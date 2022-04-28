@@ -44,7 +44,6 @@ using namespace tinygltf;
 
 struct gltf_read_options
 {
-	int interleaved;
 };
 
 struct conversion_state
@@ -81,186 +80,16 @@ static void testingStringIntMap(const std::map<std::string, int> &m, int &pos) {
 	}
 }
 
-void set_array_sizes(const tinygltf::Model &model, int &numvert, int &numfaces, int &numnorm)
-{
-	{
-
-		int indices_pos = model.meshes[0].primitives[0].indices;
-
-		//assume 1 accessor, 1 bufferview
-		const tinygltf::Accessor &accessor = model.accessors[indices_pos];
-		const tinygltf::BufferView &bufferView = model.bufferViews[accessor.bufferView];
-		const tinygltf::Buffer &buffer = model.buffers[bufferView.buffer];
-		//unsigned char to short int arr
-		const unsigned char * dataPtr = buffer.data.data() + bufferView.byteOffset +
-			accessor.byteOffset;
-		const int byte_stride = accessor.ByteStride(bufferView);
-		//const size_t count = accessor.count;
-
-		unsigned short* indices = (unsigned short*)dataPtr;
-		//int faces[bufferView.byteLength / byte_stride] ;
-		//numfaces = bufferView.byteLength / byte_stride;
-		numfaces = accessor.count;
-	}
-
-	{
-		int bot_pos = 0;
-		testingStringIntMap(model.meshes[0].primitives[0].attributes, bot_pos);
-		//assume 1 accessor, 1 bufferview
-		const tinygltf::Accessor &accessor = model.accessors[bot_pos];
-		const tinygltf::BufferView &bufferView = model.bufferViews[accessor.bufferView];
-		const tinygltf::Buffer &buffer = model.buffers[bufferView.buffer];
-		//unsigned char to short int arr
-		const unsigned char * dataPtr = buffer.data.data() + bufferView.byteOffset +
-			accessor.byteOffset;
-		const int byte_stride = accessor.ByteStride(bufferView);
-		//const size_t count = accessor.count;
-
-		float* positions = (float*)dataPtr;
-		//change double to fast_f for mk_bot
-		//double vertices[(bufferView.byteLength / byte_stride) * 3] ;
-		//numvert = (bufferView.byteLength / byte_stride) * 3;
-		numvert = accessor.count * 3;
-	}
-
-	{
-		//hardcoding norm to be accessor 1
-		const tinygltf::Accessor &accessor = model.accessors[1];
-		const tinygltf::BufferView &bufferView = model.bufferViews[accessor.bufferView];
-		const tinygltf::Buffer &buffer = model.buffers[bufferView.buffer];
-		//unsigned char to short int arr
-		const unsigned char * dataPtr = buffer.data.data() + bufferView.byteOffset +
-			accessor.byteOffset;
-		const int byte_stride = accessor.ByteStride(bufferView);
-		//const size_t count = accessor.count;
-
-		float* positions = (float*)dataPtr;
-		//change double to fast_f for mk_bot
-		//double vertices[(bufferView.byteLength / byte_stride) * 3] ;
-		//numnorm = (bufferView.byteLength / byte_stride) * 3;
-		numnorm = accessor.count * 3;
-	}
-	return;
-}
-
-void
-insert_vector_faces(const tinygltf::Model &model, double vertices[], int faces[], double normals[])
-{
-	{
-
-		int indices_pos = model.meshes[0].primitives[0].indices;
-		for (int i = 0; i < 3; i++)
-		{
-			//std::cout << model.accessors[i].bufferView << std::endl;
-		}
-
-		//assume 1 accessor, 1 bufferview
-		const tinygltf::Accessor &accessor = model.accessors[indices_pos];
-		const tinygltf::BufferView &bufferView = model.bufferViews[indices_pos];
-		const tinygltf::Buffer &buffer = model.buffers[bufferView.buffer];
-		//unsigned char to short int arr
-		const unsigned char * dataPtr = buffer.data.data() + bufferView.byteOffset +
-			accessor.byteOffset;
-		const int byte_stride = accessor.ByteStride(bufferView);
-		//const size_t count = accessor.count;
-
-		unsigned short* indices = (unsigned short*)dataPtr;
-		//int faces[bufferView.byteLength / byte_stride] ;
-		//int numfaces = bufferView.byteLength / byte_stride;
-		int numfaces = accessor.count;
-
-		for (long unsigned int i = 0; i < numfaces; i++)
-		{
-			//std::cout << "i : " << i << " = " << indices[i] << std::endl;
-			faces[i] = indices[i];
-
-		}
-
-		//std::cout << "Number of Faces: " << numfaces << std::endl;
-	}
-
-	{
-		int bot_pos = 0;
-		testingStringIntMap(model.meshes[0].primitives[0].attributes, bot_pos);
-
-		//assume 1 accessor, 1 bufferview
-		const tinygltf::Accessor &accessor = model.accessors[bot_pos];
-		const tinygltf::BufferView &bufferView = model.bufferViews[accessor.bufferView];
-		const tinygltf::Buffer &buffer = model.buffers[bufferView.buffer];
-		//unsigned char to short int arr
-		const unsigned char * dataPtr = buffer.data.data() + bufferView.byteOffset +
-			accessor.byteOffset;
-		const int byte_stride = accessor.ByteStride(bufferView);
-		//const size_t count = accessor.count;
-
-		float* positions = (float*)dataPtr;
-		//change double to fast_f for mk_bot
-		//double vertices[(bufferView.byteLength / byte_stride) * 3] ;
-		//int numvert = (bufferView.byteLength / byte_stride) * 3;
-		int numvert = accessor.count * 3;
-		//std::cout << bufferView.byteLength / byte_stride << std::endl;
-
-		for (long unsigned int i = 0; i < accessor.count; i++)
-		{
-			//std::cout << "i : " << i << " = " << positions[i * 3] << " , "
-			//	<< positions[(i * 3) + 1] << " , " << positions[(i * 3) + 2] << std::endl;
-
-			vertices[i * 3] = positions[i * 3];
-			vertices[(i * 3) + 1] = positions[(i * 3) + 1];
-			vertices[(i * 3) + 2] = positions[(i * 3) + 2];
-
-
-		}
-		//std::cout << "Number of vertices: " << numvert << std::endl;
-		//::cout << "Stride Count : " << byte_stride << std::endl;
-
-	}
-
-	{
-		//hardcoding norm to be accessor 1
-		const tinygltf::Accessor &accessor = model.accessors[1];
-		const tinygltf::BufferView &bufferView = model.bufferViews[accessor.bufferView];
-		const tinygltf::Buffer &buffer = model.buffers[bufferView.buffer];
-		//unsigned char to short int arr
-		const unsigned char * dataPtr = buffer.data.data() + bufferView.byteOffset +
-			accessor.byteOffset;
-		const int byte_stride = accessor.ByteStride(bufferView);
-		//const size_t count = accessor.count;
-
-		float* positions = (float*)dataPtr;
-		//change double to fast_f for mk_bot
-		//double vertices[(bufferView.byteLength / byte_stride) * 3] ;
-		//int numnorm = (bufferView.byteLength / byte_stride) * 3;
-		int numnorm = accessor.count * 3;
-
-		for (long unsigned int i = 0; i < accessor.count; i++)
-		{
-			//std::cout << "i : " << i << " = " << positions[i * 3] << " , "
-			//	<< positions[(i * 3) + 1] << " , " << positions[(i * 3) + 2] << std::endl;
-
-			normals[i * 3] = positions[i * 3];
-			normals[(i * 3) + 1] = positions[(i * 3) + 1];
-			normals[(i * 3) + 2] = positions[(i * 3) + 2];
-
-
-		}
-		//std::cout << "Number of vertices: " << numnorm << std::endl;
-		//std::cout << "Stride Count : " << byte_stride << std::endl;
-	}
-	return;
-}
-
 void
 generate_geometry(struct conversion_state *state, tinygltf::Model &model, int mesh_number, std::string shape_name, wmember &region)
 {
 	tinygltf::Mesh mesh = model.meshes[mesh_number];
+	//for each mesh primitive
 	for (int j = 0; j < mesh.primitives.size(); j++)
 	{
-		shape_name += "_" + j;
-		if (j > 0) std::cout << mesh_number << std::endl;
+		//get face data
 		int indices_pos = mesh.primitives[j].indices;
 
-		//assume 1 accessor, 1 bufferview
 		tinygltf::Accessor accessor = model.accessors.at(indices_pos);
 		tinygltf::BufferView bufferView = model.bufferViews[accessor.bufferView];
 		tinygltf::Buffer buffer = model.buffers[bufferView.buffer];
@@ -277,16 +106,11 @@ generate_geometry(struct conversion_state *state, tinygltf::Model &model, int me
 		int *faces = new int[numfaces];
 		for (long unsigned int i = 0; i < numfaces; i++)
 		{
-			//std::cout << "i : " << i << " = " << indices[i] << std::endl;
 			faces[i] = indices[i];
 		}
-		//int faces[3] = { 0, 1, 2 };
-
-		//std::cout << "Number of Faces: " << numfaces << std::endl;
-
+		//get vertex data
 		int bot_pos = 0;
 		testingStringIntMap(mesh.primitives[j].attributes, bot_pos);
-		//assume 1 accessor, 1 bufferview
 		accessor = model.accessors[bot_pos];
 		bufferView = model.bufferViews[accessor.bufferView];
 		buffer = model.buffers[bufferView.buffer];
@@ -297,58 +121,17 @@ generate_geometry(struct conversion_state *state, tinygltf::Model &model, int me
 		//const size_t count = accessor.count;
 
 		float* positions = (float*)dataPtr;
-		//change double to fast_f for mk_bot
-		//double vertices[(bufferView.byteLength / byte_stride) * 3] ;
-		//int numvert = (bufferView.byteLength / byte_stride) * 3;
 		int numvert = accessor.count * 3;
-		//std::cout << bufferView.byteLength / byte_stride << std::endl;
 		double* vertices = new double[numvert];
 		for (long unsigned int i = 0; i < accessor.count; i++)
 		{
-			//std::cout << "i : " << i << " = " << positions[i * 3] << " , "
-			//	<< positions[(i * 3) + 1] << " , " << positions[(i * 3) + 2] << std::endl;
-
 			vertices[i * 3] = positions[i * 3];
 			vertices[(i * 3) + 1] = positions[(i * 3) + 1];
 			vertices[(i * 3) + 2] = positions[(i * 3) + 2];
-
-
 		}
-		//std::cout << "Number of vertices: " << numvert << std::endl;
-		//::cout << "Stride Count : " << byte_stride << std::endl;
-
-		//hardcoding norm to be accessor 1
-		accessor = model.accessors[1];
-		bufferView = model.bufferViews[accessor.bufferView];
-		buffer = model.buffers[bufferView.buffer];
-		//unsigned char to short int arr
-		const unsigned char * dataPtr2 = buffer.data.data() + bufferView.byteOffset +
-			accessor.byteOffset;
-		int byte_stride2 = accessor.ByteStride(bufferView);
-		//const size_t count = accessor.count;
-
-		float* positions2 = (float*)dataPtr2;
-		//change double to fast_f for mk_bot
-		//double vertices[(bufferView.byteLength / byte_stride) * 3] ;
-		//int numnorm = (bufferView.byteLength / byte_stride) * 3;
-		int numnorm = accessor.count * 3;
-		double *normals = new double[numnorm];
-		for (long unsigned int i = 0; i < accessor.count; i++)
-		{
-			//std::cout << "i : " << i << " = " << positions[i * 3] << " , "
-			//	<< positions[(i * 3) + 1] << " , " << positions[(i * 3) + 2] << std::endl;
-
-			normals[i * 3] = positions2[i * 3];
-			normals[(i * 3) + 1] = positions2[(i * 3) + 1];
-			normals[(i * 3) + 2] = positions2[(i * 3) + 2];
-
-
-		}
-		//std::cout << "Number of vertices: " << numnorm << std::endl;
-		//std::cout << "Stride Count : " << byte_stride << std::endl;
-
-		mk_bot(state->fd_out, shape_name.c_str(), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, numvert / 3, numfaces / 3, vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
-		(void)mk_addmember((char*)shape_name.c_str(), &region.l, NULL, WMOP_UNION);
+		//make shape and add to region
+		mk_bot(state->fd_out, (shape_name + std::to_string(j)).c_str(), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, numvert / 3, numfaces / 3, vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
+		(void)mk_addmember((char*)(shape_name + std::to_string(j)).c_str(), &region.l, NULL, WMOP_UNION);
 	}
 }
 
@@ -356,11 +139,18 @@ void
 handle_node(struct conversion_state *state, tinygltf::Model &model, int node_index, struct wmember &regions)
 {
 	tinygltf::Node node = model.nodes[node_index];
+	if (node.children.empty() && node.mesh == -1)
+	{
+		//trapping nodes without meshes or children to avoid errors
+		//Fix me
+		return;
+	}
 	std::string region_name = "Region_" +std::to_string(node_index);
 	struct wmember region;
+	//generate a list to hold this node's children nodes
 	BU_LIST_INIT(&region.l);
-	unsigned char color[3] = { 255, 0, 0 };
 	int mesh_number = node.mesh;
+	//if the node is a leaf, therefore has a mesh
 	if (mesh_number != -1)
 	{
 		tinygltf::Mesh mesh = model.meshes[node.mesh];
@@ -369,26 +159,13 @@ handle_node(struct conversion_state *state, tinygltf::Model &model, int node_ind
 		{
 			shape_name = "shape" + std::to_string(node_index);
 		}
-		//mesh.name.empty() ? mesh.name : "Shape " + std::to_string(node.mesh);
-		//tinygltf::Material material = model.materials[mesh.primitives.]
-		std::cout << shape_name << std::endl;
-
 		state->bot_fcurr = 0;
 		state->id_no = 0;
-		/*
-		set_array_sizes(model, state->num_vert_values, state->num_face_values, state->num_norm_values);
-		int *faces = new int[state->num_face_values];
-		double *vertices = new double[state->num_vert_values * 3];
-		double *normals = new double[state->num_norm_values * 3];
-		insert_vector_faces(model, vertices, faces, normals);
-
-		mk_bot(state->fd_out, shape_name.c_str(), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, state->num_vert_values / 3, state->num_face_values / 3, vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);*/
 		generate_geometry(state, model, mesh_number, shape_name, region);
-		
+		//make a combination between the region and the mesh
+		mk_lrcomb(state->fd_out, region_name.c_str(), &region, 1, (char *)NULL, (char *)NULL, NULL, state->id_no, 0, 0, 100, 0);
 	}
-	mk_lrcomb(state->fd_out, region_name.c_str(), &region, 1, (char *)NULL, (char *)NULL, NULL, state->id_no, 0, 0, 100, 0);
-	state->id_no++;
-	
+	//account for translation of children
 	if (!node.translation.empty())
 	{
 		fastf_t arr[16] = { 0 };
@@ -398,6 +175,7 @@ handle_node(struct conversion_state *state, tinygltf::Model &model, int node_ind
 		arr[11] = (fastf_t)node.translation[2];
 		(void)mk_addmember(region_name.c_str(), &regions.l, arr, WMOP_UNION);
 	}
+	//account for child transformation matrix
 	else if (!node.matrix.empty())
 	{
 		fastf_t *arr = new fastf_t[16];
@@ -411,25 +189,28 @@ handle_node(struct conversion_state *state, tinygltf::Model &model, int node_ind
 	{
 		(void)mk_addmember(region_name.c_str(), &regions.l, NULL, WMOP_UNION);
 	}
+	//for each child node
 	for (int i = 0; i < node.children.size(); i++)
 	{
 		handle_node(state, model, node.children[i], region);
 	}
+	//if the node had children, make them all into a region
 	if (node.children.size() > 0)
 	{
-		mk_lrcomb(state->fd_out, region_name.c_str(), &region, 1, (char *)NULL, (char *)NULL, NULL, state->id_no, 0, 0, 100, 0);
+		mk_lrcomb(state->fd_out, region_name.c_str(), &region, 0, (char *)NULL, (char *)NULL, NULL, state->id_no, 0, 0, 100, 0);
 	}
 }
 
 void
 convert_from_gltf(struct conversion_state *state, tinygltf::Model &model)
 {
+	//assume file has one scene
 	const tinygltf::Scene &scene = model.scenes[0];
 	tinygltf::Node node;
+	//for each top level scene node
 	for (int i = 0; i < scene.nodes.size(); i++)
 	{
 		node = model.nodes[scene.nodes[i]];
-		//std::cout << node.children[0] << std::endl;
 		handle_node(state, model, scene.nodes[i], state->scene);
 
 	}
@@ -438,25 +219,7 @@ convert_from_gltf(struct conversion_state *state, tinygltf::Model &model)
 HIDDEN int
 gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *options_data, const char *source_path)
 {
-	/*
-	bool store_original_json_for_extras_and_extensions = false;
-	if (argc < 2)
-	{
-	printf("Needs input.gltf\n");
-	exit(1);
-	}
-	bu_setprogname(argv[0]);
-	if (argc > 2) {
-	store_original_json_for_extras_and_extensions = true;
-	}
-	*/
 
-	//struct conversion_state state;
-	//memset(&state, 0, sizeof(state));
-
-	//state.gltf_read_options = (struct gtlf_read_options *)options_data;
-	//std::cout << "Interleaved:" << test.interleaved << std::endl;
-	
 	tinygltf::Model model;
 	std::string err;
 	std::string warn;
@@ -467,10 +230,6 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
 
 	// getting undefined reference here for the class
 	tinygltf::TinyGLTF gltf_ctx;
-
-	//gltf_ctx.SetStoreOriginalJSONForExtrasAndExtensions(
-	//	store_original_json_for_extras_and_extensions);
-
 
 	if (ext.compare("glb") == 0) {
 		std::cout << "File type: binary glTF" << std::endl;
@@ -503,18 +262,18 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
 
 	memset(&state, 0, sizeof(state));
 	
+	//generate list to hold scene geometry
 	BU_LIST_INIT(&state.scene.l);
-	//state.gcv_options = gcv_options;
-	//state.stl_read_options = (struct stl_read_options *)options_data;
-	//state.id_no = state.stl_read_options->starting_id;
 	state.input_file = input_filename;
 	state.fd_out = context->dbip->dbi_wdbp;
 
 	std::string title = "gltf conversion from" + state.input_file;
+	//set geometry title
 	mk_id(state.fd_out, title.c_str());
 
 	convert_from_gltf(&state, model);
 
+	//combine all top level regions
 	mk_lcomb(context->dbip->dbi_wdbp, "all", &state.scene, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 	
 	return 1;
@@ -525,7 +284,6 @@ HIDDEN int
 gltf_can_read(const char *UNUSED(data))
 {
 	/* FIXME */
-	printf("123ecksdee");
 	return 0;
 }
 
