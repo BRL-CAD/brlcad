@@ -884,9 +884,8 @@ x24_setup(struct fb *ifp, int width, int height)
     switch (xi->xi_flags & FLG_VMASK) {
 	case FLG_VD24:
 	case FLG_VT24:
-	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(unsigned char),
-						       sratio*width*height)) == NULL) {
-		fb_log("X24_open: pix32 malloc failed\n");
+	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(uint32_t), sratio*width*height)) == NULL) {
+		fb_log("X24_open: pix24 malloc failed\n");
 		return -1;
 	    }
 
@@ -898,8 +897,8 @@ x24_setup(struct fb *ifp, int width, int height)
 
 	case FLG_VD16:
 	case FLG_VT16:
-	    if ((xi->xi_pix = (unsigned char *) calloc(2, width*height)) == NULL) {
-		fb_log("X24_open: pix32 malloc failed\n");
+	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(uint16_t), width*height)) == NULL) {
+		fb_log("X24_open: pix16 malloc failed\n");
 		return -1;
 	    }
 
@@ -912,8 +911,7 @@ x24_setup(struct fb *ifp, int width, int height)
 	case FLG_VP8:
 	case FLG_VS8:
 	case FLG_VG8:
-	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(unsigned char),
-						       width*height)) == NULL) {
+	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(uint8_t), width*height)) == NULL) {
 		fb_log("X24_open: pix8 malloc failed\n");
 		return -1;
 	    }
@@ -929,9 +927,8 @@ x24_setup(struct fb *ifp, int width, int height)
 					xi->xi_visual, xi->xi_depth, XYBitmap, 0,
 					NULL, width, height, 32, 0);
 
-	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(unsigned char),
-						       xi->xi_image->bytes_per_line * height)) == NULL) {
-		fb_log("X24_open: pix_1 malloc failed\n");
+	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(uint8_t), xi->xi_image->bytes_per_line * height)) == NULL) {
+		fb_log("X24_open: pix1 malloc failed\n");
 		return -1;
 	    }
 	    xi->xi_image->data = (char *) xi->xi_pix;
@@ -2596,9 +2593,8 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 	    XDestroyImage(xi->xi_image);
 
 	    /* Make new buffer and new image */
-	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(unsigned char),
-						      sratio*xi->xi_xwidth*xi->xi_xheight)) == NULL) {
-		fb_log("X24: pix32 malloc failed in resize!\n");
+	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(uint32_t), sratio*xi->xi_xwidth*xi->xi_xheight)) == NULL) {
+		fb_log("X24: pix24 malloc failed in resize!\n");
 		return 1;
 	    }
 
@@ -2614,8 +2610,8 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 	    XDestroyImage(xi->xi_image);
 
 	    /* Make new buffer and new image */
-	    if ((xi->xi_pix = (unsigned char *)calloc(2, xi->xi_xwidth*xi->xi_xheight)) == NULL) {
-		fb_log("X24: pix32 malloc failed in resize!\n");
+	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(uint16_t), xi->xi_xwidth*xi->xi_xheight)) == NULL) {
+		fb_log("X24: pix16 malloc failed in resize!\n");
 		return 1;
 	    }
 
@@ -2632,8 +2628,7 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 	    XDestroyImage(xi->xi_image);
 
 	    /* Make new buffers and new image */
-	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(unsigned char),
-						      xi->xi_xwidth * xi->xi_xheight)) == NULL) {
+	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(uint8_t), xi->xi_xwidth * xi->xi_xheight)) == NULL) {
 		fb_log("X24: pix8 malloc failed in resize!\n");
 		return 1;
 	    }
@@ -2651,9 +2646,8 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 					xi->xi_visual, xi->xi_depth, XYBitmap, 0,
 					NULL, xi->xi_xwidth, xi->xi_xheight, 32, 0);
 
-	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(unsigned char),
-						      xi->xi_image->bytes_per_line * xi->xi_xheight)) == NULL) {
-		fb_log("X24: pix_1 malloc failed in resize!\n");
+	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(uint8_t), xi->xi_image->bytes_per_line * xi->xi_xheight)) == NULL) {
+		fb_log("X24: pix1 malloc failed in resize!\n");
 		return 1;
 	    }
 
