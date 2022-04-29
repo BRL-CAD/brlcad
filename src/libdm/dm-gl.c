@@ -376,9 +376,9 @@ int gl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  * Load a new projection matrix.
  *
  */
-int gl_loadPMatrix(struct dm *dmp, fastf_t *mat)
+int gl_loadPMatrix(struct dm *dmp, const fastf_t *mat)
 {
-    fastf_t *mptr;
+    const fastf_t *mptr;
     GLfloat gtmat[16];
 
     gl_debug_print(dmp, "gl_loadPMatrix", dmp->i->dm_debugLevel);
@@ -425,6 +425,11 @@ int gl_loadPMatrix(struct dm *dmp, fastf_t *mat)
     return BRLCAD_OK;
 }
 
+void gl_popPMatrix(struct dm *UNUSED(dmp))
+{
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+}
 
 int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
 {

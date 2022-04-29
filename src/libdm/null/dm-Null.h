@@ -67,7 +67,11 @@ null_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
 
 
 DM_NULL_EXPORT extern int
-null_loadPMatrix(struct dm *dmp, fastf_t *mat);
+null_loadPMatrix(struct dm *dmp, const fastf_t *mat);
+
+
+DM_NULL_EXPORT extern void
+null_popPMatrix(struct dm *dmp);
 
 
 DM_NULL_EXPORT extern int

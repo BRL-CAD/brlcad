@@ -646,10 +646,16 @@ dm_loadmatrix(struct dm *dmp, fastf_t *mat, int eye)
     return dmp->i->dm_loadMatrix(dmp, mat, eye);
 }
 int
-dm_loadpmatrix(struct dm *dmp, fastf_t *mat)
+dm_loadpmatrix(struct dm *dmp, const fastf_t *mat)
 {
     if (!dmp || !mat) return 0;
     return dmp->i->dm_loadPMatrix(dmp, mat);
+}
+void
+dm_pop_pmatrix(struct dm *dmp)
+{
+    if (dmp)
+	dmp->i->dm_popPMatrix(dmp);
 }
 int
 dm_draw_string_2d(struct dm *dmp, const char *str, fastf_t x,  fastf_t y, int size, int use_aspect)

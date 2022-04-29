@@ -113,10 +113,16 @@ txt_loadMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat), int UNUSED(which_ey
 
 
 HIDDEN int
-txt_loadPMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat))
+txt_loadPMatrix(struct dm *UNUSED(dmp), const fastf_t *UNUSED(mat))
 {
     bu_log("loadPMatrix called\n");
     return 0;
+}
+
+HIDDEN void
+txt_popPMatrix(struct dm *UNUSED(dmp))
+{
+    bu_log("popPMatrix called\n");
 }
 
 
@@ -399,6 +405,7 @@ struct dm_impl dm_txt_impl = {
     txt_hud_end,
     txt_loadMatrix,
     txt_loadPMatrix,
+    txt_popPMatrix,
     txt_drawString2D,
     txt_String2DBBox,
     txt_drawLine2D,

@@ -2097,6 +2097,7 @@ struct dm_impl dm_X_impl = {
     X_hud_end,
     X_loadMatrix,
     null_loadPMatrix,
+    null_popPMatrix,
     X_drawString2D,
     null_String2DBBox,
     X_drawLine2D,

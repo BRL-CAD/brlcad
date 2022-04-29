@@ -612,6 +612,7 @@ dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
     if (s->s_type_flags & BV_LABELS) {
 	dm_draw_label(dmp, s);
     }
+
 }
 
 void
@@ -753,6 +754,15 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
     matp_t mat = v->gv_model2view;
     dm_loadmatrix(dmp, mat, 0);
 
+
+    // Set up to render using current perspective settings
+    if (SMALL_FASTF < v->gv_perspective)
+	(void)dm_loadpmatrix(dmp, v->gv_pmat);
+    else {
+	(void)dm_loadpmatrix(dmp, bn_mat_identity);
+    }
+
+
     // Draw geometry view objects
     // TODO - draw opaque, then transparent
     struct bu_ptbl *sobjs = bv_view_objs(v, BV_DB_OBJS);
@@ -788,6 +798,9 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
 	    dm_draw_scene_obj(dmp, s, v);
 	}
     }
+
+    // Done with perspective/orthogonal drawing
+    dm_pop_pmatrix(dmp);
 
     /* And finally, faceplate.  Set up matrices for HUD drawing, rather than 3D
      * scene drawing. */
