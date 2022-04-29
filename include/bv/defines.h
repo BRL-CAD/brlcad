@@ -465,19 +465,19 @@ struct bview_objs {
 };
 
 /* Structure used to define a view frustum. The four corners of the
- * near plane are:
+ * near_plane plane are:
  *
- * N1: origin + near*dir + -1*u_extent*up + -1*r_extent*right
- * N2: origin + near*dir + -1*u_extent*up +  1*r_extent*right
- * N3: origin + near*dir +  1*u_extent*up + -1*r_extent*right
- * N4: origin + near*dir +  1*u_extent*up +  1*r_extent*right
+ * N1: origin + near_plane*dir + -1*u_extent*up + -1*r_extent*right
+ * N2: origin + near_plane*dir + -1*u_extent*up +  1*r_extent*right
+ * N3: origin + near_plane*dir +  1*u_extent*up + -1*r_extent*right
+ * N4: origin + near_plane*dir +  1*u_extent*up +  1*r_extent*right
  *
- * And the far plane corners are:
+ * And the far_plane plane corners are:
  *
- * F1: origin + far*dir + (far/near)*(-1*u_extent*up + -1*r_extent*right)
- * F2: origin + far*dir + (far/near)*(-1*u_extent*up +  1*r_extent*right)
- * F3: origin + far*dir + (far/near)*( 1*u_extent*up + -1*r_extent*right)
- * F4: origin + far*dir + (far/near)*( 1*u_extent*up +  1*r_extent*right)
+ * F1: origin + far_plane*dir + (far_plane/near_plane)*(-1*u_extent*up + -1*r_extent*right)
+ * F2: origin + far_plane*dir + (far_plane/near_plane)*(-1*u_extent*up +  1*r_extent*right)
+ * F3: origin + far_plane*dir + (far_plane/near_plane)*( 1*u_extent*up + -1*r_extent*right)
+ * F4: origin + far_plane*dir + (far_plane/near_plane)*( 1*u_extent*up +  1*r_extent*right)
  *
  * */
 struct bv_frustum {

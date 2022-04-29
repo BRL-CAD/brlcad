@@ -254,7 +254,7 @@ view_frustum(struct bview *v,
     f->near_plane = MAGNITUDE(npc);
     f->far_plane = f->near_plane + 2*radius;
 
-#if 1
+#if 0
     bu_log("f origin  : %f %f %f\n", V3ARGS(f->origin));
     bu_log("f dir     : %f %f %f\n", V3ARGS(f->dir));
     bu_log("f near    : %f\n", f->near_plane);
@@ -286,20 +286,21 @@ view_frustum(struct bview *v,
     VADD4(arb[3], r, u, d, f->origin);
 
     // Far-plane points
+    fastf_t d_ratio = f->far_plane/f->near_plane;
     VSCALE(d, f->dir, f->far_plane);
     // 1: origin + f*d + -1*u*U + -1*r*R
-    VSCALE(u, f->up, (f->far_plane/f->near_plane)*-1*f->u_extent);
-    VSCALE(r, f->right, (f->far_plane/f->near_plane)*-1*f->r_extent);
+    VSCALE(u, f->up, d_ratio*-1*f->u_extent);
+    VSCALE(r, f->right, d_ratio*-1*f->r_extent);
     VADD4(arb[4], r, u, d, f->origin);
     // 2: origin + f*d + -1*u*U +  1*r*R
-    VSCALE(r, f->right, (f->far_plane/f->near_plane)*f->r_extent);
+    VSCALE(r, f->right, d_ratio*f->r_extent);
     VADD4(arb[5], r, u, d, f->origin);
     // 3: origin + f*d + u*U +  1*r*R
-    VSCALE(u, f->up, (f->far_plane/f->near_plane)*f->u_extent);
-    VSCALE(r, f->right, (f->far_plane/f->near_plane)*f->r_extent);
+    VSCALE(u, f->up, d_ratio*f->u_extent);
+    VSCALE(r, f->right, d_ratio*f->r_extent);
     VADD4(arb[6], r, u, d, f->origin);
     // 4: origin + f*d + u*U + -1*r*R
-    VSCALE(r, f->right, (f->far_plane/f->near_plane)*-1*f->r_extent);
+    VSCALE(r, f->right, d_ratio*-1*f->r_extent);
     VADD4(arb[7], r, u, d, f->origin);
 
     bu_log("in frustum.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
