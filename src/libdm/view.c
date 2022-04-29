@@ -759,7 +759,7 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
     if (SMALL_FASTF < v->gv_perspective)
 	(void)dm_loadpmatrix(dmp, v->gv_pmat);
     else {
-	(void)dm_loadpmatrix(dmp, bn_mat_identity);
+	(void)dm_loadpmatrix(dmp, NULL);
     }
 
 

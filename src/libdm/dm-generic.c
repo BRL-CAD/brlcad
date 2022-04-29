@@ -648,7 +648,7 @@ dm_loadmatrix(struct dm *dmp, fastf_t *mat, int eye)
 int
 dm_loadpmatrix(struct dm *dmp, const fastf_t *mat)
 {
-    if (!dmp || !mat) return 0;
+    if (!dmp) return 0;
     return dmp->i->dm_loadPMatrix(dmp, mat);
 }
 void
