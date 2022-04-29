@@ -337,7 +337,6 @@ bg_view_bounds(struct bview *v)
 	VSUB2SCALE(work, max, min, 0.5);
 	radius = MAGNITUDE(work);
     }
-    bu_log("scene center: %f %f %f\n", V3ARGS(sbbc));
 
     // Get the model space points for the mid points of the top and right edges
     // of the view.  If we don't have a width or height, we will use the
@@ -372,12 +371,21 @@ bg_view_bounds(struct bview *v)
     VUNITIZE(dir);
     VSCALE(dir, dir, -1.0);
 
+    // We will need the obb regardless, even if we are in perspective mode.  The
+    // view frustum near plane may bisect the geometry, but due to the way we manage
+    // drawing we may still see objects between the near plane and the camera origin.
+    // The frustum SAT intersection calculation won't capture those near objects, so
+    // we also check against the obb to capture those close objects.  An OBB test
+    // near the camera will "over-count" in the sense that it may report near objects
+    // as visible that are not actually visible in the perspective camera, but for LoD
+    // purposes it is much more important not to miss objects.
+    view_obb(v, sbbc, radius, dir, ec, ep1, ep2);
+
+    // If perspective mode is enabled, we may see more objects further away as the
+    // view is "broadened" further from the camera.
     if (SMALL_FASTF < v->gv_perspective) {
 	view_frustum(v, dir, radius, ec, ep1, ep2);
-	return;
     }
-
-    view_obb(v, sbbc, radius, dir, ec, ep1, ep2);
 }
 
 struct bg_mesh_lod_context_internal {
