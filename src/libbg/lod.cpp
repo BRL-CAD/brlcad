@@ -389,6 +389,19 @@ bg_view_bounds(struct bview *v)
     }
 }
 
+static int
+_obj_visible(struct bv_scene_obj *s, struct bview *v)
+{
+    if (bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3))
+	return 1;
+
+    if (SMALL_FASTF < v->gv_perspective)
+	if (bg_sat_frustum_aabb(&v->frustum, s->bmin, s->bmax))
+	    return 1;
+
+    return 0;
+}
+
 struct bg_mesh_lod_context_internal {
     MDB_env *lod_env;
     MDB_txn *lod_txn;
@@ -1689,7 +1702,7 @@ bg_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset)
 
     // If the object is not visible in the scene, don't change the data
     //bu_log("min: %f %f %f max: %f %f %f\n", V3ARGS(s->bmin), V3ARGS(s->bmax));
-    if (bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3))
+    if (_obj_visible(s, v))
 	ret = bg_mesh_lod_level(s, vscale, reset);
 
     return ret;

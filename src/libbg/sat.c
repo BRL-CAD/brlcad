@@ -666,6 +666,11 @@ bg_sat_frustum_obb(
     VUNITIZE(axis[2]);
     VSET(extent, MAGNITUDE(obb_extent1), MAGNITUDE(obb_extent2), MAGNITUDE(obb_extent3));
 
+    if (NEAR_ZERO(vf->near_plane, VUNITIZE_TOL)) {
+	// Invalid frustum
+	return 0;
+    }
+
     vect_t diff;
     VSUB2(diff, obb_center, vf->origin);  // C-E
 
