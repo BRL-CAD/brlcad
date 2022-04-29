@@ -669,7 +669,7 @@ bg_sat_frustum_obb(
     vect_t diff;
     VSUB2(diff, obb_center, vf->origin);  // C-E
 
-    fastf_t f_DRatio = vf->far/vf->near;
+    fastf_t f_DRatio = vf->far_plane/vf->near_plane;
 
     fastf_t A[3];      // Dot(R,A[i])
     fastf_t B[3];      // Dot(U,A[i])
@@ -697,22 +697,22 @@ bg_sat_frustum_obb(
 	C[i] = VDOT(axis[i], vf->dir);
     }
     radius = extent[0] * fabs(C[0]) + extent[1] * fabs(C[1]) + extent[2] * fabs(C[2]);
-    if (D[2] + radius < vf->near || D[2] - radius > vf->far)
+    if (D[2] + radius < vf->near_plane || D[2] - radius > vf->far_plane)
 	return 0;
 
     // M = n*R - r*D
     for (int32_t i = 0; i < 3; ++i) {
 	A[i] = VDOT(axis[i], vf->right);
 	RC[i] = vf->r_extent * C[i];
-	NA[i] = vf->near * A[i];
+	NA[i] = vf->near_plane * A[i];
 	NAmRC[i] = NA[i] - RC[i];
     }
     D[0] = VDOT(diff, vf->right);
     radius = extent[0] * fabs(NAmRC[0]) + extent[1] * fabs(NAmRC[1]) + extent[2] * fabs(NAmRC[2]);
-    ND[0] = vf->near * D[0];
+    ND[0] = vf->near_plane * D[0];
     RD[2] = vf->r_extent * D[2];
     DdD = ND[0] - RD[2];
-    MTwoRF = -2*vf->r_extent*vf->far;
+    MTwoRF = -2*vf->r_extent*vf->far_plane;
     if (DdD + radius < MTwoRF || DdD > radius)
 	return 0;
 
@@ -729,15 +729,15 @@ bg_sat_frustum_obb(
     for (int32_t i = 0; i < 3; ++i) {
 	B[i] = VDOT(axis[i], vf->up);
 	UC[i] = vf->u_extent * C[i];
-	NB[i] = vf->near * B[i];
+	NB[i] = vf->near_plane * B[i];
 	NBmUC[i] = NB[i] - UC[i];
     }
     D[1] = VDOT(diff, vf->up);
     radius = extent[0] * fabs(NBmUC[0]) + extent[1] * fabs(NBmUC[1]) + extent[2] * fabs(NBmUC[2]);
-    ND[1] = vf->near * D[1];
+    ND[1] = vf->near_plane * D[1];
     UD[2] = vf->u_extent * D[2];
     DdD = ND[1] - UD[2];
-    MTwoUF = -2*vf->u_extent*vf->far;
+    MTwoUF = -2*vf->u_extent*vf->far_plane;
     if (DdD + radius < MTwoUF || DdD > radius)
 	return 0;
 
@@ -756,7 +756,7 @@ bg_sat_frustum_obb(
     // M = A[i]
     for (int32_t i = 0; i < 3; ++i) {
 	p = vf->r_extent * fabs(A[i]) + vf->u_extent * fabs(B[i]);
-	NC[i] = vf->near * C[i];
+	NC[i] = vf->near_plane * C[i];
 	fmin = NC[i] - p;
 	if (fmin < 0)
 	    fmin *= f_DRatio;
@@ -815,7 +815,7 @@ bg_sat_frustum_obb(
     {
 	p = vf->r_extent * fabs(NBmUC[i]) +
 	    vf->u_extent * fabs(NAmRC[i]);
-	tmp = -vf->near * RBmUA[i];
+	tmp = -vf->near_plane * RBmUA[i];
 	fmin = tmp - p;
 	if (fmin < 0)
 	    fmin *= f_DRatio;
@@ -837,7 +837,7 @@ bg_sat_frustum_obb(
     {
 	p = vf->r_extent * fabs(NBpUC[i]) +
 	    vf->u_extent * fabs(NAmRC[i]);
-	tmp = -vf->near * RBpUA[i];
+	tmp = -vf->near_plane * RBpUA[i];
 	fmin = tmp - p;
 	if (fmin < 0)
 	    fmin *= f_DRatio;
@@ -859,7 +859,7 @@ bg_sat_frustum_obb(
     {
 	p = vf->r_extent * fabs(NBmUC[i]) +
 	    vf->u_extent * fabs(NApRC[i]);
-	tmp = vf->near * RBpUA[i];
+	tmp = vf->near_plane * RBpUA[i];
 	fmin = tmp - p;
 	if (fmin < 0)
 	    fmin *= f_DRatio;
@@ -881,7 +881,7 @@ bg_sat_frustum_obb(
     {
 	p = vf->r_extent * fabs(NBpUC[i]) +
 	    vf->u_extent * fabs(NApRC[i]);
-	tmp = vf->near * RBmUA[i];
+	tmp = vf->near_plane * RBmUA[i];
 	fmin = tmp - p;
 	if (fmin < 0)
 	    fmin *= f_DRatio;
