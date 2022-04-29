@@ -52,7 +52,6 @@
 
 #include "common.h"
 #include "vmath.h"
-#include "bv/defines.h"
 #include "bg/defines.h"
 
 __BEGIN_DECLS
@@ -126,33 +125,6 @@ BG_EXPORT extern int
 bg_sat_obb_obb(
 	point_t obb1_center, vect_t obb1_extent1, vect_t obb1_extent2, vect_t obb1_extent3,
 	point_t obb2_center, vect_t obb2_extent1, vect_t obb2_extent2, vect_t obb2_extent3
-	);
-
-
-/**
- * Test for an intersection between a view frustum and an Axis Aligned Bounding
- * Box (AABB).
- *
- * Returns 1 if they intersect, 0 otherwise.
- */
-
-BG_EXPORT extern int
-bg_sat_frustum_aabb(
-	struct bv_frustum *v,
-	point_t aabb_min, point_t aabb_max
-	);
-
-/**
- * Test for an intersection between a view frustum and an Oriented Bounding Box
- * (OBB). The box is defined by a center point and three perpendicular vectors
- * from the center to the centers of the various faces.
- *
- * Returns 1 if they intersect, 0 otherwise.
- */
-BG_EXPORT extern int
-bg_sat_frustum_obb(
-	struct bv_frustum *vf,
-	point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3
 	);
 
 

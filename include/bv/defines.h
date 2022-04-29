@@ -464,33 +464,6 @@ struct bview_objs {
     struct bv_scene_obj *free_scene_obj;
 };
 
-/* Structure used to define a view frustum. The four corners of the
- * near_plane plane are:
- *
- * N1: origin + near_plane*dir + -1*u_extent*up + -1*r_extent*right
- * N2: origin + near_plane*dir + -1*u_extent*up +  1*r_extent*right
- * N3: origin + near_plane*dir +  1*u_extent*up + -1*r_extent*right
- * N4: origin + near_plane*dir +  1*u_extent*up +  1*r_extent*right
- *
- * And the far_plane plane corners are:
- *
- * F1: origin + far_plane*dir + (far_plane/near_plane)*(-1*u_extent*up + -1*r_extent*right)
- * F2: origin + far_plane*dir + (far_plane/near_plane)*(-1*u_extent*up +  1*r_extent*right)
- * F3: origin + far_plane*dir + (far_plane/near_plane)*( 1*u_extent*up + -1*r_extent*right)
- * F4: origin + far_plane*dir + (far_plane/near_plane)*( 1*u_extent*up +  1*r_extent*right)
- *
- * */
-struct bv_frustum {
-    point_t origin;
-    vect_t dir;
-    vect_t up;
-    vect_t right;
-    fastf_t near_plane;
-    fastf_t far_plane;
-    fastf_t u_extent;
-    fastf_t r_extent;
-};
-
 struct bview_set;
 
 struct bview {
@@ -556,16 +529,13 @@ struct bview {
 
     /* We sometimes need to define the volume in space that is "active" for the
      * view.  For an orthogonal camera this is the oriented bounding box
-     * extruded to contain active scene objects visible in the view, and for a
-     * perspective camera this is the view frustum with the far plan extended
-     * to be beyond the furthest active object in the scene.  The app must set
-     * the gv_bounds_update callback to bg_view_bound so a bv_update call can
-     * update these values.*/
+     * extruded to contain active scene objects visible in the view  The app
+     * must set the gv_bounds_update callback to bg_view_bound so a bv_update
+     * call can update these values.*/
     point_t obb_center;
     vect_t obb_extent1;
     vect_t obb_extent2;
     vect_t obb_extent3;
-    struct bv_frustum frustum;
     void (*gv_bounds_update)(struct bview *);
 
     /*

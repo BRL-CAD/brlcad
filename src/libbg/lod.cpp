@@ -232,82 +232,6 @@ view_obb(struct bview *v,
 #endif
 }
 
-static void
-view_frustum(struct bview *v,
-       	vect_t dir, fastf_t radius,
-	point_t ec, point_t ep1, point_t ep2)
-{
-    struct bv_frustum *f = &v->frustum;
-
-    MAT4X3PNT(f->origin, v->gv_view2model, v->gv_eye_pos);
-    VMOVE(f->dir, dir);
-
-    VSUB2(f->up, ep1, ec);
-    f->u_extent = MAGNITUDE(f->up);
-    VUNITIZE(f->up);
-    VSUB2(f->right, ep2, ec);
-    f->r_extent = MAGNITUDE(f->right);
-    VUNITIZE(f->right);
-
-    vect_t npc;
-    VSUB2(npc, ec, f->origin);
-    f->near_plane = MAGNITUDE(npc);
-    f->far_plane = f->near_plane + 2*radius;
-
-#if 0
-    bu_log("f origin  : %f %f %f\n", V3ARGS(f->origin));
-    bu_log("f dir     : %f %f %f\n", V3ARGS(f->dir));
-    bu_log("f near    : %f\n", f->near_plane);
-    bu_log("f far     : %f\n", f->far_plane);
-    bu_log("f up      : %f %f %f\n", V3ARGS(f->up));
-    bu_log("f u_extent: %f\n", f->u_extent);
-    bu_log("f right   : %f %f %f\n", V3ARGS(f->right));
-    bu_log("f r_extent: %f\n", f->r_extent);
-
-    // For debugging purposes, construct an arb
-    point_t arb[8];
-    vect_t d, u, r;
-
-    // Near-plane points
-    VSCALE(d, f->dir, f->near_plane);
-    // 1: origin + n*d + -1*u*U + -1*r*R
-    VSCALE(u, f->up, -1*f->u_extent);
-    VSCALE(r, f->right, -1*f->r_extent);
-    VADD4(arb[0], r, u, d, f->origin);
-    // 2: origin + n*d + -1*u*U +  1*r*R
-    VSCALE(r, f->right, f->r_extent);
-    VADD4(arb[1], r, u, d, f->origin);
-    // 3: origin + n*d + u*U +  1*r*R
-    VSCALE(u, f->up, f->u_extent);
-    VSCALE(r, f->right, f->r_extent);
-    VADD4(arb[2], r, u, d, f->origin);
-    // 4: origin + n*d + u*U + -1*r*R
-    VSCALE(r, f->right, -1*f->r_extent);
-    VADD4(arb[3], r, u, d, f->origin);
-
-    // Far-plane points
-    fastf_t d_ratio = f->far_plane/f->near_plane;
-    VSCALE(d, f->dir, f->far_plane);
-    // 1: origin + f*d + -1*u*U + -1*r*R
-    VSCALE(u, f->up, d_ratio*-1*f->u_extent);
-    VSCALE(r, f->right, d_ratio*-1*f->r_extent);
-    VADD4(arb[4], r, u, d, f->origin);
-    // 2: origin + f*d + -1*u*U +  1*r*R
-    VSCALE(r, f->right, d_ratio*f->r_extent);
-    VADD4(arb[5], r, u, d, f->origin);
-    // 3: origin + f*d + u*U +  1*r*R
-    VSCALE(u, f->up, d_ratio*f->u_extent);
-    VSCALE(r, f->right, d_ratio*f->r_extent);
-    VADD4(arb[6], r, u, d, f->origin);
-    // 4: origin + f*d + u*U + -1*r*R
-    VSCALE(r, f->right, d_ratio*-1*f->r_extent);
-    VADD4(arb[7], r, u, d, f->origin);
-
-    bu_log("in frustum.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
-	    V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb  [6]), V3ARGS(arb[7]));
-#endif
-}
-
 void
 bg_view_bounds(struct bview *v)
 {
@@ -372,20 +296,9 @@ bg_view_bounds(struct bview *v)
     VUNITIZE(dir);
     VSCALE(dir, dir, -1.0);
 
-    // We will need the obb regardless, even if we are in perspective mode.  The
-    // view frustum near plane may bisect the geometry, but due to the way we manage
-    // drawing we may still see objects between the near plane and the camera origin.
-    // The frustum SAT intersection calculation won't capture those near objects, so
-    // we also check against the obb to capture those close objects.  An OBB test
-    // near the camera will "over-count" in the sense that it may report near objects
-    // as visible that are not actually visible in the perspective camera, but for LoD
-    // purposes it is much more important not to miss objects.
-    view_obb(v, sbbc, radius, dir, ec, ep1, ep2);
-
-    // If perspective mode is enabled, we may see more objects further away as the
-    // view is "broadened" further from the camera.
-    if (SMALL_FASTF < v->gv_perspective) {
-	view_frustum(v, dir, radius, ec, ep1, ep2);
+    // If perspective mode is not enabled, update the oriented bounding box.
+    if (!(SMALL_FASTF < v->gv_perspective)) {
+	view_obb(v, sbbc, radius, dir, ec, ep1, ep2);
     }
 }
 
@@ -395,9 +308,27 @@ _obj_visible(struct bv_scene_obj *s, struct bview *v)
     if (bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3))
 	return 1;
 
-    if (SMALL_FASTF < v->gv_perspective)
-	if (bg_sat_frustum_aabb(&v->frustum, s->bmin, s->bmax))
-	    return 1;
+    if (SMALL_FASTF < v->gv_perspective) {
+	// TODO - What we need to know in perspective mode is whether the
+	// object is visible, and if so how far it is from the plane of the eye
+	// point.  Tried some initial experiments with explicitly constructing
+	// a view frustum volume and testing against bboxes, but that is
+	// looking a bit thorny - the near plane of the frustum can be beyond
+	// objects that are still being drawn, unless I'm constructing
+	// something incorrectly.  Next idea:
+	//
+	// Construct the view plane from the eye point and the direction
+	// normal.  Use the screen coordinates to make a view plane rectangle
+	// and from that a bg_polygon.  Then for each object aabb, see if it is
+	// above the view plane.  If so, use the model2view matrix to project
+	// all 8 points into the view plane, and use bg_polyline_2d_chull to
+	// construct a bounding polygon.  Make another bg_polygon from that,
+	// and use bg_polygons_overlap to see if the object might be visible.
+	// If so, use the minimum distance from the eye_pt to a bounding box
+	// vert to drive a LoD size estimate (unlike the orthogonal mode,
+	// distance from camera matters with perspective.)
+	return 1;
+    }
 
     return 0;
 }
