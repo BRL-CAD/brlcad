@@ -191,6 +191,7 @@ extern "C" {
     extern mat_t Viewrotscale;
     extern fastf_t viewsize;
     extern fastf_t aspect;
+    extern fastf_t rt_perspective;
 
     void grid_setup();
 }
@@ -812,14 +813,33 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     // Camera
     //------------------------------------------------------------------------
 
-    // Create a pinhole camera with film dimensions
-    bu_vls_sprintf(&dimensions, "%f %f", 0.08 * (double) width / height, 0.08);
-    asf::auto_release_ptr<asr::Camera> camera(
-	asr::PinholeCameraFactory().create(
-	    "camera",
-	    asr::ParamArray()
-	    .insert("film_dimensions", bu_vls_cstr(&dimensions))
-	    .insert("focal_length", "0.035")));
+    // declare camera outside of if-else scope
+    asf::auto_release_ptr<asr::Camera> camera;
+
+    // check for perspective
+    if (rt_perspective > 0.0) {
+        // Create a pinhole camera with film dimensions
+        bu_vls_sprintf(&dimensions, "%f %f", 0.08 * (double) width / height, 0.08);
+        asf::auto_release_ptr<asr::Camera> pinhole(
+	    asr::PinholeCameraFactory().create(
+	        "camera",
+	        asr::ParamArray()
+	        .insert("film_dimensions", bu_vls_cstr(&dimensions))
+	        .insert("focal_length", "0.035")
+        ));
+        camera = pinhole;
+    }
+    else {
+        // Create a orthographic camera with film dimensions
+        bu_vls_sprintf(&dimensions, "%f %f", viewsize, viewsize);
+        asf::auto_release_ptr<asr::Camera> ortho(
+        asr::OrthographicCameraFactory().create(
+            "camera",
+            asr::ParamArray()
+            .insert("film_dimensions", bu_vls_cstr(&dimensions))
+        ));
+        camera = ortho;
+    }
 
     // Place and orient the camera. By default cameras are located in (0.0, 0.0, 0.0)
     // and are looking toward Z- (0.0, 0.0, -1.0).
