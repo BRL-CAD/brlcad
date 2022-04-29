@@ -164,69 +164,15 @@ obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct 
 }
 
 static void
-view_obb(struct bview *v)
+view_obb(struct bview *v,
+       	point_t sbbc, fastf_t radius,
+	vect_t dir,
+	point_t ec, point_t ep1, point_t ep2)
 {
-    // Get the radius of the scene.
-    plane_t p;
-    point_t sbbc = VINIT_ZERO;
-    fastf_t radius = 1.0;
-    vect_t min, max, work;
-    VSETALL(min,  INFINITY);
-    VSETALL(max, -INFINITY);
-    int have_objs = 0;
-    struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
-    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
-	obj_bb(&have_objs, &min, &max, g, v);
-    }
-    struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-    if (so != sol) {
-	for (size_t i = 0; i < BU_PTBL_LEN(sol); i++) {
-	    struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(sol, i);
-	    obj_bb(&have_objs, &min, &max, g, v);
-	}
-    }
-    if (have_objs) {
-	VADD2SCALE(sbbc, max, min, 0.5);
-	VSUB2SCALE(work, max, min, 0.5);
-	radius = MAGNITUDE(work);
-    }
-
-    // Get the model space points for the mid points of the top and right edges
-    // of the view.  If we don't have a width or height, we will use the
-    // existing min and max since we don't have a "screen" to base the box on
-    int w = v->gv_width;
-    int h = v->gv_height;
-    int x = (int)(w * 0.5);
-    int y = (int)(h * 0.5);
-    //bu_log("w,h,x,y: %d %d %d %d\n", w,h, x, y);
-    fastf_t x1 = 0.0, y1 = 0.0, x2 = 0.0, y2 = 0.0, xc = 0.0, yc = 0.0;
-    bv_screen_to_view(v, &x1, &y1, x, h);
-    bv_screen_to_view(v, &x2, &y2, w, y);
-    bv_screen_to_view(v, &xc, &yc, x, y);
-    //bu_log("x1,y1: %f %f\n", x1, y1);
-    //bu_log("x2,y2: %f %f\n", x2, y2);
-    //bu_log("xc,yc: %f %f\n", xc, yc);
-    point_t vp1, vp2, vc, ep1, ep2, ec;
-    VSET(vp1, x1, y1, 0);
-    VSET(vp2, x2, y2, 0);
-    VSET(vc, xc, yc, 0);
-    MAT4X3PNT(ep1, v->gv_view2model, vp1);
-    MAT4X3PNT(ep2, v->gv_view2model, vp2);
-    MAT4X3PNT(ec, v->gv_view2model, vc);
-    //bu_log("view center: %f %f %f\n", V3ARGS(ec));
-    //bu_log("edge point 1: %f %f %f\n", V3ARGS(ep1));
-    //bu_log("edge point 2: %f %f %f\n", V3ARGS(ep2));
-
-    // Need the direction vector - i.e., where the camera is looking.  Got this
-    // trick from the libged nirt code...
-    vect_t dir;
-    VMOVEN(dir, v->gv_rotation + 8, 3);
-    VUNITIZE(dir);
-    VSCALE(dir, dir, -1.0);
 
     // Box center is the closest point to the view center on the plane defined
     // by the scene's center and the view dir
+    plane_t p;
     bg_plane_pt_nrml(&p, sbbc, dir);
     fastf_t pu, pv;
     bg_plane_closest_pt(&pu, &pv, p, ec);
@@ -286,12 +232,89 @@ view_obb(struct bview *v)
 #endif
 }
 
-#if 0
 static void
-view_frustum(struct bview *v)
+view_frustum(struct bview *v,
+       	vect_t dir, fastf_t radius,
+	point_t ec, point_t ep1, point_t ep2)
 {
-    // Get the radius of the scene - we want our back plane to be beyond all
-    // visible geometry.
+    struct bv_frustum *f = &v->frustum;
+
+    MAT4X3PNT(f->origin, v->gv_view2model, v->gv_eye_pos);
+    VMOVE(f->dir, dir);
+
+    VSUB2(f->up, ep1, ec);
+    f->u_extent = MAGNITUDE(f->up);
+    VUNITIZE(f->up);
+    VSUB2(f->right, ep2, ec);
+    f->r_extent = MAGNITUDE(f->right);
+    VUNITIZE(f->right);
+
+    vect_t npc;
+    VSUB2(npc, ec, f->origin);
+    f->near = MAGNITUDE(npc);
+    f->far = f->near + 2*radius;
+
+#if 1
+    bu_log("f origin  : %f %f %f\n", V3ARGS(f->origin));
+    bu_log("f dir     : %f %f %f\n", V3ARGS(f->dir));
+    bu_log("f near    : %f\n", f->near);
+    bu_log("f far     : %f\n", f->far);
+    bu_log("f up      : %f %f %f\n", V3ARGS(f->up));
+    bu_log("f u_extent: %f\n", f->u_extent);
+    bu_log("f right   : %f %f %f\n", V3ARGS(f->right));
+    bu_log("f r_extent: %f\n", f->r_extent);
+
+    // For debugging purposes, construct an arb
+    point_t arb[8];
+    vect_t d, u, r;
+
+    // Near-plane points
+    VSCALE(d, f->dir, f->near);
+    // 1: origin + n*d + -1*u*U + -1*r*R
+    VSCALE(u, f->up, -1*f->u_extent);
+    VSCALE(r, f->right, -1*f->r_extent);
+    VADD4(arb[0], r, u, d, f->origin);
+    // 2: origin + n*d + -1*u*U +  1*r*R
+    VSCALE(r, f->right, f->r_extent);
+    VADD4(arb[1], r, u, d, f->origin);
+    // 3: origin + n*d + u*U +  1*r*R
+    VSCALE(u, f->up, f->u_extent);
+    VSCALE(r, f->right, f->r_extent);
+    VADD4(arb[2], r, u, d, f->origin);
+    // 4: origin + n*d + u*U + -1*r*R
+    VSCALE(r, f->right, -1*f->r_extent);
+    VADD4(arb[3], r, u, d, f->origin);
+
+    // Far-plane points
+    VSCALE(d, f->dir, f->far);
+    // 1: origin + f*d + -1*u*U + -1*r*R
+    VSCALE(u, f->up, (f->far/f->near)*-1*f->u_extent);
+    VSCALE(r, f->right, (f->far/f->near)*-1*f->r_extent);
+    VADD4(arb[4], r, u, d, f->origin);
+    // 2: origin + f*d + -1*u*U +  1*r*R
+    VSCALE(r, f->right, (f->far/f->near)*f->r_extent);
+    VADD4(arb[5], r, u, d, f->origin);
+    // 3: origin + f*d + u*U +  1*r*R
+    VSCALE(u, f->up, (f->far/f->near)*f->u_extent);
+    VSCALE(r, f->right, (f->far/f->near)*f->r_extent);
+    VADD4(arb[6], r, u, d, f->origin);
+    // 4: origin + f*d + u*U + -1*r*R
+    VSCALE(r, f->right, (f->far/f->near)*-1*f->r_extent);
+    VADD4(arb[7], r, u, d, f->origin);
+
+    bu_log("in frustum.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+	    V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb  [6]), V3ARGS(arb[7]));
+#endif
+}
+
+void
+bg_view_bounds(struct bview *v)
+{
+    if (!v || !v->gv_width || !v->gv_height)
+	return;
+
+    // Get the radius of the scene.
+    point_t sbbc = VINIT_ZERO;
     fastf_t radius = 1.0;
     vect_t min, max, work;
     VSETALL(min,  INFINITY);
@@ -310,27 +333,51 @@ view_frustum(struct bview *v)
 	}
     }
     if (have_objs) {
+	VADD2SCALE(sbbc, max, min, 0.5);
 	VSUB2SCALE(work, max, min, 0.5);
 	radius = MAGNITUDE(work);
     }
+    bu_log("scene center: %f %f %f\n", V3ARGS(sbbc));
 
-    // TODO - calculate frustum info from perspective angle/matrix
+    // Get the model space points for the mid points of the top and right edges
+    // of the view.  If we don't have a width or height, we will use the
+    // existing min and max since we don't have a "screen" to base the box on
+    int w = v->gv_width;
+    int h = v->gv_height;
+    int x = (int)(w * 0.5);
+    int y = (int)(h * 0.5);
+    //bu_log("w,h,x,y: %d %d %d %d\n", w,h, x, y);
+    fastf_t x1 = 0.0, y1 = 0.0, x2 = 0.0, y2 = 0.0, xc = 0.0, yc = 0.0;
+    bv_screen_to_view(v, &x1, &y1, x, h);
+    bv_screen_to_view(v, &x2, &y2, w, y);
+    bv_screen_to_view(v, &xc, &yc, x, y);
+    //bu_log("x1,y1: %f %f\n", x1, y1);
+    //bu_log("x2,y2: %f %f\n", x2, y2);
+    //bu_log("xc,yc: %f %f\n", xc, yc);
+    point_t vp1, vp2, vc, ep1, ep2, ec;
+    VSET(vp1, x1, y1, 0);
+    VSET(vp2, x2, y2, 0);
+    VSET(vc, xc, yc, 0);
+    MAT4X3PNT(ep1, v->gv_view2model, vp1);
+    MAT4X3PNT(ep2, v->gv_view2model, vp2);
+    MAT4X3PNT(ec, v->gv_view2model, vc);
+    //bu_log("view center: %f %f %f\n", V3ARGS(ec));
+    //bu_log("edge point 1: %f %f %f\n", V3ARGS(ep1));
+    //bu_log("edge point 2: %f %f %f\n", V3ARGS(ep2));
 
-}
-#endif
+    // Need the direction vector - i.e., where the camera is looking.  Got this
+    // trick from the libged nirt code...
+    vect_t dir;
+    VMOVEN(dir, v->gv_rotation + 8, 3);
+    VUNITIZE(dir);
+    VSCALE(dir, dir, -1.0);
 
-void
-bg_view_bounds(struct bview *v)
-{
-    if (!v || !v->gv_width || !v->gv_height)
+    if (SMALL_FASTF < v->gv_perspective) {
+	view_frustum(v, dir, radius, ec, ep1, ep2);
 	return;
+    }
 
-    //if (!(v->gv_perspective > SMALL_FASTF)) {
-	view_obb(v);
-	//return;
-    //}
-
-    //view_frustum(v);
+    view_obb(v, sbbc, radius, dir, ec, ep1, ep2);
 }
 
 struct bg_mesh_lod_context_internal {
