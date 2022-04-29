@@ -1058,7 +1058,7 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 
     if (file != NULL) {
 	const char *cp;
-	char modebuf[80];
+	char modebuf[80] = {0};
 	char *mp;
 	int alpha;
 	struct modeflags *mfp;
