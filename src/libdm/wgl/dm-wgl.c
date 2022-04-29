@@ -878,6 +878,7 @@ struct dm_impl dm_wgl_impl = {
     gl_hud_end,
     gl_loadMatrix,
     gl_loadPMatrix,
+    gl_popPMatrix,
     wgl_drawString2D,
     null_String2DBBox,
     gl_drawLine2D,
