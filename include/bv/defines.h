@@ -485,8 +485,8 @@ struct bv_frustum {
     vect_t dir;
     vect_t up;
     vect_t right;
-    fastf_t near;
-    fastf_t far;
+    fastf_t near_plane;
+    fastf_t far_plane;
     fastf_t u_extent;
     fastf_t r_extent;
 };
