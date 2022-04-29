@@ -104,22 +104,15 @@ dozoom(int which_eye)
 	    case 0:
 		/* Non-stereo case */
 		mat = view_state->vs_gvp->gv_model2view;
-		/* XXX hack */
-		/* if (mged_variables->mv_faceplate > 0) */
-		if (1) {
-		    if (EQUAL(view_state->vs_gvp->gv_eye_pos[Z], 1.0)) {
-			/* This way works, with reasonable Z-clipping */
-			persp_mat(perspective_mat, view_state->vs_gvp->gv_perspective,
-				  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
-		    } else {
-			/* This way does not have reasonable Z-clipping,
-			 * but includes shear, for GDurf's testing.
-			 */
-			deering_persp_mat(perspective_mat, l, h, view_state->vs_gvp->gv_eye_pos);
-		    }
+		if (EQUAL(view_state->vs_gvp->gv_eye_pos[Z], 1.0)) {
+		    /* This way works, with reasonable Z-clipping */
+		    persp_mat(perspective_mat, view_state->vs_gvp->gv_perspective,
+			    (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
 		} else {
-		    /* New way, should handle all cases */
-		    mike_persp_mat(perspective_mat, view_state->vs_gvp->gv_eye_pos);
+		    /* This way does not have reasonable Z-clipping,
+		     * but includes shear, for GDurf's testing.
+		     */
+		    deering_persp_mat(perspective_mat, l, h, view_state->vs_gvp->gv_eye_pos);
 		}
 		break;
 	    case 1:
