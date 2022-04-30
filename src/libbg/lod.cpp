@@ -313,20 +313,18 @@ _obj_visible(struct bv_scene_obj *s, struct bview *v)
 	// object is visible, and if so how far it is from the plane of the eye
 	// point.  Tried some initial experiments with explicitly constructing
 	// a view frustum volume and testing against bboxes, but that is
-	// looking a bit thorny - the near plane of the frustum can be beyond
-	// objects that are still being drawn, unless I'm constructing
-	// something incorrectly.  Next idea:
+	// looking a bit thorny.  A little more thinking makes me suspect my
+	// initial mental model of what I needed to do led me to go at this
+	// backwards - taking the view into 3-space, rather than the object
+	// AABBs into screen space...
 	//
-	// Construct the view plane from the eye point and the direction
-	// normal.  Use the screen coordinates to make a view plane rectangle
-	// and from that a bg_polygon.  Then for each object aabb, see if it is
-	// above the view plane.  If so, use the model2view matrix to project
-	// all 8 points into the view plane, and use bg_polyline_2d_chull to
-	// construct a bounding polygon.  Make another bg_polygon from that,
-	// and use bg_polygons_overlap to see if the object might be visible.
-	// If so, use the minimum distance from the eye_pt to a bounding box
-	// vert to drive a LoD size estimate (unlike the orthogonal mode,
-	// distance from camera matters with perspective.)
+	// Need to try to construct the view plane from the eye point and the
+	// direction normal.  Use the screen coordinates to make a view plane
+	// rectangle Then for each object aabb, use the model2view matrix to
+	// project all 8 points into the view plane and construct the view
+	// space aabb.  If the boxes overlap in view space, proceed. The above
+	// is probably also what I should do for the orthogonal case, rather
+	// than the full 3D sat test...
 	return 1;
     }
 
