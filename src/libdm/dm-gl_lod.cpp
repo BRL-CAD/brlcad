@@ -156,6 +156,8 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	    glVertex3dv(dpt);
 	    VMOVE(dpt, points[faces[3*i+2]]);
 	    glVertex3dv(dpt);
+	    VMOVE(dpt, points[faces[3*i+0]]);
+	    glVertex3dv(dpt);
 	    glEnd();
 	}
 	if (dmp->i->dm_light && dmp->i->dm_transparency)
