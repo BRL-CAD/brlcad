@@ -263,9 +263,8 @@ bg_view_bounds(struct bview *v)
 	radius = MAGNITUDE(work);
     }
 
-    // Get the model space points for the mid points of the top and right edges
-    // of the view.  If we don't have a width or height, we will use the
-    // existing min and max since we don't have a "screen" to base the box on
+    // Using the pixel width and height of the current "window", construct some
+    // view space dimensions related to that window
     int w = v->gv_width;
     int h = v->gv_height;
     int x = (int)(w * 0.5);
@@ -275,6 +274,21 @@ bg_view_bounds(struct bview *v)
     bv_screen_to_view(v, &x1, &y1, x, h);
     bv_screen_to_view(v, &x2, &y2, w, y);
     bv_screen_to_view(v, &xc, &yc, x, y);
+
+    // Also stash the window's view space bbox
+    fastf_t w0, w1, w2, w3;
+    bv_screen_to_view(v, &w0, &w1, 0, 0);
+    bv_screen_to_view(v, &w2, &w3, w, h);
+    v->gv_wmin[0] = (w0 < w2) ? w0 : w2;
+    v->gv_wmin[1] = (w1 < w3) ? w1 : w3;
+    v->gv_wmax[0] = (w0 > w2) ? w0 : w2;
+    v->gv_wmax[1] = (w1 > w3) ? w1 : w3;
+    //bu_log("vbbmin: %f %f\n", v->gv_wmin[0], v->gv_wmin[1]);
+    //bu_log("vbbmax: %f %f\n", v->gv_wmax[0], v->gv_wmax[1]);
+
+    // Get the model space points for the mid points of the top and right edges
+    // of the view.  If we don't have a width or height, we will use the
+    // existing min and max since we don't have a "screen" to base the box on
     //bu_log("x1,y1: %f %f\n", x1, y1);
     //bu_log("x2,y2: %f %f\n", x2, y2);
     //bu_log("xc,yc: %f %f\n", xc, yc);
@@ -309,22 +323,34 @@ _obj_visible(struct bv_scene_obj *s, struct bview *v)
 	return 1;
 
     if (SMALL_FASTF < v->gv_perspective) {
-	// TODO - What we need to know in perspective mode is whether the
-	// object is visible, and if so how far it is from the plane of the eye
-	// point.  Tried some initial experiments with explicitly constructing
-	// a view frustum volume and testing against bboxes, but that is
-	// looking a bit thorny.  A little more thinking makes me suspect my
-	// initial mental model of what I needed to do led me to go at this
-	// backwards - taking the view into 3-space, rather than the object
-	// AABBs into screen space...
-	//
-	// Need to try to construct the view plane from the eye point and the
-	// direction normal.  Use the screen coordinates to make a view plane
-	// rectangle Then for each object aabb, use the model2view matrix to
-	// project all 8 points into the view plane and construct the view
-	// space aabb.  If the boxes overlap in view space, proceed. The above
-	// is probably also what I should do for the orthogonal case, rather
-	// than the full 3D sat test...
+	// For perspective mode, project the vertices of the distorted bounding
+	// box into the view plane, bound them, and see if the box overlaps with
+	// the view screen's box.
+	point_t arb[8];
+	VSET(arb[0], s->bmin[0], s->bmin[1], s->bmin[2]);
+	VSET(arb[1], s->bmin[0], s->bmin[1], s->bmax[2]);
+	VSET(arb[2], s->bmin[0], s->bmax[1], s->bmin[2]);
+	VSET(arb[3], s->bmin[0], s->bmax[1], s->bmax[2]);
+	VSET(arb[4], s->bmax[0], s->bmin[1], s->bmin[2]);
+	VSET(arb[5], s->bmax[0], s->bmin[1], s->bmax[2]);
+	VSET(arb[6], s->bmax[0], s->bmax[1], s->bmin[2]);
+	VSET(arb[7], s->bmax[0], s->bmax[1], s->bmax[2]);
+	point2d_t omin = {INFINITY, INFINITY};
+	point2d_t omax = {-INFINITY, -INFINITY};
+	for (int i = 0; i < 8; i++) {
+	    point_t pp, ppnt;
+	    point2d_t pxy;
+	    MAT4X3PNT(pp, v->gv_pmat, arb[i]);
+	    MAT4X3PNT(ppnt, v->gv_model2view, pp);
+	    V2SET(pxy, ppnt[0], ppnt[1]);
+	    V2MINMAX(omin, omax, pxy);
+	}
+	// IFF the omin/omax box and the corresponding view box overlap, this
+	// object may be visible in the current view and needs to be updated
+	for (int i = 0; i < 2; i++) {
+	    if (omax[i] < v->gv_wmin[i] || omin[i] > v->gv_wmax[i])
+		return 0;
+	}
 	return 1;
     }
 

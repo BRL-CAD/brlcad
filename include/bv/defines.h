@@ -476,12 +476,21 @@ struct bview {
     fastf_t       gv_scale;
     fastf_t       gv_size;           /**< @brief  2.0 * scale */
     fastf_t       gv_isize;          /**< @brief  1.0 / size */
-    int		  gv_width;
-    int		  gv_height;
     fastf_t       gv_base2local;
     fastf_t       gv_local2base;
     fastf_t       gv_rscale;
     fastf_t       gv_sscale;
+
+    /* Information about current "window" into view.  This view may not be
+     * displayed (that's up to the display managers) and it is up to the
+     * calling code to set gv_width and gv_height to the current correct values
+     * for such a display, if it is associated with this view.  These
+     * definitions are needed in bview to support "view aware" algorithms that
+     * require information defining an active pixel "window" into the view. */
+    int		  gv_width;
+    int		  gv_height;
+    point2d_t	  gv_wmin; // view space bbox minimum of gv_width/gv_height window
+    point2d_t	  gv_wmax; // view space bbox maximum of gv_width/gv_height window
 
     /* Camera info */
     fastf_t       gv_perspective;    /**< @brief  perspective angle */
