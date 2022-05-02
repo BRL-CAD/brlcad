@@ -1101,9 +1101,46 @@ POPState::get_level(fastf_t vlen)
 {
     fastf_t delta = 0.01*vlen;
     point_t bmin, bmax;
+    fastf_t bdiag = 0;
     VSET(bmin, minx, miny, minz);
     VSET(bmax, maxx, maxy, maxz);
-    fastf_t bdiag = DIST_PNT_PNT(bmin, bmax);
+    bdiag = DIST_PNT_PNT(bmin, bmax);
+
+    // If all views are orthogonal we just need the diagonal of the bbox, but
+    // if we have any active perspective matrices that may change the answer.
+    // We need to provide as much detail as is required by the most demanding
+    // view.  In principle we might also be able to back the LoD down further
+    // for very distant objects, but a quick test with that resulted in too much
+    // loss of detail so for now just look at the "need more" case.
+    struct bu_ptbl *vsets = (lod && lod->s) ? bv_set_views(lod->s->s_v->vset) : NULL;
+    if (!vsets) {
+	struct bview *v = (lod && lod->s) ? lod->s->s_v : NULL;
+	if (v && SMALL_FASTF < v->gv_perspective) {
+	    fastf_t cdist = 0;
+	    point_t pbmin, pbmax;
+	    MAT4X3PNT(pbmin, v->gv_pmat, bmin);
+	    MAT4X3PNT(pbmax, v->gv_pmat, bmax);
+	    bdiag = DIST_PNT_PNT(pbmin, pbmax);
+	    if (cdist > bdiag)
+		bdiag = cdist;
+	}
+    } else {
+	for (size_t i = 0; i < BU_PTBL_LEN(vsets); i++) {
+	    fastf_t cdist = 0;
+	    struct bview *cv = (struct bview *)BU_PTBL_GET(vsets, i);
+	    if (!_obj_visible(lod->s, cv))
+		continue;
+	    if (SMALL_FASTF < cv->gv_perspective) {
+		point_t pbmin, pbmax;
+		MAT4X3PNT(pbmin, cv->gv_pmat, bmin);
+		MAT4X3PNT(pbmax, cv->gv_pmat, bmax);
+		cdist = DIST_PNT_PNT(pbmin, pbmax);
+		if (cdist > bdiag)
+		    bdiag = cdist;
+	    }
+	}
+    }
+
     for (int lev = 0; lev < POP_MAXLEVEL; lev++) {
 	fastf_t diag_slice = bdiag/pow(2,lev);
 	if (diag_slice < delta) {
