@@ -28,10 +28,21 @@
 #include <map>
 #include <string>
 
-#include "bu/time.h"
+#define ALPHANUM_IMPL
+#include "./alphanum.h"
+
 #include "bu/path.h"
+#include "bu/sort.h"
+#include "bu/time.h"
 #include "bu/vls.h"
 #include "ged.h"
+
+static int
+alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
+    struct directory *ga = *(struct directory **)a;
+    struct directory *gb = *(struct directory **)b;
+    return alphanum_impl(ga->d_namep, gb->d_namep, NULL);
+}
 
 static int
 cmd_match(struct bu_vls *s, const char *seed, const char *prev)
@@ -227,100 +238,75 @@ path_match(struct bu_vls *s, struct db_i *dbip, const char *seedp, const char *p
 static int
 obj_match(struct bu_vls *s, struct db_i *dbip, const char *seed, const char *prev)
 {
-    int ret = BRLCAD_OK;
     int found_prev = 0;
 
-    // We may need the tops list, so set it up
+    // Prepare the dp list in the order we want - first tops entries, then
+    // all objects.
+    std::vector<struct directory *> dps;
+
+    // First comes the tops list
     db_update_nref(dbip, &rt_uniresource);
     struct directory **all_paths;
     int tops_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &all_paths);
+    bu_sort(all_paths, tops_cnt, sizeof(struct directory *), alphanum_cmp, NULL);
+    for (int i = 0; i < tops_cnt; i++) {
+	dps.push_back(all_paths[i]);
+    }
+    bu_free(all_paths, "free db_ls output");
 
-    // Make a single iterative vector of all active directory pointers
-    std::vector<struct directory *> dps;
+    // After tops, all active directory pointers
+    struct bu_ptbl fdps = BU_PTBL_INIT_ZERO;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    dps.push_back(dp);
+	    bu_ptbl_ins(&fdps, (long *)dp);
 	}
     }
+    bu_sort(BU_PTBL_BASEADDR(&fdps), BU_PTBL_LEN(&fdps), sizeof(struct directory *), alphanum_cmp, NULL);
+    for (size_t i = 0; i < BU_PTBL_LEN(&fdps); i++) {
+	struct directory *dp = (struct directory *)BU_PTBL_GET(&fdps, i);
+	dps.push_back(dp);
+    }
+    bu_ptbl_free(&fdps);
 
     if (!prev || !strlen(prev)) {
 
 	// No context, seed or prev - start at the beginning
 	if (!seed) {
-	    bu_vls_sprintf(s, "%s\n", all_paths[0]->d_namep);
-	    goto obj_cleanup;
+	    bu_vls_sprintf(s, "%s\n", dps[0]->d_namep);
+	    return BRLCAD_OK;
 	}
 
 	// We have a seed - find the first match and return it
-	for (int i = 0; i < tops_cnt; i++) {
-	    if (strlen(all_paths[i]->d_namep) < strlen(seed))
-		continue;
-	    if (!strncmp(seed, all_paths[i]->d_namep, strlen(seed))) {
-		bu_vls_sprintf(s, "%s\n", all_paths[i]->d_namep);
-		goto obj_cleanup;
-	    }
-	}
-	// Nothing in the tops list - try all objects
 	for (size_t i = 0; i < dps.size(); i++) {
-	    struct directory *dp = dps[i];
-	    if (strlen(dp->d_namep) < strlen(seed))
+	    if (strlen(dps[i]->d_namep) < strlen(seed))
 		continue;
-	    if (!strncmp(seed, dp->d_namep, strlen(seed))) {
-		bu_vls_sprintf(s, "%s\n", dp->d_namep);
-		goto obj_cleanup;
+	    if (!strncmp(seed, dps[i]->d_namep, strlen(seed))) {
+		bu_vls_sprintf(s, "%s\n", dps[i]->d_namep);
+		return BRLCAD_OK;
 	    }
 	}
-
-	// Individual objects didn't work - see if we might have a partial
-	// path
-
 
 	// If nothing matched the seed, we can't complete - the input is
-	// invalid
-	ret = BRLCAD_ERROR;
-	goto obj_cleanup;
+	// invalid for an object match
+	return BRLCAD_ERROR;
     }
 
     // We do have a previous entry to iterate on from - find the next entry
-    for (int i = 0; i < tops_cnt; i++) {
-	if (found_prev) {
-	    if (!seed) {
-		bu_vls_sprintf(s, "%s\n", all_paths[i]->d_namep);
-		goto obj_cleanup;
-	    } else {
-		if (strlen(all_paths[i]->d_namep) < strlen(seed))
-		    continue;
-		if (!strncmp(seed, all_paths[i]->d_namep, strlen(seed))) {
-		    bu_vls_sprintf(s, "%s\n", all_paths[i]->d_namep);
-		    goto obj_cleanup;
-		}
-	    }
-	    if (BU_STR_EQUAL(prev, all_paths[i]->d_namep)) {
-		found_prev = 1;
-		// If we need to, wrap around to the beginning
-		if (i == tops_cnt - 1)
-		    i = 0;
-	    }
-	}
-    }
-
-    // Nothing in the tops list - try all objects
     for (size_t i = 0; i < dps.size(); i++) {
-	struct directory *dp = dps[i];
 	if (found_prev) {
 	    if (!seed) {
-		bu_vls_sprintf(s, "%s\n", dp->d_namep);
-		goto obj_cleanup;
+		bu_vls_sprintf(s, "%s\n", dps[i]->d_namep);
+		return BRLCAD_OK;
 	    } else {
-		if (strlen(dp->d_namep) < strlen(seed))
+		if (strlen(dps[i]->d_namep) < strlen(seed))
 		    continue;
-		if (!strncmp(seed, dp->d_namep, strlen(seed))) {
-		    bu_vls_sprintf(s, "%s\n", dp->d_namep);
-		    goto obj_cleanup;
+		if (!strncmp(seed, dps[i]->d_namep, strlen(seed))) {
+		    bu_vls_sprintf(s, "%s\n", dps[i]->d_namep);
+		    return BRLCAD_OK;
 		}
 	    }
-	    if (BU_STR_EQUAL(prev, dp->d_namep)) {
+	    if (BU_STR_EQUAL(prev, dps[i]->d_namep)) {
 		found_prev = 1;
 		// If we need to, wrap around to the beginning
 		if (i == dps.size() - 1)
@@ -329,24 +315,10 @@ obj_match(struct bu_vls *s, struct db_i *dbip, const char *seed, const char *pre
 	}
     }
 
-
-    // Individual objects didn't work - see if we might have a partial
-    // path
-
-
     // If nothing matched the seed, we can't complete - the input is
-    // invalid
-    ret = BRLCAD_ERROR;
-    goto obj_cleanup;
-
-
-    return BRLCAD_ERROR;
-obj_cleanup:
-    bu_free(all_paths, "free db_ls output");
-    return ret;
+    // invalid for an object match
+    return  BRLCAD_ERROR;
 }
-
-
 
 int
 ged_cmd_suggest(struct bu_vls *s, struct ged *gedp, const char *iseed, struct bu_vls *iprev, int UNUSED(list_all))
@@ -393,8 +365,7 @@ ged_cmd_suggest(struct bu_vls *s, struct ged *gedp, const char *iseed, struct bu
     }
 
     // Valid command.  TODO - see if it implements a specialized completion
-    // specifier
-
+    // specifier - need to design a system for this.
 
     // No specialized completion, so we're being asked to do a db lookup
     // completion on the last element, if we have it.  First try a straight
@@ -405,6 +376,7 @@ ged_cmd_suggest(struct bu_vls *s, struct ged *gedp, const char *iseed, struct bu
     if (ret != BRLCAD_OK) {
 	ret = path_match(&suggest, gedp->dbip, (av && ac > 1) ? av[ac-1] : NULL, (pav && pac > 1) ? pav[pac - 1] : NULL);
     }
+
 suggest_cleanup:
     if (seed)
 	bu_free(seed, "seed cpy");
