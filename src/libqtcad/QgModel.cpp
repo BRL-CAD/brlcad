@@ -399,11 +399,22 @@ QgModel::item_rebuild(QgItem *item)
 	return;
     }
 
-    // If we have no cached children, there's nothing to update - fetchMore
+    // If we have no cached children, update only the child count - fetchMore
     // will populate it if and when it is expanded, and there will be no
-    // QgItems we need to re-use so fetchMore will suffice.
-    if (!item->children.size())
+    // QgItems we need to re-use.  However, an edit operation may have
+    // invalidated the original c_count stored when the item was created.
+    if (!item->children.size()) {
+	std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
+	gInstance *g = NULL;
+	g_it = instances->find(item->ihash);
+	if (g_it != instances->end()) {
+	    g = g_it->second;
+	    item->c_count = g->children(instances).size();
+	} else {
+	    item->c_count = 0;
+	}
 	return;
+    }
 
     // Get the current child instances
     std::vector<unsigned long long> nh = (*instances)[item->ihash]->children(instances);
