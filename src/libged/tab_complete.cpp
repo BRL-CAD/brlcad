@@ -45,81 +45,12 @@ alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
 }
 
 static int
-cmd_match(struct bu_vls *s, const char *seed, const char *prev)
-{
-    const char * const *cl = NULL;
-    size_t cmd_cnt = ged_cmd_list(&cl);
-
-    if (!prev || !strlen(prev)) {
-
-	// No context - start at the beginning
-	if (!seed) {
-	    bu_vls_sprintf(s, "%s\n", cl[0]);
-	    return BRLCAD_OK;
-	}
-
-	// We have a seed - find the first match and return it
-	for (size_t i = 0; i < cmd_cnt; i++) {
-	    if (strlen(cl[i]) < strlen(seed))
-		continue;
-	    if (!strncmp(seed, cl[i], strlen(seed))) {
-		bu_vls_sprintf(s, "%s\n", cl[i]);
-		return BRLCAD_OK;
-	    }
-	}
-
-	// If nothing matched the seed, we can't complete - the input is
-	// invalid
-	return BRLCAD_ERROR;
-
-    }
-
-    int found_prev = 0;
-    for (size_t i = 0; i < cmd_cnt; i++) {
-	if (found_prev) {
-	    if (seed) {
-		if (strlen(cl[i]) < strlen(seed))
-		    continue;
-		if (!strncmp(seed, cl[i], strlen(seed))) {
-		    bu_vls_sprintf(s, "%s\n", cl[i]);
-		    return BRLCAD_OK;
-		}
-	    } else {
-		// No seed, so the next entry after prev
-		// is the return
-		bu_vls_sprintf(s, "%s\n", cl[i]);
-		return BRLCAD_OK;
-	    }
-	}
-	if (BU_STR_EQUAL(prev, cl[i]))
-	    found_prev = 1;
-    }
-
-    // Got through the list - do we need to loop around to the beginning?
-    if (found_prev) {
-	if (seed) {
-	    if (strlen(cl[0]) < strlen(seed))
-		return BRLCAD_ERROR;
-	    if (!strncmp(seed, cl[0], strlen(seed))) {
-		bu_vls_sprintf(s, "%s\n", cl[0]);
-		return BRLCAD_OK;
-	    }
-	} else {
-	    bu_vls_sprintf(s, "%s\n", cl[0]);
-	    return BRLCAD_OK;
-	}
-    }
-
-    return BRLCAD_ERROR;
-}
-
-static int
-path_match(struct bu_vls *s, struct db_i *dbip, const char *seedp, const char *prevp)
+path_match(const char ***completions, struct db_i *dbip, const char *iseed)
 {
     // If we've gotten this far, we either have a hierarchy or an error
-    std::string lstr(seedp);
+    std::string lstr(iseed);
     if (lstr.find_first_of("/", 0) == std::string::npos)
-	return BRLCAD_ERROR;
+	return 0;
 
     // Split the seed into substrings.  We can't use the db fullpath
     // routines for this, because the final obj name is likely incomplete
@@ -133,17 +64,17 @@ path_match(struct bu_vls *s, struct db_i *dbip, const char *seedp, const char *p
     }
     objs.push_back(lstr);
     if (objs.size() < 2)
-	return BRLCAD_ERROR;
+	return 0;
 
-    // If the last string from lstr is a fully qualified object name, then we
-    // are looking to do completions in its comb tree (if a comb) or there is
-    // no completion to make (if not a comb).  If the last string is a partial,
+    // If the last char in lstr is a slash, then we are looking to do
+    // completions in the comb tree of the parent (if a comb) or there is no
+    // completion to make (if not a comb).  If the last string is a partial,
     // then we're looking in the parent comb's tree for something that matches
-    // the partial
+    // the partial.
     std::string seed;
     std::string context;
     struct directory *dp = db_lookup(dbip, objs[objs.size()-1].c_str(), LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) {
+    if (dp == RT_DIR_NULL && lstr[lstr.length() - 1] != '/') {
 	seed = objs[objs.size() - 1];
 	context = objs[objs.size() - 2];
     } else {
@@ -165,70 +96,28 @@ path_match(struct bu_vls *s, struct db_i *dbip, const char *seedp, const char *p
     int child_cnt = db_comb_children(dbip, comb, &children, NULL, NULL);
     rt_db_free_internal(&in);
 
-    // If we don't have a seed or a prev entry, grab the first entry
-    if (!seed.length() && !prevp) {
-	bu_vls_printf(s, "%s", children[0]->d_namep);
+    // If we don't have a seed or a prev entry, grab all the children
+    if (!seed.length()) {
+	*completions = (const char **)bu_calloc(child_cnt + 1, sizeof(const char *), "av array");
+	for (int i = 0; i < child_cnt; i++)
+	    (*completions)[i] = bu_strdup(children[i]->d_namep);
 	bu_free(children, "dp array");
-	return BRLCAD_OK;
+	return child_cnt;
     }
 
-    // Seed but no previous entry - grab the first match
-    if (!prevp) {
-	for (int i = 0; i < child_cnt; i++) {
-	    if (strlen(children[i]->d_namep) < seed.length())
-		continue;
-	    if (!strncmp(seed.c_str(), children[i]->d_namep, seed.length())) {
-		bu_vls_sprintf(s, "%s\n", children[i]->d_namep);
-		bu_free(children, "dp array");
-		return BRLCAD_OK;
-	    }
-	}
-	// No matches - error
-	bu_free(children, "dp array");
-	return BRLCAD_ERROR;
-    }
-
-    // We have a prev - split it to get the last object
-    std::vector<std::string> pobjs;
-    std::string plstr(prevp);
-    while ((pos = plstr.find_first_of("/", 0)) != std::string::npos) {
-	std::string ss = plstr.substr(0, pos);
-	objs.push_back(ss);
-	plstr.erase(0, pos + 1);
-    }
-    pobjs.push_back(lstr);
-    if (pobjs.size() < 2) {
-	bu_free(children, "dp array");
-	return BRLCAD_ERROR;
-    }
-
-    int found_prev = 0;
+    // Have seed - grab the matches
+    std::vector<struct directory *> matches;
     for (int i = 0; i < child_cnt; i++) {
-	if (found_prev) {
-	    if (!seed.length()) {
-		bu_vls_sprintf(s, "%s\n", children[i]->d_namep);
-		bu_free(children, "dp array");
-		return BRLCAD_OK;
-	    } else {
-		if (strlen(children[i]->d_namep) < seed.length())
-		    continue;
-		if (!strncmp(seed.c_str(), children[i]->d_namep, seed.length())) {
-		    bu_vls_sprintf(s, "%s\n", children[i]->d_namep);
-		    bu_free(children, "dp array");
-		    return BRLCAD_OK;
-		}
-	    }
-	    if (BU_STR_EQUAL(pobjs[pobjs.size()-1].c_str(), children[i]->d_namep)) {
-		found_prev = 1;
-		// If we need to, wrap around to the beginning
-		if (i == child_cnt - 1)
-		    i = 0;
-	    }
-	}
+	if (strlen(children[i]->d_namep) < seed.length())
+	    continue;
+	if (!strncmp(seed.c_str(), children[i]->d_namep, seed.length()))
+	    matches.push_back(children[i]);
     }
-
+    *completions = (const char **)bu_calloc(matches.size() + 1, sizeof(const char *), "av array");
+    for (size_t i = 0; i < matches.size(); i++)
+	(*completions)[i] = bu_strdup(matches[i]->d_namep);
     bu_free(children, "dp array");
-    return BRLCAD_ERROR;
+    return (int)matches.size();
 }
 
 // Because librt doesn't forbid objects with forward slashes in
@@ -236,10 +125,8 @@ path_match(struct bu_vls *s, struct db_i *dbip, const char *seedp, const char *p
 // the wild, we have to treat all seed strings as potential dp names
 // first, and only after that fails try them as hierarchy paths.
 static int
-obj_match(struct bu_vls *s, struct db_i *dbip, const char *seed, const char *prev)
+obj_match(const char ***completions, struct db_i *dbip, const char *seed)
 {
-    int found_prev = 0;
-
     // Prepare the dp list in the order we want - first tops entries, then
     // all objects.
     std::vector<struct directory *> dps;
@@ -269,127 +156,71 @@ obj_match(struct bu_vls *s, struct db_i *dbip, const char *seed, const char *pre
     }
     bu_ptbl_free(&fdps);
 
-    if (!prev || !strlen(prev)) {
-
-	// No context, seed or prev - start at the beginning
-	if (!seed) {
-	    bu_vls_sprintf(s, "%s\n", dps[0]->d_namep);
-	    return BRLCAD_OK;
-	}
-
-	// We have a seed - find the first match and return it
-	for (size_t i = 0; i < dps.size(); i++) {
-	    if (strlen(dps[i]->d_namep) < strlen(seed))
-		continue;
-	    if (!strncmp(seed, dps[i]->d_namep, strlen(seed))) {
-		bu_vls_sprintf(s, "%s\n", dps[i]->d_namep);
-		return BRLCAD_OK;
-	    }
-	}
-
-	// If nothing matched the seed, we can't complete - the input is
-	// invalid for an object match
-	return BRLCAD_ERROR;
-    }
-
-    // We do have a previous entry to iterate on from - find the next entry
+    // Have the possibilities organized - find seed matches
+    std::vector<struct directory *> matches;
     for (size_t i = 0; i < dps.size(); i++) {
-	if (found_prev) {
-	    if (!seed) {
-		bu_vls_sprintf(s, "%s\n", dps[i]->d_namep);
-		return BRLCAD_OK;
-	    } else {
-		if (strlen(dps[i]->d_namep) < strlen(seed))
-		    continue;
-		if (!strncmp(seed, dps[i]->d_namep, strlen(seed))) {
-		    bu_vls_sprintf(s, "%s\n", dps[i]->d_namep);
-		    return BRLCAD_OK;
-		}
-	    }
-	    if (BU_STR_EQUAL(prev, dps[i]->d_namep)) {
-		found_prev = 1;
-		// If we need to, wrap around to the beginning
-		if (i == dps.size() - 1)
-		    i = 0;
-	    }
+	if (strlen(dps[i]->d_namep) < strlen(seed))
+	    continue;
+	if (!strncmp(seed, dps[i]->d_namep, strlen(seed))) {
+	    matches.push_back(dps[i]);
 	}
     }
 
-    // If nothing matched the seed, we can't complete - the input is
-    // invalid for an object match
-    return  BRLCAD_ERROR;
+    // Make an argv array for client use
+    *completions = (const char **)bu_calloc(matches.size() + 1, sizeof(const char *), "av array");
+    for (size_t i = 0; i < matches.size(); i++)
+	(*completions)[i] = bu_strdup(matches[i]->d_namep);
+    return (int)matches.size();
 }
 
 int
-ged_cmd_suggest(struct bu_vls *s, struct ged *gedp, const char *iseed, struct bu_vls *iprev, int UNUSED(list_all))
+ged_cmd_completions(const char ***completions, const char *seed)
 {
-    int ret = BRLCAD_OK;
+    int ret = 0;
 
-    if (!gedp || !s)
-	return BRLCAD_ERROR;
+    if (!completions || !seed)
+	return 0;
 
-    struct bu_vls suggest = BU_VLS_INIT_ZERO;
-
-    // If we have a seed, break it down into an argc/argv array, so we can
-    // examine the components
-    int ac = 0;
-    char **av = NULL;
-    char *seed = (iseed) ? bu_strdup(iseed) : NULL;
-    if (seed) {
-	av = (char **)bu_calloc(strlen(seed) + 1, sizeof(char *), "argv array");
-	ac = bu_argv_from_string(av, strlen(seed), seed);
-    }
-
-    // If there's a prev input, break it down as well
-    int pac = 0;
-    char **pav = NULL;
-    char *prev = (iprev && bu_vls_strlen(iprev)) ? bu_strdup(bu_vls_cstr(iprev)) : NULL;
-    if (prev) {
-	pav = (char **)bu_calloc(strlen(prev) + 1, sizeof(char *), "argv array");
-	pac = bu_argv_from_string(av, strlen(prev), prev);
-    }
-
-    // If we have a fully defined command, go with it.  Otherwise, we need to
-    // see about a completion
-    int cmd_valid = (av && av[0]) ? !ged_cmd_valid(av[0], NULL) : 0;
-    if (cmd_valid) {
-	bu_vls_printf(&suggest, "%s ", av[0]);
-    } else {
-	ret = cmd_match(&suggest, (av) ? av[0] : NULL, (pav) ? pav[0] : NULL);
-    }
+    // Either we already have a fully defined command (in which case we don't
+    // do anything) or a command seed to expand.
+    int cmd_valid = !ged_cmd_valid(seed, NULL);
 
     if (!cmd_valid) {
-	// If we didn't come in with a valid command, that's what the
-	// completion has to be focused on - we're done.
-	goto suggest_cleanup;
+	// Not a valid command - build a set of matches
+	const char * const *cl = NULL;
+	size_t cmd_cnt = ged_cmd_list(&cl);
+
+	std::vector<const char *> matches;
+	for (size_t i = 0; i < cmd_cnt; i++) {
+	    if (strlen(cl[i]) < strlen(seed))
+		continue;
+	    if (!strncmp(seed, cl[i], strlen(seed)))
+		matches.push_back(cl[i]);
+	}
+
+	*completions = (const char **)bu_calloc(matches.size() + 1, sizeof(const char *), "av array");
+	for (size_t i = 0; i < matches.size(); i++)
+	    (*completions)[i] = bu_strdup(matches[i]);
+	ret = (int)matches.size();
     }
 
-    // Valid command.  TODO - see if it implements a specialized completion
-    // specifier - need to design a system for this.
+    return ret;
+}
 
-    // No specialized completion, so we're being asked to do a db lookup
-    // completion on the last element, if we have it.  First try a straight
-    // up object name match
-    ret = obj_match(&suggest, gedp->dbip, (av && ac > 1) ? av[ac-1] : NULL, (pav && pac > 1) ? pav[pac - 1] : NULL);
+int
+ged_obj_completions(const char ***completions, struct db_i *dbip, const char *seed)
+{
+    int ret = 0;
 
-    // If the object match didn't work, see if we have a hierarchy specification
-    if (ret != BRLCAD_OK) {
-	ret = path_match(&suggest, gedp->dbip, (av && ac > 1) ? av[ac-1] : NULL, (pav && pac > 1) ? pav[pac - 1] : NULL);
+    if (!dbip || !completions || !seed)
+	return 0;
+
+    ret = obj_match(completions, dbip, seed);
+
+    // If the object name match didn't work, see if we have a hierarchy specification
+    if (!ret) {
+	ret = path_match(completions, dbip, seed);
     }
-
-suggest_cleanup:
-    if (seed)
-	bu_free(seed, "seed cpy");
-    if (prev)
-	bu_free(prev, "prev cpy");
-    if (av)
-	bu_free(av, "input argv");
-    if (pav)
-	bu_free(pav, "input pargv");
-
-    if (ret == BRLCAD_OK)
-	bu_vls_sprintf(s, "%s", bu_vls_cstr(&suggest));
-    bu_vls_free(&suggest);
 
     return ret;
 }

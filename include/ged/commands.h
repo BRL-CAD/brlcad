@@ -71,38 +71,29 @@ GED_EXPORT extern int
 ged_cmd_lookup(const char **ncmd, const char *cmd);
 
 
-/* Given a partial command string, analyze it and return a suggested
- * completion.  Typically used to implement "tab completion" or "tab expansion"
- * functionality.  The proposed completion is returned in the "s" bu_vls
- * string.  s is cleared when the suggestion is assigned, so the caller should
- * not rely on any prior contents of s surviving the function call.  If
- * the process completes successfully BRLCAD_OK is returned, otherwise
- * BRLCAD_ERROR is returned.
+/* Given a partial command string, analyze it and return possible command
+ * completions of the seed string.  Typically this functionality is used to
+ * implement "tab completion" or "tab expansion" features in applications.  The
+ * possible completions are returned in the completions array, and the returned
+ * value is the count of possible completions found.
  *
- * If a GED command is found that supports more contextually specific command
- * completion that completion will be used (required subcommand awareness, for
- * example, or valid possibilities for option arguments.).  If no full command
- * is available, or if a found command has no particular support for more
- * sophisticated processing available, completion will be based on the current
- * database objects.
- *
- * If "cycling" through objects, the order of cycling will be:
- *
- * 1.  alphanum ordered matches compatible with any user-specified substring in the "tops" set
- * 2.  alphanum ordered compatible matches with any database object
- *
- * The caller may specify either a cycling response (default) or a "list all
- * matches" response (list_all == 1).  Generally the former is desirable
- * mid-edit, and the latter if the user presses "enter" on a partial command in
- * order to see options, so both modes are supported.  If a "cycling" mode is
- * desired, the previous s return should be passed in via "prev" to provide
- * context that will allow the return of the next item in the sequence.
+ * If completions array returned is non-NULL, caller is responsible for freeing
+ * it using bu_argv_free.
  */
 GED_EXPORT extern int
-ged_cmd_suggest(struct bu_vls *s, struct ged *gedp, const char *seed, struct bu_vls *prev, int list_all);
+ged_cmd_completions(const char ***completions, const char *seed);
 
-
-
+/* Given a object name or path string, analyze it and return possible
+ * object-based completions.  Typically this functionality is used to implement
+ * "tab completion" or "tab expansion" features in applications.  The possible
+ * completions are returned in the completions array, and the returned value is
+ * the count of possible completions found.
+ *
+ * If completions array returned is non-NULL, caller is responsible for freeing
+ * it using bu_argv_free.
+ */
+GED_EXPORT extern int
+ged_geom_completions(const char ***completions, struct db_i *dbip, const char *seed);
 
 
 /** @addtogroup ged_objects */
