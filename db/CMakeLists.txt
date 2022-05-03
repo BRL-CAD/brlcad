@@ -170,6 +170,7 @@ set(G_SAMPLE_MODELS
   tank_car.asc
   terra.asc
   toyjeep.asc
+  traffic_light.asc
   truck.asc
   wave.asc
   woodsman.asc
@@ -251,6 +252,7 @@ CMAKEFILES(
   conv_run.cmake.in
   cornell.rt
   cube.rt
+  traffic_light.rt
   db.php
   include/ctype.inc
   include/debug.inc
