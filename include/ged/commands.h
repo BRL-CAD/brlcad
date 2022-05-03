@@ -52,7 +52,7 @@ GED_EXPORT size_t ged_cmd_list(const char * const **cmd_list);
  * (i.e., they are aliases for the same command.)
  *
  * If func is NULL, a 0 return indicates an valid GED command and non-zero
- * indicates a valid command.
+ * indicates an invalid command.
  *
  * If func is non-null:
  * 0 indicates both cmd and func strings invoke the same LIBGED function
@@ -69,6 +69,41 @@ GED_EXPORT int ged_cmd_valid(const char *cmd, const char *func);
  */
 GED_EXPORT extern int
 ged_cmd_lookup(const char **ncmd, const char *cmd);
+
+
+/* Given a partial command string, analyze it and return a suggested
+ * completion.  Typically used to implement "tab completion" or "tab expansion"
+ * functionality.  The proposed completion is returned in the "s" bu_vls
+ * string.  s is cleared when the suggestion is assigned, so the caller should
+ * not rely on any prior contents of s surviving the function call.  If
+ * the process completes successfully BRLCAD_OK is returned, otherwise
+ * BRLCAD_ERROR is returned.
+ *
+ * If a GED command is found that supports more contextually specific command
+ * completion that completion will be used (required subcommand awareness, for
+ * example, or valid possibilities for option arguments.).  If no full command
+ * is available, or if a found command has no particular support for more
+ * sophisticated processing available, completion will be based on the current
+ * database objects.
+ *
+ * If "cycling" through objects, the order of cycling will be:
+ *
+ * 1.  alphanum ordered matches compatible with any user-specified substring in the "tops" set
+ * 2.  alphanum ordered compatible matches with any database object
+ *
+ * The caller may specify either a cycling response (default) or a "list all
+ * matches" response (list_all == 1).  Generally the former is desirable
+ * mid-edit, and the latter if the user presses "enter" on a partial command in
+ * order to see options, so both modes are supported.  If a "cycling" mode is
+ * desired, the previous s return should be passed in via "prev" to provide
+ * context that will allow the return of the next item in the sequence.
+ */
+GED_EXPORT extern int
+ged_cmd_suggest(struct bu_vls *s, struct ged *gedp, const char *seed, struct bu_vls *prev, int list_all);
+
+
+
+
 
 /** @addtogroup ged_objects */
 /** @{ */
