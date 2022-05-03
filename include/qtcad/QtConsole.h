@@ -45,6 +45,7 @@
 
 #include "common.h"
 
+#include <QCompleter>
 #include <QWidget>
 #include <QPlainTextEdit>
 #include <QFont>
@@ -53,6 +54,8 @@
 #include "ged.h"
 #include "qtcad/defines.h"
 #include "qtcad/QtConsoleListener.h"
+
+class QtConsoleWidgetCompleter;
 
 /**
   Qt widget that provides an interactive console - you can send text to the
@@ -76,6 +79,9 @@ public:
   QFont getFont();
   /// Sets current font
   void setFont(const QFont &font);
+
+  /// Set a completer for this console widget
+  void setCompleter(QtConsoleWidgetCompleter* completer);
 
   QPoint getCursorPosition();
 
@@ -117,6 +123,11 @@ public slots:
   /// line.
   void prompt(const QString& text);
 
+  /// Inserts the given completion string at the cursor.  This will replace
+  /// the current word that the cursor is touching with the given text.
+  /// Determines the word using QTextCursor::StartOfWord, EndOfWord.
+  void insertCompletion(const QString& text);
+
 private:
   QtConsole(const QtConsole&);
   QtConsole& operator=(const QtConsole&);
@@ -143,6 +154,17 @@ private:
   class pqImplementation;
   pqImplementation* const Implementation;
   friend class pqImplementation;
+};
+
+class QTCAD_EXPORT QtConsoleWidgetCompleter : public QCompleter
+{
+public:
+  /**
+   * Update the completion model given a string.  The given string
+   * is the current console text between the cursor and the start of
+   * the line.
+   */
+  virtual void updateCompletionModel(const QString& str) = 0;
 };
 
 #endif // !QTCAD_CONSOLE_H
