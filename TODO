@@ -2466,6 +2466,19 @@ GEOMETRY MODELS
 DOCUMENTATION
 -------------
 
+* HTML docs that display in MGED via menu are way out of date and look
+  bad per modern standards. Needs to be updated/replaced with doxygen
+  docs and/or clean presentation layout with overview, tutorials, and
+  reference.
+
+* "apropos man" does not exist
+
+* "help man" does not exist
+
+* Need ability to search manual pages
+
+* rename MGED Help->Apropos to Help->Search Commands (apropos)
+
 * BRL-CAD Primitives
 	An overview of the various primitive object types in BRL-CAD,
 	their range of features, and a description of their input
