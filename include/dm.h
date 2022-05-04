@@ -237,11 +237,6 @@ DM_EXPORT extern void dm_set_zclip(struct dm *dmp, int zclip);
 DM_EXPORT extern int dm_get_perspective(struct dm *dmp);
 DM_EXPORT extern void dm_set_perspective(struct dm *dmp, fastf_t perspective);
 DM_EXPORT extern int dm_get_display_image(struct dm *dmp, unsigned char **image, int flip, int alpha);
-DM_EXPORT extern int dm_gen_dlists(struct dm *dmp, size_t range);
-DM_EXPORT extern int dm_begin_dlist(struct dm *dmp, unsigned int list);
-DM_EXPORT extern int dm_draw_dlist(struct dm *dmp, unsigned int list);
-DM_EXPORT extern int dm_end_dlist(struct dm *dmp);
-DM_EXPORT extern int dm_free_dlists(struct dm *dmp, unsigned int list, int range);
 DM_EXPORT extern int dm_draw_vlist(struct dm *dmp, struct bv_vlist *vp);
 DM_EXPORT extern int dm_draw_vlist_hidden_line(struct dm *dmp, struct bv_vlist *vp);
 DM_EXPORT extern int dm_draw_tri_callback(void *ctx, struct bv_mesh_lod *i);
@@ -263,7 +258,6 @@ DM_EXPORT extern int dm_draw_point_2d(struct dm *dmp, fastf_t x, fastf_t y);
 DM_EXPORT extern int dm_draw_point_3d(struct dm *dmp, point_t pt);
 DM_EXPORT extern int dm_draw_points_3d(struct dm *dmp, int npoints, point_t *points);
 DM_EXPORT extern int dm_draw(struct dm *dmp, struct bv_vlist *(*callback)(void *), void **data);
-DM_EXPORT extern int dm_draw_obj(struct dm *dmp, struct display_list *obj);
 DM_EXPORT extern int dm_set_depth_mask(struct dm *dmp, int d_on);
 DM_EXPORT extern int dm_debug(struct dm *dmp, int lvl);
 DM_EXPORT extern int dm_logfile(struct dm *dmp, const char *filename);
@@ -271,8 +265,31 @@ DM_EXPORT extern struct fb *dm_get_fb(struct dm *dmp);
 DM_EXPORT extern int dm_get_fb_visible(struct dm *dmp);
 DM_EXPORT extern int dm_set_fb_visible(struct dm *dmp, int is_fb_visible);
 
-// TODO - this should be using libicv  - right now this just moving the guts of
-// dmo_png_cmd behind the call table, so only provides PNG...
+/* Rather low level exposure of display list concepts.  Needed for MGED
+ * and libtclcad, but we want to get to a point where the use (or not)
+ * of display lists is an implementation level action rather than something
+ * visible to the user. */
+DM_EXPORT extern int dm_gen_dlists(struct dm *dmp, size_t range);
+DM_EXPORT extern int dm_begin_dlist(struct dm *dmp, unsigned int list);
+DM_EXPORT extern int dm_draw_dlist(struct dm *dmp, unsigned int list);
+DM_EXPORT extern int dm_end_dlist(struct dm *dmp);
+DM_EXPORT extern int dm_free_dlists(struct dm *dmp, unsigned int list, int range);
+DM_EXPORT extern int dm_draw_display_list(struct dm *dmp, struct display_list *obj);
+DM_EXPORT extern int dm_draw_head_dl(struct dm *dmp,
+					  struct bu_list *dl,
+					  fastf_t transparency_threshold,
+					  fastf_t inv_viewsize,
+					  short r, short g, short b,
+					  int line_width,
+					  int draw_style,
+					  int draw_edit,
+					  unsigned char *gdc,
+					  int solids_down,
+					  int mv_dlist
+					 );
+
+// TODO - this should be using libicv  - right now this is just moving the guts
+// of dmo_png_cmd behind the call table, so only provides PNG...
 DM_EXPORT extern int dm_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dmp);
 
 DM_EXPORT extern void dm_flush(struct dm *dmp);
@@ -295,19 +312,6 @@ DM_EXPORT extern int dm_set_hook(const struct bu_structparse_map *map,
 
 DM_EXPORT extern struct bu_structparse *dm_get_vparse(struct dm *dmp);
 DM_EXPORT extern void *dm_get_mvars(struct dm *dmp);
-
-DM_EXPORT extern int dm_draw_head_dl(struct dm *dmp,
-					  struct bu_list *dl,
-					  fastf_t transparency_threshold,
-					  fastf_t inv_viewsize,
-					  short r, short g, short b,
-					  int line_width,
-					  int draw_style,
-					  int draw_edit,
-					  unsigned char *gdc,
-					  int solids_down,
-					  int mv_dlist
-					 );
 
 DM_EXPORT extern const char *dm_default_type();
 

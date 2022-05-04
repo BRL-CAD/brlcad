@@ -226,7 +226,7 @@ createDLists(struct bu_list *hdlp)
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	dm_set_dirty(DMP, 1);
-	dm_draw_obj(DMP, gdlp);
+	dm_draw_display_list(DMP, gdlp);
 
 	gdlp = next_gdlp;
     }
