@@ -21,3 +21,4 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 file:/src/conv/gltf/tinygltf/json.hpp
+file:/src/libgcv/plugins/gltf/tinygltf_headers/json.hpp
