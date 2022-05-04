@@ -121,7 +121,7 @@ FILE* output = fopen("print_statements.txt", "wb");
 
 /* brlcad raytrace hit callback */
 int
-brlcad_hit(struct application* ap, struct partition* PartHeadp, struct seg* UNUSED(segs))
+brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct seg* UNUSED(segs))
 {
     struct partition* pp;
     struct hit* hitp;
@@ -209,8 +209,8 @@ BrlcadObject:: BrlcadObject(
     std::string db_file = m_params.get_required<std::string>("database_path");
     this->rtip = rt_new_rti(p_ap->a_rt_i->rti_dbip);
     if (this->rtip == RTI_NULL) {
-        RENDERER_LOG_INFO("building the database directory for [%s] FAILED\n", db_file);
-        bu_exit(BRLCAD_ERROR, "building the database directory for [%s] FAILED\n", db_file);
+        RENDERER_LOG_INFO("building the database directory for [%s] FAILED\n", db_file.c_str());
+        bu_exit(BRLCAD_ERROR, "building the database directory for [%s] FAILED\n", db_file.c_str());
     }
 
     for (int ic = 0; ic < MAX_PSW; ic++) {
@@ -440,7 +440,6 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
 {
     // FIXME: This current implementation below is untested and likely out of sync. It needs to be reworked for plugin use.
 
-    struct application ap;
     RT_APPLICATION_INIT(&ap);
 
     /* configure raytrace application */
