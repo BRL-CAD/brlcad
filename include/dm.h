@@ -264,7 +264,6 @@ DM_EXPORT extern int dm_get_fb_visible(struct dm *dmp);
 DM_EXPORT extern int dm_set_fb_visible(struct dm *dmp, int is_fb_visible);
 
 
-DM_EXPORT extern int dm_draw_callback(void *ctx, struct bv_scene_obj *s);
 DM_EXPORT extern int dm_draw_obj(struct dm *dmp, struct bv_scene_obj *s);
 
 

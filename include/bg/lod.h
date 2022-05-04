@@ -150,12 +150,6 @@ bg_mesh_lod_create(struct bg_mesh_lod_context *c, unsigned long long key);
 BG_EXPORT void
 bg_mesh_lod_destroy(struct bv_mesh_lod *l);
 
-/* Given a drawing context (typically a display manager), a scene object with
- * mesh LoD data stored in s->draw_data and a LoD drawing callback set with
- * bg_mesh_lod_draw_clbk, trigger a triangle drawing operation. */
-BG_EXPORT void
-bg_mesh_lod_draw(void *ctx, struct bv_scene_obj *s);
-
 /**
  * Given a scene object with mesh LoD data stored in s->draw_data, reduce
  * memory footprint (for use after client codes have completed use of a
@@ -200,10 +194,6 @@ bg_mesh_lod_free(struct bv_scene_obj *s);
 /* In order to preserve library barriers, a number of operations needed to
  * realize LoD drawing are defined at other library layers and made available
  * to the core LoD management logic with callbacks */
-
-/* Set drawing function callback */
-BG_EXPORT void
-bg_mesh_lod_draw_clbk(struct bv_mesh_lod *lod, int (*clbk)(void *, struct bv_scene_obj *));
 
 /* Set function callbacks for retrieving and freeing high levels of mesh detail */
 BG_EXPORT void

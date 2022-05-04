@@ -128,7 +128,6 @@ extern "C" {
 #define CACHE_VERT_LEVEL "v"
 #define CACHE_TRI_LEVEL "t"
 
-typedef int (*draw_clbk_t)(void *, struct bv_scene_obj *);
 typedef int (*full_detail_clbk_t)(struct bv_mesh_lod *, void *);
 
 static void
@@ -657,10 +656,6 @@ class POPState {
 
 	// Content based hash key
 	unsigned long long hash;
-
-	// Drawing trigger
-	void draw(void *ctx, struct bv_scene_obj *s);
-	draw_clbk_t draw_clbk;
 
 	// Methods for full detail
 	full_detail_clbk_t full_detail_setup_clbk = NULL;
@@ -1478,26 +1473,6 @@ POPState::tri_degenerate(rec r0, rec r1, rec r2, int level)
 }
 
 void
-POPState::draw(void *ctx, struct bv_scene_obj *s)
-{
-    if (draw_clbk) {
-	lod->s = s;
-	// If we're in POP territory use the local arrays - otherwise, they
-	// were already set by the full detail callback.
-	if (curr_level <= max_pop_threshold_level) {
-	    lod->fcnt = (int)lod_tris.size()/3;
-	    lod->faces = lod_tris.data();
-	    lod->points_orig = (const point_t *)lod_tri_pnts.data();
-	    lod->points = (const point_t *)lod_tri_pnts_snapped.data();
-	}
-	// TODO...
-	lod->face_normals = NULL;
-	lod->normals = NULL;
-	(*draw_clbk)(ctx, s);
-    }
-}
-
-void
 POPState::plot(const char *root)
 {
     if (curr_level < 0)
@@ -1666,6 +1641,18 @@ bg_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
 
     sp->force_update = (reset) ? true : false;
     sp->set_level(level);
+
+    // If we're in POP territory use the local arrays - otherwise, they
+    // were already set by the full detail callback.
+    if (sp->curr_level <= sp->max_pop_threshold_level) {
+	l->fcnt = (int)sp->lod_tris.size()/3;
+	l->faces = sp->lod_tris.data();
+	l->points_orig = (const point_t *)sp->lod_tri_pnts.data();
+	l->points = (const point_t *)sp->lod_tri_pnts_snapped.data();
+    }
+    // TODO...
+    l->face_normals = NULL;
+    l->normals = NULL;
 
     // If the data changed, any Display List we may have previously generated
     // is now obsolete
@@ -1852,20 +1839,6 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 }
 
 extern "C" void
-bg_mesh_lod_draw_clbk(
-	struct bv_mesh_lod *lod,
-	int (*clbk)(void *, struct bv_scene_obj *)
-	)
-{
-    if (!lod || !clbk)
-	return;
-
-    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)lod->i;
-    POPState *s = i->s;
-    s->draw_clbk = clbk;
-}
-
-extern "C" void
 bg_mesh_lod_detail_setup_clbk(
 	struct bv_mesh_lod *lod,
 	int (*clbk)(struct bv_mesh_lod *, void *),
@@ -1907,18 +1880,6 @@ bg_mesh_lod_detail_free_clbk(
     struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)lod->i;
     POPState *s = i->s;
     s->full_detail_free_clbk = clbk;
-}
-
-extern "C" void
-bg_mesh_lod_draw(void *ctx, struct bv_scene_obj *s)
-{
-    if (!s || !ctx)
-	return;
-
-    struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
-    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)l->i;
-    POPState *ps = i->s;
-    ps->draw(ctx, s);
 }
 
 void

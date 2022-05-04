@@ -566,42 +566,20 @@ dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 	dm_draw_scene_obj(dmp, sv, v);
     }
 
+    // Assign color attributes
+    dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os.transparency);
+    dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
+
+
     if (s->s_type_flags & BV_MESH_LOD) {
-
-	// Draw primary wireframe.
-	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os.transparency);
-
-	dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
-
-	struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
-	if (l) {
-	    // Tell the mesh lod structure what callback method to use to draw
-	    bg_mesh_lod_draw_clbk(l, &dm_draw_callback);
-
-	    // Trigger the drawing operation.  Because we don't expose the
-	    // internals of struct bg_mesh_lod, preparing the drawing-ready
-	    // data is handled by an internal bg_mesh_lod method.
-	    // Consequently, the dm_draw_callback must be invoked from that
-	    // method - hence the above callback assignment.  This keeps any
-	    // awareness of libdm and the specifics of drawing out of the other
-	    // libs.
-	    bg_mesh_lod_draw((void *)dmp, s);
-	} else {
-	    bu_log("Error - no LoD data for %s\n", bu_vls_cstr(&s->s_name));
-	}
+	dm_draw_obj(dmp, s);
     } else {
 	if (bu_list_len(&s->s_vlist)) {
-	    // Draw primary wireframe.
-	    dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os.transparency);
-
-	    dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
-
 	    if (s->s_os.s_dmode == 4) {
 		dm_draw_vlist_hidden_line(dmp, (struct bv_vlist *)&s->s_vlist);
 	    } else {
 		dm_draw_vlist(dmp, (struct bv_vlist *)&s->s_vlist);
 	    }
-
 	    dm_add_arrows(dmp, s);
 	}
     }

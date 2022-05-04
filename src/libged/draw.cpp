@@ -277,8 +277,10 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     // the parent
     bv_obj_sync(vo, s);
 
-    // Assign the LoD information to the object's draw_data
+    // Assign the LoD information to the object's draw_data, and let
+    // the LoD know which object it is associated with.
     vo->draw_data = (void *)lod;
+    lod->s = vo;
 
     // The object bounds are based on the LoD's calculations
     VMOVE(vo->bmin, lod->bmin);
@@ -312,8 +314,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	bu_log("Error loading info for initial LoD view\n");
     }
 
-    // Mark the objects as a Mesh LoD so the drawing routine knows to handle it differently
-    s->s_type_flags |= BV_MESH_LOD;
+    // Mark the object as a Mesh LoD so the drawing routine knows to handle it differently
     vo->s_type_flags |= BV_MESH_LOD;
 
     // Make the names unique
