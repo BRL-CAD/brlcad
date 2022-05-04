@@ -277,14 +277,20 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     // the parent
     bv_obj_sync(vo, s);
 
+    // Assign the LoD information to the object's draw_data
     vo->draw_data = (void *)lod;
+
+    // The object bounds are based on the LoD's calculations
     VMOVE(vo->bmin, lod->bmin);
     VMOVE(vo->bmax, lod->bmax);
     VMOVE(s->bmin, lod->bmin);
     VMOVE(s->bmax, lod->bmax);
 
-    // The free callback will clean this up, but need to initialize it here were we
-    // know the information it needs.
+    // Record the necessary information for full detail information recovery.  We
+    // don't duplicate the full mesh detail in the on-disk LoD storage, since we
+    // already have that info in the .g itself, but we need to know how to get at
+    // it when needed.  The free callback will clean up, but we need to initialize
+    // the callback data here.
     struct ged_full_detail_clbk_data *cbd;
     BU_GET(cbd, ged_full_detail_clbk_data);
     cbd->dbip = dbip;
@@ -306,7 +312,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	bu_log("Error loading info for initial LoD view\n");
     }
 
-    // Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
+    // Mark the objects as a Mesh LoD so the drawing routine knows to handle it differently
     s->s_type_flags |= BV_MESH_LOD;
     vo->s_type_flags |= BV_MESH_LOD;
 
