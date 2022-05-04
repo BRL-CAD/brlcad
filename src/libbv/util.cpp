@@ -156,6 +156,74 @@ bv_free(struct bview *gvp)
     }
 }
 
+static void
+_bound_objs(int *is_empty, int *have_geom_objs, vect_t min, vect_t max, struct bu_ptbl *so, struct bview *v)
+{
+    vect_t minus, plus;
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
+	_bound_objs(is_empty, have_geom_objs, min, max, &g->children, v);
+	if (bv_scene_obj_bound(g, v)) {
+	    (*is_empty) = 0;
+	    (*have_geom_objs) = 1;
+	    minus[X] = g->s_center[X] - g->s_size;
+	    minus[Y] = g->s_center[Y] - g->s_size;
+	    minus[Z] = g->s_center[Z] - g->s_size;
+	    VMIN(min, minus);
+	    plus[X] = g->s_center[X] + g->s_size;
+	    plus[Y] = g->s_center[Y] + g->s_size;
+	    plus[Z] = g->s_center[Z] + g->s_size;
+	    VMAX(max, plus);
+	}
+    }
+}
+
+static void
+_find_view_geom(int *have_geom_objs, struct bu_ptbl *so)
+{
+    if (*have_geom_objs)
+	return;
+
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	_find_view_geom(have_geom_objs, &s->children);
+	if ((s->s_type_flags & BV_DBOBJ_BASED) ||
+		(s->s_type_flags & BV_POLYGONS) ||
+		(s->s_type_flags & BV_LABELS)) {
+	    (*have_geom_objs) = 1;
+	    break;
+	}
+    }
+}
+
+static void
+_bound_objs_view(int *is_empty, vect_t min, vect_t max, struct bu_ptbl *so, struct bview *v, int have_geom_objs, int all_view_objs)
+{
+    vect_t minus, plus;
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	_bound_objs_view(is_empty, min, max, &s->children, v, have_geom_objs, all_view_objs);
+        if (have_geom_objs && !all_view_objs) {
+            if (!(s->s_type_flags & BV_DBOBJ_BASED) &&
+                !(s->s_type_flags & BV_POLYGONS) &&
+                !(s->s_type_flags & BV_LABELS))
+                continue;
+        }
+        if (bv_scene_obj_bound(s, v)) {
+            is_empty = 0;
+            minus[X] = s->s_center[X] - s->s_size;
+            minus[Y] = s->s_center[Y] - s->s_size;
+            minus[Z] = s->s_center[Z] - s->s_size;
+            VMIN(min, minus);
+            plus[X] = s->s_center[X] + s->s_size;
+            plus[Y] = s->s_center[Y] + s->s_size;
+            plus[Z] = s->s_center[Z] + s->s_size;
+            VMAX(max, plus);
+        }
+    }
+}
+
+
 void
 bv_autoview(struct bview *v, double factor, int all_view_objs)
 {
@@ -164,6 +232,7 @@ bv_autoview(struct bview *v, double factor, int all_view_objs)
     vect_t radial;
     vect_t sqrt_small;
     int is_empty = 1;
+    int have_geom_objs = 0;
 
     /* set the default if unset or insane */
     if (factor < SQRT_SMALL_FASTF) {
@@ -177,49 +246,7 @@ bv_autoview(struct bview *v, double factor, int all_view_objs)
     VSETALL(max, -INFINITY);
 
     struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
-    vect_t minus, plus;
-    int have_geom_objs = 0;
-    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
-	if (bv_scene_obj_bound(g, v)) {
-	    is_empty = 0;
-	    have_geom_objs = 1;
-	    minus[X] = g->s_center[X] - g->s_size;
-	    minus[Y] = g->s_center[Y] - g->s_size;
-	    minus[Z] = g->s_center[Z] - g->s_size;
-	    VMIN(min, minus);
-	    plus[X] = g->s_center[X] + g->s_size;
-	    plus[Y] = g->s_center[Y] + g->s_size;
-	    plus[Z] = g->s_center[Z] + g->s_size;
-	    VMAX(max, plus);
-	}
-	for (size_t j = 0; j < BU_PTBL_LEN(&g->children); j++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, j);
-	    if (bv_scene_obj_bound(s, v)) {
-		is_empty = 0;
-		minus[X] = s->s_center[X] - s->s_size;
-		minus[Y] = s->s_center[Y] - s->s_size;
-		minus[Z] = s->s_center[Z] - s->s_size;
-		VMIN(min, minus);
-		plus[X] = s->s_center[X] + s->s_size;
-		plus[Y] = s->s_center[Y] + s->s_size;
-		plus[Z] = s->s_center[Z] + s->s_size;
-		VMAX(max, plus);
-	    }
-	    for (size_t k = 0; k < BU_PTBL_LEN(&s->children); k++) {
-		struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, k);
-		struct bv_vlist *tvp;
-		for (BU_LIST_FOR(tvp, bv_vlist, &((struct bv_vlist *)(&s_c->s_vlist))->l)) {
-		    int nused = tvp->nused;
-		    int *cmd = tvp->cmd;
-		    point_t *pt = tvp->pt;
-		    for (int l = 0; l < nused; l++, cmd++, pt++) {
-			VMINMAX(min, max, *pt);
-		    }
-		}
-	    }
-	}
-    }
+    _bound_objs(&is_empty, &have_geom_objs, min, max, so, v);
 
     // When it comes to view-only objects, normally we will only include those
     // that are db object based, polygons or labels, unless the flag to
@@ -229,46 +256,8 @@ bv_autoview(struct bview *v, double factor, int all_view_objs)
     // then basing autoview on the view-only objs is more intuitive than just
     // using the default view settings.
     so = bv_view_objs(v, BV_VIEW_OBJS);
-    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
-	if ((s->s_type_flags & BV_DBOBJ_BASED) ||
-	    (s->s_type_flags & BV_POLYGONS) ||
-	    (s->s_type_flags & BV_LABELS))
-	    have_geom_objs = 1;
-    }
-    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
-	if (have_geom_objs && !all_view_objs) {
-	    if (!(s->s_type_flags & BV_DBOBJ_BASED) &&
-		!(s->s_type_flags & BV_POLYGONS) &&
-		!(s->s_type_flags & BV_LABELS))
-		continue;
-	}
-	if (bv_scene_obj_bound(s, v)) {
-	    is_empty = 0;
-	    minus[X] = s->s_center[X] - s->s_size;
-	    minus[Y] = s->s_center[Y] - s->s_size;
-	    minus[Z] = s->s_center[Z] - s->s_size;
-	    VMIN(min, minus);
-	    plus[X] = s->s_center[X] + s->s_size;
-	    plus[Y] = s->s_center[Y] + s->s_size;
-	    plus[Z] = s->s_center[Z] + s->s_size;
-	    VMAX(max, plus);
-	}
-	for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
-	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, j);
-	    struct bv_vlist *tvp;
-	    for (BU_LIST_FOR(tvp, bv_vlist, &((struct bv_vlist *)(&s_c->s_vlist))->l)) {
-		int k;
-		int nused = tvp->nused;
-		int *cmd = tvp->cmd;
-		point_t *pt = tvp->pt;
-		for (k = 0; k < nused; k++, cmd++, pt++) {
-		    VMINMAX(min, max, *pt);
-		}
-	    }
-	}
-    }
+    _find_view_geom(&have_geom_objs, so);
+    _bound_objs_view(&is_empty,min, max, so, v, have_geom_objs, all_view_objs);
 
     if (is_empty) {
 	/* Nothing is in view */
