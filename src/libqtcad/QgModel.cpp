@@ -47,6 +47,7 @@
 
 #include "bu/env.h"
 #include "bu/sort.h"
+#include "bg/lod.h"
 #define ALPHANUM_IMPL
 #include "../libged/alphanum.h"
 #include "raytrace.h"
@@ -290,6 +291,15 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
     gInstance *inst = NULL;
     ctx->need_update_nref = true;
     ctx->changed_db_flag = 1;
+
+    // Need to invalidate any LoD caches associated with this dp
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp) {
+	unsigned long long key = bg_mesh_lod_key_get(ctx->gedp->ged_lod, dp->d_namep);
+	if (key) {
+	    bg_mesh_lod_clear_cache(ctx->gedp->ged_lod, key);
+	    bg_mesh_lod_key_put(ctx->gedp->ged_lod, dp->d_namep, 0);
+	}
+    }
 
     switch(mode) {
 	case 0:
