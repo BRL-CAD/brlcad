@@ -65,6 +65,8 @@ struct conversion_state
 	int id_no; //????
 	int mat_code;
 };
+#define CONVERSION_STATE_ZERO {NULL, NULL, "", NULL, NULL, WMEMBER_INIT_ZERO, 0, 0, 0, 0, 0, 0}
+
 
 static void testingStringIntMap(const std::map<std::string, int> &m, int &pos) {
 	std::map<std::string, int>::const_iterator it(m.begin());
@@ -258,10 +260,8 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
 	}
 
 
-	struct conversion_state state;
+	struct conversion_state state = CONVERSION_STATE_ZERO;
 
-	memset(&state, 0, sizeof(state));
-	
 	//generate list to hold scene geometry
 	BU_LIST_INIT(&state.scene.l);
 	state.input_file = input_filename;
@@ -275,7 +275,7 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
 
 	//combine all top level regions
 	mk_lcomb(context->dbip->dbi_wdbp, "all", &state.scene, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
-	
+
 	return 1;
 }
 
