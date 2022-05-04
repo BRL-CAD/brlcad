@@ -1398,10 +1398,10 @@ int gl_draw_obj(struct dm *dmp, struct display_list *obj)
     struct bv_scene_obj *sp;
     for (BU_LIST_FOR(sp, bv_scene_obj, &obj->dl_head_scene_obj)) {
 	if (sp->s_dlist == 0)
-	    sp->s_dlist = dm_gen_dlists(dmp, 1);
+	    sp->s_dlist = gl_genDLists(dmp, 1);
 
 	(void)dm_make_current(dmp);
-	(void)dm_begin_dlist(dmp, sp->s_dlist);
+	(void)gl_beginDList(dmp, sp->s_dlist);
 	if (sp->s_iflag == UP)
 	    (void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_os.transparency);
 	else
@@ -1410,7 +1410,7 @@ int gl_draw_obj(struct dm *dmp, struct display_list *obj)
 		    (unsigned char)sp->s_color[1],
 		    (unsigned char)sp->s_color[2], 0, sp->s_os.transparency);
 	(void)dm_draw_vlist(dmp, (struct bv_vlist *)&sp->s_vlist);
-	(void)dm_end_dlist(dmp);
+	(void)gl_endDList(dmp);
     }
     return 0;
 }
