@@ -176,6 +176,7 @@ struct bv_obj_settings {
 #define BV_AXES           0x10
 #define BV_POLYGONS       0x20
 #define BV_MESH_LOD       0x40
+#define BV_CSG_LOD        0x80
 
 struct bview;
 

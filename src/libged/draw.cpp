@@ -81,7 +81,7 @@ prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
 }
 
 static int
-draw_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
+csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
 {
     /* Validate */
     if (!s || !v)
@@ -121,13 +121,13 @@ draw_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
     s->point_scale = s->s_v->gv_s->point_scale;
     s->view_scale = v->gv_scale;
 
-    // Clear out existing vlist, if any...
-    // TODO - stashing the vlists like this doesn't scale when we're zooming in
-    // deeply on large CSG models.  We need something similar to the mesh
-    // handling that can free up memory if things get too extreme.  We probably
-    // also want to compile dlists for these wireframes as well, and only zoom
-    // in when we can actually see the object...
-    BV_FREE_VLIST(s->vlfree, &s->s_vlist);
+    // Clear out existing vlists
+    struct bu_list *p;
+    while (BU_LIST_WHILE(p, bu_list, &s->s_vlist)) {
+	BU_LIST_DEQUEUE(p);
+	struct bv_vlist *pv = (struct bv_vlist *)p;
+	BU_FREE(pv, struct bv_vlist);
+    }
 
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     struct db_i *dbip = d->dbip;
@@ -139,8 +139,11 @@ draw_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
     if (ret < 0)
 	return 0;
 
-    if (ip->idb_meth->ft_adaptive_plot)
+    if (ip->idb_meth->ft_adaptive_plot) {
 	ip->idb_meth->ft_adaptive_plot(&s->s_vlist, ip, d->tol, v, s->s_size);
+	s->s_type_flags |= BV_CSG_LOD;
+	s->s_dlist_stale = 1;
+    }
 
 #if 0
     // Draw label
@@ -360,7 +363,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	ld->res = d->res;
 	vo->s_i_data= (void *)ld;
 
-	vo->s_update_callback = &draw_update;
+	vo->s_update_callback = &csg_wireframe_update;
 	vo->s_free_callback = &draw_free_data;
 
 	// Most of the view properties (color, size, etc.) are inherited from
