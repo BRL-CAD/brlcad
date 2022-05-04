@@ -296,7 +296,7 @@ DM_EXPORT extern int dm_set_hook(const struct bu_structparse_map *map,
 DM_EXPORT extern struct bu_structparse *dm_get_vparse(struct dm *dmp);
 DM_EXPORT extern void *dm_get_mvars(struct dm *dmp);
 
-DM_EXPORT extern int dm_draw_display_list(struct dm *dmp,
+DM_EXPORT extern int dm_draw_head_dl(struct dm *dmp,
 					  struct bu_list *dl,
 					  fastf_t transparency_threshold,
 					  fastf_t inv_viewsize,

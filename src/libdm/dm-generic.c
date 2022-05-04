@@ -989,7 +989,7 @@ dm_drawSolid(struct dm *dmp,
 
 
 int
-dm_draw_display_list(struct dm *dmp,
+dm_draw_head_dl(struct dm *dmp,
 		     struct bu_list *dl,
 		     fastf_t transparency_threshold,
 		     fastf_t inv_viewsize,
