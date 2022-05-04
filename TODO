@@ -138,6 +138,15 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* running mged geometry browser and selecting preview results in an
+  error.  code appears to be assuming both /dev/X framebuffer and uses
+  /dev/null redirect to sink output.
+
+* rtwizard greys out the File->New and Open menu items when run with a
+  filename, which is very confusing.  Either menu should remain usable
+  or there should be some other indication that a file was specified
+  and is open.
+
 * the mged tutorials apparently do not mention the tops command (even
   once), but really should as it's the starting point for discovering
   what is in databases that are opened or imported.

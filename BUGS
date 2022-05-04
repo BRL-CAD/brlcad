@@ -17,6 +17,12 @@ Recent Bugs
 
 * ogl display manager still crashes on attach in mged on Mac OS X 10.5
 
+* running archer "" at least on windows results in a file type dialog
+  and errors with "can't read "_conv_log": no such variable
+
+* opening a database in archer with the same name as a command doesn't
+  work.
+
 * in mged, running the 'attach' command (confirmed issues with X and
   ogl), closing the window, and then issuing a 'draw' results in mged
   crashing.
@@ -280,9 +286,6 @@ Recent Bugs
 
 * torus with a near zero inner diameter results in zero-length edges
   during tessellation.
-
-* opening a database in archer with the same name as a command doesn't
-  work.
 
 * bu_log() with a width specifier does not align like printf().
   Example: bu_log("%24s", str);
