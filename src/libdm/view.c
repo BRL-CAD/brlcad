@@ -576,14 +576,15 @@ dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 	struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
 	if (l) {
 	    // Tell the mesh lod structure what callback method to use to draw
-	    bg_mesh_lod_draw_clbk(l, &dm_draw_tri_callback);
+	    bg_mesh_lod_draw_clbk(l, &dm_draw_callback);
 
 	    // Trigger the drawing operation.  Because we don't expose the
-	    // internals of struct bg_mesh_lod, preparing the drawing-ready data is
-	    // handled by an internal bg_mesh_lod method.  Consequently, the
-	    // dm_draw_tri_callback must be invoked from that method - hence the
-	    // above callback assignment.  This keeps any awareness of libdm and the
-	    // specifics of drawing out of the other libs.
+	    // internals of struct bg_mesh_lod, preparing the drawing-ready
+	    // data is handled by an internal bg_mesh_lod method.
+	    // Consequently, the dm_draw_callback must be invoked from that
+	    // method - hence the above callback assignment.  This keeps any
+	    // awareness of libdm and the specifics of drawing out of the other
+	    // libs.
 	    bg_mesh_lod_draw((void *)dmp, s);
 	} else {
 	    bu_log("Error - no LoD data for %s\n", bu_vls_cstr(&s->s_name));

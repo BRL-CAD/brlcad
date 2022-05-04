@@ -128,7 +128,7 @@ extern "C" {
 #define CACHE_VERT_LEVEL "v"
 #define CACHE_TRI_LEVEL "t"
 
-typedef int (*draw_clbk_t)(void *, struct bv_mesh_lod *);
+typedef int (*draw_clbk_t)(void *, struct bv_scene_obj *);
 typedef int (*full_detail_clbk_t)(struct bv_mesh_lod *, void *);
 
 static void
@@ -1493,7 +1493,7 @@ POPState::draw(void *ctx, struct bv_scene_obj *s)
 	// TODO...
 	lod->face_normals = NULL;
 	lod->normals = NULL;
-	(*draw_clbk)(ctx, lod);
+	(*draw_clbk)(ctx, s);
     }
 }
 
@@ -1854,7 +1854,7 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 extern "C" void
 bg_mesh_lod_draw_clbk(
 	struct bv_mesh_lod *lod,
-	int (*clbk)(void *, struct bv_mesh_lod *)
+	int (*clbk)(void *, struct bv_scene_obj *)
 	)
 {
     if (!lod || !clbk)

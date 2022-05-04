@@ -570,7 +570,7 @@ struct dm_impl dm_qtgl_impl = {
     gl_drawPoints3D,
     gl_drawVList,
     gl_drawVListHiddenLine,
-    gl_draw_tri,
+    gl_draw_obj,
     gl_draw_data_axes,
     gl_draw,
     gl_setFGColor,
@@ -589,7 +589,7 @@ struct dm_impl dm_qtgl_impl = {
     gl_drawDList,
     gl_freeDLists,
     gl_genDLists,
-    gl_draw_obj,
+    gl_draw_display_list,
     gl_getDisplayImage, /* display to image function */
     gl_reshape,
     qtgl_makeCurrent,

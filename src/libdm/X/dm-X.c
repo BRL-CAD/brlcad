@@ -2108,7 +2108,7 @@ struct dm_impl dm_X_impl = {
     null_drawPoints3D,
     X_drawVList,
     X_drawVList,
-    null_draw_tri,
+    null_draw_obj,
     NULL,
     X_draw,
     X_setFGColor,

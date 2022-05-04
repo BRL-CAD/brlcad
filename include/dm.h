@@ -239,8 +239,6 @@ DM_EXPORT extern void dm_set_perspective(struct dm *dmp, fastf_t perspective);
 DM_EXPORT extern int dm_get_display_image(struct dm *dmp, unsigned char **image, int flip, int alpha);
 DM_EXPORT extern int dm_draw_vlist(struct dm *dmp, struct bv_vlist *vp);
 DM_EXPORT extern int dm_draw_vlist_hidden_line(struct dm *dmp, struct bv_vlist *vp);
-DM_EXPORT extern int dm_draw_tri_callback(void *ctx, struct bv_mesh_lod *i);
-DM_EXPORT extern int dm_draw_tri(struct dm *dmp, struct bv_mesh_lod *i);
 DM_EXPORT extern int dm_set_line_attr(struct dm *dmp, int width, int style);
 DM_EXPORT extern int dm_draw_begin(struct dm *dmp);
 DM_EXPORT extern int dm_draw_end(struct dm *dmp);
@@ -264,6 +262,11 @@ DM_EXPORT extern int dm_logfile(struct dm *dmp, const char *filename);
 DM_EXPORT extern struct fb *dm_get_fb(struct dm *dmp);
 DM_EXPORT extern int dm_get_fb_visible(struct dm *dmp);
 DM_EXPORT extern int dm_set_fb_visible(struct dm *dmp, int is_fb_visible);
+
+
+DM_EXPORT extern int dm_draw_callback(void *ctx, struct bv_scene_obj *s);
+DM_EXPORT extern int dm_draw_obj(struct dm *dmp, struct bv_scene_obj *s);
+
 
 /* Rather low level exposure of display list concepts.  Needed for MGED
  * and libtclcad, but we want to get to a point where the use (or not)

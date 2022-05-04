@@ -193,7 +193,7 @@ null_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bv_vlist *UNUSED(vp))
 
 
 int
-null_draw_tri(struct dm *UNUSED(dmp), struct bv_mesh_lod *UNUSED(i)) {
+null_draw_obj(struct dm *UNUSED(dmp), struct bv_scene_obj *UNUSED(s)) {
     return 0;
 }
 
@@ -375,7 +375,7 @@ struct dm_impl dm_null_impl = {
     null_drawPoints3D,
     null_drawVList,
     null_drawVListHiddenLine,
-    null_draw_tri,
+    null_draw_obj,
     NULL,
     null_draw,
     null_setFGColor,

@@ -1391,7 +1391,7 @@ int gl_genDLists(struct dm *dmp, size_t range)
     return glGenLists((GLsizei)range);
 }
 
-int gl_draw_obj(struct dm *dmp, struct display_list *obj)
+int gl_draw_display_list(struct dm *dmp, struct display_list *obj)
 {
     gl_debug_print(dmp, "gl_draw_obj", dmp->i->dm_debugLevel);
 

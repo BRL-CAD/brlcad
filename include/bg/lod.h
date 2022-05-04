@@ -203,7 +203,7 @@ bg_mesh_lod_free(struct bv_scene_obj *s);
 
 /* Set drawing function callback */
 BG_EXPORT void
-bg_mesh_lod_draw_clbk(struct bv_mesh_lod *lod, int (*clbk)(void *, struct bv_mesh_lod *));
+bg_mesh_lod_draw_clbk(struct bv_mesh_lod *lod, int (*clbk)(void *, struct bv_scene_obj *));
 
 /* Set function callbacks for retrieving and freeing high levels of mesh detail */
 BG_EXPORT void

@@ -63,8 +63,6 @@ void dlist_free_callback(struct bv_scene_obj *s)
 // in memory at the same time.  For that scenario, we would first need to break
 // down the big mesh into smaller pieces as in the earlier LoD experiments in
 // order to keep using display lists...
-
-extern "C"
 int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 {
     int fcnt = lod->fcnt;
@@ -285,6 +283,16 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
     return BRLCAD_ERROR;
 }
 
+extern "C"
+int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
+{
+    if (s->s_type_flags & BV_MESH_LOD) {
+	struct bv_mesh_lod *lod = (struct bv_mesh_lod *)s->draw_data;
+	return gl_draw_tri(dmp, lod);
+    }
+
+    return BRLCAD_ERROR;
+}
 
 // Local Variables:
 // tab-width: 8
