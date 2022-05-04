@@ -125,7 +125,7 @@ public:
 
 private:
     /* Object attributes */
-    struct application* ap;
+    struct application ap;
     struct rt_i* rtip;
     struct resource* resources;
     point_t min;
