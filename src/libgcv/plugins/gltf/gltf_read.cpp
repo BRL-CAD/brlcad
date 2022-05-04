@@ -26,7 +26,7 @@
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#define STBI_MSC_SECURE_CRT
+/*#define STBI_MSC_SECURE_CRT */
 
 #include "tinygltf_headers/tiny_gltf.h"
 
@@ -85,7 +85,7 @@ generate_geometry(struct conversion_state *state, tinygltf::Model &model, int me
 {
 	tinygltf::Mesh mesh = model.meshes[mesh_number];
 	//for each mesh primitive
-	for (int j = 0; j < mesh.primitives.size(); j++)
+	for (size_t j = 0; j < mesh.primitives.size(); j++)
 	{
 		//get face data
 		int indices_pos = mesh.primitives[j].indices;
@@ -96,15 +96,15 @@ generate_geometry(struct conversion_state *state, tinygltf::Model &model, int me
 		//unsigned char to short int arr
 		const unsigned char * dataPtr3 = buffer.data.data() + bufferView.byteOffset + accessor.byteOffset;
 
-		const int byte_stride3 = accessor.ByteStride(bufferView);
+		//const int byte_stride3 = accessor.ByteStride(bufferView);
 		//const size_t count = accessor.count;
 
 		unsigned short* indices = (unsigned short*)dataPtr3;
 		//int faces[bufferView.byteLength / byte_stride] ;
 		//int numfaces = bufferView.byteLength / byte_stride;
-		int numfaces = accessor.count;
+		size_t numfaces = accessor.count;
 		int *faces = new int[numfaces];
-		for (long unsigned int i = 0; i < numfaces; i++)
+		for (size_t i = 0; i < numfaces; i++)
 		{
 			faces[i] = indices[i];
 		}
@@ -117,7 +117,7 @@ generate_geometry(struct conversion_state *state, tinygltf::Model &model, int me
 		//unsigned char to short int arr
 		const unsigned char * dataPtr = buffer.data.data() + bufferView.byteOffset +
 			accessor.byteOffset;
-		int byte_stride = accessor.ByteStride(bufferView);
+		//int byte_stride = accessor.ByteStride(bufferView);
 		//const size_t count = accessor.count;
 
 		float* positions = (float*)dataPtr;
@@ -190,7 +190,7 @@ handle_node(struct conversion_state *state, tinygltf::Model &model, int node_ind
 		(void)mk_addmember(region_name.c_str(), &regions.l, NULL, WMOP_UNION);
 	}
 	//for each child node
-	for (int i = 0; i < node.children.size(); i++)
+	for (size_t i = 0; i < node.children.size(); i++)
 	{
 		handle_node(state, model, node.children[i], region);
 	}
@@ -208,7 +208,7 @@ convert_from_gltf(struct conversion_state *state, tinygltf::Model &model)
 	const tinygltf::Scene &scene = model.scenes[0];
 	tinygltf::Node node;
 	//for each top level scene node
-	for (int i = 0; i < scene.nodes.size(); i++)
+	for (size_t i = 0; i < scene.nodes.size(); i++)
 	{
 		node = model.nodes[scene.nodes[i]];
 		handle_node(state, model, scene.nodes[i], state->scene);
@@ -217,7 +217,7 @@ convert_from_gltf(struct conversion_state *state, tinygltf::Model &model)
 }
 
 HIDDEN int
-gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *options_data, const char *source_path)
+gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *source_path)
 {
 
 	tinygltf::Model model;
