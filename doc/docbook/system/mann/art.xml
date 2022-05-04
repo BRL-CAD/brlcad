@@ -1,0 +1,83 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="art">
+
+<refmeta>
+  <refentrytitle>ART</refentrytitle>
+  <manvolnum>nged</manvolnum>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD MGED Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv xml:id="name">
+  <refname>art</refname>
+  <refpurpose>Executes the BRL-CAD <emphasis>art</emphasis> program.
+   </refpurpose>
+</refnamediv>
+
+<!-- body begins here -->
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
+    <command>art</command>
+
+    <arg choice="opt" rep="norepeat"><replaceable>options</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>--objects</replaceable></arg>
+  </cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection xml:id="description"><title>DESCRIPTION</title>
+
+  <para>
+	  The <emphasis>art</emphasis> command is a new, in-progress command that performs similar rendering as in <command>rt</command>, using the open-source <emphasis>Appleseed</emphasis>
+      physically based rendering engine. The integration of Appleseed into BRL-CAD is an ongoing effort to make art production-ready through enabling as many rt features as possible
+      so that art is a drop-in replacement. The current status of the project has incorporated several, but not all, features of rt, as well as fixing issues with the Appleseed integration
+      with BRL-CAD, such as z-up orientation and the orthographic view. To run art as one would run rt, simply run bin/art from the command line or, from the MGED raytrace control panel, select
+      "Art" instead of "Raytrace".
+  </para>
+
+  <para>
+	  There are some limitations with the current implementation of art. One is that it does not yet match the MGED graphics window, and that not all rt options are supported. Additionally,
+      art does not support .pix output, rt's default; art does not handle non-region, muliply referenced, or halfspace objects; and art multiframe rendering is untested, which means that 
+	  memory leaks are currently likely.
+  </para>
+
+  <para>
+	  The following example commands are performed in mged, but since art is en evolving command, some issues with running the commands may be observed.
+  </para>
+
+</refsection>
+
+<refsection xml:id="examples"><title>EXAMPLES</title>
+
+  <para>The first example shows the use of the <command>art</command> command to run the art program to produce a color-shaded image.  The second example shows the use of the <command>art</command> command to run the art program to produce a brightened image. Both commands use a sample object.
+     </para>
+
+  <example><title>Run the <emphasis>art</emphasis> program to produce a color-shaded image.</title>
+
+    <para>
+      <prompt>mged&gt;</prompt><userinput> art -C 255,255,255 -s 1024 share/db/moss.g all.g</userinput>
+    </para>
+    <para>Runs the <emphasis>art</emphasis> program to produce a color-shaded image of a sample object. The image will be 1024 pixels square and will be displayed on a
+	lingering <emphasis>X</emphasis> framebuffer.
+    </para>
+  </example>
+
+  <example><title>Run the <emphasis>art</emphasis> program to produce a brightened image of an object.</title>
+
+    <para>
+      <prompt>mged&gt;</prompt><userinput>art -A 2 share/db/moss.g all.g</userinput>
+    </para>
+    <para>Runs the <emphasis>art</emphasis> program to produce a brightened image of the sample object. The image will be brightened by a factor of 2.
+    </para>
+  </example>
+
+</refsection>
+
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team, Joseph Stepic (Texas A&M University)</para></refsection>
+
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to <email>devs@brlcad.org</email>
+  </para>
+</refsection>
+</refentry>
