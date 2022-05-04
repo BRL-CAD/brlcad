@@ -291,6 +291,16 @@ int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
 	return gl_draw_tri(dmp, lod);
     }
 
+    // "Standard" vlist object drawing
+    if (bu_list_len(&s->s_vlist)) {
+	if (s->s_os.s_dmode == 4) {
+	    dm_draw_vlist_hidden_line(dmp, (struct bv_vlist *)&s->s_vlist);
+	} else {
+	    dm_draw_vlist(dmp, (struct bv_vlist *)&s->s_vlist);
+	}
+	return BRLCAD_OK;
+    }
+
     return BRLCAD_ERROR;
 }
 

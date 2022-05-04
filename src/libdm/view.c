@@ -546,8 +546,8 @@ dm_draw_labels(struct dm *dmp, struct bv_data_label_state *gdlsp, matp_t m2vmat)
     }
 }
 
-void
-dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
+static void
+draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 {
     if (s->s_flag == DOWN)
 	return;
@@ -563,25 +563,18 @@ dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
 	struct bv_scene_obj *sv = bv_obj_for_view(s_c, s->s_v);
-	dm_draw_scene_obj(dmp, sv, v);
+	draw_scene_obj(dmp, sv, v);
     }
 
     // Assign color attributes
     dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os.transparency);
     dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
 
+    // Primary object drawing
+    dm_draw_obj(dmp, s);
 
-    if (s->s_type_flags & BV_MESH_LOD) {
-	dm_draw_obj(dmp, s);
-    } else {
-	if (bu_list_len(&s->s_vlist)) {
-	    if (s->s_os.s_dmode == 4) {
-		dm_draw_vlist_hidden_line(dmp, (struct bv_vlist *)&s->s_vlist);
-	    } else {
-		dm_draw_vlist(dmp, (struct bv_vlist *)&s->s_vlist);
-	    }
-	    dm_add_arrows(dmp, s);
-	}
+    if (!(s->s_type_flags & BV_MESH_LOD)) {
+	dm_add_arrows(dmp, s);
     }
 
     if (s->s_type_flags & BV_AXES) {
@@ -639,7 +632,7 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
 	struct bv_scene_obj *s = bv_obj_for_view(g, v);
 	bu_log("Draw %s\n", bu_vls_cstr(&g->s_name));
-	dm_draw_scene_obj(dmp, s, v);
+	draw_scene_obj(dmp, s, v);
     }
 
     // Draw view-only objects
@@ -647,7 +640,7 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
     for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 	struct bv_scene_obj *sv = bv_obj_for_view(s, v);
-	dm_draw_scene_obj(dmp, sv, v);
+	draw_scene_obj(dmp, sv, v);
     }
 
     /* Set up matrices for HUD drawing, rather than 3D scene drawing. */
@@ -749,7 +742,7 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sobjs, i);
 	struct bv_scene_obj *s = bv_obj_for_view(g, v);
 	//bu_log("dm_draw_objs %s\n", bu_vls_cstr(&g->s_name));
-	dm_draw_scene_obj(dmp, s, v);
+	draw_scene_obj(dmp, s, v);
     }
     struct bu_ptbl *iobjs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
     if (iobjs != sobjs) {
@@ -757,7 +750,7 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
 	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(iobjs, i);
 	    struct bv_scene_obj *s = bv_obj_for_view(g, v);
 	    //bu_log("dm_draw_objs(i) %s\n", bu_vls_cstr(&g->s_name));
-	    dm_draw_scene_obj(dmp, s, v);
+	    draw_scene_obj(dmp, s, v);
 	}
     }
 
@@ -766,7 +759,7 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
     for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 	struct bv_scene_obj *sv = bv_obj_for_view(s, v);
-	dm_draw_scene_obj(dmp, sv, v);
+	draw_scene_obj(dmp, sv, v);
     }
 
     // Draw view-specific view-only objects if we haven't already done so
@@ -774,7 +767,7 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
     if (vo != view_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(vo); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(vo, i);
-	    dm_draw_scene_obj(dmp, s, v);
+	    draw_scene_obj(dmp, s, v);
 	}
     }
 
