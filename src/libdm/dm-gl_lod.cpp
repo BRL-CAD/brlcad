@@ -513,10 +513,23 @@ gl_csg2_lod(struct dm *dmp, struct bv_scene_obj *s)
     }
 
     struct bv_polyline_lod *l = (struct bv_polyline_lod *)s->draw_data;
+
+#if 0
     for (int i = 0; i < l->array_cnt; i++) {
 	glVertexPointer(3, GL_DOUBLE, 0, l->parrays[i]);
 	glDrawArrays(GL_LINE_STRIP, 0, l->pcnts[i]);
     }
+#else
+    GLdouble dpt[3];
+    for (int i = 0; i < l->array_cnt; i++) {
+	glBegin(GL_LINE_STRIP);
+	for (int j = 0; j < l->pcnts[i]; j++) {
+	    VMOVE(dpt, l->parrays[i][j]);
+	    glVertex3dv(dpt);
+	}
+	glEnd();
+    }
+#endif
 
     if (dmp->i->dm_light && dmp->i->dm_transparency)
 	glDisable(GL_BLEND);
