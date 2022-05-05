@@ -43,17 +43,24 @@
 #include "bg/lod.h"
 #include "bg/sample.h"
 
-static void
-rebuild_vect(std::vector<std::vector<fastf_t>> &point_arrays, struct bv_polyline_lod *l, point_t *pa, size_t ind)
+static int 
+rebuild_vect(std::vector<std::vector<fastf_t>> &point_arrays, struct bv_polyline_lod *l, point_t *pa, int pcnt, size_t ind)
 {
+    int ptotal = pcnt + 1;
+    if (ptotal == l->pcnts[ind])
+	return 0;
+    l->pcnts[ind] = ptotal;
     point_arrays[ind].clear();
     point_arrays[ind].reserve(l->pcnts[ind]*3);
-    for (int i = 0; i < l->pcnts[ind]; i++) {
+    for (int i = 0; i < l->pcnts[ind] - 1; i++) {
 	for (int j = 0; j < 3; j++)
 	    point_arrays[ind].push_back(pa[i][j]);
     }
+    for (int j = 0; j < 3; j++)
+	point_arrays[ind].push_back(pa[0][j]);
     point_arrays[ind].shrink_to_fit();
     l->parrays[ind] = (point_t *)point_arrays[ind].data();
+    return 1;
 }
 
 static fastf_t
@@ -226,11 +233,7 @@ PolyLines::torus_update(struct bg_torus *tor, struct bview *v, fastf_t s_size)
     /* plot outer circular contour */
     point_t *pa;
     int pcnt = bg_ell_sample(&pa, tor->v, a, b, points_per_ellipse);
-    if (pcnt != l->pcnts[0]) {
-	l->pcnts[0] = pcnt;
-	rebuild_vect(point_arrays, l, pa, 0);
-	ret = 1;
-    }
+    ret += rebuild_vect(point_arrays, l, pa, pcnt, 0);
     bu_free(pa, "pnts");
 
     /* plot inner circular contour */
@@ -238,11 +241,7 @@ PolyLines::torus_update(struct bg_torus *tor, struct bview *v, fastf_t s_size)
     VJOIN1(b, tor_b, -1.0 * mag_h / mag_b, tor_b);
     points_per_ellipse = tor_ellipse_points(a, b, point_spacing);
     pcnt = bg_ell_sample(&pa, tor->v, a, b, points_per_ellipse);
-    if (pcnt != l->pcnts[1]) {
-	l->pcnts[1] = pcnt;
-	rebuild_vect(point_arrays, l, pa, 1);
-	ret = 1;
-    }
+    ret += rebuild_vect(point_arrays, l, pa, pcnt, 1);
     bu_free(pa, "pnts");
 
 
@@ -252,21 +251,13 @@ PolyLines::torus_update(struct bg_torus *tor, struct bview *v, fastf_t s_size)
     points_per_ellipse = tor_ellipse_points(tor_a, tor_b, point_spacing);
     VADD2(center, tor->v, tor_h);
     pcnt = bg_ell_sample(&pa, center, tor_a, tor_b, points_per_ellipse);
-    if (pcnt != l->pcnts[2]) {
-	l->pcnts[2] = pcnt;
-	rebuild_vect(point_arrays, l, pa, 2);
-	ret = 1;
-    }
+    ret += rebuild_vect(point_arrays, l, pa, pcnt, 2);
     bu_free(pa, "pnts");
 
 
     VJOIN1(center, tor->v, -1.0, tor_h);
     pcnt = bg_ell_sample(&pa, center, tor_a, tor_b, points_per_ellipse);
-    if (pcnt != l->pcnts[3]) {
-	l->pcnts[3] = pcnt;
-	rebuild_vect(point_arrays, l, pa, 3);
-	ret = 1;
-    }
+    ret += rebuild_vect(point_arrays, l, pa, pcnt, 3);
     bu_free(pa, "pnts");
 
 
@@ -282,11 +273,7 @@ PolyLines::torus_update(struct bg_torus *tor, struct bview *v, fastf_t s_size)
 	VSCALE(a, a, mag_h);
 
 	pcnt = bg_ell_sample(&pa, center, a, b, points_per_ellipse);
-	if (pcnt != l->pcnts[i+4]) {
-	    l->pcnts[i+4] = pcnt;
-	    rebuild_vect(point_arrays, l, pa, i+4);
-	    ret = 1;
-	}
+	ret += rebuild_vect(point_arrays, l, pa, pcnt, i+4);
 	bu_free(pa, "pnts");
 
 	radian += radian_step;
@@ -351,7 +338,10 @@ bg_polyline_lod_view(struct bv_scene_obj *s, struct bview *v)
 {
     struct bv_polyline_lod *l = (struct bv_polyline_lod *)s->draw_data;
     struct bg_polyline_lod_internal *i = (struct bg_polyline_lod_internal *)l->i;
-    return i->i->update(v);
+    int ret = i->i->update(v);
+    if (ret)
+	s->s_dlist_stale = 1;
+    return ret;
 }
 
 // Local Variables:

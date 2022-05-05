@@ -514,10 +514,12 @@ gl_csg2_lod(struct dm *dmp, struct bv_scene_obj *s)
 
     struct bv_polyline_lod *l = (struct bv_polyline_lod *)s->draw_data;
 
-#if 0
+#if 1
     for (int i = 0; i < l->array_cnt; i++) {
 	glVertexPointer(3, GL_DOUBLE, 0, l->parrays[i]);
+	glEnableClientState(GL_VERTEX_ARRAY);
 	glDrawArrays(GL_LINE_STRIP, 0, l->pcnts[i]);
+	glDisableClientState(GL_VERTEX_ARRAY);
     }
 #else
     GLdouble dpt[3];
