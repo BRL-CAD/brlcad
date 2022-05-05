@@ -155,20 +155,23 @@ bg_ell_sample(
     if (!num_points)
 	return 0;
 
-    (*pnts) = (point_t *)bu_calloc(num_points, sizeof(point_t), "points array");
+    // If we're sampling an ellipse, don't use less than 6 points
+    int npnts = (num_points < 6) ? 6 : num_points;
+
+    (*pnts) = (point_t *)bu_calloc(npnts, sizeof(point_t), "points array");
     if (!(*pnts))
 	return -1;
 
     fastf_t radian = 0;
-    fastf_t radian_step = M_2PI / num_points;
+    fastf_t radian_step = M_2PI / npnts;
     point_t p;
-    for (int i = 0; i < num_points; ++i) {
+    for (int i = 0; i < npnts; ++i) {
 	bg_ell_radian_pnt(p, center, axis_a, axis_b, radian);
 	VMOVE((*pnts)[i], p);
         radian += radian_step;
     }
 
-    return num_points;
+    return npnts;
 }
 
 

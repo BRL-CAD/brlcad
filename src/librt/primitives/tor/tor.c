@@ -118,6 +118,7 @@
 #include "vmath.h"
 #include "bu/cv.h"
 #include "bg/sample.h"
+#include "bg/lod.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -1112,95 +1113,100 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     return 0;
 }
 
-#if 0
 int
 rt_tor_adaptive2_plot(struct bv_scene_obj *s, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     vect_t a, b, tor_a, tor_b, tor_h, center;
     fastf_t mag_a, mag_b, mag_h;
     struct rt_tor_internal *tor;
-    fastf_t radian, radian_step;
-    int i, num_ellipses, points_per_ellipse;
+    int points_per_ellipse;
 
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
     tor = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tor);
 
-    fastf_t point_spacing = bg_sample_spacing(v, s_size);
+    // Set up the container to hold the polyline info
+    struct bv_polyline_lod *l = bg_polyline_lod_create();
+    s->draw_data = (void *)l;
+    // Mark the object as a CSG LoD so the drawing routine knows to handle it differently
+    s->s_type_flags |= BV_CSG2_LOD;
 
+    // Calculate some convenience values from the torus
     VMOVE(tor_a, tor->a);
     mag_a = tor->r_a;
-
     VSCALE(tor_h, tor->h, tor->r_h);
     mag_h = tor->r_h;
-
     VCROSS(tor_b, tor_a, tor_h);
     VUNITIZE(tor_b);
     VSCALE(tor_b, tor_b, mag_a);
     mag_b = mag_a;
 
-    /* plot outer circular contour */
+    // Using view and size info, determine a sampling interval
+    fastf_t point_spacing = bg_sample_spacing(v, s_size);
+
+    // Based on the initial recommended sampling, see how many
+    // points this particular object will require
     VJOIN1(a, tor_a, mag_h / mag_a, tor_a);
     VJOIN1(b, tor_b, mag_h / mag_b, tor_b);
-
     points_per_ellipse = tor_ellipse_points(a, b, point_spacing);
     if (points_per_ellipse < 6) {
-	points_per_ellipse = 6;
+	// If we're this small, just draw a point
+	l->array_cnt = 1;
+	l->parrays = (point_t **)bu_calloc(l->array_cnt, sizeof(point_t *), "points array alloc");
+	l->pcnts = (int *)bu_calloc(l->array_cnt, sizeof(int), "point array counts array alloc");
+	l->pcnts[0] = 1;
+	l->parrays[0] = (point_t *)bu_calloc(l->pcnts[0], sizeof(point_t), "point array alloc");
+	VMOVE(l->parrays[0][0], tor->v);
+	return 0;
     }
 
-    plot_ellipse(vlfree, vhead, tor->v, a, b, points_per_ellipse);
+    // To allocate the correct memory, we first determine how many polylines we will
+    // be creating for this particular object
+    l->array_cnt = 4;
+    int num_ellipses = primitive_curve_count(ip, tol, v->gv_s->curve_scale, s_size);
+    if (num_ellipses < 3)
+	num_ellipses = 3;
+    l->array_cnt += num_ellipses;
+    l->parrays = (point_t **)bu_calloc(l->array_cnt, sizeof(point_t *), "points array alloc");
+    l->pcnts = (int *)bu_calloc(l->array_cnt, sizeof(int), "point array counts array alloc");
+
+    /* plot outer circular contour */
+    l->pcnts[0] = bg_ell_sample(&l->parrays[0], tor->v, a, b, points_per_ellipse);
 
     /* plot inner circular contour */
     VJOIN1(a, tor_a, -1.0 * mag_h / mag_a, tor_a);
     VJOIN1(b, tor_b, -1.0 * mag_h / mag_b, tor_b);
-
     points_per_ellipse = tor_ellipse_points(a, b, point_spacing);
-    if (points_per_ellipse < 6) {
-	points_per_ellipse = 6;
-    }
-
-    plot_ellipse(vlfree, vhead, tor->v, a, b, points_per_ellipse);
+    l->pcnts[1] = bg_ell_sample(&l->parrays[1], tor->v, a, b, points_per_ellipse);
 
     /* Draw parallel circles to show the primitive's most extreme points along
      * +h/-h.
      */
     points_per_ellipse = tor_ellipse_points(tor_a, tor_b, point_spacing);
-    if (points_per_ellipse < 6) {
-	points_per_ellipse = 6;
-    }
-
     VADD2(center, tor->v, tor_h);
-    plot_ellipse(vlfree, vhead, center, tor_a, tor_b, points_per_ellipse);
+    l->pcnts[2] = bg_ell_sample(&l->parrays[2], center, tor_a, tor_b, points_per_ellipse);
 
     VJOIN1(center, tor->v, -1.0, tor_h);
-    plot_ellipse(vlfree, vhead, center, tor_a, tor_b, points_per_ellipse);
+    l->pcnts[3] = bg_ell_sample(&l->parrays[3], center, tor_a, tor_b, points_per_ellipse);
 
     /* draw circular radial cross sections */
     VMOVE(b, tor_h);
-
-    num_ellipses = primitive_curve_count(ip, tol, v->gv_s->curve_scale, s_size);
-    if (num_ellipses < 3) {
-	num_ellipses = 3;
-    }
-
-    radian_step = M_2PI / num_ellipses;
-    radian = 0;
-    for (i = 0; i < num_ellipses; ++i) {
-	ellipse_point_at_radian(center, tor->v, tor_a, tor_b, radian);
+    fastf_t radian_step = M_2PI / num_ellipses;
+    fastf_t radian = 0;
+    for (int i = 0; i < num_ellipses; ++i) {
+	bg_ell_radian_pnt(center, tor->v, tor_a, tor_b, radian);
 
 	VJOIN1(a, center, -1.0, tor->v);
 	VUNITIZE(a);
 	VSCALE(a, a, mag_h);
 
-	plot_ellipse(vlfree, vhead, center, a, b, points_per_ellipse);
+	l->pcnts[i+4] = bg_ell_sample(&l->parrays[i+4], center, a, b, points_per_ellipse);
 
 	radian += radian_step;
     }
 
     return 0;
 }
-#endif
 
 /**
  * The TORUS has the following input fields:

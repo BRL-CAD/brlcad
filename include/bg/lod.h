@@ -203,6 +203,13 @@ bg_mesh_lod_detail_clear_clbk(struct bv_mesh_lod *lod, int (*clbk)(struct bv_mes
 BG_EXPORT void
 bg_mesh_lod_detail_free_clbk(struct bv_mesh_lod *lod, int (*clbk)(struct bv_mesh_lod *, void *));
 
+
+
+BG_EXPORT struct bv_polyline_lod *
+bg_polyline_lod_create();
+BG_EXPORT void
+bg_polyline_lod_destroy(struct bv_polyline_lod *l);
+
 __END_DECLS
 
 #endif  /* BG_LOD_H */

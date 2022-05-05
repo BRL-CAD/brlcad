@@ -1893,6 +1893,46 @@ bg_mesh_lod_free(struct bv_scene_obj *s)
     s->draw_data = NULL;
 }
 
+
+
+
+extern "C" struct bv_polyline_lod *
+bg_polyline_lod_create()
+{
+    struct bv_polyline_lod *lod;
+    BU_GET(lod, struct bv_polyline_lod);
+    return lod;
+}
+
+extern "C" void
+bg_polyline_lod_destroy(struct bv_polyline_lod *l)
+{
+    if (!l)
+	return;
+
+    // Unlike meshes (at least for the moment) non libbg routines are
+    // generating the info, so the primary memory is allocated elsewhere rather
+    // than being pointers to internals and we directly free the public
+    // structures when cleaning up.
+    //
+    // In the longer term we may shift the generation logic down and use an
+    // internal, which is why the bv_polyline_lod structure has provisions for
+    // such containers.  We'd need to determine if we can do so without relying
+    // on librt data types, and for now we need an incremental approach, so
+    // keeping it simple...
+    if (l->array_cnt && l->parrays) {
+	for (int i = 0; i < l->array_cnt; i++) {
+	    bu_free(l->parrays[i], "point array");
+	}
+	bu_free(l->parrays, "point arrays array");
+    }
+    if (l->pcnts)
+	bu_free(l->pcnts, "point counts array");
+
+    BU_PUT(l, struct bv_polyline_lod);
+}
+
+
 // Local Variables:
 // tab-width: 8
 // mode: C++
