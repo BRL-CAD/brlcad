@@ -34,10 +34,27 @@
 
 #include "common.h"
 
+#include <vector>
+
+#include "vmath.h"
 #include "bu/malloc.h"
+#include "bv/defines.h"
 #include "bg/geom.h"
 #include "bg/lod.h"
 #include "bg/sample.h"
+
+static void
+rebuild_vect(std::vector<std::vector<fastf_t>> &point_arrays, struct bv_polyline_lod *l, point_t *pa, size_t ind)
+{
+    point_arrays[ind].clear();
+    point_arrays[ind].reserve(l->pcnts[ind]*3);
+    for (int i = 0; i < l->pcnts[ind]; i++) {
+	for (int j = 0; j < 3; j++)
+	    point_arrays[ind].push_back(pa[i][j]);
+    }
+    point_arrays[ind].shrink_to_fit();
+    l->parrays[ind] = (point_t *)point_arrays[ind].data();
+}
 
 static fastf_t
 bbox_curve_count(
@@ -59,6 +76,38 @@ bbox_curve_count(
 }
 
 
+class PolyLines;
+struct bg_polyline_lod_internal {
+    PolyLines *i;
+};
+
+class PolyLines {
+    public:
+	PolyLines(struct bv_polyline_lod *lod, void *gd, unsigned int type);
+	point_t bbmin, bbmax;
+	struct bv_polyline_lod *l;
+
+	int update(struct bview *v); // return 1 if changed, else 0
+
+    private:
+
+	std::vector<std::vector<fastf_t>> point_arrays;
+
+	// Wireframe updating is specific to each object type
+	int torus_update(struct bg_torus *tor, struct bview *v, fastf_t s_size);
+
+	// gdata holds the object-specific data for this instance
+	void *gdata = NULL;
+	unsigned int data_type = 0;
+};
+
+PolyLines::PolyLines(struct bv_polyline_lod *lod, void *gd, unsigned int type)
+{
+    l = lod;
+    gdata = gd;
+    data_type = type;
+}
+
 static int
 tor_ellipse_points(
         vect_t ellipse_A,
@@ -74,19 +123,13 @@ tor_ellipse_points(
 }
 
 int
-bg_tor_lod_gen(struct bv_scene_obj *s, struct bg_torus *tor, const struct bview *v, fastf_t s_size)
+PolyLines::torus_update(struct bg_torus *tor, struct bview *v, fastf_t s_size)
 {
     vect_t a, b, tor_a, tor_b, tor_h, center;
     fastf_t mag_a, mag_b, mag_h;
     int points_per_ellipse;
 
     BG_TOR_CK_MAGIC(tor);
-
-    // Set up the container to hold the polyline info
-    struct bv_polyline_lod *l = bg_polyline_lod_create();
-    s->draw_data = (void *)l;
-    // Mark the object as a CSG LoD so the drawing routine knows to handle it differently
-    s->s_type_flags |= BV_CSG2_LOD;
 
     // Calculate some convenience values from the torus
     VMOVE(tor_a, tor->a);
@@ -108,44 +151,69 @@ bg_tor_lod_gen(struct bv_scene_obj *s, struct bg_torus *tor, const struct bview 
     points_per_ellipse = tor_ellipse_points(a, b, point_spacing);
     if (points_per_ellipse < 6) {
 	// If we're this small, just draw a point
+	point_arrays.clear();
+	point_arrays.shrink_to_fit();
+	point_arrays.reserve(1);
+	point_arrays[0].reserve(3);
+	for (int i = 0; i < 3; i++)
+	    point_arrays[0].push_back(tor->v[i]);
 	l->array_cnt = 1;
-	l->parrays = (point_t **)bu_calloc(l->array_cnt, sizeof(point_t *), "points array alloc");
-	l->pcnts = (int *)bu_calloc(l->array_cnt, sizeof(int), "point array counts array alloc");
+	l->parrays = (point_t **)bu_realloc(l->parrays, l->array_cnt * sizeof(point_t *), "points array alloc");
+	l->pcnts = (int *)bu_realloc(l->pcnts, l->array_cnt * sizeof(int), "point array counts array alloc");
 	l->pcnts[0] = 1;
-	l->parrays[0] = (point_t *)bu_calloc(l->pcnts[0], sizeof(point_t), "point array alloc");
-	VMOVE(l->parrays[0][0], tor->v);
+	l->parrays[0] = (point_t *)point_arrays[0].data();
 	return 0;
     }
 
     // To allocate the correct memory, we first determine how many polylines we will
     // be creating for this particular object
     l->array_cnt = 4;
-
-    int num_ellipses = bbox_curve_count(s->bmin, s->bmax, v->gv_s->curve_scale, s_size);
+    int num_ellipses = bbox_curve_count(l->s->bmin, l->s->bmax, v->gv_s->curve_scale, s_size);
     if (num_ellipses < 3)
 	num_ellipses = 3;
     l->array_cnt += num_ellipses;
-    l->parrays = (point_t **)bu_calloc(l->array_cnt, sizeof(point_t *), "points array alloc");
-    l->pcnts = (int *)bu_calloc(l->array_cnt, sizeof(int), "point array counts array alloc");
+
+    // If the array is pre-existing, resize to what we need
+    while (point_arrays.size() > (size_t)l->array_cnt) {
+	point_arrays.pop_back();
+    }
+    point_arrays.shrink_to_fit();
+    point_arrays.reserve(l->array_cnt);
+
+    // Set up the public facing containers
+    l->parrays = (point_t **)bu_realloc(l->parrays, l->array_cnt * sizeof(point_t *), "points array alloc");
+    l->pcnts = (int *)bu_realloc(l->pcnts, l->array_cnt * sizeof(int), "point array counts array alloc");
 
     /* plot outer circular contour */
-    l->pcnts[0] = bg_ell_sample(&l->parrays[0], tor->v, a, b, points_per_ellipse);
+    point_t *pa;
+    l->pcnts[0] = bg_ell_sample(&pa, tor->v, a, b, points_per_ellipse);
+    rebuild_vect(point_arrays, l, pa, 0);
+    bu_free(pa, "pnts");
 
     /* plot inner circular contour */
     VJOIN1(a, tor_a, -1.0 * mag_h / mag_a, tor_a);
     VJOIN1(b, tor_b, -1.0 * mag_h / mag_b, tor_b);
     points_per_ellipse = tor_ellipse_points(a, b, point_spacing);
-    l->pcnts[1] = bg_ell_sample(&l->parrays[1], tor->v, a, b, points_per_ellipse);
+    l->pcnts[1] = bg_ell_sample(&pa, tor->v, a, b, points_per_ellipse);
+    rebuild_vect(point_arrays, l, pa, 1);
+    bu_free(pa, "pnts");
+
 
     /* Draw parallel circles to show the primitive's most extreme points along
      * +h/-h.
      */
     points_per_ellipse = tor_ellipse_points(tor_a, tor_b, point_spacing);
     VADD2(center, tor->v, tor_h);
-    l->pcnts[2] = bg_ell_sample(&l->parrays[2], center, tor_a, tor_b, points_per_ellipse);
+    l->pcnts[2] = bg_ell_sample(&pa, center, tor_a, tor_b, points_per_ellipse);
+    rebuild_vect(point_arrays, l, pa, 2);
+    bu_free(pa, "pnts");
+
 
     VJOIN1(center, tor->v, -1.0, tor_h);
-    l->pcnts[3] = bg_ell_sample(&l->parrays[3], center, tor_a, tor_b, points_per_ellipse);
+    l->pcnts[3] = bg_ell_sample(&pa, center, tor_a, tor_b, points_per_ellipse);
+    rebuild_vect(point_arrays, l, pa, 3);
+    bu_free(pa, "pnts");
+
 
     /* draw circular radial cross sections */
     VMOVE(b, tor_h);
@@ -158,7 +226,9 @@ bg_tor_lod_gen(struct bv_scene_obj *s, struct bg_torus *tor, const struct bview 
 	VUNITIZE(a);
 	VSCALE(a, a, mag_h);
 
-	l->pcnts[i+4] = bg_ell_sample(&l->parrays[i+4], center, a, b, points_per_ellipse);
+	l->pcnts[i+4] = bg_ell_sample(&pa, center, a, b, points_per_ellipse);
+	rebuild_vect(point_arrays, l, pa, i+4);
+	bu_free(pa, "pnts");
 
 	radian += radian_step;
     }
@@ -166,11 +236,43 @@ bg_tor_lod_gen(struct bv_scene_obj *s, struct bg_torus *tor, const struct bview 
     return 0;
 }
 
+
+int
+PolyLines::update(struct bview *v)
+{
+    if (!l || !gdata || !data_type)
+	return 0;
+
+    switch (data_type) {
+	case ID_TOR:
+	    {
+		struct bg_torus *t = (struct bg_torus *)gdata;
+		BG_TOR_CK_MAGIC(t);
+		return torus_update(t, v, 1);
+	    }
+	default:
+	    return 0;
+    }
+
+    return 0;
+}
+
 extern "C" struct bv_polyline_lod *
-bg_polyline_lod_create()
+bg_polyline_lod_create(struct bv_scene_obj *s, void *gd, unsigned int type)
 {
     struct bv_polyline_lod *lod;
     BU_GET(lod, struct bv_polyline_lod);
+    BU_GET(lod->i, struct bg_polyline_lod_internal);
+    lod->s = s;
+    lod->parrays = NULL;
+    lod->pcnts = NULL;
+    ((struct bg_polyline_lod_internal *)lod->i)->i = new PolyLines(lod, gd, type);
+
+    // Stash the polyline info
+    lod->s->draw_data = (void *)lod;
+    // Mark the object as a CSG LoD so the drawing routine knows to handle it differently
+    lod->s->s_type_flags |= BV_CSG2_LOD;
+
     return lod;
 }
 
@@ -180,25 +282,8 @@ bg_polyline_lod_destroy(struct bv_polyline_lod *l)
     if (!l)
 	return;
 
-    // Unlike meshes (at least for the moment) non libbg routines are
-    // generating the info, so the primary memory is allocated elsewhere rather
-    // than being pointers to internals and we directly free the public
-    // structures when cleaning up.
-    //
-    // In the longer term we may shift the generation logic down and use an
-    // internal, which is why the bv_polyline_lod structure has provisions for
-    // such containers.  We'd need to determine if we can do so without relying
-    // on librt data types, and for now we need an incremental approach, so
-    // keeping it simple...
-    if (l->array_cnt && l->parrays) {
-	for (int i = 0; i < l->array_cnt; i++) {
-	    bu_free(l->parrays[i], "point array");
-	}
-	bu_free(l->parrays, "point arrays array");
-    }
-    if (l->pcnts)
-	bu_free(l->pcnts, "point counts array");
-
+    delete ((struct bg_polyline_lod_internal *)l->i)->i;
+    BU_PUT(l->i, struct bg_polyline_lod_internal);
     BU_PUT(l, struct bv_polyline_lod);
 }
 

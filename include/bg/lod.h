@@ -206,7 +206,7 @@ bg_mesh_lod_detail_free_clbk(struct bv_mesh_lod *lod, int (*clbk)(struct bv_mesh
 
 
 BG_EXPORT struct bv_polyline_lod *
-bg_polyline_lod_create();
+bg_polyline_lod_create(struct bv_scene_obj *s, void *gd, unsigned int type);
 BG_EXPORT void
 bg_polyline_lod_destroy(struct bv_polyline_lod *l);
 
