@@ -36,8 +36,9 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu/cv.h"
 #include "vmath.h"
+#include "bu/cv.h"
+#include "bg/sample.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -2009,7 +2010,7 @@ rt_tgc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     tgc_mag_d = MAGNITUDE(tip->d);
     avg_diameter = tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d;
     avg_diameter /= 2.0;
-    point_spacing = solid_point_spacing(v, avg_diameter);
+    point_spacing = bg_sample_spacing(v, avg_diameter);
 
     points_per_ellipse = tgc_points_per_ellipse(ip, point_spacing);
 

@@ -9,6 +9,7 @@ set(bg_headers
   plane.h
   polygon.h
   polygon_types.h
+  sample.h
   sat.h
   spsr.h
   tri_pt.h

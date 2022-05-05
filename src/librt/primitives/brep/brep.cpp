@@ -46,6 +46,7 @@
 #include "bu/cv.h"
 #include "bu/opt.h"
 #include "bu/time.h"
+#include "bg/sample.h"
 #include "brep.h"
 #include "bn/dvec.h"
 
@@ -1897,7 +1898,7 @@ rt_brep_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const st
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
-    fastf_t point_spacing = solid_point_spacing(v, brep_est_avg_curve_len(bi) * M_2_PI * 2.0);
+    fastf_t point_spacing = bg_sample_spacing(v, brep_est_avg_curve_len(bi) * M_2_PI * 2.0);
 
     ON_Brep* brep = bi->brep;
     int gridres = 10;

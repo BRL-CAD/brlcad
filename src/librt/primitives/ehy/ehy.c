@@ -154,8 +154,9 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu/cv.h"
 #include "vmath.h"
+#include "bu/cv.h"
+#include "bg/sample.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -875,7 +876,7 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     struct rt_pnt_node *pts_r1, *pts_r2, *node, *node1, *node2;
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
-    fastf_t point_spacing = solid_point_spacing(v, s_size);
+    fastf_t point_spacing = bg_sample_spacing(v, s_size);
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);

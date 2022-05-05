@@ -151,8 +151,9 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu/cv.h"
 #include "vmath.h"
+#include "bu/cv.h"
+#include "bg/sample.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -843,7 +844,7 @@ rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	return -2;
     }
 
-    fastf_t point_spacing = solid_point_spacing(v, s_size);
+    fastf_t point_spacing = bg_sample_spacing(v, s_size);
 
     num_curve_points = epa_curve_points(epa, point_spacing);
 

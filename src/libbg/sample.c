@@ -1,7 +1,7 @@
-/*                  V I E W . C
+/*                        S A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,19 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/view.c
+/** @file sample.c
  *
- * Information routines to support adaptive plotting.
+ * Brief description
  *
  */
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <string.h>
-
-#include "bv.h"
-#include "librt_private.h"
+#include "vmath.h"
+#include "bu/malloc.h"
+#include "bg/sample.h"
 
 static fastf_t
 view_avg_size(const struct bview *gvp)
@@ -43,7 +41,7 @@ view_avg_size(const struct bview *gvp)
     return (x_size + y_size) / 2.0;
 }
 
-fastf_t
+static fastf_t
 view_avg_sample_spacing(const struct bview *gvp)
 {
     fastf_t avg_view_size, avg_view_samples;
@@ -55,15 +53,15 @@ view_avg_sample_spacing(const struct bview *gvp)
 }
 
 fastf_t
-solid_point_spacing(const struct bview *gvp, fastf_t solid_width)
+bg_sample_spacing(const struct bview *v, fastf_t w)
 {
     fastf_t radius, avg_view_size, avg_sample_spacing;
     point2d_t p1, p2;
 
-    if (solid_width < SQRT_SMALL_FASTF)
-	solid_width = SQRT_SMALL_FASTF;
+    if (w < SQRT_SMALL_FASTF)
+	w = SQRT_SMALL_FASTF;
 
-    avg_view_size = view_avg_size(gvp);
+    avg_view_size = view_avg_size(v);
 
     /* Now, for the sake of simplicity we're going to make
      * several assumptions:
@@ -71,8 +69,8 @@ solid_point_spacing(const struct bview *gvp, fastf_t solid_width)
      *  - a circle with a diameter half the width of the solid is a
      *    good proxy for the kind of curve that will be plotted
      */
-    radius = solid_width / 4.0;
-    if (avg_view_size < solid_width) {
+    radius = w / 4.0;
+    if (avg_view_size < w) {
 	/* If the solid is larger than the view, it is
 	 * probably only partly visible and likely isn't the
 	 * primary focus of the user. We'll cap the point
@@ -110,7 +108,7 @@ solid_point_spacing(const struct bview *gvp, fastf_t solid_width)
     p1[Y] = radius;
     p1[X] = 0.0;
 
-    avg_sample_spacing = view_avg_sample_spacing(gvp);
+    avg_sample_spacing = view_avg_sample_spacing(v);
     if (avg_sample_spacing < radius) {
 	p2[Y] = radius - (avg_sample_spacing);
     } else {
@@ -122,6 +120,55 @@ solid_point_spacing(const struct bview *gvp, fastf_t solid_width)
     p2[X] = sqrt((radius * radius) - (p2[Y] * p2[Y]));
 
     return DIST_PNT2_PNT2(p1, p2);
+}
+
+
+
+void
+bg_ell_radian_pnt(
+        point_t result,
+        const vect_t center,
+        const vect_t axis_a,
+        const vect_t axis_b,
+        fastf_t radian)
+{
+    fastf_t cos_rad, sin_rad;
+
+    cos_rad = cos(radian);
+    sin_rad = sin(radian);
+
+    VJOIN2(result, center, cos_rad, axis_a, sin_rad, axis_b);
+}
+
+int
+bg_ell_sample(
+        point_t **pnts,
+        const vect_t center,
+        const vect_t axis_a,
+        const vect_t axis_b,
+        int num_points)
+{
+
+    if (!pnts || num_points < 0)
+	return -1;
+
+    if (!num_points)
+	return 0;
+
+    (*pnts) = (point_t *)bu_calloc(num_points, sizeof(point_t), "points array");
+    if (!(*pnts))
+	return -1;
+
+    fastf_t radian = 0;
+    fastf_t radian_step = M_2PI / num_points;
+    point_t p;
+    for (int i = 0; i < num_points; ++i) {
+	bg_ell_radian_pnt(p, center, axis_a, axis_b, radian);
+	VMOVE((*pnts)[i], p);
+        radian += radian_step;
+    }
+
+    return num_points;
 }
 
 

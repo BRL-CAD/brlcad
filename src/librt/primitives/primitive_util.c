@@ -27,6 +27,7 @@
 #include "bu/malloc.h"
 #include "bu/opt.h"
 #include "bu/app.h"
+#include "bg/sample.h"
 #include "../librt_private.h"
 
 
@@ -113,7 +114,7 @@ primitive_diagonal_samples(
     ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, tol);
     primitive_diagonal_mm = DIST_PNT_PNT(bbox_min, bbox_max);
 
-    fastf_t point_spacing = solid_point_spacing(v, s_size);
+    fastf_t point_spacing = bg_sample_spacing(v, s_size);
     samples_per_mm = 1.0 / point_spacing;
     diagonal_samples = samples_per_mm * primitive_diagonal_mm;
 

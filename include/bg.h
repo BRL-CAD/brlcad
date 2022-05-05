@@ -56,6 +56,7 @@
 #include "bg/obr.h"
 #include "bg/plane.h"
 #include "bg/polygon.h"
+#include "bg/sample.h"
 #include "bg/sat.h"
 #include "bg/tri_pt.h"
 #include "bg/tri_ray.h"

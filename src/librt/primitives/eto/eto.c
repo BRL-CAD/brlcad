@@ -32,8 +32,9 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu/cv.h"
 #include "vmath.h"
+#include "bu/cv.h"
+#include "bg/sample.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -924,7 +925,7 @@ rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	return -1;
     }
 
-    fastf_t point_spacing = solid_point_spacing(v, s_size);
+    fastf_t point_spacing = bg_sample_spacing(v, s_size);
 
     VMOVE(eto_V, eto->eto_V);
 
