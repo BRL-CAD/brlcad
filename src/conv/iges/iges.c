@@ -1920,7 +1920,7 @@ tor_to_iges(struct rt_db_internal *ip,
 	    char *name,
 	    FILE *fp_dir, FILE *fp_param)
 {
-    struct rt_tor_internal *tor;
+    struct bg_torus *tor;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int name_de;
@@ -1929,9 +1929,9 @@ tor_to_iges(struct rt_db_internal *ip,
     if (ip->idb_type != ID_TOR)
 	bu_log("tor_to_iges called for non-torus (type=%d)\n", ip->idb_type);
 
-    tor = (struct rt_tor_internal *)ip->idb_ptr;
+    tor = (struct bg_torus *)ip->idb_ptr;
 
-    RT_TOR_CK_MAGIC(tor);
+    BG_TOR_CK_MAGIC(tor);
 
     /* initialize directory entry */
     for (i = 0; i < 21; i++)

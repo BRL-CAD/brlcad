@@ -112,11 +112,11 @@ Torus_Brep( const ON_Torus& torus)
 extern "C" void
 rt_tor_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    struct rt_tor_internal *tip;
+    struct bg_torus *tip;
 
     RT_CK_DB_INTERNAL(ip);
-    tip = (struct rt_tor_internal *)ip->idb_ptr;
-    RT_TOR_CK_MAGIC(tip);
+    tip = (struct bg_torus *)ip->idb_ptr;
+    BG_TOR_CK_MAGIC(tip);
 
     ON_3dPoint origin(tip->v);
     ON_3dVector normal(tip->h);

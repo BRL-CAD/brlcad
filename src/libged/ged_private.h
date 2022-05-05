@@ -498,7 +498,7 @@ GED_EXPORT extern int _ged_scale_tgc(struct ged *gedp,
 
 /* defined in scale_tor.c */
 GED_EXPORT extern int _ged_scale_tor(struct ged *gedp,
-			  struct rt_tor_internal *tor,
+			  struct bg_torus *tor,
 			  const char *attribute,
 			  fastf_t sf,
 			  int rflag);

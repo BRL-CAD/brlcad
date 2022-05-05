@@ -227,9 +227,9 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    }
 	case ID_TOR:
 	    {
-		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)ip->idb_ptr;
-		RT_TOR_CK_MAGIC(tor);
+		struct bg_torus *tor =
+		    (struct bg_torus *)ip->idb_ptr;
+		BG_TOR_CK_MAGIC(tor);
 
 		VMOVE(mpt, tor->v);
 		break;

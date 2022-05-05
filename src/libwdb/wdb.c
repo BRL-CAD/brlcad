@@ -333,10 +333,10 @@ mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t
 int
 mk_tor(struct rt_wdb *wdbp, const char *name, const point_t center, const vect_t inorm, double r1, double r2)
 {
-    struct rt_tor_internal *tor;
+    struct bg_torus *tor;
 
-    BU_ALLOC(tor, struct rt_tor_internal);
-    tor->magic = RT_TOR_INTERNAL_MAGIC;
+    BU_ALLOC(tor, struct bg_torus);
+    tor->magic = BG_TOR_MAGIC;
     VMOVE(tor->v, center);
     VMOVE(tor->h, inorm);
     tor->r_a = r1;

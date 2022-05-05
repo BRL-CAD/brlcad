@@ -144,7 +144,7 @@ ged_pscale_core(struct ged *gedp, int argc, const char *argv[])
 	    ret = _ged_scale_tgc(gedp, (struct rt_tgc_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_TOR:
-	    ret = _ged_scale_tor(gedp, (struct rt_tor_internal *)intern.idb_ptr, argv[2], sf, rflag);
+	    ret = _ged_scale_tor(gedp, (struct bg_torus *)intern.idb_ptr, argv[2], sf, rflag);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_PIPE:
 	    ret = _ged_scale_pipe(gedp, (struct rt_pipe_internal *)intern.idb_ptr, argv[2], sf, rflag);

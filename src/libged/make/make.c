@@ -54,7 +54,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_ars_internal *ars_ip;
     struct rt_tgc_internal *tgc_ip;
     struct rt_ell_internal *ell_ip;
-    struct rt_tor_internal *tor_ip;
+    struct bg_torus *tor_ip;
     struct rt_grip_internal *grp_ip;
     struct rt_half_internal *half_ip;
     struct rt_rpc_internal *rpc_ip;
@@ -397,9 +397,9 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TOR;
 	internal.idb_meth = &OBJ[ID_TOR];
-	BU_ALLOC(internal.idb_ptr, struct rt_tor_internal);
-	tor_ip = (struct rt_tor_internal *)internal.idb_ptr;
-	tor_ip->magic = RT_TOR_INTERNAL_MAGIC;
+	BU_ALLOC(internal.idb_ptr, struct bg_torus);
+	tor_ip = (struct bg_torus *)internal.idb_ptr;
+	tor_ip->magic = BG_TOR_MAGIC;
 	VSET(tor_ip->v, origin[X], origin[Y], origin[Z]);
 	VSET(tor_ip->h, 1.0, 0.0, 0.0);	/* unit normal */
 	tor_ip->r_h = 0.1*scale;

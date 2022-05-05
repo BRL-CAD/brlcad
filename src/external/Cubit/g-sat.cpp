@@ -530,7 +530,7 @@ primitive_func(db_tree_state *tsp,
 		    CubitVector y_axis(0.0, 1.0, 0.0);
 		    CubitVector z_axis(0.0, 0.0, 1.0);
 
-		    rt_tor_internal *tor = (rt_tor_internal *)ip->idb_ptr;
+		    bg_torus *tor = (bg_torus *)ip->idb_ptr;
 
 		    if (debug&DEBUG_NAMES) {
 			printf("Write this torus (name=%s) in your format:\n", dp->d_namep);

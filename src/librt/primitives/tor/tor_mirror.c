@@ -36,7 +36,7 @@
 int
 rt_tor_mirror(struct rt_db_internal *ip, register const plane_t plane)
 {
-    struct rt_tor_internal *tor;
+    struct bg_torus *tor;
 
     mat_t mirmat;
     mat_t rmat;
@@ -56,8 +56,8 @@ rt_tor_mirror(struct rt_db_internal *ip, register const plane_t plane)
 
     RT_CK_DB_INTERNAL(ip);
 
-    tor = (struct rt_tor_internal *)ip->idb_ptr;
-    RT_TOR_CK_MAGIC(tor);
+    tor = (struct bg_torus *)ip->idb_ptr;
+    BG_TOR_CK_MAGIC(tor);
 
     MAT_IDN(mirmat);
 

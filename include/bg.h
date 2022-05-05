@@ -52,6 +52,7 @@
 #include "bg/defines.h"
 #include "bg/chull.h"
 #include "bg/clip.h"
+#include "bg/geom.h"
 #include "bg/lseg.h"
 #include "bg/obr.h"
 #include "bg/plane.h"

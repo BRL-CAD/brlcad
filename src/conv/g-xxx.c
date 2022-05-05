@@ -234,7 +234,7 @@ primitive_func(struct db_tree_state *tsp,
 	    /* most commonly used primitives */
 	    case ID_TOR:	/* torus */
 		{
-		    struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
+		    struct bg_torus *tor = (struct bg_torus *)ip->idb_ptr;
 
 		    printf("Write this torus (name=%s) in your format:\n", dp->d_namep);
 		    printf("\tV=(%g %g %g)\n", V3ARGS(tor->v));

@@ -1795,14 +1795,14 @@ static int
 tor_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 {
     int i;
-    struct rt_tor_internal *tip;
+    struct bg_torus *tip;
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_TOR;
     intern->idb_meth = &OBJ[ID_TOR];
-    BU_ALLOC(intern->idb_ptr, struct rt_tor_internal);
-    tip = (struct rt_tor_internal *)intern->idb_ptr;
-    tip->magic = RT_TOR_INTERNAL_MAGIC;
+    BU_ALLOC(intern->idb_ptr, struct bg_torus);
+    tip = (struct bg_torus *)intern->idb_ptr;
+    tip->magic = BG_TOR_MAGIC;
 
     for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	tip->v[i] = atof(cmd_argvs[3+i]) * gedp->dbip->dbi_local2base;

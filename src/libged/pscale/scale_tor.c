@@ -35,11 +35,11 @@
 
 
 int
-_ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, const char *attribute, fastf_t sf, int rflag)
+_ged_scale_tor(struct ged *gedp, struct bg_torus *tor, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t newrad;
 
-    RT_TOR_CK_MAGIC(tor);
+    BG_TOR_CK_MAGIC(tor);
 
     switch (attribute[0]) {
 	case 'a':

@@ -42,6 +42,7 @@
 #include "bu/mapped_file.h"
 #include "bu/vls.h"
 #include "vmath.h"
+#include "bg/geom.h"
 #include "rt/defines.h"
 
 #include "../nmg.h" /* (temporarily?) needed for knot_vector */
@@ -51,25 +52,6 @@
 __BEGIN_DECLS
 
 #define NAMELEN 16	/* NAMESIZE from db.h (can't call it NAMESIZE!!!!!) */
-
-/** @addtogroup rt_tor */
-/** @{ */
-/*
- * ID_TOR
- */
-struct rt_tor_internal {
-    uint32_t magic;
-    point_t v;		/**< @brief center point */
-    vect_t h;		/**< @brief normal, unit length */
-    fastf_t r_h;	/**< @brief radius in H direction (r2) */
-    fastf_t r_a;	/**< @brief radius in A direction (r1) */
-    /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
-    vect_t a;		/**< @brief r_a length */
-    vect_t b;		/**< @brief r_b length */
-    fastf_t r_b;	/**< @brief radius in B direction (typ == r_a) */
-};
-#define RT_TOR_CK_MAGIC(_p) BU_CKMAG(_p, RT_TOR_INTERNAL_MAGIC, "rt_tor_internal")
-/** @} */
 
 /** @addtogroup rt_tgc */
 /** @{ */

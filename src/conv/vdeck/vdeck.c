@@ -663,7 +663,7 @@ gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct
     /* Process appropriate solid type.				*/
     switch (ip->idb_type) {
 	case ID_TOR:
-	    addtor(&sol, (struct rt_tor_internal *)ip->idb_ptr,
+	    addtor(&sol, (struct bg_torus *)ip->idb_ptr,
 		    dp->d_namep, stp->st_bit+delsol);
 	    break;
 	case ID_ARB8:
@@ -744,10 +744,10 @@ swap_dbl(double *d1, double *d2)
  * Process torus.
  */
 void
-addtor(struct bu_vls *v, struct rt_tor_internal *gp, char *name, int num)
+addtor(struct bu_vls *v, struct bg_torus *gp, char *name, int num)
 {
     BU_CK_VLS(v);
-    RT_TOR_CK_MAGIC(gp);
+    BG_TOR_CK_MAGIC(gp);
 
     /* V, N, r1, r2 */
     vls_itoa(v, num, 5);

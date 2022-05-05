@@ -2164,9 +2164,9 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 	    }
 	case ID_TOR:
 	    {
-		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)ip->idb_ptr;
-		RT_TOR_CK_MAGIC(tor);
+		struct bg_torus *tor =
+		    (struct bg_torus *)ip->idb_ptr;
+		BG_TOR_CK_MAGIC(tor);
 
 		if (BU_STR_EQUAL(cp, "V")) {
 		    VMOVE(mpt, tor->v);
@@ -3052,10 +3052,10 @@ pscale(void)
 	case MENU_TOR_R1:
 	    /* scale radius 1 of TOR */
 	    {
-		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)es_int.idb_ptr;
+		struct bg_torus *tor =
+		    (struct bg_torus *)es_int.idb_ptr;
 		fastf_t newrad;
-		RT_TOR_CK_MAGIC(tor);
+		BG_TOR_CK_MAGIC(tor);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
@@ -3072,10 +3072,10 @@ pscale(void)
 	case MENU_TOR_R2:
 	    /* scale radius 2 of TOR */
 	    {
-		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)es_int.idb_ptr;
+		struct bg_torus *tor =
+		    (struct bg_torus *)es_int.idb_ptr;
 		fastf_t newrad;
-		RT_TOR_CK_MAGIC(tor);
+		BG_TOR_CK_MAGIC(tor);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
@@ -8175,11 +8175,11 @@ label_edited_solid(
 
 	case ID_TOR:
 	    {
-		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)es_int.idb_ptr;
+		struct bg_torus *tor =
+		    (struct bg_torus *)es_int.idb_ptr;
 		fastf_t r3, r4;
 		vect_t adir;
-		RT_TOR_CK_MAGIC(tor);
+		BG_TOR_CK_MAGIC(tor);
 
 		bn_vec_ortho(adir, tor->h);
 
