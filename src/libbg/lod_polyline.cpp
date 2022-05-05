@@ -75,6 +75,26 @@ bbox_curve_count(
     return avg_len / curve_spacing;
 }
 
+// We need a local copy of the geometry object data, so we
+// don't have to persist the rt_db_internals which are (usually)
+// the original source of this information
+void *
+obj_data_cpy(void *gd, unsigned int type)
+{
+    switch (type) {
+	case ID_TOR:
+	    {
+		struct bg_torus *nt;
+		struct bg_torus *st = (struct bg_torus *)gd;
+		BG_TOR_CK_MAGIC(st);
+		BU_GET(nt, struct bg_torus);
+		*nt = *st;
+		return nt;
+	    }
+	default:
+	    return NULL;
+    }
+}
 
 class PolyLines;
 struct bg_polyline_lod_internal {
@@ -83,11 +103,13 @@ struct bg_polyline_lod_internal {
 
 class PolyLines {
     public:
-	PolyLines(struct bv_polyline_lod *lod, void *gd, unsigned int type);
+	PolyLines(void *gd, unsigned int type);
 	point_t bbmin, bbmax;
 	struct bv_polyline_lod *l;
 
 	int update(struct bview *v); // return 1 if changed, else 0
+
+	bool valid = false;
 
     private:
 
@@ -101,11 +123,12 @@ class PolyLines {
 	unsigned int data_type = 0;
 };
 
-PolyLines::PolyLines(struct bv_polyline_lod *lod, void *gd, unsigned int type)
+PolyLines::PolyLines(void *gd, unsigned int type)
 {
-    l = lod;
-    gdata = gd;
     data_type = type;
+    gdata = obj_data_cpy(gd, type);
+    if (gdata)
+	valid = true;
 }
 
 static int
@@ -125,6 +148,9 @@ tor_ellipse_points(
 int
 PolyLines::torus_update(struct bg_torus *tor, struct bview *v, fastf_t s_size)
 {
+    if (!l || !tor || !v)
+	return 0;
+
     vect_t a, b, tor_a, tor_b, tor_h, center;
     fastf_t mag_a, mag_b, mag_h;
     int points_per_ellipse;
@@ -154,6 +180,7 @@ PolyLines::torus_update(struct bg_torus *tor, struct bview *v, fastf_t s_size)
 	point_arrays.clear();
 	point_arrays.shrink_to_fit();
 	point_arrays.reserve(1);
+	point_arrays.push_back(std::vector<fastf_t>());
 	point_arrays[0].reserve(3);
 	for (int i = 0; i < 3; i++)
 	    point_arrays[0].push_back(tor->v[i]);
@@ -179,6 +206,9 @@ PolyLines::torus_update(struct bg_torus *tor, struct bview *v, fastf_t s_size)
     }
     point_arrays.shrink_to_fit();
     point_arrays.reserve(l->array_cnt);
+    for (size_t i = point_arrays.size(); i < (size_t)l->array_cnt; i++) {
+	point_arrays.push_back(std::vector<fastf_t>());
+    }
 
     // Set up the public facing containers
     l->parrays = (point_t **)bu_realloc(l->parrays, l->array_cnt * sizeof(point_t *), "points array alloc");
@@ -240,7 +270,7 @@ PolyLines::torus_update(struct bg_torus *tor, struct bview *v, fastf_t s_size)
 int
 PolyLines::update(struct bview *v)
 {
-    if (!l || !gdata || !data_type)
+    if (!gdata || !data_type)
 	return 0;
 
     switch (data_type) {
@@ -258,22 +288,22 @@ PolyLines::update(struct bview *v)
 }
 
 extern "C" struct bv_polyline_lod *
-bg_polyline_lod_create(struct bv_scene_obj *s, void *gd, unsigned int type)
+bg_polyline_lod_create(void *gd, unsigned int type)
 {
-    struct bv_polyline_lod *lod;
-    BU_GET(lod, struct bv_polyline_lod);
-    BU_GET(lod->i, struct bg_polyline_lod_internal);
-    lod->s = s;
-    lod->parrays = NULL;
-    lod->pcnts = NULL;
-    ((struct bg_polyline_lod_internal *)lod->i)->i = new PolyLines(lod, gd, type);
+    PolyLines *pl = new PolyLines(gd, type);
+    if (!pl->valid) {
+	delete pl;
+	return NULL;
+    }
 
-    // Stash the polyline info
-    lod->s->draw_data = (void *)lod;
-    // Mark the object as a CSG LoD so the drawing routine knows to handle it differently
-    lod->s->s_type_flags |= BV_CSG2_LOD;
+    BU_GET(pl->l, struct bv_polyline_lod);
+    BU_GET(pl->l->i, struct bg_polyline_lod_internal);
+    pl->l->parrays = NULL;
+    pl->l->pcnts = NULL;
+    struct bg_polyline_lod_internal *i = (struct bg_polyline_lod_internal *)pl->l->i;
+    i->i = pl;
 
-    return lod;
+    return pl->l;
 }
 
 extern "C" void
@@ -287,6 +317,13 @@ bg_polyline_lod_destroy(struct bv_polyline_lod *l)
     BU_PUT(l, struct bv_polyline_lod);
 }
 
+int
+bg_polyline_lod_view(struct bv_scene_obj *s, struct bview *v)
+{
+    struct bv_polyline_lod *l = (struct bv_polyline_lod *)s->draw_data;
+    struct bg_polyline_lod_internal *i = (struct bg_polyline_lod_internal *)l->i;
+    return i->i->update(v);
+}
 
 // Local Variables:
 // tab-width: 8

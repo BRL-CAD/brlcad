@@ -170,6 +170,46 @@ draw_free_data(struct bv_scene_obj *s)
     s->s_i_data = NULL;
 }
 
+static int
+csg_lod_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
+{
+    /* Validate */
+    if (!s || !v)
+	return 0;
+
+    // If the object is not visible in the scene, don't change the data.  This
+    // check is useful in orthographic camera mode, where we zoom in on a
+    // narrow subset of the model and far away objects are still rendered in
+    // full detail.  If we have a perspective matrix active don't make this
+    // check, since far away objects outside the view obb will be visible.
+    if (!(v->gv_perspective > SMALL_FASTF) && !bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3))
+	return 0;
+
+    return bg_polyline_lod_view(s, v);
+}
+
+static void
+csg_lod_free_data(struct bv_scene_obj *s)
+{
+    /* Validate */
+    if (!s)
+	return;
+
+    /* free drawing info */
+    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+    if (!d)
+	return;
+    db_free_full_path(&d->fp);
+    BU_PUT(d, struct draw_update_data_t);
+    s->s_i_data = NULL;
+
+    struct bv_polyline_lod *l = (struct bv_polyline_lod *)s->draw_data;
+    bg_polyline_lod_destroy(l);
+}
+
+
+
+
 struct ged_full_detail_clbk_data {
     struct db_i *dbip;
     struct directory *dp;
@@ -344,6 +384,45 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	    // generated once rather than per-view.
 	    s->current = 1;
 	}
+	return;
+    }
+
+    // If we're adaptive, first see if we can create a new style LoD object.
+    struct bv_polyline_lod *l = bg_polyline_lod_create(ip->idb_ptr, ip->idb_minor_type);
+    if (l) {
+	struct bv_scene_obj *vo = bv_obj_get_child(s);
+	bv_set_view_obj(s, v, vo);
+
+	// Associate the scene object with the polyline info
+	l->s = vo;
+	// Associate the polyline info with s
+	vo->draw_data = (void *)l;
+	// Mark the object as a CSG LoD so the drawing routine knows to handle it differently
+	vo->s_type_flags |= BV_CSG2_LOD;
+
+	// Make a copy of the draw info for vo.
+	struct draw_update_data_t *ld;
+	BU_GET(ld, struct draw_update_data_t);
+	db_full_path_init(&ld->fp);
+	db_dup_full_path(&ld->fp, &d->fp);
+	ld->dbip = d->dbip;
+	ld->tol = d->tol;
+	ld->ttol = d->ttol;
+	ld->mesh_c = d->mesh_c;
+	ld->res = d->res;
+	vo->s_i_data= (void *)ld;
+
+	vo->s_update_callback = &csg_lod_wireframe_update;
+	vo->s_free_callback = &csg_lod_free_data;
+
+	// Most of the view properties (color, size, etc.) are inherited from
+	// the parent
+	bv_obj_sync(vo, s);
+
+	// Make the names unique
+	bu_vls_sprintf(&vo->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_name));
+	bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
+
 	return;
     }
 
