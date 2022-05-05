@@ -439,6 +439,112 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
     return BRLCAD_OK;
 }
 
+static int
+gl_csg2_lod(struct dm *dmp, struct bv_scene_obj *s)
+{
+    int mode = s->s_os.s_dmode;
+    mat_t save_mat, draw_mat;
+
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    static float black[4] = {0.0, 0.0, 0.0, 0.0};
+    GLfloat originalLineWidth, originalPointSize;
+
+    if (mode)
+	return BRLCAD_ERROR;
+
+    glGetFloatv(GL_POINT_SIZE, &originalPointSize);
+    glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
+
+    gl_debug_print(dmp, "gl_csg_lod", dmp->i->dm_debugLevel);
+
+    // If the dlist is stale, clear it
+    if (s->s_dlist_stale) {
+	glDeleteLists(s->s_dlist, 1);
+	s->s_dlist = 0;
+    }
+
+    // If we have a dlist in the correct mode, use it
+    if (s->s_dlist) {
+	if (mode == s->s_dlist_mode) {
+	    //bu_log("use dlist %d\n", s->s_dlist);
+	    MAT_COPY(save_mat, s->s_v->gv_model2view);
+	    bn_mat_mul(draw_mat, s->s_v->gv_model2view, s->s_mat);
+	    dm_loadmatrix(dmp, draw_mat, 0);
+	    glCallList(s->s_dlist);
+	    dm_loadmatrix(dmp, save_mat, 0);
+	    glLineWidth(originalLineWidth);
+	    return BRLCAD_OK;
+	} else {
+	    // Display list mode is incorrect (wireframe when we
+	    // want shaded, or vice versa.)
+	    glDeleteLists(s->s_dlist, 1);
+	    s->s_dlist = 0;
+	}
+    }
+
+    // Figure out if we need a new dlist (and if so whether this vlist is a
+    // candidate.)  OpenGL Display Lists are faster than immediate drawing when
+    // we can use them, but they require more memory usage while they are being
+    // generated.  If we're tight on memory and the vlist is large, accept the
+    // slower drawing to avoid memory stress - otherwise, use display lists
+    int ec;
+    unsigned long long avail_mem = 0.5*bu_mem(BU_MEM_AVAIL, &ec);
+    unsigned long long size_est = (unsigned long long)(bu_list_len(&s->s_vlist)*sizeof(point_t));
+    bool gen_dlist = false;
+    if (!s->s_dlist && size_est < avail_mem) {
+	gen_dlist = true;
+	s->s_dlist = glGenLists(1);
+	s->s_dlist_mode = mode;
+	bu_log("gen_dlist: %d\n", s->s_dlist);
+	s->s_dlist_free_callback = &dlist_free_callback;
+	glNewList(s->s_dlist, GL_COMPILE);
+    } else {
+	bu_log("Not using dlist\n");
+    }
+
+    // Wireframe
+    if (dmp->i->dm_light) {
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+	if (dmp->i->dm_transparency)
+	    glDisable(GL_BLEND);
+    }
+
+    struct bv_polyline_lod *l = (struct bv_polyline_lod *)s->draw_data;
+    for (int i = 0; i < l->array_cnt; i++) {
+	glVertexPointer(3, GL_DOUBLE, 0, l->parrays[i]);
+	glDrawArrays(GL_LINE_STRIP, 0, l->pcnts[i]);
+    }
+
+    if (dmp->i->dm_light && dmp->i->dm_transparency)
+	glDisable(GL_BLEND);
+
+    if (gen_dlist) {
+	glEndList();
+	s->s_dlist_stale = 0;
+	if (size_est > (avail_mem * 0.01)) {
+	    // If the original data is sizable, clear it to save system memory.
+	    // The dlist has what it needs, and the LoD code will re-load info
+	    // as needed for updates.
+
+	    // TODO
+	}
+
+	MAT_COPY(save_mat, s->s_v->gv_model2view);
+	bn_mat_mul(draw_mat, s->s_v->gv_model2view, s->s_mat);
+	dm_loadmatrix(dmp, draw_mat, 0);
+	glCallList(s->s_dlist);
+	dm_loadmatrix(dmp, save_mat, 0);
+    }
+
+    glPointSize(originalPointSize);
+    glLineWidth(originalLineWidth);
+
+    return BRLCAD_OK;
+}
+
 extern "C"
 int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
 {
@@ -450,6 +556,11 @@ int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
     if (s->s_type_flags & BV_CSG_LOD) {
 	return gl_csg_lod(dmp, s);
     }
+
+    if (s->s_type_flags & BV_CSG2_LOD) {
+	return gl_csg2_lod(dmp, s);
+    }
+
 
     // "Standard" vlist object drawing
     if (bu_list_len(&s->s_vlist)) {
