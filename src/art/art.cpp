@@ -130,6 +130,9 @@
 #include "foundation/utility/autoreleaseptr.h"
 #include "foundation/utility/searchpaths.h"
 
+// appleseed header for ITileCallback - needs to be organized somewhere
+#include "renderer/kernel/rendering/itilecallback.h"
+
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -154,12 +157,14 @@
 #include "optical/defines.h"
 
 #include "brlcad_ident.h"
-
+#include "dm.h"
+#include "tile.h"
 
 struct application APP;
 struct resource* resources;
 size_t samples = 25;
 size_t light_intensity = 200.0; // make ambient light match rt
+struct fb* fbp = FB_NULL;
 
 extern "C" {
     FILE* outfp = NULL;
@@ -192,7 +197,7 @@ extern "C" {
     extern fastf_t viewsize;
     extern fastf_t aspect;
     extern fastf_t rt_perspective;
-
+    extern char* framebuffer;
     void grid_setup();
 }
 
@@ -876,6 +881,49 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     return project;
 }
 
+int fb_setup() {
+    /* Framebuffer is desired */
+    size_t xx, yy;
+    int zoom;
+
+    /* Ask for a fb big enough to hold the image, at least 512. */
+    /* This is so MGED-invoked "postage stamps" get zoomed up big
+     * enough to see.
+     */
+    xx = yy = 512;
+    if (width > xx || height > yy) {
+	xx = width;
+	yy = height;
+    }
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    fbp = fb_open(framebuffer, xx, yy);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+    if (fbp == FB_NULL) {
+	fprintf(stderr, "rt:  can't open frame buffer\n");
+	return 12;
+    }
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    /* If fb came out smaller than requested, do less work */
+    if ((size_t)fb_getwidth(fbp) < width)
+	width = fb_getwidth(fbp);
+    if ((size_t)fb_getheight(fbp) < height)
+	height = fb_getheight(fbp);
+
+    /* If the fb is lots bigger (>= 2X), zoom up & center */
+    if (width > 0 && height > 0) {
+	zoom = fb_getwidth(fbp) / width;
+	if ((size_t)fb_getheight(fbp) / height < (size_t)zoom)
+	    zoom = fb_getheight(fbp) / height;
+    }
+    else {
+	zoom = 1;
+    }
+    (void)fb_view(fbp, width / 2, height / 2,
+	zoom, zoom);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+    return 0;
+}
 
 int
 main(int argc, char **argv)
@@ -996,30 +1044,64 @@ main(int argc, char **argv)
     // Build the project.
     asf::auto_release_ptr<asr::Project> project(build_project(title_file, bu_vls_cstr(&str)));
 
-
+    if (framebuffer && !fbp) {
+	      RENDERER_LOG_INFO("FRAMEBUFFER IS ON\n");
+	      fb_setup();
+    }
+    ArtTileCallback artcallback;
     // Create the master renderer.
     asr::DefaultRendererController renderer_controller;
     asf::SearchPaths resource_search_paths;
-    std::unique_ptr<asr::MasterRenderer> renderer(
-	new asr::MasterRenderer(
-	    project.ref(),
-	    project->configurations().get_by_name("final")->get_inherited_parameters(),
-	    resource_search_paths));
+    if (framebuffer){ // if -F is called
+        std::unique_ptr<asr::MasterRenderer> renderer(
+        new asr::MasterRenderer(
+    	    project.ref(),
+    	    project->configurations().get_by_name("final")->get_inherited_parameters(),
+    	    resource_search_paths,
+                    &artcallback));
 
-    // Render the frame.
-    renderer->render(renderer_controller);
+        // Render the frame.
+        renderer->render(renderer_controller);
 
-    // Save the frame to disk using outputfile name
-    // we append output/ directory to it for sorting
-    std::string add_base = "output/" + std::string(outputfile);
-    project->get_frame()->write_main_image(add_base.c_str());
+        // Save the frame to disk using outputfile name
+        // we append output/ directory to it for sorting
+        std::string add_base = "output/" + std::string(outputfile);
+        project->get_frame()->write_main_image(add_base.c_str());
 
-    // Save the project to disk.
-    asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
+        // Save the project to disk.
+        asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
 
-    // Make sure to delete the master renderer before the project and the logger / log target.
-    renderer.reset();
+        if (fbp != FB_NULL) {
+          fb_close(fbp);
+        }
 
+        // Make sure to delete the master renderer before the project and the logger / log target.
+        renderer.reset();
+    } else { // if -F is not specified
+        std::unique_ptr<asr::MasterRenderer> renderer(
+        new asr::MasterRenderer(
+    	    project.ref(),
+    	    project->configurations().get_by_name("final")->get_inherited_parameters(),
+    	    resource_search_paths));
+
+        // Render the frame.
+        renderer->render(renderer_controller);
+
+        // Save the frame to disk using outputfile name
+        // we append output/ directory to it for sorting
+        std::string add_base = "output/" + std::string(outputfile);
+        project->get_frame()->write_main_image(add_base.c_str());
+
+        // Save the project to disk.
+        asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
+
+        if (fbp != FB_NULL) {
+          fb_close(fbp);
+        }
+
+        // Make sure to delete the master renderer before the project and the logger / log target.
+        renderer.reset();
+    }
     // clean up resources
     bu_free(resources, "appleseed");
 

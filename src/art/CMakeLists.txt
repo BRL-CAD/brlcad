@@ -5,6 +5,8 @@ set(art_ignore_files
   art.cpp
   brlcadplugin.h
   brlcadplugin.cpp
+  tile.h
+  tile.cpp
   )
 CMAKEFILES(${art_ignore_files})
 
@@ -58,6 +60,7 @@ set(ART_SRCS
   brlcadplugin.cpp
   ../rt/opt.c
   ../rt/usage.cpp
+  tile.cpp
   )
 
 add_definitions(-DBOOST_ALL_DYN_LINK)
