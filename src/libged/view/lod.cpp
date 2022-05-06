@@ -125,21 +125,25 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->adaptive_plot_csg);
 	    return BRLCAD_OK;
 	}
-	if (BU_STR_EQUAL(argv[1], "1") && !gvp->gv_s->adaptive_plot_csg) {
-	    gvp->gv_s->adaptive_plot_csg = 1;
-	    int rac = 1;
-	    const char *rav[2] = {"redraw", NULL};
-	    ged_exec(gedp, rac, (const char **)rav);
+	if (BU_STR_EQUAL(argv[1], "1")) {
+	    if (!gvp->gv_s->adaptive_plot_csg) {
+		gvp->gv_s->adaptive_plot_csg = 1;
+		int rac = 1;
+		const char *rav[2] = {"redraw", NULL};
+		ged_exec(gedp, rac, (const char **)rav);
+	    }
 	    return BRLCAD_OK;
 	}
-	if (BU_STR_EQUAL(argv[1], "0") && gvp->gv_s->adaptive_plot_csg) {
-	    gvp->gv_s->adaptive_plot_csg = 0;
-	    int rac = 1;
-	    const char *rav[2] = {"redraw", NULL};
-	    ged_exec(gedp, rac, (const char **)rav);
+	if (BU_STR_EQUAL(argv[1], "0")) {
+	    if (gvp->gv_s->adaptive_plot_csg) {
+		gvp->gv_s->adaptive_plot_csg = 0;
+		int rac = 1;
+		const char *rav[2] = {"redraw", NULL};
+		ged_exec(gedp, rac, (const char **)rav);
+	    }
 	    return BRLCAD_OK;
 	}
-	bu_vls_printf(gedp->ged_result_str, "Error - invalid arg: \"%s\".  Valid args are 0 or 1/n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "Error - invalid arg: \"%s\".  Valid args are 0 or 1", argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -148,21 +152,25 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->adaptive_plot_mesh);
 	    return BRLCAD_OK;
 	}
-	if (BU_STR_EQUAL(argv[1], "1") && !gvp->gv_s->adaptive_plot_mesh) {
-	    gvp->gv_s->adaptive_plot_mesh = 1;
-	    int rac = 1;
-	    const char *rav[2] = {"redraw", NULL};
-	    ged_exec(gedp, rac, (const char **)rav);
+	if (BU_STR_EQUAL(argv[1], "1")) {
+	    if (!gvp->gv_s->adaptive_plot_mesh) {
+		gvp->gv_s->adaptive_plot_mesh = 1;
+		int rac = 1;
+		const char *rav[2] = {"redraw", NULL};
+		ged_exec(gedp, rac, (const char **)rav);
+	    }
 	    return BRLCAD_OK;
 	}
-	if (BU_STR_EQUAL(argv[1], "0") && gvp->gv_s->adaptive_plot_mesh) {
-	    gvp->gv_s->adaptive_plot_mesh = 0;
-	    int rac = 1;
-	    const char *rav[2] = {"redraw", NULL};
-	    ged_exec(gedp, rac, (const char **)rav);
+	if (BU_STR_EQUAL(argv[1], "0")) {
+	    if (gvp->gv_s->adaptive_plot_mesh) {
+		gvp->gv_s->adaptive_plot_mesh = 0;
+		int rac = 1;
+		const char *rav[2] = {"redraw", NULL};
+		ged_exec(gedp, rac, (const char **)rav);
+	    }
 	    return BRLCAD_OK;
 	}
-	bu_vls_printf(gedp->ged_result_str, "Error - invalid arg: \"%s\".  Valid args are 0 or 1/n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "Error - invalid arg: \"%s\".  Valid args are 0 or 1", argv[1]);
 	return BRLCAD_ERROR;
     }
 
