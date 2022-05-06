@@ -556,13 +556,20 @@ void QtConsole::setCompleter(QtConsoleWidgetCompleter* completer)
 void QtConsole::insertCompletion(const QString& completion)
 {
     QTextCursor tc = this->Implementation->textCursor();
-    tc.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
+    QString text = tc.selectedText();
+    const char *txt = text.toLocal8Bit().data();
+    bu_log("txt: %s\n", txt);
+    while (text.at(0) != ' ') {
+	tc.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
+	text = tc.selectedText();
+	txt = text.toLocal8Bit().data();
+	bu_log("txt: %s\n", txt);
+    }
     if (tc.selectedText() == ".") {
 	tc.insertText(QString(".") + completion);
     } else {
-	tc = this->Implementation->textCursor();
-	tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
-	tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
+	tc.setPosition(tc.position()+1, QTextCursor::MoveAnchor);
+	tc.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
 	tc.insertText(completion);
 	this->Implementation->setTextCursor(tc);
     }
