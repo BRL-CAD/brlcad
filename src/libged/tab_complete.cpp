@@ -35,6 +35,7 @@
 #include "bu/sort.h"
 #include "bu/time.h"
 #include "bu/vls.h"
+#include "bu/str.h"
 #include "ged.h"
 
 static int
@@ -110,7 +111,7 @@ path_match(const char ***completions, struct db_i *dbip, const char *iseed)
     for (int i = 0; i < child_cnt; i++) {
 	if (strlen(children[i]->d_namep) < seed.length())
 	    continue;
-	if (!strncmp(seed.c_str(), children[i]->d_namep, seed.length()))
+	if (!bu_strncmp(seed.c_str(), children[i]->d_namep, seed.length()))
 	    matches.push_back(children[i]);
     }
     *completions = (const char **)bu_calloc(matches.size() + 1, sizeof(const char *), "av array");
@@ -161,7 +162,7 @@ obj_match(const char ***completions, struct db_i *dbip, const char *seed)
     for (size_t i = 0; i < dps.size(); i++) {
 	if (strlen(dps[i]->d_namep) < strlen(seed))
 	    continue;
-	if (!strncmp(seed, dps[i]->d_namep, strlen(seed))) {
+	if (!bu_strncmp(seed, dps[i]->d_namep, strlen(seed))) {
 	    matches.push_back(dps[i]);
 	}
     }
@@ -194,7 +195,7 @@ ged_cmd_completions(const char ***completions, const char *seed)
 	for (size_t i = 0; i < cmd_cnt; i++) {
 	    if (strlen(cl[i]) < strlen(seed))
 		continue;
-	    if (!strncmp(seed, cl[i], strlen(seed)))
+	    if (!bu_strncmp(seed, cl[i], strlen(seed)))
 		matches.push_back(cl[i]);
 	}
 
