@@ -16,6 +16,7 @@ set(mann_EN
   arced.xml
   area.xml
   arot.xml
+  art.xml
   attach.xml
   attr.xml
   autoview.xml
