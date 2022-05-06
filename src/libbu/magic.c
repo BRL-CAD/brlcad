@@ -158,8 +158,8 @@ bu_identify_magic(register uint32_t magic)
 	    return "rt_superell_internal";
 	case RT_TGC_INTERNAL_MAGIC:
 	    return "rt_tgc_internal";
-	case BG_TOR_MAGIC:
-	    return "bg_torus";
+	case RT_TOR_INTERNAL_MAGIC:
+	    return "rt_tor_internal";
 	case RT_VOL_INTERNAL_MAGIC:
 	    return "rt_vol_internal";
 	case RT_HRT_INTERNAL_MAGIC:

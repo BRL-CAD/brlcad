@@ -115,11 +115,8 @@
 #include <math.h>
 #include "bio.h"
 
-#include "vmath.h"
 #include "bu/cv.h"
-#include "bg/aabb.h"
-#include "bg/sample.h"
-#include "bg/lod.h"
+#include "vmath.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -139,10 +136,10 @@
  */
 
 const struct bu_structparse rt_tor_parse[] = {
-    {"%f", 3, "V",   bu_offsetofarray(struct bg_torus, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 3, "H",   bu_offsetofarray(struct bg_torus, h, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 1, "r_a", bu_offsetof(struct bg_torus, r_a),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 1, "r_h", bu_offsetof(struct bg_torus, r_h),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "V",   bu_offsetofarray(struct rt_tor_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "H",   bu_offsetofarray(struct rt_tor_internal, h, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "r_a", bu_offsetof(struct rt_tor_internal, r_a),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "r_h", bu_offsetof(struct rt_tor_internal, r_h),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {{'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
@@ -193,9 +190,47 @@ clt_tor_pack(struct bu_pool *pool, struct soltab *stp)
  */
 int
 rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
-    struct bg_torus *tip = (struct bg_torus *)ip->idb_ptr;
-    BG_TOR_CK_MAGIC(tip);
-    return bg_tor_bbox(min, max, tip);
+    vect_t P, w1;	/* for RPP calculation */
+    fastf_t f;
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+
+   /* Compute the bounding RPP planes for a circular torus.
+    *
+    * Given a circular torus with vertex V, vector N, and radii r1
+    * and r2.  A bounding plane with direction vector P will touch
+    * the surface of the torus at the points:
+    *
+    * V +/- [r2 + r1 * |N x P|] P
+    */
+   /* X */
+   VSET(P, 1.0, 0, 0);		/* bounding plane normal */
+   VCROSS(w1, tip->h, P);	/* for sin(angle N P) */
+   f = tip->r_h + tip->r_a * MAGNITUDE(w1);
+   VSCALE(w1, P, f);
+   f = fabs(w1[X]);
+   (*min)[X] = tip->v[X] - f;
+   (*max)[X] = tip->v[X] + f;
+
+   /* Y */
+   VSET(P, 0, 1.0, 0);		/* bounding plane normal */
+   VCROSS(w1, tip->h, P);	/* for sin(angle N P) */
+   f = tip->r_h + tip->r_a * MAGNITUDE(w1);
+   VSCALE(w1, P, f);
+   f = fabs(w1[Y]);
+   (*min)[Y] = tip->v[Y] - f;
+   (*max)[Y] = tip->v[Y] + f;
+
+   /* Z */
+   VSET(P, 0, 0, 1.0);		/* bounding plane normal */
+   VCROSS(w1, tip->h, P);	/* for sin(angle N P) */
+   f = tip->r_h + tip->r_a * MAGNITUDE(w1);
+   VSCALE(w1, P, f);
+   f = fabs(w1[Z]);
+   (*min)[Z] = tip->v[Z] - f;
+   (*max)[Z] = tip->v[Z] + f;
+
+   return 0;
 }
 
 
@@ -216,13 +251,13 @@ int
 rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     register struct tor_specific *tor;
-    struct bg_torus *tip;
+    struct rt_tor_internal *tip;
 
     mat_t R;
     fastf_t f;
 
-    tip = (struct bg_torus *)ip->idb_ptr;
-    BG_TOR_CK_MAGIC(tip);
+    tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
 
     /* Validate that |A| == |B| (for now) */
     if (!NEAR_EQUAL(tip->r_a, tip->r_b, 0.001)) {
@@ -992,17 +1027,17 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 {
     vect_t a, b, tor_a, tor_b, tor_h, center;
     fastf_t mag_a, mag_b, mag_h;
-    struct bg_torus *tor;
+    struct rt_tor_internal *tor;
     fastf_t radian, radian_step;
     int i, num_ellipses, points_per_ellipse;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     struct bu_list *vlfree = &RTG.rtg_vlfree;
-    tor = (struct bg_torus *)ip->idb_ptr;
-    BG_TOR_CK_MAGIC(tor);
+    tor = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tor);
 
-    fastf_t point_spacing = bg_sample_spacing(v, s_size);
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
 
     VMOVE(tor_a, tor->a);
     mag_a = tor->r_a;
@@ -1090,7 +1125,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     fastf_t cos_alpha, sin_alpha;
     fastf_t cos_beta, sin_beta;
     fastf_t dist_to_rim;
-    struct bg_torus *tip;
+    struct rt_tor_internal *tip;
     int w;
     int nw = 8;
     int len;
@@ -1104,8 +1139,8 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     struct bu_list *vlfree = &RTG.rtg_vlfree;
-    tip = (struct bg_torus *)ip->idb_ptr;
-    BG_TOR_CK_MAGIC(tip);
+    tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
 
     if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
 	rel = 0.0;		/* none */
@@ -1209,7 +1244,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     fastf_t cos_alpha, sin_alpha;
     fastf_t cos_beta, sin_beta;
     fastf_t dist_to_rim;
-    struct bg_torus *tip;
+    struct rt_tor_internal *tip;
     int w;
     int nw = 6;
     int len;
@@ -1228,8 +1263,8 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     fastf_t rel;
 
     RT_CK_DB_INTERNAL(ip);
-    tip = (struct bg_torus *)ip->idb_ptr;
-    BG_TOR_CK_MAGIC(tip);
+    tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
 
     if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
 	rel = 0.0;		/* none */
@@ -1383,7 +1418,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 int
 rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-    struct bg_torus *tip;
+    struct rt_tor_internal *tip;
     union record *rp;
     fastf_t vec[3*4];
     vect_t axb;
@@ -1403,10 +1438,10 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_TOR;
     ip->idb_meth = &OBJ[ID_TOR];
-    BU_ALLOC(ip->idb_ptr, struct bg_torus);
+    BU_ALLOC(ip->idb_ptr, struct rt_tor_internal);
 
-    tip = (struct bg_torus *)ip->idb_ptr;
-    tip->magic = BG_TOR_MAGIC;
+    tip = (struct rt_tor_internal *)ip->idb_ptr;
+    tip->magic = RT_TOR_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
     flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->dbi_version < 0) ? 1 : 0);
@@ -1444,7 +1479,7 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 int
 rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    struct bg_torus *tip;
+    struct rt_tor_internal *tip;
 
     /* must be double for export */
     double vec[2*3+2];
@@ -1453,8 +1488,8 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_TOR) return -1;
-    tip = (struct bg_torus *)ip->idb_ptr;
-    BG_TOR_CK_MAGIC(tip);
+    tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (2*3+2);
@@ -1479,7 +1514,7 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    struct bg_torus *tip;
+    struct rt_tor_internal *tip;
     union record *rec;
     vect_t norm;
     vect_t cross1, cross2;
@@ -1491,8 +1526,8 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_TOR) return -1;
-    tip = (struct bg_torus *)ip->idb_ptr;
-    BG_TOR_CK_MAGIC(tip);
+    tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
@@ -1574,7 +1609,7 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-    struct bg_torus *tip;
+    struct rt_tor_internal *tip;
 
     /* must be double for import and export */
     struct rec {
@@ -1599,10 +1634,10 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_TOR;
     ip->idb_meth = &OBJ[ID_TOR];
-    BU_ALLOC(ip->idb_ptr, struct bg_torus);
+    BU_ALLOC(ip->idb_ptr, struct rt_tor_internal);
 
-    tip = (struct bg_torus *)ip->idb_ptr;
-    tip->magic = BG_TOR_MAGIC;
+    tip = (struct rt_tor_internal *)ip->idb_ptr;
+    tip->magic = RT_TOR_INTERNAL_MAGIC;
 
     bu_cv_ntohd((unsigned char *)&rec, ep->ext_buf, 2*3+2);
 
@@ -1635,11 +1670,11 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 int
 rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct bg_torus *tip =
-	(struct bg_torus *)ip->idb_ptr;
+    register struct rt_tor_internal *tip =
+	(struct rt_tor_internal *)ip->idb_ptr;
     double r3, r4;
 
-    BG_TOR_CK_MAGIC(tip);
+    RT_TOR_CK_MAGIC(tip);
     bu_vls_strcat(str, "torus (TOR)\n");
 
     bu_vls_printf(str, "\tV (%g, %g, %g), r1=%g (A), r2=%g (H)\n",
@@ -1689,14 +1724,14 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 void
 rt_tor_ifree(struct rt_db_internal *ip)
 {
-    register struct bg_torus *tip;
+    register struct rt_tor_internal *tip;
 
     RT_CK_DB_INTERNAL(ip);
 
-    tip = (struct bg_torus *)ip->idb_ptr;
-    BG_TOR_CK_MAGIC(tip);
+    tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
 
-    bu_free((char *)tip, "bg_torus");
+    bu_free((char *)tip, "rt_tor_internal");
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
@@ -1713,8 +1748,8 @@ rt_tor_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 void
 rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
-    struct bg_torus *tip = (struct bg_torus *)ip->idb_ptr;
-    BG_TOR_CK_MAGIC(tip);
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
     /* r_h: radius of torus tube
      * r_a: radius from axis of rotation to center of tube
      */
@@ -1725,8 +1760,8 @@ rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 void
 rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
-    struct bg_torus *tip = (struct bg_torus *)ip->idb_ptr;
-    BG_TOR_CK_MAGIC(tip);
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
     *vol = 2.0 * M_PI * M_PI * (tip->r_h * tip->r_h) * tip->r_a;
 }
 
@@ -1734,8 +1769,8 @@ rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
 void
 rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
-    struct bg_torus *tip = (struct bg_torus *)ip->idb_ptr;
-    BG_TOR_CK_MAGIC(tip);
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
     VMOVE(*cent,tip->v);
 }
 
@@ -1745,8 +1780,8 @@ rt_tor_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
     if (!labels || !ip)
 	return;
 
-    struct bg_torus *tor = (struct bg_torus *)ip->idb_ptr;
-    BG_TOR_CK_MAGIC(tor);
+    struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tor);
 
     // Set up the containers
     struct bv_label *l[4];

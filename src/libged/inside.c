@@ -646,9 +646,9 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 static int
 torin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 {
-    struct bg_torus *tor = (struct bg_torus *)ip->idb_ptr;
+    struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
 
-    BG_TOR_CK_MAGIC(tor);
+    RT_TOR_CK_MAGIC(tor);
     if (ZERO(thick[0]))
 	return BRLCAD_OK;
 

@@ -53,7 +53,6 @@ set(SPSR_srcs
   )
 
 set(LIBBG_SOURCES
-  aabb.c
   aabb_ray.c
   chull.c
   chull2.cpp
@@ -61,8 +60,7 @@ set(LIBBG_SOURCES
   chull3d.cpp
   clip.c
   clipper.cpp
-  lod_mesh.cpp
-  lod_polyline.cpp
+  lod.cpp
   lseg_lseg.c
   lseg_pt.c
   obr.c
@@ -73,7 +71,6 @@ set(LIBBG_SOURCES
   polygon_op.cpp
   polygon_triangulate.cpp
   polygon_point_in.c
-  sample.c
   sat.c
   snap.c
   spsr.c

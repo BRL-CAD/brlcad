@@ -165,7 +165,7 @@ writesolid(void)
 
     /* Print solid parameters, 1 vector or point per line */
     switch (es_int.idb_type) {
-	struct bg_torus *tor;
+	struct rt_tor_internal *tor;
 	struct rt_tgc_internal *tgc;
 	struct rt_ell_internal *ell;
 	struct rt_arb_internal *arb;
@@ -186,7 +186,7 @@ writesolid(void)
 	    (void)fclose(fp);
 	    return 1;
 	case ID_TOR:
-	    tor = (struct bg_torus *)es_int.idb_ptr;
+	    tor = (struct rt_tor_internal *)es_int.idb_ptr;
 	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(tor->v), eol);
 	    fprintf(fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL(tor->h), eol);
 	    fprintf(fp, "radius_1: %.9f%s", tor->r_a*base2local, eol);
@@ -354,7 +354,7 @@ readsolid(void)
     }
 
     switch (es_int.idb_type) {
-	struct bg_torus *tor;
+	struct rt_tor_internal *tor;
 	struct rt_tgc_internal *tgc;
 	struct rt_ell_internal *ell;
 	struct rt_arb_internal *arb;
@@ -378,7 +378,7 @@ readsolid(void)
 	    ret_val = 1;
 	    break;
 	case ID_TOR:
-	    tor = (struct bg_torus *)es_int.idb_ptr;
+	    tor = (struct rt_tor_internal *)es_int.idb_ptr;
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;

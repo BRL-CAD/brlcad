@@ -1,17 +1,14 @@
 set(bg_headers
-  aabb.h
   aabb_ray.h
   chull.h
   clip.h
   defines.h
-  geom.h
   lod.h
   lseg.h
   obr.h
   plane.h
   polygon.h
   polygon_types.h
-  sample.h
   sat.h
   spsr.h
   tri_pt.h

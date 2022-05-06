@@ -41,7 +41,6 @@
 #include "vmath.h"
 
 #include "bn.h"
-#include "bg/sample.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -2325,7 +2324,7 @@ rt_pipe_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const st
 	return 0;
     }
 
-    fastf_t point_spacing = bg_sample_spacing(v, s_size);
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
 
     cur_seg->connecting_arcs = pipe_connecting_arcs(pipeobj, vhead, v->gv_s->curve_scale, s_size);
 

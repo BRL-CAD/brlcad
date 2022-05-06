@@ -47,62 +47,6 @@
 #define BG_CW 1
 #define BG_CCW -1
 
-/*
- * Values for Solid ID.
- */
-#define ID_NULL         0       /**< @brief Unused */
-#define ID_TOR          1       /**< @brief Toroid */
-#define ID_TGC          2       /**< @brief Generalized Truncated General Cone */
-#define ID_ELL          3       /**< @brief Ellipsoid */
-#define ID_ARB8         4       /**< @brief Generalized ARB.  V + 7 vectors */
-#define ID_ARS          5       /**< @brief ARS */
-#define ID_HALF         6       /**< @brief Half-space */
-#define ID_REC          7       /**< @brief Right Elliptical Cylinder [TGC special] */
-#define ID_POLY         8       /**< @brief Polygonal faceted object */
-#define ID_BSPLINE      9       /**< @brief B-spline object */
-#define ID_SPH          10      /**< @brief Sphere */
-#define ID_NMG          11      /**< @brief n-Manifold Geometry solid */
-#define ID_EBM          12      /**< @brief Extruded bitmap solid */
-#define ID_VOL          13      /**< @brief 3-D Volume */
-#define ID_ARBN         14      /**< @brief ARB with N faces */
-#define ID_PIPE         15      /**< @brief Pipe (wire) solid */
-#define ID_PARTICLE     16      /**< @brief Particle system solid */
-#define ID_RPC          17      /**< @brief Right Parabolic Cylinder  */
-#define ID_RHC          18      /**< @brief Right Hyperbolic Cylinder  */
-#define ID_EPA          19      /**< @brief Elliptical Paraboloid  */
-#define ID_EHY          20      /**< @brief Elliptical Hyperboloid  */
-#define ID_ETO          21      /**< @brief Elliptical Torus  */
-#define ID_GRIP         22      /**< @brief Pseudo Solid Grip */
-#define ID_JOINT        23      /**< @brief Pseudo Solid/Region Joint */
-#define ID_HF           24      /**< @brief Height Field */
-#define ID_DSP          25      /**< @brief Displacement map */
-#define ID_SKETCH       26      /**< @brief 2D sketch */
-#define ID_EXTRUDE      27      /**< @brief Solid of extrusion */
-#define ID_SUBMODEL     28      /**< @brief Instanced submodel */
-#define ID_CLINE        29      /**< @brief FASTGEN4 CLINE solid */
-#define ID_BOT          30      /**< @brief Bag o' triangles */
-
-/* Add a new primitive id above here (this is will break v5 format)
- * NOTE: must update the non-geometric object id's below the
- * ADD_BELOW_HERE marker
- */
-#define ID_MAX_SOLID    47      /**< @brief Maximum defined ID_xxx for solids */
-
-/* - ADD_BELOW_HERE - */
-/* superellipsoid should be 31, but is not v5 compatible */
-#define ID_SUPERELL     35      /**< @brief Superquadratic ellipsoid */
-#define ID_METABALL     36      /**< @brief Metaball */
-#define ID_BREP         37      /**< @brief B-rep object */
-#define ID_HYP          38      /**< @brief Hyperboloid of one sheet */
-#define ID_REVOLVE      40      /**< @brief Solid of Revolution */
-#define ID_PNTS         41      /**< @brief Collection of Points */
-#define ID_HRT          43      /**< @brief Heart */
-/* NOTE - be sure to check rt/defines.h for additional non-geometric numbers
- * currently in use before adding new numerical ID types */
-#define ID_MAXIMUM      47      /**< @brief Maximum defined ID_xxx value */
-
-
-
 /**
  * Tessellation (geometric) tolerances, different beasts than the
  * calculation tolerance in bn_tol.

@@ -350,8 +350,8 @@ main(int argc, char** argv)
     write_out(outfp, &tmp_internal, "tgc", &tol);
 
     bu_log("TOR\n");
-    struct bg_torus tor;
-    tor.magic = BG_TOR_MAGIC;
+    struct rt_tor_internal tor;
+    tor.magic = RT_TOR_INTERNAL_MAGIC;
     VSET(tor.v, 0.0, 0.0, 0.0);
     VSET(tor.h, 0.0, 0.0, 1.0);
     tor.r_a = 5.0;

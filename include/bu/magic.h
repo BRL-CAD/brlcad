@@ -123,7 +123,7 @@ __BEGIN_DECLS
 #define RT_SUBMODEL_INTERNAL_MAGIC	0x7375626d /**< subm */
 #define RT_SUPERELL_INTERNAL_MAGIC      0xff93bb23 /**< ???? */
 #define RT_TGC_INTERNAL_MAGIC		0xaabbdd87 /**< ???? */
-#define BG_TOR_MAGIC			0x9bffed87 /**< ???? */
+#define RT_TOR_INTERNAL_MAGIC		0x9bffed87 /**< ???? */
 #define RT_VOL_INTERNAL_MAGIC		0x987ba1d0 /**< ?{?? */
 #define RT_PNTS_INTERNAL_MAGIC		0x706e7473 /**< pnts */
 #define RT_ANNOT_INTERNAL_MAGIC		0x616e6e6f /**< anno */

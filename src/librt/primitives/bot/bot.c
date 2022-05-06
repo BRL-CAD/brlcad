@@ -835,7 +835,6 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     double d1, d2, d3;
     point_t min;
     point_t max;
-    fastf_t view_aspect, x_size, y_size, avg_view_size, avg_view_samples;
 
     vdsNode *vertex_tree;
     struct vdsState vdss = VDS_STATE_INIT_ZERO;
@@ -852,12 +851,7 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     vertex_tree = build_vertex_tree(&vdss, bot);
 
     fold_data.root = vertex_tree;
-    view_aspect = (fastf_t)v->gv_width / v->gv_height;
-    x_size = v->gv_size;
-    y_size = x_size / view_aspect;
-    avg_view_size = (x_size + y_size) / 2.0;
-    avg_view_samples = (v->gv_width + v->gv_height) / 2.0;
-    fold_data.point_spacing = avg_view_size / avg_view_samples;
+    fold_data.point_spacing = view_avg_sample_spacing(v);
     (void)rt_bot_bbox(ip, &min, &max, NULL);
     d1 = max[0] - min[0];
     d2 = max[1] - min[1];

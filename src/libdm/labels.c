@@ -74,12 +74,12 @@ dm_label_primitive(struct rt_wdb *wdbp,
 
     switch (ip->idb_minor_type) {
 	case DB5_MINORTYPE_BRLCAD_TOR: {
-	    struct bg_torus *tor =
-		(struct bg_torus *)ip->idb_ptr;
+	    struct rt_tor_internal *tor =
+		(struct rt_tor_internal *)ip->idb_ptr;
 	    fastf_t r3, r4;
 	    vect_t adir;
 
-	    BG_TOR_CK_MAGIC(tor);
+	    RT_TOR_CK_MAGIC(tor);
 
 	    bn_vec_ortho(adir, tor->h);
 

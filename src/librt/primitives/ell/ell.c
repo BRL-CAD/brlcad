@@ -32,9 +32,8 @@
 #include <math.h>
 #include "bio.h"
 
-#include "vmath.h"
 #include "bu/cv.h"
-#include "bg/sample.h"
+#include "vmath.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -786,7 +785,7 @@ rt_ell_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
-    fastf_t point_spacing = bg_sample_spacing(v, s_size);
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
 
     config.vlfree = vlfree;
     config.vhead = vhead;

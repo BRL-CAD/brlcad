@@ -226,6 +226,11 @@ extern void plot_ellipse(
 extern int _rt_tcl_list_to_int_array(const char *list, int **array, int *array_len);
 extern int _rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len);
 
+/* view.c */
+extern fastf_t solid_point_spacing(const struct bview *gvp, fastf_t solid_width);
+extern fastf_t view_avg_sample_spacing(const struct bview *gvp);
+
+
 #ifdef USE_OPENCL
 extern cl_device_id clt_get_cl_device(void);
 extern cl_program clt_get_program(cl_context context, cl_device_id device, cl_uint count, const char *filename[], const char *options);

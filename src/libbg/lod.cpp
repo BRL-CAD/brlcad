@@ -1,4 +1,4 @@
-/*                       L O D _ M E S H . C P P
+/*                       L O D . C P P
  * BRL-CAD
  *
  * Copyright (c) 2022 United States Government as represented by
@@ -27,7 +27,7 @@
  * IN THE SOFTWARE.
  */
 
-/** @file lod_mesh.cpp
+/** @file lod.cpp
  *
  * This file implements level-of-detail routines.  Eventually it may have libbg
  * wrappers around more sophisticated algorithms...
@@ -37,6 +37,21 @@
  *
  * Useful discussion of applying POP buffers here:
  * https://medium.com/@petroskataras/the-ayotzinapa-case-447a72d89e58
+ *
+ * Notes on caching:
+ *
+ * Management of LoD cached data is actually a bit of a challenge.  A full
+ * content hash of the original ver/tri arrays is the most reliable approach
+ * but is a potentially expensive operation, which also requires reading the
+ * entire original geometry to get the hash value to do lookups.  Ideally, we'd
+ * like for the application to never have to access more of the data than is
+ * needed for display purposes.  However, object names are not unique across .g
+ * files and so are not useful for this purpose.  Also, at this level of the
+ * logic we (deliberately) are separated from any notion of .g objects.
+ *
+ * What we do is generate a hash value of the data on initialization, when we
+ * need the full data set to perform the initial LoD setup.  We then provide
+ * that value back to the caller for them to manage at a higher level.
  */
 
 #include "common.h"
@@ -412,7 +427,7 @@ bg_mesh_lod_context_create(const char *name)
     // doing to implement...
     if (mdb_env_set_mapsize(i->lod_env, CACHE_MAX_DB_SIZE))
 	goto lod_context_close_fail;
-
+    
     if (mdb_env_set_mapsize(i->name_env, CACHE_MAX_DB_SIZE))
 	goto lod_context_close_fail;
 
