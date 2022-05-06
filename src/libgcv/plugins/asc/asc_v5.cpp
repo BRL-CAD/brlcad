@@ -37,6 +37,19 @@
 #include "gcv/api.h"
 #include "gcv/util.h"
 
+static int
+check_bracket_balance(int *ocnt, int *ccnt, std::string &s)
+{
+    for (size_t i = 0; i < s.length(); i++) {
+	char c = s.at(i);
+	if (c == '{')
+	    (*ocnt)++;
+	if (c == '}')
+	    (*ccnt)++;
+    }
+    return (*ocnt == *ccnt);
+}
+
 /* Note - in its full generality, a "v5 ASCII BRL-CAD geometry file" may
  * technically be a completely arbitrary Tcl script, given the way the
  * traditional "asc2g" program is implemented.  However, real world practice is
@@ -71,46 +84,71 @@ asc_read_v5(
     if (!c)
 	return -1;
     struct bu_vls cur_line = BU_VLS_INIT_ZERO;
+    int ocnt = 0;
+    int ccnt = 0;
+    int balanced = 0;
     while (std::getline(fs, sline)) {
-	bu_vls_sprintf(&cur_line, "%s", sline.c_str());
+
+	bu_vls_printf(&cur_line, " %s", sline.c_str());
+
+	// If we don't have balanced brackets, we're either invalid or have
+	// a multi-line command.  Assume the latter and try to read another
+	// line.
+	balanced = check_bracket_balance(&ocnt, &ccnt, sline);
+	if (!balanced) {
+	    continue;
+	} else {
+	    ocnt = 0;
+	    ccnt = 0;
+	}
+
 	int list_c = 0;
 	char **list_v = NULL;
 	if (bu_argv_from_tcl_list(bu_vls_cstr(&cur_line), &list_c, (const char ***)&list_v) != 0 || list_c < 1) {
 	    bu_free(list_v, "tcl argv list");
+	    bu_vls_trunc(&cur_line, 0);
 	    continue;
 	}
 
 	if (BU_STR_EQUAL(list_v[0], "attr")) {
 	    rt_cmd_attr(NULL, c->dbip, list_c, (const char **)list_v);
 	    bu_free(list_v, "tcl argv list");
+	    bu_vls_trunc(&cur_line, 0);
 	    continue;
 	}
 	if (BU_STR_EQUAL(list_v[0], "color")) {
 	    rt_cmd_color(NULL, c->dbip, list_c, (const char **)list_v);
 	    bu_free(list_v, "tcl argv list");
+	    bu_vls_trunc(&cur_line, 0);
 	    continue;
 	}
 	if (BU_STR_EQUAL(list_v[0], "put")) {
 	    rt_cmd_put(NULL, c->dbip, list_c, (const char **)list_v);
 	    bu_free(list_v, "tcl argv list");
+	    bu_vls_trunc(&cur_line, 0);
 	    continue;
 	}
 	if (BU_STR_EQUAL(list_v[0], "title")) {
 	    rt_cmd_title(NULL, c->dbip, list_c, (const char **)list_v);
 	    bu_free(list_v, "tcl argv list");
+	    bu_vls_trunc(&cur_line, 0);
 	    continue;
 	}
 	if (BU_STR_EQUAL(list_v[0], "units")) {
 	    rt_cmd_units(NULL, c->dbip, list_c, (const char **)list_v);
 	    bu_free(list_v, "tcl argv list");
+	    bu_vls_trunc(&cur_line, 0);
 	    continue;
 	}
 
 	bu_log("Unknown command: %s\n", list_v[0]);
 	bu_free(list_v, "tcl argv list");
+	bu_vls_trunc(&cur_line, 0);
     }
+
     bu_vls_free(&cur_line);
-    return 1;
+
+    return balanced;
 }
 
 
