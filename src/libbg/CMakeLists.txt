@@ -53,6 +53,7 @@ set(SPSR_srcs
   )
 
 set(LIBBG_SOURCES
+  aabb.c
   aabb_ray.c
   chull.c
   chull2.cpp

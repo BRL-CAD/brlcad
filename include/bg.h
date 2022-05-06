@@ -50,6 +50,7 @@
 #include "common.h"
 
 #include "bg/defines.h"
+#include "bg/aabb.h"
 #include "bg/chull.h"
 #include "bg/clip.h"
 #include "bg/geom.h"

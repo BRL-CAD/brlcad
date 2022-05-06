@@ -1,4 +1,5 @@
 set(bg_headers
+  aabb.h
   aabb_ray.h
   chull.h
   clip.h

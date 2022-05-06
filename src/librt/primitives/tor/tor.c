@@ -117,6 +117,7 @@
 
 #include "vmath.h"
 #include "bu/cv.h"
+#include "bg/aabb.h"
 #include "bg/sample.h"
 #include "bg/lod.h"
 #include "rt/db4.h"
@@ -192,47 +193,9 @@ clt_tor_pack(struct bu_pool *pool, struct soltab *stp)
  */
 int
 rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
-    vect_t P, w1;	/* for RPP calculation */
-    fastf_t f;
     struct bg_torus *tip = (struct bg_torus *)ip->idb_ptr;
     BG_TOR_CK_MAGIC(tip);
-
-   /* Compute the bounding RPP planes for a circular torus.
-    *
-    * Given a circular torus with vertex V, vector N, and radii r1
-    * and r2.  A bounding plane with direction vector P will touch
-    * the surface of the torus at the points:
-    *
-    * V +/- [r2 + r1 * |N x P|] P
-    */
-   /* X */
-   VSET(P, 1.0, 0, 0);		/* bounding plane normal */
-   VCROSS(w1, tip->h, P);	/* for sin(angle N P) */
-   f = tip->r_h + tip->r_a * MAGNITUDE(w1);
-   VSCALE(w1, P, f);
-   f = fabs(w1[X]);
-   (*min)[X] = tip->v[X] - f;
-   (*max)[X] = tip->v[X] + f;
-
-   /* Y */
-   VSET(P, 0, 1.0, 0);		/* bounding plane normal */
-   VCROSS(w1, tip->h, P);	/* for sin(angle N P) */
-   f = tip->r_h + tip->r_a * MAGNITUDE(w1);
-   VSCALE(w1, P, f);
-   f = fabs(w1[Y]);
-   (*min)[Y] = tip->v[Y] - f;
-   (*max)[Y] = tip->v[Y] + f;
-
-   /* Z */
-   VSET(P, 0, 0, 1.0);		/* bounding plane normal */
-   VCROSS(w1, tip->h, P);	/* for sin(angle N P) */
-   f = tip->r_h + tip->r_a * MAGNITUDE(w1);
-   VSCALE(w1, P, f);
-   f = fabs(w1[Z]);
-   (*min)[Z] = tip->v[Z] - f;
-   (*max)[Z] = tip->v[Z] + f;
-
-   return 0;
+    return bg_tor_bbox(min, max, tip);
 }
 
 

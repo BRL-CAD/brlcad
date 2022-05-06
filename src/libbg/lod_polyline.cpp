@@ -39,6 +39,7 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bv/defines.h"
+#include "bg/aabb.h"
 #include "bg/geom.h"
 #include "bg/lod.h"
 #include "bg/sample.h"
@@ -120,6 +121,8 @@ class PolyLines {
 
     private:
 
+	fastf_t prev_size = -1;
+
 	std::vector<std::vector<fastf_t>> point_arrays;
 
 	// Wireframe updating is specific to each object type
@@ -164,6 +167,10 @@ PolyLines::torus_update(struct bg_torus *tor, struct bview *v, fastf_t s_size)
     int points_per_ellipse;
 
     BG_TOR_CK_MAGIC(tor);
+
+    bg_tor_bbox(&l->bmin, &l->bmax, tor);
+    VMOVE(l->s->bmin, l->bmin);
+    VMOVE(l->s->bmax, l->bmax);
 
     // Calculate some convenience values from the torus
     VMOVE(tor_a, tor->a);
@@ -289,12 +296,20 @@ PolyLines::update(struct bview *v)
     if (!gdata || !data_type)
 	return 0;
 
+    // If our size hasn't changed substantially, don't bother updating
+    fastf_t delta = fabs(l->s->s_size - prev_size);
+    if (delta < 0.1*l->s->s_size)
+	return 0;
+
     switch (data_type) {
 	case ID_TOR:
 	    {
 		struct bg_torus *t = (struct bg_torus *)gdata;
 		BG_TOR_CK_MAGIC(t);
-		return torus_update(t, v, l->s->s_size);
+		int ret = torus_update(t, v, l->s->s_size);
+		if (ret)
+		    prev_size = l->s->s_size;
+		return ret;
 	    }
 	default:
 	    return 0;
@@ -339,8 +354,9 @@ bg_polyline_lod_view(struct bv_scene_obj *s, struct bview *v)
     struct bv_polyline_lod *l = (struct bv_polyline_lod *)s->draw_data;
     struct bg_polyline_lod_internal *i = (struct bg_polyline_lod_internal *)l->i;
     int ret = i->i->update(v);
-    if (ret)
+    if (ret) {
 	s->s_dlist_stale = 1;
+    }
     return ret;
 }
 
