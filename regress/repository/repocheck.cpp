@@ -869,7 +869,7 @@ main(int argc, const char *argv[])
 		"/fontstash/",
 		"/qtads/",
 		"/shapelib/",
-		"/tinygltf/",
+		"gltf/",
 		"/xxhash.h",
 		"misc/CMake/Find",
 		"misc/debian",
