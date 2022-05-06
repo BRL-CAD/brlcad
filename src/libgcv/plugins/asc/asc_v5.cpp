@@ -89,7 +89,7 @@ asc_read_v5(
     int balanced = 0;
     while (std::getline(fs, sline)) {
 
-	bu_vls_printf(&cur_line, " %s", sline.c_str());
+	bu_vls_printf(&cur_line, "%s\n", sline.c_str());
 
 	// If we don't have balanced brackets, we're either invalid or have
 	// a multi-line command.  Assume the latter and try to read another
