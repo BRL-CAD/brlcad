@@ -56,12 +56,12 @@ set(ART_LIBS
 
 
 set(ART_SRCS
+  ../rt/do.c
+  ../rt/opt.c
+  ../rt/usage.cpp
   art.cpp
   brlcadplugin.cpp
   tile.cpp
-  ../rt/opt.c
-  ../rt/usage.cpp
-  ../rt/do.c
   )
 
 add_definitions(-DBOOST_ALL_DYN_LINK)

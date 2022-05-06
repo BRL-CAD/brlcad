@@ -158,10 +158,11 @@
 
 #include "brlcad_ident.h"
 
-#define VERBOSE_STATS 0x00000008
-
 #include "dm.h"
 #include "tile.h"
+
+
+#define VERBOSE_STATS 0x00000008
 
 
 struct resource* resources;
@@ -908,6 +909,49 @@ build_project(const char* file, const char* UNUSED(objects))
     return project;
 }
 
+int fb_setup() {
+    /* Framebuffer is desired */
+    size_t xx, yy;
+    int zoom;
+
+    /* Ask for a fb big enough to hold the image, at least 512. */
+    /* This is so MGED-invoked "postage stamps" get zoomed up big
+     * enough to see.
+     */
+    xx = yy = 512;
+    if (width > xx || height > yy) {
+	xx = width;
+	yy = height;
+    }
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    fbp = fb_open(framebuffer, xx, yy);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+    if (fbp == FB_NULL) {
+	fprintf(stderr, "rt:  can't open frame buffer\n");
+	return 12;
+    }
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    /* If fb came out smaller than requested, do less work */
+    if ((size_t)fb_getwidth(fbp) < width)
+	width = fb_getwidth(fbp);
+    if ((size_t)fb_getheight(fbp) < height)
+	height = fb_getheight(fbp);
+
+    /* If the fb is lots bigger (>= 2X), zoom up & center */
+    if (width > 0 && height > 0) {
+	zoom = fb_getwidth(fbp) / width;
+	if ((size_t)fb_getheight(fbp) / height < (size_t)zoom)
+	    zoom = fb_getheight(fbp) / height;
+    }
+    else {
+	zoom = 1;
+    }
+    (void)fb_view(fbp, width / 2, height / 2,
+	zoom, zoom);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+    return 0;
+}
 
 extern "C" void
 view_setup(struct rt_i* UNUSED(rtip))

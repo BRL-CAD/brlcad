@@ -53,12 +53,15 @@
 
 #include "dm.h"
 
+
 using namespace foundation;
 
 extern struct fb *fbp;	/* Framebuffer handle */
 
 
-void ArtTileCallback::on_tile_end(const renderer::Frame* frame, const size_t tile_x, const size_t tile_y) {
+void
+ArtTileCallback::on_tile_end(const renderer::Frame* frame, const size_t tile_x, const size_t tile_y)
+{
     foundation::Tile& t = frame->image().tile(tile_x, tile_y);
     const foundation::Tile rgb(t, PixelFormatUInt8);
     // fb_write(fbp, tile_x, tile_y, rgb.get_storage(), rgb.get_size());
