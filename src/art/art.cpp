@@ -166,8 +166,8 @@
 
 struct resource* resources;
 size_t samples = 25;
-size_t light_intensity = 30.0;
-//size_t light_intensity = 200.0; // make ambient light match rt
+size_t light_intensity = 200.0; // make ambient light match rt
+//size_t light_intensity = 30.0;
 const char* global_title_file;
 asf::auto_release_ptr<asr::Project> project_ptr;
 struct fb* fbp = FB_NULL;
@@ -837,6 +837,16 @@ build_project(const char* file, const char* UNUSED(objects))
 		));
         camera = ortho;
     }
+    asf::auto_release_ptr<asr::Camera> camera(
+    asr::PinholeCameraFactory().create(
+    "camera",
+    asr::ParamArray()
+    .insert("film_dimensions", bu_vls_cstr(&dimensions))
+    // .insert("focal_length", "0.035")
+    // rt_perspective is horizontal_fov
+    // horizontal_fov has precidence over focal_length
+    // if -p is not set, default will be used
+    .insert("horizontal_fov", rt_perspective))); // equvalent to focal_length", "0.035
 
     /*
       bu_log("EYE: %lf, %lf, %lf\n", V3ARGS(eye_model));
