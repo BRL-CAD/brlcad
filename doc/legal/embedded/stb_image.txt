@@ -38,3 +38,5 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 file:/src/conv/gltf/tinygltf/stb_image.h
 file:/src/conv/gltf/tinygltf/stb_image_write.h
+file:/src/libgcv/plugins/gltf/tinygltf_headers/stb_image.h
+file:/src/libgcv/plugins/gltf/tinygltf_headers/stb_image_write.h
