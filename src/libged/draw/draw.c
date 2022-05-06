@@ -596,7 +596,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 	if (gedp && gedp->ged_gvp) threshold_cached = gvp->gv_s->bot_threshold;
 
-	if (gvp && gvp->gv_s->adaptive_plot)
+	if (gvp && gvp->gv_s->adaptive_plot_csg)
 	    dgcdp.autoview = 1;
 	else
 	    dgcdp.autoview = 0;

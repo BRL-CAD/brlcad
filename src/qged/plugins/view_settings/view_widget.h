@@ -36,7 +36,8 @@ class CADViewSettings : public QWidget
 	CADViewSettings(QWidget *p = 0, struct bview **v = NULL);
 	~CADViewSettings();
 
-	QCheckBox *a_ckbx;
+	QCheckBox *acsg_ckbx;
+	QCheckBox *amesh_ckbx;
 	QCheckBox *adc_ckbx;
 	QCheckBox *cdot_ckbx;
 	QCheckBox *fb_ckbx;

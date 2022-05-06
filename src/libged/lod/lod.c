@@ -66,7 +66,7 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Print current state if no args are supplied */
     if (argc == 1) {
-	if (gvp->gv_s->adaptive_plot) {
+	if (gvp->gv_s->adaptive_plot_csg) {
 	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: enabled\n");
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: disabled\n");
@@ -83,13 +83,13 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
     printUsage = 0;
     if (argc == 1 && BU_STR_EQUAL(argv[0], "on")) {
 	/* lod on */
-	gvp->gv_s->adaptive_plot = 1;
+	gvp->gv_s->adaptive_plot_csg = 1;
     } else if (argc == 1 && BU_STR_EQUAL(argv[0], "off")) {
 	/* lod off */
-	gvp->gv_s->adaptive_plot = 0;
+	gvp->gv_s->adaptive_plot_csg = 0;
     } else if (argc == 1 && BU_STR_EQUAL(argv[0], "enabled")) {
 	/* lod enabled - return on state */
-	bu_vls_printf(gedp->ged_result_str, "%d", gvp->gv_s->adaptive_plot);
+	bu_vls_printf(gedp->ged_result_str, "%d", gvp->gv_s->adaptive_plot_csg);
     } else if (BU_STR_EQUAL(argv[0], "scale")) {
 	if (argc == 2 || argc == 3) {
 	    if (BU_STR_EQUAL(argv[1], "points")) {

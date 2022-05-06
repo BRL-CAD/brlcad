@@ -3700,7 +3700,7 @@ to_idle_mode(struct ged *gedp,
 
     mode = gdvp->gv_tcl.gv_polygon_mode;
 
-    if (gdvp->gv_s->adaptive_plot &&
+    if (gdvp->gv_s->adaptive_plot_csg &&
 	    gdvp->gv_s->redraw_on_zoom &&
 	    mode == TCLCAD_SCALE_MODE)
     {

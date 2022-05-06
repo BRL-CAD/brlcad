@@ -380,7 +380,8 @@ bv_settings_init(struct bview_settings *s)
 
     s->gv_autoview = 1;
 
-    s->adaptive_plot = 0;
+    s->adaptive_plot_mesh = 0;
+    s->adaptive_plot_csg = 0;
     s->redraw_on_zoom = 0;
     s->point_scale = 1;
     s->curve_scale = 1;

@@ -36,7 +36,8 @@ CADViewSettings::CADViewSettings(QWidget *, struct bview **v)
     QVBoxLayout *wl = new QVBoxLayout;
     wl->setAlignment(Qt::AlignTop);
 
-    a_ckbx = new QCheckBox("Adaptive Plotting");
+    acsg_ckbx = new QCheckBox("Adaptive Plotting (CSG)");
+    amesh_ckbx = new QCheckBox("Adaptive Plotting (Mesh)");
     adc_ckbx = new QCheckBox("Angle/Dist. Cursor");
     cdot_ckbx = new QCheckBox("Center Dot");
     fb_ckbx = new QCheckBox("Framebuffer");
@@ -47,8 +48,10 @@ CADViewSettings::CADViewSettings(QWidget *, struct bview **v)
     params_ckbx = new QCheckBox("Parameters");
     scale_ckbx = new QCheckBox("Scale");
     viewaxes_ckbx = new QCheckBox("View Axes");
-    wl->addWidget(a_ckbx);
-    QObject::connect(a_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+    wl->addWidget(acsg_ckbx);
+    QObject::connect(acsg_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+    wl->addWidget(amesh_ckbx);
+    QObject::connect(amesh_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
     wl->addWidget(adc_ckbx);
     QObject::connect(adc_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
     wl->addWidget(cdot_ckbx);
@@ -113,13 +116,21 @@ CADViewSettings::checkbox_refresh(struct bview **nv)
     m_v = nv;
     if (m_v && *m_v) {
 	struct bview *v = *m_v;
-	a_ckbx->blockSignals(true);
-	if (v->gv_s->adaptive_plot) {
-	    a_ckbx->setCheckState(Qt::Checked);
+	acsg_ckbx->blockSignals(true);
+	if (v->gv_s->adaptive_plot_csg) {
+	    acsg_ckbx->setCheckState(Qt::Checked);
 	} else {
-	    a_ckbx->setCheckState(Qt::Unchecked);
+	    acsg_ckbx->setCheckState(Qt::Unchecked);
 	}
-	a_ckbx->blockSignals(false);
+	acsg_ckbx->blockSignals(false);
+
+	amesh_ckbx->blockSignals(true);
+	if (v->gv_s->adaptive_plot_mesh) {
+	    amesh_ckbx->setCheckState(Qt::Checked);
+	} else {
+	    amesh_ckbx->setCheckState(Qt::Unchecked);
+	}
+	amesh_ckbx->blockSignals(false);
 
 	adc_ckbx->blockSignals(true);
 	if (v->gv_s->gv_adc.draw) {
@@ -214,10 +225,15 @@ CADViewSettings::view_refresh(struct bview **nv)
     m_v = nv;
     if (m_v && *m_v) {
 	struct bview *v = *m_v;
-	if (a_ckbx->checkState() == Qt::Checked) {
-	    v->gv_s->adaptive_plot = 1;
+	if (acsg_ckbx->checkState() == Qt::Checked) {
+	    v->gv_s->adaptive_plot_csg = 1;
 	} else {
-	    v->gv_s->adaptive_plot = 0;
+	    v->gv_s->adaptive_plot_csg = 0;
+	}
+	if (amesh_ckbx->checkState() == Qt::Checked) {
+	    v->gv_s->adaptive_plot_mesh = 1;
+	} else {
+	    v->gv_s->adaptive_plot_mesh = 0;
 	}
 	if (adc_ckbx->checkState() == Qt::Checked) {
 	    v->gv_s->gv_adc.draw = 1;

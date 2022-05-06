@@ -49,9 +49,8 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     struct ged *gedp = gd->gedp;
     struct bview *gvp;
     int print_help = 0;
-    static const char *usage = "view lod [0|1]\n"
+    static const char *usage = "view lod [csg|mesh] [0|1]\n"
 	"view lod cache [clear] [all_files]\n"
-	"view lod enabled [0|1]\n"
 	"view lod scale [factor]\n"
 	"view lod point_scale [factor]\n"
 	"view lod curve_scale [factor]\n"
@@ -92,7 +91,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
     /* Print current state if no args are supplied */
     if (argc == 0) {
-	bu_vls_printf(gedp->ged_result_str, "enabled: %d\n", gvp->gv_s->adaptive_plot);
+	bu_vls_printf(gedp->ged_result_str, "enabled(mesh/csg): %d/%d\n", gvp->gv_s->adaptive_plot_mesh, gvp->gv_s->adaptive_plot_csg);
 	bu_vls_printf(gedp->ged_result_str, "scale: %g\n", gvp->gv_s->lod_scale);
 	bu_vls_printf(gedp->ged_result_str, "point_scale: %g\n", gvp->gv_s->point_scale);
 	bu_vls_printf(gedp->ged_result_str, "curve_scale: %g\n", gvp->gv_s->curve_scale);
@@ -101,8 +100,9 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     }
 
     if (BU_STR_EQUIV(argv[0], "1")) {
-	if (!gvp->gv_s->adaptive_plot) {
-	    gvp->gv_s->adaptive_plot = 1;
+	if (!gvp->gv_s->adaptive_plot_mesh || !gvp->gv_s->adaptive_plot_csg) {
+	    gvp->gv_s->adaptive_plot_csg = 1;
+	    gvp->gv_s->adaptive_plot_mesh = 1;
 	    int rac = 1;
 	    const char *rav[2] = {"redraw", NULL};
 	    ged_exec(gedp, rac, (const char **)rav);
@@ -110,8 +110,9 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
     if (BU_STR_EQUIV(argv[0], "0")) {
-	if (gvp->gv_s->adaptive_plot) {
-	    gvp->gv_s->adaptive_plot = 0;
+	if (gvp->gv_s->adaptive_plot_mesh || gvp->gv_s->adaptive_plot_csg) {
+	    gvp->gv_s->adaptive_plot_csg = 0;
+	    gvp->gv_s->adaptive_plot_mesh = 0;
 	    int rac = 1;
 	    const char *rav[2] = {"redraw", NULL};
 	    ged_exec(gedp, rac, (const char **)rav);
@@ -119,6 +120,51 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
+    if (BU_STR_EQUAL(argv[0], "csg")) {
+	if (argc == 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->adaptive_plot_csg);
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL(argv[1], "1") && !gvp->gv_s->adaptive_plot_csg) {
+	    gvp->gv_s->adaptive_plot_csg = 1;
+	    int rac = 1;
+	    const char *rav[2] = {"redraw", NULL};
+	    ged_exec(gedp, rac, (const char **)rav);
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL(argv[1], "0") && gvp->gv_s->adaptive_plot_csg) {
+	    gvp->gv_s->adaptive_plot_csg = 0;
+	    int rac = 1;
+	    const char *rav[2] = {"redraw", NULL};
+	    ged_exec(gedp, rac, (const char **)rav);
+	    return BRLCAD_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "Error - invalid arg: \"%s\".  Valid args are 0 or 1/n", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "mesh")) {
+	if (argc == 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->adaptive_plot_mesh);
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL(argv[1], "1") && !gvp->gv_s->adaptive_plot_mesh) {
+	    gvp->gv_s->adaptive_plot_mesh = 1;
+	    int rac = 1;
+	    const char *rav[2] = {"redraw", NULL};
+	    ged_exec(gedp, rac, (const char **)rav);
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL(argv[1], "0") && gvp->gv_s->adaptive_plot_mesh) {
+	    gvp->gv_s->adaptive_plot_mesh = 0;
+	    int rac = 1;
+	    const char *rav[2] = {"redraw", NULL};
+	    ged_exec(gedp, rac, (const char **)rav);
+	    return BRLCAD_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "Error - invalid arg: \"%s\".  Valid args are 0 or 1/n", argv[1]);
+	return BRLCAD_ERROR;
+    }
 
     if (BU_STR_EQUAL(argv[0], "cache")) {
 	if (argc == 1) {
@@ -186,28 +232,6 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    }
 	}
 	bu_vls_printf(gedp->ged_result_str, "unknown argument to cache: %s\n", argv[1]);
-	return BRLCAD_ERROR;
-    }
-
-
-    if (BU_STR_EQUAL(argv[0], "enabled")) {
-	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->adaptive_plot);
-	    return BRLCAD_OK;
-	}
-	int rac = 1;
-	const char *rav[2] = {"redraw", NULL};
-	if (bu_str_true(argv[1])) {
-	    gvp->gv_s->adaptive_plot = 1;
-	    ged_exec(gedp, rac, (const char **)rav);
-	    return BRLCAD_OK;
-	}
-	if (bu_str_false(argv[1])) {
-	    gvp->gv_s->adaptive_plot = 0;
-	    ged_exec(gedp, rac, (const char **)rav);
-	    return BRLCAD_OK;
-	}
-	bu_vls_printf(gedp->ged_result_str, "unknown argument to enabled: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 

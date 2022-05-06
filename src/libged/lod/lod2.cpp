@@ -76,11 +76,7 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Print current state if no args are supplied */
     if (argc == 1) {
-	if (cv->gv_s->adaptive_plot) {
-	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: enabled\n");
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: disabled\n");
-	}
+	bu_vls_printf(gedp->ged_result_str, "LoD drawing (csg/mesh): %d/%d\n", cv->gv_s->adaptive_plot_csg, cv->gv_s->adaptive_plot_mesh);
 	bu_vls_printf(gedp->ged_result_str, "Point scale: %g\n", cv->gv_s->point_scale);
 	bu_vls_printf(gedp->ged_result_str, "Curve scale: %g\n", cv->gv_s->curve_scale);
 	bu_vls_printf(gedp->ged_result_str, "BoT face threshold: %zd\n", cv->gv_s->bot_threshold);
@@ -93,8 +89,9 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1 && BU_STR_EQUAL(argv[0], "on")) {
 	/* lod on */
 	if (cv) {
-	    if (!cv->gv_s->adaptive_plot) {
-		cv->gv_s->adaptive_plot = 1;
+	    if (!cv->gv_s->adaptive_plot_csg || !cv->gv_s->adaptive_plot_mesh) {
+		cv->gv_s->adaptive_plot_csg = 1;
+		cv->gv_s->adaptive_plot_mesh = 1;
 		const char *cmd = "redraw";
 		ged_exec(gedp, 1, (const char **)&cmd);
 	    }
@@ -105,8 +102,9 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 		struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
 		if (!v)
 		    continue;
-		if (!v->gv_s->adaptive_plot) {
-		    v->gv_s->adaptive_plot = 1;
+		if (!v->gv_s->adaptive_plot_csg || !v->gv_s->adaptive_plot_mesh) {
+		    v->gv_s->adaptive_plot_csg = 1;
+		    v->gv_s->adaptive_plot_mesh = 1;
 		    delta = 1;
 		}
 	    }
@@ -118,8 +116,9 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
     } else if (argc == 1 && BU_STR_EQUAL(argv[0], "off")) {
 	/* lod off */
 	if (cv) {
-	    if (cv->gv_s->adaptive_plot) {
-		cv->gv_s->adaptive_plot = 0;
+	    if (cv->gv_s->adaptive_plot_csg || cv->gv_s->adaptive_plot_mesh) {
+		cv->gv_s->adaptive_plot_csg = 0;
+		cv->gv_s->adaptive_plot_mesh = 0;
 		const char *cmd = "redraw";
 		ged_exec(gedp, 1, (const char **)&cmd);
 	    }
@@ -130,8 +129,9 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 		struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
 		if (!v)
 		    continue;
-		if (v->gv_s->adaptive_plot) {
-		    v->gv_s->adaptive_plot = 0;
+		if (v->gv_s->adaptive_plot_csg || v->gv_s->adaptive_plot_mesh) {
+		    cv->gv_s->adaptive_plot_csg = 0;
+		    v->gv_s->adaptive_plot_mesh = 0;
 		    delta = 1;
 		}
 
@@ -144,7 +144,7 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 	}
     } else if (argc == 1 && BU_STR_EQUAL(argv[0], "enabled")) {
 	/* lod enabled - return on state */
-	bu_vls_printf(gedp->ged_result_str, "%d", cv->gv_s->adaptive_plot);
+	bu_vls_printf(gedp->ged_result_str, "%d/%d", cv->gv_s->adaptive_plot_csg, cv->gv_s->adaptive_plot_mesh);
     } else if (BU_STR_EQUAL(argv[0], "scale")) {
 	if (argc == 2 || argc == 3) {
 	    if (BU_STR_EQUAL(argv[1], "points")) {

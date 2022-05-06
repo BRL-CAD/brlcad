@@ -286,7 +286,7 @@ to_view_func_common(struct ged *gedp,
     /* Keep the view's perspective in sync with its corresponding display manager */
     dm_set_perspective((struct dm *)gdvp->dmp, gdvp->gv_perspective);
 
-    if (gdvp->gv_s->adaptive_plot &&
+    if (gdvp->gv_s->adaptive_plot_csg &&
 	gdvp->gv_s->redraw_on_zoom)
     {
 	char *gr_av[] = {"redraw", NULL};

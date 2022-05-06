@@ -337,7 +337,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
     const struct bg_tess_tol *ttol = d->ttol;
 
     // Standard (view independent) wireframe
-    if (!v || !v->gv_s->adaptive_plot) {
+    if (!v || !v->gv_s->adaptive_plot_csg) {
 	if (ip->idb_meth->ft_plot) {
 	    ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, s->s_v);
 	    // Because this data is view independent, it only needs to be
@@ -401,7 +401,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 	return;
 
     // If we're not adaptive, trigger the view insensitive drawing routines
-    if (v && !v->gv_s->adaptive_plot)
+    if (v && !v->gv_s->adaptive_plot_csg && !v->gv_s->adaptive_plot_mesh)
 	return draw_scene(s, NULL);
 
     // If we have a scene object without drawing data, it is most likely
@@ -448,10 +448,9 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     struct db_full_path *fp = &d->fp;
     struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
 
-
     // Adaptive BoTs have specialized LoD routines to help cope with very large
     // data sets, both for wireframe and shaded mode.
-    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && s->s_v->gv_s->adaptive_plot) {
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && s->s_v->gv_s->adaptive_plot_mesh) {
 	bot_adaptive_plot(s, v);
 	return;
     }
@@ -551,7 +550,7 @@ geom_done:
     bv_scene_obj_bound(s, v);
 
     // Store current view info, in case of adaptive plotting
-    s->adaptive_wireframe = s->s_v->gv_s->adaptive_plot;
+    s->adaptive_wireframe = s->s_v->gv_s->adaptive_plot_csg;
     s->view_scale = s->s_v->gv_scale;
     s->bot_threshold= s->s_v->gv_s->bot_threshold;
     s->curve_scale = s->s_v->gv_s->curve_scale;

@@ -709,7 +709,7 @@ dm_var_init(struct mged_dm *target_dm)
     view_state->vs_gvp->independent = 0;
 
     view_state->vs_gvp->gv_clientData = (void *)view_state;
-    view_state->vs_gvp->gv_s->adaptive_plot = 0;
+    view_state->vs_gvp->gv_s->adaptive_plot_csg = 0;
     view_state->vs_gvp->gv_s->redraw_on_zoom = 0;
     view_state->vs_gvp->gv_s->point_scale = 1.0;
     view_state->vs_gvp->gv_s->curve_scale = 1.0;

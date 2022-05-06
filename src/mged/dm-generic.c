@@ -69,7 +69,7 @@ common_dm(int argc, const char *argv[])
 
 	/* redraw after scaling */
 	if (GEDP && GEDP->ged_gvp &&
-	    GEDP->ged_gvp->gv_s->adaptive_plot &&
+	    GEDP->ged_gvp->gv_s->adaptive_plot_csg &&
 	    GEDP->ged_gvp->gv_s->redraw_on_zoom &&
 	    (am_mode == AMM_SCALE ||
 	     am_mode == AMM_CON_SCALE_X ||

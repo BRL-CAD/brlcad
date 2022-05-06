@@ -747,7 +747,7 @@ draw_solid_wireframe(struct bv_scene_obj *sp, struct bview *gvp, struct db_i *db
 	return -1;
     }
 
-    if (gvp && gvp->gv_s->adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
+    if (gvp && gvp->gv_s->adaptive_plot_csg && ip->idb_meth->ft_adaptive_plot) {
 	ret = ip->idb_meth->ft_adaptive_plot(&vhead, ip, tol, gvp, sp->s_size);
     } else if (ip->idb_meth->ft_plot) {
 	ret = ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, gvp);
