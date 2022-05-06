@@ -159,7 +159,7 @@
 struct application APP;
 struct resource* resources;
 size_t samples = 25;
-size_t light_intensity = 30.0;
+size_t light_intensity = 200.0; // make ambient light match rt
 
 extern "C" {
     FILE* outfp = NULL;
@@ -273,6 +273,9 @@ struct command_tab rt_do_tab[] = {
  */
 void init_defaults(void) {
     /* Set the byte offsets at run time */
+
+    light_intensity *= AmbientIntensity; // multiplying by factor
+
     view_parse[0].sp_offset = bu_byteoffset(samples);
     view_parse[1].sp_offset = bu_byteoffset(samples);
     view_parse[2].sp_offset = bu_byteoffset(background[0]);
@@ -411,8 +414,8 @@ int register_region(struct db_tree_state* tsp,
 	    asr::ParamArray()));
 
     // choose input shader
-    // we use disney material as default
-    const char* shader = (char*)"as_disney_material";
+    // change to plastic to look more like rt
+    const char* shader = (char*)"as_plastic";
     asr::ParamArray shader_params = asr::ParamArray();
 
     // check if shader was set new way
@@ -728,6 +731,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 
     // Create a color called "light_intensity" and insert it into the assembly.
     static const float LightRadiance[] = { 1.0f, 1.0f, 1.0f };
+    light_intensity *= AmbientIntensity; // multiplying by factor
     // FIXME
     assembly->colors().insert(
 	asr::ColorEntityFactory::create(
@@ -785,7 +789,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 	    "sky_radiance",
 	    asr::ParamArray()
 	    .insert("color_space", "srgb")
-	    .insert("multiplier", "0.5"),
+	    .insert("multiplier", AmbientIntensity),
 	    asr::ColorValueArray(3, float_bgcolor)));
 
     // Create an environment EDF called "sky_edf" and insert it into the scene.
@@ -814,33 +818,23 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     // Camera
     //------------------------------------------------------------------------
 
-    // declare camera outside of if-else scope
-    asf::auto_release_ptr<asr::Camera> camera;
-
-    // check for perspective
-    if (rt_perspective > 0.0) {
-        // Create a pinhole camera with film dimensions
-        bu_vls_sprintf(&dimensions, "%f %f", 0.08 * (double) width / height, 0.08);
-        asf::auto_release_ptr<asr::Camera> pinhole(
-	    asr::PinholeCameraFactory().create(
-	        "camera",
-	        asr::ParamArray()
-	        .insert("film_dimensions", bu_vls_cstr(&dimensions))
-	        .insert("focal_length", "0.035")
-        ));
-        camera = pinhole;
+    // Create a pinhole camera with film dimensions
+    double dim_factor = 1.0;
+    if(width < height){
+      bu_vls_sprintf(&dimensions, "%f %f", dim_factor * (double) width / height, dim_factor);
+    } else {
+      bu_vls_sprintf(&dimensions, "%f %f", dim_factor * (double) height / width, dim_factor);
     }
-    else {
-        // Create a orthographic camera with film dimensions
-        bu_vls_sprintf(&dimensions, "%f %f", viewsize, viewsize);
-        asf::auto_release_ptr<asr::Camera> ortho(
-        asr::OrthographicCameraFactory().create(
-            "camera",
-            asr::ParamArray()
-            .insert("film_dimensions", bu_vls_cstr(&dimensions))
-        ));
-        camera = ortho;
-    }
+    asf::auto_release_ptr<asr::Camera> camera(
+    asr::PinholeCameraFactory().create(
+    "camera",
+    asr::ParamArray()
+    .insert("film_dimensions", bu_vls_cstr(&dimensions))
+    // .insert("focal_length", "0.035")
+    // rt_perspective is horizontal_fov
+    // horizontal_fov has precidence over focal_length
+    // if -p is not set, default will be used
+    .insert("horizontal_fov", rt_perspective))); // equvalent to focal_length", "0.035
 
     // Place and orient the camera. By default cameras are located in (0.0, 0.0, 0.0)
     // and are looking toward Z- (0.0, 0.0, -1.0).
@@ -901,6 +895,8 @@ main(int argc, char **argv)
     // you will need to implement foundation::ILogTarget (foundation/utility/log/ilogtarget.h).
     asf::ILogTarget* log_target(asf::create_console_log_target(stderr));
     asr::global_logger().add_target(log_target);
+
+    rt_perspective = 85; // setting the default
 
     // Print appleseed's version string.
     RENDERER_LOG_INFO("%s\n", asf::Appleseed::get_synthetic_version_string());
