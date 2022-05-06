@@ -38,6 +38,7 @@
 #include <QStatusBar>
 #include <QTreeView>
 
+#include "ged.h"
 #include "qtcad/QtCADQuad.h"
 #include "qtcad/QgSelectionProxyModel.h"
 #include "qtcad/QgTreeView.h"
@@ -58,6 +59,14 @@ class QBDockWidget : public QDockWidget
        void toWindow(bool floating);
 };
 
+class GEDShellCompleter : public QtConsoleWidgetCompleter
+{
+    public:
+	GEDShellCompleter(QWidget *p, struct ged *ged_ptr);
+	void updateCompletionModel(const QString& console_txt) override;
+	struct ged *gedp = NULL;
+};
+
 class BRLCAD_MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -70,6 +79,7 @@ class BRLCAD_MainWindow : public QMainWindow
 
 	QgTreeView *treeview;
 	QtConsole *console;
+	GEDShellCompleter *cshellcomp;
 	CADPalette *vc;
 	CADPalette *ic;
 	CADPalette *oc;

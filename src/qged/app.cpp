@@ -178,6 +178,9 @@ CADApp::open_file()
 	    }
 	}
     }
+
+    // Let the shell's completer know what the current gedp is (if any)
+    w->cshellcomp->gedp = m->gedp;
 }
 
 

@@ -118,7 +118,7 @@ class QtConsole::pqImplementation :
 
 	std::string historyAt(size_t ind)
 	{
-	    const char *cmd = CommandHistory.at(ind).toLocal8Bit();
+	    const char *cmd = CommandHistory.at(ind).toLocal8Bit().data();
 	    std::string scmd(cmd);
 	    return scmd;
 	}
@@ -351,6 +351,7 @@ class QtConsole::pqImplementation :
 		this->Completer->updateCompletionModel(commandText);
 
 		// Place and show the completer if there are available completions
+		bu_log("completion cnt: %d\n", this->Completer->completionCount());
 		if (this->Completer->completionCount()) {
 		    // Get a QRect for the cursor at the start of the
 		    // current word and then translate it down 8 pixels.

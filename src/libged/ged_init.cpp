@@ -149,9 +149,10 @@ ged_cmd_lookup(const char **ncmd, const char *cmd)
 size_t
 ged_cmd_list(const char * const **cl)
 {
-    if (!cmd_list) {
+    if (cmd_list) {
 	bu_argv_free(cmd_list_len, (char **)cmd_list);
 	cmd_list_len = 0;
+	cmd_list = NULL;
     }
     cmd_list = (char **)bu_calloc(ged_cmd_map.size(), sizeof(char *), "ged cmd argv");
     std::map<std::string, const struct ged_cmd *>::iterator m_it;

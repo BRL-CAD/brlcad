@@ -55,7 +55,16 @@
 #include "qtcad/defines.h"
 #include "qtcad/QtConsoleListener.h"
 
-class QtConsoleWidgetCompleter;
+class QTCAD_EXPORT QtConsoleWidgetCompleter : public QCompleter
+{
+public:
+  /**
+   * Update the completion model given a string.  The given string
+   * is the current console text between the cursor and the start of
+   * the line.
+   */
+  virtual void updateCompletionModel(const QString& str) = 0;
+};
 
 /**
   Qt widget that provides an interactive console - you can send text to the
@@ -156,16 +165,6 @@ private:
   friend class pqImplementation;
 };
 
-class QTCAD_EXPORT QtConsoleWidgetCompleter : public QCompleter
-{
-public:
-  /**
-   * Update the completion model given a string.  The given string
-   * is the current console text between the cursor and the start of
-   * the line.
-   */
-  virtual void updateCompletionModel(const QString& str) = 0;
-};
 
 #endif // !QTCAD_CONSOLE_H
 

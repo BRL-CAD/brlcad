@@ -82,7 +82,7 @@ path_match(const char ***completions, struct db_i *dbip, const char *iseed)
 	context = objs[objs.size() - 1];
     }
     struct directory *cdp = db_lookup(dbip, context.c_str(), LOOKUP_QUIET);
-    if (cdp == RT_DIR_NULL || !(dp->d_flags & RT_DIR_COMB))
+    if (cdp == RT_DIR_NULL || !(cdp->d_flags & RT_DIR_COMB))
 	return BRLCAD_ERROR;
 
     struct rt_db_internal in;
@@ -131,7 +131,7 @@ obj_match(const char ***completions, struct db_i *dbip, const char *seed)
     // Prepare the dp list in the order we want - first tops entries, then
     // all objects.
     std::vector<struct directory *> dps;
-
+#if 0
     // First comes the tops list
     db_update_nref(dbip, &rt_uniresource);
     struct directory **all_paths;
@@ -141,7 +141,7 @@ obj_match(const char ***completions, struct db_i *dbip, const char *seed)
 	dps.push_back(all_paths[i]);
     }
     bu_free(all_paths, "free db_ls output");
-
+#endif
     // After tops, all active directory pointers
     struct bu_ptbl fdps = BU_PTBL_INIT_ZERO;
     for (int i = 0; i < RT_DBNHASH; i++) {
@@ -182,34 +182,28 @@ ged_cmd_completions(const char ***completions, const char *seed)
     if (!completions || !seed)
 	return 0;
 
-    // Either we already have a fully defined command (in which case we don't
-    // do anything) or a command seed to expand.
-    int cmd_valid = !ged_cmd_valid(seed, NULL);
+    //Build a set of matches
+    const char * const *cl = NULL;
+    size_t cmd_cnt = ged_cmd_list(&cl);
 
-    if (!cmd_valid) {
-	// Not a valid command - build a set of matches
-	const char * const *cl = NULL;
-	size_t cmd_cnt = ged_cmd_list(&cl);
-
-	std::vector<const char *> matches;
-	for (size_t i = 0; i < cmd_cnt; i++) {
-	    if (strlen(cl[i]) < strlen(seed))
-		continue;
-	    if (!bu_strncmp(seed, cl[i], strlen(seed)))
-		matches.push_back(cl[i]);
-	}
-
-	*completions = (const char **)bu_calloc(matches.size() + 1, sizeof(const char *), "av array");
-	for (size_t i = 0; i < matches.size(); i++)
-	    (*completions)[i] = bu_strdup(matches[i]);
-	ret = (int)matches.size();
+    std::vector<const char *> matches;
+    for (size_t i = 0; i < cmd_cnt; i++) {
+	if (strlen(cl[i]) < strlen(seed))
+	    continue;
+	if (!bu_strncmp(seed, cl[i], strlen(seed)))
+	    matches.push_back(cl[i]);
     }
+
+    *completions = (const char **)bu_calloc(matches.size() + 1, sizeof(const char *), "av array");
+    for (size_t i = 0; i < matches.size(); i++)
+	(*completions)[i] = bu_strdup(matches[i]);
+    ret = (int)matches.size();
 
     return ret;
 }
 
 int
-ged_obj_completions(const char ***completions, struct db_i *dbip, const char *seed)
+ged_geom_completions(const char ***completions, struct db_i *dbip, const char *seed)
 {
     int ret = 0;
 
