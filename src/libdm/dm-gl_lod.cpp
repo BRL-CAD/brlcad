@@ -517,24 +517,33 @@ gl_csg2_lod(struct dm *dmp, struct bv_scene_obj *s)
 	    glDisable(GL_BLEND);
     }
 
-#if 1
-    for (int i = 0; i < l->array_cnt; i++) {
-	glVertexPointer(3, GL_DOUBLE, 0, l->parrays[i]);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glDrawArrays(GL_LINE_STRIP, 0, l->pcnts[i]);
-	glDisableClientState(GL_VERTEX_ARRAY);
-    }
-#else
-    GLdouble dpt[3];
-    for (int i = 0; i < l->array_cnt; i++) {
-	glBegin(GL_LINE_STRIP);
-	for (int j = 0; j < l->pcnts[i]; j++) {
-	    VMOVE(dpt, l->parrays[i][j]);
-	    glVertex3dv(dpt);
-	}
+    if (l->array_cnt == 1 && l->pcnts[0] == 1) {
+	// Single point only
+	GLdouble dpt[3];
+	VMOVE(dpt, l->parrays[0][0]);
+	glBegin(GL_POINTS);
+	glVertex3dv(dpt);
 	glEnd();
-    }
+    } else {
+#if 1
+	for (int i = 0; i < l->array_cnt; i++) {
+	    glVertexPointer(3, GL_DOUBLE, 0, l->parrays[i]);
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glDrawArrays(GL_LINE_STRIP, 0, l->pcnts[i]);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	}
+#else
+	GLdouble dpt[3];
+	for (int i = 0; i < l->array_cnt; i++) {
+	    glBegin(GL_LINE_STRIP);
+	    for (int j = 0; j < l->pcnts[i]; j++) {
+		VMOVE(dpt, l->parrays[i][j]);
+		glVertex3dv(dpt);
+	    }
+	    glEnd();
+	}
 #endif
+    }
 
     if (dmp->i->dm_light && dmp->i->dm_transparency)
 	glDisable(GL_BLEND);

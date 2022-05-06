@@ -392,6 +392,10 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
     if (l) {
 	struct bv_scene_obj *vo = bv_obj_get_child(s);
 	bv_set_view_obj(s, v, vo);
+	VMOVE(vo->bmin, l->bmin);
+	VMOVE(vo->bmax, l->bmax);
+	VMOVE(s->bmin, l->bmin);
+	VMOVE(s->bmax, l->bmax);
 
 	// Associate the scene object with the polyline info
 	l->s = vo;

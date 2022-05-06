@@ -44,7 +44,7 @@
 #include "bg/lod.h"
 #include "bg/sample.h"
 
-static int 
+static int
 rebuild_vect(std::vector<std::vector<fastf_t>> &point_arrays, struct bv_polyline_lod *l, point_t *pa, int pcnt, size_t ind)
 {
     int ptotal = pcnt + 1;
@@ -67,8 +67,8 @@ rebuild_vect(std::vector<std::vector<fastf_t>> &point_arrays, struct bv_polyline
 static fastf_t
 bbox_curve_count(
 	point_t bbox_min, point_t bbox_max,
-        fastf_t curve_scale,
-        fastf_t s_size)
+	fastf_t curve_scale,
+	fastf_t s_size)
 {
     fastf_t x_len, y_len, z_len, avg_len;
 
@@ -87,7 +87,7 @@ bbox_curve_count(
 // don't have to persist the rt_db_internals which are (usually)
 // the original source of this information
 void *
-obj_data_cpy(void *gd, unsigned int type)
+obj_data_cpy(point_t *bbmin, point_t *bbmax, void *gd, unsigned int type)
 {
     switch (type) {
 	case ID_TOR:
@@ -97,6 +97,7 @@ obj_data_cpy(void *gd, unsigned int type)
 		BG_TOR_CK_MAGIC(st);
 		BU_GET(nt, struct bg_torus);
 		*nt = *st;
+		bg_tor_bbox(bbmin, bbmax, nt);
 		return nt;
 	    }
 	default:
@@ -112,9 +113,10 @@ struct bg_polyline_lod_internal {
 class PolyLines {
     public:
 	PolyLines(void *gd, unsigned int type);
-	point_t bbmin, bbmax;
 	struct bv_polyline_lod *l;
 
+	point_t bbmin = {INFINITY, INFINITY, INFINITY};
+	point_t bbmax = {-INFINITY, -INFINITY, -INFINITY};
 	int update(struct bview *v); // return 1 if changed, else 0
 
 	bool valid = false;
@@ -136,16 +138,16 @@ class PolyLines {
 PolyLines::PolyLines(void *gd, unsigned int type)
 {
     data_type = type;
-    gdata = obj_data_cpy(gd, type);
+    gdata = obj_data_cpy(&bbmin, &bbmax, gd, type);
     if (gdata)
 	valid = true;
 }
 
 static int
 tor_ellipse_points(
-        vect_t ellipse_A,
-        vect_t ellipse_B,
-        fastf_t point_spacing)
+	vect_t ellipse_A,
+	vect_t ellipse_B,
+	fastf_t point_spacing)
 {
     fastf_t avg_radius, circumference;
 
@@ -168,9 +170,8 @@ PolyLines::torus_update(struct bg_torus *tor, struct bview *v, fastf_t s_size)
 
     BG_TOR_CK_MAGIC(tor);
 
-    bg_tor_bbox(&l->bmin, &l->bmax, tor);
-    VMOVE(l->s->bmin, l->bmin);
-    VMOVE(l->s->bmax, l->bmax);
+    VMOVE(l->bmin, bbmin);
+    VMOVE(l->bmax, bbmax);
 
     // Calculate some convenience values from the torus
     VMOVE(tor_a, tor->a);
@@ -212,7 +213,7 @@ PolyLines::torus_update(struct bg_torus *tor, struct bview *v, fastf_t s_size)
     // To allocate the correct memory, we first determine how many polylines we will
     // be creating for this particular object
     l->array_cnt = 4;
-    int num_ellipses = bbox_curve_count(l->s->bmin, l->s->bmax, v->gv_s->curve_scale, s_size);
+    int num_ellipses = bbox_curve_count(l->bmin, l->bmax, v->gv_s->curve_scale, s_size);
     if (num_ellipses < 3)
 	num_ellipses = 3;
     l->array_cnt += num_ellipses;
@@ -235,6 +236,9 @@ PolyLines::torus_update(struct bg_torus *tor, struct bview *v, fastf_t s_size)
 	// Set up the public facing containers
 	l->parrays = (point_t **)bu_realloc(l->parrays, l->array_cnt * sizeof(point_t *), "points array alloc");
 	l->pcnts = (int *)bu_realloc(l->pcnts, l->array_cnt * sizeof(int), "point array counts array alloc");
+	for (int i = 0; i < l->array_cnt; i++) {
+	    l->pcnts[i] = 0;
+	}
     }
 
     /* plot outer circular contour */
@@ -297,8 +301,8 @@ PolyLines::update(struct bview *v)
 	return 0;
 
     // If our size hasn't changed substantially, don't bother updating
-    fastf_t delta = fabs(l->s->s_size - prev_size);
-    if (delta < 0.1*l->s->s_size)
+    fastf_t delta = fabs(v->gv_size - prev_size);
+    if (delta < 100)
 	return 0;
 
     switch (data_type) {
@@ -308,7 +312,7 @@ PolyLines::update(struct bview *v)
 		BG_TOR_CK_MAGIC(t);
 		int ret = torus_update(t, v, l->s->s_size);
 		if (ret)
-		    prev_size = l->s->s_size;
+		    prev_size = v->gv_size;
 		return ret;
 	    }
 	default:
@@ -328,6 +332,8 @@ bg_polyline_lod_create(void *gd, unsigned int type)
     }
 
     BU_GET(pl->l, struct bv_polyline_lod);
+    VMOVE(pl->l->bmin, pl->bbmin);
+    VMOVE(pl->l->bmax, pl->bbmax);
     BU_GET(pl->l->i, struct bg_polyline_lod_internal);
     pl->l->parrays = NULL;
     pl->l->pcnts = NULL;
