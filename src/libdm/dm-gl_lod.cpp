@@ -487,9 +487,14 @@ gl_csg2_lod(struct dm *dmp, struct bv_scene_obj *s)
     // we can use them, but they require more memory usage while they are being
     // generated.  If we're tight on memory and the vlist is large, accept the
     // slower drawing to avoid memory stress - otherwise, use display lists
+    struct bv_polyline_lod *l = (struct bv_polyline_lod *)s->draw_data;
+    int ptotal = 0;
+    for (int i = 0; i < l->array_cnt; i++) {
+	ptotal += l->pcnts[i];
+    }
     int ec;
     unsigned long long avail_mem = 0.5*bu_mem(BU_MEM_AVAIL, &ec);
-    unsigned long long size_est = (unsigned long long)(bu_list_len(&s->s_vlist)*sizeof(point_t));
+    unsigned long long size_est = (unsigned long long)(ptotal*sizeof(point_t));
     bool gen_dlist = false;
     if (!s->s_dlist && size_est < avail_mem) {
 	gen_dlist = true;
@@ -511,8 +516,6 @@ gl_csg2_lod(struct dm *dmp, struct bv_scene_obj *s)
 	if (dmp->i->dm_transparency)
 	    glDisable(GL_BLEND);
     }
-
-    struct bv_polyline_lod *l = (struct bv_polyline_lod *)s->draw_data;
 
 #if 1
     for (int i = 0; i < l->array_cnt; i++) {
