@@ -84,6 +84,7 @@ set(level_3_dirs
   rtwizard
   archer
   mged
+  jview
   )
 
 # Now that we have our lists, proceed with the actual

@@ -30,6 +30,7 @@ set(cmake_ignore_files
   FindBSON.cmake
   FindFontconfig.cmake
   FindGECODE.cmake
+  FindJOGL.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
   FindLibUV.cmake
