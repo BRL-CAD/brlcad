@@ -79,7 +79,12 @@ path_match(const char ***completions, struct bu_vls *prefix, struct db_i *dbip, 
 	seed = objs[objs.size() - 1];
 	context = objs[objs.size() - 2];
     } else {
-	context = objs[objs.size() - 1];
+	if (lstr[lstr.length() - 1] != '/') {
+	    seed = objs[objs.size() - 1];
+	    context = objs[objs.size() - 2];
+	} else {
+	    context = objs[objs.size() - 1];
+	}
     }
     struct directory *cdp = db_lookup(dbip, context.c_str(), LOOKUP_QUIET);
     if (cdp == RT_DIR_NULL || !(cdp->d_flags & RT_DIR_COMB))

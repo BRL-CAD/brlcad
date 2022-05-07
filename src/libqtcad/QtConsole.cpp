@@ -351,7 +351,6 @@ class QtConsole::pqImplementation :
 		this->Completer->updateCompletionModel(commandText);
 
 		// Place and show the completer if there are available completions
-		bu_log("completion cnt: %d\n", this->Completer->completionCount());
 		if (this->Completer->completionCount()) {
 		    // Get a QRect for the cursor at the start of the
 		    // current word and then translate it down 8 pixels.
@@ -557,13 +556,13 @@ void QtConsole::insertCompletion(const QString& completion)
 {
     QTextCursor tc = this->Implementation->textCursor();
     QString text = tc.selectedText();
-    const char *txt = text.toLocal8Bit().data();
-    bu_log("txt: %s\n", txt);
+    //const char *txt = text.toLocal8Bit().data();
+    //bu_log("txt: %s\n", txt);
     while (text.at(0) != ' ' && (!split_slash || text.at(0) != '/')) {
 	tc.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
 	text = tc.selectedText();
-	txt = text.toLocal8Bit().data();
-	bu_log("txt: %s\n", txt);
+	//txt = text.toLocal8Bit().data();
+	//bu_log("txt: %s\n", txt);
     }
     if (tc.selectedText() == ".") {
 	tc.insertText(QString(".") + completion);
