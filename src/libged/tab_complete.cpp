@@ -68,7 +68,8 @@ path_match(const char ***completions, struct bu_vls *prefix, struct db_i *dbip, 
 	return 0;
 
     // If the last char in lstr is a slash, then we are looking to do
-    // completions in the comb tree of the parent (if a comb) or there is no
+    // completions in the comb tree of the parent (if a comb or if we are
+    // starting with a slash - i.e. the implicit tops comb) or there is no
     // completion to make (if not a comb).  If the last string is a partial,
     // then we're looking in the parent comb's tree for something that matches
     // the partial.
@@ -86,6 +87,26 @@ path_match(const char ***completions, struct bu_vls *prefix, struct db_i *dbip, 
 	    context = objs[objs.size() - 1];
 	}
     }
+
+    if (!context.length()) {
+	if (!seed.length()) {
+	    bu_vls_trunc(prefix, 0);
+	} else {
+	    bu_vls_sprintf(prefix, "%s", seed.c_str());
+	}
+	// Empty context - we need the tops list
+	db_update_nref(dbip, &rt_uniresource);
+	struct directory **all_paths;
+	int tops_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &all_paths);
+	bu_sort(all_paths, tops_cnt, sizeof(struct directory *), alphanum_cmp, NULL);
+	*completions = (const char **)bu_calloc(tops_cnt + 1, sizeof(const char *), "av array");
+	for (int i = 0; i < tops_cnt; i++) {
+	    (*completions)[i] = bu_strdup(all_paths[i]->d_namep);
+	}
+	bu_free(all_paths, "free db_ls output");
+	return tops_cnt;
+    }
+
     struct directory *cdp = db_lookup(dbip, context.c_str(), LOOKUP_QUIET);
     if (cdp == RT_DIR_NULL || !(cdp->d_flags & RT_DIR_COMB))
 	return BRLCAD_ERROR;
@@ -138,18 +159,8 @@ obj_match(const char ***completions, struct db_i *dbip, const char *seed)
     // Prepare the dp list in the order we want - first tops entries, then
     // all objects.
     std::vector<struct directory *> dps;
-#if 0
-    // First comes the tops list
-    db_update_nref(dbip, &rt_uniresource);
-    struct directory **all_paths;
-    int tops_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &all_paths);
-    bu_sort(all_paths, tops_cnt, sizeof(struct directory *), alphanum_cmp, NULL);
-    for (int i = 0; i < tops_cnt; i++) {
-	dps.push_back(all_paths[i]);
-    }
-    bu_free(all_paths, "free db_ls output");
-#endif
-    // After tops, all active directory pointers
+
+    // all active directory pointers
     struct bu_ptbl fdps = BU_PTBL_INIT_ZERO;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;

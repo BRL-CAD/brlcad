@@ -67,6 +67,11 @@ GEDShellCompleter::updateCompletionModel(const QString& console_txt)
     if (console_txt.isEmpty())
 	return;
 
+    // If the last char is a space, don't offer any completions - the prior
+    // contents are presumed to be complete
+    if (console_txt.at(console_txt.length() - 1) == ' ')
+	return;
+
     // We're going to be splitting up and processing this string's components
     // with libged C style, so get the data out of QString into a stable form
     char *ct = bu_strdup(console_txt.toLocal8Bit().constData());
