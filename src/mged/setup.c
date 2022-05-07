@@ -74,6 +74,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"arced", cmd_ged_plain_wrapper, ged_exec},
     {"area", f_area, GED_FUNC_PTR_NULL},
     {"arot", cmd_arot, GED_FUNC_PTR_NULL},
+	{"art", cmd_rt, GED_FUNC_PTR_NULL},
     {"attach", f_attach, GED_FUNC_PTR_NULL},
     {"attr", cmd_ged_plain_wrapper, ged_exec},
     {"autoview", cmd_autoview, GED_FUNC_PTR_NULL},
