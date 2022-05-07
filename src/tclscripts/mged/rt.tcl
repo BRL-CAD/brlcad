@@ -544,6 +544,7 @@ proc do_Raytrace {id prog_name} {
 	    append rt_cmd " -j $xmin,$ymin,$xmax,$ymax"
 	}
     }
+    puts "COMMAND: $rt_cmd" 
 
     switch $rt_control($id,omode) {
 	one

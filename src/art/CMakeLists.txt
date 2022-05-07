@@ -58,6 +58,7 @@ set(ART_SRCS
   brlcadplugin.cpp
   ../rt/opt.c
   ../rt/usage.cpp
+  ../rt/do.c
   )
 
 add_definitions(-DBOOST_ALL_DYN_LINK)

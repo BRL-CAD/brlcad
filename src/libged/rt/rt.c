@@ -139,9 +139,12 @@ const struct ged_cmd rtedge_cmd = { &rtedge_cmd_impl };
 struct ged_cmd_impl rtweight_cmd_impl = {"rtweight", ged_rt_core, GED_CMD_DEFAULT};
 const struct ged_cmd rtweight_cmd = { &rtweight_cmd_impl };
 
-const struct ged_cmd *rt_cmds[] = { &rt_cmd, &rtarea_cmd, &rtedge_cmd, &rtweight_cmd, NULL };
+struct ged_cmd_impl art_cmd_impl = { "art", ged_rt_core, GED_CMD_DEFAULT };
+const struct ged_cmd art_cmd = { &art_cmd_impl };
 
-static const struct ged_plugin pinfo = { GED_API,  rt_cmds, 4 };
+const struct ged_cmd *rt_cmds[] = { &rt_cmd, &rtarea_cmd, &rtedge_cmd, &rtweight_cmd, &art_cmd, NULL };
+
+static const struct ged_plugin pinfo = { GED_API,  rt_cmds, 5 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

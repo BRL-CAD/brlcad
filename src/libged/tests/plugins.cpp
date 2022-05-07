@@ -88,6 +88,7 @@ main(int ac, char *av[]) {
 	"arced",
 	"arot",
 	"art",
+	"artabort",
 	"attr",
 	"bb",
 	"bev",

@@ -1,4 +1,4 @@
-/*                         R T A B O R T . C
+/*                         A R T A B O R T . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2022 United States Government as represented by
@@ -17,11 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/rtabort.c
- *
- * The rtabort command.
- *
- */
+ /** @file libged/artabort.c
+  *
+  * The artabort command.
+  *
+  */
 
 #include "common.h"
 
@@ -32,17 +32,17 @@
 #include "../ged_private.h"
 
 
-/*
- * Abort the current raytrace processes (rt, rtwizard, rtcheck).
- *
- * Usage:
- * rtabort
- *
- */
+  /*
+   * Abort the current raytrace processes art.
+   *
+   * Usage:
+   * artabort
+   *
+   */
 int
-ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
+ged_artabort_core(struct ged* gedp, int argc, const char* argv[])
 {
-    struct ged_subprocess *rrp;
+    struct ged_subprocess* rrp;
     struct bu_vls cmdroot = BU_VLS_INIT_ZERO;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -58,14 +58,12 @@ ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
-	rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
-	const char *cmd;
+	rrp = (struct ged_subprocess*)BU_PTBL_GET(&gedp->ged_subp, i);
+	const char* cmd;
 	int argcnt = bu_process_args(&cmd, NULL, rrp->p);
 	bu_vls_trunc(&cmdroot, 0);
 	if (argcnt > 0 && bu_path_component(&cmdroot, cmd, BU_PATH_BASENAME_EXTLESS)) {
-	    if (BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rt") ||
-		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtwizard") || 
-		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtcheck")) {
+	    if ( BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "art")) {
 		bu_terminate(bu_process_pid(rrp->p));
 		rrp->aborted = 1;
 	    }
@@ -79,18 +77,18 @@ ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl rtabort_cmd_impl = {
-    "rtabort",
-    ged_rtabort_core,
+struct ged_cmd_impl artabort_cmd_impl = {
+    "artabort",
+    ged_artabort_core,
     GED_CMD_DEFAULT
 };
 
-const struct ged_cmd rtabort_cmd = { &rtabort_cmd_impl };
-const struct ged_cmd *rtabort_cmds[] = { &rtabort_cmd, NULL };
+const struct ged_cmd artabort_cmd = { &artabort_cmd_impl };
+const struct ged_cmd* artabort_cmds[] = { &artabort_cmd, NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  rtabort_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  artabort_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin* ged_plugin_info()
 {
     return &pinfo;
 }

@@ -47,7 +47,8 @@ set mged_help_data(arb)		{{name rot fb}	{make arb8, rotation + fallback}}
 set mged_help_data(arced)	{{a/b ...anim_command...}	{edit matrix or materials on combination's arc}}
 set mged_help_data(area)	{{[endpoint_tolerance]}	{calculate presented area of view (use ev -wT)}}
 set mged_help_data(arot)        $helplib_data(vo_arot)
-set mged_help_data(art) {{} {renders object with art} }
+set mged_help_data(art) $helplib_data(dgo_art)
+set mged_help_data(artabort)	$helplib_data(dgo_artabort)
 set mged_help_data(attach)	{{[-d display_string] [-i init_script] [-n name]
     [-t is_toplevel] [-W width] [-N height]
     [-S square_size] win_type}	{attach to a display manager}}

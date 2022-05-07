@@ -169,6 +169,8 @@ set helplib_data(vo_viewDir)		{{[-i]} {return the view direction}}
 set helplib_data(vo_vrot)		{{xdeg ydeg zdeg} {rotate viewpoint}}
 set helplib_data(vo_zoom)		{{sf} {zoom view by specified scale factor}}
 
+set helplib_data(dgo_art)		{{[options] [-- objects]}	{do raytrace of view or specified objects with art}}
+set helplib_data(dgo_artabort)		{{} {abort the associated art raytraces}}
 set helplib_data(dgo_assoc)		{{[wdb_obj]} {set/get the associated database object}}
 set helplib_data(dgo_autoview)		{{view_obj} {calculate an appropriate view size and center for view_obj}}
 set helplib_data(dgo_blast)		{{[-A] [-o] [-C#/#/#] [-s] <object(s) | attribute name/value pairs>} {erase all currently displayed geometry and draw the specified object(s)}}
