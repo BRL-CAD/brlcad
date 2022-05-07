@@ -659,7 +659,9 @@ do_ae(double azim, double elev)
 	viewsize = 2.0; /* arbitrary so Viewrotscale is normal */
     }
 
-    Viewrotscale[15] = 0.5 * viewsize;	/* Viewscale */
+    double halfsize = 0.5 * viewsize;
+    // MAT_SCALE(Viewrotscale, halfsize, halfsize, halfsize);
+    Viewrotscale[15] = halfsize;	/* Viewscale */
     bn_mat_mul(model2view, Viewrotscale, toEye);
     bn_mat_inv(view2model, model2view);
     VSET(temp, 0, 0, eye_backoff);
@@ -872,7 +874,6 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 	    0.0f,
 	    asf::Transformd::from_local_to_parent(
 		asf::Matrix<double, 4, 4>::from_array(view2model)
-		* asf::Matrix4d::make_scaling(asf::Vector3d(20.0, 20.0, 20.0))
 		)
 	    );
     }
