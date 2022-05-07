@@ -91,6 +91,7 @@ fp_name_compare(const void *d1, const void *d2, void *arg)
 
 
 struct ged_search {
+    struct bu_vls *prefix;
     struct directory **paths;
     size_t path_cnt;
     int search_type;
@@ -106,7 +107,7 @@ ged_get_interp_eval_callback(struct ged *gedp)
 
 
 HIDDEN int
-_path_scrub(struct bu_vls *path)
+_path_scrub(struct bu_vls *prefix, struct bu_vls *path)
 {
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
     const char *normalized;
@@ -121,10 +122,22 @@ _path_scrub(struct bu_vls *path)
     normalized = bu_path_normalize(bu_vls_addr(path));
 
     if (normalized && !BU_STR_EQUAL(normalized, "/")) {
+
+	// Search will use the basename
 	char *tbasename = bu_path_basename(normalized, NULL);
 	bu_vls_sprintf(&tmp, "%s", tbasename);
-	bu_free(tbasename, "free bu_path_basename string (caller's responsibility per bu/log.h)");
-	bu_vls_sprintf(path, "%s", bu_vls_addr(&tmp));
+	bu_free(tbasename, "free bu_path_basename string (caller's responsibility per bu/path.h)");
+	bu_vls_sprintf(path, "%s", bu_vls_cstr(&tmp));
+
+	// Stash the rest of the path, if any, in prefix
+	char *tdirname = bu_path_dirname(normalized);
+	bu_vls_sprintf(&tmp, "%s", tdirname);
+	bu_free(tdirname, "free bu_path_dirname string (caller's responsibility per bu/path.h)");
+	bu_vls_trunc(prefix, 0);
+	if (bu_vls_strlen(&tmp) > 1) {
+	    bu_vls_sprintf(prefix, "%s", bu_vls_cstr(&tmp));
+	}
+
 	bu_vls_free(&tmp);
     } else {
 	bu_vls_sprintf(path, "%s", "/");
@@ -148,6 +161,10 @@ _ged_free_search_set(struct bu_ptbl *search_set)
 	if (search) {
 	    if (search->paths) {
 		bu_free(search->paths, "free search paths");
+	    }
+	    if (search->prefix) {
+		bu_vls_free(search->prefix);
+		BU_PUT(search->prefix, struct bu_vls);
 	    }
 	    bu_free(search, "free search");
 	}
@@ -181,7 +198,7 @@ _ged_plan_item(char *arg)
  * The variables is_specific, is_local, and is_flat convey specifics about the search.
  */
 HIDDEN int
-_ged_search_characterize_path(struct ged *gedp, const char *orig, struct bu_vls *normalized, int *is_specific, int *is_local, int *is_flat, int *flat_only)
+_ged_search_characterize_path(struct ged *gedp, const char *orig, struct bu_vls *prefix, struct bu_vls *normalized, int *is_specific, int *is_local, int *is_flat, int *flat_only)
 {
     struct directory *path_dp = NULL;
     (*is_flat) = 0;
@@ -217,7 +234,7 @@ _ged_search_characterize_path(struct ged *gedp, const char *orig, struct bu_vls 
 	return 1;
     }
 
-    (*is_local) = _path_scrub(normalized);
+    (*is_local) = _path_scrub(prefix, normalized);
     if (!bu_vls_strlen(normalized))
 	return 0;
     if (BU_STR_EQUAL(bu_vls_addr(normalized), "/")) {
@@ -297,7 +314,8 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     int path_found = 0;
     int all_local = 1;
     int print_verbose_info = 0;
-    struct bu_vls argvls = BU_VLS_INIT_ZERO;
+    struct bu_vls prefix = BU_VLS_INIT_ZERO;
+    struct bu_vls bname = BU_VLS_INIT_ZERO;
     struct bu_vls search_string = BU_VLS_INIT_ZERO;
     struct bu_ptbl *search_set;
     const char *usage = "[-a] [-v] [-Q] [-h] [path] [expressions...]\n";
@@ -393,21 +411,25 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 		struct ged_search *new_search;
 		int search_path_type;
 
-		search_path_type = _ged_search_characterize_path(gedp, argv[plan_argv], &argvls, &is_specific, &is_local, &is_flat, &flat_only);
+		search_path_type = _ged_search_characterize_path(gedp, argv[plan_argv], &prefix, &bname, &is_specific, &is_local, &is_flat, &flat_only);
 		path_found = 1;
 
 		if (search_path_type) {
 		    BU_ALLOC(new_search, struct ged_search);
+		    BU_GET(new_search->prefix, struct bu_vls);
+		    bu_vls_init(new_search->prefix);
+		    bu_vls_sprintf(new_search->prefix, "%s", bu_vls_cstr(&prefix));
 		} else {
-		    /* FIXME: confirm 'argvls' is the desired string to print */
+		    /* FIXME: confirm 'bname' is the desired string to print */
 		    if (!wflag) {
 			bu_vls_printf(gedp->ged_result_str,  "Search path error:\n input: '%s' normalized: '%s' \n",
-				argv[plan_argv], bu_vls_addr(&argvls));
+				argv[plan_argv], bu_vls_addr(&bname));
 		    } else {
 			bu_vls_trunc(gedp->ged_result_str, 0);
 		    }
 
-		    bu_vls_free(&argvls);
+		    bu_vls_free(&bname);
+		    bu_vls_free(&prefix);
 		    bu_argv_free(argc, argv);
 		    _ged_free_search_set(search_set);
 		    return (wflag) ? BRLCAD_OK : BRLCAD_ERROR;
@@ -424,7 +446,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 			new_search->path_cnt = db_ls(gedp->dbip, DB_LS_HIDDEN, NULL, &(new_search->paths));
 		} else {
 		    /* _ged_search_characterize_path verified that the db_lookup will succeed */
-		    struct directory *local_dp = db_lookup(gedp->dbip, bu_vls_addr(&argvls), LOOKUP_QUIET);
+		    struct directory *local_dp = db_lookup(gedp->dbip, bu_vls_addr(&bname), LOOKUP_QUIET);
 		    if (is_flat) {
 			new_search->path_cnt = _ged_search_localized_obj_list(gedp, local_dp, &(new_search->paths), ctx);
 		    } else {
@@ -449,6 +471,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 		    struct ged_search *new_search;
 
 		    BU_ALLOC(new_search, struct ged_search);
+		    new_search->prefix = NULL;
 
 		    if (!aflag)
 			new_search->path_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &(new_search->paths));
@@ -473,7 +496,8 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
      * an invalid plan string, but it will report why it is invalid.  So in quiet mode,
      * we need to identify the bad string and return now. */
     if (wflag && db_search(NULL, flags, bu_vls_addr(&search_string), 0, NULL, NULL, ctx) != -1) {
-	bu_vls_free(&argvls);
+	bu_vls_free(&bname);
+	bu_vls_free(&prefix);
 	bu_vls_free(&search_string);
 	bu_argv_free(argc, argv);
 	_ged_free_search_set(search_set);
@@ -591,7 +615,11 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 					struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
 					bu_vls_trunc(&fullpath_string, 0);
 					db_fullpath_to_vls(&fullpath_string, dfptr, gedp->dbip, print_verbose_info);
-					bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&fullpath_string));
+					if (search->prefix && bu_vls_strlen(search->prefix)) {
+					    bu_vls_printf(gedp->ged_result_str, "%s%s\n", bu_vls_cstr(search->prefix), bu_vls_cstr(&fullpath_string));
+					} else {
+					    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&fullpath_string));
+					}
 				    }
 				}
 				break;
@@ -625,7 +653,8 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     }
 
     /* Done - free memory */
-    bu_vls_free(&argvls);
+    bu_vls_free(&bname);
+    bu_vls_free(&prefix);
     bu_vls_free(&search_string);
     bu_argv_free(argc, argv);
     db_search_context_destroy(ctx);
