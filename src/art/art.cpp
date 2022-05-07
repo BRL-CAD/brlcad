@@ -819,20 +819,23 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 
     // check for perspective
     if (rt_perspective > 0.0) {
+	struct bu_vls fov = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&fov, "%lf", rt_perspective);
         // Create a pinhole camera with film dimensions
-        bu_vls_sprintf(&dimensions, "%f %f", 0.08 * (double) width / height, 0.08);
+        bu_vls_sprintf(&dimensions, "%lf %lf", 1.0 * (double) width / height, 1.0);
         asf::auto_release_ptr<asr::Camera> pinhole(
 	    asr::PinholeCameraFactory().create(
 	        "camera",
 	        asr::ParamArray()
 	        .insert("film_dimensions", bu_vls_cstr(&dimensions))
-	        .insert("focal_length", "0.035")
+	        .insert("horizontal_fov", bu_vls_cstr(&fov))
+//	        .insert("focal_length", ".035")
         ));
         camera = pinhole;
     }
     else {
         // Create a orthographic camera with film dimensions
-        bu_vls_sprintf(&dimensions, "%f %f", viewsize, viewsize);
+        bu_vls_sprintf(&dimensions, "%f %f", 2.0, 2.0); /*viewsize, viewsize); */
         asf::auto_release_ptr<asr::Camera> ortho(
         asr::OrthographicCameraFactory().create(
             "camera",
@@ -842,19 +845,54 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
         camera = ortho;
     }
 
-    // Place and orient the camera. By default cameras are located in (0.0, 0.0, 0.0)
-    // and are looking toward Z- (0.0, 0.0, -1.0).
-    camera->transform_sequence().set_transform(
-	0.0f,
-	asf::Transformd::from_local_to_parent(
-        asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 1.0, 0.0), asf::deg_to_rad(-90.0)) *
-        asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 0.0, 1.0), asf::deg_to_rad(90.0)) *
-        asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(180.0)) *
-        asf::Matrix4d::make_translation(asf::Vector3d(eye_model[1], eye_model[2], eye_model[0])) * /* camera location */
-        asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 1.0, 0.0), asf::deg_to_rad(azimuth)) * /* rotate azimuth */
-        asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-elevation)) /* rotate elevation */
-	));
-    // camera->transform_sequence().set_transform(
+    bu_log("EYE: %lf, %lf, %lf\n", V3ARGS(eye_model));
+    bu_log("VIEWSIZE: %lf\n", viewsize);
+    bn_mat_print("VIEWROTSCALE: ", Viewrotscale);
+    bn_mat_print("view2model BEFORE: ", view2model);
+    bn_mat_print("model2view: ", model2view);
+
+
+    if (rt_perspective > 0.0) {
+	// Place and orient the camera. By default cameras are located in (0.0, 0.0, 0.0)
+	// and are looking toward Z- (0.0, 0.0, -1.0).
+	camera->transform_sequence().set_transform(
+	    0.0f,
+	    asf::Transformd::from_local_to_parent(
+		asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 1.0, 0.0), asf::deg_to_rad(-90.0)) *
+		asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 0.0, 1.0), asf::deg_to_rad(90.0)) *
+		asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(180.0)) *
+		asf::Matrix4d::make_translation(asf::Vector3d(eye_model[1], eye_model[2], eye_model[0])) * /* camera location */
+		asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 1.0, 0.0), asf::deg_to_rad(azimuth)) * /* rotate azimuth */
+		asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-elevation)) /* rotate elevation */
+		));
+
+    } else {
+
+	camera->transform_sequence().set_transform(
+	    0.0f,
+	    asf::Transformd::from_local_to_parent(
+		asf::Matrix<double, 4, 4>::from_array(view2model)
+		* asf::Matrix4d::make_scaling(asf::Vector3d(20.0, 20.0, 20.0))
+		)
+	    );
+    }
+
+    float time0;
+    asf::Transformd t;
+    camera->transform_sequence().get_transform(0, time0, t);
+
+    bn_mat_print("view2model AFTER: ", view2model);
+
+    const asf::Matrix<double, 4, 4>& l2p = t.get_local_to_parent();
+    const asf::Matrix<double, 4, 4>& p2l = t.get_parent_to_local();
+    mat_t ml2p, mp2l;
+    MAT_COPY(ml2p, l2p);
+    MAT_COPY(mp2l, p2l);
+    bn_mat_print("L2P TRANSFORM: ", ml2p);
+    bn_mat_print("P2L TRANSFORM: ", mp2l);
+
+
+// camera->transform_sequence().set_transform(
     //     0.0f,
     //     asf::Transformd::from_local_to_parent(
     //         asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-20.0)) *
