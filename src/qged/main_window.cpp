@@ -115,7 +115,11 @@ GEDShellCompleter::updateCompletionModel(const QString& console_txt)
 
     char *seed = av[ac - 1];
     const char **completions = NULL;
-    int completion_cnt = ged_geom_completions(&completions, gedp->dbip, seed);
+    struct bu_vls prefix = BU_VLS_INIT_ZERO;
+    int completion_cnt = ged_geom_completions(&completions, &prefix, gedp->dbip, seed);
+    ((QtConsole *)(parent()))->split_slash = 0;
+    if (!BU_STR_EQUAL(bu_vls_cstr(&prefix), seed))
+	((QtConsole *)(parent()))->split_slash = 1;
     QStringList clist = QStringList();
     for (int i = 0; i < completion_cnt; i++) {
 	clist.append(QString(completions[i]));
@@ -125,10 +129,11 @@ GEDShellCompleter::updateCompletionModel(const QString& console_txt)
 	setCompletionMode(QCompleter::PopupCompletion);
 	setModel(new QStringListModel(clist, this));
 	setCaseSensitivity(Qt::CaseSensitive);
-	setCompletionPrefix(QString(seed));
+	setCompletionPrefix(QString(bu_vls_cstr(&prefix)));
 	if (popup())
 	    popup()->setCurrentIndex(completionModel()->index(0, 0));
     }
+    bu_vls_free(&prefix);
     bu_free(ct, "strcpy");
     bu_free(av, "av");
 }

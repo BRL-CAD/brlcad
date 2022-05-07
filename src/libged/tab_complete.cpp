@@ -46,7 +46,7 @@ alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
 }
 
 static int
-path_match(const char ***completions, struct db_i *dbip, const char *iseed)
+path_match(const char ***completions, struct bu_vls *prefix, struct db_i *dbip, const char *iseed)
 {
     // If we've gotten this far, we either have a hierarchy or an error
     std::string lstr(iseed);
@@ -99,6 +99,7 @@ path_match(const char ***completions, struct db_i *dbip, const char *iseed)
 
     // If we don't have a seed or a prev entry, grab all the children
     if (!seed.length()) {
+	bu_vls_trunc(prefix, 0);
 	*completions = (const char **)bu_calloc(child_cnt + 1, sizeof(const char *), "av array");
 	for (int i = 0; i < child_cnt; i++)
 	    (*completions)[i] = bu_strdup(children[i]->d_namep);
@@ -107,6 +108,7 @@ path_match(const char ***completions, struct db_i *dbip, const char *iseed)
     }
 
     // Have seed - grab the matches
+    bu_vls_sprintf(prefix, "%s", seed.c_str());
     std::vector<struct directory *> matches;
     for (int i = 0; i < child_cnt; i++) {
 	if (strlen(children[i]->d_namep) < seed.length())
@@ -203,18 +205,21 @@ ged_cmd_completions(const char ***completions, const char *seed)
 }
 
 int
-ged_geom_completions(const char ***completions, struct db_i *dbip, const char *seed)
+ged_geom_completions(const char ***completions, struct bu_vls *prefix, struct db_i *dbip, const char *seed)
 {
     int ret = 0;
 
-    if (!dbip || !completions || !seed)
+    if (!dbip || !prefix || !completions || !seed)
 	return 0;
 
     ret = obj_match(completions, dbip, seed);
 
     // If the object name match didn't work, see if we have a hierarchy specification
     if (!ret) {
-	ret = path_match(completions, dbip, seed);
+	ret = path_match(completions, prefix, dbip, seed);
+    } else {
+	// If the match is from object names, the prefix is just the seed
+	bu_vls_sprintf(prefix, "%s", seed);
     }
 
     return ret;

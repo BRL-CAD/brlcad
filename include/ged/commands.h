@@ -93,7 +93,7 @@ ged_cmd_completions(const char ***completions, const char *seed);
  * it using bu_argv_free.
  */
 GED_EXPORT extern int
-ged_geom_completions(const char ***completions, struct db_i *dbip, const char *seed);
+ged_geom_completions(const char ***completions, struct bu_vls *cprefix, struct db_i *dbip, const char *seed);
 
 
 /** @addtogroup ged_objects */

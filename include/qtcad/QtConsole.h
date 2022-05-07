@@ -102,6 +102,10 @@ public:
   void listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d);
   std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *> listeners;
 
+  // When inserting a completion, need a setting to control
+  // how we handle slashes
+  int split_slash = 0;
+
 signals:
   /// Signal emitted whenever the user enters a command
   void executeCommand(const QString& cmd);

@@ -559,7 +559,7 @@ void QtConsole::insertCompletion(const QString& completion)
     QString text = tc.selectedText();
     const char *txt = text.toLocal8Bit().data();
     bu_log("txt: %s\n", txt);
-    while (text.at(0) != ' ') {
+    while (text.at(0) != ' ' && (!split_slash || text.at(0) != '/')) {
 	tc.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
 	text = tc.selectedText();
 	txt = text.toLocal8Bit().data();
