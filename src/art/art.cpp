@@ -850,13 +850,42 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     bu_log("EYE: %lf, %lf, %lf\n", V3ARGS(eye_model));
     bu_log("VIEWSIZE: %lf\n", viewsize);
     bn_mat_print("VIEWROTSCALE: ", Viewrotscale);
-    bn_mat_print("view2model BEFORE: ", view2model);
     bn_mat_print("model2view: ", model2view);
+    bn_mat_print("view2model BEFORE: ", view2model);
 
 
     if (rt_perspective > 0.0) {
+	/*
+
+	  double halfsize = 0.5 * viewsize;
+	  // MAT_SCALE(Viewrotscale, halfsize, halfsize, halfsize);
+	  Viewrotscale[15] = halfsize;	// Viewscale
+	  bn_mat_mul(model2view, Viewrotscale, toEye);
+	  bn_mat_inv(view2model, model2view);
+	  VSET(temp, 0, 0, eye_backoff);
+	  MAT4X3PNT(eye_model, view2model, temp);
+	*/
+
+	mat_t toEye;
+	MAT_IDN(toEye);
+	toEye[MDX] = -eye_model[X];
+	toEye[MDY] = -eye_model[Y];
+	toEye[MDZ] = -eye_model[Z];
+
+	Viewrotscale[15] = 1.0;
+	bn_mat_mul(model2view, Viewrotscale, toEye);
+	bn_mat_inv(view2model, model2view);
+
+	camera->transform_sequence().set_transform(
+	    0.0f,
+	    asf::Transformd::from_local_to_parent(
+		asf::Matrix<double, 4, 4>::from_array(view2model)
+		)
+	    );
+
 	// Place and orient the camera. By default cameras are located in (0.0, 0.0, 0.0)
 	// and are looking toward Z- (0.0, 0.0, -1.0).
+#if 0
 	camera->transform_sequence().set_transform(
 	    0.0f,
 	    asf::Transformd::from_local_to_parent(
@@ -867,6 +896,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 		asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 1.0, 0.0), asf::deg_to_rad(azimuth)) * /* rotate azimuth */
 		asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-elevation)) /* rotate elevation */
 		));
+#endif
 
     } else {
 
