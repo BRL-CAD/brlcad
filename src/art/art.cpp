@@ -912,6 +912,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 	    "beauty",
 	    asr::ParamArray()
 	    .insert("camera", "camera")
+	    .insert("tile_size", "32 32")
 	    .insert("resolution", bu_vls_cstr(&dimensions))));
 
     // Bind the scene to the project.
