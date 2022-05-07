@@ -659,9 +659,7 @@ do_ae(double azim, double elev)
 	viewsize = 2.0; /* arbitrary so Viewrotscale is normal */
     }
 
-    double halfsize = 0.5 * viewsize;
-    // MAT_SCALE(Viewrotscale, halfsize, halfsize, halfsize);
-    Viewrotscale[15] = halfsize;	/* Viewscale */
+    Viewrotscale[15] = viewsize; /* view scale */
     bn_mat_mul(model2view, Viewrotscale, toEye);
     bn_mat_inv(view2model, model2view);
     VSET(temp, 0, 0, eye_backoff);
@@ -837,7 +835,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     }
     else {
         // Create a orthographic camera with film dimensions
-        bu_vls_sprintf(&dimensions, "%f %f", 2.0, 2.0); /*viewsize, viewsize); */
+        bu_vls_sprintf(&dimensions, "%f %f", 1.0, 1.0);
         asf::auto_release_ptr<asr::Camera> ortho(
         asr::OrthographicCameraFactory().create(
             "camera",
