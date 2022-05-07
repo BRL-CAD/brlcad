@@ -59,14 +59,6 @@ class QBDockWidget : public QDockWidget
        void toWindow(bool floating);
 };
 
-class GEDShellCompleter : public QtConsoleWidgetCompleter
-{
-    public:
-	GEDShellCompleter(QWidget *p, struct ged *ged_ptr);
-	void updateCompletionModel(const QString& console_txt) override;
-	struct ged *gedp = NULL;
-};
-
 class BRLCAD_MainWindow : public QMainWindow
 {
     Q_OBJECT

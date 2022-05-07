@@ -66,6 +66,15 @@ public:
   virtual void updateCompletionModel(const QString& str) = 0;
 };
 
+/* Completion class specific to GED command line */
+class QTCAD_EXPORT GEDShellCompleter : public QtConsoleWidgetCompleter
+{
+public:
+  GEDShellCompleter(QWidget *p, struct ged *ged_ptr);
+  void updateCompletionModel(const QString& console_txt) override;
+  struct ged *gedp = NULL;
+};
+
 /**
   Qt widget that provides an interactive console - you can send text to the
   console by calling printString() and receive user input by connecting to the

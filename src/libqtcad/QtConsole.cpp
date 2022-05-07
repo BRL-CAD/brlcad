@@ -51,6 +51,7 @@
 #include <QKeyEvent>
 #include <QMimeData>
 #include <QPointer>
+#include <QStringListModel>
 #include <QTextCursor>
 #include <QTimer>
 #include <QPlainTextEdit>
@@ -58,6 +59,97 @@
 #include <QScrollBar>
 
 #include "bu.h"
+#include "ged.h"
+
+GEDShellCompleter::GEDShellCompleter(
+	QWidget* parent, struct ged *ged_ptr)
+{
+    setParent(parent);
+    gedp = ged_ptr;
+}
+
+void
+GEDShellCompleter::updateCompletionModel(const QString& console_txt)
+{
+    setModel(NULL);
+    if (console_txt.isEmpty())
+	return;
+
+    // If the last char is a space, don't offer any completions - the prior
+    // contents are presumed to be complete
+    if (console_txt.at(console_txt.length() - 1) == ' ')
+	return;
+
+    // We're going to be splitting up and processing this string's components
+    // with libged C style, so get the data out of QString into a stable form
+    char *ct = bu_strdup(console_txt.toLocal8Bit().constData());
+
+    // Break the console text down into an argc/argv array, so we can examine
+    // the components
+    int ac = 0;
+    char **av = NULL;
+    av = (char **)bu_calloc(strlen(ct) + 1, sizeof(char *), "av array");
+    ac = bu_argv_from_string(av, strlen(ct), ct);
+    if (!ac) {
+	bu_free(ct, "strcpy");
+	bu_free(av, "av");
+	return;
+    }
+
+    // If we only have 1 argument, it needs to be a command of some sort
+    if (ac == 1) {
+	char *seed = av[0];
+	const char **completions = NULL;
+	int completion_cnt = ged_cmd_completions(&completions, seed);
+	QStringList clist = QStringList();
+	for (int i = 0; i < completion_cnt; i++) {
+	    clist.append(QString(completions[i]));
+	}
+	bu_argv_free(completion_cnt, (char **)completions);
+	if (!clist.isEmpty()) {
+	    setCompletionMode(QCompleter::PopupCompletion);
+	    setModel(new QStringListModel(clist, this));
+	    setCaseSensitivity(Qt::CaseSensitive);
+	    setCompletionPrefix(QString(seed));
+	    if (popup())
+		popup()->setCurrentIndex(completionModel()->index(0, 0));
+	}
+	bu_free(ct, "strcpy");
+	bu_free(av, "av");
+	return;
+    }
+
+    // If we've got more than one argument, the last element (the one we are
+    // looking to complete) is some sort of db geometry object/path element.
+    // TODO - does QComplete allow for mid-string insertions?
+
+    if (!gedp)
+	return;
+
+    char *seed = av[ac - 1];
+    const char **completions = NULL;
+    struct bu_vls prefix = BU_VLS_INIT_ZERO;
+    int completion_cnt = ged_geom_completions(&completions, &prefix, gedp->dbip, seed);
+    ((QtConsole *)(parent()))->split_slash = 0;
+    if (!BU_STR_EQUAL(bu_vls_cstr(&prefix), seed))
+	((QtConsole *)(parent()))->split_slash = 1;
+    QStringList clist = QStringList();
+    for (int i = 0; i < completion_cnt; i++) {
+	clist.append(QString(completions[i]));
+    }
+    bu_argv_free(completion_cnt, (char **)completions);
+    if (!clist.isEmpty()) {
+	setCompletionMode(QCompleter::PopupCompletion);
+	setModel(new QStringListModel(clist, this));
+	setCaseSensitivity(Qt::CaseSensitive);
+	setCompletionPrefix(QString(bu_vls_cstr(&prefix)));
+	if (popup())
+	    popup()->setCurrentIndex(completionModel()->index(0, 0));
+    }
+    bu_vls_free(&prefix);
+    bu_free(ct, "strcpy");
+    bu_free(av, "av");
+}
 
 /////////////////////////////////////////////////////////////////////////
 // QtConsole::pqImplementation
