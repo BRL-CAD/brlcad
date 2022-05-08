@@ -365,7 +365,7 @@ proc mouse_rt_obj_select { x y } {
 	-
 	one {
 	    rt_olist_set $id $component
-	    do_Raytrace $id
+	    do_Raytrace $id _mged_rt
 	}
 	several {
 	    rt_olist_add $id $component
