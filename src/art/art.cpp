@@ -659,7 +659,7 @@ do_ae(double azim, double elev)
 	viewsize = 2.0; /* arbitrary so Viewrotscale is normal */
     }
 
-    Viewrotscale[15] = viewsize; /* view scale */
+    Viewrotscale[15] = viewsize * 0.5; /* view scale */
     bn_mat_mul(model2view, Viewrotscale, toEye);
     bn_mat_inv(view2model, model2view);
     VSET(temp, 0, 0, eye_backoff);
@@ -829,13 +829,12 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 	        asr::ParamArray()
 	        .insert("film_dimensions", bu_vls_cstr(&dimensions))
 	        .insert("horizontal_fov", bu_vls_cstr(&fov))
-//	        .insert("focal_length", ".035")
         ));
         camera = pinhole;
     }
     else {
         // Create a orthographic camera with film dimensions
-        bu_vls_sprintf(&dimensions, "%f %f", 1.0, 1.0);
+        bu_vls_sprintf(&dimensions, "%f %f", 2.0, 2.0);
         asf::auto_release_ptr<asr::Camera> ortho(
         asr::OrthographicCameraFactory().create(
             "camera",
@@ -851,39 +850,25 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     bn_mat_print("model2view: ", model2view);
     bn_mat_print("view2model BEFORE: ", view2model);
 
-
     if (rt_perspective > 0.0) {
-	/*
 
-	  double halfsize = 0.5 * viewsize;
-	  // MAT_SCALE(Viewrotscale, halfsize, halfsize, halfsize);
-	  Viewrotscale[15] = halfsize;	// Viewscale
-	  bn_mat_mul(model2view, Viewrotscale, toEye);
-	  bn_mat_inv(view2model, model2view);
-	  VSET(temp, 0, 0, eye_backoff);
-	  MAT4X3PNT(eye_model, view2model, temp);
-	*/
-
-	mat_t toEye;
-	MAT_IDN(toEye);
-	toEye[MDX] = -eye_model[X];
-	toEye[MDY] = -eye_model[Y];
-	toEye[MDZ] = -eye_model[Z];
-
-	Viewrotscale[15] = 1.0;
-	bn_mat_mul(model2view, Viewrotscale, toEye);
-	bn_mat_inv(view2model, model2view);
+#if 1
+	/* appleseed's not happy with translation being non-homogenized */
+	view2model[MDX] = eye_model[X];
+	view2model[MDY] = eye_model[Y];
+	view2model[MDZ] = eye_model[Z];
+	view2model[MSA] = 1.0;
 
 	camera->transform_sequence().set_transform(
 	    0.0f,
 	    asf::Transformd::from_local_to_parent(
-		asf::Matrix<double, 4, 4>::from_array(view2model)
-		)
-	    );
+		asf::Matrix<double, 4, 4>::from_array(view2model) *
+		asf::Matrix4d::make_identity()
+		));
 
+#else
 	// Place and orient the camera. By default cameras are located in (0.0, 0.0, 0.0)
 	// and are looking toward Z- (0.0, 0.0, -1.0).
-#if 0
 	camera->transform_sequence().set_transform(
 	    0.0f,
 	    asf::Transformd::from_local_to_parent(
@@ -894,10 +879,41 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 		asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 1.0, 0.0), asf::deg_to_rad(azimuth)) * /* rotate azimuth */
 		asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-elevation)) /* rotate elevation */
 		));
+
+	bu_log("azimuth is %lf\n", azimuth);
+	bu_log("elevation is %lf\n", elevation);
+	// mat_t toEye;
+	// vect_t temp;
+	// struct rt_i* rtip = APP.a_rt_i;
+	// MAT_IDN(toEye);
+	// toEye[MDX] = -((rtip->mdl_max[X] + rtip->mdl_min[X]) / 2.0);
+	// toEye[MDY] = -((rtip->mdl_max[Y] + rtip->mdl_min[Y]) / 2.0);
+	// toEye[MDZ] = -((rtip->mdl_max[Z] + rtip->mdl_min[Z]) / 2.0);
+	// MAT_IDN(Viewrotscale);
+	// bn_mat_angles(Viewrotscale, 270.0 + elevation, 0.0, 270.0 - azimuth);
+	// Viewrotscale[15] = viewsize * 0.5;
+	// bn_mat_mul(model2view, Viewrotscale, toEye);
+	// bn_mat_inv(view2model, model2view);
+	// VSET(temp, 0, 0, eye_backoff);
+	// MAT4X3PNT(eye_model, view2model, temp);
+
+	bu_log("NEW EYE: %lf, %lf, %lf\n", V3ARGS(eye_model));
+
+	camera->transform_sequence().set_transform(
+	    0.0f,
+	    asf::Transformd::from_local_to_parent(
+//		asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 0.0, 1.0), asf::deg_to_rad(azimuth)) * /* rotate azimuth */
+		asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 1.0, 0.0), asf::deg_to_rad(elevation)) * /* rotate elevation */
+		asf::Matrix4d::make_translation(asf::Vector3d(eye_model[0], eye_model[1], eye_model[2])) * /* camera location */
+		asf::Matrix4d::make_lookat(asf::Vector3d(0,0,0), asf::Vector3d(-1,0,0), asf::Vector3d(0,0,1)) *
+//		asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(90.0))
+//		asf::Matrix4d::make_translation(asf::Vector3d(0, 0, 400)) */* camera location */
+//		asf::Matrix4d::make_translation(asf::Vector3d(eye_model[2], eye_model[1], eye_model[0])) /* camera location */
+		asf::Matrix4d::make_identity()
+		));
 #endif
 
     } else {
-
 	camera->transform_sequence().set_transform(
 	    0.0f,
 	    asf::Transformd::from_local_to_parent(
@@ -920,12 +936,6 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     bn_mat_print("L2P TRANSFORM: ", ml2p);
     bn_mat_print("P2L TRANSFORM: ", mp2l);
 
-
-// camera->transform_sequence().set_transform(
-    //     0.0f,
-    //     asf::Transformd::from_local_to_parent(
-    //         asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-20.0)) *
-    //         asf::Matrix4d::make_translation(asf::Vector3d(0.0, 0.8, 11.0))));
 
     // Bind the camera to the scene.
     scene->cameras().insert(camera);
