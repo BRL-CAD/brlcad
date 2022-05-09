@@ -121,18 +121,16 @@ _dm_find(struct _ged_dm_info *gd, struct bu_vls *name)
 	return NULL;
 
     struct ged *gedp = gd->gedp;
-    if (!name) {
+    if (!name || !bu_vls_strlen(name)) {
 	if (!gedp->ged_gvp) {
 	    bu_vls_printf(gedp->ged_result_str, ": no current view is set in GED\n");
 	    return NULL;
-	} else {
-	    if (!gedp->ged_gvp->dmp) {
-		bu_vls_printf(gedp->ged_result_str, ": no current DM is set in GED's current view\n");
-		return NULL;
-	    } else {
-		return (struct dm *)gedp->ged_gvp->dmp;
-	    }
 	}
+	if (!gedp->ged_gvp->dmp) {
+	    bu_vls_printf(gedp->ged_result_str, ": no current DM is set in GED's current view\n");
+	    return NULL;
+	}
+	return (struct dm *)gedp->ged_gvp->dmp;
     }
     if (name && gedp->ged_gvp && gedp->ged_gvp->dmp) {
 	struct dm *cdmp = (struct dm *)gedp->ged_gvp->dmp;
