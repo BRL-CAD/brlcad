@@ -201,8 +201,7 @@ mapped_file_invalidate(struct bu_mapped_file *mp)
 	return;
 
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
-    if (mp->appl)
-	bu_free(mp->appl, "appl");
+    bu_free(mp->appl, "appl");
     mp->appl = NULL;
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 
@@ -244,7 +243,7 @@ mapped_file_is_valid(struct bu_mapped_file *mp)
 
     if ((size_t)sb.st_size != mp->buflen) {
 	if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
-	    bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %jd, opening new version.\n", mp->name, mp->buflen, (intmax_t)sb.st_size);
+	    bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %zu to %jd, opening new version.\n", mp->name, mp->buflen, (intmax_t)sb.st_size);
 	}
 	/* doesn't reflect the file any longer. */
 	return 0;
@@ -432,14 +431,12 @@ fail:
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 
-    if (mp->name) {
-	bu_free(mp->name, "mp->name");
-	mp->name = NULL;
-    }
-    if (mp->appl) {
-	bu_free(mp->appl, "mp->appl");
-	mp->appl = NULL;
-    }
+    bu_free(mp->name, "mp->name");
+    mp->name = NULL;
+
+    bu_free(mp->appl, "mp->appl");
+    mp->appl = NULL;
+
     if (mp->buf) {
 	if (mp->is_mapped) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -484,7 +481,7 @@ bu_pr_mapped_file(const char *title, const struct bu_mapped_file *mp)
     if (UNLIKELY(!mp))
 	return;
 
-    bu_log("%p mapped_file %s %p len=%ld mapped=%d, uses=%d %s\n",
+    bu_log("%p mapped_file %s %p len=%zu mapped=%d, uses=%d %s\n",
 	   (void *)mp, mp->name, mp->buf, mp->buflen,
 	   mp->is_mapped, mp->uses,
 	   title);
@@ -536,8 +533,7 @@ bu_free_mapped_files(int verbose)
 	mp->buf = (void *)NULL;		/* sanity */
 	bu_free((void *)mp->name, "bu_mapped_file.name");
 
-	if (mp->appl)
-	    bu_free((void *)mp->appl, "bu_mapped_file.appl");
+	bu_free((void *)mp->appl, "bu_mapped_file.appl");
 
 	/* release this one */
 	memset(mp, 0, sizeof(struct bu_mapped_file)); /* sanity */

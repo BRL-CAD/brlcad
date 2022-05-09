@@ -19,3 +19,29 @@ report-overlaps		no
 shotline-burst		yes
 #ground-plane		yes 66 200 200 200 200
 execute
+
+# commands currently untested by this file:
+#
+# deflect-spall-cone
+# dither-cells
+# enclose-target
+# enclose-portion
+# error-file (not working in old burst code, IIRC)
+# grid-file
+# ground-plane
+# help
+# histogram-file
+# input-2d-shot
+# input-3d-shot
+# max-barriers
+# quit
+# read-2d-shot-file
+# read-3d-shot-file
+# read-burst-file
+# read-input-file
+# report-overlaps
+# shotline-file
+# write-input-file
+# burst-coordinates
+# burst-distance
+#

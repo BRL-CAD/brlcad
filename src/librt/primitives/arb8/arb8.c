@@ -1864,7 +1864,7 @@ static const int rt_arb_planes[5][24] = {
 int
 rt_arb_3face_intersect(
     point_t point,
-    const plane_t *planes, /* assumes [6] planes */
+    const plane_t planes[6], /* assumes [6] planes */
     int type,		/* 4..8 */
     int loc)
 {

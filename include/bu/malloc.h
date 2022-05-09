@@ -89,6 +89,23 @@ BU_EXPORT extern void *bu_calloc(size_t nelem,
 				 size_t elsize,
 				 const char *str);
 
+/**
+ * Free dynamically allocated memory.
+ *
+ * This routine releases memory allocated by bu_malloc(), bu_calloc(),
+ * or bu_realloc().  An optional 'str' string will be written out to
+ * stderr if there is an error.  NULL pointers are silently ignored.
+ * Caller book-keeping may set pointers to -1L to detect invalid calls
+ * to bu_free().
+ *
+ * bu_free() intentionally wipes out the first four bytes pointed to
+ * by ptr prior to releasing memory as a basic memory safeguard.  All
+ * bits are set to one (0xFFFFFFFF).  This is intended to wipe out any
+ * magic number in structures and provide a distinct memory signature
+ * if the address happens to be accessed via some other pointer.
+ * While not guaranteed after memory is released, many implementations
+ * leave the value intact which can help with debugging.
+ */
 BU_EXPORT extern void bu_free(void *ptr,
 			      const char *str);
 

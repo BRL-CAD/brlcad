@@ -82,19 +82,18 @@
 cmake_minimum_required(VERSION 3.12)
 
 # set CMake project name
-project(BRLCAD)
+project(BRLCAD DESCRIPTION "Open Source Solid Modeling" HOMEPAGE_URL "https://brlcad.org" LANGUAGES C CXX) # ISPC support added in 3.18
 
-# install(CODE) uses generator expressions - requires 3.14 or newer.
-# We want it to be on, but until we can bump our minimum requirement
-# set it to OLD to make sure we don't break anything.
-if (POLICY CMP0087)
-  cmake_policy(SET CMP0087 OLD)
-endif (POLICY CMP0087)
 
 # Test name character check - need to look into this one...
 if (POLICY CMP0110)
   cmake_policy(SET CMP0110 OLD)
 endif (POLICY CMP0110)
+
+# cmake_dependent_option() supports full Condition Syntax
+if (POLICY CMP0127)
+  cmake_policy(SET CMP0127 NEW)
+endif (POLICY CMP0127)
 
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
@@ -581,9 +580,6 @@ CHECK_CXX_FLAG(fexceptions)
 # other code using boost where the template instantiation depth
 # needs to be increased from the default ANSI minimum of 17.
 CHECK_CXX_FLAG(ftemplate-depth-128)
-
-# check for llvm libFuzzer support
-CHECK_CXX_FLAG(fsanitize=fuzzer)
 
 # dynamic SSE optimizations for NURBS processing
 #
@@ -1256,7 +1252,8 @@ set(CMAKE_HP_PTHREADS_INIT ${CMAKE_HP_PTHREADS_INIT} CACHE STRING "Threads")
 find_package(STL)
 
 # Check for an MPI library
-find_package(MPI)
+set(CMAKE_Fortran_COMPILER_LOADED 0 CACHED) # silence find_package(MPI) warning
+find_package(MPI COMPONENTS C)
 
 # Check for the daemon function in -lbsd and/or -lc for adrt
 BRLCAD_CHECK_LIBRARY(BSD bsd daemon)
@@ -1591,7 +1588,7 @@ endif (HAVE_THREAD_LOCAL)
 # ends up lacking in practice.
 include(CheckCXX11Features)
 cxx11_check_feature("nullptr" HAS_CXX11_NULLPTR)
-cxx11_check_feature("lib_regex" HAS_CXX11_LIB_REGEX)
+# cxx11_check_feature("lib_regex" HAS_CXX11_LIB_REGEX)
 
 # see if the compiler supports %z as a size_t print width specifier
 BRLCAD_CHECK_PERCENT_Z()
@@ -1734,10 +1731,10 @@ if(NOT HAVE_SNPRINTF)
 endif(NOT HAVE_SNPRINTF)
 
 if(HAVE_REALPATH)
- #check_c_source_runs("#include<limits.h>\n#include <stdlib.h>\nint main() { char dir[PATH_MAX]; const char *d = \"/tmp/REALPATH_TEST_PATH\"; d = (const char *)realpath(d, dir); return 0; }" HAVE_WORKING_REALPATH)
- #if(HAVE_WORKING_REALPATH)
- #  CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
- #endif(HAVE_WORKING_REALPATH)
+  check_c_source_runs("#include<limits.h>\n#include <stdlib.h>\nint main() { char dir[PATH_MAX]; const char *d = \"/tmp/REALPATH_TEST_PATH\"; d = (const char *)realpath(d, dir); return 0; }" HAVE_WORKING_REALPATH)
+  if(HAVE_WORKING_REALPATH)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
+  endif(HAVE_WORKING_REALPATH)
 endif(HAVE_REALPATH)
 
 # GetFullPathName
@@ -2221,22 +2218,15 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # only, we add CMakeLists.txt (others are handled
   # by add_subdirectory wrapper
   set(toplevel_ignore_files
+    .github/workflows/check.yml
+    .gitignore
     BUGS
+    CMakeLists.txt
     ChangeLog
     TODO
     configure
-    CMakeLists.txt
     )
   CMAKEFILES(${toplevel_ignore_files})
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
-    CMAKEFILES(.gitignore)
-  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
-
-  # List any files which may exist for CI testing for distcheck.  TODO -
-  # this should be a fixed list, but until we go live with the Git repo
-  # use file(GLOB_RECURSE) instead
-  file(GLOB_RECURSE GITHUB_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ".github/*")
-  CMAKEFILES(${GITHUB_FILES})
 
   # Handle some toplevel distclean listings
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeCache.txt")

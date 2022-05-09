@@ -1,3 +1,4 @@
+
 /*                 T I E N E T _ M A S T E R . C
  * BRL-CAD / ADRT
  *
@@ -26,39 +27,35 @@
 
 #include "common.h"
 
+/* system headers */
+#include "bio.h"
+#include "bsocket.h"
+#include "bnetwork.h"
+#include "zlib.h"
 #include <stdlib.h>
 #include <string.h>
-
-#include "bnetwork.h"
-#include "bio.h"
-
-#ifdef HAVE_SYS_SOCKET_H
-#  include <sys/socket.h>
-#endif
-#ifdef HAVE_SYS_SELECT_H
-#  include <sys/select.h>
-#endif
 #ifdef HAVE_NETDB_H
 #  include <netdb.h>
 #endif
-#include "zlib.h"
 
+/* public api headers */
 #include "rt/tie.h"
 #include "bu/str.h"
-
-#include "adrt.h"
-
-#include "tienet.h"
-#include "tienet_master.h"
-
-#include "bio.h"
-
 #include "bu/log.h"
-#include "master.h"
+
+/* adrt headers */
+#include "adrt.h"
+#include "tienet.h"
+
+/* local api headers */
+#include "./tienet_master.h"
+#include "./master.h"
+
 
 #if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
 extern struct hostent *gethostbyname(const char *);
 #endif
+
 
 typedef struct tienet_master_data_s {
     void *data;

@@ -110,8 +110,12 @@ class dp_i {
 		if (oidn && !tidn) return false;
 
 		// If we don't have an IDN matrix involved, fall back on
-		// numerical sorting to order the instances
+		// numerical sorting to order the instances.  We want this to
+		// be consistent, so avoid comparing numbers that are closer
+		// than SMALL_FASTF in size
 		for (int i = 0; i < 16; i++) {
+		    if (NEAR_EQUAL(mat[i], o.mat[i], SMALL_FASTF))
+			continue;
 		    if (mat[i] < o.mat[i]) {
 			return true;
 		    }
@@ -146,6 +150,59 @@ class dp_i {
 	    return bn_mat_is_equal(mat, o.mat, tol);
 	}
 };
+
+// Slightly "looser" search operator, for use IFF a direct find lookup fails
+// using SMALL_FASTF tolerances - in that case, since the original tree walk
+// should have produced something we are supposed to use, try VUNITIZE_TOL
+// instead.  This can potentially happen with deep matrix application chains
+// and gnarly floating point math values.  std::find_if based approach learned
+// from https://stackoverflow.com/a/8054223/2037687
+struct mat_lfind
+{
+  mat_lfind( class dp_i *tdpi ) : test_dpi(tdpi) {}
+  bool operator()( const class dp_i& c ) const
+  {
+      // First, check dp
+      if (c.dp != test_dpi->dp) return false;
+
+      // Important for multiple tests to know if matrices are IDN
+      int oidn = bn_mat_is_equal(c.mat, bn_mat_identity, c.tol);
+      int tidn = bn_mat_is_equal(test_dpi->mat, bn_mat_identity, test_dpi->tol);
+      if (oidn && tidn)
+	  return true;
+
+      /* If the dp didn't resolve the question, check the matrix. */
+      if (!bn_mat_is_equal(test_dpi->mat, c.mat, test_dpi->tol)) {
+	  // We want IDN matrices to be less than any others, regardless
+	  // of the numerics.
+	  if (tidn && !oidn) return true;
+	  if (oidn && !tidn) return false;
+
+	  // If we don't have an IDN matrix involved, fall back on
+	  // numerical comparisons
+	  for (int i = 0; i < 16; i++) {
+	      if (!NEAR_EQUAL(test_dpi->mat[i], c.mat[i], VUNITIZE_TOL))
+		  return false;
+	  }
+      }
+
+      // The application of the matrix to the solid may matter
+      // when distinguishing dp_i instances, but only if one
+      // of the matrices involved is non-IDN - otherwise, the
+      // matrix applications are no-ops and we don't want them
+      // to prompt multiple instances of objects.
+      if (!(c.dp->d_flags & RT_DIR_COMB)) {
+	  if (test_dpi->apply_to_solid && !c.apply_to_solid)
+	      return false;
+      }
+
+      // All tests pass, looks equal
+      return true;
+  }
+private:
+  class dp_i *test_dpi;
+};
+
 
 /* Container to hold information during tree walk. */
 struct push_state {
@@ -654,6 +711,30 @@ tree_update_walk_subtree(
 	    }
 	    bn_mat_mul(*curr_mat, om, nm);
 
+	    /* Depending on use verbosity settings, report various information about
+	     * the current state of the tree walk */
+	    if (s->verbosity > 2 && s->msgs) {
+		char *ps = db_path_to_string(dfp);
+		if (tp->tr_l.tl_mat && !bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol)) {
+		    bu_vls_printf(s->msgs, "W3[%s]: found [M]%s\n", ps, dp->d_namep);
+		    if (s->verbosity > 3) {
+			struct bu_vls title = BU_VLS_INIT_ZERO;
+			bu_vls_sprintf(&title, "W3[%s]: %s instance matrix", ps, dp->d_namep);
+			bn_mat_print_vls(bu_vls_cstr(&title), *curr_mat, s->msgs);
+			bu_vls_free(&title);
+		    }
+		} else {
+		    bu_vls_printf(s->msgs, "W3[%s]: found %s\n", ps, dp->d_namep);
+		}
+		if (s->verbosity > 3) {
+		    struct bu_vls title = BU_VLS_INIT_ZERO;
+		    bu_vls_sprintf(&title, "W3[%s]: %s current overall path matrix", ps, dp->d_namep);
+		    bn_mat_print_vls(bu_vls_cstr(&title), *curr_mat, s->msgs);
+		    bu_vls_free(&title);
+		}
+		bu_free(ps, "path string");
+	    }
+
 	    // Look up the dpi for this comb+curr_mat combination.
 	    ldpi.dp = dp;
 	    MAT_COPY(ldpi.mat, *curr_mat);
@@ -662,21 +743,68 @@ tree_update_walk_subtree(
 		ldpi.apply_to_solid = true;
 	    }
 	    dpii = s->instances.find(ldpi);
+	    // If the lookup fails (possible if accumulated floating point uncertainties
+	    // in matrix accumulations in the two tree walks produce slightly different
+	    // matrix values) see if a looser fallback search using
+	    // https://stackoverflow.com/a/8054223/2037687 can find anything.
+	    //
+	    // TODO - this can be refined by storing the instances in a map of
+	    // sets - we could then confine this more expensive lookup to just
+	    // the set of instances with matching dps.  Not clear yet if it is
+	    // warranted, since the if equality test should fail very quickly
+	    // on anything with a non-matching dp anyway... if we need this to
+	    // be logn order rather than n because it is more common in the
+	    // wild has been observed in early testing, we can redo the
+	    // instances container.
+	    //
+	    // A more sophisticated possibility might be to investigate
+	    // Locality Sensitive Hashing (https://github.com/trendmicro/tlsh)
+	    // to see if we could bin similar matricies using their hashes.
+	    // That might even have potential to identify "similar" geometry
+	    // objects, depending on the details of their internal storage...
+	    if (dpii == s->instances.end()) {
+		dpii = std::find_if(s->instances.begin(), s->instances.end(), mat_lfind(&ldpi));
+		if (dpii != s->instances.end() && s->verbosity > 3) {
+		    if (s->msgs) {
+			struct bu_vls title = BU_VLS_INIT_ZERO;
+			bu_vls_sprintf(&title, "Have loose match %s matrix", dpii->dp->d_namep);
+			bn_mat_print_vls(bu_vls_cstr(&title), dpii->mat, s->msgs);
+			bu_vls_free(&title);
+		    } else {
+			bu_log("Loose matrix match:\n");
+			bn_mat_print(tp->tr_l.tl_name, dpii->mat);
+		    }
+		}
+	    }
+
 	    if (dpii == s->instances.end()) {
 		char *ps = db_path_to_string(dfp);
-		bu_log("%s: Error - no instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
-		dpii = s->instances.find(ldpi);
-		bn_mat_print("curr_mat", *curr_mat);
-		if (dpii->apply_to_solid)
-		    bu_log("%s: apply_to_solid set\n", ps);
+		if (s->msgs) {
+		    bu_vls_printf(s->msgs, "[%s]: Error - no instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
+		    bn_mat_print_vls("Missing matrix", *curr_mat, s->msgs);
+		} else {
+		    bu_log("[%s]: Error - no instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
+		    bn_mat_print("curr_mat", *curr_mat);
+		}
 		for (i_it = s->instances.begin(); i_it != s->instances.end(); i_it++) {
 		    const dp_i &ddpi = *i_it;
 		    if (ddpi.dp == dp) {
-			bn_mat_print(tp->tr_l.tl_name, ddpi.mat);
-			if (ddpi.iname.length())
-			    bu_log("%s: iname: %s\n", ps, ddpi.iname.c_str());
-			if (ddpi.apply_to_solid)
-			    bu_log("%s: apply_to_solid set\n", ps);
+			if (s->msgs) {
+			    struct bu_vls title = BU_VLS_INIT_ZERO;
+			    bu_vls_sprintf(&title, "Have %s matrix", tp->tr_l.tl_name);
+			    bn_mat_print_vls(bu_vls_cstr(&title), ddpi.mat, s->msgs);
+			    bu_vls_free(&title);
+			    if (ddpi.iname.length())
+				bu_vls_printf(s->msgs, "%s: iname: %s\n", ps, ddpi.iname.c_str());
+			    if (ddpi.apply_to_solid)
+				bu_vls_printf(s->msgs, "%s: apply_to_solid set\n", ps);
+			} else {
+			    bn_mat_print(tp->tr_l.tl_name, ddpi.mat);
+			    if (ddpi.iname.length())
+				bu_log("%s: iname: %s\n", ps, ddpi.iname.c_str());
+			    if (ddpi.apply_to_solid)
+				bu_log("%s: apply_to_solid set\n", ps);
+			}
 		    }
 		}
 		bu_free(ps, "path string");
@@ -725,6 +853,8 @@ tree_update_walk_subtree(
 	    // If we're at max depth, we're done creating instances to manipulate
 	    // on this tree branch.
 	    if (s->max_depth && (depth == s->max_depth)) {
+		/* Done with branch - put back the old matrix state */
+		MAT_COPY(*curr_mat, om);
 		return;
 	    }
 
@@ -1360,7 +1490,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    rt_db_free_internal(in);
 	    BU_PUT(in, struct rt_db_internal);
 	}
-	for (uf_it = s.added.begin(); uf_it != s.updated.end(); uf_it++) {
+	for (uf_it = s.added.begin(); uf_it != s.added.end(); uf_it++) {
 	    struct rt_db_internal *in = uf_it->second;
 	    rt_db_free_internal(in);
 	    BU_PUT(in, struct rt_db_internal);

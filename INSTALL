@@ -1,20 +1,18 @@
 The Installation Guide to BRL-CAD
 =================================
 
-This document covers the basics of installing BRL-CAD from either a
-source or binary distribution.  Please see the 'Reporting Problems'
-section if you run into any trouble installing BRL-CAD.
+This document covers the installing BRL-CAD from either a source or
+binary distribution.  Please see REPORTING PROBLEMS to troubleshoot.
 
 Some platforms have additional platform-specific documentation
-provided in the doc/ directory of the source distribution that should
-be consulted if that is the platform you are installing on.  This
+provided in the doc/ directory with additional information. This
 presently includes the following:
 
   doc/README.AIX        -- IBM's Advanced Interactive eXecutive OS
   doc/README.BSD        -- FreeBSD, NetBSD, OpenBSD, etc.
-  doc/README.IRIX	-- SGI IRIX and IRIX64
-  doc/README.Linux	-- Various Linux distributions
-  doc/README.MacOSX	-- Apple Mac OS X
+  doc/README.IRIX	      -- SGI IRIX and IRIX64
+  doc/README.Linux	    -- Various Linux distributions
+  doc/README.MacOSX	    -- Apple Mac OS X
   doc/README.Solaris    -- Oracle Solaris, OpenIndiana (Illumos), etc.
   doc/README.Windows    -- Microsoft Windows
   doc/README.VAX        -- Virtual Address eXtension architecture from DEC.
@@ -26,7 +24,7 @@ TABLE OF CONTENTS
 -----------------
   Introduction
   Table of Contents
-  Quick Installation
+  Quick Source Install
   Installing from Binary
   Installing from Source
   Testing Functionality
@@ -35,50 +33,35 @@ TABLE OF CONTENTS
   Configuration Options
 
 
-QUICK INSTALLATION
-------------------
+QUICK SOURCE INSTALL
+--------------------
 
-Note that the downloaded files have two check sums calculated
-automatically by the Source Forge file release system.  The values are
-used to verify the integrity of the files as distributed.  Get those
-data by clicking on the 'i' button at the end of each file's name.
-You should ensure those data are retained and kept with the files if
-you re-distribute them.
+See https://brlcad.org/wiki/Compiling for a platform-specific
+walk-through including instructions for building on Windows.
 
+Required tools:
+  - Git must be 2.17 or later
+  - CMake must be 3.12 or later
+  - Compiler must be C++11-compliant
+    - If using Visual Studio, version 2015 (14.0+) or later
+    - If using GCC/G++, version 4.8.1 or later
+    - If using LLVM/Clang 3.3 or later
+    - If using Intel, version 2015 (15.0+) or later
 
-If you downloaded a binary distribution of BRL-CAD for your system,
-please read the INSTALLING FROM BINARY section of this document down
-below.  The rest of this quick installation section is only relevant
-to source code distributions of BRL-CAD.
+Steps to compile, test, and install an optimized BRL-CAD on
+non-Windows platforms:
 
-For the impatient or simplistic, the following steps should compile,
-test, and install an optimized BRL-CAD quickly into the
-/usr/brlcad/rel-VERSION directory if CMake is already installed:
-
-  tar -zxvf brlcad-VERSION.tar
-  mkdir brlcad-VERSION/build
-  cd brlcad-VERSION/build
+  git clone https://github.com/BRL-CAD/brlcad.git
+  mkdir brlcad/build
+  cd brlcad/build
   cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release
   make -j4
   make check
-  make install
+  sudo make install
 
-See the REPORTING PROBLEMS section of this document to report any
-problems or the INSTALLING FROM SOURCE section for more comprehensive
-instructions.
-
-Once installed, add /usr/brlcad/rel-VERSION/bin to your path, and you should be
-able to run any of the 400+ applications that constitute BRL-CAD.  For
-example, to run the MGED solid modeler:
-
-PATH=/usr/brlcad/rel-VERSION/bin:$PATH ; export PATH
-mged
-
-If you use tcsh or another C-shell based command shell, use this
-instead:
-
-set path=( /usr/brlcad/rel-VERSION/bin $path ) ; rehash
-mged
+Once installed, run bin/mged or bin/archer to launch BRL-CAD's GUI
+apps.  See POST-INSTALLATION for instruction adding bin/ folder to
+your system PATH to more easily run geometry converters.
 
 
 INSTALLING FROM BINARY
@@ -127,6 +110,15 @@ will install into /usr/brlcad/rel-X.Y.Z and will only require
 confirming that your environment is set up properly (i.e. add
 /usr/brlcad/rel-X.Y.Z/bin to your path) as described in the Quick
 Installation section.
+
+
+Validating checksums:
+
+The integrity of distributed files can be verified using checksums
+that are published with released files.  Files on SourceForge's file
+release system can be found by clicking the 'i' button at the end of
+each file's name.  If you re-distribute BRL-CAD, checksums should be
+retained with the files so others can validate origination.
 
 
 INSTALLING FROM SOURCE
@@ -335,19 +327,19 @@ consequently BRL-CAD's executables will not be invokable without specifying
 their full path.  This is normally handled in Unix environments by adding
 the desired BRL-CAD installation's binary directory to the user's local path:
 
-In the bash shell: export PATH=/usr/brlcad/rel-X.Y.Z:$PATH
-In the csh shell:  setenv PATH /usr/brlcad/rel-X.Y.Z:$PATH
+On Windows, the PATH system variable can be set using System Utility
+in control panel.  Add the bin/ folder in the install directory to PATH.
+
+On Linux/BSD/other systems:
+  In the bash shell: export PATH=/usr/brlcad/rel-X.Y.Z:$PATH
+  In the csh shell:  setenv PATH /usr/brlcad/rel-X.Y.Z:$PATH
+
 
 REPORTING PROBLEMS
 ------------------
 
-Please report any bugs encountered to the project bug tracker at
-http://sourceforge.net/tracker/?group_id=105292&atid=640802
-
-Similarly, please post any request for feature enhancements or support
-to http://sourceforge.net/tracker/?group_id=105292&atid=640805 and
-http://sourceforge.net/tracker/?group_id=105292&atid=640803
-respectively.
+Please report any bugs, support requests, or feature requests to:
+  https://github.com/BRL-CAD/brlcad/issues
 
 
 CONFIGURATION OPTIONS

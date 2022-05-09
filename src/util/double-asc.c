@@ -102,8 +102,7 @@ get_args(int argc, char **argv)
 		make_cells = 1;
 		break;
 	    case 'f':
-		if (format != 0)
-		    bu_free(format, "format_string");
+		bu_free(format, "format_string");
 		format = (char *)bu_malloc(strlen(bu_optarg)+1, "format string");
 		bu_strlcpy(format, bu_optarg, strlen(bu_optarg)+1);
 		break;
@@ -130,7 +129,8 @@ get_args(int argc, char **argv)
 	case 1:
 	    file_name = argv[bu_optind++];
 	    ifname = bu_file_realpath(file_name, NULL);
-	    if ((infd = open(ifname, O_RDONLY|O_BINARY)) == -1) {
+	    infd = open(ifname, O_RDONLY|O_BINARY);
+	    if (infd == -1) {
 		bu_free(ifname, "ifname alloc from bu_file_realpath");
 		bu_exit (1, "Cannot open file '%s'\n", file_name);
 	    }

@@ -18,7 +18,6 @@
 #include <cassert>
 #include <iostream>
 #include <algorithm>
-#include <deque>
 #include <limits>
 #include "QuickHull.hpp"
 
@@ -53,10 +52,10 @@ ConvexHull<T> QuickHull<T>::getConvexHull(const T* vertexData, size_t vertexCoun
 }
 
 template<typename FloatType>
-HalfEdgeMesh<FloatType, IndexType> QuickHull<FloatType>::getConvexHullAsMesh(const FloatType* vertexData, size_t vertexCount, bool CCW, FloatType epsilon) {
+HalfEdgeMesh<FloatType, size_t> QuickHull<FloatType>::getConvexHullAsMesh(const FloatType* vertexData, size_t vertexCount, bool CCW, FloatType epsilon) {
     VertexDataSource<FloatType> vertexDataSource((const vec3*)vertexData,vertexCount);
     buildMesh(vertexDataSource, CCW, false, epsilon);
-    return HalfEdgeMesh<FloatType, IndexType>(m_mesh, m_vertexData);
+    return HalfEdgeMesh<FloatType, size_t>(m_mesh, m_vertexData);
 }
 
 template<typename T>
@@ -97,33 +96,27 @@ ConvexHull<T> QuickHull<T>::getConvexHull(const VertexDataSource<T>& pointCloud,
 
 template<typename T>
 void QuickHull<T>::createConvexHalfEdgeMesh() {
-    // Temporary variables used during iteration
-    std::vector<IndexType> visibleFaces;
-    std::vector<IndexType> horizonEdges;
-    struct FaceData {
-	IndexType m_faceIndex;
-	IndexType m_enteredFromHalfEdge; // If the face turns out not to be visible, this half edge will be marked as horizon edge
-	FaceData(IndexType fi, IndexType he) : m_faceIndex(fi),m_enteredFromHalfEdge(he) {}
-    };
-    std::vector<FaceData> possiblyVisibleFaces;
+
+    m_visibleFaces.clear();
+    m_horizonEdges.clear();
+    m_possiblyVisibleFaces.clear();
 
     // Compute base tetrahedron
-    m_mesh = getInitialTetrahedron();
-    assert(m_mesh.m_faces.size()==4);
+    setupInitialTetrahedron();
 
     // Init face stack with those faces that have points assigned to them
-    std::deque<IndexType> faceList;
+    m_faceList.clear();
     for (size_t i=0;i < 4;i++) {
 	auto& f = m_mesh.m_faces[i];
 	if (f.m_pointsOnPositiveSide && f.m_pointsOnPositiveSide->size()>0) {
-	    faceList.push_back(i);
+	    m_faceList.push_back(i);
 	    f.m_inFaceStack = 1;
 	}
     }
 
     // Process faces until the face list is empty.
     size_t iter = 0;
-    while (!faceList.empty()) {
+    while (!m_faceList.empty()) {
 	iter++;
 	if (iter == std::numeric_limits<size_t>::max()) {
 	    // Visible face traversal marks visited faces with iteration counter (to mark that the face has been visited on this iteration) and the max value represents unvisited faces. At this point we have to reset iteration counter. This shouldn't be an
@@ -131,8 +124,8 @@ void QuickHull<T>::createConvexHalfEdgeMesh() {
 	    iter = 0;
 	}
 
-	const IndexType topFaceIndex = faceList.front();
-	faceList.pop_front();
+	const size_t topFaceIndex = m_faceList.front();
+	m_faceList.pop_front();
 
 	auto& tf = m_mesh.m_faces[topFaceIndex];
 	tf.m_inFaceStack = 0;
@@ -147,13 +140,13 @@ void QuickHull<T>::createConvexHalfEdgeMesh() {
 	const size_t activePointIndex = tf.m_mostDistantPoint;
 
 	// Find out the faces that have our active point on their positive side (these are the "visible faces"). The face on top of the stack of course is one of them. At the same time, we create a list of horizon edges.
-	horizonEdges.clear();
-	possiblyVisibleFaces.clear();
-	visibleFaces.clear();
-	possiblyVisibleFaces.emplace_back(topFaceIndex,std::numeric_limits<size_t>::max());
-	while (possiblyVisibleFaces.size()) {
-	    const auto faceData = possiblyVisibleFaces.back();
-	    possiblyVisibleFaces.pop_back();
+	m_horizonEdges.clear();
+	m_possiblyVisibleFaces.clear();
+	m_visibleFaces.clear();
+	m_possiblyVisibleFaces.emplace_back(topFaceIndex,std::numeric_limits<size_t>::max());
+	while (m_possiblyVisibleFaces.size()) {
+	    const auto faceData = m_possiblyVisibleFaces.back();
+	    m_possiblyVisibleFaces.pop_back();
 	    auto& pvf = m_mesh.m_faces[faceData.m_faceIndex];
 	    assert(!pvf.isDisabled());
 
@@ -169,10 +162,10 @@ void QuickHull<T>::createConvexHalfEdgeMesh() {
 		if (d>0) {
 		    pvf.m_isVisibleFaceOnCurrentIteration = 1;
 		    pvf.m_horizonEdgesOnCurrentIteration = 0;
-		    visibleFaces.push_back(faceData.m_faceIndex);
+		    m_visibleFaces.push_back(faceData.m_faceIndex);
 		    for (auto heIndex : m_mesh.getHalfEdgeIndicesOfFace(pvf)) {
 			if (m_mesh.m_halfEdges[heIndex].m_opp != faceData.m_enteredFromHalfEdge) {
-			    possiblyVisibleFaces.emplace_back( m_mesh.m_halfEdges[m_mesh.m_halfEdges[heIndex].m_opp].m_face,heIndex );
+			    m_possiblyVisibleFaces.emplace_back( m_mesh.m_halfEdges[m_mesh.m_halfEdges[heIndex].m_opp].m_face,heIndex );
 			}
 		    }
 		    continue;
@@ -182,16 +175,16 @@ void QuickHull<T>::createConvexHalfEdgeMesh() {
 
 	    // The face is not visible. Therefore, the halfedge we came from is part of the horizon edge.
 	    pvf.m_isVisibleFaceOnCurrentIteration = 0;
-	    horizonEdges.push_back(faceData.m_enteredFromHalfEdge);
+	    m_horizonEdges.push_back(faceData.m_enteredFromHalfEdge);
 	    // Store which half edge is the horizon edge. The other half edges of the face will not be part of the final mesh so their data slots can by recycled.
 	    const auto halfEdges = m_mesh.getHalfEdgeIndicesOfFace(m_mesh.m_faces[m_mesh.m_halfEdges[faceData.m_enteredFromHalfEdge].m_face]);
 	    const std::int8_t ind = (halfEdges[0]==faceData.m_enteredFromHalfEdge) ? 0 : (halfEdges[1]==faceData.m_enteredFromHalfEdge ? 1 : 2);
 	    m_mesh.m_faces[m_mesh.m_halfEdges[faceData.m_enteredFromHalfEdge].m_face].m_horizonEdgesOnCurrentIteration |= (1<<ind);
 	}
-	const size_t horizonEdgeCount = horizonEdges.size();
+	const size_t horizonEdgeCount = m_horizonEdges.size();
 
 	// Order horizon edges so that they form a loop. This may fail due to numerical instability in which case we give up trying to solve horizon edge for this point and accept a minor degeneration in the convex hull.
-	if (!reorderHorizonEdges(horizonEdges)) {
+	if (!reorderHorizonEdges(m_horizonEdges)) {
 	    std::cerr << "Failed to solve horizon edge." << std::endl;
 	    auto it = std::find(tf.m_pointsOnPositiveSide->begin(),tf.m_pointsOnPositiveSide->end(),activePointIndex);
 	    tf.m_pointsOnPositiveSide->erase(it);
@@ -208,7 +201,7 @@ void QuickHull<T>::createConvexHalfEdgeMesh() {
 	m_newHalfEdgeIndices.clear();
 	m_disabledFacePointVectors.clear();
 	size_t disableCounter = 0;
-	for (auto faceIndex : visibleFaces) {
+	for (auto faceIndex : m_visibleFaces) {
 	    auto& disabledFace = m_mesh.m_faces[faceIndex];
 	    auto halfEdges = m_mesh.getHalfEdgeIndicesOfFace(disabledFace);
 	    for (size_t j=0;j<3;j++) {
@@ -241,19 +234,19 @@ void QuickHull<T>::createConvexHalfEdgeMesh() {
 
 	// Create new faces using the edgeloop
 	for (size_t i = 0; i < horizonEdgeCount; i++) {
-	    const IndexType AB = horizonEdges[i];
+	    const size_t AB = m_horizonEdges[i];
 
 	    auto horizonEdgeVertexIndices = m_mesh.getVertexIndicesOfHalfEdge(m_mesh.m_halfEdges[AB]);
-	    IndexType A,B,C;
+	    size_t A,B,C;
 	    A = horizonEdgeVertexIndices[0];
 	    B = horizonEdgeVertexIndices[1];
 	    C = activePointIndex;
 
-	    const IndexType newFaceIndex = m_mesh.addFace();
+	    const size_t newFaceIndex = m_mesh.addFace();
 	    m_newFaceIndices.push_back(newFaceIndex);
 
-	    const IndexType CA = m_newHalfEdgeIndices[2*i+0];
-	    const IndexType BC = m_newHalfEdgeIndices[2*i+1];
+	    const size_t CA = m_newHalfEdgeIndices[2*i+0];
+	    const size_t BC = m_newHalfEdgeIndices[2*i+1];
 
 	    m_mesh.m_halfEdges[AB].m_next = BC;
 	    m_mesh.m_halfEdges[BC].m_next = CA;
@@ -299,7 +292,7 @@ void QuickHull<T>::createConvexHalfEdgeMesh() {
 	    if (newFace.m_pointsOnPositiveSide) {
 		assert(newFace.m_pointsOnPositiveSide->size()>0);
 		if (!newFace.m_inFaceStack) {
-		    faceList.push_back(newFaceIndex);
+		    m_faceList.push_back(newFaceIndex);
 		    newFace.m_inFaceStack = 1;
 		}
 	    }
@@ -315,48 +308,48 @@ void QuickHull<T>::createConvexHalfEdgeMesh() {
  */
 
 template <typename T>
-std::array<IndexType,6> QuickHull<T>::getExtremeValues() {
-    std::array<IndexType,6> outIndices{{0,0,0,0,0,0}};
+std::array<size_t,6> QuickHull<T>::getExtremeValues() {
+    std::array<size_t,6> outIndices{{0,0,0,0,0,0}};
     T extremeVals[6] = {m_vertexData[0].x,m_vertexData[0].x,m_vertexData[0].y,m_vertexData[0].y,m_vertexData[0].z,m_vertexData[0].z};
     const size_t vCount = m_vertexData.size();
     for (size_t i=1;i<vCount;i++) {
 	const Vector3<T>& pos = m_vertexData[i];
 	if (pos.x>extremeVals[0]) {
 	    extremeVals[0]=pos.x;
-	    outIndices[0]=(IndexType)i;
+	    outIndices[0]=(size_t)i;
 	}
 	else if (pos.x<extremeVals[1]) {
 	    extremeVals[1]=pos.x;
-	    outIndices[1]=(IndexType)i;
+	    outIndices[1]=(size_t)i;
 	}
 	if (pos.y>extremeVals[2]) {
 	    extremeVals[2]=pos.y;
-	    outIndices[2]=(IndexType)i;
+	    outIndices[2]=(size_t)i;
 	}
 	else if (pos.y<extremeVals[3]) {
 	    extremeVals[3]=pos.y;
-	    outIndices[3]=(IndexType)i;
+	    outIndices[3]=(size_t)i;
 	}
 	if (pos.z>extremeVals[4]) {
 	    extremeVals[4]=pos.z;
-	    outIndices[4]=(IndexType)i;
+	    outIndices[4]=(size_t)i;
 	}
 	else if (pos.z<extremeVals[5]) {
 	    extremeVals[5]=pos.z;
-	    outIndices[5]=(IndexType)i;
+	    outIndices[5]=(size_t)i;
 	}
     }
     return outIndices;
 }
 
 template<typename T>
-bool QuickHull<T>::reorderHorizonEdges(std::vector<IndexType>& horizonEdges) {
+bool QuickHull<T>::reorderHorizonEdges(std::vector<size_t>& horizonEdges) {
     const size_t horizonEdgeCount = horizonEdges.size();
     for (size_t i=0;i<horizonEdgeCount-1;i++) {
-	const IndexType endVertex = m_mesh.m_halfEdges[ horizonEdges[i] ].m_endVertex;
+	const size_t endVertex = m_mesh.m_halfEdges[ horizonEdges[i] ].m_endVertex;
 	bool foundNext = false;
 	for (size_t j=i+1;j<horizonEdgeCount;j++) {
-	    const IndexType beginVertex = m_mesh.m_halfEdges[ m_mesh.m_halfEdges[horizonEdges[j]].m_opp ].m_endVertex;
+	    const size_t beginVertex = m_mesh.m_halfEdges[ m_mesh.m_halfEdges[horizonEdges[j]].m_opp ].m_endVertex;
 	    if (beginVertex == endVertex) {
 		std::swap(horizonEdges[i+1],horizonEdges[j]);
 		foundNext = true;
@@ -372,7 +365,7 @@ bool QuickHull<T>::reorderHorizonEdges(std::vector<IndexType>& horizonEdges) {
 }
 
 template <typename T>
-T QuickHull<T>::getScale(const std::array<IndexType,6>& extremeValues) {
+T QuickHull<T>::getScale(const std::array<size_t,6>& extremeValues) {
     T s = 0;
     for (size_t i=0;i<6;i++) {
 	const T* v = (const T*)(&m_vertexData[extremeValues[i]]);
@@ -385,24 +378,24 @@ T QuickHull<T>::getScale(const std::array<IndexType,6>& extremeValues) {
     return s;
 }
 
-template <typename T>
-MeshBuilder<T> QuickHull<T>::getInitialTetrahedron() {
+template<typename T>
+void QuickHull<T>::setupInitialTetrahedron() {
     const size_t vertexCount = m_vertexData.size();
 
     // If we have at most 4 points, just return a degenerate tetrahedron:
     if (vertexCount <= 4) {
-	IndexType v[4] = {0,std::min((size_t)1,vertexCount-1),std::min((size_t)2,vertexCount-1),std::min((size_t)3,vertexCount-1)};
+	size_t v[4] = {0,std::min((size_t)1,vertexCount-1),std::min((size_t)2,vertexCount-1),std::min((size_t)3,vertexCount-1)};
 	const Vector3<T> N = mathutils::getTriangleNormal(m_vertexData[v[0]],m_vertexData[v[1]],m_vertexData[v[2]]);
 	const Plane<T> trianglePlane(N,m_vertexData[v[0]]);
 	if (trianglePlane.isPointOnPositiveSide(m_vertexData[v[3]])) {
 	    std::swap(v[0],v[1]);
 	}
-	return MeshBuilder<T>(v[0],v[1],v[2],v[3]);
+	return m_mesh.setup(v[0],v[1],v[2],v[3]);
     }
 
     // Find two most distant extreme points.
     T maxD = m_epsilonSquared;
-    std::pair<IndexType,IndexType> selectedPoints;
+    std::pair<size_t,size_t> selectedPoints;
     for (size_t i=0;i<6;i++) {
 	for (size_t j=i+1;j<6;j++) {
 	    const T d = m_vertexData[ m_extremeValues[i] ].getSquaredDistanceTo( m_vertexData[ m_extremeValues[j] ] );
@@ -414,7 +407,7 @@ MeshBuilder<T> QuickHull<T>::getInitialTetrahedron() {
     }
     if (EQUAL(maxD, m_epsilonSquared)) {
 	// A degenerate case: the point cloud seems to consists of a single point
-	return MeshBuilder<T>(0,std::min((size_t)1,vertexCount-1),std::min((size_t)2,vertexCount-1),std::min((size_t)3,vertexCount-1));
+	return m_mesh.setup(0,std::min((size_t)1,vertexCount-1),std::min((size_t)2,vertexCount-1),std::min((size_t)3,vertexCount-1));
     }
     assert(selectedPoints.first != selectedPoints.second);
 
@@ -438,12 +431,12 @@ MeshBuilder<T> QuickHull<T>::getInitialTetrahedron() {
 	auto it = std::find_if(m_vertexData.begin(),m_vertexData.end(),[&](const vec3& ve) {
 									   return ve != m_vertexData[selectedPoints.first] && ve != m_vertexData[selectedPoints.second];
 								       });
-	const IndexType thirdPoint = (it == m_vertexData.end()) ? selectedPoints.first : std::distance(m_vertexData.begin(),it);
+	const size_t thirdPoint = (it == m_vertexData.end()) ? selectedPoints.first : std::distance(m_vertexData.begin(),it);
 	it = std::find_if(m_vertexData.begin(),m_vertexData.end(),[&](const vec3& ve) {
 								      return ve != m_vertexData[selectedPoints.first] && ve != m_vertexData[selectedPoints.second] && ve != m_vertexData[thirdPoint];
 								  });
-	const IndexType fourthPoint = (it == m_vertexData.end()) ? selectedPoints.first : std::distance(m_vertexData.begin(),it);
-	return MeshBuilder<T>(selectedPoints.first,selectedPoints.second,thirdPoint,fourthPoint);
+	const size_t fourthPoint = (it == m_vertexData.end()) ? selectedPoints.first : std::distance(m_vertexData.begin(),it);
+	return m_mesh.setup(selectedPoints.first,selectedPoints.second,thirdPoint,fourthPoint);
     }
 
     // These three points form the base triangle for our tetrahedron.
@@ -484,9 +477,9 @@ MeshBuilder<T> QuickHull<T>::getInitialTetrahedron() {
     }
 
     // Create a tetrahedron half edge mesh and compute planes defined by each triangle
-    MeshBuilder<T> mesh(baseTriangle[0],baseTriangle[1],baseTriangle[2],maxI);
-    for (auto& f : mesh.m_faces) {
-	auto v = mesh.getVertexIndicesOfFace(f);
+    m_mesh.setup(baseTriangle[0],baseTriangle[1],baseTriangle[2],maxI);
+    for (auto& f : m_mesh.m_faces) {
+	auto v = m_mesh.getVertexIndicesOfFace(f);
 	const Vector3<T>& va = m_vertexData[v[0]];
 	const Vector3<T>& vb = m_vertexData[v[1]];
 	const Vector3<T>& vc = m_vertexData[v[2]];
@@ -497,13 +490,12 @@ MeshBuilder<T> QuickHull<T>::getInitialTetrahedron() {
 
     // Finally we assign a face for each vertex outside the tetrahedron (vertices inside the tetrahedron have no role anymore)
     for (size_t i=0;i<vCount;i++) {
-	for (auto& face : mesh.m_faces) {
+	for (auto& face : m_mesh.m_faces) {
 	    if (addPointToFace(face, i)) {
 		break;
 	    }
 	}
     }
-    return mesh;
 }
 
 /*

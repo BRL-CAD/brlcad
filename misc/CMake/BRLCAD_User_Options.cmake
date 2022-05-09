@@ -195,8 +195,8 @@ endif(BRLCAD_ENABLE_AQUA)
 # Enable features requiring Bullet Physics SDK
 option(BRLCAD_ENABLE_BULLET "Enable features requiring the Bullet Physics Library" OFF)
 if(BRLCAD_ENABLE_BULLET)
-  message("Bullet support is not currently working - disabling.")
-  set(BRLCAD_ENABLE_BULLET OFF CACHE BOOL "Currently broken" FORCE)
+  message("WARNING:  Bullet support has known limitations and should be considered a work in progress.")
+  #set(BRLCAD_ENABLE_BULLET OFF CACHE BOOL "Currently broken" FORCE)
 endif(BRLCAD_ENABLE_BULLET)
 mark_as_advanced(BRLCAD_ENABLE_BULLET)
 

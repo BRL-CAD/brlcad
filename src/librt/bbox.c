@@ -36,7 +36,7 @@
 
 
 int
-rt_bound_tree(const union tree *tp, fastf_t *tree_min, fastf_t *tree_max)
+rt_bound_tree(const union tree *tp, vect_t tree_min, vect_t tree_max)
 {
     vect_t r_min, r_max;		/* rpp for right side of tree */
 

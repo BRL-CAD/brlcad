@@ -1,6 +1,7 @@
-bu_sort is based on OpenBSD's qsort.c rev. 251672 2013/12/17
+bu_sort is based on OpenBSD's qsort.c and heapsort - see
+https://github.com/openbsd/src/tree/master/lib/libc/stdlib
 
-Copyright (c) 1992, 1993
+Copyright (c) 1991, 1992, 1993
      The Regents of the University of California.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

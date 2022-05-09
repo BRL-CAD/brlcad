@@ -24,5 +24,3 @@ SOFTWARE.
 
 file:/src/libbu/fort.c
 file:/src/libbu/fort.h
-file:/src/libged/stat/fort.c
-file:/src/libged/stat/fort.h

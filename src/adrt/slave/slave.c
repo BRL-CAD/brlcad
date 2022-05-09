@@ -23,32 +23,37 @@
 
 #include "common.h"
 
-#include <stdio.h>
+/* interface header */
+#include "./slave.h"
+
+/* system headers */
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
-
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
 #ifdef HAVE_GETOPT_H
 #  include <getopt.h>
 #endif
+#include "bio.h"
 
+/* public api headers */
 #include "bu/app.h"
+#include "bu/getopt.h"
+#include "bu/str.h"
 #include "rt/tie.h"
-#include "adrt.h"
-#include "camera.h"
-#include "adrt.h"
-#include "rt/tie.h"
-#include "render_util.h"
 
-#include "slave.h"
-#include "tienet_slave.h"
+/* adrt headers */
+#include "adrt.h"
 #include "load.h"
+#include "camera.h"
+#include "render_util.h"
+#include "tienet_slave.h"
+
 
 typedef struct adrt_slave_project_s {
-    tie_t tie;
+    struct tie_s tie;
     render_camera_t camera;
     uint16_t last_frame;
     uint8_t active;
@@ -73,12 +78,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 {
     TIE_3 pos, foc;
     unsigned char rm, op;
-    uint32_t ind, wlen;
-    uint16_t wid;
-
-    /* Length of work data */
-    wlen = work->ind;
-    ind = 0;
+    uint32_t ind = 0;
+    uint16_t wid = 0;
 
     /* Get work type */
     TCOPY(uint8_t, work->data, ind, &op, 0);
@@ -97,9 +98,9 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	case ADRT_WORK_INIT:
 	{
 	    render_camera_init (&adrt_workspace_list[wid].camera, adrt_slave_threads);
-	    if ( slave_load (&adrt_workspace_list[wid].tie, (void *)work->data, wlen-ind) != 0 )
+	    if ( slave_load (&adrt_workspace_list[wid].tie, (void *)work->data) != 0 )
 		bu_exit (1, "Failed to load geometry. Going into a flaming tailspin\n");
-	    tie_prep (&adrt_workspace_list[wid].tie);
+	    TIE_PREP(&adrt_workspace_list[wid].tie);
 	    render_camera_prep (&adrt_workspace_list[wid].camera);
 	    printf ("ready.\n");
 	    result->ind = 0;
@@ -111,6 +112,9 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 	case ADRT_WORK_STATUS:
 	{
+#ifndef HAVE_DECL_GETLOADAVG
+	    extern int getloadavg(double loadavg[], int nelem);
+#endif /* HAVE_DECL_GETLOADAVG */
 #ifdef HAVE_GETLOADAVG
 	    double loadavg = -1.0;
 	    getloadavg (&loadavg, 1);
@@ -160,16 +164,16 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 	case ADRT_WORK_SHOTLINE:
 	{
-	    tie_ray_t ray;
+	    struct tie_ray_s ray;
 	    void *mesg;
 	    int dlen;
 
 	    mesg = NULL;
 
 	    /* coordinates */
-	    TCOPY(TIE_3, work->data, ind, ray.pos.v, 0);
+	    TCOPY(TIE_3, work->data, ind, ray.pos, 0);
 	    ind += sizeof (TIE_3);
-	    TCOPY(TIE_3, work->data, ind, ray.dir.v, 0);
+	    TCOPY(TIE_3, work->data, ind, ray.dir, 0);
 	    ind += sizeof (TIE_3);
 
 	    /* Fire the shot */
@@ -360,8 +364,10 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    if (tile.frame != adrt_workspace_list[wid].last_frame) {
 		adrt_workspace_list[wid].camera.type = type;
 		adrt_workspace_list[wid].camera.fov = fov;
-		adrt_workspace_list[wid].camera.pos = pos;
-		adrt_workspace_list[wid].camera.focus = foc;
+
+		TCOPY(TIE_3, adrt_workspace_list[wid].camera.pos, 0, &pos, 0);
+		TCOPY(TIE_3, adrt_workspace_list[wid].camera.focus, 0, &foc, 0);
+
 		render_camera_prep (&adrt_workspace_list[wid].camera);
 	    }
 	    adrt_workspace_list[wid].last_frame = tile.frame;
@@ -435,7 +441,7 @@ static void finish(int sig)
     bu_exit(EXIT_FAILURE, "Collected signal %d, aborting!\n", sig);
 }
 
-static void info(int sig)
+static void info(int UNUSED(sig))
 {
 	/* something to display info about clients, threads and port. */
     return;

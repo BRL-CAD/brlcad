@@ -267,16 +267,14 @@ fg4_free_conversion_state(struct conversion_state *state)
     if (state->fp_muves)
 	fclose(state->fp_muves);
 
-    if (state->region_list)
-	bu_free(state->region_list, "region_list");
+    bu_free(state->region_list, "region_list");
 
-    if (state->grid_points)
-	bu_free(state->grid_points, "grid_points");
+    bu_free(state->grid_points, "grid_points");
 
     if (state->group_head) {
 	mk_freemembers(&state->group_head->l);
-	bu_free(state->group_head, "group_head");
     }
+    bu_free(state->group_head, "group_head");
 
     mk_freemembers(&state->hole_head.l);
 
@@ -313,14 +311,9 @@ fg4_free_conversion_state(struct conversion_state *state)
 
     free_name_tree(state->name_root);
 
-    if (state->faces)
-	bu_free(state->faces, "faces");
-
-    if (state->facemode)
-	bu_free(state->facemode, "facemode");
-
-    if (state->thickness)
-	bu_free(state->thickness, "thickness");
+    bu_free(state->faces, "faces");
+    bu_free(state->facemode, "facemode");
+    bu_free(state->thickness, "thickness");
 }
 
 
@@ -905,9 +898,7 @@ Add_stragglers_to_groups(struct conversion_state *pstate)
 			}
 		    }
 		}
-		if (pstate->group_head) {
-		    bu_free(pstate->group_head, "old group_head");
-		}
+		bu_free(pstate->group_head, "old group_head");
 		pstate->group_head = new_head;
 		pstate->group_head_cnt = new_cnt;
 	    }

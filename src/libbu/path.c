@@ -222,10 +222,8 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 	    break;
     }
 
-    if (basename)
-	bu_free(basename, "basename");
-    if (dirname)
-	bu_free(dirname, "dirname");
+    bu_free(basename, "basename");
+    bu_free(dirname, "dirname");
 
     return ret;
 }

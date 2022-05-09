@@ -227,11 +227,9 @@ to_data_arrows_func(Tcl_Interp *interp,
 		return GED_ERROR;
 	    }
 
-	    if (gdasp->gdas_num_points) {
-		bu_free((void *)gdasp->gdas_points, "data points");
-		gdasp->gdas_points = (point_t *)0;
-		gdasp->gdas_num_points = 0;
-	    }
+	    bu_free((void *)gdasp->gdas_points, "data points");
+	    gdasp->gdas_points = (point_t *)0;
+	    gdasp->gdas_num_points = 0;
 
 	    /* Clear out data points */
 	    if (ac < 1) {

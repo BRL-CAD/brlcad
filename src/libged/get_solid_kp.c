@@ -43,7 +43,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 			const struct rt_db_internal *const ip,
 			const fastf_t *const mat)
 {
-    point_t mpt;
+    point_t mpt = VINIT_ZERO;
 
     RT_CK_DB_INTERNAL(ip);
 

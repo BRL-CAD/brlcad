@@ -37,8 +37,7 @@
 #include "bu/defines.h"
 #include "bu/app.h"
 #include "bu/parallel.h"
-
-#include <iostream>
+#include "bu/dylib.h"
 
 
 /* These ARE exported outside LIBBU */
@@ -75,6 +74,7 @@ libbu_init(void)
 static void
 libbu_clear(void)
 {
+    (void)bu_dlunload();
     bu_semaphore_free();
 }
 

@@ -1234,7 +1234,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
 
 void
-rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *mat, register struct bu_list *vhead, register struct rt_vol_internal *vip)
+rt_vol_plate(point_t a, point_t b, point_t c, point_t d, register mat_t mat, register struct bu_list *vhead, register struct rt_vol_internal *vip)
 {
     point_t s;		/* scaled original point */
     point_t arot, prot;

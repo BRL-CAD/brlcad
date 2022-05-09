@@ -778,7 +778,7 @@ nmg_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
     register long **lp;
 
     BU_CK_PTBL(tbl);
-    bu_log("%s: bu_ptbl array with %ld entries\n",
+    bu_log("%s: bu_ptbl array with %zu entries\n",
 	   title, tbl->end);
 
     if (!verbose) return;
@@ -861,8 +861,8 @@ nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t 
  * Does not mind wire edges.
  */
 void
-nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec,
-		   const fastf_t *zvec, const struct bn_tol *UNUSED(tol))
+nmg_pr_one_eu_vecs(const struct edgeuse *eu, const vect_t xvec, const vect_t yvec,
+		   const vect_t zvec, const struct bn_tol *UNUSED(tol))
 {
     const struct loopuse *lu;
     const struct faceuse *fu;
@@ -915,7 +915,7 @@ nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t 
 
 
 void
-nmg_pr_fu_around_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec, const struct bn_tol *tol)
+nmg_pr_fu_around_eu_vecs(const struct edgeuse *eu, const vect_t xvec, const vect_t yvec, const vect_t zvec, const struct bn_tol *tol)
 {
     const struct edgeuse *eu1;
 

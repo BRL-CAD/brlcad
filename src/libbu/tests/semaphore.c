@@ -117,7 +117,7 @@ parallel_test(size_t ncpu, size_t reps)
     bu_parallel(increment_thread, ncpu, &args);
 
     if (pcounter != expected) {
-	bu_log("bu_semaphore parallel increment test:  counter is %lu, expected %lu\n [FAIL]", pcounter, expected);
+	bu_log("bu_semaphore parallel increment test:  counter is %zu, expected %zu\n [FAIL]", pcounter, expected);
 	return 0;
     }
 

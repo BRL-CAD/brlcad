@@ -191,12 +191,11 @@ to_more_args_func(struct ged *gedp,
     }
 
 end:
-    for (i = 0; i < ac; ++i) {
-	bu_free((void *)av[i], "to_more_args_func");
-    }
+
+    bu_argv_free(ac, av);
+
     bu_vls_free(&callback_cmd);
     bu_vls_free(&temp);
-    bu_free((void *)av, "to_more_args_func");
 
     return ret;
 }

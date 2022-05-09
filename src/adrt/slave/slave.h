@@ -21,7 +21,7 @@
 #ifndef ADRT_SLAVE_SLAVE_H
 #define ADRT_SLAVE_SLAVE_H
 
-void adrt_slave(int port, char *host, int threads);
+extern void adrt_slave(int port, char *host, int threads);
 
 #endif
 

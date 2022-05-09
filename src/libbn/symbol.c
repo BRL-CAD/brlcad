@@ -49,7 +49,7 @@
 #include "bn/vectfont.h"
 
 void
-tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
+tp_3symbol(FILE *fp, char *string, point_t origin, mat_t rot, double scale)
 
 /* string of chars to be plotted */
 /* lower left corner of 1st char */

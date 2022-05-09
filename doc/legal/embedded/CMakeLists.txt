@@ -52,7 +52,6 @@ set(embedded_licenses
   QFlowLayout.txt
   QtADS.txt
   QuickHull.txt
-  realpath.txt
   rply.txt
   RTree.txt
   search.txt

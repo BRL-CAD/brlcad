@@ -84,14 +84,10 @@ CMAKEFILES(isst.tcl)
 CMAKEFILES(isst.c)
 
 add_subdirectory(master)
-# add_subdirectory(slave)
+add_subdirectory(slave)
 
 set(adrt_ignore_files
   load.h
-  slave/slave.c
-  slave/tienet_slave.h
-  slave/tienet_slave.c
-  slave/slave.h
   tienet.h
   )
 CMAKEFILES(${adrt_ignore_files})

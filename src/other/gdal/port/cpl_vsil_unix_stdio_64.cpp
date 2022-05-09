@@ -803,7 +803,7 @@ int VSIUnixStdioFilesystemHandler::SupportsSparseFiles( const char*
     {
         // Add here any missing filesystem supporting sparse files.
         // See http://en.wikipedia.org/wiki/Comparison_of_file_systems
-        switch( sStatFS.f_type )
+        switch( (uint32_t) sStatFS.f_type )
         {
             // Codes from http://man7.org/linux/man-pages/man2/statfs.2.html
             case 0xef53:  // ext2, 3, 4

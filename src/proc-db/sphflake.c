@@ -98,7 +98,6 @@ typedef struct params params_t;
 
 int count = 0; /* global sphere count */
 struct rt_wdb *fp;
-mat_t IDENT;
 
 /* make the wmember structs, in order to produce individual
    combinations so we can have separate materials among differing
@@ -360,7 +359,6 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    fflush(stdin);
 	}
     }
-    MAT_IDN(IDENT);
 }
 
 
@@ -556,7 +554,7 @@ void getZRotMat(mat_t (*t), fastf_t phi)
     memcpy(*t, r, sizeof(*t));
 }
 
-void makeFlake(int depth, mat_t (*trans), fastf_t *center, fastf_t radius, double delta, int maxDepth)
+void makeFlake(int depth, mat_t (*trans), point_t center, fastf_t radius, double delta, int maxDepth)
 {
     char name[MAX_INPUT_LENGTH];
     int i = 0;

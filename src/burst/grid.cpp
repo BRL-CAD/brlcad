@@ -1740,20 +1740,6 @@ prntAspectInit(struct burst_state *s)
     /* Convert to user units before squaring cell size. */
     projarea = s->cellsz*s->unitconv;
     projarea *= projarea;
-    if (bu_vls_strlen(&s->outfile)
-	&&      fprintf(s->outfp,
-			"%c % 9.4f % 8.4f % 5.2f % 10.2f %-6s % 9.6f\n",
-			PB_ASPECT_INIT,
-			s->viewazim*RAD2DEG, /* attack azimuth in degrees */
-			s->viewelev*RAD2DEG, /* attack elevation in degrees */
-			s->bdist*s->unitconv,  /* BDIST */
-			projarea, /* projected area associated with burst pt. */
-			bu_units_string(s->unitconv),
-			s->raysolidangle
-		       ) < 0
-       ) {
-	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
-    }
 
     // For the original burst units, report back using the same string
     // burst would originally have used (for compatibility).  Eventually
@@ -1773,6 +1759,21 @@ prntAspectInit(struct burst_state *s)
     }
     if (BU_STR_EQUAL(ustr, "m")) {
 	ustr = "meters";
+    }
+
+    if (bu_vls_strlen(&s->outfile)
+	&&      fprintf(s->outfp,
+			"%c % 9.4f % 8.4f % 5.2f % 10.2f %-6s % 9.6f\n",
+			PB_ASPECT_INIT,
+			s->viewazim*RAD2DEG, /* attack azimuth in degrees */
+			s->viewelev*RAD2DEG, /* attack elevation in degrees */
+			s->bdist*s->unitconv,  /* BDIST */
+			projarea, /* projected area associated with burst pt. */
+			ustr,
+			s->raysolidangle
+		       ) < 0
+       ) {
+	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
     }
 
     if (bu_vls_strlen(&s->shotlnfile)
@@ -1920,6 +1921,36 @@ gridInit(struct burst_state *s)
     brst_log(s, MSG_LOG, "Initializing grid\n");
     rt_prep_timer();
 
+#if DEBUG_SHOT
+    if (TSTBIT(s->firemode, FM_BURST))
+	brst_log(s, MSG_OUT, "gridInit: reading burst points.\n");
+    else        {
+	if (TSTBIT(s->firemode, FM_SHOT))
+	    brst_log(s, MSG_OUT,"gridInit: shooting discrete shots.\n");
+	else
+	    brst_log(s, MSG_OUT,"gridInit: shooting %s.\n",
+		    TSTBIT(s->firemode, FM_PART) ?
+		    "partial envelope" : "full envelope");
+    }
+    if (TSTBIT(s->firemode, FM_BURST) || TSTBIT(s->firemode, FM_SHOT)) {
+	brst_log(s, MSG_OUT,"gridInit: reading %s coordinates from %s.\n",
+		TSTBIT(s->firemode, FM_3DIM) ? "3-d" : "2-d",
+		TSTBIT(s->firemode, FM_FILE) ? "file" : "command stream");
+
+    } else
+	if (TSTBIT(s->firemode, FM_FILE) || TSTBIT(s->firemode, FM_3DIM))
+	    brst_log(s, MSG_OUT,"BUG: insane combination of fire mode bits:0x%x\n",
+		    s->firemode);
+    if (TSTBIT(s->firemode, FM_BURST) || s->shotburst)
+	s->nriplevels = 1;
+    else
+	s->nriplevels = 0;
+    if (!s->shotburst && s->groundburst) {
+	const char *srcbuf = "Ground bursting directive ignored: only relevant if bursting along shotline.\n";
+	brst_log(s, MSG_OUT, srcbuf);
+    }
+#endif
+
     /* compute grid unit vectors */
     gridRotate(s->viewazim, s->viewelev, 0.0, s->gridhor, s->gridver);
 
@@ -1931,6 +1962,9 @@ gridInit(struct burst_state *s)
 	VSCALE(xdeltavec, s->gridhor, negsinyaw);
 	VSCALE(ydeltavec, s->gridver, sinpitch);
 	VADD2(cantdelta, xdeltavec, ydeltavec);
+#if DEBUG_SHOT
+	brst_log(s, MSG_OUT, "gridInit: canting warhead\n");
+#endif
     }
 
     /* unit vector from origin of model toward eye */
@@ -2055,6 +2089,12 @@ gridInit(struct burst_state *s)
 	s->gridyorg--;
 	s->gridyfin++;
     }
+#if DEBUG_SHOT
+    brst_log(s, MSG_OUT, "gridInit: xorg, xfin, yorg, yfin=%d, %d, %d, %d\n",
+	    s->gridxorg, s->gridxfin, s->gridyorg, s->gridyfin);
+    brst_log(s, MSG_OUT, "gridInit: left, right, down, up=%g, %g, %g, %g\n",
+	    s->gridlf, s->gridrt, s->griddn, s->gridup);
+#endif
 
     /* compute stand-off distance */
     s->standoff = FMAX(viewdir[X] * s->rtip->mdl_max[X],

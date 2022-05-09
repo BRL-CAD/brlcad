@@ -2408,7 +2408,7 @@ find_loop_to_cut(int *index1, int *index2, size_t prior_start, size_t prior_end,
     }
 
     if (nmg_debug&NMG_DEBUG_FCUT)
-	bu_log("\tfind_loop_to_cut: returning %ld cuts (index1=%d, index2=%d)\n",
+	bu_log("\tfind_loop_to_cut: returning %zu cuts (index1=%d, index2=%d)\n",
 	       BU_PTBL_LEN(cuts), *index1, *index2);
 
     return cuts;
@@ -3071,7 +3071,7 @@ nmg_onon_fix(struct nmg_ray_state *rs, struct bu_ptbl *b, struct bu_ptbl *ob, fa
  * a single use of that same vertex.
  */
 struct edge_g_lseg *
-nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t *mag2, struct faceuse *fu1, struct faceuse *fu2, fastf_t *pt, fastf_t *dir, struct edge_g_lseg *eg, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t *mag2, struct faceuse *fu1, struct faceuse *fu2, point_t pt, vect_t dir, struct edge_g_lseg *eg, struct bu_list *vlfree, const struct bn_tol *tol)
 /* table of vertexuses in fu1 on intercept line */
 /* table of vertexuses in fu2 on intercept line */
 /* table of distances to vertexuses from is->pt */

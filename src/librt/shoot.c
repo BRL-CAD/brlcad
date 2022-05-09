@@ -126,7 +126,7 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 }
 
 
-const union cutter *
+_BU_ATTR_FLATTEN const union cutter *
 rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 {
     register const union cutter *cutp, *curcut = ssp->curcut;
@@ -433,7 +433,7 @@ escaped_from_model:
  * primitive that meets the above criteria.  No primitive
  * intersections are performed.
  */
-fastf_t
+_BU_ATTR_FLATTEN fastf_t
 rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
     fastf_t min_backing_dist = BACKING_DIST;
     fastf_t prev_dist = -1.0;
@@ -630,7 +630,7 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 }
 
 
-int
+_BU_ATTR_FLATTEN int
 rt_shootray(register struct application *ap)
 {
     struct rt_shootray_status ss;

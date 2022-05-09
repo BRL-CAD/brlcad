@@ -289,10 +289,7 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
 
 void
 free_soup(struct soup_s *s) {
-    if (s == NULL)
-	bu_bomb("null soup");
-    if (s->faces)
-	bu_free(s->faces, "bot soup faces");
+    bu_free(s->faces, "bot soup faces");
     bu_free(s, "bot soup");
     return;
 }

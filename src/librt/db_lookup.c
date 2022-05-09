@@ -171,9 +171,28 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 	return RT_DIR_NULL;
     }
 
-    /* Anything with a forward slash is only valid as a path.  The
-     * full path lookup is potentially more expensive, so only do
-     * it when we need to.
+
+    n0 = name[0];
+    n1 = name[1];
+
+    RT_CK_DBI(dbip);
+
+    dp = dbip->dbi_Head[db_dirhash(name)];
+    for (; dp != RT_DIR_NULL; dp=dp->d_forw) {
+	char *this_obj;
+
+	/* first two checks are for speed */
+	if ((n0 == *(this_obj=dp->d_namep)) && (n1 == this_obj[1]) && (BU_STR_EQUAL(name, this_obj))) {
+	    if (UNLIKELY(RT_G_DEBUG&RT_DEBUG_DB)) {
+		bu_log("db_lookup(%s) %p\n", name, (void *)dp);
+	    }
+	    return dp;
+	}
+    }
+
+    /* Anything with a forward slash is potentially a path, rather than an object
+     * name.  The full path lookup is potentially more expensive, so only do it
+     * when we need to.
      *
      * TODO - could we ultimately consolidate db_lookup and db_string_to_path
      * somehow - maybe have db_lookup take an optional parameter for a full
@@ -197,35 +216,22 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 	    dp = DB_FULL_PATH_CUR_DIR(&fp);
 	}
 	db_free_full_path(&fp);
-	return dp;
 
-    } else {
-
-	n0 = name[0];
-	n1 = name[1];
-
-	RT_CK_DBI(dbip);
-
-	dp = dbip->dbi_Head[db_dirhash(name)];
-	for (; dp != RT_DIR_NULL; dp=dp->d_forw) {
-	    char *this_obj;
-
-	    /* first two checks are for speed */
-	    if ((n0 == *(this_obj=dp->d_namep)) && (n1 == this_obj[1]) && (BU_STR_EQUAL(name, this_obj))) {
-		if (UNLIKELY(RT_G_DEBUG&RT_DEBUG_DB)) {
-		    bu_log("db_lookup(%s) %p\n", name, (void *)dp);
-		}
-		return dp;
-	    }
+	/* If we succeeded as a full path return.  Otherwise, let the normal
+	 * lookup proceed to find out if we have a diabolical case where a
+	 * forward slash ended up in a name.  It's not supposed to, but it has
+	 * been observed in the wild. */
+	if (dp != RT_DIR_NULL) {
+	    return dp;
 	}
-
-	if (noisy || RT_G_DEBUG&RT_DEBUG_DB) {
-	    bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
-	}
-
-	return RT_DIR_NULL;
-
     }
+
+    if (noisy || RT_G_DEBUG&RT_DEBUG_DB) {
+	bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
+    }
+
+    return RT_DIR_NULL;
+
 }
 
 

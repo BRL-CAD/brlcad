@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <string>
 #include <regex>
 
 int parse_line(std::string const& line)

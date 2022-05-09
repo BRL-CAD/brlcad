@@ -243,19 +243,19 @@
 	CK_POW_2( limit );						\
 									\
 	if ( ! (subimage_size < dimen) ) {				\
-	    bu_log("%s:%d Dimension %lu should be greater than subimage size (%lu)\n", \
+	    bu_log("%s:%d Dimension %zu should be greater than subimage size (%zu)\n", \
 		   __FILE__, __LINE__, dimen, subimage_size);		\
 	    bu_bomb("reconstruct");					\
 	}								\
 									\
 	if ( ! (subimage_size < limit) ) {				\
-	    bu_log("%s:%d Channels limit %lu should be greater than subimage size (%lu)\n", \
+	    bu_log("%s:%d Channels limit %zu should be greater than subimage size (%zu)\n", \
 		   __FILE__, __LINE__, limit, subimage_size);		\
 	    bu_bomb("reconstruct");					\
 	}								\
 									\
 	if ( ! (limit <= dimen) ) {					\
-	    bu_log("%s:%d Dimension %lu should be greater than or equal to the channels limit (%lu)\n", \
+	    bu_log("%s:%d Dimension %zu should be greater than or equal to the channels limit (%zu)\n", \
 		   __FILE__, __LINE__, dimen, limit);			\
 	    bu_bomb("reconstruct");					\
 	}								\

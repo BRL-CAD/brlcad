@@ -192,8 +192,7 @@ bu_observer_free(struct bu_observer_list *observers)
 	bu_vls_free(&observers->observers[i].cmd);
     }
 
-    if (observers->observers != NULL)
-	bu_free(observers->observers, "freeing observers");
+    bu_free(observers->observers, "freeing observers");
 }
 
 

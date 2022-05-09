@@ -102,7 +102,7 @@ nmg_nurb_to_poly(struct face_g_snurb *srf)
 
 
 struct nmg_nurb_poly *
-nmg_nurb_mk_poly(fastf_t *v1, fastf_t *v2, fastf_t *v3, fastf_t *uv1, fastf_t *uv2, fastf_t *uv3)
+nmg_nurb_mk_poly(fastf_t *v1, fastf_t *v2, fastf_t *v3, fastf_t uv1[2], fastf_t uv2[2], fastf_t uv3[2])
 {
     struct nmg_nurb_poly *p;
 

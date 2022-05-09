@@ -553,8 +553,6 @@ nmg_mesh_two_faces(register struct faceuse *fu1, register struct faceuse *fu2, c
 void
 nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, struct bu_list *vlfree, const struct bn_tol *tol)
 {
-    int count = 0;
-
     NMG_CK_FACEUSE(fu1);
     NMG_CK_FACEUSE(fu2);
     BN_CK_TOL(tol);
@@ -565,15 +563,15 @@ nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, struct bu_list *vlfree,
 
     if (nmg_debug & NMG_DEBUG_MESH_EU)
 	bu_log("meshing self (fu1 %8p)\n", (void *)fu1);
-    count += nmg_mesh_two_faces(fu1, fu1, tol);
+    nmg_mesh_two_faces(fu1, fu1, tol);
 
     if (nmg_debug & NMG_DEBUG_MESH_EU)
 	bu_log("meshing self (fu2 %8p)\n", (void *)fu2);
-    count += nmg_mesh_two_faces(fu2, fu2, tol);
+    nmg_mesh_two_faces(fu2, fu2, tol);
 
     if (nmg_debug & NMG_DEBUG_MESH_EU)
 	bu_log("meshing to other (fu1:%8p fu2:%8p)\n", (void *)fu1, (void *)fu2);
-    count += nmg_mesh_two_faces(fu1, fu2, tol);
+    nmg_mesh_two_faces(fu1, fu2, tol);
 
     if (nmg_debug & NMG_DEBUG_MESH_EU && nmg_debug & NMG_DEBUG_PLOTEM) {
 	nmg_pl_2fu("After_mesh%d.plot3", fu1, fu2, 1, vlfree);

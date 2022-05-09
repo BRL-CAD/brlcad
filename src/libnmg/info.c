@@ -166,7 +166,7 @@ top:
 
 
 void
-nmg_model_bb(fastf_t *min_pt, fastf_t *max_pt, const struct model *m)
+nmg_model_bb(point_t min_pt, point_t max_pt, const struct model *m)
 {
     struct nmgregion *r;
     register int i;
@@ -391,7 +391,7 @@ nmg_find_fu_with_fg_in_s(const struct shell *s1, const struct faceuse *fu2)
  * That will be the only case for negative returns.
  */
 double
-nmg_measure_fu_angle(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *UNUSED(zvec))
+nmg_measure_fu_angle(const struct edgeuse *eu, const vect_t xvec, const vect_t yvec, const vect_t UNUSED(zvec))
 {
     vect_t left;
 
@@ -533,13 +533,12 @@ out:
  *
  */
 int
-nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *UNUSED(norm), const struct bn_tol *tol)
+nmg_loop_is_ccw(const struct loopuse *lu, const vect_t UNUSED(norm), const struct bn_tol *tol)
 {
     fastf_t area;
-    plane_t pl;
     int ret = 1;
+    plane_t pl = HINIT_ZERO;
 
-    HSETALL(pl, 0.0); /* sanity */
     area = nmg_loop_plane_area2(lu, pl, tol);
 
     if (NEAR_ZERO(area, tol->dist_sq)) {
@@ -1189,7 +1188,7 @@ nmg_find_e_pt2_handler(uint32_t *lp, void *state, int UNUSED(unused))
  * Useful for finding the edge nearest a mouse click, for example.
  */
 struct edge *
-nmg_find_e_nearest_pt2(uint32_t *magic_p, const fastf_t *pt2, const fastf_t *mat, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_find_e_nearest_pt2(uint32_t *magic_p, const point_t pt2, const mat_t mat, struct bu_list *vlfree, const struct bn_tol *tol)
 
 /* 2d point */
 /* 3d to 3d xform */
@@ -1237,7 +1236,7 @@ nmg_find_e_nearest_pt2(uint32_t *magic_p, const fastf_t *pt2, const fastf_t *mat
  * for measuring the angles of other edges and faces with.
  */
 void
-nmg_eu_2vecs_perp(fastf_t *xvec, fastf_t *yvec, fastf_t *zvec, const struct edgeuse *eu, const struct bn_tol *tol)
+nmg_eu_2vecs_perp(vect_t xvec, vect_t yvec, vect_t zvec, const struct edgeuse *eu, const struct bn_tol *tol)
 {
     const struct vertex *v1, *v2;
     fastf_t len;
@@ -1274,7 +1273,7 @@ nmg_eu_2vecs_perp(fastf_t *xvec, fastf_t *yvec, fastf_t *zvec, const struct edge
  * 0 if left vector successfully computed into caller's array.
  */
 int
-nmg_find_eu_leftvec(fastf_t *left, const struct edgeuse *eu)
+nmg_find_eu_leftvec(vect_t left, const struct edgeuse *eu)
 {
     const struct loopuse *lu;
     const struct faceuse *fu;
@@ -1408,7 +1407,7 @@ nmg_find_eu_leftvec(fastf_t *left, const struct edgeuse *eu)
  * 0 if left vector successfully computed into caller's array.
  */
 int
-nmg_find_eu_left_non_unit(fastf_t *left, const struct edgeuse *eu)
+nmg_find_eu_left_non_unit(vect_t left, const struct edgeuse *eu)
 {
     const struct loopuse *lu;
     const struct faceuse *fu;
@@ -1555,7 +1554,7 @@ nmg_find_v_in_shell(const struct vertex *v, const struct shell *s, int edges_onl
  * (struct vertexuse *) A matching vertexuse from that loopuse.
  */
 struct vertexuse *
-nmg_find_pnt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_tol *tol)
+nmg_find_pnt_in_lu(const struct loopuse *lu, const point_t pt, const struct bn_tol *tol)
 {
     register struct edgeuse *eu;
     register struct vertex_g *vg;
@@ -1601,7 +1600,7 @@ nmg_find_pnt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_
  * (struct vertexuse *) A matching vertexuse from that face.
  */
 struct vertexuse *
-nmg_find_pnt_in_face(const struct faceuse *fu, const fastf_t *pt, const struct bn_tol *tol)
+nmg_find_pnt_in_face(const struct faceuse *fu, const point_t pt, const struct bn_tol *tol)
 {
     register struct loopuse *lu;
     struct vertexuse *vu;
@@ -1634,7 +1633,7 @@ nmg_find_pnt_in_face(const struct faceuse *fu, const fastf_t *pt, const struct b
  * XXX Why does this return a vertex, while its helpers return a vertexuse?
  */
 struct vertex *
-nmg_find_pnt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_tol *tol)
+nmg_find_pnt_in_shell(const struct shell *s, const point_t pt, const struct bn_tol *tol)
 {
     const struct faceuse *fu;
     const struct loopuse *lu;
@@ -1708,7 +1707,7 @@ nmg_find_pnt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_
  * XXX first match within tolerance?
  */
 struct vertex *
-nmg_find_pnt_in_model(const struct model *m, const fastf_t *pt, const struct bn_tol *tol)
+nmg_find_pnt_in_model(const struct model *m, const point_t pt, const struct bn_tol *tol)
 {
     struct nmgregion *r;
     struct shell *s;
@@ -2360,7 +2359,7 @@ nmg_line_handler(uint32_t *longp, void *state, int UNUSED(unused))
  * The caller will have to wrestle with the added fuzz.
  */
 void
-nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, const fastf_t *pt, const fastf_t *dir, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, const point_t pt, const vect_t dir, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct model *m;
     struct edge_line_state st;

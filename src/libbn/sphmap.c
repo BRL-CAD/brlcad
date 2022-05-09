@@ -39,20 +39,14 @@ bn_spm_free(bn_spm_map_t *mp)
     if (mp == BN_SPM_MAP_NULL)
 	return;
 
-    if (mp->_data != NULL) {
-	(void) bu_free((char *)mp->_data, "sph _data");
-	mp->_data = NULL;
-    }
+    (void) bu_free((char *)mp->_data, "sph _data");
+    mp->_data = NULL;
 
-    if (mp->nx != NULL) {
-	(void) bu_free((char *)mp->nx, "sph nx");
-	mp->nx = NULL;
-    }
+    (void) bu_free((char *)mp->nx, "sph nx");
+    mp->nx = NULL;
 
-    if (mp->xbin != NULL) {
-	(void) bu_free((char *)mp->xbin, "sph xbin");
-	mp->xbin = NULL;
-    }
+    (void) bu_free((char *)mp->xbin, "sph xbin");
+    mp->xbin = NULL;
 
     (void) bu_free((char *)mp, "bn_spm_map_t");
 }

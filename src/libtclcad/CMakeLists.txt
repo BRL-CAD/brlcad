@@ -43,7 +43,7 @@ if (BRLCAD_ENABLE_TCL)
     )
 
   if (TK_INCLUDE_PATH)
-    set(TCLCAD_INCLUDE_DIRS ${TCLCAD_INCLUDE_DIRS} ${TK_INCLUDE_PATH})
+    set(TCLCAD_INCLUDE_DIRS ${TCLCAD_INCLUDE_DIRS} ${TK_INCLUDE_PATH} ${X11_INCLUDE_DIR})
   endif (TK_INCLUDE_PATH)
 
   # Include directories only needed by the implementation

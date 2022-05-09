@@ -422,7 +422,7 @@ opt_objs(struct bu_vls *msg, size_t argc, const char **argv, void *obj_tbl)
 	i++;
     }
 
-    avnum = (char **)bu_calloc(strlen(objs), sizeof(char *), "breakout array");
+    avnum = (char **)bu_calloc(strlen(objs) + 1, sizeof(char *), "breakout array");
     acnum = bu_argv_from_string(avnum, strlen(objs), objs);
 
     /* TODO - use quote/unquote routines to scrub names... */
@@ -471,7 +471,7 @@ opt_quat(struct bu_vls *msg, size_t argc, const char **argv, void *inq)
     size_t i = 0;
     int acnum = 0;
     char *str1 = NULL;
-    char *avnum[5] = {NULL, NULL, NULL, NULL, NULL};
+    char *avnum[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
 
     quat_t *q = (quat_t *)inq;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_int");
@@ -854,9 +854,8 @@ rtwizard_help(struct bu_opt_desc *d)
 	bu_vls_printf(&str, "Image Generation Options:\n%s\n", option_help);
     }
 
-    if (option_help) {
-	bu_free(option_help, "help str");
-    }
+    bu_free(option_help, "help str");
+
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);
     bu_vls_free(&filtered);
@@ -880,8 +879,8 @@ rtwizard_help_dev(struct bu_opt_desc *d)
     option_help = bu_opt_describe(d, &settings);
     if (option_help) {
 	bu_vls_printf(&str, "Options for developers:\n%s\n", option_help);
-	bu_free(option_help, "help str");
     }
+    bu_free(option_help, "help str");
 
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);

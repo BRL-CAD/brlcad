@@ -649,11 +649,9 @@ to_data_axes_func(Tcl_Interp *interp,
 		return GED_ERROR;
 	    }
 
-	    if (gdasp->num_points) {
-		bu_free((void *)gdasp->points, "data points");
-		gdasp->points = (point_t *)0;
-		gdasp->num_points = 0;
-	    }
+	    bu_free((void *)gdasp->points, "data points");
+	    gdasp->points = (point_t *)0;
+	    gdasp->num_points = 0;
 
 	    /* Clear out data points */
 	    if (ac < 1) {

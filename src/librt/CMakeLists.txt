@@ -227,6 +227,10 @@ set(LIBRT_SOURCES
   vshoot.c
   wdb.c
   )
+
+set_source_files_properties(gdiam/gdiam.cpp PROPERTIES COMPILE_FLAGS -w)
+
+
 if(BRLCAD_ENABLE_GCT)
   set(LIBRT_SOURCES
     ${LIBRT_SOURCES}
@@ -355,6 +359,7 @@ endif(BRLCAD_ENABLE_OPENCL)
 if(BRLCAD_ENABLE_SPR)
   set(SPR_LIB libSPR)
 endif(BRLCAD_ENABLE_SPR)
+
 
 BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};libbrep;libnmg;libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 

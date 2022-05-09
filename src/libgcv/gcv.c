@@ -258,15 +258,13 @@ _gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
 	    bu_log("%s\n", temp[i]);
 	}
 
-	if (temp)
-	    bu_free((void *)temp, "temp");
+	bu_free((void *)temp, "temp");
 
 	_gcv_filter_options_free(filter, *options_data);
 	return 0;
     }
 
-    if (temp)
-	bu_free((void *)temp, "temp");
+    bu_free((void *)temp, "temp");
 
     return 1;
 }

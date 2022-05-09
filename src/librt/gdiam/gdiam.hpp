@@ -34,14 +34,6 @@
 #ifndef  __GDIAM__H
 #define  __GDIAM__H
 
-/* for g++ to quell warnings */
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push /* start new diagnostic pragma */
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#elif defined(__clang__)
-#  pragma clang diagnostic push /* start new diagnostic pragma */
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
 
 #define GDIAM_FLOAT_ZERO(val) (((val) > -1.0e-37) && ((val) < 1.0e-37))
 
@@ -399,6 +391,7 @@ class   GBBox {
 	// Note that the following is an overestaime - the diameter of
 	// projection of a cube, is bounded by the length of projections
 	// of its edges....
+#if 0
 	gdiam_real   get_diam_proj( gdiam_point  dir ) const
 	{
 	    gdiam_real  sum, coord;
@@ -419,7 +412,9 @@ class   GBBox {
 	    // sum = squard diameter of the bounding box
 	    // prod = length of projection of the diameter of cube on the
 	    //      direction.
-
+#endif
+	gdiam_real   get_diam_proj( gdiam_point ) const
+	{
 	    return  get_diam();
 	}
 
@@ -707,12 +702,6 @@ gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_real  * start, int  size,
 void  gdiam_generate_orthonormal_base( gdiam_point  in,
 	gdiam_point  out1,
 	gdiam_point  out2 );
-
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop /* end ignoring warnings */
-#elif defined(__clang__)
-#  pragma clang diagnostic pop /* end ignoring warnings */
-#endif
 
 #endif  /* __GDIAM__H */
 

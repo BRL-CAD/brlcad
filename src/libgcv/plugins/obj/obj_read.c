@@ -789,12 +789,8 @@ free_gfi(struct gfi_t **gfi)
 	bu_free((*gfi)->num_vertices_arr, "(*gfi)->num_vertices_arr");
 	bu_free((*gfi)->obj_file_face_idx_arr, "(*gfi)->obj_file_face_idx_arr");
 	bu_free((*gfi)->face_status, "(*gfi)->face_status");
-	if ((*gfi)->vertex_fuse_map != NULL) {
-	    bu_free((*gfi)->vertex_fuse_map, "(*gfi)->vertex_fuse_map");
-	}
-	if ((*gfi)->texture_vertex_fuse_map != NULL) {
-	    bu_free((*gfi)->texture_vertex_fuse_map, "(*gfi)->texture_vertex_fuse_map");
-	}
+	bu_free((*gfi)->vertex_fuse_map, "(*gfi)->vertex_fuse_map");
+	bu_free((*gfi)->texture_vertex_fuse_map, "(*gfi)->texture_vertex_fuse_map");
 	bu_free(*gfi, "*gfi");
 	*gfi = NULL;
     }
@@ -2032,7 +2028,7 @@ fuse_vertex(struct ga_t *ga,
     }
 
     /* test if fuse vertices has already been run, if so free old arrays */
-    if ((vertex_type == FUSE_VERT) && (gfi->vertex_fuse_map != NULL)) {
+    if (vertex_type == FUSE_VERT) {
 	bu_free(gfi->vertex_fuse_map, "gfi->vertex_fuse_map");
 	gfi->num_vertex_fuse = 0;
 	gfi->vertex_fuse_offset = 0;
@@ -2041,10 +2037,7 @@ fuse_vertex(struct ga_t *ga,
     /* test if fuse texture vertices has already been run, if so free
      * old arrays.
      */
-    if (((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
-	 (vertex_type == FUSE_TEX_VERT)) &&
-	(gfi->texture_vertex_fuse_map != NULL))
-    {
+    if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) && (vertex_type == FUSE_TEX_VERT)) {
 	bu_free(gfi->texture_vertex_fuse_map, "gfi->texture_vertex_fuse_map");
 	gfi->num_texture_vertex_fuse = 0;
 	gfi->texture_vertex_fuse_offset = 0;
@@ -2206,8 +2199,7 @@ fuse_vertex(struct ga_t *ga,
 	bu_free(gfi->vertex_fuse_flag, "gfi->vertex_fuse_flag");
     }
 
-    if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
-	(vertex_type == FUSE_TEX_VERT))
+    if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) && (vertex_type == FUSE_TEX_VERT))
     {
 	fuse_count = populate_fuse_map(ga, gfi, conv_factor, tol,
 				       texture_vertex_index_list, num_unique_texture_vertex_index_list,
@@ -2695,8 +2687,7 @@ output_to_nmg(struct ga_t *ga,
 	 */
 	nmg_debug = ga->nmg_debug; /* restore mode */
 
-	if (verts)
-	    bu_free(verts, "verts");
+	bu_free(verts, "verts");
 
 	if (m != (struct model *)NULL) {
 	    /* sanity check */

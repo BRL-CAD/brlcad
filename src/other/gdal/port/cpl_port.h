@@ -152,7 +152,11 @@
 #  include <locale.h>
 #endif
 #ifdef HAVE_XLOCALE_H
-#  include <xlocale.h>
+#  ifndef __GLIBC__
+#    include <xlocale.h>
+#  elif __GLIBC__ == 2 && __GLIBC_MINOR__ <= 24
+#    include <xlocale.h>
+#  endif
 #endif
 
 #ifdef HAVE_DIRECT_H

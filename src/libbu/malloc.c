@@ -182,25 +182,14 @@ bu_free(void *ptr, const char *str)
     if (!str)
 	str = nul;
 
-    if (UNLIKELY(ptr == (char *)0 || ptr == (char *)(-1L))) {
-	const char *msg_sleep_time_str = NULL;
+    /* silently ignore NULL pointers */
+    if (UNLIKELY(ptr == (char *)0)) {
+	return;
+    }
+
+    /* noisily report "marked" pointers */
+    if (ptr == (char *)(-1L)) {
 	fprintf(stderr, "%p free ERROR %s\n", ptr, str);
-	/* There is a class of parallel failures that produce attempts to free
-	 * NULL values, but are difficult to reproduce.  To get a debugger on
-	 * those cases to see how we got there, we need time.  If we hit this
-	 * case, spend a little extra time to see if an environment variable is
-	 * set to a time value in seconds.  If it is set, sleep to give the
-	 * user time to attach the debugger. */
-	msg_sleep_time_str = getenv("BU_NIL_FREE_SLEEP_SEC");
-	if (msg_sleep_time_str) {
-	    long stime = 0;
-	    char *end;
-	    errno = 0;
-	    stime = strtol(msg_sleep_time_str, &end, 10);
-	    if (errno != ERANGE && errno != EINVAL && stime > 0 && stime < UINT_MAX) {
-		sleep((unsigned int)stime);
-	    }
-	}
 	return;
     }
 
@@ -208,12 +197,10 @@ bu_free(void *ptr, const char *str)
     bu_semaphore_acquire(BU_SEM_MALLOC);
 #endif
 
-    /* Here we wipe out the first four bytes before the actual free()
-     * as a basic memory safeguard.  This should wipe out any magic
-     * number in structures and provide a distinct memory signature if
-     * the address happens to be accessed via some other pointer or
-     * the program crashes.  While we're not guaranteed anything after
-     * free(), some implementations leave the zapped value intact.
+    /* Here we intentionally wipe out the first four bytes before the
+     * actual free() as a basic memory safeguard.  While we're not
+     * guaranteed anything after free(), some implementations leave
+     * the zapped value intact and it can help with debugging.
      */
     *((uint32_t *)ptr) = 0xFFFFFFFF;	/* zappo! */
 

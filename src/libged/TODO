@@ -16,6 +16,10 @@ Be specific.
   possible generalization to remove unused/unreferenced objects of
   particular type (e.g., prims, combs, regions, all).
 
+* some common shorthand aliases from Dwayne
+  ** smk -- make --edit
+  ** scp -- copy --edit
+
 
 --- NEW COMMANDS ---
 
@@ -437,9 +441,8 @@ Be specific.
     SELECT * FROM products
     WHERE category = 'book' AND desc LIKE '%algorithms%' AND stock >= 1;
 
--------------------------------------------------------------------------------
 
-ANALYZE command design thoughts:
+--- ANALYZE command design thoughts ---
 
   If we consider consolidating what are currently "special purpose"
   analysis commands (bounding box calculators, convex hull, gqa's
@@ -522,8 +525,8 @@ Alternative usage possibility:
     analyze surface --component F:1-10,23-30 mesh.s
     analyze overlap --create=overlap.s  obj1.c obj2.c
 
--------------------------------------------------------------------------------
-search command ideas
+
+--- SEARCH command ideas ---
 
 * rewrite search code for better performance, consistency, hide flat
   searches (base it on supplied filters), make above/below searches
@@ -552,10 +555,12 @@ search command ideas
 
 * implement -param support for 'search' command
 
--------------------------------------------------------------------------------
-Thoughts on search path modifiers - this is a slight iteration on the results
-of Cliff and Nick trying to work through what "preferred" meanings and
-conventions are for path specifier modifiers.
+
+--- thoughts on SEARCH path modifiers ---
+
+This is a slight iteration on the results of Cliff and Nick trying to
+work through what "preferred" meanings and conventions are for path
+specifier modifiers.
 
 A path modifier is a single or multiple character pattern specified at the head
 of an object name, path, or glob pattern:

@@ -435,7 +435,7 @@ print_results:
 	print_cmd_args(output, orig_argc, orig_argv);
     }
 
-    bu_vls_printf(output, "List length: %lu\n", BU_PTBL_LEN(&results2) - ignored_cnt);
+    bu_vls_printf(output, "List length: %zu\n", BU_PTBL_LEN(&results2) - ignored_cnt);
     bu_vls_printf(output, "%-*s %-*s %-*s %-*s %s\n",
 		  (int)region_id_len_max + 1, "ID",
 		  (int)material_id_len_max + 1, "MAT",

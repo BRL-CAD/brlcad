@@ -182,6 +182,11 @@ typedef unsigned short u_short;
 #   ifndef SSIZE_MAX
 typedef ptrdiff_t ssize_t;
 #     define HAVE_SSIZE_T 1
+#     if defined(_WIN64)
+#        define SSIZE_MAX LONG_MAX
+#     else
+#        define SSIZE_MAX INT_MAX
+#     endif
 #   endif
 # endif
 #endif

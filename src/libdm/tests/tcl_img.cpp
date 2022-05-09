@@ -589,9 +589,8 @@ Dm_Update_Manager(ClientData clientData)
 
     // We're well and truly done - the application is closing down - free the
     // rendering buffer and quit the thread
-    if (idata->dmpixel) {
-	bu_free(idata->dmpixel, "free pixbuf");
-    }
+    bu_free(idata->dmpixel, "free pixbuf");
+
     Tcl_ExitThread(TCL_OK);
     TCL_THREAD_CREATE_RETURN;
 }
@@ -659,9 +658,8 @@ Fb_Update_Manager(ClientData clientData)
 
     // We're well and truly done - the application is closing down - free the
     // rendering buffer and quit the thread
-    if (idata->fbpixel) {
-	bu_free(idata->fbpixel, "free pixbuf");
-    }
+    bu_free(idata->fbpixel, "free pixbuf");
+
     Tcl_ExitThread(TCL_OK);
     TCL_THREAD_CREATE_RETURN;
 }

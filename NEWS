@@ -10,9 +10,32 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
+--- 2022-05-08  Release 7.32.6                                     ---
+----------------------------------------------------------------------
+
+* reduced mged & archer max image size and memory use - Sean MOrrison
+* fixed librt handling of object names with '/' chars - Cliff Yapp
+* changed fast4-g to not make references to empty regions - Cliff Yapp
+* fixed gcv option handling - Cliff Yapp
+* updated bundled Eigen dependency to v3.4.0 - Cliff Yapp
+* fixed bot_merge crash when bots are of different types - Cliff Yapp
+* fixed nirt -L to not require database and objects - Sean Morrison
+* fixed bug reading older VOL objects with file data - Sean Morrison
+* fixed pixscale bug when scaling images down - Sean Morrison
+
+----------------------------------------------------------------------
 --- 2021-07-27  Release 7.32.4                                     ---
 ----------------------------------------------------------------------
 
+* Added -matrix search filter for finding comb matrices - Cliff Yapp
+* fixed MGED handling of long running subprocesses in script mode
+        - Cliff Yapp, Sean Morrison
+* improve documentation for bot modes in bot and search - Cliff Yapp
+* added -o output option to GED stat command - Cliff Yapp
+* fixed overlay support for drawing multiple files - Cliff Yapp
+* fixed file creation for tire command - Cliff Yapp
+* fixed mixing object and full path searches in MGED - Cliff Yapp
+* fixed launching of ISST graphical viewer - Cliff Yapp
 * Added -matrix search filter for finding comb matrices - Cliff Yapp
 * fixed MGED handling of long running subprocesses in script mode
         - Cliff Yapp, Sean Morrison
@@ -312,7 +335,7 @@ methodologies and usability enhancements.
 * improved 'idents' command portability - Daniel Ramirez, Cliff Yapp
 * changed remrt/rtsrv to no longer report overlaps - Sean Morrison
 * improved GUI of MGED's Overlap Tool - Saran Narayan
-* fixed geopmetry directory building bug in remrt/rtsrv - Sean Morrison
+* fixed geometry directory building bug in remrt/rtsrv - Sean Morrison
 * fixed gcv problem with full paths on Windows - Cliff Yapp
 * removed precision limitation in NIRT input parsing - Cliff Yapp
 * added new example geometry models: chess and die pieces - Jeff Sieu

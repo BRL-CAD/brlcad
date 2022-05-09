@@ -177,6 +177,7 @@ libged_init(void)
 	char pfile[MAXPATHLEN] = {0};
 	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "ged", filenames[i], NULL);
 	void *dl_handle;
+
 	dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
 	if (!dl_handle) {
 	    const char * const error_msg = bu_dlerror();
@@ -186,6 +187,7 @@ libged_init(void)
 	    bu_vls_printf(&init_msgs, "Unable to dynamically load '%s' (skipping)\n", pfile);
 	    continue;
 	}
+
 	{
 	    const char *psymbol = "ged_plugin_info";
 	    void *info_val = bu_dlsym(dl_handle, psymbol);
@@ -231,6 +233,8 @@ libged_init(void)
 	    const struct ged_cmd **cmds = plugin->cmds;
 	    for (int c = 0; c < plugin->cmd_cnt; c++) {
 		const struct ged_cmd *cmd = cmds[c];
+		if (!cmd)
+		    break;
 		std::string key(cmd->i->cname);
 		if (cmd_map.find(key) != cmd_map.end()) {
 		    bu_vls_printf(&init_msgs, "Warning - plugin '%s' provides command '%s' but that command has already been loaded, skipping\n", pfile, cmd->i->cname);
@@ -262,6 +266,8 @@ libged_clear(void)
 	bu_dlclose(handle);
     }
     cmd_funcs.clear();
+
+    bu_vls_free(&init_msgs);
 }
 
 
@@ -273,7 +279,6 @@ struct libged_initializer {
     /* destructor */
     ~libged_initializer() {
 	libged_clear();
-	bu_vls_free(&init_msgs);
     }
 };
 

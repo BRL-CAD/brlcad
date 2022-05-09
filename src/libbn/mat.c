@@ -80,14 +80,37 @@ bn_mat_print_guts(
     }
 }
 
+/* bn_mat_print_guts is exposed as public API, so we can't just
+ * replace it with a VLS version */
+static void
+bn_mat_print_vls_guts(
+    struct bu_vls *obuf,
+    const char *title,
+    const mat_t m)
+{
+    bu_vls_printf(obuf, "MATRIX %s:\n  ", title);
+    if (!m) {
+	bu_vls_strcat(obuf, "(Identity)");
+    } else {
+	for (int i = 0; i < 16; i++) {
+	    bu_vls_printf(obuf, " %8.3f", m[i]);
+	    if (i == 15) {
+		break;
+	    } else if ((i & 3) == 3) {
+		bu_vls_printf(obuf, "\n  ");
+	    }
+	}
+    }
+}
 
 void
 bn_mat_print(const char *title, const mat_t m)
 {
-    char obuf[1024];	/* snprintf may be non-PARALLEL */
+    struct bu_vls obuf = BU_VLS_INIT_ZERO;
 
-    bn_mat_print_guts(title, m, obuf, 1024);
-    bu_log("%s\n", obuf);
+    bn_mat_print_vls_guts(&obuf, title, m);
+    bu_log("%s\n", bu_vls_cstr(&obuf));
+    bu_vls_free(&obuf);
 }
 
 
@@ -97,10 +120,11 @@ bn_mat_print_vls(
     const mat_t m,
     struct bu_vls *vls)
 {
-    char obuf[1024];
+    struct bu_vls obuf = BU_VLS_INIT_ZERO;
 
-    bn_mat_print_guts(title, m, obuf, 1024);
-    bu_vls_printf(vls, "%s\n", obuf);
+    bn_mat_print_vls_guts(&obuf, title, m);
+    bu_vls_printf(vls, "%s\n", bu_vls_cstr(&obuf));
+    bu_vls_free(&obuf);
 }
 
 
@@ -1384,7 +1408,7 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 	str1 = bu_strdup(bu_vls_cstr(&mvls));
 	bu_vls_free(&mvls);
 
-	av = (char **)bu_calloc(strlen(str1), sizeof(char *), "av");
+	av = (char **)bu_calloc(strlen(str1)+1, sizeof(char *), "av");
 	ac = bu_argv_from_string(av, strlen(str1), str1);
 	if (ac == 16) {
 	    // We have 16 elements - read each one to see if it's a valid fastf_t
@@ -1396,8 +1420,7 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 		    }
 
 		    bu_free(str1, "str1");
-		    if (av)
-			bu_free((char *)av, "av");
+		    bu_free((char *)av, "av");
 		    return -1;
 		}
 		mtmp[i] = mi;
@@ -1409,8 +1432,7 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 
 	    // Cleanup
 	    bu_free(str1, "str1");
-	    if (av)
-		bu_free((char *)av, "av");
+	    bu_free((char *)av, "av");
 
 	    // Used 1 arg to read in the matrix
 	    return 1;
@@ -1418,8 +1440,7 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 
 	// Done with string copy
 	bu_free(str1, "str1");
-	if (av)
-	    bu_free((char *)av, "av");
+	bu_free((char *)av, "av");
     }
 
     // If we didn't have a single arg matrix, see if we

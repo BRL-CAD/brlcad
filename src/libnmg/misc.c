@@ -161,7 +161,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 
 
 void
-nmg_snurb_fu_eval(const struct faceuse *fu, const fastf_t u, const fastf_t v, fastf_t *pt_on_srf)
+nmg_snurb_fu_eval(const struct faceuse *fu, const fastf_t u, const fastf_t v, point_t pt_on_srf)
 {
     struct face *f;
     hpoint_t tmp_pt = HINIT_ZERO;
@@ -193,7 +193,7 @@ nmg_snurb_fu_eval(const struct faceuse *fu, const fastf_t u, const fastf_t v, fa
 
 
 void
-nmg_snurb_fu_get_norm(const struct faceuse *fu, const fastf_t u, const fastf_t v, fastf_t *norm)
+nmg_snurb_fu_get_norm(const struct faceuse *fu, const fastf_t u, const fastf_t v, vect_t norm)
 {
     struct face *f;
 
@@ -218,7 +218,7 @@ nmg_snurb_fu_get_norm(const struct faceuse *fu, const fastf_t u, const fastf_t v
 
 
 void
-nmg_snurb_fu_get_norm_at_vu(const struct faceuse *fu, const struct vertexuse *vu, fastf_t *norm)
+nmg_snurb_fu_get_norm_at_vu(const struct faceuse *fu, const struct vertexuse *vu, vect_t norm)
 {
     struct vertexuse_a_cnurb *va;
 
@@ -1251,7 +1251,7 @@ nmg_move_lu_between_fus(struct faceuse *dest, struct faceuse *src, struct loopus
  * reversed.
  */
 void
-nmg_loop_plane_newell(const struct loopuse *lu, fastf_t *pl)
+nmg_loop_plane_newell(const struct loopuse *lu, plane_t pl)
 {
     struct edgeuse *eu;
     double hmin, hmax;
@@ -1321,7 +1321,7 @@ nmg_loop_plane_newell(const struct loopuse *lu, fastf_t *pl)
  * pl is assigned the plane equation for the loop
  */
 fastf_t
-nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
+nmg_loop_plane_area(const struct loopuse *lu, plane_t pl)
 {
     fastf_t area;
     fastf_t pt_count=0.0;
@@ -1425,7 +1425,7 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
  *       faceuse normal.
  */
 fastf_t
-nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol *tol)
+nmg_loop_plane_area2(const struct loopuse *lu, plane_t pl, const struct bn_tol *tol)
 {
     struct edgeuse *eu;
     size_t cnt;
@@ -1558,7 +1558,7 @@ out:
  *
  */
 int
-nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl, struct bu_list *vlfree)
+nmg_calc_face_plane(struct faceuse *fu_in, plane_t pl, struct bu_list *vlfree)
 {
     double one_over_vertex_count;
     fastf_t det;
@@ -1748,7 +1748,7 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl, struct bu_list *vlfree)
 	} else {
 	    bu_log("nmg_calc_face_plane: Cannot calculate plane for fu %p\n", (void *)fu);
 	    nmg_pr_fu_briefly(fu, (char *)NULL);
-	    bu_log("%ld verts\n", BU_PTBL_LEN(&verts));
+	    bu_log("%zu verts\n", BU_PTBL_LEN(&verts));
 	    failed = 1;
 	    goto out;
 	}
@@ -4764,7 +4764,7 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
 	plane_t pl;
 	size_t i;
 
-	bu_log("nmg_simple_vertex_solve(new_v=%p, %ld faces)\n",
+	bu_log("nmg_simple_vertex_solve(new_v=%p, %zu faces)\n",
 	       (void *)new_v, BU_PTBL_LEN(faces));
 
 	for (i = 0; i < BU_PTBL_LEN(faces); i++) {
@@ -5271,7 +5271,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
     size_t edge_no;
 
     if (nmg_debug & NMG_DEBUG_BASIC)
-	bu_log("nmg_get_max_edge_inters(new_v = %p, %ld intersect_fus structs, %ld faces)\n",
+	bu_log("nmg_get_max_edge_inters(new_v = %p, %zu intersect_fus structs, %zu faces)\n",
 	       (void *)new_v, BU_PTBL_LEN(int_faces), BU_PTBL_LEN(faces));
 
     NMG_CK_VERTEX(new_v);
@@ -5441,7 +5441,7 @@ nmg_fuse_inters(struct intersect_fus *i_fus, struct intersect_fus *j_fus, struct
     BN_CK_TOL(tol);
 
     if (nmg_debug & NMG_DEBUG_BASIC)
-	bu_log("nmg_fuse_inters: i_fus=%p, j_fus=%p, %ld edges\n",
+	bu_log("nmg_fuse_inters: i_fus=%p, j_fus=%p, %zu edges\n",
 	       (void *)i_fus, (void *)j_fus, BU_PTBL_LEN(int_faces));
 
     /* remember the radial edge of the structure to be deleted */
@@ -5500,7 +5500,7 @@ nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, co
     size_t edge_no;
 
     if (nmg_debug & NMG_DEBUG_BASIC)
-	bu_log("nmg_split_edges_at_pts(new_v = %p, %ld intersect_fus structs)\n",
+	bu_log("nmg_split_edges_at_pts(new_v = %p, %zu intersect_fus structs)\n",
 	       (void *)new_v, BU_PTBL_LEN(int_faces));
 
     BN_CK_TOL(tol);
@@ -5610,7 +5610,7 @@ nmg_remove_short_eus_inter(struct vertex *new_v, struct bu_ptbl *int_faces, cons
     BN_CK_TOL(tol);
 
     if (nmg_debug & NMG_DEBUG_BASIC)
-	bu_log("nmg_remove_short_eus: new_v=%p (%f %f %f), %ld edges\n",
+	bu_log("nmg_remove_short_eus: new_v=%p (%f %f %f), %zu edges\n",
 	       (void *)new_v, V3ARGS(new_v->vg_p->coord), BU_PTBL_LEN(int_faces));
 
     /* first join any of the "vp" in the intersect_fus structs that are
@@ -5883,7 +5883,7 @@ nmg_make_faces_at_vert(struct vertex *new_v, struct bu_ptbl *int_faces, struct b
     size_t next_edge_no;
 
     if (nmg_debug & NMG_DEBUG_BASIC)
-	bu_log("nmg_make_faces_at_vert(%p, %ld intersect_fus structs)\n",
+	bu_log("nmg_make_faces_at_vert(%p, %zu intersect_fus structs)\n",
 	       (void *)new_v, BU_PTBL_LEN(int_faces));
 
     NMG_CK_VERTEX(new_v);
@@ -6379,7 +6379,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
     size_t edge_no;
 
     if (nmg_debug & NMG_DEBUG_BASIC)
-	bu_log("nmg_fix_crossed_loops(new_v=%p (%f %f %f), %ld edges)\n",
+	bu_log("nmg_fix_crossed_loops(new_v=%p (%f %f %f), %zu edges)\n",
 	       (void *)new_v, V3ARGS(new_v->vg_p->coord), BU_PTBL_LEN(int_faces));
 
     NMG_CK_VERTEX(new_v);
@@ -6553,7 +6553,7 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
     BN_CK_TOL(tol);
 
     if (nmg_debug & NMG_DEBUG_BASIC)
-	bu_log("nmg_calc_new_v: (%f %f %f), %ld faces\n", V3ARGS(new_v->vg_p->coord), BU_PTBL_LEN(int_faces));
+	bu_log("nmg_calc_new_v: (%f %f %f), %zu faces\n", V3ARGS(new_v->vg_p->coord), BU_PTBL_LEN(int_faces));
 
     /* make space for at least three planes */
     i = BU_PTBL_LEN(int_faces);
@@ -6672,7 +6672,7 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
      * emanating from new_v */
 
     if (nmg_debug & NMG_DEBUG_BASIC)
-	bu_log("nmg_complex_vertex_solve(new_v = %p, %ld faces)\n",
+	bu_log("nmg_complex_vertex_solve(new_v = %p, %zu faces)\n",
 	       (void *)new_v, BU_PTBL_LEN(faces));
 
     NMG_CK_VERTEX(new_v);
@@ -6941,7 +6941,7 @@ nmg_faces_are_radial(const struct faceuse *fu1, const struct faceuse *fu2)
  * 	0 - success
  */
 int
-nmg_move_edge_thru_pnt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_tol *tol)
+nmg_move_edge_thru_pnt(struct edgeuse *mv_eu, const point_t pt, const struct bn_tol *tol)
 {
     struct faceuse *fu, *fu1;
     struct edgeuse *eu, *eu1;
@@ -7440,7 +7440,7 @@ nmg_find_path(const struct vertex *vpa, const struct vertex *vpb, struct bu_ptbl
 	bu_log("nmg_find_path(vpa=%p (%f %f %f), vpb=%p (%f %f %f)\n",
 	       (void *)vpa, V3ARGS(vpa->vg_p->coord),
 	       (void *)vpb, V3ARGS(vpb->vg_p->coord));
-	bu_log("\t%ld vertices to avoid\n", BU_PTBL_LEN(bad_verts));
+	bu_log("\t%zu vertices to avoid\n", BU_PTBL_LEN(bad_verts));
 	for (i = 0; i < BU_PTBL_LEN(bad_verts); i++) {
 	    struct vertex *vpbad;
 
@@ -8759,7 +8759,7 @@ nmg_join_cnurbs(struct bu_list *crv_head)
  * the +Z direction).
  */
 struct edge_g_cnurb *
-nmg_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point_type, const struct bn_tol *tol)
+nmg_arc2d_to_cnurb(point_t i_center, point_t i_start, point_t i_end, int point_type, const struct bn_tol *tol)
 {
     struct edge_g_cnurb *crv;
     struct bu_list crv_head;

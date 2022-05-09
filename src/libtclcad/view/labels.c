@@ -205,10 +205,7 @@ to_data_labels_func(Tcl_Interp *interp,
 	    }
 
 	    if (gdlsp->gdls_num_labels) {
-		for (i = 0; i < gdlsp->gdls_num_labels; ++i)
-		    bu_free((void *)gdlsp->gdls_labels[i], "data label");
-
-		bu_free((void *)gdlsp->gdls_labels, "data labels");
+		bu_argv_free(gdlsp->gdls_num_labels, gdlsp->gdls_labels);
 		bu_free((void *)gdlsp->gdls_points, "data points");
 		gdlsp->gdls_labels = (char **)0;
 		gdlsp->gdls_points = (point_t *)0;
