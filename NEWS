@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2021-XX-XX  Release 7.34.X                                     ---
+--- 2022-XX-XX  Release 7.34.X                                     ---
 ----------------------------------------------------------------------
 
 * preserved path prefixes on search cmd results - Cliff Yapp
@@ -19,19 +19,19 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2021-XX-XX  Release 7.32.6                                     ---
+--- 2022-05-08  Release 7.32.6                                     ---
 ----------------------------------------------------------------------
 
-* reduced mged & archer max image size and memory use - Sean Morrison
+* reduced mged & archer max image size and memory use - Sean MOrrison
 * fixed librt handling of object names with '/' chars - Cliff Yapp
 * changed fast4-g to not make references to empty regions - Cliff Yapp
-* replaced original burst implementation with nburst - Cliff Yapp
 * fixed gcv option handling - Cliff Yapp
 * updated bundled Eigen dependency to v3.4.0 - Cliff Yapp
 * fixed bot_merge crash when bots are of different types - Cliff Yapp
 * fixed nirt -L to not require database and objects - Sean Morrison
 * fixed bug reading older VOL objects with file data - Sean Morrison
 * fixed pixscale bug when scaling images down - Sean Morrison
+
 
 ----------------------------------------------------------------------
 --- 2021-07-27  Release 7.32.4                                     ---
