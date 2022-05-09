@@ -133,6 +133,14 @@ void glvars_init(struct dm *dmp)
     mvars->i.light0_diffuse[1] = 1.0;
     mvars->i.light0_diffuse[2] = 1.0;
     mvars->i.light0_diffuse[3] = 1.0;
+
+    // glvars and the dm_impl struct have some duplicate
+    // entires - initialize the gl_vars versions to the
+    // dm_impl values
+    mvars->lighting_on = dmp->i->dm_light;
+    mvars->transparency_on = dmp->i->dm_transparency;
+    mvars->zbuffer_on = dmp->i->dm_zbuffer;
+    mvars->zclipping_on = dmp->i->dm_zclip;
 }
 
 void gl_fogHint(struct dm *dmp, int fastfog)
@@ -706,8 +714,10 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 				break;
 			}
 
-			if (dmp->i->dm_transparency)
+			if (dmp->i->dm_transparency) {
 			    glEnable(GL_BLEND);
+			    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			}
 		    }
 
 		    if (*cmd == BV_VLIST_POLY_START) {

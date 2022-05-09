@@ -217,8 +217,10 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 		    break;
 	    }
 
-	    if (dmp->i->dm_transparency)
+	    if (dmp->i->dm_transparency) {
 		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	    }
 	}
 
 	glBegin(GL_TRIANGLES);
