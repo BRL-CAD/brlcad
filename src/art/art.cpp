@@ -155,11 +155,13 @@
 
 #include "brlcad_ident.h"
 
+#define VERBOSE_STATS	     0x00000008	
 
-struct application APP;
 struct resource* resources;
 size_t samples = 25;
 size_t light_intensity = 30.0;
+const char* global_title_file;
+asf::auto_release_ptr<asr::Project> project_ptr;
 
 extern "C" {
     FILE* outfp = NULL;
@@ -170,6 +172,7 @@ extern "C" {
     mat_t view2model;
     mat_t model2view;
     struct icv_image* bif = NULL;
+    struct application APP;
 }
 
 
@@ -192,7 +195,8 @@ extern "C" {
     extern fastf_t viewsize;
     extern fastf_t aspect;
     extern fastf_t rt_perspective;
-
+    extern int matflag;
+    extern int rt_verbosity;
     void grid_setup();
 }
 
@@ -217,7 +221,7 @@ color_hook(const struct bu_structparse *sp, const char *name, void *UNUSED(base)
 
 
 // holds application specific paramaters
-struct bu_structparse view_parse[] = {
+extern "C" struct bu_structparse view_parse[] = {
     {"%d", 1, "samples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "s", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 3, "background", 0, color_hook, NULL, NULL},
@@ -258,13 +262,6 @@ int cm_set(const int argc, const char **argv)
     return 0;
 }
 
-
-struct command_tab rt_do_tab[] = {
-    {"set", 	"", "show or set parameters",
-     cm_set,		1, 999},
-    {(char *)0, (char *)0, (char *)0,
-     0,		0, 0	/* END */}
-};
 
 
 /* Initializes module specific options
@@ -720,7 +717,17 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     state.ts_dbip = dbip;
     state.ts_resp = resources;
 
-    db_walk_tree(dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
+    if (objc) {
+	db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
+    }
+    if (cmd_objs) {
+
+	int cmdobjc = BU_PTBL_LEN(cmd_objs);
+	const char** cmdobjv = (const char**)cmd_objs->buffer;
+	if (cmdobjc) {
+	    db_walk_tree(APP.a_rt_i->rti_dbip, cmdobjc, cmdobjv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
+	}
+    }
 
     //------------------------------------------------------------------------
     // Light
@@ -903,6 +910,145 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     return project;
 }
 
+extern "C" void
+view_setup(struct rt_i* rtip) {
+    bu_bomb("In view setup, Dont call me!");
+}
+
+extern "C" void
+view_2init(struct application* ap, char* UNUSED(framename))
+{
+    bu_bomb("In 2init, Dont call me!");
+}
+
+extern "C" void
+view_end(struct application* ap) {
+    bu_bomb("In end, Dont call me!");
+}
+
+extern "C" void
+view_cleanup(struct rt_i* rtip)
+{
+    bu_bomb("in cleanup, Dont call me!");
+}
+extern "C" void
+do_run(int a, int b) {
+    bu_bomb("in run, Dont call me!");
+}
+extern "C" void
+grid_setup(void) {
+    bu_bomb("in grid setup, Dont call me!");
+}
+
+int art_cm_clean(const int UNUSED(argc), const char** UNUSED(argv))
+{
+    return 0;
+}
+
+
+extern "C" void
+memory_summary(void)
+{
+    if (rt_verbosity & VERBOSE_STATS) {
+	size_t mdelta = bu_n_malloc - n_malloc;
+	size_t fdelta = bu_n_free - n_free;
+	bu_log("Additional #malloc=%zu, #free=%zu, #realloc=%zu (%zu retained)\n",
+	    mdelta,
+	    fdelta,
+	    bu_n_realloc - n_realloc,
+	    mdelta - fdelta);
+    }
+    n_malloc = bu_n_malloc;
+    n_free = bu_n_free;
+    n_realloc = bu_n_realloc;
+}
+
+void
+def_tree(register struct rt_i* rtip)
+{
+    struct bu_vls times = BU_VLS_INIT_ZERO;
+
+    RT_CK_RTI(rtip);
+
+    rt_prep_timer();
+    if (rt_gettrees(rtip, objc, (const char**)objv, npsw) < 0) {
+	bu_log("rt_gettrees(%s) FAILED\n", (objv && objv[0]) ? objv[0] : "ERROR");
+    }
+    (void)rt_get_timer(&times, NULL);
+
+    if (rt_verbosity & VERBOSE_STATS)
+	bu_log("GETTREE: %s\n", bu_vls_addr(&times));
+    bu_vls_free(&times);
+    memory_summary();
+}
+
+int art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+
+    if (APP.a_rt_i && BU_LIST_IS_EMPTY(&APP.a_rt_i->HeadRegion)) {
+	def_tree(APP.a_rt_i);		/* Load the default trees */
+    }
+
+#if 0
+    vect_t work, temp;
+    mat_t toEye;
+
+    if (viewsize <= 0.0)
+	bu_exit(EXIT_FAILURE, "viewsize <= 0");
+    /* model2view takes us to eye_model location & orientation */
+    MAT_IDN(toEye);
+    MAT_DELTAS_VEC_NEG(toEye, eye_model);
+    Viewrotscale[15] = 0.5 * viewsize;	/* Viewscale */
+    bn_mat_mul(model2view, Viewrotscale, toEye);
+    bn_mat_inv(view2model, model2view);
+
+    VSET(work, 0, 0, 1);
+
+    MAT3X3VEC(temp, view2model, work);
+
+    bn_ae_vec(&azimuth, &elevation, temp);
+    bu_log(
+	"View: %g azimuth, %g elevation off of front view\n",
+	azimuth, elevation);
+#endif
+
+    //if (Viewrotscale[15] <= 0.0) {
+	//RENDERER_LOG_INFO("CALLING DO AEEEEEEEEEE\n");
+
+    do_ae(azimuth, elevation);
+    // }
+    asf::auto_release_ptr<asr::Project> project(build_project(global_title_file, bu_vls_cstr(&str)));
+
+    // Create the master renderer.
+    asr::DefaultRendererController renderer_controller;
+    asf::SearchPaths resource_search_paths;
+    std::unique_ptr<asr::MasterRenderer> renderer(
+	new asr::MasterRenderer(
+	    project.ref(),
+	    project->configurations().get_by_name("final")->get_inherited_parameters(),
+	    resource_search_paths));
+
+    // Render the frame.
+    renderer->render(renderer_controller);
+
+    // Save the frame to disk using outputfile name
+    // we append output/ directory to it for sorting
+    std::string add_base = "output/" + std::string(outputfile);
+    project->get_frame()->write_main_image(add_base.c_str());
+
+    // Save the project to disk.
+    asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
+
+    // Make sure to delete the master renderer before the project and the logger / log target.
+    renderer.reset();
+
+    // clean up resources
+
+
+    return 0;
+}
+
 
 int
 main(int argc, char **argv)
@@ -956,6 +1102,7 @@ main(int argc, char **argv)
     }
 
     title_file = argv[bu_optind];
+    global_title_file = title_file;
     //title_obj = argv[bu_optind + 1];
     if (!objv) {
 	objc = argc - bu_optind - 1;
@@ -966,15 +1113,16 @@ main(int argc, char **argv)
 	     * command processing.  Initialize the table. */
 	    BU_GET(cmd_objs, struct bu_ptbl);
 	    bu_ptbl_init(cmd_objs, 8, "initialize cmdobjs table");
-
-	    // log and gracefully exit for now
-	    bu_exit(EXIT_FAILURE, "No Region specified\n");
+	    if (!matflag) {
+		// log and gracefully exit for now
+		bu_exit(EXIT_FAILURE, "No Region specified\n");
+	    }
 	}
     } else {
 	//objs_free_argv = 1;
     }
 
-    bu_vls_from_argv(&str, objc, (const char**)objv);
+    
 
     resources = static_cast<resource*>(bu_calloc(1, sizeof(resource) * MAX_PSW, "appleseed"));
     char title[1024] = { 0 };
@@ -996,16 +1144,6 @@ main(int argc, char **argv)
 	RENDERER_LOG_INFO("database title: %s\n", title);
     }
 
-    /* include objects from database */
-    if (rt_gettrees(rtip, objc, (const char**)objv, (int)npsw) < 0) {
-	RENDERER_LOG_INFO("loading the geometry for [%s...] FAILED\n", objv[0]);
-	return -1;
-    }
-
-    /* prepare database for raytracing */
-    if (rtip->needprep)
-	rt_prep_parallel(rtip, 1);
-
     /* initialize values in application struct */
     RT_APPLICATION_INIT(&APP);
 
@@ -1015,8 +1153,42 @@ main(int argc, char **argv)
     APP.a_hit = brlcad_hit;
     APP.a_miss = brlcad_miss;
 
+    if (objv) {
+
+	/* include objects from database */
+	if (rt_gettrees(rtip, objc, (const char**)objv, (int)npsw) < 0) {
+	    RENDERER_LOG_INFO("loading the geometry for [%s...] FAILED\n", objv[0]);
+	    return -1;
+	}
+
+	/* prepare database for raytracing */
+	if (rtip->needprep)
+	    rt_prep_parallel(rtip, 1);
+    }
+
+    if (matflag) {
+
+	register char* buf;
+	register int	nret;
+	rt_do_tab[6].ct_func = art_cm_end;
+	rt_do_tab[13].ct_func = art_cm_clean;
+
+	while ((buf = rt_read_cmd(stdin)) != (char*)0) {
+	    RENDERER_LOG_INFO("cmd: %s \n", buf);
+	    nret = rt_do_cmd(APP.a_rt_i, buf, rt_do_tab);
+	    bu_free(buf, "rt_read_cmd command buffer");
+	    if (nret < 0)
+		break;
+	}
+	bu_free(resources, "appleseed");
+	return 0;
+    }
+
+
     do_ae(azimuth, elevation);
     // RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], eye_model[2], -eye_model[1]);
+    
+    bu_vls_from_argv(&str, objc, (const char**)objv);
 
     // Build the project.
     asf::auto_release_ptr<asr::Project> project(build_project(title_file, bu_vls_cstr(&str)));
