@@ -582,6 +582,7 @@ struct dm_impl dm_swrast_impl = {
     gl_setWinBounds,
     gl_setLight,
     gl_setTransparency,
+    gl_getTransparency,
     gl_setDepthMask,
     gl_setZBuffer,
     gl_debug,
@@ -641,7 +642,6 @@ struct dm_impl dm_swrast_impl = {
     0,				/* no debugging */
     0,				/* no perspective */
     1,				/* lighting */
-    1,				/* transparency */
     1,				/* depth buffer is writable */
     1,				/* zbuffer */
     0,				/* no zclipping */

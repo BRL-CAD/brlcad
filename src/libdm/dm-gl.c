@@ -134,11 +134,14 @@ void glvars_init(struct dm *dmp)
     mvars->i.light0_diffuse[2] = 1.0;
     mvars->i.light0_diffuse[3] = 1.0;
 
+    /* Unless the app tells us different, assume OpenGL based
+     * displays are capable of transparency */
+    mvars->transparency_on = 1;
+
     // glvars and the dm_impl struct have some duplicate
     // entires - initialize the gl_vars versions to the
     // dm_impl values
     mvars->lighting_on = dmp->i->dm_light;
-    mvars->transparency_on = dmp->i->dm_transparency;
     mvars->zbuffer_on = dmp->i->dm_zbuffer;
     mvars->zclipping_on = dmp->i->dm_zclip;
 }
@@ -658,7 +661,7 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
 
-			if (dmp->i->dm_transparency)
+			if (mvars->transparency_on)
 			    glDisable(GL_BLEND);
 		    }
 
@@ -714,7 +717,7 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 				break;
 			}
 
-			if (dmp->i->dm_transparency) {
+			if (mvars->transparency_on) {
 			    glEnable(GL_BLEND);
 			    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			}
@@ -789,7 +792,7 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
     if (first == 0)
 	glEnd();
 
-    if (dmp->i->dm_light && dmp->i->dm_transparency)
+    if (dmp->i->dm_light && mvars->transparency_on)
 	glDisable(GL_BLEND);
 
     glPointSize(originalPointSize);
@@ -973,6 +976,7 @@ drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *
     if (!dmp) {
 	return BRLCAD_ERROR;
     }
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
 
     if (dmp->i->dm_debugLevel) {
 	struct bu_vls msg = BU_VLS_INIT_ZERO;
@@ -994,7 +998,7 @@ drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
 
-	if (dmp->i->dm_transparency)
+	if (mvars->transparency_on)
 	    glDisable(GL_BLEND);
     }
 
@@ -1017,6 +1021,7 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char 
     if (npoints < 2 || (!lflag && npoints%2)) {
 	return BRLCAD_OK;
     }
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
 
     if (dmp->i->dm_debugLevel) {
 	struct bu_vls msg = BU_VLS_INIT_ZERO;
@@ -1038,7 +1043,7 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
 
-	if (dmp->i->dm_transparency)
+	if (mvars->transparency_on)
 	    glDisable(GL_BLEND);
     }
 
@@ -1304,8 +1309,7 @@ int gl_setTransparency(struct dm *dmp,
 
     gl_debug_print(dmp, "gl_setTransparency", dmp->i->dm_debugLevel);
 
-    dmp->i->dm_transparency = transparency_on;
-    mvars->transparency_on = dmp->i->dm_transparency;
+    mvars->transparency_on = transparency_on;
 
     if (transparency_on) {
 	/* Turn it on */
@@ -1319,6 +1323,14 @@ int gl_setTransparency(struct dm *dmp,
     return BRLCAD_OK;
 }
 
+int gl_getTransparency(struct dm *dmp)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+
+    gl_debug_print(dmp, "gl_getTransparency", dmp->i->dm_debugLevel);
+
+    return mvars->transparency_on;
+}
 
 int gl_setDepthMask(struct dm *dmp, int enable)
 {

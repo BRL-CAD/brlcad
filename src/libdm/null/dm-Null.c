@@ -255,6 +255,13 @@ null_setTransparency(struct dm *UNUSED(dmp), int UNUSED(transparency))
 
 
 int
+null_getTransparency(struct dm *UNUSED(dmp))
+{
+    return 0;
+}
+
+
+int
 null_setDepthMask(struct dm *UNUSED(dmp), int UNUSED(mask))
 {
     return 0;
@@ -385,6 +392,7 @@ struct dm_impl dm_null_impl = {
     null_setWinBounds,
     null_setLight,
     null_setTransparency,
+    null_getTransparency,
     null_setDepthMask,
     null_setZBuffer,
     null_debug,
@@ -444,7 +452,6 @@ struct dm_impl dm_null_impl = {
     0,				/* no debugging */
     0,				/* no perspective */
     0,				/* no lighting */
-    0,				/* no transparency */
     0,				/* depth buffer is not writable */
     0,				/* no zbuffer */
     0,				/* no zclipping */

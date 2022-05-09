@@ -151,6 +151,10 @@ null_setTransparency(struct dm *dmp, int transparency);
 
 
 DM_NULL_EXPORT extern int
+null_getTransparency(struct dm *dmp);
+
+
+DM_NULL_EXPORT extern int
 null_setDepthMask(struct dm *dmp, int mask);
 
 

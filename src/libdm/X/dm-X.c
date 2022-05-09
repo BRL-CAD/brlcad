@@ -2118,6 +2118,7 @@ struct dm_impl dm_X_impl = {
     X_setWinBounds,
     X_setLight,
     null_setTransparency,
+    null_getTransparency,
     null_setDepthMask,
     X_setZBuffer,
     X_debug,
@@ -2177,7 +2178,6 @@ struct dm_impl dm_X_impl = {
     0,				/* no debugging */
     0,				/* no perspective */
     0,				/* no lighting */
-    0,				/* no transparency */
     0,				/* depth buffer is not writable */
     0,				/* no zbuffer */
     0,				/* no zclipping */

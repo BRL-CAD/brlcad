@@ -142,7 +142,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-	    if (dmp->i->dm_transparency)
+	    if (mvars->transparency_on)
 		glDisable(GL_BLEND);
 	}
 
@@ -159,7 +159,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	    glVertex3dv(dpt);
 	    glEnd();
 	}
-	if (dmp->i->dm_light && dmp->i->dm_transparency)
+	if (dmp->i->dm_light && mvars->transparency_on)
 	    glDisable(GL_BLEND);
 
 	if (gen_dlist) {
@@ -217,7 +217,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 		    break;
 	    }
 
-	    if (dmp->i->dm_transparency) {
+	    if (mvars->transparency_on) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	    }
@@ -256,7 +256,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 
 	glEnd();
 
-	if (dmp->i->dm_light && dmp->i->dm_transparency)
+	if (dmp->i->dm_light && mvars->transparency_on)
 	    glDisable(GL_BLEND);
 
 	// Put the lighting model back where it was prior to this operation
@@ -356,7 +356,7 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-	if (dmp->i->dm_transparency)
+	if (mvars->transparency_on)
 	    glDisable(GL_BLEND);
     }
 
@@ -405,7 +405,7 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
     if (first == 0)
 	glEnd();
 
-    if (dmp->i->dm_light && dmp->i->dm_transparency)
+    if (dmp->i->dm_light && mvars->transparency_on)
 	glDisable(GL_BLEND);
 
     if (gen_dlist) {

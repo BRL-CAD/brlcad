@@ -1240,7 +1240,8 @@ dmo_drawSList(struct dm_obj *dmop,
     if (!dmop)
 	return BRLCAD_ERROR;
 
-    if (dmop->dmo_dmp->i->dm_transparency) {
+    int dm_transparency = dm_get_transparency(dmop->dmo_dmp);
+    if (dm_transparency) {
 	/* First, draw opaque stuff */
 	for (BU_LIST_FOR(sp, bv_scene_obj, hsp)) {
 	    if (sp->s_os.transparency < 1.0)
@@ -1801,7 +1802,8 @@ dmo_transparency_tcl(void *clientData, int argc, const char **argv)
 
     /* get transparency flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_transparency);
+	int dm_transparency = dm_get_transparency(dmop->dmo_dmp);
+	bu_vls_printf(&vls, "%d", dm_transparency);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 

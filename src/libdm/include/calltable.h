@@ -88,6 +88,7 @@ struct dm_impl {
     int (*dm_setWinBounds)(struct dm *dmp, fastf_t *w);
     int (*dm_setLight)(struct dm *dmp, int light_on);
     int (*dm_setTransparency)(struct dm *dmp, int transparency_on);
+    int (*dm_getTransparency)(struct dm *dmp);
     int (*dm_setDepthMask)(struct dm *dmp, int depthMask_on);
     int (*dm_setZBuffer)(struct dm *dmp, int zbuffer_on);
     int (*dm_debug)(struct dm *dmp, int lvl);		/**< @brief Set DM debug level */
@@ -147,7 +148,6 @@ struct dm_impl {
     int dm_debugLevel;		/**< @brief !0 means debugging */
     int dm_perspective;		/**< @brief !0 means perspective on */
     int dm_light;			/**< @brief !0 means lighting on */
-    int dm_transparency;		/**< @brief !0 means transparency on */
     int dm_depthMask;		/**< @brief !0 means depth buffer is writable */
     int dm_zbuffer;		/**< @brief !0 means zbuffer on */
     int dm_zclip;			/**< @brief !0 means zclipping */
