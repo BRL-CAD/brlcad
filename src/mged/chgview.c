@@ -672,7 +672,7 @@ f_regdebug(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 
     Tcl_AppendResult(interp, "regdebug=", debug_str, "\n", (char *)NULL);
 
-    dm_debug(DMP, regdebug);
+    dm_set_debug(DMP, regdebug);
 
     return TCL_OK;
 }

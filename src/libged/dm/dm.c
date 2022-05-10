@@ -1,4 +1,4 @@
-/*                         S C R E E N G R A B . C
+/*                            D M . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2022 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/screengrab.c
+/** @file libged/dm.c
  *
- * The screengrab command.
+ * The dm and screengrab commands.
  *
  */
 
@@ -180,6 +180,34 @@ _dm_cmd_bg(void *ds, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+int
+_dm_cmd_debug(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "dm [options] debug [level]";
+    const char *purpose_string = "get/set dm debugging level";
+    if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
+    struct ged *gedp = gd->gedp;
+    struct dm *cdmp = _dm_find(gd, NULL);
+    if (!cdmp)
+	return BRLCAD_ERROR;
+
+    if (!argc) {
+	bu_vls_printf(gedp->ged_result_str, "%d\n", dm_get_debug(cdmp));
+	return BRLCAD_OK;
+    }
+
+    int lvl;
+    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&lvl) != 1)
+	return BRLCAD_ERROR;
+    dm_set_debug(cdmp, lvl);
+    return BRLCAD_OK;
+}
 
 int
 _dm_cmd_type(void *ds, int argc, const char **argv)
@@ -585,6 +613,7 @@ _dm_cmd_height(void *ds, int argc, const char **argv)
 const struct bu_cmdtab _dm_cmds[] = {
     { "attach",          _dm_cmd_attach},
     { "bg",              _dm_cmd_bg},
+    { "debug",           _dm_cmd_debug},
     { "get",             _dm_cmd_get},
     { "height",          _dm_cmd_height},
     { "initmsg",         _dm_cmd_initmsg},

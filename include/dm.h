@@ -210,8 +210,6 @@ DM_EXPORT extern int dm_get_dirty(struct dm *dmp);
 DM_EXPORT extern void dm_set_dirty(struct dm *dmp, int i);
 DM_EXPORT extern vect_t *dm_get_clipmin(struct dm *dmp);
 DM_EXPORT extern vect_t *dm_get_clipmax(struct dm *dmp);
-DM_EXPORT extern int dm_get_bound_flag(struct dm *dmp);
-DM_EXPORT extern void dm_set_bound(struct dm *dmp, fastf_t val);
 DM_EXPORT extern int dm_get_stereo(struct dm *dmp);
 DM_EXPORT extern int dm_set_win_bounds(struct dm *dmp, fastf_t *w);
 DM_EXPORT extern int dm_configure_win(struct dm *dmp, int force);
@@ -222,18 +220,11 @@ DM_EXPORT extern const char *dm_get_name(const struct dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_get_tkname(struct dm *dmp);
 DM_EXPORT extern int dm_get_fontsize(struct dm *dmp);
 DM_EXPORT extern void dm_set_fontsize(struct dm *dmp, int size);
-DM_EXPORT extern int dm_get_light(struct dm *dmp);
-DM_EXPORT extern int dm_set_light(struct dm *dmp, int light);
-DM_EXPORT extern int dm_get_transparency(struct dm *dmp);
-DM_EXPORT extern int dm_set_transparency(struct dm *dmp, int transparency);
-DM_EXPORT extern int dm_get_zbuffer(struct dm *dmp);
-DM_EXPORT extern int dm_set_zbuffer(struct dm *dmp, int zbuffer);
+
 DM_EXPORT extern int dm_get_linewidth(struct dm *dmp);
 DM_EXPORT extern void dm_set_linewidth(struct dm *dmp, int linewidth);
 DM_EXPORT extern int dm_get_linestyle(struct dm *dmp);
 DM_EXPORT extern void dm_set_linestyle(struct dm *dmp, int linestyle);
-DM_EXPORT extern int dm_get_zclip(struct dm *dmp);
-DM_EXPORT extern void dm_set_zclip(struct dm *dmp, int zclip);
 DM_EXPORT extern int dm_get_perspective(struct dm *dmp);
 DM_EXPORT extern void dm_set_perspective(struct dm *dmp, fastf_t perspective);
 DM_EXPORT extern int dm_get_display_image(struct dm *dmp, unsigned char **image, int flip, int alpha);
@@ -257,11 +248,25 @@ DM_EXPORT extern int dm_draw_point_3d(struct dm *dmp, point_t pt);
 DM_EXPORT extern int dm_draw_points_3d(struct dm *dmp, int npoints, point_t *points);
 DM_EXPORT extern int dm_draw(struct dm *dmp, struct bv_vlist *(*callback)(void *), void **data);
 DM_EXPORT extern int dm_set_depth_mask(struct dm *dmp, int d_on);
-DM_EXPORT extern int dm_debug(struct dm *dmp, int lvl);
+DM_EXPORT extern int dm_set_debug(struct dm *dmp, int lvl);
+DM_EXPORT extern int dm_get_debug(struct dm *dmp);
 DM_EXPORT extern int dm_logfile(struct dm *dmp, const char *filename);
 DM_EXPORT extern struct fb *dm_get_fb(struct dm *dmp);
 DM_EXPORT extern int dm_get_fb_visible(struct dm *dmp);
 DM_EXPORT extern int dm_set_fb_visible(struct dm *dmp, int is_fb_visible);
+
+
+DM_EXPORT extern int dm_get_light(struct dm *dmp);
+DM_EXPORT extern int dm_set_light(struct dm *dmp, int light);
+DM_EXPORT extern int dm_get_transparency(struct dm *dmp);
+DM_EXPORT extern int dm_set_transparency(struct dm *dmp, int transparency);
+DM_EXPORT extern int dm_get_zbuffer(struct dm *dmp);
+DM_EXPORT extern int dm_set_zbuffer(struct dm *dmp, int zbuffer);
+DM_EXPORT extern int dm_get_zclip(struct dm *dmp);
+DM_EXPORT extern void dm_set_zclip(struct dm *dmp, int zclip);
+DM_EXPORT extern int dm_get_bound_flag(struct dm *dmp);
+DM_EXPORT extern void dm_set_bound(struct dm *dmp, fastf_t val);
+
 
 
 DM_EXPORT extern int dm_draw_obj(struct dm *dmp, struct bv_scene_obj *s);

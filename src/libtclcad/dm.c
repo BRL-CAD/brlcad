@@ -2148,7 +2148,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
 
     /* get debug level */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_debugLevel);
+	bu_vls_printf(&vls, "%d", dm_get_debug(dmop->dmo_dmp));
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -2166,7 +2166,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	return dm_debug(dmop->dmo_dmp, level);
+	return dm_set_debug(dmop->dmo_dmp, level);
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_debug %s", argv[1]);

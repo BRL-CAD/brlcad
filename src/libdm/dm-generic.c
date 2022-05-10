@@ -712,10 +712,16 @@ dm_set_depth_mask(struct dm *dmp, int d_on)
     return dmp->i->dm_setDepthMask(dmp, d_on);
 }
 int
-dm_debug(struct dm *dmp, int lvl)
+dm_set_debug(struct dm *dmp, int lvl)
 {
     if (UNLIKELY(!dmp)) return 0;
     return dmp->i->dm_debug(dmp, lvl);
+}
+int
+dm_get_debug(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_debugLevel;
 }
 int
 dm_logfile(struct dm *dmp, const char *filename)
