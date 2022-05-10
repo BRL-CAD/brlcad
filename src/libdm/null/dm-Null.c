@@ -283,6 +283,13 @@ null_setZBuffer(struct dm *UNUSED(dmp), int UNUSED(zbuffer_on))
 
 
 int
+null_getZBuffer(struct dm *UNUSED(dmp))
+{
+    return 0;
+}
+
+
+int
 null_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
 {
     return 0;
@@ -403,6 +410,7 @@ struct dm_impl dm_null_impl = {
     null_getTransparency,
     null_setDepthMask,
     null_setZBuffer,
+    null_getZBuffer,
     null_debug,
     null_logfile,
     null_beginDList,
@@ -460,7 +468,6 @@ struct dm_impl dm_null_impl = {
     0,				/* no debugging */
     0,				/* no perspective */
     0,				/* depth buffer is not writable */
-    0,				/* no zbuffer */
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */

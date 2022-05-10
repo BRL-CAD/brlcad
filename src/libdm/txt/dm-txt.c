@@ -311,6 +311,14 @@ txt_setZBuffer(struct dm *UNUSED(dmp), int UNUSED(zbuffer_on))
 
 
 HIDDEN int
+txt_getZBuffer(struct dm *UNUSED(dmp))
+{
+    bu_log("getZBuffer called\n");
+    return 0;
+}
+
+
+HIDDEN int
 txt_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
 {
     bu_log("debug called\n");
@@ -446,6 +454,7 @@ struct dm_impl dm_txt_impl = {
     txt_getTransparency,
     txt_setDepthMask,
     txt_setZBuffer,
+    txt_getZBuffer,
     txt_debug,
     txt_logfile,
     txt_beginDList,
@@ -503,7 +512,6 @@ struct dm_impl dm_txt_impl = {
     0,				/* no debugging */
     0,				/* no perspective */
     0,				/* depth buffer is not writable */
-    0,				/* no zbuffer */
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */

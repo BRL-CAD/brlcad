@@ -903,6 +903,7 @@ struct dm_impl dm_wgl_impl = {
     gl_getTransparency,
     gl_setDepthMask,
     gl_setZBuffer,
+    gl_getZBuffer,
     gl_debug,
     NULL,
     gl_beginDList,
@@ -960,7 +961,6 @@ struct dm_impl dm_wgl_impl = {
     0,				/* no debugging */
     0,				/* no perspective */
     1,				/* depth buffer is writable */
-    1,				/* zbuffer */
     0,				/* no zclipping */
     0,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
@@ -1050,7 +1050,7 @@ wgl_open(void *UNUSED(ctx), void *vinterp, int argc, char *argv[])
     mvars->fastfog = 1;
     mvars->fogdensity = 1.0;
     mvars->lighting_on = 1;
-    mvars->zbuffer_on = dmp->i->dm_zbuffer;
+    mvars->zbuffer_on = 1;
     mvars->zclipping_on = dmp->i->dm_zclip;
     mvars->bound = dmp->i->dm_bound;
     mvars->boundFlag = dmp->i->dm_boundFlag;
@@ -1225,7 +1225,7 @@ wgl_open(void *UNUSED(ctx), void *vinterp, int argc, char *argv[])
     glLoadIdentity();
     mvars->i.faceFlag = 1; /* faceplate matrix is on top of stack */
 
-    gl_setZBuffer(dmp, dmp->i->dm_zbuffer);
+    gl_setZBuffer(dmp, mvars->zbuffer_on);
     gl_setLight(dmp, mvars->lighting_on);
 
     if (!wglMakeCurrent((HDC)NULL, (HGLRC)NULL)) {

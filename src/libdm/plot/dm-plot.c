@@ -710,6 +710,7 @@ struct dm_impl dm_plot_impl = {
     null_getTransparency,
     null_setDepthMask,
     null_setZBuffer,
+    null_getZBuffer,
     plot_debug,
     plot_logfile,
     null_beginDList,
@@ -767,7 +768,6 @@ struct dm_impl dm_plot_impl = {
     0,				/* no debugging */
     0,				/* no perspective */
     0,				/* depth buffer is not writable */
-    0,				/* no zbuffer */
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */

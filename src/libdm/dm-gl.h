@@ -181,6 +181,7 @@ DMGL_EXPORT extern int gl_setTransparency(struct dm *dmp, int transparency_on);
 DMGL_EXPORT extern int gl_getTransparency(struct dm *dmp);
 DMGL_EXPORT extern int gl_setWinBounds(struct dm *dmp, fastf_t *w);
 DMGL_EXPORT extern int gl_setZBuffer(struct dm *dmp, int zbuffer_on);
+DMGL_EXPORT extern int gl_getZBuffer(struct dm *dmp);
 DMGL_EXPORT extern void gl_bound_flag_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
 DMGL_EXPORT extern void gl_bound_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
 DMGL_EXPORT extern void gl_colorchange(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);

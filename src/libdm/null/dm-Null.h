@@ -167,6 +167,10 @@ null_setZBuffer(struct dm *dmp, int zbuffer_on);
 
 
 DM_NULL_EXPORT extern int
+null_getZBuffer(struct dm *dmp);
+
+
+DM_NULL_EXPORT extern int
 null_debug(struct dm *dmp, int lvl);
 
 

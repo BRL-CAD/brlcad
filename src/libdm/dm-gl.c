@@ -141,7 +141,6 @@ void glvars_init(struct dm *dmp)
     // glvars and the dm_impl struct have some duplicate
     // entires - initialize the gl_vars versions to the
     // dm_impl values
-    mvars->zbuffer_on = dmp->i->dm_zbuffer;
     mvars->zclipping_on = dmp->i->dm_zclip;
 }
 
@@ -1361,12 +1360,10 @@ int gl_setZBuffer(struct dm *dmp, int zbuffer_on)
 
     gl_debug_print(dmp, "gl_setZBuffer", dmp->i->dm_debugLevel);
 
-    dmp->i->dm_zbuffer = zbuffer_on;
-    mvars->zbuffer_on = dmp->i->dm_zbuffer;
+    mvars->zbuffer_on = zbuffer_on;
 
     if (mvars->zbuf == 0) {
-	dmp->i->dm_zbuffer = 0;
-	mvars->zbuffer_on = dmp->i->dm_zbuffer;
+	mvars->zbuffer_on = 0;
     }
 
     if (mvars->zbuffer_on) {
@@ -1379,6 +1376,14 @@ int gl_setZBuffer(struct dm *dmp, int zbuffer_on)
     return BRLCAD_OK;
 }
 
+int gl_getZBuffer(struct dm *dmp)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+
+    gl_debug_print(dmp, "gl_getZBuffer", dmp->i->dm_debugLevel);
+
+    return mvars->zbuffer_on;
+}
 
 int gl_beginDList(struct dm *dmp, unsigned int list)
 {

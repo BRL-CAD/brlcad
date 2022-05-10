@@ -469,7 +469,7 @@ int
 dm_get_zbuffer(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_zbuffer;
+    return dmp->i->dm_getZBuffer(dmp);
 }
 
 int
@@ -904,7 +904,6 @@ dm_hash(struct dm *dmp)
     XXH64_update(state, &dmp->i->dm_clipmax, sizeof(vect_t));
     XXH64_update(state, &dmp->i->dm_perspective, sizeof(int));
     XXH64_update(state, &dmp->i->dm_depthMask, sizeof(int));
-    XXH64_update(state, &dmp->i->dm_zbuffer, sizeof(int));
     XXH64_update(state, &dmp->i->dm_zclip, sizeof(int));
     XXH64_update(state, &dmp->i->dm_fontsize, sizeof(int));
 

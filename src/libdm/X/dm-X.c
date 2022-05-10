@@ -1479,18 +1479,6 @@ X_configureWin(struct dm *dmp, int force)
 
 
 HIDDEN int
-X_setZBuffer(struct dm *dmp, int zbuffer_on)
-{
-    if (dmp->i->dm_debugLevel)
-	bu_log("X_setZBuffer:\n");
-
-    dmp->i->dm_zbuffer = zbuffer_on;
-
-    return BRLCAD_OK;
-}
-
-
-HIDDEN int
 X_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha)
 {
     XImage *ximage_p;
@@ -2109,7 +2097,8 @@ struct dm_impl dm_X_impl = {
     null_setTransparency,
     null_getTransparency,
     null_setDepthMask,
-    X_setZBuffer,
+    null_setZBuffer,
+    null_getZBuffer,
     X_debug,
     X_logfile,
     null_beginDList,
@@ -2167,7 +2156,6 @@ struct dm_impl dm_X_impl = {
     0,				/* no debugging */
     0,				/* no perspective */
     0,				/* depth buffer is not writable */
-    0,				/* no zbuffer */
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
