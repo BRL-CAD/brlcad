@@ -10,14 +10,14 @@ The following steps allow for comparison between traces from MGED and qdm:
 
 apitrace trace ./bin/mged share/db/moss.g
 apitrace dump mged.trace > mged.log
-cut -f1 -d" " --complement mged.log > mged_trimmed.log
+cut -f1 -d" " --complement mged.log | sed 's/0x[0-9a-z]\+//g' > mged_trimmed.log
 
 apitrace trace ./bin/qdm share/db/moss.g
 apitrace dump qdm.trace > qdm.log
-cut -f1 -d" " --complement qdm.log > qdm_trimmed.log
+cut -f1 -d" " --complement qdm.log | sed 's/0x[0-9a-z]\+//g'> qdm_trimmed.log
 
-(The trimming step strips the leading numbers from the logs, which
-otherwise render comparisons with diff impractical.)
+(The trimming step strips the leading numbers from the logs and removes pointer
+addresses. Without these steps, comparisons with diff are problematic.)
 
 Comparison is still not trivial - Qt does a lot of work "under the hood"
 to manage OpenGL, which will manifest in OpenGL calls not visible in an
