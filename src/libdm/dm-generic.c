@@ -441,19 +441,14 @@ int
 dm_get_light(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_light;
+    return dmp->i->dm_getLight(dmp);
 }
 
 int
 dm_set_light(struct dm *dmp, int light)
 {
     if (UNLIKELY(!dmp)) return 0;
-    if (dmp->i->dm_setLight) {
-	return dmp->i->dm_setLight(dmp, light);
-    } else {
-	dmp->i->dm_light = light;
-    }
-    return dmp->i->dm_light;
+    return dmp->i->dm_setLight(dmp, light);
 }
 
 int
@@ -902,7 +897,6 @@ dm_hash(struct dm *dmp)
     XXH64_update(state, &dmp->i->dm_clipmin, sizeof(vect_t));
     XXH64_update(state, &dmp->i->dm_clipmax, sizeof(vect_t));
     XXH64_update(state, &dmp->i->dm_perspective, sizeof(int));
-    XXH64_update(state, &dmp->i->dm_light, sizeof(int));
     XXH64_update(state, &dmp->i->dm_depthMask, sizeof(int));
     XXH64_update(state, &dmp->i->dm_zbuffer, sizeof(int));
     XXH64_update(state, &dmp->i->dm_zclip, sizeof(int));

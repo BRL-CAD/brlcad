@@ -271,7 +271,15 @@ txt_setLight(struct dm *UNUSED(dmp), int UNUSED(light_on))
 
 
 HIDDEN int
-txt_setTransparency(struct dm *UNUSED(dmp), int UNUSED(transparency))
+txt_getLight(struct dm *UNUSED(dmp))
+{
+    bu_log("getLight called\n");
+    return 0;
+}
+
+
+HIDDEN int
+txt_setTransparency(struct dm *UNUSED(dmp), int UNUSED(transparency_on))
 {
     bu_log("setTransparency called\n");
     return 0;
@@ -433,6 +441,7 @@ struct dm_impl dm_txt_impl = {
     txt_configureWin,
     txt_setWinBounds,
     txt_setLight,
+    txt_getLight,
     txt_setTransparency,
     txt_getTransparency,
     txt_setDepthMask,
@@ -493,7 +502,6 @@ struct dm_impl dm_txt_impl = {
     {0.0, 0.0, 0.0},		/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
-    0,				/* no lighting */
     0,				/* depth buffer is not writable */
     0,				/* no zbuffer */
     0,				/* no zclipping */

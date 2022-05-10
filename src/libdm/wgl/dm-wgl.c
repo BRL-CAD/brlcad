@@ -898,6 +898,7 @@ struct dm_impl dm_wgl_impl = {
     wgl_configureWin,
     gl_setWinBounds,
     gl_setLight,
+    gl_getLight,
     gl_setTransparency,
     gl_getTransparency,
     gl_setDepthMask,
@@ -958,7 +959,6 @@ struct dm_impl dm_wgl_impl = {
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
-    0,				/* no lighting */
     1,				/* depth buffer is writable */
     1,				/* zbuffer */
     0,				/* no zclipping */
@@ -1006,7 +1006,6 @@ wgl_open(void *UNUSED(ctx), void *vinterp, int argc, char *argv[])
 
     *dmp->i = dm_wgl_impl; /* struct copy */
     dmp->i->dm_interp = interp;
-    dmp->i->dm_light = 1;
 
     BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_wglvars);
     struct dm_wglvars *pubvars = (struct dm_wglvars *)dmp->i->dm_vars.pub_vars;
@@ -1050,7 +1049,7 @@ wgl_open(void *UNUSED(ctx), void *vinterp, int argc, char *argv[])
     mvars->doublebuffer = 1;
     mvars->fastfog = 1;
     mvars->fogdensity = 1.0;
-    mvars->lighting_on = dmp->i->dm_light;
+    mvars->lighting_on = 1;
     mvars->zbuffer_on = dmp->i->dm_zbuffer;
     mvars->zclipping_on = dmp->i->dm_zclip;
     mvars->debug = dmp->i->dm_debugLevel;
@@ -1228,7 +1227,7 @@ wgl_open(void *UNUSED(ctx), void *vinterp, int argc, char *argv[])
     mvars->i.faceFlag = 1; /* faceplate matrix is on top of stack */
 
     gl_setZBuffer(dmp, dmp->i->dm_zbuffer);
-    gl_setLight(dmp, dmp->i->dm_light);
+    gl_setLight(dmp, mvars->lighting_on);
 
     if (!wglMakeCurrent((HDC)NULL, (HGLRC)NULL)) {
 	LPVOID buf;

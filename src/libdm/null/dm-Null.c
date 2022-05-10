@@ -248,6 +248,13 @@ null_setLight(struct dm *UNUSED(dmp), int UNUSED(light_on))
 
 
 int
+null_getLight(struct dm *UNUSED(dmp))
+{
+    return 0;
+}
+
+
+int
 null_setTransparency(struct dm *UNUSED(dmp), int UNUSED(transparency))
 {
     return 0;
@@ -391,6 +398,7 @@ struct dm_impl dm_null_impl = {
     null_configureWin,
     null_setWinBounds,
     null_setLight,
+    null_getLight,
     null_setTransparency,
     null_getTransparency,
     null_setDepthMask,
@@ -451,7 +459,6 @@ struct dm_impl dm_null_impl = {
     {0.0, 0.0, 0.0},		/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
-    0,				/* no lighting */
     0,				/* depth buffer is not writable */
     0,				/* no zbuffer */
     0,				/* no zclipping */

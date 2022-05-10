@@ -137,7 +137,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
     // Wireframe
     if (mode == 0) {
 
-	if (dmp->i->dm_light) {
+	if (mvars->lighting_on) {
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
@@ -159,7 +159,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	    glVertex3dv(dpt);
 	    glEnd();
 	}
-	if (dmp->i->dm_light && mvars->transparency_on)
+	if (mvars->lighting_on && mvars->transparency_on)
 	    glDisable(GL_BLEND);
 
 	if (gen_dlist) {
@@ -195,7 +195,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	glGetIntegerv(GL_LIGHT_MODEL_TWO_SIDE, &two_sided);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-	if (dmp->i->dm_light) {
+	if (mvars->lighting_on) {
 
 
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
@@ -203,7 +203,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mvars->i.specularColor);
 	    glMaterialfv(GL_FRONT, GL_DIFFUSE, mvars->i.diffuseColor);
 
-	    switch (dmp->i->dm_light) {
+	    switch (mvars->lighting_on) {
 		case 1:
 		    break;
 		case 2:
@@ -256,7 +256,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 
 	glEnd();
 
-	if (dmp->i->dm_light && mvars->transparency_on)
+	if (mvars->lighting_on && mvars->transparency_on)
 	    glDisable(GL_BLEND);
 
 	// Put the lighting model back where it was prior to this operation
@@ -351,7 +351,7 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
     }
 
     // Wireframe
-    if (dmp->i->dm_light) {
+    if (mvars->lighting_on) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
@@ -405,7 +405,7 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
     if (first == 0)
 	glEnd();
 
-    if (dmp->i->dm_light && mvars->transparency_on)
+    if (mvars->lighting_on && mvars->transparency_on)
 	glDisable(GL_BLEND);
 
     if (gen_dlist) {

@@ -176,6 +176,7 @@ DMGL_EXPORT extern int gl_setBGColor(struct dm *dmp, unsigned char r, unsigned c
 DMGL_EXPORT extern int gl_setDepthMask(struct dm *dmp, int depthMask_on);
 DMGL_EXPORT extern int gl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 DMGL_EXPORT extern int gl_setLight(struct dm *dmp, int lighting_on);
+DMGL_EXPORT extern int gl_getLight(struct dm *dmp);
 DMGL_EXPORT extern int gl_setLineAttr(struct dm *dmp, int width, int style);
 DMGL_EXPORT extern int gl_setTransparency(struct dm *dmp, int transparency_on);
 DMGL_EXPORT extern int gl_getTransparency(struct dm *dmp);

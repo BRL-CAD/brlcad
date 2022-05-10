@@ -774,6 +774,7 @@ struct dm_impl dm_ps_impl = {
     null_configureWin,
     ps_setWinBounds,
     null_setLight,
+    null_getLight,
     null_setTransparency,
     null_getTransparency,
     null_setDepthMask,
@@ -834,7 +835,6 @@ struct dm_impl dm_ps_impl = {
     {0.0, 0.0, 0.0},		/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
-    0,				/* no lighting */
     0,				/* depth buffer is not writable */
     0,				/* no zbuffer */
     0,				/* no zclipping */

@@ -182,7 +182,6 @@ qtgl_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     dmp->i = dmpi;
 
     dmp->i->dm_lineWidth = 1;
-    dmp->i->dm_light = 1;
     dmp->i->dm_bytes_per_pixel = sizeof(GLuint);
     dmp->i->dm_bits_per_channel = 8;
     bu_vls_init(&(dmp->i->dm_log));
@@ -234,7 +233,7 @@ qtgl_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     mvars->doublebuffer = 1;
     mvars->fastfog = 1;
     mvars->fogdensity = 1.0;
-    mvars->lighting_on = dmp->i->dm_light;
+    mvars->lighting_on = 1;
     mvars->zbuffer_on = dmp->i->dm_zbuffer;
     mvars->zclipping_on = dmp->i->dm_zclip;
     mvars->debug = dmp->i->dm_debugLevel;
@@ -293,7 +292,7 @@ qtgl_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     mvars->i.faceFlag = 1;	/* faceplate matrix is on top of stack */
 
     gl_setZBuffer(dmp, dmp->i->dm_zbuffer);
-    gl_setLight(dmp, dmp->i->dm_light);
+    gl_setLight(dmp, mvars->lighting_on);
 
     return dmp;
 }
@@ -579,6 +578,7 @@ struct dm_impl dm_qtgl_impl = {
     qtgl_configureWin,
     gl_setWinBounds,
     gl_setLight,
+    gl_getLight,
     gl_setTransparency,
     gl_getTransparency,
     gl_setDepthMask,
@@ -639,7 +639,6 @@ struct dm_impl dm_qtgl_impl = {
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
-    1,				/* lighting */
     1,				/* depth buffer is writable */
     1,				/* zbuffer */
     0,				/* no zclipping */

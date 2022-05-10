@@ -1479,18 +1479,6 @@ X_configureWin(struct dm *dmp, int force)
 
 
 HIDDEN int
-X_setLight(struct dm *dmp, int light_on)
-{
-    if (dmp->i->dm_debugLevel)
-	bu_log("X_setLight:\n");
-
-    dmp->i->dm_light = light_on;
-
-    return BRLCAD_OK;
-}
-
-
-HIDDEN int
 X_setZBuffer(struct dm *dmp, int zbuffer_on)
 {
     if (dmp->i->dm_debugLevel)
@@ -2116,7 +2104,8 @@ struct dm_impl dm_X_impl = {
     X_setLineAttr,
     X_configureWin,
     X_setWinBounds,
-    X_setLight,
+    null_setLight,
+    null_getLight,
     null_setTransparency,
     null_getTransparency,
     null_setDepthMask,
@@ -2177,7 +2166,6 @@ struct dm_impl dm_X_impl = {
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
-    0,				/* no lighting */
     0,				/* depth buffer is not writable */
     0,				/* no zbuffer */
     0,				/* no zclipping */

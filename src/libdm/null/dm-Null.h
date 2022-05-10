@@ -147,7 +147,11 @@ null_setLight(struct dm *dmp, int light_on);
 
 
 DM_NULL_EXPORT extern int
-null_setTransparency(struct dm *dmp, int transparency);
+null_getLight(struct dm *dmp);
+
+
+DM_NULL_EXPORT extern int
+null_setTransparency(struct dm *dmp, int transparency_on);
 
 
 DM_NULL_EXPORT extern int

@@ -141,7 +141,6 @@ void glvars_init(struct dm *dmp)
     // glvars and the dm_impl struct have some duplicate
     // entires - initialize the gl_vars versions to the
     // dm_impl values
-    mvars->lighting_on = dmp->i->dm_light;
     mvars->zbuffer_on = dmp->i->dm_zbuffer;
     mvars->zclipping_on = dmp->i->dm_zclip;
 }
@@ -219,16 +218,15 @@ int gl_setLight(struct dm *dmp, int lighting_on)
 
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
 
-    dmp->i->dm_light = lighting_on;
-    mvars->lighting_on = dmp->i->dm_light;
+    mvars->lighting_on = lighting_on;
 
-    if (!dmp->i->dm_light) {
+    if (!mvars->lighting_on) {
 	/* Turn it off */
 	glDisable(GL_LIGHTING);
     } else {
 	/* Turn it on */
 
-	if (1 < dmp->i->dm_light)
+	if (1 < mvars->lighting_on)
 	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	else
 	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
@@ -244,6 +242,15 @@ int gl_setLight(struct dm *dmp, int lighting_on)
     }
 
     return BRLCAD_OK;
+}
+
+int gl_getLight(struct dm *dmp)
+{
+    gl_debug_print(dmp, "gl_setLight", dmp->i->dm_debugLevel);
+
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+
+    return mvars->lighting_on;
 }
 
 /*
@@ -286,7 +293,7 @@ int gl_drawEnd(struct dm *dmp)
 
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
 
-    if (dmp->i->dm_light) {
+    if (mvars->lighting_on) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glLightfv(GL_LIGHT0, GL_POSITION, mvars->i.light0_position);
@@ -453,7 +460,7 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
 
     /* First, draw polygons using background color. */
 
-    if (dmp->i->dm_light) {
+    if (mvars->lighting_on) {
 	glDisable(GL_LIGHTING);
     }
 
@@ -590,7 +597,7 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
     if (first == 0)
 	glEnd();
 
-    if (dmp->i->dm_light) {
+    if (mvars->lighting_on) {
 	glEnable(GL_LIGHTING);
     }
 
@@ -654,7 +661,7 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 			glEnd();
 		    first = 0;
 
-		    if (dmp->i->dm_light && mflag) {
+		    if (mvars->lighting_on && mflag) {
 			mflag = 0;
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
@@ -696,14 +703,14 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 		case BV_VLIST_TRI_START:
 		    /* Start poly marker & normal */
 
-		    if (dmp->i->dm_light && mflag) {
+		    if (mvars->lighting_on && mflag) {
 			mflag = 0;
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mvars->i.ambientColor);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mvars->i.specularColor);
 			glMaterialfv(GL_FRONT, GL_DIFFUSE, mvars->i.diffuseColor);
 
-			switch (dmp->i->dm_light) {
+			switch (mvars->lighting_on) {
 			    case 1:
 				break;
 			    case 2:
@@ -792,7 +799,7 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
     if (first == 0)
 	glEnd();
 
-    if (dmp->i->dm_light && mvars->transparency_on)
+    if (mvars->lighting_on && mvars->transparency_on)
 	glDisable(GL_BLEND);
 
     glPointSize(originalPointSize);
@@ -808,6 +815,7 @@ int gl_draw_data_axes(struct dm *dmp,
                   fastf_t sf,
                   struct bv_data_axes_state *bndasp)
 {
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     int npoints = bndasp->num_points * 6;
     if (npoints < 1)
         return 0;
@@ -818,14 +826,14 @@ int gl_draw_data_axes(struct dm *dmp,
     dm_set_fg(dmp, bndasp->color[0], bndasp->color[1], bndasp->color[2], 1, 1.0);
 
     if (bndasp->draw > 1) {
-        if (dmp->i->dm_light)
+        if (mvars->lighting_on)
             glDisable(GL_LIGHTING);
 
         glPointSize(bndasp->size);
         dm_draw_points_3d(dmp, bndasp->num_points, bndasp->points);
         glPointSize(1);
 
-        if (dmp->i->dm_light)
+        if (mvars->lighting_on)
             glEnable(GL_LIGHTING);
 
 	return 0;
@@ -919,7 +927,7 @@ int gl_hud_begin(struct dm *dmp)
 	mvars->i.faceFlag = 1;
 	if (mvars->cueing_on)
 	    glDisable(GL_FOG);
-	if (dmp->i->dm_light)
+	if (mvars->lighting_on)
 	    glDisable(GL_LIGHTING);
     }
 
@@ -959,7 +967,7 @@ int gl_hud_end(struct dm *dmp)
 	    glFogf(GL_FOG_DENSITY, fogdepth);
 	    glFogi(GL_FOG_MODE, dmp->i->dm_perspective ? GL_EXP : GL_LINEAR);
 	}
-	if (dmp->i->dm_light) {
+	if (mvars->lighting_on) {
 	    glEnable(GL_LIGHTING);
 	}
    }
@@ -992,7 +1000,7 @@ drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
     GLdouble pt[3];
 
-    if (dmp->i->dm_light) {
+    if (mvars->lighting_on) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
@@ -1037,7 +1045,7 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char 
     register int i;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
 
-    if (dmp->i->dm_light) {
+    if (mvars->lighting_on) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
@@ -1201,7 +1209,7 @@ int gl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned cha
 	glColor3ub((GLubyte)r, (GLubyte)g, (GLubyte)b);
     } else {
 
-	if (dmp->i->dm_light) {
+	if (mvars->lighting_on) {
 	    /* Ambient = .2, Diffuse = .6, Specular = .2 */
 
 	    mvars->i.ambientColor[0] = mvars->i.wireColor[0] * 0.2;
