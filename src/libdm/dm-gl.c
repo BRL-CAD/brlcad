@@ -137,11 +137,6 @@ void glvars_init(struct dm *dmp)
     /* Unless the app tells us different, assume OpenGL based
      * displays are capable of transparency */
     mvars->transparency_on = 1;
-
-    // glvars and the dm_impl struct have some duplicate
-    // entires - initialize the gl_vars versions to the
-    // dm_impl values
-    mvars->zclipping_on = dmp->i->dm_zclip;
 }
 
 void gl_fogHint(struct dm *dmp, int fastfog)
@@ -1385,6 +1380,26 @@ int gl_getZBuffer(struct dm *dmp)
     return mvars->zbuffer_on;
 }
 
+int gl_setZClip(struct dm *dmp, int zclip)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+
+    gl_debug_print(dmp, "gl_setZClip", dmp->i->dm_debugLevel);
+
+    mvars->zclipping_on = zclip;
+
+    return BRLCAD_OK;
+}
+
+int gl_getZClip(struct dm *dmp)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+
+    gl_debug_print(dmp, "gl_getZClip", dmp->i->dm_debugLevel);
+
+    return mvars->zclipping_on;
+}
+
 int gl_beginDList(struct dm *dmp, unsigned int list)
 {
     gl_debug_print(dmp, "gl_beginDList", dmp->i->dm_debugLevel);
@@ -1530,9 +1545,7 @@ void gl_zclip_hook(const struct bu_structparse *sdp,
     struct dm *dmp = mvars->this_dm;
     fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
 
-    dmp->i->dm_zclip = mvars->zclipping_on;
-
-    if (dmp->i->dm_zclip) {
+    if (mvars->zclipping_on) {
 	bounds[4] = -1.0;
 	bounds[5] = 1.0;
     }

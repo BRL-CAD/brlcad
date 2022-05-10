@@ -57,6 +57,12 @@ extern FILE *popen(const char *command, const char *type);
 extern int pclose(FILE *stream);
 #endif
 
+struct plot_mvars {
+    int zclip;
+    double bound;
+    int boundFlag;
+};
+
 /* Display Manager package interface */
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
@@ -90,8 +96,13 @@ plot_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
     dmp->i->dm_interp = interp;
 
     BU_ALLOC(dmp->i->dm_vars.priv_vars, struct plot_vars);
-
     struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
+
+    BU_ALLOC(dmp->i->m_vars, struct plot_mvars);
+    struct plot_mvars *m_vars = (struct plot_mvars *)dmp->i->m_vars;
+    m_vars->zclip = 0;
+    m_vars->bound = 0;
+    m_vars->boundFlag = 0;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -127,7 +138,7 @@ plot_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
 		/* Enable Z clipping */
 		Tcl_AppendStringsToObj(obj, "Clipped in Z to viewing cube\n", (char *)NULL);
 
-		dmp->i->dm_zclip = 1;
+		m_vars->zclip = 1;
 		break;
 	    default:
 		Tcl_AppendStringsToObj(obj, "bad PLOT option ", argv[0], "\n", (char *)NULL);
@@ -216,6 +227,7 @@ plot_close(struct dm *dmp)
 	fclose(privars->up_fp);
 
     bu_vls_free(&dmp->i->dm_pathName);
+    bu_free((void *)dmp->i->m_vars, "plot_close: m_vars");
     bu_free((void *)dmp->i->dm_vars.priv_vars, "plot_close: plot_vars");
     bu_free((void *)dmp->i, "plot_close: dmp impl");
     bu_free((void *)dmp, "plot_close: dmp");
@@ -657,13 +669,14 @@ plot_logfile(struct dm *dmp, const char *filename)
 HIDDEN int
 plot_setWinBounds(struct dm *dmp, fastf_t *w)
 {
+    struct plot_mvars *m_vars = (struct plot_mvars *)dmp->i->m_vars;
     /* Compute the clipping bounds */
     dmp->i->dm_clipmin[0] = w[0] / 2048.0;
     dmp->i->dm_clipmax[0] = w[1] / 2047.0;
     dmp->i->dm_clipmin[1] = w[2] / 2048.0;
     dmp->i->dm_clipmax[1] = w[3] / 2047.0;
 
-    if (dmp->i->dm_zclip) {
+    if (m_vars->zclip) {
 	dmp->i->dm_clipmin[2] = w[4] / 2048.0;
 	dmp->i->dm_clipmax[2] = w[5] / 2047.0;
     } else {
@@ -674,6 +687,13 @@ plot_setWinBounds(struct dm *dmp, fastf_t *w)
     return BRLCAD_OK;
 }
 
+#define plot_MV_O(_m) offsetof(struct plot_mvars, _m)
+struct bu_structparse plot_vparse[] = {
+    {"%g",  1, "bound",         plot_MV_O(bound),       dm_generic_hook, NULL, NULL},
+    {"%d",  1, "useBound",      plot_MV_O(boundFlag),   dm_generic_hook, NULL, NULL},
+    {"%d",  1, "zclip",         plot_MV_O(zclip),       dm_generic_hook, NULL, NULL},
+    {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
+};
 
 struct dm_impl dm_plot_impl = {
     plot_open,
@@ -711,6 +731,8 @@ struct dm_impl dm_plot_impl = {
     null_setDepthMask,
     null_setZBuffer,
     null_getZBuffer,
+    null_setZClip,
+    null_getZClip,
     plot_debug,
     plot_logfile,
     null_beginDList,
@@ -768,10 +790,9 @@ struct dm_impl dm_plot_impl = {
     0,				/* no debugging */
     0,				/* no perspective */
     0,				/* depth buffer is not writable */
-    0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
-    BU_STRUCTPARSE_NULL,
+    plot_vparse,
     FB_NULL,
     NULL,			/* Tcl interpreter */
     NULL,                       /* Drawing context */

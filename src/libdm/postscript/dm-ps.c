@@ -51,6 +51,12 @@
 
 #define EPSILON 0.0001
 
+struct ps_mvars {
+    int zclip;
+    double bound;
+    int boundFlag;
+};
+
 /* Display Manager package interface */
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
@@ -92,6 +98,12 @@ ps_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
 
     BU_ALLOC(dmp->i->dm_vars.priv_vars, struct ps_vars);
 
+    BU_ALLOC(dmp->i->m_vars, struct ps_mvars);
+    struct ps_mvars *m_vars = (struct ps_mvars *)dmp->i->m_vars;
+    m_vars->zclip = 0;
+    m_vars->bound = 0;
+    m_vars->boundFlag = 0;
+
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
@@ -112,7 +124,6 @@ ps_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
     bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->creator, "LIBDM dm-ps");
     ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->scale = 0.0791;
     ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->linewidth = 4;
-    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->zclip = 0;
 
     /* skip first argument */
     --argc; ++argv;
@@ -202,7 +213,7 @@ ps_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
 		}
 		break;
 	    case 'z':
-		dmp->i->dm_zclip = 1;
+		m_vars->zclip = 1;
 		break;
 	    default:
 		Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
@@ -726,13 +737,15 @@ ps_logfile(struct dm *dmp, const char *filename)
 HIDDEN int
 ps_setWinBounds(struct dm *dmp, fastf_t *w)
 {
+    struct ps_mvars *m_vars = (struct ps_mvars *)dmp->i->m_vars;
+
     /* Compute the clipping bounds */
     dmp->i->dm_clipmin[0] = w[0] / 2048.0;
     dmp->i->dm_clipmax[0] = w[1] / 2047.0;
     dmp->i->dm_clipmin[1] = w[2] / 2048.0;
     dmp->i->dm_clipmax[1] = w[3] / 2047.0;
 
-    if (dmp->i->dm_zclip) {
+    if (m_vars->zclip) {
 	dmp->i->dm_clipmin[2] = w[4] / 2048.0;
 	dmp->i->dm_clipmax[2] = w[5] / 2047.0;
     } else {
@@ -743,6 +756,13 @@ ps_setWinBounds(struct dm *dmp, fastf_t *w)
     return BRLCAD_OK;
 }
 
+#define ps_MV_O(_m) offsetof(struct ps_mvars, _m)
+struct bu_structparse ps_vparse[] = {
+    {"%g",  1, "bound",         ps_MV_O(bound),         dm_generic_hook, NULL, NULL},
+    {"%d",  1, "useBound",      ps_MV_O(boundFlag),     dm_generic_hook, NULL, NULL},
+    {"%d",  1, "zclip",         ps_MV_O(zclip),         dm_generic_hook, NULL, NULL},
+    {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
+};
 
 struct dm_impl dm_ps_impl = {
     ps_open,
@@ -780,6 +800,8 @@ struct dm_impl dm_ps_impl = {
     null_setDepthMask,
     null_setZBuffer,
     null_getZBuffer,
+    null_setZClip,
+    null_getZClip,
     ps_debug,
     ps_logfile,
     null_beginDList,
@@ -837,10 +859,9 @@ struct dm_impl dm_ps_impl = {
     0,				/* no debugging */
     0,				/* no perspective */
     0,				/* depth buffer is not writable */
-    0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
-    BU_STRUCTPARSE_NULL,
+    ps_vparse,
     FB_NULL,
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */

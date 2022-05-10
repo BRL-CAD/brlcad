@@ -519,14 +519,14 @@ int
 dm_get_zclip(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_zclip;
+    return dmp->i->dm_getZClip(dmp);
 }
 
 void
 dm_set_zclip(struct dm *dmp, int zclip)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->i->dm_zclip = zclip;
+    dmp->i->dm_setZClip(dmp, zclip);
 }
 
 int
@@ -904,7 +904,6 @@ dm_hash(struct dm *dmp)
     XXH64_update(state, &dmp->i->dm_clipmax, sizeof(vect_t));
     XXH64_update(state, &dmp->i->dm_perspective, sizeof(int));
     XXH64_update(state, &dmp->i->dm_depthMask, sizeof(int));
-    XXH64_update(state, &dmp->i->dm_zclip, sizeof(int));
     XXH64_update(state, &dmp->i->dm_fontsize, sizeof(int));
 
     if (dmp->i->fbp) {

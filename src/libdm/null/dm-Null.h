@@ -171,6 +171,14 @@ null_getZBuffer(struct dm *dmp);
 
 
 DM_NULL_EXPORT extern int
+null_setZClip(struct dm *dmp, int zclip);
+
+
+DM_NULL_EXPORT extern int
+null_getZClip(struct dm *dmp);
+
+
+DM_NULL_EXPORT extern int
 null_debug(struct dm *dmp, int lvl);
 
 

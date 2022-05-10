@@ -93,6 +93,8 @@ struct dm_impl {
     int (*dm_setDepthMask)(struct dm *dmp, int depthMask_on);
     int (*dm_setZBuffer)(struct dm *dmp, int zbuffer_on);
     int (*dm_getZBuffer)(struct dm *dmp);
+    int (*dm_setZClip)(struct dm *dmp, int zclip);
+    int (*dm_getZClip)(struct dm *dmp);
     int (*dm_debug)(struct dm *dmp, int lvl);		/**< @brief Set DM debug level */
     int (*dm_logfile)(struct dm *dmp, const char *filename); /**< @brief Set DM log file */
     int (*dm_beginDList)(struct dm *dmp, unsigned int list);
@@ -150,7 +152,6 @@ struct dm_impl {
     int dm_debugLevel;		/**< @brief !0 means debugging */
     int dm_perspective;		/**< @brief !0 means perspective on */
     int dm_depthMask;		/**< @brief !0 means depth buffer is writable */
-    int dm_zclip;			/**< @brief !0 means zclipping */
     int dm_clearBufferAfter;	/**< @brief 1 means clear back buffer after drawing and swap */
     int dm_fontsize;		/**< @brief !0 override's the auto font size */
     struct bu_structparse *vparse;    /**< @brief Table listing settable variables */

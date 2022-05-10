@@ -266,7 +266,7 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     mvars->fogdensity = 1.0;
     mvars->lighting_on = 1;
     mvars->zbuffer_on = 1;
-    mvars->zclipping_on = dmp->i->dm_zclip;
+    mvars->zclipping_on = 0;
     mvars->bound = dmp->i->dm_bound;
     mvars->boundFlag = dmp->i->dm_boundFlag;
 
@@ -585,6 +585,8 @@ struct dm_impl dm_swrast_impl = {
     gl_setDepthMask,
     gl_setZBuffer,
     gl_getZBuffer,
+    gl_setZClip,
+    gl_getZClip,
     gl_debug,
     gl_logfile,
     gl_beginDList,
@@ -642,7 +644,6 @@ struct dm_impl dm_swrast_impl = {
     0,				/* no debugging */
     0,				/* no perspective */
     1,				/* depth buffer is writable */
-    0,				/* no zclipping */
     0,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
     gl_vparse,

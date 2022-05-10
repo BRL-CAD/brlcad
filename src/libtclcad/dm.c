@@ -1648,7 +1648,7 @@ dmo_zclip_tcl(void *clientData, int argc, const char **argv)
 
     /* get zclip flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_zclip);
+	bu_vls_printf(&vls, "%d", dm_get_zclip(dmop->dmo_dmp));
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1665,7 +1665,7 @@ dmo_zclip_tcl(void *clientData, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	dmop->dmo_dmp->i->dm_zclip = zclip;
+	dm_set_zclip(dmop->dmo_dmp, zclip);
 	return BRLCAD_OK;
     }
 

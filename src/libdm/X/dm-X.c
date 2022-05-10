@@ -80,6 +80,13 @@ extern void X_allocate_color_cube(Display *, Colormap, long unsigned int *, int,
 extern unsigned long X_get_pixel(unsigned char, unsigned char, unsigned char, long unsigned int *, int);
 
 
+struct X_mvars {
+    int zclip;
+    double bound;
+    int boundFlag;
+};
+
+
 struct allocated_colors {
     struct bu_list l;
     int r;
@@ -422,6 +429,7 @@ X_close(struct dm *dmp)
     bu_vls_free(&dmp->i->dm_pathName);
     bu_vls_free(&dmp->i->dm_tkName);
     bu_vls_free(&dmp->i->dm_dName);
+    bu_free((void *)dmp->i->m_vars, "X_close: m_vars");
     bu_free((void *)dmp->i->dm_vars.priv_vars, "X_close: x_vars");
     bu_free((void *)dmp->i->dm_vars.pub_vars, "X_close: dm_Xvars");
     bu_free((void *)dmp->i, "X_close: dmp->i");
@@ -493,6 +501,12 @@ X_open(void *UNUSED(ctx), void *vinterp, int argc, const char **argv)
 
     BU_ALLOC(dmp->i->dm_vars.priv_vars, struct x_vars);
     privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+
+    BU_ALLOC(dmp->i->m_vars, struct X_mvars);
+    struct X_mvars *m_vars = (struct X_mvars *)dmp->i->m_vars;
+    m_vars->zclip = 0;
+    m_vars->bound = 0;
+    m_vars->boundFlag = 0;
 
     bu_vls_init(&dmp->i->dm_pathName);
     bu_vls_init(&dmp->i->dm_tkName);
@@ -889,6 +903,7 @@ X_drawVList(struct dm *dmp, struct bv_vlist *vp)
     static int nvectors = 0;
     struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct X_mvars *m_vars = (struct X_mvars *)dmp->i->m_vars;
 
     /* delta is used in clipping to insure clipped endpoint is
      * slightly in front of eye plane (perspective mode only).  This
@@ -1047,7 +1062,7 @@ X_drawVList(struct dm *dmp, struct bv_vlist *vp)
 			bu_log("pt2 - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
 		    }
 
-		    if (dmp->i->dm_zclip) {
+		    if (m_vars->zclip) {
 			if (vclip(lpnt, pnt,
 				  dmp->i->dm_clipmin,
 				  dmp->i->dm_clipmax) == 0) {
@@ -1723,11 +1738,11 @@ X_openFb(struct dm *dmp)
     return 0;
 }
 
+#define X_MV_O(_m) offsetof(struct X_mvars, _m)
 struct bu_structparse X_vparse[] = {
-    {"%g",  1, "bound",         DM_O(dm_bound),         dm_generic_hook, NULL, NULL},
-    {"%d",  1, "useBound",      DM_O(dm_boundFlag),     dm_generic_hook, NULL, NULL},
-    {"%d",  1, "zclip",         DM_O(dm_zclip),         dm_generic_hook, NULL, NULL},
-    {"%d",  1, "debug",         DM_O(dm_debugLevel),    dm_generic_hook, NULL, NULL},
+    {"%g",  1, "bound",         X_MV_O(bound),          dm_generic_hook, NULL, NULL},
+    {"%d",  1, "useBound",      X_MV_O(boundFlag),      dm_generic_hook, NULL, NULL},
+    {"%d",  1, "zclip",         X_MV_O(zclip),          dm_generic_hook, NULL, NULL},
     {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
@@ -2099,6 +2114,8 @@ struct dm_impl dm_X_impl = {
     null_setDepthMask,
     null_setZBuffer,
     null_getZBuffer,
+    null_setZClip,
+    null_getZClip,
     X_debug,
     X_logfile,
     null_beginDList,
@@ -2156,7 +2173,6 @@ struct dm_impl dm_X_impl = {
     0,				/* no debugging */
     0,				/* no perspective */
     0,				/* depth buffer is not writable */
-    0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
     X_vparse,
