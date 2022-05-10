@@ -121,7 +121,6 @@ struct gl_vars {
     int rgb;
     int doublebuffer;
     int depth;
-    int debug;
     struct bu_vls log;
     double bound;
     int boundFlag;

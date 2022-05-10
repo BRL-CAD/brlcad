@@ -1544,11 +1544,6 @@ void gl_debug_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct gl_vars *mvars = (struct gl_vars *)base;
-    struct dm *dmp = mvars->this_dm;
-
-    dm_debug(dmp, mvars->debug);
-
     dm_generic_hook(sdp, name, base, value, data);
 }
 
@@ -1667,7 +1662,6 @@ struct bu_structparse gl_vparse[] = {
     {"%d",  1, "has_rgb",          gl_MV_O(rgb),             dm_generic_hook, NULL, NULL },
     {"%d",  1, "has_doublebuffer", gl_MV_O(doublebuffer),    dm_generic_hook, NULL, NULL },
     {"%d",  1, "depth",            gl_MV_O(depth),           dm_generic_hook, NULL, NULL },
-    {"%d",  1, "debug",            gl_MV_O(debug),           gl_debug_hook, NULL, NULL },
     {"%V",  1, "log",              gl_MV_O(log),             gl_logfile_hook, NULL, NULL },
     {"%g",  1, "bound",            gl_MV_O(bound),           gl_bound_hook, NULL, NULL },
     {"%d",  1, "useBound",         gl_MV_O(boundFlag),       gl_bound_flag_hook, NULL, NULL },

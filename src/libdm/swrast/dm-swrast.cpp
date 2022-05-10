@@ -267,7 +267,6 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     mvars->lighting_on = 1;
     mvars->zbuffer_on = dmp->i->dm_zbuffer;
     mvars->zclipping_on = dmp->i->dm_zclip;
-    mvars->debug = dmp->i->dm_debugLevel;
     mvars->bound = dmp->i->dm_bound;
     mvars->boundFlag = dmp->i->dm_boundFlag;
 
