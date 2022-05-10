@@ -911,28 +911,28 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 }
 
 extern "C" void
-view_setup(struct rt_i* rtip) {
+view_setup(struct rt_i* UNUSED(rtip)) {
     bu_bomb("In view setup, Dont call me!");
 }
 
 extern "C" void
-view_2init(struct application* ap, char* UNUSED(framename))
+view_2init(struct application* UNUSED(ap), char* UNUSED(framename))
 {
     bu_bomb("In 2init, Dont call me!");
 }
 
 extern "C" void
-view_end(struct application* ap) {
+view_end(struct application* UNUSED(ap)) {
     bu_bomb("In end, Dont call me!");
 }
 
 extern "C" void
-view_cleanup(struct rt_i* rtip)
+view_cleanup(struct rt_i* UNUSED(rtip))
 {
     bu_bomb("in cleanup, Dont call me!");
 }
 extern "C" void
-do_run(int a, int b) {
+do_run(int UNUSED(a), int UNUSED(b)) {
     bu_bomb("in run, Dont call me!");
 }
 extern "C" void
@@ -964,7 +964,7 @@ memory_summary(void)
 }
 
 void
-def_tree(register struct rt_i* rtip)
+def_tree(struct rt_i* rtip)
 {
     struct bu_vls times = BU_VLS_INIT_ZERO;
 
@@ -1167,9 +1167,8 @@ main(int argc, char **argv)
     }
 
     if (matflag) {
-
-	register char* buf;
-	register int	nret;
+	char* buf;
+	int nret;
 	rt_do_tab[6].ct_func = art_cm_end;
 	rt_do_tab[13].ct_func = art_cm_clean;
 
