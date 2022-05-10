@@ -232,38 +232,6 @@ extern "C" struct bu_structparse view_parse[] = {
 };
 
 
-// holds regular parse variables
-struct bu_structparse set_parse[] = {
-    /* daisy-chain to additional app-specific parameters */
-    {"%p",	1, "Application-Specific Parameters", bu_byteoffset(view_parse[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",	0, (char *)0,		0,						BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-};
-
-
-// set callback function
-int cm_set(const int argc, const char **argv)
-{
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-
-    if (argc <= 1) {
-	bu_struct_print("Generic and Application-Specific Parameter Values",
-			set_parse, (char *)0);
-	return 0;
-    }
-
-    bu_vls_from_argv(&str, argc-1, (const char **)argv+1);
-    if (bu_struct_parse(&str, set_parse, (char *)0, NULL) < 0) {
-	bu_vls_free(&str);
-	bu_log("ERROR HERE");
-	return -1;
-    }
-    // bu_log("str: %s", bu_vls_cstr(&str));
-    bu_vls_free(&str);
-    return 0;
-}
-
-
-
 /* Initializes module specific options
  * NOTE: to have an accurate usage() menu, we overwrite the indexes of all the
  * options from rt/usage.cpp which we don't support
