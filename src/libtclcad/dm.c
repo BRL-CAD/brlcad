@@ -1947,9 +1947,9 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 	 * dm_clipmin and dm_clipmax.
 	 */
 	if (dmop->dmo_dmp->i->dm_clipmax[2] <= GED_MAX)
-	    dmop->dmo_dmp->i->dm_bound = 1.0;
+	    dm_set_bound(dmop->dmo_dmp, 1.0);
 	else
-	    dmop->dmo_dmp->i->dm_bound = GED_MAX / dmop->dmo_dmp->i->dm_clipmax[2];
+	    dm_set_bound(dmop->dmo_dmp, GED_MAX / dmop->dmo_dmp->i->dm_clipmax[2]);
 
 	return BRLCAD_OK;
     }

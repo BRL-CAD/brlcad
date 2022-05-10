@@ -333,6 +333,37 @@ txt_getZClip(struct dm *UNUSED(dmp))
     return 0;
 }
 
+HIDDEN int
+txt_setBound(struct dm *UNUSED(dmp), double UNUSED(bound))
+{
+    bu_log("setBound called\n");
+    return 0;
+}
+
+
+HIDDEN double
+txt_getBound(struct dm *UNUSED(dmp))
+{
+    bu_log("getBound called\n");
+    return 0;
+}
+
+
+HIDDEN int
+txt_setBoundFlag(struct dm *UNUSED(dmp), int UNUSED(boundf))
+{
+    bu_log("setBoundFlag called\n");
+    return 0;
+}
+
+
+HIDDEN int
+txt_getBoundFlag(struct dm *UNUSED(dmp))
+{
+    bu_log("getBoundFlag called\n");
+    return 0;
+}
+
 
 HIDDEN int
 txt_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
@@ -473,6 +504,10 @@ struct dm_impl dm_txt_impl = {
     txt_getZBuffer,
     txt_setZClip,
     txt_getZClip,
+    txt_setBound,
+    txt_getBound,
+    txt_setBoundFlag,
+    txt_getBoundFlag,
     txt_debug,
     txt_logfile,
     txt_beginDList,
@@ -502,8 +537,6 @@ struct dm_impl dm_txt_impl = {
     NULL,                       /* not graphical */
     0,				/* no displaylist */
     0,				/* no stereo */
-    0.0,			/* zoom-in limit */
-    1,				/* bound flag */
     "txt",
     "Text Display",
     0,/* top */

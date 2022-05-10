@@ -303,6 +303,34 @@ null_getZClip(struct dm *UNUSED(dmp))
 
 
 int
+null_setBound(struct dm *UNUSED(dmp), double UNUSED(bound))
+{
+    return 0;
+}
+
+
+double
+null_getBound(struct dm *UNUSED(dmp))
+{
+    return 0;
+}
+
+
+int
+null_setBoundFlag(struct dm *UNUSED(dmp), int UNUSED(boundf))
+{
+    return 0;
+}
+
+
+int
+null_getBoundFlag(struct dm *UNUSED(dmp))
+{
+    return 0;
+}
+
+
+int
 null_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
 {
     return 0;
@@ -426,6 +454,10 @@ struct dm_impl dm_null_impl = {
     null_getZBuffer,
     null_setZClip,
     null_getZClip,
+    null_setBound,
+    null_getBound,
+    null_setBoundFlag,
+    null_getBoundFlag,
     null_debug,
     null_logfile,
     null_beginDList,
@@ -455,8 +487,6 @@ struct dm_impl dm_null_impl = {
     NULL,                       /* not graphical */
     0,				/* no displaylist */
     0,				/* no stereo */
-    0.0,			/* zoom-in limit */
-    1,				/* bound flag */
     "nu",
     "Null Display",
     0,/* top */

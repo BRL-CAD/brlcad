@@ -256,6 +256,7 @@ DM_EXPORT extern int dm_get_fb_visible(struct dm *dmp);
 DM_EXPORT extern int dm_set_fb_visible(struct dm *dmp, int is_fb_visible);
 
 
+/* Variables modifiable by dm get/set commands, as well as C functions */
 DM_EXPORT extern int dm_get_light(struct dm *dmp);
 DM_EXPORT extern int dm_set_light(struct dm *dmp, int light);
 DM_EXPORT extern int dm_get_transparency(struct dm *dmp);
@@ -264,8 +265,10 @@ DM_EXPORT extern int dm_get_zbuffer(struct dm *dmp);
 DM_EXPORT extern int dm_set_zbuffer(struct dm *dmp, int zbuffer);
 DM_EXPORT extern int dm_get_zclip(struct dm *dmp);
 DM_EXPORT extern void dm_set_zclip(struct dm *dmp, int zclip);
-DM_EXPORT extern int dm_get_bound_flag(struct dm *dmp);
+DM_EXPORT extern fastf_t dm_get_bound(struct dm *dmp);
 DM_EXPORT extern void dm_set_bound(struct dm *dmp, fastf_t val);
+DM_EXPORT extern int dm_get_bound_flag(struct dm *dmp);
+DM_EXPORT extern void dm_set_bound_flag(struct dm *dmp, int bound);
 
 
 

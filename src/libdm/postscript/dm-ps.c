@@ -101,8 +101,8 @@ ps_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
     BU_ALLOC(dmp->i->m_vars, struct ps_mvars);
     struct ps_mvars *m_vars = (struct ps_mvars *)dmp->i->m_vars;
     m_vars->zclip = 0;
-    m_vars->bound = 0;
-    m_vars->boundFlag = 0;
+    m_vars->bound = PLOTBOUND;
+    m_vars->boundFlag = 1;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -780,6 +780,55 @@ ps_getZClip(struct dm *dmp)
     return mvars->zclip;
 }
 
+static int
+ps_setBound(struct dm *dmp, double bound)
+{
+    struct ps_mvars *mvars = (struct ps_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("ps_setBound");
+
+    mvars->bound = bound;
+
+    return BRLCAD_OK;
+}
+
+static double
+ps_getBound(struct dm *dmp)
+{
+    struct ps_mvars *mvars = (struct ps_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("ps_getBound");
+
+    return mvars->bound;
+}
+
+static int
+ps_setBoundFlag(struct dm *dmp, int bound)
+{
+    struct ps_mvars *mvars = (struct ps_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("ps_setBoundFlag");
+
+    mvars->boundFlag = bound;
+
+    return BRLCAD_OK;
+}
+
+static int
+ps_getBoundFlag(struct dm *dmp)
+{
+    struct ps_mvars *mvars = (struct ps_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("ps_getBoundFlag");
+
+    return mvars->boundFlag;
+}
+
+
 #define ps_MV_O(_m) offsetof(struct ps_mvars, _m)
 struct bu_structparse ps_vparse[] = {
     {"%g",  1, "bound",         ps_MV_O(bound),         dm_generic_hook, NULL, NULL},
@@ -826,6 +875,10 @@ struct dm_impl dm_ps_impl = {
     null_getZBuffer,
     ps_setZClip,
     ps_getZClip,
+    ps_setBound,
+    ps_getBound,
+    ps_setBoundFlag,
+    ps_getBoundFlag,
     ps_debug,
     ps_logfile,
     null_beginDList,
@@ -855,8 +908,6 @@ struct dm_impl dm_ps_impl = {
     NULL,                       /* not graphical */
     0,				/* no displaylist */
     0,                          /* no stereo */
-    PLOTBOUND,			/* zoom-in limit */
-    1,				/* bound flag */
     "ps",
     "Screen to PostScript",
     0, /* top */

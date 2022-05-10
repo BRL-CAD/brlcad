@@ -267,8 +267,8 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     mvars->lighting_on = 1;
     mvars->zbuffer_on = 1;
     mvars->zclipping_on = 0;
-    mvars->bound = dmp->i->dm_bound;
-    mvars->boundFlag = dmp->i->dm_boundFlag;
+    mvars->bound = 1.0;
+    mvars->boundFlag = 1;
 
     /* this is important so that swrast_configureWin knows to set the font */
     privars->fs = NULL;
@@ -587,6 +587,10 @@ struct dm_impl dm_swrast_impl = {
     gl_getZBuffer,
     gl_setZClip,
     gl_getZClip,
+    gl_setBound,
+    gl_getBound,
+    gl_setBoundFlag,
+    gl_getBoundFlag,
     gl_debug,
     gl_logfile,
     gl_beginDList,
@@ -616,8 +620,6 @@ struct dm_impl dm_swrast_impl = {
     "osmesa",                   /* uses OSMesa software rasterizer */
     1,				/* has displaylist */
     0,                          /* no stereo by default */
-    1.0,			/* zoom-in limit */
-    1,				/* bound flag */
     "swrast",
     "OSMesa swrast graphics",
     1, /* top */

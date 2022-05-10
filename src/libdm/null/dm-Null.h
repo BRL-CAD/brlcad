@@ -179,6 +179,22 @@ null_getZClip(struct dm *dmp);
 
 
 DM_NULL_EXPORT extern int
+null_setBound(struct dm *dmp, double bound);
+
+
+DM_NULL_EXPORT extern double
+null_getBound(struct dm *dmp);
+
+
+DM_NULL_EXPORT extern int
+null_setBoundFlag(struct dm *dmp, int boundf);
+
+
+DM_NULL_EXPORT extern int
+null_getBoundFlag(struct dm *dmp);
+
+
+DM_NULL_EXPORT extern int
 null_debug(struct dm *dmp, int lvl);
 
 

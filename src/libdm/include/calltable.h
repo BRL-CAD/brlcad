@@ -95,6 +95,10 @@ struct dm_impl {
     int (*dm_getZBuffer)(struct dm *dmp);
     int (*dm_setZClip)(struct dm *dmp, int zclip);
     int (*dm_getZClip)(struct dm *dmp);
+    int (*dm_setBound)(struct dm *dmp, double bound);  /**< @brief set zoom-in limit */
+    double (*dm_getBound)(struct dm *dmp);  /**< @brief get zoom-in limit */
+    int (*dm_setBoundFlag)(struct dm *dmp, int bound);  /**< @brief enable/disable zoom-in limit */
+    int (*dm_getBoundFlag)(struct dm *dmp);  /**< @brief get zoom-in limit enable/disable state */
     int (*dm_debug)(struct dm *dmp, int lvl);		/**< @brief Set DM debug level */
     int (*dm_logfile)(struct dm *dmp, const char *filename); /**< @brief Set DM log file */
     int (*dm_beginDList)(struct dm *dmp, unsigned int list);
@@ -124,8 +128,6 @@ struct dm_impl {
     const char *graphics_system; /**< @brief String identifying the drawing layer assumed */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */
-    double dm_bound;		/**< @brief zoom-in limit */
-    int dm_boundFlag;
     const char *dm_name;		/**< @brief short name of device */
     const char *dm_lname;		/**< @brief long name of device */
     int dm_top;                   /**< @brief !0 means toplevel window */

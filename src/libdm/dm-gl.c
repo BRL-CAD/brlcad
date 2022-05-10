@@ -1400,6 +1400,47 @@ int gl_getZClip(struct dm *dmp)
     return mvars->zclipping_on;
 }
 
+int gl_setBound(struct dm *dmp, double bound)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+
+    gl_debug_print(dmp, "gl_setBound", dmp->i->dm_debugLevel);
+
+    mvars->bound = bound;
+
+    return BRLCAD_OK;
+}
+
+double gl_getBound(struct dm *dmp)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+
+    gl_debug_print(dmp, "gl_getBound", dmp->i->dm_debugLevel);
+
+    return mvars->bound;
+}
+
+
+int gl_setBoundFlag(struct dm *dmp, int boundf)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+
+    gl_debug_print(dmp, "gl_setBoundFlag", dmp->i->dm_debugLevel);
+
+    mvars->boundFlag = boundf;
+
+    return BRLCAD_OK;
+}
+
+int gl_getBoundFlag(struct dm *dmp)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+
+    gl_debug_print(dmp, "gl_getBoundFlag", dmp->i->dm_debugLevel);
+
+    return mvars->boundFlag;
+}
+
 int gl_beginDList(struct dm *dmp, unsigned int list)
 {
     gl_debug_print(dmp, "gl_beginDList", dmp->i->dm_debugLevel);
@@ -1586,11 +1627,6 @@ void gl_bound_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct gl_vars *mvars = (struct gl_vars *)base;
-    struct dm *dmp = mvars->this_dm;
-
-    dmp->i->dm_bound = mvars->bound;
-
     dm_generic_hook(sdp, name, base, value, data);
 }
 
@@ -1600,11 +1636,6 @@ void gl_bound_flag_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct gl_vars *mvars = (struct gl_vars *)base;
-    struct dm *dmp = mvars->this_dm;
-
-    dmp->i->dm_boundFlag = mvars->boundFlag;
-
     dm_generic_hook(sdp, name, base, value, data);
 }
 

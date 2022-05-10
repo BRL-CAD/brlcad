@@ -101,8 +101,8 @@ plot_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
     BU_ALLOC(dmp->i->m_vars, struct plot_mvars);
     struct plot_mvars *m_vars = (struct plot_mvars *)dmp->i->m_vars;
     m_vars->zclip = 0;
-    m_vars->bound = 0;
-    m_vars->boundFlag = 0;
+    m_vars->bound = PLOTBOUND;
+    m_vars->boundFlag = 1;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -711,6 +711,54 @@ plot_getZClip(struct dm *dmp)
     return mvars->zclip;
 }
 
+static int
+plot_setBound(struct dm *dmp, double bound)
+{
+    struct plot_mvars *mvars = (struct plot_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("plot_setBound");
+
+    mvars->bound = bound;
+
+    return BRLCAD_OK;
+}
+
+static double
+plot_getBound(struct dm *dmp)
+{
+    struct plot_mvars *mvars = (struct plot_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("plot_getBound");
+
+    return mvars->bound;
+}
+
+static int
+plot_setBoundFlag(struct dm *dmp, int bound)
+{
+    struct plot_mvars *mvars = (struct plot_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("plot_setBoundFlag");
+
+    mvars->boundFlag = bound;
+
+    return BRLCAD_OK;
+}
+
+static int
+plot_getBoundFlag(struct dm *dmp)
+{
+    struct plot_mvars *mvars = (struct plot_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("plot_getBoundFlag");
+
+    return mvars->boundFlag;
+}
+
 #define plot_MV_O(_m) offsetof(struct plot_mvars, _m)
 struct bu_structparse plot_vparse[] = {
     {"%g",  1, "bound",         plot_MV_O(bound),       dm_generic_hook, NULL, NULL},
@@ -757,6 +805,10 @@ struct dm_impl dm_plot_impl = {
     null_getZBuffer,
     plot_setZClip,
     plot_getZClip,
+    plot_setBound,
+    plot_getBound,
+    plot_setBoundFlag,
+    plot_getBoundFlag,
     plot_debug,
     plot_logfile,
     null_beginDList,
@@ -786,8 +838,6 @@ struct dm_impl dm_plot_impl = {
     NULL,                       /* not graphical */
     0,				/* no displaylist */
     0,				/* no stereo */
-    PLOTBOUND,			/* zoom-in limit */
-    1,				/* bound flag */
     "plot",
     "Screen to UNIX-Plot",
     0, /* top */

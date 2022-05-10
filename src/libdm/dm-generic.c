@@ -347,14 +347,28 @@ int
 dm_get_bound_flag(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_boundFlag;
+    return dmp->i->dm_getBoundFlag(dmp);
+}
+
+void
+dm_set_bound_flag(struct dm *dmp, int boundf)
+{
+    if (UNLIKELY(!dmp)) return;
+    dmp->i->dm_setBoundFlag(dmp, boundf);
+}
+
+fastf_t
+dm_get_bound(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_getBound(dmp);
 }
 
 void
 dm_set_bound(struct dm *dmp, fastf_t val)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->i->dm_bound = val;
+    dmp->i->dm_setBound(dmp, val);
 }
 
 int
@@ -891,8 +905,6 @@ dm_hash(struct dm *dmp)
     // Also deliberately not checking dirty flag - that's usually what we're
     // using this hash to set or not set.
     XXH64_update(state, &dmp->i->dm_stereo, sizeof(int));
-    XXH64_update(state, &dmp->i->dm_bound, sizeof(double));
-    XXH64_update(state, &dmp->i->dm_boundFlag, sizeof(int));
     XXH64_update(state, &dmp->i->dm_width, sizeof(int));
     XXH64_update(state, &dmp->i->dm_height, sizeof(int));
     XXH64_update(state, &dmp->i->dm_lineWidth, sizeof(int));

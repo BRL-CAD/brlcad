@@ -505,8 +505,8 @@ X_open(void *UNUSED(ctx), void *vinterp, int argc, const char **argv)
     BU_ALLOC(dmp->i->m_vars, struct X_mvars);
     struct X_mvars *m_vars = (struct X_mvars *)dmp->i->m_vars;
     m_vars->zclip = 0;
-    m_vars->bound = 0;
-    m_vars->boundFlag = 0;
+    m_vars->bound = PLOTBOUND;
+    m_vars->boundFlag = 1;
 
     bu_vls_init(&dmp->i->dm_pathName);
     bu_vls_init(&dmp->i->dm_tkName);
@@ -1508,6 +1508,54 @@ X_getZClip(struct dm *dmp)
     return mvars->zclip;
 }
 
+static int
+X_setBound(struct dm *dmp, double bound)
+{
+    struct X_mvars *mvars = (struct X_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_setBound");
+
+    mvars->bound = bound;
+
+    return BRLCAD_OK;
+}
+
+static double
+X_getBound(struct dm *dmp)
+{
+    struct X_mvars *mvars = (struct X_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_getBound");
+
+    return mvars->bound;
+}
+
+static int
+X_setBoundFlag(struct dm *dmp, int bound)
+{
+    struct X_mvars *mvars = (struct X_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_setBoundFlag");
+
+    mvars->boundFlag = bound;
+
+    return BRLCAD_OK;
+}
+
+static int
+X_getBoundFlag(struct dm *dmp)
+{
+    struct X_mvars *mvars = (struct X_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_getBoundFlag");
+
+    return mvars->boundFlag;
+}
+
 HIDDEN int
 X_configureWin(struct dm *dmp, int force)
 {
@@ -2139,6 +2187,10 @@ struct dm_impl dm_X_impl = {
     null_getZBuffer,
     X_setZClip,
     X_getZClip,
+    X_setBound,
+    X_getBound,
+    X_setBoundFlag,
+    X_getBoundFlag,
     X_debug,
     X_logfile,
     null_beginDList,
@@ -2168,8 +2220,6 @@ struct dm_impl dm_X_impl = {
     "Tk",                       /* uses Tk graphics system */
     0,				/* no displaylist */
     0,                          /* no stereo */
-    PLOTBOUND,			/* zoom-in limit */
-    1,				/* bound flag */
     "X",
     "X Window System (X11)",
     1, /* top */
