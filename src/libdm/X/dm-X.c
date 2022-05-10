@@ -1484,6 +1484,29 @@ X_setWinBounds(struct dm *dmp, fastf_t *w)
     return BRLCAD_OK;
 }
 
+static int
+X_setZClip(struct dm *dmp, int zclip)
+{
+    struct X_mvars *mvars = (struct X_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_setZClip");
+
+    mvars->zclip = zclip;
+
+    return BRLCAD_OK;
+}
+
+static int
+X_getZClip(struct dm *dmp)
+{
+    struct X_mvars *mvars = (struct X_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_getZClip");
+
+    return mvars->zclip;
+}
 
 HIDDEN int
 X_configureWin(struct dm *dmp, int force)
@@ -2114,8 +2137,8 @@ struct dm_impl dm_X_impl = {
     null_setDepthMask,
     null_setZBuffer,
     null_getZBuffer,
-    null_setZClip,
-    null_getZClip,
+    X_setZClip,
+    X_getZClip,
     X_debug,
     X_logfile,
     null_beginDList,

@@ -687,6 +687,30 @@ plot_setWinBounds(struct dm *dmp, fastf_t *w)
     return BRLCAD_OK;
 }
 
+static int
+plot_setZClip(struct dm *dmp, int zclip)
+{
+    struct plot_mvars *mvars = (struct plot_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("plot_setZClip");
+
+    mvars->zclip = zclip;
+
+    return BRLCAD_OK;
+}
+
+static int
+plot_getZClip(struct dm *dmp)
+{
+    struct plot_mvars *mvars = (struct plot_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("plot_getZClip");
+
+    return mvars->zclip;
+}
+
 #define plot_MV_O(_m) offsetof(struct plot_mvars, _m)
 struct bu_structparse plot_vparse[] = {
     {"%g",  1, "bound",         plot_MV_O(bound),       dm_generic_hook, NULL, NULL},
@@ -731,8 +755,8 @@ struct dm_impl dm_plot_impl = {
     null_setDepthMask,
     null_setZBuffer,
     null_getZBuffer,
-    null_setZClip,
-    null_getZClip,
+    plot_setZClip,
+    plot_getZClip,
     plot_debug,
     plot_logfile,
     null_beginDList,

@@ -756,6 +756,30 @@ ps_setWinBounds(struct dm *dmp, fastf_t *w)
     return BRLCAD_OK;
 }
 
+static int
+ps_setZClip(struct dm *dmp, int zclip)
+{
+    struct ps_mvars *mvars = (struct ps_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("ps_setZClip");
+
+    mvars->zclip = zclip;
+
+    return BRLCAD_OK;
+}
+
+static int
+ps_getZClip(struct dm *dmp)
+{
+    struct ps_mvars *mvars = (struct ps_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("ps_getZClip");
+
+    return mvars->zclip;
+}
+
 #define ps_MV_O(_m) offsetof(struct ps_mvars, _m)
 struct bu_structparse ps_vparse[] = {
     {"%g",  1, "bound",         ps_MV_O(bound),         dm_generic_hook, NULL, NULL},
@@ -800,8 +824,8 @@ struct dm_impl dm_ps_impl = {
     null_setDepthMask,
     null_setZBuffer,
     null_getZBuffer,
-    null_setZClip,
-    null_getZClip,
+    ps_setZClip,
+    ps_getZClip,
     ps_debug,
     ps_logfile,
     null_beginDList,
