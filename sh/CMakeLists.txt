@@ -35,6 +35,7 @@ set(noinst_SCRIPTS
   news2tracker.sh
   template.sh
   ws.sh
+  sandbox/metaring.sh
   )
 CMAKEFILES(${sh_SCRIPTS})
 CMAKEFILES(${noinst_SCRIPTS})
