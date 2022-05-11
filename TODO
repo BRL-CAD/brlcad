@@ -138,6 +138,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* idents command needs to have csv/xls output options and should
+  output a column header and optionally not export the comment header
+  for ease of import into spreadsheet programs.
+
 * running mged geometry browser and selecting preview results in an
   error.  code appears to be assuming both /dev/X framebuffer and uses
   /dev/null redirect to sink output.
