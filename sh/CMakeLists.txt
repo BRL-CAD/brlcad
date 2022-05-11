@@ -36,6 +36,7 @@ set(noinst_SCRIPTS
   template.sh
   ws.sh
   sandbox/metaring.sh
+  sandbox/visibility.sh
   )
 CMAKEFILES(${sh_SCRIPTS})
 CMAKEFILES(${noinst_SCRIPTS})
