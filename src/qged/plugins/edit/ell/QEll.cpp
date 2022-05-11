@@ -32,7 +32,10 @@
 QEll::QEll()
     : QWidget()
 {
-    ell.magic = RT_ELL_INTERNAL_MAGIC; // ID_ELL
+    // TODO - in an ideal world the "default" values would be set
+    // and updated in response to view changes (if widget is continually
+    // visible) or when it becomes visible...
+    ell.magic = RT_ELL_INTERNAL_MAGIC;
     VSET(ell.v, 0, 0, 0);
     VSET(ell.a, 100, 0, 0);
     VSET(ell.b, 0, 200, 0);
