@@ -117,7 +117,6 @@ namespace asr = renderer;
 
 thread_local struct BRLCAD_to_ASR brlcad_ray_info;
 
-FILE* output = fopen("print_statements.txt", "wb");
 
 /* brlcad raytrace hit callback */
 int
@@ -138,9 +137,6 @@ brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct s
 
     /* entry hit point, so we type less */
     hitp = pp->pt_inhit;
-
-    // fprintf(output, "names: %s | %s\n", (const char*)ap->a_uptr, pp->pt_regionp->reg_name);
-    // fflush(output);
 
     /* construct the actual (entry) hit-point from the ray and the
      * distance to the intersection point (i.e., the 't' value).
@@ -185,8 +181,6 @@ BrlcadObject::BrlcadObject(
     // VMOVE(max, ap->a_vvec);
 
     this->name = new std::string(m_params.get_required<std::string>("object_path"));
-    fprintf(output, "appleseed const: Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", V3ARGS(min), V3ARGS(max));
-    fflush(output);
 }
 
 
@@ -221,15 +215,6 @@ BrlcadObject:: BrlcadObject(
     rt_gettree(this->rtip, this->name->c_str());
     if (this->rtip->needprep)
         rt_prep_parallel(this->rtip, 1);
-    //printf("name: [%s]\n", name);
-    //this->rtip = rt_dirbuild();
-    //this->rtip = p_ap->a_rt_i;
-
-    // VSETALL(ap->a_uvec, 0);
-    // VSETALL(ap->a_vvec, 0);
-
-    // fprintf(output, "art.cpp const: Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", V3ARGS(min), V3ARGS(max));
-    // fflush(output);
 
     RT_APPLICATION_INIT(&ap);
 
@@ -292,9 +277,6 @@ BrlcadObject::compute_local_bbox() const
     // point_t max;
     // VMOVE(max, ap->a_vvec);
     // VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
-
-    // fprintf(output, "Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", V3ARGS(min), V3ARGS(max));
-    // fflush(output);
 
     return asr::GAABB3(asr::GVector3(V3ARGS(min)), asr::GVector3(V3ARGS(max)));
     // return asr::GAABB3(asr::GVector3(-r), asr::GVector3(r));
@@ -456,8 +438,7 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
     /* load the specified geometry database */
     rtip = rt_dirbuild(path, title, sizeof(title));
     if (rtip == RTI_NULL) {
-	fprintf(output, "Building the database directory for [%s] FAILED\n", path);
-	fflush(output);
+	bu_log("Building the database directory for [%s] FAILED\n", path);
 	return;
     }
 
@@ -468,8 +449,7 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
 
     /* display optional database title */
     if (title[0]) {
-	fprintf(output, "Database title: %s\n", title);
-	fflush(output);
+	bu_log("Database title: %s\n", title);
     }
 
     /* parse object arguments */
@@ -480,8 +460,7 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
 
     /* include objects from database */
     if (rt_gettrees(rtip, objc, objv, (int)npsw) < 0) {
-	fprintf(output, "Loading the geometry for [%s] FAILED\n", objects[0].c_str());
-	fflush(output);
+	bu_log("Loading the geometry for [%s] FAILED\n", objects[0].c_str());
     }
 
     /* Prepare database for raytracing */
