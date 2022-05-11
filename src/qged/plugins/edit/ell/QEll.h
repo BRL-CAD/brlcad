@@ -68,8 +68,8 @@ class QEll : public QWidget
 	bool eventFilter(QObject *, QEvent *);
 
     private:
-	struct db_i *dbip = NULL;
-	struct rt_db_internal *intern = NULL;
+	struct directory *dp = NULL;
+	struct rt_ell_internal ell;
 	struct bv_scene_obj *p = NULL;
 };
 

@@ -32,6 +32,13 @@
 QEll::QEll()
     : QWidget()
 {
+    ell.magic = RT_ELL_INTERNAL_MAGIC; // ID_ELL
+    VSET(ell.v, 0, 0, 0);
+    VSET(ell.a, 100, 0, 0);
+    VSET(ell.b, 0, 200, 0);
+    VSET(ell.c, 0, 0, 300);
+
+
     QVBoxLayout *l = new QVBoxLayout;
 
     QLabel *ell_name_label = new QLabel("Object name:");
@@ -77,22 +84,101 @@ QEll::~QEll()
 void
 QEll::read_from_db()
 {
+    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
+    if (!mdl)
+	return;
+    QgModel *m = (QgModel *)mdl->sourceModel();
+    struct ged *gedp = m->gedp;
+    if (!gedp)
+	return;
+    struct db_i *dbip = gedp->dbip;
     if (!dbip)
 	return;
+
+    char *oname = NULL;
+    if (ell_name->placeholderText().length()) {
+	oname = bu_strdup(ell_name->placeholderText().toLocal8Bit().data());
+    }
+    if (ell_name->text().length()) {
+	bu_free(oname, "don't need placeholder text");
+	oname = bu_strdup(ell_name->text().toLocal8Bit().data());
+    }
+    if (!oname)
+	return;
+
+    dp = db_lookup(dbip, oname, LOOKUP_QUIET);
+    bu_free(oname, "oname");
+    if (!dp || dp->d_minor_type != DB5_MINORTYPE_BRLCAD_ELL)
+	return;
+
+    struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
+    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	return;
+    RT_ELL_CK_MAGIC(&intern);
+    struct rt_ell_internal *ellp = (struct rt_ell_internal *)intern.idb_ptr;
+    VMOVE(ell.v, ellp->v);
+    VMOVE(ell.a, ellp->a);
+    VMOVE(ell.b, ellp->b);
+    VMOVE(ell.c, ellp->c);
+    rt_db_free_internal(&intern);
 }
 
 void
 QEll::write_to_db()
 {
+    char *oname = NULL;
+    if (ell_name->placeholderText().length()) {
+	oname = bu_strdup(ell_name->placeholderText().toLocal8Bit().data());
+    }
+    if (ell_name->text().length()) {
+	bu_free(oname, "don't need placeholder text");
+	oname = bu_strdup(ell_name->text().toLocal8Bit().data());
+    }
+    if (!oname)
+	return;
+
+    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
+    if (!mdl)
+	return;
+    QgModel *m = (QgModel *)mdl->sourceModel();
+    struct ged *gedp = m->gedp;
+    if (!gedp)
+	return;
+    struct db_i *dbip = gedp->dbip;
     if (!dbip)
 	return;
+
+
+    struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_ELL;
+    intern.idb_ptr = &ell;
+    intern.idb_meth = &OBJ[intern.idb_type];
+
+    dp = db_lookup(dbip, oname, LOOKUP_QUIET);
+
+    if (dp == RT_DIR_NULL) {
+	dp = db_diradd(dbip, oname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+    }
+
+    bu_free(oname, "oname");
+
+    if (dp == RT_DIR_NULL) {
+	rt_db_free_internal(&intern);
+	return;
+    }
+
+    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+	rt_db_free_internal(&intern);
+	return;
+    }
+
+    rt_db_free_internal(&intern);
 }
 
 void
 QEll::update_obj_wireframe()
 {
-    if (!dbip)
-	return;
 }
 
 bool
