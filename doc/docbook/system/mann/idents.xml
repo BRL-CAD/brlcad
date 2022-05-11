@@ -25,35 +25,49 @@
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-  <para>Places a summary of the regions in the list of <emphasis>objects</emphasis> specified
-	in the file specified. If any regions include other regions, then only the first
-	encountered region in that tree will be listed. The resulting file will contain two lists
-	of regions, one in the order encountered in the list of objects, and the other ordered by
-	ident number. The data written for each region includes (in this order) a sequential
-	region count, the ident number, the air code, the material code, the LOS, and the path
-	to the region.
+  <para>Places a summary of the regions in the list of
+  <emphasis>objects</emphasis> specified in the file specified. If any
+  regions include other regions, then only the first encountered
+  region in that tree will be listed. The resulting file will contain
+  two lists of regions, one in the order encountered in the list of
+  objects, and the other ordered by ident number. The data written for
+  each region includes (in this order) a sequential region count, the
+  ident number, the air code, the material code, the LOS, and the path
+  to the region.
     </para>
 </refsection>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <para>The example shows the use of the <command>idents</command> command to create a file that will list all 	regions in specified objects.
-   </para>
-  <example><title>Create a file that lists all regions contained in specified objects.</title>
+  <para>The example shows the use of the <command>idents</command>
+  command to create a file that will list all regions in specified
+  objects.
+  </para>
+  <example>
+    <title>Create a file that lists all regions contained in
+    specified objects.</title>
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>idents regions_file group1 group2 region3</userinput></term>
-	   <listitem>
-	     <para>Creates a file named <emphasis>regions_file</emphasis> and lists all the regions in <emphasis>			group1, group2,</emphasis> and <emphasis>region3</emphasis> in the file.
-	    </para>
-	   </listitem>
+	<term><prompt>mged&gt;</prompt> <userinput>idents regions_file group1 group2 region3</userinput></term>
+	<listitem>
+	  <para>Creates a file named
+	  <emphasis>regions_file</emphasis> and lists all the regions
+	   in <emphasis> group1, group2,</emphasis> and
+	   <emphasis>region3</emphasis> in the file.
+	  </para>
+	</listitem>
       </varlistentry>
     </variablelist>
   </example>
 </refsection>
 
-<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
+<refsection xml:id="see_also"><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>idents</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsection>
+
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD
+Team</para></refsection>
 
 <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 

@@ -28,6 +28,7 @@ set(man5_EN
   burst_shotline_files.xml
   bw.xml
   cmap.xml
+  idents.xml
   nirt_formatting.xml
   pix.xml
   plot3.xml
