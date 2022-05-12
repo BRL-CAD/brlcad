@@ -838,16 +838,6 @@ build_project(const char* file, const char* UNUSED(objects))
 		));
         camera = ortho;
     }
-    asf::auto_release_ptr<asr::Camera> camera(
-    asr::PinholeCameraFactory().create(
-    "camera",
-    asr::ParamArray()
-    .insert("film_dimensions", bu_vls_cstr(&dimensions))
-    // .insert("focal_length", "0.035")
-    // rt_perspective is horizontal_fov
-    // horizontal_fov has precidence over focal_length
-    // if -p is not set, default will be used
-    .insert("horizontal_fov", rt_perspective))); // equvalent to focal_length", "0.035
 
     /*
       bu_log("EYE: %lf, %lf, %lf\n", V3ARGS(eye_model));
