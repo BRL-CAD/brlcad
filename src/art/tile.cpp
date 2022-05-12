@@ -1,5 +1,25 @@
+/*                        T I L E . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2022 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+
+/* interface header */
 #include "tile.h"
-#include "dm.h"
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic push
@@ -31,9 +51,12 @@
 #  pragma clang diagnostic pop
 #endif
 
+#include "dm.h"
+
 using namespace foundation;
 
 extern struct fb *fbp;	/* Framebuffer handle */
+
 
 void ArtTileCallback::on_tile_end(const renderer::Frame* frame, const size_t tile_x, const size_t tile_y) {
     foundation::Tile& t = frame->image().tile(tile_x, tile_y);
@@ -43,12 +66,21 @@ void ArtTileCallback::on_tile_end(const renderer::Frame* frame, const size_t til
     // printf("%lu %lu \n", tile_x, tile_y);
     // printf("%lu %lu \n", rgb.get_width(), rgb.get_height());
     for (size_t y = 0; y < rgb.get_height(); y++) {
-            for (size_t x = 0; x < rgb.get_width(); x++) {
-                    size_t x_coord = tile_x * rgb.get_width() + x;
-                    size_t y_coord = tile_y * rgb.get_height() + y;
-                    size_t img_h = frame->image().properties().m_canvas_height;
-                    fb_write(fbp, x_coord, img_h - y_coord, rgb.get_storage()+((y * rgb.get_width() * 4) + (x * 4)), 1);
-            }
-
+	for (size_t x = 0; x < rgb.get_width(); x++) {
+	    size_t x_coord = tile_x * rgb.get_width() + x;
+	    size_t y_coord = tile_y * rgb.get_height() + y;
+	    size_t img_h = frame->image().properties().m_canvas_height;
+	    fb_write(fbp, x_coord, img_h - y_coord, rgb.get_storage()+((y * rgb.get_width() * 4) + (x * 4)), 1);
+	}
     }
 }
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
