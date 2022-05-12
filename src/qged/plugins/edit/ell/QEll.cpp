@@ -104,16 +104,9 @@ QEll::read_from_db()
     if (!dbip)
 	return;
 
-    // Both of the conditions we are checking for here are normal - the former
-    // indicates we are creating a new object, and the latter indicates we are
-    // going to replace an existing object of another type with an ell.
-    //
-    // TODO - in the latter case we probably want to indicate visually in some
-    // fashion that an application of the write would be more than an update to
-    // existing object parameters - maybe by changing the color and/or label of
-    // the write button.
-    if (!dp || dp->d_minor_type != DB5_MINORTYPE_BRLCAD_ELL)
+    if (!dp || dp->d_minor_type != DB5_MINORTYPE_BRLCAD_ELL) {
 	return;
+    }
 
     struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
     if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
@@ -221,6 +214,7 @@ QEll::update_obj_wireframe()
     if (intern.idb_meth->ft_labels)
 	intern.idb_meth->ft_labels(p, &intern, p->s_v);
 
+    p->s_flag = UP;
     // TODO - we should be able to set UP or DOWN on the various labels
     // when their respective controls are enabled/disabled...
 
@@ -263,8 +257,13 @@ QEll::update_viewobj_name(const QString &)
     struct directory *ndp = db_lookup(gedp->dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
     if (ndp != dp) {
 	dp = ndp;
-	if (dp)
+	if (dp) {
 	    read_from_db();
+	} else {
+	    // Turning off wireframe - obj name is now invalid
+	    p->s_flag = DOWN;
+	    emit view_updated(&v);
+	}
     }
 }
 
