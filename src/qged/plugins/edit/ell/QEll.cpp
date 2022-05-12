@@ -111,6 +111,15 @@ QEll::read_from_db()
 
     dp = db_lookup(dbip, oname, LOOKUP_QUIET);
     bu_free(oname, "oname");
+
+    // Both of the conditions we are checking for here are normal - the former
+    // indicates we are creating a new object, and the latter indicates we are
+    // going to replace an existing object of another type with an ell.
+    //
+    // TODO - in the latter case we probably want to indicate visually in some
+    // fashion that an application of the write would be more than an update to
+    // existing object parameters - maybe by changing the color and/or label of
+    // the write button.
     if (!dp || dp->d_minor_type != DB5_MINORTYPE_BRLCAD_ELL)
 	return;
 
