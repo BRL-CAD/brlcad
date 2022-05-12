@@ -1000,37 +1000,31 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		struct per_region_data *prd;
 		vect_t cmass;
 		vect_t lenTorque;
-		fastf_t Lx = state->span[0]/state->steps[0];
-		fastf_t Ly = state->span[1]/state->steps[1];
-		fastf_t Lz = state->span[2]/state->steps[2];
 		fastf_t Lx_sq;
 		fastf_t Ly_sq;
 		fastf_t Lz_sq;
-		fastf_t cell_area;
+		fastf_t cell_area = gridSpacing*gridSpacing;
 		int los;
 
 		switch (state->i_axis) {
 		    case 0:
 			Lx_sq = dist*pp->pt_regionp->reg_los*0.01;
 			Lx_sq *= Lx_sq;
-			Ly_sq = Ly*Ly;
-			Lz_sq = Lz*Lz;
-			cell_area = Ly_sq;
+			Ly_sq = cell_area;
+			Lz_sq = cell_area;
 			break;
 		    case 1:
-			Lx_sq = Lx*Lx;
+			Lx_sq = cell_area;
 			Ly_sq = dist*pp->pt_regionp->reg_los*0.01;
 			Ly_sq *= Ly_sq;
-			Lz_sq = Lz*Lz;
-			cell_area = Lx_sq;
+			Lz_sq = cell_area;
 			break;
 		    case 2:
 		    default:
-			Lx_sq = Lx*Lx;
-			Ly_sq = Ly*Ly;
+			Lx_sq = cell_area;
+			Ly_sq = cell_area;
 			Lz_sq = dist*pp->pt_regionp->reg_los*0.01;
 			Lz_sq *= Lz_sq;
-			cell_area = Lx_sq;
 			break;
 		}
 
@@ -1273,7 +1267,7 @@ plane_worker(int cpu, void *ptr)
     shot_cnt = 0;
     while (v) {
 
-	v_coord = v * gridSpacing;
+	v_coord = (v - 0.5) * gridSpacing;
 	if (debug) {
 	    bu_semaphore_acquire(state->sem_worker);
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "  v = %d v_coord=%g\n", v, v_coord);
@@ -1286,8 +1280,8 @@ plane_worker(int cpu, void *ptr)
 	     * numbered row in a grid refinement
 	     */
 	    for (u=1; u < state->steps[state->u_axis]; u++) {
-		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
-		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v*gridSpacing;
+		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + (u - 0.5) * gridSpacing;
+		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v_coord;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
 		if (debug) {
@@ -1309,8 +1303,8 @@ plane_worker(int cpu, void *ptr)
 	     * them have been computed in a previous iteration.
 	     */
 	    for (u=1; u < state->steps[state->u_axis]; u+=2) {
-		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
-		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v*gridSpacing;
+		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + (u - 0.5) * gridSpacing;
+		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v_coord;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
 		if (debug) {
@@ -2622,6 +2616,9 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	int view;
 
 	VSCALE(state.steps, state.span, inv_spacing);
+	state.steps[0] += 1;
+	state.steps[1] += 1;
+	state.steps[2] += 1;
 
 	bu_log("Processing with grid spacing %g %s %ld x %ld x %ld\n",
 	       gridSpacing / units[LINE]->val,
