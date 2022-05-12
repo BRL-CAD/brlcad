@@ -330,16 +330,6 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-A #</option></term>
-	<listitem>
-	  <para>
-	    Select angle for shading.  Default is 5.0 degrees; 89.0 will produce
-	    an image where only steep drops and rises are shaded.
-	  </para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
 	<term><option>-B</option></term>
 	<listitem>
 	  <para>turns on the "benchmark" flag. This causes all intentional random effects
