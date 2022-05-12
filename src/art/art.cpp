@@ -899,7 +899,9 @@ build_project(const char* file, const char* UNUSED(objects))
     return project;
 }
 
-int fb_setup() {
+
+static int
+fb_setup() {
     /* Framebuffer is desired */
     size_t xx, yy;
     int zoom;
