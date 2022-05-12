@@ -221,6 +221,9 @@ QEll::update_obj_wireframe()
     if (intern.idb_meth->ft_labels)
 	intern.idb_meth->ft_labels(p, &intern, p->s_v);
 
+    // TODO - we should be able to set UP or DOWN on the various labels
+    // when their respective controls are enabled/disabled...
+
     emit view_updated(&v);
 }
 
