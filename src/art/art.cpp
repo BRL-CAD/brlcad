@@ -158,7 +158,7 @@
 
 #include "brlcad_ident.h"
 
-#define VERBOSE_STATS	     0x00000008	
+#define VERBOSE_STATS 0x00000008
 
 #include "dm.h"
 #include "tile.h"
@@ -175,44 +175,40 @@ struct fb* fbp = FB_NULL;
 
 extern "C" {
     FILE* outfp = NULL;
+    extern char* framebuffer;
+    extern char* outputfile;
+    extern char** objv;
+    extern fastf_t aspect;
+    extern fastf_t azimuth, elevation;
+    extern fastf_t eye_backoff; /* dist from eye to center */
+    extern fastf_t rt_perspective;
+    extern fastf_t viewsize;
+    extern int matflag;
+    extern int objc;
+    extern int rt_verbosity;
+    extern mat_t Viewrotscale;
+    extern point_t eye_model; /* model-space location of eye */
+    extern size_t npsw;
+    extern size_t width, height;
+    extern struct bu_ptbl* cmd_objs;
+    extern struct command_tab rt_do_tab[];
     int save_overlaps = 1;
-    size_t n_malloc;		/* Totals at last check */
-    size_t n_free;
-    size_t n_realloc;
-    mat_t view2model;
     mat_t model2view;
-    struct icv_image* bif = NULL;
+    mat_t view2model;
+    size_t n_free;
+    size_t n_malloc;		/* Totals at last check */
+    size_t n_realloc;
     struct application APP;
-}
+    struct icv_image* bif = NULL;
 
-
-extern "C" {
+    void grid_setup();
     void option(const char *cat, const char *opt, const char *des, int verbose);
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
-
-    extern struct command_tab rt_do_tab[];
-    extern char* outputfile;
-    extern int objc;
-    extern char** objv;
-    extern size_t npsw;
-    extern struct bu_ptbl* cmd_objs;
-    extern size_t width, height;
-    extern fastf_t azimuth, elevation;
-    extern point_t eye_model; /* model-space location of eye */
-    extern fastf_t eye_backoff; /* dist from eye to center */
-    extern mat_t Viewrotscale;
-    extern fastf_t viewsize;
-    extern fastf_t aspect;
-    extern fastf_t rt_perspective;
-    extern int matflag;
-    extern int rt_verbosity;
-    extern char* framebuffer;
-    void grid_setup();
 }
 
 
-void
+static void
 color_hook(const struct bu_structparse *sp, const char *name, void *UNUSED(base), const char *value, void *UNUSED(data))
 {
     struct bu_color color = BU_COLOR_INIT_ZERO;
@@ -247,7 +243,9 @@ extern "C" struct bu_structparse view_parse[] = {
  * NOTE: to have an accurate usage() menu, we overwrite the indexes of all the
  * options from rt/usage.cpp which we don't support
  */
-void init_defaults(void) {
+static void
+init_defaults(void)
+{
     /* Set the byte offsets at run time */
 
     light_intensity *= AmbientIntensity; // multiplying by factor
@@ -316,10 +314,11 @@ namespace asr = renderer;
  * using either a disney shader with rgb color set on combination regions
  * or specified material OSL optical shader
  */
-int register_region(struct db_tree_state* tsp,
-		    const struct db_full_path* pathp,
-		    const struct rt_comb_internal* combp,
-		    void* data)
+static int
+register_region(struct db_tree_state* tsp,
+		const struct db_full_path* pathp,
+		const struct rt_comb_internal* combp,
+		void* data)
 {
     if (!pathp || !combp || !data)
 	return 1;
@@ -382,7 +381,7 @@ int register_region(struct db_tree_state* tsp,
 	    asr::ParamArray()));
 
 
-     // create a shader group
+    // create a shader group
     std::string shader_name = std::string(name) + "_shader";
     asf::auto_release_ptr<asr::ShaderGroup> shader_grp(
 	asr::ShaderGroupFactory().create(
@@ -403,16 +402,16 @@ int register_region(struct db_tree_state* tsp,
     struct rt_db_internal intern;
     struct rt_material_internal* material_ip;
     if (dp1 != RT_DIR_NULL) {
-	    if (rt_db_get_internal(&intern, dp1, tsp->ts_dbip, NULL, &rt_uniresource) >= 0) {
-	        if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
-		    material_ip = (struct rt_material_internal*)intern.idb_ptr;
-		    bu_vls_printf(&m, "%s", bu_avs_get(&material_ip->opticalProperties, "OSL"));
-		    if (!BU_STR_EQUAL(bu_vls_cstr(&m), "(null)")) {
-		        shader = bu_vls_cstr(&m);
-		        bu_log("material->optical->OSL: %s\n", shader);
-		    }
-	        }
+	if (rt_db_get_internal(&intern, dp1, tsp->ts_dbip, NULL, &rt_uniresource) >= 0) {
+	    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
+		material_ip = (struct rt_material_internal*)intern.idb_ptr;
+		bu_vls_printf(&m, "%s", bu_avs_get(&material_ip->opticalProperties, "OSL"));
+		if (!BU_STR_EQUAL(bu_vls_cstr(&m), "(null)")) {
+		    shader = bu_vls_cstr(&m);
+		    bu_log("material->optical->OSL: %s\n", shader);
+		}
 	    }
+	}
     }
 
     // check for color assignment, if set add to param array
@@ -571,7 +570,7 @@ int register_region(struct db_tree_state* tsp,
 }
 
 
-void
+static void
 do_ae(double azim, double elev)
 {
     vect_t temp;
@@ -646,7 +645,8 @@ do_ae(double azim, double elev)
 }
 
 
-asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* UNUSED(objects))
+static asf::auto_release_ptr<asr::Project>
+build_project(const char* file, const char* UNUSED(objects))
 {
     /* If user gave no sizing info at all, use 512 as default */
     struct bu_vls dimensions = BU_VLS_INIT_ZERO;
@@ -672,9 +672,9 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     // number of samples, the smoother the image but the longer the rendering time.
     // we overwrite via command line -c "set"
     project->configurations()
-    .get_by_name("final")->get_parameters()
-    .insert_path("uniform_pixel_renderer.samples", samples)
-    .insert_path("rendering_threads", npsw);
+	.get_by_name("final")->get_parameters()
+	.insert_path("uniform_pixel_renderer.samples", samples)
+	.insert_path("rendering_threads", npsw);
     project->configurations()
 	.get_by_name("interactive")->get_parameters()
 	.insert_path("rendering_threads", "1"); /* no multithreading - for debug rendering on appleseed */
@@ -813,7 +813,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 	struct bu_vls fov = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fov, "%lf", rt_perspective);
         // Create a pinhole camera with film dimensions
-	if(width < height){
+	if(width < height) {
 	    bu_vls_sprintf(&dimensions, "%f %f", dim_factor * (double) width / height, dim_factor);
 	} else {
 	    bu_vls_sprintf(&dimensions, "%f %f", dim_factor * (double) height / width, dim_factor);
@@ -824,17 +824,17 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 	        asr::ParamArray()
 	        .insert("film_dimensions", bu_vls_cstr(&dimensions))
 	        .insert("horizontal_fov", bu_vls_cstr(&fov))
-        ));
+		));
         camera = pinhole;
     } else {
         // Create a orthographic camera with film dimensions
         bu_vls_sprintf(&dimensions, "%f %f", 2.0, 2.0);
         asf::auto_release_ptr<asr::Camera> ortho(
-        asr::OrthographicCameraFactory().create(
-            "camera",
-            asr::ParamArray()
-            .insert("film_dimensions", bu_vls_cstr(&dimensions))
-        ));
+	    asr::OrthographicCameraFactory().create(
+		"camera",
+		asr::ParamArray()
+		.insert("film_dimensions", bu_vls_cstr(&dimensions))
+		));
         camera = ortho;
     }
 
@@ -900,9 +900,11 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 
 
 extern "C" void
-view_setup(struct rt_i* UNUSED(rtip)) {
+view_setup(struct rt_i* UNUSED(rtip))
+{
     bu_bomb("In view setup, Dont call me!");
 }
+
 
 extern "C" void
 view_2init(struct application* UNUSED(ap), char* UNUSED(framename))
@@ -910,26 +912,36 @@ view_2init(struct application* UNUSED(ap), char* UNUSED(framename))
     bu_bomb("In 2init, Dont call me!");
 }
 
+
 extern "C" void
 view_end(struct application* UNUSED(ap)) {
     bu_bomb("In end, Dont call me!");
 }
+
 
 extern "C" void
 view_cleanup(struct rt_i* UNUSED(rtip))
 {
     bu_bomb("in cleanup, Dont call me!");
 }
+
+
 extern "C" void
-do_run(int UNUSED(a), int UNUSED(b)) {
+do_run(int UNUSED(a), int UNUSED(b))
+{
     bu_bomb("in run, Dont call me!");
 }
+
+
 extern "C" void
-grid_setup(void) {
+grid_setup(void)
+{
     bu_bomb("in grid setup, Dont call me!");
 }
 
-int art_cm_clean(const int UNUSED(argc), const char** UNUSED(argv))
+
+static int
+art_cm_clean(const int UNUSED(argc), const char** UNUSED(argv))
 {
     return 0;
 }
@@ -942,17 +954,18 @@ memory_summary(void)
 	size_t mdelta = bu_n_malloc - n_malloc;
 	size_t fdelta = bu_n_free - n_free;
 	bu_log("Additional #malloc=%zu, #free=%zu, #realloc=%zu (%zu retained)\n",
-	    mdelta,
-	    fdelta,
-	    bu_n_realloc - n_realloc,
-	    mdelta - fdelta);
+	       mdelta,
+	       fdelta,
+	       bu_n_realloc - n_realloc,
+	       mdelta - fdelta);
     }
     n_malloc = bu_n_malloc;
     n_free = bu_n_free;
     n_realloc = bu_n_realloc;
 }
 
-void
+
+static void
 def_tree(struct rt_i* rtip)
 {
     struct bu_vls times = BU_VLS_INIT_ZERO;
@@ -971,7 +984,9 @@ def_tree(struct rt_i* rtip)
     memory_summary();
 }
 
-int art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
+
+static int
+art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
@@ -1003,7 +1018,7 @@ int art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 #endif
 
     //if (Viewrotscale[15] <= 0.0) {
-	//RENDERER_LOG_INFO("CALLING DO AEEEEEEEEEE\n");
+    //RENDERER_LOG_INFO("CALLING DO AEEEEEEEEEE\n");
 
     do_ae(azimuth, elevation);
     // }
@@ -1039,7 +1054,9 @@ int art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 }
 
 
-int fb_setup() {
+static int
+fb_setup()
+{
     /* Framebuffer is desired */
     size_t xx, yy;
     int zoom;
@@ -1078,7 +1095,7 @@ int fb_setup() {
 	zoom = 1;
     }
     (void)fb_view(fbp, width / 2, height / 2,
-	zoom, zoom);
+		  zoom, zoom);
     bu_semaphore_release(BU_SEM_SYSCALL);
     return 0;
 }
@@ -1158,7 +1175,6 @@ main(int argc, char **argv)
 	//objs_free_argv = 1;
     }
 
-    
 
     resources = static_cast<resource*>(bu_calloc(1, sizeof(resource) * MAX_PSW, "appleseed"));
     char title[1024] = { 0 };
@@ -1222,27 +1238,27 @@ main(int argc, char **argv)
 
     do_ae(azimuth, elevation);
     // RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], eye_model[2], -eye_model[1]);
-    
+
     bu_vls_from_argv(&str, objc, (const char**)objv);
 
     // Build the project.
     asf::auto_release_ptr<asr::Project> project(build_project(title_file, bu_vls_cstr(&str)));
 
     if (framebuffer && !fbp) {
-	      RENDERER_LOG_INFO("FRAMEBUFFER IS ON\n");
-	      fb_setup();
+	RENDERER_LOG_INFO("FRAMEBUFFER IS ON\n");
+	fb_setup();
     }
     ArtTileCallback artcallback;
     // Create the master renderer.
     asr::DefaultRendererController renderer_controller;
     asf::SearchPaths resource_search_paths;
-    if (framebuffer){ // if -F is called
+    if (framebuffer) { // if -F is called
         std::unique_ptr<asr::MasterRenderer> renderer(
-        new asr::MasterRenderer(
-    	    project.ref(),
-    	    project->configurations().get_by_name("final")->get_inherited_parameters(),
-    	    resource_search_paths,
-                    &artcallback));
+	    new asr::MasterRenderer(
+		project.ref(),
+		project->configurations().get_by_name("final")->get_inherited_parameters(),
+		resource_search_paths,
+		&artcallback));
 
         // Render the frame.
         renderer->render(renderer_controller);
@@ -1256,17 +1272,17 @@ main(int argc, char **argv)
         asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
 
         if (fbp != FB_NULL) {
-          fb_close(fbp);
+	    fb_close(fbp);
         }
 
         // Make sure to delete the master renderer before the project and the logger / log target.
         renderer.reset();
     } else { // if -F is not specified
         std::unique_ptr<asr::MasterRenderer> renderer(
-        new asr::MasterRenderer(
-    	    project.ref(),
-    	    project->configurations().get_by_name("final")->get_inherited_parameters(),
-    	    resource_search_paths));
+	    new asr::MasterRenderer(
+		project.ref(),
+		project->configurations().get_by_name("final")->get_inherited_parameters(),
+		resource_search_paths));
 
         // Render the frame.
         renderer->render(renderer_controller);
@@ -1280,7 +1296,7 @@ main(int argc, char **argv)
         asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
 
         if (fbp != FB_NULL) {
-          fb_close(fbp);
+	    fb_close(fbp);
         }
 
         // Make sure to delete the master renderer before the project and the logger / log target.
