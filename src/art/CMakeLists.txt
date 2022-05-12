@@ -5,6 +5,8 @@ set(art_ignore_files
   art.cpp
   brlcadplugin.h
   brlcadplugin.cpp
+  tile.h
+  tile.cpp
   )
 CMAKEFILES(${art_ignore_files})
 
@@ -56,6 +58,7 @@ set(ART_LIBS
 set(ART_SRCS
   art.cpp
   brlcadplugin.cpp
+  tile.cpp
   ../rt/opt.c
   ../rt/usage.cpp
   ../rt/do.c

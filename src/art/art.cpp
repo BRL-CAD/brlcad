@@ -130,6 +130,9 @@
 #include "foundation/utility/autoreleaseptr.h"
 #include "foundation/utility/searchpaths.h"
 
+// appleseed header for ITileCallback - needs to be organized somewhere
+#include "renderer/kernel/rendering/itilecallback.h"
+
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -157,11 +160,18 @@
 
 #define VERBOSE_STATS	     0x00000008	
 
+#include "dm.h"
+#include "tile.h"
+
+
 struct resource* resources;
 size_t samples = 25;
 size_t light_intensity = 30.0;
+//size_t light_intensity = 200.0; // make ambient light match rt
 const char* global_title_file;
 asf::auto_release_ptr<asr::Project> project_ptr;
+struct fb* fbp = FB_NULL;
+
 
 extern "C" {
     FILE* outfp = NULL;
@@ -197,6 +207,7 @@ extern "C" {
     extern fastf_t rt_perspective;
     extern int matflag;
     extern int rt_verbosity;
+    extern char* framebuffer;
     void grid_setup();
 }
 
@@ -238,6 +249,9 @@ extern "C" struct bu_structparse view_parse[] = {
  */
 void init_defaults(void) {
     /* Set the byte offsets at run time */
+
+    light_intensity *= AmbientIntensity; // multiplying by factor
+
     view_parse[0].sp_offset = bu_byteoffset(samples);
     view_parse[1].sp_offset = bu_byteoffset(samples);
     view_parse[2].sp_offset = bu_byteoffset(background[0]);
@@ -376,8 +390,8 @@ int register_region(struct db_tree_state* tsp,
 	    asr::ParamArray()));
 
     // choose input shader
-    // we use disney material as default
-    const char* shader = (char*)"as_disney_material";
+    // change to plastic to look more like rt
+    const char* shader = (char*)"as_plastic";
     asr::ParamArray shader_params = asr::ParamArray();
 
     // check if shader was set new way
@@ -703,6 +717,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 
     // Create a color called "light_intensity" and insert it into the assembly.
     static const float LightRadiance[] = { 1.0f, 1.0f, 1.0f };
+    light_intensity *= AmbientIntensity; // multiplying by factor
     // FIXME
     assembly->colors().insert(
 	asr::ColorEntityFactory::create(
@@ -760,7 +775,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 	    "sky_radiance",
 	    asr::ParamArray()
 	    .insert("color_space", "srgb")
-	    .insert("multiplier", "0.5"),
+	    .insert("multiplier", AmbientIntensity),
 	    asr::ColorValueArray(3, float_bgcolor)));
 
     // Create an environment EDF called "sky_edf" and insert it into the scene.
@@ -794,10 +809,15 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 
     // check for perspective
     if (rt_perspective > 0.0) {
+	double dim_factor = 1.0;
 	struct bu_vls fov = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fov, "%lf", rt_perspective);
         // Create a pinhole camera with film dimensions
-        bu_vls_sprintf(&dimensions, "%lf %lf", 1.0 * (double) width / height, 1.0);
+	if(width < height){
+	    bu_vls_sprintf(&dimensions, "%f %f", dim_factor * (double) width / height, dim_factor);
+	} else {
+	    bu_vls_sprintf(&dimensions, "%f %f", dim_factor * (double) height / width, dim_factor);
+	}
         asf::auto_release_ptr<asr::Camera> pinhole(
 	    asr::PinholeCameraFactory().create(
 	        "camera",
@@ -877,6 +897,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 
     return project;
 }
+
 
 extern "C" void
 view_setup(struct rt_i* UNUSED(rtip)) {
@@ -1018,6 +1039,51 @@ int art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 }
 
 
+int fb_setup() {
+    /* Framebuffer is desired */
+    size_t xx, yy;
+    int zoom;
+
+    /* Ask for a fb big enough to hold the image, at least 512. */
+    /* This is so MGED-invoked "postage stamps" get zoomed up big
+     * enough to see.
+     */
+    xx = yy = 512;
+    if (width > xx || height > yy) {
+	xx = width;
+	yy = height;
+    }
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    fbp = fb_open(framebuffer, xx, yy);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+    if (fbp == FB_NULL) {
+	fprintf(stderr, "rt:  can't open frame buffer\n");
+	return 12;
+    }
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    /* If fb came out smaller than requested, do less work */
+    if ((size_t)fb_getwidth(fbp) < width)
+	width = fb_getwidth(fbp);
+    if ((size_t)fb_getheight(fbp) < height)
+	height = fb_getheight(fbp);
+
+    /* If the fb is lots bigger (>= 2X), zoom up & center */
+    if (width > 0 && height > 0) {
+	zoom = fb_getwidth(fbp) / width;
+	if ((size_t)fb_getheight(fbp) / height < (size_t)zoom)
+	    zoom = fb_getheight(fbp) / height;
+    }
+    else {
+	zoom = 1;
+    }
+    (void)fb_view(fbp, width / 2, height / 2,
+	zoom, zoom);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+    return 0;
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -1036,6 +1102,8 @@ main(int argc, char **argv)
     // you will need to implement foundation::ILogTarget (foundation/utility/log/ilogtarget.h).
     asf::ILogTarget* log_target(asf::create_console_log_target(stderr));
     asr::global_logger().add_target(log_target);
+
+    rt_perspective = 85; // setting the default
 
     // Print appleseed's version string.
     RENDERER_LOG_INFO("%s\n", asf::Appleseed::get_synthetic_version_string());
@@ -1160,30 +1228,64 @@ main(int argc, char **argv)
     // Build the project.
     asf::auto_release_ptr<asr::Project> project(build_project(title_file, bu_vls_cstr(&str)));
 
-
+    if (framebuffer && !fbp) {
+	      RENDERER_LOG_INFO("FRAMEBUFFER IS ON\n");
+	      fb_setup();
+    }
+    ArtTileCallback artcallback;
     // Create the master renderer.
     asr::DefaultRendererController renderer_controller;
     asf::SearchPaths resource_search_paths;
-    std::unique_ptr<asr::MasterRenderer> renderer(
-	new asr::MasterRenderer(
-	    project.ref(),
-	    project->configurations().get_by_name("final")->get_inherited_parameters(),
-	    resource_search_paths));
+    if (framebuffer){ // if -F is called
+        std::unique_ptr<asr::MasterRenderer> renderer(
+        new asr::MasterRenderer(
+    	    project.ref(),
+    	    project->configurations().get_by_name("final")->get_inherited_parameters(),
+    	    resource_search_paths,
+                    &artcallback));
 
-    // Render the frame.
-    renderer->render(renderer_controller);
+        // Render the frame.
+        renderer->render(renderer_controller);
 
-    // Save the frame to disk using outputfile name
-    // we append output/ directory to it for sorting
-    std::string add_base = "output/" + std::string(outputfile);
-    project->get_frame()->write_main_image(add_base.c_str());
+        // Save the frame to disk using outputfile name
+        // we append output/ directory to it for sorting
+        std::string add_base = "output/" + std::string(outputfile);
+        project->get_frame()->write_main_image(add_base.c_str());
 
-    // Save the project to disk.
-    asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
+        // Save the project to disk.
+        asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
 
-    // Make sure to delete the master renderer before the project and the logger / log target.
-    renderer.reset();
+        if (fbp != FB_NULL) {
+          fb_close(fbp);
+        }
 
+        // Make sure to delete the master renderer before the project and the logger / log target.
+        renderer.reset();
+    } else { // if -F is not specified
+        std::unique_ptr<asr::MasterRenderer> renderer(
+        new asr::MasterRenderer(
+    	    project.ref(),
+    	    project->configurations().get_by_name("final")->get_inherited_parameters(),
+    	    resource_search_paths));
+
+        // Render the frame.
+        renderer->render(renderer_controller);
+
+        // Save the frame to disk using outputfile name
+        // we append output/ directory to it for sorting
+        std::string add_base = "output/" + std::string(outputfile);
+        project->get_frame()->write_main_image(add_base.c_str());
+
+        // Save the project to disk.
+        asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
+
+        if (fbp != FB_NULL) {
+          fb_close(fbp);
+        }
+
+        // Make sure to delete the master renderer before the project and the logger / log target.
+        renderer.reset();
+    }
     // clean up resources
     bu_free(resources, "appleseed");
 
