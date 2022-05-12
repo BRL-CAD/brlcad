@@ -82,6 +82,8 @@ QEll::QEll()
 
 QEll::~QEll()
 {
+    if (p)
+	bv_obj_put(p);
 }
 
 void
@@ -203,9 +205,8 @@ QEll::update_obj_wireframe()
 	return;
 
     // Make the object, if we've not already done so
-    if (!p) {
+    if (!p)
 	p = bv_obj_get(v, BV_VIEW_OBJS);
-    }
 
     // Make sure the view object names match whatever the dialog says
     // is the current (proposed) name for the written object
