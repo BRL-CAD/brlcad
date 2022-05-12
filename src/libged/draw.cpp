@@ -146,12 +146,6 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
 	s->s_dlist_stale = 1;
     }
 
-#if 0
-    // Draw label
-    if (ip->idb_meth->ft_labels)
-	ip->idb_meth->ft_labels(&s->children, ip, s->s_v);
-#endif
-
     return 1;
 }
 

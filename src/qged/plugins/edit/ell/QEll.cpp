@@ -182,6 +182,70 @@ QEll::write_to_db()
 void
 QEll::update_obj_wireframe()
 {
+    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
+    if (!mdl)
+	return;
+    QgModel *m = (QgModel *)mdl->sourceModel();
+    struct ged *gedp = m->gedp;
+    if (!gedp)
+	return;
+    struct bview *v = gedp->ged_gvp;
+    if (!v)
+	return;
+
+    // Make the object, if we've not already done so
+    if (!p) {
+	p = bv_obj_get(v, BV_VIEW_OBJS);
+    }
+
+    // Make sure the view object names match whatever the dialog says
+    // is the current (proposed) name for the written object
+    // TODO - this should probably be a separate slot, not part of wireframe
+    // updating...
+    char *oname = NULL;
+    if (ell_name->placeholderText().length()) {
+	oname = bu_strdup(ell_name->placeholderText().toLocal8Bit().data());
+    }
+    if (ell_name->text().length()) {
+	bu_free(oname, "don't need placeholder text");
+	oname = bu_strdup(ell_name->text().toLocal8Bit().data());
+    }
+    if (!oname)
+	return;
+    bu_vls_sprintf(&p->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), oname);
+    bu_vls_sprintf(&p->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), oname);
+    bu_free(oname, "oname");
+
+    // Clear any old wireframes, labels, etc.
+    bv_obj_reset(p);
+
+    // Use whatever view is current to drive the update
+    p->s_v = v;
+
+    // Set up the rt_db_internal and trigger the plotting routine with the
+    // current ell parameters
+    struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_ELL;
+    intern.idb_ptr = &ell;
+    intern.idb_meth = &OBJ[intern.idb_type];
+    if (!intern.idb_meth->ft_plot)
+	return;
+    struct bn_tol *tol = &gedp->ged_wdbp->wdb_tol;
+    struct bg_tess_tol *ttol = &gedp->ged_wdbp->wdb_ttol;
+    intern.idb_meth->ft_plot(&p->s_vlist, &intern, ttol, tol, p->s_v);
+
+    // At least for now, mimic the MGED behavior and make editing wireframes white
+    const char *wcolor = "255/255/255";
+    const char *av[2] = {wcolor, NULL};
+    struct bu_color cval;
+    bu_opt_color(NULL, 1, (const char **)&av[0], (void *)&cval);
+    bu_color_to_rgb_chars(&cval, p->s_color);
+
+    // When editing, we show the labels
+    if (intern.idb_meth->ft_labels)
+	intern.idb_meth->ft_labels(&p->children, &intern, p->s_v);
+
 }
 
 bool
