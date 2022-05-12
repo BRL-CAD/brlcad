@@ -2533,11 +2533,11 @@ rt_arb_find_e_nearest_pt2(int *edge,
 }
 
 void
-rt_arb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+rt_arb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
 {
     int i;
 
-    if (!labels || !ip)
+    if (!ps || !ip)
 	return;
 
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
@@ -2549,9 +2549,8 @@ rt_arb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
     // Set up the containers
     struct bv_label *l[8];
     for (i = 0; i < arbType; i++) {
-	struct bv_scene_obj *s;
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
 	struct bv_label *la;
-	BU_GET(s, struct bv_scene_obj);
 	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
 	s->s_v = v;
@@ -2563,7 +2562,6 @@ rt_arb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
 	BU_VLS_INIT(&la->label);
 
 	l[i] = la;
-	bu_ptbl_ins(labels, (long *)s);
     }
 
     // Do the specific data assignments for each label

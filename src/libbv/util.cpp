@@ -902,6 +902,15 @@ bv_obj_reset(struct bv_scene_obj *s)
     if (s->s_dlist_free_callback)
 	(*s->s_dlist_free_callback)(s);
 
+    // If we have a label, do the label freeing steps
+    // TODO - properly speaking this should be using the free callback rather
+    // than special casing...
+    if (s->s_type_flags & BV_LABELS) {
+	struct bv_label *la = (struct bv_label *)s->s_i_data;
+	bu_vls_free(&la->label);
+	BU_PUT(la, struct bv_label);
+    }
+
     // free vlist
     if (BU_LIST_IS_INITIALIZED(&s->s_vlist)) {
 	BV_FREE_VLIST(s->vlfree, &s->s_vlist);

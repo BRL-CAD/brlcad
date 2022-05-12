@@ -78,12 +78,16 @@ QEll::QEll()
     l->setAlignment(Qt::AlignTop);
     this->setLayout(l);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+
+    QObject::connect(ell_name, &QLineEdit::textEdited, this, &QEll::update_viewobj_name);
 }
 
 QEll::~QEll()
 {
     if (p)
 	bv_obj_put(p);
+    bu_vls_free(&oname);
 }
 
 void
@@ -100,20 +104,6 @@ QEll::read_from_db()
     if (!dbip)
 	return;
 
-    char *oname = NULL;
-    if (ell_name->placeholderText().length()) {
-	oname = bu_strdup(ell_name->placeholderText().toLocal8Bit().data());
-    }
-    if (ell_name->text().length()) {
-	bu_free(oname, "don't need placeholder text");
-	oname = bu_strdup(ell_name->text().toLocal8Bit().data());
-    }
-    if (!oname)
-	return;
-
-    dp = db_lookup(dbip, oname, LOOKUP_QUIET);
-    bu_free(oname, "oname");
-
     // Both of the conditions we are checking for here are normal - the former
     // indicates we are creating a new object, and the latter indicates we are
     // going to replace an existing object of another type with an ell.
@@ -128,27 +118,22 @@ QEll::read_from_db()
     struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
     if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
 	return;
-    RT_ELL_CK_MAGIC(&intern);
     struct rt_ell_internal *ellp = (struct rt_ell_internal *)intern.idb_ptr;
+    RT_ELL_CK_MAGIC(ellp);
     VMOVE(ell.v, ellp->v);
     VMOVE(ell.a, ellp->a);
     VMOVE(ell.b, ellp->b);
     VMOVE(ell.c, ellp->c);
     rt_db_free_internal(&intern);
+
+    // We have pulled new data from disk - let the wireframe know
+    update_obj_wireframe();
 }
 
 void
 QEll::write_to_db()
 {
-    char *oname = NULL;
-    if (ell_name->placeholderText().length()) {
-	oname = bu_strdup(ell_name->placeholderText().toLocal8Bit().data());
-    }
-    if (ell_name->text().length()) {
-	bu_free(oname, "don't need placeholder text");
-	oname = bu_strdup(ell_name->text().toLocal8Bit().data());
-    }
-    if (!oname)
+    if (!bu_vls_strlen(&oname))
 	return;
 
     QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
@@ -162,20 +147,16 @@ QEll::write_to_db()
     if (!dbip)
 	return;
 
-
     struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_ELL;
     intern.idb_ptr = &ell;
     intern.idb_meth = &OBJ[intern.idb_type];
 
-    dp = db_lookup(dbip, oname, LOOKUP_QUIET);
+    dp = db_lookup(dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
 
-    if (dp == RT_DIR_NULL) {
-	dp = db_diradd(dbip, oname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
-    }
-
-    bu_free(oname, "oname");
+    if (dp == RT_DIR_NULL)
+	dp = db_diradd(dbip, bu_vls_cstr(&oname), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
 
     if (dp == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
@@ -188,6 +169,8 @@ QEll::write_to_db()
     }
 
     rt_db_free_internal(&intern);
+
+    emit db_updated();
 }
 
 void
@@ -207,24 +190,6 @@ QEll::update_obj_wireframe()
     // Make the object, if we've not already done so
     if (!p)
 	p = bv_obj_get(v, BV_VIEW_OBJS);
-
-    // Make sure the view object names match whatever the dialog says
-    // is the current (proposed) name for the written object
-    // TODO - this should probably be a separate slot, not part of wireframe
-    // updating...
-    char *oname = NULL;
-    if (ell_name->placeholderText().length()) {
-	oname = bu_strdup(ell_name->placeholderText().toLocal8Bit().data());
-    }
-    if (ell_name->text().length()) {
-	bu_free(oname, "don't need placeholder text");
-	oname = bu_strdup(ell_name->text().toLocal8Bit().data());
-    }
-    if (!oname)
-	return;
-    bu_vls_sprintf(&p->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), oname);
-    bu_vls_sprintf(&p->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), oname);
-    bu_free(oname, "oname");
 
     // Clear any old wireframes, labels, etc.
     bv_obj_reset(p);
@@ -254,8 +219,50 @@ QEll::update_obj_wireframe()
 
     // When editing, we show the labels
     if (intern.idb_meth->ft_labels)
-	intern.idb_meth->ft_labels(&p->children, &intern, p->s_v);
+	intern.idb_meth->ft_labels(p, &intern, p->s_v);
 
+    emit view_updated(&v);
+}
+
+void
+QEll::update_viewobj_name(const QString &)
+{
+    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
+    if (!mdl)
+	return;
+    QgModel *m = (QgModel *)mdl->sourceModel();
+    struct ged *gedp = m->gedp;
+    if (!gedp)
+	return;
+    struct bview *v = gedp->ged_gvp;
+    if (!v)
+	return;
+
+    // Make the view object, if we've not already done so
+    if (!p)
+	p = bv_obj_get(v, BV_VIEW_OBJS);
+
+    // Make sure the view object names match whatever the dialog says
+    // is the current (proposed) name for the written object
+    bu_vls_trunc(&oname, 0);
+    if (ell_name->placeholderText().length())
+	bu_vls_sprintf(&oname, "%s", ell_name->placeholderText().toLocal8Bit().data());
+    if (ell_name->text().length())
+	bu_vls_sprintf(&oname, "%s", ell_name->text().toLocal8Bit().data());
+    if (!bu_vls_strlen(&oname))
+	return;
+    bu_vls_sprintf(&p->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&oname));
+    bu_vls_sprintf(&p->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&oname));
+
+    // Update the directory pointer to reflect the name.  If there is a change,
+    // and that change points us to a new object, we need to read the info from
+    // that object
+    struct directory *ndp = db_lookup(gedp->dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
+    if (ndp != dp) {
+	dp = ndp;
+	if (dp)
+	    read_from_db();
+    }
 }
 
 bool

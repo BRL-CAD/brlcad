@@ -270,8 +270,8 @@ struct rt_functab {
 #define RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(_func) ((int (*)(struct soltab *, const struct rt_db_internal *, struct bu_external *, size_t *))((void (*)(void))_func))
 
     /** generate struct bv_scene_obj labels for the primitive */
-    void (*ft_labels)(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v);
-#define RTFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(struct bu_ptbl *, const struct rt_db_internal *, struct bview *))((void (*)(void))_func))
+    void (*ft_labels)(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v);
+#define RTFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(struct bv_scene_obj *, const struct rt_db_internal *, struct bview *))((void (*)(void))_func))
 
 };
 

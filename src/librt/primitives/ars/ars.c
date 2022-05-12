@@ -967,9 +967,9 @@ rt_ars_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 void
-rt_ars_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+rt_ars_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
 {
-    if (!labels || !ip)
+    if (!ps || !ip)
 	return;
 
     /*XXX Needs work - doesn't really represent the ARS data well... */
@@ -981,9 +981,8 @@ rt_ars_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
     struct bv_label *l[2];
     int lcnt = 1;
     for (int i = 0; i < lcnt; i++) {
-	struct bv_scene_obj *s;
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
 	struct bv_label *la;
-	BU_GET(s, struct bv_scene_obj);
 	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
 	s->s_v = v;
@@ -995,7 +994,6 @@ rt_ars_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
 	BU_VLS_INIT(&la->label);
 
 	l[i] = la;
-	bu_ptbl_ins(labels, (long *)s);
     }
 
     bu_vls_sprintf(&l[0]->label, "V");

@@ -2054,9 +2054,9 @@ rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 void
-rt_ehy_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+rt_ehy_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
 {
-    if (!labels || !ip)
+    if (!ps || !ip)
 	return;
 
     struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)ip->idb_ptr;
@@ -2065,9 +2065,8 @@ rt_ehy_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
     // Set up the containers
     struct bv_label *l[5];
     for (int i = 0; i < 5; i++) {
-	struct bv_scene_obj *s;
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
 	struct bv_label *la;
-	BU_GET(s, struct bv_scene_obj);
 	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
 	s->s_v = v;
@@ -2079,7 +2078,6 @@ rt_ehy_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
 	BU_VLS_INIT(&la->label);
 
 	l[i] = la;
-	bu_ptbl_ins(labels, (long *)s);
     }
 
     // Do the specific data assignments for each label

@@ -1437,9 +1437,9 @@ rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
 }
 
 extern "C" void
-rt_nurb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+rt_nurb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
 {
-    if (!labels || !ip)
+    if (!ps || !ip)
 	return;
 
     struct rt_nurb_internal *nurb = (struct rt_nurb_internal *)ip->idb_ptr;
@@ -1448,9 +1448,8 @@ rt_nurb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct b
     // Set up the containers
     struct bv_label *l[5];
     for (int i = 0; i < 5; i++) {
-	struct bv_scene_obj *s;
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
 	struct bv_label *la;
-	BU_GET(s, struct bv_scene_obj);
 	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
 	s->s_v = v;
@@ -1462,7 +1461,6 @@ rt_nurb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct b
 	BU_VLS_INIT(&la->label);
 
 	l[i] = la;
-	bu_ptbl_ins(labels, (long *)s);
     }
 
     // Do the specific data assignments for each label

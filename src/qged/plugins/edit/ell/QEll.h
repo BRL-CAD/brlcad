@@ -63,6 +63,7 @@ class QEll : public QWidget
 	void read_from_db();
 	void write_to_db();
 	void update_obj_wireframe();
+	void update_viewobj_name(const QString &);
 
     protected:
 	bool eventFilter(QObject *, QEvent *);
@@ -71,6 +72,7 @@ class QEll : public QWidget
 	struct directory *dp = NULL;
 	struct rt_ell_internal ell;
 	struct bv_scene_obj *p = NULL;
+	struct bu_vls oname = BU_VLS_INIT_ZERO;
 };
 
 #endif //QELL_H
