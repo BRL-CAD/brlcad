@@ -39,5 +39,9 @@
      <file>images/primitives/sph.png</file>
      <file>images/primitives/tgc.png</file>
      <file>images/primitives/tor.png</file>
- </qresource>
+     <file>images/view/view_center.png</file>
+     <file>images/view/view_rotate.png</file>
+     <file>images/view/view_scale.png</file>
+     <file>images/view/view_translate.png</file>
+</qresource>
  </RCC>

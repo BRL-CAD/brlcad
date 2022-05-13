@@ -1,7 +1,11 @@
-add_subdirectory(tree)
-add_subdirectory(primitives)
-add_subdirectory(view)
+set(view_images
+  view_center.png
+  view_rotate.png
+  view_scale.png
+  view_translate.png
+  )
 
+CMAKEFILES(${view_images})
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:

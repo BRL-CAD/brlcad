@@ -46,6 +46,7 @@ set(qtcad_srcs
   QFlowLayout.cpp
   QKeyVal.cpp
   QToolPalette.cpp
+  QViewCtrl.cpp
   QgModel.cpp
   QgSelectionProxyModel.cpp
   QgTreeView.cpp
@@ -73,6 +74,7 @@ set(qth_names
   QColorRGB
   QKeyVal
   QToolPalette
+  QViewCtrl
   QgModel
   QgTreeView
   QtAppExecDialog
