@@ -2130,7 +2130,7 @@ rt_copy_curve(struct rt_curve *crv_out, const struct rt_curve *crv_in)
 	struct nurb_seg *nsg_out, *nsg_in;
 	struct bezier_seg *bsg_out, *bsg_in;
 
-	crv_out->reverse[j] = crv_in->reverse[j];
+	crv_out->reverse[j] = (crv_in->reverse) ? crv_in->reverse[j] : 0;
 	lng = (uint32_t *)crv_in->segment[j];
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
