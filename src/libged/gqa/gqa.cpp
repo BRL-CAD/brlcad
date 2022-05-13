@@ -1267,7 +1267,7 @@ plane_worker(int cpu, void *ptr)
     shot_cnt = 0;
     while (v) {
 
-	v_coord = (v - 0.5) * gridSpacing;
+	v_coord = v * gridSpacing;
 	if (debug) {
 	    bu_semaphore_acquire(state->sem_worker);
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "  v = %d v_coord=%g\n", v, v_coord);
@@ -1280,7 +1280,7 @@ plane_worker(int cpu, void *ptr)
 	     * numbered row in a grid refinement
 	     */
 	    for (u=1; u < state->steps[state->u_axis]; u++) {
-		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + (u - 0.5) * gridSpacing;
+		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u * gridSpacing;
 		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v_coord;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
@@ -1303,7 +1303,7 @@ plane_worker(int cpu, void *ptr)
 	     * them have been computed in a previous iteration.
 	     */
 	    for (u=1; u < state->steps[state->u_axis]; u+=2) {
-		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + (u - 0.5) * gridSpacing;
+		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u * gridSpacing;
 		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v_coord;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
