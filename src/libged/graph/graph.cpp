@@ -300,7 +300,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct graph_data *
 
     Avoid::ShapeRef *shapeRef1 = NULL;
     Avoid::ShapeRef *shapeRef2 = NULL;
-    const unsigned int CENTRE = 0;
+    const unsigned int CENTRE = 1;
 
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_log("ERROR: Database read error, skipping %s\n", dp->d_namep);
