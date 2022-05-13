@@ -63,7 +63,9 @@ if {[file exists [file normalize $argv0]]} {
 
 # Itk's default class doesn't keep the menu, but Archer needs it - redefine itk:Toplevel
 set itk_file [file join [bu_dir data] "tclscripts" archer itk_redefines.tcl]
-source $itk_file
+if {[file exists [file normalize $itk_file]]} {
+    source $itk_file
+}
 
 # Set ttk theme
 if {[tk windowingsystem] eq "aqua"} {
