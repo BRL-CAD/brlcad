@@ -9,7 +9,7 @@ endif (TK_INCLUDE_PATH)
 list(REMOVE_DUPLICATES ARCHER_INCLUDE_DIRS)
 BRLCAD_INCLUDE_DIRS(ARCHER_INCLUDE_DIRS)
 
-BRLCAD_ADDDATA(archer_launch.tcl tclscripts/archer)
+BRLCAD_ADDDATA(archer_launch.tcl tclscripts/archer/init)
 
 # NOTE: Building "GUI" doesn't matter except on Windows, but on Windows archer
 # currently works only in graphical mode - might as well behave "nicely" there.

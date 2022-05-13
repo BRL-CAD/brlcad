@@ -110,7 +110,7 @@ main(int argc, const char **argv)
     }
     bu_vls_free(&tlog);
 
-    archer_tcl = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "archer", "archer_launch.tcl", NULL);
+    archer_tcl = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "archer", "init", "archer_launch.tcl", NULL);
     Tcl_DStringInit(&temp);
     fullname = Tcl_TranslateFileName(interp, archer_tcl, &temp);
     status = Tcl_EvalFile(interp, fullname);
