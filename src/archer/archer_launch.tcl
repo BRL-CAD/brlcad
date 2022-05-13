@@ -94,11 +94,6 @@ if { [catch {package require Archer 1.0} _initialized] } {
     exit 1
 }
 
-set Archer::debug 0
-if { [info exists env(DEBUG)] } {
-    set Archer::debug $env(DEBUG)
-}
-
 # Initialize bgerror
 initBgerror
 

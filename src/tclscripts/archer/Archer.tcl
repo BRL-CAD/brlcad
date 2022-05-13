@@ -28,10 +28,6 @@
 encoding system utf-8
 
 namespace eval Archer {
-    if {![info exists debug]} {
-	set debug 0
-    }
-
     set methodDecls ""
     set methodImpls ""
     set extraMgedCommands ""
