@@ -31,21 +31,22 @@
 #include <stdlib.h>
 #include <vector>
 
-#define BRLCAD_PARALLEL PARALLEL
-#undef PARALLEL
+/* Adaptagrams Header */
+#undef PARALLEL /* they define a global */
+#include "libavoid/libavoid.h"
+using namespace Avoid;
+
+/* BRL-CAD Headers */
+#include "bu/hash.h"
+#include "ged.h"
+
+
 #define POSITION_COORDINATE 50.0
 #define X_WIDTH 30.0
 #define Y_HEIGHT 30.0
 
 /* Maximum dimension of a subcommand's name. */
 #define NAME_SIZE 10
-
-/* Adaptagrams Header */
-#include "libavoid/libavoid.h"
-using namespace Avoid;
-
-/* Public Header */
-#include "ged.h"
 
 
 /**
@@ -149,10 +150,10 @@ position_node(_ged_dag_data *dag, bool has_parent, Avoid::ShapeRef *parent, Avoi
 
 #if defined LIBAVOID_LATEST_API
 	Box parent_bbox = parent->polygon().offsetBoundingBox(0);
-	parent_x  = bbox.min[LIBX];
-	parent_y  = bbox.min[LIBY];
-	parent_x1 = bbox.max[LIBX];
-	parent_y1 = bbox.max[LIBY];
+	parent_x  = parent_bbox.min[LIBX];
+	parent_y  = parent_bbox.min[LIBY];
+	parent_x1 = parent_bbox.max[LIBX];
+	parent_y1 = parent_bbox.max[LIBY];
 #else
 	parent->polygon().getBoundingRect(&parent_x, &parent_y, &parent_x1, &parent_y1);
 #endif
@@ -254,14 +255,11 @@ add_object(struct _ged_dag_data *dag, unsigned int id)
 void
 free_hash_values(struct bu_hash_tbl *htbl)
 {
-    struct bu_hash_entry *entry;
-    struct bu_hash_record rec;
-
-    entry = bu_hash_tbl_first(htbl, &rec);
+    struct bu_hash_entry *entry = bu_hash_next(htbl, NULL);
 
     while (entry) {
-	bu_free(bu_get_hash_value(entry), "hash entry");
-	entry = bu_hash_tbl_next(&rec);
+	bu_free(bu_hash_value(entry, NULL), "hash entry");
+	entry = bu_hash_next(htbl, entry);
     }
 }
 
@@ -274,12 +272,9 @@ free_hash_values(struct bu_hash_tbl *htbl)
 void
 decorate_object(struct _ged_dag_data *dag, char *object_name, int object_type)
 {
-    int new_entry;
-    struct bu_hash_entry *hsh_entry = bu_hash_tbl_add(dag->object_types, (uint8_t *)object_name, strlen(object_name) + 1, &new_entry);
-
     char *type = (char *)bu_malloc((size_t)1, "hash entry value");
     sprintf(type, "%d", object_type);
-    bu_set_hash_value(hsh_entry, (void *)type);
+    bu_hash_set(dag->object_types, (uint8_t *)object_name, strlen(object_name) + 1, (void *)type);
 }
 
 
@@ -297,14 +292,11 @@ dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct _ged_dag_dat
     struct rt_comb_internal *comb;
 
     struct output *o = (struct output *)out;
-    struct bu_hash_entry *prev = NULL;
-    struct bu_hash_entry *hsh_entry_comb = NULL;
-    unsigned long idx;
     unsigned int comb_id, subnode_id;
 
     Avoid::ShapeRef *shapeRef1 = NULL;
     Avoid::ShapeRef *shapeRef2 = NULL;
-    const unsigned int CENTRE = 1;
+    const unsigned int CENTRE = 0;
 
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_log("ERROR: Database read error, skipping %s\n", dp->d_namep);
@@ -312,9 +304,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct _ged_dag_dat
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     /* Look for the ID of the current combination */
-    if ((hsh_entry_comb = bu_hash_tbl_find(objects, (uint8_t *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx))) {
-	comb_id = atoi((const char*)hsh_entry_comb->value);
-    }
+    comb_id = atoi((const char *)bu_hash_get(objects, (uint8_t *)dp->d_namep, strlen(dp->d_namep) + 1));
 
     /* Add the combination name to the vector */
     o->combinations.reserve(o->combinations.size() + 1);
@@ -368,7 +358,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct _ged_dag_dat
 	    rt_tree_array = NULL;
 	}
 
-	bu_log("%d subnode(s)\n", actual_count);
+	bu_log("%zu subnode(s)\n", actual_count);
 
 	for (i = 0; i < actual_count; i++) {
 	    char op;
@@ -389,11 +379,11 @@ dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct _ged_dag_dat
 	    }
 
 	    bu_log("\t\"%s\" -> \"%s\" [ label=\"%c\" ];\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
-	    struct bu_hash_entry *hsh_entry;
-	    hsh_entry = bu_hash_tbl_find(objects, (uint8_t *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1, &prev, &idx);
 
-	    if (hsh_entry) {
-		subnode_id = atoi((const char*)hsh_entry->value);
+	    const char *subnode = (const char*)bu_hash_get(objects, (uint8_t *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1);
+
+	    if (subnode) {
+		subnode_id = atoi(subnode);
 
 		/* Check if a shape was already created for this subnode. */
 		shape_exists = false;
@@ -402,7 +392,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct _ged_dag_dat
 		    if ((*it)->id() == subnode_id) {
 			/* Don't create another shape because it already exists a corresponding one.
 			 * Get a reference to the shape that corresponds to the current node of the subtree.
-			 */
+		     */
 			shapeRef2 = dynamic_cast<ShapeRef *>(*it);
 			shape_exists = true;
 			break;
@@ -415,8 +405,8 @@ dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct _ged_dag_dat
 		}
 
 		/* Create connection pins on shapes for linking the parent node with the subnode. */
-		new Avoid::ShapeConnectionPin(shapeRef1, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
-		new Avoid::ShapeConnectionPin(shapeRef2, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
+		new Avoid::ShapeConnectionPin(shapeRef1, CENTRE, 0, 0, 0, 0, Avoid::ATTACH_POS_CENTRE);
+		new Avoid::ShapeConnectionPin(shapeRef2, CENTRE, 0, 0, 0, 0, Avoid::ATTACH_POS_CENTRE);
 
 		/* Create connector from each shape shapeRef2 to the input pin on shapeRef1. */
 		Avoid::ConnEnd dstEnd(shapeRef1, CENTRE);
@@ -447,10 +437,8 @@ dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct _ged_dag_dat
 void
 put_me_in_a_bucket(struct directory *dp, struct directory *ndp, struct db_i *dbip, struct bu_hash_tbl *objects, struct output *o, struct _ged_dag_data *dag)
 {
-    struct bu_hash_entry *prev = NULL;
-    unsigned long idx;
     unsigned int object_id;
-    struct bu_hash_entry *hsh_entry;
+    const char *object = NULL;
     struct bu_vls dp_name_vls = BU_VLS_INIT_ZERO;
 
     bu_vls_sprintf(&dp_name_vls, "%s%s", "", dp->d_namep);
@@ -459,11 +447,10 @@ put_me_in_a_bucket(struct directory *dp, struct directory *ndp, struct db_i *dbi
 	bu_log("Adding PRIMITIVE object [%s]\n", bu_vls_addr(&dp_name_vls));
 
 	/* Check if this solid is in the objects list. */
-	prev = NULL;
-	hsh_entry = bu_hash_tbl_find(objects, (uint8_t *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
+	object = (const char *)bu_hash_get(objects, (uint8_t *)dp->d_namep, strlen(dp->d_namep) + 1);
 
-	if (hsh_entry) {
-	    object_id = atoi((const char*)hsh_entry->value);
+	if (object) {
+	    object_id = atoi((const char*)object);
 
 	    o->primitives.reserve(o->primitives.size() + 1);
 	    std::string name((const char *)dp->d_namep);
@@ -497,10 +484,10 @@ put_me_in_a_bucket(struct directory *dp, struct directory *ndp, struct db_i *dbi
 	decorate_object(dag, dp->d_namep, dp->d_flags);
     } else {
 	bu_log("Something else: [%s]\n", bu_vls_addr(&dp_name_vls));
-	prev = NULL;
-	hsh_entry = bu_hash_tbl_find(objects, (uint8_t *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
 
-	if (hsh_entry) {
+	void *exists = bu_hash_get(objects, (uint8_t *)dp->d_namep, strlen(dp->d_namep) + 1);
+
+	if (exists) {
 	    o->non_geometries.reserve(o->non_geometries.size() + 1);
 	    std::string name((const char *)dp->d_namep);
 	    o->non_geometries.push_back(name);
@@ -525,15 +512,12 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
     int i, object_nr = 0;
     struct output o;
     struct bu_hash_tbl *objects;
-    struct bu_hash_entry *hsh_entry1;
-    struct bu_hash_entry *prev = NULL;
-    unsigned long idx;
     struct db_i *dbip = gedp->dbip;
 
     /* Create the master "objects" hash table. It will have at most 64 entries. */
-    objects = bu_hash_tbl_create(1);
-    dag->ids = bu_hash_tbl_create(1);
-    dag->object_types = bu_hash_tbl_create(1);
+    objects = bu_hash_create(1);
+    dag->ids = bu_hash_create(1);
+    dag->object_types = bu_hash_create(1);
 
     /* Sets a spacing distance for overlapping orthogonal connectors to be nudged apart. */
 #if defined LIBAVOID_LATEST_API
@@ -560,26 +544,21 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
 	    ndp = db_lookup(gedp->dbip, bu_vls_addr(&dp_name_vls), 1);
 	    if (ndp) {
 		/* Check if this object is already in the hash table. If not, add it to the objects hash table. */
-		int new_entry;
+		void *entry = bu_hash_get(objects, (uint8_t *)dp->d_namep, strlen(dp->d_namep) + 1);
 
-		hsh_entry1 = bu_hash_tbl_find(objects, (uint8_t *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
-
-		if (!hsh_entry1) {
+		if (!entry) {
 		    bu_log("Adding object [%s]\n", bu_vls_addr(&dp_name_vls));
 
 		    /* This object hasn't been registered yet. Add it into the solids hash table and create a shape for it. */
 		    object_nr++;
 
-		    struct bu_hash_entry *hsh_entry = bu_hash_tbl_add(objects, (uint8_t *)dp->d_namep, strlen(dp->d_namep) + 1, &new_entry);
 		    char *id = (char *)bu_malloc((size_t)6, "hash entry value");
 		    sprintf(id, "%d", object_nr);
 
-		    /* Set the id value for this object */
-		    bu_set_hash_value(hsh_entry, (void *)id);
+		    bu_hash_set(objects, (uint8_t *)dp->d_namep, strlen(dp->d_namep) + 1, id);
 
 		    /* Add the ID of this object as a key and its name as a value. */
-		    hsh_entry = bu_hash_tbl_add(dag->ids, (uint8_t *)id, strlen(id) + 1, &new_entry);
-		    bu_set_hash_value(hsh_entry, (void *)dp->d_namep);
+		    bu_hash_set(dag->ids, (uint8_t *)id, strlen(id) + 1, (void *)dp->d_namep);
 		}
 	    } else {
 		bu_log("ERROR: Unable to locate [%s] within input database, skipping.\n",  bu_vls_addr(&dp_name_vls));
@@ -607,7 +586,7 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
     /* Free memory. */
     bu_vls_free(&dp_name_vls);
     free_hash_values(objects);
-    bu_hash_tbl_free(objects);
+    bu_hash_destroy(objects);
 
     return BRLCAD_OK;
 }
@@ -638,11 +617,9 @@ graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
     for (unsigned int i = 0; i < size; i++) {
 	char *root = (char *)bu_malloc((size_t)6, "hash entry value");
 	sprintf(root, "%u", root_ids[i]);
-	struct bu_hash_entry *prev_root = NULL;
-	unsigned long idx_root;
-	struct bu_hash_entry *hsh_entry_root = bu_hash_tbl_find(dag->ids, (uint8_t *)root, strlen(root) + 1, &prev_root, &idx_root);
+	void *exists = bu_hash_get(dag->ids, (uint8_t *)root, strlen(root) + 1);
 
-	if (hsh_entry_root) {
+	if (exists) {
 	    level = 0;
 	    if (i == 0) {
 		/* First root node: set the maximum X coordinate to be 0.0. */
@@ -663,9 +640,7 @@ graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
 	char *id = (char *)bu_malloc((size_t)6, "hash entry value");
 	sprintf(id, "%d", (*it)->id());
 
-	struct bu_hash_entry *prev = NULL;
-	unsigned long idx;
-	struct bu_hash_entry *hsh_entry = bu_hash_tbl_find(dag->ids, (uint8_t *)id, strlen(id) + 1, &prev, &idx);
+	void *hsh_entry = bu_hash_get(dag->ids, (const uint8_t *)id, strlen(id) + 1);
 	if (hsh_entry) {
 #if defined LIBAVOID_LATEST_API
 	    Box bbox = (*it)->polygon().offsetBoundingBox(0);
@@ -676,12 +651,9 @@ graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
 #else
 	    (*it)->polygon().getBoundingRect(&minX, &minY, &maxX, &maxY);
 #endif
-	    prev = NULL;
-	    struct bu_hash_entry *hsh_entry_type = bu_hash_tbl_find(dag->object_types, hsh_entry->value,
-								    strlen((char *)hsh_entry->value) + 1, &prev, &idx);
+	    void *hsh_entry_type = bu_hash_get(dag->object_types, (const uint8_t *)hsh_entry, strlen((const char *)hsh_entry) + 1);
 	    if (hsh_entry_type) {
-		bu_vls_printf(gedp->ged_result_str, "%s %s %f %f %f %f\n", hsh_entry->value, hsh_entry_type->value, minX,
-			      minY, maxX, maxY);
+		bu_vls_printf(gedp->ged_result_str, "%s %s %f %f %f %f\n", (const char *)hsh_entry, (const char *)hsh_entry_type, minX, minY, maxX, maxY);
 	    }
 	}
     }
@@ -807,7 +779,7 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
  * Dummy graph function in case no Adaptagrams library is found.
  */
 extern "C" int
-ged_graph_core(struct ged *gedp, int argc, const char *argv[])
+ged_graph(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -827,7 +799,7 @@ ged_graph_core(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-struct ged_cmd_impl dag_cmd_impl = { "graph", ged_graph_core, GED_CMD_DEFAULT };
+struct ged_cmd_impl dag_cmd_impl = { "graph", ged_graph, GED_CMD_DEFAULT };
 const struct ged_cmd dag_cmd = { &dag_cmd_impl };
 const struct ged_cmd *dag_cmds[] = { &dag_cmd,  NULL };
 
