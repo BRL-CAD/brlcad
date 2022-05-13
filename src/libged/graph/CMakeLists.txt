@@ -13,11 +13,11 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-dag SHARED dag.cpp)
-target_link_libraries(ged-dag libged libbu ${ADAPTAGRAMS_LIBRARIES})
-set_property(TARGET ged-dag APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-dag dag.cpp)
-PLUGIN_SETUP(ged-dag ged)
+ged_plugin_library(ged-graph SHARED graph.cpp)
+target_link_libraries(ged-graph libged libbu ${ADAPTAGRAMS_LIBRARIES})
+set_property(TARGET ged-graph APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+VALIDATE_STYLE(ged-graph graph.cpp)
+PLUGIN_SETUP(ged-graph ged)
 
 CMAKEFILES(
   CMakeLists.txt
