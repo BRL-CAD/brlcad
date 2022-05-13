@@ -1,4 +1,4 @@
-/*                         D A G . C P P
+/*                       G R A P H . C P P
  * BRL-CAD
  *
  * Copyright (c) 2012-2022 United States Government as represented by
@@ -17,9 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/dag.cpp
+/** @file libged/graph.cpp
  *
- * The model for a directed acyclic graph.
+ * Command calculates the graph layout for the current directed
+ * acyclic graph.  Works in conjunction with the 'igraph' Tcl script
+ * command which displays results in a GUI.
  *
  */
 
