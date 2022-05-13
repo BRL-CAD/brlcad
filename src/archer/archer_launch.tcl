@@ -136,6 +136,10 @@ proc showMainWindow {} {
 proc createSplashScreen {} {
     global env
 
+    if { ![info exists ::ArcherCore::splash] } {
+	return
+    }
+
     set useImage 1
 
     if {$useImage} {
@@ -275,11 +279,11 @@ wm withdraw .
 
 # start splash screen
 createSplashScreen
-if { $::argc eq 1 } {
+if { [info exists argc] && $::argc eq 1 } {
    set argv1 [lindex $argv 0]
    set argv1_ext [file extension $argv1]
    if {[string compare -nocase $argv1_ext ".g"] != 0} {
-    $::ArcherCore::splash deactivate
+       $::ArcherCore::splash deactivate
    }
 }
 
