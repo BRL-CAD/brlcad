@@ -21,7 +21,7 @@ PLUGIN_SETUP(ged-graph ged)
 
 CMAKEFILES(
   CMakeLists.txt
-  dag.cpp
+  graph.cpp
   )
 
 # Local Variables:
