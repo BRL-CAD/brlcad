@@ -73,10 +73,7 @@
  * -1 Fatal Error
  */
 int
-db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t, size_t, int, void *), int do_old_matter, void *client_data)
-
-
-/* argument for handler */
+db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t, size_t, int, void *), int do_old_matter, void *client_data /* argument for handler */)
 {
     union record record;	/* Initial record, holds name */
     union record rec2;		/* additional record(s) */
