@@ -246,8 +246,8 @@ view_pixel(struct application *ap)
     }
 
     if (OPTICAL_DEBUG&OPTICAL_DEBUG_HITS) bu_log("rgb=%3d, %3d, %3d xy=%3d, %3d (%g, %g, %g)\n",
-				    r, g, b, ap->a_x, ap->a_y,
-				    V3ARGS(ap->a_color));
+						 r, g, b, ap->a_x, ap->a_y,
+						 V3ARGS(ap->a_color));
 
     switch (buf_mode) {
 
@@ -281,8 +281,10 @@ view_pixel(struct application *ap)
 		 * and hit a different region than this pixel, then
 		 * recompute it too.
 		 */
-		if ((size_t)ap->a_x >= width-1) return;
-		if (fp[1].ff_frame <= 0) return;	/* not valid, will be recomputed. */
+		if ((size_t)ap->a_x >= width-1)
+		    return;
+		if (fp[1].ff_frame <= 0)
+		    return;	/* not valid, will be recomputed. */
 		if (fp[1].ff_regp == fp->ff_regp)
 		    return;				/* OK */
 
@@ -447,7 +449,8 @@ view_pixel(struct application *ap)
     }
 
 
-    if (!do_eol) return;
+    if (!do_eol)
+	return;
 
     switch (buf_mode) {
 	case BUFMODE_INCR:
