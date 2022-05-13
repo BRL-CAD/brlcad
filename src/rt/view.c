@@ -498,11 +498,9 @@ view_pixel(struct application *ap)
 		}
 		bu_semaphore_release(BU_SEM_SYSCALL);
 		if (sub_grid_mode) {
-		    if (npix < (size_t)sub_xmax-(size_t)sub_xmin-1)
-			bu_exit(EXIT_FAILURE, "scanline fb_write error");
-		} else {
-		    if (npix < width)
-			bu_exit(EXIT_FAILURE, "scanline fb_write error");
+		    if (npix < (size_t)sub_xmax-(size_t)sub_xmin-1) {
+			bu_log("WARNING: scanline error (wrote %zu of %zu pixels)", npix, (size_t)sub_xmax-sub_xmin-1);
+		    }
 		}
 	    }
 	    if (bif != NULL) {
