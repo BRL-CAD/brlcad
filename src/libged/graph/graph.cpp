@@ -58,6 +58,7 @@ struct graph_subcmd_tab {
     char *name;
 };
 
+
 /**
  * Table of graph subcommand functions.
  */
@@ -66,6 +67,7 @@ static const struct graph_subcmd_tab graph_subcmds[] = {
     {(char *)"positions"},
     {(char *)NULL}
 };
+
 
 /**
  * This structure has fields that correspond to three lists for primitive, combination and non-geometry type objects of a database.
@@ -80,7 +82,7 @@ struct output {
 /**
  * This structure has fields related to the representation of a graph with the help of the Adaptagrams library.
  */
-struct _ged_dag_data {
+struct graph_data {
     Avoid::Router *router;
     struct bu_hash_tbl *ids;
     struct bu_hash_tbl *object_types;
@@ -104,7 +106,7 @@ conn_callback(void *ptr)
  * Routine that returns the root nodes within the graph.
  */
 std::vector<unsigned int>
-find_roots(_ged_dag_data *dag)
+find_roots(graph_data *dag)
 {
     std::vector<unsigned int> roots;
     ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
@@ -127,7 +129,7 @@ find_roots(_ged_dag_data *dag)
  * and on the maximum X coordinate on that level.
  */
 void
-position_node(_ged_dag_data *dag, bool has_parent, Avoid::ShapeRef *parent, Avoid::ShapeRef *child, unsigned int &level, std::vector<double> &maxX_level)
+position_node(graph_data *dag, bool has_parent, Avoid::ShapeRef *parent, Avoid::ShapeRef *child, unsigned int &level, std::vector<double> &maxX_level)
 {
     double new_x, new_y, new_x1, new_y1;
 
@@ -190,7 +192,7 @@ position_node(_ged_dag_data *dag, bool has_parent, Avoid::ShapeRef *parent, Avoi
  * It recurses over all nodes of a tree, starting from the root node.
  */
 void
-set_layout(_ged_dag_data *dag, bool has_parent, unsigned long int parent_id, unsigned long int child_id, unsigned int &level, std::vector<double> &maxX_level)
+set_layout(graph_data *dag, bool has_parent, unsigned long int parent_id, unsigned long int child_id, unsigned int &level, std::vector<double> &maxX_level)
 {
     Avoid::ShapeRef *parent = NULL;
     Avoid::ShapeRef *child = NULL;
@@ -227,7 +229,7 @@ set_layout(_ged_dag_data *dag, bool has_parent, unsigned long int parent_id, uns
 	    maxX_level.reserve(level + 1);
 	    maxX_level.push_back(0.0);
 	}
-	for ( it=children.begin() ; it != children.end(); it++) {
+	for (it=children.begin() ; it != children.end(); it++) {
 	    set_layout(dag, has_parent, child_id, *it, level, maxX_level);
 	}
 	level --;
@@ -239,7 +241,7 @@ set_layout(_ged_dag_data *dag, bool has_parent, unsigned long int parent_id, uns
  * Add one object to the router of the 'dag' structure.
  */
 static Avoid::ShapeRef*
-add_object(struct _ged_dag_data *dag, unsigned int id)
+add_object(struct graph_data *dag, unsigned int id)
 {
     Avoid::Point srcPt(dag->object_nr * POSITION_COORDINATE + 2.0, dag->object_nr * POSITION_COORDINATE + 2.0);
     Avoid::Point dstPt(POSITION_COORDINATE + dag->object_nr * POSITION_COORDINATE, POSITION_COORDINATE +
@@ -272,7 +274,7 @@ free_hash_values(struct bu_hash_tbl *htbl)
  * the type of the object as a value.
  */
 void
-decorate_object(struct _ged_dag_data *dag, char *object_name, int object_type)
+decorate_object(struct graph_data *dag, char *object_name, int object_type)
 {
     char *type = (char *)bu_malloc((size_t)1, "hash entry value");
     sprintf(type, "%d", object_type);
@@ -287,7 +289,7 @@ decorate_object(struct _ged_dag_data *dag, char *object_name, int object_type)
  * Avoid::ShapeRef object to the graph.
  */
 static void
-dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct _ged_dag_data *dag, struct bu_hash_tbl *objects)
+dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct graph_data *dag, struct bu_hash_tbl *objects)
 {
     size_t i;
     struct rt_db_internal intern;
@@ -394,7 +396,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct _ged_dag_dat
 		    if ((*it)->id() == subnode_id) {
 			/* Don't create another shape because it already exists a corresponding one.
 			 * Get a reference to the shape that corresponds to the current node of the subtree.
-		     */
+			 */
 			shapeRef2 = dynamic_cast<ShapeRef *>(*it);
 			shape_exists = true;
 			break;
@@ -437,7 +439,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct _ged_dag_dat
  * and adds it to the corresponding list of names.
  */
 void
-put_me_in_a_bucket(struct directory *dp, struct directory *ndp, struct db_i *dbip, struct bu_hash_tbl *objects, struct output *o, struct _ged_dag_data *dag)
+put_me_in_a_bucket(struct directory *dp, struct directory *ndp, struct db_i *dbip, struct bu_hash_tbl *objects, struct output *o, struct graph_data *dag)
 {
     unsigned int object_id;
     const char *object = NULL;
@@ -507,7 +509,7 @@ put_me_in_a_bucket(struct directory *dp, struct directory *ndp, struct db_i *dbi
  * Add the list of objects in the master hash table "objects".
  */
 int
-add_objects(struct ged *gedp, struct _ged_dag_data *dag)
+add_objects(struct ged *gedp, struct graph_data *dag)
 {
     struct directory *dp = NULL, *ndp = NULL;
     struct bu_vls dp_name_vls = BU_VLS_INIT_ZERO;
@@ -599,7 +601,7 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
  * type and positions within the graph.
  */
 HIDDEN void
-graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
+graph_positions(struct ged *gedp, struct graph_data *dag)
 {
     /* The bounding positions of the rectangle corresponding to one object. */
     double minX;
@@ -670,9 +672,9 @@ graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
 int
 _ged_graph_positions(struct ged *gedp)
 {
-    struct _ged_dag_data *dag;
+    struct graph_data *dag;
 
-    BU_ALLOC(dag, struct _ged_dag_data);
+    BU_ALLOC(dag, struct graph_data);
     dag->router = new Avoid::Router(Avoid::PolyLineRouting);
 
     /* Get the name, type and position within the graph for each object. */
@@ -692,9 +694,9 @@ _ged_graph_positions(struct ged *gedp)
 int
 _ged_graph_show(struct ged *gedp)
 {
-    struct _ged_dag_data *dag;
+    struct graph_data *dag;
 
-    BU_ALLOC(dag, struct _ged_dag_data);
+    BU_ALLOC(dag, struct graph_data);
     dag->router = new Avoid::Router(Avoid::PolyLineRouting);
 
     /* Get the name, type and position within the graph for each object. */
@@ -801,16 +803,16 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-struct ged_cmd_impl dag_cmd_impl = { "graph", ged_graph, GED_CMD_DEFAULT };
-const struct ged_cmd dag_cmd = { &dag_cmd_impl };
-const struct ged_cmd *dag_cmds[] = { &dag_cmd,  NULL };
+    struct ged_cmd_impl graph_cmd_impl = { "graph", ged_graph, GED_CMD_DEFAULT };
+    const struct ged_cmd graph_cmd = { &graph_cmd_impl };
+    const struct ged_cmd *graph_cmds[] = { &graph_cmd,  NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  dag_cmds, 1 };
+    static const struct ged_plugin pinfo = { GED_API,  graph_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-{
-    return &pinfo;
-}
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+    {
+	return &pinfo;
+    }
 }
 #endif
 
