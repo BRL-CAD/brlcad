@@ -1,6 +1,9 @@
 find_package(ADAPTAGRAMS)
 if(ADAPTAGRAMS_FOUND)
   add_definitions(-DHAVE_ADAPTAGRAMS=1)
+else(ADAPTAGRAMS_FOUND)
+  set (AVOID_INCLUDE_DIR "")
+  set (ADAPTAGRAMS_LIBRARIES "")
 endif(ADAPTAGRAMS_FOUND)
 
 include_directories(
