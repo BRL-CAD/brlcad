@@ -187,6 +187,10 @@ extern void color_hook(const struct bu_structparse *sp, const char *name, void *
 /* usage.c */
 extern void usage(const char *argv0, int verbose);
 
+/* grid.c */
+extern void grid_setup();
+extern void grid_sync_dimensions();
+
 /**
  * called by apps during application_init() to register
  * application-specific usage options.

@@ -15,6 +15,7 @@ BRLCAD_INCLUDE_DIRS(RTBIN_INCLUDE_DIRS)
 
 set(LIBRTUIF_SOURCES
   do.c
+  grid.c
   heatgraph.c
   main.c
   opt.c

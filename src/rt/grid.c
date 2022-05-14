@@ -1,0 +1,244 @@
+/*                          G R I D . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2022 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file grid.c
+ *
+ * Routines that help set up the view grid
+ *
+ */
+
+#include "common.h"
+
+#include "rt/application.h"
+#include "bn/mat.h"
+#include "bu/log.h"
+#include "bu/app.h"
+#include "bu/assert.h"
+#include "vmath.h"
+
+#include "./ext.h"
+
+extern int cell_newsize;
+extern fastf_t cell_width;
+extern fastf_t cell_height;
+extern size_t width;
+extern size_t height;
+extern fastf_t aspect;
+extern fastf_t viewsize;
+extern mat_t Viewrotscale;
+extern mat_t model2view;
+extern mat_t view2model;
+extern fastf_t rt_perspective;
+extern int stereo;
+extern unsigned int jitter;
+extern vect_t left_eye_delta;
+extern point_t eye_model;
+extern point_t viewbase_model;
+extern fastf_t gift_grid_rounding;
+extern vect_t dx_model;
+extern vect_t dy_model;
+extern vect_t dx_unit;
+extern vect_t dy_unit;
+extern point_t viewbase_model;
+extern struct application APP;
+
+fastf_t gift_grid_rounding = 0;	/* set to 25.4 for inches */
+
+
+void
+grid_sync_dimensions()
+{
+    BU_ASSERT(!ZERO(width) || cell_width);
+    BU_ASSERT(!ZERO(height) || cell_height);
+    BU_ASSERT(!ZERO(viewsize));
+
+    if (cell_newsize) {
+	if (cell_width <= 0.0)
+	    cell_width = cell_height;
+	if (cell_height <= 0.0)
+	    cell_height = cell_width;
+
+	/* sanity, should be positive by now */
+	if (cell_width <= 0.0)
+	    cell_width = 1.0;
+	if (cell_height <= 0.0)
+	    cell_height = 1.0;
+
+	/* adjust viewsize to match grid specification */
+	width = (viewsize / cell_width) + 0.99;
+	if (!ZERO(aspect)) {
+	    height = (viewsize / (cell_height*aspect)) + 0.99;
+	} else {
+	    height = (viewsize / cell_height) + 0.99;
+	}
+
+	cell_newsize = 0;
+    } else {
+	/* Chop -1.0..+1.0 range into parts */
+	cell_width = viewsize / width;
+	if (!ZERO(aspect)) {
+	    cell_height = viewsize / (height*aspect);
+	} else {
+	    cell_height = viewsize / height;
+	}
+    }
+}
+
+
+/**
+ * In theory, the grid can be specified by providing any two of
+ * these sets of parameters:
+ *
+ * number of pixels (width, height)
+ * viewsize (in model units, mm)
+ * number of grid cells (cell_width, cell_height)
+ *
+ * however, for now, it is required that the view size always be
+ * specified, and one or the other parameter be provided.
+ */
+void
+grid_setup(void)
+{
+    vect_t temp;
+    mat_t toEye;
+
+    if (viewsize <= 0.0)
+	bu_exit(EXIT_FAILURE, "viewsize <= 0");
+    /* model2view takes us to eye_model location & orientation */
+    MAT_IDN(toEye);
+    MAT_DELTAS_VEC_NEG(toEye, eye_model);
+    Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
+    bn_mat_mul(model2view, Viewrotscale, toEye);
+    bn_mat_inv(view2model, model2view);
+
+    /* Determine grid cell size and number of pixels */
+    grid_sync_dimensions();
+
+    /*
+     * Optional GIFT compatibility, mostly for RTG3.  Round coordinates
+     * of lower left corner to fall on integer- valued coordinates, in
+     * "gift_grid_rounding" units.
+     */
+    if (gift_grid_rounding > 0.0) {
+	point_t v_ll;		/* view, lower left */
+	point_t m_ll;		/* model, lower left */
+	point_t hv_ll;		/* hv, lower left*/
+	point_t hv_wanted;
+	vect_t hv_delta;
+	vect_t m_delta;
+	mat_t model2hv;
+	mat_t hv2model;
+
+	/* Build model2hv matrix, including mm2inches conversion */
+	MAT_COPY(model2hv, Viewrotscale);
+	model2hv[15] = gift_grid_rounding;
+	bn_mat_inv(hv2model, model2hv);
+
+	VSET(v_ll, -1, -1, 0);
+	MAT4X3PNT(m_ll, view2model, v_ll);
+	MAT4X3PNT(hv_ll, model2hv, m_ll);
+	VSET(hv_wanted, floor(hv_ll[X]), floor(hv_ll[Y]), floor(hv_ll[Z]));
+	VSUB2(hv_delta, hv_ll, hv_wanted);
+
+	MAT4X3PNT(m_delta, hv2model, hv_delta);
+	VSUB2(eye_model, eye_model, m_delta);
+	MAT_DELTAS_VEC_NEG(toEye, eye_model);
+	bn_mat_mul(model2view, Viewrotscale, toEye);
+	bn_mat_inv(view2model, model2view);
+    }
+
+    /* Create basis vectors dx and dy for emanation plane (grid) */
+    VSET(temp, 1, 0, 0);
+    MAT3X3VEC(dx_unit, view2model, temp);	/* rotate only */
+    VSCALE(dx_model, dx_unit, cell_width);
+
+    VSET(temp, 0, 1, 0);
+    MAT3X3VEC(dy_unit, view2model, temp);	/* rotate only */
+    VSCALE(dy_model, dy_unit, cell_height);
+
+    if (stereo) {
+	/* Move left 2.5 inches (63.5mm) */
+	VSET(temp, -63.5*2.0/viewsize, 0, 0);
+	MAT4X3VEC(left_eye_delta, view2model, temp);
+    }
+
+    /* "Lower left" corner of viewing plane */
+    if (rt_perspective > 0.0) {
+	fastf_t zoomout;
+	zoomout = 1.0 / tan(DEG2RAD * rt_perspective / 2.0);
+	VSET(temp, -1, -1/aspect, -zoomout);	/* viewing plane */
+
+	/*
+	 * divergence is perspective angle divided by the number of
+	 * pixels in that angle. Extra factor of 0.5 is because
+	 * perspective is a full angle while divergence is the tangent
+	 * (slope) of a half angle.
+	 */
+	APP.a_diverge = tan(DEG2RAD * rt_perspective * 0.5 / width);
+	APP.a_rbeam = 0;
+    } else {
+	/* all rays go this direction */
+	VSET(temp, 0, 0, -1);
+	MAT4X3VEC(APP.a_ray.r_dir, view2model, temp);
+	VUNITIZE(APP.a_ray.r_dir);
+
+	VSET(temp, -1, -1/aspect, 0);	/* eye plane */
+	APP.a_rbeam = 0.5 * viewsize / width;
+	APP.a_diverge = 0;
+    }
+    if (ZERO(APP.a_rbeam) && ZERO(APP.a_diverge))
+	bu_exit(EXIT_FAILURE, "zero-radius beam");
+    MAT4X3PNT(viewbase_model, view2model, temp);
+
+    if (jitter & JITTER_FRAME) {
+	/* Move the frame in a smooth circular rotation in the plane */
+	fastf_t ang;	/* radians */
+	fastf_t dx, dy;
+
+	ang = curframe * M_2PI / 100.0;	/* semi-abitrary 100 frame period */
+	dx = cos(ang) * 0.5;	/* +/- 1/4 pixel width in amplitude */
+	dy = sin(ang) * 0.5;
+	VJOIN2(viewbase_model, viewbase_model,
+	       dx, dx_model,
+	       dy, dy_model);
+    }
+
+    if (cell_width <= 0 || cell_width >= INFINITY ||
+	cell_height <= 0 || cell_height >= INFINITY) {
+	bu_log("grid_setup: cell size ERROR (%g, %g) mm\n",
+	       cell_width, cell_height);
+	bu_exit(EXIT_FAILURE, "cell size");
+    }
+    if (width <= 0 || height <= 0) {
+	bu_log("grid_setup: ERROR bad image size (%zu, %zu)\n",
+	       width, height);
+	bu_exit(EXIT_FAILURE, "bad size");
+    }
+}
+
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

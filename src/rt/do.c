@@ -63,9 +63,6 @@ extern mat_t view2model;
 extern mat_t model2view;
 /***** end of sharing with viewing model *****/
 
-extern void grid_setup(void);
-extern void worker(int cpu, void *arg);
-
 /***** variables shared with opt.c *****/
 extern int	orientflag;		/* 1 means orientation has been set */
 /***** end variables shared with opt.c *****/
@@ -76,16 +73,15 @@ extern char *string_pix_end;	/* string spec of ending pixel */
 extern int finalframe;		/* frame to halt at */
 /***** end variables shared with rt.c *****/
 
-/***** variables for frame buffer black pixel rendering *****/
-unsigned char *pixmap = NULL; /* Pixel Map for rerendering of black pixels */
-
-
 void def_tree(register struct rt_i *rtip);
 void do_ae(double azim, double elev);
 void res_pr(void);
 void memory_summary(void);
+extern void grid_setup(void);
+extern void worker(int cpu, void *arg);
 
 extern struct icv_image *bif;
+unsigned char *pixmap = NULL; /**< Pixel Map for rerendering of black pixels */
 
 
 /**
