@@ -79,13 +79,15 @@ mat_t		view2model;
 mat_t		model2view;
 /***** end of sharing with viewing model *****/
 
+
 /***** variables shared with worker() ******/
 struct application APP;
 int		report_progress;	/* !0 = user wants progress report */
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern size_t	incr_nlevel;		/* number of levels */
-
+extern vect_t   left_eye_delta;
 /***** end variables shared with worker() *****/
+
 
 /***** variables shared with do.c *****/
 extern int	pix_start;		/* pixel to start at */
@@ -108,7 +110,9 @@ extern char	*framebuffer;		/* desired framebuffer */
 
 extern struct command_tab rt_do_tab[];
 
-int	save_overlaps=0;	/* flag for setting rti_save_overlaps */
+int	save_overlaps = 0;	/* flag for setting rti_save_overlaps */
+fastf_t gift_grid_rounding = 0;	/* set to 25.4 for inches */
+
 
 
 void
@@ -142,21 +146,174 @@ memory_summary(void)
 }
 
 
+static void
+grid_sync_dimensions()
+{
+    if (cell_newsize) {
+	if (cell_width <= 0.0) cell_width = cell_height;
+	if (cell_height <= 0.0) cell_height = cell_width;
+	width = (viewsize / cell_width) + 0.99;
+	height = (viewsize / (cell_height*aspect)) + 0.99;
+	cell_newsize = 0;
+    } else {
+	/* Chop -1.0..+1.0 range into parts */
+	cell_width = viewsize / width;
+	cell_height = viewsize / (height*aspect);
+    }
+}
+
+
+/**
+ * In theory, the grid can be specified by providing any two of
+ * these sets of parameters:
+ *
+ * number of pixels (width, height)
+ * viewsize (in model units, mm)
+ * number of grid cells (cell_width, cell_height)
+ *
+ * however, for now, it is required that the view size always be
+ * specified, and one or the other parameter be provided.
+ */
+void
+grid_setup(void)
+{
+    vect_t temp;
+    mat_t toEye;
+
+    if (viewsize <= 0.0)
+	bu_exit(EXIT_FAILURE, "viewsize <= 0");
+    /* model2view takes us to eye_model location & orientation */
+    MAT_IDN(toEye);
+    MAT_DELTAS_VEC_NEG(toEye, eye_model);
+    Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
+    bn_mat_mul(model2view, Viewrotscale, toEye);
+    bn_mat_inv(view2model, model2view);
+
+    /* Determine grid cell size and number of pixels */
+    grid_sync_dimensions();
+
+    /*
+     * Optional GIFT compatibility, mostly for RTG3.  Round coordinates
+     * of lower left corner to fall on integer- valued coordinates, in
+     * "gift_grid_rounding" units.
+     */
+    if (gift_grid_rounding > 0.0) {
+	point_t v_ll;		/* view, lower left */
+	point_t m_ll;		/* model, lower left */
+	point_t hv_ll;		/* hv, lower left*/
+	point_t hv_wanted;
+	vect_t hv_delta;
+	vect_t m_delta;
+	mat_t model2hv;
+	mat_t hv2model;
+
+	/* Build model2hv matrix, including mm2inches conversion */
+	MAT_COPY(model2hv, Viewrotscale);
+	model2hv[15] = gift_grid_rounding;
+	bn_mat_inv(hv2model, model2hv);
+
+	VSET(v_ll, -1, -1, 0);
+	MAT4X3PNT(m_ll, view2model, v_ll);
+	MAT4X3PNT(hv_ll, model2hv, m_ll);
+	VSET(hv_wanted, floor(hv_ll[X]), floor(hv_ll[Y]), floor(hv_ll[Z]));
+	VSUB2(hv_delta, hv_ll, hv_wanted);
+
+	MAT4X3PNT(m_delta, hv2model, hv_delta);
+	VSUB2(eye_model, eye_model, m_delta);
+	MAT_DELTAS_VEC_NEG(toEye, eye_model);
+	bn_mat_mul(model2view, Viewrotscale, toEye);
+	bn_mat_inv(view2model, model2view);
+    }
+
+    /* Create basis vectors dx and dy for emanation plane (grid) */
+    VSET(temp, 1, 0, 0);
+    MAT3X3VEC(dx_unit, view2model, temp);	/* rotate only */
+    VSCALE(dx_model, dx_unit, cell_width);
+
+    VSET(temp, 0, 1, 0);
+    MAT3X3VEC(dy_unit, view2model, temp);	/* rotate only */
+    VSCALE(dy_model, dy_unit, cell_height);
+
+    if (stereo) {
+	/* Move left 2.5 inches (63.5mm) */
+	VSET(temp, -63.5*2.0/viewsize, 0, 0);
+	MAT4X3VEC(left_eye_delta, view2model, temp);
+    }
+
+    /* "Lower left" corner of viewing plane */
+    if (rt_perspective > 0.0) {
+	fastf_t zoomout;
+	zoomout = 1.0 / tan(DEG2RAD * rt_perspective / 2.0);
+	VSET(temp, -1, -1/aspect, -zoomout);	/* viewing plane */
+
+	/*
+	 * divergence is perspective angle divided by the number of
+	 * pixels in that angle. Extra factor of 0.5 is because
+	 * perspective is a full angle while divergence is the tangent
+	 * (slope) of a half angle.
+	 */
+	APP.a_diverge = tan(DEG2RAD * rt_perspective * 0.5 / width);
+	APP.a_rbeam = 0;
+    } else {
+	/* all rays go this direction */
+	VSET(temp, 0, 0, -1);
+	MAT4X3VEC(APP.a_ray.r_dir, view2model, temp);
+	VUNITIZE(APP.a_ray.r_dir);
+
+	VSET(temp, -1, -1/aspect, 0);	/* eye plane */
+	APP.a_rbeam = 0.5 * viewsize / width;
+	APP.a_diverge = 0;
+    }
+    if (ZERO(APP.a_rbeam) && ZERO(APP.a_diverge))
+	bu_exit(EXIT_FAILURE, "zero-radius beam");
+    MAT4X3PNT(viewbase_model, view2model, temp);
+
+    if (jitter & JITTER_FRAME) {
+	/* Move the frame in a smooth circular rotation in the plane */
+	fastf_t ang;	/* radians */
+	fastf_t dx, dy;
+
+	ang = curframe * M_2PI / 100.0;	/* semi-abitrary 100 frame period */
+	dx = cos(ang) * 0.5;	/* +/- 1/4 pixel width in amplitude */
+	dy = sin(ang) * 0.5;
+	VJOIN2(viewbase_model, viewbase_model,
+	       dx, dx_model,
+	       dy, dy_model);
+    }
+
+    if (cell_width <= 0 || cell_width >= INFINITY ||
+	cell_height <= 0 || cell_height >= INFINITY) {
+	bu_log("grid_setup: cell size ERROR (%g, %g) mm\n",
+	       cell_width, cell_height);
+	bu_exit(EXIT_FAILURE, "cell size");
+    }
+    if (width <= 0 || height <= 0) {
+	bu_log("grid_setup: ERROR bad image size (%zu, %zu)\n",
+	       width, height);
+	bu_exit(EXIT_FAILURE, "bad size");
+    }
+}
+
+
 #ifndef RT_TXT_OUTPUT
 int fb_setup() {
     /* Framebuffer is desired */
     size_t xx, yy;
     int zoom;
 
+    /* make sure width/height are set via -g/-G */
+    grid_sync_dimensions();
+
     /* Ask for a fb big enough to hold the image, at least 512. */
     /* This is so MGED-invoked "postage stamps" get zoomed up big
      * enough to see.
      */
     xx = yy = 512;
-    if (width > xx || height > yy) {
+    if (xx < width || yy < height) {
 	xx = width;
 	yy = height;
     }
+
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     fbp = fb_open(framebuffer, xx, yy);
     bu_semaphore_release(BU_SEM_SYSCALL);
@@ -167,21 +324,23 @@ int fb_setup() {
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     /* If fb came out smaller than requested, do less work */
-    if ((size_t)fb_getwidth(fbp) < width)
-	width = fb_getwidth(fbp);
-    if ((size_t)fb_getheight(fbp) < height)
-	height = fb_getheight(fbp);
+    size_t fbwidth = (size_t)fb_getwidth(fbp);
+    size_t fbheight = (size_t)fb_getheight(fbp);
+    if (width > fbwidth)
+	width = fbwidth;
+    if (height > fbheight)
+	height = fbheight;
 
-    /* If the fb is lots bigger (>= 2X), zoom up & center */
+    /* If fb is lots bigger (>= 2X), zoom up & center */
     if (width > 0 && height > 0) {
-	zoom = fb_getwidth(fbp)/width;
-	if ((size_t)fb_getheight(fbp)/height < (size_t)zoom)
+	zoom = fbwidth/width;
+	if (fbheight/height < (size_t)zoom) {
 	    zoom = fb_getheight(fbp)/height;
+	}
+	(void)fb_view(fbp, width/2, height/2, zoom, zoom);
     } else {
 	zoom = 1;
     }
-    (void)fb_view(fbp, width/2, height/2,
-		  zoom, zoom);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
 #ifdef USE_OPENCL
