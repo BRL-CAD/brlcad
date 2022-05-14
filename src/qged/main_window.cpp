@@ -26,6 +26,7 @@
 #include <map>
 #include <set>
 #include <QTimer>
+#include "qtcad/QViewCtrl.h"
 #include "bu/str.h"
 #include "main_window.h"
 #include "app.h"
@@ -104,9 +105,23 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 
     help_menu = menuBar()->addMenu("Help");
 
-    c4 = new QtCADQuad(this, gedp, canvas_type);
+
+    // Define a widget to hold the main view and its associated
+    // controls
+    QWidget *cw = new QWidget(this);
+    QVBoxLayout *cwl = new QVBoxLayout;
+
+    QViewCtrl *vcw = new QViewCtrl(cw);
+    vcw->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    cwl->addWidget(vcw);
+
+    c4 = new QtCADQuad(cw, gedp, canvas_type);
     c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    setCentralWidget(c4);
+    cwl->addWidget(c4);
+
+    cw->setLayout(cwl);
+    setCentralWidget(cw);
+
     gedp->ged_gvp = c4->view();
 
     if (quad_view) {

@@ -64,7 +64,7 @@ class QTCAD_EXPORT QViewCtrl : public QWidget
 
 	void resizeEvent(QResizeEvent *pevent);
 
-	int icon_size = 50;
+	int icon_size = 25;
 
     signals:
 	void mode_change(int);
