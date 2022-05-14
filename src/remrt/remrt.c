@@ -228,7 +228,7 @@ int detached = 0;		/* continue after EOF */
 fd_set clients;
 int print_on = 1;
 
-int save_overlaps = 0;
+
 /*
  * Scan the ihost table.  For all eligible hosts that don't
  * presently have a server running, try to start a server.

@@ -112,15 +112,14 @@ static int avail_cpus = 0;	/* # of cpus avail on this system */
 static int original_argc;
 static char **original_argv;
 
-int save_overlaps = 0;
-
 struct icv_image *bif = NULL;
+
 
 /*
  * Package Handlers.
  */
-void ph_unexp(struct pkg_conn *pc, char *buf);		/* foobar message handler */
-void ph_enqueue(struct pkg_conn *pc, char *buf);	/* Adds message to linked list */
+void ph_unexp(struct pkg_conn *pc, char *buf);   /* foobar message handler */
+void ph_enqueue(struct pkg_conn *pc, char *buf); /* Adds message to linked list */
 void ph_dirbuild(struct pkg_conn *pc, char *buf);
 void ph_gettrees(struct pkg_conn *pc, char *buf);
 void ph_matrix(struct pkg_conn *pc, char *buf);

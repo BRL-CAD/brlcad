@@ -140,6 +140,8 @@ int sub_ymax = 0;
  */
 int use_air = 0;                        /* whether librt should handle air */
 
+int save_overlaps = 0;                  /* flag for setting rti_save_overlaps */
+
 /***** end variables shared with do.c *****/
 
 

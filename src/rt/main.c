@@ -110,8 +110,6 @@ extern char	*framebuffer;		/* desired framebuffer */
 
 extern struct command_tab rt_do_tab[];
 
-int	save_overlaps = 0;	/* flag for setting rti_save_overlaps */
-
 
 void
 siginfo_handler(int UNUSED(arg))

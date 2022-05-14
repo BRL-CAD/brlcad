@@ -193,7 +193,6 @@ extern "C" {
     extern size_t width, height;
     extern struct bu_ptbl* cmd_objs;
     extern struct command_tab rt_do_tab[];
-    int save_overlaps = 1;
     mat_t model2view;
     mat_t view2model;
     size_t n_free;
