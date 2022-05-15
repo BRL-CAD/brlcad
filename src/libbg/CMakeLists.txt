@@ -99,6 +99,12 @@ if (HIDE_INTERNAL_SYMBOLS)
   endif (TARGET libbg-obj)
 endif (HIDE_INTERNAL_SYMBOLS)
 
+# altivec vectorization is broken in our bundled version of eigen.
+# looks like it was fixed in upstream long time ago, so just disable
+# for now.  TODO: remove this / retest after next Eigen upgrade.
+set_property(TARGET libbg APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
+set_property(TARGET libbg-obj APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
+
 add_subdirectory(tests)
 
 set(bg_ignore
