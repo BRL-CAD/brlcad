@@ -1183,7 +1183,7 @@ std::string ElfFile<ElfFileParamNames>::getInterpreter()
 }
 
 template<ElfFileParams>
-void ElfFile<ElfFileParamNames>::modifySoname(sonameMode op, const std::string & newSoname)
+void ElfFile<ElfFileParamNames>::modifySoname(sonameMode op, const std::string & newsoname)
 {
     if (rdi(hdr->e_type) != ET_DYN) {
         debug("this is not a dynamic library\n");
@@ -1217,18 +1217,18 @@ void ElfFile<ElfFileParamNames>::modifySoname(sonameMode op, const std::string &
         return;
     }
 
-    if (std::string(soname ? soname : "") == newSoname) {
+    if (std::string(soname ? soname : "") == newsoname) {
         debug("current and proposed new SONAMEs are equal keeping DT_SONAME entry\n");
         return;
     }
 
-    debug("new SONAME is '%s'\n", newSoname.c_str());
+    debug("new SONAME is '%s'\n", newsoname.c_str());
 
     /* Grow the .dynstr section to make room for the new SONAME. */
     debug("SONAME is too long, resizing...\n");
 
-    std::string & newDynStr = replaceSection(".dynstr", rdi(shdrDynStr.sh_size) + newSoname.size() + 1);
-    setSubstr(newDynStr, rdi(shdrDynStr.sh_size), newSoname + '\0');
+    std::string & newDynStr = replaceSection(".dynstr", rdi(shdrDynStr.sh_size) + newsoname.size() + 1);
+    setSubstr(newDynStr, rdi(shdrDynStr.sh_size), newsoname + '\0');
 
     /* Update the DT_SONAME entry. */
     if (dynSoname) {
@@ -1256,10 +1256,10 @@ void ElfFile<ElfFileParamNames>::modifySoname(sonameMode op, const std::string &
 }
 
 template<ElfFileParams>
-void ElfFile<ElfFileParamNames>::setInterpreter(const std::string & newInterpreter)
+void ElfFile<ElfFileParamNames>::setInterpreter(const std::string & newinterpreter)
 {
-    std::string & section = replaceSection(".interp", newInterpreter.size() + 1);
-    setSubstr(section, 0, newInterpreter + '\0');
+    std::string & section = replaceSection(".interp", newinterpreter.size() + 1);
+    setSubstr(section, 0, newinterpreter + '\0');
     changed = true;
 }
 
@@ -1273,7 +1273,7 @@ static void concatToRPath(std::string & rpath, const std::string & path)
 
 template<ElfFileParams>
 void ElfFile<ElfFileParamNames>::modifyRPath(RPathOp op,
-    const std::vector<std::string> & allowedRpathPrefixes, std::string newRPath)
+    const std::vector<std::string> & allowedPathPrefixes, std::string newPath)
 {
     auto shdrDynamic = findSection(".dynamic");
 
@@ -1332,20 +1332,20 @@ void ElfFile<ElfFileParamNames>::modifyRPath(RPathOp op,
     if (op == rpShrink) {
         std::vector<bool> neededLibFound(neededLibs.size(), false);
 
-        newRPath = "";
+        newPath = "";
 
         for (auto & dirName : splitColonDelimitedString(rpath)) {
 
             /* Non-absolute entries are allowed (e.g., the special
                "$ORIGIN" hack). */
             if (dirName[0] != '/') {
-                concatToRPath(newRPath, dirName);
+                concatToRPath(newPath, dirName);
                 continue;
             }
 
             /* If --allowed-rpath-prefixes was given, reject directories
                not starting with any of the (colon-delimited) prefixes. */
-            if (!allowedRpathPrefixes.empty() && !hasAllowedPrefix(dirName, allowedRpathPrefixes)) {
+            if (!allowedPathPrefixes.empty() && !hasAllowedPrefix(dirName, allowedPathPrefixes)) {
                 debug("removing directory '%s' from RPATH because of non-allowed prefix\n", dirName.c_str());
                 continue;
             }
@@ -1370,7 +1370,7 @@ void ElfFile<ElfFileParamNames>::modifyRPath(RPathOp op,
             if (!libFound)
                 debug("removing directory '%s' from RPATH\n", dirName.c_str());
             else
-                concatToRPath(newRPath, dirName);
+                concatToRPath(newPath, dirName);
         }
     }
 
@@ -1412,7 +1412,7 @@ void ElfFile<ElfFileParamNames>::modifyRPath(RPathOp op,
         changed = true;
     }
 
-    if (std::string(rpath ? rpath : "") == newRPath) {
+    if (std::string(rpath ? rpath : "") == newPath) {
         return;
     }
 
@@ -1426,12 +1426,12 @@ void ElfFile<ElfFileParamNames>::modifyRPath(RPathOp op,
         memset(rpath, 'X', rpathSize);
     }
 
-    debug("new rpath is '%s'\n", newRPath.c_str());
+    debug("new rpath is '%s'\n", newPath.c_str());
 
 
-    if (newRPath.size() <= rpathSize) {
+    if (newPath.size() <= rpathSize) {
 	if (rpath)
-           strcpy(rpath, newRPath.c_str());
+           strcpy(rpath, newPath.c_str());
         return;
     }
 
@@ -1439,8 +1439,8 @@ void ElfFile<ElfFileParamNames>::modifyRPath(RPathOp op,
     debug("rpath is too long, resizing...\n");
 
     std::string & newDynStr = replaceSection(".dynstr",
-        rdi(shdrDynStr.sh_size) + newRPath.size() + 1);
-    setSubstr(newDynStr, rdi(shdrDynStr.sh_size), newRPath + '\0');
+        rdi(shdrDynStr.sh_size) + newPath.size() + 1);
+    setSubstr(newDynStr, rdi(shdrDynStr.sh_size), newPath + '\0');
 
     /* Update the DT_RUNPATH and DT_RPATH entries. */
     if (dynRunPath || dynRPath) {
