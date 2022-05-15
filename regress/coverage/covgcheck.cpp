@@ -53,6 +53,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <cstring>
 
 #include "bu/app.h"
 #include "bu/exit.h"
