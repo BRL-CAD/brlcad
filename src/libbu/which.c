@@ -49,7 +49,6 @@ bu_which(const char *cmd)
 
     char *directory = NULL;
     char *position = NULL;
-    char curr_dir[] = ".";
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("bu_which: [%s]\n", cmd);
@@ -110,6 +109,8 @@ bu_which(const char *cmd)
     /* search for the executable */
     directory = PATH;
     do {
+	struct bu_vls vp = BU_VLS_INIT_ZERO;
+
 	position = strchr(directory, BU_PATH_SEPARATOR);
 	if (position) {
 	    /* 'directory' can't be const because we have to change a character here: */
@@ -117,11 +118,29 @@ bu_which(const char *cmd)
 	}
 
 	/* empty means use current dir */
-	if (strlen(directory) == 0) {
-	    directory = curr_dir; /* "."; */
+	size_t dirlen = strlen(directory);
+	if (dirlen == 0) {
+	    /* "./cmd" */
+	    bu_vls_putc(&vp, '.');
+	    bu_vls_putc(&vp, BU_DIR_SEPARATOR);
+	    bu_vls_strcat(&vp, cmd);
+	    bu_strlcpy(bu_which_result, bu_vls_cstr(&vp), MAXPATHLEN);
+	    bu_vls_free(&vp);
+	} else if (dirlen <= MAXPATHLEN-2) {
+	    /* "dir/cmd" */
+	    bu_vls_strcpy(&vp, directory);
+	    bu_vls_putc(&vp, BU_DIR_SEPARATOR);
+	    bu_vls_strcat(&vp, cmd);
+	    bu_strlcpy(bu_which_result, bu_vls_cstr(&vp), MAXPATHLEN);
+	    bu_vls_free(&vp);
+	} else {
+	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+		bu_log("WARNING: PATH dir is too long (%zu > %zu), skipping.\n"
+		       "         dir = [%s]\n", dirlen, (size_t)MAXPATHLEN-2, directory);
+	    }
+	    continue;
 	}
 
-	snprintf(bu_which_result, MAXPATHLEN, "%s/%s", directory, cmd);
 	if (bu_file_exists(bu_which_result, NULL)) {
 	    if (bu_which_result[0] == '\0')
 		return NULL; /* never return empty */
