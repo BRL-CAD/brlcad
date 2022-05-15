@@ -107,6 +107,8 @@ bu_whereis(const char *cmd)
     /* search for the executable */
     directory = PATH;
     do {
+	struct bu_vls vp = BU_VLS_INIT_ZERO;
+
 	position = strchr(directory, BU_PATH_SEPARATOR);
 	if (position) {
 	    /* 'directory' can't be const because we have to change a character here: */
@@ -116,9 +118,19 @@ bu_whereis(const char *cmd)
 	/* empty means use current dir */
 	size_t dirlen = strlen(directory);
 	if (dirlen == 0) {
-	    snprintf(bu_whereis_result, MAXPATHLEN, "./%s", cmd);
+	    /* "./cmd" */
+	    bu_vls_putc(&vp, '.');
+	    bu_vls_putc(&vp, BU_DIR_SEPARATOR);
+	    bu_vls_strcat(&vp, cmd);
+	    bu_strlcpy(bu_whereis_result, bu_vls_cstr(&vp), MAXPATHLEN);
+	    bu_vls_free(&vp);
 	} else if (dirlen <= MAXPATHLEN-2) {
-	    snprintf(bu_whereis_result, MAXPATHLEN, "%s/%s", directory, cmd);
+	    /* "dir/cmd" */
+	    bu_vls_strcpy(&vp, directory);
+	    bu_vls_putc(&vp, BU_DIR_SEPARATOR);
+	    bu_vls_strcat(&vp, cmd);
+	    bu_strlcpy(bu_whereis_result, bu_vls_cstr(&vp), MAXPATHLEN);
+	    bu_vls_free(&vp);
 	} else {
 	    bu_log("WARNING: PATH dir is too long (%zu > %zu), skipping.\n"
 		   "         dir = [%s]\n", dirlen, (size_t)MAXPATHLEN-2, directory);
