@@ -57,7 +57,6 @@ bu_whereis(const char *cmd)
 
     char *directory = NULL;
     char *position = NULL;
-    char curr_dir[] = ".";
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("bu_whereis: [%s]\n", cmd);
@@ -115,11 +114,17 @@ bu_whereis(const char *cmd)
 	}
 
 	/* empty means use current dir */
-	if (strlen(directory) == 0) {
-	    directory = curr_dir; /* "."; */
+	size_t dirlen = strlen(directory);
+	if (dirlen == 0) {
+	    snprintf(bu_whereis_result, MAXPATHLEN, "./%s", cmd);
+	} else if (dirlen <= MAXPATHLEN-2) {
+	    snprintf(bu_whereis_result, MAXPATHLEN, "%s/%s", directory, cmd);
+	} else {
+	    bu_log("WARNING: PATH dir is too long (%zu > %zu), skipping.\n"
+		   "         dir = [%s]\n", dirlen, (size_t)MAXPATHLEN-2, directory);
+	    continue;
 	}
 
-	snprintf(bu_whereis_result, MAXPATHLEN, "%s/%s", directory, cmd);
 	if (bu_file_exists(bu_whereis_result, NULL)) {
 	    if (bu_whereis_result[0] == '\0')
 		return NULL; /* never return empty */
