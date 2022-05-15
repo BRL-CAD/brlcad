@@ -2110,24 +2110,24 @@ Pointer( Real ) Octree< Real >::SetLaplacianConstraints( const NormalInfo& norma
 			int d , off[3];
 			node->depthAndOffset( d , off );
 			for( int x=startX ; x<endX ; x++ ) for( int y=startY ; y<endY ; y++ ) for( int z=startZ ; z<endZ ; z++ )
-				if( neighbors5.neighbors[x][y][z] )
-				{
-					TreeOctNode* _node = neighbors5.neighbors[x][y][z];
-					int _i = _node->nodeData.nodeIndex;
-					if( isInterior )
-					{
-						Point3D< double >& div = _stencil.values[x][y][z];
-						Point3D< Real >& normal = coefficients[_i];
-						constraint += Real( div[0] * normal[0] + div[1] * normal[1] + div[2] * normal[2] );
-					}
-					else
-					{
-						int _d , _off[3];
-						_node->depthAndOffset( _d , _off );
-						constraint += Real( GetDivergence2( integrator , d , off , _off , true , coefficients[_i] ) );
-					}
-				}
-				constraints[ node->nodeData.nodeIndex ] += constraint;
+						if( neighbors5.neighbors[x][y][z] )
+						{
+							TreeOctNode* _node = neighbors5.neighbors[x][y][z];
+							int _i = _node->nodeData.nodeIndex;
+							if( isInterior )
+							{
+								Point3D< double >& div = _stencil.values[x][y][z];
+								Point3D< Real >& normal = coefficients[_i];
+								constraint += Real( div[0] * normal[0] + div[1] * normal[1] + div[2] * normal[2] );
+							}
+							else
+							{
+								int _d , _off[3];
+								_node->depthAndOffset( _d , _off );
+								constraint += Real( GetDivergence2( integrator , d , off , _off , true , coefficients[_i] ) );
+							}
+						}
+					constraints[ node->nodeData.nodeIndex ] += constraint;
 		}
 	}
 	return constraints;
