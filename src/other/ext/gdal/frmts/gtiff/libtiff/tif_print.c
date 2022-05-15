@@ -82,7 +82,8 @@ _TIFFPrintField(FILE* fd, const TIFFField *fip,
     /* which aren't registered by libtiff itself. */
     const char* field_name = fip->field_name;
     if( strncmp(fip->field_name, "Tag ", 4) == 0 ) {
-        for( size_t i = 0; i < NTAGS; ++i ) {
+        size_t i;
+        for( i = 0; i < NTAGS; ++i ) {
             if( fip->field_tag == tagnames[i].tag ) {
                 field_name = tagnames[i].name;
                 break;
