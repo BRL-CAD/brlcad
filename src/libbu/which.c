@@ -44,7 +44,7 @@ static char bu_which_result[MAXPATHLEN] = {0};
 static char *
 which_path(const char *cmd, const char *path, char *result)
 {
-    if (!cmd || !path || !result)
+    if (!cmd || !path || !result || path[0] == '\0')
 	return NULL;
 
     char test_result[MAXPATHLEN] = {0};
@@ -109,9 +109,9 @@ which_path(const char *cmd, const char *path, char *result)
 const char *
 bu_which(const char *cmd)
 {
-    static const char *gotpath = NULL;
+    const char *gotpath = NULL;
 
-    char PATH[MAXPATHENV];
+    char PATH[MAXPATHENV] = {0};
 
     char *position = NULL;
 
@@ -124,10 +124,9 @@ bu_which(const char *cmd)
     }
 
     /* start fresh */
-    memset(PATH, 0, MAXPATHENV);
     memset(bu_which_result, 0, MAXPATHLEN);
 
-    /* check for full/relative path match */
+    /* ATTEMPT #0: check for full/relative path match */
     bu_strlcpy(bu_which_result, cmd, MAXPATHLEN);
     if (!BU_STR_EQUAL(bu_which_result, cmd)) {
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
@@ -137,46 +136,73 @@ bu_which(const char *cmd)
     }
 
     if (bu_file_exists(bu_which_result, NULL) && strchr(bu_which_result, BU_DIR_SEPARATOR)) {
-	if (bu_which_result[0] == '\0')
-	    return NULL; /* never return empty */
-	return bu_which_result;
+	if (bu_which_result[0] != '\0') {
+	    /* never return empty */
+	    return bu_which_result;
+	}
     }
 
-    /* load up the PATH from the caller's user environment */
+    /* ATTEMPT #1: search PATH from caller's user environment */
     gotpath = getenv("PATH");
     if (gotpath) {
 	bu_strlcpy(PATH, gotpath, MAXPATHENV);
 
-	/* make sure it fit, we have a problem if it did not */
+	/* make sure fits, address truncated path if it didn't */
 	if (!BU_STR_EQUAL(PATH, gotpath)) {
 	    position = strrchr(PATH, BU_PATH_SEPARATOR);
 	    if (position) {
-		position = NULL;
+		*position = '\0';
 	    } else {
 		/* too much and no separator? wtf. */
 		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-		    bu_log("path contains invalid data?\n");
+		    bu_log("PATH contains invalid data?\n");
 		}
-		return NULL;
+		*PATH = '\0';
 	    }
 	}
-
-	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-	    bu_log("PATH is %s\n", PATH);
-	}
-    } else {
-	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+    }
+    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+	if (PATH[0]) {
+	    bu_log("PATH is [%s]\n", PATH);
+	} else {
 	    bu_log("PATH is NULL\n");
 	}
-	return NULL;
     }
 
     if (which_path(cmd, PATH, bu_which_result))
 	return bu_which_result;
 
+    /* ATTEMPT #2: search system path (not necessarily same as PATH) */
+#if defined(HAVE_SYSCTL) && defined(CTL_USER) && defined(USER_CS_PATH)
+    {
+	int mib[2] = { CTL_USER, USER_CS_PATH };
+	size_t len = MAXPATHENV;
+
+	/* use sysctl() to get the PATH */
+	if (sysctl(mib, 2, PATH, &len, NULL, 0) != 0) {
+	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+		perror("sysctl of user.cs_path");
+		bu_log("user.cs_path is unusable\n");
+	    }
+	    PATH[0] = '\0';
+	}
+    }
+    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+	if (PATH[0]) {
+	    bu_log("user.cs_path is %s\n", PATH);
+	} else {
+	    bu_log("user.cs_path is NULL\n");
+	}
+    }
+
+    if (which_path(cmd, PATH, bu_which_result))
+	return bu_which_result;
+
+#endif  /* HAVE_SYSCTL */
+
     /* no path or no match */
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-	bu_log("no %s in %s\n", cmd, gotpath ? gotpath : "(no path)");
+	bu_log("command [%s] not found\n", cmd);
     }
 
     return NULL;
