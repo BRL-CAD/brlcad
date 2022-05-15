@@ -211,7 +211,7 @@ set_property(TARGET itclstub APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 file(GENERATE
   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl"
   CONTENT "
-if {![package vsatisfies [package provide Tcl] ${TCL_VERSION}]} {return}
+if {![package vsatisfies [package provide Tcl] 8.5]} {return}
 package ifneeded Itcl ${ITCL_VERSION} [list load [file join $dir ../../${SHARED_DIR}/itcl${ITCL_VERSION} $<TARGET_FILE_NAME:itcl${ITCL_VERSION}>] Itcl]
 ")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION ${LIB_DIR}/itcl${ITCL_VERSION})
