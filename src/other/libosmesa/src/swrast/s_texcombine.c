@@ -89,7 +89,7 @@ texture_combine(const GLcontext *ctx, GLuint unit, GLuint n,
 #ifdef __clang_analyzer__
     // Validate the arrays up front for clang - Coverity doesn't seem
     // to think we need to
-    for (int i = 0; i < n; i++) {
+    for (i = 0; i < n; i++) {
 	if (!argRGB[i])
 	    return;
 	if (!rgba[i])

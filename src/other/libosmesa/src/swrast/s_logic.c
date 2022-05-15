@@ -237,8 +237,9 @@ _swrast_logicop_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
 		      (const GLuint *) rbPixels, span->array->mask);
     } else {
 	GLuint crgba[MAX_WIDTH][4];
-	for (int i = 0; i < MAX_WIDTH; i++) {
-	    for (int j = 0; j < 4; j++) {
+	int i, j;
+	for (i = 0; i < MAX_WIDTH; i++) {
+	    for (j = 0; j < 4; j++) {
 		crgba[i][j] = (GLuint) span->array->attribs[FRAG_ATTRIB_COL0][i][j];
 	    }
 	}
