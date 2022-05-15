@@ -39,7 +39,7 @@ DAMAGE.
 #  pragma GCC diagnostic ignored "-Wunused-variable"
 #  pragma GCC diagnostic ignored "-Wsign-compare"
 #  pragma GCC diagnostic ignored "-Wunused-value"
-#  pragma GCC diagnostic ignored "-Wmisleading-indentation"
+//#  pragma GCC diagnostic ignored "-Wmisleading-indentation"
 #  pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #  pragma GCC diagnostic ignored "-Wparentheses"
 #  pragma GCC diagnostic ignored "-Wreturn-type"
