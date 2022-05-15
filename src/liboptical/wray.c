@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
 #include "vmath.h"
 #include "raytrace.h"
@@ -116,8 +117,10 @@ struct vldray
 void
 wray(struct partition *pp, struct application *ap, FILE *fp, const vect_t inormal)
 {
-    struct vldray vldray = {0};
+    struct vldray vldray;
     register struct hit *hitp= pp->pt_inhit;
+
+    memset(&vldray, 0, sizeof(vldray));
 
     VMOVE(&(vldray.ox), hitp->hit_point);
     VSUB2(&(vldray.rx), pp->pt_outhit->hit_point,
@@ -153,9 +156,11 @@ wray(struct partition *pp, struct application *ap, FILE *fp, const vect_t inorma
 void
 wraypts(vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FILE *fp)
 {
-    struct vldray vldray = {0};
+    struct vldray vldray;
     vect_t norm = VINIT_ZERO;
     size_t ret = 0;
+
+    memset(&vldray, 0, sizeof(vldray));
 
     VMOVE(&(vldray.ox), in);
     VSUB2(&(vldray.rx), out, in);
@@ -181,8 +186,10 @@ wraypts(vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FIL
 void
 wraypaint(vect_t start, vect_t norm, int paint, struct application *ap, FILE *fp)
 {
-    struct vldray vldray = {0};
+    struct vldray vldray;
     size_t ret = 0;
+
+    memset(&vldray, 0, sizeof(vldray));
 
     VMOVE(&(vldray.ox), start);
     VSETALL(&(vldray.rx), 0);
