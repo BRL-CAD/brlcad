@@ -62,6 +62,7 @@ bu_whereis(const char *cmd)
 	bu_log("bu_whereis: [%s]\n", cmd);
     }
 
+    /* intentionally not checking strlen(cmd), "" valid for whereis */
     if (UNLIKELY(!cmd)) {
 	return NULL;
     }
