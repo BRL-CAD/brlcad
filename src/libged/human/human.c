@@ -2399,10 +2399,10 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 	int num = 0;
 	int w = 0;
 	int x = 0;
-	char holder[10] = {'0'};
+	char holder[12] = {'0'};
 	int z = 0;
-	char thing[10] = "0";
-	char thing2[10] = "0";
+	char thing[12] = "0";
+	char thing2[12] = "0";
 	bu_log("Naming\n");
 
 	for (w=0; w<(troops*troops); w++) {
