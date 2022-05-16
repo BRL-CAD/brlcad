@@ -142,7 +142,7 @@ bu_which(const char *cmd)
 	}
     }
 
-    /* ATTEMPT #1: search PATH from caller's user environment */
+    /* ATTEMPT #1: 'which' method, search user PATH */
     gotpath = getenv("PATH");
     if (gotpath) {
 	bu_strlcpy(PATH, gotpath, MAXPATHENV);
@@ -172,7 +172,7 @@ bu_which(const char *cmd)
     if (which_path(cmd, PATH, bu_which_result))
 	return bu_which_result;
 
-    /* ATTEMPT #2: search system path (not necessarily same as PATH) */
+    /* ATTEMPT #2: 'whereis' method, search system path */
 #if defined(HAVE_SYSCTL) && defined(CTL_USER) && defined(USER_CS_PATH)
     {
 	int mib[2] = { CTL_USER, USER_CS_PATH };
