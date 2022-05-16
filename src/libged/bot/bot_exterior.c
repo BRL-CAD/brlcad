@@ -53,11 +53,6 @@ bot_exterior(struct rt_bot_internal *bot)
 	return 0;
     RT_BOT_CK_MAGIC(bot);
 
-    if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
-	bu_log("Calculating the exterior faces for a PLATE MODE BoT is currently unsupported\n");
-	return 0;
-    }
-
     size_t i;
     size_t num_exterior = 0;
     int *faces;
@@ -140,11 +135,19 @@ ged_bot_exterior(struct ged *gedp, int argc, const char *argv[])
     bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
+    if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
+	bu_log("%s: %s is a PLATE MODE BoT\n"
+	       "Calculating exterior faces currently unsupported for PLATE MODE\n", argv[0], argv[1]);
+	return BRLCAD_ERROR;
+    }
+
     fcount = bot_exterior(bot);
     vcount = rt_bot_condense(bot);
 
     bu_vls_printf(gedp->ged_result_str, "%s: %zu interior vertices eliminated\n", argv[0], vcount);
     bu_vls_printf(gedp->ged_result_str, "%s: %zu interior faces eliminated\n", argv[0], fcount);
+
+    /* FIXME: if the BoT is not SOLID, create as PLATE instead */
 
     GED_DB_DIRADD(gedp, new_dp, argv[2], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, BRLCAD_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, BRLCAD_ERROR);
