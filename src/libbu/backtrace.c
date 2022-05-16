@@ -407,13 +407,7 @@ bu_backtrace_app(FILE *fp, const char *argv0)
     if ((locate_debugger = bu_which("gdb"))) {
 	bu_strlcpy(path_gdb, locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] Found gdb in USER path: %s\n", locate_debugger);
-	}
-	have_gdb = 1;
-    } else if ((locate_debugger = bu_whereis("gdb"))) {
-	bu_strlcpy(path_gdb, locate_debugger, MAXPATHLEN);
-	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] Found gdb in SYSTEM path: %s\n", locate_debugger);
+	    bu_log("[BACKTRACE] Found gdb in PATH: %s\n", locate_debugger);
 	}
 	have_gdb = 1;
     }
@@ -422,13 +416,7 @@ bu_backtrace_app(FILE *fp, const char *argv0)
     if ((locate_debugger = bu_which("lldb"))) {
 	bu_strlcpy(path_lldb, locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] Found lldb in USER path: %s\n", locate_debugger);
-	}
-	have_lldb = 1;
-    } else if ((locate_debugger = bu_whereis("lldb"))) {
-	bu_strlcpy(path_lldb, locate_debugger, MAXPATHLEN);
-	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] Found lldb in SYSTEM path: %s\n", locate_debugger);
+	    bu_log("[BACKTRACE] Found lldb in PATH: %s\n", locate_debugger);
 	}
 	have_lldb = 1;
     }
