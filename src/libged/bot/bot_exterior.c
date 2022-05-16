@@ -34,13 +34,64 @@
 #include "../ged_private.h"
 
 
+/* determine whether a given face is exterior or not */
+static int
+exterior_face(struct rt_bot_internal *bot, int face) {
+    if (!bot || face < 0)
+	return 0;
+
+    return 1;
+}
+
+
 static size_t
 bot_exterior(struct rt_bot_internal *bot)
 {
     if (!bot)
 	return 0;
+    RT_BOT_CK_MAGIC(bot);
 
-    return 0;
+    if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
+	bu_log("Calculating the exterior faces for a PLATE MODE BoT is currently unsupported\n");
+	return 0;
+    }
+
+    size_t i;
+    size_t num_exterior = 0;
+    int *faces;
+    faces = (int *)bu_calloc(bot->num_faces, sizeof(int), "rt_bot_exterior: faces");
+
+    /* walk the list of faces, and mark each one if it is exterior */
+    for (i = 0; i < bot->num_faces; i++) {
+	if (exterior_face(bot, i)) {
+	    faces[i] = 1;
+	    num_exterior++;
+	}
+    }
+
+    /* Walk the list of faces, eliminate each interior face by making
+     * it a duplicate of the next face, then condensing all dulicates.
+     */
+    int j = 0;
+    int *newfaces = (int *)bu_calloc(num_exterior, 3*sizeof(int), "new bot faces");
+    for (i = 0; i < bot->num_faces; i++) {
+	if (faces[i]) {
+	    VMOVE(&newfaces[j*3], &bot->faces[i*3]);
+	    j++;
+	}
+    }
+
+    bu_free((char *)faces, "rt_bot_exterior: faces");
+
+    if (num_exterior == bot->num_faces)
+	return 0;
+
+    int removed = bot->num_faces - num_exterior;
+    bot->num_faces = num_exterior;
+    bu_free(bot->faces, "release bot faces");
+    bot->faces = newfaces;
+
+    return removed;
 }
 
 
