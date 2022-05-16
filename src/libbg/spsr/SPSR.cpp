@@ -33,16 +33,19 @@ DAMAGE.
 #  pragma clang diagnostic push
 #endif
 #if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
 #  pragma GCC diagnostic ignored "-Wshadow"
 #  pragma GCC diagnostic ignored "-Wunused-parameter"
 #  pragma GCC diagnostic ignored "-Wunused-variable"
 #  pragma GCC diagnostic ignored "-Wsign-compare"
 #  pragma GCC diagnostic ignored "-Wunused-value"
-//#  pragma GCC diagnostic ignored "-Wmisleading-indentation"
 #  pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #  pragma GCC diagnostic ignored "-Wparentheses"
 #  pragma GCC diagnostic ignored "-Wreturn-type"
+#  if (__GNUC__ >= 6)
+#    pragma GCC diagnostic ignored "-Wmisleading-indentation"
+#  endif
 #  if (__GNUC__ >= 8)
 #    pragma GCC diagnostic ignored "-Wclass-memaccess"
 #  endif
