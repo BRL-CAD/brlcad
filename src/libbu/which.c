@@ -24,6 +24,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+#  include <sys/sysctl.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 /* common headers */
 #include "bu/app.h"
@@ -126,6 +135,7 @@ bu_which(const char *cmd)
     /* start fresh */
     memset(bu_which_result, 0, MAXPATHLEN);
 
+
     /* ATTEMPT #0: check for full/relative path match */
     bu_strlcpy(bu_which_result, cmd, MAXPATHLEN);
     if (!BU_STR_EQUAL(bu_which_result, cmd)) {
@@ -134,13 +144,13 @@ bu_which(const char *cmd)
 	}
 	return NULL;
     }
-
     if (bu_file_exists(bu_which_result, NULL) && strchr(bu_which_result, BU_DIR_SEPARATOR)) {
 	if (bu_which_result[0] != '\0') {
 	    /* never return empty */
 	    return bu_which_result;
 	}
     }
+
 
     /* ATTEMPT #1: 'which' method, search user PATH */
     gotpath = getenv("PATH");
@@ -172,11 +182,13 @@ bu_which(const char *cmd)
     if (which_path(cmd, PATH, bu_which_result))
 	return bu_which_result;
 
+
     /* ATTEMPT #2: 'whereis' method, search system path */
 #if defined(HAVE_SYSCTL) && defined(CTL_USER) && defined(USER_CS_PATH)
     {
 	int mib[2] = { CTL_USER, USER_CS_PATH };
 	size_t len = MAXPATHENV;
+	*PATH = '\0';
 
 	/* use sysctl() to get the PATH */
 	if (sysctl(mib, 2, PATH, &len, NULL, 0) != 0) {
@@ -194,11 +206,36 @@ bu_which(const char *cmd)
 	    bu_log("user.cs_path is NULL\n");
 	}
     }
-
     if (which_path(cmd, PATH, bu_which_result))
 	return bu_which_result;
-
 #endif  /* HAVE_SYSCTL */
+
+
+    /* ATTEMPT #3: 'whereis' method, search system path via confstr */
+#if defined(HAVE_CONFSTR) && defined(_CS_PATH)
+    {
+	*PATH = '\0';
+
+	/* use confstr() to get the PATH */
+	if (confstr(_CS_PATH, PATH, MAXPATHENV) == 0) {
+	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+		perror("confstr of _CS_PATH");
+		bu_log("_CS_PATH is unusable\n");
+	    }
+	    PATH[0] = '\0';
+	}
+    }
+    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+	if (PATH[0]) {
+	    bu_log("_CS_PATH is %s\n", PATH);
+	} else {
+	    bu_log("_CS_PATH is NULL\n");
+	}
+    }
+    if (which_path(cmd, PATH, bu_which_result))
+	return bu_which_result;
+#endif  /* HAVE_CONFSTR */
+
 
     /* no path or no match */
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
