@@ -40,7 +40,9 @@ exterior_face(struct rt_bot_internal *bot, int face) {
     if (!bot || face < 0)
 	return 0;
 
-    return 1;
+    if (face < 10)
+	return 1;
+    return 0;
 }
 
 
@@ -69,9 +71,13 @@ bot_exterior(struct rt_bot_internal *bot)
 	}
     }
 
-    /* Walk the list of faces, eliminate each interior face by making
-     * it a duplicate of the next face, then condensing all dulicates.
-     */
+    /* sanity */
+    if (num_exterior == 0) {
+	bu_log("No interior faces??  Aborting.\n");
+	return 0;
+    }
+
+    /* rebuild list of faces, copying over ones marked exterior */
     int j = 0;
     int *newfaces = (int *)bu_calloc(num_exterior, 3*sizeof(int), "new bot faces");
     for (i = 0; i < bot->num_faces; i++) {
@@ -101,7 +107,8 @@ ged_bot_exterior(struct ged *gedp, int argc, const char *argv[])
     struct directory *old_dp, *new_dp;
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
-    size_t count = 0;
+    size_t fcount = 0;
+    size_t vcount = 0;
     static const char *usage = "old_bot new_bot";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -133,8 +140,11 @@ ged_bot_exterior(struct ged *gedp, int argc, const char *argv[])
     bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
-    count = bot_exterior(bot);
-    bu_vls_printf(gedp->ged_result_str, "%s: %zu interior faces eliminated\n", argv[0], count);
+    fcount = bot_exterior(bot);
+    vcount = rt_bot_condense(bot);
+
+    bu_vls_printf(gedp->ged_result_str, "%s: %zu interior vertices eliminated\n", argv[0], vcount);
+    bu_vls_printf(gedp->ged_result_str, "%s: %zu interior faces eliminated\n", argv[0], fcount);
 
     GED_DB_DIRADD(gedp, new_dp, argv[2], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, BRLCAD_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, BRLCAD_ERROR);
