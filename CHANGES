@@ -1674,3 +1674,5 @@ s/GED_MORE/BRLCAD_MORE/g
 s/GED_UNKNOWN/BRLCAD_UNKNOWN/g
 s/dm_draw_display_list/dm_draw_head_dl/g
 s/dm_draw_obj\(/dm_draw_display_list\(/g
+s/bu_whereis\(/bu_whence\(/g
+s/bu_which\(/bu_whence\(/g
