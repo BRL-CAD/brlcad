@@ -110,7 +110,13 @@ exterior_face(struct application *app, struct rt_bot_internal *bot, int face) {
     VSCALE(app->a_ray.r_pt, app->a_ray.r_pt, 1.0/3.0);
     /* calculate min/max to exit bounding volume */
     if (!rt_in_rpp(&app->a_ray, app->a_ray.r_dir, app->a_rt_i->mdl_min, app->a_ray.r_dir)) {
-	bu_log("INTERNAL ERROR: missed the model??\n");
+	static size_t msgs = 0;
+	if (msgs < 100) {
+	    bu_log("INTERNAL ERROR: Missed the model??\n");
+	    msgs++;
+	    if (msgs == 100)
+		bu_log("Additional missed model reporting will be suppressed\n");
+	}
 	return 0;
     }
     VJOIN1(app->a_ray.r_pt, app->a_ray.r_pt, app->a_ray.r_max, app->a_ray.r_dir);
