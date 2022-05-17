@@ -47,6 +47,7 @@ QViewCtrl::QViewCtrl(QWidget *pparent) : QWidget(pparent)
     sca->setMaximumWidth(icon_size);
     sca->setMinimumHeight(icon_size);
     sca->setMaximumHeight(icon_size);
+    sca->setToolTip("Scale");
     bl->addWidget(sca);
     bg->addButton(sca);
     QObject::connect(sca, &QPushButton::clicked, this, &QViewCtrl::do_sca);
@@ -57,6 +58,7 @@ QViewCtrl::QViewCtrl(QWidget *pparent) : QWidget(pparent)
     rot->setMaximumWidth(icon_size);
     rot->setMinimumHeight(icon_size);
     rot->setMaximumHeight(icon_size);
+    rot->setToolTip("Rotate");
     bl->addWidget(rot);
     bg->addButton(rot);
     QObject::connect(rot, &QPushButton::clicked, this, &QViewCtrl::do_rot);
@@ -67,6 +69,7 @@ QViewCtrl::QViewCtrl(QWidget *pparent) : QWidget(pparent)
     tra->setMaximumWidth(icon_size);
     tra->setMinimumHeight(icon_size);
     tra->setMaximumHeight(icon_size);
+    tra->setToolTip("Translate");
     bl->addWidget(tra);
     bg->addButton(tra);
     QObject::connect(tra, &QPushButton::clicked, this, &QViewCtrl::do_tra);
@@ -77,6 +80,7 @@ QViewCtrl::QViewCtrl(QWidget *pparent) : QWidget(pparent)
     center->setMaximumWidth(icon_size);
     center->setMinimumHeight(icon_size);
     center->setMaximumHeight(icon_size);
+    center->setToolTip("Center");
     bl->addWidget(center);
     bg->addButton(center);
     QObject::connect(center, &QPushButton::clicked, this, &QViewCtrl::do_center);
