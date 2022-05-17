@@ -59,9 +59,6 @@ class QTCAD_EXPORT QViewCtrl : public QWidget
         QViewCtrl(QWidget *p);
         ~QViewCtrl();
 
-	int icon_width;
-	int icon_height;
-
 	void resizeEvent(QResizeEvent *pevent);
 
 	int icon_size = 25;

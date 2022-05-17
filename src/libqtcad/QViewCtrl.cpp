@@ -37,8 +37,8 @@ QViewCtrl::QViewCtrl(QWidget *pparent) : QWidget(pparent)
     bl->setVerticalSpacing(0);
     bl->setContentsMargins(0,0,0,0);
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
-    this->setMinimumHeight(icon_height);
-    this->setMinimumWidth(icon_width*5+1);
+    this->setMinimumHeight(icon_size);
+    this->setMinimumWidth(icon_size*5+1);
     this->setLayout(bl);
 
     sca = new QPushButton(this);
