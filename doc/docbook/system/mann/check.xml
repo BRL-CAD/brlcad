@@ -84,8 +84,7 @@
 	<listitem>
 	  <para>
 	    This causes checks to be made to see if the ray encounters air regions before
-	    (or after all) solid objects. It also checks to see if the ray moves from a
-	    void to an air region. Typically, only the air inside a building or vehicle is
+	    (or after all) solid objects.  Typically, only the air inside a building or vehicle is
 	    modeled if the purpose of the model is to support analysis of that single
 	    structure/vehicle. There are exceptions, such as when modeling larger environments
 	    for more extended analysis purposes.
