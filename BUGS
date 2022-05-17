@@ -15,6 +15,23 @@ on-going issues.
 Recent Bugs
 -----------
 
+* When run inside mged, invalid syntax reported on "gqa -p prefix"
+  despite it being documented as the correct form (and working outside
+  mged).  specifying gqa -pprefix appears to be workaround, though
+  unintuitive.  specifying gqa -p"" annoyingly outputs ""exp_air.plot3
+  with quotes embedded in the name.
+
+* rtweight/gqa volumes seem wrong with simple sphere test case, with
+  values consistently and quickly converging less than the actual
+  volume regardless of the grid size.
+
+* gqa manpage has the wrong indentation on the options write-up.
+
+* raytracing a revolved sketch seems to work fine, but rtarea and gqa
+  seem to be crashing on that same revolve.  curiously, the brep
+  revolve from the csgbrep proc-db has the same failure as well as the
+  brep ehy.
+
 * ogl display manager still crashes on attach in mged on Mac OS X 10.5
 
 * running archer "" at least on windows results in a file type dialog
@@ -268,11 +285,6 @@ Recent Bugs
 * rtxray crashes if you specify a -o *.bw output file due to
   assumptions in the rt front-end that all output files are .pix
 
-* raytracing a revolved sketch seems to work fine, but rtarea and gqa
-  seem to be crashing on that same revolve.  curiously, the brep
-  revolve from the csgbrep proc-db has the same failure as well as the
-  brep ehy.
-
 * encountered a crash during rtarea on a (default) facetized version
   of the hyp from the proc-db csgbrep tool.
 
@@ -348,8 +360,6 @@ Recent Bugs
 
 * edcomb command seems to be busted similar to red, doesn't seem to do
   anything.
-
-* gqa manpage has the wrong indentation on the options write-up.
 
 * Detailed BoT model ray trace image had incorrect background pixel
   values in framebuffer, off slightly by one.
@@ -668,10 +678,6 @@ Recent Bugs
   an empty .density file.
 
 * rtarea gives incorrect areas when using -H hypersample flag
-
-* rtweight/gqa volumes seem wrong with simple sphere test case, with
-  values consistently and quickly converging less than the actual
-  volume regardless of the grid size.
 
 * setting src/librt/db5_io.c's AVS_ADD off in db5_import_attributes
   causes bad things to happen and it really shouldn't.
