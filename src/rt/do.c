@@ -1157,6 +1157,39 @@ do_frame(int framenumber)
 }
 
 
+/* given the bounds and aspect ratio for a view, calculate the
+ * viewsize so that its diagonal will fit in view (thus always
+ * visible).
+ */
+static double
+autoviewsize(point_t viewmin, point_t viewmax, double aspectratio)
+{
+    double size = viewsize; /* global */
+    vect_t diag;
+
+    /* Fit a sphere to the model RPP, diameter is viewsize, unless
+     * viewsize command used to override.
+     */
+    if (size < 0.0 || ZERO(size)) {
+	VSUB2(diag, viewmax, viewmin);
+	size = MAGNITUDE(diag);
+	if (aspectratio > 1.0) {
+	    /* don't clip any of the image when autoscaling */
+	    size *= aspectratio;
+	}
+    }
+
+    /* sanity check: make sure viewsize still isn't zero in case
+     * bounding box is empty, otherwise bn_mat_int() will bomb.
+     */
+    if (size < 0.0 || ZERO(size)) {
+	size = 2.0; /* arbitrary so Viewrotscale is normal */
+    }
+
+    return size;
+}
+
+
 /**
  * Compute the rotation specified by the azimuth and elevation
  * parameters.  First, note that these are specified relative to the
@@ -1172,7 +1205,6 @@ void
 do_ae(double azim, double elev)
 {
     vect_t temp;
-    vect_t diag;
     mat_t toEye;
     struct rt_i *rtip = APP.a_rt_i;
 
@@ -1216,24 +1248,8 @@ do_ae(double azim, double elev)
     toEye[MDY] = -((rtip->mdl_max[Y]+rtip->mdl_min[Y])/2.0);
     toEye[MDZ] = -((rtip->mdl_max[Z]+rtip->mdl_min[Z])/2.0);
 
-    /* Fit a sphere to the model RPP, diameter is viewsize, unless
-     * viewsize command used to override.
-     */
-    if (viewsize <= 0) {
-	VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
-	viewsize = MAGNITUDE(diag);
-	if (aspect > 1) {
-	    /* don't clip any of the image when autoscaling */
-	    viewsize *= aspect;
-	}
-    }
-
-    /* sanity check: make sure viewsize still isn't zero in case
-     * bounding box is empty, otherwise bn_mat_int() will bomb.
-     */
-    if (viewsize < 0 || ZERO(viewsize)) {
-	viewsize = 2.0; /* arbitrary so Viewrotscale is normal */
-    }
+    /* determine global viewsize based on model size */
+    viewsize = autoviewsize(rtip->mdl_min, rtip->mdl_max, aspect);
 
     Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
     bn_mat_mul(model2view, Viewrotscale, toEye);
