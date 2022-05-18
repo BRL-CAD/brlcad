@@ -142,7 +142,6 @@ memory_summary(void)
 }
 
 
-#ifndef RT_TXT_OUTPUT
 int fb_setup() {
     /* Framebuffer is desired */
     size_t xx, yy;
@@ -195,7 +194,6 @@ int fb_setup() {
 #endif
     return 0;
 }
-#endif
 
 
 int main(int argc, char *argv[])
@@ -544,7 +542,6 @@ int main(int argc, char *argv[])
 	if (!orientflag)
 	    do_ae(azimuth, elevation);
 
-#ifndef RT_TXT_OUTPUT
 	if (need_fb != 0 && !fbp) {
 	    int fb_status = fb_setup();
 	    if (fb_status) {
@@ -554,16 +551,13 @@ int main(int argc, char *argv[])
 		return fb_status;
 	    }
 	}
-#endif
 
 	frame_retval = do_frame(curframe);
 	if (frame_retval != 0) {
-#ifndef RT_TXT_OUTPUT
 	    /* Release the framebuffer, if any */
 	    if (fbp != FB_NULL) {
 		fb_close(fbp);
 	    }
-#endif
 	    ret = 1;
 	    goto rt_cleanup;
 	}
@@ -620,7 +614,6 @@ int main(int argc, char *argv[])
 	     * to avoid backing up stdin's pipe.
 	     */
 	    if (!bu_strncmp(buf, "end", 3) || !bu_strncmp(buf, "multiview", 8)) {
-#ifndef RT_TXT_OUTPUT
 		if (need_fb != 0 && !fbp) {
 		    int fb_status = fb_setup();
 		    if (fb_status) {
@@ -630,7 +623,6 @@ int main(int argc, char *argv[])
 			return fb_status;
 		    }
 		}
-#endif
 	    }
 
 	    nret = rt_do_cmd(APP.a_rt_i, buf, rt_do_tab);
@@ -646,11 +638,9 @@ int main(int argc, char *argv[])
     }
 
     /* Release the framebuffer, if any */
-#ifndef RT_TXT_OUTPUT
     if (fbp != FB_NULL) {
 	fb_close(fbp);
     }
-#endif
 
 rt_cleanup:
     /* Clean up objv memory, if necessary */
