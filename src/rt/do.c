@@ -310,7 +310,8 @@ int cm_end(const int UNUSED(argc), const char **UNUSED(argv))
     if (Viewrotscale[15] <= 0.0)
 	do_ae(azimuth, elevation);
 
-    if (do_frame(curframe) < 0) return -1;
+    if (do_frame(curframe) < 0)
+	return -1;
     return 0;
 }
 
@@ -773,6 +774,26 @@ do_prep(struct rt_i *rtip)
 }
 
 
+static int
+validate_raytrace(struct rt_i *rtip)
+{
+    if (!rtip) {
+	bu_log("ERROR: No raytracing instance.\n");
+	return 1;
+    }
+    if (rtip->nsolids <= 0) {
+	bu_log("ERROR: No primitives remaining.\n");
+	return 2;
+    }
+    if (rtip->nregions <= 0) {
+	bu_log("ERROR: No regions remaining.\n");
+	return 3;
+    }
+
+    return 0;
+}
+
+
 /**
  * Do all the actual work to run a frame.
  *
@@ -806,11 +827,8 @@ do_frame(int framenumber)
 	rt_debug = optical_debug = 0;
     }
 
-    if (rtip->nsolids <= 0)
-	bu_exit(3, "ERROR: No primitives remaining.\n");
-
-    if (rtip->nregions <= 0)
-	bu_exit(3, "ERROR: No regions remaining.\n");
+    if (validate_raytrace(rtip) > 0)
+	return -1;
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)
 	bu_log("Model: X(%g, %g), Y(%g, %g), Z(%g, %g)\n",
@@ -823,6 +841,7 @@ do_frame(int framenumber)
      * This may alter cell size or width/height.
      */
     grid_setup();
+
     /* az/el 0, 0 is when screen +Z is model +X */
     VSET(work, 0, 0, 1);
     MAT3X3VEC(temp, view2model, work);
@@ -833,6 +852,7 @@ do_frame(int framenumber)
 	    "View: %g azimuth, %g elevation off of front view\n",
 	    azimuth, elevation);
     quat_mat2quat(quat, model2view);
+
     if (rt_verbosity & VERBOSE_VIEWDETAIL) {
 	bu_log("Orientation: %g, %g, %g, %g\n", V4ARGS(quat));
 	bu_log("Eye_pos: %g, %g, %g\n", V3ARGS(eye_model));
@@ -1210,12 +1230,6 @@ do_ae(double azim, double elev)
 
     if (rtip == NULL)
 	return;
-
-    if (rtip->nsolids <= 0)
-	bu_exit(EXIT_FAILURE, "ERROR: no primitives active\n");
-
-    if (rtip->nregions <= 0)
-	bu_exit(EXIT_FAILURE, "ERROR: no regions active\n");
 
     if (rtip->mdl_max[X] >= INFINITY) {
 	bu_log("do_ae: infinite model bounds? setting a unit minimum\n");
