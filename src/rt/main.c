@@ -540,6 +540,10 @@ int main(int argc, char *argv[])
 	    }
 	}
 
+	/* orientation command has not been used */
+	if (!orientflag)
+	    do_ae(azimuth, elevation);
+
 #ifndef RT_TXT_OUTPUT
 	if (need_fb != 0 && !fbp) {
 	    int fb_status = fb_setup();
@@ -552,9 +556,6 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	/* orientation command has not been used */
-	if (!orientflag)
-	    do_ae(azimuth, elevation);
 	frame_retval = do_frame(curframe);
 	if (frame_retval != 0) {
 #ifndef RT_TXT_OUTPUT
