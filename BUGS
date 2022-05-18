@@ -21,6 +21,8 @@ Recent Bugs
   unintuitive.  specifying gqa -p"" annoyingly outputs ""exp_air.plot3
   with quotes embedded in the name.
 
+* rtweight reports nan,nan,nan centroid when density is 0
+
 * rtweight/gqa volumes seem wrong with simple sphere test case, with
   values consistently and quickly converging less than the actual
   volume regardless of the grid size.
@@ -672,10 +674,6 @@ Recent Bugs
   shouldn't be required to get the shading.
 
 * an underlay framebuffer does not underlay with shaded mode
-
-* rtweight chokes on a .density file that has less than 3 values per
-  line (infinite loop).  also gives infinite areas when presented with
-  an empty .density file.
 
 * rtarea gives incorrect areas when using -H hypersample flag
 

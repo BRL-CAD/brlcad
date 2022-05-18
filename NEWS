@@ -235,6 +235,7 @@ infrastructure with BRL-CAD's imminent migration to Git.
 * fixed a locking condition in MGED's rtcheck command - Cliff Yapp
 * added support for >=< prefixes for mater -d get options - Cliff Yapp
 * fixed brlman lookup location of html manual pages - Cliff Yapp
+* fixed rtweight infinite loop bug on invalid .density - Cliff Yapp
 * fixed rt -t top-to-bottom parallel rendering option - Sean Morrison
 * added a 'flip' normals command to MGED's brep command - Cliff Yapp
 * added rtweight support for in-.g density information - Cliff Yapp
