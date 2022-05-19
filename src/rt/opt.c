@@ -98,7 +98,7 @@ size_t incr_nlevel = 0;                 /* number of levels */
 size_t full_incr_sample = 0;            /* current fully incremental sample */
 size_t full_incr_nsamples = 0;          /* number of samples in the fully incremental mode */
 size_t npsw = 1;                        /* number of worker PSWs to run */
-struct resource resource[MAX_PSW];      /* memory resources */
+struct resource resource[MAX_PSW] = {0};      /* memory resources */
 int top_down = 0;                       /* render image top-down or bottom-up (default) */
 int random_mode = 0;                    /* Mode to shoot rays at random directions */
 int opencl_mode = 0;                    /* enable/disable OpenCL */
