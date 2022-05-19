@@ -214,6 +214,28 @@ initialize_resources(size_t cnt, struct resource *resp, struct rt_i *rtip)
 }
 
 
+static void
+initialize_option_defaults()
+{
+    /* GIFT defaults */
+    azimuth = 35.0;
+    elevation = 25.0;
+
+    /* 40% ambient light */
+    AmbientIntensity = 0.4;
+
+    /* 0/0/1 background */
+    background[0] = background[1] = 0.0;
+    background[2] = 1.0/255.0; /* slightly non-black */
+
+    /* Before option processing, get default number of processors */
+    npsw = bu_avail_cpus();		/* Use all that are present */
+    if (npsw > MAX_PSW)
+	npsw = MAX_PSW;
+
+}
+
+
 int main(int argc, char *argv[])
 {
     int ret = 0;
@@ -239,19 +261,13 @@ int main(int argc, char *argv[])
     bu_setlinebuf(stdout);
     bu_setlinebuf(stderr);
 
-    azimuth = 35.0;			/* GIFT defaults */
-    elevation = 25.0;
+    /* establish defaults managed by option handling */
+    initialize_option_defaults();
 
-    AmbientIntensity = 0.4;
-    background[0] = background[1] = 0.0;
-    background[2] = 1.0/255.0; /* slightly non-black */
-
-    /* Before option processing, get default number of processors */
-    npsw = bu_avail_cpus();		/* Use all that are present */
-    if (npsw > MAX_PSW) npsw = MAX_PSW;
-
-    /* Before option processing, do application-specific initialization */
+    /* global application context */
     RT_APPLICATION_INIT(&APP);
+
+    /* Before option processing, do RTUIF app-specific init */
     application_init();
 
 #ifdef MPI_ENABLED
