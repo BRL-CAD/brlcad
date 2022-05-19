@@ -365,10 +365,11 @@ int main(int argc, char *argv[])
 	while ((size_t)(1ULL << incr_nlevel) < x)
 	    incr_nlevel++;
 	height = width = 1ULL << incr_nlevel;
-	if (rt_verbosity & VERBOSE_INCREMENTAL)
+	if (rt_verbosity & VERBOSE_INCREMENTAL) {
 	    fprintf(stderr,
 		    "incremental resolution, nlevels = %lu, width=%lu\n",
 		    (unsigned long)incr_nlevel, (unsigned long)width);
+	}
     }
 
     /*
@@ -389,20 +390,28 @@ int main(int argc, char *argv[])
     size_t avail_cpus = bu_avail_cpus();
 
     if (npsw > avail_cpus) {
-	fprintf(stderr, "Requesting %lu CPUs, only %lu available.",
-		(unsigned long)npsw, (unsigned long)avail_cpus);
+	if (rt_verbosity & VERBOSE_STATS) {
+	    fprintf(stderr, "Requesting %lu CPUs, only %lu available.",
+		    (unsigned long)npsw, (unsigned long)avail_cpus);
+	}
 
 	if (!(bu_debug | RT_G_DEBUG | optical_debug)) {
-	    fprintf(stderr, "\nAllowing surplus CPUs due to debug flag.\n");
+	    if (rt_verbosity & VERBOSE_STATS) {
+		fprintf(stderr, "\nAllowing surplus CPUs due to debug flag.\n");
+	    }
 	} else {
 	    npsw = avail_cpus;
 	}
     }
     if (npsw < 1 || npsw > MAX_PSW) {
-	fprintf(stderr, "Numer of requested CPUs (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
+	if (rt_verbosity & VERBOSE_STATS) {
+	    fprintf(stderr, "Numer of requested CPUs (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
+	}
 
 	if (!(bu_debug | RT_G_DEBUG | optical_debug)) {
-	    fprintf(stderr, ", but allowing due to debug flag\n");
+	    if (rt_verbosity & VERBOSE_STATS) {
+		fprintf(stderr, ", but allowing due to debug flag\n");
+	    }
 	} else {
 	    npsw = avail_cpus;
 	}
