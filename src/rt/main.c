@@ -395,8 +395,7 @@ int main(int argc, char *argv[])
 			npsw, avail_cpus);
 	    }
 
-	    if (!(bu_debug | RT_G_DEBUG | optical_debug)) {
-		bu_log("%d %d %d\n", bu_debug, RT_G_DEBUG, optical_debug);
+	    if ((bu_debug | RT_G_DEBUG | optical_debug)) {
 		if (rt_verbosity & VERBOSE_STATS) {
 		    fprintf(stderr, "\nAllowing surplus CPUs due to debug flag.\n");
 		}
@@ -408,7 +407,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Numer of requested CPUs (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
 	    }
 
-	    if (!(bu_debug | RT_G_DEBUG | optical_debug)) {
+	    if ((bu_debug | RT_G_DEBUG | optical_debug)) {
 		if (rt_verbosity & VERBOSE_STATS) {
 		    fprintf(stderr, ", but allowing due to debug flag\n");
 		}
