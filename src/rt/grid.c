@@ -61,17 +61,22 @@ extern struct application APP;
 fastf_t gift_grid_rounding = 0;	/* set to 25.4 for inches */
 
 
+/*
+ * sets cell_width+cell_height variables and width+height to match.  if cell_newsize is set, it mat
+ */
 void
-grid_sync_dimensions()
+grid_sync_dimensions(double vsize)
 {
     BU_ASSERT(!ZERO(width) || cell_width);
     BU_ASSERT(!ZERO(height) || cell_height);
-    BU_ASSERT(!ZERO(viewsize));
+
+    if (vsize <= 0.0)
+	return;
 
     if (cell_newsize) {
-	if (cell_width <= 0.0)
+	if (cell_width <= 0.0 && cell_height > 0.0)
 	    cell_width = cell_height;
-	if (cell_height <= 0.0)
+	if (cell_height <= 0.0 && cell_width > 0.0)
 	    cell_height = cell_width;
 
 	/* sanity, should be positive by now */
@@ -80,22 +85,22 @@ grid_sync_dimensions()
 	if (cell_height <= 0.0)
 	    cell_height = 1.0;
 
-	/* adjust viewsize to match grid specification */
-	width = (viewsize / cell_width) + 0.99;
+	/* adjust grid specification to match viewsize */
+	width = (vsize / cell_width) + 0.99;
 	if (!ZERO(aspect)) {
-	    height = (viewsize / (cell_height*aspect)) + 0.99;
+	    height = (vsize / (cell_height*aspect)) + 0.99;
 	} else {
-	    height = (viewsize / cell_height) + 0.99;
+	    height = (vsize / cell_height) + 0.99;
 	}
 
 	cell_newsize = 0;
     } else {
 	/* Chop -1.0..+1.0 range into parts */
-	cell_width = viewsize / width;
+	cell_width = vsize / width;
 	if (!ZERO(aspect)) {
-	    cell_height = viewsize / (height*aspect);
+	    cell_height = vsize / (height*aspect);
 	} else {
-	    cell_height = viewsize / height;
+	    cell_height = vsize / height;
 	}
     }
 }
@@ -128,7 +133,7 @@ grid_setup(void)
     bn_mat_inv(view2model, model2view);
 
     /* Determine grid cell size and number of pixels */
-    grid_sync_dimensions();
+    grid_sync_dimensions(viewsize);
 
     /*
      * Optional GIFT compatibility, mostly for RTG3.  Round coordinates
