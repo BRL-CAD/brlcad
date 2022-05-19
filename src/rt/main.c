@@ -236,6 +236,15 @@ initialize_option_defaults()
 }
 
 
+#ifdef MPI_ENABLED
+/* MPI atexit() handler */
+static void mpi_exit_func(void)
+{
+    MPI_Finalize();
+}
+#endif
+
+
 int main(int argc, char *argv[])
 {
     int ret = 0;
@@ -272,6 +281,7 @@ int main(int argc, char *argv[])
 
 #ifdef MPI_ENABLED
     MPI_Init(&argc, &argv);
+    atexit(&mpi_exit_func);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     fprintf(stderr, "MPI Rank: %d of %d\n", rank+1, size);
@@ -281,16 +291,10 @@ int main(int argc, char *argv[])
     i = get_args(argc, (const char **)argv);
     if (i < 0) {
 	usage(argv[0], 0);
-#ifdef MPI_ENABLED
-	MPI_Finalize();
-#endif
 	return 1;
     } else if (i == 0) {
 	/* asking for help is ok */
 	usage(argv[0], 100);
-#ifdef MPI_ENABLED
-	MPI_Finalize();
-#endif
 	return 0;
     }
 
@@ -320,9 +324,6 @@ int main(int argc, char *argv[])
     if (bu_optind >= argc) {
 	fprintf(stderr, "%s:  BRL-CAD geometry database not specified\n", argv[0]);
 	usage(argv[0], 0);
-#ifdef MPI_ENABLED
-	MPI_Finalize();
-#endif
 	return 1;
     }
 
@@ -350,10 +351,9 @@ int main(int argc, char *argv[])
 	    fprintf(stderr, "rt: illegal values for subgrid %d, %d, %d, %d\n",
 		    sub_xmin, sub_ymin, sub_xmax, sub_ymax);
 	    fprintf(stderr, "\tFor a %lu X %lu image, the subgrid must be within 0, 0, %lu, %lu\n",
-		    (unsigned long)width, (unsigned long)height, (unsigned long)width-1, (unsigned long)height-1);
-#ifdef MPI_ENABLED
-	    MPI_Finalize();
-#endif
+		    (unsigned long)width, (unsigned long)height,
+		    (unsigned long)width-1, (unsigned long)height-1);
+
 	    return 1;
 	}
     }
@@ -489,9 +489,6 @@ int main(int argc, char *argv[])
     rtip = rt_dirbuild(title_file, idbuf, sizeof(idbuf));
     if (rtip == RTI_NULL) {
 	bu_log("rt:  rt_dirbuild(%s) failure\n", title_file);
-#ifdef MPI_ENABLED
-	MPI_Finalize();
-#endif
 	return 2;
     }
     APP.a_rt_i = rtip;
@@ -565,9 +562,6 @@ int main(int argc, char *argv[])
 	    /* output_is_binary is changed by view_init, as appropriate */
 	    if (output_is_binary && isatty(fileno(outfp))) {
 		fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
-#ifdef MPI_ENABLED
-		MPI_Finalize();
-#endif
 		return 14;
 	    }
 	}
@@ -579,9 +573,6 @@ int main(int argc, char *argv[])
 	if (need_fb != 0 && !fbp) {
 	    int fb_status = fb_setup();
 	    if (fb_status) {
-#ifdef MPI_ENABLED
-		MPI_Finalize();
-#endif
 		return fb_status;
 	    }
 	}
@@ -611,9 +602,6 @@ int main(int argc, char *argv[])
 	    /* output_is_binary is changed by view_init, as appropriate */
 	    if (output_is_binary && isatty(fileno(outfp))) {
 		fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
-#ifdef MPI_ENABLED
-		MPI_Finalize();
-#endif
 		return 14;
 	    }
 	}
@@ -651,9 +639,6 @@ int main(int argc, char *argv[])
 		if (need_fb != 0 && !fbp) {
 		    int fb_status = fb_setup();
 		    if (fb_status) {
-#ifdef MPI_ENABLED
-			MPI_Finalize();
-#endif
 			return fb_status;
 		    }
 		}
@@ -697,10 +682,6 @@ rt_cleanup:
     /* Release the ray-tracer instance */
     rt_free_rti(APP.a_rt_i);
     APP.a_rt_i = NULL;
-
-#ifdef MPI_ENABLED
-    MPI_Finalize();
-#endif
 
     return ret;
 }
