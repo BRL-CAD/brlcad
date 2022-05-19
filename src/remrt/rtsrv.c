@@ -106,7 +106,7 @@ static char *title_obj = NULL;	/* name of file and first object */
 
 #define MAX_WIDTH (16*1024)
 
-static int avail_cpus = 0;	/* # of cpus avail on this system */
+static size_t avail_cpus = 0;	/* # of cpus avail on this system */
 
 /* store program parameters in case of restart */
 static int original_argc;
@@ -314,13 +314,13 @@ main(int argc, char **argv)
 
     /* Need to set rtg_parallel non_zero here for RES_INIT to work */
     npsw = avail_cpus;
-    if (npsw > 1) {
-	RTG.rtg_parallel = 1;
-    } else {
+    if (npsw == 1) {
 	RTG.rtg_parallel = 0;
+    } else {
+	RTG.rtg_parallel = 1;
     }
 
-    bu_log("using %zu of %d cpus\n", npsw, avail_cpus);
+    bu_log("using %zd of %zu cpus\n", npsw, avail_cpus);
 
     /* Before option processing, do application-specific initialization */
     RT_APPLICATION_INIT(&APP);

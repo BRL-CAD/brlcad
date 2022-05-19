@@ -189,7 +189,7 @@ extern "C" {
     extern int rt_verbosity;
     extern mat_t Viewrotscale;
     extern point_t eye_model; /* model-space location of eye */
-    extern size_t npsw;
+    extern ssize_t npsw;
     extern size_t width, height;
     extern struct bu_ptbl* cmd_objs;
     extern struct command_tab rt_do_tab[];
@@ -674,7 +674,7 @@ build_project(const char* file, const char* UNUSED(objects))
     project->configurations()
 	.get_by_name("final")->get_parameters()
 	.insert_path("uniform_pixel_renderer.samples", samples)
-	.insert_path("rendering_threads", npsw);
+	.insert_path("rendering_threads", (size_t)npsw);
     project->configurations()
 	.get_by_name("interactive")->get_parameters()
 	.insert_path("rendering_threads", "1"); /* no multithreading - for debug rendering on appleseed */
@@ -1018,7 +1018,7 @@ def_tree(struct rt_i* rtip)
     RT_CK_RTI(rtip);
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, objc, (const char**)objv, npsw) < 0) {
+    if (rt_gettrees(rtip, objc, (const char**)objv, (int)npsw) < 0) {
 	bu_log("rt_gettrees(%s) FAILED\n", (objv && objv[0]) ? objv[0] : "ERROR");
     }
     (void)rt_get_timer(&times, NULL);
