@@ -382,7 +382,7 @@ int cm_prep(const int UNUSED(argc), const char **UNUSED(argv))
     objargv = (const char **)cmd_objs->buffer;
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, objcnt, objargv, npsw) < 0)
+    if (rt_gettrees(rtip, objcnt, objargv, (size_t)npsw) < 0)
 	bu_log("rt_gettrees() FAILED\n");
     (void)rt_get_timer(&times, NULL);
 
@@ -579,7 +579,7 @@ def_tree(register struct rt_i *rtip)
     RT_CK_RTI(rtip);
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, objc, (const char **)objv, npsw) < 0) {
+    if (rt_gettrees(rtip, objc, (const char **)objv, (size_t)npsw) < 0) {
 	bu_log("rt_gettrees(%s) FAILED\n", (objv && objv[0]) ? objv[0] : "ERROR");
     }
     (void)rt_get_timer(&times, NULL);
@@ -720,7 +720,7 @@ clt_run(int cur_pixel, int last_pixel)
 	   a.a_rt_i->rti_prismtrace, rt_perspective, stereo);
 
     /* Tally up the statistics */
-    for (cpu=0; cpu < npsw; cpu++) {
+    for (cpu = 0; cpu < MAX_PSW; cpu++) {
 	if (resource[cpu].re_magic != RESOURCE_MAGIC) {
 	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
 	    continue;
@@ -747,7 +747,7 @@ do_prep(struct rt_i *rtip)
 
 	/* Allow RT library to prepare itself */
 	rt_prep_timer();
-	rt_prep_parallel(rtip, npsw);
+	rt_prep_parallel(rtip, (size_t)npsw);
 
 	(void)rt_get_timer(&times, NULL);
 	if (rt_verbosity & VERBOSE_STATS)
@@ -1108,12 +1108,12 @@ do_frame(int framenumber)
      * know is that a given workload takes about the same amount of
      * CPU time, regardless of the number of CPUs.
      */
-    if (npsw > 1) {
+    if ((size_t)npsw > 1) {
 	size_t avail_cpus;
 	size_t ncpus;
 
 	avail_cpus = bu_avail_cpus();
-	if (npsw > avail_cpus) {
+	if ((size_t)npsw > avail_cpus) {
 	    ncpus = avail_cpus;
 	} else {
 	    ncpus = npsw;
@@ -1286,7 +1286,7 @@ res_pr(void)
 
     bu_log("\nResource use summary, by processor:\n");
     res = &resource[0];
-    for (i = 0; i < npsw; i++, res++) {
+    for (i = 0; i < (size_t)npsw; i++, res++) {
 	bu_log("---CPU %zu:\n", i);
 	if (res->re_magic != RESOURCE_MAGIC) {
 	    bu_log("Bad magic number!\n");

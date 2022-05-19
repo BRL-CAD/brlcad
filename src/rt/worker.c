@@ -477,23 +477,23 @@ worker(int cpu, void *UNUSED(arg))
 	if (UNLIKELY(one_eighth < 1))
 	    one_eighth = 1;
 
-	if (one_eighth > npsw * 262144)
+	if (one_eighth > (size_t)npsw * 262144)
 	    chunk_size = 262144; /* 512x512 */
-	else if (one_eighth > npsw * 65536)
+	else if (one_eighth > (size_t)npsw * 65536)
 	    chunk_size = 65536; /* 256x256 */
-	else if (one_eighth > npsw * 16384)
+	else if (one_eighth > (size_t)npsw * 16384)
 	    chunk_size = 16384; /* 128x128 */
-	else if (one_eighth > npsw * 4096)
+	else if (one_eighth > (size_t)npsw * 4096)
 	    chunk_size = 4096; /* 64x64 */
-	else if (one_eighth > npsw * 1024)
+	else if (one_eighth > (size_t)npsw * 1024)
 	    chunk_size = 1024; /* 32x32 */
-	else if (one_eighth > npsw * 256)
+	else if (one_eighth > (size_t)npsw * 256)
 	    chunk_size = 256; /* 16x16 */
-	else if (one_eighth > npsw * 64)
+	else if (one_eighth > (size_t)npsw * 64)
 	    chunk_size = 64; /* 8x8 */
-	else if (one_eighth > npsw * 16)
+	else if (one_eighth > (size_t)npsw * 16)
 	    chunk_size = 16; /* 4x4 */
-	else if (one_eighth > npsw * 4)
+	else if (one_eighth > (size_t)npsw * 4)
 	    chunk_size = 4; /* 2x2 */
 	else
 	    chunk_size = 1; /* one pixel at a time */
@@ -594,12 +594,12 @@ do_run(int a, int b)
 	/*
 	 * Parallel case.
 	 */
-	bu_parallel(worker, npsw, NULL);
+	bu_parallel(worker, (size_t)npsw, NULL);
     }
 
     /* Tally up the statistics */
     size_t cpu;
-    for (cpu=0; cpu < npsw; cpu++) {
+    for (cpu = 0; cpu < MAX_PSW; cpu++) {
 	if (resource[cpu].re_magic != RESOURCE_MAGIC) {
 	    bu_log("ERROR: CPU %zu resources corrupted, statistics bad\n", cpu);
 	    continue;

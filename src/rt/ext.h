@@ -112,7 +112,7 @@ extern int fullfloat_mode;
 extern int hypersample;			/* number of extra rays to fire */
 extern int incr_mode;			/* !0 for incremental resolution */
 extern int full_incr_mode;              /* !0 for fully incremental resolution */
-extern size_t npsw;			/* number of worker PSWs to run */
+extern ssize_t npsw;			/* number of worker PSWs to run */
 extern int reproj_cur;			/* number of pixels reprojected this frame */
 extern int reproj_max;			/* out of total number of pixels */
 extern int reproject_mode;

@@ -372,54 +372,57 @@ int main(int argc, char *argv[])
 	}
     }
 
-    /*
-     * Handle parallel initialization, if applicable.
-     */
+    /* figure out number of CPU cores from what was specified */
+    {
+	size_t avail_cpus = bu_avail_cpus();
+
 #ifndef PARALLEL
-    npsw = 1;			/* force serial */
+	npsw = 1;			/* force serial */
 #endif
 
-    /* parsing the user value needs separation from the set value,
-     * probably handled better during global elimination. --CSM */
-/*     if (npsw < 0) { */
-/* 	/\* Negative number means "all but" npsw *\/ */
-/* 	npsw = bu_avail_cpus() + npsw; */
-/*     } */
-    /* Number of parallel workers */
-
-    size_t avail_cpus = bu_avail_cpus();
-
-    if (npsw > avail_cpus) {
-	if (rt_verbosity & VERBOSE_STATS) {
-	    fprintf(stderr, "Requesting %lu CPUs, only %lu available.",
-		    (unsigned long)npsw, (unsigned long)avail_cpus);
+	/* Negative means "all but" #CPUs */
+	if (npsw < 0) {
+	    npsw += avail_cpus;
+	    /* could still be negative */
+	    if (npsw < 1)
+		npsw = 1;
 	}
 
-	if (!(bu_debug | RT_G_DEBUG | optical_debug)) {
+	/* make sure #CPUs is in range */
+	if (npsw > (ssize_t)avail_cpus) {
 	    if (rt_verbosity & VERBOSE_STATS) {
-		fprintf(stderr, "\nAllowing surplus CPUs due to debug flag.\n");
+		fprintf(stderr, "Requesting %zd CPUs, only %zu available.",
+			npsw, avail_cpus);
 	    }
-	} else {
+
+	    if (!(bu_debug | RT_G_DEBUG | optical_debug)) {
+		bu_log("%d %d %d\n", bu_debug, RT_G_DEBUG, optical_debug);
+		if (rt_verbosity & VERBOSE_STATS) {
+		    fprintf(stderr, "\nAllowing surplus CPUs due to debug flag.\n");
+		}
+	    } else {
+		npsw = avail_cpus;
+	    }
+	} else if (npsw > (ssize_t)MAX_PSW) {
+	    if (rt_verbosity & VERBOSE_STATS) {
+		fprintf(stderr, "Numer of requested CPUs (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
+	    }
+
+	    if (!(bu_debug | RT_G_DEBUG | optical_debug)) {
+		if (rt_verbosity & VERBOSE_STATS) {
+		    fprintf(stderr, ", but allowing due to debug flag\n");
+		}
+	    } else {
+		npsw = avail_cpus;
+	    }
+	} else if (npsw < 1) {
 	    npsw = avail_cpus;
 	}
-    }
-    if (npsw < 1 || npsw > MAX_PSW) {
-	if (rt_verbosity & VERBOSE_STATS) {
-	    fprintf(stderr, "Numer of requested CPUs (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
-	}
 
-	if (!(bu_debug | RT_G_DEBUG | optical_debug)) {
-	    if (rt_verbosity & VERBOSE_STATS) {
-		fprintf(stderr, ", but allowing due to debug flag\n");
-	    }
-	} else {
-	    npsw = avail_cpus;
-	}
+	RTG.rtg_parallel = (npsw == 1) ? 0 : 1;
+	if (rt_verbosity & VERBOSE_MULTICPU)
+	    fprintf(stderr, "Planning to run with %zd processor%s", npsw, (npsw == 1) ? "\n" : "s\n");
     }
-
-    RTG.rtg_parallel = (npsw == 1) ? 0 : 1;
-    if (rt_verbosity & VERBOSE_MULTICPU)
-	fprintf(stderr, "Planning to run with %zu processor%s", npsw, (npsw == 1) ? "s\n" : "\n");
 
     /*
      * Do not use bu_log() or bu_malloc() before this point!
