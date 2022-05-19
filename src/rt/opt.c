@@ -562,40 +562,8 @@ get_args(int argc, const char *argv[])
 	    case 'E':
 		eye_backoff = atof(bu_optarg);
 		break;
-
 	    case 'P':
-		{
-		    /* Number of parallel workers */
-		    size_t avail_cpus;
-
-		    avail_cpus = bu_avail_cpus();
-
-		    npsw = atoi(bu_optarg);
-
-		    if (npsw > avail_cpus) {
-			fprintf(stderr, "Requesting %lu cpus, only %lu available.",
-				(unsigned long)npsw, (unsigned long)avail_cpus);
-
-			if ((bu_debug & BU_DEBUG_PARALLEL) ||
-			    (RT_G_DEBUG & RT_DEBUG_PARALLEL)) {
-			    fprintf(stderr, "\nAllowing surplus cpus due to debug flag.\n");
-			} else {
-			    fprintf(stderr, "  Will use %lu.\n", (unsigned long)avail_cpus);
-			    npsw = avail_cpus;
-			}
-		    }
-		    if (npsw < 1 || npsw > MAX_PSW) {
-			fprintf(stderr, "Numer of requested cpus (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
-
-			if ((bu_debug & BU_DEBUG_PARALLEL) ||
-			    (RT_G_DEBUG & RT_DEBUG_PARALLEL)) {
-			    fprintf(stderr, ", but allowing due to debug flag\n");
-			} else {
-			    fprintf(stderr, ", using -P1\n");
-			    npsw = 1;
-			}
-		    }
-		}
+		npsw = atoi(bu_optarg);
 		break;
 	    case 'Q':
 		Query_one_pixel = ! Query_one_pixel;

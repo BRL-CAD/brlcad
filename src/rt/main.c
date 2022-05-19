@@ -384,22 +384,33 @@ int main(int argc, char *argv[])
 /* 	/\* Negative number means "all but" npsw *\/ */
 /* 	npsw = bu_avail_cpus() + npsw; */
 /*     } */
+    /* Number of parallel workers */
 
+    size_t avail_cpus = bu_avail_cpus();
 
-    /* allow debug builds to go higher than the max */
-    if (!(bu_debug & BU_DEBUG_PARALLEL)) {
-	if (npsw > MAX_PSW) {
-	    npsw = MAX_PSW;
+    if (npsw > avail_cpus) {
+	fprintf(stderr, "Requesting %lu CPUs, only %lu available.",
+		(unsigned long)npsw, (unsigned long)avail_cpus);
+
+	if (!(bu_debug | RT_G_DEBUG | optical_debug)) {
+	    fprintf(stderr, "\nAllowing surplus CPUs due to debug flag.\n");
+	} else {
+	    npsw = avail_cpus;
+	}
+    }
+    if (npsw < 1 || npsw > MAX_PSW) {
+	fprintf(stderr, "Numer of requested CPUs (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
+
+	if (!(bu_debug | RT_G_DEBUG | optical_debug)) {
+	    fprintf(stderr, ", but allowing due to debug flag\n");
+	} else {
+	    npsw = avail_cpus;
 	}
     }
 
-    if (npsw > 1) {
-	RTG.rtg_parallel = 1;
-	if (rt_verbosity & VERBOSE_MULTICPU)
-	    fprintf(stderr, "Planning to run with %lu processors\n", (unsigned long)npsw);
-    } else {
-	RTG.rtg_parallel = 0;
-    }
+    RTG.rtg_parallel = (npsw == 1) ? 0 : 1;
+    if (rt_verbosity & VERBOSE_MULTICPU)
+	fprintf(stderr, "Planning to run with %zu processor%s", npsw, (npsw == 1) ? "s\n" : "\n");
 
     /*
      * Do not use bu_log() or bu_malloc() before this point!
