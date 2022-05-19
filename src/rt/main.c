@@ -428,20 +428,24 @@ int main(int argc, char *argv[])
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 
 	bu_vls_from_argv(&str, bu_optind, (const char **)argv);
-	bu_vls_strcat(&str, "\nopendb ");
-	bu_vls_strcat(&str, title_file);
-	bu_vls_strcat(&str, ";\ntree ");
+	bu_vls_strcat(&str, "\n");
+	bu_vls_printf(&str, "opendb %s;\n", title_file);
 
-	/* arbitrarily limit the number of command-line objects being
-	 * echo'd back for log printing, followed by ellipses.
-	 */
-	bu_vls_from_argv(&str,
-			 objc <= 16 ? objc : 16,
-			 (const char **)argv+bu_optind+1);
-	if (objc > 16)
-	    bu_vls_strcat(&str, " ...");
-	else
-	    bu_vls_putc(&str, ';');
+	if (objc) {
+	    bu_vls_strcat(&str, "tree ");
+
+	    /* arbitrarily limit number of command-line objects being
+	     * echo'd back for log printing, followed by ellipses.
+	     */
+	    bu_vls_from_argv(&str,
+			     objc <= 16 ? objc : 16,
+			     (const char **)argv+bu_optind+1);
+	    if (objc > 16)
+		bu_vls_strcat(&str, " ...");
+	    else
+		bu_vls_putc(&str, ';');
+	}
+
 	bu_log("%s\n", bu_vls_addr(&str));
 	bu_vls_free(&str);
     }
@@ -613,7 +617,7 @@ int main(int argc, char *argv[])
 	     * Postpone fb setup until we're ready to render something
 	     * to avoid backing up stdin's pipe.
 	     */
-	    if (!bu_strncmp(buf, "end", 3) || !bu_strncmp(buf, "multiview", 8)) {
+	    if (!bu_strncmp(buf, "end", sizeof("end")) || !bu_strncmp(buf, "multiview", sizeof("multiview"))) {
 		if (need_fb != 0 && !fbp) {
 		    int fb_status = fb_setup();
 		    if (fb_status) {
