@@ -391,25 +391,26 @@ int main(int argc, char *argv[])
 	/* make sure #CPUs is in range */
 	if (npsw > (ssize_t)avail_cpus) {
 	    if (rt_verbosity & VERBOSE_STATS) {
-		fprintf(stderr, "Requesting %zd CPUs, only %zu available.",
+		fprintf(stderr, "Specified %zd CPU cores, only %zu available.\n",
 			npsw, avail_cpus);
 	    }
 
 	    if ((bu_debug | RT_G_DEBUG | optical_debug)) {
 		if (rt_verbosity & VERBOSE_STATS) {
-		    fprintf(stderr, "\nAllowing surplus CPUs due to debug flag.\n");
+		    fprintf(stderr, "\tAllowing surplus CPU cores due to debug flag.\n");
 		}
 	    } else {
 		npsw = avail_cpus;
 	    }
 	} else if (npsw > (ssize_t)MAX_PSW) {
 	    if (rt_verbosity & VERBOSE_STATS) {
-		fprintf(stderr, "Numer of requested CPUs (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
+		fprintf(stderr, "Specified %zd CPU cores, out of range 1..%d",
+			npsw, MAX_PSW);
 	    }
 
 	    if ((bu_debug | RT_G_DEBUG | optical_debug)) {
 		if (rt_verbosity & VERBOSE_STATS) {
-		    fprintf(stderr, ", but allowing due to debug flag\n");
+		    fprintf(stderr, "\tAllowing surplus CPU cores due to debug flag.\n");
 		}
 	    } else {
 		npsw = avail_cpus;
@@ -420,7 +421,7 @@ int main(int argc, char *argv[])
 
 	RTG.rtg_parallel = (npsw == 1) ? 0 : 1;
 	if (rt_verbosity & VERBOSE_MULTICPU)
-	    fprintf(stderr, "Planning to run with %zd processor%s", npsw, (npsw == 1) ? "\n" : "s\n");
+	    fprintf(stderr, "Planning to run with %zd processor(s)\n", npsw);
     }
 
     /*
