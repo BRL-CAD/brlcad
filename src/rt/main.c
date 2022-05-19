@@ -196,6 +196,24 @@ int fb_setup() {
 }
 
 
+static void
+initialize_resources(size_t cnt, struct resource *resp, struct rt_i *rtip)
+{
+    if (!resp)
+	return;
+
+    /* Initialize all the per-CPU memory resources.  Number of
+     * processors can change at runtime, so initialize all.
+     */
+    memset(resp, 0, sizeof(struct resource) * cnt);
+
+    int i;
+    for (i = 0; i < MAX_PSW; i++) {
+	rt_init_resource(&resp[i], i, rtip);
+    }
+}
+
+
 int main(int argc, char *argv[])
 {
     int ret = 0;
@@ -452,7 +470,8 @@ int main(int argc, char *argv[])
 
     /* Build directory of GED database */
     rt_prep_timer();
-    if ((rtip = rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL) {
+    rtip = rt_dirbuild(title_file, idbuf, sizeof(idbuf));
+    if (rtip == RTI_NULL) {
 	bu_log("rt:  rt_dirbuild(%s) failure\n", title_file);
 #ifdef MPI_ENABLED
 	MPI_Finalize();
@@ -460,6 +479,7 @@ int main(int argc, char *argv[])
 	return 2;
     }
     APP.a_rt_i = rtip;
+
     (void)rt_get_timer(&times, NULL);
     if (rt_verbosity & VERBOSE_MODELTITLE)
 	bu_log("db title:  %s\n", idbuf);
@@ -487,14 +507,8 @@ int main(int argc, char *argv[])
     if (outputfile && BU_STR_EQUAL(outputfile, "-"))
 	outputfile = (char *)0;
 
-    /*
-     * Initialize all the per-CPU memory resources.
-     * The number of processors can change at runtime, init them all.
-     */
-    memset(resource, 0, sizeof(resource));
-    for (i = 0; i < MAX_PSW; i++) {
-	rt_init_resource(&resource[i], i, APP.a_rt_i);
-    }
+    /* per-CPU preparation */
+    initialize_resources(sizeof(resource) / sizeof(struct resource), resource, rtip);
     memory_summary();
 
 #ifdef SIGUSR1
