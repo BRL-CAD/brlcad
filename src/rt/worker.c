@@ -580,23 +580,6 @@ pat_found:
 void
 do_run(int a, int b)
 {
-    size_t cpu;
-
-#ifdef USE_FORKED_THREADS
-    int pid, wpid;
-    int waitret;
-    void *buffer = (void*)0;
-    int p[2] = {0, 0};
-    struct resource *tmp_res;
-
-    if (RTG.rtg_parallel) {
-	buffer = bu_calloc(npsw, sizeof(resource[0]), "buffer");
-	if (pipe(p) == -1) {
-	    perror("pipe failed");
-	}
-    }
-#endif
-
     cur_pixel = a;
     last_pixel = b;
 
@@ -610,84 +593,20 @@ do_run(int a, int b)
 	/*
 	 * Parallel case.
 	 */
-
-	/* hack to bypass a bug in the Linux 2.4 kernel pthreads
-	 * implementation. cpu statistics are only traceable on a
-	 * process level and the timers will report effectively no
-	 * elapsed cpu time.  this allows the stats of all threads to
-	 * be gathered up by an encompassing process that may be
-	 * timed.
-	 *
-	 * XXX this should somehow only apply to a build on a 2.4
-	 * linux kernel.
-	 */
-#ifdef USE_FORKED_THREADS
-	pid = fork();
-	if (pid < 0) {
-	    perror("fork failed");
-	    bu_exit(1, NULL);
-	} else if (pid == 0) {
-#endif
-
-	    bu_parallel(worker, npsw, NULL);
-
-#ifdef USE_FORKED_THREADS
-	    /* send raytrace instance data back to the parent */
-	    if (write(p[1], resource, sizeof(resource[0]) * npsw) == -1) {
-		perror("Unable to write to the communication pipe");
-		bu_exit(1, NULL);
-	    }
-	    /* flush the pipe */
-	    if (close(p[1]) == -1) {
-		perror("Unable to close the communication pipe");
-		bu_snooze(BU_SEC2USEC(1)); /* give the parent time to read */
-	    }
-	    bu_exit(0, NULL);
-	} else {
-	    if (read(p[0], buffer, sizeof(resource[0]) * npsw) == -1) {
-		perror("Unable to read from the communication pipe");
-	    }
-
-	    /* do not use the just read info to overwrite the resource
-	     * structures.  doing so will hose the resources
-	     * completely
-	     */
-
-	    /* parent ends up waiting on his child (and his child's
-	     * threads) to terminate.  we can get valid usage
-	     * statistics on a child process.
-	     */
-	    while ((wpid = wait(&waitret)) != pid && wpid != -1)
-		; /* do nothing */
-	} /* end fork() */
-#endif
-
-    } /* end parallel case */
-
-#ifdef USE_FORKED_THREADS
-    if (RTG.rtg_parallel) {
-	tmp_res = (struct resource *)buffer;
-    } else {
-	tmp_res = resource;
+	bu_parallel(worker, npsw, NULL);
     }
-    for (cpu=0; cpu < npsw; cpu++) {
-	if (tmp_res[cpu].re_magic != RESOURCE_MAGIC) {
-	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
-	    continue;
-	}
-	rt_add_res_stats(APP.a_rt_i, &tmp_res[cpu]);
-	rt_zero_res_stats(&resource[cpu]);
-    }
-#else
+
     /* Tally up the statistics */
+    size_t cpu;
     for (cpu=0; cpu < npsw; cpu++) {
 	if (resource[cpu].re_magic != RESOURCE_MAGIC) {
 	    bu_log("ERROR: CPU %zu resources corrupted, statistics bad\n", cpu);
 	    continue;
 	}
 	rt_add_res_stats(APP.a_rt_i, &resource[cpu]);
+	rt_zero_res_stats(&resource[cpu]);
     }
-#endif
+
     return;
 }
 
