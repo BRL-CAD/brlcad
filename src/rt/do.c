@@ -96,13 +96,17 @@ old_frame(FILE *fp)
     char number[NUMBER_LEN+1];
 
     /* Visible part is from -1 to +1 in view space */
-    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1)
+	return -1;
     viewsize = atof(number);
-    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1)
+	return -1;
     eye_model[X] = atof(number);
-    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1)
+	return -1;
     eye_model[Y] = atof(number);
-    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1)
+	return -1;
     eye_model[Z] = atof(number);
     for (i = 0; i < 16; i++) {
 	if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1)
@@ -848,9 +852,8 @@ do_frame(int framenumber)
     bn_ae_vec(&azimuth, &elevation, temp);
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)
-	bu_log(
-	    "View: %g azimuth, %g elevation off of front view\n",
-	    azimuth, elevation);
+	bu_log("View: %g azimuth, %g elevation off of front view\n",
+	       azimuth, elevation);
     quat_mat2quat(quat, model2view);
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL) {
@@ -1006,22 +1009,23 @@ do_frame(int framenumber)
 
 	    if (bif == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
 		perror(framename);
-		if (matflag) return 0;	/* OK */
+		if (matflag)
+		    return 0;	/* OK */
 		return -1;			/* Bad */
 	    }
 #else
 	    outfp = fopen(framename, "w");
 	    if (outfp == NULL) {
 		perror(framename);
-		if (matflag) return 0;	/* OK */
+		if (matflag)
+		    return 0;	/* OK */
 		return -1;			/* Bad */
 	    }
 #endif
 	}
 
 	if (rt_verbosity & VERBOSE_OUTPUTFILE)
-	    bu_log("Output file is '%s' %zux%zu pixels\n",
-		   framename, width, height);
+	    bu_log("Output file is '%s' %zux%zu pixels\n", framename, width, height);
     }
 
     /* initialize lighting, may update pix_start */
@@ -1031,8 +1035,9 @@ do_frame(int framenumber)
     if (opencl_mode) {
         unsigned int mode = 0;
 
-                            mode |= CLT_COLOR;
-        if (full_incr_mode) mode |= CLT_ACCUM;
+	mode |= CLT_COLOR;
+        if (full_incr_mode)
+	    mode |= CLT_ACCUM;
 
         clt_view_init(mode);
     }

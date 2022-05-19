@@ -536,7 +536,8 @@ pat_found:
 	       inclusive - TODO: check if there is any issue related
 	       with multi-threaded RNG */
 	    pixelnum = rand()*1.0/RAND_MAX*(last_pixel + 1);
-	    if (pixelnum >= last_pixel) pixelnum = last_pixel;
+	    if (pixelnum >= last_pixel)
+		pixelnum = last_pixel;
 	    do_pixel(cpu, pat_num, pixelnum);
 	}
 
