@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2022-XX-XX  Release 7.34.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed archer empty string ("") loading behavior - Cliff Yapp
 * fixed rt framebuffer bug with -g/-G cellsize options - Sean Morrison
 * added new idents(5) file format manual page - Sean Morrison
 * preserved path prefixes on search cmd results - Cliff Yapp
