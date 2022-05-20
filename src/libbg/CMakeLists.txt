@@ -103,7 +103,9 @@ endif (HIDE_INTERNAL_SYMBOLS)
 # looks like it was fixed in upstream long time ago, so just disable
 # for now.  TODO: remove this / retest after next Eigen upgrade.
 set_property(TARGET libbg APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
-set_property(TARGET libbg-obj APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
+if (TARGET libbg-obj)
+  set_property(TARGET libbg-obj APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
+endif (TARGET libbg-obj)
 
 add_subdirectory(tests)
 
