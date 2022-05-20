@@ -201,7 +201,6 @@ extern "C" {
     struct application APP;
     struct icv_image* bif = NULL;
 
-    void grid_setup();
     void option(const char *cat, const char *opt, const char *des, int verbose);
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
@@ -944,6 +943,7 @@ fb_setup() {
     return 0;
 }
 
+
 extern "C" void
 view_setup(struct rt_i* UNUSED(rtip))
 {
@@ -975,13 +975,6 @@ extern "C" void
 do_run(int UNUSED(a), int UNUSED(b))
 {
     bu_bomb("in run, Dont call me!");
-}
-
-
-extern "C" void
-grid_setup(void)
-{
-    bu_bomb("in grid setup, Dont call me!");
 }
 
 

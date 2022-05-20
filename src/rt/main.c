@@ -148,7 +148,7 @@ int fb_setup() {
     int zoom;
 
     /* make sure width/height are set via -g/-G */
-    grid_sync_dimensions();
+    grid_sync_dimensions(viewsize);
 
     /* Ask for a fb big enough to hold the image, at least 512. */
     /* This is so MGED-invoked "postage stamps" get zoomed up big
@@ -338,12 +338,35 @@ int main(int argc, char *argv[])
     if (height <= 0 && cell_height <= 0)
 	height = 512;
 
-    /* If user didn't provide an aspect ratio, use the image
-     * dimensions ratio as a default.
+    /* incremental mode requires height and width be square and a
+     * power of 2
      */
-    if (aspect <= 0.0) {
+    if (incr_mode) {
+	size_t x = height;
+	if (x < width)
+	    x = width;
+	incr_nlevel = 1;
+	while ((size_t)(1ULL << incr_nlevel) < x)
+	    incr_nlevel++;
+	height = width = 1ULL << incr_nlevel;
+	if (rt_verbosity & VERBOSE_INCREMENTAL) {
+	    fprintf(stderr,
+		    "incremental resolution, nlevels = %lu, width=%lu\n",
+		    (unsigned long)incr_nlevel, (unsigned long)width);
+	}
+    }
+
+    /* If user didn't provide an aspect ratio, use the image
+     * dimensions if they've been set as a default.
+     */
+    if (width > 0.0 && height > 0.0 && aspect <= 0.0) {
 	aspect = (fastf_t)width / (fastf_t)height;
     }
+
+    /* figure out the viewsize so we can finalize grid dimensions */
+
+    /* finalize the grid dimensions */
+    grid_sync_dimensions(viewsize);
 
     if (sub_grid_mode) {
 	/* check that we have a legal subgrid */
@@ -355,20 +378,6 @@ int main(int argc, char *argv[])
 		    (unsigned long)width-1, (unsigned long)height-1);
 
 	    return 1;
-	}
-    }
-
-    if (incr_mode) {
-	size_t x = height;
-	if (x < width) x = width;
-	incr_nlevel = 1;
-	while ((size_t)(1ULL << incr_nlevel) < x)
-	    incr_nlevel++;
-	height = width = 1ULL << incr_nlevel;
-	if (rt_verbosity & VERBOSE_INCREMENTAL) {
-	    fprintf(stderr,
-		    "incremental resolution, nlevels = %lu, width=%lu\n",
-		    (unsigned long)incr_nlevel, (unsigned long)width);
 	}
     }
 

@@ -58,6 +58,7 @@ set(ART_LIBS
 set(ART_SRCS
   ../rt/do.c
   ../rt/opt.c
+  ../rt/grid.c
   ../rt/usage.cpp
   art.cpp
   brlcadplugin.cpp

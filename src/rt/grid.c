@@ -62,7 +62,7 @@ fastf_t gift_grid_rounding = 0;	/* set to 25.4 for inches */
 
 
 /*
- * sets cell_width+cell_height variables and width+height to match.  if cell_newsize is set, it mat
+ * sets cell_width+cell_height variables and width+height to match.
  */
 void
 grid_sync_dimensions(double vsize)
@@ -117,14 +117,17 @@ grid_sync_dimensions(double vsize)
  * however, for now, it is required that the view size always be
  * specified, and one or the other parameter be provided.
  */
-void
-grid_setup(void)
+int
+grid_setup(struct bu_vls *err)
 {
     vect_t temp;
     mat_t toEye;
 
-    if (viewsize <= 0.0)
-	bu_exit(EXIT_FAILURE, "viewsize <= 0");
+    if (viewsize <= 0.0) {
+	bu_vls_printf(err, "viewsize <= 0");
+	return 1;
+    }
+
     /* model2view takes us to eye_model location & orientation */
     MAT_IDN(toEye);
     MAT_DELTAS_VEC_NEG(toEye, eye_model);
@@ -207,8 +210,12 @@ grid_setup(void)
 	APP.a_rbeam = 0.5 * viewsize / width;
 	APP.a_diverge = 0;
     }
-    if (ZERO(APP.a_rbeam) && ZERO(APP.a_diverge))
-	bu_exit(EXIT_FAILURE, "zero-radius beam");
+
+    if (ZERO(APP.a_rbeam) && ZERO(APP.a_diverge)) {
+	bu_vls_printf(err, "zero-radius beam");
+	return 1;
+    }
+
     MAT4X3PNT(viewbase_model, view2model, temp);
 
     if (jitter & JITTER_FRAME) {
@@ -226,15 +233,17 @@ grid_setup(void)
 
     if (cell_width <= 0 || cell_width >= INFINITY ||
 	cell_height <= 0 || cell_height >= INFINITY) {
-	bu_log("grid_setup: cell size ERROR (%g, %g) mm\n",
-	       cell_width, cell_height);
-	bu_exit(EXIT_FAILURE, "cell size");
+	bu_vls_printf(err, "bad cell size (%g, %g) mm",
+		      cell_width, cell_height);
+	return 1;
     }
     if (width <= 0 || height <= 0) {
-	bu_log("grid_setup: ERROR bad image size (%zu, %zu)\n",
-	       width, height);
-	bu_exit(EXIT_FAILURE, "bad size");
+	bu_vls_printf(err, "bad image size (%zu, %zu)",
+		      width, height);
+	return 1;
     }
+
+    return 0;
 }
 
 

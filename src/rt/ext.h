@@ -188,8 +188,8 @@ extern void color_hook(const struct bu_structparse *sp, const char *name, void *
 extern void usage(const char *argv0, int verbose);
 
 /* grid.c */
-extern void grid_setup();
-extern void grid_sync_dimensions();
+extern int grid_setup(struct bu_vls *err);
+extern void grid_sync_dimensions(double vsize);
 
 /**
  * called by apps during application_init() to register

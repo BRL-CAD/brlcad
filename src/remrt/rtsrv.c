@@ -49,6 +49,7 @@
 #include "bu/str.h"
 #include "bu/process.h"
 #include "bu/snooze.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -82,7 +83,7 @@ int srv_scanlen = REMRT_MAX_PIXELS;	/* max assignment */
 unsigned char *scanbuf = NULL;
 /***** end of sharing with viewing model *****/
 
-extern void grid_setup();
+extern int grid_setup(struct bu_vls *err);
 extern void worker();
 extern void application_init(void);
 
@@ -684,7 +685,12 @@ prepare(void)
     if (rtip->nsolids <= 0)
 	bu_exit(3, "ph_matrix: No solids remain after prep.\n");
 
-    grid_setup();
+    {
+	struct bu_vls err = BU_VLS_INIT_ZERO;
+	int ret = grid_setup(&err);
+	if (ret)
+	    bu_exit(BRLCAD_ERROR, "%s\n", bu_vls_cstr(&err));
+    }
 
     /* initialize lighting */
     view_2init(&APP, NULL);

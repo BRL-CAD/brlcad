@@ -77,7 +77,6 @@ void def_tree(register struct rt_i *rtip);
 void do_ae(double azim, double elev);
 void res_pr(void);
 void memory_summary(void);
-extern void grid_setup(void);
 extern void worker(int cpu, void *arg);
 
 extern struct icv_image *bif;
@@ -844,7 +843,17 @@ do_frame(int framenumber)
      * Perform Grid setup.
      * This may alter cell size or width/height.
      */
-    grid_setup();
+    {
+	int setup;
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+
+	setup = grid_setup(&msg);
+	if (setup ) {
+	    bu_exit(BRLCAD_ERROR, "%s\n", bu_vls_cstr(&msg));
+	}
+
+	bu_vls_free(&msg);
+    }
 
     /* az/el 0, 0 is when screen +Z is model +X */
     VSET(work, 0, 0, 1);
