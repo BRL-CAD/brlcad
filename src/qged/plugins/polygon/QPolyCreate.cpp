@@ -589,6 +589,8 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return false;
+    if (!gedp->ged_gvp)
+	return false;
 
     QMouseEvent *m_e = NULL;
 

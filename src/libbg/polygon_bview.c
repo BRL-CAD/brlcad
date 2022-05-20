@@ -106,8 +106,10 @@ bv_polygon_vlist(struct bv_scene_obj *s)
     if (!s)
 	return;
 
-    // Reset obj drawing data
+    // Reset obj drawing data, but keep view
+    struct bview *v = s->s_v;
     bv_obj_reset(s);
+    s->s_v = v;
 
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     int type = p->type;
