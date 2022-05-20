@@ -81,9 +81,6 @@ int last_pixel = 0;			/* last pixel number */
 
 int stop_worker = 0;
 
-/* for stereo output */
-vect_t left_eye_delta = VINIT_ZERO;
-
 /**
  * For certain hypersample values there is a particular advantage to
  * subdividing the pixel and shooting a ray in each sub-pixel.  This
@@ -165,6 +162,8 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     static const double one_over_255 = 1.0 / 255.0;
     const int pindex = (pixelnum * sizeof(RGBpixel));
 
+    /* for stereo output */
+    vect_t left_eye_delta = VINIT_ZERO;
 
     if (lightmodel == 8) {
 	/* Add timer here to start pixel-time for heat
@@ -307,8 +306,13 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
 	if (stereo) {
 	    fastf_t right, left;
+	    vect_t temp;
 
 	    right = CRT_BLEND(a.a_color);
+
+	    /* Move left 2.5 inches (63.5mm) */
+	    VSET(temp, -63.5*2.0/viewsize, 0, 0);
+	    MAT4X3VEC(left_eye_delta, view2model, temp);
 
 	    VSUB2(stereo_point, point, left_eye_delta);
 	    if (rt_perspective > 0.0) {
@@ -387,8 +391,13 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
 	    if (stereo) {
 		fastf_t right, left;
+		vect_t temp;
 
 		right = CRT_BLEND(a.a_color);
+
+		/* Move left 2.5 inches (63.5mm) */
+		VSET(temp, -63.5*2.0/viewsize, 0, 0);
+		MAT4X3VEC(left_eye_delta, view2model, temp);
 
 		VSUB2(stereo_point, point, left_eye_delta);
 		if (rt_perspective > 0.0) {

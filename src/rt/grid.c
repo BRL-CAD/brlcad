@@ -47,7 +47,6 @@ extern mat_t view2model;
 extern fastf_t rt_perspective;
 extern int stereo;
 extern unsigned int jitter;
-extern vect_t left_eye_delta;
 extern point_t eye_model;
 extern point_t viewbase_model;
 extern fastf_t gift_grid_rounding;
@@ -179,12 +178,6 @@ grid_setup(struct bu_vls *err)
     VSET(temp, 0, 1, 0);
     MAT3X3VEC(dy_unit, view2model, temp);	/* rotate only */
     VSCALE(dy_model, dy_unit, cell_height);
-
-    if (stereo) {
-	/* Move left 2.5 inches (63.5mm) */
-	VSET(temp, -63.5*2.0/viewsize, 0, 0);
-	MAT4X3VEC(left_eye_delta, view2model, temp);
-    }
 
     /* "Lower left" corner of viewing plane */
     if (rt_perspective > 0.0) {

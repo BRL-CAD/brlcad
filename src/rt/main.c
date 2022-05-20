@@ -85,7 +85,6 @@ struct application APP;
 int		report_progress;	/* !0 = user wants progress report */
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern size_t	incr_nlevel;		/* number of levels */
-extern vect_t   left_eye_delta;
 /***** end variables shared with worker() *****/
 
 
