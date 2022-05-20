@@ -15,6 +15,7 @@ changes made.  See document footer for additional details.
 
 * improved mged & archer html command help formatting - Sean Morrison
 * fixed archer empty string ("") loading behavior - Cliff Yapp
+* rt* tools' -P option accepts negative #core counts - Sean Morrison
 * gqa -Ae exposed air report no longer has gapped air - Sean Morrison
 * fixed rt framebuffer bug with -g/-G cellsize options - Sean Morrison
 * added new idents(5) file format manual page - Sean Morrison
