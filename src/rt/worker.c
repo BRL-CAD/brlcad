@@ -66,8 +66,6 @@ extern unsigned char *pixmap;	/* pixmap for rerendering of black pixels */
 
 int per_processor_chunk = 0;	/* how many pixels to do at once */
 
-point_t viewbase_model;	/* model-space location of viewplane corner */
-
 int fullfloat_mode = 0;
 int reproject_mode = 0;
 struct floatpixel *curr_float_frame; /* buffer of full frame */

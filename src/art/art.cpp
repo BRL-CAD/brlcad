@@ -193,8 +193,9 @@ extern "C" {
     extern size_t width, height;
     extern struct bu_ptbl* cmd_objs;
     extern struct command_tab rt_do_tab[];
-    mat_t model2view;
-    mat_t view2model;
+    extern mat_t model2view;
+    extern mat_t view2model;
+    extern point_t viewbase_model;
     size_t n_free;
     size_t n_malloc;		/* Totals at last check */
     size_t n_realloc;

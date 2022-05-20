@@ -49,7 +49,6 @@ extern int stereo;
 extern unsigned int jitter;
 extern point_t eye_model;
 extern point_t viewbase_model;
-extern fastf_t gift_grid_rounding;
 extern vect_t dx_model;
 extern vect_t dy_model;
 extern vect_t dx_unit;
@@ -57,7 +56,11 @@ extern vect_t dy_unit;
 extern point_t viewbase_model;
 extern struct application APP;
 
-fastf_t gift_grid_rounding = 0;	/* set to 25.4 for inches */
+/* globals */
+mat_t	view2model = MAT_INIT_IDN;
+mat_t	model2view = MAT_INIT_IDN;
+point_t viewbase_model = VINIT_ZERO; /* model-space location of viewplane corner */
+fastf_t gift_grid_rounding = 0;      /* set to 25.4 for inches */
 
 
 /*

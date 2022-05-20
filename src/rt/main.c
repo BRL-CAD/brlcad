@@ -75,8 +75,7 @@ extern const char title[];
 struct fb	*fbp = FB_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
 struct icv_image *bif = NULL;
-mat_t		view2model;
-mat_t		model2view;
+
 /***** end of sharing with viewing model *****/
 
 

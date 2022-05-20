@@ -76,8 +76,6 @@ struct pkg_queue {
 struct fb *fbp = FB_NULL;	/* Framebuffer handle */
 FILE *outfp = NULL;	/* optional pixel output file */
 
-mat_t view2model;
-mat_t model2view;
 int srv_startpix = 0;	/* offset for view_pixel */
 int srv_scanlen = REMRT_MAX_PIXELS;	/* max assignment */
 unsigned char *scanbuf = NULL;

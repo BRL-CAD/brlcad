@@ -89,13 +89,17 @@ extern int use_air;			/* Handling of air in librt */
 extern int random_mode;                 /* Mode to shoot rays at random directions */
 extern int opencl_mode;			/* enable/disable OpenCL */
 
+/***** variables from grid.c *****/
+extern mat_t model2view;
+extern mat_t view2model;
+extern point_t viewbase_model;		/* model-space location of viewplane corner */
+extern fastf_t gift_grid_rounding;
+
 /***** variables from main.c *****/
 extern FILE *outfp;			/* optional output file */
 extern int output_is_binary;		/* !0 means output is binary */
 extern int report_progress;		/* !0 = user wants progress report */
 extern int save_overlaps;		/* flag for setting rti_save_overlaps */
-extern mat_t model2view;
-extern mat_t view2model;
 extern struct application APP;
 extern struct icv_image *bif;
 
@@ -119,7 +123,6 @@ extern int reproject_mode;
 extern int stereo;			/* stereo viewing */
 extern mat_t Viewrotscale;
 extern point_t eye_model;		/* model-space location of eye */
-extern point_t viewbase_model;		/* model-space location of viewplane corner */
 extern size_t height;			/* # of lines in Y */
 extern size_t incr_level;		/* current incremental level */
 extern size_t incr_nlevel;		/* number of levels */
