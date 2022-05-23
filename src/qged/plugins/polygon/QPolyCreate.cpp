@@ -252,6 +252,9 @@ QPolyCreate::finalize(bool)
 	ps->view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
 	bu_vls_free(&pname);
 
+	// No longer need mouse movements to adjust parameters - turn off callback
+	p->s_update_callback = NULL;
+
 	// If we're also writing this out as a sketch, take care of that.
 	if (ps->sketch_sync->isChecked()) {
 	    char *sk_name = NULL;
