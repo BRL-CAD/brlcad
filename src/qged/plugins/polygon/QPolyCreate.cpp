@@ -347,9 +347,6 @@ QPolyCreate::do_vpoly_copy()
     }
     p->s_v = gedp->ged_gvp;
 
-    // Let the view know the polygon is there
-    bu_ptbl_ins(view_objs, (long *)p);
-
     // Done processing view object - increment name
     poly_cnt++;
     ps->view_name->clear();
@@ -417,9 +414,6 @@ QPolyCreate::do_import_sketch()
 	return;
     }
     p->s_v = gedp->ged_gvp;
-
-    // Let the view know the polygon is there
-    bu_ptbl_ins(view_objs, (long *)p);
 
     // Done processing view object - increment name
     poly_cnt++;
@@ -686,10 +680,6 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 		ip->fill_flag = 1;
 		bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
 	    }
-
-	    // Let the view know the polygon is there
-	    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
-	    bu_ptbl_ins(view_objs, (long *)p);
 
 	    // Name appropriately
 	    bu_vls_init(&p->s_uuid);
