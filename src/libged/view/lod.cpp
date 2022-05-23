@@ -83,7 +83,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    gvp = gedp->ged_gvp;
+    gvp = gd->cv;
     if (gvp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "no current view defined\n");
 	return BRLCAD_ERROR;

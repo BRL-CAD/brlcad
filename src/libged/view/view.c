@@ -240,7 +240,7 @@ _view_cmd_selections(void *bs, int argc, const char **argv)
 
     argc--; argv++;
 
-    struct bview *v = gd->gedp->ged_gvp;
+    struct bview *v = gd->cv;
     if (!v) {
 	bu_vls_printf(gd->gedp->ged_result_str, "no current view selected\n");
 	return BRLCAD_ERROR;
@@ -354,7 +354,7 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
     }
 
     if (calc_mode != -1) {
-	struct bview *v = gedp->ged_gvp;
+	struct bview *v = gd->cv;
 	if (bu_vls_strlen(&calc_target)) {
 	    // User has specified a view object to use - try to find it
 struct bv_scene_obj *wobj = NULL;
@@ -386,7 +386,7 @@ struct bv_scene_obj *wobj = NULL;
 		}
 	    }
 	    if (wobj) {
-		fastf_t vZ = bv_vZ_calc(wobj, gedp->ged_gvp, calc_mode);
+		fastf_t vZ = bv_vZ_calc(wobj, gd->cv, calc_mode);
 		bu_vls_sprintf(gedp->ged_result_str, "%0.15f", vZ);
 		return BRLCAD_OK;
 	    } else {
@@ -401,7 +401,7 @@ struct bv_scene_obj *wobj = NULL;
 	    int have_vz = 0;
 	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
-		fastf_t calc_val = bv_vZ_calc(s, gedp->ged_gvp, calc_mode);
+		fastf_t calc_val = bv_vZ_calc(s, gd->cv, calc_mode);
 		if (calc_mode) {
 		    if (calc_val > vZ) {
 			vZ = calc_mode;
@@ -418,7 +418,7 @@ struct bv_scene_obj *wobj = NULL;
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 		if (bu_list_len(&cg->s_vlist)) {
-		    fastf_t calc_val = bv_vZ_calc(cg, gedp->ged_gvp, calc_mode);
+		    fastf_t calc_val = bv_vZ_calc(cg, gd->cv, calc_mode);
 		    if (calc_mode) {
 			if (calc_val > vZ) {
 			    vZ = calc_mode;
@@ -433,7 +433,7 @@ struct bv_scene_obj *wobj = NULL;
 		} else {
 		    for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
 			struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
-			fastf_t calc_val = bv_vZ_calc(s, gedp->ged_gvp, calc_mode);
+			fastf_t calc_val = bv_vZ_calc(s, gd->cv, calc_mode);
 			if (calc_mode) {
 			    if (calc_val > vZ) {
 				vZ = calc_mode;
@@ -457,7 +457,7 @@ struct bv_scene_obj *wobj = NULL;
 
 
     if (!argc) {
-	bu_vls_printf(gedp->ged_result_str, "%g\n", gedp->ged_gvp->gv_data_vZ);
+	bu_vls_printf(gedp->ged_result_str, "%g\n", gd->cv->gv_data_vZ);
 	return BRLCAD_OK;
     }
 
@@ -465,7 +465,7 @@ struct bv_scene_obj *wobj = NULL;
     if (argc == 1) {
 	fastf_t val;
 	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&val) == 1) {
-	    gedp->ged_gvp->gv_data_vZ = val;
+	    gd->cv->gv_data_vZ = val;
 	    return BRLCAD_OK;
 	}
     }
@@ -479,8 +479,8 @@ struct bv_scene_obj *wobj = NULL;
 	    return BRLCAD_ERROR;
 	}
 	vect_t vpt;
-	MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, mpt);
-	gedp->ged_gvp->gv_data_vZ = vpt[Z];
+	MAT4X3PNT(vpt, gd->cv->gv_model2view, mpt);
+	gd->cv->gv_data_vZ = vpt[Z];
 	return BRLCAD_OK;
     }
 
@@ -499,8 +499,7 @@ _view_cmd_width(void *ds, int argc, const char **argv)
     argc--; argv++;
 
     struct _ged_view_info *gd = (struct _ged_view_info *)ds;
-    struct ged *gedp = gd->gedp;
-    struct bview *v = gedp->ged_gvp;
+    struct bview *v = gd->cv;
     bu_vls_printf(gd->gedp->ged_result_str, "%d\n", v->gv_width);
     return BRLCAD_OK;
 }
@@ -517,8 +516,7 @@ _view_cmd_height(void *ds, int argc, const char **argv)
     argc--; argv++;
 
     struct _ged_view_info *gd = (struct _ged_view_info *)ds;
-    struct ged *gedp = gd->gedp;
-    struct bview *v = gedp->ged_gvp;
+    struct bview *v = gd->cv;
     bu_vls_printf(gd->gedp->ged_result_str, "%d\n", v->gv_height);
     return BRLCAD_OK;
 }
@@ -553,6 +551,7 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
     struct _ged_view_info gd;
     gd.gedp = gedp;
     gd.cmds = _view_cmds;
+    gd.cv = NULL;
     gd.verbosity = 0;
 
     // Sanity
@@ -567,10 +566,12 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
     argc--; argv++;
 
     // See if we have any high level options set
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",    "",  NULL,               &help,         "Print help");
-    BU_OPT(d[1], "v", "verbose", "",  &bu_opt_incr_long,  &gd.verbosity, "Verbose output");
-    BU_OPT_NULL(d[2]);
+    struct bu_vls vname = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc d[4];
+    BU_OPT(d[0], "h", "help",    "",      NULL,               &help,         "Print help");
+    BU_OPT(d[1], "v", "verbose", "",      &bu_opt_incr_long,  &gd.verbosity, "Verbose output");
+    BU_OPT(d[2], "V", "view",    "name",  &bu_opt_vls,        &vname,        "Specified view (default is GED current)");
+    BU_OPT_NULL(d[3]);
 
     gd.gopts = d;
 
@@ -583,8 +584,16 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    // Clear out any high level opts prior to subcommand
     int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-    (void)bu_opt_parse(NULL, acnt, argv, d);
+    int ac_ret = bu_opt_parse(NULL, acnt, argv, d);
+    if (ac_ret) {
+	help = 1;
+    } else {
+	for (int i = 0; i < acnt; i++) {
+	    argc--; argv++;
+	}
+    }
 
     if (help) {
 	if (cmd_pos >= 0) {
@@ -594,6 +603,7 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_view_cmds, "view", "[options] subcommand [args]", &gd, 0, NULL);
 	}
+	bu_vls_free(&vname);
 	return BRLCAD_OK;
     }
 
@@ -601,21 +611,44 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
     if (cmd_pos == -1) {
 	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
 	_ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_view_cmds, "view", "[options] subcommand [args]", &gd, 0, NULL);
+	bu_vls_free(&vname);
 	return BRLCAD_ERROR;
     }
 
-    if (!gedp->ged_gvp) {
-	bu_vls_printf(gedp->ged_result_str, ": no view current in GED");
+    // Either a view was specified, or we use the current view
+    if (bu_vls_strlen(&vname)) {
+	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	    struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	    if (BU_STR_EQUAL(bu_vls_cstr(&vname), bu_vls_cstr(&v->gv_name))) {
+		gd.cv = v;
+		break;
+	    }
+	}
+	if (!gd.cv) {
+	    bu_vls_printf(gedp->ged_result_str, ": invalid view name: %s", bu_vls_cstr(&vname));
+	    bu_vls_free(&vname);
+	    return BRLCAD_ERROR;
+	}
+    } else {
+	gd.cv = gedp->ged_gvp;
+    }
+
+    if (!gd.cv) {
+	bu_vls_printf(gedp->ged_result_str, ": no view specified and no view listed as current in GED");
+	bu_vls_free(&vname);
 	return BRLCAD_ERROR;
     }
 
     int ret;
     if (bu_cmd(_view_cmds, argc, argv, 0, (void *)&gd, &ret) == BRLCAD_OK) {
+	bu_vls_free(&vname);
 	return ret;
     } else {
 	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
     }
 
+    bu_vls_free(&vname);
     return BRLCAD_ERROR;
 }
 

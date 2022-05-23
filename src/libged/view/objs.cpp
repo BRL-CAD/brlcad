@@ -312,7 +312,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    struct bview *v = gedp->ged_gvp;
+    struct bview *v = gd->cv;
     if (argc) {
 	int x, y;
 	if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&x) != 1 || x < 0) {
@@ -361,7 +361,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
 
-    if (!gedp->ged_gvp) {
+    if (!gd->cv) {
 	bu_vls_printf(gedp->ged_result_str, ": no view current in GED");
 	return BRLCAD_ERROR;
     }
@@ -394,7 +394,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	list_view = 1;
 
     // If we're not wanting help and we have no subcommand, list defined view objects
-    struct bview *v = gedp->ged_gvp;
+    struct bview *v = gd->cv;
     if (!ac && cmd_pos < 0 && !help) {
 	if (list_db) {
 	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
@@ -429,7 +429,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 
     // We need a name, even if it doesn't exist yet.  Check if it does, since subcommands
     // will react differently based on that status.
-    if (ac != 1) {
+    if (ac < 1) {
 	bu_vls_printf(gd->gedp->ged_result_str, "need view object name");
 	return BRLCAD_ERROR;
     }
@@ -439,8 +439,9 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 
     // View-only objects come first, unless we're explicitly excluding them by only specifying -G
     if (list_view) {
-	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
+	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
+	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 	    if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_uuid))) {
 		gd->s = s;
 		break;

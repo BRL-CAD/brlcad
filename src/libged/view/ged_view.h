@@ -38,6 +38,7 @@ struct _ged_view_info {
     const struct bu_cmdtab *cmds;
     struct bu_opt_desc *gopts;
     const char *vobj;
+    struct bview *cv;
     struct bv_scene_obj *s;
 };
 extern int _view_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps);

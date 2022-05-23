@@ -50,7 +50,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
     struct db_i *dbip = gedp->dbip;
-    struct bview *v = gedp->ged_gvp;
+    struct bview *v = gd->cv;
     const char *usage_string = "view gobjs name create";
     const char *purpose_string = "create an editing view obj from a database solid/comb";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
@@ -126,7 +126,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     // Set up drawing settings
     unsigned char wcolor[3] = {255,255,255};
     struct bv_obj_settings vs = BV_OBJ_SETTINGS_INIT;
-    bv_obj_settings_sync(&vs, &gedp->ged_gvp->gv_s->obj_s);
+    bv_obj_settings_sync(&vs, &v->gv_s->obj_s);
     bv_obj_settings_sync(&g->s_os, &vs);
 
     // We have a tree walk ahead to populate the wireframe - set up the client
@@ -134,7 +134,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     std::map<struct directory *, fastf_t> s_size;
     struct draw_data_t dd;
     dd.dbip = gedp->dbip;
-    dd.v = gedp->ged_gvp;
+    dd.v = v;
     dd.tol = &gedp->ged_wdbp->wdb_tol;
     dd.ttol = &gedp->ged_wdbp->wdb_ttol;
     dd.mesh_c = gedp->ged_lod;
@@ -203,8 +203,8 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
 
-    if (!gedp->ged_gvp) {
-	bu_vls_printf(gedp->ged_result_str, ": no view current in GED");
+    if (!gd->cv) {
+	bu_vls_printf(gedp->ged_result_str, ": no view specified or current in GED");
 	return BRLCAD_ERROR;
     }
 
@@ -231,7 +231,7 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
     int ac = bu_opt_parse(NULL, acnt, argv, d);
 
     // If we're not wanting help and we have no subcommand, list current gobjs objects
-    struct bview *v = gedp->ged_gvp;
+    struct bview *v = gd->cv;
     if (!ac && cmd_pos < 0 && !help) {
 	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
