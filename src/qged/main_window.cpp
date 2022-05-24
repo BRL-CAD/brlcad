@@ -372,25 +372,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     QTimer::singleShot(0, oc, &CADPalette::reflow);
 #endif
 
-
-    QDockWidget *sattrd = new QDockWidget("Standard Attributes", this);
-    addDockWidget(Qt::RightDockWidgetArea, sattrd);
-    sattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    view_menu->addAction(sattrd->toggleViewAction());
-    CADAttributesModel *stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
-    QKeyValView *stdpropview = new QKeyValView(this, 1);
-    stdpropview->setModel(stdpropmodel);
-    sattrd->setWidget(stdpropview);
-
-    QDockWidget *uattrd = new QDockWidget("User Attributes", this);
-    addDockWidget(Qt::RightDockWidgetArea, uattrd);
-    uattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    view_menu->addAction(uattrd->toggleViewAction());
-    CADAttributesModel *userpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
-    QKeyValView *userpropview = new QKeyValView(this, 0);
-    userpropview->setModel(userpropmodel);
-    uattrd->setWidget(userpropview);
-
     /* Because the console usually doesn't need a huge amount of horizontal
      * space and the tree can use all the vertical space it can get when
      * viewing large .g hierarchyes, give the bottom corners to the left/right
@@ -442,6 +423,26 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     connect(ic, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
     connect(oc, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
 
+
+    // Dialogues for attribute viewing (and eventually manipulation)
+    QDockWidget *sattrd = new QDockWidget("Standard Attributes", this);
+    addDockWidget(Qt::LeftDockWidgetArea, sattrd);
+    sattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    view_menu->addAction(sattrd->toggleViewAction());
+    CADAttributesModel *stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
+    QKeyValView *stdpropview = new QKeyValView(this, 1);
+    stdpropview->setModel(stdpropmodel);
+    sattrd->setWidget(stdpropview);
+
+    QDockWidget *uattrd = new QDockWidget("User Attributes", this);
+    addDockWidget(Qt::LeftDockWidgetArea, uattrd);
+    uattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    view_menu->addAction(uattrd->toggleViewAction());
+    CADAttributesModel *userpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
+    QKeyValView *userpropview = new QKeyValView(this, 0);
+    userpropview->setModel(userpropmodel);
+    uattrd->setWidget(userpropview);
+
     // Update props if we select a new item in the tree.  TODO - these need to be updated when
     // we have a app_changed_db as well, since the change may have been to edit attributes...
     QObject::connect(treeview, &QgTreeView::clicked, stdpropmodel, &CADAttributesModel::refresh);
@@ -451,6 +452,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // if we open a new .g file, IIRC, but it needs to happen when we've editing combs or added/
     // removed solids too...)  TODO - do we still need this?
     //QObject::connect(m, &QgModel::mdl_changed_db, ca->mdl, &QgSelectionProxyModel::refresh);
+
+
 
     // If the database changes, we need to update our views
     if (c4) {
