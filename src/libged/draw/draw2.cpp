@@ -536,10 +536,7 @@ ged_draw_view(struct bview *v, int bot_threshold, int no_autoview, int blank_sla
 
     // Make sure what we've drawn is visible, unless we've a reason not to.
     if (blank_slate && !no_autoview) {
-	// Note - -1 factor is used to match that in the autoview command,
-	// which is in turn used to trigger the default behavior:
-	// 0.5 model scale == 2.0 view factor
-	bv_autoview(v, -1, 0);
+	bv_autoview(v, BV_AUTOVIEW_SCALE_DEFAULT, 0);
     }
 
     // Scene objects are created and stored. The application may now call each

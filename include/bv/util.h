@@ -45,6 +45,9 @@ BV_EXPORT void bv_mat_aet(struct bview *v);
 
 BV_EXPORT extern void bv_settings_init(struct bview_settings *s);
 
+/* To use default scaling (0.5 model scale == 2.0 view factor) use
+ * this as an argument to bv_autoview's scale parameter */
+#define BV_AUTOVIEW_SCALE_DEFAULT -1
 /**
  * Automatically set up the view to make the scene objects visible
  */
