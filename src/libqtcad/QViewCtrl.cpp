@@ -1,4 +1,4 @@
-/*                      Q V I E W C T R L . C X X
+/*                      Q V I E W C T R L . C P P
  * BRL-CAD
  *
  * Copyright (c) 2022 United States Government as represented by
@@ -28,86 +28,18 @@
 #include "qtcad/QViewCtrl.h"
 
 
-QViewCtrl::QViewCtrl(QWidget *pparent) : QWidget(pparent)
+QViewCtrl::QViewCtrl(QWidget *pparent) : QToolBar(pparent)
 {
-    bg = new QButtonGroup(this);
-    bg->setExclusive(true);
-    bl = new QFlowLayout();
-    bl->setHorizontalSpacing(0);
-    bl->setVerticalSpacing(0);
-    bl->setContentsMargins(0,0,0,0);
-    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
-    this->setMinimumHeight(icon_size);
-    this->setMinimumWidth(icon_size*5+1);
-    this->setLayout(bl);
+    this->setStyleSheet("QToolButton{margin:0px;}");
 
-    sca = new QPushButton(this);
-    sca->setIcon(QIcon(QPixmap(":images/view/view_scale.png")));
-    sca->setMinimumWidth(icon_size);
-    sca->setMaximumWidth(icon_size);
-    sca->setMinimumHeight(icon_size);
-    sca->setMaximumHeight(icon_size);
-    sca->setToolTip("Scale");
-    bl->addWidget(sca);
-    bg->addButton(sca);
-    QObject::connect(sca, &QPushButton::clicked, this, &QViewCtrl::do_sca);
-
-    rot = new QPushButton(this);
-    rot->setIcon(QIcon(QPixmap(":images/view/view_rotate.png")));
-    rot->setMinimumWidth(icon_size);
-    rot->setMaximumWidth(icon_size);
-    rot->setMinimumHeight(icon_size);
-    rot->setMaximumHeight(icon_size);
-    rot->setToolTip("Rotate");
-    bl->addWidget(rot);
-    bg->addButton(rot);
-    QObject::connect(rot, &QPushButton::clicked, this, &QViewCtrl::do_rot);
-
-    tra = new QPushButton(this);
-    tra->setIcon(QIcon(QPixmap(":images/view/view_translate.png")));
-    tra->setMinimumWidth(icon_size);
-    tra->setMaximumWidth(icon_size);
-    tra->setMinimumHeight(icon_size);
-    tra->setMaximumHeight(icon_size);
-    tra->setToolTip("Translate");
-    bl->addWidget(tra);
-    bg->addButton(tra);
-    QObject::connect(tra, &QPushButton::clicked, this, &QViewCtrl::do_tra);
-
-    center = new QPushButton(this);
-    center->setIcon(QIcon(QPixmap(":images/view/view_center.png")));
-    center->setMinimumWidth(icon_size);
-    center->setMaximumWidth(icon_size);
-    center->setMinimumHeight(icon_size);
-    center->setMaximumHeight(icon_size);
-    center->setToolTip("Center");
-    bl->addWidget(center);
-    bg->addButton(center);
-    QObject::connect(center, &QPushButton::clicked, this, &QViewCtrl::do_center);
+    sca = addAction(QIcon(QPixmap(":images/view/view_scale.png")), "Scale");
+    rot = addAction(QIcon(QPixmap(":images/view/view_rotate.png")), "Rotate");
+    tra = addAction(QIcon(QPixmap(":images/view/view_translate.png")), "Translate");
+    center = addAction(QIcon(QPixmap(":images/view/view_center.png")), "Center");
 }
 
 QViewCtrl::~QViewCtrl()
 {
-}
-
-void QViewCtrl::do_sca() { emit mode_change(VIEWCTL_SCA); }
-void QViewCtrl::do_rot() { emit mode_change(VIEWCTL_ROT); }
-void QViewCtrl::do_tra() { emit mode_change(VIEWCTL_TRA); }
-void QViewCtrl::do_center() { emit mode_change(VIEWCTL_CENTER); }
-
-void
-QViewCtrl::resizeEvent(QResizeEvent *pevent)
-{
-    QWidget::resizeEvent(pevent);
-    div_t layout_dim = div(this->size().width()-1, icon_size);
-    div_t layout_grid = div(bg->buttons().count(), (int)layout_dim.quot);
-    if (layout_grid.rem > 0) {
-	this->setMinimumHeight((layout_grid.quot + 1) * icon_size);
-	this->setMaximumHeight((layout_grid.quot + 1) * icon_size);
-    } else {
-	this->setMinimumHeight((layout_grid.quot) * icon_size);
-	this->setMaximumHeight((layout_grid.quot) * icon_size);
-    }
 }
 
 // Local Variables:

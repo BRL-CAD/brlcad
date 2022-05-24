@@ -29,13 +29,9 @@
 
 #include "common.h"
 
-#include <QButtonGroup>
-#include <QIcon>
-#include <QImage>
-#include <QPushButton>
+#include <QToolBar>
 #include <QWidget>
 #include "qtcad/defines.h"
-#include "qtcad/QFlowLayout.h"
 
 // TODO - need a view image control widget for raytrace run, raytrace
 // abort, overlay/underlay/off, and save scene image
@@ -46,12 +42,7 @@
 // instances under the mouse click, adding and removing objects from
 // selection sets, and creating an initial set with a rectangle selection
 
-#define VIEWCTL_SCA 0
-#define VIEWCTL_ROT 1
-#define VIEWCTL_TRA 2
-#define VIEWCTL_CENTER 3
-
-class QTCAD_EXPORT QViewCtrl : public QWidget
+class QTCAD_EXPORT QViewCtrl : public QToolBar
 {
     Q_OBJECT
 
@@ -59,27 +50,12 @@ class QTCAD_EXPORT QViewCtrl : public QWidget
         QViewCtrl(QWidget *p);
         ~QViewCtrl();
 
-	void resizeEvent(QResizeEvent *pevent);
-
 	int icon_size = 25;
 
-    signals:
-	void mode_change(int);
-
-    public slots:
-	void do_sca();
-	void do_rot();
-	void do_tra();
-	void do_center();
-
-    private:
-	QFlowLayout *bl;
-	QButtonGroup *bg;
-
-	QPushButton *sca;
-	QPushButton *rot;
-	QPushButton *tra;
-	QPushButton *center;
+	QAction *sca;
+	QAction *rot;
+	QAction *tra;
+	QAction *center;
 };
 
 
