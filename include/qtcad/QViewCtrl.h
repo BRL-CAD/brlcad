@@ -52,10 +52,17 @@ class QTCAD_EXPORT QViewCtrl : public QToolBar
 
 	int icon_size = 25;
 
+	// Left mouse behavior controls (when not using a tool or editing)
 	QAction *sca;
 	QAction *rot;
 	QAction *tra;
 	QAction *center;
+
+	// Raytrace/framebuffer controls
+	QAction *raytrace;
+	QAction *fb_on;
+	QAction *fb_overlay;
+	QAction *fb_clear;
 };
 
 

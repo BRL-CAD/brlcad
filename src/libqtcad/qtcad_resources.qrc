@@ -39,9 +39,16 @@
      <file>images/primitives/sph.png</file>
      <file>images/primitives/tgc.png</file>
      <file>images/primitives/tor.png</file>
+     <file>images/view/framebuffer.png</file>
+     <file>images/view/framebuffer_clear.png</file>
+     <file>images/view/framebuffer_off.png</file>
+     <file>images/view/framebuffer_overlay.png</file>
+     <file>images/view/framebuffer_underlay.png</file>
+     <file>images/view/raytrace.png</file>
+     <file>images/view/raytrace_abort.png</file>
      <file>images/view/view_center.png</file>
      <file>images/view/view_rotate.png</file>
      <file>images/view/view_scale.png</file>
      <file>images/view/view_translate.png</file>
 </qresource>
- </RCC>
+</RCC>

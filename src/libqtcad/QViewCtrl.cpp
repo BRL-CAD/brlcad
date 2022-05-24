@@ -36,6 +36,14 @@ QViewCtrl::QViewCtrl(QWidget *pparent) : QToolBar(pparent)
     rot = addAction(QIcon(QPixmap(":images/view/view_rotate.png")), "Rotate");
     tra = addAction(QIcon(QPixmap(":images/view/view_translate.png")), "Translate");
     center = addAction(QIcon(QPixmap(":images/view/view_center.png")), "Center");
+
+    addSeparator();
+
+    raytrace = addAction(QIcon(QPixmap(":images/view/raytrace.png")), "Raytrace");
+    fb_on = addAction(QIcon(QPixmap(":images/view/framebuffer.png")), "Framebuffer On/Off");
+    fb_overlay = addAction(QIcon(QPixmap(":images/view/framebuffer_overlay.png")), "Framebuffer Overlay/Underlay");
+    fb_clear = addAction(QIcon(QPixmap(":images/view/framebuffer_clear.png")), "Clear Framebuffer");
+
 }
 
 QViewCtrl::~QViewCtrl()
