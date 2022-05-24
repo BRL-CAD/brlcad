@@ -1387,7 +1387,10 @@ X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, 
 
 
 HIDDEN int
-X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+X_setBGColor(struct dm *dmp,
+	unsigned char r, unsigned char g, unsigned char b,
+	unsigned char UNUSED(r2), unsigned char UNUSED(g2), unsigned char UNUSED(b2)
+	)
 {
     struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
@@ -1395,9 +1398,9 @@ X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
     if (dmp->i->dm_debugLevel)
 	bu_log("X_setBGColor()\n");
 
-    dmp->i->dm_bg[0] = r;
-    dmp->i->dm_bg[1] = g;
-    dmp->i->dm_bg[2] = b;
+    dmp->i->dm_bg1[0] = r;
+    dmp->i->dm_bg1[1] = g;
+    dmp->i->dm_bg1[2] = b;
 
     if (privars->is_trueColor) {
 	XColor color;
@@ -2239,7 +2242,8 @@ struct dm_impl dm_X_impl = {
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls logfile */
-    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* bg1 color */
+    {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */

@@ -1356,13 +1356,12 @@ to_bg(struct ged *gedp,
 
     /* get background color */
     if (argc == 2) {
-	unsigned char *dm_bg = dm_get_bg((struct dm *)gdvp->dmp);
-	if (dm_bg) {
-	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-		    dm_bg[0],
-		    dm_bg[1],
-		    dm_bg[2]);
-	}
+	unsigned char *dm_bg;
+	dm_get_bg(&dm_bg, NULL, (struct dm *)gdvp->dmp);
+	bu_vls_printf(gedp->ged_result_str, "%d %d %d",
+		dm_bg[0],
+		dm_bg[1],
+		dm_bg[2]);
 	return BRLCAD_OK;
     }
 
@@ -1379,7 +1378,7 @@ to_bg(struct ged *gedp,
 	goto bad_color;
 
     (void)dm_make_current((struct dm *)gdvp->dmp);
-    (void)dm_set_bg((struct dm *)gdvp->dmp, (unsigned char)r, (unsigned char)g, (unsigned char)b);
+    (void)dm_set_bg((struct dm *)gdvp->dmp, (unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)r, (unsigned char)g, (unsigned char)b);
 
     to_refresh_view(gdvp);
 

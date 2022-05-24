@@ -148,27 +148,69 @@ void gl_fogHint(struct dm *dmp, int fastfog)
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
 }
 
+static void
+gl_gradient_bg(struct gl_vars *mvars)
+{
+    glDisable(GL_LIGHTING);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(-1.0, 1.0, -1.0, 1.0, 1.0, -1.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glDisable(GL_DEPTH_TEST); // Color buffer only rendering
+    glBegin(GL_QUADS);
+    glColor3f(mvars->i.r1, mvars->i.g1, mvars->i.b1);
+    glVertex2f(-1.0f, -1.0f);
+    glVertex2f( 1.0f, -1.0f);
+    glColor3f(mvars->i.r2, mvars->i.g2, mvars->i.b2);
+    glVertex2f( 1.0f, 1.0f);
+    glVertex2f(-1.0f, 1.0f);
+    glEnd();
+    glEnable(GL_LIGHTING);
+    glClear(GL_DEPTH_BUFFER_BIT);
 
-int gl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+    if (mvars->zbuffer_on) {
+	glDepthFunc(GL_LEQUAL);
+	glEnable(GL_DEPTH_TEST);
+    } else {
+	glDisable(GL_DEPTH_TEST);
+    }
+}
+
+int gl_setBGColor(struct dm *dmp,
+	unsigned char r1, unsigned char g1, unsigned char b1,
+	unsigned char r2, unsigned char g2, unsigned char b2
+	)
 {
     gl_debug_print(dmp, "gl_setBGColor", dmp->i->dm_debugLevel);
 
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
 
-    dmp->i->dm_bg[0] = r;
-    dmp->i->dm_bg[1] = g;
-    dmp->i->dm_bg[2] = b;
+    dmp->i->dm_bg1[0] = r1;
+    dmp->i->dm_bg1[1] = g1;
+    dmp->i->dm_bg1[2] = b1;
+    dmp->i->dm_bg2[0] = r2;
+    dmp->i->dm_bg2[1] = g2;
+    dmp->i->dm_bg2[2] = b2;
 
-    mvars->i.r = r / 255.0;
-    mvars->i.g = g / 255.0;
-    mvars->i.b = b / 255.0;
+    mvars->i.r1 = r1 / 255.0;
+    mvars->i.g1 = g1 / 255.0;
+    mvars->i.b1 = b1 / 255.0;
+    mvars->i.r2 = r2 / 255.0;
+    mvars->i.g2 = g2 / 255.0;
+    mvars->i.b2 = b2 / 255.0;
 
     if (mvars->doublebuffer) {
 	if (dmp->i->dm_SwapBuffers) {
 	    (*dmp->i->dm_SwapBuffers)(dmp);
 	}
-	glClearColor(mvars->i.r, mvars->i.g, mvars->i.b, 0.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	if (r1 == r2 && g1 == g2 && b1 == b2) {
+	    glClearColor(mvars->i.r1, mvars->i.g1, mvars->i.b1, 0.0);
+	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	} else {
+	    // Have two colors - do gradient
+	    gl_gradient_bg(mvars);
+	}
     }
 
     return BRLCAD_OK;
@@ -194,9 +236,13 @@ int gl_reshape(struct dm *dmp, int width, int height)
 
     glViewport(0, 0, dmp->i->dm_width, dmp->i->dm_height);
 
-    glClearColor(mvars->i.r, mvars->i.g,  mvars->i.b, 0.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    if (dmp->i->dm_bg1[0] == dmp->i->dm_bg2[0] && dmp->i->dm_bg1[1] == dmp->i->dm_bg2[1] && dmp->i->dm_bg1[2] == dmp->i->dm_bg2[2]) {
+	glClearColor(mvars->i.r1, mvars->i.g1, mvars->i.b1, 0.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    } else {
+	// Have two colors - do gradient
+	gl_gradient_bg(mvars);
+    }
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -262,8 +308,13 @@ int gl_drawBegin(struct dm *dmp)
 
     /* clear back buffer */
     if (!dmp->i->dm_clearBufferAfter && mvars->doublebuffer) {
-	glClearColor(mvars->i.r, mvars->i.g, mvars->i.b, 0.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	if (dmp->i->dm_bg1[0] == dmp->i->dm_bg2[0] && dmp->i->dm_bg1[1] == dmp->i->dm_bg2[1] && dmp->i->dm_bg1[2] == dmp->i->dm_bg2[2]) {
+	    glClearColor(mvars->i.r1, mvars->i.g1, mvars->i.b1, 0.0);
+	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	} else {
+	    // Have two colors - do gradient
+	    gl_gradient_bg(mvars);
+	}
     }
 
     // In case we were left in a faceplace matrix state, clear it.
@@ -300,8 +351,13 @@ int gl_drawEnd(struct dm *dmp)
 
 	if (dmp->i->dm_clearBufferAfter) {
 	    /* give Graphics pipe time to work */
-	    glClearColor(mvars->i.r, mvars->i.g, mvars->i.b, 0.0);
-	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	    if (dmp->i->dm_bg1[0] == dmp->i->dm_bg2[0] && dmp->i->dm_bg1[1] == dmp->i->dm_bg2[1] && dmp->i->dm_bg1[2] == dmp->i->dm_bg2[2]) {
+		glClearColor(mvars->i.r1, mvars->i.g1, mvars->i.b1, 0.0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	    } else {
+		// Have two colors - do gradient
+		gl_gradient_bg(mvars);
+	    }
 	}
     }
 
@@ -467,7 +523,7 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
     glPolygonOffset(1.0, 1.0);
 
     /* Set color to background color for drawing polygons. */
-    glColor3f(mvars->i.r, mvars->i.g, mvars->i.b);
+    glColor3f(mvars->i.r1, mvars->i.g1, mvars->i.b1);
 
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;

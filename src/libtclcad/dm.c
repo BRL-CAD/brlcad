@@ -1424,9 +1424,9 @@ dmo_bg_tcl(void *clientData, int argc, const char **argv)
     /* get background color */
     if (argc == 2) {
 	bu_vls_printf(&vls, "%d %d %d",
-		      dmop->dmo_dmp->i->dm_bg[0],
-		      dmop->dmo_dmp->i->dm_bg[1],
-		      dmop->dmo_dmp->i->dm_bg[2]);
+		      dmop->dmo_dmp->i->dm_bg1[0],
+		      dmop->dmo_dmp->i->dm_bg1[1],
+		      dmop->dmo_dmp->i->dm_bg1[2]);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1446,7 +1446,7 @@ dmo_bg_tcl(void *clientData, int argc, const char **argv)
 	    goto bad_color;
 
 	bu_vls_free(&vls);
-	return dm_set_bg(dmop->dmo_dmp, (unsigned char)r, (unsigned char)g, (unsigned char)b);
+	return dm_set_bg(dmop->dmo_dmp, (unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)r, (unsigned char)g, (unsigned char)b);
     }
 
     /* wrong number of arguments */

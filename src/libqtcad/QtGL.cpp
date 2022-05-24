@@ -143,10 +143,10 @@ void QtGL::paintGL()
     if (!m_init || !dmp)
 	return;
 
-    const unsigned char *dm_bg = dm_get_bg(dmp);
-    if (dm_bg) {
-	dm_set_bg(dmp, dm_bg[0], dm_bg[1], dm_bg[2]);
-    }
+    unsigned char *dm_bg1;
+    unsigned char *dm_bg2;
+    dm_get_bg(&dm_bg1, &dm_bg2, dmp);
+    dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
 
     // Go ahead and set the flag, but (unlike the rendering thread
     // implementation) we need to do the draw routine every time in paintGL, or

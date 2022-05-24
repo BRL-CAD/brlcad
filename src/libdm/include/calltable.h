@@ -82,7 +82,7 @@ struct dm_impl {
     int (*dm_draw_data_axes)(struct dm *dmp, fastf_t sf, struct bv_data_axes_state *bndasp);
     int (*dm_draw)(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data);	/**< @brief formerly dmr_object */
     int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-    int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char);
+    int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char);
     int (*dm_setLineAttr)(struct dm *dmp, int width, int style);	/**< @brief currently - linewidth, (not-)dashed */
     int (*dm_configureWin)(struct dm *dmp, int force);
     int (*dm_setWinBounds)(struct dm *dmp, fastf_t *w);
@@ -147,7 +147,8 @@ struct dm_impl {
     struct bu_vls dm_tkName;	/**< @brief short Tcl/Tk name of drawing window */
     struct bu_vls dm_dName;	/**< @brief Display name */
     struct bu_vls dm_log;   /**< @brief !NULL && !empty means log debug output to the file */
-    unsigned char dm_bg[3];	/**< @brief background color */
+    unsigned char dm_bg1[3];	/**< @brief background color 1*/
+    unsigned char dm_bg2[3];	/**< @brief background color 2 (if different than bg1, draw gradient)*/
     unsigned char dm_fg[3];	/**< @brief foreground color */
     vect_t dm_clipmin;		/**< @brief minimum clipping vector */
     vect_t dm_clipmax;		/**< @brief maximum clipping vector */

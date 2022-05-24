@@ -231,7 +231,10 @@ txt_setFGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UN
 
 
 HIDDEN int
-txt_setBGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UNUSED(g), unsigned char UNUSED(b))
+txt_setBGColor(struct dm *UNUSED(dmp),
+	unsigned char UNUSED(r1), unsigned char UNUSED(g1), unsigned char UNUSED(b1),
+	unsigned char UNUSED(r2), unsigned char UNUSED(g2), unsigned char UNUSED(b2)
+	)
 {
     bu_log("setBGColor called\n");
     return 0;
@@ -556,7 +559,8 @@ struct dm_impl dm_txt_impl = {
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls logfile */
-    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* bg1 color */
+    {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
     {0.0, 0.0, 0.0},		/* clipmin */
     {0.0, 0.0, 0.0},		/* clipmax */

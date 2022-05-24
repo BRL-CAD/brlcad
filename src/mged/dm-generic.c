@@ -566,10 +566,10 @@ common_dm(int argc, const char *argv[])
 
 	/* return background color of current display manager */
 	if (argc == 1) {
-	    if (dm_get_bg(DMP)) {
-		bu_vls_printf(&vls, "%d %d %d", dm_get_bg(DMP)[0], dm_get_bg(DMP)[1], dm_get_bg(DMP)[2]);
-		Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
-	    }
+	    unsigned char *dm_bg;
+	    dm_get_bg(&dm_bg, NULL, DMP);
+	    bu_vls_printf(&vls, "%d %d %d", dm_bg[0], dm_bg[1], dm_bg[2]);
+	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
 	    return TCL_OK;
@@ -588,7 +588,7 @@ common_dm(int argc, const char *argv[])
 	DMP_dirty = 1;
 	dm_set_dirty(DMP, 1);
 	(void)dm_make_current(DMP);
-	return dm_set_bg(DMP, r, g, b);
+	return dm_set_bg(DMP, r, g, b, r, g, b);
     }
 
     Tcl_AppendResult(INTERP, "dm: bad command - ", argv[0], "\n", (char *)NULL);

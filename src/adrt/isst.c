@@ -554,7 +554,7 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
 	return TCL_ERROR;
     }
 
-    dm_set_bg(dmp, 0, 0, 0x30);
+    dm_set_bg(dmp, 0, 0, 0x30, 0, 0, 0x30);
 
     return TCL_OK;
 

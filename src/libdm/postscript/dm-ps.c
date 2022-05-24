@@ -693,10 +693,13 @@ ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 
 
 HIDDEN int
-ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+ps_setBGColor(struct dm *dmp,
+	unsigned char r1, unsigned char g1, unsigned char b1,
+	unsigned char r2, unsigned char g2, unsigned char b2
+	)
 {
     if (!dmp) {
-	bu_log("WARNING: Null display (r/g/b==%d/%d/%d)\n", r, g, b);
+	bu_log("WARNING: Null display (r/g/b==%d/%d/%d, color2==%d/%d/%d)\n", r1, g1, b1, r2, g2, b2);
 	return BRLCAD_ERROR;
     }
 
@@ -927,7 +930,8 @@ struct dm_impl dm_ps_impl = {
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls logfile */
-    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* bg1 color */
+    {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
     {0.0, 0.0, 0.0},		/* clipmin */
     {0.0, 0.0, 0.0},		/* clipmax */

@@ -127,7 +127,7 @@ null_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
 
 
 DM_NULL_EXPORT extern int
-null_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
+null_setBGColor(struct dm *dmp, unsigned char r1, unsigned char g1, unsigned char b1, unsigned char r2, unsigned char g2, unsigned char b2);
 
 
 DM_NULL_EXPORT extern int

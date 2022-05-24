@@ -844,7 +844,7 @@ Done:
     //bu_vls_sprintf(&dmp->i->dm_log, "mged.log");
 
 
-    gl_setBGColor(dmp, 0, 0, 0);
+    gl_setBGColor(dmp, 0, 0, 0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (mvars->doublebuffer)
@@ -933,7 +933,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	/* This is the applications display list offset */
 	dmp1->i->dm_displaylist = privars->fontOffset + 128;
 
-	gl_setBGColor(dmp1, 0, 0, 0);
+	gl_setBGColor(dmp1, 0, 0, 0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	if (mvars->doublebuffer)
@@ -1010,7 +1010,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	((struct pogl_vars *)dmp2->i->dm_vars.priv_vars)->fontOffset = privars->fontOffset;
 	dmp2->i->dm_displaylist = dmp1->i->dm_displaylist;
 
-	gl_setBGColor(dmp2, 0, 0, 0);
+	gl_setBGColor(dmp2, 0, 0, 0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	if (mvars->doublebuffer)
@@ -1512,7 +1512,8 @@ struct dm_impl dm_ogl_impl = {
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls logfile */
-    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* bg1 color */
+    {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */

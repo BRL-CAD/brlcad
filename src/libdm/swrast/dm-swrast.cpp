@@ -279,7 +279,7 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
 
 
     dm_make_current(dmp);
-    gl_setBGColor(dmp, 0, 0, 0);
+    gl_setBGColor(dmp, 0, 0, 0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (mvars->doublebuffer)
@@ -639,7 +639,8 @@ struct dm_impl dm_swrast_impl = {
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls logfile */
-    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* bg1 color */
+    {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */

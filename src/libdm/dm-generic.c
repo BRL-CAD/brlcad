@@ -263,19 +263,39 @@ dm_close(struct dm *dmp)
     return dmp->i->dm_close(dmp);
 }
 
-unsigned char *
-dm_get_bg(struct dm *dmp)
+int
+dm_get_bg(unsigned char **bg1, unsigned char **bg2, struct dm *dmp)
 {
-    static unsigned char dbg[3] = {0, 0, 0};
-    if (UNLIKELY(!dmp)) return dbg;
-    return dmp->i->dm_bg;
+    static unsigned char dbg1[3] = {0, 0, 0};
+    static unsigned char dbg2[3] = {0, 0, 0};
+    if (UNLIKELY(!dmp)) {
+	if (bg1)
+	    (*bg1) = (unsigned char *)dbg1;
+	if (bg2)
+	    (*bg2) = (unsigned char *)dbg2;
+	return 0;
+    }
+    if (bg1)
+	(*bg1) = (unsigned char *)dmp->i->dm_bg1;
+    if (bg2)
+	(*bg2) = (unsigned char *)dmp->i->dm_bg2;
+    if (dmp->i->dm_bg1[0] != dmp->i->dm_bg2[0])
+	return 1;
+    if (dmp->i->dm_bg1[1] != dmp->i->dm_bg2[1])
+	return 1;
+    if (dmp->i->dm_bg1[2] != dmp->i->dm_bg2[2])
+	return 1;
+    return 0;
 }
 
 int
-dm_set_bg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+dm_set_bg(struct dm *dmp,
+	unsigned char r1, unsigned char g1, unsigned char b1,
+	unsigned char r2, unsigned char g2, unsigned char b2
+	)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_setBGColor(dmp, r, g, b);
+    return dmp->i->dm_setBGColor(dmp, r1, g1, b1, r2, g2, b2);
 }
 
 unsigned char *
@@ -910,7 +930,8 @@ dm_hash(struct dm *dmp)
     XXH64_update(state, &dmp->i->dm_lineWidth, sizeof(int));
     XXH64_update(state, &dmp->i->dm_lineStyle, sizeof(int));
     XXH64_update(state, &dmp->i->dm_aspect, sizeof(fastf_t));
-    XXH64_update(state, &dmp->i->dm_bg, sizeof(unsigned char[3]));
+    XXH64_update(state, &dmp->i->dm_bg1, sizeof(unsigned char[3]));
+    XXH64_update(state, &dmp->i->dm_bg2, sizeof(unsigned char[3]));
     XXH64_update(state, &dmp->i->dm_fg, sizeof(unsigned char[3]));
     XXH64_update(state, &dmp->i->dm_clipmin, sizeof(vect_t));
     XXH64_update(state, &dmp->i->dm_clipmax, sizeof(vect_t));

@@ -90,7 +90,7 @@
 struct gl_internal_vars {
     int faceFlag;
     GLdouble faceplate_mat[16];
-    GLclampf r, g, b;
+    GLclampf r1, g1, b1, r2, g2, b2;
 
     fastf_t default_viewscale;
     double xlim_view;  /* args for glOrtho*/
@@ -171,7 +171,7 @@ DMGL_EXPORT extern int gl_hud_begin(struct dm *dmp);
 DMGL_EXPORT extern int gl_hud_end(struct dm *dmp);
 DMGL_EXPORT extern int gl_put_internal(struct dm *dmp);
 DMGL_EXPORT extern int gl_reshape(struct dm *dmp, int width, int height);
-DMGL_EXPORT extern int gl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
+DMGL_EXPORT extern int gl_setBGColor(struct dm *dmp, unsigned char r1, unsigned char g1, unsigned char b1, unsigned char r2, unsigned char g2, unsigned char b2);
 DMGL_EXPORT extern int gl_setDepthMask(struct dm *dmp, int depthMask_on);
 DMGL_EXPORT extern int gl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 DMGL_EXPORT extern int gl_setLight(struct dm *dmp, int lighting_on);

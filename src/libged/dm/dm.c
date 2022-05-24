@@ -159,24 +159,44 @@ _dm_cmd_bg(void *ds, int argc, const char **argv)
 	return BRLCAD_ERROR;
 
     if (!argc) {
-	const unsigned char *dm_bg = dm_get_bg(cdmp);
-	if (dm_bg) {
-	    bu_vls_printf(gedp->ged_result_str, "%d/%d/%d\n", (short)dm_bg[0], (short)dm_bg[1], (short)dm_bg[2]);
-	    return BRLCAD_OK;
+	unsigned char *dm_bg1 = NULL;
+	unsigned char *dm_bg2 = NULL;
+	int dm_bg_type = dm_get_bg(&dm_bg1, &dm_bg2, cdmp);
+	if (dm_bg_type == 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%d/%d/%d->%d/%d/%d\n", (short)dm_bg1[0], (short)dm_bg1[1], (short)dm_bg1[2], (short)dm_bg2[0], (short)dm_bg2[1], (short)dm_bg2[2]);
 	} else {
-	    bu_vls_printf(gedp->ged_result_str, ": no background color available\n");
-	    return BRLCAD_ERROR;
+	    bu_vls_printf(gedp->ged_result_str, "%d/%d/%d\n", (short)dm_bg1[0], (short)dm_bg1[1], (short)dm_bg1[2]);
 	}
+	return BRLCAD_OK;
     }
 
+    unsigned char n_bg1[3], n_bg2[3];
     struct bu_color c;
-    if (bu_opt_color(NULL, argc, argv, &c) == -1) {
+    int ac_used = bu_opt_color(NULL, argc, argv, &c);
+    if (ac_used == -1) {
 	bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
 	return BRLCAD_ERROR;
     }
-    unsigned char n_bg[3];
-    bu_color_to_rgb_chars(&c, n_bg);
-    dm_set_bg(cdmp, n_bg[0], n_bg[1], n_bg[2]);
+    bu_color_to_rgb_chars(&c, n_bg1);
+
+    for (int i = 0; i < ac_used; i++) {
+	argc--; argv++;
+    }
+    if (argc) {
+	ac_used = bu_opt_color(NULL, argc, argv, &c);
+	if (ac_used == -1) {
+	    bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
+	    return BRLCAD_ERROR;
+	}
+	bu_color_to_rgb_chars(&c, n_bg2);
+    } else {
+	for (int i = 0; i < 3; i++) {
+	    n_bg2[i] = n_bg1[i];
+	}
+    }
+
+    dm_set_bg(cdmp, n_bg1[0], n_bg1[1], n_bg1[2], n_bg2[0], n_bg2[1], n_bg2[2]);
+
     return BRLCAD_OK;
 }
 
