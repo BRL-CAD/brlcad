@@ -92,17 +92,32 @@ class CADApp : public QApplication
 	/* GUI/View connection slots */
     public slots:
 
-	// Called if the view is being altered.
+	// "Universal" slot to be connected to for widgets altering the view.
+	// All logic in the application can access the global qApp, which is a
+	// CADApp, so this method is universally accessible by any application
+	// logic needing to make signal/slot connections concerning view
+	// changes.  Will emit the view_change signal to notify all concerned
+	// widgets in the application of the change.  Note that nothing
+	// attached to that signal should trigger any logic that leads back to
+	// this slot being called again, or an infinite loop may result.
 	void do_view_change(struct bview **);
 
-	// Called if the db is being altered.
+	// "Universal" slot to be connected to for widgets altering the .g
+	// contents.  All logic in the application can access the global qApp,
+	// which is a CADApp, so this method is universally accessible by any
+	// application logic needing to make signal/slot connections concerning
+	// view changes.  Causes the model to emit its changed signal to notify
+	// all concerned widgets in the app there has been a db change.  Note
+	// that nothing attached to that signal should trigger any logic that
+	// leads back to this slot being called again, or an infinite loop may
+	// result.
 	void do_db_change();
 
 	// This slot is used for quad view configurations - it is called if the
 	// user uses the mouse to select one of multiple views.  This slot has
 	// the responsibility to notify GUI elements of a view change via
-	// do_gui_view_change, after updating the current gedp->ged_gvp
-	// pointer to refer to the now-current view.
+	// do_view_change, after updating the current gedp->ged_gvp pointer to
+	// refer to the now-current view.
 	void do_quad_view_change(QtCADView *);
 
        	/* Utility slots */
