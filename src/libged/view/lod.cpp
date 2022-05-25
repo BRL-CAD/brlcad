@@ -56,8 +56,6 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	"view lod curve_scale [factor]\n"
 	"view lod bot_threshold [face_cnt]\n";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
