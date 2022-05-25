@@ -312,7 +312,12 @@ int main(int argc, char *argv[])
 
     ///////////////////////////////////////////////////////////////////////////////////////
     // DEBUG - turn on some of the bells and whistles by default, since they won't normally
-    // be tested in other ways
+    // be tested in other ways.  Note that setting the dm background here only works if
+    // using QtGL.  The initialization of the QtSW widget postpones the creation of the
+    // dm attach longer, since it requires more of the Qt windowing infrastructure to be
+    // stood up, and it's not ready by this point.  We'll need to implement an initialization
+    // routine to be fired after all windows are fully realized, to reliably assign stored
+    // user values to set in app dm contexts.
     const char *av[5] = {NULL};
     av[0] = "dm";
     av[1] = "bg";
