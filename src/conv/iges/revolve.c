@@ -32,7 +32,7 @@ void Addsub();
 
 struct subtracts
 {
-    char *name;
+    struct bu_vls name;
     int index;
     struct subtracts *next;
 };
@@ -85,7 +85,7 @@ revolve(int entityno)
 
     if (dir[entityno]->param <= pstart) {
 	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
-	       dir[entityno]->direct, bu_vls_cstr(&dir[entityno]->name));
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
     Readrec(dir[entityno]->param);
@@ -112,7 +112,7 @@ revolve(int entityno)
 
     if (fract <= 0.0 || fract > 1.0) {
 	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
-	       dir[entityno]->direct, bu_vls_cstr(&dir[entityno]->name));
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
 
@@ -124,7 +124,7 @@ revolve(int entityno)
     if (npts == 0) {
 	bu_log("Could not get points along curve for revolving\n");
 	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
-	       dir[entityno]->direct, bu_vls_cstr(&dir[entityno]->name));
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
 
@@ -152,7 +152,7 @@ revolve(int entityno)
 	    BU_ALLOC(trcs, struct trclist);
 	    trcptr = trcs;
 	    prev = NULL;
-	} else if (bu_vls_cstr(&trcptr->name[0]) != '\0') {
+	} else if (bu_vls_cstr(&trcptr->name)[0] != '\0') {
 	    BU_ALLOC(trcptr->next, struct trclist);
 	    prev = trcptr;
 	    trcptr = trcptr->next;
@@ -202,7 +202,7 @@ revolve(int entityno)
 	if (mk_trc_top(fdout, bu_vls_cstr(&trcptr->name), trcptr->base,
 		       trcptr->top, trcptr->r1, trcptr->r2) < 0) {
 	    bu_log("Unable to write TRC for entity D%07d (%s)\n" ,
-		   dir[entityno]->direct, bu_vls_cstr(&dir[entityno]->name));
+		   dir[entityno]->direct, dir[entityno]->name);
 	    return 0;
 	}
 
@@ -362,7 +362,7 @@ revolve(int entityno)
 	/* Make the BRL-CAD solid */
 	if (mk_arb8(fdout, bu_vls_cstr(&cutname), &pts[0][X]) < 0) {
 	    bu_log("Unable to write ARB8 for entity D%07d (%s)\n" ,
-		   dir[entityno]->direct, bu_vls_cstr(&dir[entityno]->name));
+		   dir[entityno]->direct, dir[entityno]->name);
 	    return 0;
 	}
     }
@@ -382,7 +382,7 @@ revolve(int entityno)
 	    subp = trcptr->subtr;
 	    /* Subtract the inside TRC's */
 	    while (subp != NULL) {
-		(void)mk_addmember(bu_vls_addr(&subp->name), &head.l, NULL, operators[Subtract]);
+		(void)mk_addmember(bu_vls_cstr(&subp->name), &head.l, NULL, operators[Subtract]);
 		subp = subp->next;
 	    }
 	}
@@ -390,10 +390,10 @@ revolve(int entityno)
     }
 
     /* Make the object */
-    if (mk_lcomb(fdout, bu_vls_cstr(&dir[entityno]->name), &head, 0 ,
+    if (mk_lcomb(fdout, dir[entityno]->name, &head, 0 ,
 		 (char *)0, (char *)0, (unsigned char *)0, 0) < 0) {
 	bu_log("Unable to make combination for entity D%07d (%s)\n" ,
-	       dir[entityno]->direct, bu_vls_cstr(&dir[entityno]->name));
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
 
@@ -428,7 +428,7 @@ Addsub(struct trclist *trc, struct trclist *ptr)
     }
 
     subp->next = NULL;
-    subp->name = bu_vls_cstr(&ptr->name);
+    subp->name = ptr->name; /* struct copy */
     subp->index = ptr->index;
 }
 
