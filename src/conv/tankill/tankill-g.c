@@ -49,7 +49,7 @@ static int verbose=0;		/* verbosity flag */
 #define START_ARRAY_SIZE	64
 #define ARRAY_BLOCK_SIZE	64
 
-#define	NAMESIZE	16	/* from db.h */
+#define	NAMESIZE	MAXPATHLEN /* arbitrary, huge */
 
 struct tankill_verts
 {
