@@ -509,6 +509,23 @@ QtCADView::disableDefaultMouseBindings()
 
 
 void
+QtCADView::set_lmouse_move_default(int mm)
+{
+
+#ifdef BRLCAD_OPENGL
+    if (canvas_gl) {
+	canvas_gl->set_lmouse_move_default(mm);
+	return;
+    }
+#endif
+    if (canvas_sw) {
+	canvas_sw->set_lmouse_move_default(mm);
+	return;
+    }
+}
+
+
+void
 QtCADView::do_init_done()
 {
     emit init_done();

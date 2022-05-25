@@ -441,6 +441,18 @@ QtCADQuad::disableDefaultMouseBindings()
 	}
     }
 }
+
+void
+QtCADQuad::set_lmouse_move_default(int mm)
+{
+
+    for (int i = 0; i < 4; i++) {
+	if (views[i] != nullptr) {
+	    views[i]->set_lmouse_move_default(mm);
+	}
+    }
+}
+
 void
 QtCADQuad::do_init_done()
 {

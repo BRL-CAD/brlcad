@@ -88,6 +88,7 @@ class QTCAD_EXPORT QtSW : public QWidget
 
     public slots:
 	void need_update();
+        void set_lmouse_move_default(int);
 
     protected:
 	void paintEvent(QPaintEvent *e) override;
@@ -105,6 +106,7 @@ class QTCAD_EXPORT QtSW : public QWidget
 
 	bool use_default_keybindings = true;
 	bool use_default_mousebindings = true;
+	int lmouse_mode = BV_SCALE;
 
 	bool m_init = false;
 	int x_prev = -INT_MAX;

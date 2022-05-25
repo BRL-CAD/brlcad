@@ -270,7 +270,7 @@ void QtSW::mouseMoveEvent(QMouseEvent *e)
     v->gv_width = width();
     v->gv_height = height();
 
-    if (CADmouseMoveEvent(v, x_prev, y_prev, e)) {
+    if (CADmouseMoveEvent(v, x_prev, y_prev, e, lmouse_mode)) {
 	dm_set_dirty(dmp, 1);
 	update();
 	emit changed();
@@ -415,6 +415,12 @@ void
 QtSW::disableDefaultMouseBindings()
 {
     use_default_mousebindings = false;
+}
+
+void
+QtSW::set_lmouse_move_default(int mm)
+{
+    lmouse_mode = mm;
 }
 
 // Local Variables:

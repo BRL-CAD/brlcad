@@ -104,6 +104,7 @@ class QTCAD_EXPORT QtCADView : public QWidget
 	void need_update(void *);
 	void do_view_changed();
 	void do_init_done();
+	void set_lmouse_move_default(int);
 
     private:
         QBoxLayout *l = NULL;

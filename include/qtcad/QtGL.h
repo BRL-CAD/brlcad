@@ -83,6 +83,7 @@ class QTCAD_EXPORT QtGL : public QOpenGLWidget, protected QOpenGLFunctions
 
     public slots:
 	void need_update();
+        void set_lmouse_move_default(int);
 
     protected:
 	void paintGL() override;
@@ -100,6 +101,7 @@ class QTCAD_EXPORT QtGL : public QOpenGLWidget, protected QOpenGLFunctions
 
 	bool use_default_keybindings = true;
 	bool use_default_mousebindings = true;
+	int lmouse_mode = BV_SCALE;
 
 	bool m_init = false;
 	int x_prev = -INT_MAX;

@@ -199,7 +199,7 @@ int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UN
 
 }
 
-int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
+int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e, int mode)
 {
 
     if (!v)
@@ -215,8 +215,7 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
 
     if (e->buttons().testFlag(Qt::LeftButton)) {
 	bu_log("Left\n");
-	// TODO - this should default based on button settings from the app...
-	view_flags = BV_SCALE;
+	view_flags = mode;
 
 	if (e->modifiers().testFlag(Qt::ControlModifier)) {
 	    bu_log("Ctrl+Left\n");
