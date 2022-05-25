@@ -280,9 +280,7 @@ cache_init(struct rt_cache *cache)
 
     /* make sure there's a format file */
 
-    bu_strlcpy(path, dir, MAXPATHLEN);
-    bu_strlcat(path, CPP_STR(BU_DIR_SEPARATOR), MAXPATHLEN);
-    bu_strlcat(path, "format", MAXPATHLEN);
+    snprintf(path, MAXPATHLEN, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
     if (!bu_file_exists(path, NULL)) {
 	if (!cache_ensure_path(path, 1)) {
 	    cache_warn(cache, path, "Cannot create format file.  Caching disabled.");
@@ -318,9 +316,7 @@ cache_init(struct rt_cache *cache)
      * file, e.g.:
      * [CACHE_DIR]/.rt/objects/A8/A8D460B2-194F-5FA7-8FED-286A6C994B89
      */
-    bu_strlcpy(path, dir, MAXPATHLEN);
-    bu_strlcat(path, CPP_STR(BU_DIR_SEPARATOR), MAXPATHLEN);
-    bu_strlcat(path, "objects", MAXPATHLEN);
+    snprintf(path, MAXPATHLEN, "%s%c%s", dir, BU_DIR_SEPARATOR, "objects");
     if (!bu_file_exists(path, NULL)) {
 	if (!cache_ensure_path(path, 0)) {
 	    cache_warn(cache, path, "Cannot create objects directory.  Caching disabled.");
