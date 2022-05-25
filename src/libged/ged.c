@@ -251,6 +251,8 @@ ged_init(struct ged *gedp)
     gedp->fbs_open_client_handler = NULL;
     gedp->fbs_close_client_handler = NULL;
 
+    gedp->ged_subprocess_init_callback = NULL;
+    gedp->ged_subprocess_end_callback = NULL;
 
     BU_GET(gedp->ged_gdp, struct ged_drawable);
     BU_GET(gedp->ged_gdp->gd_headDisplay, struct bu_list);

@@ -1506,6 +1506,9 @@ _ged_rt_output_handler2(void *clientData, int type)
 	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
 	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
 
+	if (rrtp->end_clbk)
+	    rrtp->end_clbk(aborted);
+
 	/* free rrtp */
 	bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
 	BU_PUT(rrtp, struct ged_subprocess);
@@ -1579,6 +1582,9 @@ _ged_rt_output_handler(void *clientData, int mask)
 
 	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
 	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
+
+	if (rrtp->end_clbk)
+	    rrtp->end_clbk(aborted);
 
 	/* free rrtp */
 	bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
@@ -1686,6 +1692,10 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 	return BRLCAD_ERROR;
     }
 
+    if (gedp->ged_subprocess_init_callback) {
+	(*gedp->ged_subprocess_init_callback)(bu_process_pid(p));
+    }
+
     fp_in = bu_process_open(p, BU_PROCESS_STDIN);
 
     _ged_rt_set_eye_model(gedp, eye_model);
@@ -1698,6 +1708,7 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     run_rtp->stdin_active = 0;
     run_rtp->stdout_active = 0;
     run_rtp->stderr_active = 0;
+    run_rtp->end_clbk = gedp->ged_subprocess_end_callback;
     bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
 
     run_rtp->p = p;

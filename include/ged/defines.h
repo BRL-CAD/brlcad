@@ -121,6 +121,7 @@ struct ged_subprocess {
     void *chan;
     int aborted;
     struct ged *gedp;
+    void (*end_clbk)(int);	/**< @brief  function called when process completes */
     int stdin_active;
     int stdout_active;
     int stderr_active;
@@ -253,6 +254,15 @@ struct ged {
     void			(*ged_create_vlist_scene_obj_callback)(struct bv_scene_obj *);	/**< @brief  function to call after creating a vlist to create display list for solid */
     void			(*ged_create_vlist_display_list_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
     void			(*ged_destroy_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
+
+
+    /* Functions assigned to ged_subprocess init_clbk and end_clbk
+     * slots when the ged_subprocess is created.  TODO - eventually
+     * this should be command-specific callback registrations, but
+     * first we'll get the basic mechanism working, then introduce
+     * that extra complication... */
+    void			(*ged_subprocess_init_callback)(int);	/**< @brief  function called when process starts */
+    void			(*ged_subprocess_end_callback)(int);	/**< @brief  function called when process completes */
 
     /* Handler functions for I/O communication with asynchronous subprocess commands.  There
      * are two opaque data structures at play here, with different scopes.  One is the "data"
