@@ -54,6 +54,9 @@ class QTCAD_EXPORT QViewCtrl : public QToolBar
 	struct ged *gedp = NULL;
 	int icon_size = 25;
 
+    signals:
+	void gui_changed_view(struct bview **);
+
     public slots:
 	void fbclear_cmd();
 	void raytrace_cmd();

@@ -63,6 +63,7 @@ QViewCtrl::fbclear_cmd()
     const char *av[2] = {NULL};
     av[0] = "fbclear";
     ged_exec(gedp, 1, (const char **)av);
+    emit gui_changed_view(&gedp->ged_gvp);
 }
 
 void rt_cmd_start(int pid, void *ctx)
@@ -101,6 +102,7 @@ QViewCtrl::raytrace_cmd()
 
     av[0] = "ert";
     ged_exec(gedp, 1, (const char **)av);
+    emit gui_changed_view(&gedp->ged_gvp);
 
 cmd_cleanup:
     gedp->ged_subprocess_init_callback = NULL;
