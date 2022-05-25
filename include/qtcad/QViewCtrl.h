@@ -55,6 +55,7 @@ class QTCAD_EXPORT QViewCtrl : public QToolBar
 	int icon_size = 25;
 
     public slots:
+	void raytrace_cmd();
 	void raytrace_start(int);
 	void raytrace_done(int);
 
@@ -71,6 +72,9 @@ class QTCAD_EXPORT QViewCtrl : public QToolBar
 	QAction *fb_overlay;
 	QAction *fb_clear;
 
+    private:
+	bool raytrace_running = false;
+	int pid = -1;
 };
 
 

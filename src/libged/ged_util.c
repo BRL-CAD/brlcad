@@ -1507,7 +1507,7 @@ _ged_rt_output_handler2(void *clientData, int type)
 	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
 
 	if (rrtp->end_clbk)
-	    rrtp->end_clbk(aborted);
+	    rrtp->end_clbk(aborted, rrtp->end_clbk_data);
 
 	/* free rrtp */
 	bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
@@ -1584,7 +1584,7 @@ _ged_rt_output_handler(void *clientData, int mask)
 	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
 
 	if (rrtp->end_clbk)
-	    rrtp->end_clbk(aborted);
+	    rrtp->end_clbk(aborted, rrtp->end_clbk_data);
 
 	/* free rrtp */
 	bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
@@ -1693,7 +1693,7 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     }
 
     if (gedp->ged_subprocess_init_callback) {
-	(*gedp->ged_subprocess_init_callback)(bu_process_pid(p));
+	(*gedp->ged_subprocess_init_callback)(bu_process_pid(p), gedp->ged_subprocess_clbk_context);
     }
 
     fp_in = bu_process_open(p, BU_PROCESS_STDIN);
@@ -1709,6 +1709,7 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     run_rtp->stdout_active = 0;
     run_rtp->stderr_active = 0;
     run_rtp->end_clbk = gedp->ged_subprocess_end_callback;
+    run_rtp->end_clbk_data = gedp->ged_subprocess_clbk_context;
     bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
 
     run_rtp->p = p;

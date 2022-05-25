@@ -272,16 +272,16 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 }
 
 extern "C" void
-raytrace_start(int val)
+raytrace_start(int val, void *ctx)
 {
-    CADApp *ap = (CADApp *)qApp;
+    CADApp *ap = (CADApp *)ctx;
     ap->w->vcw->raytrace_start(val);
 }
 
 extern "C" void
-raytrace_done(int val)
+raytrace_done(int val, void *ctx)
 {
-    CADApp *ap = (CADApp *)qApp;
+    CADApp *ap = (CADApp *)ctx;
     ap->w->vcw->raytrace_done(val);
 }
 
@@ -320,6 +320,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	if (BU_STR_EQUAL(argv[0], "ert")) {
 	    gedp->ged_subprocess_init_callback = &raytrace_start;
 	    gedp->ged_subprocess_end_callback = &raytrace_done;
+	    gedp->ged_subprocess_clbk_context = (void *)this;
 	}
 
 	// Ask the model to execute the command
@@ -327,6 +328,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
 	gedp->ged_subprocess_init_callback = NULL;
 	gedp->ged_subprocess_end_callback = NULL;
+	gedp->ged_subprocess_clbk_context = NULL;
 
     } else {
 	for (int i = 0; i < argc; i++) {

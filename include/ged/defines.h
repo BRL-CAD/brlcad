@@ -121,7 +121,8 @@ struct ged_subprocess {
     void *chan;
     int aborted;
     struct ged *gedp;
-    void (*end_clbk)(int);	/**< @brief  function called when process completes */
+    void (*end_clbk)(int, void *);	/**< @brief  function called when process completes */
+    void *end_clbk_data;
     int stdin_active;
     int stdout_active;
     int stderr_active;
@@ -261,8 +262,9 @@ struct ged {
      * this should be command-specific callback registrations, but
      * first we'll get the basic mechanism working, then introduce
      * that extra complication... */
-    void			(*ged_subprocess_init_callback)(int);	/**< @brief  function called when process starts */
-    void			(*ged_subprocess_end_callback)(int);	/**< @brief  function called when process completes */
+    void			(*ged_subprocess_init_callback)(int, void *);	/**< @brief  function called when process starts */
+    void			(*ged_subprocess_end_callback)(int, void *);	/**< @brief  function called when process completes */
+    void			*ged_subprocess_clbk_context;
 
     /* Handler functions for I/O communication with asynchronous subprocess commands.  There
      * are two opaque data structures at play here, with different scopes.  One is the "data"

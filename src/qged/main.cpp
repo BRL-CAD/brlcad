@@ -112,7 +112,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
     // time to call the end callback (if any)
     if (!p->stdin_active && !p->stdout_active && !p->stderr_active) {
 	if (p->end_clbk)
-            p->end_clbk(0);
+            p->end_clbk(0, p->end_clbk_data);
     }
 
     if (w->c4)
