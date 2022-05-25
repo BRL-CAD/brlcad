@@ -218,13 +218,33 @@ void QtGL::mousePressEvent(QMouseEvent *e) {
 	update();
 	emit changed();
     }
+
 #ifdef USE_QT6
-    bu_log("X,Y: %f, %f\n", e->position().x(), e->position().y());
+    x_press_pos = e->position().x();
+    y_press_pos = e->position().y();
 #else
-    bu_log("X,Y: %d, %d\n", e->x(), e->y());
+    x_press_pos = (double)e->x();
+    y_press_pos = (double)e->y();
 #endif
+    bu_log("X,Y: %g, %g\n", x_press_pos, y_press_pos);
 
     QOpenGLWidget::mousePressEvent(e);
+}
+
+void QtGL::mouseReleaseEvent(QMouseEvent *e) {
+
+    // To avoid an abrupt jump in scene motion the next time movement is
+    // started with the mouse, after we release we return to the default state.
+    x_prev = -INT_MAX;
+    y_prev = -INT_MAX;
+
+    if (CADmouseReleaseEvent(v, x_press_pos, y_press_pos, x_prev, y_prev, e)) {
+       dm_set_dirty(dmp, 1);
+       update();
+       emit changed();
+    }
+
+    QOpenGLWidget::mouseReleaseEvent(e);
 }
 
 void QtGL::mouseMoveEvent(QMouseEvent *e)
@@ -276,16 +296,6 @@ void QtGL::wheelEvent(QWheelEvent *e) {
     }
 
     QOpenGLWidget::wheelEvent(e);
-}
-
-void QtGL::mouseReleaseEvent(QMouseEvent *e) {
-
-    // To avoid an abrupt jump in scene motion the next time movement is
-    // started with the mouse, after we release we return to the default state.
-    x_prev = -INT_MAX;
-    y_prev = -INT_MAX;
-
-    QOpenGLWidget::mouseReleaseEvent(e);
 }
 
 void QtGL::stash_hashes()

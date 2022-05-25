@@ -104,6 +104,8 @@ class QTCAD_EXPORT QtGL : public QOpenGLWidget, protected QOpenGLFunctions
 	bool m_init = false;
 	int x_prev = -INT_MAX;
 	int y_prev = -INT_MAX;
+	double x_press_pos = -INT_MAX;
+	double y_press_pos = -INT_MAX;
 };
 
 #endif /* QTGL_H */

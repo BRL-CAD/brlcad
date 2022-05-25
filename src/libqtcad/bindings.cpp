@@ -135,22 +135,60 @@ int CADmousePressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), 
 	return 0;
     }
 
+    if (e->buttons().testFlag(Qt::LeftButton)) {
+	bu_log("Press Left\n");
+    }
+    if (e->buttons().testFlag(Qt::RightButton)) {
+	bu_log("Press Right\n");
+    }
+    if (e->buttons().testFlag(Qt::MiddleButton)) {
+	bu_log("Press Middle\n");
+    }
+
+    return 0;
+}
+
+int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UNUSED(x_prev), int UNUSED(y_prev), QMouseEvent *e)
+{
+
+    if (!v)
+	return 0;
+
+    // If we're intending the mouse motion to do the work,
+    // then the release has to be a no-op.  If we're going
+    // to do configurable key bindings, this will take some
+    // thought - if we want unmodded left button to be a
+    // rotation, and Ctrl+Left to do something else, these
+    // checks are all going to have to be exact-flag-combo-only
+    // actions.
+    if (e->modifiers()) {
+	return 0;
+    }
+
+    double cx, cy;
+#ifdef USE_QT6
+    cx = e->position().x();
+    cy = e->position().y();
+#else
+    cx = (double)e->x();
+    cy = (double)e->y();
+#endif
+    if ((fabs(cx - x_press) > 10) || (fabs(cy - y_press) > 10))
+	return 0;
+
     int dx = 1000;
     int dy = 0;
     unsigned long long view_flags = BV_IDLE;
 
-    if (e->buttons().testFlag(Qt::LeftButton)) {
-	bu_log("Press Left\n");
+    if (e->button() == Qt::LeftButton) {
+	bu_log("Release Left\n");
 	view_flags = BV_SCALE;
 	dy = -100;
     }
-    if (e->buttons().testFlag(Qt::RightButton)) {
-	bu_log("Press Right\n");
+    if (e->button() == Qt::RightButton) {
+	bu_log("Release Right\n");
 	view_flags = BV_SCALE;
 	dy = 100;
-    }
-    if (e->buttons().testFlag(Qt::MiddleButton)) {
-	bu_log("Press Middle\n");
     }
 
     point_t center;

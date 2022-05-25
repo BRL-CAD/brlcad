@@ -33,6 +33,8 @@ int CADkeyPressEvent(struct bview *v, int x_prev, int y_prev, QKeyEvent *k);
 
 int CADmousePressEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e);
 
+int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int x_prev, int y_prev, QMouseEvent *e);
+
 int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e);
 
 int CADwheelEvent(struct bview *v, QWheelEvent *e);

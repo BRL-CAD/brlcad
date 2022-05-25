@@ -109,6 +109,8 @@ class QTCAD_EXPORT QtSW : public QWidget
 	bool m_init = false;
 	int x_prev = -INT_MAX;
 	int y_prev = -INT_MAX;
+	double x_press_pos = -INT_MAX;
+	double y_press_pos = -INT_MAX;
 };
 
 #endif /* QTCAD_QTSW_H */
