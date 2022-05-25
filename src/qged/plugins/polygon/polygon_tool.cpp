@@ -39,8 +39,8 @@ polygon_tool_create()
     // These creates may change the view - connect the internal widget signal
     // to the QToolPaletteElement slot so the application can get the word when
     // that happens.
-    QObject::connect(poly_create, &QPolyCreate::view_updated, el, &QToolPaletteElement::do_gui_changed_view);
-    QObject::connect(poly_create, &QPolyCreate::db_updated, el, &QToolPaletteElement::do_gui_changed_db);
+    QObject::connect(poly_create, &QPolyCreate::view_updated, el, &QToolPaletteElement::do_view_changed);
+    QObject::connect(poly_create, &QPolyCreate::db_updated, el, &QToolPaletteElement::do_db_changed);
 
     // Let the element (and hence the application) know that this tool has a
     // locally customized event filter to use with the view widget.
@@ -62,12 +62,12 @@ polygon_tool_modify()
     // These mods may change the view - connect the internal widget signal
     // to the QToolPaletteElement slot so the application can get the word when
     // that happens.
-    QObject::connect(poly_mod, &QPolyMod::view_updated, el, &QToolPaletteElement::do_gui_changed_view);
-    QObject::connect(poly_mod, &QPolyMod::db_updated, el, &QToolPaletteElement::do_gui_changed_db);
+    QObject::connect(poly_mod, &QPolyMod::view_updated, el, &QToolPaletteElement::do_view_changed);
+    QObject::connect(poly_mod, &QPolyMod::db_updated, el, &QToolPaletteElement::do_db_changed);
 
     // However the view changed, we need to make sure our list is current
     QObject::connect(poly_mod, &QPolyMod::view_updated, poly_mod, &QPolyMod::mod_names_reset);
-    QObject::connect(el, &QToolPaletteElement::app_changed_view, poly_mod, &QPolyMod::mod_names_reset);
+    QObject::connect(el, &QToolPaletteElement::app_view_sync, poly_mod, &QPolyMod::mod_names_reset);
     // //Make sure the list is current whenever we display the control widget
     QObject::connect(el, &QToolPaletteElement::palette_unhide, poly_mod, &QPolyMod::mod_names_reset);
 

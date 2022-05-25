@@ -38,8 +38,8 @@ ell_tool()
     // Edit operations will usually change view objects - connect the internal
     // widget signal to the QToolPaletteElement slot so the application can get
     // the word when that happens.
-    QObject::connect(ell, &QEll::view_updated, el, &QToolPaletteElement::do_gui_changed_view);
-    QObject::connect(ell, &QEll::db_updated, el, &QToolPaletteElement::do_gui_changed_db);
+    QObject::connect(ell, &QEll::view_updated, el, &QToolPaletteElement::do_view_changed);
+    QObject::connect(ell, &QEll::db_updated, el, &QToolPaletteElement::do_db_changed);
 
     // Let the element (and hence the application) know that this tool has a
     // locally customized event filter to use with the view widget.

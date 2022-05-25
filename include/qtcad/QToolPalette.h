@@ -78,21 +78,11 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	// changed anything in the view.  Emitted by signal_view_update slot,
 	// which is connected to internal widget signals in the controls. This
 	// provide a generic, public "signal interface" for widget internals.
-	void gui_changed_view(struct bview **);
+	void view_changed(struct bview **);
 
 	// Signal the application can listen to to see if the Element has
 	// changed anything in the database.
-	void gui_changed_db();
-
-    public slots:
-	// INTERNAL:
-	// The following slot is for connecting to by internal control widget
-	// signals when the widget makes a view change, and handles emission
-	// of the public facing gui_changed_view signal.
-	void do_gui_changed_view(struct bview **);
-
-        // As above, for database changes
-        void do_gui_changed_db();
+	void db_changed();
 
     public slots:
 	// PUBLIC:
@@ -102,13 +92,13 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	// hide any internal signal/slot implementation details from the
 	// application while still allowing changes at the app level to drive
 	// updates in the Element contents.
-	void do_app_changed_view(struct bview **);
-	void do_app_changed_db(void *);
+	void do_view_sync(struct bview **);
+	void do_db_sync(void *);
 	void do_palette_unhide(void *);
 
      signals:
 	// INTERNAL:
-	// These signals are emitted by the above slots.  Subcomponents will
+	// These signals are emitted by the below slots.  Subcomponents will
 	// connect to these in lieu of connecting directly to application
 	// signals, to decouple the implementation of the Element internals
 	// from the application.  I.e. the application connects to the above
@@ -118,9 +108,17 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	// Note that these signals should NEVER be emitted directly by any of
 	// the Element subcomponents.  Nor should they be connected to by
 	// application code.
-	void app_changed_view(struct bview **);
-	void app_changed_db(void *);
+	void app_view_sync(struct bview **);
+	void app_db_sync(void *);
 	void palette_unhide();
+
+    public slots:
+	// INTERNAL:
+	// The following slots are for connecting to by internal control widget
+	// signals when the widget makes a view change, and handle emission
+	// of the public facing signals.
+	void do_view_changed(struct bview **);
+        void do_db_changed();
 
     public:
 	QToolPaletteButton *button;

@@ -282,11 +282,11 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	    for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
 		QToolPaletteElement *el = *el_it;
 		vc->addTool(el);
-		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_changed_view);
-		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_app_changed_db);
+		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_view_sync);
+		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_db_sync);
 
-		QObject::connect(el, &QToolPaletteElement::gui_changed_view, ap, &CADApp::do_view_update_from_gui_change);
-		QObject::connect(el, &QToolPaletteElement::gui_changed_db, ap, &CADApp::do_db_update_from_gui_change);
+		QObject::connect(el, &QToolPaletteElement::view_changed, ap, &CADApp::do_view_update_from_gui_change);
+		QObject::connect(el, &QToolPaletteElement::db_changed, ap, &CADApp::do_db_update_from_gui_change);
 	    }
 	}
 
@@ -295,9 +295,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	    for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
 		QToolPaletteElement *el = *el_it;
 		oc->addTool(el);
-		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_changed_view);
-		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_app_changed_db);
-		QObject::connect(el, &QToolPaletteElement::gui_changed_view, ap, &CADApp::do_view_update_from_gui_change);
+		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_view_sync);
+		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_db_sync);
+		QObject::connect(el, &QToolPaletteElement::view_changed, ap, &CADApp::do_view_update_from_gui_change);
 	    }
 	}
 

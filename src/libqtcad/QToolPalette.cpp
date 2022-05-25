@@ -91,9 +91,9 @@ QToolPaletteElement::setControls(QWidget *n_control)
 }
 
 void
-QToolPaletteElement::do_app_changed_view(struct bview **v)
+QToolPaletteElement::do_view_sync(struct bview **v)
 {
-    emit app_changed_view(v);
+    emit app_view_sync(v);
 }
 
 void
@@ -103,21 +103,21 @@ QToolPaletteElement::do_palette_unhide(void *)
 }
 
 void
-QToolPaletteElement::do_gui_changed_view(struct bview **v)
+QToolPaletteElement::do_view_changed(struct bview **v)
 {
-    emit gui_changed_view(v);
+    emit view_changed(v);
 }
 
 void
-QToolPaletteElement::do_gui_changed_db()
+QToolPaletteElement::do_db_changed()
 {
-    emit gui_changed_db();
+    emit db_changed();
 }
 
 void
-QToolPaletteElement::do_app_changed_db(void *d)
+QToolPaletteElement::do_db_sync(void *d)
 {
-    emit app_changed_db(d);
+    emit app_db_sync(d);
 }
 
 QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
