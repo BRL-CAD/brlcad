@@ -86,15 +86,16 @@ bv_clear(struct bview *v, int flags);
 /* Note that some of these are mutually exclusive as far as producing any
  * changes - a simultaneous constraint in X and Y, for example, results in a
  * no-op. */
-#define BV_IDLE       0x0
-#define BV_ROT        0x1
-#define BV_TRANS      0x2
-#define BV_SCALE      0x4
-#define BV_CON_X      0x8
-#define BV_CON_Y      0x10
-#define BV_CON_Z      0x20
-#define BV_CON_GRID   0x40
-#define BV_CON_LINES  0x80
+#define BV_IDLE       0x000
+#define BV_ROT        0x001
+#define BV_TRANS      0x002
+#define BV_SCALE      0x004
+#define BV_CENTER     0x008
+#define BV_CON_X      0x010
+#define BV_CON_Y      0x020
+#define BV_CON_Z      0x040
+#define BV_CON_GRID   0x080
+#define BV_CON_LINES  0x100
 
 /* Update a view in response to X,Y coordinate changes as generated
  * by a graphical interface's mouse motion. */

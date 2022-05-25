@@ -121,6 +121,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     c4 = new QtCADQuad(cw, gedp, canvas_type);
     c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     cwl->addWidget(c4);
+    QObject::connect(vcw, &QViewCtrl::lmouse_mode, c4, &QtCADQuad::set_lmouse_move_default);
 
     cw->setLayout(cwl);
     setCentralWidget(cw);

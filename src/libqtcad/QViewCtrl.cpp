@@ -46,7 +46,11 @@ QViewCtrl::QViewCtrl(QWidget *pparent, struct ged *pgedp) : QToolBar(pparent)
     fb_mode = addAction(QIcon(QPixmap(":images/view/framebuffer_off.png")), "Framebuffer Off/Overlay/Underlay");
     fb_clear = addAction(QIcon(QPixmap(":images/view/framebuffer_clear.png")), "Clear Framebuffer");
 
-    // Connect some of the buttons to standard actions
+    // Connect buttons to standard actions
+    connect(sca, &QAction::triggered, this, &QViewCtrl::sca_mode);
+    connect(rot, &QAction::triggered, this, &QViewCtrl::rot_mode);
+    connect(tra, &QAction::triggered, this, &QViewCtrl::tra_mode);
+    connect(center, &QAction::triggered, this, &QViewCtrl::center_mode);
     connect(raytrace, &QAction::triggered, this, &QViewCtrl::raytrace_cmd);
     connect(fb_clear, &QAction::triggered, this, &QViewCtrl::fbclear_cmd);
 }
@@ -54,6 +58,31 @@ QViewCtrl::QViewCtrl(QWidget *pparent, struct ged *pgedp) : QToolBar(pparent)
 QViewCtrl::~QViewCtrl()
 {
 }
+
+void
+QViewCtrl::sca_mode()
+{
+    emit lmouse_mode(BV_SCALE);
+}
+
+void
+QViewCtrl::rot_mode()
+{
+    emit lmouse_mode(BV_ROT);
+}
+
+void
+QViewCtrl::tra_mode()
+{
+    emit lmouse_mode(BV_TRANS);
+}
+
+void
+QViewCtrl::center_mode()
+{
+    emit lmouse_mode(BV_CENTER);
+}
+
 
 void
 QViewCtrl::fbclear_cmd()

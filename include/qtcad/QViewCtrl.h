@@ -56,8 +56,15 @@ class QTCAD_EXPORT QViewCtrl : public QToolBar
 
     signals:
 	void gui_changed_view(struct bview **);
+	void lmouse_mode(int);
 
     public slots:
+
+	void sca_mode();
+	void rot_mode();
+	void tra_mode();
+	void center_mode();
+
 	void fbclear_cmd();
 
 	void fb_mode_cmd();
