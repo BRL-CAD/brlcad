@@ -164,6 +164,9 @@ int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UN
     if (e->modifiers()) {
 	return 0;
     }
+    if (e->buttons().testFlag(Qt::LeftButton) || e->buttons().testFlag(Qt::RightButton)) {
+	return 0;
+    }
 
     double cx, cy;
 #ifdef USE_QT6
@@ -176,19 +179,21 @@ int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UN
     if ((fabs(cx - x_press) > 10) || (fabs(cy - y_press) > 10))
 	return 0;
 
-    int dx = 1000;
-    int dy = 0;
+    int dx = 1;
+    int dy = 1;
     unsigned long long view_flags = BV_IDLE;
 
     if (e->button() == Qt::LeftButton) {
 	bu_log("Release Left\n");
 	view_flags = BV_SCALE;
-	dy = -100;
+	dx = 10;
+	dy = 5;
     }
     if (e->button() == Qt::RightButton) {
 	bu_log("Release Right\n");
 	view_flags = BV_SCALE;
-	dy = 100;
+	dx = 1;
+	dy = 2;
     }
 
     // TODO - IFF we are in center mode, center on the last pixel value
@@ -250,10 +255,18 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e, i
 #endif
 
     if (view_flags == BV_SCALE) {
+	// Build in some sensitivity to how much the mouse moved when doing
+	// a motion based scale
 	int mdelta = (abs(dx) > abs(dy)) ? dx : -dy;
-	double f = (double)mdelta/(double)v->gv_height;
-	dy = (int)(2 * f * 1000);
-	dx = 1000;
+	int f = (int)(2*100*(double)abs(mdelta)/(double)v->gv_height);
+
+	if (mdelta > 0) {
+	    dy = 101 + f;
+	    dx = 100;
+	} else {
+	    dy = 99 - f;
+	    dx = 100;
+	}
     }
 
     // TODO - the key point and the mode/flags are all hardcoded

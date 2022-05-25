@@ -587,17 +587,12 @@ int
 _bv_scale(struct bview *v, int sensitivity, int factor, point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
 {
     double f = (double)factor/(double)sensitivity;
-
-    v->gv_scale = v->gv_scale * (1.0 - f);
-
-    if (v->gv_scale < BV_MINVIEWSIZE) {
-	v->gv_scale = BV_MINVIEWSIZE;
-    }
+    v->gv_scale /= f;
     if (v->gv_scale < BV_MINVIEWSCALE)
-	v->gv_scale = BV_MINVIEWSCALE;
-
+        v->gv_scale = BV_MINVIEWSCALE;
     v->gv_size = 2.0 * v->gv_scale;
     v->gv_isize = 1.0 / v->gv_size;
+    bv_update(v);
 
     /* scale factors are set, now sync other bv values */
     bv_update(v);
