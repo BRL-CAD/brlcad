@@ -53,6 +53,7 @@ QViewCtrl::QViewCtrl(QWidget *pparent, struct ged *pgedp) : QToolBar(pparent)
     connect(center, &QAction::triggered, this, &QViewCtrl::center_mode);
     connect(raytrace, &QAction::triggered, this, &QViewCtrl::raytrace_cmd);
     connect(fb_clear, &QAction::triggered, this, &QViewCtrl::fbclear_cmd);
+    connect(fb_mode, &QAction::triggered, this, &QViewCtrl::fb_mode_cmd);
 }
 
 QViewCtrl::~QViewCtrl()
