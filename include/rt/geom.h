@@ -169,14 +169,14 @@ struct rt_metaball_internal {
 struct wdb_metaball_pnt {
     struct bu_list l;
     int type;
-    fastf_t fldstr; /**< @brief  field strength */
-    fastf_t sweat;  /**< @brief  beta value used for metaball and blob evaluation */
+    fastf_t fldstr; /**< @brief field strength */
+    fastf_t sweat;  /**< @brief beta value used for metaball and blob evaluation */
     point_t coord;
     point_t coord2;
 };
 #define WDB_METABALLPT_TYPE_POINT 0x0
 #define WDB_METABALLPT_TYPE_LINE 0x1
-#define WDB_METABALL_PNT_NULL	((struct wdb_metaball_pnt *)0)
+#define WDB_METABALL_PNT_NULL ((struct wdb_metaball_pnt *)0)
 /** @} */
 
 
@@ -303,6 +303,7 @@ struct rt_brep_internal {
 
 #define RT_BREP_CK_MAGIC(_p) BU_CKMAG(_p, RT_BREP_INTERNAL_MAGIC, "rt_brep_internal");
 #define RT_BREP_TEST_MAGIC(_p) ((_p) && (*((uint32_t *)(_p)) == (uint32_t)(RT_BREP_INTERNAL_MAGIC)))
+
 /** @} */
 
 
@@ -425,11 +426,11 @@ struct rt_pipe_internal {
 };
 #define RT_PIPE_CK_MAGIC(_p) BU_CKMAG(_p, RT_PIPE_INTERNAL_MAGIC, "rt_pipe_internal")
 struct wdb_pipe_pnt {
-    struct bu_list l;      /**< @brief  doubly linked list support */
-    point_t pp_coord;      /**< @brief  "control" point for pipe solid */
-    fastf_t pp_id;         /**< @brief  inner diam, <=0 if solid (wire) */
-    fastf_t pp_od;         /**< @brief  pipe outer diam */
-    fastf_t pp_bendradius; /**< @brief  bend radius to use for a bend at this point */
+    struct bu_list l;      /**< @brief doubly linked list support */
+    point_t pp_coord;      /**< @brief "control" point for pipe solid */
+    fastf_t pp_id;         /**< @brief inner diam, <=0 if solid (wire) */
+    fastf_t pp_od;         /**< @brief pipe outer diam */
+    fastf_t pp_bendradius; /**< @brief bend radius to use for a bend at this point */
 };
 /** @} */
 
@@ -979,6 +980,7 @@ struct rt_ant {
     void **segments;			/**< @brief array of annotation segment pointer */
 };
 
+
 /**
  * text labels used by the annotation primitive
  */
@@ -990,6 +992,7 @@ struct txt_seg {
     fastf_t txt_size;           /** text size */
     fastf_t txt_rot_angle;      /** text rotation angle */
 };
+
 
 /**
  * placement flags
@@ -1021,7 +1024,6 @@ struct rt_annot_internal
     point2d_t *verts;			/**< @brief array of vertices that serve as control points */
     struct rt_ant ant;			/**< @brief segments in the annotation */
 };
-
 
 
 #define RT_ANNOT_CK_MAGIC(_p) BU_CKMAG(_p, RT_ANNOT_INTERNAL_MAGIC, "rt_annot_internal")
@@ -1068,6 +1070,7 @@ struct rt_datum_internal
     struct rt_datum_internal *next;
 };
 
+
 /**
  * validation macro to make sure an rt_datum_internal has the proper magic identifier.
  */
@@ -1096,7 +1099,6 @@ struct rt_script_internal {
 };
 #define RT_SCRIPT_CK_MAGIC(_p) BU_CKMAG(_p, RT_SCRIPT_INTERNAL_MAGIC, "rt_script_internal")
 /** @} */
-
 
 
 __END_DECLS
