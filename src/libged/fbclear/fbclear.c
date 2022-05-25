@@ -97,6 +97,8 @@ ged_fbclear_core(struct ged *gedp, int argc, const char *argv[])
     fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
     (void)dm_draw_end(dmp);
 
+    dm_set_dirty(dmp, 1);
+
     return BRLCAD_OK;
 }
 
