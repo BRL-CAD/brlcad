@@ -3590,7 +3590,7 @@ main(int argc, char *argv[])
     /* Listen for our PKG connections */
     int tcp_num = 0;
     if ((tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, remrt_log)) < 0) {
-	char num[8];
+	char num[12];
 	/* Do it by the numbers */
 	for (i = 0; i < 10; i++) {
 	    tcp_num = REMRT_TCP_DEFAULT_PORT+i;
