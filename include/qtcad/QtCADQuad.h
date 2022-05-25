@@ -69,7 +69,7 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 	void disableDefaultMouseBindings();
 
     signals:
-	void changed();
+	void changed(QtCADView *);
 	void selected(QtCADView *);
 	void init_done();
 

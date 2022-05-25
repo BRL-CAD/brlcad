@@ -102,11 +102,6 @@ class CADApp : public QApplication
 	// elements, rather than being driven by mouse movements or commands.
 	void do_db_update_from_gui_change();
 
-        // Called when the view has been changed by mouse events or commands.
-	// It is responsible for updating the GUI elements that might be
-	// displaying view information.  Does not change the view settings.
-        void do_gui_update_from_view_change();
-
 	// This slot is used for quad view configurations - it is called if the
 	// user uses the mouse to select one of multiple views.  This slot has
 	// the responsibility to notify GUI elements of a view change via

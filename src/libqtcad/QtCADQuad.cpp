@@ -225,7 +225,7 @@ QtCADQuad::changeToQuadFrame()
 void
 QtCADQuad::do_view_changed()
 {
-    emit changed();
+    emit changed(currentView);
 }
 
 bool

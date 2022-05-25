@@ -473,7 +473,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // If the view changes, let the GUI know.  The ap supplied signals are used by other
     // widgets to hide the specifics of the current view implementation (single or quad).
     if (c4) {
-	QObject::connect(c4, &QtCADQuad::changed, ap, &CADApp::do_gui_update_from_view_change);
+	QObject::connect(c4, &QtCADQuad::changed, ap, &CADApp::do_quad_view_change);
     }
 
     // Some of the dm initialization has to be delayed - make the connections so we can

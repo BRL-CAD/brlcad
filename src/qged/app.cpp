@@ -94,7 +94,7 @@ CADApp::do_quad_view_change(QtCADView *cv)
 {
     QgModel *m = (QgModel *)mdl->sourceModel();
     m->gedp->ged_gvp = cv->view();
-    do_gui_update_from_view_change();
+    emit view_change(&m->gedp->ged_gvp);
 }
 
 void
@@ -112,13 +112,6 @@ CADApp::do_db_update_from_gui_change()
 {
     QgModel *m = (QgModel *)mdl->sourceModel();
     emit m->mdl_changed_db(NULL);
-}
-
-void
-CADApp::do_gui_update_from_view_change()
-{
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    emit view_change(&m->gedp->ged_gvp);
 }
 
 void
