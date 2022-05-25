@@ -1376,11 +1376,12 @@ refine_edges(struct shell *s)
 
 	bu_log("\tBroke %d edges\n", breaks);
 	if (debug) {
-	    char name[16];
+	    struct bu_vls name = BU_VLS_INIT_ZERO;
 
-	    sprintf(name, "break.%d", loop_count);
+	    bu_vls_printf(&name, "break.%d", loop_count);
 	    nmg_rebound(m, &tol);
-	    mk_nmg(fd_out, name, m);
+	    mk_nmg(fd_out, bu_vls_cstr(&name), m);
+	    bu_vls_free(&name);
 	}
 
 	bu_ptbl_reset(cur);
