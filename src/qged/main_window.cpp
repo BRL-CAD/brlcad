@@ -472,6 +472,12 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	QObject::connect(c4, &QtCADQuad::changed, ap, &CADApp::do_gui_update_from_view_change);
     }
 
+    // Some of the dm initialization has to be delayed - make the connections so we can
+    // do the work after widget initialization is complete.
+    if (c4) {
+	QObject::connect(c4, &QtCADQuad::init_done, this, &BRLCAD_MainWindow::do_dm_init);
+    }
+
     // We start out with the View Control panel as the current panel - by
     // default we are viewing, not editing
     vc->makeCurrent(vc);
@@ -492,6 +498,39 @@ BRLCAD_MainWindow::fallback3D()
 	c4->fallback();
 	return;
     }
+}
+
+void
+BRLCAD_MainWindow::do_dm_init()
+{
+    CADApp *ap = (CADApp *)qApp;
+    QgModel *m = (QgModel *)ap->mdl->sourceModel();
+    struct ged *gedp = m->gedp;
+
+    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
+
+    ///////////////////////////////////////////////////////////////////////////
+    // DEBUG - turn on some of the bells and whistles by default, since they
+    // won't normally be tested in other ways.  We need fully set up views and
+    // dm contexts for these commands to work, and that setup (especially for
+    // dm) can be delayed, so we put these invocations in a slot that is
+    // specifically triggered once the underlying widgets have informed us that
+    // they're ready to go.
+    const char *av[5] = {NULL};
+    av[0] = "dm";
+    av[1] = "bg";
+    av[2] = "110/110/110";
+    av[3] = "0/0/50";
+    ged_exec(gedp, 4, (const char **)av);
+
+    av[0] = "view";
+    av[1] = "lod";
+    av[2] = "mesh";
+    av[3] = "1";
+    ged_exec(gedp, 4, (const char **)av);
+
+    emit ap->view_change(&gedp->ged_gvp);
+    ///////////////////////////////////////////////////////////////////////////
 }
 
 /*

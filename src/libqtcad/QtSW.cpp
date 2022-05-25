@@ -142,6 +142,8 @@ void QtSW::paintEvent(QPaintEvent *e)
 
 	// Ready to go
 	m_init = true;
+
+	emit init_done();
     }
 
     if (!m_init || !dmp)

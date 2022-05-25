@@ -138,6 +138,7 @@ void QtGL::paintGL()
 
 	// Ready to go
 	m_init = true;
+	emit init_done();
     }
 
     if (!m_init || !dmp)

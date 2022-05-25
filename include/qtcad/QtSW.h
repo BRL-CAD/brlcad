@@ -84,6 +84,7 @@ class QTCAD_EXPORT QtSW : public QWidget
 
     signals:
 	void changed();
+	void init_done();
 
     public slots:
 	void need_update();

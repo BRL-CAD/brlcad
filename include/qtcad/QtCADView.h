@@ -98,10 +98,12 @@ class QTCAD_EXPORT QtCADView : public QWidget
 
     signals:
 	void changed();
+	void init_done();
 
     public slots:
 	void need_update(void *);
 	void do_view_changed();
+	void do_init_done();
 
     private:
         QBoxLayout *l = NULL;

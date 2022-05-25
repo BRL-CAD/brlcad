@@ -71,10 +71,12 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
     signals:
 	void changed();
 	void selected(QtCADView *);
+	void init_done();
 
     public slots:
 	void need_update(void *);
         void do_view_changed();
+	void do_init_done();
 
     private:
         bool eventFilter(QObject*, QEvent*);
@@ -96,6 +98,9 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
         QSpacerItem *spacerLeft = nullptr;
         QSpacerItem *spacerRight = nullptr;
         QSpacerItem *spacerCenter = nullptr;
+
+	// Flag for initializations of sub-widgets
+	bool init_done_flag = false;
 };
 
 #endif /* QTCADQUAD_H */

@@ -49,6 +49,7 @@ QtCADView::QtCADView(QWidget *parent, int type, struct fb *fbp)
 	    canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_gl);
 	    QObject::connect(canvas_gl, &QtGL::changed, this, &QtCADView::do_view_changed);
+	    QObject::connect(canvas_gl, &QtGL::init_done, this, &QtCADView::do_init_done);
 	    break;
 #endif
 	case QtCADView_SW:
@@ -57,6 +58,7 @@ QtCADView::QtCADView(QWidget *parent, int type, struct fb *fbp)
 	    canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_sw);
 	    QObject::connect(canvas_sw, &QtSW::changed, this, &QtCADView::do_view_changed);
+	    QObject::connect(canvas_sw, &QtSW::init_done, this, &QtCADView::do_init_done);
 	    break;
 	default:
 #ifdef BRLCAD_OPENGL
@@ -65,12 +67,14 @@ QtCADView::QtCADView(QWidget *parent, int type, struct fb *fbp)
 	    canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_gl);
 	    QObject::connect(canvas_gl, &QtGL::changed, this, &QtCADView::do_view_changed);
+	    QObject::connect(canvas_gl, &QtGL::init_done, this, &QtCADView::do_init_done);
 #else
 	    canvas_sw = new QtSW(this, fbp);
 	    canvas_sw->setMinimumSize(50,50);
 	    canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_sw);
 	    QObject::connect(canvas_sw, &QtSW::changed, this, &QtCADView::do_view_changed);
+	    QObject::connect(canvas_sw, &QtSW::init_done, this, &QtCADView::do_init_done);
 #endif
 	    return;
     }
@@ -501,6 +505,13 @@ QtCADView::disableDefaultMouseBindings()
 	canvas_sw->disableDefaultMouseBindings();
 	return;
     }
+}
+
+
+void
+QtCADView::do_init_done()
+{
+    emit init_done();
 }
 
 // Local Variables:

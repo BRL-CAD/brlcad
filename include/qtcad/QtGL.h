@@ -79,6 +79,7 @@ class QTCAD_EXPORT QtGL : public QOpenGLWidget, protected QOpenGLFunctions
 
     signals:
 	void changed();
+	void init_done();
 
     public slots:
 	void need_update();

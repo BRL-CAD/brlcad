@@ -81,7 +81,6 @@ QtCADQuad::QtCADQuad(QWidget *parent, struct ged *gedpRef, int type) : QWidget(p
     views[UPPER_RIGHT]->set_current(1);
     currentView = views[UPPER_RIGHT];
 
-    QObject::connect(views[UPPER_RIGHT], &QtCADView::changed, this, &QtCADQuad::do_view_changed);
 }
 
 QtCADQuad::~QtCADQuad()
@@ -117,6 +116,8 @@ QtCADQuad::createView(int index)
     view->view()->vset = &gedp->ged_views;
     view->view()->independent = 0;
 
+    QObject::connect(view, &QtCADView::changed, this, &QtCADQuad::do_view_changed);
+    QObject::connect(view, &QtCADView::init_done, this, &QtCADQuad::do_init_done);
     return view;
 }
 
@@ -187,7 +188,6 @@ QtCADQuad::changeToQuadFrame()
 	    views[i] = createView(i);
 	}
 	bv_set_add_view(&gedp->ged_views, views[i]->view());
-	QObject::connect(views[i], &QtCADView::changed, this, &QtCADQuad::do_view_changed);
     }
     QGridLayout *layout = (QGridLayout *)this->layout();
     if (layout == nullptr) {
@@ -439,6 +439,14 @@ QtCADQuad::disableDefaultMouseBindings()
 	if (views[i] != nullptr) {
 	    views[i]->disableDefaultMouseBindings();
 	}
+    }
+}
+void
+QtCADQuad::do_init_done()
+{
+    if (!init_done_flag) {
+	init_done_flag = true;
+	emit init_done();
     }
 }
 

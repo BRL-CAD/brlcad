@@ -78,6 +78,7 @@ class BRLCAD_MainWindow : public QMainWindow
 
     public slots:
         //void save_image();
+	void do_dm_init();
 
     private:
 	QMenu *file_menu;
