@@ -248,7 +248,7 @@ void QtSW::mouseReleaseEvent(QMouseEvent *e) {
     x_prev = -INT_MAX;
     y_prev = -INT_MAX;
 
-    if (CADmouseReleaseEvent(v, x_press_pos, y_press_pos, x_prev, y_prev, e)) {
+    if (CADmouseReleaseEvent(v, x_press_pos, y_press_pos, x_prev, y_prev, e, lmouse_mode)) {
 	dm_set_dirty(dmp, 1);
 	update();
 	emit changed();

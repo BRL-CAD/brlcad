@@ -148,7 +148,7 @@ int CADmousePressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), 
     return 0;
 }
 
-int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UNUSED(x_prev), int UNUSED(y_prev), QMouseEvent *e)
+int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UNUSED(x_prev), int UNUSED(y_prev), QMouseEvent *e, int mode)
 {
 
     if (!v)
@@ -185,23 +185,34 @@ int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UN
 
     if (e->button() == Qt::LeftButton) {
 	bu_log("Release Left\n");
-	view_flags = BV_SCALE;
-	dx = 10;
-	dy = 5;
+	if (mode != BV_CENTER) {
+	    view_flags = BV_SCALE;
+	    dx = 10;
+	    dy = 5;
+	} else {
+	    view_flags = BV_CENTER;
+	    dx = (int)cx;
+	    dy = (int)cy;
+	}
     }
     if (e->button() == Qt::RightButton) {
 	bu_log("Release Right\n");
+	if (mode == BV_CENTER)
+	    return 0;
 	view_flags = BV_SCALE;
 	dx = 1;
 	dy = 2;
     }
 
-    // TODO - IFF we are in center mode, center on the last pixel value
+    if (e->button() == Qt::MiddleButton) {
+	bu_log("Release Center\n");
+	view_flags = BV_CENTER;
+	dx = (int)cx;
+	dy = (int)cy;
+    }
 
-    point_t center;
-    MAT_DELTAS_GET_NEG(center, v->gv_center);
-    return bv_adjust(v, dx, dy, center, 0, view_flags);
-
+    point_t keypt = VINIT_ZERO;
+    return bv_adjust(v, dx, dy, keypt, 0, view_flags);
 }
 
 int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e, int mode)
@@ -218,9 +229,12 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e, i
 	return 0;
     }
 
+    view_flags = mode;
+    if (mode == BV_CENTER)
+	view_flags = BV_SCALE;
+
     if (e->buttons().testFlag(Qt::LeftButton)) {
 	bu_log("Left\n");
-	view_flags = mode;
 
 	if (e->modifiers().testFlag(Qt::ControlModifier)) {
 	    bu_log("Ctrl+Left\n");
@@ -269,6 +283,7 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e, i
 	}
     }
 
+
     // TODO - the key point and the mode/flags are all hardcoded
     // right now, but eventually for shift grips they will need to
     // respond to the various mod keys.  The intent is to set flags
@@ -287,9 +302,10 @@ int CADwheelEvent(struct bview *v, QWheelEvent *e)
 	return 0;
 
     QPoint delta = e->angleDelta();
-    int incr = delta.y() / 8;
-    int dx = 1000;
-    int dy = (incr > 0) ? 20 : -20;
+    int mdelta = -1* delta.y() / 8;
+
+    int dx = 100 + mdelta;
+    int dy = 100;
 
     point_t origin = VINIT_ZERO;
     return bv_adjust(v, dx, dy, origin, 0, BV_SCALE);

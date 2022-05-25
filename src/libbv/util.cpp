@@ -592,11 +592,23 @@ _bv_scale(struct bview *v, int sensitivity, int factor, point_t UNUSED(keypoint)
         v->gv_scale = BV_MINVIEWSCALE;
     v->gv_size = 2.0 * v->gv_scale;
     v->gv_isize = 1.0 / v->gv_size;
-    bv_update(v);
 
     /* scale factors are set, now sync other bv values */
     bv_update(v);
 
+    return 1;
+}
+
+int
+_bv_center(struct bview *v, int vx, int vy, point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
+{
+    point_t vpt, center;
+    fastf_t fx, fy;
+    bv_screen_to_view(v, &fx, &fy, (fastf_t)vx, (fastf_t)vy);
+    VSET(vpt, fx, fy, 0);
+    MAT4X3PNT(center, v->gv_view2model, vpt);
+    MAT_DELTAS_VEC_NEG(v->gv_center, center);
+    bv_update(v);
     return 1;
 }
 
@@ -615,6 +627,10 @@ bv_adjust(struct bview *v, int dx, int dy, point_t keypoint, int UNUSED(mode), u
 
     if (flags & BV_SCALE)
 	return _bv_scale(v, dx, dy, keypoint, flags);
+
+    if (flags & BV_CENTER)
+	return _bv_center(v, dx, dy, keypoint, flags);
+
 
     return 0;
 }
