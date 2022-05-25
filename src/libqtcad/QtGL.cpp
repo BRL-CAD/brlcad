@@ -308,6 +308,9 @@ bool QtGL::diff_hashes()
 	c_dhash = dm_hash(dmp);
     c_vhash = bv_hash(v);
 
+    if (dmp && dm_get_dirty(dmp))
+	ret = true;
+
     if (prev_dhash != c_dhash) {
 	if (dmp)
 	    dm_set_dirty(dmp, 1);

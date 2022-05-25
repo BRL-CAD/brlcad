@@ -55,6 +55,7 @@ class QTCAD_EXPORT QViewCtrl : public QToolBar
 	int icon_size = 25;
 
     public slots:
+	void fbclear_cmd();
 	void raytrace_cmd();
 	void raytrace_start(int);
 	void raytrace_done(int);

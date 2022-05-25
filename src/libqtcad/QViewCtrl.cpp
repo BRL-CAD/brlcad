@@ -49,10 +49,20 @@ QViewCtrl::QViewCtrl(QWidget *pparent, struct ged *pgedp) : QToolBar(pparent)
 
     // Connect some of the buttons to standard actions
     connect(raytrace, &QAction::triggered, this, &QViewCtrl::raytrace_cmd);
+    connect(fb_clear, &QAction::triggered, this, &QViewCtrl::fbclear_cmd);
 }
 
 QViewCtrl::~QViewCtrl()
 {
+}
+
+void
+QViewCtrl::fbclear_cmd()
+{
+    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
+    const char *av[2] = {NULL};
+    av[0] = "fbclear";
+    ged_exec(gedp, 1, (const char **)av);
 }
 
 void rt_cmd_start(int pid, void *ctx)
