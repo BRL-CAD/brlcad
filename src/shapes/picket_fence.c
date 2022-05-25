@@ -30,6 +30,7 @@
 
 #include "vmath.h"
 #include "bu/app.h"
+#include "bu/vls.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -44,12 +45,13 @@ main(int argc, char *argv[])
     long i, j, k, l;
     struct rt_wdb *fp_db = NULL;
 
-    char name[264] = {0};
-    char pname[261] = {0};
-    char w1name[266] = {0};
-    char w2name[266] = {0};
     char firstname[256] = {0};
     char prefix[256] = {0};
+
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct bu_vls pname= BU_VLS_INIT_ZERO;
+    struct bu_vls w1name = BU_VLS_INIT_ZERO;
+    struct bu_vls w2name = BU_VLS_INIT_ZERO;
 
     struct wmember wm;
     struct wmember wm2;
@@ -170,53 +172,53 @@ main(int argc, char *argv[])
 	c0d[1] = (pwidth - ps) / 2.0;
 	c0h[2] = height;
 
-	snprintf(w1name, sizeof(w1name), "%swedge1-%ld.s", prefix, j);
-	mk_wedge(fp_db, w1name, w0, w0x, w0z, xlen, ylen, zlen, x_top_len);
+	bu_vls_sprintf(&w1name, "%swedge1-%ld.s", prefix, j);
+	mk_wedge(fp_db, bu_vls_cstr(&w1name), w0, w0x, w0z, xlen, ylen, zlen, x_top_len);
 
-	snprintf(w2name, sizeof(w2name), "%swedge2-%ld.s", prefix, j);
-	mk_wedge(fp_db, w2name, w1, w1x, w1z, xlen, ylen, zlen, x_top_len);
+	bu_vls_sprintf(&w2name, "%swedge2-%ld.s", prefix, j);
+	mk_wedge(fp_db, bu_vls_cstr(&w2name), w1, w1x, w1z, xlen, ylen, zlen, x_top_len);
 
-	snprintf(name, sizeof(name), "%spost-%ld.s", prefix, j);
-	mk_arb8(fp_db, name, s0);
-	mk_addmember(name, &wm.l, NULL, WMOP_UNION);
-	mk_addmember(w1name, &wm.l, NULL, WMOP_SUBTRACT);
-	mk_addmember(w2name, &wm.l, NULL, WMOP_SUBTRACT);
+	bu_vls_sprintf(&name, "%spost-%ld.s", prefix, j);
+	mk_arb8(fp_db, bu_vls_cstr(&name), s0);
+	mk_addmember(bu_vls_cstr(&name), &wm.l, NULL, WMOP_UNION);
+	mk_addmember(bu_vls_cstr(&w1name), &wm.l, NULL, WMOP_SUBTRACT);
+	mk_addmember(bu_vls_cstr(&w2name), &wm.l, NULL, WMOP_SUBTRACT);
 
 	if (post) {
-	    snprintf(name, sizeof(name), "%spost_c.s", prefix);
-	    mk_tgc(fp_db, name, c0, c0h, c0a, c0b, c0c, c0d);
-	    mk_addmember(name, &wm.l, NULL, WMOP_UNION);
-	    mk_addmember(w1name, &wm.l, NULL, WMOP_SUBTRACT);
-	    mk_addmember(w2name, &wm.l, NULL, WMOP_SUBTRACT);
+	    bu_vls_sprintf(&name, "%spost_c.s", prefix);
+	    mk_tgc(fp_db, bu_vls_cstr(&name), c0, c0h, c0a, c0b, c0c, c0d);
+	    mk_addmember(bu_vls_cstr(&name), &wm.l, NULL, WMOP_UNION);
+	    mk_addmember(bu_vls_cstr(&w1name), &wm.l, NULL, WMOP_SUBTRACT);
+	    mk_addmember(bu_vls_cstr(&w2name), &wm.l, NULL, WMOP_SUBTRACT);
 	}
 
-	snprintf(name, sizeof(name), "%sls%ld.s", prefix, j);
-	mk_arb8(fp_db, name, s1);
-	mk_addmember(name, &swm.l, NULL, WMOP_UNION);
+	bu_vls_sprintf(bu_vls_cstr(&name), "%sls%ld.s", prefix, j);
+	mk_arb8(fp_db, bu_vls_cstr(&name), s1);
+	mk_addmember(bu_vls_cstr(&name), &swm.l, NULL, WMOP_UNION);
 
 	for (k = 0; k < 8; k++)
 	    s1[(3 * k) + 2] += (height / 3);
 
-	snprintf(name, sizeof(name), "%shs%ld.s", prefix, j);
-	mk_arb8(fp_db, name, s1);
-	mk_addmember(name, &swm.l, NULL, WMOP_UNION);
+	bu_vls_sprintf(&name, "%shs%ld.s", prefix, j);
+	mk_arb8(fp_db, bu_vls_cstr(&name), s1);
+	mk_addmember(bu_vls_cstr(&name), &swm.l, NULL, WMOP_UNION);
 
-	snprintf(pname, sizeof(pname), "%sp-%ld.c", prefix, j);
+	bu_vls_sprintf(&pname, "%sp-%ld.c", prefix, j);
 	matcolor[0] = 50;
 	matcolor[1] = 30;
 	matcolor[2] = 10;
-	mk_lcomb(fp_db, pname, &wm, 0, "plastic", "", matcolor, 0);
+	mk_lcomb(fp_db, bu_vls_cstr(&pname), &wm, 0, "plastic", "", matcolor, 0);
 
 	for (i = 0; i < numposts; i++) {
-	    snprintf(name, sizeof(name), "%sp%ld-%ld.r", prefix, j, i);
-	    mk_addmember(pname, &wm2.l, NULL, WMOP_UNION);
+	    bu_vls_sprintf(&name, "%sp%ld-%ld.r", prefix, j, i);
+	    mk_addmember(bu_vls_cstr(&pname), &wm2.l, NULL, WMOP_UNION);
 
 	    matcolor[0] = 50;
 	    matcolor[1] = 50;
 	    matcolor[2] = 20;
-	    mk_lcomb(fp_db, name, &wm2, 0, "plastic", "", matcolor, 0);
+	    mk_lcomb(fp_db, bu_vls_cstr(&name), &wm2, 0, "plastic", "", matcolor, 0);
 
-	    nwm = mk_addmember(name, &swm.l, NULL, WMOP_UNION);
+	    nwm = mk_addmember(bu_vls_cstr(&name), &swm.l, NULL, WMOP_UNION);
 	    for (k = 0; k < 16; k++)
 		nwm->wm_mat[k] = 0;
 	    nwm->wm_mat[0] = 1;
@@ -227,13 +229,13 @@ main(int argc, char *argv[])
 	    nwm->wm_mat[15] = 1;
 	}
 
-	snprintf(name, sizeof(name), "%ssec%ld.c", prefix, j);
+	bu_vls_sprintf(&name, "%ssec%ld.c", prefix, j);
 	matcolor[0] = 50;
 	matcolor[1] = 50;
 	matcolor[2] = 20;
-	mk_lcomb(fp_db, name, &swm, 0, "plastic", "", matcolor, 0);
+	mk_lcomb(fp_db, bu_vls_cstr(&name), &swm, 0, "plastic", "", matcolor, 0);
 
-	nwm = mk_addmember(name, &fwm.l, NULL, WMOP_SUBTRACT);
+	nwm = mk_addmember(bu_vls_cstr(&name), &fwm.l, NULL, WMOP_SUBTRACT);
 	xt = x_1 - x_0;
 	yt = y_1 - y_0;
 	xt /= sqrt((xt * xt) + (yt * yt));
@@ -248,7 +250,7 @@ main(int argc, char *argv[])
 	nwm->wm_mat[11] = z_0;
 	nwm->wm_mat[15] = 1;
 
-	nwm = mk_addmember(name, &fwm.l, NULL, WMOP_UNION);
+	nwm = mk_addmember(bu_vls_cstr(&name), &fwm.l, NULL, WMOP_UNION);
 	xt = x_1 - x_0;
 	yt = y_1 - y_0;
 	xt /= sqrt((xt * xt) + (yt * yt));
@@ -264,7 +266,7 @@ main(int argc, char *argv[])
 	nwm->wm_mat[15] = 1;
 
 	if (j == 0) {
-	    bu_strlcpy(firstname, name, sizeof(firstname));
+	    bu_strlcpy(firstname, bu_vls_cstr(&name), sizeof(firstname));
 	    for (l = 0; l < 16; l++)
 		first_mat[l] = nwm->wm_mat[l];
 	}
