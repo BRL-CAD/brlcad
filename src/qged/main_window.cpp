@@ -165,13 +165,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     vc = new CADPalette(0, this);
     vcd->setWidget(vc);
 
-    icd = new QDockWidget("Instance Editing", this);
-    addDockWidget(Qt::RightDockWidgetArea, icd);
-    icd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    view_menu->addAction(icd->toggleViewAction());
-    ic = new CADPalette(1, this);
-    icd->setWidget(ic);
-
     ocd = new QDockWidget("Object Editing", this);
     addDockWidget(Qt::RightDockWidgetArea, ocd);
     ocd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
@@ -182,13 +175,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // The view and edit panels have consequences for the tree widget, so each
     // needs to know which one is current
     connect(vc, &CADPalette::current, vc, &CADPalette::makeCurrent);
-    connect(vc, &CADPalette::current, ic, &CADPalette::makeCurrent);
     connect(vc, &CADPalette::current, oc, &CADPalette::makeCurrent);
-    connect(ic, &CADPalette::current, vc, &CADPalette::makeCurrent);
-    connect(ic, &CADPalette::current, ic, &CADPalette::makeCurrent);
-    connect(ic, &CADPalette::current, oc, &CADPalette::makeCurrent);
     connect(oc, &CADPalette::current, vc, &CADPalette::makeCurrent);
-    connect(oc, &CADPalette::current, ic, &CADPalette::makeCurrent);
     connect(oc, &CADPalette::current, oc, &CADPalette::makeCurrent);
 
     /****************************************************************************
@@ -203,7 +191,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	bu_vls_sprintf(&plugin_pattern, "*%s", QGED_PLUGIN_SUFFIX);
 	size_t nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &filenames);
 	std::map<int, std::set<QToolPaletteElement *>> vc_map;
-	std::map<int, std::set<QToolPaletteElement *>> ic_map;
 	std::map<int, std::set<QToolPaletteElement *>> oc_map;
 	for (size_t i = 0; i < nfiles; i++) {
 	    char pfile[MAXPATHLEN] = {0};
@@ -267,13 +254,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 			    vc_map[cmd->palette_priority].insert(el);
 			}
 			break;
-		    case QGED_IC_TOOL_PLUGIN:
-			for (int c = 0; c < plugin->cmd_cnt; c++) {
-			    const struct qged_tool *cmd = cmds[c];
-			    QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
-			    ic_map[cmd->palette_priority].insert(el);
-			}
-			break;
 		    case QGED_OC_TOOL_PLUGIN:
 			for (int c = 0; c < plugin->cmd_cnt; c++) {
 			    const struct qged_tool *cmd = cmds[c];
@@ -310,18 +290,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	    }
 	}
 
-
-	for (e_it = ic_map.begin(); e_it != ic_map.end(); e_it++) {
-	    std::set<QToolPaletteElement *>::iterator el_it;
-	    for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
-		QToolPaletteElement *el = *el_it;
-		ic->addTool(el);
-		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_changed_view);
-		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_app_changed_db);
-		QObject::connect(el, &QToolPaletteElement::gui_changed_view, ap, &CADApp::do_view_update_from_gui_change);
-	    }
-	}
-
 	for (e_it = oc_map.begin(); e_it != oc_map.end(); e_it++) {
 	    std::set<QToolPaletteElement *>::iterator el_it;
 	    for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
@@ -341,13 +309,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // Add some placeholder tools until we start to implement the real ones
     {
 	QIcon *obj_icon = new QIcon();
-	QString obj_label("instance controls ");
-	QPushButton *obj_control = new QPushButton(obj_label);
-	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
-	ic->addTool(el);
-    }
-    {
-	QIcon *obj_icon = new QIcon();
 	QString obj_label("primitive controls ");
 	QPushButton *obj_control = new QPushButton(obj_label);
 	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
@@ -361,7 +322,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // default to selecting the default view tool at the end of this
     // procedure by making vc the current palette.)
     QObject::connect(vc->tpalette, &QToolPalette::element_selected, ap, &CADApp::element_selected);
-    QObject::connect(ic->tpalette, &QToolPalette::element_selected, ap, &CADApp::element_selected);
     QObject::connect(oc->tpalette, &QToolPalette::element_selected, ap, &CADApp::element_selected);
 
 
@@ -372,7 +332,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // Make sure the palette buttons are all visible - trick from
     // https://stackoverflow.com/a/56852841/2037687
     QTimer::singleShot(0, vc, &CADPalette::reflow);
-    QTimer::singleShot(0, ic, &CADPalette::reflow);
     QTimer::singleShot(0, oc, &CADPalette::reflow);
 #endif
 
@@ -421,10 +380,14 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     connect(m, &QgModel::mdl_changed_db, treeview, &QgTreeView::redo_expansions);
     connect(m, &QgModel::check_highlights, treeview, &QgTreeView::redo_highlights);
 
-    // The tree's highlighting changes based on which set of tools we're using - instance editing
-    // and primitive editing have different non-local implications in the hierarchy.
+    // The tree's highlighting changes based on which set of tools we're using.
+    //
+    // TODO - instance editing and primitive editing have different non-local
+    // implications in the hierarchy.  Originally plan was to have separate
+    // panels for the two modes.  That's looking like it may be overkill, so
+    // the interaction mode of oc may need to change for the specific comb case
+    // of editing an instance in the comb tree.
     connect(vc, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
-    connect(ic, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
     connect(oc, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
 
 

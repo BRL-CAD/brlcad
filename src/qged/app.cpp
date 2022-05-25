@@ -121,14 +121,10 @@ CADApp::tree_update()
 	return;
     CADPalette *v = NULL;
     CADPalette *vc = w->vc;
-    CADPalette *ic = w->ic;
     CADPalette *oc = w->oc;
     switch (mdl->interaction_mode) {
 	case 0:
 	    v = vc;
-	    break;
-	case 1:
-	    v = ic;
 	    break;
 	case 2:
 	    v = oc;
@@ -140,7 +136,6 @@ CADApp::tree_update()
     if (!v)
 	return;
     vc->makeCurrent(v);
-    ic->makeCurrent(v);
     oc->makeCurrent(v);
 }
 

@@ -75,7 +75,6 @@ class BRLCAD_MainWindow : public QMainWindow
 	QViewCtrl *vcw;
 	GEDShellCompleter *cshellcomp;
 	CADPalette *vc;
-	CADPalette *ic;
 	CADPalette *oc;
 
     public slots:
@@ -96,7 +95,6 @@ class BRLCAD_MainWindow : public QMainWindow
 	QBDockWidget *console_dock;
 	QBDockWidget *tree_dock;
 	QDockWidget *vcd;
-	QDockWidget *icd;
 	QDockWidget *ocd;
 
 };

@@ -101,16 +101,6 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
 	    return false;
 	}
     }
-    QWidget *icp = c->w->ic->tpalette;
-    if (icp) {
-	QRect lrect = icp->geometry();
-	QPoint mpos = icp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos) && pm->interaction_mode != 1) {
-	    pm->mode_change(1);
-	    QTimer::singleShot(0, c, &CADApp::tree_update);
-	    return false;
-	}
-    }
     QWidget *ocp = c->w->oc->tpalette;
     if (ocp) {
 	QRect lrect = ocp->geometry();
