@@ -191,6 +191,8 @@ int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UN
 	dy = 100;
     }
 
+    // TODO - IFF we are in center mode, center on the last pixel value
+
     point_t center;
     MAT_DELTAS_GET_NEG(center, v->gv_center);
     return bv_adjust(v, dx, dy, center, 0, view_flags);
@@ -213,6 +215,8 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
 
     if (e->buttons().testFlag(Qt::LeftButton)) {
 	bu_log("Left\n");
+	// TODO - this should default based on button settings from the app...
+	view_flags = BV_SCALE;
 
 	if (e->modifiers().testFlag(Qt::ControlModifier)) {
 	    bu_log("Ctrl+Left\n");
