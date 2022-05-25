@@ -192,7 +192,7 @@ main(int argc, char *argv[])
 	    mk_addmember(bu_vls_cstr(&w2name), &wm.l, NULL, WMOP_SUBTRACT);
 	}
 
-	bu_vls_sprintf(bu_vls_cstr(&name), "%sls%ld.s", prefix, j);
+	bu_vls_sprintf(&name, "%sls%ld.s", prefix, j);
 	mk_arb8(fp_db, bu_vls_cstr(&name), s1);
 	mk_addmember(bu_vls_cstr(&name), &swm.l, NULL, WMOP_UNION);
 
@@ -276,13 +276,14 @@ main(int argc, char *argv[])
     for (l = 0; l < 16; l++)
 	nwm->wm_mat[l] = first_mat[l];
 
-    snprintf(name, sizeof(name), "%sfence.c", prefix);
+    bu_vls_printf(&name, "%sfence.c", prefix);
     matcolor[0] = 50;
     matcolor[1] = 50;
     matcolor[2] = 20;
-    mk_lcomb(fp_db, name, &fwm, 0, "plastic", "", matcolor, 0);
+    mk_lcomb(fp_db, bu_vls_cstr(&name), &fwm, 0, "plastic", "", matcolor, 0);
 
     wdb_close(fp_db);
+    bu_vls_free(&name);
 
     return 0;
 }
