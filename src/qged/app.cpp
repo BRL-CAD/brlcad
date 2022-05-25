@@ -98,17 +98,17 @@ CADApp::do_quad_view_change(QtCADView *cv)
 }
 
 void
-CADApp::do_view_update_from_gui_change(struct bview **nv)
+CADApp::do_view_change(struct bview **nv)
 {
 
     QgModel *m = (QgModel *)mdl->sourceModel();
     if (nv)
 	m->gedp->ged_gvp = *nv;
-    emit gui_changed_view(NULL);
+    emit view_change(&m->gedp->ged_gvp);
 }
 
 void
-CADApp::do_db_update_from_gui_change()
+CADApp::do_db_change()
 {
     QgModel *m = (QgModel *)mdl->sourceModel();
     emit m->mdl_changed_db(NULL);

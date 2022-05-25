@@ -81,7 +81,6 @@ class CADApp : public QApplication
 
     signals:
 	void view_change(struct bview **);
-	void gui_changed_view(void *);
 
         /* Menu slots */
     public slots:
@@ -93,14 +92,11 @@ class CADApp : public QApplication
 	/* GUI/View connection slots */
     public slots:
 
-	// Called if the view is being altered by one of the app's graphical
-	// elements, rather than being driven by mouse movements or commands.
-	// Changes the view settings, but does NOT update GUI elements.
-	void do_view_update_from_gui_change(struct bview **);
+	// Called if the view is being altered.
+	void do_view_change(struct bview **);
 
-	// Called if the db is being altered by one of the app's graphical
-	// elements, rather than being driven by mouse movements or commands.
-	void do_db_update_from_gui_change();
+	// Called if the db is being altered.
+	void do_db_change();
 
 	// This slot is used for quad view configurations - it is called if the
 	// user uses the mouse to select one of multiple views.  This slot has
