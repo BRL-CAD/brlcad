@@ -111,7 +111,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     QWidget *cw = new QWidget(this);
     QVBoxLayout *cwl = new QVBoxLayout;
 
-    QViewCtrl *vcw = new QViewCtrl(cw);
+    vcw = new QViewCtrl(cw, gedp);
     vcw->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     cwl->addWidget(vcw);
 

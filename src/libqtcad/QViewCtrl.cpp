@@ -28,8 +28,10 @@
 #include "qtcad/QViewCtrl.h"
 
 
-QViewCtrl::QViewCtrl(QWidget *pparent) : QToolBar(pparent)
+QViewCtrl::QViewCtrl(QWidget *pparent, struct ged *pgedp) : QToolBar(pparent)
 {
+    gedp = pgedp;
+
     this->setStyleSheet("QToolButton{margin:0px;}");
 
     sca = addAction(QIcon(QPixmap(":images/view/view_scale.png")), "Scale");
@@ -48,6 +50,18 @@ QViewCtrl::QViewCtrl(QWidget *pparent) : QToolBar(pparent)
 
 QViewCtrl::~QViewCtrl()
 {
+}
+
+void
+QViewCtrl::raytrace_start(int)
+{
+    raytrace->setIcon(QIcon(QPixmap(":images/view/raytrace_abort.png")));
+}
+
+void
+QViewCtrl::raytrace_done(int)
+{
+    raytrace->setIcon(QIcon(QPixmap(":images/view/raytrace.png")));
 }
 
 // Local Variables:

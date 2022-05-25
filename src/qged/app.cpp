@@ -271,6 +271,19 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
     return (int)(regen.size() + erase.size());
 }
 
+extern "C" void
+raytrace_start(int val)
+{
+    CADApp *ap = (CADApp *)qApp;
+    ap->w->vcw->raytrace_start(val);
+}
+
+extern "C" void
+raytrace_done(int val)
+{
+    CADApp *ap = (CADApp *)qApp;
+    ap->w->vcw->raytrace_done(val);
+}
 
 int
 CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
@@ -301,8 +314,19 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	if (w->c4)
 	    w->c4->stash_hashes();
 
+
+	// If we need command-specific subprocess awareness for
+	// a command, set it up
+	if (BU_STR_EQUAL(argv[0], "ert")) {
+	    gedp->ged_subprocess_init_callback = &raytrace_start;
+	    gedp->ged_subprocess_end_callback = &raytrace_done;
+	}
+
 	// Ask the model to execute the command
 	ret = m->run_cmd(msg, argc, argv);
+
+	gedp->ged_subprocess_init_callback = NULL;
+	gedp->ged_subprocess_end_callback = NULL;
 
     } else {
 	for (int i = 0; i < argc; i++) {

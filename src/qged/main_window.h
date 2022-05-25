@@ -44,6 +44,7 @@
 #include "qtcad/QgTreeView.h"
 #include "qtcad/QtCADView.h"
 #include "qtcad/QtConsole.h"
+#include "qtcad/QViewCtrl.h"
 
 #include "plugins/plugin.h"
 #include "palettes.h"
@@ -71,6 +72,7 @@ class BRLCAD_MainWindow : public QMainWindow
 
 	QgTreeView *treeview;
 	QtConsole *console;
+	QViewCtrl *vcw;
 	GEDShellCompleter *cshellcomp;
 	CADPalette *vc;
 	CADPalette *ic;

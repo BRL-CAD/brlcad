@@ -31,6 +31,7 @@
 
 #include <QToolBar>
 #include <QWidget>
+#include "ged.h"
 #include "qtcad/defines.h"
 
 // TODO - need a view image control widget for raytrace run, raytrace
@@ -47,11 +48,17 @@ class QTCAD_EXPORT QViewCtrl : public QToolBar
     Q_OBJECT
 
     public:
-        QViewCtrl(QWidget *p);
+        QViewCtrl(QWidget *p, struct ged *pgedp);
         ~QViewCtrl();
 
+	struct ged *gedp = NULL;
 	int icon_size = 25;
 
+    public slots:
+	void raytrace_start(int);
+	void raytrace_done(int);
+
+    public:
 	// Left mouse behavior controls (when not using a tool or editing)
 	QAction *sca;
 	QAction *rot;
@@ -63,6 +70,7 @@ class QTCAD_EXPORT QViewCtrl : public QToolBar
 	QAction *fb_on;
 	QAction *fb_overlay;
 	QAction *fb_clear;
+
 };
 
 

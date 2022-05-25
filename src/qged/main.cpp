@@ -108,6 +108,13 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 	    break;
     }
 
+    // All communication has ceased between the app and the subprocess,
+    // time to call the end callback (if any)
+    if (!p->stdin_active && !p->stdout_active && !p->stderr_active) {
+	if (p->end_clbk)
+            p->end_clbk(0);
+    }
+
     if (w->c4)
 	w->c4->need_update(NULL);
 }
