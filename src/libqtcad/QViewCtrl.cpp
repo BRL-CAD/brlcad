@@ -43,8 +43,7 @@ QViewCtrl::QViewCtrl(QWidget *pparent, struct ged *pgedp) : QToolBar(pparent)
     addSeparator();
 
     raytrace = addAction(QIcon(QPixmap(":images/view/raytrace.png")), "Raytrace");
-    fb_on = addAction(QIcon(QPixmap(":images/view/framebuffer.png")), "Framebuffer On/Off");
-    fb_overlay = addAction(QIcon(QPixmap(":images/view/framebuffer_overlay.png")), "Framebuffer Overlay/Underlay");
+    fb_mode = addAction(QIcon(QPixmap(":images/view/framebuffer_off.png")), "Framebuffer Off/Overlay/Underlay");
     fb_clear = addAction(QIcon(QPixmap(":images/view/framebuffer_clear.png")), "Clear Framebuffer");
 
     // Connect some of the buttons to standard actions
@@ -64,6 +63,49 @@ QViewCtrl::fbclear_cmd()
     av[0] = "fbclear";
     ged_exec(gedp, 1, (const char **)av);
     emit gui_changed_view(&gedp->ged_gvp);
+}
+
+void
+QViewCtrl::fb_mode_cmd()
+{
+    if (!gedp->ged_gvp)
+	return;
+    struct bview *v = gedp->ged_gvp;
+    switch (v->gv_s->gv_fb_mode) {
+	case 0:
+	    v->gv_s->gv_fb_mode = 1;
+	    break;
+	case 1:
+	    v->gv_s->gv_fb_mode = 2;
+	    break;
+	case 2:
+	    v->gv_s->gv_fb_mode = 0;
+	    break;
+	default:
+	    bu_log("Error - invalid fb mode: %d\n", v->gv_s->gv_fb_mode);
+    }
+    emit gui_changed_view(&gedp->ged_gvp);
+}
+
+void
+QViewCtrl::fb_mode_icon()
+{
+    if (!gedp->ged_gvp)
+	return;
+    struct bview *v = gedp->ged_gvp;
+    switch (v->gv_s->gv_fb_mode) {
+	case 0:
+	    fb_mode->setIcon(QIcon(QPixmap(":images/view/framebuffer_off.png")));
+	    break;
+	case 1:
+	    fb_mode->setIcon(QIcon(QPixmap(":images/view/framebuffer.png")));
+	    break;
+	case 2:
+	    fb_mode->setIcon(QIcon(QPixmap(":images/view/framebuffer_underlay.png")));
+	    break;
+	default:
+	    bu_log("Error - invalid fb mode: %d\n", v->gv_s->gv_fb_mode);
+    }
 }
 
 void rt_cmd_start(int pid, void *ctx)

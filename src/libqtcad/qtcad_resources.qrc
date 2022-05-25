@@ -42,7 +42,6 @@
      <file>images/view/framebuffer.png</file>
      <file>images/view/framebuffer_clear.png</file>
      <file>images/view/framebuffer_off.png</file>
-     <file>images/view/framebuffer_overlay.png</file>
      <file>images/view/framebuffer_underlay.png</file>
      <file>images/view/raytrace.png</file>
      <file>images/view/raytrace_abort.png</file>

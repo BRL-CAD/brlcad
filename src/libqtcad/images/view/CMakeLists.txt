@@ -2,7 +2,6 @@ set(view_images
   framebuffer.png
   framebuffer_clear.png
   framebuffer_off.png
-  framebuffer_overlay.png
   framebuffer_underlay.png
   raytrace.png
   raytrace_abort.png

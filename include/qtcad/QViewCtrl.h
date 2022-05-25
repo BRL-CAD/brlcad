@@ -59,6 +59,15 @@ class QTCAD_EXPORT QViewCtrl : public QToolBar
 
     public slots:
 	void fbclear_cmd();
+
+	void fb_mode_cmd();
+	void fb_mode_icon();
+
+	// Unlike the other commands, the raytrace button
+	// has to reflect a potentially long-running state -
+	// that of the child rt process  Consequently the
+	// icon controls need to be independent of the command
+	// execution logic.
 	void raytrace_cmd();
 	void raytrace_start(int);
 	void raytrace_done(int);
@@ -72,8 +81,7 @@ class QTCAD_EXPORT QViewCtrl : public QToolBar
 
 	// Raytrace/framebuffer controls
 	QAction *raytrace;
-	QAction *fb_on;
-	QAction *fb_overlay;
+	QAction *fb_mode;
 	QAction *fb_clear;
 
     private:

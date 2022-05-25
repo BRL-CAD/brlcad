@@ -115,6 +115,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     vcw->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     cwl->addWidget(vcw);
     QObject::connect(vcw, &QViewCtrl::gui_changed_view, ap, &CADApp::do_view_update_from_gui_change);
+    QObject::connect(ap, &CADApp::view_change, vcw, &QViewCtrl::fb_mode_icon);
+    QObject::connect(ap, &CADApp::gui_changed_view, vcw, &QViewCtrl::fb_mode_icon);
 
     c4 = new QtCADQuad(cw, gedp, canvas_type);
     c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
