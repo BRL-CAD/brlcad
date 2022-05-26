@@ -29,18 +29,19 @@
 int
 tienet_send(int tsocket, void* data, size_t size)
 {
-    fd_set	 set;
-    unsigned int ind = 0;
-    int		 r;
+    fd_set set;
+    size_t ind = 0;
+    int r;
 
     FD_ZERO(&set);
     FD_SET(tsocket, &set);
 
     do {
 	select(tsocket+1, NULL, &set, NULL, NULL);
-	r = write(tsocket, &((char*)data)[ind], size-ind);
+	r = write(tsocket, &((char*)data)[ind], (unsigned int)(size-ind));
+	if (r <= 0)
+	    return 1;	/* Error, socket is probably dead */
 	ind += r;
-	if (r <= 0) return 1;	/* Error, socket is probably dead */
     } while (ind < size);
 
     return 0;
