@@ -40,9 +40,14 @@
  * select [-b bot] [-p] [-z vminz] vx vy {vr | vw vh}
  *
  */
+extern int ged_select2_core(struct ged *gedp, int argc, const char *argv[]);
 int
 ged_select_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+	return ged_select2_core(gedp, argc, argv);
+
     int c;
     double vx, vy, vw, vh, vr;
     static const char *usage = "[-b bot] [-p] [-z vminz] vx vy {vr | vw vh}";
