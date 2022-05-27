@@ -48,6 +48,7 @@ struct ged_concat_data {
     struct db_i *old_dbip;
     struct db_i *new_dbip;
     struct bu_vls affix;
+    int override_flag;
 };
 
 
@@ -56,7 +57,40 @@ struct ged_concat_data {
 #define AUTO_SUFFIX	1<<2
 #define CUSTOM_PREFIX	1<<3
 #define CUSTOM_SUFFIX	1<<4
+#define OVERRIDE	1<<5
 
+
+/**
+ * warn user of duplicate names and prompt to override
+ * sets flag in cc_data determined by user response
+ */
+static int
+override_name_prompt(const char *name,
+	      struct ged_concat_data *cc_data)
+{
+    // if user wants override all, just set flag and return
+    if (cc_data->copy_mode & OVERRIDE) {
+	cc_data->override_flag = 1;
+	return 1;
+    }
+
+    // warn user and handle response
+    bu_log("WARNING: %s exists in both databases, override? (y/n)[y]? ", name);
+    struct bu_vls wanted = BU_VLS_INIT_ZERO;
+    int ret = bu_vls_gets(&wanted, stdin);
+    
+    if (ret >= 0 && (bu_vls_strlen(&wanted) == 0 || BU_STR_EQUAL(bu_vls_addr(&wanted), "y"))) {
+	// set flag and return as we don't care about finding a new name
+	bu_vls_free(&wanted);
+	cc_data->override_flag = 1;
+	return 1;
+    } else {
+	bu_vls_free(&wanted);
+	cc_data->override_flag = 0;
+    }
+
+    return 0;
+}
 
 /**
  * find a new unique name given a list of previously used names, and
@@ -93,6 +127,14 @@ get_new_name(const char *name,
 	 * use, trying to accommodate the user's requested affix
 	 * naming mode.
 	 */
+
+	// prompt for override on first conflict
+	if (num == 1) {
+	    if (override_name_prompt(name, cc_data)) {
+		num = 0;
+		break;
+	    }
+	}
 
 	bu_vls_trunc(&new_name, 0);
 
@@ -162,9 +204,11 @@ get_new_name(const char *name,
     }
 
     /* we should now have a unique name.  store it in the map and the used_names set */
-    name_map[nname] = std::string(bu_vls_cstr(&new_name));
-    used_names.insert(name_map[nname]);
-    bu_vls_free(&new_name);
+    if (!cc_data->override_flag) {	// if we override, dont save name
+    	name_map[nname] = std::string(bu_vls_cstr(&new_name));
+    	used_names.insert(name_map[nname]);
+    	bu_vls_free(&new_name);
+    }
 
     return name_map[nname];
 }
@@ -228,6 +272,8 @@ copy_object(struct ged *gedp,
     struct rt_comb_internal *comb;
     struct directory *new_dp;
     std::string new_name;
+    struct directory * oride_dp;
+    std::string oride_name;
 
     if (rt_db_get_internal(&ip, input_dp, input_dbip, NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
@@ -275,6 +321,16 @@ copy_object(struct ged *gedp,
     if (!new_name.length()) {
 	new_name = std::string(input_dp->d_namep);
     }
+
+    /* when override is requested
+     * move current to temp name before copying to avoid name collisions and data loss */
+    if (cc_data->override_flag) {
+	oride_dp = db_lookup(gedp->dbip, input_dp->d_namep, 0);
+	oride_name = input_dp->d_namep;
+	oride_name.append("_ORIDE");
+	db_rename(cc_data->old_dbip, oride_dp, oride_name.c_str());
+    }
+
     if ((new_dp = db_diradd(curr_dbip, new_name.c_str(), RT_DIR_PHONY_ADDR, 0, input_dp->d_flags,
 			    (void *)&input_dp->d_minor_type)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str,
@@ -294,6 +350,20 @@ copy_object(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
+    /* when override is requested
+     * if we get here, its safe to delete the original object */
+    if (cc_data->override_flag) {
+	_dl_eraseAllNamesFromDisplay(gedp, oride_name.c_str(), 0);
+	if (db_delete(gedp->dbip, oride_dp) != 0 || db_dirdelete(gedp->dbip, oride_dp) != 0) {
+	    /* Abort processing on first error */
+	    bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s\n", oride_name.c_str());
+	    return BRLCAD_ERROR;
+	}
+	db_update_nref(gedp->dbip, &rt_uniresource);
+
+	cc_data->override_flag = 0;
+    }
+
     return BRLCAD_OK;
 }
 
@@ -310,7 +380,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     char *colorTab;
     struct ged_concat_data cc_data;
     const char *oldfile;
-    static const char *usage = "[-u] [-t] [-c] [-s|-p] file.g [suffix|prefix]";
+    static const char *usage = "[-u] [-t] [-c] [-s|-p] [-O] file.g [suffix|prefix]";
     int importUnits = 0;
     int importTitle = 0;
     int importColorTable = 0;
@@ -337,7 +407,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     /* process args */
     bu_optind = 1;
     bu_opterr = 0;
-    while ((c=bu_getopt(argc, (char * const *)argv, "utcsp")) != -1) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "utcspO")) != -1) {
 	switch (c) {
 	    case 'u':
 		importUnits = 1;
@@ -353,6 +423,9 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 's':
 		cc_data.copy_mode |= AUTO_SUFFIX;
+		break;
+	    case 'O':
+	    	cc_data.copy_mode |= OVERRIDE;
 		break;
 	    default: {
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
@@ -395,6 +468,8 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 		cc_data.copy_mode |= CUSTOM_SUFFIX;
 	    }
 
+	} else if (cc_data.copy_mode & OVERRIDE) {
+	    bu_log("WARNING: All duplicate existing objects will be overridden\n");
 	} else {
 	    bu_vls_free(&cc_data.affix);
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
@@ -457,6 +532,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    continue;
 	}
+	cc_data.override_flag = 0;
 	copy_object(gedp, dp, newdbp, gedp->dbip, name_map, used_names, &cc_data);
     } FOR_ALL_DIRECTORY_END;
 
