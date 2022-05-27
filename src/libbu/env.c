@@ -284,7 +284,7 @@ bu_mem(int type, size_t *sz)
     size_t subsz = 0;
     unsigned long long ret = 0;
 
-    if (getenv("BU_AVAILABLE_MEM_NOCHECK")) {
+    if (getenv("BU_MEM_NOCHECK")) {
 	if (sz)
 	    *sz = 0;
 	return 0;
