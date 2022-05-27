@@ -29,17 +29,43 @@
 #define GED_VIEW_SELECT_H
 
 #include "common.h"
+#include "bv/defines.h"
 #include "ged/defines.h"
 
 __BEGIN_DECLS
+
+struct ged_selection {
+    struct bv_scene_obj *so;
+    struct rt_object_selections *r_os;
+};
+
+struct ged_selection_set_impl;
+struct ged_selection_set {
+    struct ged_selection_set_impl *i;
+};
 
 struct ged_selection_sets_impl;
 struct ged_selection_sets {
     struct ged_selection_sets_impl *i;
 };
 
+// Routines to manage a set of selection sets
 GED_EXPORT extern struct ged_selection_sets *ged_selection_sets_create();
 GED_EXPORT extern void ged_selection_sets_destroy(struct ged_selection_sets *s);
+GED_EXPORT int ged_selection_set_cpy(struct ged_selection_sets *s, const char *from, const char *to);
+
+// Routines to retrieve and remove individual selection sets
+GED_EXPORT struct ged_selection_set *ged_selection_sets_get(struct ged_selection_sets *s, const char *s_name);
+GED_EXPORT struct ged_selection_set *ged_selection_sets_lookup(struct ged_selection_sets *s, const char *s_name);
+GED_EXPORT void ged_selection_sets_put(struct ged_selection_sets *s, const char *s_name);
+GED_EXPORT int ged_selection_sets_list(char ***set_names, struct ged_selection_sets *s);
+
+// Retrieve data.
+GED_EXPORT struct ged_selection *ged_selection_set_get(struct ged_selection_set *s, const char *s_name);
+GED_EXPORT struct ged_selection *ged_selection_set_lookup(struct ged_selection_set *s, const char *s_name);
+GED_EXPORT void ged_selection_set_put(struct ged_selection_set *s, const char *s_name);
+GED_EXPORT int ged_selection_set_list(char ***keys, struct ged_selection_set *s);
+GED_EXPORT void ged_selection_set_clear(struct ged_selection_set *s);
 
 
 /**

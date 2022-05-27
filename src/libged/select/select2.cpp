@@ -54,15 +54,44 @@ int
 _select_cmd_list(void *bs, int argc, const char **argv)
 {
     struct _ged_select_info *gd = (struct _ged_select_info *)bs;
-    const char *usage_string = "select [options] list";
-    const char *purpose_string = "list currently defined selection sets";
+    const char *usage_string = "select [options] list [set_name]";
+    const char *purpose_string = "list currently defined selection sets, or the contents of a specified set";
     if (_select_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
         return BRLCAD_OK;
     }
 
+    argc--; argv++;
+
     struct ged *gedp = gd->gedp;
     if (!gedp->ged_selection_sets)
 	return BRLCAD_ERROR;
+
+    if (!argc) {
+	char **set_names = NULL;
+	int ac = ged_selection_sets_list(&set_names, gedp->ged_selection_sets);
+	if (ac) {
+	    for (int i = 0; i < ac; i++) {
+		bu_vls_printf(gedp->ged_result_str, "%s\n", set_names[i]);
+	    }
+	    bu_argv_free(ac, set_names);
+	}
+	return BRLCAD_OK;
+    }
+
+    struct ged_selection_set *gs = ged_selection_sets_lookup(gedp->ged_selection_sets, argv[0]);
+    if (!gs) {
+	bu_vls_printf(gedp->ged_result_str, ": set %s not found\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    char **selection_names = NULL;
+    int ac = ged_selection_set_list(&selection_names, gs);
+    if (ac) {
+	for (int i = 0; i < ac; i++) {
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", selection_names[i]);
+	}
+	bu_argv_free(ac, selection_names);
+    }
 
     return BRLCAD_OK;
 }
