@@ -477,10 +477,13 @@ main(int argc, const char *argv[])
 	ofile << "    }\n";
 	ofile << "\n";
 	ofile << "    if (report_mem) {\n";
-	ofile << "	 int ec = 0;\n";
-	ofile << "	 unsigned long long all_mem = bu_mem(BU_MEM_ALL, &ec);\n";
-	ofile << "	 unsigned long long avail_mem = bu_mem(BU_MEM_AVAIL, &ec);\n";
-	ofile << "	 unsigned long long page_mem = bu_mem(BU_MEM_PAGE_SIZE, &ec);\n";
+	ofile << "	size_t all_mem, avail_mem, page_mem;\n";
+	ofile << "	int ret = 0;\n";
+	ofile << "	ret += bu_mem(BU_MEM_ALL, &all_mem);\n";
+	ofile << "	ret += bu_mem(BU_MEM_AVAIL, &avail_mem);\n";
+	ofile << "	ret += bu_mem(BU_MEM_PAGE_SIZE, &page_mem);\n";
+	ofile << "	if (ret)\n";
+	ofile << "	    return BRLCAD_ERROR;\n";
 	ofile << "\n";
 	ofile << "   	 char all_buf[6] = {'\\0'};\n";
 	ofile << "	 char avail_buf[6] = {'\\0'};\n";
@@ -489,7 +492,7 @@ main(int argc, const char *argv[])
 	ofile << "	 bu_humanize_number(avail_buf, 5, avail_mem, \"\", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);\n";
 	ofile << "	 bu_humanize_number(p_buf, 5, page_mem, \"\", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);\n";
 	ofile << "\n";
-	ofile << "	 bu_vls_printf(s_out, \"MEM: all: %s(%llu) avail: %s(%llu) page_size: %s(%llu)\\n\",\n";
+	ofile << "	 bu_vls_printf(s_out, \"MEM: all: %s(%zu) avail: %s(%zu) page_size: %s(%zu)\\n\",\n";
 	ofile << "			      all_buf, all_mem,\n";
 	ofile << "			      avail_buf, avail_mem,\n";
 	ofile << "			      p_buf, page_mem);\n";

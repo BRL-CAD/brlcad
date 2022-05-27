@@ -820,7 +820,7 @@ analyze_polygonize(
     setcenter(&p, p.centers, 0, 0, 0);
 
     while (p.cubes != NULL) { /* process active cubes till none left */
-	unsigned long long avail_mem = 0;
+	size_t avail_mem = 0;
 	CUBE c;
 	CUBES *temp = p.cubes;
 	c = p.cubes->cube;
@@ -857,10 +857,9 @@ analyze_polygonize(
 	}
 
 	if (params && params->minimum_free_mem > 0) {
-	    int ec;
-	    avail_mem = bu_mem(BU_MEM_AVAIL, &ec);
-	    if (!ec && avail_mem < params->minimum_free_mem) {
-		/* memory too tight, bail */
+	    avail_mem = bu_mem(BU_MEM_AVAIL, NULL);
+	    if (avail_mem > 0 && avail_mem < params->minimum_free_mem) {
+		/* error or memory too tight, bail */
 		ret = 3;
 		goto analyze_polygonizer_memfree;
 	    }

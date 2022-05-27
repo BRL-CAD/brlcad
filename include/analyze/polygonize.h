@@ -28,14 +28,17 @@
 #define ANALYZE_POLYGONIZE_H
 
 #include "common.h"
-#include "raytrace.h"
 
+#include <stdint.h>
+
+#include "raytrace.h"
 #include "analyze/defines.h"
+
 
 __BEGIN_DECLS
 struct analyze_polygonize_params {
     int max_time;
-    unsigned long long minimum_free_mem;
+    size_t minimum_free_mem;
     int verbosity;
 };
 #define ANALYZE_POLYGONIZE_PARAMS_DEFAULT { 30, 150000000, 0 }

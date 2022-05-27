@@ -119,11 +119,10 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
     // usage while they are being generated.  If we're tight on memory and the
     // triangle set is large, accept the slower drawing to avoid memory stress
     // - otherwise, we want the list
-    int ec;
-    unsigned long long avail_mem = 0.5*bu_mem(BU_MEM_AVAIL, &ec);
-    unsigned long long size_est = (unsigned long long)(fcnt*3*sizeof(point_t));
+    ssize_t avail_mem = 0.5*bu_mem(BU_MEM_AVAIL, NULL);
+    size_t size_est = (size_t)(fcnt*3*sizeof(point_t));
     bool gen_dlist = false;
-    if (!s->s_dlist && size_est < avail_mem) {
+    if (!s->s_dlist && avail_mem > 0 && size_est < (size_t)avail_mem) {
 	gen_dlist = true;
 	s->s_dlist = glGenLists(1);
 	s->s_dlist_mode = mode;
@@ -335,11 +334,10 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
     // we can use them, but they require more memory usage while they are being
     // generated.  If we're tight on memory and the vlist is large, accept the
     // slower drawing to avoid memory stress - otherwise, use display lists
-    int ec;
-    unsigned long long avail_mem = 0.5*bu_mem(BU_MEM_AVAIL, &ec);
-    unsigned long long size_est = (unsigned long long)(bu_list_len(&s->s_vlist)*sizeof(point_t));
+    ssize_t avail_mem = 0.5*bu_mem(BU_MEM_AVAIL, NULL);
+    size_t size_est = (bu_list_len(&s->s_vlist)*sizeof(point_t));
     bool gen_dlist = false;
-    if (!s->s_dlist && size_est < avail_mem) {
+    if (!s->s_dlist && avail_mem > 0 && size_est < (size_t)avail_mem) {
 	gen_dlist = true;
 	s->s_dlist = glGenLists(1);
 	s->s_dlist_mode = mode;

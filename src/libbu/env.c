@@ -117,19 +117,21 @@ bu_setenv(const char *name, const char *value, int overwrite)
 }
 
 
-static unsigned long long
-_bu_mem_sysconf(int type, int *ec)
+static int
+_bu_mem_sysconf(int type, size_t *memsz)
 {
-    if (type < 0) {
-	(*ec) = -2;
-	return 0;
-    }
+    if (!memsz)
+	return -1;
+
+    if (type < 0)
+	return -2;
+
 #ifdef HAVE_SYSCONF_AVPHYS
 
     long int pagesize = (long int)sysconf(_SC_PAGESIZE);
     if (type == BU_MEM_PAGE_SIZE) {
-	(*ec) = 1;
-	return pagesize;
+	(*memsz) = (size_t)pagesize;
+	return 0;
     }
 
     long int sysmemory = 0;
@@ -139,37 +141,37 @@ _bu_mem_sysconf(int type, int *ec)
 	sysmemory = (long int)sysconf(_SC_PHYS_PAGES);
     }
     if (sysmemory < 0) {
-	(*ec) = -1;
-	return 0;
+	return -1;
     }
 
-    unsigned long long avail_bytes = pagesize * sysmemory;
-    (*ec) = 1;
-    return avail_bytes;
+    (*memsz) = pagesize * sysmemory;
+    return 0;
 
 #endif
-    return 0;
+    return 1;
 }
 
-static unsigned long long
-_bu_mem_sysinfo(int type, int *ec)
+
+static int
+_bu_mem_sysinfo(int type, size_t *memsz)
 {
-    if (type < 0) {
-	(*ec) = -2;
-	return 0;
-    }
+    if (!memsz)
+	return -1;
+
+    if (type < 0)
+	return -2;
+
 #if defined(HAVE_SYS_SYSINFO_H)
 
     struct sysinfo s;
     if (sysinfo(&s)) {
-	(*ec) = -1;
-	return 0;
+	return -3;
     }
 
     // sysinfo doesn't provide this
     if (type == BU_MEM_PAGE_SIZE) {
-	(*ec) = 1;
-	return (unsigned long long)BU_PAGE_SIZE;
+	(*memsz) = (size_t)BU_PAGE_SIZE;
+	return 0;
     }
 
     long int sysmemory = 0;
@@ -179,36 +181,37 @@ _bu_mem_sysinfo(int type, int *ec)
 	sysmemory = (long int)s.totalram;
     }
     if (sysmemory < 0) {
-	(*ec) = -1;
-	return 0;
+	return -1;
     }
 
-    unsigned long long avail_bytes = s.mem_unit * sysmemory;
-    (*ec) = 1;
-    return avail_bytes;
+    (*memsz) = s.mem_unit * sysmemory;
+    return 0;
 
 #endif
-    return 0;
+    return 1;
 }
 
-static unsigned long long
-_bu_mem_host_info(int type, int *ec)
+
+static int
+_bu_mem_host_info(int type, size_t *memsz)
 {
-    if (type < 0) {
-	(*ec) = -2;
-	return 0;
-    }
+    if (!memsz)
+	return -1;
+
+    if (type < 0)
+	return -2;
+
 #if defined(HAVE_SYS_SYSTCL_H) && defined(HAVE_MACH_HOST_INFO_H)
+
     long int pagesize = 0;
     size_t osize = sizeof(pagesize);
     int sargs[2] = {CTL_HW, HW_PAGESIZE};
     if (sysctl(sargs, 2, &pagesize, &osize, NULL, 0) < 0) {
-	(*ec) = -1;
-	return 0;
+	return -1;
     }
     if (type == BU_MEM_PAGE_SIZE) {
-	(*ec) = 1;
-	return (unsigned long long)pagesize;
+	(*memsz) = (size_t)pagesize;
+	return 0;
     }
 
     long int sysmemory = 0;
@@ -216,10 +219,8 @@ _bu_mem_host_info(int type, int *ec)
 	// See info at https://stackoverflow.com/a/6095158/2037687
 	mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
 	vm_statistics_data_t vmstat;
-	if (host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmstat, &count) != KERN_SUCCESS)
-	{
-	    (*ec) = -1;
-	    return 0;
+	if (host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmstat, &count) != KERN_SUCCESS) {
+	    return -1;
 	}
 	sysmemory = (long int) (vmstat.free_count * pagesize / (1024*1024));
     } else {
@@ -227,91 +228,98 @@ _bu_mem_host_info(int type, int *ec)
 	sysctl(sargs, 2, &sysmemory, &osize, NULL, 0);
     }
     if (sysmemory < 0) {
-	(*ec) = -1;
-	return 0;
+	return -1;
     }
 
-    unsigned long long avail_bytes = pagesize * sysmemory;
-    (*ec) = 1;
-    return avail_bytes;
+    (*memsz) = pagesize * sysmemory;
+    return 0;
 
 #endif
-    return 0;
+    return 1;
 }
 
-static unsigned long long
-_bu_mem_status(int type, int *ec)
+
+static int
+_bu_mem_status(int type, size_t *memsz)
 {
-    if (type < 0) {
-	(*ec) = -2;
-	return 0;
-    }
+    if (!memsz)
+	return -1;
+
+    if (type < 0)
+	return -2;
+
 #if defined(HAVE_WINDOWS_H)
 
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
-    unsigned long long pagesize = (long int)sysinfo.dwPageSize;
+    size_t pagesize = (size_t)sysinfo.dwPageSize;
     if (type == BU_MEM_PAGE_SIZE) {
-	(*ec) = 1;
-	return pagesize;
+	(*memsz) = pagesize;
+	return 0;
     }
 
-    unsigned long long sysmemory = 0;
+    size_t sysmemory = 0;
     MEMORYSTATUSEX mavail;
     mavail.dwLength = sizeof(mavail);
     GlobalMemoryStatusEx(&mavail);
     if (type == BU_MEM_AVAIL) {
-	sysmemory = mavail.ullAvailPhys;
+	sysmemory = (size_t)mavail.ullAvailPhys;
     } else {
-	sysmemory = mavail.ullTotalPhys;
+	sysmemory = (size_t)mavail.ullTotalPhys;
     }
-    (*ec) = 1;
-    return sysmemory;
+    (*memsz) = sysmemory;
+    return 0;
 
 #endif
-    return 0;
+    return 1;
 }
 
-unsigned long long
-bu_mem(int type, int *ec)
+
+ssize_t
+bu_mem(int type, size_t *sz)
 {
+    if (type < 0)
+	return (ssize_t)-1;
+
+    size_t subsz = 0;
     unsigned long long ret = 0;
-    int success = 0;
-    if (!ec)
-	return 0;
 
     if (getenv("BU_AVAILABLE_MEM_NOCHECK")) {
-	(*ec) = 0;
-	return ret;
+	if (sz)
+	    *sz = 0;
+	return 0;
     }
 
-    ret = _bu_mem_host_info(type, &success);
-    if (success == 1) {
-	(*ec) = 0;
-	return ret;
+    ret = _bu_mem_host_info(type, &subsz);
+    if (ret == 0) {
+	if (sz)
+	    *sz = subsz;
+	return subsz;
     }
 
-    ret = _bu_mem_status(type, &success);
-    if (success == 1) {
-	(*ec) = 0;
-	return ret;
+    ret = _bu_mem_status(type, &subsz);
+    if (ret == 0) {
+	if (sz)
+	    *sz = subsz;
+	return subsz;
     }
 
-    ret = _bu_mem_sysconf(type, &success);
-    if (success == 1) {
-	(*ec) = 0;
-	return ret;
+    ret = _bu_mem_sysconf(type, &subsz);
+    if (ret == 0) {
+	if (sz)
+	    *sz = subsz;
+	return subsz;
     }
 
-    ret = _bu_mem_sysinfo(type, &success);
-    if (success == 1) {
-	(*ec) = 0;
-	return ret;
+    ret = _bu_mem_sysinfo(type, &subsz);
+    if (ret == 0) {
+	if (sz)
+	    *sz = subsz;
+	return subsz;
     }
 
-    /* Don't know how to figure this out if the above haven't worked. */
-    (*ec) = -3;
-    return ret;
+    /* error if the above didn't work */
+    return -1;
 }
 
 /*
