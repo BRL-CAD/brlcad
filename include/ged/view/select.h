@@ -33,6 +33,14 @@
 
 __BEGIN_DECLS
 
+struct ged_selection_sets_impl;
+struct ged_selection_sets {
+    struct ged_selection_sets_impl *i;
+};
+
+GED_EXPORT extern struct ged_selection_sets *ged_selection_sets_create();
+GED_EXPORT extern void ged_selection_sets_destroy(struct ged_selection_sets *s);
+
 
 /**
  * Returns a list of items within the previously defined rectangle.

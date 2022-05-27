@@ -61,19 +61,8 @@ _select_cmd_list(void *bs, int argc, const char **argv)
     }
 
     struct ged *gedp = gd->gedp;
-    struct bu_hash_tbl *t = gedp->ged_selections;
-    if (!t)
+    if (!gedp->ged_selection_sets)
 	return BRLCAD_ERROR;
-
-    int scnt = 0;
-    struct bu_hash_entry *entry = bu_hash_next(t, NULL);
-
-    while (entry) {
-	scnt++;
-	entry = bu_hash_next(t, entry);
-    }
-
-    bu_vls_sprintf(gedp->ged_result_str, "Found %d sets", scnt);
 
     return BRLCAD_OK;
 }

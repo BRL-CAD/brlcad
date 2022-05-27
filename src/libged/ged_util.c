@@ -1723,40 +1723,6 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     return BRLCAD_OK;
 }
 
-struct rt_object_selections *
-ged_get_object_selections(struct ged *gedp, const char *object_name)
-{
-    struct rt_object_selections *obj_selections;
-
-    obj_selections = (struct rt_object_selections *)bu_hash_get(gedp->ged_selections, (uint8_t *)object_name, strlen(object_name));
-
-    if (!obj_selections) {
-	BU_ALLOC(obj_selections, struct rt_object_selections);
-	obj_selections->sets = bu_hash_create(0);
-	(void)bu_hash_set(gedp->ged_selections, (uint8_t *)object_name, strlen(object_name), (void *)obj_selections);
-    }
-
-    return obj_selections;
-}
-
-
-struct rt_selection_set *
-ged_get_selection_set(struct ged *gedp, const char *object_name, const char *selection_name)
-{
-    struct rt_object_selections *obj_selections;
-    struct rt_selection_set *set;
-
-    obj_selections = ged_get_object_selections(gedp, object_name);
-    set = (struct rt_selection_set *)bu_hash_get(obj_selections->sets, (uint8_t *)selection_name, strlen(selection_name));
-    if (!set) {
-	BU_ALLOC(set, struct rt_selection_set);
-	BU_PTBL_INIT(&set->selections);
-	bu_hash_set(obj_selections->sets, (uint8_t *)selection_name, strlen(selection_name), (void *)set);
-    }
-
-    return set;
-}
-
 /*
  * Add an instance of object 'objp' to combination 'name'.
  * If the combination does not exist, it is created.

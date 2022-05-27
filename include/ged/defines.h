@@ -220,9 +220,11 @@ struct ged {
 
     struct ged_drawable		*ged_gdp;
     struct bu_ptbl              free_solids;
-    struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
 
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
+
+    /* Selection data */
+    struct ged_selection_sets	*ged_selection_sets;
 
 
     /* FIXME -- this ugly hack needs to die.  the result string should
