@@ -23,6 +23,7 @@
       <arg choice="opt" rep="norepeat"><replaceable>-u</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>-c</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>-s|-p</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-O</replaceable></arg>
       <arg choice="req" rep="norepeat"><replaceable>database_file</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>affix</replaceable></arg>
     </cmdsynopsis>
@@ -44,10 +45,11 @@
       command finds duplicate names, use the <emphasis>prefix</emphasis> option to both the
       <command>dup</command> 	and <command>dbconcat</command> commands to find a
       <emphasis>prefix</emphasis> that produces no duplicates.	If duplicate names
-      are encountered during the "dbconcat" process, computer-generated prefixes
-      will be added to the object names coming from the <emphasis>database_file</emphasis>
-      (but member names appearing in combinations will not be modified, so this is a
-      dangerous practice and should be avoided). The <emphasis>-t</emphasis> option indicates that
+      are encountered during the "dbconcat" process, there is an option to override the current object.
+      If the <emphasis>-O</emphasis> option is supplied, all conlicts will automatically be overridden.
+      If override is denied, computer-generated prefixes will be added to the object names coming 
+      from the <emphasis>database_file</emphasis> (but member names appearing in combinations will not 
+      be modified, so this is a dangerous practice and should be avoided). The <emphasis>-t</emphasis> option indicates that
       the title of the <emphasis>database_file</emphasis> should become the title of the currently
       edited database. The <emphasis>-u</emphasis> option indicates that the units of the
       <emphasis>database_file</emphasis> should become the units of the currently edited database. Similarly,
