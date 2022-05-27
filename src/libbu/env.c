@@ -118,7 +118,7 @@ bu_setenv(const char *name, const char *value, int overwrite)
 
 
 static int
-_bu_mem_sysconf(int type, size_t *memsz)
+mem_sysconf(int type, size_t *memsz)
 {
     if (!memsz)
 	return -1;
@@ -153,7 +153,7 @@ _bu_mem_sysconf(int type, size_t *memsz)
 
 
 static int
-_bu_mem_sysinfo(int type, size_t *memsz)
+mem_sysinfo(int type, size_t *memsz)
 {
     if (!memsz)
 	return -1;
@@ -193,7 +193,7 @@ _bu_mem_sysinfo(int type, size_t *memsz)
 
 
 static int
-_bu_mem_host_info(int type, size_t *memsz)
+mem_host_info(int type, size_t *memsz)
 {
     if (!memsz)
 	return -1;
@@ -240,7 +240,7 @@ _bu_mem_host_info(int type, size_t *memsz)
 
 
 static int
-_bu_mem_status(int type, size_t *memsz)
+mem_status(int type, size_t *memsz)
 {
     if (!memsz)
 	return -1;
@@ -290,28 +290,28 @@ bu_mem(int type, size_t *sz)
 	return 0;
     }
 
-    ret = _bu_mem_host_info(type, &subsz);
+    ret = mem_host_info(type, &subsz);
     if (ret == 0) {
 	if (sz)
 	    *sz = subsz;
 	return subsz;
     }
 
-    ret = _bu_mem_status(type, &subsz);
+    ret = mem_status(type, &subsz);
     if (ret == 0) {
 	if (sz)
 	    *sz = subsz;
 	return subsz;
     }
 
-    ret = _bu_mem_sysconf(type, &subsz);
+    ret = mem_sysconf(type, &subsz);
     if (ret == 0) {
 	if (sz)
 	    *sz = subsz;
 	return subsz;
     }
 
-    ret = _bu_mem_sysinfo(type, &subsz);
+    ret = mem_sysinfo(type, &subsz);
     if (ret == 0) {
 	if (sz)
 	    *sz = subsz;
