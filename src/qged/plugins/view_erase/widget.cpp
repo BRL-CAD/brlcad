@@ -29,6 +29,7 @@
 #include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
+#include "bg/aabb_ray.h"
 #include "bg/plane.h"
 #include "bg/lod.h"
 
@@ -51,6 +52,30 @@ CADViewEraser::~CADViewEraser()
 {
 }
 
+struct rec_state {
+    std::unordered_set<std::string> active;
+    int rec_all;
+    double cdist;
+    std::string closest;
+};
+
+static int
+_obj_record(struct application *ap, struct partition *p_hp, struct seg *UNUSED(segs))
+{
+    struct rec_state *rc = (struct rec_state *)ap->a_uptr;
+    for (struct partition *pp = p_hp->pt_forw; pp != p_hp; pp = pp->pt_forw) {
+	if (rc->rec_all) {
+	    rc->active.insert(std::string(pp->pt_regionp->reg_name));
+	} else {
+	    struct hit *hitp = pp->pt_inhit;
+	    if (hitp->hit_dist < rc->cdist)
+		rc->closest = std::string(pp->pt_regionp->reg_name);
+	}
+    }
+    bu_log("hit\n");
+    return 1;
+}
+
 bool
 CADViewEraser::eventFilter(QObject *, QEvent *e)
 {
@@ -67,6 +92,10 @@ CADViewEraser::eventFilter(QObject *, QEvent *e)
     if (e->type() == QEvent::MouseButtonRelease) {
 
 	QMouseEvent *m_e = (QMouseEvent *)e;
+
+	// If any other keys are down, we're not doing an erase
+	if (m_e->modifiers() != Qt::NoModifier)
+	    return false;
 
 	fastf_t vx, vy;
 #ifdef USE_QT6
@@ -104,14 +133,117 @@ CADViewEraser::eventFilter(QObject *, QEvent *e)
 	}
 
 	if (erase_all_ckbx->isChecked() && use_ray_test_ckbx->isChecked()) {
-	    // We're clearing everything based on ray intersections - shoot the
-	    // ray, find the new set, construct the erase command and run it.
+	    // We're clearing everything, as long as it reports a hit using the full
+	    // librt intersection test.
+	    struct application *ap;
+	    BU_GET(ap, struct application);
+	    RT_APPLICATION_INIT(ap);
+	    ap->a_onehit = 0;
+	    ap->a_hit = _obj_record;
+	    ap->a_miss = NULL;
+	    ap->a_overlap = NULL;
+	    ap->a_logoverlap = NULL;
+
+	    struct rt_i *rtip = rt_new_rti(gedp->dbip);
+	    struct resource *resp = NULL;
+	    BU_GET(resp, struct resource);
+	    rt_init_resource(resp, 0, rtip);
+	    ap->a_resource = resp;
+	    ap->a_rt_i = rtip;
+	    const char **objs = (const char **)bu_calloc(scnt + 1, sizeof(char *), "objs");
+	    for (int i = 0; i < scnt; i++) {
+		struct bv_scene_obj *s = sset[i];
+		objs[i] = bu_vls_cstr(&s->s_name);
+	    }
+	    if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
+		bu_free(objs, "objs");
+		rt_free_rti(rtip);
+		BU_PUT(resp, struct resource);
+		BU_PUT(ap, struct appliation);
+		return false;
+	    }
+	    size_t ncpus = bu_avail_cpus();
+	    rt_prep_parallel(rtip, (int)ncpus);
+	    bv_screen_to_view(v, &vx, &vy, x, y);
+	    point_t vpnt, mpnt;
+	    VSET(vpnt, vx, vy, 0);
+	    MAT4X3PNT(mpnt, v->gv_view2model, vpnt);
+	    vect_t dir;
+	    VMOVEN(dir, v->gv_rotation + 8, 3);
+	    VUNITIZE(dir);
+	    VSCALE(dir, dir, v->radius);
+	    VADD2(ap->a_ray.r_pt, mpnt, dir);
+	    VUNITIZE(dir);
+	    VSCALE(ap->a_ray.r_dir, dir, -1);
+
+	    struct rec_state rc;
+	    rc.rec_all = 1;
+	    ap->a_uptr = (void *)&rc;
+
+	    (void)rt_shootray(ap);
+	    bu_free(objs, "objs");
+	    rt_free_rti(rtip);
+	    BU_PUT(resp, struct resource);
+	    BU_PUT(ap, struct appliation);
+
+	    std::unordered_set<std::string>::iterator a_it;
+	    const char **av = (const char **)bu_calloc(rc.active.size()+2, sizeof(char *), "av");
+	    av[0] = bu_strdup("erase");
+	    int i = 0;
+	    for (a_it = rc.active.begin(); a_it != rc.active.end(); a_it++) {
+		av[i+1] = bu_strdup(a_it->c_str());
+		i++;
+	    }
+	    ged_exec(gedp, rc.active.size()+1, av);
+	    bu_argv_free(rc.active.size()+1, (char **)av);
+	    bu_free(sset, "sset");
+	    emit view_updated(&gedp->ged_gvp);
+	    return true;
 	}
 
 
 	if (!erase_all_ckbx->isChecked() && !use_ray_test_ckbx->isChecked()) {
-	    // Only removing one object - need to find the first bbox
-	    // intersection, then run the erase command.
+	    // Only removing one object, not using all-up librt raytracing -
+	    // need to find the first bbox intersection, then run the erase
+	    // command.
+	    struct bv_scene_obj *s_closest = NULL;
+	    double dist = DBL_MAX;
+	    bv_screen_to_view(v, &vx, &vy, x, y);
+	    point_t vpnt, mpnt;
+	    VSET(vpnt, vx, vy, 0);
+	    MAT4X3PNT(mpnt, v->gv_view2model, vpnt);
+	    point_t rmin, rmax;
+	    vect_t dir;
+	    VMOVEN(dir, v->gv_rotation + 8, 3);
+	    VUNITIZE(dir);
+	    VSCALE(dir, dir, v->radius);
+	    VADD2(mpnt, mpnt, dir);
+	    VUNITIZE(dir);
+	    bg_ray_invdir(&dir, dir);
+	    for (int i = 0; i < scnt; i++) {
+		struct bv_scene_obj *s = sset[i];
+		if (bg_isect_aabb_ray(rmin, rmax, mpnt, dir, s->bmin, s->bmax)){
+		    double ndist = DIST_PNT_PNT(rmin, v->gv_vc_backout);
+		    if (ndist < dist) {
+			dist = ndist;
+			s_closest = s;
+		    }
+		}
+	    }
+	    if (s_closest) {
+		const char **av = (const char **)bu_calloc(3, sizeof(char *), "av");
+		av[0] = "erase";
+		av[1] = bu_vls_cstr(&s_closest->s_name);
+		ged_exec(gedp, 2, av);
+		bu_free(av, "av");
+		bu_free(sset, "sset");
+		emit view_updated(&gedp->ged_gvp);
+		return true;
+	    } else {
+		// no-op
+		bu_free(sset, "sset");
+		return false;
+	    }
 	}
 
 	if (!erase_all_ckbx->isChecked() && use_ray_test_ckbx->isChecked()) {
