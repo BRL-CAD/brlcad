@@ -961,13 +961,15 @@ bv_obj_put(struct bv_scene_obj *s)
     bu_vls_trunc(&s->s_uuid, 0);
     bu_vls_trunc(&s->s_name, 0);
 
-    bu_ptbl_rm(s->otbl, (long *)s);
+    if (s->otbl)
+	bu_ptbl_rm(s->otbl, (long *)s);
 
     s->otbl = NULL;
 
     struct bv_scene_obj *fs = s->free_scene_obj;
     s->free_scene_obj = NULL;
-    FREE_BV_SCENE_OBJ(s, &fs->l);
+    if (fs)
+	FREE_BV_SCENE_OBJ(s, &fs->l);
 }
 
 struct bv_scene_obj *

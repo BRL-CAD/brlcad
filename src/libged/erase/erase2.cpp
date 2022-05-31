@@ -401,6 +401,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
 	    struct bv_scene_obj *s = *s_it;
+	    bu_ptbl_rm(&cg->children, (long *)s);
 	    bv_obj_put(s);
 	}
     }

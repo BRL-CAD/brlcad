@@ -84,7 +84,7 @@ CADViewEraser::eventFilter(QObject *, QEvent *e)
 
 	// If we didn't hit anything, we have a no-op
 	if (!scnt)
-	    return true;
+	    return false;
 
 	if (erase_all_ckbx->isChecked() && !use_ray_test_ckbx->isChecked()) {
 	    // We're clearing everything - construct the erase command and
