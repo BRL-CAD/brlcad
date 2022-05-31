@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <set>
+#include <unordered_map>
 
 #include <stdlib.h>
 #include <string.h>
@@ -73,8 +74,13 @@ struct dfp_cmp {
 
 /* Return 1 if we did a split, 0 otherwise */
 int
-path_add_children(std::set<struct bv_scene_group *> *ngrps, struct db_i *dbip, struct db_full_path *gfp, struct db_full_path *fp, struct bview *v)
+path_add_children(
+	std::unordered_map<struct bv_scene_group *, struct db_full_path *> *ngrps,
+	struct db_i *dbip, struct db_full_path *gfp, struct db_full_path *fp, struct bview *v)
 {
+    if (DB_FULL_PATH_CUR_DIR(gfp)->d_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION)
+	return 0;
+
     // Get the list of immediate children from gfp:
     struct directory **children = NULL;
     struct rt_db_internal in;
@@ -120,7 +126,11 @@ path_add_children(std::set<struct bv_scene_group *> *ngrps, struct db_i *dbip, s
 	    bu_vls_trunc(&pvls, 0);
 	    db_path_to_vls(&pvls, gfp);
 	    bu_vls_sprintf(&g->s_name, "%s", bu_vls_cstr(&pvls));
-	    ngrps->insert(g);
+	    struct db_full_path *nfp;
+	    BU_ALLOC(nfp, struct db_full_path);
+	    db_full_path_init(nfp);
+	    db_dup_full_path(nfp, gfp);
+	    (*ngrps)[g] = nfp;
 	}
 	i++;
 	dp = children[i];
@@ -142,7 +152,7 @@ new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct
     // Turn spaths into db_full_paths so we can do depth ordered processing
     for (s_it = spaths.begin(); s_it != spaths.end(); s_it++) {
 	struct db_full_path *fp = NULL;
-	BU_GET(fp, struct db_full_path);
+	BU_ALLOC(fp, struct db_full_path);
 	db_full_path_init(fp);
 	int ret = db_string_to_path(fp, dbip, s_it->c_str());
 	if (ret < 0) {
@@ -163,30 +173,35 @@ new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct
     bu_ptbl_reset(&cg->children);
 
     // Seed our group set with the top level group
-    std::set<struct bv_scene_group *> ngrps;
-    ngrps.insert(cg);
+    std::unordered_map<struct bv_scene_group *, struct db_full_path *> ngrps;
+    {
+	struct db_full_path *gfp = NULL;
+	BU_ALLOC(gfp, struct db_full_path);
+	db_full_path_init(gfp);
+	int ret = db_string_to_path(gfp, dbip, bu_vls_cstr(&cg->s_name));
+	if (ret < 0) {
+	    // Invalid path
+	    db_free_full_path(gfp);
+	    BU_FREE(gfp, struct db_full_path);
+	    return;
+	}
+	ngrps[cg] = gfp;
+    }
+
 
     // Now, work our way through sfp.  For each sfp path, split everything
     // in ngrps that matches it.
-    std::set<struct bv_scene_group *>::iterator g_it;
+    std::unordered_map<struct bv_scene_group *, struct db_full_path *>::iterator g_it;
     while (sfp.size()) {
 	struct db_full_path *fp = *sfp.begin();
 	sfp.erase(sfp.begin());
 
 	std::set<struct bv_scene_group *> gclear;
-	std::set<struct bv_scene_group *> next_grps;
+	std::unordered_map<struct bv_scene_group *, struct db_full_path *> next_grps;
 
 	for (g_it = ngrps.begin(); g_it != ngrps.end(); g_it++) {
-	    struct bv_scene_group *ng = *g_it;
-	    struct db_full_path *gfp = NULL;
-	    BU_GET(gfp, struct db_full_path);
-	    db_full_path_init(gfp);
-	    int ret = db_string_to_path(gfp, dbip, bu_vls_cstr(&ng->s_name));
-	    if (ret < 0) {
-		// Invalid path
-		db_free_full_path(gfp);
-		continue;
-	    }
+	    struct bv_scene_group *ng = g_it->first;
+	    struct db_full_path *gfp = g_it->second;
 	    if (db_full_path_match_top(gfp, fp)) {
 		// Matches.  Make new groups based on the children, and
 		// eliminate the gfp group
@@ -197,15 +212,17 @@ new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct
 	}
 
 	// Free up the replaced groups
-	for (g_it = gclear.begin(); g_it != gclear.end(); g_it++) {
-	    struct bv_scene_group *ng = *g_it;
+	std::set<struct bv_scene_group *>::iterator gc_it;
+	for (gc_it = gclear.begin(); gc_it != gclear.end(); gc_it++) {
+	    struct bv_scene_group *ng = *gc_it;
+	    db_free_full_path(ngrps[ng]);
 	    ngrps.erase(ng);
 	    bv_obj_put(ng);
 	}
 
 	// Populate ngrps for the next round
 	for (g_it = next_grps.begin(); g_it != next_grps.end(); g_it++) {
-	    ngrps.insert(*g_it);
+	    ngrps[g_it->first] = g_it->second;
 	}
 
     }
@@ -218,16 +235,8 @@ new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct
 	struct draw_update_data_t *ud = (struct draw_update_data_t *)sobj->s_i_data;
 	// Find the correct group
 	for (g_it = ngrps.begin(); g_it != ngrps.end(); g_it++) {
-	    struct bv_scene_group *ng = *g_it;
-	    struct db_full_path *gfp = NULL;
-	    BU_GET(gfp, struct db_full_path);
-	    db_full_path_init(gfp);
-	    int ret = db_string_to_path(gfp, dbip, bu_vls_cstr(&ng->s_name));
-	    if (ret < 0) {
-		// Invalid path
-		db_free_full_path(gfp);
-		continue;
-	    }
+	    struct bv_scene_group *ng = g_it->first;
+	    struct db_full_path *gfp = g_it->second;
 	    if (db_full_path_match_top(gfp, &ud->fp)) {
 		bu_ptbl_ins(&ng->children, (long *)sobj);
 		break;
@@ -237,8 +246,12 @@ new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct
 
     // Put the new groups in the view group set
     for (g_it = ngrps.begin(); g_it != ngrps.end(); g_it++) {
-	struct bv_scene_group *ng = *g_it;
+	struct bv_scene_group *ng = g_it->first;
 	all->insert(ng);
+    }
+    for (g_it = ngrps.begin(); g_it != ngrps.end(); g_it++) {
+	db_free_full_path(g_it->second);
+	BU_FREE(g_it->second, struct db_full_path);
     }
 }
 
