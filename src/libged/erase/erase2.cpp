@@ -37,6 +37,20 @@
 #include "../alphanum.h"
 #include "../ged_private.h"
 
+#if 0
+static void
+print_names(struct bu_ptbl *so, int depth)
+{
+    if (!so)
+	return;
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_group *s = (struct bv_scene_group *)BU_PTBL_GET(so, i) ;
+	bu_log("%*s%s\n", depth, " ", bu_vls_cstr(&s->s_name));
+	print_names(&s->children, depth+2);
+    }
+}
+#endif
+
 // Need to process shallowest to deepest, so we properly split new scene groups
 // generated from higher level paths that are in turn split by other deeper
 // paths.
@@ -102,7 +116,7 @@ path_add_children(std::set<struct bv_scene_group *> *ngrps, struct db_i *dbip, s
 		path_add_children(ngrps, dbip, gfp, fp, v);
 	} else {
 	    struct bu_vls pvls = BU_VLS_INIT_ZERO;
-	    struct bv_scene_group *g = bv_obj_get(v, BV_DB_OBJS);
+	    struct bv_scene_group *g = bv_obj_create(v, BV_DB_OBJS);
 	    bu_vls_trunc(&pvls, 0);
 	    db_path_to_vls(&pvls, gfp);
 	    bu_vls_sprintf(&g->s_name, "%s", bu_vls_cstr(&pvls));
@@ -319,6 +333,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     }
     bu_ptbl_reset(sg);
 
+
     std::set<struct bv_scene_group *> clear;
     std::set<struct bv_scene_group *>::iterator c_it;
     std::map<struct bv_scene_group *, std::set<std::string>> split;
@@ -406,6 +421,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+
     // Now, generate the new scene groups and assign the still-active solids to them.
     for (g_it = split.begin(); g_it != split.end(); g_it++) {
 	struct bv_scene_group *cg = g_it->first;
@@ -414,14 +430,17 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	new_scene_grps(&all, dbip, cg, spaths, v);
     }
 
+
     // Repopulate the sg tbl with the final results
     for (c_it = all.begin(); c_it != all.end(); c_it++) {
 	struct bv_scene_group *ng = *c_it;
 	bu_ptbl_ins(sg, (long *)ng);
     }
 
+
     // Sort
     bu_sort(BU_PTBL_BASEADDR(sg), BU_PTBL_LEN(sg), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
+
 
     return BRLCAD_OK;
 }

@@ -91,9 +91,24 @@ CADViewEraser::eventFilter(QObject *, QEvent *e)
 	return false;
     struct bview *v = gedp->ged_gvp;
 
+    // If certain kinds of mouse events take place, we know we are manipulating the
+    // view to achieve something other than erasure.  Flag accordingly, so we don't
+    // fire off the erase event at the end of whatever we're doing instead.
+    if (e->type() == QEvent::MouseButtonDblClick || e->type() == QEvent::MouseMove) {
+	enabled = false;
+	return false;
+    }
+
     if (e->type() == QEvent::MouseButtonRelease) {
 
 	QMouseEvent *m_e = (QMouseEvent *)e;
+
+	// If we were doing something else and the mouse release signals we're
+	// done, re-enable the erase behavior
+	if (!enabled) {
+	    enabled = true;
+	    return false;
+	}
 
 	// If any other keys are down, we're not doing an erase
 	if (m_e->modifiers() != Qt::NoModifier)

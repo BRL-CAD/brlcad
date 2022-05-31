@@ -721,9 +721,8 @@ bv_clear(struct bview *v, int flags)
     ocnt += (svl && svl != sv) ? BU_PTBL_LEN(svl) : 0;
     return ocnt ;
 }
-
 struct bv_scene_obj *
-bv_obj_get(struct bview *v, int type)
+bv_obj_create(struct bview *v, int type)
 {
     if (!v)
 	return NULL;
@@ -818,7 +817,20 @@ bv_obj_get(struct bview *v, int type)
     s->otbl = otbl;
     s->current = 0;
 
-    bu_ptbl_ins(otbl, (long *)s);
+    return s;
+}
+
+struct bv_scene_obj *
+bv_obj_get(struct bview *v, int type)
+{
+    if (!v)
+	return NULL;
+
+    struct bv_scene_obj *s = bv_obj_create(v, type);
+    if (!s)
+	return NULL;
+
+    bu_ptbl_ins(s->otbl, (long *)s);
 
     return s;
 }

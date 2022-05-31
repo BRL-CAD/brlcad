@@ -44,6 +44,9 @@ class CADViewEraser : public QWidget
 
     protected:
 	bool eventFilter(QObject *, QEvent *);
+
+    private:
+	bool enabled = true;
 };
 
 // Local Variables:

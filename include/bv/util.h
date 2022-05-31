@@ -121,9 +121,15 @@ BV_EXPORT extern fastf_t bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int
 /* Copy object attributes (but not geometry) from src to dest */
 BV_EXPORT extern void bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj *src);
 
-/* Given a view, create an object of the specified type.  Issues such as memory
- * management as a function of view settings are handled internally, so client
- * codes don't need to manage it. */
+/* Given a view, create an object of the specified type.  Like bv_obj_get, except it
+ * leaves the addition of objects to the client.  Lower level. */
+BV_EXPORT struct bv_scene_obj *
+bv_obj_create(struct bview *v, int type);
+
+/* Given a view, create an object of the specified type and add it to the
+ * appropriate container.  Issues such as memory management as a function of
+ * view settings are handled internally, so client codes don't need to manage
+ * it. */
 BV_EXPORT struct bv_scene_obj *
 bv_obj_get(struct bview *v, int type);
 
