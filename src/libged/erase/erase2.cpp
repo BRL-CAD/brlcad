@@ -346,17 +346,24 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     }
     bu_ptbl_reset(sg);
 
-
-    std::set<struct bv_scene_group *> clear;
-    std::set<struct bv_scene_group *>::iterator c_it;
-    std::map<struct bv_scene_group *, std::set<std::string>> split;
-    std::map<struct bv_scene_group *, std::set<std::string>>::iterator g_it;
+    // Make sure all the paths are unique and well formatted
+    std::set<std::string> epaths;
+    std::set<std::string>::iterator e_it;
     struct bu_vls upath = BU_VLS_INIT_ZERO;
     for (int i = 0; i < argc; ++i) {
 	bu_vls_sprintf(&upath, "%s", argv[i]);
 	if (argv[i][0] != '/') {
 	    bu_vls_prepend(&upath, "/");
 	}
+	epaths.insert(std::string(bu_vls_cstr(&upath)));
+    }
+
+    std::set<struct bv_scene_group *> clear;
+    std::set<struct bv_scene_group *>::iterator c_it;
+    std::map<struct bv_scene_group *, std::set<std::string>> split;
+    std::map<struct bv_scene_group *, std::set<std::string>>::iterator g_it;
+    for (e_it = epaths.begin(); e_it != epaths.end(); e_it++) {
+	bu_vls_sprintf(&upath, "%s", e_it->c_str());
 	for (c_it = all.begin(); c_it != all.end(); c_it++) {
 	    struct bv_scene_group *cg = *c_it;
 	    if (bu_vls_strlen(&upath) > bu_vls_strlen(&cg->s_name)) {
