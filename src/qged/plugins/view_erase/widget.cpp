@@ -78,6 +78,22 @@ _obj_record(struct application *ap, struct partition *p_hp, struct seg *UNUSED(s
     return 1;
 }
 
+static int
+_ovlp_record(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *UNUSED(ihp))
+{
+    struct rec_state *rc = (struct rec_state *)ap->a_uptr;
+    if (rc->rec_all) {
+	rc->active.insert(std::string(reg1->reg_name));
+	rc->active.insert(std::string(reg2->reg_name));
+    } else {
+	rc->closest = std::string(reg1->reg_name);
+	rc->cdist = pp->pt_inhit->hit_dist;
+    }
+    bu_log("ovlp\n");
+    return 1;
+}
+
+
 bool
 CADViewEraser::eventFilter(QObject *, QEvent *e)
 {
@@ -203,7 +219,7 @@ CADViewEraser::eventFilter(QObject *, QEvent *e)
 	    ap->a_onehit = 0;
 	    ap->a_hit = _obj_record;
 	    ap->a_miss = NULL;
-	    ap->a_overlap = NULL;
+	    ap->a_overlap = _ovlp_record;
 	    ap->a_logoverlap = NULL;
 
 	    struct rt_i *rtip = rt_new_rti(gedp->dbip);
