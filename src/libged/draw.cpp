@@ -316,7 +316,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     vo->s_type_flags |= BV_MESH_LOD;
 
     // Make the names unique
-    bu_vls_sprintf(&vo->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_name));
+    bu_vls_sprintf(&vo->s_name, "%s", bu_vls_cstr(&s->s_name));
     bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
 
     return;
