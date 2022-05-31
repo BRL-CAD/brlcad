@@ -549,6 +549,13 @@ struct bview {
     vect_t obb_extent3;
     void (*gv_bounds_update)(struct bview *);
 
+    /* "Backed out" point, lookat direction, scene radius. Used for geometric
+     * view based interrogation. */
+    point_t gv_vc_backout;
+    vect_t gv_lookat;
+    double radius;
+
+
     /*
      * gv_data_vZ is an internal parameter used by commands creating and
      * manipulating data objects.  Geometrically, it is a magnitude in the

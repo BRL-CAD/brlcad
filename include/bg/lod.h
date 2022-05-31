@@ -47,6 +47,11 @@ __BEGIN_DECLS
 BG_EXPORT extern void
 bg_view_bounds(struct bview *v);
 
+/* Given a screen x,y coordinate, construct and return the set of all scene
+ * objects whose AABB intersect with the OBB created by the projection of that
+ * pixel through the scene. */
+BG_EXPORT int
+bg_view_objs_select(struct bv_scene_obj ***set, struct bview *v, int x, int y);
 
 /* Storing and reading from a lot of small, individual files doesn't work very
  * well on some platforms.  We provide a "context" to manage bookkeeping of data

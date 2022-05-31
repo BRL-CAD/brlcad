@@ -174,7 +174,6 @@ bv_set_view_obj(struct bv_scene_obj *s, struct bview *v, struct bv_scene_obj *vo
 BV_EXPORT struct bu_ptbl *
 bv_view_objs(struct bview *v, int type);
 
-
 __END_DECLS
 
 /** @} */
