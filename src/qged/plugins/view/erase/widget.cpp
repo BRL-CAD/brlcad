@@ -24,7 +24,7 @@
 #include "common.h"
 #include <QMouseEvent>
 #include <QVBoxLayout>
-#include "../../app.h"
+#include "../../../app.h"
 
 #include "bu/opt.h"
 #include "bu/malloc.h"

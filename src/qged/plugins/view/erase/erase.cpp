@@ -24,7 +24,7 @@
 #include <QGroupBox>
 #include <QCheckBox>
 #include "qtcad/QToolPalette.h"
-#include "../plugin.h"
+#include "../../plugin.h"
 #include "./widget.h"
 
 void *

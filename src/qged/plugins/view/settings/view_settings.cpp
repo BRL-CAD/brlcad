@@ -21,34 +21,36 @@
  *
  */
 
+#include <QGroupBox>
+#include <QCheckBox>
 #include "qtcad/QToolPalette.h"
-#include "../plugin.h"
-#include "view_model.h"
+#include "../../plugin.h"
+#include "view_widget.h"
 
 void *
-view_info_tool_create()
+view_settings_tool_create()
 {
-    CADViewModel *vmodel = new CADViewModel();
-    QIcon *obj_icon = new QIcon(QPixmap(":info.svg"));
-    QKeyValView *vview = new QKeyValView(NULL, 0);
-    vview->setModel(vmodel);
-    vview->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    vview->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, vview);
-    QObject::connect(el, &QToolPaletteElement::app_view_sync, vmodel, &CADViewModel::refresh);
+    QIcon *obj_icon = new QIcon(QPixmap(":settings.svg"));
+
+    CADViewSettings *vs = new CADViewSettings();
+
+    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, vs);
+
+    QObject::connect(el, &QToolPaletteElement::app_view_sync, vs, &CADViewSettings::checkbox_refresh);
+    QObject::connect(vs, &CADViewSettings::settings_changed, el, &QToolPaletteElement::do_view_changed);
 
     return el;
 }
 
 extern "C" {
-    struct qged_tool_impl view_info_tool_impl = {
-	view_info_tool_create
+    struct qged_tool_impl view_settings_tool_impl = {
+	view_settings_tool_create
     };
 
-    const struct qged_tool view_info_tool = { &view_info_tool_impl, 0 };
-    const struct qged_tool *view_info_tools[] = { &view_info_tool, NULL };
+    const struct qged_tool view_settings_tool = { &view_settings_tool_impl, 1 };
+    const struct qged_tool *view_settings_tools[] = { &view_settings_tool, NULL };
 
-    static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, view_info_tools, 1 };
+    static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, view_settings_tools, 1 };
 
     COMPILER_DLLEXPORT const struct qged_plugin *qged_plugin_info()
     {

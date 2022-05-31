@@ -27,11 +27,7 @@ CMAKEFILES(${plugin_ignore_files})
 
 # Plugins
 add_subdirectory(polygon)
-add_subdirectory(view_erase)
-add_subdirectory(view_info)
-add_subdirectory(view_settings)
-
-# primitive editing plugins
+add_subdirectory(view)
 add_subdirectory(edit)
 
 # Local Variables:
