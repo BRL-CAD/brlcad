@@ -28,7 +28,39 @@
 #include "vmath.h"
 #include "bg/aabb_ray.h"
 
-int bg_isect_aabb_ray(fastf_t *r_min, fastf_t *r_max,
+void
+bg_ray_invdir(vect_t *invdir, vect_t dir)
+{
+    if (UNLIKELY(!invdir))
+	return;
+
+        /* Compute the inverse of the direction cosines */
+    if (dir[X] < -SQRT_SMALL_FASTF) {
+        (*invdir)[X]=1.0/dir[X];
+    } else if (dir[X] > SQRT_SMALL_FASTF) {
+        (*invdir)[X]=1.0/dir[X];
+    } else {
+        dir[X] = 0.0;
+        (*invdir)[X] = INFINITY;
+    }
+    if (dir[Y] < -SQRT_SMALL_FASTF) {
+        (*invdir)[Y]=1.0/dir[Y];
+    } else if (dir[Y] > SQRT_SMALL_FASTF) {
+        (*invdir)[Y]=1.0/dir[Y];
+    } else {
+        (*invdir)[Y] = INFINITY;
+    }
+    if (dir[Z] < -SQRT_SMALL_FASTF) {
+        (*invdir)[Z]=1.0/dir[Z];
+    } else if (dir[Z] > SQRT_SMALL_FASTF) {
+        (*invdir)[Z]=1.0/dir[Z];
+    } else {
+        (*invdir)[Z] = INFINITY;
+    }
+}
+
+int
+bg_isect_aabb_ray(fastf_t *r_min, fastf_t *r_max,
         point_t opt,
         const fastf_t *invdir, /* inverses of dir[] */
         const fastf_t *aabb_min,
