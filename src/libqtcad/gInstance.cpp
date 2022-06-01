@@ -158,29 +158,37 @@ add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *com
     // We need to do the lookup to see if we already have this instance stored
     // - to do the lookup we need the hash.
     mat_t c_m;
+    MAT_IDN(c_m);
     XXH64_state_t h_state;
     XXH64_reset(&h_state, 0);
     std::string dp_name(comb_leaf->tr_l.tl_name);
-    if (comb_leaf->tr_l.tl_mat) {
-	MAT_COPY(c_m, comb_leaf->tr_l.tl_mat);
-    } else {
-	MAT_IDN(c_m);
-    }
-
 
     // The cnt_set exists only for this tree walk, and its purpose is to ensure that all tree
     // instances end up with their own unique hash, even if they are duplicates from a data
     // standpoint within the tree
     int icnt = 0;
-    unsigned long long nhash = ginstance_hash(&h_state, parent_dp, dp_name, dbip, op, c_m, icnt);
+    unsigned long long nhash = ginstance_hash(&h_state, parent_dp, dp_name, dbip, DB_OP_UNION, c_m, icnt);
     std::unordered_set<unsigned long long>::iterator c_it;
     c_it = cnt_set->find(nhash);
     while (c_it != cnt_set->end()) {
 	icnt++;
-	nhash = ginstance_hash(&h_state, parent_dp, dp_name, dbip, op, c_m, icnt);
+	nhash = ginstance_hash(&h_state, parent_dp, dp_name, dbip, DB_OP_UNION, c_m, icnt);
 	c_it = cnt_set->find(nhash);
     }
     cnt_set->insert(nhash);
+
+    // Having done the "unique lookup" hash to get icnt, we now redo it with
+    // the op and matrix if they are different from the union/IDN case so the
+    // hash is also tied to those properties of the tree entry.  A tree rewrite
+    // may produce a new instance of the same name in the same count position,
+    // but with a different op and/or matrix - we want the hash to change in
+    // that situation to reflect the tree change.
+    if (comb_leaf->tr_l.tl_mat || op != DB_OP_UNION) {
+	if (comb_leaf->tr_l.tl_mat) {
+	    MAT_COPY(c_m, comb_leaf->tr_l.tl_mat);
+	}
+	nhash = ginstance_hash(&h_state, parent_dp, dp_name, dbip, op, c_m, icnt);
+    }
 
     // See if we already have this gInstance hash or not.  If not,
     // create and add a new gInstance.
@@ -191,6 +199,7 @@ add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *com
 	ninst->hash = nhash;
 	ninst->dp_name = std::string(comb_leaf->tr_l.tl_name);
 	ninst->op = op;
+	ninst->icnt = icnt;
 	MAT_COPY(ninst->c_m, c_m);
 	(*instances)[nhash] = ninst;
 	if (valid_instances)
