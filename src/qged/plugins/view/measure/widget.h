@@ -80,6 +80,7 @@ class CADViewMeasure : public QWidget
 	struct bu_vls buffer = BU_VLS_INIT_ZERO;
 
 	// Raytracing related information
+	int prev_cnt = 0;
 	int scene_obj_set_cnt = 0;
 	struct bv_scene_obj **scene_obj_set = NULL;
 	struct application *ap = NULL;

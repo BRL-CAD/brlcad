@@ -160,11 +160,13 @@ CADViewMeasure::get_point(QMouseEvent *m_e)
     int scnt = bg_view_objs_select(&sset, v, x, y);
 
     // If we didn't see anything, we have a no-op
-    if (!scnt)
+    if (!scnt) {
+	prev_cnt = scnt;
 	return false;
+    }
 
     bool need_prep = (!ap || !rtip || !resp) ? true : false;
-    if (need_prep || !scene_obj_set_cnt || scnt != scene_obj_set_cnt) {
+    if (need_prep || !scene_obj_set_cnt || prev_cnt != scnt || scnt != scene_obj_set_cnt) {
 	// Something changed - need to reset the raytrace data
 	if (scene_obj_set)
 	    bu_free(scene_obj_set, "old set");
@@ -182,6 +184,8 @@ CADViewMeasure::get_point(QMouseEvent *m_e)
 	    }
 	}
     }
+
+    prev_cnt = scnt;
 
     if (need_prep) {
 	if (!ap) {
@@ -349,7 +353,6 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 
     // If any other keys are down, we're not doing a measurement
     if (m_e->modifiers() != Qt::NoModifier) {
-	bu_log("Have modifier\n");
 	return false;
     }
 
