@@ -40,7 +40,7 @@
 #include "qtcad/gInstance.h"
 
 unsigned long long
-ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::string &dp_name, struct db_i *dbip, db_op_t op, mat_t c_m, int cnt)
+ginstance_hash(XXH64_state_t *h_state, struct directory *parent, std::string &dp_name, struct db_i *dbip, db_op_t op, mat_t c_m, int cnt)
 {
     if (!h_state)
 	return 0;
@@ -76,11 +76,8 @@ ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::
 	    int_op = 0;
 	    break;
     }
-    if (mode == 1 || mode == 3)
-	XXH64_update(h_state, &int_op, sizeof(int));
-
-    if (mode == 2 || mode == 3)
-	XXH64_update(h_state, c_m, sizeof(mat_t));
+    XXH64_update(h_state, &int_op, sizeof(int));
+    XXH64_update(h_state, c_m, sizeof(mat_t));
 
     hash_val = XXH64_digest(h_state);
     XXH64_reset(h_state, 0);
@@ -175,12 +172,12 @@ add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *com
     // instances end up with their own unique hash, even if they are duplicates from a data
     // standpoint within the tree
     int icnt = 0;
-    unsigned long long nhash = ginstance_hash(&h_state, 3, parent_dp, dp_name, dbip, op, c_m, icnt);
+    unsigned long long nhash = ginstance_hash(&h_state, parent_dp, dp_name, dbip, op, c_m, icnt);
     std::unordered_set<unsigned long long>::iterator c_it;
     c_it = cnt_set->find(nhash);
     while (c_it != cnt_set->end()) {
 	icnt++;
-	nhash = ginstance_hash(&h_state, 3, parent_dp, dp_name, dbip, op, c_m, icnt);
+	nhash = ginstance_hash(&h_state, parent_dp, dp_name, dbip, op, c_m, icnt);
 	c_it = cnt_set->find(nhash);
     }
     cnt_set->insert(nhash);
@@ -331,7 +328,7 @@ gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instanc
 	if (extr->sketch_name) {
 	    std::string sk_name(extr->sketch_name);
 	    MAT_IDN(c_m);
-	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, sk_name, dbip, DB_OP_UNION, c_m, 0);
+	    unsigned long long nhash = ginstance_hash(&h_state, dp, sk_name, dbip, DB_OP_UNION, c_m, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		chash.push_back(nhash);
@@ -349,7 +346,7 @@ gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instanc
 	if (bu_vls_strlen(&revolve->sketch_name) > 0) {
 	    std::string sk_name(bu_vls_cstr(&revolve->sketch_name));
 	    MAT_IDN(c_m);
-	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, sk_name, dbip, DB_OP_UNION, c_m, 0);
+	    unsigned long long nhash = ginstance_hash(&h_state, dp, sk_name, dbip, DB_OP_UNION, c_m, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		chash.push_back(nhash);
@@ -367,7 +364,7 @@ gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instanc
 	if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen(&dsp->dsp_name) > 0) {
 	    std::string dsp_name(bu_vls_cstr(&dsp->dsp_name));
 	    MAT_IDN(c_m);
-	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, dsp_name, dbip, DB_OP_UNION, c_m, 0);
+	    unsigned long long nhash = ginstance_hash(&h_state, dp, dsp_name, dbip, DB_OP_UNION, c_m, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		chash.push_back(nhash);
@@ -400,7 +397,7 @@ dp_instances(std::unordered_map<unsigned long long, gInstance *> *valid_instance
 	if (extr->sketch_name) {
 	    std::string sk_name(extr->sketch_name);
 	    MAT_IDN(c_m);
-	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, sk_name, dbip, DB_OP_UNION, c_m, 0);
+	    unsigned long long nhash = ginstance_hash(&h_state, dp, sk_name, dbip, DB_OP_UNION, c_m, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		if (valid_instances)
@@ -432,7 +429,7 @@ dp_instances(std::unordered_map<unsigned long long, gInstance *> *valid_instance
 	if (bu_vls_strlen(&revolve->sketch_name) > 0) {
 	    std::string sk_name(bu_vls_cstr(&revolve->sketch_name));
 	    MAT_IDN(c_m);
-	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, sk_name, dbip, DB_OP_UNION, c_m, 0);
+	    unsigned long long nhash = ginstance_hash(&h_state, dp, sk_name, dbip, DB_OP_UNION, c_m, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		if (valid_instances)
@@ -464,7 +461,7 @@ dp_instances(std::unordered_map<unsigned long long, gInstance *> *valid_instance
 	if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen(&dsp->dsp_name) > 0) {
 	    std::string dsp_name(bu_vls_cstr(&dsp->dsp_name));
 	    MAT_IDN(c_m);
-	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, dsp_name, dbip, DB_OP_UNION, c_m, 0);
+	    unsigned long long nhash = ginstance_hash(&h_state, dp, dsp_name, dbip, DB_OP_UNION, c_m, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		if (valid_instances)
@@ -564,7 +561,7 @@ sync_instances(
 	    gInstance *tinst = NULL;
 	    struct directory *curr_dp = db_objects[i];
 	    std::string dname = std::string(curr_dp->d_namep);
-	    unsigned long long nhash = ginstance_hash(&h_state, 3, NULL, dname, dbip, DB_OP_UNION, c_m, 0);
+	    unsigned long long nhash = ginstance_hash(&h_state, NULL, dname, dbip, DB_OP_UNION, c_m, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it == instances->end()) {
 		tinst = new gInstance(curr_dp, dbip);

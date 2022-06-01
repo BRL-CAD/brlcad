@@ -65,7 +65,7 @@ class QTCAD_EXPORT gInstance
 	int active_flag = 0;
 
 	// gInstance content based hash for quick lookup/comparison of two
-	// gInstances.  mode == 3 - i.e., hash of full gInstance data.
+	// gInstances.
 	unsigned long long hash = 0;
 
 	// dp of parent comb (NULL for tops objects)
@@ -80,13 +80,23 @@ class QTCAD_EXPORT gInstance
 	db_op_t op = DB_OP_NULL;
 	// Matrix above comb instance in comb tree (default is IDN)
 	mat_t c_m;
+
+	// Position in comb tree - intent is to be able to use this number in
+	// a GED command to look up an exact comb tree instance, i.e.:
+	//
+	// /comb1/comb2@3/comb3/comb4/obj.s@5
+	//
+	// The idea would be that in each string there is an implicit @0 after
+	// each specifier, and IFF we need to distinguish others, we can add
+	// the explicit @ specifier
+	int icnt = 0;
 };
 
 /* Given gInstance data, construct its hash.  This function is public to allow
  * for hashing of different "modes" in client codes wanting to do fuzzy matching
  * of instances. */
 QTCAD_EXPORT extern unsigned long long
-ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::string &dp_name, db_op_t op, mat_t c_m, int cnt);
+ginstance_hash(XXH64_state_t *h_state, struct directory *parent, std::string &dp_name, db_op_t op, mat_t c_m, int cnt);
 
 // Given a dbip, construct or find the instances associated with it and add them
 // to the containers.  The instances maps may contain previous gInstances created
