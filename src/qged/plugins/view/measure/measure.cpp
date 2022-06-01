@@ -38,6 +38,9 @@ view_measure_tool_create()
 
     QObject::connect(er, &CADViewMeasure::view_updated, el, &QToolPaletteElement::do_view_changed);
 
+    // If units change, need to update the reported dimensions
+    QObject::connect(el, &QToolPaletteElement::app_db_sync, er, &CADViewMeasure::adjust_text_db);
+
     // Let the element (and hence the application) know that this tool has a
     // locally customized event filter to use with the view widget.
     el->use_event_filter = true;

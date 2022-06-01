@@ -43,11 +43,120 @@ CADViewMeasure::CADViewMeasure(QWidget *)
     measure_3d = new QCheckBox("Use 3D hit points");
     wl->addWidget(measure_3d);
 
+    QLabel *ml1_label = new QLabel("Measured Length #1:");
+    length1_report = new QLineEdit();
+    length1_report->setReadOnly(true);
+    wl->addWidget(ml1_label);
+    wl->addWidget(length1_report);
+
+    QLabel *ml2_label = new QLabel("Measured Length #2:");
+    length2_report = new QLineEdit();
+    length2_report->setReadOnly(true);
+    wl->addWidget(ml2_label);
+    wl->addWidget(length2_report);
+
+    report_radians = new QCheckBox("Report angle in radians");
+    wl->addWidget(report_radians);
+    QObject::connect(report_radians, &QCheckBox::stateChanged, this, &CADViewMeasure::adjust_text);
+
+    ma_label = new QLabel("Measured Angle (deg):");
+    angle_report = new QLineEdit();
+    angle_report->setReadOnly(true);
+    wl->addWidget(ma_label);
+    wl->addWidget(angle_report);
+
+    color_2d = new QColorRGB(this, "2D:", QColor(Qt::yellow));
+    wl->addWidget(color_2d);
+    color_3d = new QColorRGB(this, "3D:", QColor(Qt::green));
+    wl->addWidget(color_3d);
+    QObject::connect(color_2d, &QColorRGB::color_changed, this, &CADViewMeasure::update_color);
+    QObject::connect(color_3d, &QColorRGB::color_changed, this, &CADViewMeasure::update_color);
+
     this->setLayout(wl);
 }
 
 CADViewMeasure::~CADViewMeasure()
 {
+    bu_vls_free(&buffer);
+    if (s)
+	bv_obj_put(s);
+}
+
+void
+CADViewMeasure::update_color()
+{
+    if (!s)
+	return;
+
+    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
+    if (!mdl)
+	return;
+
+    QgModel *m = (QgModel *)mdl->sourceModel();
+    struct ged *gedp = m->gedp;
+    if (!gedp || !gedp->ged_gvp)
+	return;
+
+    if (!measure_3d->isChecked()) {
+	bu_color_to_rgb_chars(&color_2d->bc, s->s_color);
+	emit view_updated(&gedp->ged_gvp);
+	return;
+    }
+
+    if (measure_3d->isChecked()) {
+	bu_color_to_rgb_chars(&color_3d->bc, s->s_color);
+	emit view_updated(&gedp->ged_gvp);
+	return;
+    }
+}
+
+void
+CADViewMeasure::adjust_text_db(void *)
+{
+    adjust_text();
+}
+
+void
+CADViewMeasure::adjust_text()
+{
+    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
+    if (!mdl)
+	return;
+
+    QgModel *m = (QgModel *)mdl->sourceModel();
+    struct ged *gedp = m->gedp;
+    if (!gedp || !gedp->ged_gvp)
+	return;
+
+
+    if (report_radians->isChecked()) {
+	ma_label = new QLabel("Measured Angle (rad):");
+    } else {
+	ma_label = new QLabel("Measured Angle (deg):");
+    }
+
+    if (mode > 1) {
+	bu_vls_sprintf(&buffer, "%.15f %s", DIST_PNT_PNT(p1, p2)*gedp->dbip->dbi_base2local, bu_units_string(gedp->dbip->dbi_local2base));
+	length1_report->setText(bu_vls_cstr(&buffer));
+    }
+
+    if (mode > 2) {
+	bu_vls_sprintf(&buffer, "%.15f %s", DIST_PNT_PNT(p2, p3)*gedp->dbip->dbi_base2local, bu_units_string(gedp->dbip->dbi_local2base));
+	length2_report->setText(bu_vls_cstr(&buffer));
+	vect_t v1, v2;
+	VSUB2(v1, p1, p2);
+	VSUB2(v2, p3, p2);
+	VUNITIZE(v1);
+	VUNITIZE(v2);
+	angle = acos(VDOT(v1, v2));
+	if (report_radians->isChecked()) {
+	    bu_vls_sprintf(&buffer, "%.15f", angle);
+	} else {
+	    bu_vls_sprintf(&buffer, "%.15f", angle*180/M_PI);
+	}
+	angle_report->setText(bu_vls_cstr(&buffer));
+    }
+
 }
 
 bool
@@ -95,18 +204,42 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
     if (e->type() == QEvent::MouseButtonPress) {
 	bu_log("Mouse press: %d %d (%f %f %f)\n", x, y, V3ARGS(mpnt));
 	if (m_e->button() == Qt::RightButton) {
+	    if (s)
+		bv_obj_put(s);
+	    mode = 0;
+	    length1_report->clear();
+	    length2_report->clear();
+	    angle_report->clear();
+	    emit view_updated(&gedp->ged_gvp);
 	    return true;
 	}
-	if (!mode || mode == 4) {
+	if (mode == 4) {
+	    if (s)
+		bv_obj_put(s);
+	    mode = 0;
+	    length1_report->clear();
+	    length2_report->clear();
+	    angle_report->clear();
+	    emit view_updated(&gedp->ged_gvp);
+	    return true;
+	}
+	if (!mode) {
 	    if (s)
 		bv_obj_put(s);
 	    s = bv_obj_get(v, BV_VIEW_OBJS);
+	    update_color();
 	    mode = 1;
 	    VMOVE(p1, mpnt);
+	    VMOVE(p2, mpnt);
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
 	    bu_vls_init(&s->s_uuid);
 	    bu_vls_printf(&s->s_uuid, "tool:measurement");
 	    emit view_updated(&gedp->ged_gvp);
+	    return true;
+	}
+	if (mode == 1) {
+	    VMOVE(p2, mpnt);
+	    return true;
 	}
 	if (mode == 2) {
 	    mode = 3;
@@ -115,6 +248,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
 	    VMOVE(p3, mpnt);
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
+	    adjust_text();
 	    emit view_updated(&gedp->ged_gvp);
 	}
 	return true;
@@ -129,6 +263,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
 	    VMOVE(p2, mpnt);
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
+	    adjust_text();
 	    emit view_updated(&gedp->ged_gvp);
 	}
 	if (mode == 3) {
@@ -137,6 +272,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
 	    VMOVE(p3, mpnt);
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
+	    adjust_text();
 	    emit view_updated(&gedp->ged_gvp);
 	}
 	return true;
@@ -155,12 +291,16 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	}
 	if (!mode)
 	    return false;
+	if (mode == 1 && DIST_PNT_PNT(p1, p2) < SMALL_FASTF) {
+	    return true;
+	}
 	if (mode == 1) {
 	    mode = 2;
 	    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
 	    VMOVE(p2, mpnt);
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
+	    adjust_text();
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
 	}
@@ -171,6 +311,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
 	    VMOVE(p3, mpnt);
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
+	    adjust_text();
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
 	}

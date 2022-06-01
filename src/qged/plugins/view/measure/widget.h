@@ -26,7 +26,10 @@
 #include <QCheckBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QLineEdit>
+#include "bv.h"
 #include "ged.h"
+#include "qtcad/QColorRGB.h"
 
 class CADViewMeasure : public QWidget
 {
@@ -38,8 +41,25 @@ class CADViewMeasure : public QWidget
 
 	QCheckBox *measure_3d;
 
+	QLineEdit *length1_report;
+	QLineEdit *length2_report;
+
+	QCheckBox *report_radians;
+	QLabel *ma_label;
+	QLineEdit *angle_report;
+
+	QColorRGB *color_2d;
+	QColorRGB *color_3d;
+
     signals:
 	void view_updated(struct bview **);
+
+    public slots:
+        void adjust_text();
+        void adjust_text_db(void *);
+
+    private slots:
+	void update_color();
 
     protected:
 	bool eventFilter(QObject *, QEvent *);
@@ -50,7 +70,10 @@ class CADViewMeasure : public QWidget
 	point_t p1;
 	point_t p2;
 	point_t p3;
+	double length;
+	double angle;
 	bool enabled = true;
+	struct bu_vls buffer = BU_VLS_INIT_ZERO;
 };
 
 // Local Variables:
