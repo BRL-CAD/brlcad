@@ -461,6 +461,9 @@ RT_EXPORT extern int db_follow_path(struct db_tree_state *tsp,
  *
  * A much more complete version of rt_plookup().
  *
+ * TODO - need to extend this to support specifiers orig_str to
+ * call out particular instances of combs in a tree...
+ *
  * Returns -
  * 0 success (plus *tsp is updated)
  * -1 error (*tsp values are not useful)
