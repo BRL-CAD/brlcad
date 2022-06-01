@@ -1,5 +1,6 @@
 add_subdirectory(erase)
 add_subdirectory(info)
+add_subdirectory(measure)
 add_subdirectory(settings)
 
 CMAKEFILES(CMakeLists.txt)
