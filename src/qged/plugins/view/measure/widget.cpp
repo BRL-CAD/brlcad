@@ -69,7 +69,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 
     QMouseEvent *m_e = (QMouseEvent *)e;
 
-    // If any other keys are down, we're not doing an erase
+    // If any other keys are down, we're not doing a measurement
     if (m_e->modifiers() != Qt::NoModifier) {
 	bu_log("Have modifier\n");
 	return false;
@@ -92,19 +92,89 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
     MAT4X3PNT(mpnt, v->gv_view2model, vpnt);
 
 
-
     if (e->type() == QEvent::MouseButtonPress) {
 	bu_log("Mouse press: %d %d (%f %f %f)\n", x, y, V3ARGS(mpnt));
+	if (m_e->button() == Qt::RightButton) {
+	    return true;
+	}
+	if (!mode || mode == 4) {
+	    if (s)
+		bv_obj_put(s);
+	    s = bv_obj_get(v, BV_VIEW_OBJS);
+	    mode = 1;
+	    VMOVE(p1, mpnt);
+	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
+	    bu_vls_init(&s->s_uuid);
+	    bu_vls_printf(&s->s_uuid, "tool:measurement");
+	    emit view_updated(&gedp->ged_gvp);
+	}
+	if (mode == 2) {
+	    mode = 3;
+	    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
+	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
+	    VMOVE(p3, mpnt);
+	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
+	    emit view_updated(&gedp->ged_gvp);
+	}
 	return true;
     }
 
     if (e->type() == QEvent::MouseMove) {
 	bu_log("Mouse move: %d %d (%f %f %f)\n", x, y, V3ARGS(mpnt));
+	if (!mode)
+	    return false;
+	if (mode == 1) {
+	    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
+	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
+	    VMOVE(p2, mpnt);
+	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
+	    emit view_updated(&gedp->ged_gvp);
+	}
+	if (mode == 3) {
+	    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
+	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
+	    VMOVE(p3, mpnt);
+	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
+	    emit view_updated(&gedp->ged_gvp);
+	}
 	return true;
     }
 
     if (e->type() == QEvent::MouseButtonRelease) {
 	bu_log("Mouse release: %d %d (%f %f %f)\n", x, y, V3ARGS(mpnt));
+	if (m_e->button() == Qt::RightButton) {
+	    mode = 0;
+	    if (s) {
+		bv_obj_put(s);
+		emit view_updated(&gedp->ged_gvp);
+	    }
+	    s = NULL;
+	    return true;
+	}
+	if (!mode)
+	    return false;
+	if (mode == 1) {
+	    mode = 2;
+	    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
+	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
+	    VMOVE(p2, mpnt);
+	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
+	    emit view_updated(&gedp->ged_gvp);
+	    return true;
+	}
+	if (mode == 3) {
+	    mode = 4;
+	    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
+	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
+	    VMOVE(p3, mpnt);
+	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
+	    emit view_updated(&gedp->ged_gvp);
+	    return true;
+	}
+
 	return true;
     }
 

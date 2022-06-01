@@ -45,6 +45,11 @@ class CADViewMeasure : public QWidget
 	bool eventFilter(QObject *, QEvent *);
 
     private:
+	struct bv_scene_obj *s = NULL;
+	int mode = 0;  // 0 == uninitialized, 1 = length measurement in progress, 2 = length measurement complete, 3 = angle measurement in progress, 4 = angle measurement complete
+	point_t p1;
+	point_t p2;
+	point_t p3;
 	bool enabled = true;
 };
 
