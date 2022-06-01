@@ -221,7 +221,6 @@ CADViewEraser::eventFilter(QObject *, QEvent *e)
 	}
 
 	if (use_ray_test_ckbx->isChecked()) {
-	    // We're clearing everything, as long as it reports a hit using the full
 	    // librt intersection test.
 	    struct application *ap;
 	    BU_GET(ap, struct application);

@@ -65,6 +65,10 @@ class CADViewMeasure : public QWidget
 	bool eventFilter(QObject *, QEvent *);
 
     private:
+
+	bool get_point(QMouseEvent *);
+	point_t mpnt;
+
 	struct bv_scene_obj *s = NULL;
 	int mode = 0;  // 0 == uninitialized, 1 = length measurement in progress, 2 = length measurement complete, 3 = angle measurement in progress, 4 = angle measurement complete
 	point_t p1;
@@ -74,6 +78,14 @@ class CADViewMeasure : public QWidget
 	double angle;
 	bool enabled = true;
 	struct bu_vls buffer = BU_VLS_INIT_ZERO;
+
+	// Raytracing related information
+	int scene_obj_set_cnt = 0;
+	struct bv_scene_obj **scene_obj_set = NULL;
+	struct application *ap = NULL;
+	struct rt_i *rtip = NULL;
+	struct resource *resp = NULL;
+
 };
 
 // Local Variables:
