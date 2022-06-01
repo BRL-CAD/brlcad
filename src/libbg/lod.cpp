@@ -57,6 +57,7 @@
 #include "common.h"
 #include <stdlib.h>
 #include <map>
+#include <set>
 #include <thread>
 #include <vector>
 #include <unordered_map>
@@ -335,7 +336,7 @@ bg_view_bounds(struct bview *v)
 }
 
 static void
-_find_active_objs(std::vector<struct bv_scene_obj *> &active, struct bv_scene_obj *s, struct bview *v, point_t obb_c, point_t obb_e1, point_t obb_e2, point_t obb_e3)
+_find_active_objs(std::set<struct bv_scene_obj *> &active, struct bv_scene_obj *s, struct bview *v, point_t obb_c, point_t obb_e1, point_t obb_e2, point_t obb_e3)
 {
     if (BU_PTBL_LEN(&s->children)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) { 
@@ -345,14 +346,14 @@ _find_active_objs(std::vector<struct bv_scene_obj *> &active, struct bv_scene_ob
     } else {
 	bv_scene_obj_bound(s, v);
 	if (bg_sat_aabb_obb(s->bmin, s->bmax, obb_c, obb_e1, obb_e2, obb_e3))
-	    active.push_back(s);
+	    active.insert(s);
     } 
 }
 
 int
-bg_view_objs_select(struct bv_scene_obj ***set, struct bview *v, int x, int y)
+bg_view_objs_select(struct bv_scene_obj ***sset, struct bview *v, int x, int y)
 {
-    if (!v || !set || !v->gv_width || !v->gv_height)
+    if (!v || !sset || !v->gv_width || !v->gv_height)
 	return 0;
 
     if (x < 0 || y < 0 || x > v->gv_width || y > v->gv_height)
@@ -415,16 +416,19 @@ bg_view_objs_select(struct bv_scene_obj ***set, struct bview *v, int x, int y)
 
     // Having constructed the box, test the scene objects against it.  Any that intersect,
     // add them to the set
-    std::vector<struct bv_scene_obj *> active;
+    std::set<struct bv_scene_obj *> active;
     struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
 	_find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
     }
     if (active.size()) {
-	(*set) = (struct bv_scene_obj **)bu_calloc(active.size(), sizeof(struct bv_scene_obj *), "objs");
-	for (size_t i = 0; i < active.size(); i++) {
-	    (*set)[i] = active[i];
+	std::set<struct bv_scene_obj *>::iterator a_it;
+	(*sset) = (struct bv_scene_obj **)bu_calloc(active.size(), sizeof(struct bv_scene_obj *), "objs");
+	int i = 0;
+	for (a_it = active.begin(); a_it != active.end(); a_it++) {
+	    (*sset)[i] = *a_it;
+	    i++;
 	}
     }
 
