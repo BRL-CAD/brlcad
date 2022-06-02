@@ -593,7 +593,7 @@ main(int argc, const char **argv)
     mat_t m;
     mat_t q;
     /* These bu_opt_desc_opts settings approximate the old struct nirt_state help formatting */
-    struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 11, 67, NULL, NULL, NULL, 1, NULL, NULL };
+    struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 15, 65, NULL, NULL, NULL, 1, NULL, NULL };
     struct bu_opt_desc d[19] = {BU_OPT_DESC_NULL};
 
     BU_OPT(d[0],  "?", "",     "",       NULL,             &print_help,     "print help and exit");
@@ -678,8 +678,18 @@ main(int argc, const char **argv)
      * and exit */
     if (print_help || argc < 2 || (silent_mode == SILENT_YES && verbose_mode)) {
 	char *help = bu_opt_describe(d, &dopts);
-	ret = (argc < 2) ? EXIT_FAILURE : EXIT_SUCCESS;
-	bu_vls_sprintf(&msg, "Usage: 'nirt [options] model.g objects...'\n\nNote: by default NIRT is using a new implementation which may have behavior changes.  During migration, old behavior can be enabled by adding the option \"--old\" as the first option to the nirt program.\n\nOptions:\n%s\n", help);
+	ret = (print_help) ? EXIT_SUCCESS : EXIT_FAILURE;
+        /* if nirt_debug exists, we assume we are being run from libged, so dont print
+         * output not relevant in embedded context
+         */ 
+        if (bu_vls_strlen(&nirt_debug) > 0) {
+            dopts.reject = "M"; // reject 'M' option when printing within libged
+            help = bu_opt_describe(d, &dopts);
+            bu_vls_sprintf(&msg, "Usage: nirt [options]...\n\nOptions:\n%s\n", help);   
+        } else {
+            help = bu_opt_describe(d, &dopts);
+            bu_vls_sprintf(&msg, "Usage: nirt [options] model.g objects...\n\nNote: by default NIRT is using a new implementation which may have behavior changes.  During migration, old behavior can be enabled by adding the option \"--old\" as the first option to the nirt program.\n\nOptions:\n%s\n", help);
+        }
 	nirt_out(&io_data, bu_vls_addr(&msg));
 	if (help)
 	    bu_free(help, "help str");
@@ -828,8 +838,11 @@ main(int argc, const char **argv)
     }
 
     if (bu_vls_strlen(&nirt_debug) > 0) {
-	bu_vls_sprintf(&ncmd, "debug -V ANALYZE %s", bu_vls_cstr(&nirt_debug));
-	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
+	// when we're explicitly calling within libged, ignore
+        if (!BU_STR_EQUAL(bu_vls_cstr(&nirt_debug), "ged")) {
+	    bu_vls_sprintf(&ncmd, "debug -V ANALYZE %s", bu_vls_cstr(&nirt_debug));
+	    (void)nirt_exec(ns, bu_vls_addr(&ncmd));
+	}
     }
 
     /* Initialize the attribute list before we do the drawing, since
