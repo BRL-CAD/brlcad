@@ -610,6 +610,7 @@ db_identical_full_paths(const struct db_full_path *a, const struct db_full_path 
 
     for (i = a->fp_len-1; i >= 0; i--) {
 	if (a->fp_names[i] != b->fp_names[i]) return 0;
+	if (a->fp_cinst[i] != b->fp_cinst[i]) return 0;
     }
     return 1;
 }
@@ -640,6 +641,9 @@ db_full_path_subset(
 	if (a->fp_names[i] != b->fp_names[0])
 	    continue;
 
+	if (a->fp_cinst[i] != b->fp_cinst[0])
+	    continue;
+
 	/* First element matches, check remaining length */
 	if (b->fp_len > a->fp_len - i)
 	    return 0;
@@ -647,6 +651,7 @@ db_full_path_subset(
 	/* Check remainder of 'b' */
 	for (j = 1; j < b->fp_len; j++) {
 	    if (a->fp_names[i+j] != b->fp_names[j]) goto step;
+	    if (a->fp_cinst[i+j] != b->fp_cinst[j]) goto step;
 	}
 
 	/* 'b' is a proper subset */
@@ -673,6 +678,7 @@ db_full_path_match_top(
 
     for (i = 0; i < a->fp_len; i++) {
 	if (a->fp_names[i] != b->fp_names[i]) return 0;
+	if (a->fp_cinst[i] != b->fp_cinst[i]) return 0;
     }
 
     return 1;

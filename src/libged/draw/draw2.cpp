@@ -39,171 +39,13 @@
 #include "bg/lod.h"
 #include "nmg.h"
 #include "rt/view.h"
+#include "rt/db_fp.h"
 
 #include "ged/view/state.h"
 #define ALPHANUM_IMPL
 #include "../alphanum.h"
 #include "../ged_private.h"
 
-static void
-_db_comb_child_test(int *status, const struct db_i *dbip, union tree *tp, struct directory *dp)
-{
-    if (!tp) return;
-
-    RT_CHECK_DBI(dbip);
-    RT_CK_TREE(tp);
-
-    switch (tp->tr_op) {
-        case OP_UNION:
-        case OP_INTERSECT:
-        case OP_SUBTRACT:
-        case OP_XOR:
-            _db_comb_child_test(status, dbip, tp->tr_b.tb_right, dp);
-            /* fall through */
-        case OP_NOT:
-        case OP_GUARD:
-        case OP_XNOP:
-            _db_comb_child_test(status, dbip, tp->tr_b.tb_left, dp);
-            break;
-        case OP_DB_LEAF:
-            if (db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET) == dp) {
-                (*status) = 1;
-            }
-            break;
-        default:
-            bu_log("_db_comb_child_test: unrecognized operator %d\n", tp->tr_op);
-            bu_bomb("_db_comb_child_test\n");
-    }
-}
-
-static int
-db_comb_is_child(const struct db_i *dbip, struct directory *cdp, struct directory *dp)
-{
-    RT_CK_DBI(dbip);
-
-    if (!(cdp->d_flags & RT_DIR_COMB))
-        return 0;
-
-    struct rt_db_internal in;
-    struct rt_comb_internal *comb;
-    if (rt_db_get_internal(&in, cdp, dbip, NULL, &rt_uniresource) < 0)
-        return 0;
-    comb = (struct rt_comb_internal *)in.idb_ptr;
-    RT_CK_COMB(comb);
-
-    int is_child = 0;
-    _db_comb_child_test(&is_child, dbip, comb->tree, dp);
-    rt_db_free_internal(&in);
-    return is_child;
-}
-
-int
-db_fp_parse_path(struct db_full_path *pp, const struct db_i *dbip, const char *str)
-{
-    char *cp;
-    char *slashp;
-    struct directory *dp;
-    char *copy;
-    size_t nslash = 0;
-    int ret = 0;
-    size_t len;
-
-    /* assume NULL str is '/' */
-    if (!str) {
-	db_full_path_init(pp);
-	return 0;
-    }
-
-    while (*str == '/') str++; /* strip off leading slashes */
-    if (*str == '\0') {
-	/* Path of a lone slash */
-	db_full_path_init(pp);
-	return 0;
-    }
-
-    copy = bu_strdup(str);
-
-    /* eliminate all trailing slashes */
-    len = strlen(copy);
-    while (copy[len - 1] == '/') {
-	copy[len - 1] = '\0';
-	--len;
-    }
-
-    cp = copy;
-    while (*cp) {
-	if ((slashp = strchr(cp, '/')) == NULL) break;
-	nslash++;
-	cp = slashp+1;
-    }
-
-    /* Make a path structure just big enough */
-    pp->magic = DB_FULL_PATH_MAGIC;
-    pp->fp_maxlen = pp->fp_len = nslash+1;
-    pp->fp_names = (struct directory **)bu_malloc(
-	    pp->fp_maxlen * sizeof(struct directory *),
-	    "db_string_to_path path array");
-    pp->fp_bool = (int *)bu_calloc(
-	    pp->fp_maxlen, sizeof(int),
-	    "db_string_to_path bool array");
-    pp->fp_cinst = (int *)bu_calloc(
-	    pp->fp_maxlen, sizeof(int),
-	    "db_string_to_path cinst array");
-
-
-    RT_CK_DBI(dbip);
-
-    /* Build up path array */
-    cp = copy;
-    nslash = 0;
-    while (*cp) {
-	if ((slashp = strchr(cp, '/')) == NULL) {
-	    /* Last element of string, has no trailing slash */
-	    slashp = cp + strlen(cp) - 1;
-	} else {
-	    *slashp = '\0';
-	}
-	int comb_instance_index = 0;
-	dp = db_lookup(dbip, cp, LOOKUP_QUIET);
-	if (dp == RT_DIR_NULL) {
-	    char *atp = strchr(cp, '@');
-	    if (atp) {
-		*atp = '\0';
-		atp++;
-		if (bu_opt_int(NULL, 1, (const char **)&atp, (void *)&comb_instance_index) == -1) {
-		    bu_log("invalid comb instance index: %s\n", atp);
-		} else {
-		    bu_log("%d\n", comb_instance_index);
-		}
-		dp = db_lookup(dbip, cp, LOOKUP_NOISY);
-	    }
-	}
-	if (dp == RT_DIR_NULL) {
-	    bu_log("db_string_to_path() of '%s' failed on '%s'\n", str, cp);
-	    ret = -1; /* FAILED */
-	    /* Fall through, storing null dp in this location */
-	} else {
-	    // db_lookup isn't enough by itself - we also need to check that
-	    // the parent comb (if there is one) does in fact contain this dp
-	    if (nslash > 0 && pp->fp_names[nslash -1] != RT_DIR_NULL) {
-		if (!db_comb_is_child(dbip, pp->fp_names[nslash -1], dp)) {
-		    // NOT falling through here, since we do have a dp but it's
-		    // not under the parent
-		    bu_log("db_string_to_path() failed: '%s' is not a child of '%s'\n", dp->d_namep, pp->fp_names[nslash -1]->d_namep);
-		    pp->fp_names[nslash++] = RT_DIR_NULL;
-		    cp = slashp+1;
-		    ret = -1; /* FAILED */
-		    continue;
-		}
-	    }
-	}
-	pp->fp_names[nslash++] = dp;
-	cp = slashp+1;
-    }
-    BU_ASSERT(nslash == pp->fp_len);
-    bu_free(copy, "db_string_to_path() duplicate string");
-    return ret;
-}
 
 extern "C" int
 ged_pathtest_core(struct ged *gedp, int argc, const char *argv[])
@@ -214,7 +56,7 @@ ged_pathtest_core(struct ged *gedp, int argc, const char *argv[])
     for (int i = 0; i < argc; i++) {
 	struct db_full_path gfp;
 	db_full_path_init(&gfp);
-	if (db_fp_parse_path(&gfp, gedp->dbip, argv[i])) {
+	if (db_fp_from_string(&gfp, gedp->dbip, argv[i])) {
 	    db_free_full_path(&gfp);
 	    continue;
 	}
@@ -303,10 +145,10 @@ _bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// Have a comb - keep going
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
-	if (rt_db_get_internal(&in, dp, dd->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal(&in, dp, dd->dbip, NULL, dd->res) < 0)
 	    return;
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	draw_walk_tree(path, comb->tree, curr_mat, _bound_fp, client_data);
+	draw_walk_tree(path, comb->tree, curr_mat, _bound_fp, client_data, NULL);
 	rt_db_free_internal(&in);
 	// Use bbox to update sizing
 	if (dd->have_bbox) {
@@ -371,6 +213,9 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 {
     struct db_i *dbip = gedp->dbip;
     struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
+    struct resource *local_res;
+    BU_GET(local_res, struct resource);
+    rt_init_resource(local_res, 0, NULL);
 
     // If we have no active groups and no view objects, we are drawing into a
     // blank canvas - unless options specifically disable it, if we are doing
@@ -378,7 +223,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
     struct draw_data_t bounds_data;
     std::map<struct directory *, fastf_t> s_size;
     bounds_data.bound_only = 1;
-    bounds_data.res = &rt_uniresource;
+    bounds_data.res = local_res;
     bounds_data.have_bbox = 0;
     bounds_data.dbip = dbip;
     bounds_data.skip_subtractions = 1;
@@ -396,11 +241,10 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	struct db_full_path *fp;
 	BU_GET(fp, struct db_full_path);
 	db_full_path_init(fp);
-	int ret = db_string_to_path(fp, dbip, argv[i]);
+	int ret = db_fp_from_string(fp, dbip, argv[i]);
 	if (ret < 0) {
 	    // If that didn't work, there's one other thing we have to check
 	    // for - a really strange path with the "/" character in it.
-	    db_free_full_path(fp);
 	    struct directory *fdp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
 	    if (fdp == RT_DIR_NULL) {
 		// Invalid path
@@ -410,6 +254,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		continue;
 	    } else {
 		// Object name contained forward slash (urk!)
+		db_free_full_path(fp);
+		db_full_path_init(fp);
 		db_add_node_to_full_path(fp, fdp);
 	    }
 	}
@@ -430,7 +276,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    struct db_full_path *fp;
 	    BU_GET(fp, struct db_full_path);
 	    db_full_path_init(fp);
-	    int ret = db_string_to_path(fp, dbip, bu_vls_cstr(&s->s_name));
+	    int ret = db_fp_from_string(fp, dbip, bu_vls_cstr(&s->s_name));
 	    if (ret < 0) {
 		// If that didn't work, there's one other thing we have to check
 		// for - a really strange path with the "/" character in it.
@@ -443,6 +289,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		    continue;
 		} else {
 		    // Object name contained forward slash (urk!)
+		    db_free_full_path(fp);
+		    db_full_path_init(fp);
 		    db_add_node_to_full_path(fp, fdp);
 		}
 	    }
@@ -455,6 +303,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
     // plotting, do initial bounds calculations to pave the way for an
     // initial view setup.
     std::map<struct db_full_path *, struct bv_scene_group *> fp_g;
+
     for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
 	struct bv_scene_group *g = NULL;
 	struct db_full_path *fp = *f_it;
@@ -466,8 +315,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	// is a problem.
 	mat_t mat;
 	MAT_IDN(mat);
-	// TODO - get resource from somewhere other than rt_uniresource
-	if (!db_path_to_mat(dbip, fp, mat, fp->fp_len-1, &rt_uniresource)) {
+	if (db_fp_matrix(mat, fp, dbip, 0, local_res)) {
 	    db_free_full_path(fp);
 	    BU_PUT(fp, struct db_full_path);
 	    continue;
@@ -478,6 +326,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	std::set<struct bv_scene_group *>::iterator g_it;
 	struct bv_obj_settings fpvs;
 	bv_obj_settings_sync(&fpvs, vs);
+	bool clear_invalid_only = false;
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	    // If we already know we're clearing this one, don't check
@@ -489,17 +338,24 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    // Not already clearing, need to check
 	    struct db_full_path gfp;
 	    db_full_path_init(&gfp);
-	    int ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->s_name));
+	    int ret = db_fp_from_string(&gfp, dbip, bu_vls_cstr(&cg->s_name));
 	    if (ret < 0) {
 		// If we can't get a db_fullpath, it's invalid
 		clear.insert(cg);
 		db_free_full_path(&gfp);
 		continue;
 	    }
+
+	    // If we found an encompassing path, we don't need to do any more work
+	    if (clear_invalid_only) {
+		db_free_full_path(&gfp);
+		continue;
+	    }
+
 	    // Two conditions to check for here:
 	    // 1.  proposed draw path is a top match for existing path
 	    if (db_full_path_match_top(fp, &gfp)) {
-		// New path will replace this path - clear it
+		// New path will replace the currently drawn path - clear it
 		clear.insert(cg);
 		db_free_full_path(&gfp);
 		if (refresh)
@@ -516,28 +372,42 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		    bv_obj_settings_sync(&fpvs, &cg->s_os);
 		// We continue to weed out any other invalid paths in sg, even
 		// though cg should be the only path in sg that matches in this
-		// condition...
+		// condition.  However, we no longer need to do the top matches,
+		// so let the loop know
+		clear_invalid_only = true;
 		continue;
 	    }
+
+	    db_free_full_path(&gfp);
 	}
 
+	// IFF we are just redrawing part or all of an already drawn path, we don't
+	// need to create a new scene object.  Otherwise, we do.
 	if (g) {
-	    // remove children that match fp - we will be adding new versions to g to update it,
-	    // rather than creating a new one.
-	    std::set<struct bv_scene_obj *> sclear;
-	    std::set<struct bv_scene_obj *>::iterator s_it;
-	    for (size_t i = 0; i < BU_PTBL_LEN(&g->children); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, i);
-		struct db_full_path gfp;
-		db_full_path_init(&gfp);
-		db_string_to_path(&gfp, dbip, bu_vls_cstr(&s->s_name));
-		if (db_full_path_match_top(&gfp, fp)) {
-		    sclear.insert(s);
+	    // Remove children that match fp - we will be adding new versions
+	    // to g to update them.  If g has no children, it was probably an
+	    // evaluated shape - in that case, replace it with a fresh instance.
+	    if (!BU_PTBL_LEN(&g->children)) {
+		bv_obj_put(g);
+		g = bv_obj_get(v, BV_DB_OBJS);
+		db_fp_to_vls(&g->s_name, fp);
+		bv_obj_settings_sync(&g->s_os, &fpvs);
+	    } else {
+		std::set<struct bv_scene_obj *> sclear;
+		std::set<struct bv_scene_obj *>::iterator s_it;
+		for (size_t i = 0; i < BU_PTBL_LEN(&g->children); i++) {
+		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, i);
+		    struct db_full_path gfp;
+		    db_full_path_init(&gfp);
+		    db_fp_from_string(&gfp, dbip, bu_vls_cstr(&s->s_name));
+		    if (db_full_path_match_top(&gfp, fp)) {
+			sclear.insert(s);
+		    }
 		}
-	    }
-	    for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
-		struct bv_scene_obj *s = *s_it;
-		bv_obj_put(s);
+		for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
+		    struct bv_scene_obj *s = *s_it;
+		    bv_obj_put(s);
+		}
 	    }
 	} else {
 	    // Create new scene object.  Typically this will be a "parent"
@@ -547,7 +417,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    // unique to this object and in those cases drawing information
 	    // will be stored in this object directly.
 	    g = bv_obj_get(v, BV_DB_OBJS);
-	    db_path_to_vls(&g->s_name, fp);
+	    db_fp_to_vls(&g->s_name, fp);
 	    bv_obj_settings_sync(&g->s_os, &fpvs);
 	}
 
@@ -585,8 +455,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	// Seed initial matrix from the path
 	mat_t mat;
 	MAT_IDN(mat);
-	// TODO - get resource from somewhere other than rt_uniresource
-	if (!db_path_to_mat(dbip, fp, mat, fp->fp_len-1, &rt_uniresource)) {
+	if (db_fp_matrix(mat, fp, dbip, 0, local_res)) {
 	    db_free_full_path(fp);
 	    BU_PUT(fp, struct db_full_path);
 	    continue;
@@ -600,7 +469,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    dc[1] = 0;
 	    dc[2] = 0;
 	    bu_color_from_rgb_chars(&c, dc);
-	    db_full_path_color(&c, fp, dbip, &rt_uniresource);
+	    db_full_path_color(&c, fp, dbip, local_res);
 	}
 
 	// Prepare tree walking data container
@@ -612,7 +481,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	dd.mesh_c = gedp->ged_lod;
 	dd.color_inherit = 0;
 	dd.bound_only = 0;
-	dd.res = &rt_uniresource;
+	dd.res = local_res;
 	dd.bool_op = 2; // Default to union
 	if (vs->color_override) {
 	    bu_color_from_rgb_chars(&dd.c, vs->color);
@@ -638,7 +507,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    ud->dbip = dd.dbip;
 	    ud->tol = dd.tol;
 	    ud->ttol = dd.ttol;
-	    ud->res = dd.res;
+	    ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view... local_res is temporary, don't use it here
 	    ud->mesh_c = dd.mesh_c;
 	    g->s_i_data = (void *)ud;
 	    g->s_v = dd.v;
@@ -648,19 +517,23 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    continue;
 	}
 
-	// Walk the tree to build up the set of scene objects
+	// Walk the tree to build up the set of scene objects that will hold
+	// each instance's wireframe.  These scene objects will be stored as
+	// children of g (which is the "who" level drawn object).
 	draw_gather_paths(fp, &mat, (void *)&dd);
 
 	// Done with path
 	db_free_full_path(fp);
 	BU_PUT(fp, struct db_full_path);
     }
+    rt_clean_resource_basic(NULL, local_res);
+    BU_PUT(local_res, struct resource);
 
     // Sort
     bu_sort(BU_PTBL_BASEADDR(sg), BU_PTBL_LEN(sg), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
 
     // Scene objects are created and stored. The next step is to generate
-    // wireframes, triangles, etc. for that object based on current settings.
+    // wireframes, triangles, etc. for each object based on current settings.
     // It is then the job of the dm to display the scene objects supplied by
     // the view.
     return BRLCAD_OK;

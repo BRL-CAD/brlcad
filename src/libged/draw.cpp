@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <set>
+#include <unordered_map>
 
 #include <stdlib.h>
 #include <ctype.h>
@@ -43,6 +44,7 @@
 #include "bg/sat.h"
 #include "nmg.h"
 #include "rt/view.h"
+#include "rt/db_fp.h"
 
 #include "ged/view/state.h"
 #include "./alphanum.h"
@@ -637,12 +639,12 @@ tree_color(struct directory *dp, struct draw_data_t *dd)
 extern "C" void
 draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
 			 void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
-			 void *client_data)
+			 void *client_data, void *comb_inst_map)
 {
     mat_t om, nm;
     struct directory *dp;
     struct draw_data_t *dd= (struct draw_data_t *)client_data;
-    int prev_bool_op = dd->bool_op;
+    std::unordered_map<std::string, int> *cinst_map = (std::unordered_map<std::string, int> *)comb_inst_map;
 
     if (!tp)
 	return;
@@ -652,21 +654,22 @@ draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
     RT_CK_TREE(tp);
 
     switch (tp->tr_op) {
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    draw_walk_tree(path, tp->tr_b.tb_left, curr_mat, traverse_func, client_data, comb_inst_map);
+	    break;
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    if (tp->tr_op == OP_SUBTRACT)
-		dd->bool_op = 4;
-	    draw_walk_tree(path, tp->tr_b.tb_right, curr_mat, traverse_func, client_data);
-	    /* fall through */
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-	    dd->bool_op = prev_bool_op;
-	    draw_walk_tree(path, tp->tr_b.tb_left, curr_mat, traverse_func, client_data);
+	    draw_walk_tree(path, tp->tr_b.tb_left, curr_mat, traverse_func, client_data, comb_inst_map);
+	    dd->bool_op = tp->tr_op;
+	    draw_walk_tree(path, tp->tr_b.tb_right, curr_mat, traverse_func, client_data, comb_inst_map);
 	    break;
 	case OP_DB_LEAF:
+	    if (cinst_map)
+		(*cinst_map)[std::string(tp->tr_l.tl_name)]++;
 	    if ((dp=db_lookup(dd->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		return;
 	    } else {
@@ -696,6 +699,9 @@ draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
 		// duplicated in all traverse functions.
 		if (!(dp->d_flags & RT_DIR_HIDDEN)) {
 		    db_add_node_to_full_path(path, dp);
+		    DB_FULL_PATH_SET_CUR_BOOL(path, tp->tr_op);
+		    if (cinst_map)
+			DB_FULL_PATH_SET_CUR_COMB_INST(path, (*cinst_map)[std::string(tp->tr_l.tl_name)]-1);
 		    if (!db_full_path_cyclic(path, NULL, 0)) {
 			/* Keep going */
 			traverse_func(path, curr_mat, client_data);
@@ -746,9 +752,10 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	if (rt_db_get_internal(&in, dp, dd->dbip, NULL, &rt_uniresource) < 0)
 	    return;
 
+	std::unordered_map<std::string, int> cinst_map;
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 
-	draw_walk_tree(path, comb->tree, curr_mat, draw_gather_paths, client_data);
+	draw_walk_tree(path, comb->tree, curr_mat, draw_gather_paths, client_data, (void *)&cinst_map);
 	rt_db_free_internal(&in);
 
     } else {
@@ -764,38 +771,8 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// will end up getting handled by the object update callbacks, and the
 	// job here will just be to set up the key data for later use...
 
-	// There are two scenarios - one is we are creating a new scene object.
-	// The other is we are applying new global view settings to existing
-	// scene objects (i.e. re-drawing an object with shaded mode arguments
-	// instead of wireframe.)  In the latter case we need to find the
-	// existing view object and update it, in the former (where we can't
-	// find it) we create it instead.
-
-	// Have database object, find or make the appropriate child scene object
-#if 0
-	struct bu_vls iname = BU_VLS_INIT_ZERO;
-	XXH64_state_t *state = XXH64_createState();
-	XXH64_reset(state, 0);
-	XXH64_update(state, *curr_mat, sizeof(mat_t));
-	XXH64_hash_t hash_val = XXH64_digest(state);
-	XXH64_freeState(state);
-	db_path_to_vls(&iname, path);
-	bu_vls_printf(&iname, "_%llu_%d", (unsigned long long)hash_val, (dd->bool_op == 4) ? 1 : 0);
-	struct bv_scene_obj *s = bv_find_child(dd->g, bu_vls_cstr(&iname));
-	if (!s) {
-	    s = bv_obj_get_child(dd->g);
-	    bu_vls_sprintf(&s->s_name, "%s", bu_vls_cstr(&iname));
-	    MAT_COPY(s->s_mat, *curr_mat);
-	}
-	bu_vls_free(&iname);
-#endif
-	// s_name is how the draw commands convert a user specified path into
-	// the scene object.  It is potentially ambiguous, but so too are the
-	// user specified paths.  Until we have a command line convention for
-	// unique specification, the above attempt at naming uniqueness is
-	// counterproductive.
 	struct bv_scene_obj *s = bv_obj_get_child(dd->g);
-	db_path_to_vls(&s->s_name, path);
+	db_fp_to_vls(&s->s_name, path);
 	MAT_COPY(s->s_mat, *curr_mat);
 	bv_obj_settings_sync(&s->s_os, &dd->g->s_os);
 	s->s_type_flags = BV_DBOBJ_BASED;
@@ -815,7 +792,7 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	ud->tol = dd->tol;
 	ud->ttol = dd->ttol;
 	ud->mesh_c = dd->mesh_c;
-	ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view...
+	ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view.  dd->res is temporary, so we don't use it here
 	s->s_i_data = (void *)ud;
 
 	// Let the object know about its size

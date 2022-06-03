@@ -32,6 +32,7 @@
 #include <string.h>
 
 #include "bu/sort.h"
+#include "rt/db_fp.h"
 #include "ged/view/state.h"
 
 #define ALPHANUM_IMPL
@@ -51,6 +52,33 @@ print_names(struct bu_ptbl *so, int depth)
     }
 }
 #endif
+
+void
+fp_path_split(std::vector<std::string> &objs, const char *str)
+{
+    std::string s(str);
+    size_t pos = 0;
+    if (s.c_str()[0] == '/')
+	s.erase(0, 1);  //Remove leading slash
+    while ((pos = s.find_first_of("/", 0)) != std::string::npos) {
+	std::string ss = s.substr(0, pos);
+	objs.push_back(ss);
+	s.erase(0, pos + 1);
+    }
+    objs.push_back(s);
+}
+
+bool
+fp_path_top_match(std::vector<std::string> &top, std::vector<std::string> &candidate)
+{
+    for (size_t i = 0; i < top.size(); i++) {
+	if (i == candidate.size())
+	    return false;
+	if (top[i] != candidate[i])
+	    return false;
+    }
+    return true;
+}
 
 // Need to process shallowest to deepest, so we properly split new scene groups
 // generated from higher level paths that are in turn split by other deeper
@@ -72,6 +100,74 @@ struct dfp_cmp {
     }
 };
 
+
+struct erase_data {
+    std::unordered_map<struct bv_scene_group *, struct db_full_path *> *ngrps;
+    struct db_i *dbip;
+    struct db_full_path *fp;
+    struct bview *v;
+    std::unordered_map<std::string, int> *cinst_map;
+};
+
+extern "C" void
+path_add_children_walk_tree(struct db_full_path *path, union tree *tp,
+	int (*traverse_func) (std::unordered_map<struct bv_scene_group *, struct db_full_path *> *,
+	    struct db_i *, struct db_full_path *, struct db_full_path *, struct bview *),
+	void *client_data)
+{
+    struct bu_vls pvls = BU_VLS_INIT_ZERO;
+    struct bv_scene_group *g = NULL;
+    struct directory *dp;
+    struct db_full_path *nfp;
+    struct erase_data *ed = (struct erase_data *)client_data;
+
+    if (!tp)
+	return;
+
+    RT_CK_FULL_PATH(path);
+    RT_CHECK_DBI(ed->dbip);
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    path_add_children_walk_tree(path, tp->tr_b.tb_left, traverse_func, client_data);
+	    break;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    path_add_children_walk_tree(path, tp->tr_b.tb_left, traverse_func, client_data);
+	    path_add_children_walk_tree(path, tp->tr_b.tb_right, traverse_func, client_data);
+	    break;
+	case OP_DB_LEAF:
+	    (*ed->cinst_map)[std::string(tp->tr_l.tl_name)]++;
+	    if ((dp=db_lookup(ed->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
+		return;
+	    db_add_node_to_full_path(path, dp);
+	    DB_FULL_PATH_SET_CUR_BOOL(path, tp->tr_op);
+	    DB_FULL_PATH_SET_CUR_COMB_INST(path, (*ed->cinst_map)[std::string(tp->tr_l.tl_name)]-1);
+	    if (db_full_path_match_top(path, ed->fp)) {
+		if (DB_FULL_PATH_CUR_DIR(path) != DB_FULL_PATH_CUR_DIR(ed->fp))
+		    (*traverse_func)(ed->ngrps, ed->dbip, path, ed->fp, ed->v);
+	    } else {
+		g = bv_obj_create(ed->v, BV_DB_OBJS);
+		db_fp_to_vls(&pvls, path);
+		bu_vls_sprintf(&g->s_name, "%s", bu_vls_cstr(&pvls));
+		BU_ALLOC(nfp, struct db_full_path);
+		db_full_path_init(nfp);
+		db_dup_full_path(nfp, path);
+		(*ed->ngrps)[g] = nfp;
+	    }
+	    DB_FULL_PATH_POP(path);
+	    break;
+	default:
+	    bu_log("path_add_children_walk_tree: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("path_add_children_walk_tree: unrecognized operator\n");
+    }
+}
+
 /* Return 1 if we did a split, 0 otherwise */
 int
 path_add_children(
@@ -90,52 +186,16 @@ path_add_children(
 	return 0;
     }
     comb = (struct rt_comb_internal *)in.idb_ptr;
-    db_comb_children(dbip, comb, &children, NULL, NULL);
 
-    // First, make sure fp actually is a path matching one of this comb's children.
-    // A prior top match is not actually a guarantee of a full match.
-    int i = 0;
-    int path_match = 0;
-    struct directory *dp =  children[0];
-    while (dp != RT_DIR_NULL) {
-	db_add_node_to_full_path(gfp, dp);
-	if (db_full_path_match_top(gfp, fp)) {
-	    path_match = 1;
-	    DB_FULL_PATH_POP(gfp);
-	    break;
-	}
-	i++;
-	dp = children[i];
-	DB_FULL_PATH_POP(gfp);
-    }
+    std::unordered_map<std::string, int> comb_inst_map;
+    struct erase_data ed;
+    ed.ngrps = ngrps;
+    ed.dbip = dbip;
+    ed.fp = fp;
+    ed.v = v;
+    ed.cinst_map = &comb_inst_map;
 
-    if (!path_match) {
-	return 0;
-    }
-
-    i = 0;
-    dp =  children[0];
-    while (dp != RT_DIR_NULL) {
-	db_add_node_to_full_path(gfp, dp);
-	if (db_full_path_match_top(gfp, fp)) {
-	    if (DB_FULL_PATH_CUR_DIR(gfp) != DB_FULL_PATH_CUR_DIR(fp))
-		path_add_children(ngrps, dbip, gfp, fp, v);
-	} else {
-	    struct bu_vls pvls = BU_VLS_INIT_ZERO;
-	    struct bv_scene_group *g = bv_obj_create(v, BV_DB_OBJS);
-	    bu_vls_trunc(&pvls, 0);
-	    db_path_to_vls(&pvls, gfp);
-	    bu_vls_sprintf(&g->s_name, "%s", bu_vls_cstr(&pvls));
-	    struct db_full_path *nfp;
-	    BU_ALLOC(nfp, struct db_full_path);
-	    db_full_path_init(nfp);
-	    db_dup_full_path(nfp, gfp);
-	    (*ngrps)[g] = nfp;
-	}
-	i++;
-	dp = children[i];
-	DB_FULL_PATH_POP(gfp);
-    }
+    path_add_children_walk_tree(gfp, comb->tree, path_add_children, (void *)&ed);
 
     rt_db_free_internal(&in);
     bu_free(children, "free children struct directory ptr array");
@@ -143,18 +203,21 @@ path_add_children(
     return 1;
 }
 
+// For a given original drawn group and a set of splitting paths, find
+// the new groups needed to hold the subset of solids that will still
+// be drawn.
 void
 new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct bv_scene_group *cg, std::set<std::string> &spaths, struct bview *v)
 {
     std::set<struct db_full_path *, dfp_cmp> sfp;
     std::set<std::string>::iterator s_it;
 
-    // Turn spaths into db_full_paths so we can do depth ordered processing
+    // Turn splitting paths into db_full_paths so we can do depth ordered processing
     for (s_it = spaths.begin(); s_it != spaths.end(); s_it++) {
 	struct db_full_path *fp = NULL;
 	BU_ALLOC(fp, struct db_full_path);
 	db_full_path_init(fp);
-	int ret = db_string_to_path(fp, dbip, s_it->c_str());
+	int ret = db_fp_from_string(fp, dbip, s_it->c_str());
 	if (ret < 0) {
 	    // Invalid path
 	    db_free_full_path(fp);
@@ -178,7 +241,7 @@ new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct
 	struct db_full_path *gfp = NULL;
 	BU_ALLOC(gfp, struct db_full_path);
 	db_full_path_init(gfp);
-	int ret = db_string_to_path(gfp, dbip, bu_vls_cstr(&cg->s_name));
+	int ret = db_fp_from_string(gfp, dbip, bu_vls_cstr(&cg->s_name));
 	if (ret < 0) {
 	    // Invalid path
 	    db_free_full_path(gfp);
@@ -263,10 +326,11 @@ alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
 }
 
 /*
- * Erase objects from the display.
- *
- * TODO - like draw2, this needs to be aware of whether we're using local or shared
- * grp sets.
+ * Erase objects from the scene.  In many ways this is the most complex
+ * operation we need to perform on a displayed set of objects.  When subsets of
+ * objects are erased, the top level "who" objects need to be split into new
+ * objects, with each new "who" object being the highest level child instance
+ * available in the hierarchy that is still fully drawn.
  */
 extern "C" int
 ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
@@ -303,7 +367,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (!v->independent) {
-	    bu_vls_printf(gedp->ged_result_str, "Specified view %s is not an independent view, and as such does not support specifying db objects for display in only this view.  To change the view's status, he   command 'view independent %s 1' may be applied.\n", bu_vls_cstr(&cvls), bu_vls_cstr(&cvls));
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s is not an independent view, and as such does not support specifying db objects for display in only this view.  To change the view's status, the command 'view independent %s 1' may be applied.\n", bu_vls_cstr(&cvls), bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
 	    return BRLCAD_ERROR;
 	}
@@ -364,13 +428,17 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     std::map<struct bv_scene_group *, std::set<std::string>>::iterator g_it;
     for (e_it = epaths.begin(); e_it != epaths.end(); e_it++) {
 	bu_vls_sprintf(&upath, "%s", e_it->c_str());
+	std::vector<std::string> u_objs;
+	fp_path_split(u_objs, bu_vls_cstr(&upath));
 	for (c_it = all.begin(); c_it != all.end(); c_it++) {
 	    struct bv_scene_group *cg = *c_it;
-	    if (bu_vls_strlen(&upath) > bu_vls_strlen(&cg->s_name)) {
-		if (bu_vls_strncmp(&upath, &cg->s_name, bu_vls_strlen(&cg->s_name)) == 0) {
+	    std::vector<std::string> cg_objs;
+	    fp_path_split(cg_objs, bu_vls_cstr(&cg->s_name));
+	    if (u_objs.size() > cg_objs.size()) {
+		if (fp_path_top_match(cg_objs, u_objs)) {
 		    // The hard case - upath matches all of sname.  We're
-		    // erasing a part of the sname group, so we need to split
-		    // it up into new groups.
+		    // erasing only a part of the drawn group, so we need to
+		    // split it up into new groups.
 		    split[cg].insert(std::string(bu_vls_cstr(&upath)));
 
 		    // We may be clearing multiple paths, but only one path per
@@ -379,7 +447,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 		    break;
 		}
 	    } else {
-		if (bu_vls_strncmp(&upath, &cg->s_name, bu_vls_strlen(&upath)) == 0) {
+		if (fp_path_top_match(u_objs, cg_objs)) {
 		    // Easy case.  Drawn path (s_name) is equal to or below
 		    // hierarchy of specified upath, so it will be subsumed in
 		    // upath - just clear it.  This may happen to multiple
@@ -409,9 +477,13 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     // First step - remove the solid children corresponding to the removed
     // paths so cg->children contains only the set of solids to be drawn (it
     // will at that point be an invalid scene group but will be a suitable
-    // input for the next stage.)
+    // input for the next stage.)  NOTE:  we can't use db_full_path routines
+    // for this, since we want to be able to erase objects with no-longer-valid
+    // names and the full path routines validate against the .g database.
     for (g_it = split.begin(); g_it != split.end(); g_it++) {
 	struct bv_scene_group *cg = &(*g_it->first);
+	std::vector<std::string> cg_objs;
+	fp_path_split(cg_objs, bu_vls_cstr(&cg->s_name));
 	std::set<struct bv_scene_obj *> sclear;
 	std::set<struct bv_scene_obj *>::iterator s_it;
 	std::set<std::string>::iterator st_it;
@@ -422,14 +494,19 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    // Select the scene objects that contain upath in their hierarchy (i.e. s_name
 	    // is a full subset of upath).  These objects are removed.
-	    if (bu_vls_strncmp(&upath, &cg->s_name, bu_vls_strlen(&cg->s_name)) == 0) {
+	    std::vector<std::string> u_objs;
+	    fp_path_split(u_objs, bu_vls_cstr(&upath));
+	    bool match = fp_path_top_match(cg_objs, u_objs);
+	    if (match) {
 		for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
 		    // For the solids in cg, any that are below upath in the hierarchy
 		    // (that is, upath is a full subset of s_name) are being erased.
-		    if (bu_vls_strncmp(&upath, &s->s_name, bu_vls_strlen(&upath)) == 0) {
+		    std::vector<std::string> s_objs;
+		    fp_path_split(s_objs, bu_vls_cstr(&s->s_name));
+		    bool smatch = fp_path_top_match(u_objs, s_objs);
+		    if (smatch)
 			sclear.insert(s);
-		    }
 		    continue;
 		}
 	    }

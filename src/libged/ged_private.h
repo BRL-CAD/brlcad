@@ -217,7 +217,7 @@ struct draw_data_t {
 GED_EXPORT void draw_scene(struct bv_scene_obj *s, struct bview *v);
 GED_EXPORT void draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
           void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
-          void *client_data);
+          void *client_data, void *comb_inst_map);
 GED_EXPORT void draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data);
 
 GED_EXPORT void vls_col_item(struct bu_vls *str, const char *cp);

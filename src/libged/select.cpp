@@ -263,6 +263,49 @@ ged_get_selection_set(struct ged *gedp, const char *object_name, const char *sel
 }
 
 
+//////////////////////////////////////////////////////////////////////////
+
+void
+fp_path_split(std::vector<std::string> &objs, const char *str)
+{
+    std::string s(str);
+    size_t pos = 0;
+    if (s.c_str()[0] == '/')
+	s.erase(0, 1);  //Remove leading slash
+    while ((pos = s.find_first_of("/", 0)) != std::string::npos) {
+	std::string ss = s.substr(0, pos);
+	objs.push_back(ss);
+	s.erase(0, pos + 1);
+    }
+    objs.push_back(s);
+}
+
+bool
+fp_path_top_match(std::vector<std::string> &top, std::vector<std::string> &candidate)
+{
+    for (size_t i = 0; i < top.size(); i++) {
+	if (i == candidate.size())
+	    return false;
+	if (top[i] != candidate[i])
+	    return false;
+    }
+    return true;
+}
+
+#if 0
+/* Add and remove operations on sets of instance paths.  These are primarily for drawing
+ * code but may also be useful when manipulating selection sets. */
+int
+ged_fp_str_set_add(struct bu_ptbl *fps, const char *npath, struct db_i *dbip, int solids_flag)
+{
+}
+
+int
+ged_fp_str_set_rm(struct bu_ptbl *fps, const char *npath, struct db_i *dbip, int consolidate_flag)
+{
+}
+#endif
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

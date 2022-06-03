@@ -64,6 +64,7 @@ set(LIBRT_SOURCES
   db_diff.c
   db_flags.c
   db_flip.c
+  db_fp.cpp
   db_fullpath.c
   db_inmem.c
   db_io.c
@@ -393,7 +394,6 @@ add_subdirectory(tests)
 
 CMAKEFILES(
   CMakeLists.txt
-  db_fp.cpp
   vds/README
   vds/COPYING
   vds/vds.h
