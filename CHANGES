@@ -1676,3 +1676,4 @@ s/dm_draw_display_list/dm_draw_head_dl/g
 s/dm_draw_obj\(/dm_draw_display_list\(/g
 s/bu_whereis\(/bu_whence\(/g
 s/bu_which\(/bu_whence\(/g
+s/rt_gettree_muves\(/rt_gettrees_and_attrs\(/g

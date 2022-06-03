@@ -708,7 +708,7 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
 
 
 int
-rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
+rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
 {
     struct soltab *stp;
     struct region *regp;
@@ -875,14 +875,6 @@ again:
 	bu_log("rt_gettrees(%s) warning:  no primitives found\n", argv[0]);
     return 0;	/* OK */
 }
-
-
-int
-rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
-{
-    return rt_gettrees_muves(rtip, attrs, argc, argv, ncpus);
-}
-
 
 int
 rt_gettree(struct rt_i *rtip, const char *node)
