@@ -320,6 +320,8 @@ db_apply_state_from_memb(struct db_tree_state *tsp, struct db_full_path *pathp, 
 	return -1;
     }
 
+    /* TODO - I think this needs to change to support comb instance specifiers, but I'm
+     * not sure how yet... */
     db_add_node_to_full_path(pathp, mdp);
 
     MAT_COPY(old_xlate, tsp->ts_mat);
@@ -762,6 +764,9 @@ db_follow_path(
     /*
      * Process two things at once: the combination at [j], and its
      * member at [j+1].
+     *
+     * TODO - I think this needs to change to support comb instance specifiers, but I'm
+     * not sure how yet...
      */
     do {
 	/* j == depth is the last one, presumably a leaf */
