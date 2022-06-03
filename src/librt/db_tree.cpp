@@ -1,4 +1,4 @@
-/*                       D B _ T R E E . C
+/*                     D B _ T R E E . C P P
  * BRL-CAD
  *
  * Copyright (c) 1988-2022 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file librt/db_tree.c
+/** @file librt/db_tree.cpp
  *
  * Includes parallel tree walker routine.  Also includes routines to
  * return a matrix given a name or path.
@@ -2740,12 +2740,13 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 
 
 /** @} */
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

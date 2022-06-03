@@ -1,4 +1,4 @@
-/*                          P R E P . C
+/*                        P R E P . C P P
  * BRL-CAD
  *
  * Copyright (c) 1990-2022 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup ray */
 /** @{ */
-/** @file librt/prep.c
+/** @file librt/prep.cpp
  *
  * Manage one-time preparations to be done before actual ray-tracing
  * can commence.
@@ -2069,12 +2069,13 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
 /** @} */
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

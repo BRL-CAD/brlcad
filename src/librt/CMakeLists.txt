@@ -72,7 +72,7 @@ set(LIBRT_SOURCES
   db_match.c
   db_open.c
   db_scan.c
-  db_tree.c
+  db_tree.cpp
   db_walk.c
   dir.c
   dspline.c
@@ -86,7 +86,7 @@ set(LIBRT_SOURCES
   mkbundle.c
   op.c
   pr.c
-  prep.c
+  prep.cpp
   primitives/annot/annot.c
   primitives/arb8/arb8.c
   primitives/arb8/arb8_brep.cpp
