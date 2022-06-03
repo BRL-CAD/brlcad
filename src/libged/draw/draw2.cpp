@@ -56,7 +56,7 @@ ged_pathtest_core(struct ged *gedp, int argc, const char *argv[])
     for (int i = 0; i < argc; i++) {
 	struct db_full_path gfp;
 	db_full_path_init(&gfp);
-	if (db_fp_from_string(&gfp, gedp->dbip, argv[i])) {
+	if (db_string_to_path(&gfp, gedp->dbip, argv[i])) {
 	    db_free_full_path(&gfp);
 	    continue;
 	}
@@ -241,7 +241,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	struct db_full_path *fp;
 	BU_GET(fp, struct db_full_path);
 	db_full_path_init(fp);
-	int ret = db_fp_from_string(fp, dbip, argv[i]);
+	int ret = db_string_to_path(fp, dbip, argv[i]);
 	if (ret < 0) {
 	    // If that didn't work, there's one other thing we have to check
 	    // for - a really strange path with the "/" character in it.
@@ -276,7 +276,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    struct db_full_path *fp;
 	    BU_GET(fp, struct db_full_path);
 	    db_full_path_init(fp);
-	    int ret = db_fp_from_string(fp, dbip, bu_vls_cstr(&s->s_name));
+	    int ret = db_string_to_path(fp, dbip, bu_vls_cstr(&s->s_name));
 	    if (ret < 0) {
 		// If that didn't work, there's one other thing we have to check
 		// for - a really strange path with the "/" character in it.
@@ -315,7 +315,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	// is a problem.
 	mat_t mat;
 	MAT_IDN(mat);
-	if (db_fp_matrix(mat, fp, dbip, 0, local_res)) {
+	if (db_path_to_mat(dbip, fp, mat, 0, local_res)) {
 	    db_free_full_path(fp);
 	    BU_PUT(fp, struct db_full_path);
 	    continue;
@@ -338,7 +338,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    // Not already clearing, need to check
 	    struct db_full_path gfp;
 	    db_full_path_init(&gfp);
-	    int ret = db_fp_from_string(&gfp, dbip, bu_vls_cstr(&cg->s_name));
+	    int ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->s_name));
 	    if (ret < 0) {
 		// If we can't get a db_fullpath, it's invalid
 		clear.insert(cg);
@@ -390,7 +390,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    if (!BU_PTBL_LEN(&g->children)) {
 		bv_obj_put(g);
 		g = bv_obj_get(v, BV_DB_OBJS);
-		db_fp_to_vls(&g->s_name, fp);
+		db_path_to_vls(&g->s_name, fp);
 		bv_obj_settings_sync(&g->s_os, &fpvs);
 	    } else {
 		std::set<struct bv_scene_obj *> sclear;
@@ -399,7 +399,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, i);
 		    struct db_full_path gfp;
 		    db_full_path_init(&gfp);
-		    db_fp_from_string(&gfp, dbip, bu_vls_cstr(&s->s_name));
+		    db_string_to_path(&gfp, dbip, bu_vls_cstr(&s->s_name));
 		    if (db_full_path_match_top(&gfp, fp)) {
 			sclear.insert(s);
 		    }
@@ -417,7 +417,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    // unique to this object and in those cases drawing information
 	    // will be stored in this object directly.
 	    g = bv_obj_get(v, BV_DB_OBJS);
-	    db_fp_to_vls(&g->s_name, fp);
+	    db_path_to_vls(&g->s_name, fp);
 	    bv_obj_settings_sync(&g->s_os, &fpvs);
 	}
 
@@ -455,7 +455,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	// Seed initial matrix from the path
 	mat_t mat;
 	MAT_IDN(mat);
-	if (db_fp_matrix(mat, fp, dbip, 0, local_res)) {
+	if (db_path_to_mat(dbip, fp, mat, 0, local_res)) {
 	    db_free_full_path(fp);
 	    BU_PUT(fp, struct db_full_path);
 	    continue;

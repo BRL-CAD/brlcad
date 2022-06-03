@@ -853,11 +853,11 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
 
     db_full_path_init(&new_path);
 
-    if (db_fp_from_string(&new_path, tsp->ts_dbip, orig_str) < 0) {
+    if (db_string_to_path(&new_path, tsp->ts_dbip, orig_str) < 0) {
 	db_free_full_path(&new_path);
 	return -1;
     }
-    bu_log("%s->%s\n", orig_str, db_fp_to_string(&new_path));
+    bu_log("%s->%s\n", orig_str, db_path_to_string(&new_path));
 
     if (new_path.fp_len <= 0) {
 	db_free_full_path(&new_path);
@@ -2287,12 +2287,12 @@ db_region_mat(
     mat_t region_to_model;
 
     /* get transformation between world and "region" coordinates */
-    if (db_fp_from_string(&full_path, dbip, name)) {
+    if (db_string_to_path(&full_path, dbip, name)) {
 	/* bad thing */
-	bu_log("db_region_mat: db_fp_from_string(%s) error\n", name);
+	bu_log("db_region_mat: db_string_to_path(%s) error\n", name);
 	return -1;
     }
-    if (!db_fp_matrix(region_to_model, &full_path, dbip, 0, resp)) {
+    if (!db_path_to_mat(dbip, &full_path, region_to_model, 0, resp)) {
 	/* bad thing */
 	bu_log("db_region_mat: db_fp_matrix(%s) error", name);
 	return -2;

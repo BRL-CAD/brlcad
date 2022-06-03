@@ -772,7 +772,7 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// job here will just be to set up the key data for later use...
 
 	struct bv_scene_obj *s = bv_obj_get_child(dd->g);
-	db_fp_to_vls(&s->s_name, path);
+	db_path_to_vls(&s->s_name, path);
 	MAT_COPY(s->s_mat, *curr_mat);
 	bv_obj_settings_sync(&s->s_os, &dd->g->s_os);
 	s->s_type_flags = BV_DBOBJ_BASED;

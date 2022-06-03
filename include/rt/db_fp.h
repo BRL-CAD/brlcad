@@ -61,28 +61,6 @@ struct directory; /* forward declaration */
 /** @file rt/db_fp.h */
 
 RT_EXPORT extern int
-db_fp_from_string(struct db_full_path *pp, const struct db_i *dbip, const char *str);
-
-
-RT_EXPORT extern int
-db_fp_from_argv(struct db_full_path *pp, const struct db_i *dbip, const char *str);
-
-RT_EXPORT extern char *
-db_fp_to_string(const struct db_full_path *pp);
-
-
-RT_EXPORT extern void
-db_fp_to_vls(struct bu_vls *s, const struct db_full_path *pp);
-
-
-RT_EXPORT extern int
-db_fp_matrix(mat_t mat, /* result */
-	struct db_full_path *pathp,
-	struct db_i *dbip,
-	int depth, /* number of arcs - 0 == all */
-	struct resource *resp);
-
-RT_EXPORT extern int
 db_fp_op(struct db_full_path *pathp,
 	struct db_i *dbip,
 	int depth, /* number of arcs - 0 == all */

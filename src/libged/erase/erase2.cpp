@@ -153,7 +153,7 @@ path_add_children_walk_tree(struct db_full_path *path, union tree *tp,
 		    (*traverse_func)(ed->ngrps, ed->dbip, path, ed->fp, ed->v);
 	    } else {
 		g = bv_obj_create(ed->v, BV_DB_OBJS);
-		db_fp_to_vls(&pvls, path);
+		db_path_to_vls(&pvls, path);
 		bu_vls_sprintf(&g->s_name, "%s", bu_vls_cstr(&pvls));
 		BU_ALLOC(nfp, struct db_full_path);
 		db_full_path_init(nfp);
@@ -217,7 +217,7 @@ new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct
 	struct db_full_path *fp = NULL;
 	BU_ALLOC(fp, struct db_full_path);
 	db_full_path_init(fp);
-	int ret = db_fp_from_string(fp, dbip, s_it->c_str());
+	int ret = db_string_to_path(fp, dbip, s_it->c_str());
 	if (ret < 0) {
 	    // Invalid path
 	    db_free_full_path(fp);
@@ -241,7 +241,7 @@ new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct
 	struct db_full_path *gfp = NULL;
 	BU_ALLOC(gfp, struct db_full_path);
 	db_full_path_init(gfp);
-	int ret = db_fp_from_string(gfp, dbip, bu_vls_cstr(&cg->s_name));
+	int ret = db_string_to_path(gfp, dbip, bu_vls_cstr(&cg->s_name));
 	if (ret < 0) {
 	    // Invalid path
 	    db_free_full_path(gfp);

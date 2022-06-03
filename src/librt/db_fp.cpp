@@ -128,7 +128,7 @@ dp_instance(int *comb_instance_index, const struct db_i *dbip, const char *cp)
 }
 
 int
-db_fp_from_string(struct db_full_path *pp, const struct db_i *dbip, const char *str)
+db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *str)
 {
     char *cp;
     char *slashp;
@@ -172,13 +172,13 @@ db_fp_from_string(struct db_full_path *pp, const struct db_i *dbip, const char *
     pp->fp_maxlen = pp->fp_len = nslash+1;
     pp->fp_names = (struct directory **)bu_malloc(
 	    pp->fp_maxlen * sizeof(struct directory *),
-	    "db_fp_from_string path array");
+	    "db_string_to_path path array");
     pp->fp_bool = (int *)bu_calloc(
 	    pp->fp_maxlen, sizeof(int),
-	    "db_fp_from_string bool array");
+	    "db_string_to_path bool array");
     pp->fp_cinst = (int *)bu_calloc(
 	    pp->fp_maxlen, sizeof(int),
-	    "db_fp_from_string cinst array");
+	    "db_string_to_path cinst array");
 
 
     RT_CK_DBI(dbip);
@@ -198,7 +198,7 @@ db_fp_from_string(struct db_full_path *pp, const struct db_i *dbip, const char *
 	if (dp == RT_DIR_NULL)
 	    dp = dp_instance(&comb_instance_index, dbip, cp);
 	if (dp == RT_DIR_NULL) {
-	    bu_log("db_fp_from_string() of '%s' failed on '%s'\n", str, cp);
+	    bu_log("db_string_to_path() of '%s' failed on '%s'\n", str, cp);
 	    ret = -1; /* FAILED */
 	    /* Fall through, storing null dp in this location */
 	} else {
@@ -209,7 +209,7 @@ db_fp_from_string(struct db_full_path *pp, const struct db_i *dbip, const char *
 		if (!db_comb_has_instance(&bool_op, dbip, pp->fp_names[nslash -1], dp, comb_instance_index)) {
 		    // NOT falling through here, since we do have a dp but it's
 		    // not under the parent
-		    bu_log("db_fp_from_string() failed: '%s@%d' is not a child of '%s'\n", dp->d_namep, comb_instance_index, pp->fp_names[nslash -1]->d_namep);
+		    bu_log("db_string_to_path() failed: '%s@%d' is not a child of '%s'\n", dp->d_namep, comb_instance_index, pp->fp_names[nslash -1]->d_namep);
 		    pp->fp_names[nslash++] = RT_DIR_NULL;
 		    cp = slashp+1;
 		    ret = -1; /* FAILED */
@@ -223,12 +223,12 @@ db_fp_from_string(struct db_full_path *pp, const struct db_i *dbip, const char *
 	cp = slashp+1;
     }
     BU_ASSERT(nslash == pp->fp_len);
-    bu_free(copy, "db_fp_from_string() duplicate string");
+    bu_free(copy, "db_string_to_path() duplicate string");
     return ret;
 }
 
 int
-db_fp_from_argv(struct db_full_path *pp, struct db_i *dbip, int argc, const char *const *argv)
+db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char *const *argv)
 {
     struct directory *dp;
     int ret = 0;
@@ -286,7 +286,7 @@ db_fp_from_argv(struct db_full_path *pp, struct db_i *dbip, int argc, const char
 
 
 void
-db_fp_to_vls(struct bu_vls *str, const struct db_full_path *pp)
+db_path_to_vls(struct bu_vls *str, const struct db_full_path *pp)
 {
     size_t i;
 
@@ -310,11 +310,11 @@ db_fp_to_vls(struct bu_vls *str, const struct db_full_path *pp)
 }
 
 char *
-db_fp_to_string(const struct db_full_path *pp)
+db_path_to_string(const struct db_full_path *pp)
 {
     char *buf = NULL;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    db_fp_to_vls(&vls, pp);
+    db_path_to_vls(&vls, pp);
     if (bu_vls_strlen(&vls))
 	buf = bu_strdup(bu_vls_cstr(&vls));
     bu_vls_free(&vls);
@@ -347,11 +347,13 @@ _comb_instance_matrix(matp_t m, const struct db_i *dbip, struct directory *cdp, 
 }
 
 int
-db_fp_matrix(mat_t mat,
-	struct db_full_path *pp,
+db_path_to_mat(
 	struct db_i *dbip,
+	struct db_full_path *pp,
+	mat_t mat,
 	int depth,
-	struct resource *resp)
+	struct resource *resp
+	)
 {
     if (!pp || !dbip || depth < 0 || !resp)
 	return -1;
