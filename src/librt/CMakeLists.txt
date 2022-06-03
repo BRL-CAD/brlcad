@@ -224,7 +224,7 @@ set(LIBRT_SOURCES
   reduce_db.cpp
   regionfix.c
   roots.c
-  search.c
+  search.cpp
   shoot.c
   timer.cpp
   tol.c
