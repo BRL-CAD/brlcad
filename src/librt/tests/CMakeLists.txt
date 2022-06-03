@@ -69,6 +69,7 @@ set(distcheck_files
   arb_intersect.g
   brep_boolean_tests.g
   cyclic_tests.g
+  matrix_tests.g
   nurbs_surfaces.g
   extreme_ssi_test.g
   binary_attribute.c
