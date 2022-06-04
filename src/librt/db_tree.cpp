@@ -28,6 +28,9 @@
 
 #include "common.h"
 
+#include <string>
+#include <unordered_map>
+
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
@@ -123,6 +126,7 @@ db_new_combined_tree_state(const struct db_tree_state *tsp, const struct db_full
     db_dup_db_tree_state(&(new_ctsp->cts_s), tsp);
     db_full_path_init(&(new_ctsp->cts_p));
     db_dup_full_path(&(new_ctsp->cts_p), pathp);
+    bu_log("cts_p: %s\n", db_path_to_string(&(new_ctsp->cts_p)));
     return new_ctsp;
 }
 
@@ -303,11 +307,12 @@ db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *p
 
 
 int
-db_apply_state_from_memb(struct db_tree_state *tsp, struct db_full_path *pathp, const union tree *tp)
+db_apply_state_from_memb(struct db_tree_state *tsp, struct db_full_path *pathp, const union tree *tp, void *cmap)
 {
     struct directory *mdp;
     mat_t xmat;
     mat_t old_xlate;
+    std::unordered_map<std::string, int> *c_inst_map = (std::unordered_map<std::string, int> *)cmap;
 
     RT_CK_DBTS(tsp);
     RT_CK_FULL_PATH(pathp);
@@ -320,9 +325,10 @@ db_apply_state_from_memb(struct db_tree_state *tsp, struct db_full_path *pathp, 
 	return -1;
     }
 
-    /* TODO - I think this needs to change to support comb instance specifiers, but I'm
-     * not sure how yet... */
     db_add_node_to_full_path(pathp, mdp);
+    bu_log("db_apply_state_from_memb: %s\n", db_path_to_string(pathp));
+    if (c_inst_map)
+	DB_FULL_PATH_SET_CUR_COMB_INST(pathp, (*c_inst_map)[std::string(tp->tr_l.tl_name)]-1);
 
     MAT_COPY(old_xlate, tsp->ts_mat);
     if (tp->tr_l.tl_mat) {
@@ -352,9 +358,13 @@ db_apply_state_from_one_member(
     struct db_full_path *pathp,
     const char *cp,
     int sofar,
-    const union tree *tp)
+    const union tree *tp,
+    int target_inst,
+    void *cmap
+    )
 {
     int ret;
+    std::unordered_map<std::string, int> *c_inst_map = (std::unordered_map<std::string, int> *)cmap;
 
     RT_CK_DBTS(tsp);
     RT_CHECK_DBI(tsp->ts_dbip);
@@ -364,10 +374,14 @@ db_apply_state_from_one_member(
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
+	    if (c_inst_map)
+		(*c_inst_map)[std::string(tp->tr_l.tl_name)]++;
 	    if (!BU_STR_EQUAL(cp, tp->tr_l.tl_name))
 		return 0;		/* NO-OP */
+	    if ((*c_inst_map)[std::string(tp->tr_l.tl_name)]-1 != target_inst)
+		return 0;
 	    tsp->ts_sofar |= sofar;
-	    if (db_apply_state_from_memb(tsp, pathp, tp) < 0)
+	    if (db_apply_state_from_memb(tsp, pathp, tp, cmap) < 0)
 		return -1;		/* FAIL */
 	    return 1;			/* success */
 
@@ -376,14 +390,14 @@ db_apply_state_from_one_member(
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    ret = db_apply_state_from_one_member(tsp, pathp, cp, sofar,
-						 tp->tr_b.tb_left);
+						 tp->tr_b.tb_left, target_inst, cmap);
 	    if (ret != 0) return ret;
 	    if (tp->tr_op == OP_SUBTRACT)
 		sofar |= TS_SOFAR_MINUS;
 	    else if (tp->tr_op == OP_INTERSECT)
 		sofar |= TS_SOFAR_INTER;
 	    return db_apply_state_from_one_member(tsp, pathp, cp, sofar,
-						  tp->tr_b.tb_right);
+						  tp->tr_b.tb_right, target_inst, cmap);
 
 	default:
 	    bu_log("db_apply_state_from_one_member: bad op %d\n", tp->tr_op);
@@ -698,6 +712,10 @@ db_follow_path(
     struct directory *dp;	/* element's dp */
     size_t j;
 
+    std::unordered_map<std::string, int> c_inst_map;
+    int itarget = 0;
+
+
     RT_CK_DBTS(tsp);
     RT_CHECK_DBI(tsp->ts_dbip);
     RT_CK_FULL_PATH(total_path);
@@ -754,6 +772,7 @@ db_follow_path(
 
 	/* Put first element on output path, either way */
 	db_add_node_to_full_path(total_path, dp);
+	DB_FULL_PATH_SET_CUR_COMB_INST(total_path, 0);
 
 	if ((dp->d_flags & RT_DIR_COMB) == 0) goto is_leaf;
 
@@ -764,14 +783,12 @@ db_follow_path(
     /*
      * Process two things at once: the combination at [j], and its
      * member at [j+1].
-     *
-     * TODO - I think this needs to change to support comb instance specifiers, but I'm
-     * not sure how yet...
      */
     do {
 	/* j == depth is the last one, presumably a leaf */
 	if (j > (size_t)depth) break;
 	dp = new_path->fp_names[j];
+	itarget = new_path->fp_cinst[j];
 	RT_CK_DIR(dp);
 
 	if (!comb_dp) {
@@ -797,7 +814,8 @@ db_follow_path(
 	    goto fail;
 
 	/* Crawl tree searching for specified leaf */
-	if (db_apply_state_from_one_member(tsp, total_path, dp->d_namep, 0, comb->tree) <= 0) {
+	c_inst_map.clear();
+	if (db_apply_state_from_one_member(tsp, total_path, dp->d_namep, 0, comb->tree, itarget, (void *)&c_inst_map) <= 0) {
 	    bu_log("db_follow_path() ERROR: unable to apply member %s state\n", dp->d_namep);
 	    goto fail;
 	}
@@ -862,7 +880,7 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
 	db_free_full_path(&new_path);
 	return -1;
     }
-    bu_log("%s->%s\n", orig_str, db_path_to_string(&new_path));
+    bu_log("db_follow_path_for_state: %s->%s\n", orig_str, db_path_to_string(&new_path));
 
     if (new_path.fp_len <= 0) {
 	db_free_full_path(&new_path);
@@ -880,11 +898,11 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
  * Helper routine for db_recurse()
  */
 HIDDEN void
-_db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, void *client_data)
+_db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, void *client_data, void *cmap)
 {
     struct db_tree_state memb_state;
     union tree *subtree;
-
+    std::unordered_map<std::string, int> *c_inst_map = (std::unordered_map<std::string, int> *)cmap;
     RT_CK_TREE(tp);
     RT_CK_DBTS(msp);
     RT_CK_RESOURCE(msp->ts_resp);
@@ -893,7 +911,9 @@ _db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_pa
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
-	    if (db_apply_state_from_memb(&memb_state, pathp, tp) < 0) {
+	    if (c_inst_map)
+		(*c_inst_map)[std::string(tp->tr_l.tl_name)]++;
+	    if (db_apply_state_from_memb(&memb_state, pathp, tp, cmap) < 0) {
 		/* Lookup of this leaf failed, NOP it out. */
 		if (tp->tr_l.tl_mat) {
 		    bu_free((char *)tp->tr_l.tl_mat, "tl_mat");
@@ -929,7 +949,7 @@ _db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_pa
 	    }
 
 	    /* Recursive call */
-	    if ((subtree = db_recurse(&memb_state, pathp, region_start_statepp, client_data)) != TREE_NULL) {
+	    if ((subtree = db_recurse(&memb_state, pathp, region_start_statepp, client_data, cmap)) != TREE_NULL) {
 		union tree *tmp;
 
 		/* graft subtree on in place of 'tp' leaf node */
@@ -960,12 +980,12 @@ _db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_pa
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    _db_recurse_subtree(tp->tr_b.tb_left, &memb_state, pathp, region_start_statepp, client_data);
+	    _db_recurse_subtree(tp->tr_b.tb_left, &memb_state, pathp, region_start_statepp, client_data, cmap);
 	    if (tp->tr_op == OP_SUBTRACT)
 		memb_state.ts_sofar |= TS_SOFAR_MINUS;
 	    else if (tp->tr_op == OP_INTERSECT)
 		memb_state.ts_sofar |= TS_SOFAR_INTER;
-	    _db_recurse_subtree(tp->tr_b.tb_right, &memb_state, pathp, region_start_statepp, client_data);
+	    _db_recurse_subtree(tp->tr_b.tb_right, &memb_state, pathp, region_start_statepp, client_data, cmap);
 	    break;
 
 	default:
@@ -980,7 +1000,7 @@ out:
 
 
 union tree *
-db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, void *client_data)
+db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, void *client_data, void *cmap)
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -1031,6 +1051,8 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
+	std::unordered_map<std::string, int> c_inst_map;
+
 	db5_sync_attr_to_comb(comb, &intern.idb_avs, dp);
 	if ((is_region = db_apply_state_from_comb(&nts, pathp, comb)) < 0) {
 	    db_free_db_tree_state(&nts);
@@ -1093,7 +1115,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	    rt_db_free_internal(&intern);
 	    comb = NULL;
 
-	    _db_recurse_subtree(curtree, &nts, pathp, region_start_statepp, client_data);
+	    _db_recurse_subtree(curtree, &nts, pathp, region_start_statepp, client_data, cmap);
 	    if (curtree)
 		RT_CK_TREE(curtree);
 	} else {
@@ -1861,7 +1883,8 @@ _db_walk_subtree(
     struct combined_tree_state **region_start_statepp,
     union tree *(*leaf_func)(struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *),
     void *client_data,
-    struct resource *resp)
+    struct resource *resp,
+    void *cmap)
 {
     struct combined_tree_state *ctsp;
     union tree *curtree;
@@ -1902,7 +1925,7 @@ _db_walk_subtree(
 	    else
 		ctsp->cts_s.ts_sofar &= ~TS_SOFAR_REGION;
 
-	    curtree = db_recurse(&ctsp->cts_s, &ctsp->cts_p, region_start_statepp, client_data);
+	    curtree = db_recurse(&ctsp->cts_s, &ctsp->cts_p, region_start_statepp, client_data, cmap);
 	    if (curtree == TREE_NULL) {
 		char *str;
 		str = db_path_to_string(&(ctsp->cts_p));
@@ -1925,7 +1948,7 @@ _db_walk_subtree(
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-	    _db_walk_subtree(tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data, resp);
+	    _db_walk_subtree(tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data, resp, cmap);
 	    return;
 
 	case OP_UNION:
@@ -1933,8 +1956,8 @@ _db_walk_subtree(
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    /* This node is known to be a binary op */
-	    _db_walk_subtree(tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data, resp);
-	    _db_walk_subtree(tp->tr_b.tb_right, region_start_statepp, leaf_func, client_data, resp);
+	    _db_walk_subtree(tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data, resp, cmap);
+	    _db_walk_subtree(tp->tr_b.tb_right, region_start_statepp, leaf_func, client_data, resp, cmap);
 	    return;
 
 	case OP_DB_LEAF:
@@ -1996,7 +2019,8 @@ _db_walk_dispatcher(int cpu, void *arg)
 
 	/* Walk the full subtree now */
 	region_start_statep = (struct combined_tree_state *)0;
-	_db_walk_subtree(curtree, &region_start_statep, wps->reg_leaf_func, wps->client_data, resp);
+	std::unordered_map<std::string, int> c_inst_map;
+	_db_walk_subtree(curtree, &region_start_statep, wps->reg_leaf_func, wps->client_data, resp, (void *)&c_inst_map);
 
 	/* curtree->tr_op may be OP_NOP here.
 	 * It is up to db_reg_end_func() to deal with this,
@@ -2104,7 +2128,8 @@ db_walk_tree(struct db_i *dbip,
 	ts.ts_leaf_func = _db_gettree_leaf;
 
 	region_start_statep = (struct combined_tree_state *)0;
-	curtree = db_recurse(&ts, &path, &region_start_statep, client_data);
+	std::unordered_map<std::string, int> c_inst_map;
+	curtree = db_recurse(&ts, &path, &region_start_statep, client_data, (void *)&c_inst_map);
 	if (region_start_statep)
 	    db_free_combined_tree_state(region_start_statep);
 	db_free_full_path(&path);

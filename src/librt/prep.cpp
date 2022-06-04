@@ -28,6 +28,9 @@
 
 #include "common.h"
 
+#include <string>
+#include <unordered_map>
+
 #include <stdlib.h>
 #include <stddef.h>
 #include <math.h>
@@ -1486,8 +1489,10 @@ rt_find_path(struct db_i *dbip,
 	     struct directory *end,
 	     struct bu_ptbl *paths,
 	     struct db_full_path **curr_path,
-	     struct resource *resp)
+	     struct resource *resp,
+	     void *cmap)
 {
+    std::unordered_map<std::string, int> *c_inst_map = (std::unordered_map<std::string, int> *)cmap;
     int curr_path_index = (*curr_path)->fp_len;
     struct db_full_path *newpath;
     struct directory *dp;
@@ -1496,12 +1501,16 @@ rt_find_path(struct db_i *dbip,
 
     switch (tp->tr_op) {
 	case OP_DB_LEAF:
+	    if (c_inst_map)
+		(*c_inst_map)[std::string(tp->tr_l.tl_name)]++;
 	    dp = db_lookup(dbip, tp->tr_l.tl_name, 1);
 	    if (dp == RT_DIR_NULL) {
 		bu_log("Unable to lookup geometry [%s]\nAborting.\n", tp->tr_l.tl_name);
 		return;
 	    }
 	    db_add_node_to_full_path(*curr_path, dp);
+	    if (c_inst_map)
+		DB_FULL_PATH_SET_CUR_COMB_INST(*curr_path, (*c_inst_map)[std::string(tp->tr_l.tl_name)]-1);
 	    if (dp == end) {
 		bu_ptbl_ins(paths, (long *)(*curr_path));
 		BU_ALLOC(newpath, struct db_full_path);
@@ -1515,7 +1524,8 @@ rt_find_path(struct db_i *dbip,
 		    return;
 		}
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
-		rt_find_path(dbip, comb->tree, end, paths, curr_path, resp);
+		std::unordered_map<std::string, int> n_cmap;
+		rt_find_path(dbip, comb->tree, end, paths, curr_path, resp, (void *)&n_cmap);
 		rt_db_free_internal(&intern);
 	    }
 	    break;
@@ -1524,13 +1534,13 @@ rt_find_path(struct db_i *dbip,
 	case OP_INTERSECT:
 	case OP_XOR:
 	    /* binary, process both subtrees */
-	    rt_find_path(dbip, tp->tr_b.tb_left, end, paths, curr_path, resp);
+	    rt_find_path(dbip, tp->tr_b.tb_left, end, paths, curr_path, resp, cmap);
 	    (*curr_path)->fp_len = curr_path_index;
-	    rt_find_path(dbip, tp->tr_b.tb_right, end, paths, curr_path, resp);
+	    rt_find_path(dbip, tp->tr_b.tb_right, end, paths, curr_path, resp, cmap);
 	    break;
 	case OP_NOT:
 	case OP_GUARD:
-	    rt_find_path(dbip, tp->tr_b.tb_left, end, paths, curr_path, resp);
+	    rt_find_path(dbip, tp->tr_b.tb_left, end, paths, curr_path, resp, cmap);
 	    break;
 	default:
 	    bu_log("ERROR: rt_find_path(): Unrecognized OP (%d)\n", tp->tr_op);
@@ -1578,7 +1588,8 @@ rt_find_paths(struct db_i *dbip,
     }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
-    rt_find_path(dbip, comb->tree, end, paths, &path, resp);
+    std::unordered_map<std::string, int> c_inst_map;
+    rt_find_path(dbip, comb->tree, end, paths, &path, resp, (void *)&c_inst_map);
     rt_db_free_internal(&intern);
 
     return 0;

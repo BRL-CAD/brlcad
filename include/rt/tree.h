@@ -340,7 +340,8 @@ RT_EXPORT extern int db_apply_state_from_comb(struct db_tree_state *tsp,
  */
 RT_EXPORT extern int db_apply_state_from_memb(struct db_tree_state *tsp,
 					      struct db_full_path *pathp,
-					      const union tree *tp);
+					      const union tree *tp,
+					      void *cmap);
 
 /**
  * Returns -
@@ -352,7 +353,10 @@ RT_EXPORT extern int db_apply_state_from_one_member(struct db_tree_state *tsp,
 						    struct db_full_path *pathp,
 						    const char *cp,
 						    int sofar,
-						    const union tree *tp);
+						    const union tree *tp,
+						    int target_inst,
+						    void *cmap
+						    );
 
 /**
  * The search stops on the first match.
@@ -482,7 +486,8 @@ RT_EXPORT extern int db_follow_path_for_state(struct db_tree_state *tsp,
 RT_EXPORT extern union tree *db_recurse(struct db_tree_state    *tsp,
 					struct db_full_path *pathp,
 					struct combined_tree_state **region_start_statepp,
-					void *client_data);
+					void *client_data,
+					void *cmap);
 RT_EXPORT extern union tree *db_dup_subtree(const union tree *tp,
 					    struct resource *resp);
 RT_EXPORT extern void db_ck_tree(const union tree *tp);
