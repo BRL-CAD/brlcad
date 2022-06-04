@@ -393,7 +393,6 @@ add_subdirectory(tests)
 
 CMAKEFILES(
   CMakeLists.txt
-  db_fp.cpp
   vds/README
   vds/COPYING
   vds/vds.h
