@@ -64,7 +64,7 @@ set(LIBRT_SOURCES
   db_diff.c
   db_flags.c
   db_flip.c
-  db_fullpath.c
+  db_fullpath.cpp
   db_inmem.c
   db_io.c
   db_lookup.c
