@@ -119,7 +119,7 @@ _bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// Have a comb - keep going
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
-	if (rt_db_get_internal(&in, dp, dd->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal(&in, dp, dd->dbip, NULL, dd->res) < 0)
 	    return;
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	draw_walk_tree(path, comb->tree, curr_mat, _bound_fp, client_data);
@@ -187,6 +187,9 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 {
     struct db_i *dbip = gedp->dbip;
     struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
+    struct resource *local_res;
+    BU_GET(local_res, struct resource);
+    rt_init_resource(local_res, 0, NULL);
 
     // If we have no active groups and no view objects, we are drawing into a
     // blank canvas - unless options specifically disable it, if we are doing
@@ -194,7 +197,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
     struct draw_data_t bounds_data;
     std::map<struct directory *, fastf_t> s_size;
     bounds_data.bound_only = 1;
-    bounds_data.res = &rt_uniresource;
+    bounds_data.res = local_res;
     bounds_data.have_bbox = 0;
     bounds_data.dbip = dbip;
     bounds_data.skip_subtractions = 1;
@@ -216,7 +219,6 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	if (ret < 0) {
 	    // If that didn't work, there's one other thing we have to check
 	    // for - a really strange path with the "/" character in it.
-	    db_free_full_path(fp);
 	    struct directory *fdp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
 	    if (fdp == RT_DIR_NULL) {
 		// Invalid path
@@ -226,6 +228,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		continue;
 	    } else {
 		// Object name contained forward slash (urk!)
+		db_free_full_path(fp);
+		db_full_path_init(fp);
 		db_add_node_to_full_path(fp, fdp);
 	    }
 	}
@@ -259,6 +263,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		    continue;
 		} else {
 		    // Object name contained forward slash (urk!)
+		    db_free_full_path(fp);
+		    db_full_path_init(fp);
 		    db_add_node_to_full_path(fp, fdp);
 		}
 	    }
@@ -271,6 +277,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
     // plotting, do initial bounds calculations to pave the way for an
     // initial view setup.
     std::map<struct db_full_path *, struct bv_scene_group *> fp_g;
+
     for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
 	struct bv_scene_group *g = NULL;
 	struct db_full_path *fp = *f_it;
@@ -282,8 +289,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	// is a problem.
 	mat_t mat;
 	MAT_IDN(mat);
-	// TODO - get resource from somewhere other than rt_uniresource
-	if (!db_path_to_mat(dbip, fp, mat, fp->fp_len-1, &rt_uniresource)) {
+	if (db_path_to_mat(dbip, fp, mat, 0, local_res)) {
 	    db_free_full_path(fp);
 	    BU_PUT(fp, struct db_full_path);
 	    continue;
@@ -315,7 +321,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    // Two conditions to check for here:
 	    // 1.  proposed draw path is a top match for existing path
 	    if (db_full_path_match_top(fp, &gfp)) {
-		// New path will replace this path - clear it
+		// New path will replace the currently drawn path - clear it
 		clear.insert(cg);
 		db_free_full_path(&gfp);
 		if (refresh)
@@ -335,26 +341,30 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		// condition...
 		continue;
 	    }
+
+	    db_free_full_path(&gfp);
 	}
 
+	// IFF we are just redrawing part or all of an already drawn path, we don't
+	// need to create a new scene object.  Otherwise, we do.
 	if (g) {
 	    // remove children that match fp - we will be adding new versions to g to update it,
 	    // rather than creating a new one.
-	    std::set<struct bv_scene_obj *> sclear;
-	    std::set<struct bv_scene_obj *>::iterator s_it;
-	    for (size_t i = 0; i < BU_PTBL_LEN(&g->children); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, i);
-		struct db_full_path gfp;
-		db_full_path_init(&gfp);
-		db_string_to_path(&gfp, dbip, bu_vls_cstr(&s->s_name));
-		if (db_full_path_match_top(&gfp, fp)) {
-		    sclear.insert(s);
+		std::set<struct bv_scene_obj *> sclear;
+		std::set<struct bv_scene_obj *>::iterator s_it;
+		for (size_t i = 0; i < BU_PTBL_LEN(&g->children); i++) {
+		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, i);
+		    struct db_full_path gfp;
+		    db_full_path_init(&gfp);
+		    db_string_to_path(&gfp, dbip, bu_vls_cstr(&s->s_name));
+		    if (db_full_path_match_top(&gfp, fp)) {
+			sclear.insert(s);
+		    }
 		}
-	    }
-	    for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
-		struct bv_scene_obj *s = *s_it;
-		bv_obj_put(s);
-	    }
+		for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
+		    struct bv_scene_obj *s = *s_it;
+		    bv_obj_put(s);
+		}
 	} else {
 	    // Create new scene object.  Typically this will be a "parent"
 	    // object and the actual per-solid wireframes or triangles will
@@ -401,8 +411,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	// Seed initial matrix from the path
 	mat_t mat;
 	MAT_IDN(mat);
-	// TODO - get resource from somewhere other than rt_uniresource
-	if (!db_path_to_mat(dbip, fp, mat, fp->fp_len-1, &rt_uniresource)) {
+	if (db_path_to_mat(dbip, fp, mat, 0, local_res)) {
 	    db_free_full_path(fp);
 	    BU_PUT(fp, struct db_full_path);
 	    continue;
@@ -416,7 +425,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    dc[1] = 0;
 	    dc[2] = 0;
 	    bu_color_from_rgb_chars(&c, dc);
-	    db_full_path_color(&c, fp, dbip, &rt_uniresource);
+	    db_full_path_color(&c, fp, dbip, local_res);
 	}
 
 	// Prepare tree walking data container
@@ -428,7 +437,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	dd.mesh_c = gedp->ged_lod;
 	dd.color_inherit = 0;
 	dd.bound_only = 0;
-	dd.res = &rt_uniresource;
+	dd.res = local_res;
 	dd.bool_op = 2; // Default to union
 	if (vs->color_override) {
 	    bu_color_from_rgb_chars(&dd.c, vs->color);
@@ -454,7 +463,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    ud->dbip = dd.dbip;
 	    ud->tol = dd.tol;
 	    ud->ttol = dd.ttol;
-	    ud->res = dd.res;
+	    ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view... local_res is temporary, don't use it here
 	    ud->mesh_c = dd.mesh_c;
 	    g->s_i_data = (void *)ud;
 	    g->s_v = dd.v;
@@ -464,19 +473,23 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    continue;
 	}
 
-	// Walk the tree to build up the set of scene objects
+	// Walk the tree to build up the set of scene objects that will hold
+	// each instance's wireframe.  These scene objects will be stored as
+	// children of g (which is the "who" level drawn object).
 	draw_gather_paths(fp, &mat, (void *)&dd);
 
 	// Done with path
 	db_free_full_path(fp);
 	BU_PUT(fp, struct db_full_path);
     }
+    rt_clean_resource_basic(NULL, local_res);
+    BU_PUT(local_res, struct resource);
 
     // Sort
     bu_sort(BU_PTBL_BASEADDR(sg), BU_PTBL_LEN(sg), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
 
     // Scene objects are created and stored. The next step is to generate
-    // wireframes, triangles, etc. for that object based on current settings.
+    // wireframes, triangles, etc. for each object based on current settings.
     // It is then the job of the dm to display the scene objects supplied by
     // the view.
     return BRLCAD_OK;

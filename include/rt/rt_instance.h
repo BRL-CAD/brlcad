@@ -255,6 +255,8 @@ struct rt_i; /* forward declaration */
 RT_EXPORT extern void rt_init_resource(struct resource *resp, int cpu_num, struct rt_i *rtip);
 
 
+RT_EXPORT extern void rt_clean_resource_basic(struct rt_i *rtip,
+					struct resource *resp);
 RT_EXPORT extern void rt_clean_resource(struct rt_i *rtip,
 					struct resource *resp);
 RT_EXPORT extern void rt_clean_resource_complete(struct rt_i *rtip,
