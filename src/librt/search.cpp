@@ -1,4 +1,4 @@
-/*                        S E A R C H . C
+/*                      S E A R C H . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2022 United States Government as represented by
@@ -2746,12 +2746,12 @@ db_search(struct bu_ptbl *search_results,
 }
 
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
