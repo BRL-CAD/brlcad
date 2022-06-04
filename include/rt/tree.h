@@ -331,30 +331,6 @@ RT_EXPORT extern int db_apply_state_from_comb(struct db_tree_state *tsp,
 					      const struct rt_comb_internal *comb);
 
 /**
- * Updates state via *tsp, pushes member's directory entry on *pathp.
- * (Caller is responsible for popping it).
- *
- * Returns -
- * -1 failure
- * 0 success, member pushed on path
- */
-RT_EXPORT extern int db_apply_state_from_memb(struct db_tree_state *tsp,
-					      struct db_full_path *pathp,
-					      const union tree *tp);
-
-/**
- * Returns -
- * -1 found member, failed to apply state
- * 0 unable to find member 'cp'
- * 1 state applied OK
- */
-RT_EXPORT extern int db_apply_state_from_one_member(struct db_tree_state *tsp,
-						    struct db_full_path *pathp,
-						    const char *cp,
-						    int sofar,
-						    const union tree *tp);
-
-/**
  * The search stops on the first match.
  *
  * Returns -
@@ -472,17 +448,6 @@ RT_EXPORT extern int db_follow_path_for_state(struct db_tree_state *tsp,
 					      struct db_full_path *pathp,
 					      const char *orig_str, int noisy);
 
-/**
- * Recurse down the tree, finding all the leaves (or finding just all
- * the regions).
- *
- * ts_region_start_func() is called to permit regions to be skipped.
- * It is not intended to be used for collecting state.
- */
-RT_EXPORT extern union tree *db_recurse(struct db_tree_state    *tsp,
-					struct db_full_path *pathp,
-					struct combined_tree_state **region_start_statepp,
-					void *client_data);
 RT_EXPORT extern union tree *db_dup_subtree(const union tree *tp,
 					    struct resource *resp);
 RT_EXPORT extern void db_ck_tree(const union tree *tp);
@@ -775,6 +740,57 @@ RT_EXPORT extern union tree *db_mkgift_tree(struct rt_tree_array *trees,
 
 RT_EXPORT extern void rt_optim_tree(union tree *tp,
 				    struct resource *resp);
+
+
+
+
+
+/*************************************************************************
+ * Deprecated
+ *************************************************************************/
+
+
+/**
+ * Updates state via *tsp, pushes member's directory entry on *pathp.
+ * (Caller is responsible for popping it).
+ *
+ * Returns -
+ * -1 failure
+ * 0 success, member pushed on path
+ *
+ * DEPRECATED, internal implementation function
+ */
+RT_EXPORT extern int db_apply_state_from_memb(struct db_tree_state *tsp,
+					      struct db_full_path *pathp,
+					      const union tree *tp);
+
+/**
+ * Returns -
+ * -1 found member, failed to apply state
+ * 0 unable to find member 'cp'
+ * 1 state applied OK
+ *
+ * DEPRECATED, internal implementation function
+ */
+RT_EXPORT extern int db_apply_state_from_one_member(struct db_tree_state *tsp,
+						    struct db_full_path *pathp,
+						    const char *cp,
+						    int sofar,
+						    const union tree *tp);
+
+/**
+ * Recurse down the tree, finding all the leaves (or finding just all
+ * the regions).
+ *
+ * ts_region_start_func() is called to permit regions to be skipped.
+ * It is not intended to be used for collecting state.
+ *
+ * DEPRECATED, internal implementation function
+ */
+RT_EXPORT extern union tree *db_recurse(struct db_tree_state *tsp,
+					struct db_full_path *pathp,
+					struct combined_tree_state **region_start_statepp,
+					void *client_data);
 
 
 
