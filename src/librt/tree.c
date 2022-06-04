@@ -166,16 +166,6 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	return curtree;
     }
 
-    if (pathp) {
-	// It is possible, with full path instanced specifications, for the user
-	// to supply a path to a subtracted or intersected instance.  These paths
-	// are not suitable for independent raytracing, so filter them out.
-	RT_CK_RESOURCE(tsp->ts_resp);
-	RT_CK_DBI(tsp->ts_dbip);
-	if (db_fp_op(pathp, tsp->ts_dbip, 0, tsp->ts_resp) != OP_UNION)
-	    return TREE_NULL;
-    }
-
     BU_ALLOC(rp, struct region);
     rp->l.magic = RT_REGION_MAGIC;
     rp->reg_regionid = tsp->ts_regionid;
@@ -727,7 +717,7 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
     struct bu_hash_tbl *tbl;
 
     size_t prev_sol_count;
-    int i;
+    int ret = 0;
     int num_attrs=0;
     point_t region_min, region_max;
 
@@ -788,12 +778,27 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
 	    data.cache = rt_cache_open();
 	}
 
-	i = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
+	struct bu_ptbl pos_paths = BU_PTBL_INIT_ZERO;
+	for (int i = 0; i < argc; i++) {
+	    struct db_full_path ifp;
+	    db_full_path_init(&ifp);
+	    db_string_to_path(&ifp, rtip->rti_dbip, argv[i]);
+	    if (db_fp_op(&ifp, rtip->rti_dbip, 0, &rt_uniresource) == OP_UNION) {
+		bu_ptbl_ins(&pos_paths, (long *)argv[i]);
+	    }
+	    db_free_full_path(&ifp);
+	}
+	for (size_t i = 0; i < BU_PTBL_LEN(&pos_paths); i++) {
+	    argv[i] = (const char *)BU_PTBL_GET(&pos_paths, i);
+	}
+
+	ret = db_walk_tree(rtip->rti_dbip, BU_PTBL_LEN(&pos_paths), argv, ncpus,
 			 &tree_state,
 			 _rt_gettree_region_start,
 			 _rt_gettree_region_end,
 			 _rt_gettree_leaf, (void *)&data);
 	bu_avs_free(&tree_state.ts_attrs);
+	bu_ptbl_free(&pos_paths);
 
 	if (rtip->rti_dbip->dbi_version > 4) {
 	    rt_cache_close(data.cache);
@@ -880,12 +885,12 @@ again:
 	db_ck_tree(regp->reg_treetop);
     }
 
-    if (i < 0)
-	return i;
+    if (ret < 0)
+	return ret;
 
     if (rtip->nsolids <= prev_sol_count)
 	bu_log("rt_gettrees(%s) warning:  no primitives found\n", argv[0]);
-    return 0;	/* OK */
+    return ret;	/* OK */
 }
 
 int
