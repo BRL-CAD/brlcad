@@ -47,31 +47,6 @@
 #include "../ged_private.h"
 
 
-extern "C" int
-ged_pathtest_core(struct ged *gedp, int argc, const char *argv[])
-{
-    /* skip command name argv[0] */
-    argc-=(argc>0); argv+=(argc>0);
-
-    for (int i = 0; i < argc; i++) {
-	struct db_full_path gfp;
-	db_full_path_init(&gfp);
-	if (db_string_to_path(&gfp, gedp->dbip, argv[i])) {
-	    db_free_full_path(&gfp);
-	    continue;
-	}
-	struct bu_vls pvls = BU_VLS_INIT_ZERO;
-	db_fullpath_to_vls(&pvls, &gfp, gedp->dbip, DB_FP_PRINT_TYPE|DB_FP_PRINT_BOOL|DB_FP_PRINT_COMB_INDEX);
-	bu_log("%s\n", bu_vls_cstr(&pvls));
-	bu_vls_free(&pvls);
-	db_free_full_path(&gfp);
-    }
-
-    return BRLCAD_OK;
-}
-
-
-
 static int
 _fp_bbox(fastf_t *s_size, point_t *bmin, point_t *bmax,
 	 struct db_full_path *fp,
