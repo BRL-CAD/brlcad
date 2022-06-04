@@ -100,6 +100,7 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	inmem_dbip->dbi_fp = NULL;
 	inmem_dbip->dbi_mf = NULL;
 	inmem_dbip->dbi_read_only = 0;
+	inmem_dbip->use_comb_instance_ids = 0;
 
 	/* Initialize fields */
 	for (i = 0; i <RT_DBNHASH; i++) {

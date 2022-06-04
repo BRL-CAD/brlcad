@@ -298,7 +298,7 @@ db_path_to_vls(struct bu_vls *str, const struct db_full_path *pp)
     for (i = 0; i < pp->fp_len; i++) {
 	bu_vls_putc(str, '/');
 	if (pp->fp_names[i]) {
-	    if (pp->fp_cinst[i]) {
+	    if (UNLIKELY(pp->fp_cinst[i])) {
 		bu_vls_printf(str, "%s@%d", pp->fp_names[i]->d_namep, pp->fp_cinst[i]);
 	    } else {
 		bu_vls_strcat(str, pp->fp_names[i]->d_namep);

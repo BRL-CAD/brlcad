@@ -228,6 +228,7 @@ db_open(const char *name, const char *mode)
     bu_ptbl_init(&dbip->dbi_changed_clbks , 8, "dbi_changed_clbks]");
     bu_ptbl_init(&dbip->dbi_update_nref_clbks, 8, "dbi_update_nref_clbks");
 
+    dbip->use_comb_instance_ids = 0;
     dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
     /* determine version */
