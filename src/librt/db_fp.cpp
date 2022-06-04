@@ -408,7 +408,7 @@ _comb_instance_bool_op(int *bval, const struct db_i *dbip, struct directory *cdp
 // it this way will result in either the current answer or the exposure of
 // an out-of-date db_full_path.
 int
-db_fp_op(struct db_full_path *pp,
+db_fp_op(const struct db_full_path *pp,
 	struct db_i *dbip,
 	int depth,
 	struct resource *resp)

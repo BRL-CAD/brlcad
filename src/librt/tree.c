@@ -30,6 +30,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "rt/db4.h"
+#include "rt/db_fp.h"
 #include "raytrace.h"
 
 #include "./cache.h"
@@ -163,6 +164,16 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     if (curtree->tr_op == OP_NOP) {
 	/* Ignore empty regions */
 	return curtree;
+    }
+
+    if (pathp) {
+	// It is possible, with full path instanced specifications, for the user
+	// to supply a path to a subtracted or intersected instance.  These paths
+	// are not suitable for independent raytracing, so filter them out.
+	RT_CK_RESOURCE(tsp->ts_resp);
+	RT_CK_DBI(tsp->ts_dbip);
+	if (db_fp_op(pathp, tsp->ts_dbip, 0, tsp->ts_resp) != OP_UNION)
+	    return TREE_NULL;
     }
 
     BU_ALLOC(rp, struct region);
