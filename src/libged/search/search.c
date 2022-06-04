@@ -353,6 +353,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	    case 'v':
 		print_verbose_info |= DB_FP_PRINT_BOOL;
 		print_verbose_info |= DB_FP_PRINT_TYPE;
+		print_verbose_info |= DB_FP_PRINT_COMB_INDEX;
 		break;
 
 	    case 'Q':
