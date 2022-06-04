@@ -43,7 +43,6 @@
 #include "bn.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rt/db_fp.h"
 #include "./librt_private.h"
 
 

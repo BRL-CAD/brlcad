@@ -39,7 +39,6 @@
 #include "bg/lod.h"
 #include "nmg.h"
 #include "rt/view.h"
-#include "rt/db_fp.h"
 
 #include "ged/view/state.h"
 #define ALPHANUM_IMPL

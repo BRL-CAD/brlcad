@@ -44,7 +44,6 @@
 #include "bg/sat.h"
 #include "nmg.h"
 #include "rt/view.h"
-#include "rt/db_fp.h"
 
 #include "ged/view/state.h"
 #include "./alphanum.h"

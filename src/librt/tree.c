@@ -30,7 +30,6 @@
 #include "vmath.h"
 #include "bn.h"
 #include "rt/db4.h"
-#include "rt/db_fp.h"
 #include "raytrace.h"
 
 #include "./cache.h"

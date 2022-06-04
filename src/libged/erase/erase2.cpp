@@ -32,7 +32,6 @@
 #include <string.h>
 
 #include "bu/sort.h"
-#include "rt/db_fp.h"
 #include "ged/view/state.h"
 
 #define ALPHANUM_IMPL

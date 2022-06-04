@@ -61,7 +61,6 @@ set(rt_headers
 BRLCAD_MANAGE_FILES(rt_headers ${INCLUDE_DIR}/brlcad/rt)
 
 CMAKEFILES(CMakeLists.txt)
-CMAKEFILES(db_fp.h)
 
 # Local Variables:
 # tab-width: 8
