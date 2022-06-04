@@ -788,17 +788,20 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
 	    }
 	    db_free_full_path(&ifp);
 	}
+	int ac = (int)BU_PTBL_LEN(&pos_paths);
+	const char **av = (const char **)bu_calloc(BU_PTBL_LEN(&pos_paths)+1, sizeof(const char *), "av");
 	for (size_t i = 0; i < BU_PTBL_LEN(&pos_paths); i++) {
-	    argv[i] = (const char *)BU_PTBL_GET(&pos_paths, i);
+	    av[i] = (const char *)BU_PTBL_GET(&pos_paths, i);
 	}
+	bu_ptbl_free(&pos_paths);
 
-	ret = db_walk_tree(rtip->rti_dbip, BU_PTBL_LEN(&pos_paths), argv, ncpus,
+	ret = db_walk_tree(rtip->rti_dbip, ac, av, ncpus,
 			 &tree_state,
 			 _rt_gettree_region_start,
 			 _rt_gettree_region_end,
 			 _rt_gettree_leaf, (void *)&data);
 	bu_avs_free(&tree_state.ts_attrs);
-	bu_ptbl_free(&pos_paths);
+	bu_free(av, "av");
 
 	if (rtip->rti_dbip->dbi_version > 4) {
 	    rt_cache_close(data.cache);
