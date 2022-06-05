@@ -300,6 +300,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	std::set<struct bv_scene_group *>::iterator g_it;
 	struct bv_obj_settings fpvs;
 	bv_obj_settings_sync(&fpvs, vs);
+	bool clear_invalid_only = false;
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	    // If we already know we're clearing this one, don't check
@@ -318,6 +319,13 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		db_free_full_path(&gfp);
 		continue;
 	    }
+
+	    // If we found an encompassing path, we don't need to do any more work
+	    if (clear_invalid_only) {
+		db_free_full_path(&gfp);
+		continue;
+	    }
+
 	    // Two conditions to check for here:
 	    // 1.  proposed draw path is a top match for existing path
 	    if (db_full_path_match_top(fp, &gfp)) {
@@ -338,7 +346,9 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		    bv_obj_settings_sync(&fpvs, &cg->s_os);
 		// We continue to weed out any other invalid paths in sg, even
 		// though cg should be the only path in sg that matches in this
-		// condition...
+		// condition.  However, we no longer need to do the top matches,
+		// so let the loop know
+		clear_invalid_only = true;
 		continue;
 	    }
 
