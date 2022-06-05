@@ -122,7 +122,7 @@ _bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	if (rt_db_get_internal(&in, dp, dd->dbip, NULL, dd->res) < 0)
 	    return;
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	draw_walk_tree(path, comb->tree, curr_mat, _bound_fp, client_data);
+	draw_walk_tree(path, comb->tree, curr_mat, _bound_fp, client_data, NULL);
 	rt_db_free_internal(&in);
 	// Use bbox to update sizing
 	if (dd->have_bbox) {

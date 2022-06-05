@@ -128,6 +128,7 @@ struct db_i {
     struct rt_wdb * dbi_wdbp;           /**< @brief PRIVATE: ptr back to containing rt_wdb */
     struct bu_ptbl dbi_changed_clbks;     /**< @brief PRIVATE: dbi_changed_t callbacks registered with dbi */
     struct bu_ptbl dbi_update_nref_clbks; /**< @brief PRIVATE: dbi_update_nref_t callbacks registered with dbi */
+    int dbi_use_comb_instance_ids;            /**< @brief PRIVATE: flag to enable/disable comb instance tracking in full paths */
 };
 #define DBI_NULL ((struct db_i *)0)
 #define RT_CHECK_DBI(_p) BU_CKMAG(_p, DBI_MAGIC, "struct db_i")

@@ -252,6 +252,18 @@ RT_EXPORT extern int db_path_to_mat(struct db_i *dbip,
 				    struct resource *resp);
 
 /**
+ * For a given path, return the "net" boolean operation of the
+ * path.  If a subtraction is found along the path, overall path
+ * is regarded as a subtraction.  Else, if an intersection is found
+ * op is reported as an intersection.  Else, union is reported.
+ */
+RT_EXPORT extern int
+db_fp_op(const struct db_full_path *pathp,
+	struct db_i *dbip,
+	int depth, /* number of arcs - 0 == all */
+	struct resource *resp);
+
+/**
  * Determine the color operative at the current directory pointer (the leaf
  * node) of the path according to available information and rules.
  *

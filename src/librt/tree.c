@@ -197,7 +197,6 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 
     rp->reg_name = db_path_to_string(pathp);
 
-
     if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	bu_log("_rt_gettree_region_end() %s\n", rp->reg_name);
 	rt_pr_tree(curtree, 0);
@@ -715,7 +714,7 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
     struct bu_hash_tbl *tbl;
 
     size_t prev_sol_count;
-    int i;
+    int ret = 0;
     int num_attrs=0;
     point_t region_min, region_max;
 
@@ -776,12 +775,39 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
 	    data.cache = rt_cache_open();
 	}
 
-	i = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
-			 &tree_state,
-			 _rt_gettree_region_start,
-			 _rt_gettree_region_end,
-			 _rt_gettree_leaf, (void *)&data);
-	bu_avs_free(&tree_state.ts_attrs);
+	if (UNLIKELY(rtip->rti_dbip->dbi_use_comb_instance_ids)) {
+	    struct bu_ptbl pos_paths = BU_PTBL_INIT_ZERO;
+	    for (int i = 0; i < argc; i++) {
+		struct db_full_path ifp;
+		db_full_path_init(&ifp);
+		db_string_to_path(&ifp, rtip->rti_dbip, argv[i]);
+		if (db_fp_op(&ifp, rtip->rti_dbip, 0, &rt_uniresource) == OP_UNION) {
+		    bu_ptbl_ins(&pos_paths, (long *)argv[i]);
+		}
+		db_free_full_path(&ifp);
+	    }
+	    int ac = (int)BU_PTBL_LEN(&pos_paths);
+	    const char **av = (const char **)bu_calloc(BU_PTBL_LEN(&pos_paths)+1, sizeof(const char *), "av");
+	    for (size_t i = 0; i < BU_PTBL_LEN(&pos_paths); i++) {
+		av[i] = (const char *)BU_PTBL_GET(&pos_paths, i);
+	    }
+	    bu_ptbl_free(&pos_paths);
+
+	    ret = db_walk_tree(rtip->rti_dbip, ac, av, ncpus,
+		    &tree_state,
+		    _rt_gettree_region_start,
+		    _rt_gettree_region_end,
+		    _rt_gettree_leaf, (void *)&data);
+	    bu_avs_free(&tree_state.ts_attrs);
+	    bu_free(av, "av");
+	} else {
+	    ret = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
+		    &tree_state,
+		    _rt_gettree_region_start,
+		    _rt_gettree_region_end,
+		    _rt_gettree_leaf, (void *)&data);
+	    bu_avs_free(&tree_state.ts_attrs);
+	}
 
 	if (rtip->rti_dbip->dbi_version > 4) {
 	    rt_cache_close(data.cache);
@@ -868,12 +894,12 @@ again:
 	db_ck_tree(regp->reg_treetop);
     }
 
-    if (i < 0)
-	return i;
+    if (ret < 0)
+	return ret;
 
     if (rtip->nsolids <= prev_sol_count)
 	bu_log("rt_gettrees(%s) warning:  no primitives found\n", argv[0]);
-    return 0;	/* OK */
+    return ret;	/* OK */
 }
 
 int

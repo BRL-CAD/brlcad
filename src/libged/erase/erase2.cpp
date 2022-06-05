@@ -99,6 +99,76 @@ struct dfp_cmp {
     }
 };
 
+
+struct erase_data {
+    std::unordered_map<struct bv_scene_group *, struct db_full_path *> *ngrps;
+    struct db_i *dbip;
+    struct db_full_path *fp;
+    struct bview *v;
+    std::unordered_map<std::string, int> *cinst_map;
+};
+
+extern "C" void
+path_add_children_walk_tree(struct db_full_path *path, union tree *tp,
+	int (*traverse_func) (std::unordered_map<struct bv_scene_group *, struct db_full_path *> *,
+	    struct db_i *, struct db_full_path *, struct db_full_path *, struct bview *),
+	void *client_data)
+{
+    struct bu_vls pvls = BU_VLS_INIT_ZERO;
+    struct bv_scene_group *g = NULL;
+    struct directory *dp;
+    struct db_full_path *nfp;
+    struct erase_data *ed = (struct erase_data *)client_data;
+
+    if (!tp)
+	return;
+
+    RT_CK_FULL_PATH(path);
+    RT_CHECK_DBI(ed->dbip);
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    path_add_children_walk_tree(path, tp->tr_b.tb_left, traverse_func, client_data);
+	    break;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    path_add_children_walk_tree(path, tp->tr_b.tb_left, traverse_func, client_data);
+	    path_add_children_walk_tree(path, tp->tr_b.tb_right, traverse_func, client_data);
+	    break;
+	case OP_DB_LEAF:
+	    if (UNLIKELY(ed->dbip->dbi_use_comb_instance_ids && ed->cinst_map))
+		(*ed->cinst_map)[std::string(tp->tr_l.tl_name)]++;
+	    if ((dp=db_lookup(ed->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
+		return;
+	    db_add_node_to_full_path(path, dp);
+	    DB_FULL_PATH_SET_CUR_BOOL(path, tp->tr_op);
+	    if (UNLIKELY(ed->dbip->dbi_use_comb_instance_ids && ed->cinst_map))
+		DB_FULL_PATH_SET_CUR_COMB_INST(path, (*ed->cinst_map)[std::string(tp->tr_l.tl_name)]-1);
+	    if (db_full_path_match_top(path, ed->fp)) {
+		if (DB_FULL_PATH_CUR_DIR(path) != DB_FULL_PATH_CUR_DIR(ed->fp))
+		    (*traverse_func)(ed->ngrps, ed->dbip, path, ed->fp, ed->v);
+	    } else {
+		g = bv_obj_create(ed->v, BV_DB_OBJS);
+		db_path_to_vls(&pvls, path);
+		bu_vls_sprintf(&g->s_name, "%s", bu_vls_cstr(&pvls));
+		BU_ALLOC(nfp, struct db_full_path);
+		db_full_path_init(nfp);
+		db_dup_full_path(nfp, path);
+		(*ed->ngrps)[g] = nfp;
+	    }
+	    DB_FULL_PATH_POP(path);
+	    break;
+	default:
+	    bu_log("path_add_children_walk_tree: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("path_add_children_walk_tree: unrecognized operator\n");
+    }
+}
+
 /* Return 1 if we did a split, 0 otherwise */
 int
 path_add_children(
@@ -117,52 +187,20 @@ path_add_children(
 	return 0;
     }
     comb = (struct rt_comb_internal *)in.idb_ptr;
-    db_comb_children(dbip, comb, &children, NULL, NULL);
 
-    // First, make sure fp actually is a path matching one of this comb's children.
-    // A prior top match is not actually a guarantee of a full match.
-    int i = 0;
-    int path_match = 0;
-    struct directory *dp =  children[0];
-    while (dp != RT_DIR_NULL) {
-	db_add_node_to_full_path(gfp, dp);
-	if (db_full_path_match_top(gfp, fp)) {
-	    path_match = 1;
-	    DB_FULL_PATH_POP(gfp);
-	    break;
-	}
-	i++;
-	dp = children[i];
-	DB_FULL_PATH_POP(gfp);
+    std::unordered_map<std::string, int> comb_inst_map;
+    struct erase_data ed;
+    ed.ngrps = ngrps;
+    ed.dbip = dbip;
+    ed.fp = fp;
+    ed.v = v;
+    if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	ed.cinst_map = &comb_inst_map;
+    } else {
+	ed.cinst_map = NULL;
     }
 
-    if (!path_match) {
-	return 0;
-    }
-
-    i = 0;
-    dp =  children[0];
-    while (dp != RT_DIR_NULL) {
-	db_add_node_to_full_path(gfp, dp);
-	if (db_full_path_match_top(gfp, fp)) {
-	    if (DB_FULL_PATH_CUR_DIR(gfp) != DB_FULL_PATH_CUR_DIR(fp))
-		path_add_children(ngrps, dbip, gfp, fp, v);
-	} else {
-	    struct bu_vls pvls = BU_VLS_INIT_ZERO;
-	    struct bv_scene_group *g = bv_obj_create(v, BV_DB_OBJS);
-	    bu_vls_trunc(&pvls, 0);
-	    db_path_to_vls(&pvls, gfp);
-	    bu_vls_sprintf(&g->s_name, "%s", bu_vls_cstr(&pvls));
-	    struct db_full_path *nfp;
-	    BU_ALLOC(nfp, struct db_full_path);
-	    db_full_path_init(nfp);
-	    db_dup_full_path(nfp, gfp);
-	    (*ngrps)[g] = nfp;
-	}
-	i++;
-	dp = children[i];
-	DB_FULL_PATH_POP(gfp);
-    }
+    path_add_children_walk_tree(gfp, comb->tree, path_add_children, (void *)&ed);
 
     rt_db_free_internal(&in);
     bu_free(children, "free children struct directory ptr array");
