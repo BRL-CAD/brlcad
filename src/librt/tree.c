@@ -775,30 +775,39 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
 	    data.cache = rt_cache_open();
 	}
 
-	struct bu_ptbl pos_paths = BU_PTBL_INIT_ZERO;
-	for (int i = 0; i < argc; i++) {
-	    struct db_full_path ifp;
-	    db_full_path_init(&ifp);
-	    db_string_to_path(&ifp, rtip->rti_dbip, argv[i]);
-	    if (db_fp_op(&ifp, rtip->rti_dbip, 0, &rt_uniresource) == OP_UNION) {
-		bu_ptbl_ins(&pos_paths, (long *)argv[i]);
+	if (UNLIKELY(rtip->rti_dbip->use_comb_instance_ids)) {
+	    struct bu_ptbl pos_paths = BU_PTBL_INIT_ZERO;
+	    for (int i = 0; i < argc; i++) {
+		struct db_full_path ifp;
+		db_full_path_init(&ifp);
+		db_string_to_path(&ifp, rtip->rti_dbip, argv[i]);
+		if (db_fp_op(&ifp, rtip->rti_dbip, 0, &rt_uniresource) == OP_UNION) {
+		    bu_ptbl_ins(&pos_paths, (long *)argv[i]);
+		}
+		db_free_full_path(&ifp);
 	    }
-	    db_free_full_path(&ifp);
-	}
-	int ac = (int)BU_PTBL_LEN(&pos_paths);
-	const char **av = (const char **)bu_calloc(BU_PTBL_LEN(&pos_paths)+1, sizeof(const char *), "av");
-	for (size_t i = 0; i < BU_PTBL_LEN(&pos_paths); i++) {
-	    av[i] = (const char *)BU_PTBL_GET(&pos_paths, i);
-	}
-	bu_ptbl_free(&pos_paths);
+	    int ac = (int)BU_PTBL_LEN(&pos_paths);
+	    const char **av = (const char **)bu_calloc(BU_PTBL_LEN(&pos_paths)+1, sizeof(const char *), "av");
+	    for (size_t i = 0; i < BU_PTBL_LEN(&pos_paths); i++) {
+		av[i] = (const char *)BU_PTBL_GET(&pos_paths, i);
+	    }
+	    bu_ptbl_free(&pos_paths);
 
-	ret = db_walk_tree(rtip->rti_dbip, ac, av, ncpus,
-			 &tree_state,
-			 _rt_gettree_region_start,
-			 _rt_gettree_region_end,
-			 _rt_gettree_leaf, (void *)&data);
-	bu_avs_free(&tree_state.ts_attrs);
-	bu_free(av, "av");
+	    ret = db_walk_tree(rtip->rti_dbip, ac, av, ncpus,
+		    &tree_state,
+		    _rt_gettree_region_start,
+		    _rt_gettree_region_end,
+		    _rt_gettree_leaf, (void *)&data);
+	    bu_avs_free(&tree_state.ts_attrs);
+	    bu_free(av, "av");
+	} else {
+	    ret = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
+		    &tree_state,
+		    _rt_gettree_region_start,
+		    _rt_gettree_region_end,
+		    _rt_gettree_leaf, (void *)&data);
+	    bu_avs_free(&tree_state.ts_attrs);
+	}
 
 	if (rtip->rti_dbip->dbi_version > 4) {
 	    rt_cache_close(data.cache);

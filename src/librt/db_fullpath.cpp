@@ -410,15 +410,21 @@ _db_comb_instance(matp_t m, int *icnt, int *bval, int bool_val, const struct db_
 	case OP_DB_LEAF:
 	    if (!BU_STR_EQUAL(cp, tp->tr_l.tl_name))
 		return 0;               /* NO-OP */
-	    // Have a name match, is this the right instance
-	    if (itarget == *icnt) {
-		(*bval) = bool_val;
+	    if (UNLIKELY(dbip->use_comb_instance_ids)) {
+		// Have a name match, is this the right instance
+		if (itarget == *icnt) {
+		    (*bval) = bool_val;
+		    if (tp->tr_l.tl_mat && m)
+			MAT_COPY(m, tp->tr_l.tl_mat);
+		    return 1;
+		} else {
+		    (*icnt)++;
+		    return 0;
+		}
+	    } else {
 		if (tp->tr_l.tl_mat && m)
 		    MAT_COPY(m, tp->tr_l.tl_mat);
 		return 1;
-	    } else {
-		(*icnt)++;
-		return 0;
 	    }
 	case OP_UNION:
 	case OP_INTERSECT:
@@ -543,8 +549,10 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	int bool_op = 2; // default to union
 	int comb_instance_index = 0;
 	dp = db_lookup(dbip, cp, LOOKUP_QUIET);
-	if (dp == RT_DIR_NULL)
-	    dp = dp_instance(&comb_instance_index, dbip, cp);
+	if (UNLIKELY(dbip->use_comb_instance_ids)) {
+	    if (dp == RT_DIR_NULL)
+		dp = dp_instance(&comb_instance_index, dbip, cp);
+	}
 	if (dp == RT_DIR_NULL) {
 	    bu_log("db_string_to_path() of '%s' failed on '%s'\n", str, cp);
 	    ret = -1; /* FAILED */
@@ -605,8 +613,10 @@ db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char
 	int bool_op = 2; // default to union
 	int comb_instance_index = 0;
 	dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
-	if (dp == RT_DIR_NULL)
-	    dp = dp_instance(&comb_instance_index, dbip, argv[i]);
+	if (UNLIKELY(dbip->use_comb_instance_ids)) {
+	    if (dp == RT_DIR_NULL)
+		dp = dp_instance(&comb_instance_index, dbip, argv[i]);
+	}
 	if (dp == RT_DIR_NULL) {
 	    bu_log("db_fp_from_argv() failed on element %d='%s'\n", i, argv[i]);
 	    ret = -1; /* FAILED */
@@ -935,8 +945,10 @@ db_fp_op(const struct db_full_path *pp,
 	if (!cdp || !dp)
 	    return OP_NOP;
 	int c_op;
-	if (!_comb_instance_bool_op(&c_op, dbip, cdp, dp, resp, pp->fp_cinst[i]))
-	    return OP_NOP;
+	if (UNLIKELY(dbip->use_comb_instance_ids)) {
+	    if (!_comb_instance_bool_op(&c_op, dbip, cdp, dp, resp, pp->fp_cinst[i]))
+		return OP_NOP;
+	}
 	if (c_op == OP_INTERSECT && r_op != OP_SUBTRACT)
 	    r_op = OP_INTERSECT;
 	if (c_op == OP_SUBTRACT)

@@ -149,6 +149,9 @@ int main(int argc, char *argv[])
     /* Done with command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
 
+    /* Let LIBRT know to process comb instance specifiers in paths */
+    bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
+
     /* Handle top level application options */
     struct bu_opt_desc d[6];
     BU_OPT(d[0],  "h", "help",   "", NULL, &print_help,    "Print help and exit");

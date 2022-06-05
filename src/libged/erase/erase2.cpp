@@ -141,12 +141,14 @@ path_add_children_walk_tree(struct db_full_path *path, union tree *tp,
 	    path_add_children_walk_tree(path, tp->tr_b.tb_right, traverse_func, client_data);
 	    break;
 	case OP_DB_LEAF:
-	    (*ed->cinst_map)[std::string(tp->tr_l.tl_name)]++;
+	    if (UNLIKELY(ed->dbip->use_comb_instance_ids && ed->cinst_map))
+		(*ed->cinst_map)[std::string(tp->tr_l.tl_name)]++;
 	    if ((dp=db_lookup(ed->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
 		return;
 	    db_add_node_to_full_path(path, dp);
 	    DB_FULL_PATH_SET_CUR_BOOL(path, tp->tr_op);
-	    DB_FULL_PATH_SET_CUR_COMB_INST(path, (*ed->cinst_map)[std::string(tp->tr_l.tl_name)]-1);
+	    if (UNLIKELY(ed->dbip->use_comb_instance_ids && ed->cinst_map))
+		DB_FULL_PATH_SET_CUR_COMB_INST(path, (*ed->cinst_map)[std::string(tp->tr_l.tl_name)]-1);
 	    if (db_full_path_match_top(path, ed->fp)) {
 		if (DB_FULL_PATH_CUR_DIR(path) != DB_FULL_PATH_CUR_DIR(ed->fp))
 		    (*traverse_func)(ed->ngrps, ed->dbip, path, ed->fp, ed->v);
@@ -192,7 +194,11 @@ path_add_children(
     ed.dbip = dbip;
     ed.fp = fp;
     ed.v = v;
-    ed.cinst_map = &comb_inst_map;
+    if (UNLIKELY(dbip->use_comb_instance_ids)) {
+	ed.cinst_map = &comb_inst_map;
+    } else {
+	ed.cinst_map = NULL;
+    }
 
     path_add_children_walk_tree(gfp, comb->tree, path_add_children, (void *)&ed);
 
