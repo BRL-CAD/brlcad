@@ -348,8 +348,15 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	// IFF we are just redrawing part or all of an already drawn path, we don't
 	// need to create a new scene object.  Otherwise, we do.
 	if (g) {
-	    // remove children that match fp - we will be adding new versions to g to update it,
-	    // rather than creating a new one.
+	    // Remove children that match fp - we will be adding new versions
+	    // to g to update them.  If g has no children, it was probably an
+	    // evaluated shape - in that case, replace it with a fresh instance.
+	    if (!BU_PTBL_LEN(&g->children)) {
+		bv_obj_put(g);
+		g = bv_obj_get(v, BV_DB_OBJS);
+		db_path_to_vls(&g->s_name, fp);
+		bv_obj_settings_sync(&g->s_os, &fpvs);
+	    } else {
 		std::set<struct bv_scene_obj *> sclear;
 		std::set<struct bv_scene_obj *>::iterator s_it;
 		for (size_t i = 0; i < BU_PTBL_LEN(&g->children); i++) {
@@ -365,6 +372,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		    struct bv_scene_obj *s = *s_it;
 		    bv_obj_put(s);
 		}
+	    }
 	} else {
 	    // Create new scene object.  Typically this will be a "parent"
 	    // object and the actual per-solid wireframes or triangles will
