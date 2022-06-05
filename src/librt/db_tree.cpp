@@ -125,7 +125,6 @@ db_new_combined_tree_state(const struct db_tree_state *tsp, const struct db_full
     db_dup_db_tree_state(&(new_ctsp->cts_s), tsp);
     db_full_path_init(&(new_ctsp->cts_p));
     db_dup_full_path(&(new_ctsp->cts_p), pathp);
-    bu_log("cts_p: %s\n", db_path_to_string(&(new_ctsp->cts_p)));
     return new_ctsp;
 }
 
@@ -325,7 +324,6 @@ db_apply_state_from_memb2(struct db_tree_state *tsp, struct db_full_path *pathp,
     }
 
     db_add_node_to_full_path(pathp, mdp);
-    bu_log("db_apply_state_from_memb2: %s\n", db_path_to_string(pathp));
     if (c_inst_map)
 	DB_FULL_PATH_SET_CUR_COMB_INST(pathp, (*c_inst_map)[std::string(tp->tr_l.tl_name)]-1);
 
@@ -879,7 +877,6 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
 	db_free_full_path(&new_path);
 	return -1;
     }
-    bu_log("db_follow_path_for_state: %s->%s\n", orig_str, db_path_to_string(&new_path));
 
     if (new_path.fp_len <= 0) {
 	db_free_full_path(&new_path);
