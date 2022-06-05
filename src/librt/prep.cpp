@@ -1501,7 +1501,7 @@ rt_find_path(struct db_i *dbip,
 
     switch (tp->tr_op) {
 	case OP_DB_LEAF:
-	    if (UNLIKELY(dbip->use_comb_instance_ids && c_inst_map))
+	    if (UNLIKELY(dbip->dbi_use_comb_instance_ids && c_inst_map))
 		(*c_inst_map)[std::string(tp->tr_l.tl_name)]++;
 	    dp = db_lookup(dbip, tp->tr_l.tl_name, 1);
 	    if (dp == RT_DIR_NULL) {
@@ -1509,7 +1509,7 @@ rt_find_path(struct db_i *dbip,
 		return;
 	    }
 	    db_add_node_to_full_path(*curr_path, dp);
-	    if (UNLIKELY(dbip->use_comb_instance_ids && c_inst_map))
+	    if (UNLIKELY(dbip->dbi_use_comb_instance_ids && c_inst_map))
 		DB_FULL_PATH_SET_CUR_COMB_INST(*curr_path, (*c_inst_map)[std::string(tp->tr_l.tl_name)]-1);
 	    if (dp == end) {
 		bu_ptbl_ins(paths, (long *)(*curr_path));

@@ -775,7 +775,7 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
 	    data.cache = rt_cache_open();
 	}
 
-	if (UNLIKELY(rtip->rti_dbip->use_comb_instance_ids)) {
+	if (UNLIKELY(rtip->rti_dbip->dbi_use_comb_instance_ids)) {
 	    struct bu_ptbl pos_paths = BU_PTBL_INIT_ZERO;
 	    for (int i = 0; i < argc; i++) {
 		struct db_full_path ifp;

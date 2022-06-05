@@ -324,7 +324,7 @@ db_apply_state_from_memb2(struct db_tree_state *tsp, struct db_full_path *pathp,
     }
 
     db_add_node_to_full_path(pathp, mdp);
-    if (UNLIKELY(tsp->ts_dbip->use_comb_instance_ids && c_inst_map))
+    if (UNLIKELY(tsp->ts_dbip->dbi_use_comb_instance_ids && c_inst_map))
 	DB_FULL_PATH_SET_CUR_COMB_INST(pathp, (*c_inst_map)[std::string(tp->tr_l.tl_name)]-1);
 
     MAT_COPY(old_xlate, tsp->ts_mat);
@@ -371,11 +371,11 @@ db_apply_state_from_one_member2(
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
-	    if (UNLIKELY(tsp->ts_dbip->use_comb_instance_ids && c_inst_map))
+	    if (UNLIKELY(tsp->ts_dbip->dbi_use_comb_instance_ids && c_inst_map))
 		(*c_inst_map)[std::string(tp->tr_l.tl_name)]++;
 	    if (!BU_STR_EQUAL(cp, tp->tr_l.tl_name))
 		return 0;		/* NO-OP */
-	    if (UNLIKELY(tsp->ts_dbip->use_comb_instance_ids && c_inst_map)) {
+	    if (UNLIKELY(tsp->ts_dbip->dbi_use_comb_instance_ids && c_inst_map)) {
 		if ((*c_inst_map)[std::string(tp->tr_l.tl_name)]-1 != target_inst)
 		    return 0;
 	    }
@@ -787,7 +787,7 @@ db_follow_path(
 	/* j == depth is the last one, presumably a leaf */
 	if (j > (size_t)depth) break;
 	dp = new_path->fp_names[j];
-	if (UNLIKELY(tsp->ts_dbip->use_comb_instance_ids))
+	if (UNLIKELY(tsp->ts_dbip->dbi_use_comb_instance_ids))
 	    itarget = new_path->fp_cinst[j];
 	RT_CK_DIR(dp);
 
@@ -814,7 +814,7 @@ db_follow_path(
 	    goto fail;
 
 	/* Crawl tree searching for specified leaf */
-	if (UNLIKELY(tsp->ts_dbip->use_comb_instance_ids))
+	if (UNLIKELY(tsp->ts_dbip->dbi_use_comb_instance_ids))
 	    c_inst_map.clear();
 	if (db_apply_state_from_one_member2(tsp, total_path, dp->d_namep, 0, comb->tree, itarget, (void *)&c_inst_map) <= 0) {
 	    bu_log("db_follow_path() ERROR: unable to apply member %s state\n", dp->d_namep);
@@ -913,7 +913,7 @@ _db_recurse_subtree2(union tree *tp, struct db_tree_state *msp, struct db_full_p
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
-	    if (UNLIKELY(msp->ts_dbip->use_comb_instance_ids && c_inst_map))
+	    if (UNLIKELY(msp->ts_dbip->dbi_use_comb_instance_ids && c_inst_map))
 		(*c_inst_map)[std::string(tp->tr_l.tl_name)]++;
 	    if (db_apply_state_from_memb2(&memb_state, pathp, tp, cmap) < 0) {
 		/* Lookup of this leaf failed, NOP it out. */

@@ -145,10 +145,10 @@ db_open(const char *name, const char *mode)
 	    return DBI_NULL;
 	}
 
-	dbip->use_comb_instance_ids = 0;
+	dbip->dbi_use_comb_instance_ids = 0;
 	const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
 	if (BU_STR_EQUAL(need_comb_inst, "1")) {
-	    dbip->use_comb_instance_ids = 1;
+	    dbip->dbi_use_comb_instance_ids = 1;
 	}
 
 	dbip->dbi_read_only = 1;
@@ -166,10 +166,10 @@ db_open(const char *name, const char *mode)
 	    return DBI_NULL;
 	}
 
-	dbip->use_comb_instance_ids = 0;
+	dbip->dbi_use_comb_instance_ids = 0;
 	const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
 	if (BU_STR_EQUAL(need_comb_inst, "1")) {
-	    dbip->use_comb_instance_ids = 1;
+	    dbip->dbi_use_comb_instance_ids = 1;
 	}
 
 	dbip->dbi_read_only = 0;
@@ -240,10 +240,10 @@ db_open(const char *name, const char *mode)
     bu_ptbl_init(&dbip->dbi_changed_clbks , 8, "dbi_changed_clbks]");
     bu_ptbl_init(&dbip->dbi_update_nref_clbks, 8, "dbi_update_nref_clbks");
 
-    dbip->use_comb_instance_ids = 0;
+    dbip->dbi_use_comb_instance_ids = 0;
     const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
     if (BU_STR_EQUAL(need_comb_inst, "1")) {
-	dbip->use_comb_instance_ids = 1;
+	dbip->dbi_use_comb_instance_ids = 1;
     }
 
     dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
