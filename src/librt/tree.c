@@ -196,8 +196,6 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	rp->reg_mater.ma_shader = (char *)NULL;
 
     rp->reg_name = db_path_to_string(pathp);
-    bu_log("rp->reg_name: %s\n", rp->reg_name);
-
 
     if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	bu_log("_rt_gettree_region_end() %s\n", rp->reg_name);
