@@ -401,6 +401,25 @@ static const struct cvt_tab *units[3] = {
     &units_tab[2][0]	/* weight */
 };
 
+/**
+ * simplify_av_name
+ * 
+ * Strips the full path of an argv supplied object down to its simplest form.
+ * 
+ * '/path/to/some/object' returns 'object'
+ * 
+ */
+char*
+simplify_av_name(const char* av_name)
+{
+    char* obj_name = (char *)av_name;
+    char* most_specific = strrchr(obj_name, '/');
+    if (most_specific) {
+	most_specific = most_specific + 1;	// strip leading '/'
+	obj_name = most_specific;
+    }
+    return obj_name;
+}
 
 /**
  * _gqa_read_units_double
@@ -1430,7 +1449,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
      */
     obj_tbl = (struct per_obj_data *)bu_calloc(num_objects, sizeof(struct per_obj_data), "report tables");
     for (i = 0; i < num_objects; i++) {
-	obj_tbl[i].o_name = (char *)av[start+i];
+	obj_tbl[i].o_name = simplify_av_name(av[start+i]);
 	obj_tbl[i].o_len = (double *)bu_calloc(num_views, sizeof(double), "o_len");
 	obj_tbl[i].o_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "o_lenDensity");
 	obj_tbl[i].o_volume = (double *)bu_calloc(num_views, sizeof(double), "o_volume");
@@ -2542,8 +2561,8 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
      * that the user wants included in the ray trace.
      */
     for (; arg_count < argc; arg_count++) {
-	if (rt_gettree(rtip, argv[arg_count]) < 0) {
-	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[arg_count]);
+	if (rt_gettree(rtip, simplify_av_name(argv[arg_count])) < 0) {
+	    fprintf(stderr, "rt_gettree(%s) FAILED\n", simplify_av_name(argv[arg_count]));
 	    return BRLCAD_ERROR;
 	}
     }

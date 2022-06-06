@@ -40,8 +40,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * Overlap tool in MGED is not handling no overlaps reporting correctly.
 
-* gqa is crashing when supplied all.g/box.r as an object argument
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
