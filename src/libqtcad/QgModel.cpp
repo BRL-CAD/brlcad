@@ -213,6 +213,28 @@ QgItem::childNumber() const
     return 0;
 }
 
+struct db_full_path *
+QgItem::fp()
+{
+    std::vector<QgItem *> path_items;
+    QgItem *citem = this;
+    path_items.push_back(this);
+    while (citem->parent() && citem->parent()->instance()) {
+	citem = citem->parent();
+	path_items.push_back(citem);
+    }
+    std::reverse(path_items.begin(), path_items.end());
+    struct db_full_path *ifp;
+    BU_GET(ifp, struct db_full_path);
+    db_full_path_init(ifp);
+    for (size_t i = 0; i < path_items.size(); i++) {
+	db_add_node_to_full_path(ifp, path_items[i]->dp);
+	DB_FULL_PATH_SET_CUR_COMB_INST(ifp, path_items[i]->instance()->icnt);
+    }
+    return ifp;
+}
+
+
 QString
 QgItem::toString()
 {
@@ -224,17 +246,13 @@ QgItem::toString()
 	path_items.push_back(citem);
     }
     std::reverse(path_items.begin(), path_items.end());
-    struct db_full_path ifp;
-    db_full_path_init(&ifp);
-    for (size_t i = 0; i < path_items.size(); i++) {
-	db_add_node_to_full_path(&ifp, path_items[i]->dp);
-	DB_FULL_PATH_SET_CUR_COMB_INST(&ifp, path_items[i]->instance()->icnt);
-    }
+    struct db_full_path *ifp = fp();
     struct bu_vls fpstr = BU_VLS_INIT_ZERO;
-    db_path_to_vls(&fpstr, &ifp);
+    db_path_to_vls(&fpstr, ifp);
     QString fpqstr(bu_vls_cstr(&fpstr));
     bu_vls_free(&fpstr);
-    db_free_full_path(&ifp);
+    db_free_full_path(ifp);
+    BU_PUT(ifp, struct db_full_path);
     return fpqstr;
 }
 
@@ -952,16 +970,20 @@ QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 // are a few exceptions related to common, standard operations like drawing that
 // are potentially triggered from QActions.
 int
-QgModel::draw()
+QgModel::draw_action()
 {
     // https://stackoverflow.com/a/28647342/2037687
     QAction *a = qobject_cast<QAction *>(sender());
     QVariant v = a->data();
     QgItem *cnode  = (QgItem *) v.value<void *>();
-
-
     QString cnode_str = cnode->toString();
-    const char *inst_path = bu_strdup(cnode_str.toLocal8Bit().data());
+    return draw(cnode_str);
+}
+
+int
+QgModel::draw(QString &qpath)
+{
+    const char *inst_path = bu_strdup(qpath.toLocal8Bit().data());
     const char *argv[2];
     argv[0] = "draw";
     argv[1] = inst_path;
@@ -977,16 +999,20 @@ QgModel::draw()
 }
 
 int
-QgModel::erase()
+QgModel::erase_action()
 {
     // https://stackoverflow.com/a/28647342/2037687
     QAction *a = qobject_cast<QAction *>(sender());
     QVariant v = a->data();
     QgItem *cnode  = (QgItem *) v.value<void *>();
-
-
     QString cnode_str = cnode->toString();
-    const char *inst_path = bu_strdup(cnode_str.toLocal8Bit().data());
+    return erase(cnode_str);
+}
+
+int
+QgModel::erase(QString &qpath)
+{
+    const char *inst_path = bu_strdup(qpath.toLocal8Bit().data());
     const char *argv[2];
     argv[0] = "erase";
     argv[1] = inst_path;

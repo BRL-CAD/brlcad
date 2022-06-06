@@ -200,6 +200,7 @@ class QTCAD_EXPORT QgItem
 	// Return the full path to this particular item (equivalent to
 	// db_path_to_vls)
 	QString toString();
+	struct db_full_path *fp();
 
 	// Cached data from the gInstance, so we can keep
 	// displaying while librt does work on the gInstances.
@@ -354,8 +355,10 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	void check_highlights();
 
     public slots:
-	int draw();
-	int erase();
+	int draw_action();
+	int draw(QString &qpath);
+	int erase_action();
+	int erase(QString &qpath);
 
     private:
 	int NodeRow(QgItem *node) const;

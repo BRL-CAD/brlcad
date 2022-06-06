@@ -63,6 +63,7 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
 	void redo_expansions(void *);
 	void redo_highlights();
 	void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected) override;
+	void do_draw_toggle(const QModelIndex &index);
 
     private:
 	void header_state();

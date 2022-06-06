@@ -122,12 +122,18 @@ QgTreeView::QgTreeView(QWidget *pparent, QgSelectionProxyModel *treemodel) : QTr
 
     setItemDelegate(new gObjDelegate(this));
 
+    // We use double click to control drawing - don't want the tree to expand
+    // and contract at the same time.  To open or close combs, use arrows to
+    // the left of the text and icon.
+    setExpandsOnDoubleClick(false);
+
     header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     header()->setStretchLastSection(true);
     QObject::connect(this, &QgTreeView::expanded, this, &QgTreeView::tree_column_size);
     QObject::connect(this, &QgTreeView::collapsed, this, &QgTreeView::tree_column_size);
     QObject::connect(this, &QgTreeView::clicked, treemodel, &QgSelectionProxyModel::update_selected_node_relationships);
     QObject::connect(this, &QgTreeView::customContextMenuRequested, (QgTreeView *)this, &QgTreeView::context_menu);
+    QObject::connect(this, &QgTreeView::doubleClicked, (QgTreeView *)this, &QgTreeView::do_draw_toggle);
 }
 
 void
@@ -193,13 +199,13 @@ void QgTreeView::context_menu(const QPoint &point)
     // https://stackoverflow.com/a/28647342/2037687
     QVariant draw_action_v = qVariantFromValue((void *)cnode);
     draw_action->setData(draw_action_v);
-    connect(draw_action, &QAction::triggered, sm, &QgModel::draw);
+    connect(draw_action, &QAction::triggered, sm, &QgModel::draw_action);
 
 
     QAction* erase_action = new QAction("Erase", NULL);
     QVariant erase_action_v = qVariantFromValue((void *)cnode);
     erase_action->setData(erase_action_v);
-    connect(erase_action, &QAction::triggered, sm, &QgModel::erase);
+    connect(erase_action, &QAction::triggered, sm, &QgModel::erase_action);
 
 
     QMenu *menu = new QMenu("Object Actions", NULL);
@@ -226,6 +232,45 @@ QModelIndex QgTreeView::selected()
     } else {
 	return QModelIndex();
     }
+}
+
+void
+QgTreeView::do_draw_toggle(const QModelIndex &index)
+{
+    QgModel *sm = (QgModel *)m->sourceModel();
+    QgItem *cnode = static_cast<QgItem *>(index.internalPointer());
+
+    if (!sm->gedp)
+	return;
+
+    struct bview *v = sm->gedp->ged_gvp;
+    if (!v)
+	return;
+
+    struct db_full_path *clicked_path = cnode->fp();
+
+    bool do_draw = true;
+    struct bu_ptbl *sg = bv_view_objs(sm->gedp->ged_gvp, BV_DB_OBJS);
+    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+	struct db_full_path currently_drawn;
+	db_full_path_init(&currently_drawn);
+	db_string_to_path(&currently_drawn, sm->gedp->dbip, bu_vls_cstr(&cg->s_name));
+	if (db_full_path_match_top(&currently_drawn, clicked_path)) {
+	    do_draw = false;
+	    break;
+	}
+    }
+    db_free_full_path(clicked_path);
+    BU_PUT(clicked_path, struct db_full_path);
+
+    QString cnode_path = cnode->toString();
+    if (do_draw) {
+	sm->draw(cnode_path);
+    } else {
+	sm->erase(cnode_path);
+    }
+
 }
 
 void
