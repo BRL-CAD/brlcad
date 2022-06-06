@@ -39,8 +39,10 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <set>
 #include <unordered_set>
+#include <vector>
 #include <QFileInfo>
 
 #include "xxhash.h"
@@ -210,7 +212,30 @@ QgItem::childNumber() const
     return 0;
 }
 
-
+QString
+QgItem::toString()
+{
+    std::vector<QgItem *> path_items;
+    QgItem *citem = this;
+    path_items.push_back(this);
+    while (citem->parent() && citem->parent()->instance()) {
+	citem = citem->parent();
+	path_items.push_back(citem);
+    }
+    std::reverse(path_items.begin(), path_items.end());
+    struct db_full_path ifp;
+    db_full_path_init(&ifp);
+    for (size_t i = 0; i < path_items.size(); i++) {
+	db_add_node_to_full_path(&ifp, path_items[i]->dp);
+	DB_FULL_PATH_SET_CUR_COMB_INST(&ifp, path_items[i]->instance()->icnt);
+    }
+    struct bu_vls fpstr = BU_VLS_INIT_ZERO;
+    db_path_to_vls(&fpstr, &ifp);
+    QString fpqstr(bu_vls_cstr(&fpstr));
+    bu_vls_free(&fpstr);
+    db_free_full_path(&ifp);
+    return fpqstr;
+}
 
 // 0 = exact, 1 = name + op, 2 = name + mat, 3 = name only, -1 name mismatch
 int

@@ -28,7 +28,7 @@
 #include "common.h"
 
 #include <set>
-#include <unordered_set>
+#include <unordered_map>
 
 #define XXH_STATIC_LINKING_ONLY
 #define XXH_IMPLEMENTATION
@@ -130,7 +130,7 @@ gInstance::print()
 }
 
 static void
-add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, int tree_op, void *pdp, void *inst_map, void *vchash, void *val_inst, void *c_set)
+add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, int tree_op, void *pdp, void *inst_map, void *vchash, void *val_inst, void *c_map)
 {
     std::unordered_map<unsigned long long, gInstance *>::iterator i_it;
 
@@ -141,7 +141,7 @@ add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *com
     // Unpack
     std::unordered_map<unsigned long long, gInstance *> *instances = (std::unordered_map<unsigned long long, gInstance *> *)inst_map;
     std::unordered_map<unsigned long long, gInstance *> *valid_instances = (std::unordered_map<unsigned long long, gInstance *> *)val_inst;
-    std::unordered_set<unsigned long long> *cnt_set = (std::unordered_set<unsigned long long> *)c_set;
+    std::unordered_map<std::string, int> *c_inst_map = (std::unordered_map<std::string, int> *)c_map;
     struct directory *parent_dp = (struct directory *)pdp;
     std::vector<unsigned long long> *chash = (std::vector<unsigned long long> *)vchash;
 
@@ -163,32 +163,15 @@ add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *com
     XXH64_reset(&h_state, 0);
     std::string dp_name(comb_leaf->tr_l.tl_name);
 
-    // The cnt_set exists only for this tree walk, and its purpose is to ensure that all tree
-    // instances end up with their own unique hash, even if they are duplicates from a data
-    // standpoint within the tree
-    int icnt = 0;
-    unsigned long long nhash = ginstance_hash(&h_state, parent_dp, dp_name, dbip, DB_OP_UNION, c_m, icnt);
-    std::unordered_set<unsigned long long>::iterator c_it;
-    c_it = cnt_set->find(nhash);
-    while (c_it != cnt_set->end()) {
-	icnt++;
-	nhash = ginstance_hash(&h_state, parent_dp, dp_name, dbip, DB_OP_UNION, c_m, icnt);
-	c_it = cnt_set->find(nhash);
-    }
-    cnt_set->insert(nhash);
+    // The c_inst_map exists only for this tree walk, and its purpose is to ensure that all comb
+    // instances get their correct index
+    (*c_inst_map)[std::string(comb_leaf->tr_l.tl_name)]++;
+    int icnt = (*c_inst_map)[std::string(comb_leaf->tr_l.tl_name)] - 1;
 
-    // Having done the "unique lookup" hash to get icnt, we now redo it with
-    // the op and matrix if they are different from the union/IDN case so the
-    // hash is also tied to those properties of the tree entry.  A tree rewrite
-    // may produce a new instance of the same name in the same count position,
-    // but with a different op and/or matrix - we want the hash to change in
-    // that situation to reflect the tree change.
-    if (comb_leaf->tr_l.tl_mat || op != DB_OP_UNION) {
-	if (comb_leaf->tr_l.tl_mat) {
-	    MAT_COPY(c_m, comb_leaf->tr_l.tl_mat);
-	}
-	nhash = ginstance_hash(&h_state, parent_dp, dp_name, dbip, op, c_m, icnt);
+    if (comb_leaf->tr_l.tl_mat) {
+	MAT_COPY(c_m, comb_leaf->tr_l.tl_mat);
     }
+    unsigned long long nhash = ginstance_hash(&h_state, parent_dp, dp_name, dbip, op, c_m, icnt);
 
     // See if we already have this gInstance hash or not.  If not,
     // create and add a new gInstance.
@@ -316,10 +299,11 @@ gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instanc
 	// anything cute with the librt comb data containers.  Because we are
 	// only concerned with the immediate comb's children and not the full
 	// tree, all objects are leaves and we can use db_tree_opleaf
-	std::unordered_set<unsigned long long> cnt_set;
+	std::unordered_map<std::string, int> *cinst_map = new std::unordered_map<std::string, int>;
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
-	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)instances, (void *)&chash, NULL, &cnt_set);
+	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)instances, (void *)&chash, NULL, cinst_map);
 	rt_db_free_internal(&intern);
+	delete cinst_map;
 	return chash;
     }
 
@@ -504,9 +488,10 @@ dp_instances(std::unordered_map<unsigned long long, gInstance *> *valid_instance
 	    return;
 	}
 
-	std::unordered_set<unsigned long long> cnt_set;
+	std::unordered_map<std::string, int> *cinst_map = new std::unordered_map<std::string, int>;
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
-	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)instances, NULL, (void *)valid_instances, (void *)&cnt_set);
+	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)instances, NULL, (void *)valid_instances, cinst_map);
+	delete cinst_map;
 	rt_db_free_internal(&intern);
 	return;
     }

@@ -185,7 +185,9 @@ void QgTreeView::tree_column_size(const QModelIndex &)
 void QgTreeView::context_menu(const QPoint &point)
 {
     QModelIndex index = indexAt(point);
-    QAction* act = new QAction(index.data().toString(), NULL);
+    QgItem *cnode = static_cast<QgItem *>(index.internalPointer());
+    QString cnode_str = cnode->toString();
+    QAction* act = new QAction(cnode_str, NULL);
     QMenu *menu = new QMenu("Object Actions", NULL);
     menu->addAction(act);
     menu->exec(mapToGlobal(point));

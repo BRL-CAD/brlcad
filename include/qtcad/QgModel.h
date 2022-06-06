@@ -197,6 +197,10 @@ class QTCAD_EXPORT QgItem
 	std::unordered_map<QgItem *, int> c_noderow;
 	size_t c_count = 0;
 
+	// Return the full path to this particular item (equivalent to
+	// db_path_to_vls)
+	QString toString();
+
 	// Cached data from the gInstance, so we can keep
 	// displaying while librt does work on the gInstances.
 	struct bu_vls name = BU_VLS_INIT_ZERO;
