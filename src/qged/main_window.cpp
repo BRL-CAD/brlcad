@@ -39,7 +39,8 @@ QBDockWidget::QBDockWidget(const QString &title, QWidget *parent)
 {
 }
 
-void QBDockWidget::toWindow(bool floating)
+void
+QBDockWidget::toWindow(bool floating)
 {
     if (floating) {
 	setWindowFlags(
@@ -51,6 +52,42 @@ void QBDockWidget::toWindow(bool floating)
 		);
 	show();
     }
+}
+
+bool
+QBDockWidget::event(QEvent *e)
+{
+    if (e->type() == QEvent::MouseMove) {
+	moving = true;
+	return QDockWidget::event(e);
+    }
+    if (e->type() != QEvent::MouseButtonRelease)
+	return QDockWidget::event(e);
+    QMouseEvent *m_e = (QMouseEvent *)e;
+    if (moving) {
+	moving = false;
+	return QDockWidget::event(e);
+    }
+#ifdef USE_QT6
+    QPoint gpos = m_e->globalPosition().toPoint();
+#else
+    QPoint gpos = m_e->globalPos();
+#endif
+    QRect trect = this->geometry();
+    if (!trect.contains(gpos))
+	return QDockWidget::event(e);
+
+    emit banner_click();
+
+    CADApp *ap = (CADApp *)qApp;
+    QgModel *m = (QgModel *)ap->mdl->sourceModel();
+    if (m->flatten_hierarchy) {
+	setWindowTitle("Objects");
+    } else {
+	setWindowTitle("Hierarchy");
+    }
+
+    return QDockWidget::event(e);
 }
 
 BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
@@ -370,6 +407,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     CADApp *ca = (CADApp *)qApp;
     treeview = new QgTreeView(tree_dock, ca->mdl);
     tree_dock->setWidget(treeview);
+    connect(tree_dock, &QBDockWidget::banner_click, m, &QgModel::toggle_hierarchy);
 
     // Tell the selection model we have a tree view
     ca->mdl->treeview = treeview;

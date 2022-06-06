@@ -56,8 +56,14 @@ class QBDockWidget : public QDockWidget
 
     public:
 	QBDockWidget(const QString &title, QWidget *parent);
+	bool event(QEvent *e);
+    signals:
+	void banner_click();
     public slots:
        void toWindow(bool floating);
+
+    private:
+        bool moving = false;
 };
 
 class BRLCAD_MainWindow : public QMainWindow

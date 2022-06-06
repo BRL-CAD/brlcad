@@ -501,7 +501,7 @@ void
 sync_instances(
 	std::unordered_map<unsigned long long, gInstance *> *tops_instances,
 	std::unordered_map<unsigned long long, gInstance *> *instances,
-	struct db_i *dbip)
+	struct db_i *dbip, int flatten)
 {
 
     if (!dbip) {
@@ -538,13 +538,16 @@ sync_instances(
     // the tops set cleanly each time
     tops_instances->clear();
 
+    // To do a flat, "ls" style tree, all we need to do is switch the above
+    // db_ls filters to the unfiltered version.  Otherwise, we want the TOPS
+    // list and any cyclic objects (which will be invisible to tops)
     struct directory **db_objects = NULL;
-    int path_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_CYCLIC , NULL, &db_objects);
-
-    // TODO - to do a flat, "ls" style tree, all we need to do is switch the
-    // above db_ls filters to the unfiltered version.  Need to make this a
-    // user option.
-    //int path_cnt = db_ls(dbip, 0, NULL, &db_objects);
+    int path_cnt = 0;
+    if (flatten) {
+	path_cnt = db_ls(dbip, 0, NULL, &db_objects);
+    } else {
+	path_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_CYCLIC , NULL, &db_objects);
+    }
 
     if (path_cnt) {
 	XXH64_state_t h_state;

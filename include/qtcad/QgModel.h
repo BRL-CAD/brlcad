@@ -338,6 +338,10 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// Sorted QgItem pointers corresponding to the tops_instances
 	std::vector<QgItem *> tops_items;
 
+	// Toggle for whether or not the model should be viewed using a tops
+	// listing or the full object listing as the "seed" set
+	int flatten_hierarchy = 0;
+
     signals:
 	// Emitted if the commands think they may have changed the database
 	// structure in some way.
@@ -359,6 +363,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	int draw(QString &qpath);
 	int erase_action();
 	int erase(QString &qpath);
+	void toggle_hierarchy();
 
     private:
 	int NodeRow(QgItem *node) const;

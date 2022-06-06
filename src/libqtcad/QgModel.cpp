@@ -563,7 +563,7 @@ QgModel::g_update(struct db_i *n_dbip)
     if (!n_dbip) {
 	// if we have no dbip, clear out everything
 	beginResetModel();
-	sync_instances(tops_instances, instances, n_dbip);
+	sync_instances(tops_instances, instances, n_dbip, flatten_hierarchy);
 	std::unordered_set<QgItem *>::iterator s_it;
 	for (s_it = items->begin(); s_it != items->end(); s_it++) {
 	    QgItem *itm = *s_it;
@@ -584,7 +584,7 @@ QgModel::g_update(struct db_i *n_dbip)
 
 	// Step 1 - make sure our instances are current - i.e. they match the
 	// .g database state
-	sync_instances(tops_instances, instances, n_dbip);
+	sync_instances(tops_instances, instances, n_dbip, flatten_hierarchy);
 
 	// Clear out any QgItems with invalid info.  We need to be fairly
 	// aggressive here - first we find all the existing invalid ones, and
@@ -1025,6 +1025,18 @@ QgModel::erase(QString &qpath)
     emit view_change(&gedp->ged_gvp);
 
     return ret;
+}
+
+void
+QgModel::toggle_hierarchy()
+{
+    bu_log("toggle_hierarchy\n");
+    if (!gedp || !gedp->dbip)
+	return;
+
+    flatten_hierarchy = !flatten_hierarchy;
+    changed_db_flag = 1;
+    g_update(gedp->dbip);
 }
 
 // Local Variables:

@@ -106,7 +106,8 @@ QTCAD_EXPORT extern void
 sync_instances(
 	std::unordered_map<unsigned long long, gInstance *> *tops_instances,
 	std::unordered_map<unsigned long long, gInstance *> *instances,
-	struct db_i *dbip);
+	struct db_i *dbip,
+	int flatten);
 
 
 #endif //GINSTANCE_H
