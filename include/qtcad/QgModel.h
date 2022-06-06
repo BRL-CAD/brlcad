@@ -342,9 +342,20 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// structure in some way.
 	void mdl_changed_db(void *);
 
+	// Emitted if a method thinks it may have changed the view.  Normally
+	// this is dealt with at a higher level by checking the view state
+	// (it is sometimes extremely difficult to know if a complex command
+	// will alter the view) but if a particular method knows it will
+	// do so, it may emit this signal
+	void view_change(struct bview **);
+
 	// Let the tree view know it has highlighting work to do it wouldn't
 	// otherwise see
 	void check_highlights();
+
+    public slots:
+	int draw();
+	int erase();
 
     private:
 	int NodeRow(QgItem *node) const;

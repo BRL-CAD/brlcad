@@ -43,6 +43,7 @@
 #include <set>
 #include <unordered_set>
 #include <vector>
+#include <QAction>
 #include <QFileInfo>
 
 #include "xxhash.h"
@@ -897,7 +898,8 @@ QgModel::columnCount(const QModelIndex &p) const
 ///////////////////////////////////////////////////////////////////////
 //                  .g Centric Methods
 ///////////////////////////////////////////////////////////////////////
-int QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
+int
+QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
     model_dbip = gedp->dbip;
 
@@ -942,6 +944,59 @@ int QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     if (msg && gedp)
 	bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
+
+    return ret;
+}
+
+// Normally the model won't define methods for specific GED commands, but there
+// are a few exceptions related to common, standard operations like drawing that
+// are potentially triggered from QActions.
+int
+QgModel::draw()
+{
+    // https://stackoverflow.com/a/28647342/2037687
+    QAction *a = qobject_cast<QAction *>(sender());
+    QVariant v = a->data();
+    QgItem *cnode  = (QgItem *) v.value<void *>();
+
+
+    QString cnode_str = cnode->toString();
+    const char *inst_path = bu_strdup(cnode_str.toLocal8Bit().data());
+    const char *argv[2];
+    argv[0] = "draw";
+    argv[1] = inst_path;
+
+    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
+    int ret = ged_exec(gedp, 2, argv);
+
+    bu_free((void *)inst_path, "inst_path");
+
+    emit view_change(&gedp->ged_gvp);
+
+    return ret;
+}
+
+int
+QgModel::erase()
+{
+    // https://stackoverflow.com/a/28647342/2037687
+    QAction *a = qobject_cast<QAction *>(sender());
+    QVariant v = a->data();
+    QgItem *cnode  = (QgItem *) v.value<void *>();
+
+
+    QString cnode_str = cnode->toString();
+    const char *inst_path = bu_strdup(cnode_str.toLocal8Bit().data());
+    const char *argv[2];
+    argv[0] = "erase";
+    argv[1] = inst_path;
+
+    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
+    int ret = ged_exec(gedp, 2, argv);
+
+    bu_free((void *)inst_path, "inst_path");
+
+    emit view_change(&gedp->ged_gvp);
 
     return ret;
 }

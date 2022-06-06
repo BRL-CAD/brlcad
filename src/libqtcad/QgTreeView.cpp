@@ -184,12 +184,27 @@ void QgTreeView::tree_column_size(const QModelIndex &)
 
 void QgTreeView::context_menu(const QPoint &point)
 {
+    QgModel *sm = (QgModel *)m->sourceModel();
     QModelIndex index = indexAt(point);
     QgItem *cnode = static_cast<QgItem *>(index.internalPointer());
-    QString cnode_str = cnode->toString();
-    QAction* act = new QAction(cnode_str, NULL);
+
+
+    QAction* draw_action = new QAction("Draw", NULL);
+    // https://stackoverflow.com/a/28647342/2037687
+    QVariant draw_action_v = qVariantFromValue((void *)cnode);
+    draw_action->setData(draw_action_v);
+    connect(draw_action, &QAction::triggered, sm, &QgModel::draw);
+
+
+    QAction* erase_action = new QAction("Erase", NULL);
+    QVariant erase_action_v = qVariantFromValue((void *)cnode);
+    erase_action->setData(erase_action_v);
+    connect(erase_action, &QAction::triggered, sm, &QgModel::erase);
+
+
     QMenu *menu = new QMenu("Object Actions", NULL);
-    menu->addAction(act);
+    menu->addAction(draw_action);
+    menu->addAction(erase_action);
     menu->exec(mapToGlobal(point));
 }
 

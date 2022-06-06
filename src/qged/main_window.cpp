@@ -283,6 +283,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		vc->addTool(el);
 		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_view_sync);
 		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_db_sync);
+		QObject::connect(m, &QgModel::view_change, el, &QToolPaletteElement::do_view_sync);
 
 		QObject::connect(el, &QToolPaletteElement::view_changed, ap, &CADApp::do_view_change);
 		QObject::connect(el, &QToolPaletteElement::db_changed, ap, &CADApp::do_db_change);
@@ -296,6 +297,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		oc->addTool(el);
 		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_view_sync);
 		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_db_sync);
+		QObject::connect(m, &QgModel::view_change, el, &QToolPaletteElement::do_view_sync);
 		QObject::connect(el, &QToolPaletteElement::view_changed, ap, &CADApp::do_view_change);
 	    }
 	}
@@ -419,7 +421,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // removed solids too...)  TODO - do we still need this?
     //QObject::connect(m, &QgModel::mdl_changed_db, ca->mdl, &QgSelectionProxyModel::refresh);
 
-
+    // If the model does something that it things should trigger a view update, let the app know
+    QObject::connect(m, &QgModel::view_change, ap, &CADApp::do_view_change);
 
     // If the database changes, we need to update our views
     if (c4) {
