@@ -103,12 +103,12 @@ QViewCtrl::fb_mode_cmd()
     struct bview *v = gedp->ged_gvp;
     switch (v->gv_s->gv_fb_mode) {
 	case 0:
-	    v->gv_s->gv_fb_mode = 1;
-	    break;
-	case 1:
 	    v->gv_s->gv_fb_mode = 2;
 	    break;
 	case 2:
+	    v->gv_s->gv_fb_mode = 1;
+	    break;
+	case 1:
 	    v->gv_s->gv_fb_mode = 0;
 	    break;
 	default:
