@@ -47,6 +47,7 @@ set(qtcad_srcs
   QKeyVal.cpp
   QToolPalette.cpp
   QViewCtrl.cpp
+  QgDockWidget.cpp
   QgModel.cpp
   QgSelectionProxyModel.cpp
   QgTreeView.cpp
@@ -75,6 +76,7 @@ set(qth_names
   QKeyVal
   QToolPalette
   QViewCtrl
+  QgDockWidget
   QgModel
   QgTreeView
   QtAppExecDialog

@@ -40,6 +40,7 @@
 
 #include "ged.h"
 #include "qtcad/QtCADQuad.h"
+#include "qtcad/QgDockWidget.h"
 #include "qtcad/QgSelectionProxyModel.h"
 #include "qtcad/QgTreeView.h"
 #include "qtcad/QtCADView.h"
@@ -48,23 +49,6 @@
 
 #include "plugins/plugin.h"
 #include "palettes.h"
-
-// https://stackoverflow.com/q/44707344/2037687
-class QBDockWidget : public QDockWidget
-{
-    Q_OBJECT
-
-    public:
-	QBDockWidget(const QString &title, QWidget *parent);
-	bool event(QEvent *e);
-    signals:
-	void banner_click();
-    public slots:
-       void toWindow(bool floating);
-
-    private:
-        bool moving = false;
-};
 
 class BRLCAD_MainWindow : public QMainWindow
 {
@@ -98,8 +82,8 @@ class BRLCAD_MainWindow : public QMainWindow
 	QAction *cad_single_view;
 	QAction *cad_quad_view;
 
-	QBDockWidget *console_dock;
-	QBDockWidget *tree_dock;
+	QgDockWidget *console_dock;
+	QgDockWidget *tree_dock;
 	QDockWidget *vcd;
 	QDockWidget *ocd;
 

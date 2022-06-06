@@ -34,62 +34,6 @@
 #include "attributes.h"
 #include "fbserv.h"
 
-QBDockWidget::QBDockWidget(const QString &title, QWidget *parent)
-    : QDockWidget(title, parent)
-{
-}
-
-void
-QBDockWidget::toWindow(bool floating)
-{
-    if (floating) {
-	setWindowFlags(
-		Qt::CustomizeWindowHint |
-                Qt::Window |
-                Qt::WindowMinimizeButtonHint |
-                Qt::WindowMaximizeButtonHint |
-		Qt::WindowCloseButtonHint
-		);
-	show();
-    }
-}
-
-bool
-QBDockWidget::event(QEvent *e)
-{
-    if (e->type() == QEvent::MouseMove) {
-	moving = true;
-	return QDockWidget::event(e);
-    }
-    if (e->type() != QEvent::MouseButtonRelease)
-	return QDockWidget::event(e);
-    QMouseEvent *m_e = (QMouseEvent *)e;
-    if (moving) {
-	moving = false;
-	return QDockWidget::event(e);
-    }
-#ifdef USE_QT6
-    QPoint gpos = m_e->globalPosition().toPoint();
-#else
-    QPoint gpos = m_e->globalPos();
-#endif
-    QRect trect = this->geometry();
-    if (!trect.contains(gpos))
-	return QDockWidget::event(e);
-
-    emit banner_click();
-
-    CADApp *ap = (CADApp *)qApp;
-    QgModel *m = (QgModel *)ap->mdl->sourceModel();
-    if (m->flatten_hierarchy) {
-	setWindowTitle("Objects");
-    } else {
-	setWindowTitle("Hierarchy");
-    }
-
-    return QDockWidget::event(e);
-}
-
 BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 {
     CADApp *ap = (CADApp *)qApp;
@@ -381,11 +325,11 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
 
     /* Console */
-    console_dock = new QBDockWidget("Console", this);
+    console_dock = new QgDockWidget("Console", this);
     addDockWidget(Qt::BottomDockWidgetArea, console_dock);
     console_dock->setAllowedAreas(Qt::BottomDockWidgetArea);
     view_menu->addAction(console_dock->toggleViewAction());
-    connect(console_dock, &QBDockWidget::topLevelChanged, console_dock, &QBDockWidget::toWindow);
+    connect(console_dock, &QgDockWidget::topLevelChanged, console_dock, &QgDockWidget::toWindow);
     console = new QtConsole(console_dock);
     console->prompt("$ ");
     console_dock->setWidget(console);
@@ -399,15 +343,16 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     console->setCompleter(cshellcomp);
 
     /* Geometry Tree */
-    tree_dock = new QBDockWidget("Hierarchy", this);
+    tree_dock = new QgDockWidget("Hierarchy", this);
     addDockWidget(Qt::LeftDockWidgetArea, tree_dock);
     tree_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(tree_dock->toggleViewAction());
-    connect(tree_dock, &QBDockWidget::topLevelChanged, tree_dock, &QBDockWidget::toWindow);
+    connect(tree_dock, &QgDockWidget::topLevelChanged, tree_dock, &QgDockWidget::toWindow);
     CADApp *ca = (CADApp *)qApp;
     treeview = new QgTreeView(tree_dock, ca->mdl);
     tree_dock->setWidget(treeview);
-    connect(tree_dock, &QBDockWidget::banner_click, m, &QgModel::toggle_hierarchy);
+    tree_dock->m = m;
+    connect(tree_dock, &QgDockWidget::banner_click, m, &QgModel::toggle_hierarchy);
 
     // Tell the selection model we have a tree view
     ca->mdl->treeview = treeview;

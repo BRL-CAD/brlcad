@@ -1030,7 +1030,6 @@ QgModel::erase(QString &qpath)
 void
 QgModel::toggle_hierarchy()
 {
-    bu_log("toggle_hierarchy\n");
     if (!gedp || !gedp->dbip)
 	return;
 
