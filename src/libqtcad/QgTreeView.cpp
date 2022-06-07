@@ -21,6 +21,10 @@
  *
  * BRL-CAD .g tree visualization widget.
  *
+ * TODO - look at https://doc.qt.io/qt-5/qtwidgets-itemviews-customsortfiltermodel-example.html
+ * to add filtering abilities to the tree view.  Particularly on large models, a flat listing
+ * of objects is going to be too unwieldy to want to work with much - we need a way to trim it
+ * down for a specific task.
  */
 
 #include "common.h"
