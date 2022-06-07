@@ -1224,7 +1224,7 @@ or data corruption issue involved.  That said, binary releases may be
 re-posted with a modified name per the convention described in VERSION
 NUMBERS & COMPATIBILITY.
 
-Example:  BRL-CAD-7.12.2.dmg is superseded by BRL-CAD-7.12.2-1.dmg
+Example:  BRL-CAD_7.12.2.dmg is superseded by BRL-CAD_7.12.2-1.dmg
 
 Older binary releases may be moved to the hidden attic folder, though
 not necessary or recommended except where critical vulnerabilities are
