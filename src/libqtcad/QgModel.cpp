@@ -968,7 +968,8 @@ QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
 // Normally the model won't define methods for specific GED commands, but there
 // are a few exceptions related to common, standard operations like drawing that
-// are potentially triggered from QActions.
+// are potentially triggered from QActions.  TODO - it might be better to have
+// these live in the selection proxy model...
 int
 QgModel::draw_action()
 {

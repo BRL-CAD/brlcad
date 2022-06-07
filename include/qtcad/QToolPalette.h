@@ -156,6 +156,14 @@ class QTCAD_EXPORT QToolPalette: public QWidget
 	void element_selected(QToolPaletteElement *);
 
    public slots:
+        // TODO - I think we're going to need an activateElement and drawElement
+	// distinction here for editing - we will want the current panel shown
+	// (and highlighted button, if we can figure out how to highlight without
+	// selecting) to reflect the most recent selection, and we'll probably
+	// want to highlight both the comb and appropriate solid button when when
+	// we're selecting  instances in the tree, but we don't want to kick in
+	// the event filters and create the edit wireframes until one of the buttons
+	// is actually selected.
 	void displayElement(QToolPaletteElement *);
 	void button_layout_resize();
 

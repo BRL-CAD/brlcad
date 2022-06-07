@@ -95,6 +95,15 @@
  * an editing operation commences, we will also need to be able to construct the
  * set of all scene objects which are NOT active in the currently processed set.
  *
+ * If we want to edit primitive parameters, rather than comb instances, we will
+ * need to boil down a set of selected comb instances to one or a set of solid
+ * names.  (Usually a set count > 1 won't work for primitive editing... in that
+ * case we may want to just reject an attempt to solid edit...)  Given the solid,
+ * we will then need to extract the set of all drawn instances of that solid from
+ * the scene, so we can generate and update per-instance wireframes for all of
+ * them to visually reflect the impact of the edit (MGED's inability to do this
+ * is why solid editing is rejected if more than one instance of the object is
+ * drawn in the scene - we don't want that limitation.)
  *
  */
 
