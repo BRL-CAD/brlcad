@@ -119,6 +119,10 @@ QgSelectionProxyModel::setData(const QModelIndex & idx, const QVariant &UNUSED(v
 // Note that we're setting flags here, not deciding whether to highlight a
 // particular QgItem.  That decision will be made later, and is a combination
 // of active_flag status and the open status of the QgItem.
+//
+// TODO - this may be the correct place to also illuminate or de-illuminate
+// the drawn solids in response to tree selections, in which case this
+// method name should be generalized...
 void
 QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx)
 {
