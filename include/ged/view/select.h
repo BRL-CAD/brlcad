@@ -55,18 +55,21 @@ GED_EXPORT extern void ged_selection_sets_destroy(struct ged_selection_sets *s);
 GED_EXPORT int ged_selection_set_cpy(struct ged_selection_sets *s, const char *from, const char *to);
 
 // Routines to retrieve and remove individual selection sets
-GED_EXPORT struct ged_selection_set *ged_selection_sets_get(struct ged_selection_sets *s, const char *s_name);
-GED_EXPORT struct ged_selection_set *ged_selection_sets_lookup(struct ged_selection_sets *s, const char *s_name);
-GED_EXPORT void ged_selection_sets_put(struct ged_selection_sets *s, const char *s_name);
+GED_EXPORT struct ged_selection_set *ged_selection_sets_get(struct ged_selection_sets *s, const char *s_path);
+GED_EXPORT struct ged_selection_set *ged_selection_sets_lookup(struct ged_selection_sets *s, const char *s_path);
+GED_EXPORT void ged_selection_sets_put(struct ged_selection_sets *s, const char *s_path);
 GED_EXPORT int ged_selection_sets_list(char ***set_names, struct ged_selection_sets *s);
 
 // Retrieve data.
-GED_EXPORT struct ged_selection *ged_selection_set_get(struct ged_selection_set *s, const char *s_name);
-GED_EXPORT struct ged_selection *ged_selection_set_lookup(struct ged_selection_set *s, const char *s_name);
-GED_EXPORT void ged_selection_set_put(struct ged_selection_set *s, const char *s_name);
+GED_EXPORT struct ged_selection *ged_selection_set_lookup(struct ged_selection_set *s, const char *s_path);
 GED_EXPORT int ged_selection_set_list(char ***keys, struct ged_selection_set *s);
 GED_EXPORT void ged_selection_set_clear(struct ged_selection_set *s);
 
+// Manipulate data
+GED_EXPORT struct ged_selection *ged_selection_set_insert(struct ged_selection_set *s, const char *s_path);
+GED_EXPORT struct ged_selection *ged_selection_set_remove(struct ged_selection_set *s, const char *s_path);
+GED_EXPORT int ged_selection_set_expand(struct ged_selection_set *s_out, struct ged_selection_set *s);
+GED_EXPORT int ged_selection_set_collapse(struct ged_selection_set *s_out, struct ged_selection_set *s);
 
 /**
  * Returns a list of items within the previously defined rectangle.

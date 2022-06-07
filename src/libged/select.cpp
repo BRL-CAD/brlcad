@@ -19,6 +19,82 @@
  */
 /** @file select.cpp
  *
+ * "Sets" in BRL-CAD have some interesting complications, particularly when it
+ * comes to geometric scenes.  Graphically visible scene objects representing
+ * .g geometry always correspond to one instance of one solid.  Frequently those
+ * "raw geometry" scene objects will be grouped as children of a parent scene
+ * object that corresponds to the requested "drawn" object. Those top level
+ * groups are what is reported out by the who command, since it will be more
+ * compact and informative to users than a detailed itemization of (potentially)
+ * thousands of individual instance shape objects.  Those top level groups also
+ * offer convenient subsets which alleviate the need for the drawing logic to
+ * check all scene object paths for matches of a user specified path - if the
+ * parent scene object isn't a partial match, none of the children need to be
+ * checked.
+ *
+ * However, when defining selection sets, it gets more complex.  Building selection
+ * sets graphically by interrogating the scene will build up sets of individual
+ * shape objects.  If the correct sub-sets of those objects are selected, we can
+ * conceptually regard a parent comb as being fully selected, if we so choose.
+ * However, that parent comb may not have a directly corresponding scene object,
+ * if it was not what was originally requested by the user (or generated as
+ * consequence of the processing actions of the draw/erase routines.)  Nor would we
+ * always want the "fully selected" parent comb to replace all of its children in
+ * the set, since different types of actions may want/need the individual instance
+ * solids rather than the parent combs.
+ *
+ * We will need "expand" and "collapse" operations for sets, the former of which
+ * will take each entry in the set and replace it with all of its child instances.
+ * In the event of multiple expansions producing duplicates, the duplicates will
+ * be collapsed to a unique set.
+ *
+ * Likewise, the "collapse" operation will look at the children contained in the set,
+ * and for cases where all children are present, those children will be replaced
+ * with one reference to the parent.  This will be done working "up" the various
+ * trees until either all potential collapses are missing one or more children, or
+ * all entries collapse to top level objects.
+ *
+ * Nor do we want to always expand or collapse - in some cases we want exactly
+ * what was selected.  For example, if we have the tree
+ *
+ * a
+ *  b
+ *   c
+ *    d
+ *     e
+ *
+ * and we want to select and operate on /a/b/c, we can't simply collapse (which
+ * will result in /a) or expand (which will result in /a/b/c/d/e).  If /a/b/c/d/e
+ * is part of a larger selection set and we want to replace it with /a/b/c, we will
+ * need a "insert" operation that identifies and removes all subset paths of
+ * /a/b/c prior to insertion of /a/b/c into the set, but does not alter any
+ * other paths or process /a/b/c itself.
+ *
+ * As an exercise, we consider a potential use of sets - selecting an instance of
+ * an object in a scene for editing operations.  There are a number of things we
+ * will need to know:
+ *
+ * The solids associated with the selected instance itself.  If a solid was
+ * selected we already know where to get the editing wireframe, but if comb was
+ * selected from the tree, there's more work to do.  We have the advantage of
+ * explicitly knowing the level at which the editing operations will take place
+ * (a tree selection would correspond to the previously discussed "insert"
+ * operation to the set), but we will need to generate a list of that comb's
+ * child solids so we can create appropriate editing wireframe visual objects
+ * to represent the comb in the scene.  In the event of multiple selections we
+ * would need to construct the instance set from multiple sources.
+ *
+ * If we are performing graphical selection operations, we may be either refining
+ * a set by selecting objects to be removed from it, or selecting objects not
+ * already part of the set to add to it.  In either case we will be operating
+ * at the individual instance level, and must provide ways to allow the user
+ * to refine (perhaps via the tree view) their selection intent for editing
+ * purposes.
+ *
+ * If we want to (say) set all non-active objects to be highly transparent when
+ * an editing operation commences, we will also need to be able to construct the
+ * set of all scene objects which are NOT active in the currently processed set.
+ *
  *
  */
 
