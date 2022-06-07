@@ -99,7 +99,7 @@ command line, and is order-dependent. The parameters are (in order):</para>
   <example><title>Build a simple track.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>track 500 0 10 10 -50 50 10 550 50 10 -50 -20 2</userinput>
+      <prompt>mged&gt; </prompt><userinput>track 500 0 10 10 -50 50 10 550 50 10 -50 -20 2</userinput>
     </para>
     <para>Builds a simple track using the provided arguments.
 

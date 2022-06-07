@@ -53,7 +53,7 @@
   <example><title>Run the <emphasis>art</emphasis> program to produce a color-shaded image.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput> art -C 255,255,255 -s 1024 share/db/moss.g all.g</userinput>
+      <prompt>mged&gt; </prompt><userinput> art -C 255,255,255 -s 1024 share/db/moss.g all.g</userinput>
     </para>
     <para>Runs the <emphasis>art</emphasis> program to produce a color-shaded image of a sample object. The image will be 1024 pixels square and will be displayed on a
 	lingering <emphasis>X</emphasis> framebuffer.
@@ -63,7 +63,7 @@
   <example><title>Run the <emphasis>art</emphasis> program to produce a brightened image of an object.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>art -A 2 share/db/moss.g all.g</userinput>
+      <prompt>mged&gt; </prompt><userinput>art -A 2 share/db/moss.g all.g</userinput>
     </para>
     <para>Runs the <emphasis>art</emphasis> program to produce a brightened image of the sample object. The image will be brightened by a factor of 2.
     </para>

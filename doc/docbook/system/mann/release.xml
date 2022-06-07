@@ -36,7 +36,7 @@
   <example><title>Close the current display manager.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>release</userinput>
+      <prompt>mged&gt; </prompt><userinput>release</userinput>
     </para>
     <para>Closes the current display manager.
 
@@ -46,7 +46,7 @@
  <example><title>Close a specified display manager.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>release .dm_X0</userinput>
+      <prompt>mged&gt; </prompt><userinput>release .dm_X0</userinput>
     </para>
     <para>Closes <emphasis>.dm_X0</emphasis>.
 

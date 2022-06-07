@@ -38,7 +38,7 @@
   <example><title>Set the size of the MGED display.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>size 250</userinput>
+      <prompt>mged&gt; </prompt><userinput>size 250</userinput>
     </para>
     <para>Sets the MGED display to be 250 units across.
     </para>

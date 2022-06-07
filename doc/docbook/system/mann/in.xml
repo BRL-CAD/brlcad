@@ -220,7 +220,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>in new1 raw 0 0 0 0 0 1 1 0 0 0 1 0</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>in new1 raw 0 0 0 0 0 1 1 0 0 0 1 0</userinput></term>
 	   <listitem>
 	     <para>Creates an <emphasis>ARB</emphasis> named <emphasis>new1</emphasis> in the form of a right 		  angle wedge.
 	     </para>

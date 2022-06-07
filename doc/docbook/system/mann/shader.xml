@@ -38,7 +38,7 @@
   <example><title>Assign shader parameters to a specified combination.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>shader group1 checker "{a 0,255,0 b 0,0,255}"</userinput>
+      <prompt>mged&gt; </prompt><userinput>shader group1 checker "{a 0,255,0 b 0,0,255}"</userinput>
     </para>
     <para>Assigns the checkerboard shader to <emphasis>group1</emphasis> using green and blue colors for the
 	squares.

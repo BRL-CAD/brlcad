@@ -38,7 +38,7 @@
   <example><title>Rename the current database.</title>
 
     <para>
-	     <prompt>mged&gt;</prompt> <userinput>title This is my \\"database\\"</userinput>
+	     <prompt>mged&gt; </prompt><userinput>title This is my \\"database\\"</userinput>
     </para>
     <para>Sets the title of the current database to <emphasis>This is my database.</emphasis>
      </para>

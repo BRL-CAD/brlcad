@@ -36,7 +36,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>eye_pt 100 0 0</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>eye_pt 100 0 0</userinput></term>
 	   <listitem>
 	     <para> The eye point is located at 100 mm along the <emphasis>x</emphasis> axis.
 	     </para>

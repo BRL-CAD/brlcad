@@ -154,7 +154,7 @@
   <example><title>Import a density file to material objects.</title>
     <variablelist>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt> <userinput>material import --id .density</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>material import --id .density</userinput></term>
 	<listitem>
 	  <para>
 	    Imports the density file <emphasis>.density</emphasis> to material objects and names the objects based on the file's ids.
@@ -167,7 +167,7 @@
   <example><title>Get the density attribute of the material "copper" within the physical property group.</title>
     <variablelist>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt> <userinput>material get copper physical density</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>material get copper physical density</userinput></term>
     <listitem>
 	<para>Outputs the value of density. 
 	</para>

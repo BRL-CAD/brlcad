@@ -38,7 +38,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>keypoint 10 20 30</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>keypoint 10 20 30</userinput></term>
 	   <listitem>
 	     <para>Sets the <emphasis>keypoint</emphasis> to the point (10 20 30) in model units.
 	      </para>

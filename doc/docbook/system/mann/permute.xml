@@ -42,7 +42,7 @@
   <example><title>Rearrange the vertices of an ARB being edited.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>permute 321</userinput>
+      <prompt>mged&gt; </prompt><userinput>permute 321</userinput>
     </para>
     <para>Rearranges the vertices of the currently edited ARB such that vertex 3 becomes
 	vertex 1, vertex 2 remains 2, and vertex 1 becomes 3.

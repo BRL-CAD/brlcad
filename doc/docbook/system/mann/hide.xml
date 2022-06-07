@@ -36,7 +36,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>hide sol_a</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>hide sol_a</userinput></term>
 	   <listitem>
 	     <para>Marks <emphasis>sol_a</emphasis> as hidden.
 	     </para>

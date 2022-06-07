@@ -49,7 +49,7 @@
       range of idents using the color red.</title>
 
       <para>
-	<prompt>mged&gt;</prompt> <userinput>color 1100 1200 255 0 0 fake_string</userinput>
+	<prompt>mged&gt; </prompt><userinput>color 1100 1200 255 0 0 fake_string</userinput>
       </para>
       <para>
 	Makes an entry in the color lookup table for regions with idents from 1100-1200 using the color red.

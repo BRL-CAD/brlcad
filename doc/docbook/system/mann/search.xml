@@ -997,8 +997,8 @@ d2.r
 	or intersections in the m35.g example model in BRL-CAD and draw the objects' wireframes in the display manager:
 	<literallayout>
 	  <computeroutput>
-	    <prompt>mged&gt;</prompt><userinput>search all.g -type region -and ( -below -bool - -or -below -bool + ) -exec draw "{}" ";"</userinput>
-	    <prompt>mged&gt;</prompt><userinput>autoview</userinput>
+	    <prompt>mged&gt; </prompt><userinput>search all.g -type region -and ( -below -bool - -or -below -bool + ) -exec draw "{}" ";"</userinput>
+	    <prompt>mged&gt; </prompt><userinput>autoview</userinput>
 	  </computeroutput>
 	</literallayout>
       </para>
@@ -1012,8 +1012,8 @@ d2.r
 	First, we collect the set of search results into a Tcl variable:
 	<literallayout>
 	  <computeroutput>
-	    <prompt>mged&gt;</prompt><userinput> set glob_compat_mode 0</userinput>
-	    <prompt>mged&gt;</prompt><userinput> set search_results [search cab -type region]</userinput>
+	    <prompt>mged&gt; </prompt><userinput> set glob_compat_mode 0</userinput>
+	    <prompt>mged&gt; </prompt><userinput> set search_results [search cab -type region]</userinput>
 	  </computeroutput>
 	</literallayout>
       </para>
@@ -1021,7 +1021,7 @@ d2.r
 	Next we randomize the colors using Tcl's functionality (here we use random numbers and avoid any value less than 30 to keep objects more visible):
 	<literallayout>
 	  <computeroutput>
-	    <prompt>mged&gt;</prompt><userinput> foreach i $search_results {attr set $i color [expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]}</userinput>
+	    <prompt>mged&gt; </prompt><userinput> foreach i $search_results {attr set $i color [expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]}</userinput>
 	  </computeroutput>
 	</literallayout>
       </para>
@@ -1029,7 +1029,7 @@ d2.r
 	Finally, we add transparency to the same regions:
 	<literallayout>
 	  <computeroutput>
-	    <prompt>mged&gt;</prompt><userinput> foreach i $search_results {attr set $i shader {glass {tr 0.7 ri 1}}}</userinput>
+	    <prompt>mged&gt; </prompt><userinput> foreach i $search_results {attr set $i shader {glass {tr 0.7 ri 1}}}</userinput>
 	  </computeroutput>
 	</literallayout>
       </para>
@@ -1038,7 +1038,7 @@ d2.r
 	  Remember when setting region colors to check for the presence of a <emphasis>regionid_colortable</emphasis> attribute on the _GLOBAL object - if such a table is present (the m35.g sample model has one, for example) you need to remove that table (and for MGED wireframes, re-open the database) before the colors on the individual regions will "take":
 	  <literallayout>
 	    <computeroutput>
-	      <prompt>mged&gt;</prompt><userinput> attr rm _GLOBAL regionid_colortable</userinput>
+	      <prompt>mged&gt; </prompt><userinput> attr rm _GLOBAL regionid_colortable</userinput>
 	    </computeroutput>
 	  </literallayout>
 	</para>

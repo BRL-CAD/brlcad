@@ -49,7 +49,7 @@
 
     <variablelist>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt> <userinput>idents regions_file group1 group2 region3</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>idents regions_file group1 group2 region3</userinput></term>
 	<listitem>
 	  <para>Creates a file named
 	  <emphasis>regions_file</emphasis> and lists all the regions

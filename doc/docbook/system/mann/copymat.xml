@@ -38,7 +38,7 @@
     <example><title>Set the matrix for a member in one combination equal to the matrix for another member in another combination.
       </title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>copymat comb1/memb1 comb2/memb2</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>copymat comb1/memb1 comb2/memb2</userinput></para>
       <para>Sets the matrix for member <emphasis>memb2</emphasis> in combination <emphasis>comb2</emphasis> equal to the matrix for member <emphasis>memb1</emphasis> in combination <emphasis>comb1</emphasis>.</para>
     </example>
   </refsection>

@@ -51,7 +51,7 @@
   <example><title>Show the structure of an object down to the primitive shape level.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>tree group1</userinput>
+      <prompt>mged&gt; </prompt><userinput>tree group1</userinput>
     </para>
     <para>Shows the structure of the tree rooted at <emphasis>group1</emphasis> down to the primitive shape level.
 
@@ -60,7 +60,7 @@
  <example><title>Specify the amount of indentation in the tree.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>tree -i2 group1</userinput>
+      <prompt>mged&gt; </prompt><userinput>tree -i2 group1</userinput>
     </para>
     <para> Uses two spaces for each level of indentation.
     </para>
@@ -68,7 +68,7 @@
   <example><title>Specify that no shapes are to be printed.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>tree -c group1</userinput>
+      <prompt>mged&gt; </prompt><userinput>tree -c group1</userinput>
     </para>
     <para>No shapes are printed.
     </para>
@@ -77,7 +77,7 @@
   <example><title>Specify that attributes are listed for each object printed.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>tree -a -c group1</userinput>
+      <prompt>mged&gt; </prompt><userinput>tree -a -c group1</userinput>
     </para>
     <para>No shapes are printed, but attributes are shown for the printed objects.
     </para>

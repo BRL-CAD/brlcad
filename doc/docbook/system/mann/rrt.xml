@@ -50,7 +50,7 @@
     </title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rrt echo</userinput>
+      <prompt>mged&gt; </prompt><userinput>rrt echo</userinput>
     </para>
     <para>Lists the current database name and currently displayed objects.
     </para>

@@ -79,7 +79,7 @@
     <example><title>Get a dump of the in-memory directory.</title>
 
       <para>
-	<prompt>mged&gt;</prompt> <userinput>debugdir</userinput>
+	<prompt>mged&gt; </prompt><userinput>debugdir</userinput>
       </para>
       <para>Gets a dump of the in-memory directory.</para>
     </example>

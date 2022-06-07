@@ -39,7 +39,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>eac 1 2 3</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>eac 1 2 3</userinput></term>
 	   <listitem>
 	     <para>Draws all regions with
 	     <emphasis>aircodes</emphasis> 1, 2, or 3 in the

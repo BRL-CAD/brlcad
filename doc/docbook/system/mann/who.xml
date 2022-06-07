@@ -44,7 +44,7 @@ command. The <emphasis>real</emphasis> flag asks for just <emphasis>real</emphas
   <example><title>List the top-level phony objects that are currently displayed.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>who p</userinput>
+      <prompt>mged&gt; </prompt><userinput>who p</userinput>
     </para>
     <para>
        Lists all top-level <emphasis>phony</emphasis> objects currently displayed.

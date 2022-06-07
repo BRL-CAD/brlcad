@@ -41,7 +41,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>edcolor</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>edcolor</userinput></term>
 	   <listitem>
 	     <para>The user can now edit the color table.
 	     </para>

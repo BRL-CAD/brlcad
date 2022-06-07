@@ -50,7 +50,7 @@
     the current value.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>debugbu</userinput>
+      <prompt>mged&gt; </prompt><userinput>debugbu</userinput>
     </para>
     <para>
       Lists available <emphasis>bu_debug</emphasis> values and the current value.
@@ -60,7 +60,7 @@
   <example><title>Set a new value for <emphasis>bu_debug</emphasis>.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>debugbu 2</userinput>
+      <prompt>mged&gt; </prompt><userinput>debugbu 2</userinput>
     </para>
     <para>
       Sets <emphasis>bu_debug</emphasis> to &lt;MEM_CHECK&gt;.

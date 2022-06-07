@@ -48,7 +48,7 @@
       uniquely named NMG shapes.
       </title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>decompose shape.nmg part</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>decompose shape.nmg part</userinput></para>
       <para>
 	Decomposes the <emphasis>NMG</emphasis>shape named <emphasis>shape.nmg</emphasis> into
 	maximally connected shells and puts each resulting shell into a separate

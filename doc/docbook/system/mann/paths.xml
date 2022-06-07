@@ -38,7 +38,7 @@
   <example><title>List all paths that start from a specified path start and end at a primitive shape.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>paths group1 region2</userinput>
+      <prompt>mged&gt; </prompt><userinput>paths group1 region2</userinput>
     </para>
     <para>Lists all existing paths that start from <emphasis>group1/region2</emphasis> and end at a primitive 		shape.
     </para>

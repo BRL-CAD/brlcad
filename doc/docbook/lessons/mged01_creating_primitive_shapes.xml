@@ -87,7 +87,7 @@
 
 
       <para>
-	You can type in commands at the <prompt>mged&gt;</prompt> prompt. Many experienced UNIX users
+	You can type in commands at the <prompt>mged&gt; </prompt>prompt. Many experienced UNIX users
 	prefer this method because it allows them to quickly create a model (which
 	we sometimes refer to as a "design") without having to point and click on
 	a lot of options. The complete listing of editing commands and what they
@@ -227,7 +227,7 @@
 	database you are going to make. When you are done, press the ENTER key.
 	For example:
 
-	<userinput><prompt>mged&gt;</prompt> title MySphere[ENTER]</userinput>
+	<userinput><prompt>mged&gt; </prompt>title MySphere[ENTER]</userinput>
 
 	Note that in <application>BRL-CAD</application> versions prior to release 6.0, the title is limited
 	to 72 characters.
@@ -247,7 +247,7 @@
 	just type units in after the <application>MGED</application> prompt in the Command Window, followed
 	by the ENTER key. The Command Line looks like:
 
-	<userinput><prompt>mged&gt;</prompt> units in[ENTER]</userinput>
+	<userinput><prompt>mged&gt; </prompt>units in[ENTER]</userinput>
       </para>
     </section>
 
@@ -419,7 +419,7 @@
 	parameters or attributes of the first sphere you created is as follows:
 
 	<literallayout class="normal">
-<prompt>mged&gt;</prompt> <command>l sph1.s</command>
+<prompt>mged&gt; </prompt><command>l sph1.s</command>
 <computeroutput>
 sph1.s: ellipsoid (ELL)
 

@@ -40,7 +40,7 @@ MGED session.
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>history</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>history</userinput></term>
 	   <listitem>
 	     <para>Displays the command history list for the current MGED session.
 	     </para>

@@ -64,7 +64,7 @@
     </para>
     <example><title>Copy objects in a specified database to the current one and add a prefix to all the copied objects.</title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>dbconcat model_two.g two_</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>dbconcat model_two.g two_</userinput></para>
       <para>
 	Copies all the objects in <emphasis>model_two.g</emphasis> to the current database,
 	but prefixes the name of every object copied with the string <emphasis>two_</emphasis>.
@@ -77,7 +77,7 @@
     </para>
     <example><title>Copy an entire database, including title, units, and color table, to the current database without any affix</title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>dbconcat -t -u -c model_two.g</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>dbconcat -t -u -c model_two.g</userinput></para>
       <para>
 	Copies all the objects in <emphasis>model_two.g</emphasis> to the current database, including the title, units,
 	and color table. No suffix or prefix is added to the object names.

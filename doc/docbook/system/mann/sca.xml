@@ -51,7 +51,7 @@
   <example><title>Apply a scaling factor to an object or view.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>sca 2</userinput>
+      <prompt>mged&gt; </prompt><userinput>sca 2</userinput>
     </para>
     <para>
       In matrix edit mode, the object being affected will get twice as big. In
@@ -64,7 +64,7 @@
   <example><title>Apply a scaling factor to an object.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>sca 2 1 1</userinput>
+      <prompt>mged&gt; </prompt><userinput>sca 2 1 1</userinput>
     </para>
     <para>
       In matrix edit mode, the object being affected will get twice as big

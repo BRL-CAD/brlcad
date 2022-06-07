@@ -50,7 +50,7 @@
 
   <variablelist>
     <varlistentry>
-      <term><prompt>mged&gt;</prompt> <userinput>kill group1 region2 shapeb</userinput></term>
+      <term><prompt>mged&gt; </prompt><userinput>kill group1 region2 shapeb</userinput></term>
       <listitem>
 	<para>
 	  Deletes <emphasis>group1, region2</emphasis>, and <emphasis>shapeb</emphasis>	from

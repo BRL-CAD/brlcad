@@ -67,7 +67,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt; </prompt> <userinput>3ptarb</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>3ptarb</userinput></term>
 	   <listitem>
 	     <para>
 	       Start the <command>3ptarb</command> command.
@@ -75,7 +75,7 @@
 	   </listitem>
       </varlistentry>
       <varlistentry>
-	   <term><prompt>Enter name for this arb: </prompt> <userinput>thing</userinput></term>
+	   <term><prompt>Enter name for this arb: </prompt><userinput>thing</userinput></term>
 	   <listitem>
 	     <para>
 	       The new ARB8 will be named <emphasis>thing</emphasis>.
@@ -83,7 +83,7 @@
 	   </listitem>
       </varlistentry>
        <varlistentry>
-	   <term><prompt>Enter X, Y, Z for point 1: </prompt> <userinput>0 0 0</userinput></term>
+	   <term><prompt>Enter X, Y, Z for point 1: </prompt><userinput>0 0 0</userinput></term>
 	   <listitem>
 	     <para>
 	       Point one is at the origin.
@@ -91,7 +91,7 @@
 	   </listitem>
       </varlistentry>
       <varlistentry>
-	   <term><prompt>Enter X, Y, Z for point 2: </prompt> <userinput>1 0 0</userinput></term>
+	   <term><prompt>Enter X, Y, Z for point 2: </prompt><userinput>1 0 0</userinput></term>
 	   <listitem>
 	     <para>
 	       Point two is at (1, 0, 0).
@@ -99,7 +99,7 @@
 	   </listitem>
       </varlistentry>
       <varlistentry>
-	   <term><prompt>Enter X, Y, Z for point 3: </prompt> <userinput>1 1 0</userinput></term>
+	   <term><prompt>Enter X, Y, Z for point 3: </prompt><userinput>1 1 0</userinput></term>
 	   <listitem>
 	     <para>
 	       Point three is at (1, 1, 0).
@@ -108,7 +108,7 @@
       </varlistentry>
 
       <varlistentry>
-	   <term><prompt>Enter coordinate to solve for (x, y, or z): </prompt> <userinput>z</userinput></term>
+	   <term><prompt>Enter coordinate to solve for (x, y, or z): </prompt><userinput>z</userinput></term>
 	   <listitem>
 	     <para>
 	       The code will calculate the z coordinate of the fourth point.
@@ -116,7 +116,7 @@
 	   </listitem>
       </varlistentry>
       <varlistentry>
-	   <term><prompt>Enter the X, Y coordinate values: </prompt> <userinput>0 1</userinput></term>
+	   <term><prompt>Enter the X, Y coordinate values: </prompt><userinput>0 1</userinput></term>
 	   <listitem>
 	     <para>
 	       The x and y coordinates of the fourth point are 0 and 1.
@@ -124,7 +124,7 @@
 	   </listitem>
       </varlistentry>
       <varlistentry>
-	   <term><prompt>Enter thickness for this arb: </prompt> <userinput>3</userinput></term>
+	   <term><prompt>Enter thickness for this arb: </prompt><userinput>3</userinput></term>
 	   <listitem>
 	     <para>
 	       The new ARB8 will be 3 units thick.

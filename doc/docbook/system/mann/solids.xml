@@ -39,7 +39,7 @@
   <example><title>List a summary of all the regions in a group.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>solids shapes_summary group1 regiona</userinput>
+      <prompt>mged&gt; </prompt><userinput>solids shapes_summary group1 regiona</userinput>
     </para>
     <para>Writes a summary of all the regions in <emphasis>group1</emphasis> and includes the region named
 	<emphasis>regiona</emphasis>. The summary includes detailed shape parameters for the shapes used in

@@ -43,7 +43,7 @@ increases the size of the viewing cube (zoom out).
   <example><title>Reduce the size of the viewing cube by half.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>zoom 2</userinput>
+      <prompt>mged&gt; </prompt><userinput>zoom 2</userinput>
     </para>
     <para>Reduces the size of the current viewing cube by half (effectively doubling the size
 of objects in the display).

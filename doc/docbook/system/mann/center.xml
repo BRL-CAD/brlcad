@@ -58,7 +58,7 @@
     <example><title>Printing the coordinates of the center of the <emphasis>mged</emphasis> display.</title>
 
       <para>
-	<prompt>mged&gt;</prompt> <userinput>center</userinput>
+	<prompt>mged&gt; </prompt><userinput>center</userinput>
       </para>
       <para>Prints out the coordinates of the center of the mged display.
       </para>
@@ -67,7 +67,7 @@
     <example><title>Moving the center of the <emphasis>mged</emphasis> display to a specified point.</title>
 
       <para>
-	<prompt>mged&gt;</prompt><userinput>center 12.5 5.6 8.7&gt;</userinput>
+	<prompt>mged&gt; </prompt><userinput>center 12.5 5.6 8.7&gt;</userinput>
       </para>
       <para>The center of the <emphasis>mged</emphasis> display is moved to the point (12.5, 5.6, 8.7).</para>
     </example>
@@ -75,7 +75,7 @@
     <example><title>Set Tcl variable $oldcent to the display center coordinates.</title>
 
       <para>
-	<prompt>mged&gt;</prompt><userinput>set oldcent [center]</userinput>
+	<prompt>mged&gt; </prompt><userinput>set oldcent [center]</userinput>
       </para>
       <para>
 	Sets the Tcl variable $oldcent to the display center coordinates.
@@ -86,15 +86,15 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>set glob_compat_mode 0</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>set glob_compat_mode 0</userinput></term>
       <listitem><para/></listitem>
       </varlistentry>
       <varlistentry>
-	   <term><prompt>mged</prompt> <userinput>units mm</userinput></term>
+	   <term><prompt>mged</prompt><userinput>units mm</userinput></term>
       <listitem><para/></listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged</prompt> <userinput>eval center [vadd2[center] {2 0 0}]</userinput></term>
+	<term><prompt>mged</prompt><userinput>eval center [vadd2[center] {2 0 0}]</userinput></term>
 	<listitem>
 	  <para>
 	    Moves the center point 2 mm in the model + x direction.
@@ -108,11 +108,11 @@
 
       <variablelist>
 	<varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>units mm</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>units mm</userinput></term>
       <listitem><para/></listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><prompt>mged</prompt> <userinput>db adjust sphere.s  V [center]</userinput></term>
+	  <term><prompt>mged</prompt><userinput>db adjust sphere.s  V [center]</userinput></term>
       <listitem><para/></listitem>
 	</varlistentry>
       </variablelist>

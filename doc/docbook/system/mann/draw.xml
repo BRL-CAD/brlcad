@@ -112,7 +112,7 @@
       <title>Draw specific objects in the <emphasis>MGED</emphasis> display.</title>
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>draw object1 object2</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>draw object1 object2</userinput></term>
 	  <listitem>
 	    <para><emphasis>Object1</emphasis> and <emphasis>object2</emphasis> are drawn in the <emphasis>MGED</emphasis> display.
 	    </para>
@@ -124,7 +124,7 @@
     <example>
       <title>Specify the color used to draw the object.</title>
       <para>
-	<prompt>mged&gt;</prompt><userinput>draw -C 255/255/255 object2</userinput>
+	<prompt>mged&gt; </prompt><userinput>draw -C 255/255/255 object2</userinput>
       </para>
       <para>Object2 is drawn in white.
       </para>
@@ -133,7 +133,7 @@
     <example>
       <title>Limit the objects to be drawn to those having specific attribute names and value pairs.</title>
       <para>
-	<prompt>mged&gt;</prompt><userinput>draw -A -o Comment {First comment} Comment {Second comment}</userinput>
+	<prompt>mged&gt; </prompt><userinput>draw -A -o Comment {First comment} Comment {Second comment}</userinput>
       </para>
       <para>
 	Objects having a Comment attribute with a value of either "First comment" or "Second comment" are drawn.

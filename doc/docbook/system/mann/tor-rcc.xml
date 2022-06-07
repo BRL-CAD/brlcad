@@ -39,7 +39,7 @@
 
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>tor-rcc tor.s rcc.s</userinput>
+      <prompt>mged&gt; </prompt><userinput>tor-rcc tor.s rcc.s</userinput>
     </para>
     <para>Creates an RCC named <emphasis>rcc.s</emphasis> to fill in the hole in the middle of <emphasis>tor.s</emphasis>.
 

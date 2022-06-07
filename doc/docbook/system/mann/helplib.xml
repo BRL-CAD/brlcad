@@ -40,7 +40,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>helplib mat_trn</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>helplib mat_trn</userinput></term>
 	   <listitem>
 	     <para>Displays a one-line usage message for the <command>mat_trn</command> command.
 	     </para>

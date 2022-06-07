@@ -37,7 +37,7 @@
 
 
      <para>
-      <prompt>mged&gt;</prompt><userinput>mrot 0 0 10</userinput>
+      <prompt>mged&gt; </prompt><userinput>mrot 0 0 10</userinput>
     </para>
     <para>Rotates the view about the model <emphasis>z</emphasis> axis by 10°.
     </para>

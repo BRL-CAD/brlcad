@@ -41,7 +41,7 @@ written out.
   <example><title>Make sure disk files are up to date.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>sync</userinput>
+      <prompt>mged&gt; </prompt><userinput>sync</userinput>
     </para>
     <para>Shows disk files in memory.
 

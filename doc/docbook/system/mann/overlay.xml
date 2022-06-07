@@ -93,7 +93,7 @@
       <title>Plot a UNIX plot file in the MGED display.</title>
 
       <para>
-	<prompt>mged&gt;</prompt><userinput>overlay plot.upl tmp</userinput>
+	<prompt>mged&gt; </prompt><userinput>overlay plot.upl tmp</userinput>
       </para>
       <para>
 	Plots the UNIX plot file <emphasis>plot.upl</emphasis> in the MGED
@@ -106,7 +106,7 @@
       <title>Plot a PNG file in the MGED framebuffer.</title>
 
       <para>
-	<prompt>mged&gt;</prompt><userinput>overlay -c -F image.png</userinput>
+	<prompt>mged&gt; </prompt><userinput>overlay -c -F image.png</userinput>
       </para>
       <para>
 	Plots the image file <emphasis>image.png</emphasis> in the MGED

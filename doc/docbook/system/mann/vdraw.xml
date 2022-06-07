@@ -154,7 +154,7 @@ command lists.</para>
   <example><title>Open a specified list.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>vdraw open square</userinput>
+      <prompt>mged&gt; </prompt><userinput>vdraw open square</userinput>
     </para>
     <para>Opens a list named <emphasis>square</emphasis>.
     </para>
@@ -162,7 +162,7 @@ command lists.</para>
  <example><title>Set the color.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>vdraw params color ff00</userinput>
+      <prompt>mged&gt; </prompt><userinput>vdraw params color ff00</userinput>
     </para>
     <para>Sets the color to green.
 
@@ -171,7 +171,7 @@ command lists.</para>
 <example><title>Start a line at the origin.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>vdraw write next 0 0 0 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>vdraw write next 0 0 0 0</userinput>
     </para>
     <para>Starts a line at the origin.
 
@@ -180,7 +180,7 @@ command lists.</para>
 <example><title>Draw a line from the previous point to a specified point.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>vdraw write next 1 100 0 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>vdraw write next 1 100 0 0</userinput>
     </para>
     <para>Draws a line from the origin to (100 0 0).
 
@@ -189,7 +189,7 @@ command lists.</para>
 <example><title>Draw a line from the previous point to a specified point.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>vdraw write next 1 100 100 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>vdraw write next 1 100 100 0</userinput>
     </para>
     <para>Draws a line from the previous point to (100 100 0).
 
@@ -198,7 +198,7 @@ command lists.</para>
 <example><title>Draw a line from the previous point to a specified point.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>vdraw write next 1 0 100 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>vdraw write next 1 0 100 0</userinput>
     </para>
     <para> Draws a line from the previous point to (0 100 0).
 
@@ -207,7 +207,7 @@ command lists.</para>
 <example><title>Draw a line from the previous point to the origin.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>vdraw write next 1 0 0 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>vdraw write next 1 0 0 0</userinput>
     </para>
     <para>
        Draws a line from the previous point to the origin.
@@ -216,7 +216,7 @@ command lists.</para>
 <example><title>Send the command list to the display manager.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>vdraw send</userinput>
+      <prompt>mged&gt; </prompt><userinput>vdraw send</userinput>
     </para>
     <para>Draws the square in the MGED display.
 

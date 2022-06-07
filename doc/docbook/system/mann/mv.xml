@@ -37,7 +37,7 @@ Note that this does not change any references to <emphasis>old_name</emphasis> t
   <example><title>Change an object's name.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>mv shapea shapeb</userinput>
+      <prompt>mged&gt; </prompt><userinput>mv shapea shapeb</userinput>
     </para>
     <para>Changes the name of <emphasis>shapea</emphasis> to <emphasis>shapeb</emphasis>.
 

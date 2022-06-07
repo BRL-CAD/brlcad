@@ -40,7 +40,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>dup other_model.g</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>dup other_model.g</userinput></term>
 	   <listitem>
 	     <para>Checks <emphasis>other_model.g</emphasis> for names duplicating those in the current model.
 	     </para>
@@ -52,7 +52,7 @@
   <example><title/>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>dup other_model.g abc</userinput>
+      <prompt>mged&gt; </prompt><userinput>dup other_model.g abc</userinput>
     </para>
     <para>Does the same check as in the first example, but prefixes all the names in <emphasis>other_model.g        	    </emphasis>with <emphasis>abc</emphasis> before comparing with the names in the current model.
     </para>

@@ -75,7 +75,7 @@
 
     <example><title>Analyze a particular <emphasis>ARB</emphasis></title>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>analyze box.s</userinput>
+	<prompt>mged&gt; </prompt><userinput>analyze box.s</userinput>
       </para>
       <literallayout>
 box.s:  ARB8
@@ -117,7 +117,7 @@ box.s:  ARB8
 
      <example><title>Analyze a particular <emphasis>TOR</emphasis></title>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>analyze tor</userinput>
+	<prompt>mged&gt; </prompt><userinput>analyze tor</userinput>
       </para>
       <literallayout>
 tor:  torus (TOR)
@@ -141,7 +141,7 @@ tor:  torus (TOR)
     <example><title>Points inside a sphere</title>
     
       <para>
-	<prompt>mged&gt;</prompt> <userinput>l sph.s</userinput>
+	<prompt>mged&gt; </prompt><userinput>l sph.s</userinput>
       </para>
       <literallayout>
 sph.s:  ellipsoid (ELL)
@@ -158,7 +158,7 @@ sph.s:  ellipsoid (ELL)
       </literallayout>
       
       <para>
-	<prompt>mged&gt;</prompt> <userinput>l pnts.s</userinput>
+	<prompt>mged&gt; </prompt><userinput>l pnts.s</userinput>
       </para>
       <literallayout>
 pnts.s:  Point Cloud (PNTS)
@@ -174,14 +174,14 @@ point#, (point)
       </literallayout>
       
       <para>
-	<prompt>mged&gt;</prompt> <userinput>analyze intersect -o inside.s pnts.s sph.s</userinput>
+	<prompt>mged&gt; </prompt><userinput>analyze intersect -o inside.s pnts.s sph.s</userinput>
       </para>
       <literallayout>
 3
       </literallayout>
       
       <para>
-	<prompt>mged&gt;</prompt> <userinput>l inside.s</userinput>
+	<prompt>mged&gt; </prompt><userinput>l inside.s</userinput>
       </para>
       <literallayout>
 inside.s:  Point Cloud (PNTS)
@@ -199,7 +199,7 @@ point#, (point)
     <example><title>Points outside a sphere</title>
     
       <para>
-	<prompt>mged&gt;</prompt> <userinput>l sph.s</userinput>
+	<prompt>mged&gt; </prompt><userinput>l sph.s</userinput>
       </para>
       <literallayout>
 sph.s:  ellipsoid (ELL)
@@ -216,7 +216,7 @@ sph.s:  ellipsoid (ELL)
       </literallayout>
       
       <para>
-	<prompt>mged&gt;</prompt> <userinput>l pnts.s</userinput>
+	<prompt>mged&gt; </prompt><userinput>l pnts.s</userinput>
       </para>
       <literallayout>
 pnts.s:  Point Cloud (PNTS)
@@ -232,14 +232,14 @@ point#, (point)
       </literallayout>
       
       <para>
-	<prompt>mged&gt;</prompt> <userinput>analyze subtract -o outside.s pnts.s sph</userinput>
+	<prompt>mged&gt; </prompt><userinput>analyze subtract -o outside.s pnts.s sph</userinput>
       </para>
       <literallayout>
 3
       </literallayout>
 
       <para>
-	<prompt>mged&gt;</prompt> <userinput>l outside.s</userinput>
+	<prompt>mged&gt; </prompt><userinput>l outside.s</userinput>
       </para>
       <literallayout>
 outside.s:  Point Cloud (PNTS)

@@ -209,7 +209,7 @@
 	Cuando haya terminado, pulse la tecla [ENTER].
 	Por ejemplo:
 
-	<userinput><prompt>mged&gt;</prompt> title MySphere [ENTER]</userinput>.
+	<userinput><prompt>mged&gt; </prompt>title MySphere [ENTER]</userinput>.
 
 	Note que en las versiones de <application>BRL-CAD</application> anteriores a la 	6.0, el título está limitado a 72 caracteres.
       </para>
@@ -224,7 +224,7 @@
 	Si prefiere la línea de comandos, tipee en una la palabra "units" y luego presione 		 [ENTER].
 	En la terminal de <application>MGED</application> aparecerá una línea que dirá:
 
-	<userinput><prompt>mged&gt;</prompt> units in [ENTER]</userinput>.
+	<userinput><prompt>mged&gt; </prompt>units in [ENTER]</userinput>.
       </para>
     </section>
 
@@ -368,7 +368,7 @@
       <para>
 	Un ejemplo de diálogo que podría darse en la ventana de comandos para mostrar los 		parámetros o atributos de la primera esfera que ha creado es el siguiente:
 	<literallayout class="normal">
-<prompt>mged&gt;</prompt> <command>l sph1.s</command>
+<prompt>mged&gt; </prompt><command>l sph1.s</command>
 <computeroutput>
 sph1.s: ellipsoid (ELL)
 

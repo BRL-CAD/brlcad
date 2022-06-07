@@ -203,7 +203,7 @@
       </para>
       <example><title>List the available display manager internal variables.</title>
 
-	<para><prompt>mged&gt;</prompt> <userinput>dm set</userinput></para>
+	<para><prompt>mged&gt; </prompt><userinput>dm set</userinput></para>
 	<para>Lists the available display manager internal variables.</para>
       </example>
 
@@ -211,7 +211,7 @@
 	<emphasis>var</emphasis> and <emphasis>val</emphasis> arguments.</title>
 
 	<para>
-	  <prompt>mged&gt;</prompt><userinput>dm set perspective 1</userinput>
+	  <prompt>mged&gt; </prompt><userinput>dm set perspective 1</userinput>
 	</para>
 	<para>Turns on perspective projection in the display.
 	</para>
@@ -221,7 +221,7 @@
 	</title>
 
 	<para>
-	  <prompt>mged&gt;</prompt><userinput>dm size</userinput>
+	  <prompt>mged&gt; </prompt><userinput>dm size</userinput>
 	</para>
 	<para>The display manager's window size is returned.
 	</para>
@@ -231,7 +231,7 @@
 	</title>
 
 	<para>
-	  <prompt>mged&gt;</prompt><userinput>dm size 900 900</userinput>
+	  <prompt>mged&gt; </prompt><userinput>dm size 900 900</userinput>
 	</para>
 	<para>The display manager window is resized to 900 x 900.
 	</para>
@@ -241,7 +241,7 @@
 	</title>
 
 	<para>
-      <prompt>mged&gt;</prompt><userinput>dm m 2 100 200</userinput>
+      <prompt>mged&gt; </prompt><userinput>dm m 2 100 200</userinput>
 	</para>
 	<para>Simulates a button2 press at (100, 200) in X screen coordinates.</para>
       </example>
@@ -250,7 +250,7 @@
 	</title>
 
 	<para>
-	  <prompt>mged&gt;</prompt><userinput>dm am r 400 100</userinput>
+	  <prompt>mged&gt; </prompt><userinput>dm am r 400 100</userinput>
 	</para>
 	<para>Starts an alternate mouse mode rotation at (400, 100). </para>
       </example>
@@ -259,7 +259,7 @@
 	</title>
 
 	<para>
-	  <prompt>mged&gt;</prompt><userinput>dm adc d 300 200</userinput>
+	  <prompt>mged&gt; </prompt><userinput>dm adc d 300 200</userinput>
 	</para>
 	<para>Starts a tick distance manipulation at (300, 200).</para>
       </example>
@@ -268,7 +268,7 @@
 	</title>
 
 	<para>
-	  <prompt>mged&gt;</prompt><userinput>dm con t z 200 200</userinput>
+	  <prompt>mged&gt; </prompt><userinput>dm con t z 200 200</userinput>
 	</para>
 	<para>Starts a constrained translation down the Z axis.
 	</para>
@@ -278,7 +278,7 @@
 	</title>
 
 	<para>
-	  <prompt>mged&gt;</prompt><userinput>dm con a d 200 100</userinput>
+	  <prompt>mged&gt; </prompt><userinput>dm con a d 200 100</userinput>
 	</para>
 	<para>Starts a constrained tick distance manipulation.
 	</para>
@@ -288,7 +288,7 @@
 	</title>
 
 	<para>
-	  <prompt>mged&gt;</prompt><userinput>dm idle</userinput>
+	  <prompt>mged&gt; </prompt><userinput>dm idle</userinput>
 	</para>
 	<para>Ends the drag.
 	</para>

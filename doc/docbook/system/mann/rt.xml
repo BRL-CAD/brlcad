@@ -40,7 +40,7 @@
   <example><title>Run the <emphasis>rt</emphasis> program to produce a color-shaded image of the current 	view in MGED.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rt -s1024 -F/dev/Xl</userinput>
+      <prompt>mged&gt; </prompt><userinput>rt -s1024 -F/dev/Xl</userinput>
     </para>
     <para>Runs the <emphasis>rt</emphasis> program to produce a color-shaded image of the current 	view in the MGED display. The image will be 1024 pixels square and will be displayed on a
 	lingering <emphasis>X</emphasis> framebuffer.
@@ -50,7 +50,7 @@
   <example><title>Run the <emphasis>rt</emphasis> program to produce a color-shaded image of an object  	using MGED's current viewing parameters.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rt -C 200/200/255 -- roof</userinput>
+      <prompt>mged&gt; </prompt><userinput>rt -C 200/200/255 -- roof</userinput>
     </para>
     <para>Runs the <emphasis>rt</emphasis> program to produce a color-shaded image of the object 	<emphasis>roof</emphasis> using MGED's current viewing parameters. The image will have a 	sky-blue background and will be displayed on the framebuffer specified by the FB_FILE shell 	variable.
     </para>
