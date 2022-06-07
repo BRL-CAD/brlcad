@@ -138,6 +138,32 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* audit support for slashes in object names and commands that expect
+  paths or can/should have meaningful behavior with paths
+
+* default tops to undecorated, deprecate -n, add tops -p
+
+* default ls to undecorated, deprecate -n, add ls -p
+
+* make mv and mvall not accept slashes on destination:
+
+  mged> mv sph.r sph.r/R
+  db_lookup(R) failed: R does not exist
+  db_string_to_path() of 'sph.r/R' failed on 'R'
+  mged> tops
+  sph.r/R/R
+  mged> mv sph.r/R sph.r
+  mged> tops
+  sph.r/R
+
+* consider not using spaces in the default installer path on Windows
+  for simplified scripting usage (e.g., when installed to C:\)
+
+* color management of objects in mged/archer so you can brighten dark
+  objects, darken bright objects, map objects to other colors, etc.
+  related to the luminance adjustments being done in the Creo export
+  plugin.
+
 * idents command needs to have csv/xls output options and should
   output a column header and optionally not export the comment header
   for ease of import into spreadsheet programs.
