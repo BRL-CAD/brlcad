@@ -120,19 +120,22 @@ QgTreeView::QgTreeView(QWidget *pparent, QgSelectionProxyModel *treemodel) : QTr
 {
     this->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    // https://stackoverflow.com/a/31356930/2037687
+    // Optimization: https://stackoverflow.com/a/31356930/2037687
     this->setUniformRowHeights(true);
+
+    // We use double click to control drawing - don't want the tree to expand
+    // and contract at the same time.  To open or close combs, use arrows to
+    // the left of the text and icon.
+    setExpandsOnDoubleClick(false);
+
+    // Allow for multiple selection
+    this->setSelectionMode(ExtendedSelection);
 
     m = treemodel;
 
     setModel(treemodel);
 
     setItemDelegate(new gObjDelegate(this));
-
-    // We use double click to control drawing - don't want the tree to expand
-    // and contract at the same time.  To open or close combs, use arrows to
-    // the left of the text and icon.
-    setExpandsOnDoubleClick(false);
 
     header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     header()->setStretchLastSection(true);
