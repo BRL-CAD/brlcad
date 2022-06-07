@@ -116,6 +116,9 @@ QgTreeView::QgTreeView(QWidget *pparent, QgSelectionProxyModel *treemodel) : QTr
 {
     this->setContextMenuPolicy(Qt::CustomContextMenu);
 
+    // https://stackoverflow.com/a/31356930/2037687
+    this->setUniformRowHeights(true);
+
     m = treemodel;
 
     setModel(treemodel);
