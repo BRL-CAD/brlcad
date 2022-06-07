@@ -114,12 +114,17 @@ QgSelectionProxyModel::setData(const QModelIndex & idx, const QVariant &UNUSED(v
 void
 QgSelectionProxyModel::illuminate(const QItemSelection &selected, const QItemSelection &deselected)
 {
+    // Probably not possible?
+    if (!selected.size() && !deselected.size())
+	return;
+
     QModelIndexList sl = selected.indexes();
     for (long int i = 0; i < sl.size(); i++) {
 	QgItem *snode = static_cast<QgItem *>(sl.at(i).internalPointer());
 	QString nstr = snode->toString();
 	std::cout << "selected: " << nstr.toLocal8Bit().data() << "\n";
     }
+    std::cout << "TODO: update default GED selected set and any illumination flags that need setting on already drawn objects\n";
 
     QModelIndexList dl = deselected.indexes();
     for (long int i = 0; i < dl.size(); i++) {
@@ -127,6 +132,10 @@ QgSelectionProxyModel::illuminate(const QItemSelection &selected, const QItemSel
 	QString nstr = snode->toString();
 	std::cout << "deselected: " << nstr.toLocal8Bit().data() << "\n";
     }
+    std::cout << "TODO: update default GED selected set and any illumination flags that need unsetting on already drawn objects\n";
+
+    QgModel *m = (QgModel *)sourceModel();
+    emit m->view_change(&m->gedp->ged_gvp);
 }
 
 

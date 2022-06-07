@@ -785,6 +785,10 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	}
 	bu_color_to_rgb_chars(&dd->c, s->s_color);
 
+	// TODO - check path against the GED default selected set - if we're
+	// drawing something the app has already flagged as selected, need to
+	// illuminate
+
 	// Stash the information needed for a draw update callback
 	struct draw_update_data_t *ud;
 	BU_GET(ud, struct draw_update_data_t);

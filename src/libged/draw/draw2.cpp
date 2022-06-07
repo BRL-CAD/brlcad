@@ -474,6 +474,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    } else {
 		bu_color_to_rgb_chars(&c, g->s_color);
 	    }
+	    // TODO - check object against default GED selection set
 	    struct draw_update_data_t *ud;
 	    BU_GET(ud, struct draw_update_data_t);
 	    db_full_path_init(&ud->fp);
