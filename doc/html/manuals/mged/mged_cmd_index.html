@@ -20,12 +20,15 @@
       span.c13 {font-family: Courier; font-size: 80%}
       span.c12 {font-size: 100%;}
       dd.c11 {font-size: 100%;}
-      dt.c10 {font-size: 100%;}
+      dt.c10 {font-size: 100%; margin-top:20px;}
       dd.c9 {font-size: 100%}
-      dt.c8 {font-size: 100%}
+      dt.c8 {font-size: 100%; margin-top:20px;}
       div.c7 {margin-left: 2em}
       span.c6 {font-size: 100%}
-      hr.c3 {text-align: right}
+      hr.c3 {
+          text-align: right;
+          border: 10px solid #ccc;
+      }
       span.c2 {font-size: 100%}
       div.c1 {
           text-align: center;
@@ -360,23 +363,20 @@
         which occurs when the user exits the shell. This only works in
         a command window associated with a tty (i.e., the window used
         to start <i>mged</i> in classic mode).</dd>
+      <br>
       <dd></dd>
-      <dt><span class="c6">Examples:</span></dt>
+      <dt>Examples:</dt>
       <dd></dd>
-      <dd><span class="c6"><tt>mged&gt; </tt>
-          <b>%</b></span></dd>
+      <dd><tt>mged&gt; </tt><b>%</b><br>
+            -- Start a new shell process.<br></dd>
+      <dd><tt>$ </tt><b>ls -al</b><br>
+            -- Issue any shell commands.<br></dd>
+      <dd><tt>$ </tt><b>exit</b><br>
+          -- Exit the shell.<br></dd>
+      <dd><tt>mged&gt; </tt><span class="c2"><br>
+          -- Continue editing in <i>mged</i>.</br></dd>
     </dl>
-    <p><b><span class="c2">-- Start a new shell
-          process.</span></b></p>
-    <div class="c7">
-      <p><b><span class="c2"><br></span> <tt>$</tt> <span class=
-                                                          "c2"><b>ls -al</b><br>
-            -- Issue any shell commands.<br></span></b></p>
-      <p><tt>$</tt> <span class="c2"><b>exit</b><br>
-          -- Exit the shell.<br></span></p>
-      <p><tt>mged&gt; </tt><span class="c2"><br>
-          -- Continue editing in <i>mged</i>.</span></p>
-    </div>
+
     <hr class="c3">
     <dl>
       <dt><b><a name="3ptarb" id="3ptarb"></a>3ptarb</b> [
@@ -401,44 +401,43 @@
       <dd></dd>
       <dt class="c8">Examples:</dt>
       <dd></dd>
-      <dd class="c9"><tt>mged&gt; </tt><b>3ptarb</b></dd>
-    </dl>
-    <p><span class="c6">-- Start the <i>3ptarb</i>
+      <dd class="c9"><tt>mged&gt; </tt><b>3ptarb</b><br>
+        <p><span class="c6">-- Start the <i>3ptarb</i>
         command.<br></span></p>
-    <div class="c7">
-      <p><span class="c6"><tt>Enter name for this arb:</tt>
-          <span class="c2"><b>thing</b><br>
-            -- The new</span> <a href="#ARB"><span class=
-                                                   "c2">ARB8</span></a> <span class="c2">will be named
-            <i>thing</i>.<br></span></span></p>
-      <p><span class="c6"><tt>Enter X, Y, Z for point 1:</tt>
-          <span class="c2"><b>0 0 0</b><br>
+        <p><span class="c6"><tt>Enter name for this arb:</tt>
+            <span class="c2"><b>thing</b><br>
+              -- The new</span> <a href="#ARB"><span class=
+                                                     "c2">ARB8</span></a> <span class="c2">will be named
+              <i>thing</i>.<br></span></span></p>
+        <p><span class="c6"><tt>Enter X, Y, Z for point 1:</tt>
+            <span class="c2"><b>0 0 0</b><br>
             -- Point one is at the origin.<br></span></span></p>
-      <p><span class="c6"><tt>Enter X, Y, Z for point 2:</tt>
-          <span class="c2"><b>1 0 0</b><br>
-            -- Point two is at (1, 0, 0).<br></span></span></p>
-      <p><span class="c6"><tt>Enter X, Y, Z for point 3:</tt>
-          <span class="c2"><b>1 1 0</b><br>
-            -- Point three is at (1, 1, 0).<br></span></span></p>
-      <p><span class="c6"><tt>Enter coordinate to solve for (x, y, or
-            z):</tt> <span class="c2"><b>z</b><br>
-            -- The code will calculate the <i>z</i> coordinate of the
-            fourth point.<br></span></span></p>
-      <p><span class="c6"><tt>Enter the X, Y coordinate values:</tt>
-          <span class="c2"><b>0 1</b><br>
-            -- The <i>x</i> and <i>y</i> coordinates of the fourth point
-            are 0 and 1.<br></span></span></p>
-      <p><span class="c6"><tt>Enter thickness for this arb:</tt>
-          <span class="c2"><b>3</b><br>
-            -- The new</span> <a href="#ARB"><span class=
-                                                   "c2">ARB8</span></a> <span class="c2">will be 3</span> <a href=
-                                                                                                             "#units"><span class="c2">units</span></a> <span class=
-                                                                                                                                                              "c2">thick.<br></span></span></p>
-      <p><span class="c6"><tt>mged&gt; </tt><span class=
-                                                  "c2"><b>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</b><br>
-            -- Same as above example, but with all arguments supplied on
-            the command line.</span></span></p>
-    </div>
+        <p><span class="c6"><tt>Enter X, Y, Z for point 2:</tt>
+            <span class="c2"><b>1 0 0</b><br>
+              -- Point two is at (1, 0, 0).<br></span></span></p>
+        <p><span class="c6"><tt>Enter X, Y, Z for point 3:</tt>
+            <span class="c2"><b>1 1 0</b><br>
+              -- Point three is at (1, 1, 0).<br></span></span></p>
+        <p><span class="c6"><tt>Enter coordinate to solve for (x, y, or
+              z):</tt> <span class="c2"><b>z</b><br>
+              -- The code will calculate the <i>z</i> coordinate of the
+              fourth point.<br></span></span></p>
+        <p><span class="c6"><tt>Enter the X, Y coordinate values:</tt>
+            <span class="c2"><b>0 1</b><br>
+              -- The <i>x</i> and <i>y</i> coordinates of the fourth point
+              are 0 and 1.<br></span></span></p>
+        <p><span class="c6"><tt>Enter thickness for this arb:</tt>
+            <span class="c2"><b>3</b><br>
+              -- The new</span> <a href="#ARB"><span class=
+                                                     "c2">ARB8</span></a> <span class="c2">will be 3</span> <a href=
+                                                                                                               "#units"><span class="c2">units</span></a> <span class=
+                                                                                                                                                                "c2">thick.<br></span></span></p>
+        <p><span class="c6"><tt>mged&gt; </tt><span class=
+                                                    "c2"><b>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</b><br>
+              -- Same as above example, but with all arguments supplied on
+              the command line.</span></span></p>
+      </dd>
+    </dl>
 
     <hr class="c3">
     <dl>
@@ -590,9 +589,11 @@
       <dt class="c8"><span class="c12">Examples:</span></dt>
       <dd></dd>
       <dd class="c9"><span class="c12"><tt>mged&gt; </tt>
-          <b>Z</b></span></dd>
+          <b>Z</b></span>
+        <p><span class="c12">-- Clear the <i>mged</i> display.</span></p></dd>
+      
     </dl>
-    <p><span class="c12">-- Clear the <i>mged</i> display.</span></p>
+
     <hr class="c3">
     <dl>
       <dt class="c8"><span class="c6"><b><a name="adc" id=
@@ -608,7 +609,8 @@
                                                                "#knob">knob</a> command. This command accepts the following
           subcommands:</span></dd>
       <dd></dd>
-      <dt class="c8"><span class="c12">vars</span></dt>
+      <div class="c22"><dl>
+      <dt class="c8"><span class="c12"><b>vars</b></span></dt>
       <dd class="c9"><span class="c12">Returns a list of all ADC
           variables and their values (i.e., var = val).</span></dd>
       <dd></dd>
@@ -715,34 +717,37 @@
       <dd class="c9"><span class="c6">Set or get anchor point for
           tick distance (model coordinates and local units).</span></dd>
       <dd></dd>
-      <dt class="c8"><span class="c12">reset</span></dt>
+      <dt class="c8"><span class="c12"><b>reset</b></span></dt>
       <dd class="c9"><span class="c12">Reset all values to their
           defaults.</span></dd>
       <dd></dd>
-      <dt class="c8"><span class="c12">help</span></dt>
+      <dt class="c8"><span class="c12"><b>help</b></span></dt>
       <dd class="c9"><span class="c12">Print the help
           message.</span></dd>
       <dd></dd>
+      </dl></div>
       <dt class="c8"><span class="c12">Examples:</span></dt>
       <dd></dd>
-      <dd class="c9"><span class="c12"><tt>mged&gt; </tt>
-          <b>adc</b></span></dd>
+      <div class="c7">
+        <dd class="c9">
+          <span class="c12"><tt>mged&gt; </tt><b>adc</b><br>
+            -- Toggle display of the angle/distance
+          cursor<br></span></p>
+          <p><span class="c12"><tt>mged&gt; </tt><span class="c2"><b>adc
+                  a1 37.5</b><br>
+                -- Set angle1 to 37.5˚.<br></span></span></p>
+          <p><span class="c12"><tt>mged&gt; </tt><span class="c2"><b>adc
+                  a1</b><br>
+                37.5<br>
+                -- Get angle1.<br></span></span></p>
+          <p><span class="c12"><tt>mged&gt; </tt><span class="c2"><b>adc
+                  xyz 100 0 0</b><br>
+                -- Move ADC position to (100, 0, 0), model coordinates and
+                local units.</span></span></p>
+        </dd>
+      </div>
     </dl>
-    <p><span class="c12">-- Toggle display of the angle/distance
-        cursor<br></span></p>
-    <div class="c7">
-      <p><span class="c12"><tt>mged&gt; </tt><span class="c2"><b>adc
-              a1 37.5</b><br>
-            -- Set angle1 to 37.5˚.<br></span></span></p>
-      <p><span class="c12"><tt>mged&gt; </tt><span class="c2"><b>adc
-              a1</b><br>
-            37.5<br>
-            -- Get angle1.<br></span></span></p>
-      <p><span class="c12"><tt>mged&gt; </tt><span class="c2"><b>adc
-              xyz 100 0 0</b><br>
-            -- Move ADC position to (100, 0, 0), model coordinates and
-            local units.</span></span></p>
-    </div>
+
     <hr class="c3">
     <dl>
       <dt class="c8"><span class="c6"><b><a name="ae" id=
@@ -806,7 +811,7 @@
     <hr class="c3">
     <dl>
       <dt class="c8"><span class="c12"><a name="animmate" id=
-                                          "animmate"></a>animmate</span></dt>
+                                          "animmate"></a><b>animmate</b></span></dt>
       <dd class="c9"><span class="c12">The "animmate" command starts
           the Tcl/Tk-based animation tool. The capabilities and correct
           use of this command are too extensive to be described here, but
@@ -2607,11 +2612,11 @@
           options:</span></dd>
     </dl>
     <ul>
-      <li><span class="c6"><i><span class="c2">d</span></i>
+      <li><span class="c6"><i>d</span></i>
           <span class="c2">-- Do not perform Boolean operations or any
             checking; simply convert shapes to polygons and draw them.
             Useful for visualizing BOT and polysolid
-            primitives.</span></span></li>
+            primitives.</span></li>
       <li><span class="c6"><i>f</i> -- Fast path for quickly
           visualizing polysolid primitives.</span></li>
       <li><span class="c6"><i>w</i> -- Draw wireframes (rather than
@@ -2648,11 +2653,11 @@
     <p><span class="c6">-- Display evaluated <i>region1</i> and
         <i>shapea</i> as shaded polygons.</span></p>
     <div class="c7">
-      <p><span class="c6"><span class="c2"><br></span>
-          <tt>mged&gt; </tt><span class="c2"><b>ev -wT region1</b><br>
+      <p><span class="c6"><tt>mged&gt; </tt><b>ev -wT region1</b><br>
             -- Display evaluated <i>region1</i> as wireframe without
-            triangulating.</span></span></p>
+          triangulating.</span></p>
     </div>
+    
     <hr class="c3">
     <dl>
       <dt class="c8"><span class="c12"><a name="exit" id=
@@ -2665,15 +2670,14 @@
       <dd></dd>
       <dd class="c9"><span class="c12"><tt>mged&gt; </tt>
           <b>exit</b></span></dd>
-    </dl>
-    <p><span class="c12">-- Stop MGED.</span></p>
-    <p><span class="c12">&nbsp;</span></p>
-    <dl>
+      <p><span class="c12">-- Stop MGED.</span></p>
+      <p><span class="c12">&nbsp;</span></p>
       <dt class="c8"><span class="c12"><a name="expand" id=
                                           "expand"></a></span></dt>
-      <dd>
-        <hr class="c3">
-      </dd>
+    </dl>
+
+    <hr class="c3">
+    <dl>
       <dt><b>expand</b> <i>regular_expression</i></dt>
       <dd class="c9"><span class="c16">The "expand" command performs
           matching of the regular_expression with the names of all the
@@ -2927,7 +2931,7 @@
     <hr class="c3">
     <dl>
       <dt class="c8"><span class="c12"><a name="garbage_collect" id=
-                                          "garbage_collect"></a>garbage_collect</span></dt>
+                                          "garbage_collect"></a><b>garbage_collect</b></span></dt>
       <dd class="c9"><span class="c12">The "garbage_collect" command
           eliminates unused space in a BRL-CAD database file.</span></dd>
       <dd></dd>
@@ -5234,9 +5238,9 @@
     </dl>
 
     <hr class="c3">
-    <dt class="c8"><span class="c6"><b><span class="c6">
+    <dt class="c8"><span class="c6"><span class="c6">
             <a name= "rcccap"
-               id="rcccap"></a>rcc</span></b><span class="c6">-<b>cap</b> <i>rccname
+               id="rcccap"></a><b>rcc-cap</b> <i>rccname
             newname [height] [b|t]</i></span></span></dt>
     <dd class="c9"><span class="c16">The "rcc-cap" command is used
         to round the end of a cylinder with an ellipsoid. It creates an
@@ -5260,11 +5264,8 @@
     <dd class="c9"><span class="c16">-- Create an ELL shape named
         cap.s with a radius of 20 units at the top of
         rcc.s.</span></dd>
-    <dd>
-      <hr class="c3">
-    </dd>
-    <dd></dd>
-    <dd></dd>
+
+    <hr class="c3">
     <dt class="c8"><span class="c6"><b><a name="rcctgc" id=
                                           "rcctgc"></a>rcc-tgc</b> <i>rccname newname x y z
           [b|t]</i></span></dt>
@@ -5289,9 +5290,8 @@
         <i>rcc.s</i>.</span></dd>
     <dt class="c8"><span class="c12">&nbsp;</span></dt>
     <dd></dd>
-    <dd>
-      <hr class="c3">
-    </dd>
+
+    <hr class="c3">
     <dt class="c8"><span class="c6"><b><span class="c6"><a name=
                                                            "rcctor" id="rcctor"></a>rcc-tor</span></b> <span class=
                                                                                                              "c16">rccname newname</span></span></dt>
@@ -5369,7 +5369,7 @@
     <hr class="c3">
     <dl>
       <dt class="c8"><span class="c12"><a name="refresh" id=
-                                          "refresh"></a>refresh</span></dt>
+                                          "refresh"></a><b>refresh</b></span></dt>
       <dd class="c9"><span class="c12">The "refresh" command updates
           the MGED display.</span></dd>
       <dd></dd>
@@ -5609,12 +5609,10 @@
             rpp.s arch.s 1234</b></span></dd>
       <dd class="c9"><span class="c6">-- Create an RCC shape named
           <i>arch.s</i> at the 1234 face of the RPP<i>.</i></span></dd>
-      <dd>
-        <hr class="c3">
-      </dd>
+      <hr class="c3">
       <dd></dd>
-      <dt class="c8"><span class="c6"><b><a name="rppcap" id=
-                                            "rppcap"></a>rpp</b>-<b>cap</b> <i>rppname newname face height
+      <dt class="c8"><span class="c6"><a name="rppcap" id=
+                                            "rppcap"></a><b>rpp-cap</b> <i>rppname newname face height
             [0|1]</i></span></dt>
       <dd class="c9"><span class="c16">The "rpp-cap" command creates
           an <a href="#IDENT">ARB6</a> with the specified height at a
@@ -7540,7 +7538,7 @@
     <hr class="c3">
     <dl>
       <dt class="c8"><span class="c12"><a name="get_dm_list" id=
-                                          "get_dm_list"></a>get_dm_list</span></dt>
+                                          "get_dm_list"></a><b>get_dm_list</b></span></dt>
       <dd class="c9"><span class="c12">The "get_dm_list" command
           returns a list of all open display managers. The members of
           this list are the actual Tcl/Tk window names of the open
@@ -7551,7 +7549,7 @@
     <hr class="c3">
     <dl>
       <dt class="c8"><span class="c12"><a name="get_more_default"
-                                          id="get_more_default"></a>get_more_default</span></dt>
+                                          id="get_more_default"></a><b>get_more_default</b></span></dt>
       <dd class="c9"><span class="c12">Returns the current default
           input value.</span></dd>
     </dl>
@@ -7784,7 +7782,7 @@
     <dl>
       <dt class="c8"><span class="c12"><a name="put_edit_solid" id=
                                           "put_edit_solid"></a><a name="reset_edit_solid" id=
-                                                                  "reset_edit_solid"></a>reset_edit_solid</span></dt>
+                                                                  "reset_edit_solid"></a><b>reset_edit_solid</b></span></dt>
       <dd class="c9"><span class="c12">Reset the parameters for the
           currently edited shape (i.e. es_int) to the database
           values.</span></dd>
@@ -8110,6 +8108,8 @@
     <p><span class="c6">-- List the model coordinates of the center
         of the MGED viewing cube.</span></p>
     <p><span class="c6">&nbsp;</span></p>
+
+    <hr class="c3">
     <dl>
       <dt class="c8"><span class="c6"><b><a name="viewset" id=
                                             "viewset"></a>viewset</b> &lt;<i>parameter
@@ -8148,6 +8148,8 @@
           the size of the viewing cube to 100 mm.</span></p>
       <p><span class="c6">&nbsp;</span></p>
     </div>
+
+    <hr class="c3">
     <dl>
       <dt class="c8"><span class="c6"><b><a name="winset" id=
                                             "winset"></a>winset</b> [<i>pathName</i>]</span></dt>
