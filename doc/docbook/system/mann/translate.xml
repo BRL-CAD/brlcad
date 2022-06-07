@@ -40,7 +40,7 @@ is translated to the specified coordinates.
   <example><title>Move a currently edited object to specified coordinates.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>translate 10 20 30</userinput>
+      <prompt>mged&gt; </prompt><userinput>translate 10 20 30</userinput>
     </para>
     <para>Moves a currently edited object to the model coordinates (10 20 30).
     </para>

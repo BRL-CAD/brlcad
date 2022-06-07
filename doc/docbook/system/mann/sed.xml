@@ -38,7 +38,7 @@
   <example><title>Enter the primitive edit mode for a particular shape.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>sed shape1</userinput>
+      <prompt>mged&gt; </prompt><userinput>sed shape1</userinput>
     </para>
     <para>Enters the primitive edit state for shape1.
     </para>

@@ -47,7 +47,7 @@
       <title>Write a PNG image file of the MGED framebuffer contents.</title>
 
       <para>
-	<prompt>mged&gt;</prompt><userinput>screengrab -F fb.png</userinput>
+	<prompt>mged&gt; </prompt><userinput>screengrab -F fb.png</userinput>
       </para>
       <para>
 	Writes the contents of the active MGED framebuffer to the image file

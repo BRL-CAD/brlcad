@@ -35,7 +35,7 @@ command.
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>exit</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>exit</userinput></term>
 	   <listitem>
 	     <para>MGED stops.
 	      </para>

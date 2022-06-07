@@ -188,7 +188,7 @@
 	should appear in your Command Window (including the appropriate
 	responses).
 
-	<userinput><prompt>mged&gt;</prompt> in sph2.s sph</userinput>
+	<userinput><prompt>mged&gt; </prompt>in sph2.s sph</userinput>
 
 	<literal>Enter X, Y, Z of vertex: 4 4 4</literal>
 
@@ -233,7 +233,7 @@
       </para>
 
       <literallayout class="normal">
-      <prompt>mged&gt;</prompt> in rcc2.s rcc
+      <prompt>mged&gt; </prompt>in rcc2.s rcc
 
       Enter X, Y, Z of vertex: 4 4 0
 

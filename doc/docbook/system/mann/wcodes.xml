@@ -40,7 +40,7 @@ the regions in the list of <emphasis>objects</emphasis> to the specified <emphas
   <example><title>Write region data of objects to a file.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>wcodes code_file group1 group2</userinput>
+      <prompt>mged&gt; </prompt><userinput>wcodes code_file group1 group2</userinput>
     </para>
     <para>Writes region data for all the regions in <emphasis>group1</emphasis> and <emphasis>group2</emphasis> to <emphasis>code_file.</emphasis>
 

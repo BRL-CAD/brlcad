@@ -38,7 +38,7 @@ The <emphasis>combname</emphasis> is the name of the combination to be modified.
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>edcomb comb1 R 1001 0 50 8</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>edcomb comb1 R 1001 0 50 8</userinput></term>
 	   <listitem>
 	     <para>Makes <emphasis>comb1</emphasis> a <emphasis>region</emphasis> and set its <emphasis>ident				   </emphasis> to 1001, its <emphasis>air code</emphasis> to 0, its <emphasis>los</emphasis> to 50, 			   and its <emphasis>material code</emphasis> to 8.
 	     </para>
@@ -50,7 +50,7 @@ The <emphasis>combname</emphasis> is the name of the combination to be modified.
   <example><title>Unset a <emphasis>region</emphasis> flag for a particular combination.</title>
 
     <para>
-      <prompt>mged&gt;</prompt> <userinput>edcomb comb1 C 0 0 0 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>edcomb comb1 C 0 0 0 0</userinput>
     </para>
     <para>Unsets the <emphasis>region</emphasis> flag for combination <emphasis>comb1</emphasis>.
 	</para>

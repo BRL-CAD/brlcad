@@ -52,7 +52,7 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged</prompt> <userinput>M 1 100 100</userinput></term>
+	  <term><prompt>mged</prompt><userinput>M 1 100 100</userinput></term>
 	  <listitem>
 	    <para>
 	      The point at screen coordinates (100,100)is repositioned to the

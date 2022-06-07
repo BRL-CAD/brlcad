@@ -73,7 +73,7 @@
 <example>
   <title>Report all regions using air codes between 7 and 10.</title>
   <para>
-    <prompt>mged&gt;</prompt><userinput>whichair 7-10</userinput>
+    <prompt>mged&gt; </prompt><userinput>whichair 7-10</userinput>
     <literallayout class="normal">
 Region[s] with air code 7:
    r11
@@ -93,7 +93,7 @@ Region[s] with air code 8:
 <example>
   <title>Report all unused aircode ranges in the database between 1 and 10.</title>
   <para>
-    <prompt>mged&gt;</prompt><userinput>whichair -U 1-10</userinput>
+    <prompt>mged&gt; </prompt><userinput>whichair -U 1-10</userinput>
     <literallayout class="normal">
 Unused air codes:
    1-3

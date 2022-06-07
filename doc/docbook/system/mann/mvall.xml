@@ -37,7 +37,7 @@ database. If the <emphasis>-f</emphasis> variation of the command is used, all <
   <example><title>Change the name of an object everywhere it occurs in the database.</title>
 
      <para>
-      <prompt>mged&gt;</prompt><userinput>mvall shapea shapeb</userinput>
+      <prompt>mged&gt; </prompt><userinput>mvall shapea shapeb</userinput>
      </para>
      <para>Changes the name of <emphasis>shapea</emphasis> to <emphasis>shapeb</emphasis> everywhere it occurs in the database.
      </para>

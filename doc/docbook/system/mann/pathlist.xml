@@ -37,7 +37,7 @@ combinations and end at a primitive shape.
   <example><title>List all paths that start from given combinations and end at a primitive shape.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>pathlist group1 region2</userinput>
+      <prompt>mged&gt; </prompt><userinput>pathlist group1 region2</userinput>
     </para>
     <para>Lists all existing paths that start from the <emphasis>combinations group1</emphasis> and <emphasis>	region2</emphasis> and end at primitive shapes.
     </para>

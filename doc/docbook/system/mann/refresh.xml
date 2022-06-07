@@ -35,7 +35,7 @@
   <example><title>Update the MGED display.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>refresh</userinput>
+      <prompt>mged&gt; </prompt><userinput>refresh</userinput>
     </para>
     <para>Updates the MGED display.
 

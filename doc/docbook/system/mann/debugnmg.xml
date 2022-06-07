@@ -43,7 +43,7 @@
     </para>
     <example><title>Using the hex code argument to set the NMG debug flag value.</title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>debugnmg 100</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>debugnmg 100</userinput></para>
       <para>
 	Sets the <emphasis>NMG</emphasis> debug flag to get details on the
 	classification process.

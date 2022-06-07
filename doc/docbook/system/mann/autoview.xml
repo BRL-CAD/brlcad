@@ -33,7 +33,7 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>autoview</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>autoview</userinput></term>
 	  <listitem>
 	    <para>
 	      The view resets so that all objects displayed can be seen.

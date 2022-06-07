@@ -53,7 +53,7 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>bev -t triangulated_lens sphere1 + sphere2</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>bev -t triangulated_lens sphere1 + sphere2</userinput></term>
 	  <listitem>
 	    <para>Creates a triangulated object by intersecting objects <emphasis>sphere1</emphasis> and <emphasis>sphere2</emphasis>
 	    </para>

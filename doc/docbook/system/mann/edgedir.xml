@@ -42,7 +42,7 @@ a direction vector in the form of <emphasis>x, y,</emphasis> and <emphasis>z</em
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>edgedir 0 1 0</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>edgedir 0 1 0</userinput></term>
 	   <listitem>
 	     <para>Rotates the edge being edited to be parallel to the <emphasis>y</emphasis> axis.
 		     </para>

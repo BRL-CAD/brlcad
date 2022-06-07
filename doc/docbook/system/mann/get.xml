@@ -40,8 +40,8 @@
   </para>
 
   <para>
-    <prompt>mged&gt;</prompt> <userinput>make eto.s eto</userinput>
-    <prompt>mged&gt;</prompt> <userinput>l eto.s</userinput>
+    <prompt>mged&gt; </prompt><userinput>make eto.s eto</userinput>
+    <prompt>mged&gt; </prompt><userinput>l eto.s</userinput>
     <literallayout>
 eto.s:  Elliptical Torus (ETO)
       V (0, 0, 0)
@@ -51,7 +51,7 @@ eto.s:  Elliptical Torus (ETO)
       d=100
 
     </literallayout>
-    <prompt>mged&gt;</prompt> <userinput>get eto.s r</userinput>
+    <prompt>mged&gt; </prompt><userinput>get eto.s r</userinput>
     <literallayout>
 800
     </literallayout>

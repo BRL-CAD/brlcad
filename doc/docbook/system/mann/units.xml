@@ -224,7 +224,7 @@ editing units, are as follows:
   <example><title>Switch the editing units to inches.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>units in</userinput>
+      <prompt>mged&gt; </prompt><userinput>units in</userinput>
     </para>
     <para>Switch to editing in inches and remember this as the preferred editing units for
 	this database.

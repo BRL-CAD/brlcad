@@ -111,7 +111,7 @@
 	attempts CM conversion.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize region1.r region1.bot</userinput>
+	<prompt>mged&gt; </prompt><userinput>facetize region1.r region1.bot</userinput>
       </para>
     </example>
 
@@ -122,7 +122,7 @@
 	a new conversion hierarchy under model_facetized.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize -r model model.f</userinput>
+	<prompt>mged&gt; </prompt><userinput>facetize -r model model.f</userinput>
       </para>
     </example>
 
@@ -133,7 +133,7 @@
 	any fallback conversion methods.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize -r --NMG model model.f</userinput>
+	<prompt>mged&gt; </prompt><userinput>facetize -r --NMG model model.f</userinput>
       </para>
     </example>
 
@@ -144,7 +144,7 @@
 	conversion attempt, attempting only CM reconstruction without first retrying NMG conversion.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize -r --resume model.f</userinput>
+	<prompt>mged&gt; </prompt><userinput>facetize -r --resume model.f</userinput>
       </para>
     </example>
 
@@ -270,7 +270,7 @@ CM: decimation succeeded, final BoT has 247642 faces
 	narrow subsets of the .g database.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>search -attr facetize:CM -exec attr rm "{}" facetize:CM ";"</userinput>
+	<prompt>mged&gt; </prompt><userinput>search -attr facetize:CM -exec attr rm "{}" facetize:CM ";"</userinput>
       </para>
     </example>
 
@@ -280,7 +280,7 @@ CM: decimation succeeded, final BoT has 247642 faces
 	Use lint -M to report on invalid objects below a comb.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput> lint -M model.f</userinput>
+	<prompt>mged&gt; </prompt><userinput> lint -M model.f</userinput>
       </para>
     </example>
 

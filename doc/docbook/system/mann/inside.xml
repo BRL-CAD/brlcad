@@ -44,7 +44,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>inside out_arb in_arb 1 1 1 1 1 1</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>inside out_arb in_arb 1 1 1 1 1 1</userinput></term>
 	   <listitem>
 	     <para>Creates a shape named <emphasis>in_arb</emphasis> such that each face is 1 unit from the 				corresponding face in <emphasis>out_arb</emphasis>.
 	     </para>
@@ -56,7 +56,7 @@
   <example><title>Creates a shape inside of the current key shape or the shape being edited.</title>
 
     <para>
-      <prompt>mged&gt;</prompt> <userinput>inside in_arb 1 1 1 1 1 1</userinput>
+      <prompt>mged&gt; </prompt><userinput>inside in_arb 1 1 1 1 1 1</userinput>
     </para>
     <para>Creates a shape named <emphasis>in_arb</emphasis> such that each face is 1 unit from the corresponding 	  face in the current key shape or the shape currently being edited.
     </para>

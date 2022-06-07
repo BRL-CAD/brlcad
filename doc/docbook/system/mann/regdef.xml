@@ -44,7 +44,7 @@
   <example><title>Set region default attributes.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>regdef 1003 0 100 8</userinput>
+      <prompt>mged&gt; </prompt><userinput>regdef 1003 0 100 8</userinput>
     </para>
     <para>Sets the region default attributes to an ident of 1003, an air code of 0, an los of
 	100%, and a material code of 8.

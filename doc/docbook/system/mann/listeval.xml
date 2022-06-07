@@ -36,7 +36,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>listeval group1/region1/shapeb</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>listeval group1/region1/shapeb</userinput></term>
 	   <listitem>
 	     <para>Displays the parameters for <emphasis>shapeb</emphasis> after applying the transformation matrix 		  from <emphasis>group1</emphasis> for <emphasis>region1</emphasis> and the transformation matrix 			  from <emphasis>region1</emphasis> for <emphasis>shapeb</emphasis>.
 	      </para>

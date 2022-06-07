@@ -40,7 +40,7 @@ specified.
   <example><title>List the regions that use the specified shaders.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>which_shader plastic light</userinput>
+      <prompt>mged&gt; </prompt><userinput>which_shader plastic light</userinput>
     </para>
     <para>Lists all regions in the current database that use the <emphasis>plastic</emphasis> or <emphasis>light</emphasis> shaders.
     </para>

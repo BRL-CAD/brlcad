@@ -108,7 +108,7 @@
 <refsection xml:id="examples"><title>EXAMPLES</title>
   <example><title>Create basic point cloud</title>
     <para>
-      <prompt>mged&gt; </prompt> <userinput>make_pnts cloud1.s /home/user/cloud1_data.txt xyz mm 1.0</userinput>
+      <prompt>mged&gt; </prompt><userinput>make_pnts cloud1.s /home/user/cloud1_data.txt xyz mm 1.0</userinput>
     </para>
     <para>
       Creates a "pnts" primitive named "cloud1.s" using the data file
@@ -119,7 +119,7 @@
   </example>
   <example><title>Create basic point cloud from data file with reversed coordinate ordering</title>
     <para>
-      <prompt>mged&gt; </prompt> <userinput>make_pnts cloud1.s /home/user/cloud1_data.txt zyx in 1.0</userinput>
+      <prompt>mged&gt; </prompt><userinput>make_pnts cloud1.s /home/user/cloud1_data.txt zyx in 1.0</userinput>
     </para>
     <para>
       Creates a "pnts" primitive named "cloud1.s" using the data file
@@ -130,7 +130,7 @@
   </example>
   <example><title>Create point cloud with color</title>
     <para>
-      <prompt>mged&gt; </prompt> <userinput>make_pnts cloud1.s /home/user/cloud1_data.txt xyzrgb 2 1.0</userinput>
+      <prompt>mged&gt; </prompt><userinput>make_pnts cloud1.s /home/user/cloud1_data.txt xyzrgb 2 1.0</userinput>
     </para>
     <para>
       Creates a "pnts" primitive named "cloud1.s" using the data file
@@ -142,7 +142,7 @@
   </example>
   <example><title>Create point cloud with color and normals</title>
     <para>
-      <prompt>mged&gt; </prompt> <userinput>make_pnts cloud1.s /home/user/cloud1_data.txt xyzrgbijk m 1.0</userinput>
+      <prompt>mged&gt; </prompt><userinput>make_pnts cloud1.s /home/user/cloud1_data.txt xyzrgbijk m 1.0</userinput>
     </para>
     <para>
       Creates a "pnts" primitive named "cloud1.s" using the data file
@@ -154,7 +154,7 @@
   </example>
   <example><title>Create point cloud with only normals from data file containing normals and colors</title>
     <para>
-      <prompt>mged&gt; </prompt> <userinput>make_pnts cloud1.s /home/user/cloud1_data.txt xyz???ijk cm 1.0</userinput>
+      <prompt>mged&gt; </prompt><userinput>make_pnts cloud1.s /home/user/cloud1_data.txt xyz???ijk cm 1.0</userinput>
     </para>
     <para>
       Creates a "pnts" primitive named "cloud1.s" using the data file

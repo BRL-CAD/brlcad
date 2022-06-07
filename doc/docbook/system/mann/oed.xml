@@ -39,7 +39,7 @@
   <example><title>Place MGED in matrix edit mode.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>oed group1/group2 region1/shapea</userinput>
+      <prompt>mged&gt; </prompt><userinput>oed group1/group2 region1/shapea</userinput>
     </para>
     <para>Places MGED into matrix edit mode, editing the matrix in <emphasis>group2</emphasis> that corresponds to <emphasis>region1</emphasis>, using <emphasis>shapea</emphasis> as the reference shape.
     </para>
