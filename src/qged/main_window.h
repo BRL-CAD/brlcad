@@ -78,6 +78,8 @@ class BRLCAD_MainWindow : public QMainWindow
 	//QAction *cad_save_image;
 	QAction *cad_exit;
 	QMenu *view_menu;
+	QAction *vm_topview;
+	QMenu *vm_panels;
 	QMenu *help_menu;
 	QAction *cad_single_view;
 	QAction *cad_quad_view;

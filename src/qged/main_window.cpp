@@ -81,6 +81,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     file_menu->addAction(cad_exit);
 
     view_menu = menuBar()->addMenu("View");
+    vm_topview = new QAction("Toggle Hierarchy (ls/tops)", this);
+    view_menu->addAction(vm_topview);
+    vm_panels = view_menu->addMenu("Panels");
 
     menuBar()->addSeparator();
 
@@ -141,14 +144,14 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     vcd = new QDockWidget("View Controls", this);
     addDockWidget(Qt::RightDockWidgetArea, vcd);
     vcd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    view_menu->addAction(vcd->toggleViewAction());
+    vm_panels->addAction(vcd->toggleViewAction());
     vc = new CADPalette(0, this);
     vcd->setWidget(vc);
 
     ocd = new QDockWidget("Object Editing", this);
     addDockWidget(Qt::RightDockWidgetArea, ocd);
     ocd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    view_menu->addAction(ocd->toggleViewAction());
+    vm_panels->addAction(ocd->toggleViewAction());
     oc = new CADPalette(2, this);
     ocd->setWidget(oc);
 
@@ -328,7 +331,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     console_dock = new QgDockWidget("Console", this);
     addDockWidget(Qt::BottomDockWidgetArea, console_dock);
     console_dock->setAllowedAreas(Qt::BottomDockWidgetArea);
-    view_menu->addAction(console_dock->toggleViewAction());
+    vm_panels->addAction(console_dock->toggleViewAction());
     connect(console_dock, &QgDockWidget::topLevelChanged, console_dock, &QgDockWidget::toWindow);
     console = new QtConsole(console_dock);
     console->prompt("$ ");
@@ -346,13 +349,14 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     tree_dock = new QgDockWidget("Hierarchy", this);
     addDockWidget(Qt::LeftDockWidgetArea, tree_dock);
     tree_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    view_menu->addAction(tree_dock->toggleViewAction());
+    vm_panels->addAction(tree_dock->toggleViewAction());
     connect(tree_dock, &QgDockWidget::topLevelChanged, tree_dock, &QgDockWidget::toWindow);
     CADApp *ca = (CADApp *)qApp;
     treeview = new QgTreeView(tree_dock, ca->mdl);
     tree_dock->setWidget(treeview);
     tree_dock->m = m;
     connect(tree_dock, &QgDockWidget::banner_click, m, &QgModel::toggle_hierarchy);
+    connect(vm_topview, &QAction::triggered, m, &QgModel::toggle_hierarchy);
 
     // Tell the selection model we have a tree view
     ca->mdl->treeview = treeview;
@@ -379,7 +383,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     QDockWidget *sattrd = new QDockWidget("Standard Attributes", this);
     addDockWidget(Qt::LeftDockWidgetArea, sattrd);
     sattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    view_menu->addAction(sattrd->toggleViewAction());
+    vm_panels->addAction(sattrd->toggleViewAction());
     CADAttributesModel *stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
     QKeyValView *stdpropview = new QKeyValView(this, 1);
     stdpropview->setModel(stdpropmodel);
@@ -388,7 +392,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     QDockWidget *uattrd = new QDockWidget("User Attributes", this);
     addDockWidget(Qt::LeftDockWidgetArea, uattrd);
     uattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    view_menu->addAction(uattrd->toggleViewAction());
+    vm_panels->addAction(uattrd->toggleViewAction());
     CADAttributesModel *userpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
     QKeyValView *userpropview = new QKeyValView(this, 0);
     userpropview->setModel(userpropmodel);
