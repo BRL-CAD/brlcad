@@ -111,6 +111,25 @@ QgSelectionProxyModel::setData(const QModelIndex & idx, const QVariant &UNUSED(v
     return false;
 }
 
+void
+QgSelectionProxyModel::illuminate(const QItemSelection &selected, const QItemSelection &deselected)
+{
+    QModelIndexList sl = selected.indexes();
+    for (long int i = 0; i < sl.size(); i++) {
+	QgItem *snode = static_cast<QgItem *>(sl.at(i).internalPointer());
+	QString nstr = snode->toString();
+	std::cout << "selected: " << nstr.toLocal8Bit().data() << "\n";
+    }
+
+    QModelIndexList dl = deselected.indexes();
+    for (long int i = 0; i < dl.size(); i++) {
+	QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
+	QString nstr = snode->toString();
+	std::cout << "deselected: " << nstr.toLocal8Bit().data() << "\n";
+    }
+}
+
+
 // These functions tell the related-object highlighting logic what the current
 // status is.  We need to do this whenever the selected object is changed -
 // highlighted items may change anywhere (or everywhere) in the tree view with

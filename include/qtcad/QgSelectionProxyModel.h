@@ -94,6 +94,7 @@ class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
 	void item_collapsed(const QModelIndex &index);
 	void item_expanded(const QModelIndex &index);
 	void redo_expansions(void *);
+	void illuminate(const QItemSelection &selected, const QItemSelection &deselected);
 };
 
 #endif //QGSELECTIONMODEL_H

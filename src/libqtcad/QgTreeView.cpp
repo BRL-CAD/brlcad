@@ -141,6 +141,7 @@ QgTreeView::QgTreeView(QWidget *pparent, QgSelectionProxyModel *treemodel) : QTr
     header()->setStretchLastSection(true);
     QObject::connect(this, &QgTreeView::expanded, this, &QgTreeView::tree_column_size);
     QObject::connect(this, &QgTreeView::collapsed, this, &QgTreeView::tree_column_size);
+    QObject::connect(this->selectionModel(), &QItemSelectionModel::selectionChanged, treemodel, &QgSelectionProxyModel::illuminate);
     QObject::connect(this, &QgTreeView::clicked, treemodel, &QgSelectionProxyModel::update_selected_node_relationships);
     QObject::connect(this, &QgTreeView::customContextMenuRequested, (QgTreeView *)this, &QgTreeView::context_menu);
     QObject::connect(this, &QgTreeView::doubleClicked, (QgTreeView *)this, &QgTreeView::do_draw_toggle);
