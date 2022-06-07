@@ -6426,20 +6426,20 @@ x 					delete character
     – View from top direction.
   </para>
   <para>
-<literal>mged&gt;</literal> <emphasis role="strong">ae
+<literal>mged&gt; </literal><emphasis role="strong">ae
     270 0</emphasis>
      – View from right hand side.
   </para>
   <para>
 
- <literal>mged&gt;</literal> <emphasis role="strong">ae
+ <literal>mged&gt; </literal><emphasis role="strong">ae
     35 25 10</emphasis>
      – View from azimuth 35, elevation 25, with view rotated
     by 10˚.
   </para>
   <para>
 
-<literal>mged&gt;</literal> <emphasis role="strong">ae
+<literal>mged&gt; </literal><emphasis role="strong">ae
     -i 0 0 5</emphasis>
     – Rotate the current view through 5˚ about the viewing
     direction.
@@ -6636,7 +6636,7 @@ x 					delete character
   </para>
   <para>
 
-<literal>mged&gt;</literal>
+<literal>mged&gt; </literal>
     <link linkend="ae"><emphasis role="strong">ae</emphasis></link><emphasis role="strong">35
     25</emphasis>
      – Rotate view to look straight on at square face of
@@ -6759,12 +6759,12 @@ x 					delete character
     – Clear the <emphasis>mged</emphasis> display(s).
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <link linkend="E"><emphasis role="strong">E</emphasis></link><emphasis role="strong">region_1</emphasis>
 			– <emphasis>E</emphasis> a single region.
   </para>
   <para>
-<literal>mged&gt;</literal>
+<literal>mged&gt; </literal>
     <emphasis role="strong">area</emphasis> – Calculate the presented area of the enclosing polygon
     of the region.
   </para>
@@ -6869,38 +6869,38 @@ x 					delete character
     those found in the default bindings.
   </para>
   <para>
-<literal>mged&gt;</literal>
+<literal>mged&gt; </literal>
     <emphasis role="strong">toplevel .t</emphasis>
      – Create a toplevel window named .t.
   </para>
   <para>
 
-<literal>mged&gt;</literal>
+<literal>mged&gt; </literal>
     <emphasis role="strong">attach -t 0 -S 800 -n .t.ogl ogl</emphasis>
      – Open a 800x800 OpenGL display window named .t.ogl
     that is not a top-level window.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">button .t.dismiss -text Dismiss -command
     <quote>release .t.ogl; destroy .t</quote></emphasis>
      – Create a button to dismiss the display manager etc.
   </para>
   <para>
 
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">pack .t.ogl -expand 1 -fill both</emphasis>
     – Pack the display manager inside .t.
   </para>
   <para>
 
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">pack .t.dismiss</emphasis>
     – Pack the Dismiss button inside .t.
   </para>
   <para>
 
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">attach</emphasis>
     – List the help message that includes the valid display
     types.
@@ -7099,7 +7099,7 @@ x 					delete character
     Examples:
   </para>
   <para>
-    <literal>mged&gt;</literal> <emphasis role="strong">bo -i -u c cmds
+    <literal>mged&gt; </literal><emphasis role="strong">bo -i -u c cmds
     /usr/brlcad/html/manuals/mged/mged_cmds.html</emphasis>
   </para>
   <para>
@@ -7108,7 +7108,7 @@ x 					delete character
     <emphasis>/usr/brlcad/html/manuals/mged/mged_cmds.html.</emphasis>
   </para>
   <para>
-    <literal>mged&gt;</literal> <emphasis role="strong">bo -o
+    <literal>mged&gt; </literal><emphasis role="strong">bo -o
     /home/jim/cmds.html cmds</emphasis>
   </para>
   <para>
@@ -7535,7 +7535,7 @@ x 					delete character
   </para>
   <para>
 
- <literal>mged&gt;</literal> <emphasis role="strong">db
+ <literal>mged&gt; </literal><emphasis role="strong">db
     adjust sphere.s V [center]</emphasis>
   </para>
   <para>
@@ -8241,28 +8241,28 @@ x 					delete character
   </para>
   <para>
 
- <literal>mged&gt;</literal> <emphasis role="strong">db
+ <literal>mged&gt; </literal><emphasis role="strong">db
     get cone.s</emphasis>
     – Get a list of all the attributes and their values for
     shape <emphasis>cone.s</emphasis>.
   </para>
   <para>
 
- <literal>mged&gt;</literal> <emphasis role="strong">db
+ <literal>mged&gt; </literal><emphasis role="strong">db
     get cone.s V</emphasis>
      – Get the value of the <emphasis>V</emphasis> (vertex)
     attribute of shape <emphasis>cone.s</emphasis>.
   </para>
   <para>
 
-<literal>mged&gt;</literal> <emphasis role="strong">db
+<literal>mged&gt; </literal><emphasis role="strong">db
     put new_cone.s tgc V {0 0 0} H {0 0 1} A {1 0 0} B {0 1 0} C {5 0 0}
     D {0 5 0}</emphasis>
     – Create a new <link linkend="TGC">TGC</link> shape
     named <emphasis>new_cone.s</emphasis> with the specified attributes.
   </para>
   <para>
-<literal>mged&gt;</literal> <emphasis role="strong">db
+<literal>mged&gt; </literal><emphasis role="strong">db
     adjust new_cone.s V {0 0 10}</emphasis>
      – Adjust the <emphasis>V</emphasis> (vertex) attribute
     of <emphasis>new_cone.s</emphasis> to the value {0 0 10}.
@@ -8364,15 +8364,15 @@ x 					delete character
       </term>
       <listitem>
         <para>
-          <literal>mged&gt;</literal> <emphasis role="strong">dbconcat
+          <literal>mged&gt; </literal><emphasis role="strong">dbconcat
           model_two.g two_</emphasis>
         </para>
         <para>
-          <literal>mged&gt;</literal> <emphasis role="strong">dbconcat
+          <literal>mged&gt; </literal><emphasis role="strong">dbconcat
           -s model_two.g</emphasis>
         </para>
         <para>
-          <literal>mged&gt;</literal> <emphasis role="strong">dbconcat
+          <literal>mged&gt; </literal><emphasis role="strong">dbconcat
           -c -p model_two.g two_</emphasis>
         </para>
       </listitem>
@@ -8410,13 +8410,13 @@ x 					delete character
       </term>
       <listitem>
         <para>
-          <literal>mged&gt;</literal> debugbu
+          <literal>mged&gt; </literal>debugbu
         </para>
       </listitem>
     </varlistentry>
   </variablelist>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">debugbu 2</emphasis>
   </para>
   <para>
@@ -8534,7 +8534,7 @@ x 					delete character
     <emphasis>librt</emphasis> and the current value.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">debuglib 1</emphasis>  – Set the <emphasis>librt</emphasis> debug flag to
     &lt;DEBUG_ALLRAYS&gt; (print info about rays).
   </para>
@@ -8825,11 +8825,11 @@ x 					delete character
     – Get a list of the available display manager internal variables.
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">dm
+ <literal>mged&gt; </literal><emphasis role="strong">dm
     set perspective 1</emphasis>  – Turn on perspective projection in the display.
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">dm
+ <literal>mged&gt; </literal><emphasis role="strong">dm
     size</emphasis>  – Return the size to the display manager.
   </para>
   <para>
@@ -8837,28 +8837,28 @@ x 					delete character
     900x900.
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">dm
+ <literal>mged&gt; </literal><emphasis role="strong">dm
     m 2 100 200</emphasis>  – Simulate a button2 press at (100, 200) in X screen
     coordinates.
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">dm
+ <literal>mged&gt; </literal><emphasis role="strong">dm
     am r 400 100</emphasis>  – Start an alternate mouse mode rotation.
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">dm
+ <literal>mged&gt; </literal><emphasis role="strong">dm
     adc d 300 200</emphasis>  – Start a tick distance manipulation.
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">dm
+ <literal>mged&gt; </literal><emphasis role="strong">dm
     con t z 200 200</emphasis>  – Start a constrained translation down the Z axis.
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">dm
+ <literal>mged&gt; </literal><emphasis role="strong">dm
     con a d 200 100</emphasis>  – Start a constrained tick distance manipulation.
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">dm
+ <literal>mged&gt; </literal><emphasis role="strong">dm
     idle</emphasis>  – End drag.
   </para>
   <para>
@@ -9223,7 +9223,7 @@ x 					delete character
     <emphasis>material code</emphasis> to 8.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">edcomb comb1 0 0 0 0</emphasis>  – Unset the <emphasis>region</emphasis> flag for
     combination <emphasis>comb1.</emphasis>
   </para>
@@ -9511,7 +9511,7 @@ x 					delete character
     <emphasis>shapea</emphasis> as shaded polygons.
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">ev
+ <literal>mged&gt; </literal><emphasis role="strong">ev
     -wT region1</emphasis>  – Display evaluated <emphasis>region1</emphasis> as
     wireframe without triangulating.
   </para>
@@ -9761,7 +9761,7 @@ foo.r_xpand/R
     plane at <emphasis>x</emphasis>=20.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">facedef 5678 b 0 0 10 10 0 10 10 10
     10</emphasis>  – Move face 5678 such that it is in the plane formed by
     the three points (0 0 10), (10 0 10), and (10 10 10).
@@ -10563,7 +10563,7 @@ foo.r_xpand/R
     face in <emphasis>out_arb.</emphasis>
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">inside in_arb 1 1 1 1 1 1</emphasis>  – Create a shape named <emphasis>in_arb</emphasis> such
     that each face is 1 <link linkend="units">unit</link> from the
     corresponding face in the current key
@@ -11166,13 +11166,13 @@ foo.r_xpand/R
     – Display details about region1.
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">l
+ <literal>mged&gt; </literal><emphasis role="strong">l
     group1/group2/region1/shape3</emphasis>  – Display shape parameters for
     <emphasis>shape3</emphasis> with matrices applied from the
     <emphasis>path.</emphasis>
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">l
+ <literal>mged&gt; </literal><emphasis role="strong">l
     -r a/b</emphasis>  – Display all possible paths that start with
     <emphasis>a/b</emphasis> and end in a primitive
     <emphasis>shape</emphasis>  – The shape parameters with the accumulated
@@ -11417,22 +11417,22 @@ foo.r_xpand/R
     (output is formatted).
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">ls
+ <literal>mged&gt; </literal><emphasis role="strong">ls
     -a shape*</emphasis>  – List all objects with names beginning with
     <quote>shape.</quote>
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">ls
+ <literal>mged&gt; </literal><emphasis role="strong">ls
     -p wheel*</emphasis>  – List all primitives with names beginning with
     <quote>wheel.</quote>
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">ls
+ <literal>mged&gt; </literal><emphasis role="strong">ls
     -r wheel*</emphasis>  – List all regions with names beginning with
     <quote>wheel.</quote>
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">ls
+ <literal>mged&gt; </literal><emphasis role="strong">ls
     -c suspension*</emphasis>  – List all combinations with names beginning with
     <quote>suspension.</quote>
   </para>
@@ -11628,7 +11628,7 @@ foo.r_xpand/R
     – Create a sphere named <emphasis>shapea.</emphasis>
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">make -t</emphasis>  – Return a list of shape types handled by
     <emphasis>make.</emphasis>
   </para>
@@ -12227,7 +12227,7 @@ foo.r_xpand/R
     <emphasis>model.g.</emphasis>
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">opendb</emphasis>  – Return the name of the current database file.
   </para>
   <para>
@@ -13006,7 +13006,7 @@ foo.r_xpand/R
     it the title <quote>Test Title.</quote>
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">ps
+ <literal>mged&gt; </literal><emphasis role="strong">ps
     -l 10 -t <quote>Test Fat Lines</quote> fat_lines.ps</emphasis>  – This time use fat lines.
   </para>
   <para>
@@ -13356,15 +13356,15 @@ foo.r_xpand/R
     – Print usage message.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">qray fmt o</emphasis>  – Returns the overlap format string.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">qray oddcolor</emphasis>  – Returns the rgb color used to color odd partitions.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">qray oddcolor 255 0 0</emphasis>  – Sets the odd partition color to red.
   </para>
   <para>
@@ -13937,7 +13937,7 @@ foo.r_xpand/R
     – Close the current display manager.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">release .dm_X0</emphasis>  – Close <emphasis>.dm_X0.</emphasis>
   </para>
   <para>
@@ -14088,7 +14088,7 @@ foo.r_xpand/R
     – Rotate 45 degrees about the Z axis.
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">rot
+ <literal>mged&gt; </literal><emphasis role="strong">rot
     45 45 0</emphasis>  – Rotate 45˚ about the <emphasis>y</emphasis> axis,
     then rotate 45 degrees about the <emphasis>x</emphasis> axis.
   </para>
@@ -14307,7 +14307,7 @@ foo.r_xpand/R
     <emphasis>X</emphasis> framebuffer.
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">rt
+ <literal>mged&gt; </literal><emphasis role="strong">rt
     -C 200/200/255 – roof</emphasis>  – Run the <emphasis>rt</emphasis> program to produce a
     color-shaded image of the object <emphasis>roof</emphasis> using
     MGED s current viewing parameters. The image will have a sky-blue
@@ -14924,11 +14924,11 @@ EOF
     toViewcenter, Viewrot, model2view and view2model).
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">status Viewrot</emphasis>  – Get the view rotation matrix.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">status state</emphasis>  – Get the edit state.
   </para>
   <para>
@@ -15005,7 +15005,7 @@ EOF
     – The view is unchanged.
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">sv
+ <literal>mged&gt; </literal><emphasis role="strong">sv
     1024 0 0</emphasis>  – The view center is moved half way between the current
     view center and the right side of the view screen.
   </para>
@@ -15106,22 +15106,22 @@ EOF
     – List all objects with names beginning with <quote>shape.</quote>  (output is formatted)
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">t
+ <literal>mged&gt; </literal><emphasis role="strong">t
     -a shape*</emphasis>  – List all objects with names beginning with
     <quote>shape.</quote>
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">t
+ <literal>mged&gt; </literal><emphasis role="strong">t
     -s wheel*</emphasis>  – List all shapes with names beginning with
     <quote>wheel.</quote>
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">t
+ <literal>mged&gt; </literal><emphasis role="strong">t
     -r wheel*</emphasis>  – List all regions with names beginning with
     <quote>wheel.</quote>
   </para>
   <para>
- <literal>mged&gt;</literal> <emphasis role="strong">t
+ <literal>mged&gt; </literal><emphasis role="strong">t
     -c suspension*</emphasis>  – List all combinations with names beginning with
     <quote>suspension.</quote>
   </para>
@@ -15573,12 +15573,12 @@ EOF
     <emphasis>group1</emphasis> down to the primitive shape level.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">tree -i 2 group1</emphasis>  – This time use two spaces for each level of
     indentation.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">tree -c group1</emphasis>  – No shapes are printed.
   </para>
   <para>
@@ -16282,31 +16282,31 @@ EOF
     – Open a list named <emphasis>square.</emphasis>
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">vdraw params color ff00</emphasis>  – Set color to green.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">vdraw write next 0 0 0 0</emphasis>  – Start a line at the origin.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">vdraw write next 1 100 0 0</emphasis>  – Draw line to (100 0 0).
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">vdraw write next 1 100 100 0</emphasis>  – Draw line to (100 100 0).
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">vdraw write next 1 0 100 0</emphasis>  – Draw line to (0 100 0).
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">vdraw write next 1 0 0 0</emphasis>  – Draw line to (0 0 0).
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">vdraw send</emphasis>  – Draw the square in the MGED display.
   </para>
   <para>
@@ -16368,7 +16368,7 @@ EOF
     – Get the view center.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">view center 0 0 0</emphasis>  – Set the view center at the origin of model space.
   </para>
   <para>
@@ -16471,7 +16471,7 @@ EOF
     – Rotate 90 degrees about view <emphasis>x</emphasis> axis.
   </para>
   <para>
- <literal>mged&gt;</literal>
+ <literal>mged&gt; </literal>
     <emphasis role="strong">vrot 0 180 0</emphasis>  – Rotate 180 degrees about view <emphasis>y</emphasis>
     axis.
   </para>
