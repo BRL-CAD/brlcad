@@ -364,36 +364,6 @@ db_pr_full_path(const char *msg, const struct db_full_path *pathp)
 
 }
 
-static void
-_db_comb_child_test(int *status, const struct db_i *dbip, union tree *tp, struct directory *dp)
-{
-    if (!tp) return;
-
-    RT_CHECK_DBI(dbip);
-    RT_CK_TREE(tp);
-
-    switch (tp->tr_op) {
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-	    _db_comb_child_test(status, dbip, tp->tr_b.tb_right, dp);
-	    /* fall through */
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-	    _db_comb_child_test(status, dbip, tp->tr_b.tb_left, dp);
-	    break;
-	case OP_DB_LEAF:
-	    if (db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET) == dp) {
-		(*status) = 1;
-	    }
-	    break;
-	default:
-	    bu_log("_db_comb_child_test: unrecognized operator %d\n", tp->tr_op);
-	    bu_bomb("_db_comb_child_test\n");
-    }
-}
 
 static int
 _db_comb_instance(matp_t m, int *icnt, int *bval, int bool_val, const struct db_i *dbip, union tree *tp, const char *cp, int itarget)
@@ -944,7 +914,7 @@ db_fp_op(const struct db_full_path *pp,
 	struct directory *dp = pp->fp_names[i];
 	if (!cdp || !dp)
 	    return OP_NOP;
-	int c_op;
+	int c_op = OP_NOP;
 	if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
 	    if (!_comb_instance_bool_op(&c_op, dbip, cdp, dp, resp, pp->fp_cinst[i]))
 		return OP_NOP;
