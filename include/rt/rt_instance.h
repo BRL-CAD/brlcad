@@ -142,7 +142,7 @@ struct rt_i {
  * } RT_VISIT_ALL_SOLTABS_END
  */
 #define RT_VISIT_ALL_SOLTABS_START(_s, _rti) { \
-    register struct bu_list *_head = &((_rti)->rti_solidheads[0]); \
+    struct bu_list *_head = &((_rti)->rti_solidheads[0]); \
     for (; _head < &((_rti)->rti_solidheads[RT_DBNHASH]); _head++) \
 	for (BU_LIST_FOR(_s, soltab, _head)) {
 
