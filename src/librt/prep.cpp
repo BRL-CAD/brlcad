@@ -50,7 +50,7 @@
 
 extern void rt_ck(struct rt_i *rtip);
 
-HIDDEN void rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp);
+HIDDEN void rt_solid_bitfinder(union tree *treep, struct region *regp, struct resource *resp);
 
 
 int RT_SEM_WORKER = 0;
@@ -72,8 +72,8 @@ int RT_SEM_TREE3 = 0;
 struct rt_i *
 rt_new_rti(struct db_i *dbip)
 {
-    register struct rt_i *rtip;
-    register int i;
+    struct rt_i *rtip;
+    int i;
 
     RT_CK_DBI(dbip);
 
@@ -147,7 +147,7 @@ rt_new_rti(struct db_i *dbip)
      * done with all its treewalking.
      */
     for (i=0; i < RT_DBNHASH; i++) {
-	register struct directory *dp;
+	struct directory *dp;
 
 	dp = rtip->rti_dbip->dbi_Head[i];
 	for (; dp != RT_DIR_NULL; dp = dp->d_forw)
@@ -211,11 +211,11 @@ rt_free_rti(struct rt_i *rtip)
  * be called ncpu times, hence the critical section.
  */
 void
-rt_prep_parallel(register struct rt_i *rtip, int ncpu)
+rt_prep_parallel(struct rt_i *rtip, int ncpu)
 {
-    register struct region *regp;
-    register struct soltab *stp;
-    register int i;
+    struct region *regp;
+    struct soltab *stp;
+    int i;
     struct resource *resp;
     vect_t diag;
 
@@ -333,7 +333,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
      */
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
 	/* Ensure bit numbers are unique */
-	register struct soltab **ssp = &rtip->rti_Solids[stp->st_bit];
+	struct soltab **ssp = &rtip->rti_Solids[stp->st_bit];
 	if (*ssp != SOLTAB_NULL) {
 	    bu_log("rti_Solids[%ld] is non-empty! rtip=%p\n", stp->st_bit, (void *)rtip);
 	    bu_log("Existing entry is (st_rtip=%p):\n", (void *)(*ssp)->st_rtip);
@@ -362,7 +362,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     }
     /* Fill in the array and rebuild the count (aka index) */
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
-	register int id;
+	int id;
 	id = stp->st_id;
 	rtip->rti_sol_by_type[id][rtip->rti_nsol_by_type[id]++] = stp;
     } RT_VISIT_ALL_SOLTABS_END;
@@ -383,7 +383,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
      * Always do this, because application debugging may use it too.
      */
     {
-	register fastf_t f, diff;
+	fastf_t f, diff;
 
 	diff = (rtip->mdl_max[X] - rtip->mdl_min[X]);
 	f = (rtip->mdl_max[Y] - rtip->mdl_min[Y]);
@@ -459,7 +459,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
  * Compatibility stub.  Only uses 1 CPU.
  */
 void
-rt_prep(register struct rt_i *rtip)
+rt_prep(struct rt_i *rtip)
 {
     RT_CK_RTI(rtip);
     rt_prep_parallel(rtip, 1);
@@ -695,7 +695,7 @@ clt_prep(struct rt_i *rtip)
 void
 rt_plot_all_bboxes(FILE *fp, struct rt_i *rtip)
 {
-    register struct soltab *stp;
+    struct soltab *stp;
 
     RT_CK_RTI(rtip);
     pdv_3space(fp, rtip->rti_pmin, rtip->rti_pmax);
@@ -719,7 +719,7 @@ rt_plot_all_solids(
     struct rt_i *rtip,
     struct resource *resp)
 {
-    register struct soltab *stp;
+    struct soltab *stp;
 
     RT_CK_RTI(rtip);
 
@@ -789,7 +789,7 @@ rt_vlist_solid(
  */
 int
 rt_plot_solid(
-    register FILE *fp,
+    FILE *fp,
     struct rt_i *rtip,
     const struct soltab *stp,
     struct resource *resp)
@@ -1131,11 +1131,11 @@ rt_get_solidbitv(size_t nbits, struct resource *resp)
  * anything has been prepped.
  */
 void
-rt_clean(register struct rt_i *rtip)
+rt_clean(struct rt_i *rtip)
 {
-    register struct region *regp;
-    register struct bu_list *head;
-    register struct soltab *stp;
+    struct region *regp;
+    struct bu_list *head;
+    struct soltab *stp;
     int i;
 
     RT_CK_RTI(rtip);
@@ -1280,7 +1280,7 @@ rt_clean(register struct rt_i *rtip)
 	 * up.
 	 */
 	for (i=0; i < RT_DBNHASH; i++) {
-	    register struct directory *dp;
+	    struct directory *dp;
 
 	    dp = rtip->rti_dbip->dbi_Head[i];
 	    for (; dp != RT_DIR_NULL; dp = dp->d_forw)
@@ -1305,7 +1305,7 @@ rt_clean(register struct rt_i *rtip)
  * 0 success
  */
 int
-rt_del_regtree(struct rt_i *rtip, register struct region *delregp, struct resource *resp)
+rt_del_regtree(struct rt_i *rtip, struct region *delregp, struct resource *resp)
 {
     if (rtip)
 	RT_CK_RTI(rtip);
@@ -1334,11 +1334,11 @@ rt_del_regtree(struct rt_i *rtip, register struct region *delregp, struct resour
  * region bits have been assigned.
  */
 HIDDEN void
-rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp)
+rt_solid_bitfinder(union tree *treep, struct region *regp, struct resource *resp)
 {
-    register union tree **sp;
-    register struct soltab *stp;
-    register union tree **stackend;
+    union tree **sp;
+    struct soltab *stp;
+    union tree **stackend;
 
     RT_CK_REGION(regp);
     RT_CK_RESOURCE(resp);
@@ -1367,7 +1367,7 @@ rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resou
 		*sp++ = treep->tr_b.tb_right;
 		*sp++ = treep->tr_b.tb_left;
 		if (sp >= stackend) {
-		    register int off = sp - resp->re_boolstack;
+		    int off = sp - resp->re_boolstack;
 		    rt_bool_growstack(resp);
 		    sp = &(resp->re_boolstack[off]);
 		    stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
@@ -1387,7 +1387,7 @@ rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resou
  * between different LIBRT instances.
  */
 void
-rt_ck(register struct rt_i *rtip)
+rt_ck(struct rt_i *rtip)
 {
     struct region *regp;
     struct soltab *stp;
@@ -1686,9 +1686,9 @@ unprep_leaf(struct db_tree_state *tsp,
 	    struct rt_db_internal *ip,
 	    void *client_data)
 {
-    register struct soltab *stp;
+    struct soltab *stp;
     struct directory *dp;
-    register matp_t mat;
+    matp_t mat;
     struct rt_i *rtip;
     struct bu_list *mid;
     struct rt_reprep_obj_list *objs=(struct rt_reprep_obj_list *)client_data;
