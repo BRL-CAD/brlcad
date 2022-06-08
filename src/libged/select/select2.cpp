@@ -54,8 +54,8 @@ int
 _select_cmd_list(void *bs, int argc, const char **argv)
 {
     struct _ged_select_info *gd = (struct _ged_select_info *)bs;
-    const char *usage_string = "select [options] list [set_name]";
-    const char *purpose_string = "list currently defined selection sets, or the contents of a specified set";
+    const char *usage_string = "select [options] list [set_name_pattern]";
+    const char *purpose_string = "list currently defined selection sets, or the contents of specified sets";
     if (_select_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
         return BRLCAD_OK;
     }
@@ -67,31 +67,37 @@ _select_cmd_list(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
 
     if (!argc) {
-	char **set_names = NULL;
-	int ac = ged_selection_sets_list(&set_names, gedp->ged_selection_sets);
-	if (ac) {
-	    for (int i = 0; i < ac; i++) {
-		bu_vls_printf(gedp->ged_result_str, "%s\n", set_names[i]);
+	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "*");
+	if (scnt) {
+	    for (size_t i = 0; i < scnt; i++) {
+		struct ged_selection_set *s = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
+		bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->name));
 	    }
-	    bu_argv_free(ac, set_names);
 	}
+	bu_ptbl_free(&ssets);
 	return BRLCAD_OK;
     }
 
-    struct ged_selection_set *gs = ged_selection_sets_lookup(gedp->ged_selection_sets, argv[0]);
-    if (!gs) {
-	bu_vls_printf(gedp->ged_result_str, ": set %s not found\n", argv[0]);
+    struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+    size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, argv[0]);
+    if (!scnt) {
+	bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", argv[0]);
 	return BRLCAD_ERROR;
     }
 
-    char **selection_names = NULL;
-    int ac = ged_selection_set_list(&selection_names, gs);
-    if (ac) {
-	for (int i = 0; i < ac; i++) {
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", selection_names[i]);
+    for (size_t i = 0; i < scnt; i++) {
+	struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
+	char **selection_names = NULL;
+	int ac = ged_selection_set_list(&selection_names, gs);
+	if (ac) {
+	    for (int j = 0; j < ac; j++) {
+		bu_vls_printf(gedp->ged_result_str, "%s\n", selection_names[j]);
+	    }
+	    bu_argv_free(ac, selection_names);
 	}
-	bu_argv_free(ac, selection_names);
     }
+    bu_ptbl_free(&ssets);
 
     return BRLCAD_OK;
 }

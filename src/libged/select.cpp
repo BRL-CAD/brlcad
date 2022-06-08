@@ -112,8 +112,37 @@
 #include <map>
 #include <string>
 
+#include "bu/path.h"
 #include "ged/view/select.h"
 #include "./ged_private.h"
+
+static void
+fp_path_split(std::vector<std::string> &objs, const char *str)
+{
+    std::string s(str);
+    size_t pos = 0;
+    if (s.c_str()[0] == '/')
+	s.erase(0, 1);  //Remove leading slash
+    while ((pos = s.find_first_of("/", 0)) != std::string::npos) {
+	std::string ss = s.substr(0, pos);
+	objs.push_back(ss);
+	s.erase(0, pos + 1);
+    }
+    objs.push_back(s);
+}
+
+static bool
+fp_path_top_match(std::vector<std::string> &top, std::vector<std::string> &candidate)
+{
+    for (size_t i = 0; i < top.size(); i++) {
+	if (i == candidate.size())
+	    return false;
+	if (top[i] != candidate[i])
+	    return false;
+    }
+    return true;
+}
+
 
 struct ged_selection_set_impl {
     std::map<std::string, struct ged_selection *> m;
@@ -124,15 +153,59 @@ struct ged_selection_sets_impl {
 };
 
 
-struct ged_selection_sets *
-ged_selection_sets_create()
+
+struct ged_selection *
+_selection_get(struct ged_selection_set *s, const char *s_name)
 {
+    if (!s || !s_name || !strlen(s_name))
+	return NULL;
+    std::map<std::string, struct ged_selection *>::iterator s_it;
+    s_it = s->i->m.find(std::string(s_name));
+    if (s_it == s->i->m.end()) {
+	struct ged_selection *s_o;
+	BU_GET(s_o, struct ged_selection);
+	s_o->gedp = s->gedp;
+	s_o->r_os = NULL;
+	s_o->so = NULL;
+	bu_vls_init(&s_o->path);
+	bu_vls_sprintf(&s_o->path, "%s", s_name);
+	s->i->m[std::string(s_name)] = s_o;
+	s_it = s->i->m.find(std::string(s_name));
+    }
+    return s_it->second;
+}
+
+
+void
+_selection_put(struct ged_selection_set *s, const char *s_name)
+{
+    if (!s || !s_name || !strlen(s_name))
+	return;
+    std::map<std::string, struct ged_selection *>::iterator s_it;
+    s_it = s->i->m.find(std::string(s_name));
+    if (s_it == s->i->m.end())
+	return;
+    bu_vls_init(&s_it->second->path);
+    BU_PUT(s_it->second, struct ged_selection);
+    s->i->m.erase(std::string(s_name));
+}
+
+
+struct ged_selection_sets *
+ged_selection_sets_create(struct ged *gedp)
+{
+    if (!gedp)
+	return NULL;
     struct ged_selection_sets *s;
     BU_GET(s, struct ged_selection_sets);
+    s->gedp = gedp;
     s->i = new ged_selection_sets_impl;
     s->i->s = new std::map<std::string, struct ged_selection_set *>;
     struct ged_selection_set *ds;
     BU_GET(ds, struct ged_selection_set);
+    bu_vls_init(&ds->name);
+    bu_vls_sprintf(&ds->name, "default");
+    ds->gedp = gedp;
     ds->i = new ged_selection_set_impl;
     (*s->i->s)[std::string("default")] = ds;
     return s;
@@ -154,7 +227,7 @@ ged_selection_sets_destroy(struct ged_selection_sets *s)
 struct ged_selection_set *
 ged_selection_sets_get(struct ged_selection_sets *s, const char *s_name)
 {
-    if (!s)
+    if (!s || !s_name || !strlen(s_name))
 	return NULL;
     std::map<std::string, struct ged_selection_set *>::iterator s_it;
     std::string sname = (s_name || !strlen(s_name)) ? std::string("default") : std::string(s_name);
@@ -162,6 +235,9 @@ ged_selection_sets_get(struct ged_selection_sets *s, const char *s_name)
     if (s_it == s->i->s->end()) {
 	struct ged_selection_set *ds;
 	BU_GET(ds, struct ged_selection_set);
+	ds->gedp = s->gedp;
+	bu_vls_init(&ds->name);
+	bu_vls_sprintf(&ds->name, "%s", s_name);
 	ds->i = new ged_selection_set_impl;
 	(*s->i->s)[sname] = ds;
 	s_it = s->i->s->find(sname);
@@ -169,16 +245,27 @@ ged_selection_sets_get(struct ged_selection_sets *s, const char *s_name)
     return s_it->second;
 }
 
-struct ged_selection_set *
-ged_selection_sets_lookup(struct ged_selection_sets *s, const char *s_name)
+size_t
+ged_selection_sets_lookup(struct bu_ptbl *sets, struct ged_selection_sets *s, const char *pattern)
 {
-    if (!s || !s_name || !strlen(s_name))
-	return NULL;
+    if (!sets|| !s || !pattern || !strlen(pattern))
+	return 0;
+
+    bu_ptbl_reset(sets);
+
+    std::vector<struct ged_selection_set *> s_sets;
     std::map<std::string, struct ged_selection_set *>::iterator s_it;
-    s_it = s->i->s->find(std::string(s_name));
-    if (s_it == s->i->s->end())
-	return NULL;
-    return s_it->second;
+    for (s_it = s->i->s->begin(); s_it != s->i->s->end(); s_it++) {
+	if (!bu_path_match(pattern, s_it->first.c_str(), 0)) {
+	    s_sets.push_back(s_it->second);
+	}
+    }
+
+    for (size_t i = 0; i < s_sets.size(); i++) {
+	bu_ptbl_ins(sets, (long *)s_sets[i]);
+    }
+
+    return s_sets.size();
 }
 
 void
@@ -200,70 +287,55 @@ ged_selection_sets_put(struct ged_selection_sets *s, const char *s_name)
 	return;
     }
 
+    bu_vls_free(&s_it->second->name);
     delete s_it->second->i;
     BU_GET(s_it->second, struct ged_selection_set);
     s->i->s->erase(s_it);
 }
 
-int
-ged_selection_sets_list(char ***set_names, struct ged_selection_sets *s)
+size_t
+ged_selection_lookup(struct bu_ptbl *matches, struct ged_selection_set *s, const char *s_name)
 {
-    if (!set_names || !s)
+    if (!matches || !s || !s_name || !strlen(s_name))
 	return 0;
 
-    (*set_names) = (char **)bu_calloc(s->i->s->size()+1, sizeof(char *), "name array");
-    std::map<std::string, struct ged_selection_set *>::iterator s_it;
-    int i = 0;
-    for (s_it = s->i->s->begin(); s_it != s->i->s->end(); s_it++) {
-	(*set_names)[i] = bu_strdup(s_it->first.c_str());
-	i++;
+    bu_ptbl_reset(matches);
+
+    std::vector<std::string> s_top;
+    fp_path_split(s_top, s_name);
+
+    // We want to do a "db_fullpath" style check to see if any active entries are matches or
+    // subsets of this path.  To allow for the possibility of selections that have no corresponding
+    // database object (in particular, invalid comb entries we may want to select to edit) we
+    // do like the erase command and operate on the strings themselves.
+    std::vector<struct ged_selection *> s_matches;
+    std::map<std::string, struct ged_selection *>::iterator s_it;
+    for (s_it = s->i->m.begin(); s_it != s->i->m.end(); s_it++) {
+	std::vector<std::string> s_c;
+	fp_path_split(s_c, s_it->first.c_str());
+	if (fp_path_top_match(s_top, s_c)) {
+	    s_matches.push_back(s_it->second);
+	}
     }
-    return (int)s->i->s->size();
-}
 
-
-struct ged_selection *
-ged_selection_set_get(struct ged_selection_set *s, const char *s_name)
-{
-    if (!s || !s_name || !strlen(s_name))
-	return NULL;
-    std::map<std::string, struct ged_selection *>::iterator s_it;
-    s_it = s->i->m.find(std::string(s_name));
-    if (s_it == s->i->m.end()) {
-	struct ged_selection *s_o;
-	BU_GET(s_o, struct ged_selection);
-	s_o->r_os = NULL;
-	s_o->so = NULL;
-	s->i->m[std::string(s_name)] = s_o;
-	s_it = s->i->m.find(std::string(s_name));
+    for (size_t i = 0; i < s_matches.size(); i++) {
+	bu_ptbl_ins(matches, (long *)s_matches[i]);
     }
-    return s_it->second;
+
+    return s_matches.size();
 }
 
-struct ged_selection *
-ged_selection_set_lookup(struct ged_selection_set *s, const char *s_name)
+size_t
+ged_selection_lookup_fp(struct bu_ptbl *matches, struct ged_selection_set *s, struct db_full_path *fp)
 {
-    if (!s || !s_name || !strlen(s_name))
-	return NULL;
-    std::map<std::string, struct ged_selection *>::iterator s_it;
-    s_it = s->i->m.find(std::string(s_name));
-    if (s_it == s->i->m.end())
-	return NULL;
-    return s_it->second;
+    if (!matches || !s || !fp)
+	return 0;
+    char *fp_s = db_path_to_string(fp);
+    size_t ret = ged_selection_lookup(matches, s, fp_s);
+    bu_free(fp_s, "fp_s");
+    return ret;
 }
 
-void
-ged_selection_set_put(struct ged_selection_set *s, const char *s_name)
-{
-    if (!s || !s_name || !strlen(s_name))
-	return;
-    std::map<std::string, struct ged_selection *>::iterator s_it;
-    s_it = s->i->m.find(std::string(s_name));
-    if (s_it == s->i->m.end())
-	return;
-    BU_PUT(s_it->second, struct ged_selection);
-    s->i->m.erase(std::string(s_name));
-}
 
 int
 ged_selection_set_list(char ***keys, struct ged_selection_set *s)
@@ -310,6 +382,8 @@ ged_selection_set_cpy(struct ged_selection_sets *s, const char *from, const char
     for (s_it = s_from->i->m.begin(); s_it != s_from->i->m.end(); s_it++) {
 	struct ged_selection *s_o;
 	BU_GET(s_o, struct ged_selection);
+	bu_vls_init(&s_o->path);
+	bu_vls_sprintf(&s_o->path, "%s", bu_vls_cstr(&s_it->second->path));
 	s_o->r_os = s_it->second->r_os;
 	s_o->so = s_it->second->so;
 	s_to->i->m[s_it->first] = s_o;
@@ -323,7 +397,7 @@ struct rt_object_selections *
 ged_get_object_selections(struct ged *gedp, const char *object_name)
 {
     struct ged_selection_set *ss = (*gedp->ged_selection_sets->i->s)[std::string("default")];
-    struct ged_selection *s = ged_selection_set_get(ss, object_name);
+    struct ged_selection *s = _selection_get(ss, object_name);
     if (!s->r_os) {
 	struct rt_object_selections *ro_s;
 	BU_GET(ro_s, struct rt_object_selections);
