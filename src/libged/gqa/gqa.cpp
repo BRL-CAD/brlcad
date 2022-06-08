@@ -1073,6 +1073,13 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		ap->A_LENDEN += val;
 
 		prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
+
+		// ensure we have an object
+		if (prd->optr == NULL) {
+		    bu_log("INTERNAL ERROR: %s does not have parent tracking\n", pp->pt_regionp->reg_name);
+		    continue;
+		}
+		
 		/* accumulate the per-region per-view weight values */
 		bu_semaphore_acquire(state->sem_stats);
 		prd->r_lenDensity[state->i_axis] += val;
@@ -1133,6 +1140,11 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	    struct per_region_data *prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 	    ap->A_LEN += dist; /* add to total volume */
 	    {
+		// ensure we have an object
+		if (prd->optr == NULL) {
+		    bu_log("INTERNAL ERROR: %s does not have parent tracking\n", pp->pt_regionp->reg_name);
+		    continue;
+		}
 		bu_semaphore_acquire(state->sem_stats);
 
 		/* add to region volume */
@@ -1386,6 +1398,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
     }
 
     for (i = 0; i < num_objects; i++) {
+	bu_log("%s | %s\n", obj_rpt[i].o_name, str);
 	if (BU_STR_EQUAL(obj_rpt[i].o_name, str)) {
 	    bu_free(str, "");
 	    return i;
@@ -1394,6 +1407,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 
     bu_vls_printf(_ged_current_gedp->ged_result_str, "%s Didn't find object named \"%s\" in %d entries\n", CPP_FILELINE, name, num_objects);
 
+    bu_free(str, "");
     return -1;
 }
 
@@ -2561,8 +2575,8 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
      * that the user wants included in the ray trace.
      */
     for (; arg_count < argc; arg_count++) {
-	if (rt_gettree(rtip, simplify_av_name(argv[arg_count])) < 0) {
-	    fprintf(stderr, "rt_gettree(%s) FAILED\n", simplify_av_name(argv[arg_count]));
+	if (rt_gettree(rtip, argv[arg_count]) < 0) {
+	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[arg_count]);
 	    return BRLCAD_ERROR;
 	}
     }
