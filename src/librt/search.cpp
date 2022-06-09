@@ -82,6 +82,9 @@
 
 #include "common.h"
 
+#include <string>
+#include <unordered_map>
+
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -155,10 +158,11 @@ struct list_client_data_t {
 HIDDEN void
 db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *tp,
 			 void (*traverse_func) (struct db_full_path *path, void *),
-			 void *client_data)
+			 void *cmap, void *client_data)
 {
     struct directory *dp;
     struct list_client_data_t *lcd= (struct list_client_data_t *)client_data;
+    std::unordered_map<std::string, int> *c_inst_map = (std::unordered_map<std::string, int> *)cmap;
     int bool_val = curr_bool;
 
     if (!tp)
@@ -169,24 +173,27 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
     RT_CK_TREE(tp);
 
     switch (tp->tr_op) {
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    db_fullpath_list_subtree(path, OP_UNION, tp->tr_b.tb_left, traverse_func, cmap, client_data);
+	    break;
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
+	    db_fullpath_list_subtree(path, OP_UNION, tp->tr_b.tb_left, traverse_func, cmap, client_data);
 	    if (tp->tr_op == OP_UNION)
 		bool_val = 2;
 	    if (tp->tr_op == OP_INTERSECT)
 		bool_val = 3;
 	    if (tp->tr_op == OP_SUBTRACT)
 		bool_val = 4;
-	    db_fullpath_list_subtree(path, bool_val, tp->tr_b.tb_right, traverse_func, client_data);
-	    /* fall through */
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-	    db_fullpath_list_subtree(path, OP_UNION, tp->tr_b.tb_left, traverse_func, client_data);
+	    db_fullpath_list_subtree(path, bool_val, tp->tr_b.tb_right, traverse_func, cmap, client_data);
 	    break;
 	case OP_DB_LEAF:
+	    if (UNLIKELY(lcd->dbip->dbi_use_comb_instance_ids && c_inst_map))
+		(*c_inst_map)[std::string(tp->tr_l.tl_name)]++;
 	    if ((dp=db_lookup(lcd->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		return;
 	    } else {
@@ -196,6 +203,8 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		    struct db_full_path *newpath;
 		    db_add_node_to_full_path(path, dp);
 		    DB_FULL_PATH_SET_CUR_BOOL(path, bool_val);
+		    if (UNLIKELY(lcd->dbip->dbi_use_comb_instance_ids && c_inst_map))
+			DB_FULL_PATH_SET_CUR_COMB_INST(path, (*c_inst_map)[std::string(tp->tr_l.tl_name)]-1);
 		    BU_ALLOC(newpath, struct db_full_path);
 		    db_full_path_init(newpath);
 		    db_dup_full_path(newpath, path);
@@ -213,7 +222,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		DB_FULL_PATH_POP(path);
 		break;
 	    }
-
+	    break;
 	default:
 	    bu_log("db_functree_subtree: unrecognized operator %d\n", tp->tr_op);
 	    bu_bomb("db_functree_subtree: unrecognized operator\n");
@@ -228,7 +237,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
  * db_full_path structure.  This list is then used for further
  * processing and filtering by the search routines.
  */
-HIDDEN void
+static void
 db_fullpath_list(struct db_full_path *path, void *client_data)
 {
     struct directory *dp;
@@ -246,8 +255,9 @@ db_fullpath_list(struct db_full_path *path, void *client_data)
 	if (rt_db_get_internal(&in, dp, lcd->dbip, NULL, &rt_uniresource) < 0)
 	    return;
 
+	std::unordered_map<std::string, int> c_inst_map;
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	db_fullpath_list_subtree(path, OP_UNION, comb->tree, db_fullpath_list, client_data);
+	db_fullpath_list_subtree(path, OP_UNION, comb->tree, db_fullpath_list, &c_inst_map, client_data);
 	rt_db_free_internal(&in);
     }
 }
