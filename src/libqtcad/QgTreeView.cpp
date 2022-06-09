@@ -208,13 +208,23 @@ void QgTreeView::context_menu(const QPoint &point)
 
     QAction* draw_action = new QAction("Draw", NULL);
     // https://stackoverflow.com/a/28647342/2037687
-    QVariant draw_action_v = qVariantFromValue((void *)cnode);
+    QVariant draw_action_v;
+#ifdef USE_QT6
+    draw_action_v = QVariant::fromValue((void *)cnode);
+#else
+    draw_action_v = qVariantFromValue((void *)cnode);
+#endif
     draw_action->setData(draw_action_v);
     connect(draw_action, &QAction::triggered, sm, &QgModel::draw_action);
 
 
     QAction* erase_action = new QAction("Erase", NULL);
-    QVariant erase_action_v = qVariantFromValue((void *)cnode);
+    QVariant erase_action_v;
+#ifdef USE_QT6
+    erase_action_v = QVariant::fromValue((void *)cnode);
+#else
+    erase_action_v = qVariantFromValue((void *)cnode);
+#endif
     erase_action->setData(erase_action_v);
     connect(erase_action, &QAction::triggered, sm, &QgModel::erase_action);
 
