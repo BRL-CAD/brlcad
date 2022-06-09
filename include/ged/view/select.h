@@ -71,14 +71,17 @@ GED_EXPORT int ged_selection_set_list(char ***keys, struct ged_selection_set *s)
 GED_EXPORT void ged_selection_set_clear(struct ged_selection_set *s);
 
 // Manipulate data
-GED_EXPORT struct ged_selection *ged_selection_set_insert(struct ged_selection_set *s, const char *s_path);
-GED_EXPORT struct ged_selection *ged_selection_set_insert_fp(struct ged_selection_set *s, struct db_full_path *fp);
-GED_EXPORT struct ged_selection *ged_selection_set_insert_obj(struct ged_selection_set *s, struct bv_scene_obj *o);
-GED_EXPORT struct ged_selection *ged_selection_set_remove(struct ged_selection_set *s, const char *s_path);
-GED_EXPORT struct ged_selection *ged_selection_set_remove_fp(struct ged_selection_set *s, struct db_full_path *fp);
-GED_EXPORT struct ged_selection *ged_selection_set_remove_obj(struct ged_selection_set *s, struct bv_scene_obj *o);
+GED_EXPORT struct ged_selection *ged_selection_insert(struct ged_selection_set *s, const char *s_path);
+GED_EXPORT struct ged_selection *ged_selection_insert_fp(struct ged_selection_set *s, struct db_full_path *fp);
+GED_EXPORT struct ged_selection *ged_selection_insert_obj(struct ged_selection_set *s, struct bv_scene_obj *o);
+GED_EXPORT void ged_selection_remove(struct ged_selection_set *s, const char *s_path);
+GED_EXPORT void ged_selection_remove_fp(struct ged_selection_set *s, struct db_full_path *fp);
+GED_EXPORT void ged_selection_remove_obj(struct ged_selection_set *s, struct bv_scene_obj *o);
 GED_EXPORT int ged_selection_set_expand(struct ged_selection_set *s_out, struct ged_selection_set *s);
 GED_EXPORT int ged_selection_set_collapse(struct ged_selection_set *s_out, struct ged_selection_set *s);
+
+// Given a set, associate the DBOBJ scene objects with any matching selection objects.
+GED_EXPORT void ged_selection_assign_objs(struct ged_selection_set *s);
 
 /**
  * Returns a list of items within the previously defined rectangle.
