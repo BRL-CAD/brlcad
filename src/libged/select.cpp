@@ -475,14 +475,20 @@ ged_selection_remove(struct ged_selection_set *s, const char *s_path)
     fp_path_split(s_c, s_path);
 
     struct ged_selection *match = NULL;
+    std::string match_str;
     std::map<std::string, struct ged_selection *>::iterator s_it;
     for (s_it = s->i->m.begin(); s_it != s->i->m.end(); s_it++) {
 	std::vector<std::string> s_top;
 	fp_path_split(s_top, s_it->first.c_str());
 	if (fp_path_top_match(s_top, s_c)) {
 	    match = s_it->second;
+	    match_str = s_it->first;
 	    break;
 	}
+    }
+    if (!match) {
+	s->i->m.erase(std::string(s_path));
+	return;
     }
 
     // If we have an exact match we're done
@@ -494,7 +500,6 @@ ged_selection_remove(struct ged_selection_set *s, const char *s_path)
     // If not, s_path is a child of match.  The hard case - need to split and
     // reconstitute the remaining sub-paths of match as new selections
 
-
     // Create a temporary selection set
     struct ged_selection_set *tmp_s;
     BU_GET(tmp_s, struct ged_selection_set);
@@ -502,19 +507,24 @@ ged_selection_remove(struct ged_selection_set *s, const char *s_path)
     tmp_s->i = new ged_selection_set_impl;
 
     // Move the match from the original set to the temporary set
-    s->i->m.erase(std::string(s_path));
+    s->i->m.erase(match_str);
     tmp_s->i->m[(std::string(s_path))] = match;
 
     ged_selection_set_expand(tmp_s, tmp_s);
 
     // Remove everything in the expanded temp set where s_c is a
     // top path of the current path
-    for (s_it = s->i->m.begin(); s_it != s->i->m.end(); s_it++) {
+    std::set<std::string> rm_tmp;
+    for (s_it = tmp_s->i->m.begin(); s_it != tmp_s->i->m.end(); s_it++) {
 	std::vector<std::string> s_cc;
 	fp_path_split(s_cc, s_it->first.c_str());
 	if (fp_path_top_match(s_c, s_cc)) {
-	    _selection_put(tmp_s, s_it->first.c_str());
+	    rm_tmp.insert(s_it->first.c_str());
 	}
+    }
+    std::set<std::string>::iterator tmp_it;
+    for (tmp_it = rm_tmp.begin(); tmp_it != rm_tmp.end(); tmp_it++) {
+	_selection_put(tmp_s, (*tmp_it).c_str());
     }
 
     // Collapse everything that's left into the new selection paths
@@ -664,7 +674,9 @@ ged_selection_set_expand(struct ged_selection_set *s_out, struct ged_selection_s
     for (s_it = s->i->m.begin(); s_it != s->i->m.end(); s_it++) {
 	initial.push(s_it->second);
     }
-    ged_selection_set_clear(s_out);
+    if (s_out != s) {
+	ged_selection_set_clear(s_out);
+    }
 
     while (!initial.empty()) {
 	struct ged_selection *ss = initial.front();
@@ -679,7 +691,7 @@ ged_selection_set_expand(struct ged_selection_set *s_out, struct ged_selection_s
 	    db_free_full_path(&dfp);
 	    continue;
 	}
-	//struct directory *leaf = DB_FULL_PATH_CUR_DIR(&dfp);
+
 	struct expand_client_data_t ecd;
 	struct bu_ptbl *solid_paths;
 	BU_ALLOC(solid_paths, struct bu_ptbl);
@@ -698,10 +710,12 @@ ged_selection_set_expand(struct ged_selection_set *s_out, struct ged_selection_s
 		ged_selection_insert_fp(s_out, sfp);
 	    }
 	    // Expanded - remove original
-	    ged_selection_remove(s_out, bu_vls_cstr(&ss->path));
+	    _selection_put(s_out, bu_vls_cstr(&ss->path));
 	} else {
 	    // No expansion - keep initial
-	    ged_selection_insert(s_out, bu_vls_cstr(&ss->path));
+	    if (s_out != s) {
+		ged_selection_insert(s_out, bu_vls_cstr(&ss->path));
+	    }
 	}
 	bu_ptbl_free(solid_paths);
 	BU_FREE(solid_paths, struct bu_ptbl);
@@ -818,16 +832,26 @@ ged_selection_set_collapse(struct ged_selection_set *s_out, struct ged_selection
     size_t longest = (ps->size()) ? ((*ps->begin()).size()) : 0;
     std::vector<std::string> cparent;
     std::set<std::string> found_children;
-    while (ps->size()) {
-	std::vector<std::string> s_p = *ps->begin();
-	ps->erase(ps->begin());
-
-	if (s_p.size() < longest) {
+    while (ps->size() || pnext->size() || found_children.size()) {
+	std::vector<std::string> s_p;
+	bool empty = false;
+	if (ps->size()) {
+	    s_p = *ps->begin();
+	    ps->erase(ps->begin());
+	    std::cout << "Process: ";
+	    for(size_t i = 0; i < s_p.size(); i++)
+		std::cout << "/" << s_p[i];
+	    std::cout << "\n";
+	} else {
+	    empty = true;
+	}
+	if (empty || s_p.size() < longest) {
 	    // Because the set was ordered by path length, if we've hit a
 	    // shorter path that means we've processed all the paths with the
 	    // correct length - now it's time to find out if we have a fully
 	    // realized parent.  If we do, we insert cparent int pnext.  If
 	    // not, we put all the found_children of cparent into final_paths.
+	    std::cout << "End check\n";
 	    std::set<std::string> g_c;
 	    child_name_set(&g_c, s->gedp, cparent[cparent.size()-1]);
 	    if (g_c == found_children) {
@@ -839,7 +863,7 @@ ged_selection_set_collapse(struct ged_selection_set *s_out, struct ged_selection
 		// Not all children present - cparent + found_children constitute
 		// final paths
 		std::set<std::string>::iterator f_it;
-		for (f_it == found_children.begin(); f_it != found_children.end(); f_it++) {
+		for (f_it = found_children.begin(); f_it != found_children.end(); f_it++) {
 		    cparent.push_back(*f_it);
 		    final_paths.insert(cparent);
 		    cparent.pop_back();
@@ -848,11 +872,13 @@ ged_selection_set_collapse(struct ged_selection_set *s_out, struct ged_selection
 
 	    // Having figured out the answer for the previous case, move
 	    // remaining paths to pnext, swap ps and pnext, and continue
-	    pnext->insert(s_p);
-	    while (!ps->size()) {
-		s_p = *ps->begin();
-		ps->erase(ps->begin());
+	    if (!empty) {
 		pnext->insert(s_p);
+		while (ps->size()) {
+		    s_p = *ps->begin();
+		    ps->erase(ps->begin());
+		    pnext->insert(s_p);
+		}
 	    }
 	    tmp = ps;
 	    ps = pnext;
@@ -872,6 +898,11 @@ ged_selection_set_collapse(struct ged_selection_set *s_out, struct ged_selection
 	if (!cparent.size()) {
 	    // Starting a new comb check - initialize parent
 	    cparent = s_p;
+	    std::cout << "Starting new: ";
+	    for(size_t i = 0; i < cparent.size(); i++)
+		std::cout << "/" << cparent[i];
+	    std::cout << "\n";
+
 	    found_children.insert(cparent[cparent.size()-1]);
 	    cparent.pop_back();
 	    continue;
@@ -879,7 +910,16 @@ ged_selection_set_collapse(struct ged_selection_set *s_out, struct ged_selection
 
 	if (s_p[s_p.size()-2] != cparent[cparent.size()-1]) {
 	    // Right length, but wrong parent - defer
+	    std::cout << "Defer: ";
+	    for(size_t i = 0; i < s_p.size(); i++)
+		std::cout << "/" << s_p[i];
+	    std::cout << "\n";
+
 	    pnext->insert(s_p);
+	    continue;
+	} else {
+	    std::cout << "Found child\n";
+	    found_children.insert(s_p[s_p.size()-1]);
 	    continue;
 	}
     }
