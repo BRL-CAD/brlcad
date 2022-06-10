@@ -377,6 +377,20 @@ _selection_get(struct ged_selection_set *s, const char *s_name)
     return s_o;
 }
 
+void
+_selection_put(struct ged_selection_set *s, const char *s_name)
+{
+    if (!s || !s_name || !strlen(s_name))
+	return;
+    std::map<std::string, struct ged_selection *>::iterator s_it;
+    s_it = s->i->m.find(std::string(s_name));
+    if (s_it == s->i->m.end())
+	return;
+    bu_vls_free(&s_it->second->path);
+    BU_PUT(s_it->second, struct ged_selection);
+    s->i->m.erase(std::string(s_name));
+}
+
 struct ged_selection *
 ged_selection_insert(struct ged_selection_set *s, const char *s_path)
 {
@@ -403,9 +417,20 @@ ged_selection_insert(struct ged_selection_set *s, const char *s_path)
 	}
     }
 
-    // If no match found, add the path
-    if (!match)
-	match = _selection_get(s, s_path);
+    if (match)
+	return match;
+
+    // If no match found, we're adding the path.  We also need to remove any
+    // paths that are below this path.
+    for (s_it = s->i->m.begin(); s_it != s->i->m.end(); s_it++) {
+	std::vector<std::string> s_cc;
+	fp_path_split(s_cc, s_it->first.c_str());
+	if (fp_path_top_match(s_c, s_cc))
+	    _selection_put(s, s_it->first.c_str());
+    }
+
+    // Children cleared - add the new path
+    match = _selection_get(s, s_path);
 
     return match;
 }
@@ -430,21 +455,6 @@ ged_selection_insert_obj(struct ged_selection_set *s, struct bv_scene_obj *o)
     if (ss)
 	ss->so = o;
     return ss;
-}
-
-
-void
-_selection_put(struct ged_selection_set *s, const char *s_name)
-{
-    if (!s || !s_name || !strlen(s_name))
-	return;
-    std::map<std::string, struct ged_selection *>::iterator s_it;
-    s_it = s->i->m.find(std::string(s_name));
-    if (s_it == s->i->m.end())
-	return;
-    bu_vls_free(&s_it->second->path);
-    BU_PUT(s_it->second, struct ged_selection);
-    s->i->m.erase(std::string(s_name));
 }
 
 
