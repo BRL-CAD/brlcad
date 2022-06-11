@@ -217,10 +217,122 @@ _select_cmd_rm(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+int
+_select_cmd_collapse(void *bs, int argc, const char **argv)
+{
+    struct _ged_select_info *gd = (struct _ged_select_info *)bs;
+    const char *usage_string = "select [options] collapse [set_name_pattern]";
+    const char *purpose_string = "collapse specified set(s)";
+    if (_select_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+        return BRLCAD_OK;
+    }
+
+    argc--; argv++;
+
+    struct ged *gedp = gd->gedp;
+    if (!gedp->ged_selection_sets)
+	return BRLCAD_ERROR;
+
+    if (!argc && !bu_vls_strlen(&gd->curr_set)) {
+	bu_vls_printf(gedp->ged_result_str, ": no set specified\n");
+	return BRLCAD_OK;
+    }
+
+    if (bu_vls_strlen(&gd->curr_set)) {
+	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, bu_vls_cstr(&gd->curr_set));
+	if (!scnt) {
+	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", bu_vls_cstr(&gd->curr_set));
+	    return BRLCAD_ERROR;
+	}
+
+	for (size_t i = 0; i < scnt; i++) {
+	    struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
+	    ged_selection_set_collapse(gs, gs);
+	}
+	bu_ptbl_free(&ssets);
+
+	if (!argc || BU_STR_EQUAL(bu_vls_cstr(&gd->curr_set), argv[0]))
+	    return BRLCAD_OK;
+    }
+
+    struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+    size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, argv[0]);
+    if (!scnt) {
+	bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    for (size_t i = 0; i < scnt; i++) {
+	struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
+	ged_selection_set_collapse(gs, gs);
+    }
+    bu_ptbl_free(&ssets);
+
+    return BRLCAD_OK;
+}
+
+int
+_select_cmd_expand(void *bs, int argc, const char **argv)
+{
+    struct _ged_select_info *gd = (struct _ged_select_info *)bs;
+    const char *usage_string = "select [options] expand [set_name_pattern]";
+    const char *purpose_string = "expand specified set(s)";
+    if (_select_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+        return BRLCAD_OK;
+    }
+
+    argc--; argv++;
+
+    struct ged *gedp = gd->gedp;
+    if (!gedp->ged_selection_sets)
+	return BRLCAD_ERROR;
+
+    if (!argc && !bu_vls_strlen(&gd->curr_set)) {
+	bu_vls_printf(gedp->ged_result_str, ": no set specified\n");
+	return BRLCAD_OK;
+    }
+
+    if (bu_vls_strlen(&gd->curr_set)) {
+	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, bu_vls_cstr(&gd->curr_set));
+	if (!scnt) {
+	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", bu_vls_cstr(&gd->curr_set));
+	    return BRLCAD_ERROR;
+	}
+
+	for (size_t i = 0; i < scnt; i++) {
+	    struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
+	    ged_selection_set_expand(gs, gs);
+	}
+	bu_ptbl_free(&ssets);
+
+	if (!argc || BU_STR_EQUAL(bu_vls_cstr(&gd->curr_set), argv[0]))
+	    return BRLCAD_OK;
+    }
+
+    struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+    size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, argv[0]);
+    if (!scnt) {
+	bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    for (size_t i = 0; i < scnt; i++) {
+	struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
+	ged_selection_set_expand(gs, gs);
+    }
+    bu_ptbl_free(&ssets);
+
+    return BRLCAD_OK;
+}
+
 const struct bu_cmdtab _select_cmds[] = {
     { "list",       _select_cmd_list},
     { "add",        _select_cmd_add},
     { "rm",         _select_cmd_rm},
+    { "collapse",   _select_cmd_collapse},
+    { "expand",     _select_cmd_expand},
     { (char *)NULL,      NULL}
 };
 
