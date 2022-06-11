@@ -107,7 +107,7 @@ if(BRLCAD_SC_BUILD)
     add_dependencies(${SCEXEC}_exe_stage libexppp_stage)
   endforeach(SCEXEC ${STEPCODE_EXECS})
 
-  ExternalProject_ByProducts(stepcore STEPCODE_BLD ${STEPCODE_INSTDIR} ${INCLUDE_DIR}/stepcode
+  set(STEPCODE_HDRS
     base/judy.h
     base/judyL2Array.h
     base/judyLArray.h
@@ -234,9 +234,24 @@ if(BRLCAD_SC_BUILD)
     express/type.h
     express/variable.h
     ordered_attrs.h
-    sc_cf.h
     sc_export.h
-    sc_stdbool.h
+    )
+
+  # To allow main to be used with upstream stepcode for testing, support some variability
+  # what we look for in the header set.  (This will get more extensive in the future and
+  # will need to become more sophisticated, but for now just check the current files)
+  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/include/sc_cf.h.in)
+    set(STEPCODE_HDRS ${STEPCODE_HDRS} sc_cf.h)
+  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/include/sc_cf.h.in)
+  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/include/config.h.in)
+    set(STEPCODE_HDRS ${STEPCODE_HDRS} config.h)
+  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/include/config.h.in)
+  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/include/sc_stdbool.h)
+    set(STEPCODE_HDRS ${STEPCODE_HDRS} sc_stdbool.h)
+  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/include/sc_stdbool.h)
+
+  ExternalProject_ByProducts(stepcore STEPCODE_BLD ${STEPCODE_INSTDIR} ${INCLUDE_DIR}/stepcode
+    ${STEPCODE_HDRS}
     )
 
   set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} stepcode  CACHE STRING "Bundled system include dirs" FORCE)
