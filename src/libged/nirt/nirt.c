@@ -104,13 +104,38 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    /* look for help */
+    /* look for options which solely print information to user */
     for (i = 0; i < argc; i++) {
-	if (BU_STR_EQUAL(argv[i], "-h") || BU_STR_EQUAL(argv[i], "-?")) {
-	    /* FIXME: provide proper usage */
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s [options]\n", argv[0]);
-	    return BRLCAD_HELP;
-	}
+        if (BU_STR_EQUAL(argv[i], "-h") || 
+            BU_STR_EQUAL(argv[i], "-?") ||
+            BU_STR_EQUAL(argv[i], "--help") || 
+            BU_STR_EQUAL(argv[i], "-L")) {
+
+            // load av with request
+            av = (char **)bu_calloc(4, sizeof(char *), "av");
+            av[0] = (char*)nirt;
+            av[1] = (char*)argv[i];
+            av[2] = "-X";
+            av[3] = "ged";
+
+            bu_process_exec(&p, nirt, 4, (const char **)av, 0, 1);
+            bu_free(av, "av");
+
+            // open pipes
+            fp_in = bu_process_open(p, BU_PROCESS_STDIN);
+
+            /* use fp_out to read back the result */
+            fp_out = bu_process_open(p, BU_PROCESS_STDOUT);
+
+            /* use fp_err to read any error messages */
+            fp_err = bu_process_open(p, BU_PROCESS_STDERR);
+
+            /* send quit command to nirt */
+            fprintf(fp_in, "q\n");
+            bu_process_close(p, BU_PROCESS_STDIN);
+
+            goto print;
+        }
     }
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -266,13 +291,22 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     j = 1;
-    av = (char **)bu_calloc(gd_rt_cmd_len + 1, sizeof(char *), "av");
+    /* increment gd_rt_cmd_len +1 for null termination
+    * +2 to indicate we are running within libged with "-X ged"
+    */
+    av = (char **)bu_calloc(gd_rt_cmd_len + 3, sizeof(char *), "av");
     av[0] = gd_rt_cmd[0];
+    av[j++] = "-X";
+    av[j++] = "ged";
+    int format_override = 0;
     for (i = 1; i < gd_rt_cmd_len; i++) {
 	/* skip commands */
 	if (BU_STR_EQUAL(gd_rt_cmd[i], "-e")) {
-	    i++;
+	    i++;	// skip script too
 	} else {
+	    if (BU_STR_EQUAL(gd_rt_cmd[i], "-f")) {
+                format_override = 1;
+            }
 	    av[j] = gd_rt_cmd[i];
 	    j++;
 	}
@@ -297,6 +331,10 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     /* send commands down the pipe */
     for (i = 1; i < gd_rt_cmd_len - 2; i++) {
 	if (gd_rt_cmd[i] && strstr(gd_rt_cmd[i], "-e") != NULL) {
+	    // user manually specified format
+            if (format_override && strstr(gd_rt_cmd[i+1], "fmt ") != NULL) {
+                continue;
+            }
 	    fprintf(fp_in, "%s\n", gd_rt_cmd[++i]);
 	}
     }
@@ -321,6 +359,9 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* handle partitions */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
+	    if (strstr(line, "Usage") == line) {
+                break;
+            }
 	    bu_vls_strcpy(&v, line);
 	    bu_vls_trimspace(&v);
 
@@ -338,7 +379,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	    ndlp->z_in = scan[2];
 	    ndlp->los = scan[3];
 	    if (ret != 4) {
-		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four numbers.\n", bu_vls_addr(&v));
+		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four partition numbers.\n", bu_vls_addr(&v));
 		break;
 	    }
 	}
@@ -359,6 +400,9 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* handle overlaps */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
+	    if (strstr(line, "Usage") == line) {
+                break;
+            }
 	    bu_vls_strcpy(&v, line);
 	    bu_vls_trimspace(&v);
 
@@ -376,7 +420,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	    ndlp->z_in = scan[2];
 	    ndlp->los = scan[3];
 	    if (ret != 4) {
-		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four numbers.\n", bu_vls_addr(&v));
+		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four overlap numbers.\n", bu_vls_addr(&v));
 		break;
 	    }
 	}
@@ -388,6 +432,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	bv_vlblock_free(vbp);
     }
 
+print:
     if (DG_QRAY_TEXT(gedp->ged_gdp)) {
 	bu_vls_free(&t_vls);
 
