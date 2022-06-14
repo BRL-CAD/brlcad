@@ -174,7 +174,7 @@ struct ged_gqa_plot {
 
 /* summary data structure for objects specified on command line */
 static struct per_obj_data {
-    char *o_name;
+    const char *o_name;
     double *o_len;
     double *o_lenDensity;
     double *o_volume;
@@ -400,26 +400,6 @@ static const struct cvt_tab *units[3] = {
     &units_tab[1][0],	/* volume */
     &units_tab[2][0]	/* weight */
 };
-
-/**
- * simplify_av_name
- * 
- * Strips the full path of an argv supplied object down to its simplest form.
- * 
- * '/path/to/some/object' returns 'object'
- * 
- */
-char*
-simplify_av_name(const char* av_name)
-{
-    char* obj_name = (char *)av_name;
-    char* most_specific = strrchr(obj_name, '/');
-    if (most_specific) {
-	most_specific = most_specific + 1;	// strip leading '/'
-	obj_name = most_specific;
-    }
-    return obj_name;
-}
 
 /**
  * _gqa_read_units_double
@@ -1074,12 +1054,18 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
 		prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 
-		// ensure we have an object
+		// ensure we have an object and minimize reporting when we have errors
 		if (prd->optr == NULL) {
-		    bu_log("INTERNAL ERROR: %s does not have parent tracking\n", pp->pt_regionp->reg_name);
+		    static size_t reported = 0;
+		    if (reported < 20) {
+		    	bu_log("INTERNAL ERROR: %s does not have parent tracking\n", pp->pt_regionp->reg_name);
+		    } else if (reported == 20) {
+		        bu_log("INTERNAL ERROR: too many tracking errors, suppressing further reporting\n");
+		    }
+		    reported++;
 		    continue;
 		}
-		
+
 		/* accumulate the per-region per-view weight values */
 		bu_semaphore_acquire(state->sem_stats);
 		prd->r_lenDensity[state->i_axis] += val;
@@ -1140,11 +1126,18 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	    struct per_region_data *prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 	    ap->A_LEN += dist; /* add to total volume */
 	    {
-		// ensure we have an object
+		// ensure we have an object and minimize reporting when we have errors
 		if (prd->optr == NULL) {
-		    bu_log("INTERNAL ERROR: %s does not have parent tracking\n", pp->pt_regionp->reg_name);
+		    static size_t reported = 0;
+		    if (reported < 20) {
+		    	bu_log("INTERNAL ERROR: %s does not have parent tracking\n", pp->pt_regionp->reg_name);
+		    } else if (reported == 20) {
+		        bu_log("INTERNAL ERROR: too many tracking errors, suppressing further reporting\n");
+		    }
+		    reported++;
 		    continue;
 		}
+
 		bu_semaphore_acquire(state->sem_stats);
 
 		/* add to region volume */
@@ -1385,30 +1378,33 @@ plane_worker(int cpu, void *ptr)
 }
 
 
-int
-find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
+struct per_obj_data*
+find_cmd_line_obj(int objc, struct per_obj_data *obj_rpt, const char *name)
 {
+    /* name is full region path ie /a/b/c
+     * user specified either a or b or c or /a or /a/b or /a/b/c
+     */
     int i;
-    char *str = bu_strdup(name);
-    char *p;
 
-    p = strchr(str, '/');
-    if (p) {
-	*p = '\0';
+    for (i = 0; i < objc; i++) {
+    	const char* curr = name;
+
+	do {
+	    const char* oname = obj_rpt[i].o_name;
+	    if (oname[0] != '/') {
+		curr++;
+	    }
+	    int len = strlen(oname);
+	    int comp = bu_strncmp(curr, oname, len);
+	    if (comp == 0 && (curr[len] == '/' || curr[len] == '\0')) {
+		return &obj_rpt[i];
+	    }
+	} while ((curr = strchr(curr+1, '/')));
     }
 
-    for (i = 0; i < num_objects; i++) {
-	bu_log("%s | %s\n", obj_rpt[i].o_name, str);
-	if (BU_STR_EQUAL(obj_rpt[i].o_name, str)) {
-	    bu_free(str, "");
-	    return i;
-	}
-    }
+    bu_vls_printf(_ged_current_gedp->ged_result_str, "INTERNAL ERROR: Didn't find object named \"%s\" in %d command line entries\n", name, objc);
 
-    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s Didn't find object named \"%s\" in %d entries\n", CPP_FILELINE, name, num_objects);
-
-    bu_free(str, "");
-    return -1;
+    return NULL;
 }
 
 
@@ -1423,7 +1419,6 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     struct rt_i *rtip = state->rtip;
     int i;
     int m;
-    int index;
 
     if (start > ac) {
 	/* what? */
@@ -1463,7 +1458,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
      */
     obj_tbl = (struct per_obj_data *)bu_calloc(num_objects, sizeof(struct per_obj_data), "report tables");
     for (i = 0; i < num_objects; i++) {
-	obj_tbl[i].o_name = simplify_av_name(av[start+i]);
+	obj_tbl[i].o_name = av[start+i];
 	obj_tbl[i].o_len = (double *)bu_calloc(num_views, sizeof(double), "o_len");
 	obj_tbl[i].o_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "o_lenDensity");
 	obj_tbl[i].o_volume = (double *)bu_calloc(num_views, sizeof(double), "o_volume");
@@ -1487,11 +1482,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
 
 	m = (int)strlen(regp->reg_name);
 	if (m > max_region_name_len) max_region_name_len = m;
-	index = find_cmd_line_obj(obj_tbl, &regp->reg_name[1]);
-	if (index == -1)
-	    reg_tbl[i].optr = NULL;
-	else
-	    reg_tbl[i].optr = &obj_tbl[index];
+	reg_tbl[i].optr = find_cmd_line_obj(num_objects, obj_tbl, regp->reg_name);
     }
 }
 
