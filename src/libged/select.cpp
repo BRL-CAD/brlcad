@@ -386,9 +386,10 @@ _selection_put(struct ged_selection_set *s, const char *s_name)
     s_it = s->i->m.find(std::string(s_name));
     if (s_it == s->i->m.end())
 	return;
-    bu_vls_free(&s_it->second->path);
-    BU_PUT(s_it->second, struct ged_selection);
-    s->i->m.erase(std::string(s_name));
+    struct ged_selection *gs = s_it->second; 
+    s->i->m.erase(s_it);
+    bu_vls_free(&gs->path);
+    BU_PUT(gs, struct ged_selection);
 }
 
 struct ged_selection *
@@ -707,7 +708,8 @@ ged_selection_set_expand(struct ged_selection_set *s_out, struct ged_selection_s
 	if (BU_PTBL_LEN(solid_paths)) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(solid_paths); i++) {
 		struct db_full_path *sfp = (struct db_full_path *)BU_PTBL_GET(solid_paths, i);
-		ged_selection_insert_fp(s_out, sfp);
+		char *s_path = db_path_to_string(sfp);
+		_selection_get(s_out, s_path);
 	    }
 	    // Expanded - remove original
 	    _selection_put(s_out, bu_vls_cstr(&ss->path));
