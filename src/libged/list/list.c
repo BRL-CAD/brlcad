@@ -93,6 +93,12 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 		ged_exec(gedp, 3, (const char **)tmp_argv);
 	    }
 	} else if (strchr(argv[arg], '/')) {
+	   // Still need to check if the slash containing string is an object first...
+	    if ((dp = db_lookup(gedp->dbip, argv[arg], LOOKUP_QUIET)) != RT_DIR_NULL) {
+		_ged_do_list(gedp, dp, verbose);	/* very verbose */
+		continue;
+	    }
+
 	    struct db_tree_state ts;
 	    struct db_full_path path;
 
