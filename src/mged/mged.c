@@ -1520,9 +1520,9 @@ main(int argc, char *argv[])
 	/* Call cmdline instead of calling mged_cmd directly so that
 	 * access to Tcl/Tk is possible.
 	 */
-	ffor (argc -= 1, argv += 1; argc; --argc, ++argv) {
+	for (argc -= 1, argv += 1; argc; --argc, ++argv) {
 	    /* in order to process interactively, an old optional y/n argument
-	    * intended for f_opendb must be filtered out here to remove 
+	    * intended for f_opendb must be filtered out here to remove
 	    * garbage "unrecognized command" line prints
 	    */
 	    if (!BU_STR_EQUAL("y", argv[0]) && !BU_STR_EQUAL("Y", argv[0])
