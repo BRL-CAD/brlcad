@@ -41,13 +41,9 @@ for i in {1..30}; do
 		then
 		    echo "Converting ppsection$i/part_$j/g$k.ply:"
 		    echo
-		    #ply-g ppsection$i/part_$j/g$k.ply part_$i-$j-$k.g
-		    #mged part_$i-$j-$k.g mvall g$k.bot.r part_$i-$j-$k.r
-		    #mged part_$i-$j-$k.g mvall g$k.bot part_$i-$j-$k.bot
-		    rm -f tmp.obj
-		    assimp export ppsection$i/part_$j/g$k.ply tmp.obj
-		    obj-g tmp.obj part_$i-$j-$k.g
-		    mged part_$i-$j-$k.g mvall \*.s part_$i-$j-$k.s
+		    ply-g ppsection$i/part_$j/g$k.ply part_$i-$j-$k.g
+		    mged part_$i-$j-$k.g mvall g$k.bot.r part_$i-$j-$k.r
+		    mged part_$i-$j-$k.g mvall g$k.bot part_$i-$j-$k.bot
 		    mged part_$i-$j-$k.g r part_$i-$j-$k.r u part_$i-$j-$k.s
 		    mged powerplant.g dbconcat part_$i-$j-$k.g
 		    mged powerplant.g g part_$i-$j part_$i-$j-$k.r
