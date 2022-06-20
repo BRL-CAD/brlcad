@@ -217,7 +217,7 @@ ged_init(struct ged *gedp)
     gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     qray_init(gedp->ged_gdp);
 
-    gedp->ged_selection_sets = ged_selection_sets_create();
+    gedp->ged_selection_sets = ged_selection_sets_create(gedp);
 
 
     BU_GET(gedp->ged_log, struct bu_vls);

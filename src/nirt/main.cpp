@@ -273,17 +273,21 @@ decode_overlap(struct bu_vls *msg, size_t argc, const char **argv, void *set_var
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt overlap handle");
 
     if (BU_STR_EQUAL(argv[0], "resolve") || BU_STR_EQUAL(argv[0], "0")) {
-	if (oval)
+	if (oval) {
 	    (*oval) = OVLP_RESOLVE;
+	}
     } else if (BU_STR_EQUAL(argv[0], "rebuild_fastgen") || BU_STR_EQUAL(argv[0], "1")) {
-	if (oval)
+	if (oval) {
 	    (*oval) = OVLP_REBUILD_FASTGEN;
+	}
     } else if (BU_STR_EQUAL(argv[0], "rebuild_all") || BU_STR_EQUAL(argv[0], "2")) {
-	if (oval)
+	if (oval) {
 	    (*oval) = OVLP_REBUILD_ALL;
+	}
     } else if (BU_STR_EQUAL(argv[0], "retain") || BU_STR_EQUAL(argv[0], "3")) {
-	if (oval)
+	if (oval) {
 	    (*oval) = OVLP_RETAIN;
+	}
     } else {
 	bu_log("Illegal overlap_claims specification: '%s'\n", argv[0]);
 	return -1;
@@ -547,6 +551,7 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
     return nret;
 }
 
+
 int
 main(int argc, const char **argv)
 {
@@ -593,7 +598,7 @@ main(int argc, const char **argv)
     mat_t m;
     mat_t q;
     /* These bu_opt_desc_opts settings approximate the old struct nirt_state help formatting */
-    struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 11, 67, NULL, NULL, NULL, 1, NULL, NULL };
+    struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 15, 65, NULL, NULL, NULL, 1, NULL, NULL };
     struct bu_opt_desc d[19] = {BU_OPT_DESC_NULL};
 
     BU_OPT(d[0],  "?", "",     "",       NULL,             &print_help,     "print help and exit");
@@ -678,8 +683,18 @@ main(int argc, const char **argv)
      * and exit */
     if (print_help || argc < 2 || (silent_mode == SILENT_YES && verbose_mode)) {
 	char *help = bu_opt_describe(d, &dopts);
-	ret = (argc < 2) ? EXIT_FAILURE : EXIT_SUCCESS;
-	bu_vls_sprintf(&msg, "Usage: 'nirt [options] model.g objects...'\n\nNote: by default NIRT is using a new implementation which may have behavior changes.  During migration, old behavior can be enabled by adding the option \"--old\" as the first option to the nirt program.\n\nOptions:\n%s\n", help);
+	ret = (print_help) ? EXIT_SUCCESS : EXIT_FAILURE;
+        /* if nirt_debug exists, we assume we are being run from libged, so dont print
+         * output not relevant in embedded context
+         */ 
+        if (bu_vls_strlen(&nirt_debug) > 0) {
+            dopts.reject = "M"; // reject 'M' option when printing within libged
+            help = bu_opt_describe(d, &dopts);
+            bu_vls_sprintf(&msg, "Usage: nirt [options]...\n\nOptions:\n%s\n", help);   
+        } else {
+            help = bu_opt_describe(d, &dopts);
+            bu_vls_sprintf(&msg, "Usage: nirt [options] model.g objects...\n\nNote: by default NIRT is using a new implementation which may have behavior changes.  During migration, old behavior can be enabled by adding the option \"--old\" as the first option to the nirt program.\n\nOptions:\n%s\n", help);
+        }
 	nirt_out(&io_data, bu_vls_addr(&msg));
 	if (help)
 	    bu_free(help, "help str");
@@ -712,25 +727,23 @@ main(int argc, const char **argv)
 	}
 	nirt_msg(&io_data, " (specify -L option for descriptive listing)\n");
 
-	{
-	    fmtcnt = list_formats(&io_data, &names);
-	    if (fmtcnt > 0) {
-		i = 0;
-		nirt_msg(&io_data, "Formats available:");
-		do {
-		    /* trim off any filename suffix */
-		    dot = strchr(names[i], '.');
-		    if (dot)
-			*dot = '\0';
+	fmtcnt = list_formats(&io_data, &names);
+	if (fmtcnt > 0) {
+	    i = 0;
+	    nirt_msg(&io_data, "Formats available:");
+	    do {
+		/* trim off any filename suffix */
+		dot = strchr(names[i], '.');
+		if (dot)
+		    *dot = '\0';
 
-		    nirt_msg(&io_data, " ");
-		    nirt_msg(&io_data, names[i]);
-		} while (++i < fmtcnt);
+		nirt_msg(&io_data, " ");
+		nirt_msg(&io_data, names[i]);
+	    } while (++i < fmtcnt);
 
-		nirt_msg(&io_data, " (specify via -f option)\n");
-	    }
-	    bu_argv_free(fmtcnt, names);
+	    nirt_msg(&io_data, " (specify via -f option)\n");
 	}
+	bu_argv_free(fmtcnt, names);
     }
 
     /* OK, from here on out we are actually going to be working with NIRT
@@ -828,8 +841,11 @@ main(int argc, const char **argv)
     }
 
     if (bu_vls_strlen(&nirt_debug) > 0) {
-	bu_vls_sprintf(&ncmd, "debug -V ANALYZE %s", bu_vls_cstr(&nirt_debug));
-	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
+	// when we're explicitly calling within libged, ignore
+        if (!BU_STR_EQUAL(bu_vls_cstr(&nirt_debug), "ged")) {
+	    bu_vls_sprintf(&ncmd, "debug -V ANALYZE %s", bu_vls_cstr(&nirt_debug));
+	    (void)nirt_exec(ns, bu_vls_addr(&ncmd));
+	}
     }
 
     /* Initialize the attribute list before we do the drawing, since
@@ -877,8 +893,9 @@ main(int argc, const char **argv)
     /* If we ended up with scripts to run before interacting, run them */
     if (init_scripts.size() > 0) {
 	for (i = 0; i < init_scripts.size(); i++) {
-	    if (nirt_exec(ns, init_scripts.at(i).c_str()) == 1)
+	    if (nirt_exec(ns, init_scripts.at(i).c_str()) == 1) {
 		goto done;
+	    }
 	}
 	init_scripts.clear();
     }

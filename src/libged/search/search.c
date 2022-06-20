@@ -313,7 +313,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     int plan_found = 0;
     int path_found = 0;
     int all_local = 1;
-    int print_verbose_info = 0;
+    int print_verbose_info = DB_FP_PRINT_COMB_INDEX;
     struct bu_vls prefix = BU_VLS_INIT_ZERO;
     struct bu_vls bname = BU_VLS_INIT_ZERO;
     struct bu_vls search_string = BU_VLS_INIT_ZERO;
@@ -353,7 +353,6 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	    case 'v':
 		print_verbose_info |= DB_FP_PRINT_BOOL;
 		print_verbose_info |= DB_FP_PRINT_TYPE;
-		print_verbose_info |= DB_FP_PRINT_COMB_INDEX;
 		break;
 
 	    case 'Q':

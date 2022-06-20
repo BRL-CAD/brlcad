@@ -124,9 +124,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * heap unit test needs to actually compare performance against system
   allocation, not just do some work
 
-* mged> nirt -? needs to provide help
-
-* mged> nirt -f fmt doesn't seem to work at all
+* mged> nirt -f fmt needs output cleanup. When run with -f csv there are 
+  unexpected warnings and duplicate line prints
 
 * move the rt_*_timer timing facilities to libbu and rework to allow
   contexts, allowing for more than one timer to be active.  Make sure

@@ -1,7 +1,7 @@
 /*                           S A T . C
  * BRL-CAD
  *
- * Based on implementations in GeometircTools:
+ * Based on implementations in GeometricTools:
  *
  * https://github.com/davideberly/GeometricTools
  *
