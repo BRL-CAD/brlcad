@@ -42,20 +42,20 @@ typedef struct t_ply_argument_ *p_ply_argument;
 
 /* ply format mode type */
 typedef enum e_ply_storage_mode_ {
-    PLY_INVALID_STORAGE,
     PLY_BIG_ENDIAN,
     PLY_LITTLE_ENDIAN,
     PLY_ASCII,
+    PLY_INVALID_STORAGE,
     PLY_DEFAULT      /* has to be the last in enum */
 } e_ply_storage_mode; /* order matches ply_storage_mode_list */
 
 /* ply data type */
 typedef enum e_ply_type {
-    PLY_INVALID_TYPE,
     PLY_INT8, PLY_UINT8, PLY_INT16, PLY_UINT16,
     PLY_INT32, PLY_UIN32, PLY_FLOAT32, PLY_FLOAT64,
     PLY_CHAR, PLY_UCHAR, PLY_SHORT, PLY_USHORT,
-    PLY_INT, PLY_UINT, PLY_FLOAT, PLY_DOUBLE,
+    PLY_INT, PLY_UINT, PLY_FLOAT, PLY_DOUBLE, 
+    PLY_INVALID_TYPE,   /* has to be after all types to match i/odriver index order */
     PLY_LIST    /* has to be the last in enum */
 } e_ply_type;   /* order matches ply_type_list */
 

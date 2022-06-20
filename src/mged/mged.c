@@ -1371,6 +1371,9 @@ main(int argc, char *argv[])
 
 	    /* Command line may have more than 2 args, opendb only wants 2
 	     * expecting second to be the file name.
+	     * NOTE: this way makes it so f_opendb does not care about y/n
+	     * and always create a new db if one does not exist since we want
+	     * to allow mged to process args after the db as a command
 	     */
 	    if (f_opendb((ClientData)NULL, INTERP, 2, av) == TCL_ERROR) {
 		if (!run_in_foreground && use_pipe) {
@@ -1517,8 +1520,16 @@ main(int argc, char *argv[])
 	/* Call cmdline instead of calling mged_cmd directly so that
 	 * access to Tcl/Tk is possible.
 	 */
-	for (argc -= 1, argv += 1; argc; --argc, ++argv)
+	ffor (argc -= 1, argv += 1; argc; --argc, ++argv) {
+	    /* in order to process interactively, an old optional y/n argument
+	    * intended for f_opendb must be filtered out here to remove 
+	    * garbage "unrecognized command" line prints
+	    */
+	    if (!BU_STR_EQUAL("y", argv[0]) && !BU_STR_EQUAL("Y", argv[0])
+	     && !BU_STR_EQUAL("n", argv[0]) && !BU_STR_EQUAL("N", argv[0])) {
 	    bu_vls_printf(&input_str, "%s ", *argv);
+	    }
+	}
 
 	cmdline(&input_str, TRUE);
 	bu_vls_free(&input_str);
