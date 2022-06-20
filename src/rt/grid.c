@@ -69,8 +69,8 @@ fastf_t gift_grid_rounding = 0;      /* set to 25.4 for inches */
 void
 grid_sync_dimensions(double vsize)
 {
-    BU_ASSERT(!ZERO(width) || cell_width);
-    BU_ASSERT(!ZERO(height) || cell_height);
+    BU_ASSERT(!ZERO(width) || !ZERO(cell_width));
+    BU_ASSERT(!ZERO(height) || !ZERO(cell_height));
 
     if (vsize <= 0.0)
 	return;
