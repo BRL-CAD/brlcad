@@ -108,16 +108,15 @@ typedef enum e_ply_io_mode_ {
 } e_ply_io_mode;
 
 static const char *const ply_storage_mode_list[] = {
-    "binary_big_endian", "binary_little_endian", "ascii", NULL
+    "binary_big_endian", "binary_little_endian", "ascii", "invalid", NULL
 };     /* order matches e_ply_storage_mode enum */
 
 static const char *const ply_type_list[] = {
-    "invalid",
     "int8", "uint8", "int16", "uint16",
     "int32", "uint32", "float32", "float64",
     "char", "uchar", "short", "ushort",
     "int", "uint", "float", "double",
-    "list", NULL
+    "invalid", "list", NULL
 };     /* order matches e_ply_type enum */
 
 /* ----------------------------------------------------------------------
@@ -1590,15 +1589,15 @@ static int ply_read_header_property(p_ply ply) {
     /* get property type */
     if (!ply_read_word(ply)) return 0;
     property->type = ply_find_type_string(BWORD(ply));
-    if (property->type == (e_ply_type) (-1)) return 0;
+    if (property->type == PLY_INVALID_TYPE) return 0;
     if (property->type == PLY_LIST) {
         /* if it's a list, we need the base types */
         if (!ply_read_word(ply)) return 0;
         property->length_type = ply_find_type_string(BWORD(ply));
-        if (property->length_type == (e_ply_type) (-1)) return 0;
+        if (property->length_type == PLY_INVALID_TYPE) return 0;
         if (!ply_read_word(ply)) return 0;
         property->value_type = ply_find_type_string(BWORD(ply));
-        if (property->value_type == (e_ply_type) (-1)) return 0;
+        if (property->value_type == PLY_INVALID_TYPE) return 0;
     }
     /* get property name */
     if (!ply_read_word(ply)) return 0;
