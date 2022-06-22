@@ -269,6 +269,8 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     // Once we have a valid key, proceed to create the necessary
     // data structures and objects.
     struct bv_mesh_lod *lod = bg_mesh_lod_create(d->mesh_c, key);
+    if (!lod)
+	return;
     struct bv_scene_obj *vo = bv_obj_get_child(s);
     bv_set_view_obj(s, v, vo);
 
