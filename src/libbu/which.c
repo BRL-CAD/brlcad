@@ -99,7 +99,7 @@ which_path(const char *cmd, const char *path, char *result)
 	if (bu_file_exists(test_result, NULL)) {
 	    if (test_result[0] == '\0')
 		continue;
-	    bu_free(initial_path, "strdup(path)");
+	    bu_free(initial_path, "bu_strdup(path)");
 	    bu_strlcpy(result, test_result, MAXPATHLEN);
 	    return result;
 	}
