@@ -2753,7 +2753,7 @@ proc mged_handle_configure { id } {
 proc mged_draw_grid {id} {
     global mged_gui
 
-    winset $mged_gui($id,active_dm)
+    catch { winset $mged_gui($id,active_dm) } msg
     mged_apply $id "rset grid draw $mged_gui($id,grid_draw)"
 
     # Reconcile the Tcl grid_draw with the internal grid_draw.

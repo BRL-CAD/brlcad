@@ -25,6 +25,10 @@
 proc mged_apply { id cmd } {
     global mged_gui
 
+    if {![info exists mged_gui($id,apply_to)]} {
+	set mged_gui($id,apply_to) 0
+    }
+
     if {$mged_gui($id,apply_to) == 1} {
 	mged_apply_local $id $cmd
     } elseif {$mged_gui($id,apply_to) == 2} {
@@ -39,8 +43,8 @@ proc mged_apply { id cmd } {
 proc mged_apply_active { id cmd } {
     global mged_gui
 
-    winset $mged_gui($id,active_dm)
-    catch { uplevel \#0 $cmd } msg
+    catch {winset $mged_gui($id,active_dm)} msg
+    catch {uplevel \#0 $cmd} msg
 
     return $msg
 }

@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2022-XX-XX  Release 7.34.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed mged -c unknown variable windows on keypresses- Sean Morrison
 * improved mged & archer html command help formatting - Sean Morrison
 * fixed archer empty string ("") loading behavior - Cliff Yapp
 * rt* tools' -P option accepts negative #core counts - Sean Morrison
