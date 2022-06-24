@@ -282,7 +282,7 @@ init_defaults(void)
     option("Raytrace", "-P #", "Specify number of processors to use (default: all available)", 100);
     option("Raytrace", "-T # or -T #/#", "Tolerance as distance or distance/angular", 100);
 
-    option("Advanced", "-c \"command\"", "[eventually will] Run a semicolon-separated list of commands (just samples for now)", 0);
+    option("Advanced", "-c \"command\"", "Run a semicolon-separated list of rt commands", 0);
     option("Advanced", "-M", "Read matrix + commands on stdin (RT 'saveview' scripts)", 100);
     option("Advanced", "-D #", "Specify starting frame number (ending is specified via -K #)", 100);
     option("Advanced", "-K #", "Specify ending frame number (starting is specified via -D #)", 100);
