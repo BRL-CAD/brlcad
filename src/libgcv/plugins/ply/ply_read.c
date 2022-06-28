@@ -46,9 +46,9 @@ struct conversion_state
     const struct gcv_opts *gcv_options;
     const struct ply_read_options *ply_read_options;
 
-    const char *input_file;	            /* name of the input file */
-    FILE *fd_in;		                /* input file */
-    struct rt_wdb *fd_out;	            /* Resulting BRL-CAD file */
+    const char *input_file;	        /* name of the input file */
+    FILE *fd_in;		        /* input file */
+    struct rt_wdb *fd_out;	        /* Resulting BRL-CAD file */
 
     struct rt_bot_internal* bot;        /* converted bot */    
     struct wmember wm;                  /* handle for in-memory combinations */
@@ -235,8 +235,8 @@ convert_input(struct conversion_state* pstate)
 
     ply_close(ply_fp);
 
-    // convert to .g
-    /* generate object name by striping input file of slashes and .ply */
+    /* convert to .g
+     * generate object name by striping input file of slashes and .ply */
     periodpos = strrchr(striped_input, '.');
     slashpos = strrchr(striped_input, '/');
     if (slashpos) striped_input = slashpos + 1;
@@ -305,19 +305,14 @@ free_mem:
 HIDDEN int
 ply_can_read(const char* data)
 {
+    // TODO - currently the 'can_read' is not being used by gcv
     if (!data) return 0;
-    
-    // returns 1 if CAN be processed
     return 1;
 }
 
 HIDDEN void
 ply_read_create_opts(struct bu_opt_desc** options_desc, void** dest_options_data)
 {
-    /* NOTE: all these options are not unique to ply from default gcv_opts
-     * but are created in this table incase a user expecting them from ply-g
-     * explicitly sets them
-     */
     struct ply_read_options *options_data;
 
     BU_ALLOC(options_data, struct ply_read_options);

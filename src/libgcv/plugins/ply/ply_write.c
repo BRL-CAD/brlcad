@@ -37,10 +37,10 @@
 
 struct ply_write_options
 {
-    double rel;                                 /* relative tessolation tolerance */
-    double abs;                                 /* absolute tessolation tolerance */
-    double norm;                                /* surface normal tessolation tolerance */
-    double dist;                                /* distance calculation tolerance */
+    double rel;                                /* relative tessolation tolerance */
+    double abs;                                /* absolute tessolation tolerance */
+    double norm;                               /* surface normal tessolation tolerance */
+    double dist;                               /* distance calculation tolerance */
     char* o_file;                              /* output file name */
     char* type;                                /* storage type */
     int separate;                              /* flag to not merge all objects into one ply file */
@@ -373,7 +373,6 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 
 	/* Write the facetized region to the output file */
 	nmg_to_ply(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp, pstate);
-
     } else {
 	/* catch */
 
@@ -410,7 +409,6 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
-
     } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);
@@ -600,7 +598,6 @@ ply_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_dat
     BU_OPT((*options_desc)[7],  "v", "verbose",       "",      NULL,           &options_data->verbose,   "specify a flag for verbose output");
     BU_OPT((*options_desc)[8],  "x", "rt_dubug",      "str",   bu_opt_str,     &options_data->o_file,    "specify debug script for rt_debug");
     BU_OPT((*options_desc)[9],  "X", "nmg_debug",     "str",   bu_opt_str,     &options_data->o_file,    "specify debug script for nmg_debug");
-//     BU_OPT((*options_desc)[10], NULL, "objects",     "",   bu_opt_str,     &options_data->o_file,    "specify debug script for nmg_debug");
     BU_OPT_NULL((*options_desc)[10]);
 }
 
@@ -628,7 +625,7 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
     state.color_info = 0;
 
     tree_state = rt_initial_tree_state; /* struct copy */
-    struct bn_tol tol = state.gcv_options->calculational_tolerance;     // init tol with gcv_options defaults
+    struct bn_tol tol = state.gcv_options->calculational_tolerance;             // init tol with gcv_options defaults
     struct bg_tess_tol ttol = state.gcv_options->tessellation_tolerance;        // init ttol with gcv_options defaults
     tree_state.ts_tol = &tol;   // point tree_state at modifable tol
     tree_state.ts_ttol = &ttol; // point tree_state at modifable ttol
