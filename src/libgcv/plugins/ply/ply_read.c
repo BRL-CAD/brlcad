@@ -34,9 +34,9 @@
 #include "wdb.h"
 #include "rply.h"
 
+double scale_factor;                    // without refactor to callbacks theres no easy way to avoid this global
 struct ply_read_options
 {
-    fastf_t scale_factor;        
     int verbose;                        /* verbose output flag */
     int debug;                          /* debug output flag */
 };
@@ -91,10 +91,6 @@ log_elements(p_ply ply_fp)
 HIDDEN int
 vertex_cb(p_ply_argument argument)
 {
-    // TODO FIXME: this is a global in ply-g
-    // either recreate it, or (better) incorporate it into function
-    double scale_factor = 1000.0;
-
     static int cur_vertex = -1;
     long vert_index;
     struct rt_bot_internal bot;
@@ -211,7 +207,7 @@ convert_input(struct conversion_state* pstate)
         goto free_mem;
     }
 
-    if (pstate->ply_read_options->verbose) {
+    if (pstate->ply_read_options->verbose || pstate->gcv_options->verbosity_level) {
         log_elements(ply_fp);
     }
 
@@ -256,7 +252,7 @@ convert_input(struct conversion_state* pstate)
 	goto free_bot;
     }
 
-    if (pstate->ply_read_options->verbose) {
+    if (pstate->ply_read_options->verbose || pstate->gcv_options->verbosity_level) {
 	bu_log("Wrote BOT %s\n", bu_vls_addr(&bot_name));
     }
 
@@ -266,22 +262,20 @@ convert_input(struct conversion_state* pstate)
     }
 
     if (irgb[0] < 0 || irgb[0] > 255) {
-        if (pstate->ply_read_options->verbose) {
+        if (pstate->ply_read_options->verbose || pstate->gcv_options->verbosity_level) {
             bu_log("No color information specified\n");
         }
         if (mk_comb(pstate->fd_out, bu_vls_addr(&region_name), &pstate->wm.l, 1, NULL, NULL, NULL, 1000, 0, 1, 100, 0, 0, 0)) {
             bu_log("ERROR: Failed to write region(%s) to database\n", bu_vls_addr(&region_name));
             goto free_bot;
         }
-    } 
-//     else if (irgb[3]) {
-//         bu_log("All triangles are not the same color. No color information written!\n");
-//         if (mk_comb(pstate->fd_out, bu_vls_addr(&region_name), &pstate->wm.l, 1, NULL, NULL, NULL, 1000, 0, 1, 100, 0, 0, 0)) {
-//             bu_log("ERROR: Failed to write region(%s) to database\n", bu_vls_addr(&region_name));
-//             goto free_bot;
-//         }
-//     } 
-    else {
+    } else if (irgb[3]) {
+        bu_log("All triangles are not the same color. No color information written!\n");
+        if (mk_comb(pstate->fd_out, bu_vls_addr(&region_name), &pstate->wm.l, 1, NULL, NULL, NULL, 1000, 0, 1, 100, 0, 0, 0)) {
+            bu_log("ERROR: Failed to write region(%s) to database\n", bu_vls_addr(&region_name));
+            goto free_bot;
+        }
+    } else {
         for (int i = 0; i < 3; i++) {
             rgb[i] = (unsigned char) irgb[i];
         }
@@ -320,19 +314,23 @@ ply_can_read(const char* data)
 HIDDEN void
 ply_read_create_opts(struct bu_opt_desc** options_desc, void** dest_options_data)
 {
+    /* NOTE: all these options are not unique to ply from default gcv_opts
+     * but are created in this table incase a user expecting them from ply-g
+     * explicitly sets them
+     */
     struct ply_read_options *options_data;
 
     BU_ALLOC(options_data, struct ply_read_options);
     *dest_options_data = options_data;
     *options_desc = (struct bu_opt_desc *)bu_malloc(4 * sizeof(struct bu_opt_desc), "options_desc");
 
-    options_data->scale_factor = 1000.0;        /* default units are meters */
+    scale_factor = 1000.0;                      /* default units are meters */
     options_data->verbose = 0;                  /* default flag = off */
     options_data->debug = 0;                    /* default flag = off */
 
-    BU_OPT((*options_desc)[0], "s", "scale_factor", "number", NULL, &options_data->scale_factor, "specify the scale factor");
-    BU_OPT((*options_desc)[1], "v", "verbose",      "",       NULL, &options_data->verbose,      "specify to run with verbose output");
-    BU_OPT((*options_desc)[2], "d", "debug",        "",       NULL, &options_data->debug,        "specify specify to run with debug output");
+    BU_OPT((*options_desc)[0], "s", "scale_factor", "float", bu_opt_fastf_t, &scale_factor, "specify the scale factor");
+    BU_OPT((*options_desc)[1], "v", "verbose",      "",      NULL,           &options_data->verbose,      "specify to run with verbose output");
+    BU_OPT((*options_desc)[2], "d", "debug",        "",      NULL,           &options_data->debug,        "specify specify to run with debug output");
     BU_OPT_NULL((*options_desc)[3]);
 }
 
@@ -351,6 +349,7 @@ ply_read_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, co
     state.ply_read_options = (struct ply_read_options*)options_data;
     state.input_file = source_path;
     state.fd_out = context->dbip->dbi_wdbp;
+    scale_factor = gcv_options->scale_factor;
 
     if ((state.fd_in = fopen(source_path, "rb")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", source_path);
@@ -358,7 +357,7 @@ ply_read_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, co
 	bu_exit(1, NULL);
     }
 
-    mk_id_units(state.fd_out, "Conversion from Stereolithography format", "mm");
+    mk_id_units(state.fd_out, "Conversion from PLY format", "mm");
 
     /* initialize necessary components */
     BU_LIST_INIT(&state.wm.l);
@@ -378,8 +377,8 @@ ply_read_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, co
 
 /* filter setup */
 static const struct gcv_filter gcv_conv_ply_read = {
-"PLY Reader", GCV_FILTER_READ, BU_MIME_MODEL_PLY, ply_can_read,
-ply_read_create_opts, ply_read_free_opts, ply_read_gcv
+    "PLY Reader", GCV_FILTER_READ, BU_MIME_MODEL_PLY, ply_can_read,
+    ply_read_create_opts, ply_read_free_opts, ply_read_gcv
 };
 
 extern const struct gcv_filter gcv_conv_ply_write;
