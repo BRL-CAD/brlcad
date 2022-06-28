@@ -269,8 +269,40 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     // Once we have a valid key, proceed to create the necessary
     // data structures and objects.
     struct bv_mesh_lod *lod = bg_mesh_lod_create(d->mesh_c, key);
-    if (!lod)
-	return;
+    if (!lod) {
+	// Stale key?  Clear it and try a regeneration
+	unsigned long long old_key = key;
+	bg_mesh_lod_clear_cache(d->mesh_c, key);
+
+	// Load mesh and process
+	struct rt_db_internal dbintern;
+	RT_DB_INTERNAL_INIT(&dbintern);
+	struct rt_db_internal *ip = &dbintern;
+	int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
+	if (ret < 0)
+	    return;
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+	RT_BOT_CK_MAGIC(bot);
+	key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+	bg_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
+	rt_db_free_internal(&dbintern);
+
+	// Sanity
+	if (old_key == key) {
+	    bu_log("%s: LoD lookup by key failed, but regeneration generated the same key (?)\n", dp->d_namep);
+	    return;
+	}
+	unsigned long long new_key = bg_mesh_lod_key_get(d->mesh_c, dp->d_namep);
+	if (new_key == old_key) {
+	    bu_log("%s: LoD regenerated with new key, but key lookup still returns old key (?)\n", dp->d_namep);
+	    return;
+	}
+
+	// If after all that we STILL don't get an LoD struct, give up
+	lod = bg_mesh_lod_create(d->mesh_c, key);
+	if (!lod)
+	    return;
+    }
     struct bv_scene_obj *vo = bv_obj_get_child(s);
     bv_set_view_obj(s, v, vo);
 
