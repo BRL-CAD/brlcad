@@ -32,25 +32,67 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---------------------------------------------------------------------------
 */
-#include "UnitTestPCH.h"
-#include <assimp/importerdesc.h>
 
-using namespace Assimp;
+#include "common.h"
 
-class AssimpAPITest : public ::testing::Test {
-    // empty
+#include <string>
+
+#include "gcv/api.h"
+#include "wdb.h"
+
+// assimp headers
+
+
+struct assimp_read_options
+{
 };
 
-TEST_F( AssimpAPITest, aiGetImporterDescTest ) {
-    const aiImporterDesc *desc( nullptr );
-    desc = aiGetImporterDesc(nullptr);
-    EXPECT_EQ(nullptr, desc);
+struct conversion_state
+{
+	const struct gcv_opts* gcv_options;
+	struct assimp_read_options* assimp_read_options;
 
-    desc = aiGetImporterDesc( "obj" );
-    EXPECT_TRUE(nullptr != desc);
+	std::string input_file;	                        /* name of the input file */
+	FILE* fd_in;		                        /* input file */
+	struct rt_wdb* fd_out;	                        /* Resulting BRL-CAD file */
+};
+#define CONVERSION_STATE_NULL { NULL, NULL, "", NULL, NULL }
+
+HIDDEN int
+assimp_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *source_path)
+{
+    struct conversion_state state = CONVERSION_STATE_NULL;
+    state.input_file = source_path;
+    state.fd_out = context->dbip->dbi_wdbp;
+
+    bu_log("Assimp reader\n");
+    
+    return 0;
 }
 
-TEST_F( AssimpAPITest, aiGetLastErrorTest ) {
-    const char *error = aiGetErrorString();
-    EXPECT_NE(nullptr, error);
+
+HIDDEN int
+assimp_can_read(const char* data)
+{
+    /* FIXME - currently 'can_read' is unused by gcv */
+    if (!data)
+        return 0;
+
+    return 1;
+}
+
+extern "C"
+{
+    static const struct gcv_filter gcv_conv_assimp_read = {
+        "Assimp Reader", GCV_FILTER_READ, BU_MIME_MODEL_ASSIMP, assimp_can_read,
+        NULL, NULL, assimp_read
+    };
+
+    static const struct gcv_filter * const filters[] = { &gcv_conv_assimp_read, NULL, NULL };
+
+    const struct gcv_plugin gcv_plugin_info_s = { filters };
+
+    COMPILER_DLLEXPORT const struct gcv_plugin *
+    gcv_plugin_info() { return &gcv_plugin_info_s; }
+
 }
