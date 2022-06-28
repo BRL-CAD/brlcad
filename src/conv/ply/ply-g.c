@@ -20,333 +20,96 @@
  */
 /** @file conv/ply/ply-g.c
  *
- * Program to convert the PLY format to the BRL-CAD format.
+ * Program to convert the PLY format to the BRL-CAD format using GCV execution
  *
  */
 
 #include "common.h"
 
-/* system headers */
 #include <stdlib.h>
-#include <math.h>
-#include <string.h>
-#include <ctype.h>
-#include "bio.h"
 
-/* interface headers */
-#include "vmath.h"
 #include "bu/app.h"
-#include "bu/debug.h"
 #include "bu/getopt.h"
-#include "bu/endian.h"
-#include "bn.h"
-#include "raytrace.h"
-#include "wdb.h"
-#include "rply.h"
+#include "gcv/api.h"
 
-
-static struct rt_wdb *out_fp=NULL;
-static char *ply_file;
-static char *brlcad_file;
-static fastf_t scale_factor=1000.0;	/* default units are meters */
-static int verbose=0;
-
-static char *usage="Usage:\n\tply-g [-s scale_factor] [-d] [-v] input_file.ply output_file.g";
-
-static int cur_vertex=-1;
-static int cur_face=-1;
-
-static void
-log_elements(p_ply ply_fp)
-{
-    p_ply_property prop;
-    const char *elem_name = NULL;
-    const char *prop_name = NULL;
-    long ninstances;
-    p_ply_element elem = NULL;
-
-    while ((elem = ply_get_next_element(ply_fp, elem))) {
-	prop = NULL;
-	ninstances = 0;
-	if (!ply_get_element_info(elem, &elem_name, &ninstances)) {
-	    bu_log("Could not get info of this element\n");
-	    continue;
-	}
-	bu_log("There are %ld instances of the %s element:\n", ninstances, elem_name);
-
-	/* iterate over all properties of current element */
-	while ((prop = ply_get_next_property(elem, prop))) {
-	    if (!ply_get_property_info(prop, &prop_name, NULL, NULL, NULL)) {
-		bu_log("\t\tCould not get info of this element's property\n");
-		continue;
-
-	    }
-	    bu_log("\t%s is a property\n", prop_name);
-	}
-    }
-}
-
-static int
-vertex_cb(p_ply_argument argument)
-{
-    long vert_index;
-    struct rt_bot_internal bot;
-    struct rt_bot_internal *pbot = &bot;
-    double botval = ply_get_argument_value(argument);
-    if (!ply_get_argument_user_data(argument, (void **)&pbot, &vert_index)) {
-	bu_bomb("Unable to import BOT");
-    }
-    if (vert_index == 0) {
-	cur_vertex++;
-	pbot->vertices[cur_vertex*3] = botval * (double) scale_factor;
-    } else if (vert_index == 1) {
-	pbot->vertices[cur_vertex*3+1] = botval * (double) scale_factor;
-    } else if (vert_index == 2) {
-	pbot->vertices[cur_vertex*3+2] = botval * (double) scale_factor;
-    }
-    return 1;
-}
-
-static int
-color_cb(p_ply_argument argument)
-{
-    int *rgb;
-    int (*prgb)[4] = NULL;
-    long vert_index;
-    double botval = ply_get_argument_value(argument);
-    if (!ply_get_argument_user_data(argument, (void **)&prgb, &vert_index)) {
-	bu_bomb("Unable to import BOT");
-    }
-    rgb = *prgb;
-    if (botval < 0) {
-	bu_log("ignoring invalid color\n");
-	return 1;
-    }
-    if (rgb[vert_index] < 0) {
-	rgb[vert_index] = botval;
-    }
-    else if (rgb[vert_index] != (int) botval) {
-	rgb[3] = 1;
-    }
-    return 1;
-}
-
-static int
-face_cb(p_ply_argument argument)
-{
-    long list_len, vert_index;
-    struct rt_bot_internal bot;
-    struct rt_bot_internal *pbot = &bot;
-    int botval;
-    if (!ply_get_argument_property(argument, NULL, &list_len, &vert_index)) {
-	bu_bomb("Unable to import face lists");
-    }
-    if (list_len < 3 || list_len > 4) {
-	bu_log("ignoring face with %ld vertices\n", list_len);
-	return 1;
-    }
-    ply_get_argument_user_data(argument, (void **)&pbot, NULL);
-    botval = ply_get_argument_value(argument);
-
-    switch (vert_index) {
-	case 0:
-	    cur_face++;
-	    pbot->faces[cur_face*3] = botval;
-	    break;
-	case 1:
-	    pbot->faces[cur_face*3+1] = botval;
-	    break;
-	case 2:
-	    pbot->faces[cur_face*3+2] = botval;
-	    break;
-	case 3:
-	    /* need to break this into two BOT faces */
-	    pbot->num_faces++;
-	    pbot->faces = (int *)bu_realloc(pbot->faces, pbot->num_faces * 3 * sizeof(int), "bot_faces");
-	    pbot->faces[cur_face*3+3] = botval;
-	    pbot->faces[cur_face*3+4] = pbot->faces[cur_face*3];
-	    pbot->faces[cur_face*3+5] = pbot->faces[cur_face*3+2];
-	    cur_face++;
-	    break;
-	default:
-	    /* will never execute because lists of length > 4 are not allowed */
-	    break;
-    }
-    return 1;
-}
+static char* usage="Usage:\n\tply-g [-s scale_factor] [-d] [-v] input_file.ply output_file.g";
 
 int
 main(int argc, char *argv[])
 {
-    struct rt_bot_internal *bot = NULL;
-    int c, i;
-    long nvertices, nfaces;
-    struct bu_list head;
-    struct wmember *wmp = NULL;
-    p_ply ply_fp;
-    char *periodpos = NULL;
-    char *slashpos = NULL;
-    struct bu_vls bot_name = BU_VLS_INIT_ZERO;
-    struct bu_vls region_name = BU_VLS_INIT_ZERO;
-    unsigned char rgb[3];
-    int irgb[4] = {-1, -1, -1, 0};
-    bu_setprogname(argv[0]);
+    const struct gcv_filter *in_filter;
+    const struct gcv_filter *out_filter;
+    struct gcv_context context;
+    struct gcv_opts gcv_options;
+    const char *output_path = NULL;
+    const char *input_path;
+    int c;
+    char* scale_factor = "1000.0";      // scale factor gets passed as a string, no sense converting
 
-    /* get command line arguments */
-    while ((c = bu_getopt(argc, argv, "dvs:")) != -1) {
+    bu_setprogname(argv[0]);
+    gcv_opts_default(&gcv_options);
+
+    while ((c = bu_getopt(argc, argv, "s:dv")) != -1) {
 	switch (c) {
-	    case 's':   /* scale factor */
-		scale_factor = atof(bu_optarg);
-		if (scale_factor < SQRT_SMALL_FASTF) {
-		    bu_log("scale factor too small\n%s\n", usage);
-		    goto free_mem;
-		}
+	    case 's':
+		scale_factor = bu_optarg;
 		break;
-	    case 'd':	/* debug */
-		bu_debug = BU_DEBUG_COREDUMP;
+	    case 'd':
+		gcv_options.bu_debug_flag = 1;
 		break;
-	    case 'v':	/* verbose */
-		verbose = 1;
+	    case 'v':
+		gcv_options.verbosity_level = 1;
 		break;
 	    default:
-		bu_log("%s\n", usage );
-		break;
+		bu_log("%s\n", usage);
+		return 1;
 	}
     }
 
-    if (argc - bu_optind < 2) {
+    /* per usage, we should have only two argv left:
+     * input_file.ply output_file.g
+     */
+    if (bu_optind != argc - 2) {
 	bu_log("%s\n", usage);
-	goto free_mem;
+	return 1;
+    }
+    input_path = argv[bu_optind];
+    output_path = argv[bu_optind + 1];
+
+    /* since ply files are typically in meters, we want to pass in the scale factor
+     * to gcv_exec with argc and argv as "-s scale_factor"
+     */
+    const char* unique_options_av[2];
+    unique_options_av[0] = "-s";
+    unique_options_av[1] = scale_factor;
+
+    /* setup to call gcv */
+    gcv_context_init(&context);
+
+    /* ensure filters exist */
+    in_filter = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_PLY, input_path, &context);
+    out_filter = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, output_path, &context);
+
+    if (!out_filter || !in_filter) {
+	gcv_context_destroy(&context);
+        bu_log("ERROR: could not find the conversion filters\n");
+        return 1;
     }
 
-    ply_file = argv[bu_optind++];
-    brlcad_file = argv[bu_optind];
-
-
-    if ((out_fp = wdb_fopen(brlcad_file)) == NULL) {
-	bu_log("ERROR: Cannot open output file (%s)\n", brlcad_file);
-	goto free_mem;
-    }
-    /* malloc BOT storage */
-    BU_ALLOC(bot, struct rt_bot_internal);
-    bot->magic = RT_BOT_INTERNAL_MAGIC;
-    bot->mode = RT_BOT_SURFACE;
-    bot->orientation = RT_BOT_UNORIENTED;
-
-    /* using the RPly library */
-    ply_fp = ply_open(ply_file, NULL, 0, NULL);
-    if (!ply_fp) {
-	bu_log("ERROR: Cannot open PLY file (%s)\n", ply_file);
-	goto free_mem;
-    }
-    if (!ply_read_header(ply_fp)) {
-	bu_log("ERROR: File does not seem to be a PLY file\n");
-	goto free_mem;
+    /* do the conversion */
+    if (!gcv_execute(&context, in_filter, &gcv_options, 2, unique_options_av, input_path)) {
+	gcv_context_destroy(&context);
+	bu_exit(1, "failed to load input file");
     }
 
-    if (verbose) {
-	log_elements(ply_fp);
+    gcv_options.debug_mode = 0;
+
+    if (!gcv_execute(&context, out_filter, &gcv_options, 0, NULL, output_path)) {
+	gcv_context_destroy(&context);
+	bu_exit(1, "failed to export to output file");
     }
 
-
-    nvertices = ply_set_read_cb(ply_fp, "vertex", "x", vertex_cb, bot, 0);
-    ply_set_read_cb(ply_fp, "vertex", "y", vertex_cb, bot, 1);
-    ply_set_read_cb(ply_fp, "vertex", "z", vertex_cb, bot, 2);
-
-    ply_set_read_cb(ply_fp, "face", "red", color_cb, &irgb, 0);
-    ply_set_read_cb(ply_fp, "face", "green", color_cb, &irgb, 1);
-    ply_set_read_cb(ply_fp, "face", "blue", color_cb, &irgb, 2);
-    nfaces = ply_set_read_cb(ply_fp, "face", "vertex_indices", face_cb, bot, 0);
-
-    bot->num_vertices = nvertices;
-    bot->num_faces = nfaces;
-
-    if (bot->num_faces < 1 || bot->num_vertices < 1) {
-	bu_log("This PLY file appears to contain no geometry!\n");
-	goto free_bot;
-    }
-    bot->faces = (int *)bu_calloc(bot->num_faces * 3, sizeof(int), "bot faces");
-    bot->vertices = (fastf_t *)bu_calloc(bot->num_vertices * 3, sizeof(fastf_t), "bot vertices");
-
-    if (!ply_read(ply_fp)) {
-	bu_log("ERROR: Cannot read PLY file (%s)\n", ply_file);
-	goto free_bot;
-    }
-
-
-    ply_close(ply_fp);
-
-
-    /* generate object names */
-    periodpos = strrchr(ply_file, '.');
-    slashpos = strrchr(ply_file, '/');
-    if (slashpos) ply_file = slashpos + 1;
-
-    bu_vls_sprintf(&bot_name, "%s", ply_file);
-    if (periodpos)
-	bu_vls_trunc(&bot_name, -1 * strlen(periodpos));
-    bu_vls_printf(&bot_name, ".bot");
-    bu_vls_sprintf(&region_name, "%s.r", bu_vls_addr(&bot_name));
-
-    if (mk_bot(out_fp, bu_vls_addr(&bot_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, bot->num_vertices, bot->num_faces, bot->vertices, bot->faces, NULL, NULL)) {
-	bu_log("ERROR: Failed to write BOT(%s) to database\n", bu_vls_addr(&bot_name));
-	goto free_bot;
-    }
-
-    if (verbose) {
-	bu_log("Wrote BOT %s\n", bu_vls_addr(&bot_name));
-    }
-
-    BU_LIST_INIT(&head);
-    wmp = mk_addmember(bu_vls_addr(&bot_name), &head, NULL, WMOP_UNION);
-    if (wmp == WMEMBER_NULL) {
-	bu_log("ERROR: Failed to add %s to region\n", bu_vls_addr(&bot_name));
-	goto free_bot;
-    }
-
-    if (irgb[0] < 0 || irgb[0] > 255) {
-	if (verbose) {
-	    bu_log("No color information specified\n");
-	}
-	if (mk_comb(out_fp, bu_vls_addr(&region_name), &head, 1, NULL, NULL, NULL, 1000, 0, 1, 100, 0, 0, 0)) {
-	    bu_log("ERROR: Failed to write region(%s) to database\n", bu_vls_addr(&region_name));
-	    goto free_bot;
-	}
-    }
-    else if (irgb[3]) {
-	bu_log("All triangles are not the same color. No color information written!\n");
-	if (mk_comb(out_fp, bu_vls_addr(&region_name), &head, 1, NULL, NULL, NULL, 1000, 0, 1, 100, 0, 0, 0)) {
-	    bu_log("ERROR: Failed to write region(%s) to database\n", bu_vls_addr(&region_name));
-	    goto free_bot;
-	}
-    }
-    else {
-	for (i = 0; i < 3; i++) {
-	    rgb[i] = (unsigned char) irgb[i];
-	}
-	if (mk_comb(out_fp, bu_vls_addr(&region_name), &head, 1, NULL, NULL, rgb, 1000, 0, 1, 100, 0, 0, 0)) {
-	    bu_log("ERROR: Failed to write region(%s) to database\n", bu_vls_addr(&region_name));
-	    goto free_bot;
-	}
-    }
-
-    if (verbose) {
-	bu_log("Wrote region %s\n", bu_vls_addr(&region_name));
-    }
-
-free_bot:
-    if(bot->faces)
-	bu_free(bot->faces, "bot->faces");
-    if(bot->vertices)
-	bu_free(bot->vertices, "bot->vertices");
-free_mem:
-    if(bot)
-	bu_free(bot, "bot");
-    if(out_fp)
-	bu_free(out_fp, "out_fp");
-
-    bu_vls_free(&bot_name);
-    bu_vls_free(&region_name);
+    gcv_context_destroy(&context);
 
     return 0;
 }
