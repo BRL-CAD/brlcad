@@ -44,7 +44,6 @@ for i in {1..30}; do
 		    ply-g ppsection$i/part_$j/g$k.ply part_$i-$j-$k.g
 		    mged part_$i-$j-$k.g mvall g$k.bot.r part_$i-$j-$k.r
 		    mged part_$i-$j-$k.g mvall g$k.bot part_$i-$j-$k.bot
-		    mged part_$i-$j-$k.g r part_$i-$j-$k.r u part_$i-$j-$k.s
 		    mged powerplant.g dbconcat part_$i-$j-$k.g
 		    mged powerplant.g g part_$i-$j part_$i-$j-$k.r
 		    rm part_$i-$j-$k.g
