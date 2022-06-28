@@ -454,6 +454,20 @@ gcv_list_filters(struct gcv_context *context)
     return &filter_table;
 }
 
+const struct gcv_filter *
+ find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type, const char *data, struct gcv_context *context)
+ {
+     const struct gcv_filter * const *entry;
+     const struct bu_ptbl * const filters = gcv_list_filters(context);
+
+     for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
+ 	bu_mime_model_t emt = (*entry)->mime_type;
+ 	if ((*entry)->filter_type != filter_type) continue;
+ 	if ( (emt != BU_MIME_MODEL_AUTO) && (emt == mime_type)) return *entry;
+ 	if ( (emt == BU_MIME_MODEL_AUTO) && ((*entry)->data_supported && data && (*(*entry)->data_supported)(data)) ) return *entry;
+     }
+     return NULL;
+ }
 
 void
 gcv_opts_default(struct gcv_opts *gcv_options)
