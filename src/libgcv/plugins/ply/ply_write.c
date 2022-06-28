@@ -333,6 +333,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	}
 
         pstate->v_order = 0;    // reset index for next file
+        ply_close(ply_fp);      
     }
 
     pstate->tot_polygons += nfaces;

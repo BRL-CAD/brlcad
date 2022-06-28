@@ -285,7 +285,7 @@ convert_input(struct conversion_state* pstate)
         }
     }
 
-    if (pstate->ply_read_options->verbose) {
+    if (pstate->ply_read_options->verbose || pstate->gcv_options->verbosity_level) {
 	bu_log("Wrote region %s\n", bu_vls_addr(&region_name));
     }
 
