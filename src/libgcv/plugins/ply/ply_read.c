@@ -344,7 +344,6 @@ ply_read_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, co
     state.ply_read_options = (struct ply_read_options*)options_data;
     state.input_file = source_path;
     state.fd_out = context->dbip->dbi_wdbp;
-    scale_factor = gcv_options->scale_factor;
 
     if ((state.fd_in = fopen(source_path, "rb")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", source_path);

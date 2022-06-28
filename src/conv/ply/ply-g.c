@@ -1,4 +1,4 @@
-P L Y - G . C
+/*                         P L Y - G . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2022 United States Government as represented by
@@ -44,6 +44,7 @@ main(int argc, char *argv[])
     const char *output_path = NULL;
     const char *input_path;
     int c;
+    char* scale_factor = "1000.0";      // scale factor gets passed as a string, no sense converting
 
     bu_setprogname(argv[0]);
     gcv_opts_default(&gcv_options);
@@ -51,7 +52,7 @@ main(int argc, char *argv[])
     while ((c = bu_getopt(argc, argv, "s:dv")) != -1) {
 	switch (c) {
 	    case 's':
-		gcv_options.scale_factor = atof(bu_optarg);
+		scale_factor = bu_optarg;
 		break;
 	    case 'd':
 		gcv_options.bu_debug_flag = 1;
@@ -75,6 +76,13 @@ main(int argc, char *argv[])
     input_path = argv[bu_optind];
     output_path = argv[bu_optind + 1];
 
+    /* since ply files are typically in meters, we want to pass in the scale factor
+     * to gcv_exec with argc and argv as "-s scale_factor"
+     */
+    const char* unique_options_av[2];
+    unique_options_av[0] = "-s";
+    unique_options_av[1] = scale_factor;
+
     /* setup to call gcv */
     gcv_context_init(&context);
 
@@ -89,7 +97,7 @@ main(int argc, char *argv[])
     }
 
     /* do the conversion */
-    if (!gcv_execute(&context, in_filter, &gcv_options, 0, NULL, input_path)) {
+    if (!gcv_execute(&context, in_filter, &gcv_options, 2, unique_options_av, input_path)) {
 	gcv_context_destroy(&context);
 	bu_exit(1, "failed to load input file");
     }
