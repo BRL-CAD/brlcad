@@ -37,7 +37,7 @@ __BEGIN_DECLS
 struct ged_selection {
     struct ged *gedp;
     struct bu_vls path;
-    struct bv_scene_obj *so;
+    struct bu_ptbl sobjs; // struct bv_scene_obj pointers
     struct rt_object_selections *r_os;
 };
 
@@ -82,6 +82,7 @@ GED_EXPORT int ged_selection_set_collapse(struct ged_selection_set *s_out, struc
 
 // Given a set, associate the DBOBJ scene objects with any matching selection objects.
 GED_EXPORT void ged_selection_assign_objs(struct ged_selection_set *s);
+GED_EXPORT void ged_selection_toggle_illum(struct ged_selection_set *s, char ill_state);
 
 /**
  * Returns a list of items within the previously defined rectangle.
