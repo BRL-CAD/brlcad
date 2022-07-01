@@ -2593,7 +2593,8 @@ XXH64_update (XXH64_state_t* state, const void* input, size_t len)
             state->memsize = 0;
         }
 
-        if (p+32 <= bEnd) {
+        uintmax_t p32 = ((uintmax_t)p) + 32;
+        if (p32 <= (uintmax_t)bEnd) {
             const xxh_u8* const limit = bEnd - 32;
             xxh_u64 v1 = state->v1;
             xxh_u64 v2 = state->v2;
