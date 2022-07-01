@@ -48,13 +48,13 @@ fhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(seg
     struct curvature cur = RT_CURVATURE_INIT_ZERO;
 
     /* will contain our hit point coordinate */
-    point_t pt;
+    point_t pt = VINIT_ZERO;
 
     /* will contain normal vector where ray enters geometry */
-    vect_t inormal;
+    vect_t inormal = VINIT_ZERO;
 
     /* will contain normal vector where ray exits geometry */
-    vect_t onormal;
+    vect_t onormal = VINIT_ZERO;
 
     /* iterate over each partition until we get back to the head.
      * each partition corresponds to a specific homogeneous region of
