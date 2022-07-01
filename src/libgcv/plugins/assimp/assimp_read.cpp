@@ -327,6 +327,8 @@ assimp_read(struct gcv_context *context, const struct gcv_opts* gcv_options, con
         bu_exit(EXIT_FAILURE, "ERROR: The specified model file extension is currently unsupported in Assimp conversion.");
     }
 
+    mk_id_units(state.fd_out, "Conversion using Asset Importer Library (assimp)", "mm");
+
     convert_input(&state);
 
     bu_log("Converted ( %d / %d ) meshes ... %.2f%%\n", state.converted, state.scene->mNumMeshes, (float) (state.converted / state.scene->mNumMeshes * 100));
@@ -354,11 +356,11 @@ extern "C"
         assimp_read_create_opts, assimp_read_free_opts, assimp_read
     };
 
-    static const struct gcv_filter * const filters[] = { &gcv_conv_assimp_read, NULL, NULL };
+    extern const struct gcv_filter gcv_conv_assimp_write;
+    static const struct gcv_filter * const filters[] = { &gcv_conv_assimp_read, &gcv_conv_assimp_write, NULL };
 
     const struct gcv_plugin gcv_plugin_info_s = { filters };
 
     COMPILER_DLLEXPORT const struct gcv_plugin *
     gcv_plugin_info() { return &gcv_plugin_info_s; }
-
 }

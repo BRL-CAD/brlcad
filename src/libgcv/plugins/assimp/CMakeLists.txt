@@ -1,5 +1,6 @@
 set(ASSIMP_SRCS
   assimp_read.cpp
+  assimp_write.cpp
   )
 
 find_package(Assimp)
