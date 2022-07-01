@@ -19188,6 +19188,14 @@ EOF
     program performs such <emphasis>ray tracing</emphasis>.
   </para>
   <para>
+    Note:  For users working with sensitive information (proprietary,
+    copyrighted, classified, etc.) remember you will will need to apply
+    any appropriate notices and markings yourself as a post-processing step when
+    generating images.  BRL-CAD has no inherent awareness of the type of data
+    it is working with, just as a word processor or image editor does not know the
+    nature of the document being edited.
+  </para>
+  <para>
     <emphasis role="strong">region</emphasis>
   </para>
   <para>
