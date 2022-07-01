@@ -692,14 +692,17 @@ bg_mesh_lod_key_put(struct bg_mesh_lod_context *c, const char *name, unsigned lo
     unsigned long long hash = (unsigned long long)hash_val;
     bu_vls_sprintf(&keystr, "%llu", hash);
 
-    MDB_val mdb_key, mdb_data;
+    MDB_val mdb_key;
+    MDB_val mdb_data[2];
     mdb_txn_begin(c->i->name_env, NULL, 0, &c->i->name_txn);
     mdb_dbi_open(c->i->name_txn, NULL, 0, &c->i->name_dbi);
     mdb_key.mv_size = bu_vls_strlen(&keystr)*sizeof(char);
     mdb_key.mv_data = (void *)bu_vls_cstr(&keystr);
-    mdb_data.mv_size = sizeof(key);
-    mdb_data.mv_data = (void *)&key;
-    int rc = mdb_put(c->i->name_txn, c->i->name_dbi, &mdb_key, &mdb_data, 0);
+    mdb_data[0].mv_size = sizeof(key);
+    mdb_data[0].mv_data = (void *)&key;
+    mdb_data[1].mv_size = 0;
+    mdb_data[2].mv_data = NULL;
+    int rc = mdb_put(c->i->name_txn, c->i->name_dbi, &mdb_key, mdb_data, 0);
     mdb_txn_commit(c->i->name_txn);
 
     bu_vls_free(&keystr);
