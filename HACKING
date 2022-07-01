@@ -1037,6 +1037,12 @@ in resolving the issue promptly.  It is the responsibility of all
 developers to address issues as they are encountered regardless of who
 introduces the problem.
 
+To assist developers in these efforts,  BRL-CAD utilizes Continuous
+Integration (CI) testing via the Github Actions infrastructure to
+monitor code health:  https://github.com/BRL-CAD/brlcad/actions
+Under normal conditions, all developers should strive to keep all
+Github Actions tests passing.
+
 3) Contributors making commits to the repository are required to
 uphold the legal conventions and requirements summarized in the
 COPYING file.  This includes the implicit assignment of copyright to
