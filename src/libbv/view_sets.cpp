@@ -80,8 +80,8 @@ bv_set_free(struct bview_set *s)
 	    sp = nsp;
 	}
 	BU_PUT(s->i->free_scene_obj, struct bv_scene_obj);
+	BU_PUT(s->i, struct bview_set_internal);
     }
-    BU_PUT(s->i, struct bview_set_internal);
 
     // TODO - clean up vlfree
 }

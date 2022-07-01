@@ -1035,6 +1035,8 @@ drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *
 	return BRLCAD_ERROR;
     }
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    if (!mvars)
+	return BRLCAD_ERROR;
 
     if (dmp->i->dm_debugLevel) {
 	struct bu_vls msg = BU_VLS_INIT_ZERO;
@@ -1080,6 +1082,8 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char 
 	return BRLCAD_OK;
     }
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    if (!mvars)
+	return BRLCAD_ERROR;
 
     if (dmp->i->dm_debugLevel) {
 	struct bu_vls msg = BU_VLS_INIT_ZERO;

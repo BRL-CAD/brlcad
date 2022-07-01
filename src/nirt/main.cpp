@@ -684,15 +684,13 @@ main(int argc, const char **argv)
     if (print_help || argc < 2 || (silent_mode == SILENT_YES && verbose_mode)) {
 	char *help = bu_opt_describe(d, &dopts);
 	ret = (print_help) ? EXIT_SUCCESS : EXIT_FAILURE;
-        /* if nirt_debug exists, we assume we are being run from libged, so dont print
+        /* if nirt_debug exists, we assume we are being run from libged, so don't print
          * output not relevant in embedded context
-         */ 
+         */
         if (bu_vls_strlen(&nirt_debug) > 0) {
             dopts.reject = "M"; // reject 'M' option when printing within libged
-            help = bu_opt_describe(d, &dopts);
-            bu_vls_sprintf(&msg, "Usage: nirt [options]...\n\nOptions:\n%s\n", help);   
+            bu_vls_sprintf(&msg, "Usage: nirt [options]...\n\nOptions:\n%s\n", help);
         } else {
-            help = bu_opt_describe(d, &dopts);
             bu_vls_sprintf(&msg, "Usage: nirt [options] model.g objects...\n\nNote: by default NIRT is using a new implementation which may have behavior changes.  During migration, old behavior can be enabled by adding the option \"--old\" as the first option to the nirt program.\n\nOptions:\n%s\n", help);
         }
 	nirt_out(&io_data, bu_vls_addr(&msg));

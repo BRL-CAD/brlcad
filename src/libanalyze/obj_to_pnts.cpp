@@ -339,7 +339,8 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 	/* We now know enough to get the max ray count.  Try up to 10x the number of max
 	 * points of rays, or up to 2 million. */
 	size_t mrc = ((max_pnts * 10) > 2000000 || !max_pnts) ? 2000000 : max_pnts * 10;
-	size_t craynum = mrc/((long)ncpus+1);
+	size_t ccnt = (ncpus >= LONG_MAX-1) ? ncpus : ncpus+1;
+	size_t craynum = mrc/ccnt;
 	fastf_t mt = (max_time > 0) ? (fastf_t)max_time : (fastf_t)INT_MAX;
 
 	point_t center;

@@ -1896,7 +1896,7 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 	fkey = *fkeyp;
 	if (fkey == key)
 	    mdb_cursor_del(cursor, 0);
-	while ((rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) == 0) {
+	while (!mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) {
 	    fkeyp = (unsigned long long *)mdb_data.mv_data;
 	    fkey = *fkeyp;
 	    if (fkey == key)
@@ -1926,7 +1926,7 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 	    return;
 	}
 	mdb_cursor_del(cursor, 0);
-	while ((rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) == 0)
+	while (!mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT))
 	    mdb_cursor_del(cursor, 0);
 	mdb_txn_commit(c->i->lod_txn);
 
@@ -1945,10 +1945,9 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 	    return;
 	}
 	mdb_cursor_del(cursor, 0);
-	while ((rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) == 0)
+	while (!mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT))
 	    mdb_cursor_del(cursor, 0);
 	mdb_txn_commit(c->i->name_txn);
-
 
 	return;
     }

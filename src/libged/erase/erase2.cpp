@@ -175,6 +175,9 @@ path_add_children(
 	std::unordered_map<struct bv_scene_group *, struct db_full_path *> *ngrps,
 	struct db_i *dbip, struct db_full_path *gfp, struct db_full_path *fp, struct bview *v)
 {
+    if (!gfp || !DB_FULL_PATH_CUR_DIR(gfp) || !dbip)
+	return 0;
+
     if (DB_FULL_PATH_CUR_DIR(gfp)->d_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION)
 	return 0;
 
