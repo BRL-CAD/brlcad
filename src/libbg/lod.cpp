@@ -1367,12 +1367,12 @@ POPState::cache_write(const char *component, std::stringstream &s)
     // and the value is the serialized LoD data
     char *keycstr = bu_strdup(keystr.c_str());
     void *bdata = bu_calloc(buffer.length()+1, sizeof(char), "bdata");
-    memcpy(bdata, buffer.data(), buffer.length());
+    memcpy(bdata, buffer.data(), buffer.length()*sizeof(char));
     mdb_txn_begin(c->i->lod_env, NULL, 0, &c->i->lod_txn);
     mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
     mdb_key.mv_size = keystr.length()*sizeof(char);
     mdb_key.mv_data = (void *)keycstr;
-    mdb_data.mv_size = buffer.length();
+    mdb_data.mv_size = buffer.length()*sizeof(char);
     mdb_data.mv_data = bdata;
     int rc = mdb_put(c->i->lod_txn, c->i->lod_dbi, &mdb_key, &mdb_data, 0);
     mdb_txn_commit(c->i->lod_txn);
