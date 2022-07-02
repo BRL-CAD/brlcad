@@ -217,14 +217,15 @@ LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
 
     printCommand(argv);
 
-    struct ged g;
+    struct ged *g;
     struct rt_wdb *wdbp;
     struct db_i *dbip;
 
     dbip = db_create_inmem();
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
 
-    GED_INIT(&g, wdbp);
+    BU_GET(g, struct ged);
+    GED_INIT(g, wdbp);
 
     /* FIXME: To draw, we need to init this LIBRT global */
     BU_LIST_INIT(&RTG.rtg_vlfree);
@@ -232,8 +233,8 @@ LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
     /* Need a view for commands that expect a view */
     struct bview *gvp;
     BU_GET(gvp, struct bview);
-    bv_init(gvp, &g.ged_views);
-    g.ged_gvp = gvp;
+    bv_init(gvp, &g->ged_views);
+    g->ged_gvp = gvp;
 
     void *libged = bu_dlopen(NULL, BU_RTLD_LAZY);
     if (!libged) {
@@ -248,11 +249,11 @@ LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
 
     int ret = 0;
     if (func) {
-	ret = func(&g, argc, (char **)argv.data());
+	ret = func(g, argc, (char **)argv.data());
     }
     bu_dlclose(libged);
 
-    ged_close(&g);
+    ged_close(g);
 
     return ret;
 }
