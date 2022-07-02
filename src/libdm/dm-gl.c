@@ -34,7 +34,6 @@
 #include "bu.h"
 #include "bn.h"
 #include "bv/defines.h"
-#include "bg/lod.h"
 #include "dm.h"
 #include "./dm-gl.h"
 #include "./include/private.h"
