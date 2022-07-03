@@ -2572,7 +2572,16 @@ XXH64_update (XXH64_state_t* state, const void* input, size_t len)
         return XXH_ERROR;
 #endif
 
-    {   const xxh_u8* p = (const xxh_u8*)input;
+    {   const xxh_u8* p;
+	xxh_u64 pbuf = 0;
+	if (len < sizeof(xxh_u64)) {
+	   /* If we have a very short input data length, copy the data into
+	    * pbuf and use it as the hash input */
+	   memcpy(&pbuf, input, len);
+	   p = (const xxh_u8*)&pbuf;
+	} else {
+	   p = (const xxh_u8*)input;
+	}
         const xxh_u8* const bEnd = p + len;
 
         state->total_len += len;
