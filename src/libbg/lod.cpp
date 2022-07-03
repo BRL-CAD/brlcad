@@ -701,7 +701,7 @@ bg_mesh_lod_key_put(struct bg_mesh_lod_context *c, const char *name, unsigned lo
     mdb_data[0].mv_size = sizeof(key);
     mdb_data[0].mv_data = (void *)&key;
     mdb_data[1].mv_size = 0;
-    mdb_data[2].mv_data = NULL;
+    mdb_data[1].mv_data = NULL;
     int rc = mdb_put(c->i->name_txn, c->i->name_dbi, &mdb_key, mdb_data, 0);
     mdb_txn_commit(c->i->name_txn);
 
