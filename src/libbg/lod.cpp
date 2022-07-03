@@ -821,7 +821,7 @@ class POPState {
 	size_t cache_get(void **data, const char *component);
 	void cache_done();
 	void cache_del(const char *component);
-	MDB_val mdb_key, mdb_data;
+	MDB_val mdb_key, mdb_data[2];
 
 	// Specific loading and unloading methods
 	void tri_pop_load(int start_level, int level);
@@ -1372,9 +1372,11 @@ POPState::cache_write(const char *component, std::stringstream &s)
     mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
     mdb_key.mv_size = keystr.length()*sizeof(char);
     mdb_key.mv_data = (void *)keycstr;
-    mdb_data.mv_size = buffer.length()*sizeof(char);
-    mdb_data.mv_data = bdata;
-    int rc = mdb_put(c->i->lod_txn, c->i->lod_dbi, &mdb_key, &mdb_data, 0);
+    mdb_data[0].mv_size = buffer.length()*sizeof(char);
+    mdb_data[0].mv_data = bdata;
+    mdb_data[1].mv_size = 0;
+    mdb_data[1].mv_data = NULL;
+    int rc = mdb_put(c->i->lod_txn, c->i->lod_dbi, &mdb_key, mdb_data, 0);
     mdb_txn_commit(c->i->lod_txn);
     bu_free(keycstr, "keycstr");
     bu_free(bdata, "buffer data");
@@ -1401,16 +1403,16 @@ POPState::cache_get(void **data, const char *component)
     mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
     mdb_key.mv_size = keystr.length()*sizeof(char);
     mdb_key.mv_data = (void *)keycstr;
-    int rc = mdb_get(c->i->lod_txn, c->i->lod_dbi, &mdb_key, &mdb_data);
+    int rc = mdb_get(c->i->lod_txn, c->i->lod_dbi, &mdb_key, &mdb_data[0]);
     if (rc) {
 	bu_free(keycstr, "keycstr");
 	(*data) = NULL;
 	return 0;
     }
     bu_free(keycstr, "keycstr");
-    (*data) = mdb_data.mv_data;
+    (*data) = mdb_data[0].mv_data;
 
-    return mdb_data.mv_size;
+    return mdb_data[0].mv_size;
 }
 
 void
