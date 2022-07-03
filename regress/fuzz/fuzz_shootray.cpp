@@ -132,7 +132,7 @@ LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
 //    struct resource res = RT_RESOURCE_INIT_ZERO;
     char title[1024] = {0};
 
-    const char *file = bu_dir(NULL, 0, BU_DIR_DATA, "..", "..", "share", "db", "moss.g", NULL);
+    const char *file = bu_dir(NULL, 0, BU_DIR_DATA, "db", "moss.g", NULL);
     const char *objs = "all.g";
 
     if (!bu_file_exists(file, NULL))
