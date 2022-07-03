@@ -666,7 +666,9 @@ size_t ON_SerialNumberMap::ActiveIdCount() const
   return m_active_id_count;
 }
 
-#if 0
+// NOTE - optimization currently disabled for FirstElement due to compiler bug
+// in VS2022 - see https://github.com/microsoft/vcpkg/issues/19561
+#pragma optimize("", off)
 struct ON_SerialNumberMap::SN_ELEMENT* ON_SerialNumberMap::FirstElement() const
 {
   struct SN_ELEMENT* e=0;
@@ -718,7 +720,7 @@ struct ON_SerialNumberMap::SN_ELEMENT* ON_SerialNumberMap::FirstElement() const
   }
   return e;
 }
-#endif
+#pragma optimize("", on)
 
 struct ON_SerialNumberMap::SN_ELEMENT* ON_SerialNumberMap::LastElement() const
 {
