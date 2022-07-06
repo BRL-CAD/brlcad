@@ -1,11 +1,12 @@
 #include "common.h"
 
 #include <string>
+#include <unordered_map>
 
 #include "gcv/api.h"
 #include "wdb.h"
 
-// assimp headers - these three are usually needed
+/* assimp headers */
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -23,6 +24,7 @@ struct assimp_read_options
     int const_id;                                   /* Constant ident number (assigned to all regions if non-negative) */
     int mat_code;                                   /* default material code */
     int verbose;                                    /* verbose flag */
+    char* format;                                   /* output file format */
 };
 
 struct conversion_state
@@ -134,7 +136,7 @@ generate_geometry(struct conversion_state* pstate, wmember &region, unsigned int
 
     if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose) {
         bu_log("mesh[%d] num Faces: %d\n", mesh_idx, mesh->mNumFaces);
-        bu_log("mesh[%d] num vertices: %d\n\n", mesh_idx, mesh->mNumVertices);
+        bu_log("mesh[%d] num vertices: %d\n", mesh_idx, mesh->mNumVertices);
     }
 
     /* add all faces */
@@ -168,17 +170,20 @@ handle_node(struct conversion_state* pstate, const C_STRUCT aiNode* curr, struct
      * if no slashes, check if theres any name data at all
      * otherwise just give the region a generic name
      * */
-    const char* region_name = strrchr(curr->mName.data, '/');
-    if (!region_name) {
-        region_name = curr->mName.data;
-    } else if (region_name[0] == '/') {
-        region_name = &region_name[1];
-    }
-    if (region_name[0] == 0)
-        sprintf((char*)region_name, "region_%d.r", pstate->dfs);
+    static std::unordered_map<std::string, int>used_names; /* used region names */
+    std::string region_name = curr->mName.data;
+    const char* trim = strrchr(curr->mName.data, '/');
+    if (trim)
+        region_name = ++trim;
+    if (!region_name.size())
+        region_name = "region_" + std::to_string(pstate->dfs) + ".r";
+    auto it = used_names.find(region_name);
+    if (it != used_names.end())
+        region_name.append("_DUP" + std::to_string(it->second++));
+    used_names.emplace(region_name, 0);
 
     if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose) {
-        bu_log("Curr node name | dfs index: %s | %d\n", curr->mName.data, pstate->dfs);
+        bu_log("\nCurr node name | dfs index: %s | %d\n", curr->mName.data, pstate->dfs);
         bu_log("Curr node transformation:\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n", 
             curr->mTransformation.a1, curr->mTransformation.a2, curr->mTransformation.a3, curr->mTransformation.a4,
             curr->mTransformation.b1, curr->mTransformation.b2, curr->mTransformation.b3, curr->mTransformation.b4,
@@ -186,7 +191,7 @@ handle_node(struct conversion_state* pstate, const C_STRUCT aiNode* curr, struct
             curr->mTransformation.d1, curr->mTransformation.d2, curr->mTransformation.d3, curr->mTransformation.d4);
         bu_log("Curr node children: %d\n", curr->mNumChildren);
         bu_log("Curr node meshes: %d\n", curr->mNumMeshes);
-        bu_log("Region name: %s\n", region_name);
+        bu_log("Region name: %s\n", region_name.c_str());
         if (!curr->mNumMeshes)
             bu_log("\n");
     }
@@ -206,9 +211,10 @@ handle_node(struct conversion_state* pstate, const C_STRUCT aiNode* curr, struct
          */
         unsigned int mesh_idx = curr->mMeshes[i];
         if (mesh_idx >= pstate->scene->mNumMeshes)
-            bu_exit(EXIT_FAILURE, "ERROR: bad mesh index");
+            bu_exit(0, "ERROR: bad mesh index");
         if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose)
             bu_log("      uses mesh %d\n", mesh_idx);
+        /* TODO FIXME: bad generation logs extra converted and mesh */
         generate_geometry(pstate, mesh, mesh_idx);
 
         /* FIXME generate shader and color 
@@ -223,17 +229,16 @@ handle_node(struct conversion_state* pstate, const C_STRUCT aiNode* curr, struct
         aimatrix_to_arr16(curr->mTransformation, tra);
 
         /* make region with all meshes */
-        mk_lrcomb(pstate->fd_out, region_name, &mesh, 1, shader_prop.shadername, shader_prop.shaderargs, shader_prop.rgb, pstate->id_no, 0, pstate->assimp_read_options->mat_code, 100, 0);
-        (void)mk_addmember(region_name, &mesh.l, tra, WMOP_UNION);
+        mk_lrcomb(pstate->fd_out, region_name.c_str(), &mesh, 1, shader_prop.shadername, shader_prop.shaderargs, shader_prop.rgb, pstate->id_no, 0, pstate->assimp_read_options->mat_code, 100, 0);
+        (void)mk_addmember(region_name.c_str(), &mesh.l, tra, WMOP_UNION);
 
         if (!pstate->assimp_read_options->const_id)
             pstate->id_no++;
     }
 
-
     /* add base region to top level */
     if (!curr->mNumChildren)
-        (void)mk_addmember(region_name, &regions.l, NULL, WMOP_UNION);
+        (void)mk_addmember(region_name.c_str(), &regions.l, NULL, WMOP_UNION);
 
     /* recursive call all children */
     for (size_t i = 0; i < curr->mNumChildren; i++) {
@@ -251,7 +256,7 @@ convert_input(struct conversion_state* pstate)
 
     /* we know there is atleast one root node if conversion is successful */
     if (!pstate->scene || !pstate->scene->mRootNode)
-        bu_exit(EXIT_FAILURE, "ERROR: bad scene conversion");
+        bu_exit(0, "ERROR: bad scene conversion");
         
     if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose) {
         bu_log("Scene num meshes: %d\n", pstate->scene->mNumMeshes);
@@ -262,19 +267,14 @@ convert_input(struct conversion_state* pstate)
         bu_log("Scene num Cameras: %d\n\n", pstate->scene->mNumCameras);
     }
 
-    /* iterate over each top level node
-     * TODO FIXME: some formats (uncertain which) have more than one root
-     */
+    /* create around the root node */
     BU_LIST_INIT(&pstate->all.l);
-    for (size_t i = 0; i < 1; i++) {
-        if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose)
-            bu_log("top level node: %zu\n", i);
-        handle_node(pstate, &pstate->scene->mRootNode[i], pstate->all);
+    if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose)
+        bu_log("-- root node --\n");
+    handle_node(pstate, &pstate->scene->mRootNode[0], pstate->all);
 
-        /* make a top level 'all.g' for each root node*/
-        std::string all = "all_" + std::to_string(i) + ".g";
-        mk_lcomb(pstate->fd_out, all.c_str(), &pstate->all, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
-    }
+    /* make a top level 'all.g' */
+    mk_lcomb(pstate->fd_out, "all.g", &pstate->all, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 }
 
 HIDDEN void
@@ -284,18 +284,20 @@ assimp_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_d
 
     BU_ALLOC(options_data, struct assimp_read_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(5 * sizeof(struct bu_opt_desc), "options_desc");
+    *options_desc = (struct bu_opt_desc *)bu_malloc(6 * sizeof(struct bu_opt_desc), "options_desc");
 
     options_data->starting_id = 1000;
     options_data->const_id = 0;
     options_data->mat_code = 1;
     options_data->verbose = 0;
+    options_data->format = NULL;
 
     BU_OPT((*options_desc)[0], NULL, "starting-ident", "number", bu_opt_int, options_data, "specify the starting ident for the regions created");
     BU_OPT((*options_desc)[1], NULL, "constant-ident", NULL, NULL, &options_data->const_id, "specify that the starting ident should remain constant");
     BU_OPT((*options_desc)[2], NULL, "material", "number", bu_opt_int, &options_data->mat_code, "specify the material code that will be assigned to created regions");
     BU_OPT((*options_desc)[3], "v", "verbose", NULL, NULL, &options_data->verbose, "specify for verbose output");
-    BU_OPT_NULL((*options_desc)[4]);
+    BU_OPT((*options_desc)[4], NULL, "format", NULL, bu_opt_str, &options_data->format, "specify the output file format");
+    BU_OPT_NULL((*options_desc)[5]);
 }
 
 HIDDEN void
@@ -315,23 +317,27 @@ assimp_read(struct gcv_context *context, const struct gcv_opts* gcv_options, con
     state.input_file = source_path;
     state.fd_out = context->dbip->dbi_wdbp;
 
-    /* check and validate the specied model file extension against ai
-     * NOTE: this is likely all a 'can_read' function will need for ai
-     * but it requires extension recognition..
+    /* check and validate the specied input file type against ai
+     * checks using file extension if no --format is supplied
+     * this is likely all a 'can_read' function will need
      */
     const char* extension = strrchr(source_path, '.');
+    if (state.assimp_read_options->format)       /* intentional setting format trumps file extension */
+        extension = state.assimp_read_options->format;
     if (!extension) {
-        bu_exit(EXIT_FAILURE, "ERROR: Please provide a file with a valid extension");
+        bu_log("ERROR: Please provide a file with a valid extension, or specify format with --format\n");
+        return 0;
     }
     if (AI_FALSE == aiIsExtensionSupported(extension)) {
-        bu_exit(EXIT_FAILURE, "ERROR: The specified model file extension is currently unsupported in Assimp conversion.");
+        bu_log("ERROR: The specified model file type is currently unsupported in Assimp conversion.\n");
+        return 0;
     }
 
     mk_id_units(state.fd_out, "Conversion using Asset Importer Library (assimp)", "mm");
 
     convert_input(&state);
 
-    bu_log("Converted ( %d / %d ) meshes ... %.2f%%\n", state.converted, state.scene->mNumMeshes, (float) (state.converted / state.scene->mNumMeshes * 100));
+    bu_log("Converted ( %d / %d ) meshes ... %.2f%%\n", state.converted, state.scene->mNumMeshes, (float)state.converted / (float)state.scene->mNumMeshes * 100.0);
 
     return 1;
 }
