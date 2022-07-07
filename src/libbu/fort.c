@@ -50,6 +50,8 @@ SOFTWARE.
 #include "fort.h"
 
 #include "bu/str.h"
+#include "bu/malloc.h"
+
 
 /* Define FT_INTERNAL to make internal libfort functions static
  * in the result amalgamed source file.
