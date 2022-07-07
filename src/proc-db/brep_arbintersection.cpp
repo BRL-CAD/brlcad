@@ -47,9 +47,6 @@ printusage(void) {
     fprintf(stderr,"Usage: brep_arbintersection (takes no arguments)\n");
 }
 
-
-
-
 int
 com_add(
     struct rt_wdb* wdbp,
@@ -88,9 +85,7 @@ int test_UNION(rt_wdb* out, int arb_num, rt_arb_internal** arbs, ON_3dPoint poin
 
     unsigned char rgb[] = { 255, 255, 255 };
     std::string com_name = (head + ".r");
-    com_add(outfp, com_name.data(), arb_num, names, "plastic", "", rgb);
-
-
+    com_add(out, com_name.data(), arb_num, names, "plastic", "", rgb);
 
     ON_Brep* brep = ON_Brep::New();
     struct rt_db_internal brep_db_internal;
@@ -112,18 +107,26 @@ int test_UNION(rt_wdb* out, int arb_num, rt_arb_internal** arbs, ON_3dPoint poin
             fprintf(stderr, "problem getting internal object rep\n");
         }
 
-        struct bn_tol tol;
-        tol.magic = BN_TOL_MAGIC;
-        tol.dist = BN_TOL_DIST;
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = SMALL_FASTF;
-        tol.para = 1.0 - tol.perp;
-        rt_comb_brep(&brep, &ip, &tol, dbip);
-
+        struct rt_db_internal intern_res;
         std::string brep_name = ("brep." + head);
-        mk_brep(outfp, brep_name.data(), (void*)brep);
+
+
+        int ret = brep_conversion(&ip, &brep_db_internal, dbip);
+        bu_log("ret = %d.\n", ret);
+        if (ret == -1) {
+            bu_log("-1.\n");
+        }
+        else if (ret == -2) {
+            bu_log("-2.\n");
+        }
+        else {
+            brep = ((struct rt_brep_internal*)brep_db_internal.idb_ptr)->brep;
+            ret = mk_brep(outfp, brep_name.data(), (void*)brep);
+        }
+
+        rt_db_free_internal(&brep_db_internal);
+        return BRLCAD_OK;
     }
-    return 0;
 }
 
 int
@@ -153,6 +156,7 @@ main(int argc, char** argv)
     test_UNION(outfp, arb_2_num, arb_2, arb_2_v, "arb_2");
     test_UNION(outfp, arb_3_num, arb_3, arb_3_v, "arb_3");
     test_UNION(outfp, arb_4_num, arb_4, arb_4_v, "arb_4");
+    test_UNION(outfp, arb_5_num, arb_5, arb_5_v, "arb_5");
 
     wdb_close(outfp);
     
