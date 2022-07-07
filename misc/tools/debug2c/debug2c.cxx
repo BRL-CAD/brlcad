@@ -402,7 +402,7 @@ main(int argc, const char *argv[])
     ofile << "		}\n";
     ofile << "		return -1;\n";
     ofile << "	    } else {\n";
-    ofile << "		return lcnt;\n";
+    ofile << "		return (int)lcnt;\n";
     ofile << "	    }\n";
     ofile << "	}\n";
     ofile << "	lcnt++;\n";
