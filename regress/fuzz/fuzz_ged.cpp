@@ -249,7 +249,7 @@ LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
 
     int ret = 0;
     if (func) {
-	ret = func(g, argc, (char **)argv.data());
+	ret = func(g, (int)argc, (char **)argv.data());
     }
     bu_dlclose(libged);
 

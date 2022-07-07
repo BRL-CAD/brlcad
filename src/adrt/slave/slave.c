@@ -63,7 +63,7 @@ uint32_t adrt_slave_threads;
 adrt_slave_project_t adrt_workspace_list[ADRT_MAX_WORKSPACE_NUM];
 
 void
-adrt_slave_free()
+adrt_slave_free(void)
 {
     uint16_t i;
 
@@ -97,7 +97,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
     switch (op) {
 	case ADRT_WORK_INIT:
 	{
-	    render_camera_init (&adrt_workspace_list[wid].camera, adrt_slave_threads);
+	    render_camera_init (&adrt_workspace_list[wid].camera, (size_t)adrt_slave_threads);
 	    if ( slave_load (&adrt_workspace_list[wid].tie, (void *)work->data) != 0 )
 		bu_exit (1, "Failed to load geometry. Going into a flaming tailspin\n");
 	    TIE_PREP(&adrt_workspace_list[wid].tie);
@@ -126,7 +126,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	case ADRT_WORK_SELECT:
 	{
 	    uint8_t c;
-	    char string[255];
+	    char string[255] = { 0 };
 	    uint32_t n, i, num;
 
 	    ind = 1;	/* ind is too far in for some reason, force it back to 1? */
