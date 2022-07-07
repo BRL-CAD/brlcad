@@ -68,26 +68,26 @@
 /* --- from flex's flexdef.h --- */
 void buf_init(struct Buf * buf, size_t elem_size);
 void buf_destroy(struct Buf * buf);
-struct Buf *buf_append(struct Buf * buf, const void *ptr, int n_elem);
+struct Buf *buf_append(struct Buf * buf, const void *ptr, size_t n_elem);
 struct Buf *buf_concat(struct Buf* dest, const struct Buf* src);
 struct Buf *buf_strappend(struct Buf *, const char *str);
-struct Buf *buf_strnappend(struct Buf *, const char *str, int nchars);
+struct Buf *buf_strnappend(struct Buf *, const char *str, size_t nchars);
 struct Buf *buf_strdefine(struct Buf * buf, const char *str, const char *def);
 struct Buf *buf_prints(struct Buf *buf, const char *fmt, const char* s);
 struct Buf *buf_m4_define(struct Buf *buf, const char* def, const char* val);
 struct Buf *buf_m4_undefine(struct Buf *buf, const char* def);
 struct Buf *buf_print_strings(struct Buf * buf, FILE* out);
-struct Buf *buf_linedir(struct Buf *buf, const char* filename, int lineno);
+struct Buf *buf_linedir(struct Buf *buf, const char* filename, size_t lineno);
 
 /* --- from flex's misc.c --- */
 static void*
-allocate_array(int size, size_t element_size)
+allocate_array(size_t size, size_t element_size)
 {
     return malloc(element_size * size);
 }
 
 static void*
-reallocate_array(void *array, int size, size_t element_size)
+reallocate_array(void *array, size_t size, size_t element_size)
 {
     return realloc(array, element_size * size);
 }
@@ -108,7 +108,7 @@ reallocate_array(void *array, int size, size_t element_size)
 struct Buf*
 buf_print_strings(struct Buf * buf, FILE* out)
 {
-    int i;
+    size_t i;
 
     if(!buf || !out) {
         return buf;
@@ -143,10 +143,10 @@ buf_prints(struct Buf *buf, const char *fmt, const char *s)
  * @return buf
  */
 struct Buf*
-buf_linedir(struct Buf *buf, const char* filename, int lineno)
+buf_linedir(struct Buf *buf, const char* filename, size_t lineno)
 {
     char *t;
-    const char fmt[] = "#line %d \"%s\"\n";
+    const char fmt[] = "#line %zu \"%s\"\n";
 
     t = (char*)malloc(strlen(fmt) + strlen(filename) + (int)(1 + log10(lineno >= 0? lineno : -lineno)) + 1);
     sprintf(t, fmt, lineno, filename);
@@ -171,7 +171,7 @@ buf_concat(struct Buf* dest, const struct Buf* src)
 
 /* Appends n characters in str to buf. */
 struct Buf*
-buf_strnappend(struct Buf *buf, const char *str, int n)
+buf_strnappend(struct Buf *buf, const char *str, size_t n)
 {
     buf_append(buf, str, n + 1);
 
@@ -185,7 +185,7 @@ buf_strnappend(struct Buf *buf, const char *str, int n)
 struct Buf*
 buf_strappend(struct Buf *buf, const char *str)
 {
-    return buf_strnappend(buf, str, (int)strlen(str));
+    return buf_strnappend(buf, str, strlen(str));
 }
 
 /* appends "#define str def\n" */
@@ -265,9 +265,9 @@ buf_destroy(struct Buf *buf)
  * We grow by mod(512) boundaries.
  */
 struct Buf*
-buf_append(struct Buf *buf, const void *ptr, int n_elem)
+buf_append(struct Buf *buf, const void *ptr,  n_elem)
 {
-    int n_alloc = 0;
+    size_t n_alloc = 0;
 
     if (!ptr || n_elem == 0) {
 	return buf;
