@@ -168,27 +168,25 @@ typedef unsigned short u_short;
 #endif
 
 /**
- * C99 does not provide a ssize_t even though it is provided by SUS97.
- * regardless, we use it so make sure it's declared by using the
+ * make sure ssize_t is provided.  C99 does not provide it even though it is
+ * defined in SUS97.  if not available, we create the type aligned with the
  * similar POSIX ptrdiff_t type.
  */
-#if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
-# ifndef HAVE_SSIZE_T
-#   ifdef HAVE_SYS_TYPES_H
-#     include <sys/types.h>
-#   endif
-#   include <limits.h>
-#   include <stddef.h>
-#   ifndef SSIZE_MAX
+#if defined(_MSC_VER) && !defined(HAVE_SSIZE_T)
+#  ifdef HAVE_SYS_TYPES_H
+#    include <sys/types.h>
+#  endif
+#  include <limits.h>
+#  include <stddef.h>
 typedef ptrdiff_t ssize_t;
-#     define HAVE_SSIZE_T 1
-#     if defined(_WIN64)
-#        define SSIZE_MAX LONG_MAX
-#     else
-#        define SSIZE_MAX INT_MAX
-#     endif
-#   endif
-# endif
+#  define HAVE_SSIZE_T 1
+#  ifndef SSIZE_MAX
+#    if defined(_WIN64)
+#      define SSIZE_MAX LONG_MAX
+#    else
+#      define SSIZE_MAX INT_MAX
+#    endif
+#  endif
 #endif
 
 /* make sure most of the C99 stdint types are provided including the
