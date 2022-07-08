@@ -2893,7 +2893,7 @@ output_to_nmg(struct ga_t *ga,
 	if ((verbose > 1) || debug) {
 	    bu_log("Running nmg_gluefaces on (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
-	nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, tol);
+	nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), (int)BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, tol);
 	if ((verbose > 1) || debug) {
 	    bu_log("Completed nmg_gluefaces for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}

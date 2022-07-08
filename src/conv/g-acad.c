@@ -64,11 +64,11 @@ static struct model *the_model;
 
 static struct db_tree_state tree_state;	/* includes tol & model */
 
-static int regions_tried = 0;
-static int regions_converted = 0;
-static int regions_written = 0;
+static size_t regions_tried = 0;
+static size_t regions_converted = 0;
+static size_t regions_written = 0;
 static int inches = 0;
-static long tot_polygons = 0;
+static size_t tot_polygons = 0;
 
 
 static void
@@ -88,10 +88,10 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
     struct vertex *v;
     struct bu_ptbl verts;
     char *region_name;
-    int numverts = 0;		/* Number of vertices to output */
-    int numtri   = 0;		/* Number of triangles to output */
-    int tricount = 0;		/* Triangle number */
-    int i;
+    size_t numverts = 0;		/* Number of vertices to output */
+    size_t numtri   = 0;		/* Number of triangles to output */
+    size_t tricount = 0;		/* Triangle number */
+    size_t i;
 
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
@@ -110,7 +110,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 
     /* Get number of vertices */
 
-    numverts = BU_PTBL_LEN (&verts);
+    numverts = BU_PTBL_LEN(&verts);
 
 /* BEGIN CHECK SECTION */
 
@@ -137,7 +137,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 
 	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		struct edgeuse *eu;
-		int vert_count=0;
+		size_t vert_count=0;
 
 		NMG_CK_LOOPUSE(lu);
 
@@ -146,14 +146,16 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 
 		/* check vertex numbers for each triangle */
 		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    intmax_t idx;
+
 		    NMG_CK_EDGEUSE(eu);
 
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX(v);
 
 		    vert_count++;
-		    i = bu_ptbl_locate(&verts, (long *)v);
-		    if (i < 0) {
+		    idx = bu_ptbl_locate(&verts, (long *)v);
+		    if (idx < 0) {
 			bu_ptbl_free(&verts);
 			bu_free(region_name, "region name");
 			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)r);
@@ -163,7 +165,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 		if (vert_count > 3) {
 		    bu_ptbl_free(&verts);
 		    bu_free(region_name, "region name");
-		    bu_log("lu %p has too many (%d) vertices!\n", (void *)lu, vert_count);
+		    bu_log("lu %p has too many (%zu) vertices!\n", (void *)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle\n");
 		} else if (vert_count < 3)
 		    continue;
@@ -179,7 +181,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 /* No mirror plane */
     fprintf(fp, "%d\n", 0);
 /* Number of vertices */
-    fprintf(fp, "%d\n", numverts);
+    fprintf(fp, "%zu\n", numverts);
 
 
     /* Write numverts, then vertices */
@@ -198,7 +200,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 /* Write out name again */
     fprintf(fp, "%s\n", (region_name+1));
 /* Number of triangles, number of vert/tri (3) */
-    fprintf(fp, "%d       %d\n", numtri, 3);
+    fprintf(fp, "%zu       %d\n", numtri, 3);
 
     /* output triangles */
     for (BU_LIST_FOR(s, shell, &r->s_hd)) {
@@ -216,7 +218,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 
 	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		struct edgeuse *eu;
-		int vert_count=0;
+		size_t vert_count=0;
 
 		NMG_CK_LOOPUSE(lu);
 
@@ -225,33 +227,35 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 
 		/* list vertex numbers for each triangle */
 		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    intmax_t idx;
+
 		    NMG_CK_EDGEUSE(eu);
 
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX(v);
 
 		    vert_count++;
-		    i = bu_ptbl_locate(&verts, (long *)v);
-		    if (i < 0) {
+		    idx = bu_ptbl_locate(&verts, (long *)v);
+		    if (idx < 0) {
 			bu_ptbl_free(&verts);
 			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)r);
 			bu_free(region_name, "region name");
 			bu_exit(1, "ERROR: Can't find vertex in list!\n");
 		    }
 
-		    fprintf(fp, " %d", i+1);
+		    fprintf(fp, " %lld", idx+1);
 		}
 
 		/* Output other info. for triangle ICOAT, component#, facet# */
 		/* Map Icoat from material table later */
 		/* fprintf(fp, "%s icomp=%d material=%d:\n", (region_name+1), region_id);*/
 
-		fprintf(fp, " %d    %d    %d\n", 0, region_id, ++tricount);
+		fprintf(fp, " %d    %d    %zu\n", 0, region_id, ++tricount);
 
 		if (vert_count > 3) {
 		    bu_ptbl_free(&verts);
 		    bu_free(region_name, "region name");
-		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
+		    bu_log("lu %p has %zu vertices!\n", (void *)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle\n");
 		} else if (vert_count < 3)
 		    continue;
@@ -261,7 +265,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
     }
 /* regions_converted++;
    printf("Processed region %s\n", region_name);
-   printf("Regions attempted = %d Regions done = %d\n", regions_tried, regions_converted);
+   printf("Regions attempted = %zu Regions done = %zu\n", regions_tried, regions_converted);
    fflush(stdout);
 */
     bu_ptbl_free(&verts);
@@ -349,7 +353,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
     if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
 	char *sofar = db_path_to_string(pathp);
-	bu_log("\ndo_region_end(%d %d%%) %s\n",
+	bu_log("\ndo_region_end(%zu %zu%%) %s\n",
 	       regions_tried,
 	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
 	       sofar);
@@ -463,7 +467,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
 	npercent = (float)(regions_converted * 100) / regions_tried;
 	tpercent = (float)(regions_written * 100) / regions_tried;
-	printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
+	printf("Tried %zu regions, %zu conv. to NMG's %zu conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
 	       regions_tried, regions_converted, regions_written, npercent, tpercent);
     }
 
@@ -532,7 +536,7 @@ main(int argc, char **argv)
 		ncpu = atoi(bu_optarg);
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		bu_sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);
@@ -540,7 +544,7 @@ main(int argc, char **argv)
 		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		bu_sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
 		NMG_debug = nmg_debug;
 		break;
 	    case 'e':		/* Error file name. */
@@ -559,7 +563,7 @@ main(int argc, char **argv)
 
     if (!output_file) {
 	fp = stdout;
-	setmode(fileno(fp), O_BINARY);
+	(void)setmode(fileno(fp), O_BINARY);
     } else {
 	/* Open output file */
 	if ((fp=fopen(output_file, "wb+")) == NULL) {
@@ -571,7 +575,7 @@ main(int argc, char **argv)
     /* Open g-acad error log file */
     if (!error_file) {
 	fpe = stderr;
-	setmode(fileno(fpe), O_BINARY);
+	(void)setmode(fileno(fpe), O_BINARY);
     } else if ((fpe=fopen(error_file, "wb")) == NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Cannot open output file (%s) for writing\n", error_file);
@@ -587,6 +591,12 @@ main(int argc, char **argv)
     }
     if (db_dirbuild(dbip)) {
 	bu_exit(1, "db_dirbuild failed\n");
+    }
+
+    /* sanity */
+    if (!fp || !fpe) {
+	bu_bomb("ERROR: output unset\n");
+	return 1;
     }
 
     BN_CK_TOL(tree_state.ts_tol);
@@ -631,24 +641,24 @@ main(int argc, char **argv)
 
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100) / regions_tried;
-	printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
+	printf("Tried %zu regions, %zu converted to NMG's successfully.  %g%%\n",
 	       regions_tried, regions_converted, percent);
     }
 
     if (regions_tried > 0) {
 	percent = ((double)regions_written * 100) / regions_tried;
-	printf("                  %d triangulated successfully. %g%%\n",
+	printf("                  %zu triangulated successfully. %g%%\n",
 	       regions_written, percent);
     }
 
-    bu_log("%ld triangles written\n", tot_polygons);
-    fprintf(fpe, "%ld triangles written\n", tot_polygons);
+    bu_log("%zu triangles written\n", tot_polygons);
+    fprintf(fpe, "%zu triangles written\n", tot_polygons);
 
     /* Write out number of facet entities to .facet file */
 
     rewind(fp);
     bu_fseek(fp, 46, 0); /* Re-position pointer to 2nd line */
-    fprintf(fp, "%d\n", regions_written); /* Write out number of regions */
+    fprintf(fp, "%zu\n", regions_written); /* Write out number of regions */
     fclose(fp);
 
     /* Release dynamic storage */

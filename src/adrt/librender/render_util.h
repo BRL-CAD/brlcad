@@ -27,8 +27,8 @@
 #include "render_internal.h"
 
 RENDER_EXPORT extern void render_util_spall_vec(vect_t dir, fastf_t angle, int vec_num, vect_t *vec_list);
-RENDER_EXPORT extern void render_util_shotline_list(struct tie_s *tie, struct tie_ray_s *ray, void **data, int *dlen);
-RENDER_EXPORT extern void render_util_spall_list(struct tie_s *tie, struct tie_ray_s *ray, TFLOAT angle, void **data, int *dlen);
+RENDER_EXPORT extern void render_util_shotline_list(struct tie_s *tie, struct tie_ray_s *ray, void **data, size_t *dlen);
+RENDER_EXPORT extern void render_util_spall_list(struct tie_s *tie, struct tie_ray_s *ray, TFLOAT angle, void **data, size_t *dlen);
 
 #endif
 

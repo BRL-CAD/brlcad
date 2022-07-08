@@ -166,7 +166,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	{
 	    struct tie_ray_s ray;
 	    void *mesg;
-	    int dlen;
+	    size_t dlen;
 
 	    mesg = NULL;
 
