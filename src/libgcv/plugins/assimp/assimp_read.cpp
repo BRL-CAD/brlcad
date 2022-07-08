@@ -70,13 +70,20 @@ generate_shader(struct conversion_state* pstate, unsigned int mesh_idx)
     struct shader_properties ret = SHADER_PROPERTIES_NULL;
 
     /* check for material data */
-    if (pstate->scene->mNumMaterials) {
+    if (pstate->scene->HasMaterials()) {
         unsigned int mat_idx = pstate->scene->mMeshes[mesh_idx]->mMaterialIndex;
         C_STRUCT aiMaterial* mat = pstate->scene->mMaterials[mat_idx];
 
-        ret.shadername = mat->GetName().data;
-        if (ret.shadername[0] == 0)
-            ret.shadername = "plastic";
+        std::string fmt = mat->GetName().data;
+
+        size_t space = fmt.find(" ");
+
+        if (space != std::string::npos) {
+            ret.shadername = fmt.substr(0, space).c_str();
+            ret.shaderargs = fmt.substr(space).c_str();
+        } else {
+            ret.shadername = fmt.c_str();
+        }
 
         /* get material data used for phong shading */
         C_STRUCT aiColor3D diff (-1);
@@ -88,15 +95,9 @@ generate_shader(struct conversion_state* pstate, unsigned int mesh_idx)
         mat->Get(AI_MATKEY_COLOR_AMBIENT, amb);
         mat->Get(AI_MATKEY_SHININESS_STRENGTH, s);
 
-        /* TODO create shader arg string */
-        std::string fmt_args = "{";
-        if (s >= 0) {
-            fmt_args.append("sh ");
-            fmt_args.append(std::to_string(s));
-        }
-        fmt_args.append("}");
+        /* TODO create shader arg string from set material data, not just name*/
 
-        ret.shaderargs = fmt_args.c_str();
+        // ret.shaderargs = fmt_args.c_str();
     }
 
     /* set the color of the face using the first vertex color data we 
@@ -252,7 +253,7 @@ convert_input(struct conversion_state* pstate)
     /* we are taking one of the postprocessing presets to avoid
      * spelling out 20+ single postprocessing flags here. 
      */
-    pstate->scene = aiImportFile(pstate->input_file.c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
+    pstate->scene = aiImportFile(pstate->input_file.c_str(), aiProcessPreset_TargetRealtime_MaxQuality & ~aiProcess_RemoveRedundantMaterials);
 
     /* we know there is atleast one root node if conversion is successful */
     if (!pstate->scene || !pstate->scene->mRootNode)

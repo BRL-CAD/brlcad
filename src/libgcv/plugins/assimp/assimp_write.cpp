@@ -14,6 +14,7 @@
 struct assimp_write_options
 {
     char* format;
+    const char* model_workaround;
 };
 
 struct conversion_state
@@ -28,9 +29,11 @@ struct conversion_state
     aiScene* scene;                     /* generated scene to be exported */
     std::vector<aiNode*> children;      /* dynamically keeps track of children while walking */
     std::vector<aiMesh*> meshes;        /* dynamically keeps track of bot meshes while walking */
+    std::vector<aiMaterial*> mats;      /* dynamically keeps track of materials (shaders) */
+    std::unordered_map<std::string, int> mat_names;
     
 };
-#define CONVERSION_STATE_NULL { NULL, NULL, NULL, NULL, NULL, {}, {} }
+#define CONVERSION_STATE_NULL { NULL, NULL, NULL, NULL, NULL, {}, {}, {}, {} }
 
 /* uses strrchr to find last instance of 'token' and returns what remains excluding
  * the char. returns NULL if the token does not exist within the string 
@@ -45,7 +48,7 @@ strip_at_char(char* str, char token) {
 }
 
 HIDDEN void
-nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float color[3], void *client_data)
+nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state* tsp, void *client_data)
 {
     struct conversion_state * const pstate = (struct conversion_state *)client_data;
     struct model* m;
@@ -190,14 +193,50 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(
         curr_mesh->mNormals = final_normals;
     }
 
-    /* TODO generate material and color data */
-    curr_mesh->mMaterialIndex = 0;
-
-    aiColor4D* final_color = new aiColor4D();
-    final_color->r = color[0];
-    final_color->g = color[1];
-    final_color->b = color[2];
+    /* set color data at mesh level */
+    aiColor4D* final_color = new aiColor4D(1);
+    if (tsp->ts_mater.ma_color_valid) {
+        final_color->r = tsp->ts_mater.ma_color[0];
+        final_color->g = tsp->ts_mater.ma_color[1];
+        final_color->b = tsp->ts_mater.ma_color[2];
+    }
     curr_mesh->mColors[0] = final_color;
+
+    /* set material data using shader string */
+    if (tsp->ts_mater.ma_shader) {
+        std::string shader_name(tsp->ts_mater.ma_shader);
+        auto it = pstate->mat_names.find(shader_name);
+        if (it != pstate->mat_names.end()) {
+            curr_mesh->mMaterialIndex = it->second;
+        } else {
+            /* we create a new material and give it the name of the raw ma_shader
+            * NOTE: this hack-ily handles any modifiers (re, sh, etc)
+            * by stuffing them into the string rather than setting them properly
+            * in the material properties. This works internally because assimp_read.cpp
+            * re-sets the shader string but this will NOT work to relate material data
+            * to other readers using the file format */
+            aiMaterial* mat = new aiMaterial();
+        
+            aiString* str_to_aistr = new aiString(shader_name);
+            mat->AddProperty(str_to_aistr, AI_MATKEY_NAME);
+    
+        //     int blinn = aiShadingMode_Blinn;
+        //     mat->AddProperty<int>(&blinn, 1, AI_MATKEY_SHADING_MODEL);
+    
+        //     aiColor3D col(final_color->r, final_color->g, final_color->b);
+    
+        //     mat->AddProperty<aiColor3D>(&col, 1, AI_MATKEY_COLOR_DIFFUSE);
+            // aiTextureType_UNKNOWN for mat_code?
+    
+    
+            /* add new material to map */
+            pstate->mats.push_back(mat);
+            curr_mesh->mMaterialIndex = pstate->mats.size();
+            pstate->mat_names.emplace(shader_name, pstate->mats.size());
+        }
+    } else {
+        curr_mesh->mMaterialIndex = 0;
+    }
 
     /* GENERATE NODE */
     aiNode* curr_node = new aiNode();
@@ -235,12 +274,14 @@ assimp_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_
 
     BU_ALLOC(options_data, struct assimp_write_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(2 * sizeof(struct bu_opt_desc), "options_desc");
+    *options_desc = (struct bu_opt_desc *)bu_malloc(3 * sizeof(struct bu_opt_desc), "options_desc");
 
     options_data->format = NULL;
+    options_data->model_workaround = NULL;
 
     BU_OPT((*options_desc)[0], NULL, "format", "string", bu_opt_str, &options_data->format, "specify the output file format");
-    BU_OPT_NULL((*options_desc)[1]);
+    BU_OPT((*options_desc)[1], NULL, "model", "string", bu_opt_str, &options_data->model_workaround, "specify a single object to convert");
+    BU_OPT_NULL((*options_desc)[2]);
 }
 
 
@@ -304,6 +345,17 @@ assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, co
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
     
     /* Walk indicated tree(s).  Each region will be output separately */
+    if (state.assimp_write_options->model_workaround) {
+        const char** single = new const char*[1];
+        single[0] = state.assimp_write_options->model_workaround;
+        (void) db_walk_tree(context->dbip, 1, single,
+                1,
+                &tree_state,
+                0,			/* take all regions */
+                (gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?gcv_region_end_mc:gcv_region_end,
+                (gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?NULL:nmg_booltree_leaf_tess,
+                (void *)&gcvwriter);
+    } else {
     (void) db_walk_tree(context->dbip, gcv_options->num_objects, (const char **)gcv_options->object_names,
 			1,
 			&tree_state,
@@ -311,6 +363,7 @@ assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, co
 			(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?gcv_region_end_mc:gcv_region_end,
 			(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?NULL:nmg_booltree_leaf_tess,
 			(void *)&gcvwriter);
+    }
 
     /* update the scene */
     aiNode** conv_children = new aiNode*[state.children.size()];
@@ -325,13 +378,15 @@ assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, co
     state.scene->mMeshes = conv_meshes;
     state.scene->mNumMeshes = state.meshes.size();
 
-    /* TODO FIXME: create better materials using shader data of db */
-    aiMaterial** conv_mats = new aiMaterial*[1];
+    aiMaterial** conv_mats = new aiMaterial*[state.mats.size()];
+    aiMaterial def;
+    aiString def_name("plastic");       /* index 0 assigns 'plastic' for any region wo a shader set */
+    def.AddProperty(&def_name, AI_MATKEY_NAME);
+    conv_mats[0] = &def;
+    for (size_t i = 0; i < state.mats.size(); i++)
+        conv_mats[i+1] = state.mats[i];
+    state.scene->mNumMaterials = state.mats.size() + 1;
     state.scene->mMaterials = conv_mats;
-    aiMaterial* temp = new aiMaterial();
-    conv_mats[0] = temp;
-
-    state.scene->mNumMaterials = 1;
 
     /* export */
     aiReturn airet = exporter.Export(state.scene, fmt_desc->id, dest_path, state.scene->mFlags);
