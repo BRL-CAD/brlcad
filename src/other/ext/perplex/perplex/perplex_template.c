@@ -247,7 +247,7 @@ buf_linedir(struct Buf *buf, const char* filename, size_t lineno)
     char *t;
     const char fmt[] = "#line %zu \"%s\"\n";
 
-    t = (char*)malloc(strlen(fmt) + strlen(filename) + numDigits(lineno) + 1);
+    t = (char*)malloc(strlen(fmt) + strlen(filename) + numDigits((int)lineno) + 1);
     sprintf(t, fmt, lineno, filename);
     buf = buf_strappend(buf, t);
     free(t);
