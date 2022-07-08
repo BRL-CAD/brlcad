@@ -127,7 +127,7 @@ infix_to_postfix(std::string str)
     std::ostringstream ostr;
     char c;
 
-    for (unsigned int i = 0; i < strlen(str.c_str()); i++) {
+    for (size_t i = 0; i < strlen(str.c_str()); i++) {
 	c = str[i];
 	if (c == '(') {
 	    s.push(c);
@@ -183,12 +183,12 @@ parse_args(struct bu_vls *output_file, int ac, char **av)
 		verbose++;
 		break;
 	    case 'x':               /* librt debug flag */
-		sscanf(bu_optarg, "%x", &rt_debug);
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
+		(void)sscanf(bu_optarg, "%x", &rt_debug);
+		bu_printb("librt RT_G_DEBUG", rt_debug, RT_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X':               /* NMG debug flag */
-		sscanf(bu_optarg, "%x", &nmg_debug);
+		(void)sscanf(bu_optarg, "%x", &nmg_debug);
 		bu_printb("librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
@@ -1023,7 +1023,7 @@ booltree_evaluate(tree *tp, resource *resp)
     union tree *tr;
     char op;
     char *name;
-    int namelen;
+    size_t namelen;
 
     RT_CK_TREE(tp);
 
@@ -1073,8 +1073,10 @@ booltree_evaluate(tree *tp, resource *resp)
 	/* For sub and add, if rhs is 0, result is lhs */
 	return tl;
     }
-    if (tl->tr_op != OP_DB_LEAF) bu_exit(2, "booltree_evaluate() bad left tree\n");
-    if (tr->tr_op != OP_DB_LEAF) bu_exit(2, "booltree_evaluate() bad right tree\n");
+    if (tl->tr_op != OP_DB_LEAF)
+	bu_exit(2, "booltree_evaluate() bad left tree\n");
+    if (tr->tr_op != OP_DB_LEAF)
+	bu_exit(2, "booltree_evaluate() bad right tree\n");
 
     bu_log(" {%s} %c {%s}\n", tl->tr_d.td_name, op, tr->tr_d.td_name);
     std::cout << "******" << tl->tr_d.td_name << " " << (char)op << " " << tr->tr_d.td_name << "***********" << std::endl;
