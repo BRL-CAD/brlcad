@@ -265,7 +265,7 @@ buf_destroy(struct Buf *buf)
  * We grow by mod(512) boundaries.
  */
 struct Buf*
-buf_append(struct Buf *buf, const void *ptr,  n_elem)
+buf_append(struct Buf *buf, const void *ptr, size_t n_elem)
 {
     size_t n_alloc = 0;
 
