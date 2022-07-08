@@ -107,7 +107,7 @@ generate_shader(struct conversion_state* pstate, unsigned int mesh_idx)
      */
     C_STRUCT aiColor4D* mesh_color = pstate->scene->mMeshes[mesh_idx]->mColors[0];
     if (mesh_color) {
-        unsigned char trgb[3] = { 0 };
+        unsigned char* trgb = new unsigned char[3];
         trgb[0] = (unsigned char)(mesh_color->r * 255);
         trgb[1] = (unsigned char)(mesh_color->g * 255);
         trgb[2] = (unsigned char)(mesh_color->b * 255);

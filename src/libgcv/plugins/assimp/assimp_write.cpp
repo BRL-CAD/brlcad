@@ -263,7 +263,7 @@ assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, co
 
     state.gcv_options = gcv_options;
     state.assimp_write_options = (struct assimp_write_options*)options_data;
-    state.dbip = context->dbip;
+//     state.dbip = context->dbip;
 
     /* check and validate the specied output file type against ai 
      * checks using file extension if no --format is supplied 
@@ -304,7 +304,7 @@ assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, co
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
     
     /* Walk indicated tree(s).  Each region will be output separately */
-    (void) db_walk_tree(state.dbip, gcv_options->num_objects, (const char **)gcv_options->object_names,
+    (void) db_walk_tree(context->dbip, gcv_options->num_objects, (const char **)gcv_options->object_names,
 			1,
 			&tree_state,
 			0,			/* take all regions */
