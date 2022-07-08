@@ -255,7 +255,7 @@ HmFreeLList(HmLList *listp)
 static void
 HmPutItem(HmWindow *win, HmItem *itemp, int flag)
 {
-    int label_len = strlen(itemp->text);
+    size_t label_len = strlen(itemp->text);
     static char buf[HmMAXLINE];
     char *p = buf;
     int col = win->menux;
@@ -647,7 +647,7 @@ HmRedraw(void)
 	    MmVFree(Min(win->height, HmLastMaxVis)+HmHGTBORDER,
 		    int, win->dirty);
 	    if ((win->dirty =
-		 MmVAllo(HmHEIGHT+HmHGTBORDER, int)
+		 MmVAllo((size_t)HmHEIGHT+HmHGTBORDER, int)
 		    ) == NULL) {
 		return;
 	    }
@@ -739,8 +739,8 @@ HmFitMenu(HmWindow *nwin, HmWindow *cwin)
 	else
 	    /* Look for space underneath this menu.				*/
 	    if (cwin->menux + nwin->width + 1 <= ScCO
-		&&	cwin->menuy + cwin->height + nwin->height + HmHGTBORDER
-		< HmMaxVis + HmTopMenu
+		&& (size_t)cwin->menuy + cwin->height + nwin->height + HmHGTBORDER
+		< (size_t)HmMaxVis + HmTopMenu
 		) {
 		nwin->menux = cwin->menux;
 		nwin->menuy = cwin->menuy + cwin->height + HmHGTBORDER - 1;
@@ -903,7 +903,7 @@ HmHit(HmMenu *menup)
 	if (i > 0) {
 	    int ii;
 	    HmLList *lp;
-	    if ((menup->item = MmVAllo(i+1, HmItem)) == NULL) {
+	    if ((menup->item = MmVAllo((size_t)i+1, HmItem)) == NULL) {
 		goto clean_exit;
 	    }
 	    for (ii = 0, lp = llhead.next;
@@ -932,7 +932,7 @@ HmHit(HmMenu *menup)
 	menup->prevhit = 0;
     itemp = &menup->item[menup->prevhit];
 
-    if ((win->dirty = MmVAllo(HmHEIGHT+HmHGTBORDER, int)) == NULL) {
+    if ((win->dirty = MmVAllo((size_t)HmHEIGHT+HmHGTBORDER, int)) == NULL) {
 	goto clean_exit;
     }
     if (HmDirty)
@@ -963,7 +963,7 @@ HmHit(HmMenu *menup)
 		    if (HmENTRY < win->menup->prevtop) {
 			win->menup->prevtop -=
 			    HmENTRY > HmMaxVis/2 ?
-			    HmMaxVis/2+1 : HmENTRY+1;
+			    (short)HmMaxVis/2+1 : (short)HmENTRY+1;
 			HmSetmap(win);
 			HmDrawWin(win);
 		    } else
@@ -972,7 +972,7 @@ HmHit(HmMenu *menup)
 		break;
 	    case M_DOWN :
 	    case A_DOWN :
-		if (HmENTRY >= win->height-1)
+		if ((size_t)HmENTRY >= (size_t)win->height-1)
 		    HmRingbell();
 		else {
 		    HmPutItem(win, itemp, P_OFF | P_FORCE);
@@ -1013,7 +1013,7 @@ HmHit(HmMenu *menup)
 		lastitemp = itemp;
 		itemp = win->menup->item +
 		    win->menup->prevtop +
-		    (mousey - (win->menuy + 1));
+		    ((size_t)mousey - ((size_t)win->menuy + 1));
 		if (itemp == lastitemp)
 		    /* User hit item twice in a row, so select it. */
 		    goto m_select;
@@ -1021,15 +1021,15 @@ HmHit(HmMenu *menup)
 		menup->prevhit = HmENTRY;
 		if (HmENTRY - win->menup->prevtop >= HmMaxVis) {
 		    win->menup->prevtop +=
-			win->height-HmENTRY > HmMaxVis/2 ?
-			HmMaxVis/2 : win->height-HmENTRY;
+			(short)(win->height-HmENTRY > HmMaxVis/2 ?
+			HmMaxVis/2 : win->height-HmENTRY);
 		    HmSetmap(win);
 		    HmDrawWin(win);
 		} else
 		    if (HmENTRY < win->menup->prevtop) {
 			win->menup->prevtop -=
-			    HmENTRY > HmMaxVis/2 ?
-			    HmMaxVis/2+1 : HmENTRY+1;
+			    (short)(HmENTRY > HmMaxVis/2 ?
+			    (size_t)HmMaxVis/2+1 : HmENTRY+1);
 			HmSetmap(win);
 			HmDrawWin(win);
 		    } else {
