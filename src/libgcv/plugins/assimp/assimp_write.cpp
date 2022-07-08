@@ -115,7 +115,7 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(
 		    NMG_CK_VERTEX(v);
 
                     loc = bu_ptbl_locate(&verts, (long *)v);
-                    if (loc < 0 || loc >= numverts) {
+                    if ((long)loc < 0 || loc >= numverts) {
                         /* TODO I dont think we ever actually get here, but if we do
                          * handle the mismatch without a full stop
                          */
