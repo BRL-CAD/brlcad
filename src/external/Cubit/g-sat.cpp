@@ -317,10 +317,10 @@ describe_tree(tree *tree, bu_vls *str)
  *
  */
 static int
-region_start (db_tree_state *UNUSED(tsp),
-	      const db_full_path *pathp,
-	      const rt_comb_internal *combp,
-	      void *UNUSED(client_data))
+region_start(db_tree_state *UNUSED(tsp),
+	     const db_full_path *pathp,
+	     const rt_comb_internal *combp,
+	     void *UNUSED(client_data))
 {
     directory *dp;
     bu_vls str = BU_VLS_INIT_ZERO;
@@ -337,7 +337,8 @@ region_start (db_tree_state *UNUSED(tsp),
 
     /* here is where the conversion should be done */
     std::cout << "* Here is where the conversion should be done *" << std::endl;
-    printf("Write this region (name=%s) as a part in your format:\n", dp->d_namep);
+    if (dp && dp->d_namep)
+	printf("Write this region (name=%s) as a part in your format:\n", dp->d_namep);
 
     describe_tree(combp->tree, &str);
 
@@ -512,13 +513,15 @@ primitive_func(db_tree_state *tsp,
     GeometryModifyTool *gmt = GeometryModifyTool::instance();
     GeometryQueryTool *gqt = GeometryQueryTool::instance();
 
-    dp = DB_FULL_PATH_CUR_DIR(pathp);
-
     if (debug&DEBUG_NAMES) {
 	char *cname = db_path_to_string(pathp);
 	bu_log("leaf_func    %s\n", cname);
 	bu_free(cname, "region_end name");
     }
+
+    dp = DB_FULL_PATH_CUR_DIR(pathp);
+    if (!dp || !dp->d_namep)
+	return (tree*)NULL;
 
     /* handle each type of primitive (see h/rtgeom.h) */
     if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD) {
