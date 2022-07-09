@@ -62,22 +62,22 @@ FileUtil::getFileType()
     FILE *fp = fopen(filename, "rb");
 
     if (!fp)
-	return FILE_TYPE_UNKNOWN; //return with unknown type if it could not open file
+	return FILEUTIL_TYPE_UNKNOWN; //return with unknown type if it could not open file
     if (fread(format, sizeof(unsigned char), 10, fp) != 10) {
 	fclose(fp);
-	return FILE_TYPE_UNKNOWN;
+	return FILEUTIL_TYPE_UNKNOWN;
     }
 
     fclose(fp);
 
-    int fileType = FILE_TYPE_UNKNOWN;
+    int fileType = FILEUTIL_TYPE_UNKNOWN;
 
     //compares file formate with known formats to check for vrml version 1 or 2
     if (bu_strncmp((char *)format, "#VRML V2.0", 10) == 0) {
-	    fileType = FILE_TYPE_VRML;  //vrml version 2
+	    fileType = FILEUTIL_TYPE_VRML;  //vrml version 2
     }
     if (bu_strncmp((char *)format, "#VRML V1.0", 10) == 0) {
-	    fileType = FILE_TYPE_VRML1; //vrml version 1
+	    fileType = FILEUTIL_TYPE_VRML1; //vrml version 1
     }
 
     return fileType;
