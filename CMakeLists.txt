@@ -764,13 +764,19 @@ if(HAVE_SCANF23_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_SCANF23_ATTRIBUTE 1\n")
 endif(HAVE_SCANF23_ATTRIBUTE)
 
-include(CheckCSourceCompiles)
 # Check whether the compiler supports __attribute__((__noreturn__))
 check_c_source_compiles("#include <stdlib.h>\n
 void noret() __attribute__((__noreturn__)); void noret(){exit(1);} int main(int argc, char *argv[]) {noret(); return 0;}" HAVE_NORETURN_ATTRIBUTE)
 if(HAVE_NORETURN_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_NORETURN_ATTRIBUTE 1\n")
 endif(HAVE_NORETURN_ATTRIBUTE)
+
+# Check whether the compiler supports __declspec(noreturn)
+check_c_source_compiles("#include <stdlib.h>\n
+void __declspec(noreturn) noret() {exit(1);} int main(int argc, char *argv[]) {noret(); return 0;}" HAVE_NORETURN_DECLSPEC)
+if(HAVE_NORETURN_DECLSPEC)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_NORETURN_DECLSPEC 1\n")
+endif(HAVE_NORETURN_DECLSPEC)
 
 # Check whether the compiler supports __attribute__((analyzer_noreturn))
 check_c_source_compiles("void anoret() __attribute__((analyzer_noreturn)); void anoret(){return;} int main(int argc, char *argv[]) {anoret(); return 0;}" HAVE_ANALYZER_NORETURN_ATTRIBUTE)
@@ -783,6 +789,12 @@ check_c_source_compiles("inline void always_inline() __attribute__((always_inlin
 if(HAVE_ALWAYS_INLINE_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_ALWAYS_INLINE_ATTRIBUTE 1\n")
 endif(HAVE_ALWAYS_INLINE_ATTRIBUTE)
+
+# Check whether the compiler supports __forceinline
+check_c_source_compiles("inline void always_inline() __forceinline; inline void always_inline(){return;} int main(int argc, char *argv[]) {always_inline(); return 0;}" HAVE_FORCEINLINE)
+if(HAVE_FORCEINLINE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_FORCEINLINE 1\n")
+endif(HAVE_FORCEINLINE)
 
 # Check whether the compiler supports __attribute__((const))
 check_c_source_compiles("void func() __attribute__((const)); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_CONST_ATTRIBUTE)
@@ -801,6 +813,12 @@ check_c_source_compiles("void func() __attribute__((cold)); void func(){return;}
 if(HAVE_COLD_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_COLD_ATTRIBUTE 1\n")
 endif(HAVE_COLD_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((hot))
+check_c_source_compiles("void func() __attribute__((hot)); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_HOT_ATTRIBUTE)
+if(HAVE_HOT_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_HOT_ATTRIBUTE 1\n")
+endif(HAVE_HOT_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((nonnull))
 check_c_source_compiles("int *func(int *) __attribute__((nonnull)); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}" HAVE_NONNULL_ATTRIBUTE)
