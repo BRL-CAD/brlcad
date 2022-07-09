@@ -116,8 +116,10 @@
 /**
  * shorthand declaration of a function that doesn't return
  */
-#ifdef HAVE_NORETURN_ATTRIBUTE
+#if defined(HAVE_NORETURN_ATTRIBUTE)
 #  define _BU_ATTR_NORETURN __attribute__((__noreturn__))
+#elif defined(HAVE_NORETURN_DECLSPEC)
+#  define _BU_ATTR_NORETURN __declspec(noreturn)
 #else
 #  define _BU_ATTR_NORETURN
 #endif
@@ -127,9 +129,9 @@
  * this, but for now this suppresses a lot of noise in the
  * reports */
 #ifdef HAVE_ANALYZER_NORETURN_ATTRIBUTE
-#  define _BU_ATTR_ANALYZE_NORETURN __attribute__((analyzer_noreturn))
+#  define _BU_ATTR_ANALYZER_NORETURN __attribute__((analyzer_noreturn))
 #else
-#  define _BU_ATTR_ANALYZE_NORETURN
+#  define _BU_ATTR_ANALYZER_NORETURN
 #endif
 
 /**
