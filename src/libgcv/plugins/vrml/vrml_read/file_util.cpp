@@ -41,7 +41,7 @@ extern "C" b_off_t ftello(FILE *);
 
 #include "bu.h"
 
-using namespace std;
+
 //Constructor with filename a parameter
 FileUtil::FileUtil(const char *fname)
 {
@@ -88,11 +88,11 @@ char *
 FileUtil::storeFileInput()
 {
     int size, i;
-    ifstream infile(filename, ios::in);
+    std::ifstream infile(filename, std::ios::in);
 
-    infile.seekg(0, ios::end);
+    infile.seekg(0, std::ios::end);
     size = infile.tellg();  //Get file size
-    infile.seekg(0, ios::beg);
+    infile.seekg(0, std::ios::beg);
 
     fileinput = new char[(2*size) + 1];
 
