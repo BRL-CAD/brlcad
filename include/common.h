@@ -408,6 +408,27 @@ typedef ptrdiff_t ssize_t;
 #endif
 
 
+/**
+ * NORETURN is declaration of a function that doesn't return.
+ * 
+ * For portability, the attribute must precede the function, i.e., be
+ * declared on the left:
+ * 
+ * NORETURN void function(void);
+ */
+#ifdef NORETURN
+#  undef NORETURN
+#  warning "NORETURN unexpectedly defined.  Ensure common.h is included first."
+#endif
+#if defined(HAVE_NORETURN_ATTRIBUTE)
+#  define NORETURN __attribute__((__noreturn__))
+#elif defined(HAVE_NORETURN_DECLSPEC)
+#  define NORETURN __declspec(noreturn)
+#else
+#  define NORETURN /* does not return */
+#endif
+
+
 /* ActiveState Tcl doesn't include this catch in tclPlatDecls.h, so we
  * have to add it for them
  */
