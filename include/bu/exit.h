@@ -111,7 +111,7 @@ BU_EXPORT extern void bu_bomb_restore_hooks(struct bu_hook_list *save_hlp);
  * This routine should never return unless there is a BU_SETJUMP()
  * handler registered.
  */
-BU_EXPORT _BU_ATTR_ANALYZER_NORETURN _BU_ATTR_NORETURN extern void bu_bomb(const char *str);
+BU_EXPORT _BU_ATTR_ANALYZER_NORETURN NORETURN extern void bu_bomb(const char *str);
 
 
 /**
@@ -126,7 +126,7 @@ BU_EXPORT _BU_ATTR_ANALYZER_NORETURN _BU_ATTR_NORETURN extern void bu_bomb(const
  *
  * This routine should never return.
  */
-BU_EXPORT _BU_ATTR_ANALYZER_NORETURN _BU_ATTR_NORETURN _BU_ATTR_PRINTF23 extern void bu_exit(int status, const char *fmt, ...);
+BU_EXPORT _BU_ATTR_ANALYZER_NORETURN NORETURN _BU_ATTR_PRINTF23 extern void bu_exit(int status, const char *fmt, ...);
 
 
 /**
