@@ -113,16 +113,6 @@
 #  define _BU_ATTR_SCANF23
 #endif
 
-/**
- * shorthand declaration of a function that doesn't return
- */
-#if defined(HAVE_NORETURN_ATTRIBUTE)
-#  define _BU_ATTR_NORETURN __attribute__((__noreturn__))
-#elif defined(HAVE_NORETURN_DECLSPEC)
-#  define _BU_ATTR_NORETURN __declspec(noreturn)
-#else
-#  define _BU_ATTR_NORETURN
-#endif
 
 /* For the moment, we need to specially flag some functions
  * for clang.  It's not clear if we will always need to do
