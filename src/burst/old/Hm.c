@@ -1029,7 +1029,7 @@ HmHit(HmMenu *menup)
 		    if (HmENTRY < win->menup->prevtop) {
 			win->menup->prevtop -=
 			    (short)(HmENTRY > HmMaxVis/2 ?
-			    (size_t)HmMaxVis/2+1 : HmENTRY+1);
+			    (size_t)HmMaxVis/2+1 : (size_t)(HmENTRY+1));
 			HmSetmap(win);
 			HmDrawWin(win);
 		    } else {
