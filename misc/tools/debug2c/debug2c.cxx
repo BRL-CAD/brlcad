@@ -162,6 +162,7 @@ main(int argc, const char *argv[])
     ofile << "#include <stdio.h>\n\n";
 
 #ifndef TEST_MAIN
+    ofile << "#include \"bu/exit.h\"\n";
     ofile << "#include \"bu/str.h\"\n";
     ofile << "#include \"bu/vls.h\"\n\n";
 #endif
@@ -375,7 +376,7 @@ main(int argc, const char *argv[])
     ofile << "    }\n";
     ofile << "}\n";
     ofile << "\n";
-    ofile << "static int\n";
+    ofile << "static size_t\n";
     ofile << "toggle_debug_flag(struct bu_vls *e_vls, const char *lib_filter, const char *flag_filter)\n";
     ofile << "{\n";
     ofile << "    size_t lcnt = 0;\n";
@@ -397,21 +398,17 @@ main(int argc, const char *argv[])
     ofile << "		ecnt++;\n";
     ofile << "	    }\n";
     ofile << "	    if (!found) {\n";
-    ofile << "		if (e_vls) {\n";
-    ofile << "		    bu_vls_printf(e_vls, \"invalid %s flag paramter: %s\\n\", dbg_libs[lcnt], flag_filter);\n";
-    ofile << "		}\n";
-    ofile << "		return -1;\n";
+    ofile << "		if (e_vls)\n";
+    ofile << "		    bu_exit(-1, \"invalid %s flag paramter: %s\\n\", dbg_libs[lcnt], flag_filter);\n";
     ofile << "	    } else {\n";
-    ofile << "		return (int)lcnt;\n";
+    ofile << "		return lcnt;\n";
     ofile << "	    }\n";
     ofile << "	}\n";
     ofile << "	lcnt++;\n";
     ofile << "    }\n";
     ofile << "\n";
-    ofile << "    if (e_vls) {\n";
-    ofile << "	bu_vls_printf(e_vls, \"invalid lib paramter: %s\\n\", lib_filter);\n";
-    ofile << "    }\n";
-    ofile << "    return -1;\n";
+    ofile << "	bu_exit(-1, \"invalid lib paramter: %s\\n\", lib_filter);\n";
+    ofile << "    \n";
     ofile << "}\n";
     ofile << "\n";
     ofile << "static void\n";
@@ -580,13 +577,9 @@ main(int argc, const char *argv[])
     ofile << "	}\n";
     ofile << "\n";
     ofile << "	if (argc == 3) {\n";
-    ofile << "	    lcnt = toggle_debug_flag(e_vls, argv[1], argv[2]);\n";
-    ofile << "	    if (lcnt < 0) {\n";
-    ofile << "		return -1;\n";
-    ofile << "	    } else {\n";
-    ofile << "		print_set_lib_flags(o_vls, lcnt, max_strlen);\n";
-    ofile << "		return 0;\n";
-    ofile << "	    }\n";
+    ofile << "	    toggle_debug_flag(e_vls, argv[1], argv[2]);\n";
+    ofile << "	    print_set_lib_flags(o_vls, lcnt, max_strlen);\n";
+    ofile << "	    return 0;\n";
     ofile << "	}\n";
     ofile << "\n";
     ofile << "	debug_print_help(e_vls);\n";
