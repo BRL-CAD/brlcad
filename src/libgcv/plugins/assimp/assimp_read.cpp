@@ -120,6 +120,47 @@ generate_shader(struct conversion_state* pstate, unsigned int mesh_idx)
     return ret;
 }
 
+HIDDEN std::string
+generate_unique_name(const char* curr_name, unsigned int def_idx, bool is_mesh)
+{
+    static std::unordered_map<std::string, int>used_names; /* used names in db */
+
+    std::string name(curr_name);
+    std::string prefix("region");
+    std::string suffix(".r");
+
+    /* get last instance of '/' and keep everything after it */
+    const char* trim = strrchr(curr_name, '/');
+    if (trim)
+        name = ++trim;
+
+    if (is_mesh) {
+        prefix = "mesh";
+        suffix = ".MESH";
+
+        /* get rid of .r if it is at end of name but regions have no enforced pattern
+         * to discern them from underlying meshes when importing names. 
+         * add '.MESH' at end to reduce collisions */
+        size_t dotr = name.find(".r\0");
+        if (dotr != std::string::npos)
+            name = name.substr(0, dotr);
+            
+        name.append(suffix);
+    }
+
+    /* if curr_name is empty, give a generic name */
+    if (!name.size())
+        name = prefix + "_" + std::to_string(def_idx) + suffix;
+
+    /* check for name collisions */
+    auto it = used_names.find(name);
+    if (it != used_names.end())
+        name.append("_DUP" + std::to_string(it->second++));
+    used_names.emplace(name, 0);
+
+    return name;
+}
+
 HIDDEN void
 generate_geometry(struct conversion_state* pstate, wmember &region, unsigned int mesh_idx)
 {
@@ -155,7 +196,7 @@ generate_geometry(struct conversion_state* pstate, wmember &region, unsigned int
     }
 
     /* add mesh to region list */
-    std::string mesh_name = "mesh_" + std::to_string(pstate->converted);
+    std::string mesh_name = generate_unique_name(pstate->scene->mMeshes[mesh_idx]->mName.data, pstate->converted, TRUE);
     mk_bot(pstate->fd_out, mesh_name.c_str(), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, mesh->mNumVertices, mesh->mNumFaces, vertices, faces, (fastf_t*)NULL, (struct bu_bitv*)NULL);
     (void)mk_addmember(mesh_name.c_str(), &region.l, NULL, WMOP_UNION);
 
@@ -166,22 +207,7 @@ generate_geometry(struct conversion_state* pstate, wmember &region, unsigned int
 HIDDEN void
 handle_node(struct conversion_state* pstate, const C_STRUCT aiNode* curr, struct wmember &regions)
 {
-    /* some files preserve names in the node
-     * first check and get rid of slashes
-     * if no slashes, check if theres any name data at all
-     * otherwise just give the region a generic name
-     * */
-    static std::unordered_map<std::string, int>used_names; /* used region names */
-    std::string region_name = curr->mName.data;
-    const char* trim = strrchr(curr->mName.data, '/');
-    if (trim)
-        region_name = ++trim;
-    if (!region_name.size())
-        region_name = "region_" + std::to_string(pstate->dfs) + ".r";
-    auto it = used_names.find(region_name);
-    if (it != used_names.end())
-        region_name.append("_DUP" + std::to_string(it->second++));
-    used_names.emplace(region_name, 0);
+    std::string region_name = generate_unique_name(curr->mName.data, pstate->dfs, FALSE);
 
     if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose) {
         bu_log("\nCurr node name | dfs index: %s | %d\n", curr->mName.data, pstate->dfs);
@@ -219,7 +245,7 @@ handle_node(struct conversion_state* pstate, const C_STRUCT aiNode* curr, struct
         generate_geometry(pstate, mesh, mesh_idx);
 
         /* FIXME generate shader and color 
-         * this assumes all mesh under a region are using the same material data
+         * this assumes all mesh under a region are using the same material data.
          * if they're not, we're just using the last one
          */
         shader_prop = generate_shader(pstate, mesh_idx);
@@ -250,13 +276,13 @@ handle_node(struct conversion_state* pstate, const C_STRUCT aiNode* curr, struct
 HIDDEN void
 convert_input(struct conversion_state* pstate)
 {
-    /* we are taking one of the postprocessing presets to avoid
-     * spelling out 20+ single postprocessing flags here. 
+    /* we are taking one of the postprocessing presets to have
+     * max quality with reasonable render times. We must keep 
+     * seemingly redundant materials we use the names for BRLCAD shaders
      */
     pstate->scene = aiImportFile(pstate->input_file.c_str(), aiProcessPreset_TargetRealtime_MaxQuality & ~aiProcess_RemoveRedundantMaterials);
 
-    /* we know there is atleast one root node if conversion is successful */
-    if (!pstate->scene || !pstate->scene->mRootNode)
+    if (!pstate->scene)
         bu_exit(0, "ERROR: bad scene conversion");
         
     if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose) {
