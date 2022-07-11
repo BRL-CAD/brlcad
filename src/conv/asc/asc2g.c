@@ -357,47 +357,40 @@ sktbld(void)
 		nsg->k.knots = (fastf_t *)bu_calloc(nsg->k.k_size, sizeof(fastf_t), "knots");
 		nsg->ctl_points = (int *)bu_calloc(nsg->c_size, sizeof(int), "control points");
 		if (bu_fgets(buf, BUFSIZE, ifp) == (char*)0) {
-		    bu_bomb("Unexpected EOF while reading sketch (%s) data\n", name);
-		    return;
+		    bu_exit(BRLCAD_ERROR, "ERROR: Unexpected EOF while reading sketch (%s) data\n", name);
 		}
 		cp = buf + 3;
 		ptr = strtok(cp, " ");
 		if (!ptr) {
-		    bu_bomb("ERROR: not enough knots for nurb segment in sketch (%s)\n", name);
-		    return;
+		    bu_exit(BRLCAD_ERROR, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name);
 		}
 		for (k=0; k<nsg->k.k_size; k++) {
 		    nsg->k.knots[k] = atof(ptr);
 		    ptr = strtok((char *)NULL, " ");
 		    if (!ptr || k < nsg->k.k_size - 1) {
-			bu_bomb("ERROR: not enough knots for nurb segment in sketch (%s)\n", name);
-			return;
+			bu_exit(BRLCAD_ERROR, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name);
 		    }
 		}
 		if (bu_fgets(buf, BUFSIZE, ifp) == (char*)0) {
-		    bu_bomb("Unexpected EOF while reading sketch (%s) data\n", name);
-		    return;
+		    bu_exit(BRLCAD_ERROR, "ERROR: Unexpected EOF while reading sketch (%s) data\n", name);
 		}
 		cp = buf + 3;
 		ptr = strtok(cp, " ");
 		if (!ptr) {
-		    bu_bomb("ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
-		    return;
+		    bu_exit(BRLCAD_ERROR, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
 		}
 		for (k=0; k<nsg->c_size; k++) {
 		    nsg->ctl_points[k] = atoi(ptr);
 		    ptr = strtok((char *)NULL, " ");
 		    if (!ptr || k < nsg->c_size - 1) {
-			bu_bomb("ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
-			return;
+			bu_exit(BRLCAD_ERROR, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
 		    }
 		}
 		nsg->magic = CURVE_NURB_MAGIC;
 		crv->segment[j] = nsg;
 		break;
 	    default:
-		bu_bomb("Unrecognized segment type (%c) in sketch (%s)\n", *cp, name);
-		return;
+		bu_exit(BRLCAD_ERROR, "ERROR: Unrecognized segment type (%c) in sketch (%s)\n", *cp, name);
 	}
 
     }
