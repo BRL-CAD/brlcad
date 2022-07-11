@@ -73,7 +73,7 @@ extern int fileno(FILE *stream);
 
 /* provide a stub so we don't need to wrap all setmode() calls */
 static inline int setmode(int UNUSED(a), int UNUSED(b)) {return 42;}
-static int (*setmode_func)(int, int) = setmode; /* quell use */
+static int (* volatile setmode_func)(int, int) = setmode; /* quell use */
 #endif
 
 /* needed for testing O_TEMPORARY and O_BINARY */
