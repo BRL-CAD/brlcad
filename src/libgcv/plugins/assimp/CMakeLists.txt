@@ -5,8 +5,8 @@ set(ASSIMP_SRCS
 
 find_package(Assimp)
 
-if(Assimp_LIBRARY AND Assimp_INCLUDE_DIR)
-  message("FOUND assimp")
+if(Assimp_ENABLED AND Assimp_LIBRARY AND Assimp_INCLUDE_DIR)
+  message("assimp plugin FOUND and ENABLED")
   include_directories(SYSTEM ${Assimp_INCLUDE_DIR})
 
   gcv_plugin_library(gcv-assimp SHARED ${ASSIMP_SRCS})
@@ -15,7 +15,7 @@ if(Assimp_LIBRARY AND Assimp_INCLUDE_DIR)
   VALIDATE_STYLE(gcv-assimp "${ASSIMP_SRCS}")
   PLUGIN_SETUP(gcv-assimp gcv)
 
-endif(Assimp_LIBRARY AND Assimp_INCLUDE_DIR)
+endif(Assimp_ENABLED AND Assimp_LIBRARY AND Assimp_INCLUDE_DIR)
 
 CMAKEFILES(
   ${ASSIMP_SRCS}
