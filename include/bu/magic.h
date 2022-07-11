@@ -260,7 +260,7 @@ __BEGIN_DECLS
  * pointer.  It's primarily a support routine for BU_CKMAG macro, but
  * may be used elsewhere.  This function never returns.
  */
-BU_EXPORT _BU_ATTR_ANALYZER_NORETURN NORETURN extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line);
+BU_EXPORT NORETURN extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line);
 
 
 /** @brief Routines involved with handling "magic numbers" used to identify various in-memory data structures. */

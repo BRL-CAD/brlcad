@@ -115,19 +115,6 @@
 
 
 /**
-* The 'analyzer_noreturn' attribute is (currently) clang-specific and
-* is almost identical to 'noreturn' except that it does not affect
-* code generation.  It's useful for annotating assertion handlers
-* that actually can/do return (exceptions and longjmp do not count),
-* but that any code analysis should pretend they do not.
-*/
-#ifdef HAVE_ANALYZER_NORETURN_ATTRIBUTE
-#  define _BU_ATTR_ANALYZER_NORETURN __attribute__((analyzer_noreturn))
-#else
-#  define _BU_ATTR_ANALYZER_NORETURN
-#endif
-
-/**
  * shorthand declaration of a function that should always be inline
  */
 
