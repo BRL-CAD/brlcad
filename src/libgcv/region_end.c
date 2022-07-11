@@ -195,7 +195,6 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     } else {
 
 	/* Write the region out */
-	// data->write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color, data->client_data);
         data->write_region(r, pathp, tsp, data->client_data);
 
     } BU_UNSETJUMP; /* Relinquish bomb protection */

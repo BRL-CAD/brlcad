@@ -14,7 +14,7 @@
 struct assimp_write_options
 {
     char* format;
-    const char* model_workaround;
+    const char* model_workaround;       /* once gcv can specify models to convert, this should go away */
 };
 
 struct conversion_state
@@ -25,19 +25,15 @@ struct conversion_state
     struct db_i *dbip;
     struct model *the_model;
 
-    /* TODO move scene out of here? all its being used for in walk is the root node */
     aiScene* scene;                     /* generated scene to be exported */
     std::vector<aiNode*> children;      /* dynamically keeps track of children while walking */
     std::vector<aiMesh*> meshes;        /* dynamically keeps track of bot meshes while walking */
     std::vector<aiMaterial*> mats;      /* dynamically keeps track of materials (shaders) */
-    std::unordered_map<std::string, int> mat_names;
+    std::unordered_map<std::string, int> mat_names;     /* maps material to vector index */
     
 };
 #define CONVERSION_STATE_NULL { NULL, NULL, NULL, NULL, NULL, {}, {}, {}, {} }
 
-/* uses strrchr to find last instance of 'token' and returns what remains excluding
- * the char. returns NULL if the token does not exist within the string 
- */
 HIDDEN char* 
 strip_at_char(char* str, char token) {
     char* ret = strrchr(str, token);
@@ -78,7 +74,7 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
     /* get list of vertexuse normals */
     nmg_vertexuse_normal_tabulate(&norms, &r->l.magic, &RTG.rtg_vlfree);
 
-    /* Check vertices */
+    /* Prelim check all vertices */
     for (i = 0; i < numverts; i++) {
 	v = (struct vertex *)BU_PTBL_GET(&verts, i);
 	NMG_CK_VERTEX(v);
@@ -194,7 +190,7 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
     }
 
     /* set color data at mesh level */
-    aiColor4D* final_color = new aiColor4D(1);
+    aiColor4D* final_color = new aiColor4D(1);  /* default color is white */
     if (tsp->ts_mater.ma_color_valid) {
         final_color->r = tsp->ts_mater.ma_color[0];
         final_color->g = tsp->ts_mater.ma_color[1];
@@ -304,10 +300,10 @@ assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, co
 
     state.gcv_options = gcv_options;
     state.assimp_write_options = (struct assimp_write_options*)options_data;
-//     state.dbip = context->dbip;
 
     /* check and validate the specied output file type against ai 
      * checks using file extension if no --format is supplied 
+     * this is likely all a 'can_write' function would need
      */
     const char* outext = strip_at_char((char*)dest_path, '.');
     if (state.assimp_write_options->format)     /* intentional setting format trumps file extension */
@@ -380,7 +376,7 @@ assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, co
 
     aiMaterial** conv_mats = new aiMaterial*[state.mats.size()];
     aiMaterial def;
-    aiString def_name("plastic");       /* index 0 assigns 'plastic' for any region wo a shader set */
+    aiString def_name("plastic");       /* index 0 assigns 'plastic' for any region w/o a shader set */
     def.AddProperty(&def_name, AI_MATKEY_NAME);
     conv_mats[0] = &def;
     for (size_t i = 0; i < state.mats.size(); i++)

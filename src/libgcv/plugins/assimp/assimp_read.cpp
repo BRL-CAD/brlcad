@@ -36,7 +36,7 @@ struct conversion_state
     struct rt_wdb* fd_out;	                    /* Resulting BRL-CAD file */
     struct wmember all;                             /* scene root */
 
-    const C_STRUCT aiScene* scene;                  /* assimp generated scene */
+    const aiScene* scene;                  /* assimp generated scene */
     int id_no;                                      /* region ident number */
     unsigned int dfs;                               /* number of nodes visited */
     unsigned int converted;                         /* number of meshes converted */
@@ -44,7 +44,7 @@ struct conversion_state
 #define CONVERSION_STATE_NULL { NULL, NULL, "", NULL, WMEMBER_INIT_ZERO, NULL, 0, 0, 0 }
 
 HIDDEN void
-aimatrix_to_arr16(C_STRUCT aiMatrix4x4 aimat, fastf_t* ret)
+aimatrix_to_arr16(aiMatrix4x4 aimat, fastf_t* ret)
 {
     ret[0 ] = aimat.a1;
     ret[1 ] = aimat.a2;
@@ -72,7 +72,7 @@ generate_shader(struct conversion_state* pstate, unsigned int mesh_idx)
     /* check for material data */
     if (pstate->scene->HasMaterials()) {
         unsigned int mat_idx = pstate->scene->mMeshes[mesh_idx]->mMaterialIndex;
-        C_STRUCT aiMaterial* mat = pstate->scene->mMaterials[mat_idx];
+        aiMaterial* mat = pstate->scene->mMaterials[mat_idx];
 
         std::string fmt = mat->GetName().data;
 
@@ -86,16 +86,16 @@ generate_shader(struct conversion_state* pstate, unsigned int mesh_idx)
         }
 
         /* get material data used for phong shading */
-        C_STRUCT aiColor3D diff (-1);
-        C_STRUCT aiColor3D spec (-1);
-        C_STRUCT aiColor3D amb (-1);
+        aiColor3D diff (-1);
+        aiColor3D spec (-1);
+        aiColor3D amb (-1);
         float s = -1.0;
         mat->Get(AI_MATKEY_COLOR_DIFFUSE, diff);
         mat->Get(AI_MATKEY_COLOR_SPECULAR, spec);
         mat->Get(AI_MATKEY_COLOR_AMBIENT, amb);
         mat->Get(AI_MATKEY_SHININESS_STRENGTH, s);
 
-        /* TODO create shader arg string from set material data, not just name*/
+        /* TODO create shader arg string from set material data, not just name */
 
         // ret.shaderargs = fmt_args.c_str();
     }
@@ -106,7 +106,7 @@ generate_shader(struct conversion_state* pstate, unsigned int mesh_idx)
      * 1) each vertex only has one set of colors
      * 2) each vertex in the triangle is the same color
      */
-    C_STRUCT aiColor4D* mesh_color = pstate->scene->mMeshes[mesh_idx]->mColors[0];
+    aiColor4D* mesh_color = pstate->scene->mMeshes[mesh_idx]->mColors[0];
     if (mesh_color) {
         unsigned char* trgb = new unsigned char[3];
         trgb[0] = (unsigned char)(mesh_color->r * 255);
@@ -144,7 +144,7 @@ generate_unique_name(const char* curr_name, unsigned int def_idx, bool is_mesh)
         size_t dotr = name.find(".r\0");
         if (dotr != std::string::npos)
             name = name.substr(0, dotr);
-            
+
         name.append(suffix);
     }
 
@@ -164,7 +164,7 @@ generate_unique_name(const char* curr_name, unsigned int def_idx, bool is_mesh)
 HIDDEN void
 generate_geometry(struct conversion_state* pstate, wmember &region, unsigned int mesh_idx)
 {
-    C_STRUCT aiMesh* mesh = pstate->scene->mMeshes[mesh_idx];
+    aiMesh* mesh = pstate->scene->mMeshes[mesh_idx];
     int* faces = new int[mesh->mNumFaces * 3];
     double* vertices = new double[mesh->mNumVertices * 3];
     
@@ -205,7 +205,7 @@ generate_geometry(struct conversion_state* pstate, wmember &region, unsigned int
 }
 
 HIDDEN void
-handle_node(struct conversion_state* pstate, const C_STRUCT aiNode* curr, struct wmember &regions)
+handle_node(struct conversion_state* pstate, aiNode* curr, struct wmember &regions)
 {
     std::string region_name = generate_unique_name(curr->mName.data, pstate->dfs, FALSE);
 
@@ -233,15 +233,11 @@ handle_node(struct conversion_state* pstate, const C_STRUCT aiNode* curr, struct
 
     /* handle the current nodes meshes if any */
     for (size_t i = 0; i < curr->mNumMeshes; i++) {
-        /* each node has an array of mesh indicies which correlates to 
-         * the index of mMeshes in scene
-         */
         unsigned int mesh_idx = curr->mMeshes[i];
         if (mesh_idx >= pstate->scene->mNumMeshes)
             bu_exit(0, "ERROR: bad mesh index");
         if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose)
             bu_log("      uses mesh %d\n", mesh_idx);
-        /* TODO FIXME: bad generation logs extra converted and mesh */
         generate_geometry(pstate, mesh, mesh_idx);
 
         /* FIXME generate shader and color 
@@ -263,7 +259,7 @@ handle_node(struct conversion_state* pstate, const C_STRUCT aiNode* curr, struct
             pstate->id_no++;
     }
 
-    /* add base region to top level */
+    /* when we're done adding children, add to top level */
     if (!curr->mNumChildren)
         (void)mk_addmember(region_name.c_str(), &regions.l, NULL, WMOP_UNION);
 
@@ -277,8 +273,8 @@ HIDDEN void
 convert_input(struct conversion_state* pstate)
 {
     /* we are taking one of the postprocessing presets to have
-     * max quality with reasonable render times. We must keep 
-     * seemingly redundant materials we use the names for BRLCAD shaders
+     * max quality with reasonable render times. But, we must keep 
+     * seemingly redundant materials as we use the names for BRLCAD shaders
      */
     pstate->scene = aiImportFile(pstate->input_file.c_str(), aiProcessPreset_TargetRealtime_MaxQuality & ~aiProcess_RemoveRedundantMaterials);
 
@@ -346,7 +342,7 @@ assimp_read(struct gcv_context *context, const struct gcv_opts* gcv_options, con
 
     /* check and validate the specied input file type against ai
      * checks using file extension if no --format is supplied
-     * this is likely all a 'can_read' function will need
+     * this is likely all a 'can_read' function would need
      */
     const char* extension = strrchr(source_path, '.');
     if (state.assimp_read_options->format)       /* intentional setting format trumps file extension */
@@ -364,6 +360,7 @@ assimp_read(struct gcv_context *context, const struct gcv_opts* gcv_options, con
 
     convert_input(&state);
 
+    /* TODO FIXME: bad generation logs extra converted and mesh */
     bu_log("Converted ( %d / %d ) meshes ... %.2f%%\n", state.converted, state.scene->mNumMeshes, (float)state.converted / (float)state.scene->mNumMeshes * 100.0);
 
     return 1;
