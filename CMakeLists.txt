@@ -777,7 +777,7 @@ if(HAVE_DEPRECATED_DECLSPEC)
 endif(HAVE_DEPRECATED_DECLSPEC)
 
 # Check whether the compiler supports __attribute__((__noreturn__))
-check_c_source_compiles("#__attribute__((__noreturn__)) void noret(); void noret(){exit(1);} int main(int argc, char *argv[]) {noret(); return 0;}" HAVE_NORETURN_ATTRIBUTE)
+check_c_source_compiles("__attribute__((__noreturn__)) void noret(); void noret(){exit(1);} int main(int argc, char *argv[]) {noret(); return 0;}" HAVE_NORETURN_ATTRIBUTE)
 if(HAVE_NORETURN_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_NORETURN_ATTRIBUTE 1\n")
 endif(HAVE_NORETURN_ATTRIBUTE)
