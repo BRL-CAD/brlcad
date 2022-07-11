@@ -243,7 +243,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 			bu_exit(1, "ERROR: Can't find vertex in list!\n");
 		    }
 
-		    fprintf(fp, " %lld", idx+1);
+		    fprintf(fp, " %ld", (long)(idx+1));
 		}
 
 		/* Output other info. for triangle ICOAT, component#, facet# */
