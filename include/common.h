@@ -409,12 +409,18 @@ typedef ptrdiff_t ssize_t;
 
 
 /**
- * NORETURN is declaration of a function that doesn't return.
- * 
+ * NORETURN declares that a function does not return.
+ *
  * For portability, the attribute must precede the function, i.e., be
  * declared on the left:
- * 
+ *
  * NORETURN void function(void);
+ *
+ * Note that throwing an exception or calling longjmp() do not
+ * constitute a return.  Functions that (always) infinite loop can be
+ * considered functions that do not return.  Functions that do not
+ * return should have a void return type.  This option is a hint to
+ * compilers and static analyers, to reduce false positive reporting.
  */
 #ifdef NORETURN
 #  undef NORETURN
@@ -426,6 +432,34 @@ typedef ptrdiff_t ssize_t;
 #  define NORETURN __declspec(noreturn)
 #else
 #  define NORETURN /* does not return */
+#endif
+
+
+/**
+ * FAUX_NORETURN declares a function should be treated as if it does
+ * not return, even though it can.
+ *
+ * As this label is (currently) Clang-specific, it can be declared on
+ * the left or right of a function declaration.  Left is recommended
+ * for consistency with other annotations, e.g.:
+ *
+ * FAUX_NORETURN void function(void);
+ *
+ * This annocation is almost identical to NORETURN except that it does
+ * not affect code generation and can be used on functions that
+ * actually return.  It's typically useful for annotating assertion
+ * handlers (e.g., assert()) that sometimes return and should not be
+ * used on NORETURN functions.  This annotation is primarily a hint to
+ * static analyzers.
+ */
+#ifdef FAUX_NORETURN
+#  undef FAUX_NORETURN
+#  warning "FAUX_NORETURN unexpectedly defined.  Ensure common.h is included first."
+#endif
+#ifdef HAVE_ANALYZER_NORETURN_ATTRIBUTE
+#  define FAUX_NORETURN __attribute__((analyzer_noreturn))
+#else
+#  define FAUX_NORETURN /* pretend does not return */
 #endif
 
 
