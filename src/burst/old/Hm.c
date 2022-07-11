@@ -261,7 +261,7 @@ HmPutItem(HmWindow *win, HmItem *itemp, int flag)
     int col = win->menux;
     int row = win->menuy+
 	(HmENTRY-win->menup->prevtop)+1;
-    int width = win->width;
+    size_t width = win->width;
     int bitmap = flag & P_FORCE ?
 	~0 : win->dirty[row-win->menuy];
     int bit = 1;
@@ -270,7 +270,7 @@ HmPutItem(HmWindow *win, HmItem *itemp, int flag)
 	return;
     if (itemp->text[0] & 0200) {
 	/* right-justified */
-	int i;
+	size_t i;
 	label_len--;
 	for (i = 0; i < width - label_len; i++)
 	    *p++ = itemp->text[0] & 0177;
@@ -278,7 +278,7 @@ HmPutItem(HmWindow *win, HmItem *itemp, int flag)
 	    *p++ = itemp->text[i];
     } else				/* left-justified */
 	if (itemp->text[label_len-1] & 0200) {
-	    int i;
+	    size_t i;
 	    label_len--;
 	    for (i = 0; !(itemp->text[i] & 0200); i++)
 		*p++ = itemp->text[i];
@@ -286,7 +286,7 @@ HmPutItem(HmWindow *win, HmItem *itemp, int flag)
 		*p++ = itemp->text[label_len] & 0177;
 	} else {
 	    /* centered */
-	    int i, j;
+	    size_t i, j;
 	    for (i = 0; i < (width - label_len)/2; i++)
 		*p++ = ' ';
 	    for (j = 0; itemp->text[j] != '\0'; j++)
