@@ -352,13 +352,13 @@ extern "C" WFOBJ_EXPORT int obj_contents_destroy(obj_contents_t contents)
 }
 
 
-extern "C" WFOBJ_EXPORT int obj_vertices(obj_contents_t contents, const float(*val_arr[])[4])
+extern "C" WFOBJ_EXPORT int obj_vertices(obj_contents_t contents, const double(*val_arr[])[4])
 {
     try {
 	obj::objFileContents *c =
 	    static_cast<obj::objFileContents*>(contents.p);
 
-	// coerce vector<tuple<float, 4> > to size_t arr[][4]
+	// coerce vector<tuple<double, 4> > to size_t arr[][4]
 	if (val_arr && c->gvertices_list.size()) {
 	    *val_arr = &(c->gvertices_list.front().v);
 	}
@@ -373,13 +373,13 @@ extern "C" WFOBJ_EXPORT int obj_vertices(obj_contents_t contents, const float(*v
 }
 
 
-extern "C" WFOBJ_EXPORT int obj_texture_coord(obj_contents_t contents, const float(*val_arr[])[3])
+extern "C" WFOBJ_EXPORT int obj_texture_coord(obj_contents_t contents, const double(*val_arr[])[3])
 {
     try {
 	obj::objFileContents *c =
 	    static_cast<obj::objFileContents*>(contents.p);
 
-	// coerce vector<tuple<float, 3> > to size_t arr[][3]
+	// coerce vector<tuple<double, 3> > to size_t arr[][3]
 	if (val_arr && c->tvertices_list.size()) {
 	    *val_arr = &(c->tvertices_list.front().v);
 	}
@@ -394,13 +394,13 @@ extern "C" WFOBJ_EXPORT int obj_texture_coord(obj_contents_t contents, const flo
 }
 
 
-extern "C" WFOBJ_EXPORT int obj_normals(obj_contents_t contents, const float(*val_arr[])[3])
+extern "C" WFOBJ_EXPORT int obj_normals(obj_contents_t contents, const double(*val_arr[])[3])
 {
     try {
 	obj::objFileContents *c =
 	    static_cast<obj::objFileContents*>(contents.p);
 
-	// coerce vector<tuple<float, 3> > to size_t arr[][3]
+	// coerce vector<tuple<double, 3> > to size_t arr[][3]
 	if (val_arr && c->nvertices_list.size()) {
 	    *val_arr = &(c->nvertices_list.front().v);
 	}
