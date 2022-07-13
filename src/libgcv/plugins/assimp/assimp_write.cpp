@@ -11,16 +11,14 @@
 #include <assimp/scene.h>
 #include <assimp/Exporter.hpp>
 
-struct assimp_write_options
-{
+typedef struct assimp_write_options {
     char* format;
     const char* model_workaround;       /* once gcv can specify models to convert, this should go away */
-};
+} assimp_write_options_t;
 
-struct conversion_state
-{
+typedef struct assimp_write_state {
     const struct gcv_opts *gcv_options;
-    const struct assimp_write_options *assimp_write_options;
+    assimp_write_options_t* assimp_write_options;
 
     struct db_i *dbip;
     struct model *the_model;
@@ -30,12 +28,22 @@ struct conversion_state
     std::vector<aiMesh*> meshes;        /* dynamically keeps track of bot meshes while walking */
     std::vector<aiMaterial*> mats;      /* dynamically keeps track of materials (shaders) */
     std::unordered_map<std::string, int> mat_names;     /* maps material to vector index */
-    
-};
-#define CONVERSION_STATE_NULL { NULL, NULL, NULL, NULL, NULL, {}, {}, {}, {} }
+    assimp_write_state() {
+        gcv_options = NULL;
+        assimp_write_options = NULL;
+        dbip = NULL;
+        the_model = NULL;
+        scene = NULL;
+        children = {};
+        meshes = {};
+        mats = {};
+        mat_names = {};
+    }
+} assimp_write_state_t;
 
 HIDDEN char* 
-strip_at_char(char* str, char token) {
+strip_at_char(char* str, char token)
+{
     char* ret = strrchr(str, token);
     if (ret)
         return &ret[1];
@@ -46,15 +54,16 @@ strip_at_char(char* str, char token) {
 HIDDEN void
 nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state* tsp, void *client_data)
 {
-    struct conversion_state * const pstate = (struct conversion_state *)client_data;
+    assimp_write_state_t* const pstate = (assimp_write_state_t*)client_data;
     struct model* m;
     struct shell *s;
     struct vertex *v;
     struct bu_ptbl verts = BU_PTBL_INIT_ZERO;
     struct bu_ptbl norms = BU_PTBL_INIT_ZERO;
-    size_t numverts = 0;		                /* Number of vertices to output */
-    aiVector3D* final_vertices = NULL;                  /* puts 'verts' into usable arr for ai */
     std::vector<aiFace*> faces = {};
+    aiMesh* curr_mesh = new aiMesh();
+    aiNode* curr_node = new aiNode();
+    size_t numverts = 0;		                /* Number of vertices to output */
     size_t i;
 
     NMG_CK_REGION(r);
@@ -81,7 +90,7 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
     }
 
     /* Check triangles, storing vert and face data */
-    final_vertices = new aiVector3D[numverts];
+    curr_mesh->mVertices = new aiVector3D[numverts];
     for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	struct faceuse *fu;
 
@@ -98,7 +107,8 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
 	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		struct edgeuse *eu;
 		int vert_count=0;
-                unsigned int* face = new unsigned int[3];
+                aiFace* curr_face = new aiFace();
+                curr_face->mIndices = new unsigned int[3];
 
 		NMG_CK_LOOPUSE(lu);
 
@@ -119,29 +129,29 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
                          * handle the mismatch without a full stop
                          */
 			bu_ptbl_free(&verts);
-			bu_exit(1, "ERROR: bad vertex location (%zu)!", loc);
+			bu_log("ERROR: bad vertex location (%zu)!\n", loc);
+                        return;
 		    }
 
                     /* store vertex data and match index to face data */
-                    face[vert_count] = loc;
-                    final_vertices[loc].x = v->vg_p->coord[0] * pstate->gcv_options->scale_factor;
-                    final_vertices[loc].y = v->vg_p->coord[1] * pstate->gcv_options->scale_factor;
-                    final_vertices[loc].z = v->vg_p->coord[2] * pstate->gcv_options->scale_factor;
+                    curr_face->mIndices[vert_count] = loc;
+                    curr_mesh->mVertices[loc].x = v->vg_p->coord[0] * pstate->gcv_options->scale_factor;
+                    curr_mesh->mVertices[loc].y = v->vg_p->coord[1] * pstate->gcv_options->scale_factor;
+                    curr_mesh->mVertices[loc].z = v->vg_p->coord[2] * pstate->gcv_options->scale_factor;
 		    vert_count++;
 		}
 
                 // TODO ai handles polygons
 		if (vert_count > 3) {
 		    bu_ptbl_free(&verts);
+		    bu_log("ERROR: LU is not a triangle -- ");
 		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
-		    bu_exit(1, "ERROR: LU is not a triangle\n");
+                    return;
 		} else if (vert_count < 3)      // TODO same here
 		    continue;
                 
-                /* create a new face and add to vector */
-                aiFace* curr_face = new aiFace();
+                /* if we have a triangle, we're good to add the face */
                 curr_face->mNumIndices = 3;
-                curr_face->mIndices = face;
                 /* it may be worth for time complexity allocating faces to a worst 
                  * case 'numverts' up-front rather than using push_back
                  */
@@ -150,9 +160,7 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
 	}
     }
     
-    /* GENERATE MESH */
-    aiMesh* curr_mesh = new aiMesh();
-
+    /* generate mesh */
     char* region_name = strip_at_char(db_path_to_string(pathp), '/');
     if (!region_name)
         sprintf(region_name, "region_%lu", pstate->meshes.size());
@@ -160,43 +168,36 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
     curr_mesh->mPrimitiveTypes |= aiPrimitiveType_TRIANGLE;
     curr_mesh->mNumVertices = numverts;
     curr_mesh->mNumFaces = faces.size();
-
-    curr_mesh->mVertices = final_vertices;
     
-    /* add faces */
-    aiFace* final_faces = new aiFace[faces.size()];     /* convert vector to arr */
+    /* add faces to mesh */
+    curr_mesh->mFaces = new aiFace[faces.size()];     /* convert vector to arr */
     for (i = 0; i < faces.size(); i++) {
-        final_faces[i] = *faces[i];
+        curr_mesh->mFaces[i] = *faces[i];
     }
-    curr_mesh->mFaces = final_faces;
 
-    /* add normals */
+    /* add normals to mesh */
     size_t numnorms = BU_PTBL_LEN(&norms);
     if (numnorms == numverts) {
-        aiVector3D* final_normals = new aiVector3D[numnorms];
+        curr_mesh->mNormals = new aiVector3D[numnorms];
         for (i = 0; i < numnorms; i++) {
             struct vertexuse_a_plane *va;
 
             va = (struct vertexuse_a_plane *)BU_PTBL_GET(&norms, i);
             NMG_CK_VERTEXUSE_A_PLANE(va);
 
-            aiVector3D curr;
-            curr.x = va->N[0] * pstate->gcv_options->scale_factor;
-            curr.y = va->N[1] * pstate->gcv_options->scale_factor;
-            curr.z = va->N[2] * pstate->gcv_options->scale_factor;
-            final_normals[i] = curr;
+            curr_mesh->mNormals[i].x = va->N[0] * pstate->gcv_options->scale_factor;
+            curr_mesh->mNormals[i].y = va->N[1] * pstate->gcv_options->scale_factor;
+            curr_mesh->mNormals[i].z = va->N[2] * pstate->gcv_options->scale_factor;
         }
-        curr_mesh->mNormals = final_normals;
     }
 
     /* set color data at mesh level */
-    aiColor4D* final_color = new aiColor4D(1);  /* default color is white */
+    curr_mesh->mColors[0] = new aiColor4D(1);  /* default color is white */
     if (tsp->ts_mater.ma_color_valid) {
-        final_color->r = tsp->ts_mater.ma_color[0];
-        final_color->g = tsp->ts_mater.ma_color[1];
-        final_color->b = tsp->ts_mater.ma_color[2];
+        curr_mesh->mColors[0]->r = tsp->ts_mater.ma_color[0];
+        curr_mesh->mColors[0]->g = tsp->ts_mater.ma_color[1];
+        curr_mesh->mColors[0]->b = tsp->ts_mater.ma_color[2];
     }
-    curr_mesh->mColors[0] = final_color;
 
     /* set material data using shader string */
     if (tsp->ts_mater.ma_shader) {
@@ -216,14 +217,14 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
             aiString* str_to_aistr = new aiString(shader_name);
             mat->AddProperty(str_to_aistr, AI_MATKEY_NAME);
     
+            /* TODO set properties the correct way */
         //     int blinn = aiShadingMode_Blinn;
         //     mat->AddProperty<int>(&blinn, 1, AI_MATKEY_SHADING_MODEL);
     
         //     aiColor3D col(final_color->r, final_color->g, final_color->b);
     
         //     mat->AddProperty<aiColor3D>(&col, 1, AI_MATKEY_COLOR_DIFFUSE);
-            // aiTextureType_UNKNOWN for mat_code?
-    
+        //     aiTextureType_UNKNOWN for mat_code?
     
             /* add new material to map */
             pstate->mats.push_back(mat);
@@ -234,9 +235,7 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
         curr_mesh->mMaterialIndex = 0;
     }
 
-    /* GENERATE NODE */
-    aiNode* curr_node = new aiNode();
-
+    /* generate node */
     aiString name(db_path_to_string(pathp));
     curr_node->mName = name;
 
@@ -251,12 +250,9 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
     curr_node->mNumChildren = 0;
 
     /* point the current node mesh index to newly created mesh */
+    curr_node->mMeshes = new unsigned int[1];
+    curr_node->mMeshes[0] = pstate->meshes.size();
     curr_node->mNumMeshes = 1;
-    unsigned int* temp_mMeshes = new unsigned int[1];
-    temp_mMeshes[0] = pstate->meshes.size();
-    curr_node->mMeshes = temp_mMeshes;
-
-    // TODO cleanup memory
 
     /* keep track of new mesh and node */
     pstate->children.push_back(curr_node);
@@ -266,9 +262,9 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
 HIDDEN void
 assimp_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
 {
-    struct assimp_write_options *options_data;
+    assimp_write_options_t* options_data;
 
-    BU_ALLOC(options_data, struct assimp_write_options);
+    BU_ALLOC(options_data, assimp_write_options_t);
     *dest_options_data = options_data;
     *options_desc = (struct bu_opt_desc *)bu_malloc(3 * sizeof(struct bu_opt_desc), "options_desc");
 
@@ -290,7 +286,7 @@ assimp_write_free_opts(void *options_data)
 HIDDEN int
 assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *dest_path)
 {
-    struct conversion_state state = CONVERSION_STATE_NULL;
+    assimp_write_state_t state;
     struct gcv_region_end_data gcvwriter;
     struct db_tree_state tree_state;
     int ret = 1;
@@ -299,7 +295,7 @@ assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, co
     gcvwriter.client_data = &state;
 
     state.gcv_options = gcv_options;
-    state.assimp_write_options = (struct assimp_write_options*)options_data;
+    state.assimp_write_options = (assimp_write_options_t*)options_data;
 
     /* check and validate the specied output file type against ai 
      * checks using file extension if no --format is supplied 
@@ -317,7 +313,7 @@ assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, co
     Assimp::Exporter exporter;
     for (size_t i = 0, end = exporter.GetExportFormatCount(); i < end; ++i) {
         fmt_desc = exporter.GetExportFormatDescription(i);
-        if (!strcmp(outext, fmt_desc->fileExtension)) {
+        if (!bu_strcmp(outext, fmt_desc->fileExtension)) {
             found_fmt = true;
             break;
         }
@@ -342,8 +338,7 @@ assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, co
     
     /* Walk indicated tree(s).  Each region will be output separately */
     if (state.assimp_write_options->model_workaround) {
-        const char** single = new const char*[1];
-        single[0] = state.assimp_write_options->model_workaround;
+        const char* single[1] = { state.assimp_write_options->model_workaround };
         (void) db_walk_tree(context->dbip, 1, single,
                 1,
                 &tree_state,
@@ -368,21 +363,24 @@ assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, co
     }
     state.scene->mRootNode->addChildren(state.children.size(), conv_children);
 
-    aiMesh** conv_meshes = new aiMesh*[state.meshes.size()];
+    state.scene->mMeshes = new aiMesh*[state.meshes.size()];
     for (size_t i = 0; i < state.meshes.size(); i++) 
-        conv_meshes[i] = state.meshes[i];
-    state.scene->mMeshes = conv_meshes;
+        state.scene->mMeshes[i] = state.meshes[i];
     state.scene->mNumMeshes = state.meshes.size();
 
-    aiMaterial** conv_mats = new aiMaterial*[state.mats.size()];
+    /* index 0 assigns 'plastic' to any region without a shader set */
+    state.scene->mMaterials = new aiMaterial*[state.mats.size() +1];
     aiMaterial def;
-    aiString def_name("plastic");       /* index 0 assigns 'plastic' for any region w/o a shader set */
+    aiString def_name("plastic");
     def.AddProperty(&def_name, AI_MATKEY_NAME);
-    conv_mats[0] = &def;
+    state.scene->mMaterials[0] = &def;
     for (size_t i = 0; i < state.mats.size(); i++)
-        conv_mats[i+1] = state.mats[i];
+        state.scene->mMaterials[i+1] = state.mats[i];
     state.scene->mNumMaterials = state.mats.size() + 1;
-    state.scene->mMaterials = conv_mats;
+
+    aiMetadata meta_null;
+    meta_null.mNumProperties = 0;
+    state.scene->mMetaData = &meta_null;
 
     /* export */
     aiReturn airet = exporter.Export(state.scene, fmt_desc->id, dest_path, state.scene->mFlags);
@@ -392,8 +390,6 @@ assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, co
     }
 
     /* Release dynamic storage */
-    for (size_t i = 0; i < state.children.size(); i++)
-        delete state.children[i];
     nmg_km(state.the_model);
     rt_vlist_cleanup();
 

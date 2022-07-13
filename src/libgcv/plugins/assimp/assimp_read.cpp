@@ -11,37 +11,55 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-struct shader_properties {
-    const char *shadername;		            /**< shader name, or NULL */
-    const char *shaderargs;		            /**< shader args, or NULL */
-    const unsigned char* rgb; 			    /**< NULL => no color */
-};
-#define SHADER_PROPERTIES_NULL { NULL, NULL, NULL }
+typedef struct shader_properties {
+    char *name;		                            /* shader name, or NULL */
+    char *args;		                            /* shader args, or NULL */
+    unsigned char* rgb; 			    /* NULL => no color */
+    shader_properties() {
+        name = NULL;
+        args = NULL;
+        rgb = NULL;
+    }
+    ~shader_properties() {
+        delete name;
+        delete args;
+        delete rgb;
+    }
+} shader_properties_t;
 
-struct assimp_read_options
-{
+typedef struct assimp_read_options {
     int starting_id;                                /* starting ident id number */
     int const_id;                                   /* Constant ident number (assigned to all regions if non-negative) */
     int mat_code;                                   /* default material code */
     int verbose;                                    /* verbose flag */
     char* format;                                   /* output file format */
-};
+} assimp_read_options_t;
 
-struct conversion_state
-{
-    const struct gcv_opts* gcv_options;
-    struct assimp_read_options* assimp_read_options;
+typedef struct assimp_read_state {
+    const struct gcv_opts* gcv_options;             /* global options */
+    assimp_read_options_t* assimp_read_options;     /* internal options */
 
     std::string input_file;	                    /* name of the input file */
     struct rt_wdb* fd_out;	                    /* Resulting BRL-CAD file */
     struct wmember all;                             /* scene root */
 
-    const aiScene* scene;                  /* assimp generated scene */
+    const aiScene* scene;                           /* assimp generated scene */
     int id_no;                                      /* region ident number */
     unsigned int dfs;                               /* number of nodes visited */
     unsigned int converted;                         /* number of meshes converted */
-};
-#define CONVERSION_STATE_NULL { NULL, NULL, "", NULL, WMEMBER_INIT_ZERO, NULL, 0, 0, 0 }
+    assimp_read_state() {
+        gcv_options = NULL;
+        assimp_read_options = NULL;
+        input_file = "";
+        fd_out = NULL;
+        all = WMEMBER_INIT_ZERO;
+        scene = NULL;
+        id_no = 0;
+        dfs = 0;
+        converted = 0;
+    }
+    ~assimp_read_state() {}
+} assimp_read_state_t;
 
 HIDDEN void
 aimatrix_to_arr16(aiMatrix4x4 aimat, fastf_t* ret)
@@ -64,27 +82,33 @@ aimatrix_to_arr16(aiMatrix4x4 aimat, fastf_t* ret)
     ret[15] = aimat.d4;
 }
 
-HIDDEN struct shader_properties
-generate_shader(struct conversion_state* pstate, unsigned int mesh_idx)
+HIDDEN shader_properties_t*
+generate_shader(assimp_read_state_t* pstate, unsigned int mesh_idx)
 {
-    struct shader_properties ret = SHADER_PROPERTIES_NULL;
+    shader_properties_t* ret = new shader_properties_t();
 
     /* check for material data */
     if (pstate->scene->HasMaterials()) {
         unsigned int mat_idx = pstate->scene->mMeshes[mesh_idx]->mMaterialIndex;
         aiMaterial* mat = pstate->scene->mMaterials[mat_idx];
 
+        /* for brlcad shaders, a space means we have additional shader params
+         * in the form "shader_name param1=x .."
+         */
         std::string fmt = mat->GetName().data;
-
         size_t space = fmt.find(" ");
 
         if (space != std::string::npos) {
-            ret.shadername = fmt.substr(0, space).c_str();
-            ret.shaderargs = fmt.substr(space).c_str();
+            ret->name = new char[space +1];
+            ret->args = new char[fmt.size() - space];
+            bu_strlcpy(ret->name, fmt.substr(0, space).c_str(), space +1);
+            bu_strlcpy(ret->args, fmt.substr(space+1).c_str(), fmt.size() - space);
         } else {
-            ret.shadername = fmt.c_str();
+            ret->name = new char[fmt.size() +1];
+            bu_strlcpy(ret->name, fmt.c_str(), fmt.size() +1);
         }
 
+        /* TODO create shader arg string from set material data, not just name */
         /* get material data used for phong shading */
         aiColor3D diff (-1);
         aiColor3D spec (-1);
@@ -94,10 +118,6 @@ generate_shader(struct conversion_state* pstate, unsigned int mesh_idx)
         mat->Get(AI_MATKEY_COLOR_SPECULAR, spec);
         mat->Get(AI_MATKEY_COLOR_AMBIENT, amb);
         mat->Get(AI_MATKEY_SHININESS_STRENGTH, s);
-
-        /* TODO create shader arg string from set material data, not just name */
-
-        // ret.shaderargs = fmt_args.c_str();
     }
 
     /* set the color of the face using the first vertex color data we 
@@ -108,13 +128,12 @@ generate_shader(struct conversion_state* pstate, unsigned int mesh_idx)
      */
     aiColor4D* mesh_color = pstate->scene->mMeshes[mesh_idx]->mColors[0];
     if (mesh_color) {
-        unsigned char* trgb = new unsigned char[3];
-        trgb[0] = (unsigned char)(mesh_color->r * 255);
-        trgb[1] = (unsigned char)(mesh_color->g * 255);
-        trgb[2] = (unsigned char)(mesh_color->b * 255);
-        ret.rgb = trgb;
+        ret->rgb = new unsigned char[3];
+        ret->rgb[0] = (unsigned char)(mesh_color->r * 255);
+        ret->rgb[1] = (unsigned char)(mesh_color->g * 255);
+        ret->rgb[2] = (unsigned char)(mesh_color->b * 255);
         if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose)
-            bu_log("color data (%d, %d, %d)\n", (int)ret.rgb[0], (int)ret.rgb[1], (int)ret.rgb[2]);
+            bu_log("color data (%d, %d, %d)\n", (int)ret->rgb[0], (int)ret->rgb[1], (int)ret->rgb[2]);
     }
 
     return ret;
@@ -162,7 +181,7 @@ generate_unique_name(const char* curr_name, unsigned int def_idx, bool is_mesh)
 }
 
 HIDDEN void
-generate_geometry(struct conversion_state* pstate, wmember &region, unsigned int mesh_idx)
+generate_geometry(assimp_read_state_t* pstate, wmember &region, unsigned int mesh_idx)
 {
     aiMesh* mesh = pstate->scene->mMeshes[mesh_idx];
     int* faces = new int[mesh->mNumFaces * 3];
@@ -202,11 +221,16 @@ generate_geometry(struct conversion_state* pstate, wmember &region, unsigned int
 
     /* book keeping to log converted meshes */
     pstate->converted++;
+
+    /* cleanup memory */
+    delete[] faces;
+    delete[] vertices;
 }
 
 HIDDEN void
-handle_node(struct conversion_state* pstate, aiNode* curr, struct wmember &regions)
+handle_node(assimp_read_state_t* pstate, aiNode* curr, struct wmember &regions)
 {
+    shader_properties_t shader_prop;
     std::string region_name = generate_unique_name(curr->mName.data, pstate->dfs, FALSE);
 
     if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose) {
@@ -229,22 +253,20 @@ handle_node(struct conversion_state* pstate, aiNode* curr, struct wmember &regio
     /* generate a list to hold this node's meshes */
     struct wmember mesh;
     BU_LIST_INIT(&mesh.l);
-    struct shader_properties shader_prop = SHADER_PROPERTIES_NULL;
 
     /* handle the current nodes meshes if any */
     for (size_t i = 0; i < curr->mNumMeshes; i++) {
-        unsigned int mesh_idx = curr->mMeshes[i];
-        if (mesh_idx >= pstate->scene->mNumMeshes)
-            bu_exit(0, "ERROR: bad mesh index");
+        unsigned int mesh_idx = curr->mMeshes[i];\
         if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose)
             bu_log("      uses mesh %d\n", mesh_idx);
+
         generate_geometry(pstate, mesh, mesh_idx);
 
         /* FIXME generate shader and color 
          * this assumes all mesh under a region are using the same material data.
          * if they're not, we're just using the last one
          */
-        shader_prop = generate_shader(pstate, mesh_idx);
+        shader_prop = *generate_shader(pstate, mesh_idx);
     }
     if (curr->mNumMeshes) {
         /* apply parent transformations */
@@ -252,7 +274,7 @@ handle_node(struct conversion_state* pstate, aiNode* curr, struct wmember &regio
         aimatrix_to_arr16(curr->mTransformation, tra);
 
         /* make region with all meshes */
-        mk_lrcomb(pstate->fd_out, region_name.c_str(), &mesh, 1, shader_prop.shadername, shader_prop.shaderargs, shader_prop.rgb, pstate->id_no, 0, pstate->assimp_read_options->mat_code, 100, 0);
+        mk_lrcomb(pstate->fd_out, region_name.c_str(), &mesh, 1, shader_prop.name, shader_prop.args, shader_prop.rgb, pstate->id_no, 0, pstate->assimp_read_options->mat_code, 100, 0);
         (void)mk_addmember(region_name.c_str(), &mesh.l, tra, WMOP_UNION);
 
         if (!pstate->assimp_read_options->const_id)
@@ -269,8 +291,8 @@ handle_node(struct conversion_state* pstate, aiNode* curr, struct wmember &regio
     }
 }
 
-HIDDEN void
-convert_input(struct conversion_state* pstate)
+HIDDEN int
+convert_input(assimp_read_state_t* pstate)
 {
     /* we are taking one of the postprocessing presets to have
      * max quality with reasonable render times. But, we must keep 
@@ -278,8 +300,10 @@ convert_input(struct conversion_state* pstate)
      */
     pstate->scene = aiImportFile(pstate->input_file.c_str(), aiProcessPreset_TargetRealtime_MaxQuality & ~aiProcess_RemoveRedundantMaterials);
 
-    if (!pstate->scene)
-        bu_exit(0, "ERROR: bad scene conversion");
+    if (!pstate->scene) {
+        bu_log("ERROR: bad scene conversion\n");
+        return 0;
+    }
         
     if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose) {
         bu_log("Scene num meshes: %d\n", pstate->scene->mNumMeshes);
@@ -298,14 +322,19 @@ convert_input(struct conversion_state* pstate)
 
     /* make a top level 'all.g' */
     mk_lcomb(pstate->fd_out, "all.g", &pstate->all, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+
+    /* TODO FIXME: bad generation logs extra converted and mesh */
+    bu_log("Converted ( %d / %d ) meshes ... %.2f%%\n", pstate->converted, pstate->scene->mNumMeshes, (float)pstate->converted / (float)pstate->scene->mNumMeshes * 100.0);
+
+    return 1;
 }
 
 HIDDEN void
 assimp_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
 {
-    struct assimp_read_options *options_data;
+    assimp_read_options_t* options_data;
 
-    BU_ALLOC(options_data, struct assimp_read_options);
+    BU_ALLOC(options_data, assimp_read_options_t);
     *dest_options_data = options_data;
     *options_desc = (struct bu_opt_desc *)bu_malloc(6 * sizeof(struct bu_opt_desc), "options_desc");
 
@@ -332,10 +361,10 @@ assimp_read_free_opts(void *options_data)
 HIDDEN int
 assimp_read(struct gcv_context *context, const struct gcv_opts* gcv_options, const void *options_data, const char *source_path)
 {
-    struct conversion_state state = CONVERSION_STATE_NULL;
+    assimp_read_state_t state;
 
     state.gcv_options = gcv_options;
-    state.assimp_read_options = (struct assimp_read_options*)options_data;
+    state.assimp_read_options = (assimp_read_options_t*)options_data;
     state.id_no = state.assimp_read_options->starting_id;
     state.input_file = source_path;
     state.fd_out = context->dbip->dbi_wdbp;
@@ -358,12 +387,7 @@ assimp_read(struct gcv_context *context, const struct gcv_opts* gcv_options, con
 
     mk_id_units(state.fd_out, "Conversion using Asset Importer Library (assimp)", "mm");
 
-    convert_input(&state);
-
-    /* TODO FIXME: bad generation logs extra converted and mesh */
-    bu_log("Converted ( %d / %d ) meshes ... %.2f%%\n", state.converted, state.scene->mNumMeshes, (float)state.converted / (float)state.scene->mNumMeshes * 100.0);
-
-    return 1;
+    return convert_input(&state);
 }
 
 
