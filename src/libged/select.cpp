@@ -208,7 +208,10 @@ ged_selection_set_cpy(struct ged_selection_sets *s, const char *from, const char
 	bu_vls_init(&s_o->path);
 	bu_vls_sprintf(&s_o->path, "%s", bu_vls_cstr(&s_it->second->path));
 	s_o->r_os = s_it->second->r_os;
-	s_o->so = s_it->second->so;
+	bu_ptbl_init(&s_o->sobjs, 8, "selection objs");
+	for (size_t s_i = 0; s_i < BU_PTBL_LEN(&s_it->second->sobjs); s_i++) {
+	    bu_ptbl_ins(&s_o->sobjs, BU_PTBL_GET(&s_it->second->sobjs, s_i));
+	}
 	s_to->i->m[s_it->first] = s_o;
 	i++;
     }
@@ -245,7 +248,7 @@ ged_selection_sets_put(struct ged_selection_sets *s, const char *s_name)
     if (!s)
 	return;
     std::map<std::string, struct ged_selection_set *>::iterator s_it;
-    std::string sname = (s_name || !strlen(s_name)) ? std::string("default") : std::string(s_name);
+    std::string sname = (!s_name || !strlen(s_name)) ? std::string("default") : std::string(s_name);
     s_it = s->i->s->find(sname);
     if (s_it == s->i->s->end())
 	return;
@@ -370,7 +373,7 @@ _selection_get(struct ged_selection_set *s, const char *s_name)
     BU_GET(s_o, struct ged_selection);
     s_o->gedp = s->gedp;
     s_o->r_os = NULL;
-    s_o->so = NULL;
+    bu_ptbl_init(&s_o->sobjs, 8, "selection objs");
     bu_vls_init(&s_o->path);
     bu_vls_sprintf(&s_o->path, "%s", s_name);
     s->i->m[std::string(s_name)] = s_o;
@@ -454,7 +457,7 @@ ged_selection_insert_obj(struct ged_selection_set *s, struct bv_scene_obj *o)
 	return NULL;
     struct ged_selection *ss = ged_selection_insert(s, bu_vls_cstr(&o->s_name));
     if (ss)
-	ss->so = o;
+	bu_ptbl_ins(&ss->sobjs, (long *)o);
     return ss;
 }
 
@@ -942,9 +945,114 @@ ged_selection_set_collapse(struct ged_selection_set *s_out, struct ged_selection
 }
 
 
+void
+ged_selection_assign_objs(struct ged_selection_set *s)
+{
+    if (!s || !s->i->m.size())
+	return;
+
+    // If we don't have view objects, there's nothing to associate
+    struct bu_ptbl *sg = bv_view_objs(s->gedp->ged_gvp, BV_DB_OBJS);
+    if (!sg) {
+	std::map<std::string, struct ged_selection *>::iterator s_it;
+	for (s_it = s->i->m.begin(); s_it != s->i->m.end(); s_it++) {
+	    struct ged_selection *ss = s_it->second;
+	    bu_ptbl_reset(&ss->sobjs);
+	}
+	return;
+    }
+
+    // populate the paths map with scene objects
+    std::map<struct directory *, std::set<struct db_full_path *>> so_paths;
+    std::map<struct db_full_path *, struct bv_scene_obj *> path_to_obj;
+    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+	struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
+	struct db_full_path *dfp;
+	BU_GET(dfp, struct db_full_path);
+	db_full_path_init(dfp);
+	if (db_string_to_path(dfp, s->gedp->dbip, bu_vls_cstr(&so->s_name))) {
+	    db_free_full_path(dfp);
+	    BU_PUT(dfp, struct db_full_path);
+	    continue;
+	}
+	so_paths[DB_FULL_PATH_GET(dfp, 0)].insert(dfp);
+	path_to_obj[dfp] = so;
+    }
+
+    // For the selections, add any scene objects with paths below the selection
+    // path to that selections sobjs ptbl
+    std::map<std::string, struct ged_selection *>::iterator s_it;
+    for (s_it = s->i->m.begin(); s_it != s->i->m.end(); s_it++) {
+	struct ged_selection *ss = s_it->second;
+	struct db_full_path *sel_fp;
+	BU_GET(sel_fp, struct db_full_path);
+	db_full_path_init(sel_fp);
+	// If the path isn't valid, there's nothing to add
+	if (db_string_to_path(sel_fp, s->gedp->dbip, bu_vls_cstr(&ss->path))) {
+	    db_free_full_path(sel_fp);
+	    BU_PUT(sel_fp, struct db_full_path);
+	    continue;
+	}
+	// If no paths match the first pointer, there's no point checking further
+	if (so_paths.find(DB_FULL_PATH_GET(sel_fp, 0)) == so_paths.end()) {
+	    db_free_full_path(sel_fp);
+	    BU_PUT(sel_fp, struct db_full_path);
+	    continue;
+	}
+	// Pull the set of paths that are a first pointer match, and check them
+	// to see which ones are top matches for this selection path.  If they
+	// are a match, add to sobjs.  This can probably be made more efficient
+	// - we filter on first pointer matching to try and help cut down the
+	// unnecessary checks, but there are probably better ways.
+	std::set<struct db_full_path *> &dpaths = so_paths[DB_FULL_PATH_GET(sel_fp, 0)];
+	std::set<struct db_full_path *>::iterator d_it;
+	for (d_it = dpaths.begin(); d_it != dpaths.end(); d_it++) {
+	    struct db_full_path *so_fp = *d_it;
+	    if (db_full_path_match_top(sel_fp, so_fp)) {
+		struct bv_scene_obj *sso = path_to_obj[sel_fp];
+		if (!sso)
+		    continue;
+		bu_ptbl_ins(&ss->sobjs, (long *)sso);
+	    }
+	}
+	db_free_full_path(sel_fp);
+	BU_PUT(sel_fp, struct db_full_path);
+    }
+
+    std::map<struct directory *, std::set<struct db_full_path *>>::iterator sp_it;
+    for (sp_it = so_paths.begin(); sp_it != so_paths.end(); sp_it++) {
+	std::set<struct db_full_path *>::iterator d_it;
+	for (d_it = sp_it->second.begin(); d_it != sp_it->second.end(); d_it++) {
+	    struct db_full_path *dfp = *d_it;
+	    db_free_full_path(dfp);
+	    BU_PUT(dfp, struct db_full_path);
+	}
+    }
+}
+
+static void
+_ill_toggle(struct bv_scene_obj *s, char ill_state)
+{
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	_ill_toggle(s_c, ill_state);
+    }
+    s->s_iflag = ill_state;
+}
 
 
-
+void
+ged_selection_toggle_illum(struct ged_selection_set *s, char ill_state)
+{
+    std::map<std::string, struct ged_selection *>::iterator s_it;
+    for (s_it = s->i->m.begin(); s_it != s->i->m.end(); s_it++) {
+	struct ged_selection *ss = s_it->second;
+	for (size_t i = 0; i < BU_PTBL_LEN(&ss->sobjs); i++) {
+	    struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(&ss->sobjs, i);
+	    _ill_toggle(so, ill_state);
+	}
+    }
+}
 
 
 

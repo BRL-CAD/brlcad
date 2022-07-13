@@ -282,7 +282,7 @@ init_defaults(void)
     option("Raytrace", "-P #", "Specify number of processors to use (default: all available)", 100);
     option("Raytrace", "-T # or -T #/#", "Tolerance as distance or distance/angular", 100);
 
-    option("Advanced", "-c \"command\"", "[eventually will] Run a semicolon-separated list of commands (just samples for now)", 0);
+    option("Advanced", "-c \"command\"", "Run a semicolon-separated list of rt commands", 0);
     option("Advanced", "-M", "Read matrix + commands on stdin (RT 'saveview' scripts)", 100);
     option("Advanced", "-D #", "Specify starting frame number (ending is specified via -K #)", 100);
     option("Advanced", "-K #", "Specify ending frame number (starting is specified via -D #)", 100);
@@ -704,10 +704,10 @@ build_project(const char* file, const char* UNUSED(objects))
     }
     if (cmd_objs) {
 
-	int cmdobjc = BU_PTBL_LEN(cmd_objs);
+	size_t cmdobjc = BU_PTBL_LEN(cmd_objs);
 	const char** cmdobjv = (const char**)cmd_objs->buffer;
 	if (cmdobjc) {
-	    db_walk_tree(APP.a_rt_i->rti_dbip, cmdobjc, cmdobjv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
+	    db_walk_tree(APP.a_rt_i->rti_dbip, (int)cmdobjc, cmdobjv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
 	}
     }
 
@@ -915,7 +915,7 @@ fb_setup() {
 	yy = height;
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    fbp = fb_open(framebuffer, xx, yy);
+    fbp = fb_open(framebuffer, (int)xx, (int)yy);
     bu_semaphore_release(BU_SEM_SYSCALL);
     if (fbp == FB_NULL) {
 	fprintf(stderr, "rt:  can't open frame buffer\n");
@@ -931,15 +931,14 @@ fb_setup() {
 
     /* If the fb is lots bigger (>= 2X), zoom up & center */
     if (width > 0 && height > 0) {
-	zoom = fb_getwidth(fbp) / width;
+	zoom = (int)(fb_getwidth(fbp) / width);
 	if ((size_t)fb_getheight(fbp) / height < (size_t)zoom)
-	    zoom = fb_getheight(fbp) / height;
+	    zoom = (int)(fb_getheight(fbp) / height);
     }
     else {
 	zoom = 1;
     }
-    (void)fb_view(fbp, width / 2, height / 2,
-	zoom, zoom);
+    (void)fb_view(fbp, width / 2, height / 2, (int)zoom, (int)zoom);
     bu_semaphore_release(BU_SEM_SYSCALL);
     return 0;
 }

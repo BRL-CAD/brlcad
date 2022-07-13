@@ -48,13 +48,13 @@ fhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(seg
     struct curvature cur = RT_CURVATURE_INIT_ZERO;
 
     /* will contain our hit point coordinate */
-    point_t pt;
+    point_t pt = VINIT_ZERO;
 
     /* will contain normal vector where ray enters geometry */
-    vect_t inormal;
+    vect_t inormal = VINIT_ZERO;
 
     /* will contain normal vector where ray exits geometry */
-    vect_t onormal;
+    vect_t onormal = VINIT_ZERO;
 
     /* iterate over each partition until we get back to the head.
      * each partition corresponds to a specific homogeneous region of
@@ -132,7 +132,7 @@ LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
 //    struct resource res = RT_RESOURCE_INIT_ZERO;
     char title[1024] = {0};
 
-    const char *file = bu_dir(NULL, 0, BU_DIR_DATA, "..", "..", "share", "db", "moss.g", NULL);
+    const char *file = bu_dir(NULL, 0, BU_DIR_DATA, "db", "moss.g", NULL);
     const char *objs = "all.g";
 
     if (!bu_file_exists(file, NULL))

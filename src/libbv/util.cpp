@@ -563,6 +563,7 @@ _bv_trans(struct bview *v, int dx, int dy, point_t UNUSED(keypoint), unsigned lo
 {
     if (!v)
 	return 0;
+
     fastf_t aspect = (fastf_t)v->gv_width / (fastf_t)v->gv_height;
     fastf_t fx = (fastf_t)dx / (fastf_t)v->gv_width * 2.0;
     fastf_t fy = -dy / (fastf_t)v->gv_height / aspect * 2.0;
@@ -586,6 +587,9 @@ _bv_trans(struct bview *v, int dx, int dy, point_t UNUSED(keypoint), unsigned lo
 int
 _bv_scale(struct bview *v, int sensitivity, int factor, point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
 {
+    if (!v)
+	return 0;
+
     double f = (double)factor/(double)sensitivity;
     v->gv_scale /= f;
     if (v->gv_scale < BV_MINVIEWSCALE)
@@ -602,8 +606,12 @@ _bv_scale(struct bview *v, int sensitivity, int factor, point_t UNUSED(keypoint)
 int
 _bv_center(struct bview *v, int vx, int vy, point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
 {
+    if (!v)
+	return 0;
+
     point_t vpt, center;
-    fastf_t fx, fy;
+    fastf_t fx = 0.0;
+    fastf_t fy = 0.0;
     bv_screen_to_view(v, &fx, &fy, (fastf_t)vx, (fastf_t)vy);
     VSET(vpt, fx, fy, 0);
     MAT4X3PNT(center, v->gv_view2model, vpt);
@@ -674,7 +682,6 @@ bv_clear(struct bview *v, int flags)
     }
     if (!flags || flags & BV_VIEW_OBJS) {
 	struct bu_ptbl *sv = bv_view_objs(v, BV_VIEW_OBJS | (flags & ~BV_DB_OBJS));
-	sv = v->gv_objs.view_objs;
 	if (sv) {
 	    for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
@@ -697,7 +704,6 @@ bv_clear(struct bview *v, int flags)
 	}
 	if (!flags || flags & BV_VIEW_OBJS) {
 	    struct bu_ptbl *sv = bv_view_objs(v, BV_VIEW_OBJS | (flags & ~BV_DB_OBJS) | BV_LOCAL_OBJS);
-	    sv = v->gv_objs.view_objs;
 	    if (sv) {
 		for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);

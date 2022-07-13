@@ -101,9 +101,10 @@ extern void clr_Tabs();
 extern void reset_Tty();
 extern void save_Tty();
 
-extern void (*norml_sig)(), (*abort_sig)();
-extern void abort_RT();
-extern void intr_sig();
+extern void (*norml_sig)(int);
+extern void (*abort_sig)(int);
+extern void abort_RT(int);
+extern void intr_sig(int);
 
 /* proper prototype */
 extern void prntScr(const char *, ...);

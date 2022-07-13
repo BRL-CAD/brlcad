@@ -116,12 +116,8 @@ public:
     field.  You must NEVER change any other SN_ELEMENT
     fields or you will break searching and possibly cause
     crashes.
-
-    NOTE - currently disabled due to compiler bug in VS2022 - see
-    https://discourse.mcneel.com/t/building-opennurbs-public-with-visualstudio2022-results-in-compiler-error/137817
-    https://github.com/microsoft/vcpkg/issues/19561
   */
-  //struct SN_ELEMENT* FirstElement() const;
+  struct SN_ELEMENT* FirstElement() const;
 
   /*
   Returns:

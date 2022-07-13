@@ -32,9 +32,9 @@
  * calling it due to the testing, we need to avoid assigning that
  * attribute (it causes interesting crashing behaviors if we leave
  * it in place with some compiler settings.)*/
-#ifdef _BU_ATTR_NORETURN
-#  undef _BU_ATTR_NORETURN
-#  define _BU_ATTR_NORETURN
+#ifdef NORETURN
+#  undef NORETURN
+#  define NORETURN
 #endif
 
 #include "bu/magic.h"

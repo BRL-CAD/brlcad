@@ -118,7 +118,7 @@ ged_cmd_lookup(const char **ncmd, const char *cmd)
     if (!cmd || !ncmd) {
 	return -1;
     }
-    unsigned long min_dist = LONG_MAX;
+    size_t min_dist = LONG_MAX;
 
     // On OpenBSD, if the executable was launched in a way that requires
     // bu_setprogname to find the BRL-CAD root directory the iniital libged
@@ -134,7 +134,7 @@ ged_cmd_lookup(const char **ncmd, const char *cmd)
     std::string scmd(cmd);
     std::map<std::string, const struct ged_cmd *>::iterator cmd_it;
     for (cmd_it = ged_cmd_map.begin(); cmd_it != ged_cmd_map.end(); cmd_it++) {
-	unsigned long edist = bu_editdist(cmd, cmd_it->first.c_str());
+	size_t edist = bu_editdist(cmd, cmd_it->first.c_str());
 	if (edist < min_dist) {
 	    ccmd = (*cmd_it).first.c_str();
 	    min_dist = edist;

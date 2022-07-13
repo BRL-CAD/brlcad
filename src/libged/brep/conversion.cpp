@@ -113,7 +113,7 @@ brep_conversion_tree(const struct db_i *dbip, const union tree *oldtree, union t
 	case OP_GUARD:
 	case OP_XNOP:
 	    /* convert left */
-	    BU_ALLOC(newtree->tr_b.tb_left, union tree);
+	    newtree->tr_b.tb_left = new tree;
 	    RT_TREE_INIT(newtree->tr_b.tb_left);
 	    ret = brep_conversion_tree(dbip, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, suffix, wdbp, local2mm);
 	    if (ret) {

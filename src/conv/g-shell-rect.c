@@ -125,7 +125,7 @@ static char *plotfile;
 static short vert_ids[8]={1, 2, 4, 8, 16, 32, 64, 128};
 static int debug=0;
 static char *token_seps=" \t, ;\n";
-static int cur_dir=0;
+static size_t cur_dir=0;
 static size_t cell_count[3];
 static fastf_t decimation_tol=0.0;
 static fastf_t min_angle=0.0;
@@ -977,7 +977,7 @@ shrink_wrap(struct shell *s)
 
     sd.s = s;
     sd.manifolds = nmg_manifolds(m);
-    sd.hitmiss = (struct hitmiss **)bu_calloc(2 * m->maxindex, sizeof(struct hitmiss *), "nmg geom hit list");
+    sd.hitmiss = (struct hitmiss **)bu_calloc((size_t)m->maxindex * 2, sizeof(struct hitmiss *), "nmg geom hit list");
 
     memset(&ap, 0, sizeof(struct application));
     ap.a_uptr = (void *)&sd;
@@ -1404,7 +1404,7 @@ Make_shell(void)
 {
     int i;
     size_t x_index, y_index, z_index;
-    int cell_no[4];
+    size_t cell_no[4];
     int status;
     struct model *m;
     struct nmgregion *r;
@@ -1751,7 +1751,7 @@ main(int argc, char **argv)
 		bot = 1;
 		break;
 	    case 'X':	/* nmg debug flags */
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		bu_sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
 		bu_log("%s: setting nmg_debug to x%x\n", argv[0], nmg_debug);
 		break;
 	    default:
@@ -1817,9 +1817,9 @@ main(int argc, char **argv)
     } else
 	cur_dir = initial_ray_dir;
 
-    cell_count[X] = (int)((rtip->mdl_max[X] - rtip->mdl_min[X])/cell_size) + 3;
-    cell_count[Y] = (int)((rtip->mdl_max[Y] - rtip->mdl_min[Y])/cell_size) + 3;
-    cell_count[Z] = (int)((rtip->mdl_max[Z] - rtip->mdl_min[Z])/cell_size) + 3;
+    cell_count[X] = ((rtip->mdl_max[X] - rtip->mdl_min[X])/cell_size) + 3;
+    cell_count[Y] = ((rtip->mdl_max[Y] - rtip->mdl_min[Y])/cell_size) + 3;
+    cell_count[Z] = ((rtip->mdl_max[Z] - rtip->mdl_min[Z])/cell_size) + 3;
     bu_log("cell size is %gmm\n\t%zu cells in X-direction\n\t%zu cells in Y-direction\n\t%zu cells in Z-direction\n",
 	   cell_size, cell_count[X], cell_count[Y], cell_count[Z]);
 
@@ -1887,9 +1887,9 @@ main(int argc, char **argv)
 	case X:
 	    for (i = 0; i < cell_count[Y]; i++) {
 		for (j = 0; j < cell_count[Z]; j++) {
-		    ap.a_x = i;
-		    ap.a_y = j;
-		    ap.a_user = YZ_CELL(i, j);
+		    ap.a_x = (int)i;
+		    ap.a_y = (int)j;
+		    ap.a_user = (int)YZ_CELL(i, j);
 		    VMOVE(ap.a_ray.r_pt, yz_rays[YZ_CELL(i, j)].r_pt);
 		    VMOVE(ap.a_ray.r_dir, yz_rays[YZ_CELL(i, j)].r_dir);
 		    (void)rt_shootray(&ap);
@@ -1899,9 +1899,9 @@ main(int argc, char **argv)
 	case Y:
 	    for (i = 0; i < cell_count[X]; i++) {
 		for (j = 0; j < cell_count[Z]; j++) {
-		    ap.a_x = i;
-		    ap.a_y = j;
-		    ap.a_user = XZ_CELL(i, j);
+		    ap.a_x = (int)i;
+		    ap.a_y = (int)j;
+		    ap.a_user = (int)XZ_CELL(i, j);
 		    VMOVE(ap.a_ray.r_pt, xz_rays[XZ_CELL(i, j)].r_pt);
 		    VMOVE(ap.a_ray.r_dir, xz_rays[XZ_CELL(i, j)].r_dir);
 		    (void)rt_shootray(&ap);
@@ -1911,9 +1911,9 @@ main(int argc, char **argv)
 	case Z:
 	    for (i = 0; i < cell_count[X]; i++) {
 		for (j = 0; j <cell_count[Y]; j++) {
-		    ap.a_x = i;
-		    ap.a_y = j;
-		    ap.a_user = XY_CELL(i, j);
+		    ap.a_x = (int)i;
+		    ap.a_y = (int)j;
+		    ap.a_user = (int)XY_CELL(i, j);
 		    VMOVE(ap.a_ray.r_pt, xy_rays[XY_CELL(i, j)].r_pt);
 		    VMOVE(ap.a_ray.r_dir, xy_rays[XY_CELL(i, j)].r_dir);
 		    (void)rt_shootray(&ap);

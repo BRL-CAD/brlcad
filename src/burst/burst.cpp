@@ -1751,7 +1751,7 @@ burst_process_line(struct burst_state *s, const char *line)
     /* Make an argv array from the input line */
     char *input = bu_strdup(line);
     char **av = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
-    int ac = bu_argv_from_string(av, strlen(input), input);
+    size_t ac = bu_argv_from_string(av, strlen(input), input);
 
     if (!ac || bu_cmd_valid(_burst_cmds, av[0]) != BRLCAD_OK) {
 	brst_log(s, MSG_OUT, "unrecognzied command: %s\n", av[0]);
@@ -1759,7 +1759,7 @@ burst_process_line(struct burst_state *s, const char *line)
 	goto line_done;
     }
 
-    if (bu_cmd(_burst_cmds, ac, (const char **)av, 0, (void *)s, &ret) != BRLCAD_OK) {
+    if (bu_cmd(_burst_cmds, (int)ac, (const char **)av, 0, (void *)s, &ret) != BRLCAD_OK) {
 	brst_log(s, MSG_OUT, "error running command: %s\n", av[0]);
 	ret = BRLCAD_ERROR;
 	goto line_done;

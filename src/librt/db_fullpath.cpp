@@ -375,8 +375,6 @@ _db_comb_instance(matp_t m, int *icnt, int *bval, int bool_val, const struct db_
     RT_CK_TREE(tp);
 
     switch (tp->tr_op) {
-
-
 	case OP_DB_LEAF:
 	    if (!BU_STR_EQUAL(cp, tp->tr_l.tl_name))
 		return 0;               /* NO-OP */
@@ -408,6 +406,8 @@ _db_comb_instance(matp_t m, int *icnt, int *bval, int bool_val, const struct db_
 	    bu_log("_db_comb_instance: bad op %d\n", tp->tr_op);
 	    bu_bomb("_db_comb_instance\n");
     }
+
+    return 0;
 }
 
 static int

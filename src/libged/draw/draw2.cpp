@@ -611,6 +611,11 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT_NULL(vd[1]);
     int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
     argc = opt_ret;
+    if (argc < 0) {
+	bu_vls_free(&cvls);
+	return BRLCAD_ERROR;
+    }
+
     if (bu_vls_strlen(&cvls)) {
 	cv = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
 	if (!cv) {

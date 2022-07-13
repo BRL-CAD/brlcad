@@ -286,12 +286,12 @@ sktbld(void)
     cp++;
     cp++;
 
-    sscanf(cp, "%200s %f %f %f %f %f %f %f %f %f %lu %lu", /* NAME_LEN */
-	   name,
-	   &fV[0], &fV[1], &fV[2],
-	   &fu[0], &fu[1], &fu[2],
-	   &fv[0], &fv[1], &fv[2],
-	   &vert_count, &seg_count);
+    bu_sscanf(cp, "%200s %f %f %f %f %f %f %f %f %f %lu %lu", /* NAME_LEN */
+	      name,
+	      &fV[0], &fV[1], &fV[2],
+	      &fu[0], &fu[1], &fu[2],
+	      &fv[0], &fv[1], &fv[2],
+	      &vert_count, &seg_count);
 
     VMOVE(V, fV);
     VMOVE(u, fu);
@@ -338,13 +338,13 @@ sktbld(void)
 	switch (*cp) {
 	    case LSEG:
 		BU_ALLOC(lsg, struct line_seg);
-		sscanf(cp+1, "%d %d %d", &crv->reverse[j], &lsg->start, &lsg->end);
+		bu_sscanf(cp+1, "%d %d %d", &crv->reverse[j], &lsg->start, &lsg->end);
 		lsg->magic = CURVE_LSEG_MAGIC;
 		crv->segment[j] = lsg;
 		break;
 	    case CARC:
 		BU_ALLOC(csg, struct carc_seg);
-		sscanf(cp+1, "%d %d %d %lf %d %d", &crv->reverse[j], &csg->start, &csg->end,
+		bu_sscanf(cp+1, "%d %d %d %lf %d %d", &crv->reverse[j], &csg->start, &csg->end,
 		       &radius, &csg->center_is_left, &csg->orientation);
 		csg->radius = radius;
 		csg->magic = CURVE_CARC_MAGIC;
@@ -352,39 +352,45 @@ sktbld(void)
 		break;
 	    case NURB:
 		BU_ALLOC(nsg, struct nurb_seg);
-		sscanf(cp+1, "%d %d %d %d %d", &crv->reverse[j], &nsg->order, &nsg->pt_type,
+		bu_sscanf(cp+1, "%d %d %d %d %d", &crv->reverse[j], &nsg->order, &nsg->pt_type,
 		       &nsg->k.k_size, &nsg->c_size);
 		nsg->k.knots = (fastf_t *)bu_calloc(nsg->k.k_size, sizeof(fastf_t), "knots");
 		nsg->ctl_points = (int *)bu_calloc(nsg->c_size, sizeof(int), "control points");
-		if (bu_fgets(buf, BUFSIZE, ifp) == (char *)0)
-		    bu_exit(-1, "Unexpected EOF while reading sketch (%s) data\n", name);
+		if (bu_fgets(buf, BUFSIZE, ifp) == (char*)0) {
+		    bu_exit(BRLCAD_ERROR, "ERROR: Unexpected EOF while reading sketch (%s) data\n", name);
+		}
 		cp = buf + 3;
 		ptr = strtok(cp, " ");
-		if (!ptr)
-		    bu_exit(1, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name);
+		if (!ptr) {
+		    bu_exit(BRLCAD_ERROR, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name);
+		}
 		for (k=0; k<nsg->k.k_size; k++) {
 		    nsg->k.knots[k] = atof(ptr);
 		    ptr = strtok((char *)NULL, " ");
-		    if (!ptr && k<nsg->k.k_size-1)
-			bu_exit(1, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name);
+		    if (!ptr || k < nsg->k.k_size - 1) {
+			bu_exit(BRLCAD_ERROR, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name);
+		    }
 		}
-		if (bu_fgets(buf, BUFSIZE, ifp) == (char *)0)
-		    bu_exit(-1, "Unexpected EOF while reading sketch (%s) data\n", name);
+		if (bu_fgets(buf, BUFSIZE, ifp) == (char*)0) {
+		    bu_exit(BRLCAD_ERROR, "ERROR: Unexpected EOF while reading sketch (%s) data\n", name);
+		}
 		cp = buf + 3;
 		ptr = strtok(cp, " ");
-		if (!ptr)
-		    bu_exit(1, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
+		if (!ptr) {
+		    bu_exit(BRLCAD_ERROR, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
+		}
 		for (k=0; k<nsg->c_size; k++) {
 		    nsg->ctl_points[k] = atoi(ptr);
 		    ptr = strtok((char *)NULL, " ");
-		    if (!ptr && k<nsg->c_size-1)
-			bu_exit(1, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
+		    if (!ptr || k < nsg->c_size - 1) {
+			bu_exit(BRLCAD_ERROR, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
+		    }
 		}
 		nsg->magic = CURVE_NURB_MAGIC;
 		crv->segment[j] = nsg;
 		break;
 	    default:
-		bu_exit(1, "Unrecognized segment type (%c) in sketch (%s)\n", *cp, name);
+		bu_exit(BRLCAD_ERROR, "ERROR: Unrecognized segment type (%c) in sketch (%s)\n", *cp, name);
 	}
 
     }
@@ -411,7 +417,7 @@ extrbld(void)
     cp++;
 
     cp++;
-    sscanf(cp, "%200s %200s %d %f %f %f  %f %f %f %f %f %f %f %f %f", /* NAME_LEN */
+    bu_sscanf(cp, "%200s %200s %d %f %f %f  %f %f %f %f %f %f %f %f %f", /* NAME_LEN */
 	   name, sketch_name, &keypoint, &fV[0], &fV[1], &fV[2], &fh[0], &fh[1], &fh[2],
 	   &fu_vec[0], &fu_vec[1], &fu_vec[2], &fv_vec[0], &fv_vec[1], &fv_vec[2]);
 
@@ -444,7 +450,7 @@ nmgbld(void)
     int j;
 
     /* First, process the header line */
-    strtok(buf, " ");
+    (void)strtok(buf, " ");
     /* This is nmg_id, unused here. */
     cp = strtok(NULL, " ");
     version = atoi(cp);

@@ -38,7 +38,7 @@ SOFTWARE.
 #ifndef FORT_IMPL_H
 #define FORT_IMPL_H
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS /* To disable warnings for unsafe functions */
 #endif
 
@@ -50,6 +50,8 @@ SOFTWARE.
 #include "fort.h"
 
 #include "bu/str.h"
+#include "bu/malloc.h"
+
 
 /* Define FT_INTERNAL to make internal libfort functions static
  * in the result amalgamed source file.
@@ -799,24 +801,19 @@ void *utf8dup(const void *src)
     // figure out how many bytes (including the terminator) we need to copy first
     size_t bytes = utf8size(src);
 
-    n = (char *)malloc(bytes);
+    n = (char *)bu_malloc(bytes, "utf8dup");
 
-    if (utf8_null == n) {
-        // out of memory so we bail
-        return utf8_null;
-    } else {
-        bytes = 0;
+    bytes = 0;
 
-        // copy src byte-by-byte into our new utf8 string
-        while ('\0' != s[bytes]) {
-            n[bytes] = s[bytes];
-            bytes++;
-        }
-
-        // append null terminating byte
-        n[bytes] = '\0';
-        return n;
+    // copy src byte-by-byte into our new utf8 string
+    while ('\0' != s[bytes]) {
+        n[bytes] = s[bytes];
+        bytes++;
     }
+
+    // append null terminating byte
+    n[bytes] = '\0';
+    return n;
 }
 
 void *utf8fry(const void *str);
@@ -4081,7 +4078,7 @@ int print_n_strings(f_conv_context_t *cntx, size_t n, const char *str)
 
             cntx->u.buf += raw_written;
             cntx->raw_avail -= raw_written;
-            return utf8len(str) * n;
+            return (int)((size_t)utf8len(str) * n);
 #endif /* FT_HAVE_UTF8 */
         default:
             assert(0);
@@ -4099,7 +4096,7 @@ int ft_nprint(f_conv_context_t *cntx, const char *str, size_t strlen)
     cntx->u.buf += strlen;
     cntx->raw_avail -= strlen;
     *cntx->u.buf = '\0'; /* Do we need this ? */
-    return strlen;
+    return (int)strlen;
 }
 
 #ifdef FT_HAVE_WCHAR
@@ -4117,7 +4114,7 @@ int ft_nwprint(f_conv_context_t *cntx, const wchar_t *str, size_t strlen)
     /* Do we need this ? */
     wchar_t end_of_string = L'\0';
     memcpy(cntx->u.buf, &end_of_string, sizeof(wchar_t));
-    return strlen;
+    return (int)strlen;
 }
 #endif /* FT_HAVE_WCHAR */
 
@@ -4135,7 +4132,7 @@ int ft_nu8print(f_conv_context_t *cntx, const void *beg, const void *end)
     cntx->u.buf += raw_len;
     cntx->raw_avail -= raw_len;
     *(cntx->u.buf) = '\0'; /* Do we need this ? */
-    return raw_len; /* what return here ? */
+    return (int)raw_len; /* what return here ? */
 }
 #endif /* FT_HAVE_UTF8 */
 
@@ -6878,7 +6875,7 @@ int buffer_check_align(f_string_buffer_t *buffer)
             return 1;
 #ifdef FT_HAVE_WCHAR
         case W_CHAR_BUF:
-            return (((unsigned long)buffer->str.data) & (sizeof(wchar_t) - 1)) == 0;
+            return (((unsigned long)(uintptr_t)buffer->str.data) & (sizeof(wchar_t) - 1)) == 0;
 #endif
 #ifdef FT_HAVE_UTF8
         case UTF8_BUF:

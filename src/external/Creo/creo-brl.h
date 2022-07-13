@@ -107,8 +107,8 @@ extern "C" {
 #define NUM_FEAT_TYPES 314
 #define FEAT_TYPE_OFFSET 910
 
-#define CREO_NAME_MAX 100000
-#define CREO_MSG_MAX 1000000
+#define CREO_NAME_MAX 240*2 /* max part name length Creo supports is 240 chars */
+#define CREO_MSG_MAX 4096 /* max message and/or response length */
 
 #define MSG_FAIL 0
 #define MSG_OK 1
