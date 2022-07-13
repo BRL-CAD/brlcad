@@ -215,7 +215,7 @@ generate_geometry(assimp_read_state_t* pstate, wmember &region, unsigned int mes
     }
 
     /* add mesh to region list */
-    std::string mesh_name = generate_unique_name(pstate->scene->mMeshes[mesh_idx]->mName.data, pstate->converted, TRUE);
+    std::string mesh_name = generate_unique_name(pstate->scene->mMeshes[mesh_idx]->mName.data, pstate->converted, 1);
     mk_bot(pstate->fd_out, mesh_name.c_str(), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, mesh->mNumVertices, mesh->mNumFaces, vertices, faces, (fastf_t*)NULL, (struct bu_bitv*)NULL);
     (void)mk_addmember(mesh_name.c_str(), &region.l, NULL, WMOP_UNION);
 
@@ -231,7 +231,7 @@ HIDDEN void
 handle_node(assimp_read_state_t* pstate, aiNode* curr, struct wmember &regions)
 {
     shader_properties_t shader_prop;
-    std::string region_name = generate_unique_name(curr->mName.data, pstate->dfs, FALSE);
+    std::string region_name = generate_unique_name(curr->mName.data, pstate->dfs, 0);
 
     if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose) {
         bu_log("\nCurr node name | dfs index: %s | %d\n", curr->mName.data, pstate->dfs);
