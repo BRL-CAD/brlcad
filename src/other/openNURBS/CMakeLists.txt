@@ -46,6 +46,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 include(CMakeDependentOption)
 cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT MSVC" OFF)
 
+set(BRLCAD_DEBUG ON)
 if(BRLCAD_DEBUG)
   add_definitions(${DEBUG_CXX_FLAGS})
 endif(BRLCAD_DEBUG)
