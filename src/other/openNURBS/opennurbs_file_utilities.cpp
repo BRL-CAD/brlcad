@@ -37,7 +37,7 @@
 #pragma ON_PRAGMA_WARNING_BEFORE_DIRTY_INCLUDE
 #include <Shlobj.h>
 #pragma ON_PRAGMA_WARNING_AFTER_DIRTY_INCLUDE
-#if defined(_M_X64) && defined(WIN32) && defined(WIN64)
+#if (defined(_M_X64) || defined(_M_ARM64)) && defined(WIN32) && defined(WIN64)
 // Shlwapi.h, Shlobj.h and perhaps others, unconditionally define WIN32
 #undef WIN32
 #endif

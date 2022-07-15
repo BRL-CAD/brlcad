@@ -32,9 +32,9 @@
 #error Incorrect _M_... setting for x64 build
 #endif
 
-#if !defined(_M_X64)
+#if !defined(_M_X64) && !defined(_M_ARM64)
 // This should be automatically defined by the compiler
-#error _M_X64 should be defined for x64 builds
+#error _M_X64 or _M_ARM64 should be defined for x64 or ARM64 builds
 #endif
 
 // All opennurbs code uses the "offical" _M_X64. Unfortunately, 
@@ -43,9 +43,9 @@
 // _M_X64 and _M_AMD64 for the WIN64 platform.  If it doesn't,
 // then we have a serious problem because some system header
 // files will not be correctly preprocessed.
-#if !defined(_M_AMD64)
+#if !defined(_M_AMD64) && !defined(_M_ARM64)
 // This should be automatically defined by the compiler
-#error _M_AMD64 should be defined for x64 builds
+#error _M_AMD64 or _M_ARM64 should be defined for x64 or ARM64 builds
 #endif
 
 #endif
@@ -57,7 +57,7 @@
 #error Microsoft defines _WIN32 for all Windows builds
 #endif
 
-#if defined(_M_IA64) || defined(_M_X64) || defined(_M_AMD64)
+#if defined(_M_IA64) || defined(_M_X64) || defined(_M_AMD64) || defined(_M_ARM64)
 #error Incorrect _M_... setting for 32 bit Windows build.
 #endif
 
@@ -108,9 +108,9 @@
 #error Incorrect _M_... setting for x64 build
 #endif
 
-#if !defined(_M_X64)
+#if !defined(_M_X64) && !defined(_M_ARM64)
 // This should be automatically defined by the compiler
-#error _M_X64 should be defined for x64 builds
+#error _M_X64 or _M_ARM64 should be defined for x64 or ARM64 builds
 #endif
 
 // All opennurbs code uses the "offical" _M_X64. Unfortunately, 
@@ -119,9 +119,9 @@
 // _M_X64 and _M_AMD64 for the WIN64 platform.  If it doesn't,
 // then we have a serious problem because some system header
 // files will not be correctly preprocessed.
-#if !defined(_M_AMD64)
+#if !defined(_M_AMD64) && !defined(_M_ARM64)
 // This should be automatically defined by the compiler
-#error _M_AMD64 should be defined for x64 builds
+#error _M_AMD64 or _M_ARM64 should be defined for x64 or ARM6 builds
 #endif
 
 #endif
@@ -133,7 +133,7 @@
 #error Microsoft defines _WIN32 for all Windows builds
 #endif
 
-#if defined(_M_IA64) || defined(_M_X64) || defined(_M_AMD64)
+#if defined(_M_IA64) || defined(_M_X64) || defined(_M_AMD64) || defined(_M_ARM64)
 #error Incorrect _M_... setting for 32 bit Windows build.
 #endif
 

@@ -383,7 +383,7 @@ typedef ON__UINT32 wchar_t;
 */
 
 
-#if defined(_M_X64) && defined(WIN32) && defined(WIN64)
+#if (defined(_M_X64) || defined(_M_ARM64)) && defined(WIN32) && defined(WIN64)
 // 23 August 2007 Dale Lear
 
 #if defined(_INC_WINDOWS)
@@ -406,7 +406,7 @@ typedef ON__UINT32 wchar_t;
 #pragma ON_PRAGMA_WARNING_AFTER_DIRTY_INCLUDE
 #endif
 
-#if defined(_M_X64) && defined(WIN32) && defined(WIN64)
+#if (defined(_M_X64) || defined(_M_ARM64)) && defined(WIN32) && defined(WIN64)
 // 23 August 2007 Dale Lear
 //   windows.h unconditionally defines WIN32  This is a bug
 //   and the hope is this simple undef will let us continue.

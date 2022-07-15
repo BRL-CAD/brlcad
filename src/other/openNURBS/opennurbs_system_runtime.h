@@ -137,7 +137,7 @@
 #define ON_RUNTIME_WIN_WINOS
 #endif
 
-#if defined(_M_X64) || defined(_WIN64)
+#if defined(_M_X64) || defined(_M_ARM64) || defined(_WIN64)
 #define ON_64BIT_RUNTIME
 #elif defined(_M_X86) || defined(_WIN32)
 #define ON_32BIT_RUNTIME
@@ -146,7 +146,7 @@
 #endif
 
 #if !defined(ON_LITTLE_ENDIAN)
-#if (defined(_M_X64) || defined(_M_IX86) || defined (__i386__) || defined( __x86_64__ ))
+#if (defined(_M_X64) || defined(_M_ARM64) || defined(_M_IX86) || defined(__i386__) || defined(__x86_64__))
 #define ON_LITTLE_ENDIAN
 #endif
 #endif
