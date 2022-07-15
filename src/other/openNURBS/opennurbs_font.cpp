@@ -9642,7 +9642,7 @@ bool ON_Font::IsValid(ON_TextLog* text_log) const
 
 void ON_Font::Dump(ON_TextLog& dump) const
 {
-  const bool bTextHash = dump.IsTextHash();;
+  const bool bTextHash = dump.IsTextHash();
 
   ON_wString s;
 

@@ -301,7 +301,7 @@ bool ON_Brep::SetTrimBoundingBoxes( bool bLazy )
 bool ON_Brep::SetTrimBoundingBoxes( ON_BrepFace& face, bool bLazy )
 {
   bool rc = true;
-  int li, fli, loop_count = m_L.Count(), fl_count = face.m_li.Count();;
+  int li, fli, loop_count = m_L.Count(), fl_count = face.m_li.Count();
   for ( fli = 0; fli < fl_count; fli++ )
   {
     li = face.m_li[fli];

@@ -14072,7 +14072,7 @@ const ON_SubDVertex * ON_SubD::ReplaceFaceWithTriangleFan(ON_SubDFace * face, ON
     if (i < 4)
       face->m_edge4[i] = ON_SubDEdgePtr::Null;
     else
-      face->m_edgex[i - 4] = ON_SubDEdgePtr::Null;;
+      face->m_edgex[i - 4] = ON_SubDEdgePtr::Null;
     ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(edges[i].m_ptr);
     e->RemoveFaceFromArray(face);
     const_cast<ON_SubDVertex*>(edges[i].RelativeVertex(0))->RemoveFaceFromArray(face);
