@@ -2537,12 +2537,6 @@ DOCUMENTATION
         defined per object type and possibly programmable.  See
         src/proc-db/csgbrep.cpp for a basic start.
 
-* BRL-CAD Ray Tracing Shaders
-	An overview of the various shaders and shader options
-	available in BRL-CAD.  Create a catalog of all
-	possible/distinct/useful shader settings.  See
-	regress/shaders.sh for a basic start.
-
 * update the rt* manual pages to note that they can all write out to
   various image formats like png just by specifying an output file
   extension.
@@ -2728,6 +2722,9 @@ DOCUMENTATION
 	nirt.  Succinct overview of less than 10% of the core
 	functionality in 10 pages or less (plus pictures).
 
+* Introduction to MGED Tutorial
+        This exists, but has not yet been added to the repo.
+
 * Technical Overview of BRL-CAD
 	Describes everything in the package succinctly yet
 	comprehensively.  Survey of all the major features,
@@ -2790,6 +2787,16 @@ DOCUMENTATION
 
 * Procedural Geometry in BRL-CAD
 	How-To for creating new tools that create geometry.
+
+* Guide to Rendering with BRL-CAD
+        Basic overview of all the ray tracers and primary rendering
+        options supported.
+
+* BRL-CAD Ray Tracing Shaders
+	An overview of the various shaders and shader options
+	available in BRL-CAD.  Create a catalog of all
+	possible/distinct/useful shader settings.  See
+	regress/shaders.sh for a basic start.
 
 * BRL-CAD Ray Tracing Shader Development
 	How-To for creating new shaders.
