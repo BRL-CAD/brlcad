@@ -137,6 +137,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* automatic ground plane
+
+  Need ability to auto-calculate a ground plane default for a given
+  model.  Need render option to display the ground plane (e.g.,
+  auto-insert a half or arb8).  Need libged command for
+  creating/manipulating explicit ground objects.  Needs to work with
+  ground_plane_offset attribute on _GLOBAL.
+
 * audit support for slashes in object names and commands that expect
   paths or can/should have meaningful behavior with paths
 
