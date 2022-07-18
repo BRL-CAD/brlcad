@@ -203,6 +203,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * add linear interpolation method for metaballs
 
+* optimize metaballs performance case where there are lots of single
+  points, no interpolation.
+
 * add script/command for changing metaball weights in masse
 
 * dbconcat option to override / merge over existing objects
@@ -2497,6 +2500,8 @@ FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
   primitive for initial estimate, caches result)
 
 * write and use kdtree - make traversal cache coherent
+
+* replace adrt's kdtree with one that builds faster
 
 
 GEOMETRY MODELS
