@@ -48,88 +48,6 @@ printusage(void) {
 }
 
 int
-com_add(
-    struct rt_wdb* wdbp,
-    const char* combname,
-    int size,
-    std::string* names,
-    const char* shadername,
-    const char* shaderargs,
-    const unsigned char* rgb)
-{
-    struct bu_list head;
-    BU_LIST_INIT(&head);
-    for (int i = 0; i < size; i++)
-    {
-        if (mk_addmember(names[i].data(), &head, NULL, WMOP_UNION) == WMEMBER_NULL)
-            return -2;
-    }
-    return mk_comb(wdbp, combname, &head, 1, shadername, shaderargs,
-        rgb, 0, 0, 0, 0, 0, 0, 0);
-}
-
-int test_UNION(rt_wdb* out, int arb_num, rt_arb_internal** arbs, ON_3dPoint points[][8], char* namehead)
-{
-    std::string head = namehead;
-    std::string* names = new std::string[arb_num];for (int i = 0; i < arb_num; i++) {
-        BU_ALLOC(arbs[i], struct rt_arb_internal);
-        arbs[i]->magic = RT_ARB_INTERNAL_MAGIC;
-        for (int j = 0; j < 8; j++) {
-            VMOVE(arbs[i]->pt[j], points[i][j]);
-        }
-        std::string str= std::to_string(i);
-        names[i] = head + std::to_string(i);
-        wdb_export(out, names[i].data(), (void*)arbs[i], ID_ARB8, mk_conv2mm);
-    }
-
-
-    unsigned char rgb[] = { 255, 255, 255 };
-    std::string com_name = (head + ".r");
-    com_add(out, com_name.data(), arb_num, names, "plastic", "", rgb);
-
-    ON_Brep* brep = ON_Brep::New();
-    struct rt_db_internal brep_db_internal;
-
-    struct db_i* dbip = db_open(db_name, DB_OPEN_READONLY);
-    if (!dbip) {
-        bu_exit(1, "Unable to open brep_arbintersection.g geometry database file\n");
-    }
-    db_dirbuild(dbip);
-    struct directory* dirp;
-    if ((dirp = db_lookup(dbip, com_name.data(), 0)) != RT_DIR_NULL) {
-        struct rt_db_internal ip;
-        mat_t mat;
-        MAT_IDN(mat);
-        if (rt_db_get_internal(&ip, dirp, dbip, mat, &rt_uniresource) >= 0) {
-
-        }
-        else {
-            fprintf(stderr, "problem getting internal object rep\n");
-        }
-
-        struct rt_db_internal intern_res;
-        std::string brep_name = ("brep." + head);
-
-
-        int ret = brep_conversion(&ip, &brep_db_internal, dbip);
-        bu_log("ret = %d.\n", ret);
-        if (ret == -1) {
-            bu_log("-1.\n");
-        }
-        else if (ret == -2) {
-            bu_log("-2.\n");
-        }
-        else {
-            brep = ((struct rt_brep_internal*)brep_db_internal.idb_ptr)->brep;
-            ret = mk_brep(outfp, brep_name.data(), (void*)brep);
-        }
-
-        rt_db_free_internal(&brep_db_internal);
-        return BRLCAD_OK;
-    }
-}
-
-int
 main(int argc, char** argv)
 {
     ON_TextLog error_log;
@@ -152,16 +70,98 @@ main(int argc, char** argv)
     outfp = wdb_fopen(db_name);
     mk_id(outfp, id_name);
 
-    test_UNION(outfp, arb_1_num, arb_1, arb_1_v, "arb_1");
-    test_UNION(outfp, arb_2_num, arb_2, arb_2_v, "arb_2");
-    test_UNION(outfp, arb_3_num, arb_3, arb_3_v, "arb_3");
-    test_UNION(outfp, arb_4_num, arb_4, arb_4_v, "arb_4");
-    test_UNION(outfp, arb_5_num, arb_5, arb_5_v, "arb_5");
+    struct ON_3dPoint v_arb_0[125][8];
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            for (int k = 0; k < 5; k++) {
+                int case_id = i * 25 + j * 5 + k;
+                v_arb_0[case_id][0].x = v_arb_0[case_id][1].x = v_arb_0[case_id][4].x = v_arb_0[case_id][5].x = v_arb_pos[i][0];
+                v_arb_0[case_id][2].x = v_arb_0[case_id][3].x = v_arb_0[case_id][6].x = v_arb_0[case_id][7].x = v_arb_pos[i][1];
+                v_arb_0[case_id][0].y = v_arb_0[case_id][3].y = v_arb_0[case_id][4].y = v_arb_0[case_id][7].y = v_arb_pos[j][0];
+                v_arb_0[case_id][1].y = v_arb_0[case_id][2].y = v_arb_0[case_id][5].y = v_arb_0[case_id][6].y = v_arb_pos[j][1];
+                v_arb_0[case_id][0].z = v_arb_0[case_id][1].z = v_arb_0[case_id][2].z = v_arb_0[case_id][3].z = v_arb_pos[k][0];
+                v_arb_0[case_id][4].z = v_arb_0[case_id][5].z = v_arb_0[case_id][6].z = v_arb_0[case_id][7].z = v_arb_pos[k][1];
+            }
+        }
+    }
 
-    wdb_close(outfp);
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            for (int k = 0; k < 5; k++) {
+                int case_id = i * 25 + j * 5 + k;
+                rt_arb_internal* arb_0;
+                rt_arb_internal* arb_1;
+                BU_ALLOC(arb_0, struct rt_arb_internal);
+                BU_ALLOC(arb_1, struct rt_arb_internal);
+                arb_0->magic = RT_ARB_INTERNAL_MAGIC;
+                arb_1->magic = RT_ARB_INTERNAL_MAGIC;
+                for (int t = 0; t < 8; t++) {
+                    VMOVE(arb_0->pt[t], ps_arb_0[t]);
+                    VMOVE(arb_1->pt[t], v_arb_0[case_id][t]);
+                }
+                std::string name_0 = "arb_" + std::to_string(case_id) + "_0";
+                std::string name_1 = "arb_" + std::to_string(case_id) + "_1";
+                std::string name_comb = "u_" + std::to_string(case_id) + ".r";
+                wdb_export(outfp, name_0.data(), (void*)arb_0, ID_ARB8, mk_conv2mm);
+                wdb_export(outfp, name_1.data(), (void*)arb_1, ID_ARB8, mk_conv2mm);
+
+                struct bu_list comb;
+                BU_LIST_INIT(&comb);
+                if (mk_addmember(name_0.data(), &comb, NULL, WMOP_UNION) == WMEMBER_NULL)
+                    return -2;
+                if (mk_addmember(name_1.data(), &comb, NULL, WMOP_UNION) == WMEMBER_NULL)
+                    return -2;
+
+                unsigned char rgb[] = { 255, 255, 255 };
+                mk_comb(outfp, name_comb.data(), &comb, 1, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0);
+                }
+            }
+        }
     
+    
+    for (int i = 0; i < 125; i++) {
+        ON_Brep* brep = ON_Brep::New();
+        struct rt_db_internal brep_db_internal;
+        std::string name_comb = "u_" + std::to_string(i) + ".r";
+
+        struct db_i* dbip = db_open(db_name, DB_OPEN_READONLY);
+        if (!dbip) {
+            bu_exit(1, "Unable to open brep_arbintersection.g geometry database file\n");
+        }
+        db_dirbuild(dbip);
+        struct directory* dirp;
+        if ((dirp = db_lookup(dbip, name_comb.data(), 0)) != RT_DIR_NULL) {
+            struct rt_db_internal ip;
+            mat_t mat;
+            MAT_IDN(mat);
+            if (rt_db_get_internal(&ip, dirp, dbip, mat, &rt_uniresource) >= 0) {
+
+            }
+            else {
+                fprintf(stderr, "problem getting internal object rep\n");
+            }
+
+            struct rt_db_internal intern_res;
+            std::string brep_name = ("brep." + std::to_string(i));
 
 
+            int ret = brep_conversion(&ip, &brep_db_internal, dbip);
+            bu_log("ret = %d.\n", ret);
+            if (ret) {
+                bu_log("-1.\n");
+            }
+            else if (ret == -2) {
+                bu_log("-2.\n");
+            }
+            else {
+                brep = ((struct rt_brep_internal*)brep_db_internal.idb_ptr)->brep;
+                ret = mk_brep(outfp, brep_name.data(), (void*)brep);
+            }
+
+            rt_db_free_internal(&brep_db_internal);
+        }
+    }
+    
     ON::End();
 
     return 0;

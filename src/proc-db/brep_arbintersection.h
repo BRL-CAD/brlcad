@@ -22,156 +22,36 @@
  * Test arb8 intersection cases
  * 
  * brep functions are copied from libged
+ * for each pair of arb_8 object, the first arb_8 have the same vertex
+ * position, the second are combined for 5*5*5 = 125 cases: 1. arb2 is
+ * just right to arb1, 2. arb2 is middle right to arb1, 3. arb2 is in the
+ * middle of arb1, 4. arb2 is middle left to arb1, 5. arb2 is just
+ * left to arb1,
  *
  */
 
 #ifndef PROC_DB_BREP_ARBINTERSECTION_H
 #define PROC_DB_BREP_ARBINTERSECTION_H
 
+/// @brief All the arb_8 intersect cases have the same arb
 
-struct rt_arb_internal* arb_0[2];
-struct ON_3dPoint v_arb_0[2][8] = { {
-    { 0.0,  0.0,  1.0 },
-    { 1.5,  0.0,  1.0 },
-    { 1.5,  1.2,  1.0 },
-    { 0.0,  1.0,  1.0 },
-    { 0.0,  0.0,  0.0 },
-    { 1.5,  0.0,  0.0 },
-    { 1.5,  1.0,  0.0 },
-    { 0.0,  1.0,  0.0 },
-},
-    {{ 1.0,  0.0,  1.0 },
-    { 2.0,  0.0,  1.0 },
-    { 2.0,  1.2,  1.0 },
-    { 1.0,  1.0,  1.0 },
-    { 1.0,  0.0,  0.0 },
-    { 2.0,  0.0,  0.0 },
-    { 2.0,  1.0,  0.0 },
-    { 1.0,  1.0,  0.0 },
-}
-};
-
-
-// case 1: two arb8 intersect at one point (outer + OP_UNION£©
-int arb_1_num = 2;
-struct rt_arb_internal* arb_1[2];
-struct ON_3dPoint arb_1_v[2][8] = { {
-    { 0,  0,  0 },
-    { 0,  1,  0 },
-    { 1,  1,  0 },
-    { 1,  0,  0 },
-    { 0,  0,  1 },
-    { 0,  1,  1 },
-    { 1,  1,  1 },
-    { 1,  0,  1 },
-},
-   {{ 1,  1,  1 },
-    { 1,  2,  1 },
-    { 2,  2,  1 },
-    { 2,  1,  1 },
-    { 1,  1,  2 },
-    { 1,  2,  2 },
-    { 2,  2,  2 },
-    { 2,  1,  2 },
-}
-};
-
-// case 2: two arb8 intersect at one line (outer + OP_UNION£©
-int arb_2_num = 2;
-struct rt_arb_internal* arb_2[2];
-struct ON_3dPoint arb_2_v[2][8] = { {
-    { 0,  0,  0 },
-    { 0,  1,  0 },
-    { 1,  1,  0 },
-    { 1,  0,  0 },
-    { 0,  0,  1 },
-    { 0,  1,  1 },
-    { 1,  1,  1 },
-    { 1,  0,  1 },
-},
-   {{ 0,  1,  1 },
-    { 0,  2,  1 },
-    { 1,  2,  1 },
-    { 1,  1,  1 },
-    { 0,  1,  2 },
-    { 0,  2,  2 },
-    { 1,  2,  2 },
-    { 1,  1,  2 },
-}
-};
-
-
-// case 3: two arb8 intersect at one face (outer + OP_UNION£©
-int arb_3_num = 2;
-struct rt_arb_internal* arb_3[2];
-struct ON_3dPoint arb_3_v[2][8] = { {
-    { 0,  0,  0 },
-    { 0,  1,  0 },
-    { 1,  1,  0 },
-    { 1,  0,  0 },
-    { 0,  0,  1 },
-    { 0,  1,  1 },
-    { 1,  1,  1 },
-    { 1,  0,  1 },
-},
-   {{ -1,  1, 0 },
-    { -1,  2, 0 },
-    { 2,  2,  0 },
-    { 2,  1,  0 },
-    { -1,  1, 1 },
-    { -1,  2, 1 },
-    { 2,  2,  1 },
-    { 2,  1,  1 },
-}
-};
-
-
-// case 4: two arb8 intersect (intersect + OP_UNION£©
-int arb_4_num = 2;
-struct rt_arb_internal* arb_4[2];
-struct ON_3dPoint arb_4_v[2][8] = { {
-    { 0,  0,  0 },
-    { 0,  1.5,  0 },
-    { 1,  1.5,  0 },
-    { 1,  0,  0 },
-    { 0,  0,  1 },
-    { 0,  1.5,  1 },
-    { 1,  1.5,  1 },
-    { 1,  0,  1 },
-},
-   {{ -1,  1, 0 },
-    { -1,  2, 0 },
-    { 2,  2,  0 },
-    { 2,  1,  0 },
-    { -1,  1, 1 },
-    { -1,  2, 1 },
-    { 2,  2,  1 },
-    { 2,  1,  1 },
-}
-};
-
-// case 5: two arb8 intersect (intersect + OP_UNION£©
-int arb_5_num = 2;
-struct rt_arb_internal* arb_5[2];
-struct ON_3dPoint arb_5_v[2][8] = { {
-	{ 1,  -1,  -1 },
-	{ 1,  1,  -1 },
-	{ 1,  1,  1 },
-	{ 1,  -1,  1 },
+struct ON_3dPoint ps_arb_0[8] = {
 	{ -1,  -1,  -1 },
 	{ -1,  1,  -1 },
-	{ -1,  1,  1 },
+	{ 1,  1,  -1 },
+	{ 1,  -1,  -1 },
 	{ -1,  -1,  1 },
-},
-   {{ 0.5,  -2, -1 },
-	{ 0.5,  2, -1 },
-	{ 0.5,  2,  0.5 },
-	{ 0.5,  -2,  0.5 },
-	{ -0.5,  -2, -1 },
-	{ -0.5,  2, -1 },
-	{ -0.5,  2,  0.5 },
-	{ -0.5,  -2,  0.5 },
-}
+	{ -1,  1,  1 },
+	{ 1,  1,  1 },
+	{ 1,  -1,  1 }
+};
+
+double v_arb_pos[5][2] = {
+	{1, 2},
+	{0, 2},
+	{-0.5, 0.5},
+	{-2, 0},
+	{-2, -1},
 };
 
 static int
@@ -380,7 +260,6 @@ brep_conversion_comb(struct rt_db_internal* old_internal, const char* name, cons
 		ret = wdb_export(wdbp, name, comb_internal, ID_COMBINATION, local2mm);
 		if (ret)
 			return ret;
-		bu_log("%s is made 1.\n", name);
 		return 0;
 	}
 	RT_CK_TREE(comb_internal->tree);
@@ -402,8 +281,6 @@ brep_conversion_comb(struct rt_db_internal* old_internal, const char* name, cons
 		bu_free(new_internal->tree, "tree");
 		bu_free(new_internal, "rt_comb_internal");
 	}
-	if (!ret)
-		bu_log("%s is made 2.\n", name);
 
 	return ret;
 }
