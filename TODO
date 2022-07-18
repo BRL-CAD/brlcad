@@ -139,6 +139,27 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* automatic tops
+
+  implement db_tops() to return list of top-level entities.  then,
+  implement a db_tops_default() to support automatic default object
+  loading for commands like rt* that typically work with top-level
+  objects.  let some commands default to an unspecified object when
+  there's an identifiable priority according to matching criteria:
+
+  a) _GLOBAL has a tops_default attribute set, default to that object
+  b) there's only one object, default to that object
+  c) there's only one comb, default to that comb
+  d) there's only one comb (sans any ext) matching filename (sans ext)
+  e) there's only one comb with pattern matching '^(all|scene)*'
+
+  if _GLOBAL has a tops_default attribute set to empty/negative, then
+  this behavior will be disabled.
+
+  when there is not a match, the commands should report out the
+  available top-level objects by default.  that way the user doesn't
+  have to manually run mged to figure out what can be rendered.
+
 * automatic ground plane
 
   Need ability to auto-calculate a ground plane default for a given
