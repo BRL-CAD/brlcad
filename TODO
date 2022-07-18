@@ -2142,7 +2142,12 @@ ttcp       (not ported)
 CONVERTERS
 ----------
 
-* add glTF importer/exporter (.gltf and .glb file formats)
+* add obj cstype/bezier/surf/curv/param/trim/etc import for nurbs
+  import/export support
+
+* improve glTF importer
+
+* add glTF exporter (.gltf and .glb file formats)
 
 * add 3MF importer/exporter (3D printing file format like STL that
   supports materials, colors, and other information.)
