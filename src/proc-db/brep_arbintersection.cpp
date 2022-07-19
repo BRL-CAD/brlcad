@@ -101,64 +101,81 @@ main(int argc, char** argv)
                 }
                 std::string name_0 = "arb_" + std::to_string(case_id) + "_0";
                 std::string name_1 = "arb_" + std::to_string(case_id) + "_1";
-                std::string name_comb = "u_" + std::to_string(case_id) + ".r";
+                std::string name_inter = "inter_" + std::to_string(case_id) + ".r";
+                std::string name_sub = "sub_" + std::to_string(case_id) + ".r";
+                std::string name_un = "un_" + std::to_string(case_id) + ".r";
                 wdb_export(outfp, name_0.data(), (void*)arb_0, ID_ARB8, mk_conv2mm);
                 wdb_export(outfp, name_1.data(), (void*)arb_1, ID_ARB8, mk_conv2mm);
 
-                struct bu_list comb;
-                BU_LIST_INIT(&comb);
-                if (mk_addmember(name_0.data(), &comb, NULL, WMOP_UNION) == WMEMBER_NULL)
+                // three boolean operations: intersection, subtraction, and union
+                struct bu_list inter;
+                struct bu_list sub;
+                struct bu_list un;
+                BU_LIST_INIT(&inter);
+                BU_LIST_INIT(&sub);
+                BU_LIST_INIT(&un);
+
+                if (mk_addmember(name_0.data(), &inter, NULL, WMOP_UNION) == WMEMBER_NULL)
                     return -2;
-                if (mk_addmember(name_1.data(), &comb, NULL, WMOP_UNION) == WMEMBER_NULL)
+                if (mk_addmember(name_1.data(), &inter, NULL, WMOP_INTERSECT) == WMEMBER_NULL)
+                    return -2;
+
+                if (mk_addmember(name_0.data(), &sub, NULL, WMOP_UNION) == WMEMBER_NULL)
+                    return -2;
+                if (mk_addmember(name_1.data(), &sub, NULL, WMOP_SUBTRACT) == WMEMBER_NULL)
+                    return -2;
+
+                if (mk_addmember(name_0.data(), &un, NULL, WMOP_UNION) == WMEMBER_NULL)
+                    return -2;
+                if (mk_addmember(name_1.data(), &un, NULL, WMOP_UNION) == WMEMBER_NULL)
                     return -2;
 
                 unsigned char rgb[] = { 255, 255, 255 };
-                mk_comb(outfp, name_comb.data(), &comb, 1, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0);
+                mk_comb(outfp, name_inter.data(), &inter, 1, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0);
+                mk_comb(outfp, name_sub.data(), &sub, 1, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0);
+                mk_comb(outfp, name_un.data(), &un, 1, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0);
                 }
             }
         }
     
-    
+
+    struct db_i* dbip = db_open(db_name, DB_OPEN_READONLY);
+    if (!dbip) {
+        bu_exit(1, "Unable to open brep_arbintersection.g geometry database file\n");
+    }
+    db_dirbuild(dbip);
     for (int i = 0; i < 125; i++) {
         ON_Brep* brep = ON_Brep::New();
         struct rt_db_internal brep_db_internal;
-        std::string name_comb = "u_" + std::to_string(i) + ".r";
-
-        struct db_i* dbip = db_open(db_name, DB_OPEN_READONLY);
-        if (!dbip) {
-            bu_exit(1, "Unable to open brep_arbintersection.g geometry database file\n");
-        }
-        db_dirbuild(dbip);
+        std::string names[3] = {
+            std::string("inter_" + std::to_string(i) + ".r").data(),
+            std::string("sub_" + std::to_string(i) + ".r").data(),
+            std::string("un_" + std::to_string(i) + ".r").data()
+        };
         struct directory* dirp;
-        if ((dirp = db_lookup(dbip, name_comb.data(), 0)) != RT_DIR_NULL) {
-            struct rt_db_internal ip;
-            mat_t mat;
-            MAT_IDN(mat);
-            if (rt_db_get_internal(&ip, dirp, dbip, mat, &rt_uniresource) >= 0) {
 
-            }
-            else {
-                fprintf(stderr, "problem getting internal object rep\n");
-            }
+        for (auto str : names) {
 
-            struct rt_db_internal intern_res;
-            std::string brep_name = ("brep." + std::to_string(i));
+            if ((dirp = db_lookup(dbip, str.data(), 0)) != RT_DIR_NULL) {
+                struct rt_db_internal ip;
+                mat_t mat;
+                MAT_IDN(mat);
+                if (rt_db_get_internal(&ip, dirp, dbip, mat, &rt_uniresource) >= 0) {
 
+                }
 
-            int ret = brep_conversion(&ip, &brep_db_internal, dbip);
-            bu_log("ret = %d.\n", ret);
-            if (ret) {
-                bu_log("-1.\n");
-            }
-            else if (ret == -2) {
-                bu_log("-2.\n");
-            }
-            else {
-                brep = ((struct rt_brep_internal*)brep_db_internal.idb_ptr)->brep;
-                ret = mk_brep(outfp, brep_name.data(), (void*)brep);
-            }
+                struct rt_db_internal intern_res;
+                std::string brep_name = ("brep.." + std::to_string(i));
+                brep_name.insert(5, 1, str.data()[0]);
 
-            rt_db_free_internal(&brep_db_internal);
+                int ret = brep_conversion(&ip, &brep_db_internal, dbip);
+                if (!ret && ret != -2) {
+                    brep = ((struct rt_brep_internal*)brep_db_internal.idb_ptr)->brep;
+                    ret = mk_brep(outfp, brep_name.data(), (void*)brep);
+                }
+
+                rt_db_free_internal(&brep_db_internal);
+            }
         }
     }
     
