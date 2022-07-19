@@ -33,12 +33,11 @@ contents of the BRL-CAD distribution.
 Some platforms have additional platform-specific documentation that
 should be consulted after reading this file:
 
-  doc/README.AIX        -- IBM's Advanced Interactive eXecutive OS
   doc/README.BSD        -- FreeBSD, NetBSD, OpenBSD, etc.
-  doc/README.IRIX       -- SGI IRIX and IRIX64
   doc/README.Linux      -- Various Linux distributions
   doc/README.MacOSX     -- Apple Mac OS X
   doc/README.Solaris    -- Oracle Solaris, OpenIndiana (Illumos), etc.
+  doc/README.VAX        -- VAX (original benchmark baseline platform)
   doc/README.Windows    -- Microsoft Windows
 
 The information on how to install and operate the software, to become
