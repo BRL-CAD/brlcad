@@ -134,27 +134,16 @@ Please submit all bugs, support requests, and feature requests to:
 DISTRIBUTION DETAILS
 --------------------
 
-BRL-CAD is available via Git or Subversion checkout from:
+BRL-CAD releases are available at:
+
+https://github.com/BRL-CAD/brlcad/releases
+
+Assets stored for each release will always include source archives,
+and usually binary compilations for commonly used operating systems.
+
+For developers, BRL-CAD is available via Git version control cloning:
 
 https://github.com/BRL-CAD/brlcad
-
-There is also a paid-for full-service support distribution available
-for those interested through SURVICE Engineering, Inc., and the
-Survivability/Vulnerability Information Analysis Center (SURVIAC).
-
-SURVICE provides their own BRL-CAD distribution that comes with
-commercial support, documentation, and installation media.  Full
-technical assistance is provided to their commercial distributions by
-phone, FAX, postal mail, or e-mail.  Agencies of the Federal
-Government may acquire the full service distribution with a MIPR or
-OGA funds transfer.
-
-For further details, contact:
-
-BRL-CAD Distribution
-SURVIAC Aberdeen Satellite Office
-4695 Millennium Drive
-Belcamp, MD 210017-1505  USA
 
 
 BACKGROUND INFORMATION
