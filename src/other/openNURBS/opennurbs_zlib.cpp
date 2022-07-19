@@ -26,6 +26,7 @@
 
 #include "opennurbs_zlib.h"
 
+#if 0
 #if defined(ON_COMPILER_MSC)
 
 #if !defined(OPENNURBS_ZLIB_LIB_DIR)
@@ -42,7 +43,6 @@
 
 #endif
 
-
 #if defined(_LIB) && defined(_MT) && !defined(_DLL)
 // using Microsoft statically linked C-runtime
 #pragma message ( "Linking with zlib_mt.lib in " OPENNURBS_PP2STR(OPENNURBS_ZLIB_LIB_DIR) )
@@ -51,6 +51,8 @@
 // using Microsoft DLL C-runtime
 #pragma message ( "Linking with zlib.lib in " OPENNURBS_PP2STR(OPENNURBS_ZLIB_LIB_DIR) )
 #pragma comment(lib, "\"" OPENNURBS_ZLIB_LIB_DIR "/" "zlib.lib" "\"")
+#endif
+
 #endif
 
 #endif
