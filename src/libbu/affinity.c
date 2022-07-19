@@ -58,7 +58,7 @@ parallel_set_affinity(int cpu)
 
     /* Linux and BSD pthread affinity */
 
-#ifdef HAVE_SYS_CPUSET_H
+#if defined(HAVE_SYS_CPUSET_H) || defined(HAVE_PTHREAD_NP_H)
     cpuset_t set_of_cpus;
 #else
     cpu_set_t set_of_cpus;
