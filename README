@@ -7,7 +7,7 @@ solid modeling system that includes an interactive 3D solid geometry
 editor, a network-distributed symmetric multiprocessing (SMP)
 high-performance ray-tracer with support for rendering and geometric
 analysis, image and signal-processing tools, a system performance
-analysis benchmark suite, a flexible geometry scripting interface, 
+analysis benchmark suite, a flexible geometry scripting interface,
 and a high-performance geometric representation and analysis library.
 
 
@@ -115,7 +115,7 @@ There are various BRL-CAD mailing lists available including three
 developer-oriented lists, a user list, and a read-only news
 announcement list:
 
-  http://sourceforge.net/mail/?group_id=105292 
+  http://sourceforge.net/mail/?group_id=105292
 
 For interactive discussion, there is Zulip chat and IRC available:
 
@@ -186,12 +186,12 @@ Linux, and Windows.
 
 The BRL-CAD package is intentionally designed to be extensively
 cross-platform and is actively developed on and maintained for many
-common operating system environments including for BSD, IRIX, Linux,
-Solaris, Mac OS X, and Windows among others.  The entire package is
-distributed in binary and source code form as free open source
-software (FOSS), provided under Open Source Initiative (OSI) approved
-license terms.  BRL-CAD was released as open source in December 2004.
-See the COPYING file for more details.
+common operating system environments including various BSD
+distributions, Linux, Solaris, Mac OS X, and Windows.  The entire
+package is distributed in binary and source code form as free open
+source software (FOSS), provided under Open Source Initiative (OSI)
+approved license terms.  BRL-CAD was released as open source in
+December 2004. See the COPYING file for more details.
 
 Best Wishes,
 The BRL-CAD Development Team
