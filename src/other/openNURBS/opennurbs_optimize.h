@@ -18,6 +18,7 @@
 #define OPENNURBS_OPTIMIZE_INC_
 
 // find a local minimum of a 1 parameter function
+ON_DECL
 int ON_FindLocalMinimum( // returns 0 - failed to converge, 1 - success, 2 - failed to converge to requested tolerances
         int (*)(void*,double,double*,double*), // f(void*, double t, double* value, double* derivative );
         void*, // passed as the void* argument to the above function
