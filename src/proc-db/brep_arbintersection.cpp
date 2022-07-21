@@ -47,6 +47,11 @@ printusage(void) {
     fprintf(stderr,"Usage: brep_arbintersection (takes no arguments)\n");
 }
 
+void pointShift(ON_3dPoint* point, ON_3dPoint shift) {
+    point->x += shift.x;
+    point->y += shift.y;
+    point->z += shift.z;
+}
 int
 main(int argc, char** argv)
 {
@@ -70,17 +75,31 @@ main(int argc, char** argv)
     outfp = wdb_fopen(db_name);
     mk_id(outfp, id_name);
 
+    // caculate vertex positions of arb8s
     struct ON_3dPoint v_arb_0[125][8];
+    struct ON_3dPoint v_arb_1[125][8];
+    struct ON_3dPoint shift(0, 0, 0);   //each test case have a 4*4*4 space
+    double shift_space = 4.0;
     for (int i = 0; i < 5; i++) {
+        shift.x = i * shift_space;
         for (int j = 0; j < 5; j++) {
+            shift.y = j * shift_space;
             for (int k = 0; k < 5; k++) {
+                shift.z = k * shift_space;
                 int case_id = i * 25 + j * 5 + k;
-                v_arb_0[case_id][0].x = v_arb_0[case_id][1].x = v_arb_0[case_id][4].x = v_arb_0[case_id][5].x = v_arb_pos[i][0];
-                v_arb_0[case_id][2].x = v_arb_0[case_id][3].x = v_arb_0[case_id][6].x = v_arb_0[case_id][7].x = v_arb_pos[i][1];
-                v_arb_0[case_id][0].y = v_arb_0[case_id][3].y = v_arb_0[case_id][4].y = v_arb_0[case_id][7].y = v_arb_pos[j][0];
-                v_arb_0[case_id][1].y = v_arb_0[case_id][2].y = v_arb_0[case_id][5].y = v_arb_0[case_id][6].y = v_arb_pos[j][1];
-                v_arb_0[case_id][0].z = v_arb_0[case_id][1].z = v_arb_0[case_id][2].z = v_arb_0[case_id][3].z = v_arb_pos[k][0];
-                v_arb_0[case_id][4].z = v_arb_0[case_id][5].z = v_arb_0[case_id][6].z = v_arb_0[case_id][7].z = v_arb_pos[k][1];
+                v_arb_1[case_id][0].x = v_arb_1[case_id][1].x = v_arb_1[case_id][4].x = v_arb_1[case_id][5].x = v_arb_pos[i][0];
+                v_arb_1[case_id][2].x = v_arb_1[case_id][3].x = v_arb_1[case_id][6].x = v_arb_1[case_id][7].x = v_arb_pos[i][1];
+                v_arb_1[case_id][0].y = v_arb_1[case_id][3].y = v_arb_1[case_id][4].y = v_arb_1[case_id][7].y = v_arb_pos[j][0];
+                v_arb_1[case_id][1].y = v_arb_1[case_id][2].y = v_arb_1[case_id][5].y = v_arb_1[case_id][6].y = v_arb_pos[j][1];
+                v_arb_1[case_id][0].z = v_arb_1[case_id][1].z = v_arb_1[case_id][2].z = v_arb_1[case_id][3].z = v_arb_pos[k][0];
+                v_arb_1[case_id][4].z = v_arb_1[case_id][5].z = v_arb_1[case_id][6].z = v_arb_1[case_id][7].z = v_arb_pos[k][1];
+
+                for (int t = 0; t < 8; t++) {
+                    VMOVE(v_arb_0[case_id][t], ps_arb_0[t]);
+                    pointShift(&v_arb_0[case_id][t], shift);
+                    pointShift(&v_arb_1[case_id][t], shift);
+                }
+                    
             }
         }
     }
@@ -96,14 +115,15 @@ main(int argc, char** argv)
                 arb_0->magic = RT_ARB_INTERNAL_MAGIC;
                 arb_1->magic = RT_ARB_INTERNAL_MAGIC;
                 for (int t = 0; t < 8; t++) {
-                    VMOVE(arb_0->pt[t], ps_arb_0[t]);
-                    VMOVE(arb_1->pt[t], v_arb_0[case_id][t]);
+                    VMOVE(arb_0->pt[t], v_arb_0[case_id][t]);
+                    VMOVE(arb_1->pt[t], v_arb_1[case_id][t]);
                 }
-                std::string name_0 = "arb_" + std::to_string(case_id) + "_0";
-                std::string name_1 = "arb_" + std::to_string(case_id) + "_1";
-                std::string name_inter = "inter_" + std::to_string(case_id) + ".r";
-                std::string name_sub = "sub_" + std::to_string(case_id) + ".r";
-                std::string name_un = "un_" + std::to_string(case_id) + ".r";
+                
+                std::string name_0 = "arb_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k) + "_0";
+                std::string name_1 = "arb_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k) + "_1";
+                std::string name_inter = "inter_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k) + ".r";
+                std::string name_sub = "sub_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k) + ".r";
+                std::string name_un = "un_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k) + ".r";
                 wdb_export(outfp, name_0.data(), (void*)arb_0, ID_ARB8, mk_conv2mm);
                 wdb_export(outfp, name_1.data(), (void*)arb_1, ID_ARB8, mk_conv2mm);
 
@@ -148,10 +168,11 @@ main(int argc, char** argv)
         ON_Brep* brep = ON_Brep::New();
         struct rt_db_internal brep_db_internal;
         std::string names[3] = {
-            std::string("inter_" + std::to_string(i) + ".r").data(),
-            std::string("sub_" + std::to_string(i) + ".r").data(),
-            std::string("un_" + std::to_string(i) + ".r").data()
+            std::string("inter_" + std::to_string(i / 25) + "_" + std::to_string(i % 25 / 5) + "_" + std::to_string(i % 5) + ".r").data(),
+            std::string("sub_" + std::to_string(i / 25) + "_" + std::to_string(i % 25 / 5) + "_" + std::to_string(i % 5) + ".r").data(),
+            std::string("un_" + std::to_string(i / 25) + "_" + std::to_string(i % 25 / 5) + "_" + std::to_string(i % 5) + ".r").data()
         };
+
         struct directory* dirp;
 
         for (auto str : names) {
@@ -165,7 +186,8 @@ main(int argc, char** argv)
                 }
 
                 struct rt_db_internal intern_res;
-                std::string brep_name = ("brep.." + std::to_string(i));
+                
+                std::string brep_name = ("brep.." + std::to_string(i / 25) + "_" + std::to_string(i % 25 / 5) + "_" + std::to_string(i % 5));
                 brep_name.insert(5, 1, str.data()[0]);
 
                 int ret = brep_conversion(&ip, &brep_db_internal, dbip);
