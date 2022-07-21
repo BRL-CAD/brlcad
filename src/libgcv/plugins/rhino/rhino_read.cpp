@@ -41,6 +41,7 @@
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <unordered_map>
 
 
 namespace rhino_read
@@ -253,6 +254,66 @@ clean_name(std::map<ON_wString, std::size_t> &seen,
 	name += ('_' + lexical_cast<std::string>(number + 1)).c_str();
 }
 
+/* loads model and then iterates over objects to ensure unique names */
+HIDDEN void
+load_model(const gcv_opts& gcv_options, const std::string& path,
+    ONX_Model& model, std::string& root_name)
+{
+    if (!model.Read(path.c_str()))
+	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
+
+
+    /* loop over types we draw names from to check for non-unique names */
+    const int num_types = 2;
+    ON_ModelComponent::Type types[num_types] = { ON_ModelComponent::Type::ModelGeometry,
+					 ON_ModelComponent::Type::Layer
+					};
+    for (int i = 0; i < num_types; i++) {
+	std::unordered_map <std::string, int> used_names;			/* used names, times used */
+	std::vector<std::pair<ON_UUID, ON_ModelComponent*>>to_remove;	/* remove ID, replacing copy */
+	ON_ModelComponent::Type curr_type = types[i];
+	ONX_ModelComponentIterator it(model, curr_type);
+	for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference()) {
+	    std::string chk_name = ON_String(cr.ModelComponent()->Name());
+	    std::string chk_name_orig = chk_name;
+
+	    /* remove spaces and slashes */
+	    bu_vls scrub = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&scrub, "%s", chk_name.c_str());
+	    bu_vls_simplify(&scrub, nullptr, " _\0", " _\0");
+	    chk_name = std::string(bu_vls_cstr(&scrub));
+
+	    /* ensure name is unique */
+	    if (used_names.find(chk_name) == used_names.end()) {
+		used_names.insert({ chk_name, 0 });
+		if (chk_name == chk_name_orig)
+		    continue;
+	    } else {
+		/* find non-conflicting name */
+		auto handle = used_names.find(chk_name);
+		while (used_names.find(chk_name + "_" + std::to_string(++handle->second)) != used_names.end())
+		    ;
+		chk_name.append("_" + std::to_string(handle->second));
+	    }
+
+	    /* make a copy of the component with the non-conflicting name */
+	    ON_ModelComponent* cpy = cr.ModelComponent()->Duplicate();
+	    cpy->SetName(ON_wString(chk_name.c_str()));
+
+	    /* this is a linked list iteration, so we cannot add/delete inside the loop.
+	     * keep track of offender/copy for clean up later
+	     */
+	    to_remove.push_back(std::make_pair(cr.ModelComponent()->Id(), cpy));
+	}
+
+	/* do the removes and replacing additions */
+	for (int i = 0; i < to_remove.size(); i++) {
+	    model.RemoveModelComponent(curr_type, to_remove[i].first);
+	    model.AddManagedModelComponent(to_remove[i].second);
+	}
+    }
+}
+
 void
 write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 {
@@ -379,8 +440,28 @@ write_geometry(rt_wdb &wdb, const std::string &name,
     } else if (geometry->HasBrepForm()) {
 	AutoPtr<ON_Brep, autoptr_wrap_delete> temp(geometry->BrepForm());
 	write_geometry(wdb, name, *temp.ptr);
-    } else
+    } else if (const ON_SubD* subd = ON_SubD::Cast(geometry)) {
+	/* NOTE: pending proper support for subdivision surfaces, 
+	 * this is a very poor approximation just to have *something*
+	 */
+	if (ON_SubD* new_subd = subd->Duplicate()) {
+	    /* The number of subdivisions */
+	    const int count = 3;
+
+	    /* use opennurbs Catmull-Clark subdivision algorithm */
+	    new_subd->GlobalSubdivide(count);
+
+	    /* Get control net mesh */
+	    ON_Mesh* mesh = new_subd->GetControlNetMesh(nullptr, ON_SubDGetControlNetMeshPriority::Geometry);
+	    if (nullptr != mesh) {
+		write_geometry(wdb, name, *mesh);
+		delete mesh;
+	    }
+	    delete new_subd;
+	}
+    } else {
 	return false;
+    }
 
     return true;
 }
@@ -510,7 +591,9 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	if (!mg)
 	    continue;
 	ON_String cname = ON_String(mg->Name());
-	const std::string name = (cname.Array()) ? std::string(cname.Array()) : std::string("unnamed");
+	char cuid[37];
+	ON_UuidToString(mg->Id(), cuid);
+	const std::string name = (cname.Array()) ? std::string(cname.Array()) : std::string(cuid);
 	const std::string member_name = name + ".s";
 
 
@@ -858,9 +941,7 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     try {
 	// Use the openNURBS extenstion to read the whole 3dm file into memory.
 	ONX_Model model;
-	if (!model.Read(source_path))
-	    throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
-	
+	load_model(*gcv_options, source_path, model, root_name);
 	
 	// The idef member set is static, but is used many times - generate it
 	// once up front.
