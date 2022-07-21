@@ -2453,11 +2453,21 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     RT_MemoryArchive archive(ep->ext_buf, ep->ext_nbytes);
     ONX_Model model;
     ON_TextLog err(stderr);
-    //archive.Dump3dmChunk(err);
-    model.Read(archive, &err);
+    unsigned int obj_filter = ON::brep_object;
+    model.Read(archive, 0, obj_filter, &err);
 
-    ON_ModelGeometryComponent *mo = ON_ModelGeometryComponent::Cast(model.ImageFromIndex(0).ExclusiveModelComponent());
-    bi->brep = ON_Brep::New(*ON_Brep::Cast(mo->Geometry(nullptr)));
+    /* grab the first geometry item from the manifest */
+    const ON_ComponentManifestItem* geom = model.Manifest().FirstItem(ON_ModelComponent::Type::ModelGeometry);
+    /* sanity check */
+    if (model.Manifest().NextItem(geom) != nullptr)
+	bu_log("WARNING: geometry may be getting lost\n");
+
+    /* do the necessary API calls to get a usable geometry component from the manifest item */
+    ON_ModelComponentReference geom_ref = model.ModelGeometryFromId(geom->Id());
+    const ON_ModelGeometryComponent* geom_comp = ON_ModelGeometryComponent::Cast(geom_ref.ModelComponent());
+
+    bi->brep = ON_Brep::New(*ON_Brep::Cast(geom_comp->Geometry(NULL)));
+
     if (mat) {
 	ON_Xform xform(mat);
 
