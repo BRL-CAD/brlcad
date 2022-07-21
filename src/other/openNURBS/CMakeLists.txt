@@ -477,7 +477,7 @@ include_directories(
 add_definitions(-DON_COMPILING_OPENNURBS)
 if (MSVC)
   add_definitions(-DUNICODE)
-  set(OPENNURBS_LINKLIBRARIES ${OPENNURBS_LINKLIBRARIES} Rpcrt4)
+  set(OPENNURBS_LINKLIBRARIES ${OPENNURBS_LINKLIBRARIES} Rpcrt4 Shlwapi)
 endif(MSVC)
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
