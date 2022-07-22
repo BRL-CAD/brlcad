@@ -40,7 +40,6 @@ set(embedded_licenses
   mt19937ar.txt
   normalize.txt
   obr.txt
-  OpenNURBS.txt
   osl.txt
   ParaView.txt
   pbrt.txt

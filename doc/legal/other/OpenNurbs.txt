@@ -1,0 +1,405 @@
+Copyright (c) 1993-2021 Robert McNeel & Associates.
+All Rights Reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software.
+
+THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED
+WARRANTY. ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE
+AND OF MERCHANTABILITY ARE HEREBY DISCLAIMED.
+
+openNURBS is a trademark of Robert McNeel & Associates. Rhinoceros is
+a registered trademark of Robert McNeel & Associates.
+
+
+
+
+
+
+A number of individual source files in OpenNURBS have separate copyrights
+and licenses:
+
+
+
+android_uuid:
+
+Copyright (C) 1996, 1997, 1998, 1999 Theodore Ts'o.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, and the entire permission notice in its entirety,
+   including the disclaimer of warranties.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the author may not be used to endorse or promote
+   products derived from this software without specific prior
+   written permission.
+
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, ALL OF
+WHICH ARE HEREBY DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+USE OF THIS SOFTWARE, EVEN IF NOT ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGE.
+
+
+
+
+opennurbs_crc.cpp, opennurbs_crc.h
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// ON_CRC32() is a slightly altered version of zlib 1.3.3's crc32()
+// and the zlib "legal stuff" is reproduced below.
+//
+// ON_CRC32() and crc32() compute the same values.  ON_CRC32() was renamed
+// so it wouldn't clash with the other crc32()'s that are out there and the
+// argument order was switched to match that used by the legacy ON_CRC16().
+//
+//////////////////////////////////////////////////////////////////////////////////////////
+
+zlib.h -- interface of the 'zlib' general purpose compression library
+version 1.1.3, July 9th, 1998
+
+Copyright (C) 1995-1998 Jean-loup Gailly and Mark Adler
+
+This software is provided 'as-is', without any express or implied
+warranty.  In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution.
+
+Jean-loup Gailly        Mark Adler
+jloup@gzip.org          madler@alumni.caltech.edu
+
+
+The data format used by the zlib library is described by RFCs (Request for
+Comments) 1950 to 1952 in the files ftp://ds.internic.net/rfc/rfc1950.txt
+(zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
+
+
+
+
+
+opennurbs_freetype.cpp, opennurbs_freetype_include.h
+
+// opennurbs uses FreeType to calculate font metric, glyph metric, and glyph outline information.
+
+// FreeType Licensing:
+//
+//// Retrieved March 22, 2017
+//// https://www.freetype.org/freetype2/docs/index.html
+////What is FreeType?
+////
+////FreeType is a software font engine that is designed to be small, efficient,
+////highly customizable, and portable while capable of producing high-quality
+////output (glyph images). It can be used in graphics libraries, display servers,
+////font conversion tools, text image generation tools, and many other products as well.
+////
+////Note that FreeType is a font service and doesn't provide APIs to perform
+////higher-level features like text layout or graphics processing
+////(e.g., colored text rendering, ‘hollowing’, etc.). However, it greatly
+////simplifies these tasks by providing a simple, easy to use, and uniform
+////interface to access the content of font files.
+////
+////FreeType is released under two open-source licenses: our own BSD-like
+////FreeType License and the GNU Public License, Version 2. It can thus
+////be used by any kind of projects, be they proprietary or not.
+////
+////Please note that ‘FreeType’ is also called ‘FreeType 2’, to
+////distinguish it from the old, deprecated ‘FreeType 1’ library,
+////a predecessor no longer maintained and supported.
+////
+//// http://git.savannah.gnu.org/cgit/freetype/freetype2.git/tree/docs/FTL.TXT
+////
+////                    The FreeType Project LICENSE
+////                    ----------------------------
+////
+////                            2006-Jan-27
+////
+////                    Copyright 1996-2002, 2006 by
+////          David Turner, Robert Wilhelm, and Werner Lemberg
+////
+////
+////
+////Introduction
+////============
+////
+////  The FreeType  Project is distributed in  several archive packages;
+////  some of them may contain, in addition to the FreeType font engine,
+////  various tools and  contributions which rely on, or  relate to, the
+////  FreeType Project.
+////
+////  This  license applies  to all  files found  in such  packages, and
+////  which do not  fall under their own explicit  license.  The license
+////  affects  thus  the  FreeType   font  engine,  the  test  programs,
+////  documentation and makefiles, at the very least.
+////
+////  This  license   was  inspired  by  the  BSD,   Artistic,  and  IJG
+////  (Independent JPEG  Group) licenses, which  all encourage inclusion
+////  and  use of  free  software in  commercial  and freeware  products
+////  alike.  As a consequence, its main points are that:
+////
+////    o We don't promise that this software works. However, we will be
+////      interested in any kind of bug reports. (`as is' distribution)
+////
+////    o You can  use this software for whatever you  want, in parts or
+////      full form, without having to pay us. (`royalty-free' usage)
+////
+////    o You may not pretend that  you wrote this software.  If you use
+////      it, or  only parts of it,  in a program,  you must acknowledge
+////      somewhere  in  your  documentation  that  you  have  used  the
+////      FreeType code. (`credits')
+////
+////  We  specifically  permit  and  encourage  the  inclusion  of  this
+////  software, with  or without modifications,  in commercial products.
+////  We  disclaim  all warranties  covering  The  FreeType Project  and
+////  assume no liability related to The FreeType Project.
+////
+////
+////  Finally,  many  people  asked  us  for  a  preferred  form  for  a
+////  credit/disclaimer to use in compliance with this license.  We thus
+////  encourage you to use the following text:
+////
+////   """
+////    Portions of this software are copyright © <year> The FreeType
+////    Project (www.freetype.org).  All rights reserved.
+////   """
+////
+////  Please replace <year> with the value from the FreeType version you
+////  actually use.
+////
+////
+////Legal Terms
+////===========
+////
+////0. Definitions
+////--------------
+////
+////  Throughout this license,  the terms `package', `FreeType Project',
+////  and  `FreeType  archive' refer  to  the  set  of files  originally
+////  distributed  by the  authors  (David Turner,  Robert Wilhelm,  and
+////  Werner Lemberg) as the `FreeType Project', be they named as alpha,
+////  beta or final release.
+////
+////  `You' refers to  the licensee, or person using  the project, where
+////  `using' is a generic term including compiling the project's source
+////  code as  well as linking it  to form a  `program' or `executable'.
+////  This  program is  referred to  as  `a program  using the  FreeType
+////  engine'.
+////
+////  This  license applies  to all  files distributed  in  the original
+////  FreeType  Project,   including  all  source   code,  binaries  and
+////  documentation,  unless  otherwise  stated   in  the  file  in  its
+////  original, unmodified form as  distributed in the original archive.
+////  If you are  unsure whether or not a particular  file is covered by
+////  this license, you must contact us to verify this.
+////
+////  The FreeType  Project is copyright (C) 1996-2000  by David Turner,
+////  Robert Wilhelm, and Werner Lemberg.  All rights reserved except as
+////  specified below.
+////
+////1. No Warranty
+////--------------
+////
+////  THE FREETYPE PROJECT  IS PROVIDED `AS IS' WITHOUT  WARRANTY OF ANY
+////  KIND, EITHER  EXPRESS OR IMPLIED,  INCLUDING, BUT NOT  LIMITED TO,
+////  WARRANTIES  OF  MERCHANTABILITY   AND  FITNESS  FOR  A  PARTICULAR
+////  PURPOSE.  IN NO EVENT WILL ANY OF THE AUTHORS OR COPYRIGHT HOLDERS
+////  BE LIABLE  FOR ANY DAMAGES CAUSED  BY THE USE OR  THE INABILITY TO
+////  USE, OF THE FREETYPE PROJECT.
+////
+////2. Redistribution
+////-----------------
+////
+////  This  license  grants  a  worldwide, royalty-free,  perpetual  and
+////  irrevocable right  and license to use,  execute, perform, compile,
+////  display,  copy,   create  derivative  works   of,  distribute  and
+////  sublicense the  FreeType Project (in  both source and  object code
+////  forms)  and  derivative works  thereof  for  any  purpose; and  to
+////  authorize others  to exercise  some or all  of the  rights granted
+////  herein, subject to the following conditions:
+////
+////    o Redistribution of  source code  must retain this  license file
+////      (`FTL.TXT') unaltered; any  additions, deletions or changes to
+////      the original  files must be clearly  indicated in accompanying
+////      documentation.   The  copyright   notices  of  the  unaltered,
+////      original  files must  be  preserved in  all  copies of  source
+////      files.
+////
+////    o Redistribution in binary form must provide a  disclaimer  that
+////      states  that  the software is based in part of the work of the
+////      FreeType Team,  in  the  distribution  documentation.  We also
+////      encourage you to put an URL to the FreeType web page  in  your
+////      documentation, though this isn't mandatory.
+////
+////  These conditions  apply to any  software derived from or  based on
+////  the FreeType Project,  not just the unmodified files.   If you use
+////  our work, you  must acknowledge us.  However, no  fee need be paid
+////  to us.
+////
+////3. Advertising
+////--------------
+////
+////  Neither the  FreeType authors and  contributors nor you  shall use
+////  the name of the  other for commercial, advertising, or promotional
+////  purposes without specific prior written permission.
+////
+////  We suggest,  but do not require, that  you use one or  more of the
+////  following phrases to refer  to this software in your documentation
+////  or advertising  materials: `FreeType Project',  `FreeType Engine',
+////  `FreeType library', or `FreeType Distribution'.
+////
+////  As  you have  not signed  this license,  you are  not  required to
+////  accept  it.   However,  as  the FreeType  Project  is  copyrighted
+////  material, only  this license, or  another one contracted  with the
+////  authors, grants you  the right to use, distribute,  and modify it.
+////  Therefore,  by  using,  distributing,  or modifying  the  FreeType
+////  Project, you indicate that you understand and accept all the terms
+////  of this license.
+////
+////4. Contacts
+////-----------
+////
+////  There are two mailing lists related to FreeType:
+////
+////    o freetype@nongnu.org
+////
+////      Discusses general use and applications of FreeType, as well as
+////      future and  wanted additions to the  library and distribution.
+////      If  you are looking  for support,  start in  this list  if you
+////      haven't found anything to help you in the documentation.
+////
+////    o freetype-devel@nongnu.org
+////
+////      Discusses bugs,  as well  as engine internals,  design issues,
+////      specific licenses, porting, etc.
+////
+////  Our home page can be found at
+////
+////    http://www.freetype.org
+////
+////--- end of FTL.TXT ---
+
+
+
+
+
+
+opennurbs_md5.cpp, opennurbs_md5.h
+The ON_MD5 class is based on code that is modified from C code with the following copyright.
+
+Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All rights reserved.
+
+  License to copy and use this software is granted provided that it
+  is identified as the "RSA Data Security, Inc. MD5 Message-Digest
+  Algorithm" in all material mentioning or referencing this software
+  or this function.
+
+  License is also granted to make and use derivative works provided
+  that such works are identified as "derived from the RSA Data
+  Security, Inc. MD5 Message-Digest Algorithm" in all material
+  mentioning or referencing the derived work.
+
+  RSA Data Security, Inc. makes no representations concerning either
+  the merchantability of this software or the suitability of this
+  software for any particular purpose. It is provided "as is"
+  without express or implied warranty of any kind.
+
+  These notices must be retained in any copies of any part of this
+  documentation and/or software.
+
+
+
+
+
+opennurbs_point.cpp
+/////////////////////////////////////////////////////////////////////////
+// The calculation below is a modified version of a portion of wn_PnPoly()
+// with a bug fix for the case when m_winding_point is on the polyline.
+//
+// http://geomalgorithms.com/a03-_inclusion.html
+//
+// Copyright 2000 softSurfer, 2012 Dan Sunday
+// This code may be freely used and modified for any purpose
+// providing that this copyright notice is included with it.
+// SoftSurfer makes no warranty for this code, and cannot be held
+// liable for any real or imagined damage resulting from its use.
+// Users of this code must verify correctness for their application.
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+opennurbs_rand.cpp
+// This source code is from
+// http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html
+// and its copyright and license are reproduced below.
+// It is included in opennurbs because we need a thread safe and
+// platform independent way to get a decent 32 bit random number.
+
+/*
+   A C-program for MT19937, with initialization improved 2002/1/26.
+   Coded by Takuji Nishimura and Makoto Matsumoto.
+
+   Before using, initialize the state by using init_genrand(seed)
+   or init_by_array(init_key, key_length).
+
+   Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
+   All rights reserved.
+
+   Redistribution and use in source and binary forms, with or without
+   modification, are permitted provided that the following conditions
+   are met:
+
+     1. Redistributions of source code must retain the above copyright
+        notice, this list of conditions and the following disclaimer.
+
+     2. Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+
+     3. The names of its contributors may not be used to endorse or promote
+        products derived from this software without specific prior written
+        permission.
+
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+   Any feedback is very welcome.
+   http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
+   email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
+*/
+
