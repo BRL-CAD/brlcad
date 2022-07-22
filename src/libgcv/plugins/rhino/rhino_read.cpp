@@ -256,8 +256,8 @@ clean_name(std::map<ON_wString, std::size_t> &seen,
 
 /* loads model and then iterates over objects to ensure unique names */
 HIDDEN void
-load_model(const gcv_opts& gcv_options, const std::string& path,
-    ONX_Model& model, std::string& root_name)
+load_model(const gcv_opts& UNUSED(gcv_options), const std::string& path,
+    ONX_Model& model, std::string& UNUSED(root_name))
 {
     if (!model.Read(path.c_str()))
 	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
@@ -274,7 +274,7 @@ load_model(const gcv_opts& gcv_options, const std::string& path,
 	ON_ModelComponent::Type curr_type = types[i];
 	ONX_ModelComponentIterator it(model, curr_type);
 	for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference()) {
-	    std::string chk_name = ON_String(cr.ModelComponent()->Name());
+	    std::string chk_name = std::string(ON_String(cr.ModelComponent()->Name()).Array());
 	    std::string chk_name_orig = chk_name;
 
 	    /* remove spaces and slashes */
@@ -307,9 +307,9 @@ load_model(const gcv_opts& gcv_options, const std::string& path,
 	}
 
 	/* do the removes and replacing additions */
-	for (int i = 0; i < to_remove.size(); i++) {
-	    model.RemoveModelComponent(curr_type, to_remove[i].first);
-	    model.AddManagedModelComponent(to_remove[i].second);
+	for (size_t j = 0; j < to_remove.size(); j++) {
+	    model.RemoveModelComponent(curr_type, to_remove[j].first);
+	    model.AddManagedModelComponent(to_remove[j].second);
 	}
     }
 }
@@ -452,10 +452,10 @@ write_geometry(rt_wdb &wdb, const std::string &name,
 	    new_subd->GlobalSubdivide(count);
 
 	    /* Get control net mesh */
-	    ON_Mesh* mesh = new_subd->GetControlNetMesh(nullptr, ON_SubDGetControlNetMeshPriority::Geometry);
-	    if (nullptr != mesh) {
-		write_geometry(wdb, name, *mesh);
-		delete mesh;
+	    ON_Mesh* nmesh = new_subd->GetControlNetMesh(nullptr, ON_SubDGetControlNetMeshPriority::Geometry);
+	    if (nullptr != nmesh) {
+		write_geometry(wdb, name, *nmesh);
+		delete nmesh;
 	    }
 	    delete new_subd;
 	}
