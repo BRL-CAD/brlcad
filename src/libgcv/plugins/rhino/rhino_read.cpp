@@ -256,8 +256,7 @@ clean_name(std::map<ON_wString, std::size_t> &seen,
 
 /* loads model and then iterates over objects to ensure unique names */
 HIDDEN void
-load_model(const gcv_opts& UNUSED(gcv_options), const std::string& path,
-    ONX_Model& model, std::string& UNUSED(root_name))
+load_model(const char* default_name, const std::string& path, ONX_Model& model)
 {
     if (!model.Read(path.c_str()))
 	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
@@ -274,14 +273,17 @@ load_model(const gcv_opts& UNUSED(gcv_options), const std::string& path,
 	ON_ModelComponent::Type curr_type = types[i];
 	ONX_ModelComponentIterator it(model, curr_type);
 	for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference()) {
-	    std::string chk_name = std::string(ON_String(cr.ModelComponent()->Name()).Array());
-	    std::string chk_name_orig = chk_name;
+            /* jump through some hoops to make sure we have a name in std::string format */
+            std::string chk_name = default_name;
+            if (cr.ModelComponent()->NameIsNotEmpty())
+                chk_name = std::string(ON_String(cr.ModelComponent()->Name()).Array());
+            std::string chk_name_orig = chk_name;       /* dont update component name if we dont have to */
 
 	    /* remove spaces and slashes */
 	    bu_vls scrub = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&scrub, "%s", chk_name.c_str());
 	    bu_vls_simplify(&scrub, nullptr, " _\0", " _\0");
-	    chk_name = std::string(bu_vls_cstr(&scrub));
+	    chk_name = chk_name.size() > 0 ? std::string(bu_vls_cstr(&scrub)) : default_name;   /* somemtimes we scrub out the entire name */
 
 	    /* ensure name is unique */
 	    if (used_names.find(chk_name) == used_names.end()) {
@@ -941,7 +943,7 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     try {
 	// Use the openNURBS extenstion to read the whole 3dm file into memory.
 	ONX_Model model;
-	load_model(*gcv_options, source_path, model, root_name);
+	load_model(gcv_options->default_name, source_path, model);
 	
 	// The idef member set is static, but is used many times - generate it
 	// once up front.
