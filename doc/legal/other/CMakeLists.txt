@@ -1,7 +1,7 @@
 set(other_licenses
   Eigen.txt
   assimp.txt
-  OpenNURBS.txt
+  openNURBS.txt
   gct.txt
   gdal.txt
   itcl3.txt
@@ -12,6 +12,7 @@ set(other_licenses
   linenoise.txt
   lmdb.txt
   netpbm.txt
+  openNURBS.txt
   png.txt
   poly2tri.txt
   proj-4.txt
