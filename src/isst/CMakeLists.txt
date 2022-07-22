@@ -2,7 +2,7 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 
   find_package(OpenGL)
 
-  include_directories(
+  set(QG_DIRS
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../adrt
@@ -14,6 +14,7 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
     ${BU_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIR}
     )
+  BRLCAD_INCLUDE_DIRS(QG_DIRS)
 endif(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 
 # NOTE: We can't use the CMake global values for automoc et. al.

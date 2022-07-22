@@ -16,7 +16,7 @@ if(BRLCAD_ENABLE_QT)
     endif (Qt6Widgets_FOUND)
   endif (OPENGL_LIBS)
 
-  include_directories(
+  set(QG_DIRS
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}
@@ -27,6 +27,7 @@ if(BRLCAD_ENABLE_QT)
     ${BU_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIR_GL}
     )
+  BRLCAD_INCLUDE_DIRS(QG_DIRS)
 
 endif(BRLCAD_ENABLE_QT)
 
