@@ -26,6 +26,7 @@ set(cmake_ignore_files
   FindADAPTAGRAMS.cmake
   FindASTYLE.cmake
   FindAppleseed.cmake
+  FindAssimp.cmake
   FindBlosc.cmake
   FindBSON.cmake
   FindFontconfig.cmake

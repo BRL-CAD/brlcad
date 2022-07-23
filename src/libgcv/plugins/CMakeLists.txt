@@ -19,6 +19,7 @@ add_custom_target(gcv_plugins ALL DEPENDS gcv_plugins_sentinel)
 set_target_properties(gcv_plugins PROPERTIES FOLDER "BRL-CAD Plugins")
 
 add_subdirectory(asc)
+add_subdirectory(assimp)
 add_subdirectory(decimate)
 add_subdirectory(fastgen4)
 add_subdirectory(gdal)

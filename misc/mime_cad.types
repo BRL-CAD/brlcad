@@ -29,6 +29,7 @@ image/rle					rle
 image/spm					spm
 image/sun					sun
 image/yuv					yuv
+model/assimp                                    ai
 model/dxf					dxf
 model/gltf                  gltf glb
 model/obj					obj
