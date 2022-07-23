@@ -3,19 +3,19 @@ set(ASSIMP_SRCS
   assimp_write.cpp
   )
 
-find_package(Assimp)
+find_package(ASSIMP)
 
-if(Assimp_ENABLED AND Assimp_LIBRARY AND Assimp_INCLUDE_DIR)
+if(BRLCAD_ENABLE_ASSIMP AND ASSIMP_LIBRARY AND ASSIMP_INCLUDE_DIR)
   message("assimp plugin FOUND and ENABLED")
-  include_directories(SYSTEM ${Assimp_INCLUDE_DIR})
+  include_directories(SYSTEM ${ASSIMP_INCLUDE_DIR})
 
   gcv_plugin_library(gcv-assimp SHARED ${ASSIMP_SRCS})
-  target_link_libraries(gcv-assimp libgcv libwdb librt libbu ${Assimp_LIBRARY})
+  target_link_libraries(gcv-assimp libgcv libwdb librt libbu ${ASSIMP_LIBRARY})
   set_property(TARGET gcv-assimp APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(gcv-assimp "${ASSIMP_SRCS}")
   PLUGIN_SETUP(gcv-assimp gcv)
 
-endif(Assimp_ENABLED AND Assimp_LIBRARY AND Assimp_INCLUDE_DIR)
+endif(BRLCAD_ENABLE_ASSIMP AND ASSIMP_LIBRARY AND ASSIMP_INCLUDE_DIR)
 
 CMAKEFILES(
   ${ASSIMP_SRCS}

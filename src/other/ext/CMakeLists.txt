@@ -317,6 +317,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
 # GDAL -  translator library for raster and vector geospatial data formats
 include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 
+# ASSIMP - library for supporting I/O for a number of Geometry file formats
+#include(${CMAKE_CURRENT_SOURCE_DIR}/assimp.cmake)
+
 # TCL - scripting language.  For Tcl/Tk builds we want
 # static lib building on so we get the stub libraries.
 set(BSL_CACHE ${BUILD_STATIC_LIBS})
@@ -354,6 +357,7 @@ if (COMMAND CMAKEFILES)
   CMAKEFILES(
     CMakeLists.txt
     CMake/ExternalProject_Target.cmake
+    CMake/FindASSIMP.cmake
     CMake/FindBSON.cmake
     CMake/FindITCL.cmake
     CMake/FindLEMON.cmake
@@ -375,6 +379,8 @@ if (COMMAND CMAKEFILES)
     CMake/rpath_replace.cxx.in
     CMake/tcl_replace.cxx.in
     Eigen.dist
+    assimp.cmake
+    assimp.dist
     bson.cmake
     bson.dist
     gdal.cmake
