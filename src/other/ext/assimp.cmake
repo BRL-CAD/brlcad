@@ -78,7 +78,7 @@ if (BRLCAD_ASSIMP_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/ASSIMP_BLD-prefix")
 
   # Tell the parent build about files and libraries
-  set_lib_vars(ASSIMP assimp "5" "2" "0")
+  set_lib_vars(ASSIMP assimp "5" "0" "0")
   ExternalProject_Target(SHARED assimp ASSIMP_BLD ${ASSIMP_INSTDIR}
     ${ASSIMP_BASENAME}${ASSIMP_SUFFIX}
     SYMLINKS ${ASSIMP_SYMLINK_1};${ASSIMP_SYMLINK_2}
@@ -88,12 +88,10 @@ if (BRLCAD_ASSIMP_BUILD)
 
   ExternalProject_ByProducts(assimp ASSIMP_BLD ${ASSIMP_INSTDIR} ${INCLUDE_DIR}/assimp
     NOINSTALL
-    Base64.hpp
     BaseImporter.h
     Bitmap.h
     BlobIOSystem.h
     ByteSwapper.h
-    ColladaMetaData.h
     Compiler/poppack1.h
     Compiler/pstdint.h
     Compiler/pushpack1.h
@@ -101,10 +99,10 @@ if (BRLCAD_ASSIMP_BUILD)
     DefaultIOStream.h
     DefaultIOSystem.h
     DefaultLogger.hpp
+    Defines.h
     Exceptional.h
     Exporter.hpp
     GenericProperty.h
-    GltfMaterial.h
     Hash.h
     IOStream.hpp
     IOStreamBuffer.h
@@ -114,10 +112,10 @@ if (BRLCAD_ASSIMP_BUILD)
     LogAux.h
     LogStream.hpp
     Logger.hpp
+    Macros.h
     MathFunctions.h
     MemoryIOWrapper.h
     NullLogger.hpp
-    ObjMaterial.h
     ParsingUtils.h
     Profiler.h
     ProgressHandler.hpp
@@ -125,7 +123,6 @@ if (BRLCAD_ASSIMP_BUILD)
     SGSpatialSort.h
     SceneCombiner.h
     SkeletonMeshBuilder.h
-    SmallVector.h
     SmoothingGroups.h
     SmoothingGroups.inl
     SpatialSort.h
@@ -138,7 +135,6 @@ if (BRLCAD_ASSIMP_BUILD)
     TinyFormatter.h
     Vertex.h
     XMLTools.h
-    XmlParser.h
     ZipArchiveIOSystem.h
     aabb.h
     ai_assert.h
@@ -149,11 +145,11 @@ if (BRLCAD_ASSIMP_BUILD)
     cimport.h
     color4.h
     color4.inl
-    commonMetaData.h
     config.h
     defs.h
     fast_atof.h
     importerdesc.h
+    irrXMLWrapper.h
     light.h
     material.h
     material.inl
