@@ -29,7 +29,6 @@ image/rle					rle
 image/spm					spm
 image/sun					sun
 image/yuv					yuv
-model/assimp                                    ai
 model/dxf					dxf
 model/gltf                  gltf glb
 model/obj					obj
@@ -44,3 +43,4 @@ model/vnd.gift					cg comgeom
 model/vnd.intaval				tgf
 model/vnd.rhino					3dm
 model/vnd.gdal					gdal dem dted tif tiff
+model/vnd.assimp				assimp

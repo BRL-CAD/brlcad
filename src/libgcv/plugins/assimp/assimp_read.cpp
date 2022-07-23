@@ -432,7 +432,7 @@ assimp_can_read(const char* data)
 extern "C"
 {
     static const struct gcv_filter gcv_conv_assimp_read = {
-	"Assimp Reader", GCV_FILTER_READ, BU_MIME_MODEL_ASSIMP, assimp_can_read,
+	"Assimp Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_ASSIMP, assimp_can_read,
 	assimp_read_create_opts, assimp_read_free_opts, assimp_read
     };
 

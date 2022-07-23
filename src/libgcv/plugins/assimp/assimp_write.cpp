@@ -426,7 +426,7 @@ assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, co
 extern "C"
 {
     extern const struct gcv_filter gcv_conv_assimp_write = {
-	"Assimp Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_ASSIMP, NULL,
+	"Assimp Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_ASSIMP, NULL,
 	assimp_write_create_opts, assimp_write_free_opts, assimp_write
     };
 }
