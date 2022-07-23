@@ -1,3 +1,29 @@
+/*                 A S S I M P _ R E A D . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2022 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file assimp_read.cpp
+ *
+ * GCV logic for importing geometry using the Open Asset Import Library:
+ * https://github.com/assimp/assimp 
+ *
+ */
+
 #include "common.h"
 
 #include <string>
@@ -16,14 +42,14 @@ typedef struct shader_properties {
     char *args;		                            /* shader args, or NULL */
     unsigned char* rgb; 			    /* NULL => no color */
     shader_properties() {
-        name = NULL;
-        args = NULL;
-        rgb = NULL;
+	name = NULL;
+	args = NULL;
+	rgb = NULL;
     }
     ~shader_properties() {
-        delete name;
-        delete args;
-        delete rgb;
+	delete name;
+	delete args;
+	delete rgb;
     }
 } shader_properties_t;
 
@@ -48,15 +74,15 @@ typedef struct assimp_read_state {
     unsigned int dfs;                               /* number of nodes visited */
     unsigned int converted;                         /* number of meshes converted */
     assimp_read_state() {
-        gcv_options = NULL;
-        assimp_read_options = NULL;
-        input_file = "";
-        fd_out = NULL;
-        all = WMEMBER_INIT_ZERO;
-        scene = NULL;
-        id_no = 0;
-        dfs = 0;
-        converted = 0;
+	gcv_options = NULL;
+	assimp_read_options = NULL;
+	input_file = "";
+	fd_out = NULL;
+	all = WMEMBER_INIT_ZERO;
+	scene = NULL;
+	id_no = 0;
+	dfs = 0;
+	converted = 0;
     }
     ~assimp_read_state() {}
 } assimp_read_state_t;
@@ -89,35 +115,35 @@ generate_shader(assimp_read_state_t* pstate, unsigned int mesh_idx)
 
     /* check for material data */
     if (pstate->scene->HasMaterials()) {
-        unsigned int mat_idx = pstate->scene->mMeshes[mesh_idx]->mMaterialIndex;
-        aiMaterial* mat = pstate->scene->mMaterials[mat_idx];
+	unsigned int mat_idx = pstate->scene->mMeshes[mesh_idx]->mMaterialIndex;
+	aiMaterial* mat = pstate->scene->mMaterials[mat_idx];
 
-        /* for brlcad shaders, a space means we have additional shader params
-         * in the form "shader_name param1=x .."
-         */
-        std::string fmt = mat->GetName().data;
-        size_t space = fmt.find(" ");
+	/* for brlcad shaders, a space means we have additional shader params
+	 * in the form "shader_name param1=x .."
+	 */
+	std::string fmt = mat->GetName().data;
+	size_t space = fmt.find(" ");
 
-        if (space != std::string::npos) {
-            ret->name = new char[space +1];
-            ret->args = new char[fmt.size() - space];
-            bu_strlcpy(ret->name, fmt.substr(0, space).c_str(), space +1);
-            bu_strlcpy(ret->args, fmt.substr(space+1).c_str(), fmt.size() - space);
-        } else {
-            ret->name = new char[fmt.size() +1];
-            bu_strlcpy(ret->name, fmt.c_str(), fmt.size() +1);
-        }
+	if (space != std::string::npos) {
+	    ret->name = new char[space +1];
+	    ret->args = new char[fmt.size() - space];
+	    bu_strlcpy(ret->name, fmt.substr(0, space).c_str(), space +1);
+	    bu_strlcpy(ret->args, fmt.substr(space+1).c_str(), fmt.size() - space);
+	} else {
+	    ret->name = new char[fmt.size() +1];
+	    bu_strlcpy(ret->name, fmt.c_str(), fmt.size() +1);
+	}
 
-        /* TODO create shader arg string from set material data, not just name */
-        /* get material data used for phong shading */
-        aiColor3D diff (-1);
-        aiColor3D spec (-1);
-        aiColor3D amb (-1);
-        float s = -1.0;
-        mat->Get(AI_MATKEY_COLOR_DIFFUSE, diff);
-        mat->Get(AI_MATKEY_COLOR_SPECULAR, spec);
-        mat->Get(AI_MATKEY_COLOR_AMBIENT, amb);
-        mat->Get(AI_MATKEY_SHININESS_STRENGTH, s);
+	/* TODO create shader arg string from set material data, not just name */
+	/* get material data used for phong shading */
+	aiColor3D diff (-1);
+	aiColor3D spec (-1);
+	aiColor3D amb (-1);
+	float s = -1.0;
+	mat->Get(AI_MATKEY_COLOR_DIFFUSE, diff);
+	mat->Get(AI_MATKEY_COLOR_SPECULAR, spec);
+	mat->Get(AI_MATKEY_COLOR_AMBIENT, amb);
+	mat->Get(AI_MATKEY_SHININESS_STRENGTH, s);
     }
 
     /* set the color of the face using the first vertex color data we 
@@ -128,12 +154,12 @@ generate_shader(assimp_read_state_t* pstate, unsigned int mesh_idx)
      */
     aiColor4D* mesh_color = pstate->scene->mMeshes[mesh_idx]->mColors[0];
     if (mesh_color) {
-        ret->rgb = new unsigned char[3];
-        ret->rgb[0] = (unsigned char)(mesh_color->r * 255);
-        ret->rgb[1] = (unsigned char)(mesh_color->g * 255);
-        ret->rgb[2] = (unsigned char)(mesh_color->b * 255);
-        if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose)
-            bu_log("color data (%d, %d, %d)\n", (int)ret->rgb[0], (int)ret->rgb[1], (int)ret->rgb[2]);
+	ret->rgb = new unsigned char[3];
+	ret->rgb[0] = (unsigned char)(mesh_color->r * 255);
+	ret->rgb[1] = (unsigned char)(mesh_color->g * 255);
+	ret->rgb[2] = (unsigned char)(mesh_color->b * 255);
+	if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose)
+	    bu_log("color data (%d, %d, %d)\n", (int)ret->rgb[0], (int)ret->rgb[1], (int)ret->rgb[2]);
     }
 
     return ret;
@@ -151,30 +177,30 @@ generate_unique_name(const char* curr_name, unsigned int def_idx, bool is_mesh)
     /* get last instance of '/' and keep everything after it */
     const char* trim = strrchr(curr_name, '/');
     if (trim)
-        name = ++trim;
+	name = ++trim;
 
     if (is_mesh) {
-        prefix = "mesh";
-        suffix = ".MESH";
+	prefix = "mesh";
+	suffix = ".MESH";
 
-        /* get rid of .r if it is at end of name but regions have no enforced pattern
-         * to discern them from underlying meshes when importing names. 
-         * add '.MESH' at end to reduce collisions */
-        size_t dotr = name.find(".r\0");
-        if (dotr != std::string::npos)
-            name = name.substr(0, dotr);
+	/* get rid of .r if it is at end of name but regions have no enforced pattern
+	 * to discern them from underlying meshes when importing names. 
+	 * add '.MESH' at end to reduce collisions */
+	size_t dotr = name.find(".r\0");
+	if (dotr != std::string::npos)
+	    name = name.substr(0, dotr);
 
-        name.append(suffix);
+	name.append(suffix);
     }
 
     /* if curr_name is empty, give a generic name */
     if (!name.size())
-        name = prefix + "_" + std::to_string(def_idx) + suffix;
+	name = prefix + "_" + std::to_string(def_idx) + suffix;
 
     /* check for name collisions */
     auto it = used_names.find(name);
     if (it != used_names.end())
-        name.append("_DUP" + std::to_string(it->second++));
+	name.append("_DUP" + std::to_string(it->second++));
     used_names.emplace(name, 0);
 
     return name;
@@ -186,32 +212,32 @@ generate_geometry(assimp_read_state_t* pstate, wmember &region, unsigned int mes
     aiMesh* mesh = pstate->scene->mMeshes[mesh_idx];
     int* faces = new int[mesh->mNumFaces * 3];
     double* vertices = new double[mesh->mNumVertices * 3];
-    
+
     /* make sure we are dealing with only triangles 
      * TODO: support polygons by splitting into triangles 
      */
     if (mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
-        bu_log("WARNING: unknown primitive in mesh[%d] -- skipping\n", mesh_idx);
-        return;
+	bu_log("WARNING: unknown primitive in mesh[%d] -- skipping\n", mesh_idx);
+	return;
     }
 
     if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose) {
-        bu_log("mesh[%d] num Faces: %d\n", mesh_idx, mesh->mNumFaces);
-        bu_log("mesh[%d] num vertices: %d\n", mesh_idx, mesh->mNumVertices);
+	bu_log("mesh[%d] num Faces: %d\n", mesh_idx, mesh->mNumFaces);
+	bu_log("mesh[%d] num vertices: %d\n", mesh_idx, mesh->mNumVertices);
     }
 
     /* add all faces */
     for (size_t i = 0; i < mesh->mNumFaces; i++) {
-        faces[i * 3   ] = mesh->mFaces[i].mIndices[0];
-        faces[i * 3 +1] = mesh->mFaces[i].mIndices[1];
-        faces[i * 3 +2] = mesh->mFaces[i].mIndices[2];
+	faces[i * 3   ] = mesh->mFaces[i].mIndices[0];
+	faces[i * 3 +1] = mesh->mFaces[i].mIndices[1];
+	faces[i * 3 +2] = mesh->mFaces[i].mIndices[2];
     }
 
     /* add all vertices */
     for (size_t i = 0; i < mesh->mNumVertices; i++) {
-        vertices[i * 3   ] = mesh->mVertices[i].x * pstate->gcv_options->scale_factor;
-        vertices[i * 3 +1] = mesh->mVertices[i].y * pstate->gcv_options->scale_factor;
-        vertices[i * 3 +2] = mesh->mVertices[i].z * pstate->gcv_options->scale_factor;
+	vertices[i * 3   ] = mesh->mVertices[i].x * pstate->gcv_options->scale_factor;
+	vertices[i * 3 +1] = mesh->mVertices[i].y * pstate->gcv_options->scale_factor;
+	vertices[i * 3 +2] = mesh->mVertices[i].z * pstate->gcv_options->scale_factor;
     }
 
     /* add mesh to region list */
@@ -234,60 +260,60 @@ handle_node(assimp_read_state_t* pstate, aiNode* curr, struct wmember &regions)
     std::string region_name = generate_unique_name(curr->mName.data, pstate->dfs, 0);
 
     if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose) {
-        bu_log("\nCurr node name | dfs index: %s | %d\n", curr->mName.data, pstate->dfs);
-        bu_log("Curr node transformation:\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n", 
-            curr->mTransformation.a1, curr->mTransformation.a2, curr->mTransformation.a3, curr->mTransformation.a4,
-            curr->mTransformation.b1, curr->mTransformation.b2, curr->mTransformation.b3, curr->mTransformation.b4,
-            curr->mTransformation.c1, curr->mTransformation.c2, curr->mTransformation.c3, curr->mTransformation.c4,
-            curr->mTransformation.d1, curr->mTransformation.d2, curr->mTransformation.d3, curr->mTransformation.d4);
-        bu_log("Curr node children: %d\n", curr->mNumChildren);
-        bu_log("Curr node meshes: %d\n", curr->mNumMeshes);
-        bu_log("Region name: %s\n", region_name.c_str());
-        if (!curr->mNumMeshes)
-            bu_log("\n");
+	bu_log("\nCurr node name | dfs index: %s | %d\n", curr->mName.data, pstate->dfs);
+	bu_log("Curr node transformation:\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n", 
+		curr->mTransformation.a1, curr->mTransformation.a2, curr->mTransformation.a3, curr->mTransformation.a4,
+		curr->mTransformation.b1, curr->mTransformation.b2, curr->mTransformation.b3, curr->mTransformation.b4,
+		curr->mTransformation.c1, curr->mTransformation.c2, curr->mTransformation.c3, curr->mTransformation.c4,
+		curr->mTransformation.d1, curr->mTransformation.d2, curr->mTransformation.d3, curr->mTransformation.d4);
+	bu_log("Curr node children: %d\n", curr->mNumChildren);
+	bu_log("Curr node meshes: %d\n", curr->mNumMeshes);
+	bu_log("Region name: %s\n", region_name.c_str());
+	if (!curr->mNumMeshes)
+	    bu_log("\n");
     }
-    
+
     /* book keeping for dfs node traversal */
     pstate->dfs++;
-    
+
     /* generate a list to hold this node's meshes */
     struct wmember mesh;
     BU_LIST_INIT(&mesh.l);
 
     /* handle the current nodes meshes if any */
     for (size_t i = 0; i < curr->mNumMeshes; i++) {
-        unsigned int mesh_idx = curr->mMeshes[i];\
-        if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose)
-            bu_log("      uses mesh %d\n", mesh_idx);
+	unsigned int mesh_idx = curr->mMeshes[i];\
+				if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose)
+				    bu_log("      uses mesh %d\n", mesh_idx);
 
-        generate_geometry(pstate, mesh, mesh_idx);
+	generate_geometry(pstate, mesh, mesh_idx);
 
-        /* FIXME generate shader and color 
-         * this assumes all mesh under a region are using the same material data.
-         * if they're not, we're just using the last one
-         */
-        shader_prop = *generate_shader(pstate, mesh_idx);
+	/* FIXME generate shader and color 
+	 * this assumes all mesh under a region are using the same material data.
+	 * if they're not, we're just using the last one
+	 */
+	shader_prop = *generate_shader(pstate, mesh_idx);
     }
     if (curr->mNumMeshes) {
-        /* apply parent transformations */
-        fastf_t tra[16];
-        aimatrix_to_arr16(curr->mTransformation, tra);
+	/* apply parent transformations */
+	fastf_t tra[16];
+	aimatrix_to_arr16(curr->mTransformation, tra);
 
-        /* make region with all meshes */
-        mk_lrcomb(pstate->fd_out, region_name.c_str(), &mesh, 1, shader_prop.name, shader_prop.args, shader_prop.rgb, pstate->id_no, 0, pstate->assimp_read_options->mat_code, 100, 0);
-        (void)mk_addmember(region_name.c_str(), &mesh.l, tra, WMOP_UNION);
+	/* make region with all meshes */
+	mk_lrcomb(pstate->fd_out, region_name.c_str(), &mesh, 1, shader_prop.name, shader_prop.args, shader_prop.rgb, pstate->id_no, 0, pstate->assimp_read_options->mat_code, 100, 0);
+	(void)mk_addmember(region_name.c_str(), &mesh.l, tra, WMOP_UNION);
 
-        if (!pstate->assimp_read_options->const_id)
-            pstate->id_no++;
+	if (!pstate->assimp_read_options->const_id)
+	    pstate->id_no++;
     }
 
     /* when we're done adding children, add to top level */
     if (!curr->mNumChildren)
-        (void)mk_addmember(region_name.c_str(), &regions.l, NULL, WMOP_UNION);
+	(void)mk_addmember(region_name.c_str(), &regions.l, NULL, WMOP_UNION);
 
     /* recursive call all children */
     for (size_t i = 0; i < curr->mNumChildren; i++) {
-        handle_node(pstate, curr->mChildren[i], regions);
+	handle_node(pstate, curr->mChildren[i], regions);
     }
 }
 
@@ -301,23 +327,23 @@ convert_input(assimp_read_state_t* pstate)
     pstate->scene = aiImportFile(pstate->input_file.c_str(), aiProcessPreset_TargetRealtime_MaxQuality & ~aiProcess_RemoveRedundantMaterials);
 
     if (!pstate->scene) {
-        bu_log("ERROR: bad scene conversion\n");
-        return 0;
+	bu_log("ERROR: bad scene conversion\n");
+	return 0;
     }
-        
+
     if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose) {
-        bu_log("Scene num meshes: %d\n", pstate->scene->mNumMeshes);
-        bu_log("Scene num materials: %d\n", pstate->scene->mNumMaterials);
-        bu_log("Scene num Animations: %d\n", pstate->scene->mNumAnimations);
-        bu_log("Scene num Textures: %d\n", pstate->scene->mNumTextures);
-        bu_log("Scene num Lights: %d\n", pstate->scene->mNumLights);
-        bu_log("Scene num Cameras: %d\n\n", pstate->scene->mNumCameras);
+	bu_log("Scene num meshes: %d\n", pstate->scene->mNumMeshes);
+	bu_log("Scene num materials: %d\n", pstate->scene->mNumMaterials);
+	bu_log("Scene num Animations: %d\n", pstate->scene->mNumAnimations);
+	bu_log("Scene num Textures: %d\n", pstate->scene->mNumTextures);
+	bu_log("Scene num Lights: %d\n", pstate->scene->mNumLights);
+	bu_log("Scene num Cameras: %d\n\n", pstate->scene->mNumCameras);
     }
 
     /* create around the root node */
     BU_LIST_INIT(&pstate->all.l);
     if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose)
-        bu_log("-- root node --\n");
+	bu_log("-- root node --\n");
     handle_node(pstate, &pstate->scene->mRootNode[0], pstate->all);
 
     /* make a top level 'all.g' */
@@ -375,14 +401,14 @@ assimp_read(struct gcv_context *context, const struct gcv_opts* gcv_options, con
      */
     const char* extension = strrchr(source_path, '.');
     if (state.assimp_read_options->format)       /* intentional setting format trumps file extension */
-        extension = state.assimp_read_options->format;
+	extension = state.assimp_read_options->format;
     if (!extension) {
-        bu_log("ERROR: Please provide a file with a valid extension, or specify format with --format\n");
-        return 0;
+	bu_log("ERROR: Please provide a file with a valid extension, or specify format with --format\n");
+	return 0;
     }
     if (AI_FALSE == aiIsExtensionSupported(extension)) {
-        bu_log("ERROR: The specified model file type is currently unsupported in Assimp conversion.\n");
-        return 0;
+	bu_log("ERROR: The specified model file type is currently unsupported in Assimp conversion.\n");
+	return 0;
     }
 
     mk_id_units(state.fd_out, "Conversion using Asset Importer Library (assimp)", "mm");
@@ -396,7 +422,7 @@ assimp_can_read(const char* data)
 {
     /* TODO FIXME - currently 'can_read' is unused by gcv */
     if (!data)
-        return 0;
+	return 0;
 
     return 1;
 }
@@ -406,8 +432,8 @@ assimp_can_read(const char* data)
 extern "C"
 {
     static const struct gcv_filter gcv_conv_assimp_read = {
-        "Assimp Reader", GCV_FILTER_READ, BU_MIME_MODEL_ASSIMP, assimp_can_read,
-        assimp_read_create_opts, assimp_read_free_opts, assimp_read
+	"Assimp Reader", GCV_FILTER_READ, BU_MIME_MODEL_ASSIMP, assimp_can_read,
+	assimp_read_create_opts, assimp_read_free_opts, assimp_read
     };
 
     extern const struct gcv_filter gcv_conv_assimp_write;
@@ -416,5 +442,14 @@ extern "C"
     const struct gcv_plugin gcv_plugin_info_s = { filters };
 
     COMPILER_DLLEXPORT const struct gcv_plugin *
-    gcv_plugin_info() { return &gcv_plugin_info_s; }
+	gcv_plugin_info() { return &gcv_plugin_info_s; }
 }
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
