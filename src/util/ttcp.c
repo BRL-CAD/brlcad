@@ -74,6 +74,11 @@
 
 #endif
 
+#if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
+extern struct hostent *gethostbyname(const char *);
+#endif
+
+
 struct sockaddr_in sinme;
 struct sockaddr_in sinhim;
 struct sockaddr_in sindum;
