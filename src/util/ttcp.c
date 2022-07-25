@@ -19,11 +19,11 @@
  * Mike Muuss and Terry Slattery have released this code to the Public Domain.
  */
 
-#ifndef _POSIX_C_SOURCE
-#  define _POSIX_C_SOURCE 1
+#ifndef _POSIX_SOURCE
+#  define _POSIX_SOURCE 1
 #endif
-#ifndef _XOPEN_SOURCE
-#  define  _XOPEN_SOURCE 1
+#ifndef _BSD_SOURCE
+#  define  _BSD_SOURCE 1
 #endif
 #define BSD43
 #define SYSV
