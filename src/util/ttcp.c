@@ -19,9 +19,14 @@
  * Mike Muuss and Terry Slattery have released this code to the Public Domain.
  */
 
-#undef _POSIX_C_SOURCE
-#undef _XOPEN_SOURCE
+#ifndef _POSIX_C_SOURCE
+#  define _POSIX_C_SOURCE 1
+#endif
+#ifndef _XOPEN_SOURCE
+#  define  _XOPEN_SOURCE 1
+#endif
 #define BSD43
+#define SYSV
 /* #define BSD42 */
 /* #define BSD41a */
 
@@ -72,10 +77,6 @@
 #  undef DEFINED_USE_GNU
 #endif
 
-#endif
-
-#if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
-extern struct hostent *gethostbyname(const char *);
 #endif
 
 
