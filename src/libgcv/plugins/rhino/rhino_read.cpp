@@ -263,9 +263,14 @@ load_model(const char* default_name, const std::string& path, ONX_Model& model)
 
 
     /* loop over types we draw names from to check for non-unique names */
-    const int num_types = 2;
+    /* FIXME: when adding a duplicated layer, the index is auto-regenerated but attributes
+     * referencing the layer are not updated to point to it
+     * ie if we change layer with index = 0. the duplicated will NOT have index 0
+     * and, attributes->m_layer_index references (like in import_model_objects) will still use 0
+     */
+    const int num_types = 1;
     ON_ModelComponent::Type types[num_types] = { ON_ModelComponent::Type::ModelGeometry,
-					 ON_ModelComponent::Type::Layer
+					//  ON_ModelComponent::Type::Layer
 					};
     for (int i = 0; i < num_types; i++) {
 	std::unordered_map <std::string, int> used_names;			/* used names, times used */
@@ -433,68 +438,51 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 	bu_bomb("mk_bot_w_normals() failed");
 }
 
-// void
-// write_geometry(rt_wdb& wdb, const std::string& name, 
-//                const ONX_Model& model, const ON_InstanceRef* comp)
-// {
-//     const ON_ModelGeometryComponent gc = model.ModelGeometryComponentFromId(comp->m_instance_definition_uuid);
-//     if (const ON_InstanceRef* internal_ref = ON_InstanceRef::Cast(&gc)) {
-//         write_geometry(wdb, name, model, internal_ref);
-//     } else {
-//         const ON_InstanceDefinition* idef = ON_InstanceDefinition::FromModelComponentRef(model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, comp->m_instance_definition_uuid), nullptr);
-//         if (idef) {
-//             std::set<std::string> members;
-//             const ON_SimpleArray<ON_UUID> id_list = idef->InstanceGeometryIdList();
-//             for (int i = 0; i < id_list.Count(); i++) {
-//                 const ON_ModelGeometryComponent internal_gc = model.ModelGeometryComponentFromId(id_list[i]);
-//                 const ON_Geometry* internal_g = internal_gc.Geometry(nullptr);
-//                 ON_String internal_name = internal_gc.Name();
-//                 if (!internal_name.Array()) {
-//                     /* if our load_model is working correctly, we should never get here */
-//                     char cuid[37];
-// 	            ON_UuidToString(internal_gc.Id(), cuid);
-//                     bu_log("ERROR: unnamed reference to uid: %s\n", cuid);
-//                     continue;
-//                 }
-//                 const std::string internal_name_stdstr = std::string(internal_name.Array()) + ".s";
-//                 /* TODO/FIXME: this should call a filter function (like the write_geometry
-//                  * function below this) as it more exhaustively checks conversion possiblities 
-//                  */
-//                 if (const ON_Brep* const brep = ON_Brep::Cast(internal_g)) {
-//                     ON_Brep* b = const_cast<ON_Brep*>(brep);
-//                     if (mk_brep(&wdb, internal_name_stdstr.c_str(), (void *)b))
-// 	                bu_bomb("mk_brep() failed");
-//                     members.insert(internal_name_stdstr);
-//                 }
-//             }
-
-//             mat_t matrix;
-//             for (std::size_t i = 0; i < 4; ++i)
-// 	        for (std::size_t j = 0; j < 4; ++j)
-// 	            matrix[4 * i + j] = comp->m_xform[i][j];
-
-//             write_comb(wdb, name, members, matrix, NULL, NULL, NULL);
-//         }
-//     }
-// }
-
-
-bool
+void
 write_geometry(rt_wdb &wdb, const std::string &name,
-	       const ONX_Model& UNUSED(model), const ON_Geometry *geometry)
+	       const ONX_Model& model, const ON_Geometry *geometry, 
+               mat_t& matrix, std::set<std::string>& members)
 {
+    /* geometry we've come across that is not writable */
+    static std::set<std::string> skip_geom;
+    if (skip_geom.find(name) != skip_geom.end())
+        return;
+
     if (const ON_Brep * const brep = ON_Brep::Cast(geometry)) {
 	write_geometry(wdb, name, *brep);
+        members.insert(name);
     } else if (const ON_Mesh * const mesh = ON_Mesh::Cast(geometry)) {
 	write_geometry(wdb, name, *mesh);
+        members.insert(name);
     } else if (geometry->HasBrepForm()) {
 	AutoPtr<ON_Brep, autoptr_wrap_delete> temp(geometry->BrepForm());
 	write_geometry(wdb, name, *temp.ptr);
-    } 
-//     else if (const ON_InstanceRef* iref = ON_InstanceRef::Cast(geometry)) {
-//         write_geometry(wdb, name, model, iref);
-//     } 
-    else if (const ON_SubD* subd = ON_SubD::Cast(geometry)) {
+        members.insert(name);
+    } else if (const ON_InstanceRef* iref = ON_InstanceRef::Cast(geometry)) {
+        const ON_InstanceDefinition* idef = ON_InstanceDefinition::FromModelComponentRef(model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, iref->m_instance_definition_uuid), nullptr);
+        if (idef) {
+            const ON_SimpleArray<ON_UUID> id_list = idef->InstanceGeometryIdList();
+            for (int i = 0; i < id_list.Count(); i++) {
+                const ON_ModelGeometryComponent internal_gc = model.ModelGeometryComponentFromId(id_list[i]);
+                if (const ON_Geometry* internal_g = internal_gc.Geometry(nullptr)) {
+                    ON_String internal_name = internal_gc.Name();
+                    if (!internal_name.Array()) {
+                        /* if our load_model is working correctly, we should never get here */
+                        char cuid[37];
+                        ON_UuidToString(internal_gc.Id(), cuid);
+                        bu_log("ERROR: unnamed reference to uid: %s\n", cuid);
+                        continue;
+                    }
+                    const std::string internal_name_stdstr = std::string(internal_name.Array()) + ".s";
+                    write_geometry(wdb, internal_name_stdstr, model, internal_g, matrix, members);
+                }
+            }
+
+            for (std::size_t i = 0; i < 4; ++i)
+                for (std::size_t j = 0; j < 4; ++j)
+                    matrix[4 * i + j] = iref->m_xform[i][j];
+        }
+    } else if (const ON_SubD* subd = ON_SubD::Cast(geometry)) {
 	/* NOTE: pending proper support for subdivision surfaces, 
 	 * this is a very poor approximation just to have *something*
 	 */
@@ -509,17 +497,15 @@ write_geometry(rt_wdb &wdb, const std::string &name,
 	    ON_Mesh* nmesh = new_subd->GetControlNetMesh(nullptr, ON_SubDGetControlNetMeshPriority::Geometry);
 	    if (nullptr != nmesh) {
 		write_geometry(wdb, name, *nmesh);
+                members.insert(name);
 		delete nmesh;
 	    }
 	    delete new_subd;
 	}
     } else {
-        /* NOTE: see opennurbs_defines.h "object_type" for enum */
-        bu_log("WARNING: Cannot handle type [0x%d] for object [%s]\n", geometry->ObjectType(), name.c_str());
-	return false;
+        bu_log("WARNING: Cannot handle type [%s] for object [%s] -- skipping\n", ON_ObjectTypeToString(geometry->ObjectType()), name.c_str());
+        skip_geom.insert(name);
     }
-
-    return true;
 }
 
 
@@ -609,51 +595,6 @@ write_comb(rt_wdb &wdb, const std::string &name,
 }
 
 void
-write_geometry(rt_wdb& wdb, const std::string& name, 
-               const ONX_Model& model, const ON_InstanceRef* comp)
-{
-    const ON_ModelGeometryComponent gc = model.ModelGeometryComponentFromId(comp->m_instance_definition_uuid);
-    if (const ON_InstanceRef* internal_ref = ON_InstanceRef::Cast(&gc)) {
-        write_geometry(wdb, name, model, internal_ref);
-    } else {
-        const ON_InstanceDefinition* idef = ON_InstanceDefinition::FromModelComponentRef(model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, comp->m_instance_definition_uuid), nullptr);
-        if (idef) {
-            std::set<std::string> members;
-            const ON_SimpleArray<ON_UUID> id_list = idef->InstanceGeometryIdList();
-            for (int i = 0; i < id_list.Count(); i++) {
-                const ON_ModelGeometryComponent internal_gc = model.ModelGeometryComponentFromId(id_list[i]);
-                const ON_Geometry* internal_g = internal_gc.Geometry(nullptr);
-                ON_String internal_name = internal_gc.Name();
-                if (!internal_name.Array()) {
-                    /* if our load_model is working correctly, we should never get here */
-                    char cuid[37];
-	            ON_UuidToString(internal_gc.Id(), cuid);
-                    bu_log("ERROR: unnamed reference to uid: %s\n", cuid);
-                    continue;
-                }
-                const std::string internal_name_stdstr = std::string(internal_name.Array()) + ".s";
-                /* TODO/FIXME: this should call a filter function (like the write_geometry
-                 * function below this) as it more exhaustively checks conversion possiblities 
-                 */
-                if (const ON_Brep* const brep = ON_Brep::Cast(internal_g)) {
-                    ON_Brep* b = const_cast<ON_Brep*>(brep);
-                    if (mk_brep(&wdb, internal_name_stdstr.c_str(), (void *)b))
-	                bu_bomb("mk_brep() failed");
-                    members.insert(internal_name_stdstr);
-                }
-            }
-
-            mat_t matrix;
-            for (std::size_t i = 0; i < 4; ++i)
-	        for (std::size_t j = 0; j < 4; ++j)
-	            matrix[4 * i + j] = comp->m_xform[i][j];
-
-            write_comb(wdb, name, members, matrix, NULL, NULL, NULL);
-        }
-    }
-}
-
-void
 import_object(rt_wdb &wdb, const std::string &name,
 	      const ON_InstanceRef * const iref,
 	      const ONX_Model &model,
@@ -682,7 +623,7 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 {
     size_t total_count = 0;
     size_t success_count = 0;
-    std::vector<ON_UUID>remove_ids;     /* ids for geometry unable to write */
+    std::set<std::string>to_remove;     /* names of geometry unable to write */
 
     ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
     for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
@@ -697,9 +638,6 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	ON_UuidToString(mg->Id(), cuid);
 	const std::string name = (cname.Array()) ? std::string(cname.Array()) : std::string(cuid);
 	const std::string member_name = name + ".s";
-        if (name == "unnamed")
-            bu_log("breakpoint");
-
 
 	Shader shader;
 	unsigned char rgb[3];
@@ -708,63 +646,28 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	const ON_3dmObjectAttributes *attributes = mg->Attributes(nullptr);
 	get_object_material(attributes, model, shader, rgb, own_shader, own_rgb);
 
-	// const ON_InstanceRef * const iref = ON_InstanceRef::Cast(mg);
-	// if (iref) {
-	//     import_object(wdb, name, iref, model, own_shader ? shader.first.c_str() : NULL,
-	// 	    own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
-	//     if (attributes) {
-	// 	ON_String uuid;
-	// 	const char *uuid_str = ON_UuidToString(attributes->m_uuid, uuid);
-	// 	int ret1 = db5_update_attribute(name.c_str(), "rhino::type", mg->ClassId()->ClassName(), wdb.dbip);
-	// 	int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", uuid_str, wdb.dbip);
-	// 	if (ret1 || ret2)
-	// 	    bu_bomb("db5_update_attribute() failed");
-	//     }
-	//     ++success_count;
-	//     continue;
-	// }
-
 	const ON_Geometry *g = mg->Geometry(nullptr);
 	if (g) {
-            if (const ON_InstanceRef* iref = ON_InstanceRef::Cast(g)) {
-                write_geometry(wdb, name, model, iref);
-                continue;
-            }
-	    if (write_geometry(wdb, member_name, model, g)) {
-		std::set<std::string> members;
-		members.insert(member_name);
-		write_comb(wdb, name, members, NULL, own_shader ? shader.first.c_str() : NULL,
+            mat_t matrix = MAT_INIT_IDN;
+            std::set<std::string>members;
+
+            write_geometry(wdb, member_name, model, g, matrix, members);
+
+            write_comb(wdb, name, members, matrix, own_shader ? shader.first.c_str() : NULL,
 			own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
-		if (attributes) {
-		    ON_String uuid;
-		    const char *uuid_str = ON_UuidToString(attributes->m_uuid, uuid);
-		    int ret1 = db5_update_attribute(name.c_str(), "rhino::type", mg->ClassId()->ClassName(), wdb.dbip);
-		    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", uuid_str, wdb.dbip);
-		    if (ret1 || ret2)
-			bu_bomb("db5_update_attribute() failed");
-		}
-		++success_count;
-		continue;
-	    } else {
-                /* keep track of the ids of geometry we could not handle */
-                remove_ids.push_back(mg->Id());
-		if (gcv_options.verbosity_level) {
-		    ON_String ctype = ON_ModelComponent::ComponentTypeToString(mg->ComponentType());
-		    const std::string ctname = (ctype.Array()) ? std::string(ctype.Array()) : std::string("unknown");
-		    std::cerr << "skipped " << name << ", type '" << ON_ObjectTypeToString(g->ObjectType()) << "' geometry object\n";
-		}
-	    }
+            if (attributes && members.size() > 0) {
+                ON_String uuid;
+                const char *uuid_str = ON_UuidToString(attributes->m_uuid, uuid);
+                int ret1 = db5_update_attribute(name.c_str(), "rhino::type", mg->ClassId()->ClassName(), wdb.dbip);
+                int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", uuid_str, wdb.dbip);
+                if (ret1 || ret2)
+                bu_bomb("db5_update_attribute() failed");
+            }
+            success_count += members.size();
 	} else {
 	    if (gcv_options.verbosity_level)
 		std::cerr << "skipped " << name << ", no geometry associated with ModelGeometryComponent (?)\n";
 	}
-    }
-
-    for (size_t i = 0; i < remove_ids.size(); i++) {
-        /* remove the object we were unable to write from the model so we dont get
-         * unreferenced linking of layers(combs)
-         */
-        model.RemoveModelComponent(ON_ModelComponent::Type::ModelGeometry, remove_ids[i]);
     }
 
     if (gcv_options.verbosity_level && (success_count != total_count))
@@ -1022,6 +925,7 @@ import_model_layers(rt_wdb &wdb, const ONX_Model &model,
 	const ON_Layer *p = ON_Layer::Cast(cr.ModelComponent());
 	if (!p)
 	    continue;
+        // bu_log("layer: %s -> index: %d\n", std::string(ON_String(p->Name().Array())).c_str(), p->Index());
 	import_layer(wdb, p, model, model_idef_members);
     }
 
