@@ -238,90 +238,79 @@ generate_uuid()
     return result;
 }
 
-void
-clean_name(std::map<ON_wString, std::size_t> &seen,
-	   const std::string &default_name, ON_wString &name)
+/* cleans ON_wString of non-standard characters and removes duplicate spaces and underscores
+ * RETURNS: std::string of modified name
+ */
+std::string
+clean_name(const ON_wString chk_name, const std::string default_name = "Default")
 {
-    name = ON_String(name);
+    /* jump through some hoops to make sure we have a name in std::string format */
+    std::string ret = default_name;
+    if (chk_name.IsNotEmpty())
+        ret = std::string(ON_String(chk_name).Array());
 
-    if (name.IsEmpty())
-	name = default_name.c_str();
-
-    name.ReplaceWhiteSpace('_');
-    name.Replace('/', '_');
-
-    if (const std::size_t number = seen[name]++)
-	name += ('_' + lexical_cast<std::string>(number + 1)).c_str();
+    /* remove spaces and slashes */
+    bu_vls scrub = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&scrub, "%s", ret.c_str());
+    bu_vls_simplify(&scrub, nullptr, " _\0", " _\0");
+    ret = ret.size() > 0 ? std::string(bu_vls_cstr(&scrub)) : default_name;   /* somemtimes we scrub out the entire name */
+    
+    return ret;
 }
 
-/* loads model and then iterates over objects to ensure unique names */
+/* loop over ModelGeometry to check for non-unique names. Updates are reflected in the model */
+HIDDEN void
+chk_geometry_names(ONX_Model& model, const char* default_name)
+{
+    std::unordered_map <std::string, int> used_names;			/* used names, times used */
+    std::vector<std::pair<ON_UUID, ON_ModelComponent*>>to_remove;	/* remove ID, replacing copy */
+    ON_ModelComponent::Type curr_type = ON_ModelComponent::Type::ModelGeometry;
+    ONX_ModelComponentIterator it(model, curr_type);
+
+    for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference()) {
+        std::string name = clean_name(cr.ModelComponent()->Name(), default_name);
+        if (cr.ModelComponent()->NameIsNotEmpty() && (name == std::string(ON_String(cr.ModelComponent()->Name()).Array())))
+            continue;
+
+        /* ensure name is unique */
+        if (used_names.find(name) == used_names.end()) {
+            used_names.insert({ name, 0 });
+            /* on the first use of default the component needs to reflect the change */
+            if (name != default_name)
+                continue;
+        } else {
+            /* find non-conflicting name */
+            auto handle = used_names.find(name);
+            while (used_names.find(name + "_" + std::to_string(++handle->second)) != used_names.end())
+                ;
+            name.append("_" + std::to_string(handle->second));
+        }
+
+        /* make a copy of the component with the non-conflicting name */
+        ON_ModelComponent* cpy = cr.ModelComponent()->Duplicate();
+        cpy->SetName(ON_wString(name.c_str()));
+
+        /* this is a linked list iteration, so we cannot add/delete inside the loop.
+         * keep track of offender/copy for clean up later
+         */
+        to_remove.push_back(std::make_pair(cr.ModelComponent()->Id(), cpy));
+    }
+    
+    /* do the removes and replacing additions */
+    for (size_t j = 0; j < to_remove.size(); j++) {
+        model.RemoveModelComponent(curr_type, to_remove[j].first);
+        model.AddManagedModelComponent(to_remove[j].second);
+    }
+}
+
+/* loads model and then checks and updates geometry names to be unique */
 HIDDEN void
 load_model(const char* default_name, const std::string& path, ONX_Model& model)
 {
     if (!model.Read(path.c_str()))
 	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
 
-
-    /* loop over types we draw names from to check for non-unique names */
-    /* FIXME: when adding a duplicated layer, the index is auto-regenerated but attributes
-     * referencing the layer are not updated to point to it
-     * ie if we change layer with index = 0. the duplicated will NOT have index 0
-     * and, attributes->m_layer_index references (like in import_model_objects) will still use 0
-     */
-    const int num_types = 1;
-    ON_ModelComponent::Type types[num_types] = { ON_ModelComponent::Type::ModelGeometry,
-					//  ON_ModelComponent::Type::Layer
-					};
-    for (int i = 0; i < num_types; i++) {
-	std::unordered_map <std::string, int> used_names;			/* used names, times used */
-	std::vector<std::pair<ON_UUID, ON_ModelComponent*>>to_remove;	/* remove ID, replacing copy */
-	ON_ModelComponent::Type curr_type = types[i];
-	ONX_ModelComponentIterator it(model, curr_type);
-	for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference()) {
-            /* jump through some hoops to make sure we have a name in std::string format */
-            std::string chk_name = default_name;
-            if (cr.ModelComponent()->NameIsNotEmpty())
-                chk_name = std::string(ON_String(cr.ModelComponent()->Name()).Array());
-            std::string chk_name_orig = chk_name;       /* dont update component name if we dont have to */
-
-	    /* remove spaces and slashes */
-	    bu_vls scrub = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&scrub, "%s", chk_name.c_str());
-	    bu_vls_simplify(&scrub, nullptr, " _\0", " _\0");
-	    chk_name = chk_name.size() > 0 ? std::string(bu_vls_cstr(&scrub)) : default_name;   /* somemtimes we scrub out the entire name */
-
-	    /* ensure name is unique */
-	    if (used_names.find(chk_name) == used_names.end()) {
-		used_names.insert({ chk_name, 0 });
-                /* if we changed the name, or its unnamed and we're using default_name, we need 
-                 * to update the name of the component
-                 */
-		if (chk_name == chk_name_orig && chk_name != default_name)
-		    continue;
-	    } else {
-		/* find non-conflicting name */
-		auto handle = used_names.find(chk_name);
-		while (used_names.find(chk_name + "_" + std::to_string(++handle->second)) != used_names.end())
-		    ;
-		chk_name.append("_" + std::to_string(handle->second));
-	    }
-
-	    /* make a copy of the component with the non-conflicting name */
-	    ON_ModelComponent* cpy = cr.ModelComponent()->Duplicate();
-	    cpy->SetName(ON_wString(chk_name.c_str()));
-
-	    /* this is a linked list iteration, so we cannot add/delete inside the loop.
-	     * keep track of offender/copy for clean up later
-	     */
-	    to_remove.push_back(std::make_pair(cr.ModelComponent()->Id(), cpy));
-	}
-
-	/* do the removes and replacing additions */
-	for (size_t j = 0; j < to_remove.size(); j++) {
-	    model.RemoveModelComponent(curr_type, to_remove[j].first);
-	    model.AddManagedModelComponent(to_remove[j].second);
-	}
-    }
+    chk_geometry_names(model, default_name);
 }
 
 void
@@ -623,7 +612,6 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 {
     size_t total_count = 0;
     size_t success_count = 0;
-    std::set<std::string>to_remove;     /* names of geometry unable to write */
 
     ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
     for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
@@ -816,8 +804,7 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model, const std::set<
 	    if (!cl)
 		continue;
 	    if (cl->ParentLayerId() == layer->ModelObjectId()) {
-		members.insert(std::string(ON_String(cl->Name()).Array()));
-		//std::cout << "Layer " << ON_String(cl->Name()).Array() << " is a child of " << ON_String(layer->Name()).Array() << "\n";
+                members.insert(clean_name(cl->Name()));
 	    }
 	}
     }
@@ -858,7 +845,7 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model, const std::set<
 void
 import_layer(rt_wdb &wdb, const ON_Layer *l, const ONX_Model &model, const std::set<std::string> &model_idef_members)
 {
-    const std::string name = std::string(ON_String(l->Name().Array()));
+    const std::string name = clean_name(l->Name());
     ON_String lid;
     const char *lid_str = ON_UuidToString(l->Id(), lid);
     ON_Color wc = (l->Color() == ON_UNSET_COLOR) ? l->PlotColor() : l->Color();
