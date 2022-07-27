@@ -37,6 +37,12 @@ extern "C" {
 #include "qtcad/defines.h"
 #include "qtcad/QtCADView.h"
 
+// Abbreviations:
+//
+// ur == 0 == Upper Right Quadrant
+// ul == 1 == Upper Left Quadrant
+// ll == 2 == Lower Left Quadrant
+// lr == 3 == Lower Right Quadrant
 class QTCAD_EXPORT QtCADQuad : public QWidget
 {
     Q_OBJECT
@@ -57,6 +63,7 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 
 	void select(int quadrant_num);
 	void select(const char *id); // valid inputs: ur, ul, ll and lr
+	int get_selected(); // 0 = ur, 1 = ul, 2 = ll, 3 = lr
 
         void changeToSingleFrame();
         void changeToQuadFrame();

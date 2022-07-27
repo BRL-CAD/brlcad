@@ -342,29 +342,47 @@ QtCADQuad::select(int quadrantId)
     if (oc != currentView) {
 	emit selected(currentView);
     }
-    // TODO - update coloring of bg to
-    // indicate active quadrant
 }
 
 void
 QtCADQuad::select(const char *quadrant_id)
 {
     if (BU_STR_EQUIV(quadrant_id, "ur")) {
-	select(1);
+	select(0);
 	return;
     }
     if (BU_STR_EQUIV(quadrant_id, "ul")) {
-	select(2);
+	select(1);
 	return;
     }
     if (BU_STR_EQUIV(quadrant_id, "ll")) {
-	select(3);
+	select(2);
 	return;
     }
     if (BU_STR_EQUIV(quadrant_id, "lr")) {
-	select(4);
+	select(3);
 	return;
     }
+}
+
+
+int
+QtCADQuad::get_selected()
+{
+    if (currentView == views[0]) {
+	return 0;
+    }
+    if (currentView == views[1]) {
+	return 1;
+    }
+    if (currentView == views[2]) {
+	return 2;
+    }
+    if (currentView == views[3]) {
+	return 3;
+    }
+
+    return 0;
 }
 
 void
