@@ -430,7 +430,8 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 void
 write_geometry(rt_wdb &wdb, const std::string &name,
 	       const ONX_Model& model, const ON_Geometry *geometry, 
-               mat_t& matrix, std::set<std::string>& members)
+               mat_t& matrix, std::set<std::string>& members,
+               int verbose)
 {
     /* geometry we've come across that is not writable */
     static std::set<std::string> skip_geom;
@@ -463,7 +464,7 @@ write_geometry(rt_wdb &wdb, const std::string &name,
                         continue;
                     }
                     const std::string internal_name_stdstr = std::string(internal_name.Array()) + ".s";
-                    write_geometry(wdb, internal_name_stdstr, model, internal_g, matrix, members);
+                    write_geometry(wdb, internal_name_stdstr, model, internal_g, matrix, members, verbose);
                 }
             }
 
@@ -492,7 +493,8 @@ write_geometry(rt_wdb &wdb, const std::string &name,
 	    delete new_subd;
 	}
     } else {
-        bu_log("WARNING: Cannot handle type [%s] for object [%s] -- skipping\n", ON_ObjectTypeToString(geometry->ObjectType()), name.c_str());
+        if (verbose)
+            bu_log("WARNING: Cannot handle type [%s] for object [%s] -- skipping\n", ON_ObjectTypeToString(geometry->ObjectType()), name.c_str());
         skip_geom.insert(name);
     }
 }
@@ -639,19 +641,20 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
             mat_t matrix = MAT_INIT_IDN;
             std::set<std::string>members;
 
-            write_geometry(wdb, member_name, model, g, matrix, members);
-
-            write_comb(wdb, name, members, matrix, own_shader ? shader.first.c_str() : NULL,
-			own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
-            if (attributes && members.size() > 0) {
-                ON_String uuid;
-                const char *uuid_str = ON_UuidToString(attributes->m_uuid, uuid);
-                int ret1 = db5_update_attribute(name.c_str(), "rhino::type", mg->ClassId()->ClassName(), wdb.dbip);
-                int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", uuid_str, wdb.dbip);
-                if (ret1 || ret2)
-                bu_bomb("db5_update_attribute() failed");
+            write_geometry(wdb, member_name, model, g, matrix, members, gcv_options.verbosity_level);
+            if (members.size() > 0) {
+                write_comb(wdb, name, members, matrix, own_shader ? shader.first.c_str() : NULL,
+			   own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
+                if (attributes) {
+                    ON_String uuid;
+                    const char *uuid_str = ON_UuidToString(attributes->m_uuid, uuid);
+                    int ret1 = db5_update_attribute(name.c_str(), "rhino::type", mg->ClassId()->ClassName(), wdb.dbip);
+                    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", uuid_str, wdb.dbip);
+                    if (ret1 || ret2)
+                        bu_bomb("db5_update_attribute() failed");
+                }
+                success_count += members.size();
             }
-            success_count += members.size();
 	} else {
 	    if (gcv_options.verbosity_level)
 		std::cerr << "skipped " << name << ", no geometry associated with ModelGeometryComponent (?)\n";
