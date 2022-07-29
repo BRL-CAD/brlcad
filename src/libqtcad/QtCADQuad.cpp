@@ -253,25 +253,12 @@ bool
 QtCADQuad::eventFilter(QObject *t, QEvent *e)
 {
     if (e->type() == QEvent::KeyPress || e->type() == QEvent::MouseButtonPress) {
-	QtCADView *oc = currentView;
 	for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	    if (views[i] != nullptr && t == views[i]) {
-		currentView = views[i];
-		// Make sure we are in quad mode
-		if (views[1] != nullptr) {
-		    views[i]->select(1);
-		}
-	    } else {
-		if (views[i] != nullptr) {
-		    views[i]->set_current(0);
-		    views[i]->select(0);
-		}
+		select(i);
+		break;
 	    }
 	}
-
-	currentView->set_current(1);
-	if (currentView != oc)
-	    emit selected(currentView);
     }
     return false;
 }
@@ -329,13 +316,28 @@ QtCADQuad::select(int quadrantId)
 
     QtCADView *oc = currentView;
 
+    // Set new selection
     if (views[quadrantId] != nullptr) {
 	currentView = views[quadrantId];
+	// Make sure we are in quad mode
+	if (views[1] != nullptr) {
+	    views[quadrantId]->select(1);
+	    currentView->set_current(1);
+	}
     }
 
-    if (oc != currentView) {
-	emit selected(currentView);
+    // Clear any old selections
+    for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
+	if (i == quadrantId)
+	    continue;
+	if (views[i] != nullptr) {
+	    views[i]->set_current(0);
+	    views[i]->select(0);
+	}
     }
+
+    if (oc != currentView)
+	emit selected(currentView);
 }
 
 void
