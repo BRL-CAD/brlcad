@@ -48,11 +48,6 @@
 #include "ged/commands.h"
 #include "qtcad/QtCADQuad.h"
 
-static const int UPPER_RIGHT = 0;
-static const int UPPER_LEFT = 1;
-static const int LOWER_LEFT = 2;
-static const int LOWER_RIGHT = 3;
-
 static const char *VIEW_NAMES[] = {"Q1", "Q2", "Q3", "Q4"};
 
 /**
@@ -67,9 +62,9 @@ QtCADQuad::QtCADQuad(QWidget *parent, struct ged *gedpRef, int type) : QWidget(p
     gedp = gedpRef;
     graphicsType = type;
 
-    views[UPPER_RIGHT] = createView(UPPER_RIGHT);
-    bv_set_add_view(&gedp->ged_views, views[UPPER_RIGHT]->view());
-    gedp->ged_gvp = views[UPPER_RIGHT]->view();
+    views[UPPER_RIGHT_QUADRANT] = createView(UPPER_RIGHT_QUADRANT);
+    bv_set_add_view(&gedp->ged_views, views[UPPER_RIGHT_QUADRANT]->view());
+    gedp->ged_gvp = views[UPPER_RIGHT_QUADRANT]->view();
 
     // Define the spacers
     spacerTop = new QSpacerItem(3, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -78,8 +73,8 @@ QtCADQuad::QtCADQuad(QWidget *parent, struct ged *gedpRef, int type) : QWidget(p
     spacerRight = new QSpacerItem(0, 3, QSizePolicy::Expanding, QSizePolicy::Fixed);
     spacerCenter = new QSpacerItem(3, 3, QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-    views[UPPER_RIGHT]->set_current(1);
-    currentView = views[UPPER_RIGHT];
+    views[UPPER_RIGHT_QUADRANT]->set_current(1);
+    currentView = views[UPPER_RIGHT_QUADRANT];
 
 }
 
@@ -106,7 +101,7 @@ QtCADQuad::~QtCADQuad()
  * @return QtCADView*
  */
 QtCADView *
-QtCADQuad::createView(int index)
+QtCADQuad::createView(unsigned int index)
 {
     QtCADView *view = new QtCADView(this, graphicsType);
     bu_vls_sprintf(&view->view()->gv_name, "%s", VIEW_NAMES[index]);
@@ -156,7 +151,7 @@ QtCADQuad::changeToSingleFrame()
 	layout = createLayout();
     }
     while (layout->takeAt(0) != NULL);
-    layout->addWidget(views[UPPER_RIGHT], 0, 2);
+    layout->addWidget(views[UPPER_RIGHT_QUADRANT], 0, 2);
 
     for (int i = 1; i < 4; i++) {
 	// Don't want use cpu for views that are not visible
@@ -168,10 +163,10 @@ QtCADQuad::changeToSingleFrame()
 	}
     }
 
-    views[UPPER_RIGHT]->set_current(1);
-    currentView = views[UPPER_RIGHT];
+    views[UPPER_RIGHT_QUADRANT]->set_current(1);
+    currentView = views[UPPER_RIGHT_QUADRANT];
     // This is only used in quad mode
-    currentView->select(0);
+    currentView->select(1);
 
     default_views();
 }
@@ -183,7 +178,7 @@ QtCADQuad::changeToSingleFrame()
 void
 QtCADQuad::changeToQuadFrame()
 {
-    for (int i = 1; i < 4; i++) {
+    for (int i = UPPER_RIGHT_QUADRANT + 1; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] == nullptr) {
 	    views[i] = createView(i);
 	}
@@ -195,15 +190,15 @@ QtCADQuad::changeToQuadFrame()
     }
     while (layout->takeAt(0) != NULL);
 
-    layout->addWidget(views[UPPER_LEFT], 0, 0);
+    layout->addWidget(views[UPPER_LEFT_QUADRANT], 0, 0);
     layout->addItem(spacerTop, 0, 1);
-    layout->addWidget(views[UPPER_RIGHT], 0, 2);
+    layout->addWidget(views[UPPER_RIGHT_QUADRANT], 0, 2);
     layout->addItem(spacerLeft, 1, 0);
     layout->addItem(spacerCenter, 1, 1);
     layout->addItem(spacerRight, 1, 2);
-    layout->addWidget(views[LOWER_LEFT], 2, 0);
+    layout->addWidget(views[LOWER_LEFT_QUADRANT], 2, 0);
     layout->addItem(spacerBottom, 2, 1);
-    layout->addWidget(views[LOWER_RIGHT], 2, 2);
+    layout->addWidget(views[LOWER_RIGHT_QUADRANT], 2, 2);
 
     default_views();
 
@@ -211,13 +206,13 @@ QtCADQuad::changeToQuadFrame()
     const char *av[2];
     av[0] = "autoview";
     av[1] = (char *)0;
-    for (int i = 1; i < 4; i++) {
+    for (int i = UPPER_RIGHT_QUADRANT + 1; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	gedp->ged_gvp = views[i]->view();
 	ged_exec(gedp, 1, (const char **)av);
     }
-    gedp->ged_gvp = views[UPPER_RIGHT]->view();
-    views[UPPER_RIGHT]->set_current(1);
-    currentView = views[UPPER_RIGHT];
+    gedp->ged_gvp = views[UPPER_RIGHT_QUADRANT]->view();
+    views[UPPER_RIGHT_QUADRANT]->set_current(1);
+    currentView = views[UPPER_RIGHT_QUADRANT];
     // This is only used in quad mode
     currentView->select(1);
 }
@@ -231,7 +226,7 @@ QtCADQuad::do_view_changed()
 bool
 QtCADQuad::isValid()
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr && !views[i]->isValid())
 	    return false;
     }
@@ -241,7 +236,7 @@ QtCADQuad::isValid()
 void
 QtCADQuad::fallback()
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
 	    views[i]->fallback();
 
@@ -250,8 +245,8 @@ QtCADQuad::fallback()
     }
 
     // ur is still the default current
-    views[UPPER_RIGHT]->set_current(1);
-    currentView = views[UPPER_RIGHT];
+    views[UPPER_RIGHT_QUADRANT]->set_current(1);
+    currentView = views[UPPER_RIGHT_QUADRANT];
 }
 
 bool
@@ -259,15 +254,14 @@ QtCADQuad::eventFilter(QObject *t, QEvent *e)
 {
     if (e->type() == QEvent::KeyPress || e->type() == QEvent::MouseButtonPress) {
 	QtCADView *oc = currentView;
-	for (int i = 0; i < 4; i++) {
+	for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	    if (views[i] != nullptr && t == views[i]) {
 		currentView = views[i];
 		// Make sure we are in quad mode
 		if (views[1] != nullptr) {
 		    views[i]->select(1);
 		}
-	    }
-	    else {
+	    } else {
 		if (views[i] != nullptr) {
 		    views[i]->set_current(0);
 		    views[i]->select(0);
@@ -285,29 +279,29 @@ QtCADQuad::eventFilter(QObject *t, QEvent *e)
 void
 QtCADQuad::default_views()
 {
-    if (views[UPPER_RIGHT] != nullptr) {
-	if (views[UPPER_LEFT] == nullptr) {
-	    views[UPPER_RIGHT]->aet(270, 90, 0);
+    if (views[UPPER_RIGHT_QUADRANT] != nullptr) {
+	if (views[UPPER_LEFT_QUADRANT] == nullptr) {
+	    views[UPPER_RIGHT_QUADRANT]->aet(270, 90, 0);
 	}
 	else {
-	    views[UPPER_RIGHT]->aet(35, 25, 0);
+	    views[UPPER_RIGHT_QUADRANT]->aet(35, 25, 0);
 	}
     }
-    if (views[UPPER_LEFT] != nullptr) {
-	views[UPPER_LEFT]->aet(0, 90, 0);
+    if (views[UPPER_LEFT_QUADRANT] != nullptr) {
+	views[UPPER_LEFT_QUADRANT]->aet(0, 90, 0);
     }
-    if (views[LOWER_LEFT] != nullptr) {
-	views[LOWER_LEFT]->aet(0, 0, 0);
+    if (views[LOWER_LEFT_QUADRANT] != nullptr) {
+	views[LOWER_LEFT_QUADRANT]->aet(0, 0, 0);
     }
-    if (views[LOWER_RIGHT] != nullptr) {
-	views[LOWER_RIGHT]->aet(90, 0, 0);
+    if (views[LOWER_RIGHT_QUADRANT] != nullptr) {
+	views[LOWER_RIGHT_QUADRANT]->aet(90, 0, 0);
     }
 }
 
 struct bview *
 QtCADQuad::view(int quadrantId)
 {
-    if (quadrantId > 0) quadrantId -= 1;
+    if (quadrantId > LOWER_RIGHT_QUADRANT || quadrantId < UPPER_RIGHT_QUADRANT) quadrantId = UPPER_RIGHT_QUADRANT;
 
     if (views[quadrantId] != nullptr) {
 	return views[quadrantId]->view();
@@ -319,7 +313,7 @@ QtCADQuad::view(int quadrantId)
 QtCADView *
 QtCADQuad::get(int quadrantId)
 {
-    if (quadrantId > 0) quadrantId -= 1;
+    if (quadrantId > LOWER_RIGHT_QUADRANT || quadrantId < UPPER_RIGHT_QUADRANT) quadrantId = UPPER_RIGHT_QUADRANT;
 
     if (views[quadrantId] != nullptr) {
 	return views[quadrantId];
@@ -331,7 +325,7 @@ QtCADQuad::get(int quadrantId)
 void
 QtCADQuad::select(int quadrantId)
 {
-    if (quadrantId > 0) quadrantId -= 1;
+    if (quadrantId > LOWER_RIGHT_QUADRANT || quadrantId < UPPER_RIGHT_QUADRANT) quadrantId = UPPER_RIGHT_QUADRANT;
 
     QtCADView *oc = currentView;
 
@@ -348,19 +342,19 @@ void
 QtCADQuad::select(const char *quadrant_id)
 {
     if (BU_STR_EQUIV(quadrant_id, "ur")) {
-	select(0);
+	select(UPPER_RIGHT_QUADRANT);
 	return;
     }
     if (BU_STR_EQUIV(quadrant_id, "ul")) {
-	select(1);
+	select(UPPER_LEFT_QUADRANT);
 	return;
     }
     if (BU_STR_EQUIV(quadrant_id, "ll")) {
-	select(2);
+	select(LOWER_LEFT_QUADRANT);
 	return;
     }
     if (BU_STR_EQUIV(quadrant_id, "lr")) {
-	select(3);
+	select(LOWER_RIGHT_QUADRANT);
 	return;
     }
 }
@@ -369,16 +363,16 @@ QtCADQuad::select(const char *quadrant_id)
 int
 QtCADQuad::get_selected()
 {
-    if (currentView == views[0]) {
+    if (currentView == views[UPPER_RIGHT_QUADRANT]) {
 	return 0;
     }
-    if (currentView == views[1]) {
+    if (currentView == views[UPPER_LEFT_QUADRANT]) {
 	return 1;
     }
-    if (currentView == views[2]) {
+    if (currentView == views[LOWER_LEFT_QUADRANT]) {
 	return 2;
     }
-    if (currentView == views[3]) {
+    if (currentView == views[LOWER_RIGHT_QUADRANT]) {
 	return 3;
     }
 
@@ -388,7 +382,7 @@ QtCADQuad::get_selected()
 void
 QtCADQuad::need_update(void *)
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
 	    views[i]->need_update(NULL);
 	}
@@ -398,7 +392,7 @@ QtCADQuad::need_update(void *)
 void
 QtCADQuad::stash_hashes()
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
 	    views[i]->stash_hashes();
 	}
@@ -409,7 +403,7 @@ bool
 QtCADQuad::diff_hashes()
 {
     bool ret = false;
-    for (int i = 0; i < 4; i++) {
+    for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
 	    if (views[i]->diff_hashes()) {
 		ret = true;
@@ -423,7 +417,7 @@ QtCADQuad::diff_hashes()
 void
 QtCADQuad::enableDefaultKeyBindings()
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
 	    views[i]->enableDefaultKeyBindings();
 	}
@@ -433,7 +427,7 @@ QtCADQuad::enableDefaultKeyBindings()
 void
 QtCADQuad::disableDefaultKeyBindings()
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
 	    views[i]->disableDefaultKeyBindings();
 	}
@@ -443,7 +437,7 @@ QtCADQuad::disableDefaultKeyBindings()
 void
 QtCADQuad::enableDefaultMouseBindings()
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
 	    views[i]->enableDefaultMouseBindings();
 	}
@@ -453,7 +447,7 @@ QtCADQuad::enableDefaultMouseBindings()
 void
 QtCADQuad::disableDefaultMouseBindings()
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
 	    views[i]->disableDefaultMouseBindings();
 	}
@@ -463,8 +457,7 @@ QtCADQuad::disableDefaultMouseBindings()
 void
 QtCADQuad::set_lmouse_move_default(int mm)
 {
-
-    for (int i = 0; i < 4; i++) {
+    for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
 	    views[i]->set_lmouse_move_default(mm);
 	}
