@@ -89,6 +89,10 @@ endif(DEFINED BRLCAD_VERSION_AMEND)
 project(BRLCAD VERSION ${BRLCAD_VERSION} DESCRIPTION "Open Source Solid Modeling" HOMEPAGE_URL "https://brlcad.org" LANGUAGES C CXX)
 #######
 
+# Policy CMP0060 tells CMake to use full paths in link specifications
+if (POLICY CMP0060)
+  cmake_policy(SET CMP0060 NEW)
+endif (POLICY CMP0060)
 
 # Policy CMP0074 allows CMake to search
 # "prefixes specified by the <PackageName>_ROOT in find_package"
@@ -1897,7 +1901,7 @@ set(tgamma_test "#include <math.h>\nint main() {double tga = tgamma(3.14); retur
 BRLCAD_FUNCTION_EXISTS(tgamma COMPILE_TEST_SRCS tgamma_test REQUIRED_LIBS ${M_LIBRARY})
 
 # test for gethostbyaddr
-set(gethostbyaddr_test "#include<stdlib.h>\n#include <netdb.h>\nint main() {(void)gethostbyaddr(NULL, 0, AF_INET); return 0;}")
+set(gethostbyaddr_test "#include<stdlib.h>\n#include <netdb.h>\nint main() {(void)gethostbyaddr; return 0;}")
 BRLCAD_FUNCTION_EXISTS(gethostbyaddr DECL_TEST_SRCS gethostbyaddr_test REQUIRED_LIBS ${NL_LIBRARY})
 
 # test for gethostbyname
