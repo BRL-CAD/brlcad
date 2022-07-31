@@ -55,6 +55,7 @@ endif(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND 
 
 add_executable(env2c env2c.cxx)
 target_link_libraries(env2c Threads::Threads)
+target_link_options(env2c PRIVATE -Wl,-z,stack-size=12097152)
 
 if (O3_COMPILER_FLAG)
   # If we have the O3 flag, use it
