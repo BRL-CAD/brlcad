@@ -162,7 +162,7 @@ struct rt_comb_v5_serialize_state {
  */
 void
 rt_comb_v5_serialize(
-    const union tree *tp,
+    union tree *tp,
     struct rt_comb_v5_serialize_state *ssp)
 {
     size_t n;
@@ -171,84 +171,104 @@ rt_comb_v5_serialize(
     RT_CK_TREE(tp);
     RT_CK_COMB_V5_SERIALIZE_STATE(ssp);
 
-    switch (tp->tr_op) {
-	case OP_DB_LEAF:
-	    /*
-	     * Encoding of the leaf: A null-terminated name string,
-	     *and the matrix subscript.  -1 == identity.
-	     */
-	    n = strlen(tp->tr_l.tl_name) + 1;
-	    memcpy(ssp->leafp, tp->tr_l.tl_name, n);
-	    ssp->leafp += n;
+    /* setup stack for iterative traversal */
+    union tree** stack = (union tree**)0;
+    size_t stack_size = 128;
+    stack = (union tree**)bu_malloc(stack_size * sizeof(union tree*), "initial stack");
+    stack[0] = TREE_NULL;
+    stack[1] = (union tree*)tp;
+    size_t idx = 2;
 
-	    if (tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat)) {
-		mi = ssp->mat_num++;
-	    } else {
-		mi = (ssize_t)-1;
-	    }
+    while ((tp = stack[--idx]) != TREE_NULL) {
+        if (idx >= stack_size-3) {
+            stack_size <<= 1;
+            stack = (union tree **)bu_realloc(stack, stack_size * sizeof(union tree*), "double stack");
+        }
 
-	    BU_ASSERT(mi < (ssize_t)ssp->nmat);
-
-	    /* there should be a better way than casting
-	     * 'mi' from ssize_t to size_t
-	     */
-	    n = (size_t)mi;
-	    ssp->leafp = db5_encode_length(ssp->leafp, n, ssp->wid);
-
-	    /* Encoding of the matrix */
-	    if (mi != (ssize_t)-1) {
-		/* must be double for import and export */
-		double scanmat[ELEMENTS_PER_MAT];
-
-		MAT_COPY(scanmat, tp->tr_l.tl_mat); /* convert fastf_t to double */
-		bu_cv_htond(ssp->matp, (const unsigned char *)scanmat, ELEMENTS_PER_MAT);
-		ssp->matp += ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE;
-	    }
-
-	    /* Encoding of the "leaf" operator */
-	    if (ssp->exprp)
-		*ssp->exprp++ = DB5COMB_TOKEN_LEAF;
-	    return;
-
-	case OP_NOT:
-	    /* Unary ops */
-	    rt_comb_v5_serialize(tp->tr_b.tb_left, ssp);
-	    if (ssp->exprp)
-		*ssp->exprp++ = DB5COMB_TOKEN_NOT;
-	    return;
-
-	case OP_UNION:
-	    /* This node is known to be a binary op */
-	    rt_comb_v5_serialize(tp->tr_b.tb_left, ssp);
-	    rt_comb_v5_serialize(tp->tr_b.tb_right, ssp);
-	    if (ssp->exprp)
-		*ssp->exprp++ = DB5COMB_TOKEN_UNION;
-	    return;
-	case OP_INTERSECT:
-	    /* This node is known to be a binary op */
-	    rt_comb_v5_serialize(tp->tr_b.tb_left, ssp);
-	    rt_comb_v5_serialize(tp->tr_b.tb_right, ssp);
-	    if (ssp->exprp)
-		*ssp->exprp++ = DB5COMB_TOKEN_INTERSECT;
-	    return;
-	case OP_SUBTRACT:
-	    /* This node is known to be a binary op */
-	    rt_comb_v5_serialize(tp->tr_b.tb_left, ssp);
-	    rt_comb_v5_serialize(tp->tr_b.tb_right, ssp);
-	    if (ssp->exprp)
-		*ssp->exprp++ = DB5COMB_TOKEN_SUBTRACT;
-	    return;
-	case OP_XOR:
-	    /* This node is known to be a binary op */
-	    rt_comb_v5_serialize(tp->tr_b.tb_left, ssp);
-	    rt_comb_v5_serialize(tp->tr_b.tb_right, ssp);
-	    if (ssp->exprp)
-		*ssp->exprp++ = DB5COMB_TOKEN_XOR;
-	    return;
-
-	default:
-	    bu_log("rt_comb_v5_serialize: bad op %d\n", tp->tr_op);
-	    bu_bomb("rt_comb_v5_serialize\n");
+        switch (tp->tr_op) {
+    	    case OP_DB_LEAF:
+    	        /*
+    	        * Encoding of the leaf: A null-terminated name string,
+    	        * and the matrix subscript.  -1 == identity.
+    	        */
+    	        n = strlen(tp->tr_l.tl_name) + 1;
+    	        memcpy(ssp->leafp, tp->tr_l.tl_name, n);
+    	        ssp->leafp += n;
+    
+    	        if (tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat)) {
+    		    mi = ssp->mat_num++;
+    	        } else {
+    		    mi = (ssize_t)-1;
+    	        }
+    
+    	        BU_ASSERT(mi < (ssize_t)ssp->nmat);
+    
+    	        /* there should be a better way than casting
+    	        * 'mi' from ssize_t to size_t
+    	        */
+    	        n = (size_t)mi;
+    	        ssp->leafp = db5_encode_length(ssp->leafp, n, ssp->wid);
+    
+    	        /* Encoding of the matrix */
+    	        if (mi != (ssize_t)-1) {
+    		    /* must be double for import and export */
+    		    double scanmat[ELEMENTS_PER_MAT];
+    
+    		    MAT_COPY(scanmat, tp->tr_l.tl_mat); /* convert fastf_t to double */
+    		    bu_cv_htond(ssp->matp, (const unsigned char *)scanmat, ELEMENTS_PER_MAT);
+    		    ssp->matp += ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE;
+    	        }
+    
+    	        /* Encoding of the "leaf" operator */
+    	        if (ssp->exprp)
+    		    *ssp->exprp++ = DB5COMB_TOKEN_LEAF;
+    	        break;
+    
+    	    case OP_NOT:
+    	        /* Unary ops */
+                stack[idx] = tp->tr_b.tb_left;
+                idx += 1;
+    	        if (ssp->exprp)
+    		    *ssp->exprp++ = DB5COMB_TOKEN_NOT;
+    	        break;
+    
+    	    case OP_UNION:
+    	        /* This node is known to be a binary op */
+                stack[idx] = tp->tr_b.tb_left;
+                stack[idx+1] = tp->tr_b.tb_right;
+                idx += 2;
+    	        if (ssp->exprp)
+    		    *ssp->exprp++ = DB5COMB_TOKEN_UNION;
+    	        break;
+    	    case OP_INTERSECT:
+    	        /* This node is known to be a binary op */
+                stack[idx] = tp->tr_b.tb_left;
+                stack[idx+1] = tp->tr_b.tb_right;
+                idx += 2;
+    	        if (ssp->exprp)
+    		    *ssp->exprp++ = DB5COMB_TOKEN_INTERSECT;
+    	        break;
+    	    case OP_SUBTRACT:
+    	        /* This node is known to be a binary op */
+                stack[idx] = tp->tr_b.tb_left;
+                stack[idx+1] = tp->tr_b.tb_right;
+                idx += 2;
+    	        if (ssp->exprp)
+    		    *ssp->exprp++ = DB5COMB_TOKEN_SUBTRACT;
+    	        break;
+    	    case OP_XOR:
+    	        /* This node is known to be a binary op */
+                stack[idx] = tp->tr_b.tb_left;
+                stack[idx+1] = tp->tr_b.tb_right;
+                idx += 2;
+    	        if (ssp->exprp)
+    		    *ssp->exprp++ = DB5COMB_TOKEN_XOR;
+    	        break;
+    
+    	    default:
+    	        bu_log("rt_comb_v5_serialize: bad op %d\n", tp->tr_op);
+    	        bu_bomb("rt_comb_v5_serialize\n");
+        }
     }
 }
 
