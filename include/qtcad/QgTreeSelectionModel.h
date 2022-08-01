@@ -1,4 +1,4 @@
-/*             Q G S E L E C T I O N P R O X Y M O D E L . H
+/*             Q G T R E E S E L E C T I O N M O D E L . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2022 United States Government as represented by
@@ -17,51 +17,39 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QgSelectionProxyModel.h
- *
- * TODO - I think this needs to be turned into QgTreeSelectionModel
- * (a subclass of QItemSelectionModel) and managed as a selection
- * model for the QgTreeView rather than a proxy model on the QgModel
- */
+/** @file QgTreeSelectionModel.h
+*/
 
-#ifndef QGSELECTIONMODEL_H
-#define QGSELECTIONMODEL_H
+#ifndef QGTREESELECTIONMODEL_H
+#define QGTREESELECTIONMODEL_H
 
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <QIdentityProxyModel>
+#include <QItemSelectionModel>
 #include <QModelIndex>
 
 #include "qtcad/defines.h"
 #include "qtcad/QgModel.h"
 
-class QgTreeView;
-
 #define QgViewMode 0
 #define QgInstanceEditMode 1
 #define QgPrimitiveEditMode 2
 
-class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
+class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel
 {
     public:
 
-	QgSelectionProxyModel(QObject* parent = 0): QIdentityProxyModel(parent) {}
-
-	QgTreeView *treeview = NULL;
+	QgSelectionProxyModel(QAbstractItemModel *model, QObject* parent): QItemSelectionModel(model, parent) {}
+	QgSelectionProxyModel(QAbstractItemModel *model = nullptr): QItemSelectionModel(model) {}
 
 	// There are a number of relationships which can be used for related
 	// node highlighting - this allows a client application to select one.
 	int interaction_mode = 0;
-
-    public slots:
-	void mode_change(int i);
-        void update_selected_node_relationships(const QModelIndex & index);
-	void illuminate(const QItemSelection &selected, const QItemSelection &deselected);
 };
 
-#endif //QGSELECTIONMODEL_H
+#endif //QGTREESELECTIONMODEL_H
 
 // Local Variables:
 // tab-width: 8

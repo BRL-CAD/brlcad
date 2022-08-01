@@ -871,11 +871,19 @@ QgModel::data(const QModelIndex &index, int role) const
     if (!index.isValid())
 	return QVariant();
     QgItem *qi= getItem(index);
-    gInstance *gi = qi->instance();
-    if (!gi)
-	return QVariant();
     if (role == Qt::DisplayRole)
-	return QVariant(gi->dp->d_namep);
+	return QVariant(bu_vls_cstr(&qi->name));
+    if (role == BoolInternalRole) {
+	return QVariant(qi->op);
+    }
+    if (role == DirectoryInternalRole)
+	return QVariant::fromValue((void *)(qi->dp));
+
+    if (role == TypeIconDisplayRole)
+	return QVariant(qi->icon);
+    if (role == HighlightDisplayRole) {
+	return qi->instance()->active_flag;
+    }
     return QVariant();
 }
 
@@ -1037,6 +1045,20 @@ QgModel::toggle_hierarchy()
     flatten_hierarchy = !flatten_hierarchy;
     changed_db_flag = 1;
     g_update(gedp->dbip);
+}
+
+void
+QgModel::item_collapsed(const QModelIndex &index)
+{
+    QgItem *itm = getItem(index);
+    itm->open_itm = false;
+}
+
+void
+QgModel::item_expanded(const QModelIndex &index)
+{
+    QgItem *itm = getItem(index);
+    itm->open_itm = true;
 }
 
 // Local Variables:

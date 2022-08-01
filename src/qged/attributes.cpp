@@ -190,7 +190,7 @@ CADAttributesModel::refresh(const QModelIndex &idx)
     if (!gedp)
 	return;
 
-    current_dp = (struct directory *)(idx.data(QgSelectionProxyModel::DirectoryInternalRole).value<void *>());
+    current_dp = (struct directory *)(idx.data(QgModel::DirectoryInternalRole).value<void *>());
     update(gedp->dbip, current_dp);
 }
 

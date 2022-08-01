@@ -277,6 +277,14 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	QModelIndex NodeIndex(QgItem *node) const;
 	QgItem *getItem(const QModelIndex &index) const;
 
+	enum CADDataRoles {
+	    BoolInternalRole = Qt::UserRole + 1000,
+	    BoolDisplayRole = Qt::UserRole + 1001,
+	    DirectoryInternalRole = Qt::UserRole + 1002,
+	    TypeIconDisplayRole = Qt::UserRole + 1003,
+	    HighlightDisplayRole = Qt::UserRole + 1004,
+	};
+
 	// Return data used for displaying each individual entry
 	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
@@ -362,6 +370,8 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	int erase_action();
 	int erase(QString &qpath);
 	void toggle_hierarchy();
+	void item_collapsed(const QModelIndex &index);
+	void item_expanded(const QModelIndex &index);
 
     private:
 	int NodeRow(QgItem *node) const;

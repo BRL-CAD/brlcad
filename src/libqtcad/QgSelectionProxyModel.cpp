@@ -19,6 +19,10 @@
  */
 /** @file QgSelectionProxyModel.cpp
  *
+ * TODO - I'm beginning wonder if this proxy model shouldn't be fully
+ * replaced by a custom QItemSelectionModel that is applied to QgTreeView
+ * via setItemSelectionModel.
+ *
  */
 
 #include "common.h"
@@ -31,84 +35,12 @@
 #include "qtcad/QgSelectionProxyModel.h"
 #include "qtcad/QgTreeView.h"
 
-QModelIndex
-QgSelectionProxyModel::NodeIndex(QgItem *node) const
-{
-    QgModel *m = (QgModel *)sourceModel();
-    if (node == m->root()) return QModelIndex();
-    return createIndex(NodeRow(node), 0, node);
-}
-
-int
-QgSelectionProxyModel::NodeRow(QgItem *node) const
-{
-    if (!node->parent())
-	return 0;
-    std::vector<QgItem *> &v = node->parent()->children;
-    std::vector<QgItem *>::iterator it = std::find(v.begin(), v.end(), node);
-    if (it == v.end())
-	return 0;
-    int ind = it - v.begin();
-    return ind;
-}
-
-QVariant
-QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
-{
-    if (!idx.isValid()) return QVariant();
-    QgItem *curr_node = static_cast<QgItem *>(idx.internalPointer());
-    if (role == Qt::DisplayRole) {
-	return QVariant(bu_vls_cstr(&curr_node->name));
-    }
-    if (role == BoolInternalRole) {
-	return QVariant(curr_node->op);
-    }
-    if (role == DirectoryInternalRole)
-	return QVariant::fromValue((void *)(curr_node->dp));
-
-    if (role == TypeIconDisplayRole)
-	return QVariant(curr_node->icon);
-    if (role == HighlightDisplayRole) {
-	return curr_node->instance()->active_flag;
-    }
-    return QVariant();
-}
-
 void QgSelectionProxyModel::mode_change(int i)
 {
     if (i != interaction_mode && treeview) {
 	interaction_mode = i;
 	update_selected_node_relationships(treeview->selected());
     }
-}
-
-void
-QgSelectionProxyModel::item_collapsed(const QModelIndex &index)
-{
-    QgModel *m = (QgModel *)sourceModel();
-    QgItem *itm = m->getItem(index);
-    itm->open_itm = false;
-}
-
-void
-QgSelectionProxyModel::item_expanded(const QModelIndex &index)
-{
-    QgModel *m = (QgModel *)sourceModel();
-    QgItem *itm = m->getItem(index);
-    itm->open_itm = true;
-}
-
-// TODO - In the new setup much of the old setting here is moot - these
-// properties should be looked up from the QgItem or its entries.  The
-// implications for setData in a modifiable tree may actually be changing the
-// .g contents, which is an altogether different proposition from the old
-// logic.  It is not clear to me yet that we will actually change QgItem
-// contents via this mechanism.
-bool
-QgSelectionProxyModel::setData(const QModelIndex & idx, const QVariant &UNUSED(value), int UNUSED(role))
-{
-    if (!idx.isValid()) return false;
-    return false;
 }
 
 void

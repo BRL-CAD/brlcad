@@ -47,7 +47,7 @@ void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
 	goto text_string;
     }
 
-    aflag = index.data(QgSelectionProxyModel::HighlightDisplayRole).toInt();
+    aflag = index.data(QgModel::HighlightDisplayRole).toInt();
     if (!cadtreeview->isExpanded(index) && aflag == 1) {
 	painter->fillRect(option.rect, QBrush(QColor(220, 200, 30)));
 	goto text_string;
@@ -64,7 +64,7 @@ void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
 
 text_string:
     QString text = index.data().toString();
-    int bool_op = index.data(QgSelectionProxyModel::BoolInternalRole).toInt();
+    int bool_op = index.data(QgModel::BoolInternalRole).toInt();
     switch (bool_op) {
 	case DB_OP_INTERSECT:
 	    text.prepend("  + ");
@@ -83,7 +83,7 @@ text_string:
     //
     // draw text label
 
-    QImage type_icon = index.data(QgSelectionProxyModel::TypeIconDisplayRole).value<QImage>().scaledToHeight(option.rect.height()-2);
+    QImage type_icon = index.data(QgModel::TypeIconDisplayRole).value<QImage>().scaledToHeight(option.rect.height()-2);
     QRect image_rect = type_icon.rect();
     image_rect.moveTo(option.rect.topLeft());
     QRect text_rect(type_icon.rect().topRight(), option.rect.bottomRight());
@@ -98,7 +98,7 @@ QSize gObjDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelInd
 {
     QSize name_size = option.fontMetrics.size(Qt::TextSingleLine, index.data().toString());
     QSize bool_size;
-    int bool_op = index.data(QgSelectionProxyModel::BoolInternalRole).toInt();
+    int bool_op = index.data(QgModel::BoolInternalRole).toInt();
     switch (bool_op) {
 	case DB_OP_UNION:
 	    bool_size = option.fontMetrics.size(Qt::TextSingleLine, " ");
@@ -152,7 +152,7 @@ QgTreeView::drawBranches(QPainter* painter, const QRect& rrect, const QModelInde
 {
     QModelIndex selected_idx = ((QgTreeView *)this)->selected();
     if (!(index == selected_idx)) {
-	int aflag = index.data(QgSelectionProxyModel::HighlightDisplayRole).toInt();
+	int aflag = index.data(QgModel::HighlightDisplayRole).toInt();
 	if (!(QgTreeView *)this->isExpanded(index) && aflag == 1) {
 	    painter->fillRect(rrect, QBrush(QColor(220, 200, 30)));
 	}
@@ -350,7 +350,7 @@ void QgTreeView::expand_path(QString path)
 	    if (QString::fromStdString(g->dp_name) != path_items.at(i)) {
 		continue;
 	    }
-	    QModelIndex path_component = view_model->NodeIndex(c);
+	    QModelIndex path_component = sm->NodeIndex(c);
 	    if (i == path_items.size() - 1) {
 		selectionModel()->clearSelection();
 		selectionModel()->select(path_component, QItemSelectionModel::Select | QItemSelectionModel::Rows);

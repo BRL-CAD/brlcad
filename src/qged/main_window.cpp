@@ -363,8 +363,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 
     // We need to record the expanded/contracted state of the tree items,
     // and restore them after a model reset
-    connect(treeview, &QgTreeView::expanded, ca->mdl, &QgSelectionProxyModel::item_expanded);
-    connect(treeview, &QgTreeView::collapsed, ca->mdl, &QgSelectionProxyModel::item_collapsed);
+    connect(treeview, &QgTreeView::expanded, m, &QgModel::item_expanded);
+    connect(treeview, &QgTreeView::collapsed, m, &QgModel::item_collapsed);
     connect(m, &QgModel::mdl_changed_db, treeview, &QgTreeView::redo_expansions);
     connect(m, &QgModel::check_highlights, treeview, &QgTreeView::redo_highlights);
 
