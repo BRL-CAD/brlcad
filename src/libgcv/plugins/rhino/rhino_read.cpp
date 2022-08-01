@@ -249,7 +249,7 @@ clean_name(const ON_wString chk_name, const std::string default_name = "Default"
     if (chk_name.IsNotEmpty())
         ret = std::string(ON_String(chk_name).Array());
 
-    /* remove spaces and slashes */
+    /* remove spaces, slashes and non-standard characters */
     bu_vls scrub = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&scrub, "%s", ret.c_str());
     bu_vls_simplify(&scrub, nullptr, " _\0", " _\0");
@@ -269,14 +269,14 @@ chk_geometry_names(ONX_Model& model, const char* default_name)
 
     for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference()) {
         std::string name = clean_name(cr.ModelComponent()->Name(), default_name);
-        if (cr.ModelComponent()->NameIsNotEmpty() && (name == std::string(ON_String(cr.ModelComponent()->Name()).Array())))
-            continue;
 
         /* ensure name is unique */
         if (used_names.find(name) == used_names.end()) {
             used_names.insert({ name, 0 });
-            /* on the first use of default the component needs to reflect the change */
-            if (name != default_name)
+            /* if the changed the name at all we need to update */
+            if (name != default_name &&
+                cr.ModelComponent()->NameIsNotEmpty() &&
+                name == std::string(ON_String(cr.ModelComponent()->Name()).Array()))
                 continue;
         } else {
             /* find non-conflicting name */
@@ -431,11 +431,10 @@ void
 write_geometry(rt_wdb &wdb, const std::string &name,
 	       const ONX_Model& model, const ON_Geometry *geometry, 
                mat_t& matrix, std::set<std::string>& members,
-               int verbose)
+               std::unordered_map<std::string, ON_UUID>& to_remove, ON_UUID id)
 {
     /* geometry we've come across that is not writable */
-    static std::set<std::string> skip_geom;
-    if (skip_geom.find(name) != skip_geom.end())
+    if (to_remove.find(name) != to_remove.end())
         return;
 
     if (const ON_Brep * const brep = ON_Brep::Cast(geometry)) {
@@ -464,7 +463,7 @@ write_geometry(rt_wdb &wdb, const std::string &name,
                         continue;
                     }
                     const std::string internal_name_stdstr = std::string(internal_name.Array()) + ".s";
-                    write_geometry(wdb, internal_name_stdstr, model, internal_g, matrix, members, verbose);
+                    write_geometry(wdb, internal_name_stdstr, model, internal_g, matrix, members, to_remove, id_list[i]);
                 }
             }
 
@@ -493,9 +492,7 @@ write_geometry(rt_wdb &wdb, const std::string &name,
 	    delete new_subd;
 	}
     } else {
-        if (verbose)
-            bu_log("WARNING: Cannot handle type [%s] for object [%s] -- skipping\n", ON_ObjectTypeToString(geometry->ObjectType()), name.c_str());
-        skip_geom.insert(name);
+        to_remove.insert(std::make_pair(name, id));
     }
 }
 
@@ -614,8 +611,10 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 {
     size_t total_count = 0;
     size_t success_count = 0;
+    std::unordered_map<std::string, ON_UUID>to_remove;
+    ON_ModelComponent::Type type = ON_ModelComponent::Type::ModelGeometry;
+    ONX_ModelComponentIterator it(model, type);
 
-    ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
     for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
     {
 	total_count++;
@@ -623,11 +622,9 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	const ON_ModelGeometryComponent *mg = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
 	if (!mg)
 	    continue;
-	ON_String cname = ON_String(mg->Name());
-	char cuid[37];
-	ON_UuidToString(mg->Id(), cuid);
-	const std::string name = (cname.Array()) ? std::string(cname.Array()) : std::string(cuid);
-	const std::string member_name = name + ".s";
+        
+	std::string name = std::string(ON_String(mg->Name()).Array());
+        const std::string member_name = name + ".s";
 
 	Shader shader;
 	unsigned char rgb[3];
@@ -641,7 +638,7 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
             mat_t matrix = MAT_INIT_IDN;
             std::set<std::string>members;
 
-            write_geometry(wdb, member_name, model, g, matrix, members, gcv_options.verbosity_level);
+            write_geometry(wdb, member_name, model, g, matrix, members, to_remove, mg->Id());
             if (members.size() > 0) {
                 write_comb(wdb, name, members, matrix, own_shader ? shader.first.c_str() : NULL,
 			   own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
@@ -659,6 +656,15 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	    if (gcv_options.verbosity_level)
 		std::cerr << "skipped " << name << ", no geometry associated with ModelGeometryComponent (?)\n";
 	}
+    }
+
+    /* cleanup the geometry not written */
+    for (auto itr : to_remove) {
+        if (gcv_options.verbosity_level)
+            bu_log("WARNING: cannot handle type [%s] for object [%s] -- skipping\n", 
+                    ON_ObjectTypeToString(model.ModelGeometryComponentFromId(itr.second).Geometry(nullptr)->ObjectType()),
+                    itr.first.c_str());
+        model.RemoveModelComponent(type, itr.second);
     }
 
     if (gcv_options.verbosity_level && (success_count != total_count))
