@@ -114,7 +114,7 @@ stl_write_lswap(unsigned int *v)
 
 
 HIDDEN void
-nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]), void *client_data)
+nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state* UNUSED(tsp), void *client_data)
 {
     struct model *m;
     struct shell *s;

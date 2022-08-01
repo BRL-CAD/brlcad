@@ -354,10 +354,7 @@ add_triangle(struct ug_state *s, int v1, int v2, int v3 )
     if ( s->curr_tri >= s->max_tri ) {
 	/* allocate more memory for triangles */
 	s->max_tri += TRI_BLOCK;
-	s->part_tris = (int *)realloc( s->part_tris, sizeof( int ) * s->max_tri * 3 );
-	if ( !s->part_tris ) {
-	    bu_exit(1, "ERROR: Failed to allocate memory for part triangles\n" );
-	}
+	s->part_tris = (int *)bu_realloc( s->part_tris, sizeof( int ) * s->max_tri * 3, "add triangle");
     }
 
     /* fill in triangle info */
@@ -379,10 +376,7 @@ add_face_normals(struct ug_state *s, int v1, int v2, int v3 )
     if ( s->curr_norm >= s->max_norm ) {
 	/* allocate more memory for triangles */
 	s->max_norm += NORM_BLOCK;
-	s->part_norms = (int *)realloc( s->part_norms, sizeof( int ) * s->max_norm * 3 );
-	if ( !s->part_norms ) {
-	    bu_exit(1, "ERROR: Failed to allocate memory for part triangles\n" );
-	}
+	s->part_norms = (int *)bu_realloc( s->part_norms, sizeof( int ) * s->max_norm * 3, "add face normals");
     }
 
     /* fill in triangle info */
@@ -496,7 +490,7 @@ create_unique_brlcad_name(struct ug_state *s, struct bu_vls *name_vls )
     int len=0;
 
     bu_vls_vlscat( &tmp_vls, name_vls );
-    len = bu_vls_strlen( &tmp_vls );
+    len = (int)bu_vls_strlen( &tmp_vls );
     while ( db_lookup( s->wdb_fd->dbip, bu_vls_addr( &tmp_vls ), LOOKUP_QUIET ) != RT_DIR_NULL ) {
 	count++;
 	bu_vls_trunc( &tmp_vls, len );
@@ -911,8 +905,8 @@ static void
 get_blend_radius( tag_t feat_tag, char *part_name, double units_conv, double *blend_radius )
 {
     int n_exps;
-    tag_t *exps;
-    char **descs;
+    tag_t *exps = NULL;
+    char **descs = NULL;
     double tmp;
 
     UF_func( UF_MODL_ask_exp_desc_of_feat(feat_tag, &n_exps, &descs, &exps ) );
@@ -1092,7 +1086,7 @@ get_cone_data( tag_t feat_tag, int n_exps, tag_t *exps, char **descs, double uni
 
 #define VERT_ALLOC_BLOCK 32
 
-static int
+static size_t
 add_sketch_vert( double pt[3], struct rt_sketch_internal *skt, int *verts_alloced, double tol_sq )
 {
     unsigned int i;
@@ -1341,11 +1335,11 @@ conv_extrusion(struct ug_state *s, tag_t feat_tag, char *part_name, char *UNUSED
 		UF_MTX3_vec_multiply( line_data.start_point, csys, pt );
 		VSCALE( pt, pt, units_conv );
 		z1 = pt[Z];
-		lsg->start = add_sketch_vert( pt, skt, &verts_alloced, tol_sq );
+		lsg->start = (int)add_sketch_vert( pt, skt, &verts_alloced, tol_sq );
 		UF_MTX3_vec_multiply( line_data.end_point, csys, pt );
 		VSCALE( pt, pt, units_conv );
 		z2 = pt[Z];
-		lsg->end = add_sketch_vert( pt, skt, &verts_alloced, tol_sq );
+		lsg->end = (int)add_sketch_vert( pt, skt, &verts_alloced, tol_sq );
 		if ( !NEAR_ZERO( fabs( z1 - z2 ), s->tol_dist ) ) {
 		    bu_log( "Sketch (%s) for part %s is not planar, cannot handle this",
 			    skt_name, part_name );
@@ -1394,10 +1388,10 @@ conv_extrusion(struct ug_state *s, tag_t feat_tag, char *part_name, char *UNUSED
 		    csg->center_is_left = 1;
 		    VSCALE( start, start, units_conv );
 		    z1 = start[Z];
-		    csg->start = add_sketch_vert( start, skt, &verts_alloced, tol_sq );
+		    csg->start = (int)add_sketch_vert( start, skt, &verts_alloced, tol_sq );
 		    VSCALE( end, arc_data.arc_center, units_conv );
 		    z2 = end[Z];
-		    csg->end = add_sketch_vert( end, skt, &verts_alloced, tol_sq );
+		    csg->end = (int)add_sketch_vert( end, skt, &verts_alloced, tol_sq );
 		} else {
 		    /* arc */
 		    end[0] = arc_data.arc_center[0] + arc_data.radius * cos( arc_data.end_angle );
@@ -1413,10 +1407,10 @@ conv_extrusion(struct ug_state *s, tag_t feat_tag, char *part_name, char *UNUSED
 		    }
 		    VSCALE( start, start, units_conv );
 		    z1 = start[Z];
-		    csg->start = add_sketch_vert( start, skt, &verts_alloced, tol_sq );
+		    csg->start = (int)add_sketch_vert( start, skt, &verts_alloced, tol_sq );
 		    VSCALE( end, end, units_conv );
 		    z2 = end[Z];
-		    csg->end = add_sketch_vert( end, skt, &verts_alloced, tol_sq );
+		    csg->end = (int)add_sketch_vert( end, skt, &verts_alloced, tol_sq );
 		}
 		skt->curve.segment[j] = (void *)csg;
 		if ( !NEAR_ZERO( fabs( z1 - z2 ), s->tol_dist ) ) {
@@ -4500,11 +4494,11 @@ facetize(struct ug_state *s, tag_t solid_tag, char *part_name, char *refset_name
 		VSCALE(v[vn], v[vn], units_conv);
 	    }
 	    MAT4X3PNT( xformed_pt, curr_xform, v[vn] );
-	    vindex[vn] = bg_vert_tree_add( vert_tree, xformed_pt[0], xformed_pt[1], xformed_pt[2], s->tol_dist_sq );
+	    vindex[vn] = (int)bg_vert_tree_add( vert_tree, xformed_pt[0], xformed_pt[1], xformed_pt[2], s->tol_dist_sq );
 
 	    if ( s->use_normals ) {
 		MAT4X3VEC( xformed_pt, curr_xform, normals[vn] );
-		nindex[vn] = bg_vert_tree_add( norm_tree, xformed_pt[0], xformed_pt[1], xformed_pt[2], s->tol_dist_sq );
+		nindex[vn] = (int)bg_vert_tree_add( norm_tree, xformed_pt[0], xformed_pt[1], xformed_pt[2], s->tol_dist_sq );
 	    }
 	}
 	if ( !bad_triangle(s, vindex[0], vindex[1], vindex[2] ) ) {
@@ -5430,7 +5424,7 @@ main(int ac, char *av[])
     norm_tree = bg_vert_tree_create();
 
     if ( ac > i+1 ) {
-	s.subparts = (char **)bu_calloc( ac - i + 1, sizeof(char *), "subparts" );
+	s.subparts = (char **)bu_calloc( (size_t)ac - i + 1, sizeof(char *), "subparts" );
 	for ( j=i+1; j<ac; j++ ) {
 	    char *ptr;
 

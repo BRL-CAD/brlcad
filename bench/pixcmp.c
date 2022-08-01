@@ -372,7 +372,7 @@ main(int argc, char *argv[])
 	    for (skipped = 0; skipped < f1_skip; skipped++) {
 		(void)fgetc(f1);
 	    }
-	} else if (fseek(f1, f1_skip, SEEK_SET)) {
+	} else if (fseek(f1, (long)f1_skip, SEEK_SET)) {
 	    bu_log("ERROR: Unable to seek %zd %s%s in FILE1\n",
 		   f1_skip,
 		   print_bytes?"byte":"pixel",
@@ -389,7 +389,7 @@ main(int argc, char *argv[])
 	    for (skipped = 0; skipped < f2_skip; skipped++) {
 		(void)fgetc(f2);
 	    }
-	} else if (fseek(f2, f2_skip, SEEK_SET)) {
+	} else if (fseek(f2, (long)f2_skip, SEEK_SET)) {
 	    bu_log("ERROR: Unable to seek %zd %s%s in FILE2\n",
 		   f2_skip,
 		   print_bytes?"byte":"pixel",

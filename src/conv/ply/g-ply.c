@@ -101,8 +101,8 @@ main(int argc, char **argv)
      * another for separate if user specifed
      */
     int unique_options_ac = 2 + separate;
-    const char* unique_options_av[unique_options_ac];
-
+    const char* unique_options_av[4] = {NULL, NULL, NULL, NULL};
+    
     unique_options_av[0] = "-t";
     unique_options_av[1] = type;
     if (separate)

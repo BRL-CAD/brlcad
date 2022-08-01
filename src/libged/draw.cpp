@@ -171,7 +171,6 @@ struct ged_full_detail_clbk_data {
     struct directory *dp;
     struct resource *res;
     struct rt_db_internal *intern;
-    struct ged_full_detail_clbk_data *cbd;
 };
 
 /* Set up the data for drawing */
@@ -229,7 +228,7 @@ bot_mesh_info_free_clbk(struct bv_mesh_lod *lod, void *cb_data)
 {
     bot_mesh_info_clear_clbk(lod, cb_data);
     struct ged_full_detail_clbk_data *cd = (struct ged_full_detail_clbk_data *)cb_data;
-    BU_PUT(cd->cbd, struct ged_full_detail_clbk_data);
+    BU_PUT(cd, struct ged_full_detail_clbk_data);
     return 0;
 }
 
@@ -332,7 +331,6 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     cbd->dp = DB_FULL_PATH_CUR_DIR(fp);
     cbd->res = &rt_uniresource;
     cbd->intern = NULL;
-    cbd->cbd = cbd;
     bg_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
     bg_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
     bg_mesh_lod_detail_free_clbk(lod, &bot_mesh_info_free_clbk);

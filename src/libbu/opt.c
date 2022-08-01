@@ -637,6 +637,8 @@ opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate
 		if (equal_pos)
 		    varg++;
 
+		BU_ASSERT(eq_arg != NULL);
+
 		(*eq_arg) = varg;
 		opt = bu_strdup(bu_vls_addr(&vopt));
 		bu_ptbl_ins(opts, (long *)opt);
@@ -648,7 +650,7 @@ opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate
 	    struct bu_vls vopt = BU_VLS_INIT_ZERO;
 	    const char *varg = opt_candidate;
 	    bu_vls_sprintf(&vopt, "%s", opt_candidate);
-	    bu_vls_trunc(&vopt, -1 * strlen(equal_pos));
+	    bu_vls_trunc(&vopt, -1 * (int)strlen(equal_pos));
 	    bu_vls_nibble(&vopt, offset);
 
 	    varg = opt_candidate + bu_vls_strlen(&vopt) + 2;
@@ -753,11 +755,16 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
 	    bu_ptbl_free(&known_args);
 	    bu_ptbl_free(&opts);
 	    return -1;
-	}
-	if (opt_cnt > 1) {
+
+	} else if (opt_cnt == 0) {
+	    /* skip, fall through */
+	    i++;
+
+	} else if (opt_cnt > 1) {
+
 	    for (j = 0; j < (size_t)opt_cnt; j++) {
-		int *flag_var;
-		char *opt = (char *)BU_PTBL_GET(&opts, j);
+		int* flag_var;
+		char* opt = (char*)BU_PTBL_GET(&opts, j);
 		/* Find the corresponding desc - if we're in a
 		 * multiple flag processing situation, we've already
 		 * verified that each entry has a desc.
@@ -776,18 +783,24 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
 		 */
 		if (desc->arg_process) {
 		    (void)(*desc->arg_process)(msgs, 0, NULL, desc->set_var);
-		} else {
-		    flag_var = (int *)desc->set_var;
+		}
+		else {
+		    flag_var = (int*)desc->set_var;
 		    if (flag_var) {
 			*flag_var = 1;
 		    }
 		}
 	    }
 	    /* record the option in known args */
-	    bu_ptbl_ins(&known_args, (long *)argv[i]);
+	    bu_ptbl_ins(&known_args, (long*)argv[i]);
 	    i++;
+
 	} else {
-	    char *opt = (char *)BU_PTBL_GET(&opts, 0);
+	    /* should be just one option */
+	    char* opt = NULL;
+	    if (BU_PTBL_LEN(&opts)) {
+		opt = (char*)BU_PTBL_GET(&opts, 0);
+	    }
 
 	    /* Find the corresponding desc, if we have one */
 	    desc = &(ds[0]);
@@ -949,7 +962,7 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
     /* Rearrange argv so the unused options are ordered at the front
      * of the array.
      */
-    ret_argc = BU_PTBL_LEN(&unknown_args);
+    ret_argc = (int)BU_PTBL_LEN(&unknown_args);
     if (ret_argc > 0) {
 	size_t avc = 0;
 	size_t akc = BU_PTBL_LEN(&known_args);
@@ -967,7 +980,7 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
     bu_ptbl_free(&unknown_args);
     bu_ptbl_free(&known_args);
 
-    return (int)ret_argc;
+    return ret_argc;
 }
 
 

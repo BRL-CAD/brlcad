@@ -19,9 +19,14 @@
  * Mike Muuss and Terry Slattery have released this code to the Public Domain.
  */
 
-#undef _POSIX_C_SOURCE
-#undef _XOPEN_SOURCE
+#ifndef _POSIX_SOURCE
+#  define _POSIX_SOURCE 1
+#endif
+#ifndef _DEFAULT_SOURCE
+#  define  _DEFAULT_SOURCE 1
+#endif
 #define BSD43
+#define SYSV
 /* #define BSD42 */
 /* #define BSD41a */
 
@@ -73,6 +78,7 @@
 #endif
 
 #endif
+
 
 struct sockaddr_in sinme;
 struct sockaddr_in sinhim;

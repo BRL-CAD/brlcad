@@ -73,7 +73,7 @@ ArtTileCallback::on_tile_end(const renderer::Frame* frame, const size_t tile_x, 
 	    size_t x_coord = tile_x * rgb.get_width() + x;
 	    size_t y_coord = tile_y * rgb.get_height() + y;
 	    size_t img_h = frame->image().properties().m_canvas_height;
-	    fb_write(fbp, x_coord, img_h - y_coord, rgb.get_storage()+((y * rgb.get_width() * 4) + (x * 4)), 1);
+	    fb_write(fbp, (int)x_coord, (int)(img_h - y_coord), rgb.get_storage()+((y * rgb.get_width() * 4) + (x * 4)), 1);
 	}
     }
 }

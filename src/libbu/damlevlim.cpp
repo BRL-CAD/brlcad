@@ -44,7 +44,7 @@
 // Limits
 #define DAMLEVLIM_MAX_EDIT_DIST 16384
 
-unsigned long
+size_t
 bu_editdist(const char *s1, const char *s2)
 {
     // If we don't have both strings, trivial equality
@@ -69,10 +69,12 @@ bu_editdist(const char *s1, const char *s2)
     // We need std::mismatch to handle any length string in either argument -
     // prior to C++14, it did not. That case fails hard on some platforms
     // (Windows) at runtime.
-#if CXX_STANDARD >= 14
+#if defined(CXX_STANDARD) && CXX_STANDARD >= 14
 
     // Set up buffer
     char *ptr = (char *)new(std::nothrow) std::vector<size_t>(DAMLEVLIM_MAX_EDIT_DIST);
+    if (!ptr)
+	return DAMLEVLIM_MAX_EDIT_DIST;
     std::vector<size_t> &buffer = *(std::vector<size_t> *)ptr;
 
     // Let's make some string views so we can use the STL.
@@ -169,13 +171,13 @@ bu_editdist(const char *s1, const char *s2)
 	}
     }
 
-    unsigned long ret = buffer[end_j-1];
+    size_t ret = buffer[end_j-1];
     delete ptr;
     return ret;
 
 #else
 
-    return LONG_MAX;
+    return DAMLEVLIM_MAX_EDIT_DIST;
 
 #endif
 }

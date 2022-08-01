@@ -118,24 +118,56 @@ QgSelectionProxyModel::illuminate(const QItemSelection &selected, const QItemSel
     if (!selected.size() && !deselected.size())
 	return;
 
-    QModelIndexList sl = selected.indexes();
-    for (long int i = 0; i < sl.size(); i++) {
-	QgItem *snode = static_cast<QgItem *>(sl.at(i).internalPointer());
-	QString nstr = snode->toString();
-	std::cout << "selected: " << nstr.toLocal8Bit().data() << "\n";
+    QgModel *m = (QgModel *)sourceModel();
+    struct ged *gedp = m->gedp;
+    if (!gedp->ged_selection_sets)
+	return;
+    struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+    size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
+    if (scnt != 1) {
+	bu_ptbl_free(&ssets);
+	return;
     }
-    std::cout << "TODO: update default GED selected set and any illumination flags that need setting on already drawn objects\n";
+    struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
+    bu_ptbl_free(&ssets);
 
+    struct bu_vls tpath = BU_VLS_INIT_ZERO;
+
+    // TODO - there is an interesting conundrum here - if both box.r and it's
+    // expanded item box.r/box.s are selected, where box.s is the sole child of
+    // box.r, if box.s is de-selected box.r shouldn't be active any longer.
+    // And there are other scenarios where the GED selected set and the
+    // QTreeView selections could get out of wack.  What we really need to do
+    // is apply the selected and deselected to the GED lists, and then re-sync
+    // the tree to match what's in the GED set.  We'll also have to cook up
+    // some way to indicate a partial selection if some but not all of an
+    // item's child objects are in the active GED set.
+    //
+    // What's really needed here is probably related to the work highlighting
+    // related objects based on editing modes done in earlier prototypes...
+    // In addition to that awareness, we'll be needing to pay attention to
+    // the ged default selection set for highlighting purposes.
     QModelIndexList dl = deselected.indexes();
     for (long int i = 0; i < dl.size(); i++) {
 	QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
 	QString nstr = snode->toString();
-	std::cout << "deselected: " << nstr.toLocal8Bit().data() << "\n";
+	bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+	std::cout << "deselected: " << bu_vls_cstr(&tpath) << "\n";
+	ged_selection_remove(gs, bu_vls_cstr(&tpath));
     }
-    std::cout << "TODO: update default GED selected set and any illumination flags that need unsetting on already drawn objects\n";
+    std::cout << "TODO: update any illumination flags that need unsetting on already drawn objects\n";
 
-    QgModel *m = (QgModel *)sourceModel();
-    emit m->view_change(&m->gedp->ged_gvp);
+    QModelIndexList sl = selected.indexes();
+    for (long int i = 0; i < sl.size(); i++) {
+	QgItem *snode = static_cast<QgItem *>(sl.at(i).internalPointer());
+	QString nstr = snode->toString();
+	bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+	std::cout << "selected: " << bu_vls_cstr(&tpath) << "\n";
+	ged_selection_insert(gs, bu_vls_cstr(&tpath));
+    }
+    std::cout << "TODO: update any illumination flags that need setting on already drawn objects\n";
+
+    emit m->view_change(&gedp->ged_gvp);
 }
 
 

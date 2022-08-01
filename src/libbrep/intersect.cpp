@@ -2546,7 +2546,7 @@ newton_ssi(double &uA, double &vA, double &uB, double &vB, const ON_Surface *sur
 
     pointA = surfA->PointAt(uA, vA);
     pointB = surfB->PointAt(uB, vB);
-    return (pointA.DistanceTo(pointB) < isect_tol) && !std::isnan(uA) && !std::isnan(vA) && !std::isnan(uB) & !std::isnan(vB);
+    return (pointA.DistanceTo(pointB) < isect_tol) && !std::isnan(uA) && !std::isnan(vA) && !std::isnan(uB) && !std::isnan(vB);
 }
 
 // if curve end is greater than tol distance from pt, append a linear

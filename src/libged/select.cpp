@@ -407,6 +407,7 @@ ged_selection_insert(struct ged_selection_set *s, const char *s_path)
     // don't duplicate it.  So the incoming path is the child candidate and the
     // existing paths are the top candidates, switching the
     // ged_selection_lookup behavior.
+    struct bu_vls tpath = BU_VLS_INIT_ZERO;
     std::vector<std::string> s_c;
     fp_path_split(s_c, s_path);
 
@@ -414,28 +415,39 @@ ged_selection_insert(struct ged_selection_set *s, const char *s_path)
     std::map<std::string, struct ged_selection *>::iterator s_it;
     for (s_it = s->i->m.begin(); s_it != s->i->m.end(); s_it++) {
 	std::vector<std::string> s_top;
-	fp_path_split(s_top, s_it->first.c_str());
+	bu_vls_sprintf(&tpath, "%s", s_it->first.c_str());
+	fp_path_split(s_top, bu_vls_cstr(&tpath));
 	if (fp_path_top_match(s_top, s_c)) {
 	    match = s_it->second;
 	    break;
 	}
     }
 
-    if (match)
+    if (match) {
+	bu_vls_free(&tpath);
 	return match;
+    }
 
     // If no match found, we're adding the path.  We also need to remove any
     // paths that are below this path.
+    std::set<std::string> to_remove;
     for (s_it = s->i->m.begin(); s_it != s->i->m.end(); s_it++) {
 	std::vector<std::string> s_cc;
-	fp_path_split(s_cc, s_it->first.c_str());
+	bu_vls_sprintf(&tpath, "%s", s_it->first.c_str());
+	fp_path_split(s_cc, bu_vls_cstr(&tpath));
 	if (fp_path_top_match(s_c, s_cc))
-	    _selection_put(s, s_it->first.c_str());
+	    to_remove.insert(std::string(bu_vls_cstr(&tpath)));
+    }
+    std::set<std::string>::iterator r_it;
+    for (r_it = to_remove.begin(); r_it != to_remove.end(); r_it++) {
+	bu_vls_sprintf(&tpath, "%s", r_it->c_str());
+	_selection_put(s, bu_vls_cstr(&tpath));
     }
 
     // Children cleared - add the new path
     match = _selection_get(s, s_path);
 
+    bu_vls_free(&tpath);
     return match;
 }
 

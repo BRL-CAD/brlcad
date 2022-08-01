@@ -2432,7 +2432,7 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 
 HIDDEN void
 write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
-		 int UNUSED(region_id), int UNUSED(material_id), float *UNUSED(color),
+		 struct db_tree_state* UNUSED(tsp),
 		 void *client_data)
 {
     NMG_CK_REGION(nmg_region);

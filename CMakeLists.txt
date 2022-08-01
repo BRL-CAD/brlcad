@@ -89,6 +89,10 @@ endif(DEFINED BRLCAD_VERSION_AMEND)
 project(BRLCAD VERSION ${BRLCAD_VERSION} DESCRIPTION "Open Source Solid Modeling" HOMEPAGE_URL "https://brlcad.org" LANGUAGES C CXX)
 #######
 
+# Policy CMP0060 tells CMake to use full paths in link specifications
+if (POLICY CMP0060)
+  cmake_policy(SET CMP0060 NEW)
+endif (POLICY CMP0060)
 
 # Policy CMP0074 allows CMake to search
 # "prefixes specified by the <PackageName>_ROOT in find_package"
@@ -764,52 +768,82 @@ if(HAVE_SCANF23_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_SCANF23_ATTRIBUTE 1\n")
 endif(HAVE_SCANF23_ATTRIBUTE)
 
-include(CheckCSourceCompiles)
+# Check whether the compiler supports __attribute__((deprecated))
+check_c_source_compiles("__attribute__((deprecated)) void func(); void func(){} void func2(){} int main(int argc, char *argv[]) {func2(); return 0;}" HAVE_DEPRECATED_ATTRIBUTE)
+if(HAVE_DEPRECATED_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_DEPRECATED_ATTRIBUTE 1\n")
+endif(HAVE_DEPRECATED_ATTRIBUTE)
+
+# Check whether the compiler supports __declspec(deprecated())
+check_c_source_compiles("__declspec(deprecated(\"DEPRECATED\")) void func(); void func(){} void func2(){} int main(int argc, char *argv[]) {func2(); return 0;}" HAVE_DEPRECATED_DECLSPEC)
+if(HAVE_DEPRECATED_DECLSPEC)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_DEPRECATED_DECLSPEC 1\n")
+endif(HAVE_DEPRECATED_DECLSPEC)
+
 # Check whether the compiler supports __attribute__((__noreturn__))
-check_c_source_compiles("#include <stdlib.h>\n
-void noret() __attribute__((__noreturn__)); void noret(){exit(1);} int main(int argc, char *argv[]) {noret(); return 0;}" HAVE_NORETURN_ATTRIBUTE)
+check_c_source_compiles("#include <stdlib.h>
+__attribute__((__noreturn__)) void noret(); void noret(){exit(1);} int main(int argc, char *argv[]) {noret(); return 0;}" HAVE_NORETURN_ATTRIBUTE)
 if(HAVE_NORETURN_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_NORETURN_ATTRIBUTE 1\n")
 endif(HAVE_NORETURN_ATTRIBUTE)
 
+# Check whether the compiler supports __declspec(noreturn)
+check_c_source_compiles("#include <stdlib.h>
+__declspec(noreturn) void noret() {exit(1);} int main(int argc, char *argv[]) {noret(); return 0;}" HAVE_NORETURN_DECLSPEC)
+if(HAVE_NORETURN_DECLSPEC)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_NORETURN_DECLSPEC 1\n")
+endif(HAVE_NORETURN_DECLSPEC)
+
 # Check whether the compiler supports __attribute__((analyzer_noreturn))
-check_c_source_compiles("void anoret() __attribute__((analyzer_noreturn)); void anoret(){return;} int main(int argc, char *argv[]) {anoret(); return 0;}" HAVE_ANALYZER_NORETURN_ATTRIBUTE)
+check_c_source_compiles("__attribute__((analyzer_noreturn)) void anoret(); void anoret(){return;} int main(int argc, char *argv[]) {anoret(); return 0;}" HAVE_ANALYZER_NORETURN_ATTRIBUTE)
 if(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_ANALYZER_NORETURN_ATTRIBUTE 1\n")
 endif(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((always_inline))
-check_c_source_compiles("inline void always_inline() __attribute__((always_inline)); inline void always_inline(){return;} int main(int argc, char *argv[]) {always_inline(); return 0;}" HAVE_ALWAYS_INLINE_ATTRIBUTE)
+check_c_source_compiles("__attribute__((always_inline)) inline void always_inline(); inline void always_inline(){return;} int main(int argc, char *argv[]) {always_inline(); return 0;}" HAVE_ALWAYS_INLINE_ATTRIBUTE)
 if(HAVE_ALWAYS_INLINE_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_ALWAYS_INLINE_ATTRIBUTE 1\n")
 endif(HAVE_ALWAYS_INLINE_ATTRIBUTE)
 
+# Check whether the compiler supports __forceinline
+check_c_source_compiles("__forceinline inline void always_inline(); inline void always_inline(){return;} int main(int argc, char *argv[]) {always_inline(); return 0;}" HAVE_FORCEINLINE)
+if(HAVE_FORCEINLINE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_FORCEINLINE 1\n")
+endif(HAVE_FORCEINLINE)
+
 # Check whether the compiler supports __attribute__((const))
-check_c_source_compiles("void func() __attribute__((const)); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_CONST_ATTRIBUTE)
+check_c_source_compiles("__attribute__((const)) void func(); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_CONST_ATTRIBUTE)
 if(HAVE_CONST_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_CONST_ATTRIBUTE 1\n")
 endif(HAVE_CONST_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((pure))
-check_c_source_compiles("void func() __attribute__((pure)); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_PURE_ATTRIBUTE)
+check_c_source_compiles("__attribute__((pure)) void func(); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_PURE_ATTRIBUTE)
 if(HAVE_PURE_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_PURE_ATTRIBUTE 1\n")
 endif(HAVE_PURE_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((cold))
-check_c_source_compiles("void func() __attribute__((cold)); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_COLD_ATTRIBUTE)
+check_c_source_compiles("__attribute__((cold)) void func(); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_COLD_ATTRIBUTE)
 if(HAVE_COLD_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_COLD_ATTRIBUTE 1\n")
 endif(HAVE_COLD_ATTRIBUTE)
 
+# Check whether the compiler supports __attribute__((hot))
+check_c_source_compiles("__attribute__((hot)) void func(); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_HOT_ATTRIBUTE)
+if(HAVE_HOT_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_HOT_ATTRIBUTE 1\n")
+endif(HAVE_HOT_ATTRIBUTE)
+
 # Check whether the compiler supports __attribute__((nonnull))
-check_c_source_compiles("int *func(int *) __attribute__((nonnull)); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}" HAVE_NONNULL_ATTRIBUTE)
+check_c_source_compiles("__attribute__((nonnull)) int *func(int *); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}" HAVE_NONNULL_ATTRIBUTE)
 if(HAVE_NONNULL_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_NONNULL_ATTRIBUTE 1\n")
 endif(HAVE_NONNULL_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((warn_unused_result))
-check_c_source_compiles("int *func(int *) __attribute__((warn_unused_result)); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}" HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
+check_c_source_compiles("__attribute__((warn_unused_result)) int *func(int *); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}" HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
 if(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_WARN_UNUSED_RESULT_ATTRIBUTE 1\n")
 endif(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
@@ -1467,7 +1501,10 @@ BRLCAD_INCLUDE_FILE(string.h HAVE_STRING_H)
 BRLCAD_INCLUDE_FILE(strings.h HAVE_STRINGS_H)
 BRLCAD_INCLUDE_FILE(strsafe.h HAVE_STRSAFE_H)
 BRLCAD_INCLUDE_FILE(sys/_ioctl.h HAVE_SYS__IOCTL_H)
+
+# FIXME: fails freebsd due to non-encapsulated header (__BEGIN_DECLS undecl)
 BRLCAD_INCLUDE_FILE(sys/cpuset.h HAVE_SYS_CPUSET_H)
+
 BRLCAD_INCLUDE_FILE(sys/file.h HAVE_SYS_FILE_H)
 BRLCAD_INCLUDE_FILE(sys/ioctl.h HAVE_SYS_IOCTL_H)
 BRLCAD_INCLUDE_FILE(sys/ioctl_compat.h HAVE_SYS_IOCTL_COMPAT_H)
@@ -1576,6 +1613,8 @@ if(NOT HAVE_SOCKLEN_T)
     BRLCAD_TYPE_SIZE("socklen_t" "sys/socket.h")
   endif(NOT HAVE_SOCKLEN_T)
 endif(NOT HAVE_SOCKLEN_T)
+
+# FIXME: false negative on barebones linux
 BRLCAD_TYPE_SIZE("cpu_set_t" "sched.h")
 
 BRLCAD_TYPE_SIZE("int" "")
@@ -1679,7 +1718,7 @@ BRLCAD_FUNCTION_EXISTS(getcwd)
 BRLCAD_FUNCTION_EXISTS(getegid)
 BRLCAD_FUNCTION_EXISTS(getenv_s)
 BRLCAD_FUNCTION_EXISTS(geteuid)
-BRLCAD_FUNCTION_EXISTS(gethostbyname)
+# BRLCAD_FUNCTION_EXISTS(gethostbyname)
 BRLCAD_FUNCTION_EXISTS(gethostname)
 BRLCAD_FUNCTION_EXISTS(getloadavg)
 BRLCAD_FUNCTION_EXISTS(getopt_long)
@@ -1862,8 +1901,12 @@ set(tgamma_test "#include <math.h>\nint main() {double tga = tgamma(3.14); retur
 BRLCAD_FUNCTION_EXISTS(tgamma COMPILE_TEST_SRCS tgamma_test REQUIRED_LIBS ${M_LIBRARY})
 
 # test for gethostbyaddr
-set(gethostbyaddr_test "#include<stdlib.h>\n#include <netdb.h>\nint main() {(void)gethostbyaddr(NULL, 0, AF_INET); return 0;}")
+set(gethostbyaddr_test "#include<stdlib.h>\n#include <netdb.h>\nint main() {(void)gethostbyaddr; return 0;}")
 BRLCAD_FUNCTION_EXISTS(gethostbyaddr DECL_TEST_SRCS gethostbyaddr_test REQUIRED_LIBS ${NL_LIBRARY})
+
+# test for gethostbyname
+set(gethostbyname_test "#include<stdlib.h>\n#include <netdb.h>\nint main() {(void)gethostbyname; return 0;}")
+BRLCAD_FUNCTION_EXISTS(gethostbyname DECL_TEST_SRCS gethostbyname_test REQUIRED_LIBS ${NL_LIBRARY})
 
 # Check for logb in C++
 check_cxx_source_compiles("#include <cmath>\nint main() {return logb(3.14);}" HAVE_CXX_LOGB)

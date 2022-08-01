@@ -40,6 +40,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * Overlap tool in MGED is not handling no overlaps reporting correctly.
 
+* Overlap tool needs to have basic documentation written.
+
 * gqa is crashing when supplied all.g/box.r as an object argument
 
 
@@ -137,6 +139,35 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* automatic tops
+
+  implement db_tops() to return list of top-level entities.  then,
+  implement a db_tops_default() to support automatic default object
+  loading for commands like rt* that typically work with top-level
+  objects.  let some commands default to an unspecified object when
+  there's an identifiable priority according to matching criteria:
+
+  a) _GLOBAL has a tops_default attribute set, default to that object
+  b) there's only one object, default to that object
+  c) there's only one comb, default to that comb
+  d) there's only one comb (sans any ext) matching filename (sans ext)
+  e) there's only one comb with pattern matching '^(all|scene)*'
+
+  if _GLOBAL has a tops_default attribute set to empty/negative, then
+  this behavior will be disabled.
+
+  when there is not a match, the commands should report out the
+  available top-level objects by default.  that way the user doesn't
+  have to manually run mged to figure out what can be rendered.
+
+* automatic ground plane
+
+  Need ability to auto-calculate a ground plane default for a given
+  model.  Need render option to display the ground plane (e.g.,
+  auto-insert a half or arb8).  Need libged command for
+  creating/manipulating explicit ground objects.  Needs to work with
+  ground_plane_offset attribute on _GLOBAL.
+
 * audit support for slashes in object names and commands that expect
   paths or can/should have meaningful behavior with paths
 
@@ -192,6 +223,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   translucency.
 
 * add linear interpolation method for metaballs
+
+* optimize metaballs performance case where there are lots of single
+  points, no interpolation.
 
 * add script/command for changing metaball weights in masse
 
@@ -721,97 +755,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
       (term-mode)
       (term-line-mode)
       (switch-to-buffer termbuf))) 
-
-* Need to mark or otherwise disambiguate grazing hit segments so we
-  can consistently retain or remove hits without introducing overlaps.
-  Consider the case of a tgc stacked on top of an arb8, perfectly
-  tangent, and shoot a ray at that point:
-
-                                   -----   z=2.0
-                                   |tgc|
-  shoot a ray through here --->   -------- z=1.0   <--- or here
-                                  | arb8 |
-                                  -------- z=0.0
-
-  Here are the primary concerns:
-
-  A) solidity: a ray should never pass through the two without one or
-  both evaluating to a hit,
-
-  B) usability: a convention that precludes forcing the user to
-  "nudge" them apart by some arbitrary epsilon is desired (it's
-  intuitive and common for users to model two objects with "perfect
-  tangency"),
-
-  C) deterministic: firing a ray should give the same result every
-  time that same ray is fired, and,
-
-  D) bidirectional: a ray fired in one direction should evaluate to
-  the same result if fired from the opposite direction along the same
-  path (view independence).
-
-  If we hit both, an overlap will ensue unless these objects are
-  unioned.  This is undesirable.  If we miss both, slipping through
-  the hairline "crack", it can be devastating for analysis and result
-  in raytrace speckling.
-
-  In order to only hit one, a consistent grazing policy must be
-  applied such that grazing points on one "side" of an object are
-  always kept and grazing hits on the other "side" are always thrown
-  away.  The proposed method, similar to handling special case
-  grazings with a Breseham line painter algorithm, is to consistently
-  consider grazes with a procedure:
-
-  1) Calculate the ray intersection, detect whether the hit is grazing
-  (defined as a hit being barely in/on the surface either through a
-  point, edge or even down a surface).
-
-  2) Calculate a hit normal.  It may be desirable to average both the
-  in/out hit points to get more of a "practical" surface normal.
-
-  3) Calculate the ray of reflection.  Use the surface normal and ray
-  of intersection to calculate our reflection direction.
-
-  4) Determine which plane of a globally bounding rpp the reflected
-  ray would intersect with.
-
-  5) If the reflected ray hits the front, right, or bottom face, the
-  grazing is kept, but if it reflects onto the back, left, or top
-  face, the grazing is ignored.  In ray-view projected 2D, this
-  corresponds with keeping the grazing if the reflection is pointing
-  up or to the left and discarding if pointing down or to the right.
-
-                                   discard top/left/rear
-                rear              keep bottom/right/front
-            .____________.
-            |\           |\ t              discard
-            | \          | \ o           ._________.
-          l |  \         |  \ p          |/////////|
-          e |   o____________o          d|//view// |
-          f |   |        |   |          i|//of///  |
-          t |   |        |   | r        s|//ray/   |k
-        b   .___|________.   | i        c|////+    |e
-         o  \   |         \  | g        a|////     |e
-          t  \  |          \ | h        r|///      |p
-           t  \ |           \| t        d|//       |
-            o  \o____________o           ./________.
-             m     front                     keep
-
-  This should result in consistent grazing behavior that addresses the
-  above case: we consistently hit the tgc but not the arb8 and there
-  are no overlaps requiring modeler intervention.  The main problem
-  with this approach, however, is calculating an appropriate surface
-  normal for edge and face grazings can be difficult for some objects.
-
-  In the case above, we do not get a hit on the tgc's bottom ellipse,
-  for example, instead getting two hits near the edge of the side.
-  Similarly, we hit the left and right arb8 faces, not the top face
-  even though that is what we are conceptually grazing through.
-
-  One possibility to address that difficulty is to simply report all
-  grazing hits, but mark them as grazing, and let rt_shootray() sort
-  it out by sampling a 3x3 pattern that determines if we're grazing
-  the "top/left" or "bottom/right" side of a surface.
 
 * fix the redblack tree callback function signatures.  they're
   declared and handled as taking (void) but they actually take a
@@ -1373,6 +1316,97 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 OVERLAP TOOLS
 -------------
+
+* Need to mark or otherwise disambiguate grazing hit segments so we
+  can consistently retain or remove hits without introducing overlaps.
+  Consider the case of a tgc stacked on top of an arb8, perfectly
+  tangent, and shoot a ray at that point:
+
+                                   -----   z=2.0
+                                   |tgc|
+  shoot a ray through here --->   -------- z=1.0   <--- or here
+                                  | arb8 |
+                                  -------- z=0.0
+
+  Here are the primary concerns:
+
+  A) solidity: a ray should never pass through the two without one or
+  both evaluating to a hit,
+
+  B) usability: a convention that precludes forcing the user to
+  "nudge" them apart by some arbitrary epsilon is desired (it's
+  intuitive and common for users to model two objects with "perfect
+  tangency"),
+
+  C) deterministic: firing a ray should give the same result every
+  time that same ray is fired, and,
+
+  D) bidirectional: a ray fired in one direction should evaluate to
+  the same result if fired from the opposite direction along the same
+  path (view independence).
+
+  If we hit both, an overlap will ensue unless these objects are
+  unioned.  This is undesirable.  If we miss both, slipping through
+  the hairline "crack", it can be devastating for analysis and result
+  in raytrace speckling.
+
+  In order to only hit one, a consistent grazing policy must be
+  applied such that grazing points on one "side" of an object are
+  always kept and grazing hits on the other "side" are always thrown
+  away.  The proposed method, similar to handling special case
+  grazings with a Breseham line painter algorithm, is to consistently
+  consider grazes with a procedure:
+
+  1) Calculate the ray intersection, detect whether the hit is grazing
+  (defined as a hit being barely in/on the surface either through a
+  point, edge or even down a surface).
+
+  2) Calculate a hit normal.  It may be desirable to average both the
+  in/out hit points to get more of a "practical" surface normal.
+
+  3) Calculate the ray of reflection.  Use the surface normal and ray
+  of intersection to calculate our reflection direction.
+
+  4) Determine which plane of a globally bounding rpp the reflected
+  ray would intersect with.
+
+  5) If the reflected ray hits the front, right, or bottom face, the
+  grazing is kept, but if it reflects onto the back, left, or top
+  face, the grazing is ignored.  In ray-view projected 2D, this
+  corresponds with keeping the grazing if the reflection is pointing
+  up or to the left and discarding if pointing down or to the right.
+
+                                   discard top/left/rear
+                rear              keep bottom/right/front
+            .____________.
+            |\           |\ t              discard
+            | \          | \ o           ._________.
+          l |  \         |  \ p          |/////////|
+          e |   o____________o          d|//view// |
+          f |   |        |   |          i|//of///  |
+          t |   |        |   | r        s|//ray/   |k
+        b   .___|________.   | i        c|////+    |e
+         o  \   |         \  | g        a|////     |e
+          t  \  |          \ | h        r|///      |p
+           t  \ |           \| t        d|//       |
+            o  \o____________o           ./________.
+             m     front                     keep
+
+  This should result in consistent grazing behavior that addresses the
+  above case: we consistently hit the tgc but not the arb8 and there
+  are no overlaps requiring modeler intervention.  The main problem
+  with this approach, however, is calculating an appropriate surface
+  normal for edge and face grazings can be difficult for some objects.
+
+  In the case above, we do not get a hit on the tgc's bottom ellipse,
+  for example, instead getting two hits near the edge of the side.
+  Similarly, we hit the left and right arb8 faces, not the top face
+  even though that is what we are conceptually grazing through.
+
+  One possibility to address that difficulty is to simply report all
+  grazing hits, but mark them as grazing, and let rt_shootray() sort
+  it out by sampling a 3x3 pattern that determines if we're grazing
+  the "top/left" or "bottom/right" side of a surface.
 
 * implement quasi-random unbiased iterative spherical ray sampling.
   requires devising an algorithm whereby we obtain a set of points on
@@ -2108,7 +2142,12 @@ ttcp       (not ported)
 CONVERTERS
 ----------
 
-* add glTF importer/exporter (.gltf and .glb file formats)
+* add obj cstype/bezier/surf/curv/param/trim/etc import for nurbs
+  import/export support
+
+* improve glTF importer
+
+* add glTF exporter (.gltf and .glb file formats)
 
 * add 3MF importer/exporter (3D printing file format like STL that
   supports materials, colors, and other information.)
@@ -2488,6 +2527,8 @@ FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 
 * write and use kdtree - make traversal cache coherent
 
+* replace adrt's kdtree with one that builds faster
+
 
 GEOMETRY MODELS
 ---------------
@@ -2528,12 +2569,6 @@ DOCUMENTATION
         sphere, flat disc, long spike, etc.).  this is necessarily
         defined per object type and possibly programmable.  See
         src/proc-db/csgbrep.cpp for a basic start.
-
-* BRL-CAD Ray Tracing Shaders
-	An overview of the various shaders and shader options
-	available in BRL-CAD.  Create a catalog of all
-	possible/distinct/useful shader settings.  See
-	regress/shaders.sh for a basic start.
 
 * update the rt* manual pages to note that they can all write out to
   various image formats like png just by specifying an output file
@@ -2720,6 +2755,9 @@ DOCUMENTATION
 	nirt.  Succinct overview of less than 10% of the core
 	functionality in 10 pages or less (plus pictures).
 
+* Introduction to MGED Tutorial
+        This exists, but has not yet been added to the repo.
+
 * Technical Overview of BRL-CAD
 	Describes everything in the package succinctly yet
 	comprehensively.  Survey of all the major features,
@@ -2782,6 +2820,16 @@ DOCUMENTATION
 
 * Procedural Geometry in BRL-CAD
 	How-To for creating new tools that create geometry.
+
+* Guide to Rendering with BRL-CAD
+        Basic overview of all the ray tracers and primary rendering
+        options supported.
+
+* BRL-CAD Ray Tracing Shaders
+	An overview of the various shaders and shader options
+	available in BRL-CAD.  Create a catalog of all
+	possible/distinct/useful shader settings.  See
+	regress/shaders.sh for a basic start.
 
 * BRL-CAD Ray Tracing Shader Development
 	How-To for creating new shaders.

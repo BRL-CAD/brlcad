@@ -44,12 +44,17 @@ main(int argc, char *argv[])
     bu_setprogname(argv[0]);
 
     if (argc != 3) {
-	fprintf(stderr, "Usage: %s input output", argv[0]);
+	fprintf(stderr, "Usage: %s input output\n", argv[0]);
 	exit(1);
     }
 
     inputFile = fopen(argv[1], "r");
+    if (!inputFile)
+	bu_exit(BRLCAD_ERROR, "ERROR: Unable to open input file\n");
+
     outputFile = fopen(argv[2], "w");
+    if (!outputFile)
+	bu_exit(BRLCAD_ERROR, "ERROR: Unable to open output file\n");
 
     scanner = perplexFileScanner(inputFile);
     perplexSetExtra(scanner, &appData);

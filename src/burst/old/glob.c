@@ -170,8 +170,8 @@ int zoom = 1;		/* magnification factor on frame buffer */
 struct rt_i *rtip = RTI_NULL; /* model specific access from librt */
 
 /* signal handlers */
-void (*norml_sig)();	/* active during interactive operation */
-void (*abort_sig)(); /* active during ray tracing only */
+void (*norml_sig)(int);	/* active during interactive operation */
+void (*abort_sig)(int); /* active during ray tracing only */
 
 /*
  * Local Variables:

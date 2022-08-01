@@ -188,6 +188,13 @@ Be specific.
   default to a view-oriented "underlay" but permanently stored in the
   .g file as a proper image object (top-level TODO entry).
 
+* 'import' and 'export' commands: import/export image, text, csv, and
+  other file types.  possibly catch-all alternative to keep/dbconcat
+  that could also work for importing other data files as objects.  a
+  specific use-case needed is ability create/import combinations that
+  are described in a text file in some specific structured format
+  (e.g., sysdef or regmap) that would be good to generically support.
+
 * 'gsort' or 'tables' or 'filter' command.  Distinction is that this
   comamnd is object-aware and can process geometry by name in a given
   column or list.  This way, one could sort output from search, nirt,
