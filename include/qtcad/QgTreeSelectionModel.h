@@ -30,6 +30,7 @@
 #include <QAbstractItemModel>
 #include <QItemSelectionModel>
 #include <QModelIndex>
+#include <QObject>
 
 #include "qtcad/defines.h"
 #include "qtcad/QgModel.h"
@@ -40,11 +41,18 @@
 
 class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel
 {
+    Q_OBJECT
+
     public:
 
 	QgTreeSelectionModel(QAbstractItemModel *model, QObject* parent): QItemSelectionModel(model, parent) {}
 	QgTreeSelectionModel(QAbstractItemModel *model = nullptr): QItemSelectionModel(model) {}
 
+    public slots:
+	void select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags) override;
+        void select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags) override;
+
+    public:
 	// There are a number of relationships which can be used for related
 	// node highlighting - this allows a client application to select one.
 	int interaction_mode = 0;

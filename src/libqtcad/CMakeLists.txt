@@ -50,6 +50,7 @@ set(qtcad_srcs
   QgDockWidget.cpp
   QgModel.cpp
   QgSelectionProxyModel.cpp
+  QgTreeSelectionModel.cpp
   QgTreeView.cpp
   QgUtil.cpp
   QtAppExecDialog.cpp
@@ -78,6 +79,7 @@ set(qth_names
   QViewCtrl
   QgDockWidget
   QgModel
+  QgTreeSelectionModel
   QgTreeView
   QtAppExecDialog
   QtCADView
