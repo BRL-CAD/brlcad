@@ -161,8 +161,8 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 #define SZ 63
     char title[SZ+1] = {0};
     char geom_fname[SZ+1] = {0};
-    char rname[SZ+1] = {0};
-    char sname[SZ+1] = {0};
+    struct bu_vls rname = BU_VLS_INIT_ZERO;
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
 
 #define BUF_SZ 255
     char buf[BUF_SZ+1] = {0};
@@ -205,12 +205,15 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
     read_faces(m, fgeom);
     fclose(fgeom);
 
-    snprintf(sname, sizeof(sname)-1, "s.%s", title);
-    snprintf(rname, sizeof(sname)-1, "r.%s", title);
+    bu_vls_printf(&sname, "s.%s", title);
+    bu_vls_printf(&rname, "r.%s", title);
 
     mk_id(fpout, title);
-    mk_nmg(fpout, sname, m);
-    mk_comb1(fpout, rname, sname, 1);
+    mk_nmg(fpout, bu_vls_cstr(&sname), m);
+    mk_comb1(fpout, bu_vls_cstr(&rname), bu_vls_cstr(&sname), 1);
+
+    bu_vls_free(&sname);
+    bu_vls_free(&rname);
 
     nmg_km(m);
     return 0;
