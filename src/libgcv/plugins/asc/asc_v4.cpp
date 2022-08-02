@@ -40,6 +40,14 @@
 #include "gcv/api.h"
 #include "gcv/util.h"
 
+
+#define LSEG 'L'
+#define CARC 'A'
+#define NURB 'N'
+#define NAME_LEN 255
+#define TYPE_LEN 255
+
+
 struct ascv4_rstate {
     struct bu_vls *buf;
     struct bu_vls *name; /* Record input buffer */
@@ -249,10 +257,6 @@ out:
 }
 
 
-#define LSEG 'L'
-#define CARC 'A'
-#define NURB 'N'
-#define NAME_LEN 255
 void
 sktbld(struct ascv4_rstate *s)
 {
@@ -1419,7 +1423,6 @@ particlebld(struct ascv4_rstate *s)
  * This routine reads arbn data from standard in and sends it to
  * mk_arbn().
  */
-#define TYPE_LEN 255
 void
 arbnbld(struct ascv4_rstate *s)
 {
