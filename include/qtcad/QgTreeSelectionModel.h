@@ -31,7 +31,7 @@
 #include <QItemSelectionModel>
 #include <QModelIndex>
 #include <QObject>
-
+#include "ged.h"
 #include "qtcad/defines.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeView.h"
@@ -56,6 +56,7 @@ class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel
 	void update_selected_node_relationships(const QModelIndex & index);
 	void illuminate(const QItemSelection &selected, const QItemSelection &deselected);
 
+	void ged_sync(QgItem *start, struct ged_selection_set *gs);  // If we only need to check part of the tree (i.e. when opening a comb) we can supply a non-null start QgItem
 
     public:
 	// There are a number of relationships which can be used for related
@@ -65,7 +66,7 @@ class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel
 	QgTreeView *treeview;
 
     private:
-	bool do_ged = false;
+	bool ged_doing_sync = false;
 };
 
 #endif //QGTREESELECTIONMODEL_H

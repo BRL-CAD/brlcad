@@ -43,12 +43,87 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 	    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
 	bu_ptbl_free(&ssets);
     }
+    if (!ged_doing_sync) {
+	void (*tmp)(struct ged_selection_set *) = gedp->ged_select_callback;
+	gedp->ged_select_callback = NULL;
+	if (!(flags & QItemSelectionModel::Deselect)) {
+	    QModelIndexList dl = selection.indexes();
+	    std::queue<QgItem *> to_process;
+	    for (long int i = 0; i < dl.size(); i++) {
+		QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
+		QgItem *pnode = snode->parent();
+		while (pnode) {
+		    QString nstr = pnode->toString();
+		    if (nstr == QString())
+			break;
+		    to_process.push(pnode);
+		    pnode = pnode->parent();
+		}
 
-    if (!(flags & QItemSelectionModel::Deselect)) {
-	QModelIndexList dl = selection.indexes();
+		std::queue<QgItem *> get_children;
+		if (snode->children.size()) {
+		    get_children.push(snode);
+		}
+		while (!get_children.empty()) {
+		    QgItem *cnode = get_children.front();
+		    get_children.pop();
+		    for (size_t j = 0; j < cnode->children.size(); j++) {
+			QgItem *ccnode = cnode->children[j];
+			get_children.push(ccnode);
+			to_process.push(ccnode);
+		    }
+		}
+	    }
+	    while (!to_process.empty()) {
+		QgItem *itm = to_process.front();
+		to_process.pop();
+		QModelIndex pind = itm->ctx->NodeIndex(itm);
+		select(pind, QItemSelectionModel::Deselect);
+	    }
+
+	    if (gs) {
+		for (long int i = 0; i < dl.size(); i++) {
+		    QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
+		    struct bu_vls tpath = BU_VLS_INIT_ZERO;
+		    QString nstr = snode->toString();
+		    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+		    std::cout << "ged insert: " << bu_vls_cstr(&tpath) << "\n";
+		    ged_selection_insert(gs, bu_vls_cstr(&tpath));
+		    bu_vls_free(&tpath);
+		}
+	    }
+
+	} else {
+
+	    QModelIndexList dl = selection.indexes();
+	    std::queue<QgItem *> to_process;
+	    for (long int i = 0; i < dl.size(); i++) {
+		QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
+		QString nstr = snode->toString();
+		if (nstr != QString()) {
+		    struct bu_vls tpath = BU_VLS_INIT_ZERO;
+		    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+		    std::cout << "ged remove: " << bu_vls_cstr(&tpath) << "\n";
+		    ged_selection_remove(gs, bu_vls_cstr(&tpath));
+		    bu_vls_free(&tpath);
+		}
+	    }
+	}
+
+	gedp->ged_select_callback = tmp;
+    }
+
+    QItemSelectionModel::select(selection, flags);
+}
+
+void
+QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags)
+{
+
+    if (!ged_doing_sync && !(flags & QItemSelectionModel::Deselect)) {
 	std::queue<QgItem *> to_process;
-	for (long int i = 0; i < dl.size(); i++) {
-	    QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
+	QgItem *snode = static_cast<QgItem *>(index.internalPointer());
+	if (snode) {
 	    QgItem *pnode = snode->parent();
 	    while (pnode) {
 		QString nstr = pnode->toString();
@@ -71,117 +146,28 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 		    to_process.push(ccnode);
 		}
 	    }
-	}
-	while (!to_process.empty()) {
-	    QgItem *itm = to_process.front();
-	    to_process.pop();
-	    QModelIndex pind = itm->ctx->NodeIndex(itm);
-	    select(pind, QItemSelectionModel::Deselect);
-	}
-
-	if (gs) {
-	    for (long int i = 0; i < dl.size(); i++) {
-		QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
-		struct bu_vls tpath = BU_VLS_INIT_ZERO;
-		QString nstr = snode->toString();
-		bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-		std::cout << "ged insert: " << bu_vls_cstr(&tpath) << "\n";
-		ged_selection_insert(gs, bu_vls_cstr(&tpath));
-		bu_vls_free(&tpath);
+	    while (!to_process.empty()) {
+		QgItem *itm = to_process.front();
+		to_process.pop();
+		QModelIndex pind = itm->ctx->NodeIndex(itm);
+		select(pind, QItemSelectionModel::Deselect);
+	    }
+	} else {
+	    // If we have an empty selection, clear the GED set
+	    QgModel *m = treeview->m;
+	    struct ged *gedp = m->gedp;
+	    struct ged_selection_set *gs = NULL;
+	    if (gedp->ged_selection_sets) {
+		struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+		size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
+		if (scnt == 1)
+		    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
+		bu_ptbl_free(&ssets);
+	    }
+	    if (gs) {
+		ged_selection_set_clear(gs);
 	    }
 	}
-
-    } else {
-
-	QModelIndexList dl = selection.indexes();
-	std::queue<QgItem *> to_process;
-	for (long int i = 0; i < dl.size(); i++) {
-	    QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
-	    QString nstr = snode->toString();
-	    if (nstr != QString()) {
-		struct bu_vls tpath = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-		std::cout << "ged remove: " << bu_vls_cstr(&tpath) << "\n";
-		ged_selection_remove(gs, bu_vls_cstr(&tpath));
-		bu_vls_free(&tpath);
-	    }
-	}
-    }
-
-    QItemSelectionModel::select(selection, flags);
-}
-
-void
-QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags)
-{
-    // Initially thought both select callbacks would have to operate on ged -
-    // so far it looks like that's not the case, but leaving this here in case
-    // a scenario crops where it's needed.
-#if 0
-    QgModel *m = treeview->m;
-    struct ged *gedp = m->gedp;
-    struct ged_selection_set *gs = NULL;
-    if (gedp->ged_selection_sets) {
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
-	if (scnt == 1)
-	    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
-	bu_ptbl_free(&ssets);
-    }
-#endif
-    if (!(flags & QItemSelectionModel::Deselect)) {
-	std::queue<QgItem *> to_process;
-	QgItem *snode = static_cast<QgItem *>(index.internalPointer());
-	QgItem *pnode = snode->parent();
-	while (pnode) {
-	    QString nstr = pnode->toString();
-	    if (nstr == QString())
-		break;
-	    to_process.push(pnode);
-	    pnode = pnode->parent();
-	}
-
-	std::queue<QgItem *> get_children;
-	if (snode->children.size()) {
-	    get_children.push(snode);
-	}
-	while (!get_children.empty()) {
-	    QgItem *cnode = get_children.front();
-	    get_children.pop();
-	    for (size_t j = 0; j < cnode->children.size(); j++) {
-		QgItem *ccnode = cnode->children[j];
-		get_children.push(ccnode);
-		to_process.push(ccnode);
-	    }
-	}
-	while (!to_process.empty()) {
-	    QgItem *itm = to_process.front();
-	    to_process.pop();
-	    QModelIndex pind = itm->ctx->NodeIndex(itm);
-	    select(pind, QItemSelectionModel::Deselect);
-	}
-#if 0
-	if (gs) {
-	    struct bu_vls tpath = BU_VLS_INIT_ZERO;
-	    QString nstr = snode->toString();
-	    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-	    std::cout << "index ged insert: " << bu_vls_cstr(&tpath) << "\n";
-	    ged_selection_insert(gs, bu_vls_cstr(&tpath));
-	    bu_vls_free(&tpath);
-	}
-    } else {
-	if (gs) {
-	    QgItem *snode = static_cast<QgItem *>(index.internalPointer());
-	    QString nstr = snode->toString();
-	    if (nstr != QString()) {
-		struct bu_vls tpath = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-		std::cout << "index ged remove: " << bu_vls_cstr(&tpath) << "\n";
-		ged_selection_remove(gs, bu_vls_cstr(&tpath));
-		bu_vls_free(&tpath);
-	    }
-	}
-#endif
 
     }
 
@@ -195,6 +181,43 @@ QgTreeSelectionModel::mode_change(int i)
 	interaction_mode = i;
 	update_selected_node_relationships(treeview->selected());
     }
+}
+
+void
+QgTreeSelectionModel::ged_sync(QgItem *start, struct ged_selection_set *gs)
+{
+    if (!gs)
+	return;
+
+    ged_doing_sync = true;
+    QgModel *m = treeview->m;
+    std::queue<QgItem *> to_check;
+    if (start && start != m->root()) {
+	to_check.push(start);
+    } else {
+	for (size_t i = 0; i < m->root()->children.size(); i++) {
+	    to_check.push(m->root()->children[i]);
+	}
+    }
+    struct bu_vls pstr = BU_VLS_INIT_ZERO;
+    while (!to_check.empty()) {
+	QgItem *cnode = to_check.front();
+	to_check.pop();
+	for (size_t i = 0; i < cnode->children.size(); i++) {
+	    to_check.push(cnode->children[i]);
+	}
+	QString qstr = cnode->toString();
+	bu_vls_sprintf(&pstr, "%s", qstr.toLocal8Bit().data());
+	QModelIndex pind = cnode->ctx->NodeIndex(cnode);
+	if (ged_selection_find(gs, bu_vls_cstr(&pstr))) {
+	    bu_log("ged sync select\n");
+	    select(pind, QItemSelectionModel::Select);
+	} else {
+	    select(pind, QItemSelectionModel::Deselect);
+	}
+    }
+
+    ged_doing_sync = false;
 }
 
 void

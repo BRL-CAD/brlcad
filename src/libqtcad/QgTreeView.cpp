@@ -376,6 +376,25 @@ void QgTreeView::expand_link(const QUrl &link)
     expand_path(link.path());
 }
 
+
+void QgTreeView::qgitem_select_sync(QgItem *itm)
+{
+    struct ged *gedp = m->gedp;
+    struct ged_selection_set *gs = NULL;
+    if (gedp->ged_selection_sets) {
+	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
+	if (scnt == 1)
+	    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
+	bu_ptbl_free(&ssets);
+    }
+    if (!gs)
+	return;
+
+    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
+    selm->ged_sync(itm, gs);
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

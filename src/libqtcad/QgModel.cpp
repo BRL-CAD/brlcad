@@ -803,6 +803,7 @@ QgModel::fetchMore(const QModelIndex &idx)
     }
     endInsertRows();
     emit check_highlights();
+    emit item->ctx->opened_item(item);
 }
 
 

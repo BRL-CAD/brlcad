@@ -290,6 +290,18 @@ ged_selection_sets_lookup(struct bu_ptbl *sets, struct ged_selection_sets *s, co
     return s_sets.size();
 }
 
+int
+ged_selection_find(struct ged_selection_set *s, const char *s_name)
+{
+    if (!s || !s_name || !strlen(s_name))
+	return 0;
+
+    std::string key(s_name);
+    if (s->i->m.find(key) != s->i->m.end())
+	return 1;
+
+    return 0;
+}
 
 size_t
 ged_selection_lookup(struct bu_ptbl *matches, struct ged_selection_set *s, const char *s_name)
@@ -362,6 +374,9 @@ ged_selection_set_clear(struct ged_selection_set *s)
 	BU_PUT(s_it->second, struct ged_selection);
     }
     s->i->m.clear();
+
+    if (s->gedp->ged_select_callback)
+	(*s->gedp->ged_select_callback)(s);
 }
 
 struct ged_selection *
@@ -401,6 +416,16 @@ ged_selection_insert(struct ged_selection_set *s, const char *s_path)
     if (!s || !s_path || !strlen(s_path))
 	return NULL;
 
+    // If s_path isn't a valid path, don't add it
+    struct db_full_path ifp;
+    db_full_path_init(&ifp);
+    int spathret = db_string_to_path(&ifp, s->gedp->dbip, s_path);
+    if (spathret < 0) {
+	db_free_full_path(&ifp);
+	return NULL;
+    }
+    db_free_full_path(&ifp);
+
     // Unlike the lookup, with the insert operation we need to check if this
     // path is equal to or below any already added paths in the set.  If so,
     // it's already active (either explicitly or implicitly) in the set and we
@@ -425,6 +450,9 @@ ged_selection_insert(struct ged_selection_set *s, const char *s_path)
 
     if (match) {
 	bu_vls_free(&tpath);
+
+	if (s->gedp->ged_select_callback)
+	    (*s->gedp->ged_select_callback)(s);
 	return match;
     }
 
@@ -448,6 +476,9 @@ ged_selection_insert(struct ged_selection_set *s, const char *s_path)
     match = _selection_get(s, s_path);
 
     bu_vls_free(&tpath);
+
+    if (s->gedp->ged_select_callback)
+	(*s->gedp->ged_select_callback)(s);
     return match;
 }
 
@@ -504,12 +535,18 @@ ged_selection_remove(struct ged_selection_set *s, const char *s_path)
     }
     if (!match) {
 	s->i->m.erase(std::string(s_path));
+
+	if (s->gedp->ged_select_callback)
+	    (*s->gedp->ged_select_callback)(s);
 	return;
     }
 
     // If we have an exact match we're done
     if (BU_STR_EQUAL(s_path, bu_vls_cstr(&match->path))) {
 	_selection_put(s, s_path);
+
+	if (s->gedp->ged_select_callback)
+	    (*s->gedp->ged_select_callback)(s);
 	return;
     }
 
@@ -555,6 +592,9 @@ ged_selection_remove(struct ged_selection_set *s, const char *s_path)
     // Delete temporary selection set
     delete tmp_s->i;
     BU_PUT(tmp_s, struct ged_selection_set);
+
+    if (s->gedp->ged_select_callback)
+	(*s->gedp->ged_select_callback)(s);
 }
 
 void
@@ -737,6 +777,9 @@ ged_selection_set_expand(struct ged_selection_set *s_out, struct ged_selection_s
 	bu_ptbl_free(solid_paths);
 	BU_FREE(solid_paths, struct bu_ptbl);
     }
+
+    if (s_out->gedp->ged_select_callback)
+	(*s_out->gedp->ged_select_callback)(s_out);
 
     return BRLCAD_OK;
 }
@@ -952,6 +995,9 @@ ged_selection_set_collapse(struct ged_selection_set *s_out, struct ged_selection
 	}
 	ged_selection_insert(s_out, fpath.c_str());
     }
+
+    if (s_out->gedp->ged_select_callback)
+	(*s_out->gedp->ged_select_callback)(s_out);
 
     return BRLCAD_OK;
 }

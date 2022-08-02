@@ -368,6 +368,10 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// otherwise see
 	void check_highlights();
 
+	// Signal emitted when a model item is opened (there is work that
+	// needs to be done in the view after this happens...)
+	void opened_item(QgItem *);
+
     public slots:
 	int draw_action();
 	int draw(QString &qpath);

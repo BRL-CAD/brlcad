@@ -164,12 +164,18 @@ _select_cmd_add(void *bs, int argc, const char **argv)
     struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
     bu_ptbl_free(&ssets);
 
+    struct bu_vls dpath = BU_VLS_INIT_ZERO;
     for (int i = 0; i < argc; i++) {
-	if (!ged_selection_insert(gs, argv[i])) {
+	bu_vls_sprintf(&dpath, "%s", argv[i]);
+	if (bu_vls_cstr(&dpath)[0] != '/')
+	    bu_vls_prepend(&dpath, "/");
+	if (!ged_selection_insert(gs, bu_vls_cstr(&dpath))) {
 	    bu_vls_printf(gedp->ged_result_str, "unable to add path to selection: %s", argv[i]);
+	    bu_vls_free(&dpath);
 	    return BRLCAD_ERROR;
 	}
     }
+    bu_vls_free(&dpath);
     return BRLCAD_OK;
 }
 

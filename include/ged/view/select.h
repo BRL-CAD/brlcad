@@ -65,6 +65,7 @@ GED_EXPORT void ged_selection_sets_put(struct ged_selection_sets *s, const char 
 GED_EXPORT size_t ged_selection_sets_lookup(struct bu_ptbl *sets, struct ged_selection_sets *s, const char *pattern);
 
 // Retrieve data.
+GED_EXPORT int ged_selection_find(struct ged_selection_set *s, const char *s_name);
 GED_EXPORT size_t ged_selection_lookup(struct bu_ptbl *matches, struct ged_selection_set *s, const char *s_path);
 GED_EXPORT size_t ged_selection_lookup_fp(struct bu_ptbl *matches, struct ged_selection_set *s, struct db_full_path *fp);
 GED_EXPORT int ged_selection_set_list(char ***keys, struct ged_selection_set *s);
