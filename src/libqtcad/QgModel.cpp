@@ -863,9 +863,6 @@ QgModel::flags(const QModelIndex &index) const
 
     Qt::ItemFlags flags = QAbstractItemModel::flags(index);
 
-    if (index.column() == 0)
-        flags |= Qt::ItemIsUserCheckable;
-
     // flags |= Qt::ItemIsEditable;
 
     return flags;
@@ -879,19 +876,17 @@ QgModel::data(const QModelIndex &index, int role) const
     QgItem *qi= getItem(index);
     if (role == Qt::DisplayRole)
 	return QVariant(bu_vls_cstr(&qi->name));
-    if (role == BoolInternalRole) {
+    if (role == BoolInternalRole)
 	return QVariant(qi->op);
-    }
     if (role == DirectoryInternalRole)
 	return QVariant::fromValue((void *)(qi->dp));
+    if (role == DrawnDisplayRole)
+	return QVariant(qi->draw_state);
 
     if (role == TypeIconDisplayRole)
 	return QVariant(qi->icon);
     if (role == HighlightDisplayRole) {
 	return qi->instance()->active_flag;
-    }
-    if (role == Qt::CheckStateRole && index.column() == 0) {
-	return QVariant(qi->isChecked() ? Qt::Checked : Qt::Unchecked);
     }
 
     return QVariant();

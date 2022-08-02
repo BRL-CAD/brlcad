@@ -194,8 +194,6 @@ class QTCAD_EXPORT QgItem
 	std::vector<QgItem *> children;
 	std::unordered_map<QgItem *, int> c_noderow;
 	size_t c_count = 0;
-	bool isChecked() const {return drawn;}
-	void setChecked(bool d) {drawn = d;}
 
 	// Return the full path to this particular item (equivalent to
 	// db_path_to_vls)
@@ -209,8 +207,8 @@ class QTCAD_EXPORT QgItem
 	struct directory *dp = NULL;
 	QImage icon;
 
-	// Flag to determine whether the item is currently drawn
-	bool drawn = false;
+	// Flag to determine whether the item is fully or partially drawn
+	bool draw_state = 0;
 };
 
 /* The primary expression in a Qt context of a .g database and its contents.
@@ -288,6 +286,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	    DirectoryInternalRole = Qt::UserRole + 1002,
 	    TypeIconDisplayRole = Qt::UserRole + 1003,
 	    HighlightDisplayRole = Qt::UserRole + 1004,
+	    DrawnDisplayRole = Qt::UserRole + 1005
 	};
 
 	// Return data used for displaying each individual entry
