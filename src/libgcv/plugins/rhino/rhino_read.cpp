@@ -677,7 +677,7 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
         model.RemoveModelComponent(type, itr.second);
     }
 
-    if (gcv_options.verbosity_level && (success_count != total_count))
+    if (gcv_options.verbosity_level)
 	std::cerr << "imported " << success_count << " of " << total_count << " objects\n";
 }
 
