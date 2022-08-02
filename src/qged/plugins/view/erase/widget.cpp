@@ -97,11 +97,10 @@ _ovlp_record(struct application *ap, struct partition *pp, struct region *reg1, 
 bool
 CADViewEraser::eventFilter(QObject *, QEvent *e)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
-	return false;
 
-    QgModel *m = (QgModel *)mdl->sourceModel();
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
+	return false;
     struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return false;

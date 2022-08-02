@@ -36,7 +36,7 @@
 #include <QTreeView>
 
 #include "qtcad/defines.h"
-#include "qtcad/QgSelectionProxyModel.h"
+#include "qtcad/QgModel.h"
 
 
 class QTCAD_EXPORT QgTreeView : public QTreeView
@@ -44,13 +44,13 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
     Q_OBJECT
 
     public:
-	QgTreeView(QWidget *pparent, QgSelectionProxyModel *treemodel);
+	QgTreeView(QWidget *pparent, QgModel *treemodel);
 	~QgTreeView() {};
 
 	QModelIndex selected();
 
 	void drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const override;
-	QgSelectionProxyModel *m = NULL;
+	QgModel *m = NULL;
 
     protected:
 	void resizeEvent(QResizeEvent *pevent) override;

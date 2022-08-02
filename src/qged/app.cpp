@@ -93,26 +93,23 @@ CADApp::initialize()
 void
 CADApp::do_quad_view_change(QtCADView *cv)
 {
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    m->gedp->ged_gvp = cv->view();
-    emit view_change(&m->gedp->ged_gvp);
+    mdl->gedp->ged_gvp = cv->view();
+    emit view_change(&mdl->gedp->ged_gvp);
 }
 
 void
 CADApp::do_view_change(struct bview **nv)
 {
 
-    QgModel *m = (QgModel *)mdl->sourceModel();
     if (nv)
-	m->gedp->ged_gvp = *nv;
-    emit view_change(&m->gedp->ged_gvp);
+	mdl->gedp->ged_gvp = *nv;
+    emit view_change(&mdl->gedp->ged_gvp);
 }
 
 void
 CADApp::do_db_change()
 {
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    emit m->mdl_changed_db(NULL);
+    emit mdl->mdl_changed_db(NULL);
 }
 
 void
@@ -145,7 +142,6 @@ CADApp::tree_update()
 void
 CADApp::open_file()
 {
-    QgModel *m = (QgModel *)mdl->sourceModel();
     const char *file_filters = "BRL-CAD (*.g *.asc);;Rhino (*.3dm);;STEP (*.stp *.step);;All Files (*)";
     QString fileName = QFileDialog::getOpenFileName((QWidget *)this->w,
 	    "Open Geometry File",
@@ -159,7 +155,7 @@ CADApp::open_file()
 	av[0] = "open";
 	av[1] = bu_strdup(fileName.toLocal8Bit().data());
 	av[2] = NULL;
-	int ret = m->run_cmd(m->gedp->ged_result_str, ac, (const char **)av);
+	int ret = mdl->run_cmd(mdl->gedp->ged_result_str, ac, (const char **)av);
 	bu_free((void *)av[1], "filename cpy");
 	if (w) {
 	    if (ret) {
@@ -171,7 +167,7 @@ CADApp::open_file()
     }
 
     // Let the shell's completer know what the current gedp is (if any)
-    w->cshellcomp->gedp = m->gedp;
+    w->cshellcomp->gedp = mdl->gedp;
 }
 
 
@@ -284,9 +280,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     if (!mdl || !argc || !argv)
 	return BRLCAD_ERROR;
 
-    QgModel *m = (QgModel *)mdl->sourceModel();
-
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = mdl->gedp;
 
     /* Set the local unit conversions */
     if (gedp->dbip && w->c4) {
@@ -315,7 +309,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	}
 
 	// Ask the model to execute the command
-	ret = m->run_cmd(msg, argc, argv);
+	ret = mdl->run_cmd(msg, argc, argv);
 
 	gedp->ged_subprocess_init_callback = NULL;
 	gedp->ged_subprocess_end_callback = NULL;
@@ -332,13 +326,13 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    av[i] = tmp_av[i];
 	}
 	int ac = (int)tmp_av.size();
-	ret = m->run_cmd(msg, ac, (const char **)av);
+	ret = mdl->run_cmd(msg, ac, (const char **)av);
     }
 
     if (!(ret & BRLCAD_MORE)) {
 
 	// Handle any necessary redrawing.
-	if (qged_view_update(gedp, &m->changed_dp) > 0) {
+	if (qged_view_update(gedp, &mdl->changed_dp) > 0) {
 	    if (w->c4)
 		w->c4->need_update(NULL);
 	}
@@ -405,8 +399,6 @@ CADApp::run_qcmd(const QString &command)
 	return;
     }
 
-    QgModel *m  = (QgModel *)mdl->sourceModel();
-
     // make an argv array
     struct bu_vls ged_prefixed = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&ged_prefixed, "%s", cmd);
@@ -431,8 +423,8 @@ CADApp::run_qcmd(const QString &command)
 	if (bu_vls_strlen(&msg) > 0 && console) {
 	    console->printString(bu_vls_cstr(&msg));
 	}
-	if (view_dirty && m->gedp) {
-	    emit view_change(&m->gedp->ged_gvp);
+	if (view_dirty && mdl->gedp) {
+	    emit view_change(&mdl->gedp->ged_gvp);
 	    view_dirty = false;
 	}
     }
@@ -440,7 +432,7 @@ CADApp::run_qcmd(const QString &command)
 
     if (console) {
 	if (ret & BRLCAD_MORE) {
-	    console->prompt(bu_vls_cstr(m->gedp->ged_result_str));
+	    console->prompt(bu_vls_cstr(mdl->gedp->ged_result_str));
 	} else {
 	    console->prompt("$ ");
 	    if (history_mark_start >= 0 && history_mark_end >= 0) {
@@ -451,8 +443,8 @@ CADApp::run_qcmd(const QString &command)
 	}
     }
 
-    if (m->gedp) {
-	bu_vls_trunc(m->gedp->ged_result_str, 0);
+    if (mdl->gedp) {
+	bu_vls_trunc(mdl->gedp->ged_result_str, 0);
     }
 
     bu_free((void *)cmd, "cmd");

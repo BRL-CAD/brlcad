@@ -41,7 +41,6 @@
 #include "ged.h"
 #include "qtcad/QtCADQuad.h"
 #include "qtcad/QgDockWidget.h"
-#include "qtcad/QgSelectionProxyModel.h"
 #include "qtcad/QgTreeView.h"
 #include "qtcad/QtCADView.h"
 #include "qtcad/QtConsole.h"

@@ -64,7 +64,7 @@ QgTreeSelectionModel::illuminate(const QItemSelection &selected, const QItemSele
     // before we get to this point.  Probably what is needed is a custom
     // subclassing of QItemSelectionModel with a select that deals with these
     // ged operations.
-    QgModel *m = (QgModel *)treeview->m->sourceModel();
+    QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
     if (!gedp->ged_selection_sets)
 	return;
@@ -119,7 +119,7 @@ QgTreeSelectionModel::update_selected_node_relationships(const QModelIndex &idx)
     std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
 
     // Clear all highlighting state
-    QgModel *m = (QgModel *)treeview->m->sourceModel();
+    QgModel *m = treeview->m;
     if (!m || !m->instances)
 	return;
 

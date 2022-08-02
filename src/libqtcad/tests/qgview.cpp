@@ -32,7 +32,6 @@
 #include "../../libged/alphanum.h"
 #include  <QApplication>
 #include "qtcad/QgModel.h"
-#include "qtcad/QgSelectionProxyModel.h"
 #include "qtcad/QgTreeView.h"
 
 void
@@ -82,10 +81,7 @@ int main(int argc, char *argv[])
 
     //open_tops(s, -1);
 
-    QgSelectionProxyModel sp;
-    sp.setSourceModel(s);
-
-    QgTreeView tree(NULL, &sp);
+    QgTreeView tree(NULL, s);
     tree.setWindowTitle(argv[0]);
     tree.show();
 

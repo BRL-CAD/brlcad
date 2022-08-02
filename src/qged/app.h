@@ -38,7 +38,6 @@
 #include "bv.h"
 #include "raytrace.h"
 #include "ged.h"
-#include "qtcad/QgSelectionProxyModel.h"
 #include "qtcad/QgTreeView.h"
 
 #include "main_window.h"
@@ -60,9 +59,7 @@ class CADApp : public QApplication
 
     public:
 	CADApp(int &argc, char *argv[]) :QApplication(argc, argv) {
-	    QgModel *m = new QgModel();
-	    mdl = new QgSelectionProxyModel();
-	    mdl->setSourceModel(m);
+	    mdl = new QgModel();
 	    BU_LIST_INIT(&RTG.rtg_vlfree);
 	};
 	~CADApp() {};
@@ -75,7 +72,7 @@ class CADApp : public QApplication
 	int opendb(QString filename);
 	void closedb();
 
-	QgSelectionProxyModel *mdl = NULL;
+	QgModel *mdl = NULL;
 	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
 
 	//int prev_interaction_mode = 0;

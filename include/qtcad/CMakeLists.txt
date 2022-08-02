@@ -8,7 +8,6 @@ set(qtcad_headers
   QgDockWidget.h
   QgEdit.h
   QgModel.h
-  QgSelectionProxyModel.h
   QgTreeSelectionModel.h
   QgTreeView.h
   QgUtil.h

@@ -115,11 +115,9 @@ _cpnt_ovlp(struct application *ap, struct partition *pp, struct region *UNUSED(r
 bool
 CADViewMeasure::get_point(QMouseEvent *m_e)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return false;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return false;
@@ -260,12 +258,9 @@ CADViewMeasure::update_color()
 {
     if (!s)
 	return;
-
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return;
@@ -292,11 +287,9 @@ CADViewMeasure::adjust_text_db(void *)
 void
 CADViewMeasure::adjust_text()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return;
@@ -335,11 +328,9 @@ CADViewMeasure::adjust_text()
 bool
 CADViewMeasure::eventFilter(QObject *, QEvent *e)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return false;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return false;

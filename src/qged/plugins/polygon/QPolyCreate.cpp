@@ -150,11 +150,9 @@ QPolyCreate::~QPolyCreate()
 void
 QPolyCreate::finalize(bool)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl || !p)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m || !p)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -289,11 +287,9 @@ QPolyCreate::finalize(bool)
 void
 QPolyCreate::do_vpoly_copy()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -363,11 +359,9 @@ QPolyCreate::do_vpoly_copy()
 void
 QPolyCreate::do_import_sketch()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -443,11 +437,9 @@ QPolyCreate::sketch_sync_str(const QString &)
 void
 QPolyCreate::sketch_sync()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp) {
 	ps->sketch_name->setPlaceholderText("No .g file open");
@@ -505,11 +497,9 @@ QPolyCreate::view_sync_str(const QString &)
 void
 QPolyCreate::view_sync()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -542,11 +532,9 @@ void
 QPolyCreate::toplevel_config(bool)
 {
     // Initialize
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -583,11 +571,9 @@ QPolyCreate::toplevel_config(bool)
 bool
 QPolyCreate::eventFilter(QObject *, QEvent *e)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return false;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return false;

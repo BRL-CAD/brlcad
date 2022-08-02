@@ -38,7 +38,7 @@
 BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 {
     CADApp *ap = (CADApp *)qApp;
-    QgModel *m = (QgModel *)ap->mdl->sourceModel();
+    QgModel *m = ap->mdl;
     struct ged *gedp = m->gedp;
     ap->w = this;
 
@@ -403,11 +403,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     QObject::connect(treeview, &QgTreeView::clicked, stdpropmodel, &CADAttributesModel::refresh);
     QObject::connect(treeview, &QgTreeView::clicked, userpropmodel, &CADAttributesModel::refresh);
 
-    // If the database changes, we need to refresh the tree.  (Right now this is only triggered
-    // if we open a new .g file, IIRC, but it needs to happen when we've editing combs or added/
-    // removed solids too...)  TODO - do we still need this?
-    //QObject::connect(m, &QgModel::mdl_changed_db, ca->mdl, &QgSelectionProxyModel::refresh);
-
     // If the model does something that it things should trigger a view update, let the app know
     QObject::connect(m, &QgModel::view_change, ap, &CADApp::do_view_change);
 
@@ -460,7 +455,7 @@ void
 BRLCAD_MainWindow::do_dm_init()
 {
     CADApp *ap = (CADApp *)qApp;
-    QgModel *m = (QgModel *)ap->mdl->sourceModel();
+    QgModel *m = ap->mdl;
     struct ged *gedp = m->gedp;
 
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);

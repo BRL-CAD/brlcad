@@ -181,11 +181,10 @@ int CADAttributesModel::update(struct db_i *new_dbip, struct directory *new_dp)
 void
 CADAttributesModel::refresh(const QModelIndex &idx)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
 
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;

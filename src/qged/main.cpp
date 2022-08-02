@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
     // until now in order to have the display related containers from graphical
     // initialization available - the GED structure will need to know about some
     // of them to have drawing commands connect properly to the 3D displays.
-    QgModel *m = (QgModel *)app.mdl->sourceModel();
+    QgModel *m = app.mdl;
     if (argc) {
 	int ac = 2;
 	const char *av[3];

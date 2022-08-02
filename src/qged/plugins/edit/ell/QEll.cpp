@@ -93,10 +93,9 @@ QEll::~QEll()
 void
 QEll::read_from_db()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -128,11 +127,9 @@ QEll::write_to_db()
 {
     if (!bu_vls_strlen(&oname))
 	return;
-
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -169,10 +166,9 @@ QEll::write_to_db()
 void
 QEll::update_obj_wireframe()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -224,10 +220,9 @@ QEll::update_obj_wireframe()
 void
 QEll::update_viewobj_name(const QString &)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
