@@ -63,6 +63,9 @@ class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel
 	int interaction_mode = 0;
 
 	QgTreeView *treeview;
+
+    private:
+	bool do_ged = false;
 };
 
 #endif //QGTREESELECTIONMODEL_H

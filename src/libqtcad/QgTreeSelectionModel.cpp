@@ -33,6 +33,17 @@
 void
 QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags)
 {
+    QgModel *m = treeview->m;
+    struct ged *gedp = m->gedp;
+    struct ged_selection_set *gs = NULL;
+    if (gedp->ged_selection_sets) {
+	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
+	if (scnt == 1)
+	    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
+	bu_ptbl_free(&ssets);
+    }
+
     if (!(flags & QItemSelectionModel::Deselect)) {
 	QModelIndexList dl = selection.indexes();
 	std::queue<QgItem *> to_process;
@@ -67,13 +78,57 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 	    QModelIndex pind = itm->ctx->NodeIndex(itm);
 	    select(pind, QItemSelectionModel::Deselect);
 	}
+
+	if (gs) {
+	    for (long int i = 0; i < dl.size(); i++) {
+		QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
+		struct bu_vls tpath = BU_VLS_INIT_ZERO;
+		QString nstr = snode->toString();
+		bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+		std::cout << "ged insert: " << bu_vls_cstr(&tpath) << "\n";
+		ged_selection_insert(gs, bu_vls_cstr(&tpath));
+		bu_vls_free(&tpath);
+	    }
+	}
+
+    } else {
+
+	QModelIndexList dl = selection.indexes();
+	std::queue<QgItem *> to_process;
+	for (long int i = 0; i < dl.size(); i++) {
+	    QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
+	    QString nstr = snode->toString();
+	    if (nstr != QString()) {
+		struct bu_vls tpath = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+		std::cout << "ged remove: " << bu_vls_cstr(&tpath) << "\n";
+		ged_selection_remove(gs, bu_vls_cstr(&tpath));
+		bu_vls_free(&tpath);
+	    }
+	}
     }
+
     QItemSelectionModel::select(selection, flags);
 }
 
 void
 QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags)
 {
+    // Initially thought both select callbacks would have to operate on ged -
+    // so far it looks like that's not the case, but leaving this here in case
+    // a scenario crops where it's needed.
+#if 0
+    QgModel *m = treeview->m;
+    struct ged *gedp = m->gedp;
+    struct ged_selection_set *gs = NULL;
+    if (gedp->ged_selection_sets) {
+	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
+	if (scnt == 1)
+	    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
+	bu_ptbl_free(&ssets);
+    }
+#endif
     if (!(flags & QItemSelectionModel::Deselect)) {
 	std::queue<QgItem *> to_process;
 	QgItem *snode = static_cast<QgItem *>(index.internalPointer());
@@ -105,6 +160,29 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 	    QModelIndex pind = itm->ctx->NodeIndex(itm);
 	    select(pind, QItemSelectionModel::Deselect);
 	}
+#if 0
+	if (gs) {
+	    struct bu_vls tpath = BU_VLS_INIT_ZERO;
+	    QString nstr = snode->toString();
+	    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+	    std::cout << "index ged insert: " << bu_vls_cstr(&tpath) << "\n";
+	    ged_selection_insert(gs, bu_vls_cstr(&tpath));
+	    bu_vls_free(&tpath);
+	}
+    } else {
+	if (gs) {
+	    QgItem *snode = static_cast<QgItem *>(index.internalPointer());
+	    QString nstr = snode->toString();
+	    if (nstr != QString()) {
+		struct bu_vls tpath = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+		std::cout << "index ged remove: " << bu_vls_cstr(&tpath) << "\n";
+		ged_selection_remove(gs, bu_vls_cstr(&tpath));
+		bu_vls_free(&tpath);
+	    }
+	}
+#endif
+
     }
 
     QItemSelectionModel::select(index, flags);
@@ -125,13 +203,13 @@ QgTreeSelectionModel::illuminate(const QItemSelection &selected, const QItemSele
     // Probably not possible?
     if (!selected.size() && !deselected.size())
 	return;
-
     // TODO - The GED syncing and selected path calculations need to happen
     // before we get to this point.  Probably what is needed is a custom
     // subclassing of QItemSelectionModel with a select that deals with these
     // ged operations.
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
+#if 0
     if (!gedp->ged_selection_sets)
 	return;
     struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
@@ -163,7 +241,7 @@ QgTreeSelectionModel::illuminate(const QItemSelection &selected, const QItemSele
 	ged_selection_insert(gs, bu_vls_cstr(&tpath));
     }
     std::cout << "TODO: update any illumination flags that need setting on already drawn objects\n";
-
+#endif
     emit m->view_change(&gedp->ged_gvp);
 }
 
