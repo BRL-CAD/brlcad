@@ -296,26 +296,6 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}")
 
 std_build_rpath()
 
-
-#---------------------------------------------------------------------
-# We need compiler support for certain C and C++ standards when we
-# build.  Set CMake's flags accordingly for what source code syntax
-# (i.e., -std=xxx flags) and API (i.e., -D_POSIX_C_SOURCE defines) to
-# permit and utilize respectively.  Common profiles:
-#
-#   2011-2016: C11 & C++11 (ignoring C++14, target: 2013)
-#     ISO/IEC 9899:2011 __STDC_VERSION__==201112L
-#     ISO/IEC 14882:2011 __cplusplus==201103L
-#     IEEE 1003.1-2008 -D_POSIX_C_SOURCE=200809L
-#     Open Group Single UNIX Specification, Version 4 (2008+) -D_XOPEN_SOURCE=700
-#   2017-2020: C11 & C++17 (target: 2019)
-#     ISO/IEC 9899:2011 __STDC_VERSION__==201112L
-#     ISO/IEC 14882:2017 __cplusplus==201703L
-#     IEEE 1003.1-2008 -D_POSIX_C_SOURCE=200809L
-#     Open Group Single UNIX Specification, Version 4 (2008+) -D_XOPEN_SOURCE=700
-#
-# Sources: https://sourceforge.net/p/predef/wiki/Standards/
-
 # For certain platforms (in particular Visual C++) we want to keep some pre-defined
 # flags that are commonly used in the build logic.
 if(NOT DEFINED CMAKE_C_FLAGS_DEFAULT)
@@ -356,6 +336,30 @@ endfunction(BRLCAD_API_FLAG)
 set(API_FLAGS)
 BRLCAD_API_FLAG("-D_POSIX_C_SOURCE=200809L" API_FLAGS)
 BRLCAD_API_FLAG("-D_XOPEN_SOURCE=700" API_FLAGS)
+
+#---------------------------------------------------------------------
+# We need compiler support for certain C and C++ standards when we
+# build.  Set CMake's flags accordingly for what source code syntax
+# (i.e., -std=xxx flags) and API (i.e., -D_POSIX_C_SOURCE defines) to
+# permit and utilize respectively.  Common profiles:
+#
+#   2011-2016: C11 & C++11 (reliably targets: 2013)
+#     ISO/IEC 9899:2011 __STDC_VERSION__==201112L
+#     ISO/IEC 14882:2011 __cplusplus==201103L
+#     IEEE 1003.1-2008 -D_POSIX_C_SOURCE=200809L
+#     Open Group Single UNIX Specification, Version 4 (2008+) -D_XOPEN_SOURCE=700
+#   2014-2017: C11 & C++14 (reliably targets: 2016)
+#     ISO/IEC 9899:2011 __STDC_VERSION__==201112L
+#     ISO/IEC 14882:2014 __cplusplus==201402L
+#     IEEE 1003.1-2008 -D_POSIX_C_SOURCE=200809L
+#     Open Group Single UNIX Specification, Version 4 (2008+) -D_XOPEN_SOURCE=700
+#   2017-2020: C11 & C++17 (reliably targets: 2019)
+#     ISO/IEC 9899:2011 __STDC_VERSION__==201112L
+#     ISO/IEC 14882:2017 __cplusplus==201703L
+#     IEEE 1003.1-2008 -D_POSIX_C_SOURCE=200809L
+#     Open Group Single UNIX Specification, Version 4 (2008+) -D_XOPEN_SOURCE=700
+#
+# Sources: https://sourceforge.net/p/predef/wiki/Standards/
 
 # C
 unset(C_STANDARD_FLAGS)
