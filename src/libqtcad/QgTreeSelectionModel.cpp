@@ -33,14 +33,80 @@
 void
 QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags)
 {
-    bu_log("select QItemSelection\n");
+    if (!(flags & QItemSelectionModel::Deselect)) {
+	QModelIndexList dl = selection.indexes();
+	std::queue<QgItem *> to_process;
+	for (long int i = 0; i < dl.size(); i++) {
+	    QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
+	    QgItem *pnode = snode->parent();
+	    while (pnode) {
+		QString nstr = pnode->toString();
+		if (nstr == QString())
+		    break;
+		to_process.push(pnode);
+		pnode = pnode->parent();
+	    }
+
+	    std::queue<QgItem *> get_children;
+	    if (snode->children.size()) {
+		get_children.push(snode);
+	    }
+	    while (!get_children.empty()) {
+		QgItem *cnode = get_children.front();
+		get_children.pop();
+		for (size_t j = 0; j < cnode->children.size(); j++) {
+		    QgItem *ccnode = cnode->children[j];
+		    get_children.push(ccnode);
+		    to_process.push(ccnode);
+		}
+	    }
+	}
+	while (!to_process.empty()) {
+	    QgItem *itm = to_process.front();
+	    to_process.pop();
+	    QModelIndex pind = itm->ctx->NodeIndex(itm);
+	    select(pind, QItemSelectionModel::Deselect);
+	}
+    }
     QItemSelectionModel::select(selection, flags);
 }
 
 void
 QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags)
 {
-    bu_log("select QModelIndex\n");
+    if (!(flags & QItemSelectionModel::Deselect)) {
+	std::queue<QgItem *> to_process;
+	QgItem *snode = static_cast<QgItem *>(index.internalPointer());
+	QgItem *pnode = snode->parent();
+	while (pnode) {
+	    QString nstr = pnode->toString();
+	    if (nstr == QString())
+		break;
+	    to_process.push(pnode);
+	    pnode = pnode->parent();
+	}
+
+	std::queue<QgItem *> get_children;
+	if (snode->children.size()) {
+	    get_children.push(snode);
+	}
+	while (!get_children.empty()) {
+	    QgItem *cnode = get_children.front();
+	    get_children.pop();
+	    for (size_t j = 0; j < cnode->children.size(); j++) {
+		QgItem *ccnode = cnode->children[j];
+		get_children.push(ccnode);
+		to_process.push(ccnode);
+	    }
+	}
+	while (!to_process.empty()) {
+	    QgItem *itm = to_process.front();
+	    to_process.pop();
+	    QModelIndex pind = itm->ctx->NodeIndex(itm);
+	    select(pind, QItemSelectionModel::Deselect);
+	}
+    }
+
     QItemSelectionModel::select(index, flags);
 }
 

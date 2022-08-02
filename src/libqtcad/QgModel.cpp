@@ -224,6 +224,8 @@ QgItem::fp()
 	path_items.push_back(citem);
     }
     std::reverse(path_items.begin(), path_items.end());
+    if (!path_items[0]->instance())
+	return NULL;
     struct db_full_path *ifp;
     BU_GET(ifp, struct db_full_path);
     db_full_path_init(ifp);
@@ -247,6 +249,8 @@ QgItem::toString()
     }
     std::reverse(path_items.begin(), path_items.end());
     struct db_full_path *ifp = fp();
+    if (!ifp)
+	return QString();
     struct bu_vls fpstr = BU_VLS_INIT_ZERO;
     db_path_to_vls(&fpstr, ifp);
     QString fpqstr(bu_vls_cstr(&fpstr));
