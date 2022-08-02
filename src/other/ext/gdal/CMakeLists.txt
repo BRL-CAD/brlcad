@@ -158,10 +158,10 @@ int main() {
      std::cout << \"0.0 is nan\";
   return 0;
 }")
-check_cxx_source_runs("${isnan_src}" HAVE_ISNAN)
-if(HAVE_ISNAN)
+check_cxx_source_runs("${isnan_src}" HAVE_STD_IS_NAN)
+if(HAVE_STD_IS_NAN)
   add_definitions(-DHAVE_STD_IS_NAN)
-endif(HAVE_ISNAN)
+endif(HAVE_STD_IS_NAN)
 
 
 if(MSVC)
