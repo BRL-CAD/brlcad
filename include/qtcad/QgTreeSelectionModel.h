@@ -27,6 +27,7 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <QAbstractItemModel>
 #include <QItemSelectionModel>
 #include <QModelIndex>
 
@@ -41,8 +42,8 @@ class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel
 {
     public:
 
-	QgSelectionProxyModel(QAbstractItemModel *model, QObject* parent): QItemSelectionModel(model, parent) {}
-	QgSelectionProxyModel(QAbstractItemModel *model = nullptr): QItemSelectionModel(model) {}
+	QgTreeSelectionModel(QAbstractItemModel *model, QObject* parent): QItemSelectionModel(model, parent) {}
+	QgTreeSelectionModel(QAbstractItemModel *model = nullptr): QItemSelectionModel(model) {}
 
 	// There are a number of relationships which can be used for related
 	// node highlighting - this allows a client application to select one.

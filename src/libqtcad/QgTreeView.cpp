@@ -34,6 +34,7 @@
 #include <QUrl>
 #include "qtcad/QgModel.h"
 #include "qtcad/QgSelectionProxyModel.h"
+#include "qtcad/QgTreeSelectionModel.h"
 #include "qtcad/QgTreeView.h"
 
 void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
@@ -128,12 +129,15 @@ QgTreeView::QgTreeView(QWidget *pparent, QgSelectionProxyModel *treemodel) : QTr
     // the left of the text and icon.
     setExpandsOnDoubleClick(false);
 
+    // Set model
+    m = treemodel;
+    setModel(treemodel);
+
+    // Set custom selection model
+    QgTreeSelectionModel *sm = new QgTreeSelectionModel(treemodel, this);
+    this->setSelectionModel(sm);
     // Allow for multiple selection
     this->setSelectionMode(ExtendedSelection);
-
-    m = treemodel;
-
-    setModel(treemodel);
 
     setItemDelegate(new gObjDelegate(this));
 
