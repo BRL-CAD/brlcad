@@ -34,6 +34,7 @@
 
 #include "qtcad/defines.h"
 #include "qtcad/QgModel.h"
+#include "qtcad/QgTreeView.h"
 
 #define QgViewMode 0
 #define QgInstanceEditMode 1
@@ -45,17 +46,23 @@ class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel
 
     public:
 
-	QgTreeSelectionModel(QAbstractItemModel *model, QObject* parent): QItemSelectionModel(model, parent) {}
-	QgTreeSelectionModel(QAbstractItemModel *model = nullptr): QItemSelectionModel(model) {}
+	QgTreeSelectionModel(QAbstractItemModel *model, QObject* parent, QgTreeView *tv): QItemSelectionModel(model, parent) {treeview = tv;}
+	QgTreeSelectionModel(QAbstractItemModel *model = nullptr, QgTreeView *tv = nullptr): QItemSelectionModel(model) {treeview = tv;}
 
     public slots:
 	void select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags) override;
         void select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags) override;
+	void mode_change(int i);
+	void update_selected_node_relationships(const QModelIndex & index);
+	void illuminate(const QItemSelection &selected, const QItemSelection &deselected);
+
 
     public:
 	// There are a number of relationships which can be used for related
 	// node highlighting - this allows a client application to select one.
 	int interaction_mode = 0;
+
+	QgTreeView *treeview;
 };
 
 #endif //QGTREESELECTIONMODEL_H

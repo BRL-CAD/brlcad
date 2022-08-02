@@ -39,26 +39,11 @@
 
 class QgTreeView;
 
-#define QgViewMode 0
-#define QgInstanceEditMode 1
-#define QgPrimitiveEditMode 2
-
 class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
 {
     public:
 
 	QgSelectionProxyModel(QObject* parent = 0): QIdentityProxyModel(parent) {}
-
-	QgTreeView *treeview = NULL;
-
-	// There are a number of relationships which can be used for related
-	// node highlighting - this allows a client application to select one.
-	int interaction_mode = 0;
-
-    public slots:
-	void mode_change(int i);
-        void update_selected_node_relationships(const QModelIndex & index);
-	void illuminate(const QItemSelection &selected, const QItemSelection &deselected);
 };
 
 #endif //QGSELECTIONMODEL_H

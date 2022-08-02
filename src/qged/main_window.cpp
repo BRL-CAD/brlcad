@@ -27,6 +27,7 @@
 #include <set>
 #include <QTimer>
 #include "qtcad/QViewCtrl.h"
+#include "qtcad/QgTreeSelectionModel.h"
 #include "bu/str.h"
 #include "main_window.h"
 #include "app.h"
@@ -355,11 +356,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     treeview = new QgTreeView(tree_dock, ca->mdl);
     tree_dock->setWidget(treeview);
     tree_dock->m = m;
+    ap->treeview = treeview;
     connect(tree_dock, &QgDockWidget::banner_click, m, &QgModel::toggle_hierarchy);
     connect(vm_topview, &QAction::triggered, m, &QgModel::toggle_hierarchy);
-
-    // Tell the selection model we have a tree view
-    ca->mdl->treeview = treeview;
 
     // We need to record the expanded/contracted state of the tree items,
     // and restore them after a model reset
@@ -375,8 +374,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // panels for the two modes.  That's looking like it may be overkill, so
     // the interaction mode of oc may need to change for the specific comb case
     // of editing an instance in the comb tree.
-    connect(vc, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
-    connect(oc, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
+    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)treeview->selectionModel();
+    connect(vc, &CADPalette::interaction_mode, selm, &QgTreeSelectionModel::mode_change);
+    connect(oc, &CADPalette::interaction_mode, selm, &QgTreeSelectionModel::mode_change);
 
 
     // Dialogues for attribute viewing (and eventually manipulation)

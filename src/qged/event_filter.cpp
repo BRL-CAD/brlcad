@@ -29,6 +29,7 @@
 #include <QMouseEvent>
 #include "app.h"
 #include "event_filter.h"
+#include "qtcad/QgTreeSelectionModel.h"
 
 /* We base conditionals on whether the target widget w is active.  Usually the
  * actual focus widget is a child of the widget in question, so we walk up the
@@ -85,7 +86,7 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
 	return false;
     }
     QMouseEvent *m_e = (QMouseEvent *)e;
-    QgSelectionProxyModel *pm = c->mdl;
+    QgTreeSelectionModel *tvsm = (QgTreeSelectionModel *)c->treeview->selectionModel();
     QWidget *vcp = c->w->vc->tpalette;
 #ifdef USE_QT6
     QPoint gpos = m_e->globalPosition().toPoint();
@@ -95,8 +96,8 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
     if (vcp) {
 	QRect lrect = vcp->geometry();
 	QPoint mpos = vcp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos) && pm->interaction_mode != 0) {
-	    pm->mode_change(0);
+	if (lrect.contains(mpos) && tvsm->interaction_mode != 0) {
+	    tvsm->mode_change(0);
 	    QTimer::singleShot(0, c, &CADApp::tree_update);
 	    return false;
 	}
@@ -105,8 +106,8 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
     if (ocp) {
 	QRect lrect = ocp->geometry();
 	QPoint mpos = ocp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos) && pm->interaction_mode != 2) {
-	    pm->mode_change(2);
+	if (lrect.contains(mpos) && tvsm->interaction_mode != 2) {
+	    tvsm->mode_change(2);
 	    QTimer::singleShot(0, c, &CADApp::tree_update);
 	    return false;
 	}

@@ -144,7 +144,7 @@ QgTreeView::QgTreeView(QWidget *pparent, QgSelectionProxyModel *treemodel) : QTr
     setModel(treemodel);
 
     // Set custom selection model
-    QgTreeSelectionModel *sm = new QgTreeSelectionModel(treemodel, this);
+    QgTreeSelectionModel *sm = new QgTreeSelectionModel(treemodel, this, this);
     this->setSelectionModel(sm);
     // Allow for multiple selection
     this->setSelectionMode(ExtendedSelection);
@@ -155,8 +155,8 @@ QgTreeView::QgTreeView(QWidget *pparent, QgSelectionProxyModel *treemodel) : QTr
     header()->setStretchLastSection(true);
     QObject::connect(this, &QgTreeView::expanded, this, &QgTreeView::tree_column_size);
     QObject::connect(this, &QgTreeView::collapsed, this, &QgTreeView::tree_column_size);
-    QObject::connect(this->selectionModel(), &QItemSelectionModel::selectionChanged, treemodel, &QgSelectionProxyModel::illuminate);
-    QObject::connect(this, &QgTreeView::clicked, treemodel, &QgSelectionProxyModel::update_selected_node_relationships);
+    QObject::connect(this->selectionModel(), &QItemSelectionModel::selectionChanged, sm, &QgTreeSelectionModel::illuminate);
+    QObject::connect(this, &QgTreeView::clicked, sm, &QgTreeSelectionModel::update_selected_node_relationships);
     QObject::connect(this, &QgTreeView::customContextMenuRequested, (QgTreeView *)this, &QgTreeView::context_menu);
     QObject::connect(this, &QgTreeView::doubleClicked, (QgTreeView *)this, &QgTreeView::do_draw_toggle);
 }
@@ -340,7 +340,8 @@ QgTreeView::redo_highlights()
 	}
     }
 
-    view_model->update_selected_node_relationships(selected_idx);
+    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
+    selm->update_selected_node_relationships(selected_idx);
 }
 
 void QgTreeView::expand_path(QString path)

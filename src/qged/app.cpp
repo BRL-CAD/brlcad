@@ -32,6 +32,7 @@
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "qtcad/QtAppExecDialog.h"
+#include "qtcad/QgTreeSelectionModel.h"
 #include "app.h"
 #include "fbserv.h"
 
@@ -122,7 +123,9 @@ CADApp::tree_update()
     CADPalette *v = NULL;
     CADPalette *vc = w->vc;
     CADPalette *oc = w->oc;
-    switch (mdl->interaction_mode) {
+    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)treeview->selectionModel();
+
+    switch (selm->interaction_mode) {
 	case 0:
 	    v = vc;
 	    break;

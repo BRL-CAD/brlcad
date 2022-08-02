@@ -39,6 +39,7 @@
 #include "raytrace.h"
 #include "ged.h"
 #include "qtcad/QgSelectionProxyModel.h"
+#include "qtcad/QgTreeView.h"
 
 #include "main_window.h"
 
@@ -130,6 +131,7 @@ class CADApp : public QApplication
     public:
 	BRLCAD_MainWindow *w = NULL;
 	QtCADView *curr_view = NULL;
+	QgTreeView *treeview = NULL;
 	QString db_filename;
 	struct bu_vls init_msgs = BU_VLS_INIT_ZERO;
 
