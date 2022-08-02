@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,10 +18,6 @@
  * information.
  */
 
-/** @ingroup parallel */
-/** @{ */
-/** @file include/bu/parallel.h */
-/** @} */
 #ifndef BU_PARALLEL_H
 #define BU_PARALLEL_H
 
@@ -33,7 +29,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup bu_thread
+/** @addtogroup bu_parallel
  * @brief
  * Thread based parallelism routines.
  */

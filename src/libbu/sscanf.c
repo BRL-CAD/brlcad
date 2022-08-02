@@ -1,7 +1,7 @@
 /*                        S S C A N F . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2020 United States Government as represented by
+ * Copyright (c) 2012-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright (c) 1990, 1993 The Regents of the University of California.
@@ -48,6 +48,7 @@
 #include <string.h>
 
 #include "bu/defines.h"
+#include "bu/assert.h"
 #include "bu/vls.h"
 #include "bu/log.h"
 

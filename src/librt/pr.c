@@ -1,7 +1,7 @@
 /*                            P R . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -687,7 +687,7 @@ rt_pr_bit_tree(const struct bit_tree *btp, int idx, int lvl)
 #endif
 
 void
-rt_pr_fallback_angle(struct bu_vls *str, const char *prefix, const double *angles)
+rt_pr_fallback_angle(struct bu_vls *str, const char *prefix, const double angles[5])
 {
     BU_CK_VLS(str);
 
@@ -703,7 +703,7 @@ rt_pr_fallback_angle(struct bu_vls *str, const char *prefix, const double *angle
  * In degrees.
  */
 void
-rt_find_fallback_angle(double *angles, const fastf_t *vec)
+rt_find_fallback_angle(double angles[5], const vect_t vec)
 {
     register double f;
     double asinZ;

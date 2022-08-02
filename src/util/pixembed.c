@@ -1,7 +1,7 @@
 /*                      P I X E M B E D . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2020 United States Government as represented by
+ * Copyright (c) 1992-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -103,7 +103,7 @@ get_args(int argc, char **argv)
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((buffp = fopen(file_name, "r")) == NULL) {
+	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pixembed: cannot open \"%s\" for reading\n",
 		    file_name);
@@ -126,6 +126,9 @@ main(int argc, char **argv)
     size_t y;
 
     bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
@@ -165,7 +168,8 @@ main(int argc, char **argv)
     }
 
     /* For the remaining lines, Write out duplicates of last line read */
-    for (y = 0; y < ydup; y++) write_buffer();
+    for (y = 0; y < ydup; y++)
+	write_buffer();
 
     bu_free(obuf, "obuf");
 

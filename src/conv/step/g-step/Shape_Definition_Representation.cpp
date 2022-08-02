@@ -2,7 +2,7 @@
  *
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,10 +63,11 @@ Add_Shape_Definition_Representation(struct directory *dp, AP203_Contents *sc, Sd
     SdaiProduct_definition *prod_def = (SdaiProduct_definition *)sc->registry->ObjCreate("PRODUCT_DEFINITION");
     sc->instance_list->Append((STEPentity *)prod_def, completeSE);
     SdaiCharacterized_product_definition *char_def_prod = new SdaiCharacterized_product_definition(prod_def);
-    SdaiCharacterized_definition *char_def= new SdaiCharacterized_definition(char_def_prod);
-    prod_def_shape->definition_(char_def);
+    SdaiCharacterized_definition char_def(char_def_prod);
+    prod_def_shape->definition_(&char_def);
     prod_def->id_("''");
     prod_def->description_("''");
+    delete char_def_prod;
 
     // PRODUCT_DEFINITION_FORMATION
     SdaiProduct_definition_formation *prod_def_form = (SdaiProduct_definition_formation *)sc->registry->ObjCreate("PRODUCT_DEFINITION_FORMATION");

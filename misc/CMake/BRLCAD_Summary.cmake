@@ -1,7 +1,7 @@
 #            B R L C A D _ S U M M A R Y . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2012-2020 United States Government as represented by
+# Copyright (c) 2012-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -246,28 +246,23 @@ function(BRLCAD_Summary)
   set(BRLCAD_TK_BUILD_LABEL "Compile Tk ")
   set(BRLCAD_INCRTCL_BUILD_LABEL "Compile Itcl/Itk ")
   set(BRLCAD_IWIDGETS_BUILD_LABEL "Compile Iwidgets ")
-  set(BRLCAD_TKHTML_BUILD_LABEL "Compile Tkhtml ")
-  set(BRLCAD_TKPNG_BUILD_LABEL "Compile tkpng ")
-  set(BRLCAD_TKTABLE_BUILD_LABEL "Compile Tktable ")
   set(BRLCAD_PNG_BUILD_LABEL "Compile libpng ")
   set(BRLCAD_REGEX_BUILD_LABEL "Compile libregex ")
   set(BRLCAD_ZLIB_BUILD_LABEL "Compile zlib ")
-  set(BRLCAD_UTAHRLE_BUILD_LABEL "Compile Utah Raster Toolkit ")
-  set(BRLCAD_OPENNURBS_BUILD_LABEL "Compile openNURBS ")
   set(BRLCAD_SC_BUILD_LABEL "Compile STEPcode")
   set(BRLCAD_ENABLE_X11_LABEL "X11 support (optional) ")
   set(BRLCAD_ENABLE_OPENGL_LABEL "OpenGL support (optional) ")
   set(BRLCAD_ENABLE_QT_LABEL "Qt support (optional) ")
   set(BRLCAD_ENABLE_RUNTIME_DEBUG_LABEL "Run-time debuggability (optional) ")
   set(BRLCAD_ARCH_BITSETTING_LABEL "Build 32/64-bit release ")
-  set(BRLCAD_OPTIMIZED_BUILD_LABEL "Build optimized release ")
-  set(BRLCAD_FLAGS_DEBUG_LABEL "Build debuggable release")
-  set(BRLCAD_ENABLE_PROFILING_LABEL "Build profile release ")
-  set(BRLCAD_ENABLE_SMP_LABEL "Build SMP-capable release ")
+  set(BRLCAD_OPTIMIZED_LABEL "Build with optimization ")
+  set(BRLCAD_DEBUGGING_LABEL "Build with debugging symbols ")
+  set(BRLCAD_PROFILING_LABEL "Build with performance profiling ")
+  set(BRLCAD_SMP_LABEL "Build SMP-capable release ")
   set(BUILD_STATIC_LIBS_LABEL "Build static libraries ")
   set(BUILD_SHARED_LIBS_LABEL "Build dynamic libraries ")
-  set(BRLCAD_ENABLE_COMPILER_WARNINGS_LABEL "Print verbose compilation warnings ")
-  set(BRLCAD_ENABLE_VERBOSE_PROGRESS_LABEL "Print verbose compilation progress ")
+  set(BRLCAD_WARNINGS_LABEL "Print verbose compilation warnings ")
+  set(BRLCAD_VERBOSE_LABEL "Print verbose compilation progress ")
   set(BRLCAD_INSTALL_EXAMPLE_GEOMETRY_LABEL "Install example geometry models ")
   set(BRLCAD_DOCBOOK_BUILD_LABEL "Generate extra docs ")
   set(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_LABEL "Build with strict ISO C compliance checking ")
@@ -276,8 +271,7 @@ function(BRLCAD_Summary)
 
   # Make sets to use for iteration over all report items
   set(BUILD_REPORT_ITEMS
-    TCL TK INCRTCL IWIDGETS TKHTML TKTABLE PNG REGEX ZLIB
-    UTAHRLE OPENNURBS SC)
+    TCL TK INCRTCL IWIDGETS PNG REGEX ZLIB SC)
 
   set(FEATURE_REPORT_ITEMS
     BRLCAD_ENABLE_OPENGL
@@ -287,18 +281,18 @@ function(BRLCAD_Summary)
     )
 
   set(OTHER_REPORT_ITEMS
-    BRLCAD_ARCH_BITSETTING BRLCAD_OPTIMIZED_BUILD
+    BRLCAD_ARCH_BITSETTING BRLCAD_OPTIMIZED
     BUILD_STATIC_LIBS BUILD_SHARED_LIBS
     BRLCAD_INSTALL_EXAMPLE_GEOMETRY BRLCAD_DOCBOOK_BUILD
     )
 
   if(BRLCAD_SUMMARIZE_DEV_SETTINGS)
     set(OTHER_REPORT_ITEMS ${OTHER_REPORT_ITEMS}
-      BRLCAD_FLAGS_DEBUG
-      BRLCAD_ENABLE_SMP
-      BRLCAD_ENABLE_PROFILING
-      BRLCAD_ENABLE_COMPILER_WARNINGS
-      BRLCAD_ENABLE_VERBOSE_PROGRESS
+      BRLCAD_DEBUGGING
+      BRLCAD_SMP
+      BRLCAD_PROFILING
+      BRLCAD_WARNINGS
+      BRLCAD_VERBOSE
       ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE
       ENABLE_POSIX_COMPLIANCE ENABLE_ALL_CXX_COMPILE
       )
@@ -359,18 +353,18 @@ function(BRLCAD_Summary)
 
   # Set state messages for standard components
   foreach(ITEM ${THIRD_PARTY_COMPONENT_LIST})
-    get_directory_property(BRLCAD_${ITEM}_BUILD DIRECTORY src/other DEFINITION BRLCAD_${ITEM}_BUILD)
-    get_directory_property(BRLCAD_${ITEM}_NOTFOUND DIRECTORY src/other DEFINITION BRLCAD_${ITEM}_NOTFOUND)
+    get_directory_property(BRLCAD_${ITEM}_BUILD DIRECTORY src/other/ext DEFINITION BRLCAD_${ITEM}_BUILD)
+    get_directory_property(BRLCAD_${ITEM}_NOTFOUND DIRECTORY src/other/ext DEFINITION BRLCAD_${ITEM}_NOTFOUND)
     if("${BRLCAD_${ITEM}_BUILD}" STREQUAL "OFF" AND BRLCAD_${ITEM}_NOTFOUND)
       set(BRLCAD_${ITEM}_BUILD "OFF!")
     endif("${BRLCAD_${ITEM}_BUILD}" STREQUAL "OFF" AND BRLCAD_${ITEM}_NOTFOUND)
   endforeach(ITEM ${THIRD_PARTY_COMPONENT_LIST})
 
   # IncrTcl is both ITCL and ITK - handle the various possibilities here
-  get_directory_property(BRLCAD_ITCL_BUILD DIRECTORY src/other DEFINITION	BRLCAD_ITCL_BUILD)
-  get_directory_property(BRLCAD_ITK_BUILD DIRECTORY src/other DEFINITION BRLCAD_ITK_BUILD)
-  get_directory_property(BRLCAD_ITCL_NOTFOUND DIRECTORY src/other DEFINITION BRLCAD_ITCL_NOTFOUND)
-  get_directory_property(BRLCAD_ITK_NOTFOUND DIRECTORY src/other DEFINITION BRLCAD_ITK_NOTFOUND)
+  get_directory_property(BRLCAD_ITCL_BUILD DIRECTORY src/other/ext DEFINITION	BRLCAD_ITCL_BUILD)
+  get_directory_property(BRLCAD_ITK_BUILD DIRECTORY src/other/ext DEFINITION BRLCAD_ITK_BUILD)
+  get_directory_property(BRLCAD_ITCL_NOTFOUND DIRECTORY src/other/ext DEFINITION BRLCAD_ITCL_NOTFOUND)
+  get_directory_property(BRLCAD_ITK_NOTFOUND DIRECTORY src/other/ext DEFINITION BRLCAD_ITK_NOTFOUND)
   if(BRLCAD_ITCL_BUILD AND BRLCAD_ITK_BUILD)
     set(BRLCAD_INCRTCL_BUILD ON)
   else(BRLCAD_ITCL_BUILD AND BRLCAD_ITK_BUILD)
@@ -451,7 +445,7 @@ function(BRLCAD_Summary)
 
   # In multi-configuration builds, some features are
   # set at build time instead of configure time.
-  set(MULTICONFIG_FEATURES "BRLCAD_OPTIMIZED_BUILD")
+  set(MULTICONFIG_FEATURES "BRLCAD_OPTIMIZED")
   if(CMAKE_CONFIGURATION_TYPES)
     foreach(item ${MULTICONFIG_FEATURES})
       set(${item} "Build Configuration Dependent")

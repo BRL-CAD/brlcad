@@ -1,7 +1,7 @@
 /*                      T R I M S U R F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -574,7 +574,7 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 
 	    /* if last EU is zero length, kill it */
 	    eu = BU_LIST_LAST(edgeuse, &lu->down_hd);
-	    if (bn_dist_pnt3_pnt3(eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord) < tol.dist)
+	    if (bg_dist_pnt3_pnt3(eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord) < tol.dist)
 		nmg_keu(eu);
 	    else {
 		bu_log("ERROR: composite trimming curve is not closed!\n");

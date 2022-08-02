@@ -1,7 +1,7 @@
 /*                          N I R T . H
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -100,46 +100,176 @@ struct nirt_overlap {
 };
 #define NIRT_OVERLAP_NULL ((struct nirt_overlap *)0)
 
-struct nirt_seg {
-    int type = 0;
-    point_t in;
-    fastf_t d_in;
-    point_t out;
-    fastf_t d_out;
-    fastf_t los;
-    fastf_t scaled_los;
-    std::string path_name;
-    std::string reg_name;
-    int reg_id;
-    fastf_t obliq_in;
-    fastf_t obliq_out;
-    vect_t nm_in;
-    fastf_t nm_d_in;
-    fastf_t nm_h_in;
-    fastf_t nm_v_in;
-    vect_t nm_out;
-    fastf_t nm_d_out;
-    fastf_t nm_h_out;
-    fastf_t nm_v_out;
-    std::string ov_reg1_name;
-    int ov_reg1_id;
-    std::string ov_reg2_name;
-    int ov_reg2_id;
-    std::string ov_sol_in;
-    std::string ov_sol_out;
-    fastf_t ov_los;
-    point_t ov_in;
-    fastf_t ov_d_in;
-    point_t ov_out;
-    fastf_t ov_d_out;
-    int surf_num_in;
-    int surf_num_out;
-    int claimant_count;
-    std::string claimant_list;
-    std::string claimant_listn; /* uses \n instead of space to separate claimants */
-    std::string attributes;
-    point_t gap_in;
-    fastf_t gap_los;
+class nirt_seg {
+    public:
+	int type;
+	point_t in;
+	fastf_t d_in;
+	point_t out;
+	fastf_t d_out;
+	fastf_t los;
+	fastf_t scaled_los;
+	std::string path_name;
+	std::string reg_name;
+	int reg_id;
+	fastf_t obliq_in;
+	fastf_t obliq_out;
+	vect_t nm_in;
+	fastf_t nm_d_in;
+	fastf_t nm_h_in;
+	fastf_t nm_v_in;
+	vect_t nm_out;
+	fastf_t nm_d_out;
+	fastf_t nm_h_out;
+	fastf_t nm_v_out;
+	std::string ov_reg1_name;
+	int ov_reg1_id;
+	std::string ov_reg2_name;
+	int ov_reg2_id;
+	std::string ov_sol_in;
+	std::string ov_sol_out;
+	fastf_t ov_los;
+	point_t ov_in;
+	fastf_t ov_d_in;
+	point_t ov_out;
+	fastf_t ov_d_out;
+	int surf_num_in;
+	int surf_num_out;
+	int claimant_count;
+	std::string claimant_list;
+	std::string claimant_listn; /* uses \n instead of space to separate claimants */
+	std::string attributes;
+	point_t gap_in;
+	fastf_t gap_los;
+
+	nirt_seg() {
+	    type = 0;
+	    VSETALL(in, 0.0);
+	    d_in = 0.0;
+	    VSETALL(out, 0.0);
+	    d_out = 0.0;
+	    los = 0.0;
+	    scaled_los = 0.0;
+	    path_name = std::string("");
+	    reg_name = std::string("");
+	    reg_id = 0;
+	    obliq_in = 0.0;
+	    obliq_out = 0.0;
+	    VSETALL(nm_in, 0.0);
+	    nm_d_in = 0.0;
+	    nm_h_in = 0.0;
+	    nm_v_in = 0.0;
+	    VSETALL(nm_out, 0.0);
+	    nm_d_out = 0.0;
+	    nm_h_out = 0.0;
+	    nm_v_out = 0.0;
+	    ov_reg1_name = std::string("");
+	    ov_reg1_id = 0;
+	    ov_reg2_name = std::string("");
+	    ov_reg2_id = 0;
+	    ov_sol_in = std::string("");
+	    ov_sol_out = std::string("");
+	    ov_los = 0.0;
+	    VSETALL(ov_in, 0.0);
+	    ov_d_in = 0.0;
+	    VSETALL(ov_out, 0.0);
+	    ov_d_out = 0.0;
+	    surf_num_in = 0;
+	    surf_num_out = 0;
+	    claimant_count = 0;
+	    claimant_list = std::string("");
+	    claimant_listn = std::string(""); /* uses \n instead of space to separate claimants */
+	    attributes = std::string("");
+	    VSETALL(gap_in, 0.0);
+	    gap_los = 0.0;
+	}
+
+	nirt_seg(const nirt_seg &other)
+	{
+	    type = other.type;
+	    VMOVE(in, other.in);
+	    d_in = other.d_in;
+	    VMOVE(out, other.out);
+	    d_out = other.d_out;
+	    los = other.los;
+	    scaled_los = other.scaled_los;
+	    path_name = other.path_name;
+	    reg_name = other.reg_name;
+	    reg_id = other.reg_id;
+	    obliq_in = other.obliq_in;
+	    obliq_out = other.obliq_out;
+	    VMOVE(nm_in, other.nm_in);
+	    nm_d_in = other.nm_d_in;
+	    nm_h_in = other.nm_h_in;
+	    nm_v_in = other.nm_v_in;
+	    VMOVE(nm_out, other.nm_out);
+	    nm_d_out = other.nm_d_out;
+	    nm_h_out = other.nm_h_out;
+	    nm_v_out = other.nm_v_out;
+	    ov_reg1_name = other.ov_reg1_name;
+	    ov_reg1_id = other.ov_reg1_id;
+	    ov_reg2_name = other.ov_reg2_name;
+	    ov_reg2_id = other.ov_reg2_id;
+	    ov_sol_in = other.ov_sol_in;
+	    ov_sol_out = other.ov_sol_out;
+	    ov_los = other.ov_los;
+	    VMOVE(ov_in, other.ov_in);
+	    ov_d_in = other.ov_d_in;
+	    VMOVE(ov_out, other.ov_out);
+	    ov_d_out = other.ov_d_out;
+	    surf_num_in = other.surf_num_in;
+	    surf_num_out = other.surf_num_out;
+	    claimant_count = other.claimant_count;
+	    claimant_list = other.claimant_list;
+	    claimant_listn = other.claimant_listn;
+	    attributes = other.attributes;
+	    VMOVE(gap_in, other.gap_in);
+	    gap_los = other.gap_los;
+	}
+
+	nirt_seg& operator=(const nirt_seg &other)
+	{
+	    type = other.type;
+	    VMOVE(in, other.in);
+	    d_in = other.d_in;
+	    VMOVE(out, other.out);
+	    d_out = other.d_out;
+	    los = other.los;
+	    scaled_los = other.scaled_los;
+	    path_name = other.path_name;
+	    reg_name = other.reg_name;
+	    reg_id = other.reg_id;
+	    obliq_in = other.obliq_in;
+	    obliq_out = other.obliq_out;
+	    VMOVE(nm_in, other.nm_in);
+	    nm_d_in = other.nm_d_in;
+	    nm_h_in = other.nm_h_in;
+	    nm_v_in = other.nm_v_in;
+	    VMOVE(nm_out, other.nm_out);
+	    nm_d_out = other.nm_d_out;
+	    nm_h_out = other.nm_h_out;
+	    nm_v_out = other.nm_v_out;
+	    ov_reg1_name = other.ov_reg1_name;
+	    ov_reg1_id = other.ov_reg1_id;
+	    ov_reg2_name = other.ov_reg2_name;
+	    ov_reg2_id = other.ov_reg2_id;
+	    ov_sol_in = other.ov_sol_in;
+	    ov_sol_out = other.ov_sol_out;
+	    ov_los = other.ov_los;
+	    VMOVE(ov_in, other.ov_in);
+	    ov_d_in = other.ov_d_in;
+	    VMOVE(ov_out, other.ov_out);
+	    ov_d_out = other.ov_d_out;
+	    surf_num_in = other.surf_num_in;
+	    surf_num_out = other.surf_num_out;
+	    claimant_count = other.claimant_count;
+	    claimant_list = other.claimant_list;
+	    claimant_listn = other.claimant_listn;
+	    attributes = other.attributes;
+	    VMOVE(gap_in, other.gap_in);
+	    gap_los = other.gap_los;
+	    return *this;
+	}
 };
 
 /* This record structure doesn't have to correspond exactly to the above list
@@ -154,7 +284,7 @@ struct nirt_output_record {
     fastf_t a;
     fastf_t e;
     struct nirt_overlap ovlp_list;
-    struct nirt_seg *seg;
+    nirt_seg *seg;
 };
 
 
@@ -197,7 +327,7 @@ struct nirt_state_impl {
     struct bu_vls *err;
     int err_accumulate;
     struct bu_list s_vlist; /* used by the segs vlblock */
-    struct bn_vlblock *segs;
+    struct bv_vlblock *segs;
     int plot_overlaps;
     //TODO - int segs_accumulate;
     int ret;  // return code to be returned by nirt_exec after execution
@@ -259,7 +389,7 @@ void nout(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
 void nerr(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
 void ndbg(struct nirt_state *nss, int flag, const char *fmt, ...);
 
-size_t _nirt_find_first_unescaped(std::string &s, const char *keys, int offset);
+size_t _nirt_find_first_unescaped(std::string &s, const char *keys, size_t offset);
 size_t _nirt_find_first_unquoted(std::string &ts, const char *key, size_t offset);
 void _nirt_trim_whitespace(std::string &s);
 std::vector<std::string> _nirt_string_split(std::string s);
@@ -290,7 +420,7 @@ int _nirt_raytrace_prep(struct nirt_state *nss);
 
 void _nirt_diff_create(struct nirt_state *nss);
 void _nirt_diff_destroy(struct nirt_state *nss);
-void _nirt_diff_add_seg(struct nirt_state *nss, struct nirt_seg *nseg);
+void _nirt_diff_add_seg(struct nirt_state *nss, nirt_seg *nseg);
 extern "C" int _nirt_cmd_diff(void *ns, int argc, const char *argv[]);
 
 

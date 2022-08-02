@@ -1,7 +1,7 @@
 /*                      P I X M E R G E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -140,7 +141,7 @@ get_args(int argc, char **argv)
     f1_name = argv[bu_optind++];
     if (BU_STR_EQUAL(f1_name, "-"))
 	f1 = stdin;
-    else if ((f1 = fopen(f1_name, "r")) == NULL) {
+    else if ((f1 = fopen(f1_name, "rb")) == NULL) {
 	perror(f1_name);
 	fprintf(stderr,
 		"pixmerge: cannot open \"%s\" for reading\n",
@@ -152,7 +153,7 @@ get_args(int argc, char **argv)
 	f2_name = argv[bu_optind++];
 	if (BU_STR_EQUAL(f2_name, "-"))
 	    f2 = stdin;
-	else if ((f2 = fopen(f2_name, "r")) == NULL) {
+	else if ((f2 = fopen(f2_name, "rb")) == NULL) {
 	    perror(f2_name);
 	    fprintf(stderr,
 		"pixmerge: cannot open \"%s\" for reading\n",
@@ -174,6 +175,9 @@ main(int argc, char **argv)
     size_t ret;
 
     bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
@@ -198,10 +202,10 @@ main(int argc, char **argv)
 	fprintf(stderr, " bg\n");
     }
 
-    if ((b1 = (char *)malloc(width*CHUNK)) == (char *)0 ||
-	(b2 = (char *)malloc(width*CHUNK)) == (char *)0 ||
-	(b3 = (char *)malloc(width*CHUNK)) == (char *)0) {
-	fprintf(stderr, "pixmerge:  malloc failure\n");
+    if ((b1 = (char *)bu_calloc(width,CHUNK,"b1")) == (char *)0 ||
+	(b2 = (char *)bu_calloc(width,CHUNK,"b2")) == (char *)0 ||
+	(b3 = (char *)bu_calloc(width,CHUNK,"b3")) == (char *)0) {
+	fprintf(stderr, "pixmerge:  bu_calloc failure\n");
 	bu_exit (3, NULL);
     }
 
@@ -244,8 +248,9 @@ main(int argc, char **argv)
 	     * Stated condition must hold for all input bytes
 	     * to select the foreground for output
 	     */
-	    unsigned char *ap, *bp;
-	    unsigned char *ep;		/* end ptr */
+	    unsigned char *ap = NULL;
+	    unsigned char *bp = NULL;
+	    unsigned char *ep = NULL;		/* end ptr */
 
 	    ap = cb1;
 	    if (seen_const)

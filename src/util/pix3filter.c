@@ -1,7 +1,7 @@
 /*                    P I X 3 F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -133,21 +133,21 @@ get_args(int argc, char **argv)
     }
 
     if (bu_optind + 3 <= argc) {
-	if ((oldfp = fopen(argv[bu_optind], "r")) == NULL) {
+	if ((oldfp = fopen(argv[bu_optind], "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pix3filter: cannot open \"%s\" for reading\n",
 		    argv[bu_optind]);
 	    return 0;
 	}
 
-	if ((curfp = fopen(argv[++bu_optind], "r")) == NULL) {
+	if ((curfp = fopen(argv[++bu_optind], "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pix3filter: cannot open \"%s\" for reading\n",
 		    argv[bu_optind]);
 	    return 0;
 	}
 
-	if ((newfp = fopen(argv[++bu_optind], "r")) == NULL) {
+	if ((newfp = fopen(argv[++bu_optind], "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pix3filter: cannot open \"%s\" for reading\n",
 		    argv[bu_optind]);
@@ -161,7 +161,7 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	working_name = (char *)bu_malloc(strlen(file_name)+5, "working_name");
 
-	if ((curfp = fopen(file_name, "r")) == NULL) {
+	if ((curfp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pix3filter: cannot open \"%s\" for reading\n",
 		    file_name);
@@ -183,7 +183,7 @@ get_args(int argc, char **argv)
 	}
 
 	snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber-1);
-	if ((oldfp = fopen(working_name, "r")) == NULL) {
+	if ((oldfp = fopen(working_name, "rb")) == NULL) {
 	    if (frameNumber-1 != 0) {
 		fprintf(stderr,
 			"pix3filter: cannot open \"%s\" for reading.\n",
@@ -191,7 +191,7 @@ get_args(int argc, char **argv)
 		bu_free(working_name, "free working_name");
 		return 0;
 	    }
-	    if ((oldfp = fopen(file_name, "r")) == NULL) {
+	    if ((oldfp = fopen(file_name, "rb")) == NULL) {
 		fprintf(stderr,
 			"pix3filter: cannot open \"%s\" for reading.\n",
 			file_name);
@@ -201,7 +201,7 @@ get_args(int argc, char **argv)
 	}
 
 	snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber+1);
-	if ((newfp = fopen(working_name, "r")) == NULL) {
+	if ((newfp = fopen(working_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pix3filter: cannot open \"%s\" for reading.\n",
 		    working_name);

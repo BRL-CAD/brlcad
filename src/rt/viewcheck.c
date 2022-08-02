@@ -1,7 +1,7 @@
 /*                     V I E W C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2020 United States Government as represented by
+ * Copyright (c) 1988-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 #include "./ext.h"
 

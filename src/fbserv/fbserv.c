@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -76,15 +76,15 @@
 #include "bsocket.h"
 #include "bio.h"
 
-#include "../libfb/fb_private.h" /* for _fb_disk_enable */
-
 #include "bu/app.h"
-#include "bu/malloc.h"
-#include "bu/getopt.h"
+#include "bu/color.h"
 #include "bu/exit.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/snooze.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 
@@ -109,8 +109,8 @@ struct pkg_conn *clients[MAX_CLIENTS];
 int verbose = 0;
 
 /* from server.c */
-extern const struct pkg_switch fb_server_pkg_switch[];
-extern fb *fb_server_fbp;
+extern const struct pkg_switch pkg_switch[];
+extern struct fb *fb_server_fbp;
 extern fd_set *fb_server_select_list;
 extern int *fb_server_max_fd;
 extern int fb_server_got_fb_free;       /* !0 => we have received an fb_free */
@@ -196,80 +196,6 @@ is_socket(int fd)
     return 0;
 }
 
-
-static void
-setup_socket(int fd)
-{
-    int on = 1;
-
-#ifdef SO_KEEPALIVE
-    if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0) {
-#  ifdef HAVE_SYSLOG_H
-	syslog(LOG_WARNING, "setsockopt (SO_KEEPALIVE): %s", strerror(errno));
-#  endif
-    }
-#endif
-#ifdef SO_RCVBUF
-    /* try to set our buffers up larger */
-    {
-	int m = 0;
-	int n = 0;
-	int val;
-	int size;
-
-	for (size = 256; size > 16; size /= 2) {
-	    val = size * 1024;
-	    m = setsockopt(fd, SOL_SOCKET, SO_RCVBUF,
-			   (char *)&val, sizeof(val));
-	    val = size * 1024;
-	    n = setsockopt(fd, SOL_SOCKET, SO_SNDBUF,
-			   (char *)&val, sizeof(val));
-	    if (m >= 0 && n >= 0) break;
-	}
-	if (m < 0 || n < 0) perror("fbserv setsockopt()");
-    }
-#endif
-}
-
-
-void
-new_client(struct pkg_conn *pcp)
-{
-    int i;
-
-    if (pcp == PKC_ERROR)
-	return;
-
-    for (i = MAX_CLIENTS-1; i >= 0; i--) {
-	if (clients[i] != NULL) continue;
-	/* Found an available slot */
-	clients[i] = pcp;
-	FD_SET(pcp->pkc_fd, &select_list);
-	V_MAX(max_fd, pcp->pkc_fd);
-	setup_socket(pcp->pkc_fd);
-	return;
-    }
-    fprintf(stderr, "fbserv: too many clients\n");
-    pkg_close(pcp);
-}
-
-
-void
-drop_client(int sub)
-{
-    int fd;
-
-    if (clients[sub] == PKC_NULL)
-	return;
-
-    fd = clients[sub]->pkc_fd;
-
-    FD_CLR(fd, &select_list);
-    pkg_close(clients[sub]);
-    clients[sub] = PKC_NULL;
-}
-
-
 /*
  * Communication error.  An error occurred on the PKG link.
  * It may be local, or it may be between us and the client we are serving.
@@ -277,7 +203,7 @@ drop_client(int sub)
  * Don't send one down the wire, this can cause loops.
  */
 static void
-comm_error(const char *str)
+communications_error(const char *str)
 {
 #if defined(HAVE_SYSLOG_H)
     if (use_syslog) {
@@ -292,6 +218,79 @@ comm_error(const char *str)
 	fprintf(stderr, "%s", str);
     }
 }
+
+
+static void
+fbserv_setup_socket(int fd)
+{
+    int on = 1;
+
+#if defined(SO_KEEPALIVE)
+    if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0) {
+#  ifdef HAVE_SYSLOG_H
+	syslog(LOG_WARNING, "setsockopt (SO_KEEPALIVE): %s", strerror(errno));
+#  endif
+    }
+#endif
+#if defined(SO_RCVBUF)
+    /* try to set our buffers up larger */
+    {
+	int m = -1, n = -1;
+	int val;
+	int size;
+
+	for (size = 256; size > 16; size /= 2) {
+	    val = size * 1024;
+	    m = setsockopt(fd, SOL_SOCKET, SO_RCVBUF,
+			   (char *)&val, sizeof(val));
+	    val = size * 1024;
+	    n = setsockopt(fd, SOL_SOCKET, SO_SNDBUF,
+			   (char *)&val, sizeof(val));
+	    if (m >= 0 && n >= 0) break;
+	}
+
+	if (m < 0 || n < 0)
+	    perror("setsockopt");
+    }
+#endif
+}
+
+static void
+fbserv_drop_client(int sub)
+{
+    int fd;
+
+    if (clients[sub] == PKC_NULL)
+	return;
+
+    fd = clients[sub]->pkc_fd;
+
+    FD_CLR(fd, &select_list);
+    pkg_close(clients[sub]);
+    clients[sub] = PKC_NULL;
+}
+
+static void
+fbserv_new_client(struct pkg_conn *pcp)
+{
+    int i;
+
+    if (pcp == PKC_ERROR)
+	return;
+
+    for (i = MAX_CLIENTS-1; i >= 0; i--) {
+	if (clients[i] != NULL) continue;
+	/* Found an available slot */
+	clients[i] = pcp;
+	FD_SET(pcp->pkc_fd, &select_list);
+	V_MAX(max_fd, pcp->pkc_fd);
+	fbserv_setup_socket(pcp->pkc_fd);
+	return;
+    }
+    fprintf(stderr, "fbserv: too many clients\n");
+    pkg_close(pcp);
+}
+
 
 
 /*
@@ -338,7 +337,7 @@ main_loop(void)
 
 	/* Accept any new client connections */
 	if (netfd > 0 && FD_ISSET(netfd, &infds)) {
-	    new_client(pkg_getclient(netfd, fb_server_pkg_switch, comm_error, 0));
+	    fbserv_new_client(pkg_getclient(netfd, pkg_switch, communications_error, 0));
 	    nopens++;
 	}
 
@@ -352,7 +351,7 @@ main_loop(void)
 	    if (! FD_ISSET(clients[i]->pkc_fd, &infds)) continue;
 	    if (pkg_suckin(clients[i]) <= 0) {
 		/* Probably EOF */
-		drop_client(i);
+		fbserv_drop_client(i);
 		ncloses++;
 		continue;
 	    }
@@ -417,7 +416,7 @@ main(int argc, char **argv)
     netfd = 0;
     if (is_socket(netfd)) {
 	init_syslog();
-	new_client(pkg_transerver(fb_server_pkg_switch, comm_error));
+	fbserv_new_client(pkg_transerver(pkg_switch, communications_error));
 	max_fd = 8;
 	once_only = 1;
 	main_loop();
@@ -450,7 +449,7 @@ main(int argc, char **argv)
 	/*
 	 * Hang an unending listen for PKG connections
 	 */
-	if ((netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0)
+	if ((netfd = pkg_permserver(portname, 0, 0, communications_error)) < 0)
 	    bu_exit(-1, NULL);
 	FD_SET(netfd, &select_list);
 	V_MAX(max_fd, netfd);
@@ -473,13 +472,13 @@ main(int argc, char **argv)
     }
 
     init_syslog();
-    while ((netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0) {
+    while ((netfd = pkg_permserver(portname, 0, 0, communications_error)) < 0) {
 	static int error_count=0;
 	bu_snooze(BU_SEC2USEC(1));
 	if (error_count++ < 60) {
 	    continue;
 	}
-	comm_error("Unable to start the stand-alone framebuffer daemon after 60 seconds, giving up.");
+	communications_error("Unable to start the stand-alone framebuffer daemon after 60 seconds, giving up.");
 	return 1;
     }
 
@@ -487,7 +486,7 @@ main(int argc, char **argv)
 	int fbstat;
 	struct pkg_conn *pcp;
 
-	pcp = pkg_getclient(netfd, fb_server_pkg_switch, comm_error, 0);
+	pcp = pkg_getclient(netfd, pkg_switch, communications_error, 0);
 	if (pcp == PKC_ERROR)
 	    break;		/* continue is unlikely to work */
 
@@ -498,7 +497,7 @@ main(int argc, char **argv)
 	    /* Create 2nd level child process, "double detach" */
 	    if (fork() == 0) {
 		/* 2nd level child -- start work! */
-		new_client(pcp);
+		fbserv_new_client(pcp);
 		once_only = 1;
 		main_loop();
 		return 0;
@@ -517,7 +516,6 @@ main(int argc, char **argv)
 
     return 2;
 }
-
 
 #ifndef _WIN32
 /*
@@ -548,8 +546,8 @@ fb_log(const char *fmt, ...)
     for (i = MAX_CLIENTS-1; i >= 0; i--) {
 	if (clients[i] == NULL) continue;
 	if (pkg_send(MSG_ERROR, outbuf, want, clients[i]) != want) {
-	    comm_error("pkg_send error in fb_log, message was:\n");
-	    comm_error(outbuf);
+	    communications_error("pkg_send error in fb_log, message was:\n");
+	    communications_error(outbuf);
 	} else {
 	    nsent++;
 	}

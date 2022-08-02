@@ -1,7 +1,7 @@
 /*                     O S L O _ C A L C . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -79,7 +79,7 @@ nmg_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv
 
     mu = 0;				/* initialize mu */
 
-    head = (struct oslo_mat *) nmg_malloc (
+    head = (struct oslo_mat *) bu_malloc (
 	sizeof(struct oslo_mat),
 	"nmg_nurb_calc_oslo: oslo mat head");
 
@@ -89,7 +89,7 @@ nmg_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv
 	register int i;
 
 	if (j != 0) {
-	    new_o = (struct oslo_mat *) nmg_malloc (
+	    new_o = (struct oslo_mat *) bu_malloc (
 		sizeof(struct oslo_mat),
 		"nmg_nurb_calc_oslo: oslo mat struct");
 
@@ -167,7 +167,7 @@ nmg_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv
 	    }
 	}
 
-	o_ptr->o_vec = (fastf_t *) nmg_malloc (sizeof(fastf_t) * (v+1),
+	o_ptr->o_vec = (fastf_t *) bu_malloc (sizeof(fastf_t) * (v+1),
 					      "nmg_nurb_calc_oslo: oslo vector");
 
 	o_ptr->offset = AMAX(muprim -v, 0);
@@ -216,8 +216,8 @@ nmg_nurb_free_oslo(struct oslo_mat *om)
     while (om != (struct oslo_mat *) 0) {
 	omp = om;
 	om = om->next;
-	nmg_free((char *)omp->o_vec, "nmg_nurb_free_oslo: ovec");
-	nmg_free((char *)omp, "nmg_nurb_free_oslo: struct oslo");
+	bu_free((char *)omp->o_vec, "nmg_nurb_free_oslo: ovec");
+	bu_free((char *)omp, "nmg_nurb_free_oslo: struct oslo");
     }
 }
 

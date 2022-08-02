@@ -1,7 +1,7 @@
 /*                           R E C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -204,9 +204,12 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
-    mag_h = sqrt(magsq_h = MAGSQ(tip->h));
-    mag_a = sqrt(magsq_a = MAGSQ(tip->a));
-    mag_b = sqrt(magsq_b = MAGSQ(tip->b));
+    magsq_h = MAGSQ(tip->h);
+    magsq_a = MAGSQ(tip->a);
+    magsq_b = MAGSQ(tip->b);
+    mag_h = sqrt(magsq_h);
+    mag_a = sqrt(magsq_a);
+    mag_b = sqrt(magsq_b);
     magsq_c = MAGSQ(tip->c);
     magsq_d = MAGSQ(tip->d);
 
@@ -615,23 +618,18 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	       hits[1].hit_dist,
 	       hits[2].hit_dist,
 	       hits[3].hit_dist);
-	/* count just the first two hits, to have something */
-	nhits-=2;
     } else if (nhits > 2) {
 	bu_log("rt_rec_shot(%s): %d unique hits?!?  %g, %g, %g\n",
 	       stp->st_name, nhits,
 	       hits[0].hit_dist,
 	       hits[1].hit_dist,
 	       hits[2].hit_dist);
-	/* count just the first two hits, to have something */
-	nhits--;
     } else if (nhits == 1) {
 	/* Ray is probably tangent to body of cylinder or a single hit
 	 * on only an end plate.  This could be considered a MISS, but
 	 * to signal the condition, return 0-thickness hit.
 	 */
 	hits[1] = hits[0]; /* struct copy */
-	nhits++; /* replicate [0] to [1] */
     }
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
@@ -675,7 +673,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     vect_t pprime;		/* P' */
     fastf_t k1, k2;		/* distance constants of solution */
     vect_t xlated;		/* translated vector */
-    struct hit hits[3];	/* 4 potential hit points */
+    struct hit hits[4] = {RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO};	/* 4 potential hit points */
     struct hit *hitp;	/* pointer to hit point */
     fastf_t b;		/* coeff of polynomial */
     fastf_t root;		/* root of radical */

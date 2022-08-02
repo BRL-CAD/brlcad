@@ -1,7 +1,7 @@
 /*               O P E N N U R B S _ E X T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@
 /// another arbitrary calculation tolerance (need to try VDIVIDE_TOL or VUNITIZE_TOL to tighten the bounds)
 #define TOL2 0.00001
 
-void
+int
 brep_get_plane_ray(const ON_Ray& r, plane_ray& pr)
 {
     vect_t v1;
@@ -71,6 +71,10 @@ brep_get_plane_ray(const ON_Ray& r, plane_ray& pr)
 	    index = i;
 	}
     }
+    if (index == -1) {
+	bu_log("brep_get_plane_ray: error finding smallest component\n");
+	return -1;
+    }
     v1[index] += 1; // alter the smallest component
     VCROSS(pr.n1, v1, r.m_dir); // n1 is perpendicular to v1
     VUNITIZE(pr.n1);
@@ -79,6 +83,7 @@ brep_get_plane_ray(const ON_Ray& r, plane_ray& pr)
     pr.d1 = VDOT(pr.n1, r.m_origin);
     pr.d2 = VDOT(pr.n2, r.m_origin);
     TRACE1("n1:" << ON_PRINT3(pr.n1) << " n2:" << ON_PRINT3(pr.n2) << " d1:" << pr.d1 << " d2:" << pr.d2);
+    return 0;
 }
 
 
@@ -368,7 +373,7 @@ ON_NurbsCurve_ClosestPointToLineSegment(
 	double ndist;
 	if (t) {
 	    point_t c1i, l1i;
-	    ndist = bg_lseg_lseg_dist(&c1i, &l1i, C0, C1, L0, L1);
+	    ndist = sqrt(bg_distsq_lseg3_lseg3(&c1i, &l1i, C0, C1, L0, L1));
 	    double nt;
 	    ON_3dPoint tp(c1i[0], c1i[1], c1i[2]);
 	    if (!ON_NurbsCurve_GetClosestPoint(&nt, nc, tp, maximum_distance, &domain)) {
@@ -380,7 +385,7 @@ ON_NurbsCurve_ClosestPointToLineSegment(
 	    }
 	    (*t) = nt;
 	} else {
-	    ndist = bg_lseg_lseg_dist(NULL, NULL, C0, C1, L0, L1);
+	    ndist = sqrt(bg_distsq_lseg3_lseg3(NULL, NULL, C0, C1, L0, L1));
 	}
 	if (dist) {
 	    (*dist) = ndist;
@@ -466,7 +471,8 @@ trim_binary_search(fastf_t *tparam, const ON_BrepTrim *trim, double tstart, doub
 	double vdot = ON_DotProduct(v1,v2);
 
 	if (vdot < 0 && dist > ON_ZERO_TOLERANCE) {
-	    double tlparam, trparam;
+	    double tlparam = DBL_MAX;
+	    double trparam = DBL_MAX;
 	    double fldist = trim_binary_search(&tlparam, trim, tstart, tcparam, edge_3d, tol, depth+1, 0);
 	    double frdist = trim_binary_search(&trparam, trim, tcparam, tend, edge_3d, tol, depth+1, 0);
 	    if (fldist >= 0 && frdist < -1) {
@@ -520,8 +526,6 @@ ON_TrimCurve_GetClosestPoint(
 	const ON_Interval *sub_domain
 	)
 {
-    ON_3dPoint trim_2d;
-    ON_3dPoint trim_3d;
     if (!t || !trim) {
 	return false;
     }
@@ -531,7 +535,7 @@ ON_TrimCurve_GetClosestPoint(
     if (trim->m_type == ON_BrepTrim::singular) {
 	// If the trim is singular, there's only one point to check.
 	if (maximum_distance > 0) {
-	    trim_3d = trim->Brep()->m_V[trim->m_vi[0]].Point();
+	    ON_3dPoint trim_3d = trim->Brep()->m_V[trim->m_vi[0]].Point();
 	    if (trim_3d.DistanceTo(p) > maximum_distance) {
 		return false;
 	    }
@@ -961,7 +965,6 @@ CurveTree::initialLoopBBox(const ON_BrepFace &face)
 BRNode*
 CurveTree::subdivideCurve(const ON_Curve* curve, int trim_index, int adj_face_index, double min, double max, bool innerTrim, int divDepth) const
 {
-    ON_Interval dom = curve->Domain();
     ON_3dPoint points[2];
     points[0] = curve->PointAt(min);
     points[1] = curve->PointAt(max);
@@ -1207,12 +1210,14 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const BBNode* node) {
     ON_3dVector dir = node->m_normal;
     dir.Reverse();
     ON_Ray ray(const_cast<ON_3dPoint &>(pt), dir);
-    brep_get_plane_ray(ray, pr);
+    if (brep_get_plane_ray(ray, pr) < 0)
+	return -1;
 
     //know use this as guess to iterate to closer solution
-    pt2d_t Rcurr;
-    pt2d_t new_uv;
-    ON_3dVector su, sv;
+    pt2d_t Rcurr = V2INIT_ZERO;
+    pt2d_t new_uv = V2INIT_ZERO;
+    ON_3dVector su = ON_3dVector::ZeroVector;
+    ON_3dVector sv = ON_3dVector::ZeroVector;
     bool found=false;
     fastf_t Dlast = MAX_FASTF;
     pt2d_t nuv;
@@ -1297,7 +1302,6 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
 	    double dist = fp.DistanceTo(pt);
 	    if (NEAR_ZERO(dist, BREP_SAME_POINT_TOLERANCE)) {
 		uv = curr_uv;
-		found = true;
 		return 1; //close enough to same point so no sense in looking for one closer
 	    } else if (NEAR_ZERO(dist, tolerance)) {
 		if (dist < min_dist) {
@@ -1321,7 +1325,6 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
 	    double dist = fp.DistanceTo(pt);
 	    if (NEAR_ZERO(dist, BREP_SAME_POINT_TOLERANCE)) {
 		uv = curr_uv;
-		found = true;
 		return 1; //close enough to same point so no sense in looking for one closer
 	    } else if (NEAR_ZERO(dist, tolerance)) {
 		if (dist < min_dist) {
@@ -1331,6 +1334,10 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
 		}
 	    }
 	}
+    }
+
+    if (found) {
+	return 1;
     }
 
     return -1;
@@ -2135,6 +2142,15 @@ get_closest_point(ON_2dPoint& outpt,
 	a_tree = new SurfaceTree(&face);
 	delete_tree = true;
     }
+
+    // If we don't have a workable tree, there's
+    // no point in continuing
+    if (!a_tree->Valid()) {
+	if (delete_tree)
+	    delete a_tree;
+	return false;
+    }
+
     ON_Interval u, v;
     ON_2dPoint est = a_tree->getClosestPointEstimate(point, u, v);
     pt2d_t uv = {est[0], est[1]};

@@ -1,7 +1,7 @@
 /*                      V I E W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2020 United States Government as represented by
+ * Copyright (c) 2001-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 #include "bu/parse.h"
 #include "bu/parallel.h"
 #include "bu/log.h"
@@ -112,7 +112,7 @@
 #endif
 
 
-extern fb *fbp;	/* Framebuffer handle */
+extern struct fb *fbp;	/* Framebuffer handle */
 extern fastf_t viewsize;
 extern int lightmodel;
 extern size_t width, height;
@@ -130,7 +130,7 @@ struct cell {
     vect_t c_normal;	/* surface normal at the hit point */
     vect_t c_rdir;	/* ray direction, permits perspective */
 };
-
+#define CELL_INIT {0, NULL, 0.0, 0, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO}
 
 #define MISS_DIST MAX_FASTF
 #define MISS_ID -1
@@ -383,6 +383,9 @@ void choose_color(RGBpixel col, double intensity, struct cell *me,
 	if (use_this == (struct cell *)NULL)
 	    bu_exit(EXIT_FAILURE, "Error: use_this is NULL.\n");
 
+	if (!use_this->c_region)
+	    bu_exit(EXIT_FAILURE, "Error: use_this->c_region is NULL.\n");
+
 	col[RED] = 255 * use_this->c_region->reg_mater.ma_color[RED];
 	col[GRN] = 255 * use_this->c_region->reg_mater.ma_color[GRN];
 	col[BLU] = 255 * use_this->c_region->reg_mater.ma_color[BLU];
@@ -425,7 +428,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 
 	bu_log("rtedge: loading occlusion geometry from %s.\n", file);
 
-	if (bu_argv_from_tcl_list(bu_vls_addr(&occlusion_objects), &split_argc, &objs) == TCL_ERROR) {
+	if (bu_argv_from_tcl_list(bu_vls_addr(&occlusion_objects), &split_argc, &objs) == 1) {
 	    bu_log("rtedge: occlusion list = %s\n",
 		   bu_vls_addr(&occlusion_objects));
 	    bu_exit(EXIT_FAILURE, "rtedge: could not parse occlusion objects list.\n");
@@ -479,9 +482,9 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	 * geometry. Need one per cpu, the upper half does the per-
 	 * thread allocation in worker, but that's off limits.
 	 */
-	occlusion_apps = (struct application **)bu_calloc(npsw, sizeof(struct application *),
+	occlusion_apps = (struct application **)bu_calloc((size_t)npsw, sizeof(struct application *),
 							  "occlusion application structure array");
-	for (i=0; i<npsw; ++i) {
+	for (i=0; i<(size_t)npsw; ++i) {
 	    BU_ALLOC(occlusion_apps[i], struct application);
 	    RT_APPLICATION_INIT(occlusion_apps[i]);
 
@@ -628,7 +631,7 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
      * Create a edge flag buffer for each processor.  Create a
      * scanline buffer for each processor.
      */
-    for (i = 0; i < npsw; ++i) {
+    for (i = 0; i < (size_t)npsw; ++i) {
 	if (saved[i] == NULL)
 	    BU_ALLOC(saved[i], struct cell);
 	if (writeable[i] == NULL)
@@ -1222,12 +1225,12 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     register struct hit *hitp; /* which hit */
 
     struct application a2;
-    struct cell me;
-    struct cell below;
-    struct cell left;
+    struct cell me = CELL_INIT;
+    struct cell below = CELL_INIT;
+    struct cell left = CELL_INIT;
 
-    struct cell above;
-    struct cell right;
+    struct cell above = CELL_INIT;
+    struct cell right = CELL_INIT;
 
     double intensity = 1.0;
 

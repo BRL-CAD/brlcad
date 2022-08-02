@@ -1,7 +1,7 @@
 /*                  G - S H E L L - R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -125,7 +125,7 @@ static char *plotfile;
 static short vert_ids[8]={1, 2, 4, 8, 16, 32, 64, 128};
 static int debug=0;
 static char *token_seps=" \t, ;\n";
-static int cur_dir=0;
+static size_t cur_dir=0;
 static size_t cell_count[3];
 static fastf_t decimation_tol=0.0;
 static fastf_t min_angle=0.0;
@@ -530,7 +530,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
 	(void)Get_extremes(s, &ap2, sd->hitmiss, sd->manifolds, hit1, hit2);
 
-	if (debug) {
+	if (debug && hit1_v && hit2_v) {
 	    bu_log("shrink_hit:\n\thit1_v=(%g %g %g), hit2_v=(%g %g %g)\n",
 		   V3ARGS(hit1_v->vg_p->coord),
 		   V3ARGS(hit2_v->vg_p->coord));
@@ -542,17 +542,18 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 		   V3ARGS(mhit2));
 	}
 
-	VSUB2(diff1, hit1_v->vg_p->coord, hit1);
-	VSUB2(diff2, hit2_v->vg_p->coord, hit2);
-
-	len1_sq = MAGSQ(diff1);
-	len2_sq = MAGSQ(diff2);
-
-	if (!NEAR_ZERO(len1_sq, tol.dist_sq))
-	    hit1_v = (struct vertex *)NULL;
-
-	if (!NEAR_ZERO(len2_sq, tol.dist_sq))
-	    hit2_v = (struct vertex *)NULL;
+	if (hit1_v) {
+	    VSUB2(diff1, hit1_v->vg_p->coord, hit1);
+	    len1_sq = MAGSQ(diff1);
+	    if (!NEAR_ZERO(len1_sq, tol.dist_sq))
+		hit1_v = (struct vertex *)NULL;
+	}
+	if (hit2_v) {
+	    VSUB2(diff2, hit2_v->vg_p->coord, hit2);
+	    len2_sq = MAGSQ(diff2);
+	    if (!NEAR_ZERO(len2_sq, tol.dist_sq))
+		hit2_v = (struct vertex *)NULL;
+	}
     }
 
     if (hit1_v && hit1_v == hit2_v) {
@@ -889,7 +890,6 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		cut_pt[cur_dir] = cut_value;
 		nmg_vertex_gv(eu1->vu_p->v_p, cut_pt);
 		bu_ptbl_ins(tab, (long *)eu1->vu_p->v_p);
-		vg1a = eu1->vu_p->v_p->vg_p;
 		vu1_cut = eu1->vu_p;
 	    } else if (EQUAL(vg1a->coord[cur_dir], cut_value))
 		vu1_cut = eu1->vu_p;
@@ -905,7 +905,6 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		cut_pt[cur_dir] = cut_value;
 		nmg_vertex_gv(eu2->vu_p->v_p, cut_pt);
 		bu_ptbl_ins(tab, (long *)eu2->vu_p->v_p);
-		vg2a = eu2->vu_p->v_p->vg_p;
 		vu_cut = (struct vertexuse *)NULL;
 		for (BU_LIST_FOR(vu_cut, vertexuse, &eu2->vu_p->v_p->vu_hd)) {
 		    if (nmg_find_lu_of_vu(vu_cut) == lu) {
@@ -978,7 +977,7 @@ shrink_wrap(struct shell *s)
 
     sd.s = s;
     sd.manifolds = nmg_manifolds(m);
-    sd.hitmiss = (struct hitmiss **)bu_calloc(2 * m->maxindex, sizeof(struct hitmiss *), "nmg geom hit list");
+    sd.hitmiss = (struct hitmiss **)bu_calloc((size_t)m->maxindex * 2, sizeof(struct hitmiss *), "nmg geom hit list");
 
     memset(&ap, 0, sizeof(struct application));
     ap.a_uptr = (void *)&sd;
@@ -1377,11 +1376,12 @@ refine_edges(struct shell *s)
 
 	bu_log("\tBroke %d edges\n", breaks);
 	if (debug) {
-	    char name[16];
+	    struct bu_vls name = BU_VLS_INIT_ZERO;
 
-	    sprintf(name, "break.%d", loop_count);
+	    bu_vls_printf(&name, "break.%d", loop_count);
 	    nmg_rebound(m, &tol);
-	    mk_nmg(fd_out, name, m);
+	    mk_nmg(fd_out, bu_vls_cstr(&name), m);
+	    bu_vls_free(&name);
 	}
 
 	bu_ptbl_reset(cur);
@@ -1404,7 +1404,7 @@ Make_shell(void)
 {
     int i;
     size_t x_index, y_index, z_index;
-    int cell_no[4];
+    size_t cell_no[4];
     int status;
     struct model *m;
     struct nmgregion *r;
@@ -1680,8 +1680,6 @@ main(int argc, char **argv)
 		struct refine_rpp *rpp;
 		int bad_opt = 0;
 
-		ptr = bu_optarg;
-
 		rpp = (struct refine_rpp *)bu_malloc(sizeof(struct refine_rpp), "add refine rpp");
 		ptr = strtok(bu_optarg, token_seps);
 		if (!ptr) {
@@ -1753,7 +1751,7 @@ main(int argc, char **argv)
 		bot = 1;
 		break;
 	    case 'X':	/* nmg debug flags */
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		bu_sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
 		bu_log("%s: setting nmg_debug to x%x\n", argv[0], nmg_debug);
 		break;
 	    default:
@@ -1819,9 +1817,9 @@ main(int argc, char **argv)
     } else
 	cur_dir = initial_ray_dir;
 
-    cell_count[X] = (int)((rtip->mdl_max[X] - rtip->mdl_min[X])/cell_size) + 3;
-    cell_count[Y] = (int)((rtip->mdl_max[Y] - rtip->mdl_min[Y])/cell_size) + 3;
-    cell_count[Z] = (int)((rtip->mdl_max[Z] - rtip->mdl_min[Z])/cell_size) + 3;
+    cell_count[X] = ((rtip->mdl_max[X] - rtip->mdl_min[X])/cell_size) + 3;
+    cell_count[Y] = ((rtip->mdl_max[Y] - rtip->mdl_min[Y])/cell_size) + 3;
+    cell_count[Z] = ((rtip->mdl_max[Z] - rtip->mdl_min[Z])/cell_size) + 3;
     bu_log("cell size is %gmm\n\t%zu cells in X-direction\n\t%zu cells in Y-direction\n\t%zu cells in Z-direction\n",
 	   cell_size, cell_count[X], cell_count[Y], cell_count[Z]);
 
@@ -1889,9 +1887,9 @@ main(int argc, char **argv)
 	case X:
 	    for (i = 0; i < cell_count[Y]; i++) {
 		for (j = 0; j < cell_count[Z]; j++) {
-		    ap.a_x = i;
-		    ap.a_y = j;
-		    ap.a_user = YZ_CELL(i, j);
+		    ap.a_x = (int)i;
+		    ap.a_y = (int)j;
+		    ap.a_user = (int)YZ_CELL(i, j);
 		    VMOVE(ap.a_ray.r_pt, yz_rays[YZ_CELL(i, j)].r_pt);
 		    VMOVE(ap.a_ray.r_dir, yz_rays[YZ_CELL(i, j)].r_dir);
 		    (void)rt_shootray(&ap);
@@ -1901,9 +1899,9 @@ main(int argc, char **argv)
 	case Y:
 	    for (i = 0; i < cell_count[X]; i++) {
 		for (j = 0; j < cell_count[Z]; j++) {
-		    ap.a_x = i;
-		    ap.a_y = j;
-		    ap.a_user = XZ_CELL(i, j);
+		    ap.a_x = (int)i;
+		    ap.a_y = (int)j;
+		    ap.a_user = (int)XZ_CELL(i, j);
 		    VMOVE(ap.a_ray.r_pt, xz_rays[XZ_CELL(i, j)].r_pt);
 		    VMOVE(ap.a_ray.r_dir, xz_rays[XZ_CELL(i, j)].r_dir);
 		    (void)rt_shootray(&ap);
@@ -1913,9 +1911,9 @@ main(int argc, char **argv)
 	case Z:
 	    for (i = 0; i < cell_count[X]; i++) {
 		for (j = 0; j <cell_count[Y]; j++) {
-		    ap.a_x = i;
-		    ap.a_y = j;
-		    ap.a_user = XY_CELL(i, j);
+		    ap.a_x = (int)i;
+		    ap.a_y = (int)j;
+		    ap.a_user = (int)XY_CELL(i, j);
 		    VMOVE(ap.a_ray.r_pt, xy_rays[XY_CELL(i, j)].r_pt);
 		    VMOVE(ap.a_ray.r_dir, xy_rays[XY_CELL(i, j)].r_dir);
 		    (void)rt_shootray(&ap);

@@ -1,7 +1,7 @@
 /*                       T A B L E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1989-2020 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,8 +52,8 @@ extern "C" {
     extern void rt_##name##_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp); \
     extern int rt_##name##_class(const struct soltab *, const vect_t *, const vect_t *, const struct bn_tol *); \
     extern void rt_##name##_free(struct soltab *stp); \
-    extern int rt_##name##_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *info); \
-    extern int rt_##name##_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info); \
+    extern int rt_##name##_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *info); \
+    extern int rt_##name##_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size); \
     extern void rt_##name##_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap); \
     extern int rt_##name##_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol); \
     extern int rt_##name##_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol); \
@@ -79,7 +79,8 @@ extern "C" {
     extern struct rt_selection_set *rt_##name##_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query); \
     extern struct rt_selection *rt_##name##_evaluate_selection(const struct rt_db_internal *ip, int op, const struct rt_selection *a, const struct rt_selection *b); \
     extern int rt_##name##_process_selection(struct rt_db_internal *ip, struct db_i *, const struct rt_selection *selection, const struct rt_selection_operation *op); \
-    extern int rt_##name##_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version)
+    extern int rt_##name##_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version); \
+    extern void rt_##name##_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
 
 RT_DECLARE_INTERFACE(tor);
 RT_DECLARE_INTERFACE(tgc);
@@ -116,6 +117,7 @@ RT_DECLARE_INTERFACE(metaball);
 RT_DECLARE_INTERFACE(hyp);
 RT_DECLARE_INTERFACE(revolve);
 RT_DECLARE_INTERFACE(constraint);
+RT_DECLARE_INTERFACE(material);
 /* RT_DECLARE_INTERFACE(binunif); */
 RT_DECLARE_INTERFACE(pnts);
 RT_DECLARE_INTERFACE(hrt);
@@ -204,6 +206,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -250,7 +253,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_tor_labels) /* label */
     },
 
     {
@@ -296,7 +300,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_tgc_labels) /* label */
     },
 
     {
@@ -342,7 +347,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_ell_labels) /* label */
     },
 
     {
@@ -388,7 +394,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_arb_labels) /* label */
     },
 
     {
@@ -434,7 +441,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_ars_labels) /* label */
     },
 
     {
@@ -480,7 +488,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -526,7 +535,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_tgc_labels) /* label */
     },
 
     {
@@ -572,7 +582,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -618,7 +629,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_nurb_labels) /* label */
     },
 
     {
@@ -664,7 +676,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_sph_labels) /* label */
     },
 
     {
@@ -710,7 +723,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -756,7 +770,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -802,7 +817,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -848,7 +864,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -894,7 +911,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -940,7 +958,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_part_labels) /* label */
     },
 
     {
@@ -986,7 +1005,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_rpc_labels) /* label */
     },
 
     {
@@ -1032,7 +1052,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_rhc_labels) /* label */
     },
 
     {
@@ -1078,7 +1099,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_epa_labels) /* label */
     },
 
     {
@@ -1124,7 +1146,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_ehy_labels) /* label */
     },
 
     {
@@ -1170,7 +1193,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_eto_labels) /* label */
     },
 
     {
@@ -1216,7 +1240,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -1262,7 +1287,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FIND_SELECTIONS_CAST(rt_joint_find_selections),
 	NULL, /* evaluate_selections */
 	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_joint_process_selection),
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
 #if 0
 	0, /* ft_use_rpp */
 	NULL, /* prep */
@@ -1304,7 +1330,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
 #endif
     },
 
@@ -1351,7 +1378,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -1397,7 +1425,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -1443,7 +1472,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -1489,7 +1519,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -1535,7 +1566,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -1581,7 +1613,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_cline_labels) /* label */
     },
 
     {
@@ -1627,7 +1660,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -1673,7 +1707,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -1721,7 +1756,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -1767,7 +1803,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -1815,7 +1852,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -1861,7 +1899,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -1907,7 +1946,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -1953,7 +1993,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FIND_SELECTIONS_CAST(rt_brep_find_selections),
 	NULL, /* evaluate_selection */
 	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_brep_process_selection),
-        RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(rt_brep_prep_serialize)
+        RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(rt_brep_prep_serialize),
+	NULL  /* label */
     },
 
     {
@@ -1999,7 +2040,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_hyp_labels) /* label */
     },
 
     {
@@ -2045,7 +2087,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -2091,7 +2134,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -2137,7 +2181,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -2183,7 +2228,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -2229,7 +2275,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
 
@@ -2276,7 +2323,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
 
@@ -2323,7 +2371,55 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
+    },
+
+    {
+	/* 46 */
+	RT_FUNCTAB_MAGIC, "ID_MATERIAL", "material",
+	0, /* ft_use_rpp */
+	NULL, /* prep */
+	NULL, /* shot */
+	NULL, /* print */
+	NULL, /* norm */
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
+	NULL, /* uv */
+	NULL, /* curve */
+	NULL, /* classify */
+	NULL, /* free */
+	NULL, /* plot */
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
+	NULL, /* tess */
+	NULL, /* tnurb */
+	NULL, /* brep */
+	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_material_import5),
+	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_material_export5),
+	NULL, /* import4 */
+	NULL, /* export4 */
+	RTFUNCTAB_FUNC_IFREE_CAST(rt_material_ifree),
+	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_material_describe),
+	NULL, /* xform */
+	NULL, /* parse */
+	0, /* sizeof(internal) */
+	0, /* magic */
+	NULL, /* get */
+	NULL, /* adjust */
+	NULL, /* form */
+	NULL, /* make */
+	NULL, /* params */
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL, /* serialize */
+	NULL  /* label */
     },
 
     {
@@ -2369,7 +2465,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
-	NULL /* serialize */
+	NULL, /* serialize */
+	NULL  /* label */
     }
 };
 
@@ -2524,12 +2621,12 @@ rt_get_functab_by_label(const char *label)
 
 } /* end extern "C" */
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

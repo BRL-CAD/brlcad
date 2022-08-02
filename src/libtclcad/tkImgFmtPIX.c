@@ -1,7 +1,7 @@
 /*                   T K I M G F M T P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,7 +63,7 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 #include "tk.h"
 
 #include "tclcad.h"

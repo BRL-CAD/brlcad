@@ -1,7 +1,7 @@
 /*                   B R E P _ C D T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -100,7 +100,6 @@ getEdgePoints(const ON_BrepTrim &trim,
 	      std::map<double, BrepTrimPoint *> &param_points)
 {
     const ON_Surface *s = trim.SurfaceOf();
-    ON_Interval range = trim.Domain();
     ON_3dPoint mid_2d = ON_3dPoint::UnsetPoint;
     ON_3dPoint mid_3d = ON_3dPoint::UnsetPoint;
     ON_3dVector mid_norm = ON_3dVector::UnsetVector;
@@ -304,8 +303,7 @@ getSurfacePoints(const ON_Surface *s,
     }
 
     if (udist > ldfactor * vdist) {
-	int isteps = (int)(udist / vdist);
-	isteps = (int)(udist / vdist / ldfactor * 2.0);
+	int isteps = (int)(udist / vdist / ldfactor * 2.0);
 	fastf_t step = udist / (fastf_t) isteps;
 
 	fastf_t step_u;
@@ -336,8 +334,7 @@ getSurfacePoints(const ON_Surface *s,
 	    }
 	}
     } else if (vdist > ldfactor * udist) {
-	int isteps = (int)(vdist / udist);
-	isteps = (int)(vdist / udist / ldfactor * 2.0);
+	int isteps = (int)(vdist / udist / ldfactor * 2.0);
 	fastf_t step = vdist / (fastf_t) isteps;
 	fastf_t step_v;
 	for (int i = 1; i <= isteps; i++) {
@@ -960,7 +957,8 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 	bool first_seam_pt = true;
 	for (i = 0; i < numpoints; i++) {
 	    btp = brep_loop_points[i];
-	    if ((seam = IsAtSeam(surf, btp.p2d, same_point_tolerance)) > 0) {
+	    seam = IsAtSeam(surf, btp.p2d, same_point_tolerance);
+	    if (seam > 0) {
 		if (first_seam_pt) {
 		    part1.Append(btp);
 		    first_seam_pt = false;
@@ -1051,7 +1049,6 @@ get_loop_sample_points(
 	    //ON_2dPoint p2d_begin = trim->PointAt(trim->Domain().m_t[0]);
 	    //ON_2dPoint p2d_end = trim->PointAt(trim->Domain().m_t[1]);
 	    double delta =  trim->Domain().Length() / 10.0;
-	    ON_Interval trim_dom = trim->Domain();
 
 	    for (int i = 1; i <= 10; i++) {
 		btp.p3d = p3d;
@@ -1685,6 +1682,7 @@ poly2tri_CDT(struct bu_list *vhead,
 
     if (outer) {
 	std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
+	delete pointmap;
 	return;
     }
 
@@ -1764,14 +1762,14 @@ poly2tri_CDT(struct bu_list *vhead,
 		    }
 		}
 		//tri one
-		BN_ADD_VLIST(vlfree, vhead, nv[0], BN_VLIST_TRI_START);
-		BN_ADD_VLIST(vlfree, vhead, nv[0], BN_VLIST_TRI_VERTNORM);
-		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_TRI_MOVE);
-		BN_ADD_VLIST(vlfree, vhead, nv[1], BN_VLIST_TRI_VERTNORM);
-		BN_ADD_VLIST(vlfree, vhead, pt[1], BN_VLIST_TRI_DRAW);
-		BN_ADD_VLIST(vlfree, vhead, nv[2], BN_VLIST_TRI_VERTNORM);
-		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_TRI_DRAW);
-		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_TRI_END);
+		BV_ADD_VLIST(vlfree, vhead, nv[0], BV_VLIST_TRI_START);
+		BV_ADD_VLIST(vlfree, vhead, nv[0], BV_VLIST_TRI_VERTNORM);
+		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_TRI_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, nv[1], BV_VLIST_TRI_VERTNORM);
+		BV_ADD_VLIST(vlfree, vhead, pt[1], BV_VLIST_TRI_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, nv[2], BV_VLIST_TRI_VERTNORM);
+		BV_ADD_VLIST(vlfree, vhead, pt[2], BV_VLIST_TRI_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_TRI_END);
 	    }
 	} else if (plottype == 1) { // tris 3d wire
 	    ON_3dPoint pnt[3] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};;
@@ -1798,10 +1796,10 @@ poly2tri_CDT(struct bu_list *vhead,
 		    }
 		}
 		//tri one
-		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(vlfree, vhead, pt[1], BN_VLIST_LINE_DRAW);
-		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_LINE_DRAW);
-		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, pt[1], BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt[2], BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_LINE_DRAW);
 
 	    }
 	} else if (plottype == 2) { // tris 2d
@@ -1825,8 +1823,8 @@ poly2tri_CDT(struct bu_list *vhead,
 		    pt2[0] = p->x;
 		    pt2[1] = p->y;
 		    pt2[2] = 0.0;
-		    BN_ADD_VLIST(vlfree, vhead, pt1, BN_VLIST_LINE_MOVE);
-		    BN_ADD_VLIST(vlfree, vhead, pt2, BN_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
 		}
 	    }
 	}
@@ -1852,8 +1850,8 @@ poly2tri_CDT(struct bu_list *vhead,
 		pt2[0] = p->x;
 		pt2[1] = p->y;
 		pt2[2] = 0.0;
-		BN_ADD_VLIST(vlfree, vhead, pt1, BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(vlfree, vhead, pt2, BN_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
 	    }
 	}
     } else if (plottype == 4) {
@@ -1866,7 +1864,7 @@ poly2tri_CDT(struct bu_list *vhead,
 	    pt[0] = p->x;
 	    pt[1] = p->y;
 	    pt[2] = 0.0;
-	    BN_ADD_VLIST(vlfree, vhead, pt, BN_VLIST_POINT_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_POINT_DRAW);
 	}
     }
 
@@ -1925,12 +1923,12 @@ int
 brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
                       const struct bg_tess_tol *ttol, const struct bn_tol *tol,
                       const ON_Brep *brep, struct bu_list *p_vhead,
-                      struct bn_vlblock *vbp, struct bu_list *vlfree,
+                      struct bv_vlblock *vbp, struct bu_list *vlfree,
 		      int index, int plottype, int num_points)
 {
     struct bu_list *vhead = p_vhead;
     if (!vhead) {
-	vhead = bn_vlblock_find(vbp, YELLOW);
+	vhead = bv_vlblock_find(vbp, YELLOW);
     }
     bool watertight = true;
     ON_wString wstr;
@@ -1944,17 +1942,19 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
     if (!brep->IsValid(&tl)) {
 	//for now try to draw even if it's invalid, but report if the
 	//user is listening
-	if (vls && wstr.Length() > 0) {
-	    ON_String onstr = ON_String(wstr);
-	    const char *isvalidinfo = onstr.Array();
-	    bu_vls_strcat(vls, "brep (");
-	    bu_vls_strcat(vls, solid_name);
-	    bu_vls_strcat(vls, ") is NOT valid:");
-	    bu_vls_strcat(vls, isvalidinfo);
-	} else {
-	    bu_vls_strcat(vls, "brep (");
-	    bu_vls_strcat(vls, solid_name);
-	    bu_vls_strcat(vls, ") is NOT valid.");
+	if (vls) {
+	    if (wstr.Length() > 0) {
+		ON_String onstr = ON_String(wstr);
+		const char *isvalidinfo = onstr.Array();
+		bu_vls_strcat(vls, "brep (");
+		bu_vls_strcat(vls, solid_name);
+		bu_vls_strcat(vls, ") is NOT valid:");
+		bu_vls_strcat(vls, isvalidinfo);
+	    } else {
+		bu_vls_strcat(vls, "brep (");
+		bu_vls_strcat(vls, solid_name);
+		bu_vls_strcat(vls, ") is NOT valid.");
+	    }
 	}
     }
 

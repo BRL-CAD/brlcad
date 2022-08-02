@@ -1,7 +1,7 @@
 /*                    C O N S T R A I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,15 +36,15 @@ constraint_set(void *datap, int argc, const char *argv[])
     if (!gedp || argc < 3 || !argv)
 	return BRLCAD_ERROR;
 
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, argv[2], LOOKUP_QUIET);
     if (!dp) {
 	/* TODO: need to create the object here */
 	return BRLCAD_ERROR;
     }
 
-    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot get constraints for %s\n", dp->d_namep);
 	bu_avs_free(&avs);
 	return BRLCAD_ERROR;
@@ -54,10 +54,10 @@ constraint_set(void *datap, int argc, const char *argv[])
     (void)bu_avs_add(&avs, argv[3], bu_vls_addr(&expression));
     bu_vls_free(&expression);
 
-    if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+    if (db5_update_attributes(dp, &avs, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to set constraints on %s\n", dp->d_namep);
 	bu_avs_free(&avs);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_avs_free(&avs);
@@ -84,7 +84,7 @@ constraint_get(void *datap, int argc, const char *argv[])
     for (obj = 0; 2+obj < (size_t)argc; obj++) {
 
 	/* load the constraint object */
-	dp = db_lookup(gedp->ged_wdbp->dbip, argv[2+obj], LOOKUP_QUIET);
+	dp = db_lookup(gedp->dbip, argv[2+obj], LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Unable to find %s in the database.\n", argv[2+obj]);
 	    ret = BRLCAD_ERROR;
@@ -92,7 +92,7 @@ constraint_get(void *datap, int argc, const char *argv[])
 	}
 
 	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot get constraints for %s\n", dp->d_namep);
 	    ret = BRLCAD_ERROR;
 	}
@@ -127,7 +127,7 @@ constraint_show(void *datap, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s:\n", argv[2+obj]);
 
 	/* load the constraint object */
-	dp = db_lookup(gedp->ged_wdbp->dbip, argv[2+obj], LOOKUP_QUIET);
+	dp = db_lookup(gedp->dbip, argv[2+obj], LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "\tUnable to find %s in the database.\n", argv[2+obj]);
 	    ret = BRLCAD_ERROR;
@@ -135,7 +135,7 @@ constraint_show(void *datap, int argc, const char *argv[])
 	}
 
 	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "\tCannot get constraints for %s\n", dp->d_namep);
 	    ret = BRLCAD_ERROR;
 	}
@@ -165,13 +165,13 @@ constraint_eval(void *datap, int argc, const char *argv[])
     if (!gedp || argc < 1 || !argv)
 	return BRLCAD_ERROR;
 
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* multiple arguments assumed to be multiple objects */
     for (obj = 0; 2+obj < (size_t)argc; obj++) {
 
 	/* load the constraint object */
-	dp = db_lookup(gedp->ged_wdbp->dbip, argv[2+obj], LOOKUP_QUIET);
+	dp = db_lookup(gedp->dbip, argv[2+obj], LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Unable to find %s in the database.\n", argv[2+obj]);
 	    ret = BRLCAD_ERROR;
@@ -179,7 +179,7 @@ constraint_eval(void *datap, int argc, const char *argv[])
 	}
 
 	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot get constraints from %s\n", dp->d_namep);
 	    ret = BRLCAD_ERROR;
 	}
@@ -291,7 +291,7 @@ constraint_help(void *datap, int argc, const char *argv[])
 
 
 int
-ged_constraint(struct ged *gedp, int argc, const char *argv[])
+ged_constraint_core(struct ged *gedp, int argc, const char *argv[])
 {
     /* Potential constraint attributes:
      *
@@ -317,49 +317,68 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if (argc < 2) {
 	/* must be wanting help */
 	constraint_usage(gedp->ged_result_str, argv[0]);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
     if (BU_STR_EQUIV(argv[1], "help")) {
-        constraint_help(gedp, argc, argv);
-	return GED_OK;
+	constraint_help(gedp, argc, argv);
+	return BRLCAD_OK;
     }
 
     if (argc < 3) {
 	/* must be confused */
 	constraint_usage(gedp->ged_result_str, argv[0]);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
     /* this is only valid for v5 databases */
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str, "Attributes are not available for this database format.\nPlease upgrade your database format using \"dbupgrade\" to enable attributes.");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* run our command */
     ret = bu_cmd(pc_cmds, argc, argv, 1, gedp, &cmdret);
     if (ret != BRLCAD_OK) {
 	constraint_usage(gedp->ged_result_str, argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (cmdret != BRLCAD_OK)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl constraint_cmd_impl = {
+    "constraint",
+    ged_constraint_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd constraint_cmd = { &constraint_cmd_impl };
+const struct ged_cmd *constraint_cmds[] = { &constraint_cmd, NULL };
+
+static const struct ged_plugin pinfo = { GED_API,  constraint_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

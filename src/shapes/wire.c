@@ -1,7 +1,7 @@
 /*                          W I R E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,36 +49,36 @@ static const char usage[]   = "Usage: wire [interactive questions...]\n";
 int
 main(int argc, char *argv[])
 {
-    struct rt_wdb *fpw;			/* File to be created. */
+    struct rt_wdb *fpw = NULL;		/* File to be created. */
 #define NAME_LEN 256
-    char filemged[NAME_LEN+1] = {0};		/* Mged file name. */
+    char filemged[NAME_LEN+1] = {0};	/* Mged file name. */
     double numseg = -1.0;		/* Number of segments. */
-    double scanseg;
-    double strtpt[MAXWIRESEG][3];	/* Start point of segment. */
-    double endpt[MAXWIRESEG][3];	/* End point of segment. */
-    double strtrad[MAXWIRESEG];		/* Radius at starting point of segment. */
-    double endrad[MAXWIRESEG];		/* Radius at ending point of segment. */
+    double scanseg = 0.0;
+    double strtpt[MAXWIRESEG][3] = {{0.0, 0.0, 0.0}};	/* Start point of segment. */
+    double endpt[MAXWIRESEG][3] = {{0.0, 0.0, 0.0}};	/* End point of segment. */
+    double strtrad[MAXWIRESEG] = {0.0};		/* Radius at starting point of segment. */
+    double endrad[MAXWIRESEG] = {0.0};		/* Radius at ending point of segment. */
 
     char solcyl[8], regcyl[8];		/* Solid & region name for cylinder (cone). */
     char solsph[8], regsph[8];		/* Solid & region name for sphere. */
     char solsub1[8], solsub2[8];	/* Solids that are subtracted. */
     char group[6];			/* Group name. */
 
-    point_t bs;				/* Base of cone. */
-    vect_t dir;				/* Direction of cone. */
-    fastf_t ht;				/* Height of cone. */
-    fastf_t rdc1;			/* Radius 1 of cone. */
-    fastf_t rdc2;			/* Radius 2 of cone. */
-    point_t cent;			/* Center of sphere. */
-    fastf_t rds;			/* Radius of sphere. */
+    point_t bs = VINIT_ZERO;		/* Base of cone. */
+    vect_t dir = VINIT_ZERO;		/* Direction of cone. */
+    fastf_t ht = 0.0;			/* Height of cone. */
+    fastf_t rdc1 = 0.0;			/* Radius 1 of cone. */
+    fastf_t rdc2 = 0.0;			/* Radius 2 of cone. */
+    point_t cent = VINIT_ZERO;		/* Center of sphere. */
+    fastf_t rds = 0.0;			/* Radius of sphere. */
     struct wmember comb;		/* Used to make regions. */
     struct wmember comb1;		/* Used to make groups. */
 
-    int i;				/* Loop counters. */
-    double r;				/* Temporary variables. */
-    char temp[NAME_LEN+1];		/* Temporary char string. */
-    char temp1[NAME_LEN+1];		/* Temporary char string. */
-    int ret;
+    int i = 0;				/* Loop counters. */
+    double r = 0.0;			/* Temporary variables. */
+    char temp[NAME_LEN+1] = {0};	/* Temporary char string. */
+    char temp1[NAME_LEN+1] = {0};	/* Temporary char string. */
+    int ret = 0;
 
     bu_setprogname(argv[0]);
 

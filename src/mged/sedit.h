@@ -1,7 +1,7 @@
 /*                         S E D I T . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -244,11 +244,11 @@ extern char edit_rate_model_origin;
 extern char edit_rate_object_origin;
 extern char edit_rate_view_origin;
 extern char edit_rate_coords;
-extern struct dm_list *edit_rate_mr_dm_list;
-extern struct dm_list *edit_rate_or_dm_list;
-extern struct dm_list *edit_rate_vr_dm_list;
-extern struct dm_list *edit_rate_mt_dm_list;
-extern struct dm_list *edit_rate_vt_dm_list;
+extern struct mged_dm *edit_rate_mr_dm_list;
+extern struct mged_dm *edit_rate_or_dm_list;
+extern struct mged_dm *edit_rate_vr_dm_list;
+extern struct mged_dm *edit_rate_mt_dm_list;
+extern struct mged_dm *edit_rate_vt_dm_list;
 
 extern fastf_t es_scale;	/* scale factor */
 extern fastf_t es_para[3];	/* keyboard input parameter changes */

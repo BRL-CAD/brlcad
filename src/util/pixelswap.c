@@ -1,7 +1,7 @@
 /*                     P I X E L S W A P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 
 
 char options[] = "d:h?";
@@ -99,7 +99,10 @@ int main(int ac, char **av)
 
     bu_setprogname(av[0]);
 
-    i=parse_args(ac, av);
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
+   i=parse_args(ac, av);
 /* if ac == 1, there is only 1 argument; i.e., run-with-no-arguments
  */
     if (ac == 1) usage("");

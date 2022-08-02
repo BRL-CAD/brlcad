@@ -1,7 +1,7 @@
 /*                       P I X S T A T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -87,6 +87,9 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     /* check for verbose flag */
     if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
 	verbose++;
@@ -96,7 +99,7 @@ main(int argc, char **argv)
 
     /* check for optional input file */
     if (argc > 1) {
-	if ((fp = fopen(argv[1], "r")) == 0) {
+	if ((fp = fopen(argv[1], "rb")) == 0) {
 	    bu_exit(1, "pixstat: can't open \"%s\"\n", argv[1]);
 	}
 	argv++;

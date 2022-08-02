@@ -1,7 +1,7 @@
 #                        H E L P . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2020 United States Government as represented by
+# Copyright (c) 2004-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 #==============================================================================
 
 # This command causes helplib.tcl to get read in.
-source [file join [bu_brlcad_root "share/tclscripts"] "helplib.tcl"]
+source [file join [bu_dir data] "tclscripts" "helplib.tcl"]
 helplib
 
 set mged_help_data(?)		{{}	{summary of available mged commands}}
@@ -47,6 +47,7 @@ set mged_help_data(arb)		{{name rot fb}	{make arb8, rotation + fallback}}
 set mged_help_data(arced)	{{a/b ...anim_command...}	{edit matrix or materials on combination's arc}}
 set mged_help_data(area)	{{[endpoint_tolerance]}	{calculate presented area of view (use ev -wT)}}
 set mged_help_data(arot)        $helplib_data(vo_arot)
+set mged_help_data(art) $helplib_data(dgo_art)
 set mged_help_data(attach)	{{[-d display_string] [-i init_script] [-n name]
     [-t is_toplevel] [-W width] [-N height]
     [-S square_size] win_type}	{attach to a display manager}}
@@ -141,21 +142,20 @@ set mged_help_data(debuglib)	{{[hex_code]}	{show/set debugging bit vector for li
 set mged_help_data(debugnmg)	{{[hex code]}	{show/set debugging bit vector for NMG}}
 set mged_help_data(decompose)	{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
 set mged_help_data(delay)	{{sec usec}	{delay for the specified amount of time}}
-set mged_help_data(dm)		{{set var [val]}	{do display-manager specific command}}
-set mged_help_data(dmtype)	{{{set dmtype}}	{Without argument, display current display manager type.  With 'set dmtype' changes display manager instances to new type.}}
+set mged_help_data(dm)		{{[type|valid|set] [dmtype|var [val]]}	{print/check the display-manager type or list/set specific variables}}
 set mged_help_data(draw)	$helplib_data(dgo_draw)
 set mged_help_data(dsp)         {{obj [command]} {work with DSP primitives}}
 set mged_help_data(dump)	$helplib_data(wdb_dump)
 set mged_help_data(dup)		$helplib_data(wdb_dup)
 set mged_help_data(E)		$helplib_data(dgo_E)
 set mged_help_data(e)		$helplib_data(dgo_draw)
-set mged_help_data(e_id)	{{ident[-ident] ...} {Edits object(s) with the specified ident number or within the hyphenated ident ranges.
+set mged_help_data(e_id)	{{regionID[-regionID] ...} {Edits object(s) with the specified region ID number or within the hyphenated range(s).
 
 Example: e_id 1000 2000 3000-4000}}
-set mged_help_data(eac)		{{air_code(s)}	{display all regions with given air code}}
+set mged_help_data(eac)		{{air_code(s)}	{display all regions with given air code(s) (i.e., numbers >=0)}}
 set mged_help_data(echo)	{{[text]}	{echo arguments back}}
 set mged_help_data(edcodes)	{{[-n] object(s)}	{edit region ident codes.   only reports matches without renaming with the -n option.}}
-set mged_help_data(edcomb)	{{combname Regionflag regionid air los [material]}	{edit combination record info}}
+set mged_help_data(edcomb)	{{combname [regionflag regionID airID los% materialID]}	{edit combination record info}}
 set mged_help_data(edgedir)	{{[delta_x delta_y delta_z]|[rot fb]}	{define direction of ARB edge being moved}}
 set mged_help_data(edmater)	{{comb(s)}	{edit combination materials}}
 set mged_help_data(erase)	{{<objects>}	{remove objects from the screen}}
@@ -187,7 +187,7 @@ set mged_help_data(igraph)      {{}    {interactive graph for the objects of the
 set mged_help_data(ill)		{{name}	{illuminate object}}
 set mged_help_data(in)		{{[-f] [-s] parameters...}	{keyboard entry of solids.  -f for no drawing, -s to enter solid edit}}
 set mged_help_data(inside)	{{[outside_solid new_inside_solid thicknesses]}	{finds inside solid per specified thicknesses. Note that in an edit mode the edited solid is used for the outside_solid and should not appear on the command line }}
-set mged_help_data(item)	{{region ident [air [material [los]]]}	{set region ident codes}}
+set mged_help_data(item)	{{region_name regionID [airID [materialID [los%]]]}	{set region ident codes}}
 set mged_help_data(joint)	{{command [options]}	{articulation/animation commands}}
 set mged_help_data(journal)	{{[-d] fileName}	{record all commands and timings to journal}}
 set mged_help_data(keep)	$helplib_data(wdb_keep)
@@ -211,6 +211,22 @@ set mged_help_data(make)	{{-t | name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|
 set mged_help_data(make_pnts)	{{object_name path_and_filename file_format units_or_conv_factor default_diameter} {creates a point-cloud}}
 set mged_help_data(match)	$helplib_data(wdb_match)
 set mged_help_data(mater)	{{comb [material]}	{assign/delete material to combination}}
+set mged_help_data(material)	{{[options]} {Creates materials and allows assigning of properties.
+
+Options:
+	
+import [--id|--name] fileName					-Imports materials from a density table.
+	--id - Specifies that the material will be imported with the id.
+	--name - Specifies that the material will be imported with the name.
+
+create objectName materialName			    	-Stores a material with name db_name.
+
+destroy objectName					    	-Deletes material from database.
+
+set objectName propertyGroup propertyName propertyValue 	-Sets a property in specified group with name and value.
+
+get objectName propertyGroup propertyName		    	-Gets a property value based on name and group.
+	propertyGroup : [physical | mechanical | optical | thermal]}}
 set mged_help_data(matpick)	{{# | a/b}	{select arc which has matrix to be edited, in O_PATH state}}
 set mged_help_data(mirface)	{{#### of axis}	{mirror an ARB face}}
 set mged_help_data(mirror)	{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror primitive or combination along the specified axis}}
@@ -258,12 +274,12 @@ set mged_help_data(rcodes)	{{filename}	{read region ident codes from filename}}
 set mged_help_data(red)		{{object}	{edit a group or region using a text editor}}
 set mged_help_data(refresh)	{{}	{send new control list}}
 set mged_help_data(regdebug)	{{[number]}	{toggle display manager debugging or set debug level}}
-set mged_help_data(regdef)	{{ident [air [los [material]]]}	{change next region default codes}}
+set mged_help_data(regdef)	{{regionID [airID [los% [materialID]]]}	{change next region default codes}}
 set mged_help_data(regions)	{{file object(s)}	{make ascii summary of regions}}
-set mged_help_data(reid)	{{assembly regionID}	{incrementally assign region IDs to all regions under a given assembly starting with the given region ID number}}
+set mged_help_data(reid)	{{[-n num] comb regionID}	{sequentially assign IDs to all regions under a specified combination starting from regionID in increments of 'num'}}
 set mged_help_data(release)	{{[name]}	{release display processor}}
-set mged_help_data(relos)	{{assembly LOS}	{assign the same LOS to all regions under some given assembly}}
-set mged_help_data(remat)	{{assembly materialID}	{assign the same material ID number to all regions under some given assembly}}
+set mged_help_data(relos)	{{comb los%}	{assign same line-of-sight thickness percentage to all regions under a given combination}}
+set mged_help_data(remat)	{{comb materialID}	{assign the same material ID number to all regions under a given combination}}
 set mged_help_data(reset)	{{}	{Reset view such that all solids can be seen}}
 set mged_help_data(rfarb)	{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thickness}}
 set mged_help_data(rm)		$helplib_data(wdb_remove)

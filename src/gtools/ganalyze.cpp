@@ -1,7 +1,7 @@
 /*                    G A N A L Y Z E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2020 United States Government as represented by
+ * Copyright (c) 2019-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@ struct analyze_command_table {
 };
 
 struct analyze_command_state {
-    struct bn_vlblock *vbp;
+    struct bv_vlblock *vbp;
     int draw_pipe;
 };
 
@@ -90,7 +90,7 @@ analyze_do_cmd(const char *cmdline, const struct analyze_command_table *tp, void
     }
 
     lp = bu_strdup(cmdline);
-    cmd_args = (char **)bu_calloc(strlen(lp), sizeof(char *), "args");
+    cmd_args = (char **)bu_calloc(strlen(lp) + 1, sizeof(char *), "args");
     nwords = bu_argv_from_string(cmd_args, strlen(lp), lp);
     if (nwords <= 0) {
 	bu_free(cmd_args, "args array");

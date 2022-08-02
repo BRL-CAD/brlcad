@@ -1,7 +1,7 @@
 /*                     P I X S H R I N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
     int count = 0;
 
     if (!buffer &&
-	(buffer=(UCHAR *)malloc(scanlen * Height)) == (UCHAR *)NULL) {
+	(buffer=(UCHAR *)calloc(scanlen, Height)) == (UCHAR *)NULL) {
 	fprintf(stderr, "%s: cannot allocate input buffer\n",
 		progname);
 	bu_exit (-1, NULL);
@@ -221,7 +221,7 @@ parse_args(int ac, char **av)
     }
     if (bu_optind < ac) {
 	char *ifname = bu_file_realpath(av[bu_optind], NULL);
-	if (freopen(ifname, "r", stdin) == (FILE *)NULL) {
+	if (freopen(ifname, "rb", stdin) == (FILE *)NULL) {
 	    perror(ifname);
 	    bu_free(ifname, "ifname alloc from bu_file_realpath");
 	    bu_exit (-1, NULL);
@@ -244,6 +244,9 @@ int main(int ac, char **av)
     UCHAR *buffer = (UCHAR *)NULL;
 
     bu_setprogname(av[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     (void)parse_args(ac, av);
     if (isatty(fileno(stdin)))

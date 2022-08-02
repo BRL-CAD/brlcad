@@ -1,7 +1,7 @@
 /*                     B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,6 +51,7 @@
 
 #include "raytrace.h"
 #include "rt/geom.h"
+#include "../../librt_private.h"
 
 #include "./brep_local.h"
 #include "./brep_debug.h"
@@ -71,8 +72,8 @@ extern "C" {
     void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
     void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
     void rt_brep_free(struct soltab *stp);
-    int rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info);
-    int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
+    int rt_brep_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size);
+    int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *UNUSED(info));
     int rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
     int rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
     int rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv);
@@ -1565,7 +1566,7 @@ near_equal(double first, double second)
 
 
 static void
-plotisoUCheckForTrim(struct bu_list *vhead, const SurfaceTree* st, fastf_t from, fastf_t to, fastf_t v)
+plotisoUCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const SurfaceTree* st, fastf_t from, fastf_t to, fastf_t v)
 {
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
@@ -1614,7 +1615,7 @@ plotisoUCheckForTrim(struct bu_list *vhead, const SurfaceTree* st, fastf_t from,
 
     int hit_cnt = trim_hits.size();
 
-    cnt = 1;
+    //cnt = 1;
     //bu_log("\tplotisoUCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, from, v , to, v);
 
     if ((hit_cnt > 0) && ((hit_cnt % 2) == 0)) {
@@ -1648,8 +1649,8 @@ plotisoUCheckForTrim(struct bu_list *vhead, const SurfaceTree* st, fastf_t from,
 		    //						"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
 		    //						cnt++, x, v, x + deltax, v);
 
-		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-		    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
 		}
 	    }
 	}
@@ -1660,7 +1661,7 @@ plotisoUCheckForTrim(struct bu_list *vhead, const SurfaceTree* st, fastf_t from,
 
 
 static void
-plotisoVCheckForTrim(struct bu_list *vhead, const SurfaceTree* st, fastf_t from, fastf_t to, fastf_t u)
+plotisoVCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const SurfaceTree* st, fastf_t from, fastf_t to, fastf_t u)
 {
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
@@ -1706,7 +1707,7 @@ plotisoVCheckForTrim(struct bu_list *vhead, const SurfaceTree* st, fastf_t from,
     trim_hits.unique(near_equal);
 
     size_t hit_cnt = trim_hits.size();
-    cnt = 1;
+    //cnt = 1;
 
     //bu_log("\tplotisoVCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, u, from, u, to);
 
@@ -1738,8 +1739,8 @@ plotisoVCheckForTrim(struct bu_list *vhead, const SurfaceTree* st, fastf_t from,
 		    //bu_log("\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
 		    //		cnt++, u, y, u, y + deltay);
 
-		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-		    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
 		}
 	    }
 	}
@@ -1749,7 +1750,7 @@ plotisoVCheckForTrim(struct bu_list *vhead, const SurfaceTree* st, fastf_t from,
 
 
 static void
-plotisoU(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf_t v, int curveres)
+plotisoU(struct bu_list *vlfree, struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf_t v, int curveres)
 {
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
@@ -1767,14 +1768,14 @@ plotisoU(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf
 	}
 	//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y+deltay, p.x, p.y, p.z);
 	VMOVE(pt2, p);
-	RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
     }
 }
 
 
 static void
-plotisoV(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf_t u, int curveres)
+plotisoV(struct bu_list *vlfree, struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf_t u, int curveres)
 {
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
@@ -1792,14 +1793,14 @@ plotisoV(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf
 	}
 	//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y+deltay, p.x, p.y, p.z);
 	VMOVE(pt2, p);
-	RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
     }
 }
 
 
 static void
-plot_BBNode(struct bu_list *vhead, SurfaceTree* st, const BBNode * node, int isocurveres, int gridres)
+plot_BBNode(struct bu_list *vlfree, struct bu_list *vhead, SurfaceTree* st, const BBNode * node, int isocurveres, int gridres)
 {
     if (node->isLeaf()) {
 	//draw leaf
@@ -1812,55 +1813,91 @@ plot_BBNode(struct bu_list *vhead, SurfaceTree* st, const BBNode * node, int iso
 	    fastf_t to = node->m_u[1];
 	    //bu_log("drawBBNode: node %x uvmin center %f %f 0.0, uvmax center %f %f 0.0\n", node, node->m_u[0], node->m_v[0], node->m_u[1], node->m_v[1]);
 
-	    plotisoUCheckForTrim(vhead, st, from, to, v); //bottom
+	    plotisoUCheckForTrim(vlfree, vhead, st, from, to, v); //bottom
 	    v = node->m_v[1];
-	    plotisoUCheckForTrim(vhead, st, from, to, v); //top
+	    plotisoUCheckForTrim(vlfree, vhead, st, from, to, v); //top
 	    from = node->m_v[0];
 	    to = node->m_v[1];
-	    plotisoVCheckForTrim(vhead, st, from, to, u); //left
+	    plotisoVCheckForTrim(vlfree, vhead, st, from, to, u); //left
 	    u = node->m_u[1];
-	    plotisoVCheckForTrim(vhead, st, from, to, u); //right
+	    plotisoVCheckForTrim(vlfree, vhead, st, from, to, u); //right
 	    return;
 	} else { // fully untrimmed just draw bottom and right edges
 	    fastf_t u = node->m_u[0];
 	    fastf_t v = node->m_v[0];
 	    fastf_t from = u;
 	    fastf_t to = node->m_u[1];
-	    plotisoU(vhead, st, from, to, v, isocurveres); //bottom
+	    plotisoU(vlfree, vhead, st, from, to, v, isocurveres); //bottom
 
 	    from = v;
 	    to = node->m_v[1];
-	    plotisoV(vhead, st, from, to, u, isocurveres); //right
+	    plotisoV(vlfree, vhead, st, from, to, u, isocurveres); //right
 	    return;
 	}
     } else {
 	for (std::vector<BBNode*>::const_iterator childnode = node->get_children().begin(); childnode != node->get_children().end(); ++childnode) {
-	    plot_BBNode(vhead, st, *childnode, isocurveres, gridres);
+	    plot_BBNode(vlfree, vhead, st, *childnode, isocurveres, gridres);
 	}
     }
 }
 
 
 static void
-plot_face_from_surface_tree(struct bu_list *vhead, SurfaceTree* st, int isocurveres, int gridres)
+plot_face_from_surface_tree(struct bu_list *vlfree, struct bu_list *vhead, SurfaceTree* st, int isocurveres, int gridres)
 {
     const BBNode *root = st->getRootNode();
-    plot_BBNode(vhead, st, root, isocurveres, gridres);
+    plot_BBNode(vlfree, vhead, st, root, isocurveres, gridres);
 }
 
+static fastf_t
+brep_avg_curve_bbox_diagonal_len(ON_Brep *brep)
+{
+    fastf_t avg_curve_len = 0.0;
+    int i, num_curves = 0;
+
+    for (i = 0; i < brep->m_E.Count(); ++i) {
+	ON_BrepEdge &e = brep->m_E[i];
+	const ON_Curve *crv = e.EdgeCurveOf();
+
+	if (!crv->IsLinear()) {
+	    ++num_curves;
+
+	    ON_BoundingBox bbox;
+	    if (crv->GetTightBoundingBox(bbox)) {
+		avg_curve_len += bbox.Diagonal().Length();
+	    } else {
+		ON_3dVector linear_approx =
+		    crv->PointAtEnd() - crv->PointAtStart();
+		avg_curve_len += linear_approx.Length();
+	    }
+	}
+    }
+    avg_curve_len /= num_curves;
+
+    return avg_curve_len;
+}
+
+static fastf_t
+brep_est_avg_curve_len(struct rt_brep_internal *bi)
+{
+    return brep_avg_curve_bbox_diagonal_len(bi->brep) * 2.0;
+}
 
 int
-rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_brep_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t UNUSED(s_size))
 {
     TRACE1("rt_brep_adaptive_plot");
     struct rt_brep_internal* bi;
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
+
+    fastf_t point_spacing = solid_point_spacing(v, brep_est_avg_curve_len(bi) * M_2_PI * 2.0);
 
     ON_Brep* brep = bi->brep;
     int gridres = 10;
@@ -1874,13 +1911,13 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	    ON_SumSurface *sumsurf = const_cast<ON_SumSurface *>(ON_SumSurface::Cast(surf));
 	    if (sumsurf != NULL) {
 		SurfaceTree st(&face, true, 2);
-		plot_face_from_surface_tree(info->vhead, &st, isocurveres, gridres);
+		plot_face_from_surface_tree(vlfree, vhead, &st, isocurveres, gridres);
 	    } else {
 		ON_RevSurface *revsurf = const_cast<ON_RevSurface *>(ON_RevSurface::Cast(surf));
 
 		if (revsurf != NULL) {
 		    SurfaceTree st(&face, true, 0);
-		    plot_face_from_surface_tree(info->vhead, &st, isocurveres, gridres);
+		    plot_face_from_surface_tree(vlfree, vhead, &st, isocurveres, gridres);
 		}
 	    }
 	}
@@ -1895,8 +1932,8 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	    const ON_BrepVertex& v2 = brep->m_V[e.m_vi[1]];
 	    VMOVE(pt1, v1.Point());
 	    VMOVE(pt2, v2.Point());
-	    RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(info->vhead, pt2, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
 	} else {
 	    point_t endpt;
 	    ON_Interval dom = crv->Domain();
@@ -1912,26 +1949,26 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	    double t1 = 0.0;
 	    p = crv->PointAt(dom.ParameterAt(t1));
 	    VMOVE(pt1, p);
-	    RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
 
 	    // add segments until the minimum segment count is
 	    // achieved and the distance between the end of the last
 	    // segment and the endpoint is within point spacing
 	    for (int nsegs = 0; (nsegs < min_linear_seg_count) ||
-		     (DIST_PNT_PNT(pt1, endpt) > info->point_spacing); ++nsegs) {
+		     (DIST_PNT_PNT(pt1, endpt) > point_spacing); ++nsegs) {
 		p = crv->PointAt(dom.ParameterAt(t2));
 		VMOVE(pt2, p);
 
 		// bring t2 increasingly closer to t1 until target
 		// point spacing is achieved
 		double step = t2 - t1;
-		while (DIST_PNT_PNT(pt1, pt2) > info->point_spacing) {
+		while (DIST_PNT_PNT(pt1, pt2) > point_spacing) {
 		    step /= 2.0;
 		    t2 = t1 + step;
 		    p = crv->PointAt(dom.ParameterAt(t2));
 		    VMOVE(pt2, p);
 		}
-		RT_ADD_VLIST(info->vhead, pt2, BN_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
 
 		// advance to next segment
 		t1 = t2;
@@ -1942,7 +1979,7 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 		    t2 = 1.0;
 		}
 	    }
-	    RT_ADD_VLIST(info->vhead, endpt, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, endpt, BV_VLIST_LINE_DRAW);
 	}
     }
 
@@ -1966,7 +2003,7 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
  *
  */
 int
-rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
+rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct bview *UNUSED(info))
 {
     TRACE1("rt_brep_plot");
     struct rt_brep_internal* bi;
@@ -1974,6 +2011,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
@@ -1990,13 +2028,13 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 		ON_SumSurface *sumsurf = const_cast<ON_SumSurface *>(ON_SumSurface::Cast(surf));
 		if (sumsurf != NULL) {
 		    SurfaceTree st(&face, true, 2);
-		    plot_face_from_surface_tree(vhead, &st, isocurveres, gridres);
+		    plot_face_from_surface_tree(vlfree, vhead, &st, isocurveres, gridres);
 		} else {
 		    ON_RevSurface *revsurf = const_cast<ON_RevSurface *>(ON_RevSurface::Cast(surf));
 
 		    if (revsurf != NULL) {
 			SurfaceTree st(&face, true, 0);
-			plot_face_from_surface_tree(vhead, &st, isocurveres, gridres);
+			plot_face_from_surface_tree(vlfree, vhead, &st, isocurveres, gridres);
 		    }
 		}
 	    }
@@ -2018,11 +2056,11 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 	    if (pnt_cnt > 1) {
 		p = poly[0];
 		VMOVE(pt1, p);
-		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
 		for (j = 1; j < pnt_cnt; j++) {
 		    p = poly[j];
 		    VMOVE(pt1, p);
-		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_DRAW);
 		}
 	    }
 	}
@@ -2035,8 +2073,8 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 int
 rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
-    int ret;
-    struct rt_brep_internal *bi;
+    int ret = 0;
+    struct rt_brep_internal *bi = NULL;
 
     if (!r || !m || !ip || !ttol || !tol)
 	return -1;
@@ -2045,13 +2083,13 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     bi = (struct rt_brep_internal *)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
-    int fcnt, fncnt, ncnt, vcnt;
+    int fcnt=0, fncnt=0, ncnt=0, vcnt=0;
     int *faces = NULL;
     fastf_t *vertices = NULL;
     int *face_normals = NULL;
     fastf_t *normals = NULL;
 
-    struct bg_tess_tol cdttol;
+    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
     cdttol.abs = ttol->abs;
     cdttol.rel = ttol->rel;
     cdttol.norm = ttol->norm;
@@ -2065,7 +2103,6 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt, &face_normals, &fncnt, &normals, &ncnt, s_cdt, 0, NULL);
     ON_Brep_CDT_Destroy(s_cdt);
 
-    struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     BU_GET(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
@@ -2083,6 +2120,7 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     bot->normals = normals;
     bot->face_normals = face_normals;
 
+    struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_BOT;
@@ -2140,13 +2178,13 @@ private:
 
 
 RT_MemoryArchive::RT_MemoryArchive()
-    : ON_BinaryArchive(ON::write3dm), pos(0), m_buffer()
+    : ON_BinaryArchive(ON::on_write3dm), pos(0), m_buffer()
 {
 }
 
 
 RT_MemoryArchive::RT_MemoryArchive(const void *memory, size_t len)
-    : ON_BinaryArchive(ON::read3dm), pos(0),
+    : ON_BinaryArchive(ON::on_read3dm), pos(0),
       m_buffer((char *)memory, (char *)memory + len)
 {
 }
@@ -2257,6 +2295,8 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     default_style.SetDefaults();
     model.m_dimstyle_table.Reserve(1);
     model.m_dimstyle_table.Append(default_style);
+
+    model.m_object_table.SetCapacity(1);
 
     ONX_Model_Object& mo = model.m_object_table.AppendNew();
     mo.m_object = bi->brep;
@@ -2463,7 +2503,6 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     ON_Brep *brep_out;
     brep1 = bip1->brep;
     brep2 = bip2->brep;
-    brep_out = ON_Brep::New();
 
     op_type operation_type;
     switch (operation) {
@@ -2479,6 +2518,8 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 	default:
 	    return -1;
     }
+
+    brep_out = ON_Brep::New();
 
     int ret;
     if ((ret = ON_Boolean(brep_out, brep1, brep2, operation_type)) < 0)
@@ -2615,7 +2656,7 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 		scv->j = j;
 		scv->sqdist_to_start = DIST_PNT_PNT_SQ(query->start, cv);
 		scv->sqdist_to_line =
-		    bn_distsq_line3_pnt3(query->start, query->dir, cv);
+		    bg_distsq_line3_pnt3(query->start, query->dir, cv);
 
 		selectable.push_back(scv);
 
@@ -2910,9 +2951,13 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 
 int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, struct rt_db_internal *ip,
 		      const struct bg_tess_tol *ttol, const struct bn_tol *tol,
-		      const struct rt_view_info *UNUSED(info))
+		      const struct bview *UNUSED(info))
 {
     TRACE1("rt_brep_plot");
+
+    if (!vhead || !pathp || pathp->fp_len <= 0 || !ip || !ttol || !tol)
+	return -1;
+
     struct rt_brep_internal* bi;
     const char *solid_name =  DB_FULL_PATH_CUR_DIR(pathp)->d_namep;
     ON_wString wstr;

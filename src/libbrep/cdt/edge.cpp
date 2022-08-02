@@ -1,7 +1,7 @@
 /*                        C D T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -485,7 +485,7 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe, ON_
 		//bu_log("Non-reversed trim: going with distance %f greater than desired tolerance %f\n", dist, tol);
 	    }
 	    if (dist > 10*tol) {
-		cpoint = ON_TrimCurve_GetClosestPoint(&tparam, &trim, edge_mid_3d, 0, &domain);
+		ON_TrimCurve_GetClosestPoint(&tparam, &trim, edge_mid_3d, 0, &domain);
 	    }
 	}
     }
@@ -1052,8 +1052,18 @@ initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt)
 	// NOTE - another point where this won't work if we don't have a 1->2 edge to trims relationship
 	ON_BrepTrim *trim1 = edge.Trim(0);
 	ON_BrepTrim *trim2 = edge.Trim(1);
-	s_cdt->brep->m_T[trim1->TrimCurveIndexOf()].SetDomain(bseg->edge_start, bseg->edge_end);
-	s_cdt->brep->m_T[trim2->TrimCurveIndexOf()].SetDomain(bseg->edge_start, bseg->edge_end);
+	int t1cind = trim1->TrimCurveIndexOf();
+	if (t1cind < 0) {
+	    delete bseg;
+	    continue;
+	}
+	int t2cind = trim2->TrimCurveIndexOf();
+	if (t2cind < 0) {
+	    delete bseg;
+	    continue;
+	}
+	s_cdt->brep->m_T[t1cind].SetDomain(bseg->edge_start, bseg->edge_end);
+	s_cdt->brep->m_T[t2cind].SetDomain(bseg->edge_start, bseg->edge_end);
 
 	// The 3D start and endpoints will be vertex points (they are shared with other edges).
 	bseg->e_start = (*s_cdt->vert_pnts)[edge.Vertex(0)->m_vertex_index];

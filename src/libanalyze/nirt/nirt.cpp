@@ -1,7 +1,7 @@
 /*                        N I R T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -157,9 +157,9 @@ void ndbg(struct nirt_state *nss, int flag, const char *fmt, ...)
 }
 
 size_t
-_nirt_find_first_unescaped(std::string &s, const char *keys, int offset)
+_nirt_find_first_unescaped(std::string &s, const char *keys, size_t offset)
 {
-    int off = offset;
+    size_t off = offset;
     int done = 0;
     size_t candidate = std::string::npos;
     while (!done) {
@@ -1095,7 +1095,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
     int ev_odd = 1; /* first partition is colored as "odd" */
     point_t out_old = VINIT_ZERO;
     double d_out_old = 0.0;
-    struct nirt_seg *s = new struct nirt_seg;
+    nirt_seg *s = new nirt_seg;
     if (vals->seg) {
 	delete vals->seg;
 	vals->seg = NULL;
@@ -1149,7 +1149,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 		s->type = NIRT_GAP_SEG;
 		_nirt_report(nss, 'g', vals);
 		{
-		    struct nirt_seg gseg;
+		    nirt_seg gseg;
 		    gseg.type = NIRT_GAP_SEG;
 		    VMOVE(gseg.in, out_old);
 		    VMOVE(gseg.out, s->in);
@@ -1157,9 +1157,9 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 		    _nirt_diff_add_seg(nss, &gseg);
 		}
 		/* vlist segment for gap */
-		vhead = bn_vlblock_find(nss->i->segs, nss->i->void_color->buc_rgb[RED], nss->i->void_color->buc_rgb[GRN], nss->i->void_color->buc_rgb[BLU]);
-		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->gap_in, BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BN_VLIST_LINE_DRAW);
+		vhead = bv_vlblock_find(nss->i->segs, nss->i->void_color->buc_rgb[RED], nss->i->void_color->buc_rgb[GRN], nss->i->void_color->buc_rgb[BLU]);
+		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->gap_in, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BV_VLIST_LINE_DRAW);
 		nss->i->b_segs = true;
 		s->type = NIRT_PARTITION_SEG;
 	    }
@@ -1224,12 +1224,12 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 
 	/* vlist segment for hit */
 	if (ev_odd % 2) {
-	    vhead = bn_vlblock_find(nss->i->segs, nss->i->hit_odd_color->buc_rgb[RED], nss->i->hit_odd_color->buc_rgb[GRN], nss->i->hit_odd_color->buc_rgb[BLU]);
+	    vhead = bv_vlblock_find(nss->i->segs, nss->i->hit_odd_color->buc_rgb[RED], nss->i->hit_odd_color->buc_rgb[GRN], nss->i->hit_odd_color->buc_rgb[BLU]);
 	} else {
-	    vhead = bn_vlblock_find(nss->i->segs, nss->i->hit_even_color->buc_rgb[RED], nss->i->hit_even_color->buc_rgb[GRN], nss->i->hit_even_color->buc_rgb[BLU]);
+	    vhead = bv_vlblock_find(nss->i->segs, nss->i->hit_even_color->buc_rgb[RED], nss->i->hit_even_color->buc_rgb[GRN], nss->i->hit_even_color->buc_rgb[BLU]);
 	}
-	BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BN_VLIST_LINE_MOVE);
-	BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BV_VLIST_LINE_DRAW);
 	nss->i->b_segs = true;
 
 	/* done with hit portion - if diff, stash */
@@ -1269,15 +1269,15 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 
 	    /* vlist segment for overlap */
 	    if (nss->i->plot_overlaps) {
-		vhead = bn_vlblock_find(nss->i->segs, nss->i->overlap_color->buc_rgb[RED], nss->i->overlap_color->buc_rgb[GRN], nss->i->overlap_color->buc_rgb[BLU]);
-		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->ov_in, BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->ov_out, BN_VLIST_LINE_DRAW);
+		vhead = bv_vlblock_find(nss->i->segs, nss->i->overlap_color->buc_rgb[RED], nss->i->overlap_color->buc_rgb[GRN], nss->i->overlap_color->buc_rgb[BLU]);
+		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->ov_in, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->ov_out, BV_VLIST_LINE_DRAW);
 		nss->i->b_segs = true;
 	    }
 
 	    /* Diff */
 	    {
-		struct nirt_seg novlp = *s;
+		nirt_seg novlp = *s;
 		VMOVE(novlp.in, s->ov_in);
 		VMOVE(novlp.out, s->ov_out);
 		_nirt_diff_add_seg(nss, &novlp);
@@ -2114,17 +2114,22 @@ _nirt_cmd_quit(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 extern "C" int
 _nirt_cmd_show_menu(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 {
-    int longest = 0;
+    int longest = 0; // must be int for $*
     const struct nirt_cmd_desc *d;
     struct nirt_state *nss = (struct nirt_state *)ns;
-    if (!ns) return -1;
+
+    if (!ns)
+	return -1;
+
     for (d = nirt_descs; d->cmd != NULL; d++) {
-	int l = strlen(d->cmd);
-	if (l > longest) longest = l;
+	size_t l = strlen(d->cmd);
+	if (l > (size_t)longest)
+	    longest = (int)l;
     }
     for (d = nirt_descs; d->cmd != NULL; d++) {
 	nout(nss, "%*s %s\n", longest, d->cmd, d->desc);
     }
+
     return 0;
 }
 
@@ -2384,8 +2389,10 @@ _nirt_exec_cmd(struct nirt_state *ns, const char *cmdstr)
     if (!ns || !cmdstr || strlen(cmdstr) > entry.max_size()) return -1;
     std::string s(cmdstr);
     std::stringstream ss(s);
+
     // get an upper limit on the size of argv
-    while (std::getline(ss, entry, ' ')) ac_max++;
+    while (std::getline(ss, entry, ' '))
+	ac_max++;
     ss.clear();
     ss.seekg(0, ss.beg);
 
@@ -2396,7 +2403,8 @@ _nirt_exec_cmd(struct nirt_state *ns, const char *cmdstr)
     }
 
     _nirt_trim_whitespace(s);
-    if (!s.length()) return 0;
+    if (!s.length())
+	return 0;
 
     /* Start by initializing the position markers for quoted substrings. */
     q_start = _nirt_find_first_unescaped(s, "\"", 0);
@@ -2621,7 +2629,7 @@ nirt_init(struct nirt_state *ns)
     bu_vls_init(n->err);
     n->err_accumulate = 0;
     BU_LIST_INIT(&(n->s_vlist));
-    n->segs = bn_vlblock_init(&(n->s_vlist), 32);
+    n->segs = bv_vlblock_init(&(n->s_vlist), 32);
     n->plot_overlaps = 1;
     n->ret = 0;
 
@@ -2791,8 +2799,8 @@ nirt_destroy(struct nirt_state *ns)
     bu_vls_free(ns->i->err);
     bu_vls_free(ns->i->msg);
     bu_vls_free(ns->i->out);
-    bn_vlist_cleanup(&(ns->i->s_vlist));
-    bn_vlblock_free(ns->i->segs);
+    bv_vlist_cleanup(&(ns->i->s_vlist));
+    bv_vlblock_free(ns->i->segs);
 
     if (ns->i->rtip != RTI_NULL) rt_free_rti(ns->i->rtip);
     if (ns->i->rtip_air != RTI_NULL) rt_free_rti(ns->i->rtip_air);

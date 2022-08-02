@@ -1,7 +1,7 @@
 /*                        R A N D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,6 +46,10 @@
 /** @{ */
 /** @file rand.h */
 
+/* TODO - investigate whether it makes sense to incorporate the T258 code from
+ * ARL-TR-7928 Section 9.1 by Joseph C Collins into libbn
+ * (https://apps.dtic.mil/sti/pdfs/AD1024837.pdf) */
+
 #ifndef BN_RAND_H
 #define BN_RAND_H
 
@@ -76,7 +80,7 @@ BN_EXPORT extern const float bn_rand_table[BN_RAND_TABSIZE];
 #define BN_RANDHALF(_i) (bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]-0.5)
 #define BN_RANDHALF_INIT(_p) _p = bn_rand_table
 
-#define BN_RANDHALFTABSIZE 16535	/* Powers of two give streaking */
+#define BN_RANDHALFTABSIZE 16535	/**< Powers of two give streaking */
 BN_EXPORT extern int bn_randhalftabsize;
 
 /**

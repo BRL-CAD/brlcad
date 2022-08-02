@@ -1,7 +1,7 @@
 /*                       A S C 2 D S P . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2020 United States Government as represented by
+ * Copyright (c) 2012-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,6 +45,7 @@
 #include "bnetwork.h"
 #include "bu/app.h"
 #include "bu/log.h"
+#include "bu/opt.h"
 
 
 static char usage[] = "\
@@ -90,8 +91,8 @@ output_netshort(char *buf, unsigned *nchars, FILE *fpo)
     /* now output it */
     ret = fwrite(&netshort, sizeof(uint16_t), 1, fpo);
     if (UNLIKELY(ret != 1)) {
-       perror("fwrite failed");
-       bu_bomb("output_netshort: write error");
+	perror("fwrite failed");
+	bu_bomb("output_netshort: write error");
     }
 
     /* prep buffer for next value */
@@ -104,23 +105,44 @@ main(int argc, char **argv)
 {
     FILE *fpi = NULL;
     FILE *fpo = NULL;
-    int d;
+    int need_help = 0;
 
     char buf[BUFSZ] = {0};
     unsigned nchars = 0;
 
     bu_setprogname(argv[0]);
 
-    if (argc != 3)
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",        "",         NULL,        &need_help, "Print help   and exit");
+    BU_OPT(d[1], "?", "",            "",         NULL,        &need_help, "");
+    BU_OPT_NULL(d[2]);
+
+    /* Skip first arg */
+    argv++; argc--;
+    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+    int uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
+
+    if (uac == -1) {
+	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
+    }
+    bu_vls_free(&optparse_msg);
+
+    argc = uac;
+
+    if (need_help) {
+	bu_exit(EXIT_SUCCESS, "%s", usage);
+    }
+
+    if (argc != 2)
 	bu_exit(1, "%s", usage);
 
-    fpi = fopen(argv[1], "r");
+    fpi = fopen(argv[0], "r");
     if (!fpi)
-	perror(argv[1]);
+	perror(argv[0]);
 
-    fpo = fopen(argv[2], "wb");
+    fpo = fopen(argv[1], "wb");
     if (!fpo)
-	perror(argv[2]);
+	perror(argv[1]);
     if (fpi == NULL || fpo == NULL) {
 	bu_exit(1, "asc2dsp: can't open files.");
     }
@@ -128,24 +150,25 @@ main(int argc, char **argv)
     buf[0] = '\0';
     nchars = 0;
 
-    while ((d = fgetc(fpi)) != EOF) {
-      unsigned char c = (unsigned char)d;
-      if (isspace(c)) {
-	  /* may be end of a chunk of digits indicating need to process buffer */
-	  /* there should be nchars > 0 if anything is there */
-	  if (nchars) {
-	      /* note that the following call resets the buffer and nchars */
-	      output_netshort(buf, &nchars, fpo);
-	  }
-	  continue;
-      } else if (c < '0' || c > '9') {
-	  /* invalid char--bail */
-	  bu_log("asc2dsp: invalid char '%c'\n", c);
-	  bu_exit(1, "asc2dsp: FATAL");
-      }
+    int cg;
+    while ((cg = fgetc(fpi)) != EOF) {
+	unsigned char c = (unsigned char) cg;
+	if (isspace(c)) {
+	    /* may be end of a chunk of digits indicating need to process buffer */
+	    /* there should be nchars > 0 if anything is there */
+	    if (nchars) {
+		/* note that the following call resets the buffer and nchars */
+		output_netshort(buf, &nchars, fpo);
+	    }
+	    continue;
+	} else if (c < '0' || c > '9') {
+	    /* invalid char--bail */
+	    bu_log("asc2dsp: invalid char '%c'\n", c);
+	    bu_exit(1, "asc2dsp: FATAL");
+	}
 
-      /* copy the 0-9 to the buffer's next spot */
-      buf[nchars++] = c;
+	/* copy the 0-9 to the buffer's next spot */
+	buf[nchars++] = c;
     }
     fclose(fpi);
 
@@ -155,7 +178,7 @@ main(int argc, char **argv)
     }
     fclose(fpo);
 
-    printf("See output file '%s'.\n", argv[2]);
+    printf("See output file '%s'.\n", argv[1]);
 
     exit(0);
 }

@@ -48,10 +48,10 @@
 
     <mediaobject>
       <imageobject role="html">
-	<imagedata align="center" fileref="../../articles/images/build_region_fig01.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/build_region_fig01.png" format="PNG"/>
       </imageobject>
     <imageobject role="fo">
-	<imagedata align="center" fileref="../../articles/images/build_region_fig01.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/build_region_fig01.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
@@ -70,10 +70,10 @@
 
     <mediaobject>
       <imageobject role="html">
-	<imagedata align="center" fileref="../../articles/images/build_region_fig02.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/build_region_fig02.png" format="PNG"/>
       </imageobject>
     <imageobject role="fo">
-	<imagedata align="center" fileref="../../articles/images/build_region_fig02.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/build_region_fig02.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
@@ -107,10 +107,10 @@ u wgn.s2 + wgn.s2+1 - wgn.s2-1
 
     <mediaobject>
       <imageobject role="html">
-	<imagedata align="center" fileref="../../articles/images/build_region_fig03.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/build_region_fig03.png" format="PNG"/>
       </imageobject>
     <imageobject role="fo">
-	<imagedata align="center" fileref="../../articles/images/build_region_fig03.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/build_region_fig03.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
@@ -125,10 +125,10 @@ u wgn.s2 + wgn.s2+1 - wgn.s2-1
 
     <mediaobject>
       <imageobject role="html">
-	<imagedata align="center" fileref="../../articles/images/build_region_fig04.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/build_region_fig04.png" format="PNG"/>
       </imageobject>
     <imageobject role="fo">
-	<imagedata align="center" fileref="../../articles/images/build_region_fig04.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/build_region_fig04.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>

@@ -1,7 +1,7 @@
 /*                      A A B B _ R A Y . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 
 /*----------------------------------------------------------------------*/
 /* @file aabb_ray.h */
-/** @addtogroup aabb_ray */
+/** @addtogroup bg_aabb_ray */
 /** @{ */
 
 /**
@@ -39,11 +39,18 @@
 
 __BEGIN_DECLS
 
-BG_EXPORT extern int bg_isect_aabb_ray(fastf_t *r_min, fastf_t *r_max,
-	point_t opt,
-	const fastf_t *invdir, /* inverses of dir[] */
-	const fastf_t *aabb_min,
-	const fastf_t *aabb_max
+/* Compute the inverse of the direction cosines */
+BG_EXPORT extern void
+bg_ray_invdir(vect_t *invdir, vect_t dir);
+
+BG_EXPORT extern int
+bg_isect_aabb_ray(
+	fastf_t *r_min, // first hit point
+	fastf_t *r_max, // second hit point
+	point_t opt,    // ray origin
+	const fastf_t *invdir, // inverses of dir[]
+	const fastf_t *aabb_min, // AABB first point
+	const fastf_t *aabb_max  // AABB second point
 	);
 
 __END_DECLS

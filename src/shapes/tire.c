@@ -1,7 +1,7 @@
 /*                          T I R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,11 +59,11 @@ int main(int ac, char *av[])
     GED_INIT(&ged, db_fp);
 
     /* create the tire */
-    ret = ged_tire(&ged, ac, (const char **)av);
+    ret = ged_exec(&ged, ac, (const char **)av);
 
     /* Close database */
     wdb_close(db_fp);
-    if (ret) {
+    if (ret & BRLCAD_ERROR) {
 	bu_file_delete(filename);
 	bu_log("%s", bu_vls_addr(ged.ged_result_str));
     } else

@@ -1,0 +1,86 @@
+# Values set at CMake configure time
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+set(LOGFILE "${CBDIR}/regress-ged_push.log")
+
+set(OUTPUT_FILES
+  "${CBDIR}/ged_push.g"
+  "${CBDIR}/ged_xpush.g"
+  "${CBDIR}/ged_local_xpush.g"
+  )
+
+file(WRITE "${LOGFILE}" "Starting push test run\n")
+
+# The executable locations aren't know at CMake configure time, so it is passed
+# in via the EXEC variable at runtime by a generator expression in the parent
+# build.  De-quote it and assign it to the appropriate variable.
+string(REPLACE "\\" "" PUSH_EXEC "${EXEC}")
+if (NOT EXISTS "${PUSH_EXEC}")
+  file(WRITE "${LOGFILE}" "push test program not found at location \"${PUSH_EXEC}\" - aborting\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find push test program, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
+endif (NOT EXISTS "${PUSH_EXEC}")
+
+# Clean up in case we've run before unsuccessfully
+foreach(of ${OUTPUT_FILES})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${of}")
+endforeach(of ${OUTPUT_FILES})
+
+# Run basic push test
+file(APPEND "${LOGFILE}" "Running ${PUSH_EXEC} ${CSDIR}/ppush_tests.g ${CBDIR}/ged_push.g\n")
+execute_process(COMMAND "${CMAKE_COMMAND}" -E copy "${CSDIR}/push_tests.g" "${CBDIR}/ged_push.g")
+execute_process(
+  COMMAND "${PUSH_EXEC}" "${CSDIR}/ppush_tests.g" "${CBDIR}/ged_push.g" RESULT_VARIABLE ged_push_result
+  OUTPUT_VARIABLE ged_push_log ERROR_VARIABLE ged_push_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+file(APPEND "${LOGFILE}" "${ged_push_log}")
+set(get_push_log)
+if(ged_push_result)
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[regress-ged_push] Failure: ${ged_push_result}. See ${LOGFILE} for more info.\n${LOG}")
+endif(ged_push_result)
+
+# Run basic xpush test
+file(APPEND "${LOGFILE}" "Running ${PUSH_EXEC} -f ${CSDIR}/xpush_tests.g ${CBDIR}/ged_xpush.g\n")
+execute_process(COMMAND "${CMAKE_COMMAND}" -E copy "${CSDIR}/push_tests.g" "${CBDIR}/ged_xpush.g")
+execute_process(
+  COMMAND "${PUSH_EXEC}" -f "${CSDIR}/xpush_tests.g" "${CBDIR}/ged_xpush.g" RESULT_VARIABLE ged_push_result
+  OUTPUT_VARIABLE ged_push_log ERROR_VARIABLE ged_push_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+file(APPEND "${LOGFILE}" "${ged_push_log}")
+set(get_push_log)
+if(ged_push_result)
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[regress-ged_push] Failure: ${ged_push_result}. See ${LOGFILE} for more info.\n${LOG}")
+endif(ged_push_result)
+
+# Run local xpush test
+file(APPEND "${LOGFILE}" "Running ${PUSH_EXEC} -L -f ${CSDIR}/xpush_tests.g ${CBDIR}/ged_local_xpush.g\n")
+execute_process(COMMAND "${CMAKE_COMMAND}" -E copy "${CSDIR}/push_tests.g" "${CBDIR}/ged_local_xpush.g")
+execute_process(
+  COMMAND "${PUSH_EXEC}" -L -f "${CSDIR}/xpush_tests.g" "${CBDIR}/ged_local_xpush.g" RESULT_VARIABLE ged_push_result
+  OUTPUT_VARIABLE ged_push_log ERROR_VARIABLE ged_push_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+file(APPEND "${LOGFILE}" "${ged_push_log}")
+set(get_push_log)
+if(ged_push_result)
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[regress-ged_push] Failure: ${ged_push_result}. See ${LOGFILE} for more info.\n${LOG}")
+endif(ged_push_result)
+
+
+# Clean up
+foreach(of ${OUTPUT_FILES})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${of}")
+endforeach(of ${OUTPUT_FILES})
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

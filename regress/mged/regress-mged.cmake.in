@@ -1,7 +1,7 @@
 # Values set at CMake configure time
 set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
-set(TNAME "@TARGET_NAME@")
+set(TNAME "@TNAME@")
 set(LOGFILE "@LOG_FILE@")
 
 file(WRITE "${LOGFILE}" "Starting mged test run\n")
@@ -12,7 +12,8 @@ file(WRITE "${LOGFILE}" "Starting mged test run\n")
 string(REPLACE "\\" "" MGED_EXEC "${EXEC}")
 if (NOT EXISTS "${MGED_EXEC}")
   file(WRITE "${LOGFILE}" "mged not found at location \"${MGED_EXEC}\" - aborting\n")
-  message(FATAL_ERROR "Unable to find mged, aborting.\nSee ${LOGFILE} for more details.")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find mged, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
 endif (NOT EXISTS "${MGED_EXEC}")
 
 # Create the .g file
@@ -25,7 +26,8 @@ execute_process(
 file(APPEND "${LOGFILE}" "${mged_log}")
 set(mged_log)
 if(mged_result)
-  message(FATAL_ERROR "[mged ${TNAME}] Failure: ${mged_result}. See ${LOGFILE} for more info.\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[mged ${TNAME}] Failure: ${mged_result}. See ${LOGFILE} for more info.\n${LOG}")
 endif(mged_result)
 
 # Run the core test
@@ -36,7 +38,8 @@ execute_process(
 file(APPEND "${LOGFILE}" "${mged_log}")
 set(mged_log)
 if(mged_result)
-  message(FATAL_ERROR "[mged ${TNAME}] Failure: ${mged_result}. See ${LOGFILE} for more info.\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[mged ${TNAME}] Failure: ${mged_result}. See ${LOGFILE} for more info.\n${LOG}")
 endif(mged_result)
 
 # Clean up

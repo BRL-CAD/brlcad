@@ -1,7 +1,7 @@
 /*                      D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,9 +46,21 @@
 #  endif
 #endif
 
-/* NOTE: do not rely on these values */
-#define BRLCAD_OK 0
-#define BRLCAD_ERROR 1
+/** All okay return code, not a maskable result.  Callers should not rely on
+ * the numerical value. */
+#define BRLCAD_OK    0x0000
+
+/**
+ * Possible maskable return codes from BRL-CAD functions.  Callers should not
+ * rely on the actual values or exact numerical equalities but should instead
+ * test via masking.
+ */
+#define BRLCAD_ERROR   0x0001 /**< something went wrong, the action was not performed */
+#define BRLCAD_HELP    0x0002 /**< invalid specification, result contains usage */
+#define BRLCAD_MORE    0x0004 /**< incomplete specification, can specify again interactively */
+#define BRLCAD_QUIET   0x0008 /**< don't set or modify the result string */
+#define BRLCAD_UNKNOWN 0x0010 /**< argv[0] was not a known command */
+#define BRLCAD_EXIT    0x0020 /**< command is requesting a clean application shutdown */
 
 /**
  * @def BU_DIR_SEPARATOR
@@ -67,22 +79,6 @@
 #    endif  /* _WIN32 */
 #  endif  /* DIR_SEPARATOR_2 */
 #endif  /* DIR_SEPARATOR */
-
-/**
- * Maximum length of a filesystem path.  Typically defined in a system
- * file but if it isn't set, we create it.
- */
-#ifndef MAXPATHLEN
-#  ifdef PATH_MAX
-#    define MAXPATHLEN PATH_MAX
-#  else
-#    ifdef _MAX_PATH
-#      define MAXPATHLEN _MAX_PATH
-#    else
-#      define MAXPATHLEN 1024
-#    endif
-#  endif
-#endif
 
 /**
  * set to the path list separator character
@@ -117,24 +113,6 @@
 #  define _BU_ATTR_SCANF23
 #endif
 
-/**
- * shorthand declaration of a function that doesn't return
- */
-#ifdef HAVE_NORETURN_ATTRIBUTE
-#  define _BU_ATTR_NORETURN __attribute__((__noreturn__))
-#else
-#  define _BU_ATTR_NORETURN
-#endif
-
-/* For the moment, we need to specially flag some functions
- * for clang.  It's not clear if we will always need to do
- * this, but for now this suppresses a lot of noise in the
- * reports */
-#ifdef HAVE_ANALYZER_NORETURN_ATTRIBUTE
-#  define _BU_ATTR_ANALYZE_NORETURN __attribute__((analyzer_noreturn))
-#else
-#  define _BU_ATTR_ANALYZE_NORETURN
-#endif
 
 /**
  * shorthand declaration of a function that should always be inline
@@ -184,7 +162,7 @@
 
 /**
  * shorthand declaration of a function that doesn't accept NULL
- * pointer arugments.  if a null pointer is detected during
+ * pointer arguments.  if a null pointer is detected during
  * compilation, a warning/error can be emitted.
  */
 #ifdef HAVE_NONNULL_ATTRIBUTE
@@ -206,31 +184,24 @@
 
 
 /**
+ * shorthand placed before a function _definition_ indicating to some
+ * compilers that it should inline most of the function calls within
+ * the function.  this should be used sparingly on functions that are
+ * demonstrably hot, as indicated by a profiler.
+ */
+#ifdef HAVE_FLATTEN_ATTRIBUTE
+#  define _BU_ATTR_FLATTEN __attribute__((flatten))
+#else
+#  define _BU_ATTR_FLATTEN
+#endif
+
+/**
  * This macro is used to take the 'C' function name, and convert it at
  * compile time to the FORTRAN calling convention.
  *
  * Lower case, with a trailing underscore.
  */
 #define BU_FORTRAN(lc, uc) lc ## _
-
-
-/**
- * @def BU_ASSERT(eqn)
- * Quick and easy macros to generate an informative error message and
- * abort execution if the specified condition does not hold true.
- *
- */
-#ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT(_equation) (void)(_equation)
-#else
-#  define BU_ASSERT(_equation)	\
-    if (UNLIKELY(!(_equation))) { \
-	const char *_equation_buf = #_equation; \
-	bu_log("BU_ASSERT(%s), failed, file %s, line %d\n", \
-	       _equation_buf, __FILE__, __LINE__); \
-	bu_bomb("BU_ASSERT failure\n"); \
-    }
-#endif
 
 
 /** @} */

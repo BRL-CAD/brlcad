@@ -38,17 +38,14 @@ target_link_libraries(BrlcadCore
   libbn-static
   libbrep-static
   libbu-static
-  gdiam-static
   libged-static
   regex-static
   librt-static
   libbrep-static
-  vds-static
   libwdb-static
   libnmg-static
   poly2tri-static
   zlib-static
-  lz4-static
   openNURBS-static
   )
 
@@ -120,17 +117,14 @@ target_link_libraries(brlcad
   libbn-static
   libbrep-static
   libbu-static
-  gdiam-static
   libged-static
   regex-static
   librt-static
   libbrep-static
-  vds-static
   libwdb-static
   libnmg-static
   poly2tri-static
   zlib-static
-  lz4-static
   openNURBS-static
   ${COREINTERFACE_MSVC_LIBRARIES}
   )

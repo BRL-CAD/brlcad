@@ -1,7 +1,7 @@
 /*                        R T F U N C . H
  * BRL-CAD
  *
- * Copyright (c) 2010-2020 United States Government as represented by
+ * Copyright (c) 2010-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 #include "bu/list.h"
 #include "bu/parse.h"
 #include "bu/vls.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bn/tol.h"
 #include "rt/defines.h"
 #include "rt/application.h"

@@ -1,7 +1,7 @@
 /*                         E D A R B . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,6 +62,10 @@ editarb(vect_t pos_model)
     arb = (struct rt_arb_internal *)es_int.idb_ptr;
 
     ret = arb_edit(arb, es_peqn, es_menu, newedge, pos_model, &mged_tol);
+
+    // arb_edit doesn't zero out our global any more as a library call, so
+    // reset once operation is complete.
+    newedge = 0;
 
     if (ret) {
 	es_edflag = IDLE;
@@ -128,6 +132,7 @@ f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     /* draw the updated solid */
     replot_editing_solid();
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     return TCL_OK;
 }

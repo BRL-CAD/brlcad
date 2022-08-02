@@ -1,7 +1,7 @@
 /*                         C L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2020 United States Government as represented by
+ * Copyright (c) 2000-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -188,7 +188,10 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
     fastf_t distmin, distmax;
     fastf_t add_radius;
 
-    if (ap) RT_CK_APPLICATION(ap);
+    if (!ap || !rp)
+	return 0;
+
+    RT_CK_APPLICATION(ap);
 
     BU_LIST_INIT(&ref_seghead.l);
 
@@ -208,7 +211,7 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
     else
 	tmp = cosa + 1.0;
 
-    (void)bn_distsq_line3_line3(dist, cline->V, cline->height,
+    (void)bg_distsq_line3_line3(dist, cline->V, cline->height,
 				rp->r_pt, rp->r_dir, pt1, pt2);
 
     if (NEAR_ZERO(tmp, RT_DOT_TOL)) {
@@ -353,7 +356,10 @@ rt_cline_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     vect_t tmp;
     fastf_t dot;
 
-    if (hitp) RT_CK_HIT(hitp);
+    if (!hitp || !rp)
+	return;
+
+    RT_CK_HIT(hitp);
 
     if (hitp->hit_surfno == 1 || hitp->hit_surfno == -1)
 	return;
@@ -372,9 +378,10 @@ rt_cline_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     }
 
     if (MAGNITUDE(hitp->hit_normal) < 0.9) {
-	bu_log("BAD normal for solid %s for ray -p %g %g %g -d %g %g %g\n",
-	       stp->st_name, V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
-	bu_bomb("BAD normal\n");
+	if (stp)
+	    bu_log("BAD normal for cline solid %s for ray -p %g %g %g -d %g %g %g\n",
+		    stp->st_name, V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
+	bu_bomb("BAD cline normal\n");
     }
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 }
@@ -428,7 +435,7 @@ rt_cline_free(register struct soltab *stp)
 
 
 int
-rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_cline_internal *cline_ip;
     fastf_t top[16*3];
@@ -441,6 +448,7 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cline_ip);
 
@@ -455,21 +463,21 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
     rt_ell_16pnts(top, top_pt, a, b);
 
     /* Draw the top */
-    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw the bottom */
-    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw connections */
     for (i = 0; i < 16; i += 4) {
-	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
@@ -484,21 +492,21 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	rt_ell_16pnts(top, top_pt, a, b);
 
 	/* Draw the top */
-	RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
 	for (i = 0; i < 16; i++) {
-	    RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
 	}
 
 	/* Draw the bottom */
-	RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
 	for (i = 0; i < 16; i++) {
-	    RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
 	}
 
 	/* Draw connections */
 	for (i = 0; i < 16; i += 4) {
-	    RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
 	}
 
     }
@@ -612,9 +620,11 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	VJOIN2(base_outer[seg_no].pt, cline_ip->v, a, v1, b, v2);
 	VADD2(top_outer[seg_no].pt, base_outer[seg_no].pt, cline_ip->h);
 
-	if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
-	    VJOIN2(base_inner[seg_no].pt, cline_ip->v, c, v1, d, v2);
-	    VADD2(top_inner[seg_no].pt, base_inner[seg_no].pt, cline_ip->h);
+	if (base_inner && top_inner) {
+	    if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
+		VJOIN2(base_inner[seg_no].pt, cline_ip->v, c, v1, d, v2);
+		VADD2(top_inner[seg_no].pt, base_inner[seg_no].pt, cline_ip->h);
+	    }
 	}
     }
 
@@ -748,10 +758,12 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	nmg_vertex_gv(base_outer[seg_no].v, base_outer[seg_no].pt);
     }
 
-    if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
-	for (seg_no = 0; seg_no < nsegs; seg_no++) {
-	    nmg_vertex_gv(top_inner[seg_no].v, top_inner[seg_no].pt);
-	    nmg_vertex_gv(base_inner[seg_no].v, base_inner[seg_no].pt);
+    if (top_inner && base_inner) {
+	if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
+	    for (seg_no = 0; seg_no < nsegs; seg_no++) {
+		nmg_vertex_gv(top_inner[seg_no].v, top_inner[seg_no].pt);
+		nmg_vertex_gv(base_inner[seg_no].v, base_inner[seg_no].pt);
+	    }
 	}
     }
 
@@ -1129,6 +1141,43 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
     BU_LIST_APPEND(&pipep->pipe_segs_head, &point2->l);
 
     return 0;
+}
+
+void
+rt_cline_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!ps || !ip)
+	return;
+
+    struct rt_cline_internal *cline = (struct rt_cline_internal *)ip->idb_ptr;
+    RT_CLINE_CK_MAGIC(cline);
+
+    // Set up the containers
+    struct bv_label *l[2];
+    for (int i = 0; i < 2; i++) {
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
+	struct bv_label *la;
+	BU_GET(la, struct bv_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+    }
+
+    // Do the specific data assignments for each label
+
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, cline->v);
+
+    bu_vls_sprintf(&l[0]->label, "H");
+    VADD2(l[1]->p, cline->v, cline->h);
+
 }
 
 

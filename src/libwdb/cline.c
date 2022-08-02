@@ -1,7 +1,7 @@
 /*                         C L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2020 United States Government as represented by
+ * Copyright (c) 2000-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

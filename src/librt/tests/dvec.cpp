@@ -1,7 +1,7 @@
 /*                   T E S T _ D V E C . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -116,6 +116,8 @@ main(int argc, char** argv)
 	    total += lh[7];
 	}
 	printf("dvec<8> time: %3.4g\n", (double)(clock()-start)/(double)CLOCKS_PER_SEC);
+	if (!(total > 0))
+	    return 1;
     }
 
 /* test correctness */

@@ -1,7 +1,7 @@
 /*              B O T _ O R I E N T E D _ B B O X . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,6 +65,8 @@ rt_bot_oriented_bbox(struct rt_arb_internal *bbox, struct rt_db_internal *ip, co
     /* 1, 0, 1 */
     bb.get_vertex(1, 0, 1, &(bbox->pt[7][0]), &(bbox->pt[7][1]), &(bbox->pt[7][2]));
 
+    /* Done with gdiam array */
+    free(pnt_arr);
     return 0;
 }
 

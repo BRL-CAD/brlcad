@@ -1,7 +1,7 @@
 /*                     N U R B _ E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ nmg_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *f
      */
 
     diff_curve = (fastf_t *)
-	nmg_malloc(row_size * sizeof(fastf_t) * coords,
+	bu_malloc(row_size * sizeof(fastf_t) * coords,
 		  "rt_nurb_s__eval: diff_curve");
 
     c_ptr = diff_curve;
@@ -78,7 +78,7 @@ nmg_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *f
 	bu_bomb("nmg_nurb_s_eval: u value outside parameter range\n");
     }
 
-    curves = (fastf_t *) nmg_malloc(col_size * sizeof(fastf_t) * coords,
+    curves = (fastf_t *) bu_malloc(col_size * sizeof(fastf_t) * coords,
 				   "nmg_nurb_s_eval:crv_ptr");
 
     for (i = 0; i < row_size; i++) {
@@ -99,7 +99,7 @@ nmg_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *f
 	c_ptr += coords;
     }
 
-    nmg_free((char *)curves, "nmg_nurb_s_eval: curves");
+    bu_free((char *)curves, "nmg_nurb_s_eval: curves");
 
     k_index = nmg_nurb_knot_index(&srf->v, v, srf->order[RT_NURB_SPLIT_COL]);
     if (k_index < 0) {
@@ -115,7 +115,7 @@ nmg_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *f
     for (k = 0; k < coords; k++)
 	final_value[k] = ev_pt[k];
 
-    nmg_free ((char *)diff_curve, "nmg_nurb_s_eval: diff curve");
+    bu_free ((char *)diff_curve, "nmg_nurb_s_eval: diff curve");
 }
 
 
@@ -139,7 +139,7 @@ nmg_nurb_c_eval(const struct edge_g_cnurb *crv, fastf_t param, fastf_t *final_va
 	bu_bomb("nmg_nurb_c_eval: param value outside parameter range\n");
     }
 
-    pnts = (fastf_t *) nmg_malloc(coords * sizeof(fastf_t) *
+    pnts = (fastf_t *) bu_malloc(coords * sizeof(fastf_t) *
 				 crv->c_size, "diff: nmg_nurb_c_eval");
 
     for (i = 0; i < coords * crv->c_size; i++)
@@ -151,7 +151,7 @@ nmg_nurb_c_eval(const struct edge_g_cnurb *crv, fastf_t param, fastf_t *final_va
     for (i = 0; i < coords; i++)
 	final_value[i] = ev_pt[i];
 
-    nmg_free((char *) pnts, "nmg_nurb_c_eval");
+    bu_free((char *) pnts, "nmg_nurb_c_eval");
 }
 
 

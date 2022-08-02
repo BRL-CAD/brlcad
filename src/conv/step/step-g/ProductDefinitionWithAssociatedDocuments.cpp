@@ -1,7 +1,7 @@
 /*                 ProductDefinition.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,9 +69,14 @@ bool ProductDefinitionWithAssociatedDocuments::Load(STEPWrapper *sw, SDAI_Applic
 	return false;
     }
 
+#if 0
+    // TODO - unused right now - presumably we need to do some work to read
+    // info from the ProductDefinitionWithAssociatedDocuments entity?
+
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
     sse = step->getEntity(sse, ENTITYNAME);
+#endif
 
     sw->entity_status[id] = STEP_LOADED;
 

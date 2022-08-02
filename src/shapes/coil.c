@@ -1,7 +1,7 @@
 /*                          C O I L . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2020 United States Government as represented by
+ * Copyright (c) 2009-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,14 +64,14 @@ main(int ac, char *av[])
     /* do it. */
     mk_id(db_fp, "coil");
     GED_INIT(&ged, db_fp);
-    flag = ged_coil(&ged, ac, (const char**)av);
+    flag = ged_exec(&ged, ac, (const char**)av);
     /* Close database */
     wdb_close(db_fp);
-    if (flag == GED_ERROR)
+    if (flag & BRLCAD_ERROR)
 	/* Creation failed - remove file */
 	bu_file_delete(DEFAULT_COIL_FILENAME);
     bu_log("%s\n", bu_vls_addr(ged.ged_result_str));
-    /* return -1 if flag is 1; return 0 if flag is 0; GED_ERROR is 1 */
+    /* return -1 if flag is 1; return 0 if flag is 0; BRLCAD_ERROR is 1 */
     return -flag;
 }
 

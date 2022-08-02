@@ -79,10 +79,10 @@
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../articles/images/pipes_fig01.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/pipes_fig01.png" format="PNG"/>
 	</imageobject>
 	<imageobject role="fo">
-	  <imagedata align="center" fileref="../../articles/images/pipes_fig01.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/pipes_fig01.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -91,10 +91,10 @@
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../articles/images/pipes_fig02.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/pipes_fig02.png" format="PNG"/>
 	</imageobject>
 	<imageobject role="fo">
-	  <imagedata align="center" fileref="../../articles/images/pipes_fig02.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/pipes_fig02.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -103,10 +103,10 @@
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../articles/images/pipes_fig03.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/pipes_fig03.png" format="PNG"/>
 	</imageobject>
 	<imageobject role="fo">
-	  <imagedata align="center" fileref="../../articles/images/pipes_fig03.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/pipes_fig03.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -189,10 +189,10 @@
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../articles/images/pipes_fig04.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/pipes_fig04.png" format="PNG"/>
 	</imageobject>
 	<imageobject role="fo">
-	  <imagedata align="center" fileref="../../articles/images/pipes_fig04.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/pipes_fig04.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -297,35 +297,35 @@
 	<tbody>
 	  <row>
 	    <entry>- mged&gt;p 500 -500 150</entry>
-	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/images/pipes_fig05.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/images/pipes_fig05.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../articles/images/pipes_fig05.png"/></imageobject><imageobject role="fo"><imagedata fileref="../articles/images/pipes_fig05.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
 	    <entry>- mged&gt;p -500 -500 250</entry>
-	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/images/pipes_fig06.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/images/pipes_fig06.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../articles/images/pipes_fig06.png"/></imageobject><imageobject role="fo"><imagedata fileref="../articles/images/pipes_fig06.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
 	    <entry>- mged&gt;p -500 500 350</entry>
-	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/images/pipes_fig07.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/images/pipes_fig07.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../articles/images/pipes_fig07.png"/></imageobject><imageobject role="fo"><imagedata fileref="../articles/images/pipes_fig07.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
 	    <entry>- mged&gt;p 500 500 450</entry>
-	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/images/pipes_fig08.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/images/pipes_fig08.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../articles/images/pipes_fig08.png"/></imageobject><imageobject role="fo"><imagedata fileref="../articles/images/pipes_fig08.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
 	    <entry>- mged&gt;p 500 -500 550</entry>
-	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/images/pipes_fig09.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/images/pipes_fig09.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../articles/images/pipes_fig09.png"/></imageobject><imageobject role="fo"><imagedata fileref="../articles/images/pipes_fig09.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
 	    <entry>- mged&gt;p -500 -500 650</entry>
-	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/images/pipes_fig10.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/images/pipes_fig10.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../articles/images/pipes_fig10.png"/></imageobject><imageobject role="fo"><imagedata fileref="../articles/images/pipes_fig10.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
 	    <entry>- mged&gt;p -500 500 750</entry>
-	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/images/pipes_fig11.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/images/pipes_fig11.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../articles/images/pipes_fig11.png"/></imageobject><imageobject role="fo"><imagedata fileref="../articles/images/pipes_fig11.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
 	    <entry>- mged&gt;p 0 500 800</entry>
-	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/images/pipes_fig12.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/images/pipes_fig12.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../articles/images/pipes_fig12.png"/></imageobject><imageobject role="fo"><imagedata fileref="../articles/images/pipes_fig12.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	</tbody>
       </tgroup>
@@ -339,10 +339,10 @@
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../articles/images/pipes_fig13.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/pipes_fig13.png" format="PNG"/>
 	</imageobject>
 	<imageobject role="fo">
-	  <imagedata align="center" fileref="../../articles/images/pipes_fig13.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/pipes_fig13.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>

@@ -1,7 +1,7 @@
 /*                        H A M W I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,10 +51,9 @@ init_hamwintab(int size)
     double theta;
 
     if (size > maxinitlen) {
-	if (hamwintab != NULL) {
-	    bu_free(hamwintab, "free hamwintab");
-	    maxinitlen = 0;
-	}
+	bu_free(hamwintab, "free hamwintab");
+	maxinitlen = 0;
+
 	hamwintab = (double *)bu_malloc(size*sizeof(double), "alloc hamwintab");
 	if (!hamwintab) {
 	    fprintf(stderr, "coswin: couldn't malloc space for %d elements\n", size);

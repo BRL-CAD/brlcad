@@ -1,7 +1,7 @@
 /*                         V D E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -392,7 +392,7 @@ flatten_tree(struct bu_vls *vls, union tree *tp, char *op, int neg)
 	    return;
 
 	case OP_REGION:
-	    bu_log("REGION 'stp'=%lx\n", (size_t)tp->tr_a.tu_stp);
+	    bu_log("REGION 'stp'=%zx\n", (size_t)tp->tr_a.tu_stp);
 	    return;
 
 	default:
@@ -1676,6 +1676,7 @@ getarg(char *str, size_t maxchars)
     for (i = 0; i < maxchars; ++i) {
 	c = getchar();
 	switch (c) {
+	case '\r':
 	case '\n':
 	case EOF:
 	    /* end of input */

@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
  * either detected via configure or hand crafted, as is the case for
  * the win32 platform.
  *
- * NOTE: In order to use compile-time API, applicaitons need to define
+ * NOTE: In order to use compile-time API, applications need to define
  * BRLCADBUILD and HAVE_CONFIG_H before including this header.
  *
  */
@@ -168,22 +168,25 @@ typedef unsigned short u_short;
 #endif
 
 /**
- * C99 does not provide a ssize_t even though it is provided by SUS97.
- * regardless, we use it so make sure it's declared by using the
+ * make sure ssize_t is provided.  C99 does not provide it even though it is
+ * defined in SUS97.  if not available, we create the type aligned with the
  * similar POSIX ptrdiff_t type.
  */
-#if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
-# ifndef HAVE_SSIZE_T
-#   ifdef HAVE_SYS_TYPES_H
-#     include <sys/types.h>
-#   endif
-#   include <limits.h>
-#   include <stddef.h>
-#   ifndef SSIZE_MAX
+#if defined(_MSC_VER) && !defined(HAVE_SSIZE_T)
+#  ifdef HAVE_SYS_TYPES_H
+#    include <sys/types.h>
+#  endif
+#  include <limits.h>
+#  include <stddef.h>
 typedef ptrdiff_t ssize_t;
-#     define HAVE_SSIZE_T 1
-#   endif
-# endif
+#  define HAVE_SSIZE_T 1
+#  ifndef SSIZE_MAX
+#    if defined(_WIN64)
+#      define SSIZE_MAX LONG_MAX
+#    else
+#      define SSIZE_MAX INT_MAX
+#    endif
+#  endif
 #endif
 
 /* make sure most of the C99 stdint types are provided including the
@@ -210,7 +213,7 @@ typedef ptrdiff_t ssize_t;
 
 /* off_t is 32 bit size even on 64 bit Windows. In the past we have tried to
  * force off_t to be 64 bit but this is failing on newer Windows/Visual Studio
- * verions in 2020 - therefore, we instead introduce the b_off_t define to
+ * versions in 2020 - therefore, we instead introduce the b_off_t define to
  * properly substitute the correct numerical type for the correct platform.  */
 #if defined(_WIN64)
 #  include <sys/stat.h>
@@ -224,6 +227,23 @@ typedef ptrdiff_t ssize_t;
 #  define stat  _stat
 #else
 #  define b_off_t off_t
+#endif
+
+/**
+ * Maximum length of a filesystem path.  Typically defined in a system
+ * file but if it isn't set, we create it.
+ */
+#ifndef MAXPATHLEN
+#  include <limits.h> // Consistently define (or not) PATH_MAX
+#  ifdef PATH_MAX
+#    define MAXPATHLEN PATH_MAX
+#  elif defined(MAX_PATH)
+#    define MAXPATHLEN MAX_PATH
+#  elif defined(_MAX_PATH)
+#    define MAXPATHLEN _MAX_PATH
+#  else
+#    define MAXPATHLEN 2048
+#  endif
 #endif
 
 /**
@@ -388,6 +408,61 @@ typedef ptrdiff_t ssize_t;
 #endif
 
 
+/**
+ * NORETURN declares that a function does not return.
+ *
+ * For portability, the attribute must precede the function, i.e., be
+ * declared on the left:
+ *
+ * NORETURN void function(void);
+ *
+ * Note that throwing an exception or calling longjmp() do not
+ * constitute a return.  Functions that (always) infinite loop can be
+ * considered functions that do not return.  Functions that do not
+ * return should have a void return type.  This option is a hint to
+ * compilers and static analyers, to reduce false positive reporting.
+ */
+#ifdef NORETURN
+#  undef NORETURN
+#  warning "NORETURN unexpectedly defined.  Ensure common.h is included first."
+#endif
+#if defined(HAVE_NORETURN_ATTRIBUTE)
+#  define NORETURN __attribute__((__noreturn__))
+#elif defined(HAVE_NORETURN_DECLSPEC)
+#  define NORETURN __declspec(noreturn)
+#else
+#  define NORETURN /* does not return */
+#endif
+
+
+/**
+ * FAUX_NORETURN declares a function should be treated as if it does
+ * not return, even though it can.
+ *
+ * As this label is (currently) Clang-specific, it can be declared on
+ * the left or right of a function declaration.  Left is recommended
+ * for consistency with other annotations, e.g.:
+ *
+ * FAUX_NORETURN void function(void);
+ *
+ * This annocation is almost identical to NORETURN except that it does
+ * not affect code generation and can be used on functions that
+ * actually return.  It's typically useful for annotating assertion
+ * handlers (e.g., assert()) that sometimes return and should not be
+ * used on NORETURN functions.  This annotation is primarily a hint to
+ * static analyzers.
+ */
+#ifdef FAUX_NORETURN
+#  undef FAUX_NORETURN
+#  warning "FAUX_NORETURN unexpectedly defined.  Ensure common.h is included first."
+#endif
+#ifdef HAVE_ANALYZER_NORETURN_ATTRIBUTE
+#  define FAUX_NORETURN __attribute__((analyzer_noreturn))
+#else
+#  define FAUX_NORETURN /* pretend does not return */
+#endif
+
+
 /* ActiveState Tcl doesn't include this catch in tclPlatDecls.h, so we
  * have to add it for them
  */
@@ -428,6 +503,15 @@ typedef _TCHAR TCHAR;
  */
 #  pragma warning( disable : 4351 )
 
+/* warning C5105: macro expansion producing 'defined' has undefined behavior
+ *
+ * this appears to be an erronous issue in the latest msvc
+ * pre-processor that has support for the new C17 standard, which
+ * triggers warnings in Windows SDK headers (e.g., winbase.h) that
+ * use the defined operator in certain macros.
+ */
+#  pragma warning( disable : 5105 )
+
 /* dubious warnings that are not yet intentionally disabled:
  *
  * /W3 warning C4800: 'int' : forcing value to bool 'true' or 'false' (performance warning)
@@ -466,8 +550,10 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor stringification.
  *
- * #define abc 123
- * CPP_STR(abc) => "abc"
+ @code
+ *     #define abc 123
+ *     CPP_STR(abc) => "abc"
+ @endcode
  */
 #ifndef CPP_STR
 #  define CPP_STR(x) # x
@@ -476,8 +562,10 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor expanded stringification.
  *
- * #define abc 123
- * CPP_XSTR(abc) => "123"
+ @code
+ *     #define abc 123
+ *     CPP_XSTR(abc) => "123"
+ @endcode
  */
 #ifndef CPP_XSTR
 #  define CPP_XSTR(x) CPP_STR(x)
@@ -486,12 +574,14 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor concatenation.
  *
- * #define abc 123
- * CPP_GLUE(abc, 123) => abc123
- * CPP_STR(CPP_GLUE(abc, 123)) => "CPP_GLUE(abc, 123)"
- * CPP_XSTR(CPP_GLUE(abc, 123)) => "abc123"
- * #define abc123 "xyz"
- * CPP_GLUE(abc, 123) => abc123 => "xyz"
+ @code
+ *     #define abc 123
+ *     CPP_GLUE(abc, 123) => abc123
+ *     CPP_STR(CPP_GLUE(abc, 123)) => "CPP_GLUE(abc, 123)"
+ *     CPP_XSTR(CPP_GLUE(abc, 123)) => "abc123"
+ *     #define abc123 "xyz"
+ *     CPP_GLUE(abc, 123) => abc123 => "xyz"
+ @endcode
  */
 #ifndef CPP_GLUE
 #  define CPP_GLUE(a, b) a ## b
@@ -500,10 +590,12 @@ typedef _TCHAR TCHAR;
 /**
  * Provide canonical preprocessor expanded concatenation.
  *
- * #define abc 123
- * CPP_XGLUE(abc, 123) => 123123
- * CPP_STR(CPP_XGLUE(abc, 123)) => "CPP_XGLUE(abc, 123)"
- * CPP_XSTR(CPP_XGLUE(abc, 123)) => "123123"
+ @code
+ *     #define abc 123
+ *     CPP_XGLUE(abc, 123) => 123123
+ *     CPP_STR(CPP_XGLUE(abc, 123)) => "CPP_XGLUE(abc, 123)"
+ *     CPP_XSTR(CPP_XGLUE(abc, 123)) => "123123"
+ @endcode
  */
 #ifndef CPP_XGLUE
 #  define CPP_XGLUE(a, b) CPP_GLUE(a, b)
@@ -512,9 +604,11 @@ typedef _TCHAR TCHAR;
 /**
  * Provide format specifier string tied to a size (e.g., "%123s")
  *
- * #define STR_LEN 10+1
- * char str[STR_LEN] = {0};
- * scanf(CPP_SCANSIZE(STR_LEN) "\n", str);
+ @code
+ *     #define STR_LEN 10+1
+ *     char str[STR_LEN] = {0};
+ *     scanf(CPP_SCANSIZE(STR_LEN) "\n", str);
+ @endcode
  */
 #ifndef CPP_SCAN
 #  define CPP_SCAN(sz) "%" CPP_XSTR(sz) "s"

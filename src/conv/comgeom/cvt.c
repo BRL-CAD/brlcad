@@ -1,7 +1,7 @@
 /*                           C V T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2020 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -159,9 +159,9 @@ int
 main(int argc, char **argv)
 {
     int i;
-    char ctitle[132];
-    char *title;
-    char units[16];
+    char ctitle[132] = {'\0'};
+    char *title = NULL;
+    char units[16] = {'\0'};
 
     bu_setprogname(argv[0]);
 
@@ -218,7 +218,7 @@ main(int argc, char **argv)
 	return 10;
     }
 
-    title = NULL;
+    title = ctitle+3;
     switch (version) {
 	case 1:
 	    title = ctitle;
@@ -230,7 +230,6 @@ main(int argc, char **argv)
 	    units[0] = ctitle[0];
 	    units[1] = ctitle[1];
 	    units[2] = '\0';
-	    title = ctitle+3;
 	    break;
     }
 
@@ -328,7 +327,6 @@ main(int argc, char **argv)
 
     if (verbose)printf("\nRegion table\n");
 
-    i = sizeof(struct wmember) * (reg_total+2);
     wmp = (struct wmember *)bu_calloc(reg_total+2, sizeof(struct wmember), "wmp");
 
     for (i = reg_total + 1; i >= 0; i--) {

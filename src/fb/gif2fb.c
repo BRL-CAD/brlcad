@@ -1,7 +1,7 @@
 /*                        G I F 2 F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define LSB 0 /* Least Significant Byte */
@@ -129,7 +129,7 @@ main(int argc, char **argv)
     static int lace[4] = {8, 8, 4, 2};
     static int offs[4] = {0, 4, 2, 1};
 
-    fb *fbp;
+    struct fb *fbp;
     FILE *fp;
 
     bu_setprogname(argv[0]);
@@ -156,8 +156,8 @@ main(int argc, char **argv)
 	    usage(argv);
 	    return 1;
 	}
-	file_name = "-";
 	fp = stdin;
+	setmode(fileno(stdin), O_BINARY);
     } else {
 	file_name = argv[bu_optind];
 	if ((fp = fopen(file_name, "rb")) == NULL) {
@@ -286,7 +286,7 @@ main(int argc, char **argv)
 	int ih_height = WORD(Im.IH_Height);
 	int ih_width = WORD(Im.IH_Width);
 
-	if (ih_height < 0 || ih_height > 0xffff || ih_width < 0 || ih_height > 0xffff)
+	if (ih_height < 0 || ih_height > 0xffff || ih_width < 0 || ih_width > 0xffff)
 	    bu_exit(1, "Invalid height in GIF Header\n");
 
 	/*

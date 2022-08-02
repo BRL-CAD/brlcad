@@ -51,7 +51,27 @@
       <emphasis remap="I">before</emphasis> the paths and are used to control settings
       that apply globally to <command>search</command>'s behavior and reporting during
       the execution of the search.
+    </para>
 
+    <para>
+      The results of the search command will be sorted according to David Koelle's
+      "alphanum" algorithm, which is basically a human-intuitive ordering for
+      strings with letters and numbers.  For example, a result returning d1.r, d10.r and d2.r
+      will be sorted as:
+
+      <literallayout>
+d1.r
+d2.r
+d10.r
+      </literallayout>
+
+      instead of the default ASCII character ordering, which would look like:
+
+      <literallayout>
+d1.r
+d10.r
+d2.r
+      </literallayout>
     </para>
   </refsection>
 
@@ -212,6 +232,7 @@
 	  </para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><emphasis remap="B" role="bold">-iname</emphasis> <emphasis remap="I">pattern</emphasis></term>
 	<listitem>
@@ -230,6 +251,19 @@
 	  </para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-matrix</emphasis> <emphasis remap="I">IDN|{#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#}</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the object in question is being combined into the local hierarchy with an
+	    with the specified matrix.  This is useful in combination with the <emphasis remap="B" role="bold">!</emphasis>
+	    operator, for finding objects in a hierarchy with matricies over them.  "IDN" is a shorthand
+	    that allows users to specify an identity matrix more succinctly.
+	  </para>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
 	<term><emphasis remap="B" role="bold">-maxdepth</emphasis> <emphasis remap="I">n</emphasis></term>
 	<listitem>
@@ -309,7 +343,7 @@
 		  </row>
 		  <row>
 		    <entry>bot</entry>
-		    <entry>mode, orient, V, F, T</entry>
+		    <entry>mode[surf,volume,plate,plate_nocos], orient[no,lh,rh], V, F, T</entry>
 		  </row>
 		  <row>
 		    <entry>cline</entry>
@@ -420,6 +454,14 @@
 	  <para>
 	    True if the object path matches <emphasis remap="I">pattern.</emphasis>
 	    Pattern evaluation is done using Regular Expression matching.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-size</emphasis> <emphasis remap="I">[&gt;/&lt;/=]size</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the size of the object is within the range specified.  NOTE:  for combs, extrudes, and other composite objects this filter considers <emphasis>only</emphasis> the object definition itself, not its related elements.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -555,6 +597,15 @@
 	    methodology, the pattern <emphasis remap="B">plate</emphasis> will match any
 	    object whose internal definition indiciates it is of that type.  Currently
 	    such objects are possible with "bot" and "brep" objects.
+	  </para>
+	  <para>
+	    The the pattern <emphasis remap="B">volume</emphasis> can be used as a mirror
+	    of plate, in that it will report objects that clearly define a non-implicit
+	    solid volume.  Its determination is local - for example, combs aren't matched
+	    because a comb may be made up of non-volumetric objects.  In particular,
+	    plate mode objects will not match because their volume is implicit, and
+	    (for example) surface mode BoTs will not match because they don't define a
+	    volume.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -863,6 +914,17 @@
       </para>
     </example>
 
+    <example><title>Finding all Non-Identity Matrix Instances</title>
+
+      <para>
+	<userinput>search / ! -matrix IDN -</userinput>
+      </para>
+      <para>
+	Reports all comb instances included in their parent comb with a
+	non-identity positioning matrix.
+      </para>
+    </example>
+
     <example><title>Finding all Regions with RGB color 180 180 180</title>
 
       <para>
@@ -884,6 +946,17 @@
       <para>
 	Prints all combs immediately above either obj1 or obj2.  This more or less mimics the results of
 	the dbfind command, although it will be somewhat slower (noticably so on large databases.)
+      </para>
+    </example>
+
+    <example><title>Finding all regions containing an intersection of obj2</title>
+
+      <para>
+	<userinput>search |/ -maxdepth 0 -type region -above ( -name obj2 -bool + ) </userinput>
+      </para>
+      <para>
+	Prints all regions immediately above obj2 where obj2 is included using an intersection
+	operation.
       </para>
     </example>
 
@@ -924,8 +997,8 @@
 	or intersections in the m35.g example model in BRL-CAD and draw the objects' wireframes in the display manager:
 	<literallayout>
 	  <computeroutput>
-	    <prompt>mged&gt;</prompt><userinput>search all.g -type region -and ( -below -bool - -or -below -bool + ) -exec draw "{}" ";"</userinput>
-	    <prompt>mged&gt;</prompt><userinput>autoview</userinput>
+	    <prompt>mged&gt; </prompt><userinput>search all.g -type region -and ( -below -bool - -or -below -bool + ) -exec draw "{}" ";"</userinput>
+	    <prompt>mged&gt; </prompt><userinput>autoview</userinput>
 	  </computeroutput>
 	</literallayout>
       </para>
@@ -939,8 +1012,8 @@
 	First, we collect the set of search results into a Tcl variable:
 	<literallayout>
 	  <computeroutput>
-	    <prompt>mged&gt;</prompt><userinput> set glob_compat_mode 0</userinput>
-	    <prompt>mged&gt;</prompt><userinput> set search_results [search cab -type region]</userinput>
+	    <prompt>mged&gt; </prompt><userinput> set glob_compat_mode 0</userinput>
+	    <prompt>mged&gt; </prompt><userinput> set search_results [search cab -type region]</userinput>
 	  </computeroutput>
 	</literallayout>
       </para>
@@ -948,7 +1021,7 @@
 	Next we randomize the colors using Tcl's functionality (here we use random numbers and avoid any value less than 30 to keep objects more visible):
 	<literallayout>
 	  <computeroutput>
-	    <prompt>mged&gt;</prompt><userinput> foreach i $search_results {attr set $i color [expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]}</userinput>
+	    <prompt>mged&gt; </prompt><userinput> foreach i $search_results {attr set $i color [expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]}</userinput>
 	  </computeroutput>
 	</literallayout>
       </para>
@@ -956,7 +1029,7 @@
 	Finally, we add transparency to the same regions:
 	<literallayout>
 	  <computeroutput>
-	    <prompt>mged&gt;</prompt><userinput> foreach i $search_results {attr set $i shader {glass {tr 0.7 ri 1}}}</userinput>
+	    <prompt>mged&gt; </prompt><userinput> foreach i $search_results {attr set $i shader {glass {tr 0.7 ri 1}}}</userinput>
 	  </computeroutput>
 	</literallayout>
       </para>
@@ -965,7 +1038,7 @@
 	  Remember when setting region colors to check for the presence of a <emphasis>regionid_colortable</emphasis> attribute on the _GLOBAL object - if such a table is present (the m35.g sample model has one, for example) you need to remove that table (and for MGED wireframes, re-open the database) before the colors on the individual regions will "take":
 	  <literallayout>
 	    <computeroutput>
-	      <prompt>mged&gt;</prompt><userinput> attr rm _GLOBAL regionid_colortable</userinput>
+	      <prompt>mged&gt; </prompt><userinput> attr rm _GLOBAL regionid_colortable</userinput>
 	    </computeroutput>
 	  </literallayout>
 	</para>
@@ -990,7 +1063,7 @@
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>
-      This software is Copyright (c) 2008-2020 United States Government as
+      This software is Copyright (c) 2008-2022 United States Government as
       represented by the U.S. Army Research Laboratory.
       Portions Copyright 1990, 1993, 1994 The Regents of the University of California,
       per copyright and license information from OpenBSD and NetBSD.  For more details

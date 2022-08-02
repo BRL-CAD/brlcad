@@ -1,7 +1,7 @@
 /*                         S T R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -305,6 +305,15 @@ BU_EXPORT extern size_t bu_argv_from_string(char *argv[],
 /**
  * libbu replacement for Tcl's ascii list to argc/argv functionality
  * (Note: function signature duplicates that of Tcl_SplitList)
+ *
+ * Caller is responsible for freeing output argv array with bu_free(),
+ * but NOT the strings within argv.
+ *
+ * @param       list_str input string from caller
+ * @param[out]  argc pointer to variable that will hold number of entries in argv
+ * @param[out]  argv pointer to the parsed array of list items
+ *
+ * Returns 0 if parsing was successful
  */
 BU_EXPORT extern int bu_argv_from_tcl_list(const char *list_str,
 					   int *argc,
@@ -345,6 +354,14 @@ BU_EXPORT extern char **bu_argv_dup(size_t argc, const char *argv[]);
  * elements will be merged with the specified argv array.
  */
 BU_EXPORT extern char **bu_argv_dupinsert(int insert, size_t insertArgc, const char *insertArgv[], size_t argc, const char *argv[]);
+
+/**
+ * Calculate the Damarau Levenshtein edit distance between two strings.  When
+ * max_dist is defined, calculation will terminate once that distance is reached
+ * and max_dist will be returned.  When max_dist is 0, the calculation will
+ * proceed up to an internally defined calculation limit. */
+BU_EXPORT size_t
+bu_editdist(const char *s1, const char *s2);
 
 
 __END_DECLS

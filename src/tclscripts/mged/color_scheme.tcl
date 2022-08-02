@@ -1,7 +1,7 @@
 #                C O L O R _ S C H E M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2020 United States Government as represented by
+# Copyright (c) 2004-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -386,8 +386,8 @@ proc color_scheme_apply { id } {
 	    continue
 	}
 
-	set color_a [getRGBorReset $mged_color_scheme(top).$key_a\MB mged_color_scheme($id,$key_a) $mged_color_scheme($id,$key_a)]
-	set color_ia [getRGBorReset $mged_color_scheme(top).$key_ia\MB mged_color_scheme($id,$key_ia) $mged_color_scheme($id,$key_ia)]
+	set color_a [getRGB $mged_color_scheme(top).$key_a\MB $mged_color_scheme($id,$key_a)]
+	set color_ia [getRGB $mged_color_scheme(top).$key_ia\MB $mged_color_scheme($id,$key_ia)]
 
 	mged_apply_local $id "rset cs $key_a $color_a; rset cs $key_ia $color_ia"
     }
@@ -401,8 +401,8 @@ proc color_scheme_apply { id } {
 	    continue
 	}
 
-	set color_a [getRGBorReset $mged_color_scheme(top).$key_a\MB mged_color_scheme($id,$key_a) $mged_color_scheme($id,$key_a)]
-	set color_ia [getRGBorReset $mged_color_scheme(top).$key_ia\MB mged_color_scheme($id,$key_ia) $mged_color_scheme($id,$key_ia)]
+	set color_a [getRGB $mged_color_scheme(top).$key_a\MB $mged_color_scheme($id,$key_a)]
+	set color_ia [getRGB $mged_color_scheme(top).$key_ia\MB $mged_color_scheme($id,$key_ia)]
 
 	mged_apply_local $id "rset cs $key_a $color_a; rset cs $key_ia $color_ia"
     }

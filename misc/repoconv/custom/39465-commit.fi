@@ -1,7 +1,0 @@
-commit refs/heads/dmtogl
-mark :39465
-committer Clifford Yapp <starseeker> 1274816988 +0000
-data 43
-Re-create dmtogl branch off of trunk r39463
-from dmtogl,39464
-merge master,39463

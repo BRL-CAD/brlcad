@@ -395,6 +395,8 @@ Dm_Render(ClientData clientData)
     //////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////
 
+    std::cout << "DM update: " << r << "," << g << "," << b << "\n";
+
     // Update done - let the parent structure know.  We don't clear the
     // render_needed flag here, since the parent window may have changed
     // between the start and the end of this render and if it has we need
@@ -493,6 +495,8 @@ Fb_Render(ClientData clientData)
     Tcl_MutexUnlock(&threadMutex);
     Tcl_MutexUnlock(&fblock);
 
+    std::cout << "FB update: " << r << "," << g << "," << b << "\n";
+
     // Generate an event for the manager thread to let it know we're done, if the
     // display manager isn't already about to generate such an event
     Tcl_MutexLock(&threadMutex);
@@ -585,9 +589,8 @@ Dm_Update_Manager(ClientData clientData)
 
     // We're well and truly done - the application is closing down - free the
     // rendering buffer and quit the thread
-    if (idata->dmpixel) {
-	bu_free(idata->dmpixel, "free pixbuf");
-    }
+    bu_free(idata->dmpixel, "free pixbuf");
+
     Tcl_ExitThread(TCL_OK);
     TCL_THREAD_CREATE_RETURN;
 }
@@ -655,9 +658,8 @@ Fb_Update_Manager(ClientData clientData)
 
     // We're well and truly done - the application is closing down - free the
     // rendering buffer and quit the thread
-    if (idata->fbpixel) {
-	bu_free(idata->fbpixel, "free pixbuf");
-    }
+    bu_free(idata->fbpixel, "free pixbuf");
+
     Tcl_ExitThread(TCL_OK);
     TCL_THREAD_CREATE_RETURN;
 }

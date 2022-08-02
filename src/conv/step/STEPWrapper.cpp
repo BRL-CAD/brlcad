@@ -1,7 +1,7 @@
 /*                 S T E P W R A P P E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,6 +36,10 @@
 
 /* implementation headers */
 #include "AdvancedBrepShapeRepresentation.h"
+#include "BSplineSurfaceWithKnots.h"
+#include "GeometricallyBoundedSurfaceShapeRepresentation.h"
+#include "GeometricSet.h"
+#include "GeometricSetSelect.h"
 #include "Axis2Placement3D.h"
 #include "CartesianPoint.h"
 #include "SurfacePatch.h"
@@ -128,6 +132,57 @@ convert_WritePlateBrep(
 {
     if (dry_run) return 0;
     ON_Brep *onBrep = sBrep->GetONBrep();
+    if (!onBrep) {
+	return 1;
+    } else {
+	ON_TextLog tl;
+
+	if (!onBrep->IsValid(&tl)) {
+	    bu_log("WARNING: %s is not valid\n", name->c_str());
+	}
+
+	mat_t mat;
+	MAT_IDN(mat);
+
+#if 0
+	// TODO - manifold surface container has an axis...
+	Axis2Placement3D *axis = aBrep->GetAxis2Placement3d();
+	if (axis != NULL) {
+	    //assign matrix values
+	    double translate_to[3];
+	    const double *toXaxis = axis->GetXAxis();
+	    const double *toYaxis = axis->GetYAxis();
+	    const double *toZaxis = axis->GetZAxis();
+	    mat_t rot_mat;
+
+	    VMOVE(translate_to,axis->GetOrigin());
+	    VSCALE(translate_to,translate_to,LocalUnits::length);
+
+	    MAT_IDN(rot_mat);
+	    VMOVE(&rot_mat[0], toXaxis);
+	    VMOVE(&rot_mat[4], toYaxis);
+	    VMOVE(&rot_mat[8], toZaxis);
+	    bn_mat_inv(mat, rot_mat);
+	    MAT_DELTAS_VEC(mat, translate_to);
+	}
+#endif
+	dot_g->WriteBrep(*name, onBrep, mat);
+
+	delete onBrep;
+
+	return 0;
+    }
+}
+
+int
+convert_WriteBSpline(
+	BSplineSurfaceWithKnots *sB,
+	BRLCADWrapper *dot_g,
+	std::string *name,
+	int dry_run)
+{
+    if (dry_run) return 0;
+    ON_Brep *onBrep = sB->GetONBrep();
     if (!onBrep) {
 	return 1;
     } else {
@@ -267,6 +322,23 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		}
 	    }
 	}
+
+	// Geometric Sets define collections of surfaces
+	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_geometric_set))) {
+	    GeometricSet *gs = dynamic_cast<GeometricSet*>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
+	    if (!gs) {
+		bu_exit(1, "ERROR: unable to allocate a 'GeometricSet' entity\n");
+	    }
+	    int id = gs->GetId();
+	    std::string pname  = gs->Name();
+	    pname = dotg->CleanBRLCADName(pname);
+	    std::cout << "pname(" << id << "): " << pname << "\n";
+	    if (pname.empty() || (pname.compare("''") == 0)) {
+		std::string str = "GeometricSet@";
+		pname = dotg->GetBRLCADName(str);
+	    }
+	    id2name_map[id] = pname;
+	}
     }
     /*
      * Pickup BREP related to SHAPE_REPRESENTATION through SHAPE_REPRESENTATION_RELATIONSHIP
@@ -301,6 +373,8 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 
 	    if (srr) {
 		ShapeRepresentation *aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
+
+		// First thing to try - Brep
 		AdvancedBrepShapeRepresentation *aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
 		if (!aBrep) { //try rep_1
 		    aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
@@ -340,8 +414,56 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 			    }
 			}
 		    }
+		    Factory::DeleteObjects();
+		    continue;
 		}
+
+		// If not a Brep, try a bounded surface shape
+		// NOTE:  The modeling intent may be for the set of surfaces to
+		// bound a closed volume, but the topological information
+		// defining the BRep doesn't appear to be encoded explicitly in
+		// this representation.  We will import it as plate mode
+		// surfaces under a comb - it will be up to some sort of
+		// "welding" operation to deduce and construct the actual
+		// OpenNURBS BRep from the surface set, if they do in fact
+		// define such a closed volume.
+		GeometricallyBoundedSurfaceShapeRepresentation *aBS = dynamic_cast<GeometricallyBoundedSurfaceShapeRepresentation*>(srr->GetRepresentationRelationshipRep_2());
+		if (!aBS) { //try rep_1
+		    aBS = dynamic_cast<GeometricallyBoundedSurfaceShapeRepresentation*>(srr->GetRepresentationRelationshipRep_1());
+		    aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
+		}
+		if (aSR && aBS) {
+		    mat_t mat;
+		    MAT_IDN(mat);
+		    //std::cout << "GeometricallyBoundedSurfaceShapeRepresentation\n";
+		    LIST_OF_REPRESENTATION_ITEMS *items = aBS->items_();
+		    LIST_OF_REPRESENTATION_ITEMS::iterator ii;
+		    for (ii = items->begin(); ii != items->end(); ++ii) {
+			GeometricSet *gs = dynamic_cast<GeometricSet*>(*ii);
+			string comb = id2name_map[gs->GetId()];
+			dotg->AddMember(std::string("shells"), comb, mat);
+			LIST_OF_GEOMETRIC_SET_SELECT *sitems = gs->GetElements();
+			LIST_OF_GEOMETRIC_SET_SELECT::iterator sii;
+			for (sii = sitems->begin(); sii != sitems->end(); ++sii) {
+			    BSplineSurfaceWithKnots *ks = dynamic_cast<BSplineSurfaceWithKnots*>((*sii)->GetSurfaceElement());
+			    if (ks) {
+				int kd = ks->GetId();
+				std::string kname  = ks->Name() + std::string("_") + std::to_string(kd);
+				kname = dotg->CleanBRLCADName(kname);
+				if (!dry_run)
+				    dotg->AddMember(comb,kname,mat);
+
+				convert_WriteBSpline(ks, dotg, &kname, dry_run);
+			    }
+			}
+		    }
+
+		    Factory::DeleteObjects();
+		    continue;
+		}
+
 		Factory::DeleteObjects();
+
 	    }
 	}
     }

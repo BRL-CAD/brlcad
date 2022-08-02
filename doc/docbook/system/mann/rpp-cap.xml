@@ -44,7 +44,7 @@
   <example><title>Create an ARB6 shape with a specified height from a given RPP face.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rpp-cap rpp.s cap.s 1234 20</userinput>
+      <prompt>mged&gt; </prompt><userinput>rpp-cap rpp.s cap.s 1234 20</userinput>
     </para>
     <para>Creates an ARB6 shape named <emphasis>cap.s</emphasis> that extends 20 units from the 	1234 face of the RPP. The peaks of the ARB6 will be at the midpoint between points 1 and 2 	and at the midpoint between points 3 and 4.
     </para>
@@ -53,7 +53,7 @@
   <example><title>Create an ARB6 shape with a specified height from a given RPP face and having peaks 	between points 1 and 4 and between 2 and 3. </title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rcc-cap rcc.s cap.s 1234 20 1</userinput>
+      <prompt>mged&gt; </prompt><userinput>rcc-cap rcc.s cap.s 1234 20 1</userinput>
     </para>
     <para>Creates an ARB6 shape named <emphasis>cap.s</emphasis> that extends 20 units from the 	1234 face of the RPP. The peaks of the ARB6 will be at the midpoint between point 1 and 4 	and at the midpoint between points 2 and 3.
     </para>

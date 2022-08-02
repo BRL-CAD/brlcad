@@ -106,10 +106,7 @@ namespace p2t {
     void Sweep::FinalizationPolygon(SweepContext& tcx)
     {
 	// Get an Internal triangle to start with
-	Triangle* t = tcx.front()->head()->next->triangle;
-	Point* p = tcx.front()->head()->next->point;
-	t = FindInternalTriangle(tcx.af_tail_->triangle);
-
+	Triangle* t = FindInternalTriangle(tcx.af_tail_->triangle);
 	if (!t) return;
 
 	// Collect interior triangles constrained by edges
@@ -466,6 +463,7 @@ namespace p2t {
 		Point* op = ot->OppositePoint(t, p);
 		if (!op) return false;
 		int oi = ot->Index(op);
+		if (oi < 0) return false;
 
 		// If this is a Constrained Edge or a Delaunay Edge(only during recursive legalization)
 		// then we should not try to legalize
@@ -893,7 +891,8 @@ namespace p2t {
 	} else {
 	    Point *np = NextFlipPoint(ep, eq, ot, op);
 	    ret += FlipScanEdgeEvent(tcx, ep, eq, *t, ot, np);
-	    return EdgeEvent(tcx, ep, eq, t, p);
+	    ret += EdgeEvent(tcx, ep, eq, t, p);
+	    return (ret) ? 1 : 0;
 	}
 	return ret;
     }
@@ -903,7 +902,8 @@ namespace p2t {
 	if (o == CCW) {
 	    // ot is not crossing edge after flip
 	    int edge_index = ot.EdgeIndex(p, op);
-	    ot.delaunay_edge[edge_index] = true;
+	    if (edge_index >= 0)
+		ot.delaunay_edge[edge_index] = true;
 	    Legalize(tcx, ot);
 	    ot.ClearDelunayEdges();
 	    return t;
@@ -911,8 +911,8 @@ namespace p2t {
 
 	// t is not crossing edge after flip
 	int edge_index = t.EdgeIndex(p, op);
-
-	t.delaunay_edge[edge_index] = true;
+	if (edge_index >= 0)
+	    t.delaunay_edge[edge_index] = true;
 	Legalize(tcx, t);
 	t.ClearDelunayEdges();
 	return ot;

@@ -39,7 +39,6 @@ gmtime64_r() is a 64-bit equivalent of gmtime_r().
 
 #include "common.h"
 
-#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -49,6 +48,7 @@ gmtime64_r() is a 64-bit equivalent of gmtime_r().
 #include "time64_limits.h"
 
 #include "bu/log.h"
+#include "bu/assert.h"
 
 #ifndef HAVE_DECL_TZSET
 extern void tzset (void);
@@ -373,7 +373,7 @@ static Year cycle_offset(Year year)
 */
 static int safe_year(const Year year)
 {
-    int safe_year;
+    int safe_year = 0;
     Year year_cycle;
 
     if( year >= MIN_SAFE_YEAR && year <= MAX_SAFE_YEAR ) {

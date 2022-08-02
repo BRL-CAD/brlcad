@@ -2,22 +2,40 @@
 /** @defgroup libbg libbg (Geometric Algorithms) */
 
 /* Second tier groups */
- /** @ingroup libbg */
+/** @ingroup libbg */
 /**   @defgroup bg_defines Definitions*/
- /** @ingroup libbg */
- /**  @defgroup tri Triangles */
-/**   @ingroup tri */
- /**   @defgroup tri_ray Triangle/Ray Intersection Tests */
-/**   @ingroup tri */
- /**   @defgroup tri_tri Triangle/Triangle Intersection Tests */
-/**   @ingroup tri */
- /**   @defgroup trimesh Triangle Mesh Algorithms */
- /** @ingroup libbg */
- /**  @defgroup polygon Polygons */
- /** @ingroup libbg */
- /**  @defgroup chull Convex Hulls */
- /** @ingroup libbg */
- /**  @defgroup obr Oriented Bounding Rectangles/Rectangular Cuboids*/
- /** @ingroup libbg */
- /**  @defgroup pointgen Point Generation*/
+/** @ingroup libbg */
+/**  @defgroup bg_pointgen Point Generation*/
+/** @ingroup libbg */
+/**  @defgroup bg_vert_tree Vertex binary search tree */
+/** @ingroup libbg */
+/**  @defgroup bg_clip View related geometric clipping */
+/** @ingroup libbg */
+/**  @defgroup bg_lseg Line Segments */
+/** @ingroup libbg */
+/**  @defgroup bg_plane Plane/line/point calculations */
+/** @ingroup libbg */
+/**  @defgroup bg_tri Triangles */
+/**   @ingroup bg_tri */
+/**   @defgroup bg_tri_pt Closest Point on Triangle */
+/**   @ingroup bg_tri */
+/**   @defgroup bg_tri_ray Triangle/Ray Intersection Tests */
+/**   @ingroup bg_tri */
+/**   @defgroup bg_tri_tri Triangle/Triangle Intersection Tests */
+/**   @ingroup bg_tri */
+/**   @defgroup bg_trimesh Triangle Mesh Algorithms */
+/** @ingroup libbg */
+/**  @defgroup bg_obr Oriented Bounding Rectangles/Rectangular Cuboids*/
+/** @ingroup libbg */
+/**  @defgroup bg_polygon Polygons */
+/** @ingroup libbg */
+/**  @defgroup bg_aabb Axis Aligned Bounding Boxes */
+/**   @ingroup bg_aabb */
+/**   @defgroup bg_aabb_ray AABB/Ray Intersection Tests */
+/** @ingroup libbg */
+/**  @defgroup bg_chull Convex Hulls */
+/** @ingroup libbg */
+/**  @defgroup bg_surf_recon Surface Reconstruction */
+/**   @ingroup bg_surf_recon */
+/**   @defgroup bg_surf_recon_spsr Screened Poisson Surface Reconstruction */
 

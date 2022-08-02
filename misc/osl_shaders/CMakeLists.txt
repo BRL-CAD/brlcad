@@ -24,6 +24,3 @@ CMAKEFILES(CMakeLists.txt)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-
-
-

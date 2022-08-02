@@ -1,7 +1,7 @@
 /*                        F B C M A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/snooze.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 
@@ -655,7 +655,7 @@ main(int argc, char **argv)
     int fudge;
     ColorMap cmap;
     ColorMap *cp = &cmap;
-    fb *fbp;
+    struct fb *fbp;
 
     bu_setprogname(argv[0]);
 

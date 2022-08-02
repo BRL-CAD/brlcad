@@ -1,7 +1,7 @@
 /*                         F I L E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,8 @@ __BEGIN_DECLS
  * Returns truthfully whether the given file path exists or not.  An
  * empty or NULL path name is treated as a non-existent file and, as
  * such, will return false.  If fd is non-NULL, it will be set to a
- * read-only open file descriptor for the provided path.
+ * read-only open file descriptor for the provided path.  If path is
+ * "-", fd is set to standard input's file descriptor if provided.
  *
  * @return >0 The given filename exists.
  * @return 0 The given filename does not exist.
@@ -166,7 +167,9 @@ BU_EXPORT extern char *bu_file_realpath(const char *path, char *resolved_path);
 
 /**
  * Windows corecrt_io.h defines an lseek and an _lseeki64, with different function
- * signatures, that cause trouble when we try to simply #define lseek _lseeki64.
+ * signatures, that cause trouble when we try to simply define it à la:
+ *
+ *      #define lseek _lseeki64.
  *
  * Similarly, _ftelli64 has a problematic signature.
  */

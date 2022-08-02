@@ -26,8 +26,8 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public
 License along with this file.  If you did not, please contact one of
-the BRL-CAD project administrators listed at the SourceForge project
-site http://sf.net/projects/brlcad/ or listed in the AUTHORS file
+the BRL-CAD project administrators listed at the Github project
+site https://github.com/BRL-CAD/brlcad/ or listed in the AUTHORS file
 included as part of the distribution.
 
 Overview
@@ -101,7 +101,7 @@ arranged.  This includes an implicit assignment of copyright for any
 and all contributions being made.  The following notice should be
 prominent in the BRL-CAD sources:
 
-  Copyright (c) 1984-2020 United States Government as represented by
+  Copyright (c) 1984-2022 United States Government as represented by
   the U.S. Army Research Laboratory.
 
 Contact

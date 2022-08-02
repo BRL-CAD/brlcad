@@ -1,7 +1,7 @@
 /*                         V F O N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
 
     if (fontname[0] != '/') {
 	/* absolute path */
-	const char *vfont = bu_brlcad_root("share/vfont", 1);
+	const char *vfont = bu_dir(NULL, 0, BU_DIR_DATA, "vfont", NULL);
 	if (vfont)
 	    snprintf(fname, FONTNAMESZ, "%s/%s", vfont, fontname);
 	else
@@ -127,7 +127,7 @@ vfont_get(char *font)
     register struct vfont *vfp = VFONT_NULL;
     register FILE *fp = NULL;
     register int i;
-    char fname[FONTNAMESZ];
+    char fname[FONTNAMESZ] = {'\0'};
     unsigned char header[2*5];		/* 5 16-bit vax shorts */
     unsigned char dispatch[10*256];	/* 256 10-byte structs */
     uint16_t magic;
@@ -138,7 +138,7 @@ vfont_get(char *font)
 
     /* Open the file and read in the header information. */
     if ((fp = fopen(const_font, "rb")) == NULL) {
-	snprintf(fname, FONTNAMESZ, "%s/%s", (char *)bu_brlcad_root("share/vfont", 0), const_font);
+	snprintf(fname, FONTNAMESZ, "%s/%s", bu_dir(NULL, 0, BU_DIR_DATA, "vfont", NULL), const_font);
 	if ((fp = fopen(fname, "rb")) == NULL) {
 	    snprintf(fname, FONTNAMESZ, "%s/%s", FONTDIR2, const_font);
 	    if ((fp = fopen(fname, "rb")) == NULL) {

@@ -1,7 +1,7 @@
 /*                      P L A N A R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -640,7 +640,7 @@ arbn_nucleus_degeneracy(struct subbrep_island_data *data, std::set<int> *planar_
 	    // Check if the island planar faces are coplanar with one of the shoal
 	    // arbn planes (if any).  If *all* the island planes are coplanar in
 	    // that fashion, the nucleus is degenerate.
-	    std::set<int> arbn_coplanar_faces;
+	    std::set<int> arbg_coplanar_faces;
 	    std::set<int>::iterator p_it;
 	    for (p_it = planar_faces->begin(); p_it != planar_faces->end(); p_it++) {
 		const ON_BrepFace *face = &(brep->m_F[(int)*p_it]);
@@ -651,14 +651,14 @@ arbn_nucleus_degeneracy(struct subbrep_island_data *data, std::set<int> *planar_
 		for (int i = 0; i < arbn_planes.Count(); i++) {
 		    if (arbn_planes[i].Normal().IsParallelTo(p.Normal(), BREP_PLANAR_TOL)) {
 			if (fabs(arbn_planes[i].DistanceTo(p.origin)) < BREP_PLANAR_TOL) {
-			    arbn_coplanar_faces.insert(face->m_face_index);
+			    arbg_coplanar_faces.insert(face->m_face_index);
 			    //bu_log("found coplanar face: %d\n", face->m_face_index);
 			    break;
 			}
 		    }
 		}
 	    }
-	    if (arbn_coplanar_faces.size() == planar_faces->size()) return 1;
+	    if (arbg_coplanar_faces.size() == planar_faces->size()) return 1;
 	}
     }
 

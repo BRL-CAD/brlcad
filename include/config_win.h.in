@@ -1,7 +1,7 @@
 /*                          C O N F I G _ W I N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -87,10 +87,6 @@
 #define YYTOKENTYPE		1
 
 
-#define close _close
-#define dup _dup
-#define dup2 _dup2
-
 /* it we're compiling c++ sources, there's a possibility that we'll be
  * including libc++ headers (e.g., iostream) where these underscore IO
  * function hacks become counterproductive.
@@ -106,10 +102,13 @@
 #define chsize _chsize
 #define commit _commit
 #define creat _creat
+#define dup _dup
+#define dup2 _dup2
 /* #define filelength _filelength */
 #define locking _locking
 /* #define mktemp _mktemp */
 #define open _open
+#define close _close
 #define unlink _unlink
 
 /* io.h's _pipe func takes different args */
@@ -312,7 +311,9 @@ typedef int mode_t;
 #define fork() -1
 #define getprogname() _pgmptr
 #define HAVE_SHARED_RINT_TEST 1
-#define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
+#ifndef __cplusplus
+#  define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
+#endif
 
 #if !defined(__cplusplus) && !defined(inline)
 /*  Microsoft specific inline specifier */

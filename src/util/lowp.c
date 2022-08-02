@@ -1,7 +1,7 @@
 /*                          L O W P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
+#include "bu/log.h"
 
 
 #define MAX_LINE 10000		/* Max pixels/line */
@@ -76,8 +77,14 @@ main(int argc, char **argv)
 	bu_exit (1, NULL);
     }
 
+    if (isatty(fileno(stdout))) {
+	bu_log("%s: Will not write to a TTY\n", argv[0]);
+	fprintf(stderr, "%s", usage);
+	bu_exit (1, NULL);
+    }
+
     ifname = bu_file_realpath(argv[1], NULL);
-    if ((infd1 = open(ifname, 0)) < 0) {
+    if ((infd1 = open(ifname, O_RDONLY|O_BINARY)) < 0) {
 	perror(ifname);
 	bu_free(ifname, "ifname alloc from bu_file_realpath");
 	bu_exit (3, NULL);
@@ -85,7 +92,7 @@ main(int argc, char **argv)
     bu_free(ifname, "ifname alloc from bu_file_realpath");
 
     ifname = bu_file_realpath(argv[2], NULL);
-    if ((infd2 = open(ifname, 0)) < 0) {
+    if ((infd2 = open(ifname, O_RDONLY|O_BINARY)) < 0) {
 	perror(ifname);
 	bu_free(ifname, "ifname alloc from bu_file_realpath");
 	bu_exit (3, NULL);
@@ -93,7 +100,7 @@ main(int argc, char **argv)
     bu_free(ifname, "ifname alloc from bu_file_realpath");
 
     ifname = bu_file_realpath(argv[3], NULL);
-    if ((infd3 = open(ifname, 0)) < 0) {
+    if ((infd3 = open(ifname, O_RDONLY|O_BINARY)) < 0) {
 	perror(ifname);
 	bu_free(ifname, "ifname alloc from bu_file_realpath");
 	bu_exit (3, NULL);
@@ -116,7 +123,7 @@ main(int argc, char **argv)
 
     /* First and last are black */
     memset(out1, 0, pix_line*3);
-    ret = write(1, out1, pix_line*3);
+    ret = write(fileno(stdout), out1, pix_line*3);
     if (ret < 0)
 	perror("write");
 
@@ -149,14 +156,14 @@ main(int argc, char **argv)
 		     c[ i-3]    + c[ i  ]*3  + c[ i+3]
 		) / 84;
 	}
-	ret = write(1, out1, pix_line*3);
+	ret = write(fileno(stdout), out1, pix_line*3);
 	if (ret < 0)
 	    perror("write");
     }
 
     /* First and last are black */
     memset(out1, 0, pix_line*3);
-    ret = write(1, out1, pix_line*3);
+    ret = write(fileno(stdout), out1, pix_line*3);
     if (ret < 0)
 	perror("write");
 

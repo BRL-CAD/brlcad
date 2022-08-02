@@ -1,7 +1,7 @@
 /*                        G - I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -557,7 +557,6 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		suffix[0]--;
 		while (!unique) {
 		    if (bu_file_readable(multi_name)) {
-			unique = 1;
 			break;
 		    }
 
@@ -611,9 +610,6 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	    dp->d_uses = (-nmgregion_to_iges(dp->d_namep, r, dependent, fp_dir, fp_param));
 	} else if (mode == TRIMMED_SURF_MODE)
 	    dp->d_uses = (-nmgregion_to_tsurf(dp->d_namep, r, fp_dir, fp_param));
-
-	/* NMG region is no longer necessary */
-	nmg_kr(r);
 
 	if (multi_file) {
 	    char copy_buffer[CP_BUF_SIZE] = {0};

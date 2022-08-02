@@ -1,7 +1,7 @@
 /*                      C A L C . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,11 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/**
+/** @addtogroup raytrace */
+/** @{ */
+/** @file rt/calc.h
  * @brief
  * In memory format for non-geometry objects in BRL-CAD databases.
  */
-/** @file rt/calc.h */
 
 #ifndef RT_CALC_H
 #define RT_CALC_H
@@ -115,6 +116,18 @@ RT_EXPORT extern int rt_bound_internal(struct db_i *dbip,
 				       struct directory *dp,
 				       point_t rpp_min,
 				       point_t rpp_max);
+
+/**
+ * Given an argc/argv list of objects, calculate their collective
+ * bounding box */
+RT_EXPORT extern int
+rt_obj_bounds(struct bu_vls *msgs,
+                    struct db_i *dbip,
+                    int argc,
+                    const char *argv[],
+                    int use_air,
+                    point_t rpp_min,
+                    point_t rpp_max);
 
 /**
  *

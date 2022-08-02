@@ -103,6 +103,18 @@
 	  </para>
 	</listitem>
       </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-S</emphasis></term>
+	<listitem>
+	  <para>
+	    The "S" option enables a completely different difference testing mode - rather than using rays
+	    to interrogate geometries, it checks tree structures, boolean operations, matrices and leaf
+	    objects.  It deliberately does <emphasis>not</emphasis> check object names, in order to compare
+	    the actual volumetric definitions of the trees.  Since there is no ray sampling, this option
+	    will not currently produce any visual output.
+	  </para>
+	</listitem>
+      </varlistentry>
     </variablelist>
 
   </refsection>
@@ -113,7 +125,7 @@
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
     <para>
-      This software is Copyright (c) 2016-2020 United States Government as
+      This software is Copyright (c) 2016-2022 United States Government as
       represented by the U.S. Army Research Laboratory.
     </para>
   </refsection>

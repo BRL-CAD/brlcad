@@ -1,7 +1,7 @@
 /*                       S U R F A C E T R E E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,6 +57,13 @@ namespace brlcad {
     public:
 	explicit SurfaceTree(const ON_BrepFace *face, bool removeTrimmed = true, int depthLimit = BREP_MAX_FT_DEPTH, double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
 	~SurfaceTree();
+
+	/* Report whether the tree is in a usable state */
+	bool Valid() const {
+	    if (!m_root)
+		return false;
+	    return true;
+	};
 
 	BBNode *getRootNode() const;
 

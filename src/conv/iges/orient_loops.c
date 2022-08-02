@@ -1,7 +1,7 @@
 /*                  O R I E N T _ L O O P S . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -148,6 +148,10 @@ Orient_face_loops(struct faceuse *fu)
 	    lu_outer = lu;
 	    break;
 	}
+    }
+
+    if (!lu_outer) {
+	bu_exit(BRLCAD_ERROR, "No outer loop found, orient_loops.c:%d\n", __LINE__);
     }
 
     BU_ALLOC(loop_root, struct loop_list);

@@ -1,7 +1,7 @@
 /*                        F B G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,11 +32,11 @@
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 
 
 static unsigned char *white_line, *grey_line, *dark_line;
-static fb *fbp;
+static struct fb *fbp;
 static char *framebuffer = NULL;
 
 #define OLD 0
@@ -48,7 +48,7 @@ static int fbheight = 0;
 static int flavor = DECIMAL;
 static int clear = 0;
 
-void grid(fb *fbiop, unsigned char *line, int spacing), oldflavor(void);
+void grid(struct fb *fbiop, unsigned char *line, int spacing), oldflavor(void);
 
 static char usage[] = "\
 Usage: fbgrid [-c] [-b | -d | -o] [-F framebuffer]\n\
@@ -162,7 +162,7 @@ main(int argc, char **argv)
 
 
 void
-grid(fb *fbiop, unsigned char *line, int spacing)
+grid(struct fb *fbiop, unsigned char *line, int spacing)
 {
     int x, y;
 
@@ -177,7 +177,7 @@ grid(fb *fbiop, unsigned char *line, int spacing)
 void
 oldflavor(void)
 {
-    fb *fbiop;
+    struct fb *fbiop;
     int x, y;
     int middle;
     int mask;

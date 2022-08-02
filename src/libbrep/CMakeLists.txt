@@ -4,15 +4,14 @@ set(BREP_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
-  ${P2T_INCLUDE_DIR}
+  ${POLY2TRI_INCLUDE_DIRS}
   ${OPENNURBS_INCLUDE_DIRS}
   )
 
 # locally used but not needed by users of the library
 set(BREP_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${REGEX_INCLUDE_DIR}
-  ${BRLCAD_SOURCE_DIR}/src/other/Eigen
+  ${REGEX_INCLUDE_DIRS}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(brep BREP_INCLUDE_DIRS BREP_LOCAL_INCLUDE_DIRS)
@@ -33,6 +32,7 @@ set(LIBBREP_SOURCES
   cdt/mesh.cpp
   cdt/ovlps_simple.cpp
   cdt/tri_isect.cpp
+  debug_plot.cpp
   intersect.cpp
   tools/tools.cpp
   opennurbs_ext.cpp
@@ -46,42 +46,9 @@ set(LIBBREP_SOURCES
   shape_recognition/util.cpp
   ssx_event.cpp
   tools/util.cpp
-  #opennurbs_fit.cpp
   )
 
-set(CDT2_srcs
-  cdt2/cdt.cpp
-  cdt2/vert.cpp
-  cdt2/edge.cpp
-  cdt2/mesh.cpp
-  cdt2/polygon.cpp
-  )
-if (ENABLE_CDT2)
-  set(LIBBREP_SOURCES ${LIBBREP_SOURCES} ${CDT2_srcs})
-endif (ENABLE_CDT2)
-
-set(libbrep_ignored_files
-  tools/tools.h
-  brep_except.h
-  cdt/cdt.h
-  cdt/mesh.h
-  cdt/omesh.cpp
-  cdt/overt.cpp
-  cdt/ovlps.cpp
-  cdt/ovlps_grps.cpp
-  cdt/RTree.h
-  opennurbs_fit.h
-  opennurbs_fit.cpp
-  PullbackCurve.h
-  shape_recognition/shape_recognition.h
-  shape_recognition/torus.cpp
-  surface_tree_queue_tests.patch
-  ${CDT2_srcs}
-  cdt2/cdt.h
-  )
-CMAKEFILES(${libbrep_ignored_files})
-
-BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbv;libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${POLY2TRI_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(HIDE_INTERNAL_SYMBOLS)
@@ -92,7 +59,18 @@ endif(HIDE_INTERNAL_SYMBOLS)
 
 add_subdirectory(tests)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  PullbackCurve.h
+  brep_defines.h
+  brep_except.h
+  cdt/cdt.h
+  cdt/mesh.h
+  debug_plot.h
+  shape_recognition/shape_recognition.h
+  shape_recognition/torus.cpp
+  tools/tools.h
+  )
 
 # Local Variables:
 # tab-width: 8

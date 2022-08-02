@@ -1,7 +1,7 @@
 /*                           A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,14 +70,14 @@ extern void rt_bot_ifree(struct rt_db_internal *ip);
  * allocated for holding the curve's fastf_t values.
  */
 HIDDEN fastf_t *
-ars_rd_curve(union record *rp, int npts, int flip)
+ars_rd_curve(union record *rp, size_t npts, int flip)
 {
-    int lim;
+    size_t lim;
     fastf_t *base;
     register fastf_t *fp;		/* pointer to temp vector */
-    register int i;
+    size_t i;
     union record *rr;
-    int rec;
+    size_t rec;
 
     /* Leave room for first point to be repeated */
     base = fp = (fastf_t *)bu_malloc(
@@ -88,7 +88,7 @@ ars_rd_curve(union record *rp, int npts, int flip)
     for (; npts > 0; npts -= 8) {
 	rr = &rp[rec++];
 	if (rr->b.b_id != ID_ARS_B) {
-	    bu_log("ars_rd_curve(npts=%d):  non-ARS_B record [%d]!\n", npts, rr->b.b_id);
+	    bu_log("ars_rd_curve(npts=%zu):  non-ARS_B record [%d]!\n", npts, rr->b.b_id);
 	    break;
 	}
 	lim = (npts>8) ? 8 : npts;
@@ -120,7 +120,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     union record *rp;
     register size_t i, j;
     vect_t base_vect;
-    int currec;
+    size_t currec;
 
     VSETALL(base_vect, 0);
 
@@ -142,7 +142,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ari = (struct rt_ars_internal *)ip->idb_ptr;
     ari->magic = RT_ARS_INTERNAL_MAGIC;
 
-    if (dbip->dbi_version < 0) {
+    if (dbip && dbip->dbi_version < 0) {
 	ari->ncurves = flip_short(rp[0].a.a_m);
 	ari->pts_per_curve = flip_short(rp[0].a.a_n);
     } else {
@@ -157,8 +157,9 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	(ari->ncurves+1) * sizeof(fastf_t *), "ars curve ptrs");
 
     currec = 1;
+    int cflag = (dbip && dbip->dbi_version < 0) ? 1 : 0;
     for (i = 0; i < ari->ncurves; i++) {
-	ari->curves[i] = ars_rd_curve(&rp[currec], ari->pts_per_curve, dbip->dbi_version < 0 ? 1 : 0);
+	ari->curves[i] = ars_rd_curve(&rp[currec], ari->pts_per_curve, cflag);
 	currec += (ari->pts_per_curve+7)/8;
     }
 
@@ -232,13 +233,13 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     for (cur = 0; cur < arip->ncurves; cur++) {
 	register fastf_t *fp;
 	size_t npts;
-	int left;
+	size_t left;
 
 	fp = arip->curves[cur];
 	left = arip->pts_per_curve;
 	for (npts = 0; npts < arip->pts_per_curve; npts+=8, left -= 8) {
-	    register int el;
-	    register int lim;
+	    size_t el;
+	    size_t lim;
 	    register struct ars_ext *bp = &rec[gno].b;
 
 	    bp->b_id = ID_ARS_B;
@@ -296,9 +297,9 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ari->magic = RT_ARS_INTERNAL_MAGIC;
 
     cp = (unsigned char *)ep->ext_buf;
-    ari->ncurves = ntohl(*(uint32_t *)cp);
+    ari->ncurves = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
     cp += SIZEOF_NETWORK_LONG;
-    ari->pts_per_curve = ntohl(*(uint32_t *)cp);
+    ari->pts_per_curve = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
     cp += SIZEOF_NETWORK_LONG;
 
     /*
@@ -349,9 +350,9 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "ars external");
     cp = (unsigned char *)ep->ext_buf;
 
-    *(uint32_t *)cp = htonl(arip->ncurves);
+    *(uint32_t *)cp = htonl((unsigned long)arip->ncurves);
     cp += SIZEOF_NETWORK_LONG;
-    *(uint32_t *)cp = htonl(arip->pts_per_curve);
+    *(uint32_t *)cp = htonl((unsigned long)arip->pts_per_curve);
     cp += SIZEOF_NETWORK_LONG;
 
     for (cur = 0; cur < arip->ncurves; cur++) {
@@ -474,7 +475,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    if (VNEAR_EQUAL(ARS_PT(0, -2), ARS_PT(0, -1), tol->dist))
 		continue;
 
-	    code = bn_dist_pnt3_lseg3(&dist, pca, ARS_PT(0, -2), ARS_PT(0, -1), ARS_PT(0, 0), tol);
+	    code = bg_dist_pnt3_lseg3(&dist, pca, ARS_PT(0, -2), ARS_PT(0, -1), ARS_PT(0, 0), tol);
 
 	    if (code < 2) {
 		bu_log("ARS curve backtracks on itself!!!\n");
@@ -532,8 +533,8 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    /*
 	     * First triangular face
 	     */
-	    if (bn_3pnts_distinct(ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), tol)
-		&& !bn_3pnts_collinear(ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), tol))
+	    if (bg_3pnts_distinct(ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), tol)
+		&& !bg_3pnts_collinear(ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), tol))
 	    {
 		/* Locate these points, if previously mentioned */
 		FIND_IJ(0, 0);
@@ -563,8 +564,8 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    /*
 	     * Second triangular face
 	     */
-	    if (bn_3pnts_distinct(ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), tol)
-		&& !bn_3pnts_collinear(ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), tol))
+	    if (bg_3pnts_distinct(ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), tol)
+		&& !bg_3pnts_collinear(ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), tol))
 	    {
 		/* Locate these points, if previously mentioned */
 		FIND_IJ(1, 0);
@@ -716,11 +717,12 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 
 int
-rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     register size_t i;
     register size_t j;
     struct rt_ars_internal *arip;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -735,17 +737,17 @@ rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	register fastf_t *v1;
 
 	v1 = arip->curves[i];
-	RT_ADD_VLIST(vhead, v1, BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, v1, BV_VLIST_LINE_MOVE);
 	v1 += ELEMENTS_PER_VECT;
 	for (j = 1; j <= arip->pts_per_curve; j++, v1 += ELEMENTS_PER_VECT)
-	    RT_ADD_VLIST(vhead, v1, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, v1, BV_VLIST_LINE_DRAW);
     }
 
     /* Connect the Ith points on each curve, to make a mesh.  */
     for (i = 0; i < arip->pts_per_curve; i++) {
-	RT_ADD_VLIST(vhead, &arip->curves[0][i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, &arip->curves[0][i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
 	for (j = 1; j < arip->ncurves; j++)
-	    RT_ADD_VLIST(vhead, &arip->curves[j][i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &arip->curves[j][i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     return 0;
@@ -924,7 +926,7 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
 		    /* one complete curve */
 		    i = atoi(&argv[0][1]);
-		    len = ars->pts_per_curve * 3;
+		    len = (int)ars->pts_per_curve * 3;
 		    dupstr = bu_strdup(argv[1]);
 		    ptr2 = dupstr;
 		    while (*ptr2) {
@@ -964,6 +966,40 @@ rt_ars_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+void
+rt_ars_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!ps || !ip)
+	return;
+
+    /*XXX Needs work - doesn't really represent the ARS data well... */
+
+    struct rt_ars_internal *ars = (struct rt_ars_internal *)ip->idb_ptr;
+    RT_ARS_CK_MAGIC(ars);
+
+    // Set up the containers
+    struct bv_label *l[2];
+    int lcnt = 1;
+    for (int i = 0; i < lcnt; i++) {
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
+	struct bv_label *la;
+	BU_GET(la, struct bv_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+    }
+
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, ars->curves[0]);
+
+}
 
 /** @} */
 /*

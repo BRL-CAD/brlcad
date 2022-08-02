@@ -1,7 +1,7 @@
 /*                           B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2020 United States Government as represented by
+ * Copyright (c) 1999-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@
 
 #include "bu/cv.h"
 #include "bg/polygon.h"
+#include "bg/trimesh.h"
 #include "vmath.h"
 #include "rt/db4.h"
 #include "nmg.h"
@@ -52,6 +53,8 @@
 #include "./bot_edge.h"
 #include "../../librt_private.h"
 
+//adding time only for now, delete later******
+//#include <time.h>
 
 #define MAXHITS 128
 
@@ -421,44 +424,13 @@ rt_bot_prep_pieces(struct bot_specific *bot,
  */
 int
 rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
-    struct rt_bot_internal *bot_ip;
-    size_t tri_index;
-    point_t p1, p2, p3;
-    size_t pt1, pt2, pt3;
 
     RT_CK_DB_INTERNAL(ip);
-    bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
+    struct rt_bot_internal *bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
-    VSETALL((*min), INFINITY);
-    VSETALL((*max), -INFINITY);
+    return bg_trimesh_aabb(min, max, bot_ip->faces, bot_ip->num_faces, (const point_t *)bot_ip->vertices, bot_ip->num_vertices);
 
-    for (tri_index = 0; tri_index < bot_ip->num_faces; tri_index++) {
-	pt1 = bot_ip->faces[tri_index*3];
-	pt2 = bot_ip->faces[tri_index*3 + 1];
-	pt3 = bot_ip->faces[tri_index*3 + 2];
-	VMOVE(p1, &bot_ip->vertices[pt1*3]);
-	VMOVE(p2, &bot_ip->vertices[pt2*3]);
-	VMOVE(p3, &bot_ip->vertices[pt3*3]);
-	VMINMAX((*min), (*max), p1);
-	VMINMAX((*min), (*max), p2);
-	VMINMAX((*min), (*max), p3);
-    }
-
-    /* Prevent the RPP from being 0 thickness */
-    if (NEAR_EQUAL((*min)[X], (*max)[X], SMALL_FASTF)) {
-	(*min)[X] -= SMALL_FASTF;
-	(*max)[X] += SMALL_FASTF;
-    }
-    if (NEAR_EQUAL((*min)[Y], (*max)[Y], SMALL_FASTF)) {
-	(*min)[Y] -= SMALL_FASTF;
-	(*max)[Y] += SMALL_FASTF;
-    }
-    if (NEAR_EQUAL((*min)[Z], (*max)[Z], SMALL_FASTF)) {
-	(*min)[Z] -= SMALL_FASTF;
-	(*max)[Z] += SMALL_FASTF;
-    }
-    return 0;
 }
 
 
@@ -692,9 +664,12 @@ void
 rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct bot_specific *bot;
-
     if (ap) RT_CK_APPLICATION(ap);
-    if (stp) RT_CK_SOLTAB(stp);
+
+    if (!stp)
+	return;
+    RT_CK_SOLTAB(stp);
+
     if (hitp) RT_CK_HIT(hitp);
     if (!uvp) return;
 
@@ -731,8 +706,8 @@ rt_bot_free(struct soltab *stp)
 }
 
 
-vdsNode *
-build_vertex_tree(struct rt_bot_internal *bot)
+static vdsNode *
+build_vertex_tree(struct vdsState *s, struct rt_bot_internal *bot)
 {
     size_t i, node_indices, tri_indices;
     vect_t normal = {1.0, 0.0, 0.0};
@@ -743,21 +718,21 @@ build_vertex_tree(struct rt_bot_internal *bot)
     node_indices = bot->num_vertices * 3;
     tri_indices = bot->num_faces * 3;
 
-    vdsBeginVertexTree();
-    vdsBeginGeometry();
+    vdsBeginVertexTree(s);
+    vdsBeginGeometry(s);
 
     /* create nodes */
     for (i = 0; i < node_indices; i += 3) {
-	vdsAddNode(bot->vertices[i], bot->vertices[i + 1], bot->vertices[i + 2]);
+	vdsAddNode(s, bot->vertices[i], bot->vertices[i + 1], bot->vertices[i + 2]);
     }
 
     /* create triangles */
     for (i = 0; i < tri_indices; i += 3) {
-	vdsAddTri(bot->faces[i], bot->faces[i + 1], bot->faces[i + 2],
+	vdsAddTri(s, bot->faces[i], bot->faces[i + 1], bot->faces[i + 2],
 		  normal, normal, normal, color, color, color);
     }
 
-    leaf_nodes = vdsEndGeometry();
+    leaf_nodes = vdsEndGeometry(s);
 
     node_list = (vdsNode **)bu_malloc(bot->num_vertices * sizeof(vdsNode *), "node_list");
     for (i = 0; i < bot->num_vertices; ++i) {
@@ -767,7 +742,7 @@ build_vertex_tree(struct rt_bot_internal *bot)
     vdsClusterOctree(node_list, bot->num_vertices, 0);
     bu_free(node_list, "node_list");
 
-    return vdsEndVertexTree();
+    return vdsEndVertexTree(s);
 }
 
 
@@ -782,7 +757,9 @@ struct bot_fold_data {
 static int
 should_fold(const vdsNode *node, void *udata)
 {
-    int i, num_edges, short_edges, short_spaces;
+    int i;
+    int num_edges = 0;
+    int short_edges = 0;
     fastf_t dist_01, dist_12, dist_20;
     vdsNode *corner_nodes[3];
     struct bot_fold_data *fold_data = (struct bot_fold_data *)udata;
@@ -798,7 +775,6 @@ should_fold(const vdsNode *node, void *udata)
     if (fold_data->dmax/fold_data->dmin > 5.0 && node->nsubtris < 30) return 0;
 
     num_edges = node->nsubtris * 3;
-    short_edges = short_spaces = 0;
 
     for (i = 0; i < node->nsubtris; ++i) {
 	/* get the three nodes corresponding to the three corner */
@@ -829,45 +805,53 @@ should_fold(const vdsNode *node, void *udata)
     return 0;
 }
 
+struct node_data {
+    struct bu_list *vhead;
+    struct bu_list *vlfree;
+};
 
 static void
 plot_node(const vdsNode *node, void *udata)
 {
     vdsTri *t = node->vistris;
-    struct bu_list *vhead = (struct bu_list *)udata;
+    struct node_data *nd = (struct node_data *)udata;
+    struct bu_list *vhead = nd->vhead;
+    struct bu_list *vlfree = nd->vlfree;
 
     while (t != NULL) {
 	vdsUpdateTriProxies(t);
-	RT_ADD_VLIST(vhead, t->proxies[2]->coord, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, t->proxies[0]->coord, BN_VLIST_LINE_DRAW);
-	RT_ADD_VLIST(vhead, t->proxies[1]->coord, BN_VLIST_LINE_DRAW);
-	RT_ADD_VLIST(vhead, t->proxies[2]->coord, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, t->proxies[2]->coord, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, t->proxies[0]->coord, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, t->proxies[1]->coord, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, t->proxies[2]->coord, BV_VLIST_LINE_DRAW);
 	t = t->next;
     }
 }
 
 
 int
-rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t UNUSED(s_size))
 {
     double d1, d2, d3;
     point_t min;
     point_t max;
 
     vdsNode *vertex_tree;
+    struct vdsState vdss = VDS_STATE_INIT_ZERO;
     struct rt_bot_internal *bot;
     struct bot_fold_data fold_data;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
-    vertex_tree = build_vertex_tree(bot);
+    vertex_tree = build_vertex_tree(&vdss, bot);
 
     fold_data.root = vertex_tree;
-    fold_data.point_spacing = info->point_spacing;
+    fold_data.point_spacing = view_avg_sample_spacing(v);
     (void)rt_bot_bbox(ip, &min, &max, NULL);
     d1 = max[0] - min[0];
     d2 = max[1] - min[1];
@@ -880,7 +864,10 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     if (d3 > fold_data.dmax) fold_data.dmax = d3;
 
     vdsAdjustTreeTopDown(vertex_tree, should_fold, (void *)&fold_data);
-    vdsRenderTree(vertex_tree, plot_node, NULL, (void *)info->vhead);
+    struct node_data nd;
+    nd.vhead = vhead;
+    nd.vlfree = vlfree;
+    vdsRenderTree(vertex_tree, plot_node, NULL, (void *)&nd);
     vdsFreeTree(vertex_tree);
 
     return 0;
@@ -889,10 +876,10 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 /* TODO - duplicated from brep_debug.cpp - probably should refactor into proper
  * internal API (maybe even libbn, if that makes sense) ... */
 #define BOT_BBOX_ARB_FACE(valp, a, b, c, d)             \
-    RT_ADD_VLIST(vhead, valp[a], BN_VLIST_LINE_MOVE);   \
-    RT_ADD_VLIST(vhead, valp[b], BN_VLIST_LINE_DRAW);   \
-    RT_ADD_VLIST(vhead, valp[c], BN_VLIST_LINE_DRAW);   \
-    RT_ADD_VLIST(vhead, valp[d], BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, valp[a], BV_VLIST_LINE_MOVE);   \
+    BV_ADD_VLIST(vlfree, vhead, valp[b], BV_VLIST_LINE_DRAW);   \
+    BV_ADD_VLIST(vlfree, vhead, valp[c], BV_VLIST_LINE_DRAW);   \
+    BV_ADD_VLIST(vlfree, vhead, valp[d], BV_VLIST_LINE_DRAW);
 
 #define BOT_BB_PLOT_VLIST(_min, _max) {             \
             fastf_t pt[8][3];                       \
@@ -910,29 +897,35 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
             BOT_BBOX_ARB_FACE(pt, 1, 5, 6, 2);      \
         }
 
+// TODO - while this routine makes the vlists per the standard librt API, BoTs
+// are a case where we probably should be passing the data directly to the
+// drawing routines as face and vert arrays for the hot drawing paths WITHOUT
+// making the vlist copies... this duplication results in massive additional
+// memory usage for large BoTs.
 int
-rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct rt_view_info *info)
+rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct bview *info)
 {
     struct rt_bot_internal *bot_ip;
     size_t i;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
     if (bot_ip->num_vertices <= 0 || !bot_ip->vertices || bot_ip->num_faces <= 0 || !bot_ip->faces)
 	return 0;
 
-    if (!info || !info->bot_threshold || (info->bot_threshold > bot_ip->num_faces)) {
+    if (!info || !info->gv_s->bot_threshold || (info->gv_s->bot_threshold > bot_ip->num_faces)) {
 	for (i = 0; i < bot_ip->num_faces; i++) {
 	    if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
 		continue; /* sanity */
 
-	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+1]*3], BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+2]*3], BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+1]*3], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+2]*3], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BV_VLIST_LINE_DRAW);
 	}
     } else {
 	/* too big - just draw the bbox */
@@ -953,6 +946,7 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
@@ -976,7 +970,7 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	VSUB2(ac, aa, cc);
 	VCROSS(norm, ab, ac);
 	VUNITIZE(norm);
-	RT_ADD_VLIST(vhead, norm, BN_VLIST_TRI_START);
+	BV_ADD_VLIST(vlfree, vhead, norm, BV_VLIST_TRI_START);
 
 	if ((bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) &&
 	    (bot_ip->bot_flags & RT_BOT_USE_NORMALS)) {
@@ -985,18 +979,18 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	    VMOVE(na, &bot_ip->normals[bot_ip->face_normals[i*3+0]*3]);
 	    VMOVE(nb, &bot_ip->normals[bot_ip->face_normals[i*3+1]*3]);
 	    VMOVE(nc, &bot_ip->normals[bot_ip->face_normals[i*3+2]*3]);
-	    RT_ADD_VLIST(vhead, na, BN_VLIST_TRI_VERTNORM);
-	    RT_ADD_VLIST(vhead, aa, BN_VLIST_TRI_MOVE);
-	    RT_ADD_VLIST(vhead, nb, BN_VLIST_TRI_VERTNORM);
-	    RT_ADD_VLIST(vhead, bb, BN_VLIST_TRI_DRAW);
-	    RT_ADD_VLIST(vhead, nc, BN_VLIST_TRI_VERTNORM);
-	    RT_ADD_VLIST(vhead, cc, BN_VLIST_TRI_DRAW);
-	    RT_ADD_VLIST(vhead, aa, BN_VLIST_TRI_END);
+	    BV_ADD_VLIST(vlfree, vhead, na, BV_VLIST_TRI_VERTNORM);
+	    BV_ADD_VLIST(vlfree, vhead, aa, BV_VLIST_TRI_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, nb, BV_VLIST_TRI_VERTNORM);
+	    BV_ADD_VLIST(vlfree, vhead, bb, BV_VLIST_TRI_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, nc, BV_VLIST_TRI_VERTNORM);
+	    BV_ADD_VLIST(vlfree, vhead, cc, BV_VLIST_TRI_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, aa, BV_VLIST_TRI_END);
 	} else {
-	    RT_ADD_VLIST(vhead, aa, BN_VLIST_TRI_MOVE);
-	    RT_ADD_VLIST(vhead, bb, BN_VLIST_TRI_DRAW);
-	    RT_ADD_VLIST(vhead, cc, BN_VLIST_TRI_DRAW);
-	    RT_ADD_VLIST(vhead, aa, BN_VLIST_TRI_END);
+	    BV_ADD_VLIST(vlfree, vhead, aa, BV_VLIST_TRI_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, bb, BV_VLIST_TRI_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, cc, BV_VLIST_TRI_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, aa, BV_VLIST_TRI_END);
 	}
     }
 
@@ -1108,8 +1102,8 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    corners[2] = &verts[bot_ip->faces[i*3+2]];
 	}
 
-	if (!bn_3pnts_distinct(pt[0], pt[1], pt[2], tol)
-	    || bn_3pnts_collinear(pt[0], pt[1], pt[2], tol))
+	if (!bg_3pnts_distinct(pt[0], pt[1], pt[2], tol)
+	    || bg_3pnts_collinear(pt[0], pt[1], pt[2], tol))
 	    continue;
 
 	if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
@@ -1182,8 +1176,8 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     bot_ip->magic = RT_BOT_INTERNAL_MAGIC;
 
-    bot_ip->num_vertices = ntohl(*(uint32_t *)&rp->bot.bot_num_verts[0]);
-    bot_ip->num_faces = ntohl(*(uint32_t *)&rp->bot.bot_num_triangles[0]);
+    bot_ip->num_vertices = bu_ntohl(*(uint32_t *)&rp->bot.bot_num_verts[0], 0, UINT_MAX - 1);
+    bot_ip->num_faces = bu_ntohl(*(uint32_t *)&rp->bot.bot_num_triangles[0], 0, UINT_MAX - 1);
     bot_ip->orientation = rp->bot.bot_orientation;
     bot_ip->mode = rp->bot.bot_mode;
     bot_ip->bot_flags = 0;
@@ -1204,9 +1198,9 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     for (i = 0; i < bot_ip->num_faces; i++) {
 	size_t idx=chars_used + i * 12;
 
-	bot_ip->faces[i*ELEMENTS_PER_POINT + 0] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 0]);
-	bot_ip->faces[i*ELEMENTS_PER_POINT + 1] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 4]);
-	bot_ip->faces[i*ELEMENTS_PER_POINT + 2] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 8]);
+	bot_ip->faces[i*ELEMENTS_PER_POINT + 0] = bu_ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 0], 0, UINT_MAX - 1);
+	bot_ip->faces[i*ELEMENTS_PER_POINT + 1] = bu_ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 4], 0, UINT_MAX - 1);
+	bot_ip->faces[i*ELEMENTS_PER_POINT + 2] = bu_ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 8], 0, UINT_MAX - 1);
     }
 
     if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
@@ -1351,9 +1345,9 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bip->magic = RT_BOT_INTERNAL_MAGIC;
 
     cp = ep->ext_buf;
-    bip->num_vertices = ntohl(*(uint32_t *)&cp[0]);
+    bip->num_vertices = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
     cp += SIZEOF_NETWORK_LONG;
-    bip->num_faces = ntohl(*(uint32_t *)&cp[0]);
+    bip->num_faces = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
     cp += SIZEOF_NETWORK_LONG;
     bip->orientation = *cp++;
     bip->mode = *cp++;
@@ -1389,11 +1383,11 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     }
 
     for (i = 0; i < bip->num_faces; i++) {
-	bip->faces[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
+	bip->faces[i*3 + 0] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
-	bip->faces[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
+	bip->faces[i*3 + 1] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
-	bip->faces[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
+	bip->faces[i*3 + 2] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
     }
 
@@ -1416,9 +1410,9 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	/* must be double for import and export */
 	double tmp[ELEMENTS_PER_VECT];
 
-	bip->num_normals = ntohl(*(uint32_t *)&cp[0]);
+	bip->num_normals = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
-	bip->num_face_normals = ntohl(*(uint32_t *)&cp[0]);
+	bip->num_face_normals = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
 
 	if (bip->num_normals <= 0) {
@@ -1440,11 +1434,11 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bip->face_normals = (int *)bu_calloc(bip->num_face_normals * 3, sizeof(int), "BOT face normals");
 
 	    for (i = 0; i < bip->num_face_normals; i++) {
-		bip->face_normals[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
+		bip->face_normals[i*3 + 0] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 		cp += SIZEOF_NETWORK_LONG;
-		bip->face_normals[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
+		bip->face_normals[i*3 + 1] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 		cp += SIZEOF_NETWORK_LONG;
-		bip->face_normals[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
+		bip->face_normals[i*3 + 2] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 		cp += SIZEOF_NETWORK_LONG;
 	    }
 	}
@@ -1459,9 +1453,9 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	/* must be double for import and export */
 	double tmp[ELEMENTS_PER_VECT];
 
-	bip->num_uvs = ntohl(*(uint32_t *)&cp[0]);
+	bip->num_uvs = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
-	bip->num_face_uvs = ntohl(*(uint32_t *)&cp[0]);
+	bip->num_face_uvs = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
 
 	if (bip->num_uvs <= 0) {
@@ -1483,11 +1477,11 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bip->face_uvs = (int *)bu_calloc(bip->num_face_uvs * 3, sizeof(int), "BOT face UVs");
 
 	    for (i = 0; i < bip->num_face_uvs; i++) {
-		bip->face_uvs[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
+		bip->face_uvs[i*3 + 0] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 		cp += SIZEOF_NETWORK_LONG;
-		bip->face_uvs[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
+		bip->face_uvs[i*3 + 1] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 		cp += SIZEOF_NETWORK_LONG;
-		bip->face_uvs[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
+		bip->face_uvs[i*3 + 2] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 		cp += SIZEOF_NETWORK_LONG;
 	    }
 	}
@@ -2105,7 +2099,7 @@ rt_bot_find_e_nearest_pt2(
 	p1[Z] = 0.0;
 	p2[Z] = 0.0;
 
-	ret = bn_dist_pnt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
+	ret = bg_dist_pnt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
 
 	if (ret < 3 || tmp_dist < dist) {
 	    switch (ret) {
@@ -2509,7 +2503,6 @@ int
 rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_bot_internal *bot;
-    const char **obj_array = NULL;
     int len;
     size_t i;
     long li;
@@ -2580,6 +2573,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    char *f_str;
 
 	    if (argv[0][2] == '\0') {
+		const char **obj_array = NULL;
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
 		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
@@ -2691,6 +2685,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    char *v_str;
 
 	    if (argv[0][1] == '\0') {
+		const char **obj_array = NULL;
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
 		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
@@ -2760,6 +2755,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    char *v_str;
 
 	    if (argv[0][1] == '\0') {
+		const char **obj_array = NULL;
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
 		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
@@ -2824,6 +2820,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    char *f_str;
 
 	    if (argv[0][1] == '\0') {
+		const char **obj_array = NULL;
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
 		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
@@ -2947,6 +2944,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    char *t_str;
 
 	    if (argv[0][1] == '\0') {
+		const char **obj_array = NULL;
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
 		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
@@ -2971,7 +2969,6 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		li = atol(&argv[0][1]);
 		if (li < 0 || (size_t)li >= bot->num_faces) {
 		    bu_vls_printf(logstr, "face number [%ld] out of range!!!", li);
-		    bu_free((char *)obj_array, "obj_array");
 		    return BRLCAD_ERROR;
 		}
 		if (!bot->thickness) {
@@ -3034,6 +3031,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		}
 	    }
 	} else if (BU_STR_EQUAL(argv[0], "flags")) {
+	    const char **obj_array = NULL;
 	    if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
 		bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		return BRLCAD_ERROR;
@@ -3320,7 +3318,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot, const struct bn_tol *tol)
     for (i = 0; i < bot->num_vertices; i++) {
 	j = i + 1;
 	while (j < bot->num_vertices) {
-	    if (bn_pnt3_pnt3_equal(&bot->vertices[i*3], &bot->vertices[j*3], tol)) {
+	    if (bg_pnt3_pnt3_equal(&bot->vertices[i*3], &bot->vertices[j*3], tol)) {
 		count++;
 
 		/* update bot */
@@ -4894,7 +4892,7 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	if (bot->bot_flags == RT_BOT_HAS_SURFACE_NORMALS && bot->normals) {
 	    /* bot->normals array already exists, use those instead */
 	    VMOVE(face.plane_eqn, &bot->normals[i * ELEMENTS_PER_VECT]);
-	} else if (UNLIKELY(bn_make_plane_3pnts(face.plane_eqn, (&bot->vertices[(a) * ELEMENTS_PER_POINT]), (&bot->vertices[(b) * ELEMENTS_PER_POINT]), (&bot->vertices[(c) * ELEMENTS_PER_POINT]), &tol) < 0)) {
+	} else if (UNLIKELY(bg_make_plane_3pnts(face.plane_eqn, (&bot->vertices[(a) * ELEMENTS_PER_POINT]), (&bot->vertices[(b) * ELEMENTS_PER_POINT]), (&bot->vertices[(c) * ELEMENTS_PER_POINT]), &tol) < 0)) {
 	    continue;
 	}
 
@@ -4949,7 +4947,7 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    }
 	}
 
-	whole_bot_overall_area += bn_area_of_triangle((const fastf_t *)&pt[0], (const fastf_t *)&pt[1], (const fastf_t *)&pt[2]);
+	whole_bot_overall_area += bg_area_of_triangle((const fastf_t *)&pt[0], (const fastf_t *)&pt[1], (const fastf_t *)&pt[2]);
     }
 
     switch (bot_ip->mode) {
@@ -5006,7 +5004,7 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    if (a_is_exterior_edge == 1) {
 		fastf_t rectangle_size, edge_length;
 
-		edge_length = bn_dist_pnt3_pnt3(whole_bot_vertices[a][0], whole_bot_vertices[a][1]);
+		edge_length = bg_dist_pnt3_pnt3(whole_bot_vertices[a][0], whole_bot_vertices[a][1]);
 		rectangle_size = bot_ip->thickness[a] * edge_length;
 		whole_bot_overall_area += rectangle_size;
 
@@ -5014,14 +5012,14 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    if (b_is_exterior_edge == 1) {
 		fastf_t rectangle_size, edge_length;
 
-		edge_length = bn_dist_pnt3_pnt3(whole_bot_vertices[a][1], whole_bot_vertices[a][2]);
+		edge_length = bg_dist_pnt3_pnt3(whole_bot_vertices[a][1], whole_bot_vertices[a][2]);
 		rectangle_size = bot_ip->thickness[a] * edge_length;
 		whole_bot_overall_area += rectangle_size;
 	    }
 	    if (c_is_exterior_edge == 1) {
 		fastf_t rectangle_size, edge_length;
 
-		edge_length = bn_dist_pnt3_pnt3(whole_bot_vertices[a][2], whole_bot_vertices[a][0]);
+		edge_length = bg_dist_pnt3_pnt3(whole_bot_vertices[a][2], whole_bot_vertices[a][0]);
 		rectangle_size = bot_ip->thickness[a] * edge_length;
 		whole_bot_overall_area += rectangle_size;
 	    }
@@ -5038,7 +5036,7 @@ struct rt_bot_internal *
 rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 {
     struct rt_bot_internal *result;
-    int avail_vert, avail_face;
+    size_t avail_vert, avail_face;
     size_t i, face;
     int *reverse_flags;
 
@@ -5135,8 +5133,10 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 		result->faces[avail_face*3+face*3+2] = bots[i]->faces[face*3+2] + avail_vert;
 
 		if (result->mode == RT_BOT_PLATE || result->mode == RT_BOT_PLATE_NOCOS) {
-		    result->thickness[avail_face+face] = bots[i]->thickness[face];
-		    result->face_mode[avail_face+face] = bots[i]->face_mode[face];
+		    if (bots[i]->thickness)
+			result->thickness[avail_face+face] = bots[i]->thickness[face];
+		    if (bots[i]->face_mode)
+			result->face_mode[avail_face+face] = bots[i]->face_mode[face];
 		}
 	    }
 	}

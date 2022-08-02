@@ -1,7 +1,7 @@
 /*                        B W C R O P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -128,10 +128,10 @@ main(int argc, char **argv)
     if (argc < 3) {
 	bu_exit(1, "%s", usage);
     }
-    if ((ifp = fopen(argv[1], "r")) == NULL) {
+    if ((ifp = fopen(argv[1], "rb")) == NULL) {
 	bu_exit(2, "bwcrop: can't open %s for reading\n", argv[1]);
     }
-    if ((ofp = fopen(argv[2], "w")) == NULL) {
+    if ((ofp = fopen(argv[2], "wb")) == NULL) {
 	bu_exit(3, "bwcrop: can't open %s for writing\n", argv[2]);
     }
 

@@ -275,10 +275,10 @@
         <title>Solid Geometry</title>
         <mediaobject>
         <imageobject role="html">
-          <imagedata fileref="../../books/images/hacking_brlcad_tracked_mine.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_tracked_mine.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         <imageobject role="fo">
-          <imagedata fileref="../../books/images/hacking_brlcad_tracked_mine.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_tracked_mine.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         </mediaobject>
         <para>
@@ -290,10 +290,10 @@
         <title>Raytracing</title>
         <mediaobject>
         <imageobject role="html">
-          <imagedata fileref="../../books/images/hacking_brlcad_bearing_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_bearing_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         <imageobject role="fo">
-          <imagedata fileref="../../books/images/hacking_brlcad_bearing_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_bearing_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         </mediaobject>
         <para>
@@ -305,7 +305,7 @@
         <title>Geometry Conversion</title>
         <mediaobject>
         <imageobject>
-          <imagedata fileref="../../books/images/hacking_brlcad_cubit.png" format="PNG" scalefit="1" width="100%" contentdepth="100%" />
+          <imagedata fileref="../books/images/hacking_brlcad_cubit.png" format="PNG" scalefit="1" width="100%" contentdepth="100%" />
         </imageobject>
         </mediaobject>
         <para>
@@ -313,7 +313,7 @@
         </para>
         <!--<mediaobject>
         <imageobject>
-          <imagedata fileref="../../books/images/hacking_brlcad_missing.png" format="PNG" scalefit="1" width="100%" contentdepth="100%" />
+          <imagedata fileref="../books/images/hacking_brlcad_missing.png" format="PNG" scalefit="1" width="100%" contentdepth="100%" />
         </imageobject>
         </mediaobject>-->
         <para>
@@ -325,10 +325,10 @@
         <title>Procedural Geometry</title>
         <mediaobject>
         <imageobject role="html">
-          <imagedata fileref="../../books/images/hacking_brlcad_sflake2_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_sflake2_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         <imageobject role="fo">
-          <imagedata fileref="../../books/images/hacking_brlcad_sflake2_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_sflake2_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         </mediaobject>
         <para>
@@ -340,10 +340,10 @@
         <title>Boundary Representation</title>
         <mediaobject>
         <imageobject role="html">
-          <imagedata fileref="../../books/images/hacking_brlcad_teapot.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_teapot.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         <imageobject role="fo">
-          <imagedata fileref="../../books/images/hacking_brlcad_teapot.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_teapot.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         </mediaobject>
         <para>
@@ -355,10 +355,10 @@
         <title>Path Tracing</title>
         <mediaobject>
         <imageobject role="html">
-          <imagedata fileref="../../books/images/hacking_brlcad_stryker_slat.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_stryker_slat.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         <imageobject role="fo">
-          <imagedata fileref="../../books/images/hacking_brlcad_stryker_slat.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_stryker_slat.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         </mediaobject>
         <para>
@@ -370,10 +370,10 @@
         <title>Constructive Solid Geometry (CSG)</title>
         <mediaobject>
         <imageobject role="html">
-          <imagedata fileref="../../books/images/hacking_brlcad_M1A1_9x10_300dpi_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_M1A1_9x10_300dpi_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         <imageobject role="fo">
-          <imagedata fileref="../../books/images/hacking_brlcad_M1A1_9x10_300dpi_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_M1A1_9x10_300dpi_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         </mediaobject>
         <para>
@@ -381,10 +381,10 @@
         </para>
         <mediaobject>
         <imageobject role="html">
-          <imagedata fileref="../../books/images/hacking_brlcad_csg.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_csg.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         <imageobject role="fo">
-          <imagedata fileref="../../books/images/hacking_brlcad_csg.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_csg.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         </mediaobject>
       </section>
@@ -393,18 +393,18 @@
         <title>Hidden Line Rendering</title>
         <mediaobject>
         <imageobject role="html">
-          <imagedata fileref="../../books/images/hacking_brlcad_havoc_c.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_havoc_c.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         <imageobject role="fo">
-          <imagedata fileref="../../books/images/hacking_brlcad_havoc_c.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_havoc_c.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         </mediaobject>
         <mediaobject>
         <imageobject role="html">
-          <imagedata fileref="../../books/images/hacking_brlcad_havoc_views_c.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_havoc_views_c.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         <imageobject role="fo">
-          <imagedata fileref="../../books/images/hacking_brlcad_havoc_views_c.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_havoc_views_c.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         </mediaobject>
         <para>
@@ -416,10 +416,10 @@
         <title>Scripting Interface</title>
         <mediaobject>
         <imageobject role="html">
-          <imagedata fileref="../../books/images/hacking_brlcad_Sgi_cube_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_Sgi_cube_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         <imageobject role="fo">
-          <imagedata fileref="../../books/images/hacking_brlcad_Sgi_cube_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+          <imagedata fileref="../books/images/hacking_brlcad_Sgi_cube_cc.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
         </imageobject>
         </mediaobject>
         <para>
@@ -498,7 +498,7 @@
       <section>
         <title>The Big Picture</title>
         <para>
-          The source code and most project data are stored in a Subversion<footnote><para><link xlink:href="http://subversion.apache.org/"/></para></footnote> version control system for change tracking and collaborative development. Trunk development is generally stable, but cross-platform compilation is not guaranteed. A separate branch (named STABLE) provides a higher level of quality assurance. Every released version of BRL-CAD is tested and tagged.
+          The source code and most project data are stored in a Git<footnote><para><link xlink:href="http://git-scm.com/"/></para></footnote> version control system for change tracking and collaborative development. Primary development in the "main" branch is generally stable, but cross-platform compilation is not guaranteed. A separate branch (named STABLE) provides a higher level of quality assurance. Every released version of BRL-CAD is tested and tagged.
         </para>
 
         <para>
@@ -771,7 +771,7 @@
         <title>Code Conventions</title>
 
         <para>
-          BRL-CAD has a STABLE branch in SVN that should always compile and run on all supported platforms. The primary development branch trunk, unlike STABLE, is generally expected to compile but may occasionally fail to do so during active development.
+          BRL-CAD has a STABLE branch in Git that should always compile and run on all supported platforms. The primary development branch trunk, unlike STABLE, is generally expected to compile but may occasionally fail to do so during active development.
         </para>
         <section>
           <title>Languages</title>
@@ -1020,11 +1020,11 @@ some_function(char *j)
       </para>
       <section><title>Obtaining the Code</title>
         <para>
-          You can get the development code for BRL-CAD from our Subversion code repository using the following command:
+          You can get the development code for BRL-CAD from our Git code repository using the following command:
         </para>
 
         <para>
-          <command>svn checkout svn://svn.code.sf.net/p/brlcad/code/brlcad/trunk brlcad-code</command>
+          <command>git clone https://github.com/BRL-CAD/brlcad</command>
         </para>
 
         <para>
@@ -1162,10 +1162,10 @@ some_function(char *j)
 
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_emacs-nxml.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_emacs-nxml.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_emacs-nxml.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_emacs-nxml.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
 
@@ -1227,10 +1227,10 @@ xmllint failure: 1
       </para>
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_docbook_CMakeLists.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_docbook_CMakeLists.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_docbook_CMakeLists.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_docbook_CMakeLists.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
 
@@ -1285,10 +1285,10 @@ Scanning dependencies of target ellipsoid_article_html
 
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_example_docbook_default_output.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_example_docbook_default_output.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_example_docbook_default_output.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_example_docbook_default_output.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
 
@@ -1307,10 +1307,10 @@ Scanning dependencies of target ellipsoid_article_html
 
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_docbook_working_session.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_docbook_working_session.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_docbook_working_session.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_docbook_working_session.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
 
@@ -1330,10 +1330,10 @@ Scanning dependencies of target ellipsoid_article_html
       </para>
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_brlcad_intro_hy.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_brlcad_intro_hy.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_brlcad_intro_hy.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_brlcad_intro_hy.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
       </section>
@@ -1410,10 +1410,10 @@ Scanning dependencies of target ellipsoid_article_html
 
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_tutorial_1_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_tutorial_1_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_tutorial_1_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_tutorial_1_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
 
@@ -1450,10 +1450,10 @@ Scanning dependencies of target ellipsoid_article_html
 
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_brlcad-wiki.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_brlcad-wiki.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_brlcad-wiki.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_brlcad-wiki.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
       </section>
@@ -1465,10 +1465,10 @@ Scanning dependencies of target ellipsoid_article_html
 
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_man_page_search.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_man_page_search.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_man_page_search.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_man_page_search.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
       </section>
@@ -1484,10 +1484,10 @@ Scanning dependencies of target ellipsoid_article_html
 
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_doxygen_output.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_doxygen_output.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_doxygen_output.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_doxygen_output.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
       </section>
@@ -1499,10 +1499,10 @@ Scanning dependencies of target ellipsoid_article_html
 
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_tcl_tk_presentation.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_tcl_tk_presentation.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_tcl_tk_presentation.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_tcl_tk_presentation.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
       </section>
@@ -1514,10 +1514,10 @@ Scanning dependencies of target ellipsoid_article_html
 
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_article_tire_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_article_tire_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_article_tire_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_article_tire_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
       </section>
@@ -1529,10 +1529,10 @@ Scanning dependencies of target ellipsoid_article_html
 
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_book_vol3_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_book_vol3_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_book_vol3_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_book_vol3_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
       </section>
@@ -1544,10 +1544,10 @@ Scanning dependencies of target ellipsoid_article_html
 
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_g_spec_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_g_spec_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_g_spec_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_g_spec_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
       </section>
@@ -1559,10 +1559,10 @@ Scanning dependencies of target ellipsoid_article_html
 
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_tcl_tk_presentation.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_tcl_tk_presentation.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_tcl_tk_presentation.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_tcl_tk_presentation.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
       </section>
@@ -1590,7 +1590,7 @@ Scanning dependencies of target ellipsoid_article_html
       </para>
 
       <para>
-      We also have a list of bugs in our <link xlink:href="http://sourceforge.net/p/brlcad/code/HEAD/tree/brlcad/trunk/BUGS">BUGS file</link>. While most of the bugs in the list focus on the BRL-CAD code, there are a few related to the documentation. If you plan to tackle a documentation bug, remember to report it in our <link xlink:href="http://sourceforge.net/p/brlcad/bugs/">bug tracker</link> (http://sourceforge.net/p/brlcad/bugs/).
+      We also have a list of bugs in our <link xlink:href="https://github.com/BRL-CAD/brlcad/blob/main/BUGS">BUGS file</link>. While most of the bugs in the list focus on the BRL-CAD code, there are a few related to the documentation. If you plan to tackle a documentation bug, remember to report it in our <link xlink:href="https://github.com/BRL-CAD/brlcad/issues">issue tracker</link> (https://github.com/BRL-CAD/brlcad/issues).
       </para>
       </section>
 
@@ -1612,15 +1612,15 @@ Scanning dependencies of target ellipsoid_article_html
 
       <section><title>Obtaining the Documentation</title>
       <para>
-      The documentation and the toolchain required to generate the documentation is part of the software's development code. You should download the source code from the Subversion version control system using the following command:
+      The documentation and the toolchain required to generate the documentation is part of the software's development code. You should download the source code from the Git version control system using the following command:
       </para>
 
       <para>
-      <command>svn checkout svn://svn.code.sf.net/p/brlcad/code/brlcad/trunk brlcad-code</command>
+      <command>git clone https://github.com/BRL-CAD/brlcad</command>
       </para>
 
       <para>
-      The directory <filename>brlcad-code</filename> should be within your <filename>/home</filename> directory so that BRL-CAD's build directory commands don't interfere with your system's commands.
+      The directory <filename>brlcad</filename> should be within your <filename>/home</filename> directory so that BRL-CAD's build directory commands don't interfere with your system's commands.
       </para>
 
       <section><title>Obtaining FOP</title>
@@ -1733,7 +1733,7 @@ Scanning dependencies of target ellipsoid_article_html
 
       <section><title>Bug Reporting and Feature Requests</title>
       <para>
-      Finding bugs in software is often a challenging task for developers. If you find a problem with the software, file a bug report on BRL-CAD's official <link xlink:href="http://sourceforge.net/p/brlcad/bugs/">bug tracking page</link> on SourceForge (http://sourceforge.net/p/brlcad/bugs/). Please remember to provide enough detail so that we can reproduce the problem. You can also post to our developer mailing list at <email>brlcad-devel@lists.sourceforge.net</email>.
+      Finding bugs in software is often a challenging task for developers. If you find a problem with the software, file a bug report on BRL-CAD's official <link xlink:href="https://github.com/BRL-CAD/brlcad/issues">issue tracking page</link> on SourceForge (http://sourceforge.net/p/brlcad/bugs/). Please remember to provide enough detail so that we can reproduce the problem. You can also post to our developer mailing list at <email>brlcad-devel@lists.sourceforge.net</email>.
       </para>
 
       <para>
@@ -1752,10 +1752,10 @@ Scanning dependencies of target ellipsoid_article_html
 
       <mediaobject>
       <imageobject role="html">
-        <imagedata fileref="../../books/images/hacking_brlcad_xyz.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_xyz.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       <imageobject role="fo">
-        <imagedata fileref="../../books/images/hacking_brlcad_xyz.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
+        <imagedata fileref="../books/images/hacking_brlcad_xyz.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
 
@@ -1825,15 +1825,14 @@ Scanning dependencies of target ellipsoid_article_html
       <listitem><para>Wiki: <link xlink:href="http://brlcad.org/wiki/Main_Page"/></para></listitem>
       <listitem><para>FAQs: <link xlink:href="http://brlcad.org/wiki/FAQ"/></para></listitem>
       <listitem><para>Online documentation resources: <link xlink:href="http://brlcad.org/wiki/Documentation"/></para></listitem>
-      <listitem><para>Venerated developers' guide (HACKING File): <link xlink:href="http://svn.code.sf.net/p/brlcad/code/brlcad/trunk/HACKING"/></para></listitem>
+      <listitem><para>Venerated developers' guide (HACKING File): <link xlink:href="https://github.com/BRL-CAD/brlcad/blob/main/HACKING"/></para></listitem>
       <listitem><para>BRL-CAD commands: <link xlink:href="http://brlcad.org/wiki/BRL-CAD_Commands"/></para></listitem>
       <listitem><para>MGED command reference: <link xlink:href="http://brlcad.org/wiki/MGED_Commands"/></para></listitem>
       <listitem><para>BRL-CAD primitives reference: <link xlink:href="http://brlcad.org/wiki/BRL-CAD_Primitives"/></para></listitem>
-      <listitem><para>SVN: <link xlink:href="http://brlcad.org/wiki/SVN"/></para></listitem>
+      <listitem><para>Git: <link xlink:href="http://brlcad.org/wiki/Git"/></para></listitem>
       <listitem><para>BRL-CAD patch submission: <link xlink:href="http://brlcad.org/wiki/Patches"/></para></listitem>
       <listitem><para>Image gallery: <link xlink:href="http://brlcad.org/gallery/"/></para></listitem>
-      <listitem><para>BRL-CAD SourceForge page (since we use SVN for version control): <link xlink:href="http://sourceforge.net/projects/brlcad/"/></para></listitem>
-      <listitem><para>SourceForge registration page (for contributors to submit patches): <link xlink:href="https://sourceforge.net/user/registration"/></para></listitem>
+      <listitem><para>BRL-CAD Github page: <link xlink:href="http://github.com/BRL-CAD/brlcad/"/></para></listitem>
       <listitem><para>Application requirements for Google Summer of Code (GSoC) participants: <link xlink:href="http://brlcad.org/wiki/Google_Summer_of_Code/Application_Guidelines"/></para></listitem>
       <listitem><para>Acceptance requirements for Google Summer of Code (GSoC) participants: <link xlink:href="http://brlcad.org/wiki/Google_Summer_of_Code/Acceptance"/></para></listitem>
       <listitem><para>Behavioral expectations for GSoC participants: <link xlink:href="http://brlcad.org/wiki/Google_Summer_of_Code/Expectations"/></para></listitem>

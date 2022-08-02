@@ -1,7 +1,7 @@
 /*                    T W I S T E D C U B E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -129,7 +129,6 @@ MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
     // surface's domain, start at the south side
     ON_Curve* c2;
     int c2i, ei = 0, bRev3d = 0;
-    ON_2dPoint q;
 
     // flags for isoparametric curves
     ON_Surface::ISO iso = ON_Surface::not_iso;

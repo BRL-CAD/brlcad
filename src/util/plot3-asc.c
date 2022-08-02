@@ -1,7 +1,7 @@
 /*                    P L O T 3 - A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2020 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -132,6 +132,9 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-v")) {
 	    verbose++;
@@ -142,7 +145,7 @@ main(int argc, char **argv)
 	argv++;
     }
     if (argc == 2) {
-	if ((fp = fopen(argv[1], "r")) == NULL) {
+	if ((fp = fopen(argv[1], "rb")) == NULL) {
 	    perror("plot3-asc");
 	    return 1;
 	}
@@ -156,7 +159,8 @@ main(int argc, char **argv)
     while ((c = getc(fp)) != EOF) {
 	/* look it up */
 	if (c < 'A' || c > 'z') {
-	    up = &uerror;
+	    fprintf(stderr, "Bad command '%c' (0x%02x)\n", c, c);
+	    continue;
 	} else {
 	    up = &letters[ c - 'A' ];
 	}
@@ -165,6 +169,7 @@ main(int argc, char **argv)
 	    fprintf(stderr, "Bad command '%c' (0x%02x)\n", c, c);
 	    continue;
 	}
+
 	if (verbose) {
 	    counts[ c - 'A' ]++;
 	    printf("%s\t", up->desc);

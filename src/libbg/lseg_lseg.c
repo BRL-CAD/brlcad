@@ -207,11 +207,11 @@ ComputeMinimumParameters(int edge[2], double end[2][2], double parameter[2],
 
 
 double
-bg_lseg_lseg_dist(point_t *c1, point_t *c2,
+bg_distsq_lseg3_lseg3(point_t *c1, point_t *c2,
 		  const point_t P0, const point_t P1, const point_t Q0, const point_t Q1)
 {
     vect_t diff, r1a, r1b, r2a, r2b, r1, r2;
-    double ldist;
+    double ldist_sq;
     struct bg_lseg_result result;
     struct bg_lseg_tmp_vals v;
 
@@ -324,8 +324,8 @@ bg_lseg_lseg_dist(point_t *c1, point_t *c2,
 	VMOVE(*c2, r2);
     }
     VSUB2(diff, r1, r2);
-    ldist = sqrt(VDOT(diff, diff));
-    return ldist;
+    ldist_sq = VDOT(diff, diff);
+    return ldist_sq;
 }
 
 

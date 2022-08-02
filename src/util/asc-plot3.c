@@ -1,7 +1,7 @@
 /*                     A S C - P L O T 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #include <ctype.h>
 #include "bio.h"
 
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 #include "bu/app.h"
 #include "bu/log.h"
@@ -62,15 +62,15 @@ check_syntax (char cmd, int needed, int got, int line)
 int
 main (int argc, char **argv)
 {
-    char *bp;
-    char buf[BUF_LEN];
-    char sarg[BUF_LEN];
-    static char *fm[] = { "r", "w" };
+    char *bp = NULL;
+    char buf[BUF_LEN] = {'\0'};
+    char sarg[BUF_LEN] = {'\0'};
+    static char *fm[] = { "rb", "wb" };
     double darg[6] = {0.0};
     static FILE *fp[2];
-    int i;
+    int i =0;
     int iarg[6] = {0};
-    int line_nm;
+    int line_nm = 0;
     int nm_args = 0;
 
     bu_setprogname(argv[0]);
@@ -83,6 +83,10 @@ main (int argc, char **argv)
     if (argc > 3) {
 	printusage();
     }
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     fp[0] = stdin;
     fp[1] = stdout;
     for (i = 0; (i < 2) && (--argc > 0); ++i) {
@@ -94,7 +98,7 @@ main (int argc, char **argv)
 	}
     }
     if (isatty(fileno(fp[FP_OUT]))) {
-	bu_log("asc-plot3: Will not write to a TTY\n");
+	bu_log("%s: Will not write to a TTY\n", argv[0]);
 	printusage();
 	return 1;
     }

@@ -1,7 +1,7 @@
 /*               P R I M I T I V E _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2020 United States Government as represented by
+ * Copyright (c) 2012-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -102,16 +102,19 @@ primitive_get_absolute_tolerance(
 fastf_t
 primitive_diagonal_samples(
 	struct rt_db_internal *ip,
-	const struct rt_view_info *info)
+	const struct bview *v,
+	const struct bn_tol *tol,
+	fastf_t s_size)
 {
     point_t bbox_min, bbox_max;
     fastf_t primitive_diagonal_mm, samples_per_mm;
     fastf_t diagonal_samples;
 
-    ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, info->tol);
+    ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, tol);
     primitive_diagonal_mm = DIST_PNT_PNT(bbox_min, bbox_max);
 
-    samples_per_mm = 1.0 / info->point_spacing;
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
+    samples_per_mm = 1.0 / point_spacing;
     diagonal_samples = samples_per_mm * primitive_diagonal_mm;
 
     return diagonal_samples;
@@ -124,7 +127,9 @@ primitive_diagonal_samples(
 fastf_t
 primitive_curve_count(
 	struct rt_db_internal *ip,
-	const struct rt_view_info *info)
+	const struct bn_tol *tol,
+	fastf_t curve_scale,
+	fastf_t s_size)
 {
     point_t bbox_min, bbox_max;
     fastf_t x_len, y_len, z_len, avg_len;
@@ -133,7 +138,7 @@ primitive_curve_count(
 	return 0.0;
     }
 
-    ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, info->tol);
+    ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, tol);
 
     x_len = fabs(bbox_max[X] - bbox_min[X]);
     y_len = fabs(bbox_max[Y] - bbox_min[Y]);
@@ -141,7 +146,9 @@ primitive_curve_count(
 
     avg_len = (x_len + y_len + z_len) / 3.0;
 
-    return avg_len / info->curve_spacing;
+    fastf_t curve_spacing = s_size / 2.0;
+    curve_spacing /= curve_scale;
+    return avg_len / curve_spacing;
 }
 
 /* Calculate the length of the shortest distance between a point and a line in
@@ -378,6 +385,7 @@ ellipse_point_at_radian(
 
 void
 plot_ellipse(
+	struct bu_list *vlfree,
 	struct bu_list *vhead,
 	const vect_t center,
 	const vect_t axis_a,
@@ -392,12 +400,12 @@ plot_ellipse(
 
     ellipse_point_at_radian(p, center, axis_a, axis_b,
 	    radian_step * (num_points - 1));
-    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
 
     radian = 0;
     for (i = 0; i < num_points; ++i) {
 	ellipse_point_at_radian(p, center, axis_a, axis_b, radian);
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
 	radian += radian_step;
     }
@@ -550,13 +558,11 @@ clt_get_program(cl_context context, cl_device_id device, cl_uint count, const ch
     cl_program *programs;
     cl_int error;
     cl_uint i;
-    char file[MAXPATHLEN] = {0};
     char path[MAXPATHLEN] = {0};
 
     programs = (cl_program*)bu_calloc(count, sizeof(cl_program), "programs");
     for (i=0; i<count; i++) {
-	snprintf(file, MAXPATHLEN, "%s%c%s", "share/" BRLCAD_OPENCL_DIR, BU_DIR_SEPARATOR, filenames[i]);
-	snprintf(path, MAXPATHLEN, "%s", bu_brlcad_root(file, 0));
+	snprintf(path, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_DATA, BRLCAD_OPENCL_DIR, filenames[i], NULL));
 
         pc_string = clt_read_code(path, &pc_length);
         programs[i] = clCreateProgramWithSource(context, 1, &pc_string, &pc_length, &error);
@@ -629,13 +635,16 @@ clt_init(void)
             "eto_shot.cl",
             "sph_shot.cl",
             "ebm_shot.cl",
+	    "arbn_shot.cl",
 	    "part_shot.cl",
             "rec_shot.cl",
             "tgc_shot.cl",
             "tor_shot.cl",
             "rhc_shot.cl",
             "rpc_shot.cl",
-            "hrt_shot.cl",
+	    "superell_shot.cl",
+	    "hyp_shot.cl",
+	    "hrt_shot.cl",
 
             "rt.cl",
         };
@@ -654,7 +663,7 @@ clt_init(void)
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
 
 	/* locate opencl directory */
-	snprintf(path, MAXPATHLEN, "%s", bu_brlcad_root("share/" BRLCAD_OPENCL_DIR, 0));
+	snprintf(path, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_DATA, BRLCAD_OPENCL_DIR, NULL));
 
 	/* compile opencl programs */
 	snprintf(args, MAXPATHLEN, "-I %s -D RT_SINGLE_HIT=1", path);
@@ -697,6 +706,7 @@ clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
 	case ID_REC:		size = clt_rec_pack(pool, stp);	break;
 	case ID_SPH:		size = clt_sph_pack(pool, stp);	break;
 	case ID_EBM:		size = clt_ebm_pack(pool, stp);	break;
+	case ID_ARBN:		size = clt_arbn_pack(pool, stp);break;
 	case ID_PARTICLE:	size = clt_part_pack(pool, stp);break;
 	case ID_EHY:		size = clt_ehy_pack(pool, stp);	break;
 	case ID_ARS:
@@ -705,6 +715,8 @@ clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
 	case ID_ETO:		size = clt_eto_pack(pool, stp); break;
 	case ID_RHC:		size = clt_rhc_pack(pool, stp); break;
 	case ID_RPC:		size = clt_rpc_pack(pool, stp); break;
+	case ID_SUPERELL:	size = clt_superell_pack(pool, stp); break;
+	case ID_HYP:		size = clt_hyp_pack(pool, stp);	break;
 	case ID_HRT:		size = clt_hrt_pack(pool, stp); break;
 	default:		size = 0;			break;
     }

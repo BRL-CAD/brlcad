@@ -1,7 +1,7 @@
 /*                           A D C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -76,30 +76,34 @@ static char adc_syntax4[] = "\
 void
 adc_set_dirty_flag(void)
 {
-    struct dm_list *dmlp;
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	if (dmlp->dml_adc_state == adc_state)
-	    dmlp->dml_dirty = 1;
+    for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
+	if (m_dmp->dm_adc_state == adc_state) {
+	    m_dmp->dm_dirty = 1;
+	    dm_set_dirty(m_dmp->dm_dmp, 1);
+	}
+    }
 }
 
 
 void
 adc_set_scroll(void)
 {
-    struct dm_list *dmlp;
-    struct dm_list *save_dmlp;
+    struct mged_dm *save_m_dmp;
+    save_m_dmp = mged_curr_dm;
 
-    save_dmlp = curr_dm_list;
-
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	if (dmlp->dml_adc_state == adc_state) {
-	    curr_dm_list = dmlp;
+    for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
+	if (m_dmp->dm_adc_state == adc_state) {
+	    set_curr_dm(m_dmp);
 	    set_scroll();
-	    dirty = 1;
+	    DMP_dirty = 1;
+	    dm_set_dirty(DMP, 1);
 	}
+    }
 
-    curr_dm_list = save_dmlp;
+    set_curr_dm(save_m_dmp);
 }
 
 

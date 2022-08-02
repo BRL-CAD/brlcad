@@ -1,7 +1,7 @@
 /*                         G - R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -96,7 +96,7 @@ lswap(unsigned int *v)
 
 
 static void
-nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]), void *UNUSED(client_data))
+nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *UNUSED(tsp), void *UNUSED(client_data))
 {
     struct model *m;
     struct shell *s;
@@ -353,14 +353,12 @@ main(int argc, char *argv[])
 	    use_mc?NULL:nmg_booltree_leaf_tess,
 	    (void *)&gcvwriter);
 
-    percent = 0;
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100) / regions_tried;
 	if (verbose)
 	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 		    regions_tried, regions_converted, percent);
     }
-    percent = 0;
 
     if (regions_tried > 0) {
 	percent = ((double)regions_written * 100) / regions_tried;

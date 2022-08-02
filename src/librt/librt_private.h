@@ -1,7 +1,7 @@
 /*                 L I B R T _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "bv.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 
@@ -65,7 +66,7 @@ __BEGIN_DECLS
 /* db_flip.c */
 
 /**
- * function similar to ntohs() but always flips the bytes.
+ * function similar to bu_ntohs() but always flips the bytes.
  * used for v4 compatibility.
  */
 extern short flip_short(short s);
@@ -133,6 +134,17 @@ extern int cyclic_path(const struct db_full_path *fp, const char *test_name, lon
 extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
 
 /* db_io.c */
+
+struct dbi_changed_clbk {
+    dbi_changed_t f;
+    void *u_data;
+};
+
+struct dbi_update_nref_clbk {
+    dbi_update_nref_t f;
+    void *u_data;
+};
+
 extern int db_read(const struct db_i *dbip, void *addr, size_t count, b_off_t offset);
 
 /* db5_io.c */
@@ -174,7 +186,9 @@ extern fastf_t primitive_get_absolute_tolerance(
 
 extern fastf_t primitive_diagonal_samples(
 	struct rt_db_internal *ip,
-	const struct rt_view_info *info);
+	const struct bview *v,
+	const struct bn_tol *tol,
+	fastf_t s_size);
 
 extern int approximate_parabolic_curve(
 	struct rt_pnt_node *pts,
@@ -183,7 +197,9 @@ extern int approximate_parabolic_curve(
 
 extern fastf_t primitive_curve_count(
 	struct rt_db_internal *ip,
-	const struct rt_view_info *info);
+	const struct bn_tol *tol,
+	fastf_t curve_scale,
+	fastf_t s_size);
 
 extern int approximate_hyperbolic_curve(
 	struct rt_pnt_node *pts,
@@ -200,6 +216,7 @@ ellipse_point_at_radian(
 	fastf_t radian);
 
 extern void plot_ellipse(
+	struct bu_list *vlfree,
 	struct bu_list *vhead,
 	const vect_t t,
 	const vect_t a,
@@ -208,6 +225,11 @@ extern void plot_ellipse(
 
 extern int _rt_tcl_list_to_int_array(const char *list, int **array, int *array_len);
 extern int _rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len);
+
+/* view.c */
+extern fastf_t solid_point_spacing(const struct bview *gvp, fastf_t solid_width);
+extern fastf_t view_avg_sample_spacing(const struct bview *gvp);
+
 
 #ifdef USE_OPENCL
 extern cl_device_id clt_get_cl_device(void);
@@ -225,6 +247,7 @@ CLT_DECLARE_INTERFACE(ars);
 CLT_DECLARE_INTERFACE(rec);
 CLT_DECLARE_INTERFACE(sph);
 CLT_DECLARE_INTERFACE(ebm);
+CLT_DECLARE_INTERFACE(arbn);
 CLT_DECLARE_INTERFACE(part);
 CLT_DECLARE_INTERFACE(epa);
 CLT_DECLARE_INTERFACE(ehy);
@@ -233,6 +256,8 @@ CLT_DECLARE_INTERFACE(eto);
 CLT_DECLARE_INTERFACE(rhc);
 CLT_DECLARE_INTERFACE(rpc);
 CLT_DECLARE_INTERFACE(hrt);
+CLT_DECLARE_INTERFACE(superell);
+CLT_DECLARE_INTERFACE(hyp);
 
 extern size_t clt_bot_pack(struct bu_pool *pool, struct soltab *stp);
 #endif

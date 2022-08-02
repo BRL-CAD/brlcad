@@ -1,7 +1,7 @@
 /*		     S T R I N G _ U T I L . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or

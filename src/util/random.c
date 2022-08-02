@@ -1,7 +1,7 @@
 /*                        R A N D O M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -97,7 +97,8 @@ main(int argc, char *argv[])
 	printusage();
 	bu_exit(1, "\tREQUIRED: low high\n");
     }
-    if (gauss == 0 && uniform == 0) uniform = 1;
+    if (gauss == 0 && uniform == 0)
+	uniform = 1;
     low = atoi(argv[bu_optind]);
     high = atoi(argv[bu_optind+1]);
     if (!cdone) {
@@ -121,14 +122,18 @@ main(int argc, char *argv[])
 	if (tmp < low) tmp = low;
 	if (tmp > high) tmp = high;
 	fprintf(stdout, "%d\n", (int)tmp);
-    } else {
+	return 0;
+    }
+    if (uniform) {
 	double tmp;
 	up = bn_unif_init(seed, 0);
 	tmp = high-low + 1.0;
 	tmp*=BN_UNIF_DOUBLE(up)+0.5;
 	fprintf(stdout, "%d\n", low +(int)tmp);
+	return 0;
     }
-    return 0;
+
+    return -1;
 }
 
 

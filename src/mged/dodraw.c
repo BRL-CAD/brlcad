@@ -1,7 +1,7 @@
 /*                        D O D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,8 +33,25 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
+#define GET_BV_SCENE_OBJ(p, fp) { \
+          if (BU_LIST_IS_EMPTY(fp)) { \
+              BU_ALLOC((p), struct bv_scene_obj); \
+              struct ged_bv_data *bdata; \
+              BU_GET(bdata, struct ged_bv_data); \
+              db_full_path_init(&bdata->s_fullpath); \
+              (p)->s_u_data = (void *)bdata; \
+          } else { \
+              p = BU_LIST_NEXT(bv_scene_obj, fp); \
+              BU_LIST_DEQUEUE(&((p)->l)); \
+              if ((p)->s_u_data) { \
+                  struct ged_bv_data *bdata = (struct ged_bv_data *)(p)->s_u_data; \
+                  bdata->s_fullpath.fp_len = 0; \
+              } \
+          } \
+          BU_LIST_INIT( &((p)->s_vlist) ); }
+
 void
-cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
+cvt_vlblock_to_solids(struct bv_vlblock *vbp, const char *name, int copy)
 {
     size_t i;
     char shortname[32];
@@ -48,21 +65,20 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 	av[0] = "erase";
 	av[1] = shortname;
 	av[2] = NULL;
-	(void)ged_erase(GEDP, 2, (const char **)av);
+	(void)ged_exec(GEDP, 2, (const char **)av);
     } else {
 	av[0] = "kill";
 	av[1] = "-f";
 	av[2] = shortname;
 	av[3] = NULL;
-	(void)ged_kill(GEDP, 3, (const char **)av);
+	(void)ged_exec(GEDP, 3, (const char **)av);
     }
 
     for (i=0; i < vbp->nused; i++) {
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i]))) continue;
 
 	snprintf(namebuf, sizeof(namebuf), "%s%lx",	shortname, vbp->rgb[i]);
-	/*invent_solid(namebuf, &vbp->head[i], vbp->rgb[i], copy);*/
-	invent_solid(GEDP->ged_gdp->gd_headDisplay, DBIP, createDListSolid, GEDP->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 1.0, 0, GEDP->freesolid, 0);
+	invent_solid(GEDP, namebuf, &vbp->head[i], vbp->rgb[i], copy, 1.0, 0, 0);
     }
 }
 
@@ -72,15 +88,16 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
  * Also finds s_vlen;
  */
 static void
-mged_bound_solid(struct solid *sp)
+mged_bound_solid(struct bv_scene_obj *sp)
 {
     point_t bmin, bmax;
-    int length = 0;
+    size_t length = 0;
     int cmd;
+    int dispmode;
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
 
-    cmd = bn_vlist_bbox(&sp->s_vlist, &bmin, &bmax, &length);
+    cmd = bv_vlist_bbox(&sp->s_vlist, &bmin, &bmax, &length, &dispmode);
     if (cmd) {
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", cmd);
@@ -88,7 +105,7 @@ mged_bound_solid(struct solid *sp)
 	bu_vls_free(&tmp_vls);
     }
 
-    sp->s_vlen = length;
+    sp->s_vlen = (int)length;
     sp->s_center[X] = (bmin[X] + bmax[X]) * 0.5;
     sp->s_center[Y] = (bmin[Y] + bmax[Y]) * 0.5;
     sp->s_center[Z] = (bmin[Z] + bmax[Z]) * 0.5;
@@ -96,6 +113,7 @@ mged_bound_solid(struct solid *sp)
     sp->s_size = bmax[X] - bmin[X];
     V_MAX(sp->s_size, bmax[Y] - bmin[Y]);
     V_MAX(sp->s_size, bmax[Z] - bmin[Z]);
+    sp->s_displayobj = dispmode;
 }
 
 
@@ -106,15 +124,16 @@ mged_bound_solid(struct solid *sp)
  * This routine must be prepared to run in parallel.
  */
 void
-drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp)
+drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct bv_scene_obj *existing_sp)
 {
     struct display_list *gdlp;
-    struct solid *sp;
+    struct bv_scene_obj *sp;
 
     if (!existing_sp) {
 	/* Handling a new solid */
-	GET_SOLID(sp, &GEDP->freesolid->l);
-	BU_LIST_APPEND(&GEDP->freesolid->l, &((sp)->l) );
+	struct bv_scene_obj *free_scene_obj = bv_set_fsos(&GEDP->ged_views);
+	GET_BV_SCENE_OBJ(sp, &free_scene_obj->l);
+	BU_LIST_APPEND(&free_scene_obj->l, &((sp)->l) );
 	sp->s_dlist = 0;
     } else {
 	/* Just updating an existing solid.
@@ -135,25 +154,28 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
      */
     if (!existing_sp) {
 	/* Take note of the base color */
-	sp->s_uflag = 0;
+	sp->s_old.s_uflag = 0;
 	if (tsp) {
 	    if (tsp->ts_mater.ma_color_valid) {
-		sp->s_dflag = 0;	/* color specified in db */
+		sp->s_old.s_dflag = 0;	/* color specified in db */
 	    } else {
-		sp->s_dflag = 1;	/* default color */
+		sp->s_old.s_dflag = 1;	/* default color */
 	    }
 	    /* Copy into basecolor anyway, to prevent black */
-	    sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.0;
-	    sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.0;
-	    sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.0;
+	    sp->s_old.s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.0;
+	    sp->s_old.s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.0;
+	    sp->s_old.s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.0;
 	}
-	sp->s_cflag = 0;
+	sp->s_old.s_cflag = 0;
 	sp->s_iflag = DOWN;
 	sp->s_soldash = dashflag;
-	sp->s_Eflag = 0;	/* This is a solid */
-	db_dup_full_path(&sp->s_fullpath, pathp);
+	sp->s_old.s_Eflag = 0;	/* This is a solid */
+	if (sp->s_u_data) {
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+	    db_dup_full_path(&bdata->s_fullpath, pathp);
+	}
 	if (tsp)
-	    sp->s_regionid = tsp->ts_regionid;
+	    sp->s_old.s_regionid = tsp->ts_regionid;
     }
 
     createDListSolid(sp);
@@ -165,7 +187,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 
 	/* Grab the last display list */
 	gdlp = BU_LIST_PREV(display_list, GEDP->ged_gdp->gd_headDisplay);
-	BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
+	BU_LIST_APPEND(gdlp->dl_head_scene_obj.back, &sp->l);
 
 	bu_semaphore_release(RT_SEM_MODEL);
     } else {
@@ -184,7 +206,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
  * 0 OK
  */
 int
-replot_original_solid(struct solid *sp)
+replot_original_solid(struct bv_scene_obj *sp)
 {
     struct rt_db_internal intern;
     struct directory *dp;
@@ -193,13 +215,16 @@ replot_original_solid(struct solid *sp)
     if (DBIP == DBI_NULL)
 	return 0;
 
-    dp = LAST_SOLID(sp);
-    if (sp->s_Eflag) {
+    if (!sp->s_u_data)
+	return 0;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+    dp = LAST_SOLID(bdata);
+    if (sp->s_old.s_Eflag) {
 	Tcl_AppendResult(INTERP, "replot_original_solid(", dp->d_namep,
 			 "): Unable to plot evaluated regions, skipping\n", (char *)NULL);
 	return -1;
     }
-    (void)db_path_to_mat(DBIP, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     if (rt_db_get_internal(&intern, dp, DBIP, mat, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, dp->d_namep, ":  solid import failure\n", (char *)NULL);
@@ -228,7 +253,7 @@ replot_original_solid(struct solid *sp)
  */
 int
 replot_modified_solid(
-    struct solid *sp,
+    struct bv_scene_obj *sp,
     struct rt_db_internal *ip,
     const mat_t mat)
 {
@@ -239,7 +264,7 @@ replot_modified_solid(
 
     BU_LIST_INIT(&vhead);
 
-    if (sp == SOLID_NULL) {
+    if (sp == NULL) {
 	Tcl_AppendResult(INTERP, "replot_modified_solid() sp==NULL?\n", (char *)NULL);
 	return -1;
     }
@@ -258,8 +283,12 @@ replot_modified_solid(
     transform_editing_solid(&intern, mat, ip, 0);
 
     if (OBJ[ip->idb_type].ft_plot(&vhead, &intern, &mged_ttol, &mged_tol, NULL) < 0) {
-	Tcl_AppendResult(INTERP, LAST_SOLID(sp)->d_namep,
-			 ": re-plot failure\n", (char *)NULL);
+	if (!sp->s_u_data)
+	    return -1;
+	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+	if (bdata->s_fullpath.fp_len > 0)
+	    Tcl_AppendResult(INTERP, LAST_SOLID(bdata)->d_namep,
+		    ": re-plot failure\n", (char *)NULL);
 	return -1;
     }
     rt_db_free_internal(&intern);
@@ -276,11 +305,13 @@ replot_modified_solid(
 void
 add_solid_path_to_result(
     Tcl_Interp *interp,
-    struct solid *sp)
+    struct bv_scene_obj *sp)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-
-    db_path_to_vls(&str, &sp->s_fullpath);
+    if (!sp || !sp->s_u_data)
+	return;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+    db_path_to_vls(&str, &bdata->s_fullpath);
     Tcl_AppendResult(interp, bu_vls_addr(&str), " ", NULL);
     bu_vls_free(&str);
 }
@@ -292,9 +323,9 @@ redraw_visible_objects(void)
     char *av[] = {NULL, NULL};
 
     av[0] = "redraw";
-    ret = ged_redraw(GEDP, ac, (const char **)av);
+    ret = ged_exec(GEDP, ac, (const char **)av);
 
-    if (ret == GED_ERROR) {
+    if (ret & BRLCAD_ERROR) {
 	return TCL_ERROR;
     }
 

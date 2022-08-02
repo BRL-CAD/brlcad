@@ -1,7 +1,7 @@
 /*                     T A N K I L L - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ static int verbose=0;		/* verbosity flag */
 #define START_ARRAY_SIZE	64
 #define ARRAY_BLOCK_SIZE	64
 
-#define	NAMESIZE	16	/* from db.h */
+#define	NAMESIZE	MAXPATHLEN /* arbitrary, huge */
 
 struct tankill_verts
 {
@@ -297,9 +297,9 @@ main(int argc, char **argv)
 	while ( vert_no < no_of_verts - 2 )
 	{
 	    /* skip combinations that won't make a face */
-	    if ( bn_3pnts_collinear( verts[vert_no].coord, verts[vert_no+1].coord, verts[vert_no+2].coord, &tol ) )
+	    if ( bg_3pnts_collinear( verts[vert_no].coord, verts[vert_no+1].coord, verts[vert_no+2].coord, &tol ) )
 		vert_no++;
-	    else if ( !bn_3pnts_distinct( verts[vert_no].coord, verts[vert_no+1].coord, verts[vert_no+2].coord, &tol ) )
+	    else if ( !bg_3pnts_distinct( verts[vert_no].coord, verts[vert_no+1].coord, verts[vert_no+2].coord, &tol ) )
 		vert_no++;
 	    else
 	    {

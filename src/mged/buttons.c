@@ -1,7 +1,7 @@
 /*                       B U T T O N S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -517,7 +517,7 @@ ill_common(void) {
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
 	    is_empty = 0;
 	    break;
 	}
@@ -531,7 +531,7 @@ ill_common(void) {
     }
 
     illum_gdlp = gdlp;
-    illump = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);/* any valid solid would do */
+    illump = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);/* any valid solid would do */
     illump->s_iflag = UP;
     edobj = 0;		/* sanity */
     edsol = 0;		/* sanity */
@@ -582,6 +582,7 @@ be_o_scale()
     edobj = BE_O_SCALE;
     movedir = SARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
 
     edit_absolute_scale = acc_sc_obj - 1.0;
@@ -600,6 +601,7 @@ be_o_xscale()
     edobj = BE_O_XSCALE;
     movedir = SARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
 
     edit_absolute_scale = acc_sc[0] - 1.0;
@@ -618,6 +620,7 @@ be_o_yscale()
     edobj = BE_O_YSCALE;
     movedir = SARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
 
     edit_absolute_scale = acc_sc[1] - 1.0;
@@ -636,6 +639,7 @@ be_o_zscale()
     edobj = BE_O_ZSCALE;
     movedir = SARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
 
     edit_absolute_scale = acc_sc[2] - 1.0;
@@ -654,6 +658,7 @@ be_o_x()
     edobj = BE_O_X;
     movedir = RARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
     return TCL_OK;
 }
@@ -668,6 +673,7 @@ be_o_y()
     edobj = BE_O_Y;
     movedir = UARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
     return TCL_OK;
 }
@@ -682,6 +688,7 @@ be_o_xy()
     edobj = BE_O_XY;
     movedir = UARROW | RARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
     return TCL_OK;
 }
@@ -696,6 +703,7 @@ be_o_rotate()
     edobj = BE_O_ROTATE;
     movedir = ROTARROW;
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     set_e_axes_pos(1);
     return TCL_OK;
 }
@@ -704,8 +712,6 @@ be_o_rotate()
 int
 be_accept()
 {
-    struct dm_list *dmlp;
-
     if (STATE == ST_S_EDIT) {
 	/* Accept a solid edit */
 	edsol = 0;
@@ -718,7 +724,7 @@ be_accept()
 	dl_set_iflag(GEDP->ged_gdp->gd_headDisplay, DOWN);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
-	illump = SOLID_NULL;
+	illump = NULL;
 	mged_color_soltab();
 	(void)chg_state(ST_S_EDIT, ST_VIEW, "Edit Accept");
     }  else if (STATE == ST_O_EDIT) {
@@ -731,7 +737,7 @@ be_accept()
 	mmenu_set_all(MENU_L2, MENU_NULL);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
-	illump = SOLID_NULL;
+	illump = NULL;
 	mged_color_soltab();
 	(void)chg_state(ST_O_EDIT, ST_VIEW, "Edit Accept");
     } else {
@@ -740,9 +746,11 @@ be_accept()
 	return TCL_OK;
     }
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	if (dmlp->dml_mged_variables->mv_transform == 'e')
-	    dmlp->dml_mged_variables->mv_transform = 'v';
+    for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
+	if (m_dmp->dm_mged_variables->mv_transform == 'e')
+	    m_dmp->dm_mged_variables->mv_transform = 'v';
+    }
 
     {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -758,9 +766,8 @@ be_accept()
 int
 be_reject()
 {
-    struct dm_list *dmlp;
-
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     /* Reject edit */
 
@@ -796,7 +803,7 @@ be_reject()
     edobj = 0;
     es_edflag = -1;
     illum_gdlp = GED_DISPLAY_LIST_NULL;
-    illump = SOLID_NULL;		/* None selected */
+    illump = NULL;		/* None selected */
 
     /* Clear illumination flags */
     dl_set_iflag(GEDP->ged_gdp->gd_headDisplay, DOWN);
@@ -804,9 +811,11 @@ be_reject()
     mged_color_soltab();
     (void)chg_state(STATE, ST_VIEW, "Edit Reject");
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	if (dmlp->dml_mged_variables->mv_transform == 'e')
-	    dmlp->dml_mged_variables->mv_transform = 'v';
+    for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
+	if (m_dmp->dm_mged_variables->mv_transform == 'e')
+	    m_dmp->dm_mged_variables->mv_transform = 'v';
+    }
 
     {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -939,8 +948,7 @@ stateChange(int UNUSED(oldstate), int newstate)
 int
 chg_state(int from, int to, char *str)
 {
-    struct dm_list *p;
-    struct dm_list *save_dm_list;
+    struct mged_dm *save_dm_list;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (STATE != from) {
@@ -952,14 +960,15 @@ chg_state(int from, int to, char *str)
 
     stateChange(from, to);
 
-    save_dm_list = curr_dm_list;
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	curr_dm_list = p;
+    save_dm_list = mged_curr_dm;
+    for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
+	set_curr_dm(p);
 
 	new_mats();
     }
 
-    curr_dm_list = save_dm_list;
+    set_curr_dm(save_dm_list);
 
     bu_vls_printf(&vls, "%s(state)", MGED_DISPLAY_VAR);
     Tcl_SetVar(INTERP, bu_vls_addr(&vls), state_str[STATE], TCL_GLOBAL_ONLY);

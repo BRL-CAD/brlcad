@@ -1,7 +1,7 @@
 /*                     P I X B U S T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -105,7 +105,8 @@ main(int argc, char **argv)
 	snprintf(name, 128, "%s.%ld", base_name, (unsigned long)framenumber);
 
 	ifname = bu_file_realpath(name, NULL);
-	if ((fd=creat(ifname, 0444))<0) {
+	fd = creat(ifname, 0444);
+	if (fd < 0) {
 	    perror(ifname);
 	    bu_free(ifname, "ifname alloc from bu_file_realpath");
 	    continue;

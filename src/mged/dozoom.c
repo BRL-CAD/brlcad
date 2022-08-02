@@ -1,7 +1,7 @@
 /*                        D O Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,10 +27,6 @@
 #include "vmath.h"
 #include "bn.h"
 
-#ifdef DM_RTGL
-#  include "dm-rtgl.h"
-#endif
-
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
@@ -54,8 +50,8 @@ void
 dozoom(int which_eye)
 {
     int ndrawn = 0;
-    fastf_t inv_viewsize;
-    mat_t newmat;
+    fastf_t inv_viewsize = 0.0;
+    mat_t newmat = MAT_INIT_ZERO;
     matp_t mat = newmat;
     short r = -1;
     short g = -1;
@@ -63,11 +59,11 @@ dozoom(int which_eye)
 
     /*
      * The vectorThreshold stuff in libdm may turn the
-     * Tcl-crank causing curr_dm_list to change.
+     * Tcl-crank causing mged_curr_dm to change.
      */
-    struct dm_list *save_dm_list = curr_dm_list;
+    struct mged_dm *save_dm_list = mged_curr_dm;
 
-    curr_dm_list->dml_ndrawn = 0;
+    mged_curr_dm->dm_ndrawn = 0;
     inv_viewsize = view_state->vs_gvp->gv_isize;
 
     /*
@@ -108,22 +104,15 @@ dozoom(int which_eye)
 	    case 0:
 		/* Non-stereo case */
 		mat = view_state->vs_gvp->gv_model2view;
-		/* XXX hack */
-		/* if (mged_variables->mv_faceplate > 0) */
-		if (1) {
-		    if (EQUAL(view_state->vs_gvp->gv_eye_pos[Z], 1.0)) {
-			/* This way works, with reasonable Z-clipping */
-			persp_mat(perspective_mat, view_state->vs_gvp->gv_perspective,
-				  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
-		    } else {
-			/* This way does not have reasonable Z-clipping,
-			 * but includes shear, for GDurf's testing.
-			 */
-			deering_persp_mat(perspective_mat, l, h, view_state->vs_gvp->gv_eye_pos);
-		    }
+		if (EQUAL(view_state->vs_gvp->gv_eye_pos[Z], 1.0)) {
+		    /* This way works, with reasonable Z-clipping */
+		    persp_mat(perspective_mat, view_state->vs_gvp->gv_perspective,
+			    (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
 		} else {
-		    /* New way, should handle all cases */
-		    mike_persp_mat(perspective_mat, view_state->vs_gvp->gv_eye_pos);
+		    /* This way does not have reasonable Z-clipping,
+		     * but includes shear, for GDurf's testing.
+		     */
+		    deering_persp_mat(perspective_mat, l, h, view_state->vs_gvp->gv_eye_pos);
 		}
 		break;
 	    case 1:
@@ -145,40 +134,24 @@ dozoom(int which_eye)
 
     dm_loadmatrix(DMP, mat, which_eye);
 
-#ifdef DM_RTGL
-    /* dm rtgl has its own way of drawing */
-    if (IS_DM_TYPE_RTGL(dm_get_type(DMP))) {
-
-	/* dm-rtgl needs database info for ray tracing */
-	RTGL_GEDP = GEDP;
-
-	/* will ray trace visible objects and draw the intersection points */
-	dm_draw_vlist(DMP, (struct bn_vlist *)NULL);
-	/* force update if needed */
-	dirty = RTGL_DIRTY;
-
-	return;
-    }
-#endif
-
     if (dm_get_transparency(DMP)) {
 	/* First, draw opaque stuff */
 
-	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
-	/* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
-	if (curr_dm_list != save_dm_list) curr_dm_list = save_dm_list;
+	/* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
+	if (mged_curr_dm != save_dm_list) set_curr_dm(save_dm_list);
 
-	curr_dm_list->dml_ndrawn += ndrawn;
+	mged_curr_dm->dm_ndrawn += ndrawn;
 
 	/* disable write to depth buffer */
 	dm_set_depth_mask(DMP, 0);
 
 	/* Second, draw transparent stuff */
 
-	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 0, mged_variables->mv_dlist);
 
@@ -187,16 +160,16 @@ dozoom(int which_eye)
 
     } else {
 
-	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
     }
 
-    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
-    if (curr_dm_list != save_dm_list) curr_dm_list = save_dm_list;
+    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
+    if (mged_curr_dm != save_dm_list) set_curr_dm(save_dm_list);
 
-    curr_dm_list->dml_ndrawn += ndrawn;
+    mged_curr_dm->dm_ndrawn += ndrawn;
 
 
     /* draw predictor vlist */
@@ -205,7 +178,7 @@ dozoom(int which_eye)
 		       color_scheme->cs_predictor[0],
 		       color_scheme->cs_predictor[1],
 		       color_scheme->cs_predictor[2], 1, 1.0);
-	dm_draw_vlist(DMP, (struct bn_vlist *)&curr_dm_list->dml_p_vlist);
+	dm_draw_vlist(DMP, (struct bv_vlist *)&mged_curr_dm->dm_p_vlist);
     }
 
     /*
@@ -229,14 +202,14 @@ dozoom(int which_eye)
 		   color_scheme->cs_geo_hl[2], 1, 1.0);
 
 
-    ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+    ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
 	    geometry_default_color, 0, mged_variables->mv_dlist);
 
-    curr_dm_list->dml_ndrawn += ndrawn;
+    mged_curr_dm->dm_ndrawn += ndrawn;
 
-    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
-    if (curr_dm_list != save_dm_list) curr_dm_list = save_dm_list;
+    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
+    if (mged_curr_dm != save_dm_list) set_curr_dm(save_dm_list);
 }
 
 /*
@@ -252,7 +225,8 @@ createDLists(struct bu_list *hdlp)
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	dm_draw_obj(DMP, gdlp);
+	dm_set_dirty(DMP, 1);
+	dm_draw_display_list(DMP, gdlp);
 
 	gdlp = next_gdlp;
     }
@@ -267,37 +241,39 @@ createDLists(struct bu_list *hdlp)
  * display manager that has already created the display list)
  */
 void
-createDListSolid(struct solid *sp)
+createDListSolid(struct bv_scene_obj *sp)
 {
-    struct dm_list *dlp;
-    struct dm_list *save_dlp;
+    struct mged_dm *save_dlp;
 
-    save_dlp = curr_dm_list;
+    save_dlp = mged_curr_dm;
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
-	if (dlp->dml_mapped &&
-		dm_get_displaylist(dlp->dml_dmp) &&
-		dlp->dml_mged_variables->mv_dlist) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (dlp->dm_mapped &&
+		dm_get_displaylist(dlp->dm_dmp) &&
+		dlp->dm_mged_variables->mv_dlist) {
 	    if (sp->s_dlist == 0)
 		sp->s_dlist = dm_gen_dlists(DMP, 1);
 
+	    dm_set_dirty(DMP, 1);
 	    (void)dm_make_current(DMP);
 	    (void)dm_begin_dlist(DMP, sp->s_dlist);
 	    if (sp->s_iflag == UP)
-		(void)dm_set_fg(DMP, 255, 255, 255, 0, sp->s_transparency);
+		(void)dm_set_fg(DMP, 255, 255, 255, 0, sp->s_os.transparency);
 	    else
 		(void)dm_set_fg(DMP,
 			(unsigned char)sp->s_color[0],
 			(unsigned char)sp->s_color[1],
-			(unsigned char)sp->s_color[2], 0, sp->s_transparency);
-	    (void)dm_draw_vlist(DMP, (struct bn_vlist *)&sp->s_vlist);
+			(unsigned char)sp->s_color[2], 0, sp->s_os.transparency);
+	    (void)dm_draw_vlist(DMP, (struct bv_vlist *)&sp->s_vlist);
 	    (void)dm_end_dlist(DMP);
 	}
 
-	dlp->dml_dirty = 1;
+	dlp->dm_dirty = 1;
+	dm_set_dirty(DMP, 1);
     }
 
-    curr_dm_list = save_dlp;
+    set_curr_dm(save_dlp);
 }
 
 /*
@@ -311,8 +287,8 @@ createDListSolid(struct solid *sp)
 void
 createDListAll(struct display_list *gdlp)
 {
-    struct solid *sp;
-    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+    struct bv_scene_obj *sp;
+    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	createDListSolid(sp);
     }
 }
@@ -325,16 +301,16 @@ createDListAll(struct display_list *gdlp)
 void
 freeDListsAll(unsigned int dlist, int range)
 {
-    struct dm_list *dlp;
-
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
-	if (dm_get_displaylist(dlp->dml_dmp) &&
-	    dlp->dml_mged_variables->mv_dlist) {
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (dm_get_displaylist(dlp->dm_dmp) &&
+	    dlp->dm_mged_variables->mv_dlist) {
 	    (void)dm_make_current(DMP);
-	    (void)dm_free_dlists(dlp->dml_dmp, dlist, range);
+	    (void)dm_free_dlists(dlp->dm_dmp, dlist, range);
 	}
 
-	dlp->dml_dirty = 1;
+	dlp->dm_dirty = 1;
+	dm_set_dirty(DMP, 1);
     }
 }
 

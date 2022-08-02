@@ -1,7 +1,7 @@
 /*                         G - O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2020 United States Government as represented by
+ * Copyright (c) 1996-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -302,15 +302,15 @@ main(int argc, const char **argv)
 static void
 nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int aircode, int los, int material_id)
 {
-    struct model *m;
-    struct shell *s;
-    struct vertex *v;
-    struct bu_ptbl verts;
-    struct bu_ptbl norms;
-    char *region_name;
+    struct model *m = NULL;
+    struct shell *s = NULL;
+    struct vertex *v = NULL;
+    struct bu_ptbl verts = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl norms = BU_PTBL_INIT_ZERO;
+    char *region_name = NULL;
     size_t numverts = 0;		/* Number of vertices to output */
     size_t numtri   = 0;		/* Number of triangles to output */
-    size_t i;
+    size_t i = 0;
 
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);

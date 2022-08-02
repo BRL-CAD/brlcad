@@ -1,7 +1,7 @@
 /*                         V U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,79 +25,11 @@
 
 #include "common.h"
 
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash.h"
 
 #include "./ged_private.h"
-
-
-void
-ged_view_update(struct bview *gvp)
-{
-    vect_t work, work1;
-    vect_t temp, temp1;
-
-    if (!gvp)
-	return;
-
-    bn_mat_mul(gvp->gv_model2view,
-	       gvp->gv_rotation,
-	       gvp->gv_center);
-    gvp->gv_model2view[15] = gvp->gv_scale;
-    bn_mat_inv(gvp->gv_view2model, gvp->gv_model2view);
-
-    /* Find current azimuth, elevation, and twist angles */
-    VSET(work, 0.0, 0.0, 1.0);       /* view z-direction */
-    MAT4X3VEC(temp, gvp->gv_view2model, work);
-    VSET(work1, 1.0, 0.0, 0.0);      /* view x-direction */
-    MAT4X3VEC(temp1, gvp->gv_view2model, work1);
-
-    /* calculate angles using accuracy of 0.005, since display
-     * shows 2 digits right of decimal point */
-    bn_aet_vec(&gvp->gv_aet[0],
-	       &gvp->gv_aet[1],
-	       &gvp->gv_aet[2],
-	       temp, temp1, (fastf_t)0.005);
-
-    /* Force azimuth range to be [0, 360] */
-    if ((NEAR_EQUAL(gvp->gv_aet[1], 90.0, (fastf_t)0.005) ||
-	 NEAR_EQUAL(gvp->gv_aet[1], -90.0, (fastf_t)0.005)) &&
-	gvp->gv_aet[0] < 0 &&
-	!NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
-	gvp->gv_aet[0] += 360.0;
-    else if (NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
-	gvp->gv_aet[0] = 0.0;
-
-    /* apply the perspective angle to model2view */
-    bn_mat_mul(gvp->gv_pmodel2view, gvp->gv_pmat, gvp->gv_model2view);
-
-    if (gvp->gv_callback)
-	(*gvp->gv_callback)(gvp, gvp->gv_clientData);
-}
-
-
-/**
- * FIXME: this routine is suspect and needs investigating.  if run
- * during view initialization, the shaders regression test fails.
- */
-void
-_ged_mat_aet(struct bview *gvp)
-{
-    mat_t tmat;
-    fastf_t twist;
-    fastf_t c_twist;
-    fastf_t s_twist;
-
-    bn_mat_angles(gvp->gv_rotation,
-		  270.0 + gvp->gv_aet[1],
-		  0.0,
-		  270.0 - gvp->gv_aet[0]);
-
-    twist = -gvp->gv_aet[2] * DEG2RAD;
-    c_twist = cos(twist);
-    s_twist = sin(twist);
-    bn_mat_zrot(tmat, s_twist, c_twist);
-    bn_mat_mul2(tmat, gvp->gv_rotation);
-}
-
 
 int
 _ged_do_rot(struct ged *gedp,
@@ -143,7 +75,7 @@ _ged_do_rot(struct ged *gedp,
 		MAT4X3PNT(rot_pt, gedp->ged_gvp->gv_model2view, new_origin);
 		break;
 	    default:
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
 
 	bn_mat_xform_about_pnt(viewchg, rmat, rot_pt);
@@ -158,9 +90,9 @@ _ged_do_rot(struct ged *gedp,
 
     /* pure rotation */
     bn_mat_mul2(rmat, gedp->ged_gvp->gv_rotation);
-    ged_view_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -171,9 +103,9 @@ _ged_do_slew(struct ged *gedp, vect_t svec)
 
     MAT4X3PNT(model_center, gedp->ged_gvp->gv_view2model, svec);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_center);
-    ged_view_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -192,12 +124,12 @@ _ged_do_tra(struct ged *gedp,
 
     switch (coord) {
 	case 'm':
-	    VSCALE(delta, tvec, -gedp->ged_wdbp->dbip->dbi_base2local);
+	    VSCALE(delta, tvec, -gedp->dbip->dbi_base2local);
 	    MAT_DELTAS_GET_NEG(vc, gedp->ged_gvp->gv_center);
 	    break;
 	case 'v':
 	default:
-	    VSCALE(tvec, tvec, -2.0*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_gvp->gv_isize);
+	    VSCALE(tvec, tvec, -2.0*gedp->dbip->dbi_base2local*gedp->ged_gvp->gv_isize);
 	    MAT4X3PNT(work, gedp->ged_gvp->gv_view2model, tvec);
 	    MAT_DELTAS_GET_NEG(vc, gedp->ged_gvp->gv_center);
 	    VSUB2(delta, work, vc);
@@ -206,9 +138,53 @@ _ged_do_tra(struct ged *gedp,
 
     VSUB2(nvc, vc, delta);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, nvc);
-    ged_view_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
+}
+
+unsigned long long
+ged_dl_hash(struct display_list *dl)
+{
+    if (!dl)
+	return 0;
+
+    XXH64_hash_t hash_val;
+    XXH64_state_t *state;
+    state = XXH64_createState();
+    if (!state)
+	return 0;
+    XXH64_reset(state, 0);
+
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct bv_scene_obj *sp;
+
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)dl);
+    while (BU_LIST_NOT_HEAD(gdlp, dl)) {
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    if (!sp->s_u_data)
+		continue;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+	    XXH64_update(state, &bdata->s_fullpath.fp_len, sizeof(size_t));
+	    XXH64_update(state, &bdata->s_fullpath.fp_maxlen, sizeof(size_t));
+	    for (size_t i = 0; i < DB_FULL_PATH_LEN(&bdata->s_fullpath); i++) {
+		// In principle we should check all of struct directory
+		// contents, but names are unique in the database and should
+		// suffice for this purpose - we care if the path has changed.
+		struct directory *dp = DB_FULL_PATH_GET(&bdata->s_fullpath, i);
+		XXH64_update(state, &dp->d_namep, strlen(dp->d_namep));
+	    }
+	}
+	gdlp = next_gdlp;
+    }
+
+    hash_val = XXH64_digest(state);
+    XXH64_freeState(state);
+
+    return (unsigned long long)hash_val;
 }
 
 /*

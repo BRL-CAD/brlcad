@@ -1,7 +1,7 @@
 /*                        A N N O T . C
  * BRL-CAD
  *
- * Copyright (c) 2017-2020 United States Government as represented by
+ * Copyright (c) 2017-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -151,8 +151,8 @@ ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fast
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
 
-    bn_vlist_2string(&vhead, &RTG.rtg_vlfree, tsg->label.vls_str, ref_pt[0], ref_pt[1], 5, 0);
-    bn_vlist_bbox(&vhead, &bmin, &bmax, NULL);
+    bv_vlist_2string(&vhead, &RTG.rtg_vlfree, tsg->label.vls_str, ref_pt[0], ref_pt[1], tsg->txt_size, tsg->txt_rot_angle);
+    bv_vlist_bbox(&vhead, &bmin, &bmax, NULL, NULL);
 
     *length = bmax[0] - ref_pt[0];
     *hight = bmax[1] - ref_pt[1];
@@ -403,7 +403,7 @@ rt_annot_free(struct soltab *stp)
 
 
 static int
-seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, void *seg)
+seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, void *seg)
 {
     int ret=0;
     int i;
@@ -437,9 +437,9 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 		break;
 	    }
 	    V2ADD2(pt, V, annot_ip->verts[lsg->start]);
-	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 	    V2ADD2(pt, V, annot_ip->verts[lsg->end]);
-	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 	    break;
 	case ANN_TSEG_MAGIC:
 	    tsg = (struct txt_seg *)lng;
@@ -453,7 +453,7 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 	    }
 	    ant_pos_adjs(tsg, annot_ip);
 	    V2ADD2(pt, V, annot_ip->verts[tsg->ref_pt]);
-	    bn_vlist_2string(vhead, &RTG.rtg_vlfree, tsg->label.vls_str, pt[0], pt[1], 5, 0);
+	    bv_vlist_2string(vhead, &RTG.rtg_vlfree, tsg->label.vls_str, pt[0], pt[1], tsg->txt_size, tsg->txt_rot_angle);
 	    break;
 	case CURVE_CARC_MAGIC:
 	    {
@@ -520,16 +520,16 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 		    oldu = 1.0;
 		    oldv = 0.0;
 		    VJOIN2(start_pt, center, oldu, semi_a, oldv, semi_b);
-		    RT_ADD_VLIST(vhead, start_pt, BN_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
 		    for (i=1; i<nsegs; i++) {
 			newu = oldu * cosdel - oldv * sindel;
 			newv = oldu * sindel + oldv * cosdel;
 			VJOIN2(pt, center, newu, semi_a, newv, semi_b);
-			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+			BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 			oldu = newu;
 			oldv = newv;
 		    }
-		    RT_ADD_VLIST(vhead, start_pt, BN_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_DRAW);
 		    break;
 		}
 
@@ -587,13 +587,13 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 		V2ADD2(start_pt, V, start2d);
 		oldu = (start2d[0] - center2d[0]);
 		oldv = (start2d[1] - center2d[1]);
-		RT_ADD_VLIST(vhead, start_pt, BN_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
 		for (i=0; i<nsegs; i++) {
 		    newu = oldu * cosdel - oldv * sindel;
 		    newv = oldu * sindel + oldv * cosdel;
 		    V2SET(new_uv, newu, newv);
 		    V2ADD2(pt, center, new_uv);
-		    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		    oldu = newu;
 		    oldv = newv;
 		}
@@ -622,14 +622,14 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 			inv_weight = 1.0/nsg->weights[0];
 			VSCALE(start_pt, start_pt, inv_weight);
 		    }
-		    RT_ADD_VLIST(vhead, start_pt, BN_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
 		    for (i=1; i<nsg->c_size; i++) {
 			V2ADD2(pt, V, annot_ip->verts[nsg->ctl_points[i]]);
 			if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 			    inv_weight = 1.0/nsg->weights[i];
 			    VSCALE(pt, pt, inv_weight);
 			}
-			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+			BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		    }
 		    break;
 		}
@@ -702,9 +702,9 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 			    pt[j] /= pt[coords-1];
 		    }
 		    if (i == 0)
-			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+			BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 		    else
-			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+			BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		}
 		bu_free((char *)eg.ctl_points, "eg.ctl_points");
 		break;
@@ -732,10 +732,10 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 	    if (bsg->degree == 1) {
 		/* straight line */
 		V2ADD2(start_pt, V, annot_ip->verts[bsg->ctl_points[0]]);
-		RT_ADD_VLIST(vhead, start_pt, BN_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
 		for (i=1; i<=bsg->degree; i++) {
 		    V2ADD2(pt, V, annot_ip->verts[bsg->ctl_points[i]]);
-		    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		}
 		break;
 	    }
@@ -790,13 +790,13 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 	    /* plot the results */
 	    bz = BU_LIST_FIRST(bezier_2d_list, &bezier_hd->l);
 	    V2ADD2(pt, V, bz->ctl[0]);
-	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 
 	    while (BU_LIST_WHILE(bz, bezier_2d_list, &(bezier_hd->l))) {
 		BU_LIST_DEQUEUE(&bz->l);
 		for (i=1; i<=bsg->degree; i++) {
 		    V2ADD2(pt, V, bz->ctl[i]);
-		    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		}
 		bu_free((char *)bz->ctl, "g_annot.c: bz->ctl");
 		bu_free((char *)bz, "g_annot.c: bz");
@@ -814,37 +814,39 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 
 
 static int
-ant_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, struct rt_ant *ant)
+ant_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, struct rt_ant *ant)
 {
     size_t seg_no;
     int ret=0;
 
     BU_CK_LIST_HEAD(vhead);
 
-    RT_VLIST_SET_DISP_MAT(vhead, annot_ip->V);
+    BV_VLIST_SET_DISP_MAT(vlfree, vhead, annot_ip->V);
 
     for (seg_no=0; seg_no < ant->count; seg_no++) {
-	ret += seg_to_vlist(vhead, ttol, V, annot_ip, ant->segments[seg_no]);
+	ret += seg_to_vlist(vlfree, vhead, ttol, V, annot_ip, ant->segments[seg_no]);
     }
-    RT_VLIST_SET_MODEL_MAT(vhead);
+
+    BV_VLIST_SET_MODEL_MAT(vlfree, vhead);
 
     return ret;
 }
 
 
 int
-rt_annot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_annot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_annot_internal *annot_ip;
     int ret;
     int myret=0;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     annot_ip = (struct rt_annot_internal *)ip->idb_ptr;
     RT_ANNOT_CK_MAGIC(annot_ip);
 
-    ret=ant_to_vlist(vhead, ttol, annot_ip->V, annot_ip, &annot_ip->ant);
+    ret=ant_to_vlist(vlfree, vhead, ttol, annot_ip->V, annot_ip, &annot_ip->ant);
     if (ret) {
 	myret--;
 	bu_log("WARNING: Errors in annotation (%d segments reference non-existent vertices)\n",
@@ -890,9 +892,9 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
     MAT4X3PNT(annot_ip->V, mat, v);
 
     ptr += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
-    annot_ip->vert_count = ntohl(*(uint32_t *)ptr);
+    annot_ip->vert_count = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
     ptr += SIZEOF_NETWORK_LONG;
-    annot_ip->ant.count = ntohl(*(uint32_t *)ptr);
+    annot_ip->ant.count = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
     ptr += SIZEOF_NETWORK_LONG;
 
     if (annot_ip->vert_count) {
@@ -927,40 +929,46 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 	double scan;
 	double *scanp;
 
-	magic = ntohl(*(uint32_t *)ptr);
+	magic = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 	ptr += SIZEOF_NETWORK_LONG;
 	switch (magic) {
 	    case CURVE_LSEG_MAGIC:
 		BU_ALLOC(lsg, struct line_seg);
 		lsg->magic = magic;
-		lsg->start = ntohl(*(uint32_t *)ptr);
+		lsg->start = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		lsg->end = ntohl(*(uint32_t *)ptr);
+		lsg->end = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 		annot_ip->ant.segments[seg_no] = (void *)lsg;
 		break;
 	    case ANN_TSEG_MAGIC:
 		BU_ALLOC(tsg, struct txt_seg);
 		tsg->magic = magic;
-		tsg->ref_pt = ntohl(*(uint32_t *)ptr);
+		tsg->ref_pt = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		tsg->rel_pos = ntohl(*(uint32_t *)ptr);
+		tsg->rel_pos = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 		bu_vls_init(&tsg->label);
 		bu_vls_strcpy(&tsg->label, (const char*)ptr);
 		ptr += bu_vls_strlen(&tsg->label) + 1;
+		bu_cv_ntohd((unsigned char*)&scan, ptr, 1);
+		tsg->txt_size = scan;	/* double to fastf_t */
+		ptr += SIZEOF_NETWORK_DOUBLE;
+		bu_cv_ntohd((unsigned char*)&scan, ptr, 1);
+		tsg->txt_rot_angle = scan;	/* double to fastf_t */
+		ptr += SIZEOF_NETWORK_DOUBLE;
 		annot_ip->ant.segments[seg_no] = (void *)tsg;
 		break;
 	    case CURVE_CARC_MAGIC:
 		BU_ALLOC(csg, struct carc_seg);
 		csg->magic = magic;
-		csg->start = ntohl(*(uint32_t *)ptr);
+		csg->start = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		csg->end = ntohl(*(uint32_t *)ptr);
+		csg->end = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		csg->orientation = ntohl(*(uint32_t *)ptr);
+		csg->orientation = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		csg->center_is_left = ntohl(*(uint32_t *)ptr);
+		csg->center_is_left = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 		bu_cv_ntohd((unsigned char *)&scan, ptr, 1);
 		csg->radius = scan; /* double to fastf_t */
@@ -970,11 +978,11 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 	    case CURVE_NURB_MAGIC:
 		BU_ALLOC(nsg, struct nurb_seg);
 		nsg->magic = magic;
-		nsg->order = ntohl(*(uint32_t *)ptr);
+		nsg->order = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		nsg->pt_type = ntohl(*(uint32_t *)ptr);
+		nsg->pt_type = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		nsg->k.k_size = ntohl(*(uint32_t *)ptr);
+		nsg->k.k_size = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 
 		nsg->k.knots = (fastf_t *)bu_malloc(nsg->k.k_size * sizeof(fastf_t), "nsg->k.knots");
@@ -988,11 +996,11 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 		bu_free(scanp, "scanp");
 
 		ptr += SIZEOF_NETWORK_DOUBLE * nsg->k.k_size;
-		nsg->c_size = ntohl(*(uint32_t *)ptr);
+		nsg->c_size = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 		nsg->ctl_points = (int *)bu_malloc(nsg->c_size * sizeof(int), "nsg->ctl_points");
 		for (i=0; i<(size_t)nsg->c_size; i++) {
-		    nsg->ctl_points[i] = ntohl(*(uint32_t *)ptr);
+		    nsg->ctl_points[i] = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		    ptr += SIZEOF_NETWORK_LONG;
 		}
 		if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
@@ -1014,11 +1022,11 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 	    case CURVE_BEZIER_MAGIC:
 		BU_ALLOC(bsg, struct bezier_seg);
 		bsg->magic = magic;
-		bsg->degree = ntohl(*(uint32_t *)ptr);
+		bsg->degree = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 		bsg->ctl_points = (int *)bu_calloc(bsg->degree+1, sizeof(int), "bsg->ctl_points");
 		for (i=0; i<=(size_t)bsg->degree; i++) {
-		    bsg->ctl_points[i] = ntohl(*(uint32_t *)ptr);
+		    bsg->ctl_points[i] = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		    ptr += SIZEOF_NETWORK_LONG;
 		}
 		annot_ip->ant.segments[seg_no] = (void *)bsg;
@@ -1036,7 +1044,7 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
     }
 
     for (i=0; i<ant->count; i++) {
-	ant->reverse[i] = ntohl(*(uint32_t *)ptr);
+	ant->reverse[i] = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 	ptr += SIZEOF_NETWORK_LONG;
     }
 
@@ -1087,11 +1095,11 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 		break;
 	    case ANN_TSEG_MAGIC:
 		tseg = (struct txt_seg*)lng;
-		/* magic + ref_pt + pt_rel_pos + label->vls_str length + 1 for the null terminator*/
-		ep->ext_nbytes += 3 * SIZEOF_NETWORK_LONG + bu_vls_strlen(&tseg->label) + 1;
+		/* magic + pt_rel_pos + (double) txt_size + (double) txt_rot_angle + label->vls_str length + 1 for the null terminator */
+		ep->ext_nbytes += 3 * SIZEOF_NETWORK_LONG + 2 * SIZEOF_NETWORK_DOUBLE + bu_vls_strlen(&tseg->label) + 1;
 		break;
 	    case CURVE_CARC_MAGIC:
-		/* magic + start + end + orientation + center_is_left + (double)radius*/
+		/* magic + start + end + orientation + center_is_left + (double)radius */
 		ep->ext_nbytes += 5 * SIZEOF_NETWORK_LONG + SIZEOF_NETWORK_DOUBLE;
 		break;
 	    case CURVE_NURB_MAGIC:
@@ -1179,6 +1187,12 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 		bu_strlcpy((char *)cp, bu_vls_addr(&tseg->label), bu_vls_strlen(&tseg->label) + 1);
 
 		cp += bu_vls_strlen(&tseg->label) + 1;
+		scan = tseg->txt_size;
+		bu_cv_htond(cp, (unsigned char*)&scan, 1);
+		cp += SIZEOF_NETWORK_DOUBLE;
+		scan = tseg->txt_rot_angle;
+		bu_cv_htond(cp, (unsigned char*)&scan, 1);
+		cp += SIZEOF_NETWORK_DOUBLE;
 		break;
 	    case CURVE_CARC_MAGIC:
 		cseg = (struct carc_seg *)lng;
@@ -1344,6 +1358,10 @@ rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 		sprintf(buf, "\t\tRelative position: %s\n", rel_pos);
 		bu_vls_strcat(str, buf);
 		sprintf(buf, "\tLabel text: %s\n", bu_vls_addr(&tsg->label));
+		bu_vls_strcat(str, buf);
+		sprintf(buf, "\tText size: %.1f\n", tsg->txt_size);
+		bu_vls_strcat(str, buf);
+		sprintf(buf, "\tText rotation angle: %.1f\n", tsg->txt_rot_angle);
 		bu_vls_strcat(str, buf);
 		break;
 	    case CURVE_CARC_MAGIC:
@@ -1675,7 +1693,7 @@ ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 		{
 		    struct txt_seg *tsg = (struct txt_seg *)ant->segments[j];
 		    ant_check_pos(tsg, &rel_pos);
-		    bu_vls_printf(vls, " { label %s ref_pt %d position %s }", bu_vls_addr(&tsg->label), tsg->ref_pt, rel_pos);
+		    bu_vls_printf(vls, " { label %s ref_pt %d position %s txt_size %.25g txt_rot_angle %.25g }", bu_vls_addr(&tsg->label), tsg->ref_pt, rel_pos, tsg->txt_size, tsg->txt_rot_angle);
 		}
 		break;
 	    case CURVE_CARC_MAGIC:

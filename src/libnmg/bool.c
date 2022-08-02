@@ -1,7 +1,7 @@
 /*                      N M G _ B O O L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 
 #include "vmath.h"
 #include "bu/malloc.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "nmg.h"
 
 
@@ -187,13 +187,13 @@ nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds, struct bu_list 
 
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
-    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.manifolds = manifolds;
     st.count = 0;
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    nmg_free((char *)st.visited, "visited[]");
+    bu_free((char *)st.visited, "visited[]");
     return st.count;
 }
 
@@ -904,7 +904,7 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
      */
     nelem = m->maxindex;
     for (i = 0; i < 8; i++) {
-	classlist[i] = (char *)nmg_calloc(nelem, sizeof(char), "nmg_bool classlist");
+	classlist[i] = (char *)bu_calloc(nelem, sizeof(char), "nmg_bool classlist");
     }
 
     nmg_classify_shared_edges_verts(sA, sB, classlist, vlfree);
@@ -916,7 +916,7 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     if (m->manifolds) {
-	nmg_free((char *)m->manifolds, "free manifolds table");
+	bu_free((char *)m->manifolds, "free manifolds table");
 	m->manifolds = (char *)NULL;
     }
     m->manifolds = nmg_manifolds(m);
@@ -940,7 +940,7 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     nmg_class_shells(sB, sA, &classlist[4], vlfree, tol);
 
     if (m->manifolds) {
-	nmg_free((char *)m->manifolds, "free manifolds table");
+	bu_free((char *)m->manifolds, "free manifolds table");
 	m->manifolds = (char *)NULL;
     }
 
@@ -1057,7 +1057,7 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     for (i = 0; i < 8; i++) {
-	nmg_free((char *)classlist[i], "nmg_bool classlist");
+	bu_free((char *)classlist[i], "nmg_bool classlist");
     }
 
     if (nmg_debug & NMG_DEBUG_BOOL) {

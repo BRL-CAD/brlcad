@@ -1,7 +1,7 @@
 /*                     T E S T _ H E L P . C
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ int main(int ac, char *av[]) {
 
   GED_INIT(&g, NULL);
 
-  return ged_help(&g, ac, (const char **)av);
+  return ged_exec(&g, ac, (const char **)av);
 }
 
 /*

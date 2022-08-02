@@ -1,7 +1,7 @@
 /*                         G E X . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2020 United States Government as represented by
+ * Copyright (c) 2019-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -207,18 +207,14 @@ print_representation(unsigned char *chars, size_t length)
 static void
 hexdump(const unsigned char *from, const unsigned char *to)
 {
-    long i;
-    long ii; // starting offset
-    int	j;
-    int jj;
-    int k;
-    unsigned char c;
+    long i = 0L;
+    long ii = 0L; // starting offset
+    int	j = 0;
+    int jj = 0;
+    int k = 0;
+    unsigned char c = 0;
     static const int PERLINE = 16;
-    unsigned char chars[PERLINE];
-
-    i = 0L;
-    ii = 0L;
-    j = 0;
+    unsigned char chars[PERLINE] = {0};
 
     if (from > to)
 	return;
@@ -507,7 +503,6 @@ main(int argc, char** argv)
     }
     if (wattrs) {
         if (!sepr) {
-            sepr = true;
             printf("\n");
         }
         printf("%d objects have one or more attributes.\n",
@@ -574,12 +569,12 @@ main(int argc, char** argv)
 
 } // main
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

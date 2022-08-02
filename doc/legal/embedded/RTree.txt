@@ -17,4 +17,4 @@ one or more of these licenses.
 
 Thanks Baptiste Lepilleur for the licensing idea.
 
-file:/src/libbrep/cdt/RTree.h
+file:/include/RTree.h

@@ -8,17 +8,9 @@
  /** @ingroup libbn */
  /**  @defgroup bn_anim Animation */
  /** @ingroup libbn */
- /**  @defgroup bn_clip Clipping */
- /** @ingroup libbn */
  /**  @defgroup bn_complex Complex Numbers */
  /** @ingroup libbn */
- /**  @defgroup bn_vlist Display Lists */
- /** @ingroup libbn */
- /**  @defgroup plot Plot/Draw */
- /** @ingroup libbn */
- /**  @defgroup bn_vfont Vector Fonts*/
- /** @ingroup libbn */
- /**  @defgroup noise Fractal Noise */
+ /**  @defgroup bn_noise Fractal Noise */
  /** @ingroup libbn */
  /**  @defgroup bn_mat Matrix/Vector Math */
  /** @ingroup libbn */
@@ -38,8 +30,8 @@
  /**  @defgroup bn_rmt Mersenne Twister */
  /** @ingroup bn_rand */
  /**  @defgroup bn_rnt Random Number Tables */
- /** @ingroup libbn */
- /**  @defgroup bn_plane Point/Line/Plane Geometry Math */
+ /** @ingroup bn_rand */
+ /**  @defgroup bn_sobol Sobol quasi-random low-discrepancy sequences of numbers */
  /** @ingroup libbn */
  /**  @defgroup bn_poly Polynomials */
  /** @ingroup libbn */
@@ -50,8 +42,6 @@
  /**  @defgroup bn_tabdata Tabulated Data */
  /** @ingroup libbn */
  /**  @defgroup bn_tol Tolerances */
- /** @ingroup libbn */
- /**  @defgroup bn_vert_tree Vertex Trees */
  /** @ingroup libbn */
  /**  @defgroup bn_wavelet Wavelets */
  /** @ingroup libbn */

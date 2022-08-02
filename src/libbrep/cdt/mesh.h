@@ -1,7 +1,7 @@
 /*                      C D T _ M E S H . H
  * BRL-CAD
  *
- * Copyright (c) 2019-2020 United States Government as represented by
+ * Copyright (c) 2019-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -262,19 +262,19 @@ struct triangle_t {
     long& k() { return v[2]; }
     const long& k() const { return v[2]; }
 
-    triangle_t(long i, long j, long k)
+    triangle_t(long _i, long _j, long _k)
     {
-	v[0] = i;
-	v[1] = j;
-	v[2] = k;
+	v[0] = _i;
+	v[1] = _j;
+	v[2] = _k;
 	m = NULL;
     }
 
-    triangle_t(long i, long j, long k, size_t pind)
+    triangle_t(long _i, long _j, long _k, size_t pind)
     {
-	v[0] = i;
-	v[1] = j;
-	v[2] = k;
+	v[0] = _i;
+	v[1] = _j;
+	v[2] = _k;
 	ind = pind;
 	m = NULL;
     }
@@ -309,9 +309,9 @@ struct triangle_t {
     bool operator<(triangle_t other) const
     {
 	std::vector<long> vca, voa;
-	for (int i = 0; i < 3; i++) {
-	    vca.push_back(v[i]);
-	    voa.push_back(other.v[i]);
+	for (int idx = 0; idx < 3; idx++) {
+	    vca.push_back(v[idx]);
+	    voa.push_back(other.v[idx]);
 	}
 	std::sort(vca.begin(), vca.end());
 	std::sort(voa.begin(), voa.end());

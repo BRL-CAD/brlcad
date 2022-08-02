@@ -1,0 +1,73 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="screengrab">
+
+  <refmeta>
+    <refentrytitle>SCREENGRAB</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id="name">
+    <refname>screengrab</refname>
+    <refpurpose>
+      Save the current MGED display visual or framebuffer contents to an image file.
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>screengrab</command>
+      <arg choice="opt" rep="norepeat"><replaceable>-F</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>--format fmt</replaceable></arg>      
+      <arg choice="req" rep="norepeat"><replaceable>image_file</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection xml:id="description"><title>DESCRIPTION</title>
+
+  <para>
+    Generates an image file containing either the current application display
+    manager's visual representation of the current scene or (when the
+    <option>-F</option> option is specified) the contents of the current
+    application embedded framebuffer.
+  </para>
+
+  <para>
+    The output format of the image file will be deduced from the filename, but
+    if the caller wishes to ensure a specific format the <option>--format</option>
+    may be used.
+  </para>
+  </refsection>
+
+  <refsection xml:id="examples">
+    <title>EXAMPLES</title>
+
+    <example>
+      <title>Write a PNG image file of the MGED framebuffer contents.</title>
+
+      <para>
+	<prompt>mged&gt; </prompt><userinput>screengrab -F fb.png</userinput>
+      </para>
+      <para>
+	Writes the contents of the active MGED framebuffer to the image file
+	<emphasis>fb.png</emphasis>.
+      </para>
+    </example>
+  </refsection>
+
+  <refsection xml:id="author">
+    <title>AUTHOR</title>
+    <para>
+      BRL-CAD Team
+    </para>
+  </refsection>
+
+  <refsection xml:id="bug_reports">
+    <title>BUG REPORTS</title>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to <email>devs@brlcad.org</email>
+    </para>
+  </refsection>
+</refentry>

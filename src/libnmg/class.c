@@ -1,7 +1,7 @@
 /*                     N M G _ C L A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,8 +47,8 @@
 
 #include "vmath.h"
 #include "bu/malloc.h"
-#include "bn/plane.h"
-#include "bn/plot3.h"
+#include "bg/plane.h"
+#include "bv/plot3.h"
 #include "nmg.h"
 
 #define MAX_DIR_TRYS 10
@@ -205,7 +205,7 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, int code)
  * nmg_class_pnt_l
  */
 HIDDEN void
-nmg_class_pnt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse *eu, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_class_pnt_e(struct neighbor *closest, const point_t pt, const struct edgeuse *eu, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     vect_t ptvec;	/* vector from lseg to pt */
     vect_t left;	/* vector left of edge -- into inside of loop */
@@ -237,7 +237,7 @@ nmg_class_pnt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeus
      * Some compilers don't get that fastf_t * and point_t are related
      * So we have to pass the whole bloody mess for the point arguments.
      */
-    code = bn_dist_pnt3_lseg3(&dist, pca, eu->vu_p->v_p->vg_p->coord,
+    code = bg_dist_pnt3_lseg3(&dist, pca, eu->vu_p->v_p->vg_p->coord,
 			      eu->eumate_p->vu_p->v_p->vg_p->coord,
 			      pt, tol);
     if (code <= 0)
@@ -374,7 +374,7 @@ out:
 	point_t mid_pt;
 	point_t left_pt;
 	fu = eu->up.lu_p->up.fu_p;
-	bits = (long *)nmg_calloc(nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
+	bits = (long *)bu_calloc(nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
 	sprintf(buf, "faceclass%d.plot3", num++);
 	if ((fp = fopen(buf, "wb")) == NULL)
 	    bu_bomb(buf);
@@ -386,7 +386,7 @@ out:
 	VJOIN1(left_pt, mid_pt, 500, left);
 	pdv_3line(fp, mid_pt, left_pt);
 	fclose(fp);
-	nmg_free((char *)bits, "bits[]");
+	bu_free((char *)bits, "bits[]");
 	bu_log("wrote %s\n", buf);
     }
 }
@@ -409,18 +409,18 @@ out:
  *		from: nmg_misc.c / nmg_split_loops_handler()
  */
 HIDDEN void
-nmg_class_pnt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_class_pnt_l(struct neighbor *closest, const point_t pt, const struct loopuse *lu, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     vect_t delta;
     pointp_t lu_pt;
     fastf_t dist;
     struct edgeuse *eu;
-    struct loop_g *lg;
+    struct loop_a *lg;
 
     NMG_CK_LOOPUSE(lu);
     NMG_CK_LOOP(lu->l_p);
-    lg = lu->l_p->lg_p;
-    NMG_CK_LOOP_G(lg);
+    lg = lu->l_p->la_p;
+    NMG_CK_LOOP_A(lg);
 
     if (nmg_debug & NMG_DEBUG_CLASSIFY) {
 	VPRINT("nmg_class_pnt_l\tPt:", pt);
@@ -622,7 +622,7 @@ static const point_t nmg_good_dirs[MAX_DIR_TRYS] = {
  * NMG_CLASS_AoutB pt is OUTSIDE the volume of the shell.
  */
 int
-nmg_class_pnt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_class_pnt_s(const point_t pt, const struct shell *s, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     const struct faceuse *fu;
     struct model *m;
@@ -653,7 +653,7 @@ nmg_class_pnt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_on
     }
 
     if (!in_or_out_only) {
-	faces_seen = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_class_pnt_s faces_seen[]");
+	faces_seen = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_class_pnt_s faces_seen[]");
 	/*
 	 * First pass:  Try hard to see if point is ON a face.
 	 */
@@ -723,7 +723,7 @@ nmg_class_pnt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_on
     region_diameter = MAGNITUDE(region_diagonal);
 
     nmg_model_bb(m_min_pt, m_max_pt, m);
-    model_bb_max_width = bn_dist_pnt3_pnt3(m_min_pt, m_max_pt);
+    model_bb_max_width = bg_dist_pnt3_pnt3(m_min_pt, m_max_pt);
 
     /* Choose an unlikely direction */
     tries = 0;
@@ -764,7 +764,7 @@ retry:
 
 out:
     if (!in_or_out_only) {
-	nmg_free((char *)faces_seen, "nmg_class_pnt_s faces_seen[]");
+	bu_free((char *)faces_seen, "nmg_class_pnt_s faces_seen[]");
     }
 
     if (nmg_debug & NMG_DEBUG_CLASSIFY) {
@@ -1618,7 +1618,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, struct bu_l
 		struct model *m;
 
 		m = nmg_find_model(lu->up.magic_p);
-		b = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
+		b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
 		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 		    if (NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p))
 			nmg_euprint("In:  edgeuse", eu);
@@ -1639,7 +1639,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, struct bu_l
 		    bu_log("wrote %s\n", buf);
 		}
 		nmg_pr_lu(lu, "");
-		nmg_free((char *)b, "nmg_pl_lu flag[]");
+		bu_free((char *)b, "nmg_pl_lu flag[]");
 	    }
 
 	    if (seen_error > 3) {
@@ -2262,7 +2262,6 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, struct 
 	for (BU_LIST_FOR(eu, edgeuse, &lu2->down_hd))
 	    lu2_eu_count++;
 
-	share_edges = 1;
 	eu1_start = BU_LIST_FIRST(edgeuse, &lu1->down_hd);
 	NMG_CK_EDGEUSE(eu1_start);
 	eu2_start = BU_LIST_FIRST(edgeuse, &lu2->down_hd);

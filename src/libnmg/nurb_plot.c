@@ -1,7 +1,7 @@
 /*                     N U R B _ P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "nmg.h"
 
 void

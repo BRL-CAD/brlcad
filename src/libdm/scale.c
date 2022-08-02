@@ -1,7 +1,7 @@
 /*                          S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,10 +33,10 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm_private.h"
+#include "./include/private.h"
 
 void
-dm_draw_scale(dm *dmp,
+dm_draw_scale(struct dm *dmp,
 	      fastf_t   viewSize,
 	      const char *unit,
 	      int       *lineColor,
@@ -47,11 +47,11 @@ dm_draw_scale(dm *dmp,
     fastf_t ypos1, ypos2;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     /* Save the line attributes */
-    int saveLineWidth = dmp->dm_lineWidth;
-    int saveLineStyle = dmp->dm_lineStyle;
+    int saveLineWidth = dmp->i->dm_lineWidth;
+    int saveLineStyle = dmp->i->dm_lineStyle;
 
     /* Draw solid lines */
-    dm_set_line_attr(dmp, dmp->dm_lineWidth, 0);  /* solid lines */
+    dm_set_line_attr(dmp, dmp->i->dm_lineWidth, 0);  /* solid lines */
 
     bu_vls_printf(&vls, "%g", viewSize*0.5);
     if (unit) {

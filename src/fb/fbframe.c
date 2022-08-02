@@ -1,7 +1,7 @@
 /*                       F B F R A M E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,8 @@
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "bu/malloc.h"
+#include "dm.h"
 
 char *Usage="[-F framebuffer] [-s|S squareframesize] [-w|W frame_width] [-n|N frame_height]\n";
 
@@ -47,7 +48,7 @@ main(int argc, char **argv)
 {
     int c;
     int x;
-    fb *fbp;
+    struct fb *fbp;
     int xsize, ysize;
     int len;
     char *framebuffer = (char *)NULL;
@@ -106,7 +107,8 @@ main(int argc, char **argv)
 
     /* malloc buffer for pixel lines */
     len = (xsize > ysize) ? xsize : ysize;
-    if ((line = (unsigned char *)malloc(len*sizeof(RGBpixel))) == RGBPIXEL_NULL) {
+    line = (unsigned char *)bu_calloc(len, sizeof(RGBpixel), "line");
+    if (line == RGBPIXEL_NULL) {
 	fprintf(stderr, "fbframe:  malloc failure\n");
 	return 1;
     }
@@ -129,6 +131,9 @@ main(int argc, char **argv)
     fb_writerect(fbp, 0, 1, 1, ysize-1, line);
 
     fb_close(fbp);
+
+    bu_free(line, "line");
+
     return 0;
 }
 

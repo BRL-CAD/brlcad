@@ -1,7 +1,7 @@
 /*                          B O L T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@ main(int argc, char **argv)
     char solnam[9];		/* Solid name. */
     char regnam[9];		/* Region name. */
     char grpnam[9];		/* Group name. */
-    int numblt;			/* Number of bolts to be created. */
+    int numblt = 0;		/* Number of bolts to be created. */
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */

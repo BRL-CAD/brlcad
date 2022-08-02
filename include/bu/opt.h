@@ -1,7 +1,7 @@
 /*                         O P T . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -356,15 +356,19 @@ BU_EXPORT extern char *bu_opt_describe(const struct bu_opt_desc *ds, struct bu_o
 
 /** @addtogroup bu_opt_arg_process
  *
- * Standard option validators.  If a custom option argument validation
- * isn't needed, the functions below can be used for most valid data
- * types.  When data conversion is successful, the user_data pointer in
- * bu_opt_data will point to the results of the string->[type]
- * translation in order to allow a calling program to use the
- * int/long/etc. without having to repeat the conversion.
+ * Standard option validators.  If a custom option argument validation isn't
+ * needed, the functions below can be used for most valid data types.  When
+ * data conversion is successful, the user_data pointer in bu_opt_data will
+ * point to the results of the string->[type] translation in order to allow a
+ * calling program to use the int/long/etc. without having to repeat the
+ * conversion.
  *
- * These functions should return -1 if there was a problem processing
- * the value.
+ * These functions should return -1 if there was a problem processing the
+ * value, and the number of argv entries processed otherwise.  (Some validators
+ * such as bu_opt_color may read different numbers of args depending on what is
+ * found so calling code can't assume a successful validation will always
+ * return 1.  Hence -1 is the error return - option validation will never
+ * "revert" previously processed argv entries.)
  */
 /** @{ */
 
@@ -416,6 +420,14 @@ BU_EXPORT extern int bu_opt_color(struct bu_vls *msg, size_t argc, const char **
 BU_EXPORT extern int bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /** @} */
+
+/**
+ * Process 0 arguments, incrementing the value held by a long.  This is
+ * useful for situations where multiple specifications of identical options are
+ * intended to change output, such as multiple -v options to increase
+ * verbosity.
+ */
+BU_EXPORT extern int bu_opt_incr_long(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 __END_DECLS
 

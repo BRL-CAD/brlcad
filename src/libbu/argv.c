@@ -1,7 +1,7 @@
 /*                          A R G V . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -167,15 +167,17 @@ bu_argv_free(size_t argc, char *argv[])
 {
     register size_t i;
 
-    if (UNLIKELY(!argv || argc <= 0)) {
+    if (UNLIKELY(!argv))
+	return;
+
+    if ((ssize_t)argc < 1) {
+	bu_free((void *)argv, "bu_argv_free");
 	return;
     }
 
     for (i = 0; i < argc; ++i) {
-	if (argv[i]) {
-	    bu_free((void *)argv[i], "bu_argv_free");
-	    argv[i] = NULL; /* sanity */
-	}
+	bu_free((void *)argv[i], "bu_argv_free");
+	argv[i] = NULL; /* sanity */
     }
 
     bu_free((void *)argv, "bu_argv_free");
@@ -188,15 +190,13 @@ bu_free_args(size_t argc, char *argv[], const char *str)
 {
     size_t count = 0;
 
-    if (UNLIKELY(!argv || argc <= 0)) {
+    if (UNLIKELY(!argv || (ssize_t)argc < 1)) {
 	return;
     }
 
     while (count < argc) {
-	if (argv[count]) {
-	    bu_free(argv[count], str);
-	    argv[count] = NULL;
-	}
+	bu_free(argv[count], str);
+	argv[count] = NULL;
 	count++;
     }
 
@@ -210,7 +210,7 @@ bu_argv_dup(size_t argc, const char *argv[])
     register size_t i;
     char **av;
 
-    if (UNLIKELY(argc < 1))
+    if (UNLIKELY((ssize_t)argc < 1))
 	return (char **)0;
 
     av = (char **)bu_calloc(argc+1, sizeof(char *), "bu_copy_argv");
@@ -230,7 +230,7 @@ bu_argv_dupinsert(int insert, size_t insertArgc, const char *insertArgv[], size_
     char **av;
 
     /* Nothing to insert */
-    if (insertArgc < 1)
+    if ((ssize_t)insertArgc < 1)
 	return bu_argv_dup(argc, argv);
 
     av = (char **)bu_calloc(ac, sizeof(char *), "bu_insert_argv");

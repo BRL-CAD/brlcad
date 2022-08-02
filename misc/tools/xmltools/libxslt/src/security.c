@@ -34,7 +34,7 @@
 #include <ctype.h>
 #endif
 
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #include <windows.h>
 #ifndef INVALID_FILE_ATTRIBUTES
 #define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
@@ -181,7 +181,7 @@ xsltGetSecurityPrefs(xsltSecurityPrefsPtr sec, xsltSecurityOption option) {
  */
 void
 xsltSetDefaultSecurityPrefs(xsltSecurityPrefsPtr sec) {
-    
+
     xsltDefaultSecurityPrefs = sec;
 }
 
@@ -206,7 +206,7 @@ xsltGetDefaultSecurityPrefs(void) {
  *
  * Returns -1 in case of error, 0 otherwise
  */
-int                    
+int
 xsltSetCtxtSecurityPrefs(xsltSecurityPrefsPtr sec,
 	                 xsltTransformContextPtr ctxt) {
     if (ctxt == NULL)
@@ -265,7 +265,7 @@ xsltSecurityForbid(xsltSecurityPrefsPtr sec ATTRIBUTE_UNUSED,
  *
  * TODO: remove at some point !!!
  * Local copy of xmlCheckFilename to avoid a hard dependency on
- * a new version of libxml2 
+ * a new version of libxml2
  *
  * if stat is not available on the target machine,
  * returns 1.  if stat fails, returns 0 (if calling
@@ -279,10 +279,10 @@ xsltCheckFilename (const char *path)
 {
 #ifdef HAVE_STAT
     struct stat stat_buffer;
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(__CYGWIN__)
     DWORD dwAttrs;
 
-    dwAttrs = GetFileAttributes(path); 
+    dwAttrs = GetFileAttributesA(path);
     if (dwAttrs != INVALID_FILE_ATTRIBUTES) {
         if (dwAttrs & FILE_ATTRIBUTE_DIRECTORY) {
             return 2;
@@ -384,17 +384,19 @@ xsltCheckWrite(xsltSecurityPrefsPtr sec,
     if ((uri->scheme == NULL) ||
 	(xmlStrEqual(BAD_CAST uri->scheme, BAD_CAST "file"))) {
 
-#if defined(WIN32) && !defined(__CYGWIN__)
-    if ((uri->path)&&(uri->path[0]=='/')&&
-        (uri->path[1]!='\0')&&(uri->path[2]==':'))
-    ret = xsltCheckWritePath(sec, ctxt, uri->path+1);
-    else
+#if defined(_WIN32) && !defined(__CYGWIN__)
+        if ((uri->path)&&(uri->path[0]=='/')&&
+            (uri->path[1]!='\0')&&(uri->path[2]==':'))
+            ret = xsltCheckWritePath(sec, ctxt, uri->path+1);
+        else
 #endif
+        {
+            /*
+             * Check if we are allowed to write this file
+             */
+	    ret = xsltCheckWritePath(sec, ctxt, uri->path);
+        }
 
-	/*
-	 * Check if we are allowed to write this file
-	 */
-	ret = xsltCheckWritePath(sec, ctxt, uri->path);
 	if (ret <= 0) {
 	    xmlFreeURI(uri);
 	    return(ret);

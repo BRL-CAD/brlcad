@@ -44,7 +44,7 @@
   <example><title>Fire a ray through the center of the MGED display.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>query_ray</userinput>
+      <prompt>mged&gt; </prompt><userinput>query_ray</userinput>
     </para>
     <para>Fires a single ray through the center of the MGED display.
 

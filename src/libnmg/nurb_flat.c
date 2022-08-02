@@ -1,7 +1,7 @@
 /*                     N U R B _ F L A T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ nmg_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
     max_row_dist = max_col_dist = -INFINITY;
 
-    crv = (fastf_t *) nmg_malloc(sizeof(fastf_t) *
+    crv = (fastf_t *) bu_malloc(sizeof(fastf_t) *
 				RT_NURB_EXTRACT_COORDS(srf->pt_type) * srf->s_size[1],
 				"nmg_nurb_s_flat: crv");
 
@@ -89,9 +89,9 @@ nmg_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 	max_row_dist = FMAX(max_row_dist, rdist);
     }
 
-    nmg_free((char *)crv, "nmg_nurb_s_flat: crv");
+    bu_free((char *)crv, "nmg_nurb_s_flat: crv");
 
-    crv = (fastf_t *) nmg_malloc(sizeof(fastf_t) *
+    crv = (fastf_t *) bu_malloc(sizeof(fastf_t) *
 				RT_NURB_EXTRACT_COORDS(srf->pt_type) *
 				srf->s_size[0], 	"nmg_nurb_s_flat: crv");
 
@@ -113,7 +113,7 @@ nmg_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 	max_col_dist = FMAX(max_col_dist, rdist);
     }
 
-    nmg_free((char *)crv, "nmg_nurb_s_flat: crv");
+    bu_free((char *)crv, "nmg_nurb_s_flat: crv");
 
     max_dist = FMAX(max_row_dist, max_col_dist);
 

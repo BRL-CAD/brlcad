@@ -1,7 +1,7 @@
 /*                      D B _ A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2020 United States Government as represented by
+ * Copyright (c) 1988-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -90,7 +90,7 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 	if (db_get(dbip, dp, &rec, 0, 1) < 0)
 	    return -1;
 	if (rec.u_id != ID_FREE) {
-	    bu_log("db_alloc():  len %ld non-FREE (id %d), skipping\n",
+	    bu_log("db_alloc():  len %zu non-FREE (id %d), skipping\n",
 		   len, rec.u_id);
 	    continue;
 	}

@@ -1,7 +1,7 @@
 /*                      A R B _ E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,8 +70,8 @@ mv_edge(struct rt_arb_internal *arb,
 {
     fastf_t t1, t2;
 
-    if (bn_isect_line3_plane(&t1, thru, dir, peqn[bp1], tol) < 0 ||
-	bn_isect_line3_plane(&t2, thru, dir, peqn[bp2], tol) < 0) {
+    if (bg_isect_line3_plane(&t1, thru, dir, peqn[bp1], tol) < 0 ||
+	bg_isect_line3_plane(&t2, thru, dir, peqn[bp2], tol) < 0) {
 	return 1;
     }
 
@@ -147,7 +147,7 @@ arb_extrude(struct rt_arb_internal *arb,
     }
 
     /* find plane containing this face */
-    if (bn_make_plane_3pnts(peqn[6], larb.pt[pt[0]], larb.pt[pt[1]],
+    if (bg_make_plane_3pnts(peqn[6], larb.pt[pt[0]], larb.pt[pt[1]],
 			 larb.pt[pt[2]], tol)) {
 	return 1;
     }
@@ -638,7 +638,6 @@ arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge,
 	    /* edge direction comes from edgedir() in pos_model */
 	    VMOVE(edge_dir, pos_model);
 	    VMOVE(pos_model, arb->pt[pt1]);
-	    newedge = 0;
 	} else {
 	    /* must calculate edge direction */
 	    VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
@@ -673,7 +672,7 @@ arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge,
 	    p1 = *edptr++;
 	    p2 = *edptr++;
 	    p3 = *edptr++;
-	    if (bn_make_plane_3pnts(peqn[newp], arb->pt[p1], arb->pt[p2],
+	    if (bg_make_plane_3pnts(peqn[newp], arb->pt[p1], arb->pt[p2],
 				 arb->pt[p3], tol))
 		goto err;
 
@@ -692,7 +691,7 @@ arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge,
 	    p1 = *iptr++;
 	    p2 = *iptr++;
 	    p3 = *iptr++;
-	    if (bn_make_plane_3pnts(peqn[newp], arb->pt[p1], arb->pt[p2],
+	    if (bg_make_plane_3pnts(peqn[newp], arb->pt[p1], arb->pt[p2],
 				 arb->pt[p3], tol))
 		goto err;
 	}
@@ -714,7 +713,7 @@ arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge,
      * 2 = 456
      */
     if (type == ARB7 && pflag) {
-	if (bn_make_plane_3pnts(peqn[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
+	if (bg_make_plane_3pnts(peqn[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
 	    goto err;
     }
 

@@ -1,7 +1,7 @@
 /*                       T R I M E S H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,12 +24,13 @@
 #include <set>
 #include <map>
 
+#include "bu/bitv.h"
 #include "bu/log.h"
 #include "bu/list.h"
 #include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bg/trimesh.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 
 #define TRIMESH_EDGE_EQUAL(e1, e2) ((e1).va == (e2).va && (e1).vb == (e2).vb)
 
@@ -244,7 +245,7 @@ bg_trimesh_misoriented_edges(int num_edges, struct bg_trimesh_halfedge *edge_lis
 
 int
 bg_trimesh_excess_edges(int num_edges, struct bg_trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data)
-{  
+{
     return trimesh_count_error_edges(num_edges, edge_list, edge_overmatched, error_edge_func, data);
 }
 
@@ -283,14 +284,14 @@ bg_trimesh_solid2(int vcnt, int fcnt, fastf_t *v, int *f, struct bg_trimesh_soli
     if (!(edge_list = bg_trimesh_generate_edge_list(fcnt, f))) return 1;
 
     bad_edge_func = errors ? bg_trimesh_edge_continue : bg_trimesh_edge_exit;
-    
+
     if ((unmatched_edges = bg_trimesh_unmatched_edges(num_edges, edge_list, bad_edge_func, NULL)) ||
 	(misoriented_edges = bg_trimesh_misoriented_edges(num_edges, edge_list, bad_edge_func, NULL)) ||
 	(excess_edges = bg_trimesh_excess_edges(num_edges, edge_list, bad_edge_func, NULL)))
     {
-	if (!errors) { 
-	    bu_free(edge_list, "edge_list"); 
-	    return 1; 
+	if (!errors) {
+	    bu_free(edge_list, "edge_list");
+	    return 1;
 	}
     }
 
@@ -327,9 +328,7 @@ bg_free_trimesh_edges(struct bg_trimesh_edges *edges)
 {
     if (!edges) return;
 
-    if (edges->edges) {
-	bu_free(edges->edges, "bg trimesh edges");
-    }
+    bu_free(edges->edges, "bg trimesh edges");
     edges->count = 0;
 }
 
@@ -338,9 +337,7 @@ bg_free_trimesh_faces(struct bg_trimesh_faces *faces)
 {
     if (!faces) return;
 
-    if (faces->faces) {
-	bu_free(faces->faces, "bg trimesh faces");
-    }
+    bu_free(faces->faces, "bg trimesh faces");
     faces->count = 0;
 }
 
@@ -362,10 +359,14 @@ bg_trimesh_solid(int vcnt, int fcnt, fastf_t *v, int *f, int **bedges)
 
     if (bedges) {
 	int copy_cnt = 0;
-	struct bg_trimesh_solid_errors errors;
+	struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
 
 	bedge_cnt = bg_trimesh_solid2(vcnt, fcnt, v, f, &errors);
+
 	*bedges = (int *)bu_calloc(bedge_cnt * 2, sizeof(int), "bad edges");
+
+	if (!errors.unmatched.edges || !errors.unmatched.count)
+	    return 0;
 
 	memcpy(*bedges, errors.unmatched.edges, errors.unmatched.count * 2 * sizeof(int));
 	copy_cnt += errors.unmatched.count * 2;
@@ -598,11 +599,16 @@ HIDDEN struct edge_list *
 get_parent_edge(struct bu_list *parent_options, struct edge_list *child)
 {
     struct edge_list *item;
+
+    if (!parent_options || !child)
+	return NULL;
+
     for (BU_LIST_FOR(item, edge_list, parent_options)) {
 	if (item->edge[1] == child->edge[0]) {
 	    return item;
 	}
     }
+
     return NULL;
 }
 
@@ -674,7 +680,6 @@ HIDDEN struct bg_trimesh_edges *
 find_chain_with_endpoints(int endpoints[2], struct bg_trimesh_edges *edge_set, int max_chain_edges)
 {
     int i;
-    int found_chain;
     struct edge_list *terminal_edge;
     struct bg_trimesh_edges *chain_edges = NULL;
     struct bu_list *search_list = edges_to_list(edge_set);
@@ -683,14 +688,11 @@ find_chain_with_endpoints(int endpoints[2], struct bg_trimesh_edges *edge_set, i
     edge_options = (struct bu_list **)bu_calloc(max_chain_edges, sizeof(struct bu_list *), "edge options");
     edge_options[0] = get_edges_starting_from_endpoint(search_list, endpoints[0]);
 
-    found_chain = 0;
-
-    for (i = 1; i <= max_chain_edges && !found_chain; ++i) {
+    for (i = 1; i <= max_chain_edges; ++i) {
 	edge_options[i] = get_edges_that_follow_edges(search_list, edge_options[i - 1]);
 
 	terminal_edge = get_edge_ending_at_endpoint(edge_options[i], endpoints[1]);
 	if (terminal_edge != NULL) {
-	    found_chain = 1;
 	    chain_edges = get_edges_ending_at_edge(edge_options, i, terminal_edge);
 	    break;
 	}
@@ -724,7 +726,7 @@ distance_point_to_edge(int UNUSED(num_vertices), fastf_t *vertices, int point, i
     tol.perp = SMALL_FASTF;
     tol.para = 1 - SMALL_FASTF;
 
-    rc = bn_dist_pnt3_lseg3(&dist, pca, edge_pts[0], edge_pts[1], pt, &tol);
+    rc = bg_dist_pnt3_lseg3(&dist, pca, edge_pts[0], edge_pts[1], pt, &tol);
 
     return rc ? dist : 0.0;
 }
@@ -793,6 +795,63 @@ int bg_trimesh_hanging_nodes(int num_vertices, int num_faces, fastf_t *vertices,
 
     return hanging_nodes;
 }
+
+
+int
+bg_trimesh_aabb(point_t *min, point_t *max, const int *faces, size_t num_faces, const point_t *p, size_t num_pnts)
+{
+    /* If we can't produce any output, there's no point in continuing */
+    if (!min || !max)
+	return -1;
+
+    /* If something goes wrong with any bbox logic, we want to know it as soon
+     * as possible.  Make sure as soon as we can that the bbox output is set to
+     * invalid defaults, so we don't end up with something that accidentally
+     * looks reasonable if things fail. */
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
+    /* If inputs are insufficient, we can't produce a bbox */
+    if (!faces || num_faces == 0 || !p || num_pnts == 0)
+	return -1;
+
+    /* First Pass: coherently iterate through all faces of the BoT and
+     * mark vertices in a bit-vector that are referenced by a face. */
+    struct bu_bitv *visit_vert = bu_bitv_new(num_pnts);
+    for (size_t tri_index = 0; tri_index < num_faces; tri_index++) {
+	BU_BITSET(visit_vert, faces[tri_index*3 + X]);
+	BU_BITSET(visit_vert, faces[tri_index*3 + Y]);
+	BU_BITSET(visit_vert, faces[tri_index*3 + Z]);
+    }
+
+    /* Second Pass: check max and min of vertices marked */
+    for(size_t vert_index = 0; vert_index < num_pnts; vert_index++){
+	if(BU_BITTEST(visit_vert,vert_index)){
+	    VMINMAX((*min), (*max), p[vert_index]);
+	}
+    }
+
+    /* Done with bitv */
+    bu_bitv_free(visit_vert);
+
+    /* Make sure the RPP created is not of zero volume */
+    if (NEAR_EQUAL((*min)[X], (*max)[X], SMALL_FASTF)) {
+	(*min)[X] -= SMALL_FASTF;
+	(*max)[X] += SMALL_FASTF;
+    }
+    if (NEAR_EQUAL((*min)[Y], (*max)[Y], SMALL_FASTF)) {
+	(*min)[Y] -= SMALL_FASTF;
+	(*max)[Y] += SMALL_FASTF;
+    }
+    if (NEAR_EQUAL((*min)[Z], (*max)[Z], SMALL_FASTF)) {
+	(*min)[Z] -= SMALL_FASTF;
+	(*max)[Z] += SMALL_FASTF;
+    }
+
+    /* Success */
+    return 0;
+}
+
 
 int
 bg_trimesh_2d_gc(int **ofaces, point2d_t **opnts, int *n_opnts,
@@ -864,7 +923,7 @@ bg_trimesh_3d_gc(int **ofaces, point_t **opnts, int *n_opnts,
     int nind = 0;
     std::set<int>::iterator ap;
     for (ap = active_pnts.begin(); ap != active_pnts.end(); ap++) {
-	V2MOVE(op[nind], in_pts[*ap]);
+	VMOVE(op[nind], in_pts[*ap]);
 	o2n[*ap] = nind;
 	nind++;
     }
@@ -885,12 +944,12 @@ bg_trimesh_3d_gc(int **ofaces, point_t **opnts, int *n_opnts,
 }
 
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

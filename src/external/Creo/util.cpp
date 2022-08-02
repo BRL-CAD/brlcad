@@ -1,7 +1,7 @@
 /*                    U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2017-2020 United States Government as represented by
+ * Copyright (c) 2017-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -167,12 +167,16 @@ struct pparam_data {
 
 extern "C" ProError regex_key(ProParameter *param, ProError UNUSED(status), ProAppData app_data)
 {
-    char pname[CREO_NAME_MAX];
-    char val[CREO_NAME_MAX];
-    wchar_t wval[CREO_NAME_MAX];
-    ProParamvalue pval;
-    ProParamvalueType ptype;
+    char    pname[CREO_NAME_MAX];
+    char      val[CREO_NAME_MAX];
+    wchar_t  wval[CREO_NAME_MAX];
+
     regex_t reg;
+
+    ProParamvalue     pval;
+    ProParamvalueType ptype;
+    ProUnititem       punits;
+
     struct pparam_data *pdata = (struct pparam_data *)app_data;
     if (pdata->val)
 	return PRO_TK_NO_ERROR;
@@ -185,7 +189,7 @@ extern "C" ProError regex_key(ProParameter *param, ProError UNUSED(status), ProA
     }
     regfree(&reg);
 
-    if (ProParameterValueGet(param, &pval) != PRO_TK_NO_ERROR)
+    if (ProParameterValueWithUnitsGet(param, &pval, &punits) != PRO_TK_NO_ERROR)
 	return PRO_TK_CONTINUE;
 
     if (ProParamvalueTypeGet(&pval, &ptype) != PRO_TK_NO_ERROR)
@@ -209,17 +213,20 @@ extern "C" ProError
 creo_attribute_val(char **val, const char *key, ProMdl m)
 {
     struct bu_vls cpval = BU_VLS_INIT_ZERO;
-    wchar_t wkey[CREO_NAME_MAX];
-    char cval[CREO_NAME_MAX];
-    char *fval = NULL;
-    ProError pstatus;
-    ProModelitem mitm;
-    ProParameter param;
-    ProParamvalueType ptype;
-    ProParamvalue pval;
+    wchar_t  wkey[CREO_NAME_MAX];
     wchar_t w_val[CREO_NAME_MAX];
-    short b_val;
-    int i_val;
+    char     cval[CREO_NAME_MAX];
+    char    *fval = NULL;
+
+    ProError          pstatus;
+    ProModelitem      mitm;
+    ProParameter      param;
+    ProParamvalueType ptype;
+    ProParamvalue     pval;
+    ProUnititem       punits;
+
+    short  b_val;
+    int    i_val;
     double d_val;
 
     ProStringToWstring(wkey, (char *)key);
@@ -230,7 +237,7 @@ creo_attribute_val(char **val, const char *key, ProMdl m)
     if (pstatus != PRO_TK_NO_ERROR)
 	return PRO_TK_CONTINUE;
 
-    ProParameterValueGet(&param, &pval);
+    ProParameterValueWithUnitsGet(&param, &pval, &punits);
     ProParamvalueTypeGet(&pval, &ptype);
     switch (ptype) {
 	case PRO_PARAM_STRING:
@@ -483,12 +490,12 @@ ProError PopupMsg(const char *title, const char *msg)
 }
 
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

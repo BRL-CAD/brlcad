@@ -1,7 +1,7 @@
 /*                     N A S T R A N - G . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2020 United States Government as represented by
+ * Copyright (c) 1997-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -424,10 +424,8 @@ HIDDEN int
 get_next_record(FILE *fp, int call_input, int write_flag)
 {
     char *tmp;
-    int form;
+    int form = UNKNOWN;
     int i;
-
-    form = UNKNOWN;
 
     /* read next line of input, skipping comments */
     while (1) {
@@ -498,7 +496,6 @@ get_next_record(FILE *fp, int call_input, int write_flag)
     }
 
     /* default is SMALL_FIELD */
-    form = SMALL_FIELD;
     get_small_field_input(fp, write_flag);
     return 1;
 

@@ -1,7 +1,7 @@
 /*                      H A L F T O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,9 +73,10 @@
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/getopt.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 
 #define	DLEVEL	1
 #define THRESHOLD	127
@@ -144,10 +145,11 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 {
     static unsigned char *last, *cur=0, *next;
     static int linelen;
-    size_t result;
-    int newvalue;
-    int i, value;
-    int idx;
+    size_t result = 0;
+    int newvalue = 0;
+    int i = 0;
+    int value = 0;
+    int idx = 0;
 
 /*
  *	if no sharpening going on then just read from the file and exit.
@@ -180,20 +182,23 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
     if (!cur) {
 	linelen=num;
 	last = 0;
-	cur  = (unsigned char *)malloc(linelen);
-	next = (unsigned char *)malloc(linelen);
+	cur  = (unsigned char *)bu_calloc(linelen, 1, "cur");
 	result = fread(cur, 1, linelen, file);
 	for (i=0; i<linelen;i++) {
 	    idx = cur[i];
 	    CLAMP(idx, 0, size*num);
 	    cur[i] = Map[idx];
 	}
-	if (!result)
+	if (!result) {
+	    free(cur);
 	    return result;	/* nothing there! */
+	}
+	next = (unsigned char *)bu_calloc(linelen, 1, "next");
 	result = fread(next, 1, linelen, file);
 	if (!result) {
+	    free(cur);
 	    free(next);
-	    next = 0;
+	    return result;	/* nothing there! */
 	} else {
 	    for (i=0; i<linelen;i++) {
 		idx = cur[i];
@@ -559,7 +564,7 @@ tonescale(unsigned char *map, float Slope, float B, int (*eqptr) (/* ??? */))
  *		We need an extra cubic to make eq_cubic processing
  *		easier.
  */
-	EqCubics = (struct Cubic *)malloc(2*sizeof(struct Cubic));
+	EqCubics = (struct Cubic *)bu_calloc(2, sizeof(struct Cubic), "EqCubics");
 	EqCubics[0].x = 0.0;
 	EqCubics[0].A = B;
 	EqCubics[0].B = Slope;
@@ -669,7 +674,7 @@ cubic_init(int n, int *x, int *y)
     z = (double *) malloc(n*sizeof(double));
     l = (double *) malloc(n*sizeof(double));
 
-    EqCubics = (struct Cubic *) malloc(n*sizeof(struct Cubic));
+    EqCubics = (struct Cubic *)bu_calloc(n, sizeof(struct Cubic), "EqCubics");
 
     for (i=0; i<n-1; i++) {
 	h[i] = x[i+1] - x[i];
@@ -894,7 +899,7 @@ setup(int argc, char **argv)
 	}
     } else {
 	char *ifname = bu_file_realpath(argv[bu_optind], NULL);
-	if (freopen(ifname, "r", stdin) == NULL ) {
+	if (freopen(ifname, "rb", stdin) == NULL ) {
 	    bu_free(ifname,"ifname alloc from bu_file_realpath");
 	    bu_exit(1, "halftone: cannot open \"%s\" for reading.\n", argv[bu_optind]);
 	}
@@ -922,22 +927,26 @@ main(int argc, char **argv)
     size_t ret;
 
     bu_setprogname(argv[0]);
-/*
- *	parameter processing.
- */
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
+    /*
+     *	parameter processing.
+     */
     setup(argc, argv);
-/*
- *	Get a tone map.  Map is the result.  1.0 is slope, 0.0 is
- *	the Y intercept (y=mx+b). 0 is the address of a function to
- *	do a x to y mapping, 0 means use the default function.
- */
+    /*
+     *	Get a tone map.  Map is the result.  1.0 is slope, 0.0 is
+     *	the Y intercept (y=mx+b). 0 is the address of a function to
+     *	do a x to y mapping, 0 means use the default function.
+     */
     (void) tonescale(Map, 1.0, 0.0, 0);
 
-/*
- * Currently the halftone file is scaled from 0 to 255 on output to
- * ease display via bw-fb.  In the future there might be flag to
- * set Scale to 1 to get a unscaled output.
- */
+    /*
+     * Currently the halftone file is scaled from 0 to 255 on output to
+     * ease display via bw-fb.  In the future there might be flag to
+     * set Scale to 1 to get a unscaled output.
+     */
     Scale = 255/Levels;
 
     if (Debug) {
@@ -951,33 +960,33 @@ main(int argc, char **argv)
 
     Line = (unsigned char *) bu_malloc(width, "Line");
     Out = (unsigned char *) bu_malloc(width, "Out");
-/*
- * should be a test here to make sure we got the memory requested.
- */
+    /*
+     * should be a test here to make sure we got the memory requested.
+     */
 
-/*
- *	Currently only the Floyd-Steinberg method uses the surpent flag
- *	so we make things easy with in the 'y' loop by resetting surpent
- *	for all other methods to "No Surpent".
- */
+    /*
+     *	Currently only the Floyd-Steinberg method uses the surpent flag
+     *	so we make things easy with in the 'y' loop by resetting surpent
+     *	for all other methods to "No Surpent".
+     */
     if (Method != M_FLOYD) Surpent = 0;
 
     for (y=0; y<height; y++) {
 	int NextX;
-/*
- * 		A few of the methods benefit by knowing when a new line is
- *		started.
- */
+	/*
+	 * 		A few of the methods benefit by knowing when a new line is
+	 *		started.
+	 */
 	NewFlag = 1;
 	(void) sharpen(Line, 1, width, stdin, Map);
-/*
- *		Only M_FLOYD will have Surpent != 0.
- */
+	/*
+	 *		Only M_FLOYD will have Surpent != 0.
+	 */
 	if (Surpent && y % 2) {
 	    for (x=width-1; x>=0; x--) {
 		pixel = Line[x];
 		Out[x] = Scale*tone_floyd(pixel, x, y, x-1,
-					  y+1, NewFlag);
+			y+1, NewFlag);
 		NewFlag = 0;
 	    }
 	} else {
@@ -987,19 +996,19 @@ main(int argc, char **argv)
 		switch (Method) {
 		    case M_FOLLY:
 			Out[x] = Scale*tone_folly(pixel, x, y,
-						  NextX, y+1, NewFlag);
+				NextX, y+1, NewFlag);
 			break;
 		    case M_FLOYD:
 			Out[x] = Scale*tone_floyd(pixel, x, y,
-						  NextX, y+1, NewFlag);
+				NextX, y+1, NewFlag);
 			break;
 		    case M_THRESH:
 			Out[x]=Scale*tone_simple(pixel, x, y,
-						 NextX, y+1, NewFlag);
+				NextX, y+1, NewFlag);
 			break;
 		    case M_CLASSIC:
 			Out[x]=Scale*tone_classic(pixel, x, y,
-						  NextX, y+1, NewFlag);
+				NextX, y+1, NewFlag);
 			break;
 		}
 		NewFlag=0;

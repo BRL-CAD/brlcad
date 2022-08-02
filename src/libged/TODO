@@ -16,6 +16,10 @@ Be specific.
   possible generalization to remove unused/unreferenced objects of
   particular type (e.g., prims, combs, regions, all).
 
+* some common shorthand aliases from Dwayne
+  ** smk -- make --edit
+  ** scp -- copy --edit
+
 
 --- NEW COMMANDS ---
 
@@ -42,6 +46,15 @@ Be specific.
   some thoughts on a more ambitious re-think about the analyze command,
   but bear in mind that these are preliminary thoughts only and not a
   finished design that is ready to be implemented.
+
+  Consider inside/on/outside subcommands that report back where a
+  given point is with respect to another object.  Could use ray
+  tracing to determine result.
+
+  Consider a subcommand that reports distance to surface from a given
+  point.  Ray tracing method similar to gqa (shooting spherically
+  through point and in a gqa-style grid) would give an approximation
+  that could be adaptively refined to a specified tolerance.
 
 * 'array' command: to create a shallow copy of geometry in a
   rectangular or polar pattern.  similar to clone, perhaps mergeable
@@ -174,6 +187,25 @@ Be specific.
   need option to crop, position, scale, and orient the image.  should
   default to a view-oriented "underlay" but permanently stored in the
   .g file as a proper image object (top-level TODO entry).
+
+* 'import' and 'export' commands: import/export image, text, csv, and
+  other file types.  possibly catch-all alternative to keep/dbconcat
+  that could also work for importing other data files as objects.  a
+  specific use-case needed is ability create/import combinations that
+  are described in a text file in some specific structured format
+  (e.g., sysdef or regmap) that would be good to generically support.
+
+* 'gsort' or 'tables' or 'filter' command.  Distinction is that this
+  comamnd is object-aware and can process geometry by name in a given
+  column or list.  This way, one could sort output from search, nirt,
+  idents, and other table/list-based commands. Examples:
+
+  Sort by data size: [gsort -size [search .]])
+  Reverse sort of col4 by vol: [gsort -volume -k4 -r [search .]])
+
+  Desirable to intentionally pattern after POSIX sort
+  (https://pubs.opengroup.org/onlinepubs/9699919799/utilities/sort.html),
+  adding geometry extensions similar to BSD sort(1).
 
 * 'layer' command: to create, select, delete, list enable/disable
   on/off, lock/unlock, and set other properties (e.g., color, style).
@@ -358,10 +390,6 @@ Be specific.
      simulate -k 1.0  # simulate 1s of gravity, overwriting original
      simulate -G -f 1 2 3 .4 5  # no gravity, custom force, 5s
 
-* 'tables' command: do not call system() on the "sort" unix command!
-  It should perform all sorting on the data directly in memory, at
-  least without creating another process.  bad security practice.
-
 * 'text' command: imports a text file (as geometry).  have options to
   specify the spacing between lines, first line, #lines,
   underline/overline each line, convert to all upper/lower, position.
@@ -429,9 +457,8 @@ Be specific.
     SELECT * FROM products
     WHERE category = 'book' AND desc LIKE '%algorithms%' AND stock >= 1;
 
--------------------------------------------------------------------------------
 
-ANALYZE command design thoughts:
+--- ANALYZE command design thoughts ---
 
   If we consider consolidating what are currently "special purpose"
   analysis commands (bounding box calculators, convex hull, gqa's
@@ -514,8 +541,8 @@ Alternative usage possibility:
     analyze surface --component F:1-10,23-30 mesh.s
     analyze overlap --create=overlap.s  obj1.c obj2.c
 
--------------------------------------------------------------------------------
-search command ideas
+
+--- SEARCH command ideas ---
 
 * rewrite search code for better performance, consistency, hide flat
   searches (base it on supplied filters), make above/below searches
@@ -544,10 +571,12 @@ search command ideas
 
 * implement -param support for 'search' command
 
--------------------------------------------------------------------------------
-Thoughts on search path modifiers - this is a slight iteration on the results
-of Cliff and Nick trying to work through what "preferred" meanings and
-conventions are for path specifier modifiers.
+
+--- thoughts on SEARCH path modifiers ---
+
+This is a slight iteration on the results of Cliff and Nick trying to
+work through what "preferred" meanings and conventions are for path
+specifier modifiers.
 
 A path modifier is a single or multiple character pattern specified at the head
 of an object name, path, or glob pattern:

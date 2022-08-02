@@ -2,7 +2,7 @@
  *
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,11 +57,13 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
 	stepcomplex = stepcomplex->sc;
     }
 
-    SdaiUnit *new_unit = new SdaiUnit((SdaiNamed_unit *)unit_complex);
     uncertainty->ResetAttributes();
     {
 	while ((attr = uncertainty->NextAttribute()) != NULL) {
-	    if (!bu_strcmp(attr->Name(), "unit_component")) attr->ptr.sh = new_unit;
+	    if (!bu_strcmp(attr->Name(), "unit_component")) {
+		SdaiUnit *new_unit = new SdaiUnit((SdaiNamed_unit *)unit_complex);
+		attr->ptr.sh = new_unit;
+	    }
 	    if (!bu_strcmp(attr->Name(), "value_component")) attr->StrToVal("0.05");
 	}
     }
@@ -203,6 +205,9 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
     }
 
     sc->instance_list->Append((STEPentity *)complex_entity, completeSE);
+
+    delete p_ang_unit;
+    delete p_ang_measure_value;
 
     return complex_entity;
 }

@@ -1,7 +1,7 @@
 /*                       D B _ A T T R . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,6 +45,7 @@ enum {
     ATTR_REGION = 0,
     ATTR_REGION_ID,
     ATTR_MATERIAL_ID,
+    ATTR_MATERIAL_NAME,
     ATTR_AIR,
     ATTR_LOS,
     ATTR_COLOR,

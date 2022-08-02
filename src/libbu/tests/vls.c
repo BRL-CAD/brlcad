@@ -1,7 +1,7 @@
 /*                       V L S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -85,7 +85,7 @@ test_bu_vls_vlsinit(void)
 static int
 test_bu_vls_access(int argc, char *argv[])
 {
-    char *null_expected_string = "";
+    char *null_expected_string = bu_strdup("");
     char *null_actual_string;
 
     char *set_expected_string;
@@ -112,6 +112,7 @@ test_bu_vls_access(int argc, char *argv[])
     retval = !(bu_strcmp(null_actual_string, null_expected_string) == 0
 	       && bu_strcmp(set_actual_addr_string, set_expected_string) == 0);
 
+    bu_free(null_expected_string, "null_expected_string");
     bu_vls_free(&vls);
 
     return retval;
@@ -135,7 +136,7 @@ test_bu_vls_strncpy(int argc, char *argv[])
 
     string_orig = argv[2];
     string_new = argv[3];
-    sscanf(argv[4], "%d", &n);
+    bu_sscanf(argv[4], "%d", &n);
     expected_result_string = argv[5];
 
     bu_vls_strcpy(&vls, string_orig);
@@ -229,7 +230,7 @@ test_bu_vls_trunc(int argc, char *argv[])
     }
 
     in_string = argv[2];
-    sscanf(argv[3], "%d", &trunc_len);
+    bu_sscanf(argv[3], "%d", &trunc_len);
     expected_out_string = argv[4];
 
     bu_vls_strcpy(&vls, in_string);
@@ -262,7 +263,7 @@ test_bu_vls_nibble(int argc, char *argv[])
     }
 
     in_string = argv[2];
-    sscanf(argv[3], "%d", &nibble_len);
+    bu_sscanf(argv[3], "%d", &nibble_len);
     expected_out_string = argv[4];
 
     bu_vls_strcpy(&vls, in_string);
@@ -678,13 +679,18 @@ main(int argc, char *argv[])
 {
     int function_num = 0;
 
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     if (argc < 2) {
 	bu_exit(1, "Usage: %s {function_num} {args...}\n", argv[0]);
     }
 
     sscanf(argv[1], "%d", &function_num);
+    if (function_num < 0 || function_num > INT_MAX - 1)
+	bu_exit(1, "Invalid function number specified\n");
 
     switch (function_num) {
 	case 1:

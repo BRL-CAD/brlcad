@@ -39,7 +39,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>fracture shape1.nmg f</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>fracture shape1.nmg f</userinput></term>
 	   <listitem>
 	     <para>Creates a series of NMG shapes named f_#, one for each face in <emphasis>shape1.nmg				</emphasis>.
 	     </para>

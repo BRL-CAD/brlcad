@@ -1,7 +1,7 @@
 /*                     D B 5 _ A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -102,7 +102,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
     RT_CK_DIR(dp);
     BU_CK_EXTERNAL(ep);
     if (RT_G_DEBUG & RT_DEBUG_DB)
-	bu_log("db5_realloc(%s) dbip=%p, dp=%p, ext_nbytes=%ld\n",
+	bu_log("db5_realloc(%s) dbip=%p, dp=%p, ext_nbytes=%zu\n",
 	       dp->d_namep, (void *)dbip, (void *)dp, ep->ext_nbytes);
 
     BU_ASSERT((ep->ext_nbytes&7) == 0);
@@ -176,7 +176,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 
 	rt_memfree(&(dbip->dbi_freep), dp->d_len, dp->d_addr);
 	if (db5_write_free(dbip, dp, dp->d_len) < 0) return -1;
-	baseaddr = dp->d_addr = RT_DIR_PHONY_ADDR;	/* sanity */
+	dp->d_addr = RT_DIR_PHONY_ADDR;	/* sanity */
     }
 
     /*

@@ -1,7 +1,7 @@
 /*                        F B L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2020 United States Government as represented by
+ * Copyright (c) 1988-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 
@@ -60,7 +60,7 @@ struct stroke {
 }; /* rasterization descriptor */
 
 static char *framebuffer = NULL;
-fb *fbp;			/* Current framebuffer */
+struct fb *fbp;			/* Current framebuffer */
 
 static int screen_width = 512;	/* default input width */
 static int screen_height = 512;	/* default input height */

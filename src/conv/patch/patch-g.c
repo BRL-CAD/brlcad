@@ -1,7 +1,7 @@
 /*                       P A T C H - G . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2020 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -452,10 +452,10 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
 	BU_LIST_INIT(&mir_head.l);
 
 	for (k=1; k<l-3; k++) {
-	    if (!bn_3pnts_distinct (verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
+	    if (!bg_3pnts_distinct (verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
 		;	/* do nothing */
 		/* bu_log("Repeated Vertex, no face made\n"); */
-	    } else if (bn_3pnts_collinear(verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
+	    } else if (bg_3pnts_collinear(verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
 		;	/* do nothing */
 		/* bu_log("%s: collinear points, face not made.\n", name); */
 	    } else {
@@ -517,10 +517,10 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
 	if (plate_mode && !EQUAL(thk[k+2], thickness))
 	    continue;
 
-	if (!bn_3pnts_distinct (verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
+	if (!bg_3pnts_distinct (verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
 	    ;	/* do nothing */
 	    /* bu_log("Repeated Vertex, no face made\n"); */
-	} else if (bn_3pnts_collinear(verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
+	} else if (bg_3pnts_collinear(verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
 	    ;	/* do nothing */
 	    /* bu_log("%s: collinear points, face not made.\n", name); */
 	} else {
@@ -539,7 +539,7 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
 		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 		    NMG_CK_EDGEUSE(eu);
 		    for (j=0; j<3; j++)
-			if (bn_pnt3_pnt3_equal(eu->vu_p->v_p->vg_p->coord,
+			if (bg_pnt3_pnt3_equal(eu->vu_p->v_p->vg_p->coord,
 					     verts[k+j].coord, tol))
 			    found_verts++;
 		}
@@ -1071,7 +1071,7 @@ proc_region(char *name1)
 	mir_count = 0;
     }
 
-    /* explicitely shorten tmpname to quell the gcc 8.2 snprintf string length warning/error */
+    /* explicitly shorten tmpname to quell the gcc 8.2 snprintf string length warning/error */
     bu_strlcpy(tmpname2, tmpname, sizeof(tmpname2));
 
     if (cc != in[0].cc) {
@@ -1603,23 +1603,23 @@ proc_wedge(size_t cnt)
 	    VSETALL(interior, 0.0);
 	    for (i=0; i<8; i++)
 		VJOIN1(interior, interior, join_scale,  pt8[i]);
-	    ret = bn_make_plane_3pnts(planes[0], pt8[0], pt8[3], pt8[2], tols);
+	    ret = bg_make_plane_3pnts(planes[0], pt8[0], pt8[3], pt8[2], tols);
 	    VSUB2(diff, interior, pt8[0]);
 	    if (VDOT(diff, planes[0]) < 0.0)
 		HREVERSE(planes[0], planes[0]);
-	    ret = ret | bn_make_plane_3pnts(planes[1], pt8[2], pt8[3], pt8[6], tols);
+	    ret = ret | bg_make_plane_3pnts(planes[1], pt8[2], pt8[3], pt8[6], tols);
 	    VSUB2(diff, interior, pt8[2]);
 	    if (VDOT(diff, planes[1]) < 0.0)
 		HREVERSE(planes[1], planes[1]);
-	    ret = ret | bn_make_plane_3pnts(planes[2], pt8[6], pt8[3], pt8[0], tols);
+	    ret = ret | bg_make_plane_3pnts(planes[2], pt8[6], pt8[3], pt8[0], tols);
 	    VSUB2(diff, interior, pt8[6]);
 	    if (VDOT(diff, planes[2]) < 0.0)
 		HREVERSE(planes[2], planes[2]);
-	    ret = ret | bn_make_plane_3pnts(planes[3], pt8[4], pt8[0], pt8[1], tols);
+	    ret = ret | bg_make_plane_3pnts(planes[3], pt8[4], pt8[0], pt8[1], tols);
 	    VSUB2(diff, interior, pt8[4]);
 	    if (VDOT(diff, planes[3]) < 0.0)
 		HREVERSE(planes[3], planes[3]);
-	    ret = ret | bn_make_plane_3pnts(planes[4], pt8[1], pt8[2], pt8[6], tols);
+	    ret = ret | bg_make_plane_3pnts(planes[4], pt8[1], pt8[2], pt8[6], tols);
 	    VSUB2(diff, interior, pt8[1]);
 	    if (VDOT(diff, planes[4]) < 0.0)
 		HREVERSE(planes[4], planes[4]);
@@ -1640,12 +1640,12 @@ proc_wedge(size_t cnt)
 	     * intersection of 3 planes subroutine.
 	     */
 
-	    ret = ret | bn_make_pnt_3planes(inpt8[0], planes[0], planes[3], planes[2]);
-	    ret = ret | bn_make_pnt_3planes(inpt8[1], planes[0], planes[3], planes[4]);
-	    ret = ret | bn_make_pnt_3planes(inpt8[2], planes[0], planes[1], planes[4]);
-	    ret = ret | bn_make_pnt_3planes(inpt8[3], planes[0], planes[1], planes[2]);
-	    ret = ret | bn_make_pnt_3planes(inpt8[4], planes[2], planes[3], planes[4]);
-	    ret = ret | bn_make_pnt_3planes(inpt8[6], planes[1], planes[2], planes[4]);
+	    ret = ret | bg_make_pnt_3planes(inpt8[0], planes[0], planes[3], planes[2]);
+	    ret = ret | bg_make_pnt_3planes(inpt8[1], planes[0], planes[3], planes[4]);
+	    ret = ret | bg_make_pnt_3planes(inpt8[2], planes[0], planes[1], planes[4]);
+	    ret = ret | bg_make_pnt_3planes(inpt8[3], planes[0], planes[1], planes[2]);
+	    ret = ret | bg_make_pnt_3planes(inpt8[4], planes[2], planes[3], planes[4]);
+	    ret = ret | bg_make_pnt_3planes(inpt8[6], planes[1], planes[2], planes[4]);
 
 	    VMOVE(inpt8[7], inpt8[6]);
 	    VMOVE(inpt8[5], inpt8[4]);
@@ -1673,7 +1673,6 @@ proc_wedge(size_t cnt)
 	proc_region(name);
 
     /* Mirror Processing - duplicates above code! */
-    ret = 0;
     for (k=0; k <= (cnt-1) && in[k].mirror != 0; k+=4) {
 
 	VSET(pt8[0], in[k].x, -in[k].y, in[k].z);
@@ -1716,23 +1715,23 @@ proc_wedge(size_t cnt)
 	    VSETALL(interior, 0.0);
 	    for (i=0; i<8; i++)
 		VJOIN1(interior, interior, join_scale,  pt8[i]);
-	    ret = bn_make_plane_3pnts(planes[0], pt8[0], pt8[3], pt8[2], tols);
+	    ret = bg_make_plane_3pnts(planes[0], pt8[0], pt8[3], pt8[2], tols);
 	    VSUB2(diff, interior, pt8[0]);
 	    if (VDOT(diff, planes[0]) < 0.0)
 		HREVERSE(planes[0], planes[0]);
-	    ret = ret | bn_make_plane_3pnts(planes[1], pt8[2], pt8[3], pt8[6], tols);
+	    ret = ret | bg_make_plane_3pnts(planes[1], pt8[2], pt8[3], pt8[6], tols);
 	    VSUB2(diff, interior, pt8[2]);
 	    if (VDOT(diff, planes[1]) < 0.0)
 		HREVERSE(planes[1], planes[1]);
-	    ret = ret | bn_make_plane_3pnts(planes[2], pt8[6], pt8[3], pt8[0], tols);
+	    ret = ret | bg_make_plane_3pnts(planes[2], pt8[6], pt8[3], pt8[0], tols);
 	    VSUB2(diff, interior, pt8[6]);
 	    if (VDOT(diff, planes[2]) < 0.0)
 		HREVERSE(planes[2], planes[2]);
-	    ret = ret | bn_make_plane_3pnts(planes[3], pt8[4], pt8[0], pt8[1], tols);
+	    ret = ret | bg_make_plane_3pnts(planes[3], pt8[4], pt8[0], pt8[1], tols);
 	    VSUB2(diff, interior, pt8[4]);
 	    if (VDOT(diff, planes[3]) < 0.0)
 		HREVERSE(planes[3], planes[3]);
-	    ret = ret | bn_make_plane_3pnts(planes[4], pt8[1], pt8[2], pt8[6], tols);
+	    ret = ret | bg_make_plane_3pnts(planes[4], pt8[1], pt8[2], pt8[6], tols);
 	    VSUB2(diff, interior, pt8[1]);
 	    if (VDOT(diff, planes[4]) < 0.0)
 		HREVERSE(planes[4], planes[4]);
@@ -1753,12 +1752,12 @@ proc_wedge(size_t cnt)
 	     * of 3 planes subroutine.
 	     */
 
-	    ret = ret | bn_make_pnt_3planes(inpt8[0], planes[0], planes[3], planes[2]);
-	    ret = ret | bn_make_pnt_3planes(inpt8[1], planes[0], planes[3], planes[4]);
-	    ret = ret | bn_make_pnt_3planes(inpt8[2], planes[0], planes[1], planes[4]);
-	    ret = ret | bn_make_pnt_3planes(inpt8[3], planes[0], planes[1], planes[2]);
-	    ret = ret | bn_make_pnt_3planes(inpt8[4], planes[2], planes[3], planes[4]);
-	    ret = ret | bn_make_pnt_3planes(inpt8[6], planes[1], planes[2], planes[4]);
+	    ret = ret | bg_make_pnt_3planes(inpt8[0], planes[0], planes[3], planes[2]);
+	    ret = ret | bg_make_pnt_3planes(inpt8[1], planes[0], planes[3], planes[4]);
+	    ret = ret | bg_make_pnt_3planes(inpt8[2], planes[0], planes[1], planes[4]);
+	    ret = ret | bg_make_pnt_3planes(inpt8[3], planes[0], planes[1], planes[2]);
+	    ret = ret | bg_make_pnt_3planes(inpt8[4], planes[2], planes[3], planes[4]);
+	    ret = ret | bg_make_pnt_3planes(inpt8[6], planes[1], planes[2], planes[4]);
 
 	    VMOVE(inpt8[7], inpt8[6]);
 	    VMOVE(inpt8[5], inpt8[4]);
@@ -3415,6 +3414,9 @@ main(int argc, char **argv)
     thk = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "thk");
     mirror = (int *)bu_calloc(MAX_INPUTS, sizeof(int), "mirror");
 
+    if (!in || !nm || !list || !XVAL || !YVAL || !ZVAL || !thicks || !RADIUS || !thk || !mirror)
+	bu_exit(BRLCAD_ERROR, "Memory allocation failure\n");
+
     /* initialize tolerance structure */
     TOL.magic = BN_TOL_MAGIC;
     TOL.dist = 0.01;
@@ -3633,7 +3635,6 @@ main(int argc, char **argv)
 		}
 	    }
 	}
-	done = 1;
     }
 
     /* Read the material codes file, which is a component code list

@@ -1,7 +1,7 @@
 #                        Q R A Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2020 United States Government as represented by
+# Copyright (c) 2004-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -306,10 +306,10 @@ proc qray_apply { id } {
 	    qray echo $qray_control($id,cmd_echo);\
 	    qray effects $qray_control($id,effects);\
 	    qray basename $qray_control($id,basename);\
-	    eval qray oddcolor [getRGBorReset $qray_control($id,top).oddColorMB qray_control($id,oddcolor) $qray_control($id,oddcolor)];\
-	    eval qray evencolor [getRGBorReset $qray_control($id,top).evenColorMB qray_control($id,evencolor) $qray_control($id,evencolor)];\
-	    eval qray voidcolor [getRGBorReset $qray_control($id,top).voidColorMB qray_control($id,voidcolor) $qray_control($id,voidcolor)];\
-	    eval qray overlapcolor [getRGBorReset $qray_control($id,top).overlapColorMB qray_control($id,overlapcolor) $qray_control($id,overlapcolor)]"
+	    eval qray oddcolor [getRGB $qray_control($id,top).oddColorMB $qray_control($id,oddcolor)];\
+	    eval qray evencolor [getRGB $qray_control($id,top).evenColorMB $qray_control($id,evencolor)];\
+	    eval qray voidcolor [getRGB $qray_control($id,top).voidColorMB $qray_control($id,voidcolor)];\
+	    eval qray overlapcolor [getRGB $qray_control($id,top).overlapColorMB $qray_control($id,overlapcolor)]"
 }
 
 proc qray_reset { id } {

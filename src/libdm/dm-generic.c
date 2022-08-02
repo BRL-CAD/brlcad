@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2020 United States Government as represented by
+ * Copyright (c) 1999-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,142 +27,59 @@
 
 #include <string.h>
 
-#include "tcl.h"
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash.h"
 
 #include "vmath.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/time.h"
+#include "bv/defines.h"
 #include "dm.h"
-#include "dm_private.h"
+#include "./include/private.h"
+#include "./null/dm-Null.h"
 
-#include "dm-Null.h"
-#include "rt/solid.h"
-
-extern dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
-extern dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
-extern dm *txt_open(Tcl_Interp *interp, int argc, const char **argv);
-
-#ifdef DM_X
-#  if defined(HAVE_TK)
-extern dm *X_open_dm(Tcl_Interp *interp, int argc, const char **argv);
-#  endif
-#endif /* DM_X */
-
-#ifdef DM_TK
-extern dm *tk_open_dm(Tcl_Interp *interp, int argc, const char **argv);
-#endif /* DM_TK */
-
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-extern dm *ogl_open(Tcl_Interp *interp, int argc, const char **argv);
-extern void ogl_fogHint(dm *dmp, int fastfog);
-extern int ogl_share_dlist(dm *dmp1, dm *dmp2);
-#  endif
-#endif /* DM_OGL */
-
-#ifdef DM_OSG
-extern dm *osg_open(Tcl_Interp *interp, int argc, const char **argv);
-extern void osg_fogHint(dm *dmp, int fastfog);
-extern int osg_share_dlist(dm *dmp1, dm *dmp2);
-#endif /* DM_OSG*/
-
-#ifdef DM_OSGL
-extern dm *osgl_open(Tcl_Interp *interp, int argc, const char **argv);
-extern void osgl_fogHint(dm *dmp, int fastfog);
-extern int osgl_share_dlist(dm *dmp1, dm *dmp2);
-#endif /* DM_OSGL*/
-
-#ifdef DM_RTGL
-extern dm *rtgl_open(Tcl_Interp *interp, int argc, const char **argv);
-extern void rtgl_fogHint(dm *dmp, int fastfog);
-extern int rtgl_share_dlist(dm *dmp1, dm *dmp2);
-#endif /* DM_RTGL */
-
-#ifdef DM_WGL
-extern dm *wgl_open(Tcl_Interp *interp, int argc, const char **argv);
-extern void wgl_fogHint(dm *dmp, int fastfog);
-extern int wgl_share_dlist(dm *dmp1, dm *dmp2);
-#endif /* DM_WGL */
-
-#ifdef DM_QT
-extern dm *qt_open(Tcl_Interp *interp, int argc, const char **argv);
-#endif /* DM_QT */
-
-HIDDEN dm *
-null_dm_open(Tcl_Interp *interp, int argc, const char *argv[])
+void *
+dm_interp(struct dm *dmp)
 {
-    dm *dmp = DM_NULL;
-
-    if (argc < 0 || !argv)
-	return DM_NULL;
-
-    BU_ALLOC(dmp, struct dm_internal);
-
-    *dmp = dm_null;
-    dmp->dm_interp = interp;
-
-    return dmp;
-}
-
-
-dm *
-dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
-{
-    switch (type) {
-	case DM_TYPE_NULL:
-	    return null_dm_open(interp, argc, argv);
-	case DM_TYPE_TXT:
-	    return txt_open(interp, argc, argv);
-	case DM_TYPE_PLOT:
-	    return plot_open(interp, argc, argv);
-	case DM_TYPE_PS:
-	    return ps_open(interp, argc, argv);
-#ifdef DM_X
-#  if defined(HAVE_TK)
-	case DM_TYPE_X:
-	    return X_open_dm(interp, argc, argv);
-#  endif
-#endif
-#ifdef DM_TK
-	case DM_TYPE_TK:
-	    return tk_open_dm(interp, argc, argv);
-#endif
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-	case DM_TYPE_OGL:
-	    return ogl_open(interp, argc, argv);
-#  endif
-#endif
-#ifdef DM_OSG
-	case DM_TYPE_OSG:
-	    return osg_open(interp, argc, argv);
-#endif
-#ifdef DM_OSGL
-	case DM_TYPE_OSGL:
-	    return osgl_open(interp, argc, argv);
-#endif
-#ifdef DM_RTGL
-	case DM_TYPE_RTGL:
-	    return rtgl_open(interp, argc, argv);
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    return wgl_open(interp, argc, argv);
-#endif
-#ifdef DM_QT
-	case DM_TYPE_QT:
-	    return qt_open(interp, argc, argv);
-#endif
-	default:
-	    break;
-    }
-
-    return DM_NULL;
+    if (UNLIKELY(!dmp)) return NULL;
+    return (void *)dmp->i->dm_interp;
 }
 
 void *
-dm_interp(dm *dmp)
+dm_get_ctx(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return (void *)dmp->dm_interp;
+    return (void *)dmp->i->dm_ctx;
+}
+
+void *
+dm_get_udata(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return NULL;
+    return (void *)dmp->i->dm_udata;
+}
+
+void
+dm_set_udata(struct dm *dmp, void *udata)
+{
+    if (UNLIKELY(!dmp)) return;
+    dmp->i->dm_udata = udata;
+}
+
+
+void
+dm_fogHint(struct dm *dmp, int fastfog)
+{
+    if (UNLIKELY(!dmp)) {
+	bu_log("WARNING: NULL display (fastfog => %d)\n", fastfog);
+	return;
+    }
+
+    if (dmp->i->dm_fogHint) {
+	dmp->i->dm_fogHint(dmp, fastfog);
+    }
 }
 
 /*
@@ -170,660 +87,688 @@ dm_interp(dm *dmp)
  * NULL, then dmp1 will no longer share its display lists.
  */
 int
-dm_share_dlist(dm *dmp1, dm *dmp2)
+dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
 {
     if (UNLIKELY(!dmp1) || UNLIKELY(!dmp2)) return BRLCAD_ERROR;
 
-    /*
-     * Only display managers of the same type and using the
-     * same OGL server are allowed to share display lists.
-     *
-     * XXX - need a better way to check if using the same OGL server.
-     */
-    if (dmp2 != DM_NULL)
-	if (dmp1->dm_type != dmp2->dm_type ||
-	    bu_vls_strcmp(&dmp1->dm_dName, &dmp2->dm_dName))
-	    return BRLCAD_ERROR;
-
-    switch (dmp1->dm_type) {
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-	case DM_TYPE_OGL:
-	    return ogl_share_dlist(dmp1, dmp2);
-#  endif
-#endif
-#ifdef DM_RTGL
-	case DM_TYPE_RTGL:
-	    return rtgl_share_dlist(dmp1, dmp2);
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    return wgl_share_dlist(dmp1, dmp2);
-#endif
-	default:
-	    return BRLCAD_ERROR;
+    if (dmp1->i->dm_share_dlist) {
+	return dmp1->i->dm_share_dlist(dmp1, dmp2);
     }
+
+    return BRLCAD_ERROR;
 }
 
-fastf_t
-dm_Xx2Normal(dm *dmp, int x)
-{
-    if (UNLIKELY(!dmp)) return 0.0;
-    return ((x / (fastf_t)dmp->dm_width - 0.5) * 2.0);
-}
 
 int
-dm_Normal2Xx(dm *dmp, fastf_t f)
+dm_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return 0.0;
-    return (f * 0.5 + 0.5) * dmp->dm_width;
+    if (!dmp || !dmp->i->dm_write_image) return -1;
+    return dmp->i->dm_write_image(msgs, fp, dmp);
 }
 
-fastf_t
-dm_Xy2Normal(dm *dmp, int y, int use_aspect)
-{
-    if (UNLIKELY(!dmp)) return 0.0;
-    if (use_aspect)
-	return ((0.5 - y / (fastf_t)dmp->dm_height) / dmp->dm_aspect * 2.0);
-    else
-	return ((0.5 - y / (fastf_t)dmp->dm_height) * 2.0);
-}
+/* Properly generic functions */
 
-int
-dm_Normal2Xy(dm *dmp, fastf_t f, int use_aspect)
+void
+dm_geometry_request(struct dm *dmp, int width, int height)
 {
-    if (UNLIKELY(!dmp)) return 0.0;
-    if (use_aspect)
-	return (0.5 - f * 0.5 * dmp->dm_aspect) * dmp->dm_height;
-    else
-	return (0.5 - f * 0.5) * dmp->dm_height;
+    if (!dmp || !dmp->i->dm_geometry_request) return;
+    (void)dmp->i->dm_geometry_request(dmp, width, height);
 }
 
 void
-dm_fogHint(dm *dmp, int fastfog)
+dm_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
 {
+    if (!dmp || !result || !dmp->i->dm_internal_var) return;
+    (void)dmp->i->dm_internal_var(result, dmp, key);
+}
+
+int
+dm_event_cmp(struct dm *dmp, dm_event_t type, int event)
+{
+    if (!dmp || !dmp->i->dm_event_cmp) return -1;
+    return dmp->i->dm_event_cmp(dmp, type, event);
+}
+
+fastf_t
+dm_Xx2Normal(struct dm *dmp, int x)
+{
+    if (UNLIKELY(!dmp)) return 0.0;
+    return ((x / (fastf_t)dmp->i->dm_width - 0.5) * 2.0);
+}
+
+int
+dm_Normal2Xx(struct dm *dmp, fastf_t f)
+{
+    if (UNLIKELY(!dmp)) return 0.0;
+    return (f * 0.5 + 0.5) * dmp->i->dm_width;
+}
+
+fastf_t
+dm_Xy2Normal(struct dm *dmp, int y, int use_aspect)
+{
+    if (UNLIKELY(!dmp)) return 0.0;
+    if (use_aspect)
+	return ((0.5 - y / (fastf_t)dmp->i->dm_height) / dmp->i->dm_aspect * 2.0);
+    else
+	return ((0.5 - y / (fastf_t)dmp->i->dm_height) * 2.0);
+}
+
+int
+dm_Normal2Xy(struct dm *dmp, fastf_t f, int use_aspect)
+{
+    if (UNLIKELY(!dmp)) return 0.0;
+    if (use_aspect)
+	return (0.5 - f * 0.5 * dmp->i->dm_aspect) * dmp->i->dm_height;
+    else
+	return (0.5 - f * 0.5) * dmp->i->dm_height;
+}
+
+struct fb *
+dm_get_fb(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return NULL;
+    if (dmp->i->fbp == FB_NULL)
+	dmp->i->dm_openFb(dmp);
+    return dmp->i->fbp;
+}
+
+const char *
+dm_get_dm_name(const struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return "(DM-NULL)";
+    return dmp->i->dm_name;
+}
+
+const char *
+dm_get_dm_lname(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return "(DM-NULL)";
+    return dmp->i->dm_lname;
+}
+
+int
+dm_get_width(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_width;
+}
+
+int
+dm_get_height(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_height;
+}
+
+void
+dm_set_width(struct dm *dmp, int width)
+{
+    if (UNLIKELY(!dmp)) return;
+    dmp->i->dm_width = width;
+}
+
+void
+dm_set_height(struct dm *dmp, int height)
+{
+    if (UNLIKELY(!dmp)) return;
+    dmp->i->dm_height = height;
+}
+
+int
+dm_graphical(const struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_graphical;
+}
+
+const char *
+dm_get_type(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return "(DM-NULL)";
+    return dmp->i->dm_name;
+}
+
+int
+dm_get_displaylist(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_displaylist;
+}
+
+fastf_t
+dm_get_aspect(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_aspect;
+}
+
+int
+dm_get_fontsize(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_fontsize;
+}
+
+void
+dm_set_fontsize(struct dm *dmp, int size)
+{
+    if (UNLIKELY(!dmp)) return;
+    dmp->i->dm_fontsize = size;
+}
+
+int
+dm_close(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_close(dmp);
+}
+
+int
+dm_get_bg(unsigned char **bg1, unsigned char **bg2, struct dm *dmp)
+{
+    static unsigned char dbg1[3] = {0, 0, 0};
+    static unsigned char dbg2[3] = {0, 0, 0};
     if (UNLIKELY(!dmp)) {
-	bu_log("WARNING: NULL display (fastfog => %d)\n", fastfog);
-	return;
+	if (bg1)
+	    (*bg1) = (unsigned char *)dbg1;
+	if (bg2)
+	    (*bg2) = (unsigned char *)dbg2;
+	return 0;
     }
-
-    switch (dmp->dm_type) {
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-	case DM_TYPE_OGL:
-	    ogl_fogHint(dmp, fastfog);
-	    return;
-#  endif
-#endif
-#ifdef DM_RTGL
-	case DM_TYPE_RTGL:
-	    rtgl_fogHint(dmp, fastfog);
-	    return;
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    wgl_fogHint(dmp, fastfog);
-	    return;
-#endif
-	default:
-	    return;
-    }
+    if (bg1)
+	(*bg1) = (unsigned char *)dmp->i->dm_bg1;
+    if (bg2)
+	(*bg2) = (unsigned char *)dmp->i->dm_bg2;
+    if (dmp->i->dm_bg1[0] != dmp->i->dm_bg2[0])
+	return 1;
+    if (dmp->i->dm_bg1[1] != dmp->i->dm_bg2[1])
+	return 1;
+    if (dmp->i->dm_bg1[2] != dmp->i->dm_bg2[2])
+	return 1;
+    return 0;
 }
 
-dm *
-dm_get()
+int
+dm_set_bg(struct dm *dmp,
+	unsigned char r1, unsigned char g1, unsigned char b1,
+	unsigned char r2, unsigned char g2, unsigned char b2
+	)
 {
-    struct dm_internal *new_dm = DM_NULL;
-    BU_GET(new_dm, struct dm_internal);
-    bu_vls_init(&new_dm->dm_pathName);
-    bu_vls_init(&new_dm->dm_dName);
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_setBGColor(dmp, r1, g1, b1, r2, g2, b2);
+}
 
-    return new_dm;
+unsigned char *
+dm_get_fg(struct dm *dmp)
+{
+    static unsigned char dfg[3] = {0, 0, 0};
+    if (UNLIKELY(!dmp)) return dfg;
+    return dmp->i->dm_fg;
+}
+
+int
+dm_set_fg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_setFGColor(dmp, r, g, b, strict, transparency);
+}
+
+int
+dm_reshape(struct dm *dmp, int width, int height)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_reshape(dmp, width, height);
+}
+
+int
+dm_make_current(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_makeCurrent(dmp);
+}
+
+int
+dm_doevent(struct dm *dmp, void *clientData, void *eventPtr)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_doevent(dmp, clientData, eventPtr);
+}
+
+int
+dm_get_dirty(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_dirty;
 }
 
 void
-dm_put(dm *dmp)
-{
-    if (dmp && dmp != DM_NULL) {
-	bu_vls_free(&dmp->dm_pathName);
-	bu_vls_free(&dmp->dm_dName);
-	if (dmp->fbp) fb_put(dmp->fbp);
-	if (dmp->dm_put_internal)
-	    dmp->dm_put_internal(dmp);
-	BU_PUT(dmp, struct dm_internal);
-    }
-}
-
-void
-dm_set_null(dm *dmp)
+dm_set_dirty(struct dm *dmp, int i)
 {
     if (UNLIKELY(!dmp)) return;
-    *dmp = dm_null;
+    dmp->i->dm_dirty = i;
 }
 
-fb *
-dm_get_fb(dm *dmp)
+vect_t *
+dm_get_clipmin(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
-    if (dmp->fbp == FB_NULL)
-	dmp->dm_openFb(dmp);
-    return dmp->fbp;
+    if (UNLIKELY(!dmp)) return 0;
+    return  &(dmp->i->dm_clipmin);
 }
 
-void *
-dm_get_xvars(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return NULL;
-    return (void *)(dmp->dm_vars.pub_vars);
-}
 
-const char *
-dm_get_dm_name(dm *dmp)
+vect_t *
+dm_get_clipmax(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp)) return NULL;
-    return dmp->dm_name;
-}
-
-const char *
-dm_get_dm_lname(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return NULL;
-    return dmp->dm_lname;
+    if (UNLIKELY(!dmp)) return 0;
+    return  &(dmp->i->dm_clipmax);
 }
 
 int
-dm_get_width(dm *dmp)
+dm_get_bound_flag(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_width;
-}
-
-int
-dm_get_height(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_height;
+    return dmp->i->dm_getBoundFlag(dmp);
 }
 
 void
-dm_set_width(dm *dmp, int width)
+dm_set_bound_flag(struct dm *dmp, int boundf)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_width = width;
-}
-
-void
-dm_set_height(dm *dmp, int height)
-{
-    if (UNLIKELY(!dmp)) return;
-    dmp->dm_height = height;
-}
-
-
-int
-dm_get_type(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_type;
-}
-
-int
-dm_get_displaylist(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_displaylist;
+    dmp->i->dm_setBoundFlag(dmp, boundf);
 }
 
 fastf_t
-dm_get_aspect(dm *dmp)
+dm_get_bound(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_aspect;
-}
-
-int
-dm_get_fontsize(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_fontsize;
+    return dmp->i->dm_getBound(dmp);
 }
 
 void
-dm_set_fontsize(dm *dmp, int size)
+dm_set_bound(struct dm *dmp, fastf_t val)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_fontsize = size;
+    dmp->i->dm_setBound(dmp, val);
 }
 
 int
-dm_get_light_flag(dm *dmp)
+dm_set_win_bounds(struct dm *dmp, fastf_t *w)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_light;
+    return dmp->i->dm_setWinBounds(dmp, w);
+}
+
+int
+dm_get_stereo(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_stereo;
+}
+int
+dm_configure_win(struct dm *dmp, int force)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_configureWin(dmp, force);
+}
+
+struct bu_vls *
+dm_get_pathname(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return NULL;
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
+    return &(dmp->i->dm_pathName);
 }
 
 void
-dm_set_light_flag(dm *dmp, int val)
+dm_set_pathname(struct dm *dmp, const char *pname)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_light = val;
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
+    bu_vls_sprintf(&(dmp->i->dm_pathName), "%s", pname);
 }
 
-int
-dm_close(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_close(dmp);
-}
-
-unsigned char *
-dm_get_bg(dm *dmp)
+const char *
+dm_get_name(const struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return dmp->dm_bg;
-}
-
-int
-dm_set_bg(dm *dmp, unsigned char r, unsigned char g, unsigned char b)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setBGColor(dmp, r, g, b);
-}
-
-unsigned char *
-dm_get_fg(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return NULL;
-    return dmp->dm_fg;
-}
-
-int
-dm_set_fg(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setFGColor(dmp, r, g, b, strict, transparency);
-}
-
-int
-dm_reshape(dm *dmp, int width, int height)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_reshape(dmp, width, height);
-}
-
-int
-dm_make_current(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_makeCurrent(dmp);
-}
-
-vect_t *
-dm_get_clipmin(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return  &(dmp->dm_clipmin);
-}
-
-
-vect_t *
-dm_get_clipmax(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return  &(dmp->dm_clipmax);
-}
-
-int
-dm_get_bound_flag(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_boundFlag;
-}
-
-void
-dm_set_bound(dm *dmp, fastf_t val)
-{
-    if (UNLIKELY(!dmp)) return;
-    dmp->dm_bound = val;
-}
-
-int
-dm_set_win_bounds(dm *dmp, fastf_t *w)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setWinBounds(dmp, w);
-}
-
-int
-dm_get_stereo(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_stereo;
-}
-int
-dm_configure_win(dm *dmp, int force)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_configureWin(dmp, force);
+    return dmp->i->dm_name;
 }
 
 struct bu_vls *
-dm_get_pathname(dm *dmp)
+dm_get_dname(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return &(dmp->dm_pathName);
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
+    return &(dmp->i->dm_dName);
 }
 
-
-struct bu_vls *
-dm_get_dname(dm *dmp)
+const char *
+dm_get_graphics_system(const struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return &(dmp->dm_dName);
+    return dmp->i->graphics_system;
 }
 
 struct bu_vls *
-dm_get_tkname(dm *dmp)
+dm_get_tkname(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return &(dmp->dm_tkName);
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
+    return &(dmp->i->dm_tkName);
 }
 
 unsigned long
-dm_get_id(dm *dmp)
+dm_get_id(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_id;
+    return dmp->i->dm_id;
 }
 
 void
-dm_set_id(dm *dmp, unsigned long new_id)
+dm_set_id(struct dm *dmp, unsigned long new_id)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_id = new_id;
+    dmp->i->dm_id = new_id;
 }
 
 int
-dm_set_light(dm *dmp, int light)
+dm_get_light(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setLight(dmp, light);
-}
-
-void *
-dm_get_public_vars(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return NULL;
-    return dmp->dm_vars.pub_vars;
-}
-
-void *
-dm_get_private_vars(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return NULL;
-    return dmp->dm_vars.priv_vars;
+    return dmp->i->dm_getLight(dmp);
 }
 
 int
-dm_get_transparency(dm *dmp)
+dm_set_light(struct dm *dmp, int light)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_transparency;
+    return dmp->i->dm_setLight(dmp, light);
 }
 
 int
-dm_set_transparency(dm *dmp, int transparency)
+dm_get_transparency(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setTransparency(dmp, transparency);
+    return dmp->i->dm_getTransparency(dmp);
 }
 
 int
-dm_get_zbuffer(dm *dmp)
+dm_set_transparency(struct dm *dmp, int transparency)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_zbuffer;
+    return dmp->i->dm_setTransparency(dmp, transparency);
 }
 
 int
-dm_set_zbuffer(dm *dmp, int zbuffer)
+dm_get_zbuffer(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setZBuffer(dmp, zbuffer);
+    return dmp->i->dm_getZBuffer(dmp);
 }
 
 int
-dm_get_linewidth(dm *dmp)
+dm_set_zbuffer(struct dm *dmp, int zbuffer)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_lineWidth;
+    return dmp->i->dm_setZBuffer(dmp, zbuffer);
+}
+
+int
+dm_get_linewidth(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_lineWidth;
 }
 
 void
-dm_set_linewidth(dm *dmp, int linewidth)
+dm_set_linewidth(struct dm *dmp, int linewidth)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_lineWidth = linewidth;
+    dmp->i->dm_lineWidth = linewidth;
 }
 
 int
-dm_get_linestyle(dm *dmp)
+dm_get_linestyle(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_lineStyle;
+    return dmp->i->dm_lineStyle;
 }
 
 void
-dm_set_linestyle(dm *dmp, int linestyle)
+dm_set_linestyle(struct dm *dmp, int linestyle)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_lineStyle = linestyle;
+    dmp->i->dm_lineStyle = linestyle;
 }
 
 int
-dm_set_line_attr(dm *dmp, int width, int style)
+dm_set_line_attr(struct dm *dmp, int width, int style)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setLineAttr(dmp, width, style);
+    return dmp->i->dm_setLineAttr(dmp, width, style);
 }
 
 
 int
-dm_get_zclip(dm *dmp)
+dm_get_zclip(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_zclip;
+    return dmp->i->dm_getZClip(dmp);
 }
 
 void
-dm_set_zclip(dm *dmp, int zclip)
+dm_set_zclip(struct dm *dmp, int zclip)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_zclip = zclip;
+    dmp->i->dm_setZClip(dmp, zclip);
 }
 
 int
-dm_get_perspective(dm *dmp)
+dm_get_perspective(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_perspective;
+    return dmp->i->dm_perspective;
 }
 
 void
-dm_set_perspective(dm *dmp, fastf_t perspective)
+dm_set_perspective(struct dm *dmp, fastf_t perspective)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_perspective = perspective;
+    dmp->i->dm_perspective = perspective;
 }
 
 int
-dm_get_display_image(struct dm_internal *dmp, unsigned char **image)
+dm_get_display_image(struct dm *dmp, unsigned char **image, int flip, int alpha)
 {
     if (!dmp || !image) return 0;
-    return dmp->dm_getDisplayImage(dmp, image);
+    return dmp->i->dm_getDisplayImage(dmp, image, flip, alpha);
 }
 
 int
-dm_gen_dlists(struct dm_internal *dmp, size_t range)
+dm_gen_dlists(struct dm *dmp, size_t range)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_genDLists(dmp, range);
+    return dmp->i->dm_genDLists(dmp, range);
 }
 
 int
-dm_begin_dlist(struct dm_internal *dmp, unsigned int list)
+dm_begin_dlist(struct dm *dmp, unsigned int list)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_beginDList(dmp, list);
+    return dmp->i->dm_beginDList(dmp, list);
 }
 int
-dm_draw_dlist(struct dm_internal *dmp, unsigned int list)
+dm_draw_dlist(struct dm *dmp, unsigned int list)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawDList(list);
+    return dmp->i->dm_drawDList(list);
 }
 int
-dm_end_dlist(struct dm_internal *dmp)
+dm_end_dlist(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_endDList(dmp);
+    return dmp->i->dm_endDList(dmp);
 }
 int
-dm_free_dlists(struct dm_internal *dmp, unsigned int list, int range)
+dm_free_dlists(struct dm *dmp, unsigned int list, int range)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_freeDLists(dmp, list, range);
-}
-
-int
-dm_draw_vlist(struct dm_internal *dmp, struct bn_vlist *vp)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawVList(dmp, vp);
+    return dmp->i->dm_freeDLists(dmp, list, range);
 }
 
 int
-dm_draw_vlist_hidden_line(struct dm_internal *dmp, struct bn_vlist *vp)
+dm_draw_vlist(struct dm *dmp, struct bv_vlist *vp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawVListHiddenLine(dmp, vp);
+    return dmp->i->dm_drawVList(dmp, vp);
 }
+
 int
-dm_draw_begin(dm *dmp)
+dm_draw_vlist_hidden_line(struct dm *dmp, struct bv_vlist *vp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawBegin(dmp);
+    return dmp->i->dm_drawVListHiddenLine(dmp, vp);
 }
+
 int
-dm_draw_end(dm *dmp)
+dm_draw_obj(struct dm *dmp, struct bv_scene_obj *s){
+    if (UNLIKELY(!dmp)) return -1;
+    return dmp->i->dm_draw_obj(dmp, s);
+}
+
+int
+dm_draw_begin(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawEnd(dmp);
+    dmp->start_time = bu_gettime();
+    return dmp->i->dm_drawBegin(dmp);
 }
 int
-dm_normal(dm *dmp)
+dm_draw_end(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_normal(dmp);
+    return dmp->i->dm_drawEnd(dmp);
 }
 int
-dm_loadmatrix(dm *dmp, fastf_t *mat, int eye)
+dm_hud_begin(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_hud_begin(dmp);
+}
+int
+dm_hud_end(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_hud_end(dmp);
+}
+int
+dm_loadmatrix(struct dm *dmp, fastf_t *mat, int eye)
 {
     if (!dmp || !mat) return 0;
-    return dmp->dm_loadMatrix(dmp, mat, eye);
+    return dmp->i->dm_loadMatrix(dmp, mat, eye);
 }
 int
-dm_loadpmatrix(dm *dmp, fastf_t *mat)
+dm_loadpmatrix(struct dm *dmp, const fastf_t *mat)
 {
-    if (!dmp || !mat) return 0;
-    return dmp->dm_loadPMatrix(dmp, mat);
+    if (!dmp) return 0;
+    return dmp->i->dm_loadPMatrix(dmp, mat);
+}
+void
+dm_pop_pmatrix(struct dm *dmp)
+{
+    if (dmp)
+	dmp->i->dm_popPMatrix(dmp);
 }
 int
-dm_draw_string_2d(dm *dmp, const char *str, fastf_t x,  fastf_t y, int size, int use_aspect)
+dm_draw_string_2d(struct dm *dmp, const char *str, fastf_t x,  fastf_t y, int size, int use_aspect)
 {
     if (!dmp || !str) return 0;
-    return dmp->dm_drawString2D(dmp, str, x, y, size, use_aspect);
+    return dmp->i->dm_drawString2D(dmp, str, x, y, size, use_aspect);
 }
 int
-dm_draw_line_2d(dm *dmp, fastf_t x1, fastf_t y1_2d, fastf_t x2, fastf_t y2)
+dm_string_bbox_2d(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x,  fastf_t y, int size, int use_aspect)
+{
+    if (!dmp || !str) return 0;
+    return dmp->i->dm_String2DBBox(dmp, bmin, bmax, str, x, y, size, use_aspect);
+}
+int
+dm_draw_line_2d(struct dm *dmp, fastf_t x1, fastf_t y1_2d, fastf_t x2, fastf_t y2)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawLine2D(dmp, x1, y1_2d, x2, y2);
+    return dmp->i->dm_drawLine2D(dmp, x1, y1_2d, x2, y2);
 }
 int
-dm_draw_line_3d(dm *dmp, point_t pt1, point_t pt2)
+dm_draw_line_3d(struct dm *dmp, point_t pt1, point_t pt2)
 {
     if (UNLIKELY(!dmp)) return 0;
-    if (!!pt1 || !pt2) return 0;
-    return dmp->dm_drawLine3D(dmp, pt1, pt2);
+    return dmp->i->dm_drawLine3D(dmp, pt1, pt2);
 }
 int
-dm_draw_lines_3d(dm *dmp, int npoints, point_t *points, int sflag)
+dm_draw_lines_3d(struct dm *dmp, int npoints, point_t *points, int sflag)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawLines3D(dmp, npoints, points, sflag);
+    return dmp->i->dm_drawLines3D(dmp, npoints, points, sflag);
 }
 int
-dm_draw_point_2d(dm *dmp, fastf_t x, fastf_t y)
+dm_draw_point_2d(struct dm *dmp, fastf_t x, fastf_t y)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawPoint2D(dmp, x, y);
+    return dmp->i->dm_drawPoint2D(dmp, x, y);
 }
 int
-dm_draw_point_3d(dm *dmp, point_t pt)
+dm_draw_point_3d(struct dm *dmp, point_t pt)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawPoint3D(dmp, pt);
+    return dmp->i->dm_drawPoint3D(dmp, pt);
 }
 int
-dm_draw_points_3d(dm *dmp, int npoints, point_t *points)
+dm_draw_points_3d(struct dm *dmp, int npoints, point_t *points)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawPoints3D(dmp, npoints, points);
+    return dmp->i->dm_drawPoints3D(dmp, npoints, points);
 }
 int
-dm_draw(dm *dmp, struct bn_vlist *(*callback)(void *), void **data)
+dm_draw(struct dm *dmp, struct bv_vlist *(*callback)(void *), void **data)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_draw(dmp, callback, data);
+    return dmp->i->dm_draw(dmp, callback, data);
 }
 int
-dm_draw_obj(dm *dmp, struct display_list *obj)
+dm_draw_display_list(struct dm *dmp, struct display_list *obj)
 {
     if (!dmp || !obj) return 0;
-    return dmp->dm_draw_obj(dmp, obj);
+    return dmp->i->dm_draw_display_list(dmp, obj);
 }
 int
-dm_set_depth_mask(dm *dmp, int d_on)
+dm_set_depth_mask(struct dm *dmp, int d_on)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setDepthMask(dmp, d_on);
+    return dmp->i->dm_setDepthMask(dmp, d_on);
 }
 int
-dm_debug(dm *dmp, int lvl)
+dm_set_debug(struct dm *dmp, int lvl)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_debug(dmp, lvl);
+    return dmp->i->dm_debug(dmp, lvl);
 }
 int
-dm_logfile(dm *dmp, const char *filename)
+dm_get_debug(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_debugLevel;
+}
+int
+dm_logfile(struct dm *dmp, const char *filename)
 {
     if (!dmp || !filename) return 0;
-    return dmp->dm_logfile(dmp, filename);
-}
-
-fastf_t *
-dm_get_vp(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return NULL;
-    return dmp->dm_vp;
+    return dmp->i->dm_logfile(dmp, filename);
 }
 
 void
-dm_set_vp(dm *dmp, fastf_t *vp)
+dm_set_vp(struct dm *dmp, fastf_t *vp)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_vp = vp;
+    dmp->i->dm_vp = vp;
 }
 
 /* This is the generic "catch-all" hook that is used
@@ -867,20 +812,151 @@ dm_set_hook(const struct bu_structparse_map *map,
 }
 
 struct bu_structparse *
-dm_get_vparse(dm *dmp)
+dm_get_vparse(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return dmp->vparse;
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
+    return dmp->i->vparse;
 }
 
 void *
-dm_get_mvars(dm *dmp)
+dm_get_mvars(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    if (!dmp->m_vars) return (void *)dmp;
-    return dmp->m_vars;
+    BU_CKMAG(dmp, DM_MAGIC, "dm internal");
+    if (!dmp->i->m_vars) return (void *)dmp;
+    return dmp->i->m_vars;
 }
 
+void
+_bu_structparse_hash(XXH64_state_t *state, struct bu_structparse *parsetab, const char *base)
+{
+    const struct bu_structparse *sdp;
+    char *loc;
+    int lastoff = -1;
+    for (sdp = parsetab; sdp->sp_name != (char *)0; sdp++) {
+	/* Skip alternate keywords for same value */
+	if (lastoff == (int)sdp->sp_offset)
+	    continue;
+	lastoff = (int)sdp->sp_offset;
+	loc = (char *)(base + sdp->sp_offset);
+
+	switch (sdp->sp_fmt[1]) {
+	    case 'c':
+	    case 's':
+		if (sdp->sp_count == 1) {
+		    if (*loc != '\0')
+			XXH64_update(state, loc, strlen((char *)loc));
+		} else {
+		    XXH64_update(state, loc, strlen((char *)loc));
+		}
+		break;
+	    case 'V':
+		{
+		    struct bu_vls *vls = (struct bu_vls *)loc;
+		    XXH64_update(state, bu_vls_cstr(vls), bu_vls_strlen(vls));
+		}
+		break;
+	    case 'i':
+		{
+		    register size_t i = sdp->sp_count;
+		    register short *sp = (short *)loc;
+		    while (--i > 0)
+			XXH64_update(state, &(*sp++), sizeof(short));
+		}
+		break;
+	    case 'd':
+		{
+		    register size_t i = sdp->sp_count;
+		    register int *dp = (int *)loc;
+		    while (--i > 0)
+			XXH64_update(state, &(*dp++), sizeof(int));
+		}
+		break;
+	    case 'f':
+		{
+		    register size_t i = sdp->sp_count;
+		    register fastf_t *dp = (fastf_t *)loc;
+		    while (--i > 0)
+			XXH64_update(state, &(*dp++), sizeof(fastf_t));
+		}
+		break;
+	    case 'g':
+		{
+		    register size_t i = sdp->sp_count;
+		    register double *dp = (double *)loc;
+		    while (--i > 0) {
+			XXH64_update(state, &(*dp++), sizeof(fastf_t));
+		    }
+		    break;
+		}
+	    case 'x':
+		{
+		    register size_t i = sdp->sp_count;
+		    register int *dp = (int *)loc;
+		    while (--i > 0)
+			XXH64_update(state, &(*dp++), sizeof(int));
+		}
+		break;
+	    case 'p':
+		BU_ASSERT(sdp->sp_count == 1);
+		_bu_structparse_hash(state, (struct bu_structparse *)sdp->sp_offset, base);
+		break;
+	    default:
+		break;
+	}
+    }
+}
+
+unsigned long long
+dm_hash(struct dm *dmp)
+{
+    if (!dmp)
+	return 0;
+
+    XXH64_hash_t hash_val;
+    XXH64_state_t *state;
+    state = XXH64_createState();
+    if (!state)
+	return 0;
+    XXH64_reset(state, 0);
+
+    // Note:  deliberately not checking names - a rename doesn't change the dm.
+    // Also deliberately not checking dirty flag - that's usually what we're
+    // using this hash to set or not set.
+    XXH64_update(state, &dmp->i->dm_stereo, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_width, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_height, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_lineWidth, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_lineStyle, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_aspect, sizeof(fastf_t));
+    XXH64_update(state, &dmp->i->dm_bg1, sizeof(unsigned char[3]));
+    XXH64_update(state, &dmp->i->dm_bg2, sizeof(unsigned char[3]));
+    XXH64_update(state, &dmp->i->dm_fg, sizeof(unsigned char[3]));
+    XXH64_update(state, &dmp->i->dm_clipmin, sizeof(vect_t));
+    XXH64_update(state, &dmp->i->dm_clipmax, sizeof(vect_t));
+    XXH64_update(state, &dmp->i->dm_perspective, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_depthMask, sizeof(int));
+    XXH64_update(state, &dmp->i->dm_fontsize, sizeof(int));
+
+    if (dmp->i->fbp) {
+	// TODO - check for framebuffer changes as well...
+    }
+
+    // Also check for changes in backend specific values by iterating
+    // using the structparse.
+    struct bu_structparse *pt = dm_get_vparse(dmp);
+    void *mvars = dm_get_mvars(dmp);
+    if (pt && mvars) {
+	_bu_structparse_hash(state, pt, (const char *)mvars);
+    }
+
+
+    hash_val = XXH64_digest(state);
+    XXH64_freeState(state);
+
+    return (unsigned long long)hash_val;
+}
 
 /* Routines for drawing based on a list of display_list
  * structures.  This will probably need to be a struct dm
@@ -888,8 +964,8 @@ dm_get_mvars(dm *dmp)
  * backends, but as a first step get it out of MGED
  * and into libdm. */
 static int
-dm_drawSolid(dm *dmp,
-	     struct solid *sp,
+dm_drawSolid(struct dm *dmp,
+	     struct bv_scene_obj *sp,
 	     short r,
 	     short g,
 	     short b,
@@ -898,14 +974,17 @@ dm_drawSolid(dm *dmp,
 {
     int ndrawn = 0;
 
-    if (sp->s_cflag) {
+    if (UNLIKELY(!dmp))
+	return ndrawn;
+
+    if (sp->s_old.s_cflag) {
 	if (!DM_SAME_COLOR(r, g, b, (short)gdc[0], (short)gdc[1], (short)gdc[2])) {
-	    dm_set_fg(dmp, (short)gdc[0], (short)gdc[1], (short)gdc[2], 0, sp->s_transparency);
+	    dm_set_fg(dmp, (short)gdc[0], (short)gdc[1], (short)gdc[2], 0, sp->s_os.transparency);
 	    DM_COPY_COLOR(r, g, b, (short)gdc[0], (short)gdc[1], (short)gdc[2]);
 	}
     } else {
 	if (!DM_SAME_COLOR(r, g, b, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2])) {
-	    dm_set_fg(dmp, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2], 0, sp->s_transparency);
+	    dm_set_fg(dmp, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2], 0, sp->s_os.transparency);
 	    DM_COPY_COLOR(r, g, b, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2]);
 	}
     }
@@ -915,9 +994,16 @@ dm_drawSolid(dm *dmp,
 	sp->s_flag = UP;
 	ndrawn++;
     } else {
-	if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == BRLCAD_OK) {
-	    sp->s_flag = UP;
-	    ndrawn++;
+	if (sp->s_os.s_dmode == 4) {
+	    if (dm_draw_vlist_hidden_line(dmp, (struct bv_vlist *)&sp->s_vlist) == BRLCAD_OK) {
+	    	sp->s_flag = UP;
+		ndrawn++;
+	    }
+	} else {
+	    if (dm_draw_vlist(dmp, (struct bv_vlist *)&sp->s_vlist) == BRLCAD_OK) {
+		sp->s_flag = UP;
+		ndrawn++;
+	    }
 	}
     }
 
@@ -926,7 +1012,7 @@ dm_drawSolid(dm *dmp,
 
 
 int
-dm_draw_display_list(dm *dmp,
+dm_draw_head_dl(struct dm *dmp,
 		     struct bu_list *dl,
 		     fastf_t transparency_threshold,
 		     fastf_t inv_viewsize,
@@ -941,41 +1027,44 @@ dm_draw_display_list(dm *dmp,
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bv_scene_obj *sp;
     fastf_t ratio;
     int ndrawn = 0;
     int opaque = 0;
     int opaque_only = EQUAL(transparency_threshold, 1.0);
 
+    if (UNLIKELY(!dmp))
+	return 0;
+
     gdlp = BU_LIST_NEXT(display_list, dl);
     while (BU_LIST_NOT_HEAD(gdlp, dl)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (solids_down) sp->s_flag = DOWN;              /* Not drawn yet */
 
 	    /* If part of object edit, will be drawn below */
 	    if ((sp->s_iflag == UP && !draw_edit) || (sp->s_iflag != UP && draw_edit))
 		continue;
 
-	    opaque = EQUAL(sp->s_transparency, 1.0);
+	    opaque = EQUAL(sp->s_os.transparency, 1.0);
 	    if (opaque_only) {
 		if (!opaque) {
 		    continue;
 		}
 	    } else {
 		/* transparent only */
-		if (opaque || !(sp->s_transparency > transparency_threshold || EQUAL(sp->s_transparency, transparency_threshold))) {
+		if (opaque || !(sp->s_os.transparency > transparency_threshold || EQUAL(sp->s_os.transparency, transparency_threshold))) {
 		    continue;
 		}
 	    }
 
-	    if (dm_get_bound_flag(dmp)) {
+	    if (dm_get_bound_flag(dmp) && !sp->s_displayobj) {
 		ratio = sp->s_size * inv_viewsize;
 
 		/*
 		 * Check for this object being bigger than
-		 * dmp->dm_bound * the window size, or smaller than a speck.
+		 * dmp->i->dm_bound * the window size, or smaller than a speck.
 		 */
 		if (ratio < 0.001)
 		    continue;
@@ -992,7 +1081,7 @@ dm_draw_display_list(dm *dmp,
 		    ndrawn++;
 		} else {
 		    /* draw in immediate mode */
-		    if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == BRLCAD_OK) {
+		    if (dm_draw_vlist(dmp, (struct bv_vlist *)&sp->s_vlist) == BRLCAD_OK) {
 			sp->s_flag = UP;
 			ndrawn++;
 		    }
@@ -1004,58 +1093,6 @@ dm_draw_display_list(dm *dmp,
     }
 
     return ndrawn;
-}
-
-struct bu_vls *
-dm_list_types(const char separator)
-{
-    struct bu_vls *list;
-    char sep = ' ';
-    if (separator) sep = separator;
-    BU_GET(list, struct bu_vls);
-    bu_vls_init(list);
-
-    bu_vls_trunc(list, 0);
-
-#ifdef DM_OSGL
-    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "osgl");
-#endif /* DM_OSGL*/
-
-#ifdef DM_WGL
-    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "wgl");
-#endif /* DM_WGL */
-
-#ifdef DM_OGL
-    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "ogl");
-#endif /* DM_OGL */
-
-#ifdef DM_QT
-    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "Qt");
-#endif /* DM_QT */
-
-#ifdef DM_X
-    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "X");
-#endif /* DM_X */
-
-#ifdef DM_X
-    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "tk");
-#endif /* DM_X */
-
-    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "txt");
-    bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "plot");
-    bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "ps");
-    bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "null");
-    return list;
 }
 
 /*

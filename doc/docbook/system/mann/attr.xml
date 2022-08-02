@@ -137,7 +137,7 @@ objects.
   <example><title>Assigns an attribute to an object.</title>
     <variablelist>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt> <userinput>attr set region_1 material_id 10</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>attr set region_1 material_id 10</userinput></term>
 	<listitem>
 	  <para>
 	    Assigns an attribute name "material_id" to <emphasis>region_1</emphasis>. Its
@@ -151,7 +151,7 @@ objects.
   <example><title>Assigns an attribute (with embedded white space in its value) to an object.</title>
     <variablelist>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt> <userinput>attr set region_1 comment {This is a comment for region_1}</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>attr set region_1 comment {This is a comment for region_1}</userinput></term>
 	<listitem>
 	  <para>
 	    Assigns an attribute named "comment" to <emphasis>region_1</emphasis>. Its
@@ -165,7 +165,7 @@ objects.
   <example><title>List all the attributes for an object</title>
     <variablelist>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt> <userinput>attr show region_1 comment</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>attr show region_1 comment</userinput></term>
     <listitem>
 	<para>Lists all the attributes for <emphasis>region_1</emphasis>.
 	</para>
@@ -176,7 +176,7 @@ objects.
 
   <example><title>List all the attribute types present on one or more objects in a database</title>
     <para>
-	<prompt>mged&gt;</prompt> <userinput>attr list *</userinput>
+	<prompt>mged&gt; </prompt><userinput>attr list *</userinput>
 	<literallayout class="normal">
 aircode
 los
@@ -197,7 +197,7 @@ units
 
   <example><title>List all the material_id attribute values in use in a database</title>
     <para>
-	<prompt>mged&gt;</prompt> <userinput>attr list * material_id *</userinput>
+	<prompt>mged&gt; </prompt><userinput>attr list * material_id *</userinput>
 	<literallayout class="normal">
 material_id=1
 material_id=2
@@ -227,7 +227,7 @@ material_id=20
 
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
     <para>
-      This software is Copyright (c) 2008-2020 United States
+      This software is Copyright (c) 2008-2022 United States
       Government as represented by the U.S. Army Research Laboratory.
     </para>
 </refsection>

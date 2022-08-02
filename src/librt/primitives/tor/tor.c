@@ -1,7 +1,7 @@
 /*                         T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -588,6 +588,9 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     vect_t cor_pprime;	/* new ray origin */
     fastf_t *cor_proj;
 
+    if (!stp || !(*stp) || !rp || !segp || !ap)
+	return;
+
     /* Allocate space for polys and roots */
     C = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t), "tor bn_poly_t");
     val = (bn_complex_t (*)[4])bu_malloc(n * sizeof(bn_complex_t) * 4,
@@ -1009,18 +1012,18 @@ static int
 tor_ellipse_points(
 	vect_t ellipse_A,
 	vect_t ellipse_B,
-	const struct rt_view_info *info)
+	fastf_t point_spacing)
 {
     fastf_t avg_radius, circumference;
 
     avg_radius = (MAGNITUDE(ellipse_A) + MAGNITUDE(ellipse_B)) / 2.0;
     circumference = M_2PI * avg_radius;
 
-    return circumference / info->point_spacing;
+    return circumference / point_spacing;
 }
 
 int
-rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     vect_t a, b, tor_a, tor_b, tor_h, center;
     fastf_t mag_a, mag_b, mag_h;
@@ -1028,10 +1031,13 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     fastf_t radian, radian_step;
     int i, num_ellipses, points_per_ellipse;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     tor = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tor);
+
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
 
     VMOVE(tor_a, tor->a);
     mag_a = tor->r_a;
@@ -1048,42 +1054,42 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VJOIN1(a, tor_a, mag_h / mag_a, tor_a);
     VJOIN1(b, tor_b, mag_h / mag_b, tor_b);
 
-    points_per_ellipse = tor_ellipse_points(a, b, info);
+    points_per_ellipse = tor_ellipse_points(a, b, point_spacing);
     if (points_per_ellipse < 6) {
 	points_per_ellipse = 6;
     }
 
-    plot_ellipse(info->vhead, tor->v, a, b, points_per_ellipse);
+    plot_ellipse(vlfree, vhead, tor->v, a, b, points_per_ellipse);
 
     /* plot inner circular contour */
     VJOIN1(a, tor_a, -1.0 * mag_h / mag_a, tor_a);
     VJOIN1(b, tor_b, -1.0 * mag_h / mag_b, tor_b);
 
-    points_per_ellipse = tor_ellipse_points(a, b, info);
+    points_per_ellipse = tor_ellipse_points(a, b, point_spacing);
     if (points_per_ellipse < 6) {
 	points_per_ellipse = 6;
     }
 
-    plot_ellipse(info->vhead, tor->v, a, b, points_per_ellipse);
+    plot_ellipse(vlfree, vhead, tor->v, a, b, points_per_ellipse);
 
     /* Draw parallel circles to show the primitive's most extreme points along
      * +h/-h.
      */
-    points_per_ellipse = tor_ellipse_points(tor_a, tor_b, info);
+    points_per_ellipse = tor_ellipse_points(tor_a, tor_b, point_spacing);
     if (points_per_ellipse < 6) {
 	points_per_ellipse = 6;
     }
 
     VADD2(center, tor->v, tor_h);
-    plot_ellipse(info->vhead, center, tor_a, tor_b, points_per_ellipse);
+    plot_ellipse(vlfree, vhead, center, tor_a, tor_b, points_per_ellipse);
 
     VJOIN1(center, tor->v, -1.0, tor_h);
-    plot_ellipse(info->vhead, center, tor_a, tor_b, points_per_ellipse);
+    plot_ellipse(vlfree, vhead, center, tor_a, tor_b, points_per_ellipse);
 
     /* draw circular radial cross sections */
     VMOVE(b, tor_h);
 
-    num_ellipses = primitive_curve_count(ip, info);
+    num_ellipses = primitive_curve_count(ip, tol, v->gv_s->curve_scale, s_size);
     if (num_ellipses < 3) {
 	num_ellipses = 3;
     }
@@ -1097,7 +1103,7 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	VUNITIZE(a);
 	VSCALE(a, a, mag_h);
 
-	plot_ellipse(info->vhead, center, a, b, points_per_ellipse);
+	plot_ellipse(vlfree, vhead, center, a, b, points_per_ellipse);
 
 	radian += radian_step;
     }
@@ -1112,7 +1118,7 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
  * ti.a, ti.b perpendicular, to CENTER of torus (for top, bottom)
  */
 int
-rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     fastf_t alpha;
     fastf_t beta;
@@ -1132,10 +1138,9 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
-
-    rel = primitive_get_absolute_tolerance(ttol, 2.0 * (tip->r_a + tip->r_h));
 
     if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
 	rel = 0.0;		/* none */
@@ -1144,6 +1149,9 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	 * by scaling w.r.t. the torus diameter.
 	 */
 	rel = ttol->rel * 2 * (tip->r_a+tip->r_h);
+
+	// TODO - should we be using this instead of the above?
+	// rel = primitive_get_absolute_tolerance(ttol, 2.0 * (tip->r_a + tip->r_h));
     }
     /* Take tighter of two (absolute) tolerances */
     if (ttol->abs <= 0.0) {
@@ -1209,17 +1217,17 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     /* Draw lengthwise (around outside rim) */
     for (w = 0; w < nw; w++) {
 	len = nlen-1;
-	RT_ADD_VLIST(vhead, TOR_PTA(w, len), BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, TOR_PTA(w, len), BV_VLIST_LINE_MOVE);
 	for (len = 0; len < nlen; len++) {
-	    RT_ADD_VLIST(vhead, TOR_PTA(w, len), BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, TOR_PTA(w, len), BV_VLIST_LINE_DRAW);
 	}
     }
     /* Draw around the "width" (1 cross section) */
     for (len = 0; len < nlen; len++) {
 	w = nw-1;
-	RT_ADD_VLIST(vhead, TOR_PTA(w, len), BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, TOR_PTA(w, len), BV_VLIST_LINE_MOVE);
 	for (w = 0; w < nw; w++) {
-	    RT_ADD_VLIST(vhead, TOR_PTA(w, len), BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, TOR_PTA(w, len), BV_VLIST_LINE_DRAW);
 	}
     }
 
@@ -1436,7 +1444,7 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip->magic = RT_TOR_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    flip_fastf_float(vec, rp->s.s_values, 4, dbip->dbi_version < 0 ? 1 : 0);
+    flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->dbi_version < 0) ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1765,6 +1773,55 @@ rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
     RT_TOR_CK_MAGIC(tip);
     VMOVE(*cent,tip->v);
 }
+
+void
+rt_tor_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!ps || !ip)
+	return;
+
+    struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tor);
+
+    // Set up the containers
+    struct bv_label *l[4];
+    for (int i = 0; i < 4; i++) {
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
+	struct bv_label *la;
+	BU_GET(la, struct bv_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+    }
+
+    // Do the specific data assignments for each label
+    fastf_t r3, r4;
+    vect_t adir;
+    bn_vec_ortho(adir, tor->h);
+    r3 = tor->r_a - tor->r_h;
+    r4 = tor->r_a + tor->r_h;
+
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, tor->v);
+
+    bu_vls_sprintf(&l[1]->label, "I");
+    VJOIN1(l[1]->p, tor->v, r3, adir);
+
+    bu_vls_sprintf(&l[2]->label, "O");
+    VJOIN1(l[2]->p, tor->v, r4, adir);
+
+    bu_vls_sprintf(&l[3]->label, "H");
+    VJOIN1(l[3]->p, tor->v, tor->r_a, adir);
+    VADD2(l[3]->p, l[3]->p, tor->h);
+}
+
 
 /*
  * Local Variables:

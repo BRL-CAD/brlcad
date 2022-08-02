@@ -1,7 +1,7 @@
 /*                           R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -137,6 +137,7 @@ get_args(size_t argc, const char **argv, FILE **ifp, FILE **ofp, double *angle)
 
     if (BU_STR_EQUAL(in_file_name, "-")) {
 	*ifp = stdin;
+	setmode(fileno(*ifp), O_BINARY);
     } else {
 	*ifp = fopen(in_file_name, "rb");
 	if (*ifp == NULL) {

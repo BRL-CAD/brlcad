@@ -26,6 +26,14 @@ set(LIBICV_SOURCES
 
 BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "libbu;libbn;${PNG_LIBRARIES};${NETPBM_LIBRARY}")
 set_target_properties(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+set(stgts png netpbm)
+foreach(ST ${stgts})
+  if (TARGET ${ST}_stage)
+    add_dependencies(libicv ${ST}_stage)
+  endif (TARGET ${ST}_stage)
+endforeach(ST ${stgts})
+
 if (HIDE_INTERNAL_SYMBOLS)
   if (TARGET netpbm OR HIDE_INTERNAL_SYMBOLS_EXT)
     set_property(TARGET libicv APPEND PROPERTY COMPILE_DEFINITIONS "NETPBM_DLL_IMPORTS")

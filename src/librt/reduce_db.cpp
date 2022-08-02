@@ -1,7 +1,7 @@
 /*                   R E D U C E _ D B . C P P
  * BRL-CAD
  *
- * Copyright (c) 2016-2020 United States Government as represented by
+ * Copyright (c) 2016-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -336,6 +336,8 @@ Combination::Combination(db_i &db, directory &dir) :
 
     for (std::size_t i = 0; i < avs.count; ++i)
 	m_attributes[avs.avp[i].name] = avs.avp[i].value;
+
+    bu_avs_free(&avs);
 }
 
 

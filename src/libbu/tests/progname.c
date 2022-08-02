@@ -1,7 +1,7 @@
 /*                 P R O G N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../whereami.h"
+
 #include "bu.h"
 
 
@@ -35,12 +37,20 @@ main(int ac, char *av[])
     const char *ans;
     const char *res;
     char *tbasename;
+    int length, dirname_length;
+    char *plhs = NULL;
 
     bu_setprogname(av[0]);
 
     if (ac > 1) {
 	fprintf(stderr, "Usage: %s\n", av[0]);
 	return 1;
+    }
+    length = wai_getExecutablePath(NULL, 0, &dirname_length);
+    if (length > 0) {
+	plhs = (char *)bu_calloc(length+1, sizeof(char), "program path");
+	wai_getExecutablePath(plhs, length, &dirname_length);
+	plhs[length] = '\0';
     }
 
     tbasename = (char *)bu_calloc(strlen(av[0]), sizeof(char), "bu_progname basename");
@@ -99,21 +109,25 @@ main(int ac, char *av[])
 	fail++;
     }
 
-    bu_free(tbasename, "bu_progname basename");
     /* CASE 4: set full, then get */
     label = "CASE 4";
     bu_setprogname(av[0]);
-    bu_setprogname(bu_argv0_full_path());
+    bu_setprogname(plhs);
     res = bu_getprogname();
-    ans = bu_argv0_full_path();
-    tbasename = (char *)bu_calloc(strlen(bu_argv0_full_path()), sizeof(char), "bu_progname basename");
-    bu_path_basename(ans, tbasename);
-
-    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, tbasename)) {
-	printf("%s: %24s -> %24s [PASSED]\n", label, ans, res);
-    } else {
-	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
+    ans = plhs;
+    if (!plhs || !strlen(plhs)) {
+	printf("plhs string unavailable for CASE 4 [FAIL]\n");
 	fail++;
+    } else {
+	tbasename = (char *)bu_calloc(strlen(plhs), sizeof(char), "bu_progname basename");
+	bu_path_basename(ans, tbasename);
+
+	if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, tbasename)) {
+	    printf("%s: %24s -> %24s [PASSED]\n", label, ans, res);
+	} else {
+	    printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
+	    fail++;
+	}
     }
 
     /* CASE 5: set 2x, then get */
@@ -132,7 +146,7 @@ main(int ac, char *av[])
 
     /* CASE 6: set 2x full path, then get */
     label = "CASE 6";
-    bu_setprogname(bu_argv0_full_path());
+    bu_setprogname(plhs);
     bu_setprogname("/monkey/see/monkey/do");
     res = bu_getprogname();
     ans = "do";
@@ -147,29 +161,25 @@ main(int ac, char *av[])
     /* CASE 7: get the full path */
     label = "CASE 7";
     bu_setprogname(av[0]);
-    res = bu_argv0_full_path();
-    bu_path_basename(res, tbasename);
-
-    if (res[0] == BU_DIR_SEPARATOR || (strlen(res) > 3 && res[1] == ':' && (res[2] == BU_DIR_SEPARATOR || res[2] == '/'))) {
-	printf("%s: %24s -> %24s [PASSED]\n", label, tbasename, res);
-    } else {
-	printf("%24s -> %24s (should start with %c) [FAIL]\n", label, res, BU_DIR_SEPARATOR);
+    if (!plhs) {
+	printf("plhs string unavailable for CASE 4 [FAIL]\n");
 	fail++;
-    }
-
-    /* CASE 8: make sure bu_getprogname leaves a full path */
-    label = "CASE 8";
-    bu_setprogname("/monkey/see/monkey/do");
-    res = bu_getprogname();
-    res = bu_argv0_full_path();
-    if (BU_STR_EQUAL(res, "/monkey/see/monkey/do")) {
-	printf("%s: %24s -> %24s [PASSED]\n", label, res, res);
     } else {
-	printf("%24s -> %24s (should match %s) [FAIL]\n", label, res, "/monkey/see/monkey/do");
-	fail++;
+
+	res = plhs;
+	bu_path_basename(res, tbasename);
+
+	if (res[0] == BU_DIR_SEPARATOR || (strlen(res) > 3 && res[1] == ':' && (res[2] == BU_DIR_SEPARATOR || res[2] == '/'))) {
+	    printf("%s: %24s -> %24s [PASSED]\n", label, tbasename, res);
+	} else {
+	    printf("%24s -> %24s (should start with %c) [FAIL]\n", label, res, BU_DIR_SEPARATOR);
+	    fail++;
+	}
     }
 
     bu_free(tbasename, "bu_progname basename");
+    bu_free(plhs, "wai Executable Path");
+
     return fail;
 }
 

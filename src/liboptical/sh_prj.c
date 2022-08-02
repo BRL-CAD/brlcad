@@ -1,7 +1,7 @@
 /*                        S H _ P R J . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 #define prj_MAGIC 0x70726a00	/* "prj" */
@@ -116,7 +116,7 @@ img_source_hook(const struct bu_structparse *UNUSED(sdp),
  * either from a file or from a db object.
  */
 HIDDEN int
-img_load_datasource(struct img_specific *image, struct db_i *dbInstance, const unsigned long int size)
+img_load_datasource(struct img_specific *image, struct db_i *dbInstance, const size_t size)
 {
     struct directory *dirEntry;
 
@@ -188,9 +188,9 @@ img_load_datasource(struct img_specific *image, struct db_i *dbInstance, const u
 	    return -1;				/* FAIL */
 
 	if (image->i_data->buflen < size) {
-	    bu_log("\nWARNING: %s needs %lu bytes, file only has %lu\n", bu_vls_addr(&image->i_name), size, image->i_data->buflen);
+	    bu_log("\nWARNING: %s needs %zu bytes, file only has %zu\n", bu_vls_addr(&image->i_name), size, image->i_data->buflen);
 	} else if (image->i_data->buflen > size) {
-	    bu_log("\nWARNING: Image file size is larger than specified image size\n\tInput File: %zu pixels\n\tSpecified Image Size: %lu pixels\n...continuing to load using image subsection...", image->i_data->buflen, size);
+	    bu_log("\nWARNING: Image file size is larger than specified image size\n\tInput File: %zu pixels\n\tSpecified Image Size: %zu pixels\n...continuing to load using image subsection...", image->i_data->buflen, size);
 	}
 
 	image->i_img = (unsigned char *) image->i_data->buf;
@@ -600,7 +600,7 @@ prj_free(void *cp)
 	img_sp->i_data = (struct bu_mapped_file *)NULL; /* sanity */
 	if (img_sp->i_binunifp) rt_binunif_free(img_sp->i_binunifp);
 	img_sp->i_binunifp = (struct rt_binunif_internal *)NULL; /* sanity */
-	bu_vls_vlsfree(&img_sp->i_name);
+	bu_vls_free(&img_sp->i_name);
 
 	BU_LIST_DEQUEUE(&img_sp->l);
 	BU_PUT(img_sp, struct img_specific);
@@ -764,7 +764,7 @@ prj_render(struct application *ap, const struct partition *pp, struct shadework 
 	/* project corner points into plane of hit point */
 	for (i = 0; i < CORNER_PTS; i++) {
 	    dist = 0.0;
-	    status = bn_isect_line3_plane(
+	    status = bg_isect_line3_plane(
 		&dist,
 		r_pe.corner[i].r_pt,
 		r_pe.corner[i].r_dir,

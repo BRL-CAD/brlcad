@@ -1,7 +1,7 @@
 /*			  M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -577,11 +577,12 @@ rt_metaball_uv(struct application *ap, struct soltab *stp, struct hit *hitp, str
     vect_t work, pprime;
     fastf_t r;
 
-    if (ap) RT_CK_APPLICATION(ap);
-    if (stp) RT_CK_SOLTAB(stp);
-    if (hitp) RT_CK_HIT(hitp);
-    if (!uvp) return;
-    if (!metaball) return;
+    if (!ap || !hitp || !uvp || !metaball || !stp)
+	return;
+
+    RT_CK_APPLICATION(ap);
+    RT_CK_HIT(hitp);
+    RT_CK_SOLTAB(stp);
 
     /* stuff stolen from sph */
     VSUB2(work, hitp->hit_point, stp->st_center);
@@ -617,7 +618,7 @@ rt_metaball_free(register struct soltab *stp)
 
 
 void
-rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
+rt_metaball_plot_sph(struct bu_list *vlfree, struct bu_list *vhead, point_t *center, fastf_t radius)
 {
     fastf_t top[16*3], middle[16*3], bottom[16*3];
     point_t a, b, c;
@@ -632,17 +633,17 @@ rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
     rt_ell_16pnts(bottom, *center, b, c);
     rt_ell_16pnts(middle, *center, a, c);
 
-    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    for (i = 0; i < 16; i++) BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    for (i = 0; i < 16; i++) BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, &middle[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    for (i = 0; i < 16; i++) BV_ADD_VLIST(vlfree, vhead, &middle[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
 }
 
 
 int
-rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_metaball_internal *mb;
     struct wdb_metaball_pnt *mbpt;
@@ -651,6 +652,7 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
     rad = rt_metaball_get_bounding_sphere(&bsc, mb->threshold, mb);
@@ -658,10 +660,10 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     if (rad<0)
 	return 0;
 #if PLOT_THE_BIG_BOUNDING_SPHERE
-    rt_metaball_plot_sph(vhead, &bsc, rad);
+    rt_metaball_plot_sph(vlfree, vhead, &bsc, rad);
 #endif
     for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &mb->metaball_ctrl_head))
-	rt_metaball_plot_sph(vhead, &mbpt->coord, mbpt->fldstr / mb->threshold);
+	rt_metaball_plot_sph(vlfree, vhead, &mbpt->coord, mbpt->fldstr / mb->threshold);
     return 0;
 }
 
@@ -683,7 +685,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    metaball_count = ntohl(*(uint32_t *)ep->ext_buf);
+    metaball_count = bu_ntohl(*(uint32_t *)ep->ext_buf, 0, UINT_MAX - 1);
     buf = (double *)bu_malloc((metaball_count*5+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_import5: buf");
     bu_cv_ntohd((unsigned char *)buf, (unsigned char *)ep->ext_buf+2*SIZEOF_NETWORK_LONG, metaball_count*5+1);
 
@@ -695,7 +697,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     mb->magic = RT_METABALL_INTERNAL_MAGIC;
-    mb->method = ntohl(*(uint32_t *)(ep->ext_buf + SIZEOF_NETWORK_LONG));
+    mb->method = bu_ntohl(*(uint32_t *)(ep->ext_buf + SIZEOF_NETWORK_LONG), 0, UINT_MAX - 1);
     mb->threshold = buf[0];
 
     BU_LIST_INIT(&mb->metaball_ctrl_head);

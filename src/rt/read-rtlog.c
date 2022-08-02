@@ -1,7 +1,7 @@
 /*                    R E A D - R T L O G . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2020 United States Government as represented by
+ * Copyright (c) 1991-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -135,7 +135,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 
 	arg_ptr = NULL;
 
-	for (i = 0; i < BUFF_LEN; i++) {
+	for (i = 0; i < BUFF_LEN - 1; i++) {
 	    /* Check to make sure the first char. is not a NULL;
 	     * if it is, go back for a new line.
 	     */

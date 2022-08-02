@@ -1,7 +1,7 @@
 /*               B O T _ W I R E F R A M E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -120,11 +120,11 @@ face_area(struct rt_bot_internal *bot, size_t face_num)
  *   and creating wireframe edges
  **********************************************************/
 extern "C" int
-rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(v), fastf_t UNUSED(s_size))
 {
     struct rt_bot_internal *bot;
     RT_CK_DB_INTERNAL(ip);
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
     vect_t gvects[6];
@@ -298,16 +298,16 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     for (unsigned int j = 0; j < bot->num_faces; j++) {
 	if (vert_edge_status[bot->faces[j*3+0]] &&  vert_edge_status[bot->faces[j*3+1]]) {
-	    RT_ADD_VLIST(info->vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(info->vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BV_VLIST_LINE_DRAW);
 	}
         if (vert_edge_status[bot->faces[j*3+1]] &&  vert_edge_status[bot->faces[j*3+2]]) {
-	    RT_ADD_VLIST(info->vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(info->vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BV_VLIST_LINE_DRAW);
 	}
 	if (vert_edge_status[bot->faces[j*3+2]] &&  vert_edge_status[bot->faces[j*3+0]]) {
-	    RT_ADD_VLIST(info->vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(info->vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BV_VLIST_LINE_DRAW);
 	}
     }
 

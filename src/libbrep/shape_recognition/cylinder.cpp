@@ -1,7 +1,7 @@
 /*  S H A P E _ R E C O G N I T I O N _ C Y L I N D E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2020 United States Government as represented by
+ * Copyright (c) 2019-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -120,7 +120,13 @@ cyl_implicit_plane(const ON_Brep *brep, int lc, int *le, ON_SimpleArray<ON_Plane
 	    verts.insert(edge->m_vi[0]);
 	    verts.insert(edge->m_vi[1]);
 	}
+
+	// For a plane we need at least 3 unique points
+	if (verts.size() < 3)
+	    return -1;
+
 	ON_3dPointArray points;
+	points.SetCapacity(3);
 	for (c_it = verts.begin(); c_it != verts.end(); c_it++) {
 	    const ON_BrepVertex *v = &(brep->m_V[*c_it]);
 	    points.Append(v->Point());

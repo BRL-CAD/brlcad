@@ -2,7 +2,7 @@
  * BRL-CAD
  *
  * Copyright (c) 2013 Tom Browder
- * Copyright (c) 2017-2020 United States Government as represented by the U.S. Army
+ * Copyright (c) 2017-2022 United States Government as represented by the U.S. Army
  * Research Laboratory.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -42,13 +42,13 @@
 #include <stdexcept>
 
 /* GDAL headers */
-#include <gdal.h>
-#include <gdalwarper.h>
-#include <gdal_utils.h>
-#include <cpl_conv.h>
-#include <cpl_string.h>
-#include <cpl_multiproc.h>
-#include <ogr_spatialref.h>
+#include "gdal.h"
+#include "gdalwarper.h"
+#include "gdal_utils.h"
+#include "cpl_conv.h"
+#include "cpl_string.h"
+#include "cpl_multiproc.h"
+#include "ogr_spatialref.h"
 #include "vrtdataset.h"
 
 #include "bu/app.h"
@@ -60,6 +60,9 @@
 #include "gcv/api.h"
 #include "gcv/util.h"
 #include "wdb.h"
+
+// Function based on gdalinfo code
+extern int gdal_ll(GDALDatasetH hDataset, double *lat_center, double *long_center);
 
 struct gdal_read_options
 {
@@ -94,7 +97,8 @@ HIDDEN int
 get_dataset_info(GDALDatasetH hDataset)
 {
     char *gdal_info = GDALInfo(hDataset, NULL);
-    if (gdal_info) bu_log("%s", gdal_info);
+    if (gdal_info)
+	bu_log("%s", gdal_info);
     CPLFree(gdal_info);
     return 0;
 }
@@ -105,87 +109,18 @@ gdal_can_read(const char *data)
     GDALDatasetH hDataset;
     GDALAllRegister();
 
-    if (!data) return 0;
+    if (!data)
+	return 0;
 
-    if (!bu_file_exists(data,NULL)) return 0;
+    if (!bu_file_exists(data,NULL))
+	return 0;
 
     hDataset = GDALOpenEx(data, GDAL_OF_READONLY | GDAL_OF_RASTER , NULL, NULL, NULL);
 
-    if (!hDataset) return 0;
+    if (!hDataset)
+	return 0;
 
     GDALClose(hDataset);
-
-    return 1;
-}
-
-/* Pull the latitude and longitude out of the dataset.  Based on gdalinfo code, so
- * this function (gdal_ll) is:
- *
- * Copyright (c) 1998, Frank Warmerdam
- * Copyright (c) 2007-2015, Even Rouault <even.rouault at spatialys.com>
- * Copyright (c) 2015, Faza Mahamood
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- */
-HIDDEN int
-gdal_ll(GDALDatasetH hDataset, double *lat_center, double *long_center)
-{
-    double longitude, latitude;
-    double adfGeoTransform[6];
-    const char *pzp = NULL;
-    OGRCoordinateTransformationH htfm = NULL;
-    double gx = GDALGetRasterXSize(hDataset)/2.0;
-    double gy = GDALGetRasterYSize(hDataset)/2.0;
-    if(GDALGetGeoTransform(hDataset, adfGeoTransform) == CE_None ) {
-	longitude = adfGeoTransform[0] + adfGeoTransform[1] * gx  + adfGeoTransform[2] * gy;
-	latitude = adfGeoTransform[3] + adfGeoTransform[4] * gx  + adfGeoTransform[5] * gy;
-	pzp = GDALGetProjectionRef(hDataset);
-    } else {
-	return 0;
-    }
-
-    if(pzp != NULL && strlen(pzp) > 0) {
-	OGRSpatialReferenceH hpj, hll = NULL;
-	hpj = OSRNewSpatialReference( pzp );
-	if(hpj != NULL) hll = OSRCloneGeogCS(hpj);
-	if(hll != NULL)	{
-	    CPLPushErrorHandler(CPLQuietErrorHandler);
-	    /* The bit we need... */
-	    htfm = OCTNewCoordinateTransformation(hpj, hll);
-	    CPLPopErrorHandler();
-	    OSRDestroySpatialReference(hll);
-	}
-	if(hpj != NULL) OSRDestroySpatialReference(hpj);
-    }
-
-    if(htfm != NULL) {
-	if (OCTTransform(htfm,1,&longitude,&latitude,NULL)) {
-	    if (lat_center)  (*lat_center)  = latitude;
-	    if (long_center) (*long_center) = longitude;
-	} else {
-	    return 0;
-	}
-    } else {
-	if (lat_center)  (*lat_center)  = latitude;
-	if (long_center) (*long_center) = longitude;
-    }
-    bu_log("lat: %f, long: %f\n", latitude, longitude);
 
     return 1;
 }
@@ -198,7 +133,8 @@ gdal_elev_minmax(GDALDatasetH ds)
     GDALRasterBandH band = GDALGetRasterBand(ds, 1);
     mm[0] = GDALGetRasterMinimum(band, &bmin);
     mm[1] = GDALGetRasterMaximum(band, &bmin);
-    if (!bmin || !bmax) GDALComputeRasterMinMax(band, TRUE, mm);
+    if (!bmin || !bmax)
+	GDALComputeRasterMinMax(band, TRUE, mm);
     bu_log("Elevation Minimum/Maximum: %f, %f\n", mm[0], mm[1]);
 }
 
@@ -272,17 +208,20 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     (void)get_dataset_info(state->hDataset);
     gdal_elev_minmax(state->hDataset);
 
-    /* Stash the original Spatial Reference System as a PROJ.4 string for later assignment */
+    /* Stash the original Spatial Reference System as a PROJ.4 string
+     * for later assignment
+     */
     char *orig_proj4_str = NULL;
     OGRSpatialReference iSRS(GDALGetProjectionRef(state->hDataset));
     iSRS.exportToProj4(&orig_proj4_str);
 
-    /* Use the information in the data set to deduce the EPSG number corresponding
-     * to the correct UTM projection zone, define a spatial reference, and generate
-     * the "Well Known Text" to use as the argument to the warping function*/
+    /* Use the information in the data set to deduce the EPSG number
+     * corresponding to the correct UTM projection zone, define a
+     * spatial reference, and generate the "Well Known Text" to use as
+     * the argument to the warping function*/
     GDALDatasetH hOutDS;
     int zone = (state->ops->zone == INT_MAX) ? gdal_utm_zone(state) : state->ops->zone;
-    char *dunit;
+    char *dunit = NULL;
     const char *dunit_default = "m";
     struct bu_vls new_proj4_str = BU_VLS_INIT_ZERO;
     if (zone != INT_MAX) {
@@ -293,22 +232,26 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	char *dst_Wkt = NULL;
 	oSRS.exportToWkt(&dst_Wkt);
 
-	/* Perform the UTM data warp.  At this point the data is not yet in the
-	 * form needed by the DSP primitive */
+	/* Perform the UTM data warp.  At this point the data is not
+	 * yet in the form needed by the DSP primitive */
 	hOutDS = GDALAutoCreateWarpedVRT(state->hDataset, NULL, dst_Wkt, GRA_CubicSpline, 0.0, NULL);
 	CPLFree(dst_Wkt);
-	dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
-	bu_log("\nTransformed dataset info:\n");
-	(void)get_dataset_info(hOutDS);
-	gdal_elev_minmax(hOutDS);
+
+	if (hOutDS) {
+	    dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
+	    bu_log("\nTransformed dataset info:\n");
+	    (void)get_dataset_info(hOutDS);
+	    gdal_elev_minmax(hOutDS);
+	}
     } else {
 	hOutDS = state->hDataset;
 	dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
     }
-    if (!dunit || strlen(dunit) == 0) dunit = (char *)dunit_default;
+    if (!dunit || strlen(dunit) == 0)
+	dunit = (char *)dunit_default;
 
-    /* Do the translate step (a.l.a gdal_translate) that puts the data in a
-     * form we can use */
+    /* Do the translate step (a.l.a gdal_translate) that puts the data
+     * in a form we can use */
     char *img_opts[3];
     img_opts[0] = bu_strdup("-of");
     img_opts[1] = bu_strdup("MEM");
@@ -316,12 +259,14 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     GDALTranslateOptions *gdalt_opts = GDALTranslateOptionsNew(img_opts, NULL);
     GDALDatasetH flatDS = GDALTranslate("", hOutDS, gdalt_opts, NULL);
     GDALTranslateOptionsFree(gdalt_opts);
-    if (hOutDS != state->hDataset) GDALClose(hOutDS);
+    if (hOutDS != state->hDataset)
+	GDALClose(hOutDS);
     for(int i = 0; i < 3; i++) {
-	if(img_opts[i]) bu_free(img_opts[i], "imgopt");
+	bu_free(img_opts[i], "imgopt");
     }
 
-    /* Stash the flat Spatial Reference System as a PROJ.4 string for later assignment */
+    /* Stash the flat Spatial Reference System as a PROJ.4 string for
+     * later assignment */
     char *flat_proj4_str = NULL;
     OGRSpatialReference fSRS(GDALGetProjectionRef(flatDS));
     fSRS.exportToProj4(&flat_proj4_str);
@@ -347,7 +292,8 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	}
     }
 
-    /* Convert the data before writing it so the DSP get_obj_data routine sees what it expects */
+    /* Convert the data before writing it so the DSP get_obj_data
+     * routine sees what it expects */
     int in_cookie = bu_cv_cookie("hus");
     int out_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
     if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
@@ -385,10 +331,11 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     GDALClose(flatDS);
     GDALClose(state->hDataset);
 
-    /* TODO: if we're going to BoT (3-space mesh, will depend on the transform requested) we will need different logic... */
+    /* TODO: if we're going to BoT (3-space mesh, will depend on the
+     * transform requested) we will need different logic... */
 
-    /* Write out the dsp.  Since we're using a data object, instead of a file,
-     * do the setup by hand. */
+    /* Write out the dsp.  Since we're using a data object, instead of
+     * a file, do the setup by hand. */
     struct rt_dsp_internal *dsp;
     BU_ALLOC(dsp, struct rt_dsp_internal);
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
@@ -415,8 +362,8 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
     wdb_export(state->wdbp, bu_vls_addr(&name_dsp), (void *)dsp, ID_DSP, 1);
 
-    /* Write out the original and current Spatial Reference Systems and other dimensional
-     * information to attributes on the dsp */
+    /* Write out the original and current Spatial Reference Systems
+     * and other dimensional information to attributes on the dsp */
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
     struct directory *dp = db_lookup(state->wdbp->dbip, bu_vls_addr(&name_dsp), LOOKUP_QUIET);
@@ -439,9 +386,12 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	(void)db5_update_attributes(dp, &avs, state->wdbp->dbip);
     }
 
-    if (dunit != dunit_default) bu_free(dunit, "free dunit");
-    if (orig_proj4_str) CPLFree(orig_proj4_str);
-    if (flat_proj4_str) CPLFree(flat_proj4_str);
+    if (dunit != dunit_default)
+	bu_free(dunit, "free dunit");
+    if (orig_proj4_str)
+	CPLFree(orig_proj4_str);
+    if (flat_proj4_str)
+	CPLFree(flat_proj4_str);
     bu_vls_free(&new_proj4_str);
 
     bu_vls_free(&name_root);
@@ -479,7 +429,7 @@ gdal_read_free_opts(void *options_data)
 extern "C"
 {
     struct gcv_filter gcv_conv_gdal_read =
-    {"GDAL Reader", GCV_FILTER_READ, BU_MIME_MODEL_AUTO, gdal_can_read, gdal_read_create_opts, gdal_read_free_opts, gdal_read};
+    {"GDAL Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_GDAL, gdal_can_read, gdal_read_create_opts, gdal_read_free_opts, gdal_read};
 
     static const struct gcv_filter * const filters[] = {&gcv_conv_gdal_read, NULL};
     const struct gcv_plugin gcv_plugin_info_s = { filters };

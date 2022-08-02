@@ -1,7 +1,8 @@
+
 /*                 T I E N E T _ M A S T E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2020 United States Government as represented by
+ * Copyright (c) 2002-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,43 +27,39 @@
 
 #include "common.h"
 
+/* system headers */
+#include "bio.h"
+#include "bsocket.h"
+#include "bnetwork.h"
+#include "zlib.h"
 #include <stdlib.h>
 #include <string.h>
-
-#include "bnetwork.h"
-#include "bio.h"
-
-#ifdef HAVE_SYS_SOCKET_H
-#  include <sys/socket.h>
-#endif
-#ifdef HAVE_SYS_SELECT_H
-#  include <sys/select.h>
-#endif
 #ifdef HAVE_NETDB_H
 #  include <netdb.h>
 #endif
-#include "zlib.h"
 
+/* public api headers */
 #include "rt/tie.h"
 #include "bu/str.h"
-
-#include "adrt.h"
-
-#include "tienet.h"
-#include "tienet_master.h"
-
-#include "bio.h"
-
 #include "bu/log.h"
-#include "master.h"
+
+/* adrt headers */
+#include "adrt.h"
+#include "tienet.h"
+
+/* local api headers */
+#include "./tienet_master.h"
+#include "./master.h"
+
 
 #if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
 extern struct hostent *gethostbyname(const char *);
 #endif
 
+
 typedef struct tienet_master_data_s {
     void *data;
-    int size;	/* Current size of work in bytes */
+    size_t size;	/* Current size of work in bytes */
 } tienet_master_data_t;
 
 
@@ -203,10 +200,10 @@ void tienet_master_free()
     TIENET_BUFFER_FREE(tienet_master_result_buffer);
     TIENET_BUFFER_FREE(tienet_master_result_buffer_comp);
 
-    bu_free(tienet_master_buffer, "tienet master buffer");
-
     for (i = 0; i < tienet_master_buffer_size; i++)
 	bu_free(tienet_master_buffer[i].data, "tienet master buffer data");
+
+    bu_free(tienet_master_buffer, "tienet master buffer");
 
     for (sock = tienet_master_socket_list->next; sock; sock = sock->next)
 	bu_free(sock->prev, "master socket");
@@ -302,12 +299,14 @@ void tienet_master_wait()
 void tienet_master_connect_slaves(fd_set *readfds)
 {
     FILE *fh;
-    struct sockaddr_in tdaemon, slave;
+    struct sockaddr_in tdaemon = {0};
+    struct sockaddr_in slave = {0};
     struct hostent slave_ent;
-    tienet_master_socket_t *tmp;
-    short op;
-    char host[64], *temp;
-    int slave_ver_key;
+    tienet_master_socket_t *tmp = NULL;
+    short op = 0;
+    char host[64] = {'\0'};
+    char *temp = NULL;
+    int slave_ver_key = 0;
 
     fh = fopen(tienet_master_list, "rb");
     if (fh) {
@@ -351,12 +350,14 @@ void tienet_master_connect_slaves(fd_set *readfds)
 
 		    if (bind(daemon_socket, (struct sockaddr *)&tdaemon, sizeof(tdaemon)) < 0) {
 			fprintf(stderr, "unable to bind socket, exiting.\n");
+			close(daemon_socket);
 			exit(1);
 		    }
 
 		    /* Make an attempt to connect to this host and initiate work */
 		    if (connect(daemon_socket, (struct sockaddr *)&slave, sizeof(slave)) < 0) {
 			fprintf(stderr, "cannot connect to slave: %s:%d, skipping.\n", host, port);
+			close(daemon_socket);
 		    } else {
 			/* Send endian to slave */
 			op = 1;
@@ -523,7 +524,8 @@ int tienet_master_listener(void *UNUSED(ptr))
 			 */
 			if (sock->prev)
 			    sock->prev->next = sock->next;
-			sock->next->prev = sock->prev;
+			if (sock->next)
+			    sock->next->prev = sock->prev;
 
 			/* Store ptr to sock before we modify it */
 			tmp = sock;
@@ -549,6 +551,10 @@ int tienet_master_listener(void *UNUSED(ptr))
 			}
 
 			tienet_master_socket_num--;
+
+			if (!sock)
+			    break;
+
 		    } else {
 			/*
 			 * Slave Op Instructions
@@ -605,6 +611,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
 	/* if no work units are out, allow the shutdown to proceed. */
 	if (!tienet_master_sem_out.val)
 	    tienet_sem_post(&tienet_master_sem_shutdown);
+	bu_mtx_unlock(&tienet_master_send_mut);
 	return;
     }
 

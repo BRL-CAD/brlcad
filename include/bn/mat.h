@@ -1,7 +1,7 @@
 /*                        M A T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -186,7 +186,7 @@ BN_EXPORT extern int bn_mat_inverse(mat_t output,
  * Takes a pointer to a [x, y, z] vector, and a pointer to space for a
  * homogeneous vector [x, y, z, w], and builds [x, y, z, 1].
  */
-BN_EXPORT extern void bn_vtoh_move(vect_t h,
+BN_EXPORT extern void bn_vtoh_move(hvect_t h,
 				   const vect_t v);
 
 /**
@@ -197,7 +197,7 @@ BN_EXPORT extern void bn_vtoh_move(vect_t h,
  * FIXME: make tolerance configurable
  */
 BN_EXPORT extern void bn_htov_move(vect_t v,
-				   const vect_t h);
+				   const hvect_t h);
 
 BN_EXPORT extern void bn_mat_trn(mat_t om,
 				 const mat_t im);
@@ -482,6 +482,16 @@ BN_EXPORT extern void bn_wrt_point_direc(mat_t out,
 BN_EXPORT extern void persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fastf_t backoff);
 BN_EXPORT extern void mike_persp_mat(fastf_t *pmat, const fastf_t *eye);
 BN_EXPORT extern void deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t *eye);
+
+
+/* Option parser/validator for libbu's option system that will read in a matrix
+ * from the argv entries.  set_var should be a matp_t
+ *
+ * NOTE:  In one sense this could be defined with the other option parsers in
+ * bu/opt.h, as vmath.h (which defines the matrix type) is stand-alone, but
+ * since it is defining a matrix it's a better overall conceptual fit with
+ * libbn - hence it is defined as part of that API. */
+BN_EXPORT extern int bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 __END_DECLS
 

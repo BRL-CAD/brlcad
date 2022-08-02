@@ -1,7 +1,7 @@
 /*               P I X H I S T 3 D - P L O T 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 #include "bu/exit.h"
 #include "vmath.h"
 #include "bn.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 FILE *fp;
@@ -58,8 +58,11 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     if (argc > 1) {
-	if ((fp = fopen(argv[1], "r")) == NULL) {
+	if ((fp = fopen(argv[1], "rb")) == NULL) {
 	    fprintf(stderr, "%s", Usage);
 	    bu_exit(1, "pixhist3d-plot3: can't open \"%s\"\n", argv[1]);
 	}

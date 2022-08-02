@@ -1,7 +1,7 @@
 /*                        C D T _ U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -346,86 +346,6 @@ ang_deg(const ON_3dVector &v1, const ON_3dVector &v2)
     double tdp = fabs(ON_DotProduct(v1, v2));
     double d_ang = (NEAR_EQUAL(tdp, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(tdp);
     return d_ang * 180.0/ON_PI;
-}
-
-
-bool
-point_inside(struct ON_Brep_CDT_State *s_cdt, point_t p)
-{
-    int wn = 0;
-    int exact = 0;
-    std::map<int, cdt_mesh_t>::iterator f_it;
-    for (f_it = s_cdt->fmeshes.begin(); f_it != s_cdt->fmeshes.end(); f_it++) {
-	RTree<size_t, double, 3>::Iterator tree_it;
-	f_it->second.tris_tree.GetFirst(tree_it);
-	size_t t_ind;
-	triangle_t tri;
-	while (!tree_it.IsNull()) {
-	    t_ind = *tree_it;
-	    tri = f_it->second.tris_vect[t_ind];
-	    point_t v1, v2, v3;
-	    VSET(v1, f_it->second.pnts[tri.v[0]]->x, f_it->second.pnts[tri.v[0]]->y, f_it->second.pnts[tri.v[0]]->z);
-	    VSET(v2, f_it->second.pnts[tri.v[1]]->x, f_it->second.pnts[tri.v[1]]->y, f_it->second.pnts[tri.v[1]]->z);
-	    VSET(v3, f_it->second.pnts[tri.v[2]]->x, f_it->second.pnts[tri.v[2]]->y, f_it->second.pnts[tri.v[2]]->z);
-	    wn += bg_ptm_triangle_chain(v1, v2, v3, p, &exact);
-	    if (exact) return true;
-	    ++tree_it;
-	}
-    }
-    return (wn) ? true : false;
-}
-
-bool
-on_point_inside(struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p)
-{
-    point_t tp;
-    VSET(tp, p->x, p->y, p->z);
-    return point_inside(s_cdt, tp);
-}
-
-bool
-on_point_inside_fast(struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p)
-{
-    // Shoot a vertical ray and count intersections.
-    point_t tp;
-    VSET(tp, p->x, p->y, p->z);
-
-    ON_BoundingBox bbb = s_cdt->brep->BoundingBox();
-    ON_BoundingBox pbb(*p, *p);
-    pbb.m_min.z = bbb.m_min.z;
-    pbb.m_max.z = bbb.m_max.z;
-    point_t rdir;
-    VSET(rdir, 0, 0, 1);
-    std::map<int, cdt_mesh_t>::iterator f_it;
-    int icnt = 0;
-    for (f_it = s_cdt->fmeshes.begin(); f_it != s_cdt->fmeshes.end(); f_it++) {
-	cdt_mesh_t &fmesh = f_it->second;
-
-	ON_BoundingBox fbb = s_cdt->brep->m_F[fmesh.f_id].BoundingBox();
-	if (fbb.IsDisjoint(pbb)) {
-	    continue;
-	}
-
-	std::set<size_t> near_tris = fmesh.tris_search(pbb);
-	std::set<size_t>::iterator n_it;
-	if (near_tris.size()) {
-	    std::cout << "fmesh " << fmesh.f_id << " has " << near_tris.size() << " triangles to test\n";
-	}
-	for (n_it = near_tris.begin(); n_it != near_tris.end(); n_it++) {
-	    triangle_t t = fmesh.tris_vect[*n_it];
-	    point_t T_V[3];
-	    VSET(T_V[0], fmesh.pnts[t.v[0]]->x, fmesh.pnts[t.v[0]]->y, fmesh.pnts[t.v[0]]->z);
-	    VSET(T_V[1], fmesh.pnts[t.v[1]]->x, fmesh.pnts[t.v[1]]->y, fmesh.pnts[t.v[1]]->z);
-	    VSET(T_V[2], fmesh.pnts[t.v[2]]->x, fmesh.pnts[t.v[2]]->y, fmesh.pnts[t.v[2]]->z);
-
-	    if (bg_isect_tri_ray(tp, rdir, T_V[0], T_V[1], T_V[2], NULL)) {
-		icnt++;
-	    }
-	}
-	std::cout << "icnt: " << icnt << "\n";
-    }
-
-    return (icnt > 0 && icnt % 2) ? true : false;
 }
 
 bool
@@ -800,9 +720,9 @@ ON_Brep_CDT_Tol_Get(struct bg_tess_tol *t, const struct ON_Brep_CDT_State *s)
 	t->relmin = -1;
 	t->rel_lmax = -1;
 	t->rel_lmin = -1;
+    } else {
+	*t = s->tol;
     }
-
-    *t = s->tol;
 }
 
 static int
@@ -845,14 +765,14 @@ ON_Brep_CDT_VList_Face(
 		    VSET(nv[j], onorm.x, onorm.y, onorm.z);
 		}
 		//tri one
-		BN_ADD_VLIST(vlfree, vhead, nv[0], BN_VLIST_TRI_START);
-		BN_ADD_VLIST(vlfree, vhead, nv[0], BN_VLIST_TRI_VERTNORM);
-		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_TRI_MOVE);
-		BN_ADD_VLIST(vlfree, vhead, nv[1], BN_VLIST_TRI_VERTNORM);
-		BN_ADD_VLIST(vlfree, vhead, pt[1], BN_VLIST_TRI_DRAW);
-		BN_ADD_VLIST(vlfree, vhead, nv[2], BN_VLIST_TRI_VERTNORM);
-		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_TRI_DRAW);
-		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_TRI_END);
+		BV_ADD_VLIST(vlfree, vhead, nv[0], BV_VLIST_TRI_START);
+		BV_ADD_VLIST(vlfree, vhead, nv[0], BV_VLIST_TRI_VERTNORM);
+		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_TRI_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, nv[1], BV_VLIST_TRI_VERTNORM);
+		BV_ADD_VLIST(vlfree, vhead, pt[1], BV_VLIST_TRI_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, nv[2], BV_VLIST_TRI_VERTNORM);
+		BV_ADD_VLIST(vlfree, vhead, pt[2], BV_VLIST_TRI_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_TRI_END);
 		//bu_log("Face %d, Tri %zd: %f/%f/%f-%f/%f/%f -> %f/%f/%f-%f/%f/%f -> %f/%f/%f-%f/%f/%f\n", face_index, i, V3ARGS(pt[0]), V3ARGS(nv[0]), V3ARGS(pt[1]), V3ARGS(nv[1]), V3ARGS(pt[2]), V3ARGS(nv[2]));
 		++tree_it;
 	    }
@@ -867,10 +787,10 @@ ON_Brep_CDT_VList_Face(
 		    VSET(pt[j], p3d->x, p3d->y, p3d->z);
 		}
 		//tri one
-		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(vlfree, vhead, pt[1], BN_VLIST_LINE_DRAW);
-		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_LINE_DRAW);
-		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, pt[1], BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt[2], BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_LINE_DRAW);
 		++tree_it;
 	    }
 	    break;
@@ -884,8 +804,8 @@ ON_Brep_CDT_VList_Face(
 	    pt2[0] = p->x;
 	    pt2[1] = p->y;
 	    pt2[2] = 0.0;
-	    BN_ADD_VLIST(vlfree, vhead, pt1, BN_VLIST_LINE_MOVE);
-	    BN_ADD_VLIST(vlfree, vhead, pt2, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
 #endif
 	    break;
 	default:
@@ -896,7 +816,7 @@ ON_Brep_CDT_VList_Face(
 }
 
 int ON_Brep_CDT_VList(
-	struct bn_vlblock *vbp,
+	struct bv_vlblock *vbp,
 	struct bu_list *vlfree,
 	struct bu_color *c,
 	int mode,
@@ -916,7 +836,7 @@ int ON_Brep_CDT_VList(
        return -1;
    }
 
-   vhead = bn_vlblock_find(vbp, r, g, b);
+   vhead = bv_vlblock_find(vbp, r, g, b);
 
    if (UNLIKELY(!vhead)) {
        return -1;

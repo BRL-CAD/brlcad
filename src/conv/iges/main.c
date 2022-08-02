@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -230,6 +230,10 @@ main(int argc, char *argv [])
 
     argc -= bu_optind;
     argv += bu_optind;
+
+    if (argc <= 0) {
+	bu_exit(BRLCAD_ERROR, "Need filename\n");
+    }
 
     BU_LIST_INIT(&iges_list.l);
 

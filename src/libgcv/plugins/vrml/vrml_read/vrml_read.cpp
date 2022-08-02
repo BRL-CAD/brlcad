@@ -1,7 +1,7 @@
 /*                         V R M L - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ void get3vec(float *p);
 
 using namespace std;
 
-static struct bn_vert_tree *tree;
+static struct bg_vert_tree *tree;
 static struct wmember all_head;
 static int *bot_faces=NULL;	 /* array of ints (indices into tree->the_array array) three per face */
 static int bot_fcurr=0;		/* current bot face */
@@ -111,7 +111,7 @@ Convert_input(NODE *node)
 	    y = allvert[vert_no*3+1];
 	    z = allvert[vert_no*3+2];
 
-	    tmp_face[vert_no%3] = bn_vert_tree_add( tree,x, y, z, 0.0);
+	    tmp_face[vert_no%3] = bg_vert_tree_add( tree,x, y, z, 0.0);
 
 	    if (((vert_no+1)%3 == 0) && (vert_no != 0) ) {
 		if (Check_degenerate(tmp_face)) {
@@ -127,7 +127,7 @@ Convert_input(NODE *node)
 	}
 	mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree->curr_vert, bot_fcurr,
 	tree->the_array, bot_faces, NULL, NULL);
-	bn_vert_tree_clean(tree);
+	bg_vert_tree_clean(tree);
     }else if (node->nnodetype == NODE_CONE) {
 	mk_tgc(fd_out,bu_vls_addr(&solid_name), &allvert[0], &allvert[3], &allvert[6], &allvert[9], &allvert[12], &allvert[15]);
     }else if (node->nnodetype == NODE_BOX) {
@@ -251,7 +251,7 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     BU_LIST_INIT(&all_head.l);
     /* create a tree structure to hold the input vertices */
-    tree = bn_vert_tree_create();
+    tree = bg_vert_tree_create();
 
     Parse_input(childlist);
     fclose(fd_in);

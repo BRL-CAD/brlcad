@@ -665,7 +665,7 @@ FunctionEnd
 !include LogicLib.nsh
 ; Create desktop icons
 Function installdesktopicons
-SetOutPath $INSTDIR
+SetOutPath $PROFILE
 CreateShortCut "$DESKTOP\Archer.lnk" "$INSTDIR\bin\archer.exe" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\archer.ico" 0
 CreateShortCut "$DESKTOP\MGED.lnk" "$INSTDIR\bin\mged.exe" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
 CreateShortCut "$DESKTOP\RtWizard.lnk" "$INSTDIR\bin\rtwizard.exe" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
@@ -727,6 +727,7 @@ Section "-Core installation"
 
   ;Create shortcuts
   CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
+  SetOutPath $PROFILE
 @CPACK_NSIS_CREATE_ICONS@
 @CPACK_NSIS_CREATE_ICONS_EXTRA@
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Archer.lnk" "$INSTDIR\bin\archer.exe" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\archer.ico" 0

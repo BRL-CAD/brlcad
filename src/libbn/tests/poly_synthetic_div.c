@@ -1,7 +1,7 @@
 /*           P O L Y _ S Y N T H E T I C _ D I V . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

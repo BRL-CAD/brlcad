@@ -1,7 +1,7 @@
 /*                       G L O B A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,11 +34,11 @@
 
 
 /* see rand.c for random constant globals */
-extern const float bn_rand_table[];
+extern const float bn_rand_table[BN_RAND_TABSIZE];
 extern double bn_sin_scale;
-extern const float bn_sin_table[];
+extern const float bn_sin_table[BN_SINTABSIZE];
 extern int bn_randhalftabsize;
-extern float bn_rand_halftab[];
+extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 extern float bn_rand_poison_[];
 
 /*

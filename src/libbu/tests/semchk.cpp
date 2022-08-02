@@ -1,7 +1,7 @@
 /*                       S E M C H K . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2020 United States Government as represented by
+ * Copyright (c) 2018-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -192,7 +192,7 @@ validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
 		errno = 0;
 		ninc = strtol(einc.c_str(), &endptr, 0);
 		if ((endptr != NULL && strlen(endptr) > 0) || errno == ERANGE) {
-		    std::cerr << "Could not evalute expression number: " << einc << "\n";
+		    std::cerr << "Could not evaluate expression number: " << einc << "\n";
 		    exit(1);
 		}
 

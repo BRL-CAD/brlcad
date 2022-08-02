@@ -1,7 +1,7 @@
 /*                      P L O T 3 - D M . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2020 United States Government as represented by
+ * Copyright (c) 1999-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ struct cmdtab {
 #define APP_SCALE 180.0 / 512.0
 
 Tcl_Interp *INTERP;
-dm *dmp;
+struct dm *dmp;
 mat_t toViewcenter;
 mat_t Viewrot;
 mat_t model2view;
@@ -76,13 +76,15 @@ struct plot_list{
     int pl_draw;
     int pl_edit;
     struct bu_vls pl_name;
-    struct bn_vlblock *pl_vbp;
+    struct bv_vlblock *pl_vbp;
 };
 
 
 struct plot_list HeadPlot;
 
-int dm_type = DM_TYPE_X;
+static const char *Xtype = "X";
+static const char *Otype = "ogl";
+const char *dm_type = "X";
 
 
 /*
@@ -135,12 +137,12 @@ get_args(int argc, char **argv)
 		switch (*bu_optarg) {
 		    case 'o':
 		    case 'O':
-			dm_type = DM_TYPE_OGL;
+			dm_type = Otype;
 			break;
 		    case 'x':
 		    case 'X':
 		    default:
-			dm_type = DM_TYPE_X;
+			dm_type = Xtype;
 			break;
 		}
 		break;
@@ -179,11 +181,11 @@ refresh() {
 		    rgb = plp->pl_vbp->rgb[i];
 		    dm_set_fg(dmp, (rgb>>16) & 0xFF, (rgb>>8) & 0xFF, rgb & 0xFF, 0, (fastf_t)0.0);
 		}
-		dm_draw_vlist(dmp, (struct bn_vlist *)&plp->pl_vbp->head[i]);
+		dm_draw_vlist(dmp, (struct bv_vlist *)&plp->pl_vbp->head[i]);
 	    }
     }
 
-    dm_normal(dmp);
+    dm_hud_begin(dmp);
     dm_draw_end(dmp);
 }
 
@@ -488,7 +490,7 @@ static void
 size_reset()
 {
     size_t i;
-    struct bn_vlist *tvp;
+    struct bv_vlist *tvp;
     vect_t min, max;
     vect_t center;
     vect_t radial;
@@ -498,13 +500,13 @@ size_reset()
     VSETALL(max, -INFINITY);
 
     for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-	struct bn_vlblock *vbp;
+	struct bv_vlblock *vbp;
 
 	vbp = plp->pl_vbp;
 	for (i=0; i < vbp->nused; i++) {
-	    struct bn_vlist *vp = (struct bn_vlist *)&vbp->head[i];
+	    struct bv_vlist *vp = (struct bv_vlist *)&vbp->head[i];
 
-	    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+	    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
 		int j;
 		int nused = tvp->nused;
 		int *cmd = tvp->cmd;
@@ -512,19 +514,19 @@ size_reset()
 
 		for (j = 0; j < nused; j++, cmd++, pt++) {
 		    switch (*cmd) {
-			case BN_VLIST_POLY_START:
-			case BN_VLIST_POLY_VERTNORM:
-			case BN_VLIST_TRI_START:
-			case BN_VLIST_TRI_VERTNORM:
+			case BV_VLIST_POLY_START:
+			case BV_VLIST_POLY_VERTNORM:
+			case BV_VLIST_TRI_START:
+			case BV_VLIST_TRI_VERTNORM:
 			    break;
-			case BN_VLIST_LINE_MOVE:
-			case BN_VLIST_LINE_DRAW:
-			case BN_VLIST_POLY_MOVE:
-			case BN_VLIST_POLY_DRAW:
-			case BN_VLIST_POLY_END:
-			case BN_VLIST_TRI_MOVE:
-			case BN_VLIST_TRI_DRAW:
-			case BN_VLIST_TRI_END:
+			case BV_VLIST_LINE_MOVE:
+			case BV_VLIST_LINE_DRAW:
+			case BV_VLIST_POLY_MOVE:
+			case BV_VLIST_POLY_DRAW:
+			case BV_VLIST_POLY_END:
+			case BV_VLIST_TRI_MOVE:
+			case BV_VLIST_TRI_DRAW:
+			case BV_VLIST_TRI_END:
 			    VMIN(min, *pt);
 			    VMAX(max, *pt);
 			    break;
@@ -587,7 +589,7 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
 	char *bnp;
 
 	file = argv[i];
-	if ((fp = fopen(file, "r")) == NULL) {
+	if ((fp = fopen(file, "rb")) == NULL) {
 	    bu_log("%s: can't open \"%s\"\n", argv[0], file);
 	    continue;
 	}
@@ -605,7 +607,7 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
 	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
 	    /* found object with same name */
 	    if (BU_STR_EQUAL(bu_vls_addr(&plp->pl_name), bnp)) {
-		bn_vlblock_free(plp->pl_vbp);
+		bv_vlblock_free(plp->pl_vbp);
 		goto up_to_vl;
 	    }
 	}
@@ -732,7 +734,7 @@ cmd_closepl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **
 	    if (BU_STR_EQUAL(argv[i], bu_vls_addr(&plp->pl_name))) {
 		BU_LIST_DEQUEUE(&plp->l);
 		bu_vls_free(&plp->pl_name);
-		bn_vlblock_free(plp->pl_vbp);
+		bv_vlblock_free(plp->pl_vbp);
 		bu_free((void *)plp, "cmd_closepl");
 		break;
 	    }
@@ -1039,7 +1041,7 @@ static struct cmdtab cmdtab[] = {
 static int
 X_dmInit()
 {
-    fastf_t windowbounds[6] = { 2047.0, -2048.0, 2047.0, -2048.0, 2047.0, -2048.0 };
+    fastf_t windowbounds[6] = { -2048.0, 2047.0, -2048.0, 2047.0, -2048.0, 2047.0 };
     const char *av[4];
 
     av[0] = "X_open";
@@ -1047,12 +1049,12 @@ X_dmInit()
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = DM_OPEN(INTERP, DM_TYPE_X, 3, av)) == DM_NULL) {
+    if ((dmp = dm_open(NULL, INTERP, "X", 3, av)) == DM_NULL) {
 	Tcl_AppendResult(INTERP, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_X);
+    Tk_CreateGenericHandler(X_doEvent, (ClientData)Xtype);
     dm_set_win_bounds(dmp, windowbounds);
 
     return TCL_OK;
@@ -1065,7 +1067,7 @@ X_dmInit()
 static int
 Ogl_dmInit()
 {
-    fastf_t windowbounds[6] = { 2047.0, -2048.0, 2047.0, -2048.0, 2047.0, -2048.0 };
+    fastf_t windowbounds[6] = { -2048.0, 2047.0, -2048.0, 2047.0, -2048.0, 2047.0 };
     char *av[4];
 
     av[0] = "Ogl_open";
@@ -1073,12 +1075,12 @@ Ogl_dmInit()
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = DM_OPEN(INTERP, DM_TYPE_OGL, 3, (const char **)av)) == DM_NULL) {
+    if ((dmp = dm_open(NULL, INTERP, "ogl", 3, (const char **)av)) == DM_NULL) {
 	Tcl_AppendResult(INTERP, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_OGL);
+    Tk_CreateGenericHandler(X_doEvent, (ClientData)Otype);
     dm_set_win_bounds(dmp, windowbounds);
 
     return TCL_OK;
@@ -1096,13 +1098,7 @@ appInit(Tcl_Interp *_interp)
     /* libdm uses interp */
     INTERP = _interp;
 
-    switch (dm_type) {
-	case DM_TYPE_OGL:
-	case DM_TYPE_X:
-	default:
-	    cmd_hook = X_dm;
-	    break;
-    }
+    cmd_hook = X_dm;
 
     /* Evaluates init.tcl */
     if (Tcl_Init(_interp) == TCL_ERROR)
@@ -1120,7 +1116,7 @@ appInit(Tcl_Interp *_interp)
 	bu_exit (1, "appInit: Failed to get main window.\n");
 
     /* Locate the BRL-CAD-specific Tcl scripts */
-    filename = bu_brlcad_root("share/tclscripts", 0);
+    filename = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", NULL);
 
     bu_vls_printf(&str2, "%s/plot3-dm", filename);
     bu_vls_printf(&str, "wm withdraw .; set auto_path [linsert $auto_path 0 %s %s]",
@@ -1133,13 +1129,10 @@ appInit(Tcl_Interp *_interp)
     cmd_setup(_interp, cmdtab);
 
     /* open display manager */
-    switch (dm_type) {
-	case DM_TYPE_OGL:
-	    return Ogl_dmInit();
-	case DM_TYPE_X:
-	default:
-	    return X_dmInit();
+    if (BU_STR_EQUIV(dm_type, "ogl")) {
+	return Ogl_dmInit();
     }
+    return X_dmInit();
 }
 
 

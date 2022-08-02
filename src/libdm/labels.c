@@ -1,7 +1,7 @@
 /*                          L A B E L S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,9 +28,10 @@
 #include "raytrace.h"
 #include "nmg.h"
 #include "rt/geom.h"
-#include "rt/solid.h"
+#include "bv/defines.h"
+#define DM_WITH_RT
 #include "dm.h"
-#include "dm_private.h"
+#include "./include/private.h"
 
 /*
  * Put labels on the vertices of the currently edited solid.
@@ -543,13 +544,13 @@ dm_label_primitive(struct rt_wdb *wdbp,
 
 
 int
-dm_draw_labels(dm *dmp,
+dm_draw_prim_labels(struct dm *dmp,
 	       struct rt_wdb *wdbp,
 	       const char *name,
 	       mat_t viewmat,
 	       int *labelsColor,
-	       int (*LabelsHook)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData),
-	       ClientData labelsHookClientdata)
+	       int (*LabelsHook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, void *),
+	       void *labelsHookClientdata)
 {
 #define MAX_PL 8+1
     struct rt_point_labels pl[MAX_PL];
@@ -559,7 +560,7 @@ dm_draw_labels(dm *dmp,
     struct db_tree_state ts;
     struct db_full_path path;
 
-    if (LabelsHook != (int (*)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0)
+    if (LabelsHook != (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, void *))0)
 	return LabelsHook(dmp, wdbp, name,
 			  viewmat, labelsColor,
 			  labelsHookClientdata);

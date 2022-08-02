@@ -1,7 +1,7 @@
 /*                          B R E P . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -148,12 +148,12 @@ brep(int entityno)
 }
 
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

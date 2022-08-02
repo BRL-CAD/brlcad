@@ -1,7 +1,7 @@
 /*                          V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,8 +54,8 @@
 #include "icv.h"
 #include "raytrace.h"
 #include "bu/cv.h"
-#include "fb.h"
-#include "bn/plot3.h"
+#include "dm.h"
+#include "bv/plot3.h"
 #include "photonmap.h"
 #include "scanline.h"
 
@@ -63,7 +63,7 @@
 #include "./ext.h"
 
 
-extern fb *fbp;			/* Framebuffer handle */
+extern struct fb *fbp;			/* Framebuffer handle */
 
 extern int curframe;		/* from main.c */
 extern double airdensity;	/* from opt.c */
@@ -73,7 +73,7 @@ extern plane_t kut_plane;       /* from opt.c */
 extern struct icv_image *bif;
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 extern fastf_t** timeTable_init(int x, int y);  /* from heatgraph.c */
-extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *efbp); /* from heatgraph.c */
+extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), struct fb *efbp); /* from heatgraph.c */
 extern void free_scanlines(int, struct scanline *);
 extern struct scanline* alloc_scanlines(int);
 
@@ -246,8 +246,8 @@ view_pixel(struct application *ap)
     }
 
     if (OPTICAL_DEBUG&OPTICAL_DEBUG_HITS) bu_log("rgb=%3d, %3d, %3d xy=%3d, %3d (%g, %g, %g)\n",
-				    r, g, b, ap->a_x, ap->a_y,
-				    V3ARGS(ap->a_color));
+						 r, g, b, ap->a_x, ap->a_y,
+						 V3ARGS(ap->a_color));
 
     switch (buf_mode) {
 
@@ -281,8 +281,10 @@ view_pixel(struct application *ap)
 		 * and hit a different region than this pixel, then
 		 * recompute it too.
 		 */
-		if ((size_t)ap->a_x >= width-1) return;
-		if (fp[1].ff_frame <= 0) return;	/* not valid, will be recomputed. */
+		if ((size_t)ap->a_x >= width-1)
+		    return;
+		if (fp[1].ff_frame <= 0)
+		    return;	/* not valid, will be recomputed. */
 		if (fp[1].ff_regp == fp->ff_regp)
 		    return;				/* OK */
 
@@ -447,7 +449,8 @@ view_pixel(struct application *ap)
     }
 
 
-    if (!do_eol) return;
+    if (!do_eol)
+	return;
 
     switch (buf_mode) {
 	case BUFMODE_INCR:
@@ -498,11 +501,9 @@ view_pixel(struct application *ap)
 		}
 		bu_semaphore_release(BU_SEM_SYSCALL);
 		if (sub_grid_mode) {
-		    if (npix < (size_t)sub_xmax-(size_t)sub_xmin-1)
-			bu_exit(EXIT_FAILURE, "scanline fb_write error");
-		} else {
-		    if (npix < width)
-			bu_exit(EXIT_FAILURE, "scanline fb_write error");
+		    if (npix < (size_t)sub_xmax-(size_t)sub_xmin-1) {
+			bu_log("WARNING: scanline error (wrote %zu of %zu pixels)", npix, (size_t)sub_xmax-sub_xmin-1);
+		    }
 		}
 	    }
 	    if (bif != NULL) {
@@ -1759,7 +1760,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
      */
     bu_ptbl_init(&stps, 8, "soltabs to delete");
     if (OPTICAL_DEBUG & OPTICAL_DEBUG_LIGHT)
-	bu_log("deleting %lu invisible light regions\n", BU_PTBL_LEN(&ap->a_rt_i->delete_regs));
+	bu_log("deleting %zu invisible light regions\n", BU_PTBL_LEN(&ap->a_rt_i->delete_regs));
 
     for (i=0; i<BU_PTBL_LEN(&ap->a_rt_i->delete_regs); i++) {
 	struct region *rp;
@@ -1778,7 +1779,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	 * structs.
 	 */
 	if (OPTICAL_DEBUG & OPTICAL_DEBUG_LIGHT)
-	    bu_log("Removing invisible light region pointers from %lu soltabs\n",
+	    bu_log("Removing invisible light region pointers from %zu soltabs\n",
 		   BU_PTBL_LEN(&stps));
 
 	for (j=0; j<BU_PTBL_LEN(&stps); j++) {

@@ -70,7 +70,7 @@
 <example>
   <title>Report all regions using region ids between 4000 and 7000.</title>
   <para>
-    <prompt>mged&gt;</prompt><userinput>whichid 4000-7000</userinput>
+    <prompt>mged&gt; </prompt><userinput>whichid 4000-7000</userinput>
     <literallayout class="normal">
 Region[s] with ident 4001:
    r23
@@ -89,7 +89,7 @@ Region[s] with ident 6002:
 <example>
   <title>Report all regions using region ids between 1000-2000 and 4000-5000.</title>
   <para>
-    <prompt>mged&gt;</prompt><userinput>whichid 1000-2000 4000-5000</userinput>
+    <prompt>mged&gt; </prompt><userinput>whichid 1000-2000 4000-5000</userinput>
     <literallayout class="normal">
 Region[s] with ident 1010:
    r213
@@ -109,7 +109,7 @@ Region[s] with ident 4050:
   <title>Report all regions using region ids between 1000-2000 and 4000-5000, limiting
   results to regions in the <emphasis>tank</emphasis> geomtry tree.</title>
   <para>
-    <prompt>mged&gt;</prompt><userinput>whichid --root tank 1000-2000 4000-5000</userinput>
+    <prompt>mged&gt; </prompt><userinput>whichid --root tank 1000-2000 4000-5000</userinput>
     <literallayout class="normal">
 Region[s] with ident 4001:
    r23
@@ -124,7 +124,7 @@ Region[s] with ident 4050:
 <example>
   <title>Report all unused region_id ranges in the database between 1 and 1000.</title>
   <para>
-    <prompt>mged&gt;</prompt><userinput>whichid -U 1-1000</userinput>
+    <prompt>mged&gt; </prompt><userinput>whichid -U 1-1000</userinput>
     <literallayout class="normal">
 Unused idents:
    1

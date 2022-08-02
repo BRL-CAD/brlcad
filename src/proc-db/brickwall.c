@@ -1,7 +1,7 @@
 /*                     B R I C K W A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -90,14 +90,14 @@ parse_args(int ac, char **av)
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'c':
-		if ((c=sscanf(bu_optarg, "%d/%d/%d",
-			      &red, &grn, &blu)) == 3)
+		c = sscanf(bu_optarg, "%d/%d/%d", &red, &grn, &blu);
+		if (c == 3)
 		    (void)sprintf(color, "%d %d %d", red&0x0ff,
 				  grn&0x0ff, blu&0x0ff);
 		break;
 	    case 'C':
-		if ((c=sscanf(bu_optarg, "%d/%d/%d",
-			      &red, &grn, &blu)) == 3)
+		c = sscanf(bu_optarg, "%d/%d/%d", &red, &grn, &blu);
+		if (c == 3)
 		    (void)sprintf(mortar_color, "%d %d %d",
 				  red&0x0ff, grn&0x0ff, blu&0x0ff);
 

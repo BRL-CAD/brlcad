@@ -35,13 +35,13 @@
 
   <example><title>Elliptical Torus 'r' parameter extraction</title>
   <para>
-    Use the <command>get</command> command to exctract the
+    Use the <command>get</command> command to extract the
     r parameter value from an elliptical torus.
   </para>
 
   <para>
-    <prompt>mged&gt;</prompt> <userinput>make eto.s eto</userinput>
-    <prompt>mged&gt;</prompt> <userinput>l eto.s</userinput>
+    <prompt>mged&gt; </prompt><userinput>make eto.s eto</userinput>
+    <prompt>mged&gt; </prompt><userinput>l eto.s</userinput>
     <literallayout>
 eto.s:  Elliptical Torus (ETO)
       V (0, 0, 0)
@@ -51,7 +51,7 @@ eto.s:  Elliptical Torus (ETO)
       d=100
 
     </literallayout>
-    <prompt>mged&gt;</prompt> <userinput>get eto.s r</userinput>
+    <prompt>mged&gt; </prompt><userinput>get eto.s r</userinput>
     <literallayout>
 800
     </literallayout>
@@ -70,7 +70,7 @@ eto.s:  Elliptical Torus (ETO)
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
   <para>
-    This software is Copyright (c) 2008-2020 United States
+    This software is Copyright (c) 2008-2022 United States
     Government as represented by the U.S. Army Research Laboratory.
   </para>
   </refsection>

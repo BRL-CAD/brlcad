@@ -1,7 +1,7 @@
 /*                      D B _ I O . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ struct rt_db_internal; /* forward declaration */
  * Ensure that the on-disk database has been completely written out of
  * the operating system's cache.
  */
-RT_EXPORT extern void db_sync(struct db_i	*dbip);
+RT_EXPORT extern void db_sync(struct db_i *dbip);
 
 
 /**
@@ -187,15 +187,15 @@ RT_EXPORT extern int db5_realloc(struct db_i *dbip,
  * attrib, and body may be null.
  */
 RT_EXPORT extern void db5_export_object3(struct bu_external *out,
-					 int			dli,
-					 const char			*name,
-					 const unsigned char	hidden,
-					 const struct bu_external	*attrib,
-					 const struct bu_external	*body,
-					 int			major,
-					 int			minor,
-					 int			a_zzz,
-					 int			b_zzz);
+					 int dli,
+					 const char *name,
+					 const unsigned char hidden,
+					 const struct bu_external *attrib,
+					 const struct bu_external *body,
+					 int major,
+					 int minor,
+					 int a_zzz,
+					 int b_zzz);
 
 
 /**
@@ -233,6 +233,23 @@ RT_EXPORT extern int db_wrap_v5_external(struct bu_external *ep,
 
 
 /**
+ * Given an external representation of a database object, convert
+ * it into its internal representation.
+ *
+ * Returns -
+ * <0 On error
+ * id On success.
+ */
+RT_EXPORT extern int
+rt_db_external5_to_internal5(
+    struct rt_db_internal *ip,
+    const struct bu_external *ep,
+    const char *name,
+    const struct db_i *dbip,
+    const mat_t mat,
+    struct resource *resp);
+
+/**
  * Get an object from the database, and convert it into its internal
  * representation.
  *
@@ -243,11 +260,11 @@ RT_EXPORT extern int db_wrap_v5_external(struct bu_external *ep,
  * <0 On error
  * id On success.
  */
-RT_EXPORT extern int rt_db_get_internal5(struct rt_db_internal	*ip,
-					 const struct directory	*dp,
-					 const struct db_i	*dbip,
-					 const mat_t		mat,
-					 struct resource		*resp);
+RT_EXPORT extern int rt_db_get_internal5(struct rt_db_internal *ip,
+					 const struct directory *dp,
+					 const struct db_i *dbip,
+					 const mat_t mat,
+					 struct resource *resp);
 
 
 /**
@@ -264,11 +281,11 @@ RT_EXPORT extern int rt_db_get_internal5(struct rt_db_internal	*ip,
  * <0 error
  * 0 success
  */
-RT_EXPORT extern int rt_db_put_internal5(struct directory	*dp,
-					 struct db_i		*dbip,
-					 struct rt_db_internal	*ip,
-					 struct resource		*resp,
-					 const int		major);
+RT_EXPORT extern int rt_db_put_internal5(struct directory *dp,
+					 struct db_i *dbip,
+					 struct rt_db_internal *ip,
+					 struct resource *resp,
+					 const int major);
 
 
 /**
@@ -366,8 +383,8 @@ RT_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_in
  * -1 on EOF
  * -2 on error
  */
-RT_EXPORT extern int db5_get_raw_internal_fp(struct db5_raw_internal	*rip,
-					     FILE			*fp);
+RT_EXPORT extern int db5_get_raw_internal_fp(struct db5_raw_internal *rip,
+					     FILE *fp);
 
 
 /**
@@ -429,10 +446,10 @@ RT_EXPORT extern void db_wrap_v4_external(struct bu_external *op,
 
 
 /* db_io.c */
-RT_EXPORT extern int db_write(struct db_i	*dbip,
-			      const void *	addr,
-			      size_t		count,
-			      b_off_t		offset);
+RT_EXPORT extern int db_write(struct db_i *dbip,
+			      const void * addr,
+			      size_t count,
+			      b_off_t offset);
 
 /**
  * Add name from dp->d_namep to external representation of solid, and
@@ -453,9 +470,9 @@ RT_EXPORT extern int db_write(struct db_i	*dbip,
  * NOTE: Callers of this should be using wdb_export_external()
  * instead.
  */
-RT_EXPORT extern int db_fwrite_external(FILE			*fp,
-					const char		*name,
-					struct bu_external	*ep);
+RT_EXPORT extern int db_fwrite_external(FILE *fp,
+					const char *name,
+					struct bu_external *ep);
 
 /* malloc & read records */
 
@@ -639,6 +656,7 @@ RT_EXPORT extern int db_v4_get_units_code(const char *str);
  * -1 failure
  */
 RT_EXPORT extern int db_dirbuild(struct db_i *dbip);
+RT_EXPORT extern int db_dirbuild_inmem(struct db_i *dbip, const void *data, b_off_t data_size);
 RT_EXPORT extern struct directory *db5_diradd(struct db_i *dbip,
 					      const struct db5_raw_internal *rip,
 					      b_off_t laddr,
@@ -657,6 +675,14 @@ RT_EXPORT extern int db5_scan(struct db_i *dbip,
 					      b_off_t addr,
 					      void *client_data),
 			      void *client_data);
+RT_EXPORT extern int db5_scan_inmem(struct db_i *dbip,
+				    void (*handler)(struct db_i *,
+						    const struct db5_raw_internal *,
+						    b_off_t addr,
+						    void *client_data),
+				    void *client_data,
+				    const void *data,
+				    b_off_t data_size);
 
 /**
  * obtain the database version for a given database instance.
@@ -664,6 +690,7 @@ RT_EXPORT extern int db5_scan(struct db_i *dbip,
  * presently returns only a 4 or 5 accordingly.
  */
 RT_EXPORT extern int db_version(struct db_i *dbip);
+RT_EXPORT extern int db_version_inmem(struct db_i *dbip, const void *data, b_off_t data_size);
 
 
 /* db_corrupt.c */
@@ -700,10 +727,10 @@ RT_EXPORT extern struct db_i * db_create_inmem(void);
  * Transmogrify an existing directory entry to be an in-memory-only
  * one, stealing the external representation from 'ext'.
  */
-RT_EXPORT extern void db_inmem(struct directory	*dp,
-			       struct bu_external	*ext,
-			       int		flags,
-			       struct db_i	*dbip);
+RT_EXPORT extern void db_inmem(struct directory *dp,
+			       struct bu_external *ext,
+			       int flags,
+			       struct db_i *dbip);
 
 /* db_lookup.c */
 
@@ -725,7 +752,7 @@ RT_EXPORT extern void db_ck_directory(const struct db_i *dbip);
  * 1 if the in-memory directory has entries,
  * which implies that a db_scan() has already been performed.
  */
-RT_EXPORT extern int db_is_directory_non_empty(const struct db_i	*dbip);
+RT_EXPORT extern int db_is_directory_non_empty(const struct db_i *dbip);
 
 /**
  * Returns a hash index for a given string that corresponds with the
@@ -811,12 +838,12 @@ RT_EXPORT extern struct directory *db_diradd(struct db_i *,
 					     void *ptr);
 RT_EXPORT extern struct directory *db_diradd5(struct db_i *dbip,
 					      const char *name,
-					      b_off_t				laddr,
-					      unsigned char			major_type,
-					      unsigned char 			minor_type,
-					      unsigned char			name_hidden,
-					      size_t				object_length,
-					      struct bu_attribute_value_set	*avs);
+					      b_off_t laddr,
+					      unsigned char major_type,
+					      unsigned char minor_type,
+					      unsigned char name_hidden,
+					      size_t object_length,
+					      struct bu_attribute_value_set *avs);
 
 /* delete entry from directory */
 
@@ -862,7 +889,6 @@ RT_EXPORT extern int db_rename(struct db_i *,
  */
 RT_EXPORT extern void db_update_nref(struct db_i *dbip,
 				     struct resource *resp);
-
 
 
 /* db_flags.c */
@@ -917,35 +943,35 @@ RT_EXPORT extern void db_alloc_directory_block(struct resource *resp);
 RT_EXPORT extern void rt_alloc_seg_block(struct resource *res);
 
 
-
 /**
  * Read named MGED db, build toc.
  */
 RT_EXPORT extern struct rt_i *rt_dirbuild(const char *filename, char *buf, int len);
+RT_EXPORT extern struct rt_i *rt_dirbuild_inmem(const void *data, b_off_t data_size, char *buf, int len);
 
 
 /* db5_types.c */
-RT_EXPORT extern int db5_type_tag_from_major(char	**tag,
-					     const int	major);
+RT_EXPORT extern int db5_type_tag_from_major(char **tag,
+					     const int major);
 
-RT_EXPORT extern int db5_type_descrip_from_major(char	**descrip,
-						 const int	major);
+RT_EXPORT extern int db5_type_descrip_from_major(char **descrip,
+						 const int major);
 
-RT_EXPORT extern int db5_type_tag_from_codes(char	**tag,
-					     const int	major,
-					     const int	minor);
+RT_EXPORT extern int db5_type_tag_from_codes(char **tag,
+					     const int major,
+					     const int minor);
 
-RT_EXPORT extern int db5_type_descrip_from_codes(char	**descrip,
-						 const int	major,
-						 const int	minor);
+RT_EXPORT extern int db5_type_descrip_from_codes(char **descrip,
+						 const int major,
+						 const int minor);
 
-RT_EXPORT extern int db5_type_codes_from_tag(int	*major,
-					     int	*minor,
-					     const char	*tag);
+RT_EXPORT extern int db5_type_codes_from_tag(int *major,
+					     int *minor,
+					     const char *tag);
 
-RT_EXPORT extern int db5_type_codes_from_descrip(int	*major,
-						 int	*minor,
-						 const char	*descrip);
+RT_EXPORT extern int db5_type_codes_from_descrip(int *major,
+						 int *minor,
+						 const char *descrip);
 
 RT_EXPORT extern size_t db5_type_sizeof_h_binu(const int minor);
 

@@ -2,11 +2,13 @@
 if(BRLCAD_EXTRADOCS_HTML)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-book-xhtml-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-book-xhtml-stylesheet.xsl)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-book-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_HTML)
 
 if(BRLCAD_EXTRADOCS_PHP)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-book-xhtml-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-book-xhtml-stylesheet.xsl)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-book-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PHP)
 
 # Files for PDF products
@@ -14,6 +16,7 @@ if(BRLCAD_EXTRADOCS_PDF)
   # Style sheet for XSLT transformation to PDF
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-book-fo-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-book-fo-stylesheet.xsl)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-book-fo-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PDF)
 
 # For HTML and FO (FO is an intermediate file used in the
@@ -76,7 +79,7 @@ set(books_EN_IMAGES
   images/v4-image011.jpg
   )
 if(BRLCAD_EXTRADOCS)
-  ADD_DOC(books_EN_IMAGES books/images)
+  ADD_DOC(books_EN_IMAGES html/books/images)
 else(BRLCAD_EXTRADOCS)
   CMAKEFILES(${books_EN_IMAGES})
 endif(BRLCAD_EXTRADOCS)
@@ -89,10 +92,12 @@ set(CURRENT_VOLUME "I")
 set(CURRENT_TITLE "An Overview of BRL-CAD")
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/tutorial-cover-template.xsl.in
   ${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeI-cover.xsl @ONLY)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeI-cover.xsl")
 
 string(REPLACE " " "%20" TUTORIAL_COVER_XSL ${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeI-cover.xsl)
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/tutorial-template.xsl.in
   ${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeI.xsl @ONLY)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeI.xsl")
 
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeI.xsl")
 
@@ -103,10 +108,12 @@ set(CURRENT_VOLUME "II")
 set(CURRENT_TITLE "Introduction to MGED")
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/tutorial-cover-template.xsl.in
   ${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeII-cover.xsl @ONLY)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeII-cover.xsl")
 
 string(REPLACE " " "%20" TUTORIAL_COVER_XSL ${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeII-cover.xsl)
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/tutorial-template.xsl.in
   ${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeII.xsl @ONLY)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeII.xsl")
 
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeII.xsl")
 
@@ -118,10 +125,12 @@ set(CURRENT_VOLUME "III")
 set(CURRENT_TITLE "Principles of Effective Modeling")
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/tutorial-cover-template.xsl.in
   ${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIII-cover.xsl @ONLY)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIII-cover.xsl")
 
 string(REPLACE " " "%20" TUTORIAL_COVER_XSL ${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIII-cover.xsl)
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/tutorial-template.xsl.in
   ${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIII.xsl @ONLY)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIII.xsl")
 
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIII.xsl")
 
@@ -133,10 +142,12 @@ set(CURRENT_VOLUME "IV")
 set(CURRENT_TITLE "Converting Geometry Between BRL-CAD and Other Formats")
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/tutorial-cover-template.xsl.in
   ${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIV-cover.xsl @ONLY)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIV-cover.xsl")
 
 string(REPLACE " " "%20" TUTORIAL_COVER_XSL ${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIV-cover.xsl)
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/tutorial-template.xsl.in
   ${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIV.xsl @ONLY)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIV.xsl")
 
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIV.xsl")
 

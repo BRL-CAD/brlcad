@@ -25,74 +25,132 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><command>pixcmp</command>
-is a program to compare two BRL-CAD pix image files pixel by pixel.  The following <emphasis remap='I'>OPTIONS</emphasis> are available:</para>
+
+<para><command>pixcmp</command> is a program to compare two BRL-CAD
+pix image files pixel by pixel (or byte by byte), optionally skipping
+initial pixels (or bytes) in one or both input files.  The following
+<emphasis remap='I'>OPTIONS</emphasis> are available:</para>
+
 <variablelist remap='TP'>
-  <varlistentry>
-  <term><option>-l</option></term>
-  <listitem>
-<para>Output pixel numbers, counting from 1, and values for all pixels that differ.</para>
-  </listitem>
-  </varlistentry>
   <varlistentry>
   <term><option>-b</option></term>
   <listitem>
-<para>Use bytes instead of pixels for both processing and output.  With this option, the <option>-i</option> SKIP values should be specified as bytes instead of pixels.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-i</option> <replaceable>SKIP</replaceable></term>
-  <listitem>
-<para>Skip the first SKIP pixels of input (for FILE1 and FILE2).</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-i</option> <replaceable>SKIP1</replaceable>:<emphasis remap='I'>SKIP2</emphasis></term>
-  <listitem>
-<para>Skip the first SKIP1 pixels of FILE1 and the first SKIP2 pixels of FILE2.</para>
+    <para>Use bytes instead of pixels for both processing and output.
+    This can be useful for comparing BW images or other data files.
+    With this option, the <option>-i</option> SKIP values should be
+    specified as bytes instead of pixels.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
   <term><option>-s</option></term>
   <listitem>
-<para>Silent output.  Only return an exit status.</para>
+    <para>Output a line per pixel (or per byte if using the
+    <option>-b</option> option) where the values are the same.  Each
+    line includes the pixel (or byte) number counting from 1, the
+    respective input values, and a label.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d</option></term>
+  <listitem>
+    <para>Output a line per pixel (or per byte if using the
+    <option>-b</option> option) where the values are different.  Each
+    line includes the pixel (or byte) number counting from 1, the
+    respective input values, and a label.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-q</option></term>
+  <listitem>
+    <para>Be more quiet, suppressing additional printing typically
+    sent to standard error.  With the <option>-s</option> and/or
+    <option>-d</option> options, respective lines will still be
+    printed to standard output, but without header and summary
+    information getting sent to standard error.</para>
+    <para>This option has no affect on error printing that can result
+    during abnormal exit of pixcmp.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-i</option> <replaceable>SKIP</replaceable></term>
+  <listitem>
+    <para>Skip the first SKIP pixels (or bytes if using the <option>-b</option> option) of input for FILE1 and FILE2.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-i</option> <replaceable>SKIP1</replaceable>:<emphasis remap='I'>SKIP2</emphasis></term>
+  <listitem>
+    <para>Skip the first SKIP1 pixels (or bytes if using the
+    <option>-b</option> option) of FILE1 and first SKIP2 pixels in
+    FILE2.</para>
   </listitem>
   </varlistentry>
 </variablelist>
 
-<para>SKIP1 and SKIP2 are the number of pixels to skip in each file.</para>
+<para>SKIP1 and SKIP2 are the number of pixels (or bytes if using the
+<option>-b</option> option) to skip in each file.</para>
 
 <para>If FILE is `<emphasis remap='B'>-</emphasis>` or missing,
-<command>pixcmp</command>
-reads from the standard input.</para>
+<command>pixcmp</command> reads from the standard input.  If FILE1 and
+FILE2 are both standard input, then values must be interleaved (e.g.,
+r1r2g1g2b1b2r1r2g1g2b1b2...etc... for r1g1b1 and r2g2b2 from two
+separate input streams).</para>
 </refsect1>
 
 <refsect1 xml:id='return_values'><title>RETURN VALUES</title>
-<para>The
-<command>pixcmp</command>
-utility returns <literal>0</literal> if there are no differences, <literal>1</literal> if there are only off-by-one differences, <literal>2</literal> if there are off-by-many errors, <literal>126</literal> if there are file processing problems, and <literal>127</literal> if there are argument processing or usage errors.</para>
+<para>The <command>pixcmp</command> utility returns
+<literal>0</literal> if there are no differences, <literal>1</literal>
+if there are only off-by-one differences, <literal>2</literal> if
+there are off-by-many errors, <literal>126</literal> if there are file
+processing problems, and <literal>127</literal> if there are argument
+processing or usage errors.</para>
 </refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><userinput>pixcmp -l file1 file2</userinput></term>
+  <term><userinput>pixcmp -d file1 file2</userinput></term>
   <listitem>
 <!-- .br -->
-<para>The two files are compared pixel by pixel with each difference printed instead of just the summary.</para>
+    <para>The two files are compared pixel by pixel with each
+    difference printed instead of just the summary.</para>
   </listitem>
   </varlistentry>
+
   <varlistentry>
   <term><emphasis remap='B'>pixdiff file1.pix file2.pix | pixcmp - file3.pix</emphasis></term>
   <listitem>
 <!-- .br -->
-<para>The
-<emphasis remap='I'>pixdiff</emphasis>
-tool compares the pixels in file1.pix with those in file2.pix and then outputs a resulting `diff` image which is then processed by
-<command>pixcmp</command>
-as input and compared against file3.pix, reporting on the differences.</para>
+    <para>The <emphasis remap='I'>pixdiff</emphasis> tool compares the
+    pixels in file1.pix with those in file2.pix and then outputs a
+    resulting `diff` image which is then processed by
+    <command>pixcmp</command> as input and compared against file3.pix,
+    reporting on the differences.</para>
   </listitem>
   </varlistentry>
+
+  <varlistentry>
+  <term><userinput>echo -n "aabcddeg" | pixcmp -b -s -d - -</userinput></term>
+  <listitem>
+<!-- .br -->
+    <para>Here, pixcmp reads interleaved data from the system
+    <command>echo</command> command (-n avoids a trailing newline)
+    provided via standard input.  For each pair of characters (i.e.,
+    bytes), it reports their status:</para>
+
+    <para>
+    <literallayout class="normal">
+#Byte FILE1 FILE2 LABEL
+1  97  97 MATCHING
+2  98  99 OFF_BY_ONE
+3 100 100 MATCHING
+4 101 103 OFF_BY_MANY
+pixcmp bytes:        2 matching,        1 off by 1,        1 off by many
+    </literallayout>
+    </para>
+  </listitem>
+  </varlistentry>
+
 </variablelist>
 </refsect1>
 
@@ -106,7 +164,7 @@ as input and compared against file3.pix, reporting on the differences.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 2007-2020 by the United States
+<para>This software is Copyright (c) 2007-2022 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>

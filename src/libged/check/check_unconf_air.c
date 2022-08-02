@@ -1,7 +1,7 @@
 /*                C H E C K _ U N C O N F _ A I R . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2020 United States Government as represented by
+ * Copyright (c) 2018-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ struct unconf_air_context {
     double tolerance;
 };
 
-HIDDEN void 
+HIDDEN void
 unconf_air(const struct xray *ray,
 	   const struct partition *ipart,
 	   const struct partition *opart,
@@ -52,7 +52,7 @@ unconf_air(const struct xray *ray,
     }
 
     bu_semaphore_acquire(BU_SEM_GENERAL);
-    
+
     add_to_list(context->unconfAirList,
 		ipart->pt_regionp->reg_name,
 		opart->pt_regionp->reg_name,
@@ -84,7 +84,8 @@ int check_unconf_air(struct current_state *state,
     BU_LIST_INIT(&(unconfAirList.l));
 
     if (options->plot_files) {
-	if ((plot_unconf_air=fopen(name, "wb")) == (FILE *)NULL) {
+	plot_unconf_air = fopen(name, "wb");
+	if (plot_unconf_air == (FILE *)NULL) {
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 	}
     }
@@ -97,7 +98,7 @@ int check_unconf_air(struct current_state *state,
     analyze_register_unconf_air_callback(state, unconf_air, &callbackdata);
     if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_UNCONF_AIR)) {
 	clear_list(&unconfAirList);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     print_verbose_debug(options);
@@ -109,7 +110,7 @@ int check_unconf_air(struct current_state *state,
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

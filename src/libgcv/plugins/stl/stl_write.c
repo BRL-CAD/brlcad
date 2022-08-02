@@ -1,7 +1,7 @@
 /*                     S T L _ W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2020 United States Government as represented by
+ * Copyright (c) 2003-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -114,7 +114,7 @@ stl_write_lswap(unsigned int *v)
 
 
 HIDDEN void
-nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]), void *client_data)
+nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state* UNUSED(tsp), void *client_data)
 {
     struct model *m;
     struct shell *s;
@@ -347,7 +347,7 @@ HIDDEN int
 stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *dest_path)
 {
     int ret;
-    double percent;
+    double percent = 0.0;
     struct db_tree_state tree_state;
     struct conversion_state state;
     struct gcv_region_end_data gcvwriter;
@@ -418,14 +418,12 @@ stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 			(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?NULL:nmg_booltree_leaf_tess,
 			(void *)&gcvwriter);
 
-    percent = 0;
     if (state.regions_tried>0) {
 	percent = ((double)state.regions_converted * 100) / state.regions_tried;
 	if (state.gcv_options->verbosity_level)
 	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 		   state.regions_tried, state.regions_converted, percent);
     }
-    percent = 0;
 
     if (state.regions_tried > 0) {
 	percent = ((double)state.regions_written * 100) / state.regions_tried;

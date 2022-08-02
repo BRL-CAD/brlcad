@@ -1,7 +1,7 @@
 /*                      B W S H R I N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -155,7 +155,7 @@ parse_args(int ac, char **av)
     }
     if (bu_optind < ac) {
 	char *ifname = bu_file_realpath(av[bu_optind], NULL);
-	if (freopen(ifname, "r", stdin) == (FILE *)NULL) {
+	if (freopen(ifname, "rb", stdin) == (FILE *)NULL) {
 	    perror(ifname);
 	    bu_exit (-1, NULL);
 	} else
@@ -186,6 +186,8 @@ int main(int ac, char **av)
 	usage();
 
     /* process stdin */
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     /* get buffer for image */
     size = width * height;

@@ -1,7 +1,7 @@
 /*                        C O L O R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,8 +29,6 @@
 #include "bu/magic.h"
 
 __BEGIN_DECLS
-
-/*----------------------------------------------------------------------*/
 
 /** @addtogroup bu_color
  * @brief
@@ -72,9 +70,18 @@ typedef struct bu_color bu_color_t;
  */
 #define BU_COLOR_INIT_ZERO {{0, 0, 0, 0}}
 
+/**
+ * Copy a bu_color
+ */
+#define BU_COLOR_CPY(_dest, _src) {\
+    (_dest)->buc_rgb[RED] = (_src)->buc_rgb[RED]; \
+    (_dest)->buc_rgb[GRN] = (_src)->buc_rgb[GRN]; \
+    (_dest)->buc_rgb[BLU] = (_src)->buc_rgb[BLU]; \
+    (_dest)->buc_rgb[ALP] = (_src)->buc_rgb[ALP]; \
+}
 
 
-/* random color generating methods */
+/** random color generating methods */
 typedef enum {
     BU_COLOR_RANDOM = 0,
     BU_COLOR_RANDOM_LIGHTENED
@@ -94,7 +101,7 @@ BU_EXPORT extern int bu_color_rand(struct bu_color *c, bu_color_rand_t type);
 
 #if 0
 
-/*
+/**
  * Refactoring points:
  * color command (set specified color)
  *     src/libged/color.c

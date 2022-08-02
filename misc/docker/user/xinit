@@ -1,0 +1,6 @@
+#!/bin/sh
+/usr/bin/openbox-session &
+PID=$!
+/opt/brlcad/bin/archer &
+/usr/bin/xterm &
+wait $PID

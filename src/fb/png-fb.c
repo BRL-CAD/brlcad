@@ -1,7 +1,7 @@
 /*                        P N G - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 
@@ -142,6 +142,7 @@ get_args(int argc, char **argv)
 	    return 0;
 	file_name = "-";
 	fp_in = stdin;
+	setmode(fileno(stdin), O_BINARY);
     } else {
 	file_name = argv[bu_optind];
 	if ((fp_in = fopen(file_name, "rb")) == NULL) {
@@ -165,7 +166,7 @@ int
 main(int argc, char **argv)
 {
     int y;
-    fb *fbp;
+    struct fb *fbp;
     int i;
     int xout, yout, m, xstart;
     png_structp png_p;

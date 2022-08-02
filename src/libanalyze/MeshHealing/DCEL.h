@@ -1,7 +1,7 @@
 /*                          D C E L . H
  * BRL-CAD
  *
- * Copyright (c) 2016-2020 United States Government as represented by
+ * Copyright (c) 2016-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,6 +42,7 @@ struct DCEL_Vertex {
     double coordinates[3];
     DCEL_Edge* incident_edge;
 };
+#define DCEL_VERTEX_NULL {0, {0.0, 0.0, 0.0}, NULL}
 
 /* DCEL_Face record of a doubly-connected DCEL_Edge list includes:
     1. DCEL_Face ID,

@@ -1,7 +1,7 @@
 /*                       D B 5 _ B I N . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2020 United States Government as represented by
+ * Copyright (c) 2000-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -160,7 +160,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 	    srcp = (unsigned char *) ep->ext_buf;
 	    ldestp = (unsigned long *) bip->u.uint8;
 	    for (i = 0; i < bip->count; ++i, ++ldestp, srcp += 4) {
-		*ldestp = ntohl(*(uint32_t *)&srcp[0]);
+		*ldestp = bu_ntohl(*(uint32_t *)&srcp[0], 0, UINT_MAX - 1);
 	    }
 	    break;
 	case DB5_MINORTYPE_BINU_64BITINT:
@@ -178,7 +178,7 @@ rt_binunif_dump(struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);
     bu_log("rt_binunif_internal <%p>...\n", (void *)bip);
     bu_log("  type = x%x = %d", bip->type, bip->type);
-    bu_log("  count = %ld  first = 0x%02x", bip->count,
+    bu_log("  count = %zu  first = 0x%02x", bip->count,
 	   bip->u.uint8[0] & 0x0ff);
     bu_log("- - - - -\n");
 }
@@ -631,7 +631,7 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	    const char **obj_array;
 	    unsigned char *buf, *d;
 	    const char *s;
-	    int hexlen;
+	    size_t hexlen;
 	    unsigned int h;
 
 	    /* split initial list */

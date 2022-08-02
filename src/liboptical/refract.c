@@ -1,7 +1,7 @@
 /*                       R E F R A C T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 extern int viewshade(struct application *ap,

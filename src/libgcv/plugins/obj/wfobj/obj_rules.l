@@ -1,5 +1,5 @@
 /*                   O B J _ R U L E S . R E
- * Copyright (c) 2010-2020 United States Government as represented by
+ * Copyright (c) 2010-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,30 @@
 #include <stdlib.h>
 #include <iostream>
 #include <sys/types.h>
+
+/* We get some dead store warnings from re2c output - there's not too much we
+ * can do about that, so we add the "ifndef __clang_analyzer__" disabler
+ * documented by https://clang-analyzer.llvm.org/faq.html to disable running
+ * the analyzer on the generated code.
+ *
+ * This is not ideal (clang devs discourages use of ifndef __clang_analyzer__)
+ * but even using bundled tools it's not clear to me that fixing dead store
+ * issues is doable - even in theory - without very sophisticated support from
+ * the tool itself.  A basic code generator (i.e. one that can't perform whole
+ * system analysis on its state) will likely not know if it is safe to skip
+ * assigning zero to a variable in one part of the code, since whether or not
+ * that variable is going to get used could depend on a lot of subtle
+ * consequences of generator expressions and settings.
+ *
+ * If clang adds support in the future for only disabling specific warnings, we
+ * should adjust this to disable just the dead store warnings.  It may also be
+ * worth seeing if newer generations of re2c are doing (or at some point in the
+ * future decide to do) some sort of sophisticated logic analysis to produce
+ * cleaner output, but newer re2c versions are be more difficult to bootstrap;
+ * upstream did not adopt our porting of re2c from bison to lemon, and bison is
+ * more difficult to build on Windows.
+ */
+#ifndef __clang_analyzer__
 
 #include "obj_util.h"
 #include "obj_grammar_decls.h"
@@ -333,6 +357,9 @@ bool split_reference(const char *s, int val[3])
 } /* namespace obj */
 } /* namespace gcv */
 } /* namespace cad */
+
+#endif // clang static analyzer suppression
+
 /*
  * Local Variables:
  * mode: C++

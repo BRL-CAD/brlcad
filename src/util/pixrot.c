@@ -1,7 +1,7 @@
 /*                        P I X R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -126,7 +126,7 @@ get_args(int argc, char **argv)
 	ifp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((ifp = fopen(file_name, "r")) == NULL) {
+	if ((ifp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("pixrot: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}
@@ -147,6 +147,9 @@ main(int argc, char **argv)
     size_t ret;
 
     bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	bu_exit(1, "%s", usage);

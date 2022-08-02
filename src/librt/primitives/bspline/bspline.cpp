@@ -1,7 +1,7 @@
 /*                        B S P L I N E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1991-2020 United States Government as represented by
+ * Copyright (c) 1991-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ struct nurb_hit {
     extern void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
     extern void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
     extern void rt_brep_free(struct soltab *stp);
-    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
+    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *UNUSED(info));
 
 #endif /* CONVERT_TO_BREP */
 
@@ -193,10 +193,6 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     struct rt_nurb_internal *sip;
     const struct bn_tol *tol = &rtip->rti_tol;
-    fastf_t los = tol->dist;
-
-    if (los < SMALL_FASTF)
-	los = SMALL_FASTF;
 
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
     RT_NURB_CK_MAGIC(sip);
@@ -216,6 +212,10 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     return rt_brep_prep(stp, &di, rtip);
 #else
+    fastf_t los = tol->dist;
+
+    if (los < SMALL_FASTF)
+	los = SMALL_FASTF;
 
     for (i = 0; i < sip->nsrf; i++) {
 	struct face_g_snurb * s;
@@ -335,8 +335,8 @@ rt_nurb_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     /* Note: the equation of the plane in BRL-CAD is
      * Ax + By + Cz = D represented by [A B C D]
      */
-    bn_make_plane_3pnts(plane1, p1, p3, p2, tol);
-    bn_make_plane_3pnts(plane2, p1, p2, p4, tol);
+    bg_make_plane_3pnts(plane1, p1, p3, p2, tol);
+    bg_make_plane_3pnts(plane2, p1, p2, p4, tol);
 
     /* make sure that the hit_list is zero */
 
@@ -556,7 +556,7 @@ rt_nurb_free(struct soltab *stp)
 
 
 int
-rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
+rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *UNUSED(info))
 {
     struct rt_nurb_internal *sip;
 
@@ -635,10 +635,10 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 
 	vp = c->ctl_points;
 	for (i = 0; i < c->s_size[0]; i++) {
-	    RT_ADD_VLIST(vhead, vp, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, vp, BV_VLIST_LINE_MOVE);
 	    vp += coords;
 	    for (j = 1; j < c->s_size[1]; j++) {
-		RT_ADD_VLIST(vhead, vp, BN_VLIST_LINE_DRAW);
+		RT_ADD_VLIST(vhead, vp, BV_VLIST_LINE_DRAW);
 		vp += coords;
 	    }
 	}
@@ -648,9 +648,9 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 
 	    stride = c->s_size[1] * coords;
 	    vp = &c->ctl_points[j * coords];
-	    RT_ADD_VLIST(vhead, vp, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, vp, BV_VLIST_LINE_MOVE);
 	    for (i = 0; i < c->s_size[0]; i++) {
-		RT_ADD_VLIST(vhead, vp, BN_VLIST_LINE_DRAW);
+		RT_ADD_VLIST(vhead, vp, BV_VLIST_LINE_DRAW);
 		vp += stride;
 	    }
 	}
@@ -699,7 +699,8 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     int i;
     int s;
 
-    if (dbip) RT_CK_DBI(dbip);
+    if (dbip)
+       	RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -717,7 +718,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     sip = (struct rt_nurb_internal *)ip->idb_ptr;
     sip->magic = RT_NURB_INTERNAL_MAGIC;
 
-    if (dbip->dbi_version < 0) {
+    if (dbip && dbip->dbi_version < 0) {
 	sip->nsrf = flip_short(rp->B.B_nsurf);
     } else {
 	sip->nsrf = rp->B.B_nsurf;
@@ -745,7 +746,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
 	/* fix endianness */
 	d.d.d_id = rp->d.d_id;
-	if (dbip->dbi_version < 0) {
+	if (dbip && dbip->dbi_version < 0) {
 	    d.d.d_order[0] = flip_short(rp->d.d_order[0]);
 	    d.d.d_order[1] = flip_short(rp->d.d_order[1]);
 	    d.d.d_kv_size[0] = flip_short(rp->d.d_kv_size[0]);
@@ -775,7 +776,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
 	vp = (dbfloat_t *) &rp[1];
 
-	if (dbip->dbi_version < 0) {
+	if (dbip && dbip->dbi_version < 0) {
 	    for (i = 0; i < d.d.d_kv_size[0]; i++) {
 		sip->srfs[s]->u.knots[i] = flip_dbfloat(*vp++);
 	    }
@@ -806,7 +807,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	    for (; i> 0; i--) {
 		vect_t f;
 
-		if (dbip->dbi_version < 0) {
+		if (dbip && dbip->dbi_version < 0) {
 		    f[0] = flip_dbfloat(vp[0]);
 		    f[1] = flip_dbfloat(vp[1]);
 		    f[2] = flip_dbfloat(vp[2]);
@@ -822,7 +823,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	    for (; i> 0; i--) {
 		hvect_t f;
 
-		if (dbip->dbi_version < 0) {
+		if (dbip && dbip->dbi_version < 0) {
 		    f[0] = flip_dbfloat(vp[0]);
 		    f[1] = flip_dbfloat(vp[1]);
 		    f[2] = flip_dbfloat(vp[2]);
@@ -1075,7 +1076,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     cp = (unsigned char *)ep->ext_buf;
 
-    sip->nsrf = ntohl(*(uint32_t *)cp);
+    sip->nsrf = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
     cp += SIZEOF_NETWORK_LONG;
     sip->srfs = (struct face_g_snurb **) bu_calloc(sip->nsrf, sizeof(struct face_g_snurb *), "nurb srfs[]");
 
@@ -1091,19 +1092,19 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	double *vknots;
 	double *points;
 
-	pt_type = ntohl(*(uint32_t *)cp);
+	pt_type = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
-	order[0] = ntohl(*(uint32_t *)cp);
+	order[0] = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
-	order[1] = ntohl(*(uint32_t *)cp);
+	order[1] = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
-	u_size = ntohl(*(uint32_t *)cp);
+	u_size = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
-	v_size = ntohl(*(uint32_t *)cp);
+	v_size = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
-	s_size[0] = ntohl(*(uint32_t *)cp);
+	s_size[0] = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
-	s_size[1] = ntohl(*(uint32_t *)cp);
+	s_size[1] = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
 	if (pt_type == 3)
 	    pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
@@ -1355,6 +1356,9 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 
 		(void)bu_argv_from_tcl_list(srf_array[srf_no], &n_params, (const char ***)&srf_param_array);
 
+		if (!srf_param_array)
+		    continue;
+
 		for (i=0; i<n_params; i+= 2) {
 		    int tmp_len;
 
@@ -1389,22 +1393,19 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 			    bu_free((char *)srf_param_array, "srf_param_array");
 			    return BRLCAD_ERROR;
 			}
-			nurb->srfs[srf_no] = (struct face_g_snurb *) nmg_nurb_new_snurb(
-				order[0], order[1],
-				u_size, v_size,
-				s_size[0], s_size[1],
-				pt_type);
+			nurb->srfs[srf_no] = (struct face_g_snurb *) nmg_nurb_new_snurb(order[0], order[1], u_size, v_size, s_size[0], s_size[1], pt_type);
 			srf = nurb->srfs[srf_no];
 			bu_free((char *)order, "order");
+			order = NULL;
 			bu_free((char *)s_size, "s_size");
-			(void)memcpy(srf->u.knots, u_pts,
-				srf->u.k_size * sizeof(fastf_t));
-			(void)memcpy(srf->v.knots, v_pts,
-				srf->v.k_size * sizeof(fastf_t));
+			s_size = NULL;
+			(void)memcpy(srf->u.knots, u_pts, srf->u.k_size * sizeof(fastf_t));
+			(void)memcpy(srf->v.knots, v_pts, srf->v.k_size * sizeof(fastf_t));
 			bu_free((char *)u_pts, "u_pts");
+			u_pts = NULL;
 			bu_free((char *)v_pts, "v_pts");
-			tmp_len = srf->s_size[0] * srf->s_size[1] *
-			    RT_NURB_EXTRACT_COORDS(srf->pt_type);
+			v_pts = NULL;
+			tmp_len = srf->s_size[0] * srf->s_size[1] * RT_NURB_EXTRACT_COORDS(srf->pt_type);
 			tmp2 = tmp_len;
 			if (_rt_tcl_list_to_fastf_array(srf_param_array[i+1], &srf->ctl_points, &tmp_len) != tmp2) {
 			    bu_vls_printf(logstr, "ERROR: unable to parse surface\n");
@@ -1415,6 +1416,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		    }
 		}
 		bu_free((char *)srf_param_array, "srf_param_array");
+		srf_param_array = NULL;
 	    }
 	}
 
@@ -1434,16 +1436,73 @@ rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
     return 0;			/* OK */
 }
 
+extern "C" void
+rt_nurb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!ps || !ip)
+	return;
+
+    struct rt_nurb_internal *nurb = (struct rt_nurb_internal *)ip->idb_ptr;
+    RT_NURB_CK_MAGIC(nurb);
+
+    // Set up the containers
+    struct bv_label *l[5];
+    for (int i = 0; i < 5; i++) {
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
+	struct bv_label *la;
+	BU_GET(la, struct bv_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+    }
+
+    // Do the specific data assignments for each label
+    /*XXX Needs work */
+
+    struct face_g_snurb *surf;
+    fastf_t *fp;
+    surf = nurb->srfs[0];
+    NMG_CK_SNURB(surf);
+    fp = &RT_NURB_GET_CONTROL_POINT(surf, 0, 0);
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, fp);
+
+    fp = &RT_NURB_GET_CONTROL_POINT(surf, 0, 0);
+    bu_vls_sprintf(&l[1]->label, "  0, 0");
+    VMOVE(l[1]->p, fp);
+
+    fp = &RT_NURB_GET_CONTROL_POINT(surf, 0, surf->s_size[1]-1);
+    bu_vls_sprintf(&l[2]->label, "u, 0");
+    VMOVE(l[2]->p, fp);
+
+
+    fp = &RT_NURB_GET_CONTROL_POINT(surf, surf->s_size[0]-1, 0);
+    bu_vls_sprintf(&l[3]->label, "0, v");
+    VMOVE(l[3]->p, fp);
+
+    fp = &RT_NURB_GET_CONTROL_POINT(surf, surf->s_size[0]-1, surf->s_size[1]-1);
+    bu_vls_sprintf(&l[4]->label, "u, v");
+    VMOVE(l[4]->p, fp);
+
+}
+
 #ifdef __cplusplus
 }
 #endif
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

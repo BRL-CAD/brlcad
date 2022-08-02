@@ -1,0 +1,73 @@
+/*                          D M - P L O T . H
+ * BRL-CAD
+ *
+ * Copyright (c) 1993-2022 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @addtogroup libstruct dm */
+/** @{ */
+/** @file dm-plot.h
+ *
+ */
+
+#ifndef DM_PLOT_H
+#define DM_PLOT_H
+
+#include "common.h"
+#include "vmath.h"
+
+/*
+ * Display coordinate conversion:
+ *  GED is using -2048..+2048,
+ *  and we define the PLOT file to use the same space.  Easy!
+ */
+#define	GED_TO_PLOT(x)	(x)
+#define PLOT_TO_GED(x)	(x)
+
+extern struct dm dm_plot;
+
+struct plot_vars {
+    struct bu_list l;
+    FILE *up_fp;
+    char ttybuf[BUFSIZ];
+    int floating;
+    int zclip;
+    int grid;
+    int is_3D;
+    int is_pipe;
+    int debug;
+    vect_t clipmin;
+    vect_t clipmax;
+    struct bu_vls vls;
+    mat_t plotmat;
+    mat_t disp_mat;
+    mat_t mod_mat;
+};
+
+extern struct plot_vars head_plot_vars;
+
+#endif /* DM_PLOT_H */
+
+/** @} */
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

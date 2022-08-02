@@ -37,7 +37,7 @@ specified on the command line.
  <example><title>Set the view direction for MGED.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>orientation 1 0 0 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>orientation 1 0 0 0</userinput>
     </para>
     <para>Sets the viewing direction to bottom.
 

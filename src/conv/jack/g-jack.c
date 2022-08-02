@@ -1,7 +1,7 @@
 /*                        G - J A C K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 static const char *usage =
@@ -303,6 +303,9 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     if (curtree->tr_op == OP_NOP)
 	return curtree;
 
+    if (pathp->fp_len <= 0)
+	return curtree;
+
     regions_tried++;
 
     ret_tree = process_boolean(curtree, tsp, pathp);
@@ -314,7 +317,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
     regions_done++;
 
-    if (r && !no_file_output)  {
+    if (r && !no_file_output) {
 	FILE	*fp_psurf;
 	size_t	i;
 	struct bu_vls	file_base = BU_VLS_INIT_ZERO;
@@ -388,7 +391,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 			  (int)(tsp->ts_mater.ma_color[2] * 255));
 		BU_LIST_INIT(&vhead);
 		nmg_r_to_vlist(&vhead, r, 0, &RTG.rtg_vlfree);
-		bn_vlist_to_uplot(fp, &vhead);
+		bv_vlist_to_uplot(fp, &vhead);
 		fclose(fp);
 		RT_FREE_VLIST(&vhead);
 		if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
@@ -397,10 +400,9 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	}
 	bu_vls_free(&file_base);
     }
-    if (no_file_output)  {
-	if (verbose) bu_log("*** Completed %s\n",
-			    DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
-    }
+
+    if (no_file_output && verbose)
+	bu_log("*** Completed %s\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
 
     /*
      *  Dispose of original tree, so that all associated dynamic

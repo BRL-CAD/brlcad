@@ -1,7 +1,7 @@
 /*                           C M D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -90,6 +90,7 @@ extern int cmd_setview(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_shaded_mode(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_size(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_ged_simulate_wrapper(ClientData, Tcl_Interp *, int, const char *[]);
+extern int cmd_stat(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_stub(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_stuff_str(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_tk(ClientData, Tcl_Interp *, int, const char *[]);

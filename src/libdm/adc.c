@@ -1,7 +1,7 @@
 /*                           A D C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,14 +27,15 @@
 #include <math.h>
 #include <string.h>
 
-#include "bn.h"
 #include "vmath.h"
+#include "bg/clip.h"
+#include "bv/defines.h"
+#include "bv/adc.h"
 #include "dm.h"
-#include "dm/bview.h"
-#include "dm_private.h"
+#include "./include/private.h"
 
 static void
-dm_draw_ticks(dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
+dm_draw_ticks(struct dm *dmp, struct bv_adc_state *adcp, fastf_t angle)
 {
     fastf_t c_tdist;
     fastf_t d1, d2;
@@ -59,10 +60,10 @@ dm_draw_ticks(dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
     Y1 = adcp->dv_y + d2 - t2;
     x2 = adcp->dv_x + d1 -t1;
     y2 = adcp->dv_y + d2 + t2;
-    if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
+    if (bg_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
-			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
-			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
+			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
+			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
     }
 
     /* Quadrant 2 */
@@ -70,10 +71,10 @@ dm_draw_ticks(dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
     Y1 = adcp->dv_y + d1 + t1;
     x2 = adcp->dv_x - d2 - t2;
     y2 = adcp->dv_y + d1 - t1;
-    if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
+    if (bg_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
-			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
-			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
+			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
+			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
     }
 
     /* Quadrant 3 */
@@ -81,10 +82,10 @@ dm_draw_ticks(dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
     Y1 = adcp->dv_y - d2 + t2;
     x2 = adcp->dv_x - d1 + t1;
     y2 = adcp->dv_y - d2 - t2;
-    if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
+    if (bg_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
-			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
-			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
+			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
+			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
     }
 
     /* Quadrant 4 */
@@ -92,10 +93,10 @@ dm_draw_ticks(dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
     Y1 = adcp->dv_y - d1 - t1;
     x2 = adcp->dv_x + d2 + t2;
     y2 = adcp->dv_y - d1 + t1;
-    if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
+    if (bg_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
-			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
-			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
+			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
+			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
     }
 }
 
@@ -104,7 +105,7 @@ dm_draw_ticks(dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
  * Compute and display the angle/distance cursor.
  */
 void
-dm_draw_adc(dm *dmp, struct bview_adc_state *adcp, mat_t view2model, mat_t model2view)
+dm_draw_adc(struct dm *dmp, struct bv_adc_state *adcp, mat_t view2model, mat_t model2view)
 {
     fastf_t x1, Y1;	/* not "y1", due to conflict with math lib */
     fastf_t x2, y2;
@@ -175,8 +176,8 @@ dm_draw_adc(dm *dmp, struct bview_adc_state *adcp, mat_t view2model, mat_t model
 
     /* Horizontal */
     dm_draw_line_2d(dmp,
-		    GED_TO_PM1(GED_MIN), GED_TO_PM1(adcp->dv_y) * dmp->dm_aspect,
-		    GED_TO_PM1(GED_MAX), GED_TO_PM1(adcp->dv_y) * dmp->dm_aspect);
+		    GED_TO_PM1(GED_MIN), GED_TO_PM1(adcp->dv_y) * dmp->i->dm_aspect,
+		    GED_TO_PM1(GED_MAX), GED_TO_PM1(adcp->dv_y) * dmp->i->dm_aspect);
 
     /* Vertical */
     dm_draw_line_2d(dmp,
@@ -200,11 +201,11 @@ dm_draw_adc(dm *dmp, struct bview_adc_state *adcp, mat_t view2model, mat_t model
     y4 = adcp->dv_y + d1;
 
     dm_draw_line_2d(dmp,
-		    GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
-		    GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
+		    GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
+		    GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
     dm_draw_line_2d(dmp,
-		    GED_TO_PM1(x3), GED_TO_PM1(y3) * dmp->dm_aspect,
-		    GED_TO_PM1(x4), GED_TO_PM1(y4) * dmp->dm_aspect);
+		    GED_TO_PM1(x3), GED_TO_PM1(y3) * dmp->i->dm_aspect,
+		    GED_TO_PM1(x4), GED_TO_PM1(y4) * dmp->i->dm_aspect);
 
     d1 = cos(angle2) * 8000.0;
     d2 = sin(angle2) * 8000.0;
@@ -220,11 +221,11 @@ dm_draw_adc(dm *dmp, struct bview_adc_state *adcp, mat_t view2model, mat_t model
 
     dm_set_line_attr(dmp, adcp->line_width, 1);
     dm_draw_line_2d(dmp,
-		    GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
-		    GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
+		    GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
+		    GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
     dm_draw_line_2d(dmp,
-		    GED_TO_PM1(x3), GED_TO_PM1(y3) * dmp->dm_aspect,
-		    GED_TO_PM1(x4), GED_TO_PM1(y4) * dmp->dm_aspect);
+		    GED_TO_PM1(x3), GED_TO_PM1(y3) * dmp->i->dm_aspect,
+		    GED_TO_PM1(x4), GED_TO_PM1(y4) * dmp->i->dm_aspect);
     dm_set_line_attr(dmp, adcp->line_width, 0);
 
     dm_set_fg(dmp,

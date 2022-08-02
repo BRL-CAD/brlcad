@@ -1,7 +1,7 @@
 /*                        D Y L I B. H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,12 +52,14 @@ __BEGIN_DECLS
 # define BU_RTLD_LOCAL 0
 #endif
 
+
 BU_EXPORT extern void *bu_dlopen(const char *path, int mode);
 BU_EXPORT extern void *bu_dlsym(void *path, const char *symbol);
 BU_EXPORT extern int bu_dlclose(void *handle);
 BU_EXPORT extern const char *bu_dlerror(void);
+BU_EXPORT extern int bu_dlunload();
 
-/** } */
+/** @} */
 
 __END_DECLS
 

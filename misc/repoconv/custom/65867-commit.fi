@@ -1,7 +1,0 @@
-commit refs/heads/opencl
-mark :65867
-committer Vasco Alexandre da Silva Costa <vasco_costa> 1439231890 +0000
-data 37
-creating a private branch for opencl.
-from opencl,65866
-merge master,65866

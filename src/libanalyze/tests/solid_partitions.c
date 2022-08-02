@@ -1,7 +1,7 @@
 /*                    R A Y D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ main(int argc, char **argv)
     size_t ncpus = bu_avail_cpus();
     struct db_i *dbip = DBI_NULL;
     struct directory *dp = RT_DIR_NULL;
-    struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    struct bn_tol tol = BG_TOL_INIT;
     struct bn_tol rtol = {BN_TOL_MAGIC, 10, 0.5 * 0.5, 1.0e-6, 1.0 - 1.0e-6 };
     struct resource resp;
     struct rt_gen_worker_vars state;

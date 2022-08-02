@@ -1,7 +1,7 @@
 #                A R C H E R _ I N I T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2020 United States Government as represented by
+# Copyright (c) 2002-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ if {! [info exists argv0] } {
 # already exists in the configured install path, all tcl scripts
 # will be pulled from the installed location and not the local
 # build location.  This is an inevitable consequence of how
-# bu_brlcad_root has to work (there are security implication to
+# BRL-CAD's path lookup has to work (there are security implication to
 # NOT using the installed files if they are present) but it also
 # makes for a subtle and vexing problem if a developer is trying
 # to tweak tcl scripts in the source tree and forgets that
@@ -48,7 +48,7 @@ if {! [info exists argv0] } {
 # installed file will be loaded instead of the edited version.
 # Warn if it looks like this situation is occurring by checking
 # the root path against the argv0 path.
-set check_root_dir [file normalize [bu_brlcad_root [bu_brlcad_dir bin]]]
+set check_root_dir [file normalize [bu_dir bin]]
 set check_bin_dir [file dirname [file normalize $argv0]]
 
 # Because there are conditions where we don't know our argv0 full path
@@ -57,21 +57,15 @@ set check_bin_dir [file dirname [file normalize $argv0]]
 if {[file exists [file normalize $argv0]]} {
     set dir_same [string compare $check_root_dir $check_bin_dir]
     if {!$dir_same == 0} {
-	puts "WARNING - bu_brlcad_root is set to [file dirname $check_root_dir], but binary being run is located in [file dirname $check_bin_dir].  This probably means you are running [file tail $argv0] from a non-install directory with BRL-CAD already present in [file dirname $check_root_dir] - be aware that .tcl files from [file dirname $check_root_dir] will be loaded INSTEAD OF local files. Tcl script changes made to source files for testing purposes will not be loaded, even though [file tail $argv0] will most likely 'work'.  To test local changes, either clear [file dirname $check_root_dir], specify a different install prefix (i.e. a directory *without* BRL-CAD installed) while building, or manually set the BRLCAD_ROOT environment variable."
+	puts "WARNING - bu_dir's bin value is set to [file dirname $check_root_dir], but binary being run is located in [file dirname $check_bin_dir].  This probably means you are running [file tail $argv0] from a non-install directory with BRL-CAD already present in [file dirname $check_root_dir] - be aware that .tcl files from [file dirname $check_root_dir] will be loaded INSTEAD OF local files. Tcl script changes made to source files for testing purposes will not be loaded, even though [file tail $argv0] will most likely 'work'.  To test local changes, either clear [file dirname $check_root_dir], specify a different install prefix (i.e. a directory *without* BRL-CAD installed) while building, or manually set the BRLCAD_ROOT environment variable."
     }
 }
 
 # Itk's default class doesn't keep the menu, but Archer needs it - redefine itk:Toplevel
-set itk_file [file join [bu_brlcad_root "share/tclscripts"] archer itk_redefines.tcl]
-if { ![file exists $itk_file] } {
-	#try src tree
-	set itk_file [file join [bu_brlcad_root "src"] tclscripts archer itk_redefines.tcl]
-	if { ![file exists $itk_file] } {
-		#try local relative
-		set itk_file [file join src tclscripts archer itk_redefines.tcl]
-	}
+set itk_file [file join [bu_dir data] "tclscripts" archer itk_redefines.tcl]
+if {[file exists [file normalize $itk_file]]} {
+    source $itk_file
 }
-source $itk_file
 
 # Set ttk theme
 if {[tk windowingsystem] eq "aqua"} {
@@ -98,11 +92,6 @@ if { [catch {package require Archer 1.0} _initialized] } {
     puts ""
     puts "ERROR: Unable to load Archer"
     exit 1
-}
-
-set Archer::debug 0
-if { [info exists env(DEBUG)] } {
-    set Archer::debug $env(DEBUG)
 }
 
 # Initialize bgerror
@@ -147,19 +136,14 @@ proc showMainWindow {} {
 proc createSplashScreen {} {
     global env
 
+    if { ![info exists ::ArcherCore::splash] } {
+	return
+    }
+
     set useImage 1
 
     if {$useImage} {
-	# try installed, uninstalled
-	set imgfile [file join [bu_brlcad_root "share/tclscripts"] archer images aboutArcher.png]
-	if { ![file exists $imgfile] } {
-	    # try src tree
-	    set imgfile [file join [bu_brlcad_root "src"] archer images aboutArcher.png]
-	    if { [!file exists $imgfile] } {
-		# try local relative
-	        set imgfile [file join tclscripts archer images aboutArcher.png]
-	    }
-	}
+	set imgfile [file join [bu_dir data] tclscripts archer images aboutArcher.png]
 	set image [image create photo -file $imgfile]
 	set ::ArcherCore::splash [Splash .splash -image $image]
     } else {
@@ -241,7 +225,7 @@ proc main {} {
 	wm title $::ArcherCore::application "Archer $brlcad_version"
 	if {$tcl_platform(os) == "Windows NT"} {
 	    wm iconbitmap $::ArcherCore::application -default \
-		[file join [bu_brlcad_root "share/icons"] archer.ico]
+		[file join [bu_dir data] icons archer.ico]
 	}
 	set size [wm maxsize $::ArcherCore::application]
 	set w [lindex $size 0]
@@ -260,7 +244,7 @@ proc main {} {
 	wm title . "Archer $brlcad_version"
 	if {$tcl_platform(os) == "Windows NT"} {
 	    wm iconbitmap . -default \
-		[file join [bu_brlcad_root "share/html"] manuals archer archer.ico]
+		[file join [bu_dir data] html manuals archer archer.ico]
 	}
 	set ::ArcherCore::application [Archer .\#auto]
 	set size [wm maxsize .]
@@ -295,11 +279,11 @@ wm withdraw .
 
 # start splash screen
 createSplashScreen
-if { $::argc eq 1 } {
+if { [info exists argc] && $::argc eq 1 } {
    set argv1 [lindex $argv 0]
    set argv1_ext [file extension $argv1]
    if {[string compare -nocase $argv1_ext ".g"] != 0} {
-    $::ArcherCore::splash deactivate
+       $::ArcherCore::splash deactivate
    }
 }
 

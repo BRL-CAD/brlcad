@@ -21,7 +21,7 @@
     <arg choice='opt'>-w <replaceable>width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>height</replaceable></arg>
    <arg choice='opt'>
-    <arg choice='opt'>-e <replaceable>ntsc|crt</replaceable></arg>
+    <arg choice='opt'>-e <replaceable>ntsc|crt|hdtv|hdr|avg</replaceable></arg>
     <arg choice='opt'>
      <arg choice='opt'><arg choice='plain'>-R </arg><replaceable>r_weight</replaceable></arg>
      <arg choice='opt'><arg choice='plain'>-G </arg><replaceable>g_weight</replaceable></arg>
@@ -64,15 +64,39 @@ choices include:</para>
   <varlistentry>
   <term><emphasis remap='B'>ntsc</emphasis></term>
   <listitem>
-<para> weighting used is based on the NTSC primaries and the
-D6500 alignment white.</para>
+<para>Weighting used is based on the NTSC primaries and white
+alignment.  Conforming with Rec.ITU-R BT.601-7, this uses
+0.299/0.587/0.114 RGB weights.  This gives a simplified linear
+conversion of perceived luminance that reflects human physiological
+sensitivity to green and least to blue.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
   <term><emphasis remap='B'>crt</emphasis></term>
   <listitem>
-<para>weighting scheme used will be for "typical" CRT phosphor chromaticities
-and the D6500 white.</para>
+<para>Weighting scheme matches "historic" CRT phosphor chromaticities
+and a D6500 white alignment.  Uses 0.26/0.66/0.08 RGB weights.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>hdtv</emphasis></term>
+  <listitem>
+<para>Weighting scheme matches "modern" HDTV display chromacities.
+Uses 0.2126/0.7152/0.0722 RGB weights per Rec.ITU-R BT.709</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>hdr</emphasis></term>
+  <listitem>
+<para>Weighting scheme matches high dynamic range (HDR) chromacities.
+Uses 0.2627/0.6780/0.0593 RGB weights per Rec.ITU-R BT.2020</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>avg</emphasis></term>
+  <listitem>
+<para>Weighting scheme simply takes the average of all three values
+(i.e., R + G + B / 3.0).</para>
   </listitem>
   </varlistentry>
 </variablelist>
@@ -96,15 +120,10 @@ are 1.0 divided by the number of colors selected.</para>
 <para>will equally blend the red and blue color planes; because -G is omitted, the green color plane is not considered.
 (Had "-G0.0" been included in this example, the three colors would have been weighted equally, as in the default condition.)</para>
 
-<para>pix-bw -R0.30 -G0.59 -B0.11 &lt; <emphasis remap='I'>file.pix</emphasis> &gt; <emphasis remap='I'>file.bw</emphasis></para>
+<para>pix-bw -R0.3 -G0.6 -B0.1 &lt; <emphasis remap='I'>file.pix</emphasis> &gt; <emphasis remap='I'>file.bw</emphasis></para>
 <para>
-has the same effect as the
-<option>-ntsc</option>
-flag.
-<!-- .br -->
-[The
-<option>-crt</option>
-weights are: 0.26, 0.66, 0.08]</para>
+applies weights close to the <option>-ntsc</option> flag.
+</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
@@ -118,7 +137,7 @@ weights are: 0.26, 0.66, 0.08]</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2020 by the United States
+<para>This software is Copyright (c) 1989-2022 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

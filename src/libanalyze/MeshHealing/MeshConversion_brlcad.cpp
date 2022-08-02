@@ -1,7 +1,7 @@
 /*       M E S H C O N V E R S I O N _ B R L C A D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2016-2020 United States Government as represented by
+ * Copyright (c) 2016-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ void
 BrlcadMesh::initVertices()
 {
     unsigned int num_vertices = this->getNumVertices();
-    DCEL_Vertex vertex;
+    DCEL_Vertex vertex = DCEL_VERTEX_NULL;
 
     for (unsigned int i = 0; i < num_vertices; i++) {
 
@@ -81,7 +81,7 @@ BrlcadMesh::initVertices()
     }
 }
 
-/* DCEL_Face record functions 
+/* DCEL_Face record functions
  * Note: The unbounded DCEL_Face will have face_id = 0. Its start_edge will be set to NULL.
  */
 
@@ -144,6 +144,12 @@ BrlcadMesh::initEdges()
     for (unsigned int i = 0; i < num_faces; ++i) {
 
 	DCEL_Edge temp;
+	temp.edge_id = std::make_pair(-1,-1);
+	temp.origin = NULL;
+	temp.twin = NULL;
+	temp.incident_face = NULL;
+	temp.next = NULL;
+	temp.previous = NULL;
 
 	for (unsigned int j = 0; j < VERTICES_PER_FACE; ++j){
 	    v1 = bot->faces[VERTICES_PER_FACE * i + j];
@@ -456,12 +462,12 @@ BrlcadMesh::addVertex(int ID)
     bot->num_vertices += 1;
 }
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

@@ -1,7 +1,7 @@
 /*                           E T O . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2020 United States Government as represented by
+ * Copyright (c) 1992-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -895,18 +895,18 @@ static int
 eto_ellipse_points(
 	vect_t ellipse_A,
 	vect_t ellipse_B,
-	const struct rt_view_info *info)
+	fastf_t point_spacing)
 {
     fastf_t avg_radius, circumference;
 
     avg_radius = (MAGNITUDE(ellipse_A) + MAGNITUDE(ellipse_B)) / 2.0;
     circumference = M_2PI * avg_radius;
 
-    return circumference / info->point_spacing;
+    return circumference / point_spacing;
 }
 
 int
-rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     struct rt_eto_internal *eto;
     fastf_t radian, radian_step;
@@ -915,13 +915,16 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     fastf_t mag_N, mag_ai, mag_aj, mag_bi, mag_bj;
     int i, num_cross_sections, points_per_ellipse;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     eto = (struct rt_eto_internal *)ip->idb_ptr;
     if (!eto_is_valid(eto)) {
 	return -1;
     }
+
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
 
     VMOVE(eto_V, eto->eto_V);
 
@@ -973,43 +976,43 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     /* plot elliptical contour showing extent of ellipse +A/-A */
     eto_contour_axes(contour_A, contour_B, eto_A, eto_B, mag_ai);
 
-    points_per_ellipse = eto_ellipse_points(contour_A, contour_B, info);
+    points_per_ellipse = eto_ellipse_points(contour_A, contour_B, point_spacing);
 
     if (points_per_ellipse < 6) {
 	points_per_ellipse = 6;
     }
 
     VJOIN1(center, eto_V, mag_aj / mag_N, eto_N);
-    plot_ellipse(info->vhead, center, contour_A, contour_B, points_per_ellipse);
+    plot_ellipse(vlfree, vhead, center, contour_A, contour_B, points_per_ellipse);
 
     eto_contour_axes(contour_A, contour_B, eto_A, eto_B, -mag_ai);
     VJOIN1(center, eto_V, -mag_aj / mag_N, eto_N);
-    plot_ellipse(info->vhead, center, contour_A, contour_B, points_per_ellipse);
+    plot_ellipse(vlfree, vhead, center, contour_A, contour_B, points_per_ellipse);
 
     /* plot elliptical contour showing extent of ellipse +B/-B */
     eto_contour_axes(contour_A, contour_B, eto_A, eto_B, mag_bi);
 
-    points_per_ellipse = eto_ellipse_points(contour_A, contour_B, info);
+    points_per_ellipse = eto_ellipse_points(contour_A, contour_B, point_spacing);
 
     if (points_per_ellipse < 6) {
 	points_per_ellipse = 6;
     }
 
     VJOIN1(center, eto_V, mag_bj / mag_N, eto_N);
-    plot_ellipse(info->vhead, center, contour_A, contour_B, points_per_ellipse);
+    plot_ellipse(vlfree, vhead, center, contour_A, contour_B, points_per_ellipse);
 
     eto_contour_axes(contour_A, contour_B, eto_A, eto_B, -mag_bi);
     VJOIN1(center, eto_V, -mag_bj / mag_N, eto_N);
-    plot_ellipse(info->vhead, center, contour_A, contour_B, points_per_ellipse);
+    plot_ellipse(vlfree, vhead, center, contour_A, contour_B, points_per_ellipse);
 
     /* draw elliptical radial cross sections */
-    num_cross_sections = primitive_curve_count(ip, info);
+    num_cross_sections = primitive_curve_count(ip, tol, v->gv_s->curve_scale, s_size);
 
     if (num_cross_sections < 3) {
 	num_cross_sections = 3;
     }
 
-    points_per_ellipse = eto_ellipse_points(eto_A, eto_B, info);
+    points_per_ellipse = eto_ellipse_points(eto_A, eto_B, point_spacing);
 
     if (points_per_ellipse < 6) {
 	points_per_ellipse = 6;
@@ -1027,7 +1030,7 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	VCOMB2(ellipse_A, mag_ai, I, mag_aj, J);
 	VCOMB2(ellipse_B, mag_bi, I, mag_bj, J);
 
-	plot_ellipse(info->vhead, center, ellipse_A, ellipse_B, points_per_ellipse);
+	plot_ellipse(vlfree, vhead, center, ellipse_A, ellipse_B, points_per_ellipse);
 
 	radian += radian_step;
     }
@@ -1045,7 +1048,7 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
  * eto_rd Semiminor axis length (scalar) of eto cross section
  */
 int
-rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     fastf_t a, b;	/* axis lengths of ellipse */
     fastf_t ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
@@ -1059,6 +1062,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     if (!eto_is_valid(tip)) {
 	return -1;
@@ -1136,16 +1140,16 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     /* draw ellipses */
     for (i = 0; i < nells; i++) {
-	RT_ADD_VLIST(vhead, ETO_PTA(i, npts-1), BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, ETO_PTA(i, npts-1), BV_VLIST_LINE_MOVE);
 	for (j = 0; j < npts; j++)
-	    RT_ADD_VLIST(vhead, ETO_PTA(i, j), BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ETO_PTA(i, j), BV_VLIST_LINE_DRAW);
     }
 
     /* draw connecting circles */
     for (i = 0; i < npts; i++) {
-	RT_ADD_VLIST(vhead, ETO_PTA(nells-1, i), BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, ETO_PTA(nells-1, i), BV_VLIST_LINE_MOVE);
 	for (j = 0; j < nells; j++)
-	    RT_ADD_VLIST(vhead, ETO_PTA(j, i), BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ETO_PTA(j, i), BV_VLIST_LINE_DRAW);
     }
 
     bu_free((char *)eto_ells, "ells[]");
@@ -1363,7 +1367,7 @@ rt_eto_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
 
-    if (dbip->dbi_version < 0) {
+    if (dbip && dbip->dbi_version < 0) {
 	flip_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
 	flip_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
 	flip_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
@@ -1377,7 +1381,7 @@ rt_eto_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     MAT4X3VEC(tip->eto_N, mat, v2);
     MAT4X3VEC(tip->eto_C, mat, v3);
 
-    if (dbip->dbi_version < 0) {
+    if (dbip && dbip->dbi_version < 0) {
 	v1[X] = flip_dbfloat(rp->s.s_values[3*3+0]);
 	v1[Y] = flip_dbfloat(rp->s.s_values[3*3+1]);
     } else {
@@ -1648,6 +1652,65 @@ eto_is_valid(struct rt_eto_internal *eto)
     }
 
     return 1;
+}
+
+void
+rt_eto_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!ps || !ip)
+	return;
+
+    struct rt_eto_internal *eto = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(eto);
+
+    // Set up the containers
+    struct bv_label *l[4];
+    for (int i = 0; i < 4; i++) {
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
+	struct bv_label *la;
+	BU_GET(la, struct bv_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+    }
+
+    // Do the specific data assignments for each label
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, eto->eto_V);
+
+    fastf_t ch, cv, dh, dv, cmag, phi;
+    vect_t Au, Nu;
+
+    VMOVE(Nu, eto->eto_N);
+    VUNITIZE(Nu);
+    bn_vec_ortho(Au, Nu);
+    VUNITIZE(Au);
+
+    cmag = MAGNITUDE(eto->eto_C);
+    /* get horizontal and vertical components of C and Rd */
+    cv = VDOT(eto->eto_C, Nu);
+    ch = sqrt(cmag*cmag - cv*cv);
+    /* angle between C and Nu */
+    phi = acos(cv / cmag);
+    dv = -eto->eto_rd * sin(phi);
+    dh = eto->eto_rd * cos(phi);
+
+    bu_vls_sprintf(&l[1]->label, "C");
+    VJOIN2(l[1]->p, eto->eto_V, eto->eto_r+ch, Au, cv, Nu);
+
+    bu_vls_sprintf(&l[2]->label, "D");
+    VJOIN2(l[2]->p, eto->eto_V, eto->eto_r+dh, Au, dv, Nu);
+
+    bu_vls_sprintf(&l[3]->label, "r");
+    VJOIN1(l[3]->p, eto->eto_V, eto->eto_r, Au);
+
 }
 
 /** @} */

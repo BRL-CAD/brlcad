@@ -1,7 +1,7 @@
 /*                         3 D M - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,22 +32,6 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "gcv/api.h"
-
-
-static const struct gcv_filter *
-find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type, const char *data)
-{
-    const struct gcv_filter * const *entry;
-    const struct bu_ptbl * const filters = gcv_list_filters();
-
-    for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
-	bu_mime_model_t emt = (*entry)->mime_type;
-	if ((*entry)->filter_type != filter_type) continue;
-	if ( (emt != BU_MIME_MODEL_AUTO) && (emt == mime_type)) return *entry;
-	if ( (emt == BU_MIME_MODEL_AUTO) && ((*entry)->data_supported && data && (*(*entry)->data_supported)(data)) ) return *entry;
-    }
-    return NULL;
-}
 
 
 int
@@ -95,18 +79,22 @@ main(int argc, char **argv)
 
     input_path = argv[bu_optind];
 
-    in_filter = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO, input_path);
-    out_filter = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL);
+    gcv_context_init(&context);
 
-    if (!out_filter)
+    in_filter = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO, input_path, &context);
+    out_filter = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, &context);
+
+    if (!out_filter) {
+	gcv_context_destroy(&context);
 	bu_bomb("could not find the BRL-CAD writer filter");
+    }
 
     if (!in_filter) {
 	bu_log("could not find the Rhino reader filter");
+	gcv_context_destroy(&context);
 	return 1;
     }
 
-    gcv_context_init(&context);
 
     if (!gcv_execute(&context, in_filter, &gcv_options, 0, NULL, input_path)) {
 	gcv_context_destroy(&context);

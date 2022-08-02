@@ -1,7 +1,7 @@
 /*                         F B - B W . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define LINELEN 8192
@@ -94,6 +94,7 @@ get_args(int argc, char **argv)
 	    return 0;
 	file_name = "-";
 	outfp = stdout;
+	setmode(fileno(stdout), O_BINARY);
     } else {
 	file_name = argv[bu_optind];
 	if ((outfp = fopen(file_name, "wb")) == NULL) {
@@ -114,7 +115,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    fb *fbp;
+    struct fb *fbp;
 
     int x, y;
     int xin, yin;		/* number of screen output lines */

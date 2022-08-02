@@ -1,7 +1,7 @@
 /*                   L S E G _ L S E G . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ main(int argc, char **argv)
 	VSET(Q0, 3.44524589136147830,7.67444957869714628,22.91984784277452647);
 	VSET(Q1, 3.56555225936148323,7.98564760063074353,23.37334866995422900);
 
-	dist = bg_lseg_lseg_dist(&c0, &c1, P0, P1, Q0, Q1);
+	dist = sqrt(bg_distsq_lseg3_lseg3(&c0, &c1, P0, P1, Q0, Q1));
 
 	if (dist < 0) {
 	    bu_exit(-1, "Fatal error - mesh validity test failed\n");

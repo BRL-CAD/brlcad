@@ -2130,7 +2130,7 @@ bool ONX_Model::Read(
     FILE* fp = ON::OpenFile(filename,"rb");
     if ( 0 != fp )
     {
-      ON_BinaryFile file(ON::read3dm,fp);
+      ON_BinaryFile file(ON::on_read3dm,fp);
       rc = Read(file,error_log);
       ON::CloseFile(fp);
     }
@@ -2150,7 +2150,7 @@ bool ONX_Model::Read(
     FILE* fp = ON::OpenFile(filename,L"rb");
     if ( 0 != fp )
     {
-      ON_BinaryFile file(ON::read3dm,fp);
+      ON_BinaryFile file(ON::on_read3dm,fp);
       rc = Read(file,error_log);
       ON::CloseFile(fp);
     }
@@ -3001,7 +3001,7 @@ bool ONX_Model::Write(
     FILE* fp = ON::OpenFile( filename, "wb" );
     if ( 0 != fp )
     {
-      ON_BinaryFile file( ON::write3dm, fp );
+      ON_BinaryFile file( ON::on_write3dm, fp );
       ONX_Model_WriteHelper(file);
       rc = Write( file, version, sStartSectionComment, error_log );
       ON::CloseFile(fp);
@@ -3023,7 +3023,7 @@ bool ONX_Model::Write(
     FILE* fp = ON::OpenFile( filename, L"wb" );
     if ( 0 != fp )
     {
-      ON_BinaryFile file( ON::write3dm, fp );
+      ON_BinaryFile file( ON::on_write3dm, fp );
       ONX_Model_WriteHelper(file);
       rc = Write( file, version, sStartSectionComment, error_log );
       ON::CloseFile(fp);
@@ -3066,9 +3066,9 @@ bool ONX_Model::Write(
 
   if ( !archive.WriteMode() )
   {
-    // You passed in a bogus archive.  You must pass ON::write3dm to the
+    // You passed in a bogus archive.  You must pass ON::on_write3dm to the
     // archive constructor.
-    if ( error_log) error_log->Print("ONX_Model::Write archive.Mode() is not ON::write3dm.\n"
+    if ( error_log) error_log->Print("ONX_Model::Write archive.Mode() is not ON::on_write3dm.\n"
                     "See ONX_Model::Write example in the header file.\n");
     return false;
   }
@@ -3079,10 +3079,10 @@ bool ONX_Model::Write(
   ok = archive.Write3dmStartSection( version, m_sStartSectionComments );
   if ( !ok )
   {
-    // make sure your archive was created with ON::write3dm mode.
+    // make sure your archive was created with ON::on_write3dm mode.
     if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmStartSection() failed.\n"
                     "Your archive is not properly initialized\n"
-                    "(make sure you passed ON::write3dm to the constructor),\n"
+                    "(make sure you passed ON::on_write3dm to the constructor),\n"
                     "a file is locked, a disk is locked, or something along those lines.\n");
     return false;
   }

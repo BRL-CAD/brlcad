@@ -1,7 +1,7 @@
 /*                     P I X - A L I A S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -78,7 +78,7 @@ doit(void)
     bufsize=(x*y*3);
 
     /* allocate a buffer for the image */
-    if ((image = (char *)malloc(bufsize)) == (char *)NULL) {
+    if ((image = (char *)bu_calloc(bufsize, 1, "image")) == (char *)NULL) {
 	(void) fprintf(stderr, "Error: Insufficient memory for image buffer\n");
 	bu_exit (-2, NULL);
     }
@@ -147,6 +147,9 @@ main(int ac, char **av)
     bu_setprogname(av[0]);
     progname = *av;
     if (isatty(fileno(stdin))) usage();
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     /* Get # of options & turn all the option flags off
      */

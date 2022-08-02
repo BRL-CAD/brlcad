@@ -1,7 +1,7 @@
 /*                         G 2 A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/debug.h"
+#include "bu/opt.h"
 #include "bu/units.h"
 #include "vmath.h"
 #include "rt/db4.h"
@@ -112,10 +113,33 @@ int
 main(int argc, char **argv)
 {
     unsigned i;
+    int need_help = 0;
 
     bu_setprogname(argv[0]);
+    Tcl_FindExecutable(argv[0]);
 
-    if (argc != 3) {
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",        "",         NULL,        &need_help, "Print help   and exit");
+    BU_OPT(d[1], "?", "",            "",         NULL,        &need_help, "");
+    BU_OPT_NULL(d[2]);
+
+    /* Skip first arg */
+    argv++; argc--;
+    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+    int uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
+
+    if (uac == -1) {
+	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
+    }
+    bu_vls_free(&optparse_msg);
+
+    argc = uac;
+
+    if (need_help) {
+	bu_exit(EXIT_SUCCESS, "%s", usage);
+    }
+
+    if (argc != 2) {
 	bu_exit(1, "%s", usage);
     }
 
@@ -129,29 +153,36 @@ main(int argc, char **argv)
 
     bu_debug = BU_DEBUG_COREDUMP;
 
-    if (argc >= 3) {
-	iname = argv[1];
+    if (argc >= 2) {
+
+	iname = argv[0];
+
 	if (BU_STR_EQUAL(iname, "-")) {
 	    ifp = stdin;
 	} else {
 	    ifp = fopen(iname, "rb");
 	}
-	if (!ifp)  perror(iname);
-	if (BU_STR_EQUAL(argv[2], "-")) {
+
+	if (!ifp)
+	    perror(iname);
+
+	if (BU_STR_EQUAL(argv[1], "-")) {
 	    ofp = stdout;
 	} else {
-	    ofp = fopen(argv[2], "wb");
+	    ofp = fopen(argv[1], "wb");
 	}
-	if (!ofp)  perror(argv[2]);
+
+	if (!ofp)
+	    perror(argv[1]);
+
 	if (ifp == NULL || ofp == NULL) {
 	    bu_exit(1, "g2asc: can't open files.");
 	}
     }
+
     if (isatty(fileno(ifp))) {
 	bu_exit(1, "%s", usage);
     }
-
-    Tcl_FindExecutable(argv[0]);
 
     /* First, determine what version database this is */
     if (fread((char *)&record, sizeof record, 1, ifp) != 1) {
@@ -211,6 +242,7 @@ main(int argc, char **argv)
 		/* get _GLOBAL attributes */
 		if (db5_get_attributes(dbip, &g_avs, dp)) {
 		    bu_log("Failed to find any attributes on _GLOBAL\n");
+		    bu_avs_free(&g_avs);
 		    continue;
 		}
 
@@ -242,25 +274,26 @@ main(int argc, char **argv)
 		}
 
 		value = bu_avs_get(&g_avs, "regionid_colortable");
-		if (!value)
+		if (!value) {
+		    bu_avs_free(&g_avs);
 		    continue;
+		}
 		list = Tcl_NewStringObj(value, -1);
 		{
 		    int llen;
 		    if (Tcl_ListObjLength(interp, list, &llen) != TCL_OK) {
 			bu_log("Failed to get length of region color table!!\n");
+			bu_avs_free(&g_avs);
 			continue;
 		    }
 		    list_len = (size_t)llen;
 		}
 		for (i = 0; i < list_len; i++) {
 		    if (Tcl_ListObjIndex(interp, list, i, &obj) != TCL_OK) {
-			bu_log("Cannot get entry %d from the color table!!\n",
-				i);
+			bu_log("Cannot get entry %d from the color table!!\n", i);
 			continue;
 		    }
-		    fprintf(ofp, "color %s\n",
-			     Tcl_GetStringFromObj(obj, NULL));
+		    fprintf(ofp, "color %s\n", Tcl_GetStringFromObj(obj, NULL));
 		}
 		bu_avs_free(&g_avs);
 		continue;
@@ -362,7 +395,7 @@ top:
 	    case ID_IDENT:
 		idendump();
 		continue;
-	    case ID_MATERIAL:
+	    case ID_COLORTAB:
 		materdump();
 		continue;
 	    case DBID_PIPE:
@@ -495,11 +528,11 @@ nmg_dump(void)
     }
 
     /* get number of granules needed for this NMG */
-    granules = ntohl(*(uint32_t *)record.nmg.N_count);
+    granules = bu_ntohl(*(uint32_t *)record.nmg.N_count, 0, UINT_MAX - 1);
 
     /* get the array of structure counts */
     for (j = 0; j < 26; j++)
-	struct_count[j] = ntohl(*(uint32_t *)&record.nmg.N_structs[j*4]);
+	struct_count[j] = bu_ntohl(*(uint32_t *)&record.nmg.N_structs[j*4], 0, UINT_MAX - 1);
 
     /* output some header info */
     fprintf(ofp,  "%c %d %.16s %lu\n",
@@ -671,7 +704,7 @@ bot_dump(void)
     size_t i;
 
     name = record.bot.bot_name;
-    ngranules = ntohl(*(uint32_t *)record.bot.bot_nrec) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)record.bot.bot_nrec, 0, UINT_MAX - 1) + 1;
     get_ext(&ext, ngranules);
 
     /* Hand off to librt's import() routine */
@@ -722,7 +755,7 @@ pipe_dump(void)	/* Print out Pipe record information */
     struct bu_external ext;
     struct rt_db_internal intern;
 
-    ngranules = ntohl(*(uint32_t *)record.pwr.pwr_count) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)record.pwr.pwr_count, 0, UINT_MAX - 1) + 1;
     name = record.pwr.pwr_name;
 
     get_ext(&ext, ngranules);
@@ -829,7 +862,7 @@ arbn_dump(void)
     struct bu_external ext;
     struct rt_db_internal intern;
 
-    ngranules = ntohl(*(uint32_t *)record.n.n_grans) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)record.n.n_grans, 0, UINT_MAX - 1) + 1;
     name = record.n.n_name;
 
     get_ext(&ext, ngranules);
@@ -846,7 +879,7 @@ arbn_dump(void)
 
     fprintf(ofp, "%c %.16s %lu\n", 'n', name, (unsigned long)arbn->neqn);
     for (i = 0; i < arbn->neqn; i++) {
-	fprintf(ofp, "n %26.20e %20.26e %26.20e %26.20e\n",
+	fprintf(ofp, "n %26.20e %26.20e %26.20e %26.20e\n",
 		arbn->eqn[i][X], arbn->eqn[i][Y],
 		arbn->eqn[i][Z], arbn->eqn[i][3]);
     }
@@ -959,17 +992,26 @@ combdump(void)	/* Print out Combination record information */
     /*
      *  Output the member records now
      */
-    while (BU_LIST_WHILE(mp, mchain, &head)) {
+    struct bu_list *p;
+    for (BU_LIST_FOR(p, bu_list, &head)) {
+	mp = (struct mchain *)p;
 	membdump(&mp->r);
-	BU_LIST_DEQUEUE(&mp->l);
-	BU_PUT(mp, struct mchain);
     }
 
+    /* Clean up (in the style of bu_list_free, but using BU_PUT since the
+     * memory was allocated with BU_GET) */
+    while (BU_LIST_WHILE(p, bu_list, &head)) {
+	BU_LIST_DEQUEUE(p);
+	BU_PUT(p, struct mchain);
+    }
+
+    /* ret_mp, if we have it, is not part of the list */
     if (ret_mp) {
 	memcpy((char *)&record, (char *)&ret_mp->r, sizeof(record));
 	BU_PUT(ret_mp, struct mchain);
 	return 1;
     }
+
     return 0;
 }
 
@@ -1183,7 +1225,7 @@ extrdump(void)
     struct rt_db_internal		intern;
 
     myname = record.extr.ex_name;
-    ngranules = ntohl(*(uint32_t *)record.extr.ex_count) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)record.extr.ex_count, 0, INT_MAX - 1) + 1;
     get_ext(&ext, ngranules);
 
     /* Hand off to librt's import() routine */
@@ -1218,7 +1260,7 @@ sketchdump(void)
     struct rt_curve *crv;
 
     myname = record.skt.skt_name;
-    ngranules = ntohl(*(uint32_t *)record.skt.skt_count) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)record.skt.skt_count, 0, UINT_MAX - 1) + 1;
     get_ext(&ext, ngranules);
 
     /* Hand off to librt's import() routine */

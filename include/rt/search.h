@@ -1,7 +1,7 @@
 /*                        S E A R C H . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -184,9 +184,28 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
 #define DB_LS_HIDDEN       0x8    /**< @brief include hidden objects in results */
 #define DB_LS_NON_GEOM     0x10   /**< @brief filter for non-geometry objects */
 #define DB_LS_TOPS         0x20   /**< @brief filter for objects un-referenced by other objects */
+#define DB_LS_CYCLIC       0x40   /**< @brief filter for objects with a cyclic reference in subtrees */
 /* TODO - implement this flag
-   #define DB_LS_REGEX        0x40*/ /* interpret pattern using regex rules, instead of
+   #define DB_LS_REGEX        0x80*/ /* interpret pattern using regex rules, instead of
 					globbing rules (default) */
+
+/* cyclic.c */
+/**
+ * db_cyclic_paths searches for cyclic paths in the database, either in all
+ * objects or checking whether a specific dp is cyclic within its subtree.
+ *
+ * If sdp is NULL, ALL directory pointers in the database are checked.  This is
+ * a complete validation of the whole .g file, and the only way to
+ * comprehensively search for any cyclic paths present.  The return count will
+ * be the number of combs with a cyclic reference in their subtrees.
+ *
+ * If sdp is non-NULL, the search will be limited to checking only the tree
+ * below sdp for a cyclic reference to sdp.
+ *
+ * If a cyclic_paths is non-NULL it will be used to return db_fullpath entries
+ * for the cyclic paths found.
+ */
+RT_EXPORT extern int db_cyclic_paths(struct bu_ptbl *cyclic_paths, const struct db_i *dbip, struct directory *sdp);
 
 
 __END_DECLS

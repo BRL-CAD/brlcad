@@ -21,6 +21,7 @@
 #include <libxml/xmlerror.h>
 #include <libxml/parserInternals.h>
 #include <libxml/xpathInternals.h>
+#include <libxml/xpath.h>
 #include "xslt.h"
 #include "xsltInternals.h"
 #include "xsltutils.h"
@@ -37,9 +38,9 @@ xsltInitDocKeyTable(xsltTransformContextPtr ctxt, const xmlChar *name,
                     const xmlChar *nameURI);
 
 /************************************************************************
- * 									*
- * 			Type functions 					*
- * 									*
+ *									*
+ *			Type functions					*
+ *									*
  ************************************************************************/
 
 /**
@@ -143,6 +144,11 @@ xsltNewKeyTable(const xmlChar *name, const xmlChar *nameURI) {
     return(cur);
 }
 
+static void
+xsltFreeNodeSetEntry(void *payload, const xmlChar *name ATTRIBUTE_UNUSED) {
+    xmlXPathFreeNodeSet((xmlNodeSetPtr) payload);
+}
+
 /**
  * xsltFreeKeyTable:
  * @keyt:  an XSLT key table
@@ -158,8 +164,7 @@ xsltFreeKeyTable(xsltKeyTablePtr keyt) {
     if (keyt->nameURI != NULL)
 	xmlFree(keyt->nameURI);
     if (keyt->keys != NULL)
-	xmlHashFree(keyt->keys, 
-		    (xmlHashDeallocator) xmlXPathFreeNodeSet);
+	xmlHashFree(keyt->keys, xsltFreeNodeSetEntry);
     memset(keyt, -1, sizeof(xsltKeyTable));
     xmlFree(keyt);
 }
@@ -182,9 +187,9 @@ xsltFreeKeyTableList(xsltKeyTablePtr keyt) {
 }
 
 /************************************************************************
- * 									*
- * 		The interpreter for the precompiled patterns		*
- * 									*
+ *									*
+ *		The interpreter for the precompiled patterns		*
+ *									*
  ************************************************************************/
 
 
@@ -236,6 +241,8 @@ skipString(const xmlChar *cur, int end) {
  */
 static int
 skipPredicate(const xmlChar *cur, int end) {
+    int level = 0;
+
     if ((cur == NULL) || (end < 0)) return(-1);
     if (cur[end] != '[') return(end);
     end++;
@@ -246,12 +253,12 @@ skipPredicate(const xmlChar *cur, int end) {
 	        return(-1);
 	    continue;
 	} else if (cur[end] == '[') {
-	    end = skipPredicate(cur, end);
-	    if (end <= 0)
-	        return(-1);
-	    continue;
-	} else if (cur[end] == ']')
-	    return(end + 1);
+            level += 1;
+	} else if (cur[end] == ']') {
+            if (level == 0)
+	        return(end + 1);
+            level -= 1;
+        }
 	end++;
     }
     return(-1);
@@ -311,8 +318,8 @@ xsltAddKey(xsltStylesheetPtr style, const xmlChar *name,
 	        end = skipPredicate(match, end);
 		if (end <= 0) {
 		    xsltTransformError(NULL, style, inst,
-		                       "key pattern is malformed: %s",
-				       key->match);
+		        "xsl:key : 'match' pattern is malformed: %s",
+		        key->match);
 		    if (style != NULL) style->errors++;
 		    goto error;
 		}
@@ -321,7 +328,7 @@ xsltAddKey(xsltStylesheetPtr style, const xmlChar *name,
 	}
 	if (current == end) {
 	    xsltTransformError(NULL, style, inst,
-			       "key pattern is empty\n");
+			       "xsl:key : 'match' pattern is empty\n");
 	    if (style != NULL) style->errors++;
 	    goto error;
 	}
@@ -344,6 +351,12 @@ xsltAddKey(xsltStylesheetPtr style, const xmlChar *name,
 	}
 	current = end;
     }
+    if (pattern == NULL) {
+        xsltTransformError(NULL, style, inst,
+                           "xsl:key : 'match' pattern is empty\n");
+        if (style != NULL) style->errors++;
+        goto error;
+    }
 #ifdef WITH_XSLT_DEBUG_KEYS
     xsltGenericDebug(xsltGenericDebugContext,
 	"   resulting pattern %s\n", pattern);
@@ -356,17 +369,25 @@ xsltAddKey(xsltStylesheetPtr style, const xmlChar *name,
     *   Maybe a search for "$", if it occurs outside of quotation
     *   marks, could be sufficient.
     */
+#ifdef XML_XPATH_NOVAR
+    key->comp = xsltXPathCompileFlags(style, pattern, XML_XPATH_NOVAR);
+#else
     key->comp = xsltXPathCompile(style, pattern);
+#endif
     if (key->comp == NULL) {
 	xsltTransformError(NULL, style, inst,
-		"xsl:key : XPath pattern compilation failed '%s'\n",
+		"xsl:key : 'match' pattern compilation failed '%s'\n",
 		         pattern);
 	if (style != NULL) style->errors++;
     }
+#ifdef XML_XPATH_NOVAR
+    key->usecomp = xsltXPathCompileFlags(style, use, XML_XPATH_NOVAR);
+#else
     key->usecomp = xsltXPathCompile(style, use);
+#endif
     if (key->usecomp == NULL) {
 	xsltTransformError(NULL, style, inst,
-		"xsl:key : XPath pattern compilation failed '%s'\n",
+		"xsl:key : 'use' expression compilation failed '%s'\n",
 		         use);
 	if (style != NULL) style->errors++;
     }
@@ -387,10 +408,13 @@ xsltAddKey(xsltStylesheetPtr style, const xmlChar *name,
 	prev->next = key;
     }
     key->next = NULL;
+    key = NULL;
 
 error:
     if (pattern != NULL)
 	xmlFree(pattern);
+    if (key != NULL)
+        xsltFreeKeyDef(key);
     return(0);
 }
 
@@ -607,6 +631,7 @@ xsltInitCtxtKey(xsltTransformContextPtr ctxt, xsltDocumentPtr idoc,
     xmlNodePtr oldContextNode;
     xsltDocumentPtr oldDocInfo;
     int	oldXPPos, oldXPSize;
+    xmlNodePtr oldXPNode;
     xmlDocPtr oldXPDoc;
     int oldXPNsNr;
     xmlNsPtr *oldXPNamespaces;
@@ -645,6 +670,7 @@ fprintf(stderr, "xsltInitCtxtKey %s : %d\n", keyDef->name, ctxt->keyInitLevel);
     oldDocInfo = ctxt->document;
     oldContextNode = ctxt->node;
 
+    oldXPNode = xpctxt->node;
     oldXPDoc = xpctxt->doc;
     oldXPPos = xpctxt->proximityPosition;
     oldXPSize = xpctxt->contextSize;
@@ -744,6 +770,7 @@ fprintf(stderr, "xsltInitCtxtKey %s : %d\n", keyDef->name, ctxt->keyInitLevel);
 	cur = matchList->nodeTab[i];
 	if (! IS_XSLT_REAL_NODE(cur))
 	    continue;
+        ctxt->node = cur;
 	xpctxt->node = cur;
 	/*
 	* Process the 'use' of the xsl:key.
@@ -842,6 +869,7 @@ error:
     /*
     * Restore context state.
     */
+    xpctxt->node = oldXPNode;
     xpctxt->doc = oldXPDoc;
     xpctxt->nsNr = oldXPNsNr;
     xpctxt->namespaces = oldXPNamespaces;

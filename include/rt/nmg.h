@@ -1,7 +1,7 @@
 /*                          N M G . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #include "bu/list.h"
 #include "bu/ptbl.h"
 #include "bn/tol.h"
-#include "bn/vlist.h"
+#include "bv/vlist.h"
 #include "bg/defines.h"
 #include "rt/geom.h"
 #include "rt/hit.h"

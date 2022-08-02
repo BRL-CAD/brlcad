@@ -1,7 +1,7 @@
 /*                       W A V E L E T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define CHAR	1
@@ -172,6 +172,9 @@ wlt_decompose_1d(void)
     size_t i, n;
     size_t sample_size;	/* size of data type x #values/sample */
     size_t scanline_size;	/* # bytes in a scanline */
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     sample_size = value_size * channels;
     scanline_size = sample_size * width;

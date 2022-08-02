@@ -1,7 +1,7 @@
 #                      M I M E . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2015-2020 United States Government as represented by
+# Copyright (c) 2015-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without

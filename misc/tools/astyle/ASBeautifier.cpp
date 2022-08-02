@@ -1,7 +1,7 @@
 // ASBeautifier.cpp
-// Copyright (c) 2016 by Jim Pattee <jimp03@email.com>.
+// Copyright (c) 2018 by Jim Pattee <jimp03@email.com>.
 // This code is licensed under the MIT License.
-// License.txt describes the conditions under which this software may be distributed.
+// License.md describes the conditions under which this software may be distributed.
 
 //-----------------------------------------------------------------------------
 // headers
@@ -18,7 +18,7 @@
 namespace astyle {
 //
 // this must be global
-static int g_preprocessorCppExternCBracket;
+static int g_preprocessorCppExternCBrace;
 
 //-----------------------------------------------------------------------------
 // ASBeautifier class
@@ -31,27 +31,28 @@ static int g_preprocessorCppExternCBracket;
  */
 ASBeautifier::ASBeautifier()
 {
-	waitingBeautifierStack = NULL;
-	activeBeautifierStack = NULL;
-	waitingBeautifierStackLengthStack = NULL;
-	activeBeautifierStackLengthStack = NULL;
+	waitingBeautifierStack = nullptr;
+	activeBeautifierStack = nullptr;
+	waitingBeautifierStackLengthStack = nullptr;
+	activeBeautifierStackLengthStack = nullptr;
 
-	headerStack = NULL;
-	tempStacks = NULL;
-	blockParenDepthStack = NULL;
-	blockStatementStack = NULL;
-	parenStatementStack = NULL;
-	bracketBlockStateStack = NULL;
-	inStatementIndentStack = NULL;
-	inStatementIndentStackSizeStack = NULL;
-	parenIndentStack = NULL;
-	preprocIndentStack = NULL;
-	sourceIterator = NULL;
+	headerStack = nullptr;
+	tempStacks = nullptr;
+	parenDepthStack = nullptr;
+	blockStatementStack = nullptr;
+	parenStatementStack = nullptr;
+	braceBlockStateStack = nullptr;
+	continuationIndentStack = nullptr;
+	continuationIndentStackSizeStack = nullptr;
+	parenIndentStack = nullptr;
+	preprocIndentStack = nullptr;
+	sourceIterator = nullptr;
 	isModeManuallySet = false;
 	shouldForceTabIndentation = false;
 	setSpaceIndentation(4);
+	setContinuationIndentation(1);
 	setMinConditionalIndentOption(MINCOND_TWO);
-	setMaxInStatementIndentLength(40);
+	setMaxContinuationIndentLength(40);
 	classInitializerIndents = 1;
 	tabLength = 0;
 	setClassIndent(false);
@@ -59,9 +60,10 @@ ASBeautifier::ASBeautifier()
 	setSwitchIndent(false);
 	setCaseIndent(false);
 	setBlockIndent(false);
-	setBracketIndent(false);
-	setBracketIndentVtk(false);
+	setBraceIndent(false);
+	setBraceIndentVtk(false);
 	setNamespaceIndent(false);
+	setAfterParenIndent(false);
 	setLabelIndent(false);
 	setEmptyLineFill(false);
 	setCStyle();
@@ -92,10 +94,10 @@ ASBeautifier::ASBeautifier()
 ASBeautifier::ASBeautifier(const ASBeautifier& other) : ASBase(other)
 {
 	// these don't need to copy the stack
-	waitingBeautifierStack = NULL;
-	activeBeautifierStack = NULL;
-	waitingBeautifierStackLengthStack = NULL;
-	activeBeautifierStackLengthStack = NULL;
+	waitingBeautifierStack = nullptr;
+	activeBeautifierStack = nullptr;
+	waitingBeautifierStackLengthStack = nullptr;
+	activeBeautifierStackLengthStack = nullptr;
 
 	// vector '=' operator performs a DEEP copy of all elements in the vector
 
@@ -104,8 +106,8 @@ ASBeautifier::ASBeautifier(const ASBeautifier& other) : ASBase(other)
 
 	tempStacks = copyTempStacks(other);
 
-	blockParenDepthStack = new vector<int>;
-	*blockParenDepthStack = *other.blockParenDepthStack;
+	parenDepthStack = new vector<int>;
+	*parenDepthStack = *other.parenDepthStack;
 
 	blockStatementStack = new vector<bool>;
 	*blockStatementStack = *other.blockStatementStack;
@@ -113,14 +115,14 @@ ASBeautifier::ASBeautifier(const ASBeautifier& other) : ASBase(other)
 	parenStatementStack = new vector<bool>;
 	*parenStatementStack = *other.parenStatementStack;
 
-	bracketBlockStateStack = new vector<bool>;
-	*bracketBlockStateStack = *other.bracketBlockStateStack;
+	braceBlockStateStack = new vector<bool>;
+	*braceBlockStateStack = *other.braceBlockStateStack;
 
-	inStatementIndentStack = new vector<int>;
-	*inStatementIndentStack = *other.inStatementIndentStack;
+	continuationIndentStack = new vector<int>;
+	*continuationIndentStack = *other.continuationIndentStack;
 
-	inStatementIndentStackSizeStack = new vector<int>;
-	*inStatementIndentStackSizeStack = *other.inStatementIndentStackSizeStack;
+	continuationIndentStackSizeStack = new vector<size_t>;
+	*continuationIndentStackSizeStack = *other.continuationIndentStackSizeStack;
 
 	parenIndentStack = new vector<int>;
 	*parenIndentStack = *other.parenIndentStack;
@@ -144,8 +146,8 @@ ASBeautifier::ASBeautifier(const ASBeautifier& other) : ASBase(other)
 	// variables set by ASFormatter
 	// must also be updated in activeBeautifierStack
 	inLineNumber = other.inLineNumber;
-	horstmannIndentInStatement = other.horstmannIndentInStatement;
-	nonInStatementBracket = other.nonInStatementBracket;
+	runInIndentContinuation = other.runInIndentContinuation;
+	nonInStatementBrace = other.nonInStatementBrace;
 	objCColonAlignSubsequent = other.objCColonAlignSubsequent;
 	lineCommentNoBeautify = other.lineCommentNoBeautify;
 	isElseHeaderIndent = other.isElseHeaderIndent;
@@ -174,10 +176,10 @@ ASBeautifier::ASBeautifier(const ASBeautifier& other) : ASBase(other)
 	isInAsmBlock = other.isInAsmBlock;
 	isInComment = other.isInComment;
 	isInPreprocessorComment = other.isInPreprocessorComment;
-	isInHorstmannComment = other.isInHorstmannComment;
+	isInRunInComment = other.isInRunInComment;
 	isInCase = other.isInCase;
 	isInQuestion = other.isInQuestion;
-	isInStatement = other.isInStatement;
+	isContinuation = other.isContinuation;
 	isInHeader = other.isInHeader;
 	isInTemplate = other.isInTemplate;
 	isInDefine = other.isInDefine;
@@ -189,19 +191,24 @@ ASBeautifier::ASBeautifier(const ASBeautifier& other) : ASBase(other)
 	isInClassInitializer = other.isInClassInitializer;
 	isInClass = other.isInClass;
 	isInObjCMethodDefinition = other.isInObjCMethodDefinition;
+	isInObjCMethodCall = other.isInObjCMethodCall;
+	isInObjCMethodCallFirst = other.isInObjCMethodCallFirst;
 	isImmediatelyPostObjCMethodDefinition = other.isImmediatelyPostObjCMethodDefinition;
+	isImmediatelyPostObjCMethodCall = other.isImmediatelyPostObjCMethodCall;
 	isInIndentablePreprocBlock = other.isInIndentablePreprocBlock;
 	isInObjCInterface = other.isInObjCInterface;
 	isInEnum = other.isInEnum;
 	isInEnumTypeID = other.isInEnumTypeID;
 	isInLet = other.isInLet;
+	isInTrailingReturnType = other.isInTrailingReturnType;
 	modifierIndent = other.modifierIndent;
 	switchIndent = other.switchIndent;
 	caseIndent = other.caseIndent;
 	namespaceIndent = other.namespaceIndent;
-	bracketIndent = other.bracketIndent;
-	bracketIndentVtk = other.bracketIndentVtk;
+	braceIndent = other.braceIndent;
+	braceIndentVtk = other.braceIndentVtk;
 	blockIndent = other.blockIndent;
+	shouldIndentAfterParen = other.shouldIndentAfterParen;
 	labelIndent = other.labelIndent;
 	isInConditional = other.isInConditional;
 	isModeManuallySet = other.isModeManuallySet;
@@ -214,12 +221,12 @@ ASBeautifier::ASBeautifier(const ASBeautifier& other) : ASBase(other)
 	blockCommentNoIndent = other.blockCommentNoIndent;
 	blockCommentNoBeautify = other.blockCommentNoBeautify;
 	previousLineProbationTab = other.previousLineProbationTab;
-	lineBeginsWithOpenBracket = other.lineBeginsWithOpenBracket;
-	lineBeginsWithCloseBracket = other.lineBeginsWithCloseBracket;
+	lineBeginsWithOpenBrace = other.lineBeginsWithOpenBrace;
+	lineBeginsWithCloseBrace = other.lineBeginsWithCloseBrace;
 	lineBeginsWithComma = other.lineBeginsWithComma;
 	lineIsCommentOnly = other.lineIsCommentOnly;
 	lineIsLineCommentOnly = other.lineIsLineCommentOnly;
-	shouldIndentBrackettedLine = other.shouldIndentBrackettedLine;
+	shouldIndentBracedLine = other.shouldIndentBracedLine;
 	isInSwitch = other.isInSwitch;
 	foundPreCommandHeader = other.foundPreCommandHeader;
 	foundPreCommandMacro = other.foundPreCommandMacro;
@@ -228,8 +235,9 @@ ASBeautifier::ASBeautifier(const ASBeautifier& other) : ASBase(other)
 	shouldIndentPreprocConditional = other.shouldIndentPreprocConditional;
 	indentCount = other.indentCount;
 	spaceIndentCount = other.spaceIndentCount;
-	spaceIndentObjCMethodDefinition = other.spaceIndentObjCMethodDefinition;
-	colonIndentObjCMethodDefinition = other.colonIndentObjCMethodDefinition;
+	spaceIndentObjCMethodAlignment = other.spaceIndentObjCMethodAlignment;
+	bracePosObjCMethodAlignment = other.bracePosObjCMethodAlignment;
+	colonIndentObjCMethodAlignment = other.colonIndentObjCMethodAlignment;
 	lineOpeningBlocksNum = other.lineOpeningBlocksNum;
 	lineClosingBlocksNum = other.lineClosingBlocksNum;
 	fileType = other.fileType;
@@ -238,8 +246,9 @@ ASBeautifier::ASBeautifier(const ASBeautifier& other) : ASBase(other)
 	parenDepth = other.parenDepth;
 	indentLength = other.indentLength;
 	tabLength = other.tabLength;
+	continuationIndent = other.continuationIndent;
 	blockTabCount = other.blockTabCount;
-	maxInStatementIndent = other.maxInStatementIndent;
+	maxContinuationIndent = other.maxContinuationIndent;
 	classInitializerIndents = other.classInitializerIndents;
 	templateDepth = other.templateDepth;
 	squareBracketCount = other.squareBracketCount;
@@ -265,12 +274,12 @@ ASBeautifier::~ASBeautifier()
 	deleteContainer(activeBeautifierStackLengthStack);
 	deleteContainer(headerStack);
 	deleteTempStacksContainer(tempStacks);
-	deleteContainer(blockParenDepthStack);
+	deleteContainer(parenDepthStack);
 	deleteContainer(blockStatementStack);
 	deleteContainer(parenStatementStack);
-	deleteContainer(bracketBlockStateStack);
-	deleteContainer(inStatementIndentStack);
-	deleteContainer(inStatementIndentStackSizeStack);
+	deleteContainer(braceBlockStateStack);
+	deleteContainer(continuationIndentStack);
+	deleteContainer(continuationIndentStackSizeStack);
 	deleteContainer(parenIndentStack);
 	deleteContainer(preprocIndentStack);
 }
@@ -291,32 +300,33 @@ void ASBeautifier::init(ASSourceIterator* iter)
 	sourceIterator = iter;
 	initVectors();
 	ASBase::init(getFileType());
-	g_preprocessorCppExternCBracket = 0;
+	g_preprocessorCppExternCBrace = 0;
 
 	initContainer(waitingBeautifierStack, new vector<ASBeautifier*>);
 	initContainer(activeBeautifierStack, new vector<ASBeautifier*>);
 
-	initContainer(waitingBeautifierStackLengthStack, new vector<int>);
-	initContainer(activeBeautifierStackLengthStack, new vector<int>);
+	initContainer(waitingBeautifierStackLengthStack, new vector<size_t>);
+	initContainer(activeBeautifierStackLengthStack, new vector<size_t>);
 
 	initContainer(headerStack, new vector<const string*>);
 
 	initTempStacksContainer(tempStacks, new vector<vector<const string*>*>);
-	tempStacks->push_back(new vector<const string*>);
+	tempStacks->emplace_back(new vector<const string*>);
 
-	initContainer(blockParenDepthStack, new vector<int>);
+	initContainer(parenDepthStack, new vector<int>);
 	initContainer(blockStatementStack, new vector<bool>);
 	initContainer(parenStatementStack, new vector<bool>);
-	initContainer(bracketBlockStateStack, new vector<bool>);
-	bracketBlockStateStack->push_back(true);
-	initContainer(inStatementIndentStack, new vector<int>);
-	initContainer(inStatementIndentStackSizeStack, new vector<int>);
-	inStatementIndentStackSizeStack->push_back(0);
+	initContainer(braceBlockStateStack, new vector<bool>);
+	// do not use emplace_back on vector<bool> until supported by macOS
+	braceBlockStateStack->push_back(true);
+	initContainer(continuationIndentStack, new vector<int>);
+	initContainer(continuationIndentStackSizeStack, new vector<size_t>);
+	continuationIndentStackSizeStack->emplace_back(0);
 	initContainer(parenIndentStack, new vector<int>);
 	initContainer(preprocIndentStack, new vector<pair<int, int> >);
 
-	previousLastLineHeader = NULL;
-	currentHeader = NULL;
+	previousLastLineHeader = nullptr;
+	currentHeader = nullptr;
 
 	isInQuote = false;
 	isInVerbatimQuote = false;
@@ -326,8 +336,8 @@ void ASBeautifier::init(ASSourceIterator* iter)
 	isInAsmBlock = false;
 	isInComment = false;
 	isInPreprocessorComment = false;
-	isInHorstmannComment = false;
-	isInStatement = false;
+	isInRunInComment = false;
+	isContinuation = false;
 	isInCase = false;
 	isInQuestion = false;
 	isIndentModeOff = false;
@@ -336,7 +346,10 @@ void ASBeautifier::init(ASSourceIterator* iter)
 	isInClassInitializer = false;
 	isInClass = false;
 	isInObjCMethodDefinition = false;
+	isInObjCMethodCall = false;
+	isInObjCMethodCallFirst = false;
 	isImmediatelyPostObjCMethodDefinition = false;
+	isImmediatelyPostObjCMethodCall = false;
 	isInIndentablePreprocBlock = false;
 	isInObjCInterface = false;
 	isInEnum = false;
@@ -345,11 +358,13 @@ void ASBeautifier::init(ASSourceIterator* iter)
 	isInHeader = false;
 	isInTemplate = false;
 	isInConditional = false;
+	isInTrailingReturnType = false;
 
 	indentCount = 0;
 	spaceIndentCount = 0;
-	spaceIndentObjCMethodDefinition = 0;
-	colonIndentObjCMethodDefinition = 0;
+	spaceIndentObjCMethodAlignment = 0;
+	bracePosObjCMethodAlignment = 0;
+	colonIndentObjCMethodAlignment = 0;
 	lineOpeningBlocksNum = 0;
 	lineClosingBlocksNum = 0;
 	templateDepth = 0;
@@ -365,8 +380,8 @@ void ASBeautifier::init(ASSourceIterator* iter)
 	prevNonLegalCh = '{';
 	currentNonLegalCh = '{';
 	quoteChar = ' ';
-	probationHeader = NULL;
-	lastLineHeader = NULL;
+	probationHeader = nullptr;
+	lastLineHeader = nullptr;
 	backslashEndsPrevLine = false;
 	lineOpensWithLineComment = false;
 	lineOpensWithComment = false;
@@ -379,12 +394,12 @@ void ASBeautifier::init(ASSourceIterator* iter)
 	blockCommentNoIndent = false;
 	blockCommentNoBeautify = false;
 	previousLineProbationTab = false;
-	lineBeginsWithOpenBracket = false;
-	lineBeginsWithCloseBracket = false;
+	lineBeginsWithOpenBrace = false;
+	lineBeginsWithCloseBrace = false;
 	lineBeginsWithComma = false;
 	lineIsCommentOnly = false;
 	lineIsLineCommentOnly = false;
-	shouldIndentBrackettedLine = true;
+	shouldIndentBracedLine = true;
 	isInSwitch = false;
 	foundPreCommandHeader = false;
 	foundPreCommandMacro = false;
@@ -397,8 +412,8 @@ void ASBeautifier::init(ASSourceIterator* iter)
 	isInIndentableStruct = false;
 	isInIndentablePreproc = false;
 	inLineNumber = 0;
-	horstmannIndentInStatement = 0;
-	nonInStatementBracket = 0;
+	runInIndentContinuation = 0;
+	nonInStatementBrace = 0;
 	objCColonAlignSubsequent = 0;
 }
 
@@ -427,6 +442,363 @@ void ASBeautifier::initVectors()
 	ASResource::buildPreBlockStatements(preBlockStatements, fileType);
 	ASResource::buildPreCommandHeaders(preCommandHeaders, fileType);
 	ASResource::buildIndentableHeaders(indentableHeaders);
+}
+
+/**
+ * beautify a line of source code.
+ * every line of source code in a source code file should be sent
+ * one after the other to the beautify method.
+ *
+ * @return      the indented line.
+ * @param originalLine       the original unindented line.
+ */
+string ASBeautifier::beautify(const string& originalLine)
+{
+	string line;
+	bool isInQuoteContinuation = isInVerbatimQuote || haveLineContinuationChar;
+
+	currentHeader = nullptr;
+	lastLineHeader = nullptr;
+	blockCommentNoBeautify = blockCommentNoIndent;
+	isInClass = false;
+	isInSwitch = false;
+	lineBeginsWithOpenBrace = false;
+	lineBeginsWithCloseBrace = false;
+	lineBeginsWithComma = false;
+	lineIsCommentOnly = false;
+	lineIsLineCommentOnly = false;
+	shouldIndentBracedLine = true;
+	isInAsmOneLine = false;
+	lineOpensWithLineComment = false;
+	lineOpensWithComment = false;
+	lineStartsInComment = isInComment;
+	previousLineProbationTab = false;
+	lineOpeningBlocksNum = 0;
+	lineClosingBlocksNum = 0;
+	if (isImmediatelyPostObjCMethodDefinition)
+		clearObjCMethodDefinitionAlignment();
+	if (isImmediatelyPostObjCMethodCall)
+	{
+		isImmediatelyPostObjCMethodCall = false;
+		isInObjCMethodCall = false;
+		objCColonAlignSubsequent = 0;
+	}
+
+	// handle and remove white spaces around the line:
+	// If not in comment, first find out size of white space before line,
+	// so that possible comments starting in the line continue in
+	// relation to the preliminary white-space.
+	if (isInQuoteContinuation)
+	{
+		// trim a single space added by ASFormatter, otherwise leave it alone
+		if (!(originalLine.length() == 1 && originalLine[0] == ' '))
+			line = originalLine;
+	}
+	else if (isInComment || isInBeautifySQL)
+	{
+		// trim the end of comment and SQL lines
+		line = originalLine;
+		size_t trimEnd = line.find_last_not_of(" \t");
+		if (trimEnd == string::npos)
+			trimEnd = 0;
+		else
+			trimEnd++;
+		if (trimEnd < line.length())
+			line.erase(trimEnd);
+		// does a brace open the line
+		size_t firstChar = line.find_first_not_of(" \t");
+		if (firstChar != string::npos)
+		{
+			if (line[firstChar] == '{')
+				lineBeginsWithOpenBrace = true;
+			else if (line[firstChar] == '}')
+				lineBeginsWithCloseBrace = true;
+			else if (line[firstChar] == ',')
+				lineBeginsWithComma = true;
+		}
+	}
+	else
+	{
+		line = trim(originalLine);
+		if (line.length() > 0)
+		{
+			if (line[0] == '{')
+				lineBeginsWithOpenBrace = true;
+			else if (line[0] == '}')
+				lineBeginsWithCloseBrace = true;
+			else if (line[0] == ',')
+				lineBeginsWithComma = true;
+			else if (line.compare(0, 2, "//") == 0)
+				lineIsLineCommentOnly = true;
+			else if (line.compare(0, 2, "/*") == 0)
+			{
+				if (line.find("*/", 2) != string::npos)
+					lineIsCommentOnly = true;
+			}
+		}
+
+		isInRunInComment = false;
+		size_t j = line.find_first_not_of(" \t{");
+		if (j != string::npos && line.compare(j, 2, "//") == 0)
+			lineOpensWithLineComment = true;
+		if (j != string::npos && line.compare(j, 2, "/*") == 0)
+		{
+			lineOpensWithComment = true;
+			size_t k = line.find_first_not_of(" \t");
+			if (k != string::npos && line.compare(k, 1, "{") == 0)
+				isInRunInComment = true;
+		}
+	}
+
+	// When indent is OFF the lines must still be processed by ASBeautifier.
+	// Otherwise the lines immediately following may not be indented correctly.
+	if ((lineIsLineCommentOnly || lineIsCommentOnly)
+	        && line.find("*INDENT-OFF*", 0) != string::npos)
+		isIndentModeOff = true;
+
+	if (line.length() == 0)
+	{
+		if (backslashEndsPrevLine)
+		{
+			backslashEndsPrevLine = false;
+			// check if this line ends a multi-line #define
+			// if so, remove the #define's cloned beautifier from the active
+			// beautifier stack and delete it.
+			if (isInDefineDefinition && !isInDefine)
+			{
+				isInDefineDefinition = false;
+				if (!activeBeautifierStack->empty())
+				{
+					ASBeautifier* defineBeautifier = activeBeautifierStack->back();
+					activeBeautifierStack->pop_back();
+					delete defineBeautifier;
+				}
+			}
+		}
+		if (emptyLineFill && !isInQuoteContinuation)
+		{
+			if (isInIndentablePreprocBlock)
+				return preLineWS(preprocBlockIndent, 0);
+			if (!headerStack->empty() || isInEnum)
+				return preLineWS(prevFinalLineIndentCount, prevFinalLineSpaceIndentCount);
+			// must fall thru here
+		}
+		else
+			return line;
+	}
+
+	// handle preprocessor commands
+	if (isInIndentablePreprocBlock
+	        && line.length() > 0
+	        && line[0] != '#')
+	{
+		string indentedLine;
+		if (isInClassHeaderTab || isInClassInitializer)
+		{
+			// parsing is turned off in ASFormatter by indent-off
+			// the originalLine will probably never be returned here
+			indentedLine = preLineWS(prevFinalLineIndentCount, prevFinalLineSpaceIndentCount) + line;
+			return getIndentedLineReturn(indentedLine, originalLine);
+		}
+		indentedLine = preLineWS(preprocBlockIndent, 0) + line;
+		return getIndentedLineReturn(indentedLine, originalLine);
+	}
+
+	if (!isInComment
+	        && !isInQuoteContinuation
+	        && line.length() > 0
+	        && ((line[0] == '#' && !isIndentedPreprocessor(line, 0))
+	            || backslashEndsPrevLine))
+	{
+		if (line[0] == '#' && !isInDefine)
+		{
+			string preproc = extractPreprocessorStatement(line);
+			processPreprocessor(preproc, line);
+			if (isInIndentablePreprocBlock || isInIndentablePreproc)
+			{
+				string indentedLine;
+				if (preproc.length() >= 2 && preproc.substr(0, 2) == "if") // #if, #ifdef, #ifndef
+				{
+					indentedLine = preLineWS(preprocBlockIndent, 0) + line;
+					preprocBlockIndent += 1;
+					isInIndentablePreprocBlock = true;
+				}
+				else if (preproc == "else" || preproc == "elif")
+				{
+					indentedLine = preLineWS(preprocBlockIndent - 1, 0) + line;
+				}
+				else if (preproc == "endif")
+				{
+					preprocBlockIndent -= 1;
+					indentedLine = preLineWS(preprocBlockIndent, 0) + line;
+					if (preprocBlockIndent == 0)
+						isInIndentablePreprocBlock = false;
+				}
+				else
+					indentedLine = preLineWS(preprocBlockIndent, 0) + line;
+				return getIndentedLineReturn(indentedLine, originalLine);
+			}
+			if (shouldIndentPreprocConditional && preproc.length() > 0)
+			{
+				string indentedLine;
+				if (preproc.length() >= 2 && preproc.substr(0, 2) == "if") // #if, #ifdef, #ifndef
+				{
+					pair<int, int> entry;	// indentCount, spaceIndentCount
+					if (!isInDefine && activeBeautifierStack != nullptr && !activeBeautifierStack->empty())
+						entry = activeBeautifierStack->back()->computePreprocessorIndent();
+					else
+						entry = computePreprocessorIndent();
+					preprocIndentStack->emplace_back(entry);
+					indentedLine = preLineWS(preprocIndentStack->back().first,
+					                         preprocIndentStack->back().second) + line;
+					return getIndentedLineReturn(indentedLine, originalLine);
+				}
+				if (preproc == "else" || preproc == "elif")
+				{
+					if (!preprocIndentStack->empty())	// if no entry don't indent
+					{
+						indentedLine = preLineWS(preprocIndentStack->back().first,
+						                         preprocIndentStack->back().second) + line;
+						return getIndentedLineReturn(indentedLine, originalLine);
+					}
+				}
+				else if (preproc == "endif")
+				{
+					if (!preprocIndentStack->empty())	// if no entry don't indent
+					{
+						indentedLine = preLineWS(preprocIndentStack->back().first,
+						                         preprocIndentStack->back().second) + line;
+						preprocIndentStack->pop_back();
+						return getIndentedLineReturn(indentedLine, originalLine);
+					}
+				}
+			}
+		}
+
+		// check if the last char is a backslash
+		if (line.length() > 0)
+			backslashEndsPrevLine = (line[line.length() - 1] == '\\');
+		// comments within the definition line can be continued without the backslash
+		if (isInPreprocessorUnterminatedComment(line))
+			backslashEndsPrevLine = true;
+
+		// check if this line ends a multi-line #define
+		// if so, use the #define's cloned beautifier for the line's indentation
+		// and then remove it from the active beautifier stack and delete it.
+		if (!backslashEndsPrevLine && isInDefineDefinition && !isInDefine)
+		{
+			isInDefineDefinition = false;
+			// this could happen with invalid input
+			if (activeBeautifierStack->empty())
+				return originalLine;
+			ASBeautifier* defineBeautifier = activeBeautifierStack->back();
+			activeBeautifierStack->pop_back();
+
+			string indentedLine = defineBeautifier->beautify(line);
+			delete defineBeautifier;
+			return getIndentedLineReturn(indentedLine, originalLine);
+		}
+
+		// unless this is a multi-line #define, return this precompiler line as is.
+		if (!isInDefine && !isInDefineDefinition)
+			return originalLine;
+	}
+
+	// if there exists any worker beautifier in the activeBeautifierStack,
+	// then use it instead of me to indent the current line.
+	// variables set by ASFormatter must be updated.
+	if (!isInDefine && activeBeautifierStack != nullptr && !activeBeautifierStack->empty())
+	{
+		activeBeautifierStack->back()->inLineNumber = inLineNumber;
+		activeBeautifierStack->back()->runInIndentContinuation = runInIndentContinuation;
+		activeBeautifierStack->back()->nonInStatementBrace = nonInStatementBrace;
+		activeBeautifierStack->back()->objCColonAlignSubsequent = objCColonAlignSubsequent;
+		activeBeautifierStack->back()->lineCommentNoBeautify = lineCommentNoBeautify;
+		activeBeautifierStack->back()->isElseHeaderIndent = isElseHeaderIndent;
+		activeBeautifierStack->back()->isCaseHeaderCommentIndent = isCaseHeaderCommentIndent;
+		activeBeautifierStack->back()->isNonInStatementArray = isNonInStatementArray;
+		activeBeautifierStack->back()->isSharpAccessor = isSharpAccessor;
+		activeBeautifierStack->back()->isSharpDelegate = isSharpDelegate;
+		activeBeautifierStack->back()->isInExternC = isInExternC;
+		activeBeautifierStack->back()->isInBeautifySQL = isInBeautifySQL;
+		activeBeautifierStack->back()->isInIndentableStruct = isInIndentableStruct;
+		activeBeautifierStack->back()->isInIndentablePreproc = isInIndentablePreproc;
+		// must return originalLine not the trimmed line
+		return activeBeautifierStack->back()->beautify(originalLine);
+	}
+
+	// Flag an indented header in case this line is a one-line block.
+	// The header in the header stack will be deleted by a one-line block.
+	bool isInExtraHeaderIndent = false;
+	if (!headerStack->empty()
+	        && lineBeginsWithOpenBrace
+	        && (headerStack->back() != &AS_OPEN_BRACE
+	            || probationHeader != nullptr))
+		isInExtraHeaderIndent = true;
+
+	size_t iPrelim = headerStack->size();
+
+	// calculate preliminary indentation based on headerStack and data from past lines
+	computePreliminaryIndentation();
+
+	// parse characters in the current line.
+	parseCurrentLine(line);
+
+	// handle special cases of indentation
+	adjustParsedLineIndentation(iPrelim, isInExtraHeaderIndent);
+
+	if (isInObjCMethodDefinition)
+		adjustObjCMethodDefinitionIndentation(line);
+
+	if (isInObjCMethodCall)
+		adjustObjCMethodCallIndentation(line);
+
+	if (isInDefine)
+	{
+		if (line.length() > 0 && line[0] == '#')
+		{
+			// the 'define' does not have to be attached to the '#'
+			string preproc = trim(line.substr(1));
+			if (preproc.compare(0, 6, "define") == 0)
+			{
+				if (!continuationIndentStack->empty()
+				        && continuationIndentStack->back() > 0)
+				{
+					defineIndentCount = indentCount;
+				}
+				else
+				{
+					defineIndentCount = indentCount - 1;
+					--indentCount;
+				}
+			}
+		}
+
+		indentCount -= defineIndentCount;
+	}
+
+	if (indentCount < 0)
+		indentCount = 0;
+
+	if (lineCommentNoBeautify || blockCommentNoBeautify || isInQuoteContinuation)
+		indentCount = spaceIndentCount = 0;
+
+	// finally, insert indentations into beginning of line
+
+	string indentedLine = preLineWS(indentCount, spaceIndentCount) + line;
+	indentedLine = getIndentedLineReturn(indentedLine, originalLine);
+
+	prevFinalLineSpaceIndentCount = spaceIndentCount;
+	prevFinalLineIndentCount = indentCount;
+
+	if (lastLineHeader != nullptr)
+		previousLastLineHeader = lastLineHeader;
+
+	if ((lineIsLineCommentOnly || lineIsCommentOnly)
+	        && line.find("*INDENT-ON*", 0) != string::npos)
+		isIndentModeOff = false;
+
+	return indentedLine;
 }
 
 /**
@@ -507,13 +879,31 @@ void ASBeautifier::setSpaceIndentation(int length)
 }
 
 /**
+* indent continuation lines using a number of indents.
+*
+* @param   indent     number of indents per line.
+*/
+void ASBeautifier::setContinuationIndentation(int indent)
+{
+	continuationIndent = indent;
+}
+
+/**
  * set the maximum indentation between two lines in a multi-line statement.
  *
  * @param   max     maximum indentation length.
  */
+void ASBeautifier::setMaxContinuationIndentLength(int max)
+{
+	maxContinuationIndent = max;
+}
+
+// retained for compatibility with release 2.06
+// "MaxInStatementIndent" has been changed to "MaxContinuationIndent" in 3.0
+// it is referenced only by the old "MaxInStatementIndent" options
 void ASBeautifier::setMaxInStatementIndentLength(int max)
 {
-	maxInStatementIndent = max;
+	setMaxContinuationIndentLength(max);
 }
 
 /**
@@ -543,27 +933,27 @@ void ASBeautifier::setMinConditionalIndentLength()
 }
 
 /**
- * set the state of the bracket indent option. If true, brackets will
+ * set the state of the brace indent option. If true, braces will
  * be indented one additional indent.
  *
  * @param   state             state of option.
  */
-void ASBeautifier::setBracketIndent(bool state)
+void ASBeautifier::setBraceIndent(bool state)
 {
-	bracketIndent = state;
+	braceIndent = state;
 }
 
 /**
-* set the state of the bracket indent VTK option. If true, brackets will
-* be indented one additional indent, except for the opening bracket.
+* set the state of the brace indent VTK option. If true, braces will
+* be indented one additional indent, except for the opening brace.
 *
 * @param   state             state of option.
 */
-void ASBeautifier::setBracketIndentVtk(bool state)
+void ASBeautifier::setBraceIndentVtk(bool state)
 {
 	// need to set both of these
-	setBracketIndent(state);
-	bracketIndentVtk = state;
+	setBraceIndent(state);
+	braceIndentVtk = state;
 }
 
 /**
@@ -634,6 +1024,16 @@ void ASBeautifier::setNamespaceIndent(bool state)
 }
 
 /**
+* set the state of the indent after parens option.
+*
+* @param   state             state of option.
+*/
+void ASBeautifier::setAfterParenIndent(bool state)
+{
+	shouldIndentAfterParen = state;
+}
+
+/**
  * set the state of the label indentation option.
  * If true, labels will be indented one indent LESS than the
  * current indentation level.
@@ -694,7 +1094,7 @@ int ASBeautifier::getFileType() const
  *
  * @return   value of indentLength option.
  */
-int ASBeautifier::getIndentLength(void) const
+int ASBeautifier::getIndentLength() const
 {
 	return indentLength;
 }
@@ -704,7 +1104,7 @@ int ASBeautifier::getIndentLength(void) const
  *
  * @return   the char used for indentation.
  */
-string ASBeautifier::getIndentString(void) const
+string ASBeautifier::getIndentString() const
 {
 	return indentString;
 }
@@ -722,7 +1122,7 @@ bool ASBeautifier::getModeManuallySet() const
  *
  * @return   state of force tab indentation.
  */
-bool ASBeautifier::getForceTabIndentation(void) const
+bool ASBeautifier::getForceTabIndentation() const
 {
 	return shouldForceTabIndentation;
 }
@@ -732,7 +1132,7 @@ bool ASBeautifier::getForceTabIndentation(void) const
 *
 * @return   state of shouldAlignMethodColon option.
 */
-bool ASBeautifier::getAlignMethodColon(void) const
+bool ASBeautifier::getAlignMethodColon() const
 {
 	return shouldAlignMethodColon;
 }
@@ -742,19 +1142,19 @@ bool ASBeautifier::getAlignMethodColon(void) const
  *
  * @return   state of blockIndent option.
  */
-bool ASBeautifier::getBlockIndent(void) const
+bool ASBeautifier::getBlockIndent() const
 {
 	return blockIndent;
 }
 
 /**
- * get the state of the bracket indentation option.
+ * get the state of the brace indentation option.
  *
- * @return   state of bracketIndent option.
+ * @return   state of braceIndent option.
  */
-bool ASBeautifier::getBracketIndent(void) const
+bool ASBeautifier::getBraceIndent() const
 {
-	return bracketIndent;
+	return braceIndent;
 }
 
 /**
@@ -763,7 +1163,7 @@ bool ASBeautifier::getBracketIndent(void) const
 *
 * @return   state of namespaceIndent option.
 */
-bool ASBeautifier::getNamespaceIndent(void) const
+bool ASBeautifier::getNamespaceIndent() const
 {
 	return namespaceIndent;
 }
@@ -774,7 +1174,7 @@ bool ASBeautifier::getNamespaceIndent(void) const
  *
  * @return   state of classIndent option.
  */
-bool ASBeautifier::getClassIndent(void) const
+bool ASBeautifier::getClassIndent() const
 {
 	return classIndent;
 }
@@ -785,7 +1185,7 @@ bool ASBeautifier::getClassIndent(void) const
  *
  * @return   state of modifierIndent option.
  */
-bool ASBeautifier::getModifierIndent(void) const
+bool ASBeautifier::getModifierIndent() const
 {
 	return modifierIndent;
 }
@@ -796,7 +1196,7 @@ bool ASBeautifier::getModifierIndent(void) const
  *
  * @return   state of switchIndent option.
  */
-bool ASBeautifier::getSwitchIndent(void) const
+bool ASBeautifier::getSwitchIndent() const
 {
 	return switchIndent;
 }
@@ -807,7 +1207,7 @@ bool ASBeautifier::getSwitchIndent(void) const
  *
  * @return   state of caseIndent option.
  */
-bool ASBeautifier::getCaseIndent(void) const
+bool ASBeautifier::getCaseIndent() const
 {
 	return caseIndent;
 }
@@ -820,7 +1220,7 @@ bool ASBeautifier::getCaseIndent(void) const
  *
  * @return   state of emptyLineFill option.
  */
-bool ASBeautifier::getEmptyLineFill(void) const
+bool ASBeautifier::getEmptyLineFill() const
 {
 	return emptyLineFill;
 }
@@ -832,7 +1232,7 @@ bool ASBeautifier::getEmptyLineFill(void) const
  *
  * @return   state of shouldIndentPreprocDefine option.
  */
-bool ASBeautifier::getPreprocDefineIndent(void) const
+bool ASBeautifier::getPreprocDefineIndent() const
 {
 	return shouldIndentPreprocDefine;
 }
@@ -842,380 +1242,15 @@ bool ASBeautifier::getPreprocDefineIndent(void) const
  *
  * @return   length of tab indent option.
  */
-int ASBeautifier::getTabLength(void) const
+int ASBeautifier::getTabLength() const
 {
 	return tabLength;
 }
 
-/**
- * beautify a line of source code.
- * every line of source code in a source code file should be sent
- * one after the other to the beautify method.
- *
- * @return      the indented line.
- * @param originalLine       the original unindented line.
- */
-string ASBeautifier::beautify(const string& originalLine)
-{
-	string line;
-	bool isInQuoteContinuation = isInVerbatimQuote | haveLineContinuationChar;
-
-	currentHeader = NULL;
-	lastLineHeader = NULL;
-	blockCommentNoBeautify = blockCommentNoIndent;
-	isInClass = false;
-	isInSwitch = false;
-	lineBeginsWithOpenBracket = false;
-	lineBeginsWithCloseBracket = false;
-	lineBeginsWithComma = false;
-	lineIsCommentOnly = false;
-	lineIsLineCommentOnly = false;
-	shouldIndentBrackettedLine = true;
-	isInAsmOneLine = false;
-	lineOpensWithLineComment = false;
-	lineOpensWithComment = false;
-	lineStartsInComment = isInComment;
-	previousLineProbationTab = false;
-	haveLineContinuationChar = false;
-	lineOpeningBlocksNum = 0;
-	lineClosingBlocksNum = 0;
-	if (isImmediatelyPostObjCMethodDefinition)
-		clearObjCMethodDefinitionAlignment();
-
-	// handle and remove white spaces around the line:
-	// If not in comment, first find out size of white space before line,
-	// so that possible comments starting in the line continue in
-	// relation to the preliminary white-space.
-	if (isInQuoteContinuation)
-	{
-		// trim a single space added by ASFormatter, otherwise leave it alone
-		if (!(originalLine.length() == 1 && originalLine[0] == ' '))
-			line = originalLine;
-	}
-	else if (isInComment || isInBeautifySQL)
-	{
-		// trim the end of comment and SQL lines
-		line = originalLine;
-		size_t trimEnd = line.find_last_not_of(" \t");
-		if (trimEnd == string::npos)
-			trimEnd = 0;
-		else
-			trimEnd++;
-		if (trimEnd < line.length())
-			line.erase(trimEnd);
-		// does a bracket open the line
-		size_t firstChar = line.find_first_not_of(" \t");
-		if (firstChar != string::npos)
-		{
-			if (line[firstChar] == '{')
-				lineBeginsWithOpenBracket = true;
-			else if (line[firstChar] == '}')
-				lineBeginsWithCloseBracket = true;
-			else if (line[firstChar] == ',')
-				lineBeginsWithComma = true;
-		}
-	}
-	else
-	{
-		line = trim(originalLine);
-		if (line.length() > 0)
-		{
-			if (line[0] == '{')
-				lineBeginsWithOpenBracket = true;
-			else if (line[0] == '}')
-				lineBeginsWithCloseBracket = true;
-			else if (line[0] == ',')
-				lineBeginsWithComma = true;
-			else if (line.compare(0, 2, "//") == 0)
-				lineIsLineCommentOnly = true;
-			else if (line.compare(0, 2, "/*") == 0)
-			{
-				if (line.find("*/", 2) != string::npos)
-					lineIsCommentOnly = true;
-			}
-		}
-
-		isInHorstmannComment = false;
-		size_t j = line.find_first_not_of(" \t{");
-		if (j != string::npos && line.compare(j, 2, "//") == 0)
-			lineOpensWithLineComment = true;
-		if (j != string::npos && line.compare(j, 2, "/*") == 0)
-		{
-			lineOpensWithComment = true;
-			size_t k = line.find_first_not_of(" \t");
-			if (k != string::npos && line.compare(k, 1, "{") == 0)
-				isInHorstmannComment = true;
-		}
-	}
-
-	// When indent is OFF the lines must still be processed by ASBeautifier.
-	// Otherwise the lines immediately following may not be indented correctly.
-	if ((lineIsLineCommentOnly || lineIsCommentOnly)
-	        && line.find("*INDENT-OFF*", 0) != string::npos)
-		isIndentModeOff = true;
-
-	if (line.length() == 0)
-	{
-		if (backslashEndsPrevLine)
-		{
-			backslashEndsPrevLine = false;
-			isInDefine = false;
-			isInDefineDefinition = false;
-		}
-		if (emptyLineFill && !isInQuoteContinuation)
-		{
-			if (isInIndentablePreprocBlock)
-				return preLineWS(preprocBlockIndent, 0);
-			if (!headerStack->empty() || isInEnum)
-				return preLineWS(prevFinalLineIndentCount, prevFinalLineSpaceIndentCount);
-			// must fall thru here
-		}
-		else
-			return line;
-	}
-
-	// handle preprocessor commands
-	if (isInIndentablePreprocBlock
-	        && line.length() > 0
-	        && line[0] != '#')
-	{
-		string indentedLine;
-		if (isInClassHeaderTab || isInClassInitializer)
-		{
-			// parsing is turned off in ASFormatter by indent-off
-			// the originalLine will probably never be returned here
-			indentedLine = preLineWS(prevFinalLineIndentCount, prevFinalLineSpaceIndentCount) + line;
-			return getIndentedLineReturn(indentedLine, originalLine);
-		}
-		else
-		{
-			indentedLine = preLineWS(preprocBlockIndent, 0) + line;
-			return getIndentedLineReturn(indentedLine, originalLine);
-		}
-	}
-	if (!isInComment
-	        && !isInQuoteContinuation
-	        && line.length() > 0
-	        && ((line[0] == '#' && !isIndentedPreprocessor(line, 0))
-	            || backslashEndsPrevLine))
-	{
-		if (line[0] == '#' && !isInDefine)
-		{
-			string preproc = extractPreprocessorStatement(line);
-			processPreprocessor(preproc, line);
-			if (isInIndentablePreprocBlock || isInIndentablePreproc)
-			{
-				string indentedLine;
-				if ((preproc.length() >= 2 && preproc.substr(0, 2) == "if")) // #if, #ifdef, #ifndef
-				{
-					indentedLine = preLineWS(preprocBlockIndent, 0) + line;
-					preprocBlockIndent += 1;
-					isInIndentablePreprocBlock = true;
-				}
-				else if (preproc == "else" || preproc == "elif")
-				{
-					indentedLine = preLineWS(preprocBlockIndent - 1, 0) + line;
-				}
-				else if (preproc == "endif")
-				{
-					preprocBlockIndent -= 1;
-					indentedLine = preLineWS(preprocBlockIndent, 0) + line;
-					if (preprocBlockIndent == 0)
-						isInIndentablePreprocBlock = false;
-				}
-				else
-					indentedLine = preLineWS(preprocBlockIndent, 0) + line;
-				return getIndentedLineReturn(indentedLine, originalLine);
-			}
-			if (shouldIndentPreprocConditional && preproc.length() > 0)
-			{
-				string indentedLine;
-				if (preproc.length() >= 2 && preproc.substr(0, 2) == "if") // #if, #ifdef, #ifndef
-				{
-					pair<int, int> entry;	// indentCount, spaceIndentCount
-					if (!isInDefine && activeBeautifierStack != NULL && !activeBeautifierStack->empty())
-						entry = activeBeautifierStack->back()->computePreprocessorIndent();
-					else
-						entry = computePreprocessorIndent();
-					preprocIndentStack->push_back(entry);
-					indentedLine = preLineWS(preprocIndentStack->back().first,
-					                         preprocIndentStack->back().second) + line;
-					return getIndentedLineReturn(indentedLine, originalLine);
-				}
-				else if (preproc == "else" || preproc == "elif")
-				{
-					if (preprocIndentStack->size() > 0)	// if no entry don't indent
-					{
-						indentedLine = preLineWS(preprocIndentStack->back().first,
-						                         preprocIndentStack->back().second) + line;
-						return getIndentedLineReturn(indentedLine, originalLine);
-					}
-				}
-				else if (preproc == "endif")
-				{
-					if (preprocIndentStack->size() > 0)	// if no entry don't indent
-					{
-						indentedLine = preLineWS(preprocIndentStack->back().first,
-						                         preprocIndentStack->back().second) + line;
-						preprocIndentStack->pop_back();
-						return getIndentedLineReturn(indentedLine, originalLine);
-					}
-				}
-			}
-		}
-
-		// check if the last char is a backslash
-		if (line.length() > 0)
-			backslashEndsPrevLine = (line[line.length() - 1] == '\\');
-		// comments within the definition line can be continued without the backslash
-		if (isInPreprocessorUnterminatedComment(line))
-			backslashEndsPrevLine = true;
-
-		// check if this line ends a multi-line #define
-		// if so, use the #define's cloned beautifier for the line's indentation
-		// and then remove it from the active beautifier stack and delete it.
-		if (!backslashEndsPrevLine && isInDefineDefinition && !isInDefine)
-		{
-			isInDefineDefinition = false;
-			ASBeautifier* defineBeautifier = activeBeautifierStack->back();
-			activeBeautifierStack->pop_back();
-
-			string indentedLine = defineBeautifier->beautify(line);
-			delete defineBeautifier;
-			return getIndentedLineReturn(indentedLine, originalLine);
-		}
-
-		// unless this is a multi-line #define, return this precompiler line as is.
-		if (!isInDefine && !isInDefineDefinition)
-			return originalLine;
-	}
-
-	// if there exists any worker beautifier in the activeBeautifierStack,
-	// then use it instead of me to indent the current line.
-	// variables set by ASFormatter must be updated.
-	if (!isInDefine && activeBeautifierStack != NULL && !activeBeautifierStack->empty())
-	{
-		activeBeautifierStack->back()->inLineNumber = inLineNumber;
-		activeBeautifierStack->back()->horstmannIndentInStatement = horstmannIndentInStatement;
-		activeBeautifierStack->back()->nonInStatementBracket = nonInStatementBracket;
-		activeBeautifierStack->back()->objCColonAlignSubsequent = objCColonAlignSubsequent;
-		activeBeautifierStack->back()->lineCommentNoBeautify = lineCommentNoBeautify;
-		activeBeautifierStack->back()->isElseHeaderIndent = isElseHeaderIndent;
-		activeBeautifierStack->back()->isCaseHeaderCommentIndent = isCaseHeaderCommentIndent;
-		activeBeautifierStack->back()->isNonInStatementArray = isNonInStatementArray;
-		activeBeautifierStack->back()->isSharpAccessor = isSharpAccessor;
-		activeBeautifierStack->back()->isSharpDelegate = isSharpDelegate;
-		activeBeautifierStack->back()->isInExternC = isInExternC;
-		activeBeautifierStack->back()->isInBeautifySQL = isInBeautifySQL;
-		activeBeautifierStack->back()->isInIndentableStruct = isInIndentableStruct;
-		activeBeautifierStack->back()->isInIndentablePreproc = isInIndentablePreproc;
-		// must return originalLine not the trimmed line
-		return activeBeautifierStack->back()->beautify(originalLine);
-	}
-
-	// Flag an indented header in case this line is a one-line block.
-	// The header in the header stack will be deleted by a one-line block.
-	bool isInExtraHeaderIndent = false;
-	if (!headerStack->empty()
-	        && lineBeginsWithOpenBracket
-	        && (headerStack->back() != &AS_OPEN_BRACKET
-	            || probationHeader != NULL))
-		isInExtraHeaderIndent = true;
-
-	size_t iPrelim = headerStack->size();
-
-	// calculate preliminary indentation based on headerStack and data from past lines
-	computePreliminaryIndentation();
-
-	// parse characters in the current line.
-	parseCurrentLine(line);
-
-	// handle special cases of indentation
-	adjustParsedLineIndentation(iPrelim, isInExtraHeaderIndent);
-
-	// Objective-C continuation line
-	if (isInObjCMethodDefinition)
-	{
-		// register indent for Objective-C continuation line
-		if (line.length() > 0
-		        && (line[0] == '-' || line[0] == '+'))
-		{
-			if (shouldAlignMethodColon)
-			{
-				colonIndentObjCMethodDefinition = line.find(':');
-				int objCColonAlignSubsequentIndent = objCColonAlignSubsequent + indentLength;
-				if (objCColonAlignSubsequentIndent > colonIndentObjCMethodDefinition)
-					colonIndentObjCMethodDefinition = objCColonAlignSubsequentIndent;
-			}
-			else if (inStatementIndentStack->empty()
-			         || inStatementIndentStack->back() == 0)
-			{
-				inStatementIndentStack->push_back(indentLength);
-				isInStatement = true;
-			}
-		}
-		// set indent for last definition line
-		else if (!lineBeginsWithOpenBracket)
-		{
-			if (shouldAlignMethodColon)
-				spaceIndentCount = computeObjCColonAlignment(line, colonIndentObjCMethodDefinition);
-			else if (inStatementIndentStack->empty())
-				spaceIndentCount = spaceIndentObjCMethodDefinition;
-		}
-	}
-
-	if (isInDefine)
-	{
-		if (line.length() > 0 && line[0] == '#')
-		{
-			// the 'define' does not have to be attached to the '#'
-			string preproc = trim(line.substr(1));
-			if (preproc.compare(0, 6, "define") == 0)
-			{
-				if (!inStatementIndentStack->empty()
-				        && inStatementIndentStack->back() > 0)
-				{
-					defineIndentCount = indentCount;
-				}
-				else
-				{
-					defineIndentCount = indentCount - 1;
-					--indentCount;
-				}
-			}
-		}
-
-		indentCount -= defineIndentCount;
-	}
-
-	if (indentCount < 0)
-		indentCount = 0;
-
-	if (lineCommentNoBeautify || blockCommentNoBeautify || isInQuoteContinuation)
-		indentCount = spaceIndentCount = 0;
-
-	// finally, insert indentations into beginning of line
-
-	string indentedLine = preLineWS(indentCount, spaceIndentCount) + line;
-	indentedLine = getIndentedLineReturn(indentedLine, originalLine);
-
-	prevFinalLineSpaceIndentCount = spaceIndentCount;
-	prevFinalLineIndentCount = indentCount;
-
-	if (lastLineHeader != NULL)
-		previousLastLineHeader = lastLineHeader;
-
-	if ((lineIsLineCommentOnly || lineIsCommentOnly)
-	        && line.find("*INDENT-ON*", 0) != string::npos)
-		isIndentModeOff = false;
-
-	return indentedLine;
-}
-
-string& ASBeautifier::getIndentedLineReturn(string& newLine, const string& originalLine) const
+const string& ASBeautifier::getIndentedLineReturn(const string& newLine, const string& originalLine) const
 {
 	if (isIndentModeOff)
-		return const_cast<string&>(originalLine);
+		return originalLine;
 	return newLine;
 }
 
@@ -1247,32 +1282,37 @@ string ASBeautifier::preLineWS(int lineIndentCount, int lineSpaceIndentCount) co
 }
 
 /**
- * register an in-statement indent.
+ * register a continuation indent.
  */
-void ASBeautifier::registerInStatementIndent(const string& line, int i, int spaceTabCount_,
-                                             int tabIncrementIn, int minIndent, bool updateParenStack)
+void ASBeautifier::registerContinuationIndent(const string& line, int i, int spaceIndentCount_,
+                                              int tabIncrementIn, int minIndent, bool updateParenStack)
 {
+	assert(i >= -1);
 	int remainingCharNum = line.length() - i;
 	int nextNonWSChar = getNextProgramCharDistance(line, i);
 
-	// if indent is around the last char in the line, indent instead one indent from the previous indent
-	if (nextNonWSChar == remainingCharNum)
+	// if indent is around the last char in the line OR indent-after-paren is requested,
+	// indent with the continuation indent
+	if (nextNonWSChar == remainingCharNum || shouldIndentAfterParen)
 	{
-		int previousIndent = spaceTabCount_;
-		if (!inStatementIndentStack->empty())
-			previousIndent = inStatementIndentStack->back();
-		int currIndent = /*2*/ indentLength + previousIndent;
-		if (currIndent > maxInStatementIndent
-		        && line[i] != '{')
-			currIndent = indentLength * 2 + spaceTabCount_;
-		inStatementIndentStack->push_back(currIndent);
+		int previousIndent = spaceIndentCount_;
+		if (!continuationIndentStack->empty())
+			previousIndent = continuationIndentStack->back();
+		int currIndent = continuationIndent * indentLength + previousIndent;
+		if (currIndent > maxContinuationIndent && line[i] != '{')
+			currIndent = indentLength * 2 + spaceIndentCount_;
+		continuationIndentStack->emplace_back(currIndent);
 		if (updateParenStack)
-			parenIndentStack->push_back(previousIndent);
+			parenIndentStack->emplace_back(previousIndent);
 		return;
 	}
 
 	if (updateParenStack)
-		parenIndentStack->push_back(i + spaceTabCount_ - horstmannIndentInStatement);
+	{
+		parenIndentStack->emplace_back(i + spaceIndentCount_ - runInIndentContinuation);
+		if (parenIndentStack->back() < 0)
+			parenIndentStack->back() = 0;
+	}
 
 	int tabIncrement = tabIncrementIn;
 
@@ -1283,49 +1323,50 @@ void ASBeautifier::registerInStatementIndent(const string& line, int i, int spac
 			tabIncrement += convertTabToSpaces(j, tabIncrement);
 	}
 
-	int inStatementIndent = i + nextNonWSChar + spaceTabCount_ + tabIncrement;
+	int continuationIndentCount = i + nextNonWSChar + spaceIndentCount_ + tabIncrement;
 
 	// check for run-in statement
 	if (i > 0 && line[0] == '{')
-		inStatementIndent -= indentLength;
+		continuationIndentCount -= indentLength;
 
-	if (inStatementIndent < minIndent)
-		inStatementIndent = minIndent + spaceTabCount_;
+	if (continuationIndentCount < minIndent)
+		continuationIndentCount = minIndent + spaceIndentCount_;
 
 	// this is not done for an in-statement array
-	if (inStatementIndent > maxInStatementIndent
+	if (continuationIndentCount > maxContinuationIndent
 	        && !(prevNonLegalCh == '=' && currentNonLegalCh == '{'))
-		inStatementIndent = indentLength * 2 + spaceTabCount_;
+		continuationIndentCount = indentLength * 2 + spaceIndentCount_;
 
-	if (!inStatementIndentStack->empty()
-	        && inStatementIndent < inStatementIndentStack->back())
-		inStatementIndent = inStatementIndentStack->back();
+	if (!continuationIndentStack->empty()
+	        && continuationIndentCount < continuationIndentStack->back())
+		continuationIndentCount = continuationIndentStack->back();
 
 	// the block opener is not indented for a NonInStatementArray
-	if (isNonInStatementArray && !isInEnum && !bracketBlockStateStack->empty() && bracketBlockStateStack->back())
-		inStatementIndent = 0;
+	if ((isNonInStatementArray && i >= 0 && line[i] == '{')
+	        && !isInEnum && !braceBlockStateStack->empty() && braceBlockStateStack->back())
+		continuationIndentCount = 0;
 
-	inStatementIndentStack->push_back(inStatementIndent);
+	continuationIndentStack->emplace_back(continuationIndentCount);
 }
 
 /**
-* Register an in-statement indent for a class header or a class initializer colon.
+* Register a continuation indent for a class header or a class initializer colon.
 */
-void ASBeautifier::registerInStatementIndentColon(const string& line, int i, int tabIncrementIn)
+void ASBeautifier::registerContinuationIndentColon(const string& line, int i, int tabIncrementIn)
 {
 	assert(line[i] == ':');
 	assert(isInClassInitializer || isInClassHeaderTab);
 
 	// register indent at first word after the colon
 	size_t firstChar = line.find_first_not_of(" \t");
-	if (firstChar == (size_t)i)		// firstChar is ':'
+	if (firstChar == (size_t) i)		// firstChar is ':'
 	{
 		size_t firstWord = line.find_first_not_of(" \t", firstChar + 1);
-		if (firstChar != string::npos)
+		if (firstWord != string::npos)
 		{
-			int inStatementIndent = firstWord + spaceIndentCount + tabIncrementIn;
-			inStatementIndentStack->push_back(inStatementIndent);
-			isInStatement = true;
+			int continuationIndentCount = firstWord + spaceIndentCount + tabIncrementIn;
+			continuationIndentStack->emplace_back(continuationIndentCount);
+			isContinuation = true;
 		}
 	}
 }
@@ -1358,7 +1399,7 @@ int ASBeautifier::getNextProgramCharDistance(const string& line, int i) const
 	bool inComment = false;
 	int  remainingCharNum = line.length() - i;
 	int  charDistance;
-	char ch;
+	char ch = ' ';
 
 	for (charDistance = 1; charDistance < remainingCharNum; charDistance++)
 	{
@@ -1372,9 +1413,9 @@ int ASBeautifier::getNextProgramCharDistance(const string& line, int i) const
 			}
 			continue;
 		}
-		else if (isWhiteSpace(ch))
+		if (isWhiteSpace(ch))
 			continue;
-		else if (ch == '/')
+		if (ch == '/')
 		{
 			if (line.compare(i + charDistance, 2, "//") == 0)
 				return remainingCharNum;
@@ -1391,64 +1432,6 @@ int ASBeautifier::getNextProgramCharDistance(const string& line, int i) const
 	return charDistance;
 }
 
-// check if a specific line position contains a header.
-const string* ASBeautifier::findHeader(const string& line, int i,
-                                       const vector<const string*>* possibleHeaders) const
-{
-	assert(isCharPotentialHeader(line, i));
-	// check the word
-	size_t maxHeaders = possibleHeaders->size();
-	for (size_t p = 0; p < maxHeaders; p++)
-	{
-		const string* header = (*possibleHeaders)[p];
-		const size_t wordEnd = i + header->length();
-		if (wordEnd > line.length())
-			continue;
-		int result = (line.compare(i, header->length(), *header));
-		if (result > 0)
-			continue;
-		if (result < 0)
-			break;
-		// check that this is not part of a longer word
-		if (wordEnd == line.length())
-			return header;
-		if (isLegalNameChar(line[wordEnd]))
-			continue;
-		const char peekChar = peekNextChar(line, wordEnd - 1);
-		// is not a header if part of a definition
-		if (peekChar == ',' || peekChar == ')')
-			break;
-		// the following accessor definitions are NOT headers
-		// goto default; is NOT a header
-		// default(int) keyword in C# is NOT a header
-		else if ((header == &AS_GET || header == &AS_SET || header == &AS_DEFAULT)
-		         && (peekChar == ';' || peekChar == '(' || peekChar == '='))
-			break;
-		return header;
-	}
-	return NULL;
-}
-
-// check if a specific line position contains an operator.
-const string* ASBeautifier::findOperator(const string& line, int i,
-                                         const vector<const string*>* possibleOperators) const
-{
-	assert(isCharPotentialOperator(line[i]));
-	// find the operator in the vector
-	// the vector contains the LONGEST operators first
-	// must loop thru the entire vector
-	size_t maxOperators = possibleOperators->size();
-	for (size_t p = 0; p < maxOperators; p++)
-	{
-		const size_t wordEnd = i + (*(*possibleOperators)[p]).length();
-		if (wordEnd > line.length())
-			continue;
-		if (line.compare(i, (*(*possibleOperators)[p]).length(), *(*possibleOperators)[p]) == 0)
-			return (*possibleOperators)[p];
-	}
-	return NULL;
-}
-
 /**
  * find the index number of a string element in a container of strings
  *
@@ -1456,7 +1439,7 @@ const string* ASBeautifier::findOperator(const string& line, int i,
  * @param container     a vector of strings.
  * @param element       the element to find .
  */
-int ASBeautifier::indexOf(vector<const string*>& container, const string* element) const
+int ASBeautifier::indexOf(const vector<const string*>& container, const string* element) const
 {
 	vector<const string*>::const_iterator where;
 
@@ -1534,7 +1517,7 @@ vector<vector<const string*>*>* ASBeautifier::copyTempStacks(const ASBeautifier&
 	{
 		vector<const string*>* newVec = new vector<const string*>;
 		*newVec = **iter;
-		tempStacksNew->push_back(newVec);
+		tempStacksNew->emplace_back(newVec);
 	}
 	return tempStacksNew;
 }
@@ -1562,11 +1545,11 @@ void ASBeautifier::deleteBeautifierVectors()
 template<typename T>
 void ASBeautifier::deleteContainer(T& container)
 {
-	if (container != NULL)
+	if (container != nullptr)
 	{
 		container->clear();
 		delete (container);
-		container = NULL;
+		container = nullptr;
 	}
 }
 
@@ -1578,7 +1561,7 @@ void ASBeautifier::deleteContainer(T& container)
  */
 void ASBeautifier::deleteBeautifierContainer(vector<ASBeautifier*>*& container)
 {
-	if (container != NULL)
+	if (container != nullptr)
 	{
 		vector<ASBeautifier*>::iterator iter = container->begin();
 		while (iter < container->end())
@@ -1588,7 +1571,7 @@ void ASBeautifier::deleteBeautifierContainer(vector<ASBeautifier*>*& container)
 		}
 		container->clear();
 		delete (container);
-		container = NULL;
+		container = nullptr;
 	}
 }
 
@@ -1599,7 +1582,7 @@ void ASBeautifier::deleteBeautifierContainer(vector<ASBeautifier*>*& container)
  */
 void ASBeautifier::deleteTempStacksContainer(vector<vector<const string*>*>*& container)
 {
-	if (container != NULL)
+	if (container != nullptr)
 	{
 		vector<vector<const string*>*>::iterator iter = container->begin();
 		while (iter < container->end())
@@ -1609,7 +1592,7 @@ void ASBeautifier::deleteTempStacksContainer(vector<vector<const string*>*>*& co
 		}
 		container->clear();
 		delete (container);
-		container = NULL;
+		container = nullptr;
 	}
 }
 
@@ -1622,7 +1605,7 @@ void ASBeautifier::initContainer(T& container, T value)
 {
 	// since the ASFormatter object is never deleted,
 	// the existing vectors must be deleted before creating new ones
-	if (container != NULL)
+	if (container != nullptr)
 		deleteContainer(container);
 	container = value;
 }
@@ -1635,7 +1618,7 @@ void ASBeautifier::initContainer(T& container, T value)
 void ASBeautifier::initTempStacksContainer(vector<vector<const string*>*>*& container,
                                            vector<vector<const string*>*>* value)
 {
-	if (container != NULL)
+	if (container != nullptr)
 		deleteTempStacksContainer(container);
 	container = value;
 }
@@ -1700,12 +1683,9 @@ bool ASBeautifier::statementEndsWithComma(const string& line, int index) const
 		{
 			if (isLineEndComment(line, i))
 				break;
-			else
-			{
-				isInComment_ = true;
-				++i;
-				continue;
-			}
+			isInComment_ = true;
+			++i;
+			continue;
 		}
 
 		if (ch == '(')
@@ -1751,7 +1731,7 @@ bool ASBeautifier::isLineEndComment(const string& line, int startPos) const
  *
  * @return is the index to the previous word (the in statement indent).
  */
-int ASBeautifier::getInStatementIndentAssign(const string& line, size_t currPos) const
+int ASBeautifier::getContinuationIndentAssign(const string& line, size_t currPos) const
 {
 	assert(line[currPos] == '=');
 
@@ -1766,7 +1746,7 @@ int ASBeautifier::getInStatementIndentAssign(const string& line, size_t currPos)
 	int start;          // start of the previous word
 	for (start = end; start > -1; start--)
 	{
-		if (!isLegalNameChar(line[start]) || line[start] == '.')
+		if (!isLegalNameChar(line[start]))
 			break;
 	}
 	start++;
@@ -1775,11 +1755,11 @@ int ASBeautifier::getInStatementIndentAssign(const string& line, size_t currPos)
 }
 
 /**
- * get the instatement indent for a comma
+ * get the continuation indent for a comma
  *
  * @return is the indent to the second word on the line (the in statement indent).
  */
-int ASBeautifier::getInStatementIndentComma(const string& line, size_t currPos) const
+int ASBeautifier::getContinuationIndentComma(const string& line, size_t currPos) const
 {
 	assert(line[currPos] == ',');
 
@@ -1896,15 +1876,15 @@ bool ASBeautifier::isPreprocessorConditionalCplusplus(const string& line) const
 		// check for " #if defined(__cplusplus)"
 		size_t charNum = 2;
 		charNum = preproc.find_first_not_of(" \t", charNum);
-		if (preproc.compare(charNum, 7, "defined") == 0)
+		if (charNum != string::npos && preproc.compare(charNum, 7, "defined") == 0)
 		{
 			charNum += 7;
 			charNum = preproc.find_first_not_of(" \t", charNum);
-			if (preproc.compare(charNum, 1, "(") == 0)
+			if (charNum != string::npos && preproc.compare(charNum, 1, "(") == 0)
 			{
 				++charNum;
 				charNum = preproc.find_first_not_of(" \t", charNum);
-				if (preproc.compare(charNum, 11, "__cplusplus") == 0)
+				if (charNum != string::npos && preproc.compare(charNum, 11, "__cplusplus") == 0)
 					return true;
 			}
 		}
@@ -1936,14 +1916,14 @@ bool ASBeautifier::isInPreprocessorUnterminatedComment(const string& line)
 	return true;
 }
 
-void ASBeautifier::popLastInStatementIndent()
+void ASBeautifier::popLastContinuationIndent()
 {
-	assert(!inStatementIndentStackSizeStack->empty());
-	int previousIndentStackSize = inStatementIndentStackSizeStack->back();
-	if (inStatementIndentStackSizeStack->size() > 1)
-		inStatementIndentStackSizeStack->pop_back();
-	while (previousIndentStackSize < (int) inStatementIndentStack->size())
-		inStatementIndentStack->pop_back();
+	assert(!continuationIndentStackSizeStack->empty());
+	int previousIndentStackSize = continuationIndentStackSizeStack->back();
+	if (continuationIndentStackSizeStack->size() > 1)
+		continuationIndentStackSizeStack->pop_back();
+	while (previousIndentStackSize < (int) continuationIndentStack->size())
+		continuationIndentStack->pop_back();
 }
 
 // for unit testing
@@ -1972,7 +1952,7 @@ void ASBeautifier::processPreprocessor(const string& preproc, const string& line
 			// push a new beautifier into the active stack
 			// this beautifier will be used for the indentation of this define
 			ASBeautifier* defineBeautifier = new ASBeautifier(*this);
-			activeBeautifierStack->push_back(defineBeautifier);
+			activeBeautifierStack->emplace_back(defineBeautifier);
 		}
 		else
 		{
@@ -1982,39 +1962,39 @@ void ASBeautifier::processPreprocessor(const string& preproc, const string& line
 	}
 	else if (preproc.length() >= 2 && preproc.substr(0, 2) == "if")
 	{
-		if (isPreprocessorConditionalCplusplus(line) && !g_preprocessorCppExternCBracket)
-			g_preprocessorCppExternCBracket = 1;
+		if (isPreprocessorConditionalCplusplus(line) && !g_preprocessorCppExternCBrace)
+			g_preprocessorCppExternCBrace = 1;
 		// push a new beautifier into the stack
-		waitingBeautifierStackLengthStack->push_back(waitingBeautifierStack->size());
-		activeBeautifierStackLengthStack->push_back(activeBeautifierStack->size());
+		waitingBeautifierStackLengthStack->emplace_back(waitingBeautifierStack->size());
+		activeBeautifierStackLengthStack->emplace_back(activeBeautifierStack->size());
 		if (activeBeautifierStackLengthStack->back() == 0)
-			waitingBeautifierStack->push_back(new ASBeautifier(*this));
+			waitingBeautifierStack->emplace_back(new ASBeautifier(*this));
 		else
-			waitingBeautifierStack->push_back(new ASBeautifier(*activeBeautifierStack->back()));
+			waitingBeautifierStack->emplace_back(new ASBeautifier(*activeBeautifierStack->back()));
 	}
 	else if (preproc == "else")
 	{
-		if (waitingBeautifierStack && !waitingBeautifierStack->empty())
+		if ((waitingBeautifierStack != nullptr) && !waitingBeautifierStack->empty())
 		{
 			// MOVE current waiting beautifier to active stack.
-			activeBeautifierStack->push_back(waitingBeautifierStack->back());
+			activeBeautifierStack->emplace_back(waitingBeautifierStack->back());
 			waitingBeautifierStack->pop_back();
 		}
 	}
 	else if (preproc == "elif")
 	{
-		if (waitingBeautifierStack && !waitingBeautifierStack->empty())
+		if ((waitingBeautifierStack != nullptr) && !waitingBeautifierStack->empty())
 		{
 			// append a COPY current waiting beautifier to active stack, WITHOUT deleting the original.
-			activeBeautifierStack->push_back(new ASBeautifier(*(waitingBeautifierStack->back())));
+			activeBeautifierStack->emplace_back(new ASBeautifier(*(waitingBeautifierStack->back())));
 		}
 	}
 	else if (preproc == "endif")
 	{
 		int stackLength = 0;
-		ASBeautifier* beautifier = NULL;
+		ASBeautifier* beautifier = nullptr;
 
-		if (waitingBeautifierStackLengthStack != NULL && !waitingBeautifierStackLengthStack->empty())
+		if (waitingBeautifierStackLengthStack != nullptr && !waitingBeautifierStackLengthStack->empty())
 		{
 			stackLength = waitingBeautifierStackLengthStack->back();
 			waitingBeautifierStackLengthStack->pop_back();
@@ -2049,11 +2029,11 @@ void ASBeautifier::computePreliminaryIndentation()
 	spaceIndentCount = 0;
 	isInClassHeaderTab = false;
 
-	if (isInObjCMethodDefinition && !inStatementIndentStack->empty())
-		spaceIndentObjCMethodDefinition = inStatementIndentStack->back();
+	if (isInObjCMethodDefinition && !continuationIndentStack->empty())
+		spaceIndentObjCMethodAlignment = continuationIndentStack->back();
 
-	if (!inStatementIndentStack->empty())
-		spaceIndentCount = inStatementIndentStack->back();
+	if (!continuationIndentStack->empty())
+		spaceIndentCount = continuationIndentStack->back();
 
 	for (size_t i = 0; i < headerStack->size(); i++)
 	{
@@ -2063,6 +2043,7 @@ void ASBeautifier::computePreliminaryIndentation()
 		{
 			// do NOT indent opening block for these headers
 			if (!((*headerStack)[i] == &AS_NAMESPACE
+			        || (*headerStack)[i] == &AS_MODULE
 			        || (*headerStack)[i] == &AS_CLASS
 			        || (*headerStack)[i] == &AS_STRUCT
 			        || (*headerStack)[i] == &AS_UNION
@@ -2071,18 +2052,19 @@ void ASBeautifier::computePreliminaryIndentation()
 			        || (*headerStack)[i] == &AS_STATIC))
 				++indentCount;
 		}
-		else if (!(i > 0 && (*headerStack)[i - 1] != &AS_OPEN_BRACKET
-		           && (*headerStack)[i] == &AS_OPEN_BRACKET))
+		else if (!(i > 0 && (*headerStack)[i - 1] != &AS_OPEN_BRACE
+		           && (*headerStack)[i] == &AS_OPEN_BRACE))
 			++indentCount;
 
 		if (!isJavaStyle() && !namespaceIndent && i > 0
-		        && (*headerStack)[i - 1] == &AS_NAMESPACE
-		        && (*headerStack)[i] == &AS_OPEN_BRACKET)
+		        && ((*headerStack)[i - 1] == &AS_NAMESPACE
+		            || (*headerStack)[i - 1] == &AS_MODULE)
+		        && (*headerStack)[i] == &AS_OPEN_BRACE)
 			--indentCount;
 
 		if (isCStyle() && i >= 1
 		        && (*headerStack)[i - 1] == &AS_CLASS
-		        && (*headerStack)[i] == &AS_OPEN_BRACKET)
+		        && (*headerStack)[i] == &AS_OPEN_BRACE)
 		{
 			if (classIndent)
 				++indentCount;
@@ -2092,7 +2074,7 @@ void ASBeautifier::computePreliminaryIndentation()
 		// is the switchIndent option is on, indent switch statements an additional indent.
 		else if (switchIndent && i > 1
 		         && (*headerStack)[i - 1] == &AS_SWITCH
-		         && (*headerStack)[i] == &AS_OPEN_BRACKET)
+		         && (*headerStack)[i] == &AS_OPEN_BRACE)
 		{
 			++indentCount;
 			isInSwitch = true;
@@ -2106,14 +2088,14 @@ void ASBeautifier::computePreliminaryIndentation()
 			isInClassHeaderTab = true;
 		if (lineOpensWithLineComment || lineStartsInComment || lineOpensWithComment)
 		{
-			if (!lineBeginsWithOpenBracket)
+			if (!lineBeginsWithOpenBrace)
 				--indentCount;
-			if (!inStatementIndentStack->empty())
-				spaceIndentCount -= inStatementIndentStack->back();
+			if (!continuationIndentStack->empty())
+				spaceIndentCount -= continuationIndentStack->back();
 		}
 		else if (blockIndent)
 		{
-			if (!lineBeginsWithOpenBracket)
+			if (!lineBeginsWithOpenBrace)
 				++indentCount;
 		}
 	}
@@ -2123,11 +2105,11 @@ void ASBeautifier::computePreliminaryIndentation()
 		indentCount += classInitializerIndents;
 	}
 
-	if (isInEnum && lineBeginsWithComma && !inStatementIndentStack->empty())
+	if (isInEnum && lineBeginsWithComma && !continuationIndentStack->empty())
 	{
 		// unregister '=' indent from the previous line
-		inStatementIndentStack->pop_back();
-		isInStatement = false;
+		continuationIndentStack->pop_back();
+		isContinuation = false;
 		spaceIndentCount = 0;
 	}
 
@@ -2135,32 +2117,32 @@ void ASBeautifier::computePreliminaryIndentation()
 	if (isInObjCInterface)
 		++indentCount;
 
-	// unindent a class closing bracket...
+	// unindent a class closing brace...
 	if (!lineStartsInComment
 	        && isCStyle()
 	        && isInClass
 	        && classIndent
 	        && headerStack->size() >= 2
 	        && (*headerStack)[headerStack->size() - 2] == &AS_CLASS
-	        && (*headerStack)[headerStack->size() - 1] == &AS_OPEN_BRACKET
-	        && lineBeginsWithCloseBracket
-	        && bracketBlockStateStack->back())
+	        && (*headerStack)[headerStack->size() - 1] == &AS_OPEN_BRACE
+	        && lineBeginsWithCloseBrace
+	        && braceBlockStateStack->back())
 		--indentCount;
 
-	// unindent an indented switch closing bracket...
+	// unindent an indented switch closing brace...
 	else if (!lineStartsInComment
 	         && isInSwitch
 	         && switchIndent
 	         && headerStack->size() >= 2
 	         && (*headerStack)[headerStack->size() - 2] == &AS_SWITCH
-	         && (*headerStack)[headerStack->size() - 1] == &AS_OPEN_BRACKET
-	         && lineBeginsWithCloseBracket)
+	         && (*headerStack)[headerStack->size() - 1] == &AS_OPEN_BRACE
+	         && lineBeginsWithCloseBrace)
 		--indentCount;
 
-	// handle special case of horstmann comment in an indented class statement
+	// handle special case of run-in comment in an indented class statement
 	if (isInClass
 	        && classIndent
-	        && isInHorstmannComment
+	        && isInRunInComment
 	        && !lineOpensWithComment
 	        && headerStack->size() > 1
 	        && (*headerStack)[headerStack->size() - 2] == &AS_CLASS)
@@ -2168,7 +2150,7 @@ void ASBeautifier::computePreliminaryIndentation()
 
 	if (isInConditional)
 		--indentCount;
-	if (g_preprocessorCppExternCBracket >= 4)
+	if (g_preprocessorCppExternCBrace >= 4)
 		--indentCount;
 }
 
@@ -2179,11 +2161,11 @@ void ASBeautifier::adjustParsedLineIndentation(size_t iPrelim, bool isInExtraHea
 
 	// unindent a one-line statement in a header indent
 	if (!blockIndent
-	        && lineBeginsWithOpenBracket
+	        && lineBeginsWithOpenBrace
 	        && headerStack->size() < iPrelim
 	        && isInExtraHeaderIndent
 	        && (lineOpeningBlocksNum > 0 && lineOpeningBlocksNum <= lineClosingBlocksNum)
-	        && shouldIndentBrackettedLine)
+	        && shouldIndentBracedLine)
 		--indentCount;
 
 	/*
@@ -2192,24 +2174,24 @@ void ASBeautifier::adjustParsedLineIndentation(size_t iPrelim, bool isInExtraHea
 	 * by one indentation relative to its block.
 	 */
 	else if (!blockIndent
-	         && lineBeginsWithOpenBracket
+	         && lineBeginsWithOpenBrace
 	         && !(lineOpeningBlocksNum > 0 && lineOpeningBlocksNum <= lineClosingBlocksNum)
-	         && (headerStack->size() > 1 && (*headerStack)[headerStack->size() - 2] != &AS_OPEN_BRACKET)
-	         && shouldIndentBrackettedLine)
+	         && (headerStack->size() > 1 && (*headerStack)[headerStack->size() - 2] != &AS_OPEN_BRACE)
+	         && shouldIndentBracedLine)
 		--indentCount;
 
 	// must check one less in headerStack if more than one header on a line (allow-addins)...
 	else if (headerStack->size() > iPrelim + 1
 	         && !blockIndent
-	         && lineBeginsWithOpenBracket
+	         && lineBeginsWithOpenBrace
 	         && !(lineOpeningBlocksNum > 0 && lineOpeningBlocksNum <= lineClosingBlocksNum)
-	         && (headerStack->size() > 2 && (*headerStack)[headerStack->size() - 3] != &AS_OPEN_BRACKET)
-	         && shouldIndentBrackettedLine)
+	         && (headerStack->size() > 2 && (*headerStack)[headerStack->size() - 3] != &AS_OPEN_BRACE)
+	         && shouldIndentBracedLine)
 		--indentCount;
 
-	// unindent a closing bracket...
-	else if (lineBeginsWithCloseBracket
-	         && shouldIndentBrackettedLine)
+	// unindent a closing brace...
+	else if (lineBeginsWithCloseBrace
+	         && shouldIndentBracedLine)
 		--indentCount;
 
 	// correctly indent one-line-blocks...
@@ -2221,37 +2203,38 @@ void ASBeautifier::adjustParsedLineIndentation(size_t iPrelim, bool isInExtraHea
 	if (indentCount < 0)
 		indentCount = 0;
 
-	// take care of extra bracket indentation option...
+	// take care of extra brace indentation option...
 	if (!lineStartsInComment
-	        && bracketIndent
-	        && shouldIndentBrackettedLine
-	        && (lineBeginsWithOpenBracket || lineBeginsWithCloseBracket))
+	        && braceIndent
+	        && shouldIndentBracedLine
+	        && (lineBeginsWithOpenBrace || lineBeginsWithCloseBrace))
 	{
-		if (!bracketIndentVtk)
+		if (!braceIndentVtk)
 			++indentCount;
 		else
 		{
-			// determine if a style VTK bracket is indented
-			bool haveUnindentedBracket = false;
+			// determine if a style VTK brace is indented
+			bool haveUnindentedBrace = false;
 			for (size_t i = 0; i < headerStack->size(); i++)
 			{
 				if (((*headerStack)[i] == &AS_NAMESPACE
+				        || (*headerStack)[i] == &AS_MODULE
 				        || (*headerStack)[i] == &AS_CLASS
 				        || (*headerStack)[i] == &AS_STRUCT)
 				        && i + 1 < headerStack->size()
-				        && (*headerStack)[i + 1] == &AS_OPEN_BRACKET)
+				        && (*headerStack)[i + 1] == &AS_OPEN_BRACE)
 					i++;
-				else if (lineBeginsWithOpenBracket)
+				else if (lineBeginsWithOpenBrace)
 				{
-					// don't double count the current bracket
+					// don't double count the current brace
 					if (i + 1 < headerStack->size()
-					        && (*headerStack)[i] == &AS_OPEN_BRACKET)
-						haveUnindentedBracket = true;
+					        && (*headerStack)[i] == &AS_OPEN_BRACE)
+						haveUnindentedBrace = true;
 				}
-				else if ((*headerStack)[i] == &AS_OPEN_BRACKET)
-					haveUnindentedBracket = true;
+				else if ((*headerStack)[i] == &AS_OPEN_BRACE)
+					haveUnindentedBrace = true;
 			}	// end of for loop
-			if (haveUnindentedBracket)
+			if (haveUnindentedBrace)
 				++indentCount;
 		}
 	}
@@ -2267,11 +2250,11 @@ int ASBeautifier::adjustIndentCountForBreakElseIfComments() const
 	assert(isElseHeaderIndent && !tempStacks->empty());
 	int indentCountIncrement = 0;
 	vector<const string*>* lastTempStack = tempStacks->back();
-	if (lastTempStack != NULL)
+	if (lastTempStack != nullptr)
 	{
-		for (size_t i = 0; i < lastTempStack->size(); i++)
+		for (const string* const lastTemp : *lastTempStack)
 		{
-			if (*lastTempStack->at(i) == AS_ELSE)
+			if (*lastTemp == AS_ELSE)
 				indentCountIncrement++;
 		}
 	}
@@ -2295,6 +2278,95 @@ string ASBeautifier::extractPreprocessorStatement(const string& line) const
 	return preproc;
 }
 
+void ASBeautifier::adjustObjCMethodDefinitionIndentation(const string& line_)
+{
+	// register indent for Objective-C continuation line
+	if (line_.length() > 0
+	        && (line_[0] == '-' || line_[0] == '+'))
+	{
+		if (shouldAlignMethodColon && objCColonAlignSubsequent != -1)
+		{
+			string convertedLine = getIndentedSpaceEquivalent(line_);
+			colonIndentObjCMethodAlignment = findObjCColonAlignment(convertedLine);
+			int objCColonAlignSubsequentIndent = objCColonAlignSubsequent + indentLength;
+			if (objCColonAlignSubsequentIndent > colonIndentObjCMethodAlignment)
+				colonIndentObjCMethodAlignment = objCColonAlignSubsequentIndent;
+		}
+		else if (continuationIndentStack->empty()
+		         || continuationIndentStack->back() == 0)
+		{
+			continuationIndentStack->emplace_back(indentLength);
+			isContinuation = true;
+		}
+	}
+	// set indent for last definition line
+	else if (!lineBeginsWithOpenBrace)
+	{
+		if (shouldAlignMethodColon)
+			spaceIndentCount = computeObjCColonAlignment(line_, colonIndentObjCMethodAlignment);
+		else if (continuationIndentStack->empty())
+			spaceIndentCount = spaceIndentObjCMethodAlignment;
+	}
+}
+
+void ASBeautifier::adjustObjCMethodCallIndentation(const string& line_)
+{
+	static int keywordIndentObjCMethodAlignment = 0;
+	if (shouldAlignMethodColon && objCColonAlignSubsequent != -1)
+	{
+		if (isInObjCMethodCallFirst)
+		{
+			isInObjCMethodCallFirst = false;
+			string convertedLine = getIndentedSpaceEquivalent(line_);
+			bracePosObjCMethodAlignment = convertedLine.find('[');
+			keywordIndentObjCMethodAlignment =
+			    getObjCFollowingKeyword(convertedLine, bracePosObjCMethodAlignment);
+			colonIndentObjCMethodAlignment = findObjCColonAlignment(convertedLine);
+			if (colonIndentObjCMethodAlignment >= 0)
+			{
+				int objCColonAlignSubsequentIndent = objCColonAlignSubsequent + indentLength;
+				if (objCColonAlignSubsequentIndent > colonIndentObjCMethodAlignment)
+					colonIndentObjCMethodAlignment = objCColonAlignSubsequentIndent;
+				if (lineBeginsWithOpenBrace)
+					colonIndentObjCMethodAlignment -= indentLength;
+			}
+		}
+		else
+		{
+			if (findObjCColonAlignment(line_) != -1)
+			{
+				if (colonIndentObjCMethodAlignment < 0)
+					spaceIndentCount += computeObjCColonAlignment(line_, objCColonAlignSubsequent);
+				else if (objCColonAlignSubsequent > colonIndentObjCMethodAlignment)
+					spaceIndentCount = computeObjCColonAlignment(line_, objCColonAlignSubsequent);
+				else
+					spaceIndentCount = computeObjCColonAlignment(line_, colonIndentObjCMethodAlignment);
+			}
+			else
+			{
+				if (spaceIndentCount < colonIndentObjCMethodAlignment)
+					spaceIndentCount += keywordIndentObjCMethodAlignment;
+			}
+		}
+	}
+	else    // align keywords instead of colons
+	{
+		if (isInObjCMethodCallFirst)
+		{
+			isInObjCMethodCallFirst = false;
+			string convertedLine = getIndentedSpaceEquivalent(line_);
+			bracePosObjCMethodAlignment = convertedLine.find('[');
+			keywordIndentObjCMethodAlignment =
+			    getObjCFollowingKeyword(convertedLine, bracePosObjCMethodAlignment);
+		}
+		else
+		{
+			if (spaceIndentCount < keywordIndentObjCMethodAlignment + bracePosObjCMethodAlignment)
+				spaceIndentCount += keywordIndentObjCMethodAlignment;
+		}
+	}
+}
+
 /**
  * Clear the variables used to align the Objective-C method definitions.
  */
@@ -2302,13 +2374,40 @@ void ASBeautifier::clearObjCMethodDefinitionAlignment()
 {
 	assert(isImmediatelyPostObjCMethodDefinition);
 	spaceIndentCount = 0;
-	spaceIndentObjCMethodDefinition = 0;
-	colonIndentObjCMethodDefinition = 0;
-	objCColonAlignSubsequent = 0;
+	spaceIndentObjCMethodAlignment = 0;
+	colonIndentObjCMethodAlignment = 0;
 	isInObjCMethodDefinition = false;
 	isImmediatelyPostObjCMethodDefinition = false;
-	if (!inStatementIndentStack->empty())
-		inStatementIndentStack->pop_back();
+	if (!continuationIndentStack->empty())
+		continuationIndentStack->pop_back();
+}
+
+/**
+ * Find the first alignment colon on a line.
+ * Ternary operators (?) are bypassed.
+ */
+int ASBeautifier::findObjCColonAlignment(const string& line) const
+{
+	bool haveTernary = false;
+	for (size_t i = 0; i < line.length(); i++)
+	{
+		i = line.find_first_of(":?", i);
+		if (i == string::npos)
+			break;
+
+		if (line[i] == '?')
+		{
+			haveTernary = true;
+			continue;
+		}
+		if (haveTernary)
+		{
+			haveTernary = false;
+			continue;
+		}
+		return i;
+	}
+	return -1;
 }
 
 /**
@@ -2317,12 +2416,102 @@ void ASBeautifier::clearObjCMethodDefinitionAlignment()
  * If it cannot be aligned indentLength is returned and a new colon
  * position is calculated.
  */
-int ASBeautifier::computeObjCColonAlignment(string& line, int colonAlignPosition) const
+int ASBeautifier::computeObjCColonAlignment(const string& line, int colonAlignPosition) const
 {
-	int colonPosition = line.find(':');
+	int colonPosition = findObjCColonAlignment(line);
 	if (colonPosition < 0 || colonPosition > colonAlignPosition)
 		return indentLength;
 	return (colonAlignPosition - colonPosition);
+}
+
+/*
+ * Compute position of the keyword following the method call object.
+ * This is oversimplified to find unusual method calls.
+ * Use for now and see what happens.
+ * Most programmers will probably use align-method-colon anyway.
+ */
+int ASBeautifier::getObjCFollowingKeyword(const string& line, int bracePos) const
+{
+	assert(line[bracePos] == '[');
+	size_t firstText = line.find_first_not_of(" \t", bracePos + 1);
+	if (firstText == string::npos)
+		return -(indentCount * indentLength - 1);
+	size_t searchBeg = firstText;
+	size_t objectEnd = 0;	// end of object text
+	if (line[searchBeg] == '[')
+	{
+		objectEnd = line.find(']', searchBeg + 1);
+		if (objectEnd == string::npos)
+			return 0;
+	}
+	else
+	{
+		if (line[searchBeg] == '(')
+		{
+			searchBeg = line.find(')', searchBeg + 1);
+			if (searchBeg == string::npos)
+				return 0;
+		}
+		// bypass the object name
+		objectEnd = line.find_first_of(" \t", searchBeg + 1);
+		if (objectEnd == string::npos)
+			return 0;
+		--objectEnd;
+	}
+	size_t keyPos = line.find_first_not_of(" \t", objectEnd + 1);
+	if (keyPos == string::npos)
+		return 0;
+	return keyPos - firstText;
+}
+
+/**
+ * Get a line using the current space indent with all tabs replaced by spaces.
+ * The indentCount is NOT included
+ * Needed to compute an accurate alignment.
+ */
+string ASBeautifier::getIndentedSpaceEquivalent(const string& line_) const
+{
+	string spaceIndent;
+	spaceIndent.append(spaceIndentCount, ' ');
+	string convertedLine = spaceIndent + line_;
+	for (size_t i = spaceIndent.length(); i < convertedLine.length(); i++)
+	{
+		if (convertedLine[i] == '\t')
+		{
+			size_t numSpaces = indentLength - (i % indentLength);
+			convertedLine.replace(i, 1, numSpaces, ' ');
+			i += indentLength - 1;
+		}
+	}
+	return convertedLine;
+}
+
+/**
+ * Determine if an item is at a top level.
+ */
+bool ASBeautifier::isTopLevel() const
+{
+	if (headerStack->empty())
+		return true;
+	if (headerStack->back() == &AS_OPEN_BRACE
+	        && headerStack->size() >= 2)
+	{
+		if ((*headerStack)[headerStack->size() - 2] == &AS_NAMESPACE
+		        || (*headerStack)[headerStack->size() - 2] == &AS_MODULE
+		        || (*headerStack)[headerStack->size() - 2] == &AS_CLASS
+		        || (*headerStack)[headerStack->size() - 2] == &AS_INTERFACE
+		        || (*headerStack)[headerStack->size() - 2] == &AS_STRUCT
+		        || (*headerStack)[headerStack->size() - 2] == &AS_UNION)
+			return true;
+	}
+	if (headerStack->back() == &AS_NAMESPACE
+	        || headerStack->back() == &AS_MODULE
+	        || headerStack->back() == &AS_CLASS
+	        || headerStack->back() == &AS_INTERFACE
+	        || headerStack->back() == &AS_STRUCT
+	        || headerStack->back() == &AS_UNION)
+		return true;
+	return false;
 }
 
 /**
@@ -2335,10 +2524,16 @@ void ASBeautifier::parseCurrentLine(const string& line)
 	bool isSpecialChar = false;
 	bool haveCaseIndent = false;
 	bool haveAssignmentThisLine = false;
-	bool closingBracketReached = false;
-	bool previousLineProbation = (probationHeader != NULL);
+	bool closingBraceReached = false;
+	bool previousLineProbation = (probationHeader != nullptr);
 	char ch = ' ';
 	int tabIncrementIn = 0;
+	if (isInQuote
+	        && !haveLineContinuationChar
+	        && !isInVerbatimQuote
+	        && !isInAsm)
+		isInQuote = false;				// missing closing quote
+	haveLineContinuationChar = false;
 
 	for (size_t i = 0; i < line.length(); i++)
 	{
@@ -2347,15 +2542,7 @@ void ASBeautifier::parseCurrentLine(const string& line)
 		if (isInBeautifySQL)
 			continue;
 
-		if (isWhiteSpace(ch))
-		{
-			if (ch == '\t')
-				tabIncrementIn += convertTabToSpaces(i, tabIncrementIn);
-			continue;
-		}
-
 		// handle special characters (i.e. backslash+character such as \n, \t, ...)
-
 		if (isInQuote && !isInVerbatimQuote)
 		{
 			if (isSpecialChar)
@@ -2380,6 +2567,14 @@ void ASBeautifier::parseCurrentLine(const string& line)
 		else if (isInDefine && ch == '\\')
 			continue;
 
+		// bypass whitespace here
+		if (isWhiteSpace(ch))
+		{
+			if (ch == '\t')
+				tabIncrementIn += convertTabToSpaces(i, tabIncrementIn);
+			continue;
+		}
+
 		// handle quotes (such as 'x' and "Hello Dolly")
 		if (!(isInComment || isInLineComment)
 		        && (ch == '"'
@@ -2402,8 +2597,8 @@ void ASBeautifier::parseCurrentLine(const string& line)
 				else if (isSharpStyle() && prevCh == '@')
 					isInVerbatimQuote = true;
 				// check for "C" following "extern"
-				else if (g_preprocessorCppExternCBracket == 2 && line.compare(i, 3, "\"C\"") == 0)
-					++g_preprocessorCppExternCBracket;
+				else if (g_preprocessorCppExternCBrace == 2 && line.compare(i, 3, "\"C\"") == 0)
+					++g_preprocessorCppExternCBrace;
 			}
 			else if (isInVerbatimQuote && ch == '"')
 			{
@@ -2411,7 +2606,7 @@ void ASBeautifier::parseCurrentLine(const string& line)
 				{
 					string delim = ')' + verbatimDelimiter;
 					int delimStart = i - delim.length();
-					if (delimStart > 0 && line.substr(delimStart, delim.length()) == delim)
+					if (delimStart >= 0 && line.substr(delimStart, delim.length()) == delim)
 					{
 						isInQuote = false;
 						isInVerbatimQuote = false;
@@ -2419,19 +2614,20 @@ void ASBeautifier::parseCurrentLine(const string& line)
 				}
 				else if (isSharpStyle())
 				{
-					if (peekNextChar(line, i) == '"')           // check consecutive quotes
+					if (line.compare(i, 2, "\"\"") == 0)
 						i++;
 					else
 					{
 						isInQuote = false;
 						isInVerbatimQuote = false;
+						continue;
 					}
 				}
 			}
 			else if (quoteChar == ch)
 			{
 				isInQuote = false;
-				isInStatement = true;
+				isContinuation = true;
 				continue;
 			}
 		}
@@ -2453,7 +2649,7 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			i++;
 			continue;
 		}
-		else if (!(isInComment || isInLineComment) && line.compare(i, 2, "/*") == 0)
+		if (!(isInComment || isInLineComment) && line.compare(i, 2, "/*") == 0)
 		{
 			// if there is a 'case' statement after these comments unindent by 1
 			if (isCaseHeaderCommentIndent && lineOpensWithComment)
@@ -2468,7 +2664,7 @@ void ASBeautifier::parseCurrentLine(const string& line)
 				blockCommentNoIndent = true;        // if no, cannot indent continuation lines
 			continue;
 		}
-		else if ((isInComment || isInLineComment) && line.compare(i, 2, "*/") == 0)
+		if ((isInComment || isInLineComment) && line.compare(i, 2, "*/") == 0)
 		{
 			size_t firstText = line.find_first_not_of(" \t");
 			// if there is a 'case' statement after these comments unindent by 1
@@ -2489,7 +2685,7 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			continue;
 		}
 		// treat indented preprocessor lines as a line comment
-		else if (line[0] == '#' && isIndentedPreprocessor(line, i))
+		if (line[0] == '#' && isIndentedPreprocessor(line, i))
 		{
 			isInLineComment = true;
 		}
@@ -2521,19 +2717,19 @@ void ASBeautifier::parseCurrentLine(const string& line)
 
 		// if we have reached this far then we are NOT in a comment or string of special character...
 
-		if (probationHeader != NULL)
+		if (probationHeader != nullptr)
 		{
 			if ((probationHeader == &AS_STATIC && ch == '{')
 			        || (probationHeader == &AS_SYNCHRONIZED && ch == '('))
 			{
 				// insert the probation header as a new header
 				isInHeader = true;
-				headerStack->push_back(probationHeader);
+				headerStack->emplace_back(probationHeader);
 
 				// handle the specific probation header
 				isInConditional = (probationHeader == &AS_SYNCHRONIZED);
 
-				isInStatement = false;
+				isContinuation = false;
 				// if the probation comes from the previous line, then indent by 1 tab count.
 				if (previousLineProbation
 				        && ch == '{'
@@ -2546,7 +2742,7 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			}
 
 			// dismiss the probation header
-			probationHeader = NULL;
+			probationHeader = nullptr;
 		}
 
 		prevNonSpaceCh = currentNonSpaceCh;
@@ -2563,7 +2759,7 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			currentHeader = headerStack->back();
 		}
 		else
-			currentHeader = NULL;
+			currentHeader = nullptr;
 
 		if (isCStyle() && isInTemplate
 		        && (ch == '<' || ch == '>')
@@ -2572,12 +2768,12 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			if (ch == '<')
 			{
 				++templateDepth;
-				inStatementIndentStackSizeStack->push_back(inStatementIndentStack->size());
-				registerInStatementIndent(line, i, spaceIndentCount, tabIncrementIn, 0, true);
+				continuationIndentStackSizeStack->emplace_back(continuationIndentStack->size());
+				registerContinuationIndent(line, i, spaceIndentCount, tabIncrementIn, 0, true);
 			}
 			else if (ch == '>')
 			{
-				popLastInStatementIndent();
+				popLastContinuationIndent();
 				if (--templateDepth <= 0)
 				{
 					ch = ';';
@@ -2608,42 +2804,54 @@ void ASBeautifier::parseCurrentLine(const string& line)
 
 				if (parenDepth == 0)
 				{
-					parenStatementStack->push_back(isInStatement);
-					isInStatement = true;
+					// do not use emplace_back on vector<bool> until supported by macOS
+					parenStatementStack->push_back(isContinuation);
+					isContinuation = true;
 				}
 				parenDepth++;
 				if (ch == '[')
+				{
 					++squareBracketCount;
+					if (squareBracketCount == 1 && isCStyle())
+					{
+						isInObjCMethodCall = true;
+						isInObjCMethodCallFirst = true;
+					}
+				}
 
-				inStatementIndentStackSizeStack->push_back(inStatementIndentStack->size());
+				continuationIndentStackSizeStack->emplace_back(continuationIndentStack->size());
 
-				if (currentHeader != NULL)
-					registerInStatementIndent(line, i, spaceIndentCount, tabIncrementIn, minConditionalIndent/*indentLength*2*/, true);
-				else
-					registerInStatementIndent(line, i, spaceIndentCount, tabIncrementIn, 0, true);
+				if (currentHeader != nullptr)
+					registerContinuationIndent(line, i, spaceIndentCount, tabIncrementIn, minConditionalIndent, true);
+				else if (!isInObjCMethodDefinition)
+					registerContinuationIndent(line, i, spaceIndentCount, tabIncrementIn, 0, true);
 			}
 			else if (ch == ')' || ch == ']')
 			{
 				if (ch == ']')
 					--squareBracketCount;
-				if (squareBracketCount < 0)
+				if (squareBracketCount <= 0)
+				{
 					squareBracketCount = 0;
+					if (isInObjCMethodCall)
+						isImmediatelyPostObjCMethodCall = true;
+				}
 				foundPreCommandHeader = false;
 				parenDepth--;
 				if (parenDepth == 0)
 				{
 					if (!parenStatementStack->empty())      // in case of unmatched closing parens
 					{
-						isInStatement = parenStatementStack->back();
+						isContinuation = parenStatementStack->back();
 						parenStatementStack->pop_back();
 					}
 					isInAsm = false;
 					isInConditional = false;
 				}
 
-				if (!inStatementIndentStackSizeStack->empty())
+				if (!continuationIndentStackSizeStack->empty())
 				{
-					popLastInStatementIndent();
+					popLastContinuationIndent();
 
 					if (!parenIndentStack->empty())
 					{
@@ -2661,11 +2869,12 @@ void ASBeautifier::parseCurrentLine(const string& line)
 		if (ch == '{')
 		{
 			// first, check if '{' is a block-opener or a static-array opener
-			bool isBlockOpener = ((prevNonSpaceCh == '{' && bracketBlockStateStack->back())
+			bool isBlockOpener = ((prevNonSpaceCh == '{' && braceBlockStateStack->back())
 			                      || prevNonSpaceCh == '}'
 			                      || prevNonSpaceCh == ')'
 			                      || prevNonSpaceCh == ';'
 			                      || peekNextChar(line, i) == '{'
+			                      || isInTrailingReturnType
 			                      || foundPreCommandHeader
 			                      || foundPreCommandMacro
 			                      || isInClassHeader
@@ -2683,52 +2892,52 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			                              || isLegalNameChar(prevNonSpaceCh))));
 
 			if (isInObjCMethodDefinition)
-				isImmediatelyPostObjCMethodDefinition = true;
-
-			if (!isBlockOpener && !isInStatement && !isInClassInitializer && !isInEnum)
 			{
-				if (headerStack->empty())
-					isBlockOpener = true;
-				else if (headerStack->back() == &AS_NAMESPACE
-				         || headerStack->back() == &AS_CLASS
-				         || headerStack->back() == &AS_INTERFACE
-				         || headerStack->back() == &AS_STRUCT
-				         || headerStack->back() == &AS_UNION)
+				objCColonAlignSubsequent = 0;
+				isImmediatelyPostObjCMethodDefinition = true;
+				if (lineBeginsWithOpenBrace)		// for run-in braces
+					clearObjCMethodDefinitionAlignment();
+			}
+
+			if (!isBlockOpener && !isContinuation && !isInClassInitializer && !isInEnum)
+			{
+				if (isTopLevel())
 					isBlockOpener = true;
 			}
 
-			if (!isBlockOpener && currentHeader != NULL)
+			if (!isBlockOpener && currentHeader != nullptr)
 			{
-				for (size_t n = 0; n < nonParenHeaders->size(); n++)
-					if (currentHeader == (*nonParenHeaders)[n])
+				for (const string* const nonParenHeader : *nonParenHeaders)
+					if (currentHeader == nonParenHeader)
 					{
 						isBlockOpener = true;
 						break;
 					}
 			}
 
-			bracketBlockStateStack->push_back(isBlockOpener);
+			// do not use emplace_back on vector<bool> until supported by macOS
+			braceBlockStateStack->push_back(isBlockOpener);
 
 			if (!isBlockOpener)
 			{
-				inStatementIndentStackSizeStack->push_back(inStatementIndentStack->size());
-				registerInStatementIndent(line, i, spaceIndentCount, tabIncrementIn, 0, true);
+				continuationIndentStackSizeStack->emplace_back(continuationIndentStack->size());
+				registerContinuationIndent(line, i, spaceIndentCount, tabIncrementIn, 0, true);
 				parenDepth++;
 				if (i == 0)
-					shouldIndentBrackettedLine = false;
+					shouldIndentBracedLine = false;
 				isInEnumTypeID = false;
 
 				continue;
 			}
 
-			// this bracket is a block opener...
+			// this brace is a block opener...
 
 			++lineOpeningBlocksNum;
 
 			if (isInClassInitializer || isInEnumTypeID)
 			{
-				// decrease tab count if bracket is broken
-				if (lineBeginsWithOpenBracket)
+				// decrease tab count if brace is broken
+				if (lineBeginsWithOpenBrace)
 				{
 					indentCount -= classInitializerIndents;
 					// decrease one more if an empty class
@@ -2745,14 +2954,15 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			if (isInObjCInterface)
 			{
 				isInObjCInterface = false;
-				if (lineBeginsWithOpenBracket)
+				if (lineBeginsWithOpenBrace)
 					--indentCount;
 			}
 
-			if (bracketIndent && !namespaceIndent && !headerStack->empty()
-			        && (*headerStack).back() == &AS_NAMESPACE)
+			if (braceIndent && !namespaceIndent && !headerStack->empty()
+			        && ((*headerStack).back() == &AS_NAMESPACE
+			            || (*headerStack).back() == &AS_MODULE))
 			{
-				shouldIndentBrackettedLine = false;
+				shouldIndentBracedLine = false;
 				--indentCount;
 			}
 
@@ -2762,41 +2972,44 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			        && isInIndentableStruct)
 				(*headerStack).back() = &AS_CLASS;
 
-			blockParenDepthStack->push_back(parenDepth);
-			blockStatementStack->push_back(isInStatement);
+			// is a brace inside a paren?
+			parenDepthStack->emplace_back(parenDepth);
+			// do not use emplace_back on vector<bool> until supported by macOS
+			blockStatementStack->push_back(isContinuation);
 
-			if (!inStatementIndentStack->empty())
+			if (!continuationIndentStack->empty())
 			{
-				// completely purge the inStatementIndentStack
-				while (!inStatementIndentStack->empty())
-					popLastInStatementIndent();
+				// completely purge the continuationIndentStack
+				while (!continuationIndentStack->empty())
+					popLastContinuationIndent();
 				if (isInClassInitializer || isInClassHeaderTab)
 				{
-					if (lineBeginsWithOpenBracket || lineBeginsWithComma)
+					if (lineBeginsWithOpenBrace || lineBeginsWithComma)
 						spaceIndentCount = 0;
 				}
 				else
 					spaceIndentCount = 0;
 			}
 
-			blockTabCount += (isInStatement ? 1 : 0);
-			if (g_preprocessorCppExternCBracket == 3)
-				++g_preprocessorCppExternCBracket;
+			blockTabCount += (isContinuation ? 1 : 0);
+			if (g_preprocessorCppExternCBrace == 3)
+				++g_preprocessorCppExternCBrace;
 			parenDepth = 0;
+			isInTrailingReturnType = false;
 			isInClassHeader = false;
 			isInClassHeaderTab = false;
 			isInClassInitializer = false;
 			isInEnumTypeID = false;
-			isInStatement = false;
+			isContinuation = false;
 			isInQuestion = false;
 			isInLet = false;
 			foundPreCommandHeader = false;
 			foundPreCommandMacro = false;
 			isInExternC = false;
 
-			tempStacks->push_back(new vector<const string*>);
-			headerStack->push_back(&AS_OPEN_BRACKET);
-			lastLineHeader = &AS_OPEN_BRACKET;
+			tempStacks->emplace_back(new vector<const string*>);
+			headerStack->emplace_back(&AS_OPEN_BRACE);
+			lastLineHeader = &AS_OPEN_BRACE;
 
 			continue;
 		}	// end '{'
@@ -2804,32 +3017,40 @@ void ASBeautifier::parseCurrentLine(const string& line)
 		//check if a header has been reached
 		bool isPotentialHeader = isCharPotentialHeader(line, i);
 
-		if (isPotentialHeader && !squareBracketCount)
+		if (isPotentialHeader && squareBracketCount == 0)
 		{
 			const string* newHeader = findHeader(line, i, headers);
 
+			// java can have a 'default' not in a switch
+			if (newHeader == &AS_DEFAULT
+			        && peekNextChar(line, (i + (*newHeader).length() - 1)) != ':')
+				newHeader = nullptr;
 			// Qt headers may be variables in C++
 			if (isCStyle()
 			        && (newHeader == &AS_FOREVER || newHeader == &AS_FOREACH))
 			{
 				if (line.find_first_of("=;", i) != string::npos)
-					newHeader = NULL;
+					newHeader = nullptr;
+			}
+			else if (isSharpStyle()
+			         && (newHeader == &AS_GET || newHeader == &AS_SET))
+			{
+				if (getNextWord(line, i + (*newHeader).length()) == "is")
+					newHeader = nullptr;
 			}
 			else if (newHeader == &AS_USING
-			         && ASBeautifier::peekNextChar(line, i + (*newHeader).length() - 1) != '(')
-				newHeader = NULL;
+			         && peekNextChar(line, i + (*newHeader).length() - 1) != '(')
+				newHeader = nullptr;
 
-			if (newHeader != NULL)
+			if (newHeader != nullptr)
 			{
 				// if we reached here, then this is a header...
 				bool isIndentableHeader = true;
 
 				isInHeader = true;
 
-				vector<const string*>* lastTempStack;
-				if (tempStacks->empty())
-					lastTempStack = NULL;
-				else
+				vector<const string*>* lastTempStack = nullptr;
+				if (!tempStacks->empty())
 					lastTempStack = tempStacks->back();
 
 				// if a new block is opened, push a new stack into tempStacks to hold the
@@ -2838,13 +3059,14 @@ void ASBeautifier::parseCurrentLine(const string& line)
 				// take care of the special case: 'else if (...)'
 				if (newHeader == &AS_IF && lastLineHeader == &AS_ELSE)
 				{
-					headerStack->pop_back();
+					if (!headerStack->empty())
+						headerStack->pop_back();
 				}
 
 				// take care of 'else'
 				else if (newHeader == &AS_ELSE)
 				{
-					if (lastTempStack != NULL)
+					if (lastTempStack != nullptr)
 					{
 						int indexOfIf = indexOf(*lastTempStack, &AS_IF);
 						if (indexOfIf != -1)
@@ -2854,10 +3076,10 @@ void ASBeautifier::parseCurrentLine(const string& line)
 							int restackSize = lastTempStack->size() - indexOfIf - 1;
 							for (int r = 0; r < restackSize; r++)
 							{
-								headerStack->push_back(lastTempStack->back());
+								headerStack->emplace_back(lastTempStack->back());
 								lastTempStack->pop_back();
 							}
-							if (!closingBracketReached)
+							if (!closingBraceReached)
 								indentCount += restackSize;
 						}
 						/*
@@ -2871,7 +3093,7 @@ void ASBeautifier::parseCurrentLine(const string& line)
 				// check if 'while' closes a previous 'do'
 				else if (newHeader == &AS_WHILE)
 				{
-					if (lastTempStack != NULL)
+					if (lastTempStack != nullptr)
 					{
 						int indexOfDo = indexOf(*lastTempStack, &AS_DO);
 						if (indexOfDo != -1)
@@ -2881,10 +3103,10 @@ void ASBeautifier::parseCurrentLine(const string& line)
 							int restackSize = lastTempStack->size() - indexOfDo - 1;
 							for (int r = 0; r < restackSize; r++)
 							{
-								headerStack->push_back(lastTempStack->back());
+								headerStack->emplace_back(lastTempStack->back());
 								lastTempStack->pop_back();
 							}
-							if (!closingBracketReached)
+							if (!closingBraceReached)
 								indentCount += restackSize;
 						}
 					}
@@ -2892,7 +3114,7 @@ void ASBeautifier::parseCurrentLine(const string& line)
 				// check if 'catch' closes a previous 'try' or 'catch'
 				else if (newHeader == &AS_CATCH || newHeader == &AS_FINALLY)
 				{
-					if (lastTempStack != NULL)
+					if (lastTempStack != nullptr)
 					{
 						int indexOfTry = indexOf(*lastTempStack, &AS_TRY);
 						if (indexOfTry == -1)
@@ -2904,11 +3126,11 @@ void ASBeautifier::parseCurrentLine(const string& line)
 							int restackSize = lastTempStack->size() - indexOfTry - 1;
 							for (int r = 0; r < restackSize; r++)
 							{
-								headerStack->push_back(lastTempStack->back());
+								headerStack->emplace_back(lastTempStack->back());
 								lastTempStack->pop_back();
 							}
 
-							if (!closingBracketReached)
+							if (!closingBraceReached)
 								indentCount += restackSize;
 						}
 					}
@@ -2919,7 +3141,7 @@ void ASBeautifier::parseCurrentLine(const string& line)
 					if (!haveCaseIndent)
 					{
 						haveCaseIndent = true;
-						if (!lineBeginsWithOpenBracket)
+						if (!lineBeginsWithOpenBrace)
 							--indentCount;
 					}
 				}
@@ -2951,8 +3173,8 @@ void ASBeautifier::parseCurrentLine(const string& line)
 
 				if (isIndentableHeader)
 				{
-					headerStack->push_back(newHeader);
-					isInStatement = false;
+					headerStack->emplace_back(newHeader);
+					isContinuation = false;
 					if (indexOf(*nonParenHeaders, newHeader) == -1)
 					{
 						isInConditional = true;
@@ -2965,10 +3187,12 @@ void ASBeautifier::parseCurrentLine(const string& line)
 				i += newHeader->length() - 1;
 
 				continue;
-			}  // newHeader != NULL
+			}  // newHeader != nullptr
 
-			if (findHeader(line, i, preCommandHeaders))
-				foundPreCommandHeader = true;
+			if (findHeader(line, i, preCommandHeaders) != nullptr)
+				// must be after function arguments
+				if (prevNonSpaceCh == ')')
+					foundPreCommandHeader = true;
 
 			// Objective-C NSException macros are preCommandHeaders
 			if (isCStyle() && findKeyword(line, i, AS_NS_DURING))
@@ -2995,7 +3219,7 @@ void ASBeautifier::parseCurrentLine(const string& line)
 				++i;
 				continue;
 			}
-			else if (isInQuestion)
+			else if (isInQuestion)		// NOLINT
 			{
 				// do nothing special
 			}
@@ -3011,13 +3235,13 @@ void ASBeautifier::parseCurrentLine(const string& line)
 				if (i == 0)
 					indentCount += classInitializerIndents;
 			}
-			else if (isCStyle()
+			else if ((isCStyle() || isSharpStyle())
 			         && !isInCase
 			         && (prevNonSpaceCh == ')' || foundPreCommandHeader))
 			{
 				// found a 'class' c'tor initializer
 				isInClassInitializer = true;
-				registerInStatementIndentColon(line, i, tabIncrementIn);
+				registerContinuationIndentColon(line, i, tabIncrementIn);
 				if (i == 0)
 					indentCount += classInitializerIndents;
 			}
@@ -3025,7 +3249,7 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			{
 				// is in a 'class A : public B' definition
 				isInClassHeaderTab = true;
-				registerInStatementIndentColon(line, i, tabIncrementIn);
+				registerContinuationIndentColon(line, i, tabIncrementIn);
 			}
 			else if (isInAsm || isInAsmOneLine || isInAsmBlock)
 			{
@@ -3045,10 +3269,10 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			else if (isCStyle() && !isInClass
 			         && headerStack->size() >= 2
 			         && (*headerStack)[headerStack->size() - 2] == &AS_CLASS
-			         && (*headerStack)[headerStack->size() - 1] == &AS_OPEN_BRACKET)
+			         && (*headerStack)[headerStack->size() - 1] == &AS_OPEN_BRACE)
 			{
 				// found a 'private:' or 'public:' inside a class definition
-				// and on the same line as the class opening bracket
+				// and on the same line as the class opening brace
 				// do nothing
 			}
 			else if (isJavaStyle() && lastLineHeader == &AS_FOR)
@@ -3058,7 +3282,7 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			}
 			else
 			{
-				currentNonSpaceCh = ';'; // so that brackets after the ':' will appear as block-openers
+				currentNonSpaceCh = ';'; // so that braces after the ':' will appear as block-openers
 				char peekedChar = peekNextChar(line, i);
 				if (isInCase)
 				{
@@ -3070,23 +3294,23 @@ void ASBeautifier::parseCurrentLine(const string& line)
 					// is in a label (e.g. 'label1:')
 					if (labelIndent)
 						--indentCount; // unindent label by one indent
-					else if (!lineBeginsWithOpenBracket)
+					else if (!lineBeginsWithOpenBrace)
 						indentCount = 0; // completely flush indent to left
 				}
 			}
 		}
 
-		if ((ch == ';' || (parenDepth > 0 && ch == ',')) && !inStatementIndentStackSizeStack->empty())
-			while ((int) inStatementIndentStackSizeStack->back() + (parenDepth > 0 ? 1 : 0)
-			        < (int) inStatementIndentStack->size())
-				inStatementIndentStack->pop_back();
+		if ((ch == ';' || (parenDepth > 0 && ch == ',')) && !continuationIndentStackSizeStack->empty())
+			while ((int) continuationIndentStackSizeStack->back() + (parenDepth > 0 ? 1 : 0)
+			        < (int) continuationIndentStack->size())
+				continuationIndentStack->pop_back();
 
-		else if (ch == ',' && isInEnum && isNonInStatementArray && !inStatementIndentStack->empty())
-			inStatementIndentStack->pop_back();
+		else if (ch == ',' && isInEnum && isNonInStatementArray && !continuationIndentStack->empty())
+			continuationIndentStack->pop_back();
 
 		// handle commas
 		// previous "isInStatement" will be from an assignment operator or class initializer
-		if (ch == ',' && parenDepth == 0 && !isInStatement && !isNonInStatementArray)
+		if (ch == ',' && parenDepth == 0 && !isContinuation && !isNonInStatementArray)
 		{
 			// is comma at end of line
 			size_t nextChar = line.find_first_not_of(" \t", i + 1);
@@ -3107,10 +3331,10 @@ void ASBeautifier::parseCurrentLine(const string& line)
 				// register indent at second word on the line
 				else if (!isInTemplate && !isInClassHeaderTab && !isInClassInitializer)
 				{
-					int prevWord = getInStatementIndentComma(line, i);
-					int inStatementIndent = prevWord + spaceIndentCount + tabIncrementIn;
-					inStatementIndentStack->push_back(inStatementIndent);
-					isInStatement = true;
+					int prevWord = getContinuationIndentComma(line, i);
+					int continuationIndentCount = prevWord + spaceIndentCount + tabIncrementIn;
+					continuationIndentStack->emplace_back(continuationIndentCount);
+					isContinuation = true;
 				}
 			}
 		}
@@ -3125,19 +3349,19 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			if (ch == '}')
 			{
 				// first check if this '}' closes a previous block, or a static array...
-				if (bracketBlockStateStack->size() > 1)
+				if (braceBlockStateStack->size() > 1)
 				{
-					bool bracketBlockState = bracketBlockStateStack->back();
-					bracketBlockStateStack->pop_back();
-					if (!bracketBlockState)
+					bool braceBlockState = braceBlockStateStack->back();
+					braceBlockStateStack->pop_back();
+					if (!braceBlockState)
 					{
-						if (!inStatementIndentStackSizeStack->empty())
+						if (!continuationIndentStackSizeStack->empty())
 						{
-							// this bracket is a static array
-							popLastInStatementIndent();
+							// this brace is a static array
+							popLastContinuationIndent();
 							parenDepth--;
 							if (i == 0)
-								shouldIndentBrackettedLine = false;
+								shouldIndentBracedLine = false;
 
 							if (!parenIndentStack->empty())
 							{
@@ -3151,35 +3375,35 @@ void ASBeautifier::parseCurrentLine(const string& line)
 					}
 				}
 
-				// this bracket is block closer...
+				// this brace is block closer...
 
 				++lineClosingBlocksNum;
 
-				if (!inStatementIndentStackSizeStack->empty())
-					popLastInStatementIndent();
+				if (!continuationIndentStackSizeStack->empty())
+					popLastContinuationIndent();
 
-				if (!blockParenDepthStack->empty())
+				if (!parenDepthStack->empty())
 				{
-					parenDepth = blockParenDepthStack->back();
-					blockParenDepthStack->pop_back();
-					isInStatement = blockStatementStack->back();
+					parenDepth = parenDepthStack->back();
+					parenDepthStack->pop_back();
+					isContinuation = blockStatementStack->back();
 					blockStatementStack->pop_back();
 
-					if (isInStatement)
+					if (isContinuation)
 						blockTabCount--;
 				}
 
-				closingBracketReached = true;
+				closingBraceReached = true;
 				if (i == 0)
 					spaceIndentCount = 0;
 				isInAsmBlock = false;
 				isInAsm = isInAsmOneLine = isInQuote = false;	// close these just in case
 
-				int headerPlace = indexOf(*headerStack, &AS_OPEN_BRACKET);
+				int headerPlace = indexOf(*headerStack, &AS_OPEN_BRACE);
 				if (headerPlace != -1)
 				{
 					const string* popped = headerStack->back();
-					while (popped != &AS_OPEN_BRACKET)
+					while (popped != &AS_OPEN_BRACE)
 					{
 						headerStack->pop_back();
 						popped = headerStack->back();
@@ -3187,13 +3411,14 @@ void ASBeautifier::parseCurrentLine(const string& line)
 					headerStack->pop_back();
 
 					if (headerStack->empty())
-						g_preprocessorCppExternCBracket = 0;
+						g_preprocessorCppExternCBrace = 0;
 
-					// do not indent namespace bracket unless namespaces are indented
+					// do not indent namespace brace unless namespaces are indented
 					if (!namespaceIndent && !headerStack->empty()
-					        && (*headerStack).back() == &AS_NAMESPACE
-					        && i == 0)		// must be the first bracket on the line
-						shouldIndentBrackettedLine = false;
+					        && ((*headerStack).back() == &AS_NAMESPACE
+					            || (*headerStack).back() == &AS_MODULE)
+					        && i == 0)		// must be the first brace on the line
+						shouldIndentBracedLine = false;
 
 					if (!tempStacks->empty())
 					{
@@ -3218,21 +3443,30 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			if (!tempStacks->back()->empty())
 				while (!tempStacks->back()->empty())
 					tempStacks->back()->pop_back();
-			while (!headerStack->empty() && headerStack->back() != &AS_OPEN_BRACKET)
+			while (!headerStack->empty() && headerStack->back() != &AS_OPEN_BRACE)
 			{
-				tempStacks->back()->push_back(headerStack->back());
+				tempStacks->back()->emplace_back(headerStack->back());
 				headerStack->pop_back();
 			}
 
 			if (parenDepth == 0 && ch == ';')
-				isInStatement = false;
-			if (isInObjCMethodDefinition)
-				isImmediatelyPostObjCMethodDefinition = true;
+			{
+				isContinuation = false;
+				isInClassInitializer = false;
+			}
 
-			previousLastLineHeader = NULL;
+			if (isInObjCMethodDefinition)
+			{
+				objCColonAlignSubsequent = 0;
+				isImmediatelyPostObjCMethodDefinition = true;
+			}
+
+			previousLastLineHeader = nullptr;
 			isInClassHeader = false;		// for 'friend' class
 			isInEnum = false;
+			isInEnumTypeID = false;
 			isInQuestion = false;
+			isInTemplate = false;
 			isInObjCInterface = false;
 			foundPreCommandHeader = false;
 			foundPreCommandMacro = false;
@@ -3248,18 +3482,29 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			if (!isInTemplate && !(isCStyle() && parenDepth > 0))
 			{
 				const string* newHeader = findHeader(line, i, preBlockStatements);
-				if (newHeader != NULL
-				        && !(isCStyle() && newHeader == &AS_CLASS && isInEnum))	// is not 'enum class'
+				// CORBA IDL module
+				if (newHeader == &AS_MODULE)
+				{
+					char nextChar = peekNextChar(line, i + newHeader->length() - 1);
+					if (prevNonSpaceCh == ')' || !isalpha(nextChar))
+						newHeader = nullptr;
+				}
+				if (newHeader != nullptr
+				        && !(isCStyle() && newHeader == &AS_CLASS && isInEnum)	// is not 'enum class'
+				        && !(isCStyle() && newHeader == &AS_INTERFACE			// CORBA IDL interface
+				             && (headerStack->empty()
+				                 || headerStack->back() != &AS_OPEN_BRACE)))
 				{
 					if (!isSharpStyle())
-						headerStack->push_back(newHeader);
+						headerStack->emplace_back(newHeader);
 					// do not need 'where' in the headerStack
 					// do not need second 'class' statement in a row
 					else if (!(newHeader == &AS_WHERE
-					           || (newHeader == &AS_CLASS
+					           || ((newHeader == &AS_CLASS || newHeader == &AS_STRUCT)
 					               && !headerStack->empty()
-					               && headerStack->back() == &AS_CLASS)))
-						headerStack->push_back(newHeader);
+					               && (headerStack->back() == &AS_CLASS
+					                   || headerStack->back() == &AS_STRUCT))))
+						headerStack->emplace_back(newHeader);
 
 					if (!headerStack->empty())
 					{
@@ -3269,12 +3514,13 @@ void ASBeautifier::parseCurrentLine(const string& line)
 						{
 							isInClassHeader = true;
 						}
-						else if ((*headerStack).back() == &AS_NAMESPACE)
+						else if ((*headerStack).back() == &AS_NAMESPACE
+						         || (*headerStack).back() == &AS_MODULE)
 						{
-							// remove inStatementIndent from namespace
-							if (!inStatementIndentStack->empty())
-								inStatementIndentStack->pop_back();
-							isInStatement = false;
+							// remove continuationIndent from namespace
+							if (!continuationIndentStack->empty())
+								continuationIndentStack->pop_back();
+							isContinuation = false;
 						}
 					}
 
@@ -3284,14 +3530,14 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			}
 			const string* foundIndentableHeader = findHeader(line, i, indentableHeaders);
 
-			if (foundIndentableHeader != NULL)
+			if (foundIndentableHeader != nullptr)
 			{
 				// must bypass the header before registering the in statement
 				i += foundIndentableHeader->length() - 1;
 				if (!isInOperator && !isInTemplate && !isNonInStatementArray)
 				{
-					registerInStatementIndent(line, i, spaceIndentCount, tabIncrementIn, 0, false);
-					isInStatement = true;
+					registerContinuationIndent(line, i, spaceIndentCount, tabIncrementIn, 0, false);
+					isContinuation = true;
 				}
 				continue;
 			}
@@ -3299,17 +3545,22 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			if (isCStyle() && findKeyword(line, i, AS_OPERATOR))
 				isInOperator = true;
 
-			if (g_preprocessorCppExternCBracket == 1 && findKeyword(line, i, AS_EXTERN))
-				++g_preprocessorCppExternCBracket;
+			if (g_preprocessorCppExternCBrace == 1 && findKeyword(line, i, AS_EXTERN))
+				++g_preprocessorCppExternCBrace;
 
-			if (g_preprocessorCppExternCBracket == 3)	// extern "C" is not followed by a '{'
-				g_preprocessorCppExternCBracket = 0;
+			if (g_preprocessorCppExternCBrace == 3)	// extern "C" is not followed by a '{'
+				g_preprocessorCppExternCBrace = 0;
 
 			// "new" operator is a pointer, not a calculation
 			if (findKeyword(line, i, AS_NEW))
 			{
-				if (isInStatement && !inStatementIndentStack->empty() && prevNonSpaceCh == '=' )
-					inStatementIndentStack->back() = 0;
+				if (isContinuation && !continuationIndentStack->empty() && prevNonSpaceCh == '=')
+					continuationIndentStack->back() = 0;
+			}
+
+			if (isCStyle() && findKeyword(line, i, AS_AUTO) && isTopLevel())
+			{
+				isInTrailingReturnType = true;
 			}
 
 			if (isCStyle())
@@ -3326,7 +3577,7 @@ void ASBeautifier::parseCurrentLine(const string& line)
 					if (peekNextChar(line, i) == '_')		// check for __asm
 						index = 5;
 
-					char peekedChar = ASBase::peekNextChar(line, i + index);
+					char peekedChar = peekNextChar(line, i + index);
 					if (peekedChar == '{' || peekedChar == ' ')
 						isInAsmBlock = true;
 					else
@@ -3343,19 +3594,28 @@ void ASBeautifier::parseCurrentLine(const string& line)
 		// Handle Objective-C statements
 
 		if (ch == '@'
+		        && line.length() > i + 1
+		        && !isWhiteSpace(line[i + 1])
 		        && isCharPotentialHeader(line, i + 1))
 		{
 			string curWord = getCurrentWord(line, i + 1);
-			if (curWord == AS_INTERFACE	&& headerStack->empty())
+			if (curWord == AS_INTERFACE || curWord == AS_AUTORELEASEPOOL)
 			{
 				isInObjCInterface = true;
 				string name = '@' + curWord;
 				i += name.length() - 1;
 				continue;
 			}
-			else if (curWord == AS_PUBLIC
-			         || curWord == AS_PRIVATE
-			         || curWord == AS_PROTECTED)
+
+			if (isInObjCInterface)
+			{
+				--indentCount;
+				isInObjCInterface = false;
+			}
+
+			if (curWord == AS_PUBLIC
+			        || curWord == AS_PRIVATE
+			        || curWord == AS_PROTECTED)
 			{
 				--indentCount;
 				if (modifierIndent)
@@ -3364,13 +3624,11 @@ void ASBeautifier::parseCurrentLine(const string& line)
 				i += name.length() - 1;
 				continue;
 			}
-			else if (curWord == AS_END)
+
+			if (curWord == AS_END)
 			{
-				popLastInStatementIndent();
+				popLastContinuationIndent();
 				spaceIndentCount = 0;
-				if (isInObjCInterface)
-					--indentCount;
-				isInObjCInterface = false;
 				isInObjCMethodDefinition = false;
 				string name = '@' + curWord;
 				i += name.length() - 1;
@@ -3378,8 +3636,10 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			}
 		}
 		else if ((ch == '-' || ch == '+')
-		         && peekNextChar(line, i) == '('
-		         && headerStack->empty()
+		         && (prevNonSpaceCh == ';' || prevNonSpaceCh == '{'
+		             || headerStack->empty() || isInObjCInterface)
+		         && ASBase::peekNextChar(line, i) != '-'
+		         && ASBase::peekNextChar(line, i) != '+'
 		         && line.find_first_not_of(" \t") == i)
 		{
 			if (isInObjCInterface)
@@ -3399,25 +3659,27 @@ void ASBeautifier::parseCurrentLine(const string& line)
 			const string* foundAssignmentOp = findOperator(line, i, assignmentOperators);
 			const string* foundNonAssignmentOp = findOperator(line, i, nonAssignmentOperators);
 
-			if (foundNonAssignmentOp == &AS_LAMBDA)
-				foundPreCommandHeader = true;
-
-			if (isInTemplate && foundNonAssignmentOp == &AS_GR_GR)
-				foundNonAssignmentOp = NULL;
+			if (foundNonAssignmentOp != nullptr)
+			{
+				if (foundNonAssignmentOp == &AS_LAMBDA)
+					foundPreCommandHeader = true;
+				if (isInTemplate && foundNonAssignmentOp == &AS_GR_GR)
+					foundNonAssignmentOp = nullptr;
+			}
 
 			// Since findHeader's boundary checking was not used above, it is possible
 			// that both an assignment op and a non-assignment op where found,
 			// e.g. '>>' and '>>='. If this is the case, treat the LONGER one as the
 			// found operator.
-			if (foundAssignmentOp != NULL && foundNonAssignmentOp != NULL)
+			if (foundAssignmentOp != nullptr && foundNonAssignmentOp != nullptr)
 			{
 				if (foundAssignmentOp->length() < foundNonAssignmentOp->length())
-					foundAssignmentOp = NULL;
+					foundAssignmentOp = nullptr;
 				else
-					foundNonAssignmentOp = NULL;
+					foundNonAssignmentOp = nullptr;
 			}
 
-			if (foundNonAssignmentOp != NULL)
+			if (foundNonAssignmentOp != nullptr)
 			{
 				if (foundNonAssignmentOp->length() > 1)
 					i += foundNonAssignmentOp->length() - 1;
@@ -3426,20 +3688,20 @@ void ASBeautifier::parseCurrentLine(const string& line)
 				// aligned, if we are not in a statement already and
 				// also not in the "operator<<(...)" header line
 				if (!isInOperator
-				        && inStatementIndentStack->empty()
+				        && continuationIndentStack->empty()
 				        && isCStyle()
 				        && (foundNonAssignmentOp == &AS_GR_GR
 				            || foundNonAssignmentOp == &AS_LS_LS))
 				{
 					// this will be true if the line begins with the operator
-					if (i < 2 && spaceIndentCount == 0)
+					if (i < foundNonAssignmentOp->length() && spaceIndentCount == 0)
 						spaceIndentCount += 2 * indentLength;
 					// align to the beginning column of the operator
-					registerInStatementIndent(line, i - foundNonAssignmentOp->length(), spaceIndentCount, tabIncrementIn, 0, false);
+					registerContinuationIndent(line, i - foundNonAssignmentOp->length(), spaceIndentCount, tabIncrementIn, 0, false);
 				}
 			}
 
-			else if (foundAssignmentOp != NULL)
+			else if (foundAssignmentOp != nullptr)
 			{
 				foundPreCommandHeader = false;		// clears this for array assignments
 				foundPreCommandMacro = false;
@@ -3458,10 +3720,10 @@ void ASBeautifier::parseCurrentLine(const string& line)
 						{
 							// register indent at previous word
 							haveAssignmentThisLine = true;
-							int prevWordIndex = getInStatementIndentAssign(line, i);
-							int inStatementIndent = prevWordIndex + spaceIndentCount + tabIncrementIn;
-							inStatementIndentStack->push_back(inStatementIndent);
-							isInStatement = true;
+							int prevWordIndex = getContinuationIndentAssign(line, i);
+							int continuationIndentCount = prevWordIndex + spaceIndentCount + tabIncrementIn;
+							continuationIndentStack->emplace_back(continuationIndentCount);
+							isContinuation = true;
 						}
 					}
 					// don't indent an assignment if 'let'
@@ -3469,12 +3731,12 @@ void ASBeautifier::parseCurrentLine(const string& line)
 					{
 						isInLet = false;
 					}
-					else
+					else if (!lineBeginsWithComma)
 					{
 						if (i == 0 && spaceIndentCount == 0)
 							spaceIndentCount += indentLength;
-						registerInStatementIndent(line, i, spaceIndentCount, tabIncrementIn, 0, false);
-						isInStatement = true;
+						registerContinuationIndent(line, i, spaceIndentCount, tabIncrementIn, 0, false);
+						isContinuation = true;
 					}
 				}
 			}

@@ -2,11 +2,13 @@
 if(BRLCAD_EXTRADOCS_HTML)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_HTML)
 
 if(BRLCAD_EXTRADOCS_PHP)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PHP)
 
 # Files for PDF products
@@ -14,6 +16,7 @@ if(BRLCAD_EXTRADOCS_PDF)
   # Style sheet for XSLT transformation to PDF
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-article-fo-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-fo-stylesheet.xsl)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-article-fo-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PDF)
 
 # For HTML and FO (FO is an intermediate file used in the
@@ -165,7 +168,7 @@ set(articles_EN_IMAGES
   images/rim.jpg
   )
 if(BRLCAD_EXTRADOCS)
-  ADD_DOC(articles_EN_IMAGES articles/images)
+  ADD_DOC(articles_EN_IMAGES html/articles/images)
 else(BRLCAD_EXTRADOCS)
   CMAKEFILES(${articles_EN_IMAGES})
 endif(BRLCAD_EXTRADOCS)

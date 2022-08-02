@@ -1,7 +1,7 @@
 /*                      B R N O D E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -397,7 +397,6 @@ BRNode::getLinearEstimateOfV(fastf_t u) const
 fastf_t
 BRNode::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
 {
-    ON_3dVector tangent;
     point_t A, B;
     double Ta, Tb;
 
@@ -490,7 +489,6 @@ BRNode::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
 fastf_t
 BRNode::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
 {
-    ON_3dVector tangent;
     point_t A, B;
     double Ta, Tb;
 

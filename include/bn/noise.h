@@ -1,7 +1,7 @@
 /*                        N O I S E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,9 +18,9 @@
  * information.
  */
 
-/*----------------------------------------------------------------------*/
 
-/** @addtogroup noise
+/**
+ * @addtogroup bn_noise
  *
  * @brief
  * These noise functions provide mostly random noise at the integer
@@ -137,7 +137,6 @@ BN_EXPORT extern double bn_noise_turb(point_t point,
 				      double octaves);
 
 /**
- *
  * From "Texturing and Modeling, A Procedural Approach" 2nd ed
  */
 BN_EXPORT extern double bn_noise_mf(point_t point,

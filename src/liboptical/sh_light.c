@@ -1,7 +1,7 @@
 /*                      S H _ L I G H T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "optical/light.h"
 #include "photonmap.h"
 
@@ -173,7 +173,7 @@ light_cvt_visible(const struct bu_structparse *sdp,
 
     if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	bu_log("light_cvt_visible(%s, %zu)\n", name, sdp->sp_offset);
-	bu_log("visible: %lu invisible: %lu\n",
+	bu_log("visible: %zu invisible: %zu\n",
 	       LIGHT_O(lt_visible),
 	       LIGHT_O(lt_invisible));
     }

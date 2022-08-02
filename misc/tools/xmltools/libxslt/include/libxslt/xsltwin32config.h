@@ -1,7 +1,7 @@
 /*
- * Summary: compile-time version informations for the XSLT engine 
+ * Summary: compile-time version information for the XSLT engine 
  *          when compiled on windows
- * Description: compile-time version informations for the XSLT engine
+ * Description: compile-time version information for the XSLT engine
  *              when compiled on windows. This file is generated.
  *
  * Copy: See Copyright for the status of this software.
@@ -23,21 +23,21 @@ extern "C" {
  *
  * the version string like "1.2.3"
  */
-#define LIBXSLT_DOTTED_VERSION "1.1.26"
+#define LIBXSLT_DOTTED_VERSION "1.1.34"
 
 /**
  * LIBXSLT_VERSION:
  *
  * the version number: 1.2.3 value is 1002003
  */
-#define LIBXSLT_VERSION 10126
+#define LIBXSLT_VERSION 10134
 
 /**
  * LIBXSLT_VERSION_STRING:
  *
  * the version number string, 1.2.3 value is "1002003"
  */
-#define LIBXSLT_VERSION_STRING "10126"
+#define LIBXSLT_VERSION_STRING "10134"
 
 /**
  * LIBXSLT_VERSION_EXTRA:
@@ -62,7 +62,7 @@ extern "C" {
  *
  * Whether module support is configured into libxslt
  */
-#if 1
+#if 0
 #ifndef WITH_MODULES
 #define WITH_MODULES
 #endif

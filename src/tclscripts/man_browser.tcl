@@ -1,7 +1,7 @@
 #               M A N _ B R O W S E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2020 United States Government as represented by
+# Copyright (c) 1998-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -150,7 +150,7 @@ package require cadwidgets::Accordian 1.0
 
     # Path to HTML man page directories
     if {![info exists path] || ![file isdirectory $path]} {
-	set path [file join [bu_brlcad_root "share/doc/html"]]
+	set path [file join [bu_dir doc] html]
     }
 
     configure -title "BRL-CAD Manual Page Browser"

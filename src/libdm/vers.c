@@ -1,7 +1,7 @@
 /*                          V E R S . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,14 +24,19 @@
 #include "dm.h"
 #include "brlcad_ident.h"
 
-
 /**
  * returns the compile-time version of libdm
  */
 const char *
 dm_version(void)
 {
-    return brlcad_ident("The BRL-CAD Display Manager Library");
+    return brlcad_ident("The BRL-CAD Display Manager/Framebuffer Library");
+}
+
+const char *
+fb_version(void)
+{
+    return brlcad_ident("The BRL-CAD Display Manager/Framebuffer Library");
 }
 
 /*

@@ -1,7 +1,7 @@
 /*                          A R B N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2020 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,6 +46,39 @@
 #include "raytrace.h"
 #include "../../librt_private.h"
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_arbn_specific {
+    cl_int neqn;
+    cl_int padding;
+
+    cl_double eqn[];
+};
+
+size_t
+clt_arbn_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct rt_arbn_internal *arb =
+        (struct rt_arbn_internal *)stp->st_specific;
+    struct clt_arbn_specific *args;
+
+    cl_int j;
+
+    size_t size = sizeof(*args);
+    size += sizeof(cl_double)*4*arb->neqn;
+
+    args = (struct clt_arbn_specific*)bu_pool_alloc(pool, 1, size);
+
+    args->neqn = arb->neqn;
+
+    for(j = 0; j < args->neqn; ++j)
+	HMOVE(args->eqn+4*j, arb->eqn[j]);
+
+    return size;
+}
+#endif /* USE_OPENCL */
+
+
 /**
  * Calculate a bounding RPP for an ARBN
  */
@@ -77,7 +110,7 @@ rt_arbn_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 
 		next_k = 0;
 
-		if (bn_make_pnt_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
+		if (bg_make_pnt_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
 
 		/* See if point is outside arb */
 		for (m = 0; m < aip->neqn; m++) {
@@ -160,7 +193,7 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 		next_k = 0;
 
-		if (bn_make_pnt_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
+		if (bg_make_pnt_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
 
 		/* See if point is outside arb */
 		for (m = 0; m < aip->neqn; m++) {
@@ -386,12 +419,13 @@ rt_arbn_free(struct soltab *stp)
  * Note that the vectors will be drawn in no special order.
  */
 int
-rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
+rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct bview *UNUSED(info))
 {
     struct rt_arbn_internal *aip;
     size_t i;
     size_t j;
     size_t k;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -422,7 +456,7 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 		next_k = 0;
 
 		if (k == i || k == j) continue;
-		if (bn_make_pnt_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
+		if (bg_make_pnt_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
 
 		/* See if point is outside arb */
 		for (m = 0; m < aip->neqn; m++) {
@@ -436,12 +470,12 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 		if (next_k != 0) continue;
 
 		if (point_count <= 0) {
-		    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 		    VMOVE(a, pt);
 		} else if (point_count == 1) {
 		    VSUB2(dist, pt, a);
 		    if (MAGSQ(dist) < tol->dist_sq) continue;
-		    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		    VMOVE(b, pt);
 		} else {
 		    VSUB2(dist, pt, a);
@@ -454,7 +488,7 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 		    VPRINT(" a", a);
 		    VPRINT(" b", b);
 		    VPRINT("pt", pt);
-		    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);	/* draw it */
+		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);	/* draw it */
 		}
 		point_count++;
 	    }
@@ -591,7 +625,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	    for (k = j + 1; k < aip->neqn; k++) {
 		int keep_point = 1;
 
-		if (bn_make_pnt_3planes(pts[point_count].pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]))
+		if (bg_make_pnt_3planes(pts[point_count].pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]))
 		    continue;
 
 		for (l = 0; l < aip->neqn; l++) {
@@ -826,7 +860,7 @@ rt_arbn_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
     aip->magic = RT_ARBN_INTERNAL_MAGIC;
-    aip->neqn = ntohl(*(uint32_t *)rp->n.n_neqn);
+    aip->neqn = bu_ntohl(*(uint32_t *)rp->n.n_neqn, 0, UINT_MAX - 1);
     if (aip->neqn <= 0) return -1;
 
     aip->eqn = (plane_t *)bu_malloc(aip->neqn*sizeof(plane_t), "arbn plane eqn[]");
@@ -947,7 +981,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
 
-    neqn = ntohl(*(uint32_t *)ep->ext_buf);
+    neqn = bu_ntohl(*(uint32_t *)ep->ext_buf, 0, UINT_MAX - 1);
     double_count = neqn * ELEMENTS_PER_PLANE;
     byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
 
@@ -1169,13 +1203,13 @@ rt_arbn_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 int
 rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
-    struct rt_arbn_internal *arbn;
-    unsigned char *c;
-    int len;
-    size_t i, j;
-    long val;
-    fastf_t *new_planes;
-    fastf_t *array;
+    struct rt_arbn_internal *arbn = NULL;
+    unsigned char *c = NULL;
+    int len = 0;
+    size_t i = 0;
+    size_t j = 0;
+    long val = 0;
+    fastf_t *array = NULL;
 
     RT_CK_DB_INTERNAL(intern);
 
@@ -1211,7 +1245,13 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		c++;
 	    }
 	    len = 0;
+
+	    fastf_t *new_planes = NULL;
 	    (void)_rt_tcl_list_to_fastf_array(argv[1], &new_planes, &len);
+	    if (!new_planes) {
+		bu_vls_printf(logstr, "ERROR: failed to unpack new_planes, arbn.c:%d\n", __LINE__);
+		return BRLCAD_ERROR;
+	    }
 
 	    if (len%ELEMENTS_PER_PLANE) {
 		bu_vls_printf(logstr,

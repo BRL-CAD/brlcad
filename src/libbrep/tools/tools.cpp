@@ -1,7 +1,7 @@
 /*          L I B B R E P _ B R E P _ T O O L S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -220,7 +220,7 @@ bool ON_Surface_IsFlat_U(const ON_Plane frames[9], double f_tol)
 	return false;
     } else if ((Ndot=Ndot * frames[5].zaxis * frames[7].zaxis) < f_tol) {
 	return false;
-    } else if ((Ndot=Ndot * frames[6].zaxis * frames[8].zaxis) < f_tol) {
+    } else if ((Ndot * frames[6].zaxis * frames[8].zaxis) < f_tol) {
 	return false;
     }
 
@@ -232,7 +232,7 @@ bool ON_Surface_IsFlat_U(const ON_Plane frames[9], double f_tol)
 	return false;
     } else if ((Xdot=Xdot * frames[5].xaxis * frames[7].xaxis) < f_tol) {
 	return false;
-    } else if ((Xdot=Xdot * frames[6].xaxis * frames[8].xaxis) < f_tol) {
+    } else if ((Xdot * frames[6].xaxis * frames[8].xaxis) < f_tol) {
 	return false;
     }
 
@@ -250,7 +250,7 @@ bool ON_Surface_IsFlat_V(const ON_Plane frames[9], double f_tol)
 	return false;
     } else if ((Ndot=Ndot * frames[5].zaxis * frames[6].zaxis) < f_tol) {
 	return false;
-    } else if ((Ndot=Ndot * frames[7].zaxis * frames[8].zaxis) < f_tol) {
+    } else if ((Ndot * frames[7].zaxis * frames[8].zaxis) < f_tol) {
 	return false;
     }
 
@@ -262,7 +262,7 @@ bool ON_Surface_IsFlat_V(const ON_Plane frames[9], double f_tol)
 	return false;
     } else if ((Xdot=Xdot * frames[5].xaxis * frames[6].xaxis) < f_tol) {
 	return false;
-    } else if ((Xdot=Xdot * frames[7].xaxis * frames[8].xaxis) < f_tol) {
+    } else if ((Xdot * frames[7].xaxis * frames[8].xaxis) < f_tol) {
 	return false;
     }
 

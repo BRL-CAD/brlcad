@@ -1,7 +1,7 @@
 /*                          E N V . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,10 +39,20 @@ __BEGIN_DECLS
 
 BU_EXPORT extern int bu_setenv(const char *name, const char *value, int overwrite);
 
-/* Attempts to report available free RAM (not disk or swap space) on
- * the current machine.  Returns -1 if this information is not
- * available. */
-BU_EXPORT extern long int bu_avail_mem();
+
+/* Specific types of machine memory information that may be requested */
+#define BU_MEM_ALL 0
+#define BU_MEM_AVAIL 1
+#define BU_MEM_PAGE_SIZE 2
+
+/**
+ * Report system memory sizes.
+ *
+ * Returns -1 on error and the size of the requested memory type on
+ * success.  Optionally if sz is non-NULL, the size of the reqeusted
+ * memory type will be set to it.
+ */
+BU_EXPORT extern ssize_t bu_mem(int type, size_t *sz);
 
 /** @} */
 

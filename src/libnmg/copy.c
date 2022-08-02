@@ -1,7 +1,7 @@
 /*                      N M G _ C O P Y . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -119,12 +119,12 @@ nmg_construct_face_g_snurb(const struct face_g_snurb *original, void **structArr
 
     ret->u.magic  = NMG_KNOT_VECTOR_MAGIC;
     ret->u.k_size = original->u.k_size;
-    ret->u.knots = (fastf_t *)nmg_malloc(ret->u.k_size * sizeof(fastf_t),
+    ret->u.knots = (fastf_t *)bu_malloc(ret->u.k_size * sizeof(fastf_t),
 					"nmg_construct_face_g_snurb(): u.knots");
     memcpy(ret->u.knots, original->u.knots, ret->u.k_size * sizeof(fastf_t));
     ret->v.magic  = NMG_KNOT_VECTOR_MAGIC;
     ret->v.k_size = original->v.k_size;
-    ret->v.knots = (fastf_t *)nmg_malloc(ret->v.k_size * sizeof(fastf_t),
+    ret->v.knots = (fastf_t *)bu_malloc(ret->v.k_size * sizeof(fastf_t),
 					"nmg_construct_face_g_snurb(): v.knots");
     memcpy(ret->v.knots, original->v.knots, ret->v.k_size * sizeof(fastf_t));
 
@@ -132,7 +132,7 @@ nmg_construct_face_g_snurb(const struct face_g_snurb *original, void **structArr
     ret->s_size[1]  = original->s_size[1];
     ret->pt_type    = original->pt_type;
     ret->ctl_points
-	= (fastf_t *)nmg_malloc(original->s_size[0] * original->s_size[1] * RT_NURB_EXTRACT_COORDS(ret->pt_type) * sizeof(fastf_t),
+	= (fastf_t *)bu_malloc(original->s_size[0] * original->s_size[1] * RT_NURB_EXTRACT_COORDS(ret->pt_type) * sizeof(fastf_t),
 			       "nmg_construct_face_g_snurb(): ctl_points");
     memcpy(ret->ctl_points, original->ctl_points, original->s_size[0] * original->s_size[1] * RT_NURB_EXTRACT_COORDS(ret->pt_type) * sizeof(fastf_t));
 
@@ -366,12 +366,12 @@ nmg_construct_edge_g_cnurb(const struct edge_g_cnurb *original, void **structArr
 
     ret->k.magic  = NMG_KNOT_VECTOR_MAGIC;
     ret->k.k_size = original->k.k_size;
-    ret->k.knots = (fastf_t *)nmg_malloc(ret->k.k_size * sizeof(fastf_t), "nmg_construct_edge_g_cnurb(): k.knots");
+    ret->k.knots = (fastf_t *)bu_malloc(ret->k.k_size * sizeof(fastf_t), "nmg_construct_edge_g_cnurb(): k.knots");
     memcpy(ret->k.knots, original->k.knots, ret->k.k_size * sizeof(fastf_t));
 
     ret->c_size     = original->c_size;
     ret->pt_type    = original->pt_type;
-    ret->ctl_points = (fastf_t *)nmg_malloc(ret->c_size * RT_NURB_EXTRACT_COORDS(ret->pt_type) * sizeof(fastf_t),
+    ret->ctl_points = (fastf_t *)bu_malloc(ret->c_size * RT_NURB_EXTRACT_COORDS(ret->pt_type) * sizeof(fastf_t),
 					   "nmg_construct_edge_g_cnurb(): ctl_points");
     memcpy(ret->ctl_points, original->ctl_points, ret->c_size * RT_NURB_EXTRACT_COORDS(ret->pt_type) * sizeof(fastf_t));
 
@@ -462,14 +462,14 @@ nmg_construct_edgeuse(void *parent, const struct edgeuse *original, void **struc
 }
 
 
-static struct loop_g *
-nmg_construct_loop_g(const struct loop_g *original, void **structArray)
+static struct loop_a *
+nmg_construct_loop_a(const struct loop_a *original, void **structArray)
 {
-    struct loop_g *ret;
+    struct loop_a *ret;
 
-    NMG_GETSTRUCT(ret, loop_g);
+    NMG_GETSTRUCT(ret, loop_a);
 
-    ret->magic = NMG_LOOP_G_MAGIC;
+    ret->magic = NMG_LOOP_A_MAGIC;
 
     VMOVE(ret->min_pt, original->min_pt);
     VMOVE(ret->max_pt, original->max_pt);
@@ -490,15 +490,15 @@ nmg_construct_loop(struct loopuse *parent, const struct loop *original, void **s
 
     ret->magic              = NMG_LOOP_MAGIC;
     ret->lu_p               = parent;
-    ret->lg_p               = (struct loop_g*)NULL;
+    ret->la_p               = (struct loop_a*)NULL;
     ret->index              = original->index;
     structArray[ret->index] = ret;
 
-    if (original->lg_p != NULL) {
-	ret->lg_p = (struct loop_g *)structArray[original->lg_p->index];
+    if (original->la_p != NULL) {
+	ret->la_p = (struct loop_a *)structArray[original->la_p->index];
 
-	if (ret->lg_p == NULL)
-	    ret->lg_p = nmg_construct_loop_g(original->lg_p, structArray);
+	if (ret->la_p == NULL)
+	    ret->la_p = nmg_construct_loop_a(original->la_p, structArray);
     }
 
     return ret;
@@ -719,7 +719,7 @@ nmg_clone_model(const struct model *original)
 
     NMG_CK_MODEL(original);
 
-    structArray = (void **)nmg_calloc(original->maxindex, sizeof(void *), "nmg_clone_model() structArray");
+    structArray = (void **)bu_calloc(original->maxindex, sizeof(void *), "nmg_clone_model() structArray");
 
     ret = nmg_mm();
     ret->index    = original->index;
@@ -754,7 +754,7 @@ nmg_clone_model(const struct model *original)
 	}
     }
 
-    nmg_free(structArray, "nmg_clone_model() structArray");
+    bu_free(structArray, "nmg_clone_model() structArray");
 
     return ret;
 }

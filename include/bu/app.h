@@ -1,7 +1,7 @@
 /*                          A P P . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ __BEGIN_DECLS
  *
  */
 /** @{ */
-
+/** @file bu/app.h */
 
 /**
  * DEPRECATED: This routine is replaced by bu_getcwd().
@@ -51,7 +51,7 @@ __BEGIN_DECLS
  * identified but should never return NULL.  this routine is not
  * thread-safe.
  */
-BU_EXPORT extern const char *bu_argv0_full_path(void);
+DEPRECATED BU_EXPORT extern const char *bu_argv0_full_path(void);
 
 /**
  * Routine for obtaining the current working directory.
@@ -204,7 +204,7 @@ BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
  * call bu_strdup() or make other provisions to save the returned
  * string, before calling again.
  */
-BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly);
+DEPRECATED BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly);
 
 /**
  * @brief
@@ -224,26 +224,26 @@ BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly)
  * call bu_strdup() or make other provisions to save the returned
  * string, before calling again.
  */
-BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
+DEPRECATED BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
 
 
 typedef enum {
-    BU_DIR_CURR=1,  /* (unknown) current working directory */
-    BU_DIR_INIT,    /* (unknown) initial working directory */
-    BU_DIR_BIN,     /* (read-only) user executables (bin) */
-    BU_DIR_LIB,     /* (read-only) object libraries (lib) */
-    BU_DIR_LIBEXEC, /* (read-only) object libraries (libexec) */
-    BU_DIR_INCLUDE, /* (read-only) C/C++ header files (include) */
-    BU_DIR_DATA,    /* (read-only) data files (share) */
-    BU_DIR_DOC,     /* (read-only) documentation, (DATA/doc) */
-    BU_DIR_MAN,     /* (read-only) manual pages, (DATA/man) */
-    BU_DIR_TEMP,    /* (read/write) temporary files (TEMP) */
-    BU_DIR_HOME,    /* (read/write) user home directory (HOME) */
-    BU_DIR_CACHE,   /* (read/write) user cache directory (BU_CACHE_DIR) */
-    BU_DIR_CONFIG,  /* (read/write) user config directory (HOME/.app) */
-    BU_DIR_EXT,     /* (n/a) optional executable extension */
-    BU_DIR_LIBEXT,  /* (n/a) optional library extension */
-    BU_DIR_END
+    BU_DIR_CURR=1,  /**< (unknown) current working directory */
+    BU_DIR_INIT,    /**< (unknown) initial working directory */
+    BU_DIR_BIN,     /**< (read-only) user executables (bin) */
+    BU_DIR_LIB,     /**< (read-only) object libraries (lib) */
+    BU_DIR_LIBEXEC, /**< (read-only) object libraries (libexec) */
+    BU_DIR_INCLUDE, /**< (read-only) C/C++ header files (include) */
+    BU_DIR_DATA,    /**< (read-only) data files (share) */
+    BU_DIR_DOC,     /**< (read-only) documentation, (DATA/doc) */
+    BU_DIR_MAN,     /**< (read-only) manual pages, (DATA/man) */
+    BU_DIR_TEMP,    /**< (read/write) temporary files (TEMP) */
+    BU_DIR_HOME,    /**< (read/write) user home directory (HOME) */
+    BU_DIR_CACHE,   /**< (read/write) user cache directory (BU_CACHE_DIR) */
+    BU_DIR_CONFIG,  /**< (read/write) user config directory (HOME/.app) */
+    BU_DIR_EXT,     /**< (n/a) optional executable extension */
+    BU_DIR_LIBEXT,  /**< (n/a) optional library extension */
+    BU_DIR_END      /**< always the last entry, for iterators */
 } bu_dir_t;
 
 

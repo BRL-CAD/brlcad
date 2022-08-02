@@ -1,6 +1,0 @@
-commit refs/heads/dmtogl
-mark :36472
-committer Christopher Sean Morrison <brlcad> 1258027828 +0000
-data 219
-rename from dmtogl-branch to just dmtogl.  the -branch was a cvs convention that svn takes care of with a branches parent dir.  not clear why the windows files are marked as modified as they still have CRLF line endings
-from 36472

@@ -1,7 +1,7 @@
 /*                      D E B U G 2 C . C X X
  * BRL-CAD
  *
- * Copyright (c) 2018-2020 United States Government as represented by
+ * Copyright (c) 2018-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -60,40 +60,46 @@ struct dentry {
 int
 process_file(std::string f, std::map<std::string, std::vector<struct dentry>> &entries, int verbose)
 {
-    std::regex srcfile_regex(".*debug[.](h|hpp|hxx)(\\.in)*$");
-    if (std::regex_match(std::string(f), srcfile_regex)) {
-	std::regex debug_regex("#define\\s+.*_DEBUG_.*\\s+0x.*");
-	std::string sline;
-	std::ifstream fs;
-	fs.open(f);
-	if (!fs.is_open()) {
-	    std::cerr << "Unable to open " << f << " for reading, skipping\n";
-	    return -1;
-	}
-	while (std::getline(fs, sline)) {
-	    if (std::regex_match(sline, debug_regex)) {
-		std::regex unused_regex(".*UNUSED.*");
-		if (std::regex_match(sline, unused_regex)) {
-		    continue;
-		}
-		std::regex parse_regex("#define\\s+([A-Z]+)_DEBUG_([A-Z_0-9]+)\\s+([0-9x]+)[/(< \t*]*([^*]*).*");
-		std::smatch parsevar;
-		if (!std::regex_search(sline, parsevar, parse_regex)) {
-		    std::cerr << "Error, debug2c could not parse debug variable definition:\n";
-		    std::cerr << sline << "\n";
-		    return -1;
-		} else {
-		    struct dentry nentry;
-		    nentry.key = std::string(parsevar[2]);
-		    nentry.hex = std::string(parsevar[3]);
-		    nentry.info = std::string(parsevar[4]);
-		    entries[std::string(parsevar[1])].push_back(nentry);
+    try {
+	std::regex srcfile_regex(".*debug[.](h|hpp|hxx)(\\.in)*$");
+
+	if (std::regex_match(std::string(f), srcfile_regex)) {
+	    std::regex debug_regex("#define\\s+.*_DEBUG_.*\\s+0x.*");
+	    std::string sline;
+	    std::ifstream fs;
+	    fs.open(f);
+	    if (!fs.is_open()) {
+		std::cerr << "Unable to open " << f << " for reading, skipping\n";
+		return -1;
+	    }
+	    while (std::getline(fs, sline)) {
+		if (std::regex_match(sline, debug_regex)) {
+		    std::regex unused_regex(".*UNUSED.*");
+		    if (std::regex_match(sline, unused_regex)) {
+			continue;
+		    }
+		    std::regex parse_regex("#define\\s+([A-Z]+)_DEBUG_([A-Z_0-9]+)\\s+([0-9x]+)[/(< \t*]*([^*]*).*");
+		    std::smatch parsevar;
+		    if (!std::regex_search(sline, parsevar, parse_regex)) {
+			std::cerr << "Error, debug2c could not parse debug variable definition:\n";
+			std::cerr << sline << "\n";
+			return -1;
+		    } else {
+			struct dentry nentry;
+			nentry.key = std::string(parsevar[2]);
+			nentry.hex = std::string(parsevar[3]);
+			nentry.info = std::string(parsevar[4]);
+			entries[std::string(parsevar[1])].push_back(nentry);
+		    }
 		}
 	    }
+	    fs.close();
 	}
-	fs.close();
     }
-
+    catch (const std::regex_error& e) {
+	std::cout << "regex error: " << e.what() << '\n';
+	return -1;
+    }
     return 0;
 }
 
@@ -109,6 +115,14 @@ main(int argc, const char *argv[])
     if (argc < 3) {
 	std::cerr << "Usage: debug2c [-v] file_list output_file\n";
 	return -1;
+    }
+
+    for (int i = 0; i < argc; i++) {
+	std::string arg(argv[i]);
+	if (arg == std::string("--help") || arg == std::string("-h") || arg == std::string("-?")) {
+	    std::cerr << "Usage: debug2c [-v] file_list output_file\n";
+	    return 0;
+	}
     }
 
     if (argc == 4) {
@@ -148,6 +162,7 @@ main(int argc, const char *argv[])
     ofile << "#include <stdio.h>\n\n";
 
 #ifndef TEST_MAIN
+    ofile << "#include \"bu/exit.h\"\n";
     ofile << "#include \"bu/str.h\"\n";
     ofile << "#include \"bu/vls.h\"\n\n";
 #endif
@@ -211,9 +226,9 @@ main(int argc, const char *argv[])
 
 #ifdef TEST_MAIN
     ofile << "int main() {\n";
-    ofile << "  int lcnt = 0;\n";
+    ofile << "  size_t lcnt = 0;\n";
     ofile << "  while (dbg_lib_entries[lcnt]) {\n";
-    ofile << "    int ecnt = 0;\n";
+    ofile << "    size_t ecnt = 0;\n";
     ofile << "    long eval = -1;\n";
     ofile << "    while (eval != 0) {\n";
     ofile << "       eval = dbg_lib_entries[lcnt][ecnt].val;\n";
@@ -230,9 +245,9 @@ main(int argc, const char *argv[])
 
 #ifndef TEST_MAIN
     ofile << "static void\n";
-    ofile << "print_all_lib_flags(struct bu_vls *vls, int lcnt, int max_strlen)\n";
+    ofile << "print_all_lib_flags(struct bu_vls *vls, size_t lcnt, size_t max_strlen)\n";
     ofile << "{\n";
-    ofile << "    int ecnt = 0;\n";
+    ofile << "    size_t ecnt = 0;\n";
     ofile << "    long eval = -1;\n";
     ofile << "    if (!vls) {\n";
     ofile << "	return;\n";
@@ -240,7 +255,7 @@ main(int argc, const char *argv[])
     ofile << "    while (eval != 0) {\n";
     ofile << "	eval = dbg_lib_entries[lcnt][ecnt].val;\n";
     ofile << "	if (eval > 0) {\n";
-    ofile << "	    bu_vls_printf(vls, \"   %*s (0x%08lx): %s\\n\", max_strlen, dbg_lib_entries[lcnt][ecnt].key, dbg_lib_entries[lcnt][ecnt].val, dbg_lib_entries[lcnt][ecnt].info);\n";
+    ofile << "	    bu_vls_printf(vls, \"   %*s (0x%08lx): %s\\n\", (int)max_strlen, dbg_lib_entries[lcnt][ecnt].key, dbg_lib_entries[lcnt][ecnt].val, dbg_lib_entries[lcnt][ecnt].info);\n";
     ofile << "	}\n";
     ofile << "	ecnt++;\n";
     ofile << "    }\n";
@@ -248,16 +263,16 @@ main(int argc, const char *argv[])
     ofile << "\n";
     ofile << "\n";
     ofile << "static void\n";
-    ofile << "print_set_lib_flags(struct bu_vls *vls, int lcnt, int max_strlen)\n";
+    ofile << "print_set_lib_flags(struct bu_vls *vls, size_t lcnt, size_t max_strlen)\n";
     ofile << "{\n";
-    ofile << "    int ecnt = 0;\n";
+    ofile << "    size_t ecnt = 0;\n";
     ofile << "    if (!vls) {\n";
     ofile << "	return;\n";
     ofile << "    }\n";
     ofile << "    while (dbg_lib_entries[lcnt][ecnt].val) {\n";
     ofile << "	unsigned int *cvect = dbg_vars[lcnt];\n";
     ofile << "	if (*cvect & dbg_lib_entries[lcnt][ecnt].val) {\n";
-    ofile << "	    bu_vls_printf(vls, \"   %*s (0x%08lx): %s\\n\", max_strlen, dbg_lib_entries[lcnt][ecnt].key, dbg_lib_entries[lcnt][ecnt].val, dbg_lib_entries[lcnt][ecnt].info);\n";
+    ofile << "	    bu_vls_printf(vls, \"   %*s (0x%08lx): %s\\n\", (int)max_strlen, dbg_lib_entries[lcnt][ecnt].key, dbg_lib_entries[lcnt][ecnt].val, dbg_lib_entries[lcnt][ecnt].info);\n";
     ofile << "	}\n";
     ofile << "	ecnt++;\n";
     ofile << "    }\n";
@@ -265,14 +280,14 @@ main(int argc, const char *argv[])
     ofile << "}\n";
     ofile << "\n";
     ofile << "static void\n";
-    ofile << "print_all_set_lib_flags(struct bu_vls *vls, int max_strlen)\n";
+    ofile << "print_all_set_lib_flags(struct bu_vls *vls, size_t max_strlen)\n";
     ofile << "{\n";
-    ofile << "    int lcnt = 0;\n";
+    ofile << "    size_t lcnt = 0;\n";
     ofile << "    if (!vls) {\n";
     ofile << "	return;\n";
     ofile << "    }\n";
     ofile << "    while (dbg_lib_entries[lcnt]) {\n";
-    ofile << "	int ecnt = 0;\n";
+    ofile << "	size_t ecnt = 0;\n";
     ofile << "	int have_active = 0;\n";
     ofile << "	while (dbg_lib_entries[lcnt][ecnt].val) {\n";
     ofile << "	    unsigned int *cvect = dbg_vars[lcnt];\n";
@@ -295,15 +310,15 @@ main(int argc, const char *argv[])
     ofile << "    }\n";
     ofile << "}\n";
     ofile << "\n";
-    ofile << "static int\n";
+    ofile << "static size_t\n";
     ofile << "debug_max_strlen()\n";
     ofile << "{\n";
-    ofile << "    int max_strlen = -1;\n";
-    ofile << "    int lcnt = 0;\n";
+    ofile << "    size_t max_strlen = 0;\n";
+    ofile << "    size_t lcnt = 0;\n";
     ofile << "    while (dbg_lib_entries[lcnt]) {\n";
-    ofile << "	int ecnt = 0;\n";
+    ofile << "	size_t ecnt = 0;\n";
     ofile << "	while (dbg_lib_entries[lcnt][ecnt].val != 0) {\n";
-    ofile << "	    int slen = strlen(dbg_lib_entries[lcnt][ecnt].key);\n";
+    ofile << "	    size_t slen = strlen(dbg_lib_entries[lcnt][ecnt].key);\n";
     ofile << "	    max_strlen = (slen > max_strlen) ? slen : max_strlen;\n";
     ofile << "	    ecnt++;\n";
     ofile << "	}\n";
@@ -315,7 +330,7 @@ main(int argc, const char *argv[])
     ofile << "static void\n";
     ofile << "debug_print_help(struct bu_vls *vls)\n";
     ofile << "{\n";
-    ofile << "    int lcnt = 0;\n";
+    ofile << "    size_t lcnt = 0;\n";
     ofile << "    if (!vls) {\n";
     ofile << "	return;\n";
     ofile << "    }\n";
@@ -328,9 +343,9 @@ main(int argc, const char *argv[])
     ofile << "}\n";
     ofile << "\n";
     ofile << "static void\n";
-    ofile << "print_all_flags(struct bu_vls *vls, int max_strlen)\n";
+    ofile << "print_all_flags(struct bu_vls *vls, size_t max_strlen)\n";
     ofile << "{\n";
-    ofile << "    int lcnt = 0;\n";
+    ofile << "    size_t lcnt = 0;\n";
     ofile << "    if (!vls) {\n";
     ofile << "	return;\n";
     ofile << "    }\n";
@@ -343,9 +358,9 @@ main(int argc, const char *argv[])
     ofile << "}\n";
     ofile << "\n";
     ofile << "static void\n";
-    ofile << "print_select_flags(struct bu_vls *vls, const char *filter, int max_strlen)\n";
+    ofile << "print_select_flags(struct bu_vls *vls, const char *filter, size_t max_strlen)\n";
     ofile << "{\n";
-    ofile << "    int lcnt = 0;\n";
+    ofile << "    size_t lcnt = 0;\n";
     ofile << "    if (!vls) {\n";
     ofile << "	return;\n";
     ofile << "    }\n";
@@ -361,14 +376,14 @@ main(int argc, const char *argv[])
     ofile << "    }\n";
     ofile << "}\n";
     ofile << "\n";
-    ofile << "static int\n";
+    ofile << "static size_t\n";
     ofile << "toggle_debug_flag(struct bu_vls *e_vls, const char *lib_filter, const char *flag_filter)\n";
     ofile << "{\n";
-    ofile << "    int	lcnt = 0;\n";
+    ofile << "    size_t lcnt = 0;\n";
     ofile << "    while (dbg_lib_entries[lcnt]) {\n";
     ofile << "	if (BU_STR_EQUIV(lib_filter, dbg_libs[lcnt])) {\n";
     ofile << "	    unsigned int *cvect = dbg_vars[lcnt];\n";
-    ofile << "	    int ecnt = 0;\n";
+    ofile << "	    size_t ecnt = 0;\n";
     ofile << "	    int found = 0;\n";
     ofile << "	    while (dbg_lib_entries[lcnt][ecnt].val) {\n";
     ofile << "		if (BU_STR_EQUIV(flag_filter, dbg_lib_entries[lcnt][ecnt].key)) {\n";
@@ -383,10 +398,8 @@ main(int argc, const char *argv[])
     ofile << "		ecnt++;\n";
     ofile << "	    }\n";
     ofile << "	    if (!found) {\n";
-    ofile << "		if (e_vls) {\n";
-    ofile << "		    bu_vls_printf(e_vls, \"invalid %s flag paramter: %s\\n\", dbg_libs[lcnt], flag_filter);\n";
-    ofile << "		}\n";
-    ofile << "		return -1;\n";
+    ofile << "		if (e_vls)\n";
+    ofile << "		    bu_exit(-1, \"invalid %s flag paramter: %s\\n\", dbg_libs[lcnt], flag_filter);\n";
     ofile << "	    } else {\n";
     ofile << "		return lcnt;\n";
     ofile << "	    }\n";
@@ -394,30 +407,28 @@ main(int argc, const char *argv[])
     ofile << "	lcnt++;\n";
     ofile << "    }\n";
     ofile << "\n";
-    ofile << "    if (e_vls) {\n";
-    ofile << "	bu_vls_printf(e_vls, \"invalid lib paramter: %s\\n\", lib_filter);\n";
-    ofile << "    }\n";
-    ofile << "    return -1;\n";
+    ofile << "	bu_exit(-1, \"invalid lib paramter: %s\\n\", lib_filter);\n";
+    ofile << "    \n";
     ofile << "}\n";
     ofile << "\n";
     ofile << "static void\n";
-    ofile << "print_flag_hex_val(struct bu_vls *vls, int lcnt, int max_strlen, int labeled)\n";
+    ofile << "print_flag_hex_val(struct bu_vls *vls, size_t lcnt, size_t max_strlen, int labeled)\n";
     ofile << "{\n";
     ofile << "    unsigned int *cvect = dbg_vars[lcnt];\n";
     ofile << "    if (!vls) {\n";
     ofile << "	return;\n";
     ofile << "    }\n";
     ofile << "    if (labeled) {\n";
-    ofile << "	bu_vls_printf(vls, \"%*s: 0x%08x\\n\", max_strlen, dbg_libs[lcnt], *cvect);\n";
+    ofile << "	bu_vls_printf(vls, \"%*s: 0x%08x\\n\", (int)max_strlen, dbg_libs[lcnt], *cvect);\n";
     ofile << "    } else {\n";
     ofile << "	bu_vls_printf(vls, \"0x%08x\\n\", *cvect);\n";
     ofile << "    }\n";
     ofile << "}\n";
     ofile << "\n";
     ofile << "static int\n";
-    ofile << "set_flag_hex_value(struct bu_vls *o_vls, struct bu_vls *e_vls, const char *lib_filter, const char *hexstr, int max_strlen)\n";
+    ofile << "set_flag_hex_value(struct bu_vls *o_vls, struct bu_vls *e_vls, const char *lib_filter, const char *hexstr, size_t max_strlen)\n";
     ofile << "{\n";
-    ofile << "    int lcnt = 0;\n";
+    ofile << "    size_t lcnt = 0;\n";
     ofile << "    while (dbg_lib_entries[lcnt]) {\n";
     ofile << "	if (BU_STR_EQUIV(lib_filter, dbg_libs[lcnt])) {\n";
     ofile << "	    unsigned int *cvect = dbg_vars[lcnt];\n";
@@ -453,8 +464,8 @@ main(int argc, const char *argv[])
     ofile << "static int\n";
     ofile << "debug_cmd(struct bu_vls *o_vls, struct bu_vls *e_vls, int argc, const char **argv)\n";
     ofile << "{\n";
-    ofile << "    int lcnt = 0;\n";
-    ofile << "    int max_strlen = -1;\n";
+    ofile << "    size_t lcnt = 0;\n";
+    ofile << "    size_t max_strlen = 0;\n";
     ofile << "\n";
     ofile << "    if (argc > 4) {\n";
     ofile << "	debug_print_help(e_vls);\n";
@@ -566,20 +577,15 @@ main(int argc, const char *argv[])
     ofile << "	}\n";
     ofile << "\n";
     ofile << "	if (argc == 3) {\n";
-    ofile << "	    lcnt = toggle_debug_flag(e_vls, argv[1], argv[2]);\n";
-    ofile << "	    if (lcnt < 0) {\n";
-    ofile << "		return -1;\n";
-    ofile << "	    } else {\n";
-    ofile << "		print_set_lib_flags(o_vls, lcnt, max_strlen);\n";
-    ofile << "		return 0;\n";
-    ofile << "	    }\n";
+    ofile << "	    toggle_debug_flag(e_vls, argv[1], argv[2]);\n";
+    ofile << "	    print_set_lib_flags(o_vls, lcnt, max_strlen);\n";
+    ofile << "	    return 0;\n";
     ofile << "	}\n";
     ofile << "\n";
     ofile << "	debug_print_help(e_vls);\n";
     ofile << "	return -1;\n";
     ofile << "    }\n";
     ofile << "\n";
-    ofile << "    lcnt = 0;\n";
     ofile << "    print_all_set_lib_flags(o_vls, max_strlen);\n";
     ofile << "\n";
     ofile << "    return 0;\n";

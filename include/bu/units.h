@@ -1,7 +1,7 @@
 /*                         U N I T S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,28 +37,37 @@ __BEGIN_DECLS
 /** @file bu/units.h */
 
 /**
- * Given a string representation of a unit of distance (e.g., "feet"),
- * return the multiplier which will convert that unit into the default
- * unit for the dimension (millimeters for length, mm^3 for volume,
- * and grams for mass.)
+ * Convert the provided string into a units conversion factor.
+ *
+ * Given a string for a unit of length (e.g., "feet", "yd"), volume
+ * (e.g., "cm^3", "cu yards"), or mass (e.g., "kg", "grain", or "oz")
+ * return the multiplier (aka conversion factor) that converts the
+ * unit into the default (millimeters for length, mm^3 for volume, and
+ * grams for mass.) Values may be optionally specified with the unit
+ * (e.g., "5ft") to get the conversion factor for a particular
+ * quantity.
  *
  * Returns 0.0 on error and >0.0 on success
  */
 BU_EXPORT extern double bu_units_conversion(const char *str);
 
+
 /**
  * Given a conversion factor to mm, search the table to find what unit
  * this represents.
  *
- * To accommodate floating point fuzz, a "near miss" is allowed.  The
- * algorithm depends on the table being sorted small-to-large.
+ * To accommodate floating point fuzz, a "near miss" is allowed.
  *
  * Returns -
  * char* units string
  * NULL	No known unit matches this conversion factor.
  */
 BU_EXPORT extern const char *bu_units_string(const double mm);
+
+
+/** undocumented */
 BU_EXPORT extern struct bu_vls *bu_units_strings_vls(void);
+
 
 /**
  * Given a conversion factor to mm, search the table to find the
@@ -70,6 +79,7 @@ BU_EXPORT extern struct bu_vls *bu_units_strings_vls(void);
  */
 BU_EXPORT extern const char *bu_nearest_units_string(const double mm);
 
+
 /**
  * Given a string of the form "25cm" or "5.2ft" returns the
  * corresponding distance in mm.
@@ -79,6 +89,7 @@ BU_EXPORT extern const char *bu_nearest_units_string(const double mm);
  * >0 on success
  */
 BU_EXPORT extern double bu_mm_value(const char *s);
+
 
 /**
  * Used primarily as a hooked function for bu_structparse tables to
@@ -102,6 +113,7 @@ BU_EXPORT extern void bu_mm_cvt(const struct bu_structparse *sdp,
 #define	BU_HN_GETSCALE		0x10
 #define	BU_HN_AUTOSCALE		0x20
 
+
 /**
  * Convert digital sizes to human readable form.  Based off the
  * BSD function humanize_number(3).
@@ -112,6 +124,7 @@ BU_EXPORT extern void bu_mm_cvt(const struct bu_structparse *sdp,
  * number will be returned instead.
  */
 BU_EXPORT extern int bu_humanize_number(char *buf, size_t len, int64_t quotient, const char *suffix, size_t scale, int flags);
+
 
 /*
  * Converts the number given in 'str', which may be given in a humanized

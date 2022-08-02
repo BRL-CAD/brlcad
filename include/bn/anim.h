@@ -1,7 +1,7 @@
 /*                        A N I M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -127,13 +127,13 @@ typedef fastf_t mat3_t[9];
 	(o)[7] = (i)[9];\
 	(o)[8] = (i)[10];}
 
-/* tilde matrix: [M]a = v X a */
+/** tilde matrix: [M]a = v X a */
 #define MAKE_TILDE(m, v)        {\
 	MAT3ZERO(m);\
 	m[1]= -v[2];    m[2]=v[1];      m[3]= v[2];\
 	m[5]= -v[0];    m[6]= -v[1];    m[7]= v[0];}
 
-/* a = Ix Iy Iz    b = Ixy Ixz Iyz*/
+/** a = Ix Iy Iz    b = Ixy Ixz Iyz*/
 #define INERTIAL_MAT3(m, a, b)  {\
 	(m)[0] =  (a)[0]; (m)[1] = -(b)[0]; (m)[2] = -(b)[1];\
 	(m)[3] = -(b)[0]; (m)[4] =  (a)[1]; (m)[5] = -(b)[2];\

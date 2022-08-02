@@ -2680,7 +2680,7 @@ private:
   // compressed buffer I/O uses zlib 1.1.3 inflate()/deflate()
   struct
   {
-    ON::archive_mode mode; // ON::read = read and inflate,  ON::write = deflate and write
+    ON::archive_mode mode; // ON::on_read = read and inflate,  ON::on_write = deflate and write
     enum
     {
       sizeof_x_buffer = 16384
@@ -3065,7 +3065,7 @@ Example:
 
           const char* filename = "myfile.3dm";
           FILE* fp = ON::OpenFile( filename, "wb" );
-          ON_BinaryFile file( fp, ON::write3dm );
+          ON_BinaryFile file( fp, ON::on_write3dm );
           ON_BOOL32 ok = ON_WriteArchive( archive, geometry );
           ON::CloseFile( fp );
 

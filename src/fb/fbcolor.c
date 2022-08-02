@@ -1,7 +1,7 @@
 /*                       F B C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 #include "libtermio.h"
 
 #define COMMA ','
@@ -51,7 +51,7 @@ ColorMap old_map;
 ColorMap cm;
 
 static char *framebuffer = NULL;
-static fb *fbp;
+static struct fb *fbp;
 static int scr_height;
 static int scr_width;
 

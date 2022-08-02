@@ -1,7 +1,7 @@
 /*                      S U P E R E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -171,6 +171,39 @@ struct superell_specific {
     mat_t superell_invR; /* transposed rotation matrix */
 };
 #define SUPERELL_NULL ((struct superell_specific *)0)
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_superell_specific {
+    cl_double superell_V[3]; /* Vector to center of superellipsoid */
+    cl_double superell_invmsAu; /* 1.0 / |Au|^2 */
+    cl_double superell_invmsBu; /* 1.0 / |Bu|^2 */
+    cl_double superell_invmsCu; /* 1.0 / |Cu|^2 */
+    cl_double superell_SoR[16]; /* matrix for local coordinate system, Scale(Rotate(V))*/
+    cl_double superell_invRSSR[16]; /* invR(Scale(Scale(Rot(V)))) */
+    cl_double superell_e;
+};
+
+size_t
+clt_superell_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct superell_specific *superell =
+        (struct superell_specific *)stp->st_specific;
+    struct clt_superell_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_superell_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->superell_V, superell->superell_V);
+    MAT_COPY(args->superell_SoR, superell->superell_SoR);
+    MAT_COPY(args->superell_invRSSR, superell->superell_invRSSR);
+    args->superell_invmsAu = superell->superell_invmsAu;
+    args->superell_invmsBu = superell->superell_invmsBu;
+    args->superell_invmsCu = superell->superell_invmsCu;
+    args->superell_e = superell->superell_e;
+    return size;
+}
+#endif /* USE_OPENCL */
 
 /**
  * Calculate a bounding RPP for a superell
@@ -673,7 +706,7 @@ rt_superell_16pts(fastf_t *ov,
 
 
 int
-rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     int i;
     struct rt_superell_internal *eip;
@@ -683,6 +716,7 @@ rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     RT_SUPERELL_CK_MAGIC(eip);
 
@@ -690,19 +724,19 @@ rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     rt_superell_16pts(bottom, eip->v, eip->b, eip->c);
     rt_superell_16pts(middle, eip->v, eip->a, eip->c);
 
-    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i=0; i<16; i++) {
-	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i=0; i<16; i++) {
-	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &middle[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i=0; i<16; i++) {
-	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &middle[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
     return 0;
 }
@@ -799,7 +833,7 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    flip_fastf_float(vec, rp->s.s_values, 4, dbip->dbi_version < 0 ? 1 : 0);
+    flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->dbi_version < 0) ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -808,7 +842,7 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     MAT4X3VEC(eip->b, mat, &vec[2*3]);
     MAT4X3VEC(eip->c, mat, &vec[3*3]);
 
-    if (dbip->dbi_version < 0) {
+    if (dbip && dbip->dbi_version < 0) {
 	eip->n = flip_dbfloat(rp->s.s_values[12]);
 	eip->e = flip_dbfloat(rp->s.s_values[13]);
     } else {
@@ -1193,8 +1227,8 @@ superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, 
 	 */
 	for (v = - M_PI_2; v < M_PI_2 - side_length; v += side_length, idx++) {
 	    area +=
-		bn_dist_pnt3_pnt3(row1[idx], row1[idx + 1]) *
-		bn_dist_pnt3_pnt3(row1[idx], row2[idx]);
+		bg_dist_pnt3_pnt3(row1[idx], row1[idx + 1]) *
+		bg_dist_pnt3_pnt3(row1[idx], row2[idx]);
 	}
 
 	memcpy(row1, row2, row_length);

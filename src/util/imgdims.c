@@ -1,7 +1,7 @@
 /*                       I M G D I M S . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2020 United States Government as represented by
+ * Copyright (c) 1997-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define NONE -1

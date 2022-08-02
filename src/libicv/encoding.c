@@ -1,7 +1,7 @@
 /*                      E N C O D I N G . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,22 +29,8 @@
 #include "bu/malloc.h"
 #include "bn.h"
 
-/**
- * converts unsigned char array to double array.
- * This function returns array of double data.
- *
- * Used to convert data from pix, bw, ppm type images for icv_image
- * struct.
- *
- * This does not free the char data.
- *
- * @param data pointer to the array to be converted.
- * @param size Size of the array.
- * @return double array.
- *
- */
 double *
-uchar2double(unsigned char *data, size_t size)
+icv_uchar2double(unsigned char *data, size_t size)
 {
     double *double_data, *double_p;
     unsigned char *char_p;
@@ -65,26 +51,25 @@ uchar2double(unsigned char *data, size_t size)
 }
 
 
-/**
- * Converts double data of icv_image to unsigned char data.
- * This function also does gamma correction using the gamma_corr
- * parameter of the image structure.
- *
- * This is mainly used for saving pix, bw and ppm type images.
- * Gamma correction prevents bad color aliasing.
- *
- */
 unsigned char *
-data2uchar(const icv_image_t *bif)
+icv_data2uchar(const icv_image_t *bif)
 {
     size_t size;
     unsigned char *uchar_data, *char_p;
     double *double_p;
 
+    if (!bif) {
+	return NULL;
+    }
+
     ICV_IMAGE_VAL_PTR(bif);
 
     size = bif->height*bif->width*bif->channels;
     char_p = uchar_data = (unsigned char *) bu_malloc((size_t)size, "data2uchar : unsigned char data");
+
+    if (!char_p) {
+	return NULL;
+    }
 
     double_p = bif->data;
 

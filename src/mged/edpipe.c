@@ -1,7 +1,7 @@
 /*                        E D P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2020 United States Government as represented by
+ * Copyright (c) 1995-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -300,7 +300,7 @@ find_pipe_pnt_nearest_pnt(const struct bu_list *pipe_hd, const point_t pt)
     for (BU_LIST_FOR(ps, wdb_pipe_pnt, pipe_hd)) {
 	fastf_t dist;
 
-	dist = bn_dist_line3_pnt3(pt, dir, ps->pp_coord);
+	dist = bg_dist_line3_pnt3(pt, dir, ps->pp_coord);
 	if (dist < min_dist) {
 	    min_dist = dist;
 	    nearest = ps;

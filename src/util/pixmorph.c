@@ -1,7 +1,7 @@
 /*                      P I X M O R P H . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2020 United States Government as represented by
+ * Copyright (c) 1996-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 /* Adapted from an assignment for
@@ -427,17 +427,17 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    picA = fopen(picAname, "r");
+    picA = fopen(picAname, "rb");
     if (picA == NULL) {
 	fprintf(stderr, "pixmorph: cannot open %s\n", picAname);
 	return 1;
     }
-    picB = fopen(picBname, "r");
+    picB = fopen(picBname, "rb");
     if (picB == NULL) {
 	fprintf(stderr, "pixmorph: cannot open %s\n", picBname);
 	return 1;
     }
-    linesfile = fopen(linesfilename, "r");
+    linesfile = fopen(linesfilename, "rb");
     if (linesfile == NULL) {
 	fprintf(stderr, "pixmorph: cannot open %s\n", linesfilename);
 	return 1;

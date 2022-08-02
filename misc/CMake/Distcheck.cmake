@@ -1,7 +1,7 @@
 #                 D I S T C H E C K . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2012-2020 United States Government as represented by
+# Copyright (c) 2012-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
   # Set up the script that will be used to verify the source archives
   configure_file("${BRLCAD_CMAKE_DIR}/distcheck_repo_verify.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake" @ONLY)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake")
 
   # Define the repository verification build target
   add_custom_target(distcheck-repo_verify
@@ -79,6 +80,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
   add_custom_target(distcheck-source_archives
     COMMAND ${CMAKE_COMMAND} -E echo "*** Create source tgz, tbz2 and zip archives from toplevel archive ***"
     COMMAND ${CPACK_EXEC} --config "${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake"
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_BINARY_DIR}/source_archive_contents"
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_BINARY_DIR}/_CPack_Packages"
     COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.done"
     DEPENDS distcheck-source_archive_dir)
   set_target_properties(distcheck-source_archives PROPERTIES FOLDER "BRL-CAD Distribution Checking")
@@ -133,6 +136,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
       # Based on the build command, generate a distcheck target definition from the template
       configure_file(${distcheck_template_file} "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake" @ONLY)
+      DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake")
       include("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake")
 
       # Keep track of the distcheck targets

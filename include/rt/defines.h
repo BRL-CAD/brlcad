@@ -1,7 +1,7 @@
 /*                       D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -109,7 +109,7 @@
  * NOTE: must update the non-geometric object id's below the
  * ADD_BELOW_HERE marker
  */
-#define ID_MAX_SOLID    46      /**< @brief Maximum defined ID_xxx for solids */
+#define ID_MAX_SOLID    47      /**< @brief Maximum defined ID_xxx for solids */
 
 /*
  * Non-geometric objects
@@ -119,6 +119,7 @@
 #define ID_BINUNIF      33      /**< @brief Uniform-array binary */
 #define ID_UNUSED2      34      /**< @brief UNUSED (placeholder) */
 #define ID_CONSTRAINT   39      /**< @brief Constraint object */
+#define ID_MATERIAL     46      /**< @brief Material object */
 
 /* - ADD_BELOW_HERE - */
 /* superellipsoid should be 31, but is not v5 compatible */
@@ -132,7 +133,7 @@
 #define ID_HRT          43      /**< @brief Heart */
 #define ID_DATUM        44      /**< @brief Datum references */
 #define ID_SCRIPT       45      /**< @brief Script */
-#define ID_MAXIMUM      46      /**< @brief Maximum defined ID_xxx value */
+#define ID_MAXIMUM      47      /**< @brief Maximum defined ID_xxx value */
 
 /**
  * DEPRECATED: external applications should use other LIBRT API to

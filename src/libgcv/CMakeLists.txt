@@ -14,7 +14,7 @@ if(MSVC)
 else(MSVC)
   set(LIBGCV_PLUGINS_PATH "${LIB_DIR}")
 endif(MSVC)
-set(LIBGCV_PLUGINS_DIRECTORY "libgcv_plugins")
+set(LIBGCV_PLUGINS_DIRECTORY "gcv")
 add_subdirectory(plugins)
 
 set(LIBGCV_SOURCES
@@ -33,13 +33,7 @@ set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGINS_DI
 set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGINS_PATH=\"${LIBGCV_PLUGINS_PATH}\"")
 set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 
-enable_testing()
-BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL)
-if(HIDE_INTERNAL_SYMBOLS)
-  set_property(TARGET test_bottess APPEND PROPERTY COMPILE_DEFINITIONS "BOTTESS_DLL_IMPORTS")
-endif(HIDE_INTERNAL_SYMBOLS)
-add_test(NAME bottess_test COMMAND test_bottess)
-
+add_subdirectory(tests)
 
 set(GCV_IGNORE_FILES
   CMakeLists.txt

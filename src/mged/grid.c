@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,28 +44,29 @@ static void set_grid_draw(const struct bu_structparse *, const char *, void *, c
 static void set_grid_res(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 
-struct _grid_state default_grid_state = {
-    /* gr_rc */		1,
-    /* gr_draw */		0,
-    /* gr_snap */		0,
-    /* gr_anchor */		VINIT_ZERO,
-    /* gr_res_h */		1.0,
-    /* gr_res_v */		1.0,
-    /* gr_res_major_h */	5,
-    /* gr_res_major_v */	5,
+struct bv_grid_state default_grid_state = {
+    /* rc */		1,
+    /* draw */		0,
+    /* snap */		0,
+    /* anchor */	VINIT_ZERO,
+    /* res_h */		1.0,
+    /* res_v */		1.0,
+    /* res_major_h */	5,
+    /* res_major_v */	5,
+    /* color */         {0, 0, 0}
 };
 
 
-#define GRID_O(_m) bu_offsetof(struct _grid_state, _m)
+#define GRID_O(_m) bu_offsetof(struct bv_grid_state, _m)
 struct bu_structparse grid_vparse[] = {
-    {"%d", 1, "draw",	GRID_O(gr_draw),	set_grid_draw, NULL, NULL },
-    {"%d", 1, "snap",	GRID_O(gr_snap),	grid_set_dirty_flag, NULL, NULL },
-    {"%f", 3, "anchor",	GRID_O(gr_anchor),	grid_set_dirty_flag, NULL, NULL },
-    {"%f", 1, "rh",	GRID_O(gr_res_h),	set_grid_res, NULL, NULL },
-    {"%f", 1, "rv",	GRID_O(gr_res_v),	set_grid_res, NULL, NULL },
-    {"%d", 1, "mrh",	GRID_O(gr_res_major_h),	set_grid_res, NULL, NULL },
-    {"%d", 1, "mrv",	GRID_O(gr_res_major_v),	set_grid_res, NULL, NULL },
-    {"",   0, NULL,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    {"%d", 1, "draw",	GRID_O(draw),        set_grid_draw, NULL, NULL },
+    {"%d", 1, "snap",	GRID_O(snap),        grid_set_dirty_flag, NULL, NULL },
+    {"%f", 3, "anchor",	GRID_O(anchor),      grid_set_dirty_flag, NULL, NULL },
+    {"%f", 1, "rh",	GRID_O(res_h),       set_grid_res, NULL, NULL },
+    {"%f", 1, "rv",	GRID_O(res_v),       set_grid_res, NULL, NULL },
+    {"%d", 1, "mrh",	GRID_O(res_major_h), set_grid_res, NULL, NULL },
+    {"%d", 1, "mrv",	GRID_O(res_major_v), set_grid_res, NULL, NULL },
+    {"",   0, NULL,	0,                   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -76,11 +77,14 @@ grid_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		    const char *UNUSED(value),
 		    void *UNUSED(data))
 {
-    struct dm_list *dmlp;
 
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	if (dmlp->dml_grid_state == grid_state)
-	    dmlp->dml_dirty = 1;
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (m_dmp->dm_grid_state == grid_state) {
+	    m_dmp->dm_dirty = 1;
+	    dm_set_dirty(m_dmp->dm_dmp, 1);
+	}
+    }
 }
 
 
@@ -91,24 +95,24 @@ set_grid_draw(const struct bu_structparse *sdp,
 	      const char *value,
 	      void *data)
 {
-    struct dm_list *dlp;
-
     if (DBIP == DBI_NULL) {
-	grid_state->gr_draw = 0;
+	grid_state->draw = 0;
 	return;
     }
 
     grid_set_dirty_flag(sdp, name, base, value, data);
 
     /* This gets done at most one time. */
-    if (grid_auto_size && grid_state->gr_draw) {
+    if (grid_auto_size && grid_state->draw) {
 	fastf_t res = view_state->vs_gvp->gv_size*base2local / 64.0;
 
-	grid_state->gr_res_h = res;
-	grid_state->gr_res_v = res;
-	FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	    if (dlp->dml_grid_state == grid_state)
-		dlp->dml_grid_auto_size = 0;
+	grid_state->res_h = res;
+	grid_state->res_v = res;
+	for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	    struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	    if (dlp->dm_grid_state == grid_state)
+		dlp->dm_grid_auto_size = 0;
+	}
     }
 }
 
@@ -120,14 +124,16 @@ set_grid_res(const struct bu_structparse *sdp,
 	     const char *value,
 	     void *data)
 {
-    struct dm_list *dlp;
-
     grid_set_dirty_flag(sdp, name, base, value, data);
 
-    if (grid_auto_size)
-	FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	    if (dlp->dml_grid_state == grid_state)
-		dlp->dml_grid_auto_size = 0;
+    if (!grid_auto_size)
+	return;
+
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	    if (dlp->dm_grid_state == grid_state)
+		dlp->dm_grid_auto_size = 0;
+    }
 }
 
 
@@ -151,12 +157,12 @@ draw_grid(void)
     fastf_t inv_aspect;
 
     if (DBIP == DBI_NULL ||
-	ZERO(grid_state->gr_res_h) ||
-	ZERO(grid_state->gr_res_v))
+	ZERO(grid_state->res_h) ||
+	ZERO(grid_state->res_v))
 	return;
 
-    inv_grid_res_h= 1.0 / grid_state->gr_res_h;
-    inv_grid_res_v= 1.0 / grid_state->gr_res_v;
+    inv_grid_res_h= 1.0 / grid_state->res_h;
+    inv_grid_res_v= 1.0 / grid_state->res_v;
 
     sf = view_state->vs_gvp->gv_scale*base2local;
 
@@ -165,17 +171,17 @@ draw_grid(void)
 	int width = dm_get_width(DMP);
 	fastf_t pixel_size = 2.0 * sf / (fastf_t)width;
 
-	if (grid_state->gr_res_h < pixel_size || grid_state->gr_res_v < pixel_size)
+	if (grid_state->res_h < pixel_size || grid_state->res_v < pixel_size)
 	    return;
     }
 
     inv_sf = 1.0 / sf;
     inv_aspect = 1.0 / dm_get_aspect(DMP);
 
-    nv_dots = 2.0 * inv_aspect * sf * inv_grid_res_v + (2 * grid_state->gr_res_major_v);
-    nh_dots = 2.0 * sf * inv_grid_res_h + (2 * grid_state->gr_res_major_h);
+    nv_dots = 2.0 * inv_aspect * sf * inv_grid_res_v + (2 * grid_state->res_major_v);
+    nh_dots = 2.0 * sf * inv_grid_res_h + (2 * grid_state->res_major_h);
 
-    VSCALE(model_grid_anchor, grid_state->gr_anchor, local2base);
+    VSCALE(model_grid_anchor, grid_state->anchor, local2base);
     MAT4X3PNT(view_grid_anchor, view_state->vs_gvp->gv_model2view, model_grid_anchor);
     VSCALE(view_grid_anchor_local, view_grid_anchor, sf);
 
@@ -187,11 +193,11 @@ draw_grid(void)
     {
 	int nmh, nmv;
 
-	nmh = nh / grid_state->gr_res_major_h + 1;
-	nmv = nv / grid_state->gr_res_major_v + 1;
+	nmh = nh / grid_state->res_major_h + 1;
+	nmv = nv / grid_state->res_major_v + 1;
 	VSET(view_grid_start_pt_local,
-	     view_grid_anchor_local[X] - (nmh * grid_state->gr_res_h * grid_state->gr_res_major_h),
-	     view_grid_anchor_local[Y] - (nmv * grid_state->gr_res_v * grid_state->gr_res_major_v),
+	     view_grid_anchor_local[X] - (nmh * grid_state->res_h * grid_state->res_major_h),
+	     view_grid_anchor_local[Y] - (nmv * grid_state->res_v * grid_state->res_major_v),
 	     0.0);
     }
 
@@ -202,22 +208,22 @@ draw_grid(void)
     dm_set_line_attr(DMP, 1, 0);		/* solid lines */
 
     /* draw horizontal dots */
-    for (i = 0; i < nv_dots; i += grid_state->gr_res_major_v) {
-	fy = (view_grid_start_pt_local[Y] + (i * grid_state->gr_res_v)) * inv_sf;
+    for (i = 0; i < nv_dots; i += grid_state->res_major_v) {
+	fy = (view_grid_start_pt_local[Y] + (i * grid_state->res_v)) * inv_sf;
 
 	for (j = 0; j < nh_dots; ++j) {
-	    fx = (view_grid_start_pt_local[X] + (j * grid_state->gr_res_h)) * inv_sf;
+	    fx = (view_grid_start_pt_local[X] + (j * grid_state->res_h)) * inv_sf;
 	    dm_draw_point_2d(DMP, fx, fy * dm_get_aspect(DMP));
 	}
     }
 
     /* draw vertical dots */
-    if (grid_state->gr_res_major_v != 1) {
-	for (i = 0; i < nh_dots; i += grid_state->gr_res_major_h) {
-	    fx = (view_grid_start_pt_local[X] + (i * grid_state->gr_res_h)) * inv_sf;
+    if (grid_state->res_major_v != 1) {
+	for (i = 0; i < nh_dots; i += grid_state->res_major_h) {
+	    fx = (view_grid_start_pt_local[X] + (i * grid_state->res_h)) * inv_sf;
 
 	    for (j = 0; j < nv_dots; ++j) {
-		fy = (view_grid_start_pt_local[Y] + (j * grid_state->gr_res_v)) * inv_sf;
+		fy = (view_grid_start_pt_local[Y] + (j * grid_state->res_v)) * inv_sf;
 		dm_draw_point_2d(DMP, fx, fy * dm_get_aspect(DMP));
 	    }
 	}
@@ -240,8 +246,8 @@ snap_to_grid(
     fastf_t inv_sf;
 
     if (DBIP == DBI_NULL ||
-	ZERO(grid_state->gr_res_h) ||
-	ZERO(grid_state->gr_res_v))
+	ZERO(grid_state->res_h) ||
+	ZERO(grid_state->res_v))
 	return;
 
     sf = view_state->vs_gvp->gv_scale*base2local;
@@ -250,12 +256,12 @@ snap_to_grid(
     VSET(view_pt, *mx, *my, 0.0);
     VSCALE(view_pt, view_pt, sf);  /* view_pt now in local units */
 
-    VSCALE(model_grid_anchor, grid_state->gr_anchor, local2base);
+    VSCALE(model_grid_anchor, grid_state->anchor, local2base);
     MAT4X3PNT(view_grid_anchor, view_state->vs_gvp->gv_model2view, model_grid_anchor);
     VSCALE(view_grid_anchor, view_grid_anchor, sf);  /* view_grid_anchor now in local units */
 
-    grid_units_h = (view_grid_anchor[X] - view_pt[X]) / grid_state->gr_res_h;
-    grid_units_v = (view_grid_anchor[Y] - view_pt[Y]) / grid_state->gr_res_v;
+    grid_units_h = (view_grid_anchor[X] - view_pt[X]) / grid_state->res_h;
+    grid_units_v = (view_grid_anchor[Y] - view_pt[Y]) / grid_state->res_v;
     nh = grid_units_h;
     nv = grid_units_v;
 
@@ -263,18 +269,18 @@ snap_to_grid(
     grid_units_v -= nv;		/* now contains only the fraction part */
 
     if (grid_units_h <= -0.5)
-	*mx = view_grid_anchor[X] - ((nh - 1) * grid_state->gr_res_h);
+	*mx = view_grid_anchor[X] - ((nh - 1) * grid_state->res_h);
     else if (0.5 <= grid_units_h)
-	*mx = view_grid_anchor[X] - ((nh + 1) * grid_state->gr_res_h);
+	*mx = view_grid_anchor[X] - ((nh + 1) * grid_state->res_h);
     else
-	*mx = view_grid_anchor[X] - (nh * grid_state->gr_res_h);
+	*mx = view_grid_anchor[X] - (nh * grid_state->res_h);
 
     if (grid_units_v <= -0.5)
-	*my = view_grid_anchor[Y] - ((nv - 1) * grid_state->gr_res_v);
+	*my = view_grid_anchor[Y] - ((nv - 1) * grid_state->res_v);
     else if (0.5 <= grid_units_v)
-	*my = view_grid_anchor[Y] - ((nv + 1) * grid_state->gr_res_v);
+	*my = view_grid_anchor[Y] - ((nv + 1) * grid_state->res_v);
     else
-	*my = view_grid_anchor[Y] - (nv * grid_state->gr_res_v);
+	*my = view_grid_anchor[Y] - (nv * grid_state->res_v);
 
     *mx *= inv_sf;
     *my *= inv_sf;
@@ -314,8 +320,8 @@ snap_keypoint_to_grid(void)
     bu_vls_free(&cmd);
 
     /* save model_pt in local units */
-    VMOVE(dml_work_pt, model_pt);
-    dml_mouse_dx = dml_mouse_dy = 0;
+    VMOVE(dm_work_pt, model_pt);
+    dm_mouse_dx = dm_mouse_dy = 0;
 }
 
 
@@ -338,8 +344,8 @@ snap_view_center_to_grid(void)
     VSCALE(model_pt, model_pt, base2local);
 
     /* save new center in local units */
-    VMOVE(dml_work_pt, model_pt);
-    dml_mouse_dx = dml_mouse_dy = 0;
+    VMOVE(dm_work_pt, model_pt);
+    dm_mouse_dx = dm_mouse_dy = 0;
 }
 
 
@@ -355,34 +361,34 @@ round_to_grid(fastf_t *view_dx, fastf_t *view_dy)
     int nh, nv;
 
     if (DBIP == DBI_NULL ||
-	ZERO(grid_state->gr_res_h) ||
-	ZERO(grid_state->gr_res_v))
+	ZERO(grid_state->res_h) ||
+	ZERO(grid_state->res_v))
 	return;
 
     sf = view_state->vs_gvp->gv_scale*base2local;
     inv_sf = 1 / sf;
 
     /* convert mouse distance to grid units */
-    grid_units_h = *view_dx * sf / grid_state->gr_res_h;
-    grid_units_v = *view_dy * sf /  grid_state->gr_res_v;
+    grid_units_h = *view_dx * sf / grid_state->res_h;
+    grid_units_v = *view_dy * sf /  grid_state->res_v;
     nh = grid_units_h;
     nv = grid_units_v;
     grid_units_h -= nh;
     grid_units_v -= nv;
 
     if (grid_units_h <= -0.5)
-	*view_dx = (nh - 1) * grid_state->gr_res_h;
+	*view_dx = (nh - 1) * grid_state->res_h;
     else if (0.5 <= grid_units_h)
-	*view_dx = (nh + 1) * grid_state->gr_res_h;
+	*view_dx = (nh + 1) * grid_state->res_h;
     else
-	*view_dx = nh * grid_state->gr_res_h;
+	*view_dx = nh * grid_state->res_h;
 
     if (grid_units_v <= -0.5)
-	*view_dy = (nv - 1) * grid_state->gr_res_v;
+	*view_dy = (nv - 1) * grid_state->res_v;
     else if (0.5 <= grid_units_v)
-	*view_dy = (nv + 1) * grid_state->gr_res_v;
+	*view_dy = (nv + 1) * grid_state->res_v;
     else
-	*view_dy = nv * grid_state->gr_res_v;
+	*view_dy = nv * grid_state->res_v;
 
     *view_dx *= inv_sf;
     *view_dy *= inv_sf;
@@ -396,8 +402,8 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
     point_t vcenter, diff;
 
     if (DBIP == DBI_NULL ||
-	ZERO(grid_state->gr_res_h) ||
-	ZERO(grid_state->gr_res_v))
+	ZERO(grid_state->res_h) ||
+	ZERO(grid_state->res_v))
 	return;
 
     round_to_grid(&view_dx, &view_dy);
@@ -408,7 +414,7 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
     MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
     VSUB2(diff, model_pt, vcenter);
     VSCALE(diff, diff, base2local);
-    VSUB2(model_pt, dml_work_pt, diff);
+    VSUB2(model_pt, dm_work_pt, diff);
 
     VSCALE(model_pt, model_pt, local2base);
     MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, model_pt);
@@ -419,14 +425,14 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
 void
 update_grids(fastf_t sf)
 {
-    struct dm_list *dlp;
     struct bu_vls save_result = BU_VLS_INIT_ZERO;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
-	dlp->dml_grid_state->gr_res_h *= sf;
-	dlp->dml_grid_state->gr_res_v *= sf;
-	VSCALE(dlp->dml_grid_state->gr_anchor, dlp->dml_grid_state->gr_anchor, sf);
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	dlp->dm_grid_state->res_h *= sf;
+	dlp->dm_grid_state->res_v *= sf;
+	VSCALE(dlp->dm_grid_state->anchor, dlp->dm_grid_state->anchor, sf);
     }
 
     bu_vls_strcpy(&save_result, Tcl_GetStringResult(INTERP));

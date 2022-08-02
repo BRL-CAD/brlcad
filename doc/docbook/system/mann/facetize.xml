@@ -61,7 +61,7 @@
     <para>
       Creates <emphasis>new_object</emphasis> as planar primitive shape (either an NMG or a BOT)
       approximating the 3D volume bound by <emphasis>old_object</emphasis>.  The <emphasis>-r</emphasis>
-      option will operate per-region rather than on an entire object and produces a new hiearchy.
+      option will operate per-region rather than on an entire object and produces a new hierarchy.
     </para>
     <para>
       There are a number of different verbosity levels available for the facetize command.  One or mulitple specifications
@@ -111,7 +111,7 @@
 	attempts CM conversion.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize region1.r region1.bot</userinput>
+	<prompt>mged&gt; </prompt><userinput>facetize region1.r region1.bot</userinput>
       </para>
     </example>
 
@@ -122,7 +122,7 @@
 	a new conversion hierarchy under model_facetized.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize -r model model.f</userinput>
+	<prompt>mged&gt; </prompt><userinput>facetize -r model model.f</userinput>
       </para>
     </example>
 
@@ -133,7 +133,7 @@
 	any fallback conversion methods.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize -r --NMG model model.f</userinput>
+	<prompt>mged&gt; </prompt><userinput>facetize -r --NMG model model.f</userinput>
       </para>
     </example>
 
@@ -144,10 +144,45 @@
 	conversion attempt, attempting only CM reconstruction without first retrying NMG conversion.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize -r --resume model.f</userinput>
+	<prompt>mged&gt; </prompt><userinput>facetize -r --resume model.f</userinput>
       </para>
     </example>
 
+  
+    <example>
+      <title>Increase Decimation in CM Mode</title>
+      <para>
+	<prompt>mged&gt; </prompt><userinput>facetize --CM --feature-size 0.06 --decimation-feature-size 2.0 ellipse.r ell.bot</userinput>
+	<literallayout class="normal">
+CM: completed in 16 seconds with size 0.06
+CM: completed in 23 seconds with size 0.054
+CM: timed out after 30 seconds with size 0.0486
+CM: successfully created 6960500 faces, feature size 0.054
+CM: decimation succeeded, final BoT has 104 faces
+	</literallayout>
+      </para>
+      <para>
+	The default settings on this object in CM mode will produce a little over 8000 faces in the final bot, but the addition of the <option>decimation-feature-size</option> option with a >1.5 value has dramatically reduced the count to 104.
+      </para>
+    </example>
+    
+    <example>
+      <title>Decrease Decimation in CM Mode</title>
+      <para>
+	<prompt>mged&gt; </prompt><userinput>facetize --CM --feature-size 0.06 --decimation-feature-size .01 ellipse.r ell.bot</userinput>
+	<literallayout class="normal">
+CM: completed in 16 seconds with size 0.06
+CM: completed in 23 seconds with size 0.054
+CM: timed out after 30 seconds with size 0.0486
+CM: successfully created 6960500 faces, feature size 0.054
+CM: decimation succeeded, final BoT has 247642 faces
+	</literallayout>
+      </para>
+      <para>
+	If the intent is preserve a more detailed mesh, reducing <option>decimation-feature-size</option> will keep more of the original triangles - in the above example, almost 250 thousand of the original 6.9 million faces were retained.  NOTE:  use lower values here cautiously, as extremely large meshes can be very difficult for many tools to deal with.
+      </para>
+    </example>
+        
   </refsection>
 
   <refsection xml:id="methodology">
@@ -193,7 +228,10 @@
       process its initial mesh with a decimation routine to remove triangles which are not necessary to actual
       feature representation.  This process is also feature-size based, and by default is set to 1.5x the feature size.
       However, if the user wishes to preserve more triangles than the default behavior they may manually
-      override this parameter with the <emphasis>--decimation-feature-size</emphasis> option.
+      override this parameter with the <emphasis>--decimation-feature-size</emphasis> option.  Generally
+      speaking smaller values will lead to more meshes being retained in the final output mesh, but experimentation
+      will likely be needed to zero in on desired results.  See CM examples above for an illustration using
+      the moss.g ellipsoid region.
     </para>
     <para>
       Both NMG and CM assume a geometry hierarchy containing only
@@ -215,6 +253,9 @@
     </para>
   </refsection>
 
+
+
+  
   <refsection xml:id="util">
     <title>USEFUL TRICKS</title>
     <para>
@@ -229,7 +270,7 @@
 	narrow subsets of the .g database.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>search -attr facetize:CM -exec attr rm "{}" facetize:CM ";"</userinput>
+	<prompt>mged&gt; </prompt><userinput>search -attr facetize:CM -exec attr rm "{}" facetize:CM ";"</userinput>
       </para>
     </example>
 
@@ -239,7 +280,7 @@
 	Use lint -M to report on invalid objects below a comb.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput> lint -M model.f</userinput>
+	<prompt>mged&gt; </prompt><userinput> lint -M model.f</userinput>
       </para>
     </example>
 

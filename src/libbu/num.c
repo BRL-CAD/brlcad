@@ -1,7 +1,7 @@
 /*                           N U M . C
  * BRL-CAD
  *
- * Copyright (c) 2019-2020 United States Government as represented by
+ * Copyright (c) 2019-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,9 +28,9 @@
 
 
 static size_t
-char_length(long num)
+char_length(int64_t num)
 {
-    unsigned long pos = labs(num);
+    uint64_t pos = labs((long)num);
 
     return
 	((pos < 10L) ? 1 :

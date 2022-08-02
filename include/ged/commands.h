@@ -1,7 +1,7 @@
 /*                       C O M M A N D S . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,13 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup ged_commands
+/** @addtogroup libged
  *
  * Geometry EDiting Library Commands
  *
  */
 /** @{ */
 /** @file ged/commands.h */
+/** @} */
 
 #ifndef GED_COMMANDS_H
 #define GED_COMMANDS_H
@@ -34,14 +35,77 @@
 
 __BEGIN_DECLS
 
+/** @addtogroup ged_plugins */
+/** @{ */
+/** Execute plugin based command */
+GED_EXPORT extern int ged_exec(struct ged *gedp, int argc, const char *argv[]);
+/** @} */
 
+/* LIBGED maintains this list - callers should regard it as read only.  This
+ * list will change (size and pointers to individual command strings if
+ * commands are added or removed - caller is responsible for performing a new
+ * call to get an updated list and size if commands are altered.  */
+GED_EXPORT size_t ged_cmd_list(const char * const **cmd_list);
+
+/* Report whether a string identifies a valid LIBGED command.  If func is
+ * non-NULL, check that cmd and func both refer to the same function pointer
+ * (i.e., they are aliases for the same command.)
+ *
+ * If func is NULL, a 0 return indicates an valid GED command and non-zero
+ * indicates an invalid command.
+ *
+ * If func is non-null:
+ * 0 indicates both cmd and func strings invoke the same LIBGED function
+ * 1 indicates that either or both of cmd and func were invalid GED commands
+ * 2 indicates that both were valid commands, but they did not match.
+ */
+GED_EXPORT int ged_cmd_valid(const char *cmd, const char *func);
+
+/* Given a candidate cmd name, find the closest match to it among defined
+ * GED commands.  Returns the bu_editdist distance between cmd and *ncmd
+ * (0 if they match exactly - i.e. cmd does define a command.)
+ *
+ * Useful for suggesting corrections to commands which are not found.
+ */
+GED_EXPORT extern int
+ged_cmd_lookup(const char **ncmd, const char *cmd);
+
+
+/* Given a partial command string, analyze it and return possible command
+ * completions of the seed string.  Typically this functionality is used to
+ * implement "tab completion" or "tab expansion" features in applications.  The
+ * possible completions are returned in the completions array, and the returned
+ * value is the count of possible completions found.
+ *
+ * If completions array returned is non-NULL, caller is responsible for freeing
+ * it using bu_argv_free.
+ */
+GED_EXPORT extern int
+ged_cmd_completions(const char ***completions, const char *seed);
+
+/* Given a object name or path string, analyze it and return possible
+ * object-based completions.  Typically this functionality is used to implement
+ * "tab completion" or "tab expansion" features in applications.  The possible
+ * completions are returned in the completions array, and the returned value is
+ * the count of possible completions found.
+ *
+ * If completions array returned is non-NULL, caller is responsible for freeing
+ * it using bu_argv_free.
+ */
+GED_EXPORT extern int
+ged_geom_completions(const char ***completions, struct bu_vls *cprefix, struct db_i *dbip, const char *seed);
+
+
+/** @addtogroup ged_objects */
+/** @{ */
 /**
  * Adjust object's attribute(s)
  */
 GED_EXPORT extern int ged_adjust(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Set, get, show, remove or append to attribute values for the specified object.
+ * @brief Set, get, show, remove or append to attribute values for the specified object.
+ *
  * The arguments for "set" and "append" subcommands are attribute name/value pairs.
  * The arguments for "get", "rm", and "show" subcommands are attribute names.
  * The "set" subcommand sets the specified attributes for the object.
@@ -196,6 +260,11 @@ GED_EXPORT extern int ged_mat_scale_about_pnt(struct ged *gedp, int argc, const 
 GED_EXPORT extern int ged_mater(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Apply and modify material properties to a specific object.
+ */
+GED_EXPORT extern int ged_material(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Globs expression against database objects, does not return tokens that match nothing
  */
 GED_EXPORT extern int ged_match(struct ged *gedp, int argc, const char *argv[]);
@@ -224,6 +293,11 @@ GED_EXPORT extern int ged_remove(struct ged *gedp, int argc, const char *argv[])
  * Unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output
  */
 GED_EXPORT extern int ged_unhide(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Read material properties from a file.
+ */
+GED_EXPORT extern int ged_rmater(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Write material properties to a file for specified combination(s).
@@ -283,7 +357,8 @@ GED_EXPORT extern int ged_bev(struct ged *gedp, int argc, const char *argv[]);
 
 
 /**
- * Manipulate opaque binary objects.
+ * @brief Manipulate opaque binary objects.
+ *
  * Must specify one of -i (for creating or adjusting objects (input))
  * or -o for extracting objects (output).
  * If the major type is "u" the minor type must be one of:
@@ -746,25 +821,12 @@ GED_EXPORT extern int ged_whatid(struct ged *gedp, int argc, const char *argv[])
  * Push object path transformations to solids, creating primitives if necessary
  */
 GED_EXPORT extern int ged_xpush(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_npush(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Voxelize the specified objects
  */
 GED_EXPORT extern int ged_voxelize(struct ged *gedp, int argc, const char *argv[]);
-
-
-/** defined in get_obj_bounds.c
- *
- * @todo - belongs in view?
- *
- */
-GED_EXPORT extern int ged_get_obj_bounds(struct ged *gedp,
-					 int argc,
-					 const char *argv[],
-					 int use_air,
-					 point_t rpp_min,
-					 point_t rpp_max);
-
 
 /**
  * Decompose nmg_solid into maximally connected shells
@@ -816,13 +878,36 @@ GED_EXPORT int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]
  */
 GED_EXPORT int ged_pnts(struct ged *gedp, int argc, const char *argv[]);
 
+/**
+ * Report object information.
+ */
+GED_EXPORT extern int ged_stat(struct ged *gedp, int argc, const char *argv[]);
+
+
+
+/* Debugging command for brep plotting */
+GED_EXPORT extern int ged_dplot(struct ged *gedp, int argc, const char *argv[]);
+
+
+/**
+ *
+ * DEPRECATED - use rt_obj_bounds instead
+ *
+ */
+DEPRECATED GED_EXPORT extern int ged_get_obj_bounds(struct ged *gedp,
+                                        int argc,
+                                        const char *argv[],
+                                        int use_air,
+                                        point_t rpp_min,
+                                        point_t rpp_max);
+
+/** @} */
+
 
 __END_DECLS
 
 
 #endif /* GED_COMMANDS_H */
-
-/** @} */
 
 /*
  * Local Variables:

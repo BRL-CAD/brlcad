@@ -1,7 +1,7 @@
 /*                        M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,11 @@
  */
 
 #include "common.h"
-#include "string.h"
+#include <string.h>
+
+#ifdef HAVE_WINDOWS_H
+#  include <direct.h> /* For chdir */
+#endif
 
 #include "tcl.h"
 
@@ -39,15 +43,11 @@
 #include "bu/str.h"
 #include "tclcad.h"
 
-/* avoid including itcl.h due to their usage of internal headers */
-extern int Itcl_Init(Tcl_Interp *);
-
 #define RTWIZARD_HAVE_GUI 0
 
 #define RTWIZARD_SIZE_DEFAULT 512
 
 #define RTWIZARD_MAGIC 0x72747769 /**< rtwi */
-
 
 struct rtwizard_settings {
     uint32_t magic;
@@ -401,9 +401,9 @@ int
 opt_objs(struct bu_vls *msg, size_t argc, const char **argv, void *obj_tbl)
 {
     /* argv[0] should be either an object or a list. */
-    int i = 0;
+    size_t i = 0;
     char *objs = NULL;
-    int acnum = 0;
+    size_t acnum = 0;
     char **avnum;
     struct bu_ptbl *t = (struct bu_ptbl *)obj_tbl;
 
@@ -422,7 +422,7 @@ opt_objs(struct bu_vls *msg, size_t argc, const char **argv, void *obj_tbl)
 	i++;
     }
 
-    avnum = (char **)bu_calloc(strlen(objs), sizeof(char *), "breakout array");
+    avnum = (char **)bu_calloc(strlen(objs) + 1, sizeof(char *), "breakout array");
     acnum = bu_argv_from_string(avnum, strlen(objs), objs);
 
     /* TODO - use quote/unquote routines to scrub names... */
@@ -469,9 +469,9 @@ int
 opt_quat(struct bu_vls *msg, size_t argc, const char **argv, void *inq)
 {
     size_t i = 0;
-    int acnum = 0;
+    size_t acnum = 0;
     char *str1 = NULL;
-    char *avnum[5] = {NULL, NULL, NULL, NULL, NULL};
+    char *avnum[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
 
     quat_t *q = (quat_t *)inq;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_int");
@@ -854,9 +854,8 @@ rtwizard_help(struct bu_opt_desc *d)
 	bu_vls_printf(&str, "Image Generation Options:\n%s\n", option_help);
     }
 
-    if (option_help) {
-	bu_free(option_help, "help str");
-    }
+    bu_free(option_help, "help str");
+
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);
     bu_vls_free(&filtered);
@@ -880,8 +879,8 @@ rtwizard_help_dev(struct bu_opt_desc *d)
     option_help = bu_opt_describe(d, &settings);
     if (option_help) {
 	bu_vls_printf(&str, "Options for developers:\n%s\n", option_help);
-	bu_free(option_help, "help str");
     }
+    bu_free(option_help, "help str");
 
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);
@@ -993,6 +992,15 @@ main(int argc, char **argv)
     /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
     av0 = argv[0];
+
+    /* Change the working directory to BU_DIR_HOME if we are invoking
+     * without any arguments. */
+    if (argc == 1) {
+	const char *homed = bu_dir(NULL, 0, BU_DIR_HOME, NULL);
+	if (homed && chdir(homed)) {
+	    bu_exit(1, "Failed to change working directory to \"%s\" ", homed);
+	}
+    }
 
     /* Skip first arg */
     argv++; argc--;
@@ -1113,7 +1121,7 @@ main(int argc, char **argv)
 	 * in Tcl scripts */
 	if (bu_vls_strlen(s->input_file) > 0) {
 	    Tcl_Obj *initPath, *normalPath;
-	    initPath = Tcl_NewStringObj(bu_vls_addr(s->input_file), bu_vls_strlen(s->input_file));
+	    initPath = Tcl_NewStringObj(bu_vls_addr(s->input_file), (int)bu_vls_strlen(s->input_file));
 	    Tcl_IncrRefCount(initPath);
 	    normalPath = Tcl_FSGetNormalizedPath(interp, initPath);
 	    bu_vls_sprintf(s->input_file, "%s", Tcl_GetString(normalPath));
@@ -1121,7 +1129,7 @@ main(int argc, char **argv)
 	}
 	if (bu_vls_strlen(s->output_file) > 0) {
 	    Tcl_Obj *initPath, *normalPath;
-	    initPath = Tcl_NewStringObj(bu_vls_addr(s->output_file), bu_vls_strlen(s->output_file));
+	    initPath = Tcl_NewStringObj(bu_vls_addr(s->output_file), (int)bu_vls_strlen(s->output_file));
 	    Tcl_IncrRefCount(initPath);
 	    normalPath = Tcl_FSGetNormalizedPath(interp, initPath);
 	    bu_vls_sprintf(s->output_file, "%s", Tcl_GetString(normalPath));
@@ -1140,7 +1148,7 @@ main(int argc, char **argv)
 	/* We're using this path on the file system, not in Tcl: translate it
 	 * to the appropriate form before doing the eval */
 	Tcl_DStringInit(&temp);
-	rtwizard = bu_brlcad_root("share/tclscripts/rtwizard/rtwizard", 1);
+	rtwizard = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "rtwizard", "rtwizard", NULL);
 	fullname = Tcl_TranslateFileName(interp, rtwizard, &temp);
 	status = Tcl_EvalFile(interp, fullname);
 	Tcl_DStringFree(&temp);

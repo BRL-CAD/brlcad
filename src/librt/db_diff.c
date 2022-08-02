@@ -1,7 +1,7 @@
 /*                        D B _ D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -341,7 +341,7 @@ get_diff_components(struct diff_elements *el, const struct db_i *dbip, const str
 
 	/* object type isn't a normal parameter attribute, so add it as such */
 	if (el->intern->idb_minor_type == DB5_MINORTYPE_BRLCAD_ARB8) {
-	    struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+	    struct bn_tol arb_tol = BG_TOL_INIT;
 	    bu_avs_add(el->params, "DB5_MINORTYPE", type_to_str(el->intern, rt_arb_std_type(el->intern, &arb_tol)));
 	} else {
 	    bu_avs_add(el->params, "DB5_MINORTYPE", el->intern->idb_meth->ft_label);
@@ -512,13 +512,14 @@ db_diff(const struct db_i *dbip1,
 	struct bu_ptbl *results)
 {
     int state = DIFF_EMPTY;
-    struct directory *dp1, *dp2;
+    struct directory *dp1=RT_DIR_NULL, *dp2=RT_DIR_NULL;
 
     /* look at all objects in this database */
     FOR_ALL_DIRECTORY_START(dp1, dbip1) {
-	struct bu_external ext1, ext2;
+	struct bu_external ext1 = BU_EXTERNAL_INIT_ZERO;
+	struct bu_external ext2 = BU_EXTERNAL_INIT_ZERO;
 	int extern_state = DIFF_UNCHANGED;
-	struct diff_result *result;
+	struct diff_result *result = NULL;
 	BU_GET(result, struct diff_result);
 	diff_init_result(result, diff_tol, dp1->d_namep);
 
@@ -544,8 +545,7 @@ db_diff(const struct db_i *dbip1,
 	    state |= db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_ATTRS, result);
 	}
 	if (flags == DB_COMPARE_ALL && state == DIFF_UNCHANGED && extern_state == DIFF_CHANGED) {
-	    bu_log("WARNING: internal and bu_external comparison disagree for %s and %s\n", dp1->d_namep, dp2->d_namep);
-
+	    //bu_log("WARNING: internal and bu_external comparison disagree for %s and %s\n", dp1->d_namep, dp2->d_namep);
 	}
 
 	if (results) {
@@ -882,12 +882,14 @@ db_diff3(const struct db_i *dbip_left,
 	struct bu_ptbl *results)
 {
     int state = DIFF_EMPTY;
-    struct directory *dp_ancestor, *dp_left, *dp_right;
+    struct directory *dp_ancestor=RT_DIR_NULL, *dp_left=RT_DIR_NULL, *dp_right=RT_DIR_NULL;
 
     /* Step 1: look at all objects in the ancestor database */
     FOR_ALL_DIRECTORY_START(dp_ancestor, dbip_ancestor) {
-	struct bu_external ext_left, ext_ancestor, ext_right;
-	struct diff_result *result;
+	struct bu_external ext_left = BU_EXTERNAL_INIT_ZERO;
+	struct bu_external ext_ancestor = BU_EXTERNAL_INIT_ZERO;
+	struct bu_external ext_right = BU_EXTERNAL_INIT_ZERO;
+	struct diff_result *result = NULL;
 	int ancestor_state = DIFF_EMPTY;
 	int extern_state = DIFF_UNCHANGED;
 	BU_GET(result, struct diff_result);
@@ -919,7 +921,7 @@ db_diff3(const struct db_i *dbip_left,
 	    ancestor_state |= db_diff3_dp(dbip_left, dbip_ancestor, dbip_right, dp_left, dp_ancestor, dp_right, diff3_tol, DB_COMPARE_ATTRS, result);
 	}
 	if (flags == DB_COMPARE_ALL && (ancestor_state == DIFF_UNCHANGED || ancestor_state == DIFF_EMPTY) && extern_state == DIFF_CHANGED) {
-	    bu_log("WARNING: internal and bu_external comparison disagree\n");
+	    //bu_log("WARNING: internal and bu_external comparison disagree\n");
 	}
 
 	if (results) {
@@ -965,7 +967,7 @@ db_diff3(const struct db_i *dbip_left,
 		left_state |= db_diff3_dp(dbip_left, dbip_ancestor, dbip_right, dp_left, NULL, dp_right, diff3_tol, DB_COMPARE_ATTRS, result);
 	    }
 	    if (flags == DB_COMPARE_ALL && (left_state == DIFF_UNCHANGED || left_state == DIFF_EMPTY) && extern_state == DIFF_CHANGED) {
-		bu_log("WARNING: internal and bu_external comparison disagree");
+		//bu_log("WARNING: internal and bu_external comparison disagree");
 	    }
 
 	    if (results) {

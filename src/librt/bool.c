@@ -1,7 +1,7 @@
 /*                          B O O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/defines.h"
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -140,7 +141,7 @@ bool_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *
 }
 
 
-void
+_BU_ATTR_FLATTEN void
 rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, struct application *ap)
 {
     register struct seg *segp;
@@ -252,9 +253,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    APPEND_PT(pp, PartHdp);
 	    if (RT_G_DEBUG&RT_DEBUG_PARTITION) bu_log("No partitions yet, segment forms first partition\n");
 	} else if (ap->a_no_booleans) {
-	    lastseg = segp;
 	    lasthit = &segp->seg_in;
-	    lastflip = 0;
 	    /* Just sort in ascending in-dist order */
 	    for (pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw) {
 		if (lasthit->hit_dist < pp->pt_inhit->hit_dist) {
@@ -962,8 +961,6 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	if (regp == REGION_NULL) continue;	/* empty slot in table */
 	RT_CK_REGION(regp);
 
-	code = -1;				/* For debug out in policy */
-
 	/*
 	 * Two or more regions claim this partition
 	 */
@@ -1407,7 +1404,7 @@ pop:
 }
 
 
-int
+_BU_ATTR_FLATTEN int
 rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t startdist, fastf_t enddist, struct bu_ptbl *regiontable, struct application *ap, const struct bu_bitv *solidbits)
 {
     struct region *lastregion = (struct region *)NULL;

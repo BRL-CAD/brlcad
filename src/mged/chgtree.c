@@ -1,7 +1,7 @@
 /*                       C H G T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -131,14 +131,14 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 }
 
 
-struct solid *
+struct bv_scene_obj *
 find_solid_with_path(struct db_full_path *pathp)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bv_scene_obj *sp;
     int count = 0;
-    struct solid *ret = (struct solid *)NULL;
+    struct bv_scene_obj *ret = (struct bv_scene_obj *)NULL;
 
     RT_CK_FULL_PATH(pathp);
 
@@ -146,8 +146,12 @@ find_solid_with_path(struct db_full_path *pathp)
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    if (!db_identical_full_paths(pathp, &sp->s_fullpath)) continue;
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    if (!sp->s_u_data)
+		continue;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+
+	    if (!db_identical_full_paths(pathp, &bdata->s_fullpath)) continue;
 
 	    /* Paths are the same */
 	    illum_gdlp = gdlp;
@@ -212,7 +216,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
 	    is_empty = 0;
 	    break;
 	}
@@ -247,7 +251,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     /* Patterned after ill_common() ... */
     illum_gdlp = gdlp;
-    illump = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);/* any valid solid would do */
+    illump = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);/* any valid solid would do */
     edobj = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
     MAT_IDN(modelchanges);	/* No changes yet */

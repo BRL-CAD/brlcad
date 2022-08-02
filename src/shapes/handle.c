@@ -1,7 +1,7 @@
 /*                        H A N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -202,7 +202,7 @@ main(int argc, char **argv)
 		/* START # 6 */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN - 1)) {
 		    /* START # 7 */
 		    filemged[k] = temp[j];
 		    j++;
@@ -217,7 +217,7 @@ main(int argc, char **argv)
 		/* Set up temporary character string. */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN - 1)) {
 		    /* START # 9 */
 		    temp1[k] = temp[j];
 		    j++;
@@ -233,7 +233,7 @@ main(int argc, char **argv)
 		/* Set up temporary character string. */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN - 1)) {
 		    /* START # 11 */
 		    temp1[k] = temp[j];
 		    j++;
@@ -250,7 +250,7 @@ main(int argc, char **argv)
 		/* Set up temporary character string. */
 		j = 3;
 		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN - 1)) {
 		    /* START # 13 */
 		    temp1[k] = temp[j];
 		    j++;

@@ -1,7 +1,7 @@
 /*                       P R O C E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #include <stdlib.h> /* exit */
 #include <sys/types.h>
 #include "bio.h"
+#include "bu/debug.h"
 #include "bu/file.h"
 #include "bu/list.h"
 #include "bu/malloc.h"
@@ -59,16 +60,13 @@ struct bu_process {
     FILE *fp_in;
     FILE *fp_out;
     FILE *fp_err;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    HANDLE fd_in;
-    HANDLE fd_out;
-    HANDLE fd_err;
-    HANDLE hProcess;
-    DWORD pid;
-#else
     int fd_in;
     int fd_out;
     int fd_err;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    HANDLE hProcess;
+    DWORD pid;
+#else
     int pid;
 #endif
     int aborted;
@@ -76,23 +74,28 @@ struct bu_process {
 
 
 void
-bu_process_close(struct bu_process *pinfo, int fd)
+bu_process_close(struct bu_process *pinfo, bu_process_io_t d)
 {
-    if (!pinfo) return;
-    if (fd == 0) {
-	if (!pinfo->fp_in) return;
+    if (!pinfo)
+	return;
+
+    if (d == BU_PROCESS_STDIN) {
+	if (!pinfo->fp_in)
+	    return;
 	(void)fclose(pinfo->fp_in);
 	pinfo->fp_in = NULL;
 	return;
     }
-    if (fd == 1) {
-	if (!pinfo->fp_out) return;
+    if (d == BU_PROCESS_STDOUT) {
+	if (!pinfo->fp_out)
+	    return;
 	(void)fclose(pinfo->fp_out);
 	pinfo->fp_out = NULL;
 	return;
     }
-    if (fd == 2) {
-	if (!pinfo->fp_err) return;
+    if (d == BU_PROCESS_STDERR) {
+	if (!pinfo->fp_err)
+	    return;
 	(void)fclose(pinfo->fp_err);
 	pinfo->fp_err = NULL;
 	return;
@@ -101,34 +104,23 @@ bu_process_close(struct bu_process *pinfo, int fd)
 
 
 FILE *
-bu_process_open(struct bu_process *pinfo, int fd)
+bu_process_open(struct bu_process *pinfo, bu_process_io_t d)
 {
-    if (!pinfo) return NULL;
+    if (!pinfo)
+	return NULL;
 
-    bu_process_close(pinfo, fd);
+    bu_process_close(pinfo, d);
 
-    if (fd == 0) {
-#ifndef _WIN32
+    if (d == BU_PROCESS_STDIN) {
 	pinfo->fp_in = fdopen(pinfo->fd_in, "wb");
-#else
-	pinfo->fp_in = _fdopen(_open_osfhandle((intptr_t)pinfo->fd_in, _O_TEXT), "wb");
-#endif
 	return pinfo->fp_in;
     }
-    if (fd == 1) {
-#ifndef _WIN32
+    if (d == BU_PROCESS_STDOUT) {
 	pinfo->fp_out = fdopen(pinfo->fd_out, "rb");
-#else
-	pinfo->fp_out = _fdopen(_open_osfhandle((intptr_t)pinfo->fd_out, _O_TEXT), "rb");
-#endif
 	return pinfo->fp_out;
     }
-    if (fd == 2) {
-#ifndef _WIN32
+    if (d == BU_PROCESS_STDERR) {
 	pinfo->fp_err = fdopen(pinfo->fd_err, "rb");
-#else
-	pinfo->fp_err = _fdopen(_open_osfhandle((intptr_t)pinfo->fd_err, _O_TEXT), "rb");
-#endif
 	return pinfo->fp_err;
     }
 
@@ -136,27 +128,28 @@ bu_process_open(struct bu_process *pinfo, int fd)
 }
 
 
-void *
-bu_process_fd(struct bu_process *pinfo, int fd)
+int
+bu_process_fileno(struct bu_process *pinfo, bu_process_io_t d)
 {
-    if (!pinfo || (fd < 0 || fd > 2)) return NULL;
-    if (fd == 0) {
-	return (void *)(&(pinfo->fd_in));
-    }
-    if (fd == 1) {
-	return (void *)(&(pinfo->fd_out));
-    }
-    if (fd == 2) {
-	return (void *)(&(pinfo->fd_err));
-    }
-    return NULL;
+    if (!pinfo)
+	return -1;
+
+    if (d == BU_PROCESS_STDIN)
+	return pinfo->fd_in;
+    if (d == BU_PROCESS_STDOUT)
+	return pinfo->fd_out;
+    if (d == BU_PROCESS_STDERR)
+	return pinfo->fd_err;
+
+    return -1;
 }
 
 
 int
 bu_process_pid(struct bu_process *pinfo)
 {
-    if (!pinfo) return -1;
+    if (!pinfo)
+	return -1;
     return (int)pinfo->pid;
 }
 
@@ -164,52 +157,38 @@ bu_process_pid(struct bu_process *pinfo)
 int
 bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo)
 {
-    if (!pinfo) return 0;
-    if (cmd) {
+    if (!pinfo)
+	return 0;
+
+    if (cmd)
 	*cmd = pinfo->cmd;
-    }
-    if (argv) {
+    if (argv)
 	*argv = (const char * const *)(pinfo->argv);
-    }
+
     return pinfo->argc;
 }
 
 
 int
-bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n)
+bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n)
 {
     int ret = 1;
-    if (!pinfo || !buff || !n || !count || (fd < 1 || fd > 2)) return -1;
-    if (fd == 1) {
-#ifndef _WIN32
+    if (!pinfo || !buff || !n || !count)
+	return -1;
+
+    if (d == BU_PROCESS_STDOUT) {
 	(*count) = read((int)pinfo->fd_out, buff, n);
 	if ((*count) <= 0) {
 	    ret = -1;
 	}
-#else
-	DWORD dcount;
-	BOOL rf = ReadFile(pinfo->fd_out, buff, n, &dcount, 0);
-	if (!rf || (rf && dcount == 0)) {
-	    ret = -1;
-	}
-	(*count) = (int)dcount;
-#endif
     }
-    if (fd == 2) {
-#ifndef _WIN32
+    if (d == BU_PROCESS_STDERR) {
 	(*count) = read((int)pinfo->fd_err, buff, n);
 	if ((*count) <= 0) {
 	    ret = -1;
 	}
-#else
-	DWORD dcount;
-	BOOL rf = ReadFile(pinfo->fd_err, buff, n, &dcount, 0);
-	if (!rf || (rf && dcount == 0)) {
-	    ret = -1;
-	}
-	(*count) = (int)dcount;
-#endif
     }
+
     /* sanity clamping */
     if ((*count) < 0) {
 	perror("READ ERROR");
@@ -240,14 +219,17 @@ bu_process_exec(
     int pipe_out[2];
     int pipe_err[2];
     const char **av = NULL;
-    if (!p || !cmd) {
+
+    if (!p || !cmd)
 	return;
-    }
 
     BU_GET(*p, struct bu_process);
     (*p)->fp_in = NULL;
     (*p)->fp_out = NULL;
     (*p)->fp_err = NULL;
+    (*p)->fd_in = -1;
+    (*p)->fd_out = -1;
+    (*p)->fd_err = -1;
 
     av = (const char **)bu_calloc(argc+2, sizeof(char *), "argv array");
     if (!argc || !BU_STR_EQUAL(cmd, argv[0])) {
@@ -293,23 +275,24 @@ bu_process_exec(
 
     /* fork + exec */
     if ((pid = fork()) == 0) {
+	int d1, d2, d3;
 	/* make this a process group leader */
 	setpgid(0, 0);
 
 	/* Redirect stdin and stderr */
-	(void)close(0);
-	pret = dup(pipe_in[0]);
-	if (pret < 0) {
+	(void)close(BU_PROCESS_STDIN);
+	d1 = dup(pipe_in[0]);
+	if (d1 < 0) {
 	    perror("dup");
 	}
-	(void)close(1);
-	pret = dup(pipe_out[1]);
-	if (pret < 0) {
+	(void)close(BU_PROCESS_STDOUT);
+	d2 = dup(pipe_out[1]);
+	if (d2 < 0) {
 	    perror("dup");
 	}
-	(void)close(2);
-	pret = dup(pipe_err[1]);
-	if (pret < 0) {
+	(void)close(BU_PROCESS_STDERR);
+	d3 = dup(pipe_err[1]);
+	if (d3 < 0) {
 	    perror("dup");
 	}
 
@@ -321,12 +304,21 @@ bu_process_exec(
 	(void)close(pipe_err[0]);
 	(void)close(pipe_err[1]);
 
+	// TODO - should we be doing this for more than 20? See
+	// https://docs.fedoraproject.org/en-US/Fedora_Security_Team/1/html/Defensive_Coding/sect-Defensive_Coding-Tasks-Descriptors-Child_Processes.html
 	for (int i = 3; i < 20; i++) {
 	    (void)close(i);
 	}
 
 	(void)execvp(cmd, (char * const*)av);
 	perror(cmd);
+#if 0
+	// TODO - do we need to close the dup handles?
+	fflush(NULL);
+	close(d1);
+	close(d2);
+	close(d3);
+#endif
 	exit(16);
     }
 
@@ -352,14 +344,17 @@ bu_process_exec(
     STARTUPINFO si = {0};
     PROCESS_INFORMATION pi = {0};
     SECURITY_ATTRIBUTES sa = {0};
-    if (!cmd || !argc || !argv) {
+
+    if (!cmd || !argc || !argv)
 	return;
-    }
 
     BU_GET(*p, struct bu_process);
     (*p)->fp_in = NULL;
     (*p)->fp_out = NULL;
     (*p)->fp_err = NULL;
+    (*p)->fd_in = -1;
+    (*p)->fd_out = -1;
+    (*p)->fd_err = -1;
 
     (*p)->cmd = bu_strdup(cmd);
     (*p)->argc = argc;
@@ -443,14 +438,18 @@ bu_process_exec(
     CloseHandle(pipe_out[1]);
     CloseHandle(pipe_err[1]);
 
-    /* Save necessary information for parental process manipulation */
-    (*p)->fd_in = pipe_inDup;
+    /* Save necessary information for parental process manipulation.
+     * Switching from HANDLE to file descriptor so the rest of the code can be
+     * consistent - see
+     * https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/open-osfhandle
+     */
+    (*p)->fd_in = _open_osfhandle((intptr_t)pipe_inDup, 0);
     if (out_eql_err) {
-	(*p)->fd_out = pipe_errDup;
+	(*p)->fd_out = _open_osfhandle((intptr_t)pipe_errDup, 0);
     } else {
-	(*p)->fd_out = pipe_outDup;
+	(*p)->fd_out = _open_osfhandle((intptr_t)pipe_outDup, 0);
     }
-    (*p)->fd_err = pipe_errDup;
+    (*p)->fd_err = _open_osfhandle((intptr_t)pipe_errDup, 0);
     (*p)->hProcess = pi.hProcess;
     (*p)->pid = pi.dwProcessId;
     (*p)->aborted = 0;
@@ -472,17 +471,24 @@ bu_process_wait(
 #ifndef _WIN32
     int rpid;
     int retcode = 0;
-    if (!pinfo) return -1;
+
+    if (!pinfo)
+	return -1;
+
+    close(pinfo->fd_in);
     close(pinfo->fd_out);
     close(pinfo->fd_err);
-    while ((rpid = wait(&retcode)) != pinfo->pid && rpid != -1);
+
+    while ((rpid = wait(&retcode)) != pinfo->pid && rpid != -1) {
+    }
     rc = retcode;
     if (rc) {
 	pinfo->aborted = 1;
     }
 #else
     DWORD retcode = 0;
-    if (!pinfo) return -1;
+    if (!pinfo)
+	return -1;
 
     /* wait for the forked process */
     if (wtime > 0) {
@@ -505,18 +511,15 @@ bu_process_wait(
     }
 
     /* Clean up */
-    bu_process_close(pinfo, 1);
-    bu_process_close(pinfo, 2);
+    bu_process_close(pinfo, BU_PROCESS_STDOUT);
+    bu_process_close(pinfo, BU_PROCESS_STDERR);
 
     /* Free copy of exec args */
-    if (pinfo->cmd) {
-	bu_free((void *)pinfo->cmd, "pinfo cmd copy");
-    }
+    bu_free((void *)pinfo->cmd, "pinfo cmd copy");
+
     if (pinfo->argv) {
 	for (int i = 0; i < pinfo->argc; i++) {
-	    if (pinfo->argv[i]) {
-		bu_free((void *)pinfo->argv[i], "pinfo argv member");
-	    }
+	    bu_free((void *)pinfo->argv[i], "pinfo argv member");
 	}
 	bu_free((void *)pinfo->argv, "pinfo argv array");
     }
@@ -525,6 +528,96 @@ bu_process_wait(
     return rc;
 }
 
+
+#include <time.h>
+#ifdef HAVE_POLL_H
+#  include <poll.h>
+#endif
+#ifdef HAVE_SYS_SELECT_H
+#  include <sys/select.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
+
+int
+bu_interactive()
+{
+    int interactive = 1;
+
+#if !defined(_WIN32) || defined(__CYGWIN__)
+    fd_set read_set;
+    fd_set exception_set;
+    int result;
+#endif
+
+
+#if defined(_WIN32) && !defined(CYGWIN)
+    if(!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
+	interactive = 0;
+#else
+    struct timeval timeout;
+
+    /* wait 1/10sec for input, in case we're piped */
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 100000;
+
+    /* check if there is data on stdin, first relying on whether
+     * there is standard input pending, second on whether there's
+     * a controlling terminal (isatty).
+     */
+    FD_ZERO(&read_set);
+    FD_SET(fileno(stdin), &read_set);
+    result = select(fileno(stdin)+1, &read_set, NULL, NULL, &timeout);
+    if (bu_debug > 0)
+	fprintf(stdout, "DEBUG: select result: %d, stdin read: %d\n", result, FD_ISSET(fileno(stdin), &read_set));
+
+    if (result == 0) {
+	if (!isatty(fileno(stdin)) || !isatty(fileno(stdout))) {
+	    interactive = 0;
+	}
+    } else if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
+	/* stdin pending, probably not interactive */
+	interactive = 0;
+
+	/* check if there's an out-of-bounds exception.  sometimes
+	 * the case if mged -c is started via desktop GUI.
+	 */
+	FD_ZERO(&exception_set);
+	FD_SET(fileno(stdin), &exception_set);
+	result = select(fileno(stdin)+1, NULL, NULL, &exception_set, &timeout);
+	if (bu_debug > 0)
+	    fprintf(stdout, "DEBUG: select result: %d, stdin exception: %d\n", result, FD_ISSET(fileno(stdin), &exception_set));
+
+	/* see if there's valid input waiting (more reliable than select) */
+	if (result > 0 && FD_ISSET(fileno(stdin), &exception_set)) {
+#ifdef HAVE_POLL_H
+	    struct pollfd pfd;
+	    pfd.fd = fileno(stdin);
+	    pfd.events = POLLIN;
+	    pfd.revents = 0;
+
+	    result = poll(&pfd, 1, 100);
+	    if (bu_debug > 0)
+		fprintf(stdout, "DEBUG: poll result: %d, revents: %d\n", result, pfd.revents);
+
+	    if (pfd.revents & POLLNVAL) {
+		interactive = 1;
+	    }
+#else
+	    /* just in case we get input too quickly, see if it's coming from a tty */
+	    if (isatty(fileno(stdin))) {
+		interactive = 1;
+	    }
+#endif /* HAVE_POLL_H */
+
+	}
+
+    } /* read_set */
+#endif
+
+    return interactive;
+}
 
 /*
  * Local Variables:

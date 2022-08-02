@@ -1,7 +1,7 @@
 /*                       B W S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -356,7 +356,7 @@ get_args(int argc, char **argv)
     /* XXX - backward compatibility hack */
     if (bu_optind+5 == argc) {
 	file_name = argv[bu_optind++];
-	if ((buffp = fopen(file_name, "r")) == NULL) {
+	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("bwscale: cannot open \"%s\" for reading\n",file_name);
 	    return 0;
 	}
@@ -377,7 +377,7 @@ get_args(int argc, char **argv)
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((buffp = fopen(file_name, "r")) == NULL) {
+	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("bwscale: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}
@@ -395,6 +395,9 @@ main(int argc, char **argv)
     int i;
 
     bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (!get_args(argc, argv) || isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);

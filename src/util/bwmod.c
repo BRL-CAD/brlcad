@@ -1,7 +1,7 @@
 /*                         B W M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -387,7 +387,7 @@ main(int argc, char **argv)
 	mk_trans_tbl();
     }
 
-    while ((n = read(0, (void *)ibuf, (unsigned)sizeof(ibuf))) > 0) {
+    while ((n = read(fileno(stdin), (void *)ibuf, (unsigned)sizeof(ibuf))) > 0) {
 	/* translate */
 	for (p = ibuf, q = &ibuf[n]; p < q; ++p) {
 	    long i = *p;
@@ -410,7 +410,7 @@ main(int argc, char **argv)
 	    }
 	}
 	/* output */
-	if (write(1, (void *)ibuf, (unsigned)n) != n) {
+	if (write(fileno(stdout), (void *)ibuf, (unsigned)n) != n) {
 	    fprintf(stderr, "%s: Error writing stdout\n",
 		    progname);
 	    bu_exit(-1, NULL);

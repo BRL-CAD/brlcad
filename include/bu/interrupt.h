@@ -1,7 +1,7 @@
 /*                    I N T E R R U P T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup bu_interrupt
+/** @addtogroup bu_env
  *
  * @brief Routines for managing signals.
  *

@@ -1,7 +1,7 @@
 /*                         Q R A Y . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -79,7 +79,7 @@ extern char qray_effects;
 extern int qray_cmd_echo;
 extern struct qray_fmt *qray_fmts;
 
-extern void qray_data_to_vlist(struct bn_vlblock *vbp, struct qray_dataList *headp, fastf_t *dir, int do_overlaps);
+extern void qray_data_to_vlist(struct bv_vlblock *vbp, struct qray_dataList *headp, fastf_t *dir, int do_overlaps);
 #endif
 
 /*

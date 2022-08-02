@@ -1,7 +1,7 @@
 /*                      C O M B . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,7 +83,8 @@ Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape, STEPe
     pshape->name_("''");
     pshape->description_("'Comb shape definition'");
     SdaiCharacterized_product_definition *cpd = new SdaiCharacterized_product_definition(prod_def);
-    pshape->definition_(new SdaiCharacterized_definition(cpd));
+    SdaiCharacterized_definition *cd = new SdaiCharacterized_definition(cpd);
+    pshape->definition_(cd);
 
     // SHAPE_DEFINITION_REPRESENTATION
     SdaiShape_definition_representation *shape_def_rep = (SdaiShape_definition_representation*)sc->registry->ObjCreate("SHAPE_DEFINITION_REPRESENTATION");
@@ -98,6 +99,9 @@ Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape, STEPe
 
     (*product) = (STEPentity *)prod_def;
     (*shape) = (STEPentity *)shape_rep;
+
+    delete cd;
+    delete cpd;
 }
 
 HIDDEN union tree *

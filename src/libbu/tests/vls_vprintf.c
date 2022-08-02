@@ -1,7 +1,7 @@
 /*                    V L S _ V P R I N T F. C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -99,7 +99,7 @@ check_format_chars(void)
 {
     int status = BRLCAD_OK; /* assume okay */
     int i, cflags;
-    vflags_t f;
+    vflags_t f = VFLAGS_INIT_ZERO;
 
     for (i = 0; i < 255; ++i) {
 	unsigned char c = (unsigned char)i;
@@ -142,7 +142,10 @@ main(int argc, char *argv[])
     int p = 0;
     const char *word = "Lawyer";
 
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     if (argc < 2) {
 	fprintf(stderr, "Usage: %s {test_num}\n", argv[0]);
@@ -230,10 +233,10 @@ main(int argc, char *argv[])
 	    f = p = 2;
 	    return vls_vs_sys("|%-*.*s|%*.*s|", f, p, "t", f, p, "t");
 	case 35:
-	    f = p = 2;
+	    f = 2;
 	    return vls_vs_sys("|%*s|%-*s|", f, "test", f, "test");
 	case 36:
-	    f = p = 2;
+	    f = 2;
 	    return vls_vs_sys("|%*s|%-*s|", f, word, f, word);
 	    /* min field width; max string length ('precision'); string */
 	case 37:
@@ -258,7 +261,7 @@ main(int argc, char *argv[])
 	    return vls_vs_sys("%*.*s", f, p, word);
 	case 42:
 	    /* mged bug at rev 48989 */
-	    f = 8; p = 0;
+	    f = 8;
 	    printf("fw=%d, '%s': '%%%ds'\n", f, word, f);
 	    return vls_vs_sys("%*s", f, word);
 	    /* same but left justify */

@@ -2,7 +2,7 @@
 #                   F L A W F I N D E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2020 United States Government as represented by
+# Copyright (c) 2010-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,7 @@ if test "x`env python -V 2>&1 | awk '{print $1}'`" != "xPython" ; then
     exit 0
 fi
 
-SRCFILES="`find src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libbu/realpath_bsd.c.*'`"
+SRCFILES="`find $PATH_TO_THIS/../src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libbu/realpath_bsd.c.*' -not -regex '.*tinygltf.*'`"
 run ${PATH_TO_THIS}/../misc/flawfinder --context --followdotdir --minlevel=5 --singleline --neverignore --falsepositive --quiet ${SRCFILES} | grep -v running
 
 NUMBER_WRONG=0
@@ -70,6 +70,7 @@ if test "x$NUMBER_WRONG" = "x0" ; then
     log "-> flawfinder.sh succeeded"
 else
     log "-> flawfinder.sh FAILED, see $LOGFILE"
+    cat "$LOGFILE"
 fi
 
 exit $NUMBER_WRONG

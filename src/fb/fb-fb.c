@@ -1,7 +1,7 @@
 /*                         F B - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2020 United States Government as represented by
+ * Copyright (c) 1991-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,8 @@
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
-#include "fb.h"
+#include "bu/malloc.h"
+#include "dm.h"
 
 
 static int verbose;
@@ -88,11 +89,11 @@ int
 main(int argc, char **argv)
 {
     int y;
-    fb *in_fbp, *out_fbp;
+    struct fb *in_fbp, *out_fbp;
     int n, m;
     int height;
 
-    unsigned char *scanline;    /* 1 scanline pixel buffer */
+    unsigned char *scanline = NULL;    /* 1 scanline pixel buffer */
     int scanbytes;              /* # of bytes of scanline */
     int scanpix;                /* # of pixels of scanline */
     int streamline;             /* # scanlines to do at once */
@@ -159,6 +160,8 @@ main(int argc, char **argv)
     }
     fb_close(in_fbp);
     fb_close(out_fbp);
+    if (scanline)
+	bu_free(scanline, "scanline");
     return 0;
 }
 

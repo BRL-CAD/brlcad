@@ -1,7 +1,7 @@
 /*                           E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -667,6 +667,7 @@ rt_ell_16pnts(fastf_t *ov,
 }
 
 struct ell_draw_configuration {
+    struct bu_list *vlfree;
     struct bu_list *vhead;
     vect_t ell_center;
     vect_t ell_axis_vector_a;
@@ -748,7 +749,7 @@ draw_cross_sections_along_ell_vector(struct ell_draw_configuration config)
 		cross_section.ellipsoid_travel_axis_position / ell_t_mag);
 	VADD2(cross_section.translation, cross_section.translation, config.ell_center);
 
-	plot_ellipse(config.vhead, cross_section.translation, cross_section.a,
+	plot_ellipse(config.vlfree, config.vhead, cross_section.translation, cross_section.a,
 		     cross_section.b, points_per_section);
     }
 }
@@ -757,7 +758,7 @@ draw_cross_sections_along_ell_vector(struct ell_draw_configuration config)
 static int
 ell_ellipse_points(
 	const struct rt_ell_internal *ell,
-	const struct rt_view_info *info)
+	fastf_t point_spacing)
 {
     fastf_t avg_radius, avg_circumference;
     fastf_t ell_mag_a, ell_mag_b, ell_mag_c;
@@ -769,31 +770,35 @@ ell_ellipse_points(
     avg_radius = (ell_mag_a + ell_mag_b + ell_mag_c) / 3.0;
     avg_circumference = M_2PI * avg_radius;
 
-    return avg_circumference / info->point_spacing;
+    return avg_circumference / point_spacing;
 }
 
 int
-rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_ell_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     struct ell_draw_configuration config;
     struct rt_ell_internal *eip;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
-    config.vhead = info->vhead;
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
+
+    config.vlfree = vlfree;
+    config.vhead = vhead;
     VMOVE(config.ell_center, eip->v);
 
-    config.points_per_section = ell_ellipse_points(eip, info);
+    config.points_per_section = ell_ellipse_points(eip, point_spacing);
 
     if (config.points_per_section < 4) {
-	RT_ADD_VLIST(info->vhead, eip->v, BN_VLIST_POINT_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, eip->v, BV_VLIST_POINT_DRAW);
 	return 0;
     }
 
-    config.num_cross_sections = primitive_curve_count(ip, info);
+    config.num_cross_sections = primitive_curve_count(ip, tol, v->gv_s->curve_scale, s_size);
 
     VMOVE(config.ell_travel_vector, eip->a);
     VMOVE(config.ell_axis_vector_a, eip->b);
@@ -816,7 +821,7 @@ rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 }
 
 int
-rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     register int i;
     struct rt_ell_internal *eip;
@@ -826,6 +831,7 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
@@ -833,19 +839,19 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     rt_ell_16pnts(bottom, eip->v, eip->b, eip->c);
     rt_ell_16pnts(middle, eip->v, eip->a, eip->c);
 
-    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &middle[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &middle[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     return 0;
@@ -1290,7 +1296,7 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     eip->magic = RT_ELL_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    flip_fastf_float(vec, rp->s.s_values, 4, dbip->dbi_version < 0 ? 1 : 0);
+    flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->dbi_version < 0) ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1523,7 +1529,6 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     fastf_t magsq_a, magsq_b, magsq_c;
     fastf_t f;
     register int i;
-    fastf_t radius;
     struct rt_ell_internal *eip;
     struct vertex *verts[8];
     struct vertex **vertp[4];
@@ -1547,11 +1552,14 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     }
 
     /* Create unit length versions of A, B, C */
-    invAlen = 1.0/(Alen = sqrt(magsq_a));
+    Alen = sqrt(magsq_a);
+    Blen = sqrt(magsq_b);
+    Clen = sqrt(magsq_c);
+    invAlen = 1.0/Alen;
     VSCALE(Au, eip->a, invAlen);
-    invBlen = 1.0/(Blen = sqrt(magsq_b));
+    invBlen = 1.0/Blen;
     VSCALE(Bu, eip->b, invBlen);
-    invClen = 1.0/(Clen = sqrt(magsq_c));
+    invClen = 1.0/Clen;
     VSCALE(Cu, eip->c, invClen);
 
     /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
@@ -1601,13 +1609,6 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
     /* invRoS, for converting normals from unit sphere to model */
     bn_mat_mul(invRoS, invR, S);
-
-    /* Compute radius of bounding sphere */
-    radius = Alen;
-    if (Blen > radius)
-	radius = Blen;
-    if (Clen > radius)
-	radius = Clen;
 
     MAT_IDN(xlate);
     MAT_DELTAS_VEC(xlate, eip->v);
@@ -1961,6 +1962,47 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     default:
 	bu_log("rt_ell_surf_area(): triaxial ellipsoid, cannot find surface area");
     }
+}
+
+void
+rt_ell_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!ps || !ip)
+	return;
+
+    struct rt_ell_internal *ell = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
+
+    // Set up the containers
+    struct bv_label *l[4];
+    for (int i = 0; i < 4; i++) {
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
+	struct bv_label *la;
+	BU_GET(la, struct bv_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+    }
+
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, ell->v);
+
+    bu_vls_sprintf(&l[1]->label, "A");
+    VADD2(l[1]->p, ell->v, ell->a);
+
+    bu_vls_sprintf(&l[2]->label, "B");
+    VADD2(l[2]->p, ell->v, ell->b);
+
+    bu_vls_sprintf(&l[3]->label, "C");
+    VADD2(l[3]->p, ell->v, ell->c);
+
 }
 
 

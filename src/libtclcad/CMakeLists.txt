@@ -1,49 +1,104 @@
-# Include directories needed by libtclcad users
-set(TCLCAD_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${DM_INCLUDE_DIRS}
-  ${NMG_INCLUDE_DIRS}
-  ${FB_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  ${BN_INCLUDE_DIRS}
-  ${BU_INCLUDE_DIRS}
-  ${TCL_INCLUDE_PATH}
-  ${TK_INCLUDE_PATH}
-  )
-
-# Include directories only needed by the implementation
-set(TCLCAD_LOCAL_INCLUDE_DIRS
-  ${PNG_INCLUDE_DIRS}
-  )
-
-BRLCAD_LIB_INCLUDE_DIRS(tclcad TCLCAD_INCLUDE_DIRS TCLCAD_LOCAL_INCLUDE_DIRS)
-
-if(BRLCAD_ENABLE_X11)
-  set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${X11_LIBRARIES})
-endif(BRLCAD_ENABLE_X11)
-
 set(LIBTCLCAD_SRCS
-  libfuncs.c
-  tclcad.c
-  tclcadAutoPath.c
-  tclcad_obj.c
-  tclcad_eval.c
-  tclcad_init.c
+  auto_path.c
+  bn.c
+  bu.c
+  command_io.cpp
+  commands.c
+  cmdhist.c
+  dm.c
+  eval.c
+  fb.c
+  fbserv.c
+  global.c
+  init.c
+  mouse.c
+  polygons.c
+  rt.c
   tkImgFmtPIX.c
-  cmdhist_obj.c
+  view/arrows.c
+  view/autoview.c
+  view/axes.c
+  view/draw.c
+  view/faceplate.c
+  view/labels.c
+  view/lines.c
+  view/refresh.c
+  view/util.c
+  wrapper.c
   )
-set_property(SOURCE tclcad_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged;libdm;libfb;libnmg;libbn;libbu;${TCL_LIBRARY};${TK_LIBRARY};${ITCL_LIBRARY};${ITK_LIBRARY};${TCLCAD_XLIBS}")
-set_target_properties(libtclcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
-if (TARGET itcl_pkgIndex)
-  add_dependencies(libtclcad itcl_pkgIndex)
-endif (TARGET itcl_pkgIndex)
-if (TARGET itk_pkgIndex)
-  add_dependencies(libtclcad itk_pkgIndex)
-endif (TARGET itk_pkgIndex)
 
-set(tclcad_ignore_files tclcad_private.h)
+if (BRLCAD_ENABLE_TCL)
+
+  # Include directories needed by libtclcad users
+  set(TCLCAD_INCLUDE_DIRS
+    ${BRLCAD_BINARY_DIR}/include
+    ${BRLCAD_SOURCE_DIR}/include
+    ${DM_INCLUDE_DIRS}
+    ${NMG_INCLUDE_DIRS}
+    ${FB_INCLUDE_DIRS}
+    ${GED_INCLUDE_DIRS}
+    ${BN_INCLUDE_DIRS}
+    ${BU_INCLUDE_DIRS}
+    ${TCL_INCLUDE_PATH}
+    )
+
+  if (TK_INCLUDE_PATH)
+    set(TCLCAD_INCLUDE_DIRS ${TCLCAD_INCLUDE_DIRS} ${TK_INCLUDE_PATH} ${X11_INCLUDE_DIR})
+  endif (TK_INCLUDE_PATH)
+
+  # Include directories only needed by the implementation
+  set(TCLCAD_LOCAL_INCLUDE_DIRS
+    ${PNG_INCLUDE_DIRS}
+    )
+
+
+  if(BRLCAD_ENABLE_X11)
+    set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${X11_LIBRARIES})
+  endif(BRLCAD_ENABLE_X11)
+
+  BRLCAD_LIB_INCLUDE_DIRS(tclcad TCLCAD_INCLUDE_DIRS TCLCAD_LOCAL_INCLUDE_DIRS)
+
+  set(TCLCAD_LIBS
+    libged
+    libdm
+    libnmg
+    libbg
+    libbv
+    libbn
+    libbu
+    ${TCL_LIBRARY}
+    ${TCLCAD_XLIBS}
+    )
+  if (TK_LIBRARY)
+    set(TCLCAD_LIBS ${TCLCAD_LIBS} ${TK_LIBRARY})
+  endif (TK_LIBRARY)
+
+  BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "${TCLCAD_LIBS}")
+  set_target_properties(libtclcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
+  if (TARGET itcl_pkgIndex)
+    add_dependencies(libtclcad itcl_pkgIndex)
+  endif (TARGET itcl_pkgIndex)
+  if (TARGET itk_pkgIndex)
+    add_dependencies(libtclcad itk_pkgIndex)
+  endif (TARGET itk_pkgIndex)
+
+  # For anyone to do anything with tclcad, we need the libged plugins
+  add_dependencies(libtclcad ged_plugins)
+
+  set(STAGE_TGTS tcl_stage tk_stage itcl_stage itk_stage iwidgets_stage)
+  foreach(tgt ${STAGE_TGTS})
+    if (TARGET ${tgt})
+      add_dependencies(libtclcad ${tgt})
+    endif (TARGET ${tgt})
+  endforeach(tgt ${STAGE_TGTS})
+
+endif (BRLCAD_ENABLE_TCL)
+
+set(tclcad_ignore_files
+  ${LIBTCLCAD_SRCS}
+  tclcad_private.h
+  view/view.h
+  )
 CMAKEFILES(${tclcad_ignore_files})
 CMAKEFILES(CMakeLists.txt)
 

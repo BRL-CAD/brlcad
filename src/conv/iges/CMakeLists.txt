@@ -5,7 +5,7 @@ set(IGES_INCLUDE_DIRS
   ${WDB_INCLUDE_DIRS}
   )
 list(REMOVE_DUPLICATES IGES_INCLUDE_DIRS)
-include_directories(${IGES_INCLUDE_DIRS})
+BRLCAD_INCLUDE_DIRS(IGES_INCLUDE_DIRS)
 
 #add_executable(iges
 #    BrepHandler.cpp
@@ -85,9 +85,9 @@ set(iges-g_SRCS
   usage.c
   wedge.c
   )
-BRLCAD_ADDEXEC(iges-g "${iges-g_SRCS}" "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}")
+BRLCAD_ADDEXEC(iges-g "${iges-g_SRCS}" "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
 
-BRLCAD_ADDEXEC(g-iges "g-iges.c;iges.c" "librt;libnmg;libbu;${M_LIBRARY}")
+BRLCAD_ADDEXEC(g-iges "g-iges.c;iges.c" "librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
 
 set(iges_ignore_files
   BrepHandler.cpp

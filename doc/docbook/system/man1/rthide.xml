@@ -1,246 +1,253 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- lifted from troff+man by doclifter -->
 <refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rthide1'>
-<refmeta>
+  <refmeta>
     <refentrytitle>RTHIDE
-</refentrytitle>
-<manvolnum>1</manvolnum>
-<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
-</refmeta>
+    </refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+  </refmeta>
 
-<refnamediv>
-<refname>rthide</refname>
-<refpurpose> ray-traces a model and writes a hidden line removed UNIX-Plot file.</refpurpose>
-</refnamediv>
-<!-- body begins here -->
-<refsynopsisdiv xml:id='synopsis'>
-<cmdsynopsis>
-  <command>rthide</command>
-    <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
-    <arg choice='plain'><replaceable>model.g</replaceable></arg>
-    <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
+  <refnamediv>
+    <refname>rthide</refname>
+    <refpurpose> ray-traces a model and writes a hidden line removed
+    UNIX-Plot file.</refpurpose>
+  </refnamediv>
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id='synopsis'>
+    <cmdsynopsis>
+      <command>rthide</command>
+      <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
+      <arg choice='plain'><replaceable>model.g</replaceable></arg>
+      <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
 
-    <arg choice='plain'>&gt;</arg>
-    <arg choice='plain'><replaceable>model.plot3</replaceable></arg>
-</cmdsynopsis>
-</refsynopsisdiv>
+      <arg choice='plain'>&gt;</arg>
+      <arg choice='plain'><replaceable>model.plot3</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
 
+  <refsect1 xml:id='description'>
+    <title>DESCRIPTION</title>
 
-<refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><command>rthide</command>
-operates on the indicated
-<emphasis remap='I'>objects</emphasis>
-in the input
-<emphasis remap='I'>model.g</emphasis>
-and produces a hidden line removed UNIX-Plot
-file with bas-relief features.  <command>rthide</command> produces plots by drawing a
-boundary whenever a change in region_id is detected.  It also recognizes
-and portrays abrupt changes in surface curvature and changes in surface
-height.  This permits the recognition of pits, protrusions, and changes in
-surface curvature.</para>
+    <para><command>rthide</command> operates on the indicated <emphasis
+    remap='I'>objects</emphasis> in the input <emphasis
+    remap='I'>model.g</emphasis> and produces a hidden line removed
+    UNIX-Plot file with bas-relief features.  <command>rthide</command>
+    produces plots by drawing a boundary whenever a change in region_id
+    is detected.  It also recognizes and portrays abrupt changes in
+    surface curvature and changes in surface height.  This permits the
+    recognition of pits, protrusions, and changes in surface
+    curvature.</para>
 
-<para>The orientation of the rays to be fired may be specified by
-the
-<option>-a</option>
-and
-<option>-e</option>
-options, in which case the model will be autosized, and the grid
-will be centered on the centroid of the model, with ray spacing
-chosen to span the entire set of
-<emphasis remap='I'>objects</emphasis>.
-Alternatively,
-with the
-<option>-M</option>
-option, a transformation matrix may be provided on standard input
-which maps model-space to view-space.
-In this case, the grid ranges from -1.0 &lt;= X,Y &lt;= +1.0 in view space,
-with the size of the grid (number of rays fired) specified with
-<option>-s</option>
-This option is most useful when
-<command>rthide</command>
-is being invoked from a shell script created by an
-<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-<emphasis remap='I'>saveview</emphasis> command.</para>
+    <para>The orientation of the rays to be fired may be specified by
+    the <option>-a</option> and <option>-e</option> options, in which
+    case the model will be autosized, and the grid will be centered on
+    the centroid of the model, with ray spacing chosen to span the
+    entire set of <emphasis remap='I'>objects</emphasis>.
+    Alternatively, with the <option>-M</option> option, a transformation
+    matrix may be provided on standard input which maps model-space to
+    view-space.  In this case, the grid ranges from -1.0 &lt;= X, Y &lt;=
+    +1.0 in view space, with the size of the grid (number of rays fired)
+    specified with <option>-s</option> This option is most useful when
+    <command>rthide</command> is being invoked from a shell script
+    created by an
+    <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    <emphasis remap='I'>saveview</emphasis> command.</para>
 
-<para>The following options are recognized.</para>
-<variablelist remap='TP'>
-  <varlistentry>
-  <term><option>-s#</option></term>
-  <listitem>
-<para>Number of rays to fire in X and Y directions (square grid).
-Default is 512 (512x512).</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-a#</option></term>
-  <listitem>
-<para>Select azimuth in degrees.  Used with
-<option>-e</option>
-and conflicts with
-<option>-M</option></para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-A#</option></term>
-  <listitem>
-<para>Select angle for shading.  Default is 5.0 degrees. 89.0 will produce
-a plot where only steep drops and rises are shaded.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-e#</option></term>
-  <listitem>
-<para>Select elevation in degrees.  Used with
-<option>-a</option>
-and conflicts with
-<option>-M</option></para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-M</option></term>
-  <listitem>
-<para>Read model2view matrix from standard input.
-Conflicts with
-<option>-a</option>
-and
-<option>-e</option></para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-g#</option></term>
-  <listitem>
-<para>Select grid cell width.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-G#</option></term>
-  <listitem>
-<para>Select grid cell height.  If <emphasis remap='I'>not</emphasis> specified, cell height equals
-cell width.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-U #</option></term>
-  <listitem>
-<para>sets the Boolean variable
-<emphasis remap='I'>use_air</emphasis>
-to the given value.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-o</option></term>
-  <listitem>
-<para><emphasis remap='B'>output.plot3</emphasis>
-specifies a named file for output.
-By default, the plot is written to hide.plot3.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-x#</option></term>
-  <listitem>
-<para>Set librt debug flags to (hexadecimal) number.</para>
-  </listitem>
-  </varlistentry>
-</variablelist>
+    <para>The following options are recognized.</para>
 
-<para>The
-<command>rthide</command>
-program is a simple front-end to
-<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-which is most useful when used with
-<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
-</refsect1>
+    <variablelist remap='TP'>
+      <varlistentry>
+        <term><option>-s#</option></term>
+        <listitem>
+          <para>Number of rays to fire in X and Y directions (square grid).
+          Default is 512 (512x512).</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-a#</option></term>
+        <listitem>
+          <para>Select azimuth in degrees.  Used with
+          <option>-e</option>
+          and conflicts with
+          <option>-M</option></para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-A#</option></term>
+        <listitem>
+          <para>Select angle for shading.  Default is 5.0 degrees. 89.0 will produce
+          a plot where only steep drops and rises are shaded.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-e#</option></term>
+        <listitem>
+          <para>Select elevation in degrees.  Used with
+          <option>-a</option>
+          and conflicts with
+          <option>-M</option></para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-M</option></term>
+        <listitem>
+          <para>Read model2view matrix from standard input.
+          Conflicts with
+          <option>-a</option>
+          and
+          <option>-e</option></para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-g#</option></term>
+        <listitem>
+          <para>Select grid cell width.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-G#</option></term>
+        <listitem>
+          <para>Select grid cell height.  If <emphasis remap='I'>not</emphasis> specified, cell height equals
+          cell width.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-U #</option></term>
+        <listitem>
+          <para>sets the Boolean variable
+          <emphasis remap='I'>use_air</emphasis>
+          to the given value.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-o</option></term>
+        <listitem>
+          <para><emphasis remap='B'>output.plot3</emphasis>
+          specifies a named file for output.
+          By default, the plot is written to hide.plot3.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-x#</option></term>
+        <listitem>
+          <para>Set librt debug flags to (hexadecimal) number.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
 
-<refsect1 xml:id='example'><title>EXAMPLE</title>
-<para>This section shows the ordinary usage of <command>rthide</command> .  For example,</para>
+    <para>The <command>rthide</command> program is a simple front-end
+    to
+    <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+    which is most useful when used with
+    <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+  </refsect1>
 
-<literallayout remap='.nf'>
-rthide -a# -e# -s32 model.g all.g &gt; file.plot3
-</literallayout> <!-- .fi -->
+  <refsect1 xml:id='example'>
+    <title>EXAMPLE</title>
 
-<para>results in a 32 by 32 UNIXplot file of the named model at the specified
-azimuth and elevation.  There will be some cross-hatching
-of the plot based on surface curvature.  In order to minimize
-this cross-hatching, an angle can be specified:</para>
+    <para>This section shows the ordinary usage of
+    <command>rthide</command> .  For example, </para>
 
-<literallayout remap='.nf'>
-rthide -a# -e# -s32 -A89.0  model.g all.g &gt; file.plot3
-</literallayout> <!-- .fi -->
+    <literallayout remap='.nf'>
+      rthide -a# -e# -s32 model.g all.g &gt; file.plot3
+    </literallayout> <!-- .fi -->
 
-<para>eliminates cross-hatching due to curvature.  However,
-cross-hatching resulting from sharp
-changes in gradient cannot be eliminated.</para>
+    <para>results in a 32 by 32 UNIXplot file of the named model at
+    the specified azimuth and elevation.  There will be some
+    cross-hatching of the plot based on surface curvature.  In order
+    to minimize this cross-hatching, an angle can be specified:</para>
 
-<para>The plotfile resulting from an <command>rthide</command> run can be viewed directly
-via <emphasis remap='I'>plot3-fb</emphasis> and may be rotated with <emphasis remap='B'>plot3rot</emphasis> at the user's option:</para>
+    <literallayout remap='.nf'>
+      rthide -a# -e# -s32 -A89.0  model.g all.g &gt; file.plot3
+    </literallayout> <!-- .fi -->
 
-<literallayout remap='.nf'>
-plot3-fb hide.plot3
-</literallayout> <!-- .fi -->
+    <para>eliminates cross-hatching due to curvature.  However,
+    cross-hatching resulting from sharp changes in gradient cannot be
+    eliminated.</para>
 
-<para>or</para>
+    <para>The plotfile resulting from an <command>rthide</command> run
+    can be viewed directly via <emphasis remap='I'>plot3-fb</emphasis>
+    and may be rotated with <emphasis remap='B'>plot3rot</emphasis> at
+    the user's option:</para>
 
-<literallayout remap='.nf'>
-plot3rot -a# -e# -g hide.plot3 | plot3-fb
-</literallayout> <!-- .fi -->
+    <literallayout remap='.nf'>
+      plot3-fb hide.plot3
+    </literallayout> <!-- .fi -->
 
-<para>or it can be overlaid onto a solid model in <emphasis remap='I'>mged</emphasis>:</para>
+    <para>or</para>
 
-<literallayout remap='.nf'>
-mged&gt; overlay hide.plot3
-</literallayout> <!-- .fi -->
+    <literallayout remap='.nf'>
+      plot3rot -a# -e# -g hide.plot3 | plot3-fb
+    </literallayout> <!-- .fi -->
 
-<para>This technique can be used to position and plot <command>rthide</command> output.</para>
+    <para>or it can be overlaid onto a solid model in <emphasis
+    remap='I'>mged</emphasis>:</para>
 
-<para>The output of <command>rthide</command> can be overlaid on top of a <emphasis remap='B'>rt</emphasis>
-shaded image, for "edge enhancement".  Here is a complete example,
-which assumes that FB_FILE points to a valid framebuffer:</para>
+    <literallayout remap='.nf'>
+      mged&gt; overlay hide.plot3
+    </literallayout> <!-- .fi -->
 
-<literallayout remap='.nf'>
-	AZ=35
-	EL=25
-	# Directly to the framebuffer
-	rt -s512 -a$AZ -e$EL moss.g all.g 2&gt; rt.log
-	rthide -A89.9 -s256 -a$AZ -e$EL -o rthide.plot3 moss.g all.g 2&gt; rthide.log
-	eval `rtregis rthide.log rt.log` &lt; rthide.plot3 | plot3-fb -o -s512
-</literallayout> <!-- .fi -->
+    <para>This technique can be used to position and plot
+    <command>rthide</command> output.</para>
 
-</refsect1>
+    <para>The output of <command>rthide</command> can be overlaid on
+    top of a <emphasis remap='B'>rt</emphasis> shaded image, for "edge
+    enhancement".  Here is a complete example, which assumes that
+    FB_FILE points to a valid framebuffer:</para>
 
-<refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>cell-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3rot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtregis</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>.</para>
-</refsect1>
+    <literallayout remap='.nf'>
+      AZ=35
+      EL=25
+      # Directly to the framebuffer
+      rt -s512 -a$AZ -e$EL moss.g all.g 2&gt; rt.log
+      rthide -A89.9 -s256 -a$AZ -e$EL -o rthide.plot3 moss.g all.g 2&gt; rthide.log
+      eval `rtregis rthide.log rt.log` &lt; rthide.plot3 | plot3-fb -o -s512
+    </literallayout> <!-- .fi -->
 
-<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
-<para>Numerous error conditions are possible, usually due to errors in
-the geometry database.
-Descriptive messages are printed on standard error (file descriptor 2).</para>
-</refsect1>
+  </refsect1>
 
-<refsect1 xml:id='bugs'><title>BUGS</title>
-<para>Most deficiencies observed while using the
-<command>rthide</command>
-program are usually with the
-<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-package instead.</para>
+  <refsect1 xml:id='see_also'><title>SEE ALSO</title>
+  <para><citerefentry><refentrytitle>cell-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3rot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtregis</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>.</para>
+  </refsect1>
 
-</refsect1>
+  <refsect1 xml:id='diagnostics'>
+    <title>DIAGNOSTICS</title>
 
-<refsect1 xml:id='authors'><title>AUTHORS</title>
-<para><emphasis remap='B'>BRL-CAD Team</emphasis></para>
-</refsect1>
+    <para>Numerous error conditions are possible, usually due to
+    errors in the geometry database.  Descriptive messages are printed
+    on standard error (file descriptor 2).</para>
 
-<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1990-2020 by the United States
-Government as represented by U.S. Army Research Laboratory.</para>
-</refsect1>
+  </refsect1>
 
-<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
-<para>Reports of bugs or problems should be submitted via electronic
-mail to <email>devs@brlcad.org</email></para>
-</refsect1>
+  <refsect1 xml:id='bugs'>
+    <title>BUGS</title>
+    <para>Most deficiencies observed while using the
+    <command>rthide</command> program are usually with the
+    <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+    package instead.</para>
+
+  </refsect1>
+
+  <refsect1 xml:id='authors'>
+    <title>AUTHORS</title>
+    <para><emphasis remap='B'>BRL-CAD Team</emphasis></para>
+  </refsect1>
+
+  <refsect1 xml:id='copyright'>
+    <title>COPYRIGHT</title>
+    <para>This software is Copyright (c) 1990-2022 by the United
+    States Government as represented by U.S. Army Research
+    Laboratory.</para>
+  </refsect1>
+
+  <refsect1 xml:id='bug_reports'>
+    <title>BUG REPORTS</title>
+    <para>Reports of bugs or problems should be submitted via
+    electronic mail to <email>devs@brlcad.org</email></para>
+  </refsect1>
 </refentry>
 

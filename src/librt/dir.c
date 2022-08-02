@@ -1,7 +1,7 @@
 /*                           D I R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,6 +72,47 @@ rt_dirbuild(const char *filename, char *buf, int len)
 }
 
 
+/**
+ * Builds an in-memory database directory of the object names read
+ * from an array with the raw data, i.e. a .g database file content.
+ *
+ * Allocate and initialize information for this instance of an RT
+ * model database.
+ *
+ * Returns -
+ * (struct rt_i *) Success
+ * RTI_NULL Fatal Error
+ */
+struct rt_i *
+rt_dirbuild_inmem(const void *data, b_off_t data_size, char *buf, int len)
+{
+    register struct rt_i *rtip;
+    register struct db_i *dbip;		/* Database instance ptr */
+
+    if (rt_uniresource.re_magic == 0)
+	rt_init_resource(&rt_uniresource, 0, NULL);
+
+    if ((dbip = db_open_inmem()) == DBI_NULL)
+	return RTI_NULL;		/* FAIL */
+    RT_CK_DBI(dbip);
+
+    if ((data != NULL) && (data_size > 0)) {
+	if (db_dirbuild_inmem(dbip, data, data_size) < 0) {
+	    db_close(dbip);
+	    return RTI_NULL;		/* FAIL */
+	}
+    }
+
+    rtip = rt_new_rti(dbip);		/* clones dbip */
+    db_close(dbip);				/* releases original dbip */
+
+    if (buf != (char *)NULL)
+	bu_strlcpy(buf, dbip->dbi_title, len);
+
+    return rtip;				/* OK */
+}
+
+
 int
 rt_db_get_internal(
     struct rt_db_internal *ip,
@@ -98,7 +139,8 @@ rt_db_get_internal(
 	id = ID_COMBINATION;
     } else {
 	/* As a convenience to older ft_import4 routines */
-	if (mat == NULL) mat = bn_mat_identity;
+	if (mat == NULL)
+	    mat = bn_mat_identity;
 	id = rt_id_solid(&ext);
     }
 
@@ -131,6 +173,7 @@ rt_db_get_internal(
 
     return id;			/* OK */
 }
+
 
 int
 rt_db_put_internal(
@@ -173,6 +216,7 @@ rt_db_put_internal(
     return 0;			/* OK */
 }
 
+
 int
 rt_fwrite_internal(
     FILE *fp,
@@ -206,9 +250,9 @@ rt_fwrite_internal(
 	bu_free_external(&ext);
 	return -3;
     }
+
     bu_free_external(&ext);
     return 0;
-
 }
 
 
@@ -235,6 +279,7 @@ rt_db_free_internal(struct rt_db_internal *ip)
     }
     RT_DB_INTERNAL_INIT(ip);
 }
+
 
 int
 rt_db_lookup_internal (

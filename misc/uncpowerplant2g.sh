@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 #              U N C P O W E R P L A N T 2 G . S H
 # BRL-CAD
 #
-# Copyright (c) 2014-2020 United States Government as represented by
+# Copyright (c) 2014-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or

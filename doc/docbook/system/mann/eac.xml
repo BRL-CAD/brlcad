@@ -18,28 +18,32 @@
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>eac</command>
-    <arg choice="opt" rep="norepeat">aircodes</arg>
-    <arg choice="req" rep="norepeat"><replaceable>aircodes</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>air_code(s)</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-  <para>Adds all the regions in the current model that have one of the aircodes in the argument list to the 	display list so that they will appear on the <emphasis>MGED</emphasis> display. Regions that have nonzero 	ident numbers will not be listed by this command. The <command>whichair</command> command will perform the 	same search, but just lists the results.
+  <para>Adds all the regions in the current model that have any of the
+  specified aircodes to the display list so that they will appear on
+  the <emphasis>MGED</emphasis> display.  Regions that have nonzero
+  region identifiers will not be listed by this command. The
+  <command>whichair</command> command performs a similarsearch, but
+  just lists the results.
    </para>
 </refsection>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <para>The example shows the use of the <command>eac</command> command to draw all regions having particular air codes.
-  </para>
   <example><title>Draw all regions having particular air codes.</title>
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>eac 1 2 3</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>eac 1 2 3</userinput></term>
 	   <listitem>
-	     <para>Draws all regions with <emphasis>aircodes</emphasis> 1, 2, or 3 in the <emphasis>MGED</emphasis> 			display.</para>
+	     <para>Draws all regions with
+	     <emphasis>aircodes</emphasis> 1, 2, or 3 in the
+	     <emphasis>MGED</emphasis> display.</para>
 	   </listitem>
       </varlistentry>
      </variablelist>

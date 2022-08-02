@@ -27,10 +27,10 @@
 
     <mediaobject>
       <imageobject role="html">
-	<imagedata align="center" fileref="../../articles/images/ebm_primitive_fig01.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/ebm_primitive_fig01.png" format="PNG"/>
       </imageobject>
     <imageobject role="fo">
-	<imagedata align="center" fileref="../../articles/images/ebm_primitive_fig01.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/ebm_primitive_fig01.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
@@ -39,10 +39,10 @@
 
     <mediaobject>
       <imageobject role="html">
-	<imagedata align="center" fileref="../../articles/images/ebm_primitive_fig02.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/ebm_primitive_fig02.png" format="PNG"/>
       </imageobject>
     <imageobject role="fo">
-	<imagedata align="center" fileref="../../articles/images/ebm_primitive_fig02.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/ebm_primitive_fig02.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
@@ -51,10 +51,10 @@
 
     <mediaobject>
       <imageobject role="html">
-	<imagedata align="center" fileref="../../articles/images/ebm_primitive_fig03.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/ebm_primitive_fig03.png" format="PNG"/>
       </imageobject>
     <imageobject role="fo">
-	<imagedata align="center" fileref="../../articles/images/ebm_primitive_fig03.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/ebm_primitive_fig03.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>

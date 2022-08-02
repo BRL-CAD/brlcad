@@ -1,7 +1,0 @@
-commit refs/heads/STABLE
-mark :36843
-committer Clifford Yapp <starseeker> 1260369258 +0000
-data 27
-Re-create STABLE from trunk
-from STABLE,36842
-merge master,36842

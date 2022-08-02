@@ -1,7 +1,7 @@
 /*                           E X T . H
  * BRL-CAD
  *
- * Copyright (c) 1989-2020 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #define RT_EXT_H
 
 #include "optical.h"
-#include "fb.h"
+#include "dm.h"
 #include "bu/parallel.h" /* for MAX_PSW */
 #include "bu/ptbl.h"
 
@@ -89,13 +89,17 @@ extern int use_air;			/* Handling of air in librt */
 extern int random_mode;                 /* Mode to shoot rays at random directions */
 extern int opencl_mode;			/* enable/disable OpenCL */
 
+/***** variables from grid.c *****/
+extern mat_t model2view;
+extern mat_t view2model;
+extern point_t viewbase_model;		/* model-space location of viewplane corner */
+extern fastf_t gift_grid_rounding;
+
 /***** variables from main.c *****/
 extern FILE *outfp;			/* optional output file */
 extern int output_is_binary;		/* !0 means output is binary */
 extern int report_progress;		/* !0 = user wants progress report */
 extern int save_overlaps;		/* flag for setting rti_save_overlaps */
-extern mat_t model2view;
-extern mat_t view2model;
 extern struct application APP;
 extern struct icv_image *bif;
 
@@ -112,14 +116,13 @@ extern int fullfloat_mode;
 extern int hypersample;			/* number of extra rays to fire */
 extern int incr_mode;			/* !0 for incremental resolution */
 extern int full_incr_mode;              /* !0 for fully incremental resolution */
-extern size_t npsw;			/* number of worker PSWs to run */
+extern ssize_t npsw;			/* number of worker PSWs to run */
 extern int reproj_cur;			/* number of pixels reprojected this frame */
 extern int reproj_max;			/* out of total number of pixels */
 extern int reproject_mode;
 extern int stereo;			/* stereo viewing */
 extern mat_t Viewrotscale;
 extern point_t eye_model;		/* model-space location of eye */
-extern point_t viewbase_model;		/* model-space location of viewplane corner */
 extern size_t height;			/* # of lines in Y */
 extern size_t incr_level;		/* current incremental level */
 extern size_t incr_nlevel;		/* number of levels */
@@ -172,7 +175,7 @@ enum {
     CLT_ACCUM = (1<<1)      /* TODO */
 };
 
-extern void clt_connect_fb(fb *fbp);
+extern void clt_connect_fb(struct fb *fbp);
 
 extern void clt_view_init(unsigned int mode);
 extern void clt_run(int cur_pixel, int last_pixel);
@@ -186,6 +189,10 @@ extern void color_hook(const struct bu_structparse *sp, const char *name, void *
 
 /* usage.c */
 extern void usage(const char *argv0, int verbose);
+
+/* grid.c */
+extern int grid_setup(struct bu_vls *err);
+extern void grid_sync_dimensions(double vsize);
 
 /**
  * called by apps during application_init() to register

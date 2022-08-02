@@ -1,7 +1,7 @@
 /*                C H E C K _ A D J _ A I R . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2020 United States Government as represented by
+ * Copyright (c) 2018-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,7 +72,8 @@ int check_adj_air(struct current_state *state,
     BU_LIST_INIT(&(adjAirList.l));
 
     if (options->plot_files) {
-	if ((plot_adjair=fopen(name, "wb")) == (FILE *)NULL) {
+	plot_adjair = fopen(name, "wb");
+	if (plot_adjair == (FILE *)NULL) {
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 	}
     }
@@ -85,7 +86,7 @@ int check_adj_air(struct current_state *state,
 
     if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_ADJ_AIR)) {
 	clear_list(&adjAirList);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     print_verbose_debug(options);
@@ -97,7 +98,7 @@ int check_adj_air(struct current_state *state,
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

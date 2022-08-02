@@ -1,7 +1,7 @@
 /*                           P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,10 +27,6 @@
 #include "bu/log.h"
 #include "icv_private.h"
 
-/* defined in encoding.c */
-extern double *uchar2double(unsigned char *data, size_t size);
-extern unsigned char *data2uchar(const icv_image_t *bif);
-
 int
 pix_write(icv_image_t *bif, const char *filename)
 {
@@ -52,7 +48,7 @@ pix_write(icv_image_t *bif, const char *filename)
 	return -1;
     }
 
-    data =  data2uchar(bif);
+    data =  icv_data2uchar(bif);
     size = (size_t) bif->width*bif->height*3;
     ret = fwrite(data, 1, size, fp);
     fclose(fp);
@@ -75,6 +71,7 @@ pix_read(const char* filename, size_t width, size_t height)
 
     if (filename == NULL) {
 	fp = stdin;
+	setmode(fileno(fp), O_BINARY);
     } else if ((fp = fopen(filename, "rb")) == NULL) {
 	bu_log("pix_read: Cannot open file for reading\n");
 	return NULL;
@@ -83,7 +80,6 @@ pix_read(const char* filename, size_t width, size_t height)
     ICV_IMAGE_INIT(bif);
     /* buffer pixel wise */
     if (width == 0 || height == 0) {
-	int status = 0;
 	size = 0;
 	data = (unsigned char *)bu_malloc(buffsize, "pix_read : unsigned char data");
 
@@ -91,7 +87,7 @@ pix_read(const char* filename, size_t width, size_t height)
 	 * Better to read in big chunks, but then one has to handle
 	 * partial-reads better.  Below seems to ignore a read error.
 	 */
-	while ((status = fread(&data[size], 1, 3, fp))==3) {
+	while (fread(&data[size], 1, 3, fp)==3) {
 	    size+=3;
 	    if (size==buffsize) {
 		buffsize+=1024*3;
@@ -118,7 +114,7 @@ pix_read(const char* filename, size_t width, size_t height)
 	bif->width = width;
     }
     if (size)
-	bif->data = uchar2double(data, size);
+	bif->data = icv_uchar2double(data, size);
     else {
 	/* zero sized image */
 	bu_free(bif, "icv container");
@@ -126,7 +122,7 @@ pix_read(const char* filename, size_t width, size_t height)
 	fclose(fp);
 	return NULL;
     }
-    bif->data = uchar2double(data, size);
+    bif->data = icv_uchar2double(data, size);
     bu_free(data, "pix_read : unsigned char data");
     bif->magic = ICV_IMAGE_MAGIC;
     bif->channels = 3;

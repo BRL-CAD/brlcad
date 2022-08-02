@@ -1,7 +1,7 @@
 /*                           E B M . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2020 United States Government as represented by
+ * Copyright (c) 1988-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -242,7 +242,7 @@ rt_ebm_centroid(point_t *cent, const struct rt_db_internal *ip)
  * 0 ERROR
  */
 int
-rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd, fastf_t *out_norm, fastf_t in, fastf_t out, struct xray *rp, struct application *ap)
+rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd, vect_t out_norm, fastf_t in, fastf_t out, struct xray *rp, struct application *ap)
 {
     fastf_t norm_dist_min, norm_dist_max;
     fastf_t slant_factor;
@@ -358,7 +358,6 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     if (RT_G_DEBUG&RT_DEBUG_EBM)VPRINT("r_pt", rp->r_pt);
     if (RT_G_DEBUG&RT_DEBUG_EBM)VPRINT("P", P);
     if (RT_G_DEBUG&RT_DEBUG_EBM)VPRINT("cellsize", ebmp->ebm_cellsize);
-    t0 = rp->r_min;
     tmax = rp->r_max;
     if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("[shoot: r_min=%g, r_max=%g]\n", rp->r_min, rp->r_max);
 
@@ -1116,7 +1115,7 @@ rt_ebm_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     /* Find bounding RPP of rotated local RPP */
     VSETALL(v1, 0);
     VSET(localspace, eip->xdim, eip->ydim, eip->tallness);
-    bn_rotate_bbox((*min), (*max), eip->mat, v1, localspace);
+    bg_rotate_bbox((*min), (*max), eip->mat, v1, localspace);
     return 0;
 }
 
@@ -1323,7 +1322,7 @@ rt_ebm_free(struct soltab *stp)
 
 /* either x1==x2, or y1==y2 */
 void
-rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat, register struct bu_list *vhead)
+rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat, struct bu_list *vlfree, register struct bu_list *vhead)
 {
     point_t s, p;
     point_t srot, prot;
@@ -1331,26 +1330,26 @@ rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat
     BU_CK_LIST_HEAD(vhead);
     VSET(s, x_1, y_1, 0.0);
     MAT4X3PNT(srot, mat, s);
-    RT_ADD_VLIST(vhead, srot, BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, srot, BV_VLIST_LINE_MOVE);
 
     VSET(p, x_1, y_1, t);
     MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
     VSET(p, x_2, y_2, t);
     MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
     p[Z] = 0;
     MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
-    RT_ADD_VLIST(vhead, srot, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, srot, BV_VLIST_LINE_DRAW);
 }
 
 
 int
-rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     register struct rt_ebm_internal *eip;
     size_t x, y;
@@ -1359,6 +1358,7 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
 
@@ -1371,7 +1371,7 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		if ((*bit(eip, x-1, y) == 0) != (*bit(eip, x, y) == 0))
 		    continue;
 		rt_ebm_plate(x, base, x, y, eip->tallness,
-			     eip->mat, vhead);
+			     eip->mat, vlfree, vhead);
 		following = 0;
 	    } else {
 		if ((*bit(eip, x-1, y) == 0) == (*bit(eip, x, y) == 0))
@@ -1390,7 +1390,7 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		if ((*bit(eip, x, y-1) == 0) != (*bit(eip, x, y) == 0))
 		    continue;
 		rt_ebm_plate(base, y, x, y, eip->tallness,
-			     eip->mat, vhead);
+			     eip->mat, vlfree, vhead);
 		following = 0;
 	    } else {
 		if ((*bit(eip, x, y-1) == 0) == (*bit(eip, x, y) == 0))
@@ -1493,7 +1493,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 	start_y = from_y;
 	loop_length = 1;
 	while (!done) {
-	    struct ebm_edge *e, *e_poss[2];
+	    struct ebm_edge *e, *e_poss[3];
 	    int poss;
 
 	    /* now find an edge that starts where this one stops (at to_x, to_y) */

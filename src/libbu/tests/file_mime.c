@@ -1,7 +1,7 @@
 /*                 F I L E _ M I M E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,13 +48,17 @@ main(int ac, char *av[])
     int context = 0;
     int expected = 0;
 
-    bu_setprogname(av[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(av[0]);
 
     if (ac != 4)
 	bu_exit(1, "Usage: %s {extension} {context} {expected}\n", av[0]);
 
     sscanf(av[2], "%d", &context);
-    sscanf(av[3], "%d", &expected);
+
+    expected = bu_file_mime_int(av[3]);
 
     if (context >= BU_MIME_UNKNOWN)
 	return -1;

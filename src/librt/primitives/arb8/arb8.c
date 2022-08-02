@@ -1,7 +1,7 @@
 /*                          A R B 8 . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1157,11 +1157,11 @@ rt_arb_free(register struct soltab *stp)
 }
 
 
-#define ARB_FACE(vlist_head, arb_pts, a, b, c, d) \
-    RT_ADD_VLIST(vlist_head, arb_pts[a], BN_VLIST_LINE_MOVE); \
-    RT_ADD_VLIST(vlist_head, arb_pts[b], BN_VLIST_LINE_DRAW); \
-    RT_ADD_VLIST(vlist_head, arb_pts[c], BN_VLIST_LINE_DRAW); \
-    RT_ADD_VLIST(vlist_head, arb_pts[d], BN_VLIST_LINE_DRAW);
+#define ARB_FACE(vlist_vlfree, vlist_head, arb_pts, a, b, c, d) \
+    BV_ADD_VLIST(vlist_vlfree, vlist_head, arb_pts[a], BV_VLIST_LINE_MOVE); \
+    BV_ADD_VLIST(vlist_vlfree, vlist_head, arb_pts[b], BV_VLIST_LINE_DRAW); \
+    BV_ADD_VLIST(vlist_vlfree, vlist_head, arb_pts[c], BV_VLIST_LINE_DRAW); \
+    BV_ADD_VLIST(vlist_vlfree, vlist_head, arb_pts[d], BV_VLIST_LINE_DRAW);
 
 /**
  * Plot an ARB by tracing out four "U" shaped contours This draws each
@@ -1171,10 +1171,11 @@ rt_arb_free(register struct soltab *stp)
  * be.
  */
 int
-rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     point_t *pts;
     struct rt_arb_internal *aip;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -1182,10 +1183,10 @@ rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     RT_ARB_CK_MAGIC(aip);
 
     pts = aip->pt;
-    ARB_FACE(vhead, pts, 0, 1, 2, 3);
-    ARB_FACE(vhead, pts, 4, 0, 3, 7);
-    ARB_FACE(vhead, pts, 5, 4, 7, 6);
-    ARB_FACE(vhead, pts, 1, 5, 6, 2);
+    ARB_FACE(vlfree, vhead, pts, 0, 1, 2, 3);
+    ARB_FACE(vlfree, vhead, pts, 4, 0, 3, 7);
+    ARB_FACE(vlfree, vhead, pts, 5, 4, 7, 6);
+    ARB_FACE(vlfree, vhead, pts, 1, 5, 6, 2);
 
     return 0;
 }
@@ -1198,16 +1199,16 @@ rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
 
     if (arbp == (struct arb_specific *)0) {
 	bu_log("arb(%s): no faces\n", stp->st_name);
-	return BN_CLASSIFY_UNIMPLEMENTED;
+	return BG_CLASSIFY_UNIMPLEMENTED;
     }
 
     for (i = 0; i < arbp->arb_nmfaces; i++) {
-	if (bn_hlf_class(arbp->arb_face[i].peqn, min, max, tol) == BN_CLASSIFY_OUTSIDE)
-	    return BN_CLASSIFY_OUTSIDE;
+	if (bg_hlf_class(arbp->arb_face[i].peqn, min, max, tol) == BG_CLASSIFY_OUTSIDE)
+	    return BG_CLASSIFY_OUTSIDE;
     }
 
-    /* FIXME: We need to test for BN_CLASSIFY_INSIDE vs. BN_CLASSIFY_OVERLAPPING! */
-    return BN_CLASSIFY_UNIMPLEMENTED; /* let the caller assume the worst */
+    /* FIXME: We need to test for BG_CLASSIFY_INSIDE vs. BG_CLASSIFY_OVERLAPPING! */
+    return BG_CLASSIFY_UNIMPLEMENTED; /* let the caller assume the worst */
 }
 
 /**
@@ -1250,7 +1251,8 @@ rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    flip_fastf_float(vec, rp->s.s_values, 8, dbip->dbi_version < 0 ? 1 : 0);
+    int cflag = (dbip && dbip->dbi_version < 0) ? 1 : 0;
+    flip_fastf_float(vec, rp->s.s_values, 8, cflag);
 
     /*
      * Convert from vector notation (in database) to point notation.
@@ -1864,7 +1866,7 @@ static const int rt_arb_planes[5][24] = {
 int
 rt_arb_3face_intersect(
     point_t point,
-    const plane_t *planes, /* assumes [6] planes */
+    const plane_t planes[6], /* assumes [6] planes */
     int type,		/* 4..8 */
     int loc)
 {
@@ -1877,7 +1879,7 @@ rt_arb_3face_intersect(
     i2 = rt_arb_planes[j][loc+1];
     i3 = rt_arb_planes[j][loc+2];
 
-    return bn_make_pnt_3planes(point, planes[i1], planes[i2], planes[i3]);
+    return bg_make_pnt_3planes(point, planes[i1], planes[i2], planes[i3]);
 }
 
 
@@ -1914,7 +1916,7 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 	p2 = arb_faces[type][i*4+1];
 	p3 = arb_faces[type][i*4+2];
 
-	if (bn_make_plane_3pnts(planes[i],
+	if (bg_make_plane_3pnts(planes[i],
 			     arb->pt[p1],
 			     arb->pt[p2],
 			     arb->pt[p3],
@@ -1951,8 +1953,8 @@ rt_arb_move_edge(struct bu_vls *error_msg_ret,
 {
     fastf_t t1, t2;
 
-    if (bn_isect_line3_plane(&t1, thru, dir, planes[bp1], tol) < 0 ||
-	bn_isect_line3_plane(&t2, thru, dir, planes[bp2], tol) < 0) {
+    if (bg_isect_line3_plane(&t1, thru, dir, planes[bp1], tol) < 0 ||
+	bg_isect_line3_plane(&t2, thru, dir, planes[bp2], tol) < 0) {
 	bu_vls_printf(error_msg_ret, "edge (direction) parallel to face normal\n");
 	return 1;
     }
@@ -2152,7 +2154,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	    p2 = *edptr++;
 	    p3 = *edptr++;
 
-	    if (bn_make_plane_3pnts(planes[newp], arb->pt[p1], arb->pt[p2],
+	    if (bg_make_plane_3pnts(planes[newp], arb->pt[p1], arb->pt[p2],
 				 arb->pt[p3], tol))
 		goto err;
 
@@ -2174,7 +2176,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	    p2 = *iptr++;
 	    p3 = *iptr++;
 
-	    if (bn_make_plane_3pnts(planes[newp], arb->pt[p1], arb->pt[p2],
+	    if (bg_make_plane_3pnts(planes[newp], arb->pt[p1], arb->pt[p2],
 				 arb->pt[p3], tol))
 		goto err;
 	}
@@ -2200,7 +2202,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
      * recalculate plane 2 = 456
      */
     if (arb_type == ARB7 && edit_class == RT_ARB_EDIT_POINT) {
-	if (bn_make_plane_3pnts(planes[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
+	if (bg_make_plane_3pnts(planes[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
 	    goto err;
     }
 
@@ -2255,7 +2257,8 @@ void
 rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     const int arb_faces[5][24] = rt_arb_faces;
-    int i, a, b, c, type;
+    int i, a, b, c;
+    int type = 0;
     vect_t b_a, c_a, area_;
     plane_t plane;
     struct bn_tol tmp_tol, tol;
@@ -2269,9 +2272,12 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     tol.perp = 1e-5;
     tol.para = 1 - tol.perp;
 
-    type = rt_arb_std_type(ip, &tol) - 4;
+    type = rt_arb_std_type(ip, &tol);
+    if (type < 4)
+	return;
+    type = type - 4;
 
-    /* tol struct needed for bn_make_plane_3pnts,
+    /* tol struct needed for bg_make_plane_3pnts,
      * can't be passed to the function since it
      * must fit into the rt_functab interface */
     tmp_tol.magic = BN_TOL_MAGIC;
@@ -2288,7 +2294,7 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	c = arb_faces[type][i*4+2];
 
 	/* create a plane from a, b, c */
-	if (bn_make_plane_3pnts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
+	if (bg_make_plane_3pnts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
 	    continue;
 	}
 
@@ -2317,7 +2323,7 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
     struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
-    /* tol struct needed for bn_make_plane_3pnts,
+    /* tol struct needed for bg_make_plane_3pnts,
      * can't be passed to the function since it
      * must fit into the rt_functab interface */
     tmp_tol.magic = BN_TOL_MAGIC;
@@ -2333,7 +2339,7 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 	d = farb4[i][3];
 
 	/* create a plane from a, b, c */
-	if (bn_make_plane_3pnts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
+	if (bg_make_plane_3pnts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
 	    continue;
 	}
 
@@ -2351,7 +2357,6 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
     *vol /= 6.0;
 }
 
-
 int
 rt_arb_get_edge_list(const struct rt_db_internal *ip, const short (*edge_list[])[2])
 {
@@ -2359,10 +2364,13 @@ rt_arb_get_edge_list(const struct rt_db_internal *ip, const short (*edge_list[])
     int arb_type;
     struct bn_tol tmp_tol;
     struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
-    const short arb8_evm[12][2] = arb8_edge_vertex_mapping;
-    const short arb7_evm[12][2] = arb7_edge_vertex_mapping;
-    const short arb5_evm[9][2] = arb5_edge_vertex_mapping;
-    const short arb4_evm[5][2] = arb4_edge_vertex_mapping;
+
+    /* rt_arb_get_edge_list is returning pointers to arrays.  To avoid returning
+     * a pointer to a locally scoped array, we define static arrays */
+    static const short arb8_evm[12][2] = arb8_edge_vertex_mapping;
+    static const short arb7_evm[12][2] = arb7_edge_vertex_mapping;
+    static const short arb5_evm[9][2] = arb5_edge_vertex_mapping;
+    static const short arb4_evm[5][2] = arb4_edge_vertex_mapping;
 
     RT_ARB_CK_MAGIC(aip);
 
@@ -2450,7 +2458,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
 	p1[Z] = 0.0;
 
 	if (edge_list[i][0] == edge_list[i][1]) {
-	    tmp_dist = bn_dist_pnt3_pnt3(pt2, p1);
+	    tmp_dist = bg_dist_pnt3_pnt3(pt2, p1);
 
 	    if (tmp_dist < ptol) {
 		*vert1 = edge_list[i][0] + 1;
@@ -2464,7 +2472,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
 	} else {
 	    MAT4X3PNT(p2, mat, aip->pt[edge_list[i][1]]);
 	    p2[Z] = 0.0;
-	    ret = bn_dist_pnt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
+	    ret = bg_dist_pnt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
 	}
 
 	if (ret < 3 || tmp_dist < dist) {
@@ -2522,6 +2530,78 @@ rt_arb_find_e_nearest_pt2(int *edge,
     }
 
     return 0;
+}
+
+void
+rt_arb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+{
+    int i;
+
+    if (!ps || !ip)
+	return;
+
+    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    const struct bn_tol arb_tol = BG_TOL_INIT;
+    int arbType = rt_arb_std_type(ip, &arb_tol);
+
+    // Set up the containers
+    struct bv_label *l[8];
+    for (i = 0; i < arbType; i++) {
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
+	struct bv_label *la;
+	BU_GET(la, struct bv_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+    }
+
+    // Do the specific data assignments for each label
+    switch (arbType) {
+	case ARB8:
+	    for (i=0; i<8; i++) {
+		bu_vls_sprintf(&l[i]->label, "%d", i+1);
+		VMOVE(l[i]->p, arb->pt[i]);
+	    }
+	    break;
+	case ARB7:
+	    for (i=0; i<7; i++) {
+		bu_vls_sprintf(&l[i]->label, "%d", i+1);
+		VMOVE(l[i]->p, arb->pt[i]);
+	    }
+	    break;
+	case ARB6:
+	    for (i=0; i<5; i++) {
+		bu_vls_sprintf(&l[i]->label, "%d", i+1);
+		VMOVE(l[i]->p, arb->pt[i]);
+	    }
+	    bu_vls_sprintf(&l[5]->label, "6");
+	    VMOVE(l[5]->p, arb->pt[6]);
+	    break;
+	case ARB5:
+	    for (i=0; i<5; i++) {
+		bu_vls_sprintf(&l[i]->label, "%d", i+1);
+		VMOVE(l[i]->p, arb->pt[i]);
+	    }
+	    break;
+	case ARB4:
+	    for (i=0; i<3; i++) {
+		bu_vls_sprintf(&l[i]->label, "%d", i+1);
+		VMOVE(l[i]->p, arb->pt[i]);
+	    }
+	    bu_vls_sprintf(&l[3]->label, "4");
+	    VMOVE(l[3]->p, arb->pt[4]);
+	    break;
+    }
+
 }
 
 

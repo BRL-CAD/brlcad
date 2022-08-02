@@ -127,7 +127,7 @@ during editing.
 	of the current display manager. </title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>status</userinput>
+      <prompt>mged&gt; </prompt><userinput>status</userinput>
     </para>
     <para>Gets default information (i.e., state, view size, local2base, toViewcenter, Viewrot,
 	model2view and view2model).
@@ -137,7 +137,7 @@ during editing.
   <example><title>Get the view rotation matrix.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>status Viewrot</userinput>
+      <prompt>mged&gt; </prompt><userinput>status Viewrot</userinput>
     </para>
     <para>Gets the view rotation matrix.
     </para>
@@ -146,7 +146,7 @@ during editing.
   <example><title>Get the edit state.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>status state</userinput>
+      <prompt>mged&gt; </prompt><userinput>status state</userinput>
     </para>
     <para>Gets the edit state.
     </para>

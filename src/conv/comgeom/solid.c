@@ -1,7 +1,7 @@
 /*                         S O L I D . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2020 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -197,7 +197,8 @@ getsolid(void)
 #define D(_i)	(&(dd[_i*3]))
 #define T(_i)	(&(tmp[_i][0]))
 
-    if ((i = get_line(scard, sizeof(scard), "solid card")) == EOF) {
+    i = get_line(scard, sizeof(scard), "solid card");
+    if (i == EOF) {
 	printf("getsolid: unexpected EOF\n");
 	return 1;
     }
@@ -696,7 +697,6 @@ getsolid(void)
 	}
 
     ell1:
-	m2 = 0.0;
 	r1 = dd[6];		/* R */
 	VMOVE(work, D(0));
 	work[0] += M_PI;
@@ -752,6 +752,7 @@ getsolid(void)
     if (BU_STR_EQUAL(solid_type, "arbn")) {
 	ret = read_arbn(name);
 	bu_free(name, "name");
+	return ret;
     }
 
     /*
@@ -867,7 +868,7 @@ read_arbn(char *name)
 	    } else {
 		VMOVE(c, &input_points[((s)-1)*3]);
 	    }
-	    if (bn_make_plane_3pnts(eqn[cur_eq], a, b, c, &tol) < 0) {
+	    if (bg_make_plane_3pnts(eqn[cur_eq], a, b, c, &tol) < 0) {
 		printf("arbn degenerate plane\n");
 		VPRINT("a", a);
 		VPRINT("b", b);
@@ -995,7 +996,7 @@ read_arbn(char *name)
 	    for (k = j + 1; k < nface; k++) {
 		point_t pt;
 
-		if (bn_make_pnt_3planes(pt, eqn[i], eqn[j], eqn[k]) < 0) continue;
+		if (bg_make_pnt_3planes(pt, eqn[i], eqn[j], eqn[k]) < 0) continue;
 
 		/* See if point is outside arb */
 		for (m = 0; m < nface; m++) {

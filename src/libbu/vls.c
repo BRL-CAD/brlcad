@@ -1,7 +1,7 @@
 /*                           V L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -124,9 +124,7 @@ bu_vls_addr(const struct bu_vls *vp)
     }
 
     /* Sanity checking */
-    if (vp->vls_str == (char *)NULL ||
-	vp->vls_len + vp->vls_offset >= vp->vls_max)
-    {
+    if (vp->vls_len + vp->vls_offset >= vp->vls_max) {
 	bu_log("bu_vls_addr: bad VLS.  max=%zu, len=%zu, offset=%zu\n",
 	       vp->vls_max, vp->vls_len, vp->vls_offset);
 	bu_bomb("bu_vls_addr\n");

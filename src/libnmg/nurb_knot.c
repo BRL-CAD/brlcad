@@ -1,7 +1,7 @@
 /*                     N U R B _ K N O T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ nmg_nurb_kvknot(register struct knot_vector *new_knots, int order, fastf_t lower
 
     new_knots->k_size = total;
 
-    new_knots->knots = (fastf_t *) nmg_malloc (sizeof(fastf_t) * total,
+    new_knots->knots = (fastf_t *) bu_malloc (sizeof(fastf_t) * total,
 					      "nmg_nurb_kvknot: new knots values");
 
     for (i = 0; i < order; i++)
@@ -93,7 +93,7 @@ nmg_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int nu
 	bu_bomb("nmg_nurb_kvmult\n");
     }
 
-    check.knots = (fastf_t *) nmg_malloc(sizeof(fastf_t) * check.k_size,
+    check.knots = (fastf_t *) bu_malloc(sizeof(fastf_t) * check.k_size,
 					"nmg_nurb_kvmult: check knots");
 
     for (i = 0; i < num - n; i++)
@@ -102,7 +102,7 @@ nmg_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int nu
     nmg_nurb_kvmerge(new_kv, &check, kv);
 
     /* free up old knot values */
-    nmg_free((char *)check.knots, "nmg_nurb_kvmult:check knots");
+    bu_free((char *)check.knots, "nmg_nurb_kvmult:check knots");
 }
 
 
@@ -122,7 +122,7 @@ nmg_nurb_kvgen(register struct knot_vector *kv, fastf_t lower, fastf_t upper, in
 
     kv->k_size = num;
 
-    kv->knots = (fastf_t *) nmg_malloc (sizeof(fastf_t) * num,
+    kv->knots = (fastf_t *) bu_malloc (sizeof(fastf_t) * num,
 				       "nmg_nurb_kvgen: kv knots");
 
     for (i = 1; i <= num; i++)
@@ -145,7 +145,7 @@ nmg_nurb_kvmerge(struct knot_vector *new_knots, const struct knot_vector *kv1, c
 
     new_knots->k_size = kv1->k_size + kv2->k_size;
 
-    new_knots->knots = (fastf_t *) nmg_malloc(
+    new_knots->knots = (fastf_t *) bu_malloc(
 	sizeof (fastf_t) * new_knots->k_size,
 	"nmg_nurb_kvmerge: new knot values");
 
@@ -195,7 +195,7 @@ nmg_nurb_kvextract(struct knot_vector *new_kv, register const struct knot_vector
     register int i;
     register fastf_t *ptr;
 
-    new_kv->knots = (fastf_t *) nmg_malloc (
+    new_kv->knots = (fastf_t *) bu_malloc (
 	sizeof (fastf_t) * (upper - lower),
 	"spl_kvextract: nkw kv values");
 
@@ -219,7 +219,7 @@ nmg_nurb_kvcopy(struct knot_vector *new_kv, register const struct knot_vector *o
 
     new_kv->k_size = old_kv->k_size;
 
-    new_kv->knots = (fastf_t *) nmg_malloc(sizeof(fastf_t) *
+    new_kv->knots = (fastf_t *) bu_malloc(sizeof(fastf_t) *
 					  new_kv->k_size, "spl_kvcopy: new knot values");
 
     for (i = 0; i < new_kv->k_size; i++)
@@ -311,7 +311,7 @@ nmg_nurb_gen_knot_vector(register struct knot_vector *new_knots, int order, fast
 
     new_knots->k_size = total;
 
-    new_knots->knots = (fastf_t *) nmg_malloc (sizeof(fastf_t) * total,
+    new_knots->knots = (fastf_t *) bu_malloc (sizeof(fastf_t) * total,
 					      "nmg_nurb_gen_knot_vector: new knots values");
 
     for (i = 0; i < order; i++)

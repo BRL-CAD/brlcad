@@ -1,7 +1,7 @@
 /*                        W O R K E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "fb.h"		/* Added because RGBpixel is now needed in do_pixel() */
+#include "dm.h"		/* Added because RGBpixel is now needed in do_pixel() */
 
 #include "./rtuif.h"
 #include "./ext.h"
@@ -66,10 +66,6 @@ extern unsigned char *pixmap;	/* pixmap for rerendering of black pixels */
 
 int per_processor_chunk = 0;	/* how many pixels to do at once */
 
-fastf_t gift_grid_rounding = 0;	/* set to 25.4 for inches */
-
-point_t viewbase_model;	/* model-space location of viewplane corner */
-
 int fullfloat_mode = 0;
 int reproject_mode = 0;
 struct floatpixel *curr_float_frame; /* buffer of full frame */
@@ -82,9 +78,6 @@ int cur_pixel = 0;			/* current pixel number, 0..last_pixel */
 int last_pixel = 0;			/* last pixel number */
 
 int stop_worker = 0;
-
-/* for stereo output */
-vect_t left_eye_delta = VINIT_ZERO;
 
 /**
  * For certain hypersample values there is a particular advantage to
@@ -167,6 +160,8 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     static const double one_over_255 = 1.0 / 255.0;
     const int pindex = (pixelnum * sizeof(RGBpixel));
 
+    /* for stereo output */
+    vect_t left_eye_delta = VINIT_ZERO;
 
     if (lightmodel == 8) {
 	/* Add timer here to start pixel-time for heat
@@ -309,8 +304,13 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
 	if (stereo) {
 	    fastf_t right, left;
+	    vect_t temp;
 
 	    right = CRT_BLEND(a.a_color);
+
+	    /* Move left 2.5 inches (63.5mm) */
+	    VSET(temp, -63.5*2.0/viewsize, 0, 0);
+	    MAT4X3VEC(left_eye_delta, view2model, temp);
 
 	    VSUB2(stereo_point, point, left_eye_delta);
 	    if (rt_perspective > 0.0) {
@@ -389,8 +389,13 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
 	    if (stereo) {
 		fastf_t right, left;
+		vect_t temp;
 
 		right = CRT_BLEND(a.a_color);
+
+		/* Move left 2.5 inches (63.5mm) */
+		VSET(temp, -63.5*2.0/viewsize, 0, 0);
+		MAT4X3VEC(left_eye_delta, view2model, temp);
 
 		VSUB2(stereo_point, point, left_eye_delta);
 		if (rt_perspective > 0.0) {
@@ -479,23 +484,23 @@ worker(int cpu, void *UNUSED(arg))
 	if (UNLIKELY(one_eighth < 1))
 	    one_eighth = 1;
 
-	if (one_eighth > npsw * 262144)
+	if (one_eighth > (size_t)npsw * 262144)
 	    chunk_size = 262144; /* 512x512 */
-	else if (one_eighth > npsw * 65536)
+	else if (one_eighth > (size_t)npsw * 65536)
 	    chunk_size = 65536; /* 256x256 */
-	else if (one_eighth > npsw * 16384)
+	else if (one_eighth > (size_t)npsw * 16384)
 	    chunk_size = 16384; /* 128x128 */
-	else if (one_eighth > npsw * 4096)
+	else if (one_eighth > (size_t)npsw * 4096)
 	    chunk_size = 4096; /* 64x64 */
-	else if (one_eighth > npsw * 1024)
+	else if (one_eighth > (size_t)npsw * 1024)
 	    chunk_size = 1024; /* 32x32 */
-	else if (one_eighth > npsw * 256)
+	else if (one_eighth > (size_t)npsw * 256)
 	    chunk_size = 256; /* 16x16 */
-	else if (one_eighth > npsw * 64)
+	else if (one_eighth > (size_t)npsw * 64)
 	    chunk_size = 64; /* 8x8 */
-	else if (one_eighth > npsw * 16)
+	else if (one_eighth > (size_t)npsw * 16)
 	    chunk_size = 16; /* 4x4 */
-	else if (one_eighth > npsw * 4)
+	else if (one_eighth > (size_t)npsw * 4)
 	    chunk_size = 4; /* 2x2 */
 	else
 	    chunk_size = 1; /* one pixel at a time */
@@ -538,7 +543,8 @@ pat_found:
 	       inclusive - TODO: check if there is any issue related
 	       with multi-threaded RNG */
 	    pixelnum = rand()*1.0/RAND_MAX*(last_pixel + 1);
-	    if (pixelnum >= last_pixel) pixelnum = last_pixel;
+	    if (pixelnum >= last_pixel)
+		pixelnum = last_pixel;
 	    do_pixel(cpu, pat_num, pixelnum);
 	}
 
@@ -577,170 +583,11 @@ pat_found:
 
 
 /**
- * In theory, the grid can be specified by providing any two of
- * these sets of parameters:
- *
- * number of pixels (width, height)
- * viewsize (in model units, mm)
- * number of grid cells (cell_width, cell_height)
- *
- * however, for now, it is required that the view size always be
- * specified, and one or the other parameter be provided.
- */
-void
-grid_setup(void)
-{
-    vect_t temp;
-    mat_t toEye;
-
-    if (viewsize <= 0.0)
-	bu_exit(EXIT_FAILURE, "viewsize <= 0");
-    /* model2view takes us to eye_model location & orientation */
-    MAT_IDN(toEye);
-    MAT_DELTAS_VEC_NEG(toEye, eye_model);
-    Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
-    bn_mat_mul(model2view, Viewrotscale, toEye);
-    bn_mat_inv(view2model, model2view);
-
-    /* Determine grid cell size and number of pixels */
-    if (cell_newsize) {
-	if (cell_width <= 0.0) cell_width = cell_height;
-	if (cell_height <= 0.0) cell_height = cell_width;
-	width = (viewsize / cell_width) + 0.99;
-	height = (viewsize / (cell_height*aspect)) + 0.99;
-	cell_newsize = 0;
-    } else {
-	/* Chop -1.0..+1.0 range into parts */
-	cell_width = viewsize / width;
-	cell_height = viewsize / (height*aspect);
-    }
-
-    /*
-     * Optional GIFT compatibility, mostly for RTG3.  Round coordinates
-     * of lower left corner to fall on integer- valued coordinates, in
-     * "gift_grid_rounding" units.
-     */
-    if (gift_grid_rounding > 0.0) {
-	point_t v_ll;		/* view, lower left */
-	point_t m_ll;		/* model, lower left */
-	point_t hv_ll;		/* hv, lower left*/
-	point_t hv_wanted;
-	vect_t hv_delta;
-	vect_t m_delta;
-	mat_t model2hv;
-	mat_t hv2model;
-
-	/* Build model2hv matrix, including mm2inches conversion */
-	MAT_COPY(model2hv, Viewrotscale);
-	model2hv[15] = gift_grid_rounding;
-	bn_mat_inv(hv2model, model2hv);
-
-	VSET(v_ll, -1, -1, 0);
-	MAT4X3PNT(m_ll, view2model, v_ll);
-	MAT4X3PNT(hv_ll, model2hv, m_ll);
-	VSET(hv_wanted, floor(hv_ll[X]), floor(hv_ll[Y]), floor(hv_ll[Z]));
-	VSUB2(hv_delta, hv_ll, hv_wanted);
-
-	MAT4X3PNT(m_delta, hv2model, hv_delta);
-	VSUB2(eye_model, eye_model, m_delta);
-	MAT_DELTAS_VEC_NEG(toEye, eye_model);
-	bn_mat_mul(model2view, Viewrotscale, toEye);
-	bn_mat_inv(view2model, model2view);
-    }
-
-    /* Create basis vectors dx and dy for emanation plane (grid) */
-    VSET(temp, 1, 0, 0);
-    MAT3X3VEC(dx_unit, view2model, temp);	/* rotate only */
-    VSCALE(dx_model, dx_unit, cell_width);
-
-    VSET(temp, 0, 1, 0);
-    MAT3X3VEC(dy_unit, view2model, temp);	/* rotate only */
-    VSCALE(dy_model, dy_unit, cell_height);
-
-    if (stereo) {
-	/* Move left 2.5 inches (63.5mm) */
-	VSET(temp, -63.5*2.0/viewsize, 0, 0);
-	MAT4X3VEC(left_eye_delta, view2model, temp);
-    }
-
-    /* "Lower left" corner of viewing plane */
-    if (rt_perspective > 0.0) {
-	fastf_t zoomout;
-	zoomout = 1.0 / tan(DEG2RAD * rt_perspective / 2.0);
-	VSET(temp, -1, -1/aspect, -zoomout);	/* viewing plane */
-
-	/*
-	 * divergence is perspective angle divided by the number of
-	 * pixels in that angle. Extra factor of 0.5 is because
-	 * perspective is a full angle while divergence is the tangent
-	 * (slope) of a half angle.
-	 */
-	APP.a_diverge = tan(DEG2RAD * rt_perspective * 0.5 / width);
-	APP.a_rbeam = 0;
-    } else {
-	/* all rays go this direction */
-	VSET(temp, 0, 0, -1);
-	MAT4X3VEC(APP.a_ray.r_dir, view2model, temp);
-	VUNITIZE(APP.a_ray.r_dir);
-
-	VSET(temp, -1, -1/aspect, 0);	/* eye plane */
-	APP.a_rbeam = 0.5 * viewsize / width;
-	APP.a_diverge = 0;
-    }
-    if (ZERO(APP.a_rbeam) && ZERO(APP.a_diverge))
-	bu_exit(EXIT_FAILURE, "zero-radius beam");
-    MAT4X3PNT(viewbase_model, view2model, temp);
-
-    if (jitter & JITTER_FRAME) {
-	/* Move the frame in a smooth circular rotation in the plane */
-	fastf_t ang;	/* radians */
-	fastf_t dx, dy;
-
-	ang = curframe * M_2PI / 100.0;	/* semi-abitrary 100 frame period */
-	dx = cos(ang) * 0.5;	/* +/- 1/4 pixel width in amplitude */
-	dy = sin(ang) * 0.5;
-	VJOIN2(viewbase_model, viewbase_model,
-	       dx, dx_model,
-	       dy, dy_model);
-    }
-
-    if (cell_width <= 0 || cell_width >= INFINITY ||
-	cell_height <= 0 || cell_height >= INFINITY) {
-	bu_log("grid_setup: cell size ERROR (%g, %g) mm\n",
-	       cell_width, cell_height);
-	bu_exit(EXIT_FAILURE, "cell size");
-    }
-    if (width <= 0 || height <= 0) {
-	bu_log("grid_setup: ERROR bad image size (%zu, %zu)\n",
-	       width, height);
-	bu_exit(EXIT_FAILURE, "bad size");
-    }
-}
-
-
-/**
  * Compute a run of pixels, in parallel if the hardware permits it.
  */
 void
 do_run(int a, int b)
 {
-    size_t cpu;
-
-#ifdef USE_FORKED_THREADS
-    int pid, wpid;
-    int waitret;
-    void *buffer = (void*)0;
-    int p[2] = {0, 0};
-    struct resource *tmp_res;
-
-    if (RTG.rtg_parallel) {
-	buffer = bu_calloc(npsw, sizeof(resource[0]), "buffer");
-	if (pipe(p) == -1) {
-	    perror("pipe failed");
-	}
-    }
-#endif
-
     cur_pixel = a;
     last_pixel = b;
 
@@ -754,84 +601,20 @@ do_run(int a, int b)
 	/*
 	 * Parallel case.
 	 */
-
-	/* hack to bypass a bug in the Linux 2.4 kernel pthreads
-	 * implementation. cpu statistics are only traceable on a
-	 * process level and the timers will report effectively no
-	 * elapsed cpu time.  this allows the stats of all threads to
-	 * be gathered up by an encompassing process that may be
-	 * timed.
-	 *
-	 * XXX this should somehow only apply to a build on a 2.4
-	 * linux kernel.
-	 */
-#ifdef USE_FORKED_THREADS
-	pid = fork();
-	if (pid < 0) {
-	    perror("fork failed");
-	    bu_exit(1, NULL);
-	} else if (pid == 0) {
-#endif
-
-	    bu_parallel(worker, npsw, NULL);
-
-#ifdef USE_FORKED_THREADS
-	    /* send raytrace instance data back to the parent */
-	    if (write(p[1], resource, sizeof(resource[0]) * npsw) == -1) {
-		perror("Unable to write to the communication pipe");
-		bu_exit(1, NULL);
-	    }
-	    /* flush the pipe */
-	    if (close(p[1]) == -1) {
-		perror("Unable to close the communication pipe");
-		bu_snooze(BU_SEC2USEC(1)); /* give the parent time to read */
-	    }
-	    bu_exit(0, NULL);
-	} else {
-	    if (read(p[0], buffer, sizeof(resource[0]) * npsw) == -1) {
-		perror("Unable to read from the communication pipe");
-	    }
-
-	    /* do not use the just read info to overwrite the resource
-	     * structures.  doing so will hose the resources
-	     * completely
-	     */
-
-	    /* parent ends up waiting on his child (and his child's
-	     * threads) to terminate.  we can get valid usage
-	     * statistics on a child process.
-	     */
-	    while ((wpid = wait(&waitret)) != pid && wpid != -1)
-		; /* do nothing */
-	} /* end fork() */
-#endif
-
-    } /* end parallel case */
-
-#ifdef USE_FORKED_THREADS
-    if (RTG.rtg_parallel) {
-	tmp_res = (struct resource *)buffer;
-    } else {
-	tmp_res = resource;
+	bu_parallel(worker, (size_t)npsw, NULL);
     }
-    for (cpu=0; cpu < npsw; cpu++) {
-	if (tmp_res[cpu].re_magic != RESOURCE_MAGIC) {
-	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
-	    continue;
-	}
-	rt_add_res_stats(APP.a_rt_i, &tmp_res[cpu]);
-	rt_zero_res_stats(&resource[cpu]);
-    }
-#else
+
     /* Tally up the statistics */
-    for (cpu=0; cpu < npsw; cpu++) {
+    size_t cpu;
+    for (cpu = 0; cpu < MAX_PSW; cpu++) {
 	if (resource[cpu].re_magic != RESOURCE_MAGIC) {
 	    bu_log("ERROR: CPU %zu resources corrupted, statistics bad\n", cpu);
 	    continue;
 	}
 	rt_add_res_stats(APP.a_rt_i, &resource[cpu]);
+	rt_zero_res_stats(&resource[cpu]);
     }
-#endif
+
     return;
 }
 

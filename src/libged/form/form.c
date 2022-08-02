@@ -1,0 +1,98 @@
+/*                         F O R M . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2008-2022 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file libged/form.c
+ *
+ * The form command.
+ *
+ */
+
+#include "common.h"
+
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+
+#include "ged.h"
+
+
+int
+ged_form_core(struct ged *gedp, int argc, const char *argv[])
+{
+    const struct rt_functab *ftp;
+    static const char *usage = "type";
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc != 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    if ((ftp = rt_get_functab_by_label(argv[1])) == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "There is no geometric object type \"%s\".", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (!ftp->ft_form) {
+	return BRLCAD_ERROR;
+    }
+
+    return ftp->ft_form(gedp->ged_result_str, ftp);
+}
+
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl form_cmd_impl = {
+    "form",
+    ged_form_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd form_cmd = { &form_cmd_impl };
+const struct ged_cmd *form_cmds[] = { &form_cmd, NULL };
+
+static const struct ged_plugin pinfo = { GED_API,  form_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

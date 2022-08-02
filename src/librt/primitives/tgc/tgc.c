@@ -1,7 +1,7 @@
 /*                           T G C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1275,7 +1275,6 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	 * between the planes truncating the cone.
 	 */
 	intersect = 0;
-	tgc = (struct tgc_specific *)stp[ix]->st_specific;
 	for (i=0; i < npts; i++) {
 	    /* segp[ix].seg_in.hit_normal holds dprime */
 	    /* segp[ix].seg_out.hit_normal holds pprime */
@@ -1656,7 +1655,7 @@ rt_tgc_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    flip_fastf_float(vec, rp->s.s_values, 6, dbip->dbi_version < 0 ? 1 : 0);
+    flip_fastf_float(vec, rp->s.s_values, 6, (dbip && dbip->dbi_version < 0) ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1887,6 +1886,7 @@ struct ellipse {
 
 static void
 draw_lines_between_rec_ellipses(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     struct ellipse ellipse1,
     vect_t h,
@@ -1901,14 +1901,15 @@ draw_lines_between_rec_ellipses(
 				ellipse1.axis_a, ellipse1.axis_b, i * radian_step);
 	VADD2(ellipse2_point, ellipse1_point, h);
 
-	RT_ADD_VLIST(vhead, ellipse1_point, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, ellipse2_point, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, ellipse1_point, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, ellipse2_point, BV_VLIST_LINE_DRAW);
     }
 }
 
 
 static void
 draw_lines_between_ellipses(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     struct ellipse ellipse1,
     struct ellipse ellipse2,
@@ -1924,14 +1925,14 @@ draw_lines_between_ellipses(
 	ellipse_point_at_radian(ellipse2_point, ellipse2.center,
 				ellipse2.axis_a, ellipse2.axis_b, i * radian_step);
 
-	RT_ADD_VLIST(vhead, ellipse1_point, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, ellipse2_point, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, ellipse1_point, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, ellipse2_point, BV_VLIST_LINE_DRAW);
     }
 }
 
 
 static int
-tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_info *info)
+tgc_points_per_ellipse(const struct rt_db_internal *ip, fastf_t point_spacing)
 {
     struct rt_tgc_internal *tgc;
     fastf_t avg_radius, avg_circumference;
@@ -1949,7 +1950,7 @@ tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_inf
     avg_radius = (tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d) / 4.0;
     avg_circumference = M_2PI * avg_radius;
 
-    return avg_circumference / info->point_spacing;
+    return avg_circumference / point_spacing;
 }
 
 
@@ -1965,7 +1966,8 @@ ramanujan_approx_circumference(fastf_t major_len, fastf_t minor_len)
 static int
 tgc_connecting_lines(
     const struct rt_tgc_internal *tgc,
-    const struct rt_view_info *info)
+    fastf_t curve_scale,
+    fastf_t s_size)
 {
     fastf_t mag_a, mag_b, mag_c, mag_d, avg_circumference;
 
@@ -1978,35 +1980,50 @@ tgc_connecting_lines(
     avg_circumference += ramanujan_approx_circumference(mag_c, mag_d);
     avg_circumference /= 2.0;
 
-    return avg_circumference / info->curve_spacing;
+    fastf_t curve_spacing = s_size / 2.0;
+    curve_spacing /= curve_scale;
+    return avg_circumference / curve_spacing;
 }
 
 
+
 int
-rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_tgc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     int points_per_ellipse, connecting_lines;
     struct rt_tgc_internal *tip;
     struct ellipse ellipse1, ellipse2;
+    fastf_t point_spacing;
+    fastf_t avg_diameter;
+    fastf_t tgc_mag_a, tgc_mag_b, tgc_mag_c, tgc_mag_d;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
-    points_per_ellipse = tgc_points_per_ellipse(ip, info);
+    tgc_mag_a = MAGNITUDE(tip->a);
+    tgc_mag_b = MAGNITUDE(tip->b);
+    tgc_mag_c = MAGNITUDE(tip->c);
+    tgc_mag_d = MAGNITUDE(tip->d);
+    avg_diameter = tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d;
+    avg_diameter /= 2.0;
+    point_spacing = solid_point_spacing(v, avg_diameter);
+
+    points_per_ellipse = tgc_points_per_ellipse(ip, point_spacing);
 
     if (points_per_ellipse < 6) {
 	point_t p;
 
 	VADD2(p, tip->v, tip->h);
-	RT_ADD_VLIST(info->vhead, tip->v, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, tip->v, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
 	return 0;
     }
 
-    connecting_lines = tgc_connecting_lines(tip, info);
+    connecting_lines = tgc_connecting_lines(tip, v->gv_s->curve_scale, s_size);
 
     if (connecting_lines < 4) {
 	connecting_lines = 4;
@@ -2021,8 +2038,8 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VMOVE(ellipse2.axis_b, tip->d);
 
     /* looks like a right elliptical cylinder */
-    if (VNEAR_EQUAL(tip->a, tip->c, info->tol->dist) &&
-	VNEAR_EQUAL(tip->b, tip->d, info->tol->dist))
+    if (VNEAR_EQUAL(tip->a, tip->c, tol->dist) &&
+	VNEAR_EQUAL(tip->b, tip->d, tol->dist))
     {
 	int i;
 	point_t *pts;
@@ -2036,12 +2053,12 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	/* calculate and plot first ellipse */
 	ellipse_point_at_radian(pts[0], tip->v, tip->a, tip->b,
 				radian_step * (points_per_ellipse - 1));
-	RT_ADD_VLIST(info->vhead, pts[0], BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, pts[0], BV_VLIST_LINE_MOVE);
 
 	radian = 0;
 	for (i = 0; i < points_per_ellipse; ++i) {
 	    ellipse_point_at_radian(pts[i], tip->v, tip->a, tip->b, radian);
-	    RT_ADD_VLIST(info->vhead, pts[i], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, pts[i], BV_VLIST_LINE_DRAW);
 
 	    radian += radian_step;
 	}
@@ -2051,23 +2068,23 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	    VADD2(pts[i], tip->h, pts[i]);
 	}
 
-	RT_ADD_VLIST(info->vhead, pts[points_per_ellipse - 1], BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, pts[points_per_ellipse - 1], BV_VLIST_LINE_MOVE);
 	for (i = 0; i < points_per_ellipse; ++i) {
-	    RT_ADD_VLIST(info->vhead, pts[i], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, pts[i], BV_VLIST_LINE_DRAW);
 	}
 
 	bu_free(pts, "tgc points");
 
-	draw_lines_between_rec_ellipses(info->vhead, ellipse1, tip->h,
+	draw_lines_between_rec_ellipses(vlfree, vhead, ellipse1, tip->h,
 					connecting_lines);
     } else {
-	plot_ellipse(info->vhead, ellipse1.center, ellipse1.axis_a, ellipse1.axis_b,
+	plot_ellipse(vlfree, vhead, ellipse1.center, ellipse1.axis_a, ellipse1.axis_b,
 		     points_per_ellipse);
 
-	plot_ellipse(info->vhead, ellipse2.center, ellipse2.axis_a, ellipse2.axis_b,
+	plot_ellipse(vlfree, vhead, ellipse2.center, ellipse2.axis_a, ellipse2.axis_b,
 		     points_per_ellipse);
 
-	draw_lines_between_ellipses(info->vhead, ellipse1, ellipse2,
+	draw_lines_between_ellipses(vlfree, vhead, ellipse1, ellipse2,
 				    connecting_lines);
     }
 
@@ -2076,7 +2093,7 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
 
 int
-rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_tgc_internal *tip;
     register int i;
@@ -2086,6 +2103,7 @@ rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
@@ -2094,21 +2112,21 @@ rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     rt_ell_16pnts(top, work, tip->c, tip->d);
 
     /* Draw the top */
-    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i=0; i<16; i++) {
-	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw the bottom */
-    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i=0; i<16; i++) {
-	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw connections */
     for (i=0; i<16; i += 4) {
-	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
     return 0;
 }
@@ -2214,7 +2232,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct faceuse *fu, *fu_top, *fu_base;
     struct rt_tgc_internal *tip;
     fastf_t radius;		/* bounding sphere radius */
-    fastf_t max_radius, min_radius; /* max/min of a, b, c, d */
+    fastf_t max_radius; /* max of a, b, c, d */
     fastf_t h, a, b, c, d;	/* lengths of TGC vectors */
     fastf_t inv_length;	/* 1.0/length of a vector */
     vect_t unit_a, unit_b, unit_c, unit_d; /* units vectors in a, b, c, d directions */
@@ -2307,16 +2325,6 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     if (max_radius > radius)
 	radius = max_radius;
-
-    min_radius = MAX_FASTF;
-    if (a < min_radius && a > 0.0)
-	min_radius = a;
-    if (b < min_radius && b > 0.0)
-	min_radius = b;
-    if (c < min_radius && c > 0.0)
-	min_radius = c;
-    if (d < min_radius && d > 0.0)
-	min_radius = d;
 
     if (abs_tol <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0) {
 	/* no tolerances specified, use 10% relative tolerance */
@@ -2963,7 +2971,6 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     nmg_vertexuse_a_cnurb(eu->vu_p, uvw);
     VSET(uvw, 1, 0, 0);
     nmg_vertexuse_a_cnurb(eu->eumate_p->vu_p, uvw);
-    eu = BU_LIST_NEXT(edgeuse, &eu->l);
 
     /* Top cap surface */
     nmg_tgc_disk(top_fu, top_mat, 0.0, 0);
@@ -3283,7 +3290,6 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
     nmg_vertexuse_a_cnurb(eu->vu_p, uvw);
     VSET(uvw, 0, 0, 0);
     nmg_vertexuse_a_cnurb(eu->eumate_p->vu_p, uvw);
-    eu = BU_LIST_NEXT(edgeuse, &eu->l);
 
     /* Create the edge loop geometry */
 
@@ -3423,6 +3429,50 @@ rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
 	default:
 	    bu_log("rt_tgc_centroid(): cannot find centroid\n");
     }
+}
+
+void
+rt_tgc_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!ps || !ip)
+	return;
+
+    struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tgc);
+
+    // Set up the containers
+    struct bv_label *l[5];
+    for (int i = 0; i < 5; i++) {
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
+	struct bv_label *la;
+	BU_GET(la, struct bv_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+    }
+
+    // Do the specific data assignments for each label
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, tgc->v);
+
+    bu_vls_sprintf(&l[1]->label, "A");
+    VADD2(l[1]->p, tgc->v, tgc->a);
+
+    bu_vls_sprintf(&l[2]->label, "B");
+    VADD2(l[2]->p, tgc->v, tgc->b);
+
+    bu_vls_sprintf(&l[3]->label, "C");
+    VADD3(l[3]->p, tgc->v, tgc->h, tgc->c);
+
+    bu_vls_sprintf(&l[4]->label, "D");
+    VADD3(l[4]->p, tgc->v, tgc->h, tgc->d);
 }
 
 

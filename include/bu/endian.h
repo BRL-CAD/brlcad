@@ -1,7 +1,7 @@
 /*                         E N D I A N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,9 +36,9 @@ __BEGIN_DECLS
 
 
 typedef enum {
-    BU_LITTLE_ENDIAN = 1234, /* LSB first: i386, VAX order */
-    BU_BIG_ENDIAN    = 4321, /* MSB first: 68000, IBM, network order */
-    BU_PDP_ENDIAN    = 3412  /* LSB first in word, MSW first in long */
+    BU_LITTLE_ENDIAN = 1234, /**< LSB first: i386, VAX order */
+    BU_BIG_ENDIAN    = 4321, /**< MSB first: 68000, IBM, network order */
+    BU_PDP_ENDIAN    = 3412  /**< LSB first in word, MSW first in long */
 } bu_endian_t;
 
 

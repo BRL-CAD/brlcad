@@ -1,7 +1,7 @@
 /*                         G - O F F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
@@ -275,6 +275,9 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     if (curtree->tr_op == OP_NOP)
 	return curtree;
 
+    if (!pathp || pathp->fp_len <= 0)
+	return TREE_NULL;
+
     regions_tried++;
 
     ret_tree = process_boolean(curtree, tsp, pathp);
@@ -360,7 +363,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 			  (int)(tsp->ts_mater.ma_color[2] * 255) );
 		BU_LIST_INIT( &vhead );
 		nmg_r_to_vlist(&vhead, r, 0, &RTG.rtg_vlfree);
-		bn_vlist_to_uplot( fp, &vhead );
+		bv_vlist_to_uplot( fp, &vhead );
 		fclose(fp);
 		if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
 	    }

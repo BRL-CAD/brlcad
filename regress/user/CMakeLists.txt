@@ -17,7 +17,7 @@ set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
 
 # We deliberately do not use any of the BRL-CAD wrapper functions such as
 # BRLCAD_ADDEXEC in order to avoid their automatic addtiion of compile
-# defintions or other magic specific to BRL-CAD's internal build.
+# definitions or other magic specific to BRL-CAD's internal build.
 add_executable(cad_user cad_user.c)
 target_link_libraries(cad_user libged)
 add_dependencies(cad_user managed_files)
@@ -26,16 +26,18 @@ add_dependencies(cad_user managed_files)
 # superset of what will be installed, but is the best available option without
 # performing an actual install step.)
 if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-  target_include_directories(cad_user PUBLIC "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${INCLUDE_DIR}/brlcad")
+  target_include_directories(cad_user PUBLIC "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/brlcad")
 else(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
   target_include_directories(cad_user PUBLIC "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad")
 endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
 
 set_target_properties(cad_user PROPERTIES FOLDER "BRL-CAD Regression Tests/user")
 
+if (TARGET moss.g)
 set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-user.log")
 BRLCAD_REGRESSION_TEST(regress-user "cad_user;moss.g" EXEC cad_user)
 DISTCLEAN(${LOG_FILE})
+endif (TARGET moss.g)
 
 CMAKEFILES(
   CMakeLists.txt

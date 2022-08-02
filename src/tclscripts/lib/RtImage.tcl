@@ -1,7 +1,7 @@
 #                          R T I M A G E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2020 United States Government as represented by
+# Copyright (c) 1998-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -90,7 +90,7 @@ proc rtimage {rtimage_dict} {
     set tmod [list [file join $dir $pid\_bwmod.bw] ]
     set tbwpix [list [file join $dir $pid\_bwpix.pix] ]
 
-    set binpath [bu_brlcad_root "bin"]
+    set binpath [bu_dir bin]
 
     if {[llength $_color_objects]} {
 	set have_color_objects 1
@@ -111,7 +111,7 @@ proc rtimage {rtimage_dict} {
 	    lappend cmd $obj
 	}
 
-	puts "RT (with fullcolor): $cmd"
+	#puts "RT (with fullcolor): $cmd"
 
 	#
 	# Run rt to generate the color insert
@@ -165,7 +165,7 @@ proc rtimage {rtimage_dict} {
 		}
 
 		# !!! FIXME: this runs rt in regress-D ...
-		puts "RTEDGE (with fullcolor): $cmd"
+		#puts "RTEDGE (with fullcolor): $cmd"
 		
 		#
 		# Run rtedge to generate the full-color with edges
@@ -205,7 +205,7 @@ proc rtimage {rtimage_dict} {
 	    lappend cmd $obj
 	}
 
-	puts "RT (ghosted): $cmd"
+	#puts "RT (ghosted): $cmd"
 
 	#
 	# Run rt to generate the full-color version of the ghost image
@@ -228,7 +228,7 @@ proc rtimage {rtimage_dict} {
 	    lappend cmd $obj
 	}
 
-	puts "RT (occluded): $cmd"
+	#puts "RT (occluded): $cmd"
 	
 	#
 	# Run rt to generate the full-color version of the occlude_objects (i.e. color and ghost)
@@ -295,7 +295,7 @@ proc rtimage {rtimage_dict} {
 	    lappend cmd $obj
 	}
 
-	puts "RTEDGE: $cmd"
+	#puts "RTEDGE: $cmd"
 	
 	#
 	# Run rtedge to generate the full-color version of the ghost image

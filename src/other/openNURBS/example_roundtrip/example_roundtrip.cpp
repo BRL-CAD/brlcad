@@ -66,7 +66,7 @@ int main( int argc, const char *argv[] )
     dump->PushIndent();
 
     // create achive object from file pointer
-    ON_BinaryFile archive( ON::read3dm, archive_fp );
+    ON_BinaryFile archive( ON::on_read3dm, archive_fp );
 
     // read the contents of the file into "model"
     bool rc = model.Read( archive, dump );

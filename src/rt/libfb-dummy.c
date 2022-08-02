@@ -1,7 +1,7 @@
 /*                   L I B F B - D U M M Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,9 +24,9 @@
 
 #include <stdio.h>
 
-#include "fb.h"
+#include "dm.h"
 
-fb *
+struct fb *
 fb_open( name, w, h )
     char *name;
 {

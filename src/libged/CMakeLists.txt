@@ -1,373 +1,64 @@
+# LIBGED is set up based on a plugin architecture, with common functionality
+# defined in a core library.
 
-# if GED command stuff is pushed into the actual subdirs, the autoconf vs cmake
-# verification (sh/cmakecheck.sh) will fail on dist-hook.  For now, just
-# handle it as part of libged
-if(BRLCAD_ENABLE_BULLET)
-  add_definitions(-DHAVE_BULLET=1)
-  set(LIBGED_CMD_INCLUDE_DIRS
-    ${LIBGED_CMD_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/simulate
-    )
-  include_directories(SYSTEM
-    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/bullet
-    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/LinearMath
-    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/BulletCollision
-    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/BulletDynamics
-    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/BulletSoftBody
-    )
-endif(BRLCAD_ENABLE_BULLET)
-include(simulate/bullet/CMakeLists.txt)
-
-if(ADAPTAGRAMS_FOUND)
-  set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${ADAPTAGRAMS_LIBRARIES})
-  set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${AVOID_INCLUDE_DIR})
-endif(ADAPTAGRAMS_FOUND)
-
-set(DEBUG_CMD_CPP "${CMAKE_CURRENT_BINARY_DIR}/debug_cmd.cpp")
-
-add_custom_command(OUTPUT ${DEBUG_CMD_CPP}
-  COMMAND debug2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${DEBUG_CMD_CPP}
-  DEPENDS debug2c
-  COMMENT "[DEBUG2C] Scanning for debugging variables"
+add_custom_command(
+  OUTPUT "${CMAKE_BINARY_DIR}/ged_plugins.sentinel"
+  COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/ged_plugins.sentinel"
   )
-set_source_files_properties(debug.cpp PROPERTIES OBJECT_DEPENDS ${DEBUG_CMD_CPP})
-DISTCLEAN(${DEBUG_CMD_CPP})
-
-set(ENV_CMD_C "${CMAKE_CURRENT_BINARY_DIR}/env_cmd.c")
-
-add_custom_command(OUTPUT ${ENV_CMD_C}
-  COMMAND env2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${ENV_CMD_C}
-  DEPENDS env2c
-  COMMENT "[ENV2C] Scanning for environment variable usage"
+add_custom_target(ged_plugins_sentinel
+  DEPENDS ${CMAKE_BINARY_DIR}/ged_plugins.sentinel
   )
-set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_CMD_C})
-DISTCLEAN(${ENV_CMD_C})
+set_target_properties(ged_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/ged")
+
+function(ged_plugin_library name)
+  add_library(${name} ${ARGN})
+  add_dependencies(ged_plugins_sentinel ${name})
+endfunction(ged_plugin_library name)
+
+# This target is supplied so applications wanting to run libged
+# commands at build time can depend on the plugins being built as well as
+# libged itself (otherwise LIBGED commands might fail due to their plugins not
+# yet having been built.)
+add_custom_target(ged_plugins ALL DEPENDS ged_plugins_sentinel)
+set_target_properties(ged_plugins PROPERTIES FOLDER "BRL-CAD Plugins")
+
 
 set(LIBGED_SOURCES
-  ${LIBGED_SOURCES}
-  3ptarb.c
-  adc.c
-  adjust.c
-  ae2dir.c
-  aet.c
-  analyze.c
-  annotate.c
-  arb.c
-  arced.c
-  arot.c
-  attr.cpp
-  autoview.c
-  bb.c
-  bev.c
-  bigE.c
-  blast.c
-  bo.c
-  bot/bot.cpp
-  bot/check.cpp
-  bot/extrude.cpp
-  bot/remesh.cpp
-  bot_condense.c
-  bot_decimate.c
-  bot_dump.c
-  bot_face_fuse.c
-  bot_face_sort.c
-  bot_fuse.c
-  bot_flip.c
-  bot_merge.c
-  bot_smooth.c
-  bot_split.c
-  bot_sync.c
-  bot_vertex_fuse.c
-  brep/brep.cpp
-  brep/conversion.cpp
-  brep/csg.cpp
-  brep/info.cpp
-  brep/intersect.cpp
-  brep/pick.cpp
-  brep/plot.cpp
-  brep/tikz.cpp
-  brep/valid.cpp
-  cat.c
-  cc.c
-  center.cpp
-  check/check.c
-  check/check_adj_air.c
-  check/check_centroid.c
-  check/check_exp_air.c
-  check/check_gap.c
-  check/check_mass.c
-  check/check_moments.c
-  check/check_overlaps.c
-  check/check_surf_area.c
-  check/check_unconf_air.c
-  check/check_volume.c
-  clone.c
-  coil.c
-  color.c
+  exec.cpp
+  exec_mapping.cpp
+  ged_init.cpp
   columns.c
-  comb.c
-  comb_color.c
-  comb_std.c
-  combmem.c
-  concat.cpp
-  constraint/constraint.c
-  copy.c
-  copyeval.c
-  copymat.c
-  cpi.c
-  dag.cpp
-  dbip.c
-  debug.cpp
-  debugbu.c
-  debugdir.c
-  debuglib.c
-  debugnmg.c
-  decompose.c
-  delay.c
-  dir2ae.c
   display_list.c
-  draw.c
-  draw_calc.cpp
-  dsp.c
-  dump.c
-  dup.c
-  eac.c
-  echo.c
-  edbot.c
-  edcodes.c
-  edcomb.c
-  edarb.c
-  edit.c
-  edit_metaball.c
-  editit.c
-  edmater.c
-  edpipe.c
-  env.c
-  erase.c
-  exists.c
-  expand.c
-  eye.c
-  eye_pos.c
+  draw.cpp
   facedef.c
-  facetize_log.c
-  facetize.cpp
-  fb2pix.c
-  fbclear.c
-  find.c
-  form.c
-  fracture.c
-  gdiff.c
   ged.c
   ged_util.c
-  get.c
-  get_autoview.c
-  get_comb.c
-  get_eyemodel.c
   get_obj_bounds.c
   get_solid_kp.c
-  get_type.c
-  glob.c
-  gdiff.c
-  gqa.c
-  grid.c
-  grid2model_lu.c
-  grid2view_lu.c
-  group.c
-  heal.c
-  help/help.cpp
-  hide.c
-  how.c
-  human.c
-  illum.c
-  importFg4Section.c
   inside.c
-  instance.c
-  isize.c
-  item.c
-  joint.c
-  joint2.c
-  keep.c
-  keypoint.c
-  kill.c
-  killall.c
-  killrefs.c
-  killtree.c
-  label.c
-  lc.c
-  libfuncs.c
-  lint.cpp
-  list.c
-  loadview.c
-  lod.c
-  log.c
-  lookat.c
-  ls.c
-  lt.c
-  m2v_point.c
-  make.c
-  make_name.c
-  match.c
-  mater.cpp
-  mirror.c
-  model2grid_lu.c
-  model2view.c
-  model2view_lu.c
-  move.c
-  move_all.c
-  move_arb_edge.c
-  move_arb_face.c
-  mrot.c
-  nirt.c
-  nmg.c
-  nmg_make_v.c
-  nmg_mm.c
-  nmg_cmface.c
-  nmg_collapse.c
-  nmg_fix_normals.c
-  nmg_simplify.c
-  nmg_kill_v.c
-  nmg_kill_f.c
-  nmg_move_v.c
-  ocenter.c
-  open.c
-  orient.c
-  orotate.c
-  oscale.c
-  otranslate.c
-  overlay.c
   path.c
-  pathlist.c
-  pathsum.c
-  perspective.c
-  pix2fb.c
-  plot.c
-  pmat.c
-  pmodel2view.c
-  png.c
-  png2fb.c
+  pipe.c
   pnts_util.c
-  pnts.cpp
+  points_eval.c
   polyclip.cpp
-  prcolor.c
-  prefix.c
-  preview.c
-  process.c
-  protate.c
-  ps.c
-  pscale.c
-  pset.c
-  ptranslate.c
-  pull.c
-  push.c
-  put.c
-  put_comb.c
-  putmat.c
   qray.c
-  quat.c
-  qvrot.c
-  rcodes.c
-  rect.c
-  red.c
-  regdef.c
-  region.c
-  remove.c
-  rfarb.c
-  rmap.c
-  rmat.c
-  rmater.c
-  rot.c
-  rot_point.c
-  rotate_about.c
-  rotate_arb_face.c
   rotate_eto.c
   rotate_extrude.c
   rotate_hyp.c
   rotate_tgc.c
-  rrt.c
-  rt.c
-  rtabort.c
-  rtcheck.c
-  rtwizard.c
-  savekey.c
-  saveview.c
-  scale.c
-  scale_ehy.c
-  scale_ell.c
-  scale_epa.c
-  scale_eto.c
-  scale_extrude.c
-  scale_hyp.c
-  scale_part.c
-  scale_rhc.c
-  scale_rpc.c
-  scale_superell.c
-  scale_tgc.c
-  scale_tor.c
-  screengrab.c
-  search.c
-  select.c
-  set_output_script.c
-  set_transparency.c
-  set_uplotOutputMode.c
-  setview.c
-  shaded_mode.c
-  shader.c
-  shells.c
-  showmats.c
-  simulate/ged_command.cpp
-  simulate/rt_collision_algorithm.cpp
-  simulate/rt_collision_shape.cpp
-  simulate/rt_debug_draw.cpp
-  simulate/rt_instance.cpp
-  simulate/rt_motion_state.cpp
-  simulate/simulation.cpp
-  simulate/utility.cpp
-  size.c
-  slew.c
-  solid_report.c
-  solids_on_ray.c
-  sphgroup.c
-  summary.c
-  sync.c
-  tables.c
-  tire.c
-  title.c
-  tol.c
-  tops.c
-  tra.c
+  select.cpp
+  tab_complete.cpp
   trace.c
   track.c
   translate_extrude.c
   translate_tgc.c
-  tree.c
-  typein.c
-  unhide.c
-  units.c
-  v2m_point.c
-  vdraw.c
-  version.c
-  view.c
-  view2grid_lu.c
-  view2model.c
-  view2model_lu.c
-  view2model_vec.c
-  viewdir.c
-  voxelize.c
-  vrot.c
   vutil.c
-  wcodes.c
+  view/data_lines.c
   wdb_importFg4Section.c
-  whatid.c
-  which.cpp
-  which_shader.c
-  who.c
-  wmater.c
-  xpush.c
-  ypr.c
-  zap.c
-  zoom/zoom.c
-  ${LIBGED_CMD_SRCS}
+  wireframe_eval.c
   )
+
+set_property(SOURCE ged_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "GED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 
 # Include directories needed by libged users
 set(GED_INCLUDE_DIRS
@@ -408,7 +99,7 @@ if (BRLCAD_ENABLE_OPENVDB)
   set_property(SOURCE bot_remesh.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
 endif (BRLCAD_ENABLE_OPENVDB)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libbv;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
@@ -418,14 +109,17 @@ BRLCAD_ADDEXEC(test_help help/test_help.c libged TEST)
 
 set(ged_ignore_files
   CMakeLists.txt
+  NOTES
+  README
   TODO
   alphanum.h
   bot/ged_bot.h
   brep/ged_brep.h
   check/check_private.h
   ged_private.h
-  joint.h
+  joint/joint.h
   osg.cpp
+  pscale/pscale.h
   pnts_util.h
   qray.h
   simulate/NOTES
@@ -436,8 +130,242 @@ set(ged_ignore_files
   simulate/rt_motion_state.hpp
   simulate/simulation.hpp
   simulate/utility.hpp
+  include/plugin.h
   )
 CMAKEFILES(${ged_ignore_files})
+
+# Plugins
+add_subdirectory(3ptarb)
+add_subdirectory(adc)
+add_subdirectory(adjust)
+add_subdirectory(ae2dir)
+add_subdirectory(analyze)
+add_subdirectory(annotate)
+add_subdirectory(arb)
+add_subdirectory(arced)
+add_subdirectory(arot)
+add_subdirectory(attr)
+add_subdirectory(autoview)
+add_subdirectory(bb)
+add_subdirectory(bev)
+add_subdirectory(bigE)
+add_subdirectory(blast)
+add_subdirectory(bo)
+add_subdirectory(bot)
+add_subdirectory(brep)
+add_subdirectory(cat)
+add_subdirectory(cc)
+add_subdirectory(check)
+add_subdirectory(clone)
+add_subdirectory(close)
+add_subdirectory(coil)
+add_subdirectory(color)
+add_subdirectory(comb)
+add_subdirectory(comb_color)
+add_subdirectory(comb_std)
+add_subdirectory(combmem)
+add_subdirectory(concat)
+add_subdirectory(constraint)
+add_subdirectory(copy)
+add_subdirectory(copyeval)
+add_subdirectory(copymat)
+add_subdirectory(cpi)
+add_subdirectory(dbip)
+add_subdirectory(debug)
+add_subdirectory(debugbu)
+add_subdirectory(debugdir)
+add_subdirectory(debuglib)
+add_subdirectory(debugnmg)
+add_subdirectory(decompose)
+add_subdirectory(delay)
+add_subdirectory(dir2ae)
+add_subdirectory(dm)
+add_subdirectory(draw)
+add_subdirectory(dsp)
+add_subdirectory(dump)
+add_subdirectory(dup)
+add_subdirectory(eac)
+add_subdirectory(echo)
+add_subdirectory(edarb)
+add_subdirectory(edcodes)
+add_subdirectory(edcomb)
+add_subdirectory(edit)
+add_subdirectory(editit)
+add_subdirectory(edmater)
+add_subdirectory(env)
+add_subdirectory(erase)
+add_subdirectory(exists)
+add_subdirectory(expand)
+add_subdirectory(eye_pos)
+add_subdirectory(facetize)
+add_subdirectory(fb2pix)
+add_subdirectory(fbclear)
+add_subdirectory(find)
+add_subdirectory(form)
+add_subdirectory(fracture)
+add_subdirectory(gdiff)
+add_subdirectory(get)
+add_subdirectory(get_autoview)
+add_subdirectory(get_comb)
+add_subdirectory(get_eyemodel)
+add_subdirectory(get_type)
+add_subdirectory(glob)
+add_subdirectory(gqa)
+add_subdirectory(graph)
+add_subdirectory(grid)
+add_subdirectory(grid2model_lu)
+add_subdirectory(grid2view_lu)
+add_subdirectory(group)
+add_subdirectory(heal)
+add_subdirectory(help)
+add_subdirectory(hide)
+add_subdirectory(how)
+add_subdirectory(human)
+add_subdirectory(illum)
+add_subdirectory(importFg4Section)
+add_subdirectory(inside)
+add_subdirectory(instance)
+add_subdirectory(isize)
+add_subdirectory(item)
+add_subdirectory(joint)
+add_subdirectory(joint2)
+add_subdirectory(keep)
+add_subdirectory(keypoint)
+add_subdirectory(kill)
+add_subdirectory(killall)
+add_subdirectory(killrefs)
+add_subdirectory(killtree)
+add_subdirectory(label)
+add_subdirectory(lc)
+add_subdirectory(libfuncs)
+add_subdirectory(lint)
+add_subdirectory(list)
+add_subdirectory(lod)
+add_subdirectory(log)
+add_subdirectory(lookat)
+add_subdirectory(ls)
+add_subdirectory(lt)
+add_subdirectory(m2v_point)
+add_subdirectory(make)
+add_subdirectory(make_name)
+add_subdirectory(match)
+add_subdirectory(mater)
+add_subdirectory(material)
+add_subdirectory(metaball)
+add_subdirectory(mirror)
+add_subdirectory(model2grid_lu)
+add_subdirectory(model2view)
+add_subdirectory(model2view_lu)
+add_subdirectory(move)
+add_subdirectory(move_all)
+add_subdirectory(move_arb_edge)
+add_subdirectory(move_arb_face)
+add_subdirectory(mrot)
+add_subdirectory(nirt)
+add_subdirectory(nmg)
+add_subdirectory(npush)
+add_subdirectory(ocenter)
+add_subdirectory(open)
+add_subdirectory(orient)
+add_subdirectory(orotate)
+add_subdirectory(oscale)
+add_subdirectory(otranslate)
+add_subdirectory(overlay)
+add_subdirectory(pathlist)
+add_subdirectory(pathsum)
+add_subdirectory(perspective)
+add_subdirectory(pipe)
+add_subdirectory(pix2fb)
+add_subdirectory(plot)
+add_subdirectory(pmat)
+add_subdirectory(pmodel2view)
+add_subdirectory(png)
+add_subdirectory(png2fb)
+add_subdirectory(pnts)
+add_subdirectory(prcolor)
+add_subdirectory(prefix)
+add_subdirectory(process)
+add_subdirectory(protate)
+add_subdirectory(ps)
+add_subdirectory(pscale)
+add_subdirectory(pset)
+add_subdirectory(ptranslate)
+add_subdirectory(pull)
+add_subdirectory(push)
+add_subdirectory(put)
+add_subdirectory(put_comb)
+add_subdirectory(putmat)
+add_subdirectory(qray)
+add_subdirectory(qvrot)
+add_subdirectory(rcodes)
+add_subdirectory(rect)
+add_subdirectory(red)
+add_subdirectory(regdef)
+add_subdirectory(region)
+add_subdirectory(remove)
+add_subdirectory(rfarb)
+add_subdirectory(rmap)
+add_subdirectory(rmat)
+add_subdirectory(rmater)
+add_subdirectory(rot)
+add_subdirectory(rot_point)
+add_subdirectory(rrt)
+add_subdirectory(rt)
+add_subdirectory(rtabort)
+add_subdirectory(rtcheck)
+add_subdirectory(rtwizard)
+add_subdirectory(savekey)
+add_subdirectory(saveview)
+add_subdirectory(scale)
+add_subdirectory(search)
+add_subdirectory(select)
+add_subdirectory(set_output_script)
+add_subdirectory(set_transparency)
+add_subdirectory(set_uplotOutputMode)
+add_subdirectory(setview)
+add_subdirectory(shaded_mode)
+add_subdirectory(shader)
+add_subdirectory(shells)
+add_subdirectory(showmats)
+add_subdirectory(simulate)
+add_subdirectory(slew)
+add_subdirectory(solid_report)
+add_subdirectory(solids_on_ray)
+add_subdirectory(sphgroup)
+add_subdirectory(stat)
+add_subdirectory(summary)
+add_subdirectory(sync)
+add_subdirectory(tables)
+add_subdirectory(tire)
+add_subdirectory(title)
+add_subdirectory(tol)
+add_subdirectory(tops)
+add_subdirectory(tra)
+add_subdirectory(track)
+add_subdirectory(tree)
+add_subdirectory(typein)
+add_subdirectory(unhide)
+add_subdirectory(units)
+add_subdirectory(v2m_point)
+add_subdirectory(vdraw)
+add_subdirectory(version)
+add_subdirectory(view)
+add_subdirectory(view2grid_lu)
+add_subdirectory(view2model)
+add_subdirectory(view2model_lu)
+add_subdirectory(view2model_vec)
+add_subdirectory(viewdir)
+add_subdirectory(voxelize)
+add_subdirectory(vrot)
+add_subdirectory(wcodes)
+add_subdirectory(whatid)
+add_subdirectory(which)
+add_subdirectory(which_shader)
+add_subdirectory(who)
+add_subdirectory(wmater)
+add_subdirectory(xpush)
+add_subdirectory(zap)
+add_subdirectory(zoom)
 
 # Local Variables:
 # tab-width: 8
@@ -445,3 +373,4 @@ CMAKEFILES(${ged_ignore_files})
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
+

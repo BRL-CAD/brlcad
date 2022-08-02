@@ -1,7 +1,7 @@
 /*                     W A L K _ E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -272,7 +272,7 @@ int main(int ac, char *av[])
     arg_count++;
 
     init_state = rt_initial_tree_state;
-    db_walk_tree(rtip->rti_dbip, /* database instance */
+    int ret = db_walk_tree(rtip->rti_dbip, /* database instance */
 		 ac-arg_count,		/* number of trees to get from the database */
 		 (const char **)&av[arg_count],
 		 1, /* number of cpus to use */
@@ -284,7 +284,7 @@ int main(int ac, char *av[])
 
     /* at this point you can do things with the geometry you have obtained */
 
-    return 0;
+    return ret;
 }
 
 

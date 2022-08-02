@@ -1,7 +1,7 @@
 /*                           O P T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2020 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #include "bn/str.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
@@ -97,8 +97,8 @@ size_t incr_level = 0;                  /* current incremental level */
 size_t incr_nlevel = 0;                 /* number of levels */
 size_t full_incr_sample = 0;            /* current fully incremental sample */
 size_t full_incr_nsamples = 0;          /* number of samples in the fully incremental mode */
-size_t npsw = 1;                        /* number of worker PSWs to run */
-struct resource resource[MAX_PSW];      /* memory resources */
+ssize_t npsw = 1;                        /* number of worker PSWs to run */
+struct resource resource[MAX_PSW] = {0};      /* memory resources */
 int top_down = 0;                       /* render image top-down or bottom-up (default) */
 int random_mode = 0;                    /* Mode to shoot rays at random directions */
 int opencl_mode = 0;                    /* enable/disable OpenCL */
@@ -140,6 +140,8 @@ int sub_ymax = 0;
  */
 int use_air = 0;                        /* whether librt should handle air */
 
+int save_overlaps = 0;                  /* flag for setting rti_save_overlaps */
+
 /***** end variables shared with do.c *****/
 
 
@@ -155,13 +157,13 @@ int model_units = 0;
 
 /***** end variables shared with view.c *****/
 
-char *densityfile = (char *)NULL;       /* name of density file */
+const char *densityfile = NULL;       /* name of density file */
 
 /* temporary kludge to get rt to use a tighter tolerance for raytracing */
 fastf_t rt_dist_tol = (fastf_t)0.0005;  /* Value for rti_tol.dist */
 
 fastf_t rt_perp_tol = (fastf_t)0.0;     /* Value for rti_tol.perp */
-char *framebuffer = (char *)NULL;       /* desired framebuffer */
+char *framebuffer = NULL;       /* desired framebuffer */
 
 /**
  * space partitioning algorithm to use.  previously had experimental
@@ -172,7 +174,8 @@ int space_partition = RT_PART_NUBSPT;
 
 #define MAX_WIDTH (32*1024)
 
-extern struct command_tab rt_cmdtab[];
+
+extern struct command_tab rt_do_tab[];
 
 
 /* this helper function is used to increase a bit variable through
@@ -206,7 +209,6 @@ get_args(int argc, const char *argv[])
     struct bu_vls oline = BU_VLS_INIT_ZERO;
     int oid = 0;
     bu_optind = 1;                /* restart */
-
 
 #define GETOPT_STR	\
     ".:, :@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v::w:x:z:A:BC:D:E:F:G:H:I:J:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
@@ -288,7 +290,7 @@ get_args(int argc, const char *argv[])
 		space_partition = atoi(bu_optarg);
 		break;
 	    case 'c':
-		(void)rt_do_cmd((struct rt_i *)0, bu_optarg, rt_cmdtab);
+		(void)rt_do_cmd((struct rt_i *)0, bu_optarg, rt_do_tab);
 		break;
 	    case 'd':
 		densityfile = bu_optarg;
@@ -303,7 +305,7 @@ get_args(int argc, const char *argv[])
 		    {
 			char buf[128] = {0};
 			sprintf(buf, "set background=%f/%f/%f", color.buc_rgb[RED], color.buc_rgb[GRN], color.buc_rgb[BLU]);
-			(void)rt_do_cmd((struct rt_i *)0, buf, rt_cmdtab);
+			(void)rt_do_cmd((struct rt_i *)0, buf, rt_do_tab);
 		    }
 		}
 		break;
@@ -415,7 +417,7 @@ get_args(int argc, const char *argv[])
 		    height = i;
 		break;
 	    case 'W':
-		(void)rt_do_cmd((struct rt_i *)0, "set background=1.0/1.0/1.0", rt_cmdtab);
+		(void)rt_do_cmd((struct rt_i *)0, "set background=1.0/1.0/1.0", rt_do_tab);
 		default_background = 0;
 		break;
 	    case 'w':
@@ -560,40 +562,8 @@ get_args(int argc, const char *argv[])
 	    case 'E':
 		eye_backoff = atof(bu_optarg);
 		break;
-
 	    case 'P':
-		{
-		    /* Number of parallel workers */
-		    size_t avail_cpus;
-
-		    avail_cpus = bu_avail_cpus();
-
-		    npsw = atoi(bu_optarg);
-
-		    if (npsw > avail_cpus) {
-			fprintf(stderr, "Requesting %lu cpus, only %lu available.",
-				(unsigned long)npsw, (unsigned long)avail_cpus);
-
-			if ((bu_debug & BU_DEBUG_PARALLEL) ||
-			    (RT_G_DEBUG & RT_DEBUG_PARALLEL)) {
-			    fprintf(stderr, "\nAllowing surplus cpus due to debug flag.\n");
-			} else {
-			    fprintf(stderr, "  Will use %lu.\n", (unsigned long)avail_cpus);
-			    npsw = avail_cpus;
-			}
-		    }
-		    if (npsw < 1 || npsw > MAX_PSW) {
-			fprintf(stderr, "Numer of requested cpus (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
-
-			if ((bu_debug & BU_DEBUG_PARALLEL) ||
-			    (RT_G_DEBUG & RT_DEBUG_PARALLEL)) {
-			    fprintf(stderr, ", but allowing due to debug flag\n");
-			} else {
-			    fprintf(stderr, ", using -P1\n");
-			    npsw = 1;
-			}
-		    }
-		}
+		npsw = atoi(bu_optarg);
 		break;
 	    case 'Q':
 		Query_one_pixel = ! Query_one_pixel;

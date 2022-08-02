@@ -1,7 +1,7 @@
 /*                          W O R K E R . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ typedef int (*overlapfunc_t)(struct application *, struct partition *, struct re
 struct rt_gen_worker_vars {
     struct rt_i *rtip;
     struct resource *resp;
-    int rays_cnt;
+    size_t rays_cnt;
     fastf_t *rays;
     hitfunc_t fhit;
     missfunc_t fmiss;

@@ -1,7 +1,7 @@
 /*                        B W H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,12 +35,12 @@
 #include "bu/app.h"
 #include "bu/str.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 
 
 long bin[256];
 int verbose = 0;
-fb *fbp;
+struct fb *fbp;
 
 static char *Usage = "Usage: bwhist [-v] [file.bw]\n";
 
@@ -58,6 +58,8 @@ main(int argc, char **argv)
     FILE *fp;
 
     bu_setprogname(argv[0]);
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
 	bu_exit(1, "%s", Usage);
@@ -71,14 +73,14 @@ main(int argc, char **argv)
 
     /* look for optional input file */
     if (argc > 1) {
-	if ((fp = fopen(argv[1], "r")) == 0) {
+	if ((fp = fopen(argv[1], "rb")) == 0) {
 	    bu_exit(1, "bwhist: can't open '%s'\n", argv[1]);
 	}
 	argv++;
 	argc--;
-    } else
+    } else {
 	fp = stdin;
-
+    }
     /* check usage */
     if (argc > 1 || isatty(fileno(fp)))
 	bu_exit(1, "%s", Usage);

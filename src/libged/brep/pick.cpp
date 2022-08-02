@@ -1,7 +1,7 @@
 /*                        P I C K . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 
 #include <set>
 
-#include "../../libbrep/cdt/RTree.h"
+#include "RTree.h"
 #include "opennurbs.h"
 #include "bu/cmd.h"
 #include "./ged_brep.h"
@@ -60,7 +60,7 @@ _brep_cmd_edge_pick(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> pick E [px py pz dx dy dz]";
     const char *purpose_string = "pick closest 3D edge to line";
     if (_brep_pick_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -74,11 +74,11 @@ _brep_cmd_edge_pick(void *bs, int argc, const char **argv)
 
     if (argc && argc != 6) {
 	bu_vls_printf(gib->vls, "need six values for point and direction\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else {
 	// If not explicitly specified, get the ray from GED
 	VSET(origin, -gedp->ged_gvp->gv_center[MDX], -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
-	VSCALE(origin, origin, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(origin, origin, gedp->dbip->dbi_base2local);
 	VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
 	VSCALE(dir, dir, -1.0);
 	// Back outside the shape using the brep bounding box diagonal length
@@ -144,7 +144,7 @@ _brep_cmd_edge_pick(void *bs, int argc, const char **argv)
     size_t fcnt = edge_bboxes.Intersects(&ray, &aedges);
     if (fcnt == 0) {
 	bu_vls_printf(gib->vls, "no nearby edges found\n");
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     //edge_bboxes.plot("tree.plot3");
@@ -184,7 +184,7 @@ _brep_cmd_edge_pick(void *bs, int argc, const char **argv)
 	bu_vls_printf(gib->vls, "%d\n", cedge);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // F - topological faces
@@ -209,7 +209,7 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> pick F [px py pz dx dy dz]";
     const char *purpose_string = "pick closest face";
     if (_brep_pick_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -223,11 +223,11 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
 
     if (argc && argc != 6) {
 	bu_vls_printf(gib->vls, "need six values for point and direction\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else {
 	// If not explicitly specified, get the ray from GED
 	VSET(origin, -gedp->ged_gvp->gv_center[MDX], -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
-	VSCALE(origin, origin, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(origin, origin, gedp->dbip->dbi_base2local);
 	VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
 	VSCALE(dir, dir, -1.0);
 	// Back outside the shape using the brep bounding box diagonal length
@@ -265,7 +265,7 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
     size_t fcnt = face_bboxes.Intersects(&ray, &afaces);
     if (fcnt == 0) {
 	bu_vls_printf(gib->vls, "no nearby faces found\n");
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
 
@@ -347,7 +347,6 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
 	bu_log("%d sdist: %f\n", *a_it, sdist);
 
 	if (NEAR_ZERO(sdist, ON_ZERO_TOLERANCE)) {
-	    have_hit = true;
 	    double hdist = porigin.DistanceTo(s3d);
 	    bu_log("%d hdist: %f\n", *a_it, hdist);
 	    bu_log("center %f %f %f\n", s3d.x, s3d.y, s3d.z);
@@ -371,7 +370,7 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
     }
 
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // V - 3D vertices
@@ -381,7 +380,7 @@ _brep_cmd_vertex_pick(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> pick E [px py pz dx dy dz]";
     const char *purpose_string = "pick closest 3D vertex to line";
     if (_brep_pick_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -396,11 +395,11 @@ _brep_cmd_vertex_pick(void *bs, int argc, const char **argv)
 
     if (argc && argc != 6) {
 	bu_vls_printf(gib->vls, "need six values for point and direction\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else {
 	// If not explicitly specified, get the ray from GED
 	VSET(origin, -gedp->ged_gvp->gv_center[MDX], -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
-	VSCALE(origin, origin, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(origin, origin, gedp->dbip->dbi_base2local);
 	VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
 	VSCALE(dir, dir, -1.0);
 	// Back outside the shape using the brep bounding box diagonal length
@@ -473,7 +472,7 @@ _brep_cmd_vertex_pick(void *bs, int argc, const char **argv)
     size_t fcnt = vert_bboxes.Intersects(&ray, &averts);
     if (fcnt == 0) {
 	bu_vls_printf(gib->vls, "no nearby vertices found\n");
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // Construct ON_Line
@@ -503,7 +502,7 @@ _brep_cmd_vertex_pick(void *bs, int argc, const char **argv)
     } else {
 	bu_vls_printf(gib->vls, "%d\n", cvert);
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 static void
@@ -549,33 +548,33 @@ brep_pick(struct _ged_brep_info *gb, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gb->intern.idb_ptr))->brep;
     if (brep == NULL) {
 	bu_vls_printf(gib.vls, "attempting to pick, but no ON_Brep data present\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!argc) {
 	_brep_pick_help(&gib, 0, NULL);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc > 1 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
 	argc--;argv++;
 	argc--;argv++;
 	_brep_pick_help(&gib, argc, argv);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // Must have valid subcommand to process
     if (bu_cmd_valid(_brep_pick_cmds, argv[0]) != BRLCAD_OK) {
 	bu_vls_printf(gib.vls, "invalid pick type \"%s\" specified\n", argv[0]);
 	_brep_pick_help(&gib, 0, NULL);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int ret;
     if (bu_cmd(_brep_pick_cmds, argc, argv, 0, (void *)&gib, &ret) == BRLCAD_OK) {
 	return ret;
     }
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

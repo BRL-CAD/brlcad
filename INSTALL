@@ -1,20 +1,18 @@
 The Installation Guide to BRL-CAD
 =================================
 
-This document covers the basics of installing BRL-CAD from either a
-source or binary distribution.  Please see the 'Reporting Problems'
-section if you run into any trouble installing BRL-CAD.
+This document covers the installing BRL-CAD from either a source or
+binary distribution.  Please see REPORTING PROBLEMS to troubleshoot.
 
 Some platforms have additional platform-specific documentation
-provided in the doc/ directory of the source distribution that should
-be consulted if that is the platform you are installing on.  This
+provided in the doc/ directory with additional information. This
 presently includes the following:
 
   doc/README.AIX        -- IBM's Advanced Interactive eXecutive OS
   doc/README.BSD        -- FreeBSD, NetBSD, OpenBSD, etc.
-  doc/README.IRIX	-- SGI IRIX and IRIX64
-  doc/README.Linux	-- Various Linux distributions
-  doc/README.MacOSX	-- Apple Mac OS X
+  doc/README.IRIX	      -- SGI IRIX and IRIX64
+  doc/README.Linux	    -- Various Linux distributions
+  doc/README.MacOSX	    -- Apple Mac OS X
   doc/README.Solaris    -- Oracle Solaris, OpenIndiana (Illumos), etc.
   doc/README.Windows    -- Microsoft Windows
   doc/README.VAX        -- Virtual Address eXtension architecture from DEC.
@@ -26,7 +24,7 @@ TABLE OF CONTENTS
 -----------------
   Introduction
   Table of Contents
-  Quick Installation
+  Quick Source Install
   Installing from Binary
   Installing from Source
   Testing Functionality
@@ -35,50 +33,35 @@ TABLE OF CONTENTS
   Configuration Options
 
 
-QUICK INSTALLATION
-------------------
+QUICK SOURCE INSTALL
+--------------------
 
-Note that the downloaded files have two check sums calculated
-automatically by the Source Forge file release system.  The values are
-used to verify the integrity of the files as distributed.  Get those
-data by clicking on the 'i' button at the end of each file's name.
-You should ensure those data are retained and kept with the files if
-you re-distribute them.
+See https://brlcad.org/wiki/Compiling for a platform-specific
+walk-through including instructions for building on Windows.
 
+Required tools:
+  - Git must be 2.17 or later
+  - CMake must be 3.12 or later
+  - Compiler must be C++11-compliant
+    - If using Visual Studio, version 2015 (14.0+) or later
+    - If using GCC/G++, version 4.8.1 or later
+    - If using LLVM/Clang 3.3 or later
+    - If using Intel, version 2015 (15.0+) or later
 
-If you downloaded a binary distribution of BRL-CAD for your system,
-please read the INSTALLING FROM BINARY section of this document down
-below.  The rest of this quick installation section is only relevant
-to source code distributions of BRL-CAD.
+Steps to compile, test, and install an optimized BRL-CAD on
+non-Windows platforms:
 
-For the impatient or simplistic, the following steps should compile,
-test, and install an optimized BRL-CAD quickly into the
-/usr/brlcad/rel-VERSION directory if CMake is already installed:
-
-  tar -zxvf brlcad-VERSION.tar
-  mkdir brlcad-VERSION/build
-  cd brlcad-VERSION/build
+  git clone https://github.com/BRL-CAD/brlcad.git
+  mkdir brlcad/build
+  cd brlcad/build
   cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release
   make -j4
   make check
-  make install
+  sudo make install
 
-See the REPORTING PROBLEMS section of this document to report any
-problems or the INSTALLING FROM SOURCE section for more comprehensive
-instructions.
-
-Once installed, add /usr/brlcad/rel-VERSION/bin to your path, and you should be
-able to run any of the 400+ applications that constitute BRL-CAD.  For
-example, to run the MGED solid modeler:
-
-PATH=/usr/brlcad/rel-VERSION/bin:$PATH ; export PATH
-mged
-
-If you use tcsh or another C-shell based command shell, use this
-instead:
-
-set path=( /usr/brlcad/rel-VERSION/bin $path ) ; rehash
-mged
+Once installed, run bin/mged or bin/archer to launch BRL-CAD's GUI
+apps.  See POST-INSTALLATION for instruction adding bin/ folder to
+your system PATH to more easily run geometry converters.
 
 
 INSTALLING FROM BINARY
@@ -129,27 +112,26 @@ confirming that your environment is set up properly (i.e. add
 Installation section.
 
 
+Validating checksums:
+
+The integrity of distributed files can be verified using checksums
+that are published with released files.  Files on SourceForge's file
+release system can be found by clicking the 'i' button at the end of
+each file's name.  If you re-distribute BRL-CAD, checksums should be
+retained with the files so others can validate origination.
+
+
 INSTALLING FROM SOURCE
 ----------------------
 
 There are a couple of ways to obtain the BRL-CAD sources, usually via
 one of the following starting points:
 
-  1) from a SVN checkout/export, or
+  1) from a Git checkout, or
   2) from a source distribution tarball
 
-Using the latest SVN sources is recommended where possible since it
-will have the latest changes.  See the corresponding section below for
-details on how to install from either starting point.
-
-
-Starting From a SVN Checkout/Export:
-
-With CMake, there is no longer any difference between building from
-a subversion checkout and a tarball--follow the Source Distribution
-instructions below.
-
-Starting From a Source Distribution:
+Using the latest Git sources is recommended where possible since it
+will have the latest changes.
 
 There are many different ways to build BRL-CAD and depending on what
 you need/want will determine which configuration options you should
@@ -341,23 +323,23 @@ files.
 System PATH:
 
 Normally, BRL-CAD's install directories are not in system PATH lists and
-consequently BRL-CAD's executables will not be invokable without specifying
+consequently BRL-CAD's executables will not be invocable without specifying
 their full path.  This is normally handled in Unix environments by adding
 the desired BRL-CAD installation's binary directory to the user's local path:
 
-In the bash shell: export PATH=/usr/brlcad/rel-X.Y.Z:$PATH
-In the csh shell:  setenv PATH /usr/brlcad/rel-X.Y.Z:$PATH
+On Windows, the PATH system variable can be set using System Utility
+in control panel.  Add the bin/ folder in the install directory to PATH.
+
+On Linux/BSD/other systems:
+  In the bash shell: export PATH=/usr/brlcad/rel-X.Y.Z:$PATH
+  In the csh shell:  setenv PATH /usr/brlcad/rel-X.Y.Z:$PATH
+
 
 REPORTING PROBLEMS
 ------------------
 
-Please report any bugs encountered to the project bug tracker at
-http://sourceforge.net/tracker/?group_id=105292&atid=640802
-
-Similarly, please post any request for feature enhancements or support
-to http://sourceforge.net/tracker/?group_id=105292&atid=640805 and
-http://sourceforge.net/tracker/?group_id=105292&atid=640803
-respectively.
+Please report any bugs, support requests, or feature requests to:
+  https://github.com/BRL-CAD/brlcad/issues
 
 
 CONFIGURATION OPTIONS
@@ -397,18 +379,20 @@ Aliases:  ENABLE_RUNTIME_DEBUG, ENABLE_RUN_TIME_DEBUG, ENABLE_RUNTIME_DEBUGGING
           ENABLE_RUN_TIME_DEBUGGING
 
 
---- BRLCAD_FLAGS_DEBUG ---
+--- BRLCAD_DEBUGGING ---
 
 Add compiler flags to aid in program debugging.  Defaults to ON.
 
 Aliases:  ENABLE_DEBUG, ENABLE_FLAGS_DEBUG, ENABLE_DEBUG_FLAGS
+          BRLCAD_FLAGS_DEBUG
 
 
---- BRLCAD_ENABLE_COMPILER_WARNINGS ---
+--- BRLCAD_WARNINGS ---
 
-Use extra compiler warning flags when compiling C/C++ code.  Defaults to ON.
+Use extra warning flags when compiling C/C++ code.  Defaults to ON.
 
 Aliases:  ENABLE_WARNINGS, ENABLE_COMPILER_WARNINGS
+          BRLCAD_ENABLE_COMPILER_WARNINGS
 
 
 --- BRLCAD_ENABLE_STRICT ---
@@ -444,35 +428,88 @@ permissions).
 Aliases:  ENABLE_DOCS, ENABLE_EXTRA_DOCS, ENABLE_DOCBOOK
 
 
---- BRLCAD_LEMON ---
+--- BRLCAD_ZLIB ---
 
-Option for enabling and disabling compilation of the lemon parser
+Option for enabling and disabling compilation of the zlib library
 provided with BRL-CAD's source distribution.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 
-Aliases:  ENABLE_LEMON
+Aliases:  ENABLE_ZLIB, ENABLE_LIBZ
 
 
---- BRLCAD_RE2C ---
+--- BRLCAD_REGEX ---
 
-Option for enabling and disabling compilation of the re2c scanner
-utility provided with BRL-CAD's source distribution.  Default is AUTO,
+Option for enabling and disabling compilation of the Regular
+Expression Library provided with BRL-CAD's source distribution.
+Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
+and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+
+Aliases:  ENABLE_REGEX
+
+
+--- BRLCAD_NETPBM ---
+
+Option for enabling and disabling compilation of the netpbm library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_NETPBM
+
+
+--- BRLCAD_PNG ---
+
+Option for enabling and disabling compilation of the Portable Network
+Graphics library provided with BRL-CAD's source distribution.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+
+Aliases:  ENABLE_PNG
+
+
+--- BRLCAD_SC ---
+
+Option for enabling and disabling compilation of the NIST Step Class
+Libraries provided with BRL-CAD's source code.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 
-Aliases:  ENABLE_RE2C
+Aliases:  ENABLE_SCL, ENABLE_STEP, ENABLE_STEP_CLASS_LIBRARIES
 
 
---- BRLCAD_PERPLEX ---
+--- BRLCAD_PROJ4 ---
 
-Option for enabling and disabling compilation of the perplex scanner
-generator provided with BRL-CAD's source distribution.  Default is
-AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+Option for enabling and disabling compilation of the PROJ.4 geographic
+projection library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.  perplex requires a working re2c.
+AUTO.
 
-Aliases:  ENABLE_PERPLEX
+Aliases:  ENABLE_PROJ4
+
+
+--- BRLCAD_GDAL ---
+
+Option for enabling and disabling compilation of the GDAL geographic
+library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+
+Aliases:  ENABLE_GDAL
+
+
+--- BRLCAD_TCL ---
+
+Option for enabling and disabling compilation of the Tcl library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_TCL
 
 
 --- BRLCAD_ASTYLE ---
@@ -507,232 +544,6 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 
 Aliases:  ENABLE_XMLLINT
-
-
---- BRLCAD_REGEX ---
-
-Option for enabling and disabling compilation of the Regular
-Expression Library provided with BRL-CAD's source distribution.
-Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
-and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_REGEX
-
-
---- BRLCAD_ZLIB ---
-
-Option for enabling and disabling compilation of the zlib library
-provided with BRL-CAD's source distribution.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_ZLIB, ENABLE_LIBZ
-
-
---- BRLCAD_PNG ---
-
-Option for enabling and disabling compilation of the Portable Network
-Graphics library provided with BRL-CAD's source distribution.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_PNG
-
-
---- BRLCAD_NETPBM ---
-
-Option for enabling and disabling compilation of the netpbm library
-provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_NETPBM
-
-
---- BRLCAD_UTAHRLE ---
-
-Option for enabling and disabling compilation of the Utah Raster
-Toolkit library provided with BRL-CAD's source code.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_UTAHRLE
-
-
---- BRLCAD_TCL ---
-
-Option for enabling and disabling compilation of the Tcl library
-provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_TCL
-
-
---- BRLCAD_TK ---
-
-Option for enabling and disabling compilation of the Tk library
-provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the BRLCAD_TCL option and testing first for a system version if
-BRLCAD_BUNDLED_LIBS is also AUTO. Option for enabling and disabling
-compilation of the Tk graphics package for Tcl provided with BRL-CAD's
-source distribution.  Default is AUTO, auto-enabling if the BRLCAD_TCL
-option is set to BUNDLED and testing first for a system version if
-BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_TK is set to BUNDLED,
-local copy is built even if a system version is present.  This option
-also depends on BRLCAD_ENABLE_TK being ON.
-
-Aliases:  ENABLE_TK
-
-
---- BRLCAD_ITCL ---
-
-Option for enabling and disabling compilation of the IncrTcl package
-for Tcl objects provided with BRL-CAD's source distribution.  Default
-is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
-testing first for a system version if BRLCAD_TCL is set to AUTO or
-SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built even if
-a system version is present.
-
-Aliases:  ENABLE_ITCL
-
-
---- BRLCAD_ITK ---
-
-Option for enabling and disabling compilation of the IncrTcl itk
-package for Tk objects provided with BRL-CAD's source distribution.
-Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
-BUNDLED and testing first for a system version if BRLCAD_TCL is set to
-AUTO or SYSTEM.  If BRLCAD_ITK is set to BUNDLED, local copy is built
-even if a system version is present.  This package will be disabled if
-BRLCAD_ENABLE_TK is OFF.
-
-Aliases:  ENABLE_ITK
-
-
---- BRLCAD_IWIDGETS ---
-
-Option for enabling and disabling compilation of the IWidgets Tk
-widget package provided with BRL-CAD's source distribution.  Default
-is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
-testing first for a system version if BRLCAD_TCL is set to AUTO or
-SYSTEM.  If BRLCAD_IWIDGETS is set to BUNDLED, local copy is built even if
-a system version is present.  This package will be disabled if
-BRLCAD_ENABLE_TK is OFF.
-
-Aliases:  ENABLE_IWIDGETS
-
-
---- BRLCAD_TKHTML ---
-
-Option for enabling and disabling compilation of the Tkhtml HTML
-viewing package provided with BRL-CAD's source distribution.  Default
-is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
-testing first for a system version if BRLCAD_TCL is set to AUTO or
-SYSTEM.  If BRLCAD_TKHTML is set to BUNDLED, local copy is built even if
-a system version is present.  This package will be disabled if
-BRLCAD_ENABLE_TK is OFF.
-
-Aliases:  ENABLE_TKHTML
-
-
---- BRLCAD_TKTABLE ---
-
-Option for enabling and disabling compilation of the Tktable graphical
-table widget package provided with BRL-CAD's source distribution.
-Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
-BUNDLED and testing first for a system version if BRLCAD_TCL is set to
-AUTO or SYSTEM.  If BRLCAD_TKTABLE is set to BUNDLED, local copy is built
-even if a system version is present.  This package will be disabled if
-BRLCAD_ENABLE_TK is OFF.
-
-Aliases:  ENABLE_TKTABLE
-
-
---- BRLCAD_OPENNURBS ---
-
-Option for enabling and disabling compilation of the openNURBS library
-provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_OPENNURBS
-
-
---- BRLCAD_SPSR ---
-
-Option for enabling and disabling compilation of the Screened Poisson
-Surface Reconstruction library provided with BRL-CAD's source code.
-Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
-and testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_SPSR
-
-
---- BRLCAD_SC ---
-
-Option for enabling and disabling compilation of the NIST Step Class
-Libraries provided with BRL-CAD's source code.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_SCL, ENABLE_STEP, ENABLE_STEP_CLASS_LIBRARIES
-
-
---- BRLCAD_VDS ---
-
-Option for enabling and disabling compilation of the libvds triangle
-simplification library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_VDS
-
-
---- BRLCAD_OSG ---
-
-Option for enabling and disabling compilation of the OpenSceneGraph
-libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_OPENSCENEGRAPH
-
-
---- BRLCAD_GDIAM ---
-
-Option for enabling and disabling compilation of the libgdiam approximate
-tight bounding box library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_GDIAM
-
-
---- BRLCAD_PROJ4 ---
-
-Option for enabling and disabling compilation of the PROJ.4 geographic
-projection library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_PROJ4
-
-
---- BRLCAD_GDAL ---
-
-Option for enabling and disabling compilation of the GDAL geographic
-library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_GDAL
 
 
 

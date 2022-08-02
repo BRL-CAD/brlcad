@@ -1,7 +1,7 @@
 #                          G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2020 United States Government as represented by
+# Copyright (c) 1998-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -85,6 +85,7 @@ package provide cadwidgets::Ged 1.0
     itk_option define -centerDotEnable centerDotEnable CenterDotEnable 1
     itk_option define -gridEnable gridEnable GridEnable 0
     itk_option define -gridSnap gridSnap GridSnap 0
+    itk_option define -linesSnap linesSnap LinesSnap 0
     itk_option define -hideSubtractions hideSubtractions HideSubtractions 0
     itk_option define -measuringStickColor measuringStickColor MeasuringStickColor Yellow
     itk_option define -measuringStickMode measuringStickMode MeasuringStickMode 0
@@ -162,8 +163,6 @@ package provide cadwidgets::Ged 1.0
 	method bounds_all {args}
 	method brep {args}
 	method bu_units_conversion {args}
-	method bu_brlcad_dir {args}
-	method bu_brlcad_root {args}
 	method bu_prmem {args}
 	method bu_get_value_by_keyword {args}
 	method bu_rgb_to_hsv {args}
@@ -211,6 +210,7 @@ package provide cadwidgets::Ged 1.0
 	method delay {args}
 	method dir2ae {args}
 	method dlist_on {args}
+	method dplot {args}
 	method draw {args}
 	method draw_ray {_start _partitions}
 	method dsp {args}
@@ -1038,6 +1038,10 @@ package provide cadwidgets::Ged 1.0
     grid snap $itk_option(-gridSnap)
 }
 
+::itcl::configbody cadwidgets::Ged::linesSnap {
+    view sdata_lines snap $itk_option(-linesSnap)
+}
+
 ::itcl::configbody cadwidgets::Ged::mGedFile {
     cadwidgets::Ged::open $mGedFile
 }
@@ -1382,14 +1386,6 @@ package provide cadwidgets::Ged 1.0
     uplevel \#0 bu_units_conversion $args
 }
 
-::itcl::body cadwidgets::Ged::bu_brlcad_dir {args} {
-    uplevel \#0 bu_brlcad_dir $args
-}
-
-::itcl::body cadwidgets::Ged::bu_brlcad_root {args} {
-    uplevel \#0 bu_brlcad_root $args
-}
-
 ::itcl::body cadwidgets::Ged::bu_prmem {args} {
     uplevel \#0 bu_prmem $args
 }
@@ -1629,6 +1625,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::dlist_on {args} {
     eval $mGed dlist_on $args
+}
+
+::itcl::body cadwidgets::Ged::dplot {args} {
+    eval $mGed dplot $args
 }
 
 ::itcl::body cadwidgets::Ged::draw {args} {
@@ -1884,7 +1884,7 @@ package provide cadwidgets::Ged 1.0
     incr mLastPort
     set port $mLastPort
 
-    set binpath [bu_brlcad_root "bin"]
+    set binpath [bu_dir bin]
 
     # This doesn't work (i.e. the "&" causes exec to always succeed, even when the command fails)
     while {[catch {exec [file join $binpath fbserv] -w $_w -n $_n $port $_fbtype &} pid]} {
@@ -2127,7 +2127,7 @@ package provide cadwidgets::Ged 1.0
     make_image $fbs_port $w $n $viewsize $orientation $eye_pt $perspective \
 	$_bgcolor $_ecolor $_necolor $_occmode $_gamma $_color_objects $_ghost_objects $_edge_objects
 
-    set binpath [bu_brlcad_root "bin"]
+    set binpath [bu_dir bin]
     catch {exec [file join $binpath fb-fb] $fbs_port $port &}
 
     if {$::tcl_platform(platform) == "windows"} {
@@ -2206,7 +2206,8 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::mat4x3pnt {args} {
-    uplevel \#0 mat4x3pnt $args
+    #uplevel \#0 mat4x3pnt $args
+    eval $mGed mat4x3pnt $args
 }
 
 ::itcl::body cadwidgets::Ged::mat_ae {args} {
@@ -4325,25 +4326,28 @@ package provide cadwidgets::Ged 1.0
     # above (i.e. neither a geometry object nor a data point was hit)
     # and gridSnap is active, apply snap to grid to the data point
     # currently being moved.
-    if {$point == "" && $itk_option(-gridSnap)} {
-	# First, get the data point being moved.
-	if {$mLastDataType == "data_labels" || $mLastDataType == "sdata_labels"} {
-	    set labels [$mGed $mLastDataType $itk_component($_pane) labels]
-	    set label [lindex $labels $mLastDataIndex]
-	    set point [lindex $label 1]
-	} else {
-	    set points [$mGed $mLastDataType $itk_component($_pane) points]
-	    set point [lindex $points $mLastDataIndex]
-	}
 
-	# Convert point to view coordinates and call snap_view. Then convert
-	# back to model coordinates. Note - vZ is saved so that the movement
-	# stays in a plane parallel to the view plane.
-	set view [pane_m2v_point $_pane $point]
-	set vZ [lindex $view 2]
-	set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
-	lappend view $vZ
-	set point [pane_v2m_point $_pane $view]
+    if {$point == ""} {
+       if {$itk_option(-gridSnap) || $itk_option(-linesSnap)} {
+	  # First, get the data point being moved.
+	  if {$mLastDataType == "data_labels" || $mLastDataType == "sdata_labels"} {
+	      set labels [$mGed $mLastDataType $itk_component($_pane) labels]
+	      set label [lindex $labels $mLastDataIndex]
+	      set point [lindex $label 1]
+	  } else {
+	      set points [$mGed $mLastDataType $itk_component($_pane) points]
+	      set point [lindex $points $mLastDataIndex]
+	  }
+
+	  # Convert point to view coordinates and call snap_view. Then convert
+	  # back to model coordinates. Note - vZ is saved so that the movement
+	  # stays in a plane parallel to the view plane.
+	  set view [pane_m2v_point $_pane $point]
+	  set vZ [lindex $view 2]
+	  set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
+	  lappend view $vZ
+	  set point [pane_v2m_point $_pane $view]
+        }
     }
 
     # Replace the mLastDataIndex point with this point
@@ -4374,8 +4378,8 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::end_data_poly_move {_pane} {
     refresh_off
 
-    if {$itk_option(-gridSnap)} {
-	# First, get the data point being moved.
+    if {$itk_option(-gridSnap) || $itk_option(-linesSnap)} {
+        # First, get the data point being moved.
 	set point [eval $mGed data_polygons $itk_component($_pane) get_point $mLastDataIndex]
 
 	# Convert point to view coordinates and call snap_view. Then convert
@@ -4455,7 +4459,7 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::end_data_poly_circ {_pane {_button 1}} {
     $mGed idle_mode $itk_component($_pane)
 
-    if {$itk_option(-gridSnap)} {
+    if {$itk_option(-gridSnap) || $itk_option(-linesSnap)} {
 	set mpos [$mGed get_prev_mouse $itk_component($_pane)]
 	eval $mGed mouse_poly_circ $itk_component($_pane) $mpos
     }
@@ -4478,7 +4482,7 @@ package provide cadwidgets::Ged 1.0
 
     set mpos [$mGed get_prev_mouse $itk_component($_pane)]
 
-    if {$itk_option(-gridSnap)} {
+    if {$itk_option(-gridSnap) || $itk_option(-linesSnap)} {
 	set view [eval $mGed screen2view $itk_component($_pane) $mpos]
 	set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
 	set mpos [$mGed view2screen $itk_component($_pane) $view]
@@ -4503,7 +4507,7 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::end_data_poly_ell {_pane {_button 1}} {
     $mGed idle_mode $itk_component($_pane)
 
-    if {$itk_option(-gridSnap)} {
+    if {$itk_option(-gridSnap) || $itk_option(-linesSnap)} {
 	set mpos [$mGed get_prev_mouse $itk_component($_pane)]
 	eval $mGed mouse_poly_ell $itk_component($_pane) $mpos
     }
@@ -4524,7 +4528,7 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::end_data_poly_rect {_pane {_button 1}} {
     $mGed idle_mode $itk_component($_pane)
 
-    if {$itk_option(-gridSnap)} {
+    if {$itk_option(-gridSnap) || $itk_option(-linesSnap)} {
 	set mpos [$mGed get_prev_mouse $itk_component($_pane)]
 	eval $mGed mouse_poly_rect $itk_component($_pane) $mpos
     }
@@ -6215,8 +6219,6 @@ package provide cadwidgets::Ged 1.0
 	[brepname] - convert the non-BREP object to BREP form
 	[suffix] - convert non-BREP comb to unevaluated BREP form}}
     $help add bu_units_conversion  {{units} {}}
-    $help add bu_brlcad_dir	{{dirkey} {}}
-    $help add bu_brlcad_root	{{subdir} {}}
     $help add bu_prmem		{{title} {}}
     $help add bu_get_value_by_keyword {{iwant list} {}}
     $help add bu_rgb_to_hsv	{{rgb} {}}
@@ -6250,6 +6252,7 @@ package provide cadwidgets::Ged 1.0
     $help add decompose		{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
     $help add delay		{{sec usec} {delay processing for the specified amount of time}}
     $help add dir2ae		{{az el} {returns a direction vector given the azimuth and elevation}}
+    $help add dplot		{{dplot_log} {draws plotfiles from the given logfile}}
     $help add draw		{{"-C#/#/# <objects>"} {draw objects}}
     $help add dsp		{{obj [command]} {work with DSP primitives}}
     $help add dump		{{file} {write current state of database object to file}}
@@ -6377,7 +6380,7 @@ package provide cadwidgets::Ged 1.0
     $help add postscript	{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file} {creates a postscript file of the current view}}
     $help add push		{{object[s]} {pushes object's path transformations to solids}}
     $help add put		{{object data} {creates an object}}
-    $help add put_comb		{{comb_name is_Region id air material los color shader inherit boolean_expr} {create a combination}}
+    $help add put_comb		{{comb_name color shader inherit boolean_expr is_region regionID airID materialID los%} {create a combination}}
     $help add putmat		{{a/b I|m0 m1 ... m15} {put the specified matrix on a/b}}
     $help add qray		{{subcommand}	{get/set query_ray characteristics}}
     $help add quat		{{[a b c d]} {get/set the view orientation as a quaternion}}
@@ -6392,7 +6395,7 @@ package provide cadwidgets::Ged 1.0
     $help add quat_exp		{{quat} {}}
     $help add quat_log		{{quat} {}}
     $help add qvrot		{{x y z angle} {set the view given a direction vector and an angle of rotation}}
-    $help add r			{{region <operation solid>} {create or extend a Region combination}}
+    $help add r			{{region <operation solid>} {create or extend a region combination}}
     $help add rcodes		{{file} {read codes from file}}
     $help add red		{{comb} {edit comb}}
     $help add regdef		{{item air los mat} {get/set region defaults}}

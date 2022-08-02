@@ -1,7 +1,7 @@
 /*                           W D B . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2020 United States Government as represented by
+ * Copyright (c) 2000-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -131,7 +131,7 @@ wdb_export_external(
 	return -4;
     }
 
-    switch (wdbp->type) {
+    switch (wdbp->wdb_type) {
 
 	case RT_WDB_TYPE_DB_DISK:
 	    if (wdbp->dbip->dbi_read_only) {
@@ -299,7 +299,7 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 {
     BU_LIST_INIT_MAGIC(&wdbp->l, RT_WDB_MAGIC);
 
-    wdbp->type = mode;
+    wdbp->wdb_type = mode;
     wdbp->dbip = dbip;
     wdbp->dbip->dbi_wdbp = wdbp;
 
@@ -355,7 +355,7 @@ wdb_close(struct rt_wdb *wdbp)
     bu_vls_free(&wdbp->wdb_prestr);
 
     /* sanity */
-    wdbp->type = 0;
+    wdbp->wdb_type = 0;
     wdbp->wdb_resp = NULL;
     wdbp->wdb_interp = NULL;
 

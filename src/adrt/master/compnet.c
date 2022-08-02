@@ -1,7 +1,7 @@
 /*                       C O M P N E T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,8 @@ int master_compserv_active;
  */
 void compnet_connect(char *host, int port) {
     struct hostent hostent;
-    struct sockaddr_in compserv, master;
+    struct sockaddr_in compserv = {0};
+    struct sockaddr_in master = {0};
 
     master_compserv_active = 0;
 

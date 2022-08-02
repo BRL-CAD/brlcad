@@ -1,7 +1,7 @@
 /*                        F B H E L P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 /** @file fbhelp.c
  *
  * Print out info about the selected frame buffer.
- * Just calls fb_help().
+ * Just calls dm.help().
  *
  */
 
@@ -31,7 +31,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "fb.h"
+#include "dm.h"
 
 
 static char *framebuffer = NULL;
@@ -43,7 +43,7 @@ int
 main(int argc, char **argv)
 {
     int c;
-    fb *fbp;
+    struct fb *fbp;
 
     bu_setprogname(argv[0]);
 

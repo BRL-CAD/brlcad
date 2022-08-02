@@ -1,7 +1,7 @@
 /*                        B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -521,11 +521,10 @@ out:
 static int
 bundle_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
-    register struct partition *pp;
     struct partition_bundle *bundle = (struct partition_bundle *)ap->a_uptr;
     struct partition_list *new_shotline;
 
-    if ((pp=PartHeadp->pt_forw) == PartHeadp) {
+    if (PartHeadp->pt_forw == PartHeadp) {
 	bundle->misses++;
 	return 0;		/* Nothing hit?? */
     }

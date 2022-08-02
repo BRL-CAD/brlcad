@@ -1,7 +1,7 @@
 /*          R T _ C O L L I S I O N _ S H A P E . H P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

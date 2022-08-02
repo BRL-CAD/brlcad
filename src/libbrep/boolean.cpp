@@ -1,7 +1,7 @@
 /*                  B O O L E A N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,8 @@
  *
  * Evaluate NURBS booleans (union, intersection and difference).
  *
+ * Additional documentation can be found in the "NURBS Boolean Evaluation
+ * Development Guide" docbook article (bool_eval_development.html).
  */
 
 #include "common.h"
@@ -31,6 +33,7 @@
 #include <queue>
 #include <set>
 #include <map>
+#include <sstream>
 
 #include "bio.h"
 
@@ -43,19 +46,14 @@
 #include "brep/ray.h"
 #include "brep/util.h"
 
+#include "debug_plot.h"
 #include "brep_except.h"
+#include "brep_defines.h"
 
+DebugPlot *dplot = NULL;
 
 // Whether to output the debug messages about b-rep booleans.
 #define DEBUG_BREP_BOOLEAN 0
-
-// tol value used in ON_Intersect()s. We use a smaller tolerance than the
-// default one 0.001.
-#define INTERSECTION_TOL 1e-4
-
-// tol value used in ON_3dVector::IsParallelTo(). We use a smaller tolerance
-// than the default one ON_PI/180.
-#define ANGLE_TOL ON_PI/1800.0
 
 
 struct IntersectPoint {
@@ -104,7 +102,7 @@ struct SSICurve {
 };
 
 
-HIDDEN void
+void
 append_to_polycurve(ON_Curve *curve, ON_PolyCurve &polycurve);
 // We link the SSICurves that share an endpoint, and form this new structure,
 // which has many similar behaviors as ON_Curve, e.g. PointAt(), Reverse().
@@ -344,7 +342,7 @@ curve_t_compare(const IntersectPoint *p1, const IntersectPoint *p2)
 }
 
 
-HIDDEN void
+void
 append_to_polycurve(ON_Curve *curve, ON_PolyCurve &polycurve)
 {
     // use this function rather than ON_PolyCurve::Append() to avoid
@@ -1072,11 +1070,11 @@ get_subcurves_inside_faces(
     }
 
     // get the face loops
-    if (face_i1 < 0 || face_i1 >= brep1->m_F.Count()) {
+    if (face_i1 < 0 || face_i1 >= brep1->m_F.Count() || brep1->m_F[face_i1].m_li.Count() <= 0) {
 	bu_log("get_subcurves_inside_faces(): invalid face_i1 (%d).\n", face_i1);
 	return;
     }
-    if (face_i2 < 0 || face_i2 >= brep2->m_F.Count()) {
+    if (face_i2 < 0 || face_i2 >= brep2->m_F.Count() || brep2->m_F[face_i2].m_li.Count() <= 0) {
 	bu_log("get_subcurves_inside_faces(): invalid face_i2 (%d).\n", face_i2);
 	return;
     }
@@ -1566,6 +1564,10 @@ public:
 	CurveSegment::Location l)
 	: orig_loop(loop), from(f), to(t), location(l)
     {
+	if (!orig_loop.Capacity()) {
+	    size_t c = (from.loop_index > to.loop_index) ? from.loop_index : to.loop_index;
+	    orig_loop.SetCapacity(c + 1);
+	}
     }
 
     void
@@ -2064,6 +2066,9 @@ get_loop_points(
 {
     std::multiset<CurvePoint> out;
 
+    if (loop1.Count() <= 0)
+	return out;
+
     ON_Curve *loop1_seg = loop1[0];
     out.insert(CurvePoint(source_loop, 0, loop1_seg->Domain().m_t[0], loop1_seg,
 			  loop2));
@@ -2123,6 +2128,11 @@ loop_boolean(
 	op != BOOLEAN_UNION)
     {
 	bu_log("loop_boolean: unsupported operation\n");
+	return out;
+    }
+
+    if (l1.Count() <= 0 || l2.Count() <= 0) {
+	bu_log("loop_boolean: one or more empty loops\n");
 	return out;
     }
 
@@ -2390,13 +2400,17 @@ append_faces_from_loops(
     const TrimmedFace *orig_face,
     const LoopBooleanResult &new_loops)
 {
+    std::vector<TrimmedFace *> o;
     LoopBooleanResult combined_loops = combine_loops(orig_face, new_loops);
 
     // make a face from each outerloop, using appropriate innerloops
     for (size_t i = 0; i < combined_loops.outerloops.size(); ++i) {
-	out.Append(make_face_from_loops(orig_face,
+	o.push_back(make_face_from_loops(orig_face,
 					combined_loops.outerloops[i],
 					combined_loops.innerloops));
+    }
+    for (size_t i = 0; i < o.size(); i++) {
+	out.Append(o[i]);
     }
 }
 
@@ -2548,7 +2562,7 @@ split_face_into_loops(
 	ON_Curve *remainder = orig_face->m_outerloop[loop_seg]->Duplicate();
 	if (remainder == NULL) {
 	    bu_log("ON_Curve::Duplicate() failed.\n");
-	    continue;
+	    return out;
 	}
 	for (; clx_i < clx_points.Count() && clx_points[clx_i].m_loop_seg == loop_seg; clx_i++) {
 	    IntersectPoint &ipt = clx_points[clx_i];
@@ -2575,9 +2589,7 @@ split_face_into_loops(
 	    }
 	    ipt.m_split_li = outerloop_segs.Count() - 1;
 	}
-	if (remainder) {
-	    outerloop_segs.Append(remainder);
-	}
+	outerloop_segs.Append(remainder);
     }
 
     // Append the first element at the last to handle some special cases.
@@ -3430,10 +3442,22 @@ get_face_intersection_curves(
     const ON_Brep *brep2,
     op_type operation)
 {
+    std::vector<Subsurface *> st1, st2;
     std::set<int> unused1, unused2;
     std::set<int> finalform1, finalform2;
+    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array;
     int face_count1 = brep1->m_F.Count();
     int face_count2 = brep2->m_F.Count();
+    int surf_count1 = brep1->m_S.Count();
+    int surf_count2 = brep2->m_S.Count();
+
+    // We're not well set up currently to handle a situation where
+    // one of the breps has no faces - don't try.  Also make sure
+    // we don't have too many faces.
+    if (!face_count1 || !face_count2 || ((face_count1 + face_count2) < 0))
+	return curves_array;
+    if (!surf_count1 || !surf_count2 || ((surf_count1 + surf_count2) < 0))
+	return curves_array;
 
     /* Depending on the operation type and the bounding box behaviors, we
      * can sometimes decide immediately whether a face will end up in the
@@ -3445,7 +3469,7 @@ get_face_intersection_curves(
 	std::set<int> *unused = i < face_count1 ? &unused1 : &unused2;
 	std::set<int> *intact = i < face_count1 ? &finalform1 : &finalform2;
 	int curr_index = i < face_count1 ? i : i - face_count1;
-	if (face.BoundingBox().MinimumDistanceTo(brep->BoundingBox()) > ON_ZERO_TOLERANCE) {
+	if (face.BoundingBox().MinimumDistanceTo(brep->BoundingBox()) > INTERSECTION_TOL) {
 	    switch (operation) {
 		case BOOLEAN_UNION:
 		    intact->insert(curr_index);
@@ -3483,8 +3507,8 @@ get_face_intersection_curves(
 		if (unused2.find(j) == unused2.end() &&  finalform2.find(j) == finalform2.end()) {
 		    // If the two faces don't interact according to their bounding boxes,
 		    // they won't be a source of events - otherwise, they must be checked.
-		    fastf_t disjoint = brep1->m_F[i].BoundingBox().MinimumDistanceTo(brep2->m_F[j].BoundingBox());
-		    if (!(disjoint > ON_ZERO_TOLERANCE)) {
+		    fastf_t face_dist = brep1->m_F[i].BoundingBox().MinimumDistanceTo(brep2->m_F[j].BoundingBox());
+		    if (face_dist <= INTERSECTION_TOL) {
 			intersection_candidates.insert(std::pair<int, int>(i, j));
 		    }
 		}
@@ -3518,16 +3542,16 @@ get_face_intersection_curves(
 	}
     }
 
-    int surf_count1 = brep1->m_S.Count();
-    int surf_count2 = brep2->m_S.Count();
     for (int i = 0; i < surf_count1; i++) {
-	surf_tree1.Append(new Subsurface(brep1->m_S[i]->Duplicate()));
+	Subsurface *ss = new Subsurface(brep1->m_S[i]->Duplicate());
+	st1.push_back(ss);
     }
     for (int i = 0; i < surf_count2; i++) {
-	surf_tree2.Append(new Subsurface(brep2->m_S[i]->Duplicate()));
+	Subsurface *ss = new Subsurface(brep2->m_S[i]->Duplicate());
+	st2.push_back(ss);
     }
 
-    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array(face_count1 + face_count2);
+    curves_array.SetCapacity(face_count1 + face_count2);
 
     // count must equal capacity for array copy to work as expected
     // when the result of the function is assigned
@@ -3535,6 +3559,10 @@ get_face_intersection_curves(
 
     // calculate intersection curves
     for (int i = 0; i < face_count1; i++) {
+
+	if ((int)st1.size() < brep1->m_F[i].m_si + 1)
+	    continue;
+
 	for (int j = 0; j < face_count2; j++) {
 	    if (intersection_candidates.find(std::pair<int, int>(i, j)) != intersection_candidates.end()) {
 		ON_Surface *surf1, *surf2;
@@ -3545,6 +3573,9 @@ get_face_intersection_curves(
 		if (is_same_surface(surf1, surf2)) {
 		    continue;
 		}
+
+		if (surf_tree2.Count() < brep2->m_F[j].m_si + 1)
+		    continue;
 
 		// Possible enhancement: Some faces may share the same surface.
 		// We can store the result of SSI to avoid re-computation.
@@ -3558,11 +3589,15 @@ get_face_intersection_curves(
 				       NULL,
 				       NULL,
 				       NULL,
-				       surf_tree1[brep1->m_F[i].m_si],
-				       surf_tree2[brep2->m_F[j].m_si]);
+				       st1[brep1->m_F[i].m_si],
+				       st2[brep2->m_F[j].m_si]);
 		if (results <= 0) {
 		    continue;
 		}
+
+		dplot->SSX(events, brep1, brep1->m_F[i].m_si, brep2, brep2->m_F[j].m_si);
+		dplot->WriteLog();
+
 		ON_SimpleArray<ON_Curve *> face1_curves, face2_curves;
 		for (int k = 0; k < events.Count(); k++) {
 		    if (events[k].m_type == ON_SSX_EVENT::ssx_tangent ||
@@ -3590,6 +3625,8 @@ get_face_intersection_curves(
 			}
 		    }
 		}
+		dplot->ClippedFaceCurves(surf1, surf2, face1_curves, face2_curves);
+		dplot->WriteLog();
 
 		if (DEBUG_BREP_BOOLEAN) {
 		    // Look for coplanar faces
@@ -3603,8 +3640,15 @@ get_face_intersection_curves(
 		}
 
 	    }
-
 	}
+    }
+
+    for (size_t i = 0; i < st1.size(); i++) {
+	surf_tree1.Append(st1[i]);
+    }
+
+    for (size_t i = 0; i < st2.size(); i++) {
+	surf_tree2.Append(st2[i]);
     }
 
     return curves_array;
@@ -3627,26 +3671,30 @@ HIDDEN ON_SimpleArray<ON_Curve *>get_face_trim_loop(const ON_Brep *brep, int fac
 HIDDEN ON_SimpleArray<TrimmedFace *>
 get_trimmed_faces(const ON_Brep *brep)
 {
-    ON_SimpleArray<TrimmedFace *> trimmed_faces;
+    std::vector<TrimmedFace *> trimmed_faces;
     int face_count = brep->m_F.Count();
     for (int i = 0; i < face_count; i++) {
 	const ON_BrepFace &face = brep->m_F[i];
 	const ON_SimpleArray<int> &loop_index = face.m_li;
+	if (loop_index.Count() <= 0) {
+	    continue;
+	}
 
 	TrimmedFace *trimmed_face = new TrimmedFace();
 	trimmed_face->m_face = &face;
-
-	if (loop_index.Count() > 0) {
-	    ON_SimpleArray<ON_Curve *> index_loop = get_face_trim_loop(brep, loop_index[0]);
-	    trimmed_face->m_outerloop = index_loop;
-	    for (int j = 1; j < loop_index.Count(); j++) {
-		index_loop = get_face_trim_loop(brep, loop_index[j]);
-		trimmed_face->m_innerloop.push_back(index_loop);
-	    }
+	ON_SimpleArray<ON_Curve *> index_loop = get_face_trim_loop(brep, loop_index[0]);
+	trimmed_face->m_outerloop = index_loop;
+	for (int j = 1; j < loop_index.Count(); j++) {
+	    index_loop = get_face_trim_loop(brep, loop_index[j]);
+	    trimmed_face->m_innerloop.push_back(index_loop);
 	}
-	trimmed_faces.Append(trimmed_face);
+	trimmed_faces.push_back(trimmed_face);
     }
-    return trimmed_faces;
+    ON_SimpleArray<TrimmedFace *> tf;
+    for (size_t i = 0; i < trimmed_faces.size(); i++) {
+	tf.Append(trimmed_faces[i]);
+    }
+    return tf;
 }
 
 
@@ -3694,6 +3742,7 @@ categorize_trimmed_faces(
 	    }
 
 	    splitted[j]->m_rev = false;
+	    splitted[j]->m_belong_to_final = TrimmedFace::NOT_BELONG;
 	    switch (face_location) {
 		case INSIDE_BREP:
 		    if (operation == BOOLEAN_INTERSECT ||
@@ -3773,11 +3822,15 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
 {
     ON_SimpleArray<Subsurface *> surf_tree1, surf_tree2;
 
-    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array =
-	get_face_intersection_curves(surf_tree1, surf_tree2, brep1, brep2, operation);
-
     int face_count1 = brep1->m_F.Count();
     int face_count2 = brep2->m_F.Count();
+
+    // check for face counts high enough to cause overflow
+    if ((face_count1 + face_count2) < 0)
+	return ON_ClassArray<ON_SimpleArray<TrimmedFace *> > ();
+
+    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array =
+	get_face_intersection_curves(surf_tree1, surf_tree2, brep1, brep2, operation);
 
     ON_SimpleArray<TrimmedFace *> brep1_faces, brep2_faces;
     brep1_faces = get_trimmed_faces(brep1);
@@ -3798,6 +3851,8 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
     for (int i = 0; i < original_faces.Count(); i++) {
 	TrimmedFace *first = original_faces[i];
 	ON_ClassArray<LinkedCurve> linked_curves = link_curves(curves_array[i]);
+	dplot->LinkedCurves(first->m_face->SurfaceOf(), linked_curves);
+	dplot->WriteLog();
 
 	ON_SimpleArray<TrimmedFace *> splitted = split_trimmed_face(first, linked_curves);
 	trimmed_faces.Append(splitted);
@@ -3825,6 +3880,9 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
     }
 
     categorize_trimmed_faces(trimmed_faces, brep1, brep2, surf_tree1, surf_tree2, operation);
+
+    dplot->SplitFaces(trimmed_faces);
+    dplot->WriteLog();
 
     for (int i = 0; i < surf_tree1.Count(); i++) {
 	delete surf_tree1[i];
@@ -3914,6 +3972,14 @@ standardize_loop_orientations(ON_Brep *brep)
 int
 ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, op_type operation)
 {
+    static int calls = 0;
+    ++calls;
+    std::ostringstream prefix;
+    prefix << "bool" << calls;
+    dplot = new DebugPlot(prefix.str().c_str());
+    dplot->Surfaces(brep1, brep2);
+    dplot->WriteLog();
+
     ON_ClassArray<ON_SimpleArray<TrimmedFace *> > trimmed_faces;
     try {
 	/* Deal with the trivial cases up front */
@@ -3934,19 +4000,27 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
 	    }
 	    evaluated_brep->ShrinkSurfaces();
 	    evaluated_brep->Compact();
+	    dplot->WriteLog();
 	    return 0;
 	}
 	trimmed_faces = get_evaluated_faces(brep1, brep2, operation);
     } catch (InvalidBooleanOperation &e) {
 	bu_log("%s", e.what());
+	dplot->WriteLog();
 	return -1;
     } catch (GeometryGenerationError &e) {
 	bu_log("%s", e.what());
+	dplot->WriteLog();
 	return -1;
     }
 
     int face_count1 = brep1->m_F.Count();
     int face_count2 = brep2->m_F.Count();
+
+    // check for face counts high enough to cause overflow
+    if ((face_count1 + face_count2) < 0)
+	return -1;
+
     for (int i = 0; i < trimmed_faces.Count(); i++) {
 	const ON_SimpleArray<TrimmedFace *> &splitted = trimmed_faces[i];
 	const ON_Surface *surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;
@@ -3998,6 +4072,10 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
     if (ON_String(ws).Array()) {
 	bu_log("%s", ON_String(ws).Array());
     }
+
+    dplot->WriteLog();
+    delete dplot;
+    dplot = NULL;
 
     return 0;
 }

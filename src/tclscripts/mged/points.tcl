@@ -1,7 +1,7 @@
 #                      P O I N T S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2007-2020 United States Government as represented by
+# Copyright (c) 2007-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -391,7 +391,7 @@ proc pipe {pts} {
     eval "$cmd"
 
     close $fd
-    set asc2plot3 [file join [bu_brlcad_root "bin"] asc-plot3]
+    set asc2plot3 [file join [bu_dir bin] asc-plot3]
     exec "$asc2plot3 < pipe$pipe_number.plasc > pipe$pipe_number.plot3"
 
     incr pipe_number
@@ -697,7 +697,7 @@ if { 1 == 0 } {
 	set c "Q"
     }
     close $fd
-    set asc2plot3 [file join [bu_brlcad_root "bin"] asc-plot3]
+    set asc2plot3 [file join [bu_dir bin] asc-plot3]
     exec "$asc2plot3 < pipe.asc > pipe.plot3"
     overlay pipe.plot3
     file delete pipe.asc

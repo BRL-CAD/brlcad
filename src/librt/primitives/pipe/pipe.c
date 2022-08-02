@@ -1,7 +1,7 @@
 /*                          P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1117,7 +1117,7 @@ bend_pipe_shot(
      * sufficiently close, then use the real part as one value of 't'
      * for the intersections
      */
-    for (j = 0, root_count = 0; j < 4; j++) {
+    for (j = 0; j < 4; j++) {
 	if (NEAR_ZERO(val[j].im, 0.0001)) {
 	    struct hit *hitp;
 	    fastf_t normalized_dist;
@@ -1156,14 +1156,7 @@ check_discont_radii:
     /* check for surfaces created by discontinuous changes in radii */
     prev = BU_LIST_BACK(id_pipe, &bp->l);
     if (prev->l.magic != BU_LIST_HEAD_MAGIC) {
-	if (prev->pipe_is_bend) {
-	    /* do not process previous bend
-	     * struct bend_pipe *bend = (struct bend_pipe *)prev;
-	     * or2_sq = bend->bend_or*bend->bend_or;
-	     * ir2_sq = bend->bend_ir*bend->bend_ir; */
-	    or2_sq = or_sq;
-	    ir2_sq = ir_sq;
-	} else {
+	if (!prev->pipe_is_bend) {
 	    struct lin_pipe *lin = (struct lin_pipe *)prev;
 	    or2_sq = lin->pipe_rotop_sq;
 	    ir2_sq = lin->pipe_ritop_sq;
@@ -1822,11 +1815,11 @@ rt_pipe_free(struct soltab *stp)
 
 
 static int
-pipe_circle_segments(const struct rt_view_info *info, fastf_t radius)
+pipe_circle_segments(fastf_t point_spacing, fastf_t radius)
 {
     int num_segments;
 
-    num_segments = M_2PI * radius / info->point_spacing;
+    num_segments = M_2PI * radius / point_spacing;
 
     if (num_segments < 5) {
 	num_segments = 5;
@@ -1838,14 +1831,14 @@ pipe_circle_segments(const struct rt_view_info *info, fastf_t radius)
 
 static int
 pipe_bend_segments(
-    const struct rt_view_info *info,
+    fastf_t point_spacing,
     const struct pipe_bend *bend)
 {
     int num_segments;
     fastf_t arc_length;
 
     arc_length = (bend->bend_angle * M_1_2PI) * bend->bend_circle.radius;
-    num_segments = arc_length / info->point_spacing;
+    num_segments = arc_length / point_spacing;
 
     if (num_segments < 3) {
 	num_segments = 3;
@@ -1858,14 +1851,17 @@ pipe_bend_segments(
 static int
 pipe_connecting_arcs(
     struct rt_pipe_internal *pipeobj,
-    const struct rt_view_info *info)
+    struct bu_list *vhead,
+    fastf_t curve_scale,
+    fastf_t s_size
+    )
 {
     int dcount, num_arcs;
     struct pipe_segment *cur_seg;
     fastf_t avg_diameter, avg_circumference;
 
     RT_PIPE_CK_MAGIC(pipeobj);
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
 
     cur_seg = pipe_seg_first(pipeobj);
     if (cur_seg == NULL) {
@@ -1899,7 +1895,9 @@ pipe_connecting_arcs(
     BU_PUT(cur_seg, struct pipe_segment);
 
     avg_circumference = M_PI * avg_diameter;
-    num_arcs = avg_circumference / info->curve_spacing;
+    fastf_t curve_spacing = s_size / 2.0;
+    curve_spacing /= curve_scale;
+    num_arcs = avg_circumference / curve_spacing;
 
     if (num_arcs < 4) {
 	num_arcs = 4;
@@ -1914,6 +1912,7 @@ pipe_connecting_arcs(
  */
 static void
 draw_pipe_circle(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     const struct pipe_circle *circle,
     int num_segments)
@@ -1923,7 +1922,7 @@ draw_pipe_circle(
     VSCALE(axis_a, circle->orient.v1, circle->radius);
     VSCALE(axis_b, circle->orient.v2, circle->radius);
 
-    plot_ellipse(vhead, circle->center, axis_a, axis_b, num_segments);
+    plot_ellipse(vlfree, vhead, circle->center, axis_a, axis_b, num_segments);
 }
 
 
@@ -1933,6 +1932,7 @@ draw_pipe_circle(
  */
 static void
 draw_pipe_parallel_circle_connections(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     const struct pipe_circle *start,
     const struct pipe_circle *end,
@@ -1955,10 +1955,10 @@ draw_pipe_parallel_circle_connections(
     radian = 0.0;
     for (i = 0; i < num_lines; ++i) {
 	ellipse_point_at_radian(pt, start->center, start_a, start_b, radian);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 
 	ellipse_point_at_radian(pt, end->center, end_a, end_b, radian);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 
 	radian += radian_step;
     }
@@ -1967,6 +1967,7 @@ draw_pipe_parallel_circle_connections(
 
 static void
 draw_pipe_connect_points_linearly(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     const struct wdb_pipe_pnt *startpt,
     const struct wdb_pipe_pnt *endpt,
@@ -1983,14 +1984,14 @@ draw_pipe_connect_points_linearly(
     /* connect outer circles */
     start_circle.radius = startpt->pp_od / 2.0;
     end_circle.radius = endpt->pp_od / 2.0;
-    draw_pipe_parallel_circle_connections(vhead, &start_circle, &end_circle,
+    draw_pipe_parallel_circle_connections(vlfree, vhead, &start_circle, &end_circle,
 					  num_connections);
 
     /* connect inner circles */
     if (startpt->pp_id > 0.0 && endpt->pp_id > 0.0) {
 	start_circle.radius = startpt->pp_id / 2.0;
 	end_circle.radius = endpt->pp_id / 2.0;
-	draw_pipe_parallel_circle_connections(vhead, &start_circle, &end_circle,
+	draw_pipe_parallel_circle_connections(vlfree, vhead, &start_circle, &end_circle,
 					      num_connections);
     }
 }
@@ -1998,6 +1999,7 @@ draw_pipe_connect_points_linearly(
 
 static void
 draw_pipe_linear_seg(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     struct pipe_segment *seg)
 {
@@ -2007,7 +2009,7 @@ draw_pipe_linear_seg(
     startpt = *BU_LIST_PREV(wdb_pipe_pnt, &seg->cur->l);
     VMOVE(startpt.pp_coord, seg->last_drawn);
 
-    draw_pipe_connect_points_linearly(vhead, &startpt, &endpt, &seg->orient,
+    draw_pipe_connect_points_linearly(vlfree, vhead, &startpt, &endpt, &seg->orient,
 				      seg->connecting_arcs);
 
     VMOVE(seg->last_drawn, endpt.pp_coord);
@@ -2020,6 +2022,7 @@ draw_pipe_linear_seg(
  */
 HIDDEN void
 draw_pipe_arc(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     struct pipe_circle arc_circle,
     const point_t arc_end,
@@ -2042,12 +2045,12 @@ draw_pipe_arc(
     radian_step = radians_from_start_to_end / num_segments;
 
     ellipse_point_at_radian(pt, arc_circle.center, axis_a, axis_b, 0.0);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 
     radian = radian_step;
     for (i = 0; i < num_segments; ++i) {
 	ellipse_point_at_radian(pt, arc_circle.center, axis_a, axis_b, radian);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 
 	radian += radian_step;
     }
@@ -2089,6 +2092,7 @@ pipe_seg_bend(struct pipe_bend *out_bend, const struct pipe_segment *seg)
 
 static struct pipe_orientation
 draw_pipe_connect_circular_segs(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     const struct pipe_bend *bend,
     int num_arcs,
@@ -2149,7 +2153,7 @@ draw_pipe_connect_circular_segs(
 	VADD2(arc_end, bend_end, end_pipe_r);
 	VSUB2(center_to_start, arc_start, arc_circle.center);
 	arc_circle.radius = MAGNITUDE(center_to_start);
-	draw_pipe_arc(vhead, arc_circle, arc_end, segs_per_arc);
+	draw_pipe_arc(vlfree, vhead, arc_circle, arc_end, segs_per_arc);
 
 	radian += radian_step;
     }
@@ -2166,7 +2170,7 @@ draw_pipe_connect_circular_segs(
 
 
 static void
-draw_pipe_circular_seg(struct bu_list *vhead, struct pipe_segment *seg)
+draw_pipe_circular_seg(struct bu_list *vlfree, struct bu_list *vhead, struct pipe_segment *seg)
 {
     struct pipe_bend bend;
     struct wdb_pipe_pnt *prevpt, *curpt, startpt, endpt;
@@ -2182,19 +2186,19 @@ draw_pipe_circular_seg(struct bu_list *vhead, struct pipe_segment *seg)
     VMOVE(startpt.pp_coord, seg->last_drawn);
     VMOVE(endpt.pp_coord, bend.bend_start);
 
-    draw_pipe_connect_points_linearly(vhead, &startpt, &endpt, &seg->orient,
+    draw_pipe_connect_points_linearly(vlfree, vhead, &startpt, &endpt, &seg->orient,
 				      PIPE_CONNECTING_ARCS);
 
     VMOVE(seg->last_drawn, bend.bend_start);
 
     /* draw circular bend */
     bend.pipe_circle.radius = curpt->pp_od / 2.0;
-    seg->orient = draw_pipe_connect_circular_segs(vhead, &bend,
+    seg->orient = draw_pipe_connect_circular_segs(vlfree, vhead, &bend,
 						  PIPE_CONNECTING_ARCS, PIPE_CIRCLE_SEGS);
 
     if (prevpt->pp_id > 0.0 && curpt->pp_id > 0.0) {
 	bend.pipe_circle.radius = curpt->pp_id / 2.0;
-	seg->orient = draw_pipe_connect_circular_segs(vhead, &bend,
+	seg->orient = draw_pipe_connect_circular_segs(vlfree, vhead, &bend,
 						      PIPE_CONNECTING_ARCS, PIPE_CIRCLE_SEGS);
     }
 
@@ -2204,9 +2208,10 @@ draw_pipe_circular_seg(struct bu_list *vhead, struct pipe_segment *seg)
 
 static void
 draw_pipe_circular_seg_adaptive(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     struct pipe_segment *seg,
-    const struct rt_view_info *info)
+    fastf_t point_spacing)
 {
     int num_segments;
     struct pipe_bend bend;
@@ -2223,21 +2228,21 @@ draw_pipe_circular_seg_adaptive(
     VMOVE(startpt.pp_coord, seg->last_drawn);
     VMOVE(endpt.pp_coord, bend.bend_start);
 
-    draw_pipe_connect_points_linearly(vhead, &startpt, &endpt, &seg->orient,
+    draw_pipe_connect_points_linearly(vlfree, vhead, &startpt, &endpt, &seg->orient,
 				      seg->connecting_arcs);
 
     VMOVE(seg->last_drawn, bend.bend_start);
 
     /* draw circular bend */
     bend.pipe_circle.radius = curpt->pp_od / 2.0;
-    num_segments = pipe_bend_segments(info, &bend);
-    seg->orient = draw_pipe_connect_circular_segs(vhead, &bend,
+    num_segments = pipe_bend_segments(point_spacing, &bend);
+    seg->orient = draw_pipe_connect_circular_segs(vlfree, vhead, &bend,
 						  seg->connecting_arcs, num_segments);
 
     if (prevpt->pp_id > 0.0 && curpt->pp_id > 0.0) {
 	bend.pipe_circle.radius = curpt->pp_id / 2.0;
-	num_segments = pipe_bend_segments(info, &bend);
-	seg->orient = draw_pipe_connect_circular_segs(vhead, &bend,
+	num_segments = pipe_bend_segments(point_spacing, &bend);
+	seg->orient = draw_pipe_connect_circular_segs(vlfree, vhead, &bend,
 						      seg->connecting_arcs, num_segments);
     }
 
@@ -2246,7 +2251,7 @@ draw_pipe_circular_seg_adaptive(
 
 
 static void
-draw_pipe_end(struct bu_list *vhead, struct pipe_segment *seg)
+draw_pipe_end(struct bu_list *vlfree, struct bu_list *vhead, struct pipe_segment *seg)
 {
     struct wdb_pipe_pnt *endpt;
     struct pipe_circle pipe_circle;
@@ -2258,12 +2263,12 @@ draw_pipe_end(struct bu_list *vhead, struct pipe_segment *seg)
 
     /* draw outer circle */
     pipe_circle.radius = endpt->pp_od / 2.0;
-    draw_pipe_circle(vhead, &pipe_circle, PIPE_CIRCLE_SEGS);
+    draw_pipe_circle(vlfree, vhead, &pipe_circle, PIPE_CIRCLE_SEGS);
 
     /* draw inner circle */
     if (endpt->pp_id > 0.0) {
 	pipe_circle.radius = endpt->pp_id / 2.0;
-	draw_pipe_circle(vhead, &pipe_circle, PIPE_CIRCLE_SEGS);
+	draw_pipe_circle(vlfree, vhead, &pipe_circle, PIPE_CIRCLE_SEGS);
     }
 
     VMOVE(seg->last_drawn, endpt->pp_coord);
@@ -2272,9 +2277,10 @@ draw_pipe_end(struct bu_list *vhead, struct pipe_segment *seg)
 
 static void
 draw_pipe_end_adaptive(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     struct pipe_segment *seg,
-    const struct rt_view_info *info)
+    fastf_t point_spacing)
 {
     int num_segments;
     struct wdb_pipe_pnt *endpt;
@@ -2287,14 +2293,14 @@ draw_pipe_end_adaptive(
 
     /* draw outer circle */
     pipe_circle.radius = endpt->pp_od / 2.0;
-    num_segments = pipe_circle_segments(info, pipe_circle.radius);
-    draw_pipe_circle(vhead, &pipe_circle, num_segments);
+    num_segments = pipe_circle_segments(point_spacing, pipe_circle.radius);
+    draw_pipe_circle(vlfree, vhead, &pipe_circle, num_segments);
 
     /* draw inner circle */
     if (endpt->pp_id > 0.0) {
 	pipe_circle.radius = endpt->pp_id / 2.0;
-	num_segments = pipe_circle_segments(info, pipe_circle.radius);
-	draw_pipe_circle(vhead, &pipe_circle, num_segments);
+	num_segments = pipe_circle_segments(point_spacing, pipe_circle.radius);
+	draw_pipe_circle(vlfree, vhead, &pipe_circle, num_segments);
     }
 
     VMOVE(seg->last_drawn, endpt->pp_coord);
@@ -2302,15 +2308,14 @@ draw_pipe_end_adaptive(
 
 
 int
-rt_pipe_adaptive_plot(
-    struct rt_db_internal *ip,
-    const struct rt_view_info *info)
+rt_pipe_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
 {
     struct rt_pipe_internal *pipeobj;
     struct pipe_segment *cur_seg;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     pipeobj = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pipeobj);
 
@@ -2319,23 +2324,25 @@ rt_pipe_adaptive_plot(
 	return 0;
     }
 
-    cur_seg->connecting_arcs = pipe_connecting_arcs(pipeobj, info);
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
 
-    draw_pipe_end_adaptive(info->vhead, cur_seg, info);
+    cur_seg->connecting_arcs = pipe_connecting_arcs(pipeobj, vhead, v->gv_s->curve_scale, s_size);
+
+    draw_pipe_end_adaptive(vlfree, vhead, cur_seg, point_spacing);
     pipe_seg_advance(cur_seg);
 
     while (!pipe_seg_is_last(cur_seg)) {
 	if (pipe_seg_is_bend(cur_seg)) {
-	    draw_pipe_circular_seg_adaptive(info->vhead, cur_seg, info);
+	    draw_pipe_circular_seg_adaptive(vlfree, vhead, cur_seg, point_spacing);
 	} else {
-	    draw_pipe_linear_seg(info->vhead, cur_seg);
+	    draw_pipe_linear_seg(vlfree, vhead, cur_seg);
 	}
 
 	pipe_seg_advance(cur_seg);
     }
 
-    draw_pipe_linear_seg(info->vhead, cur_seg);
-    draw_pipe_end_adaptive(info->vhead, cur_seg, info);
+    draw_pipe_linear_seg(vlfree, vhead, cur_seg);
+    draw_pipe_end_adaptive(vlfree, vhead, cur_seg, point_spacing);
 
     BU_PUT(cur_seg, struct pipe_segment);
 
@@ -2349,13 +2356,14 @@ rt_pipe_plot(
     struct rt_db_internal *ip,
     const struct bg_tess_tol *UNUSED(ttol),
     const struct bn_tol *UNUSED(tol),
-    const struct rt_view_info *UNUSED(info))
+    const struct bview *UNUSED(info))
 {
     struct rt_pipe_internal *pip;
     struct pipe_segment *cur_seg;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
 
@@ -2366,21 +2374,21 @@ rt_pipe_plot(
 
     cur_seg->connecting_arcs = PIPE_CONNECTING_ARCS;
 
-    draw_pipe_end(vhead, cur_seg);
+    draw_pipe_end(vlfree, vhead, cur_seg);
     pipe_seg_advance(cur_seg);
 
     while (!pipe_seg_is_last(cur_seg)) {
 	if (pipe_seg_is_bend(cur_seg)) {
-	    draw_pipe_circular_seg(vhead, cur_seg);
+	    draw_pipe_circular_seg(vlfree, vhead, cur_seg);
 	} else {
-	    draw_pipe_linear_seg(vhead, cur_seg);
+	    draw_pipe_linear_seg(vlfree, vhead, cur_seg);
 	}
 
 	pipe_seg_advance(cur_seg);
     }
 
-    draw_pipe_linear_seg(vhead, cur_seg);
-    draw_pipe_end(vhead, cur_seg);
+    draw_pipe_linear_seg(vlfree, vhead, cur_seg);
+    draw_pipe_end(vlfree, vhead, cur_seg);
 
     BU_PUT(cur_seg, struct pipe_segment);
 
@@ -2524,41 +2532,39 @@ tesselate_pipe_linear(
     struct shell *s,
     const struct bn_tol *tol)
 {
-    struct vertex **new_outer_loop;
-    struct vertex **new_inner_loop;
-    struct vertex **verts[3];
-    struct faceuse *fu;
-    vect_t *norms;
-    vect_t n;
-    fastf_t slope;
-    fastf_t seg_len;
+    struct vertex **new_outer_loop = NULL;
+    struct vertex **new_inner_loop = NULL;
+    struct vertex **verts[3] = {NULL, NULL, NULL};
+    struct faceuse *fu = NULL;
+    vect_t *norms = NULL;
+    vect_t n = VINIT_ZERO;
+    fastf_t slope = 0.0;
+    fastf_t seg_len = 0.0;
     int i, j;
 
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
 
-    norms = (vect_t *)bu_calloc(arc_segs, sizeof(vect_t), "tesselate_pipe_linear: new normals");
-
-    if (end_orad > tol->dist) {
-	new_outer_loop = (struct vertex **)bu_calloc(arc_segs, sizeof(struct vertex *),
-						     "tesselate_pipe_linear: new_outer_loop");
-    } else {
-	new_outer_loop = (struct vertex **)NULL;
-    }
-
-    if (end_irad > tol->dist) {
-	new_inner_loop = (struct vertex **)bu_calloc(arc_segs, sizeof(struct vertex *),
-						     "tesselate_pipe_linear: new_inner_loop");
-    } else {
-	new_inner_loop = (struct vertex **)NULL;
-    }
+    fastf_t tdist = tol->dist;
 
     VSUB2(n, end_pt, start_pt);
     seg_len = MAGNITUDE(n);
     VSCALE(n, n, 1.0 / seg_len);
     slope = (orad - end_orad) / seg_len;
 
-    if (orad > tol->dist && end_orad > tol->dist) {
+    norms = (vect_t *)bu_calloc(arc_segs, sizeof(vect_t), "tesselate_pipe_linear: new normals");
+
+    if (end_irad > tdist) {
+	new_inner_loop = (struct vertex **)bu_calloc(arc_segs, sizeof(struct vertex *),
+						     "tesselate_pipe_linear: new_inner_loop");
+    }
+
+    if (end_orad > tdist) {
+	new_outer_loop = (struct vertex **)bu_calloc(arc_segs, sizeof(struct vertex *),
+						     "tesselate_pipe_linear: new_outer_loop");
+    }
+
+    if (end_orad > tdist && orad > tdist) {
 	point_t pt;
 	fastf_t x, y, xnew, ynew;
 	struct faceuse *fu_prev = (struct faceuse *)NULL;
@@ -2641,6 +2647,10 @@ tesselate_pipe_linear(
 		       i, orad , end_orad);
 		continue;
 	    }
+	    if (!new_outer_loop) {
+		bu_log("tesselate_pipe_linear (pipe.c:%d): unexpected NULL new_outer_loop\n", __LINE__);
+		continue;
+	    }
 	    if (!new_outer_loop[i]->vg_p) {
 		nmg_vertex_gv(new_outer_loop[i], pt);
 	    }
@@ -2706,7 +2716,7 @@ tesselate_pipe_linear(
 	}
 	bu_free((char *)(*outer_loop), "tesselate_pipe_bend: outer_loop");
 	*outer_loop = new_outer_loop;
-    } else if (orad > tol->dist && end_orad <= tol->dist) {
+    } else if (orad > tdist && end_orad <= tdist) {
 	struct vertex *v = (struct vertex *)NULL;
 
 	VSUB2(norms[0], (*outer_loop)[0]->vg_p->coord, start_pt);
@@ -2779,7 +2789,7 @@ tesselate_pipe_linear(
 
 	bu_free((char *)(*outer_loop), "tesselate_pipe_linear: outer_loop");
 	outer_loop[0] = &v;
-    } else if (orad <= tol->dist && end_orad > tol->dist) {
+    } else if (orad <= tdist && end_orad > tdist) {
 	point_t pt, pt_next;
 	fastf_t x, y, xnew, ynew;
 
@@ -2818,6 +2828,10 @@ tesselate_pipe_linear(
 	    }
 	    if (!(*outer_loop)[0]->vg_p) {
 		nmg_vertex_gv((*outer_loop)[0], start_pt);
+	    }
+	    if (!new_outer_loop) {
+		bu_log("tesselate_pipe_linear (pipe.c:%d): unexpected NULL new_outer_loop\n", __LINE__);
+		continue;
 	    }
 	    if (!new_outer_loop[i]->vg_p) {
 		nmg_vertex_gv(new_outer_loop[i], pt);
@@ -2870,7 +2884,7 @@ tesselate_pipe_linear(
 
     slope = (irad - end_irad) / seg_len;
 
-    if (irad > tol->dist && end_irad > tol->dist) {
+    if (irad > tdist && end_irad > tdist) {
 	point_t pt;
 	fastf_t x, y, xnew, ynew;
 	struct faceuse *fu_prev = (struct faceuse *)NULL;
@@ -2953,6 +2967,10 @@ tesselate_pipe_linear(
 		       i, irad, end_irad);
 		continue;
 	    }
+	    if (!new_inner_loop) {
+		bu_log("tesselate_pipe_linear (pipe.c:%d): unexpected NULL new_inner_loop\n", __LINE__);
+		continue;
+	    }
 	    if (!new_inner_loop[i]->vg_p) {
 		nmg_vertex_gv(new_inner_loop[i], pt);
 	    }
@@ -3024,7 +3042,7 @@ tesselate_pipe_linear(
 	}
 	bu_free((char *)(*inner_loop), "tesselate_pipe_bend: inner_loop");
 	*inner_loop = new_inner_loop;
-    } else if (irad > tol->dist && end_irad <= tol->dist) {
+    } else if (irad > tdist && end_irad <= tdist) {
 	struct vertex *v = (struct vertex *)NULL;
 
 	VSUB2(norms[0], (*inner_loop)[0]->vg_p->coord, start_pt);
@@ -3099,7 +3117,7 @@ tesselate_pipe_linear(
 
 	bu_free((char *)(*inner_loop), "tesselate_pipe_linear: inner_loop");
 	inner_loop[0] = &v;
-    } else if (irad <= tol->dist && end_irad > tol->dist) {
+    } else if (irad <= tdist && end_irad > tdist) {
 	point_t pt, pt_next;
 	fastf_t x, y, xnew, ynew;
 
@@ -3138,6 +3156,10 @@ tesselate_pipe_linear(
 	    }
 	    if (!(*inner_loop)[0]->vg_p) {
 		nmg_vertex_gv((*inner_loop)[0], start_pt);
+	    }
+	    if (!new_inner_loop) {
+		bu_log("tesselate_pipe_linear (pipe.c:%d): unexpected NULL new_inner_loop\n", __LINE__);
+		continue;
 	    }
 	    if (!new_inner_loop[i]->vg_p) {
 		nmg_vertex_gv(new_inner_loop[i], pt);
@@ -3211,7 +3233,7 @@ tesselate_pipe_bend(
 {
     struct vertex **new_outer_loop = NULL;
     struct vertex **new_inner_loop = NULL;
-    struct bn_vert_tree *vertex_tree = NULL;
+    struct bg_vert_tree *vertex_tree = NULL;
     struct vertex **vertex_array = NULL;
     fastf_t bend_radius;
     fastf_t bend_angle;
@@ -3237,7 +3259,7 @@ tesselate_pipe_bend(
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
     BG_CK_TESS_TOL(ttol);
-    vertex_tree = bn_vert_tree_create();
+    vertex_tree = bg_vert_tree_create();
 
     VMOVE(r1, start_r1);
     VMOVE(r2, start_r2);
@@ -3287,7 +3309,7 @@ tesselate_pipe_bend(
     for (i = 0 ; i < arc_segs ; i++) {
 	struct vertex *v = (*outer_loop)[i];
 	struct vertex_g *vg = v->vg_p;
-	j = bn_vert_tree_add( vertex_tree,vg->coord[X], vg->coord[Y], vg->coord[Z], tol->dist_sq);
+	j = bg_vert_tree_add( vertex_tree,vg->coord[X], vg->coord[Y], vg->coord[Z], tol->dist_sq);
 	vertex_array[j] = v;
     }
 
@@ -3324,7 +3346,7 @@ tesselate_pipe_bend(
 	    }
 
 	    VJOIN2(pt, center, x, r1, y, r2);
-	    k = bn_vert_tree_add( vertex_tree,pt[X], pt[Y], pt[Z], tol->dist_sq);
+	    k = bg_vert_tree_add( vertex_tree,pt[X], pt[Y], pt[Z], tol->dist_sq);
 
 	    verts[0] = &(*outer_loop)[j];
 	    verts[1] = &(*outer_loop)[i];
@@ -3394,7 +3416,7 @@ tesselate_pipe_bend(
 	    y = ynew;
 
 	    VJOIN2(pt, center, x, r1, y, r2);
-	    k = bn_vert_tree_add( vertex_tree,pt[X], pt[Y], pt[Z], tol->dist_sq);
+	    k = bg_vert_tree_add( vertex_tree,pt[X], pt[Y], pt[Z], tol->dist_sq);
 
 	    verts[1] = verts[2];
 	    verts[2] = &new_outer_loop[j];
@@ -3464,7 +3486,7 @@ tesselate_pipe_bend(
     }
 
     /* release resources, sanity */
-    bn_vert_tree_destroy(vertex_tree);
+    bg_vert_tree_destroy(vertex_tree);
     bu_free((char *)vertex_array, "vertex array in pipe.c");
     vertex_tree = NULL;
     vertex_array = NULL;
@@ -3882,7 +3904,6 @@ rt_pipe_tess(
 	curr_id = pp2->pp_id;
 	curr_od = pp2->pp_od;
     next_pt:
-	pp1 = pp2;
 	pp2 = pp3;
 	pp3 = BU_LIST_NEXT(wdb_pipe_pnt, &pp3->l);
 	if (BU_LIST_IS_HEAD(&pp3->l, &(pip->pipe_segs_head))) {
@@ -3938,7 +3959,7 @@ rt_pipe_import4(
 
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     pip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-    pip->pipe_count = ntohl(*(uint32_t *)rp->pwr.pwr_pt_count);
+    pip->pipe_count = bu_ntohl(*(uint32_t *)rp->pwr.pwr_pt_count, 0, UINT_MAX - 1);
 
     /*
      * Walk the array of segments in reverse order, allocating a
@@ -4083,7 +4104,7 @@ rt_pipe_import5(
     }
     BU_CK_EXTERNAL(ep);
 
-    pipe_count = ntohl(*(uint32_t *)ep->ext_buf);
+    pipe_count = bu_ntohl(*(uint32_t *)ep->ext_buf, 0, UINT_MAX - 1);
     double_count = pipe_count * 6;
     byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
     total_count = 4 + byte_count;
@@ -4516,14 +4537,12 @@ rt_pipe_adjust(
 		ptp = BU_LIST_LAST(wdb_pipe_pnt, &pip->pipe_segs_head);
 		*new_pt = *ptp;		/* struct copy */
 		BU_LIST_INSERT(&pip->pipe_segs_head, &new_pt->l);
-		ptp = new_pt;
 	    } else {
 		VSETALL(new_pt->pp_coord, 0.0);
 		new_pt->pp_id = 0.0;
 		new_pt->pp_od = 10.0;
 		new_pt->pp_bendradius = 20.0;
 		BU_LIST_INSERT(&pip->pipe_segs_head, &new_pt->l);
-		ptp = new_pt;
 	    }
 	    num_segs++;
 	}

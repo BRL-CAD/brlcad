@@ -1,7 +1,7 @@
 #                    B I N D I N G S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2020 United States Government as represented by
+# Copyright (c) 2004-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@ proc mged_bind_dm { w } {
     global forwarding_key
     global tcl_platform
 
+    # KeySym for <F9> --> 0xffc6 --> 65478
     set hot_key 65478
 
     #make this the current display manager
@@ -101,37 +102,60 @@ if ![info exists mged_default(dm_key_bindings)] {
 }
 
 proc default_key_bindings { w } {
-    bind $w a "winset $w; adc; break"
-    bind $w c "open_cmd_win id_0"
-    bind $w e "winset $w; rset ax edit_draw !;\
-	    update_gui $w edit_draw \[rset ax edit_draw\]; break"
-    bind $w m "winset $w; rset ax model_draw !;\
-	    update_gui $w model_draw \[rset ax model_draw\]; break"
-    bind $w v "winset $w; rset ax view_draw !;\
-	    update_gui $w view_draw \[rset ax view_draw\]; break"
-    bind $w i "winset $w; aip f; break"
-    bind $w I "winset $w; aip b; break"
-    bind $w p "winset $w; M 1 0 0; break"
+    # common view shortcuts
     bind $w 2 "winset $w; ae 35 -25; break"
     bind $w 3 "winset $w; press 35,25; break"
     bind $w 4 "winset $w; press 45,45; break"
     bind $w 5 "winset $w; ae 145 25; break"
     bind $w 6 "winset $w; ae 215 25; break"
     bind $w 7 "winset $w; ae 325 25; break"
-    bind $w f "winset $w; press front; break"
-    bind $w t "winset $w; press top; break"
+
+    # default key shortcuts
+    bind $w a "winset $w; adc; break"
     bind $w b "winset $w; press bottom; break"
+    bind $w c "open_cmd_win id_0"
+    bind $w e "winset $w; rset ax edit_draw !; update_gui $w edit_draw \[rset ax edit_draw\]; break"
+    bind $w f "winset $w; press front; break"
+    bind $w i "winset $w; aip f; break"
     bind $w l "winset $w; press left; break"
-    bind $w n "winset $w; puts \[nirt -b\]; break"
-    bind $w r "winset $w; press right; break"
-    bind $w R "winset $w; press rear; break"
-    bind $w s "winset $w; press sill; break"
+    bind $w m "winset $w; rset ax model_draw !; update_gui $w model_draw \[rset ax model_draw\]; break"
     bind $w o "winset $w; press oill; break"
+    bind $w p "winset $w; M 1 0 0; break"
     bind $w q "winset $w; press reject; break"
-    bind $w A "winset $w; press accept; break"
-    bind $w P "winset $w; catch {sed_apply}; break"
-    bind $w S "winset $w; catch {sed_reset}; break"
+    bind $w r "winset $w; press right; break"
+    bind $w s "winset $w; press sill; break"
+    bind $w t "winset $w; press top; break"
     bind $w u "winset $w; svb; break"
+    bind $w v "winset $w; rset ax view_draw !; update_gui $w view_draw \[rset ax view_draw\]; break"
+
+    # default shift+key shortcuts
+    bind $w A "winset $w; press accept; break"
+    bind $w I "winset $w; aip b; break"
+    bind $w N "winset $w; puts \[nirt -b\]; break"
+    bind $w P "winset $w; catch {sed_apply}; break"
+    bind $w R "winset $w; press rear; break"
+    bind $w S "winset $w; catch {sed_reset}; break"
+
+    # default control+key shortcuts
+    bind $w <Control-n> "winset $w; _mged_view_ring next; break"
+    bind $w <Control-p> "winset $w; _mged_view_ring prev; break"
+    bind $w <Control-t> "winset $w; _mged_view_ring toggle; break"
+
+    # shift grips navigation
+    bind $w <Control-Shift-Down> "winset $w; knob -i aY \$mged_default(tran_factor); break"
+    bind $w <Control-Shift-Left> "winset $w; knob -i az \$mged_default(rot_factor); break"
+    bind $w <Control-Shift-Right> "winset $w; knob -i az -\$mged_default(rot_factor); break"
+    bind $w <Control-Shift-Up> "winset $w; knob -i aY -\$mged_default(tran_factor); break"
+    bind $w <Down> "winset $w; knob -i ax \$mged_default(rot_factor); break"
+    bind $w <Left> "winset $w; knob -i ay -\$mged_default(rot_factor); break"
+    bind $w <Right> "winset $w; knob -i ay \$mged_default(rot_factor); break"
+    bind $w <Up> "winset $w; knob -i ax -\$mged_default(rot_factor); break"
+    bind $w <Shift-Down> "winset $w; knob -i aZ -\$mged_default(tran_factor); break"
+    bind $w <Shift-Left> "winset $w; knob -i aX \$mged_default(tran_factor); break"
+    bind $w <Shift-Right> "winset $w; knob -i aX -\$mged_default(tran_factor); break"
+    bind $w <Shift-Up> "winset $w; knob -i aZ \$mged_default(tran_factor); break"
+
+    # function keys (settings)
     bind $w <F1> "winset $w; dm set depthcue !; update_gui $w depthcue \[dm set depthcue\]; break"
     bind $w <F2> "winset $w; dm set zclip !; update_gui $w zclip \[dm set zclip\]; break"
     bind $w <F3> "winset $w; set perspective_mode !; update_gui $w perspective_mode \$perspective_mode; break"
@@ -140,27 +164,10 @@ proc default_key_bindings { w } {
     bind $w <F6> "winset $w; set toggle_perspective !; break"
     bind $w <F7> "winset $w; set faceplate !; update_gui $w faceplate \$faceplate; break"
     bind $w <F8> "winset $w; set orig_gui !; update_gui $w orig_gui \$orig_gui; break"
-    # KeySym for <F9> --> 0xffc6 --> 65478
     bind $w <F9> "toggle_forward_key_bindings $w; update_gui $w forward_keys \$forwarding_key($w); break"
     bind $w <F12> "winset $w; knob zero; break"
 
-    bind $w <Left> "winset $w; knob -i ay -\$mged_default(rot_factor); break"
-    bind $w <Right> "winset $w; knob -i ay \$mged_default(rot_factor); break"
-    bind $w <Down> "winset $w; knob -i ax \$mged_default(rot_factor); break"
-    bind $w <Up> "winset $w; knob -i ax -\$mged_default(rot_factor); break"
-    bind $w <Shift-Left> "winset $w; knob -i aX \$mged_default(tran_factor); break"
-    bind $w <Shift-Right> "winset $w; knob -i aX -\$mged_default(tran_factor); break"
-    bind $w <Shift-Down> "winset $w; knob -i aZ -\$mged_default(tran_factor); break"
-    bind $w <Shift-Up> "winset $w; knob -i aZ \$mged_default(tran_factor); break"
-    bind $w <Control-Shift-Left> "winset $w; knob -i az \$mged_default(rot_factor); break"
-    bind $w <Control-Shift-Right> "winset $w; knob -i az -\$mged_default(rot_factor); break"
-    bind $w <Control-Shift-Down> "winset $w; knob -i aY \$mged_default(tran_factor); break"
-    bind $w <Control-Shift-Up> "winset $w; knob -i aY -\$mged_default(tran_factor); break"
-
-    bind $w <Control-n> "winset $w; _mged_view_ring next; break"
-    bind $w <Control-p> "winset $w; _mged_view_ring prev; break"
-    bind $w <Control-t> "winset $w; _mged_view_ring toggle; break"
-
+    # interrupt
     bind $w <Escape> "winset $w; reset_everything $w; break"
 
     # Throw away other key events
@@ -232,6 +239,7 @@ proc forward_key_bindings { w } {
     bind $w t {}
     bind $w b {}
     bind $w l {}
+    bind $w N {}
     bind $w r {}
     bind $w R {}
     bind $w s {}

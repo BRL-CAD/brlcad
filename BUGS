@@ -15,9 +15,64 @@ on-going issues.
 Recent Bugs
 -----------
 
+* When run inside mged, invalid syntax reported on "gqa -p prefix"
+  despite it being documented as the correct form (and working outside
+  mged).  specifying gqa -pprefix appears to be workaround, though
+  unintuitive.  specifying gqa -p"" annoyingly outputs ""exp_air.plot3
+  with quotes embedded in the name.
+
+* rtweight reports nan,nan,nan centroid when density is 0
+
+* rtweight/gqa volumes seem wrong with simple sphere test case, with
+  values consistently and quickly converging less than the actual
+  volume regardless of the grid size.
+
+* gqa manpage has the wrong indentation on the options write-up.
+
+* raytracing a revolved sketch seems to work fine, but rtarea and gqa
+  seem to be crashing on that same revolve.  curiously, the brep
+  revolve from the csgbrep proc-db has the same failure as well as the
+  brep ehy.
+
+* ogl display manager still crashes on attach in mged on Mac OS X 10.5
+
+* running archer "" at least on windows results in a file type dialog
+  and errors with "can't read "_conv_log": no such variable
+
+* opening a database in archer with the same name as a command doesn't
+  work.
+
+* in mged, running the 'attach' command (confirmed issues with X and
+  ogl), closing the window, and then issuing a 'draw' results in mged
+  crashing.
+
+* killtree / crashes
+
+* killtree reports spurious db_lookup failures saying object does not
+  exist as it previously deleted it.  should keep track of what it
+  deletes to not output spuriously, or (better) delete transactionally
+  so it only attempts to lookup and delete once per object.
+
+* object names with a / or \ in them make ls or underlying directory
+  parsing logic display them incorrectly.
+
+* search -exec results are inconsistent with search filtered
+  results. for example, "search . -attr ..." returns A B C, but
+  "search . -attr ... -exec attr show {} \;" results in attr show
+  output for A B C as well as subtracted repetitions.  For example,
+  say A contains - B - C, then it will show output for A B C B C.
+
+  adding -bool u gets closer to consistent but still appears to repeat
+  the last object
+
+* fbclear -c appears to hang indefinitely inside pkg_bwaitfor,
+  possible protocol mismatch or capability removed/changed in fbserv.
+
+* dbupgrade -r produces an invalid rhc with the default v5 rhc produced
+  by MGED with  "make rhc rhc"
+
 * apparently all four BRL-CAD Tutorial Series volumes are missing from
   our bibliography...
-
 
 * Tessellating an ETO with a normal tolerance results in stack
   smashing due to bad logic in recursive algorithm: set norm 2;
@@ -165,10 +220,6 @@ Recent Bugs
 
   pixborder -b "255 0 0" -t "255 255 255" < pix/moss.pix | pix-fb
 
-* report that attempting to change units on a read-only file in MGED
-  will not change the units in the file but changes them in MGED,
-  resulting in problems with nirt missing geometry it shouldn't miss.
-
 * typing 'comb -f -r assembly_name' shuts down mged with the error:
   ERROR: bad pointer 0000000000B4CA50: s/b bu_external(x768dbbd0), was bu_vls(x89333bbb), file ..\..\..\brlcad_src\src\libbu\parse.c, line 2443"
   And on the mged command line:
@@ -181,9 +232,6 @@ Recent Bugs
 
 * wgl framebuffer is not lingering on windows (regardless of using
   wgll or default) when it should
-
-* nirt -e "xyz val val val" doesn't work due to the space after the -e
-  and how the nirt/rt commands parse quoted args.
 
 * calling "attr set obj key value" should always result in key getting
   set to value, no matter what, as it is the lowest-level attribute
@@ -231,9 +279,6 @@ Recent Bugs
   book-keeping is fuxored or the db_lookup is returning NULL (or isn't
   yet performed).
 
-* idents command is reporting a bogus region count in the region
-  output table listing (first column).
-
 * src/librt/primitives/bot/g_bot_include.c:rt_bot_bbox() routine isn't
   calculating the bbox correctly
 
@@ -241,11 +286,6 @@ Recent Bugs
 
 * rtxray crashes if you specify a -o *.bw output file due to
   assumptions in the rt front-end that all output files are .pix
-
-* raytracing a revolved sketch seems to work fine, but rtarea and gqa
-  seem to be crashing on that same revolve.  curiously, the brep
-  revolve from the csgbrep proc-db has the same failure as well as the
-  brep ehy.
 
 * encountered a crash during rtarea on a (default) facetized version
   of the hyp from the proc-db csgbrep tool.
@@ -260,9 +300,6 @@ Recent Bugs
 
 * torus with a near zero inner diameter results in zero-length edges
   during tessellation.
-
-* opening a database in archer with the same name as a command doesn't
-  work.
 
 * bu_log() with a width specifier does not align like printf().
   Example: bu_log("%24s", str);
@@ -326,12 +363,8 @@ Recent Bugs
 * edcomb command seems to be busted similar to red, doesn't seem to do
   anything.
 
-* gqa manpage has the wrong indentation on the options write-up.
-
 * Detailed BoT model ray trace image had incorrect background pixel
   values in framebuffer, off slightly by one.
-
-* ogl display manager still crashes on attach in mged on Mac OS X 10.5
 
 * rt is consuming 100% CPU in fb_close() on a lingering ogl
   framebuffer waiting to close.  needs to sleep or select for a while.
@@ -345,10 +378,6 @@ Recent Bugs
   finishes drawing.
 
 * report of rt aborting randomly on 64-bit with camo shader.
-
-* mged raytrace fails with simple "raytrace failed" message when using
-  rt, nirt, etc. on Windows after modifying a region.  See sf bug
-  report 2954404.
 
 * mged rrt command is not respecting the view size, just does
   something similar to autoview but even gets az/el wrong too.
@@ -590,8 +619,6 @@ Recent Bugs
 * wavelet isn't working correctly on a simple image decomposition &
   reconstruction.
 
-* query_ray can't find nirt if not installed
-
 * fbed is looking for /usr/lib/vfont/nonie.r.12
 
 * mged doesn't check if html_dir does not exist when searching for
@@ -648,15 +675,7 @@ Recent Bugs
 
 * an underlay framebuffer does not underlay with shaded mode
 
-* rtweight chokes on a .density file that has less than 3 values per
-  line (infinite loop).  also gives infinite areas when presented with
-  an empty .density file.
-
 * rtarea gives incorrect areas when using -H hypersample flag
-
-* rtweight/gqa volumes seem wrong with simple sphere test case, with
-  values consistently and quickly converging less than the actual
-  volume regardless of the grid size.
 
 * setting src/librt/db5_io.c's AVS_ADD off in db5_import_attributes
   causes bad things to happen and it really shouldn't.

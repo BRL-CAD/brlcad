@@ -1,7 +1,7 @@
 /*         P O L Y G O N _ T R I A N G U L A T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2020 United States Government as represented by
+ * Copyright (c) 2019-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@
 #include "poly2tri/poly2tri.h"
 
 #include "bu/malloc.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "bg/polygon.h"
 
 
@@ -106,12 +106,14 @@ bg_poly2tri(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	    cdt->Triangulate(true, -1);
 	}
 	catch (...) {
+	    delete cdt;
 	    return 1;
 	}
     }
 
     // If we didn't get any triangles, fail
     if (!cdt->GetTriangles().size()) {
+	delete cdt;
 	return 1;
     }
 
@@ -274,7 +276,7 @@ bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *nu
 extern "C" void
 bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts, int r, int g, int b)
 {
-    FILE* plot_file = fopen(filename, "w");
+    FILE* plot_file = fopen(filename, "wb");
     pl_color(plot_file, r, g, b);
 
     for (int k = 0; k < num_faces; k++) {

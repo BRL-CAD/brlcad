@@ -16,6 +16,7 @@ set(mann_EN
   arced.xml
   area.xml
   arot.xml
+  art.xml
   attach.xml
   attr.xml
   autoview.xml
@@ -123,6 +124,7 @@ set(mann_EN
   make_pnts.xml
   man.xml
   mater.xml
+  material.xml
   matpick.xml
   mirface.xml
   mrot.xml
@@ -131,6 +133,7 @@ set(mann_EN
   nirt.xml
   nmg_collapse.xml
   nmg_simplify.xml
+  npush.xml
   oed.xml
   opendb.xml
   orientation.xml
@@ -184,6 +187,7 @@ set(mann_EN
   rtcheck.xml
   saveview.xml
   sca.xml
+  screengrab.xml
   search.xml
   sed.xml
   setview.xml
@@ -194,6 +198,7 @@ set(mann_EN
   size.xml
   solids.xml
   sph-part.xml
+  stat.xml
   status.xml
   summary.xml
   sv.xml

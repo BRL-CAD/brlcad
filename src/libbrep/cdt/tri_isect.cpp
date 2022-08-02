@@ -1,7 +1,7 @@
 /*              C D T _ T R I _ I S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -117,26 +117,26 @@ class tri_isect_t {
 void
 tri_isect_t::plot(const char *fname)
 {
-    FILE *plot = fopen(fname, "w");
+    FILE *plotfile = fopen(fname, "w");
     double fpnt_r = -1.0;
     double pnt_r = -1.0;
-    pl_color(plot, 0, 0, 255);
-    fmesh1->plot_tri(t1, NULL, plot, 0, 0, 0);
+    pl_color(plotfile, 0, 0, 255);
+    fmesh1->plot_tri(t1, NULL, plotfile, 0, 0, 0);
     pnt_r = fmesh1->tri_pnt_r(t1.ind);
     fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
-    pl_color(plot, 255, 0, 0);
-    fmesh2->plot_tri(t2, NULL, plot, 0, 0, 0);
+    pl_color(plotfile, 255, 0, 0);
+    fmesh2->plot_tri(t2, NULL, plotfile, 0, 0, 0);
     pnt_r = fmesh2->tri_pnt_r(t2.ind);
     fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
-    pl_color(plot, 255, 255, 255);
-    plot_pnt_3d(plot, &ipt_1, fpnt_r, 0);
-    plot_pnt_3d(plot, &ipt_2, fpnt_r, 0);
+    pl_color(plotfile, 255, 255, 255);
+    plot_pnt_3d(plotfile, &ipt_1, fpnt_r, 0);
+    plot_pnt_3d(plotfile, &ipt_2, fpnt_r, 0);
     point_t isectpt1, isectpt2;
     VSET(isectpt1, ipt_1.x, ipt_1.y, ipt_1.z);
     VSET(isectpt2, ipt_2.x, ipt_2.y, ipt_2.z);
-    pdv_3move(plot, isectpt1);
-    pdv_3cont(plot, isectpt2);
-    fclose(plot);
+    pdv_3move(plotfile, isectpt1);
+    pdv_3cont(plotfile, isectpt2);
+    fclose(plotfile);
 }
 
 bool
@@ -282,138 +282,6 @@ near_edge_process(double t, double vtol)
     return 0;
 }
 
-#if 0
-bool
-tri_isect_t::edge_midpoints_inside(int ind)
-{
-    ON_Line *tedges = (!ind) ? t1_fedges : t2_fedges;
-    omesh_t *om = (!ind) ? t2.m->omesh : t1.m->omesh;
-    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)om->fmesh->p_cdt;
-
-
-    for (int i = 0; i < 2; i++) {
-	ON_3dPoint bs_p;
-	ON_3dVector bs_n;
-	ON_3dPoint lmid = tedges[i].PointAt(0.5);
-
-	bool cpeval = om->closest_nearby_mesh_point(bs_p, bs_n, &lmid, s_cdt);
-	if (!cpeval) {
-	    std::cout << "Error - couldn't find closest point for mesh\n";
-	    continue;
-	}
-
-	bool near_surf_pt = (lmid.DistanceTo(bs_p) < BN_TOL_DIST);
-	bool point_inside = on_point_inside(s_cdt, &lmid);
-	bool pin = (point_inside && !near_surf_pt);
-
-#if 0
-	bool point_inside_fast = on_point_inside_fast(s_cdt, &lmid);
-	if (point_inside != point_inside_fast) {
-	    t1.m->tris_plot("m1.plot3");
-	    t2.m->tris_plot("m2.plot3");
-	    t1.plot("t1.plot3");
-	    t2.plot("t2.plot3");
-
-	    std::cout << "disagree: on_point_inside: " << point_inside << ", on_point_inside_fast: " << point_inside_fast << "\n\n";
-	    std::cout << "kill lmid.s bs_p.s\n";
-	    std::cout << "Z; overlay m1.plot3; overlay m2.plot3; overlay t1.plot3; overlay t2.plot3\n";
-	    std::cout << "in lmid.s sph " << lmid.x << " " << lmid.y << " " << lmid.z << " .01\n";
-	    std::cout << "in bs_p.s sph " << bs_p.x << " " << bs_p.y << " " << bs_p.z << " .02\n";
-	    std::cout << "\n";
-	    point_inside = on_point_inside_fast(s_cdt, &lmid);
-	}
-#endif
-
-	if (pin) {
-	    //std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
-	    //std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(bs_p) << "\n";
-	    return true;
-	}
-    }
-
-    return false;
-}
-
-bool
-tri_isect_t::isect_edge_only(double etol)
-{
-
-    // If either triangle thinks this isn't an edge-only intersect, we're done
-    if (!find_intersecting_edges(etol)) {
-	return false;
-    }
-
-    // If both points are on the same edge, it's an edge-only intersect.  However,
-    // if the vertices are such that we want to process them to align the mesh
-    // and avoid sliver overlaps near the edges, we may not be able to report it
-    // as such - keep checking.
-
-    // If any close-to-edge vertices from one triangle project on the interior of the
-    // nearest edge from the other triangle, report a non-edge intersect.
-
-    int process_pnt = 0;
-    double vtol = 0.01;
-    process_pnt += near_edge_process(lt[0], vtol);
-    process_pnt += near_edge_process(lt[1], vtol);
-    process_pnt += near_edge_process(lt[2], vtol);
-    process_pnt += near_edge_process(lt[3], vtol);
-
-    if (process_pnt) {
-	return false;
-    }
-
-    if (mode == 0) {
-	return true;
-    }
-
-    //TRICHECK(t1);
-    //TRICHECK(t2);
-
-    if (mode > 0) {
-	// If the projections of the two triangles onto a common plane has a non-zero
-	// area, we don't report this as an edge-only intersection - it is as far as the
-	// triangles are concerned but it has potentially non-zero volume in the mesh
-	// intersection, and so must be regarded as a processable intersection.
-	point_t t1p[3];
-	point_t t2p[3];
-	ON_Plane t1plane = fmesh1->tplane(t1);
-	ON_Plane t2plane = fmesh2->tplane(t2);
-	ON_3dPoint avgcenter = (t1plane.Origin() + t2plane.Origin()) / 2.0;
-	ON_3dVector avgnorm = (t1plane.Normal() + t2plane.Normal()) / 2.0;
-	avgnorm.Unitize();
-	ON_Plane avgplane(avgcenter, avgnorm);
-	for (int i = 0; i < 3; i++) {
-	    double u, v;
-	    ON_3dPoint p3d = *fmesh1->pnts[t1.v[i]];
-	    avgplane.ClosestPointTo(p3d, &u, &v);
-	    VSET(t1p[i], u, v, 0);
-	}
-	for (int i = 0; i < 3; i++) {
-	    double u, v;
-	    ON_3dPoint p3d = *fmesh2->pnts[t2.v[i]];
-	    avgplane.ClosestPointTo(p3d, &u, &v);
-	    VSET(t2p[i], u, v, 0);
-	}
-	if (bg_tri_tri_isect_coplanar2(t1p[0], t1p[1], t1p[2], t2p[0], t2p[1], t2p[2], 1) == 1) {
-
-	    bool in1 = edge_midpoints_inside(0);
-	    bool in2 = edge_midpoints_inside(1);
-
-	    if (in1 && in2) {
-		return false;
-	    } else {
-		return true;
-	    }
-	} else {
-	    //std::cout << "Coplanar isect false!\n";
-	    return true;
-	}
-    }
-
-    return true;
-}
-#endif
-
 /*****************************************************************************
  * We're only concerned with specific categories of intersections between
  * triangles, so filter accordingly.
@@ -448,77 +316,8 @@ tri_isect(
 	return 0;
     }
 
-#if 0
-    // Check for edge-only intersections
-    if (tri_isection.isect_edge_only()) {
-	return 0;
-    }
-#endif
-
     return 1;
 }
-
-#if 0
-static int
-near_edge_refinement(double t, double vtol) {
-    if (t > 0  && t < 1 && !NEAR_ZERO(t, vtol) && !NEAR_EQUAL(t, 1, vtol)) {
-	return 1;
-    }
-    return 0;
-}
-
-// Assuming t1 and t2 intersect, identify any refinement vertices that need processing
-int
-tri_nearedge_refine(
-	triangle_t &t1,
-       	triangle_t &t2,
-	int level
-	)
-{
-    tri_isect_t tri_isection(t1, t2, 0);
-
-    if (!tri_isection.isect_basic()) {
-	return 0;
-    }
-
-    // TODO - need something less arbitrary here... maybe < 0.5 the distance
-    // from the tri centerpoint to the edge?
-    double etol = 0.1*tri_isection.elen_min;
-
-    int process_cnt = 0;
-    double vtol = 0.01; // used on a 0-1 parametric line parameter comparison
-
-    for (int i = 0; i < 3; i++) {
-	for (int j = 0; j < 3; j++) {
-	    ON_3dPoint *vpnt = t2.vpnt(j);
-	    double lt;
-	    tri_isection.t1_lines[i].ClosestPointTo(*vpnt, &lt);
-	    if (vpnt->DistanceTo(tri_isection.t1_lines[i].PointAt(lt)) < etol) {
-		if (near_edge_refinement(lt, vtol)) {
-		    overt_t *v = t2.m->omesh->overts[t2.v[j]];
-		    process_cnt += add_refinement_vert(v, t1.m->omesh, level);
-		}
-	    }
-	}
-    }
-
-    for (int i = 0; i < 3; i++) {
-	for (int j = 0; j < 3; j++) {
-	    ON_3dPoint *vpnt = t1.vpnt(j);
-	    double lt;
-	    tri_isection.t2_lines[i].ClosestPointTo(*vpnt, &lt);
-	    if (vpnt->DistanceTo(tri_isection.t2_lines[i].PointAt(lt)) < etol) {
-		if (near_edge_refinement(lt, vtol)) {
-		    overt_t *v = t1.m->omesh->overts[t1.v[j]];
-		    process_cnt += add_refinement_vert(v, t2.m->omesh, level);
-		}
-	    }
-	}
-    }
-
-    return process_cnt;
-}
-#endif
 
 /** @} */
 

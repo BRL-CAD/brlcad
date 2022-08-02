@@ -1,7 +1,7 @@
 /*                        S H _ X X X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,9 +35,7 @@
  *	edit the xxx_render function to do the actual rendering
  *
  * If you are building a dynamically loaded shader, compile this into a
- * shared library called "shadername.so".  If you have a number of shaders
- * for you are adding, you can create a single library called "shaders.so"
- * which contains all of your DSO shaders.
+ * shared library called "shadername.so" or "libshadername.so".
  *
  * RT will look in the following locations for DSO shaders:
  *		./

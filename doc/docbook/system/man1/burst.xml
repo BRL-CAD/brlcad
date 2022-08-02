@@ -584,7 +584,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	<refsection xml:id="bursting_1_2_1">
 	  <title>Burst on Armor</title>
 	  <para>
-	    If the <command>burst-distance</command> paramter is set to a negative or zero value, then
+	    If the <command>burst-distance</command> parameter is set to a negative or zero value, then
 	    interior burst points will be generated (see <link linkend="bursting_2_1">Burst Distance</link>).
 	    This method of bursting requires the input of burst armor idents and, by default, burst
 	    air idents are also required. If the user does not want to require that certain air be
@@ -1113,7 +1113,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
   </refsection>
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
-  <para>This software is Copyright (c) 1984-2020 United States Government as
+  <para>This software is Copyright (c) 1984-2022 United States Government as
   represented by the U.S. Army Research Laboratory.</para>
   </refsection>
 

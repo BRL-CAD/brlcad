@@ -1,7 +1,7 @@
 /*                         Q M A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@
 
 
 void
-quat_mat2quat(register fastf_t *quat, register const fastf_t *mat)
+quat_mat2quat(quat_t quat, const mat_t mat)
 {
     fastf_t		tr;
     fastf_t	s;
@@ -122,7 +122,7 @@ quat_mat2quat(register fastf_t *quat, register const fastf_t *mat)
 
 
 void
-quat_quat2mat(register fastf_t *mat, register const fastf_t *quat)
+quat_quat2mat(mat_t mat, const quat_t quat)
 {
     quat_t	q;
 
@@ -149,7 +149,7 @@ quat_quat2mat(register fastf_t *mat, register const fastf_t *quat)
 
 
 double
-quat_distance(const fastf_t *q1, const fastf_t *q2)
+quat_distance(const quat_t q1, const quat_t q2)
 {
     quat_t	qtemp;
 
@@ -159,7 +159,7 @@ quat_distance(const fastf_t *q1, const fastf_t *q2)
 
 
 void
-quat_double(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
+quat_double(quat_t qout, const quat_t q1, const quat_t q2)
 {
     quat_t	qtemp;
     double	scale;
@@ -172,7 +172,7 @@ quat_double(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
 
 
 void
-quat_bisect(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
+quat_bisect(quat_t qout, const quat_t q1, const quat_t q2)
 {
     QADD2( qout, q1, q2 );
     QUNITIZE( qout );
@@ -180,7 +180,7 @@ quat_bisect(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
 
 
 void
-quat_slerp(fastf_t *qout, const fastf_t *q1, const fastf_t *q2, double f)
+quat_slerp(quat_t qout, const quat_t q1, const quat_t q2, double f)
 {
     double		omega;
     double		cos_omega;
@@ -225,7 +225,7 @@ quat_slerp(fastf_t *qout, const fastf_t *q1, const fastf_t *q2, double f)
 
 
 void
-quat_sberp(fastf_t *qout, const fastf_t *q1, const fastf_t *qa, const fastf_t *qb, const fastf_t *q2, double f)
+quat_sberp(quat_t qout, const quat_t q1, const quat_t qa, const quat_t qb, const quat_t q2, double f)
 {
     quat_t	p1, p2, p3, p4, p5;
 
@@ -244,7 +244,7 @@ quat_sberp(fastf_t *qout, const fastf_t *q1, const fastf_t *qa, const fastf_t *q
 
 
 void
-quat_make_nearest(fastf_t *q1, const fastf_t *q2)
+quat_make_nearest(quat_t q1, const quat_t q2)
 {
     quat_t	qtemp;
     double	d1, d2;
@@ -262,7 +262,7 @@ quat_make_nearest(fastf_t *q1, const fastf_t *q2)
 
 /* DEBUG ROUTINE */
 void
-quat_print(const char *title, const fastf_t *quat)
+quat_print(const char *title, const quat_t quat)
 {
     int	i;
     vect_t	axis;
@@ -281,7 +281,7 @@ quat_print(const char *title, const fastf_t *quat)
 
 
 void
-quat_exp(fastf_t *out, const fastf_t *in)
+quat_exp(quat_t out, const quat_t in)
 {
     fastf_t	theta;
     fastf_t	scale;
@@ -297,7 +297,7 @@ quat_exp(fastf_t *out, const fastf_t *in)
 
 
 void
-quat_log(fastf_t *out, const fastf_t *in)
+quat_log(quat_t out, const quat_t in)
 {
     fastf_t	theta;
     fastf_t	scale;

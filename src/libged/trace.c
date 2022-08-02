@@ -1,7 +1,7 @@
 /*                         T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ ged_trace(struct directory *dp,
     }
 
     if (dp->d_flags & RT_DIR_COMB) {
-	if (rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "Database read error, aborting");
 	    return;
 	}
@@ -109,7 +109,7 @@ ged_trace(struct directory *dp,
 	gtdp->gtd_path[pathpos] = dp;
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	if (comb->tree)
-	    db_tree_funcleaf(gtdp->gtd_gedp->ged_wdbp->dbip, comb, comb->tree, trace_do,
+	    db_tree_funcleaf(gtdp->gtd_gedp->dbip, comb, comb->tree, trace_do,
 			     (void *)&pathpos, (void *)old_xlate, (void *)gtdp, (void *)&verbose);
 
 	rt_db_free_internal(&intern);
@@ -163,7 +163,8 @@ ged_trace(struct directory *dp,
 
     /* NOTE - only reach here if gtd_flag == _GED_LISTEVAL */
     bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "/");
-    if ((id=rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->ged_wdbp->dbip, gtdp->gtd_xform, &rt_uniresource)) < 0) {
+    id = rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->dbip, gtdp->gtd_xform, &rt_uniresource);
+    if (id < 0) {
 	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
 	return;
     }
@@ -172,7 +173,7 @@ ged_trace(struct directory *dp,
 	OBJ[id].ft_describe(gtdp->gtd_gedp->ged_result_str,
 			    &intern,
 			    verbose,
-			    gtdp->gtd_gedp->ged_wdbp->dbip->dbi_base2local) < 0)
+			    gtdp->gtd_gedp->dbip->dbi_base2local) < 0)
 
 	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "%s: describe error\n", dp->d_namep);
     rt_db_free_internal(&intern);

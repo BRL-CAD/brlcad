@@ -1,7 +1,7 @@
 /*                      P L O T 3 - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -85,8 +85,8 @@
 #include "bu/getopt.h"
 #include "bu/process.h"
 #include "bu/exit.h"
-#include "fb.h"
-#include "bn/plot3.h"
+#include "dm.h"
+#include "bv/plot3.h"
 
 #define COMMA ','
 
@@ -320,7 +320,7 @@ static int sigs[] = {
 
 
 static FILE *pfin;		/* input file FIO block ptr */
-fb *fbp;			/* Current framebuffer */
+struct fb *fbp;			/* Current framebuffer */
 
 
 /*
@@ -361,8 +361,12 @@ Dequeue(struct band *bp, stroke **hp)
 static void
 Requeue(struct band *bp, stroke *vp)
 {
+    if (!bp || !vp)
+	return;
+
     CK_STROKE(vp);
     vp->next = NULL;
+
     if (bp->last)
 	bp->last->next = vp;
     else
@@ -586,6 +590,7 @@ get_args(int argc, char **argv)
 	    return 0;
 	filename = "-";
 	pfin = stdin;
+	setmode(fileno(stdin), O_BINARY);
     } else {
 	/* open file */
 	filename = argv[bu_optind];

@@ -1,7 +1,7 @@
 /*                    F U Z Z _ G E D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fuzz_ged.cpp
- *
- * Brief description
- *
- */
 
 #include "common.h"
 
@@ -31,18 +26,23 @@
 #include <cassert>
 
 #include "bu.h"
+#include "bv.h"
 #include "ged.h"
 
 const size_t MAX_ARGS = 5;
 //const std::string OUTPUT = "fuzz_ged.g";
 
 
-static size_t getArgc(uint8_t byte) {
+static size_t
+getArgc(uint8_t byte)
+{
     return (byte % MAX_ARGS) + 1;
 }
 
 
-static const std::string& getCommand(uint8_t byte) {
+static const std::string&
+getCommand(uint8_t byte)
+{
     static const std::vector<std::string> commands = {
 	"help",
 	"in",
@@ -54,7 +54,9 @@ static const std::string& getCommand(uint8_t byte) {
 }
 
 
-static const std::string& getArg(uint8_t byte) {
+static const std::string&
+getArg(uint8_t byte)
+{
     static const std::vector<std::string> args = {
 	"COMMAND",
 
@@ -178,7 +180,9 @@ static const std::string& getArg(uint8_t byte) {
 }
 
 
-static void printCommand(std::vector<const char *> & argv) {
+static void
+printCommand(std::vector<const char *> & argv)
+{
     std::cout << "Running";
     for (size_t j = 0; j < argv.size(); j++)
 	std::cout << " " << argv[j];
@@ -186,8 +190,9 @@ static void printCommand(std::vector<const char *> & argv) {
 }
 
 
-extern "C" int LLVMFuzzerTestOneInput(const int8_t *data, size_t size) {
-
+extern "C" int
+LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
+{
     if (size == 0)
 	return 0;
 
@@ -212,14 +217,15 @@ extern "C" int LLVMFuzzerTestOneInput(const int8_t *data, size_t size) {
 
     printCommand(argv);
 
-    struct ged g;
+    struct ged *g;
     struct rt_wdb *wdbp;
     struct db_i *dbip;
 
     dbip = db_create_inmem();
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
 
-    GED_INIT(&g, wdbp);
+    BU_GET(g, struct ged);
+    GED_INIT(g, wdbp);
 
     /* FIXME: To draw, we need to init this LIBRT global */
     BU_LIST_INIT(&RTG.rtg_vlfree);
@@ -227,8 +233,8 @@ extern "C" int LLVMFuzzerTestOneInput(const int8_t *data, size_t size) {
     /* Need a view for commands that expect a view */
     struct bview *gvp;
     BU_GET(gvp, struct bview);
-    ged_view_init(gvp);
-    g.ged_gvp = gvp;
+    bv_init(gvp, &g->ged_views);
+    g->ged_gvp = gvp;
 
     void *libged = bu_dlopen(NULL, BU_RTLD_LAZY);
     if (!libged) {
@@ -243,22 +249,21 @@ extern "C" int LLVMFuzzerTestOneInput(const int8_t *data, size_t size) {
 
     int ret = 0;
     if (func) {
-	ret = func(&g, argc, (char **)argv.data());
+	ret = func(g, (int)argc, (char **)argv.data());
     }
     bu_dlclose(libged);
 
-    ged_close(&g);
+    ged_close(g);
 
     return ret;
 }
 
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

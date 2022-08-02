@@ -1,7 +1,7 @@
 /*                     B U _ I N I T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2020 United States Government as represented by
+ * Copyright (c) 2019-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,8 +37,7 @@
 #include "bu/defines.h"
 #include "bu/app.h"
 #include "bu/parallel.h"
-
-#include <iostream>
+#include "bu/dylib.h"
 
 
 /* These ARE exported outside LIBBU */
@@ -75,6 +74,7 @@ libbu_init(void)
 static void
 libbu_clear(void)
 {
+    (void)bu_dlunload();
     bu_semaphore_free();
 }
 
@@ -93,12 +93,12 @@ struct libbu_initializer {
 static libbu_initializer LIBBU;
 
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

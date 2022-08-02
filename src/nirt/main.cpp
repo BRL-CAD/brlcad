@@ -1,7 +1,7 @@
 /*                      M A I N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -151,7 +151,7 @@ list_formats(struct nirt_io_data *io_data, char ***names)
     struct bu_vls fl = BU_VLS_INIT_ZERO;
 
     /* get a nirt directory listing */
-    bu_vls_printf(&nfp, "%s", bu_brlcad_root("share/nirt", 0));
+    bu_vls_printf(&nfp, "%s", bu_dir(NULL, 0, BU_DIR_DATA, "nirt", NULL));
     files = bu_file_list(bu_vls_addr(&nfp), suffix, &filearray);
     if (names)
 	*names = filearray;
@@ -233,7 +233,7 @@ enqueue_format(struct bu_vls *msg, size_t argc, const char **argv, void *set_var
     if (!file.is_open()) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&str, "%s/%s.nrt", bu_brlcad_root("share/nirt", 0), argv[0]);
+	bu_vls_printf(&str, "%s/%s.nrt", bu_dir(NULL, 0, BU_DIR_DATA, "nirt", NULL), argv[0]);
 	file.open(bu_vls_addr(&str));
 	bu_vls_free(&str);
 
@@ -273,17 +273,21 @@ decode_overlap(struct bu_vls *msg, size_t argc, const char **argv, void *set_var
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt overlap handle");
 
     if (BU_STR_EQUAL(argv[0], "resolve") || BU_STR_EQUAL(argv[0], "0")) {
-	if (oval)
+	if (oval) {
 	    (*oval) = OVLP_RESOLVE;
+	}
     } else if (BU_STR_EQUAL(argv[0], "rebuild_fastgen") || BU_STR_EQUAL(argv[0], "1")) {
-	if (oval)
+	if (oval) {
 	    (*oval) = OVLP_REBUILD_FASTGEN;
+	}
     } else if (BU_STR_EQUAL(argv[0], "rebuild_all") || BU_STR_EQUAL(argv[0], "2")) {
-	if (oval)
+	if (oval) {
 	    (*oval) = OVLP_REBUILD_ALL;
+	}
     } else if (BU_STR_EQUAL(argv[0], "retain") || BU_STR_EQUAL(argv[0], "3")) {
-	if (oval)
+	if (oval) {
 	    (*oval) = OVLP_RETAIN;
+	}
     } else {
 	bu_log("Illegal overlap_claims specification: '%s'\n", argv[0]);
 	return -1;
@@ -502,12 +506,14 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
 		if (ret < 0) {
 		    fprintf(io_data->err, "Error: failed to execute nirt script:\n\n%s\n\nwhen reading from statefile %s\n", bu_vls_addr(&fl), bu_vls_addr(state_file));
 		    bu_vls_free(&fl);
+		    fclose(sfPtr);
 		    return ret;
 		}
 		bu_vls_trunc(&fl, 0);
 	    }
 	    bu_vls_free(&fl);
 	}
+	fclose(sfPtr);
 	return 0;
     }
     if (BU_STR_EQUAL(bu_vls_addr(iline), "statefile") || !bu_path_match("statefile *", bu_vls_addr(iline), 0)) {
@@ -546,19 +552,9 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
 }
 
 
-/* gateway into the old struct nirt_state code, if we need to run it */
-extern "C" {int old_nirt_main(int argc, const char *argv[]);}
-
 int
 main(int argc, const char **argv)
 {
-    /* Make the old behavior accessible */
-    if (argc > 1 && BU_STR_EQUAL(argv[1], "--old")) {
-	argv[1] = argv[0];
-	argc--;	argv++;
-	return old_nirt_main(argc, argv);
-    }
-
     struct nirt_io_data io_data = IO_DATA_NULL;
     std::vector<std::string> init_scripts;
     struct bu_vls last_script_file = BU_VLS_INIT_ZERO;
@@ -598,11 +594,11 @@ main(int argc, const char **argv)
     double scan[16] = MAT_INIT_ZERO;
     size_t prec = std::numeric_limits<fastf_t>::max_digits10;
     char *buf = NULL;
-    int  status = 0x0;
+    int status = 0;
     mat_t m;
     mat_t q;
     /* These bu_opt_desc_opts settings approximate the old struct nirt_state help formatting */
-    struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 11, 67, NULL, NULL, NULL, 1, NULL, NULL };
+    struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 15, 65, NULL, NULL, NULL, 1, NULL, NULL };
     struct bu_opt_desc d[19] = {BU_OPT_DESC_NULL};
 
     BU_OPT(d[0],  "?", "",     "",       NULL,             &print_help,     "print help and exit");
@@ -613,7 +609,7 @@ main(int argc, const char **argv)
     BU_OPT(d[5],  "B", "",     "n",      &bu_opt_int,      &minpieces,      "set rt_bot_minpieces=n");
     BU_OPT(d[6],  "T", "",     "n",      &bu_opt_int,      &bot_mintie,     "set rt_bot_mintie=n (deprecated, use LIBRT_BOT_MINTIE instead)");
     BU_OPT(d[7],  "e", "",     "script", &enqueue_script,  &init_scripts,   "run script before interacting");
-    BU_OPT(d[8],  "f", "",     "format", &enqueue_format,  &sfd,            "load predefined format or file (see -L)");
+    BU_OPT(d[8],  "f", "",     "format", &enqueue_format,  &sfd,            "load predefined format (see -L) or file");
     BU_OPT(d[9],  "E", "",     "",       &dequeue_scripts, &init_scripts,   "ignore any -e or -f options specified earlier on the command line");
     BU_OPT(d[10], "L", "",     "",       NULL,             &show_formats,   "list output formatting options");
     BU_OPT(d[11], "s", "",     "",       NULL,             &silent_mode,    "run in silent (non-verbose) mode");
@@ -644,7 +640,7 @@ main(int argc, const char **argv)
 	bu_vls_printf(&launch_cmd, "%s", argv[argc-1]);
     }
 
-    /* Let bu_brlcad_root and friends know where we are */
+    /* Let libbu know where we are */
     bu_setprogname(argv[0]);
 
     argv++; argc--;
@@ -675,23 +671,31 @@ main(int argc, const char **argv)
     bu_vls_sprintf(io_data.outfile, "stdout");
     bu_vls_sprintf(io_data.errfile, "stderr");
 
-    /* If we've been asked to print help or don't know what to do, print help
-     * and exit */
-    if (print_help || argc < 2 || (silent_mode == SILENT_YES && verbose_mode)) {
-	char *help = bu_opt_describe(d, &dopts);
-	ret = (argc < 2) ? EXIT_FAILURE : EXIT_SUCCESS;
-	bu_vls_sprintf(&msg, "Usage: 'nirt [options] model.g objects...'\n\nNote: by default NIRT is using a new implementation which may have behavior changes.  During migration, old behavior can be enabled by adding the option \"--old\" as the first option to the nirt program.\n\nOptions:\n%s\n", help);
-	nirt_out(&io_data, bu_vls_addr(&msg));
-	if (help)
-	    bu_free(help, "help str");
-	goto done;
-    }
-
     if (show_formats) {
 	/* Print available header formats and exit */
 	nirt_msg(&io_data, "Formats available:\n");
 	list_formats(&io_data, NULL);
 	ret = EXIT_SUCCESS;
+	goto done;
+    }
+
+    /* If we've been asked to print help or don't know what to do, print help
+     * and exit */
+    if (print_help || argc < 2 || (silent_mode == SILENT_YES && verbose_mode)) {
+	char *help = bu_opt_describe(d, &dopts);
+	ret = (print_help) ? EXIT_SUCCESS : EXIT_FAILURE;
+        /* if nirt_debug exists, we assume we are being run from libged, so don't print
+         * output not relevant in embedded context
+         */
+        if (bu_vls_strlen(&nirt_debug) > 0) {
+            dopts.reject = "M"; // reject 'M' option when printing within libged
+            bu_vls_sprintf(&msg, "Usage: nirt [options]...\n\nOptions:\n%s\n", help);
+        } else {
+            bu_vls_sprintf(&msg, "Usage: nirt [options] model.g objects...\n\nNote: by default NIRT is using a new implementation which may have behavior changes.  During migration, old behavior can be enabled by adding the option \"--old\" as the first option to the nirt program.\n\nOptions:\n%s\n", help);
+        }
+	nirt_out(&io_data, bu_vls_addr(&msg));
+	if (help)
+	    bu_free(help, "help str");
 	goto done;
     }
 
@@ -721,25 +725,23 @@ main(int argc, const char **argv)
 	}
 	nirt_msg(&io_data, " (specify -L option for descriptive listing)\n");
 
-	{
-	    fmtcnt = list_formats(&io_data, &names);
-	    if (fmtcnt > 0) {
-		i = 0;
-		nirt_msg(&io_data, "Formats available:");
-		do {
-		    /* trim off any filename suffix */
-		    dot = strchr(names[i], '.');
-		    if (dot)
-			*dot = '\0';
+	fmtcnt = list_formats(&io_data, &names);
+	if (fmtcnt > 0) {
+	    i = 0;
+	    nirt_msg(&io_data, "Formats available:");
+	    do {
+		/* trim off any filename suffix */
+		dot = strchr(names[i], '.');
+		if (dot)
+		    *dot = '\0';
 
-		    nirt_msg(&io_data, " ");
-		    nirt_msg(&io_data, names[i]);
-		} while (++i < fmtcnt);
+		nirt_msg(&io_data, " ");
+		nirt_msg(&io_data, names[i]);
+	    } while (++i < fmtcnt);
 
-		nirt_msg(&io_data, " (specify via -f option)\n");
-	    }
-	    bu_argv_free(fmtcnt, names);
+	    nirt_msg(&io_data, " (specify via -f option)\n");
 	}
+	bu_argv_free(fmtcnt, names);
     }
 
     /* OK, from here on out we are actually going to be working with NIRT
@@ -837,8 +839,11 @@ main(int argc, const char **argv)
     }
 
     if (bu_vls_strlen(&nirt_debug) > 0) {
-	bu_vls_sprintf(&ncmd, "debug -V ANALYZE %s", bu_vls_cstr(&nirt_debug));
-	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
+	// when we're explicitly calling within libged, ignore
+        if (!BU_STR_EQUAL(bu_vls_cstr(&nirt_debug), "ged")) {
+	    bu_vls_sprintf(&ncmd, "debug -V ANALYZE %s", bu_vls_cstr(&nirt_debug));
+	    (void)nirt_exec(ns, bu_vls_addr(&ncmd));
+	}
     }
 
     /* Initialize the attribute list before we do the drawing, since
@@ -886,8 +891,9 @@ main(int argc, const char **argv)
     /* If we ended up with scripts to run before interacting, run them */
     if (init_scripts.size() > 0) {
 	for (i = 0; i < init_scripts.size(); i++) {
-	    if (nirt_exec(ns, init_scripts.at(i).c_str()) == 1)
+	    if (nirt_exec(ns, init_scripts.at(i).c_str()) == 1) {
 		goto done;
+	    }
 	}
 	init_scripts.clear();
     }
@@ -1019,12 +1025,12 @@ done:
 }
 
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

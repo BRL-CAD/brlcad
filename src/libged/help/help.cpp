@@ -1,7 +1,7 @@
 /*                         H E L P . C
  * BRL-CAD
  *
- * Copyright (c) 2017-2020 United States Government as represented by
+ * Copyright (c) 2017-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,8 +27,6 @@
 #include "bu/file.h"
 #include "ged.h"
 
-
-HIDDEN struct bu_list *help_cmd(void);
 
 /**
  * get a list of all the files under a given 'dir' filepath,
@@ -101,16 +99,16 @@ help_files(const char *dir, char ***files)
 HIDDEN size_t
 help_tokenize(size_t count, const char **files)
 {
-    size_t bytes;
-    size_t zeros;
-    struct bu_mapped_file *data;
+    size_t bytes = 0;
+    size_t zeros = 0;
+    struct bu_mapped_file *data = NULL;
 
 #define USE_ARRAY 0
 #define MAX_WORDS 820000
 #if USE_ARRAY
     struct bu_vls words[MAX_WORDS] = {BU_VLS_INIT_ZERO};
 #else
-    struct bu_hash_tbl *hash;
+    struct bu_hash_tbl *hash = NULL;
 #endif
     size_t cnt[MAX_WORDS] = {0};
     size_t words = 0;
@@ -129,7 +127,6 @@ help_tokenize(size_t count, const char **files)
 	}
 #endif
 
-	bytes = zeros = 0;
 	data = bu_open_mapped_file(files[count], NULL);
 	if (!data)
 	    continue;
@@ -193,14 +190,14 @@ help_tokenize(size_t count, const char **files)
 		    int ret = bu_hash_set(hash, wordbytes, wordbyteslen, &cnt[words]);
 /*		    bu_log("adding %s\n", (char *)wordbytes); */
 		    if (ret != 1)
- 			bu_bomb("totally expected a new entry\n");
+			bu_bomb("totally expected a new entry\n");
 		    cnt[words]++;
 		    words++;
 
 		}
 #endif
 		bu_vls_trunc(&word, 0);
-  	    }
+	    }
 	}
 
 	/* bu_log("FILE: %s (%zu bytes, %zu words)\n", files[count], data->buflen, words); */
@@ -237,7 +234,7 @@ help_tokenize(size_t count, const char **files)
 
 
 int
-ged_help(struct ged *gedp, int argc, const char *argv[])
+ged_help_core(struct ged *gedp, int argc, const char *argv[])
 {
     char *dir = NULL;
     char **entries = NULL;
@@ -251,7 +248,7 @@ ged_help(struct ged *gedp, int argc, const char *argv[])
 	return -1;
 
     /* get our doc dir */
-    dir = bu_strdup(bu_brlcad_dir("doc", 0));
+    dir = bu_strdup(bu_dir(NULL, 0, BU_DIR_DOC, NULL));
 
     /* get recursive list of documentation files */
     count = help_files(dir, &entries);
@@ -261,7 +258,7 @@ ged_help(struct ged *gedp, int argc, const char *argv[])
     words = help_tokenize(count, (const char **)entries);
 
     if (words == 0) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_free(dir, "free doc dir");
@@ -270,83 +267,34 @@ ged_help(struct ged *gedp, int argc, const char *argv[])
     return 0;
 }
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+extern "C" {
+struct ged_cmd_impl help_cmd_impl     = { "help",    ged_help_core, GED_CMD_DEFAULT };
+const struct ged_cmd help_cmd = { &help_cmd_impl };
 
-HIDDEN int
-help_load(struct ged *gedp)
+struct ged_cmd_impl apropos_cmd_impl  = { "apropos", ged_help_core, GED_CMD_DEFAULT };
+const struct ged_cmd apropos_cmd = { &apropos_cmd_impl };
+
+struct ged_cmd_impl info_cmd_impl     = { "info",    ged_help_core, GED_CMD_DEFAULT };
+const struct ged_cmd info_cmd = { &info_cmd_impl };
+
+struct ged_cmd_impl man_cmd_impl      = { "man",     ged_help_core, GED_CMD_DEFAULT };
+const struct ged_cmd man_cmd = { &man_cmd_impl };
+
+struct ged_cmd_impl question_cmd_impl = { "?",       ged_help_core, GED_CMD_DEFAULT };
+const struct ged_cmd question_cmd = { &question_cmd_impl };
+
+const struct ged_cmd *help_cmds[] = { &help_cmd,  &apropos_cmd,  &info_cmd,  &man_cmd,  &question_cmd, NULL };
+
+static const struct ged_plugin pinfo = { GED_API,  help_cmds, 5 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {
-    int ret = 0;
-    struct bu_list *hp = help_cmd();
-    struct ged_cmd *cmd;
-
-    for (BU_LIST_FOR(cmd, ged_cmd, hp)) {
-	ret += gedp->add(gedp, cmd);
-    }
-
-    BU_PUT(hp, struct bu_list);
-
-    return ret;
+    return &pinfo;
 }
-
-
-HIDDEN void
-help_unload(struct ged *gedp)
-{
-    gedp->del(gedp, "help");
-    gedp->del(gedp, "apropos");
-    gedp->del(gedp, "info");
-    gedp->del(gedp, "man");
-    gedp->del(gedp, "?");
 }
-
-
-HIDDEN struct bu_list *
-help_cmd(void)
-{
-    struct bu_list *hp;
-
-    static struct ged_cmd cmd[6] = {
-	{
-	    BU_LIST_INIT_ZERO, "help",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, "apropos",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, "info",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, "man",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, "?",
-	    "the BRL-CAD help system",
-	    "help",
-	    &help_load, &help_unload, &ged_help
-	}, {
-	    BU_LIST_INIT_ZERO, NULL, {0}, NULL, NULL, NULL, NULL
-	}
-    };
-
-    BU_GET(hp, struct bu_list);
-    BU_LIST_INIT(hp);
-
-    BU_LIST_PUSH(hp, &(cmd[0].l));
-    BU_LIST_PUSH(hp, &(cmd[1].l));
-    BU_LIST_PUSH(hp, &(cmd[2].l));
-    BU_LIST_PUSH(hp, &(cmd[3].l));
-    BU_LIST_PUSH(hp, &(cmd[4].l));
-
-    return hp;
-}
-
+#endif
 
 #ifdef STANDALONE
 int main(int ac, char *av[])
@@ -356,20 +304,18 @@ int main(int ac, char *av[])
     bu_setprogname(av[0]);
 
     GED_INIT(&ged, NULL);
-    help_load(&ged);
-    ged_help(&ged, ac, (const char **)av);
-    help_unload(&ged);
+    ged_exec(&ged, ac, (const char **)av);
 
     return 0;
 }
 #endif
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

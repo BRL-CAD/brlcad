@@ -1,7 +1,7 @@
 /*                  O B J _ G R A M M A R . Y Y
  * BRL-CAD
  *
- * Copyright (c) 2010-2020 United States Government as represented by
+ * Copyright (c) 2010-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 /*                  O B J _ G R A M M A R . Y Y
  * BRL-CAD
  *
- * Copyright (c) 2010-2020 United States Government as represented by
+ * Copyright (c) 2010-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -247,7 +247,7 @@ statement ::= d_interp.
 statement ::= lod.
 
 coord(A) ::= FLOAT(B). { A.real = B.real; }
-coord(A) ::= INTEGER(B). { A.real = B.integer; }
+coord(A) ::= INTEGER(B). { A.real = (double)B.integer; }
 
 vertex ::= VERTEX coord(A) coord(B) coord(C) opt_color.
 {

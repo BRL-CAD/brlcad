@@ -39,7 +39,7 @@
     </para>
     <example><title>Return an expanded command string to list specified objects.</title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>db_glob "l r23\[0-9\]"</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>db_glob "l r23\[0-9\]"</userinput></para>
       <para>Returns a command string to list objects r230 through r239.</para>
     </example>
   </refsection>

@@ -1,7 +1,7 @@
 /*                     N M G _ I N D E X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,8 +71,8 @@ nmg_index_of_struct(register const uint32_t *p)
 	    return ((struct loopuse *)p)->index;
 	case NMG_LOOP_MAGIC:
 	    return ((struct loop *)p)->index;
-	case NMG_LOOP_G_MAGIC:
-	    return ((struct loop_g *)p)->index;
+	case NMG_LOOP_A_MAGIC:
+	    return ((struct loop_a *)p)->index;
 	case NMG_EDGEUSE_MAGIC:
 	    return ((struct edgeuse *)p)->index;
 	case NMG_EDGEUSE2_MAGIC:
@@ -214,9 +214,9 @@ nmg_m_set_high_bit(struct model *m)
 		    l = lu->l_p;
 		    NMG_CK_LOOP(l);
 		    NMG_MARK_INDEX(l);
-		    if (l->lg_p) {
-			NMG_CK_LOOP_G(l->lg_p);
-			NMG_MARK_INDEX(l->lg_p);
+		    if (l->la_p) {
+			NMG_CK_LOOP_A(l->la_p);
+			NMG_MARK_INDEX(l->la_p);
 		    }
 		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 			/* Loop of Lone vertex */
@@ -243,9 +243,9 @@ nmg_m_set_high_bit(struct model *m)
 		l = lu->l_p;
 		NMG_CK_LOOP(l);
 		NMG_MARK_INDEX(l);
-		if (l->lg_p) {
-		    NMG_CK_LOOP_G(l->lg_p);
-		    NMG_MARK_INDEX(l->lg_p);
+		if (l->la_p) {
+		    NMG_CK_LOOP_A(l->la_p);
+		    NMG_MARK_INDEX(l->la_p);
 		}
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 		    /* Wire loop of Lone vertex */
@@ -367,7 +367,7 @@ nmg_m_reindex(struct model *m, register long int newindex)
 		    l = lu->l_p;
 		    NMG_CK_LOOP(l);
 		    NMG_ASSIGN_NEW_INDEX(l);
-		    if (l->lg_p) NMG_ASSIGN_NEW_INDEX(l->lg_p);
+		    if (l->la_p) NMG_ASSIGN_NEW_INDEX(l->la_p);
 		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 			/* Loop of Lone vertex */
 			vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
@@ -400,7 +400,7 @@ nmg_m_reindex(struct model *m, register long int newindex)
 		l = lu->l_p;
 		NMG_CK_LOOP(l);
 		NMG_ASSIGN_NEW_INDEX(l);
-		if (l->lg_p) NMG_ASSIGN_NEW_INDEX(l->lg_p);
+		if (l->la_p) NMG_ASSIGN_NEW_INDEX(l->la_p);
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 		    /* Wire loop of Lone vertex */
 		    vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
@@ -477,7 +477,7 @@ nmg_vls_struct_counts(struct bu_vls *str, const struct nmg_struct_counts *ctr)
     bu_vls_printf(str, "\t%6ld faceuse\n", ctr->faceuse);
     bu_vls_printf(str, "\t%6ld loopuse\n", ctr->loopuse);
     bu_vls_printf(str, "\t%6ld loop\n", ctr->loop);
-    bu_vls_printf(str, "\t%6ld loop_g\n", ctr->loop_g);
+    bu_vls_printf(str, "\t%6ld loop_a\n", ctr->loop_a);
     bu_vls_printf(str, "\t%6ld edgeuse\n", ctr->edgeuse);
     bu_vls_printf(str, "\t%6ld edge\n", ctr->edge);
     bu_vls_printf(str, "\t%6ld edge_g_lseg\n", ctr->edge_g_lseg);
@@ -568,7 +568,7 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
     NMG_CK_MODEL(m);
     memset((char *)ctr, 0, sizeof(*ctr));
 
-    ptrs = (uint32_t **)nmg_calloc(m->maxindex+1, sizeof(uint32_t *), "nmg_m_count ptrs[]");
+    ptrs = (uint32_t **)bu_calloc(m->maxindex+1, sizeof(uint32_t *), "nmg_m_count ptrs[]");
 
     NMG_UNIQ_INDEX(m, model);
     ctr->max_structs = m->maxindex;
@@ -608,9 +608,9 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
 		    l = lu->l_p;
 		    NMG_CK_LOOP(l);
 		    NMG_UNIQ_INDEX(l, loop);
-		    if (l->lg_p) {
-			NMG_CK_LOOP_G(l->lg_p);
-			NMG_UNIQ_INDEX(l->lg_p, loop_g);
+		    if (l->la_p) {
+			NMG_CK_LOOP_A(l->la_p);
+			NMG_UNIQ_INDEX(l->la_p, loop_a);
 		    }
 		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 			/* Loop of Lone vertex */
@@ -647,9 +647,9 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
 		l = lu->l_p;
 		NMG_CK_LOOP(l);
 		NMG_UNIQ_INDEX(l, loop);
-		if (l->lg_p) {
-		    NMG_CK_LOOP_G(l->lg_p);
-		    NMG_UNIQ_INDEX(l->lg_p, loop_g);
+		if (l->la_p) {
+		    NMG_CK_LOOP_A(l->la_p);
+		    NMG_UNIQ_INDEX(l->la_p, loop_a);
 		}
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 		    ctr->wire_lone_verts++;
@@ -724,7 +724,7 @@ nmg_pr_m_struct_counts(const struct model *m, const char *str)
     NMG_CK_MODEL(m);
 
     tab = nmg_m_struct_count(&cnts, m);
-    nmg_free((void *)tab, "nmg_m_struct_count");
+    bu_free((void *)tab, "nmg_m_struct_count");
     nmg_pr_struct_counts(&cnts, str);
 }
 
@@ -774,11 +774,11 @@ nmg_merge_models(struct model *m1, struct model *m2)
      * need to be regenerated.
      */
     if (m1->manifolds) {
-	nmg_free((char *)m1->manifolds, "free manifolds table");
+	bu_free((char *)m1->manifolds, "free manifolds table");
 	m1->manifolds = (char *)NULL;
     }
     if (m2->manifolds) {
-	nmg_free((char *)m2->manifolds, "free manifolds table");
+	bu_free((char *)m2->manifolds, "free manifolds table");
 	m2->manifolds = (char *)NULL;
     }
 
@@ -849,7 +849,7 @@ nmg_find_max_index(const struct model *m)
 		    l = lu->l_p;
 		    NMG_CK_LOOP(l);
 		    CHECK_INDEX(l);
-		    if (l->lg_p) CHECK_INDEX(l->lg_p);
+		    if (l->la_p) CHECK_INDEX(l->la_p);
 		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 			/* Loop of Lone vertex */
 			vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
@@ -882,7 +882,7 @@ nmg_find_max_index(const struct model *m)
 		l = lu->l_p;
 		NMG_CK_LOOP(l);
 		CHECK_INDEX(l);
-		if (l->lg_p) CHECK_INDEX(l->lg_p);
+		if (l->la_p) CHECK_INDEX(l->la_p);
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 		    /* Wire loop of Lone vertex */
 		    vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);

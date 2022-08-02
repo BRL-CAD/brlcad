@@ -1,7 +1,7 @@
 /*                            O P . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,6 +59,12 @@ typedef enum {
     DB_OP_INTERSECT = '+'
 } db_op_t;
 
+/**
+ * Give a single char, translate it to a db_op_t.  If it does not
+ * correspond to a known operator, DB_OP_NULL is returned
+ */
+RT_EXPORT db_op_t
+db_char2op(const char c);
 
 /**
  * Get the next CSG boolean operator found in a given string.

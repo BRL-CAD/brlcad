@@ -1,7 +1,7 @@
 /*                        G L I N T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1995-2020 United States Government as represented by
+ * Copyright (c) 1995-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #include "bu/redblack.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "bn/str.h"
 
 
@@ -470,7 +470,8 @@ static int rpt_hit(struct application *ap, struct partition *ph, struct seg *UNU
 		if ((what_to_report & G_LINT_A_CONT) && last_air && (pp->pt_regionp->reg_aircode != last_air)) {
 		    VSUB2(delta, pp->pt_inhit->hit_point,
 			  pp->pt_back->pt_outhit->hit_point);
-		    if ((mag_del = MAGNITUDE(delta)) < tolerance) {
+		    mag_del = MAGNITUDE(delta);
+		    if (mag_del < tolerance) {
 			if (do_plot3) {
 			    color = get_color(cp->glc_color, G_LINT_A_CONT);
 			    pl_color(cp->glc_fp, V3ARGS(color));

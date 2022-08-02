@@ -1,7 +1,7 @@
 /*                           R B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -202,8 +202,7 @@ rb_free_node(struct bu_rb_node *node)
     bu_free((void *) node->rbn_left, "red-black left children");
     bu_free((void *) node->rbn_right, "red-black right children");
     bu_free((void *) node->rbn_color, "red-black colors");
-    if (node->rbn_size)
-	bu_free((void *) node->rbn_size, "red-black size");
+    bu_free((void *) node->rbn_size, "red-black size");
     bu_free((void *) node->rbn_package, "red-black packages");
     bu_free((void *) node, "red-black node");
 
@@ -272,8 +271,7 @@ bu_rb_free(struct bu_rb_tree *tree, void (*free_data)(void *))
     bu_free((void *) node->rbn_right, "red-black right children");
     bu_free((void *) node->rbn_parent, "red-black parents");
     bu_free((void *) node->rbn_color, "red-black colors");
-    if (node->rbn_size)
-	bu_free((void *) node->rbn_size, "red-black size");
+    bu_free((void *) node->rbn_size, "red-black size");
     bu_free((void *) node->rbn_package, "red-black packages");
     bu_free((void *) node, "red-black empty node");
 

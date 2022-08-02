@@ -1,7 +1,7 @@
 #                   M A N . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2020 United States Government as represented by
+# Copyright (c) 2004-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ proc man {{cmdname {}}} {
 	    if {$::tcl_platform(platform) == "windows"} {
 		set exe_ext ".exe"
 	    }
-	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] brlman$exe_ext]]]
+	    set cmd [list [file join [bu_dir bin] brlman$exe_ext]]
 	    exec $cmd $cmdname
 	}
     }

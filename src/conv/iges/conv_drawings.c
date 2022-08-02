@@ -1,7 +1,7 @@
 /*                 C O N V _ D R A W I N G S . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -74,19 +74,20 @@ Getstrg(char **str, char *id)
     num[++i] = '\0';
     length = atoi(num);
 
-    if (length < 1)
+    if (length < 1) {
 	(*str) = NULL;
-    else
+    } else {
 	(*str) = (char *)bu_malloc(sizeof(char) * length + 1, "Getstrg: str");
-    for (i = 0; i < length; i++) {
-	if (counter > lencard)
-	    Readrec(++currec);
-	(*str)[i] = card[counter];
-	if (*id != '\0')
-	    bu_log("%c", card[counter]);
-	counter++;
+	for (i = 0; i < length; i++) {
+	    if (counter > lencard)
+		Readrec(++currec);
+	    (*str)[i] = card[counter];
+	    if (*id != '\0')
+		bu_log("%c", card[counter]);
+	    counter++;
+	}
+	(*str)[length] = '\0';
     }
-    (*str)[length] = '\0';
     if (*id != '\0')
 	bu_log("%c", '\n');
 
@@ -149,6 +150,9 @@ Note_to_vlist(int entno, struct bu_list *vhead)
 	Readcnv(&tmp[Y], "");
 	Readcnv(&tmp[Z], "");
 	Getstrg(&str, "");
+	if (str_len > 0 && !str) {
+	    bu_exit(BRLCAD_ERROR, "str_len is %d, but no str read!  conv_drawings.c: %d\n", str_len, __LINE__);
+	}
 
 	/* apply any transform */
 	MAT4X3PNT(loc, *dir[entno]->rot, tmp);
@@ -182,12 +186,12 @@ Note_to_vlist(int entno, struct bu_list *vhead)
 		tmp_y -= ydel;
 		one_char[0] = str[j];
 
-		bn_vlist_2string(vhead, &free_hd, one_char ,
+		bv_vlist_2string(vhead, &free_hd, one_char ,
 				 tmp_x, tmp_y, local_scale,
 				 (double)(rot_ang*RAD2DEG));
 	    }
 	} else
-	    bn_vlist_2string(vhead, &free_hd, str ,
+	    bv_vlist_2string(vhead, &free_hd, str ,
 			     (double)loc[X], (double)loc[Y], local_scale,
 			     (double)(rot_ang*RAD2DEG));
 
@@ -227,11 +231,11 @@ Curve_to_vlist(struct bu_list *vhead, struct ptlist *ptlist)
 
     ptr = ptlist;
 
-    RT_ADD_VLIST(vhead, ptr->pt, BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, ptr->pt, BV_VLIST_LINE_MOVE);
 
     ptr = ptr->next;
     while (ptr != NULL) {
-	RT_ADD_VLIST(vhead, ptr->pt, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, ptr->pt, BV_VLIST_LINE_DRAW);
 	ptr = ptr->next;
     }
 }
@@ -272,15 +276,15 @@ Leader_to_vlist(int entno, struct bu_list *vhead)
 	VJOIN1(v1, v1, a, v3);
     }
     MAT4X3PNT(tmp2, *dir[entno]->rot, v1);
-    RT_ADD_VLIST(vhead, tmp2, BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
     MAT4X3PNT(tmp, *dir[entno]->rot, v2);
-    RT_ADD_VLIST(vhead, tmp, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp, BV_VLIST_LINE_DRAW);
 
     for (i = 1; i < npts; i++) {
 	Readcnv(&v3[0], "");
 	Readcnv(&v3[1], "");
 	MAT4X3PNT(tmp, *dir[entno]->rot, v3);
-	RT_ADD_VLIST(vhead, tmp, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp, BV_VLIST_LINE_DRAW);
     }
     switch (dir[entno]->form) {
 	default:
@@ -295,19 +299,19 @@ Leader_to_vlist(int entno, struct bu_list *vhead)
 	    VUNITIZE(v3);
 
 	    /* Draw one side of arrow head */
-	    RT_ADD_VLIST(vhead, tmp2, BN_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
 	    v2[0] = v1[0] + a*v3[0] - b*v3[1];
 	    v2[1] = v1[1] + a*v3[1] + b*v3[0];
 	    v2[2] = v1[2];
 	    MAT4X3PNT(tmp, *dir[entno]->rot, v2);
-	    RT_ADD_VLIST(vhead, tmp, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp, BV_VLIST_LINE_DRAW);
 
 	    /* Now draw other side of arrow head */
-	    RT_ADD_VLIST(vhead, tmp2, BN_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
 	    v2[0] = v1[0] + a*v3[0] + b*v3[1];
 	    v2[1] = v1[1] + a*v3[1] - b*v3[0];
 	    MAT4X3PNT(tmp, *dir[entno]->rot, v2);
-	    RT_ADD_VLIST(vhead, tmp, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp, BV_VLIST_LINE_DRAW);
 	    break;
 	case 4:
 	    break;
@@ -318,7 +322,7 @@ Leader_to_vlist(int entno, struct bu_list *vhead)
 	    delta = M_PI/10.0;
 	    cosdel = cos(delta);
 	    sindel = sin(delta);
-	    RT_ADD_VLIST(vhead, tmp2, BN_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
 	    VMOVE(tmp, v1);
 	    for (i = 0; i < 20; i++) {
 		rx = tmp[X] - center[X];
@@ -326,7 +330,7 @@ Leader_to_vlist(int entno, struct bu_list *vhead)
 		tmp[X] = center[X] + rx*cosdel - ry*sindel;
 		tmp[Y] = center[Y] + rx*sindel + ry*cosdel;
 		MAT4X3PNT(tmp2, *dir[entno]->rot, tmp);
-		RT_ADD_VLIST(vhead, tmp2, BN_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp2, BV_VLIST_LINE_DRAW);
 	    }
 	}
 	    break;
@@ -342,25 +346,25 @@ Leader_to_vlist(int entno, struct bu_list *vhead)
 	    /* Create unit vector perp. to leader */
 	    v2[0] = v3[1];
 	    v2[1] = (-v3[0]);
-	    RT_ADD_VLIST(vhead, tmp2, BN_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp2, BV_VLIST_LINE_MOVE);
 	    tmp[0] = v1[0] + v2[0]*b/2.0;
 	    tmp[1] = v1[1] + v2[1]*b/2.0;
 	    tmp[2] = v1[2];
 	    MAT4X3PNT(tmp3, *dir[entno]->rot, tmp);
-	    RT_ADD_VLIST(vhead, tmp3, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
 	    tmp[0] += v3[0]*a;
 	    tmp[1] += v3[1]*a;
 	    MAT4X3PNT(tmp3, *dir[entno]->rot, tmp);
-	    RT_ADD_VLIST(vhead, tmp3, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
 	    tmp[0] -= v2[0]*b;
 	    tmp[1] -= v2[1]*b;
 	    MAT4X3PNT(tmp3, *dir[entno]->rot, tmp);
-	    RT_ADD_VLIST(vhead, tmp3, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
 	    tmp[0] -= v3[0]*a;
 	    tmp[1] -= v3[1]*a;
 	    MAT4X3PNT(tmp3, *dir[entno]->rot, tmp);
-	    RT_ADD_VLIST(vhead, tmp3, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, tmp2, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp2, BV_VLIST_LINE_DRAW);
 	    break;
 	case 9:
 	case 10:
@@ -378,11 +382,11 @@ Leader_to_vlist(int entno, struct bu_list *vhead)
 	    tmp[1] = v1[1] + (v2[1]*b + v3[1]*a)/2.0;
 	    tmp[2] = v1[2];
 	    MAT4X3PNT(tmp3, *dir[entno]->rot, tmp);
-	    RT_ADD_VLIST(vhead, tmp3, BN_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp3, BV_VLIST_LINE_MOVE);
 	    tmp[0] -= v3[0]*a + v2[0]*b;
 	    tmp[1] -= v3[1]*a + v2[1]*b;
 	    MAT4X3PNT(tmp3, *dir[entno]->rot, tmp);
-	    RT_ADD_VLIST(vhead, tmp3, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(&RTG.rtg_vlfree, vhead, tmp3, BV_VLIST_LINE_DRAW);
 	    break;
     }
 }
@@ -392,7 +396,7 @@ void
 Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf_t y, fastf_t local_scale, fastf_t ang, mat_t *xform)
 {
     struct bu_list vhead;
-    struct bn_vlist *vp;
+    struct bv_vlist *vp;
     struct ptlist *pts, *ptr;
     struct nmgregion *r;
     struct shell *s;
@@ -462,7 +466,7 @@ Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf
 	}
 
 	/* rotate, scale, clip, etc., etc., etc... */
-	for (BU_LIST_FOR(vp, bn_vlist, &vhead)) {
+	for (BU_LIST_FOR(vp, bv_vlist, &vhead)) {
 	    size_t nused = vp->nused;
 
 	    for (i = 0; i < nused; i++) {
@@ -498,7 +502,7 @@ Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf
 
 	/* Convert to BRL-CAD wire edges */
 	nmg_vlist_to_wire_edges(s, &vhead);
-	RT_FREE_VLIST(&vhead);
+	BV_FREE_VLIST(&RTG.rtg_vlfree, &vhead);
     }
 }
 

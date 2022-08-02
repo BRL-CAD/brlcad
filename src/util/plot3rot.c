@@ -1,7 +1,7 @@
 /*                      P L O T 3 R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,8 +38,9 @@
 #include "bu/file.h"
 #include "bu/cv.h"
 #include "vmath.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "bn.h"
+#include "bg/plane.h"
 
 #define UPPER_CASE(c)	((c)-32)
 #define COPY(n) {size_t ret; ret = fread(cbuf, 1, n, fp); if (ret < n) perror("fread"); ret = fwrite(cbuf, 1, n, stdout); if (ret < n) perror("fwrite");}
@@ -132,7 +133,7 @@ model_rpp(const fastf_t *min, const fastf_t *max)
 	    /* re-bound the space() rpp with a tighter one
 	     * after rotating & scaling it.
 	     */
-	    bn_rotate_bbox(space_min, space_max, rmat, min, max);
+	    bg_rotate_bbox(space_min, space_max, rmat, min, max);
 	}
 	space_set = 1;
     } else {
@@ -325,6 +326,9 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     if (!get_args(argc, argv)) {
 	fputs("Usage: plot3rot [options] [file1 ... fileN] > file.plot3\n", stderr);
 
@@ -342,7 +346,7 @@ main(int argc, char **argv)
 		fclose(fp);
 	    if (BU_STR_EQUAL(argv[bu_optind], "-"))
 		fp = stdin;
-	    else if ((fp = fopen(argv[bu_optind], "r")) == NULL) {
+	    else if ((fp = fopen(argv[bu_optind], "rb")) == NULL) {
 		bu_log("plot3rot: can't open \"%s\"\n", argv[bu_optind]);
 		continue;
 	    }
@@ -539,10 +543,16 @@ dofile(FILE *fp)
 void
 copy_string(FILE *fp)
 {
-    int c;
+    int c = 1;
 
-    while ((c = putchar(getc(fp))) != '\n' && c != EOF)
-	;
+    while (c != '\n' && c != EOF) {
+	int tc = getc(fp);
+	if (tc < 0) {
+	    bu_log("getc error: plot3rot.c:%d\n", __LINE__);
+	    break;
+	}
+	c = putchar(tc);
+    }
 }
 
 

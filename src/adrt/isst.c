@@ -1,7 +1,7 @@
 /*                           I S S T  . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2020 United States Government as represented by
+ * Copyright (c) 2005-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@
 #include <string.h>
 #endif
 
-static dm *dmp;
+static struct dm *dmp;
 
 struct isst_s {
     struct tie_s *tie;
@@ -147,7 +147,7 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
     }
 
     argv = (char **)malloc(sizeof(char *) * (strlen(Tcl_GetString(objv[3])) + 1));	/* allocate way too much. */
-    argc = bu_argv_from_string(argv, strlen(Tcl_GetString(objv[3])), Tcl_GetString(objv[3]));
+    argc = (int)bu_argv_from_string(argv, strlen(Tcl_GetString(objv[3])), Tcl_GetString(objv[3]));
 
     load_g(isst->tie, Tcl_GetString(objv[2]), argc, (const char **)argv, &(isst->meshes));
     free(argv);
@@ -547,14 +547,14 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
 {
     char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
 
-    dmp = dm_open(interp, dm_default_type(), sizeof(av)/sizeof(void*)-1, (const char **)av);
+    dmp = dm_open(NULL, (void *)interp, dm_default_type(), sizeof(av)/sizeof(void*)-1, (const char **)av);
 
     if (dmp == DM_NULL) {
 	printf("dm failed?\n");
 	return TCL_ERROR;
     }
 
-    dm_set_bg(dmp, 0, 0, 0x30);
+    dm_set_bg(dmp, 0, 0, 0x30, 0, 0, 0x30);
 
     return TCL_OK;
 
@@ -653,8 +653,8 @@ const char *fullname;
     argv++; argc--;
     tclcad_set_argv(interp, argc, argv);
 
-    isst_tcl = bu_brlcad_root("share/tclscripts/isst/isst.tcl", 1);
     Tcl_DStringInit(&temp);
+    isst_tcl = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "isst", "isst.tcl", NULL);
     fullname = Tcl_TranslateFileName(interp, isst_tcl, &temp);
     status = Tcl_EvalFile(interp, fullname);
     Tcl_DStringFree(&temp);

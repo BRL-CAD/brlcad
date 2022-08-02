@@ -1,7 +1,7 @@
 /*              M E S H C O N V E R S I O N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2016-2020 United States Government as represented by
+ * Copyright (c) 2016-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -402,7 +402,7 @@ int
 PolygonalMesh::addVertexRecord(double coordinates[3])
 {
     int last_vertex_id = vertexlist[vertexlist.size() - 1].vertex_id;
-    DCEL_Vertex new_vertex;
+    DCEL_Vertex new_vertex = DCEL_VERTEX_NULL;
     new_vertex.vertex_id = last_vertex_id + 1;
 
     new_vertex.coordinates[0] = coordinates[0];
@@ -877,12 +877,12 @@ PolygonalMesh::getEdgeWithIndex(int index)
     return NULL;
 }
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

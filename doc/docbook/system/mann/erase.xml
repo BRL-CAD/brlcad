@@ -37,7 +37,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>erase region1 shapea</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>erase region1 shapea</userinput></term>
 	   <listitem>
 	     <para>Deletes <emphasis>region1</emphasis> and <emphasis>shapea</emphasis> from the MGED display.
 	     </para>

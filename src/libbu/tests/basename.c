@@ -1,7 +1,7 @@
 /*                     B A S E N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,9 +42,8 @@ get_system_output(const char *input)
     char *in = input ? bu_strdup(input) : NULL;
     char *out = bu_strdup(basename(in));
 
-    if (in) {
-	bu_free(in, "input copy");
-    }
+    bu_free(in, "input copy");
+
     return out;
 }
 #endif
@@ -132,7 +131,10 @@ compare_bu_to_system_basename(const char *UNUSED(input))
 int
 main(int argc, char *argv[])
 {
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     /* If we don't have any args at all, test NULL */
     if (argc == 1) {

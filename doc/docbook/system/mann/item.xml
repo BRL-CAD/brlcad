@@ -17,10 +17,19 @@
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>item</command>
-	<arg choice="req" rep="norepeat"><replaceable>region_name ident_number</replaceable></arg>
-	<arg choice="opt" rep="norepeat"><replaceable>air_code</replaceable></arg>
-	<arg choice="opt" rep="norepeat"><replaceable>material_code</replaceable></arg>
-	  <arg choice="opt" rep="norepeat"><replaceable>LOS</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>region_name</replaceable></arg>
+    <arg choice="req" rep="norepeat">
+      <replaceable>regionID</replaceable>
+      <arg choice="opt" rep="norepeat">
+        <replaceable>airID</replaceable>
+        <arg choice="opt" rep="norepeat">
+          <replaceable>materialID</replaceable>
+          <arg choice="opt" rep="norepeat">
+            <replaceable>los%</replaceable>
+          </arg>
+        </arg>
+      </arg>
+    </arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -39,7 +48,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>item region_1 1137 0 8 100</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>item region_1 1137 0 8 100</userinput></term>
 	   <listitem>
 	     <para>Sets the <emphasis>ident number</emphasis> to 1137, <emphasis>air code</emphasis> to 0, 				<emphasis>material code</emphasis> to 8, and <emphasis>LOS</emphasis> to 100 for
 			<emphasis>region_1</emphasis>.

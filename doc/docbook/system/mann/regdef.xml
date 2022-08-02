@@ -17,13 +17,13 @@
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>regdef</command>
-    <arg choice="req" rep="norepeat"><replaceable>item</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>regionID</replaceable></arg>
     <arg choice="opt" rep="norepeat">
-        <replaceable>air </replaceable>
+        <replaceable>airID</replaceable>
         <arg choice="opt" rep="norepeat">
-            <replaceable>los</replaceable>
+            <replaceable>los%</replaceable>
             <arg choice="opt" rep="norepeat">
-                <replaceable>material_code</replaceable>
+                <replaceable>materialID</replaceable>
             </arg>
         </arg>
     </arg>
@@ -44,7 +44,7 @@
   <example><title>Set region default attributes.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>regdef 1003 0 100 8</userinput>
+      <prompt>mged&gt; </prompt><userinput>regdef 1003 0 100 8</userinput>
     </para>
     <para>Sets the region default attributes to an ident of 1003, an air code of 0, an los of
 	100%, and a material code of 8.

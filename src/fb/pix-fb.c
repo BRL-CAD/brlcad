@@ -1,7 +1,7 @@
 /*                        P I X - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@
 #include "bu/log.h"
 #include "bu/snooze.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 
 #include "pkg.h"
 
@@ -160,12 +160,13 @@ get_args(int argc, char **argv)
 	if (isatty(fileno(stdin)))
 	    return 0;
 	file_name = "-";
-	infd = 0;
+	infd = fileno(stdin);
+	setmode(fileno(stdin), O_BINARY);
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];
 	ifname = bu_file_realpath(file_name, NULL);
-	if ((infd = open(ifname, 0)) < 0) {
+	if ((infd = open(ifname, O_RDONLY|O_BINARY)) < 0) {
 	    perror(ifname);
 	    fprintf(stderr,
 		    "pix-fb: cannot open \"%s(canonical %s)\" for reading\n",
@@ -174,7 +175,6 @@ get_args(int argc, char **argv)
 	    bu_exit(1, NULL);
 	}
 	bu_free(ifname, "ifname alloc from bu_file_realpath");
-	setmode(infd, O_BINARY);
 	fileinput++;
     }
 
@@ -214,7 +214,7 @@ int
 main(int argc, char **argv)
 {
     int y;
-    fb *fbp;
+    struct fb *fbp;
     int xout, yout, n, m, xstart, xskip;
 
     bu_setprogname(argv[0]);

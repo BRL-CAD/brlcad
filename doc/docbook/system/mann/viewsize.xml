@@ -39,7 +39,7 @@ display. This command is a synonym for the <command>size</command> command.
   <example><title>Set the size of the mged display.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>viewsize 250</userinput>
+      <prompt>mged&gt; </prompt><userinput>viewsize 250</userinput>
     </para>
     <para>Sets the mged display to be 250 units across.
 

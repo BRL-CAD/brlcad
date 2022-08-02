@@ -1,7 +1,0 @@
-commit refs/heads/dmtogl
-mark :36633
-committer Clifford Yapp <starseeker> 1259124345 +0000
-data 55
-Recreate the dmtogl branch with latest trunk as a start
-from dmtogl,36632
-merge master,36632

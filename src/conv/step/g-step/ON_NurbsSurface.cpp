@@ -1,7 +1,7 @@
 /*            O N _ N U R B S S U R F A C E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -146,22 +146,47 @@ Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, ON_Brep_Info_AP203 
     stepcomplex = complex_entity->EntityPart("b_spline_surface_with_knots");
     stepcomplex->ResetAttributes();
     IntAggregate *u_multiplicities = new IntAggregate();
+    bool um_used = false;
     IntAggregate *v_multiplicities = new IntAggregate();
+    bool vm_used = false;
     RealAggregate *u_knots = new RealAggregate();
+    bool uk_used = false;
     RealAggregate *v_knots = new RealAggregate();
+    bool vk_used = false;
 
     ON_NurbsSurfaceKnots_to_Aggregates(u_multiplicities, v_multiplicities, u_knots, v_knots, nsurface);
 
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
 
-	if (!bu_strcmp(attr->Name(), "u_multiplicities")) attr->ptr.a = u_multiplicities;
-	if (!bu_strcmp(attr->Name(), "v_multiplicities")) attr->ptr.a = v_multiplicities;
+	if (!bu_strcmp(attr->Name(), "u_multiplicities")) {
+	    attr->ptr.a = u_multiplicities;
+	    um_used = true;
+	}
+	if (!bu_strcmp(attr->Name(), "v_multiplicities")) {
+	    attr->ptr.a = v_multiplicities;
+	    vm_used = true;
+	}
 
-	if (!bu_strcmp(attr->Name(), "u_knots")) attr->ptr.a = u_knots;
-	if (!bu_strcmp(attr->Name(), "v_knots")) attr->ptr.a = v_knots;
+	if (!bu_strcmp(attr->Name(), "u_knots")) {
+	    attr->ptr.a = u_knots;
+	    uk_used = true;
+	}
+	if (!bu_strcmp(attr->Name(), "v_knots")) {
+	    attr->ptr.a = v_knots;
+	    vk_used = true;
+	}
 
 	if (!bu_strcmp(attr->Name(), "knot_spec")) attr->ptr.e = new SdaiKnot_type_var(Knot_type__unspecified);
     }
+
+    if (!um_used)
+	delete u_multiplicities;
+    if (!vm_used)
+	delete v_multiplicities;
+    if (!uk_used)
+	delete u_knots;
+    if (!vk_used)
+	delete v_knots;
 
     /* Set weights */
     stepcomplex = complex_entity->EntityPart("rational_b_spline_surface");

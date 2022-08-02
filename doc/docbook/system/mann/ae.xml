@@ -53,14 +53,14 @@
     <example><title>Top view</title>
 
       <para>
-	<prompt>mged&gt;</prompt> <userinput>ae -90 90</userinput>
+	<prompt>mged&gt; </prompt><userinput>ae -90 90</userinput>
       </para>
     </example>
 
     <example><title>Right-hand side view </title>
 
       <para>
-	<prompt>mged&gt;</prompt><userinput>ae 270 0</userinput>
+	<prompt>mged&gt; </prompt><userinput>ae 270 0</userinput>
       </para>
       <para>
 	The view is from the right-hand side.
@@ -70,7 +70,7 @@
     <example><title>View from a specific azimuth and elevation with a twist angle.</title>
 
       <para>
-	<prompt>mged&gt;</prompt><userinput>ae 35 25 10</userinput>
+	<prompt>mged&gt; </prompt><userinput>ae 35 25 10</userinput>
       </para>
       <para>
 	The view is from azimuth 35, elevation 25, with a view rotated by 10 degrees.
@@ -80,7 +80,7 @@
     <example><title>The azimuth and elevation angles supplied are treated as increments.</title>
 
       <para>
-	<prompt>mged&gt;</prompt><userinput>ae -i 0 0 5</userinput>
+	<prompt>mged&gt; </prompt><userinput>ae -i 0 0 5</userinput>
       </para>
       <para>
 	Rotates the current view through 5 degrees about the viewing direction.

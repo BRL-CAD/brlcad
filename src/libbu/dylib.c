@@ -1,7 +1,7 @@
 /*                        D Y L I B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,13 @@
 #include "bio.h"
 
 #include "bu/dylib.h"
+#include "bu/malloc.h"
+
+
+static size_t n_handles = 0;
+static size_t max_handles = 0;
+static void **handles = NULL;
+
 
 void *
 bu_dlopen(const char *path, int mode)
@@ -62,14 +69,21 @@ bu_dlsym(void *handle, const char *symbol)
 int
 bu_dlclose(void *handle)
 {
-#ifdef HAVE_DLOPEN
-    return dlclose(handle);
-#elif defined(_WIN32)
-    return !FreeLibrary(handle);
-#else
-    bu_log("dlclose not supported\n");
+    if (++n_handles >= max_handles) {
+
+	/* start with just a few but then double quickly */
+	if (max_handles < 32) {
+	    max_handles = 32;
+	    handles = (void **)bu_calloc(max_handles, sizeof(void *), "alloc handles");
+	} else {
+	    max_handles *= 2;
+	    handles = (void **)bu_realloc(handles, sizeof(void *) * max_handles, "realloc handles");
+	}
+
+    }
+    handles[n_handles-1] = handle;
+
     return 0;
-#endif
 }
 
 const char *
@@ -86,6 +100,25 @@ bu_dlerror(void)
     return NULL;
 #endif
 }
+
+
+int
+bu_dlunload()
+{
+    int ret = 0;
+    while (n_handles) {
+#ifdef HAVE_DLOPEN
+	ret += dlclose(handles[n_handles-1]);
+#elif defined(_WIN32)
+	ret += !FreeLibrary(handles[n_handles-1]);
+#endif
+	handles[n_handles-1] = NULL;
+	n_handles--;
+    }
+    bu_free(handles, "free handles");
+    return ret;
+}
+
 
 /*
  * Local Variables:

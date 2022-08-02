@@ -1,7 +1,7 @@
 #                        C O M B . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2020 United States Government as represented by
+# Copyright (c) 2004-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -205,12 +205,6 @@ proc init_comb { id } {
     # name of our top level window
     set top .$id.comb
 
-    # if we already have such a window, just pop it up
-    if [winfo exists $top] {
-	raise $top
-	return
-    }
-
     # get default values for ident, air, los, and material
     set defaults [regdef]
     set default_ident [lindex $defaults 1]
@@ -223,17 +217,24 @@ proc init_comb { id } {
     set comb_control($id,pady) 2
 
     set comb_control($id,name) ""
+    set comb_control($id,color) ""
+    set comb_control($id,inherit) ""
+    set comb_control($id,comb) ""
     set comb_control($id,isRegion) "Yes"
     set comb_control($id,id) $default_ident
     set comb_control($id,air) $default_air
     set comb_control($id,material) $default_material
     set comb_control($id,los) $default_los
-    set comb_control($id,color) ""
-    set comb_control($id,inherit) ""
-    set comb_control($id,comb) ""
     set comb_control($id,shader) ""
     set comb_control($id,shader_gui) ""
     set comb_control($id,dirty_name) 1
+
+    # if we already have such a window, just pop it up after
+    # initializing / resetting the panel's values
+    if [winfo exists $top] {
+	raise $top
+	return
+    }
 
     # invoke a handler whenever the combination name is changed
     trace vdelete comb_control($id,name) w "comb_handle_trace $id"
@@ -856,6 +857,22 @@ from the combination." } }
 
 # called when "OK" is pressed
 proc comb_ok {id top} {
+    global comb_control
+
+    set top .$id.comb
+
+    # get the Boolean expression from the text widget
+    set comb_control($id,comb) [$top.combT get 0.0 end]
+
+    # normalize the name and comb expression fields
+    set comb_control($id,name) [string trim $comb_control($id,name)]
+    set comb_control($id,comb) [string trim $comb_control($id,comb)]
+
+    if {$comb_control($id,name) == "" && $comb_control($id,comb) == ""} {
+	# nothing to do
+	comb_dismiss $id $top
+	return
+    }
 
     # apply the parameters
     set ret [comb_apply $id]
@@ -863,6 +880,7 @@ proc comb_ok {id top} {
     if {$ret == 0} {
 	# destroy the window
 	comb_dismiss $id $top
+	return
     }
 }
 
@@ -877,6 +895,21 @@ proc comb_apply { id } {
     # get the Boolean expression from the text widget
     set comb_control($id,comb) [$top.combT get 0.0 end]
 
+    # normalize the name and comb expression fields
+    set comb_control($id,name) [string trim $comb_control($id,name)]
+    set comb_control($id,comb) [string trim $comb_control($id,comb)]
+    
+    if {$comb_control($id,name) == "" && $comb_control($id,comb) == ""} {
+	# nothing to apply
+	return
+    } elseif {$comb_control($id,name) == ""} {
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
+	    "You must specify a region/combination name!"\
+	    "You must specify a region/combination name!"\
+	    "" 0 OK
+	return
+    }
+
     # if someone has edited the combination name, take care about
     # overwriting an existing object
     if {$comb_control($id,dirty_name) && [exists $comb_control($id,name)]} {
@@ -888,6 +921,13 @@ proc comb_apply { id } {
 	if {$ret} {
 	    return 1
 	}
+    }
+
+    # get color
+    if {$comb_control($id,color) == ""} {
+	set color ""
+    } else {
+	set color [getRGB $top.colorMB $comb_control($id,color)]
     }
 
     if {$comb_control($id,isRegion)} {
@@ -924,54 +964,13 @@ proc comb_apply { id } {
 		return 1
 	    }
 	}
-
-	# get color
-	if {$comb_control($id,color) == ""} {
-	    set color ""
-	} else {
-	    set color [getRGBorReset $top.colorMB comb_control($id,color) $comb_control($id,color)]
-	}
-
-	# actually apply the edits to the combination on disk
-	set ret [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion) \
-			    $comb_control($id,id) $comb_control($id,air) $comb_control($id,material) \
-			    $comb_control($id,los) $color $comb_control($id,shader) \
-			    $comb_control($id,inherit) $comb_control($id,comb)} comb_error]
-
-	if {$ret} {
-	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
-		"comb_apply: Error"\
-		$comb_error\
-		"" 0 OK
-	}
-
-	# set any attributes that we have saved
-	set ret [catch {eval attr set $comb_control($id,name) $comb_control($id,attrs) } comb_error ]
-
-	if {$ret} {
-	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
-		"comb_apply: Error"\
-		$comb_error\
-		"" 0 OK
-	}
-
-	return $ret
     }
-
-
-    # this is not a region
-
-    # get the color
-    if {$comb_control($id,color) == ""} {
-	set color ""
-    } else {
-	set color [getRGBorReset $top.colorMB comb_control($id,color) $comb_control($id,color)]
-    }
-
+    
     # actually apply the edits to the combination on disk
-    set ret [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion)\
-			$color $comb_control($id,shader) $comb_control($id,inherit)\
-			$comb_control($id,comb)} comb_error]
+    set ret [catch {put_comb $comb_control($id,name) $color $comb_control($id,shader) \
+			$comb_control($id,inherit) $comb_control($id,comb) $comb_control($id,isRegion) \
+			$comb_control($id,id) $comb_control($id,air) $comb_control($id,material) $comb_control($id,los) \
+		    } comb_error]
 
     if {$ret} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
@@ -980,15 +979,8 @@ proc comb_apply { id } {
 	    "" 0 OK
     }
 
-    # set any attributes that we have saved
-    set ret [catch {eval attr set $comb_control($id,name) $comb_control($id,attrs) } comb_error ]
-
-    if {$ret} {
-	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
-	    "comb_apply: Error"\
-	    $comb_error\
-	    "" 0 OK
-    }
+    # set any attributes we had saved
+    catch {eval attr set $comb_control($id,name) $comb_control($id,attrs) }
 
     return $ret
 }
@@ -1002,11 +994,10 @@ proc comb_reset { id } {
 
     set top .$id.comb
 
-    if {$comb_control($id,name) == ""} {
-	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-	    "You must specify a region/combination name!"\
-	    "You must specify a region/combination name!"\
-	    "" 0 OK
+    if {[string trim $comb_control($id,name)] == ""} {
+	# re-init the panel to default values
+	$top.combT delete 0.0 end
+	init_comb $id
 	return
     }
 
@@ -1065,37 +1056,27 @@ proc comb_reset { id } {
     # save the attributes
     set comb_control($id,attrs) $tmp_comb_attrs
 
-    set comb_control($id,isRegion) [lindex $comb_defs 1]
-
     # set all our data variables for the editor
+    set comb_control($id,color) [lindex $comb_defs 1]
+    set comb_control($id,shader) [lindex $comb_defs 2]
+    set comb_control($id,inherit) [lindex $comb_defs 3]
+    set comb_control($id,comb) [lindex $comb_defs 4]
+
+    set comb_control($id,isRegion) [lindex $comb_defs 5]
     if {$comb_control($id,isRegion) == "Yes"} {
 	if {$result == 2} {
 	    # get default values for ident, air, los, and material
 	    set defaults [regdef]
-	    set default_ident [lindex $defaults 1]
-	    set default_air [lindex $defaults 3]
-	    set default_los [lindex $defaults 5]
-	    set default_material [lindex $defaults 7]
-
-	    set comb_control($id,id) $default_ident
-	    set comb_control($id,air) $default_air
-	    set comb_control($id,material) $default_material
-	    set comb_control($id,los) $default_los
+	    set comb_control($id,id) [lindex $defaults 1]
+	    set comb_control($id,air) [lindex $defaults 3]
+	    set comb_control($id,material) [lindex $defaults 7]
+	    set comb_control($id,los) [lindex $defaults 5]
 	} else {
-	    set comb_control($id,id) [lindex $comb_defs 2]
-	    set comb_control($id,air) [lindex $comb_defs 3]
-	    set comb_control($id,material) [lindex $comb_defs 4]
-	    set comb_control($id,los) [lindex $comb_defs 5]
+	    set comb_control($id,id) [lindex $comb_defs 6]
+	    set comb_control($id,air) [lindex $comb_defs 7]
+	    set comb_control($id,material) [lindex $comb_defs 8]
+	    set comb_control($id,los) [lindex $comb_defs 9]
 	}
-	set comb_control($id,color) [lindex $comb_defs 6]
-	set comb_control($id,shader) [lindex $comb_defs 7]
-	set comb_control($id,inherit) [lindex $comb_defs 8]
-	set comb_control($id,comb) [lindex $comb_defs 9]
-    } else {
-	set comb_control($id,color) [lindex $comb_defs 2]
-	set comb_control($id,shader) [lindex $comb_defs 3]
-	set comb_control($id,inherit) [lindex $comb_defs 4]
-	set comb_control($id,comb) [lindex $comb_defs 5]
     }
 
     if {$comb_control($id,color) == ""} {

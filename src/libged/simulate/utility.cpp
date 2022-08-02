@@ -1,7 +1,7 @@
 /*                     U T I L I T Y . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -86,7 +86,7 @@ namespace simulate
 
 
 TemporaryRegionHandle::TemporaryRegionHandle(db_i &db,
-	const db_full_path &path) :
+					     const db_full_path &path) :
     m_db(db),
     m_dir(*DB_FULL_PATH_CUR_DIR(&path)),
     m_dir_modified(false),

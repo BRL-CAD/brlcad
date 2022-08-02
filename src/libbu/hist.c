@@ -1,7 +1,7 @@
 /*                          H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,8 +39,8 @@ bu_hist_free(struct bu_hist *histp)
 
     BU_CK_HIST(histp);
 
-    if (histp->hg_bins)
-	bu_free((char *)histp->hg_bins, "old bu_hist bins");
+    bu_free((char *)histp->hg_bins, "old bu_hist bins");
+
     histp->hg_bins = NULL;
     histp->hg_nbins = 0;
     histp->magic = (unsigned int)-1;	/* sanity */
@@ -107,7 +107,7 @@ bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
 HIDDEN void
 hist_pr_suppress(register const struct bu_hist *histp, const char *title, int zero_suppress)
 {
-    long maxcount;
+    size_t maxcount;
     static const char marks[] = "################################################################";
 #define NMARKS 50
     char buf[256];
@@ -120,9 +120,9 @@ hist_pr_suppress(register const struct bu_hist *histp, const char *title, int ze
     BU_CK_HIST(histp);
 
     /* Find entry with highest count */
-    maxcount = 0L;
+    maxcount = 0;
     for (i=0; i<=histp->hg_nbins; i++) {
-	if (histp->hg_bins[i] > maxcount)
+	if ((size_t)histp->hg_bins[i] > maxcount)
 	    maxcount = histp->hg_bins[i];
     }
     if (maxcount < 1)
@@ -138,7 +138,7 @@ hist_pr_suppress(register const struct bu_hist *histp, const char *title, int ze
     }
 
     /* 12345678 12345678 123 .... */
-    bu_log("\nHistogram of %s\nmin=%g, max=%g, nbins=%zd, clumpsize=%g\n%ld samples collected, highest count was %ld\n\n Value      Count Rel%%|  Bar Graph\n",
+    bu_log("\nHistogram of %s\nmin=%g, max=%g, nbins=%zu, clumpsize=%g\n%zu samples collected, highest count was %zu\n\n Value      Count Rel%%|  Bar Graph\n",
 	   title,
 	   histp->hg_min, histp->hg_max,
 	   histp->hg_nbins, histp->hg_clumpsize,
@@ -159,7 +159,7 @@ hist_pr_suppress(register const struct bu_hist *histp, const char *title, int ze
 	if (mark_count <= 0 && histp->hg_bins[i] > 0)
 	    mark_count = 1;
 	if (mark_count > NMARKS) {
-	    bu_log("mark_count=%d, NMARKS=%d, hg_bins[%zu]=%ld, maxcount=%ld\n",
+	    bu_log("mark_count=%d, NMARKS=%d, hg_bins[%zu]=%ld, maxcount=%zu\n",
 		   mark_count, NMARKS, i, histp->hg_bins[i], maxcount);
 	    bu_bomb("bu_hist_pr() bogus mark_count\n");
 	}

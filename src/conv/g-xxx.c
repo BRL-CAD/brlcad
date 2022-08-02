@@ -1,7 +1,7 @@
 /*                         G - X X X . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -432,12 +432,13 @@ main(int argc, char *argv[])
     /* Walk the trees named on the command line
      * outputting combinations and primitives
      */
+    int ret = 0;
     for (i=bu_optind; i<argc; i++) {
-	db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], 1 /* bu_avail_cpus() */,
+	ret += db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], 1 /* bu_avail_cpus() */,
 		     &init_state, region_start, region_end, primitive_func, (void *) &your_data);
     }
 
-    return 0;
+    return ret;
 }
 
 

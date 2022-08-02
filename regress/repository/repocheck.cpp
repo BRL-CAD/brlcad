@@ -1,7 +1,7 @@
 /*                   R E P O C H E C K . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,14 +53,18 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <cstring>
 
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/mapped_file.h"
 #include "bu/str.h"
 
+extern "C" char *
+bu_strnstr(const char *h, const char *n, size_t hlen);
+
 #define MAX_LINES_CHECK 500
-#define EXPECTED_PLATFORM_SYMBOLS 254
+#define EXPECTED_PLATFORM_SYMBOLS 227
 
 class repo_info_t {
     public:
@@ -208,7 +212,8 @@ regex_init(repo_info_t &r) {
 	    "fftc.c",
 	    "fftest.c",
 	    "ifftc.c",
-	    "licenses_check.cpp",
+	    "embedded_check.cpp",
+	    "other_check.cpp",
 	    "misc/",
 	    "mt19937ar.c",
 	    "sha1.c",
@@ -273,7 +278,7 @@ regex_init(repo_info_t &r) {
 	cnt = 0;
 	rf = api_func_strs[cnt];
 	while (rf) {
-	    std::string rrf = std::string(".*[^a-zA-Z0-9_:]") + std::string(rf) + std::string("[(].*");
+	    std::string rrf = std::string(".*[^a-zA-Z0-9_:.]") + std::string(rf) + std::string("[(].*");
 	    r.api_func_filters[std::string(rf)] = std::regex(rrf);
 	    cnt++;
 	    rf = api_func_strs[cnt];
@@ -392,12 +397,12 @@ bio_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "bio.h")) {
+	if (!bu_strnstr((const char *)ifile->buf, "bio.h", ifile->buflen)) {
 	    bu_close_mapped_file(ifile);
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
@@ -463,12 +468,12 @@ bnetwork_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "bnetwork.h")) {
+	if (!bu_strnstr((const char *)ifile->buf, "bnetwork.h", ifile->buflen)) {
 	    bu_close_mapped_file(ifile);
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
@@ -541,12 +546,12 @@ common_include_first(repo_info_t &r, std::vector<std::string> &srcs)
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "common.h")) {
+	if (!bu_strnstr((const char *)ifile->buf, "common.h", ifile->buflen)) {
 	    bu_close_mapped_file(ifile);
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
@@ -599,7 +604,7 @@ api_usage(repo_info_t &r, std::vector<std::string> &srcs)
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 
@@ -696,12 +701,12 @@ setprogname(repo_info_t &r, std::vector<std::string> &srcs)
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "main")) {
+	if (!bu_strnstr((const char *)ifile->buf, "main", ifile->buflen)) {
 	    bu_close_mapped_file(ifile);
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
@@ -768,7 +773,7 @@ platform_symbols(repo_info_t &r, std::vector<std::string> &log, std::vector<std:
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
+	std::string fbuff((char *)ifile->buf, ifile->buflen);
 	std::istringstream fs(fbuff);
 
 	//std::cout << "Reading " << srcs[i] << "\n";
@@ -816,198 +821,210 @@ platform_symbols(repo_info_t &r, std::vector<std::string> &log, std::vector<std:
 int
 main(int argc, const char *argv[])
 {
-    int verbosity = 0;
-
-    if (argc < 3 || argc > 5) {
-	std::cerr << "Usage: repocheck [-v] file_list.txt source_dir\n";
-	return -1;
-    }
-
-
-    bu_setprogname(argv[0]);
-
-    if (argc == 4) {
-	if (BU_STR_EQUAL(argv[1], "-v")) {
-	    verbosity = 1;
-	    for (int i = 2; i < argc; i++) {
-		argv[i-1] = argv[i];
-	    }
-	    argc--;
-	} else {
-	    bu_exit(-1, "invalid option %s", argv[1]);
-	}
-    }
-
-
-    repo_info_t repo_info;
-    repo_info.path_root = std::string(argv[2]);
-    regex_init(repo_info);
-
-    std::string sfile;
-    std::ifstream src_file_stream;
-    src_file_stream.open(argv[1]);
-    if (!src_file_stream.is_open()) {
-	std::cerr << "Unable to open file list file " << argv[1] << "\n";
-	return -1;
-    }
-
-
-    // Build a set of filters that will cull out files which would otherwise
-    // be matches for items of interest
-    const char *reject_filters[] {
-	"/bullet/",
-	"/doc/",
-	"/shapelib/",
-	".log",
-	".svn",
-	"misc/CMake/Find",
-	"misc/repoconv",
-	"misc/tools",
-	"misc/debian",
-	"pkg.h",
-	"src/libpkg",
-	"src/other/",
-	"~",
-	NULL
-    };
-
-    // Apply filters and build up the file sets we want to introspect.
-    std::regex codefile_regex(".*[.](c|cpp|cxx|cc|h|hpp|hxx|y|yy|l)([.]in)?$");
-    std::regex buildfile_regex(".*([.]cmake([.]in)?|CMakeLists.txt)$");
-    std::vector<std::string> src_files;
-    std::vector<std::string> inc_files;
-    std::vector<std::string> build_files;
-
-    while (std::getline(src_file_stream, sfile)) {
-	bool reject = false;
-
-	int cnt = 0;
-	const char *rf = reject_filters[cnt];
-	while (rf) {
-	    if (std::strstr(sfile.c_str(), rf)) {
-		reject = true;
-		break;
-	    }
-	    cnt++;
-	    rf = reject_filters[cnt];
-	}
-	if (reject) {
-	    continue;
-	}
-
-	if (std::regex_match(sfile, codefile_regex)) {
-	    if (std::strstr(sfile.c_str(), "include")) {
-		inc_files.push_back(sfile);
-	    } else {
-		src_files.push_back(sfile);
-	    }
-	    continue;
-	}
-	if (std::regex_match(sfile, buildfile_regex)) {
-	    build_files.push_back(sfile);
-	    continue;
-	}
-    }
-
     int ret = 0;
 
-    ret += bio_redundant_check(repo_info, inc_files);
-    ret += bio_redundant_check(repo_info, src_files);
-    ret += bnetwork_redundant_check(repo_info, inc_files);
-    ret += bnetwork_redundant_check(repo_info, src_files);
-    ret += common_include_first(repo_info, src_files);
-    ret += api_usage(repo_info, src_files);
-    ret += setprogname(repo_info, src_files);
+    try {
+	int verbosity = 0;
 
-    int h_cnt = platform_symbols(repo_info, repo_info.symbol_inc_log, inc_files);
-    int s_cnt = platform_symbols(repo_info, repo_info.symbol_src_log, src_files);
-    int b_cnt = platform_symbols(repo_info, repo_info.symbol_bld_log, build_files);
-    int psym_cnt = h_cnt + s_cnt + b_cnt;
-    int expected_psym_cnt = EXPECTED_PLATFORM_SYMBOLS;
-    if (psym_cnt > expected_psym_cnt) {
-	ret = -1;
-    }
-
-    if (psym_cnt < expected_psym_cnt) {
-	std::cout << "\n\nNote: need to update EXPECTED_PLATFORM_SYMBOLS - looking for " << expected_psym_cnt << ", but only found " << psym_cnt << "\n\n\n";
-    }
-
-    if (ret || verbosity) {
-	std::sort(repo_info.api_log.begin(), repo_info.api_log.end());
-	std::sort(repo_info.bio_log.begin(), repo_info.bio_log.end());
-	std::sort(repo_info.bnet_log.begin(), repo_info.bnet_log.end());
-	std::sort(repo_info.common_log.begin(), repo_info.common_log.end());
-	std::sort(repo_info.dnu_log.begin(), repo_info.dnu_log.end());
-	std::sort(repo_info.symbol_inc_log.begin(), repo_info.symbol_inc_log.end());
-	std::sort(repo_info.symbol_src_log.begin(), repo_info.symbol_src_log.end());
-	std::sort(repo_info.symbol_bld_log.begin(), repo_info.symbol_bld_log.end());
-
-	if (repo_info.api_log.size()) {
-	    std::cout << "\nFAILURE: found " << repo_info.api_log.size() << " instances of unguarded API usage:\n";
-	    for (size_t i = 0; i < repo_info.api_log.size(); i++) {
-		std::cout << repo_info.api_log[i];
-	    }
+	if (argc < 3 || argc > 5) {
+	    std::cerr << "Usage: repocheck [-v] file_list.txt source_dir\n";
+	    return -1;
 	}
-	if (repo_info.bio_log.size()) {
-	    std::cout << "\nFAILURE: found " << repo_info.bio_log.size() << " instances of redundant header inclusions in files using bio.h:\n";
-	    for (size_t i = 0; i < repo_info.bio_log.size(); i++) {
-		std::cout << repo_info.bio_log[i];
-	    }
-	}
-	if (repo_info.bnet_log.size()) {
-	    std::cout << "\nFAILURE: found " << repo_info.bnet_log.size() << " instances of redundant header inclusions in files using bnetwork.h:\n";
-	    for (size_t i = 0; i < repo_info.bnet_log.size(); i++) {
-		std::cout << repo_info.bnet_log[i];
-	    }
-	}
-	if (repo_info.common_log.size()) {
-	    std::cout << "\nFAILURE: found " << repo_info.common_log.size() << " instances of files using common.h with out-of-order inclusions:\n";
-	    for (size_t i = 0; i < repo_info.common_log.size(); i++) {
-		std::cout << repo_info.common_log[i];
+
+
+	bu_setprogname(argv[0]);
+
+	if (argc == 4) {
+	    if (BU_STR_EQUAL(argv[1], "-v")) {
+		verbosity = 1;
+		for (int i = 2; i < argc; i++) {
+		    argv[i-1] = argv[i];
+		}
+		argc--;
+	    } else {
+		bu_exit(-1, "invalid option %s", argv[1]);
 	    }
 	}
 
-	if (repo_info.dnu_log.size()) {
-	    std::cout << "\nFAILURE: found " << repo_info.dnu_log.size() << " instances of proscribed function usage:\n";
-	    for (size_t i = 0; i < repo_info.dnu_log.size(); i++) {
-		std::cout << repo_info.dnu_log[i];
+
+	repo_info_t repo_info;
+	repo_info.path_root = std::string(argv[2]);
+	regex_init(repo_info);
+
+	std::string sfile;
+	std::ifstream src_file_stream;
+	src_file_stream.open(argv[1]);
+	if (!src_file_stream.is_open()) {
+	    std::cerr << "Unable to open file list file " << argv[1] << "\n";
+	    return -1;
+	}
+
+
+	// Build a set of filters that will cull out files which would otherwise
+	// be matches for items of interest
+	const char *reject_filters[] {
+	    ".log",
+		".svn",
+		"/bullet/",
+		"/doc/",
+		"/fontstash/",
+		"/qtads/",
+		"/shapelib/",
+		"gltf/",
+		"/xxhash.h",
+		"misc/CMake/Find",
+		"misc/debian",
+		"misc/repoconv",
+		"misc/repowork",
+		"misc/tools",
+		"pkg.h",
+		"src/libpkg",
+		"src/other/",
+		"~",
+		NULL
+	};
+
+	// Apply filters and build up the file sets we want to introspect.
+	std::regex codefile_regex(".*[.](c|cpp|cxx|cc|h|hpp|hxx|y|yy|l)([.]in)?$");
+	std::regex buildfile_regex(".*([.]cmake([.]in)?|CMakeLists.txt)$");
+	std::vector<std::string> src_files;
+	std::vector<std::string> inc_files;
+	std::vector<std::string> build_files;
+
+	while (std::getline(src_file_stream, sfile)) {
+	    bool reject = false;
+
+	    int cnt = 0;
+	    const char *rf = reject_filters[cnt];
+	    while (rf) {
+		if (std::strstr(sfile.c_str(), rf)) {
+		    reject = true;
+		    break;
+		}
+		cnt++;
+		rf = reject_filters[cnt];
+	    }
+	    if (reject) {
+		continue;
+	    }
+
+	    if (std::regex_match(sfile, codefile_regex)) {
+		if (std::strstr(sfile.c_str(), "include")) {
+		    inc_files.push_back(sfile);
+		} else {
+		    src_files.push_back(sfile);
+		}
+		continue;
+	    }
+	    if (std::regex_match(sfile, buildfile_regex)) {
+		build_files.push_back(sfile);
+		continue;
 	    }
 	}
 
-	if (repo_info.setprogname_log.size()) {
-	    std::cout << "\nFAILURE: found " << repo_info.setprogname_log.size() << " missing bu_setprogname calls:\n";
-	    for (size_t i = 0; i < repo_info.setprogname_log.size(); i++) {
-		std::cout << repo_info.setprogname_log[i];
-	    }
-	}
+	ret += bio_redundant_check(repo_info, inc_files);
+	ret += bio_redundant_check(repo_info, src_files);
+	ret += bnetwork_redundant_check(repo_info, inc_files);
+	ret += bnetwork_redundant_check(repo_info, src_files);
+	ret += common_include_first(repo_info, src_files);
+	ret += api_usage(repo_info, src_files);
+	ret += setprogname(repo_info, src_files);
 
+	int h_cnt = platform_symbols(repo_info, repo_info.symbol_inc_log, inc_files);
+	int s_cnt = platform_symbols(repo_info, repo_info.symbol_src_log, src_files);
+	int b_cnt = platform_symbols(repo_info, repo_info.symbol_bld_log, build_files);
+	int psym_cnt = h_cnt + s_cnt + b_cnt;
+	int expected_psym_cnt = EXPECTED_PLATFORM_SYMBOLS;
 	if (psym_cnt > expected_psym_cnt) {
-	    std::cout << "\n**************************************************************************\n";
-	    std::cout << "FAILURE: expected " << expected_psym_cnt << " platform symbols, found " << psym_cnt << "\n";
-	    std::cout << "**************************************************************************\n";
-	    ret = 1;
+	    ret = -1;
 	}
 
-	if (psym_cnt > expected_psym_cnt || verbosity) {
-	    if (repo_info.symbol_inc_log.size()) {
-		std::cout << "\nFound " << repo_info.symbol_inc_log.size() << " instances of platform symbol usage in header files:\n";
-		for (size_t i = 0; i < repo_info.symbol_inc_log.size(); i++) {
-		    std::cout << repo_info.symbol_inc_log[i];
+	if (psym_cnt < expected_psym_cnt) {
+	    std::cout << "\n\nNote: need to update EXPECTED_PLATFORM_SYMBOLS - looking for " << expected_psym_cnt << ", but only found " << psym_cnt << "\n\n\n";
+	}
+
+	if (ret || verbosity) {
+	    std::sort(repo_info.api_log.begin(), repo_info.api_log.end());
+	    std::sort(repo_info.bio_log.begin(), repo_info.bio_log.end());
+	    std::sort(repo_info.bnet_log.begin(), repo_info.bnet_log.end());
+	    std::sort(repo_info.common_log.begin(), repo_info.common_log.end());
+	    std::sort(repo_info.dnu_log.begin(), repo_info.dnu_log.end());
+	    std::sort(repo_info.symbol_inc_log.begin(), repo_info.symbol_inc_log.end());
+	    std::sort(repo_info.symbol_src_log.begin(), repo_info.symbol_src_log.end());
+	    std::sort(repo_info.symbol_bld_log.begin(), repo_info.symbol_bld_log.end());
+
+	    if (repo_info.api_log.size()) {
+		std::cout << "\nFAILURE: found " << repo_info.api_log.size() << " instances of unguarded API usage:\n";
+		for (size_t i = 0; i < repo_info.api_log.size(); i++) {
+		    std::cout << repo_info.api_log[i];
 		}
 	    }
-	    if (repo_info.symbol_src_log.size()) {
-		std::cout << "\nFound " << repo_info.symbol_src_log.size() << " instances of platform symbol usage in source files:\n";
-		for (size_t i = 0; i < repo_info.symbol_src_log.size(); i++) {
-		    std::cout << repo_info.symbol_src_log[i];
+	    if (repo_info.bio_log.size()) {
+		std::cout << "\nFAILURE: found " << repo_info.bio_log.size() << " instances of redundant header inclusions in files using bio.h:\n";
+		for (size_t i = 0; i < repo_info.bio_log.size(); i++) {
+		    std::cout << repo_info.bio_log[i];
 		}
 	    }
-	    if (repo_info.symbol_bld_log.size()) {
-		std::cout << "\nFound " << repo_info.symbol_bld_log.size() << " instances of platform symbol usage in build files:\n";
-		for (size_t i = 0; i < repo_info.symbol_bld_log.size(); i++) {
-		    std::cout << repo_info.symbol_bld_log[i];
+	    if (repo_info.bnet_log.size()) {
+		std::cout << "\nFAILURE: found " << repo_info.bnet_log.size() << " instances of redundant header inclusions in files using bnetwork.h:\n";
+		for (size_t i = 0; i < repo_info.bnet_log.size(); i++) {
+		    std::cout << repo_info.bnet_log[i];
+		}
+	    }
+	    if (repo_info.common_log.size()) {
+		std::cout << "\nFAILURE: found " << repo_info.common_log.size() << " instances of files using common.h with out-of-order inclusions:\n";
+		for (size_t i = 0; i < repo_info.common_log.size(); i++) {
+		    std::cout << repo_info.common_log[i];
+		}
+	    }
+
+	    if (repo_info.dnu_log.size()) {
+		std::cout << "\nFAILURE: found " << repo_info.dnu_log.size() << " instances of proscribed function usage:\n";
+		for (size_t i = 0; i < repo_info.dnu_log.size(); i++) {
+		    std::cout << repo_info.dnu_log[i];
+		}
+	    }
+
+	    if (repo_info.setprogname_log.size()) {
+		std::cout << "\nFAILURE: found " << repo_info.setprogname_log.size() << " missing bu_setprogname calls:\n";
+		for (size_t i = 0; i < repo_info.setprogname_log.size(); i++) {
+		    std::cout << repo_info.setprogname_log[i];
+		}
+	    }
+
+	    if (psym_cnt > expected_psym_cnt) {
+		std::cout << "\n**************************************************************************\n";
+		std::cout << "FAILURE: expected " << expected_psym_cnt << " platform symbols, found " << psym_cnt << "\n";
+		std::cout << "**************************************************************************\n";
+		ret = 1;
+	    }
+
+	    if (psym_cnt > expected_psym_cnt || verbosity) {
+		if (repo_info.symbol_inc_log.size()) {
+		    std::cout << "\nFound " << repo_info.symbol_inc_log.size() << " instances of platform symbol usage in header files:\n";
+		    for (size_t i = 0; i < repo_info.symbol_inc_log.size(); i++) {
+			std::cout << repo_info.symbol_inc_log[i];
+		    }
+		}
+		if (repo_info.symbol_src_log.size()) {
+		    std::cout << "\nFound " << repo_info.symbol_src_log.size() << " instances of platform symbol usage in source files:\n";
+		    for (size_t i = 0; i < repo_info.symbol_src_log.size(); i++) {
+			std::cout << repo_info.symbol_src_log[i];
+		    }
+		}
+		if (repo_info.symbol_bld_log.size()) {
+		    std::cout << "\nFound " << repo_info.symbol_bld_log.size() << " instances of platform symbol usage in build files:\n";
+		    for (size_t i = 0; i < repo_info.symbol_bld_log.size(); i++) {
+			std::cout << repo_info.symbol_bld_log[i];
+		    }
 		}
 	    }
 	}
+    }
+
+    catch (const std::regex_error& e) {
+	std::cout << "regex error: " << e.what() << '\n';
+	return -1;
     }
 
     return ret;

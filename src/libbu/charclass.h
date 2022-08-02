@@ -110,23 +110,26 @@ typedef struct _charclass {
     int (*checkfun)(int);	/* testing function */
 } CHARCLASS;
 
-static CHARCLASS charclasses[] = {
-    { "alnum", fnalnum },
-    { "alpha", fnalpha },
-    { "blank", fnblank },
-    { "cntrl", fncntrl },
-    { "digit", fndigit },
-    { "graph", fngraph },
-    { "lower", fnlower },
-    { "print", fnprint },
-    { "punct", fnpunct },
-    { "space", fnspace },
-    { "upper", fnupper },
-    { "xdigit", fnxdigit },
-    { NULL,     NULL}
+static const struct cclass {
+	const char *name;
+	int (*isctype)(int);
+} cclasses[] = {
+	{ "alnum",	fnalnum },
+	{ "alpha",	fnalpha },
+	{ "blank",	fnblank },
+	{ "cntrl",	fncntrl },
+	{ "digit",	fndigit },
+	{ "graph",	fngraph },
+	{ "lower",	fnlower },
+	{ "print",	fnprint },
+	{ "punct",	fnpunct },
+	{ "space",	fnspace },
+	{ "upper",	fnupper },
+	{ "xdigit",	fnxdigit },
+	{ NULL,		NULL }
 };
 
-#define NCCLASSES (sizeof(charclasses) / sizeof(charclasses[0]) - 1)
+#define NCCLASSES	(sizeof(cclasses) / sizeof(cclasses[0]) - 1)
 
 /*
  * Local Variables:

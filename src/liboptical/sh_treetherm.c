@@ -1,7 +1,7 @@
 /*                  S H _ T R E E T H E R M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -325,7 +325,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 	    }
 	    break;
 	default:
-	    bu_log("a long int is %lu bytes on this machine\n", sizeof(long));
+	    bu_log("a long int is %zu bytes on this machine\n", sizeof(long));
 	    bu_bomb("I can only handle 4 or 8 byte longs\n");
 	    break;
     }
@@ -472,7 +472,6 @@ tthrm_free(void *cp)
     struct tthrm_specific *tthrm_sp = (struct tthrm_specific *)cp;
 
     bu_free(tthrm_sp->tt_segs, "thermal segs");
-    bu_free(tthrm_sp->tt_name, "bu_vls_strdup");
 
     tthrm_sp->tt_segs = (struct thrm_seg *)NULL;
     tthrm_sp->tt_name[0] = '\0';

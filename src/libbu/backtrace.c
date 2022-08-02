@@ -1,7 +1,7 @@
 /*                     B A C K T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -131,21 +131,21 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 
     pid2 = fork();
     if (pid2 == 0) {
-	int ret;
+	int ret1, ret2, ret3;
 
 	close(0);
-	ret = dup(input[0]); /* set the stdin to the in pipe */
-	if (ret == -1)
+	ret1 = dup(input[0]); /* set the stdin to the in pipe */
+	if (ret1 == -1)
 	    perror("dup");
 
 	close(1);
-	ret = dup(output[1]); /* set the stdout to the out pipe */
-	if (ret == -1)
+	ret2 = dup(output[1]); /* set the stdout to the out pipe */
+	if (ret2 == -1)
 	    perror("dup");
 
 	close(2);
-	ret = dup(output[1]); /* set the stderr to the out pipe */
-	if (ret == -1)
+	ret3 = dup(output[1]); /* set the stderr to the out pipe */
+	if (ret3 == -1)
 	    perror("dup");
 
 	/* invoke debugger */
@@ -156,6 +156,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 	      NULL);
 	perror("exec failed");
 	fflush(stderr);
+
 	/* can't call bu_bomb()/bu_exit(), recursive */
 	exit(1);
     } else if (pid2 == (pid_t) -1) {
@@ -395,7 +396,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 
 
 int
-bu_backtrace(FILE *fp)
+bu_backtrace_app(FILE *fp, const char *argv0)
 {
     if (!fp) {
 	fp = stdout;
@@ -406,13 +407,7 @@ bu_backtrace(FILE *fp)
     if ((locate_debugger = bu_which("gdb"))) {
 	bu_strlcpy(path_gdb, locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] Found gdb in USER path: %s\n", locate_debugger);
-	}
-	have_gdb = 1;
-    } else if ((locate_debugger = bu_whereis("gdb"))) {
-	bu_strlcpy(path_gdb, locate_debugger, MAXPATHLEN);
-	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] Found gdb in SYSTEM path: %s\n", locate_debugger);
+	    bu_log("[BACKTRACE] Found gdb in PATH: %s\n", locate_debugger);
 	}
 	have_gdb = 1;
     }
@@ -421,13 +416,7 @@ bu_backtrace(FILE *fp)
     if ((locate_debugger = bu_which("lldb"))) {
 	bu_strlcpy(path_lldb, locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] Found lldb in USER path: %s\n", locate_debugger);
-	}
-	have_lldb = 1;
-    } else if ((locate_debugger = bu_whereis("lldb"))) {
-	bu_strlcpy(path_lldb, locate_debugger, MAXPATHLEN);
-	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] Found lldb in SYSTEM path: %s\n", locate_debugger);
+	    bu_log("[BACKTRACE] Found lldb in PATH: %s\n", locate_debugger);
 	}
 	have_lldb = 1;
     }
@@ -440,11 +429,17 @@ bu_backtrace(FILE *fp)
 #endif
 
     if (have_gdb) {
+	const char *gdb_path = NULL;
 	bu_strlcpy(debugger_args[0], path_gdb, MAXPATHLEN);
 	/* MUST give gdb path to binary, otherwise attach bug causes
 	 * process kill on some platforms (e.g., FreeBSD9+AMD64)
 	 */
-	bu_strlcpy(debugger_args[1], bu_argv0_full_path(), MAXPATHLEN);
+	if (argv0) {
+	    gdb_path = argv0;
+	} else {
+	    gdb_path = bu_dir(NULL, 0, BU_DIR_BIN, bu_getprogname(), BU_DIR_EXT, NULL);
+	}
+	bu_strlcpy(debugger_args[1], gdb_path, MAXPATHLEN);
     } else if (have_lldb) {
 	bu_strlcpy(debugger_args[0], path_lldb, MAXPATHLEN);
     }
@@ -535,6 +530,11 @@ bu_backtrace(FILE *fp)
     return 1;
 }
 
+int
+bu_backtrace(FILE *fp)
+{
+    return bu_backtrace_app(fp, NULL);
+}
 
 /*
  * Local Variables:

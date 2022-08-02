@@ -1,7 +1,7 @@
 /*                         D B _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2020 United States Government as represented by
+ * Copyright (c) 1988-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@
 #include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
+#include "librt_private.h"
 
 
 /**
@@ -308,6 +309,14 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
     if (db_version(dbip) < 5) {
 	size_t ngran;
 
+	// db_put_external5 can't do it, so do the callbacks here
+	if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
+		struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+		(*cb->f)(dbip, dp, 0, cb->u_data);
+	    }
+	}
+
 	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
 	if (ngran != dp->d_len) {
 	    if (dp->d_addr != RT_DIR_PHONY_ADDR) {
@@ -354,7 +363,81 @@ db_fwrite_external(FILE *fp, const char *name, struct bu_external *ep)
     return bu_fwrite_external(fp, ep);
 }
 
+int
+db_add_changed_clbk(struct db_i *dbip, dbi_changed_t c, void *u_data)
+{
+    if (!dbip || !c)
+	return -1;
+    struct dbi_changed_clbk *cb;
+    BU_GET(cb, struct dbi_changed_clbk);
+    cb->f = c;
+    cb->u_data = u_data;
+    bu_ptbl_ins(&dbip->dbi_changed_clbks, (long *)cb);
+    return 0;
+}
 
+int
+db_rm_changed_clbk(struct db_i *dbip, dbi_changed_t c, void *u_data)
+{
+    if (!dbip || !c)
+	return -1;
+    struct bu_ptbl rm_clbks = BU_PTBL_INIT_ZERO;
+    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
+	struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+	if (cb->f == c) {
+	    if (u_data == NULL || u_data == cb->u_data) {
+		bu_ptbl_ins(&rm_clbks, (long *)cb);
+	    }
+	}
+    }
+    int rm_cnt = 0;
+    for (size_t i = 0; i < BU_PTBL_LEN(&rm_clbks); i++) {
+	struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&rm_clbks, i);
+	bu_ptbl_rm(&dbip->dbi_changed_clbks, (long *)cb);
+	BU_PUT(cb, struct dbi_changed_clbk);
+	rm_cnt++;
+    }
+
+    return rm_cnt;
+}
+
+int
+db_add_update_nref_clbk(struct db_i *dbip, dbi_update_nref_t c, void *u_data)
+{
+    if (!dbip || !c)
+	return -1;
+    struct dbi_update_nref_clbk *cb;
+    BU_GET(cb, struct dbi_update_nref_clbk);
+    cb->f = c;
+    cb->u_data = u_data;
+    bu_ptbl_ins(&dbip->dbi_update_nref_clbks, (long *)cb);
+    return 0;
+}
+
+int
+db_rm_update_nref_clbk(struct db_i *dbip, dbi_update_nref_t c, void *u_data)
+{
+    if (!dbip || !c)
+	return -1;
+    struct bu_ptbl rm_clbks = BU_PTBL_INIT_ZERO;
+    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); i++) {
+	struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, i);
+	if (cb->f == c) {
+	    if (u_data == NULL || u_data == cb->u_data) {
+		bu_ptbl_ins(&rm_clbks, (long *)cb);
+	    }
+	}
+    }
+    int rm_cnt = 0;
+    for (size_t i = 0; i < BU_PTBL_LEN(&rm_clbks); i++) {
+	struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&rm_clbks, i);
+	bu_ptbl_rm(&dbip->dbi_update_nref_clbks, (long *)cb);
+	BU_PUT(cb, struct dbi_update_nref_clbk);
+	rm_cnt++;
+    }
+
+    return rm_cnt;
+}
 /** @} */
 /*
  * Local Variables:

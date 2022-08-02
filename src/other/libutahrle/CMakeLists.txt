@@ -33,7 +33,7 @@
 # ***                libutahrle CMakeLists.txt                     ***
 # *******************************************************************
 
-cmake_minimum_required(VERSION 3.1.3)
+cmake_minimum_required(VERSION 3.12)
 
 project(UTAHRLE)
 
@@ -89,15 +89,9 @@ set(LIBUTAHRLE_PUBLIC_HDRS
   ${CMAKE_CURRENT_SOURCE_DIR}/include/rle_raw.h
   )
 
-set(LIBUTAHRLE_PRIVATE_HDRS
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/colorquant.h
-  )
-
 set(LIBUTAHRLE_SOURCES
   Runput.c
-  buildmap.c
   cmd_name.c
-  colorquant.c
   dither.c
   float_to_exp.c
   hilbert.c
@@ -118,7 +112,6 @@ set(LIBUTAHRLE_SOURCES
   rle_raw_alc.c
   rle_rawrow.c
   rle_row_alc.c
-  scanargs.c
   vaxshort.c
   )
 
@@ -137,6 +130,7 @@ if(BUILD_SHARED_LIBS)
   endif(MSVC)
   target_link_libraries(utahrle ${M_LIBRARY})
   set_target_properties(utahrle PROPERTIES VERSION 19.0.1 SOVERSION 19)
+  set_target_properties(utahrle PROPERTIES FOLDER "Third Party Libraries")
   install(TARGETS utahrle
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
@@ -152,6 +146,7 @@ if(BUILD_STATIC_LIBS)
     set_target_properties(utahrle-static PROPERTIES OUTPUT_NAME "utahrle")
   endif(MSVC)
   target_link_libraries(utahrle-static ${M_LIBRARY})
+  set_target_properties(utahrle-static PROPERTIES FOLDER "Third Party Libraries")
   install(TARGETS utahrle-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}

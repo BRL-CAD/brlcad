@@ -1525,7 +1525,7 @@ int ON::IsOpenNURBSFile( FILE* fp )
   int version = 0;
   if ( 0 != fp )
   {
-    ON_BinaryFile archive(ON::read3dm,fp);
+    ON_BinaryFile archive(ON::on_read3dm,fp);
     if ( !archive.Read3dmStartSection(&version,sStartSectionComment) )
       version = 0;
   }

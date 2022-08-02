@@ -1,7 +1,7 @@
 /*                            B N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@
 #include "bn/msr.h"
 #include "bn/noise.h"
 #include "bn/poly.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "bn/multipoly.h"
 #include "bn/qmath.h"
 #include "bn/rand.h"
@@ -59,12 +59,8 @@
 #include "bn/sobol.h"
 #include "bn/str.h"
 #include "bn/tabdata.h"
-#include "bn/vlist.h"
-#include "bn/vert_tree.h"
-#include "bn/vectfont.h"
-#include "bn/plane.h"
-#include "bn/clip.h"
-#include "bn/adc.h"
+#include "bg/vert_tree.h"
+#include "bv/vectfont.h"
 
 #endif /* BN_H */
 

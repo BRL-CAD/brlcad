@@ -1,7 +1,7 @@
 /*                       U G _ M I S C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,20 +23,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+
 #ifndef TEST_BUILD
-#include <uf.h>
-#include <uf_ui.h>
-#include <uf_disp.h>
-#include <uf_assem.h>
-#include <uf_part.h>
-#include <uf_facet.h>
-#include <uf_obj.h>
-#include <uf_object_types.h>
-#include <uf_facet.h>
-#include <uf_modl.h>
+#  include <uf.h>
+#  include <uf_ui.h>
+#  include <uf_disp.h>
+#  include <uf_assem.h>
+#  include <uf_part.h>
+#  include <uf_facet.h>
+#  include <uf_obj.h>
+#  include <uf_object_types.h>
+#  include <uf_facet.h>
+#  include <uf_modl.h>
 #else
-#include "shim.h"
+#  include "shim.h"
 #endif
+
 #include <tcl.h>
 
 

@@ -1,7 +1,7 @@
 /*                     T E S T _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2019-2020 United States Government as represented by
+ * Copyright (c) 2019-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ main(int ac, char *av[]) {
     }
 
     if (ac > 1) {
-        size_t invocations = 0;
+	size_t invocations = 0;
 	seconds = atoi(av[1]);
 	start = bu_gettime();
 
@@ -64,7 +64,7 @@ main(int ac, char *av[]) {
 	bu_log("Invoked %zu times (%.1lf per sec)\n", invocations, invocations / ((bu_gettime() - start) / 1000000.0));
     } else {
 	ged_init(&g);
-	ged_list(&g, 1, list);
+	ged_exec(&g, 1, list);
 	/* intentionally sinking the ged result string
 	*/
 	printf("%s\n", bu_vls_addr(g.ged_result_str));

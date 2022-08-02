@@ -1,7 +1,7 @@
 /*                        S E A R C H . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -75,9 +75,9 @@ enum db_search_ntype {
     N_ABOVE = 1,                        /* must start > 0 */
     N_AND, N_ATTR, N_BELOW,
     N_CLOSEPAREN, N_DEPTH, N_EXEC, N_EXECDIR, N_EXPR,
-    N_FLAGS, N_INAME, N_IREGEX, N_LS, N_MAXDEPTH,
+    N_FLAGS, N_INAME, N_IREGEX, N_LS, N_MATRIX, N_MAXDEPTH,
     N_MINDEPTH, N_NAME, N_NNODES, N_NOT, N_OK, N_OPENPAREN, N_OR, N_PATH,
-    N_PRINT, N_PRUNE, N_REGEX, N_STDATTR, N_TYPE, N_BOOL, N_PARAM
+    N_PRINT, N_PRUNE, N_REGEX, N_SIZE, N_STDATTR, N_TYPE, N_BOOL, N_PARAM
 };
 
 
@@ -94,6 +94,7 @@ struct db_plan_t {
 #define F_ATLEAST 1 /* perm */
     int min_depth;
     int max_depth;
+    mat_t m;
     int flags;				/* private flags */
     enum db_search_ntype type;		/* plan node type */
     struct bu_ptbl *plans;              /* set of all allocated plans */
@@ -132,7 +133,7 @@ struct db_plan_t {
 
 
 typedef struct _option {
-    char *name;				/* option name */
+    const char *name;				/* option name */
     enum db_search_ntype token;			/* token type */
     int (*create)(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);	/* create function */
 #define O_NONE		0x01			/* no call required */
@@ -159,6 +160,7 @@ static int c_iregex(char *, char ***, int, struct db_plan_t **, int *, struct bu
 static int c_path(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
 static int c_print(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
 static int c_stdattr(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_matrix(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
 static int c_type(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
 static int c_bool(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
 static int c_openparen(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
@@ -168,6 +170,7 @@ static int c_or(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptb
 static int c_above(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
 static int c_below(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
 static int c_exec(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_size(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
 
 __END_DECLS
 

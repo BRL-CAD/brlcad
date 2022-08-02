@@ -1,7 +1,7 @@
 /*                      P N G . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,10 +32,6 @@
 #include "vmath.h"
 #include "icv_private.h"
 
-/* defined in encoding.c */
-extern double *uchar2double(unsigned char *data, size_t size);
-extern unsigned char *data2uchar(const icv_image_t *bif);
-
 int
 png_write(icv_image_t *bif, const char *filename)
 {
@@ -61,7 +57,7 @@ png_write(icv_image_t *bif, const char *filename)
 	return 0;
     }
 
-    data = data2uchar(bif);
+    data = icv_data2uchar(bif);
 
     png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (UNLIKELY(png_ptr == NULL)) {
@@ -97,7 +93,7 @@ icv_image_t *
 png_read(const char* filename)
 {
     size_t i;
-    FILE *fp;
+    FILE *fp = NULL;
     png_structp png_p;
     png_infop info_p;
     char header[8];
@@ -112,6 +108,7 @@ png_read(const char* filename)
 
     if (filename == NULL) {
 	fp = stdin;
+	setmode(fileno(fp), O_BINARY);
     } else if ((fp = fopen(filename, "rb")) == NULL) {
 	bu_log("ERROR: Cannot open file for reading\n");
 	return NULL;
@@ -119,23 +116,27 @@ png_read(const char* filename)
 
     if (fread(header, 8, 1, fp) != 1) {
 	bu_log("png-pix: ERROR: Failed while reading file header!!!\n");
+	fclose(fp);
 	return NULL;
     }
 
     if (png_sig_cmp((png_bytep)header, 0, 8)) {
 	bu_log("png-pix: This is not a PNG file!!!\n");
+	fclose(fp);
 	return NULL;
     }
 
     png_p = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_p) {
 	bu_log("png-pix: png_create_read_struct() failed!!\n");
+	fclose(fp);
 	return NULL;
     }
 
     info_p = png_create_info_struct(png_p);
     if (!info_p) {
 	bu_log("png-pix: png_create_info_struct() failed!!\n");
+	fclose(fp);
 	return NULL;
     }
 
@@ -180,7 +181,7 @@ png_read(const char* filename)
     png_read_image(png_p, rows);
 
 
-    bif->data = uchar2double(image, 3 * bif->width * bif->height);
+    bif->data = icv_uchar2double(image, 3 * bif->width * bif->height);
     bu_free(image, "png_read : unsigned char data");
     bif->magic = ICV_IMAGE_MAGIC;
     bif->channels = 3;

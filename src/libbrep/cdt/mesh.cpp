@@ -1,7 +1,7 @@
 /*                    C D T _ M E S H . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2020 United States Government as represented by
+ * Copyright (c) 2019-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,8 +39,8 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "bn/mat.h" /* bn_vec_perp */
-#include "bn/plot3.h"
-#include "bn/plane.h" /* bn_fit_plane */
+#include "bv/plot3.h"
+#include "bg/plane.h" /* bg_fit_plane */
 #include "bg/polygon.h"
 #include "bg/tri_pt.h"
 #include "bg/trimesh.h"
@@ -196,7 +196,7 @@ bedge_seg_t::plot(const char *fname)
 std::vector<std::pair<cdt_mesh_t *,uedge_t>>
 bedge_seg_t::uedges()
 {
-    std::vector<std::pair<cdt_mesh_t *,uedge_t>> uedges;
+    std::vector<std::pair<cdt_mesh_t *,uedge_t>> edges;
     struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)p_cdt;
     int f_id1 = s_cdt_edge->brep->m_T[tseg1->trim_ind].Face()->m_face_index;
     int f_id2 = s_cdt_edge->brep->m_T[tseg2->trim_ind].Face()->m_face_index;
@@ -211,15 +211,15 @@ bedge_seg_t::uedges()
     long ue1_2 = fmesh_f1.p2ind[fmesh_f1.pnts[fmesh_f1.p2d3d[poly1->p2o[tseg1->v2d[1]]]]];
     uedge_t ue1(ue1_1, ue1_2);
 
-    uedges.push_back(std::make_pair(&fmesh_f1, ue1));
+    edges.push_back(std::make_pair(&fmesh_f1, ue1));
 
     long ue2_1 = fmesh_f2.p2ind[fmesh_f2.pnts[fmesh_f2.p2d3d[poly2->p2o[tseg2->v2d[0]]]]];
     long ue2_2 = fmesh_f2.p2ind[fmesh_f2.pnts[fmesh_f2.p2d3d[poly2->p2o[tseg2->v2d[1]]]]];
     uedge_t ue2(ue2_1, ue2_2);
 
-    uedges.push_back(std::make_pair(&fmesh_f2, ue2));
+    edges.push_back(std::make_pair(&fmesh_f2, ue2));
 
-    return uedges;
+    return edges;
 }
 
 /*****************************/
@@ -227,18 +227,18 @@ bedge_seg_t::uedges()
 /*****************************/
 
 ON_3dPoint *
-triangle_t::vpnt(int i)
+triangle_t::vpnt(int idx)
 {
-    return m->pnts[v[i]];
+    return m->pnts[v[idx]];
 }
 
 double
 triangle_t::opp_edge_dist(int vind)
 {
     std::vector<int> everts;
-    for (int i = 0; i < 3; i++) {
-	if (v[i] != vind) {
-	    everts.push_back(v[i]);
+    for (int idx = 0; idx < 3; idx++) {
+	if (v[idx] != vind) {
+	    everts.push_back(v[idx]);
 	}
     }
     if (everts.size() != 2) {
@@ -255,9 +255,9 @@ triangle_t::opp_edge_dist(int vind)
 }
 
 char *
-triangle_t::ppnt(int i)
+triangle_t::ppnt(int idx)
 {
-    ON_3dPoint *p = vpnt(i);
+    ON_3dPoint *p = vpnt(idx);
     struct bu_vls pp = BU_VLS_INIT_ZERO;
     char *rstr = NULL;
     bu_vls_sprintf(&pp, "%.17f %.17f %.17f", p->x, p->y, p->z);
@@ -276,9 +276,9 @@ double
 triangle_t::shortest_edge_len()
 {
     double len = DBL_MAX;
-    for (int i = 0; i < 3; i++) {
-	long v0 = v[i];
-	long v1 = (i < 2) ? v[i + 1] : v[0];
+    for (int idx = 0; idx < 3; idx++) {
+	long v0 = v[idx];
+	long v1 = (idx < 2) ? v[idx + 1] : v[0];
 	ON_3dPoint *p1 = m->pnts[v0];
 	ON_3dPoint *p2 = m->pnts[v1];
 	double d = p1->DistanceTo(*p2);
@@ -293,9 +293,9 @@ triangle_t::shortest_edge()
 {
     uedge_t ue;
     double len = DBL_MAX;
-    for (int i = 0; i < 3; i++) {
-	long v0 = v[i];
-	long v1 = (i < 2) ? v[i + 1] : v[0];
+    for (int idx = 0; idx < 3; idx++) {
+	long v0 = v[idx];
+	long v1 = (idx < 2) ? v[idx + 1] : v[0];
 	ON_3dPoint *p1 = m->pnts[v0];
 	ON_3dPoint *p2 = m->pnts[v1];
 	double d = p1->DistanceTo(*p2);
@@ -315,18 +315,18 @@ triangle_t::split(uedge_t &ue, long split_pnt, bool flip)
     long B = -1;
     long C = -1;
     long E =split_pnt;
-    for (int i = 0; i < 3; i++) {
-	long v0 = v[i];
-	long v1 = (i < 2) ? v[i + 1] : v[0];
+    for (int idx = 0; idx < 3; idx++) {
+	long v0 = v[idx];
+	long v1 = (idx < 2) ? v[idx + 1] : v[0];
 	if ((v0 == ue.v[0] && v1 == ue.v[1]) || (v0 == ue.v[1] && v1 == ue.v[0])) {
 	    A = v1;
 	    C = v0;
 	    break;
 	}
     }
-    for (int i = 0; i < 3; i++) {
-	if (v[i] != A && v[i] != C) {
-	    B = v[i];
+    for (int idx = 0; idx < 3; idx++) {
+	if (v[idx] != A && v[idx] != C) {
+	    B = v[idx];
 	    break;
 	}
     }
@@ -355,20 +355,20 @@ triangle_t::split(uedge_t &ue, long split_pnt, bool flip)
 }
 
 double
-triangle_t::uedge_len(int i)
+triangle_t::uedge_len(int idx)
 {
-    long v0 = v[i];
-    long v1 = (i < 2) ? v[i + 1] : v[0];
+    long v0 = v[idx];
+    long v1 = (idx < 2) ? v[idx + 1] : v[0];
     ON_3dPoint *p1 = m->pnts[v0];
     ON_3dPoint *p2 = m->pnts[v1];
     return p1->DistanceTo(*p2);
 }
 
 uedge_t
-triangle_t::uedge(int i)
+triangle_t::uedge(int idx)
 {
-    long v0 = v[i];
-    long v1 = (i < 2) ? v[i + 1] : v[0];
+    long v0 = v[idx];
+    long v1 = (idx < 2) ? v[idx + 1] : v[0];
     return uedge_t(v0, v1);
 }
 
@@ -376,9 +376,9 @@ double
 triangle_t::longest_edge_len()
 {
     double len = -DBL_MAX;
-    for (int i = 0; i < 3; i++) {
-	long v0 = v[i];
-	long v1 = (i < 2) ? v[i + 1] : v[0];
+    for (int idx = 0; idx < 3; idx++) {
+	long v0 = v[idx];
+	long v1 = (idx < 2) ? v[idx + 1] : v[0];
 	ON_3dPoint *p1 = m->pnts[v0];
 	ON_3dPoint *p2 = m->pnts[v1];
 	double d = p1->DistanceTo(*p2);
@@ -393,9 +393,9 @@ triangle_t::longest_edge()
 {
     uedge_t ue;
     double len = -DBL_MAX;
-    for (int i = 0; i < 3; i++) {
-	long v0 = v[i];
-	long v1 = (i < 2) ? v[i + 1] : v[0];
+    for (int idx = 0; idx < 3; idx++) {
+	long v0 = v[idx];
+	long v1 = (idx < 2) ? v[idx + 1] : v[0];
 	ON_3dPoint *p1 = m->pnts[v0];
 	ON_3dPoint *p2 = m->pnts[v1];
 	double d = p1->DistanceTo(*p2);
@@ -1995,12 +1995,12 @@ cdt_mesh_t::uedges(const triangle_t &t)
     ue[1].set(t.v[1], t.v[2]);
     ue[2].set(t.v[2], t.v[0]);
 
-    std::set<uedge_t> uedges;
-    for (int i = 0; i < 3; i++) {
-	uedges.insert(ue[i]);
+    std::set<uedge_t> edges;
+    for (int idx = 0; idx < 3; idx++) {
+	edges.insert(ue[idx]);
     }
 
-    return uedges;
+    return edges;
 }
 
 std::set<uedge_t>
@@ -2210,11 +2210,11 @@ class uedge_dist_t
 };
 
 std::vector<uedge_t>
-cdt_mesh_t::sorted_uedges_l_to_s(std::set<uedge_t> &uedges)
+cdt_mesh_t::sorted_uedges_l_to_s(std::set<uedge_t> &edges)
 {
     std::vector<uedge_dist_t> ued_vect;
     std::set<uedge_t>::iterator ue_it;
-    for (ue_it = uedges.begin(); ue_it != uedges.end(); ue_it++) {
+    for (ue_it = edges.begin(); ue_it != edges.end(); ue_it++) {
 	uedge_dist_t ued;
 	ued.ue = *ue_it;
 	ON_3dPoint p1, p2;
@@ -2271,7 +2271,7 @@ cdt_mesh_t::uedge_polygon(uedge_t &ue)
 	fpnts[tpind][Z] = p->z;
 	tpind++;
     }
-    if (bn_fit_plane(&pcenter, &pnorm, t_pts.size(), fpnts)) {
+    if (bg_fit_plane(&pcenter, &pnorm, t_pts.size(), fpnts)) {
 	std::cout << "fitting plane failed!\n";
 	bu_free(fpnts, "fitting points");
 	return NULL;
@@ -3055,10 +3055,10 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 }
 
 bool
-cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg, ON_Plane *pplane)
+cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repairit, double deg, ON_Plane *pplane)
 {
     // build an initial loop from a nearby valid triangle
-    cpolygon_t *polygon = build_initial_loop(seed, repair, pplane);
+    cpolygon_t *polygon = build_initial_loop(seed, repairit, pplane);
 
     if (!polygon) {
 	std::cerr << "Could not build initial valid loop\n";
@@ -3066,7 +3066,7 @@ cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg, ON_Plane
     }
 
     // Grow until we contain the seed and its associated problem data
-    int tri_cnt = grow_loop(polygon, deg, repair, seed, (pplane == NULL));
+    int tri_cnt = grow_loop(polygon, deg, repairit, seed, (pplane == NULL));
     if (tri_cnt < 0) {
 	if (!grow_loop_failure_ok) {
 	    std::cerr << "grow_loop failure\n";
@@ -4469,7 +4469,7 @@ cdt_mesh_t::deserialize(const char *fname)
 
 
 cpolygon_t *
-cdt_mesh_t::build_initial_loop(triangle_t &seed, bool repair, ON_Plane *pplane)
+cdt_mesh_t::build_initial_loop(triangle_t &seed, bool repairit, ON_Plane *pplane)
 {
     std::set<uedge_t>::iterator u_it;
 
@@ -4504,7 +4504,7 @@ cdt_mesh_t::build_initial_loop(triangle_t &seed, bool repair, ON_Plane *pplane)
 	polygon->o2p[i] = i;
     }
 
-    if (repair) {
+    if (repairit) {
 	// None of the edges or vertices from any of the problem triangles can be
 	// in a polygon edge.  By definition, the seed is a problem triangle.
 	std::set<long> seed_verts;
@@ -4687,7 +4687,7 @@ cdt_mesh_t::best_fit_plane_reproject(cpolygon_t *polygon)
 	    vpnts[pnts_ind][Z] = p->z;
 	    pnts_ind++;
 	}
-	if (bn_fit_plane(&pcenter, &pnorm, pnts_ind, vpnts)) {
+	if (bg_fit_plane(&pcenter, &pnorm, pnts_ind, vpnts)) {
 	    return false;
 	}
 	bu_free(vpnts, "fitting points");
@@ -4771,7 +4771,7 @@ cdt_mesh_t::best_fit_plane(std::set<triangle_t> &ts)
 	vpnts[pnts_ind][Z] = p->z;
 	pnts_ind++;
     }
-    if (bn_fit_plane(&pcenter, &pnorm, pnts_ind, vpnts)) {
+    if (bg_fit_plane(&pcenter, &pnorm, pnts_ind, vpnts)) {
 	ON_Plane null_fit_plane(ON_3dPoint::UnsetPoint, ON_3dVector::UnsetVector);
 	return null_fit_plane;
     }

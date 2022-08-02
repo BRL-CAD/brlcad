@@ -4,138 +4,118 @@ set(DM_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
+  ${BG_INCLUDE_DIRS}
+  ${BVIEW_INCLUDE_DIRS}
+  ${ICV_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
-  ${FB_INCLUDE_DIRS}
-  ${X11_INCLUDE_DIR}
-  ${OPENGL_INCLUDE_DIR_GL}
-  ${OPENGL_INCLUDE_DIR_GLX}
-  ${TCL_INCLUDE_PATH}
-  ${TK_INCLUDE_PATH}
-  ${Qt5Widgets_INCLUDE_DIRS}
-  ${OPENTHREADS_INCLUDE_DIR}
-  ${OSG_INCLUDE_DIR}
+  ${PNG_INCLUDE_DIRS}
   )
 
+if(BRLCAD_ENABLE_OPENGL)
+  set(DM_INCLUDE_DIRS ${DM_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR})
+endif(BRLCAD_ENABLE_OPENGL)
+
 # local includes
-set(DM_LOCAL_INCLUDE_DIRS ${PNG_INCLUDE_DIRS})
+set(DM_LOCAL_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BRLCAD_SOURCE_DIR}/src/libbg
+  )
 
 BRLCAD_LIB_INCLUDE_DIRS(dm DM_INCLUDE_DIRS DM_LOCAL_INCLUDE_DIRS)
 
-# Initialize libdm_DEFINES in case of reconfiguration
-set(libdm_DEFINES "")
-
-# Set libdm compilation definitions
-get_property(libdm_DEFINES GLOBAL PROPERTY libdm_DEFINES)
-# Add the individual OS specific files and definitions
-if(WIN32 AND BRLCAD_ENABLE_OPENGL)
-  list(APPEND libdm_DEFINES DM_WGL IF_WGL)
-  set(dmw32_srcs dm-wgl.c)
-  set_property(SOURCE dm-wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-endif(WIN32 AND BRLCAD_ENABLE_OPENGL)
-
-if(BRLCAD_ENABLE_X11)
-  set(DM_X_LIBS ${X11_LIBRARIES})
-endif(BRLCAD_ENABLE_X11)
-
-if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
-  list(APPEND libdm_DEFINES DM_X IF_X)
-  set(dmx11_srcs dm-X.c)
-  set_property(SOURCE dm-X.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
-
-if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
-  list(APPEND libdm_DEFINES DM_OGL IF_OGL)
-  set(dmogl_srcs dm-ogl.c)
-  set_property(SOURCE dm-ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
-
-if(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_DM_TK)
-  list(APPEND libdm_DEFINES DM_TK IF_TK)
-  set(DM_TKLIB ${TCL_LIBRARY} ${TK_LIBRARY})
-  set(dmtk_srcs dm-tk.c)
-  set_property(SOURCE dm-tk.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-endif(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_DM_TK)
-
-#if(BRLCAD_ENABLE_QT)
-#  CHECK_CXX_FLAG(Wno-float-equal)
-#
-#  list(APPEND libdm_DEFINES DM_QT IF_QT)
-#  set(dmqt_srcs dm-qt.cpp)
-#  set_property(SOURCE dm-qt.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-#  set(CMAKE_AUTOMOC ON)
-#  set(CMAKE_INCLUDE_CURRENT_DIR ON)
-#  add_definitions(${Qt5Widgets_DEFINITIONS})
-#  set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${Qt5Widgets_LIBRARIES})
-#endif(BRLCAD_ENABLE_QT)
-
-if(BRLCAD_ENABLE_OSG AND BRLCAD_ENABLE_TK)
-  list(APPEND libdm_DEFINES DM_OSGL IF_OSGL)
-  set(dmosg_srcs dm-osgl.cpp)
-  set_property(SOURCE dm-osgl.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-  set(OSG_LIBRARIES
-    ${OSG_LIBRARY}
-    ${OSGTEXT_LIBRARY}
-    ${OSGVIEWER_LIBRARY}
-    )
-  set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${OSG_LIBRARIES})
-endif(BRLCAD_ENABLE_OSG AND BRLCAD_ENABLE_TK)
-
-
-set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
-
+# Main libdm library
 set(LIBDM_SRCS
-  ${dmx11_srcs}
-  ${dmw32_srcs}
-  ${dmogl_srcs}
-  ${dmosg_srcs}
-  ${dmrtgl_srcs}
-  ${dmtk_srcs}
-  ${dmqt_srcs}
+  null/dm-Null.c
+  null/if_null.c
+  txt/if_debug.c
   adc.c
+  asize.c
   axes.c
   clip.c
-  color.c
-  dm-Null.c
   dm-generic.c
-  dm-plot.c
-  dm-ps.c
-  dm_obj.c
+  dm_init.cpp
+  dm_plugins.cpp
   dm_util.c
-  dm-txt.c
+  fb_generic.c
+  fb_log.c
+  fb_paged_io.c
+  fb_rect.c
+  fb_util.c
+  fbserv.c
   grid.c
+  if_disk.c
+  if_mem.c
+  if_remote.c
+  if_stack.c
   knob.c
   labels.c
   options.c
-  query.c
   rect.c
   scale.c
-  tcl.c
+  view.c
   vers.c
   )
 set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libfb;${DM_X_LIBS};${DM_TKLIB};${DM_EXTRA_LIBS};${PNG_LIBRARIES}")
+set_property(SOURCE dm_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "DM_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libicv;libbv;libbn;libbg;libbu;libpkg;${PNG_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
-
-if(BRLCAD_ENABLE_OSG)
-  BRLCAD_ADDEXEC(osg-test osg-test.cpp "librt;libbu;${OSG_LIBRARIES}" NO_STRICT NO_INSTALL)
-  if(HIDE_INTERNAL_SYMBOLS)
-    if (TARGET osg OR HIDE_INTERNAL_SYMBOLS_EXT)
-      set_property(TARGET libdm APPEND PROPERTY COMPILE_DEFINITIONS "FREETYPE_DLL_IMPORTS")
-    endif (TARGET osg OR HIDE_INTERNAL_SYMBOLS_EXT)
-    if(TARGET libdm-obj)
-      if (TARGET osg OR HIDE_INTERNAL_SYMBOLS_EXT)
-	set_property(TARGET libdm-obj APPEND PROPERTY COMPILE_DEFINITIONS "FREETYPE_DLL_IMPORTS")
-      endif (TARGET osg OR HIDE_INTERNAL_SYMBOLS_EXT)
-    endif(TARGET libdm-obj)
-  endif(HIDE_INTERNAL_SYMBOLS)
-endif(BRLCAD_ENABLE_OSG)
-
-if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
-  add_dependencies(libdm tk)
-endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
-if(BRLCAD_ENABLE_OSG)
+if (TARGET profont_ProFont_ttf_cp)
   add_dependencies(libdm profont_ProFont_ttf_cp)
-endif(BRLCAD_ENABLE_OSG)
+endif (TARGET profont_ProFont_ttf_cp)
+
+
+# Many of the backends use the same OpenGL drawing logic for much of their
+# functionality.  If OpenGL support is available, We encapsulate the common
+# elements of this logic in a libdmgl library used by those plugins.
+set(LIBDMGL_SRCS
+  dm-gl.c
+  dm-gl_lod.cpp
+  )
+if (BRLCAD_ENABLE_OPENGL)
+  find_package(OpenGL)
+
+  if (OPENGL_opengl_LIBRARY)
+    set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
+  endif (OPENGL_opengl_LIBRARY)
+  if (OPENGL_gl_LIBRARY)
+    set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
+  endif (OPENGL_gl_LIBRARY)
+
+  BRLCAD_ADDLIB(libdmgl "${LIBDMGL_SRCS}" "libdm;libbn;libbu;${OPENGL_LIBS}")
+  set_target_properties(libdmgl PROPERTIES VERSION 20.0.1 SOVERSION 20)
+endif (BRLCAD_ENABLE_OPENGL)
+
+
+add_custom_command(
+  OUTPUT "${CMAKE_BINARY_DIR}/dm_plugins.sentinel"
+  COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/dm_plugins.sentinel"
+  )
+add_custom_target(dm_plugins_sentinel
+  DEPENDS ${CMAKE_BINARY_DIR}/dm_plugins.sentinel
+  )
+set_target_properties(dm_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/dm")
+
+function(dm_plugin_library name)
+  add_library(${name} ${ARGN})
+  add_dependencies(dm_plugins_sentinel ${name})
+endfunction(dm_plugin_library name)
+
+# This target is supplied so applications wanting to run libdm
+# commands at build time can depend on the plugins being built as well as
+# libdm itself (otherwise LIBGED commands might fail due to their plugins not
+# yet having been built.)
+add_custom_target(dm_plugins ALL DEPENDS dm_plugins_sentinel)
+set_target_properties(dm_plugins PROPERTIES FOLDER "BRL-CAD Plugins")
+
+# Backend implementations
+add_subdirectory(X)
+add_subdirectory(glx)
+add_subdirectory(plot)
+add_subdirectory(postscript)
+add_subdirectory(qtgl)
+add_subdirectory(swrast)
+add_subdirectory(txt)
+add_subdirectory(wgl)
 
 add_subdirectory(tests)
 
@@ -143,33 +123,19 @@ set(libdm_ignore_files
   CMakeLists.txt
   README
   TODO
-  dm-Null.h
-  dm-X.c
-  dm-X.h
-  dm-glx.h
-  dm-ogl.c
-  dm-ogl.h
-  dm-osgl.cpp
-  dm-osgl.h
-  dm-plot.h
-  dm-ps.h
-  dm-qt.cpp
-  dm-qt.h
-  dm-tk.c
-  dm-tk.h
-  dm-wgl.c
-  dm-wgl.h
-  dm_private.h
+  dm-gl.c
+  dm-gl.h
+  if_TEMPLATE.c
+  null/dm-Null.h
+  include/private.h
+  include/calltable.h
   fontstash/LICENSE.fontstash
   fontstash/README.md
   fontstash/fontstash.h
   fontstash/glfontstash.h
   fontstash/stb_truetype.h
-  osg-test.cpp
-  osg_bob.cpp
   )
 CMAKEFILES(${libdm_ignore_files})
-CMAKEFILES(dm_private.h)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                     T E S T _ T O P S . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2020 United States Government as represented by
+ * Copyright (c) 2018-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,10 +46,9 @@ main(int ac, char *av[]) {
     }
 
     dbp = ged_open("db", av[1], 1);
-    ged_tops(dbp, 2, tops);
+    ged_exec(dbp, 2, tops);
     printf("%s\n", bu_vls_addr(dbp->ged_result_str));
     ged_close(dbp);
-    BU_PUT(dbp, struct ged);
 
     return 0;
 }

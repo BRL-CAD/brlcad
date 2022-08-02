@@ -1,7 +1,7 @@
 /*                     S H _ P O I N T S . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2020 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 #include "vmath.h"
 #include "bn/spm.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 #include "optical.h"
 
 

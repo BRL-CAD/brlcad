@@ -1,7 +1,7 @@
 /*                    O S G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include "common.h"
 
 #include "ged.h"
-#include "rt/solid.h"
+#include "bv/defines.h"
 #include <assert.h>
 
 #include <osg/Geode>
@@ -42,7 +42,7 @@
 
 
 __BEGIN_DECLS
-void ged_osgLoadScene(struct bu_list *hdlp, void *osgData);
+void _ged_osgLoadScene(struct bu_list *hdlp, void *osgData);
 __END_DECLS
 
 
@@ -53,23 +53,23 @@ struct osg_stuff {
 };
 
 HIDDEN void
-_osgLoadHiddenSolid(osg::Geode *geode, struct solid *sp)
+_osgLoadHiddenSolid(osg::Geode *geode, struct bv_scene_obj *sp)
 {
-    register struct bn_vlist *vp = (struct bn_vlist *)&sp->s_vlist;
+    register struct bv_vlist *vp = (struct bv_vlist *)&sp->s_vlist;
     osg::Vec3dArray* vertices;
 }
 
 
 HIDDEN void
-_osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices, osg::Vec3dArray *normals, struct solid *sp)
+_osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices, osg::Vec3dArray *normals, struct bv_scene_obj *sp)
 {
-    struct bn_vlist *tvp;
+    struct bv_vlist *tvp;
     int first;
-    register struct bn_vlist *vp = (struct bn_vlist *)&sp->s_vlist;
+    register struct bv_vlist *vp = (struct bv_vlist *)&sp->s_vlist;
     int begin;
     int nverts;
 
-    bu_log("ged_osgLoadSolid: enter\n");
+    bu_log("_ged_osgLoadSolid: enter\n");
 
 
 
@@ -77,14 +77,14 @@ _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices,
     begin = 0;
     nverts = 0;
     first = 1;
-    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
 	int i;
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
 	point_t *pt = tvp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {
-		case BN_VLIST_LINE_MOVE:
+		case BV_VLIST_LINE_MOVE:
 		    /* Move, start line */
 		    if (first == 0) {
 			geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
@@ -101,23 +101,23 @@ _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices,
 		    normals->push_back(osg::Vec3(0.0f,-1.0f,0.0f));
 		    begin += nverts;
 		    nverts = 1;
-		    //bu_log("ged_osgLoadSolid: loaded point - (%lf %lf %lf)\n", (*pt)[X], (*pt)[Y], (*pt)[Z]);
+		    //bu_log("_ged_osgLoadSolid: loaded point - (%lf %lf %lf)\n", (*pt)[X], (*pt)[Y], (*pt)[Z]);
 		    break;
-		case BN_VLIST_POLY_START:
+		case BV_VLIST_POLY_START:
 		    normals->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
 		    begin += nverts;
 		    nverts = 0;
 
 		    break;
-		case BN_VLIST_LINE_DRAW:
-		case BN_VLIST_POLY_MOVE:
-		case BN_VLIST_POLY_DRAW:
+		case BV_VLIST_LINE_DRAW:
+		case BV_VLIST_POLY_MOVE:
+		case BV_VLIST_POLY_DRAW:
 		    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
 		    ++nverts;
 
-		    //bu_log("ged_osgLoadSolid: loaded point - (%lf %lf %lf)\n", (*pt)[X], (*pt)[Y], (*pt)[Z]);
+		    //bu_log("_ged_osgLoadSolid: loaded point - (%lf %lf %lf)\n", (*pt)[X], (*pt)[Y], (*pt)[Z]);
 		    break;
-		case BN_VLIST_POLY_END:
+		case BV_VLIST_POLY_END:
 		    //vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
 		    //++nverts;
 		    geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,begin,nverts));
@@ -126,7 +126,7 @@ _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices,
 		    bu_log("Add polygon: begin - %d, nverts - %d\n", begin, nverts);
 
 		    break;
-		case BN_VLIST_POLY_VERTNORM:
+		case BV_VLIST_POLY_VERTNORM:
 		    break;
 	    }
 	}
@@ -142,32 +142,32 @@ _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices,
 	//geode->addDrawable(geom);
     }
 
-    bu_log("ged_osgLoadSolid: leave\n");
+    bu_log("_ged_osgLoadSolid: leave\n");
 }
 
 
 void
-ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
+_ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
 {
     register struct display_list *gdlp;
     register struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bv_scene_obj *sp;
     struct osg_stuff *osp = (struct osg_stuff *)osgData;
 
-    bu_log("ged_osgLoadScene: part B\n");
+    bu_log("_ged_osgLoadScene: part B\n");
     osg::Group* root = new osg::Group();
 
     // create the Geode (Geometry Node) to contain all our osg::Geometry objects.
     osg::Geode* geode = new osg::Geode();
 
     bu_log("before: max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
-    bu_log("ged_osgLoadScene: enter\n");
+    bu_log("_ged_osgLoadScene: enter\n");
     gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    if (sp->s_hiddenLine) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_head_scene_obj) {
+	    if (sp->s_dmode == 4) {
 		_osgLoadHiddenSolid(geode, sp);
 	    } else {
 		osg::Geometry* geom = new osg::Geometry();
@@ -192,7 +192,7 @@ ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
     bu_log("after: max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
 
 
-    bu_log("ged_osgLoadScene: loaded geode\n");
+    bu_log("_ged_osgLoadScene: loaded geode\n");
 }
 
 // Local Variables:

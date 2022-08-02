@@ -1,7 +1,7 @@
 /*                        N M G / D E B U G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libnmg
+/** @addtogroup nmg_debug
  *
  * Debugging flags for NMG
  *
@@ -30,39 +30,43 @@
 
 #include "common.h"
 
-#define NMG_DEBUG_PL_ANIM     0x00000001	/* 1 mged: animated evaluation */
-#define NMG_DEBUG_PL_SLOW     0x00000002	/* 2 mged: add delays to animation */
-#define NMG_DEBUG_GRAPHCL     0x00000004	/* 3 mged: graphic classification */
-#define NMG_DEBUG_PL_LOOP     0x00000008	/* 4 loop class (needs GRAPHCL) */
-#define NMG_DEBUG_PLOTEM      0x00000010	/* 5 make plots in debugged routines (needs other flags set too) */
-#define NMG_DEBUG_POLYSECT    0x00000020	/* 6 nmg_inter: face intersection */
-#define NMG_DEBUG_VERIFY      0x00000040	/* 7 nmg_vshell() frequently, verify health */
-#define NMG_DEBUG_BOOL        0x00000080	/* 8 nmg_bool:  */
-#define NMG_DEBUG_CLASSIFY    0x00000100	/* 9 nmg_class: */
-#define NMG_DEBUG_BOOLEVAL    0x00000200	/* 10 nmg_eval: what to retain */
-#define NMG_DEBUG_BASIC       0x00000400	/* 11 nmg_mk.c and nmg_mod.c routines */
-#define NMG_DEBUG_MESH        0x00000800	/* 12 nmg_mesh: describe edge search */
-#define NMG_DEBUG_MESH_EU     0x00001000	/* 13 nmg_mesh: list edges meshed */
-#define NMG_DEBUG_POLYTO      0x00002000	/* 14 nmg_misc: polytonmg */
-#define NMG_DEBUG_LABEL_PTS   0x00004000	/* 15 label points in plot files */
-#define NMG_DEBUG_UNUSED1     0x00008000	/* 16 UNUSED */
-#define NMG_DEBUG_NMGRT       0x00010000	/* 17 ray tracing */
-#define NMG_DEBUG_FINDEU      0x00020000	/* 18 nmg_mod: nmg_findeu() */
-#define NMG_DEBUG_CMFACE      0x00040000	/* 19 nmg_mod: nmg_cmface() */
-#define NMG_DEBUG_CUTLOOP     0x00080000	/* 20 nmg_mod: nmg_cut_loop */
-#define NMG_DEBUG_VU_SORT     0x00100000	/* 21 nmg_fcut: coincident vu sort */
-#define NMG_DEBUG_FCUT        0x00200000	/* 22 nmg_fcut: face cutter */
-#define NMG_DEBUG_RT_SEGS     0x00400000	/* 23 nmg_rt_segs: */
-#define NMG_DEBUG_RT_ISECT    0x00800000	/* 24 nmg_rt_isect: */
-#define NMG_DEBUG_TRI         0x01000000	/* 25 nmg_tri */
-#define NMG_DEBUG_PNT_FU      0x02000000	/* 26 nmg_pt_fu */
-#define NMG_DEBUG_MANIF       0x04000000	/* 27 nmg_manif */
-#define NMG_DEBUG_UNUSED2     0x08000000	/* 28 UNUSED */
-#define NMG_DEBUG_UNUSED3     0x10000000	/* 29 UNUSED */
-#define NMG_DEBUG_UNUSED4     0x20000000	/* 30 UNUSED */
-#define NMG_DEBUG_UNUSED5     0x40000000	/* 31 UNUSED */
-#define NMG_DEBUG_UNUSED6     0x80000000	/* 32 UNUSED */
-#define NMG_DEBUG_FORMAT  "\020" /* print hex */ \
+#include "nmg/defines.h"
+
+__BEGIN_DECLS
+
+#define NMG_DEBUG_PL_ANIM     0x00000001	/**< @brief 1 mged: animated evaluation */
+#define NMG_DEBUG_PL_SLOW     0x00000002	/**< @brief 2 mged: add delays to animation */
+#define NMG_DEBUG_GRAPHCL     0x00000004	/**< @brief 3 mged: graphic classification */
+#define NMG_DEBUG_PL_LOOP     0x00000008	/**< @brief 4 loop class (needs GRAPHCL) */
+#define NMG_DEBUG_PLOTEM      0x00000010	/**< @brief 5 make plots in debugged routines (needs other flags set too) */
+#define NMG_DEBUG_POLYSECT    0x00000020	/**< @brief 6 nmg_inter: face intersection */
+#define NMG_DEBUG_VERIFY      0x00000040	/**< @brief 7 nmg_vshell() frequently, verify health */
+#define NMG_DEBUG_BOOL        0x00000080	/**< @brief 8 nmg_bool:  */
+#define NMG_DEBUG_CLASSIFY    0x00000100	/**< @brief 9 nmg_class: */
+#define NMG_DEBUG_BOOLEVAL    0x00000200	/**< @brief 10 nmg_eval: what to retain */
+#define NMG_DEBUG_BASIC       0x00000400	/**< @brief 11 nmg_mk.c and nmg_mod.c routines */
+#define NMG_DEBUG_MESH        0x00000800	/**< @brief 12 nmg_mesh: describe edge search */
+#define NMG_DEBUG_MESH_EU     0x00001000	/**< @brief 13 nmg_mesh: list edges meshed */
+#define NMG_DEBUG_POLYTO      0x00002000	/**< @brief 14 nmg_misc: polytonmg */
+#define NMG_DEBUG_LABEL_PTS   0x00004000	/**< @brief 15 label points in plot files */
+#define NMG_DEBUG_UNUSED1     0x00008000	/**< @brief 16 UNUSED */
+#define NMG_DEBUG_NMGRT       0x00010000	/**< @brief 17 ray tracing */
+#define NMG_DEBUG_FINDEU      0x00020000	/**< @brief 18 nmg_mod: nmg_findeu() */
+#define NMG_DEBUG_CMFACE      0x00040000	/**< @brief 19 nmg_mod: nmg_cmface() */
+#define NMG_DEBUG_CUTLOOP     0x00080000	/**< @brief 20 nmg_mod: nmg_cut_loop */
+#define NMG_DEBUG_VU_SORT     0x00100000	/**< @brief 21 nmg_fcut: coincident vu sort */
+#define NMG_DEBUG_FCUT        0x00200000	/**< @brief 22 nmg_fcut: face cutter */
+#define NMG_DEBUG_RT_SEGS     0x00400000	/**< @brief 23 nmg_rt_segs: */
+#define NMG_DEBUG_RT_ISECT    0x00800000	/**< @brief 24 nmg_rt_isect: */
+#define NMG_DEBUG_TRI         0x01000000	/**< @brief 25 nmg_tri */
+#define NMG_DEBUG_PNT_FU      0x02000000	/**< @brief 26 nmg_pt_fu */
+#define NMG_DEBUG_MANIF       0x04000000	/**< @brief 27 nmg_manif */
+#define NMG_DEBUG_UNUSED2     0x08000000	/**< @brief 28 UNUSED */
+#define NMG_DEBUG_UNUSED3     0x10000000	/**< @brief 29 UNUSED */
+#define NMG_DEBUG_UNUSED4     0x20000000	/**< @brief 30 UNUSED */
+#define NMG_DEBUG_UNUSED5     0x40000000	/**< @brief 31 UNUSED */
+#define NMG_DEBUG_UNUSED6     0x80000000	/**< @brief 32 UNUSED */
+#define NMG_DEBUG_FORMAT  "\020" /**< @brief print hex */ \
     "\040UNUSED6" \
     "\037UNUSED5" \
     "\036UNUSED4" \
@@ -95,6 +99,8 @@
     "\3GRAPHCL" \
     "\2PL_SLOW" \
     "\1PL_ANIM"
+
+__END_DECLS
 
 #endif /* NMG_H */
 

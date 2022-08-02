@@ -1,7 +1,7 @@
 /*                         C S G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -266,14 +266,14 @@ csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_w
     }
 }
 
-#define BOOL_RESOLVE(_a, _b) (_b == '+') ? &isect : ((_a == '-' && _b == '-') || (_a == 'u' && _b == 'u')) ? &un : &sub
+#define BOOL_RESOLVE(_a, _b) (_b == '+') ? isect : ((_a == '-' && _b == '-') || (_a == 'u' && _b == 'u')) ? un : sub
 
 HIDDEN int
 make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *wdbp, const char *rname)
 {
-    char un = 'u';
-    char sub = '-';
-    char isect = '+';
+    const char *un = "u";
+    const char *sub = "-";
+    const char *isect = "+";
 
     struct wmember wcomb;
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
@@ -294,10 +294,10 @@ make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *
 	csg_obj_process(msgs, data->params, wdbp, rname);
 	subbrep_obj_name(data->params->csg_type, data->params->csg_id, rname, &prim_name);
 	//bu_log("  %c %s\n", data->params->bool_op, bu_vls_addr(&prim_name));
-	(void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_str2op(&(data->params->bool_op)));
+	(void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_char2op(data->params->bool_op));
 	for (unsigned int i = 0; i < BU_PTBL_LEN(data->shoal_children); i++) {
 	    struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->shoal_children, i);
-	    char *bool_op = BOOL_RESOLVE(data->params->bool_op, c->bool_op);
+	    const char *bool_op = BOOL_RESOLVE(data->params->bool_op, c->bool_op);
 	    csg_obj_process(msgs, c, wdbp, rname);
 	    bu_vls_trunc(&prim_name, 0);
 	    subbrep_obj_name(c->csg_type, c->csg_id, rname, &prim_name);
@@ -322,9 +322,9 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     struct wmember scomb;
 
     int failed = 0;
-    char un = 'u';
-    char sub = '-';
-    char isect = '+'; // UNUSED here, for BOOL_RESOLVE macro.
+    const char *un = "u";
+    const char *sub = "-";
+    const char *isect = "+"; // UNUSED here, for BOOL_RESOLVE macro.
 
     char *n_bool_op;
     if (data->island_type == BREP) {
@@ -365,8 +365,8 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 
     // In a comb, the first element is always unioned.  The nucleus bool op is applied
     // to the overall shoal in the pcomb assembly.
-    (void)mk_addmember(bu_vls_addr(&shoal_name), &(ucomb.l), NULL, db_str2op(&un));
-    char *bool_op;
+    (void)mk_addmember(bu_vls_addr(&shoal_name), &(ucomb.l), NULL, WMOP_UNION);
+    const char *bool_op;
     int union_shoal_cnt = 1;
     int subtraction_shoal_cnt = 0;
 
@@ -399,10 +399,11 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    bu_vls_trunc(&shoal_name, 0);
 	    subbrep_obj_name(d->shoal_type, d->shoal_id, rname, &shoal_name);
 	    //if (*n_bool_op == 'u') {
-		//bu_log("  subtracting: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
+	    //bu_log("  subtracting: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
 	    //}
 	    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
-	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(scomb.l), NULL, db_str2op(&un));
+	    /* FIXME: should this be WMOP_SUBTRACT */
+	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(scomb.l), NULL, WMOP_UNION);
 	    subtraction_shoal_cnt++;
 	}
     }
@@ -414,7 +415,8 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	//if (*n_bool_op == 'u') {
 	//  bu_log("  subtraction found for %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&subtraction_name));
 	//}
-	(void)mk_addmember(bu_vls_addr(&subtraction_name), &(scomb.l), NULL, db_str2op(&un));
+	/* FIXME: should this be WMOP_SUBTRACT */
+	(void)mk_addmember(bu_vls_addr(&subtraction_name), &(scomb.l), NULL, WMOP_UNION);
 	bu_vls_free(&subtraction_name);
 	subtraction_shoal_cnt++;
     }
@@ -422,17 +424,17 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     if (union_shoal_cnt > 1) {
 	mk_lcomb(wdbp, bu_vls_addr(&union_name), &ucomb, 0, NULL, NULL, NULL, 0);
     }
-    (void)mk_addmember(bu_vls_addr(&union_name), &(icomb.l), NULL, db_str2op(&un));
+    (void)mk_addmember(bu_vls_addr(&union_name), &(icomb.l), NULL, WMOP_UNION);
     if (subtraction_shoal_cnt) {
 	mk_lcomb(wdbp, bu_vls_addr(&sub_name), &scomb, 0, NULL, NULL, NULL, 0);
-	(void)mk_addmember(bu_vls_addr(&sub_name), &(icomb.l), NULL, db_str2op(&sub));
+	(void)mk_addmember(bu_vls_addr(&sub_name), &(icomb.l), NULL, WMOP_SUBTRACT);
     }
     mk_lcomb(wdbp, bu_vls_addr(&island_name), &icomb, 0, NULL, NULL, NULL, 0);
     set_attr_key(wdbp, bu_vls_addr(&island_name), "loops", data->island_loops_cnt, data->island_loops);
     set_attr_key(wdbp, bu_vls_addr(&island_name), "faces", data->island_faces_cnt, data->island_faces);
 
     if (*n_bool_op == 'u')
-	(void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(n_bool_op));
+	(void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, WMOP_UNION);
 
     // Debugging B-Reps - generates a B-Rep object for each island
 #if 0
@@ -459,7 +461,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	bu_vls_sprintf(&brep_name, "%s-brep_obj_%d.s", rname, data->island_id);
 	mk_brep(wdbp, bu_vls_addr(&brep_name), (void *)(data->local_brep));
 
-	(void)mk_addmember(bu_vls_addr(&brep_name), &(bcomb.l), NULL, db_str2op((const char *)&un));
+	(void)mk_addmember(bu_vls_addr(&brep_name), &(bcomb.l), NULL, WMOP_UNION);
 	mk_lcomb(wdbp, bu_vls_addr(&bcomb_name), &bcomb, 1, "plastic", "di=.8 sp=.2", rgb, 0);
 
 	bu_vls_free(&brep_name);
@@ -515,7 +517,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 
     // Only do this if we haven't already done it - tree walking may
     // result in multiple references to a single object
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&comb_name), LOOKUP_QUIET) == RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, bu_vls_addr(&comb_name), LOOKUP_QUIET) == RT_DIR_NULL) {
 	bu_vls_printf(log, "Converting %s to %s\n", dp->d_namep, bu_vls_addr(&comb_name));
 
 	BU_LIST_INIT(&pcomb.l);
@@ -551,15 +553,15 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 		// avoid an unnecessary level of hierarchy.
 		//bu_log("only one level... - %s\n", ((struct wmember *)pcomb.l.forw)->wm_name);
 		/*
-		int ac = 3;
-		const char **av = (const char **)bu_calloc(4, sizeof(char *), "killtree argv");
-		av[0] = "mv";
-		av[1] = ((struct wmember *)pcomb.l.forw)->wm_name;
-		av[2] = bu_vls_addr(&comb_name);
-		av[3] = (char *)0;
-		(void)ged_move(gedp, ac, av);
-		bu_free(av, "free av array");
-		bu_vls_sprintf(&comb_name, "%s", ((struct wmember *)pcomb.l.forw)->wm_name);
+		  int ac = 3;
+		  const char **av = (const char **)bu_calloc(4, sizeof(char *), "killtree argv");
+		  av[0] = "mv";
+		  av[1] = ((struct wmember *)pcomb.l.forw)->wm_name;
+		  av[2] = bu_vls_addr(&comb_name);
+		  av[3] = (char *)0;
+		  (void)ged_move(gedp, ac, av);
+		  bu_free(av, "free av array");
+		  bu_vls_sprintf(&comb_name, "%s", ((struct wmember *)pcomb.l.forw)->wm_name);
 		*/
 		mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
 	    }
@@ -567,11 +569,11 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 	    // Verify that the resulting csg tree and the original B-Rep pass a difference test.
 	    if (verify) {
 		ON_BoundingBox bbox;
-		struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+		struct bn_tol tol = BG_TOL_INIT;
 		brep->GetBoundingBox(bbox);
 		tol.dist = (bbox.Diagonal().Length() / 100.0);
 		bu_vls_printf(log, "Analyzing %s csg conversion, tol %f...\n", dp->d_namep, tol.dist);
-		if (analyze_raydiff(NULL, gedp->ged_wdbp->dbip, dp->d_namep, bu_vls_addr(&comb_name), &tol, 1)) {
+		if (analyze_raydiff(NULL, gedp->dbip, dp->d_namep, bu_vls_addr(&comb_name), &tol, 1)) {
 		    /* remove generated tree if debugging flag isn't passed - not valid */
 		    int ac = 3;
 		    const char **av = (const char **)bu_calloc(4, sizeof(char *), "killtree argv");
@@ -579,7 +581,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 		    av[1] = "-f";
 		    av[2] = bu_vls_addr(&comb_name);
 		    av[3] = (char *)0;
-		    (void)ged_killtree(gedp, ac, av);
+		    (void)ged_exec(gedp, ac, av);
 		    bu_free(av, "free av array");
 		    bu_vls_printf(log, "Error: %s did not pass diff test at tol %f, rejecting\n", bu_vls_addr(&comb_name), tol.dist);
 		    return 2;
@@ -606,7 +608,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 
 int comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set *ito, struct directory *dp, int verify);
 
-int
+static int
 brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set *ito, const union tree *oldtree, union tree *newtree, int verify)
 {
     int ret = 0;
@@ -624,13 +626,7 @@ brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribu
 	    //bu_log("convert right\n");
 	    newtree->tr_b.tb_right = new tree;
 	    RT_TREE_INIT(newtree->tr_b.tb_right);
-	    ret = brep_csg_conversion_tree(gedp, log, ito, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, verify);
-#if 0
-	    if (ret) {
-		delete newtree->tr_b.tb_right;
-		break;
-	    }
-#endif
+	    ret |= brep_csg_conversion_tree(gedp, log, ito, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, verify);
 	    /* fall through */
 	case OP_NOT:
 	case OP_GUARD:
@@ -639,19 +635,13 @@ brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribu
 	    //bu_log("convert left\n");
 	    BU_ALLOC(newtree->tr_b.tb_left, union tree);
 	    RT_TREE_INIT(newtree->tr_b.tb_left);
-	    ret = brep_csg_conversion_tree(gedp, log, ito, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, verify);
-#if 0
-	    if (ret) {
-		delete newtree->tr_b.tb_left;
-		delete newtree->tr_b.tb_right;
-	    }
-#endif
+	    ret |= brep_csg_conversion_tree(gedp, log, ito, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, verify);
 	    break;
 	case OP_DB_LEAF:
 	    oldname = oldtree->tr_l.tl_name;
 	    bu_vls_sprintf(&tmpname, "csg_%s", oldname);
-	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) == RT_DIR_NULL) {
-		struct directory *dir = db_lookup(gedp->ged_wdbp->dbip, oldname, LOOKUP_QUIET);
+	    if (db_lookup(gedp->dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) == RT_DIR_NULL) {
+		struct directory *dir = db_lookup(gedp->dbip, oldname, LOOKUP_QUIET);
 
 		if (dir != RT_DIR_NULL) {
 		    if (dir->d_flags & RT_DIR_COMB) {
@@ -690,7 +680,7 @@ brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribu
 		} else {
 		    bu_vls_printf(log, "Cannot find %s.\n", oldname);
 		    newtree = NULL;
-		    ret = -1;
+		    ret |= BRLCAD_ERROR;
 		}
 	    } else {
 		bu_vls_printf(log, "%s already exists.\n", bu_vls_addr(&tmpname));
@@ -703,7 +693,8 @@ brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribu
 	    bu_log("huh??\n");
 	    break;
     }
-    return 1;
+
+    return ret;
 }
 
 
@@ -742,33 +733,34 @@ comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set 
 
     union tree *newtree = new_internal->tree;
 
-    (void)brep_csg_conversion_tree(gedp, log, ito, oldtree, newtree, verify);
+    if (brep_csg_conversion_tree(gedp, log, ito, oldtree, newtree, verify) & BRLCAD_ERROR)
+	bu_log("Error (brep/csg.cpp:%d) brep_csg_conversion_tree\n", __LINE__);
+
     (void)wdb_export(wdbp, bu_vls_addr(&comb_name), (void *)new_internal, ID_COMBINATION, 1);
 
     return 0;
 }
 
-extern "C" int
-_ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
+extern "C"
+int _ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
 {
     struct bu_attribute_value_set ito = BU_AVS_INIT_ZERO; /* islands to objects */
     int ret = 0;
     struct bu_vls log = BU_VLS_INIT_ZERO;
     struct rt_wdb *wdbp = gedp->ged_wdbp;
     struct directory *dp = db_lookup(wdbp->dbip, dp_name, LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) return GED_ERROR;
+    if (dp == RT_DIR_NULL) return BRLCAD_ERROR;
 
     if (dp->d_flags & RT_DIR_COMB) {
-	ret = comb_to_csg(gedp, &log, &ito, dp, verify) ? GED_ERROR : GED_OK;
+	ret = comb_to_csg(gedp, &log, &ito, dp, verify) ? BRLCAD_ERROR : BRLCAD_OK;
     } else {
-	ret = _obj_brep_to_csg(gedp, &log, &ito, dp, verify, NULL) ? GED_ERROR : GED_OK;
+	ret = _obj_brep_to_csg(gedp, &log, &ito, dp, verify, NULL) ? BRLCAD_ERROR : BRLCAD_OK;
     }
 
     bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_addr(&log));
     bu_vls_free(&log);
     return ret;
 }
-
 // Local Variables:
 // tab-width: 8
 // mode: C++

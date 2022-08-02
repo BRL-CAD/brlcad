@@ -1,7 +1,7 @@
 #                 F I N D R E G E X . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2020 United States Government as represented by
+# Copyright (c) 2011-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,14 +46,15 @@
 # to include its own regex.h copy, check frameworks last - /usr/include
 # is preferred to a package-specific copy for a generic regex search
 set(CMAKE_FIND_FRAMEWORK LAST)
-find_path(REGEX_INCLUDE_DIR regex.h)
+find_path(REGEX_INCLUDE_DIRS regex.h)
 
 set(REGEX_NAMES c regex compat)
 foreach(rname ${REGEX_NAMES})
   if(NOT REGEX_LIBRARY)
+    include(CheckLibraryExists)
     check_library_exists(${rname} regcomp "" HAVE_REGEX_LIB)
     if(HAVE_REGEX_LIB)
-      find_library(REGEX_LIBRARY NAMES ${rname})
+      find_library(REGEX_LIBRARIES NAMES ${rname})
     endif(HAVE_REGEX_LIB)
   endif(NOT REGEX_LIBRARY)
 endforeach(rname ${REGEX_NAMES})
@@ -63,10 +64,8 @@ mark_as_advanced(REGEX_LIBRARY REGEX_INCLUDE_DIR)
 # handle the QUIETLY and REQUIRED arguments and set REGEX_FOUND to TRUE if
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(REGEX DEFAULT_MSG REGEX_INCLUDE_DIR REGEX_LIBRARY)
+find_package_handle_standard_args(REGEX DEFAULT_MSG REGEX_INCLUDE_DIRS REGEX_LIBRARIES)
 
-set(REGEX_INCLUDE_DIRS ${REGEX_INCLUDE_DIR})
-set(REGEX_LIBRARIES ${REGEX_LIBRARY})
 
 # Local Variables:
 # tab-width: 8

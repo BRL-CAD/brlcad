@@ -1,7 +1,7 @@
 /*                        B W - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define BYTESPERPIXEL 1
@@ -90,7 +90,7 @@ get_args(int argc, char **argv)
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((infp = fopen(file_name, "r")) == NULL) {
+	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
 	    fprintf(stderr,
 		    "bw-png: cannot open \"%s\" for reading\n",

@@ -1,7 +1,7 @@
 /*                    R A Y D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ main(int argc, char **argv)
     struct db_i *dbip = DBI_NULL;
     struct directory *dp1 = RT_DIR_NULL;
     struct directory *dp2 = RT_DIR_NULL;
-    struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    struct bn_tol tol = BG_TOL_INIT;
     struct analyze_raydiff_results *results;
 
     bu_setprogname(argv[0]);

@@ -1,7 +1,7 @@
 /*                           R H C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -819,6 +819,7 @@ rhc_hyperbolic_curve(fastf_t mag_b, fastf_t c, fastf_t r, int num_points)
  */
 static void
 rhc_plot_hyperbolic_curve(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     struct rhc_specific *rhc,
     struct rt_pnt_node *pts,
@@ -834,12 +835,12 @@ rhc_plot_hyperbolic_curve(
     VMOVE(Bu, rhc->rhc_Bunit);
 
     VJOIN2(p, t, rscale * pts->p[Y], Ru, -pts->p[Z], Bu);
-    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
 
     node = pts->next;
     while (node != NULL) {
 	VJOIN2(p, t, rscale * node->p[Y], Ru, -node->p[Z], Bu);
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
 	node = node->next;
     }
@@ -848,6 +849,7 @@ rhc_plot_hyperbolic_curve(
 
 static void
 rhc_plot_hyperbolas(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     struct rt_rhc_internal *rhc,
     struct rt_pnt_node *pts)
@@ -864,18 +866,19 @@ rhc_plot_hyperbolas(
     VUNITIZE(rhc_s.rhc_Runit);
 
     /* plot hyperbolic contour curve of face containing V */
-    rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, 1.0);
-    rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, -1.0);
+    rhc_plot_hyperbolic_curve(vlfree, vhead, &rhc_s, pts, rhc_H, 1.0);
+    rhc_plot_hyperbolic_curve(vlfree, vhead, &rhc_s, pts, rhc_H, -1.0);
 
     /* plot hyperbolic contour curve of opposing face */
     VMOVE(rhc_H, rhc->rhc_H);
-    rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, 1.0);
-    rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, -1.0);
+    rhc_plot_hyperbolic_curve(vlfree, vhead, &rhc_s, pts, rhc_H, 1.0);
+    rhc_plot_hyperbolic_curve(vlfree, vhead, &rhc_s, pts, rhc_H, -1.0);
 }
 
 
 static void
 rhc_plot_curve_connections(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     const struct rt_rhc_internal *rhc,
     int num_connections)
@@ -908,17 +911,17 @@ rhc_plot_curve_connections(
 
 	/* connect faces on one side of the curve */
 	VJOIN2(p, rhc->rhc_V, z, Zu, -y, Yu);
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
 
 	VADD2(p, p, rhc->rhc_H);
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
 	/* connect the faces on the other side */
 	VJOIN2(p, rhc->rhc_V, z, Zu, y, Yu);
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
 
 	VADD2(p, p, rhc->rhc_H);
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
     }
 }
 
@@ -926,7 +929,7 @@ rhc_plot_curve_connections(
 static int
 rhc_curve_points(
     struct rt_rhc_internal *rhc,
-    const struct rt_view_info *info)
+    fastf_t point_spacing)
 {
     fastf_t height, halfwidth, est_curve_length;
     point_t p0, p1;
@@ -939,12 +942,12 @@ rhc_curve_points(
 
     est_curve_length = 2.0 * DIST_PNT_PNT(p0, p1);
 
-    return est_curve_length / info->point_spacing;
+    return est_curve_length / point_spacing;
 }
 
 
 int
-rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     point_t p;
     vect_t rhc_R;
@@ -952,15 +955,18 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     struct rt_rhc_internal *rhc;
     struct rt_pnt_node *pts, *node, *tmp;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     rhc = (struct rt_rhc_internal *)ip->idb_ptr;
     if (!rhc_is_valid(rhc)) {
 	return -2;
     }
 
-    num_curve_points = rhc_curve_points(rhc, info);
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
+
+    num_curve_points = rhc_curve_points(rhc, point_spacing);
 
     if (num_curve_points < 3) {
 	num_curve_points = 3;
@@ -971,7 +977,7 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VSCALE(rhc_R, rhc_R, rhc->rhc_r);
 
     pts = rhc_hyperbolic_curve(MAGNITUDE(rhc->rhc_B), rhc->rhc_c, rhc->rhc_r, num_curve_points);
-    rhc_plot_hyperbolas(info->vhead, rhc, pts);
+    rhc_plot_hyperbolas(vlfree, vhead, rhc, pts);
 
     node = pts;
     while (node != NULL) {
@@ -982,35 +988,35 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     }
 
     /* connect both halves of the hyperbolic contours of the opposing faces */
-    num_connections = primitive_curve_count(ip, info);
+    num_connections = primitive_curve_count(ip, tol, v->gv_s->curve_scale, s_size);
     if (num_connections < 2) {
 	num_connections = 2;
     }
 
-    rhc_plot_curve_connections(info->vhead, rhc, num_connections);
+    rhc_plot_curve_connections(vlfree, vhead, rhc, num_connections);
 
     /* plot rectangular face */
     VADD2(p, rhc->rhc_V, rhc_R);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
 
     VADD2(p, p, rhc->rhc_H);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, -2.0, rhc_R);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, -1.0, rhc->rhc_H);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, 2.0, rhc_R);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
     return 0;
 }
 
 
 int
-rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     int i, n;
     fastf_t b, c, *back, *front, rh;
@@ -1024,6 +1030,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
     if (!rhc_is_valid(xip)) {
 	return -2;
@@ -1096,24 +1103,24 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     /* Draw the front */
-    RT_ADD_VLIST(vhead, &front[(n - 1)*ELEMENTS_PER_VECT],
-		 BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &front[(n - 1)*ELEMENTS_PER_VECT],
+		 BV_VLIST_LINE_MOVE);
 
     for (i = 0; i < n; i++) {
-	RT_ADD_VLIST(vhead, &front[i * ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &front[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw the back */
-    RT_ADD_VLIST(vhead, &back[(n - 1)*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &back[(n - 1)*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
 
     for (i = 0; i < n; i++) {
-	RT_ADD_VLIST(vhead, &back[i * ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &back[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw connections */
     for (i = 0; i < n; i++) {
-	RT_ADD_VLIST(vhead, &front[i * ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, &back[i * ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &front[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, &back[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* free mem */
@@ -1503,7 +1510,7 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	mat = bn_mat_identity;
     }
 
-    if (dbip->dbi_version < 0) {
+    if (dbip && dbip->dbi_version < 0) {
 	flip_fastf_float(v1, &rp->s.s_values[0 * 3], 1, 1);
 	flip_fastf_float(v2, &rp->s.s_values[1 * 3], 1, 1);
 	flip_fastf_float(v3, &rp->s.s_values[2 * 3], 1, 1);
@@ -1517,7 +1524,7 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     MAT4X3VEC(xip->rhc_H, mat, v2);
     MAT4X3VEC(xip->rhc_B, mat, v3);
 
-    if (dbip->dbi_version < 0) {
+    if (dbip && dbip->dbi_version < 0) {
 	v1[X] = flip_dbfloat(rp->s.s_values[3 * 3 + 0]);
 	v1[Y] = flip_dbfloat(rp->s.s_values[3 * 3 + 1]);
     } else {
@@ -1921,6 +1928,58 @@ rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 	VSCALE(*cent, rip->rhc_B, scale_factor);
 	VADD2(*cent, shift_h, *cent);
     }
+}
+
+void
+rt_rhc_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!ps || !ip)
+	return;
+
+    struct rt_rhc_internal *rhc = (struct rt_rhc_internal *)ip->idb_ptr;
+    RT_RHC_CK_MAGIC(rhc);
+
+    // Set up the containers
+    struct bv_label *l[5];
+    for (int i = 0; i < 5; i++) {
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
+	struct bv_label *la;
+	BU_GET(la, struct bv_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+    }
+
+    // Do the specific data assignments for each label
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, rhc->rhc_V);
+
+    bu_vls_sprintf(&l[1]->label, "B");
+    VADD2(l[1]->p, rhc->rhc_V, rhc->rhc_B);
+
+    bu_vls_sprintf(&l[2]->label, "H");
+    VADD2(l[2]->p, rhc->rhc_V, rhc->rhc_H);
+
+    bu_vls_sprintf(&l[3]->label, "r");
+    vect_t Ru;
+    VCROSS(Ru, rhc->rhc_B, rhc->rhc_H);
+    VUNITIZE(Ru);
+    VSCALE(Ru, Ru, rhc->rhc_r);
+    VADD2(l[3]->p, rhc->rhc_V, Ru);
+
+    bu_vls_sprintf(&l[4]->label, "c");
+    VMOVE(l[4]->p, rhc->rhc_B);
+    VUNITIZE(l[4]->p);
+    VSCALE(l[4]->p, l[4]->p, MAGNITUDE(rhc->rhc_B) + rhc->rhc_c);
+    VADD2(l[4]->p, l[4]->p, rhc->rhc_V);
+
 }
 
 

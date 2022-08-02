@@ -1,7 +1,7 @@
 /*                 F A S T G E N 4 _ R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "gcv/api.h"
 
 
@@ -267,16 +267,14 @@ fg4_free_conversion_state(struct conversion_state *state)
     if (state->fp_muves)
 	fclose(state->fp_muves);
 
-    if (state->region_list)
-	bu_free(state->region_list, "region_list");
+    bu_free(state->region_list, "region_list");
 
-    if (state->grid_points)
-	bu_free(state->grid_points, "grid_points");
+    bu_free(state->grid_points, "grid_points");
 
     if (state->group_head) {
 	mk_freemembers(&state->group_head->l);
-	bu_free(state->group_head, "group_head");
     }
+    bu_free(state->group_head, "group_head");
 
     mk_freemembers(&state->hole_head.l);
 
@@ -313,14 +311,9 @@ fg4_free_conversion_state(struct conversion_state *state)
 
     free_name_tree(state->name_root);
 
-    if (state->faces)
-	bu_free(state->faces, "faces");
-
-    if (state->facemode)
-	bu_free(state->facemode, "facemode");
-
-    if (state->thickness)
-	bu_free(state->thickness, "thickness");
+    bu_free(state->faces, "faces");
+    bu_free(state->facemode, "facemode");
+    bu_free(state->thickness, "thickness");
 }
 
 
@@ -893,11 +886,11 @@ Add_stragglers_to_groups(struct conversion_state *pstate)
 
 		new_cnt = lrint(ceil(pstate->region_id_max/1000.0));
 		new_head = (struct wmember *)bu_calloc(new_cnt, sizeof(struct wmember), "group_head list");
-		bu_log("ptr->region_id=%d region_id_max=%d new_cnt=%ld\n", ptr->region_id, pstate->region_id_max, new_cnt);
+		bu_log("ptr->region_id=%d region_id_max=%d new_cnt=%zu\n", ptr->region_id, pstate->region_id_max, new_cnt);
 
 		for (i = 0 ; i < new_cnt ; i++) {
 		    BU_LIST_INIT(&new_head[i].l);
-		    if (i < pstate->group_head_cnt) {
+		    if (pstate->group_head && i < pstate->group_head_cnt) {
 			if (BU_LIST_NON_EMPTY(&pstate->group_head[i].l)) {
 			    list_first = BU_LIST_FIRST(bu_list, &pstate->group_head[i].l);
 			    BU_LIST_DEQUEUE(&pstate->group_head[i].l);
@@ -905,9 +898,7 @@ Add_stragglers_to_groups(struct conversion_state *pstate)
 			}
 		    }
 		}
-		if (pstate->group_head) {
-		    bu_free(pstate->group_head, "old group_head");
-		}
+		bu_free(pstate->group_head, "old group_head");
 		pstate->group_head = new_head;
 		pstate->group_head_cnt = new_cnt;
 	    }
@@ -1328,7 +1319,6 @@ f4_do_ccone1(struct conversion_state *pstate)
 	fastf_t length;
 	fastf_t sin_ang;
 	fastf_t slant_len;
-	fastf_t r1a, r2a;
 	vect_t height_dir;
 
 	/* make outside TGC */
@@ -1347,11 +1337,10 @@ f4_do_ccone1(struct conversion_state *pstate)
 	sin_ang = length/slant_len;
 
 	if (end1 == END_OPEN) {
-	    r1a = r1;
 	    inner_r1 = r1 - thick/sin_ang;
 	    VMOVE(base, pstate->grid_points[pt1]);
 	} else {
-	    r1a = r1 + (r2 - r1)*thick/length;
+	    fastf_t r1a = r1 + (r2 - r1)*thick/length;
 	    inner_r1 = r1a - thick/sin_ang;
 	    VJOIN1(base, pstate->grid_points[pt1], thick, height_dir);
 	}
@@ -1367,11 +1356,10 @@ f4_do_ccone1(struct conversion_state *pstate)
 	}
 
 	if (end2 == END_OPEN) {
-	    r2a = r2;
 	    inner_r2 = r2 - thick/sin_ang;
 	    VMOVE(top, pstate->grid_points[pt2]);
 	} else {
-	    r2a = r2 + (r1 - r2)*thick/length;
+	    fastf_t r2a = r2 + (r1 - r2)*thick/length;
 	    inner_r2 = r2a - thick/sin_ang;
 	    VJOIN1(top, pstate->grid_points[pt2], -thick, height_dir);
 	}
@@ -2136,6 +2124,9 @@ make_bot_object(struct conversion_state *pstate)
     bot_ip.bot_flags = 0;
 
     count = rt_bot_vertex_fuse(&bot_ip, &pstate->fpout->wdb_tol);
+    if (count)
+	bu_log("WARNING: %d duplicate vertices eliminated from group %d component %d\n", count, pstate->group_id, pstate->comp_id);
+
     count = rt_bot_face_fuse(&bot_ip);
     if (count)
 	bu_log("WARNING: %d duplicate faces eliminated from group %d component %d\n", count, pstate->group_id, pstate->comp_id);

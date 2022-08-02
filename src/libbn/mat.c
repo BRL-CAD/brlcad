@@ -1,7 +1,7 @@
 /*                           M A T . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2020 United States Government as represented by
+ * Copyright (c) 1996-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,15 +32,19 @@
 
 #include <math.h>
 #include <string.h>
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash.h"
 #include "bio.h"
 
 #include "bu/debug.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "vmath.h"
 #include "bn/mat.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 
 #if defined(HAVE_HYPOT) && !defined(HAVE_DECL_HYPOT) && !defined(__cplusplus)
 extern double hypot(double x, double y);
@@ -79,14 +83,37 @@ bn_mat_print_guts(
     }
 }
 
+/* bn_mat_print_guts is exposed as public API, so we can't just
+ * replace it with a VLS version */
+static void
+bn_mat_print_vls_guts(
+    struct bu_vls *obuf,
+    const char *title,
+    const mat_t m)
+{
+    bu_vls_printf(obuf, "MATRIX %s:\n  ", title);
+    if (!m) {
+	bu_vls_strcat(obuf, "(Identity)");
+    } else {
+	for (int i = 0; i < 16; i++) {
+	    bu_vls_printf(obuf, " %8.3f", m[i]);
+	    if (i == 15) {
+		break;
+	    } else if ((i & 3) == 3) {
+		bu_vls_printf(obuf, "\n  ");
+	    }
+	}
+    }
+}
 
 void
 bn_mat_print(const char *title, const mat_t m)
 {
-    char obuf[1024];	/* snprintf may be non-PARALLEL */
+    struct bu_vls obuf = BU_VLS_INIT_ZERO;
 
-    bn_mat_print_guts(title, m, obuf, 1024);
-    bu_log("%s\n", obuf);
+    bn_mat_print_vls_guts(&obuf, title, m);
+    bu_log("%s\n", bu_vls_cstr(&obuf));
+    bu_vls_free(&obuf);
 }
 
 
@@ -96,10 +123,11 @@ bn_mat_print_vls(
     const mat_t m,
     struct bu_vls *vls)
 {
-    char obuf[1024];
+    struct bu_vls obuf = BU_VLS_INIT_ZERO;
 
-    bn_mat_print_guts(title, m, obuf, 1024);
-    bu_vls_printf(vls, "%s\n", obuf);
+    bn_mat_print_vls_guts(&obuf, title, m);
+    bu_vls_printf(vls, "%s\n", bu_vls_cstr(&obuf));
+    bu_vls_free(&obuf);
 }
 
 
@@ -121,7 +149,7 @@ bn_atan2(double y, double x)
 
 
 void
-bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
+bn_mat_mul(mat_t o, const mat_t a, const mat_t b)
 {
     o[ 0] = a[ 0] * b[ 0] + a[ 1] * b[ 4] + a[ 2] * b[ 8] + a[ 3] * b[12];
     o[ 1] = a[ 0] * b[ 1] + a[ 1] * b[ 5] + a[ 2] * b[ 9] + a[ 3] * b[13];
@@ -146,7 +174,7 @@ bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
 
 
 void
-bn_mat_mul2(register const mat_t i, register mat_t o)
+bn_mat_mul2(const mat_t i, mat_t o)
 {
     mat_t temp;
 
@@ -182,10 +210,7 @@ bn_mat_mul4(
 
 
 void
-bn_matXvec(
-    register vect_t ov,
-    register const mat_t im,
-    register const vect_t iv)
+bn_matXvec(hvect_t ov, const mat_t im, const hvect_t iv)
 {
     register int eo = 0;	/* Position in output vector */
     register int em = 0;	/* Position in input matrix */
@@ -204,7 +229,7 @@ bn_matXvec(
 
 
 void
-bn_mat_inv(register mat_t output, const mat_t input)
+bn_mat_inv(mat_t output, const mat_t input)
 {
     if (bn_mat_inverse(output, input) == 0) {
 
@@ -219,7 +244,7 @@ bn_mat_inv(register mat_t output, const mat_t input)
 
 
 int
-bn_mat_inverse(register mat_t output, const mat_t input)
+bn_mat_inverse(mat_t output, const mat_t input)
 {
     register int i, j;	/* Indices */
     int k;		/* Indices */
@@ -307,7 +332,7 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 
 
 void
-bn_vtoh_move(register vect_t h, register const vect_t v)
+bn_vtoh_move(hvect_t h, const vect_t v)
 {
     VMOVE(h, v);
     h[W] = 1.0;
@@ -315,7 +340,7 @@ bn_vtoh_move(register vect_t h, register const vect_t v)
 
 
 void
-bn_htov_move(register vect_t v, register const vect_t h)
+bn_htov_move(vect_t v, const hvect_t h)
 {
     register fastf_t inv;
 
@@ -333,14 +358,14 @@ bn_htov_move(register vect_t v, register const vect_t h)
 
 
 void
-bn_mat_trn(mat_t om, register const mat_t im)
+bn_mat_trn(mat_t om, const mat_t im)
 {
     MAT_TRANSPOSE(om, im);
 }
 
 
 void
-bn_mat_ae(register fastf_t *m, double azimuth, double elev)
+bn_mat_ae(mat_t m, double azimuth, double elev)
 {
     double sin_az, sin_el;
     double cos_az, cos_el;
@@ -394,8 +419,8 @@ bn_aet_vec(
     fastf_t *az,
     fastf_t *el,
     fastf_t *twist,
-    fastf_t *vec_ae,
-    fastf_t *vec_twist,
+    vect_t vec_ae,
+    vect_t vec_twist,
     fastf_t accuracy)
 {
     vect_t zero_twist, ninety_twist;
@@ -458,11 +483,7 @@ bn_vec_aed(vect_t vect, fastf_t az, fastf_t el, fastf_t distance)
 
 
 void
-bn_mat_angles(
-    register fastf_t *mat,
-    double alpha_in,
-    double beta_in,
-    double ggamma_in)
+bn_mat_angles(mat_t mat, double alpha_in, double beta_in, double ggamma_in)
 {
     double alpha, beta, ggamma;
     double calpha, cbeta, cgamma;
@@ -568,8 +589,8 @@ void
 bn_eigen2x2(
     fastf_t *val1,
     fastf_t *val2,
-    fastf_t *vec1,
-    fastf_t *vec2,
+    vect_t vec1,
+    vect_t vec2,
     fastf_t a,
     fastf_t b,
     fastf_t c)
@@ -644,6 +665,86 @@ bn_vec_perp(vect_t new_vec, const vect_t old_vec)
     VCROSS(new_vec, another_vec, old_vec);
 }
 
+static int
+bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2,
+	const point_t sg2pt1, const point_t sg2pt2,
+	const struct bn_tol *tol)
+{
+    vect_t e_dif[2]    = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
+    vect_t e_dif_a[2]  = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
+    fastf_t e_rr[2][3] = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
+    char e_sc[2][3] = {{0, 0, 0}, {0, 0, 0}};
+    fastf_t dist = tol->dist;
+    fastf_t tmp;
+    int i, j;
+
+    VSUB2(e_dif[0], sg1pt2, sg1pt1);
+    VSUB2(e_dif[1], sg2pt2, sg2pt1);
+
+    for ( i = 0 ; i < 2 ; i++ ) {
+	for ( j = 0 ; j < 3 ; j++ ) {
+	    e_dif_a[i][j] = fabs(e_dif[i][j]);
+	}
+    }
+
+    for ( i = 0 ; i < 2 ; i++ ) {
+	if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Y] > dist)) {
+	    e_sc[i][0] = 1;
+	} else if ((e_dif_a[i][X] > dist) && (e_dif_a[i][Y] < dist)) {
+	    e_sc[i][0] = 2;
+	} else if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Y] < dist)) {
+	    e_sc[i][0] = 3;
+	} else {
+	    e_rr[i][0] = e_dif[i][Y] / e_dif[i][X];
+	    e_sc[i][0] = 0;
+	}
+	if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Z] > dist)) {
+	    e_sc[i][1] = 1;
+	} else if ((e_dif_a[i][X] > dist) && (e_dif_a[i][Z] < dist)) {
+	    e_sc[i][1] = 2;
+	} else if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Z] < dist)) {
+	    e_sc[i][1] = 3;
+	} else {
+	    e_rr[i][1] = e_dif[i][Z] / e_dif[i][X];
+	    e_sc[i][1] = 0;
+	}
+	if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Z] > dist)) {
+	    e_sc[i][1] = 1;
+	} else if ((e_dif_a[i][X] > dist) && (e_dif_a[i][Z] < dist)) {
+	    e_sc[i][1] = 2;
+	} else if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Z] < dist)) {
+	    e_sc[i][1] = 3;
+	} else {
+	    e_rr[i][1] = e_dif[i][Z] / e_dif[i][X];
+	    e_sc[i][1] = 0;
+	}
+	if ((e_dif_a[i][Y] < dist) && (e_dif_a[i][Z] > dist)) {
+	    e_sc[i][2] = 1;
+	} else if ((e_dif_a[i][Y] > dist) && (e_dif_a[i][Z] < dist)) {
+	    e_sc[i][2] = 2;
+	} else if ((e_dif_a[i][Y] < dist) && (e_dif_a[i][Z] < dist)) {
+	    e_sc[i][2] = 3;
+	} else {
+	    e_rr[i][2] = e_dif[i][Z] / e_dif[i][Y];
+	    e_sc[i][2] = 0;
+	}
+    }
+
+    /* loop thru (rise/run) ratios from xy, xz and yz planes */
+    for ( i = 0 ; i < 3 ; i++ ) {
+	if (e_sc[0][i] != e_sc[1][i]) {
+	    return 0;
+	}
+	if (e_sc[0][i] == 0) {
+	    tmp = e_rr[0][i] - e_rr[1][i];
+	    if (fabs(tmp) > dist) {
+		return 0;
+	    }
+	}
+    }
+
+    return 1;
+}
 
 void
 bn_mat_fromto(
@@ -723,7 +824,7 @@ bn_mat_fromto(
 
 
 void
-bn_mat_xrot(fastf_t *m, double sinx, double cosx)
+bn_mat_xrot(mat_t m, double sinx, double cosx)
 {
     m[0] = 1.0;
     m[1] = 0.0;
@@ -746,7 +847,7 @@ bn_mat_xrot(fastf_t *m, double sinx, double cosx)
 
 
 void
-bn_mat_yrot(fastf_t *m, double siny, double cosy)
+bn_mat_yrot(mat_t m, double siny, double cosy)
 {
     m[0] = cosy;
     m[1] = 0.0;
@@ -769,7 +870,7 @@ bn_mat_yrot(fastf_t *m, double siny, double cosy)
 
 
 void
-bn_mat_zrot(fastf_t *m, double sinz, double cosz)
+bn_mat_zrot(mat_t m, double sinz, double cosz)
 {
     m[0] = cosz;
     m[1] = -sinz;
@@ -847,7 +948,7 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
 
 
 void
-bn_vec_ortho(register vect_t out, register const vect_t in)
+bn_vec_ortho(vect_t out, const vect_t in)
 {
     register int j, k;
     register fastf_t f;
@@ -1355,6 +1456,109 @@ deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t 
 }
 
 
+int
+bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    matp_t m = (matp_t)set_var;
+    mat_t mtmp;
+    MAT_IDN(mtmp);
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bn_opt_mat");
+
+    // First, see if we have a matrix defined in a single string
+    {
+	int ac;
+	char **av;
+	char *str1 = NULL;
+	struct bu_vls mvls = BU_VLS_INIT_ZERO;
+
+	// Pre-process
+	str1 = bu_strdup(argv[0]);
+	int i = 0;
+	while (str1[i]) {
+	    /* If we have a separator, replace with a space */
+	    if (str1[i] == ',' || str1[i] == '/') {
+		str1[i] = ' ';
+	    }
+	    i++;
+	}
+	bu_vls_sprintf(&mvls, "%s", str1);
+	bu_free(str1, "str1");
+	if (bu_vls_cstr(&mvls)[bu_vls_strlen(&mvls) - 1] == '}')
+	    bu_vls_trunc(&mvls, -1);
+	if (bu_vls_cstr(&mvls)[0] == '{')
+	    bu_vls_nibble(&mvls, 1);
+	str1 = bu_strdup(bu_vls_cstr(&mvls));
+	bu_vls_free(&mvls);
+
+	av = (char **)bu_calloc(strlen(str1)+1, sizeof(char *), "av");
+	ac = bu_argv_from_string(av, strlen(str1), str1);
+	if (ac == 16) {
+	    // We have 16 elements - read each one to see if it's a valid fastf_t
+	    for (i = 0; i < ac; i++) {
+		fastf_t mi = 0.0;
+		if (bu_opt_fastf_t(msg, 1, (const char **)&av[i], &mi) == -1) {
+		    if (msg) {
+			bu_vls_sprintf(msg, "Not a number: %s.\n", av[i]);
+		    }
+
+		    bu_free(str1, "str1");
+		    bu_free((char *)av, "av");
+		    return -1;
+		}
+		mtmp[i] = mi;
+	    }
+
+	    // Have 16 valid numbers - we have a matrix.
+	    if (m)
+		MAT_COPY(m, mtmp);
+
+	    // Cleanup
+	    bu_free(str1, "str1");
+	    bu_free((char *)av, "av");
+
+	    // Used 1 arg to read in the matrix
+	    return 1;
+	}
+
+	// Done with string copy
+	bu_free(str1, "str1");
+	bu_free((char *)av, "av");
+    }
+
+    // If we didn't have a single arg matrix, see if we
+    // have a special case specifier.
+    if (BU_STR_EQUIV(argv[0], "IDN")) {
+	if (m)
+	    MAT_IDN(m);
+	return 1;
+    }
+
+    // The other option is 16 individual numbers, if we have that many args...
+    if (argc > 15) {
+	// We have at lest 16 elements - read see if they define a valid matrix
+	size_t i = 0;
+	for (i = 0; i < argc; i++) {
+	    fastf_t mi = 0.0;
+	    if (bu_opt_fastf_t(msg, 1, &argv[i], &mi) == -1) {
+		if (msg) {
+		    bu_vls_sprintf(msg, "Not a number: %s.\n", argv[i]);
+		}
+		return -1;
+	    }
+	    mtmp[i] = mi;
+	}
+
+	// Have 16 valid numbers - we have a matrix.
+	if (i == 16 && m)
+	    MAT_COPY(m, mtmp);
+
+	return 16;
+    }
+
+    // Nope, no matrix
+    return 0;
+}
 
 /** @} */
 /*

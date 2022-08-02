@@ -1,7 +1,7 @@
 /*               P U L L B A C K C U R V E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2020 United States Government as represented by
+ * Copyright (c) 2009-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -225,8 +225,6 @@ surface_EvNormal(// returns false if unable to evaluate
 	    /*
 	     * brute force and try to solve from each side of the surface domain
 	     */
-	    ON_Interval u = surf->Domain(0);
-	    ON_Interval v = surf->Domain(1);
 	    for(int iside=1; iside <= 4; iside++) {
 		rc=surf->EvNormal(s, t, point, normal, iside, hint);
 		if (rc)
@@ -581,8 +579,6 @@ surface_GetClosestPoint3dFirstOrderByRange(
     ON_3dVector ds, dt, dss, dst, dtt;
     ON_2dPoint working_p2d;
     ON_3dPoint working_p3d;
-    ON_3dPoint P;
-    ON_3dVector Ds, Dt, Dss, Dst, Dtt;
     bool notdone = true;
     double previous_distance = DBL_MAX;
     double distance;
@@ -654,7 +650,6 @@ surface_GetClosestPoint3dFirstOrderByRange(
 		///////////////////////////
 		// Subdivide and go again
 		///////////////////////////
-		notdone = false;
 		distance =
 		    surface_GetClosestPoint3dFirstOrderSubdivision(surf, p,
 								   u_range, u_range.Mid(), v_range, v_range.Mid(),
@@ -668,7 +663,6 @@ surface_GetClosestPoint3dFirstOrderByRange(
 	    }
 	} else {
 	    // can't get any closer
-	    notdone = false;
 	    break;
 	}
     }
@@ -698,10 +692,6 @@ bool surface_GetClosestPoint3dFirstOrder(
     double within_distance_tol
     )
 {
-    ON_3dPoint p0;
-    ON_2dPoint p2d0;
-    ON_3dVector ds, dt, dss, dst, dtt;
-    ON_3dVector T, K;
     bool rc = false;
 
     static const ON_Surface *prev_surface = NULL;
@@ -717,6 +707,9 @@ bool surface_GetClosestPoint3dFirstOrder(
     static int vmid_index = 0;
 
     current_distance = DBL_MAX;
+
+    if (!surf)
+	return rc;
 
     int prec = std::cerr.precision();
     std::cerr.precision(15);
@@ -1755,8 +1748,6 @@ bool trim_GetClosestPoint3dFirstOrder(
 
     double t0;
     ON_3dPoint p3d;
-    ON_3dPoint p0;
-    ON_3dVector ds, dt, dss, dst, dtt;
     ON_3dVector T, K;
     int prec = std::cerr.precision();
     ON_BoundingBox tight_bbox;
@@ -1819,7 +1810,6 @@ bool trim_GetClosestPoint3dFirstOrder(
 
 	    if (!N.ConvertSpanToBezier(span_index, B))
 		continue;
-	    ON_Interval bi = B.Domain();
 	    if (!B.GetTightBoundingBox(tight_bbox, bGrowBox, NULL))
 		continue;
 	    bbox[span_index] = tight_bbox;
@@ -2830,7 +2820,8 @@ Find3DCurveSeamCrossing(PBCData &data, double t0, double t1, double UNUSED(offse
 			    double distance;
 
 			    if (surface_GetClosestPoint3dFirstOrder(surf, p_3d, p_2d, check_pt_3d, distance, 0, same_point_tol, within_distance_tol)) {
-				if ((seam=IsAtSeam(surf, p_2d, tol)) > 0) {
+				seam = IsAtSeam(surf, p_2d, tol);
+				if (seam > 0) {
 				    ForceToClosestSeam(surf, p_2d, tol);
 				    from = to = p_2d;
 				    seam_t = t;
@@ -2863,8 +2854,14 @@ Find3DCurveSeamCrossing(PBCData &data, double t0, double t1, double UNUSED(offse
 			}
 		    }
 		}
+	    } else {
+		rc = false;
 	    }
+	} else {
+	   rc = false;
 	}
+    } else {
+	rc = false;
     }
 
     return rc;
@@ -2925,7 +2922,8 @@ FindTrimSeamCrossing(const ON_BrepTrim &trim, double t0, double t1, double &seam
 			double t = t0 + (t1 - t0)*(d0/(d0+d1));
 			int seam;
 			p = trim.PointAt(t);
-			if ((seam=IsAtSeam(surf, p, tol)) > 0) {
+			seam = IsAtSeam(surf, p, tol);
+			if (seam > 0) {
 			    ForceToClosestSeam(surf, p, tol);
 			    from = to = p;
 			    seam_t = t;
@@ -2978,12 +2976,12 @@ pullback_samples_from_closed_surface(PBCData* data,
     const ON_Curve* curve= data->curve;
     const ON_Surface *surf = data->surf;
 
-    ON_2dPointArray *samples= new ON_2dPointArray();
     size_t numKnots = curve->SpanCount();
     if (numKnots > INT_MAX - 1) {
 	bu_log("Error - more than INT_MAX - 1 knots in curve\n");
 	return;
     }
+    ON_2dPointArray *samples= new ON_2dPointArray();
     double *knots = new double[(unsigned int)(numKnots+1)];
 
     curve->GetSpanVector(knots);
@@ -3014,11 +3012,6 @@ pullback_samples_from_closed_surface(PBCData* data,
     double delta;
     for (size_t i=istart; i<istop; i++) {
 	delta = (knots[i+1] - knots[i])/(double)samplesperknotinterval;
-	if (i <= numKnots/2) {
-	    offset = PBC_FROM_OFFSET;
-	} else {
-	    offset = -PBC_FROM_OFFSET;
-	}
 	for (size_t j=0; j<=samplesperknotinterval; j++) {
 	    if ((j == samplesperknotinterval) && (i < istop - 1))
 		continue;
@@ -3085,7 +3078,6 @@ pullback_samples_from_closed_surface(PBCData* data,
 			    samples= new ON_2dPointArray();
 			    samples->Append(to);
 			    prev_pt = to;
-			    prev_t = seam_t;
 			} else {
 			    std::cout << "Can not find seam crossing...." << std::endl;
 			}
@@ -3244,7 +3236,6 @@ refit_edge(const ON_BrepEdge* edge, double UNUSED(tolerance))
     } else {
 	samplesperknotinterval = 18 * degree;
     }
-    ON_2dPoint pt;
     double t = 0.0;
     ON_3dPoint pointOnCurve;
     ON_3dPoint knudgedPointOnCurve;
@@ -4096,8 +4087,6 @@ shift_single_curve_loop_straddled_over_seam(std::list<PBCData*> &pbcs)
 	    return false;
 
 	const ON_Surface *surf = data->surf;
-	ON_Interval udom = surf->Domain(0);
-	ON_Interval vdom = surf->Domain(1);
 	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
 	ON_2dPoint pt;
 	ON_2dPoint prev_pt;

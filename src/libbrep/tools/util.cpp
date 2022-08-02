@@ -1,7 +1,7 @@
 /*                        U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2020 United States Government as represented by
+ * Copyright (c) 2019-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 #include "bu/malloc.h"
 #include "bn/mat.h" /* bn_vec_perp */
 #include "bn/tol.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "brep/defines.h"
 #include "brep/util.h"
 

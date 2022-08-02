@@ -6,8 +6,8 @@ set(GCV_INCLUDE_DIRS
 BRLCAD_INCLUDE_DIRS(GCV_INCLUDE_DIRS)
 
 
-BRLCAD_ADDEXEC(gcv gcv.c "libgcv;libbn;libbu;${M_LIBRARY}")
-add_dependencies(gcv libgcv_plugins)
+BRLCAD_ADDEXEC(gcv gcv.c "libgcv;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
+add_dependencies(gcv gcv_plugins)
 
 CMAKEFILES(gcv.sh)
 CMAKEFILES(CMakeLists.txt)

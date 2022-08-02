@@ -1,7 +1,7 @@
 /*                         D C O N V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -71,9 +71,9 @@ mult(double *o, double *b, int n)
 int
 main(int argc, char *argv[])
 {
-    double savebuffer[BU_PAGE_SIZE];
-    double xbuf[2 * (BU_PAGE_SIZE + 1)];
-    double ibuf[2 * (BU_PAGE_SIZE + 1)];		/* impulse response */
+    double savebuffer[BU_PAGE_SIZE] = {0.0};
+    double xbuf[2 * (BU_PAGE_SIZE + 1)] = {0.0};
+    double ibuf[2 * (BU_PAGE_SIZE + 1)] = {0.0};		/* impulse response */
 
     int i;
     int M = 128;	/* kernel size */
@@ -87,10 +87,10 @@ main(int argc, char *argv[])
 	bu_exit(1, "Usage: dconv filterfile < doubles > doubles\n       WARNING: kernel size must be 2^i - 1\n");
     }
 
+#ifdef never
     N = 2*M;	/* input sub-section length (fft size) */
     L = M + 1;	/* number of "good" points per section, simplified from L = N - M + 1 */
 
-#ifdef never
     /* prepare the kernel(!) */
     /* this is either the direct complex response,
      * or the FT(impulse resp)

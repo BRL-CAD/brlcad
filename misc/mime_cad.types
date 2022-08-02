@@ -30,14 +30,17 @@ image/spm					spm
 image/sun					sun
 image/yuv					yuv
 model/dxf					dxf
+model/gltf                  gltf glb
 model/obj					obj
 model/ply					ply
 model/shp					shp
 model/step					stp step
 model/stl					stl
 model/vnd.brlcad+binary				g brlcad
-model/vnd.brlcad+tcl				asc
+model/vnd.brlcad+asc				asc
 model/vnd.fastgen				bdf fas fg fg4
 model/vnd.gift					cg comgeom
 model/vnd.intaval				tgf
 model/vnd.rhino					3dm
+model/vnd.gdal					gdal dem dted tif tiff
+model/vnd.assimp				assimp

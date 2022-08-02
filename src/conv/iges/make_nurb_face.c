@@ -1,7 +1,7 @@
 /*                M A K E _ N U R B _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2020 United States Government as represented by
+ * Copyright (c) 1995-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -205,8 +205,13 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 		    RT_NURB_IS_PT_RATIONAL(crv->pt_type)) {
 		    nmg_nurb_s_eval(srf, end_uv[0]/end_uv[2],
 				   end_uv[1]/end_uv[2], pt_on_srf);
-		} else if (coords == 2)
+		} else if (coords == 2) {
 		    nmg_nurb_s_eval(srf, end_uv[0], end_uv[1], pt_on_srf);
+		} else {
+		    bu_log("Unable to evaluate srf point, make_nurb_face.c:%d\n", __LINE__);
+		    param = param->next;
+		    continue;
+		}
 
 		if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
 		    fastf_t sca;

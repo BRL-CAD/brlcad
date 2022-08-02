@@ -1,7 +1,7 @@
 /*                    N U R B _ B O U N D . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@
  * surface, and returns the minimum and maximum points of the surface.
  */
 int
-nmg_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
+nmg_nurb_s_bound(struct face_g_snurb *srf, point_t bmin, point_t bmax)
 {
     register fastf_t *p_ptr;	/* Mesh pointer */
     register int coords;		/* Elements per vector */
@@ -85,7 +85,7 @@ nmg_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
 
 
 int
-nmg_nurb_c_bound(struct edge_g_cnurb *crv, fastf_t *bmin, fastf_t *bmax)
+nmg_nurb_c_bound(struct edge_g_cnurb *crv, point_t bmin, point_t bmax)
 {
     register fastf_t *p_ptr;	/* Mesh pointer */
     register int coords;		/* Elements per vector */

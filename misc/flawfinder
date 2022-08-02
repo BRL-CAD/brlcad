@@ -53,9 +53,9 @@ import operator  # To support filename expansion on Windows
 import time
 import csv  # To support generating CSV format
 import hashlib
-# import formatter
+import json
 
-version = "2.0.11"
+version = "2.0.18"
 
 # Program Options - these are the default values.
 # TODO: Switch to boolean types where appropriate.
@@ -87,6 +87,7 @@ output_format = 0  # 0 = normal, 1 = html.
 single_line = 0  # 1 = singleline (can 't be 0 if html)
 csv_output = 0  # 1 = Generate CSV
 csv_writer = None
+sarif_output = 0  # 1 = Generate SARIF report
 omit_time = 0  # 1 = omit time-to-run (needed for testing)
 required_regex = None  # If non-None, regex that must be met to report
 required_regex_compiled = None
@@ -124,6 +125,173 @@ def print_warning(message):
     sys.stderr.write(message)
     sys.stderr.write("\n")
     sys.stderr.flush()
+
+def to_json(o):
+    return json.dumps(o, default=lambda o: o.__dict__, sort_keys=False, indent=2)
+
+
+# The following implements the SarifLogger.
+# We intentionally merge all of flawfinder's functionality into 1 file
+# so it's trivial to copy & use elsewhere.
+
+class SarifLogger(object):
+    _hitlist = None
+    TOOL_NAME = "Flawfinder"
+    TOOL_URL = "https://dwheeler.com/flawfinder/"
+    TOOL_VERSION = version
+    URI_BASE_ID = "SRCROOT"
+    SARIF_SCHEMA = "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json"
+    SARIF_SCHEMA_VERSION = "2.1.0"
+    CWE_TAXONOMY_NAME = "CWE"
+    CWE_TAXONOMY_URI = "https://raw.githubusercontent.com/sarif-standard/taxonomies/main/CWE_v4.4.sarif"
+    CWE_TAXONOMY_GUID = "FFC64C90-42B6-44CE-8BEB-F6B7DAE649E5"
+
+    def __init__ (self, hits):
+        self._hitlist = hits
+
+    def output_sarif(self):
+        tool = {
+            "driver": {
+                "name": self.TOOL_NAME,
+                "version": self.TOOL_VERSION,
+                "informationUri": self.TOOL_URL,
+                "rules": self._extract_rules(self._hitlist),
+                "supportedTaxonomies": [{
+                    "name": self.CWE_TAXONOMY_NAME,
+                    "guid": self.CWE_TAXONOMY_GUID,
+                }],
+            }
+        }
+
+        runs = [{
+            "tool": tool,
+            "columnKind": "utf16CodeUnits",
+            "results": self._extract_results(self._hitlist),
+            "externalPropertyFileReferences": {
+                "taxonomies": [{
+                    "location": {
+                        "uri": self.CWE_TAXONOMY_URI,
+                    },
+                    "guid": self.CWE_TAXONOMY_GUID,
+                }],
+            },
+        }]
+
+        report = {
+            "$schema": self.SARIF_SCHEMA,
+            "version": self.SARIF_SCHEMA_VERSION,
+            "runs": runs,
+        }
+
+        jsonstr = to_json(report)
+        return jsonstr
+
+    def _extract_rules(self, hitlist):
+        rules = {}
+        for hit in hitlist:
+            if not hit.ruleid in rules:
+                rules[hit.ruleid] = self._to_sarif_rule(hit)
+        return list(rules.values())
+
+    def _extract_results(self, hitlist):
+        results = []
+        for hit in hitlist:
+            results.append(self._to_sarif_result(hit))
+        return results
+
+    def _to_sarif_rule(self, hit):
+        return {
+            "id": hit.ruleid,
+            "name": "{0}/{1}".format(hit.category, hit.name),
+            "shortDescription": {
+                "text": self._append_period(hit.warning),
+            },
+            "defaultConfiguration": {
+                "level": self._to_sarif_level(hit.defaultlevel),
+            },
+            "helpUri": hit.helpuri(),
+            "relationships": self._extract_relationships(hit.cwes()),
+        }
+
+    def _to_sarif_result(self, hit):
+        return {
+            "ruleId": hit.ruleid,
+            "level": self._to_sarif_level(hit.level),
+            "message": {
+                "text": self._append_period("{0}/{1}:{2}".format(hit.category, hit.name, hit.warning)),
+            },
+            "locations": [{
+                "physicalLocation": {
+                    "artifactLocation": {
+                        "uri": self._to_uri_path(hit.filename),
+                        "uriBaseId": self.URI_BASE_ID,
+                    },
+                    "region": {
+                        "startLine": hit.line,
+                        "startColumn": hit.column,
+                        "endColumn": len(hit.context_text) + 1,
+                        "snippet": {
+                            "text": hit.context_text,
+                        }
+                    }
+                }
+            }],
+            "fingerprints": {
+                "contextHash/v1": hit.fingerprint()
+            },
+            "rank": self._to_sarif_rank(hit.level),
+        }
+
+    def _extract_relationships(self, cwestring):
+        # example cwe string "CWE-119!/ CWE-120", "CWE-829, CWE-20"
+        relationships = []
+        for cwe in re.split(',|/',cwestring):
+            cwestr = cwe.strip()
+            if cwestr:
+                relationship = {
+                    "target": {
+                        "id": cwestr.replace("!", ""),
+                        "toolComponent": {
+                            "name": self.CWE_TAXONOMY_NAME,
+                            "guid": self.CWE_TAXONOMY_GUID,
+                        },
+                    },
+                    "kinds": [
+                        "relevant" if cwestr[-1] != '!' else "incomparable"
+                    ],
+                }
+                relationships.append(relationship)
+        return relationships
+
+    @staticmethod
+    def _to_sarif_level(level):
+        # level 4 & 5
+        if level >= 4:
+            return "error"
+        # level 3
+        if level == 3:
+            return "warning"
+        # level 0 1 2
+        return "note"
+
+    @staticmethod
+    def _to_sarif_rank(level):
+        #SARIF rank  FF Level    SARIF level Default Viewer Action
+        #0.0         0           note        Does not display by default
+        #0.2         1           note        Does not display by default
+        #0.4         2           note        Does not display by default
+        #0.6         3           warning     Displays by default, does not break build / other processes
+        #0.8         4           error       Displays by default, breaks build/ other processes
+        #1.0         5           error       Displays by default, breaks build/ other processes
+        return level * 0.2
+
+    @staticmethod
+    def _to_uri_path(path):
+        return path.replace("\\", "/")
+
+    @staticmethod
+    def _append_period(text):
+        return text if text[-1] == '.' else text + "."
 
 
 # The following code accepts unified diff format from both subversion (svn)
@@ -173,7 +341,7 @@ def print_warning(message):
 diff_index_filename = re.compile(r'^Index:\s+(?P<filename>.*)')
 diff_git_filename = re.compile(r'^diff --git a/.* b/(?P<filename>.*)$')
 diff_newfile = re.compile(r'^\+\+\+\s(?P<filename>.*)$')
-diff_hunk = re.compile(r'^@@ -\d+(,\d+)?\s+\+(?P<linenumber>\d+)[, ].*@@$')
+diff_hunk = re.compile(r'^@@ -\d+(,\d+)?\s+\+(?P<linenumber>\d+)[, ].*@@')
 diff_line_added = re.compile(r'^\+[^+].*')
 diff_line_del = re.compile(r'^-[^-].*')
 # The "+++" newfile entries have the filename, followed by a timestamp
@@ -378,10 +546,11 @@ class Hit(object):
     extract_lookahead = 0  # Normally don't extract lookahead.
 
     def __init__(self, data):
-        hook, level, warning, suggestion, category, url, other = data
-        self.hook, self.level = hook, level
+        hook, level, warning, suggestion, category, url, other, ruleid = data
+        self.hook, self.level, self.defaultlevel = hook, level, level
         self.warning, self.suggestion = warning, suggestion
         self.category, self.url = category, url
+        self.ruleid = ruleid
         # These will be set later, but I set them here so that
         # analysis tools like PyChecker will know about them.
         self.column = 0
@@ -404,7 +573,7 @@ class Hit(object):
     def __ne__(self, other):
         return not self == other
 
-    # return CWEs
+    # Return CWEs
     def cwes(self):
         result = find_cwe_pattern.search(self.warning)
         return result.group()[1:-1] if result else ''
@@ -415,17 +584,28 @@ class Hit(object):
         m.update(self.context_text.strip().encode('utf-8'))
         return m.hexdigest()
 
+    # Help uri for each defined rule. e.g. "https://dwheeler.com/flawfinder#FF1002"
+    # return first CWE link for now
+    def helpuri(self):
+        cwe = re.split(',|!', self.cwes())[0] + ")"
+        return link_cwe_pattern.sub(
+                r'https://cwe.mitre.org/data/definitions/\2.html',
+                cwe)
+
     # Show as CSV format
     def show_csv(self):
         csv_writer.writerow([
-            self.filename, self.line, self.column, self.level, self.category,
-            self.name, self.warning, self.suggestion, self.note,
-            self.cwes(), self.context_text, self.fingerprint()
+            self.filename, self.line, self.column, self.defaultlevel, self.level, self.category,
+            self.name, self.warning + ".", self.suggestion + "." if self.suggestion else "", self.note,
+            self.cwes(), self.context_text, self.fingerprint(),
+            version, self.ruleid, self.helpuri()
         ])
 
     def show(self):
         if csv_output:
             self.show_csv()
+            return
+        if sarif_output:
             return
         if output_format:
             print("<li>", end='')
@@ -519,6 +699,7 @@ def extract_c_parameters(text, pos=0):
     parameters = [""]  # Insert 0th entry, so 1st parameter is parameter[1].
     currentstart = i
     parenlevel = 1
+    curlylevel = 0
     instring = 0  # 1=in double-quote, 2=in single-quote
     incomment = 0
     while i < len(text):
@@ -569,7 +750,11 @@ def extract_c_parameters(text, pos=0):
                     # print " EXTRACT_C_PARAMETERS: ", text[pos:pos+80]
                     # print " RESULTS: ", parameters
                     return parameters
-            elif c == ';':
+            elif c == '{':
+                curlylevel += 1
+            elif c == '}':
+                curlylevel -= 1
+            elif c == ';' and curlylevel < 1:
                 internal_warn(
                     "Parsing failed to find end of parameter list; "
                     "semicolon terminated it in %s" % text[pos:pos + 200])
@@ -578,7 +763,6 @@ def extract_c_parameters(text, pos=0):
     internal_warn("Parsing failed to find end of parameter list in %s" %
                   text[pos:pos + 200])
     return []  # Treat unterminated list as an empty list
-
 
 # These patterns match gettext() and _() for internationalization.
 # This is compiled here, to avoid constant recomputation.
@@ -847,10 +1031,40 @@ def cpp_unsafe_stl(hit):
     if len(hit.parameters) <= 4:
         add_warning(hit)
 
+safe_load_library_flags = [
+    # Load only from the folder where the .exe file is located
+    'LOAD_LIBRARY_SEARCH_APPLICATION_DIR',
+    # Combination of application, System32 and user directories
+    'LOAD_LIBRARY_SEARCH_DEFAULT_DIRS',
+    # This flag requires an absolute path to the DLL to be passed
+    'LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR',
+    # Load only from System32
+    'LOAD_LIBRARY_SEARCH_SYSTEM32',
+    # Load only from directories specified with AddDllDirectory
+    # or SetDllDirectory
+    'LOAD_LIBRARY_SEARCH_USER_DIRS',
+    # Loading from the current directory will only proceed if
+    # the current directory is part of the safe load list
+    'LOAD_LIBRARY_SAFE_CURRENT_DIRS'
+]
+
+def load_library_ex(hit):
+    # If parameter 3 has one of the flags below, it's safe.
+    if (len(hit.parameters) >= 4 and
+            any(flag in hit.parameters[3] for flag in safe_load_library_flags)):
+        return
+    normal(hit)
 
 def normal(hit):
     add_warning(hit)
 
+# Ignore "system" if it's "system::" (that is, a C++ namespace such as
+# boost::system::...), because that produces too many false positives.
+# We ignore spaces before "::"
+def found_system(hit):
+    follow_text = hit.lookahead[len(hit.name):].lstrip()
+    if not follow_text.startswith('::'):
+        normal(hit)
 
 # "c_ruleset": the rules for identifying "hits" in C (potential warnings).
 # It's a dictionary, where the key is the function name causing the hit,
@@ -867,7 +1081,8 @@ c_ruleset = {
     (c_buffer, 4,
      "Does not check for buffer overflows when copying to destination [MS-banned] (CWE-120)",
      "Consider using snprintf, strcpy_s, or strlcpy (warning: strncpy easily misused)",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1001"),
+
     "strcpyA|strcpyW|StrCpy|StrCpyA|lstrcpyA|lstrcpyW|_tccpy|_mbccpy|_ftcscpy|_mbsncpy|StrCpyN|StrCpyNA|StrCpyNW|StrNCpy|strcpynA|StrNCpyA|StrNCpyW|lstrcpynA|lstrcpynW":
     # We need more info on these functions; I got their names from the
     # Microsoft "banned" list.  For now, just use "normal" to process them
@@ -875,33 +1090,39 @@ c_ruleset = {
     (normal, 4,
      "Does not check for buffer overflows when copying to destination [MS-banned] (CWE-120)",
      "Consider using snprintf, strcpy_s, or strlcpy (warning: strncpy easily misused)",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1002"),
+
     "lstrcpy|wcscpy|_tcscpy|_mbscpy":
     (c_buffer, 4,
      "Does not check for buffer overflows when copying to destination [MS-banned] (CWE-120)",
      "Consider using a function version that stops copying at the end of the buffer",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1003"),
+
     "memcpy|CopyMemory|bcopy":
     (c_memcpy, 2,  # I've found this to have a lower risk in practice.
      "Does not check for buffer overflows when copying to destination (CWE-120)",
      "Make sure destination can always hold the source data",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1004"),
+
     "strcat":
     (c_buffer, 4,
      "Does not check for buffer overflows when concatenating to destination [MS-banned] (CWE-120)",
      "Consider using strcat_s, strncat, strlcat, or snprintf (warning: strncat is easily misused)",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1005"),
+
     "lstrcat|wcscat|_tcscat|_mbscat":
     (c_buffer, 4,
      "Does not check for buffer overflows when concatenating to destination [MS-banned] (CWE-120)",
      "",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1006"),
+
     # TODO: Do more analysis.  Added because they're in MS banned list.
     "StrCat|StrCatA|StrcatW|lstrcatA|lstrcatW|strCatBuff|StrCatBuffA|StrCatBuffW|StrCatChainW|_tccat|_mbccat|_ftcscat|StrCatN|StrCatNA|StrCatNW|StrNCat|StrNCatA|StrNCatW|lstrncat|lstrcatnA|lstrcatnW":
     (normal, 4,
      "Does not check for buffer overflows when concatenating to destination [MS-banned] (CWE-120)",
      "",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1007"),
+
     "strncpy":
     (c_buffer,
      1,  # Low risk level, because this is often used correctly when FIXING security
@@ -910,7 +1131,8 @@ c_ruleset = {
      "Easily used incorrectly; doesn't always \\0-terminate or "
      "check for invalid pointers [MS-banned] (CWE-120)",
      "",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1008"),
+
     "lstrcpyn|wcsncpy|_tcsncpy|_mbsnbcpy":
     (c_buffer,
      1,  # Low risk level, because this is often used correctly when FIXING security
@@ -919,7 +1141,8 @@ c_ruleset = {
      "Easily used incorrectly; doesn't always \\0-terminate or "
      "check for invalid pointers [MS-banned] (CWE-120)",
      "",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1009"),
+
     "strncat":
     (c_strncat,
      1,  # Low risk level, because this is often used correctly when
@@ -927,7 +1150,8 @@ c_ruleset = {
      # higher risk level would cause many false positives.
      "Easily used incorrectly (e.g., incorrectly computing the correct maximum size to add) [MS-banned] (CWE-120)",
      "Consider strcat_s, strlcat, snprintf, or automatically resizing strings",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1010"),
+
     "lstrcatn|wcsncat|_tcsncat|_mbsnbcat":
     (c_strncat,
      1,  # Low risk level, because this is often used correctly when FIXING security
@@ -935,42 +1159,44 @@ c_ruleset = {
      # positives.
      "Easily used incorrectly (e.g., incorrectly computing the correct maximum size to add) [MS-banned] (CWE-120)",
      "Consider strcat_s, strlcat, or automatically resizing strings",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1011"),
+
     "strccpy|strcadd":
     (normal, 1,
      "Subject to buffer overflow if buffer is not as big as claimed (CWE-120)",
      "Ensure that destination buffer is sufficiently large",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1012"),
+
     "char|TCHAR|wchar_t":  # This isn't really a function call, but it works.
     (c_static_array, 2,
      "Statically-sized arrays can be improperly restricted, "
      "leading to potential overflows or other issues (CWE-119!/CWE-120)",
      "Perform bounds checking, use functions that limit length, "
      "or ensure that the size is larger than the maximum possible length",
-     "buffer", "", {'extract_lookahead': 1}),
+     "buffer", "", {'extract_lookahead': 1}, "FF1013"),
 
     "gets|_getts":
     (normal, 5, "Does not check for buffer overflows (CWE-120, CWE-20)",
-     "Use fgets() instead", "buffer", "", {'input': 1}),
+     "Use fgets() instead", "buffer", "", {'input': 1}, "FF1014"),
 
     # The "sprintf" hook will raise "format" issues instead if appropriate:
     "sprintf|vsprintf|swprintf|vswprintf|_stprintf|_vstprintf":
     (c_sprintf, 4,
      "Does not check for buffer overflows (CWE-120)",
      "Use sprintf_s, snprintf, or vsnprintf",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1015"),
 
     "printf|vprintf|vwprintf|vfwprintf|_vtprintf|wprintf":
     (c_printf, 4,
      "If format strings can be influenced by an attacker, they can be exploited (CWE-134)",
      "Use a constant for the format specification",
-     "format", "", {}),
+     "format", "", {}, "FF1016"),
 
     "fprintf|vfprintf|_ftprintf|_vftprintf|fwprintf|fvwprintf":
     (c_printf, 4,
      "If format strings can be influenced by an attacker, they can be exploited (CWE-134)",
      "Use a constant for the format specification",
-     "format", "", {'format_position': 2}),
+     "format", "", {'format_position': 2}, "FF1017"),
 
     # The "syslog" hook will raise "format" issues.
     "syslog":
@@ -978,28 +1204,28 @@ c_ruleset = {
      "If syslog's format strings can be influenced by an attacker, "
      "they can be exploited (CWE-134)",
      "Use a constant format string for syslog",
-     "format", "", {'format_position': 2}),
+     "format", "", {'format_position': 2}, "FF1018"),
 
     "snprintf|vsnprintf|_snprintf|_sntprintf|_vsntprintf":
     (c_printf, 4,
      "If format strings can be influenced by an attacker, they can be "
      "exploited, and note that sprintf variations do not always \\0-terminate (CWE-134)",
      "Use a constant for the format specification",
-     "format", "", {'format_position': 3}),
+     "format", "", {'format_position': 3}, "FF1019"),
 
     "scanf|vscanf|wscanf|_tscanf|vwscanf":
     (c_scanf, 4,
      "The scanf() family's %s operation, without a limit specification, "
      "permits buffer overflows (CWE-120, CWE-20)",
      "Specify a limit to %s, or use a different input function",
-     "buffer", "", {'input': 1}),
+     "buffer", "", {'input': 1}, "FF1020"),
 
     "fscanf|sscanf|vsscanf|vfscanf|_ftscanf|fwscanf|vfwscanf|vswscanf":
     (c_scanf, 4,
      "The scanf() family's %s operation, without a limit specification, "
      "permits buffer overflows (CWE-120, CWE-20)",
      "Specify a limit to %s, or use a different input function",
-     "buffer", "", {'input': 1, 'format_position': 2}),
+     "buffer", "", {'input': 1, 'format_position': 2}, "FF1021"),
 
     "strlen|wcslen|_tcslen|_mbslen":
     (normal,
@@ -1010,26 +1236,26 @@ c_ruleset = {
      "if given one it may perform an over-read (it could cause a crash "
      "if unprotected) (CWE-126)",
      "",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1022"),
 
     "MultiByteToWideChar":  # Windows
     (c_multi_byte_to_wide_char,
      2,  # Only the default - this will be changed in many cases.
      "Requires maximum length in CHARACTERS, not bytes (CWE-120)",
      "",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1023"),
 
     "streadd|strecpy":
     (normal, 4,
      "This function does not protect against buffer overflows (CWE-120)",
      "Ensure the destination has 4 times the size of the source, to leave room for expansion",
-     "buffer", "dangers-c", {}),
+     "buffer", "dangers-c", {}, "FF1024"),
 
     "strtrns":
     (normal, 3,
      "This function does not protect against buffer overflows (CWE-120)",
      "Ensure that destination is at least as long as the source",
-     "buffer", "dangers-c", {}),
+     "buffer", "dangers-c", {}, "FF1025"),
 
     "realpath":
     (normal, 3,
@@ -1038,27 +1264,27 @@ c_ruleset = {
      "Ensure that the destination buffer is at least of size MAXPATHLEN, and"
      "to protect against implementation problems, the input argument "
      "should also be checked to ensure it is no larger than MAXPATHLEN",
-     "buffer", "dangers-c", {}),
+     "buffer", "dangers-c", {}, "FF1026"),
 
     "getopt|getopt_long":
     (normal, 3,
      "Some older implementations do not protect against internal buffer overflows (CWE-120, CWE-20)",
      "Check implementation on installation, or limit the size of all string inputs",
-     "buffer", "dangers-c", {'input': 1}),
+     "buffer", "dangers-c", {'input': 1}, "FF1027"),
 
     "getwd":
     (normal, 3,
      "This does not protect against buffer overflows "
      "by itself, so use with caution (CWE-120, CWE-20)",
      "Use getcwd instead",
-     "buffer", "dangers-c", {'input': 1}),
+     "buffer", "dangers-c", {'input': 1}, "FF1028"),
 
     # fread not included here; in practice I think it's rare to mistake it.
     "getchar|fgetc|getc|read|_gettc":
     (normal, 1,
      "Check buffer boundaries if used in a loop including recursive loops (CWE-120, CWE-20)",
      "",
-     "buffer", "dangers-c", {'input': 1}),
+     "buffer", "dangers-c", {'input': 1}, "FF1029"),
 
     "access":        # ???: TODO: analyze TOCTOU more carefully.
     (normal, 4,
@@ -1069,31 +1295,36 @@ c_ruleset = {
      "Set up the correct permissions (e.g., using setuid()) and "
      "try to open the file directly",
      "race",
-     "avoid-race#atomic-filesystem", {}),
+     "avoid-race#atomic-filesystem", {}, "FF1030"),
+
     "chown":
     (normal, 5,
      "This accepts filename arguments; if an attacker "
      "can move those files, a race condition results. (CWE-362)",
      "Use fchown( ) instead",
-     "race", "", {}),
+     "race", "", {}, "FF1031"),
+
     "chgrp":
     (normal, 5,
      "This accepts filename arguments; if an attacker "
      "can move those files, a race condition results. (CWE-362)",
      "Use fchgrp( ) instead",
-     "race", "", {}),
+     "race", "", {}, "FF1032"),
+
     "chmod":
     (normal, 5,
      "This accepts filename arguments; if an attacker "
      "can move those files, a race condition results. (CWE-362)",
      "Use fchmod( ) instead",
-     "race", "", {}),
+     "race", "", {}, "FF1033"),
+
     "vfork":
     (normal, 2,
      "On some old systems, vfork() permits race conditions, and it's "
      "very difficult to use correctly (CWE-362)",
      "Use fork() instead",
-     "race", "", {}),
+     "race", "", {}, "FF1034"),
+
     "readlink":
     (normal, 5,
      "This accepts filename arguments; if an attacker "
@@ -1103,43 +1334,44 @@ c_ruleset = {
      # This is often just a bad idea, and it's hard to suggest a
      # simple alternative:
      "Reconsider approach",
-     "race", "", {'input': 1}),
+     "race", "", {'input': 1}, "FF1035"),
 
     "tmpfile":
     (normal, 2,
      "Function tmpfile() has a security flaw on some systems (e.g., older System V systems) (CWE-377)",
      "",
-     "tmpfile", "", {}),
+     "tmpfile", "", {}, "FF1036"),
+
     "tmpnam|tempnam":
     (normal, 3,
      "Temporary file race condition (CWE-377)",
      "",
-     "tmpfile", "avoid-race", {}),
+     "tmpfile", "avoid-race", {}, "FF1037"),
 
     # TODO: Detect GNOME approach to mktemp and ignore it.
     "mktemp":
     (normal, 4,
      "Temporary file race condition (CWE-377)",
      "",
-     "tmpfile", "avoid-race", {}),
+     "tmpfile", "avoid-race", {}, "FF1038"),
 
     "mkstemp":
     (normal, 2,
      "Potential for temporary file vulnerability in some circumstances.  Some older Unix-like systems create temp files with permission to write by all by default, so be sure to set the umask to override this. Also, some older Unix systems might fail to use O_EXCL when opening the file, so make sure that O_EXCL is used by the library (CWE-377)",
      "",
-     "tmpfile", "avoid-race", {}),
+     "tmpfile", "avoid-race", {}, "FF1039"),
 
     "fopen|open":
     (normal, 2,
      "Check when opening files - can an attacker redirect it (via symlinks), force the opening of special file type (e.g., device files), move things around to create a race condition, control its ancestors, or change its contents? (CWE-362)",
      "",
-     "misc", "", {}),
+     "misc", "", {}, "FF1040"),
 
     "umask":
     (normal, 1,
      "Ensure that umask is given most restrictive possible setting (e.g., 066 or 077) (CWE-732)",
      "",
-     "access", "", {}),
+     "access", "", {}, "FF1041"),
 
     # Windows.  TODO: Detect correct usage approaches and ignore it.
     "GetTempFileName":
@@ -1147,15 +1379,23 @@ c_ruleset = {
      "Temporary file race condition in certain cases "
      "(e.g., if run as SYSTEM in many versions of Windows) (CWE-377)",
      "",
-     "tmpfile", "avoid-race", {}),
+     "tmpfile", "avoid-race", {}, "FF1042"),
 
     # TODO: Need to detect varying levels of danger.
-    "execl|execlp|execle|execv|execvp|system|popen|WinExec|ShellExecute":
+    "execl|execlp|execle|execv|execvp|popen|WinExec|ShellExecute":
     (normal, 4,
      "This causes a new program to execute and is difficult to use safely (CWE-78)",
      "try using a library call that implements the same functionality "
      "if available",
-     "shell", "", {}),
+     "shell", "", {}, "FF1043"),
+
+    # TODO: Need to detect varying levels of danger.
+    "system":
+    (found_system, 4,
+     "This causes a new program to execute and is difficult to use safely (CWE-78)",
+     "try using a library call that implements the same functionality "
+     "if available",
+     "shell", "", {'extract_lookahead': 1}, "FF1044"),
 
     # TODO: Be more specific.  The biggest problem involves "first" param NULL,
     # second param with embedded space. Windows.
@@ -1163,7 +1403,7 @@ c_ruleset = {
     (normal, 3,
      "This causes a new process to execute and is difficult to use safely (CWE-78)",
      "Especially watch out for embedded spaces",
-     "shell", "", {}),
+     "shell", "", {}, "FF1045"),
 
     # TODO: Be more specific.  The biggest problem involves "first" param NULL,
     # second param with embedded space. Windows.
@@ -1172,7 +1412,7 @@ c_ruleset = {
      "This causes a new process to execute and is difficult to use safely (CWE-78)",
      "Specify the application path in the first argument, NOT as part of the second, "
      "or embedded spaces could allow an attacker to force a different program to run",
-     "shell", "", {'check_for_null': 1}),
+     "shell", "", {'check_for_null': 1}, "FF1046"),
 
     "atoi|atol|_wtoi|_wtoi64":
     (normal, 2,
@@ -1181,14 +1421,14 @@ c_ruleset = {
      "If source untrusted, check both minimum and maximum, even if the"
      " input had no minus sign (large numbers can roll over into negative"
      " number; consider saving to an unsigned value if that is intended)",
-     "integer", "dangers-c", {}),
+     "integer", "dangers-c", {}, "FF1047"),
 
     # Random values.  Don't trigger on "initstate", it's too common a term.
     "drand48|erand48|jrand48|lcong48|lrand48|mrand48|nrand48|random|seed48|setstate|srand|strfry|srandom|g_rand_boolean|g_rand_int|g_rand_int_range|g_rand_double|g_rand_double_range|g_random_boolean|g_random_int|g_random_int_range|g_random_double|g_random_double_range":
     (normal, 3,
      "This function is not sufficiently random for security-related functions such as key and nonce creation (CWE-327)",
      "Use a more secure technique for acquiring random values",
-     "random", "", {}),
+     "random", "", {}, "FF1048"),
 
     "crypt|crypt_r":
     (normal, 4,
@@ -1198,7 +1438,7 @@ c_ruleset = {
      "dictionary attacks given today's faster computing equipment (CWE-327)",
      "Use a different algorithm, such as SHA-256, with a larger, "
      "non-repeating salt",
-     "crypto", "", {}),
+     "crypto", "", {}, "FF1049"),
 
     # OpenSSL EVP calls to use DES.
     "EVP_des_ecb|EVP_des_cbc|EVP_des_cfb|EVP_des_ofb|EVP_desx_cbc":
@@ -1206,7 +1446,7 @@ c_ruleset = {
      "DES only supports a 56-bit keysize, which is too small given today's computers (CWE-327)",
      "Use a different patent-free encryption algorithm with a larger keysize, "
      "such as 3DES or AES",
-     "crypto", "", {}),
+     "crypto", "", {}, "FF1050"),
 
     # Other OpenSSL EVP calls to use small keys.
     "EVP_rc4_40|EVP_rc2_40_cbc|EVP_rc2_64_cbc":
@@ -1214,7 +1454,7 @@ c_ruleset = {
      "These keysizes are too small given today's computers (CWE-327)",
      "Use a different patent-free encryption algorithm with a larger keysize, "
      "such as 3DES or AES",
-     "crypto", "", {}),
+     "crypto", "", {}, "FF1051"),
 
     "chroot":
     (normal, 3,
@@ -1222,14 +1462,14 @@ c_ruleset = {
      "Make sure the program immediately chdir(\"/\"), closes file descriptors,"
      " and drops root privileges, and that all necessary files"
      " (and no more!) are in the new root",
-     "misc", "", {}),
+     "misc", "", {}, "FF1052"),
 
     "getenv|curl_getenv":
     (normal, 3, "Environment variables are untrustable input if they can be"
      " set by an attacker.  They can have any content and"
      " length, and the same variable can be set more than once (CWE-807, CWE-20)",
      "Check environment variables carefully before using them",
-     "buffer", "", {'input': 1}),
+     "buffer", "", {'input': 1}, "FF1053"),
 
     "g_get_home_dir":
     (normal, 3, "This function is synonymous with 'getenv(\"HOME\")';"
@@ -1237,7 +1477,7 @@ c_ruleset = {
      "set by an attacker.  It can have any content and length, "
      "and the same variable can be set more than once (CWE-807, CWE-20)",
      "Check environment variables carefully before using them",
-     "buffer", "", {'input': 1}),
+     "buffer", "", {'input': 1}, "FF1054"),
 
     "g_get_tmp_dir":
     (normal, 3, "This function is synonymous with 'getenv(\"TMP\")';"
@@ -1245,7 +1485,7 @@ c_ruleset = {
      "set by an attacker.  It can have any content and length, "
      "and the same variable can be set more than once (CWE-807, CWE-20)",
      "Check environment variables carefully before using them",
-     "buffer", "", {'input': 1}),
+     "buffer", "", {'input': 1}, "FF1055"),
 
 
     # These are Windows-unique:
@@ -1256,89 +1496,102 @@ c_ruleset = {
     "SetThreadToken":
     (normal, 4, "If this call fails, the program could fail to drop heightened privileges (CWE-250)",
      "Make sure the return value is checked, and do not continue if a failure is reported",
-     "access", "", {}),
+     "access", "", {}, "FF1056"),
 
     "InitializeCriticalSection":
     (normal, 3, "Exceptions can be thrown in low-memory situations",
      "Use InitializeCriticalSectionAndSpinCount instead",
-     "misc", "", {}),
+     "misc", "", {}, "FF1057"),
 
-    "EnterCriticalSection":
-    (normal, 3, "On some versions of Windows, exceptions can be thrown in low-memory situations",
-     "Use InitializeCriticalSectionAndSpinCount instead",
-     "misc", "", {}),
+    # We have *removed* the check for EnterCriticalSection.
+    # The page from the "book Writing Secure Code" describes
+    # EnterCriticalSection as something that will not throw errors on XP,
+    # .NET Server, and later. Windows XP EOL in April 8, 2014,
+    # .Net Server EOL 14 July 2015, so users of those systems will have
+    # larger security issues anyway.
+    # My thanks to rgetz for reporting this. For details, see:
+    # https://github.com/david-a-wheeler/flawfinder/issues/19
+    # "EnterCriticalSection":
+    # (normal, 3, "On some versions of Windows, exceptions can be thrown in low-memory situations",
+    #  "Use InitializeCriticalSectionAndSpinCount instead",
+    #  "misc", "", {}),
 
-    "LoadLibrary|LoadLibraryEx":
+    "LoadLibrary":
     (normal, 3, "Ensure that the full path to the library is specified, or current directory may be used (CWE-829, CWE-20)",
-     "Use registry entry or GetWindowsDirectory to find library path, if you aren't already",
-     "misc", "", {'input': 1}),
+     "Use LoadLibraryEx with one of the search flags, or call SetSearchPathMode to use a safe search path, or pass a full path to the library",
+     "misc", "", {'input': 1}, "FF1058"),
+
+    "LoadLibraryEx":
+    (load_library_ex, 3, "Ensure that the full path to the library is specified, or current directory may be used (CWE-829, CWE-20)",
+     "Use a flag like LOAD_LIBRARY_SEARCH_SYSTEM32 or LOAD_LIBRARY_SEARCH_APPLICATION_DIR to search only desired folders",
+     "misc", "", {'input': 1}, "FF1059"),
 
     "SetSecurityDescriptorDacl":
     (c_hit_if_null, 5,
      "Never create NULL ACLs; an attacker can set it to Everyone (Deny All Access), "
      "which would even forbid administrator access (CWE-732)",
      "",
-     "misc", "", {'check_for_null': 3}),
+     "misc", "", {'check_for_null': 3}, "FF1060"),
 
     "AddAccessAllowedAce":
     (normal, 3,
      "This doesn't set the inheritance bits in the access control entry (ACE) header (CWE-732)",
      "Make sure that you set inheritance by hand if you wish it to inherit",
-     "misc", "", {}),
+     "misc", "", {}, "FF1061"),
 
     "getlogin":
     (normal, 4,
      "It's often easy to fool getlogin.  Sometimes it does not work at all, because some program messed up the utmp file.  Often, it gives only the first 8 characters of the login name. The user currently logged in on the controlling tty of our program need not be the user who started it.  Avoid getlogin() for security-related purposes (CWE-807)",
      "Use getpwuid(geteuid()) and extract the desired information instead",
-     "misc", "", {}),
+     "misc", "", {}, "FF1062"),
 
     "cuserid":
     (normal, 4,
      "Exactly what cuserid() does is poorly defined (e.g., some systems use the effective uid, like Linux, while others like System V use the real uid). Thus, you can't trust what it does. It's certainly not portable (The cuserid function was included in the 1988 version of POSIX, but removed from the 1990 version).  Also, if passed a non-null parameter, there's a risk of a buffer overflow if the passed-in buffer is not at least L_cuserid characters long (CWE-120)",
      "Use getpwuid(geteuid()) and extract the desired information instead",
-     "misc", "", {}),
+     "misc", "", {}, "FF1063"),
 
     "getpw":
     (normal, 4,
      "This function is dangerous; it may overflow the provided buffer. It extracts data from a 'protected' area, but most systems have many commands to let users modify the protected area, and it's not always clear what their limits are.  Best to avoid using this function altogether (CWE-676, CWE-120)",
      "Use getpwuid() instead",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1064"),
 
     "getpass":
     (normal, 4,
      "This function is obsolete and not portable. It was in SUSv2 but removed by POSIX.2.  What it does exactly varies considerably between systems, particularly in where its prompt is displayed and where it gets its data (e.g., /dev/tty, stdin, stderr, etc.). In addition, some implementations overflow buffers. (CWE-676, CWE-120, CWE-20)",
      "Make the specific calls to do exactly what you want.  If you continue to use it, or write your own, be sure to zero the password as soon as possible to avoid leaving the cleartext password visible in the process' address space",
-     "misc", "", {'input': 1}),
+     "misc", "", {'input': 1}, "FF1065"),
 
     "gsignal|ssignal":
     (normal, 2,
      "These functions are considered obsolete on most systems, and very non-portable (Linux-based systems handle them radically different, basically if gsignal/ssignal were the same as raise/signal respectively, while System V considers them a separate set and obsolete) (CWE-676)",
      "Switch to raise/signal, or some other signalling approach",
-     "obsolete", "", {}),
+     "obsolete", "", {}, "FF1066"),
 
     "memalign":
     (normal, 1,
      "On some systems (though not Linux-based systems) an attempt to free() results from memalign() may fail. This may, on a few systems, be exploitable.  Also note that memalign() may not check that the boundary parameter is correct (CWE-676)",
      "Use posix_memalign instead (defined in POSIX's 1003.1d).  Don't switch to valloc(); it is marked as obsolete in BSD 4.3, as legacy in SUSv2, and is no longer defined in SUSv3.  In some cases, malloc()'s alignment may be sufficient",
-     "free", "", {}),
+     "free", "", {}, "FF1067"),
 
     "ulimit":
     (normal, 1,
      "This C routine is considered obsolete (as opposed to the shell command by the same name, which is NOT obsolete) (CWE-676)",
      "Use getrlimit(2), setrlimit(2), and sysconf(3) instead",
-     "obsolete", "", {}),
+     "obsolete", "", {}, "FF1068"),
 
     "usleep":
     (normal, 1,
      "This C routine is considered obsolete (as opposed to the shell command by the same name).   The interaction of this function with SIGALRM and other timer functions such as sleep(), alarm(), setitimer(), and nanosleep() is unspecified (CWE-676)",
      "Use nanosleep(2) or setitimer(2) instead",
-     "obsolete", "", {}),
+     "obsolete", "", {}, "FF1069"),
 
     # Input functions, useful for -I
     "recv|recvfrom|recvmsg|fread|readv":
     (normal, 0, "Function accepts input from outside program (CWE-20)",
      "Make sure input data is filtered, especially if an attacker could manipulate it",
-     "input", "", {'input': 1}),
+     "input", "", {'input': 1}, "FF1070"),
 
     # Unsafe STL functions that don't check the second iterator
     "equal|mismatch|is_permutation":
@@ -1348,7 +1601,7 @@ c_ruleset = {
      1,
      "Function does not check the second iterator for over-read conditions (CWE-126)",
      "This function is often discouraged by most C++ coding standards in favor of its safer alternatives provided since C++14. Consider using a form of this function that checks the second iterator before potentially overflowing it",
-     "buffer", "", {}),
+     "buffer", "", {}, "FF1071"),
 
     # TODO: detect C++'s:   cin >> charbuf, where charbuf is a char array; the problem
     #       is that flawfinder doesn't have type information, and ">>" is safe with
@@ -1461,6 +1714,8 @@ def process_c_file(f, patch_infos):
     linenumber = 1
     ignoreline = -1
 
+    cpplanguage = (f.endswith(".cpp") or f.endswith(".cxx") or f.endswith(".cc")
+                   or f.endswith(".hpp"))
     incomment = 0
     instring = 0
     linebegin = 1
@@ -1531,7 +1786,7 @@ def process_c_file(f, patch_infos):
         print('   (ISO-8859-1 encoders normally allow anything).')
         print('4. Convert all your source code to the UTF-8 encoding.')
         print('   The system program "iconv" or Python program "cvt2utf" can')
-        print('   do this (for cvt2tuf, you can use "pip install cvt2utf").')
+        print('   do this (for cvt2utf, you can use "pip install cvt2utf").')
         print('5. Run: python2 flawfinder')
         print('   (That is, use Python 2 instead of Python 3).')
         print('Some of these options may not work depending on circumstance.')
@@ -1644,9 +1899,12 @@ def process_c_file(f, patch_infos):
                                                      startpos + max_lookahead]
                             hit.hook(hit)
                 elif p_digits.match(c):
-                    while i < len(text) and p_digits.match(
-                            text[i]):  # Process a number.
-                        i += 1
+                    while i < len(text): # Process a number.
+                        # C does not have digit separator
+                        if p_digits.match(text[i]) or (cpplanguage and text[i] == "'"):
+                            i += 1
+                        else:
+                            break
                 # else some other character, which we ignore.
                 # End of loop through text. Wrap up.
     if codeinline:
@@ -1703,9 +1961,11 @@ def display_header():
     global displayed_header
     if csv_output:
         csv_writer.writerow([
-            'File', 'Line', 'Column', 'Level', 'Category', 'Name', 'Warning',
-            'Suggestion', 'Note', 'CWEs', 'Context', 'Fingerprint'
+            'File', 'Line', 'Column', 'DefaultLevel', 'Level', 'Category', 'Name', 'Warning',
+            'Suggestion', 'Note', 'CWEs', 'Context', 'Fingerprint', 'ToolVersion', 'RuleId', 'HelpUri'
         ])
+        return
+    if sarif_output:
         return
     if not showheading:
         return
@@ -1745,6 +2005,8 @@ c_extensions = {
     '.CC': 1,
     '.c++': 1,  # C++.
     '.pcc': 1,  # Oracle C++
+    '.pc': 1,  # Oracle SQL-embedded C
+    '.sc': 1,  # Oracle Pro*C pre-compiler
     '.hpp': 1,
     '.H': 1,  # .h - usually C++.
 }
@@ -1927,6 +2189,7 @@ flawfinder [--help | -h] [--version] [--listrules]
               Display as HTML output.
   --immediate | -i
               Immediately display hits (don't just wait until the end).
+  --sarif     Generate output in SARIF format.
   --singleline | -S
               Single-line output.
   --omittime  Omit time to run.
@@ -1959,7 +2222,7 @@ flawfinder [--help | -h] [--version] [--listrules]
 def process_options():
     global show_context, show_inputs, allowlink, skipdotdir, omit_time
     global output_format, minimum_level, show_immediately, single_line
-    global csv_output, csv_writer
+    global csv_output, csv_writer, sarif_output
     global error_level
     global required_regex, required_regex_compiled
     global falsepositive
@@ -1973,22 +2236,22 @@ def process_options():
             "falsepositive", "falsepositives", "columns", "listrules",
             "omittime", "allowlink", "patch=", "followdotdir", "neverignore",
             "regex=", "quiet", "dataonly", "html", "singleline", "csv",
-            "error-level=",
+            "error-level=", "sarif",
             "loadhitlist=", "savehitlist=", "diffhitlist=", "version", "help"
         ])
         for (opt, value) in optlist:
-            if opt == "--context" or opt == "-c":
+            if opt in ("--context", "-c"):
                 show_context = 1
-            elif opt == "--columns" or opt == "-C":
+            elif opt in ("--columns", "-C"):
                 show_columns = 1
-            elif opt == "--quiet" or opt == "-Q":
+            elif opt in ("--quiet", "-Q"):
                 quiet = 1
-            elif opt == "--dataonly" or opt == "-D":
+            elif opt in ("--dataonly", "-D"):
                 showheading = 0
-            elif opt == "--inputs" or opt == "--input" or opt == "-I":
+            elif opt in ("--inputs", "--input", "-I"):
                 show_inputs = 1
                 minimum_level = 0
-            elif opt == "--falsepositive" or opt == "falsepositives" or opt == "-F":
+            elif opt in ("--falsepositive", "falsepositives", "-F"):
                 falsepositive = 1
             elif opt == "--nolink":
                 allowlink = 0
@@ -2000,36 +2263,40 @@ def process_options():
                 skipdotdir = 0
             elif opt == "--listrules":
                 list_rules = 1
-            elif opt == "--html" or opt == "-H":
+            elif opt in ("--html", "-H"):
                 output_format = 1
                 single_line = 0
-            elif opt == "--minlevel" or opt == "-m":
+            elif opt in ("--minlevel", "-m"):
                 minimum_level = int(value)
-            elif opt == "--singleline" or opt == "-S":
+            elif opt in ("--singleline", "-S"):
                 single_line = 1
             elif opt == "--csv":
                 csv_output = 1
                 quiet = 1
                 showheading = 0
                 csv_writer = csv.writer(sys.stdout)
+            elif opt == "--sarif":
+                sarif_output = 1
+                quiet = 1
+                showheading = 0
             elif opt == "--error-level":
                 error_level = int(value)
-            elif opt == "--immediate" or opt == "-i":
+            elif opt in ("--immediate", "-i"):
                 show_immediately = 1
-            elif opt == "-n" or opt == "--neverignore":
+            elif opt in ("-n", "--neverignore"):
                 never_ignore = 1
-            elif opt == "-e" or opt == "--regex":
+            elif opt in ("-e", "--regex"):
                 required_regex = value
                 # This will raise an exception if it can't be compiled as a
                 # regex:
                 required_regex_compiled = re.compile(required_regex)
-            elif opt == "-P" or opt == "--patch":
+            elif opt in ("-P", "--patch"):
                 # Note: This is -P, so that a future -p1 option can strip away
                 # pathname prefixes (with the same option name as "patch").
                 patch_file = value
                 # If we consider ignore comments we may change a line which was
-                # previously ignored but which will raise now a valid warning without
-                # noticing it now.  So, set never_ignore.
+                # previously ignored but which will raise now a valid warning
+                # without noticing it now.  So, set never_ignore.
                 never_ignore = 1
             elif opt == "--loadhitlist":
                 loadhitlist = value
@@ -2049,10 +2316,12 @@ def process_options():
             elif opt == "--version":
                 print(version)
                 sys.exit(0)
-            elif opt in ['-h', '-?', '--help']:
-                # We accept "-?" but do not document it.  On Unix-like systems the
-                # question mark in "-?" should be escaped, and many forget
-                # that.
+            elif opt in ('-h', '-?', '--help'):
+                # We accept "-?" but do not document it because we don't
+                # want to encourage its use.
+                # Unix-like systems with typical shells expand glob
+                # patterns, so the question mark in "-?" should be escaped,
+                # and many forget that.
                 usage()
                 sys.exit(0)
         # For DOS/Windows, expand filenames; for Unix, DON'T expand them
@@ -2060,7 +2329,7 @@ def process_options():
         # always call "glob", but that's WRONG -- on Unix-like systems that
         # will expand twice.  Python doesn't have a clean way to detect
         # "has globbing occurred", so this is the best I've found:
-        if os.name == "windows" or os.name == "nt" or os.name == "dos":
+        if os.name in ("windows", "nt", "dos"):
             sys.argv[1:] = functools.reduce(operator.add,
                                             list(map(glob.glob, args)))
         else:
@@ -2224,10 +2493,18 @@ def show_final_results():
         print("Minimum risk level = %d" % minimum_level)
         if output_format:
             print("<br>")
+        else:
+            print()
         if count > 0:
             print("Not every hit is necessarily a security vulnerability.")
+            print("You can inhibit a report by adding a comment in this form:")
+            print("// flawfinder: ignore")
+            print("Make *sure* it's a false positive!")
+            print("You can use the option --neverignore to show these.")
             if output_format:
                 print("<br>")
+            else:
+                print()
         print("There may be other security vulnerabilities; review your code!")
         if output_format:
             print("<br>")
@@ -2256,13 +2533,19 @@ def flawfind():
     display_header()
     initialize_ruleset()
     if process_files():
-        show_final_results()
+        if sarif_output:
+            print(SarifLogger(hitlist).output_sarif())
+        else:
+            show_final_results()
         save_if_desired()
     return 1 if error_level_exceeded else 0
 
 
-if __name__ == '__main__':
+def main():
     try:
         sys.exit(flawfind())
     except KeyboardInterrupt:
         print("*** Flawfinder interrupted")
+
+if __name__ == '__main__':
+    main()

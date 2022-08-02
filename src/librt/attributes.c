@@ -1,7 +1,7 @@
 /*                    A T T R I B U T E S . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2020 United States Government as represented by
+ * Copyright (c) 2010-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -329,6 +329,26 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
 	    bu_free_external(&ext);
 	    return -8;
 	}
+    }
+
+    // set the material_id field using the material given by the material_name field
+    const char *material_name = bu_avs_get(avsp, "material_name");
+    if (material_name != NULL && !BU_STR_EQUAL(material_name, "(null)") && !BU_STR_EQUAL(material_name, "del")) {
+        struct directory *material_dp = db_lookup(dbip, material_name, LOOKUP_QUIET);
+        if (material_dp != RT_DIR_NULL) {
+            struct rt_db_internal intern;
+            struct rt_material_internal *material_ip;
+            if (rt_db_get_internal(&intern, material_dp, dbip, NULL, NULL) >= 0) {
+                if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
+                    material_ip = (struct rt_material_internal *) intern.idb_ptr;
+                    const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");
+                    // the material_id will only be set if the material object has an id field set
+                    if (id_string != NULL) {
+                        bu_avs_add(avsp, "material_id", id_string);
+                    }
+                }
+            }
+        }
     }
 
     bu_avs_merge(&old_avs, avsp);

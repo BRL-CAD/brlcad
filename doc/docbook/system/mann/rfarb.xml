@@ -43,7 +43,7 @@
   <example><title>Create a new ARB8 shape.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rfarb</userinput>
+      <prompt>mged&gt; </prompt><userinput>rfarb</userinput>
     </para>
     <para>Creates a new ARB8 shape according to arguments supplied in responses to prompts.
 

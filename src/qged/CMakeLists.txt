@@ -1,172 +1,171 @@
-if(BRLCAD_ENABLE_QT)
-  include_directories(
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}
-    ${BRLCAD_SOURCE_DIR}/include
-    ${GED_INCLUDE_DIRS}
-    ${RT_INCLUDE_DIRS}
-    ${BU_INCLUDE_DIRS}
-    ${Qt5Widgets_INCLUDE_DIRS}
-    )
+include_directories(
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}
+  ${BRLCAD_SOURCE_DIR}/include
+  ${QTCAD_INCLUDE_DIRS}
+  ${GED_INCLUDE_DIRS}
+  ${RT_INCLUDE_DIRS}
+  ${BU_INCLUDE_DIRS}
+  )
 
-  add_definitions(${Qt5Widgets_DEFINITIONS})
-endif(BRLCAD_ENABLE_QT)
-
-add_subdirectory(qtads)
+# TODO - we need to figure out how to use windeployqt and macdeployqt (and
+# maybe something similar for Linux?) to make self-contained packages using Qt.
+# Right now, qged won't work from the build dir on Windows because it can't
+# find the Qt libraries, and it will have the same problem when bundled into
+# the .exe and .msi installers.  Potentially helpful:
+#
+# https://stackoverflow.com/a/41199492/2037687
+# https://github.com/probonopd/linuxdeployqt
 
 # NOTE: We can't use the CMake global values for automoc et. al.
 # because most of BRL-CAD's targets are not Qt targets.  We don't
 # want to run the automatic moc logic for all of them.
 
 set(qged_srcs
-  main.cxx
-  main_window.cxx
-  cadaccordion.cxx
-  cadapp.cxx
-  cadappexec.cxx
-  cadattributes.cxx
-  cadcommands.cxx
-  cadconsole.cxx
-  cadhelp.cxx
-  cadimport.cxx
-  cadtreemodel.cxx
-  cadtreeview.cxx
-  cadtreenode.cxx
-  cadview.cxx
-  console.cxx
-  pqConsoleWidget.cxx
-  QAccordionWidget.cxx
-  QToolPalette.cxx
-  QFlowLayout.cxx
+  main_window.cpp
+  app.cpp
+  attributes.cpp
+  event_filter.cpp
+  fbserv.cpp
+  import.cpp
+  palettes.cpp
   )
 
-set(moc_headers
-  main_window.h
-  cadaccordion.h
-  cadapp.h
-  cadappexec.h
-  cadattributes.h
-  cadcommands.h
-  cadhelp.h
-  cadimport.h
-  cadconsole.h
-  cadtreemodel.h
-  cadtreeview.h
-  cadview.h
-  console.h
-  pqConsoleWidget.h
-  QAccordionWidget.h
-  QToolPalette.h
-  QFlowLayout.h
+set(qth_names
+  app
+  attributes
+  event_filter
+  fbserv
+  import
+  main_window
+  palettes
   )
+foreach(qh ${qth_names})
+  set(moc_headers ${moc_headers} ${qh}.h)
+endforeach(qh ${qth_names})
 
-if(BRLCAD_ENABLE_QT)
-  QT5_WRAP_CPP(moc_srcs ${moc_headers})
-  QT5_ADD_RESOURCES(cad_qrc cadresources.qrc)
 
-  add_executable(qged ${qged_srcs} ${moc_srcs} ${cad_qrc})
-  qt5_use_modules(qged Widgets OpenGL)
-  target_link_libraries(qged libbu librt libged qtadvanceddocking ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
+if (BRLCAD_ENABLE_QT)
+
+  # Let main_window know what the platform's extension is so it knows
+  # what plugin filenames to look for
+  set_property(SOURCE main_window.cpp APPEND PROPERTY
+    COMPILE_DEFINITIONS "QGED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
+
+  if(Qt6Widgets_FOUND)
+    QT6_WRAP_CPP(moc_srcs ${moc_headers})
+  else()
+    QT5_WRAP_CPP(moc_srcs ${moc_headers})
+  endif(Qt6Widgets_FOUND)
+
+  # https://github.com/Alexhuszagh/BreezeStyleSheets
+  if(Qt6Widgets_FOUND)
+    QT6_ADD_RESOURCES(theme_qrc theme/breeze.qrc)
+  else()
+    QT5_ADD_RESOURCES(theme_qrc theme/breeze.qrc)
+  endif(Qt6Widgets_FOUND)
+
+  add_executable(qged main.cpp ${qged_srcs} ${moc_srcs} ${theme_qrc})
+  # Note - Network is needed for async embedded raytracing display
+  if(Qt6Widgets_FOUND)
+    target_link_libraries(qged libqtcad libged librt libbu Qt6::Widgets Qt6::Network)
+  else()
+    target_link_libraries(qged libqtcad libged librt libbu Qt5::Widgets Qt5::Network)
+  endif(Qt6Widgets_FOUND)
   target_compile_definitions(qged PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS qged
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
-else(BRLCAD_ENABLE_QT)
-  CMAKEFILES(${qged_srcs})
-  CMAKEFILES(${moc_headers})
-endif(BRLCAD_ENABLE_QT)
+
+  # Make sure all dm and ged plugins are accounted for when we build qged
+  add_dependencies(qged dm_plugins ged_plugins)
+
+  foreach(qh ${qth_names})
+    DISTCLEAN(moc_${qh}.cpp_parameters)
+  endforeach(qh ${qth_names})
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/theme/breeze.qrc.depends)
+
+endif (BRLCAD_ENABLE_QT)
+
+# Core application is defined, now handle plugins
+add_subdirectory(plugins)
 
 set(qged_ignore_srcs
-  default.qss
-  cadstyle.qss
-  cadtreestyle.qss
-  pqConsoleWidget_LICENSE.txt
+  ${qged_srcs}
+  ${moc_headers}
+  CMakeLists.txt
+  TODO
+  display/AxesRenderer.cpp
+  display/AxesRenderer.h
+  display/Camera.h
+  display/Display.cpp
+  display/Display.h
+  display/DisplayManager.cpp
+  display/DisplayManager.h
+  display/GeometryRenderer.cpp
+  display/GeometryRenderer.h
+  display/OrthographicCamera.cpp
+  display/OrthographicCamera.h
+  display/README.txt
+  display/Renderable.h
   fonts/Inconsolata-LICENSE.txt
   fonts/Inconsolata.otf
-  images/primitives/other.png
-  images/primitives/dsp.png
-  images/primitives/ars.png
-  images/primitives/eto.png
-  images/primitives/region.png
-  images/primitives/tgc.png
-  images/primitives/extrude.png
-  images/primitives/part.png
-  images/primitives/tor.png
-  images/primitives/ehy.png
-  images/primitives/arb8.png
-  images/primitives/air.png
-  images/primitives/arbn.png
-  images/primitives/arb5.png
-  images/primitives/rpc.png
-  images/primitives/nmg.png
-  images/primitives/assembly.png
-  images/primitives/pipe.png
-  images/primitives/sketch.png
-  images/primitives/invalid.png
-  images/primitives/ell.png
-  images/primitives/sph.png
-  images/primitives/arb6.png
-  images/primitives/brep.png
-  images/primitives/comb.png
-  images/primitives/epa.png
-  images/primitives/bot.png
-  images/primitives/half.png
-  images/primitives/rhc.png
-  images/primitives/metaball.png
-  images/primitives/arb7.png
-  images/primitives/hyp.png
-  images/primitives/arb4.png
-  images/primitives/airregion.png
-  images/appleseed/scrollbar_arrow_up_disabled.png
-  images/appleseed/combobox_arrow_down_disabled.png
-  images/appleseed/radiobutton_unchecked_enabled.png
-  images/appleseed/radiobutton_checked_disabled.png
-  images/appleseed/spinbox_arrow_down_enabled.png
-  images/appleseed/spinbox_arrow_up_disabled.png
-  images/appleseed/menu_arrow_right_selected.png
-  images/appleseed/scrollbar_arrow_left_enabled.png
-  images/appleseed/radiobutton_checked_enabled_hover.png
-  images/appleseed/scrollbar_arrow_right_enabled.png
-  images/appleseed/radiobutton_unchecked_enabled_hover.png
-  images/appleseed/checkbox_indeterminate_disabled.png
-  images/appleseed/checkbox_checked_enabled.png
-  images/appleseed/scrollbar_arrow_up_enabled.png
-  images/appleseed/scrollbar_arrow_left_disabled.png
-  images/appleseed/scrollbar_arrow_down_enabled.png
-  images/appleseed/scrollbar_arrow_right_disabled.png
-  images/appleseed/header_arrow_up_enabled.png
-  images/appleseed/checkbox_unchecked_disabled.png
-  images/appleseed/combobox_arrow_down_selected.png
-  images/appleseed/scrollbar_arrow_down_disabled.png
-  images/appleseed/radiobutton_unchecked_disabled.png
-  images/appleseed/header_arrow_down_disabled.png
-  images/appleseed/menu_arrow_right_disabled.png
-  images/appleseed/checkbox_unchecked_enabled.png
-  images/appleseed/combobox_arrow_down_enabled.png
-  images/appleseed/header_arrow_up_disabled.png
-  images/appleseed/radiobutton_checked_enabled.png
-  images/appleseed/checkbox_indeterminate_enabled.png
-  images/appleseed/header_arrow_down_enabled.png
-  images/appleseed/spinbox_arrow_up_enabled.png
-  images/appleseed/LICENSE.txt
-  images/appleseed/menu_arrow_right_enabled.png
-  images/appleseed/spinbox_arrow_down_disabled.png
-  images/appleseed/checkbox_checked_disabled.png
-  images/tree/branch-end.png
-  images/tree/branch-open.png
-  images/tree/branch-closed.png
-  images/tree/branch-more.png
-  images/tree/vline.png
+  main.cpp
+  qdm_tests.txt
+  theme/LICENSE.md
+  theme/breeze.qrc
+  theme/dark.qss
+  theme/dark/branch_closed-on.svg
+  theme/dark/branch_closed.svg
+  theme/dark/branch_open-on.svg
+  theme/dark/branch_open.svg
+  theme/dark/checkbox_checked.svg
+  theme/dark/checkbox_checked_disabled.svg
+  theme/dark/checkbox_indeterminate.svg
+  theme/dark/checkbox_indeterminate_disabled.svg
+  theme/dark/checkbox_unchecked.svg
+  theme/dark/checkbox_unchecked_disabled.svg
+  theme/dark/close-hover.svg
+  theme/dark/close-pressed.svg
+  theme/dark/close.svg
+  theme/dark/down_arrow-hover.svg
+  theme/dark/down_arrow.svg
+  theme/dark/down_arrow_disabled.svg
+  theme/dark/hmovetoolbar.svg
+  theme/dark/hsepartoolbar.svg
+  theme/dark/left_arrow.svg
+  theme/dark/left_arrow_disabled.svg
+  theme/dark/radio_checked.svg
+  theme/dark/radio_checked_disabled.svg
+  theme/dark/radio_unchecked.svg
+  theme/dark/radio_unchecked_disabled.svg
+  theme/dark/right_arrow.svg
+  theme/dark/right_arrow_disabled.svg
+  theme/dark/sizegrip.svg
+  theme/dark/spinup_disabled.svg
+  theme/dark/stylesheet-branch-end-closed.svg
+  theme/dark/stylesheet-branch-end-open.svg
+  theme/dark/stylesheet-branch-end.svg
+  theme/dark/stylesheet-branch-more.svg
+  theme/dark/stylesheet-vline.svg
+  theme/dark/transparent.svg
+  theme/dark/undock-hover.svg
+  theme/dark/undock.svg
+  theme/dark/up_arrow-hover.svg
+  theme/dark/up_arrow.svg
+  theme/dark/up_arrow_disabled.svg
+  theme/dark/vmovetoolbar.svg
+  theme/dark/vsepartoolbars.svg
   )
 
 CMAKEFILES(${qged_ignore_srcs})
 
-  # Local Variables:
-  # tab-width: 8
-  # mode: cmake
-  # indent-tabs-mode: t
-  # End:
-  # ex: shiftwidth=2 tabstop=8
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
 

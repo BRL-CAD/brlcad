@@ -1,7 +1,7 @@
 /*                    M A P P E D F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -201,9 +201,8 @@ mapped_file_invalidate(struct bu_mapped_file *mp)
 	return;
 
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
-    if (mp->appl)
-	bu_free(mp->appl, "appl");
-    mp->appl = bu_strdup("_INVALID_");
+    bu_free(mp->appl, "appl");
+    mp->appl = NULL;
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 
     return;
@@ -244,7 +243,7 @@ mapped_file_is_valid(struct bu_mapped_file *mp)
 
     if ((size_t)sb.st_size != mp->buflen) {
 	if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
-	    bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %jd, opening new version.\n", mp->name, mp->buflen, (intmax_t)sb.st_size);
+	    bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %zu to %jd, opening new version.\n", mp->name, mp->buflen, (intmax_t)sb.st_size);
 	}
 	/* doesn't reflect the file any longer. */
 	return 0;
@@ -365,22 +364,20 @@ bu_open_mapped_file(const char *name, const char *appl)
     mp->uses = 1;
     mp->buflen = sb.st_size;
     mp->modtime = sb.st_mtime;
-    mp->buf = MAP_FAILED;
+    mp->buf = NULL;
 
     /* Attempt to memory-map the file */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-#ifdef HAVE_SYS_MMAN_H
+#if defined(HAVE_SYS_MMAN_H)
     mp->buf = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-#else
-#  ifdef HAVE_WINDOWS_H
+#elif defined(HAVE_WINDOWS_H)
     /* FIXME: shouldn't need to preserve handle */
     mp->buf = win_mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0, &(mp->handle));
-#  endif
 #endif /* HAVE_SYS_MMAN_H */
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     /* If cannot memory-map, read it in manually */
-    if (mp->buf != MAP_FAILED) {
+    if (mp->buf && mp->buf != MAP_FAILED) {
 	mp->is_mapped = 1;
     } else {
 	ssize_t bytes_to_go = sb.st_size;
@@ -401,7 +398,6 @@ bu_open_mapped_file(const char *name, const char *appl)
 	    if (UNLIKELY(readval < 0)) {
 		bu_semaphore_release(BU_SEM_SYSCALL);
 		perror("read");
-		bu_free(mp->buf, name);
 		goto fail;
 	    } else {
 		nbytes += readval;
@@ -412,7 +408,6 @@ bu_open_mapped_file(const char *name, const char *appl)
 
 	if (UNLIKELY(nbytes != sb.st_size)) {
 	    perror(name);
-	    bu_free(mp->buf, name);
 	    goto fail;
 	}
     }
@@ -436,26 +431,26 @@ fail:
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 
-    if (mp->name)
-	bu_free(mp->name, "mp->name");
-    if (mp->appl)
-	bu_free(mp->appl, "mp->appl");
-    if (mp->buf) {
-	if (mp->is_mapped)
-#ifdef HAVE_SYS_MMAN_H
-	    munmap(mp->buf, (size_t)mp->buflen);
-#else
-#  ifdef HAVE_WINDOWS_H
-	win_munmap(mp->buf, (size_t)mp->buflen, mp->handle);
-#  endif
-#endif
-	else
-	    bu_free(mp->buf, name);
-    }
-
+    bu_free(mp->name, "mp->name");
     mp->name = NULL;
+
+    bu_free(mp->appl, "mp->appl");
     mp->appl = NULL;
-    mp->buf = MAP_FAILED;
+
+    if (mp->buf) {
+	if (mp->is_mapped) {
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+#if defined(HAVE_SYS_MMAN_H)
+	    munmap(mp->buf, (size_t)mp->buflen);
+#elif defined(HAVE_WINDOWS_H)
+	    win_munmap(mp->buf, (size_t)mp->buflen, mp->handle);
+#endif
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	} else if (mp->buf != MAP_FAILED) {
+	    bu_free(mp->buf, name);
+	}
+	mp->buf = NULL;
+    }
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
 	bu_log("bu_open_mapped_file(%s, %s) can't open file\n", name, appl ? appl: "(NULL)");
@@ -486,7 +481,7 @@ bu_pr_mapped_file(const char *title, const struct bu_mapped_file *mp)
     if (UNLIKELY(!mp))
 	return;
 
-    bu_log("%p mapped_file %s %p len=%ld mapped=%d, uses=%d %s\n",
+    bu_log("%p mapped_file %s %p len=%zu mapped=%d, uses=%d %s\n",
 	   (void *)mp, mp->name, mp->buf, mp->buflen,
 	   mp->is_mapped, mp->uses,
 	   title);
@@ -538,8 +533,7 @@ bu_free_mapped_files(int verbose)
 	mp->buf = (void *)NULL;		/* sanity */
 	bu_free((void *)mp->name, "bu_mapped_file.name");
 
-	if (mp->appl)
-	    bu_free((void *)mp->appl, "bu_mapped_file.appl");
+	bu_free((void *)mp->appl, "bu_mapped_file.appl");
 
 	/* release this one */
 	memset(mp, 0, sizeof(struct bu_mapped_file)); /* sanity */

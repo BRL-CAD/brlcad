@@ -737,7 +737,7 @@ analyze_polygonize(
 	)
 {
     int ret = 0;
-    int ncpus = bu_avail_cpus();
+    size_t ncpus = bu_avail_cpus();
     struct pnt_normal *rtpnt;
     PROCESS p;
     int i, n;
@@ -798,7 +798,7 @@ analyze_polygonize(
 	ret = -1;
 	goto analyze_polygonizer_memfree;
     }
-    rt_prep_parallel(rtip, ncpus);
+    rt_prep_parallel(rtip, (int)ncpus);
     p.ap = ap;
     p.d = ap;
 
@@ -820,7 +820,7 @@ analyze_polygonize(
     setcenter(&p, p.centers, 0, 0, 0);
 
     while (p.cubes != NULL) { /* process active cubes till none left */
-	long int avail_mem = 0;
+	size_t avail_mem = 0;
 	CUBE c;
 	CUBES *temp = p.cubes;
 	c = p.cubes->cube;
@@ -857,9 +857,9 @@ analyze_polygonize(
 	}
 
 	if (params && params->minimum_free_mem > 0) {
-	    avail_mem = bu_avail_mem();
-	    if (avail_mem >= 0 && avail_mem < params->minimum_free_mem) {
-		/* memory too tight, bail */
+	    avail_mem = bu_mem(BU_MEM_AVAIL, NULL);
+	    if (avail_mem > 0 && avail_mem < params->minimum_free_mem) {
+		/* error or memory too tight, bail */
 		ret = 3;
 		goto analyze_polygonizer_memfree;
 	    }

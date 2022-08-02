@@ -1,7 +1,7 @@
 /*                            D O . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2020 United States Government as represented by
+ * Copyright (c) 1987-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@
 #include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 #include "icv.h"
 
 #include "./rtuif.h"
@@ -63,9 +63,6 @@ extern mat_t view2model;
 extern mat_t model2view;
 /***** end of sharing with viewing model *****/
 
-extern void grid_setup(void);
-extern void worker(int cpu, void *arg);
-
 /***** variables shared with opt.c *****/
 extern int	orientflag;		/* 1 means orientation has been set */
 /***** end variables shared with opt.c *****/
@@ -76,16 +73,14 @@ extern char *string_pix_end;	/* string spec of ending pixel */
 extern int finalframe;		/* frame to halt at */
 /***** end variables shared with rt.c *****/
 
-/***** variables for frame buffer black pixel rendering *****/
-unsigned char *pixmap = NULL; /* Pixel Map for rerendering of black pixels */
-
-
 void def_tree(register struct rt_i *rtip);
 void do_ae(double azim, double elev);
 void res_pr(void);
 void memory_summary(void);
+extern void worker(int cpu, void *arg);
 
 extern struct icv_image *bif;
+unsigned char *pixmap = NULL; /**< Pixel Map for rerendering of black pixels */
 
 
 /**
@@ -100,13 +95,17 @@ old_frame(FILE *fp)
     char number[NUMBER_LEN+1];
 
     /* Visible part is from -1 to +1 in view space */
-    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1)
+	return -1;
     viewsize = atof(number);
-    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1)
+	return -1;
     eye_model[X] = atof(number);
-    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1)
+	return -1;
     eye_model[Y] = atof(number);
-    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1)
+	return -1;
     eye_model[Z] = atof(number);
     for (i = 0; i < 16; i++) {
 	if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1)
@@ -196,14 +195,18 @@ int cm_start(const int argc, const char **argv)
 
 	cp = buf;
 	while (*cp && isspace((int)*cp)) cp++;	/* skip spaces */
-	if (bu_strncmp(cp, "start", 5) != 0) continue;
+	if (bu_strncmp(cp, "start", 5) != 0) {
+	    bu_free(buf, "cm_start buf");
+	    continue;
+	}
 	while (*cp && !isspace((int)*cp)) cp++;	/* skip keyword */
 	while (*cp && isspace((int)*cp)) cp++;	/* skip spaces */
 	frame = atoi(cp);
 	bu_free(buf, "rt_read_cmd command buffer (skipping frames)");
 	buf = (char *)0;
-	if (finalframe >= 0 && frame > finalframe)
+	if (finalframe >= 0 && frame > finalframe) {
 	    return -1;			/* "EOF" */
+	}
 	if (frame >= desiredframe) {
 	    curframe = frame;
 	    return 0;
@@ -310,7 +313,8 @@ int cm_end(const int UNUSED(argc), const char **UNUSED(argv))
     if (Viewrotscale[15] <= 0.0)
 	do_ae(azimuth, elevation);
 
-    if (do_frame(curframe) < 0) return -1;
+    if (do_frame(curframe) < 0)
+	return -1;
     return 0;
 }
 
@@ -377,7 +381,7 @@ int cm_prep(const int UNUSED(argc), const char **UNUSED(argv))
     objargv = (const char **)cmd_objs->buffer;
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, objcnt, objargv, npsw) < 0)
+    if (rt_gettrees(rtip, objcnt, objargv, (size_t)npsw) < 0)
 	bu_log("rt_gettrees() FAILED\n");
     (void)rt_get_timer(&times, NULL);
 
@@ -574,7 +578,7 @@ def_tree(register struct rt_i *rtip)
     RT_CK_RTI(rtip);
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, objc, (const char **)objv, npsw) < 0) {
+    if (rt_gettrees(rtip, objc, (const char **)objv, (size_t)npsw) < 0) {
 	bu_log("rt_gettrees(%s) FAILED\n", (objv && objv[0]) ? objv[0] : "ERROR");
     }
     (void)rt_get_timer(&times, NULL);
@@ -597,11 +601,11 @@ extern double airdensity;
 static unsigned int clt_mode;           /* Active render buffers */
 static uint8_t clt_o[2];		/* Sub buffer offsets in bytes: {CLT_COLOR, MAX} */
 
-static fb *clt_fbp = FB_NULL;
+static struct fb *clt_fbp = FB_NULL;
 
 
 void
-clt_connect_fb(fb *fbp)
+clt_connect_fb(struct fb *fbp)
 {
     clt_fbp = fbp;
 }
@@ -715,7 +719,7 @@ clt_run(int cur_pixel, int last_pixel)
 	   a.a_rt_i->rti_prismtrace, rt_perspective, stereo);
 
     /* Tally up the statistics */
-    for (cpu=0; cpu < npsw; cpu++) {
+    for (cpu = 0; cpu < MAX_PSW; cpu++) {
 	if (resource[cpu].re_magic != RESOURCE_MAGIC) {
 	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
 	    continue;
@@ -742,7 +746,7 @@ do_prep(struct rt_i *rtip)
 
 	/* Allow RT library to prepare itself */
 	rt_prep_timer();
-	rt_prep_parallel(rtip, npsw);
+	rt_prep_parallel(rtip, (size_t)npsw);
 
 	(void)rt_get_timer(&times, NULL);
 	if (rt_verbosity & VERBOSE_STATS)
@@ -770,6 +774,26 @@ do_prep(struct rt_i *rtip)
 	       rtip->rti_ncut_by_type[CUT_BOXNODE],
 	       rtip->nempty_cells);
     }
+}
+
+
+static int
+validate_raytrace(struct rt_i *rtip)
+{
+    if (!rtip) {
+	bu_log("ERROR: No raytracing instance.\n");
+	return 1;
+    }
+    if (rtip->nsolids <= 0) {
+	bu_log("ERROR: No primitives remaining.\n");
+	return 2;
+    }
+    if (rtip->nregions <= 0) {
+	bu_log("ERROR: No regions remaining.\n");
+	return 3;
+    }
+
+    return 0;
 }
 
 
@@ -806,11 +830,8 @@ do_frame(int framenumber)
 	rt_debug = optical_debug = 0;
     }
 
-    if (rtip->nsolids <= 0)
-	bu_exit(3, "ERROR: No primitives remaining.\n");
-
-    if (rtip->nregions <= 0)
-	bu_exit(3, "ERROR: No regions remaining.\n");
+    if (validate_raytrace(rtip) > 0)
+	return -1;
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)
 	bu_log("Model: X(%g, %g), Y(%g, %g), Z(%g, %g)\n",
@@ -822,17 +843,28 @@ do_frame(int framenumber)
      * Perform Grid setup.
      * This may alter cell size or width/height.
      */
-    grid_setup();
+    {
+	int setup;
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+
+	setup = grid_setup(&msg);
+	if (setup ) {
+	    bu_exit(BRLCAD_ERROR, "%s\n", bu_vls_cstr(&msg));
+	}
+
+	bu_vls_free(&msg);
+    }
+
     /* az/el 0, 0 is when screen +Z is model +X */
     VSET(work, 0, 0, 1);
     MAT3X3VEC(temp, view2model, work);
     bn_ae_vec(&azimuth, &elevation, temp);
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)
-	bu_log(
-	    "View: %g azimuth, %g elevation off of front view\n",
-	    azimuth, elevation);
+	bu_log("View: %g azimuth, %g elevation off of front view\n",
+	       azimuth, elevation);
     quat_mat2quat(quat, model2view);
+
     if (rt_verbosity & VERBOSE_VIEWDETAIL) {
 	bu_log("Orientation: %g, %g, %g, %g\n", V4ARGS(quat));
 	bu_log("Eye_pos: %g, %g, %g\n", V3ARGS(eye_model));
@@ -986,22 +1018,23 @@ do_frame(int framenumber)
 
 	    if (bif == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
 		perror(framename);
-		if (matflag) return 0;	/* OK */
+		if (matflag)
+		    return 0;	/* OK */
 		return -1;			/* Bad */
 	    }
 #else
 	    outfp = fopen(framename, "w");
 	    if (outfp == NULL) {
 		perror(framename);
-		if (matflag) return 0;	/* OK */
+		if (matflag)
+		    return 0;	/* OK */
 		return -1;			/* Bad */
 	    }
 #endif
 	}
 
 	if (rt_verbosity & VERBOSE_OUTPUTFILE)
-	    bu_log("Output file is '%s' %zux%zu pixels\n",
-		   framename, width, height);
+	    bu_log("Output file is '%s' %zux%zu pixels\n", framename, width, height);
     }
 
     /* initialize lighting, may update pix_start */
@@ -1011,8 +1044,9 @@ do_frame(int framenumber)
     if (opencl_mode) {
         unsigned int mode = 0;
 
-                            mode |= CLT_COLOR;
-        if (full_incr_mode) mode |= CLT_ACCUM;
+	mode |= CLT_COLOR;
+        if (full_incr_mode)
+	    mode |= CLT_ACCUM;
 
         clt_view_init(mode);
     }
@@ -1083,12 +1117,12 @@ do_frame(int framenumber)
      * know is that a given workload takes about the same amount of
      * CPU time, regardless of the number of CPUs.
      */
-    if (npsw > 1) {
+    if ((size_t)npsw > 1) {
 	size_t avail_cpus;
 	size_t ncpus;
 
 	avail_cpus = bu_avail_cpus();
-	if (npsw > avail_cpus) {
+	if ((size_t)npsw > avail_cpus) {
 	    ncpus = avail_cpus;
 	} else {
 	    ncpus = npsw;
@@ -1157,6 +1191,39 @@ do_frame(int framenumber)
 }
 
 
+/* given the bounds and aspect ratio for a view, calculate the
+ * viewsize so that its diagonal will fit in view (thus always
+ * visible).
+ */
+static double
+autoviewsize(point_t viewmin, point_t viewmax, double aspectratio)
+{
+    double size = viewsize; /* global */
+    vect_t diag;
+
+    /* Fit a sphere to the model RPP, diameter is viewsize, unless
+     * viewsize command used to override.
+     */
+    if (size < 0.0 || ZERO(size)) {
+	VSUB2(diag, viewmax, viewmin);
+	size = MAGNITUDE(diag);
+	if (aspectratio > 1.0) {
+	    /* don't clip any of the image when autoscaling */
+	    size *= aspectratio;
+	}
+    }
+
+    /* sanity check: make sure viewsize still isn't zero in case
+     * bounding box is empty, otherwise bn_mat_int() will bomb.
+     */
+    if (size < 0.0 || ZERO(size)) {
+	size = 2.0; /* arbitrary so Viewrotscale is normal */
+    }
+
+    return size;
+}
+
+
 /**
  * Compute the rotation specified by the azimuth and elevation
  * parameters.  First, note that these are specified relative to the
@@ -1172,18 +1239,11 @@ void
 do_ae(double azim, double elev)
 {
     vect_t temp;
-    vect_t diag;
     mat_t toEye;
     struct rt_i *rtip = APP.a_rt_i;
 
     if (rtip == NULL)
 	return;
-
-    if (rtip->nsolids <= 0)
-	bu_exit(EXIT_FAILURE, "ERROR: no primitives active\n");
-
-    if (rtip->nregions <= 0)
-	bu_exit(EXIT_FAILURE, "ERROR: no regions active\n");
 
     if (rtip->mdl_max[X] >= INFINITY) {
 	bu_log("do_ae: infinite model bounds? setting a unit minimum\n");
@@ -1216,24 +1276,8 @@ do_ae(double azim, double elev)
     toEye[MDY] = -((rtip->mdl_max[Y]+rtip->mdl_min[Y])/2.0);
     toEye[MDZ] = -((rtip->mdl_max[Z]+rtip->mdl_min[Z])/2.0);
 
-    /* Fit a sphere to the model RPP, diameter is viewsize, unless
-     * viewsize command used to override.
-     */
-    if (viewsize <= 0) {
-	VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
-	viewsize = MAGNITUDE(diag);
-	if (aspect > 1) {
-	    /* don't clip any of the image when autoscaling */
-	    viewsize *= aspect;
-	}
-    }
-
-    /* sanity check: make sure viewsize still isn't zero in case
-     * bounding box is empty, otherwise bn_mat_int() will bomb.
-     */
-    if (viewsize < 0 || ZERO(viewsize)) {
-	viewsize = 2.0; /* arbitrary so Viewrotscale is normal */
-    }
+    /* determine global viewsize based on model size */
+    viewsize = autoviewsize(rtip->mdl_min, rtip->mdl_max, aspect);
 
     Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
     bn_mat_mul(model2view, Viewrotscale, toEye);
@@ -1251,7 +1295,7 @@ res_pr(void)
 
     bu_log("\nResource use summary, by processor:\n");
     res = &resource[0];
-    for (i = 0; i < npsw; i++, res++) {
+    for (i = 0; i < (size_t)npsw; i++, res++) {
 	bu_log("---CPU %zu:\n", i);
 	if (res->re_magic != RESOURCE_MAGIC) {
 	    bu_log("Bad magic number!\n");
@@ -1267,7 +1311,7 @@ res_pr(void)
 /**
  * Command table for RT control script language
  */
-struct command_tab rt_cmdtab[] = {
+struct command_tab rt_do_tab[] = {
     {"start", "frame number", "start a new frame",
      cm_start,	2, 2},
     {"viewsize", "size in mm", "set view size",

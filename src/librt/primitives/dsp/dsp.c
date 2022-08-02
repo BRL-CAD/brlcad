@@ -1,7 +1,7 @@
 /*                           D S P . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2020 United States Government as represented by
+ * Copyright (c) 1999-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/db4.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 /* private header */
 #include "./dsp.h"
@@ -629,7 +629,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 {
     int idx, curr_layer, xs, ys, xv, yv, tot;
     unsigned int x, y, i, j, k;
-    unsigned short dsp_min, dsp_max, cell_min, cell_max;
+    unsigned short dsp_min, dsp_max;
     unsigned short elev;
     struct dsp_bb *dsp_bb;
     struct dsp_rpp *t;
@@ -680,16 +680,13 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
     dsp->layer[0].dim[Y] = dsp->ysiz;
     dsp->layer[0].p = dsp->bb_array;
 
-    xs = dsp->xsiz;
-    ys = dsp->ysiz;
-
     dsp_min = 0xffff;
     dsp_max = 0;
 
     for (y = 0; y < YSIZ(dsp); y++) {
 
-	cell_min = 0xffff;
-	cell_max = 0;
+	unsigned short cell_min = 0xffff;
+	unsigned short cell_max = 0;
 
 	for (x = 0; x < XSIZ(dsp); x++) {
 
@@ -1760,7 +1757,6 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
     for (x = 0; x < 4; x++)
 	memset(hits+x, 0, sizeof(struct hit));
-    x = 0;
 
     dlog("isect_ray_cell_top\n");
     DSP_BB_CK(dsp_bb);
@@ -3097,8 +3093,9 @@ rt_dsp_free(register struct soltab *stp)
 
 
 int
-rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     struct rt_dsp_internal *dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
     point_t m_pt;
@@ -3149,11 +3146,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
 #define MOVE(_pt) \
 	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, _pt); \
-	RT_ADD_VLIST(vhead, m_pt, BN_VLIST_LINE_MOVE)
+	BV_ADD_VLIST(vlfree, vhead, m_pt, BV_VLIST_LINE_MOVE)
 
 #define DRAW(_pt) \
 	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, _pt); \
-	RT_ADD_VLIST(vhead, m_pt, BN_VLIST_LINE_DRAW)
+	BV_ADD_VLIST(vlfree, vhead, m_pt, BV_VLIST_LINE_DRAW)
 
 
     /* Draw the Bottom */
@@ -3290,12 +3287,10 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	    } else {
 		MOVE(o_pt);
 		DRAW(s_pt);
-		drawing = 1;
 	    }
 	} else {
 	    if (drawing) {
 		DRAW(s_pt);
-		drawing = 0;
 	    }
 	}
 
@@ -3342,12 +3337,10 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	    } else {
 		MOVE(o_pt);
 		DRAW(s_pt);
-		drawing = 1;
 	    }
 	} else {
 	    if (drawing) {
 		DRAW(s_pt);
-		drawing = 0;
 	    }
 	}
     }
@@ -3979,6 +3972,12 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
     RT_DSP_CK_MAGIC(dsp_ip);
     RT_CK_DBI(dbip);
 
+    /* Don't try this if dbi_filepath isn't initialized */
+    if (!dbip->dbi_filepath) {
+	bu_log("dbip->dbi_filepath is NULL\n");
+	return -1;
+    }
+
     /* get file */
     mf = dsp_ip->dsp_mp =
 	bu_open_mapped_file_with_path(dbip->dbi_filepath,
@@ -4336,7 +4335,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* get x, y counts */
     cp = (unsigned char *)ep->ext_buf;
 
-    dsp_ip->dsp_xcnt = ntohl(*(uint32_t *)cp);
+    dsp_ip->dsp_xcnt = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_xcnt < 1) {
 	bu_log("%s:%d DSP X dimension (%u) < 1 \n",
@@ -4344,7 +4343,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	       dsp_ip->dsp_xcnt);
     }
 
-    dsp_ip->dsp_ycnt = ntohl(*(uint32_t *)cp);
+    dsp_ip->dsp_ycnt = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_ycnt < 1) {
 	bu_log("%s:%d DSP Y dimension (%u) < 1 \n",
@@ -4365,7 +4364,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 
     /* convert smooth flag */
-    dsp_ip->dsp_smooth = ntohs(*(uint16_t *)cp);
+    dsp_ip->dsp_smooth = bu_ntohs(*(uint16_t *)cp, 0, UINT_MAX - 1);
     cp += SIZEOF_NETWORK_SHORT;
 
     dsp_ip->dsp_datasrc = *cp;

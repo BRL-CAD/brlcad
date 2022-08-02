@@ -1,7 +1,7 @@
 /*                         Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,30 +20,31 @@
 
 #include "common.h"
 
+#include "bv/util.h"
 #include "ged.h"
 
 HIDDEN int
 zoom(struct ged *gedp, double sf)
 {
     gedp->ged_gvp->gv_scale /= sf;
-    if (gedp->ged_gvp->gv_scale < RT_MINVIEWSCALE)
-	gedp->ged_gvp->gv_scale = RT_MINVIEWSCALE;
+    if (gedp->ged_gvp->gv_scale < BV_MINVIEWSCALE)
+	gedp->ged_gvp->gv_scale = BV_MINVIEWSCALE;
     gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    ged_view_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
 int
-ged_zoom(struct ged *gedp, int argc, const char *argv[])
+ged_zoom_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     double sf = 1.0;
 
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -51,52 +52,38 @@ ged_zoom(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s scale_factor", argv[0]);
-	return (argc == 1) ? GED_HELP : GED_ERROR;
+	return (argc == 1) ? BRLCAD_HELP : BRLCAD_ERROR;
     }
 
     /* get the scale factor */
     ret = sscanf(argv[1], "%lf", &sf);
     if (ret != 1 || sf < SMALL_FASTF || sf > INFINITY) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: bad scale factor [%s]", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return zoom(gedp, sf);
 }
 
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl zoom_cmd_impl = {
+    "zoom",
+    ged_zoom_core,
+    GED_CMD_VIEW_CALLBACK | GED_CMD_UPDATE_VIEW
+};
 
-HIDDEN int
-zoom_load(struct ged *gedp)
+const struct ged_cmd zoom_cmd = { &zoom_cmd_impl };
+const struct ged_cmd *zoom_cmds[] = { &zoom_cmd, NULL };
+
+static const struct ged_plugin pinfo = { GED_API,  zoom_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {
-    extern const struct ged_cmd *zoom_cmd(void);
-
-    const struct ged_cmd *cmd = zoom_cmd();
-    return gedp->add(gedp, cmd);
+    return &pinfo;
 }
+#endif /* GED_PLUGIN */
 
-
-HIDDEN void
-zoom_unload(struct ged *gedp)
-{
-    gedp->del(gedp, "zoom");
-}
-
-
-const struct ged_cmd *
-zoom_cmd(void)
-{
-    static struct ged_cmd cmd = {
-	BU_LIST_INIT_ZERO,
-	"zoom",
-	"zoom view by specified scale factor",
-	"zoom",
-	&zoom_load,
-	&zoom_unload,
-	&ged_zoom
-    };
-    BU_LIST_MAGIC_SET(&(cmd.l), GED_CMD_MAGIC);
-    return &cmd;
-}
 
 /*
  * Local Variables:

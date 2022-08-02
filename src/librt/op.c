@@ -1,7 +1,7 @@
 /*                            O P . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,6 +26,27 @@
 /* implementation headers */
 #include <ctype.h>
 
+db_op_t
+db_char2op(const char c)
+{
+    db_op_t ret = DB_OP_NULL;
+    switch (c) {
+	case 'u':
+	    ret = DB_OP_UNION;
+	    break;
+	case '-':
+	case '\\':
+	    ret = DB_OP_SUBTRACT;
+	    break;
+	case '+':
+	case 'n':
+	case 'x':
+	    ret = DB_OP_INTERSECT;
+	    break;
+    }
+
+    return ret;
+}
 
 db_op_t
 db_str2op(const char *str)
@@ -44,21 +65,7 @@ db_str2op(const char *str)
 
     if (isprint(str[0])) {
 	/* single byte/char */
-	switch (str[0]) {
-	    case 'u':
-		ret = DB_OP_UNION;
-		break;
-	    case '-':
-	    case '\\':
-		ret = DB_OP_SUBTRACT;
-		break;
-	    case '+':
-	    case 'n':
-	    case 'x':
-		ret = DB_OP_INTERSECT;
-		break;
-	}
-	return ret;
+	return db_char2op(str[0]);
     }
 
     /* check if multibyte */

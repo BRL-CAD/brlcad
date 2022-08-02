@@ -1,391 +1,538 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- lifted from troff+man by doclifter -->
-<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='remrt1'>
-<refmeta>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="remrt1">
+  <refmeta>
     <refentrytitle>REMRT
-</refentrytitle>
-<manvolnum>1</manvolnum>
-<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
-</refmeta>
+    </refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+  </refmeta>
 
-<refnamediv>
-<refname>remrt</refname>
-<refpurpose>network distributed (remote) ray-trace dispatcher</refpurpose>
-</refnamediv>
-<!-- body begins here -->
-<refsynopsisdiv xml:id='synopsis'>
-<cmdsynopsis>
-  <command>remrt</command>
-    <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
-    <arg choice='plain'><replaceable>model.g</replaceable></arg>
-    <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
+  <refnamediv>
+    <refname>remrt</refname>
+    <refpurpose>network distributed (remote) ray-trace dispatcher</refpurpose>
+  </refnamediv>
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id='synopsis'>
+    <cmdsynopsis>
+      <command>remrt</command>
+      <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
+      <arg choice='plain'><replaceable>model.g</replaceable></arg>
+      <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
 
-</cmdsynopsis>
-</refsynopsisdiv>
+    </cmdsynopsis>
+  </refsynopsisdiv>
 
 
-<refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><command>remrt</command>
-is intended to be an entirely plug-compatible replacement for
-the
-<citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-program.
-While
-<emphasis remap='I'>rt</emphasis>
-can operate on more than one processor of a shared memory MIMD style
-multi-processor, it can not spread the work out across the network.
-<command>remrt</command>
-and its companion program
-<citerefentry><refentrytitle>rtsrv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-implement a
-<citerefentry><refentrytitle>libpkg</refentrytitle><manvolnum>3</manvolnum></citerefentry>-based
-protocol for distributing the task of ray-traced rendering out
-to an arbitrary number of processors on the network.
-Those processors can be from an arbitrary mix of vendors,
-with differing instruction sets and data representations,
-operating at widely different speeds.</para>
+  <refsection xml:id='description'><title>DESCRIPTION</title>
+  <para>
+    <command>remrt</command> is intended to be an entirely plug-compatible replacement for
+    the <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    program.  While  <emphasis remap='I'>rt</emphasis>  can operate on more than one processor
+    of a shared memory MIMD style  multi-processor, it can not spread the work out across the network.
+    <command>remrt</command> and its companion program
+    <citerefentry><refentrytitle>rtsrv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    implement a
+    <citerefentry><refentrytitle>libpkg</refentrytitle><manvolnum>3</manvolnum></citerefentry>-based
+    protocol for distributing the task of ray-traced rendering out to an arbitrary number of
+    processors on the network. Those processors can be from an arbitrary mix of vendors, with
+    differing instruction sets and data representations, operating at widely different speeds.
+  </para>
 
-<para><command>remrt</command>
-provides two levels of fault-tolerance in its distributed computation.
-First, any
-<emphasis remap='I'>rtsrv</emphasis>
-processor which fails (or whose network link fails) will have its work
-reassigned automatically by
-<command>remrt</command>
-to other processors, so that the failure of that processor does not
-hold up the progress of the computation.
-On a regular interval
-<command>remrt</command>
-attempts to restart computation on failed processors marked "active",
-so that when failed systems become available again they are
-put back to work.
-Second,
-<command>remrt</command>
-offers a form of "checkpoint-restart" by carefully writing all
-received pixel data immediately to disk.  If the machine running
-<command>remrt</command>
-should fail, when
-<command>remrt</command>
-is restarted, it will determine what work remains to be done and
-restart all the
-<emphasis remap='I'>rtsrv</emphasis>
-processes on the remote machines.</para>
+  <para>
+    <command>remrt</command> provides two levels of fault-tolerance in its distributed
+    computation. First, any <emphasis remap='I'>rtsrv</emphasis> processor which fails (or whose
+    network link fails) will have its work reassigned automatically by <command>remrt</command>
+    to other processors, so that the failure of that processor does not hold up the progress of
+    the computation.  On a regular interval <command>remrt</command> attempts to restart computation
+    on failed processors marked "active", so that when failed systems become available again they are
+    put back to work. Second, <command>remrt</command> offers a form of "checkpoint-restart" by
+    carefully writing all received pixel data immediately to disk.  If the machine running
+    <command>remrt</command> should fail, when <command>remrt</command> is restarted, it will
+    determine what work remains to be done and restart all the <emphasis remap='I'>rtsrv</emphasis>
+    processes on the remote machines.
+  </para>
 
-<para><command>remrt</command>
-takes exactly the same set of command line arguments as
-<citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-For a full discussion of those options, consult the
-<citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-manual page.
-From within
-<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-the
-<command>remrt</command>
-program can be run from the current
-<emphasis remap='I'>mged</emphasis>
-view by giving the
-<emphasis remap='I'>mged</emphasis>
-command</para>
+  <para>
+    <command>remrt</command>
+    takes exactly the same set of command line arguments as
+    <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+    For a full discussion of those options, consult the
+    <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    manual page. From within
+    <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    the <command>remrt</command> program can be run from the current
+    <emphasis remap='I'>mged</emphasis> view by giving the
+    <emphasis remap='I'>mged</emphasis>
+  command</para>
 
-<literallayout remap='.nf'>
-     rrt remrt -M -s###
-</literallayout> <!-- .fi -->
+  <literallayout remap='.nf'>
+    rrt remrt -M -s###
+  </literallayout> <!-- .fi -->
 
-<para>where "###" is the image resolution desired.</para>
+  <para>
+    where "###" is the image resolution desired.
+  </para>
 
-<para><command>remrt</command>
-depends on the Berkeley
-<emphasis remap='I'>rsh (1)</emphasis>
-remote shell command and the user's corresponding ".rhosts" file
-to automatically initiate remote computation.</para>
+  <para>
+    <command>remrt</command> depends on the Berkeley <emphasis remap='I'>rsh (1)</emphasis>
+    remote shell command and the user's corresponding ".rhosts" file to automatically
+    initiate remote computation.
+  </para>
 
-<para><command>remrt</command>
-requires a control file called ".remrtrc" which specifies
-a few essential parameters of the server machines (network hosts)
-that are to participate in the distributed computation.
-The ".remrtrc" file contains a list of normal
-<command>remrt</command>
-commands which are to be executed before distributed processing
-is to begin.
-This can be useful for establishing a variety of user-specific
-defaults.
-However, the most important command to provide is a "host"
-command to describe each of the remote hosts that will (or may)
-participate in the distributed computation.
-Here is a sample ".remrt" file:</para>
+  <para>
+    <command>remrt</command>
+    requires a control file called ".remrtrc" which specifies a few essential parameters
+    of the server machines (network hosts) that are to participate in the distributed
+    computation.  The ".remrtrc" file contains a list of normal <command>remrt</command>
+    commands which are to be executed before distributed processing is to begin.
+    This can be useful for establishing a variety of user-specific defaults. However,
+    the most important command to provide is a "host" command to describe each of the
+    remote hosts that will (or may) participate in the distributed computation.
+    Here is a sample ".remrt" file:
+  </para>
 
-<!-- .in +5 -->
+  <!-- .in +5 -->
 
-<literallayout remap='.nf'>
-host wolf	passive cd /tmp/cad/.remrt.4d
-host voyage	always cd /tmp/cad/.remrt.4d
-host whiz	hacknight convert /tmp
-</literallayout> <!-- .fi -->
+  <literallayout remap='.nf'>
+    host wolf	passive cd /tmp/cad/.remrt.4d
+    host voyage	always cd /tmp/cad/.remrt.4d
+    host whiz	hacknight convert /tmp
+  </literallayout> <!-- .fi -->
 
-<!-- .in -->
+  <!-- .in -->
 
-<para>The first argument to the "host" command is the name of the
-server machine.
-It will be converted to a fully qualified name by calling
-<citerefentry><refentrytitle>gethostbyname</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>gethostbyaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+  <para>
+    The first argument to the "host" command is the name of the server machine.
+    It will be converted to a fully qualified name by calling
+    <citerefentry><refentrytitle>gethostbyname</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+    and
+    <citerefentry><refentrytitle>gethostbyaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+  </para>
 
-<para>The second argument to the "host" command describes "when" this
-machine should be used.</para>
-<variablelist remap='TP'>
-  <varlistentry>
-  <term><emphasis remap='B'>always</emphasis></term>
-  <listitem>
-<para>says that whenever this host is not participating in the computation,
-repeated attempts should be made (every 5 minutes) to start an
-<emphasis remap='I'>rtsrv</emphasis>
-process on that machine.
-This option is most useful for machines where the system administrator
-and/or owner of the machine won't mind your using the machine at any
-time.  (Note that
-<emphasis remap='I'>rtsrv</emphasis>
-runs at the lowest priority by default, so this isn't too terribly
-uncivilized.  But be polite and ask first.)</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>night</emphasis></term>
-  <listitem>
-<para>indicates that the machine should only be used during
-the night and on weekends.
-Night extends from 1800 through 0000 to 0800.
-Saturday and Sunday are considered to be in night time for the entire day.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>hacknight</emphasis></term>
-  <listitem>
-<para>indicates that the machine is owned by a late-night "hacker",
-and can be used while that hacker is likely to be asleep.
-Hacking tends to run from 1300 through 0000 to 0400, so
-<emphasis remap='B'>hacknight</emphasis>
-is the time period from 0400 to 1300.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>passive</emphasis></term>
-  <listitem>
-<para>indicates that
-<command>remrt</command>
-should never attempt to initiate an
-<emphasis remap='I'>rtsrv</emphasis>
-process on this machine, but if the user should happen to start
-<emphasis remap='I'>rtsrv</emphasis>
-manually on the machine and direct it to join the computational fray,
-then the necessary information will be available.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term>If an unlisted machine should join the fray, it will be added</term>
-  <listitem>
-<para>with a "when" value of
-<emphasis remap='B'>passive</emphasis>
-and a "where" value of
-<emphasis remap='B'>convert</emphasis>.
-When an
-<emphasis remap='I'>rtsrv</emphasis>
-passes from night into day, it is automatically terminated by
-<command>remrt</command>
-at the appointed time.</para>
-  </listitem>
-  </varlistentry>
-</variablelist>
+  <para>
+    The second argument to the "host" command describes "when" this machine should be used.
+  </para>
+  
+  <variablelist remap='TP'>
+    <varlistentry>
+      <term><emphasis remap='B'>always</emphasis></term>
+      <listitem>
+	<para>
+	  says that whenever this host is not participating in the computation,
+	  repeated attempts should be made (every 5 minutes) to start an
+	  <emphasis remap='I'>rtsrv</emphasis> process on that machine.
+	  This option is most useful for machines where the system administrator
+	  and/or owner of the machine won't mind your using the machine at any
+	  time.  (Note that <emphasis remap='I'>rtsrv</emphasis>
+	  runs at the lowest priority by default, so this isn't too terribly
+	  uncivilized.  But be polite and ask first.)
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap='B'>night</emphasis></term>
+      <listitem>
+	<para>
+	  indicates that the machine should only be used during
+	  the night and on weekends.  Night extends from 1800 through 0000 to 0800.
+	  Saturday and Sunday are considered to be in night time for the entire day.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap='B'>hacknight</emphasis></term>
+      <listitem>
+	<para>
+	  indicates that the machine is owned by a late-night "hacker",
+	  and can be used while that hacker is likely to be asleep.
+	  Hacking tends to run from 1300 through 0000 to 0400, so
+	  <emphasis remap='B'>hacknight</emphasis>
+	  is the time period from 0400 to 1300.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap='B'>passive</emphasis></term>
+      <listitem>
+	<para>
+	  indicates that <command>remrt</command> should never attempt to initiate an
+	  <emphasis remap='I'>rtsrv</emphasis> process on this machine, but if the
+	  user should happen to start <emphasis remap='I'>rtsrv</emphasis>
+	  manually on the machine and direct it to join the computational fray,
+	  then the necessary information will be available.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>If an unlisted machine should join the fray, it will be added</term>
+      <listitem>
+	<para>
+	  with a "when" value of <emphasis remap='B'>passive</emphasis>
+	  and a "where" value of <emphasis remap='B'>convert</emphasis>.
+	  When an <emphasis remap='I'>rtsrv</emphasis>
+	  passes from night into day, it is automatically terminated by
+	  <command>remrt</command> at the appointed time.
+	</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
 
-<para>The third argument to the "host" command is the "where" parameter,
-which indicates where the BRL-CAD ".g" file (and any related texture
-maps) can be found.</para>
-<variablelist remap='TP'>
-  <varlistentry>
-  <term><emphasis remap='B'>cd</emphasis></term>
-  <listitem>
-<para>indicates that the
-<emphasis remap='I'>rtsrv</emphasis>
-program should change directory
-<citerefentry><refentrytitle>cd</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-to the indicated directory path, and should just read the
-data files in that directory as
-<emphasis remap='I'>rt</emphasis>
-normally would.
-This can be used to specify NFS or RFS mounted remote directories,
-or static copies of the binary database file(s) needed to perform
-the ray-tracing.
-This is the most efficient way of operating
-<emphasis remap='I'>rtsrv</emphasis>,
-but it also requires some manual preparation on the part of the user
-to install all the required files in the designated location.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>convert</emphasis></term>
-  <listitem>
-<para>indicates that
-<command>remrt</command>
-should send across an ASCII machine-independent version of the
-".g" database file using the command:</para>
+  <para>
+    The third argument to the "host" command is the "where" parameter,
+    which indicates where the BRL-CAD ".g" file (and any related texture
+    maps) can be found.
+  </para>
+  <variablelist remap='TP'>
+    <varlistentry>
+      <term><emphasis remap='B'>cd</emphasis></term>
+      <listitem>
+	<para>
+	  indicates that the <emphasis remap='I'>rtsrv</emphasis>
+	  program should change directory
+	  <citerefentry><refentrytitle>cd</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+	  to the indicated directory path, and should just read the
+	  data files in that directory as <emphasis remap='I'>rt</emphasis>
+	  normally would. This can be used to specify NFS or RFS mounted remote
+	  directories, or static copies of the binary database file(s) needed
+	  to perform the ray-tracing. This is the most efficient way of operating
+	  <emphasis remap='I'>rtsrv</emphasis>,
+	  but it also requires some manual preparation on the part of the user
+	  to install all the required files in the designated location.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap='B'>convert</emphasis></term>
+      <listitem>
+	<para>
+	  indicates that <command>remrt</command> should send across an ASCII
+	  machine-independent version of the ".g" database file using the command:
+	</para>
 
-<literallayout remap='.nf'>
-    asc2g &lt; file.g | rsh host 'cd directory; g2asc &gt; file.g'
-</literallayout> <!-- .fi -->
+	<literallayout remap='.nf'>
+	  asc2g &lt; file.g | rsh host 'cd directory; g2asc &gt; file.g'
+	</literallayout> <!-- .fi -->
 
-<para>before starting up the
-<emphasis remap='I'>rtsrv</emphasis>
-program in that same directory.
-This relieves the user of the burden of setting up the ".g"
-database file, but suffers from several drawbacks.
-First, the transmission of a large database can take a noticeable
-amount of time.
-Second, should the server host go down and then re-join the fray,
-the database will be sent again, because
-<command>remrt</command>
-has no easy way to tell if the previous ".g" file is still intact
-after the crash/restart.
-Third,
-<command>remrt</command>
-has no way to tell what auxiliary files might be needed for this ".g"
-file, and thus can not send them automatically.
-If the ".g" file references height field, extruded bit-map, or volumetric
-solids, the associated data files will not be present on a
-<emphasis remap='B'>convert</emphasis>
-mode server.  The same applies for texture map and bump map files.</para>
-  </listitem>
-  </varlistentry>
-</variablelist>
+	<para>
+	  before starting up the <emphasis remap='I'>rtsrv</emphasis>
+	  program in that same directory. This relieves the user of the burden of
+	  setting up the ".g" database file, but suffers from several drawbacks.
+	  First, the transmission of a large database can take a noticeable
+	  amount of time.
+	  Second, should the server host go down and then
+	  re-join the fray, the database will be sent again, because
+	  <command>remrt</command>
+	  has no easy way to tell if the previous ".g" file is still intact
+	  after the crash/restart.
+	  Third, <command>remrt</command> has no way to tell what auxiliary files
+	  might be needed for this ".g" file, and thus can not send them automatically.
+	  If the ".g" file references height field, extruded bit-map, or volumetric
+	  solids, the associated data files will not be present on a
+	  <emphasis remap='B'>convert</emphasis>
+	  mode server.  The same applies for texture map and bump map files.
+	</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
 
-<para><command>remrt</command>
-uses several different strategies for optimizing the dispatching of work.
-These can be controlled by the "allocate" command.
-If "allocate frame" has been specified,
-then the work allocation method is
-a "free for all", allocating work from one frame at a time
-to all servers as they become ready for more.
-This maximizes the CPU overhead for prepping (because all CPUs will
-prep all frames), but it also provides the shortest wall-clock time
-to getting the first frame finished.
-This mode is recommended for demonstrations, and other situations
-where people are sitting around waiting for results to appear on the screen.</para>
+  <para>
+    <command>remrt</command>
+    uses several different strategies for optimizing the dispatching of work.
+    These can be controlled by the "allocate" command. If "allocate frame" has
+    been specified, then the work allocation method is a "free for all",
+    allocating work from one frame at a time to all servers as they become ready
+    for more. This maximizes the CPU overhead for prepping (because all CPUs will
+    prep all frames), but it also provides the shortest wall-clock time
+    to getting the first frame finished. This mode is recommended for demonstrations,
+    and other situations where people are sitting around waiting for results
+    to appear on the screen.
+  </para>
 
-<para>If the
-"allocate load" command has been given, then new servers
-will not be assigned to a given frame unless there is at least
-enough work remaining on that frame to require
-10 percent of that server's measured performance capacity.
-Otherwise the server is started on a subsequent frame.</para>
+  <para>
+    If the
+    "allocate load" command has been given, then new servers will not be assigned to
+    a given frame unless there is at least enough work remaining on that frame to
+    require 10 percent of that server's measured performance capacity.
+    Otherwise the server is started on a subsequent frame.
+  </para>
 
-<para>If the "allocate movie" command is given, then each server is
-allocated a whole frame to do.  This minimizes the CPU time
-spent in the overhead of prepping the frame, and tends to maximize overall
-throughput, at the price of making you wait a long time for the first
-frame to finish.
-This mode is best used when crunching out large numbers of frames
-for an animation.
-(See also the
-<citerefentry><refentrytitle>scriptsort</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-command for a clever power-of-two script rearrangement technique first
-proposed by Jim Blinn).</para>
+  <para>
+    If the "allocate movie" command is given, then each server is allocated a whole
+    frame to do.  This minimizes the CPU time spent in the overhead of prepping the
+    frame, and tends to maximize overall throughput, at the price of making you
+    wait a long time for the first frame to finish.  This mode is best used when
+    crunching out large numbers of frames for an animation.
+    (See also the
+    <citerefentry><refentrytitle>scriptsort</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    command for a clever power-of-two script rearrangement technique first
+    proposed by Jim Blinn).
+  </para>
 
-<para>The output can be stored either in a file, or sent to the current
-framebuffer, the same as with
-<citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+  <para>
+    The output can be stored either in a file, or sent to the current
+    framebuffer, the same as with
+    <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+  </para>
 
-<para>When
-<command>remrt</command>
-is run without command line arguments, it enters an interactive
-mode.  In this mode, the current framebuffer can be assigned and
-released, frames can be added to the list of pending work, and
-many other control and status commands can be used.</para>
+  <para>
+    When <command>remrt</command> is run without command line arguments, it enters
+    an interactive mode.  In this mode, the current framebuffer can be assigned and
+    released, frames can be added to the list of pending work, and many other control
+    and status commands can be used.
+  </para>
 
-<para>Normally
-<command>remrt</command>
-runs in a batch mode, taking all its information from the
-command line, the script file on stdin, and the ".remrtrc" file.
-If you wish to issue an interactive-style command to
-<command>remrt</command>
-while it is running in batch mode, this can be accomplished by
-giving an extra argument to
-<emphasis remap='I'>rtsrv</emphasis>,
-which will simply pass on the command and exit.
-For example:</para>
+  <para>
+    Normally <command>remrt</command> runs in a batch mode, taking all its information
+    from the command line, the script file on stdin, and the ".remrtrc" file.
+    If you wish to issue an interactive-style command to <command>remrt</command>
+    while it is running in batch mode, this can be accomplished by
+    giving an extra argument to <emphasis remap='I'>rtsrv</emphasis>,
+    which will simply pass on the command and exit.
+  </para>
+  <para>
+    For example:
+  </para>
 
-<literallayout remap='.nf'>
+  <literallayout remap='.nf'>
     rtsrv server_host 4446 status
-</literallayout> <!-- .fi -->
+  </literallayout> <!-- .fi -->
 
-<para>would send the command "status" to the
-<command>remrt</command>
-process running on the machine called "server_host" and listening
-at port 4446.
-4446 is the port used by the first copy of
-<command>remrt</command>
-running on a machine.  If a second copy of
-<command>remrt</command>
-is started while the first one continues to run, it
-will be assigned port 4447.  One is added to the port number
-repeatedly until an available port is found.
-Normally you do not need to worry about which port is being used,
-unless you wish to send commands there directly.
-The
-<citerefentry><refentrytitle>netstat</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-command can sometimes be useful to track down which ports are being used.</para>
-</refsect1>
+  <para>
+    would send the command "status" to the <command>remrt</command>
+    process running on the machine called "server_host" and listening
+    at port 4446. 4446 is the port used by the first copy of
+    <command>remrt</command> running on a machine.  If a second copy of
+    <command>remrt</command> is started while the first one continues to run, it
+    will be assigned port 4447.  One is added to the port number repeatedly
+    until an available port is found. Normally you do not need to worry about
+    which port is being used, unless you wish to send commands there directly.
+    The <citerefentry><refentrytitle>netstat</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    command can sometimes be useful to track down which ports are being used.
+  </para>
+</refsection>
 
-<refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>rtsrv</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>scriptsort</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>lgt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
-</refsect1>
+<refsection>
+<example>
+  <title>Performing a Basic remrt/rtsrv Raytrace</title>
+  <para>
+    The following steps will set up a local (single machine) example remrt session.
+    This does not utilize the full power of the remrt system, but will illustrate
+    how the individual pieces relate to each other.  Rather than use rsh, each
+    process will be launched manually.
+  </para>
+  <para>
+    Launch an <command>fbserv</command> instance on the desired port and with the desired type
+    (we will use port 0 and /dev/X for a Linux-based X11 rendering - windows users can try /dev/wgl.)
+    For a somewhat larger render we specify a size of 2048 pixels square.
+  </para>
+  <para>
+    <userinput>fbserv -s2048 -p0 -F/dev/X</userinput>
+  </para>
+  <para>
+    If an graphical framebuffer was specified, a window should appear.  Otherwise, fbserv will silently
+    wait for input.
+  </para>
+  <para>
+    In MGED, set up the scene you wish to render and then save a script with <command>saveview</command>
+  </para>
+  <para>
+    <userinput>saveview remrt.rt</userinput>
+  </para>
+  <para>
+    Edit the script and replace the <command>rt</command> command with <command>remrt</command>.  Replace
+    the output file specification (<option>-o filename</option>) with a -F0 option to point the render
+    to the fbserv started in the previous step. Also add a -s2048 option to specify a rendering size to
+    match that provided to the fbserv.
+  </para>
+  <para>
+    Run the script to launch remrt.  You should see output indicating the program has launched.  (Note:
+    the port number printed by the default output is not useful - you want to use 4446 by default to
+    connect to remrt.)
+  </para>
+  <para>
+    <userinput>./remrt.rt</userinput>
+    <literallayout>
+08/22 21:51:41 machinename BRL-CAD Release 7.30.0  Network-Distributed RT (REMRT)
+    Sat, 22 Aug 2020 11:24:22 -0400, Compilation 1
+    user@machinename
 
-<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
-<para>Numerous error conditions are possible.
-Descriptive messages are printed on standard error.</para>
-</refsect1>
+pkg_permserver(rtsrv, 8): unknown service
+08/22 21:51:41 Automatic REMRT on machine
+08/23 21:51:41 Assigned LIBPKG permport 24081
+08/23 21:51:41 Listening at TCP port 4446
+08/23 21:51:41 Reading script on stdin
+08/22 21:51:41 Starting to scan animation script
+08/22 21:51:41 Animation script loaded
+08/22 21:51:41 Worker assignment interval=5 seconds:
+   Server   Last  Last   Average  Cur   Machine
+    State   Lump Elapsed pix/sec Frame   Name
+  -------- ----- ------- ------- ----- -------------
+08/22 21:51:41 Seeking servers to start
+    </literallayout>
+  </para>
+  <para>
+    Note that it is seeking servers - we have not given <command>remrt</command> any instructions on
+    how to start its own.  To start a server and see the system work, we set up a local directory
+    containing the same .g file we used to set up the scene, and from that directory run <command>rtsrv</command>.
+    (For these purposes we also add the <option>-d</option> so we can see more of what is happening.
+    Without this option, if anything isn't set up correctly rtsrv can fail with cryptic errors.)
+  </para>
+  <para>
+    <userinput>rtsrv -d machinename 4446</userinput>
+  </para>
+  <para>
+    If successful, both <command>remrt</command> and <command>rtsrv</command> will being producing output.
+    The <command>rtsrv</command> will be more verbose, and should look like the following:
 
-<refsect1 xml:id='see_also2'><title>SEE ALSO</title>
-<para>M. Muuss,
-"<emphasis remap='I'>Workstations</emphasis>,
-<emphasis remap='I'>Networking</emphasis>,
-<emphasis remap='I'>Distributed Graphics</emphasis>,
-<emphasis remap='I'>and Parallel Processing</emphasis>",
-in "<emphasis remap='I'>Computer Graphics Techniques</emphasis>: <emphasis remap='I'>Theory and Practice</emphasis>",
-ed: Rogers &amp; Earnshaw,
-Springer Verlag, New York, pages 409-472</para>
-</refsect1>
+    <literallayout>
+PIXELS fr=0 pix=3588096..3592191, rays=3712, cpu=0.153336
+ph_enqueue: 3592192 3596287 0
+PIXELS fr=0 pix=3592192..3596287, rays=3856, cpu=0.143813
+ph_enqueue: 3596288 3600383 0
+PIXELS fr=0 pix=3596288..3600383, rays=3456, cpu=0.145104
+ph_enqueue: 3600384 3604479 0
+PIXELS fr=0 pix=3600384..3604479, rays=4032, cpu=0.145221
+ph_enqueue: 3604480 3608575 0
+PIXELS fr=0 pix=3604480..3608575, rays=3776, cpu=0.141353
+ph_enqueue: 3608576 3612671 0
+PIXELS fr=0 pix=3608576..3612671, rays=3696, cpu=0.13579
+ph_enqueue: 3612672 3616767 0
+    </literallayout>
+  </para>
+  <para>
+    Upon completion, remrt will notify the user and exit.  For this examle, the full remrt output is:
+    <literallayout>
+08/22 21:51:41 machinename BRL-CAD Release 7.31.0  Network-Distributed RT (REMRT)
+    Sat, 22 Aug 2020 11:24:22 -0400, Compilation 1
+    user@machinename
 
-<refsect1 xml:id='bugs'><title>BUGS</title>
-<para>Most deficiencies observed while using the
-<command>remrt</command>
-program are usually with the
-<citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-program, with which it shares a substantial amount of common code,
-or with the
-<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-library.
-If a frame fails to render properly, try processing it on a single
-machine using
-<citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-to determine if the problem is in the ray-tracing side of things,
-or the distributed computation side of things.</para>
+pkg_permserver(rtsrv, 8): unknown service
+08/22 21:51:41 Automatic REMRT on machinename
+08/22 21:51:41 Listening at port 24081, reading script on stdin
+08/22 21:51:41 Starting to scan animation script
+08/22 21:51:41 Animation script loaded
+08/22 21:51:41 Worker assignment interval=5 seconds:
+   Server   Last  Last   Average  Cur   Machine
+    State   Lump Elapsed pix/sec Frame   Name 
+  -------- ----- ------- ------- ----- -------------
+08/22 21:51:41 Seeking servers to start
+host_lookup_by_hostent(localhost) got localhost?
+08/22 21:54:32 127.0.0.1: using 12 of 12 cpus
+08/22 21:54:32 127.0.0.1 dirbuild OK (Output from STEP converter step-g.)
+08/22 21:54:32 127.0.0.1: process_cmd 'opt -w2048 -n2048 -H0 -p0 -U0 -J0 -A0.4 -l0 -E1.41421 -x0 -X0 -T5.000000e-04/0.000000e+00'
+08/22 21:54:32 127.0.0.1: Using tolerance 0
+08/22 21:54:32 127.0.0.1: process_cmd 'viewsize 9.86571722597487e+02'
+08/22 21:54:32 127.0.0.1: process_cmd 'orientation 2.48097349045873e-01 4.76590573266048e-01 7.48097349045873e-01 3.89434830518390e-01'
+08/22 21:54:32 127.0.0.1: process_cmd 'eye_pt 1.01790192500394e+04 6.80791388110900e+03 5.76220366705708e+03'
+08/22 21:54:32 127.0.0.1: process_cmd 'clean'
+08/22 21:54:33 127.0.0.1: BRL-CAD Release 7.31.0  The BRL-CAD Optical Shader Library
+    Sat, 22 Aug 2020 11:24:22 -0400, Compilation 1
+    user@machinename
+08/22 21:54:33 127.0.0.1: PREP: cpu = 9.7e-05 sec, elapsed = 0.000109 sec
+    parent: 0.0user 0.0sys 0:00real 0% i+d maxrss +pf csw
+  children: 0.0user 0.0sys 0:00real 0% i+d maxrss +pf csw
+08/22 21:54:33 127.0.0.1: NUBSP: 0 cut, 1 box (1 empty)
+08/22 21:54:33 127.0.0.1 gettrees OK (Document)
+08/22 21:54:34 127.0.0.1: shade_inputs(Brep_1.s) flip N xy=1292, 238 ID_BREP surf=125 dot=0.422618
+08/22 21:54:34 127.0.0.1: center: 10236.048570366667 7005.4508761769466 5419.0434225048521
+08/22 21:54:34 127.0.0.1: dir: -0.74240387650610384 -0.51983679072568423 -0.42261826174069994
+08/22 21:54:35 127.0.0.1: shade_inputs(Brep_1.s) flip N xy=1090, 331 ID_BREP surf=37 dot=0.422618
+08/22 21:54:35 127.0.0.1: center: 10276.352963334217 6914.8807626523731 5459.6463522037802
+08/22 21:54:35 127.0.0.1: dir: -0.74240387650610384 -0.51983679072568423 -0.42261826174069994
+08/22 21:55:58 127.0.0.1: shade_inputs(Brep_1.s) flip N xy=1069, 1335 ID_BREP surf=171 dot=0.422618
+08/22 21:55:58 127.0.0.1: center: 10114.720787667989 6789.3550779060624 5897.983356695433
+08/22 21:55:58 127.0.0.1: dir: -0.74240387650610384 -0.51983679072568423 -0.42261826174069994
+08/22 21:56:16 Frame 0 DONE: 103.085 elapsed sec, 3890128 rays/1189.42 cpu sec
+08/22 21:56:16 RTFM=37737.1 rays/sec (3270.61 rays/cpu sec)
+08/22 21:56:16 All work done!
+08/22 21:56:16 Task accomplished
+    </literallayout>
 
-</refsect1>
+    The framebuffer started in the beginning will now hold the image results.  To save those
+    results to a file, the <command>fb-png</command> is used:
+  </para>
+  <para>
+    <userinput>fb-png -F0 -s2048 image.png</userinput>
+  </para>
+</example>
+</refsection>
 
-<refsect1 xml:id='author'><title>AUTHOR</title>
-<para>BRL-CAD Team</para>
-</refsect1>
 
-<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1994-2020 by the United States
-Government as represented by U.S. Army Research Laboratory.</para>
-</refsect1>
+<refsection xml:id='see_also'><title>SEE ALSO</title>
+<para>
+  <citerefentry><refentrytitle>rtsrv</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>scriptsort</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>lgt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+</para>
+</refsection>
 
-<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
-<para>Reports of bugs or problems should be submitted via electronic
-mail to <email>devs@brlcad.org</email></para>
-</refsect1>
+<refsection xml:id='diagnostics'>
+  <title>DIAGNOSTICS</title>
+  <para>
+    Numerous error conditions are possible.
+    Descriptive messages are printed on standard error.
+  </para>
+</refsection>
+
+<refsection xml:id='see_also2'>
+  <title>SEE ALSO</title>
+  <para>
+    M. Muuss,
+    "<emphasis remap='I'>Workstations</emphasis>,
+    <emphasis remap='I'>Networking</emphasis>,
+    <emphasis remap='I'>Distributed Graphics</emphasis>,
+    <emphasis remap='I'>and Parallel Processing</emphasis>",
+    in "<emphasis remap='I'>Computer Graphics Techniques</emphasis>: <emphasis remap='I'>Theory and Practice</emphasis>",
+    ed: Rogers &amp; Earnshaw,
+    Springer Verlag, New York, pages 409-472
+  </para>
+</refsection>
+
+<refsection xml:id='bugs'>
+  <title>BUGS</title>
+  <para>
+    Most deficiencies observed while using the <command>remrt</command> program are usually
+    with the <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    program, with which it shares a substantial amount of common code, or with the
+    <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+    library. If a frame fails to render properly, try processing it on a single machine using
+    <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    to determine if the problem is in the ray-tracing side of things, or the distributed
+    computation side of things.
+  </para>
+
+</refsection>
+
+<refsection xml:id='author'>
+  <title>AUTHOR</title>
+  <para>
+    BRL-CAD Team
+  </para>
+</refsection>
+
+<refsection xml:id='copyright'>
+  <title>COPYRIGHT</title>
+  <para>
+    This software is Copyright (c) 1994-2022 by the United States
+    Government as represented by U.S. Army Research Laboratory.
+  </para>
+</refsection>
+
+<refsection xml:id='bug_reports'>
+  <title>BUG REPORTS</title>
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to <email>devs@brlcad.org</email>
+  </para>
+</refsection>
 </refentry>
 

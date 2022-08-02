@@ -10,7 +10,7 @@
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2020 United States Government as represented by
+# Copyright (c) 2010-2022 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
@@ -44,8 +44,34 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-find_program(PERPLEX_EXECUTABLE perplex DOC "path to the perplex executable")
+set(_PERPLEX_SEARCHES)
+
+# Search PERPLEX_ROOT first if it is set.
+if(PERPLEX_ROOT)
+  set(_PERPLEX_SEARCH_ROOT PATHS ${PERPLEX_ROOT} NO_DEFAULT_PATH)
+  list(APPEND _PERPLEX_SEARCHES _PERPLEX_SEARCH_ROOT)
+endif()
+
+# Normal search.
+set(_PERPLEX_x86 "(x86)")
+set(_PERPLEX_SEARCH_NORMAL
+    PATHS  "$ENV{ProgramFiles}/perplex"
+          "$ENV{ProgramFiles${_PERPLEX_x86}}/perplex")
+unset(_PERPLEX_x86)
+list(APPEND _PERPLEX_SEARCHES _PERPLEX_SEARCH_NORMAL)
+
+set(PERPLEX_NAMES perplex)
+
+# Try each search configuration.
+foreach(search ${_PERPLEX_SEARCHES})
+  find_program(PERPLEX_EXECUTABLE perplex ${${search}} PATH_SUFFIXES bin)
+endforeach()
 mark_as_advanced(PERPLEX_EXECUTABLE)
+
+foreach(search ${_PERPLEX_SEARCHES})
+  find_file(PERPLEX_TEMPLATE perplex_template.c ${${search}} PATH_SUFFIXES ${DATA_DIR} ${DATA_DIR}/perplex)
+endforeach()
+mark_as_advanced(PERPLEX_TEMPLATE)
 
 if(PERPLEX_EXECUTABLE AND NOT PERPLEX_TEMPLATE)
   get_filename_component(perplex_path ${PERPLEX_EXECUTABLE} PATH)
@@ -96,7 +122,7 @@ mark_as_advanced(PERPLEX_TEMPLATE)
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2020 United States Government as represented by
+# Copyright (c) 2010-2022 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
@@ -140,6 +166,10 @@ if(NOT COMMAND PERPLEX_TARGET)
   macro(PERPLEX_TARGET Name Input)
     get_filename_component(IN_FILE_WE ${Input} NAME_WE)
     set(PVAR_PREFIX ${Name}_${IN_FILE_WE})
+
+    if (TARGET perplex_stage)
+      set(DEP_TARGET perplex_stage)
+    endif (TARGET perplex_stage)
 
     if(${ARGC} GREATER 3)
       CMAKE_PARSE_ARGUMENTS(${PVAR_PREFIX} "" "TEMPLATE;OUT_SRC_FILE;OUT_HDR_FILE;WORKING_DIR" "" ${ARGN})
@@ -199,8 +229,10 @@ if(NOT COMMAND PERPLEX_TARGET)
     add_custom_command(
       OUTPUT ${re2c_src} ${${PVAR_PREFIX}_OUT_HDR_FILE} ${${PVAR_PREFIX}_WORKING_DIR}/${IN_FILE}
       COMMAND ${CMAKE_COMMAND} -E copy ${perplex_in_file} ${${PVAR_PREFIX}_WORKING_DIR}/${IN_FILE}
+      COMMAND ${CMAKE_COMMAND} -E touch ${${PVAR_PREFIX}_WORKING_DIR}/${IN_FILE}_cpy.done
+      COMMAND ${CMAKE_COMMAND} -E remove ${${PVAR_PREFIX}_WORKING_DIR}/${IN_FILE}_cpy.done
       COMMAND ${PERPLEX_EXECUTABLE} -c -o ${re2c_src} -i ${${PVAR_PREFIX}_OUT_HDR_FILE} -t ${${PVAR_PREFIX}_TEMPLATE} ${${PVAR_PREFIX}_WORKING_DIR}/${IN_FILE}
-      DEPENDS ${Input} ${${PVAR_PREFIX}_TEMPLATE} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
+      DEPENDS ${Input} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET} ${DEP_TARGET}
       WORKING_DIRECTORY ${${PVAR_PREFIX}_WORKING_DIR}
       COMMENT "[PERPLEX][${Name}] Generating re2c input with ${PERPLEX_EXECUTABLE}"
       )
@@ -209,7 +241,7 @@ if(NOT COMMAND PERPLEX_TARGET)
       add_custom_command(
 	OUTPUT ${${PVAR_PREFIX}_OUT_SRC_FILE}
 	COMMAND ${RE2C_EXECUTABLE} --no-debug-info --no-generation-date -c -o ${${PVAR_PREFIX}_OUT_SRC_FILE} ${re2c_src}
-	DEPENDS ${Input} ${re2c_src} ${${PVAR_PREFIX}_OUT_HDR_FILE} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
+	DEPENDS ${Input} ${re2c_src} ${${PVAR_PREFIX}_OUT_HDR_FILE} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET} ${DEP_TARGET}
 	WORKING_DIRECTORY ${${PVAR_PREFIX}_WORKING_DIR}
 	COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
 	)
@@ -217,7 +249,7 @@ if(NOT COMMAND PERPLEX_TARGET)
       add_custom_command(
 	OUTPUT ${${PVAR_PREFIX}_OUT_SRC_FILE}
 	COMMAND ${RE2C_EXECUTABLE} --no-generation-date -c -o ${${PVAR_PREFIX}_OUT_SRC_FILE} ${re2c_src}
-	DEPENDS ${Input} ${re2c_src} ${${PVAR_PREFIX}_OUT_HDR_FILE} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
+	DEPENDS ${Input} ${re2c_src} ${${PVAR_PREFIX}_OUT_HDR_FILE} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET} ${DEP_TARGET}
 	WORKING_DIRECTORY ${${PVAR_PREFIX}_WORKING_DIR}
 	COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
 	)

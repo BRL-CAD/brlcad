@@ -1,7 +1,7 @@
 /*                           S T R . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2020 United States Government as represented by
+ * Copyright (c) 1995-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ bn_decode_angle(double *ang, const char *str)
 
 
 int
-bn_decode_mat(fastf_t *mat, const char *str)
+bn_decode_mat(mat_t mat, const char *str)
 {
     double m[16];
     int ret;
@@ -85,7 +85,7 @@ bn_decode_mat(fastf_t *mat, const char *str)
 
 
 int
-bn_decode_quat(fastf_t *quat, const char *str)
+bn_decode_quat(quat_t quat, const char *str)
 {
     double q[4];
     int ret;
@@ -99,7 +99,7 @@ bn_decode_quat(fastf_t *quat, const char *str)
 
 
 int
-bn_decode_vect(fastf_t *vec, const char *str)
+bn_decode_vect(vect_t vec, const char *str)
 {
     double v[3];
     int ret;
@@ -113,7 +113,7 @@ bn_decode_vect(fastf_t *vec, const char *str)
 
 
 int
-bn_decode_hvect(fastf_t *v, const char *str)
+bn_decode_hvect(hvect_t v, const char *str)
 {
     return bn_decode_quat(v, str);
 }
@@ -144,7 +144,7 @@ bn_encode_mat(struct bu_vls *vp, const mat_t m, int clamp)
 
 
 void
-bn_encode_quat(struct bu_vls *vp, const mat_t q, int clamp)
+bn_encode_quat(struct bu_vls *vp, const quat_t q, int clamp)
 {
     if (clamp) {
 	bu_vls_printf(vp, "%g %g %g %g", V4INTCLAMPARGS(q));
@@ -155,7 +155,7 @@ bn_encode_quat(struct bu_vls *vp, const mat_t q, int clamp)
 
 
 void
-bn_encode_vect(struct bu_vls *vp, const mat_t v, int clamp)
+bn_encode_vect(struct bu_vls *vp, const vect_t v, int clamp)
 {
     if (clamp) {
 	bu_vls_printf(vp, "%g %g %g", V3INTCLAMPARGS(v));
@@ -166,7 +166,7 @@ bn_encode_vect(struct bu_vls *vp, const mat_t v, int clamp)
 
 
 void
-bn_encode_hvect(struct bu_vls *vp, const mat_t v, int clamp)
+bn_encode_hvect(struct bu_vls *vp, const hvect_t v, int clamp)
 {
     if (clamp) {
 	bu_vls_printf(vp, "%g %g %g %g", V4INTCLAMPARGS(v));

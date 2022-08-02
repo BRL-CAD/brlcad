@@ -2,7 +2,7 @@
 #                         G - D O T . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2020 United States Government as represented by
+# Copyright (c) 2010-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -78,6 +78,7 @@ if [ X$STATUS = X0 ] ; then
     log "-> g-dot.sh succeeded"
 else
     log "-> g-dot.sh FAILED, see $LOGFILE"
+    cat "$LOGFILE"
 fi
 
 exit $STATUS

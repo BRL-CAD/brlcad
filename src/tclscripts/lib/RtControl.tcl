@@ -1,7 +1,7 @@
 #                   R T C O N T R O L . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2020 United States Government as represented by
+# Copyright (c) 1998-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -275,6 +275,16 @@
     } {}
     bind $itk_component(raytraceB) <Enter> [::itcl::code $this enterRaytraceCB]
     bind $itk_component(raytraceB) <Leave> [::itcl::code $this leaveCB]
+
+	itk_component add artB {
+	::ttk::button $itk_interior.artB \
+	    -text "Art" \
+	    -width 7 \
+	    -command [::itcl::code $this raytrace]
+    } {}
+    bind $itk_component(artB) <Enter> [::itcl::code $this enterRaytraceCB]
+    bind $itk_component(artB) <Leave> [::itcl::code $this leaveCB]
+
 
     itk_component add abortB {
 	::ttk::button $itk_interior.abortB \

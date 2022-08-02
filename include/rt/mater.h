@@ -1,7 +1,7 @@
 /*                          M A T E R . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ struct mater {
 
 RT_EXPORT extern void rt_region_color_map(struct region *regp);
 
-/* process ID_MATERIAL record */
+/* process ID_COLORTAB record */
 RT_EXPORT extern void rt_color_addrec(int low,
 				      int hi,
 				      int r,

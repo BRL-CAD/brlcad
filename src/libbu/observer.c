@@ -1,7 +1,7 @@
 /*                      O B S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2020 United States Government as represented by
+ * Copyright (c) 1997-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -192,8 +192,7 @@ bu_observer_free(struct bu_observer_list *observers)
 	bu_vls_free(&observers->observers[i].cmd);
     }
 
-    if (observers->observers != NULL)
-	bu_free(observers->observers, "freeing observers");
+    bu_free(observers->observers, "freeing observers");
 }
 
 

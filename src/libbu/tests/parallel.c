@@ -1,7 +1,7 @@
 /*                    P A R A L L E L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -100,7 +100,10 @@ main(int argc, char *argv[])
     unsigned long ncpu_opt;
     struct parallel_data data;
 
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     while ((c = bu_getopt(argc, argv, "P:!:")) != -1) {
 	switch (c) {

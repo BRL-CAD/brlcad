@@ -1,7 +1,7 @@
 /*                     N M G _ P T _ F U . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,8 +34,8 @@
 
 #include "vmath.h"
 #include "bu/malloc.h"
-#include "bn/plane.h"
-#include "bn/plot3.h"
+#include "bg/plane.h"
+#include "bv/plot3.h"
 #include "nmg.h"
 
 /* vertex/edge distance
@@ -49,7 +49,7 @@ struct ve_dist {
     fastf_t dist;	/* distance squared from point to edge */
     struct vertex *v1;
     struct vertex *v2;
-    int status;	/* return code from bn_dist_pnt3_lseg3 */
+    int status;	/* return code from bg_dist_pnt3_lseg3 */
 };
 #define NMG_VE_DIST_MAGIC 0x102938
 #define NMG_CK_VED(_p) NMG_CKMAG(_p, NMG_VE_DIST_MAGIC, "vertex/edge_dist")
@@ -118,7 +118,7 @@ int nmg_class_pnt_fu_except(const point_t pt, const struct faceuse *fu, const st
  *	4	PCA is within tolerance of B. *dist = |P-B|**2.
  *	5	P is "above/below" lseg AB.  *dist=|PCA-P|**2.
  *
- * This routine was formerly called bn_dist_pnt_lseg().
+ * This routine was formerly called bg_dist_pnt_lseg().
  * This is a special version that returns the square of the distance
  * and does not actually calculate PCA.
  *
@@ -762,13 +762,12 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1, c
 		}
 
 		tmp = ei_p;
-		ei_p = BU_LIST_PLAST(edge_info, &ei_p->l);
 		BU_LIST_DEQUEUE(&tmp->l);
-		nmg_free((char *)tmp, "edge info struct");
+		bu_free((char *)tmp, "edge info struct");
 		tmp = ei;
 		ei = BU_LIST_PLAST(edge_info, &ei->l);
 		BU_LIST_DEQUEUE(&tmp->l);
-		nmg_free((char *)tmp, "edge info struct");
+		bu_free((char *)tmp, "edge info struct");
 		break;
 	    }
 	    ei_p = BU_LIST_PNEXT(edge_info, &ei_p->l);
@@ -840,7 +839,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei, struct
     }
 
     bu_log("\toverlay %s\n", name);
-    b = (long *)nmg_calloc(fpi->fu_p->s_p->r_p->m_p->maxindex,
+    b = (long *)bu_calloc(fpi->fu_p->s_p->r_p->m_p->maxindex,
 			  sizeof(long), "bit vec");
 
 	pl_erase(fp);
@@ -860,7 +859,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei, struct
     tmp_tol.perp = 1e-6;
     tmp_tol.para = 1 - tmp_tol.perp;
 
-    (void)bn_dist_pnt3_lseg3(&dist, pca, ei->eu_p->vu_p->v_p->vg_p->coord,
+    (void)bg_dist_pnt3_lseg3(&dist, pca, ei->eu_p->vu_p->v_p->vg_p->coord,
 			    ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord, fpi->pt, &tmp_tol);
 
     pl_color(fp, 255, 255, 50);
@@ -877,7 +876,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei, struct
 	pdv_3line(fp, p1, p2);
     }
 
-    nmg_free((char *)b, "bit vec");
+    bu_free((char *)b, "bit vec");
     fclose(fp);
 }
 
@@ -979,7 +978,7 @@ compute_loop_class(struct fpi *fpi,
      */
     while (BU_LIST_WHILE(ei, edge_info, &near1)) {
 	BU_LIST_DEQUEUE(&ei->l);
-	nmg_free((char *)ei, "edge_info struct");
+	bu_free((char *)ei, "edge_info struct");
     }
 
     if (UNLIKELY(nmg_debug & NMG_DEBUG_PNT_FU)) {
@@ -1034,17 +1033,17 @@ nmg_class_pnt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only, 
     NMG_CK_FPI(fpi);
     NMG_CK_LOOPUSE(lu);
     NMG_CK_LOOP(lu->l_p);
-    NMG_CK_LOOP_G(lu->l_p->lg_p);
+    NMG_CK_LOOP_A(lu->l_p->la_p);
 
 
-    if (V3PNT_OUT_RPP_TOL(fpi->pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt, fpi->tol->dist)) {
+    if (V3PNT_OUT_RPP_TOL(fpi->pt, lu->l_p->la_p->min_pt, lu->l_p->la_p->max_pt, fpi->tol->dist)) {
 	/* point is not in RPP of loop */
 
 	if (nmg_debug & NMG_DEBUG_PNT_FU) {
 	    bu_log("nmg_class_pnt_lu(pt(%g %g %g) outside loop RPP\n",
 		   V3ARGS(fpi->pt));
 	    bu_log("   lu RPP: (%g %g %g) <-> (%g %g %g)\n",
-		   V3ARGS(lu->l_p->lg_p->min_pt), V3ARGS(lu->l_p->lg_p->max_pt));
+		   V3ARGS(lu->l_p->la_p->min_pt), V3ARGS(lu->l_p->la_p->max_pt));
 	}
 
 	if (lu->orientation == OT_SAME)
@@ -1103,7 +1102,7 @@ nmg_class_pnt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only, 
 	/* free up the edge_list elements */
 	while (BU_LIST_WHILE(ei, edge_info, &edge_list.l)) {
 	    BU_LIST_DEQUEUE(&ei->l);
-	    nmg_free((char *)ei, "edge info struct");
+	    bu_free((char *)ei, "edge info struct");
 	}
     } else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 	register struct vertexuse *vu;
@@ -1163,7 +1162,7 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt, struct bu_list *v
 
     bu_log("overlay pt_fu_parity_error.plot3\n");
 
-    b = (long *)nmg_calloc(fu->s_p->r_p->m_p->maxindex,
+    b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex,
 			  sizeof(long), "bit vec");
 
 	pl_erase(fp);
@@ -1187,7 +1186,7 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt, struct bu_list *v
 	pdv_3line(fp, p1, p2);
     }
 
-    nmg_free((char *)b, "plot table");
+    bu_free((char *)b, "plot table");
     fclose(fp);
 
 }
@@ -1224,7 +1223,7 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt, struct bu_list *v
  *	NMG_CLASS_AonB, etc...
  */
 int
-nmg_class_pnt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct loopuse *ignore_lu,
+nmg_class_pnt_fu_except(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu,
 		       void (*eu_func) (struct edgeuse *, point_t, const char *, struct bu_list *), void (*vu_func) (struct vertexuse *, point_t, const char *), const char *priv,
 		       const int call_on_hits, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol)
 
@@ -1361,7 +1360,7 @@ nmg_class_pnt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struc
 
     while (BU_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
 	BU_LIST_DEQUEUE(&ved_p->l);
-	nmg_free((char *)ved_p, "ve_dist struct");
+	bu_free((char *)ved_p, "ve_dist struct");
     }
 
 
@@ -1381,7 +1380,7 @@ nmg_class_pnt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struc
  * It will not work properly on crack loops.
  */
 int
-nmg_class_pnt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge *e_p, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_class_pnt_lu_except(point_t pt, const struct loopuse *lu, const struct edge *e_p, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     register struct edgeuse *eu;
     struct edge_info edge_list;
@@ -1414,7 +1413,7 @@ nmg_class_pnt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge
 	       V3ARGS(pt), V4ARGS(fpi.norm), dist);
     }
 
-    if (V3PNT_OUT_RPP_TOL(pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt, tol->dist)) {
+    if (V3PNT_OUT_RPP_TOL(pt, lu->l_p->la_p->min_pt, lu->l_p->la_p->max_pt, tol->dist)) {
 	/* point is not in RPP of loop */
 
 	if (nmg_debug & NMG_DEBUG_PNT_FU)
@@ -1474,12 +1473,12 @@ nmg_class_pnt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge
     /* free up the edge_list elements */
     while (BU_LIST_WHILE(ei, edge_info, &edge_list.l)) {
 	BU_LIST_DEQUEUE(&ei->l);
-	nmg_free((char *)ei, "edge info struct");
+	bu_free((char *)ei, "edge info struct");
     }
 
     while (BU_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
 	BU_LIST_DEQUEUE(&ved_p->l);
-	nmg_free((char *)ved_p, "ve_dist struct");
+	bu_free((char *)ved_p, "ve_dist struct");
     }
 
     if (nmg_debug & NMG_DEBUG_PNT_FU)

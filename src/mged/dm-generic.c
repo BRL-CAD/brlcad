@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,8 +39,6 @@
 #  include "tk.h"
 #endif
 
-#include "dm/dm_xvars.h"
-
 #include "vmath.h"
 #include "raytrace.h"
 #include "ged.h"
@@ -58,24 +56,6 @@ extern void rect_view2image();		/* defined in rect.c */
 extern void rb_set_dirty_flag();
 
 
-struct bu_structparse dm_xvars_vparse[] = {
-    {"%x",	1,	"dpy",			XVARS_MV_O(dpy),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",	1,	"win",			XVARS_MV_O(win),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",	1,	"top",			XVARS_MV_O(top),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",	1,	"tkwin",		XVARS_MV_O(xtkwin),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1,	"depth",		XVARS_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",	1,	"cmap",			XVARS_MV_O(cmap),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-#if defined(DM_X) || defined (DM_OGL) || defined (DM_WGL)
-    {"%x",	1,	"vip",			XVARS_MV_O(vip),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",	1,	"fontstruct",		XVARS_MV_O(fontstruct),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-#endif
-    {"%d",	1,	"devmotionnotify",	XVARS_MV_O(devmotionnotify),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1,	"devbuttonpress",	XVARS_MV_O(devbuttonpress),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1,	"devbuttonrelease",	XVARS_MV_O(devbuttonrelease),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",	0,	(char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-};
-
-
 int
 common_dm(int argc, const char *argv[])
 {
@@ -89,8 +69,8 @@ common_dm(int argc, const char *argv[])
 
 	/* redraw after scaling */
 	if (GEDP && GEDP->ged_gvp &&
-	    GEDP->ged_gvp->gv_adaptive_plot &&
-	    GEDP->ged_gvp->gv_redraw_on_zoom &&
+	    GEDP->ged_gvp->gv_s->adaptive_plot_csg &&
+	    GEDP->ged_gvp->gv_s->redraw_on_zoom &&
 	    (am_mode == AMM_SCALE ||
 	     am_mode == AMM_CON_SCALE_X ||
 	     am_mode == AMM_CON_SCALE_Y ||
@@ -167,7 +147,7 @@ common_dm(int argc, const char *argv[])
 	    point_t view_pt;
 	    point_t model_pt;
 
-	    if (grid_state->gr_snap)
+	    if (grid_state->snap)
 		snap_to_grid(&fx, &fy);
 
 	    if (mged_variables->mv_perspective_mode)
@@ -187,7 +167,7 @@ common_dm(int argc, const char *argv[])
 		    mged_variables->mv_mouse_behavior == 'r' ||
 		    mged_variables->mv_mouse_behavior == 'z') && !stolen) {
 
-	    if (grid_state->gr_snap)
+	    if (grid_state->snap)
 		snap_to_grid(&fx, &fy);
 
 	    rubber_band->rb_active = 1;
@@ -216,14 +196,14 @@ common_dm(int argc, const char *argv[])
 	    point_t model_pt;
 	    point_t view_pt;
 
-	    if (grid_state->gr_snap)
+	    if (grid_state->snap)
 		snap_to_grid(&fx, &fy);
 
 	    VSET(view_pt, fx, fy, 1.0);
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
 	    bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
-	} else if (grid_state->gr_snap && !stolen &&
+	} else if (grid_state->snap && !stolen &&
 		   SEDIT_TRAN && mged_variables->mv_transform == 'e') {
 	    point_t view_pt;
 	    point_t model_pt;
@@ -235,7 +215,7 @@ common_dm(int argc, const char *argv[])
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
 	    bu_vls_printf(&vls, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
-	} else if (grid_state->gr_snap && !stolen &&
+	} else if (grid_state->snap && !stolen &&
 		   OEDIT_TRAN && mged_variables->mv_transform == 'e') {
 	    point_t view_pt;
 	    point_t model_pt;
@@ -247,7 +227,7 @@ common_dm(int argc, const char *argv[])
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
 	    bu_vls_printf(&vls, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
-	} else if (grid_state->gr_snap && !stolen &&
+	} else if (grid_state->snap && !stolen &&
 		   STATE != ST_S_PICK && STATE != ST_O_PICK &&
 		   STATE != ST_O_PATH && !SEDIT_PICK && !EDIT_SCALE) {
 	    point_t view_pt;
@@ -279,8 +259,8 @@ common_dm(int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	dml_omx = atoi(argv[2]);
-	dml_omy = atoi(argv[3]);
+	dm_omx = atoi(argv[2]);
+	dm_omy = atoi(argv[3]);
 
 	switch (*argv[1]) {
 	    case 'r':
@@ -289,7 +269,7 @@ common_dm(int argc, const char *argv[])
 	    case 't':
 		am_mode = AMM_TRAN;
 
-		if (grid_state->gr_snap) {
+		if (grid_state->snap) {
 		    int save_edflag;
 
 		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
@@ -345,13 +325,13 @@ common_dm(int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	dml_omx = atoi(argv[2]);
-	dml_omy = atoi(argv[3]);
+	dm_omx = atoi(argv[2]);
+	dm_omy = atoi(argv[3]);
 
 	switch (*argv[1]) {
 	    case '1':
-		fx = dm_Xx2Normal(DMP, dml_omx) * GED_MAX - adc_state->adc_dv_x;
-		fy = dm_Xy2Normal(DMP, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
+		fx = dm_Xx2Normal(DMP, dm_omx) * GED_MAX - adc_state->adc_dv_x;
+		fy = dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
 		bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(INTERP, bu_vls_addr(&vls));
@@ -360,8 +340,8 @@ common_dm(int argc, const char *argv[])
 		am_mode = AMM_ADC_ANG1;
 		break;
 	    case '2':
-		fx = dm_Xx2Normal(DMP, dml_omx) * GED_MAX - adc_state->adc_dv_x;
-		fy = dm_Xy2Normal(DMP, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
+		fx = dm_Xx2Normal(DMP, dm_omx) * GED_MAX - adc_state->adc_dv_x;
+		fy = dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
 		bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(INTERP, bu_vls_addr(&vls));
@@ -374,9 +354,9 @@ common_dm(int argc, const char *argv[])
 		    point_t model_pt;
 		    point_t view_pt;
 
-		    VSET(view_pt, dm_Xx2Normal(DMP, dml_omx), dm_Xy2Normal(DMP, dml_omy, 1), 0.0);
+		    VSET(view_pt, dm_Xx2Normal(DMP, dm_omx), dm_Xy2Normal(DMP, dm_omy, 1), 0.0);
 
-		    if (grid_state->gr_snap)
+		    if (grid_state->snap)
 			snap_to_grid(&view_pt[X], &view_pt[Y]);
 
 		    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
@@ -391,9 +371,9 @@ common_dm(int argc, const char *argv[])
 
 		break;
 	    case 'd':
-		fx = (dm_Xx2Normal(DMP, dml_omx) * GED_MAX -
+		fx = (dm_Xx2Normal(DMP, dm_omx) * GED_MAX -
 		      adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
-		fy = (dm_Xy2Normal(DMP, dml_omy, 1) * GED_MAX -
+		fy = (dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX -
 		      adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
 
 		td = sqrt(fx * fx + fy * fy);
@@ -421,8 +401,8 @@ common_dm(int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	dml_omx = atoi(argv[3]);
-	dml_omy = atoi(argv[4]);
+	dm_omx = atoi(argv[3]);
+	dm_omy = atoi(argv[4]);
 
 	switch (*argv[1]) {
 	    case 'a':
@@ -560,29 +540,18 @@ common_dm(int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL) || defined(DM_OSGL)
     if (BU_STR_EQUAL(argv[0], "getx")) {
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	if (argc == 1) {
-	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
 	    /* Bare set command, print out current settings */
-	    if(dm_get_xvars(DMP) != NULL) {
-		bu_vls_struct_print2(&tmp_vls, "dm internal X variables", dm_xvars_vparse,
-			(const char *)dm_get_xvars(DMP));
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    }
-	    bu_vls_free(&tmp_vls);
+	    dm_internal_var(&tmp_vls, DMP, NULL);
 	} else if (argc == 2) {
-	    if(dm_get_xvars(DMP) != NULL) {
-		bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1], (const char *)dm_get_xvars(DMP), COMMA);
-		Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
-	    }
-	    bu_vls_free(&vls);
+	    dm_internal_var(&tmp_vls, DMP, argv[1]);
 	}
-
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
 	return TCL_OK;
     }
-#endif
 
     if (BU_STR_EQUAL(argv[0], "bg")) {
 	int r, g, b;
@@ -597,10 +566,10 @@ common_dm(int argc, const char *argv[])
 
 	/* return background color of current display manager */
 	if (argc == 1) {
-	    if (dm_get_bg(DMP)) {
-		bu_vls_printf(&vls, "%d %d %d", dm_get_bg(DMP)[0], dm_get_bg(DMP)[1], dm_get_bg(DMP)[2]);
-		Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
-	    }
+	    unsigned char *dm_bg;
+	    dm_get_bg(&dm_bg, NULL, DMP);
+	    bu_vls_printf(&vls, "%d %d %d", dm_bg[0], dm_bg[1], dm_bg[2]);
+	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
 	    return TCL_OK;
@@ -616,9 +585,10 @@ common_dm(int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	dirty = 1;
+	DMP_dirty = 1;
+	dm_set_dirty(DMP, 1);
 	(void)dm_make_current(DMP);
-	return dm_set_bg(DMP, r, g, b);
+	return dm_set_bg(DMP, r, g, b, r, g, b);
     }
 
     Tcl_AppendResult(INTERP, "dm: bad command - ", argv[0], "\n", (char *)NULL);
@@ -658,7 +628,7 @@ zclip_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
-    hs->vs->vs_gvp->gv_zclip = dm_get_zclip(hs->hs_dmp);
+    hs->vs->vs_gvp->gv_s->gv_zclip = dm_get_zclip(hs->hs_dmp);
     dirty_hook(sdp, name, base, value, data);
 }
 
@@ -666,7 +636,7 @@ void *
 set_hook_data(struct mged_view_hook_state *hs) {
     hs->hs_dmp = DMP;
     hs->vs = view_state;
-    hs->dirty_global = &(dirty);
+    hs->dirty_global = &(DMP_dirty);
     return (void *)hs;
 }
 
@@ -690,36 +660,42 @@ dm_commands(int argc,
     struct dm_hook_data mged_dm_hook;
     if (BU_STR_EQUAL(argv[0], "set")) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
+	struct bu_structparse *dmparse = dm_get_vparse(DMP);
+	void *mvars = dm_get_mvars(DMP);
+	if (dmparse && mvars) {
+	    if (argc < 2) {
+		struct bu_vls report_str = BU_VLS_INIT_ZERO;
 
-	if (argc < 2) {
-	    struct bu_vls report_str = BU_VLS_INIT_ZERO;
-	    if (dm_get_dm_name(DMP) && dm_get_vparse(DMP)) {
 		bu_vls_sprintf(&report_str, "Display Manager (type %s) internal variables", dm_get_dm_name(DMP));
 		/* Bare set command, print out current settings */
-		bu_vls_struct_print2(&vls, bu_vls_addr(&report_str), dm_get_vparse(DMP), (const char *)dm_get_mvars(DMP));
-	    }
-	    bu_vls_free(&report_str);
-	} else if (argc == 2) {
-	    /* TODO - need to add hook func support to this func, since the one in the libdm structparse isn't enough by itself */
-	    if (dm_get_mvars(DMP) && dm_get_vparse(DMP)) {
-		bu_vls_struct_item_named(&vls, dm_get_vparse(DMP), argv[1], (const char *)dm_get_mvars(DMP), COMMA);
-	    }
-	} else {
-	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-	    int ret;
-	    struct mged_view_hook_state global_hs;
-	    void *data = set_hook_data(&global_hs);
+		bu_vls_struct_print2(&vls, bu_vls_addr(&report_str), dmparse, (const char *)mvars);
+		bu_vls_free(&report_str);
+	    } else if (argc == 2) {
+		/* TODO - need to add hook func support to this func, since the
+		 * one in the libdm structparse isn't enough by itself */
+		if (dm_get_mvars(DMP) && dm_get_vparse(DMP)) {
+		    bu_vls_struct_item_named(&vls, dmparse, argv[1], (const char *)mvars, COMMA);
+		}
+	    } else {
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+		int ret;
+		struct mged_view_hook_state global_hs;
+		void *data = set_hook_data(&global_hs);
 
-	    ret = dm_set_hook(vparse_map, argv[1], data, &mged_dm_hook);
+		ret = dm_set_hook(vparse_map, argv[1], data, &mged_dm_hook);
+		if (ret < 0) {
+		    bu_log("Warning - failed to set dm hook - dm-generic.c:%d\n", __LINE__);
+		}
 
-	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
-	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
-	    bu_vls_putc(&tmp_vls, '\"');
-	    ret = bu_struct_parse(&tmp_vls, dm_get_vparse(DMP), (char *)dm_get_mvars(DMP), (void *)(&mged_dm_hook));
-	    bu_vls_free(&tmp_vls);
-	    if (ret < 0) {
-	      bu_vls_free(&vls);
-	      return TCL_ERROR;
+		bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
+		bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
+		bu_vls_putc(&tmp_vls, '\"');
+		ret = bu_struct_parse(&tmp_vls, dmparse, (char *)mvars, (void *)(&mged_dm_hook));
+		bu_vls_free(&tmp_vls);
+		if (ret < 0) {
+		    bu_vls_free(&vls);
+		    return TCL_ERROR;
+		}
 	    }
 	}
 

@@ -10,12 +10,162 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 20XX-XX-XX  Release 7.3X.X                                     ---
+--- 2022-XX-XX  Release 7.34.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed mged -c unknown variable windows on keypresses- Sean Morrison
+* improved mged & archer html command help formatting - Sean Morrison
+* fixed archer empty string ("") loading behavior - Cliff Yapp
+* rt* tools' -P option accepts negative #core counts - Sean Morrison
+* gqa -Ae exposed air report no longer has gapped air - Sean Morrison
+* fixed rt framebuffer bug with -g/-G cellsize options - Sean Morrison
+* added new idents(5) file format manual page - Sean Morrison
+* preserved path prefixes on search cmd results - Cliff Yapp
+* new 'material' command and material object infrastructure
+        - Dinges, Connelly, Olivarez, McGregor, Studwell, Wilson
+
+
+----------------------------------------------------------------------
+--- 2022-05-08  Release 7.32.6                                     ---
+----------------------------------------------------------------------
+
+* reduced mged & archer max image size and memory use - Sean Morrison
+* fixed librt handling of object names with '/' chars - Cliff Yapp
+* changed fast4-g to not make references to empty regions - Cliff Yapp
+* fixed gcv option handling - Cliff Yapp
+* updated bundled Eigen dependency to v3.4.0 - Cliff Yapp
+* fixed bot_merge crash when bots are of different types - Cliff Yapp
+* fixed nirt -L to not require database and objects - Sean Morrison
+* fixed bug reading older VOL objects with file data - Sean Morrison
+* fixed pixscale bug when scaling images down - Sean Morrison
+
+
+----------------------------------------------------------------------
+--- 2021-07-27  Release 7.32.4                                     ---
+----------------------------------------------------------------------
+
+* Added -matrix search filter for finding comb matrices - Cliff Yapp
+* fixed MGED handling of long running subprocesses in script mode
+        - Cliff Yapp, Sean Morrison
+* improve documentation for bot modes in bot and search - Cliff Yapp
+* added -o output option to GED stat command - Cliff Yapp
+* fixed overlay support for drawing multiple files - Cliff Yapp
+* fixed file creation for tire command - Cliff Yapp
+* fixed mixing object and full path searches in MGED - Cliff Yapp
+* fixed launching of ISST graphical viewer - Cliff Yapp
+
+
+----------------------------------------------------------------------
+--- 2021-02-06  Release 7.32.2                                     ---
+----------------------------------------------------------------------
+
+* fixed OSX g-iges crash due to improper memory freeing - Cliff Yapp
+* fixed GQA multithreaded plotting file corruption - Cliff Yapp
+* added -S structural diff option to MGED gdiff command - Cliff Yapp
+* added -v verbosity option to MGED tree command - Cliff Yapp
+* added -? option to MGED which command - Cliff Yapp
+* updated Archer to set cwd=HOME when run without args - Cliff Yapp
+* updated rtwizard to set cwd=HOME when run without args - Cliff Yapp
+* updated MGED to set cwd=HOME when run without args - Cliff Yapp
+* fixed reporting of MGED "vars" command - Cliff Yapp
+* updated MGED to not open non-.g-files as databases - Cliff Yapp
+* fixed MGED I/O when running GED subcommands - Cliff Yapp
+* added decimation control examples to facetize man page - Cliff Yapp
+* changed gcv converter to append to existing .g files - Cliff Yapp
+* removed obscure MGED menu entries for unused features - Cliff Yapp
+* fixed crash when trying to shade invalid breps - Cliff Yapp
+* improved librt CPU timer behavior - Cliff Yapp
+* fixed example in saveview manual page - Sean Morrison
+* added support for in-database vol primitive data - Sumagna Das
+* changed 'mvall' to rename all refs even w/ no object - Sean Morrison
+* updated MGED Overlap GUI to run reliably on Windows - Cliff Yapp
+* fixed MGED search command crash on empty database - Sean Morrison
+* improved performance calculating BoT bounding boxes - Vikram Atreya
+* fixed MGED crash closing multiple rt views on Windows - Cliff Yapp
+* fixed 'n' key binding override with MGED key forwarding - Cliff Yapp
+* fixed mged crash when there are no display managers - Sean Morrison
+* added pixcmp -n length flag for subset comparisons - Sean Morrison
+* added pixcmp -s same and -d different printing flags - Sean Morrison
+* updated non-shape objects list for search shape filter - Cliff Yapp
+* added volume type to search -type filters - Cliff Yapp
+* applied shorter default title in fast4-g conversions - Cliff Yapp
+* improved pixcmp support for subset image comparisons - Sean Morrison
+* added subtract subcommand to MGED analyze command - Cliff Yapp
+* added intersect subcommand to MGED analyze command - Cliff Yapp
+* added summarize subcommand to MGED analyze command - Cliff Yapp
+* added quiet (-q) flag to MGED kill command - Cliff Yapp
+* added MGED stat command for reporting of object info - Cliff Yapp
+* corrected examples in gdiff man page - Cliff Yapp
+* fixed help message for -F option on gdiff command - Cliff Yapp
+* fixed mged -c bomb attaching to graphical displays - Sean Morrison
+* fixed titlebar bug opening .g with filename spaces - Sean Morrison
+* added a new 'N' graphics window keybinding to run nirt - Cliff Yapp
+
+----------------------------------------------------------------------
+--- 2020-09-14  Release 7.32.0                                     ---
+----------------------------------------------------------------------
+
+This major release of BRL-CAD introduces significant updates to core
+library infrastructure.  The update includes restructuring of nearly
+all of BRL-CAD's display infrastructure in preparation for upcoming
+significant GUI changes.  This release also fixes over fifty of
+BRL-CAD's command-line utilities so they work properly on Windows.
+This is likely the last major release of BRL-CAD on Subversion
+infrastructure with BRL-CAD's imminent migration to Git.
+
+* added basic example to remrt man page - Cliff Yapp, Sean Morrison
+* added new 'nburst' version of classic burst tool - Cliff Yapp
+* added 'bot set' command for low level BoT manipulation - Cliff Yapp
+* report semantic strings for 'bot get' mode/orientation - Cliff Yapp
+* added new manual page for the libicv library - Sumagna Das
+* added -size filter to MGED search command - Cliff Yapp
+* upgraded Tcl/Tk from 8.5.19 to 8.6.10 - Cliff Yapp
+* bundled zlib & libpng use API prefix and library suffix - Cliff Yapp
+* extensive improvements to OpenCL ray trace pipeline - Rishabh Suthar
+* improved rtweight density value warnings - Sean Morrison, Cliff Yapp
+* added perception-based hdtv and hdr modes for pix-bw - Sean Morrison
+* fixed semi-transparent DM and FB windows on Linux - Cliff Yapp
+* improved rtweight manual page - Sean Morrison
+* added line reporting TCP listening port to remrt output - Cliff Yapp
+* added help options support (-h,-?) to asc2dsp and g2asc - Cliff Yapp
+* fixed crash when drawing a VOL with missing data - Cliff Yapp
+* facetall.sh script is replaced by MGED facetize command - Cliff Yapp
+* dynamic LIBGED command loading in MGED & Archer - Cliff Yapp
+* removed MGED "Display Manager" switching menu options - Cliff Yapp
+* dynamic LIBDM display manager loading in MGED & Archer - Cliff Yapp
+* fixed 'idents' crash when running in a read-only dir - Sean Morrison
+* fixed fb tools w/ redirected files and cv on Windows - Sean Morrison
+* expanded 'bo' command docs with a DSP input example - Sean Morrison
+* fixed 'in' making joint, superell, & script objects - Sean Morrison
+* Creo converter always writes out CREO_NAME attribute - Sean Morrison
+* improved gdiff -F filtering option behavior - Cliff Yapp
+* improved gdiff command verbosity reporting options - Cliff Yapp
+* improved Combination Editor button behaviors in MGED - Sean Morrison
+* added 'asc' geometry import and export support to gcv  - Cliff Yapp
+* consistent usage taxonomy for ident-related commands - Sean Morrison
 * added units label to the Archer in-scene scale graphic - Cliff Yapp
+* added framebuffer capture option to screengrab command - Cliff Yapp
+* added framebuffer writing option to overlay command - Cliff Yapp
+* added tree search option to 'whichid' and 'whichair' - Cliff Yapp
+* changed 'whichid' and 'whichair' to print ranges of unused IDs
+	- Nick Reed, Cliff Yapp
 * improved output path sorting of search command - Cliff Yapp
+* added "bot extrude" command for making ARB6s from bots - Cliff Yapp
 * added 3dm-g failure message about supported versions - Cliff Yapp
+* fixed bw-png writing corrupted png files on Windows - Sean Morrison
+* added MGED 'dm type' subcommand for reporting DM type - Cliff Yapp
+* improved vdeck input support for Windows text files - Sean Morrison
+* fixed MGED 'plot' & 'brep plot' commands on Windows - Sean Morrison
+* fixed numerous image utilities reading binary input files on Windows
+	- Sean Morrison, Cliff Yapp
+
+
+----------------------------------------------------------------------
+--- 2020-07-24  Release 7.30.10                                    ---
+----------------------------------------------------------------------
+
+* added 3dm-g failure message about supported versions - Cliff Yapp
+* fixed MGED "in" command support for datums - Sean Morrison
 * fixed bw-png writing corrupted png files on Windows - Sean Morrison
 
 
@@ -40,9 +190,11 @@ changes made.  See document footer for additional details.
 * fixed transparent drawing in MGED - Nick Reed
 * fixed solid NURBS brep intersection testing - Cliff Yapp
 * removed extra blank line after commands in MGED GUI - Sean Morrison
+* minor improvement to NURBS ray tracing performance - Sean Morrison
 * added "plate" object type filter to search command - Cliff Yapp
 * fixed latent logging bug during facetize on Windows - Bob Parker
 * fixed bug closing rt framebuffer windows on Windows - Sean Morrison
+* added EBM support for reading from database objects - Jeffrey Liu
 
 
 ----------------------------------------------------------------------
@@ -57,9 +209,13 @@ changes made.  See document footer for additional details.
 * changed mged escape key binding to reset mouse mode - Sean Morrison
 * removed default xXyYzZ0 rate rotation key bindings - Sean Morrison
 * improved tessellation of nearly coplanar surfaces - John Anderson
-* fixed display of annotations on Windows - Daniel Roßberg
+* fixed annotations display on Windows - Daniel Roßberg, Ali Haydar
 * fixed rtedge and rtwizard occlusion object edge bug - Sean Morrison
 * rt* tools no longer force outputs to be read-only - Sean Morrison
+* fixed bug listing annotations with short label strings - Ali Haydar
+* improved support for label placement in annotations - Ali Haydar
+* fixed bug in annotation object bounding box calculation - Ali Haydar
+* fixed an annotation leader line bug affecting display - Ali Haydar
 * fixed 'burst' crash when run without options - Sean Morrison
 * changed rtweight to not truncate long pathnames - Sean Morrison
 * added new ball bearing example geometry model - Sean Morrison
@@ -79,9 +235,10 @@ changes made.  See document footer for additional details.
 	- Sean Morrison, Cliff Yapp
 * added a copy subcommand to MGED's attr command - Cliff Yapp
 * fixed a locking condition in MGED's rtcheck command - Cliff Yapp
-* added support for >=< prefixes for mater -d get options Cliff Yapp
+* added support for >=< prefixes for mater -d get options - Cliff Yapp
 * fixed brlman lookup location of html manual pages - Cliff Yapp
-* fixed rt -t top-to-bottom parallel rendering option  Sean Morrison
+* fixed rtweight infinite loop bug on invalid .density - Cliff Yapp
+* fixed rt -t top-to-bottom parallel rendering option - Sean Morrison
 * added a 'flip' normals command to MGED's brep command - Cliff Yapp
 * added rtweight support for in-.g density information - Cliff Yapp
 * improved usability of vol primitives w/ missing data - Sean Morrison
@@ -269,6 +426,7 @@ and address portability issues.
 * fix rtedge foreground/background color options - Jon Engbert
 * support rt -C colors specified as 0-255 or 0.0-1.0 - Jon Engbert
 * fixed xpush bug leaving stray top-level objects - Nick Reed
+* removed MGED wrapper 'mged.bat' batch script on Windows - Cliff Yapp
 
 
 ----------------------------------------------------------------------
@@ -322,7 +480,7 @@ performance ray tracing pipeline.
 * fixed patch-g tool and E command infinite loop bug - Sean Morrison
 * improved NMG ray tracing fault tolerance - Sean Morrison
 * added 3dm-g support for layers and names - Keith Bowman
-* fixed color/shader preservation issue with 3dm-g importer - Jon Engbert
+* fixed issue preserving color/shader info with 3dm-g - Jon Engbert
 * added 3dm-g support for mesh objects - Jon Engbert
 * added csg implicit hierarchy conversion to brep command - Cliff Yapp
 * fixed crash in clone when told to make zero copies - Cliff Yapp
@@ -336,7 +494,7 @@ performance ray tracing pipeline.
 * removed any-png.sh - use pix tools - Sean Morrison
 * removed librtserver interface - Cliff Yapp
 * removed MGED per_line command - Sean Morrison
-* updated MGED tops command: default to -g -u behavior- Sean Morrison
+* updated MGED tops command: default to -g -u behavior - Sean Morrison
 * removed MGED -n option; use -c instead - Sean Morrison
 * removed MGED commands pl, pov and polybinout - Sean Morrison
 * removed UtahRLE image tools - Cliff Yapp
@@ -344,7 +502,7 @@ performance ray tracing pipeline.
 * added brlman -S option to specify man page section  - Cliff Yapp
 * modified rtg3 to avoid outputting excessive LOS - Nick Gerstner
 * extended burst and rtg3 to output 5 digit ID numbers - Nick Gerstner
-* improved draw command manual page documenation - Cliff Yapp
+* improved draw command manual page documentation - Cliff Yapp
 * added lc -m option to report multi-material/los regions - Cliff Yapp
 * added new 'icv' image conversion tool w/ pix, bw, dpix, png, ppm
 	- Mohit Daga, Cliff Yapp, Sean Morrison, Erik Greenwald
@@ -408,6 +566,7 @@ performance ray tracing pipeline.
 * removed "high resolution" options from all commands - Carl Moore
 * improved performance of archer loading large BoT models - Nick Reed
 * added evaluated shaded drawing preference mode and menu - Nick Reed
+* fixed .mgedrc creation corruption with closed database - Cliff Yapp
 * extensive improvements to NURBS Boolean evaluation - Nick Reed
 * added 'bot chull' for creating convex hull envelopes - Cliff Yapp
 * new manual page for the g-voxel exporter - Mandarj

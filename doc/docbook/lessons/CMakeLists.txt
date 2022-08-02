@@ -2,10 +2,12 @@
 if(BRLCAD_EXTRADOCS_HTML)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_HTML)
 if(BRLCAD_EXTRADOCS_PHP)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PHP)
 
 # Files for PDF products
@@ -13,6 +15,7 @@ if(BRLCAD_EXTRADOCS_PDF)
   # Style sheet for XSLT transformation to PDF
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-lesson-fo-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-fo-stylesheet.xsl)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-fo-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PDF)
 
 # For HTML and FO (FO is an intermediate file used in the
@@ -155,7 +158,7 @@ set(lessons_EN_IMAGES
   images/mged16_radio_cutaways.png
   )
 if(BRLCAD_EXTRADOCS)
-  ADD_DOC(lessons_EN_IMAGES lessons/images)
+  ADD_DOC(lessons_EN_IMAGES html/lessons/images)
 else(BRLCAD_EXTRADOCS)
   CMAKEFILES(${lessons_EN_IMAGES})
 endif(BRLCAD_EXTRADOCS)

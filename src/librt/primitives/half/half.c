@@ -1,7 +1,7 @@
 /*                          H A L F . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -389,7 +389,7 @@ rt_hlf_free(struct soltab *stp)
  * the plane, with the outward normal drawn shorter.
  */
 int
-rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_half_internal *hip;
     vect_t cent;		/* some point on the plane */
@@ -400,6 +400,7 @@ rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
 
@@ -421,19 +422,19 @@ rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     VADD2(y_1, cent, ybase);
     VSUB2(y_2, cent, ybase);
 
-    RT_ADD_VLIST(vhead, x_1, BN_VLIST_LINE_MOVE);	/* the cross */
-    RT_ADD_VLIST(vhead, x_2, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, y_1, BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, y_2, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, x_2, BN_VLIST_LINE_DRAW);	/* the box */
-    RT_ADD_VLIST(vhead, y_1, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, x_1, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, y_2, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, x_1, BV_VLIST_LINE_MOVE);	/* the cross */
+    BV_ADD_VLIST(vlfree, vhead, x_2, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, y_1, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, y_2, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, x_2, BV_VLIST_LINE_DRAW);	/* the box */
+    BV_ADD_VLIST(vlfree, vhead, y_1, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, x_1, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, y_2, BV_VLIST_LINE_DRAW);
 
     VSCALE(tip, hip->eqn, 500);
     VADD2(tip, cent, tip);
-    RT_ADD_VLIST(vhead, cent, BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, cent, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, tip, BV_VLIST_LINE_DRAW);
     return 0;
 }
 
@@ -548,7 +549,7 @@ rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     hip = (struct rt_half_internal *)ip->idb_ptr;
     hip->magic = RT_HALF_INTERNAL_MAGIC;
 
-    flip_fastf_float(orig_eqn, rp->s.s_values, 2, dbip->dbi_version < 0 ? 1 : 0);	/* 2 floats too many */
+    flip_fastf_float(orig_eqn, rp->s.s_values, 2, (dbip && dbip->dbi_version < 0) ? 1 : 0);	/* 2 floats too many */
 
     /* Pick a point on the original halfspace */
     VSCALE(orig_pt, orig_eqn, orig_eqn[1*ELEMENTS_PER_VECT]);

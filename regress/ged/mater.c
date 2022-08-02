@@ -1,7 +1,7 @@
 /*                        M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2020 United States Government as represented by
+ * Copyright (c) 2018-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,6 +46,10 @@ int
 check_for_data_exported(const char *filename, const char *key)
 {
     struct bu_mapped_file *efile = bu_open_mapped_file(filename, "exported densities data");
+    if (!efile) {
+	bu_log("Error opening file %s\n", filename);
+	return -1;
+    }
     if (!strstr((char *)efile->buf, key)) {
 	bu_log("Error: 'mater -d export' file %s does not contain all expected data\n", filename);
 	bu_close_mapped_file(efile);
@@ -63,7 +67,7 @@ check_for_data_present(struct ged *gedp, const char *key, const char *expected)
     mater_cmd[2] = "get";
     mater_cmd[3] = "--name";
     mater_cmd[4] = key;
-    if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+    if (ged_exec(gedp, 5, (const char **)mater_cmd) != BRLCAD_OK) {
 	bu_log("Error: 'mater -d get --name %s' failed\n", key);
 	return -1;
     }
@@ -83,7 +87,7 @@ check_for_data_not_present(struct ged *gedp, const char *key)
     mater_cmd[2] = "get";
     mater_cmd[3] = "--name";
     mater_cmd[4] = key;
-    if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+    if (ged_exec(gedp, 5, (const char **)mater_cmd) != BRLCAD_OK) {
 	bu_log("Error: 'mater -d get --name %s' failed\n", key);
 	return -1;
     }
@@ -100,7 +104,7 @@ attr_val_check(struct ged *gedp, const char *obj, const char *key, const char *e
     const char *attr_cmd[5] = {"attr", "get", NULL, NULL, NULL};
     attr_cmd[2] = obj;
     attr_cmd[3] = key;
-    if (ged_attr(gedp, 4, (const char **)attr_cmd) != GED_OK) {
+    if (ged_exec(gedp, 4, (const char **)attr_cmd) != BRLCAD_OK) {
 	bu_log("Error: 'attr get %s %s' failed\n", obj, key);
 	return -1;
     }
@@ -145,8 +149,8 @@ main(int ac, char *av[]) {
     gedp = ged_open("db", gname, 0);
 
     if (BU_STR_EQUAL(av[1], "dnull")) {
-	if (ged_mater(gedp, 2, (const char **)mater_cmd) != GED_HELP) {
-	    bu_log("Error: bare 'mater -d' doesn't return GED_HELP\n");
+	if (ged_exec(gedp, 2, (const char **)mater_cmd) != BRLCAD_HELP) {
+	    bu_log("Error: bare 'mater -d' doesn't return BRLCAD_HELP\n");
 	    goto ged_test_fail;
 	}
     }
@@ -167,7 +171,7 @@ main(int ac, char *av[]) {
 	mater_cmd[1] = "-d";
 	mater_cmd[2] = "validate";
 	mater_cmd[3] = mdata;
-	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 4, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d import' failed to validate %s\n", mdata);
 	    goto ged_test_fail;
 	}
@@ -176,7 +180,7 @@ main(int ac, char *av[]) {
 	mater_cmd[2] = "import";
 	mater_cmd[3] = "-v";
 	mater_cmd[4] = mdata;
-	if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 5, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d import' failed to load %s\n", mdata);
 	    goto ged_test_fail;
 	}
@@ -184,7 +188,7 @@ main(int ac, char *av[]) {
 	mater_cmd[1] = "-d";
 	mater_cmd[2] = "source";
 	mater_cmd[3] = NULL;
-	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 4, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d source' failed to run correctly\n");
 	    goto ged_test_fail;
 	} else {
@@ -197,7 +201,7 @@ main(int ac, char *av[]) {
 	mater_cmd[1] = "-d";
 	mater_cmd[2] = "export";
 	mater_cmd[3] = exp_data;
-	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK || !bu_file_exists(exp_data, NULL)) {
+	if (ged_exec(gedp, 4, (const char **)mater_cmd) != BRLCAD_OK || !bu_file_exists(exp_data, NULL)) {
 	    bu_log("Error: 'mater -d export' failed to export to %s\n", exp_data);
 	    goto ged_test_fail;
 	}
@@ -207,7 +211,7 @@ main(int ac, char *av[]) {
 
 	mater_cmd[1] = "-d";
 	mater_cmd[2] = "clear";
-	if (ged_mater(gedp, 3, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 3, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d clear' failed\n");
 	    goto ged_test_fail;
 	}
@@ -215,7 +219,7 @@ main(int ac, char *av[]) {
 	mater_cmd[1] = "-d";
 	mater_cmd[2] = "set";
 	mater_cmd[3] = mat1;
-	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 4, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d set %s' failed\n", mat1);
 	    goto ged_test_fail;
 	}
@@ -229,7 +233,7 @@ main(int ac, char *av[]) {
 	mater_cmd[1] = "-d";
 	mater_cmd[2] = "set";
 	mater_cmd[3] = mat2;
-	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 4, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d set %s' failed\n", mat2);
 	    goto ged_test_fail;
 	}
@@ -243,7 +247,7 @@ main(int ac, char *av[]) {
 	mater_cmd[1] = "-d";
 	mater_cmd[2] = "set";
 	mater_cmd[3] = mat1_reassign;
-	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 4, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d set %s' failed\n", mat1_reassign);
 	    goto ged_test_fail;
 	}
@@ -261,7 +265,7 @@ main(int ac, char *av[]) {
 
 	mater_cmd[1] = "-d";
 	mater_cmd[2] = "clear";
-	if (ged_mater(gedp, 3, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 3, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d clear' failed\n");
 	    goto ged_test_fail;
 	}
@@ -270,7 +274,7 @@ main(int ac, char *av[]) {
 	mater_cmd[2] = "import";
 	mater_cmd[3] = "-v";
 	mater_cmd[4] = mdata;
-	if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 5, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d import' failed to load %s\n", mdata);
 	    goto ged_test_fail;
 	}
@@ -278,35 +282,35 @@ main(int ac, char *av[]) {
 	// Make the initial geometry objects on which the mappings will
 	// operate.
 	make_cmd[1] = "sph1.s";
-	if (ged_make(gedp, 3, (const char **)make_cmd) != GED_OK) {
+	if (ged_exec(gedp, 3, (const char **)make_cmd) != BRLCAD_OK) {
 	    bu_log("Error: failed to make object\n");
 	    goto ged_test_fail;
 	}
 	make_cmd[1] = "sph2.s";
-	if (ged_make(gedp, 3, (const char **)make_cmd) != GED_OK) {
+	if (ged_exec(gedp, 3, (const char **)make_cmd) != BRLCAD_OK) {
 	    bu_log("Error: failed to make object\n");
 	    goto ged_test_fail;
 	}
 	make_cmd[1] = "sph3.s";
-	if (ged_make(gedp, 3, (const char **)make_cmd) != GED_OK) {
+	if (ged_exec(gedp, 3, (const char **)make_cmd) != BRLCAD_OK) {
 	    bu_log("Error: failed to make object\n");
 	    goto ged_test_fail;
 	}
 	reg_cmd[1] = "reg1.r";
 	reg_cmd[3] = "sph1.s";
-	if (ged_region(gedp, 4, (const char **)reg_cmd) != GED_OK) {
+	if (ged_exec(gedp, 4, (const char **)reg_cmd) != BRLCAD_OK) {
 	    bu_log("Error: failed to make region\n");
 	    goto ged_test_fail;
 	}
 	reg_cmd[1] = "reg2.r";
 	reg_cmd[3] = "sph2.s";
-	if (ged_region(gedp, 4, (const char **)reg_cmd) != GED_OK) {
+	if (ged_exec(gedp, 4, (const char **)reg_cmd) != BRLCAD_OK) {
 	    bu_log("Error: failed to make region\n");
 	    goto ged_test_fail;
 	}
 	reg_cmd[1] = "reg3.r";
 	reg_cmd[3] = "sph3.s";
-	if (ged_region(gedp, 4, (const char **)reg_cmd) != GED_OK) {
+	if (ged_exec(gedp, 4, (const char **)reg_cmd) != BRLCAD_OK) {
 	    bu_log("Error: failed to make region\n");
 	    goto ged_test_fail;
 	}
@@ -315,21 +319,21 @@ main(int ac, char *av[]) {
 	attr_cmd[2] = "reg1.r";
 	attr_cmd[3] = "material_id";
 	attr_cmd[4] = "12242";
-	if (ged_attr(gedp, 5, (const char **)attr_cmd) != GED_OK) {
+	if (ged_exec(gedp, 5, (const char **)attr_cmd) != BRLCAD_OK) {
 	    bu_log("Error: failed to set attribute\n");
 	    goto ged_test_fail;
 	}
 	attr_cmd[2] = "reg2.r";
 	attr_cmd[3] = "material_name";
 	attr_cmd[4] = "Rubber, Natural";
-	if (ged_attr(gedp, 5, (const char **)attr_cmd) != GED_OK) {
+	if (ged_exec(gedp, 5, (const char **)attr_cmd) != BRLCAD_OK) {
 	    bu_log("Error: failed to set attribute\n");
 	    goto ged_test_fail;
 	}
 	attr_cmd[2] = "reg3.r";
 	attr_cmd[3] = "material_id";
 	attr_cmd[4] = "12244";
-	if (ged_attr(gedp, 5, (const char **)attr_cmd) != GED_OK) {
+	if (ged_exec(gedp, 5, (const char **)attr_cmd) != BRLCAD_OK) {
 	    bu_log("Error: failed to set attribute\n");
 	    goto ged_test_fail;
 	}
@@ -338,7 +342,7 @@ main(int ac, char *av[]) {
 	mater_cmd[1] = "-d";
 	mater_cmd[2] = "map";
 	mater_cmd[3] = "--names-from-ids";
-	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 4, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d map --names-from-ids' failed to run\n");
 	    goto ged_test_fail;
 	}
@@ -356,7 +360,7 @@ main(int ac, char *av[]) {
 	mater_cmd[1] = "-d";
 	mater_cmd[2] = "map";
 	mater_cmd[3] = "--ids-from-names";
-	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 4, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d map --ids-from-names' failed to run\n");
 	    goto ged_test_fail;
 	}
@@ -392,7 +396,7 @@ main(int ac, char *av[]) {
 	mater_cmd[2] = "map";
 	mater_cmd[3] = "--ids-from-names";
 	mater_cmd[4] = d_data;
-	if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 5, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d map --ids-from-names %s' failed to run\n", d_data);
 	    goto ged_test_fail;
 	}
@@ -413,7 +417,7 @@ main(int ac, char *av[]) {
 	mater_cmd[3] = "--ids-from-names";
 	mater_cmd[4] = d_data;
 	mater_cmd[5] = m_data;
-	if (ged_mater(gedp, 6, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 6, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d map --ids-from-names %s %s' failed to run\n", d_data, m_data);
 	    goto ged_test_fail;
 	}
@@ -432,7 +436,7 @@ main(int ac, char *av[]) {
 	mater_cmd[2] = "map";
 	mater_cmd[3] = "--names-from-ids";
 	mater_cmd[4] = d_data;
-	if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 5, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d map --names-from-ids %s' failed to run\n", d_data);
 	    goto ged_test_fail;
 	}
@@ -453,7 +457,7 @@ main(int ac, char *av[]) {
 	mater_cmd[3] = "--ids-from-names";
 	mater_cmd[4] = d_data;
 	mater_cmd[5] = m_data;
-	if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 5, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d map --ids-from-names %s %s' failed to run\n", d_data, m_data);
 	    goto ged_test_fail;
 	}
@@ -473,7 +477,7 @@ main(int ac, char *av[]) {
 	mater_cmd[2] = "map";
 	mater_cmd[3] = "--ids-from-names";
 	mater_cmd[4] = b_data;
-	if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+	if (ged_exec(gedp, 5, (const char **)mater_cmd) != BRLCAD_OK) {
 	    bu_log("Error: 'mater -d map --ids-from-names %s' failed to run\n", b_data);
 	    goto ged_test_fail;
 	}
@@ -491,12 +495,10 @@ main(int ac, char *av[]) {
     }
 
     ged_close(gedp);
-    BU_PUT(gedp, struct ged);
     return 0;
 
 ged_test_fail:
     ged_close(gedp);
-    BU_PUT(gedp, struct ged);
     return 1;
 }
 

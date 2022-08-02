@@ -1,7 +1,7 @@
 /*                   T E S T _ S S C A N F . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2020 United States Government as represented by
+ * Copyright (c) 2012-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -172,11 +172,10 @@ checkReturnsEqual(int ret, int bu_ret)
 
 static void
 test_sscanf(int type, const char *src, const char *fmt) {
-    int ret, bu_ret;
-    void *val, *bu_val;
-
-    ret = bu_ret = 0;
-    val = bu_val = NULL;
+    int ret = 0;
+    int bu_ret = 0;
+    void *val = NULL;
+    void *bu_val = NULL;
 
     print_src_and_fmt(src, fmt);
 
@@ -261,12 +260,13 @@ test_sscanf(int type, const char *src, const char *fmt) {
 	default:
 	    bu_exit(1, "Error: test_sscanf was given an unrecognized pointer type.\n");
     }
+
+    bu_free(val, "test_sscanf val");
     if (val != NULL) {
-	bu_free(val, "test_sscanf val");
 	val = NULL;
     }
+    bu_free(bu_val, "test_sscanf bu_val");
     if (bu_val != NULL) {
-	bu_free(bu_val, "test_sscanf bu_val");
 	bu_val = NULL;
     }
 } /* test_sscanf */
@@ -395,10 +395,9 @@ doNumericTests(void)
 static void
 test_sscanf_s(const char *src, const char *fmt)
 {
-    int ret, bu_ret;
+    int ret = 0;
+    int bu_ret = 0;
     char dest[TS_STR_SIZE], bu_dest[TS_STR_SIZE];
-
-    ret = bu_ret = 0;
 
     /* ensure NULL termination even for c and [...] */
     memset(dest, '\0', TS_STR_SIZE);

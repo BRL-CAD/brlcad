@@ -1,7 +1,7 @@
 /*                 OrientedFace.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -79,6 +79,10 @@ OrientedFace::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
+	} else {
+	    std::cout << CLASSNAME << ":Error unable to find face_element entity attribute." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
+	    return false;
 	}
     }
 

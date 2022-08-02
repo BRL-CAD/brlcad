@@ -1,7 +1,7 @@
 /*                          D P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@ icv_image_t *
 dpix_read(const char *filename, size_t width, size_t height)
 {
     icv_image_t *bif;
-    int fd;
+    int fd = -1;
     size_t size;
     ssize_t ret;
 
@@ -97,9 +97,10 @@ dpix_read(const char *filename, size_t width, size_t height)
 	width = 512;
     }
 
-    if (filename == NULL)
+    if (filename == NULL) {
 	fd = fileno(stdin);
-    else if ((fd = open(filename, O_RDONLY|O_BINARY, WRMODE)) <0) {
+	setmode(fd, O_BINARY);
+    } else if ((fd = open(filename, O_RDONLY|O_BINARY, WRMODE)) < 0) {
 	bu_log("dpix_read : Cannot open file %s for reading\n, ", filename);
 	return NULL;
     }
@@ -115,10 +116,15 @@ dpix_read(const char *filename, size_t width, size_t height)
     if (ret != (ssize_t)size) {
 	bu_log("dpix_read : Error while reading\n");
 	icv_destroy(bif);
+	if (filename)
+	    close(fd);
 	return NULL;
     }
 
     icv_normalize(bif);
+
+    if (filename)
+	close(fd);
 
     return bif;
 }

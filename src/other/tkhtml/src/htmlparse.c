@@ -1031,7 +1031,7 @@ HtmlTokenize (
                     assert(pTree->eWriteState == HTML_WRITE_NONE);
                     pTree->eWriteState = HTML_WRITE_INHANDLER;
                     pTree->iWriteInsert = n;
-                    rc = executeScript(pTree, pScript, pAttr, zScript, nScript);
+                    executeScript(pTree, pScript, pAttr, zScript, nScript);
 
                     assert(
                         pTree->eWriteState == HTML_WRITE_INHANDLER || 

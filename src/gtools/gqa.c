@@ -1,7 +1,7 @@
 /*                          G _ Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2020 United States Government as represented by
+ * Copyright (c) 2005-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -95,6 +95,7 @@ main(int argc, char *argv[])
 	av[j] = argv[i];
 	++j;
     }
+    av[0] = "gqa";
     av[j] = (char *)0;
 
     if ((gedp = ged_open("db", argv[db_index], 1)) == GED_NULL) {
@@ -102,12 +103,10 @@ main(int argc, char *argv[])
 	bu_exit(1, usage, argv[0]);
     }
 
-    (void)ged_gqa(gedp, j, av);
+    (void)ged_exec(gedp, j, av);
     if (bu_vls_strlen(gedp->ged_result_str) > 0)
 	bu_log("%s", bu_vls_addr(gedp->ged_result_str));
     ged_close(gedp);
-    if (gedp)
-	BU_PUT(gedp, struct ged);
 
     bu_free((void *)av, "av");
 

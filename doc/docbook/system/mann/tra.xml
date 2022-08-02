@@ -44,7 +44,7 @@
   <example><title>Translate a view along the <emphasis>x</emphasis>-axis.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>tra 10 0 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>tra 10 0 0</userinput>
     </para>
     <para>Translates by 10 units along the <emphasis>x</emphasis> axis.
 

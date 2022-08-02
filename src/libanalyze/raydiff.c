@@ -1,7 +1,7 @@
 /*                       R A Y D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -191,13 +191,14 @@ int
 analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
        const char *left, const char *right, struct bn_tol *tol, int solidcheck)
 {
-    int ret, i, j;
+    size_t i;
+    int ret, j;
     fastf_t oldtime, currtime;
     int ind = 0;
     int count = 0;
-    struct rt_i *rtip;
-    int ncpus = bu_avail_cpus();
-    fastf_t *rays;
+    struct rt_i *rtip = NULL;
+    size_t ncpus = bu_avail_cpus();
+    fastf_t *rays = NULL;
     struct rt_gen_worker_vars *state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "state");
     struct raydiff_container *local_state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "local state");
     struct bu_ptbl test_tbl = BU_PTBL_INIT_ZERO;
@@ -220,7 +221,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	state[i].foverlap = raydiff_overlap;
 	state[i].resp = &resp[i];
 	state[i].ind_src = &ind;
-	rt_init_resource(state[i].resp, i, rtip);
+	rt_init_resource(state[i].resp, (int)i, rtip);
 	/* local */
 	local_state[i].tol = 0.5;
 	local_state[i].left_name = bu_strdup(left);
@@ -250,11 +251,17 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     }
 #endif
 #if 1
-    if (rt_gettree(rtip, left) < 0) return -1;
-    if (rt_gettree(rtip, right) < 0) return -1;
+    if (rt_gettree(rtip, left) < 0) {
+	rt_free_rti(rtip);
+	return -1;
+    }
+    if (rt_gettree(rtip, right) < 0) {
+	rt_free_rti(rtip);
+	return -1;
+    }
 #endif
 
-    rt_prep_parallel(rtip, ncpus);
+    rt_prep_parallel(rtip, (int)ncpus);
 
     currtime = bu_gettime();
     bu_log("prep time: %.1f\n", (currtime - oldtime)/1e6);
@@ -285,7 +292,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 		bu_ptbl_ins(&test_tbl, BU_PTBL_GET(local_state[i].right, j));
 	    }
 	}
-	analyze_seg_filter(&test_tbl, &diff_ray, &diff_flag, rtip, resp, 0.5, ncpus);
+	analyze_seg_filter(&test_tbl, &diff_ray, &diff_flag, rtip, resp, 0.5, (int)ncpus);
     } else {
 	/* Not restricting to solids, all are valid */
 	for (i = 0; i < ncpus+1; i++) {
@@ -330,13 +337,31 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 memfree:
     /* Free memory not stored in tables */
     for (i = 0; i < ncpus+1; i++) {
-	if (local_state[i].left != NULL) BU_PUT(local_state[i].left, struct bu_ptbl);
-	if (local_state[i].right != NULL) BU_PUT(local_state[i].right, struct bu_ptbl);
-	if (local_state[i].both != NULL) BU_PUT(local_state[i].both, struct bu_ptbl);
+	if (local_state[i].left != NULL) {
+	    bu_ptbl_free(local_state[i].left);
+	    BU_PUT(local_state[i].left, struct bu_ptbl);
+	}
+	if (local_state[i].right != NULL) {
+	    bu_ptbl_free(local_state[i].right);
+	    BU_PUT(local_state[i].right, struct bu_ptbl);
+	}
+	if (local_state[i].both != NULL) {
+	    bu_ptbl_free(local_state[i].both);
+	    BU_PUT(local_state[i].both, struct bu_ptbl);
+	}
 	if (local_state[i].left_name)  bu_free((void *)local_state[i].left_name, "left name");
 	if (local_state[i].right_name) bu_free((void *)local_state[i].right_name, "right name");
 	/*BU_PUT(state[i].resp, struct resource);*/
     }
+
+    if (rays) {
+	bu_free(rays, "rays");
+    }
+
+    if (rtip) {
+	rt_free_rti(rtip);
+    }
+
     bu_free(state, "free state containers");
     bu_free(local_state, "free state containers");
     bu_free(resp, "free resources");

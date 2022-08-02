@@ -38,7 +38,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>ill shapea</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>ill shapea</userinput></term>
 	   <listitem>
 	     <para><emphasis>Shapea&gt;</emphasis> is selected for editing.
 		     </para>

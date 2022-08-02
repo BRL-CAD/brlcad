@@ -1,7 +1,7 @@
 /*                 M A P P E D F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -260,7 +260,10 @@ main(int ac, char *av[])
     long int test_num = 0;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
 
-    bu_setprogname(av[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(av[0]);
 
     /* bu_debug |= BU_DEBUG_MAPPED_FILE; */
 

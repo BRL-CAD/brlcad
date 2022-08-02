@@ -1,6 +1,0 @@
-commit refs/heads/rel-7-12-2
-mark :30760
-committer Clifford Yapp <starseeker> 1208863236 +0000
-data 18
-tag release 7.12.2
-from rel-7-12-2,30760

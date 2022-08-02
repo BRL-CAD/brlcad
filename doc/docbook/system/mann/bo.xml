@@ -17,33 +17,29 @@
     <cmdsynopsis sepchar=" ">
       <command>bo</command>
       <group choice="req" rep="norepeat">
-	<arg choice="opt" rep="norepeat">-i {type}</arg>
+	<arg choice="opt" rep="norepeat">-i u {type}</arg>
 	<arg choice="opt" rep="norepeat">-o</arg>
       </group>
-      <arg choice="req" rep="norepeat"><replaceable>{destination} {source}</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable>destination</replaceable></arg> <arg choice="req" rep="norepeat"><replaceable>source</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
-      Used to create or retrieve binary opaque objects. Currently,
-      only uniform binary objects (arrays of values) are
-      supported. One of <emphasis>-i</emphasis> or
-      <emphasis>-o</emphasis> must be
-      specified. The <emphasis>-i</emphasis> is for "input," or
-      creating a binary object, and the <emphasis>-o</emphasis> option
-      is used for "output," or retrieving a binary
-      object. The <emphasis>type</emphasis> argument must be supplied
-      when <emphasis>-i</emphasis> is used, to indicate the type of
-      uniform binary object to be created. On input,
-      the <emphasis>destination</emphasis> is the name of the object
-      to be created, and the source is the path to a file containing
-      the values in the local host format. On
+      Used to create or export binary opaque objects.  One of
+      <emphasis>-i</emphasis> or <emphasis>-o</emphasis> must be
+      specified to input or output data respectively. The
+      <emphasis>-i</emphasis> option will create a binary object, and
+      the <emphasis>-o</emphasis> option will write out a binary
+      object's data. Currently, only uniform binary objects (arrays of
+      values) are supported on input.  On input, the
+      <emphasis>destination</emphasis> is the name of the object to be
+      created, and the source is the path to a file to read. On
       output, <emphasis>destination</emphasis> is the path to a file
-      to receive the contents of the binary object whose name appears
-      in <emphasis>source</emphasis>. The
-    <emphasis>type</emphasis> may be one of:
+      to write out with the contents of the binary object specified as
+      the <emphasis>source</emphasis>. The <emphasis>type</emphasis>
+      may be one of:
 
     <simplelist type="vert">
       <member>f -&gt; float</member>
@@ -70,16 +66,22 @@
     <example><title>Create an opaque uniform binary object of characters with a specified name
       containing the contents of a particular file.</title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>bo -i u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>bo -i u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html</userinput></para>
       <para>
 	Creates an opaque uniform binary object of characters with the name <emphasis>cmds</emphasis>
 	that contains the contents of the file <emphasis>/usr/brlcad/html/manuals/mged/mged_cmds.html</emphasis>.
       </para>
     </example>
 
+    <example><title>Import data for a displacement map (DSP) object</title>
+
+      <para><prompt>mged&gt; </prompt><userinput>bo -i u S dsp.data /path/to/file.dsp</userinput></para>
+      <para>This imports a file named <emphasis>file.dsp</emphasis> that contains DSP data, i.e., raw data in unsigned short (16-bit) format.  The data is saved in the .g database into an object named <emphasis>dsp.data</emphasis>.  When creating a DSP, this <emphasis>dsp.data</emphasis> object can be specified as the data source.</para>
+    </example>
+
     <example><title>Copy the contents of a particular binary object into a specified file.</title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>bo -o /home/jim/cmds.html cmds</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>bo -o /home/jim/cmds.html cmds</userinput></para>
       <para>
 	Copies the contents of the binary object named <emphasis>cmds</emphasis> into the file named
 	<emphasis>/home/jim/cmds.html</emphasis>.

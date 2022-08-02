@@ -1,7 +1,7 @@
 /*             S U R F A C E I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2020 United States Government as represented by
+ * Copyright (c) 2009-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -141,7 +141,7 @@ SplitTrim(ON_BrepTrim *trim, double t)
  * itself and drops the pieces into an array
  */
 void
-ShatterLoop(ON_BrepLoop *loop, ON_SimpleArray<ON_Curve*> curves)
+ShatterLoop(ON_BrepLoop *loop, ON_ClassArray<ON_Curve*> curves)
 {
     int i;
     for (i = 0; i < loop->TrimCount(); i++) {
@@ -347,6 +347,7 @@ CurveCurveIntersect(
 	     newx.m_x_eventsn = ; this one we could do, but it doesn't seem worth the trouble.
 	    */
 	    x.Append(*newx);
+	    delete newx;
 	    rv++;
 	}
     }
@@ -467,13 +468,13 @@ Face_X_Event::Get_ON_X_Events(double tol)
 int
 MakeLoops(
     ON_BrepFace *face,
-    ON_SimpleArray<ON_Curve*>& new_trims,
-    ON_SimpleArray<ON_Curve*>& old_trims,
+    ON_ClassArray<ON_Curve*>& new_trims,
+    ON_ClassArray<ON_Curve*>& old_trims,
     double tol
     )
 {
     int i;
-    ON_SimpleArray<ON_Curve*> trims[2] = {new_trims, old_trims};
+    ON_ClassArray<ON_Curve*> trims[2] = {new_trims, old_trims};
     for (i = 0; i < 2; i++) {
 	trims[i].QuickSort(Curve_Compare_start);
     }
@@ -490,10 +491,8 @@ MakeLoops(
 	     */
 	    ON_LineCurve search_line = ON_LineCurve((*loop.Last())->PointAtEnd(), (*loop.First())->PointAtStart());
 	    ON_Curve *search_curve = (ON_Curve *) &search_line;
-	    int next_curve; /* -1 is the not found value */
-
+	    int next_curve = -1; /* -1 is the not found value */
 	    for (i = 0; i < 2; i++) {
-		next_curve = -1;
 		next_curve = new_trims.BinarySearch(&search_curve, Curve_Compare_start);
 		if (next_curve != -1) {
 		    loop.Append(trims[i][next_curve]);
@@ -829,10 +828,10 @@ BrepBrepIntersect(
     int i, j, k, l;
 
     /* the new curves we get from the actual intersection */
-    ON_ClassArray<ON_SimpleArray<ON_Curve*> > intersection_curves1, intersection_curves2;
+    ON_ClassArray<ON_ClassArray<ON_Curve*> > intersection_curves1, intersection_curves2;
 
     /* the new curves we get from destroying the old trim_loops */
-    ON_ClassArray<ON_SimpleArray<ON_Curve*> > trim_curves1, trim_curves2;
+    ON_ClassArray<ON_ClassArray<ON_Curve*> > trim_curves1, trim_curves2;
 
     /* initialization for brep1's arrays */
     intersection_curves1.SetCapacity(brep1->m_F.Count());
@@ -1026,12 +1025,12 @@ main(int UNUSED(argc), const char **argv)
 
 
 /** @} */
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

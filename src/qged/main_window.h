@@ -1,7 +1,7 @@
 /*                   M A I N _ W I N D O W . H
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,87 +26,68 @@
 
 #ifndef BRLCAD_MAINWINDOW_H
 #define BRLCAD_MAINWINDOW_H
-
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
-#  pragma message "Disabling GCC float equality comparison warnings via pragma due to Qt headers..."
-#endif
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
-#undef Success
-#include <QMainWindow>
-#undef Success
-#include <QGLWidget>
-#undef Success
-#include <QMenu>
-#undef Success
-#include <QMenuBar>
-#undef Success
 #include <QAction>
-#undef Success
-#include <QStatusBar>
-#undef Success
+#include <QDockWidget>
 #include <QFileDialog>
-#undef Success
-#include <QTreeView>
-#undef Success
 #include <QHeaderView>
-#undef Success
+#include <QMainWindow>
+#include <QMenu>
+#include <QMenuBar>
 #include <QObject>
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
+#include <QSettings>
+#include <QStatusBar>
+#include <QTreeView>
 
-#include "qtads/DockManager.h"
-#include "cadconsole.h"
-#include "cadtreemodel.h"
-#include "cadaccordion.h"
+#include "ged.h"
+#include "qtcad/QtCADQuad.h"
+#include "qtcad/QgDockWidget.h"
+#include "qtcad/QgTreeView.h"
+#include "qtcad/QtCADView.h"
+#include "qtcad/QtConsole.h"
+#include "qtcad/QViewCtrl.h"
+
+#include "plugins/plugin.h"
+#include "palettes.h"
 
 class BRLCAD_MainWindow : public QMainWindow
 {
     Q_OBJECT
     public:
-	BRLCAD_MainWindow();
-	void restore_settings();
+	BRLCAD_MainWindow(int canvas_type = 0, int quad_view = 0);
 
-	QGLWidget *canvas;
+	QtCADQuad *c4 = NULL;
+	bool isValid3D();
+	void fallback3D();
 
-    private slots:
-	void open_file();
-	void save_settings();
+	QgTreeView *treeview;
+	QtConsole *console;
+	QViewCtrl *vcw;
+	GEDShellCompleter *cshellcomp;
+	CADPalette *vc;
+	CADPalette *oc;
+
+    public slots:
+        //void save_image();
+	void do_dm_init();
 
     private:
 	QMenu *file_menu;
 	QAction *cad_open;
 	QAction *cad_save_settings;
-	QAction *cad_restore_settings;
+	//QAction *cad_save_image;
 	QAction *cad_exit;
 	QMenu *view_menu;
+	QAction *vm_topview;
+	QMenu *vm_panels;
 	QMenu *help_menu;
+	QAction *cad_single_view;
+	QAction *cad_quad_view;
 
-	ads::CDockManager *dock;
-	ads::CDockWidget *view_dock;
-	ads::CDockWidget *console_dock;
-	ads::CDockWidget *tree_dock;
-	ads::CDockWidget *panel_dock;
+	QgDockWidget *console_dock;
+	QgDockWidget *tree_dock;
+	QDockWidget *vcd;
+	QDockWidget *ocd;
 
-	CADConsole *console;
-	CADTreeModel *treemodel;
-	QTreeView *treeview;
-	CADAccordion *panel;
-	QString db_file;
 };
 
 #endif /* BRLCAD_MAINWINDOW_H */

@@ -1,7 +1,7 @@
 /*                       G - S A T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -95,7 +95,6 @@ std::vector <std::string> g_CsgBoolExp;
 const char *usage_msg = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 const char *options = "t:a:n:o:r:vx:X:";
 char *prog_name = NULL;
-const char *output_file = NULL;
 
 
 static void
@@ -128,7 +127,7 @@ infix_to_postfix(std::string str)
     std::ostringstream ostr;
     char c;
 
-    for (unsigned int i = 0; i < strlen(str.c_str()); i++) {
+    for (size_t i = 0; i < strlen(str.c_str()); i++) {
 	c = str[i];
 	if (c == '(') {
 	    s.push(c);
@@ -155,19 +154,8 @@ infix_to_postfix(std::string str)
 }
 
 
-static void
-usage(const char *s)
-{
-    if (s) {
-	fputs(s, stderr);
-    }
-
-    bu_exit(1, usage_msg, prog_name);
-}
-
-
 static int
-parse_args(int ac, char **av)
+parse_args(struct bu_vls *output_file, int ac, char **av)
 {
     int c;
 
@@ -189,23 +177,23 @@ parse_args(int ac, char **av)
 		/* fall through */
 	    case 'o':               /* Output file name */
 		/* grab output file name */
-		output_file = bu_optarg;
+		bu_vls_sprintf(output_file, "%s", bu_optarg);
 		break;
 	    case 'v':               /* verbosity */
 		verbose++;
 		break;
 	    case 'x':               /* librt debug flag */
-		sscanf(bu_optarg, "%x", &rt_debug);
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
+		(void)sscanf(bu_optarg, "%x", &rt_debug);
+		bu_printb("librt RT_G_DEBUG", rt_debug, RT_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X':               /* NMG debug flag */
-		sscanf(bu_optarg, "%x", &nmg_debug);
+		(void)sscanf(bu_optarg, "%x", &nmg_debug);
 		bu_printb("librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    default:
-		usage("Bad or help flag specified\n");
+		bu_exit(1, "[g-sat]: Bad or help flag specified\n");
 		break;
 	}
 
@@ -329,10 +317,10 @@ describe_tree(tree *tree, bu_vls *str)
  *
  */
 static int
-region_start (db_tree_state *UNUSED(tsp),
-	      const db_full_path *pathp,
-	      const rt_comb_internal *combp,
-	      void *UNUSED(client_data))
+region_start(db_tree_state *UNUSED(tsp),
+	     const db_full_path *pathp,
+	     const rt_comb_internal *combp,
+	     void *UNUSED(client_data))
 {
     directory *dp;
     bu_vls str = BU_VLS_INIT_ZERO;
@@ -349,7 +337,8 @@ region_start (db_tree_state *UNUSED(tsp),
 
     /* here is where the conversion should be done */
     std::cout << "* Here is where the conversion should be done *" << std::endl;
-    printf("Write this region (name=%s) as a part in your format:\n", dp->d_namep);
+    if (dp && dp->d_namep)
+	printf("Write this region (name=%s) as a part in your format:\n", dp->d_namep);
 
     describe_tree(combp->tree, &str);
 
@@ -524,13 +513,15 @@ primitive_func(db_tree_state *tsp,
     GeometryModifyTool *gmt = GeometryModifyTool::instance();
     GeometryQueryTool *gqt = GeometryQueryTool::instance();
 
-    dp = DB_FULL_PATH_CUR_DIR(pathp);
-
     if (debug&DEBUG_NAMES) {
 	char *cname = db_path_to_string(pathp);
 	bu_log("leaf_func    %s\n", cname);
 	bu_free(cname, "region_end name");
     }
+
+    dp = DB_FULL_PATH_CUR_DIR(pathp);
+    if (!dp || !dp->d_namep)
+	return (tree*)NULL;
 
     /* handle each type of primitive (see h/rtgeom.h) */
     if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD) {
@@ -1035,7 +1026,7 @@ booltree_evaluate(tree *tp, resource *resp)
     union tree *tr;
     char op;
     char *name;
-    int namelen;
+    size_t namelen;
 
     RT_CK_TREE(tp);
 
@@ -1085,8 +1076,10 @@ booltree_evaluate(tree *tp, resource *resp)
 	/* For sub and add, if rhs is 0, result is lhs */
 	return tl;
     }
-    if (tl->tr_op != OP_DB_LEAF) bu_exit(2, "booltree_evaluate() bad left tree\n");
-    if (tr->tr_op != OP_DB_LEAF) bu_exit(2, "booltree_evaluate() bad right tree\n");
+    if (tl->tr_op != OP_DB_LEAF)
+	bu_exit(2, "booltree_evaluate() bad left tree\n");
+    if (tr->tr_op != OP_DB_LEAF)
+	bu_exit(2, "booltree_evaluate() bad right tree\n");
 
     bu_log(" {%s} %c {%s}\n", tl->tr_d.td_name, op, tr->tr_d.td_name);
     std::cout << "******" << tl->tr_d.td_name << " " << (char)op << " " << tr->tr_d.td_name << "***********" << std::endl;
@@ -1139,17 +1132,16 @@ main(int argc, char *argv[])
     ttol.norm = 0.0;
 
     /* parse command line arguments. */
-    arg_count = parse_args(argc, argv);
+    struct bu_vls output_file = BU_VLS_INIT_ZERO;
+    arg_count = parse_args(&output_file, argc, argv);
 
-    std::string output;
-    if (!output_file) {
-	output = argv[bu_optind];
-	output += ".sat";
-	output_file = output.c_str();
+    if (!bu_vls_strlen(&output_file)) {
+	bu_vls_printf(&output_file, "%s.sat", argv[bu_optind]);
     }
 
     if ((argc - arg_count) < MIN_NUM_OF_ARGS) {
-	usage("Error: Must specify model and objects on the command line\n");
+	bu_vls_free(&output_file);
+	bu_exit(1, "[g-sat] Error: Must specify model and objects on the command line\n");
     }
 
     // ***********************************************************************************
@@ -1185,7 +1177,8 @@ main(int argc, char *argv[])
     rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf));
 
     if (rtip == RTI_NULL) {
-	usage("rt_dirbuild failure\n");
+	bu_vls_free(&output_file);
+	bu_exit(1, "[g-sat]: rt_dirbuild failure\n");
     }
 
     init_state = rt_initial_tree_state;
@@ -1223,7 +1216,8 @@ main(int argc, char *argv[])
 
     // Export geometry
     if (g_body_cnt == 0) {
-	usage("No geometry to convert.\n");
+	bu_vls_free(&output_file);
+	bu_exit(1, "[g-sat]: No geometry to convert.\n");
     }
 
     std::cout << "*** CSG DEBUG BEGIN ***" << std::endl;
@@ -1312,15 +1306,17 @@ main(int argc, char *argv[])
 
     // Export geometry
     if (size != 0) {
-	(void)gqt->export_solid_model(parent_entities, output_file, ACIS_SAT, size, version);
+	(void)gqt->export_solid_model(parent_entities, bu_vls_cstr(&output_file), ACIS_SAT, size, version);
     } else {
-	usage("No geometry to convert.\n");
+	bu_vls_free(&output_file);
+	bu_exit(1, "[g-sat]: No geometry to convert.\n");
     }
 
     CGMApp::instance()->shutdown();
 
     std::cout << "Number of primitives processed: " << g_body_cnt << std::endl;
 
+    bu_vls_free(&output_file);
     return 0;
 }
 

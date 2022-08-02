@@ -1,7 +1,7 @@
 /*                  W R I T E _ B R L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -249,7 +249,7 @@ void writeRingModeBox
     char name[NAMELEN + 1];
 
     // get the transformed outer points
-    vect_t outer[MAX_NPTS];
+    vect_t outer[MAX_NPTS] = {VINIT_ZERO};
 
     if (translate) {
 	for (size_t i = 0; i < form.npts; ++i)
@@ -265,7 +265,7 @@ void writeRingModeBox
     }
 
     // compute inner points
-    vect_t inner[MAX_NPTS];
+    vect_t inner[MAX_NPTS] = {VINIT_ZERO};
 
     for (size_t i2 = 0; i2 < form.npts; ++i2) {
 	vect_t a, b, c;

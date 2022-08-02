@@ -1,7 +1,7 @@
 /*                          V I E W . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,43 +30,17 @@
 #include "bu/hash.h"
 #include "bu/ptbl.h"
 #include "bn/tol.h"
+#include "bv/defines.h"
+#include "rt/defines.h"
 
 __BEGIN_DECLS
 
-#define RT_MINVIEWSIZE 0.0001
-#define RT_MINVIEWSCALE 0.00005
-
 /**
- * Normally, librt doesn't have a concept of a "display" of the
- * geometry.  However for at least the plotting routines, view
- * information is sometimes needed to produce more intelligent output.
- * In those situations, the application should populate and pass an
- * rt_view_info struct.
- *
- * **TODO** this structure is NOT in final form and should not be
- * relied upon.
+ * NOTE: Normally, librt doesn't have a concept of a "display" of the geometry.
+ * However for at least the plotting routines, view information is sometimes
+ * needed to produce more intelligent output.  In those situations, the
+ * application will generally pass in a bv structure.
  */
-struct rt_view_info {
-    struct bu_list *vhead;
-    const struct bn_tol *tol;
-
-    /**
-     * The average distance between the segment points of plotted
-     * curves.  Smaller spacing means more points per curve, and thus
-     * smoother (more accurate) plot curves.
-     */
-    fastf_t point_spacing;
-
-    /** The average distance between plotted surface curves.
-     * Smaller spacing means more curves are drawn, increasing the overall
-     * density of the plot.
-     */
-    fastf_t curve_spacing;
-
-    /** Face count beyond which the BoT primitive should return
-     * a bbox plot rather than the full vlist */
-    size_t bot_threshold;
-};
 
 /**
  * Specifies a subset of a primitive's geometry as the target for an
@@ -149,7 +123,6 @@ struct rt_selection_operation {
 	struct rt_selection_translation tran;
     } parameters;
 };
-
 
 __END_DECLS
 

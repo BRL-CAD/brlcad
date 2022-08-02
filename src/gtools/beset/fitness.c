@@ -1,7 +1,7 @@
 /*                       F I T N E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "rt/geom.h"
 
 #include "fitness.h"
@@ -243,7 +243,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
     }
 
     /* if there are a different # of partitions in source and individual */
-    while (mp != fstate->ray[ap->a_user]) {
+    while (mp && mp != fstate->ray[ap->a_user]) {
 	fstate->diff += mp->outhit_dist - mp->inhit_dist;
 	lastpt = mp->outhit_dist;
 	mp = BU_LIST_FORW(part, &mp->l);
@@ -324,8 +324,6 @@ rt_worker(int UNUSED(cpu), void *g)
     ap.a_ray.r_dir[X] = ap.a_ray.r_dir[Y] = 0.0;
     ap.a_ray.r_dir[Z] = 1.0;
     ap.a_uptr = (void *) g;
-
-    u = -1;
 
     while ((v = get_next_row(fstate))) {
 	for (u = 1; u <= fstate->res[X]; u++) {

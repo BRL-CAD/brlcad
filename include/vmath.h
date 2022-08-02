@@ -1,7 +1,7 @@
 /*                         V M A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -490,32 +490,24 @@ typedef enum vmath_matrix_component_ {
 /**
  * Return truthfully whether a value is within a minimum
  * representation tolerance from zero.
- *
- * Use not recommended due to compilation-variant tolerance.
  */
 #define ZERO(_a) NEAR_ZERO((_a), SMALL_FASTF)
 
 /**
  * Return truthfully whether a vector is within a minimum
  * representation tolerance from zero.
- *
- * Use not recommended due to compilation-variant tolerance.
  */
 #define VZERO(_a) VNEAR_ZERO((_a), SMALL_FASTF)
 
 /**
  * Return truthfully whether a 2d vector is within a minimum
  * representation tolerance from zero.
- *
- * Use not recommended due to compilation-variant tolerance.
  */
 #define V2ZERO(_a) V2NEAR_ZERO((_a), SMALL_FASTF)
 
 /**
  * Return truthfully whether a homogenized 4-element vector is within
  * a minimum representation tolerance from zero.
- *
- * Use not recommended due to compilation-variant tolerance.
  */
 #define HZERO(_a) HNEAR_ZERO((_a), SMALL_FASTF)
 
@@ -556,8 +548,6 @@ typedef enum vmath_matrix_component_ {
 /**
  * Return truthfully whether two values are within a minimum
  * representation tolerance from each other.
- *
- * Use not recommended due to compilation-variant tolerance.
  */
 #define EQUAL(_a, _b) NEAR_EQUAL((_a), (_b), SMALL_FASTF)
 
@@ -565,8 +555,6 @@ typedef enum vmath_matrix_component_ {
 /**
  * Return truthfully whether two vectors are equal within a minimum
  * representation tolerance.
- *
- * Use not recommended due to compilation-variant tolerance.
  */
 #define VEQUAL(_a, _b) VNEAR_EQUAL((_a), (_b), SMALL_FASTF)
 

@@ -1,7 +1,7 @@
 /*                 R T _ I N S T A N C E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ multioverlap_handler(application * const app, partition * const partition1,
     RT_CK_PT_HD(partition_list);
 
     MultiOverlapHandlerArgs &args = *static_cast<MultiOverlapHandlerArgs *>
-				    (app->a_uptr);
+    (app->a_uptr);
 
     if (BU_PTBL_LEN(region_table) != 2)
 	bu_bomb("unexpected region table length");
@@ -73,9 +73,9 @@ multioverlap_handler(application * const app, partition * const partition1,
 	   app->a_ray.r_dir);
 
     const region &region0 = *reinterpret_cast<const region *>(BU_PTBL_GET(
-				region_table, 0));
+								  region_table, 0));
     const region &region1 = *reinterpret_cast<const region *>(BU_PTBL_GET(
-				region_table, 1));
+								  region_table, 1));
     RT_CK_REGION(&region0);
     RT_CK_REGION(&region1);
 

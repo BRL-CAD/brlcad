@@ -1,7 +1,7 @@
 /*                        B W - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,8 +47,8 @@ open_file(FILE **fp, const char *name)
     if (BU_STR_EQUAL(name, "-")) {
 	*fp = stdin;
     } else if (BU_STR_EQUAL(name, ".")) {
-	*fp = fopen("/dev/null", "r");
-    } else if ((*fp = fopen(name, "r")) == NULL) {
+	*fp = fopen("/dev/null", "rb");
+    } else if ((*fp = fopen(name, "rb")) == NULL) {
 	bu_exit(2, "bw3-pix: Can't open \"%s\"\n", name);
     }
 }

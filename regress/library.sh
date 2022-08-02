@@ -2,7 +2,7 @@
 #                      L I B R A R Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2020 United States Government as represented by
+# Copyright (c) 2010-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,10 +43,6 @@ NAME_OF_THIS=`basename "$ARG0"`
 PATH_TO_THIS=`dirname "$ARG0"`
 THIS="$PATH_TO_THIS/$NAME_OF_THIS"
 export ARGS ARG0 ARG1 NAME_OF_THIS PATH_TO_THIS THIS
-
-LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$LD_LIBRARY_PATH
-DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$DYLD_LIBRARY_PATH
-export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 is_absolute() {
     if test "x$1" = "x" ; then
@@ -211,7 +207,11 @@ files_match ( ) {
 # script's location
 ensearch ( ) {
     ensearch_file="$1"
-    ensearch_dirs="$ARG1/bin ../bin ./bin \"$PATH_TO_THIS/../bin\" ../bench \"$PATH_TO_THIS/../bench\" "
+    ensearch_dirs="\
+	$ARG1/bin ../bin ../../bin ./bin \"$PATH_TO_THIS/../bin\" ../bench \"$PATH_TO_THIS/../bench\" \
+	$ARG1/Release/bin ../Release/bin ../../Release/bin ./Release/bin \"$PATH_TO_THIS/../Release/bin\" \
+	$ARG1/Debug/bin ../Debug/bin ../../Debug/bin ./Debug/bin \"$PATH_TO_THIS/../Debug/bin\" \
+       	"
 
     if test "x$ensearch_file" = "x" ; then
 	# nothing to do

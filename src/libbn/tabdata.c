@@ -1,7 +1,7 @@
 /*                       T A B D A T A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 #include "bio.h"
 
 #include "bu/debug.h"
+#include "bu/assert.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
@@ -915,7 +916,7 @@ bn_tabdata_binary_read(const char *filename, size_t num, const struct bn_table *
     char	*cp;
     size_t nbytes;
     size_t len;
-    int got;
+    ssize_t got;
     int	fd;
     size_t i;
 
@@ -928,9 +929,9 @@ bn_tabdata_binary_read(const char *filename, size_t num, const struct bn_table *
     len = num * nbytes;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    fd = open(filename, 0);
+    fd = open(filename, O_RDONLY|O_BINARY);
     bu_semaphore_release(BU_SEM_SYSCALL);
-    if (fd <= 0)  {
+    if (fd < 0)  {
 	perror(filename);
 	bu_log("bn_tabdata_binary_read open failed on \"%s\"\n", filename);
 	return (struct bn_tabdata *)NULL;
@@ -947,7 +948,7 @@ bn_tabdata_binary_read(const char *filename, size_t num, const struct bn_table *
 	    perror(filename);
 	    bu_log("bn_tabdata_binary_read read error on \"%s\"\n", filename);
 	} else {
-	    bu_log("bn_tabdata_binary_read(%s) expected %zu got %d\n", filename, len, got);
+	    bu_log("bn_tabdata_binary_read(%s) expected %zu got %zd\n", filename, len, got);
 	}
 	bu_free(data, "bn_tabdata[]");
 	bu_semaphore_acquire(BU_SEM_SYSCALL);

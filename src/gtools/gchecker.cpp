@@ -1,7 +1,7 @@
 /*                    G C H E C K E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -193,12 +193,12 @@ main(int argc, const char **argv)
 
     // Make sure our reference counts are up to date, so we can tell
     // which objects are top level
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     std::vector<struct directory *> objs;
     if (argc > 1) {
 	for (int i = 1; i < argc; i++) {
-	    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET);
+	    struct directory *dp = db_lookup(gedp->dbip, argv[i], LOOKUP_QUIET);
 	    if (dp == RT_DIR_NULL) {
 		bu_exit(1, "Failed to open object \"%s\" in \"%s\" ", argv[i], bu_vls_cstr(&gbasename));
 	    }
@@ -207,7 +207,7 @@ main(int argc, const char **argv)
     } else {
 	// Get all top level objects
 	struct directory **all_paths;
-	int obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
+	int obj_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
 	for (int i = 0; i < obj_cnt; i++) {
 	    objs.push_back(all_paths[i]);
 	}
@@ -254,8 +254,8 @@ main(int argc, const char **argv)
 		    av[5] = bu_strdup("-q");
 		    av[6] = bu_strdup(objs[i]->d_namep);
 		    bu_vls_trunc(gedp->ged_result_str, 0);
-		    if (ged_check(gedp, 7, av) != GED_OK) {
-			bu_exit(1, "error running ged_check\n");
+		    if (ged_exec(gedp, 7, av) != BRLCAD_OK) {
+			bu_exit(1, "error running ged 'check' command\n");
 		    }
 		    for (int j = 0; j < 7; j++) bu_free((void *)av[j], "str");
 		    bu_free(av, "av array");
@@ -301,8 +301,8 @@ main(int argc, const char **argv)
 		    av[3] = bu_strdup("-q");
 		    av[4] = bu_strdup(objs[i]->d_namep);
 		    bu_vls_trunc(gedp->ged_result_str, 0);
-		    if (ged_check(gedp, 5, av) != GED_OK) {
-			bu_exit(1, "error running ged_check\n");
+		    if (ged_exec(gedp, 5, av) != BRLCAD_OK) {
+			bu_exit(1, "error running ged 'check' command\n");
 		    }
 		    for (int j = 0; j < 5; j++) bu_free((void *)av[j], "str");
 		    bu_free(av, "av array");

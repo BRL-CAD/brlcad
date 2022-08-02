@@ -1,7 +1,7 @@
 /*                  S H _ B I L L B O A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "optical.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 #define bbd_MAGIC 0x62626400	/* "bbd" */
@@ -540,7 +540,7 @@ bbd_render(struct application *ap, const struct partition *pp, struct shadework 
 	/* find out if the ray hits the plane */
 	id[i].index = i;
 	id[i].bi = bi;
-	id[i].status = bn_isect_line3_plane(&id[i].dist,
+	id[i].status = bg_isect_line3_plane(&id[i].dist,
 					    ap->a_ray.r_pt, ap->a_ray.r_dir,
 					    bi->img_plane, &ap->a_rt_i->rti_tol);
 	i++;

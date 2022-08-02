@@ -1,7 +1,7 @@
 /*                     A L I A S - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -68,6 +68,9 @@ main(int ac, char **av)
     progname = *av;
 
     if (ac > 2 || isatty(fileno(stdin))) usage();
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (ac > 1) {
 	p = av[1];

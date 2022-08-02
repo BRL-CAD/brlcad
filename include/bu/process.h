@@ -1,7 +1,7 @@
 /*                      P R O C E S S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,10 +18,6 @@
  * information.
  */
 
-/** @ingroup process */
-/** @{ */
-/** @file include/bu/process.h */
-/** @} */
 #ifndef BU_PROCESS_H
 #define BU_PROCESS_H
 
@@ -31,6 +27,14 @@
 #include "bu/defines.h"
 
 __BEGIN_DECLS
+
+/** @addtogroup bu_process
+ *
+ * @brief
+ * Routines for process and sub-process management.
+ */
+/** @{ */
+/** @file bu/process.h */
 
 /**
  * returns the process ID of the calling process
@@ -48,10 +52,11 @@ BU_EXPORT extern int bu_terminate(int process);
 /* Wrappers for using subprocess execution */
 struct bu_process;
 
-#define BU_PROCESS_STDIN 0
-#define BU_PROCESS_STDOUT 1
-#define BU_PROCESS_STDERR 2
-
+typedef enum {
+    BU_PROCESS_STDIN,
+    BU_PROCESS_STDOUT,
+    BU_PROCESS_STDERR
+} bu_process_io_t;
 
 /**
  * Open and return a FILE pointer associated with the specified file
@@ -66,7 +71,7 @@ struct bu_process;
  * FIXME: misnomer, this does not open a process.  Probably doesn't
  * need to exist; just call fdopen().
  */
-BU_EXPORT extern FILE *bu_process_open(struct bu_process *pinfo, int fd);
+BU_EXPORT extern FILE *bu_process_open(struct bu_process *pinfo, bu_process_io_t d);
 
 
 /**
@@ -75,19 +80,17 @@ BU_EXPORT extern FILE *bu_process_open(struct bu_process *pinfo, int fd);
  * FIXME: misnomer, this does not close a process.  Probably doesn't
  * need to exist; just call fclose().
  */
-BU_EXPORT extern void bu_process_close(struct bu_process *pinfo, int fd);
+BU_EXPORT extern void bu_process_close(struct bu_process *pinfo, bu_process_io_t d);
 
 
 /**
- * Retrieve the pointer to the input (0), output (1), or error (2) file
- * descriptor associated with the process.  To use this in calling code, the
- * caller must cast the supplied pointer to the file handle type of the
- * calling code's specific platform.
+ * Retrieve the file descriptor to the input (BU_PROCESS_STDIN), output
+ * (BU_PROCESS_STDOUT), or error (BU_PROCESS_STDERR) I/O channel associated
+ * with the process.
  *
- * FIXME: void pointer casting is bad.  this function probably
- * shouldn't exist.
+ * For Windows cases where HANDLE is needed, use _get_osfhandle
  */
-BU_EXPORT void *bu_process_fd(struct bu_process *pinfo, int fd);
+BU_EXPORT int bu_process_fileno(struct bu_process *pinfo, bu_process_io_t d);
 
 
 /**
@@ -127,7 +130,7 @@ BU_EXPORT int bu_process_args(const char **cmd, const char * const **argv, struc
  * FIXME: arg ordering and input/output grouping is wrong.  partially
  * redundant with bu_process_fd() and/or bu_process_open().
  */
-BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n);
+BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n);
 
 
 /**
@@ -146,12 +149,15 @@ BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd,
  * FIXME: 'aborted' argument may be unnecessary (could make function
  * provide return value of the process waited for).  wtime
  * undocumented.
- *
- * FIXME: this doesn't actually release all the file descriptors that
- * were opened after exec.  observed open file exhausture after a
- * couple hundred calls.
  */
  BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
+
+/**
+ * @brief detect whether or not a program is being run in interactive mode
+ *
+ * Returns 1 if interactive, else 0
+ */
+BU_EXPORT extern int bu_interactive();
 
 /** @} */
 

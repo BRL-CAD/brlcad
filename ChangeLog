@@ -1,247 +1,512 @@
-2020-05-05 18:39  starseeker
-
-	* [r75697] src/other/libregex/regex.h:
-	  libregex doesn't appear to use lseek and it's making VS2019
-	  unhappy to redefine it.
-
-2020-05-04 17:35  starseeker
-
-	* [r75687] include/bu/vls.h:
-	  don't need stdio.h here
-
-2020-05-04 16:11  starseeker
+commit 8044ec9252cb3db0b51ce1e51bb5f392dc965c29
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jul 26 14:29:31 2021 -0400
 
-	* [r75685] misc/attributes/gen-attributes-file.cpp:
-	  ditto gen-attributes-file.cpp - needs off_t update
+    Bump version numbers
 
-2020-05-04 16:09  starseeker
+commit e19aaa465cb7cc14941b9ec46d4ba0f308e5904f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jul 26 14:15:00 2021 -0400
 
-	* [r75684] src/other/stepcode/src/clstepcore/complexSupport.h:
-	  stepcode needs the same off_t bit
+    Archer will need the full directory, at least at the moment.
+    
+    (cherry picked from commit 0839fb52b6a6b324fba54b036419f384231ef3c3)
 
-2020-05-04 15:52  starseeker
+commit 291532123056e3ad4dfc424d7b0fff6633994477
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jul 26 12:35:54 2021 -0400
 
-	* [r75682] src/libpkg/pkg.c:
-	  Use bio.h here
+    Initial working directory is in /home/cyapp - adjust mged test example.
+    
+    (cherry picked from commit deec305c837f7a33dc0c4364e912a12e7b24d328)
 
-2020-05-04 15:45  starseeker
+commit 63edcadd4952444c7adfcea462dd7d425c0d746a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jul 26 13:55:29 2021 -0400
 
-	* [r75681] src/other/libregex/regex.h:
-	  ws
+    Don't define this at all (even to empty) when building bundled.
 
-2020-05-04 15:44  starseeker
+commit 5c95a06ef9696e730e9d9109cf850ca7ca6c1e53
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Jul 23 10:04:41 2021 -0400
 
-	* [r75680] src/other/libregex/regex.h:
-	  Update our bundled regex.h to use the same type of off_t
-	  definition as bio.h
+    Apply memory leak fix from upstream commit eb6767
+    
+    Fix memory leak if eXIf has incorrect crc
 
-2020-05-04 15:23  starseeker
+commit aa62a3d87b484812f6825e8cb66c09e3598f66ea
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Jul 23 09:24:32 2021 -0400
 
-	* [r75679] ., include/bu/glob.h, include/bu/vls.h:
-	  Cherrypick r75678
+    Sigh.  Apparently C++ clocks don't have what we need.  Put back the previous code.
 
-2020-05-04 14:08  starseeker
+commit 8a61b9422af2eec0b17a51d695007acac34d8274
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jul 22 17:47:31 2021 -0400
 
-	* [r75677] ., include/bio.h, include/config_win.h.in,
-	  src/conv/intaval/tgf-g.cpp, src/conv/k-g.cpp,
-	  src/conv/raw/raw-g.cpp, src/libanalyze/nirt.cpp,
-	  src/libgcv/plugins/fastgen4/fastgen4_write.cpp,
-	  src/libgcv/plugins/vrml/vrml_read/file_util.cpp,
-	  src/nirt/main.cpp:
-	  Cherrypick r75077, r75078 and r75084 - off_t fixes
+    Mark some vars as advanced.
 
-2020-05-04 13:34  starseeker
+commit 76e6503dea614a192931e993c07b16a74c34a674
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jul 22 17:03:31 2021 -0400
 
-	* [r75676] ., src/gtools/gchecker.cpp:
-	  Cherrypick r75675
+    Replace -idn search opt with more general -matrix
+    
+    Per suggestion from Sean, replace the -idn option (which was limited to
+    identity matrices) with a more general -matrix filter.  IDN is supported
+    as a way to specify the identity matrix ("-idn" is now "-matrix IDN")
+    but the new logic also allows specification of a full 16 number matrix
+    as an alternative.
 
-2020-05-04 13:07  starseeker
+commit 1f1a662ae8c349789ff3f4d6f8a8ebd654c960e6
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jul 22 15:18:59 2021 -0400
 
-	* [r75674] ., bench/pixcmp.c, include/bio.h, include/bu/file.h,
-	  include/bu/ptbl.h, include/bu/time.h, include/common.h,
-	  include/rt/db_fullpath.h, include/rt/db_instance.h,
-	  include/rt/db_io.h, include/rt/directory.h, include/rt/mater.h,
-	  include/rt/mem.h, src/conv/asc/asc2g.c, src/conv/conv-vg2g.c,
-	  src/conv/dxf/dxf-g.c, src/conv/fast4-g.c, src/conv/g-acad.c,
-	  src/conv/g-obj.c, src/conv/iges/findp.c, src/conv/iges/g-iges.c,
-	  src/conv/iges/readrec.c, src/conv/iges/recsize.c,
-	  src/conv/intaval/tgf-g.cpp, src/conv/k-g.cpp,
-	  src/conv/nastran-g.c, src/conv/raw/raw-g.cpp,
-	  src/conv/vdeck/vdeck.c, src/conv/vdeck/vextern.h, src/fb/bw-fb.c,
-	  src/fb/pix-fb.c, src/fb/tests/fbthreadtest.c,
-	  src/gtools/gdiff/gdiff.c, src/libanalyze/nirt.cpp, src/libbu,
-	  src/libbu/file.c, src/libbu/mappedfile.c, src/libbu/vfont.c,
-	  src/libbu/vfont.h, src/libbu/vls.c, src/libfb/fb_generic.c,
-	  src/libfb/if_X24.c, src/libfb/if_disk.c,
-	  src/libgcv/plugins/fastgen4/fastgen4_read.c,
-	  src/libgcv/plugins/fastgen4/fastgen4_write.cpp,
-	  src/libgcv/plugins/obj/obj_write.c,
-	  src/libgcv/plugins/vrml/vrml_read/file_util.cpp,
-	  src/libged/dup.c, src/libged/ged.c, src/libged/tables.c,
-	  src/libicv/rot.c, src/liboptical/oslexec_pvt.h,
-	  src/librt/db5_alloc.c, src/librt/db5_scan.c,
-	  src/librt/db_alloc.c, src/librt/db_corrupt.c,
-	  src/librt/db_fullpath.c, src/librt/db_inmem.c, src/librt/db_io.c,
-	  src/librt/db_lookup.c, src/librt/db_open.c, src/librt/db_scan.c,
-	  src/librt/librt_private.h, src/librt/mater.c,
-	  src/librt/memalloc.c, src/librt/primitives/primitive_util.c,
-	  src/mged/edsol.c, src/mged/wdb_obj.c, src/nirt/main.cpp,
-	  src/rt/do.c, src/rt/view.c, src/util/ap-pix.c, src/util/bwcrop.c,
-	  src/util/bwhisteq.c, src/util/bwrot.c, src/util/bwscale.c,
-	  src/util/pixbustup.c, src/util/pixcrop.c, src/util/pixrot.c,
-	  src/util/pixscale.c, src/util/plot3rot.c:
-	  Cherrypick r75063 - switch to b_off_t for newer MSVC 64 bit
-	  offsets.
+    Add a function for reading in matrices via the bu_opt mechanism.
 
-2020-05-04 12:59  starseeker
+commit d4ecd86137fa5dd37f6941593b13d08f0b3b54fc
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jul 22 11:34:12 2021 -0400
 
-	* [r75673] ., regress/gchecker/CMakeLists.txt:
-	  Cherrypick r75672 - dependencies for regress-gchecker
+    Remove PNG_FILTER_OPTIMIZATIONS - we're not using it for this build and we don't want it accidentally defined.
 
-2020-05-04 12:52  starseeker
+commit 44cdb2e41573aceb4174fac624b620fa739d10bb
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 21 18:33:59 2021 -0400
 
-	* [r75671] ., NEWS, regress/CMakeLists.txt, regress/gchecker,
-	  src/gtools/CMakeLists.txt, src/gtools/gchecker.cpp:
-	  Cherrypick cross-platform generator of overlap outputs from trunk
+    Apply changes from https://github.com/tcltk commit 4705dbdde2f for CVE-2021-35331
 
-2020-05-04 12:50  starseeker
+commit 9ffd2f5747d3c7cd6609529bd46bd2ecac22ff33
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jul 19 21:45:16 2021 -0400
 
-	* [r75670] src/libbu, src/libbu/dir.c:
-	  Cherrypick r75000 from trunk - bu_dir fix for ext and libext
+    Upgrade included libtiff in GDAL to latest from https://github.com/OSGeo/gdal
 
-2020-04-22 20:02  starseeker
+commit 9b0da13ab58ab6d3cd9a2c862e255c2ce1da6e6a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jul 19 21:32:14 2021 -0400
 
-	* [r75551] ChangeLog:
-	  update changelog
+    Backport OSGeo/gdal double free fix from 148115fcc40f at https://github.com/OSGeo/gdal
 
+commit de6381d829a024749686484eb1da3ae3308dafd8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jul 13 13:42:37 2021 -0400
 
-2020-04-22 20:01  starseeker
+    Whoops - don't need the sc_cf.h.in change without the other changes.
 
-	* [r75550] ., src/libged/draw.c, src/libged/vdraw.c,
-	  src/mged/dodraw.c:
-	  Cherrypick r75549 - fix for nirt, rtcheck, etc. vlist drawing
-	  behavior
+commit 0994492ca437fae2a6aa7508820049d649a4ed17
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jun 24 11:13:47 2021 -0400
 
-2020-04-22 15:53  starseeker
+    Add richer example gource launching line.
 
-	* [r75541] regress/CMakeLists.txt:
-	  Add dsp products to the regression cleaning list
+commit d711195ef0cda954bb2988d2ea5782e068eeecb3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jun 24 11:12:35 2021 -0400
 
-2020-04-22 14:25  starseeker
+    Correct spacing on initial setup data.
 
-	* [r75532] ChangeLog:
-	  update changelog
+commit 6e56e184cc0a5326f116a7d545f7a7786c68b08c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jun 24 10:49:33 2021 -0400
 
+    exec is local
 
-2020-04-22 14:25  starseeker
+commit e03f978f8ff144b2ebb78bbafe93f9f88e3b7d09
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jun 24 10:48:00 2021 -0400
 
-	* [r75531] NEWS:
-	  Update release date
+    Stash a solution to visualizing a subset of the history with gource starting with the full tree (as opposed to its default mode of just the changed files).
 
-2020-04-21 16:59  starseeker
+commit bc5ff11154f0187a2cc180ff015d157066cc2fa0
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jun 23 18:06:19 2021 -0400
 
-	* [r75497] ., src/tclscripts/checker/check.tcl:
-	  Cherrypick r75495 - Add a checkbutton to the overlap checker to
-	  toggle fullpath display
+    Document -idn search option - lets us find comb instances with IDN (and non-IDN) matrices.
 
-2020-04-21 16:58  starseeker
+commit 77b73f61481c500b5676351f3c69cc9c137581fc
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jun 23 17:10:57 2021 -0400
 
-	* [r75496] ., src/tclscripts/checker/check.tcl:
-	  Cherrypick r75492 - restore overlap checker using full paths for
-	  drawing, subtraction and marks
+    More focused search on just the local matrix, rather than the cumulative matrix along the path.
 
-2020-04-21 11:00  starseeker
+commit fa39a518508d82896ccda50eb9044152295753f5
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jun 23 16:36:53 2021 -0400
 
-	* [r75486] ChangeLog:
-	  Update ChangeLog
+    First quick stab at a way to filter paths based on IDN or non-IDN matrices.
 
-2020-04-21 10:58  starseeker
+commit beb794176337fa91341bfe85c6f121b297660024
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jun 23 15:57:13 2021 -0400
 
-	* [r75485] NEWS:
-	  Note overlap checker improvements in NEWS file
+    If we're reusing dps, don't delete them in try runs.
 
-2020-04-21 10:57  starseeker
+commit 22fb5e6a72c6244b1ee56fbfc252b569e2aca707
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jun 14 10:29:30 2021 -0400
 
-	* [r75484] ., src/tclscripts/checker/menu.tcl:
-	  Cherrypick r75477 - overlap checker layout improvements
+    Stash some notes about using gource source code visualizer.
 
-2020-04-21 10:56  starseeker
+commit a52eb7b6323856577e555ef381bf4d877fcb39ff
+Author: Jade <software@lfcode.ca>
+Date:   Sat Jun 12 01:54:17 2021 -0700
 
-	* [r75483] ., src/tclscripts/checker/check.tcl:
-	  Cherrypick r75472 - Have overlap checker display only region
-	  names, with fullpath copy to clipboard available via right-click
-	  menu
+    Fix missing includes of <limits>
+    
+    Example compile error from gcc-11.1.0 on archlinux:
+    /home/jade/builds/brlcad/src/brlcad/src/libged/brep/brep.cpp: In function ‘int _brep_cmd_plate_mode(void*, int, const char*
+    *)’:
+    /home/jade/builds/brlcad/src/brlcad/src/libged/brep/brep.cpp:810:48: error: ‘numeric_limits’ is not a member of ‘std’
+      810 |     ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pthicknessmm;
+          |                                                ^~~~~~~~~~~~~~
 
-2020-04-21 10:55  starseeker
+commit df2ce0ec39c604a4644ce40f9ef321bdd85f19da
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jun 8 21:48:28 2021 -0400
 
-	* [r75482] ., src/tclscripts/checker/menu.tcl:
-	  Cherrypick r75471 - Fix truncation of overlap checker columns
-	  when path names are long.
+    Put back the note about git_stats for reference, at least until we find a better solution.
 
-2020-04-21 10:53  starseeker
+commit d3c7b1d6e9b3f85d95372a5d842e78cc519a0be6
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu May 20 13:12:25 2021 -0400
 
-	* [r75481] NEWS:
-	  Update news entry for solid wireframes
+    I think SVN commit r76847 fixed this
 
-2020-04-21 10:53  starseeker
+commit 0b4974d1fcfa2abe13291495e0a7252c86b1e4a1
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jul 13 11:54:31 2021 -0400
 
-	* [r75480] ., src/libdm/dm-generic.c, src/mged/dozoom.c:
-	  Cherrypick r75470 - fix for transparency issue with awareness of
-	  solid editing wireframes
+    Note MGED script mode fix in NEWS file.
 
-2020-04-14 14:51  starseeker
+commit 063f3cc47938d334e7ac864d79e89db019bd1866
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu May 20 11:44:29 2021 -0400
 
-	* [r75393] ChangeLog:
-	  Update changelog
+    Wait for subprocesses in non-interactive mode
+    
+    Report from user that a script doing a raytrace wasn't producing a file.
+    Sean suspected that MGED was quitting too early and killing the
+    processes run by the script, it looks like that was correct.
+    
+    If we're in script mode, wait for subprocesses to finish up before we
+    quit MGED.
 
+commit ac62105e196cea5f7fa025c81ba408d8d691800c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat May 8 15:10:18 2021 -0400
 
-2020-04-14 14:50  starseeker
+    Don't crash if bu_ptbl_free is passed NULL.
 
-	* [r75392] ., NEWS, src/tclscripts/checker/menu.tcl:
-	  Cherrypick r74991 - fix for initial dimensions of overlap checker
-	  window
+commit f6725bca40e26f204aed54afaa30cdd587d4a9b8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed May 5 15:16:51 2021 -0400
 
-2020-04-14 12:03  starseeker
+    Add missing paren
 
-	* [r75388] ., src/librt/primitives/brep/brep.cpp:
-	  Cherrypick r75387 - disable logging messages during brep prep.
+commit 160803c054afb5e8a558a3a12ea4cf52fad003e3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed May 5 13:31:54 2021 -0400
 
-2020-04-13 17:36  starseeker
+    Note documentation changes for bot/seach listing the mode values.
 
-	* [r75382] NEWS, README, include/conf/PATCH, misc/debian/changelog,
-	  misc/macosx/Resources/ReadMe.rtfd/TXT.rtf,
-	  misc/macosx/Resources/Welcome.rtfd/TXT.rtf:
-	  Bump the patch release number in the RELEASE branch
+commit 83025aab9cd802df519d665ebd5e89b7f18fab8a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed May 5 13:21:42 2021 -0400
 
-2020-04-13 16:38  starseeker
+    Have bot set orientation support param strings as well as cw/ccw forms.
 
-	* [r75380] ., NEWS, doc/docbook/system/mann/lint.xml,
-	  src/libged/lint.cpp:
-	  Cherrypick r75377 - search style filtering for lint command
+commit 7e1da993d685dbebace9b8ab42d4ef44ee72c2dc
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed May 5 13:30:44 2021 -0400
 
-2020-04-13 16:33  starseeker
+    List possible values for mode and orient
 
-	* [r75379] ., NEWS, src/rt/viewedge.c:
-	  Cherrypick r75378 - fix of rtedge line color with -W option
+commit e0c7216bd054be8a2df4335a16a24104757642cd
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Apr 29 11:06:11 2021 -0400
 
-2020-04-13 14:01  starseeker
+    Add -o output option to GED stat command
+    
+    For user convenience, add an option to allow for capturing stat command
+    output to a file rather than just printing it.
 
-	* [r75376] ., NEWS, src/tclscripts/mged/bindings.tcl:
-	  Cherrypick r75375 - mouse wheel scrolling in MGED
+commit 611814b8c39d8a027f00d08500bad615d4a1dee5
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Apr 23 09:37:08 2021 -0400
 
-2020-04-13 13:28  starseeker
+    Probably want the diff the other way
 
-	* [r75374] ., misc/CMake/BRLCAD_Util.cmake:
-	  Cherrypick r74981 - support for newer CMake message types
+commit 7e427d87c306fb60438081d45c6b4677f427e4ad
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Apr 23 09:35:35 2021 -0400
 
-2020-04-13 13:27  starseeker
+    Add an alias for seeing what the changes in a sha1 were relative to its parent
 
-	* [r75373] ., NEWS, src/libgcv/plugins/rhino/rhino_read.cpp:
-	  Cherrypick r75056 - Add .r suffixes to regions in 3dm-g import
+commit 537e213703af63c688666eafdb9697144cb9aee0
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Apr 22 08:44:14 2021 -0400
 
-2020-04-13 13:08  starseeker
+    Unbreak overlay command's support for pattern matching.
 
-	* [r75372] ., NEWS, src/libdm/dm-generic.c, src/mged/dozoom.c:
-	  Cherrypick r75325 to fix MGED solid editing (disables
-	  transparency)
+commit 4a551eb685c3a4a5b58555a28a85896e79af212c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Apr 19 11:49:09 2021 -0400
 
+    Feeding a full path to ged_exec will work, but generates a GED_UNKNOWN return code since the full path doesn't correspond to a GED command name.  This is fine, except we were checking for any non-zero return from ged_tire and considering it an error, so the output file got deleted.  Check instead if the return code has GED_ERROR set.
+
+commit 2a86a5fc229130752584f1e49e8eb7ea5110fb3a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Apr 3 11:37:28 2021 -0400
+
+    Properly expose redraw as a ged_exec command.
+
+commit df033a02b185fdadb4cf0225204c0028c7719960
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Apr 1 21:11:28 2021 -0400
+
+    Add some notes about following file history in Git.
+
+commit 131a748ba0400d9ad4194f10f30497e52d3f2b44
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 00:44:26 2021 -0400
+
+    Add documentation for BRL-CAD + Git
+    
+    Going through the notes accumulated over the course of the conversion
+    effort, this commit tries to collect the interesting/relevant pieces
+    into some new files for preservation going forward.  (Much of the NOTES
+    file from repoconv is now obsolete, since we have shifted to a
+    conversion approach that does not use the git notes mechanism.)
+
+commit 692c97e253806caa693906f64e6a60357f781a75
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 25 14:02:42 2021 -0400
+
+    libgvm in geomcore uses the external->internal unpacker
+
+commit 1c115e4dc5e6b7b62debc72eda369bc6c1d830d3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 23 09:03:56 2021 -0400
+
+    Just go with basic porcelain without ignored files
+
+commit de26f5a96cb30c60b10bdfb8842aff340ca1b13a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Mar 20 14:17:20 2021 -0400
+
+    Check for a .gitattributes file in the source dir
+    
+    Be proactive about making sure a .gitattributes file doesn't introduce
+    problems into the source tree.  Use the error message to direct devs to
+    the discussion file with more details.
+
+commit 7e009398784d24b7a4edefc32b2b48ad6627fa82
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Mar 20 14:02:04 2021 -0400
+
+    Set up .gitignore with common problem cases
+    
+    This requires some care since patterns here that are too broad will
+    cause problems, but the chances of inadvertently adding these files is
+    high.  Also (unlike .gitattributes) nothing here alters files on
+    checkout or commit so it's safer to have this file in place.
+
+commit ab288d672c94cf7175123a994cd1eac9c3198ada
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Mar 20 13:53:14 2021 -0400
+
+    Handle more git status --porcelain cases
+
+commit b2a80207875080588eb2f721c6143017308e87f9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 17:39:24 2021 -0400
+
+    Update some links in the Hacking BRL-CAD book.
+
+commit 6c6fa87ef5918bc667d25b8da7445805d7dad52e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 13:50:16 2021 -0400
+
+    Make a couple updates to INSTALL
+
+commit 23250550e257afee025d4eff9e86c5ae454eeb4f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 12:47:19 2021 -0400
+
+    Fix parsing for modified file checking with Git
+    
+    Previously we weren't breaking the output string down properly into
+    individual entries.  Also, be a little more nuanced when Git reports a
+    file is staged for deletion.
+
+commit d88f039945b8a379dc1973d1cd7a482f56e5cfbe
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 11:47:36 2021 -0400
+
+    First cut at updating HACKING, COPYING, README
+    
+    Undoubtedly a lot more to do here, but make an attempt to update the
+    HACKING workflow and other references to the SVN repository.
+    
+    Note that the binary and source file hosting were not updated yet, and
+    the mailing lists are also unchanged as yet.  Those will be updated as
+    new solutions come online.
+
+commit 08cf6f487cd13dd58b34398ef8dbab5a9a6f5961
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 09:30:08 2021 -0400
+
+    Remove SVN portions of CMake distcheck logic
+
+commit a04d80fccaa7cfd2ca369243f4db44b1cf96ff6a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 08:24:02 2021 -0400
+
+    Don't zap sc_cf.h.in if src dir == bin dir
+
+commit b744b36afb307e2470f76972d912f116dcb76989
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 00:49:01 2021 -0400
+
+    Remove repoconv files from working tree
+    
+    Removed in main - remove as well in RELEASE for patch release.
+    Migration is complete and there is no point in keeping these.
+
+commit 7ad5dece315115b881833cf04e9e449c723622c4
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 00:37:29 2021 -0400
+
+    Update fastgen regression LF/CRLF test handling
+    
+    fast4 files classify as text files to VCS, so their line endings get
+    updated on checkout.  Normally this won't matter, but this particular
+    regression test is intended to make sure that it in fact does *not*
+    matter.  For that, we need to preserve the LF (UNIX) or CLRF (DOS) line
+    endings in the files upon checkout.
+    
+    Rather than use .gitattributes (which invite mishaps if pattern matches
+    produce unintentional matches elsewhere in the tree or get stale as
+    files change) we instead compress the LF and CRLF versions of the files
+    to be checked out as tbz2 archives.  They are then decompressed when
+    needed.  We can do this since CMake itself is able to do the
+    decompression, and we are guaranteed to have CMake on any platform where
+    building is possible in the first place.
+    
+    As an extra check, the regression script also verifies that the LF and
+    CRLF versions of the input are in fact different after being unpacked.
+
+commit d7c1fcb60d1fcc1ac3acb4e80c56834ce77180a8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 01:13:59 2021 -0400
+
+    Set CMAKE_RC_FLAGS for Windows Ninja build
+    
+    This setting was reported to be a problem for users building with Visual
+    Studio, but it appears to be a necessity when building with Ninja.
+
+commit 534b0e9591fc08f246db80a9a755f2f7a5a5b4df
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 5 03:35:36 2021 +0000
+
+    User report that setting this flag caused a compilation failure, with RC complaining about 'invalid usage'.  Removing the definition produced a successful build.
+    
+    svn:revision:78379
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit 50f91d17aa94a91daedb411a4e5bd9a09baac2f9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 24 18:11:55 2021 +0000
+
+    If we're switching back and forth between full and object searches, the UNIQ_DB flag may be set incorrectly.  Make sure the flag for unique path returns is unset before invoking a full path db_search.  Reported by Sean.
+    
+    svn:revision:78317
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit 37211066a6fb8bb993713ad300e4d03e960fd037
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 24 16:45:51 2021 +0000
+
+    Add a search example finding regions contining a specific object included using a specific boolean operation.
+    
+    svn:revision:78316
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit b072086186eb348bd8c81ff01508ab179ead5405
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Feb 18 14:56:08 2021 +0000
+
+    Fix infinite looping of isst on initialization.
+    
+    svn:revision:78260
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit e82e6f481a71f6d34f499470de37bb779d7e3936
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Feb 16 03:33:41 2021 +0000
+
+    extern C for BU_SEM_DATETIME
+    
+    svn:revision:78245
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit aacdc38fccfea788aa0719931dde2c5c12d1c622
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 10 19:46:13 2021 +0000
+
+    Hmm.  high_resolution_clock on BSD isn't returning the correct epoch answer.
+    
+    svn:revision:78232
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit d65d06f717bec79a7302f3041a798829b88fcf4f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 10 17:42:38 2021 +0000
+
+    Shouldn't need this declaration with the C++11 approach.
+    
+    svn:revision:78231
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit 4bbabb64f69076bfc9993058d69f394b3f8e3101
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 10 14:36:17 2021 +0000
+
+    Use C++11 high_resolution_clock instead of platform specific APIs.
+    
+    svn:revision:78230
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit 5b3190d4ebc394f6e6ff4d9b442372d9134cf6e5
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 10 12:57:41 2021 +0000
+
+    C->C++
+    
+    svn:revision:78229
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit c4b8d16ff5480b4f8c8fbb90a0a55c007243f5e2
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jul 13 10:16:25 2021 -0400
+
+    Note the last pre-cherrypicking commit to RELEASE
+    
+    Not really sure where to put this yet, or even if it is truly necessary,
+    but we will need to do a cherry-pick patch release to pull some main
+    changes into RELEASE without a full merge, and I'm seeing warnings that
+    this will complicate eventual full merges of main into release.
+    
+    To make sure it's clear where the cherry picking process started, make
+    an explicit record of the last RELEASE commit made prior to the start of
+    the process.

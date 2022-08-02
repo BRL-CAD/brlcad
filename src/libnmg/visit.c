@@ -1,7 +1,7 @@
 /*                     N M G _ V I S I T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -119,8 +119,8 @@ nmg_visit_loop(struct loop *l, const struct nmg_visit_handlers *htab, void *stat
 
     if (htab->vis_loop) htab->vis_loop((uint32_t *)l, state, 0);
 
-    if (htab->vis_loop_g && l->lg_p)
-	htab->vis_loop_g((uint32_t *)l->lg_p, state, 0);
+    if (htab->vis_loop_a && l->la_p)
+	htab->vis_loop_a((uint32_t *)l->la_p, state, 0);
 }
 
 

@@ -37,7 +37,7 @@ file.
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>garbage_collect</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>garbage_collect</userinput></term>
 	   <listitem>
 	     <para>Cleans out unused space in the database.
 		     </para>

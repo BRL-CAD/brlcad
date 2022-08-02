@@ -1,7 +1,7 @@
 /*                       C O N V E R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,10 +25,31 @@
 #include <string.h>
 #include <limits.h>
 
+#include "bnetwork.h" // for ntohl, ntohs
+
 #include "bu/cv.h"
 #include "bu/endian.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
+
+uint32_t
+bu_ntohl(uint32_t netlong, uint32_t n_min, uint32_t n_max)
+{
+    uint32_t hlong = ntohl(netlong);
+    hlong = (hlong < n_min) ? n_min : hlong;
+    hlong = (hlong > n_max) ? n_max : hlong;
+    return hlong;
+}
+
+uint16_t
+bu_ntohs(uint16_t netshort, uint32_t n_min, uint32_t n_max)
+{
+    uint16_t hshort = ntohs(netshort);
+    hshort = (hshort < n_min) ? n_min : hshort;
+    hshort = (hshort > n_max) ? n_max : hshort;
+    return hshort;
+}
+
 
 int
 bu_cv_cookie(const char *in)			/* input format */
@@ -508,6 +529,10 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
      */
     outsize = bu_cv_itemlen(outcookie);
     insize = bu_cv_itemlen(incookie);
+
+    /* Sanity */
+    if (!outsize || !insize)
+	return 0;
 
     /*
      * If the input format is the same as the output format then the

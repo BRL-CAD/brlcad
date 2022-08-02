@@ -1,7 +1,7 @@
 /*                     S H _ T O Y O T A . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2020 United States Government as represented by
+ * Copyright (c) 1992-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "optical/light.h"
 
 
@@ -1797,7 +1797,7 @@ absorp_coeff(fastf_t lambda, char *material)
     }
 
     /* Find "nearby" values of lambda, absorption for interpolation. */
-    if ((n = fscanf(fp, "%lf %lf", &l, &a)) != 2 || lambda + MIKE_TOL < l) {
+    if (fscanf(fp, "%lf %lf", &l, &a) != 2 || lambda + MIKE_TOL < l) {
 	fclose(fp);
 	return -1.0;
     }

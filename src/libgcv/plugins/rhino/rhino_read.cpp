@@ -1,7 +1,7 @@
 /*                  R H I N O _ R E A D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2016-2020 United States Government as represented by
+ * Copyright (c) 2016-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -151,13 +151,16 @@ comb_region_name_check(std::map<const directory *, std::string> &renamed, db_i &
 
     directory * const dir = db_lookup(&db, name.c_str(), true);
     if (dir == RT_DIR_NULL) {
+	bu_vls_free(&nname);
 	return;
     }
     std::pair<const directory *, std::string> rpair = std::make_pair(dir, name);
     if (db_rename(&db, dir, bu_vls_cstr(&nname))){
+	bu_vls_free(&nname);
 	return;
     }
     renamed.insert(rpair);
+    bu_vls_free(&nname);
 }
 
 struct UuidCompare {
@@ -346,8 +349,9 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 
 
 HIDDEN void
-write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
+write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 {
+    ON_Mesh mesh = in_mesh;
     mesh.ConvertQuadsToTriangles();
     mesh.CombineIdenticalVertices();
     mesh.Compact();
@@ -438,7 +442,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 
     for (std::size_t i = 0; i < mesh.m_FN.UnsignedCount(); ++i) {
 	int * const dest_face_normal = &face_normals.at(3 * i);
-	VSETALL(dest_face_normal, i);
+	VSETALL(dest_face_normal, (int)i);
     }
 
     if (mk_bot_w_normals(&wdb, name.c_str(), mode, orientation,
@@ -871,6 +875,11 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 	db_full_path **entry;
 
 	for (BU_PTBL_FOR(entry, (db_full_path **), &found)) {
+
+	    // Sanity
+	    if (!(*entry) || (*entry)->fp_len <= 0)
+		continue;
+
 	    std::string prefix = DB_FULL_PATH_CUR_DIR(*entry)->d_namep;
 	    std::string suffix = ".r";
 
@@ -972,7 +981,7 @@ rhino_can_read(const char *source_path)
     if (!source_path) return 0;
     FILE *fp = ON::OpenFile(source_path,"rb");
     if (!fp) return 0;
-    ON_BinaryFile file(ON::read3dm,fp);
+    ON_BinaryFile file(ON::on_read3dm,fp);
     if (!file.Read3dmStartSection(&fv, mSC)) return 0;
     if (!file.Read3dmProperties(mprop)) return 0;
     return 1;

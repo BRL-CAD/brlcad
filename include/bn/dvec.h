@@ -1,7 +1,7 @@
 /*                           D V E C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,10 +26,10 @@
 #include <math.h>
 extern "C++" {
 /* Hide iostream from Doxygen with cond */
-/* @cond */
+/** @cond */
 #include <iostream>
 #include <ostream>
-/* @endcond */
+/** @endcond */
 }
 
 /* Needed for fastf_t definition */
@@ -131,7 +131,7 @@ private:
 #define VEC_ALIGN
 
 /* Doxygen doesn't like these includes... */
-/* @cond */
+/** @cond */
 /*#undef __SSE2__*/ // Test FPU version
 #if defined(__SSE2__) && defined(__GNUC__) && defined(HAVE_EMMINTRIN_H) && defined(HAVE_EMMINTRIN)
 #  define __x86_vector__
@@ -741,7 +741,7 @@ operator<<(std::ostream& out, const vec2d& v)
 }
 
 #endif
-/* @endcond */
+/** @endcond */
 
 inline bool vequals(const vec2d& a, const vec2d& b) {
     return
@@ -752,8 +752,13 @@ inline bool vequals(const vec2d& a, const vec2d& b) {
 // 2x2 row-major matrix
 typedef fastf_t mat2d_t[4] VEC_ALIGN;
 
+/* Hide from Doxygen with cond */
+/** @cond */
+
 // 2d point
 typedef fastf_t pt2d_t[2] VEC_ALIGN;
+
+/** @endcond */
 
 //--------------------------------------------------------------------------------
 // MATH / VECTOR ops

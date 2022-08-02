@@ -1,7 +1,7 @@
 /*                 OpenNurbsInterfaces.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,26 @@
 
 #include "common.h"
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  if GCC_PREREQ(8,0)
+#    pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  endif
+#endif
+
 #include "opennurbs.h"
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 #include "sdai.h"
 class SDAI_Application_instance;
@@ -618,6 +637,31 @@ BSplineSurface::LoadONBrep(ON_Brep *brep)
     ON_id = brep->AddSurface(surf);
 
     return true;
+}
+
+ON_Brep *
+BSplineSurfaceWithKnots::GetONBrep()
+{
+    ON_Brep *brep = ON_Brep::New();
+
+    if (!brep) {
+	std::cerr << "ERROR: INTERNAL MEMORY ALLOCATION FAILURE in " << __FILE__ << ":" << __LINE__ << std::endl;
+	return NULL;
+    }
+
+    if (!LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::GetONBrep() - Error loading openNURBS brep." << std::endl;
+	//still return brep may contain something useful to diagnose
+	return brep;
+    }
+
+    ON_Brep *b2 = ON_Brep::New();
+    b2->NewFace(*brep->m_S[0]);
+    b2->Flip();
+
+    delete brep;
+
+    return b2;
 }
 
 
@@ -1318,6 +1362,7 @@ Path::GetEdgeBounds(ON_Brep *brep)
     for (i = edge_list.begin(); i != edge_list.end(); i++) {
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	    delete u;
 	    return NULL;
 	}
 	if (u == NULL) {
@@ -1486,7 +1531,6 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	// grab the curve for this edge, face and surface
 	const ON_BrepEdge *edge = &brep->m_E[(*i)->GetONId()];
 	const ON_Curve *curve = edge->EdgeCurveOf();
-	ON_BoundingBox bb = curve->BoundingBox();
 	bool orientWithCurve = (*i)->OrientWithEdge();
 
 	if ((false) && (id == 34193)) {
@@ -1558,7 +1602,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	PBCData *ndata = (*next_cs);
 	list<ON_2dPointArray *>::iterator nsi;
 	nsi = ndata->segments->begin();
-	ON_2dPointArray *nsamples = (*nsi);
+	ON_2dPointArray *nsamples = NULL;
 
 	while (si != data->segments->end()) {
 	    nsi = si;
@@ -1726,6 +1770,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    delete data->segments->front();
 	    data->segments->pop_front();
 	}
+	delete data->segments;
 	delete data;
 	curve_pullback_samples.pop_front();
     }
@@ -1885,10 +1930,6 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
 
     ON_RevSurface *s = c.RevSurfaceForm();
     if (s) {
-	double r = fabs(c.radius);
-	if (r <= ON_SQRT_EPSILON) {
-	    r = 1.0;
-	}
 	s->SetDomain(0, 0.0, 2.0 * ON_PI);
     }
 
@@ -1922,7 +1963,7 @@ intersectLines(const ON_Line &l1, const ON_Line &l2, ON_3dPoint &out)
     VMOVE(l2_dir, d);
 
     fastf_t l1_dist, l2_dist;
-    int i = bn_isect_line3_line3(&l1_dist, &l2_dist, l1_from, l1_dir,
+    int i = bg_isect_line3_line3(&l1_dist, &l2_dist, l1_from, l1_dir,
 				 l2_from, l2_dir, &tol);
     if (i == 1) {
 	ON_3dVector l1_unit_dir = l1.Direction();
@@ -2111,7 +2152,7 @@ Circle::LoadONBrep(ON_Brep *brep)
     ON_3dPointArray cpts(2 * narcs + 1);
     double angle = t;
     double W[2 * 4 + 1]; /* 2 * max narcs + 1 */
-    ON_3dPoint circleP1, isect, circleP2, PM, PT;
+    ON_3dPoint circleP1, isect, circleP2;
     ON_3dVector tangentP1, tangentP2;
 
     circleP1 = circle.PointAt(angle); // was using 'startpt' from edge_curve but found case where not in tol
@@ -2313,7 +2354,6 @@ Ellipse::LoadONBrep(ON_Brep *brep)
     double angle = t;
     double W[2 * 4 + 1]; // 2 * max narcs + 1
     ON_3dPoint Pnt[2 * 4 + 1];
-    ON_3dPoint MP0, MP1, MP2, MPM, MPT, MPX;
     ON_3dVector Tangent1, Tangent2;
     ON_3dPoint P0, PX, P2, P1;
 
@@ -2805,6 +2845,7 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
     path_line.to = extrusion_endpnt;
     ON_3dVector path_vector = path_line.Direction();
     if (path_vector.IsZero()) {
+	delete l;
 	return false;
     }
 
@@ -2817,6 +2858,7 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
     sum_srf = new ON_SumSurface();
 
     if (!sum_srf) {
+	delete l;
 	return false;
     }
     sum_srf->m_curve[0] = srf_base_curve;

@@ -1,7 +1,7 @@
 /*                          P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@
 
 
 int
-mk_particle(struct rt_wdb *fp, const char *name, fastf_t *vertex, fastf_t *height, double vradius, double hradius)
+mk_particle(struct rt_wdb *fp, const char *name, point_t vertex, vect_t height, double vradius, double hradius)
 {
     struct rt_part_internal *part;
 

@@ -1,7 +1,7 @@
 /*                    P I P E _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,15 @@ void
 make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, ON_SimpleArray<ON_Curve*> *endoutercurves, ON_SimpleArray<ON_Curve*> *startinnercurves, ON_SimpleArray<ON_Curve*> *endinnercurves)
 {
     int c1ind = (*b)->AddEdgeCurve((*startoutercurves)[0]);
+    if (c1ind < 0) {
+	bu_log("Failed to create edge curve 1 - pipe_brep.cpp:%d\n", __LINE__);
+	return;
+    }
     int c2ind = (*b)->AddEdgeCurve((*endoutercurves)[0]);
+    if (c2ind < 0) {
+	bu_log("Failed to create edge curve 2 - pipe_brep.cpp:%d\n", __LINE__);
+	return;
+    }
     ON_BrepVertex& vert1 = (*b)->NewVertex((*b)->m_C3[c1ind]->PointAt(0), SMALL_FASTF);
     vert1.m_tolerance = 0.0;
     int vert1ind = (*b)->m_V.Count() - 1;
@@ -77,7 +85,15 @@ make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
 
     if (startinnercurves->Count() > 0) {
 	int c3ind = (*b)->AddEdgeCurve(ON_Curve::Cast(*(startinnercurves[0])));
+	if (c3ind < 0) {
+	    bu_log("Failed to create edge curve 3 - pipe_brep.cpp:%d\n", __LINE__);
+	    return;
+	}
 	int c4ind = (*b)->AddEdgeCurve(ON_Curve::Cast(*(endinnercurves[0])));
+	if (c4ind < 0) {
+	    bu_log("Failed to create edge curve 4 - pipe_brep.cpp:%d\n", __LINE__);
+	    return;
+	}
 	ON_BrepVertex& vert3 = (*b)->NewVertex((*b)->m_C3[c3ind]->PointAt(0), SMALL_FASTF);
 	vert3.m_tolerance = 0.0;
 	int vert3ind = (*b)->m_V.Count() - 1;
@@ -88,7 +104,6 @@ make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
 	startinneredge->m_tolerance = 0.0;
 	ON_BrepEdge* endinneredge = &(*b)->NewEdge((*b)->m_V[vert4ind], (*b)->m_V[vert4ind], c4ind);
 	endinneredge->m_tolerance = 0.0;
-	startedge = (*b)->Edge(startedge->m_edge_index);
 	(*b)->NewRuledFace(*startinneredge, false, *endinneredge, false);
     }
     startinnercurves->Empty();
@@ -149,6 +164,8 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     RT_CK_DB_INTERNAL(ip);
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
+
+    startoutercurves.SetCapacity(1);
 
     // delete duplicated points
     curp = BU_LIST_FIRST(wdb_pipe_pnt, &pip->pipe_segs_head);

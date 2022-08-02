@@ -98,10 +98,10 @@ EOF
   <example><title>Save current viewing parameters in a specified file in the form of a shell script to run the BRL-CAD 	<emphasis>rt</emphasis> program.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rt_script -s1024</userinput>
+      <prompt>mged&gt; </prompt><userinput>saveview script.rt -s1024</userinput>
     </para>
-    <para>Creates (or appends to) a file named <emphasis>rt_script</emphasis> that will contain a script to run 	the <emphasis>rt</emphasis> program and create a color-shaded image of the current MGED display. The image
-	produced will be 1024 pixels square.
+    <para>Creates (or appends to) a file named <emphasis>script.rt</emphasis> that will contain a POSX shell script for running the <emphasis>rt</emphasis> program and create a color-shaded image of the current MGED display. The image
+	  produced will be 1024 pixels square due to the additional <option>-s1024</option> arg specified after the script name.  Additional args are passed to <emphasis>rt</emphasis>.
     </para>
   </example>
 

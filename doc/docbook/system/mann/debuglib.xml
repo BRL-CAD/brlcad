@@ -45,14 +45,14 @@
     </para>
     <example><title>List available debug values for <emphasis>librt</emphasis> and the current value.</title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>debuglib</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>debuglib</userinput></para>
       <para>Lists available debug values for <emphasis>librt</emphasis> and the current value.</para>
     </example>
 
     <example><title>Set the <emphasis>librt</emphasis> debug flag to a specific value.</title>
 
       <para>
-	<prompt>mged&gt;</prompt><userinput>debuglib 1</userinput>
+	<prompt>mged&gt; </prompt><userinput>debuglib 1</userinput>
       </para>
       <para>
        Sets the <emphasis>librt</emphasis> debug flag to &lt;DEBUG_ALLRAYS&gt; (prints info about rays).

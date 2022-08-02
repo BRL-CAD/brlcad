@@ -43,7 +43,7 @@ combined into one BRL-CAD spline solid.
 The
 <option>-d</option>
 option indicates that IGES drawings should be converted to BRL-CAD NMG objects.
-Theses objects will be two-dimensional drawings, not solids.
+These objects will be two-dimensional drawings, not solids.
 The
 <option>-3</option>
 option is the same as the
@@ -112,7 +112,7 @@ IGES/PDES Organization, September 1991</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2020 by the United States
+<para>This software is Copyright (c) 1991-2022 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

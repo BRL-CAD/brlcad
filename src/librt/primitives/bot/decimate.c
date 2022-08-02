@@ -1,7 +1,7 @@
 /*                      D E C I M A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2020 United States Government as represented by
+ * Copyright (c) 1999-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,6 @@
 
 #if !defined(BRLCAD_DISABLE_GCT)
 #  include "./gct_decimation/meshdecimation.h"
-#  include "./gct_decimation/meshoptimization.h"
 #endif
 
 #include "./bot_edge.h"
@@ -271,6 +270,10 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, size_t num_edges, int *fa
 		    edg->v = -1;
 		    edg->next = NULL;
 		    bu_free(edg, "bot edge");
+		    // TODO - Just freed edg, so we can't use that to test in
+		    // the while loop - is this our terminating case?  Not 100%
+		    // sure what the correct behavior is here...
+		    edg = NULL;
 		}
 	    } else {
 		/* unaffected edge, just continue */
@@ -480,14 +483,13 @@ rt_bot_decimate_gct(struct rt_bot_internal *UNUSED(bot), fastf_t UNUSED(feature_
     return 0;
 #else
 rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
-    const int opt_level = 3; /* maximum */
-    mdOperation mdop;
 
     RT_BOT_CK_MAGIC(bot);
 
     if (feature_size < 0.0)
 	bu_bomb("invalid feature_size");
 
+    mdOperation mdop;
     mdOperationInit(&mdop);
     mdOperationData(&mdop, bot->num_vertices, bot->vertices,
 		    sizeof(bot->vertices[0]), 3 * sizeof(bot->vertices[0]), bot->num_faces,
@@ -500,7 +502,9 @@ rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
     bot->num_vertices = mdop.vertexcount;
     bot->num_faces = mdop.tricount;
 
-    mesh_optimization(bot->num_vertices, bot->num_faces, bot->faces, sizeof(bot->faces[0]), opt_level);
+    moOptimizeMesh(bot->num_vertices, bot->num_faces,
+	    bot->faces, sizeof(bot->faces[0]),
+	    3 * sizeof(bot->faces[0]), 0, 0, 32, 0);
 
     return mdop.decimationcount;
 #endif

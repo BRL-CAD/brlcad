@@ -17,14 +17,17 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 //
-// This version is based off of earcut.js 2.1.5
+// This version is based off of earcut.js 2.2.3
 
 #pragma once
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstddef>
+#include <limits>
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace mapbox {
@@ -84,7 +87,7 @@ private:
     Node* cureLocalIntersections(Node* start);
     void splitEarcut(Node* start);
     template <typename Polygon> Node* eliminateHoles(const Polygon& points, Node* outerNode);
-    void eliminateHole(Node* hole, Node* outerNode);
+    Node* eliminateHole(Node* hole, Node* outerNode);
     Node* findHoleBridge(Node* hole, Node* outerNode);
     bool sectorContainsSector(const Node* m, const Node* p);
     void indexCurve(Node* start);
@@ -254,7 +257,7 @@ Earcut<N>::filterPoints(Node* start, Node* end) {
     do {
         again = false;
 
-        if (!p->steiner && (equals(p, p->next) || area(p->prev, p, p->next) == 0)) {
+        if (p && !p->steiner && (equals(p, p->next) || ((p->prev && p->next) && area(p->prev, p, p->next) == 0))) {
             removeNode(p);
             p = end = p->prev;
 
@@ -262,7 +265,7 @@ Earcut<N>::filterPoints(Node* start, Node* end) {
             again = true;
 
         } else {
-            p = p->next;
+            p = (p) ? p->next : end;
         }
     } while (again || p != end);
 
@@ -460,7 +463,7 @@ Earcut<N>::eliminateHoles(const Polygon& points, Node* outerNode) {
 
     // process holes from left to right
     for (size_t i = 0; i < queue.size(); i++) {
-        eliminateHole(queue[i], outerNode);
+        outerNode = eliminateHole(queue[i], outerNode);
         outerNode = filterPoints(outerNode, outerNode->next);
     }
 
@@ -469,12 +472,21 @@ Earcut<N>::eliminateHoles(const Polygon& points, Node* outerNode) {
 
 // find a bridge between vertices that connects hole with an outer ring and and link it
 template <typename N>
-void Earcut<N>::eliminateHole(Node* hole, Node* outerNode) {
-    outerNode = findHoleBridge(hole, outerNode);
-    if (outerNode) {
-        Node* b = splitPolygon(outerNode, hole);
-        filterPoints(b, b->next);
+typename Earcut<N>::Node*
+Earcut<N>::eliminateHole(Node* hole, Node* outerNode) {
+    Node* bridge = findHoleBridge(hole, outerNode);
+    if (!bridge) {
+        return outerNode;
     }
+
+    Node* bridgeReverse = splitPolygon(bridge, hole);
+
+    // filter collinear points around the cuts
+    Node* filteredBridge = filterPoints(bridge, bridge->next);
+    filterPoints(bridgeReverse, bridgeReverse->next);
+
+    // Check if input node was removed by the filtering
+    return outerNode == bridge ? filteredBridge : outerNode;
 }
 
 // David Eberly's algorithm for finding a bridge between hole and outer polygon

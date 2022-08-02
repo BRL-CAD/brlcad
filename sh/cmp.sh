@@ -2,7 +2,7 @@
 #                          C M P . S H
 # BRL-CAD
 #
-# Copyright (c) 2011-2020 United States Government as represented by
+# Copyright (c) 2011-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -80,8 +80,9 @@ base="$2"
 echo ""
 echo "=== $i ==="
 
+export MGED=mged
 if ! test -r "$base.base.rt" ; then
-    mged -c "$dbfile" "e $base ; ae 35 25 ; zoom 1.25 ; saveview -e ./run.me -l /dev/stdout $base.base.rt"
+    $MGED -c "$dbfile" "e $base ; ae 35 25 ; zoom 1.25 ; saveview -e ./run.me -l /dev/stdout $base.base.rt"
     if ! test -r "$base.base.rt" ; then
 	echo "ERROR: couldn't saveview from $dbfile to $base.base.rt"
     fi
@@ -98,10 +99,10 @@ if ! test -x "run.me" ; then
 fi
 
 sed "s/\.base\././g" $base.base.rt | sed "s/'$base'/'$i'/g" | sed "s/-o $base.rt.pix/-o $i.rt.pix/g" > $i.rt
-export RT=rt
 
   ################
 echo -n "Perf: "
+export RT=rt
 export LIBRT_BOT_MINTIE=0
 unset LIBRT_BOT_MINTIE
 rm -f "$i.rt.log" "$i.rt.pix"
@@ -223,8 +224,9 @@ printf -- "%-25s ($t1 $t2 $t3 $t4 $t5)\n" "${rays}"
 # nrps=`printf -- "%10.0f rays/s" "${norm}"`
 # printf -- "%-25s ($bigger $fore $ratio)\n" "$nrps"
 
-  ################
-export RT=rtxray
+################
+export RTXRAY=rtxray
+export RT=$RTXRAY
 echo -n "Xray: "
 rm -f $base.base.rtxray.pix $base.base.rtxray.log
 sh $base.base.rt -o $base.base.rtxray.pix -s$SZ >$base.base.rtxray.log 2>&1
@@ -249,7 +251,8 @@ else
 fi
 
   ################
-export RT=rtedge
+export RTEDGE=rtedge
+export RT=$RTEDGE
 echo -n "Edge: "
 rm -f $base.base.rtedge.pix $base.base.rtedge.log
 sh $base.base.rt -o $base.base.rtedge.pix -s$SZ >$base.base.rtedge.log 2>&1
@@ -272,7 +275,8 @@ else
 fi
 
   ################
-export RT=rtarea
+export RTAREA=rtarea
+export RT=$RTAREA
 echo -n "Area: "
 rm -f $base.base.rtarea.log
 sh $base.base.rt -o /dev/null -s$SZ >$base.base.rtarea.log 2>&1
@@ -296,9 +300,10 @@ else
 fi
 
   ################
+export GQA=gqa
 echo -n "Volu: "
 rm -f $base.base.gqa.log
-gqa "$GQTOL" -Av $dbfile $base >$base.base.gqa.log 2>&1
+$GQA "$GQTOL" -Av $dbfile $base >$base.base.gqa.log 2>&1
 if ! test -f $base.base.gqa.log ; then
     echo "ERROR: $base.base.gqa.log failed to evaluate"
 fi
@@ -307,7 +312,7 @@ bvol2=`printf "%.1f" $bvol`
 bvol=`printf "%f" $bvol`
 if ! test "x$bvol2" = "x" && ! test "x$bvol2" = "x0.0" ; then
     rm -f "$i.gqa.log"
-    vol="`gqa "$GQTOL" -Av $dbfile $i 2>&1 | tee $i.gqa.log | tail -n 5 | grep total | awk '{print $4}'`"
+    vol="`$GQA "$GQTOL" -Av $dbfile $i 2>&1 | tee $i.gqa.log | tail -n 5 | grep total | awk '{print $4}'`"
     vol2=`printf "%.1f" $vol`
     vol=`printf "%f" $vol`
     if test "x$vol2" = "x" ; then

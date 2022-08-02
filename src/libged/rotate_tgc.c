@@ -1,7 +1,7 @@
 /*                         R O T A T E _ T G C . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,22 +56,22 @@ _ged_rotate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attri
 			MAT4X3VEC(tgc->d, rmat, tgc->d);
 		    } else {
 			bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-			return GED_ERROR;
+			return BRLCAD_ERROR;
 		    }
 
 		    break;
 		default:
 		    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 	    }
 
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

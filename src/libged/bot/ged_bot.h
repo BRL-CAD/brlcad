@@ -1,7 +1,7 @@
 /*                    G E D _ B O T . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 #include <time.h>
 
 #include "bu/opt.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "bu/color.h"
 #include "rt/db4.h"
 #include "raytrace.h"
@@ -49,7 +49,7 @@ struct _ged_bot_info {
     struct ged *gedp = NULL;
     struct rt_db_internal *intern = NULL;
     struct directory *dp = NULL;
-    struct bn_vlblock *vbp = NULL;
+    struct bv_vlblock *vbp = NULL;
     struct bu_color *color = NULL;
     int verbosity;
     int visualize;
@@ -58,21 +58,35 @@ struct _ged_bot_info {
     struct bu_opt_desc *gopts = NULL;
 };
 
-/* defined in draw.c */
-extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
-				       struct bn_vlblock *vbp,
-				       const char *name,
-				       int copy);
-
 int _bot_obj_setup(struct _ged_bot_info *gb, const char *name);
 
 int _bot_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps);
 
-int _bot_cmd_extrude(void *bs, int argc, const char **argv);
 
-int _bot_cmd_check(void *bs, int argc, const char **argv);
+extern int ged_bot_condense_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_decimate_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_dump_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_exterior(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_face_fuse_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_face_sort_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_flip_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_merge_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_smooth_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_split_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_sync_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_bot_vertex_fuse_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_find_bot_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_find_bot_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_get_bot_edges_core(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_dbot_dump_core(struct ged *gedp, int argc, const char **argv);
 
-int _bot_cmd_remesh(void *bs, int argc, const char **argv);
+
+extern int _bot_cmd_extrude(void *bs, int argc, const char **argv);
+
+extern int _bot_cmd_check(void *bs, int argc, const char **argv);
+
+extern int _bot_cmd_remesh(void *bs, int argc, const char **argv);
 
 __END_DECLS
 

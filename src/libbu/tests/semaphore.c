@@ -1,7 +1,7 @@
 /*                  S E M A P H O R E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -117,7 +117,7 @@ parallel_test(size_t ncpu, size_t reps)
     bu_parallel(increment_thread, ncpu, &args);
 
     if (pcounter != expected) {
-	bu_log("bu_semaphore parallel increment test:  counter is %lu, expected %lu\n [FAIL]", pcounter, expected);
+	bu_log("bu_semaphore parallel increment test:  counter is %zu, expected %zu\n [FAIL]", pcounter, expected);
 	return 0;
     }
 
@@ -142,7 +142,10 @@ main(int argc, char *argv[])
     size_t ncpu = bu_avail_cpus();
     unsigned long ncpu_opt;
 
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     while ((c = bu_getopt(argc, argv, "n:P:")) != -1) {
 	switch (c) {

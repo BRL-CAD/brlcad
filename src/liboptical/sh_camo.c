@@ -1,7 +1,7 @@
 /*                       S H _ C A M O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,40 +65,6 @@ struct camo_specific {
     mat_t xform;	/* model->region coord sys matrix */
 };
 #define CK_camo_SP(_p) BU_CKMAG(_p, camo_MAGIC, "camo_specific")
-
-static struct camo_specific camo_defaults = {
-    camo_MAGIC,
-    2.1753974,		/* noise_lacunarity */
-    1.0,		/* noise_h_val */
-    4.0,		/* noise_octaves */
-    1.0,		/* noise_size */
-    VINITALL(0.0125),	/* noise_vscale */
-    VINITALL(1000.0),	/* delta into noise space */
-    -0.25,		/* t1 */
-    0.25,		/* t2 */
-    { .38, .29, .16 },	/* darker color c1 (97/74/41) */
-    { .1, .30, .04 },	/* basic color c2 (26/77/10) */
-    VINITALL(0.15),	/* dark black (38/38/38) */
-    MAT_INIT_IDN
-};
-
-
-static struct camo_specific marble_defaults = {
-    camo_MAGIC,
-    2.1753974,		/* noise_lacunarity */
-    1.0,		/* noise_h_val */
-    4.0,		/* noise_octaves */
-    1.0,		/* noise_size */
-    VINITALL(1.0),	/* noise_vscale */
-    VINITALL(1000.0),	/* delta into noise space */
-    0.25,		/* t1 */
-    0.5,		/* t2 */
-    { .8, .2, .16 },	/* darker color c1 (97/74/41) */
-    { .9, .9, .8 },	/* basic color c2 (26/77/10) */
-    VINITALL(0.15),	/* dark black (38/38/38) */
-    MAT_INIT_IDN
-};
-
 
 #define SHDR_NULL ((struct camo_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct camo_specific, m)
@@ -199,7 +165,7 @@ color_fix(const struct bu_structparse *sdp,
 
 
 HIDDEN int
-setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_i *rtip, char *parameters, struct camo_specific defaults)
+setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_i *rtip, char *parameters, struct camo_specific *defaults)
 {
 /* pointer to reg_udata in *rp */
 
@@ -217,7 +183,7 @@ setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_
     if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("%s'%s'\n", parameters, bu_vls_addr(matparm));
     }
-    memcpy(camo_sp, &defaults, sizeof(struct camo_specific));
+    memcpy(camo_sp, defaults, sizeof(struct camo_specific));
 
     if (bu_struct_parse(matparm, camo_parse, (char *)camo_sp, NULL) < 0)
 	return -1;
@@ -267,7 +233,23 @@ setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_
 HIDDEN int
 camo_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 {
-    return setup(rp, matparm, dpp, rtip, "camouflage parameters = ", camo_defaults);
+    static struct camo_specific camo_defaults = {
+	camo_MAGIC,
+	2.1753974,		/* noise_lacunarity */
+	1.0,			/* noise_h_val */
+	4.0,			/* noise_octaves */
+	1.0,			/* noise_size */
+	VINITALL(0.0125),	/* noise_vscale */
+	VINITALL(1000.0),	/* delta into noise space */
+	-0.25,			/* t1 */
+	0.25,			/* t2 */
+	{ .38, .29, .16 },	/* darker color c1 (97/74/41) */
+	{ .1, .30, .04 },	/* basic color c2 (26/77/10) */
+	VINITALL(0.15),		/* dark black (38/38/38) */
+	MAT_INIT_IDN
+    };
+
+    return setup(rp, matparm, dpp, rtip, "camouflage parameters = ", &camo_defaults);
 }
 
 
@@ -332,7 +314,23 @@ camo_render(struct application *ap, const struct partition *pp, struct shadework
 HIDDEN int
 marble_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 {
-    return setup(rp, matparm, dpp, rtip, "marble parameters = ", marble_defaults);
+    static struct camo_specific marble_defaults = {
+	camo_MAGIC,
+	2.1753974,		/* noise_lacunarity */
+	1.0,			/* noise_h_val */
+	4.0,			/* noise_octaves */
+	1.0,			/* noise_size */
+	VINITALL(1.0),		/* noise_vscale */
+	VINITALL(1000.0),	/* delta into noise space */
+	0.25,			/* t1 */
+	0.5,			/* t2 */
+	{ .8, .2, .16 },	/* darker color c1 (97/74/41) */
+	{ .9, .9, .8 },		/* basic color c2 (26/77/10) */
+	VINITALL(0.15),		/* dark black (38/38/38) */
+	MAT_INIT_IDN
+    };
+
+    return setup(rp, matparm, dpp, rtip, "marble parameters = ", &marble_defaults);
 }
 
 

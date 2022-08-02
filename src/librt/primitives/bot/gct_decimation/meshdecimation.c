@@ -37,10 +37,7 @@
 
 #include "meshdecimation.h"
 
-#include "auxiliary/cc.h"
-#include "auxiliary/mm.h"
-#include "auxiliary/mmhash.h"
-#include "auxiliary/mmbinsort.h"
+#include "./util.h"
 #include "bu/tc.h"
 
 #include "bu/malloc.h"
@@ -3026,9 +3023,11 @@ static int mdMeshVertexComputeNormal(mdMesh *mesh, mdi vertexindex, mdi *trirefl
 static mdi mdMeshCloneVertex(mdMesh *mesh, mdi cloneindex, mdf *point)
 {
     mdi vertexindex, retindex;
-    mdVertex *vertex;
-    mdOpAttrib *attrib, *attribend;
-    void *attrsrc, *attrdst;
+    mdVertex *vertex = NULL;
+    mdOpAttrib *attrib = NULL;
+    mdOpAttrib *attribend = NULL;
+    void *attrsrc = NULL;
+    void *attrdst = NULL;
 
     retindex = -1;
     vertex = &mesh->vertexlist[mesh->clonesearchindex];
@@ -3044,7 +3043,6 @@ static mdi mdMeshCloneVertex(mdMesh *mesh, mdi cloneindex, mdf *point)
 
 	/* Copy generic vertex attributes from the cloned vertex */
 	if (mesh->attribcount) {
-	    attrib = mesh->attrib;
 	    attribend = &mesh->attrib[mesh->attribcount];
 
 	    for (attrib = mesh->attrib; attrib < attribend; attrib++) {
@@ -3259,10 +3257,13 @@ static int mdMeshVertexCheckUse(mdMesh *mesh, mdi *trireflist, int trirefcount)
 static void mdMeshWriteVertices(mdMesh *mesh, mdOpAttrib *normalattrib, mdf *vertexnormal)
 {
     mdi vertexindex, writeindex;
-    mdf *point, *normal;
-    mdVertex *vertex;
-    mdOpAttrib *attrib, *attribend;
-    void *attrsrc, *attrdst;
+    mdf *point = NULL;
+    mdf *normal = NULL;
+    mdVertex *vertex = NULL;
+    mdOpAttrib *attrib = NULL;
+    mdOpAttrib *attribend = NULL;
+    void *attrsrc = NULL;
+    void *attrdst = NULL;
     void (*writenormal)(void *dst, mdf * src);
 
     writenormal = 0;
@@ -3277,7 +3278,6 @@ static void mdMeshWriteVertices(mdMesh *mesh, mdOpAttrib *normalattrib, mdf *ver
     point = mesh->point;
     writeindex = 0;
     vertex = mesh->vertexlist;
-    attrib = mesh->attrib;
     attribend = &mesh->attrib[mesh->attribcount];
 
     for (vertexindex = 0; vertexindex < mesh->vertexcount; vertexindex++, vertex++) {
@@ -3555,8 +3555,8 @@ static void mdUpdateStatus(mdMesh *mesh, mdThreadInit *threadinit, int stage, md
     int threadid, stageindex;
     long buildtricount, buildrefcount, populatecount, deletioncount;
     double progress, subprogress;
-    mdThreadInit *tinit;
-    mdThreadData *tdata;
+    mdThreadInit *tinit = NULL;
+    mdThreadData *tdata = NULL;
 
     subprogress = 0.0;
 
@@ -3565,8 +3565,6 @@ static void mdUpdateStatus(mdMesh *mesh, mdThreadInit *threadinit, int stage, md
     else {
 	tinit = &threadinit[0];
 	status->stage = tinit->stage;
-
-	tdata = tinit->tdata;
 
 	if ((unsigned)status->stage >= MD_STATUS_STAGE_COUNT)
 	    return;
@@ -3951,7 +3949,7 @@ int mdMeshDecimation(mdOperation *operation, int flags)
     for (threadid = 0; threadid < threadcount; threadid++, tinit++)
 	operation->decimationcount += tinit->decimationcount;
 
-    if (mesh.updatestatusflag) {
+    if (mesh.updatestatusflag && operation->statuscallback) {
 	mdUpdateStatus(&mesh, 0, MD_STATUS_STAGE_STORE, &status);
 	operation->statuscallback(operation->statusopaquepointer, &status);
     }
@@ -3967,7 +3965,7 @@ int mdMeshDecimation(mdOperation *operation, int flags)
     operation->vertexcount = mesh.vertexpackcount;
     operation->tricount = mesh.tripackcount;
 
-    if (mesh.updatestatusflag) {
+    if (mesh.updatestatusflag && operation->statuscallback) {
 	mdUpdateStatus(&mesh, 0, MD_STATUS_STAGE_DONE, &status);
 	operation->statuscallback(operation->statusopaquepointer, &status);
     }
@@ -3987,3 +3985,14 @@ error:
 
     return 1;
 }
+
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

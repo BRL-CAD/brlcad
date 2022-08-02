@@ -23,17 +23,10 @@
 #define IN_LIBEXSLT
 #include "libexslt/libexslt.h"
 
-#if defined(WIN32) && !defined (__CYGWIN__) && (!__MINGW32__)
-#include <win32config.h>
-#else
-#include "config.h"
-#endif
-
 #include <libxml/tree.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
-#include <libxslt/xsltconfig.h>
 #include <libxslt/xsltutils.h>
 #include <libxslt/xsltInternals.h>
 #include <libxslt/extensions.h>
@@ -74,11 +67,11 @@ exsltDynEvaluateFunction(xmlXPathParserContextPtr ctxt, int nargs) {
 	ret = xmlXPathEval(str,ctxt->context);
 	if (ret)
 		valuePush(ctxt,ret);
- 	else {
+	else {
 		xsltGenericError(xsltGenericErrorContext,
 			"dyn:evaluate() : unable to evaluate expression '%s'\n",str);
 		valuePush(ctxt,xmlXPathNewNodeSet(NULL));
-	}	
+	}
 	xmlFree(str);
 	return;
 }
@@ -113,24 +106,12 @@ exsltDynMapFunction(xmlXPathParserContextPtr ctxt, int nargs)
         return;
     }
     str = xmlXPathPopString(ctxt);
-    if (xmlXPathCheckError(ctxt)) {
-        xmlXPathSetTypeError(ctxt);
-        return;
-    }
+    if (xmlXPathCheckError(ctxt))
+        goto cleanup;
 
     nodeset = xmlXPathPopNodeSet(ctxt);
-    if (xmlXPathCheckError(ctxt)) {
-        xmlXPathSetTypeError(ctxt);
-        return;
-    }
-    if (str == NULL || !xmlStrlen(str) || !(comp = xmlXPathCompile(str))) {
-        if (nodeset != NULL)
-            xmlXPathFreeNodeSet(nodeset);
-        if (str != NULL)
-            xmlFree(str);
-        valuePush(ctxt, xmlXPathNewNodeSet(NULL));
-        return;
-    }
+    if (xmlXPathCheckError(ctxt))
+        goto cleanup;
 
     ret = xmlXPathNewNodeSet(NULL);
     if (ret == NULL) {
@@ -139,21 +120,26 @@ exsltDynMapFunction(xmlXPathParserContextPtr ctxt, int nargs)
         goto cleanup;
     }
 
-    oldDoc = ctxt->context->doc;
-    oldNode = ctxt->context->node;
-    oldContextSize = ctxt->context->contextSize;
-    oldProximityPosition = ctxt->context->proximityPosition;
-
-        /** 
-	 * since we really don't know we're going to be adding node(s) 
-	 * down the road we create the RVT regardless 
-	 */
     tctxt = xsltXPathGetTransformContext(ctxt);
     if (tctxt == NULL) {
 	xsltTransformError(xsltXPathGetTransformContext(ctxt), NULL, NULL,
 	      "dyn:map : internal error tctxt == NULL\n");
 	goto cleanup;
     }
+
+    if (str == NULL || !xmlStrlen(str) ||
+        !(comp = xmlXPathCtxtCompile(tctxt->xpathCtxt, str)))
+        goto cleanup;
+
+    oldDoc = ctxt->context->doc;
+    oldNode = ctxt->context->node;
+    oldContextSize = ctxt->context->contextSize;
+    oldProximityPosition = ctxt->context->proximityPosition;
+
+        /**
+	 * since we really don't know we're going to be adding node(s)
+	 * down the road we create the RVT regardless
+	 */
     container = xsltCreateRVT(tctxt);
     if (container == NULL) {
 	xsltTransformError(tctxt, NULL, NULL,
@@ -167,10 +153,27 @@ exsltDynMapFunction(xmlXPathParserContextPtr ctxt, int nargs)
         ctxt->context->proximityPosition = 0;
         for (i = 0; i < nodeset->nodeNr; i++) {
             xmlXPathObjectPtr subResult = NULL;
+            xmlNodePtr cur = nodeset->nodeTab[i];
 
             ctxt->context->proximityPosition++;
-            ctxt->context->node = nodeset->nodeTab[i];
-            ctxt->context->doc = nodeset->nodeTab[i]->doc;
+            ctxt->context->node = cur;
+
+            if (cur->type == XML_NAMESPACE_DECL) {
+                /*
+                * The XPath module sets the owner element of a ns-node on
+                * the ns->next field.
+                */
+                cur = (xmlNodePtr) ((xmlNsPtr) cur)->next;
+                if ((cur == NULL) || (cur->type != XML_ELEMENT_NODE)) {
+                    xsltGenericError(xsltGenericErrorContext,
+                        "Internal error in exsltDynMapFunction: "
+                        "Cannot retrieve the doc of a namespace node.\n");
+                    continue;
+                }
+                ctxt->context->doc = cur->doc;
+            } else {
+                ctxt->context->doc = cur->doc;
+            }
 
             subResult = xmlXPathCompiledEval(comp, ctxt->context);
             if (subResult != NULL) {
@@ -185,21 +188,20 @@ exsltDynMapFunction(xmlXPathParserContextPtr ctxt, int nargs)
                         break;
                     case XPATH_BOOLEAN:
                         if (container != NULL) {
-                            xmlNodePtr cur =
-                                xmlNewChild((xmlNodePtr) container, NULL,
-                                            BAD_CAST "boolean",
-                                            BAD_CAST (subResult->
-                                            boolval ? "true" : ""));
-                            if (cur != NULL) {
-                                cur->ns =
-                                    xmlNewNs(cur,
+                            xmlNodePtr newChildNode =
+                                xmlNewTextChild((xmlNodePtr) container, NULL,
+                                                BAD_CAST "boolean",
+                                                BAD_CAST (subResult->
+                                                boolval ? "true" : ""));
+                            if (newChildNode != NULL) {
+                                newChildNode->ns =
+                                    xmlNewNs(newChildNode,
                                              BAD_CAST
                                              "http://exslt.org/common",
                                              BAD_CAST "exsl");
                                 xmlXPathNodeSetAddUnique(ret->nodesetval,
-                                                         cur);
+                                                         newChildNode);
                             }
-			    xsltExtensionInstructionResultRegister(tctxt, ret);
                         }
                         break;
                     case XPATH_NUMBER:
@@ -207,40 +209,38 @@ exsltDynMapFunction(xmlXPathParserContextPtr ctxt, int nargs)
                             xmlChar *val =
                                 xmlXPathCastNumberToString(subResult->
                                                            floatval);
-                            xmlNodePtr cur =
-                                xmlNewChild((xmlNodePtr) container, NULL,
-                                            BAD_CAST "number", val);
+                            xmlNodePtr newChildNode =
+                                xmlNewTextChild((xmlNodePtr) container, NULL,
+                                                BAD_CAST "number", val);
                             if (val != NULL)
                                 xmlFree(val);
 
-                            if (cur != NULL) {
-                                cur->ns =
-                                    xmlNewNs(cur,
+                            if (newChildNode != NULL) {
+                                newChildNode->ns =
+                                    xmlNewNs(newChildNode,
                                              BAD_CAST
                                              "http://exslt.org/common",
                                              BAD_CAST "exsl");
                                 xmlXPathNodeSetAddUnique(ret->nodesetval,
-                                                         cur);
+                                                         newChildNode);
                             }
-			    xsltExtensionInstructionResultRegister(tctxt, ret);
                         }
                         break;
                     case XPATH_STRING:
                         if (container != NULL) {
-                            xmlNodePtr cur =
-                                xmlNewChild((xmlNodePtr) container, NULL,
-                                            BAD_CAST "string",
-                                            subResult->stringval);
-                            if (cur != NULL) {
-                                cur->ns =
-                                    xmlNewNs(cur,
+                            xmlNodePtr newChildNode =
+                                xmlNewTextChild((xmlNodePtr) container, NULL,
+                                                BAD_CAST "string",
+                                                subResult->stringval);
+                            if (newChildNode != NULL) {
+                                newChildNode->ns =
+                                    xmlNewNs(newChildNode,
                                              BAD_CAST
                                              "http://exslt.org/common",
                                              BAD_CAST "exsl");
                                 xmlXPathNodeSetAddUnique(ret->nodesetval,
-                                                         cur);
+                                                         newChildNode);
                             }
-			    xsltExtensionInstructionResultRegister(tctxt, ret);
                         }
                         break;
 		    default:

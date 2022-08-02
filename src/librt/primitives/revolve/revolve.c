@@ -1,7 +1,7 @@
 /*                           R E V O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1200,9 +1200,10 @@ rt_revolve_free(struct soltab *stp)
     BU_PUT(revolve, struct revolve_specific);
 }
 
+#define VVECT_INIT16 {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO}
 
 int
-rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_revolve_internal *rip;
 
@@ -1210,7 +1211,8 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
     point2d_t *verts;
     struct rt_curve *crv;
 
-    vect_t ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
+    vect_t ell[16] = VVECT_INIT16;
+    vect_t cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
     fastf_t cos22_5 = 0.9238795325112867385;
     fastf_t cos67_5 = 0.3826834323650898373;
     int *endcount = NULL, ang_sign;
@@ -1218,10 +1220,18 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
 
+    nseg = rip->skt->curve.count;
     nvert = rip->skt->vert_count;
+
+    if (nseg && !nvert) {
+	bu_log("Trying to plot a revolve with segments but no vertices??\n");
+	return -1;
+    }
+
     verts = rip->skt->verts;
     crv = &rip->skt->curve;
 
@@ -1281,7 +1291,6 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
     if (nvert)
 	endcount = (int *)bu_calloc(nvert, sizeof(int), "endcount");
 
-    nseg = rip->skt->curve.count;
 
     for (i=0; i<nseg; i++) {
 	uint32_t *lng;
@@ -1328,16 +1337,16 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 	    VSCALE(cir[j], ucir[j], verts[i][X]);
 	    VADD3(ell[j], rip->v3d, cir[j], height);
 	}
-	RT_ADD_VLIST(vhead, ell[0], BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, ell[0], BV_VLIST_LINE_MOVE);
 	for (j=1; j<narc; j++) {
-	    RT_ADD_VLIST(vhead, ell[j], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ell[j], BV_VLIST_LINE_DRAW);
 	}
 	if (narc < 16) {
 	    VSCALE(cir[narc], rEnd, verts[i][X]);
 	    VADD3(ell[narc], rip->v3d, cir[narc], height);
-	    RT_ADD_VLIST(vhead, ell[narc], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ell[narc], BV_VLIST_LINE_DRAW);
 	} else {
-	    RT_ADD_VLIST(vhead, ell[0], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ell[0], BV_VLIST_LINE_DRAW);
 	}
     }
 
@@ -1366,48 +1375,48 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 
     /* draw sketch outlines */
     for (i=0; i<narc; i++) {
-	curve_to_vlist(vhead, ttol, rip->v3d, ucir[i], uz, rip->skt, crv);
+	curve_to_vlist(vlfree, vhead, ttol, rip->v3d, ucir[i], uz, rip->skt, crv);
 	for (j=0; j<nadd; j++) {
 	    if (j+1 < nadd &&
 		ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y])) {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, add, verts[endcount[j]][X], ucir[i]);
 		VJOIN1(add3, add, verts[endcount[j+1]][X], ucir[i]);
-		RT_ADD_VLIST(vhead, add2, BN_VLIST_LINE_MOVE);
-		RT_ADD_VLIST(vhead, add3, BN_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, add3, BV_VLIST_LINE_DRAW);
 		j++;
 	    } else {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, add, verts[endcount[j]][X], ucir[i]);
-		RT_ADD_VLIST(vhead, add, BN_VLIST_LINE_MOVE);
-		RT_ADD_VLIST(vhead, add2, BN_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, add, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_DRAW);
 	    }
 	}
     }
     if (narc < 16) {
-	curve_to_vlist(vhead, ttol, rip->v3d, rEnd, uz, rip->skt, crv);
+	curve_to_vlist(vlfree, vhead, ttol, rip->v3d, rEnd, uz, rip->skt, crv);
 	for (j=0; j<nadd; j++) {
 	    if (j+1 < nadd &&
 		ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y])) {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, add, verts[endcount[j]][X], rEnd);
 		VJOIN1(add3, add, verts[endcount[j+1]][X], rEnd);
-		RT_ADD_VLIST(vhead, add2, BN_VLIST_LINE_MOVE);
-		RT_ADD_VLIST(vhead, add3, BN_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, add3, BV_VLIST_LINE_DRAW);
 		j++;
 	    } else {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, add, verts[endcount[j]][X], rEnd);
-		RT_ADD_VLIST(vhead, add, BN_VLIST_LINE_MOVE);
-		RT_ADD_VLIST(vhead, add2, BN_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, add, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_DRAW);
 	    }
 	}
 	for (j=0; j<nadd; j+=2) {
 	    if (!ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y])) {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, rip->v3d, verts[endcount[j+1]][Y], rip->axis3d);
-		RT_ADD_VLIST(vhead, add, BN_VLIST_LINE_MOVE);
-		RT_ADD_VLIST(vhead, add2, BN_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, add, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_DRAW);
 	    }
 	}
     }

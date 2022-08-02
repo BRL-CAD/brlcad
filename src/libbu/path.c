@@ -1,7 +1,7 @@
 /*                         P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -222,10 +222,8 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 	    break;
     }
 
-    if (basename)
-	bu_free(basename, "basename");
-    if (dirname)
-	bu_free(dirname, "dirname");
+    bu_free(basename, "basename");
+    bu_free(dirname, "dirname");
 
     return ret;
 }

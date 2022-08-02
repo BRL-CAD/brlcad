@@ -1,7 +1,7 @@
 /*                         M A G I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -85,11 +85,11 @@ bu_identify_magic(register uint32_t magic)
 	case BN_UNIF_MAGIC:
 	    return "bn_unif";
 	case BN_VERT_TREE_MAGIC:
-	    return "bn_vert_tree";
-	case BN_VLBLOCK_MAGIC:
-	    return "bn_vlblock";
-	case BN_VLIST_MAGIC:
-	    return "bn_vlist";
+	    return "bg_vert_tree";
+	case BV_VLBLOCK_MAGIC:
+	    return "bv_vlblock";
+	case BV_VLIST_MAGIC:
+	    return "bv_vlist";
 
 	    /*
 	     * Primitives
@@ -190,8 +190,8 @@ bu_identify_magic(register uint32_t magic)
 	    return "knot_vector";
 	case NMG_LOOPUSE_MAGIC:
 	    return "loopuse";
-	case NMG_LOOP_G_MAGIC:
-	    return "loop_g";
+	case NMG_LOOP_A_MAGIC:
+	    return "loop_a";
 	case NMG_LOOP_MAGIC:
 	    return "loop";
 	case NMG_MODEL_MAGIC:
@@ -236,6 +236,8 @@ bu_identify_magic(register uint32_t magic)
 	    return "librt rt_comb_internal";
 	case RT_CONSTRAINT_MAGIC:
 	    return "librt rt_constraint_internal";
+	case RT_MATERIAL_MAGIC:
+	    return "librt rt_material_internal";
 	case RT_CTS_MAGIC:
 	    return "librt combined_tree_state";
 	case RT_DB_TRAVERSE_MAGIC:

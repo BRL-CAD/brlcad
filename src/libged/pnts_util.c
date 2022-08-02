@@ -1,7 +1,7 @@
 /*                    P N T S _ U T I L. C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -390,6 +390,91 @@ _ged_pnts_add(struct rt_pnts_internal *pnts, void *point)
 	default:
 	    break;
     }
+}
+
+void *
+_ged_pnts_dup(void *point, rt_pnt_type type)
+{
+    void *npnt = NULL;
+    struct pnt *pstd, *pstdnew = NULL;
+    struct pnt_color *pc, *pcnew = NULL;
+    struct pnt_scale *ps, *psnew = NULL;
+    struct pnt_normal *pn, *pnnew = NULL;
+    struct pnt_color_scale *pcs, *pcsnew = NULL;
+    struct pnt_color_normal *pcn, *pcnnew = NULL;
+    struct pnt_scale_normal *psn, *psnnew = NULL;
+    struct pnt_color_scale_normal *pcsn, *pcsnnew = NULL;
+
+    switch (type) {
+	case RT_PNT_TYPE_PNT:
+	    pstd = (struct pnt *)point;
+	    npnt = _ged_pnts_new_pnt(type);
+	    pstdnew = (struct pnt *)npnt;
+	    VMOVE(pstdnew->v, pstd->v);
+	    break;
+	case RT_PNT_TYPE_COL:
+	    pc = (struct pnt_color *)point;
+	    npnt = _ged_pnts_new_pnt(type);
+	    pcnew = (struct pnt_color *)npnt;
+	    VMOVE(pcnew->v, pc->v);
+	    pcnew->c.buc_rgb[0] = pc->c.buc_rgb[0];
+	    pcnew->c.buc_rgb[1] = pc->c.buc_rgb[1];
+	    pcnew->c.buc_rgb[2] = pc->c.buc_rgb[2];
+	    break;
+	case RT_PNT_TYPE_SCA:
+	    ps = (struct pnt_scale *)point;
+	    npnt = _ged_pnts_new_pnt(type);
+	    psnew = (struct pnt_scale *)npnt;
+	    VMOVE(psnew->v, ps->v);
+	    psnew->s = ps->s;
+	    break;
+	case RT_PNT_TYPE_NRM:
+	    pn = (struct pnt_normal *)point;
+	    npnt = _ged_pnts_new_pnt(type);
+	    pnnew = (struct pnt_normal *)npnt;
+	    VMOVE(pnnew->v, pn->v);
+	    VMOVE(pnnew->n, pn->n);
+	    break;
+	case RT_PNT_TYPE_COL_SCA:
+	    pcs = (struct pnt_color_scale *)point;
+	    npnt = _ged_pnts_new_pnt(type);
+	    pcsnew = (struct pnt_color_scale *)npnt;
+	    VMOVE(pcsnew->v, pcs->v);
+	    pcsnew->c.buc_rgb[0] = pcs->c.buc_rgb[0];
+	    pcsnew->c.buc_rgb[1] = pcs->c.buc_rgb[1];
+	    pcsnew->c.buc_rgb[2] = pcs->c.buc_rgb[2];
+	    pcsnew->s = pcs->s;
+	    break;
+	case RT_PNT_TYPE_COL_NRM:
+	    pcn = (struct pnt_color_normal *)point;
+	    npnt = _ged_pnts_new_pnt(type);
+	    pcnnew = (struct pnt_color_normal *)npnt;
+	    VMOVE(pcnnew->v, pcn->v);
+	    VMOVE(pcnnew->n, pcn->n);
+	    break;
+	case RT_PNT_TYPE_SCA_NRM:
+	    psn = (struct pnt_scale_normal *)point;
+	    npnt = _ged_pnts_new_pnt(type);
+	    psnnew = (struct pnt_scale_normal *)npnt;
+	    VMOVE(psnnew->v, psn->v);
+	    psnnew->s = psn->s;
+	    VMOVE(psnnew->n, psn->n);
+	    break;
+	case RT_PNT_TYPE_COL_SCA_NRM:
+	    pcsn = (struct pnt_color_scale_normal *)point;
+	    npnt = _ged_pnts_new_pnt(type);
+	    pcsnnew = (struct pnt_color_scale_normal *)npnt;
+	    VMOVE(pcsnnew->v, pcsn->v);
+	    pcsnnew->c.buc_rgb[0] = pcsn->c.buc_rgb[0];
+	    pcsnnew->c.buc_rgb[1] = pcsn->c.buc_rgb[1];
+	    pcsnnew->c.buc_rgb[2] = pcsn->c.buc_rgb[2];
+	    pcsnnew->s = pcsn->s;
+	    VMOVE(pcsnnew->n, pcsn->n);
+	    break;
+	default:
+	    break;
+    }
+    return npnt;
 }
 
 /*

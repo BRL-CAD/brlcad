@@ -1,7 +1,7 @@
 /*                          P A R T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -965,7 +965,7 @@ rt_part_hemisphere(register point_t (*ov), register fastf_t *v, fastf_t *a, fast
 
 
 int
-rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_part_internal *pip;
     point_t tail;
@@ -979,6 +979,7 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
 
@@ -989,21 +990,21 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 	VSET(c, 0, 0, pip->part_vrad);
 
 	rt_ell_16pnts(&sphere_rim[0][X], pip->part_V, a, b);
-	RT_ADD_VLIST(vhead, sphere_rim[15], BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, sphere_rim[15], BV_VLIST_LINE_MOVE);
 	for (i=0; i<16; i++) {
-	    RT_ADD_VLIST(vhead, sphere_rim[i], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, sphere_rim[i], BV_VLIST_LINE_DRAW);
 	}
 
 	rt_ell_16pnts(&sphere_rim[0][X], pip->part_V, b, c);
-	RT_ADD_VLIST(vhead, sphere_rim[15], BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, sphere_rim[15], BV_VLIST_LINE_MOVE);
 	for (i=0; i<16; i++) {
-	    RT_ADD_VLIST(vhead, sphere_rim[i], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, sphere_rim[i], BV_VLIST_LINE_DRAW);
 	}
 
 	rt_ell_16pnts(&sphere_rim[0][X], pip->part_V, a, c);
-	RT_ADD_VLIST(vhead, sphere_rim[15], BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, sphere_rim[15], BV_VLIST_LINE_MOVE);
 	for (i=0; i<16; i++) {
-	    RT_ADD_VLIST(vhead, sphere_rim[i], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, sphere_rim[i], BV_VLIST_LINE_DRAW);
 	}
 	return 0;		/* OK */
     }
@@ -1027,44 +1028,44 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
     rt_part_hemisphere(hhemi, tail, as, bs, hs);
 
     /* Draw V end hemisphere */
-    RT_ADD_VLIST(vhead, vhemi[0], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, vhemi[0], BV_VLIST_LINE_MOVE);
     for (i=7; i >= 0; i--) {
-	RT_ADD_VLIST(vhead, vhemi[i], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, vhemi[i], BV_VLIST_LINE_DRAW);
     }
-    RT_ADD_VLIST(vhead, vhemi[8], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, vhemi[12], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, vhemi[10], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, vhemi[4], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, vhemi[2], BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, vhemi[9], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, vhemi[12], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, vhemi[11], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, vhemi[6], BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, vhemi[8], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, vhemi[12], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, vhemi[10], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, vhemi[4], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, vhemi[2], BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, vhemi[9], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, vhemi[12], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, vhemi[11], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, vhemi[6], BV_VLIST_LINE_DRAW);
 
     /* Draw H end hemisphere */
-    RT_ADD_VLIST(vhead, hhemi[0], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, hhemi[0], BV_VLIST_LINE_MOVE);
     for (i=7; i >= 0; i--) {
-	RT_ADD_VLIST(vhead, hhemi[i], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, hhemi[i], BV_VLIST_LINE_DRAW);
     }
-    RT_ADD_VLIST(vhead, hhemi[8], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, hhemi[12], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, hhemi[10], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, hhemi[4], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, hhemi[2], BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, hhemi[9], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, hhemi[12], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, hhemi[11], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, hhemi[6], BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, hhemi[8], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, hhemi[12], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, hhemi[10], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, hhemi[4], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, hhemi[2], BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, hhemi[9], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, hhemi[12], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, hhemi[11], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, hhemi[6], BV_VLIST_LINE_DRAW);
 
     /* Draw 4 connecting lines */
-    RT_ADD_VLIST(vhead, vhemi[0], BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, hhemi[0], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, vhemi[2], BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, hhemi[2], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, vhemi[4], BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, hhemi[4], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, vhemi[6], BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, hhemi[6], BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, vhemi[0], BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, hhemi[0], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, vhemi[2], BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, hhemi[2], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, vhemi[4], BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, hhemi[4], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, vhemi[6], BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, hhemi[6], BV_VLIST_LINE_DRAW);
 
     return 0;
 }
@@ -1875,6 +1876,53 @@ rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
 
     VADD3(*cent, fcent, hhcent, cvcent);
+}
+
+void
+rt_part_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!ps || !ip)
+	return;
+
+    struct rt_part_internal *part = (struct rt_part_internal *)ip->idb_ptr;
+    RT_PART_CK_MAGIC(part);
+
+    // Set up the containers
+    struct bv_label *l[4];
+    for (int i = 0; i < 4; i++) {
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
+	struct bv_label *la;
+	BU_GET(la, struct bv_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+    }
+
+    // Do the specific data assignments for each label
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, part->part_V);
+
+    bu_vls_sprintf(&l[1]->label, "H");
+    VADD2(l[1]->p, part->part_V, part->part_H);
+
+    bu_vls_sprintf(&l[2]->label, "v");
+    vect_t Ru, ortho;
+    VMOVE(Ru, part->part_H);
+    VUNITIZE(Ru);
+    bn_vec_ortho(ortho, Ru);
+    VSCALE(l[2]->p, ortho, part->part_vrad);
+    VADD2(l[2]->p, part->part_V, l[2]->p);
+
+    bu_vls_sprintf(&l[3]->label, "h");
+    VSCALE(l[3]->p, ortho, part->part_hrad);
+    VADD3(l[3]->p, part->part_V, part->part_H, l[3]->p);
 }
 
 /*

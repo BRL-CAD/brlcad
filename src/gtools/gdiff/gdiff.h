@@ -1,7 +1,7 @@
 /*                     G D I F F 2 . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,7 +45,8 @@ struct diff_state {
     int return_unchanged;
     int return_conflicts;
     int have_search_filter;
-    int verbosity;
+    long verbosity;
+    long quiet;
     int output_mode;
     int merge;
     struct bn_tol *diff_tol;

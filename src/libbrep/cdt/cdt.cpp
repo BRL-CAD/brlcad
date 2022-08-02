@@ -1,7 +1,7 @@
 /*                        C D T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -609,7 +609,7 @@ ON_Brep_CDT_Mesh(
     std::set<ON_3dPoint *> vfnormals;
     std::set<ON_3dPoint *> flip_normals;
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
-	cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
+	cdt_mesh_t *fmesh = &s_cdt->fmeshes[(int)fi];
 	RTree<size_t, double, 3>::Iterator tree_it;
 	fmesh->tris_tree.GetFirst(tree_it);
 	size_t t_ind;
@@ -634,7 +634,7 @@ ON_Brep_CDT_Mesh(
 		    }
 		}
 	    }
-	    triangle_cnt++;;
+	    triangle_cnt++;
 	    ++tree_it;
 	}
     }
@@ -690,7 +690,7 @@ ON_Brep_CDT_Mesh(
 	    (*normals)[norm_ind*3] = vnf.x;
 	    (*normals)[norm_ind*3+1] = vnf.y;
 	    (*normals)[norm_ind*3+2] = vnf.z;
-	    on_norm_to_bot_norm[vn] = norm_ind;
+	    on_norm_to_bot_norm[vn] = (int)norm_ind;
 	    norm_ind++;
 	}
     }
@@ -698,9 +698,8 @@ ON_Brep_CDT_Mesh(
     // Iterate over faces, adding points and faces to BoT container.  Note: all
     // 3D points should be geometrically unique in this final container.
     int face_cnt = 0;
-    triangle_cnt = 0;
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
-	cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
+	cdt_mesh_t *fmesh = &s_cdt->fmeshes[(int)fi];
 	RTree<size_t, double, 3>::Iterator tree_it;
 	fmesh->tris_tree.GetFirst(tree_it);
 	size_t t_ind;

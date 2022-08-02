@@ -1,7 +1,7 @@
 /*                    V L S _ V P R I N T F . H
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,6 +20,10 @@
 
 #ifndef LIBBU_VLS_VPRINTF_H
 #define LIBBU_VLS_VPRINTF_H seen
+
+#include "common.h"
+
+__BEGIN_DECLS
 
 /* private constants */
 
@@ -48,11 +52,14 @@ vprintf_flags
     int left_justify;
     ssize_t precision;
 } vflags_t;
+#define VFLAGS_INIT_ZERO {0, 0, 0, 0, 0, 0}
 
 /* private shared function decls */
 BU_EXPORT extern int format_part_status(const char c);
 BU_EXPORT extern int handle_format_part(const int vp_part, vflags_t *f, const char c, const int print);
 BU_EXPORT extern int handle_obsolete_format_char(const char c, const int print);
+
+__END_DECLS
 
 #endif /* LIBBU_VLS_VPRINTF_H */
 

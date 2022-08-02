@@ -1,7 +1,7 @@
 /*                    R E G I O N _ E N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -195,7 +195,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     } else {
 
 	/* Write the region out */
-	data->write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color, data->client_data);
+        data->write_region(r, pathp, tsp, data->client_data);
 
     } BU_UNSETJUMP; /* Relinquish bomb protection */
 

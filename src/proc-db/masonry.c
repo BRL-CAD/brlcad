@@ -2,7 +2,7 @@
 /*                       M A S O N R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -927,22 +927,15 @@ mortar_brick(struct rt_wdb *fd)
 void
 brick(struct rt_wdb *fd)
 {
-    struct wmember wm_hd;
-    int horiz_bricks;
-    double mortar_height;
-    double mortar_width;
-    point_t pts[8];
-    char proto_brick[64];
+    struct wmember wm_hd = WMEMBER_INIT_ZERO;
+    double mortar_height = 0.0;
+    point_t pts[8] = {VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO};
+    char proto_brick[64] = {'\0'};
 
     bu_log("WARNING: the brick type option is untested\n");
 
     if (!color)
 	color = brick_color;
-
-    horiz_bricks = (WALL_WIDTH-brick_depth) / brick_width;
-
-    mortar_width = WALL_WIDTH - horiz_bricks * brick_width;
-    mortar_width /= horiz_bricks;
 
     mortar_height = 0.0;
 

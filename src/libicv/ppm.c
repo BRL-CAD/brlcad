@@ -1,7 +1,7 @@
 /*                           P P M . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ ppm_write(icv_image_t *bif, const char *filename)
 	ppm_writeppmrow(fp, pixelrow, cols, (pixval) 255, 0 );
     }
 
-    ppm_freerow(pixelrow);
+    ppm_freerow((void *)pixelrow);
 
     pm_close(fp);
 
@@ -90,6 +90,7 @@ ppm_read(const char *filename)
 
     if (filename == NULL) {
 	fp = stdin;
+	setmode(fileno(fp), O_BINARY);
     } else if ((fp = pm_openr(filename)) == NULL) {
 	bu_log("ERROR: Cannot open file for reading\n");
 	return NULL;

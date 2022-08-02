@@ -1,7 +1,7 @@
 /*                    P N T S _ U T I L. H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +22,8 @@
  * utility functionality for simple Point Set (pnts) primitive operations.
  *
  */
+#ifndef LIBGED_PNT_GED_PRIVATE_H
+#define LIBGED_PNT_GED_PRIVATE_H
 
 #include "common.h"
 
@@ -31,29 +33,38 @@
 
 #include "bu/color.h"
 #include "rt/geom.h"
+#include "ged/defines.h"
 #include "./ged_private.h"
 
-extern const char *_ged_pnt_default_fmt_str(rt_pnt_type type);
+__BEGIN_DECLS
 
-extern void _ged_pnt_v_set(void *point, rt_pnt_type type, char key, fastf_t val);
+GED_EXPORT extern const char *_ged_pnt_default_fmt_str(rt_pnt_type type);
 
-extern void _ged_pnt_c_set(void *point, rt_pnt_type type, char key, fastf_t val);
+GED_EXPORT extern void _ged_pnt_v_set(void *point, rt_pnt_type type, char key, fastf_t val);
 
-extern void _ged_pnt_s_set(void *point, rt_pnt_type type, char key, fastf_t val);
+GED_EXPORT extern void _ged_pnt_c_set(void *point, rt_pnt_type type, char key, fastf_t val);
 
-extern void _ged_pnt_n_set(void *point, rt_pnt_type type, char key, fastf_t val);
+GED_EXPORT extern void _ged_pnt_s_set(void *point, rt_pnt_type type, char key, fastf_t val);
 
-extern rt_pnt_type _ged_pnts_fmt_type(const char *fc);
+GED_EXPORT extern void _ged_pnt_n_set(void *point, rt_pnt_type type, char key, fastf_t val);
 
-extern rt_pnt_type _ged_pnts_fmt_guess(int numcnt);
+GED_EXPORT extern rt_pnt_type _ged_pnts_fmt_type(const char *fc);
 
-extern int _ged_pnts_fmt_match(rt_pnt_type t, int numcnt);
+GED_EXPORT extern rt_pnt_type _ged_pnts_fmt_guess(int numcnt);
 
-extern void _ged_pnts_init_head_pnt(struct rt_pnts_internal *pnts);
+GED_EXPORT extern int _ged_pnts_fmt_match(rt_pnt_type t, int numcnt);
 
-extern void * _ged_pnts_new_pnt(rt_pnt_type t);
+GED_EXPORT extern void _ged_pnts_init_head_pnt(struct rt_pnts_internal *pnts);
 
-extern void _ged_pnts_add(struct rt_pnts_internal *pnts, void *point);
+GED_EXPORT extern void * _ged_pnts_new_pnt(rt_pnt_type t);
+
+GED_EXPORT extern void _ged_pnts_add(struct rt_pnts_internal *pnts, void *point);
+
+GED_EXPORT extern void * _ged_pnts_dup(void *point, rt_pnt_type t);
+
+__END_DECLS
+
+#endif //LIBGED_PNT_GED_PRIVATE_H
 
 /*
  * Local Variables:

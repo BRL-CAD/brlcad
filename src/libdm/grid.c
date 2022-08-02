@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,10 +29,10 @@
 
 #include "vmath.h"
 #include "dm.h"
-#include "dm_private.h"
+#include "./include/private.h"
 
 void
-dm_draw_grid(dm *dmp, struct bview_grid_state *ggsp, fastf_t scale, mat_t model2view, fastf_t base2local)
+dm_draw_grid(struct dm *dmp, struct bv_grid_state *ggsp, fastf_t scale, mat_t model2view, fastf_t base2local)
 {
     int	i, j;
     int	nh, nv;
@@ -60,13 +60,13 @@ dm_draw_grid(dm *dmp, struct bview_grid_state *ggsp, fastf_t scale, mat_t model2
 
     /* sanity - don't draw the grid if it would fill the screen */
     {
-	fastf_t pixel_size = 2.0 * sf / dmp->dm_width;
+	fastf_t pixel_size = 2.0 * sf / dmp->i->dm_width;
 	if ( (ggsp->res_h*base2local) < pixel_size || (ggsp->res_v*base2local) < pixel_size )
 	    return;
     }
 
     inv_sf = 1.0 / sf;
-    inv_aspect = 1.0 / dmp->dm_aspect;
+    inv_aspect = 1.0 / dmp->i->dm_aspect;
 
     nv_dots = 2.0 * inv_aspect * sf * inv_grid_res_v + (2 * ggsp->res_major_v);
     nh_dots = 2.0 * sf * inv_grid_res_h + (2 * ggsp->res_major_h);
@@ -101,7 +101,7 @@ dm_draw_grid(dm *dmp, struct bview_grid_state *ggsp, fastf_t scale, mat_t model2
 
 	for (j = 0; j < nh_dots; ++j) {
 	    fx = (view_grid_start_pt_local[X] + (j * ggsp->res_h * base2local)) * inv_sf;
-	    dm_draw_point_2d(dmp, fx, fy * dmp->dm_aspect);
+	    dm_draw_point_2d(dmp, fx, fy * dmp->i->dm_aspect);
 	}
     }
 
@@ -112,7 +112,7 @@ dm_draw_grid(dm *dmp, struct bview_grid_state *ggsp, fastf_t scale, mat_t model2
 
 	    for (j = 0; j < nv_dots; ++j) {
 		fy = (view_grid_start_pt_local[Y] + (j * ggsp->res_v * base2local)) * inv_sf;
-		dm_draw_point_2d(dmp, fx, fy * dmp->dm_aspect);
+		dm_draw_point_2d(dmp, fx, fy * dmp->i->dm_aspect);
 	    }
 	}
     }

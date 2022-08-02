@@ -1,5 +1,25 @@
 set(nmg_headers
+  check.h
   debug.h
+  defines.h
+  edge.h
+  face.h
+  globals.h
+  index.h
+  io.h
+  isect.h
+  loop.h
+  model.h
+  nurb.h
+  plot.h
+  print.h
+  radial.h
+  ray.h
+  region.h
+  shell.h
+  topology.h
+  vertex.h
+  visit.h
   )
 BRLCAD_MANAGE_FILES(nmg_headers ${INCLUDE_DIR}/brlcad/nmg)
 

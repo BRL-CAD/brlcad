@@ -1,7 +1,7 @@
 /*                   G _ O B J E C T S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
 {
     //int type;
     struct bn_tol tol;
-    //struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+    //struct bn_tol arb_tol = BG_TOL_INIT;
     ON_Brep **brep;
     STEPentity *brep_shape;
     STEPentity *brep_product;

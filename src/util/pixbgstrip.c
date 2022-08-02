@@ -1,7 +1,7 @@
 /*                    P I X B G S T R I P . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2020 United States Government as represented by
+ * Copyright (c) 1991-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 static unsigned char *scanline;		/* 1 scanline pixel buffer */
@@ -98,7 +98,7 @@ get_args(int argc, char **argv)
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((infp = fopen(file_name, "r")) == NULL) {
+	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
 	    fprintf(stderr,
 		    "pixbgstrip: cannot open \"%s\" for reading\n",
@@ -133,6 +133,9 @@ main(int argc, char **argv)
 	(void)fputs(usage, stderr);
 	bu_exit (1, NULL);
     }
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     /* autosize input? */
     if (fileinput && autosize) {

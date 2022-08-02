@@ -47,7 +47,7 @@ displayed.
   <example><title>List the paths to the displayed shapes.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>x</userinput>
+      <prompt>mged&gt; </prompt><userinput>x</userinput>
     </para>
     <para>Lists the paths to the displayed shapes.
 

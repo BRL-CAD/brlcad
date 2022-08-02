@@ -1,7 +1,7 @@
 /*                        N M G _ P R . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -162,12 +162,12 @@ nmg_pr_sa(const struct shell_a *sa, char *h)
 
 
 void
-nmg_pr_lg(const struct loop_g *lg, char *h)
+nmg_pr_lg(const struct loop_a *lg, char *h)
 {
     MKPAD(h);
-    NMG_CK_LOOP_G(lg);
+    NMG_CK_LOOP_A(lg);
 
-    bu_log("%sLOOP_G %p\n", h, (void *)lg);
+    bu_log("%sLOOP_A %p\n", h, (void *)lg);
     bu_log("%s%f %f %f Min\n", h, lg->min_pt[X], lg->min_pt[Y],
 	   lg->min_pt[Z]);
     bu_log("%s%f %f %f Max\n", h, lg->max_pt[X], lg->max_pt[Y],
@@ -393,9 +393,9 @@ nmg_pr_l(const struct loop *l, char *h)
 	Return;
     }
     bu_log("%s%p lu_p\n", h, (void *)l->lu_p);
-    bu_log("%s%p lg_p\n", h, (void *)l->lg_p);
-    if (l->lg_p)
-	nmg_pr_lg(l->lg_p, h);
+    bu_log("%s%p lg_p\n", h, (void *)l->la_p);
+    if (l->la_p)
+	nmg_pr_lg(l->la_p, h);
 
     Return;
 }
@@ -778,7 +778,7 @@ nmg_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
     register long **lp;
 
     BU_CK_PTBL(tbl);
-    bu_log("%s: bu_ptbl array with %ld entries\n",
+    bu_log("%s: bu_ptbl array with %zu entries\n",
 	   title, tbl->end);
 
     if (!verbose) return;
@@ -861,8 +861,8 @@ nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t 
  * Does not mind wire edges.
  */
 void
-nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec,
-		   const fastf_t *zvec, const struct bn_tol *UNUSED(tol))
+nmg_pr_one_eu_vecs(const struct edgeuse *eu, const vect_t xvec, const vect_t yvec,
+		   const vect_t zvec, const struct bn_tol *UNUSED(tol))
 {
     const struct loopuse *lu;
     const struct faceuse *fu;
@@ -915,7 +915,7 @@ nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t 
 
 
 void
-nmg_pr_fu_around_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec, const struct bn_tol *tol)
+nmg_pr_fu_around_eu_vecs(const struct edgeuse *eu, const vect_t xvec, const vect_t yvec, const vect_t zvec, const struct bn_tol *tol)
 {
     const struct edgeuse *eu1;
 
@@ -994,7 +994,7 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu, struct bu_list *vlfree)
 	return;
     }
 
-    b = (long *)nmg_calloc(nmg_find_model((uint32_t *)eu)->maxindex, sizeof(long),
+    b = (long *)bu_calloc(nmg_find_model((uint32_t *)eu)->maxindex, sizeof(long),
 			  "nmg_pl_lu_around_eu flag[]");
 
     /* To go correct way around, start with arg's mate,
@@ -1017,7 +1017,7 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu, struct bu_list *vlfree)
 	eu1 = eu1->radial_p;
     } while (eu1 != eu);
 
-    nmg_free((char *)b, "nmg_pl_lu_around_eu flag[]");
+    bu_free((char *)b, "nmg_pl_lu_around_eu flag[]");
     fclose(fp);
     bu_log("Wrote %s\n", buf);
 }

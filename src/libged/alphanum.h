@@ -58,6 +58,9 @@ This copy has been simplified down to the essential sorting comparison of C stri
   @param r NULL-terminated C-style string
   @return negative if l<r, 0 if l equals r, positive if l>r
   */
+int alphanum_impl(const char *l, const char *r, void *arg);
+
+#ifdef ALPHANUM_IMPL
 int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
 {
     enum alphanum_mode_t { STRING, NUMBER } mode=STRING;
@@ -92,19 +95,29 @@ int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
 	}
 	else // mode==NUMBER
 	{
-	    // get the left number
-	    char *end;
-	    unsigned long l_int=strtoul(l, &end, 0);
-	    l=end;
+	    // try to get the numbers
+	    char *lend, *rend;
+	    unsigned long l_int=strtoul(l, &lend, 0);
+	    unsigned long r_int=strtoul(r, &rend, 0);
 
-	    // get the right number
-	    unsigned long r_int=strtoul(r, &end, 0);
-	    r=end;
-
-	    // if the difference is not equal to zero, we have a comparison result
-	    const long diff=l_int-r_int;
-	    if(diff != 0)
-		return diff;
+	    if (lend == l || rend == r) {
+		// One or more of the numerical conversions failed.  Fall back
+		// on char comparison
+		char l_char=*l;
+		char r_char=*r;
+		const int diff = l_char - r_char;
+		if(diff != 0) return diff;
+		++l;
+		++r;
+	    } else {
+		// Numerical conversion successful - proceed
+		l=lend;
+		r=rend;
+		// if the difference is not equal to zero, we have a comparison result
+		const long diff=l_int-r_int;
+		if(diff != 0)
+		    return diff;
+	    }
 
 	    // otherwise we process the next substring in STRING mode
 	    mode=STRING;
@@ -115,8 +128,9 @@ int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
     if(*l) return +1;
     return 0;
 }
+#endif //ALPHANUM_IMPL
 
-#endif
+#endif //ALPHANUM_H
 
 /*
  * Local Variables:

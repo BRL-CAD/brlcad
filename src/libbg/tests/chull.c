@@ -1,7 +1,7 @@
 /*                      B N _ C H U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bg.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 HIDDEN
 void plot_chull(int test_num, const point_t *pnt_array, int pnt_cnt)
@@ -37,7 +37,7 @@ void plot_chull(int test_num, const point_t *pnt_array, int pnt_cnt)
     FILE *plot_file = NULL;
     bu_vls_init(&name);
     bu_vls_printf(&name, "chull_test_%.3d.plot3", test_num);
-    plot_file = fopen(bu_vls_addr(&name), "w");
+    plot_file = fopen(bu_vls_addr(&name), "wb");
     pl_color(plot_file, 0, 255, 0);
     for (i = 0; i < pnt_cnt; i++) {
 	pdv_3move(plot_file, pnt_array[i]);
@@ -60,7 +60,7 @@ void plot2d_chull(int test_num, const point2d_t *pnt_array, int pnt_cnt)
     point_t p3d;
     bu_vls_init(&name);
     bu_vls_printf(&name, "chull_test_%.3d.plot3", test_num);
-    plot_file = fopen(bu_vls_addr(&name), "w");
+    plot_file = fopen(bu_vls_addr(&name), "wb");
     pl_color(plot_file, 0, 255, 0);
     for (i = 0; i < pnt_cnt; i++) {
 	VSET(p3d, pnt_array[i][X], pnt_array[i][Y], 0);
@@ -85,7 +85,7 @@ void plot_chull2(int test_num, int *hull, int pnt_cnt, const point_t *pnt_array)
     FILE *plot_file = NULL;
     bu_vls_init(&name);
     bu_vls_printf(&name, "chull2_test_%.3d.plot3", test_num);
-    plot_file = fopen(bu_vls_addr(&name), "w");
+    plot_file = fopen(bu_vls_addr(&name), "wb");
     pl_color(plot_file, 0, 255, 0);
     for (i = 0; i < pnt_cnt; i++) {
 	pdv_3move(plot_file, pnt_array[hull[i]]);
@@ -108,7 +108,7 @@ void plot2d_chull2(int test_num, int *hull, int pnt_cnt, const point2d_t *pnt_ar
     point_t p3d;
     bu_vls_init(&name);
     bu_vls_printf(&name, "chull2_test_%.3d.plot3", test_num);
-    plot_file = fopen(bu_vls_addr(&name), "w");
+    plot_file = fopen(bu_vls_addr(&name), "wb");
     pl_color(plot_file, 0, 255, 0);
     for (i = 0; i < pnt_cnt; i++) {
 	VSET(p3d, pnt_array[hull[i]][X], pnt_array[hull[i]][Y], 0);

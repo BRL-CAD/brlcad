@@ -1,7 +1,7 @@
 /*                         D A T U M . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -144,13 +144,14 @@ rt_datum_free(struct soltab *stp)
 
 
 int
-rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_datum_internal *datum_ip;
     point_t point_size = VINIT_ZERO;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     datum_ip = (struct rt_datum_internal *)ip->idb_ptr;
     RT_DATUM_CK_MAGIC(datum_ip);
 
@@ -158,7 +159,7 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 
     /* make sure plotted points are an odd selectable number of pixels with a center pixel, 5x5 */
     point_size[X] = 5.0;
-    RT_ADD_VLIST(vhead, point_size, BN_VLIST_POINT_SIZE);
+    BV_ADD_VLIST(vlfree, vhead, point_size, BV_VLIST_POINT_SIZE);
 
     while (datum_ip) {
 	if (!ZERO(datum_ip->w)) {
@@ -169,8 +170,8 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    VMOVE(up, datum_ip->dir);
 	    VUNITIZE(up);
 	    VADD2(tip, datum_ip->pnt, datum_ip->dir);
-	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_POINT_DRAW);
-	    RT_ADD_VLIST(vhead, tip, BN_VLIST_POINT_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, datum_ip->pnt, BV_VLIST_POINT_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, tip, BV_VLIST_POINT_DRAW);
 
 	    VSUB2(up, tip, datum_ip->pnt);
 	    VUNITIZE(up);
@@ -184,8 +185,8 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    VSCALE(nright, nright, MAGNITUDE(datum_ip->dir));
 
 	    /* line to normal point */
-	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, datum_ip->pnt, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, tip, BV_VLIST_LINE_DRAW);
 
 	    /* draw the box */
 	    VJOIN2(ul, datum_ip->pnt, datum_ip->w, left, datum_ip->w, right);
@@ -193,11 +194,11 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    VJOIN2(ur, datum_ip->pnt, datum_ip->w, left, datum_ip->w, nright);
 	    VJOIN2(lr, datum_ip->pnt, datum_ip->w, nleft, datum_ip->w, nright);
 
-	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, ll, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, lr, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, ur, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ul, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, ll, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, lr, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ur, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ul, BV_VLIST_LINE_DRAW);
 
 	} else if (MAGNITUDE(datum_ip->dir) > 0.0 && ZERO(datum_ip->w)) {
 	    vect_t left, right, nleft, nright, dir;
@@ -211,8 +212,8 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    /* draw main segment minus a smidgen for an arrowhead */
 	    VSCALE(line_seg, datum_ip->dir, 1.0 - arrowhead_percentage);
 	    VADD2(endpt, datum_ip->pnt, line_seg);
-	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, endpt, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, datum_ip->pnt, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, endpt, BV_VLIST_LINE_DRAW);
 
 	    /* calculate arrowhead points */
 	    VMOVE(dir, datum_ip->dir);
@@ -232,22 +233,22 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    VJOIN2(lr, endpt, 1, nleft, 1, nright);
 
 	    /* draw arrowhead */
-	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, lr, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, ll, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, ur, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ul, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, tip, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, lr, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ll, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, tip, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ur, BV_VLIST_LINE_DRAW);
 
 
-	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, ll, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, lr, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, ur, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ul, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, ll, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, lr, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ur, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ul, BV_VLIST_LINE_DRAW);
 
 	} else {
-	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_POINT_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, datum_ip->pnt, BV_VLIST_POINT_DRAW);
 	}
 	datum_ip = datum_ip->next;
     }
@@ -392,13 +393,13 @@ rt_datum_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
     buf = (unsigned char *)ep->ext_buf;
 
     /* unpack our datum set count */
-    count = ntohl(*(uint32_t *)buf);
+    count = bu_ntohl(*(uint32_t *)buf, 0, UINT_MAX - 1);
     buf += SIZEOF_NETWORK_LONG;
 
     while (count-- > 0) {
 	struct rt_datum_internal *datum_ip;
 
-	size_t vals = ntohl(*(uint32_t *)buf);
+	size_t vals = bu_ntohl(*(uint32_t *)buf, 0, UINT_MAX - 1);
 	buf += SIZEOF_NETWORK_LONG;
 
 	if (vals > MAX_VALS)

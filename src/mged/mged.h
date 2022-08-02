@@ -1,7 +1,7 @@
 /*                           M G E D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,6 +63,10 @@
 #include <time.h>
 
 #include "tcl.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#  define HAVE_X11_TYPES 1
+#endif
 #include "bu/parallel.h"
 #include "bu/list.h"
 #include "bu/str.h"
@@ -72,12 +76,10 @@
 /* Needed to define struct menu_item */
 #include "./menu.h"
 
-/* Needed to define struct w_dm */
-#include "./mged_dm.h"
+/* Needed to define struct bv_scene_obj */
+#include "bv/defines.h"
 
-/* Needed to define struct solid */
-#include "rt/solid.h"
-
+#include "./mged_dm.h" /* _view_state */
 
 #define MGED_DB_NAME "db"
 #define MGED_INMEM_NAME ".inmem"
@@ -181,7 +183,7 @@ extern int irot();
 extern void mged_setup(Tcl_Interp **interpreter);
 extern void mged_global_variable_teardown(Tcl_Interp *interpreter); /* cmd.c */
 extern void dir_build();
-extern void buildHrot(fastf_t *, double, double, double);
+extern void buildHrot(mat_t, double, double, double);
 extern void dozoom(int which_eye);
 #ifndef _WIN32
 extern void itoa(int n, char *s, int w);
@@ -189,7 +191,7 @@ extern void itoa(int n, char *s, int w);
 extern void eraseobj(struct directory **dpp);
 extern void eraseobjall(struct directory **dpp);
 extern void mged_finish(int exitcode);
-extern void slewview(fastf_t *view_pos);
+extern void slewview(vect_t view_pos);
 extern void mmenu_init(void);
 extern void moveHinstance(struct directory *cdp, struct directory *dp, matp_t xlate);
 extern void moveHobj(struct directory *dp, matp_t xlate);
@@ -247,7 +249,7 @@ void history_setup(void);
 extern int movedir;  /* RARROW | UARROW | SARROW | ROTARROW */
 
 extern struct display_list *illum_gdlp; /* Pointer to solid in solid table to be illuminated */
-extern struct solid *illump; /* == 0 if none, else points to ill. solid */
+extern struct bv_scene_obj *illump; /* == 0 if none, else points to ill. solid */
 extern int ipathpos; /* path index of illuminated element */
 extern int sedraw; /* apply solid editing changes */
 extern int edobj; /* object editing options */
@@ -413,7 +415,7 @@ struct mged_hist {
 /* internal variables related to the command window(s) */
 struct cmd_list {
     struct bu_list l;
-    struct dm_list *cl_tie;        /* the drawing window that we're tied to */
+    struct mged_dm *cl_tie;        /* the drawing window that we're tied to */
     struct mged_hist *cl_cur_hist;
     struct bu_vls cl_more_default;
     struct bu_vls cl_name;
@@ -445,9 +447,9 @@ extern struct run_rt head_run_rt;
 
 /* attach.c */
 int is_dm_null(void);
-int mged_attach(struct w_dm *wp, int argc, const char *argv[]);
-void mged_link_vars(struct dm_list *p);
-void mged_slider_free_vls(struct dm_list *p);
+int mged_attach(const char *wp_name, int argc, const char *argv[]);
+void mged_link_vars(struct mged_dm *p);
+void mged_slider_free_vls(struct mged_dm *p);
 int gui_setup(const char *dstr);
 int gui_output(void *clientData, void *str);
 
@@ -473,7 +475,7 @@ void size_reset(void);
 void solid_list_callback(void);
 
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
-extern void view_ring_destroy(struct dm_list *dlp);
+extern void view_ring_destroy(struct mged_dm *dlp);
 
 /* cmd.c */
 int cmdline(struct bu_vls *vp, int record);
@@ -508,16 +510,16 @@ int cmd_killtree(
     const char *argv[]);
 
 /* dodraw.c */
-void cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy);
+void cvt_vlblock_to_solids(struct bv_vlblock *vbp, const char *name, int copy);
 int drawtrees(int argc, const char *argv[], int kind);
-int replot_modified_solid(struct solid *sp, struct rt_db_internal *ip, const mat_t mat);
-int replot_original_solid(struct solid *sp);
-void add_solid_path_to_result(Tcl_Interp *interpreter, struct solid *sp);
+int replot_modified_solid(struct bv_scene_obj *sp, struct rt_db_internal *ip, const mat_t mat);
+int replot_original_solid(struct bv_scene_obj *sp);
+void add_solid_path_to_result(Tcl_Interp *interpreter, struct bv_scene_obj *sp);
 int redraw_visible_objects(void);
 
 /* dozoom.c */
 void createDLists(struct bu_list *hdlp);
-void createDListSolid(struct solid *sp);
+void createDListSolid(struct bv_scene_obj *sp);
 void createDListAll(struct display_list *gdlp);
 void freeDListsAll(unsigned int dlist, int range);
 
@@ -601,13 +603,13 @@ void oedit_abs_scale(void);
 void oedit_accept(void);
 void oedit_reject(void);
 void objedit_mouse(const vect_t mousevec);
-extern int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const fastf_t *ref_pt, const fastf_t *mat);
+extern int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt, const mat_t mat);
 void label_edited_solid(int *num_lines, point_t *lines, struct rt_point_labels pl[], int max_pl, const mat_t xform, struct rt_db_internal *ip);
 void init_oedit(void);
 void init_sedit(void);
 
 /* share.c */
-void usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2);
+void usurp_all_resources(struct mged_dm *dlp1, struct mged_dm *dlp2);
 
 /* inside.c */
 int torin(struct rt_db_internal *ip, fastf_t thick[6]);

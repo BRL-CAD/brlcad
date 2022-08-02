@@ -1,7 +1,7 @@
 /*                        N M G _ M K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,6 +65,33 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "nmg.h"
+#include "./nmg_private.h"
+
+/*
+ * To find all the uses of this loop, use lu_p for one loopuse, then
+ * go down and find an edge, then wander around either eumate_p or
+ * radial_p from there.
+ *
+ * Normally, down_hd heads a doubly linked list of edgeuses.  But,
+ * before using it, check BU_LIST_FIRST_MAGIC(&lu->down_hd) for the
+ * magic number type.  If this is a self-loop on a single vertexuse,
+ * then get the vertex pointer with vu = BU_LIST_FIRST(vertexuse,
+ * &lu->down_hd)
+ *
+ * This is an especially dangerous storage efficiency measure
+ * ("hack"), because the list that the vertexuse structure belongs to
+ * is headed, not by a superior element type, but by the vertex
+ * structure.  When a loopuse needs to point down to a vertexuse, rip
+ * off the forw pointer.  Take careful note that this is just a
+ * pointer, **not** the head of a linked list (single, double, or
+ * otherwise)!  Exercise great care!
+ *
+ * The edges of an exterior (OT_SAME) loop occur in counter-clockwise
+ * order, as viewed from the normalward side (outside).
+ */
+#define LIST_SET_DOWN_TO_VERT(_hp, _vu) { \
+        (_hp)->forw = &((_vu)->l); (_hp)->back = (struct bu_list *)NULL; }
+
 
 
 /************************************************************************
@@ -102,13 +129,13 @@
  * 	faceuse, loopuse, edgeuse and vertexuse.
  * Geometry can optionally be associated with the abstract objects:
  *	face_g		(plane equation, bounding box)
- *	loop_g		(just a bounding box, for planar faces)
  *	edge_g		(to track edge subdivision heritage, for linear edges)
  *	vertex_g	(Cartesian coordinates)
  * The uses of those objects can optionally have attributes:
+ *	vertexuse_a	(special surface normal, for normal interpolation)
+ *	loop_a		(loop bounding box)
  *	nmgregion_a	(region bounding box)	[nmgregions have no uses]
  *	shell_a		(shell bounding box)	[shells have no uses]
- *	vertexuse_a	(special surface normal, for normal interpolation)
  *
  * Consider for example a simple cube.
  *
@@ -197,8 +224,8 @@
  *		In a simple case the point would be the same as one of
  *		the vertex_g points and the direction would be the normalized
  *		(unit) vector of the difference between the two vertex_g points.
- * 6 loop_g structures
- *		Each loop_g structure contains a bounding box for the loop.
+ * 6 loop_a structures
+ *		Each loop_a structure contains a bounding box for the loop.
  *		It is referenced by 1 loop structure.
  * 6 face_g_plane structures
  *		Each face_g_plane structure contains a plane equation and
@@ -531,41 +558,6 @@ nmg_mf(struct loopuse *lu1)
 }
 
 
-/**
- * Make a new loop (with specified orientation) and vertex, in a shell
- * or face.
- * XXX - vertex or vertexuse? or both? ctj
- *
- * If the vertex 'v' is NULL, the shell's lone vertex is used, or a
- * new vertex is created.
- *
- * "magic" must point to the magic number of a faceuse or shell.
- *
- * If the shell has a lone vertex in it, that lone vertex *will* be
- * used.  If a non-NULL 'v' is provided, the lone vertex and 'v' will
- * be fused together.  XXX Why is this good?
- *
- * If a convenient shell does not exist, use s=nmg_msv() to make the
- * shell and vertex, then call lu=nmg_mlv(s, s->vu_p->v_p, OT_SAME),
- * followed by nmg_kvu(s->vu_p).
- *
- * Implicit returns -
- * The new vertexuse can be had by:
- * BU_LIST_FIRST(vertexuse, &lu->down_hd);
- *
- * In case the returned loopuse isn't retained, the new loopuse was
- * inserted at the +head+ of the appropriate list, e.g.:
- * lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
- * or
- * lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
- *
- * N.B.  This function is made more complex than warranted by using
- * the "hack" of stealing a vertexuse structure from the shell if at
- * all possible.  A future enhancement to this function would be to
- * remove the vertexuse steal and have the caller pass in the vertex
- * from the shell followed by a call to nmg_kvu(s->vu_p).  The v==NULL
- * convention is used only in nmg_mod.c.
- */
 struct loopuse *
 nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
 {
@@ -592,7 +584,7 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
     GET_LOOPUSE(lu1, m);
     GET_LOOPUSE(lu2, m);
 
-    l->lg_p = (struct loop_g *)NULL;
+    l->la_p = (struct loop_a *)NULL;
     l->lu_p = lu1;
     l->magic = NMG_LOOP_MAGIC;	/* Loop struct is GOOD */
 
@@ -631,12 +623,12 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
 	    else vu1 = nmg_mvvu(&lu1->l.magic, m);
 	}
 	NMG_CK_VERTEXUSE(vu1);
-	RT_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
+	LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
 	/* vu1->up.lu_p = lu1; done by nmg_mvu/nmg_mvvu */
 
 	vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic, m);
 	NMG_CK_VERTEXUSE(vu2);
-	RT_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
+	LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
 	/* vu2->up.lu_p = lu2; done by nmg_mvu() */
     } else if (*p.magic_p == NMG_FACEUSE_MAGIC) {
 	/* First, finish setting up the loopuses */
@@ -651,11 +643,11 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
 	/* Second, build the vertices */
 	if (v) vu1 = nmg_mvu(v, &lu1->l.magic, m);
 	else vu1 = nmg_mvvu(&lu1->l.magic, m);
-	RT_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
+	LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
 	/* vu1->up.lu_p = lu1; done by nmg_mvu/nmg_mvvu */
 
 	vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic, m);
-	RT_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
+	LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
 	/* vu2->up.lu_p = lu2; done by nmg_mvu() */
     } else {
 	bu_bomb("nmg_mlv() unknown parent for loopuse!\n");
@@ -669,30 +661,6 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
     return lu1;
 }
 
-
-/**
- * Make wire edge.
- *
- * Make a new edge between a pair of vertices in a shell.
- *
- * A new vertex will be made for any NULL vertex pointer parameters.
- * If we need to make a new vertex and the shell still has its
- * vertexuse we re-use that vertex rather than freeing and
- * re-allocating.
- *
- * If both vertices were specified, and the shell also had a vertexuse
- * pointer, the vertexuse in the shell is killed.  XXX Why?
- *
- * Explicit Return -
- * An edgeuse in shell "s" whose vertexuse refers to vertex v1.
- * The edgeuse mate's vertexuse refers to vertex v2
- *
- * Implicit Returns -
- * 1) If the shell had a lone vertex in vu_p, it is destroyed,
- * even if both vertices were specified.
- * 2) The returned edgeuse is the first item on the shell's
- * eu_hd list, followed immediately by the mate.
- */
 struct edgeuse *
 nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
 {
@@ -782,19 +750,6 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
 }
 
 
-/**
- * Make an edge on vertexuse.
- *
- * The new edge runs from and to that vertex.
- *
- * If the vertexuse was the shell's sole vertexuse, then the new edge
- * is a wire edge in the shell's eu_hd list.
- *
- * If the vertexuse was part of a loop-of-a-single-vertex, either as a
- * loop in a face or as a wire-loop in the shell, the loop becomes a
- * regular loop with one edge that runs from and to the original
- * vertex.
- */
 struct edgeuse *
 nmg_meonvu(struct vertexuse *vu)
 {
@@ -952,7 +907,7 @@ nmg_ml(struct shell *s)
     GET_LOOPUSE(lu1, m);
     GET_LOOPUSE(lu2, m);
 
-    l->lg_p = (struct loop_g *)NULL;
+    l->la_p = (struct loop_a *)NULL;
     l->lu_p = lu1;
     l->magic = NMG_LOOP_MAGIC;	/* loop struct is GOOD */
 
@@ -1067,29 +1022,6 @@ nmg_ml(struct shell *s)
  *									*
  ************************************************************************/
 
-
-/**
- * Kill vertexuse, and null out parent's vu_p.
- *
- * This routine is not intended for general use by applications,
- * because it requires cooperation on the part of the caller to
- * properly dispose of or fix the now *quite* illegal parent.
- * (Illegal because the parent's vu_p is NULL).  It exists primarily
- * as a support routine for "mopping up" after nmg_klu(), nmg_keu(),
- * nmg_ks(), and nmg_mv_vu_between_shells().
- *
- * It is also used in a particularly ugly way in nmg_cut_loop() and
- * nmg_split_lu_at_vu() as part of their method for obtaining an
- * "empty" loopuse/loop set.
- *
- * It is worth noting that all these callers ignore the return code,
- * because they *all* exist to intentionally empty out the parent, but
- * the return code is provided anyway, in the name of [CTJ] symmetry.
- *
- * Returns -
- * 0 If all is well in the parent
- * 1 If parent is empty, and is thus "illegal"
- */
 int
 nmg_kvu(struct vertexuse *vu)
 {
@@ -1178,9 +1110,9 @@ nmg_kfg(uint32_t *magic_p)
 	    struct face_g_snurb *sp;
 	    sp = (struct face_g_snurb *)magic_p;
 	    if (BU_LIST_NON_EMPTY(&(sp->f_hd))) return;
-	    nmg_free((char *)sp->u.knots, "nmg_kfg snurb u knots[]");
-	    nmg_free((char *)sp->v.knots, "nmg_kfg snurb v knots[]");
-	    nmg_free((char *)sp->ctl_points, "nmg_kfg snurb ctl_points[]");
+	    bu_free((char *)sp->u.knots, "nmg_kfg snurb u knots[]");
+	    bu_free((char *)sp->v.knots, "nmg_kfg snurb v knots[]");
+	    bu_free((char *)sp->ctl_points, "nmg_kfg snurb ctl_points[]");
 	    FREE_FACE_G_SNURB(sp);
 	}
 	    break;
@@ -1193,10 +1125,9 @@ nmg_kfg(uint32_t *magic_p)
 /**
  * Kill Faceuse
  *
- * delete a faceuse and its mate from the parent shell.
- *
- * Any children found are brutally murdered as well.  The faceuses are
- * dequeued from the parent shell's list here.
+ * Delete the "guts" of a faceuse and its mate from the parent shell.
+ * We don't delete the structs themselves, as they are needed for
+ * bu_list iterations until preliminary operations are complete.
  *
  * Returns -
  * 0 If all is well
@@ -1226,10 +1157,12 @@ nmg_kfu(struct faceuse *fu1)
     s = fu1->s_p;
     NMG_CK_SHELL(s);
 
-    /* kill off the children (infanticide?)*/
-    while (BU_LIST_NON_EMPTY(&fu1->lu_hd)) {
-	(void)nmg_klu(BU_LIST_FIRST(loopuse, &fu1->lu_hd));
+    struct loopuse *lu;
+    while (BU_LIST_WHILE(lu, loopuse, &fu1->lu_hd)) {
+	BU_LIST_DEQUEUE(&(lu->l));
+	(void)nmg_klu(lu);
     }
+    bu_list_free(&(fu1->lu_hd));
 
     /* Release the face geometry */
     if (f1->g.magic_p) {
@@ -1252,26 +1185,14 @@ nmg_kfu(struct faceuse *fu1)
 	bu_log("nmg_kfu(fu1=%p) fu2=%p ret=%d\n", (void *)fu1, (void *)fu2, ret);
     }
 
-    FREE_FACEUSE(fu1);
-    FREE_FACEUSE(fu2);
+    // TODO - I don't think we can free these yet?  bu_list iterations
+    // may still be in progress...
+    //FREE_FACEUSE(fu1);
+    //FREE_FACEUSE(fu2);
 
     return ret;
 }
 
-
-/**
- * Kill loopuse, loopuse mate, and loop.
- *
- * if the loop contains any edgeuses or vertexuses they are killed
- * before the loop is deleted.
- *
- * We support the concept of killing a loop with no children to
- * support the routine "nmg_demote_lu"
- *
- * Returns -
- * 0 If all is well
- * 1 If parent is empty, and is thus "illegal"
- */
 int
 nmg_klu(struct loopuse *lu1)
 {
@@ -1328,9 +1249,9 @@ nmg_klu(struct loopuse *lu1)
     }
 
     NMG_CK_LOOP(lu1->l_p);
-    if (lu1->l_p->lg_p) {
-	NMG_CK_LOOP_G(lu1->l_p->lg_p);
-	FREE_LOOP_G(lu1->l_p->lg_p);
+    if (lu1->l_p->la_p) {
+	NMG_CK_LOOP_A(lu1->l_p->la_p);
+	FREE_LOOP_A(lu1->l_p->la_p);
     }
     FREE_LOOP(lu1->l_p);
     if (nmg_debug & NMG_DEBUG_BASIC) {
@@ -1360,7 +1281,7 @@ nmg_klu(struct loopuse *lu1)
  * NOT INTENDED FOR GENERAL USE!
  * However, nmg_mod.c needs it for nmg_eusplit().  (Drat!)
  */
-/* static */ int
+int
 nmg_keg(struct edgeuse *eu)
 {
     if (!eu)
@@ -1387,8 +1308,8 @@ nmg_keg(struct edgeuse *eu)
 	    eu->g.magic_p = NULL;
 	    if (BU_LIST_NON_EMPTY(&eg->eu_hd2)) return 0;
 	    if (eg->order != 0) {
-		nmg_free((char *)eg->k.knots, "nmg_keg cnurb knots[]");
-		nmg_free((char *)eg->ctl_points, "nmg_keg cnurb ctl_points[]");
+		bu_free((char *)eg->k.knots, "nmg_keg cnurb knots[]");
+		bu_free((char *)eg->ctl_points, "nmg_keg cnurb ctl_points[]");
 	    }
 	    FREE_EDGE_G_CNURB(eg);
 	    break;
@@ -1399,15 +1320,6 @@ nmg_keg(struct edgeuse *eu)
 }
 
 
-/**
- * Delete an edgeuse & its mate from a shell or loop.
- *
- * Returns -
- * 0 If all is well
- * 1 If the parent now has no edgeuses, and is thus "illegal" and in
- * need of being deleted.  (The lu / shell deletion can't be handled
- * at this level, and must be done by the caller).
- */
 int
 nmg_keu(register struct edgeuse *eu1)
 {
@@ -1554,12 +1466,27 @@ nmg_ks(struct shell *s)
     if (r)
 	NMG_CK_REGION(r);
 
-    while (BU_LIST_NON_EMPTY(&s->fu_hd))
-	(void)nmg_kfu(BU_LIST_FIRST(faceuse, &s->fu_hd));
-    while (BU_LIST_NON_EMPTY(&s->lu_hd))
-	(void)nmg_klu(BU_LIST_FIRST(loopuse, &s->lu_hd));
-    while (BU_LIST_NON_EMPTY(&s->eu_hd))
-	(void)nmg_keu(BU_LIST_FIRST(edgeuse, &s->eu_hd));
+    struct faceuse *fu;
+    while (BU_LIST_WHILE(fu, faceuse, &s->fu_hd)) {
+	BU_LIST_DEQUEUE(&(fu->l));
+	(void)nmg_kfu(fu);
+    }
+    bu_list_free(&(s->fu_hd));
+
+    struct loopuse *lu;
+    while (BU_LIST_WHILE(lu, loopuse, &s->lu_hd)) {
+	BU_LIST_DEQUEUE(&(lu->l));
+	(void)nmg_klu(lu);
+    }
+    bu_list_free(&(s->lu_hd));
+
+    struct edgeuse *eu;
+    while (BU_LIST_WHILE(eu, edgeuse, &s->eu_hd)) {
+	BU_LIST_DEQUEUE(&(eu->l));
+	(void)nmg_keu(eu);
+    }
+    bu_list_free(&(s->eu_hd));
+
     if (s->vu_p)
 	nmg_kvu(s->vu_p);
 
@@ -1641,7 +1568,7 @@ nmg_km(struct model *m)
 	(void)nmg_kr(BU_LIST_FIRST(nmgregion, &m->r_hd));
 
     if (m->manifolds) {
-	nmg_free((char *)m->manifolds, "free manifolds table");
+	bu_free((char *)m->manifolds, "free manifolds table");
 	m->manifolds = (char *)NULL;
     }
 
@@ -1659,12 +1586,8 @@ nmg_km(struct model *m)
  *									*
  ************************************************************************/
 
-
-/**
- * Associate point_t ("vector") coordinates with a vertex
- */
 void
-nmg_vertex_gv(struct vertex *v, const fastf_t *pt)
+nmg_vertex_gv(struct vertex *v, const point_t pt)
 {
     struct vertex_g *vg;
     struct model *m;
@@ -1689,11 +1612,6 @@ nmg_vertex_gv(struct vertex *v, const fastf_t *pt)
     }
 }
 
-
-/**
- * a version that can take x, y, z coords and doesn't need a point
- * array.  Mostly useful for quick and dirty programs.
- */
 void
 nmg_vertex_g(register struct vertex *v, fastf_t x, fastf_t y, fastf_t z)
 {
@@ -1710,12 +1628,8 @@ nmg_vertex_g(register struct vertex *v, fastf_t x, fastf_t y, fastf_t z)
     nmg_vertex_gv(v, pt);
 }
 
-
-/**
- * Assign a normal vector to a vertexuse
- */
 void
-nmg_vertexuse_nv(struct vertexuse *vu, const fastf_t *norm)
+nmg_vertexuse_nv(struct vertexuse *vu, const vect_t norm)
 {
     struct model *m;
 
@@ -1778,12 +1692,7 @@ nmg_vertexuse_a_cnurb(struct vertexuse *vu, const fastf_t *uvw)
 }
 
 
-/**
- * Compute the equation of the line formed by the endpoints of the
- * edge.
- *
- * XXX This isn't the best name.  nmg_edge_g_lseg() ?
- */
+/* XXX This isn't the best name.  nmg_edge_g_lseg() ? */
 void
 nmg_edge_g(struct edgeuse *eu)
 {
@@ -1943,7 +1852,7 @@ nmg_edge_g_cnurb(struct edgeuse *eu, int order, int n_knots, fastf_t *kv, int n_
     } else {
 	int ncoord = RT_NURB_EXTRACT_COORDS(pt_type);
 
-	eg->ctl_points = (fastf_t *)nmg_calloc(
+	eg->ctl_points = (fastf_t *)bu_calloc(
 	    ncoord * n_pts,
 	    sizeof(fastf_t),
 	    "cnurb ctl_points[]");
@@ -2070,18 +1979,6 @@ nmg_edge_g_cnurb_plinear(struct edgeuse *eu)
 }
 
 
-/**
- * Associate edgeuse 'eu' with the edge_g_X structure given as
- * 'magic_p'.  If the edgeuse is already associated with some
- * geometry, release that first.  Note that, to start with, the two
- * edgeuses may be using different original geometries.
- *
- * Also do the edgeuse mate.
- *
- * Returns -
- * 0 If the old edge geometry (eu->g.magic_p) has other uses.
- * 1 If the old edge geometry has been destroyed. Caller beware!
- */
 int
 nmg_use_edge_g(struct edgeuse *eu, uint32_t *magic_p)
 {
@@ -2137,22 +2034,12 @@ nmg_use_edge_g(struct edgeuse *eu, uint32_t *magic_p)
     return ndead;
 }
 
-
-/**
- * Build the bounding box for a loop.
- *
- * The bounding box is guaranteed never to have zero thickness.
- *
- * XXX This really isn't loop geometry, this is a loop attribute.
- * This routine really should be called nmg_loop_bb(), unless it gets
- * something more to do.
- */
 void
-nmg_loop_g(struct loop *l, const struct bn_tol *tol)
+nmg_loop_a(struct loop *l, const struct bn_tol *tol)
 {
     struct edgeuse *eu;
     struct vertex_g *vg;
-    struct loop_g *lg;
+    struct loop_a *lg;
     struct loopuse *lu;
     struct model *m;
     uint32_t magic1;
@@ -2163,14 +2050,14 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
     lu = l->lu_p;
     NMG_CK_LOOPUSE(lu);
 
-    lg = l->lg_p;
+    lg = l->la_p;
     if (lg) {
-	NMG_CK_LOOP_G(lg);
+	NMG_CK_LOOP_A(lg);
     } else {
 	m = nmg_find_model(lu->up.magic_p);
-	GET_LOOP_G(l->lg_p, m);
-	lg = l->lg_p;
-	lg->magic = NMG_LOOP_G_MAGIC;
+	GET_LOOP_A(l->la_p, m);
+	lg = l->la_p;
+	lg->magic = NMG_LOOP_A_MAGIC;
     }
     VSETALL(lg->max_pt, -INFINITY);
     VSETALL(lg->min_pt,  INFINITY);
@@ -2194,9 +2081,9 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
 	VMOVE(lg->min_pt, vg->coord);
 	VMOVE(lg->max_pt, vg->coord);
     } else {
-	bu_log("nmg_loop_g() loopuse down is %s (%x)\n",
+	bu_log("nmg_loop_a() loopuse down is %s (%x)\n",
 	       bu_identify_magic(magic1), magic1);
-	bu_bomb("nmg_loop_g() loopuse has bad child\n");
+	bu_bomb("nmg_loop_a() loopuse has bad child\n");
     }
 
     /* Pad the dimension of the loop bounding box which is less than
@@ -2218,7 +2105,7 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
     }
 
     if (nmg_debug & NMG_DEBUG_BASIC) {
-	bu_log("nmg_loop_g(l=%p, tol=%p)\n", (void *)l, (void *)tol);
+	bu_log("nmg_loop_a(l=%p, tol=%p)\n", (void *)l, (void *)tol);
     }
 
 }
@@ -2231,7 +2118,7 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
  * In the interest of modularity this no longer calls nmg_face_bb().
  */
 void
-nmg_face_g(struct faceuse *fu, const fastf_t *p)
+nmg_face_g(struct faceuse *fu, const plane_t p)
 {
     int i;
     struct face_g_plane *fg;
@@ -2277,7 +2164,7 @@ nmg_face_g(struct faceuse *fu, const fastf_t *p)
  * geometry for this face, then make a new geometry for this face.
  */
 void
-nmg_face_new_g(struct faceuse *fu, const fastf_t *pl)
+nmg_face_new_g(struct faceuse *fu, const plane_t pl)
 {
     struct face *f;
     struct face *f_tmp;
@@ -2336,7 +2223,7 @@ nmg_face_new_g(struct faceuse *fu, const fastf_t *pl)
  *
  * If either of the knot vector arrays or the ctl_points arrays are
  * given as non-null, then simply swipe the caller's arrays.  The
- * caller must have allocated them with nmg_malloc() or malloc().  If
+ * caller must have allocated them with bu_malloc() or malloc().  If
  * the pointers are NULL, then the necessary storage is allocated
  * here.
  *
@@ -2378,12 +2265,12 @@ nmg_face_g_snurb(struct faceuse *fu, int u_order, int v_order, int n_u_knots,
     if (ukv) {
 	fg->u.knots = ukv;
     } else {
-	fg->u.knots = (fastf_t *)nmg_calloc(n_u_knots, sizeof(fastf_t), "u.knots[]");
+	fg->u.knots = (fastf_t *)bu_calloc(n_u_knots, sizeof(fastf_t), "u.knots[]");
     }
     if (vkv) {
 	fg->v.knots = vkv;
     } else {
-	fg->v.knots = (fastf_t *)nmg_calloc(n_v_knots, sizeof(fastf_t), "v.knots[]");
+	fg->v.knots = (fastf_t *)bu_calloc(n_v_knots, sizeof(fastf_t), "v.knots[]");
     }
 
     fg->s_size[0] = n_rows;
@@ -2395,7 +2282,7 @@ nmg_face_g_snurb(struct faceuse *fu, int u_order, int v_order, int n_u_knots,
     } else {
 	int nwords;
 	nwords = n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
-	fg->ctl_points = (fastf_t *)nmg_calloc(
+	fg->ctl_points = (fastf_t *)bu_calloc(
 	    nwords, sizeof(fastf_t), "snurb ctl_points[]");
     }
 
@@ -2436,11 +2323,11 @@ nmg_face_bb(struct face *f, const struct bn_tol *tol)
      * each of the loop children.
      */
     for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-	nmg_loop_g(lu->l_p, tol);
+	nmg_loop_a(lu->l_p, tol);
 
 	if (lu->orientation != OT_BOOLPLACE) {
-	    VMIN(f->min_pt, lu->l_p->lg_p->min_pt);
-	    VMAX(f->max_pt, lu->l_p->lg_p->max_pt);
+	    VMIN(f->min_pt, lu->l_p->la_p->min_pt);
+	    VMAX(f->max_pt, lu->l_p->la_p->max_pt);
 	}
     }
 
@@ -2511,10 +2398,10 @@ nmg_shell_a(struct shell *s, const struct bn_tol *tol)
 	}
     }
     for (BU_LIST_FOR (lu, loopuse, &s->lu_hd)) {
-	nmg_loop_g(lu->l_p, tol);
+	nmg_loop_a(lu->l_p, tol);
 
-	VMIN(sa->min_pt, lu->l_p->lg_p->min_pt);
-	VMAX(sa->max_pt, lu->l_p->lg_p->max_pt);
+	VMIN(sa->min_pt, lu->l_p->la_p->min_pt);
+	VMAX(sa->max_pt, lu->l_p->la_p->max_pt);
     }
     for (BU_LIST_FOR (eu, edgeuse, &s->eu_hd)) {
 	NMG_CK_EDGEUSE(eu);
@@ -2597,14 +2484,6 @@ nmg_region_a(struct nmgregion *r, const struct bn_tol *tol)
  *									*
  ************************************************************************/
 
-
-/**
- * Demote a loopuse of edgeuses to a bunch of wire edges in the shell.
- *
- * Returns -
- * 0 If all is well (edges moved to shell, loopuse deleted).
- * 1 If parent is empty, and is thus "illegal".  Still successful.
- */
 int
 nmg_demote_lu(struct loopuse *lu1)
 {
@@ -2663,14 +2542,6 @@ nmg_demote_lu(struct loopuse *lu1)
 }
 
 
-/**
- * Demote a wire edge into a pair of self-loop vertices
- *
- *
- * Returns -
- * 0 If all is well
- * 1 If shell is empty, and is thus "illegal".
- */
 int
 nmg_demote_eu(struct edgeuse *eu)
 {
@@ -2717,13 +2588,6 @@ nmg_demote_eu(struct edgeuse *eu)
  *									*
  ************************************************************************/
 
-
-/**
- * Move a vertexuse from an old vertex to a new vertex.  If this was
- * the last use, the old vertex is destroyed.
- *
- * XXX nmg_jvu() as a better name?
- */
 void
 nmg_movevu(struct vertexuse *vu, struct vertex *v)
 {
@@ -2750,16 +2614,6 @@ nmg_movevu(struct vertexuse *vu, struct vertex *v)
 }
 
 
-/**
- * Move a pair of edgeuses onto a single edge (glue edgeuse).  The
- * edgeuse eusrc and its mate are moved to the edge used by eudst.
- * eusrc is made to be immediately radial to eudst.  if eusrc does not
- * share the same vertices as eudst, we bomb.
- *
- * The edgeuse geometry pointers are not changed by this operation.
- *
- * This routine was formerly called nmg_moveeu().
- */
 void
 nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
 {
@@ -2848,19 +2702,6 @@ nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
 }
 
 
-/**
- * If edgeuse is part of a shared edge (more than one pair of edgeuses
- * on the edge), it and its mate are "unglued" from the edge, and
- * associated with a new edge structure.
- *
- * Primarily a support routine for nmg_eusplit()
- *
- * If the original edge had edge geometry, that is *not* duplicated
- * here, because it is not easy (or appropriate) for nmg_eusplit() to
- * know whether the new vertex lies on the previous edge geometry or
- * not.  Hence having the nmg_ebreak() interface, which preserves the
- * ege geometry across a split, and nmg_esplit() which does not.
- */
 void
 nmg_unglueedge(struct edgeuse *eu)
 {
@@ -2906,12 +2747,6 @@ nmg_unglueedge(struct edgeuse *eu)
 }
 
 
-/**
- * Join two vertexes into one.
- *
- * v1 inherits all the vertexuses presently pointing to v2, and v2 is
- * then destroyed.
- */
 void
 nmg_jv(register struct vertex *v1, register struct vertex *v2)
 {
@@ -3027,21 +2862,6 @@ nmg_jfg(struct face *f1, struct face *f2)
     }
 }
 
-
-/**
- * Join two edge geometries.
- *
- * For all edges in the model which refer to 'src_eg', change them to
- * refer to 'dest_eg'.  The source is destroyed.
- *
- * It is the responsibility of the caller to make certain that the
- * 'dest_eg' is the best one for these edges.  Outrageously wrong
- * requests will cause this routine to abort.
- *
- * This algorithm does not make sense if dest_eg is an edge_g_cnurb;
- * those only make sense in the parameter space of their associated
- * face.
- */
 void
 nmg_jeg(struct edge_g_lseg *dest_eg, struct edge_g_lseg *src_eg)
 {
@@ -3118,7 +2938,7 @@ nmg_keu_zl(struct shell *s, const struct bn_tol *tol)
 	    while (BU_LIST_NOT_HEAD(eu, &lu->down_hd)) {
 		NMG_CK_EDGEUSE(eu);
 		if ((eu->vu_p->v_p->vg_p == eu->eumate_p->vu_p->v_p->vg_p) ||
-		    bn_pnt3_pnt3_equal(eu->vu_p->v_p->vg_p->coord,
+		    bg_pnt3_pnt3_equal(eu->vu_p->v_p->vg_p->coord,
 				     eu->eumate_p->vu_p->v_p->vg_p->coord, tol)) {
 		    /* fuse the two vertices */
 		    nmg_jv(eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);

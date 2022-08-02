@@ -3237,8 +3237,6 @@ int HtmlLayoutImage(
     /* Force any pending style and/or layout operations to run. */
     HtmlCallbackForce(pTree);
 
-    w = pTree->canvas.right;
-    h = pTree->canvas.bottom;
     Tk_MakeWindowExist(pTree->tkwin);
     w = Tk_Width(pTree->tkwin);
     h = Tk_Height(pTree->tkwin);
@@ -3862,7 +3860,7 @@ paintNodesSearchCb(
                     int bottom = origin_y + pT->y + pFont->metrics.descent;
                     int left   = origin_x + pT->x;
                     int right;
-                    int nFin = n;
+                    int nFin;
 
                     if (iNode == p->iNodeFin && p->iIndexFin >= 0) {
                         nFin = MIN(n, 1 + p->iIndexFin - pT->iIndex);

@@ -1,7 +1,7 @@
 /*                          H O O K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -125,8 +125,8 @@ bu_hook_delete_all(struct bu_hook_list *hlp)
     if (UNLIKELY(!hlp))
 	return;
 
-    if (hlp->hooks)
-	bu_free(hlp->hooks, "free hooks");
+    bu_free(hlp->hooks, "free hooks");
+
     hlp->hooks = NULL;
     hlp->size = hlp->capacity = 0;
 }

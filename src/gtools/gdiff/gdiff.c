@@ -1,7 +1,7 @@
-/*                     G D I F F 2 . C
+/*                     G D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 
 #include "./gdiff.h"
 #include "bu/app.h"
+#include "bu/opt.h"
 
 /*******************************************************************/
 /* Primary function for basic diff operation on two .g files */
@@ -54,8 +55,18 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	BU_PTBL_INIT(&results_filtered);
 	for (i = 0; i < (int)BU_PTBL_LEN(&results); i++) {
 	    struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&results, i);
-	    if ((dr->dp_left  != RT_DIR_NULL && (bu_ptbl_locate(&left_dbip_filtered,  (long *)dr->dp_left ) != -1)) ||
-		(dr->dp_right != RT_DIR_NULL && (bu_ptbl_locate(&right_dbip_filtered, (long *)dr->dp_right) != -1))) {
+	    // Default to pass - if an object doesn't exist on one side, we want to pass/fail
+	    // based on the object we have.
+	    int lpass = 1;
+	    int rpass = 1;
+	    // If both sides pass the filters, it's in - otherwise it's out
+	    if (dr->dp_left != RT_DIR_NULL) {
+		lpass = (bu_ptbl_locate(&left_dbip_filtered,  (long *)dr->dp_left ) != -1);
+	    }
+	    if (dr->dp_right != RT_DIR_NULL) {
+		rpass = (bu_ptbl_locate(&right_dbip_filtered, (long *)dr->dp_right) != -1);
+	    }
+	    if (lpass && rpass) {
 		bu_ptbl_ins(&results_filtered, (long *)dr);
 		filtered_diff_state |= dr->param_state;
 		filtered_diff_state |= dr->attr_state;
@@ -89,6 +100,7 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	inmem_dbip->dbi_fp = NULL;
 	inmem_dbip->dbi_mf = NULL;
 	inmem_dbip->dbi_read_only = 0;
+	inmem_dbip->dbi_use_comb_instance_ids = 0;
 
 	/* Initialize fields */
 	for (i = 0; i <RT_DBNHASH; i++) {
@@ -233,67 +245,81 @@ do_diff3(struct db_i *left_dbip, struct db_i *ancestor_dbip, struct db_i *right_
 }
 
 static void
-gdiff_usage(const char *str) {
-    bu_log("Usage: %s [-adhmux] [-v {0-4}] [-t tol] [-F \"filter_string\"] [-M merged.g] left.g [ancestor.g] right.g\n", str);
-    bu_exit(1, NULL);
+gdiff_usage(const char *cmd, struct bu_opt_desc *d) {
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    char *option_help = bu_opt_describe(d, NULL);
+    bu_vls_sprintf(&str, "Usage: %s [options] left.g [ancestor.g] right.g\n", cmd);
+    if (option_help) {
+        bu_vls_printf(&str, "Options:\n%s\n", option_help);
+        bu_free(option_help, "help str");
+    }
+    bu_log("%s", bu_vls_cstr(&str));
+    bu_vls_free(&str);
 }
 
-
 int
-main(int argc, char **argv)
+main(int argc, const char **argv)
 {
-    int c;
     int diff_return = 0;
+    int print_help = 0;
     struct diff_state *state;
     struct db_i *left_dbip = DBI_NULL;
     struct db_i *right_dbip = DBI_NULL;
     struct db_i *ancestor_dbip = DBI_NULL;
     const char *diff_prog_name = argv[0];
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
+
+    // Name stashed, move on
+    argc--; argv++;
 
     BU_GET(state, struct diff_state);
     diff_state_init(state);
 
-    while ((c = bu_getopt(argc, argv, "amF:M:dt:uv:xh?")) != -1) {
-	switch (c) {
-	    case 'a':
-		state->return_added = 1;
-		break;
-	    case 'd':
-		state->return_removed = 1;
-		break;
-	    case 'm':
-		state->return_changed = 1;
-		break;
-	    case 'u':
-		state->return_unchanged = 1;
-		break;
-	    case 'F':
-		state->have_search_filter = 1;
-		bu_vls_sprintf(state->search_filter, "%s", bu_optarg);
-		break;
-	    case 'M':
-		state->merge = 1;
-		bu_vls_sprintf(state->merge_file, "%s", bu_optarg);
-		break;
-	    case 't':   /* distance tolerance for same/different decisions (RT_LEN_TOL is default) */
-		if (sscanf(bu_optarg, "%lf", &(state->diff_tol->dist)) != 1) {
-		    bu_log("Invalid distance tolerance specification: '%s'\n", bu_optarg);
-		    gdiff_usage(diff_prog_name);
-		    bu_exit (1, NULL);
-		}
-		break;
-	    case 'v':   /* verbosity (2 is default) */
-		if (sscanf(bu_optarg, "%d", &(state->verbosity)) != 1) {
-		    bu_log("Invalid verbosity specification: '%s'\n", bu_optarg);
-		    gdiff_usage(diff_prog_name);
-		    bu_exit (1, NULL);
-		}
-		break;
-	    default:
-		gdiff_usage(diff_prog_name);
-	}
+    struct bu_opt_desc d[13];
+    BU_OPT(d[0],  "h", "help",       "",        NULL,              &print_help,              "Print help and exit");
+    BU_OPT(d[1],  "?", "",           "",        NULL,              &print_help,              "");
+    BU_OPT(d[2],  "a", "added",      "",        NULL,              &state->return_added,     "Report added objects");
+    BU_OPT(d[3],  "d", "deleted",    "",        NULL,              &state->return_removed,   "Report deleted objects");
+    BU_OPT(d[4],  "m", "modified",   "",        NULL,              &state->return_changed,   "Report modified objects");
+    BU_OPT(d[5],  "u", "unchanged",  "",        NULL,              &state->return_unchanged, "Report unchanged objects");
+    BU_OPT(d[6],  "F", "filter",     "string",  &bu_opt_vls,       state->search_filter,     "Specify filter to use on results");
+    BU_OPT(d[7],  "M", "merge-file", "merge.g", &bu_opt_vls,       state->merge_file,        "Specify merge file");
+    BU_OPT(d[8],  "t", "tolerance",  "#",       &bu_opt_fastf_t,   &state->diff_tol->dist,   "numerical distance tolerance for same/different decisions (RT_LEN_TOL is default)");
+    BU_OPT(d[9],  "v", "verbosity",  "",        &bu_opt_incr_long, &state->verbosity,        "increase output verbosity (multiple specifications of -v increase verbosity more)");
+    BU_OPT(d[10], "q", "quiet",      "",        &bu_opt_incr_long, &state->quiet,            "decrease output verbosity (multiple specifications of -q decrease verbosity more)");
+    BU_OPT_NULL(d[11]);
+
+    int ret_ac = bu_opt_parse(&msg, argc, argv, d);
+    if (ret_ac < 0) {
+        bu_log("%s\n", bu_vls_cstr(&msg));
+        bu_vls_free(&msg);
+        bu_vls_free(state->search_filter);
+        bu_vls_free(state->merge_file);
+	BU_PUT(state, struct diff_state);
+        return BRLCAD_ERROR;
+    }
+    if (print_help) {
+	gdiff_usage(diff_prog_name, d);
+        bu_vls_free(&msg);
+        bu_vls_free(state->search_filter);
+        bu_vls_free(state->merge_file);
+	BU_PUT(state, struct diff_state);
+        return BRLCAD_OK;
+    }
+
+    if (bu_vls_strlen(state->search_filter)) {
+	state->have_search_filter = 1;
+    }
+    if (bu_vls_strlen(state->merge_file)) {
+	state->merge = 1;
+    }
+
+    state->verbosity = state->verbosity - state->quiet;
+
+    if (state->verbosity > 4) {
+	state->verbosity = 4;
     }
 
     state->return_conflicts = 1;
@@ -302,39 +328,38 @@ main(int argc, char **argv)
 	state->return_added = 1; state->return_removed = 1; state->return_changed = 1;
     }
 
-    argc -= bu_optind;
-    argv += bu_optind;
+    argc = ret_ac;
 
     if (argc != 2 && argc != 3) {
 	bu_log("Error - please specify either two or three .g files\n");
-	bu_exit(EXIT_FAILURE, NULL);
+	bu_exit(-1, NULL);
     }
 
     if (!bu_file_exists(argv[0], NULL)) {
-	bu_exit(1, "Cannot stat file %s\n", argv[0]);
+	bu_exit(-1, "Cannot stat file %s\n", argv[0]);
     }
 
     if (!bu_file_exists(argv[1], NULL)) {
-	bu_exit(1, "Cannot stat file %s\n", argv[1]);
+	bu_exit(-1, "Cannot stat file %s\n", argv[1]);
     }
 
     if (argc == 3 && !bu_file_exists(argv[2], NULL)) {
-	bu_exit(1, "Cannot stat file %s\n", argv[2]);
+	bu_exit(-1, "Cannot stat file %s\n", argv[2]);
     }
 
     if (state->merge && bu_file_exists(bu_vls_addr(state->merge_file), NULL)) {
-	bu_exit(1, "File %s already exists.\n", bu_vls_addr(state->merge_file));
+	bu_exit(-1, "File %s already exists.\n", bu_vls_addr(state->merge_file));
     }
 
     /* diff case */
     if (argc == 2) {
 
 	if (bu_file_same(argv[0], argv[1])) {
-	    bu_exit(1, "Same database file specified as both left and right diff inputs: %s\n", argv[0]);
+	    bu_exit(-1, "Same database file specified as both left and right diff inputs: %s\n", argv[0]);
 	}
 
 	if ((left_dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
-	    bu_exit(1, "Cannot open geometry database file %s\n", argv[0]);
+	    bu_exit(-1, "Cannot open geometry database file %s\n", argv[0]);
 	}
 	RT_CK_DBI(left_dbip);
 	/* Reset the material head so we don't get warnings when the global
@@ -343,12 +368,12 @@ main(int argc, char **argv)
 	rt_new_material_head(MATER_NULL);
 	if (db_dirbuild(left_dbip) < 0) {
 	    db_close(left_dbip);
-	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
+	    bu_exit(-1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
 	}
 	db_update_nref(left_dbip, &rt_uniresource);
 
 	if ((right_dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
-	    bu_exit(1, "Cannot open geometry database file %s\n", argv[1]);
+	    bu_exit(-1, "Cannot open geometry database file %s\n", argv[1]);
 	}
 	RT_CK_DBI(right_dbip);
 	/* Reset the material head so we don't get warnings when the global
@@ -358,7 +383,7 @@ main(int argc, char **argv)
 	if (db_dirbuild(right_dbip) < 0) {
 	    db_close(ancestor_dbip);
 	    db_close(right_dbip);
-	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
+	    bu_exit(-1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
 	}
 	db_update_nref(right_dbip, &rt_uniresource);
 
@@ -369,27 +394,27 @@ main(int argc, char **argv)
     if (argc == 3) {
 
 	if (bu_file_same(argv[0], argv[1]) && bu_file_same(argv[2], argv[1])) {
-	    bu_exit(1, "Same database file specified for all three inputs: %s\n", argv[0]);
+	    bu_exit(-1, "Same database file specified for all three inputs: %s\n", argv[0]);
 	}
 
 	if (bu_file_same(argv[0], argv[1])) {
-	    bu_exit(1, "Same database file specified as both ancestor and left diff inputs: %s\n", argv[0]);
+	    bu_exit(-1, "Same database file specified as both ancestor and left diff inputs: %s\n", argv[0]);
 	}
 
 	if (bu_file_same(argv[1], argv[2])) {
-	    bu_exit(1, "Same database file specified as both ancestor and right diff inputs: %s\n", argv[1]);
+	    bu_exit(-1, "Same database file specified as both ancestor and right diff inputs: %s\n", argv[1]);
 	}
 
 	if (bu_file_same(argv[0], argv[2])) {
-	    bu_exit(1, "Same database file specified as both left and right diff inputs: %s\n", argv[0]);
+	    bu_exit(-1, "Same database file specified as both left and right diff inputs: %s\n", argv[0]);
 	}
 
 	if (!bu_file_exists(argv[2], NULL)) {
-	    bu_exit(1, "Cannot stat file %s\n", argv[2]);
+	    bu_exit(-1, "Cannot stat file %s\n", argv[2]);
 	}
 
 	if ((left_dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
-	    bu_exit(1, "Cannot open geometry database file %s\n", argv[0]);
+	    bu_exit(-1, "Cannot open geometry database file %s\n", argv[0]);
 	}
 	RT_CK_DBI(left_dbip);
 	/* Reset the material head so we don't get warnings when the global
@@ -398,12 +423,12 @@ main(int argc, char **argv)
 	rt_new_material_head(MATER_NULL);
 	if (db_dirbuild(left_dbip) < 0) {
 	    db_close(left_dbip);
-	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
+	    bu_exit(-1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
 	}
 	db_update_nref(left_dbip, &rt_uniresource);
 
 	if ((ancestor_dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
-	    bu_exit(1, "Cannot open geometry database file %s\n", argv[1]);
+	    bu_exit(-1, "Cannot open geometry database file %s\n", argv[1]);
 	}
 	RT_CK_DBI(ancestor_dbip);
 	/* Reset the material head so we don't get warnings when the global
@@ -413,12 +438,12 @@ main(int argc, char **argv)
 	if (db_dirbuild(ancestor_dbip) < 0) {
 	    db_close(left_dbip);
 	    db_close(ancestor_dbip);
-	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
+	    bu_exit(-1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
 	}
 	db_update_nref(ancestor_dbip, &rt_uniresource);
 
 	if ((right_dbip = db_open(argv[2], DB_OPEN_READONLY)) == DBI_NULL) {
-	    bu_exit(1, "Cannot open geometry database file %s\n", argv[2]);
+	    bu_exit(-1, "Cannot open geometry database file %s\n", argv[2]);
 	}
 	RT_CK_DBI(right_dbip);
 	/* Reset the material head so we don't get warnings when the global
@@ -428,7 +453,7 @@ main(int argc, char **argv)
 	if (db_dirbuild(right_dbip) < 0) {
 	    db_close(ancestor_dbip);
 	    db_close(left_dbip);
-	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[2]);
+	    bu_exit(-1, "db_dirbuild failed on geometry database file %s\n", argv[2]);
 	}
 	db_update_nref(right_dbip, &rt_uniresource);
 

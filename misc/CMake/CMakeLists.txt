@@ -1,10 +1,17 @@
 set(cmake_ignore_files
+  BRLCAD_API_Flag.cmake
+  BRLCAD_Build_Types.cmake
+  BRLCAD_CPack.cmake
   BRLCAD_CPackOptions.cmake.in
   BRLCAD_CheckFunctions.cmake
+  BRLCAD_Environment_Setup.cmake
+  BRLCAD_Install_Prefix.cmake
   BRLCAD_Options.cmake
   BRLCAD_Regress_Util.cmake
   BRLCAD_Summary.cmake
   BRLCAD_Targets.cmake
+  BRLCAD_Test_Wrappers.cmake
+  BRLCAD_User_Options.cmake
   BRLCAD_Util.cmake
   CMakeLists.txt
   CheckCInline.cmake
@@ -20,36 +27,38 @@ set(cmake_ignore_files
   FindADAPTAGRAMS.cmake
   FindASTYLE.cmake
   FindAppleseed.cmake
+  FindASSIMP.cmake
   FindBlosc.cmake
   FindBSON.cmake
   FindFontconfig.cmake
   FindGECODE.cmake
-  FindGL.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
+  FindLibUV.cmake
   FindNETPBM.cmake
+  FindNSIS.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake
   FindOpenCL.cmake
+  FindOpenGL.cmake
   FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
+  FindPOLY2TRI.cmake
   FindPROJ4.cmake
   FindRE2C.cmake
   FindREGEX.cmake
   FindSCL.cmake
-  FindSSE.cmake
   FindSTL.cmake
   FindShellDeps.cmake
+  FindSTEPCODE.cmake
   FindTBB.cmake
   FindTCL.cmake
   FindUTAHRLE.cmake
   FindUUID.cmake
-  FindVDS.cmake
-  FindX11.cmake
+  FindWix.cmake
   FindXMLLINT.cmake
   FindXSLTPROC.cmake
-  Fuzzer.cmake
   NSIS.template.in
   NSIS_silent.template.in
   OpenVDBUtils.cmake
@@ -57,8 +66,6 @@ set(cmake_ignore_files
   RPath_Setup.cmake
   ResetCache.cmake
   TCL_PKGINDEX.cmake
-  ThirdParty.cmake
-  ThirdParty_TCL.cmake
   compat/README
   compat/README.compat
   compat/README.compat.c99
@@ -84,7 +91,9 @@ set(cmake_ignore_files
   compat/test_strtok_r.c
   configure_prefix.sh
   configure_suffix.sh
+  date_delta.cpp
   distcheck_in_src_dir.cmake.in
+  distcheck_no_tcl.cmake.in
   distcheck_repo_verify.cmake.in
   distcheck_target.cmake.in
   distclean.cmake.in
@@ -93,6 +102,9 @@ set(cmake_ignore_files
   multiconfig_path_read.cmake.in
   source_archive_setup.cmake.in
   tcltest.tcl.in
+  scripts/printtime.cmake
+  scripts/tcl_mkindex.cmake
+  scripts/timestamp.cmake
   )
 CMAKEFILES(${cmake_ignore_files})
 
@@ -104,5 +116,3 @@ CMAKEFILES(NOTES)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-
-

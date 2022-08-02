@@ -1,7 +1,7 @@
 /*                            D B 4 . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,6 +67,7 @@
 #include "common.h"
 
 #include "vmath.h"  /* Needed only for the deprecated functions below using fastf_t */
+#include "nmg.h"    /* for struct nmg_rec */
 
 __BEGIN_DECLS
 
@@ -226,7 +227,7 @@ struct member {
 }; /* struct member */
 
 struct material_rec {		/* whole record is DEPRECATED */
-    char	md_id;		/* = ID_MATERIAL color override */
+    char	md_id;		/* = ID_COLORTAB color override */
     char	md_flags;	/* UNUSED */
     short	md_low;		/* lower end of region IDs affected */
     short	md_hi;		/* upper end of region IDs affected */
@@ -340,15 +341,6 @@ struct particle_rec {
     unsigned char	p_hrad[8];	/* radius at end of height */
 }; /* struct particle_rec */
 
-struct nmg_rec {
-    char	N_id;			/* DBID_NMG */
-    char	N_version;		/* Version indicator */
-    char	N_name[NAMESIZE];
-    char	N_pad2[2];		/* neatness */
-    unsigned char	N_count[4];	/* # additional granules */
-    unsigned char	N_structs[26*4];/* # of structs needed */
-}; /* struct nmg_rec */
-
 struct extr_rec	{
     char	ex_id;			/* DBID_EXTR */
     char	ex_pad;
@@ -378,7 +370,7 @@ struct annot_rec {
     char	ant_id;			/*DBID_ANNOT */
     char	ant_pad;
     char	ant_name[NAMESIZE];
-    unsigned char	ant_V[8*3];		/* orgin map */
+    unsigned char	ant_V[8*3];		/* origin map */
     unsigned char       ant_vert_count[4];      /* number of vertices in annotation */
     unsigned char       ant_seg_count[4];       /* number of segments in annotation */
     unsigned char       ant_count[4];           /* number of additional granules */
@@ -432,7 +424,7 @@ union record {
 #define ID_P_DATA	'Q'	/* Polygon data record */
 #define ID_BSOLID	'b'	/* B-spline solid.  multiple surfs */
 #define ID_BSURF	'D'     /* d_spline surface header */
-#define ID_MATERIAL	'm'	/* Material description record */
+#define ID_COLORTAB	'm'	/* Material "color table" record */
 #define DBID_STRSOL	's'	/* String solid description */
 #define DBID_ARBN	'n'	/* Convex polyhedron with N faces */
 #define DBID_PIPE	'w'	/* pipe (wire) solid */

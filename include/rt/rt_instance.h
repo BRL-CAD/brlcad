@@ -1,7 +1,7 @@
 /*                    R T _ I N S T A N C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -142,7 +142,7 @@ struct rt_i {
  * } RT_VISIT_ALL_SOLTABS_END
  */
 #define RT_VISIT_ALL_SOLTABS_START(_s, _rti) { \
-    register struct bu_list *_head = &((_rti)->rti_solidheads[0]); \
+    struct bu_list *_head = &((_rti)->rti_solidheads[0]); \
     for (; _head < &((_rti)->rti_solidheads[RT_DBNHASH]); _head++) \
 	for (BU_LIST_FOR(_s, soltab, _head)) {
 
@@ -181,30 +181,6 @@ RT_EXPORT extern int rt_gettrees(struct rt_i *rtip,
 
 /**
  * User-called function to add a set of tree hierarchies to the active
- * set.
- *
- * This function may run in parallel, but is not multiply re-entrant
- * itself, because db_walk_tree() isn't multiply re-entrant.
- *
- * Semaphores used for critical sections in parallel mode:
- * RT_SEM_TREE* protects rti_solidheads[] lists, d_uses(solids)
- * RT_SEM_RESULTS protects HeadRegion, mdl_min/max, d_uses(reg), nregions
- * RT_SEM_WORKER (db_walk_dispatcher, from db_walk_tree)
- * RT_SEM_STATS nsolids
- *
- * Returns -
- * 0 Ordinarily
- * -1 On major error
- * -2 If there were unresolved names
- */
-RT_EXPORT extern int rt_gettrees_and_attrs(struct rt_i *rtip,
-					   const char **attrs,
-					   int argc,
-					   const char **argv, int ncpus);
-
-
-/**
- * User-called function to add a set of tree hierarchies to the active
  * set. Includes getting the indicated list of attributes and a
  * bu_hash_tbl for use with the ORCA man regions. (stashed in the
  * rt_i structure).
@@ -234,11 +210,11 @@ RT_EXPORT extern int rt_gettrees_and_attrs(struct rt_i *rtip,
  * 0 Ordinarily
  * -1 On major error
  */
-RT_EXPORT extern int rt_gettrees_muves(struct rt_i *rtip,
-				       const char **attrs,
-				       int argc,
-				       const char **argv,
-				       int ncpus);
+RT_EXPORT extern int rt_gettrees_and_attrs(struct rt_i *rtip,
+				           const char **attrs,
+				           int argc,
+				           const char **argv,
+				           int ncpus);
 
 DEPRECATED RT_EXPORT extern int rt_load_attrs(struct rt_i *rtip,
 					      char **attrs);
@@ -279,6 +255,8 @@ struct rt_i; /* forward declaration */
 RT_EXPORT extern void rt_init_resource(struct resource *resp, int cpu_num, struct rt_i *rtip);
 
 
+RT_EXPORT extern void rt_clean_resource_basic(struct rt_i *rtip,
+					struct resource *resp);
 RT_EXPORT extern void rt_clean_resource(struct rt_i *rtip,
 					struct resource *resp);
 RT_EXPORT extern void rt_clean_resource_complete(struct rt_i *rtip,

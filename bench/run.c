@@ -1,7 +1,7 @@
 /*                           R U N . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,12 +67,14 @@ run(int ac, char *av[])
     const char *run_geomname = av[0];
     const char *run_geometry = av[1];
     long int hypersample = strtod(av[2], NULL);
-    struct bu_vls args = BU_VLS_INIT_ZERO;
     av += 3;
     ac -= 3;
 
-    args = bu_argv_to_string(ac, (const char **)av);
-    echo("DEBUG: Running %s -B -M -s512 -H%ld -J0 %s -o %s.pix %s/%s.g %s\n", av[0], hypersample, args, run_geomname, run_geomname, run_geometry);
+    {
+	struct bu_vls args = bu_argv_to_string(ac, (const char **)av);
+	echo("DEBUG: Running %s -B -M -s512 -H%ld -J0 %s -o %s.pix %s/%s.g %s\n", av[0], hypersample, args, run_geomname, run_geomname, run_geometry);
+	bu_vls_free(&args);
+    }
 
     /* pipe(stdin_for_bu_exec); */
     retval = bu_exec("program", NULL, NULL, NULL);

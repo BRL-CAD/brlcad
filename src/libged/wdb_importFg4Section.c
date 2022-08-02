@@ -1,7 +1,7 @@
 /*              I M P O R T F G 4 S E C T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@
 #include "raytrace.h"
 #include "ged.h"
 #include "wdb.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 static int grid_size;		/* Number of points that will fit in current grid_pts array */
@@ -438,6 +438,8 @@ make_bot_object(const char *name,
     bot_ip.bot_flags = 0;
 
     count = rt_bot_vertex_fuse(&bot_ip, &wdbp->wdb_tol);
+    if (count)
+	bu_log("WARNING: %d vertices eliminated from group %d component %d\n", count, group_id, comp_id);
     count = rt_bot_face_fuse(&bot_ip);
     if (count)
 	bu_log("WARNING: %d duplicate faces eliminated from group %d component %d\n", count, group_id, comp_id);
@@ -480,7 +482,7 @@ wdb_importFg4Section_cmd(void *data,
 
     if (argc != 3) {
 	bu_log("ERROR: expecting three arguments\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     grid_size = GRID_BLOCK;
@@ -539,7 +541,7 @@ wdb_importFg4Section_cmd(void *data,
     THICKNESS = NULL;
     facemode = NULL;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 /** @} */
 

@@ -1,7 +1,7 @@
 /*                  N U R B _ R E V E R S E . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2020 United States Government as represented by
+ * Copyright (c) 1991-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ rt_nurb_reverse_srf(struct face_g_snurb *srf)
     row = srf->s_size[0];
     col = srf->s_size[1];
 
-    tmp = (fastf_t *) nmg_malloc(sizeof(fastf_t) * coords *
+    tmp = (fastf_t *) bu_malloc(sizeof(fastf_t) * coords *
 				row * col, "nurb_reverse:temp");
 
     ptr2 = tmp;
@@ -77,7 +77,7 @@ rt_nurb_reverse_srf(struct face_g_snurb *srf)
     srf->u.knots = srf->v.knots;
     srf->v.knots = p_ptr;
 
-    nmg_free((char *) tmp, "temporary storage for transpose");
+    bu_free((char *) tmp, "temporary storage for transpose");
 }
 
 

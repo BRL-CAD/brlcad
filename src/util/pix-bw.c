@@ -1,7 +1,7 @@
 /*                        P I X - B W . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,12 +20,6 @@
 /** @file util/pix-bw.c
  *
  * Converts a RGB pix file into an 8-bit BW file.
- *
- * By default it will weight the RGB values evenly.
- * -ntsc will use weights for NTSC standard primaries and
- *       NTSC alignment white.
- * -crt  will use weights for "typical" color CRT phosphors and
- *       a D6500 alignment white.
  *
  */
 
@@ -63,7 +57,7 @@ char *in_file = NULL;
 
 static const char usage[] = "\
 Usage: pix-bw [-s squaresize] [-w width] [-n height]\n\
-              [ [-e ntsc|crt] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
+              [ [-e ntsc|crt|hdtv|hdr|avg] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
               [-o out_file.bw] [[<] file.pix] [> out_file.bw]\n";
 
 int
@@ -75,15 +69,30 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "e:s:w:n:R:G:B:o:h?")) != -1) {
 	switch (c) {
 	    case 'e' :
-	        if (BU_STR_EQUAL(bu_optarg, "ntsc")) {
-		    rweight = 0.30;
-		    gweight = 0.59;
-		    bweight = 0.11;
+	        if (BU_STR_EQUAL(bu_optarg, "avg")) {
+		    rweight = 0.0;
+		    gweight = 0.0;
+		    bweight = 0.0;
+		}
+	        else if (BU_STR_EQUAL(bu_optarg, "ntsc")) {
+		    rweight = 0.299;
+		    gweight = 0.587;
+		    bweight = 0.114;
 		}
 		else if (BU_STR_EQUAL(bu_optarg, "crt")) {
 		    rweight = 0.26;
 		    gweight = 0.66;
 		    bweight = 0.08;
+		}
+		else if (BU_STR_EQUAL(bu_optarg, "hdtv")) {
+		    rweight = 0.2126;
+		    gweight = 0.7152;
+		    bweight = 0.0722;
+		}
+		else if (BU_STR_EQUAL(bu_optarg, "hdr")) {
+		    rweight = 0.2627;
+		    gweight = 0.6780;
+		    bweight = 0.0593;
 		}
 		else {
 		    fprintf(stderr,"pix-bw: invalid -e argument\n");

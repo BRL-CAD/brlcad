@@ -2,7 +2,7 @@
 #
 # BRL-CAD
 #
-# Copyright (c) 2011-2020 United States Government as represented by
+# Copyright (c) 2011-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,103 +53,10 @@ function(scrub_list SLIST)
   set(${SLIST} ${NONEMPTY} PARENT_SCOPE)
 endfunction(scrub_list SLIST)
 
-# Subversion generates a textual report that we need to convert into a file
-# list.  The basic approach is to crush anything that's not what we want down
-# to line returns, then replace all line returns with semicolons to create
-# a valid CMake lists.
-function(SVN_INFO_TO_PATH_LIST SVN_INFO SVN_PATHLIST)
-  set(SVN_PROCESSING ${${SVN_INFO}})
-  string(REGEX REPLACE "Name: [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "URL: [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "Repository [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "Text Last[^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "Last [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "Checksum: [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "Copied From [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "Revision: [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "Schedule: [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "Node Kind: [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "Path: " "" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "@CMAKE_SOURCE_DIR@/" "" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "@CMAKE_SOURCE_DIR@\r?\n" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "Relative[^\r\n]*\r?\n" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "Working Copy Root[^\r\n]*\r?\n" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "\n" ";" SVN_PROCESSING "${SVN_PROCESSING}")
-  string(REGEX REPLACE "/;" ";" SVN_PROCESSING "${SVN_PROCESSING}")
-  scrub_list(SVN_PROCESSING)
-  set(SVN_FILES)
-  foreach(sf ${SVN_PROCESSING})
-    if(NOT IS_DIRECTORY "@CMAKE_SOURCE_DIR@/${sf}")
-      list(APPEND SVN_FILES ${sf})
-    endif(NOT IS_DIRECTORY "@CMAKE_SOURCE_DIR@/${sf}")
-  endforeach(sf ${SVN_PROCESSING})
-  set(${SVN_PATHLIST} "${SVN_FILES}" PARENT_SCOPE)
-endfunction(SVN_INFO_TO_PATH_LIST)
-
-# If we're using subversion, check what it thinks the contents should be
-if(EXISTS "@CMAKE_SOURCE_DIR@/.svn")
-  # Look for Subversion - if we don't have the command, we can't query the
-  # repository even if it is present.
-  find_program(SVN_EXEC svn)
-
-  if(SVN_EXEC)
-    # We need the Subversion binary and the source directory must be a
-    # checkout of the BRL-CAD subversion repository.  If these two conditions
-    # are met, we can collect information from subversion
-
-    # By default, assume that nothing has been modified.
-    set(SVN_TREE_MODIFIED 0)
-
-    # Get the file list
-    set(SVN_FILES "")
-    execute_process(COMMAND ${SVN_EXEC} info -R "@CMAKE_SOURCE_DIR@" OUTPUT_VARIABLE SVN_STDOUT ERROR_VARIABLE SVN_STDERR RESULT_VARIABLE RETVAL)
-    if (RETVAL)
-      message("")
-      message("WARNING: Subversion does not seem to be working correctly.")
-      message("         Output from ${SVN_EXEC} info -R \"@CMAKE_SOURCE_DIR@\":")
-      message("${SVN_STDERR}")
-    endif (RETVAL)
-
-    message(" --- Building file list from Subversion manifests: ...")
-
-    SVN_INFO_TO_PATH_LIST(SVN_STDOUT SVN_FILES)
-
-    # Check whether Subversion is reporting modified files.  Also, if any
-    # deleted files are reported, remove those from the SVN_FILES list
-    execute_process(COMMAND ${SVN_EXEC} status "@CMAKE_SOURCE_DIR@" OUTPUT_VARIABLE SVN_STDOUT ERROR_VARIABLE SVN_STDERR)
-    string(REPLACE "@CMAKE_SOURCE_DIR@/" "" SVN_STDOUT "${SVN_STDOUT}")
-    string(REGEX REPLACE "\r?\n" ";" SVN_STATUS "${SVN_STDOUT}")
-    foreach(ITEM ${SVN_STATUS})
-      if(${ITEM} MATCHES "^M")
-	set(SVN_TREE_MODIFIED 1)
-      endif(${ITEM} MATCHES "^M")
-      if(${ITEM} MATCHES "^D")
-	string(REGEX REPLACE "^D[\\t\\ ]*" "" item_path "${ITEM}")
-	list(REMOVE_ITEM SVN_FILES ${item_path})
-      endif(${ITEM} MATCHES "^D")
-    endforeach(ITEM ${SVN_STATUS})
-
-    # Generate a sorted text file with the results of the Subversion list processing.
-    scrub_list(SVN_FILES)
-    list(SORT SVN_FILES)
-    list(REMOVE_DUPLICATES SVN_FILES)
-
-    # If we've got modified files, we shouldn't use resulting tarballs for a distribution -
-    # warn accordingly.
-    if(SVN_TREE_MODIFIED)
-      message("\n**** NOTE:  Subversion reports modified source files present in the source tree.\n     Distcheck proceeding, but archives will not be suitable for release.\n")
-      set(NOT_DISTCHECK_READY 1)
-    endif(SVN_TREE_MODIFIED)
-
-    message(" --- Building file list from Subversion manifests: Done")
-
-  endif(SVN_EXEC)
-endif(EXISTS "@CMAKE_SOURCE_DIR@/.svn")
-
 # If we're using Git, check what it thinks the contents should be
 if(EXISTS "@CMAKE_SOURCE_DIR@/.git")
-  # Look for Subversion - if we don't have the command, we can't query the
-  # repository even if it is present.
+  # Look for Git - if we don't have the command, we can't query the
+  # repository even if the repo information is present.
   find_program(GIT_EXEC git)
 
   if(GIT_EXEC)
@@ -158,16 +65,17 @@ if(EXISTS "@CMAKE_SOURCE_DIR@/.git")
     # are met, we can collect information from Git
 
     # By default, assume that nothing has been modified.
-    set(SVN_TREE_MODIFIED 0)
+    set(GIT_TREE_MODIFIED 0)
 
     # Get the file list
-    set(GIT_FILES "")
+    unset(GIT_FILES)
     execute_process(COMMAND ${GIT_EXEC} ls-tree --full-tree -r --name-only HEAD
       WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@"
       OUTPUT_VARIABLE GIT_STDOUT
       ERROR_VARIABLE GIT_STDERR
       RESULT_VARIABLE RETVAL)
     string(REGEX REPLACE "\r?\n" ";" GIT_FILES "${GIT_STDOUT}")
+    string(REGEX REPLACE ";$" "" GIT_FILES "${GIT_FILES}")
     if (RETVAL)
       message("")
       message("WARNING: Git does not seem to be working correctly.")
@@ -175,8 +83,9 @@ if(EXISTS "@CMAKE_SOURCE_DIR@/.git")
       message("${GIT_STDERR}")
     endif (RETVAL)
 
+
     # Check whether Git is reporting modified files.
-    execute_process(COMMAND ${GIT_EXEC} status --porcelain --ignored
+    execute_process(COMMAND ${GIT_EXEC} status --porcelain
       WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@"
       OUTPUT_VARIABLE GIT_STDOUT
       ERROR_VARIABLE GIT_STDERR)
@@ -184,11 +93,35 @@ if(EXISTS "@CMAKE_SOURCE_DIR@/.git")
     foreach(ITEM ${GIT_STDOUT})
       list(APPEND GIT_STATUS ${ITEM})
     endforeach(ITEM ${GIT_STDOUT})
+    # Apparently can get an empty list entry from GIT_STDOUT - remove any empty
+    # entries so CMake won't complain.
+    list(REMOVE_ITEM "" GIT_STATUS)
+    string(REPLACE "\n" ";" GIT_STATUS "${GIT_STATUS}")
     foreach(ITEM ${GIT_STATUS})
       if(${ITEM} MATCHES "^\\?\\?")
 	string(REGEX REPLACE "^[?][?][\\t\\ ]*" "" item_path "${ITEM}")
 	list(REMOVE_ITEM GIT_FILES ${item_path})
+      elseif(${ITEM} MATCHES "^D ")
+	# If Git has staged a file for deletion, ignore it unless a
+	# file with that name is still present in the tree
+	string(REGEX REPLACE "^D[ ][\\t\\ ]*" "" item_path "${ITEM}")
+	if (NOT EXISTS "@CMAKE_SOURCE_DIR@/${item_path}")
+	  list(REMOVE_ITEM GIT_FILES ${item_path})
+	else (NOT EXISTS "@CMAKE_SOURCE_DIR@/${item_path}")
+	  message("\nFile ${item_path} is staged for deletion by Git, but still exists in working tree.")
+	endif (NOT EXISTS "@CMAKE_SOURCE_DIR@/${item_path}")
+      elseif(${ITEM} MATCHES "^R ")
+	string(REGEX REPLACE "^R[ ][\\t\\ ]*" "" item_paths "${ITEM}")
+	string(REPLACE " -> " ";" item_path_list "${item_paths}")
+	list(GET item_path_list 0 PATH1)
+	list(GET item_path_list 1 PATH2)
+	list(REMOVE_ITEM GIT_FILES ${PATH1})
+	list(APPEND GIT_FILES ${PATH2})
+      elseif(${ITEM} MATCHES "^A ")
+	string(REGEX REPLACE "^A[ ][\\t\\ ]*" "" item_path "${ITEM}")
+	list(APPEND GIT_FILES ${item_path})
       else(${ITEM} MATCHES "^\\?\\?")
+	string(REGEX REPLACE "^[ ]M[\\t\\ ]*" "" item_path "${ITEM}")
 	set(GIT_TREE_MODIFIED 1)
       endif(${ITEM} MATCHES "^\\?\\?")
     endforeach(ITEM ${GIT_STATUS})
@@ -201,7 +134,7 @@ if(EXISTS "@CMAKE_SOURCE_DIR@/.git")
     # If we've got modified files, we shouldn't use resulting tarballs for a distribution -
     # warn accordingly.
     if(GIT_TREE_MODIFIED)
-      message("\n**** NOTE:  Git reports modified source files present in the source tree.\n     Distcheck proceeding, but archives will not be suitable for release.\n")
+      message("\n**** NOTE:  Git reports modified source files present in the source tree.\n     Distcheck proceeding, but archives will not be suitable for release.\n     To see the list of modified files, run \"git status --porcelain\"\n")
       set(NOT_DISTCHECK_READY 1)
     endif(GIT_TREE_MODIFIED)
 
@@ -239,7 +172,7 @@ file(GLOB_RECURSE FS_FILE_LIST RELATIVE "@CMAKE_SOURCE_DIR@" "@CMAKE_SOURCE_DIR@
 # Start scrubbing...
 set(FS_FILES)
 foreach(pf ${FS_FILE_LIST})
-  if(NOT "${pf}" MATCHES ".*\\.svn/.*" AND NOT "${pf}" MATCHES "^\\.git/.*")
+  if(NOT "${pf}" MATCHES "^\\.git/.*")
     if(CPACK_IGNORE_BUILD_PATH)
       if(NOT "${pf}" MATCHES "^${CPACK_IGNORE_BUILD_PATH}.*")
 	list(APPEND FS_FILES ${pf})
@@ -247,7 +180,7 @@ foreach(pf ${FS_FILE_LIST})
     else(CPACK_IGNORE_BUILD_PATH)
       list(APPEND FS_FILES ${pf})
     endif(CPACK_IGNORE_BUILD_PATH)
-  endif(NOT "${pf}" MATCHES ".*\\.svn/.*" AND NOT "${pf}" MATCHES "^\\.git/.*")
+  endif(NOT "${pf}" MATCHES "^\\.git/.*")
 endforeach(pf ${FS_FILE_LIST})
 set(FS_FILE_LIST ${FS_FILES})
 if(NOT FS_FILE_LIST)
@@ -266,38 +199,6 @@ message(" --- Building list of files actually present in source tree: Done")
 #
 # http://www.cmake.org/pipermail/cmake/2011-September/046214.html
 message(" --- Performing comparisons...")
-
-# If we have Subversion, we can do lots more interesting comparisons.
-# Otherwise, just look for files the build system doesn't know about.
-if(EXISTS "@CMAKE_SOURCE_DIR@/.svn")
-  if(SVN_EXEC)
-
-    # Report file in Subversion but not the build logic:
-    set(SVN_FILES_NOT_IN_BUILD ${SVN_FILES})
-    list(REMOVE_ITEM SVN_FILES_NOT_IN_BUILD ${BUILD_FILES})
-    if(SVN_FILES_NOT_IN_BUILD)
-      string(REPLACE ";" "\n" SVN_FILES_NOT_IN_BUILD "${SVN_FILES_NOT_IN_BUILD}")
-      message("\nFiles known to subversion are not accounted for in build logic: \n${SVN_FILES_NOT_IN_BUILD}\n")
-    endif(SVN_FILES_NOT_IN_BUILD)
-
-    # Report file in the build logic but not Subversion:
-    set(BUILD_FILES_NOT_IN_SVN ${BUILD_FILES})
-    list(REMOVE_ITEM BUILD_FILES_NOT_IN_SVN ${SVN_FILES})
-    if(BUILD_FILES_NOT_IN_SVN)
-      string(REPLACE ";" "\n" BUILD_FILES_NOT_IN_SVN "${BUILD_FILES_NOT_IN_SVN}")
-      message("\nFiles mentioned in build logic are not checked into the repository: \n${BUILD_FILES_NOT_IN_SVN}\n")
-    endif(BUILD_FILES_NOT_IN_SVN)
-
-    # Either of the previous two cases halts distcheck until fixed.
-    set(FORCE_DISTCHECK @FORCE_DISTCHECK@)
-    if (SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
-      if (NOT FORCE_DISTCHECK)
-	message(FATAL_ERROR "ERROR: Distcheck cannot proceed until build files and repo are in sync (set -DFORCE_DISTCHECK=ON to override)")
-      endif (NOT FORCE_DISTCHECK)
-    endif (SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
-
-  endif(SVN_EXEC)
-endif(EXISTS "@CMAKE_SOURCE_DIR@/.svn")
 
 # If we have Git, we can do lots more interesting comparisons.
 # Otherwise, just look for files the build system doesn't know about.
@@ -347,21 +248,15 @@ if(NOT_DISTCHECK_READY)
   file(APPEND "@CMAKE_BINARY_DIR@/CMakeTmp/distcheck_remove_archives_if_invalid" "execute_process(COMMAND @CMAKE_COMMAND@ -E remove \"${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.bz2\")\n")
   file(APPEND "@CMAKE_BINARY_DIR@/CMakeTmp/distcheck_remove_archives_if_invalid" "execute_process(COMMAND @CMAKE_COMMAND@ -E remove \"${CPACK_SOURCE_PACKAGE_FILE_NAME}.zip\")\n")
 else(NOT_DISTCHECK_READY)
-  if(EXISTS "@CMAKE_SOURCE_DIR@/.svn" AND SVN_EXEC)
-    file(WRITE "@CMAKE_BINARY_DIR@/CMakeTmp/distcheck_remove_archives_if_invalid" "")
-  endif(EXISTS "@CMAKE_SOURCE_DIR@/.svn" AND SVN_EXEC)
   if(EXISTS "@CMAKE_SOURCE_DIR@/.git" AND GIT_EXEC)
     file(WRITE "@CMAKE_BINARY_DIR@/CMakeTmp/distcheck_remove_archives_if_invalid" "")
   endif(EXISTS "@CMAKE_SOURCE_DIR@/.git" AND GIT_EXEC)
-  if(EXISTS "@CMAKE_SOURCE_DIR@/.svn" AND NOT SVN_EXEC)
-    file(WRITE "@CMAKE_BINARY_DIR@/CMakeTmp/distcheck_remove_archives_if_invalid" "execute_process(COMMAND @CMAKE_COMMAND@ -E echo \"Note:  Archive files were generated without being able to compare them to the Subversion archive master file lists..\")\n")
-  endif(EXISTS "@CMAKE_SOURCE_DIR@/.svn" AND NOT SVN_EXEC)
   if(EXISTS "@CMAKE_SOURCE_DIR@/.git" AND NOT GIT_EXEC)
     file(WRITE "@CMAKE_BINARY_DIR@/CMakeTmp/distcheck_remove_archives_if_invalid" "execute_process(COMMAND @CMAKE_COMMAND@ -E echo \"Note:  Archive files were generated without being able to compare them to the Git archive master file lists..\")\n")
   endif(EXISTS "@CMAKE_SOURCE_DIR@/.git" AND NOT GIT_EXEC)
-  if(NOT EXISTS "@CMAKE_SOURCE_DIR@/.svn" AND NOT EXISTS "@CMAKE_SOURCE_DIR@/.git")
-    file(WRITE "@CMAKE_BINARY_DIR@/CMakeTmp/distcheck_remove_archives_if_invalid" "execute_process(COMMAND @CMAKE_COMMAND@ -E echo \"Note:  Archive files were generated without being able to compare them to the Version Control System master file lists..\")\n")
-  endif(NOT EXISTS "@CMAKE_SOURCE_DIR@/.svn" AND NOT EXISTS "@CMAKE_SOURCE_DIR@/.git")
+  if(NOT EXISTS "@CMAKE_SOURCE_DIR@/.git")
+    file(WRITE "@CMAKE_BINARY_DIR@/CMakeTmp/distcheck_remove_archives_if_invalid" "execute_process(COMMAND @CMAKE_COMMAND@ -E echo \"Note:  Archive files were generated without being able to compare them to the Version Control System master file lists.\")\n")
+  endif(NOT EXISTS "@CMAKE_SOURCE_DIR@/.git")
 endif(NOT_DISTCHECK_READY)
 
 # All done - print result messages and prepare the appropriate final message for the distcheck build.
@@ -369,15 +264,9 @@ set(FINAL_DIST_MESSAGE "--- distcheck succeeded ---")
 if("${NOT_DISTCHECK_READY}")
   set(FINAL_DIST_MESSAGE "--- distcheck compilation succeeded, archives not ready ---")
 endif("${NOT_DISTCHECK_READY}")
-  if(NOT EXISTS "@CMAKE_SOURCE_DIR@/.svn" AND NOT EXISTS "@CMAKE_SOURCE_DIR@/.git")
-    set(FINAL_DIST_MESSAGE "--- distcheck succeeded ---\n*** Archive files pass available checks, but a distcheck using a Version Controlled checkout is recommended for archive files intended for distribution. ***")
-  endif(NOT EXISTS "@CMAKE_SOURCE_DIR@/.svn" AND NOT EXISTS "@CMAKE_SOURCE_DIR@/.git")
-  if(EXISTS "@CMAKE_SOURCE_DIR@/.svn" AND NOT SVN_EXEC)
-    set(FINAL_DIST_MESSAGE "--- distcheck succeeded ---\n*** Archive files pass available checks, but a distcheck using a Version Controlled checkout is recommended for archive files intended for distribution. ***")
-  endif(EXISTS "@CMAKE_SOURCE_DIR@/.svn" AND NOT SVN_EXEC)
-  if(EXISTS "@CMAKE_SOURCE_DIR@/.git" AND GIT_EXEC)
-    set(FINAL_DIST_MESSAGE "--- distcheck succeeded ---\n*** Archive files pass available checks, but a distcheck using a Version Controlled checkout is recommended for archive files intended for distribution. ***")
-  endif(EXISTS "@CMAKE_SOURCE_DIR@/.git" AND GIT_EXEC)
+if(NOT EXISTS "@CMAKE_SOURCE_DIR@/.git" OR NOT GIT_EXEC)
+  set(FINAL_DIST_MESSAGE "--- distcheck succeeded ---\n*** Archive files pass available checks, but a distcheck using a Version Controlled checkout is recommended for archive files intended for distribution. ***")
+endif(NOT EXISTS "@CMAKE_SOURCE_DIR@/.git" OR NOT GIT_EXEC)
 file(WRITE "@CMAKE_BINARY_DIR@/CMakeTmp/distcheck_message" "execute_process(COMMAND @CMAKE_COMMAND@ -E echo \"${FINAL_DIST_MESSAGE}\")")
 
 # If we got this far, it worked

@@ -1,7 +1,7 @@
 /*                C H E C K _ M O M E N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2020 United States Government as represented by
+ * Copyright (c) 2018-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ int check_moments(struct current_state *state,
     int i;
     mat_t moments;
 
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_MASS|ANALYSIS_CENTROIDS|ANALYSIS_MOMENTS)) return GED_ERROR;
+    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_MASS|ANALYSIS_CENTROIDS|ANALYSIS_MOMENTS)) return BRLCAD_ERROR;
 
     print_verbose_debug(options);
 
@@ -47,7 +47,7 @@ int check_moments(struct current_state *state,
     analyze_moments_total(state, moments);
     bn_mat_print_vls("For the Moments and Products of Inertia For\n\tAll Specified Objects",
 		     moments, _ged_current_gedp->ged_result_str);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

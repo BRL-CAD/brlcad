@@ -1,7 +1,7 @@
 /*                      V I E W X R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 #include "vmath.h"
 #include "icv.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
@@ -53,7 +53,7 @@
 #define	LGT_FLOAT	1
 
 
-extern	fb	*fbp;
+extern	struct fb *fbp;
 extern	FILE	*outfp;
 extern	fastf_t	viewsize;
 extern	int	lightmodel;

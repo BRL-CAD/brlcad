@@ -1,7 +1,7 @@
 /*                           V L B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -107,9 +107,8 @@ void
 bu_vlb_free(struct bu_vlb *vlb)
 {
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
-    if (vlb->buf != NULL) {
-	bu_free(vlb->buf, "vlb");
-    }
+    bu_free(vlb->buf, "vlb");
+
     vlb->buf = NULL;
     vlb->bufCapacity = 0;
     vlb->nextByte = (size_t)-1;

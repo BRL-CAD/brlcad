@@ -1,7 +1,7 @@
 /*                          C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -456,20 +456,23 @@ int
 rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		const mat_t mat, const struct db_i *dbip, struct resource *resp)
 {
-    struct rt_comb_internal *comb;
-    unsigned char *cp;
-    int wid;
-    size_t nmat, nleaf, rpn_len, max_stack_depth;
-    size_t leafbytes;
-    unsigned char *matp;
-    unsigned char *leafp;
-    unsigned char *leafp_end;
-    unsigned char *exprp;
+    struct rt_comb_internal *comb = NULL;
+    unsigned char *cp = NULL;
+    int wid = 0;
+    size_t nmat = 0;
+    size_t nleaf = 0;
+    size_t rpn_len = 0;
+    size_t max_stack_depth = 0;
+    size_t leafbytes = 0;
+    unsigned char *matp = NULL;
+    unsigned char *leafp = NULL;
+    unsigned char *leafp_end = NULL;
+    unsigned char *exprp = NULL;
 #define MAX_V5_STACK 8000
-    union tree *stack[MAX_V5_STACK];
-    union tree **sp;			/* stack pointer */
-    const char *ap;
-    size_t ius;
+    union tree *stack[MAX_V5_STACK] = {NULL};
+    union tree **sp = NULL;			/* stack pointer */
+    const char *ap = NULL;
+    size_t ius = 0;
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
@@ -780,6 +783,9 @@ finish:
 	}
 	if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_MATERIAL_ID))) != NULL) {
 	    comb->GIFTmater = atol(ap);
+	}
+	if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_MATERIAL_NAME))) != NULL) {
+	    bu_vls_strcpy(&comb->material, ap);
 	}
 	if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_LOS))) != NULL) {
 	    comb->los = atol(ap);

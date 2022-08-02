@@ -1,7 +1,7 @@
 /*                          R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 
 #include "vmath.h"
 #include "ged.h"
-#include "fb.h"
+#include "dm.h"
 #include "./mged.h"
 #include "./mged_dm.h"
 
@@ -71,11 +71,13 @@ rb_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		  const char *UNUSED(value),
 		  void *UNUSED(data))
 {
-    struct dm_list *dmlp;
-
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	if (dmlp->dml_rubber_band == rubber_band)
-	    dmlp->dml_dirty = 1;
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (m_dmp->dm_rubber_band == rubber_band) {
+	    m_dmp->dm_dirty = 1;
+	    dm_set_dirty(m_dmp->dm_dmp, 1);
+	}
+    }
 }
 
 

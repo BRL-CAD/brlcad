@@ -1,7 +1,7 @@
 /*                    R P C _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     RT_RPC_CK_MAGIC(eip);
 
     point_t p1_origin;
-    ON_3dPoint plane1_origin, plane2_origin;
+    ON_3dPoint plane1_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
 
     // First, find plane in 3 space corresponding to the bottom face

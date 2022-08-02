@@ -2,7 +2,7 @@
  *
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -340,13 +340,16 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	    pshape->name_("''");
 	    pshape->description_("''");
 	    SdaiCharacterized_product_definition *cpd = new SdaiCharacterized_product_definition(usage);
-	    pshape->definition_(new SdaiCharacterized_definition(cpd));
+	    SdaiCharacterized_definition *cd = new SdaiCharacterized_definition(cpd);
+	    pshape->definition_(cd);
 	    sc->instance_list->Append((STEPentity *)pshape, completeSE);
 	    STEPentity *rep_rel = Build_Representation_Relationship(item_transform, parent_shape, child_shape, sc->registry, sc->instance_list);
 	    SdaiContext_dependent_shape_representation *cshape = (SdaiContext_dependent_shape_representation *)sc->registry->ObjCreate("CONTEXT_DEPENDENT_SHAPE_REPRESENTATION");
 	    cshape->representation_relation_((SdaiShape_representation_relationship *)rep_rel);
 	    cshape->represented_product_relation_(pshape);
 	    sc->instance_list->Append((STEPentity *)cshape, completeSE);
+	    delete cpd;
+	    delete cd;
 	} else {
 	    bu_log("\nA matrix with a scaling component is present in the following comb relationship:\n  %s/%s\nScaling is not supported by STEP in assembly structures - to export this structure, consider using\npush or xpush to remove the scaling matrices from the hierarchy.\n", dp->d_namep, curr_dp->d_namep);
 	}

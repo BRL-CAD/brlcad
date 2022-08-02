@@ -1,7 +1,7 @@
 /*                     O B J _ W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2020 United States Government as represented by
+ * Copyright (c) 1996-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -535,7 +535,7 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     else if (NEAR_EQUAL(state.gcv_options->scale_factor, 1.0, RT_LEN_TOL))
 	fprintf(state.fp, "# BRL-CAD generated Wavefront OBJ file (Units mm)\n");
     else
-	fprintf(state.fp, "# BRL-CAD generated Wavefront OBJ file (Units %f/mm)\n", (float)state.gcv_options->scale_factor);
+	fprintf(state.fp, "# BRL-CAD generated Wavefront OBJ file (Units %lf/mm)\n", state.gcv_options->scale_factor);
 
     fprintf(state.fp, "# BRL-CAD model\n# BRL_CAD objects:");
 

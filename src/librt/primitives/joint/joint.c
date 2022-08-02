@@ -1,7 +1,7 @@
 /*                          J O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -223,7 +223,7 @@ rt_joint_free(struct soltab *stp)
  */
 #define LOCATION_RADIUS 5
 int
-rt_joint_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_joint_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_joint_internal *jip;
     point_t a = {LOCATION_RADIUS, 0, 0};
@@ -236,6 +236,7 @@ rt_joint_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     jip = (struct rt_joint_internal *)ip->idb_ptr;
     RT_JOINT_CK_MAGIC(jip);
 
@@ -243,19 +244,19 @@ rt_joint_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
     rt_ell_16pnts(bottom, jip->location, b, c);
     rt_ell_16pnts(middle, jip->location, a, c);
 
-    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &middle[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &middle[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
 
@@ -552,11 +553,11 @@ rt_joint_find_selections(
      * the view plane that intersects the location)
      */
     BN_TOL_INIT(&tol);
-    (void)bn_dist_pnt3_line3(dist, qline_pt, qstart, qdir, jip->location, &tol);
+    (void)bg_dist_pnt3_line3(dist, qline_pt, qstart, qdir, jip->location, &tol);
     VJOIN1(joint_selection->start, qline_pt, -1.0, jip->location);
 
 #if 0
-    ret = bn_distsq_line3_line3(dist, qstart, qdir, jip->location,
+    ret = bg_distsq_line3_line3(dist, qstart, qdir, jip->location,
 	    jip->vector1, qline_pt, joint_v1pt);
     dist_sq1 = dist[2];
 
@@ -569,7 +570,7 @@ rt_joint_find_selections(
 	fastf_t distsq_to_loc;
 	fastf_t max_vdist;
 
-	ret = bn_distsq_line3_line3(dist, qstart, qdir, jip->location,
+	ret = bg_distsq_line3_line3(dist, qstart, qdir, jip->location,
 		jip->vector2, qline_pt, joint_v2pt);
 	dist_sq2 = dist[2];
 
@@ -756,6 +757,8 @@ rt_joint_process_selection(
 
 	if (!member) {
 	    bu_log("couldn't lookup member to edit matrix\n");
+	    rt_db_free_internal(&path_ip);
+	    return 0;
 	}
 	if (!member->tr_l.tl_mat) {
 	    mat_t *new_mat;

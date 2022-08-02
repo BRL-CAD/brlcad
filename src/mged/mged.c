@@ -1,7 +1,7 @@
 /*                           M G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,8 +45,8 @@
 #  include <sys/stat.h>
 #endif
 
-#ifdef HAVE_POLL_H
-#  include <poll.h>
+#ifdef HAVE_WINDOWS_H
+#  include <direct.h> /* For chdir */
 #endif
 
 #include "bio.h"
@@ -69,6 +69,7 @@
 #include "raytrace.h"
 #include "libtermio.h"
 #include "rt/db4.h"
+#include "bv/util.h"
 #include "ged.h"
 #include "tclcad.h"
 
@@ -109,7 +110,7 @@ extern struct _mged_variables default_mged_variables;
 extern struct _color_scheme default_color_scheme;
 
 /* defined in grid.c */
-extern struct _grid_state default_grid_state;
+extern struct bv_grid_state default_grid_state;
 
 /* defined in axes.c */
 extern struct _axes_state default_axes_state;
@@ -144,15 +145,7 @@ void (*cur_sigint)();	/* Current SIGINT status */
 int interactive = 1;	/* >0 means interactive */
 int cbreak_mode = 0;        /* >0 means in cbreak_mode */
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL) || defined(DM_OSGL)
-# if defined(HAVE_TK)
-int classic_mged=0;
-#  else
 int classic_mged=1;
-#  endif
-#else
-int classic_mged=1;
-#endif
 
 /* The old mged gui is temporarily the default. */
 int old_mged_gui=1;
@@ -350,21 +343,21 @@ sig3(int UNUSED(sig))
 void
 new_edit_mats(void)
 {
-    struct dm_list *p;
-    struct dm_list *save_dm_list;
+    struct mged_dm *save_dm_list;
 
-    save_dm_list = curr_dm_list;
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (!p->dml_owner)
+    save_dm_list = mged_curr_dm;
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (!p->dm_owner)
 	    continue;
 
-	curr_dm_list = p;
+	set_curr_dm(p);
 	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, modelchanges);
 	bn_mat_inv(view_state->vs_objview2model, view_state->vs_model2objview);
 	view_state->vs_flag = 1;
     }
 
-    curr_dm_list = save_dm_list;
+    set_curr_dm(save_dm_list);
 }
 
 
@@ -382,6 +375,7 @@ mged_view_callback(struct bview *gvp,
 	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
     }
     vsp->vs_flag = 1;
+    dm_set_dirty(mged_curr_dm->dm_dmp, 1);
 }
 
 
@@ -392,7 +386,7 @@ mged_view_callback(struct bview *gvp,
 void
 new_mats(void)
 {
-    ged_view_update(view_state->vs_gvp);
+    bv_update(view_state->vs_gvp);
 }
 
 
@@ -639,7 +633,7 @@ mged_process_char(char ch)
 	    if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
 		curr_cmd_list = &head_cmd_list;
 		if (curr_cmd_list->cl_tie)
-		    curr_dm_list = curr_cmd_list->cl_tie;
+		    set_curr_dm(curr_cmd_list->cl_tie);
 
 		reset_Tty(fileno(stdin)); /* Backwards compatibility */
 		(void)signal(SIGINT, SIG_IGN);
@@ -1024,8 +1018,8 @@ main(int argc, char *argv[])
      * initialization.
      */
 #ifdef HAVE_PIPE
-    int pipe_out[2];
-    int pipe_err[2];
+    int pipe_out[2] = {-1, -1};
+    int pipe_err[2] = {-1, -1};
 #endif
 
     int rateflag = 0;
@@ -1039,7 +1033,6 @@ main(int argc, char *argv[])
     Tcl_Channel chan;
 #if !defined(_WIN32) || defined(__CYGWIN__)
     fd_set read_set;
-    fd_set exception_set;
     int result;
 #endif
 
@@ -1060,6 +1053,12 @@ main(int argc, char *argv[])
     if (bu_avail_cpus() > 1) {
 	RTG.rtg_parallel = 1;
     }
+
+#if defined(HAVE_TK)
+    if (dm_have_graphics()) {
+	classic_mged = 0;
+    }
+#endif
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, argv, "a:d:hbicorx:X:v?")) != -1) {
@@ -1112,6 +1111,15 @@ main(int argc, char *argv[])
 	}
     }
 
+    /* Change the working directory to BU_DIR_HOME if we are invoking
+     * without any arguments. */
+    if (argc == 1) {
+	const char *homed = bu_dir(NULL, 0, BU_DIR_HOME, NULL);
+	if (homed && chdir(homed)) {
+	    bu_exit(1, "Failed to change working directory to \"%s\" ", homed);
+	}
+    }
+
     /* skip the args and invocation name */
     argc -= bu_optind;
     argv += bu_optind;
@@ -1120,70 +1128,10 @@ main(int argc, char *argv[])
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
     } else {
-#if defined(_WIN32) && !defined(CYGWIN)
-	if(!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
-	    interactive = 0;
-#else
-	struct timeval timeout;
-
-	/* wait 1/10sec for input, in case we're piped */
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 100000;
-
-	/* check if there is data on stdin, first relying on whether
-	 * there is standard input pending, second on whether there's
-	 * a controlling terminal (isatty).
-	 */
-	FD_ZERO(&read_set);
-	FD_SET(fileno(stdin), &read_set);
-	result = select(fileno(stdin)+1, &read_set, NULL, NULL, &timeout);
-	if (bu_debug > 0)
-	    fprintf(stdout, "DEBUG: select result: %d, stdin read: %d\n", result, FD_ISSET(fileno(stdin), &read_set));
-
-	if (result == 0) {
-	    if (!isatty(fileno(stdin)) || !isatty(fileno(stdout))) {
-		interactive = 0;
-	    }
-	} else if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
-	    /* stdin pending, probably not interactive */
-	    interactive = 0;
-
-	    /* check if there's an out-of-bounds exception.  sometimes
-	     * the case if mged -c is started via desktop GUI.
-	     */
-	    FD_ZERO(&exception_set);
-	    FD_SET(fileno(stdin), &exception_set);
-	    result = select(fileno(stdin)+1, NULL, NULL, &exception_set, &timeout);
-	    if (bu_debug > 0)
-		fprintf(stdout, "DEBUG: select result: %d, stdin exception: %d\n", result, FD_ISSET(fileno(stdin), &exception_set));
-
-	    /* see if there's valid input waiting (more reliable than select) */
-	    if (result > 0 && FD_ISSET(fileno(stdin), &exception_set)) {
-#ifdef HAVE_POLL_H
-		struct pollfd pfd;
-		pfd.fd = fileno(stdin);
-		pfd.events = POLLIN;
-		pfd.revents = 0;
-
-		result = poll(&pfd, 1, 100);
-		if (bu_debug > 0)
-		    fprintf(stdout, "DEBUG: poll result: %d, revents: %d\n", result, pfd.revents);
-
-		if (pfd.revents & POLLNVAL) {
-		    interactive = 1;
-		}
-#else
-		/* just in case we get input too quickly, see if it's coming from a tty */
-		if (isatty(fileno(stdin))) {
-		    interactive = 1;
-		}
-#endif /* HAVE_POLL_H */
-
-	    }
-
-	} /* read_set */
-#endif
+	interactive = bu_interactive();
     } /* argc > 1 */
+
+    //bu_log("interactive: %d\n", interactive);
 
     if (bu_debug > 0)
 	fprintf(stdout, "DEBUG: interactive=%d, classic_mged=%d\n", interactive, classic_mged);
@@ -1262,25 +1210,33 @@ main(int argc, char *argv[])
     bu_vls_strcpy(&head_cmd_list.cl_name, "mged");
     curr_cmd_list = &head_cmd_list;
 
-    memset((void *)&head_dm_list, 0, sizeof(struct dm_list));
-    BU_LIST_INIT(&head_dm_list.l);
-
-    BU_ALLOC(curr_dm_list, struct dm_list);
-    BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
+    BU_ALLOC(mged_curr_dm, struct mged_dm);
+    bu_ptbl_init(&active_dm_set, 8, "dm set");
+    bu_ptbl_ins(&active_dm_set, (long *)mged_curr_dm);
+    mged_dm_init_state = mged_curr_dm;
     netfd = -1;
 
     /* initialize predictor stuff */
-    BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
+    BU_LIST_INIT(&mged_curr_dm->dm_p_vlist);
     predictor_init();
 
-    DMP = dm_get();
-    dm_set_null(DMP);
-    bu_vls_init(tkName);
-    bu_vls_init(dName);
-    if (dm_get_pathname(DMP)) {
-	bu_vls_strcpy(dm_get_pathname(DMP), "nu");
+    /* register application provided routines */
+
+    DMP = dm_open(NULL, INTERP, "nu", 0, NULL);
+    struct bu_vls *dpvp = dm_get_pathname(DMP);
+    if (dpvp) {
+	bu_vls_strcpy(dpvp, "nu");
     }
-    bu_vls_strcpy(tkName, "nu");
+
+    /* If we're only doing the 'nu' dm we don't need most of mged_dm_init, but
+     * we do still need to register the dm_commands */
+    mged_curr_dm->dm_cmd_hook = dm_commands;
+
+    struct bu_vls *tnvp = dm_get_tkname(mged_curr_dm->dm_dmp);
+    if (tnvp) {
+	bu_vls_init(tnvp); /* this may leak */
+	bu_vls_strcpy(tnvp, "nu");
+    }
 
     BU_ALLOC(rubber_band, struct _rubber_band);
     *rubber_band = default_rubber_band;		/* struct copy */
@@ -1291,7 +1247,7 @@ main(int argc, char *argv[])
     BU_ALLOC(color_scheme, struct _color_scheme);
     *color_scheme = default_color_scheme;	/* struct copy */
 
-    BU_ALLOC(grid_state, struct _grid_state);
+    BU_ALLOC(grid_state, struct bv_grid_state);
     *grid_state = default_grid_state;		/* struct copy */
 
     BU_ALLOC(axes_state, struct _axes_state);
@@ -1309,7 +1265,7 @@ main(int argc, char *argv[])
 
     BU_ALLOC(view_state, struct _view_state);
     view_state->vs_rc = 1;
-    view_ring_init(curr_dm_list->dml_view_state, (struct _view_state *)NULL);
+    view_ring_init(mged_curr_dm->dm_view_state, (struct _view_state *)NULL);
     MAT_IDN(view_state->vs_ModelDelta);
 
     am_mode = AMM_IDLE;
@@ -1341,7 +1297,7 @@ main(int argc, char *argv[])
 
     mmenu_init();
     btn_head_menu(0, 0, 0);
-    mged_link_vars(curr_dm_list);
+    mged_link_vars(mged_curr_dm);
 
     bu_vls_printf(&input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
     (void)Tcl_Eval(INTERP, bu_vls_addr(&input_str));
@@ -1415,6 +1371,9 @@ main(int argc, char *argv[])
 
 	    /* Command line may have more than 2 args, opendb only wants 2
 	     * expecting second to be the file name.
+	     * NOTE: this way makes it so f_opendb does not care about y/n
+	     * and always create a new db if one does not exist since we want
+	     * to allow mged to process args after the db as a command
 	     */
 	    if (f_opendb((ClientData)NULL, INTERP, 2, av) == TCL_ERROR) {
 		if (!run_in_foreground && use_pipe) {
@@ -1471,9 +1430,9 @@ main(int argc, char *argv[])
 		status = Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	    } else {
 		Tcl_DString temp;
-		const char *archer = bu_brlcad_root("share/tclscripts/archer/archer_launch.tcl", 1);
 		const char *archer_trans;
 		Tcl_DStringInit(&temp);
+		const char *archer = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "archer", "archer_launch.tcl", NULL);
 		archer_trans = Tcl_TranslateFileName(INTERP, archer, &temp);
 		tclcad_set_argv(INTERP, argc, (const char **)argv);
 		status = Tcl_EvalFile(INTERP, archer_trans);
@@ -1540,8 +1499,9 @@ main(int argc, char *argv[])
      * dm first opens filled with garbage.
      */
     {
-	const unsigned char *dm_bg = dm_get_bg(DMP);
-	dm_set_bg(DMP, dm_bg[0], dm_bg[1], dm_bg[2]);
+	unsigned char *dm_bg;
+	dm_get_bg(&dm_bg, NULL, DMP);
+	dm_set_bg(DMP, dm_bg[0], dm_bg[1], dm_bg[2], dm_bg[0], dm_bg[1], dm_bg[2]);
     }
 
     /* initialize a display manager */
@@ -1557,20 +1517,35 @@ main(int argc, char *argv[])
 
     /* If this is an argv[] invocation, do it now */
     if (argc > 1) {
-	const char *av[2];
-
-	av[0] = "q";
-	av[1] = NULL;
-
 	/* Call cmdline instead of calling mged_cmd directly so that
 	 * access to Tcl/Tk is possible.
 	 */
-	for (argc -= 1, argv += 1; argc; --argc, ++argv)
+	for (argc -= 1, argv += 1; argc; --argc, ++argv) {
+	    /* in order to process interactively, an old optional y/n argument
+	    * intended for f_opendb must be filtered out here to remove
+	    * garbage "unrecognized command" line prints
+	    */
+	    if (!BU_STR_EQUAL("y", argv[0]) && !BU_STR_EQUAL("Y", argv[0])
+	     && !BU_STR_EQUAL("n", argv[0]) && !BU_STR_EQUAL("N", argv[0])) {
 	    bu_vls_printf(&input_str, "%s ", *argv);
+	    }
+	}
 
 	cmdline(&input_str, TRUE);
 	bu_vls_free(&input_str);
 
+	// If we launched subcommands, we need to process their
+	// output before quitting.  Do one up front to catch
+	// anything produced by a process that already exited,
+	// and loop while libged still reports running processes.
+	Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
+	while (BU_PTBL_LEN(&GEDP->ged_subp)) {
+	    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
+	}
+
+	const char *av[2];
+	av[0] = "q";
+	av[1] = NULL;
 	f_quit((ClientData)NULL, INTERP, 1, av);
 	/* NOTREACHED */
     }
@@ -1779,7 +1754,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
 	    curr_cmd_list = &head_cmd_list;
 	    if (curr_cmd_list->cl_tie)
-		curr_dm_list = curr_cmd_list->cl_tie;
+		set_curr_dm(curr_cmd_list->cl_tie);
 
 	    if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
 		/* Remove newline */
@@ -1943,8 +1918,7 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
 int
 event_check(int non_blocking)
 {
-    struct dm_list *p;
-    struct dm_list *save_dm_list;
+    struct mged_dm *save_dm_list;
     int save_edflag;
     int handled = 0;
 
@@ -1978,12 +1952,12 @@ event_check(int non_blocking)
     /*********************************
      * Handle rate-based processing *
      *********************************/
-    save_dm_list = curr_dm_list;
+    save_dm_list = mged_curr_dm;
     if (edit_rateflag_model_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	curr_dm_list = edit_rate_mr_dm_list;
+	set_curr_dm(edit_rate_mr_dm_list);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
@@ -2017,7 +1991,7 @@ event_check(int non_blocking)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	curr_dm_list = edit_rate_or_dm_list;
+	set_curr_dm(edit_rate_or_dm_list);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'o';
 
@@ -2051,7 +2025,7 @@ event_check(int non_blocking)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	curr_dm_list = edit_rate_vr_dm_list;
+	set_curr_dm(edit_rate_vr_dm_list);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
@@ -2085,7 +2059,7 @@ event_check(int non_blocking)
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	curr_dm_list = edit_rate_mt_dm_list;
+	set_curr_dm(edit_rate_mt_dm_list);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
@@ -2118,7 +2092,7 @@ event_check(int non_blocking)
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	curr_dm_list = edit_rate_vt_dm_list;
+	set_curr_dm(edit_rate_vt_dm_list);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
@@ -2172,11 +2146,12 @@ event_check(int non_blocking)
 	    edobj = save_edflag;
     }
 
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (!p->dml_owner)
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (!p->dm_owner)
 	    continue;
 
-	curr_dm_list = p;
+	set_curr_dm(p);
 
 	if (view_state->vs_rateflag_model_rotate) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -2238,7 +2213,7 @@ event_check(int non_blocking)
 	    bu_vls_free(&vls);
 	}
 
-	curr_dm_list = save_dm_list;
+	set_curr_dm(save_dm_list);
     }
 
     return non_blocking;
@@ -2260,41 +2235,43 @@ event_check(int non_blocking)
 void
 refresh(void)
 {
-    struct dm_list *p;
-    struct dm_list *save_dm_list;
+    struct mged_dm *save_dm_list;
     struct bu_vls overlay_vls = BU_VLS_INIT_ZERO;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     int do_overlay = 1;
     int64_t elapsed_time, start_time = bu_gettime();
     int do_time = 0;
 
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (!p->dml_view_state)
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (!p->dm_view_state)
 	    continue;
-	if (update_views || p->dml_view_state->vs_flag)
-	    p->dml_dirty = 1;
+	if (update_views || p->dm_view_state->vs_flag)
+	    p->dm_dirty = 1;
     }
 
     /*
-     * This needs to be done separately because dml_view_state may be
+     * This needs to be done separately because dm_view_state may be
      * shared.
      */
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (!p->dml_view_state)
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (!p->dm_view_state)
 	    continue;
-	p->dml_view_state->vs_flag = 0;
+	p->dm_view_state->vs_flag = 0;
     }
 
     update_views = 0;
 
-    save_dm_list = curr_dm_list;
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+    save_dm_list = mged_curr_dm;
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	/*
 	 * if something has changed, then go update the display.
 	 * Otherwise, we are happy with the view we have
 	 */
-	curr_dm_list = p;
-	if (mapped && dirty) {
+	set_curr_dm(p);
+	if (mapped && DMP_dirty) {
 	    int restore_zbuffer = 0;
 
 	    if (mged_variables->mv_fb &&
@@ -2304,7 +2281,7 @@ refresh(void)
 		(void)dm_set_zbuffer(DMP, 0);
 	    }
 
-	    dirty = 0;
+	    DMP_dirty = 0;
 	    do_time = 1;
 	    VMOVE(geometry_default_color, color_scheme->cs_geo_def);
 
@@ -2322,98 +2299,103 @@ refresh(void)
 	    if (mged_variables->mv_predictor)
 		predictor_frame();
 
-	    dm_draw_begin(DMP);	/* update displaylist prolog */
+	    if (dm_get_dirty(DMP)) {
 
-	    if (DBIP != DBI_NULL) {
-		/* do framebuffer underlay */
-		if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
-		    if (mged_variables->mv_fb_all)
-			fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
-		    else if (mged_variables->mv_mouse_behavior != 'z')
-			paint_rect_area();
-		}
+		dm_draw_begin(DMP);	/* update displaylist prolog */
 
-		/* do framebuffer overlay for entire window */
-		if (mged_variables->mv_fb &&
-		    mged_variables->mv_fb_overlay &&
-		    mged_variables->mv_fb_all) {
-		    fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
-
-		    if (restore_zbuffer)
-			dm_set_zbuffer(DMP, 1);
-		} else {
-		    if (restore_zbuffer)
-			dm_set_zbuffer(DMP, 1);
-
-		    /* Draw each solid in its proper place on the
-		     * screen by applying zoom, rotation, &
-		     * translation.  Calls dm_loadmatrix() and
-		     * dm_draw_vlist().
-		     */
-
-		    if (dm_get_stereo(DMP) == 0 ||
-			mged_variables->mv_eye_sep_dist <= 0) {
-			/* Normal viewing */
-			dozoom(0);
-		    } else {
-			/* Stereo viewing */
-			dozoom(1);
-			dozoom(2);
+		if (DBIP != DBI_NULL) {
+		    /* do framebuffer underlay */
+		    if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
+			if (mged_variables->mv_fb_all)
+			    fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
+			else if (mged_variables->mv_mouse_behavior != 'z')
+			    paint_rect_area();
 		    }
 
-		    /* do framebuffer overlay in rectangular area */
+		    /* do framebuffer overlay for entire window */
 		    if (mged_variables->mv_fb &&
-			mged_variables->mv_fb_overlay &&
-			mged_variables->mv_mouse_behavior != 'z')
-			paint_rect_area();
+			    mged_variables->mv_fb_overlay &&
+			    mged_variables->mv_fb_all) {
+			fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
+
+			if (restore_zbuffer)
+			    dm_set_zbuffer(DMP, 1);
+		    } else {
+			if (restore_zbuffer)
+			    dm_set_zbuffer(DMP, 1);
+
+			/* Draw each solid in its proper place on the
+			 * screen by applying zoom, rotation, &
+			 * translation.  Calls dm_loadmatrix() and
+			 * dm_draw_vlist().
+			 */
+
+			if (dm_get_stereo(DMP) == 0 ||
+				mged_variables->mv_eye_sep_dist <= 0) {
+			    /* Normal viewing */
+			    dozoom(0);
+			} else {
+			    /* Stereo viewing */
+			    dozoom(1);
+			    dozoom(2);
+			}
+
+			/* do framebuffer overlay in rectangular area */
+			if (mged_variables->mv_fb &&
+				mged_variables->mv_fb_overlay &&
+				mged_variables->mv_mouse_behavior != 'z')
+			    paint_rect_area();
+		    }
+
+
+		    /* Restore to non-rotated, full brightness */
+		    dm_hud_begin(DMP);
+
+		    /* only if not doing overlay */
+		    if (!mged_variables->mv_fb ||
+			    mged_variables->mv_fb_overlay != 2) {
+			if (rubber_band->rb_active || rubber_band->rb_draw)
+			    draw_rect();
+
+			if (grid_state->draw)
+			    draw_grid();
+
+			/* Compute and display angle/distance cursor */
+			if (adc_state->adc_draw)
+			    adcursor();
+
+			if (axes_state->ax_view_draw)
+			    draw_v_axes();
+
+			if (axes_state->ax_model_draw)
+			    draw_m_axes();
+
+			if (axes_state->ax_edit_draw &&
+				(STATE == ST_S_EDIT || STATE == ST_O_EDIT))
+			    draw_e_axes();
+
+			/* Display titles, etc., if desired */
+			bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
+			dotitles(&tmp_vls);
+			bu_vls_trunc(&tmp_vls, 0);
+		    }
 		}
-
-
-		/* Restore to non-rotated, full brightness */
-		dm_normal(DMP);
 
 		/* only if not doing overlay */
 		if (!mged_variables->mv_fb ||
-		    mged_variables->mv_fb_overlay != 2) {
-		    if (rubber_band->rb_active || rubber_band->rb_draw)
-			draw_rect();
-
-		    if (grid_state->gr_draw)
-			draw_grid();
-
-		    /* Compute and display angle/distance cursor */
-		    if (adc_state->adc_draw)
-			adcursor();
-
-		    if (axes_state->ax_view_draw)
-			draw_v_axes();
-
-		    if (axes_state->ax_model_draw)
-			draw_m_axes();
-
-		    if (axes_state->ax_edit_draw &&
-			(STATE == ST_S_EDIT || STATE == ST_O_EDIT))
-			draw_e_axes();
-
-		    /* Display titles, etc., if desired */
-		    bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
-		    dotitles(&tmp_vls);
-		    bu_vls_trunc(&tmp_vls, 0);
+			mged_variables->mv_fb_overlay != 2) {
+		    /* Draw center dot */
+		    dm_set_fg(DMP,
+			    color_scheme->cs_center_dot[0],
+			    color_scheme->cs_center_dot[1],
+			    color_scheme->cs_center_dot[2], 1, 1.0);
+		    dm_draw_point_2d(DMP, 0.0, 0.0);
 		}
-	    }
 
-	    /* only if not doing overlay */
-	    if (!mged_variables->mv_fb ||
-		mged_variables->mv_fb_overlay != 2) {
-		/* Draw center dot */
-		dm_set_fg(DMP,
-			  color_scheme->cs_center_dot[0],
-			  color_scheme->cs_center_dot[1],
-			  color_scheme->cs_center_dot[2], 1, 1.0);
-		dm_draw_point_2d(DMP, 0.0, 0.0);
-	    }
+		dm_draw_end(DMP);
+		dm_set_dirty(DMP, 0);
 
-	    dm_draw_end(DMP);
+	    }
 	}
     }
 
@@ -2427,7 +2409,7 @@ refresh(void)
 	}
     }
 
-    curr_dm_list = save_dm_list;
+    set_curr_dm(save_dm_list);
 
     bu_vls_free(&overlay_vls);
     bu_vls_free(&tmp_vls);
@@ -2443,28 +2425,48 @@ void
 mged_finish(int exitcode)
 {
     char place[64];
-    struct dm_list *p;
     struct cmd_list *c;
     int ret;
 
     (void)sprintf(place, "exit_status=%d", exitcode);
 
+    /* If we're in script mode, wait for subprocesses to finish before we
+     * wrap up */
+    if (GEDP && !interactive) {
+	struct bu_ptbl rmp = BU_PTBL_INIT_ZERO;
+	while (BU_PTBL_LEN(&GEDP->ged_subp)) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(&GEDP->ged_subp); i++) {
+		int aborted = 0;
+		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&GEDP->ged_subp, i);
+		if (bu_process_wait(&aborted, rrp->p, 1) != -1) {
+		    bu_ptbl_ins(&rmp, (long *)rrp);
+		}
+	    }
+	    for (size_t i = 0; i < BU_PTBL_LEN(&rmp); i++) {
+		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&GEDP->ged_subp, i);
+		bu_ptbl_rm(&GEDP->ged_subp, (long *)rrp);
+		BU_PUT(rrp, struct ged_subprocess);
+	    }
+	    bu_ptbl_reset(&rmp);
+	}
+    }
+
     /* Release all displays */
-    while (BU_LIST_WHILE(p, dm_list, &(head_dm_list.l))) {
-	if (!p)
-	    bu_bomb("dm list entry is null? aborting!\n");
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 
-	BU_LIST_DEQUEUE(&(p->l));
+	bu_ptbl_rm(&active_dm_set, (long *)p);
 
-	if (p && p->dml_dmp) {
-	    dm_close(p->dml_dmp);
-	    RT_FREE_VLIST(&p->dml_p_vlist);
+	if (p && p->dm_dmp) {
+	    dm_close(p->dm_dmp);
+	    RT_FREE_VLIST(&p->dm_p_vlist);
 	    mged_slider_free_vls(p);
-	    bu_free(p, "release: curr_dm_list");
+	    bu_free(p, "release: mged_curr_dm");
 	}
 
-	curr_dm_list = DM_LIST_NULL;
+	set_curr_dm(MGED_DM_NULL);
     }
+    bu_ptbl_free(&active_dm_set);
 
     for (BU_LIST_FOR (c, cmd_list, &head_cmd_list.l)) {
 	bu_vls_free(&c->cl_name);
@@ -2489,9 +2491,11 @@ mged_finish(int exitcode)
     Tcl_Eval(INTERP, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
     Tcl_Release((ClientData)INTERP);
 
+    struct tclcad_io_data *giod = (struct tclcad_io_data *)GEDP->ged_io_data;
     ged_close(GEDP);
-    if (GEDP)
-	BU_PUT(GEDP, struct ged);
+    if (giod) {
+	tclcad_destroy_io_data(giod);
+    }
 
     WDBP = RT_WDB_NULL;
     DBIP = DBI_NULL;
@@ -2545,8 +2549,6 @@ mged_refresh_handler(void *UNUSED(clientdata))
 int
 f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    struct rt_wdb *ged_wdbp = RT_WDB_NULL;
-    struct ged *save_gedp;
     struct db_i *save_dbip = DBI_NULL;
     struct mater *save_materp = MATER_NULL;
     struct bu_vls msg = BU_VLS_INIT_ZERO;	/* use this to hold returned message */
@@ -2592,7 +2594,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	return TCL_ERROR;
     }
 
-    save_gedp = GEDP;
     save_dbip = DBIP;
     DBIP = DBI_NULL;
     save_materp = rt_material_head();
@@ -2608,7 +2609,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	 */
 	if (bu_file_exists(argv[1], NULL)) {
 	    /* need to reset things before returning */
-	    GEDP = save_gedp;
 	    DBIP = save_dbip;
 	    rt_new_material_head(save_materp);
 
@@ -2664,7 +2664,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 		/* not initializing mged */
 		if (argc == 2) {
 		    /* need to reset this before returning */
-		    GEDP = save_gedp;
 		    DBIP = save_dbip;
 		    rt_new_material_head(save_materp);
 		    Tcl_AppendResult(interpreter, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
@@ -2679,7 +2678,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	/* did the caller specify not creating a new database? */
 	if (argc >= 3 && bu_str_false(argv[2])) {
-	    GEDP = save_gedp;
 	    DBIP = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
 	    bu_vls_free(&msg);
@@ -2688,7 +2686,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	/* File does not exist, and should be created */
 	if ((DBIP = db_create(argv[1], mged_db_version)) == DBI_NULL) {
-	    GEDP = save_gedp;
 	    DBIP = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
 	    bu_vls_free(&msg);
@@ -2713,6 +2710,14 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     } else {
 	/* Opened existing database file */
 
+	/* If dbi_version < 0, file isn't a valid .g file - don't proceed */
+	if (DBIP->dbi_version < 0) {
+	    bu_free(DBIP->dbi_filename, "free filename");
+	    DBIP = DBI_NULL;
+	    Tcl_AppendResult(interpreter, "opendb:  ", argv[1], " is not a valid database\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
 	/* Scan geometry database and build in-memory directory */
 	(void)db_dirbuild(DBIP);
     }
@@ -2726,7 +2731,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	new_materp = rt_material_head();
 
 	/* activate the 'saved' values so we can cleanly close the previous db */
-	GEDP = save_gedp;
 	DBIP = save_dbip;
 	rt_new_material_head(save_materp);
 
@@ -2765,18 +2769,22 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
      * one we fed tcl.  must occur before the call to [get_dbip] since
      * that hooks into a libged callback.
      */
-    if (!GEDP) {
-	BU_ALLOC(GEDP, struct ged);
-    }
-
-    /* initialize a separate wdbp for libged to manage */
-    ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
-    GED_INIT(GEDP, ged_wdbp);
+    GEDP->ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
+    if (GEDP->ged_wdbp)
+	GEDP->dbip = GEDP->ged_wdbp->dbip;
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
-    GEDP->ged_create_vlist_solid_callback = createDListSolid;
-    GEDP->ged_create_vlist_callback = createDListAll;
-    GEDP->ged_free_vlist_callback = freeDListsAll;
+    GEDP->ged_create_vlist_scene_obj_callback = createDListSolid;
+    GEDP->ged_create_vlist_display_list_callback = createDListAll;
+    GEDP->ged_destroy_vlist_callback = freeDListsAll;
+    GEDP->ged_create_io_handler = &tclcad_create_io_handler;
+    GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
+    GEDP->ged_interp = (void *)interpreter;
+    GEDP->ged_interp_eval = &mged_db_search_callback;
+    struct tclcad_io_data *t_iod = tclcad_create_io_data();
+    t_iod->io_mode = TCL_READABLE;
+    t_iod->interp = interpreter;
+    GEDP->ged_io_data = t_iod;
 
     /* increment use count for gedp db instance */
     (void)db_clone_dbi(DBIP, NULL);
@@ -2784,12 +2792,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     /* Provide LIBWDB C access to the on-disk database */
     if ((WDBP = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
 	Tcl_AppendResult(interpreter, "wdb_dbopen() failed?\n", (char *)NULL);
-
-	/* release any allocated memory */
-	ged_free(GEDP);
-	bu_free((void *)GEDP, "struct ged");
-	GEDP = NULL;
-
 	return TCL_ERROR;
     }
 
@@ -2827,18 +2829,12 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	    Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
 	    bu_vls_free(&msg);
 	    bu_vls_free(&cmd);
-
-	    /* release any allocated memory */
-	    ged_free(GEDP);
-	    bu_free((void *)GEDP, "struct ged");
-	    GEDP = NULL;
-
 	    return TCL_ERROR;
 	}
 
 	/* Perhaps do something special with the GUI */
 	bu_vls_trunc(&cmd, 0);
-	bu_vls_printf(&cmd, "opendb_callback %s", DBIP->dbi_filename);
+	bu_vls_printf(&cmd, "opendb_callback {%s}", DBIP->dbi_filename);
 	(void)Tcl_Eval(interpreter, bu_vls_addr(&cmd));
 
 	bu_vls_strcpy(&cmd, "local2base");
@@ -2919,8 +2915,9 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     Tcl_Eval(interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
 
     /* close the geometry instance */
-    ged_close(GEDP);
-    BU_PUT(GEDP, struct ged);
+    wdb_close(GEDP->ged_wdbp);
+    GEDP->ged_wdbp = RT_WDB_NULL;
+    GEDP->dbip = NULL;
 
     WDBP = RT_WDB_NULL;
     DBIP = DBI_NULL;

@@ -66,7 +66,7 @@ s - list all nonhidden shapes in the database.
    <example><title>List all objects with names beginning with "shape."</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>t shape*</userinput>
+      <prompt>mged&gt; </prompt><userinput>t shape*</userinput>
     </para>
     <para>Lists all objects with names beginning with shape.
 (output is formatted)
@@ -76,7 +76,7 @@ s - list all nonhidden shapes in the database.
  <example><title>List all objects with names beginning with "shape."</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>t -a shape*</userinput>
+      <prompt>mged&gt; </prompt><userinput>t -a shape*</userinput>
     </para>
     <para>
        Lists all objects with names beginning with shape.
@@ -85,7 +85,7 @@ s - list all nonhidden shapes in the database.
 <example><title>List all shapes with names beginning with wheel.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>t -s wheel*</userinput>
+      <prompt>mged&gt; </prompt><userinput>t -s wheel*</userinput>
     </para>
     <para>Lists all shapes with names beginning with wheel.
 
@@ -94,7 +94,7 @@ s - list all nonhidden shapes in the database.
 <example><title>List all regions with names beginning with wheel.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>t -r wheel*</userinput>
+      <prompt>mged&gt; </prompt><userinput>t -r wheel*</userinput>
     </para>
     <para>
        Lists all regions with names beginning with wheel.
@@ -103,7 +103,7 @@ s - list all nonhidden shapes in the database.
 <example><title>List all combinations with names beginning with suspension.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>t -c suspension*</userinput>
+      <prompt>mged&gt; </prompt><userinput>t -c suspension*</userinput>
     </para>
     <para>Lists all combinations with names beginning with suspension.
 

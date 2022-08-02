@@ -108,33 +108,40 @@ static void glfons__renderDelete(void* userPtr)
 
 FONScontext* glfonsCreate(int width, int height, int flags)
 {
-	FONSparams params;
-	GLFONScontext* gl;
+	GLFONScontext* gl = (GLFONScontext*)calloc(1, sizeof(GLFONScontext));
+	FONSparams *params = (FONSparams *)calloc(1, sizeof(FONSparams));
+	FONScontext *ctx = NULL;
+	if (gl == NULL) goto cerror;
+	if (params == NULL) goto cerror;
 
-	gl = (GLFONScontext*)malloc(sizeof(GLFONScontext));
-	if (gl == NULL) goto error;
-	memset(gl, 0, sizeof(GLFONScontext));
+	params->width = width;
+	params->height = height;
+	params->flags = (unsigned char)flags;
+	params->renderCreate = glfons__renderCreate;
+	params->renderResize = glfons__renderResize;
+	params->renderUpdate = glfons__renderUpdate;
+	params->renderDraw = glfons__renderDraw;
+	params->renderDelete = glfons__renderDelete;
+	params->userPtr = gl;
 
-	memset(&params, 0, sizeof(params));
-	params.width = width;
-	params.height = height;
-	params.flags = (unsigned char)flags;
-	params.renderCreate = glfons__renderCreate;
-	params.renderResize = glfons__renderResize;
-	params.renderUpdate = glfons__renderUpdate;
-	params.renderDraw = glfons__renderDraw;
-	params.renderDelete = glfons__renderDelete;
-	params.userPtr = gl;
+	ctx = fonsCreateInternal(params);
+	if (ctx)
+	   return ctx;
 
-	return fonsCreateInternal(&params);
-
-error:
+cerror:
+	if (params != NULL) free(params);
 	if (gl != NULL) free(gl);
 	return NULL;
 }
 
 void glfonsDelete(FONScontext* ctx)
 {
+	if (ctx->params->userPtr) {
+	   free(ctx->params->userPtr);
+	}
+	if (ctx->params) {
+	   free(ctx->params);
+	}
 	fonsDeleteInternal(ctx);
 }
 

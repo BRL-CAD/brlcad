@@ -8,9 +8,7 @@ INPUT += \"${CMAKE_SOURCE_DIR}/misc/doxygen/vmath.dox\"")
 set(lib_inputs "${lib_inputs}
 INPUT += \"${CMAKE_SOURCE_DIR}/include/vmath.h\"")
 set(lib_inputs "${lib_inputs}
-INPUT += \"${CMAKE_SOURCE_DIR}/misc/doxygen/bview.dox\"")
-set(lib_inputs "${lib_inputs}
-INPUT += \"${CMAKE_SOURCE_DIR}/include/dm/bview.h\"")
+INPUT += \"${CMAKE_SOURCE_DIR}/include//bv.h\"")
 set(lib_inputs "${lib_inputs}
 INPUT += \"${CMAKE_SOURCE_DIR}/include/bio.h\"")
 set(lib_inputs "${lib_inputs}
@@ -30,6 +28,7 @@ set(DOX_LIBS
   libbu
   libbn
   libbg
+  libbv
   libnmg
   libbrep
   libfft
@@ -41,7 +40,6 @@ set(DOX_LIBS
   libgcv
   libanalyze
   libged
-  libfb
   libdm
   libtclcad
   libpkg
@@ -171,7 +169,6 @@ endif(DOXYGEN_FOUND)
 set(doxygen_ignore_files
   CMakeLists.txt
   Doxyfile.in
-  bview.dox
   common.dox
   images/README.txt
   images/rt_pattern_circ_spiral.png
@@ -182,8 +179,9 @@ set(doxygen_ignore_files
   libbn.dox
   libbrep.dox
   libbu.dox
+  libbv.dox
   libdm.dox
-  libfb.dox
+  libdm.dox
   libfft.dox
   libgcv.dox
   libged.dox

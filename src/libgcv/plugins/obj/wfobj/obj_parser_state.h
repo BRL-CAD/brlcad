@@ -1,7 +1,7 @@
 /*             O B J _ P A R S E R _ S T A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2010-2020 United States Government as represented by
+ * Copyright (c) 2010-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -909,9 +909,9 @@ inline void output_formatter(ParserStateT &state, const char *s)
 }
 
 
-typedef basic_obj_contents<float, char> objFileContents;
+typedef basic_obj_contents<double, char> objFileContents;
 typedef basic_obj_parser<char> objParser;
-typedef basic_parser_extra<float, char> objCombinedState;
+typedef basic_parser_extra<double, char> objCombinedState;
 
 } /* namespace obj */
 } /* namespace gcv */

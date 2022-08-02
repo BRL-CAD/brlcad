@@ -1,7 +1,7 @@
 /*                       S U N - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -167,7 +167,7 @@ get_args(int argc, char **argv)
 	fp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((fp = fopen(file_name, "r")) == NULL) {
+	if ((fp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "sun-pix: cannot open \"%s\" for reading\n",
 		    file_name);
@@ -267,6 +267,9 @@ main(int argc, char **argv)
     unsigned char c, cmap_idx, buf[BU_PAGE_SIZE];
 
     bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     fp = stdin;
     if (!get_args(argc, argv) || (isatty(fileno(stdout)) && (hflag == 0))) {

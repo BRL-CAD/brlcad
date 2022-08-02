@@ -11,7 +11,8 @@ file(WRITE "${LOGFILE}" "Starting pkg test run\n")
 string(REPLACE "\\" "" RPKG "${EXEC}")
 if (NOT EXISTS "${RPKG}")
   file(WRITE "${LOGFILE}" "regress_pkg not found at location \"${RPKG}\" - aborting\n")
-  message(FATAL_ERROR "Unable to find regress_pkg, aborting.\nSee ${LOGFILE} for more details.")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find regress_pkg, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
 endif (NOT EXISTS "${RPKG}")
 
 execute_process(

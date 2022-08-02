@@ -1,7 +1,7 @@
 /*                        I O U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/path.h"
-#include "fb.h"
+#include "dm.h"
 
 
 HIDDEN void
@@ -62,7 +62,7 @@ Message(const char *format, ...)
 
 
 void
-Fatal(fb *fbp, const char *format, ...)
+Fatal(struct fb *fbp, const char *format, ...)
 {
     va_list ap;
 

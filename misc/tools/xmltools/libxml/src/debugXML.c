@@ -164,7 +164,7 @@ xmlDebugErr(xmlDebugCtxtPtr ctxt, int error, const char *msg)
 		    NULL, NULL, NULL, 0, 0,
 		    "%s", msg);
 }
-static void
+static void LIBXML_ATTR_FORMAT(3,0)
 xmlDebugErr2(xmlDebugCtxtPtr ctxt, int error, const char *msg, int extra)
 {
     ctxt->errors++;
@@ -174,7 +174,7 @@ xmlDebugErr2(xmlDebugCtxtPtr ctxt, int error, const char *msg, int extra)
 		    NULL, NULL, NULL, 0, 0,
 		    msg, extra);
 }
-static void
+static void LIBXML_ATTR_FORMAT(3,0)
 xmlDebugErr3(xmlDebugCtxtPtr ctxt, int error, const char *msg, const char *extra)
 {
     ctxt->errors++;
@@ -254,10 +254,12 @@ xmlCtxtCheckName(xmlDebugCtxtPtr ctxt, const xmlChar * name)
 	    xmlDebugErr(ctxt, XML_CHECK_NO_NAME, "Name is NULL");
 	    return;
 	}
+#if defined(LIBXML_TREE_ENABLED) || defined(LIBXML_SCHEMAS_ENABLED)
         if (xmlValidateName(name, 0)) {
 	    xmlDebugErr3(ctxt, XML_CHECK_NOT_NCNAME,
 			 "Name is not an NCName '%s'", (const char *) name);
 	}
+#endif
 	if ((ctxt->dict != NULL) &&
 	    (!xmlDictOwns(ctxt->dict, name)) &&
             ((ctxt->doc == NULL) ||
@@ -354,7 +356,6 @@ xmlCtxtGenericNodeCheck(xmlDebugCtxtPtr ctxt, xmlNodePtr node) {
 	(node->type != XML_ELEMENT_DECL) &&
 	(node->type != XML_ATTRIBUTE_DECL) &&
 	(node->type != XML_DTD_NODE) &&
-	(node->type != XML_ELEMENT_DECL) &&
 	(node->type != XML_HTML_DOCUMENT_NODE) &&
 	(node->type != XML_DOCUMENT_NODE)) {
 	if (node->content != NULL)
@@ -1228,8 +1229,11 @@ xmlCtxtDumpDocument(xmlDebugCtxtPtr ctxt, xmlDocPtr doc)
 }
 
 static void
-xmlCtxtDumpEntityCallback(xmlEntityPtr cur, xmlDebugCtxtPtr ctxt)
+xmlCtxtDumpEntityCallback(void *payload, void *data,
+                          const xmlChar *name ATTRIBUTE_UNUSED)
 {
+    xmlEntityPtr cur = (xmlEntityPtr) payload;
+    xmlDebugCtxtPtr ctxt = (xmlDebugCtxtPtr) data;
     if (cur == NULL) {
         if (!ctxt->check)
             fprintf(ctxt->output, "Entity is NULL");
@@ -1288,8 +1292,7 @@ xmlCtxtDumpEntities(xmlDebugCtxtPtr ctxt, xmlDocPtr doc)
 
         if (!ctxt->check)
             fprintf(ctxt->output, "Entities in internal subset\n");
-        xmlHashScan(table, (xmlHashScanner) xmlCtxtDumpEntityCallback,
-                    ctxt);
+        xmlHashScan(table, xmlCtxtDumpEntityCallback, ctxt);
     } else
         fprintf(ctxt->output, "No entities in internal subset\n");
     if ((doc->extSubset != NULL) && (doc->extSubset->entities != NULL)) {
@@ -1298,8 +1301,7 @@ xmlCtxtDumpEntities(xmlDebugCtxtPtr ctxt, xmlDocPtr doc)
 
         if (!ctxt->check)
             fprintf(ctxt->output, "Entities in external subset\n");
-        xmlHashScan(table, (xmlHashScanner) xmlCtxtDumpEntityCallback,
-                    ctxt);
+        xmlHashScan(table, xmlCtxtDumpEntityCallback, ctxt);
     } else if (!ctxt->check)
         fprintf(ctxt->output, "No entities in external subset\n");
 }
@@ -1724,8 +1726,11 @@ xmlLsOneNode(FILE *output, xmlNodePtr node) {
 
     switch (node->type) {
 	case XML_ELEMENT_NODE:
-	    if (node->name != NULL)
+	    if (node->name != NULL) {
+                if ((node->ns != NULL) && (node->ns->prefix != NULL))
+                    fprintf(output, "%s:", node->ns->prefix);
 		fprintf(output, "%s", (const char *) node->name);
+            }
 	    break;
 	case XML_ATTRIBUTE_NODE:
 	    if (node->name != NULL)
@@ -1799,7 +1804,7 @@ xmlBoolToText(int boolval)
 #ifdef LIBXML_XPATH_ENABLED
 /****************************************************************
  *								*
- *	 	The XML shell related functions			*
+ *		The XML shell related functions			*
  *								*
  ****************************************************************/
 
@@ -2358,10 +2363,7 @@ xmlShellRNGValidate(xmlShellCtxtPtr sctxt, char *schemas,
     int ret;
 
     ctxt = xmlRelaxNGNewParserCtxt(schemas);
-    xmlRelaxNGSetParserErrors(ctxt,
-	    (xmlRelaxNGValidityErrorFunc) fprintf,
-	    (xmlRelaxNGValidityWarningFunc) fprintf,
-	    stderr);
+    xmlRelaxNGSetParserErrors(ctxt, xmlGenericError, xmlGenericError, NULL);
     relaxngschemas = xmlRelaxNGParse(ctxt);
     xmlRelaxNGFreeParserCtxt(ctxt);
     if (relaxngschemas == NULL) {
@@ -2370,10 +2372,7 @@ xmlShellRNGValidate(xmlShellCtxtPtr sctxt, char *schemas,
 	return(-1);
     }
     vctxt = xmlRelaxNGNewValidCtxt(relaxngschemas);
-    xmlRelaxNGSetValidErrors(vctxt,
-	    (xmlRelaxNGValidityErrorFunc) fprintf,
-	    (xmlRelaxNGValidityWarningFunc) fprintf,
-	    stderr);
+    xmlRelaxNGSetValidErrors(vctxt, xmlGenericError, xmlGenericError, NULL);
     ret = xmlRelaxNGValidateDoc(vctxt, sctxt->doc);
     if (ret == 0) {
 	fprintf(stderr, "%s validates\n", sctxt->filename);
@@ -2642,9 +2641,9 @@ xmlShellValidate(xmlShellCtxtPtr ctxt, char *dtd,
     int res = -1;
 
     if ((ctxt == NULL) || (ctxt->doc == NULL)) return(-1);
-    vctxt.userData = stderr;
-    vctxt.error = (xmlValidityErrorFunc) fprintf;
-    vctxt.warning = (xmlValidityWarningFunc) fprintf;
+    vctxt.userData = NULL;
+    vctxt.error = xmlGenericError;
+    vctxt.warning = xmlGenericError;
 
     if ((dtd == NULL) || (dtd[0] == 0)) {
         res = xmlValidateDocument(&vctxt, ctxt->doc);
@@ -2696,6 +2695,8 @@ xmlShellDu(xmlShellCtxtPtr ctxt,
         } else if (node->type == XML_ELEMENT_NODE) {
             for (i = 0; i < indent; i++)
                 fprintf(ctxt->output, "  ");
+            if ((node->ns) && (node->ns->prefix))
+                fprintf(ctxt->output, "%s:", node->ns->prefix);
             fprintf(ctxt->output, "%s\n", node->name);
         } else {
         }
@@ -2837,6 +2838,10 @@ xmlShell(xmlDocPtr doc, char *filename, xmlShellReadlineFunc input,
     while (1) {
         if (ctxt->node == (xmlNodePtr) ctxt->doc)
             snprintf(prompt, sizeof(prompt), "%s > ", "/");
+        else if ((ctxt->node != NULL) && (ctxt->node->name) &&
+                 (ctxt->node->ns) && (ctxt->node->ns->prefix))
+            snprintf(prompt, sizeof(prompt), "%s:%s > ",
+                     (ctxt->node->ns->prefix), ctxt->node->name);
         else if ((ctxt->node != NULL) && (ctxt->node->name))
             snprintf(prompt, sizeof(prompt), "%s > ", ctxt->node->name);
         else
@@ -2911,6 +2916,7 @@ xmlShell(xmlDocPtr doc, char *filename, xmlShellReadlineFunc input,
 		  fprintf(ctxt->output, "\t             the default namespace if any uses 'defaultns' prefix\n");
 #endif /* LIBXML_XPATH_ENABLED */
 		  fprintf(ctxt->output, "\tpwd          display current working directory\n");
+		  fprintf(ctxt->output, "\twhereis      display absolute path of [path] or current working directory\n");
 		  fprintf(ctxt->output, "\tquit         leave shell\n");
 #ifdef LIBXML_OUTPUT_ENABLED
 		  fprintf(ctxt->output, "\tsave [name]  save this document to name or the original name\n");
@@ -2920,7 +2926,7 @@ xmlShell(xmlDocPtr doc, char *filename, xmlShellReadlineFunc input,
 		  fprintf(ctxt->output, "\tvalidate     check the document for errors\n");
 #endif /* LIBXML_VALID_ENABLED */
 #ifdef LIBXML_SCHEMAS_ENABLED
-		  fprintf(ctxt->output, "\trelaxng rng  validate the document agaisnt the Relax-NG schemas\n");
+		  fprintf(ctxt->output, "\trelaxng rng  validate the document against the Relax-NG schemas\n");
 #endif
 		  fprintf(ctxt->output, "\tgrep string  search for a string in the subtree\n");
 #ifdef LIBXML_VALID_ENABLED
@@ -2937,7 +2943,7 @@ xmlShell(xmlDocPtr doc, char *filename, xmlShellReadlineFunc input,
         } else if (!strcmp(command, "save")) {
             xmlShellSave(ctxt, arg, NULL, NULL);
         } else if (!strcmp(command, "write")) {
-	    if ((arg == NULL) || (arg[0] == 0))
+	    if (arg[0] == 0)
 		xmlGenericError(xmlGenericErrorContext,
                         "Write command requires a filename argument\n");
 	    else
@@ -2960,7 +2966,79 @@ xmlShell(xmlDocPtr doc, char *filename, xmlShellReadlineFunc input,
             if (!xmlShellPwd(ctxt, dir, ctxt->node, NULL))
                 fprintf(ctxt->output, "%s\n", dir);
         } else if (!strcmp(command, "du")) {
-            xmlShellDu(ctxt, NULL, ctxt->node, NULL);
+            if (arg[0] == 0) {
+                xmlShellDu(ctxt, NULL, ctxt->node, NULL);
+            } else {
+                ctxt->pctxt->node = ctxt->node;
+#ifdef LIBXML_XPATH_ENABLED
+                ctxt->pctxt->node = ctxt->node;
+                list = xmlXPathEval((xmlChar *) arg, ctxt->pctxt);
+#else
+                list = NULL;
+#endif /* LIBXML_XPATH_ENABLED */
+                if (list != NULL) {
+                    switch (list->type) {
+                        case XPATH_UNDEFINED:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s: no such node\n", arg);
+                            break;
+                        case XPATH_NODESET:{
+                            int indx;
+
+                            if (list->nodesetval == NULL)
+                                break;
+
+                            for (indx = 0;
+                                 indx < list->nodesetval->nodeNr;
+                                 indx++)
+                                xmlShellDu(ctxt, NULL,
+                                           list->nodesetval->
+                                           nodeTab[indx], NULL);
+                            break;
+                        }
+                        case XPATH_BOOLEAN:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is a Boolean\n", arg);
+                            break;
+                        case XPATH_NUMBER:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is a number\n", arg);
+                            break;
+                        case XPATH_STRING:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is a string\n", arg);
+                            break;
+                        case XPATH_POINT:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is a point\n", arg);
+                            break;
+                        case XPATH_RANGE:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is a range\n", arg);
+                            break;
+                        case XPATH_LOCATIONSET:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is a range\n", arg);
+                            break;
+                        case XPATH_USERS:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is user-defined\n", arg);
+                            break;
+                        case XPATH_XSLT_TREE:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is an XSLT value tree\n",
+                                            arg);
+                            break;
+                    }
+#ifdef LIBXML_XPATH_ENABLED
+                    xmlXPathFreeObject(list);
+#endif
+                } else {
+                    xmlGenericError(xmlGenericErrorContext,
+                                    "%s: no such node\n", arg);
+                }
+                ctxt->pctxt->node = NULL;
+            }
         } else if (!strcmp(command, "base")) {
             xmlShellBase(ctxt, NULL, ctxt->node, NULL);
         } else if (!strcmp(command, "set")) {
@@ -3078,12 +3156,94 @@ xmlShell(xmlDocPtr doc, char *filename, xmlShellReadlineFunc input,
                 }
                 ctxt->pctxt->node = NULL;
             }
+        } else if (!strcmp(command, "whereis")) {
+            char dir[500];
+
+            if (arg[0] == 0) {
+                if (!xmlShellPwd(ctxt, dir, ctxt->node, NULL))
+                    fprintf(ctxt->output, "%s\n", dir);
+            } else {
+                ctxt->pctxt->node = ctxt->node;
+#ifdef LIBXML_XPATH_ENABLED
+                list = xmlXPathEval((xmlChar *) arg, ctxt->pctxt);
+#else
+                list = NULL;
+#endif /* LIBXML_XPATH_ENABLED */
+                if (list != NULL) {
+                    switch (list->type) {
+                        case XPATH_UNDEFINED:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s: no such node\n", arg);
+                            break;
+                        case XPATH_NODESET:{
+                                int indx;
+
+				if (list->nodesetval == NULL)
+				    break;
+
+                                for (indx = 0;
+                                     indx < list->nodesetval->nodeNr;
+                                     indx++) {
+                                    if (!xmlShellPwd(ctxt, dir, list->nodesetval->
+                                                     nodeTab[indx], NULL))
+                                        fprintf(ctxt->output, "%s\n", dir);
+                                }
+                                break;
+                            }
+                        case XPATH_BOOLEAN:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is a Boolean\n", arg);
+                            break;
+                        case XPATH_NUMBER:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is a number\n", arg);
+                            break;
+                        case XPATH_STRING:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is a string\n", arg);
+                            break;
+                        case XPATH_POINT:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is a point\n", arg);
+                            break;
+                        case XPATH_RANGE:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is a range\n", arg);
+                            break;
+                        case XPATH_LOCATIONSET:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is a range\n", arg);
+                            break;
+                        case XPATH_USERS:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is user-defined\n", arg);
+                            break;
+                        case XPATH_XSLT_TREE:
+                            xmlGenericError(xmlGenericErrorContext,
+                                            "%s is an XSLT value tree\n",
+                                            arg);
+                            break;
+                    }
+#ifdef LIBXML_XPATH_ENABLED
+                    xmlXPathFreeObject(list);
+#endif
+                } else {
+                    xmlGenericError(xmlGenericErrorContext,
+                                    "%s: no such node\n", arg);
+                }
+                ctxt->pctxt->node = NULL;
+            }
         } else if (!strcmp(command, "cd")) {
             if (arg[0] == 0) {
                 ctxt->node = (xmlNodePtr) ctxt->doc;
             } else {
 #ifdef LIBXML_XPATH_ENABLED
+                int l;
+
                 ctxt->pctxt->node = ctxt->node;
+		l = strlen(arg);
+		if ((l >= 2) && (arg[l - 1] == '/'))
+		    arg[l - 1] = 0;
                 list = xmlXPathEval((xmlChar *) arg, ctxt->pctxt);
 #else
                 list = NULL;

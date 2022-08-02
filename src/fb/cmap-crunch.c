@@ -1,7 +1,7 @@
 /*                   C M A P - C R U N C H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include <stdio.h>
 
 #include "bu/color.h"
-#include "fb.h"
+#include "dm.h"
 
 void
 cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *cmap)

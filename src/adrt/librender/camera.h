@@ -1,7 +1,7 @@
 /*                        C A M E R A . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -92,7 +92,7 @@ typedef struct render_camera_thread_data_s
 } render_camera_thread_data_t;
 
 
-RENDER_EXPORT extern void render_camera_init(render_camera_t *camera, int threads);
+RENDER_EXPORT extern void render_camera_init(render_camera_t *camera, size_t threads);
 RENDER_EXPORT extern void render_camera_free(render_camera_t *camera);
 RENDER_EXPORT extern void render_camera_prep(render_camera_t *camera);
 RENDER_EXPORT extern void render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *tile, tienet_buffer_t *result);

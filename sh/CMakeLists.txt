@@ -3,7 +3,6 @@ set(sh_SCRIPTS
   elapsed.sh
   cmp.sh
   conversion.sh
-  facetall.sh
   show.sh
   )
 foreach(script ${sh_SCRIPTS})
@@ -36,6 +35,8 @@ set(noinst_SCRIPTS
   news2tracker.sh
   template.sh
   ws.sh
+  sandbox/metaring.sh
+  sandbox/visibility.sh
   )
 CMAKEFILES(${sh_SCRIPTS})
 CMAKEFILES(${noinst_SCRIPTS})

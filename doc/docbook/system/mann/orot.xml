@@ -36,7 +36,7 @@
   <example><title>Rotate a currently edited object.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>orot 0 0 35</userinput>
+      <prompt>mged&gt; </prompt><userinput>orot 0 0 35</userinput>
     </para>
     <para>Rotates currently edited object by 35° about the Z-axis from the original orientation.
     </para>

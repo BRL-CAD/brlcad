@@ -1,7 +1,7 @@
 /*                          Q R A Y . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,11 +42,17 @@
 
 #define DG_INV_GED 0.00048828125
 
+GED_EXPORT extern struct ged_qray_color def_qray_odd_color;
+GED_EXPORT extern struct ged_qray_color def_qray_even_color;
+GED_EXPORT extern struct ged_qray_color def_qray_void_color;
+GED_EXPORT extern struct ged_qray_color def_qray_overlap_color;
+
 struct qray_fmt_data {
     char type;
     char *fmt;
 };
 
+GED_EXPORT extern struct qray_fmt_data def_qray_fmt_data[];
 
 struct qray_dataList {
     struct bu_list l;
@@ -58,9 +64,9 @@ struct qray_dataList {
 
 
 /* defined in qray.c */
-extern void qray_init(struct ged_drawable *gdp);
-extern void qray_free(struct ged_drawable *gdp);
-extern void qray_data_to_vlist(struct ged *gdp, struct bn_vlblock *vbp, struct qray_dataList *headp, vect_t dir, int do_overlaps);
+GED_EXPORT extern void qray_init(struct ged_drawable *gdp);
+GED_EXPORT extern void qray_free(struct ged_drawable *gdp);
+GED_EXPORT extern void qray_data_to_vlist(struct ged *gdp, struct bv_vlblock *vbp, struct qray_dataList *headp, vect_t dir, int do_overlaps);
 
 #endif
 

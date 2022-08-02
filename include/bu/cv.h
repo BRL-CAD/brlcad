@@ -1,7 +1,7 @@
 /*                            C V . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -162,6 +162,12 @@ __BEGIN_DECLS
 #  define htonll(_val) ntohll(_val)
 #endif
 
+BU_EXPORT extern uint32_t
+bu_ntohl(uint32_t netlong, uint32_t n_min, uint32_t n_max);
+
+
+BU_EXPORT extern uint16_t
+bu_ntohs(uint16_t netshort, uint32_t n_min, uint32_t n_max);
 
 /**
  * convert from one format to another.

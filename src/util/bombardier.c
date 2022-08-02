@@ -1,7 +1,7 @@
 /*                    B O M B A R D I E R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -163,7 +163,7 @@ load_file(const char *filename)
 	return;
     }
 
-    fp = fopen(filename, "r");
+    fp = fopen(filename, "rb");
     if (!fp) {
 	perror("unable to open file");
 	bu_log("ERROR: unable to open log file [%s]\n", filename);

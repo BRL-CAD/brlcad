@@ -1,7 +1,7 @@
 /*                        F B - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 
 #include "pkg.h"
 
@@ -62,7 +62,7 @@ int
 get_args(int argc, char **argv)
 {
     int c;
-    char *file_name;
+    char *file_name = "-";
 
     while ((c = bu_getopt(argc, argv, "ciF:s:w:n:g:#:h?")) != -1) {
 	switch (c) {
@@ -102,8 +102,8 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdout)))
 	    return 0;
-	file_name = "-";
 	outfp = stdout;
+	setmode(fileno(stdout), O_BINARY);
     } else {
 	file_name = argv[bu_optind];
 	if ((outfp = fopen(file_name, "wb")) == NULL) {
@@ -128,7 +128,7 @@ main(int argc, char **argv)
     static int scanpix;			/* # of pixels of scanline */
     static ColorMap cmap;		/* libfb color map */
 
-    fb *fbp;
+    struct fb *fbp;
     int y;
     int got;
     png_structp png_p;

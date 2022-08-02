@@ -1,7 +1,7 @@
 #             G E O M E T R Y B R O W S E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2020 United States Government as represented by
+# Copyright (c) 2004-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -475,7 +475,7 @@ body GeometryBrowser::destructor {} {
     # destroy the framebuffer, if we opened it
     if { $_weStartedFbserv } {
 	puts "cleaning up fbserv"
-	set fbfree [file join [bu_brlcad_root "bin"] fbfree]
+	set fbfree [file join [bu_dir bin] fbfree]
 	if { [ catch { exec $fbfree -F $_fbservPort } error ] } {
 	    puts $error
 	    puts "Unable to properly clean up after our fbserv"
@@ -956,10 +956,10 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
     set device /dev/X
     set rgb "255 255 255"
     set rtrun ""
-    set fbserv [file join [bu_brlcad_root "bin"] fbserv]
-    set fbfree [file join [bu_brlcad_root "bin"] fbfree]
-    set fbline [file join [bu_brlcad_root "bin"] fbline]
-    set fbclear [file join [bu_brlcad_root "bin"] fbclear]
+    set fbserv [file join [bu_dir bin] fbserv]
+    set fbfree [file join [bu_dir bin] fbfree]
+    set fbline [file join [bu_dir bin] fbline]
+    set fbclear [file join [bu_dir bin] fbclear]
 
     # see if we can try to use the mged graphics window instead of firing up our own framebuffer
     set useMgedWindow 0
@@ -1111,7 +1111,7 @@ body GeometryBrowser::raytracePanel {} {
 # simply fires off rtwizard
 #
 body GeometryBrowser::raytraceWizard {} {
-    set rtwizard [file join [bu_brlcad_root "bin"] rtwizard]
+    set rtwizard [file join [bu_dir bin] rtwizard]
     puts "exec $rtwizard &"
     return [ exec $rtwizard & ]
 }

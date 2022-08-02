@@ -1,7 +1,7 @@
 /*                         S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2020 United States Government as represented by
+ * Copyright (c) 2000-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include "vmath.h"
 
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 #define V3PT_DEPARTING_RPP(_step, _lo, _hi, _pt)			\
@@ -40,6 +40,16 @@
      ((_step)[Y] >= 0 && (_py) > (_hi)[Y]) ||			\
      ((_step)[Z] <= 0 && (_pz) < (_lo)[Z]) ||			\
      ((_step)[Z] >= 0 && (_pz) > (_hi)[Z]))
+
+
+HIDDEN void
+shoot_setup_status(struct rt_shootray_status *ss, struct application *ap)
+{
+    ss->newray = ap->a_ray;		/* struct copy */
+    ss->odist_corr = ss->obox_start = ss->obox_end = -99;
+    ss->dist_corr = 0.0;
+    ss->box_num = 0;
+}
 
 
 void
@@ -126,7 +136,7 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 }
 
 
-const union cutter *
+_BU_ATTR_FLATTEN const union cutter *
 rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 {
     register const union cutter *cutp, *curcut = ssp->curcut;
@@ -433,7 +443,7 @@ escaped_from_model:
  * primitive that meets the above criteria.  No primitive
  * intersections are performed.
  */
-fastf_t
+_BU_ATTR_FLATTEN fastf_t
 rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
     fastf_t min_backing_dist = BACKING_DIST;
     fastf_t prev_dist = -1.0;
@@ -630,7 +640,7 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 }
 
 
-int
+_BU_ATTR_FLATTEN int
 rt_shootray(register struct application *ap)
 {
     struct rt_shootray_status ss;
@@ -830,9 +840,7 @@ rt_shootray(register struct application *ap)
 	    VMOVE(ss.curmin, rtip->mdl_min);
 	    VMOVE(ss.curmax, rtip->mdl_max);
 	    last_bool_start = BACKING_DIST;
-	    ss.newray = ap->a_ray;		/* struct copy */
-	    ss.odist_corr = ss.obox_start = ss.obox_end = -99;
-	    ss.dist_corr = 0.0;
+	    shoot_setup_status(&ss, ap);
 	    goto start_cell;
 	}
 	resp->re_nmiss_model++;
@@ -936,10 +944,7 @@ rt_shootray(register struct application *ap)
     }
 
     last_bool_start = BACKING_DIST;
-    ss.newray = ap->a_ray;		/* struct copy */
-    ss.odist_corr = ss.obox_start = ss.obox_end = -99;
-    ss.dist_corr = 0.0;
-    ss.box_num = 0;
+    shoot_setup_status(&ss, ap);
 
     /*
      * While the ray remains inside model space, push from box to box
@@ -1487,9 +1492,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 	VMOVE(ss.curmax, rtip->mdl_max);
     }
 
-    ss.newray = ap->a_ray;		/* struct copy */
-    ss.odist_corr = ss.obox_start = ss.obox_end = -99;
-    ss.dist_corr = 0.0;
+    shoot_setup_status(&ss, ap);
 
     /*
      * While the ray remains inside model space, push from box to box

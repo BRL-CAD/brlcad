@@ -42,7 +42,7 @@ set(LIBRENDER_SRCS
   )
 BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libgcv")
 set_target_properties(librender PROPERTIES VERSION 20.0.1 SOVERSION 20)
-add_dependencies(librender libgcv_plugins)
+add_dependencies(librender gcv_plugins)
 
 set(tie_HDRS
   adrt.h
@@ -73,8 +73,7 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
   BRLCAD_ADDDATA(isst.tcl tclscripts/isst)
   BRLCAD_ADDEXEC(isst isst.c "${isst_libs}" GUI)
-  add_dependencies(isst isst_tcl_cp)
-
+  ADD_TARGET_DEPS(isst isst_tcl_cp dm_plugins)
   foreach(item ${tclindex_target_list})
     add_dependencies(isst ${item})
   endforeach(item ${tclindex_target_list})
@@ -85,14 +84,10 @@ CMAKEFILES(isst.tcl)
 CMAKEFILES(isst.c)
 
 add_subdirectory(master)
-# add_subdirectory(slave)
+add_subdirectory(slave)
 
 set(adrt_ignore_files
   load.h
-  slave/slave.c
-  slave/tienet_slave.h
-  slave/tienet_slave.c
-  slave/slave.h
   tienet.h
   )
 CMAKEFILES(${adrt_ignore_files})

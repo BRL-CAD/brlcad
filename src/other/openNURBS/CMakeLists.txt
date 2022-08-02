@@ -29,7 +29,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.1.3)
+cmake_minimum_required(VERSION 3.12)
 
 project(OPENNURBS)
 
@@ -41,9 +41,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 include(CMakeDependentOption)
 cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT MSVC" OFF)
 
-if(BRLCAD_FLAGS_DEBUG)
+if(BRLCAD_DEBUG)
   add_definitions(${DEBUG_CXX_FLAGS})
-endif(BRLCAD_FLAGS_DEBUG)
+endif(BRLCAD_DEBUG)
 
 # build shared libs by default
 if(NOT DEFINED BUILD_SHARED_LIBS)
@@ -350,17 +350,33 @@ endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 # Based on the options, define libraries as either stand-alone builds
 # or dependencies on OBJECT library builds
 if(NOT USE_OBJECT_LIBS)
+ 
   if(BUILD_SHARED_LIBS)
     add_library(openNURBS SHARED ${OPENNURBS_SOURCES})
     if(MSVC)
       set_property(TARGET openNURBS APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_EXPORTS")
     endif(MSVC)
   endif(BUILD_SHARED_LIBS)
+
   if(BUILD_STATIC_LIBS)
     add_library(openNURBS-static STATIC ${OPENNURBS_SOURCES})
+    if(TARGET zlib_stage)
+      add_dependencies(openNURBS-static zlib_stage)
+    endif(TARGET zlib_stage)
   endif(BUILD_STATIC_LIBS)
+
 else(NOT USE_OBJECT_LIBS)
+
   add_library(openNURBS-obj OBJECT ${OPENNURBS_SOURCES})
+
+  # For build ordering, if we are linking to another build target make sure
+  # the object build depends on that target
+  foreach(DEP ${OPENNURBS_LINKLIBRARIES})
+    if(TARGET ${DEP})
+      add_dependencies(openNURBS-obj ${DEP})
+    endif(TARGET ${DEP})
+  endforeach(DEP ${OPENNURBS_LINKLIBRARIES})
+
   if(BUILD_SHARED_LIBS)
     add_library(openNURBS SHARED $<TARGET_OBJECTS:openNURBS-obj>)
     if(MSVC)
@@ -369,6 +385,9 @@ else(NOT USE_OBJECT_LIBS)
   endif(BUILD_SHARED_LIBS)
   if(BUILD_STATIC_LIBS)
     add_library(openNURBS-static STATIC $<TARGET_OBJECTS:openNURBS-obj>)
+    if(TARGET zlib_stage)
+      add_dependencies(openNURBS-static zlib_stage)
+    endif(TARGET zlib_stage)
   endif(BUILD_STATIC_LIBS)
 endif(NOT USE_OBJECT_LIBS)
 

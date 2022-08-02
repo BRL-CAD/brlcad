@@ -1,7 +1,7 @@
 /*                         T O O L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,8 +49,11 @@ void
 strappend(char *s, char *t)	/* === */
 {
     s = endstr(s);
+    if (!s || !t)
+	return;
     while ((*s++ = *t++) != '\0');
-    *s = '\0';
+    if (s)
+	*s = '\0';
 }
 
 

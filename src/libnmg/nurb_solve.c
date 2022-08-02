@@ -1,7 +1,7 @@
 /*                    N U R B _ S O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1983-2020 United States Government as represented by
+ * Copyright (c) 1983-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,13 +66,13 @@ nmg_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int c
     fastf_t * b;
     fastf_t * s;
 
-    y = (fastf_t *) nmg_malloc(sizeof (fastf_t) * dim,
+    y = (fastf_t *) bu_malloc(sizeof (fastf_t) * dim,
 			      "nmg_nurb_solve: y");/* Create temp array */
 
-    b = (fastf_t *) nmg_malloc(sizeof (fastf_t) * dim,
+    b = (fastf_t *) bu_malloc(sizeof (fastf_t) * dim,
 			      "nmg_nurb_solve: b");/* Create temp array */
 
-    s = (fastf_t *) nmg_malloc(sizeof (fastf_t) * dim,
+    s = (fastf_t *) bu_malloc(sizeof (fastf_t) * dim,
 			      "nmg_nurb_solve: s");/* Create temp array */
 
     nmg_nurb_doolittle (mat_1, mat_2, dim, coords);/* Create LU decomposition */
@@ -101,9 +101,9 @@ nmg_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int c
 	}
     }
 
-    nmg_free ((char *)y, "nmg_nurb_solve: y");			/* Free up storage */
-    nmg_free ((char *)b, "nmg_nurb_solve: b");			/* Free up storage */
-    nmg_free ((char *)s, "nmg_nurb_solve: s");			/* Free up storage */
+    bu_free ((char *)y, "nmg_nurb_solve: y");			/* Free up storage */
+    bu_free ((char *)b, "nmg_nurb_solve: b");			/* Free up storage */
+    bu_free ((char *)s, "nmg_nurb_solve: s");			/* Free up storage */
 }
 
 
@@ -127,11 +127,11 @@ nmg_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 
     int max_pivot;
 
-    d = (fastf_t *) nmg_malloc(sizeof (fastf_t) * row,
+    d = (fastf_t *) bu_malloc(sizeof (fastf_t) * row,
 			      "nmg_nurb_doolittle:d");	/* scale factor */
-    s = (fastf_t *) nmg_malloc(sizeof (fastf_t) * row * row,
+    s = (fastf_t *) bu_malloc(sizeof (fastf_t) * row * row,
 			      "nmg_nurb_doolittle:s");	/* vector to check */
-    ds = (fastf_t *) nmg_malloc(sizeof (fastf_t) * row,
+    ds = (fastf_t *) bu_malloc(sizeof (fastf_t) * row,
 			       "nmg_nurb_doolittle:ds");	/* if rows need to be swapped */
 
     for (i = 0; i < row; i++) {
@@ -195,9 +195,9 @@ nmg_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 	}
 
     }
-    nmg_free((char *)d, "nmg_nurb_doolittle:d");		/* Free up the storage. */
-    nmg_free((char *)s, "nmg_nurb_doolittle:s");
-    nmg_free((char *)ds, "nmg_nurb_doolittle:ds");
+    bu_free((char *)d, "nmg_nurb_doolittle:d");		/* Free up the storage. */
+    bu_free((char *)s, "nmg_nurb_doolittle:s");
+    bu_free((char *)ds, "nmg_nurb_doolittle:ds");
 }
 
 

@@ -1,7 +1,7 @@
 /*                    P I P E L I N E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -77,8 +77,10 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 	nonplanar_surfaces.insert(loop->Face()->m_face_index);
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+	    if (trim->m_ei == -1)
+		continue;
 	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-	    if (trim->m_ei != -1 && edge->TrimCount() > 0) {
+	    if (edge && edge->TrimCount() > 0) {
 		edges.insert(trim->m_ei);
 		ON_3dPoint midpt = edge->EdgeCurveOf()->PointAt(edge->EdgeCurveOf()->Domain().Mid());
 		edge_midpnts.Append(midpt);

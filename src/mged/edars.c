@@ -1,7 +1,7 @@
 /*                         E D A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2020 United States Government as represented by
+ * Copyright (c) 1996-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,24 +50,21 @@ find_ars_nearest_pnt(
     vect_t dir)
 {
     size_t i, j;
-    int pt_no;
     int closest_i=0, closest_j=0;
     fastf_t min_dist_sq=MAX_FASTF;
 
     RT_ARS_CK_MAGIC(ars);
 
-    pt_no = 0;
     for (i=0; i<ars->ncurves; i++) {
 	for (j=0; j<ars->pts_per_curve; j++) {
 	    fastf_t dist_sq;
 
-	    dist_sq = bn_distsq_line3_pnt3(pick_pt, dir, &ars->curves[i][j*3]);
+	    dist_sq = bg_distsq_line3_pnt3(pick_pt, dir, &ars->curves[i][j*3]);
 	    if (dist_sq < min_dist_sq) {
 		min_dist_sq = dist_sq;
 		closest_i = i;
 		closest_j = j;
 	    }
-	    pt_no += 3;
 	}
     }
     *crv = closest_i;

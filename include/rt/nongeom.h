@@ -1,7 +1,7 @@
 /*                      N O N G E O M . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -131,9 +131,26 @@ struct rt_constraint_internal {
     struct bu_vls expression;
 };
 
-#define RT_CHECK_CONSTRAINT(_p) BU_CKMAG(_p, PC_CONSTRAINT_MAGIC, "pc_constraint_internal")
-#define RT_CK_CONSTRAINT(_p) PC_CHECK_CONSTRAINT(_p)
+#define RT_CHECK_CONSTRAINT(_p) BU_CKMAG(_p, RT_CONSTRAINT_MAGIC, "rt_constraint_internal")
+#define RT_CK_CONSTRAINT(_p) RT_CHECK_CONSTRAINT(_p)
 
+/**
+ * In-memory format for database "material" record
+ */
+struct rt_material_internal {
+	uint32_t magic;
+	struct bu_vls name;
+	struct bu_vls parent;
+	struct bu_vls source;
+
+	struct bu_attribute_value_set physicalProperties;
+	struct bu_attribute_value_set mechanicalProperties;
+	struct bu_attribute_value_set opticalProperties;
+	struct bu_attribute_value_set thermalProperties;
+};
+
+#define RT_CHECK_MATERIAL(_p) BU_CKMAG(_p, RT_MATERIAL_MAGIC, "rt_material_internal")
+#define RT_CK_MATERIAL(_p) RT_CHECK_MATERIAL(_p)
 
 __END_DECLS
 

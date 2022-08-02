@@ -1,7 +1,7 @@
 /*                     B A D M A G I C . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,15 +25,16 @@
 #include <string.h>
 
 #include "bu/defines.h"
+#include "bu/app.h"
 
 /* Normally, we mark bu_badmagic as a non-returning function for
  * static analyzers.  In this case, because we *do* return after
  * calling it due to the testing, we need to avoid assigning that
  * attribute (it causes interesting crashing behaviors if we leave
  * it in place with some compiler settings.)*/
-#ifdef _BU_ATTR_NORETURN
-#  undef _BU_ATTR_NORETURN
-#  define _BU_ATTR_NORETURN
+#ifdef NORETURN
+#  undef NORETURN
+#  define NORETURN
 #endif
 
 #include "bu/magic.h"
@@ -55,15 +56,18 @@ bomb_callback(const void *data, const char *str)
 int
 main(int argc, char *argv[])
 {
-    unsigned char *misalign = (unsigned char *)bu_malloc(1, "bu_badmagic.c");
+    unsigned char *misalign = NULL;
     uint32_t *ptr = (uint32_t *)bu_malloc(sizeof(uint32_t), "bu_badmagic.c");
     uint32_t magic;
-    char *str = (char *)bu_malloc(20, "bu_badmagic.c");
+    char *str = NULL;
     char *expected_str = (char *)bu_malloc(512, "bu_badmagic.c");
-    char *file = "bu_badmagic.c";
+    const char *file = "bu_badmagic.c";
     int line = 42, testnum;
 
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     if (argc < 2) {
 	bu_exit(1, "Usage: %s {number}\nMust specify a function number.\n", argv[0]);

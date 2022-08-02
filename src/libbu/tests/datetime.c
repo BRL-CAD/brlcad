@@ -1,7 +1,7 @@
 /*                    D A T E T I M E . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,10 @@ main(int argc, char *argv[])
     int64_t curr_time;
     int function_num;
 
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     if (argc != 2) {
 	bu_log("Usage: %s {function_num}\n", argv[0]);
@@ -39,7 +42,9 @@ main(int argc, char *argv[])
 
     switch (function_num) {
 	case 0:	{
-	    int64_t time0, time1, time2;
+	    int64_t time0 = 0;
+	    int64_t time1 = 0;
+	    int64_t time2 = 0;
 	    int64_t i = 0;
 	    size_t counter = 1;
 
@@ -129,7 +134,7 @@ main(int argc, char *argv[])
 	    if (!BU_STR_EQUAL(result.vls_str, "2069-09-27T05:00:49Z"))
 		return 1;
 	    break;
-
+#if 0
 	case 11:
 	    {
 		/* Per POSIX and Microsoft's docs, time should return the time
@@ -158,6 +163,7 @@ main(int argc, char *argv[])
 		bu_vls_free(&result2);
 		return 0;
 	    }
+#endif
     }
     return 0;
 }

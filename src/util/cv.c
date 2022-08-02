@@ -1,7 +1,7 @@
 /*                            C V . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2020 United States Government as represented by
+ * Copyright (c) 1991-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -91,21 +91,23 @@ main(int argc, char **argv)
     }
 
     if (argc == 5) {
-	if ((outfp = fopen(argv[4], "w")) == NULL) {
+	if ((outfp = fopen(argv[4], "wb")) == NULL) {
 	    perror(argv[4]);
 	    return 2;
 	}
     } else {
 	outfp = stdout;
+	setmode(fileno(outfp), O_BINARY);
     }
 
     if (argc >= 4) {
-	if ((infp = fopen(argv[3], "r")) == NULL) {
+	if ((infp = fopen(argv[3], "rb")) == NULL) {
 	    perror(argv[3]);
 	    return 3;
 	}
     } else {
 	infp = stdin;
+	setmode(fileno(infp), O_BINARY);
     }
 
     if (isatty(fileno(outfp))) {

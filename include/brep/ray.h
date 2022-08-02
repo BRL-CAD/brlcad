@@ -1,7 +1,7 @@
 /*                          R A Y . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -145,7 +145,7 @@ ON_Ray::IntersectRay(const ON_Ray &v, ON_2dPoint &isect) const
     return true;
 }
 
-BREP_EXPORT void brep_get_plane_ray(const ON_Ray &r, plane_ray &pr);
+BREP_EXPORT int brep_get_plane_ray(const ON_Ray &r, plane_ray &pr);
 BREP_EXPORT void brep_r(const ON_Surface* surf, const plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R);
 BREP_EXPORT void brep_newton_iterate(const plane_ray& pr, pt2d_t R, const ON_3dVector& su, const ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv);
 BREP_EXPORT void utah_ray_planes(const ON_Ray &r, ON_3dVector &p1, double &p1d, ON_3dVector &p2, double &p2d);

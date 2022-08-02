@@ -179,7 +179,7 @@ the view.
   <example><title>View from the top direction.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>press top</userinput>
+      <prompt>mged&gt; </prompt><userinput>press top</userinput>
     </para>
     <para>Switches to view from the top direction.
     </para>

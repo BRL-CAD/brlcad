@@ -1,7 +1,7 @@
 /*                           R P C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -741,6 +741,7 @@ rpc_parabolic_curve(fastf_t mag_b, fastf_t r, int num_points)
  */
 static void
 rpc_plot_parabolic_curve(
+	struct bu_list *vlfree,
 	struct bu_list *vhead,
 	struct rpc_specific *rpc,
 	struct rt_pnt_node *pts,
@@ -756,12 +757,12 @@ rpc_plot_parabolic_curve(
     VMOVE(Bu, rpc->rpc_Bunit);
 
     VJOIN2(p, t, rscale * pts->p[Y], Ru, -pts->p[Z], Bu);
-    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
 
     node = pts->next;
     while (node != NULL) {
 	VJOIN2(p, t, rscale * node->p[Y], Ru, -node->p[Z], Bu);
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
 	node = node->next;
     }
@@ -769,6 +770,7 @@ rpc_plot_parabolic_curve(
 
 static void
 rpc_plot_parabolas(
+	struct bu_list *vlfree,
 	struct bu_list *vhead,
 	struct rt_rpc_internal *rpc,
 	struct rt_pnt_node *pts)
@@ -786,17 +788,18 @@ rpc_plot_parabolas(
 
     /* plot parabolic contour curve of face containing V */
     VSETALL(rpc_H, 0.0);
-    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, 1.0);
-    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, -1.0);
+    rpc_plot_parabolic_curve(vlfree, vhead, &rpc_s, pts, rpc_H, 1.0);
+    rpc_plot_parabolic_curve(vlfree, vhead, &rpc_s, pts, rpc_H, -1.0);
 
     /* plot parabolic contour curve of opposing face */
     VMOVE(rpc_H, rpc->rpc_H);
-    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, 1.0);
-    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, -1.0);
+    rpc_plot_parabolic_curve(vlfree, vhead, &rpc_s, pts, rpc_H, 1.0);
+    rpc_plot_parabolic_curve(vlfree, vhead, &rpc_s, pts, rpc_H, -1.0);
 }
 
 static void
 rpc_plot_curve_connections(
+	struct bu_list *vlfree,
 	struct bu_list *vhead,
 	struct rt_rpc_internal *rpc,
 	int num_connections)
@@ -828,24 +831,24 @@ rpc_plot_curve_connections(
 
 	/* connect faces on one side of the curve */
 	VJOIN2(pt, rpc->rpc_V, z, Zu, -y, Yu);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 
 	VADD2(pt, pt, rpc->rpc_H);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 
 	/* connect the faces on the other side */
 	VJOIN2(pt, rpc->rpc_V, z, Zu, y, Yu);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 
 	VADD2(pt, pt, rpc->rpc_H);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
     }
 }
 
 static int
 rpc_curve_points(
 	struct rt_rpc_internal *rpc,
-	const struct rt_view_info *info)
+	fastf_t point_spacing)
 {
     fastf_t height, halfwidth, est_curve_length;
     point_t p0, p1;
@@ -858,19 +861,20 @@ rpc_curve_points(
 
     est_curve_length = 2.0 * DIST_PNT_PNT(p0, p1);
 
-    return est_curve_length / info->point_spacing;
+    return est_curve_length / point_spacing;
 }
 
 int
-rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     point_t p;
     vect_t rpc_R;
     int num_curve_points, num_connections;
     struct rt_rpc_internal *rpc;
     struct rt_pnt_node *pts, *node, *tmp;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
-    BU_CK_LIST_HEAD(info->vhead);
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
     rpc = (struct rt_rpc_internal *)ip->idb_ptr;
@@ -878,7 +882,8 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	return -2;
     }
 
-    num_curve_points = rpc_curve_points(rpc, info);
+    fastf_t point_spacing = solid_point_spacing(v, s_size);
+    num_curve_points = rpc_curve_points(rpc, point_spacing);
 
     if (num_curve_points < 3) {
 	num_curve_points = 3;
@@ -889,7 +894,7 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VSCALE(rpc_R, rpc_R, rpc->rpc_r);
 
     pts = rpc_parabolic_curve(MAGNITUDE(rpc->rpc_B), rpc->rpc_r, num_curve_points);
-    rpc_plot_parabolas(info->vhead, rpc, pts);
+    rpc_plot_parabolas(vlfree, vhead, rpc, pts);
 
     node = pts;
     while (node != NULL) {
@@ -900,34 +905,34 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     }
 
     /* connect both halves of the parabolic contours of the opposing faces */
-    num_connections = primitive_curve_count(ip, info);
+    num_connections = primitive_curve_count(ip, tol, v->gv_ls.curve_scale, s_size);
     if (num_connections < 2) {
 	num_connections = 2;
     }
 
-    rpc_plot_curve_connections(info->vhead, rpc, num_connections);
+    rpc_plot_curve_connections(vlfree, vhead, rpc, num_connections);
 
     /* plot rectangular face */
     VADD2(p, rpc->rpc_V, rpc_R);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
 
     VADD2(p, p, rpc->rpc_H);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, -2.0, rpc_R);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, -1.0, rpc->rpc_H);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, 2.0, rpc_R);
-    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
     return 0;
 }
 
 int
-rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_rpc_internal *xip;
     fastf_t *front;
@@ -936,6 +941,7 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     int i, n;
     struct rt_pnt_node *old, *pos, *pts;
     vect_t Bu, Hu, Ru, B, R;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -1009,22 +1015,21 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     /* Draw the front */
-    RT_ADD_VLIST(vhead, &front[(n-1)*ELEMENTS_PER_VECT],
-		 BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &front[(n-1)*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < n; i++) {
-	RT_ADD_VLIST(vhead, &front[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &front[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw the back */
-    RT_ADD_VLIST(vhead, &back[(n-1)*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &back[(n-1)*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < n; i++) {
-	RT_ADD_VLIST(vhead, &back[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &back[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw connections */
     for (i = 0; i < n; i++) {
-	RT_ADD_VLIST(vhead, &front[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, &back[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &front[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, &back[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     bu_free((char *)front, "fastf_t");
@@ -1363,7 +1368,7 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Warning:  type conversion */
     if (mat == NULL) mat = bn_mat_identity;
 
-    if (dbip->dbi_version < 0) {
+    if (dbip && dbip->dbi_version < 0) {
 	flip_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
 	flip_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
 	flip_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
@@ -1377,7 +1382,7 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     MAT4X3VEC(xip->rpc_H, mat, v2);
     MAT4X3VEC(xip->rpc_B, mat, v3);
 
-    if (dbip->dbi_version < 0) {
+    if (dbip && dbip->dbi_version < 0) {
 	v1[X] = flip_dbfloat(rp->s.s_values[3*3+0]);
     } else {
 	v1[X] = rp->s.s_values[3*3+0];
@@ -1702,6 +1707,52 @@ rpc_is_valid(struct rt_rpc_internal *rpc)
 
     return 1;
 }
+
+void
+rt_rpc_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!ps || !ip)
+	return;
+
+    struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(rpc);
+
+    // Set up the containers
+    struct bv_label *l[4];
+    for (int i = 0; i < 4; i++) {
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
+	struct bv_label *la;
+	BU_GET(la, struct bv_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+    }
+
+    // Do the specific data assignments for each label
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, rpc->rpc_V);
+
+    bu_vls_sprintf(&l[1]->label, "B");
+    VADD2(l[1]->p, rpc->rpc_V, rpc->rpc_B);
+
+    bu_vls_sprintf(&l[2]->label, "H");
+    VADD2(l[2]->p, rpc->rpc_V, rpc->rpc_H);
+
+    bu_vls_sprintf(&l[3]->label, "r");
+    vect_t Ru;
+    VCROSS(Ru, rpc->rpc_B, rpc->rpc_H);
+    VUNITIZE(Ru);
+    VSCALE(Ru, Ru, rpc->rpc_r);
+    VADD2(l[3]->p, rpc->rpc_V, Ru);
+}
+
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                        T I E N E T . C
  * BRL-CAD
  *
- * Copyright (c) 2016-2020 United States Government as represented by
+ * Copyright (c) 2016-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,18 +29,19 @@
 int
 tienet_send(int tsocket, void* data, size_t size)
 {
-    fd_set	 set;
-    unsigned int ind = 0;
-    int		 r;
+    fd_set set;
+    size_t ind = 0;
+    int r;
 
     FD_ZERO(&set);
     FD_SET(tsocket, &set);
 
     do {
 	select(tsocket+1, NULL, &set, NULL, NULL);
-	r = write(tsocket, &((char*)data)[ind], size-ind);
+	r = write(tsocket, &((char*)data)[ind], (unsigned int)(size-ind));
+	if (r <= 0)
+	    return 1;	/* Error, socket is probably dead */
 	ind += r;
-	if (r <= 0) return 1;	/* Error, socket is probably dead */
     } while (ind < size);
 
     return 0;
@@ -71,7 +72,9 @@ void tienet_sem_init(tienet_sem_t *sem, int val)
 {
     bu_mtx_init(&sem->mut);
     bu_cnd_init(&sem->cond);
+    bu_mtx_lock(&sem->mut);
     sem->val = val;
+    bu_mtx_unlock(&sem->mut);
 }
 
 

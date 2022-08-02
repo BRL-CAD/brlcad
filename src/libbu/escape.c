@@ -1,7 +1,7 @@
 /*                        E S C A P E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -138,8 +138,7 @@ bu_str_escape(const char *input, const char *expression, char *output, size_t si
     /* always null-terminate */
     output[i] = '\0';
 
-    if (incpy)
-	bu_free(incpy, "bu_str_escape strdup");
+    bu_free(incpy, "bu_str_escape strdup");
     bu_free(chars, "free strgrab");
 
     return output;
@@ -208,8 +207,7 @@ bu_str_unescape(const char *input, char *output, size_t size)
     /* always null-terminate */
     output[i] = '\0';
 
-    if (incpy)
-	bu_free(incpy, "bu_str_unescape strdup");
+    bu_free(incpy, "bu_str_unescape strdup");
 
     return output;
 }

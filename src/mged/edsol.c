@@ -1,7 +1,7 @@
 /*                         E D S O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -750,7 +750,6 @@ set_e_axes_pos(int both)
        set e_axes_pos and curr_e_axes_pos */
 {
     int i;
-    struct dm_list *dmlp;
     const short earb8[12][18] = earb8_edit_array;
     const short earb7[12][18] = earb7_edit_array;
     const short earb6[10][18] = earb6_edit_array;
@@ -758,6 +757,7 @@ set_e_axes_pos(int both)
     const int local_arb_faces[5][24] = rt_arb_faces;
 
     update_views = 1;
+    dm_set_dirty(DMP, 1);
     switch (es_int.idb_type) {
 	case ID_ARB8:
 	    if (STATE == ST_O_EDIT) {
@@ -920,8 +920,10 @@ set_e_axes_pos(int both)
 
 	MAT_IDN(acc_rot_sol);
 
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	    dmlp->dml_mged_variables->mv_transform = 'e';
+	for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	    struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	    m_dmp->dm_mged_variables->mv_transform = 'e';
+	}
     }
 }
 
@@ -1622,7 +1624,7 @@ nmg_ed(int arg)
 	    nmg_pr_fu_around_eu(es_eu, &mged_tol);
 	    {
 		struct model *m;
-		struct bn_vlblock*vbp;
+		struct bv_vlblock*vbp;
 		long *tab;
 
 		m = nmg_find_model(&es_eu->l.magic);
@@ -1637,7 +1639,7 @@ nmg_ed(int arg)
 		    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &RTG.rtg_vlfree, &mged_tol);
 		    cvt_vlblock_to_solids(vbp, "_EU_", 0);	/* swipe vlist */
 
-		    bn_vlblock_free(vbp);
+		    bv_vlblock_free(vbp);
 		    bu_free((void *)tab, "nmg_ed tab[]");
 		}
 		view_state->vs_flag = 1;
@@ -1795,7 +1797,7 @@ nmg_ed(int arg)
 			NMG_CK_VERTEX(v2);
 			VSUB2(edge2, eu2->eumate_p->vu_p->v_p->vg_p->coord, v2->vg_p->coord);
 
-			if ((ret_val = bn_isect_lseg3_lseg3(dist, v1->vg_p->coord, edge1,
+			if ((ret_val = bg_isect_lseg3_lseg3(dist, v1->vg_p->coord, edge1,
 							    v2->vg_p->coord, edge2, &mged_tol)) > (-1))
 			{
 			    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
@@ -1880,7 +1882,7 @@ void
 get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t *mat)
 {
     char *cp = *strp;
-    point_t mpt;
+    point_t mpt = VINIT_ZERO;
     static char buf[BUFSIZ];
 
     RT_CK_DB_INTERNAL(ip);
@@ -1970,7 +1972,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		for (i=0; i<arbn->neqn; i++) {
 		    for (j=i+1; j<arbn->neqn; j++) {
 			for (k=j+1; k<arbn->neqn; k++) {
-			    if (!bn_make_pnt_3planes(mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k])) {
+			    if (!bg_make_pnt_3planes(mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k])) {
 				size_t l;
 
 				good_vert = 1;
@@ -2533,18 +2535,25 @@ init_sedit(void)
     /*
      * Check for a processed region or other illegal solid.
      */
-    if (illump->s_Eflag) {
+    if (illump->s_old.s_Eflag) {
 	Tcl_AppendResult(INTERP,
 			 "Unable to Solid_Edit a processed region;  select a primitive instead\n", (char *)NULL);
 	return;
     }
 
     /* Read solid description into es_int */
-    if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
+    if (!illump->s_u_data)
+	return;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+    if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
 			   DBIP, NULL, &rt_uniresource) < 0) {
-	Tcl_AppendResult(INTERP, "init_sedit(",
-			 LAST_SOLID(illump)->d_namep,
-			 "):  solid import failure\n", (char *)NULL);
+	if (bdata->s_fullpath.fp_len > 0) {
+	    Tcl_AppendResult(INTERP, "init_sedit(",
+		    LAST_SOLID(bdata)->d_namep,
+		    "):  solid import failure\n", (char *)NULL);
+	} else {
+	    Tcl_AppendResult(INTERP, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
+	}
 	rt_db_free_internal(&es_int);
 	return;				/* FAIL */
     }
@@ -2584,7 +2593,7 @@ init_sedit(void)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(DBIP, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -2616,7 +2625,7 @@ init_sedit(void)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&vls, "begin_edit_callback ");
-	db_path_to_vls(&vls, &illump->s_fullpath);
+	db_path_to_vls(&vls, &bdata->s_fullpath);
 	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
@@ -2662,23 +2671,28 @@ replot_editing_solid(void)
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     mat_t mat;
-    struct solid *sp;
+    struct bv_scene_obj *sp;
     struct directory *illdp;
 
     if (!illump) {
 	return;
     }
-
-    illdp = LAST_SOLID(illump);
+    if (!illump->s_u_data)
+	return;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+    illdp = LAST_SOLID(bdata);
 
     gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    if (LAST_SOLID(sp) == illdp) {
-		(void)db_path_to_mat(DBIP, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
-		(void)replot_modified_solid(sp, &es_int, mat);
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    if (sp->s_u_data) {
+		bdata = (struct ged_bv_data *)sp->s_u_data;
+		if (LAST_SOLID(bdata) == illdp) {
+		    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+		    (void)replot_modified_solid(sp, &es_int, mat);
+		}
 	    }
 	}
 
@@ -2808,9 +2822,11 @@ get_rotation_vertex(void)
     }
     bu_vls_printf(&str, ") [%d]: ", arb_vertices[type][loc]);
 
+    const struct bu_vls *dnvp = dm_get_dname(mged_curr_dm->dm_dmp);
+
     bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
  {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
-		  bu_vls_addr(dName), bu_vls_addr(&str), arb_vertices[type][loc]);
+		  (dnvp) ? bu_vls_addr(dnvp) : "id", bu_vls_addr(&str), arb_vertices[type][loc]);
 
     while (!valid) {
 	if (Tcl_Eval(INTERP, bu_vls_addr(&cmd)) != TCL_OK) {
@@ -4131,14 +4147,14 @@ sedit(void)
 		RT_VOL_CK_MAGIC(vol);
 
 		if (inpara == 3) {
-		    if (stat(vol->file, &stat_buf)) {
-			Tcl_AppendResult(INTERP, "Cannot get status of file ", vol->file, (char *)NULL);
+		    if (stat(vol->name, &stat_buf)) {
+			Tcl_AppendResult(INTERP, "Cannot get status of file ", vol->name, (char *)NULL);
 			mged_print_result(TCL_ERROR);
 			return;
 		    }
 		    need_size = es_para[0] * es_para[1] * es_para[2] * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
-			Tcl_AppendResult(INTERP, "File (", vol->file,
+			Tcl_AppendResult(INTERP, "File (", vol->name,
 					 ") is too small, set file name first", (char *)NULL);
 			mged_print_result(TCL_ERROR);
 			return;
@@ -4216,7 +4232,7 @@ sedit(void)
 
 		RT_VOL_CK_MAGIC(vol);
 
-		fname = get_file_name(vol->file);
+		fname = get_file_name(vol->name);
 		if (fname) {
 		    struct bu_vls message = BU_VLS_INIT_ZERO;
 
@@ -4235,7 +4251,7 @@ sedit(void)
 			mged_print_result(TCL_ERROR);
 			return;
 		    }
-		    bu_strlcpy(vol->file, fname, RT_VOL_NAME_LEN);
+		    bu_strlcpy(vol->name, fname, RT_VOL_NAME_LEN);
 		}
 
 		break;
@@ -4789,7 +4805,7 @@ sedit(void)
 		    rota= es_para[0] * DEG2RAD;
 		    fb_a  = es_para[1] * DEG2RAD;
 
-		    /* calculate normal vector (length = 1) from rot, fb */
+		    /* calculate normal vector (length = 1) from rot, struct fb */
 		    es_peqn[es_menu][0] = cos(fb_a) * cos(rota);
 		    es_peqn[es_menu][1] = cos(fb_a) * sin(rota);
 		    es_peqn[es_menu][2] = sin(fb_a);
@@ -5520,7 +5536,7 @@ sedit(void)
 			MAT4X3VEC(view_dir, view_state->vs_gvp->gv_view2model, view_z_dir);
 
 			/* intersect line through new_pt with plane of loop */
-			if (bn_isect_line3_plane(&dist, new_pt, view_dir, pl, &mged_tol) < 1) {
+			if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &mged_tol) < 1) {
 			    /* line does not intersect plane, don't do an esplit */
 			    Tcl_AppendResult(INTERP, "Edge Move: Cannot place new point in plane of loop\n", (char *)NULL);
 			    mged_print_result(TCL_ERROR);
@@ -5673,7 +5689,7 @@ sedit(void)
 			MAT4X3VEC(view_dir, view_state->vs_gvp->gv_view2model, view_z_dir);
 
 			/* intersect line through new_pt with plane of loop */
-			if (bn_isect_line3_plane(&dist, new_pt, view_dir, pl, &mged_tol) < 1) {
+			if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &mged_tol) < 1) {
 			    /* line does not intersect plane, don't do an esplit */
 			    Tcl_AppendResult(INTERP, "Edge Split: Cannot place new point in plane of loop\n", (char *)NULL);
 			    mged_print_result(TCL_ERROR);
@@ -5723,7 +5739,7 @@ sedit(void)
 
 		VSUB2(extrude_vec, to_pt, lu_keypoint);
 
-		if (bn_isect_line3_plane(&dist, to_pt, extrude_vec, lu_pl, &mged_tol) < 1) {
+		if (bg_isect_line3_plane(&dist, to_pt, extrude_vec, lu_pl, &mged_tol) < 1) {
 		    Tcl_AppendResult(INTERP, "Cannot extrude parallel to plane of loop\n", (char *)NULL);
 		    mged_print_result(TCL_ERROR);
 		    return;
@@ -6600,7 +6616,7 @@ sedit(void)
 		for (BU_LIST_FOR(ps, wdb_metaball_pnt, &metaball->metaball_ctrl_head)) {
 		    fastf_t dist;
 
-		    dist = bn_dist_line3_pnt3(new_pt, dir, ps->coord);
+		    dist = bg_dist_line3_pnt3(new_pt, dir, ps->coord);
 		    if (dist < min_dist) {
 			min_dist = dist;
 			nearest = ps;
@@ -6652,7 +6668,10 @@ sedit(void)
 		struct wdb_metaball_pnt *n = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
 
 		if (inpara != 3) {
-		    bu_log("Must provide x y z"); break; }
+		    bu_log("Must provide x y z");
+		    bu_free(n, "wdb_metaball_pnt n");
+		    break;
+		}
 
 		es_metaball_pnt = BU_LIST_FIRST(wdb_metaball_pnt, &metaball->metaball_ctrl_head);
 		VMOVE(n->coord, es_para);
@@ -6694,6 +6713,7 @@ sedit(void)
     replot_editing_solid();
 
     if (update_views) {
+	dm_set_dirty(DMP, 1);
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&vls, "active_edit_callback");
@@ -7004,7 +7024,7 @@ sedit_mouse(const vect_t mousevec)
 		    VMOVE(pt2, &bot->vertices[v2*3]);
 		    VMOVE(pt3, &bot->vertices[v3*3]);
 
-		    if (bn_does_ray_isect_tri(start_pt, dir, pt1, pt2, pt3, tmp)) {
+		    if (bg_does_ray_isect_tri(start_pt, dir, pt1, pt2, pt3, tmp)) {
 			hits++;
 			bu_vls_printf(&vls, " { %d %d %d }", v1, v2, v3);
 		    }
@@ -7150,14 +7170,13 @@ sedit_abs_scale(void)
 void
 objedit_mouse(const vect_t mousevec)
 {
-    fastf_t scale;
+    fastf_t scale = 1.0;
     vect_t pos_view;	 	/* Unrotated view space pos */
     vect_t pos_model;	/* Rotated screen space pos */
     vect_t tr_temp;		/* temp translation vector */
     vect_t temp;
 
     MAT_IDN(incr_change);
-    scale = 1;
     if (movedir & SARROW) {
 	/* scaling option is in effect */
 	scale = 1.0 + (fastf_t)(mousevec[Y]>0 ?
@@ -7376,7 +7395,7 @@ init_oedit_guts(void)
     /*
      * Check for a processed region
      */
-    if (illump->s_Eflag) {
+    if (illump->s_old.s_Eflag) {
 	/* Have a processed (E'd) region - NO key solid.
 	 * Use the 'center' as the key
 	 */
@@ -7386,11 +7405,18 @@ init_oedit_guts(void)
     }
 
     /* Not an evaluated region - just a regular path ending in a solid */
-    if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
+    if (!illump->s_u_data)
+	return;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+    if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
 			   DBIP, NULL, &rt_uniresource) < 0) {
-	Tcl_AppendResult(INTERP, "init_oedit(",
-			 LAST_SOLID(illump)->d_namep,
-			 "):  solid import failure\n", (char *)NULL);
+	if (bdata->s_fullpath.fp_len > 0) {
+	    Tcl_AppendResult(INTERP, "init_oedit(",
+		    LAST_SOLID(bdata)->d_namep,
+		    "):  solid import failure\n", (char *)NULL);
+	} else {
+	    Tcl_AppendResult(INTERP, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
+	}
 	rt_db_free_internal(&es_int);
 	button(BE_REJECT);
 	return;				/* FAIL */
@@ -7408,7 +7434,7 @@ init_oedit_guts(void)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(DBIP, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -7473,7 +7499,7 @@ oedit_apply(int continue_editing)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bv_scene_obj *sp;
     /* matrices used to accept editing done from a depth
      * >= 2 from the top of the illuminated path
      */
@@ -7482,14 +7508,18 @@ oedit_apply(int continue_editing)
     mat_t deltam;	/* final "changes":  deltam = (inv_topm)(modelchanges)(topm) */
     mat_t tempm;
 
+    if (!illump || !illump->s_u_data)
+	return;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+
     switch (ipathpos) {
 	case 0:
-	    moveHobj(DB_FULL_PATH_GET(&illump->s_fullpath, ipathpos),
+	    moveHobj(DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
 		     modelchanges);
 	    break;
 	case 1:
-	    moveHinstance(DB_FULL_PATH_GET(&illump->s_fullpath, ipathpos-1),
-			  DB_FULL_PATH_GET(&illump->s_fullpath, ipathpos),
+	    moveHinstance(DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
+			  DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
 			  modelchanges);
 	    break;
 	default:
@@ -7498,15 +7528,15 @@ oedit_apply(int continue_editing)
 	    MAT_IDN(deltam);
 	    MAT_IDN(tempm);
 
-	    (void)db_path_to_mat(DBIP, &illump->s_fullpath, topm, ipathpos-1, &rt_uniresource);
+	    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, topm, ipathpos-1, &rt_uniresource);
 
 	    bn_mat_inv(inv_topm, topm);
 
 	    bn_mat_mul(tempm, modelchanges, topm);
 	    bn_mat_mul(deltam, inv_topm, tempm);
 
-	    moveHinstance(DB_FULL_PATH_GET(&illump->s_fullpath, ipathpos-1),
-			  DB_FULL_PATH_GET(&illump->s_fullpath, ipathpos),
+	    moveHinstance(DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
+			  DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
 			  deltam);
 	    break;
     }
@@ -7524,7 +7554,7 @@ oedit_apply(int continue_editing)
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (sp->s_iflag == DOWN)
 		continue;
 	    (void)replot_original_solid(sp);
@@ -7544,7 +7574,7 @@ oedit_accept(void)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
+    struct bv_scene_obj *sp;
 
     if (DBIP == DBI_NULL)
 	return;
@@ -7556,7 +7586,7 @@ oedit_accept(void)
 	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 		if (sp->s_iflag == DOWN)
 		    continue;
 		(void)replot_original_solid(sp);
@@ -7680,7 +7710,10 @@ sedit_apply(int accept_flag)
     }
 
     /* write editing changes out to disc */
-    dp = LAST_SOLID(illump);
+    if (!illump->s_u_data)
+	return TCL_ERROR;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+    dp = LAST_SOLID(bdata);
     if (!dp) {
 	/* sanity check, unexpected error */
 	return TCL_ERROR;
@@ -7731,10 +7764,10 @@ sedit_apply(int accept_flag)
     } else {
 	/* XXX hack to restore es_int after rt_db_put_internal blows it away */
 	/* Read solid description into es_int again! Gaak! */
-	if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
+	if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
 			       DBIP, NULL, &rt_uniresource) < 0) {
 	    Tcl_AppendResult(INTERP, "sedit_apply(",
-			     LAST_SOLID(illump)->d_namep,
+			     LAST_SOLID(bdata)->d_namep,
 			     "):  solid reimport failure\n", (char *)NULL);
 	    rt_db_free_internal(&es_int);
 	    return TCL_ERROR;
@@ -7799,14 +7832,20 @@ sedit_reject(void)
     {
 	struct display_list *gdlp;
 	struct display_list *next_gdlp;
-	struct solid *sp;
+	struct bv_scene_obj *sp;
+	if (!illump->s_u_data)
+	    return;
+	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-		if (LAST_SOLID(sp) == LAST_SOLID(illump))
+	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+		if (!sp->s_u_data)
+		    continue;
+		struct ged_bv_data *bdatas = (struct ged_bv_data *)sp->s_u_data;
+		if (LAST_SOLID(bdatas) == LAST_SOLID(bdata))
 		    (void)replot_original_solid(sp);
 	    }
 
@@ -8899,6 +8938,10 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_ERROR;
     }
 
+    if (illump || !illump->s_u_data)
+	return TCL_ERROR;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+
     if (argc == 1) {
 	struct bu_vls logstr = BU_VLS_INIT_ZERO;
 
@@ -8913,7 +8956,7 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
 	pnto = Tcl_NewObj();
 	/* insert solid name, type and parameters */
-	Tcl_AppendStringsToObj(pnto, LAST_SOLID(illump)->d_namep, " ",
+	Tcl_AppendStringsToObj(pnto, LAST_SOLID(bdata)->d_namep, " ",
 			       Tcl_GetStringFromObj(pto, (int *)0), (char *)0);
 
 	Tcl_SetObjResult(interp, pnto);
@@ -8946,7 +8989,7 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 
-	db_path_to_vls(&str, &illump->s_fullpath);
+	db_path_to_vls(&str, &bdata->s_fullpath);
 	Tcl_AppendStringsToObj(pnto, bu_vls_addr(&str), NULL);
 	bu_vls_free(&str);
     }
@@ -9073,11 +9116,19 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
     es_eu = (struct edgeuse *)NULL;
 
     /* read in a fresh copy */
-    if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
+    if (!illump || !illump->s_u_data)
+	return TCL_ERROR;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+    if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
 			   DBIP, NULL, &rt_uniresource) < 0) {
-	Tcl_AppendResult(interp, "sedit_reset(",
-			 LAST_SOLID(illump)->d_namep,
-			 "):  solid import failure\n", (char *)NULL);
+	if (bdata->s_fullpath.fp_len > 0) {
+	    Tcl_AppendResult(interp, "sedit_reset(",
+		    LAST_SOLID(bdata)->d_namep,
+		    "):  solid import failure\n", (char *)NULL);
+	} else {
+	    Tcl_AppendResult(interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
+
+	}
 	return TCL_ERROR;				/* FAIL */
     }
     RT_CK_DB_INTERNAL(&es_int);
@@ -9109,6 +9160,7 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 
     set_e_axes_pos(1);
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     /* active edit callback */
     bu_vls_printf(&vls, "active_edit_callback");
@@ -9165,6 +9217,7 @@ f_oedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 
     new_edit_mats();
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     /* active edit callback */
     bu_vls_printf(&vls, "active_edit_callback");
@@ -9184,9 +9237,13 @@ f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
     CHECK_DBI_NULL;
     oedit_apply(UP); /* apply changes, but continue editing */
 
+    if (!illump->s_u_data)
+	return TCL_ERROR;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+
     /* Save aggregate path matrix */
     MAT_IDN(es_mat);
-    (void)db_path_to_mat(DBIP, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -9195,6 +9252,7 @@ f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
     init_oedit_vars();
     new_edit_mats();
     update_views = 1;
+    dm_set_dirty(DMP, 1);
 
     /* active edit callback */
     bu_vls_printf(&vls, "active_edit_callback");

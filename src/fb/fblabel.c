@@ -1,7 +1,7 @@
 /*                       F B L A B E L . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "bu/vfont.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 
@@ -44,7 +44,7 @@
 static char *framebuffer = NULL;
 static char *font1 = NULL;
 
-fb *fbp;
+struct fb *fbp;
 
 static char usage[] = "\
 Usage: fblabel [-c -a] [-F framebuffer] [-C r/g/b]\n\

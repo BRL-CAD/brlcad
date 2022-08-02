@@ -1,7 +1,7 @@
 /*                     P O L Y G O N . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,10 +24,43 @@
 
 #include "bu/malloc.h"
 #include "bu/sort.h"
-#include "bn/plane.h"
-#include "bn/plot3.h"
+#include "bg/plane.h"
+#include "bv/plot3.h"
 #include "bn/tol.h"
 #include "bg/polygon.h"
+
+void
+bg_polygon_free(struct bg_polygon *gpp)
+{
+    if (gpp->num_contours == 0)
+	return;
+
+    for (size_t j = 0; j < gpp->num_contours; ++j) {
+	if (gpp->contour[j].num_points > 0) {
+	    bu_free((void *)gpp->contour[j].point, "contour points");
+	}
+    }
+
+    bu_free((void *)gpp->contour, "contour");
+    bu_free((void *)gpp->hole, "hole");
+    gpp->num_contours = 0;
+}
+
+void
+bg_polygons_free(struct bg_polygons *gpp)
+{
+    if (gpp->num_polygons == 0)
+	return;
+
+    for (size_t i = 0; i < gpp->num_polygons; ++i) {
+	bg_polygon_free(&gpp->polygon[i]);
+    }
+
+    bu_free((void *)gpp->polygon, "data polygons");
+    gpp->polygon = (struct bg_polygon *)0;
+    gpp->num_polygons = 0;
+}
+
 
 int
 bg_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
@@ -41,7 +74,7 @@ bg_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
 	return 1;
     BN_TOL_INIT(&tol);
     tol.dist_sq = BN_TOL_DIST * BN_TOL_DIST;
-    if (bn_make_plane_3pnts(plane_eqn, pts[0], pts[1], pts[2], &tol) == -1)
+    if (bg_make_plane_3pnts(plane_eqn, pts[0], pts[1], pts[2], &tol) == -1)
 	return 1;
 
     switch (npts) {
@@ -127,7 +160,7 @@ bg_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
     x_0 = pts[i][0];
     z_0 = pts[i][2];
     x_1 = pts[0][0];
-    z_0 = pts[0][2];
+    z_1 = pts[0][2];
     a = x_0 *z_1 - x_1*z_0;
     signedArea += a;
     *cent[2] += (z_0 + z_1)*a;
@@ -150,7 +183,7 @@ bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts, size_t neqs, const p
 	    for (k = j + 1; k < neqs; k++) {
 		point_t pt;
 		int keep_point = 1;
-		if (bn_make_pnt_3planes(pt, eqs[i], eqs[j], eqs[k]) < 0)
+		if (bg_make_pnt_3planes(pt, eqs[i], eqs[j], eqs[k]) < 0)
 		    continue;
 		/* discard pt if it is outside the polyhedron */
 		for (l = 0; l < neqs; l++) {
@@ -219,18 +252,40 @@ bg_polygon_direction(size_t npts, const point2d_t *pts, const int *pt_indices)
     }
 
     /* clean up and evaluate results */
-    if (tmp_pt_order)
-	bu_free(tmp_pt_order, "free tmp_pt_order");
+    bu_free(tmp_pt_order, "free tmp_pt_order");
     if (NEAR_ZERO(sum, SMALL_FASTF))
 	return 0;
     return (sum > 0) ? BG_CW : BG_CCW;
+}
+
+
+void
+bg_polygon_cpy(struct bg_polygon *dest, struct bg_polygon *src)
+{
+    if (!dest || !src)
+	return;
+
+    dest->num_contours = src->num_contours;
+    dest->hole = (int *)bu_calloc(src->num_contours, sizeof(int), "hole");
+    dest->contour = (struct bg_poly_contour *)bu_calloc(src->num_contours, sizeof(struct bg_poly_contour), "contour");
+    for (size_t i = 0; i < src->num_contours; i++) {
+	dest->hole[i] = src->hole[i];
+    }
+    for (size_t i = 0; i < src->num_contours; i++) {
+	dest->contour[i].num_points = src->contour[i].num_points;
+	dest->contour[i].open = src->contour[i].open;
+	dest->contour[i].point = (point_t *)bu_calloc(src->contour[i].num_points, sizeof(point_t), "point");
+	for (size_t j = 0; j < src->contour[i].num_points; j++) {
+	    VMOVE(dest->contour[i].point[j], src->contour[i].point[j]);
+	}
+    }
 }
 
 void
 bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts, int r, int g, int b)
 {
     point_t bnp;
-    FILE* plot_file = fopen(filename, "w");
+    FILE* plot_file = fopen(filename, "wb");
     pl_color(plot_file, r, g, b);
 
     VSET(bnp, pnts[0][X], pnts[0][Y], 0);
@@ -242,6 +297,27 @@ bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts, int r
     }
 
     VSET(bnp, pnts[0][X], pnts[0][Y], 0);
+    pdv_3cont(plot_file, bnp);
+
+    fclose(plot_file);
+}
+
+void
+bg_polygon_plot(const char *filename, const point_t *pnts, int npnts, int r, int g, int b)
+{
+    point_t bnp;
+    FILE* plot_file = fopen(filename, "wb");
+    pl_color(plot_file, r, g, b);
+
+    VSET(bnp, pnts[0][X], pnts[0][Y], 0);
+    pdv_3move(plot_file, bnp);
+
+    for (int i = 1; i < npnts; i++) {
+	VSET(bnp, pnts[i][X], pnts[i][Y], pnts[i][Z]);
+	pdv_3cont(plot_file, bnp);
+    }
+
+    VSET(bnp, pnts[0][X], pnts[0][Y], pnts[0][Z]);
     pdv_3cont(plot_file, bnp);
 
     fclose(plot_file);

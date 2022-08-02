@@ -1,7 +1,7 @@
 /*                       R E A L P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,10 @@ main(int ac, char *av[])
 {
     int test_num = 0;
 
-    bu_setprogname(av[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(av[0]);
 
     if (ac < 2) {
 	bu_exit(1, "Usage: %s {test_number}\n", av[0]);

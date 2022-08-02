@@ -1,7 +1,7 @@
 /*                         E N F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2020 United States Government as represented by
+ * Copyright (c) 2001-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 #define MAX_LINE_SIZE 256
@@ -63,7 +63,7 @@ static int name_not_converted=0;
 static int indent_level=0;
 static int indent_delta=4;
 
-static struct bn_vert_tree *tree;
+static struct bg_vert_tree *tree;
 
 #define DO_INDENT { int _i; \
 	for (_i=0; _i<indent_level; _i++) {\
@@ -384,7 +384,7 @@ Part_import(int id_start)
     int tri[3];
     int corner_index=-1;
 
-    bn_vert_tree_clean(tree);
+    bg_vert_tree_clean(tree);
 
     VSETALL(rgb, 128);
 
@@ -449,7 +449,7 @@ Part_import(int id_start)
 		v[i] = atof(ptr);
 		ptr = strtok((char *)NULL, " \t");
 	    }
-	    tri[++corner_index] = bn_vert_tree_add(tree, V3ARGS(v), local_tol_sq);
+	    tri[++corner_index] = (int)bg_vert_tree_add(tree, V3ARGS(v), local_tol_sq);
 	    if (corner_index == 2) {
 		if (!bad_triangle(tri, tree->the_array)) {
 		    add_triangle(tri);
@@ -675,7 +675,7 @@ main(int argc, char *argv[])
 	create_name_hash(fd_parts);
     }
 
-    tree = bn_vert_tree_create();
+    tree = bg_vert_tree_create();
 
     /* finally, start processing the input */
     while (bu_fgets(line, MAX_LINE_SIZE, fd_in)) {

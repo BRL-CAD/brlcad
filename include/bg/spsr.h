@@ -50,8 +50,8 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file sbsr.h */
-/** @addtogroup sbsr */
+/* @file spsr.h */
+/** @addtogroup bg_surf_recon_spsr */
 /** @{ */
 
 /**

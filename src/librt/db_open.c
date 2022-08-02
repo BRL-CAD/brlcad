@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2020 United States Government as represented by
+ * Copyright (c) 1988-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,6 +42,7 @@
 
 #include "bu/parallel.h"
 #include "bu/path.h"
+#include "bu/app.h"
 #include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
@@ -144,6 +145,12 @@ db_open(const char *name, const char *mode)
 	    return DBI_NULL;
 	}
 
+	dbip->dbi_use_comb_instance_ids = 0;
+	const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
+	if (BU_STR_EQUAL(need_comb_inst, "1")) {
+	    dbip->dbi_use_comb_instance_ids = 1;
+	}
+
 	dbip->dbi_read_only = 1;
     } else {
 	/* Read-write mode */
@@ -157,6 +164,12 @@ db_open(const char *name, const char *mode)
 	    }
 	    bu_free((char *)dbip, "struct db_i");
 	    return DBI_NULL;
+	}
+
+	dbip->dbi_use_comb_instance_ids = 0;
+	const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
+	if (BU_STR_EQUAL(need_comb_inst, "1")) {
+	    dbip->dbi_use_comb_instance_ids = 1;
 	}
 
 	dbip->dbi_read_only = 0;
@@ -191,11 +204,11 @@ db_open(const char *name, const char *mode)
 	struct bu_vls fullpath = BU_VLS_INIT_ZERO;
 
 	bu_free((void *)argv[1], "db_open: argv[1]");
-	argv[1] = getcwd((char *)NULL, (size_t)MAXPATHLEN);
+	argv[1] = bu_getcwd((char *)NULL, (size_t)MAXPATHLEN);
 
 	/* Something went wrong and we didn't get the CWD. So,
 	 * free up any memory allocated here and return DBI_NULL */
-	if (argv[1] == NULL) {
+	if (BU_STR_EQUAL(argv[1], ".") || BU_STR_EMPTY(argv[1])) {
 	    bu_close_mapped_file(dbip->dbi_mf);
 	    bu_free_mapped_files(0);
 	    dbip->dbi_mf = (struct bu_mapped_file *)NULL;
@@ -224,6 +237,15 @@ db_open(const char *name, const char *mode)
 #endif
 
     bu_ptbl_init(&dbip->dbi_clients, 128, "dbi_clients[]");
+    bu_ptbl_init(&dbip->dbi_changed_clbks , 8, "dbi_changed_clbks]");
+    bu_ptbl_init(&dbip->dbi_update_nref_clbks, 8, "dbi_update_nref_clbks");
+
+    dbip->dbi_use_comb_instance_ids = 0;
+    const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
+    if (BU_STR_EQUAL(need_comb_inst, "1")) {
+	dbip->dbi_use_comb_instance_ids = 1;
+    }
+
     dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
     /* determine version */
@@ -361,6 +383,10 @@ db_close(register struct db_i *dbip)
     dbip->dbi_inmem = NULL;		/* sanity */
 
     bu_ptbl_free(&dbip->dbi_clients);
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks))
+	bu_ptbl_free(&dbip->dbi_changed_clbks);
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks))
+	bu_ptbl_free(&dbip->dbi_update_nref_clbks);
 
     /* Free all directory entries */
     for (i = 0; i < RT_DBNHASH; i++) {

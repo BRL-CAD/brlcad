@@ -1,7 +1,7 @@
 /*                            P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -486,7 +486,7 @@ rt_pg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uv
 
 
 int
-rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     size_t i;
     size_t p;	/* current polygon number */
@@ -494,6 +494,7 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
 
@@ -501,11 +502,11 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 	struct rt_pg_face_internal *pp;
 
 	pp = &pgp->poly[p];
-	RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)],
-		     BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*(pp->npts-1)],
+		     BV_VLIST_LINE_MOVE);
 	for (i=0; i < pp->npts; i++) {
-	    RT_ADD_VLIST(vhead, &pp->verts[3*i],
-			 BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*i],
+			 BV_VLIST_LINE_DRAW);
 	}
     }
     return 0;		/* OK */
@@ -524,6 +525,7 @@ rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
 
@@ -538,13 +540,13 @@ rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 	VSUB2(bb, &pp->verts[3*(0)], &pp->verts[3*(2)]);
 	VCROSS(norm, aa, bb);
 	VUNITIZE(norm);
-	RT_ADD_VLIST(vhead, norm, BN_VLIST_POLY_START);
+	BV_ADD_VLIST(vlfree, vhead, norm, BV_VLIST_POLY_START);
 
-	RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)], BN_VLIST_POLY_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*(pp->npts-1)], BV_VLIST_POLY_MOVE);
 	for (i=0; i < pp->npts-1; i++) {
-	    RT_ADD_VLIST(vhead, &pp->verts[3*i], BN_VLIST_POLY_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*i], BV_VLIST_POLY_DRAW);
 	}
-	RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)], BN_VLIST_POLY_END);
+	BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*(pp->npts-1)], BV_VLIST_POLY_END);
     }
     return 0;		/* OK */
 }
@@ -694,7 +696,7 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	    point_t pnt;
 	    vect_t vec;
 
-	    if (dbip->dbi_version < 0) {
+	    if (dbip && dbip->dbi_version < 0) {
 		flip_fastf_float(pnt, rp[rno].q.q_verts[i], 1, 1);
 		flip_fastf_float(vec, rp[rno].q.q_norms[i], 1, 1);
 	    } else {

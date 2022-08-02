@@ -38,7 +38,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>edmater comb1 comb2</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>edmater comb1 comb2</userinput></term>
 	   <listitem>
 	     <para>The <emphasis>shader</emphasis> parameters can now be edited for <emphasis>comb1</emphasis> and 				<emphasis>comb2</emphasis>.
 	      </para>

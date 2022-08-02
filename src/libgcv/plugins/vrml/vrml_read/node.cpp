@@ -1,7 +1,7 @@
 /*			 N O D E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -113,8 +113,10 @@ NODE::initTransform(NODE *node)
 
 
 NODE *
-NODE::createNewNode(int nodetype, NODE *node)
+NODE::createNewNode(int nodetype)
 {
+    NODE *node = NULL;
+
     switch (nodetype) {
 	case NODE_APPEARANCE:
 	    node = new NODE;
@@ -217,9 +219,9 @@ NODE::copyNode(NODE *destnode, NODE *sourcenode)
 	for (i = 0; i < sourcenode->children.size(); i++) {
 	    NODE *nptr;
 	    NODETYPE tnode;
-	    nptr = new NODE;
+	    NODE tmpnode;
 	    ntype = tnode.findNodeType(sourcenode->children[i]);
-	    nptr =  nptr->createNewNode(ntype, nptr);
+	    nptr =  tmpnode.createNewNode(ntype);
 	    nptr->copyNodeData(nptr, sourcenode->children[i], ntype);
 	    destnode->children.push_back(nptr);
 	    copyNode(destnode->children[i], sourcenode->children[i]);

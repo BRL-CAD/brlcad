@@ -1,7 +1,7 @@
 /*                          P T B L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -146,7 +146,7 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 	return -1;	/* To signal that it was added */
     }
 
-    b->buffer[k=b->end++] = p;
+    b->buffer[b->end++] = p;
     return -1;		/* To signal that it was added */
 }
 
@@ -230,11 +230,12 @@ bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
 void
 bu_ptbl_free(struct bu_ptbl *b)
 {
+    if (UNLIKELY(!b))
+	return;
+
     BU_CK_PTBL(b);
 
-    if (b->buffer) {
-	bu_free((void *)b->buffer, "bu_ptbl.buffer[]");
-    }
+    bu_free((void *)b->buffer, "bu_ptbl.buffer[]");
     memset((char *)b, 0, sizeof(struct bu_ptbl));	/* sanity */
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PTBL))

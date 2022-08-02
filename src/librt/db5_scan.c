@@ -1,7 +1,7 @@
 /*                      D B 5 _ S C A N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include "bn.h"
 #include "rt/db5.h"
 #include "raytrace.h"
+#include "librt_private.h"
 
 
 int
@@ -110,6 +111,57 @@ fatal:
 }
 
 
+int
+db5_scan_inmem(
+    struct db_i *dbip,
+    void (*handler)(struct db_i *,
+		    const struct db5_raw_internal *,
+		    b_off_t addr, void *client_data),
+    void *client_data,
+    const void *data,
+    b_off_t data_size)
+{
+    unsigned char header[8];
+    struct db5_raw_internal raw;
+    size_t nrec;
+    b_off_t addr;
+    const unsigned char *cp = (const unsigned char *)data;
+
+    RT_CK_DBI(dbip);
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db5_scan_inmem(%p, %lx)\n",
+				    (void *)dbip, (long unsigned int)handler);
+
+    raw.magic = DB5_RAW_INTERNAL_MAGIC;
+    nrec = 0L;
+
+    if (db5_header_is_valid(cp) == 0) {
+	bu_log("db5_scan_inmem ERROR:  data is lacking a proper BRL-CAD v5 database header\n");
+	goto fatal;
+    }
+    cp += sizeof(header);
+    addr = (b_off_t)sizeof(header);
+    while (addr < data_size) {
+	const unsigned char *current_data = cp;
+	void *dp_copy;
+	if ((cp = db5_get_raw_internal_ptr(&raw, cp)) == NULL) {
+	    goto fatal;
+	}
+	dp_copy = bu_malloc(raw.object_length, "db5_scan_inmem raw dp data");
+	memcpy(dp_copy, current_data, raw.object_length);
+	(*handler)(dbip, &raw, (b_off_t)(intptr_t)dp_copy, client_data);
+	nrec++;
+	addr += (b_off_t)raw.object_length;
+    }
+
+    dbip->dbi_nrec = nrec;		/* # obj in db, not inc. header */
+    return 0;			/* success */
+
+fatal:
+    dbip->dbi_read_only = 1;	/* Writing could corrupt it worse */
+    return -1;			/* fatal error */
+}
+
+
 struct directory *
 db_diradd5(
     struct db_i *dbip,
@@ -179,10 +231,21 @@ db_diradd5(
     dp->d_forw = *headp;
     *headp = dp;
 
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
+	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+	    (*cb->f)(dbip, dp, 1, cb->u_data);
+	}
+    }
+
     return dp;
 }
 
 
+/**
+ * Add a raw internal to the database.  If client_data is 1, the entry
+ * will be marked as in-mem.
+ */
 struct directory *
 db5_diradd(struct db_i *dbip,
 	   const struct db5_raw_internal *rip,
@@ -194,10 +257,6 @@ db5_diradd(struct db_i *dbip,
     struct bu_vls local = BU_VLS_INIT_ZERO;
 
     RT_CK_DBI(dbip);
-
-    if (client_data && RT_G_DEBUG&RT_DEBUG_DB) {
-	bu_log("WARNING: db5_diradd() received non-NULL client_data\n");
-    }
 
     bu_vls_strcpy(&local, (const char *)rip->name.ext_buf);
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {
@@ -252,6 +311,8 @@ db5_diradd(struct db_i *dbip,
     }
     if (rip->h_name_hidden)
 	dp->d_flags |= RT_DIR_HIDDEN;
+    if (client_data && (*((int*)client_data) == 1))
+	dp->d_flags |= RT_DIR_INMEM;
     dp->d_len = rip->object_length;		/* in bytes */
     BU_LIST_INIT(&dp->d_use_hd);
     dp->d_animate = NULL;
@@ -260,19 +321,28 @@ db5_diradd(struct db_i *dbip,
     dp->d_forw = *headp;
     *headp = dp;
 
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
+	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+	    (*cb->f)(dbip, dp, 1, cb->u_data);
+	}
+    }
+
     return dp;
 }
 
 
-/*
- * In support of db5_scan, add a named entry to the directory.
+/**
+ * In support of db5_scan(), this helper function adds a named entry
+ * to the directory.  If client_data is 1, it entry will be added as
+ * in-mem database object.
  */
 HIDDEN void
 db5_diradd_handler(
     struct db_i *dbip,
     const struct db5_raw_internal *rip,
     b_off_t laddr,
-    void *client_data)	/* unused client_data from db5_scan() */
+    void *client_data)
 {
     RT_CK_DBI(dbip);
 
@@ -417,6 +487,113 @@ db_dirbuild(struct db_i *dbip)
 
 
 int
+db_dirbuild_inmem(struct db_i *dbip, const void *data, b_off_t data_size)
+{
+    int version;
+
+    if (!dbip)
+	return -1;
+
+    RT_CK_DBI(dbip);
+
+    /* First, determine what version database this is */
+    version = db_version_inmem(dbip, data, data_size);
+
+    if (version == 5) {
+	struct directory *dp;
+	struct bu_external ext;
+	struct db5_raw_internal raw;
+	struct bu_attribute_value_set avs;
+	const char *cp;
+	int inmem_flag = 1;
+
+	bu_avs_init_empty(&avs);
+
+	/* File is v5 format */
+	if (db5_scan_inmem(dbip, db5_diradd_handler, &inmem_flag, data, data_size) < 0) {
+	    bu_log("db_dirbuild_inmem(): db5_scan_inmem() failed\n");
+	    return -1;
+	}
+
+	/* Need to retrieve _GLOBAL object and obtain title and units */
+	if ((dp = db_lookup(dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    bu_log("db_dirbuild_inmem(): improper database, no %s object\n",
+		   DB5_GLOBAL_OBJECT_NAME);
+	    dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
+	    /* Missing _GLOBAL object so create it and set default title and units */
+	    db5_update_ident(dbip, "Untitled BRL-CAD Database", 1.0);
+	    return 0;	/* not a fatal error, user may have deleted it */
+	}
+
+	BU_EXTERNAL_INIT(&ext);
+
+	if (db_get_external(&ext, dp, dbip) < 0 ||
+	    db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
+	    bu_log("db_dirbuild_inmem(): improper database, unable to read %s object\n",
+		   DB5_GLOBAL_OBJECT_NAME);
+	    return -1;
+	}
+
+	if (raw.major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+	    bu_log("db_dirbuild_inmem(): improper database, %s exists but is not an attribute-only object\n",
+		   DB5_GLOBAL_OBJECT_NAME);
+	    dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
+	    return 0;	/* not a fatal error, need to let user proceed to fix it */
+	}
+
+	/* Parse out the attributes */
+	if (db5_import_attributes(&avs, &raw.attributes) < 0) {
+	    bu_log("db_dirbuild_inmem(): improper database, corrupted attribute-only %s object\n",
+		   DB5_GLOBAL_OBJECT_NAME);
+	    bu_free_external(&ext);
+	    return -1;	/* this is fatal */
+	}
+
+	BU_CK_AVS(&avs);
+
+	/* 1/3: title */
+	if ((cp = bu_avs_get(&avs, "title")) != NULL)
+	    dbip->dbi_title = bu_strdup(cp);
+	else
+	    dbip->dbi_title = bu_strdup("Untitled BRL-CAD database");
+
+	/* 2/3: units */
+	if ((cp = bu_avs_get(&avs, "units")) != NULL) {
+	    double dd;
+	    if (sscanf(cp, "%lf", &dd) != 1 || NEAR_ZERO(dd, VUNITIZE_TOL)) {
+		bu_log("db_dirbuild_inmem(): improper database, %s object attribute 'units'=%s is invalid\n",
+		       DB5_GLOBAL_OBJECT_NAME, cp);
+		/* Not fatal, just stick with default value from db_open() */
+	    } else {
+		dbip->dbi_local2base = dd;
+		dbip->dbi_base2local = 1/dd;
+	    }
+	}
+
+	/* 3/3: color table */
+	if ((cp = bu_avs_get(&avs, "regionid_colortable")) != NULL)
+	    /* Import the region-id coloring table */
+	    db5_import_color_table((char *)cp);
+
+	bu_avs_free(&avs);
+	bu_free_external(&ext);	/* not until after done with avs! */
+
+	return 0;		/* ok */
+    } else if (version == 4) {
+	/* things used to be pretty simple with v4 */
+	if (db_scan(dbip, db_diradd4, 1, NULL) < 0)
+	    return -1;
+
+	return 0;		/* ok */
+    }
+
+    bu_log("ERROR: Cannot build object directory.\n\tData does not seem to be in BRL-CAD geometry database format.\n");
+
+    return -1;
+}
+
+
+int
 db_version(struct db_i *dbip)
 {
     unsigned char header[8];
@@ -446,6 +623,37 @@ db_version(struct db_i *dbip)
     } else if (header[0] == 'I') {
 	return 4;
     }
+
+    return -1;
+}
+
+
+int
+db_version_inmem(struct db_i *dbip, const void *data, b_off_t data_size)
+{
+    const unsigned char* header;
+
+    if (!dbip)
+	return -1;
+
+    RT_CK_DBI(dbip);
+
+    /* already calculated during db_open? */
+    if (dbip->dbi_version != 0)
+	return abs(dbip->dbi_version);
+
+    rewind(dbip->dbi_fp);
+    if (!data || (data_size < 8)) {
+	bu_log("ERROR: data chunk too short to be a BRL-CAD database\n");
+	return -1;
+    }
+
+    header = (const unsigned char *)data;
+
+    if (db5_header_is_valid(header))
+	return 5;
+    else if (header[0] == 'I')
+	return 4;
 
     return -1;
 }

@@ -1,7 +1,7 @@
 /*                       G C V _ A P I . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,10 +43,12 @@ __BEGIN_DECLS
 /**
  * The big kahuna.
  */
+struct gcv_context_internal;
 struct gcv_context
 {
     struct db_i *dbip;
     bu_avs_t messages;
+    struct gcv_context_internal *i;  // Internal information
 };
 
 
@@ -139,10 +141,14 @@ struct gcv_filter {
     /* operation type */
     const enum gcv_filter_type filter_type;
 
-    /* If we have a definite type this converter is known to handle, call
-     * it out here.
-     * MIME_MODEL_UNKNOWN if 'filter_type' is GCV_FILTER_FILTER or
-     * if the plugin is a multi-format I/O plugin */
+    /* If we have a specific model type this converter is known to
+     * handle, call it out here.  Use BU_MIME_MODEL_UNKNOWN if
+     * 'filter_type' is GCV_FILTER_FILTER or if the plugin is a
+     * multi-format I/O plugin.
+     *
+     * FIXME: input/output plugins conceivably could be something
+     * other than geometry (e.g., png input or csv output).
+     */
     const bu_mime_model_t mime_type;
 
     /* For plugins supporting multiple file types, call this to
@@ -188,6 +194,7 @@ struct gcv_filter {
      * 'options_data' is NULL if and only if 'create_opts_fn' is NULL.
      */
     int (* const filter_fn)(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *target);
+
 };
 
 
@@ -200,8 +207,14 @@ struct gcv_plugin {
  * Return a pointer to a bu_ptbl listing all registered filters as
  * const struct gcv_filter pointers.
  */
-GCV_EXPORT const struct bu_ptbl *gcv_list_filters(void);
+GCV_EXPORT const struct bu_ptbl *gcv_list_filters(struct gcv_context *context);
 
+/* Returns a pointer to a gcv_filter if it exists within the registered filters
+  * returns NULL if no matching filter can be found
+  */
+ GCV_EXPORT const struct gcv_filter*
+ find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type, const char *data, struct gcv_context *context);
+ 
 /**
  * Perform a filtering operation on a gcv_context.
  *

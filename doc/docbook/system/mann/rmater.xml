@@ -36,7 +36,7 @@
   <example><title>Set combination attributes according to those listed in a specified file.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rmater mater_file</userinput>
+      <prompt>mged&gt; </prompt><userinput>rmater mater_file</userinput>
     </para>
     <para>Reads the file named <emphasis>mater_file</emphasis> and sets the combination 	attributes according to those listed in the file.
     </para>

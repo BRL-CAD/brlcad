@@ -1,7 +1,7 @@
 /*                   D B _ F U L L P A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2020 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 
 #include "vmath.h"
 
+#include "bu/color.h"
 #include "bu/vls.h"
 #include "rt/defines.h"
 
@@ -57,18 +58,28 @@ struct db_full_path {
     size_t		fp_maxlen;
     struct directory **	fp_names;	/**< @brief array of dir pointers */
     int	              * fp_bool;	/**< @brief array of boolean flags */
+    int	              * fp_cinst;	/**< @brief array of comb tree instance specifiers */
 };
+#define RT_CK_FULL_PATH(_p) BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
+
+#define DB_FULL_PATH_CUR_DIR(_pp) (((_pp)->fp_len > 0) ? (_pp)->fp_names[(_pp)->fp_len-1] : NULL)
+#define DB_FULL_PATH_CUR_BOOL(_pp) ((_pp)->fp_bool[(_pp)->fp_len-1])
+#define DB_FULL_PATH_SET_CUR_BOOL(_pp, _i) ((_pp)->fp_bool[(_pp)->fp_len-1]) = _i
+
+#define DB_FULL_PATH_CUR_COMB_INST(_pp) ((_pp)->fp_cinst[(_pp)->fp_len-1])
+#define DB_FULL_PATH_SET_CUR_COMB_INST(_pp, _i) ((_pp)->fp_cinst[(_pp)->fp_len-1]) = _i
+
+#define DB_FULL_PATH_LEN(_pp) ((_pp)->fp_len)
 #define DB_FULL_PATH_POP(_pp) ((_pp)->fp_len > 0) ? (_pp)->fp_len-- : (_pp)->fp_len
 
-#define DB_FULL_PATH_CUR_DIR(_pp) ((_pp)->fp_names[(_pp)->fp_len-1])
-#define DB_FULL_PATH_CUR_BOOL(_pp) ((_pp)->fp_bool[(_pp)->fp_len-1])
-#define DB_FULL_PATH_SET_CUR_BOOL(_pp, _i) ((_pp)->fp_bool[(_pp)->fp_len-1] = _i)
-#define DB_FULL_PATH_ROOT_DIR(_pp) ((_pp)->fp_names[0])
 #define DB_FULL_PATH_GET(_pp, _i) ((_pp)->fp_names[(_i)])
 #define DB_FULL_PATH_GET_BOOL(_pp, _i) ((_pp)->fp_bool[(_i)])
 #define DB_FULL_PATH_SET_BOOL(_pp, _i, _j) ((_pp)->fp_bool[(_i)] = _j)
+#define DB_FULL_PATH_GET_COMB_INST(_pp, _i) ((_pp)->fp_cinst[(_i)])
+#define DB_FULL_PATH_SET_COMB_INST(_pp, _i, _j) ((_pp)->fp_cinst[(_i)] = _j)
 
-#define RT_CK_FULL_PATH(_p) BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
+#define DB_FULL_PATH_ROOT_DIR(_pp) ((_pp)->fp_names[0])
+
 
 
 /* db_fullpath.c */
@@ -119,6 +130,7 @@ RT_EXPORT extern void db_path_to_vls(struct bu_vls *str,
 #define DB_FP_PRINT_BOOL         0x1    /* print boolean operations */
 #define DB_FP_PRINT_TYPE         0x2    /* print object types */
 #define DB_FP_PRINT_MATRIX       0x4    /* print notice that a matrix is present */
+#define DB_FP_PRINT_COMB_INDEX   0x8    /* print non-zero comb tree instance specifiers */
 RT_EXPORT extern void db_fullpath_to_vls(struct bu_vls *vls,
 					 const struct db_full_path *full_path,
 					 const struct db_i *dbip,  /* needed for type determination */
@@ -238,6 +250,30 @@ RT_EXPORT extern int db_path_to_mat(struct db_i *dbip,
 				    mat_t mat, /* result */
 				    int depth, /* number of arcs */
 				    struct resource *resp);
+
+/**
+ * For a given path, return the "net" boolean operation of the
+ * path.  If a subtraction is found along the path, overall path
+ * is regarded as a subtraction.  Else, if an intersection is found
+ * op is reported as an intersection.  Else, union is reported.
+ */
+RT_EXPORT extern int
+db_fp_op(const struct db_full_path *pathp,
+	struct db_i *dbip,
+	int depth, /* number of arcs - 0 == all */
+	struct resource *resp);
+
+/**
+ * Determine the color operative at the current directory pointer (the leaf
+ * node) of the path according to available information and rules.
+ *
+ * If nothing can be determined default color is set.
+ */
+RT_EXPORT extern void db_full_path_color(struct bu_color *c,
+				         struct db_full_path *pathp,
+				         struct db_i *dbip,
+				         struct resource *resp);
+
 
 /** @} */
 

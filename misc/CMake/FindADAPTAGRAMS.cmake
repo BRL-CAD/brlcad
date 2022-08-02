@@ -1,7 +1,7 @@
 #               F I N D A D A P T A G R A M S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2012-2020 United States Government as represented by
+# Copyright (c) 2012-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@
 #  ADAPTAGRAMS_LIBRARIES      - List of libraries when using Adaptagrams.
 #  ADAPTAGRAMS_FOUND          - True if libavoid is found.
 
-find_path(AVOID_INCLUDE_DIR libavoid.h PATH_SUFFIXES libavoid)
+find_path(AVOID_INCLUDE_DIR libavoid/libavoid.h)
 find_library(AVOID_LIBRARY NAMES avoid)
 
 set(ADAPTAGRAMS_INCLUDE_DIRS ${AVOID_INCLUDE_DIR} CACHE STRING "Adaptagrams headers")

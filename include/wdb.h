@@ -1,7 +1,7 @@
 /*                           W D B . H
  * BRL-CAD
  *
- * Copyright (c) 1988-2020 United States Government as represented by
+ * Copyright (c) 1988-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -347,6 +347,17 @@ WDB_EXPORT extern int mk_ars(struct rt_wdb *fp, const char *name, size_t ncurves
 WDB_EXPORT extern int mk_constraint(struct rt_wdb *wdbp, const char *name, const char *expr);
 
 
+WDB_EXPORT extern int mk_material(struct rt_wdb *wdbp,
+                                    const char *db_name,
+                                    const char *name,
+                                    const char *parent,
+                                    const char *source,
+                                    struct bu_attribute_value_set *physicalProperties,
+                                    struct bu_attribute_value_set *mechanicalProperties,
+                                    struct bu_attribute_value_set *opticalProperties,
+                                    struct bu_attribute_value_set *thermalProperties);
+
+
 /* FIXME: are the variable-sized types actually necessary?  should be
  * able to rely on stdint types.  the file+nonfile duplication seems
  * silly too.
@@ -500,11 +511,9 @@ WDB_EXPORT int mk_bot_w_normals_and_uvs(
 					 * into normals array), must
 					 * have 3*num_faces entries
 					 */
-    size_t num_uvs, /* number of uv texture coordinates in uvs array */
-    fastf_t *uvs,   /* array of floats for uv texture coordinates [num_uvs*3] */
-    int *face_uvs   /* array of ints (indices into uvs array),
-		     * must have 3*num_faces entries
-		     */
+    size_t num_uvs, /**< number of uv texture coordinates in uvs array */
+    fastf_t *uvs,   /**< array of floats for uv texture coordinates [num_uvs*3] */
+    int *face_uvs   /**< array of ints (indices into uvs array), must have 3*num_faces entries */
     );
 
 /**
@@ -650,7 +659,7 @@ WDB_EXPORT extern int mk_hrt(struct rt_wdb *fp, const char *name, const point_t 
 /**
  * 3-D Volume primitive.
  */
-WDB_EXPORT extern int mk_vol(struct rt_wdb *fp, const char *name, const char *file,
+WDB_EXPORT extern int mk_vol(struct rt_wdb *fp, const char *name, char datasrc, const char *file,
 			     size_t xdim, size_t ydim, size_t zdim, size_t lo, size_t hi,
 			     const vect_t cellsize, const matp_t mat);
 

@@ -1,7 +1,7 @@
 /*                          S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -349,7 +349,7 @@ under_sample(icv_image_t* bif, size_t factor)
     }
 
     widthstep = bif->width*bif->channels;
-    res_p = data_p = bif->data;
+    res_p = bif->data;
 
     for (y = 0; y < bif->height; y += factor) {
 	data_p = bif->data + widthstep*y;

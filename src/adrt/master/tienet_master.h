@@ -1,7 +1,7 @@
 /*                 T I E N E T _ M A S T E R . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2020 United States Government as represented by
+ * Copyright (c) 2002-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,15 +27,15 @@
 #ifndef ADRT_MASTER_TIENET_MASTER_H
 #define ADRT_MASTER_TIENET_MASTER_H
 
-extern void   	tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char *list, char *exec, int buffer_size, int ver_key, int verbose);
-extern void	tienet_master_free();
-extern void	tienet_master_push(const void *data, size_t size);
-extern void	tienet_master_begin();
-extern void	tienet_master_end();
-extern void	tienet_master_wait();
-extern void	tienet_master_shutdown();
-extern void	tienet_master_broadcast(const void* mesg, size_t mesg_len);
-extern uint64_t	tienet_master_get_rays_fired();
+extern void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char *list, char *exec, int buffer_size, int ver_key, int verbose);
+extern void tienet_master_free();
+extern void tienet_master_push(const void *data, size_t size);
+extern void tienet_master_begin();
+extern void tienet_master_end();
+extern void tienet_master_wait();
+extern void tienet_master_shutdown();
+extern void tienet_master_broadcast(const void* mesg, size_t mesg_len);
+extern uint64_t tienet_master_get_rays_fired();
 
 extern int	tienet_master_active_slaves;
 extern int	tienet_master_socket_num;

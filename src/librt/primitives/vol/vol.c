@@ -1,7 +1,7 @@
 /*                           V O L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2020 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,7 +65,9 @@ struct rt_vol_specific {
 #define VOL_O(m) bu_offsetof(struct rt_vol_internal, m)
 
 const struct bu_structparse rt_vol_parse[] = {
-    {"%s", RT_VOL_NAME_LEN, "file", bu_offsetof(struct rt_vol_internal, file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", RT_VOL_NAME_LEN, "file", bu_offsetof(struct rt_vol_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", RT_VOL_NAME_LEN, "name", bu_offsetof(struct rt_vol_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c", 1, "src",	VOL_O(datasrc),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "w", VOL_O(xdim), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "n", VOL_O(ydim), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "d", VOL_O(zdim), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -78,8 +80,9 @@ const struct bu_structparse rt_vol_parse[] = {
 
 
 extern void rt_vol_plate(point_t a, point_t b, point_t c, point_t d,
-			 mat_t mat, struct bu_list *vhead, struct rt_vol_internal *vip);
-
+			 mat_t mat, struct bu_list *vlfree, struct bu_list *vhead, struct rt_vol_internal *vip);
+extern int rt_retrieve_binunif(struct rt_db_internal *intern, const struct db_i *dbip, const char *name);
+extern int rt_binunif_describe(struct bu_vls  *str, const struct rt_db_internal *ip, int verbose, double mm2local);
 /*
  * Codes to represent surface normals.
  * In a bitmap, there are only 4 possible normals.
@@ -115,7 +118,6 @@ extern void rt_vol_plate(point_t a, point_t b, point_t c, point_t d,
 
 static int rt_vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
 
-
 /**
  * Transform the ray into local coordinates of the volume ("ideal space").
  * Step through the 3-D array, in local coordinates.
@@ -136,9 +138,9 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     int igrid[3];/* Grid cell coordinates of cell (integerized) */
     vect_t P;	/* hit point */
     int inside;	/* inside/outside a solid flag */
-    int in_axis;
+    int in_axis = -INT_MAX;
     int axis_set = 0;
-    int out_axis;
+    int out_axis = -INT_MAX;
     int j;
     struct xray ideal_ray;
 
@@ -274,7 +276,8 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
     if (!axis_set) bu_log("ERROR vol: no valid entry face found\n");
 
-    if (RT_G_DEBUG&RT_DEBUG_VOL)bu_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), t0);
+    if (RT_G_DEBUG&RT_DEBUG_VOL && in_axis != -INT_MAX)
+	bu_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), t0);
 
     /* Advance to next exits */
     t[X] += delta[X];
@@ -464,6 +467,9 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Default VOL cell size in ideal coordinates is one unit/cell */
     VSETALL(vip->cellsize, 1);
 
+    /* default source is file for compatibility with old VOL */
+    vip->datasrc = RT_VOL_SRC_FILE;
+
     bu_vls_strcpy(&str, rp->ss.ss_args);
     if (bu_struct_parse(&str, rt_vol_parse, (char *)vip, NULL) < 0) {
 	bu_vls_free(&str);
@@ -472,7 +478,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_vls_free(&str);
 
     /* Check for reasonable values */
-    if (vip->file[0] == '\0' || vip->xdim < 1 ||
+    if (vip->name[0] == '\0' || vip->xdim < 1 ||
 	vip->ydim < 1 || vip->zdim < 1 || vip->mat[15] <= 0.0 ||
 	vip->hi > 255) {
 	bu_struct_print("Unreasonable VOL parameters", rt_vol_parse,
@@ -492,8 +498,8 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     vip->map = (unsigned char *)bu_calloc(1, nbytes, "vol_import4 bitmap");
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    if ((fp = fopen(vip->file, "rb")) == NULL) {
-	perror(vip->file);
+    if ((fp = fopen(vip->name, "rb")) == NULL) {
+	perror(vip->name);
 	bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 	return -1;
     }
@@ -508,7 +514,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 	    if (ret < 1) {
 		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%zu, z=%zu\n",
-		       vip->file, y, z);
+		       vip->name, y, z);
 		bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 		fclose(fp);
 		bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
@@ -612,6 +618,163 @@ vol_from_file(const char *file, size_t xdim, size_t ydim, size_t zdim, unsigned 
 
 
 /**
+ * Read VOL data from external file
+ * Returns :
+ * 0 success
+ * !0 fail
+ */
+static int
+vol_file_data(struct rt_vol_internal *vip)
+{
+   size_t nbytes;
+
+   size_t bytes = vip->xdim * vip->ydim * vip->zdim;
+ 	nbytes = vol_from_file(vip->name, vip->xdim, vip->ydim, vip->zdim, &vip->map);
+ 	if (nbytes != bytes) {
+ 	    bu_log("WARNING: unexpected VOL bytes (read %zu, expected %zu) in %s\n", nbytes, bytes, vip->name);
+ 	}
+
+   return 0;
+}
+
+
+/**
+ * Read VOL data from in database object
+ * Returns :
+ * 0 success
+ * !0 fail
+ */
+static int
+get_obj_data(struct rt_vol_internal *vip, const struct db_i *dbip)
+{
+    struct rt_binunif_internal *bip;
+    int ret;
+    int nbytes;
+
+    if (!vip || !dbip)
+	return -1;
+
+    BU_ALLOC(vip->bip, struct rt_db_internal);
+
+    ret = rt_retrieve_binunif(vip->bip, dbip, vip->name);
+    if (ret)
+	return -1;
+
+    if (RT_G_DEBUG & RT_DEBUG_HF) {
+	bu_log("db_internal magic: 0x%08x  major: %d  minor: %d\n",
+		vip->bip->idb_magic,
+		vip->bip->idb_major_type,
+		vip->bip->idb_minor_type);
+    }
+
+    bip = (struct rt_binunif_internal *)vip->bip->idb_ptr;
+
+    if (RT_G_DEBUG & RT_DEBUG_HF)
+	bu_log("binunif magic: 0x%08x  type: %d count:%zu data[0]:%u\n",
+		bip->magic, bip->type, bip->count, bip->u.uint8[0]);
+
+    if (bip->type != DB5_MINORTYPE_BINU_8BITINT_U
+	|| (size_t)bip->count != (size_t)(vip->xdim*vip->ydim*vip->zdim))
+    {
+	size_t i = 0;
+	size_t size;
+	struct bu_vls binudesc = BU_VLS_INIT_ZERO;
+	rt_binunif_describe(&binudesc, vip->bip, 0, dbip->dbi_base2local);
+
+	/* skip the first title line*/
+	size = bu_vls_strlen(&binudesc);
+	while (size > 0 && i < size && bu_vls_cstr(&binudesc)[0] != '\n') {
+	    bu_vls_nibble(&binudesc, 1);
+	}
+	if (bu_vls_cstr(&binudesc)[0] == '\n')
+	    bu_vls_nibble(&binudesc, 1);
+
+	bu_log("ERROR: Binary object '%s' has invalid data (expected type %d, found %d).\n"
+	       "       Expecting %zu 8-bit unsigned char (nuc) integer data values.\n"
+	       "       Encountered %s\n",
+	       vip->name,
+	       DB5_MINORTYPE_BINU_8BITINT_U,
+	       bip->type,
+	       (size_t)(vip->xdim*vip->ydim*vip->zdim),
+	       bu_vls_cstr(&binudesc));
+	return -2;
+    }
+
+    nbytes = (vip->xdim+VOL_XWIDEN*2)*(vip->ydim+VOL_YWIDEN*2)*(vip->zdim+VOL_ZWIDEN*2);
+
+    size_t y, z;
+    if (!vip->map) {
+	unsigned char* cp;
+
+  vip->map = (unsigned char *)bu_calloc(1, nbytes, "vol_import4 bitmap");
+	cp = (unsigned char *)bip->u.uint8;
+
+  for (z = 0; z < vip->zdim; z++) {
+	   for (y = 0; y < vip->ydim; y++) {
+       void *data = &VOLMAP(vip->map, vip->xdim, vip->ydim, 0, y, z);
+
+	     memcpy(data, cp, vip->xdim);
+       cp+= vip->xdim;
+	   }
+  }
+    }
+    return 0;
+}
+
+/**
+ * Retrieve VOL data from data source
+ * Returns :
+ * 0 success
+ * !0 fail
+ */
+static int
+get_vol_data(struct rt_vol_internal *vip, const mat_t mat, const struct db_i *dbip)
+{
+  mat_t tmp;
+
+  /* Apply Modelling transform */
+  bn_mat_mul(tmp, mat, vip->mat);
+  MAT_COPY(vip->mat, tmp);
+
+  switch (vip->datasrc) {
+case RT_VOL_SRC_FILE:
+    /* Retrieve the data from an external file */
+    if (RT_G_DEBUG & RT_DEBUG_HF)
+	bu_log("getting data from file \"%s\"\n", vip->name);
+
+    if(vol_file_data(vip) != 0) {
+      return 1;
+    }
+    else {
+      return 0;
+    }
+    break;
+case RT_VOL_SRC_OBJ:
+    /* Retrieve the data from an internal db object */
+    if (RT_G_DEBUG & RT_DEBUG_HF)
+	bu_log("getting data from object \"%s\"\n", vip->name);
+
+    if (get_obj_data(vip, dbip) != 0) {
+	return 1;
+    } else {
+	RT_CK_DB_INTERNAL(vip->bip);
+	RT_CK_BINUNIF(vip->bip->idb_ptr);
+	return 0;
+    }
+    break;
+default:
+bu_log("%s:%d Odd vol data src '%c' s/b '%c' or '%c'\n",
+  __FILE__, __LINE__, vip->datasrc,
+  RT_VOL_SRC_FILE, RT_VOL_SRC_OBJ);
+  }
+
+  if (dbip)
+      bu_log("%s", dbip->dbi_filename);
+  return 0; //temporary
+}
+
+
+/**
  * Read in the information from the string solid record.
  * Then, as a service to the application, read in the bitmap
  * and set up some of the associated internal variables.
@@ -621,7 +784,6 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 {
     register struct rt_vol_internal *vip;
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    size_t nbytes;
     mat_t tmat;
 
     if (dbip) RT_CK_DBI(dbip);
@@ -642,6 +804,9 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     vip->lo = 0;
     vip->hi = 255;
 
+    /* default source is file for compatibility with old VOL */
+    vip->datasrc = RT_VOL_SRC_FILE;
+
     /* Default VOL cell size in ideal coordinates is one unit/cell */
     VSETALL(vip->cellsize, 1);
 
@@ -651,9 +816,8 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	return -2;
     }
     bu_vls_free(&str);
-
     /* Check for reasonable values */
-    if (vip->file[0] == '\0'
+    if (vip->name[0] == '\0'
 	|| vip->xdim < 1 || vip->ydim < 1 || vip->zdim < 1
 	|| vip->mat[15] <= 0.0 || vip->hi > 255)
     {
@@ -668,15 +832,8 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bn_mat_mul(tmat, mat, vip->mat);
     MAT_COPY(vip->mat, tmat);
 
-    if (bu_file_exists(vip->file, NULL)) {
-	size_t bytes = vip->xdim * vip->ydim * vip->zdim;
-	nbytes = vol_from_file(vip->file, vip->xdim, vip->ydim, vip->zdim, &vip->map);
-	if (nbytes != bytes) {
-	    bu_log("WARNING: unexpected VOL bytes (read %zu, expected %zu) in %s\n", nbytes, bytes, vip->file);
-	}
-    } else {
-	bu_log("WARNING: VOL data file missing [%s]\n", vip->file);
-    }
+    if (get_vol_data(vip, mat, dbip) == 1)
+  bu_log("Couldn't find the associated file/object %s",vip->name);
 
     return 0;
 }
@@ -735,10 +892,18 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(
 
     /* pretty-print dimensions in local, not storage (mm) units */
     VSCALE(local, vip->cellsize, mm2local);
+    if (vip->datasrc == RT_VOL_SRC_FILE) {
     bu_vls_printf(&substr, "\tfile=\"%s\"\n\tw=%u n=%u d=%u\n\tlo=%u hi=%u\n\tsize=%g,%g,%g\n",
-		  vip->file,
+		  vip->name,
 		  vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
 		  V3INTCLAMPARGS(local));
+    } else {
+      bu_vls_printf(&substr, "\tobject name=\"%s\"\n\tw=%u n=%u d=%u\n\tlo=%u hi=%u\n\tsize=%g,%g,%g\n",
+  		  vip->name,
+  		  vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
+  		  V3INTCLAMPARGS(local));
+    }
+
     bu_vls_vlscat(str, &substr);
 
     bu_vls_strcat(str, "\tmat=");
@@ -797,7 +962,7 @@ rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     /* Find bounding RPP of rotated local RPP */
     VSETALL(v1, 0);
     VSET(localspace, vip->xdim*vip->cellsize[0], vip->ydim*vip->cellsize[1], vip->zdim*vip->cellsize[2]);/* type conversion */
-    bn_rotate_bbox((*min), (*max), vip->mat, v1, localspace);
+    bg_rotate_bbox((*min), (*max), vip->mat, v1, localspace);
     return 0;
 }
 
@@ -868,7 +1033,7 @@ rt_vol_print(register const struct soltab *stp)
     register const struct rt_vol_specific *volp =
 	(struct rt_vol_specific *)stp->st_specific;
 
-    bu_log("vol file = %s\n", volp->vol_i.file);
+    bu_log("vol file = %s\n", volp->vol_i.name);
     bu_log("dimensions = (%u, %u, %u)\n",
 	   volp->vol_i.xdim, volp->vol_i.ydim,
 	   volp->vol_i.zdim);
@@ -971,7 +1136,7 @@ rt_vol_free(struct soltab *stp)
 
 
 int
-rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     register struct rt_vol_internal *vip;
     int x, y, z;
@@ -980,8 +1145,13 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
+
+    if (!vip->map) {
+	return 1;
+    }
 
     /*
      * Scan across in Z & X.  For each X position, scan down Y,
@@ -1005,7 +1175,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		/* End of run of edge.  One cell beyond. */
 		VSET(c, x+0.5, y-0.5, z+0.5);
 		VSET(d, x+0.5, y-0.5, z-0.5);
-		rt_vol_plate(a, b, c, d, vip->mat, vhead, vip);
+		rt_vol_plate(a, b, c, d, vip->mat, vlfree, vhead, vip);
 	    }
 	}
     }
@@ -1031,7 +1201,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		/* End of run of edge.  One cell beyond */
 		VSET(c, (x-0.5), (y+0.5), (z+0.5));
 		VSET(d, (x-0.5), (y+0.5), (z-0.5));
-		rt_vol_plate(a, b, c, d, vip->mat, vhead, vip);
+		rt_vol_plate(a, b, c, d, vip->mat, vlfree, vhead, vip);
 	    }
 	}
     }
@@ -1057,7 +1227,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		/* End of run of edge.  One cell beyond */
 		VSET(c, (x+0.5), (y-0.5), (z+0.5));
 		VSET(d, (x-0.5), (y-0.5), (z+0.5));
-		rt_vol_plate(a, b, c, d, vip->mat, vhead, vip);
+		rt_vol_plate(a, b, c, d, vip->mat, vlfree, vhead, vip);
 	    }
 	}
     }
@@ -1066,7 +1236,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
 
 void
-rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *mat, register struct bu_list *vhead, register struct rt_vol_internal *vip)
+rt_vol_plate(point_t a, point_t b, point_t c, point_t d, register mat_t mat, struct bu_list *vlfree, register struct bu_list *vhead, register struct rt_vol_internal *vip)
 {
     point_t s;		/* scaled original point */
     point_t arot, prot;
@@ -1075,21 +1245,21 @@ rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *m
 
     VELMUL(s, vip->cellsize, a);
     MAT4X3PNT(arot, mat, s);
-    RT_ADD_VLIST(vhead, arot, BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, arot, BV_VLIST_LINE_MOVE);
 
     VELMUL(s, vip->cellsize, b);
     MAT4X3PNT(prot, mat, s);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
     VELMUL(s, vip->cellsize, c);
     MAT4X3PNT(prot, mat, s);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
     VELMUL(s, vip->cellsize, d);
     MAT4X3PNT(prot, mat, s);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
-    RT_ADD_VLIST(vhead, arot, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, arot, BV_VLIST_LINE_DRAW);
 }
 
 

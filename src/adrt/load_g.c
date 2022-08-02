@@ -1,7 +1,7 @@
 /*                        L O A D _ G . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2009-2020 United States Government as represented by
+ * Copyright (c) 2009-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ static struct tie_s *cur_tie;
 static struct db_i *dbip;
 TIE_3 **tribuf;
 
-static void nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3], void *client_data);
+static void nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, void *client_data);
 
 struct gcv_data {
     struct gcv_region_end_data region_end_data;
@@ -207,7 +207,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 
 
 static void
-nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int material_id, float color[3], void *UNUSED(client_data))
+nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, void *UNUSED(client_data))
 {
     struct model *m;
     struct adrt_mesh_s *mesh;
@@ -230,9 +230,9 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
     mesh->flags = 0;
 
     BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
-    mesh->matid = material_id;
+    mesh->matid = tsp->ts_gmater;
 
-    VMOVE(mesh->attributes->color.v, color);
+    VMOVE(mesh->attributes->color.v, tsp->ts_mater.ma_color);
     bu_strlcpy(mesh->name, db_path_to_string(pathp), sizeof(mesh->name));
 
     nmg_to_adrt_internal(mesh, r);

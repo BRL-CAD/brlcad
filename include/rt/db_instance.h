@@ -1,7 +1,7 @@
 /*                   D B _ I N S T A N C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,12 +35,52 @@
 #include "bu/mapped_file.h"
 #include "bu/ptbl.h"
 #include "rt/mem.h"
+#include "rt/op.h"
 #include "rt/directory.h"
 #include "rt/anim.h"
 
 __BEGIN_DECLS
 
+struct db_i;   /* forward declaration */
 struct rt_wdb; /* forward declaration */
+
+/* Callback called when database objects are changed.  The int indicates
+ * the change type (0 = mod, 1 = add, 2 = rm). ctx is a user
+ * supplied context and is passed back as the last argument to db_change.
+ */
+typedef void (*dbi_changed_t)(struct db_i *, struct directory *, int, void *);
+
+
+/* Callback called when references are updated. Args are:
+ *
+ * 1. parent dp,
+ * 2. child dp referenced by parent dp
+ * 3. the child name (should be available even if the child dp is null, which can happen with references to
+ * non-existent objects)
+ * 4. the boolean operation used to include the child
+ * 5. the matrix above the child (NULL == IDN matrix)
+ * 6. dbi_u_data (generally application context set for use in these callbacks)
+ *
+ * There are two particular sets of callback args that have special significance:
+ *
+ * NULL, NULL, NULL, DB_OP_UNION, NULL == the beginning of a db_update_nref cycle
+ * NULL, NULL, NULL, DB_OP_SUBTRACT, NULL == the end of a db_update_nref cycle
+ *
+ * NOTE:  the contents of the child name and matrix should be copied by the
+ * caller if they want to make use of them - they are not references to
+ * stable storage.
+ *
+ * NOTE:  the parent may be a non-comb object, if extrudes or other primitives
+ * that reference other primitives are present in the .g - the caller should
+ * be aware of that when processing the results.
+ *
+ * librt only stores the reference count in d_nref, but applications may
+ * need more explicit awareness of the parent/child relationships.  Since
+ * db_update_nref must be called in any case for librt to function
+ * properly, this callback lets the parent application benefit from the
+ * work db_update_nref is already doing to figure out these relationships.
+ * */
+typedef void (*dbi_update_nref_t)(struct db_i *, struct directory *, struct directory *, const char *, db_op_t, matp_t, void *);
 
 /**
  * One of these structures is used to describe each separate instance
@@ -86,11 +126,20 @@ struct db_i {
     struct bu_ptbl dbi_clients;         /**< @brief PRIVATE: List of rtip's using this db_i */
     int dbi_version;                    /**< @brief PRIVATE: use db_version() */
     struct rt_wdb * dbi_wdbp;           /**< @brief PRIVATE: ptr back to containing rt_wdb */
+    struct bu_ptbl dbi_changed_clbks;     /**< @brief PRIVATE: dbi_changed_t callbacks registered with dbi */
+    struct bu_ptbl dbi_update_nref_clbks; /**< @brief PRIVATE: dbi_update_nref_t callbacks registered with dbi */
+    int dbi_use_comb_instance_ids;            /**< @brief PRIVATE: flag to enable/disable comb instance tracking in full paths */
 };
 #define DBI_NULL ((struct db_i *)0)
 #define RT_CHECK_DBI(_p) BU_CKMAG(_p, DBI_MAGIC, "struct db_i")
 #define RT_CK_DBI(_p) RT_CHECK_DBI(_p)
 
+/* Functions for registering and unregistering callbacks with a dbip */
+extern RT_EXPORT int db_add_changed_clbk(struct db_i *dbip, dbi_changed_t c, void *u_data);
+extern RT_EXPORT int db_rm_changed_clbk(struct db_i *dbip, dbi_changed_t c, void *u_data);
+
+extern RT_EXPORT int db_add_update_nref_clbk(struct db_i *dbip, dbi_update_nref_t c, void *u_data);
+extern RT_EXPORT int db_rm_update_nref_clbk(struct db_i *dbip, dbi_update_nref_t c, void *u_data);
 
 __END_DECLS
 

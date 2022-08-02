@@ -1,0 +1,48 @@
+Diffing between branches is more important in some ways in Git than it is in
+SVN.  In particular, because Git commits do not retain branch origin
+information, there is no simple way to list just the set of commits made to
+that branch - once (for example) main is merged into the branch, main's commits
+are also part of that branch's history.  Under those circumstances, the best
+way to get a feel for work specific to the branch is to use git diff to see how
+the branch differs from main.  For long lived branches with large diffs, the
+--name-status feature can be a useful tool to get an overview.  Below is an
+example during work on the opennurbs branch (because a new openNURBS version
+was introduced, we also filter out src/other/openNURBS to get a sense of what
+else in the tree has been altered:)
+
+git diff --name-status main :^src\/other\/openNURBS
+D       .github/workflows/analysis.yml
+D       .github/workflows/check.yml
+D       .github/workflows/codeql-analysis.yml
+M       CMakeLists.txt
+M       include/brep/intersect.h
+M       include/brep/util.h
+M       regress/fuzz/CMakeLists.txt
+M       src/conv/step/step-g/CMakeLists.txt
+M       src/conv/step/step-g/OpenNurbsInterfaces.cpp
+M       src/libbrep/CMakeLists.txt
+M       src/libbrep/PullbackCurve.cpp
+M       src/libbrep/Subsurface.cpp
+M       src/libbrep/boolean.cpp
+M       src/libbrep/cdt/fast.cpp
+M       src/libbrep/cdt/mesh.cpp
+M       src/libbrep/cdt/surf.cpp
+M       src/libbrep/intersect.cpp
+M       src/libbrep/opennurbs_ext.cpp
+M       src/libbrep/tools/util.cpp
+M       src/libgcv/plugins/rhino/rhino_read.cpp
+M       src/librt/primitives/brep/brep.cpp
+M       src/librt/primitives/bspline/bspline_brep.cpp
+M       src/librt/primitives/dsp/dsp_brep.cpp
+M       src/librt/primitives/ell/ell_brep.cpp
+M       src/librt/primitives/nmg/nmg_brep.cpp
+M       src/librt/primitives/sketch/sketch_tess.cpp
+M       src/librt/primitives/sph/sph_brep.cpp
+M       src/librt/primitives/tor/tor_brep.cpp
+M       src/librt/tests/cache.cpp
+M       src/other/CMakeLists.txt
+M       src/other/openNURBS.dist
+M       src/proc-db/surfaceintersect.cpp
+
+
+

@@ -1,7 +1,7 @@
 /*                          R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2020 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,9 @@ get_line(char *cp, int buflen, char *title)
     if (c > buflen)
 	printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
 		(unsigned long)cp, buflen, title);
-    return bu_strlcpy(cp, bu_vls_addr(&str), buflen);
+    int ret = bu_strlcpy(cp, bu_vls_addr(&str), buflen);
+    bu_vls_free(&str);
+    return ret;
 }
 
 

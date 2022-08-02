@@ -1,7 +1,7 @@
 /*                           G C V . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,6 +46,10 @@
 #include "rt/global.h"
 #include "gcv/api.h"
 
+struct gcv_context_internal {
+    struct bu_ptbl *handles;
+};
+
 
 HIDDEN int
 _gcv_brlcad_read(struct gcv_context *context,
@@ -65,13 +69,19 @@ _gcv_brlcad_read(struct gcv_context *context,
 	return 0;
     }
 
-    if (db_dump(context->dbip->dbi_wdbp, in_dbip)) {
-	bu_log("db_dump() failed (from '%s' to context->dbip)\n", source_path);
-	db_close(in_dbip);
-	return 0;
-    }
+    if (db_version(in_dbip) > 4) {
+	if (db_dump(context->dbip->dbi_wdbp, in_dbip)) {
+	    bu_log("db_dump() failed (from '%s' to context->dbip)\n", source_path);
+	    db_close(in_dbip);
+	    return 0;
+	}
 
-    db_close(in_dbip);
+	db_close(in_dbip);
+    } else {
+	// For v4 .g files, use the original rather than an inmem (which is v5)
+	db_close(context->dbip);
+	context->dbip = in_dbip;
+    }
     return 1;
 }
 
@@ -81,7 +91,13 @@ _gcv_brlcad_write(struct gcv_context *context,
 		  const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
 		  const char *dest_path)
 {
-    struct rt_wdb * const out_wdbp = wdb_fopen(dest_path);
+    struct rt_wdb * out_wdbp = NULL;
+    if (!bu_file_exists(dest_path, NULL)) {
+	out_wdbp = wdb_fopen(dest_path);
+    } else {
+	struct db_i *dbip = db_open(dest_path, DB_OPEN_READWRITE);
+	out_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
+    }
 
     if (!out_wdbp) {
 	bu_log("wdb_fopen() failed for '%s'\n", dest_path);
@@ -103,9 +119,15 @@ _gcv_brlcad_can_read(const char *data)
 {
     union record record; /* GED database record */
     FILE *ifp = fopen(data, "rb");
-    if (fread((char *)&record, sizeof record, 1, ifp) != 1) return 0;
+    if (!ifp)
+	return 0;
+    if (fread((char *)&record, sizeof record, 1, ifp) != 1) {
+	fclose(ifp);
+	return 0;
+    }
     fclose(ifp);
-    if (db5_header_is_valid((unsigned char *)&record)) return 1;
+    if (db5_header_is_valid((unsigned char *)&record))
+	return 1;
     return 0;
 }
 
@@ -246,15 +268,13 @@ _gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
 	    bu_log("%s\n", temp[i]);
 	}
 
-	if (temp)
-	    bu_free((void *)temp, "temp");
+	bu_free((void *)temp, "temp");
 
 	_gcv_filter_options_free(filter, *options_data);
 	return 0;
     }
 
-    if (temp)
-	bu_free((void *)temp, "temp");
+    bu_free((void *)temp, "temp");
 
     return 1;
 }
@@ -294,7 +314,7 @@ _gcv_context_check(const struct gcv_context *context)
 }
 
 HIDDEN void
-_gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
+_gcv_plugins_load(struct bu_ptbl *filter_table, const char *path, struct gcv_context *c)
 {
     void *info_val;
     const struct gcv_plugin *(*plugin_info)();
@@ -323,6 +343,7 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 
 	bu_log("Unable to load symbols from '%s' (skipping)\n", path);
 	bu_log("Could not find 'gcv_plugin_info' symbol in plugin\n");
+	bu_dlclose(dl_handle);
 	return;
     }
 
@@ -330,8 +351,11 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 
     if (!plugin || !plugin->filters) {
 	bu_log("Invalid plugin encountered from '%s' (skipping)\n", path);
+	bu_dlclose(dl_handle);
 	return;
     }
+
+    bu_ptbl_ins(c->i->handles, (long *)dl_handle);
 
     for (current = plugin->filters; *current; ++current)
 	_gcv_filter_register(filter_table, *current);
@@ -341,29 +365,14 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 HIDDEN const char *
 _gcv_plugins_get_path(void)
 {
-    const char *brlcad_libs_path;
-    struct bu_vls buffer;
-    const char *result;
-
-    /* LIBGCV_PLUGINS_PATH is where the plugin dir resides, defined via cppflag */
-    brlcad_libs_path = bu_brlcad_dir(LIBGCV_PLUGINS_PATH, 0);
-
-    if (!brlcad_libs_path)
-	return NULL;
-
-    bu_vls_init(&buffer);
-    /* LIBGCV_PLUGINS_DIRECTORY is the name of the plugin dir, defined via cppflag */
-    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR,
-		   LIBGCV_PLUGINS_DIRECTORY);
-    result = bu_brlcad_root(bu_vls_addr(&buffer), 0);
-    bu_vls_free(&buffer);
-
+    const char *pdir = bu_dir(NULL, 0, BU_DIR_LIBEXEC, LIBGCV_PLUGINS_DIRECTORY, NULL);
+    const char *result = bu_strdup(pdir);
     return result;
 }
 
 
 HIDDEN void
-_gcv_plugins_load_all(struct bu_ptbl *filter_table)
+_gcv_plugins_load_all(struct bu_ptbl *filter_table, struct gcv_context *context)
 {
     const char * const plugins_path = _gcv_plugins_get_path();
 
@@ -386,13 +395,15 @@ _gcv_plugins_load_all(struct bu_ptbl *filter_table)
 	for (i = 0; i < num_filenames; ++i)
 	    if (!bu_file_directory(filenames[i])) {
 		bu_vls_sprintf(&buffer, "%s%c%s", plugins_path, BU_DIR_SEPARATOR, filenames[i]);
-		_gcv_plugins_load(filter_table, bu_vls_addr(&buffer));
+		_gcv_plugins_load(filter_table, bu_vls_addr(&buffer), context);
 	    }
 
 	bu_vls_free(&buffer);
 	bu_vls_free(&pattern);
 	bu_argv_free(num_filenames, filenames);
     }
+
+    bu_free((void *)plugins_path, "plugins_path");
 }
 
 
@@ -401,6 +412,9 @@ gcv_context_init(struct gcv_context *context)
 {
     context->dbip = db_create_inmem();
     BU_AVS_INIT(&context->messages);
+    BU_GET(context->i, struct gcv_context_internal);
+    BU_GET(context->i->handles, struct bu_ptbl);
+    bu_ptbl_init(context->i->handles, 64, "handles init");
 }
 
 
@@ -408,14 +422,23 @@ void
 gcv_context_destroy(struct gcv_context *context)
 {
     _gcv_context_check(context);
+    for (size_t i = 0; i < BU_PTBL_LEN(context->i->handles); i++) {
+	void *dl_handle = BU_PTBL_GET(context->i->handles, i);
+	bu_dlclose(dl_handle);
+    }
+    bu_ptbl_free(context->i->handles);
+    BU_PUT(context->i->handles, struct bu_ptbl);
+    BU_PUT(context->i, struct gcv_context_internal);
 
-    db_close(context->dbip);
+    // TODO - clean up the inmem db so db_close will
+    // do the job correctly here...
+    wdb_close(context->dbip->dbi_wdbp);
     bu_avs_free(&context->messages);
 }
 
 
 const struct bu_ptbl *
-gcv_list_filters(void)
+gcv_list_filters(struct gcv_context *context)
 {
     static struct bu_ptbl filter_table = BU_PTBL_INIT_ZERO;
 
@@ -425,12 +448,26 @@ gcv_list_filters(void)
 	_gcv_filter_register(&filter_table, &_gcv_filter_brlcad_read);
 	_gcv_filter_register(&filter_table, &_gcv_filter_brlcad_write);
 
-	_gcv_plugins_load_all(&filter_table);
+	_gcv_plugins_load_all(&filter_table, context);
     }
 
     return &filter_table;
 }
 
+const struct gcv_filter *
+ find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type, const char *data, struct gcv_context *context)
+ {
+     const struct gcv_filter * const *entry;
+     const struct bu_ptbl * const filters = gcv_list_filters(context);
+
+     for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
+ 	bu_mime_model_t emt = (*entry)->mime_type;
+ 	if ((*entry)->filter_type != filter_type) continue;
+ 	if ( (emt != BU_MIME_MODEL_AUTO) && (emt == mime_type)) return *entry;
+ 	if ( (emt == BU_MIME_MODEL_AUTO) && ((*entry)->data_supported && data && (*(*entry)->data_supported)(data)) ) return *entry;
+     }
+     return NULL;
+ }
 
 void
 gcv_opts_default(struct gcv_opts *gcv_options)

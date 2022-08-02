@@ -1,7 +1,7 @@
 /*                        C O S W I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,10 +50,9 @@ init_coswintab(int size)
     double theta;
 
     if (size > maxinitlen) {
-	if (coswintab != NULL) {
-	    bu_free(coswintab, "coswintab");
-	    maxinitlen = 0;
-	}
+	bu_free(coswintab, "coswintab");
+	maxinitlen = 0;
+
 	coswintab = (double *)bu_malloc(size*sizeof(double), "coswintab");
 	maxinitlen = size;
     }

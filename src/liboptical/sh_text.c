@@ -1,7 +1,7 @@
 /*                       S H _ T E X T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -130,7 +130,7 @@ txt_transp_hook(const struct bu_structparse *sdp,
  * (there is no specific unload_datasource function).
  */
 HIDDEN int
-txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const unsigned long int size)
+txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const size_t size)
 {
     struct directory *dirEntry;
 

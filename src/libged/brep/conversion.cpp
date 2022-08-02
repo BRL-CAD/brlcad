@@ -1,7 +1,7 @@
 /*                  C O N V E R S I O N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -95,14 +95,12 @@ brep_conversion_tree(const struct db_i *dbip, const union tree *oldtree, union t
 {
     int ret = 0;
     *newtree = *oldtree;
-    rt_comb_internal *comb = NULL;
     switch (oldtree->tr_op) {
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    /* convert right */
-	    comb = new rt_comb_internal;
 	    newtree->tr_b.tb_right = new tree;
 	    RT_TREE_INIT(newtree->tr_b.tb_right);
 	    ret = brep_conversion_tree(dbip, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, suffix, wdbp, local2mm);
@@ -115,12 +113,10 @@ brep_conversion_tree(const struct db_i *dbip, const union tree *oldtree, union t
 	case OP_GUARD:
 	case OP_XNOP:
 	    /* convert left */
-	    BU_ALLOC(newtree->tr_b.tb_left, union tree);
+	    newtree->tr_b.tb_left = new tree;
 	    RT_TREE_INIT(newtree->tr_b.tb_left);
 	    ret = brep_conversion_tree(dbip, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, suffix, wdbp, local2mm);
-	    if (!ret) {
-		comb->tree = newtree;
-	    } else {
+	    if (ret) {
 		delete newtree->tr_b.tb_left;
 		delete newtree->tr_b.tb_right;
 	    }
@@ -215,8 +211,6 @@ brep_conversion_tree(const struct db_i *dbip, const union tree *oldtree, union t
 	    bu_log("OPCODE NOT IMPLEMENTED: %d\n", oldtree->tr_op);
 	    ret = -1;
     }
-    if (comb)
-	delete comb;
     return ret;
 }
 

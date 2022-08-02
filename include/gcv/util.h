@@ -1,7 +1,7 @@
 /*                      G C V _ U T I L . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ GCV_EXPORT extern int gcv_bot_is_orientable(const struct rt_bot_internal *bot);
  */
 struct gcv_region_end_data
 {
-    void (*write_region)(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3], void *client_data);
+    void (*write_region)(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, void *client_data);
     void *client_data;
 };
 

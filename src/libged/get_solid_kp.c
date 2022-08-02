@@ -1,7 +1,7 @@
 /*                    G E T _ S O L I D _ K P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,8 +34,8 @@
 
 /*
  * Default keypoint in model space is established in "pt". Returns
- * GED_ERROR if unable to determine a keypoint, otherwise returns
- * GED_OK.
+ * BRLCAD_ERROR if unable to determine a keypoint, otherwise returns
+ * BRLCAD_OK.
  */
 int
 _ged_get_solid_keypoint(struct ged *const gedp,
@@ -43,7 +43,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 			const struct rt_db_internal *const ip,
 			const fastf_t *const mat)
 {
-    point_t mpt;
+    point_t mpt = VINIT_ZERO;
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -106,7 +106,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		for (i = 0; i < arbn->neqn; i++) {
 		    for (j = i + 1; j < arbn->neqn; j++) {
 			for (k = j + 1; k < arbn->neqn; k++) {
-			    if (!bn_make_pnt_3planes(mpt, arbn->eqn[i],
+			    if (!bg_make_pnt_3planes(mpt, arbn->eqn[i],
 						    arbn->eqn[j],
 						    arbn->eqn[k])) {
 				size_t l;
@@ -477,10 +477,10 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    VSETALL(mpt, 0.0);
 	    bu_vls_printf(gedp->ged_result_str,
 			  "get_solid_keypoint: unrecognized solid type");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
     MAT4X3PNT(pt, mat, mpt);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

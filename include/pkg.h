@@ -1,7 +1,7 @@
 /*                           P K G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,6 +51,8 @@
 extern "C" {
 #endif
 
+#define PKG_STDIO_MODE -3
+
 /* ?? used in remrt */
 PKG_EXPORT extern int pkg_permport;
 
@@ -83,6 +85,8 @@ struct pkg_header {
 #define	PKG_STREAMLEN	(32*1024)
 struct pkg_conn {
     int	pkc_fd;					/**< @brief TCP connection fd */
+    int pkc_in_fd;                              /**< @brief input connection fd */
+    int pkc_out_fd;                             /**< @brief output connection fd */
     const struct pkg_switch *pkc_switch;	/**< @brief Array of message handlers */
     pkg_errlog pkc_errlog;			/**< @brief Error message logger */
     struct pkg_header pkc_hdr;			/**< @brief hdr of cur msg */

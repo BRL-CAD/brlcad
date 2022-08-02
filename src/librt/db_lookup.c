@@ -1,7 +1,7 @@
 /*                     D B _ L O O K U P . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2020 United States Government as represented by
+ * Copyright (c) 1988-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "bu/vls.h"
 #include "rt/db4.h"
 #include "raytrace.h"
-
+#include "librt_private.h"
 
 int
 db_is_directory_non_empty(const struct db_i *dbip)
@@ -171,9 +171,28 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 	return RT_DIR_NULL;
     }
 
-    /* Anything with a forward slash is only valid as a path.  The
-     * full path lookup is potentially more expensive, so only do
-     * it when we need to.
+
+    n0 = name[0];
+    n1 = name[1];
+
+    RT_CK_DBI(dbip);
+
+    dp = dbip->dbi_Head[db_dirhash(name)];
+    for (; dp != RT_DIR_NULL; dp=dp->d_forw) {
+	char *this_obj;
+
+	/* first two checks are for speed */
+	if ((n0 == *(this_obj=dp->d_namep)) && (n1 == this_obj[1]) && (BU_STR_EQUAL(name, this_obj))) {
+	    if (UNLIKELY(RT_G_DEBUG&RT_DEBUG_DB)) {
+		bu_log("db_lookup(%s) %p\n", name, (void *)dp);
+	    }
+	    return dp;
+	}
+    }
+
+    /* Anything with a forward slash is potentially a path, rather than an object
+     * name.  The full path lookup is potentially more expensive, so only do it
+     * when we need to.
      *
      * TODO - could we ultimately consolidate db_lookup and db_string_to_path
      * somehow - maybe have db_lookup take an optional parameter for a full
@@ -197,35 +216,22 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 	    dp = DB_FULL_PATH_CUR_DIR(&fp);
 	}
 	db_free_full_path(&fp);
-	return dp;
 
-    } else {
-
-	n0 = name[0];
-	n1 = name[1];
-
-	RT_CK_DBI(dbip);
-
-	dp = dbip->dbi_Head[db_dirhash(name)];
-	for (; dp != RT_DIR_NULL; dp=dp->d_forw) {
-	    char *this_obj;
-
-	    /* first two checks are for speed */
-	    if ((n0 == *(this_obj=dp->d_namep)) && (n1 == this_obj[1]) && (BU_STR_EQUAL(name, this_obj))) {
-		if (UNLIKELY(RT_G_DEBUG&RT_DEBUG_DB)) {
-		    bu_log("db_lookup(%s) %p\n", name, (void *)dp);
-		}
-		return dp;
-	    }
+	/* If we succeeded as a full path return.  Otherwise, let the normal
+	 * lookup proceed to find out if we have a diabolical case where a
+	 * forward slash ended up in a name.  It's not supposed to, but it has
+	 * been observed in the wild. */
+	if (dp != RT_DIR_NULL) {
+	    return dp;
 	}
-
-	if (noisy || RT_G_DEBUG&RT_DEBUG_DB) {
-	    bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
-	}
-
-	return RT_DIR_NULL;
-
     }
+
+    if (noisy || RT_G_DEBUG&RT_DEBUG_DB) {
+	bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
+    }
+
+    return RT_DIR_NULL;
+
 }
 
 
@@ -244,7 +250,13 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
 	       (void *)dbip, name, (intmax_t)laddr, len, flags, ptr);
     }
 
-    if ((tmp_ptr = strchr(name, '/')) != NULL) {
+    if (BU_STR_EMPTY(name)) {
+	bu_log("db_diradd() object with empty name is illegal, ignored\n");
+	return RT_DIR_NULL;
+    }
+
+    tmp_ptr = strchr(name, '/');
+    if (tmp_ptr != NULL) {
 	/* if this is a version 4 database and the offending char is beyond NAMESIZE
 	 * then it is not really a problem
 	 */
@@ -275,6 +287,10 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
     RT_CK_DIR(dp);
     RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
     dp->d_addr = laddr;
+
+    /* TODO: investigate removing exclusion of INMEM flag, added by
+     * mike in c13285 when in-mem support was originally added
+     */
     dp->d_flags = flags & ~(RT_DIR_INMEM);
     dp->d_len = len;
     dp->d_forw = *headp;
@@ -297,6 +313,14 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
     }
 
     bu_vls_free(&local);
+
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
+	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+	    (*cb->f)(dbip, dp, 1, cb->u_data);
+	}
+    }
+
     return dp;
 }
 
@@ -318,6 +342,17 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
     }
 
     if (*headp == dp) {
+
+	// If we've gotten this far, the dp is on its way out - call the change
+	// callback first if defined, so the app can get information from the
+	// dp before it is cleared.
+	if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
+		struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+		(*cb->f)(dbip, dp, 2, cb->u_data);
+	    }
+	}
+
 	RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
 	*headp = dp->d_forw;
 
@@ -329,6 +364,17 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
     for (findp = *headp; findp != RT_DIR_NULL; findp = findp->d_forw) {
 	if (findp->d_forw != dp)
 	    continue;
+
+	// If we've gotten this far, the dp is on its way out - call the change
+	// callback first if defined, so the app can get information from the
+	// dp before it is cleared.
+	if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
+		struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+		(*cb->f)(dbip, dp, 2, cb->u_data);
+	    }
+	}
+
 	RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
 	findp->d_forw = dp->d_forw;
 
@@ -407,7 +453,7 @@ db_pr_dir(const struct db_i *dbip)
 		flags = "COM";
 	    else
 		flags = "Bad";
-	    bu_log("%p %s %s=%jd len=%.5ld use=%.2ld nref=%.2ld %s",
+	    bu_log("%p %s %s=%jd len=%.5zu use=%.2ld nref=%.2ld %s",
 		   (void *)dp,
 		   flags,
 		   dp->d_flags & RT_DIR_INMEM ? "  ptr " : "d_addr",

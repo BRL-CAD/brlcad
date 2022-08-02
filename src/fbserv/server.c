@@ -1,7 +1,7 @@
 /*                        S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2020 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 
 #include "bu/color.h"
 #include "bu/log.h"
-#include "fb.h"
+#include "dm.h"
 #include "vmath.h"
 #include "pkg.h"
 
@@ -48,7 +48,7 @@
  * These are the only symbols intended for export to LIBFB users.
  */
 
-fb *fb_server_fbp = FB_NULL;
+struct fb *fb_server_fbp = FB_NULL;
 fd_set *fb_server_select_list;
 int *fb_server_max_fd = (int *)NULL;
 int fb_server_got_fb_free = 0;	/* !0 => we have received an fb_free */
@@ -64,9 +64,9 @@ int fb_server_retain_on_close = 0;	/* !0 => we are holding a reusable FB open */
  * which might send the message back across the wire.
  */
 static void
-fb_server_got_unknown(struct pkg_conn *pcp, char *buf)
+fb_server_fb_unknown(struct pkg_conn *pcp, char *buf)
 {
-    fb_log("fb_server_got_unknown: message type %d not part of remote LIBFB protocol, ignored.\n",
+    fb_log("fb_server_fb_unknown: message type %d not part of remote LIBFB protocol, ignored.\n",
 	   pcp->pkc_type);
     (void)free(buf);
 }
@@ -85,8 +85,10 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
     char rbuf[5*NET_LONG_LEN+1];
     int want;
 
-    if (buf == NULL) return;
-    if (pcp == PKC_NULL) return;
+    if (buf == NULL)
+       	return;
+    if (pcp == PKC_NULL)
+       	return;
 
     width = pkg_glong(&buf[0*NET_LONG_LEN]);
     height = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -122,7 +124,8 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
     want = 5*NET_LONG_LEN;
     if (pkg_send(MSG_RETURN, rbuf, want, pcp) != want)
 	fprintf(stderr, "pkg_send fb_open reply\n");
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -148,7 +151,8 @@ fb_server_fb_close(struct pkg_conn *pcp, char *buf)
      * If communication has broken, other end will know we are gone.
      */
     (void)pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -176,7 +180,8 @@ fb_server_fb_free(struct pkg_conn *pcp, char *buf)
 
     if (pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp) != NET_LONG_LEN)
 	fprintf(stderr, "pkg_send fb_free reply\n");
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 
     fb_server_got_fb_free = 1;
 }
@@ -188,8 +193,10 @@ fb_server_fb_clear(struct pkg_conn *pcp, char *buf)
     RGBpixel bg;
     char rbuf[NET_LONG_LEN+1];
 
-    if (buf == NULL) return;
-    if (pcp == PKC_NULL) return;
+    if (buf == NULL)
+	return;
+    if (pcp == PKC_NULL)
+	return;
 
     bg[RED] = buf[0];
     bg[GRN] = buf[1];
@@ -198,7 +205,8 @@ fb_server_fb_clear(struct pkg_conn *pcp, char *buf)
     (void)pkg_plong(rbuf, fb_clear(fb_server_fbp, bg));
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
 
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -211,8 +219,10 @@ fb_server_fb_read(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
 
-    if (buf == NULL) return;
-    if (pcp == PKC_NULL) return;
+    if (buf == NULL)
+	return;
+    if (pcp == PKC_NULL)
+	return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -226,7 +236,8 @@ fb_server_fb_read(struct pkg_conn *pcp, char *buf)
 
 	if ((scanbuf = (unsigned char *)malloc(buflen)) == NULL) {
 	    fb_log("fb_read: malloc failed!");
-	    if (buf) (void)free(buf);
+	    if (buf)
+		(void)free(buf);
 	    buflen = 0;
 	    return;
 	}
@@ -237,7 +248,8 @@ fb_server_fb_read(struct pkg_conn *pcp, char *buf)
 
     /* sending a 0-length package indicates error */
     pkg_send(MSG_RETURN, (char *)scanbuf, ret*sizeof(RGBpixel), pcp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -253,8 +265,10 @@ fb_server_fb_write(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if (buf == NULL) return;
-    if (pcp == PKC_NULL) return;
+    if (buf == NULL)
+	return;
+    if (pcp == PKC_NULL)
+	return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -266,7 +280,8 @@ fb_server_fb_write(struct pkg_conn *pcp, char *buf)
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -280,8 +295,10 @@ fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
 
-    if (buf == NULL) return;
-    if (pcp == PKC_NULL) return;
+    if (buf == NULL)
+	return;
+    if (pcp == PKC_NULL)
+	return;
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -297,7 +314,8 @@ fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
 
 	if ((scanbuf = (unsigned char *)malloc(buflen)) == NULL) {
 	    fb_log("fb_read: malloc failed!");
-	    if (buf) (void)free(buf);
+	    if (buf)
+		(void)free(buf);
 	    buflen = 0;
 	    return;
 	}
@@ -308,7 +326,8 @@ fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
 
     /* sending a 0-length package indicates error */
     pkg_send(MSG_RETURN, (char *)scanbuf, ret*sizeof(RGBpixel), pcp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -324,8 +343,10 @@ fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if (buf == NULL) return;
-    if (pcp == PKC_NULL) return;
+    if (buf == NULL)
+	return;
+    if (pcp == PKC_NULL)
+	return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -340,7 +361,8 @@ fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -354,8 +376,10 @@ fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
 
-    if (buf == NULL) return;
-    if (pcp == PKC_NULL) return;
+    if (buf == NULL)
+	return;
+    if (pcp == PKC_NULL)
+       	return;
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -371,7 +395,8 @@ fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
 
 	if ((scanbuf = (unsigned char *)malloc(buflen)) == NULL) {
 	    fb_log("fb_bwreadrect: malloc failed!");
-	    if (buf) (void)free(buf);
+	    if (buf)
+		(void)free(buf);
 	    buflen = 0;
 	    return;
 	}
@@ -382,7 +407,8 @@ fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
 
     /* sending a 0-length package indicates error */
     pkg_send(MSG_RETURN, (char *)scanbuf, ret, pcp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -398,8 +424,10 @@ fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if (buf == NULL) return;
-    if (pcp == PKC_NULL) return;
+    if (buf == NULL)
+       	return;
+    if (pcp == PKC_NULL)
+       	return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -416,9 +444,10 @@ fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
     } else {
 	/* No formal return code.  Note errors locally */
 	if (ret < 0) fb_log("fb_server_fb_bwwriterect(%d, %d, %d, %d) error %d\n",
-			    x, y, width, height, ret);
+				x, y, width, height, ret);
     }
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -428,8 +457,10 @@ fb_server_fb_cursor(struct pkg_conn *pcp, char *buf)
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if (buf == NULL) return;
-    if (pcp == PKC_NULL) return;
+    if (buf == NULL)
+       	return;
+    if (pcp == PKC_NULL)
+       	return;
 
     mode = pkg_glong(&buf[0*NET_LONG_LEN]);
     x = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -437,7 +468,8 @@ fb_server_fb_cursor(struct pkg_conn *pcp, char *buf)
 
     (void)pkg_plong(&rbuf[0], fb_cursor(fb_server_fbp, mode, x, y));
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -456,7 +488,8 @@ fb_server_fb_getcursor(struct pkg_conn *pcp, char *buf)
     (void)pkg_plong(&rbuf[2*NET_LONG_LEN], x);
     (void)pkg_plong(&rbuf[3*NET_LONG_LEN], y);
     pkg_send(MSG_RETURN, rbuf, 4*NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -468,7 +501,8 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
     int xbits, ybits;
     int xorig, yorig;
 
-    if (buf == NULL) return;
+    if (buf == NULL)
+	return;
     if (pcp == PKC_NULL) return;
 
     xbits = pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -483,7 +517,8 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -496,8 +531,10 @@ fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if (buf == NULL) return;
-    if (pcp == PKC_NULL) return;
+    if (buf == NULL)
+	return;
+    if (pcp == PKC_NULL)
+	return;
 
     mode = pkg_glong(&buf[0*NET_LONG_LEN]);
     x = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -505,7 +542,8 @@ fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
 
     (void)pkg_plong(&rbuf[0], fb_scursor(fb_server_fbp, mode, x, y));
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -518,15 +556,18 @@ fb_server_fb_window(struct pkg_conn *pcp, char *buf)
     int x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if (buf == NULL) return;
-    if (pcp == PKC_NULL) return;
+    if (buf == NULL)
+	return;
+    if (pcp == PKC_NULL)
+	return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
 
     (void)pkg_plong(&rbuf[0], fb_window(fb_server_fbp, x, y));
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -539,15 +580,18 @@ fb_server_fb_zoom(struct pkg_conn *pcp, char *buf)
     int x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if (buf == NULL) return;
-    if (pcp == PKC_NULL) return;
+    if (buf == NULL)
+	return;
+    if (pcp == PKC_NULL)
+	return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
 
     (void)pkg_plong(&rbuf[0], fb_zoom(fb_server_fbp, x, y));
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -558,8 +602,10 @@ fb_server_fb_view(struct pkg_conn *pcp, char *buf)
     int xcenter, ycenter, xzoom, yzoom;
     char rbuf[NET_LONG_LEN+1];
 
-    if (buf == NULL) return;
-    if (pcp == PKC_NULL) return;
+    if (buf == NULL)
+	return;
+    if (pcp == PKC_NULL)
+	return;
 
     xcenter = pkg_glong(&buf[0*NET_LONG_LEN]);
     ycenter = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -569,7 +615,8 @@ fb_server_fb_view(struct pkg_conn *pcp, char *buf)
     ret = fb_view(fb_server_fbp, xcenter, ycenter, xzoom, yzoom);
     (void)pkg_plong(&rbuf[0], ret);
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -589,7 +636,8 @@ fb_server_fb_getview(struct pkg_conn *pcp, char *buf)
     (void)pkg_plong(&rbuf[3*NET_LONG_LEN], xzoom);
     (void)pkg_plong(&rbuf[4*NET_LONG_LEN], yzoom);
     pkg_send(MSG_RETURN, rbuf, 5*NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -611,7 +659,8 @@ fb_server_fb_rmap(struct pkg_conn *pcp, char *buf)
     }
     pkg_send(MSG_DATA, (char *)cm, sizeof(cm), pcp);
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -629,8 +678,10 @@ fb_server_fb_wmap(struct pkg_conn *pcp, char *buf)
     long ret;
     ColorMap map;
 
-    if (buf == NULL) return;
-    if (pcp == PKC_NULL) return;
+    if (buf == NULL)
+       	return;
+    if (pcp == PKC_NULL)
+	return;
 
     if (pcp->pkc_len == 0)
 	ret = fb_wmap(fb_server_fbp, COLORMAP_NULL);
@@ -644,7 +695,8 @@ fb_server_fb_wmap(struct pkg_conn *pcp, char *buf)
     }
     (void)pkg_plong(&rbuf[0], ret);
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -663,7 +715,8 @@ fb_server_fb_flush(struct pkg_conn *pcp, char *buf)
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }
 
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -673,7 +726,8 @@ fb_server_fb_poll(struct pkg_conn *pcp, char *buf)
     if (pcp == PKC_NULL) return;
 
     (void)fb_poll(fb_server_fbp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
 
@@ -687,50 +741,52 @@ fb_server_fb_help(struct pkg_conn *pcp, char *buf)
     long ret;
     char rbuf[NET_LONG_LEN+1];
 
-    if (pcp == PKC_NULL) return;
-    if (buf == NULL) return;
+    if (pcp == PKC_NULL)
+       	return;
+    if (buf == NULL)
+       	return;
 
     (void)pkg_glong(&buf[0*NET_LONG_LEN]);
 
     ret = fb_help(fb_server_fbp);
     (void)pkg_plong(&rbuf[0], ret);
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    if (buf)
+	(void)free(buf);
 }
 
-
-const struct pkg_switch fb_server_pkg_switch[] = {
-    { MSG_FBOPEN,		fb_server_fb_open,	"Open Framebuffer", NULL },
-    { MSG_FBCLOSE,		fb_server_fb_close,	"Close Framebuffer", NULL },
-    { MSG_FBCLEAR,		fb_server_fb_clear,	"Clear Framebuffer", NULL },
-    { MSG_FBREAD,		fb_server_fb_read,	"Read Pixels", NULL },
-    { MSG_FBWRITE,		fb_server_fb_write,	"Write Pixels", NULL },
-    { MSG_FBWRITE+MSG_NORETURN,	fb_server_fb_write,	"Asynch write", NULL },
-    { MSG_FBCURSOR,		fb_server_fb_cursor,	"Cursor", NULL },
-    { MSG_FBGETCURSOR,		fb_server_fb_getcursor,	"Get Cursor", NULL },	   /*NEW*/
-    { MSG_FBSCURSOR,		fb_server_fb_scursor,	"Screen Cursor", NULL }, /*OLD*/
-    { MSG_FBWINDOW,		fb_server_fb_window,	"Window", NULL },	   /*OLD*/
-    { MSG_FBZOOM,		fb_server_fb_zoom,	"Zoom", NULL },	   /*OLD*/
-    { MSG_FBVIEW,		fb_server_fb_view,	"View", NULL },	   /*NEW*/
-    { MSG_FBGETVIEW,		fb_server_fb_getview,	"Get View", NULL },	   /*NEW*/
-    { MSG_FBRMAP,		fb_server_fb_rmap,	"R Map", NULL },
-    { MSG_FBWMAP,		fb_server_fb_wmap,	"W Map", NULL },
-    { MSG_FBHELP,		fb_server_fb_help,	"Help Request", NULL },
-    { MSG_ERROR,		fb_server_got_unknown,	"Error Message", NULL },
-    { MSG_CLOSE,		fb_server_got_unknown,	"Close Connection", NULL },
-    { MSG_FBREADRECT, 		fb_server_fb_readrect,	"Read Rectangle", NULL },
-    { MSG_FBWRITERECT,		fb_server_fb_writerect,	"Write Rectangle", NULL },
-    { MSG_FBWRITERECT+MSG_NORETURN, fb_server_fb_writerect,	"Write Rectangle", NULL },
-    { MSG_FBBWREADRECT, 	fb_server_fb_bwreadrect,	"Read BW Rectangle", NULL },
-    { MSG_FBBWWRITERECT,	fb_server_fb_bwwriterect,	"Write BW Rectangle", NULL },
-    { MSG_FBBWWRITERECT+MSG_NORETURN, fb_server_fb_bwwriterect, "Write BW Rectangle", NULL },
-    { MSG_FBFLUSH,		fb_server_fb_flush,		"Flush Output", NULL },
-    { MSG_FBFLUSH + MSG_NORETURN, fb_server_fb_flush,		"Flush Output", NULL },
-    { MSG_FBFREE,		fb_server_fb_free,		"Free Resources", NULL },
-    { MSG_FBPOLL,		fb_server_fb_poll,		"Handle Events", NULL },
-    { MSG_FBSETCURSOR,		fb_server_fb_setcursor,		"Set Cursor Shape", NULL },
-    { MSG_FBSETCURSOR + MSG_NORETURN, fb_server_fb_setcursor,	"Set Cursor Shape", NULL },
-    { 0, NULL, NULL, NULL }
+const struct pkg_switch pkg_switch[] = {
+    { MSG_FBOPEN,                       fb_server_fb_open,        "Open Framebuffer", NULL },
+    { MSG_FBCLOSE,                      fb_server_fb_close,       "Close Framebuffer", NULL },
+    { MSG_FBCLEAR,                      fb_server_fb_clear,       "Clear Framebuffer", NULL },
+    { MSG_FBREAD,                       fb_server_fb_read,        "Read Pixels", NULL },
+    { MSG_FBWRITE,                      fb_server_fb_write,       "Write Pixels", NULL },
+    { MSG_FBWRITE + MSG_NORETURN,       fb_server_fb_write,       "Asynch write", NULL },
+    { MSG_FBCURSOR,                     fb_server_fb_cursor,      "Cursor", NULL },
+    { MSG_FBGETCURSOR,                  fb_server_fb_getcursor,   "Get Cursor", NULL },      /*NEW*/
+    { MSG_FBSCURSOR,                    fb_server_fb_scursor,     "Screen Cursor", NULL }, /*OLD*/
+    { MSG_FBWINDOW,                     fb_server_fb_window,      "Window", NULL },          /*OLD*/
+    { MSG_FBZOOM,                       fb_server_fb_zoom,        "Zoom", NULL },    /*OLD*/
+    { MSG_FBVIEW,                       fb_server_fb_view,        "View", NULL },    /*NEW*/
+    { MSG_FBGETVIEW,                    fb_server_fb_getview,     "Get View", NULL },        /*NEW*/
+    { MSG_FBRMAP,                       fb_server_fb_rmap,        "R Map", NULL },
+    { MSG_FBWMAP,                       fb_server_fb_wmap,        "W Map", NULL },
+    { MSG_FBHELP,                       fb_server_fb_help,        "Help Request", NULL },
+    { MSG_ERROR,                        fb_server_fb_unknown,     "Error Message", NULL },
+    { MSG_CLOSE,                        fb_server_fb_unknown,     "Close Connection", NULL },
+    { MSG_FBREADRECT,                   fb_server_fb_readrect,    "Read Rectangle", NULL },
+    { MSG_FBWRITERECT,                  fb_server_fb_writerect,   "Write Rectangle", NULL },
+    { MSG_FBWRITERECT + MSG_NORETURN,   fb_server_fb_writerect,   "Write Rectangle", NULL },
+    { MSG_FBBWREADRECT,                 fb_server_fb_bwreadrect,  "Read BW Rectangle", NULL },
+    { MSG_FBBWWRITERECT,                fb_server_fb_bwwriterect, "Write BW Rectangle", NULL },
+    { MSG_FBBWWRITERECT + MSG_NORETURN, fb_server_fb_bwwriterect, "Write BW Rectangle", NULL },
+    { MSG_FBFLUSH,                      fb_server_fb_flush,       "Flush Output", NULL },
+    { MSG_FBFLUSH + MSG_NORETURN,       fb_server_fb_flush,       "Flush Output", NULL },
+    { MSG_FBFREE,                       fb_server_fb_free,        "Free Resources", NULL },
+    { MSG_FBPOLL,                       fb_server_fb_poll,        "Handle Events", NULL },
+    { MSG_FBSETCURSOR,                  fb_server_fb_setcursor,   "Set Cursor Shape", NULL },
+    { MSG_FBSETCURSOR + MSG_NORETURN,   fb_server_fb_setcursor,   "Set Cursor Shape", NULL },
+    { 0,                                NULL,           NULL, NULL }
 };
 
 

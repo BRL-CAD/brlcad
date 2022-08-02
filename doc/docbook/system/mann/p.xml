@@ -42,7 +42,7 @@ would normally be done using the mouse or knobs.
   <example><title>Set the currently selected shape parameter of the currently edited shape.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>p 30</userinput>
+      <prompt>mged&gt; </prompt><userinput>p 30</userinput>
     </para>
     <para>Sets the currently selected shape parameter of the currently edited shape to 30 units.
 

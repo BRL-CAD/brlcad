@@ -1,7 +1,7 @@
 /*                         F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,10 @@ main(int ac, char *av[])
     struct bu_vls fname2 = BU_VLS_INIT_ZERO;
     const char *tdir = "bu_file_test_dir";
 
-    bu_setprogname(av[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(av[0]);
 
     if (ac != 1)
 	bu_exit(1, "Usage: %s \n", av[0]);

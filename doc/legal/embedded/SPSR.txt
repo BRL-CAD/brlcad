@@ -48,51 +48,78 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
+
+Uses PlyVertexMini.h from geogram:
+https://github.com/alicevision/geogram/blob/master/src/lib/geogram/third_party/PoissonRecon/PlyVertexMini.h
+
+Geogram is licensed under the 3-clauses BSD License (also called "Revised
+BSD License", "New BSD License", or "Modified BSD License"):
+
+Copyright (c) 2012-2014, Bruno Levy All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer. Redistributions in binary
+form must reproduce the above copyright notice, this list of conditions and
+the following disclaimer in the documentation and/or other materials
+provided with the distribution. Neither the name of the ALICE Project-Team
+nor the names of its contributors may be used to endorse or promote products
+derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+If you modify this software, you should include a notice giving the name of
+the person performing the modification, the date of modification, and the
+reason for such modification.
+
 file:/include/bg/spsr.h
-file:/src/other/libspsr/Src/Allocator.h
-file:/src/other/libspsr/Src/Array.h
-file:/src/other/libspsr/Src/Array.inl
-file:/src/other/libspsr/Src/BSplineData.h
-file:/src/other/libspsr/Src/BSplineData.inl
-file:/src/other/libspsr/Src/BinaryNode.h
-file:/src/other/libspsr/Src/CmdLineParser.cpp
-file:/src/other/libspsr/Src/CmdLineParser.h
-file:/src/other/libspsr/Src/CmdLineParser.inl
-file:/src/other/libspsr/Src/Factor.cpp
-file:/src/other/libspsr/Src/Factor.h
-file:/src/other/libspsr/Src/FunctionData.h
-file:/src/other/libspsr/Src/FunctionData.inl
-file:/src/other/libspsr/Src/Geometry.cpp
-file:/src/other/libspsr/Src/Geometry.h
-file:/src/other/libspsr/Src/Geometry.inl
-file:/src/other/libspsr/Src/Hash.h
-file:/src/other/libspsr/Src/MAT.h
-file:/src/other/libspsr/Src/MAT.inl
-file:/src/other/libspsr/Src/MarchingCubes.cpp
-file:/src/other/libspsr/Src/MarchingCubes.h
-file:/src/other/libspsr/Src/MemoryUsage.h
-file:/src/other/libspsr/Src/MultiGridOctreeData.IsoSurface.inl
-file:/src/other/libspsr/Src/MultiGridOctreeData.SortedTreeNodes.inl
-file:/src/other/libspsr/Src/MultiGridOctreeData.h
-file:/src/other/libspsr/Src/MultiGridOctreeData.inl
-file:/src/other/libspsr/Src/MyTime.h
-file:/src/other/libspsr/Src/Octree.h
-file:/src/other/libspsr/Src/Octree.inl
-file:/src/other/libspsr/Src/PPolynomial.h
-file:/src/other/libspsr/Src/PPolynomial.inl
-file:/src/other/libspsr/Src/Ply.h
-file:/src/other/libspsr/Src/PlyFile.cpp
-file:/src/other/libspsr/Src/PointStream.h
-file:/src/other/libspsr/Src/PointStream.inl
-file:/src/other/libspsr/Src/PoissonRecon.cpp
-file:/src/other/libspsr/Src/Polynomial.h
-file:/src/other/libspsr/Src/Polynomial.inl
-file:/src/other/libspsr/Src/SPSR.cpp
-file:/src/other/libspsr/Src/SPSR.h
-file:/src/other/libspsr/Src/SparseMatrix.h
-file:/src/other/libspsr/Src/SparseMatrix.inl
-file:/src/other/libspsr/Src/SurfaceTrimmer.cpp
-file:/src/other/libspsr/Src/Vector.h
-file:/src/other/libspsr/Src/Vector.inl
-file:/src/other/libspsr/Src/cvertex.h
+file:/src/libbg/spsr/Allocator.h
+file:/src/libbg/spsr/Array.h
+file:/src/libbg/spsr/Array.inl
+file:/src/libbg/spsr/BSplineData.h
+file:/src/libbg/spsr/BSplineData.inl
+file:/src/libbg/spsr/BinaryNode.h
+file:/src/libbg/spsr/Factor.cpp
+file:/src/libbg/spsr/Factor.h
+file:/src/libbg/spsr/FunctionData.h
+file:/src/libbg/spsr/FunctionData.inl
+file:/src/libbg/spsr/Geometry.cpp
+file:/src/libbg/spsr/Geometry.h
+file:/src/libbg/spsr/Geometry.inl
+file:/src/libbg/spsr/MAT.h
+file:/src/libbg/spsr/MAT.inl
+file:/src/libbg/spsr/MarchingCubes.cpp
+file:/src/libbg/spsr/MarchingCubes.h
+file:/src/libbg/spsr/MultiGridOctreeData.IsoSurface.inl
+file:/src/libbg/spsr/MultiGridOctreeData.SortedTreeNodes.inl
+file:/src/libbg/spsr/MultiGridOctreeData.h
+file:/src/libbg/spsr/MultiGridOctreeData.inl
+file:/src/libbg/spsr/Octree.h
+file:/src/libbg/spsr/Octree.inl
+file:/src/libbg/spsr/PPolynomial.h
+file:/src/libbg/spsr/PPolynomial.inl
+file:/src/libbg/spsr/PlyVertexMini.h
+file:/src/libbg/spsr/PointStream.h
+file:/src/libbg/spsr/PointStream.inl
+file:/src/libbg/spsr/Polynomial.h
+file:/src/libbg/spsr/Polynomial.inl
+file:/src/libbg/spsr/SPSR.cpp
+file:/src/libbg/spsr/SPSR.h
+file:/src/libbg/spsr/SparseMatrix.h
+file:/src/libbg/spsr/SparseMatrix.inl
+file:/src/libbg/spsr/Vector.h
+file:/src/libbg/spsr/Vector.inl
+file:/src/libbg/spsr/cvertex.h
 

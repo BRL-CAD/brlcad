@@ -1,7 +1,7 @@
 /*           S H A P E _ R E C O G N I T I O N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2020 United States Government as represented by
+ * Copyright (c) 2019-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -275,18 +275,20 @@ shoal_build(int **s_loops, int loop_index, struct subbrep_island_data *data)
 	todo.pop();
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+	    if (trim->m_ei == -1)
+		continue;
 	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-	    if (trim->m_ei != -1 && edge) {
-		for (int j = 0; j < edge->m_ti.Count(); j++) {
-		    const ON_BrepTrim *t = &(brep->m_T[edge->m_ti[j]]);
-		    int li = t->Loop()->m_loop_index;
-		    if (processed_loops.find(li) == processed_loops.end()) {
-			if (shoal_filter_loop(lc, li, data)) {
-			    shoal_loops.insert(li);
-			    todo.push(li);
-			} else {
-			    processed_loops.insert(li);
-			}
+	    if (!edge)
+		continue;
+	    for (int j = 0; j < edge->m_ti.Count(); j++) {
+		const ON_BrepTrim *t = &(brep->m_T[edge->m_ti[j]]);
+		int li = t->Loop()->m_loop_index;
+		if (processed_loops.find(li) == processed_loops.end()) {
+		    if (shoal_filter_loop(lc, li, data)) {
+			shoal_loops.insert(li);
+			todo.push(li);
+		    } else {
+			processed_loops.insert(li);
 		    }
 		}
 	    }
@@ -455,8 +457,10 @@ brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
 	    todo.pop();
 	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 		const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+		if (trim->m_ei == -1)
+		    continue;
 		const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-		if (trim->m_ei != -1 && edge->TrimCount() > 0) {
+		if (edge && edge->TrimCount() > 0) {
 		    for (int j = 0; j < edge->TrimCount(); j++) {
 			int li = edge->Trim(j)->Loop()->m_loop_index;
 			if (loops.find(li) == loops.end()) {

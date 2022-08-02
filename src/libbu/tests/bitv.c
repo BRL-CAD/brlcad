@@ -1,7 +1,7 @@
 /*                       B I T V . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -977,7 +977,10 @@ main(int argc, char *argv[])
 {
     int function_num = 0;
 
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     if (argc < 2) {
 	bu_log("Usage: %s {function_num} {function_test_arg0} {...}", argv[0]);

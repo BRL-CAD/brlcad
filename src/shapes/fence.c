@@ -1,7 +1,7 @@
 /*                          F E N C E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -581,7 +581,7 @@ int parseArguments(int argc, char **argv)
  * passed to some fp (usually DEFAULT_DEBUG_OUTPUT or
  * DEFAULT_VERBOSE_OUTPUT).
  *************************/
-void printMatrix(FILE *fp, char *n, fastf_t *m)
+void printMatrix(FILE *fp, char *n, mat_t m)
 {
     int i = 0;
     fprintf(fp, "\n-----%s------\n", n);
@@ -650,7 +650,7 @@ char *getPrePostName(char *prefix, char *base, char *suffix)
  * generating fence.  That is, the function may be called with as few
  * parameters as necessary to actually generate the fence.
  *************************************************************/
-int generateFence_s(struct rt_wdb *fp, char *fencename, fastf_t *startposition, fastf_t *endposition)
+int generateFence_s(struct rt_wdb *fp, char *fencename, point_t startposition, point_t endposition)
 {
     vect_t widthvector;
     vect_t heightvector;
@@ -662,7 +662,7 @@ int generateFence_s(struct rt_wdb *fp, char *fencename, fastf_t *startposition, 
 }
 
 
-int generateFence(struct rt_wdb *fp, char *fencename, fastf_t *startposition, fastf_t *heightvector, fastf_t *widthvector)
+int generateFence(struct rt_wdb *fp, char *fencename, point_t startposition, point_t heightvector, vect_t widthvector)
 {
     int errors=0;
     int poleerrors=0;
@@ -780,7 +780,7 @@ int generatePoles_s(struct rt_wdb *fp, char *polename)
 }
 
 
-int generatePoles(struct rt_wdb *fp, char *polename, fastf_t *startposition, fastf_t *heightvector, fastf_t *widthvector, double radius)
+int generatePoles(struct rt_wdb *fp, char *polename, point_t startposition, point_t heightvector, vect_t widthvector, double radius)
 {
     int count=0;
     int errors=0;
@@ -905,7 +905,7 @@ int generateMesh_s(struct rt_wdb *fp, char *meshname)
 }
 
 
-int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fastf_t *heightvector, fastf_t *widthvector)
+int generateMesh(struct rt_wdb *fp, char *meshname, point_t startposition, point_t heightvector, vect_t widthvector)
 {
     int count=0;
     int count2=0;
@@ -1023,7 +1023,7 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
  *
  *****************************************/
 
-int generateWire_s(struct rt_wdb *fp, char *wirename, fastf_t *position)
+int generateWire_s(struct rt_wdb *fp, char *wirename, point_t position)
 {
     vect_t wirevector;
     vect_t widthvector;
@@ -1037,7 +1037,7 @@ int generateWire_s(struct rt_wdb *fp, char *wirename, fastf_t *position)
 }
 
 
-int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *fenceheightvector, fastf_t *fencewidthvector, double radius, double angle, double segmentlength)
+int generateWire(struct rt_wdb *fp, char *wirename, point_t position, vect_t fenceheightvector, vect_t fencewidthvector, double radius, double angle, double segmentlength)
 {
     double height;
     vect_t heightvector, widthvector;
@@ -1174,7 +1174,7 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
  * that form the twists and straits of the wire.
  *
  ***************************************************************************************************************/
-int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fastf_t *widthvector, double radius, double angle, double segmentlength, double segmentdepthseparation)
+int createWire(struct rt_wdb *fp, char *segmentname, vect_t heightvector, vect_t widthvector, double radius, double angle, double segmentlength, double segmentdepthseparation)
 {
     int count=0;
     int errors=0;

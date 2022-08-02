@@ -1,7 +1,7 @@
 /*                         P A R S E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2020 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 
 #include "bu/cv.h"
 #include "bu/log.h"
+#include "bu/assert.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/parse.h"
@@ -685,7 +686,15 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
     /* iterate over all structure entries and look for a match */
     for (; sdp->sp_name != (char *)0; sdp++) {
 
-	loc = (char *)(base + sdp->sp_offset);
+	// Optimized GhostBSD sometimes results in this calculation evaluating
+	// to zero/NULL when base == NULL, even when sdp->sp_offset is
+	// non-zero???  Only try the math if we have a non-null base to start
+	// with - otherwise just use the offset.
+	if (base) {
+	    loc = (char *)(base + sdp->sp_offset);
+	} else {
+	    loc = (char *)(sdp->sp_offset);
+	}
 
 	if (UNLIKELY(loc == NULL)) {
 	    bu_log("Structure inconsistency detected parsing '%s'\n", sdp->sp_name ? sdp->sp_name : "NULL");

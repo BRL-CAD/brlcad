@@ -1,2 +1,143 @@
 /* Top level library group */
 /** @defgroup libnmg libnmg (Non-Manifold Geometry) */
+
+/* Second tier groups */
+/** @ingroup libnmg */
+/**  @defgroup nmg_defines Definitions*/
+/** @ingroup libnmg */
+/**  @defgroup nmg_global Global variables*/
+/** @ingroup libnmg */
+/**  @defgroup nmg_topology Topology */
+/**  @addtogroup nmg_topology
+     @brief Basic NMG structural hierarchy definitions, including the necessary geometric definitions.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_vertex Vertex */
+/**  @addtogroup nmg_vertex
+     @brief Routines for working with NMG Vertices and Vertex Uses.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_edge Edge */
+/**  @addtogroup nmg_edge
+     @brief Routines for working with NMG Edges and Edge Uses.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_loop Loop */
+/**  @addtogroup nmg_loop
+     @brief Routines for working with NMG Loops and Loop Uses.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_face Face */
+/**  @addtogroup nmg_face
+     @brief Routines for working with NMG Faces and Face Uses.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_shell Shell */
+/**  @addtogroup nmg_shell
+     @brief Routines for working with NMG Shells.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_region Region */
+/**  @addtogroup nmg_region
+     @brief Routines for working with NMG Regions.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_model Model */
+/**  @addtogroup nmg_model
+     @brief Routines for working with NMG Models.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_check Checking */
+/**  @addtogroup nmg_check
+     @brief NMG validation routines.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_debug Debugging */
+/**  @addtogroup nmg_debug
+     @brief NMG debugging definitions.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_plot Plotting */
+/**  @addtogroup nmg_plot
+     @brief NMG plotting routines.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_print Printing */
+/**  @addtogroup nmg_print
+     @brief Write out information about NMG data as text.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_nurbs Non-Uniform Rational BSplines */
+/**  @addtogroup nmg_nurbs
+     @brief NMG NURBS support.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_ray Ray/NMG Intersection */
+/**  @addtogroup nmg_ray
+     @brief Support for intersecting geometric rays with NMG models.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_isect NMG/NMG Intersection */
+/**  @addtogroup nmg_isect
+     @brief Intersection calculations between elements of NMG models.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_index Element Indexing*/
+/**  @addtogroup nmg_index
+     @brief Routines for handling the indexing of NMG structs.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_visit Visit operations */
+/**  @addtogroup nmg_visit
+     @brief ???.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_radial Radial operations */
+/**  @addtogroup nmg_radial
+     @brief ???.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_debug Debugging */
+/**  @addtogroup nmg_debug
+     @brief NMG debugging definitions.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_plot Plotting */
+/**  @addtogroup nmg_plot
+     @brief NMG plotting routines.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_print Printing */
+/**  @addtogroup nmg_print
+     @brief Write out information about NMG data as text.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_nurbs Non-Uniform Rational BSplines */
+/**  @addtogroup nmg_nurbs
+     @brief NMG NURBS support.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_ray Ray/NMG Intersection */
+/**  @addtogroup nmg_ray
+     @brief Support for intersecting geometric rays with NMG models.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_isect NMG/NMG Intersection */
+/**  @addtogroup nmg_isect
+     @brief Intersection calculations between elements of NMG models.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_index Element Indexing*/
+/**  @addtogroup nmg_index
+     @brief Routines for handling the indexing of NMG structs.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_visit Visit operations */
+/**  @addtogroup nmg_visit
+     @brief ???.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_radial Radial operations */
+/**  @addtogroup nmg_radial
+     @brief ???.
+ */

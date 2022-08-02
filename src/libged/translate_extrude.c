@@ -1,7 +1,7 @@
 /*                         T R A N S L A T E _ E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ _ged_translate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, co
 
     RT_EXTRUDE_CK_MAGIC(extrude);
 
-    VSCALE(tvec, tvec, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(tvec, tvec, gedp->dbip->dbi_local2base);
 
     switch (attribute[0]) {
 	case 'h':
@@ -57,7 +57,7 @@ _ged_translate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, co
 		/* check for zero H vector */
 		if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
 		    bu_vls_printf(gedp->ged_result_str, "Zero H vector not allowed.");
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 
 		VMOVE(extrude->h, hvec);
@@ -67,7 +67,7 @@ _ged_translate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, co
 	    case 'R':
 		if (attribute[2] != '\0') {
 		    bu_vls_printf(gedp->ged_result_str, "bad extrude attribute - %s", attribute);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 
 		if (rflag) {
@@ -79,7 +79,7 @@ _ged_translate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, co
 		/* check for zero H vector */
 		if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
 		    bu_vls_printf(gedp->ged_result_str, "Zero H vector not allowed.");
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 
 		VMOVE(extrude->h, hvec);
@@ -96,16 +96,16 @@ _ged_translate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, co
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "bad extrude attribute - %s", attribute);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "bad extrude attribute - %s", attribute);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -1,7 +1,7 @@
 /*                         M A G I C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,8 +83,8 @@ __BEGIN_DECLS
 #define BN_TOL_MAGIC			0x98c734bb /**< ??4? */
 #define BN_UNIF_MAGIC			0x00be7460 /**< ??t` => 12481632 */
 #define BN_VERT_TREE_MAGIC		0x56455254 /**< VERT */
-#define BN_VLBLOCK_MAGIC		0x981bd112 /**< ???? */
-#define BN_VLIST_MAGIC			0x98237474 /**< ?\#tt */
+#define BV_VLBLOCK_MAGIC		0x981bd112 /**< ???? */
+#define BV_VLIST_MAGIC			0x98237474 /**< ?\#tt */
 
 /* libbg */
 #define BG_TESS_TOL_MAGIC		0xb9090dab /**< ???? */
@@ -144,7 +144,7 @@ __BEGIN_DECLS
 #define NMG_INTER_STRUCT_MAGIC		0x99912120 /**< ??!  */
 #define NMG_KNOT_VECTOR_MAGIC		0x6b6e6f74 /**< knot */
 #define NMG_LOOPUSE_MAGIC		0x78787878 /**< xxxx */
-#define NMG_LOOP_G_MAGIC		0x6420224c /**< d "L */
+#define NMG_LOOP_A_MAGIC		0x6420224c /**< d "L */
 #define NMG_LOOP_MAGIC			0x67676767 /**< gggg */
 #define NMG_MODEL_MAGIC 		0x12121212 /**< ???? */
 #define NMG_RADIAL_MAGIC		0x52614421 /**< RaD! */
@@ -168,6 +168,7 @@ __BEGIN_DECLS
 #define RT_AP_MAGIC			0x4170706c /**< Appl */
 #define RT_COMB_MAGIC			0x436f6d49 /**< ComI */
 #define RT_CONSTRAINT_MAGIC		0x7063696d /**< pcim */
+#define RT_MATERIAL_MAGIC		0x54414d55 /**< TAMU */
 #define RT_CTS_MAGIC			0x98989123 /**< ???\# */
 #define RT_DB_TRAVERSE_MAGIC		0x64627472 /**< dbtr */
 #define RT_DBTS_MAGIC			0x64627473 /**< dbts */
@@ -198,17 +199,19 @@ __BEGIN_DECLS
 #define FB_X24_MAGIC			0x58324642 /**< X2FB */
 #define FB_TK_MAGIC			0x544b4642 /**< TKFB */
 #define FB_QT_MAGIC			0x51544642 /**< QTFB */
+#define FB_QTGL_MAGIC			0x51474642 /**< QGFB */
 #define FB_DEBUG_MAGIC			0x44424642 /**< DBFB */
 #define FB_DISK_MAGIC			0x44494642 /**< STFB */
 #define FB_STK_MAGIC			0x53544642 /**< STFB */
 #define FB_MEMORY_MAGIC			0x4d454642 /**< MEFB */
 #define FB_REMOTE_MAGIC			0x524d4642 /**< MEFB */
 #define FB_NULL_MAGIC			0x4e554642 /**< NUFB */
-#define FB_OSGL_MAGIC			0x4f474642 /**< OGFB */
+#define FB_SWFB_MAGIC			0x51474642 /**< SWFB */
 
 /* misc */
 
 #define ANIMATE_MAGIC			0x414e4963 /**< ANIc */
+#define BV_MAGIC			0x62766965 /**< bvie */
 #define CURVE_BEZIER_MAGIC		0x62657a69 /**< bezi */
 #define CURVE_CARC_MAGIC		0x63617263 /**< carc */
 #define CURVE_LSEG_MAGIC		0x6c736567 /**< lseg */
@@ -217,6 +220,7 @@ __BEGIN_DECLS
 #define DB5_RAW_INTERNAL_MAGIC		0x64357269 /**< d5ri */
 #define DBI_MAGIC			0x57204381 /**< W C? */
 #define DB_FULL_PATH_MAGIC		0x64626670 /**< dbfp */
+#define DM_MAGIC			0x444d4d4d /**< DMMM */
 #define LIGHT_MAGIC			0xdbddbdb7 /**< ???? */
 #define MF_MAGIC			0x55968058 /**< U??X */
 #define PIXEL_EXT_MAGIC 		0x50787400 /**< Pxt  */
@@ -240,7 +244,11 @@ __BEGIN_DECLS
 #  define BU_CKMAG(_ptr, _magic, _str) (void)(_ptr)
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) do { \
-	if (UNLIKELY(((uintptr_t)(_ptr) == 0) || ((uintptr_t)(_ptr) & (sizeof((uintptr_t)(_ptr))-1)) || *((const uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
+    /* coverity[BAD_SIZEOF] */ \
+    if (UNLIKELY(( ((uintptr_t)(_ptr) == 0) /* non-zero pointer */ \
+		   || ((uintptr_t)(_ptr) & (sizeof((uintptr_t)(_ptr))-1)) /* aligned ptr */ \
+		   || (*((const uint32_t *)(_ptr)) != (uint32_t)(_magic)) /* matches value */ \
+		     ))) { \
 	    bu_badmagic((const uint32_t *)(_ptr), (uint32_t)(_magic), _str, __FILE__, __LINE__); \
 	} \
     } while (0)
@@ -252,7 +260,7 @@ __BEGIN_DECLS
  * pointer.  It's primarily a support routine for BU_CKMAG macro, but
  * may be used elsewhere.  This function never returns.
  */
-BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line) _BU_ATTR_ANALYZE_NORETURN _BU_ATTR_NORETURN;
+BU_EXPORT NORETURN extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line);
 
 
 /** @brief Routines involved with handling "magic numbers" used to identify various in-memory data structures. */

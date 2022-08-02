@@ -11,7 +11,8 @@ file(WRITE "${LOGFILE}" "Starting 3rd party user simulation run\n")
 string(REPLACE "\\" "" USER_EXEC "${EXEC}")
 if (NOT EXISTS "${USER_EXEC}")
   file(WRITE "${LOGFILE}" "cad_user not found at location \"${USER_EXEC}\" - aborting\n")
-  message(FATAL_ERROR "Unable to find cad_user, aborting.\nSee ${LOGFILE} for more details.")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find cad_user, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
 endif (NOT EXISTS "${USER_EXEC}")
 
 # Reconstruct the tree root from the EXEC path, and identify the input file location
@@ -19,7 +20,7 @@ get_filename_component(BDIR "${USER_EXEC}" DIRECTORY)
 string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
 set(GFILE "${RDIR}/${DATA_DIR}/db/moss.g")
 
-# Runn the command
+# Run the command
 file(APPEND "${LOGFILE}" "Running ${USER_EXEC} ${GFILE}:\n")
 execute_process(
   COMMAND "${USER_EXEC}" "${GFILE}"
@@ -28,7 +29,8 @@ execute_process(
 file(APPEND "${LOGFILE}" "${user_log}")
 if(user_result)
   file(APPEND "${LOGFILE}" "Failure: ${user_result}")
-  message(FATAL_ERROR "3rd party user simulation run failed, aborting.\nSee ${LOGFILE} for more details.")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "3rd party user simulation run failed, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
 endif(user_result)
 
 # Local Variables:

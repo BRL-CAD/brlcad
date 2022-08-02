@@ -1,7 +1,7 @@
 /*                        C D T . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,10 +47,10 @@
 #include "bu/opt.h"
 #include "bu/time.h"
 #include "bn/mat.h"
-#include "bn/plane.h"
-#include "bn/plot3.h"
+#include "bg/plane.h"
+#include "bv/plot3.h"
 #include "bn/tol.h"
-#include "bn/vlist.h"
+#include "bv/vlist.h"
 #include "bg/polygon.h"
 #include "bg/trimesh.h"
 #include "brep/defines.h"

@@ -1,7 +1,7 @@
 /*                        M E N G E R . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -395,11 +395,10 @@ main(int ac, char *av[])
 	    }
 	    case 'r':
 	    case 'R': {
-		long val = repeat;
 		if (!bu_optarg)
 		    bu_exit(3, "ERROR: missing repeat count after -r option\n");
 
-		val = strtol(bu_optarg, NULL, 0);
+		long val = strtol(bu_optarg, NULL, 0);
 		if (val <= 0)
 		    bu_exit(3, "ERROR: invalid repeat specification [%ld <= 0]\n", val);
 

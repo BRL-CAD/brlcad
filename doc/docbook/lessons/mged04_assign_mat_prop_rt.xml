@@ -166,10 +166,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged04_commandwindow.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged04_commandwindow.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged04_commandwindow.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged04_commandwindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -283,10 +283,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged04_raytracedshapes.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged04_raytracedshapes.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged04_raytracedshapes.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged04_raytracedshapes.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -337,8 +337,8 @@
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged04_raytracedshapes.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged04_raytracedshapes.png"/></imageobject></inlinemediaobject></entry>
-	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged04_fb_overlay_mode.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged04_fb_overlay_mode.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged04_raytracedshapes.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged04_raytracedshapes.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged04_fb_overlay_mode.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged04_fb_overlay_mode.png"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Framebuffer in Underlay Mode</entry>

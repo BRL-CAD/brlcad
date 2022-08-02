@@ -1,7 +1,7 @@
 /*                        P O L Y . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@
 __BEGIN_DECLS
 
 /* This could be larger, or even dynamic... */
-#define BN_MAX_POLY_DEGREE 6	/* Maximum Poly Order */
+#define BN_MAX_POLY_DEGREE 6	/**< Maximum Poly Order */
 
 /**
  * Polynomial data type

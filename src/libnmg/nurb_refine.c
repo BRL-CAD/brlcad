@@ -1,7 +1,7 @@
 /*                   N U R B _ R E F I N E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ nmg_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *k
 	nurb_srf->s_size[1] = kv->k_size - srf->order[0];
 	nurb_srf->pt_type = srf->pt_type;
 	nurb_srf->ctl_points = (fastf_t *)
-	    nmg_malloc(sizeof (fastf_t) *
+	    bu_malloc(sizeof (fastf_t) *
 		      nurb_srf->s_size[0] *
 		      nurb_srf->s_size[1] *
 		      RT_NURB_EXTRACT_COORDS(nurb_srf->pt_type),
@@ -108,7 +108,7 @@ nmg_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *k
 
 	nurb_srf->pt_type = srf->pt_type;
 	nurb_srf->ctl_points = (fastf_t *)
-	    nmg_malloc(sizeof (fastf_t) *
+	    bu_malloc(sizeof (fastf_t) *
 		      nurb_srf->s_size[0] *
 		      nurb_srf->s_size[1] *
 		      RT_NURB_EXTRACT_COORDS(nurb_srf->pt_type),

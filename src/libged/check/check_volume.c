@@ -1,7 +1,7 @@
 /*                C H E C K _ V O L U M E . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2020 United States Government as represented by
+ * Copyright (c) 2018-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,13 +36,14 @@ int check_volume(struct current_state *state,
     char *name = "volume.plot3";
 
     if (options->plot_files) {
-	if ((plot_volume=fopen(name, "wb")) == (FILE *)NULL) {
+	plot_volume = fopen(name, "wb");
+	if (plot_volume == (FILE *)NULL) {
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 	}
 	analyze_set_volume_plotfile(state, plot_volume);
     }
 
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_VOLUME)) return GED_ERROR;
+    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_VOLUME)) return BRLCAD_ERROR;
 
     print_verbose_debug(options);
     bu_vls_printf(_ged_current_gedp->ged_result_str, "Volume:\n");
@@ -75,7 +76,7 @@ int check_volume(struct current_state *state,
     if (plot_volume){
 	fclose(plot_volume);
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
-    } 
+    }
 
     return 0;
 }

@@ -1,7 +1,7 @@
 /*                      V I E W H I D E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2020 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 /* private */
 #include "./rtuif.h"
@@ -581,7 +581,6 @@ vert_cmp(struct cell *downp, struct cell *upp, int mem_width)
 	}
 
 	pdv_3line(outfp, start, stop);
-	state = SEEKING_START_PT;
     }
 }
 

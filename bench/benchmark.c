@@ -1,7 +1,7 @@
 /*                     B E N C H M A R K . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -97,6 +97,7 @@ record(const char *fmt, ...)
     if (!BU_STR_EQUAL(LOGFILE, "")) {
 	FILE *fp = fopen(LOGFILE, "a");
 	fprintf(fp, "%s", bu_vls_addr(&str));
+	fclose(fp);
     }
     if (bu_str_false(QUIET)) {
 	bu_log("%s", bu_vls_addr(&str));
@@ -216,14 +217,16 @@ look_for(void (*verbose)(const char *, ...), look_for_type_t type, const char *l
 static void
 set_if_unset(void (*echo)(const char *, ...), void (*verbose)(const char *, ...), const char *var, const char *val)
 {
-    const char *setval = getenv(var);
-
     if (!var || !val) {
 	return;
     }
+
+    const char *setval = getenv(var);
+
     if (!echo) {
 	echo = sink;
     }
+
     if (!verbose) {
 	verbose = sink;
     }
@@ -390,7 +393,7 @@ main(int ac, char *av[])
 	bu_log("well-known datasets into 512x512 images where performance metrics are\n");
 	bu_log("documented and fairly well understood.  The local machine's\n");
 	bu_log("performance is compared to the base system (called VGR) and a numeric\n");
-	bu_log("\"VGR\" mulitplier of performance is computed.  This number is a\n");
+	bu_log("\"VGR\" multiplier of performance is computed.  This number is a\n");
 	bu_log("simplified metric from which one may qualitatively compare cpu and\n");
 	bu_log("cache performance, versions of BRL-CAD, and different compiler\n");
 	bu_log("characteristics.\n");
@@ -430,7 +433,7 @@ main(int ac, char *av[])
 	bu_log("effectively performing a multiplier amount of work over the initial\n");
 	bu_log("frame.\n");
 	bu_log("\n");
-	bu_log("Plese send your BRL-CAD Benchmark results to the developers along with\n");
+	bu_log("Please send your BRL-CAD Benchmark results to the developers along with\n");
 	bu_log("detailed system information to <devs@brlcad.org>.  Include at least:\n");
 	bu_log("\n");
 	bu_log("  0) Compiler name and version (e.g. gcc --version)\n");
@@ -479,6 +482,10 @@ main(int ac, char *av[])
 	    j = bu_argv_from_string(pattern, 4, bu_vls_addr(&pattern_str));
 	    while (j > 0) {
 		num = bu_file_glob(pattern[j-1], paths);
+		if (!num || !paths || !paths[0]) {
+		    j--;
+		    continue;
+		}
 		cnt = num;
 		while (num > 0) {
 		    bu_file_delete(paths[num-1]);
@@ -499,8 +506,10 @@ main(int ac, char *av[])
 	    num = bu_file_glob("benchmark-[0-9]*-run.log", paths);
 	    cnt = num;
 	    while (num > 0) {
-		bu_log("rm -f %s\n", paths[num-1]);
-		bu_file_delete(paths[num-1]);
+		if (paths) {
+		    bu_log("rm -f %s\n", paths[num-1]);
+		    bu_file_delete(paths[num-1]);
+		}
 		num--;
 	    }
 	    bu_argv_free(cnt, paths);
@@ -521,7 +530,8 @@ main(int ac, char *av[])
 		bu_log("\nThe following files must be removed manually:\n");
 		printed=1;
 	    }
-	    bu_log("%s ", paths[num-1]);
+	    if (paths)
+		bu_log("%s ", paths[num-1]);
 	    num--;
 	}
 	bu_argv_free(cnt, paths);
@@ -680,11 +690,6 @@ main(int ac, char *av[])
     bu_argv_from_string(argv, 32, bu_vls_addr(&vp));
     look_for(verbose_echo, script, "a time elapsed utility", "ELP", (const char **)argv);
     bu_vls_trunc(&vp, 0);
-
-    bu_free(root, "strdup root");
-    bu_free(db, "strdup db");
-    bu_free(pix, "strdup pix");
-
 
     /*********************
      * output parameters *
@@ -920,8 +925,6 @@ main(int ac, char *av[])
 		  "./benchmark.tr",
 		  thisp, thisp, thisp, thisp, thisp, thisp);
     bu_argv_from_string(argv, 32, bu_vls_addr(&vp));
-
-    bu_free(thisp, "dirname this");
 
     look_for(NULL, file, "BENCHMARK_TR", "benchmark", (const char **)argv);
     bu_vls_trunc(&vp, 0);

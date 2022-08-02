@@ -1,7 +1,7 @@
 /*                       W H E R E I S . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2020 United States Government as represented by
+ * Copyright (c) 2005-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,12 +57,12 @@ bu_whereis(const char *cmd)
 
     char *directory = NULL;
     char *position = NULL;
-    char curr_dir[] = ".";
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("bu_whereis: [%s]\n", cmd);
     }
 
+    /* intentionally not checking strlen(cmd), "" valid for whereis */
     if (UNLIKELY(!cmd)) {
 	return NULL;
     }
@@ -108,6 +108,8 @@ bu_whereis(const char *cmd)
     /* search for the executable */
     directory = PATH;
     do {
+	struct bu_vls vp = BU_VLS_INIT_ZERO;
+
 	position = strchr(directory, BU_PATH_SEPARATOR);
 	if (position) {
 	    /* 'directory' can't be const because we have to change a character here: */
@@ -115,11 +117,29 @@ bu_whereis(const char *cmd)
 	}
 
 	/* empty means use current dir */
-	if (strlen(directory) == 0) {
-	    directory = curr_dir; /* "."; */
+	size_t dirlen = strlen(directory);
+	if (dirlen == 0) {
+	    /* "./cmd" */
+	    bu_vls_putc(&vp, '.');
+	    bu_vls_putc(&vp, BU_DIR_SEPARATOR);
+	    bu_vls_strcat(&vp, cmd);
+	    bu_strlcpy(bu_whereis_result, bu_vls_cstr(&vp), MAXPATHLEN);
+	    bu_vls_free(&vp);
+	} else if (dirlen <= MAXPATHLEN-2) {
+	    /* "dir/cmd" */
+	    bu_vls_strcpy(&vp, directory);
+	    bu_vls_putc(&vp, BU_DIR_SEPARATOR);
+	    bu_vls_strcat(&vp, cmd);
+	    bu_strlcpy(bu_whereis_result, bu_vls_cstr(&vp), MAXPATHLEN);
+	    bu_vls_free(&vp);
+	} else {
+	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+		bu_log("WARNING: PATH dir is too long (%zu > %zu), skipping.\n"
+		       "         dir = [%s]\n", dirlen, (size_t)MAXPATHLEN-2, directory);
+	    }
+	    continue;
 	}
 
-	snprintf(bu_whereis_result, MAXPATHLEN, "%s/%s", directory, cmd);
 	if (bu_file_exists(bu_whereis_result, NULL)) {
 	    if (bu_whereis_result[0] == '\0')
 		return NULL; /* never return empty */

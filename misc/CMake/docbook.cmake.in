@@ -1,7 +1,7 @@
 #                D O C B O O K . C M A K E . I N
 # BRL-CAD
 #
-# Copyright (c) 2012-2020 United States Government as represented by
+# Copyright (c) 2012-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,8 @@ if(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
   set(BUILD_TYPE "Release")
 elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Debug")
   set(BUILD_TYPE "Debug")
+elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/RelWithDebInfo")
+  set(BUILD_TYPE "RelWithDebInfo")
 else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
   set(BUILD_TYPE)
 endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")

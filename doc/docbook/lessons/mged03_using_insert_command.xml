@@ -80,10 +80,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged03_wireframe_sph.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged03_wireframe_sph.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged03_wireframe_sph.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged03_wireframe_sph.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -112,10 +112,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged03_wireframe_sph_rcc.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged03_wireframe_sph_rcc.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged03_wireframe_sph_rcc.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged03_wireframe_sph_rcc.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -188,7 +188,7 @@
 	should appear in your Command Window (including the appropriate
 	responses).
 
-	<userinput><prompt>mged&gt;</prompt> in sph2.s sph</userinput>
+	<userinput><prompt>mged&gt; </prompt>in sph2.s sph</userinput>
 
 	<literal>Enter X, Y, Z of vertex: 4 4 4</literal>
 
@@ -233,7 +233,7 @@
       </para>
 
       <literallayout class="normal">
-      <prompt>mged&gt;</prompt> in rcc2.s rcc
+      <prompt>mged&gt; </prompt>in rcc2.s rcc
 
       Enter X, Y, Z of vertex: 4 4 0
 
@@ -256,8 +256,8 @@
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged03_shapes_make_command.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged03_shapes_make_command.png"/></imageobject></inlinemediaobject></entry>
-	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged03_shapes_in_command.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged03_shapes_in_command.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged03_shapes_make_command.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged03_shapes_make_command.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged03_shapes_in_command.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged03_shapes_in_command.png"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Shapes Created with Make Command</entry>

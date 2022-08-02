@@ -1,0 +1,107 @@
+/*                         G E T . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2008-2022 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file libged/get.c
+ *
+ * The get command.
+ *
+ */
+
+#include "common.h"
+
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+
+#include "ged.h"
+
+
+int
+ged_get_core(struct ged *gedp, int argc, const char *argv[])
+{
+    int status;
+    struct rt_db_internal intern;
+    static const char *usage = "object ?attr?";
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc > 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    /* Verify that this wdb supports lookup operations
+       (non-null dbip) */
+    if (gedp->dbip == 0) {
+	bu_vls_printf(gedp->ged_result_str, "dbip does not support lookup operations");
+	return BRLCAD_ERROR;
+    }
+
+    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp) & BRLCAD_ERROR)
+	return BRLCAD_ERROR;
+
+    if (!intern.idb_meth->ft_get) {
+	return BRLCAD_ERROR;
+    }
+
+    status = intern.idb_meth->ft_get(gedp->ged_result_str, &intern, argv[2]);
+    rt_db_free_internal(&intern);
+
+    return status;
+}
+
+
+#ifdef GED_PLUGIN
+#include "../include/plugin.h"
+struct ged_cmd_impl get_cmd_impl = {
+    "get",
+    ged_get_core,
+    GED_CMD_DEFAULT
+};
+
+const struct ged_cmd get_cmd = { &get_cmd_impl };
+const struct ged_cmd *get_cmds[] = { &get_cmd, NULL };
+
+static const struct ged_plugin pinfo = { GED_API,  get_cmds, 1 };
+
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
+#endif /* GED_PLUGIN */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

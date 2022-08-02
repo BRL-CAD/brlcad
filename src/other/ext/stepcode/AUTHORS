@@ -1,0 +1,42 @@
+Various authors have contributed to SCL since 2009. Their work is available at 
+https://github.com/mpictor/StepClassLibrary and/or
+http://brlcad.svn.sourceforge.net/viewvc/brlcad/brlcad/trunk/src/other/step/?view=log
+
+In alphabetical order:
+Bertucat, Roch (rbertucat)
+Bowman, W. Keith (indianlarry)
+da Costa, Raphael Kubo (rakuco)
+DeGraw, Jason (jasondegraw)
+Easterbrook, Zach (lainiwakurax)
+Greenwald, Erik (erikg, erikgreenwald)
+Horler, Chris (cshorler)
+Lanning, Craig (craigl64)
+Loman, David (davidloman)
+McDonald, Rob (ramcdona)
+Mittal, Pulkit (hoiji09)
+Morrison, Christopher Sean (sean, morrison, brlcad)
+Paviot, Thomas (tpaviot)
+Pictor, Mark (mpictor)
+Reed, Nick (nickreed)
+Shah, Kesha (kesha, keshashah)
+Thomas, Dawn (homovulgaris, madant)
+Wouters, Dave (davyw)
+Yapp, Clifford (starseeker)
+
+Special thanks:
+Hunten, Keith (Lockheed Martin)
+Lubbell, Joshua (NIST)
+Stirk, Charlie (CostVision)
+Thurman, Tom (TRThurman)
+
+Between 2005 and 2006, Stefan Richter worked to make SCL compatible with
+modern ANSI/ISO C++, and modified the build system. His patches are at
+http://www.statik.tu-cottbus.de/fileadmin/project_dth/scl/
+
+Original authors:
+/* National Institute of Standards and Technology (NIST)
+ * Manufacturing Engineering Laboratory (MEL)
+ * Factory Automation Systems Division (FASD)
+*/
+
+

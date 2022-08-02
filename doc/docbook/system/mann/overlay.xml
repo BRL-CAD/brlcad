@@ -1,67 +1,132 @@
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="overlay">
 
-<refmeta>
-  <refentrytitle>OVERLAY</refentrytitle>
-  <manvolnum>nged</manvolnum>
-  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
-  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
-</refmeta>
+  <refmeta>
+    <refentrytitle>OVERLAY</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
 
-<refnamediv xml:id="name">
-  <refname>overlay</refname>
-  <refpurpose>Plots the specified UNIX <emphasis>plot_file</emphasis> in the MGED display.
-   </refpurpose>
-</refnamediv>
+  <refnamediv xml:id="name">
+    <refname>overlay</refname>
+    <refpurpose>
+      Plots the specified UNIX <emphasis>plot_file</emphasis>
+      in the MGED display.
+    </refpurpose>
+  </refnamediv>
 
-<!-- body begins here -->
-<refsynopsisdiv xml:id="synopsis">
-  <cmdsynopsis sepchar=" ">
-    <command>overlay</command>
-     <arg choice="req" rep="norepeat"><replaceable>plot_file</replaceable></arg>
-    <arg choice="opt" rep="norepeat"><replaceable>name</replaceable></arg>
-  </cmdsynopsis>
-</refsynopsisdiv>
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>overlay</command>
+      <arg choice="opt" rep="norepeat"><replaceable>-s #</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable>plot_file</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>name</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>overlay -F</command>
+      <arg choice="opt" rep="norepeat"><replaceable>-i</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-c</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-z</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-X #</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-Y #</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-w #</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-n #</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-S #</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>--format fmt</replaceable></arg>      
+      <arg choice="req" rep="norepeat"><replaceable>img_file</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
 
-<refsection xml:id="description"><title>DESCRIPTION</title>
-
-  <para>Plots the specified UNIX <emphasis>plot_file</emphasis> in the
-  MGED display.  Multiple files may be specified using a pattern match
-  (e.g., <command>overlay</command> <emphasis>*.plot</emphasis>).
-  </para>
-
-  <para>Phony object names are created for each part of the plot file
-  that is in a unique color.  The names are created by adding a color
-  to the specified <emphasis>name</emphasis>, or to _PLOT_OVER
-  if no name is provided. The color suffix is built by converting the
-  RGB color to a six-digit hex number. Each color corresponds to 2 hex
-  digits, so that white becomes "ffffff," red becomes "ff0000," green
-  is "00ff00," etc.
-  </para>
-</refsection>
-
-<refsection xml:id="examples"><title>EXAMPLES</title>
-
-  <para>The example shows the use of the <command>overlay</command> command to plot a specified UNIX plot file in 	the MGED display.
-  </para>
-
-<example><title>Plot a UNIX plot file in the MGED display.</title>
-
-    <para>
-      <prompt>mged&gt;</prompt><userinput>overlay plot.upl tmp</userinput>
-    </para>
-    <para>Plots the UNIX plot file <emphasis>plot.upl</emphasis> in the MGED display, using <emphasis>tmp</emphasis> as the base for the phony object names.
-    </para>
-  </example>
-
-</refsection>
-
-<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
-
-<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
-    Reports of bugs or problems should be submitted via electronic
-    mail to <email>devs@brlcad.org</email>
+    Plots the specified UNIX <emphasis>plot_file</emphasis> in the current
+    application display or the specified <emphasis>image file</emphasis> in
+    the current application embedded framebuffer.  When displaying plot
+    files, multiple files may be specified using a pattern match (e.g.,
+    <command>overlay</command> <emphasis>*.plot</emphasis>).
   </para>
-</refsection>
+
+  <para>
+    When displaying plot files, phony object names are created for each
+    part of the plot file(s) with a unique color.  The names are created
+    by adding a color to the specified <emphasis>name</emphasis>, or to
+    _PLOT_OVERLAY_  if no name is provided. The color suffix is built by
+    converting the RGB color to a six-digit hex number. Each color
+    corresponds to 2 hex digits, so that white becomes "ffffff," red
+    becomes "ff0000," green is "00ff00," etc.
+  </para>
+
+  <para>
+    Image files will be display in the currently active framebuffer.  Currently
+    multiple images cannot be specified by a single <command>overlay</command>
+    command (but as the images would overrwrite each other this feature would
+    not be terribly useful in any case.)  However, mulitiple images can be written
+    in succession to the same framebuffer using the <option>-X</option> and
+    <option>-Y</option> offset specification options to offset their positions
+    for simultaneous display.  Alternately, if the user wishes to reset the framebuffer
+    before drawing the new image the <option>-c</option> option may be specified.
+  </para>
+
+  <para>
+    The <option>-w</option>, <option>-n</option>, and <option>-S</option> options
+    are used to specify image size for formats such as PIX that do not encode the
+    image size in their own data.  Similarly, <option>--format</option> may be
+    used to explicitly specify an image format if the filename does not make the
+    format clear.
+  </para>
+
+  <para>
+    By default, images are displayed in the framebuffer using their original size.
+    If the users wishes to use all available space in the image window to display
+    an image, the <option>-z</option> may be specified to focus the framebuffer on
+    the image.  The <option>-i</option> option may be used to invert an image's
+    display in the y (vertical) direction.
+  </para>
+  </refsection>
+
+  <refsection xml:id="examples">
+    <title>EXAMPLES</title>
+
+    <example>
+      <title>Plot a UNIX plot file in the MGED display.</title>
+
+      <para>
+	<prompt>mged&gt; </prompt><userinput>overlay plot.upl tmp</userinput>
+      </para>
+      <para>
+	Plots the UNIX plot file <emphasis>plot.upl</emphasis> in the MGED
+	display, using <emphasis>tmp</emphasis> as the base for the phony
+	object names.
+      </para>
+    </example>
+    
+    <example>
+      <title>Plot a PNG file in the MGED framebuffer.</title>
+
+      <para>
+	<prompt>mged&gt; </prompt><userinput>overlay -c -F image.png</userinput>
+      </para>
+      <para>
+	Plots the image file <emphasis>image.png</emphasis> in the MGED
+	framebuffer, first clearing any pre-existing images in the framebuffer.
+      </para>
+    </example>
+  </refsection>
+
+  <refsection xml:id="author">
+    <title>AUTHOR</title>
+    <para>
+      BRL-CAD Team
+    </para>
+  </refsection>
+
+  <refsection xml:id="bug_reports">
+    <title>BUG REPORTS</title>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to <email>devs@brlcad.org</email>
+    </para>
+  </refsection>
 </refentry>

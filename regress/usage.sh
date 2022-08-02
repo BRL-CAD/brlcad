@@ -2,7 +2,7 @@
 #                       U S A G E . S H
 # BRL-CAD
 #
-# Copyright (c) 2018-2020 United States Government as represented by
+# Copyright (c) 2018-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -78,7 +78,7 @@ fi
 
 exists="`timeout --version 2>&1 | head -1 | awk '{print $1}'`"
 if test "x$exists" != "xtimeout" ; then
-    function timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+    timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
 fi
 
 
@@ -92,6 +92,7 @@ log "Testing usage statements ..."
 test_usage ( ) {
     cmd=$1
 
+    echo $cmd
     log "=== $cmd === (pid: $$)"
 
     usage="`timeout ${WAIT} $cmd -h -? 2>&1`"
@@ -104,6 +105,17 @@ test_usage ( ) {
     lines=`echo "$usage" | wc -l 2>&1`
     if test "x$lines" = "x" ; then
 	lines=0
+    fi
+
+    # This is only feasible if we're in single-process-at-a-time mode, but if
+    # we are see if the execution of the command put out a -? file.  If it
+    # did, that means it improperly handled the supplied options.
+    if test $NPSW -eq 1 ; then
+	QFILE=`pwd`/-?
+	if test -f "$QFILE"; then
+	    log "ERROR: command $cmd created a -? file"
+	    rm -f $QFILE
+	fi
     fi
 
     printf "  %-30s lines:%3d  maxline:%3d\n" "$cmd ..." "$lines" "$length"
@@ -197,7 +209,7 @@ log "`printf \"| %5d | %5d | %7d | %4d | %5d | %10d | %4d | %4d |\n\" $CNT $USAG
 log "---------------------------------------------------------------------"
 
 
-NEED_FIXING=86
+NEED_FIXING=54
 if test $LONG -lt `expr $NEED_FIXING + 1` ; then
     if test $LONG -ne $NEED_FIXING ; then
 	log "********************************************************"
@@ -209,6 +221,7 @@ if test $LONG -lt `expr $NEED_FIXING + 1` ; then
     log "-> usage check succeeded"
 else
     log "-> usage check FAILED, see $LOGFILE"
+    cat "$LOGFILE"
 fi
 
 exit 0

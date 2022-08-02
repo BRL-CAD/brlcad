@@ -1,7 +1,7 @@
 /*                           I O . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,9 +66,14 @@ ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
  * dimensions of an image, when the image doesn't supply such
  * information.
  *
- * @param[in] name       String identifying a particular size (pass NULL if not using)
+ * Standard image sizes may be hinted using the label parameter.  Many
+ * standard print and display sizes (e.g., "A4" and "SVGA") are
+ * recognized and used in concert with the dpi and data_size
+ * parameters.
+ *
+ * @param[in] label      String hinting at a size  (pass NULL if not using)
  * @param[in] dpi        Dots per inch of image (pass 0 if not using)
- * @param[in] file_size  File or in-memory size of image (necessary if deducing an unspecified image size)
+ * @param[in] data_size  Number of uncompressed image bytes (necessary if deducing an unspecified image size)
  * @param[in] type       Image type (necessary if deducing an unspecified image size)
  *
  * @param[out] widthp    Pointer to variable that will hold image width
@@ -78,7 +83,7 @@ ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
  * Returns 1 if an image size was identified, zero otherwise.
  *
  */
-ICV_EXPORT extern int icv_image_size(const char *name, size_t dpi, size_t file_size, bu_mime_image_t type, size_t *widthp, size_t *heightp);
+ICV_EXPORT extern int icv_image_size(const char *label, size_t dpi, size_t data_size, bu_mime_image_t type, size_t *widthp, size_t *heightp);
 
 /**
  * Load a file into an ICV struct. For most formats, this will be
@@ -145,6 +150,35 @@ ICV_EXPORT int icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA ty
  * @return on success 0, on failure -1
  */
 ICV_EXPORT int icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data);
+
+/**
+ * Converts double data of icv_image to unsigned char data.
+ * This function also does gamma correction using the gamma_corr
+ * parameter of the image structure.
+ *
+ * Gamma correction prevents bad color aliasing.
+ *
+ * @param bif ICV struct where data is to be read from
+ * @return array of unsigned char converted data, or NULL on failure
+ */
+ICV_EXPORT unsigned char *icv_data2uchar(const icv_image_t *bif);
+
+/**
+ * Converts unsigned char array to double array.
+ * This function returns array of double data.
+ *
+ * Used to convert data from pix, bw, ppm type images for icv_image
+ * struct.
+ *
+ * This does not free the char data.
+ *
+ * @param data pointer to the array to be converted.
+ * @param size Size of the array.
+ * @return double array.
+ *
+ */
+ICV_EXPORT double *icv_uchar2double(unsigned char *data, size_t size);
+
 
 /** @} */
 

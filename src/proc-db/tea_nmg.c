@@ -1,7 +1,7 @@
 /*                       T E A _ N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -147,7 +147,6 @@ dump_patch(int (*patch)[4])
     }
 
     /* set eu geometry */
-    pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, 0); /* see nurb.h for details */
     lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
     NMG_CK_LOOPUSE(lu);
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
@@ -226,7 +225,7 @@ main(int argc, char **argv)
 	bu_log("Cannot open plot3 file: %s\n", uplot_name);
 	perror("teapot_nmg");
     } else {
-	bn_vlist_to_uplot(fp, &vhead);
+	bv_vlist_to_uplot(fp, &vhead);
     }
 
     bu_log(" done.\n");

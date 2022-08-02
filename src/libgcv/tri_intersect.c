@@ -1,7 +1,7 @@
 /*                 T R I _ I N T E R S E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -243,7 +243,7 @@ gcv_tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s 
     b=fabs(D[1]);
     c=fabs(D[2]);
     if (b>max) max=b, i=1;
-    if (c>max) max=c, i=2;
+    if (c > max) i=2;
 
     /* this is the simplified projection onto L*/
     vp0=lf->vert[0][i];

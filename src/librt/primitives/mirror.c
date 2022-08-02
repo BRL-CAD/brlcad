@@ -1,7 +1,7 @@
 /*                        M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2020 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -99,7 +99,7 @@ rt_mirror(struct db_i *dbip,
 	  struct rt_db_internal *ip,
 	  point_t mirror_pt,
 	  vect_t mirror_dir,
-	  struct resource *resp)
+	  struct resource *UNUSED(resp))
 {
     int id;
     int err;
@@ -112,10 +112,6 @@ rt_mirror(struct db_i *dbip,
     if (!NEAR_EQUAL(MAGSQ(mirror_dir), 1.0, tol_dist_sq)) {
 	bu_log("ERROR: mirror direction is invalid\n");
 	return NULL;
-    }
-
-    if (!resp) {
-	resp=&rt_uniresource;
     }
 
     /* not the best, but consistent until v6 */

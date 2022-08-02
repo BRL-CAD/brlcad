@@ -1,7 +1,7 @@
 /*                  N U R B _ E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rt/nurb.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 extern double drand48(void);

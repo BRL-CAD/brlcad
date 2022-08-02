@@ -1,7 +1,7 @@
 #   D I S T C H E C K _ I N _ S R C _ D I R . C M A K E . I N
 # BRL-CAD
 #
-# Copyright (c) 2012-2020 United States Government as represented by
+# Copyright (c) 2012-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@ file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-initstat.cma
 
 set(final_status_script
 "file(GLOB_RECURSE SOURCE_ARCHIVE_CONTENTS RELATIVE \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME}\" \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME}/*\")
+list(REMOVE_ITEM SOURCE_ARCHIVE_CONTENTS .ninja_log)
 file(WRITE \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/final_src_contents.txt\" \"\${SOURCE_ARCHIVE_CONTENTS}\")")
 
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-finalstat.cmake" "${final_status_script}")
@@ -50,6 +51,10 @@ set(compare_status
 file(READ \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/final_src_contents.txt\" FINAL_SOURCE_LIST)
 string(STRIP \"\${INITIAL_SOURCE_LIST}\" INITIAL_SOURCE_LIST)
 string(STRIP \"\${FINAL_SOURCE_LIST}\" FINAL_SOURCE_LIST)
+# Ninja keeps a running log in .ninja_log - if we're using ninja itself to run the
+# tests, we can't clear this file. Ignore it, as it's not a sign of a problem with
+# the clean logic.
+list(REMOVE_ITEM FINAL_SOURCE_LIST .ninja_log)
 if(NOT \"\${INITIAL_SOURCE_LIST}\" STREQUAL \"\${FINAL_SOURCE_LIST}\")
   set(FINAL_FILES_NOT_IN_INITIAL \${FINAL_SOURCE_LIST})
   set(INITIAL_FILES_NOT_IN_FINAL \${INITIAL_SOURCE_LIST})

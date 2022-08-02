@@ -1,7 +1,7 @@
 /*                      D B _ M A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2020 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,17 +34,34 @@
 #include "rt/db4.h"
 #include "rt/geom.h"
 #include "raytrace.h"
+#include "librt_private.h"
 
 HIDDEN void
-db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, void *UNUSED(dummy1), void *UNUSED(dummy2), void *UNUSED(dummy3), void *UNUSED(dummy4))
+db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, void *pdp, void *UNUSED(dummy2), void *UNUSED(dummy3), void *UNUSED(dummy4))
 {
-    struct directory *dp;
+    struct directory *dp = RT_DIR_NULL;
+    struct directory *parent_dp = (struct directory *)pdp;
 
     if (comb) RT_CK_COMB(comb);
     RT_CK_TREE(comb_leaf);
 
-    if ((dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL)
+    if ((dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	++dp->d_nref;
+    }
+
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks)) {
+	db_op_t op = DB_OP_UNION;
+	if (comb_leaf->tr_l.tl_op == OP_SUBTRACT) {
+	    op = DB_OP_SUBTRACT;
+	}
+	if (comb_leaf->tr_l.tl_op == OP_INTERSECT) {
+	    op = DB_OP_INTERSECT;
+	}
+	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); i++) {
+	    struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, i);
+	    (*cb->f)(dbip, parent_dp, dp, comb_leaf->tr_l.tl_name, op, comb_leaf->tr_l.tl_mat, cb->u_data);
+	}
+    }
 }
 
 void
@@ -62,6 +79,12 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
     for (i = 0; i < RT_DBNHASH; i++)
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    dp->d_nref = 0;
+
+    /* Do a NULL + union callback to indicate the start of an update cycle */
+    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
+	struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
+	(*cb->f)(dbip, NULL, NULL, NULL, DB_OP_UNION, NULL, cb->u_data);
+    }
 
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
@@ -86,6 +109,14 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			if (dp2 != RT_DIR_NULL) {
 			    dp2->d_nref++;
 			}
+
+			// Do callbacks
+			if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks)) {
+			    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
+				struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
+				(*cb->f)(dbip, dp, dp2, extr->sketch_name, DB_OP_UNION, NULL, cb->u_data);
+			    }
+			}
 		    }
 		    rt_db_free_internal(&intern);
 		} else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_REVOLVE) {
@@ -100,6 +131,14 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			if (dp2 != RT_DIR_NULL) {
 			    dp2->d_nref++;
 			}
+
+			// Do callbacks
+			if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks)) {
+			    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
+				struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
+				(*cb->f)(dbip, dp, dp2, bu_vls_cstr(&revolve->sketch_name), DB_OP_UNION, NULL, cb->u_data);
+			    }
+			}
 		    }
 		    rt_db_free_internal(&intern);
 		} else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_DSP) {
@@ -113,6 +152,13 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			dp2 = db_lookup(dbip, bu_vls_addr(&dsp->dsp_name), LOOKUP_QUIET);
 			if (dp2 != RT_DIR_NULL) {
 			    dp2->d_nref++;
+			}
+			// Do callbacks
+			if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks)) {
+			    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
+				struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
+				(*cb->f)(dbip, dp, dp2, bu_vls_cstr(&dsp->dsp_name), DB_OP_UNION, NULL, cb->u_data);
+			    }
 			}
 		    }
 		    rt_db_free_internal(&intern);
@@ -131,11 +177,18 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    db_tree_funcleaf(dbip, comb, comb->tree,
-			     db_count_refs, (void *)NULL,
+			     db_count_refs, (void *)dp,
 			     (void *)NULL, (void *)NULL, (void *)NULL);
 	    rt_db_free_internal(&intern);
 	}
     }
+
+    /* Do a NULL + subtraction callback to indicate the end of an update cycle */
+    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
+	struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
+	(*cb->f)(dbip, NULL, NULL, NULL, DB_OP_SUBTRACT, NULL, cb->u_data);
+    }
+
 }
 
 

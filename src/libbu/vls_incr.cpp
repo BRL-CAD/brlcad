@@ -1,7 +1,7 @@
 /*                      V L S _ I N C R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 #include <stdlib.h> /* for strtol */
 
 #include <regex>
-#include <string>
+#include <cstring>
 
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -120,59 +120,68 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
     struct bu_vls ispec = BU_VLS_INIT_ZERO;
     const char *last_regex = "([0-9]+)[^0-9]*$";
     const char *rs = (regex_str) ? regex_str : last_regex;
-    std::regex cregex(rs, std::regex_constants::extended);
-    int success = 0;
 
-    while (!success) {
-	std::string sline(bu_vls_cstr(name));
-	std::string incr_str, prefix, suffix;
-	/* Find incrementer. */
-	std::smatch ivar;
-	if (!std::regex_search(sline, ivar, cregex)) {
-	    /* No incrementer string according to the regex - add as a suffix */
-	    bu_vls_sprintf(&num_str, "0");
-	    prefix = sline;
-	    suffix = std::string("");
-	} else {
-	    /* We have an incrementer string according to the regex */
-	    std::string incr_str_pre = ivar.str(1);
-	    prefix = sline.substr(0, ivar.position(1));
-	    suffix = sline.substr(ivar.position(1)+ivar.length(1), std::string::npos);
-	    std::regex nregex("([0-9]+)", std::regex_constants::extended);
-	    std::smatch nvar;
-	    std::regex_search(incr_str_pre, nvar, nregex);
-	    bu_vls_sprintf(&num_str, "%s", nvar.str(1).c_str());
+    try {
+	std::regex cregex(rs, std::regex_constants::extended);
+	int success = 0;
+
+	while (!success) {
+	    std::string sline(bu_vls_cstr(name));
+	    std::string incr_str, prefix, suffix;
+	    /* Find incrementer. */
+	    std::smatch ivar;
+	    if (!std::regex_search(sline, ivar, cregex)) {
+		/* No incrementer string according to the regex - add as a suffix */
+		bu_vls_sprintf(&num_str, "0");
+		prefix = sline;
+		suffix = std::string("");
+	    } else {
+		/* We have an incrementer string according to the regex */
+		std::string incr_str_pre = ivar.str(1);
+		prefix = sline.substr(0, ivar.position(1));
+		suffix = sline.substr(ivar.position(1)+ivar.length(1), std::string::npos);
+		std::regex nregex("([0-9]+)", std::regex_constants::extended);
+		std::smatch nvar;
+		std::regex_search(incr_str_pre, nvar, nregex);
+		bu_vls_sprintf(&num_str, "%s", nvar.str(1).c_str());
+	    }
+
+	    /* Either used the supplied incrementing specification or initialize with the default */
+	    if (!incr_spec) {
+		bu_vls_sprintf(&ispec, "%zu:%d:%d:%d", strlen(bu_vls_cstr(&num_str)), 0, 0, 1);
+	    } else {
+		bu_vls_sprintf(&ispec, "%s", incr_spec);
+	    }
+
+	    bu_vls_sprintf(&new_name, "%s", prefix.c_str());
+
+	    /* Do incrementation */
+	    ret = vls_incr_next(&new_name, bu_vls_addr(&num_str), bu_vls_addr(&ispec));
+	    bu_vls_printf(&new_name, "%s", suffix.c_str());
+	    bu_vls_sprintf(name, "%s", bu_vls_cstr(&new_name));
+
+	    if (ret < 0) {
+		goto incr_cleanup;
+	    }
+
+	    /* If we need to, test for uniqueness */
+	    if (ut) {
+		success = (*ut)(name,data);
+	    } else {
+		success = 1;
+	    }
+
+	    bu_vls_trunc(&num_str, 0);
+	    bu_vls_trunc(&ispec, 0);
+	    bu_vls_trunc(&new_name, 0);
 	}
-
-	/* Either used the supplied incrementing specification or initialize with the default */
-	if (!incr_spec) {
-	    bu_vls_sprintf(&ispec, "%lu:%d:%d:%d", strlen(bu_vls_cstr(&num_str)), 0, 0, 1);
-	} else {
-	    bu_vls_sprintf(&ispec, "%s", incr_spec);
-	}
-
-	bu_vls_sprintf(&new_name, "%s", prefix.c_str());
-
-	/* Do incrementation */
-	ret = vls_incr_next(&new_name, bu_vls_addr(&num_str), bu_vls_addr(&ispec));
-	bu_vls_printf(&new_name, "%s", suffix.c_str());
-	bu_vls_sprintf(name, "%s", bu_vls_cstr(&new_name));
-
-	if (ret < 0) {
-	    goto incr_cleanup;
-	}
-
-	/* If we need to, test for uniqueness */
-	if (ut) {
-	    success = (*ut)(name,data);
-	} else {
-	    success = 1;
-	}
-
-	bu_vls_trunc(&num_str, 0);
-	bu_vls_trunc(&ispec, 0);
-	bu_vls_trunc(&new_name, 0);
     }
+
+    catch (const std::regex_error& e) {
+	bu_log("bu_vls_incr regex error: %s\n", e.what());
+	ret = -1;
+    }
+
 incr_cleanup:
     bu_vls_free(&num_str);
     bu_vls_free(&ispec);

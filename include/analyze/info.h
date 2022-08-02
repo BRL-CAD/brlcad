@@ -1,7 +1,7 @@
 /*                           I N F O . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2020 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ __BEGIN_DECLS
 struct region_pair {
     struct bu_list l;
     union {
-	char *name;
+	const char *name;
 	struct region *r1;
     } r;
     struct region *r2;
@@ -93,7 +93,7 @@ analyze_total_volume(struct current_state *context);
 
 /**
  * stores the region name, volume, high and low ranges of volume
- * for the specifed index of region in region table.
+ * for the specified index of region in region table.
  */
 ANALYZE_EXPORT extern void
 analyze_volume_region(struct current_state *context, int index, char** reg_name, double *volume, double *high, double *low);
@@ -112,7 +112,7 @@ analyze_total_mass(struct current_state *context);
 
 /**
  * stores the region name, mass, high and low ranges of mass
- * for the specifed index of region in region table.
+ * for the specified index of region in region table.
  */
 ANALYZE_EXPORT extern void
 analyze_mass_region(struct current_state *context, int index, char** reg_name, double *mass, double *high, double *low);
@@ -155,7 +155,7 @@ analyze_total_surf_area(struct current_state *state);
 
 /**
  * stores the region name, surf_area, high and low ranges of surf_area
- * for the specifed index of region in region table.
+ * for the specified index of region in region table.
  */
 ANALYZE_EXPORT extern void
 analyze_surf_area_region(struct current_state *state, int i, char **name, double *surf_area, double *high, double *low);

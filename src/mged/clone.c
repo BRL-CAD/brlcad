@@ -1,7 +1,7 @@
 /*	                  C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2020 United States Government as represented by
+ * Copyright (c) 2005-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@
 
 
 #define CLONE_VERSION "Clone ver 4.0\n2006-08-08\n"
-#define CLONE_BUFSIZE 512
+#define CLONE_BUFSIZE 511
 
 /*
  * NOTE: in order to not shadow the global "dbip" pointer used
@@ -225,21 +225,21 @@ static struct bu_vls *
 get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, int iter)
 {
     struct bu_vls *newname;
-    char prefix[CLONE_BUFSIZE] = {0}, suffix[CLONE_BUFSIZE] = {0}, buf[CLONE_BUFSIZE + 1] = {0}, suffix2[CLONE_BUFSIZE] = {0};
+    char prefix[CLONE_BUFSIZE+1] = {0}, suffix[CLONE_BUFSIZE+1] = {0}, buf[CLONE_BUFSIZE+1] = {0}, suffix2[CLONE_BUFSIZE+1] = {0};
     int num = 0, i = 1, j = 0;
 
     newname = bu_vls_vlsinit();
 
     /* Ugh. This needs much repair/cleanup. */
     if (state->updpos == 0) {
-	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%512s", prefix, &num, suffix, suffix2); /* CLONE_BUFSIZE */
-	snprintf(suffix, CLONE_BUFSIZE, "%s", suffix2);
+	bu_sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%" CPP_XSTR(CLONE_BUFSIZE) "s", prefix, &num, suffix, suffix2);
+	snprintf(suffix, CLONE_BUFSIZE+1, "%s", suffix2);
     } else if (state->updpos == 1) {
 	struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
 	int num2 = 0;
 	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", prefix, &num2, suffix2, &num, suffix);
 	bu_vls_sprintf(&tmpbuf, "%s%d%s", prefix, num2, suffix2);
-	snprintf(prefix, CLONE_BUFSIZE, "%s", bu_vls_addr(&tmpbuf));
+	snprintf(prefix, CLONE_BUFSIZE+1, "%s", bu_vls_addr(&tmpbuf));
 	bu_vls_free(&tmpbuf);
     } else
 	bu_exit(EXIT_FAILURE, "multiple -c options not supported yet.");
@@ -253,8 +253,11 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 	    /* primitives and regions */
 	    if (suffix[0] != 0)
 		if ((i == 1) && is_in_list(obj_list, buf)) {
+		    /* save the name for the next pass */
+		    struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
 		    j = index_in_list(obj_list, buf);
-		    snprintf(buf, sizeof(buf), "%s%d", prefix, num);	/* save the name for the next pass */
+		    bu_vls_sprintf(&tmpbuf, "%s%d", prefix, num);
+		    snprintf(buf, sizeof(buf), "%s", bu_vls_cstr(&tmpbuf));
 		    /* clear and set the name */
 		    bu_vls_trunc(newname, 0);
 		    bu_vls_printf(newname, "%s%s", bu_vls_addr(&obj_list.names[j].dest[iter]), suffix);
@@ -984,10 +987,10 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
     /* Prepare vert list *****************************/
     n_links = ((argc-3)/2)>1?((argc-3)/2):1;
-    verts = (vect_t *)malloc(sizeof(vect_t) * n_verts * (n_links+2));
+    verts = (vect_t *)bu_calloc(n_verts * (n_links+2), sizeof(vect_t), "verts");
 
     /* Read in links names and link lengths **********/
-    links = (struct link *)malloc(sizeof(struct link)*n_links);
+    links = (struct link *)calloc(n_links, sizeof(struct link));
     for (i = arg; i < (size_t)argc; i+=2) {
 	double scan;
 
@@ -1053,8 +1056,6 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	fflush(stdout);
 	for (j = 0; j < n_links; j++) /* set length of each link based on current track length */
 	    links[j].len = len * links[j].pct;
-	min = 0;
-	max = s.t[s.n_segs];
 	mid = 0;
 
 	for (j = 0; j < n_verts+1; j++) /* around the track once */
@@ -1088,6 +1089,10 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	len = totlen/(n_verts-1);
     }
     fprintf(stdout, "\n");
+    if (!i) {
+	fprintf(stdout, "Failed to interpolate any link vertices\n");
+	return TCL_ERROR;
+    }
 
     /* Write out interpolation info ******************/
     fprintf(stdout, "%ld Iterations; Final link lengths:\n", (unsigned long)i);

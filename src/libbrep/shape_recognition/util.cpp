@@ -1,7 +1,7 @@
 /*                        U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -372,6 +372,7 @@ subbrep_bbox(struct subbrep_island_data *obj)
 	}
 	if (loop_ind == -1) {
 	    bu_log("Error - could not find fil loop!\n");
+	    continue;
 	}
 	const ON_BrepLoop *loop= &(obj->brep->m_L[loop_ind]);
 	for (int ti = 0; ti < loop->TrimCount(); ti++) {
@@ -413,11 +414,11 @@ subbrep_brep_boolean(struct subbrep_island_data *data)
 	const ON_BrepLoop *loop = &(brep->m_L[data->island_loops[i]]);
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+	    if (trim->m_ei == -1)
+		continue;
 	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-	    if (trim->m_ei != -1) {
-		ON_3dPoint midpt = edge->EdgeCurveOf()->PointAt(edge->EdgeCurveOf()->Domain().Mid());
-		mid_points.Append(midpt);
-	    }
+	    ON_3dPoint midpt = edge->EdgeCurveOf()->PointAt(edge->EdgeCurveOf()->Domain().Mid());
+	    mid_points.Append(midpt);
 	}
     }
 

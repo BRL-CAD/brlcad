@@ -1,7 +1,7 @@
 /*                   E S C A P E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2020 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,16 +36,53 @@ esc_compare(const char *input, const char *output, const char *correct)
     }
 }
 
+static int
+esc_test3(int test_num)
+{
+    int pass = 0;
+    char *bufp;
+    char buffer[32];
+    switch (test_num) {
+	case 1:
+	    bufp = bu_str_unescape(bu_str_escape("abc", "b", buffer, 32), NULL, 0);
+	    pass = esc_compare("abc", bufp, "abc");
+	    bu_free(bufp, NULL);
+	    return !pass;
+	case 2:
+	    bufp = bu_str_unescape(bu_str_escape("abc\\cba", "b", buffer, 32), NULL, 0);
+	    pass = esc_compare("abc\\cba", bufp, "abccba");
+	    bu_free(bufp, NULL);
+	    return !pass;
+	case 3:
+	    bufp = bu_str_unescape(bu_str_escape("abc\\\\cba", "b", buffer, 32), NULL, 0);
+	    pass = esc_compare("abc\\\\cba", bufp, "abc\\cba");
+	    bu_free(bufp, NULL);
+	    return !pass;
+	case 4:
+	    bufp = bu_str_unescape(bu_str_escape("abc\\\\\\c\\ba\\", "b", buffer, 32), NULL, 0);
+	    pass = esc_compare("abc\\\\\\c\\ba\\", bufp, "abc\\c\\ba");
+	    bu_free(bufp, NULL);
+	    return !pass;
+	default:
+	    pass += esc_test3(1);
+	    pass += esc_test3(2);
+	    pass += esc_test3(3);
+	    pass += esc_test3(4);
+	    return (pass == 4) ? 0 : 1;
+    }
+}
 
 int
 main(int ac, char *av[])
 {
     int function_num = 0;
     int test_num = 0;
-    char *bufp;
     char buffer[32];
 
-    bu_setprogname(av[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(av[0]);
 
     if (ac < 3)
 	bu_exit(1, "Usage: %s {function_number} {test_number}\n", av[0]);
@@ -176,33 +213,9 @@ main(int ac, char *av[])
     }
 
     if (function_num == 3) {
-	int pass = 0;
-	switch (test_num) {
-	    case 1:
-		bufp = bu_str_unescape(bu_str_escape("abc", "b", buffer, 32), NULL, 0);
-		pass = esc_compare("abc", bufp, "abc");
-		bu_free(bufp, NULL);
-		/* fall through */
-
-	    case 2:
-		bufp = bu_str_unescape(bu_str_escape("abc\\cba", "b", buffer, 32), NULL, 0);
-		pass = esc_compare("abc\\cba", bufp, "abccba");
-		bu_free(bufp, NULL);
-		/* fall through */
-
-	    case 3:
-		bufp = bu_str_unescape(bu_str_escape("abc\\\\cba", "b", buffer, 32), NULL, 0);
-		pass = esc_compare("abc\\\\cba", bufp, "abc\\cba");
-		bu_free(bufp, NULL);
-		/* fall through */
-
-	    case 4:
-		bufp = bu_str_unescape(bu_str_escape("abc\\\\\\c\\ba\\", "b", buffer, 32), NULL, 0);
-		pass = esc_compare("abc\\\\\\c\\ba\\", bufp, "abc\\c\\ba");
-		bu_free(bufp, NULL);
-	}
-	return !pass;
+	return esc_test3(test_num);
     }
+
     return 1;
 }
 

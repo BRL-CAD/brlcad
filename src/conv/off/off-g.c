@@ -1,7 +1,7 @@
 /*                         O F F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,9 +51,9 @@ static struct bn_tol tol;
 
 int read_faces(struct model *m, FILE *fgeom)
 {
-    int 		   nverts, nfaces, nedges;
-    int 	   i, j, fail=0;
-    fastf_t 	  *pts;
+    int nverts = -1, nfaces = -1, nedges = -1;
+    int i, j, fail=0;
+    fastf_t *pts;
     struct vertex 	 **verts;
     struct faceuse 	 **outfaceuses;
     struct nmgregion  *r;
@@ -63,6 +63,13 @@ int read_faces(struct model *m, FILE *fgeom)
     /* Get numbers of vertices and faces, and grab the appropriate amount of memory */
     if (fscanf(fgeom, "%d %d %d", &nverts, &nfaces, &nedges) != 3)
 	bu_exit(1, "Cannot read number of vertices, faces, edges.\n");
+
+    if (nverts < 1 || nverts > INT_MAX - 1)
+	bu_exit(1, "Invalid vertex count: %d\n", nverts);
+
+    if (nfaces < 1 || nfaces > INT_MAX - 1)
+	bu_exit(1, "Invalid face count: %d\n", nfaces);
+
 
     pts = (fastf_t *) bu_malloc(sizeof(fastf_t) * 3 * nverts, "points list");
     verts = (struct vertex **) bu_malloc(sizeof(struct vertex *) * nverts, "vertices");
@@ -151,17 +158,18 @@ int read_faces(struct model *m, FILE *fgeom)
 
 int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 {
-#define SZ 64
-    char title[SZ-1], geom_fname[SZ+1];
-    char rname[SZ+1], sname[SZ+1];
+#define SZ 63
+    char title[SZ+1] = {0};
+    char geom_fname[SZ+1] = {0};
+    struct bu_vls rname = BU_VLS_INIT_ZERO;
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
 
-#define BUF_SZ 200
-    char buf[BUF_SZ], buf2[BUF_SZ];
+#define BUF_SZ 255
+    char buf[BUF_SZ+1] = {0};
+    char buf2[BUF_SZ+1] = {0};
 
     FILE *fgeom;
     struct model *m;
-
-    title[0] = geom_fname[0] = '\0';
 
     bu_fgets(buf, sizeof(buf), fpin);
     while (!feof(fpin)) {
@@ -171,7 +179,8 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 
 	if (sscanf(buf, "geometry %" CPP_XSTR(BUF_SZ) "[^\n]s", buf2) > 0) {
 #define FMT_SZ 40
-	    char dtype[FMT_SZ+1], format[FMT_SZ+1];
+	    char dtype[FMT_SZ+1] = {0};
+	    char format[FMT_SZ+1] = {0};
 
 	    if (sscanf(buf2, CPP_SCAN(FMT_SZ) CPP_SCAN(FMT_SZ) CPP_SCAN(SZ), dtype, format, geom_fname) != 3)
 		bu_exit(1, "Incomplete geometry field in input file.");
@@ -196,12 +205,15 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
     read_faces(m, fgeom);
     fclose(fgeom);
 
-    snprintf(sname, sizeof(sname), "s.%s", title);
-    snprintf(rname, sizeof(sname), "r.%s", title);
+    bu_vls_printf(&sname, "s.%s", title);
+    bu_vls_printf(&rname, "r.%s", title);
 
     mk_id(fpout, title);
-    mk_nmg(fpout, sname, m);
-    mk_comb1(fpout, rname, sname, 1);
+    mk_nmg(fpout, bu_vls_cstr(&sname), m);
+    mk_comb1(fpout, bu_vls_cstr(&rname), bu_vls_cstr(&sname), 1);
+
+    bu_vls_free(&sname);
+    bu_vls_free(&rname);
 
     nmg_km(m);
     return 0;

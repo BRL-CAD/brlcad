@@ -4,23 +4,24 @@ verbose_add_subdirectory(doc legal)
 
 set(documentation_DATA
   BRL-CAD.bib
+  GITHUB
   IDEAS
   PROJECTS
   README.Linux
   README.MacOSX
   README.Windows
-  README.other/README.AIX
-  README.other/README.BSD
-  README.other/README.IRIX
-  README.other/README.Solaris
-  README.other/README.VAX
+  README.BSD
+  README.Solaris
+  README.VAX
   checklist.txt
   description.txt
   notes/TODO.BREP
   notes/TODO.shaded_displays
+  notes/apitrace.txt
   notes/brep.txt
   notes/bu_opt_design_notes.txt
   notes/cvs.txt
+  notes/debugging_example.txt
   notes/editors.txt
   notes/history.txt
   notes/hypot.txt
@@ -204,13 +205,24 @@ set(documentation_mged_old_DATA
 ADD_DOC(documentation_mged_old_DATA mged_old)
 
 configure_file(pad_file.xml.in "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" @ONLY)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" DESTINATION ${DOC_DIR})
 
 CMAKEFILES(
   CMakeLists.txt
-  README.other/README.OSCON-2014
   STARTERS
   STRATEGY
+  git/check.yml
+  git/diffing.txt
+  git/git2gource.cpp
+  git/gitconfig
+  git/gitk
+  git/gitstats.txt
+  git/gource.sh
+  git/gource.txt
+  git/history.txt
+  git/merging.txt
+  git/mime_types.txt
   notes/bsd_semaphore_bug.txt
   notes/cmake_paths/CMakeLists.txt
   notes/cmake_paths/README.txt

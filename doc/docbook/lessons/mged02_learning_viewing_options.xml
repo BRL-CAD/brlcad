@@ -108,10 +108,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged02_defaultradio.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged02_defaultradio.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged02_defaultradio.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged02_defaultradio.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -246,8 +246,8 @@
 	  <tgroup cols="2" align="center">
 	    <tbody>
 	      <row>
-		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_flower_zoomin.png" scale="60"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_flower_zoomin.png" scale="60"/></imageobject></inlinemediaobject></entry>
-		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_flower_zoomout.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_flower_zoomout.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_flower_zoomin.png" scale="60"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_flower_zoomin.png" scale="60"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_flower_zoomout.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_flower_zoomout.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>Zoom In to View Details (small size of view)</entry>
@@ -341,8 +341,8 @@
 	    <colspec colwidth="3*"/>
 	    <tbody>
 	      <row>
-		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_truck_front.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_truck_front.png"/></imageobject></inlinemediaobject></entry>
-		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_truck_35_0.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_truck_35_0.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_truck_front.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_truck_front.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_truck_35_0.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_truck_35_0.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>Front (az=0, el=0)</entry>
@@ -358,8 +358,8 @@
 	    <colspec colwidth="1*"/>
 	    <tbody>
 	      <row>
-		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_truck_left.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_truck_left.png"/></imageobject></inlinemediaobject></entry>
-		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_truck_rear.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_truck_rear.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_truck_left.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_truck_left.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_truck_rear.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_truck_rear.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>Left (az=90, el=0)</entry>
@@ -373,7 +373,7 @@
 	  <tgroup cols="1" align="center">
 	    <tbody>
 	      <row>
-		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_truck_right.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_truck_right.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_truck_right.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_truck_right.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>Right (az=270, el=0)</entry>
@@ -398,24 +398,24 @@
 	  <tgroup cols="2" align="center">
 	    <tbody>
 	      <row>
-		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_truck_35_0.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_truck_35_0.png"/></imageobject></inlinemediaobject></entry>
-		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_truck_35_25.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_truck_35_25.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_truck_35_0.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_truck_35_0.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_truck_35_25.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_truck_35_25.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>az=35, el=0</entry>
 		<entry>az=35, el=25</entry>
 	      </row>
 	      <row>
-		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_truck_35_60.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_truck_35_60.png"/></imageobject></inlinemediaobject></entry>
-		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_truck_35_90.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_truck_35_90.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_truck_35_60.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_truck_35_60.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_truck_35_90.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_truck_35_90.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>az=35, el=60</entry>
 		<entry>az=35, el=90</entry>
 	      </row>
 	      <row>
-		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_truck_270_90.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_truck_270_90.png"/></imageobject></inlinemediaobject></entry>
-		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_truck_270_-90.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_truck_270_-90.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_truck_270_90.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_truck_270_90.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_truck_270_-90.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_truck_270_-90.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>Top (az=270, el=90)</entry>
@@ -440,7 +440,7 @@
 	    <tgroup cols="1" align="center">
 	      <tbody>
 		<row>
-		  <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_truck_0_0_14.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_truck_0_0_14.png"/></imageobject></inlinemediaobject></entry>
+		  <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_truck_0_0_14.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_truck_0_0_14.png"/></imageobject></inlinemediaobject></entry>
 		</row>
 		<row>
 		  <entry>Front (az=0, el=0, tw=14)</entry>
@@ -467,10 +467,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged02_coordsys.png" scale="60" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged02_coordsys.png" scale="60" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged02_coordsys.png" scale="60" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged02_coordsys.png" scale="60" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -507,16 +507,16 @@
 	<tgroup cols="2" align="center">
 	  <tbody>
 	    <row>
-	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_radio_top.png" scale="90"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_radio_top.png" scale="90"/></imageobject></inlinemediaobject></entry>
-	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_radio_35_25.png" scale="90"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_radio_35_25.png" scale="90"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_radio_top.png" scale="90"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_radio_top.png" scale="90"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_radio_35_25.png" scale="90"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_radio_35_25.png" scale="90"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Top</entry>
 	      <entry>az35,el25</entry>
 	    </row>
 	    <row>
-	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_radio_right.png" scale="90"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_radio_right.png" scale="90"/></imageobject></inlinemediaobject></entry>
-	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged02_radio_front.png" scale="90"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged02_radio_front.png" scale="90"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_radio_right.png" scale="90"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_radio_right.png" scale="90"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged02_radio_front.png" scale="90"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged02_radio_front.png" scale="90"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Right</entry>
@@ -545,10 +545,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged02_multipane.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged02_multipane.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged02_multipane.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged02_multipane.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>

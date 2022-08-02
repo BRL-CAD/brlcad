@@ -1,7 +1,7 @@
 /*                           G C V . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -300,9 +300,8 @@ file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 
     if (bu_file_exists(argv[0], NULL)) {
 	if (msg) {
-	    bu_vls_sprintf(msg, "Error - file %s already exists!\n", argv[0]);
+	    bu_vls_sprintf(msg, "Note - file %s already exists, appending conversion output\n", argv[0]);
 	}
-	return -1;
     }
 
     if (file_set)
@@ -367,10 +366,11 @@ do_conversion(
     size_t in_argc, const char **in_argv,
     size_t out_argc, const char **out_argv)
 {
-    const struct bu_ptbl * const filters = gcv_list_filters();
+    struct gcv_context context;
+    gcv_context_init(&context);
+    const struct bu_ptbl * const filters = gcv_list_filters(&context);
     const struct gcv_filter * const *entry;
     const struct gcv_filter *in_filter = NULL, *out_filter = NULL;
-    struct gcv_context context;
 
     for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
 	bu_mime_model_t emt = (*entry)->mime_type;
@@ -396,10 +396,11 @@ do_conversion(
 	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(in_type, BU_MIME_MODEL));
     if (!out_filter)
 	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(out_type, BU_MIME_MODEL));
-    if (!in_filter || !out_filter)
+    if (!in_filter || !out_filter) {
+	gcv_context_destroy(&context);
 	return 0;
+    }
 
-    gcv_context_init(&context);
 
     if (!gcv_execute(&context, in_filter, NULL, in_argc, in_argv, in_path)) {
 	bu_vls_printf(messages, "Read filter ('%s') failed for '%s'\n", in_filter->name, in_path);
@@ -540,6 +541,9 @@ main(int ac, const char **av)
 	goto cleanup;
     }
 
+    // Remaining av handling will use the ac count from bu_opt_parse
+    ac = unknown_ac;
+
     /* Did we get explicit options for an input and/or output file? */
     if (in_str) {
 	bu_vls_sprintf(&in_path_raw, "%s", in_str);
@@ -567,12 +571,10 @@ main(int ac, const char **av)
 	    bu_vls_sprintf(&in_path_raw, "%s", av[ac - 2]);
 	    bu_vls_sprintf(&out_path_raw, "%s", av[ac - 1]);
 	    av[ac - 1] = av[ac - 2] = NULL;
-	    ac -= 2;
 	    unknown_ac -= 2;
 	} else if (ac == 1) {
 	    bu_vls_sprintf(&in_path_raw, "%s", av[ac - 1]);
 	    av[ac - 1] = NULL;
-	    ac--;
 	    unknown_ac--;
 	}
     }
@@ -698,8 +700,10 @@ cleanup:
 
     bu_vls_free(&in_format);
     bu_vls_free(&in_path);
+    bu_vls_free(&in_path_raw);
     bu_vls_free(&out_format);
     bu_vls_free(&out_path);
+    bu_vls_free(&out_path_raw);
     bu_vls_free(&slog);
 
     bu_ptbl_free(&in_opts);

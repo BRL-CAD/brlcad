@@ -1,11 +1,15 @@
 set(IFC_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${STEPCODE_INCLUDE_DIRS}
   ${OPENNURBS_INCLUDE_DIRS}
   )
+
+link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
+
 BRLCAD_INCLUDE_DIRS(IFC_INCLUDE_DIRS)
 
-set(IFC_SCHEMA_FILE ${STEPCODE_DIR}/data/ifc4/IFC4.exp)
+set(IFC_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ifc4/IFC4.exp)
 
 GENERATE_SCHEMA_INPUTS(${IFC_SCHEMA_FILE} ifcg)
 
@@ -28,7 +32,7 @@ set(ifcg_LIBS
   )
 list(APPEND ifcg_LIBS ${ifcg_LIBS})
 
-BRLCAD_ADDEXEC(ifc-g "${ifcg_SOURCES}" "${ifcg_LIBS}" NO_STRICT)
+BRLCAD_ADDEXEC(ifc-g "${ifcg_SOURCES}" "${ifcg_LIBS}" NO_STRICT FOLDER Conv)
 add_dependencies(ifc-g ifc-express-${SCHEMA_NAME}-ifcg)
 
 if (HIDE_INTERNAL_SYMBOLS)

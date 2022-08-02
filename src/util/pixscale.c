@@ -1,7 +1,7 @@
 /*                      P I X S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -88,7 +88,10 @@ fill_buffer(int y)
     size_t ret;
 
     buf_start = y - buflines/2;
-    if (buf_start < 0) buf_start = 0;
+    if (buf_start < 0)
+	buf_start = 0;
+
+    /* bu_log("filepos is %zu, buf_start is %zu, scanlen is %zu\n", (size_t)file_pos, (size_t)buf_start, (size_t)scanlen); */
 
     if (file_pos != buf_start * scanlen) {
 	if (bu_fseek(buffp, buf_start * scanlen, 0) < 0) {
@@ -97,8 +100,10 @@ fill_buffer(int y)
 	file_pos = buf_start * scanlen;
     }
     ret = fread(buffer, scanlen, buflines, buffp);
-    if (ret < (size_t)buflines)
+    if (ret < (size_t)buflines && ferror(buffp))
 	perror("fread");
+    else if (feof(buffp))
+	bu_log("WARNING: Short read (%zu < %zu)", ret, buflines);
 
     file_pos += buflines * scanlen;
 }
@@ -383,7 +388,7 @@ get_args(int argc, char **argv)
     /* XXX - backward compatibility hack */
     if (bu_optind+5 == argc) {
 	file_name = argv[bu_optind++];
-	if ((buffp = fopen(file_name, "r")) == NULL) {
+	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}
@@ -400,7 +405,7 @@ get_args(int argc, char **argv)
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((buffp = fopen(file_name, "r")) == NULL) {
+	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}
@@ -419,6 +424,9 @@ main(int argc, char **argv)
     int i;
 
     bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);

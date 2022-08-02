@@ -1,7 +1,7 @@
 /*                         G L O B . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2020 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 __BEGIN_DECLS
 
 
-/** @addtogroup bu_glob
+/** @addtogroup bu_experimental
  *
  * NOTE - the glob API below is a work in progress - until this notice is
  * removed it should not be considered functional, much less stable!
@@ -67,10 +67,10 @@ struct bu_stat {
  */
 struct bu_glob_context {
 
-#define BU_GLOB_APPEND     0x0001  /* Append to output from previous call. */
-#define BU_GLOB_NOSORT     0x0020  /* Don't sort. */
-#define BU_GLOB_NOESCAPE   0x2000  /* Disable backslash escaping. */
-#define BU_GLOB_ALTDIRFUNC 0x0040  /* use alternate functions. */
+#define BU_GLOB_APPEND     0x0001  /**< Append to output from previous call. */
+#define BU_GLOB_NOSORT     0x0020  /**< Don't sort. */
+#define BU_GLOB_NOESCAPE   0x2000  /**< Disable backslash escaping. */
+#define BU_GLOB_ALTDIRFUNC 0x0040  /**< use alternate functions. */
     int gl_flags;                /**< flags customizing globbing behavior */
 
     /* Return values */
@@ -88,8 +88,8 @@ struct bu_glob_context {
     int (*gl_lstat)(const char *, struct bu_stat *, struct bu_glob_context *);
     int (*gl_stat)(const char *, struct bu_stat *, struct bu_glob_context *);
 
-#define BU_GLOB_NOMATCH (-1)     /* No match. */
-#define BU_GLOB_ABORTED (-2)     /* Unignored error. */
+#define BU_GLOB_NOMATCH (-1)     /**< No match. */
+#define BU_GLOB_ABORTED (-2)     /**< Unignored error. */
     int (*gl_errfunc)(const char *, int, struct bu_glob_context *);
 
     /* For caller use */
@@ -116,7 +116,7 @@ BU_EXPORT struct bu_glob_context *bu_glob_init();
 
 
 /**
- * release any resoures allocated during bu_glob(), including any
+ * release any resources allocated during bu_glob(), including any
  * returned paths
  */
 BU_EXPORT extern void bu_glob_free(struct bu_glob_context *);

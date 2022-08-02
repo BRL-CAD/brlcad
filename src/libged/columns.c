@@ -1,7 +1,7 @@
 /*                       C O L U M N S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rt/db4.h"
+#include "./ged_private.h"
 
 
 static int col_count;		/* names listed on current line */
@@ -77,7 +78,6 @@ vls_col_eol(struct bu_vls *str)
     col_count = 0;
     col_len = 0;
 }
-
 
 /*
  * Local Variables:

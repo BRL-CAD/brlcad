@@ -1,7 +1,7 @@
 /*                   B R E P _ C O B B . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Based off of code from Ayam:
@@ -233,36 +233,42 @@ Cobb_Sphere(double UNUSED(radius), ON_3dPoint *UNUSED(origin))
     ON_NurbsSurface *p1_nurb = ON_NurbsSurface::New();
     b1->GetNurbForm(*p1_nurb);
     b->NewFace(*p1_nurb);
+    delete b1;
 
     // Patch 2 of 6
     ON_BezierSurface *b2 = ON_CobbSphereFace(90, 0);
     ON_NurbsSurface *p2_nurb = ON_NurbsSurface::New();
     b2->GetNurbForm(*p2_nurb);
     b->NewFace(*p2_nurb);
+    delete b2;
 
     // Patch 3 of 6
     ON_BezierSurface *b3 = ON_CobbSphereFace(180, 0);
     ON_NurbsSurface *p3_nurb = ON_NurbsSurface::New();
     b3->GetNurbForm(*p3_nurb);
     b->NewFace(*p3_nurb);
+    delete b3;
 
     // Patch 4 of 6
     ON_BezierSurface *b4 = ON_CobbSphereFace(270, 0);
     ON_NurbsSurface *p4_nurb = ON_NurbsSurface::New();
     b4->GetNurbForm(*p4_nurb);
     b->NewFace(*p4_nurb);
+    delete b4;
 
     // Patch 5 of 6
     ON_BezierSurface *b5 = ON_CobbSphereFace(90, 90);
     ON_NurbsSurface *p5_nurb = ON_NurbsSurface::New();
     b5->GetNurbForm(*p5_nurb);
     b->NewFace(*p5_nurb);
+    delete b5;
 
     // Patch 6 of 6
     ON_BezierSurface *b6 = ON_CobbSphereFace(90, 270);
     ON_NurbsSurface *p6_nurb = ON_NurbsSurface::New();
     b6->GetNurbForm(*p6_nurb);
     b->NewFace(*p6_nurb);
+    delete b6;
 
 
     b->Standardize();

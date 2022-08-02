@@ -1,7 +1,7 @@
 /*                C H E C K _ S U R F _ A R E A . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2020 United States Government as represented by
+ * Copyright (c) 2018-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ int check_surf_area(struct current_state *state,
 {
     int i;
     double units = options->units[LINE]->val*options->units[LINE]->val;
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_SURF_AREA)) return GED_ERROR;
+    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_SURF_AREA)) return BRLCAD_ERROR;
 
     print_verbose_debug(options);
 
@@ -66,7 +66,7 @@ int check_surf_area(struct current_state *state,
 			  low/units);
 	}
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

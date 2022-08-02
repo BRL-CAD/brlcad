@@ -50,10 +50,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged09_globe_outside_display_box.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged09_globe_outside_display_box.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged09_globe_outside_display_box.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged09_globe_outside_display_box.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -75,10 +75,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged09_globe_inside_outside_box.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged09_globe_inside_outside_box.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged09_globe_inside_outside_box.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged09_globe_inside_outside_box.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -121,10 +121,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged09_globe_wireframe.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged09_globe_wireframe.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged09_globe_wireframe.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged09_globe_wireframe.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -200,10 +200,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged09_globe_raytraced.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged09_globe_raytraced.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged09_globe_raytraced.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged09_globe_raytraced.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -303,10 +303,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged09_globe_base_box_wireframe.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged09_globe_base_box_wireframe.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged09_globe_base_box_wireframe.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged09_globe_base_box_wireframe.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -353,10 +353,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged09_globe_base_box_raytraced.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged09_globe_base_box_raytraced.png" format="PNG"/>
 	  </imageobject>
 	<imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged09_globe_base_box_raytraced.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged09_globe_base_box_raytraced.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </informalfigure>

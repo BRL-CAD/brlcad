@@ -1,7 +1,7 @@
 /*                       F B C B A R S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define MAX_LINE (8*1024)	/* Max pixels/line */
@@ -220,7 +220,7 @@ int
 main(int argc, char **argv)
 {
     int x, y;
-    fb *fbp;
+    struct fb *fbp;
 
     bu_setprogname(argv[0]);
 

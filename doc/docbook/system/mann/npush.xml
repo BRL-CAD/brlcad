@@ -1,0 +1,438 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="STATFORMAT" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <refmeta>
+    <refentrytitle>NPUSH</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id="name">
+    <refname>npush</refname>
+    <refpurpose>
+      push matrices down a tree hierarchy
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>npush</command>
+      <arg choice="opt" rep="norepeat">-h</arg>
+      <arg choice="opt" rep="norepeat">-?</arg>
+      <arg choice="opt" rep="norepeat">-v</arg>
+      <arg choice="opt" rep="norepeat">-f</arg>
+      <arg choice="opt" rep="norepeat">-x</arg>
+      <arg choice="opt" rep="norepeat">-r</arg>
+      <arg choice="opt" rep="norepeat">-s</arg>
+      <arg choice="opt" rep="norepeat">-d <replaceable>max_depth</replaceable></arg>
+      <arg choice="req">arg1 [arg2]...</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  
+  <refsection xml:id="npush_background"><info><title>Background: Matrices in BRL-CAD</title></info>
+
+  <para>
+    BRL-CAD uses a global coordinate system in which all objects are placed.  This means each region
+    must uniquely occupy its own portion of that space in order to avoid overlapping with another
+    region.  Naively, this means that all objects defined in a .g file need to individually
+    describe distinct volumes using unique primitives.  While possible, such an approach is quite
+    wasteful if different regions define the same shape and vary only in the positioning of that shape.
+    A classic example is as a standard bolt used hundereds of times in assembling a machine - ideally
+    such a shape should only need to be described once, and then <emphasis>instances</emphasis> of that
+    shape are positioned to identify individual bolts in the overall model.
+  </para>
+  <para>
+    COMB trees, which describe organized hierarchies of individual shapes (or other COMB trees) in
+    BRL-CAD, are the standard mechanism used in .g files to reusing otherwise identical object definitions
+    in <emphasis>different</emphasis> positions and orientations. Matrices associated with instances of
+    objects listed in COMB trees position those individual parts, and matrices at different portions of
+    the COMB tree hierarchy can position smaller or large components of the whole.
+    For example, the tree:
+  </para>
+  <literallayout>
+    sph3/
+        u sph3_1.r/R
+                u sph3.s
+        u sph3_2.r/R
+                u sph3.s
+  </literallayout>
+  <para>
+    appears at first glance to define an overlap, since it includes two different regions both of which
+    are defined using the same sphere object: sph3.s.  However, if we inspect sph3_1.r and sph3_2.r more
+    closely, we see that their definitions incorporate matrices over the instances of sph3.s:
+  </para>
+  <literallayout>
+sph3_1.r:  REGION id=1002 (air=0, los=100, GIFTmater=1) --
+   u sph3.s [10, 0, 0] scale 1
+sph3_2.r:  REGION id=1003 (air=0, los=100, GIFTmater=1) --
+   u sph3.s [20, 0, 0] scale 1
+  </literallayout>
+  <para>
+    The instance of sph3.s in sph3_1.r is offset in the X direction by 10mm, and the sph3_2.r instance is
+    offset by 20mm.  In addition, if we inspect sph3's tree:
+  </para>
+  <literallayout>
+sph3:  --
+   u sph3_1.r
+   u sph3_2.r [100, 0, 0] scale 1
+  </literallayout>
+  <para>
+    we see that the instance of sph3_2.r in sph3 also has a matrix offsetting its position.  So the
+    instance of sph.s defined by sph3/sph3_2.r/sph.s is offset in total by 120mm in the positive X direction
+    relative to the global definition of sph.s
+  </para>
+  <para>
+    As useful as these matrices are, users frequently need to consolidate multiple levels of positioning
+    within a COMB tree, or even eliminate them completely if a client's code is not able to properly interpret
+    the matrix information of a COMB hierarchy for its own processing.  Thus, specific logic is available in
+    BRL-CAD to accomplish these tasks.
+  </para>
+  
+  </refsection>
+
+  <refsection xml:id="npush_overview"><info><title>Overview</title></info>
+
+  <para>
+    The GED command <command>npush</command> defines logic for "moving" matrix operations within a COMB tree,
+    without changing the position of individual object instances in the tree definition.
+  </para>
+  
+  </refsection>
+
+  <refsection xml:id="npush_depth"><info><title>A Note on Depth</title></info>
+
+  <para>
+    It is worth taking a little time to define what we are referring to when we discuss the concept of
+    depth when it comes to applying matrix pushing operations.  Consider the hierarchy:
+  </para>
+  <literallayout>
+sph_009/
+        u [M1] sph9_g1/
+                u [M2] sph9_g2/
+                        u [M3] sph9_g3/
+                                u [M4] sph9_g4/
+                                        u [M5] sph9.r/R
+                                                u [M6] sph9.s
+  </literallayout>
+  <para>
+    M1, M2, etc. are matrices applied at each level of the hierarchy.  When discussing M1, we would refer
+    to that matrix as being at "depth 1" in the hierarchy, as it is defined at one level below the top
+    of the tree.  Similarly, M2 would be defined as being at depth 2, and so on.
+  </para>
+  <para>
+    When discussing depth in push operations, pushing a matrix to a depth means we propagate the matrices
+    down the tree to define a matrix at the specified depth.  For example, in the above example, a push
+    of the matrices to depth 4 would result in:
+  </para>
+  <literallayout>
+sph_009/
+        u sph9_g1/
+                u sph9_g2/
+                        u sph9_g3/
+                                u [M1234] sph9_g4/
+                                        u [M5] sph9.r/R
+                                                u [M6] sph9.s
+  </literallayout>
+  <para>
+    where M1234 is the accumulated application of M1, M2, M3 and M4.  Note the new matrix is applied at
+    depth 4, the depth specified as the depth limit in the push.  Similarly, a depth limit of 6 would
+    result in:
+  </para>
+  <literallayout>
+sph_009/
+        u sph9_g1/
+                u sph9_g2/
+                        u sph9_g3/
+                                u sph9_g4/
+                                        u sph9.r/R
+                                                u [M123456] sph9.s
+  </literallayout>
+  <para>
+    where M123456 is the accumulated application of M1, M2, M3, M4, M5 and M6.  Note that the final step
+    of eliminating the matrix by updating the parameters of sph.s was not taken.  That operation is defined
+    conceptually as being at one depth lower than the matrix applied to the object.  Thus, it would require
+    a depth limit of 7 to completely eliminate all the matrices in the example and update sph.s:
+  </para>
+  <literallayout>
+sph_009/
+        u sph9_g1/
+                u sph9_g2/
+                        u sph9_g3/
+                                u sph9_g4/
+                                        u sph9.r/R
+                                                u sph9.s (updated)
+  </literallayout>
+  <para>
+    Note that if an object or comb exists at different levels of the hierarchy, depth limits may produce
+    copies of an object even if there wouldn't otherwise be a need for those copies.  Take the following
+    example:
+  </para>
+  <literallayout>
+sph_010/
+        u [M1] sph10_f/
+                u [M1] sph10_g/
+                        u [M1] sph10.r/R
+                                u [M2] sph10.s
+        u [M3] sph10_a.r/R
+                u [M3] sph10.s
+  </literallayout>
+  <para>
+    where 3*M1+M2 = 2*M3 (i.e., the matricies on each branch of sph_010's tree individually evaluate out
+    to the same result).  Since sph10.s ends up in the same place in both branches of sph_010, a full
+    push of all matrices in this tree shouldn't need to create a copy of sph10.s with new paramenters.  However,
+    if a push is limited to depth 3, we get a different outcome in that respect:
+  </para>
+  <literallayout>
+sph_010/
+        u sph10_f/
+                u sph10_g/
+                        u [M1*3] sph10.r/R
+                                u [M2] sph10.s
+        u sph10_a.r/R
+                u sph10.s_01 (updated sph10.s copy)
+  </literallayout>   
+  <para>
+    Depth 3 is deep enough that the parameters of sph10.s in the second branch should be updated.  However,
+    in the first branch, there is an instance of sph10.s that will remain unmodified with a depth limit of
+    three.  Thus, the database needs to contain both the modified and unmodified sph10.s in order to define
+    the requested comb tree.  A subsequent full push would result in sph10.s being identical to sph10.s_01,
+    but (at least for now) logic to automatically recognize this case and simplify it is not built in to the
+    push logic.
+  </para>
+  <para>
+    The same phenomena can occur with comb trees.  Consider the following example:
+  </para>
+  <literallayout>
+sph_011/
+        u sph11_f/
+                u [M1] sph11_g/
+                        u sph11.s
+        u sph11_h/
+                u [M2] sph11_g/
+                        u sph11.s
+  </literallayout>
+  <para>
+    If sph_011 is pushed to depth 3, the matrices will be pushed to the level of sph11_g's instance
+    references (sph11.s, in this case.)  However, if M1 != M2, sph11_g would need to have two different
+    matrices in its tree for the same instance.  Since a depth limit of 3 does not push the matrices
+    down to parameter setting of sph11.s, a new comb must be created:
+  </para>
+  <literallayout>
+sph_011/
+        u sph11_f/
+                u sph11_g/
+                        u [M1] sph11.s
+        u sph11_h/
+                u sph11_g_01/ (updated sph11_g copy)
+                        u [M2] sph11.s
+  </literallayout>
+  
+  </refsection>
+
+  <refsection xml:id="npush_special_depths"><info><title>Pushing relative to Regions and Shapes</title></info>
+
+  <para>
+    In addition to numerical depth limits, <command>npush</command> offers two additional specifiers that
+    are more aware of specific types of objects in trees.  The <option>r</option> option will push matrices
+    down to a level just above region references, and the <option>s</option> option will push matrices to
+    a level just above primitive shapes.  For example, using the following hierarchy:
+  </para>
+  <literallayout>
+sph_010/
+        u [M1] sph10_f/
+                u [M1] sph10_g/
+                        u [M1] sph10.r/R
+                                u [M2] sph10.s
+        u [M3] sph10_a.r/R
+                u [M3] sph10.s
+  </literallayout>
+  <para>
+    a <option>r</option> push would result in the following:
+  </para>
+  <literallayout>
+sph_010/
+        u sph10_f/
+                u sph10_g/
+                        u [M1*3] sph10.r/R
+                                u [M2] sph10.s
+        u [M3] sph10_a.r/R
+                u [M3] sph10.s
+  </literallayout>
+  <para>
+    A <option>s</option> push, on the other hand, will take the matrices in both branches deeper:
+  </para>
+  <literallayout>
+sph_010/
+        u sph10_f/
+                u sph10_g/
+                        u sph10.r/R
+                                u [M1*3+M2] sph10.s
+        u sph10_a.r/R
+                u [M3*2] sph10.s
+  </literallayout>
+  <para>
+    Note that neither option alters the parameters of primitive shapes.
+  </para>
+
+  <para>
+    Worse still is a case where multiple copies of identical objects are referenced at multiple levels.
+    Consider the following example:
+  </para>
+  <literallayout>
+sph_016/
+        u [M1] sph16a/R
+                u [M2] sph16_1/
+                        u sph16.c/
+                                u sph16.s
+                u sph16_1/
+                        u sph16.c/
+                                u sph16.s
+        u [M3] sph16a/R
+                u [M4] sph16_1/
+                        u sph16.c/
+                                u sph16.s
+                u sph16_1/
+                        u sph16.c/
+                                u sph16.s
+  </literallayout>
+  <para>
+    If we push to depth 3, we end up with four different versions of the sph16.c tree: 
+  </para>
+  <literallayout>
+sph_016/
+        u sph16a/R
+                u sph16_1/
+                        u [M12] sph16.c/
+                                u sph16.s
+                u sph16_1/
+                        u [M1] sph16.c/
+                                u sph16.s
+        u sph16a/R
+                u sph16_1/
+                        u [M34] sph16.c/
+                                u sph16.s
+                u sph16_1/
+                        u [M3] sph16.c/
+                                u sph16.s
+  </literallayout>
+  <para>
+    The first stage of the answer is to create three new combinations and redefine the sph16a tree:
+  </para>
+  <literallayout>
+sph_016/
+        u sph16a/R
+                u sph16_1_01/
+                        u [M12] sph16.c/
+                                u sph16.s
+                u sph16_1/
+                        u [M1] sph16.c/
+                                u sph16.s
+        u sph16a/R
+                u sph16_1_02/
+                        u [M34] sph16.c/
+                                u sph16.s
+                u sph16_1_03/
+                        u [M3] sph16.c/
+                                u sph16.s
+  </literallayout>
+  <para>
+    That addresses sph16_1, but the tree updates to sph16a created a new problem:   now we have
+    two different versions of the sph16a tree.  To resolve that problem, we must create a new
+    comb to replace one of the conflicting sph16a instances and redefine the sph_016 tree:
+  </para>
+  <literallayout>
+sph_016/
+        u sph16a/R
+                u sph16_1_01/
+                        u [M12] sph16.c/
+                                u sph16.s
+                u sph16_1/
+                        u [M1] sph16.c/
+                                u sph16.s
+        u sph16a_01/R
+                u sph16_1_02/
+                        u [M34] sph16.c/
+                                u sph16.s
+                u sph16_1_03/
+                        u [M3] sph16.c/
+                                u sph16.s
+  </literallayout>
+  <para>
+    Unlike sph16a and sph16_1, sph_016 has not seen any changes to its volumetric definition.  sph_016
+    is the "top level" object specified for this push, and as such constitutes a reliable termination point for
+    any need to propagate tree changes.  Even if any combs elsewhere in the database reference sph_016,
+    they will not see any volumetric changes as a consequence of the operation and do not need to redefine
+    their trees to preserve original sph_016 trees for external use in copies of sph_016.
+  </para>
+  </refsection>
+  
+  <refsection xml:id="search_options"><title>OPTIONS</title>
+
+    <variablelist remap="TP">
+      <varlistentry>
+        <term><emphasis remap="B" role="bold">-h or -?</emphasis></term>
+        <listitem>
+          <para>
+            Print help and exit.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis remap="B" role="bold">-v</emphasis></term>
+        <listitem>
+          <para>
+            Verbose processing output (primarily used for debugging).
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis remap="B" role="bold">-f or -x</emphasis></term>
+        <listitem>
+          <para>
+            Force creation of new objects if necessary to avoid conflicts while fully pushing matrices. (A.k.a "xpush" mode).
+          </para>
+        </listitem>
+      </varlistentry>
+       <varlistentry>
+        <term><emphasis remap="B" role="bold">-r</emphasis></term>
+        <listitem>
+          <para>
+            Halt push operations at the hierarchy level above regions.
+          </para>
+        </listitem>
+       </varlistentry>
+        <varlistentry>
+        <term><emphasis remap="B" role="bold">-s</emphasis></term>
+        <listitem>
+          <para>
+	    Halt push operations at the hierarchy level above solids.
+          </para>
+        </listitem>
+	</varlistentry>
+        <varlistentry>
+        <term><emphasis remap="B" role="bold">-d max_depth</emphasis></term>
+        <listitem>
+          <para>
+	    Halt push operations at the hierarchy level specified by <emphasis>max_depth</emphasis>.
+          </para>
+        </listitem>
+	</varlistentry>
+    </variablelist>
+
+  </refsection>
+
+  <refsection xml:id="examples"><title>EXAMPLES</title>
+
+    <example><title>Default</title>
+      <para>
+        <userinput>push sph1</userinput>
+      </para>
+      <literallayout>
+      </literallayout>
+    </example>
+    
+  </refsection>
+  
+</refentry>

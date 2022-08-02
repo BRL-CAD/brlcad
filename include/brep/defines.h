@@ -1,7 +1,7 @@
 /*                      D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,18 +40,30 @@
 /* @cond */
 extern "C++" {
 
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  if GCC_PREREQ(8,0)
+#    pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  endif
+#endif
+
 /* don't let opennurbs include windows.h */
 #define ON_NO_WINDOWS 1
 
-/* NOTE: we re-define read/write due to the archive_mode enum that
- * shadows the system symbols.  we undefine when done to not interfere
- * with app code.
- */
-#define read on_read
-#define write on_write
 #include "opennurbs.h"
-#undef read
-#undef write
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 }
 /* @endcond */

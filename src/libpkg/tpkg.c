@@ -1,7 +1,7 @@
 /*                          T P K G . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2020 United States Government as represented by
+ * Copyright (c) 2006-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -284,6 +284,7 @@ run_client(const char *server, int port, const char *file, unsigned int tpkg_buf
 	    if (bytes < 0) {
 		pkg_close(stash.connection);
 		bu_log("Unable to successfully send data to %s, port %d.\n", stash.server, stash.port);
+		fclose(fp);
 		bu_free(buffer, "buffer release");
 		return;
 	    }

@@ -6,44 +6,30 @@ set(BN_INCLUDE_DIRS
   )
 
 set(BN_LOCAL_INCLUDE_DIRS
-  ${BRLCAD_SOURCE_DIR}/src/other/Eigen
+  ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(bn BN_INCLUDE_DIRS BN_LOCAL_INCLUDE_DIRS)
 
 set(LIBBN_SOURCES
   anim.c
-  axis.c
   complex.c
-  clip.c
-  font.c
   globals.c
-  list.c
-  marker.c
   mat.c
   msr.c
   mt19937ar.c
   multipoly.c
   noise.c
-  plane.cpp
-  plot3.c
   poly.c
   qmath.c
   rand.c
   randsph.c
-  scale.c
-  sobolseq.c
+  sobol.c
   sphmap.c
   str.c
-  symbol.c
   tabdata.c
-  tplot.c
   ulp.c
-  vectfont.c
-  vector.c
   vers.c
-  vert_tree.c
-  vlist.c
   wavelet.c
   )
 

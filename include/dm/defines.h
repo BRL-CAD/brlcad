@@ -1,7 +1,7 @@
 /*                     D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +22,12 @@
 /** @file dm/defines.h
  *
  */
+
+#ifndef DM_DEFINES_H
+#define DM_DEFINES_H
+
+#include "common.h"
+
 #ifndef DM_EXPORT
 #  if defined(DM_DLL_EXPORTS) && defined(DM_DLL_IMPORTS)
 #    error "Only DM_DLL_EXPORTS or DM_DLL_IMPORTS can be defined, not both."
@@ -33,6 +39,43 @@
 #    define DM_EXPORT
 #  endif
 #endif
+
+#ifndef FB_EXPORT
+#  if defined(FB_DLL_EXPORTS) && defined(FB_DLL_IMPORTS)
+#    error "Only FB_DLL_EXPORTS or FB_DLL_IMPORTS can be defined, not both."
+#  elif defined(FB_DLL_EXPORTS)
+#    define FB_EXPORT COMPILER_DLLEXPORT
+#  elif defined(FB_DLL_IMPORTS)
+#    define FB_EXPORT COMPILER_DLLIMPORT
+#  else
+#    define FB_EXPORT
+#  endif
+#endif
+
+/* The internals of the dm structure are hidden using the PImpl pattern*/
+struct dm_impl;
+struct dm {
+    uint32_t magic;
+    struct dm_impl *i;
+    int64_t start_time;  // time of last dm_draw_begin call
+};
+
+struct dm_plugin {
+    uint32_t api_version; /* must be first in struct */
+    const struct dm * const p;
+};
+
+/* The internals of the framebuffer structure are hidden using the PImpl pattern */
+struct fb_impl;
+struct fb {
+    struct fb_impl *i;
+};
+
+struct fb_plugin {
+    const struct fb * const p;
+};
+
+#endif /* DM_DEFINES_H */
 
 /** @} */
 /*

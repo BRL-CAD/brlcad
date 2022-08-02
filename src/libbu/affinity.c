@@ -1,7 +1,7 @@
 /*                         A F F I N I T Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,14 +54,14 @@
 int
 parallel_set_affinity(int cpu)
 {
-#if defined(HAVE_PTHREAD_H) && defined(CPU_ZERO)
+#if defined(HAVE_PTHREAD_H) && defined(CPU_ZERO) && (defined(HAVE_SYS_CPUSET_H) || defined(HAVE_SCHED_H))
 
     /* Linux and BSD pthread affinity */
 
-#ifdef HAVE_CPU_SET_T
-    cpu_set_t set_of_cpus; /* bsd */
+#if defined(HAVE_SYS_CPUSET_H) || defined(HAVE_PTHREAD_NP_H)
+    cpuset_t set_of_cpus;
 #else
-    cpuset_t set_of_cpus; /* linux */
+    cpu_set_t set_of_cpus;
 #endif
     int ret;
     int ncpus = bu_avail_cpus();

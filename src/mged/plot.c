@@ -1,7 +1,7 @@
 /*                          P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2020 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -57,8 +57,8 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 #ifndef _WIN32
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
-    struct bn_vlist *vp;
+    struct bv_scene_obj *sp;
+    struct bv_vlist *vp;
     FILE *fp_r;
     FILE *fp_w;
     int rpid;
@@ -90,7 +90,7 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
 	    is_empty = 0;
 	    break;
 	}
@@ -107,8 +107,8 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    if (!sp->s_Eflag && sp->s_soldash != 0) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    if (!sp->s_old.s_Eflag && sp->s_soldash != 0) {
 		struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 		bu_vls_printf(&vls, "help area");
@@ -151,7 +151,7 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     }
 
     if ((pid1 = fork()) == 0) {
-	const char *cad_boundp = bu_brlcad_root("bin/cad_boundp", 1);
+	const char *cad_boundp = bu_dir(NULL, 0, BU_DIR_BIN, "cad_boundp", BU_DIR_EXT, NULL);
 
 	dup2(fd1[0], fileno(stdin));
 	dup2(fd2[1], fileno(stdout));
@@ -167,7 +167,7 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     }
 
     if ((pid2 = fork()) == 0) {
-	const char *cad_parea = bu_brlcad_root("bin/cad_parea", 1);
+	const char *cad_parea = bu_dir(NULL, 0, BU_DIR_BIN, "cad_parea", BU_DIR_EXT, NULL);
 
 	dup2(fd2[0], fileno(stdin));
 	dup2(fd3[1], fileno(stdout));
@@ -198,30 +198,30 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
 		int i;
 		int nused = vp->nused;
 		int *cmd = vp->cmd;
 		point_t *pt = vp->pt;
 		for (i = 0; i < nused; i++, cmd++, pt++) {
 		    switch (*cmd) {
-			case BN_VLIST_POLY_START:
-			case BN_VLIST_POLY_VERTNORM:
-			case BN_VLIST_TRI_START:
-			case BN_VLIST_TRI_VERTNORM:
+			case BV_VLIST_POLY_START:
+			case BV_VLIST_POLY_VERTNORM:
+			case BV_VLIST_TRI_START:
+			case BV_VLIST_TRI_VERTNORM:
 			    continue;
-			case BN_VLIST_POLY_MOVE:
-			case BN_VLIST_LINE_MOVE:
-			case BN_VLIST_TRI_MOVE:
+			case BV_VLIST_POLY_MOVE:
+			case BV_VLIST_LINE_MOVE:
+			case BV_VLIST_TRI_MOVE:
 			    /* Move, not draw */
 			    MAT4X3VEC(last, view_state->vs_gvp->gv_rotation, *pt);
 			    continue;
-			case BN_VLIST_POLY_DRAW:
-			case BN_VLIST_POLY_END:
-			case BN_VLIST_LINE_DRAW:
-			case BN_VLIST_TRI_DRAW:
-			case BN_VLIST_TRI_END:
+			case BV_VLIST_POLY_DRAW:
+			case BV_VLIST_POLY_END:
+			case BV_VLIST_LINE_DRAW:
+			case BV_VLIST_TRI_DRAW:
+			case BV_VLIST_TRI_END:
 			    /* draw.  */
 			    MAT4X3VEC(fin, view_state->vs_gvp->gv_rotation, *pt);
 			    break;

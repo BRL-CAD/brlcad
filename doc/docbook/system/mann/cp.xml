@@ -40,7 +40,7 @@
     <example><title>Duplicate a combination.</title>
 
       <para>
-	<prompt>mged&gt;</prompt> <userinput>cp comb1 comb2</userinput>
+	<prompt>mged&gt; </prompt><userinput>cp comb1 comb2</userinput>
       </para>
       <para>Duplicate combination comb1 and call it comb2.</para>
     </example>

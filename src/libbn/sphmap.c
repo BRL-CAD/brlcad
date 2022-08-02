@@ -1,7 +1,7 @@
 /*                        S P H M A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,20 +39,14 @@ bn_spm_free(bn_spm_map_t *mp)
     if (mp == BN_SPM_MAP_NULL)
 	return;
 
-    if (mp->_data != NULL) {
-	(void) bu_free((char *)mp->_data, "sph _data");
-	mp->_data = NULL;
-    }
+    (void) bu_free((char *)mp->_data, "sph _data");
+    mp->_data = NULL;
 
-    if (mp->nx != NULL) {
-	(void) bu_free((char *)mp->nx, "sph nx");
-	mp->nx = NULL;
-    }
+    (void) bu_free((char *)mp->nx, "sph nx");
+    mp->nx = NULL;
 
-    if (mp->xbin != NULL) {
-	(void) bu_free((char *)mp->xbin, "sph xbin");
-	mp->xbin = NULL;
-    }
+    (void) bu_free((char *)mp->xbin, "sph xbin");
+    mp->xbin = NULL;
 
     (void) bu_free((char *)mp, "bn_spm_map_t");
 }
@@ -63,6 +57,10 @@ bn_spm_init(int N, int elsize)
 {
     int i, nx, total, idx;
     register bn_spm_map_t *mapp;
+
+    if (!N || !elsize) {
+	return BN_SPM_MAP_NULL;
+    }
 
     BU_ALLOC(mapp, bn_spm_map_t);
     if (mapp == BN_SPM_MAP_NULL)
@@ -206,6 +204,11 @@ bn_spm_save(bn_spm_map_t *mapp, char *filename)
     int got;
     FILE *fp;
 
+    /* Sanity */
+    if (mapp == BN_SPM_MAP_NULL || !filename) {
+	return -1;
+    }
+
     BN_CK_SPM_MAP(mapp);
 
     if (BU_STR_EQUAL(filename, "-"))
@@ -252,6 +255,11 @@ bn_spm_pix_load(bn_spm_map_t *mapp, char *filename, int nx, int ny)
     unsigned long red, green, blue;
     long count;
     FILE *fp;
+
+    /* Sanity */
+    if (mapp == BN_SPM_MAP_NULL || !filename || !nx || !ny) {
+	return -1;
+    }
 
     BN_CK_SPM_MAP(mapp);
 

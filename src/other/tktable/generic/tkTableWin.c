@@ -951,5 +951,5 @@ Table_WindowCmd(ClientData clientData, register Tcl_Interp *interp,
 	break;
     }
     }
-    return TCL_OK;
+    return result;
 }

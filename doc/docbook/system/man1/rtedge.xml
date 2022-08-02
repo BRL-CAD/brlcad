@@ -330,16 +330,6 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-A #</option></term>
-	<listitem>
-	  <para>
-	    Select angle for shading.  Default is 5.0 degrees; 89.0 will produce
-	    an image where only steep drops and rises are shaded.
-	  </para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
 	<term><option>-B</option></term>
 	<listitem>
 	  <para>turns on the "benchmark" flag. This causes all intentional random effects
@@ -466,12 +456,10 @@
       <varlistentry>
 	<term><option>-P #</option></term>
 	<listitem>
-	  <para>specifies the maximum number of processors (in a multi-processor system) to be
-	  used for this execution.  The default is system dependent.
-	  On "dedicated" multi-processors, such as workstations and super-minis,
-	  the default is usually set for the maximum number of processors,
-	  while on shared multi-processors, such as SuperComputers,
-	  usually just one processor is used by default.</para>
+          <para>Specify the maximum number of processor cores to be
+          used on multicore systems.  The default is the maximum
+          number of cores available for the machine.  Negative numbers
+          indicate using all except for the count specified.</para>
 	</listitem>
       </varlistentry>
 
@@ -1063,7 +1051,7 @@ EOF
   </refsection>
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
-  <para>This software is Copyright (c) 2001-2020 United States Government as
+  <para>This software is Copyright (c) 2001-2022 United States Government as
   represented by the U.S. Army Research Laboratory.</para>
   </refsection>
 

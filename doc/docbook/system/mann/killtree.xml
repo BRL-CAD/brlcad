@@ -96,7 +96,7 @@ recursively deletes all objects referenced by any of those objects.</refpurpose>
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>killtree -a group1 region2 shapeb</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>killtree -a group1 region2 shapeb</userinput></term>
 	   <listitem>
 	     <para>Destroys <emphasis>group1</emphasis>,
 	     <emphasis>region2</emphasis>, and

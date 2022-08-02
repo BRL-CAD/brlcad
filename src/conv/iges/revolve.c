@@ -1,7 +1,7 @@
 /*                       R E V O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ void Addsub();
 
 struct subtracts
 {
-    char *name;
+    struct bu_vls name;
     int index;
     struct subtracts *next;
 };
@@ -44,7 +44,7 @@ struct trclist
     fastf_t r1, r2;
     int op; /* 0 => union, 1=> subtract */
     int index;
-    char name[NAMESIZE+1];
+    struct bu_vls name;
     struct subtracts *subtr;
     struct trclist *next, *prev;
 };
@@ -70,7 +70,7 @@ revolve(int entityno)
     fastf_t hmax, hmin;		/* Max and Min distances along axis of rotation */
     fastf_t rmax;			/* Max radius */
     int cutop = Intersect;	/* Operator for cutting solid */
-    char cutname[NAMESIZE+1];	/* Name for cutting solid */
+    struct bu_vls cutname;	/* Name for cutting solid */
     struct subtracts *subp;
     int i;
 
@@ -152,7 +152,7 @@ revolve(int entityno)
 	    BU_ALLOC(trcs, struct trclist);
 	    trcptr = trcs;
 	    prev = NULL;
-	} else if (trcptr->name[0] != '\0') {
+	} else if (bu_vls_cstr(&trcptr->name)[0] != '\0') {
 	    BU_ALLOC(trcptr->next, struct trclist);
 	    prev = trcptr;
 	    trcptr = trcptr->next;
@@ -161,7 +161,7 @@ revolve(int entityno)
 	trcptr->prev = prev;
 	trcptr->op = 0;
 	trcptr->subtr = NULL;
-	trcptr->name[0] = '\0';
+	bu_vls_addr(&trcptr->name)[0] = '\0';
 
 	/* Calculate base point of TRC */
 	VSUB2(v1, ptr->pt, pt);
@@ -196,10 +196,10 @@ revolve(int entityno)
 	}
 
 	/* Make a name for the TRC */
-	snprintf(trcptr->name, NAMESIZE+1, "rev.%d.%d", entityno, ntrcs); /* Format for creating TRC names */
+	bu_vls_sprintf(&trcptr->name, "rev.%d.%d", entityno, ntrcs); /* Format for creating TRC names */
 
 	/* Make the TRC */
-	if (mk_trc_top(fdout, trcptr->name, trcptr->base,
+	if (mk_trc_top(fdout, bu_vls_cstr(&trcptr->name), trcptr->base,
 		       trcptr->top, trcptr->r1, trcptr->r2) < 0) {
 	    bu_log("Unable to write TRC for entity D%07d (%s)\n" ,
 		   dir[entityno]->direct, dir[entityno]->name);
@@ -212,7 +212,7 @@ revolve(int entityno)
     }
 
     /* Eliminate last struct if not used */
-    if (trcptr->name[0] == '\0') {
+    if (trcptr && bu_vls_cstr(&trcptr->name)[0] == '\0') {
       if (trcptr->prev) trcptr->prev->next = NULL;
       bu_free((char *)trcptr, "Revolve: trcptr");
     }
@@ -290,14 +290,17 @@ revolve(int entityno)
 
     if (fract < 1.0) {
 	/* Must calculate a cutting solid */
-	vect_t pdir, enddir, startdir;
-	fastf_t len, theta;
+	vect_t pdir = VINIT_ZERO;
+	vect_t enddir = VINIT_ZERO;
+	vect_t startdir = VINIT_ZERO;
+	fastf_t len = 0.0;
+	fastf_t theta = 0.0;
 	point_t pts[8];
 
 	/* Calculate direction from axis to curve */
 	len = 0.0;
 	ptr = curv_pts;
-	while (ZERO(len)) {
+	while (ptr && ZERO(len)) {
 	    VSUB2(pdir, ptr->pt, pt);
 	    VJOIN1(startdir, pdir, -VDOT(pdir, adir), adir);
 	    len = MAGNITUDE(startdir);
@@ -357,7 +360,7 @@ revolve(int entityno)
 	}
 
 	/* Make the BRL-CAD solid */
-	if (mk_arb8(fdout, cutname, &pts[0][X]) < 0) {
+	if (mk_arb8(fdout, bu_vls_cstr(&cutname), &pts[0][X]) < 0) {
 	    bu_log("Unable to write ARB8 for entity D%07d (%s)\n" ,
 		   dir[entityno]->direct, dir[entityno]->name);
 	    return 0;
@@ -369,17 +372,17 @@ revolve(int entityno)
     while (trcptr != NULL) {
 	/* Union together all the TRC's that are not subtracts */
 	if (trcptr->op != 1) {
-	    (void)mk_addmember(trcptr->name, &head.l, NULL, operators[Union]);
+	    (void)mk_addmember(bu_vls_cstr(&trcptr->name), &head.l, NULL, operators[Union]);
 
 	    if (fract < 1.0) {
 		/* include cutting solid */
-		(void)mk_addmember(cutname, &head.l, NULL, operators[cutop]);
+		(void)mk_addmember(bu_vls_cstr(&cutname), &head.l, NULL, operators[cutop]);
 	    }
 
 	    subp = trcptr->subtr;
 	    /* Subtract the inside TRC's */
 	    while (subp != NULL) {
-		(void)mk_addmember(subp->name, &head.l, NULL, operators[Subtract]);
+		(void)mk_addmember(bu_vls_cstr(&subp->name), &head.l, NULL, operators[Subtract]);
 		subp = subp->next;
 	    }
 	}
@@ -399,6 +402,7 @@ revolve(int entityno)
     trcptr = trcs;
     while (trcptr != NULL) {
 	trcptr_tmp = trcptr->next;
+	bu_vls_free(&trcptr->name);
 	bu_free((char *)trcptr, "Revolve: trcptr");
 	trcptr = trcptr_tmp;
     }
@@ -424,7 +428,7 @@ Addsub(struct trclist *trc, struct trclist *ptr)
     }
 
     subp->next = NULL;
-    subp->name = ptr->name;
+    subp->name = ptr->name; /* struct copy */
     subp->index = ptr->index;
 }
 

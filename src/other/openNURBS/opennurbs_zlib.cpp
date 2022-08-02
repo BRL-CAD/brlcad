@@ -525,11 +525,11 @@ bool ON_BinaryArchive::CompressionInit()
   // inflateInit() and deflateInit() are in zlib 1.3.3
   bool rc = false;
   if ( WriteMode() ) {
-    rc = ( m_zlib.mode == ON::write ) ? true : false;
+    rc = ( m_zlib.mode == ON::on_write ) ? true : false;
     if ( !rc ) {
       CompressionEnd();
       if ( Z_OK == deflateInit( &m_zlib.strm, Z_BEST_COMPRESSION ) ) {
-        m_zlib.mode = ON::write;
+        m_zlib.mode = ON::on_write;
         rc = true;
       }
       else {
@@ -538,11 +538,11 @@ bool ON_BinaryArchive::CompressionInit()
     }
   }
   else if ( ReadMode() ) {
-    rc = ( m_zlib.mode == ON::read ) ? true : false;
+    rc = ( m_zlib.mode == ON::on_read ) ? true : false;
     if ( !rc ) {
       CompressionEnd();
       if ( Z_OK == inflateInit( &m_zlib.strm ) ) {
-        m_zlib.mode = ON::read;
+        m_zlib.mode = ON::on_read;
         rc = true;
       }
       else {
@@ -560,12 +560,12 @@ void ON_BinaryArchive::CompressionEnd()
 {
   // inflateEnd() and deflateEnd() are in zlib 1.3.3
   switch ( m_zlib.mode ) {
-  case ON::read:
-  case ON::read3dm:
+  case ON::on_read:
+  case ON::on_read3dm:
     inflateEnd(&m_zlib.strm);
     break;
-  case ON::write:
-  case ON::write3dm:
+  case ON::on_write:
+  case ON::on_write3dm:
     deflateEnd(&m_zlib.strm);
     break;
   default: // to quiet lint

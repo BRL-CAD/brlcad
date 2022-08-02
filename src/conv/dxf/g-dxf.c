@@ -1,7 +1,7 @@
 /*                         G - D X F . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2020 United States Government as represented by
+ * Copyright (c) 2003-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -135,7 +135,7 @@ find_closest_color(float color[3])
 
 
 static void
-nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float color[3], void *UNUSED(client_data))
+nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, void *UNUSED(client_data))
 {
     struct model *m;
     struct shell *s;
@@ -218,7 +218,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
     nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
 
-    color_num = find_closest_color(color);
+    color_num = find_closest_color(tsp->ts_mater.ma_color);
 
     if (polyface_mesh) {
 	size_t i;
@@ -536,14 +536,12 @@ main(int argc, char *argv[])
 			nmg_booltree_leaf_tess,
 			(void *)&gcvwriter);	/* callback for gcv_region_end */
 
-    percent = 0;
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100) / regions_tried;
 	if (verbose)
 	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 		   regions_tried, regions_converted, percent);
     }
-    percent = 0;
 
     if (regions_tried > 0) {
 	percent = ((double)regions_written * 100) / regions_tried;

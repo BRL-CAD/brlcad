@@ -7,7 +7,9 @@ potentially impacts developers or users.  The scope is limited to
 public interfaces including developer application programming
 interfaces (APIs), user application command-line interfaces (CLIs),
 and graphical user interfaces (GUIs).  The policy aims to balance
-developer agility with interface stability.
+developer agility with interface stability.  Note that renaming an
+application is NOT considered minimally impacting, since that name
+is the primary means by which users locate the application.
 
 All changes to BRL-CAD are expected to conform to this change policy.
 Changes MUST either be:
@@ -127,6 +129,41 @@ generally listed for reference.
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
 
+7.32
+----
+burst,nburst
+	Point Burst Damage Assessment Model (PDAM) input preparation
+	tool.  Obsolete, no longer in use by upstream tools,
+	scheduling for removal (both the original and the newer
+	nburst implementation.)
+
+include/bu/app.h
+        bu_brlcad_root: replaced by bu_dir
+        bu_brlcad_dir:  replaced by bu_dir
+
+include/bg/chull.h
+        All functions returning point arrays instead of index arrays.
+        Will be replaced by similarly named functions returning
+        indexes into provided points array, to allow the caller
+        to decide if new arrays are needed. [deprecated 7.32]
+        bg_polyline_2d_chull, bg_2d_chull, bg_3d_coplanar_chull,
+        bg_3d_chull
+
+include/bu/exit.h
+        bu_backtrace and bu_crashreport will be replaced with versions
+        that take an optional parameter to pass in a full path from
+        the calling application.  (Currently available as
+        bu_backtrace_app and bu_crashreport_app, these will
+        replace existing versions after deprecation is complete.)
+
+MGED gui
+	The following will be removed from MGED's menu bar (unused
+	features, can be accomplished another way, or will be exposed
+	only as lower level settings when there are sensible defaults
+	that are seldom changed.)
+
+	Settings->Mouse Behavior->Pick Raytrace-Object(s)
+
 7.30
 ----
 ~/.density
@@ -137,7 +174,7 @@ btclsh, bwish
 	Emacs key binding emulation
 	achieved by running btclsh in Emacs [deprecated 7.30]
 
-include/bu/redblach.h
+include/bu/redblack.h
 	All redblack related functions, structures and macros
 	defined in libbu's redblack.h.  Functions are:
 	bu_rb_create, bu_rb_delete, bu_rb_diagnose_tree,
@@ -147,9 +184,6 @@ include/bu/redblach.h
 	bu_rb_uniq_on, bu_rb_uniq_off, bu_rb_rank, bu_rb_select,
 	bu_rb_search, bu_rb_walk
 	Use C++ containers set/map from std [deprecated 7.30]
-
-nirt
-	Behavior available under the --old flag [deprecated 7.30]
 
 7.28
 ----
@@ -190,8 +224,15 @@ signal analysis tools
 	d2-c', double-asc' : incorporating into cv
 	Removed as part of distillation effort [deprecated 7.26]
 include/bu/ptbl.h
-        BU_PTBL_BASEADDR, BU_PTBL_LASTADDR, BU_PTBL_END
-        Removed as private implementation detail [deprecated 7.26
+	BU_PTBL_BASEADDR, BU_PTBL_LASTADDR, BU_PTBL_END
+	Removed as private implementation detail [deprecated 7.26]
+include/bu/hash.h
+        bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value,
+	bu_get_hash_key, bu_hash_tbl_add, bu_hash_tbl_print,
+	bu_hash_tbl_free, bu_hash_tbl_first, bu_hash_tbl_next,
+	bu_hash_tbl_traverse, bu_hash_record.  public structs
+	bu_hash_entry and bu_hash_tbl will be made private.
+        Replaced with new API [deprecated 7.26]
 include/bu/cmd.h
 	remove struct bu_cmdhist and struct bu_cmdhist_obj [deprecated 7.26]
 	BU_CMDHIST_NULL, BU_CMDHIST_OBJ_NULL, bu_cmdhist_histor, bu_cmdhist_add,
@@ -354,6 +395,12 @@ include/raytrace.h
 ***                       OBSOLETED CHANGES                        ***
 **********************************************************************
                     (reverse chronological order)
+
+7.34.0
+------
+nirt
+	Behavior available under the --old flag [deprecated 7.30]
+
 7.30.2
 ------
 ray tracing tools
@@ -398,11 +445,12 @@ fb-rle, rle-fb, bw-rle, pix-rle, rle-pix
 burst
 	remove termlib-based interactive menu interface [deprecated 7.26]
 include/bu/hash.h
-	bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value, bu_get_hash_key,
-	bu_hash_tbl_add, bu_hash_tbl_print, bu_hash_tbl_free, bu_hash_tbl_first,
-	bu_hash_tbl_next, bu_hash_tbl_traverse, public structs bu_hash_entry and
-	bu_hash_tbl will be made private.
-	Replaced with new API [deprecated 7.26]
+	bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value,
+	bu_get_hash_key, bu_hash_tbl_add, bu_hash_tbl_print,
+	bu_hash_tbl_free, bu_hash_tbl_first, bu_hash_tbl_next,
+	bu_hash_tbl_traverse, bu_hash_record.  public structs
+	bu_hash_entry and bu_hash_tbl will be made private.
+        Replaced with new API [deprecated 7.26]
 
 7.30.0
 ------
@@ -689,7 +737,7 @@ perl -0777 -pi -e 'EXPRESSION' FILE
 To apply an expression to an entire source tree, the following pattern
 may work:
 
-find . -type f -not -path "*.svn/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 'EXPRESSION' {} \;
+find . -type f -not -path "*.git/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 'EXPRESSION' {} \;
 
 find src \( -name '*.c' -or -name '*.cxx' -or -name '*.cpp' -or -name '*.h' -or -name '*.hxx' -or -name '*.hpp' -or -name '*.java' -or -name '*.f' -or -name '*.sh' -or -name '*.tcl' -or -name '*.tk' -or -name '*.itcl' -or -name '*.itk' -or -name '*.pl' -or -name '*.php' -or -name '*.inc' -or -name '*.mged' -or -name '*.y' -or -name '*.l' -or -name '*.yy' \) -not \( -name other -or -regex '.*/other/.*' -or -name tools -or -regex '.*/misc/tools/.*' -or -regex '.*/\.[^\.].*' -or -regex '.*~' -or -regex '.*/#.*' \)
 
@@ -1390,7 +1438,7 @@ s/bu_dirname\(/bu_path_dirname\(/g
 s/bu_basename\(/bu_path_basename\(/g
 s/bu_normalize\(/bu_path_normalize\(/g
 s/bu_argv_from_path\(/bu_path_to_argv\(/g
-        renamed path functons with proper group label [7.27]
+        renamed path functions with proper group label [7.27]
 s/bu_fnmatch\(/bu_path_match\(/g
 s/BU_FNMATCH_LEADING_DIR/0x0/g
 s/BU_FNMATCH_/BU_PATH_MATCH/g
@@ -1527,3 +1575,105 @@ s/wdb_pipept/wdb_pipe_pnt/g
         renamed points from pt to pnt for consistency [7.30]
 s/proe-brl/creo-brl/g
         replaced by newer creo plugin [7.30]
+
+7.32
+----
+s/facetall.sh/mged -c facetize/g
+        replaced by more improved facetize command [7.30]
+s/pixcmp -s/pixcmp -q/g
+s/pixcmp -l/pixcmp -d/g
+	changed pixcmp options for consistency with new options [7.32]
+s/(#[[:space:]]*include[[:space:]]+["<])bn\/clip\.h/\1bg\/clip.h/g
+        moved clip.h header [7.32]
+s/bn_ray_vclip/bg_ray_vclip/g
+s/bn_lseg_clip/bg_lseg_clip/g
+        functions moved and renamed [7.32]
+s/(#[[:space:]]*include[[:space:]]+["<])bn\/vlist\.h/\1bview\/vlist.h/g
+        moved vlist.h header [7.32]
+s/bn_vlist/bv_vlist/g
+s/bn_vlblock/bv_vlblock/g
+s/BN_VLIST/BV_VLIST/g
+s/BN_ADD_VLIST/BV_ADD_VLIST/g
+s/BN_FREE_VLIST/BV_FREE_VLIST/g
+s/bn_plot_vlblock/bv_plot_vlblock/g
+s/BN_CK_VLBLOCK/BV_CK_VLBLOCK/g
+s/BN_CK_VLIST/BV_CK_VLIST/g
+s/BN_VLBLOCK_MAGIC/BV_VLBLOCK_MAGIC/g
+s/bn_ck_vlist/bv_ck_vlist/g
+s/BN_GET_VLIST/BV_GET_VLIST/g
+        bn_vlist relocated to libbview [7.32]
+s/(#[[:space:]]*include[[:space:]]+["<])bn\/plane\.h/\1bg\/plane.h/g
+        moved plane.h header [7.32]
+s/bn_distsq_line3_line3/bg_distsq_line3_line3/g
+s/bn_dist_pnt3_line3/bg_dist_pnt3_line3/g
+s/bn_dist_line3_lseg3/bg_dist_line3_lseg3/g
+s/bn_dist_line3_line3/bg_dist_line3_line3/g
+s/bn_dist_pnt3_lseg3/bg_dist_pnt3_lseg3/g
+s/bn_distsq_pnt3_lseg3_v2/bg_distsq_pnt3_lseg3_v2/g
+s/bn_3pnts_collinear/bg_3pnts_collinear/g
+s/bn_pnt3_pnt3_equal/bg_pnt3_pnt3_equal/g
+s/bn_dist_pnt2_lseg2/bg_dist_pnt2_lseg2/g
+s/bn_isect_lseg3_lseg3/bg_isect_lseg3_lseg3/g
+s/bn_lseg3_lseg3_parallel/bg_lseg3_lseg3_parallel/g
+s/bn_isect_line3_line3/bg_isect_line3_line3/g
+s/bn_2line3_colinear/bg_2line3_colinear/g
+s/bn_isect_pnt2_lseg2/bg_isect_pnt2_lseg2/g
+s/bn_isect_line2_lseg2/bg_isect_line2_lseg2/g
+s/bn_isect_lseg2_lseg2/bg_isect_lseg2_lseg2/g
+s/bn_isect_line2_line2/bg_isect_line2_line2/g
+s/bn_dist_pnt3_pnt3/bg_dist_pnt3_pnt3/g
+s/bn_3pnts_distinct/bg_3pnts_distinct/g
+s/bn_npnts_distinct/bg_npnts_distinct/g
+s/bn_make_plane_3pnts/bg_make_plane_3pnts/g
+s/bn_make_pnt_3planes/bg_make_pnt_3planes/g
+s/bn_isect_line3_plane/bg_isect_line3_plane/g
+s/bn_isect_2planes/bg_isect_2planes/g
+s/bn_isect_2lines/bg_isect_2lines/g
+s/bn_isect_line_lseg/bg_isect_line_lseg/g
+s/bn_dist_line3_pnt3/bg_dist_line3_pnt3/g
+s/bn_distsq_line3_pnt3/bg_distsq_line3_pnt3/g
+s/bn_dist_line_origin/bg_dist_line_origin/g
+s/bn_dist_line2_point2/bg_dist_line2_point2/g
+s/bn_distsq_line2_point2/bg_distsq_line2_point2/g
+s/bn_area_of_triangle/bg_area_of_triangle/g
+s/bn_isect_pnt_lseg/bg_isect_pnt_lseg/g
+s/bn_dist_pnt_lseg/bg_dist_pnt_lseg/g
+s/bn_rotate_bbox/bg_rotate_bbox/g
+s/bn_rotate_plane/bg_rotate_plane/g
+s/bn_coplanar/bg_coplanar/g
+s/bn_angle_measure/bg_angle_measure/g
+s/bn_dist_pnt3_along_line3/bg_dist_pnt3_along_line3/g
+s/bn_dist_pnt2_along_line2/bg_dist_pnt2_along_line2/g
+s/bn_between/bg_between/g
+s/bn_does_ray_isect_tri/bg_does_ray_isect_tri/g
+s/bn_hlf_class/bg_hlf_class/g
+s/bn_isect_planes/bg_isect_planes/g
+s/bn_plane_pt_nrml/bg_plane_pt_nrml/g
+s/bn_fit_plane/bg_fit_plane/g
+s/bn_plane_closest_pt/bg_plane_closest_pt/g
+s/bn_plane_pt_at/bg_plane_pt_at/g
+s/BN_CLASSIFY/BG_CLASSIFY/g
+        plane.h moved from libbn to libbg [7.32]
+s/(#[[:space:]]*include[[:space:]]+["<])bn\/plot3\.h/\1bview\/plot3.h/g
+        moved plot3.h header [7.32]
+s/(#[[:space:]]*include[[:space:]]+["<])bn\/vert_tree\.h/\1bg\/vert_tree.h/g
+        moved vert_tree.h header [7.32]
+s/bn_vert_tree/bg_vert_tree/g
+        moved vert_tree to libbg [7.32]
+s/(#[[:space:]]*include[[:space:]]+["<])bn\/vectfont\.h/\1bview\/vectfont.h/g
+        moved vertfont.h header to bview[7.32]
+s/ID_MATERIAL/ID_COLORTAB/g
+        renamed to make room for material objects [7.32]
+s/loop_g/loop_a/g
+s/LOOP_G/LOOP_A/g
+s/->lg_p/->la_p/g
+s/GED_OK/BRLCAD_OK/g
+s/GED_ERROR/BRLCAD_ERROR/g
+s/GED_HELP/BRLCAD_HELP/g
+s/GED_MORE/BRLCAD_MORE/g
+s/GED_UNKNOWN/BRLCAD_UNKNOWN/g
+s/dm_draw_display_list/dm_draw_head_dl/g
+s/dm_draw_obj\(/dm_draw_display_list\(/g
+s/bu_whereis\(/bu_whence\(/g
+s/bu_which\(/bu_whence\(/g
+s/rt_gettree_muves\(/rt_gettrees_and_attrs\(/g

@@ -1,7 +1,7 @@
 /*                       F A C E D E F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -361,7 +361,7 @@ get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol)
     for (i=0; i<3; i++)
 	c[i] = atof(argv[6+i]) * local2base;
 
-    if (bn_make_plane_3pnts(plane, a, b, c, tol) < 0) {
+    if (bg_make_plane_3pnts(plane, a, b, c, tol) < 0) {
 	Tcl_AppendResult(INTERP, "Facedef: not a plane\n", (char *)NULL);
 	return -1;		/* failure */
     }
@@ -388,7 +388,7 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
     rota= atof(argv[0]) * DEG2RAD;
     fb_a  = atof(argv[1]) * DEG2RAD;
 
-    /* calculate normal vector (length=1) from rot, fb */
+    /* calculate normal vector (length=1) from rot, struct fb */
     plane[0] = cos(fb_a) * cos(rota);
     plane[1] = cos(fb_a) * sin(rota);
     plane[2] = sin(fb_a);

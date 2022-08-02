@@ -1,7 +1,7 @@
 /*                            B W . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2020 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,10 +27,6 @@
 #include "bu/malloc.h"
 #include "icv_private.h"
 
-/* defined in encoding.c */
-extern double *uchar2double(unsigned char *data, size_t size);
-extern unsigned char *data2uchar(const icv_image_t *bif);
-
 int
 bw_write(icv_image_t *bif, const char *filename)
 {
@@ -45,7 +41,7 @@ bw_write(icv_image_t *bif, const char *filename)
 	bu_log("bw_write : Color Space conflict");
 	return -1;
     }
-    data = data2uchar(bif);
+    data = icv_data2uchar(bif);
     size = bif->height*bif->width;
 
     if (filename == NULL) {
@@ -81,6 +77,7 @@ bw_read(const char *filename, size_t width, size_t height)
 
     if (filename==NULL) {
 	fp = stdin;
+	setmode(fileno(fp), O_BINARY);
     } else if ((fp = fopen(filename, "rb")) == NULL) {
 	bu_log("bw_read: Cannot open %s for reading\n", filename);
 	return NULL;
@@ -91,8 +88,6 @@ bw_read(const char *filename, size_t width, size_t height)
 
     /* buffer pixel wise */
     if (width == 0 || height == 0) {
-	int status = 0;
-
 	size = 0;
 	data = (unsigned char *)bu_malloc(buffsize, "bw_read : unsigned char data");
 
@@ -100,7 +95,7 @@ bw_read(const char *filename, size_t width, size_t height)
 	 * Better to read in big chunks, but then one has to handle
 	 * partial-reads better.  Below seems to ignore a read error.
 	 */
-	while ((status = fread(&data[size], 1, 1, fp))==1) {
+	while (fread(&data[size], 1, 1, fp)==1) {
 	    size++;
 	    if (size==buffsize) {
 		buffsize+=1024;
@@ -131,7 +126,7 @@ bw_read(const char *filename, size_t width, size_t height)
     }
 
     if (size)
-	bif->data = uchar2double(data, size);
+	bif->data = icv_uchar2double(data, size);
     else {
 	/* zero sized image */
 	bu_free(bif, "icv container");

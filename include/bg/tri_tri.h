@@ -1,7 +1,7 @@
 /*                      T R I _ T R I . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2020 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 
 /*----------------------------------------------------------------------*/
 /* @file tri_tri.h */
-/** @addtogroup tri_tri */
+/** @addtogroup bg_tri_tri */
 /** @{ */
 
 /**

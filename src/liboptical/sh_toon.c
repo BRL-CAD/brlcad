@@ -1,7 +1,7 @@
 /*                        S H _ T O O N . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2020 United States Government as represented by
+ * Copyright (c) 2010-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -168,7 +168,6 @@ toon_render(struct application *ap, const struct partition *pp, struct shadework
 {
     int i;
     struct toon_specific *toon_sp = (struct toon_specific *)dp;
-    struct light_specific *lp;
     fastf_t cosi, scale;
 
     /* check the validity of the arguments we got */
@@ -191,7 +190,7 @@ toon_render(struct application *ap, const struct partition *pp, struct shadework
 
     /* Consider effects of each light source */
     for (i=ap->a_rt_i->rti_nlights-1; i>=0; i--) {
-	if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL)
+	if ((struct light_specific *)swp->sw_visible[i] == LIGHT_NULL)
 	    continue;
 
 	cosi = VDOT(swp->sw_hit.hit_normal, swp->sw_tolight);

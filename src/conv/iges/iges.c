@@ -1,7 +1,7 @@
 /*                          I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2020 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -531,7 +531,7 @@ write_attribute_definition(FILE *fp_dir, FILE *fp_param)
 	dir_entry[i] = DEFAULT;
 
     /* start with parameter data */
-    bu_vls_printf(&str, "322,%ldH%s,5001,9", strlen(att_string), att_string);
+    bu_vls_printf(&str, "322,%zuH%s,5001,9", strlen(att_string), att_string);
     bu_vls_printf(&str, ",1,3,1"); /* material name */
     bu_vls_printf(&str, ",2,3,1"); /* material parameters */
     bu_vls_printf(&str, ",3,6,1"); /* region flag (logical value) */

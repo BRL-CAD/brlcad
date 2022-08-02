@@ -1,7 +1,7 @@
 /*                       S H _ S T X T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2020 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -121,7 +121,6 @@ stxt_read(register struct stxt_specific *stp)
     int frame = 0;
     int ln = 0;
     int rd = 0;
-    int rdd = 0;
 
     /*** MEMORY HOG ***/
     stp->stx_pixels = (char *)bu_malloc(
@@ -141,7 +140,8 @@ stxt_read(register struct stxt_specific *stp)
 	linebuf = (char *)bu_malloc(stp->stx_fw*3, "texture file line");
 
 	for (i = 0; i < stp->stx_n; i++) {
-	    if ((rd = (int)fread(linebuf, 1, stp->stx_fw*3, fp)) != stp->stx_fw*3) {
+	    rd = (int)fread(linebuf, 1, stp->stx_fw*3, fp);
+	    if (rd != stp->stx_fw*3) {
 		bu_log("stxt_read: read error on %s\n", name);
 		stp->stx_file[0] = '\0';
 		(void)fclose(fp);
@@ -150,7 +150,6 @@ stxt_read(register struct stxt_specific *stp)
 	    }
 	    memcpy(stp->stx_pixels + ln*stp->stx_w*3, linebuf, stp->stx_w*3);
 	    ln++;
-	    rdd += rd;
 	}
 	(void)fclose(fp);
 	bu_free(linebuf, "texture file line");

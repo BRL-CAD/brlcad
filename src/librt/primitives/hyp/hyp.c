@@ -1,7 +1,7 @@
 /*                           H Y P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2020 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -113,6 +113,49 @@ const struct bu_structparse rt_hyp_parse[] = {
     { "%f", 1, "bnr",   bu_offsetof(struct rt_hyp_internal, hyp_bnr), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
+
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_hyp_specific {
+    cl_double hyp_V[3];	/* scaled vector to hyp origin */
+
+    cl_double hyp_Hunit[3];	/* unit H vector */
+    cl_double hyp_Aunit[3];	/* unit vector along semi-major axis */
+    cl_double hyp_Bunit[3];	/* unit vector, H x A, semi-minor axis */
+    cl_double hyp_Hmag;	/* scaled height of hyperboloid */
+
+    cl_double hyp_rx;
+    cl_double hyp_ry;	/* hyp_r* store coeffs */
+    cl_double hyp_rz;
+
+    cl_double hyp_bounds;	/* const used to check if a ray hits the top/bottom surfaces */
+};
+
+size_t
+clt_hyp_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct hyp_specific *hyp =
+        (struct hyp_specific *)stp->st_specific;
+    struct clt_hyp_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_hyp_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->hyp_V, hyp->hyp_V);
+    VMOVE(args->hyp_Hunit, hyp->hyp_Hunit);
+    VMOVE(args->hyp_Aunit, hyp->hyp_Aunit);
+    VMOVE(args->hyp_Bunit, hyp->hyp_Bunit);
+    args->hyp_Hmag = hyp->hyp_Hmag;
+    args->hyp_rx = hyp->hyp_rx;
+    args->hyp_ry = hyp->hyp_ry;
+    args->hyp_rz = hyp->hyp_rz;
+    args->hyp_bounds = hyp->hyp_bounds;
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
 
 /**
  * Create a bounding RPP for an hyp
@@ -588,7 +631,7 @@ rt_hyp_free(struct soltab *stp)
 
 
 int
-rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     int i, j;		/* loop indices */
     struct rt_hyp_internal *hyp_in;
@@ -605,6 +648,7 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(incoming);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     hyp_in = (struct rt_hyp_internal *)incoming->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_in);
 
@@ -663,9 +707,9 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 	VADD4(ell[15], hyp->hyp_V, heightAxis[i], majorAxis[1], minorAxis[4]);
 
 	/* draw ellipse */
-	RT_ADD_VLIST(vhead, ell[15], BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, ell[15], BV_VLIST_LINE_MOVE);
 	for (j = 0; j < 16; j++) {
-	    RT_ADD_VLIST(vhead, ell[j], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ell[j], BV_VLIST_LINE_DRAW);
 	}
 
 	/* add ellipse's points to ribs */
@@ -676,9 +720,9 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
     /* draw ribs */
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, ribs[i][0], BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, ribs[i][0], BV_VLIST_LINE_MOVE);
 	for (j = 1; j < 7; j++) {
-	    RT_ADD_VLIST(vhead, ribs[i][j], BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ribs[i][j], BV_VLIST_LINE_DRAW);
 	}
 
     }
@@ -711,7 +755,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct rt_pnt_node *pos_a, *pos_b, *pts_a, *pts_b;
     struct shell *s;
     struct faceuse **outfaceuses = NULL;
-    struct faceuse *fu_top;
+    struct faceuse *fu_top, *fu_bottom;
     struct loopuse *lu;
     struct edgeuse *eu;
     struct vertex *vertp[3];
@@ -913,8 +957,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
     /* vertices of ellipses of hyp */
-    vells = (struct vertex ***)
-	bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
+    vells = (struct vertex ***)bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
     j = nseg;
     for (i = 0; i < nell; i++) {
 	vells[i] = (struct vertex **)bu_malloc(j*sizeof(struct vertex *), "vertex []");
@@ -1047,10 +1090,10 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     BU_ASSERT(outfaceuses != NULL);
     if ((outfaceuses[face++] = nmg_cface(s, vells[0], nseg)) == 0) {
-	bu_log("rt_hyp_tess() failure, top face\n");
+	bu_log("rt_hyp_tess() failure, bottom face\n");
 	goto fail;
     }
-    fu_top = outfaceuses[face-1];
+    fu_bottom = outfaceuses[face-1];
 
     /* Mark edges of this face as real, this is the only real edge */
     for (BU_LIST_FOR (lu, loopuse, &outfaceuses[face-1]->lu_hd)) {
@@ -1137,8 +1180,10 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    NMG_CK_VERTEXUSE(vu);
 	    fu = nmg_find_fu_of_vu(vu);
 
-	    /* don't assign vertexuse normals to top face (flat) */
+	    /* don't assign vertexuse normals to top or bottom faces (flat) */
 	    if (fu == fu_top || fu->fumate_p == fu_top)
+		continue;
+	    if (fu == fu_bottom || fu->fumate_p == fu_bottom)
 		continue;
 
 	    NMG_CK_FACEUSE(fu);
@@ -1373,7 +1418,7 @@ rt_hyp_surf_area(fastf_t *UNUSED(area), const struct rt_db_internal *UNUSED(ip))
 void
 rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
-    if (volume != NULL || ip != NULL) {
+    if (volume != NULL && ip != NULL) {
 	struct rt_hyp_internal *hip;
 	struct hyp_specific *hyp;
 
@@ -1388,6 +1433,50 @@ rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
     }
 }
 
+void
+rt_hyp_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+{
+    if (!ps || !ip)
+	return;
+
+    struct rt_hyp_internal *hyp = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(hyp);
+
+    // Set up the containers
+    struct bv_label *l[4];
+    for (int i = 0; i < 4; i++) {
+	struct bv_scene_obj *s = bv_obj_get_child(ps);
+	struct bv_label *la;
+	BU_GET(la, struct bv_label);
+	s->s_i_data = (void *)la;
+	s->s_v = v;
+
+	BU_LIST_INIT(&(s->s_vlist));
+	VSET(s->s_color, 255, 255, 0);
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
+	BU_VLS_INIT(&la->label);
+
+	l[i] = la;
+    }
+
+    bu_vls_sprintf(&l[0]->label, "V");
+    VMOVE(l[0]->p, hyp->hyp_Vi);
+
+    bu_vls_sprintf(&l[1]->label, "H");
+    VADD2(l[1]->p, hyp->hyp_Vi, hyp->hyp_Hi);
+
+    bu_vls_sprintf(&l[2]->label, "A");
+    VADD2(l[2]->p, hyp->hyp_Vi, hyp->hyp_A);
+
+    bu_vls_sprintf(&l[3]->label, "B");
+    vect_t vB;
+    VCROSS(vB, hyp->hyp_A, hyp->hyp_Hi);
+    VUNITIZE(vB);
+    VSCALE(vB, vB, hyp->hyp_b);
+    VADD2(l[3]->p, hyp->hyp_Vi, vB);
+
+}
 
 /*
  * Local Variables:

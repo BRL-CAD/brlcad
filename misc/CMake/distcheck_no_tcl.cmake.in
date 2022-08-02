@@ -1,0 +1,110 @@
+#       D I S T C H E C K _ T A R G E T . C M A K E . I N
+# BRL-CAD
+#
+# Copyright (c) 2012-2022 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
+set(check_distcheck
+"file(GLOB_RECURSE BUILD_DIR_CONTENTS RELATIVE \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${build_dir}\" \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${build_dir}/*\")
+# Ninja keeps a running log in .ninja_log - if we're using ninja itself to run the
+# tests, we can't clear this file. Ignore it, as it's not a sign of a problem with
+# the clean logic.
+list(REMOVE_ITEM BUILD_DIR_CONTENTS .ninja_log)
+if(BUILD_DIR_CONTENTS)
+  message(\"Files present after distclean in ${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${build_dir}:\")
+  foreach(filename \${BUILD_DIR_CONTENTS})
+    message(\"\${filename}\")
+  endforeach(filename \${BUILD_DIR_CONTENTS})
+  message(FATAL_ERROR \"distclean failed in ${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${build_dir}\")
+endif(BUILD_DIR_CONTENTS)
+")
+file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-eval_distclean.cmake" "${check_distcheck}")
+
+# Note - the path name variables in this particular target are *deliberately*
+# not put inside quotes.  Normally in BRL-CAD paths should be quoted to handle
+# spaces in paths, but in this particular instance the target/command logic
+# ends up quoting the spaces directly.  Consequently, adding quotes actually
+# *introduces* errors into paths with spaces.
+add_custom_target(distcheck-${TARGET_SUFFIX}
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Extracting TGZ archive..."
+  COMMAND ${CMAKE_COMMAND} -E remove distcheck_${TARGET_SUFFIX}.log
+  COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-${TARGET_SUFFIX}
+  COMMAND ${CMAKE_COMMAND} -E make_directory distcheck-${TARGET_SUFFIX}
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX} ${CMAKE_COMMAND} -E tar xzf ../${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
+  COMMAND ${CMAKE_COMMAND} -E rename distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME} distcheck-${TARGET_SUFFIX}/${source_dir}
+  COMMAND ${CMAKE_COMMAND} -E make_directory distcheck-${TARGET_SUFFIX}/${build_dir}
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Extracting TGZ archive... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Configuring... "
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${build_dir} ${CMAKE_COMMAND} ../${source_dir} @CMAKE_OPTS@ -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${install_dir} @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Configuring... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Compiling using source from TGZ archive..."
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${build_dir} @DISTCHECK_BUILD_CMD@ @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Compiling using source from TGZ archive... Done."
+  #COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory unit, benchmark and regression testing..."
+  # TODO - with Tcl we can't run the benchmarks, since we can't generate the .g files from the .asc files...
+  #COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${build_dir} ${CMAKE_COMMAND} --build . --target check @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory unit and regression testing..."
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${build_dir} ${CMAKE_COMMAND} --build . --target unit @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${build_dir} ${CMAKE_COMMAND} --build . --target regress @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory unit, benchmark and regression testing... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Install from tgz build directory..."
+  COMMAND ${CMAKE_COMMAND} -E make_directory distcheck-${TARGET_SUFFIX}/${install_dir}
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${build_dir} @DISTCHECK_INSTALL_CMD@ @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Install from tgz build directory... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Test distclean rule..."
+  COMMAND ${CMAKE_COMMAND} -E remove -f distcheck-${TARGET_SUFFIX}/${build_dir}/bench/summary
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${build_dir} ${CMAKE_COMMAND} --build . --target distclean @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-eval_distclean.cmake
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Test distclean rule... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Clear tgz archive sources and build directory..."
+  COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-${TARGET_SUFFIX}/${source_dir}
+  COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-${TARGET_SUFFIX}/${build_dir}
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Clear tgz archive sources and build directory... Done."
+  # TODO - with Tcl we can't run the benchmarks, since we can't generate the .g files from the .asc files...
+  #COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run benchmark testing from tgz archive installed build..."
+  #COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${install_dir} ${BIN_DIR}/benchmark run TIMEFRAME=1 @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run benchmark testing from installed build... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Cleanup..."
+  COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-${TARGET_SUFFIX}
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Cleanup... Done."
+  COMMENT "[distcheck-${TARGET_SUFFIX}] Performing distcheck - ${TARGET_SUFFIX} configuration..."
+  DEPENDS distcheck-source_archives
+  )
+set_target_properties(distcheck-${TARGET_SUFFIX} PROPERTIES FOLDER "BRL-CAD Distribution Checking")
+set_target_properties(distcheck-${TARGET_SUFFIX} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
