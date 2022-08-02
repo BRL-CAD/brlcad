@@ -437,4 +437,4 @@ CMAKEFILES(
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-set_target_properties(librt PROPERTIES OUTPUT_NAME "librt_")
+
