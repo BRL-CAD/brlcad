@@ -205,8 +205,8 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
     read_faces(m, fgeom);
     fclose(fgeom);
 
-    snprintf(sname, sizeof(sname), "s.%s", title);
-    snprintf(rname, sizeof(sname), "r.%s", title);
+    snprintf(sname, sizeof(sname)-1, "s.%s", title);
+    snprintf(rname, sizeof(sname)-1, "r.%s", title);
 
     mk_id(fpout, title);
     mk_nmg(fpout, sname, m);
