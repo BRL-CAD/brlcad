@@ -600,6 +600,10 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
     if (!m_e)
 	return false;
 
+    // If we have modifiers, we're most likely doing shift grips
+    if (m_e->modifiers() != Qt::NoModifier)
+	return false;
+
     printf("polygon add\n");
 
     do_bool = false;
