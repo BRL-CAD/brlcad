@@ -158,17 +158,18 @@ int read_faces(struct model *m, FILE *fgeom)
 
 int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 {
-#define SZ 64
-    char title[SZ-1], geom_fname[SZ+1];
-    char rname[SZ+1], sname[SZ+1];
+#define SZ 63
+    char title[SZ+1] = {0};
+    char geom_fname[SZ+1] = {0};
+    char rname[SZ+1] = {0};
+    char sname[SZ+1] = {0};
 
-#define BUF_SZ 200
-    char buf[BUF_SZ], buf2[BUF_SZ];
+#define BUF_SZ 255
+    char buf[BUF_SZ+1] = {0};
+    char buf2[BUF_SZ+1] = {0};
 
     FILE *fgeom;
     struct model *m;
-
-    title[0] = geom_fname[0] = '\0';
 
     bu_fgets(buf, sizeof(buf), fpin);
     while (!feof(fpin)) {
@@ -178,7 +179,8 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 
 	if (sscanf(buf, "geometry %" CPP_XSTR(BUF_SZ) "[^\n]s", buf2) > 0) {
 #define FMT_SZ 40
-	    char dtype[FMT_SZ+1], format[FMT_SZ+1];
+	    char dtype[FMT_SZ+1] = {0};
+	    char format[FMT_SZ+1] = {0};
 
 	    if (sscanf(buf2, CPP_SCAN(FMT_SZ) CPP_SCAN(FMT_SZ) CPP_SCAN(SZ), dtype, format, geom_fname) != 3)
 		bu_exit(1, "Incomplete geometry field in input file.");
