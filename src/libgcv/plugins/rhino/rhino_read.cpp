@@ -429,8 +429,8 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 
 void
 write_geometry(rt_wdb &wdb, const std::string &name,
-	       const ONX_Model& model, const ON_Geometry *geometry, 
-               mat_t& matrix, std::set<std::string>& members,
+	       const ONX_Model& UNUSED(model), const ON_Geometry *geometry, 
+               mat_t& UNUSED(matrix), std::set<std::string>& members,
                std::unordered_map<std::string, ON_UUID>& to_remove, ON_UUID id)
 {
     /* geometry we've come across that is not writable */
@@ -447,30 +447,11 @@ write_geometry(rt_wdb &wdb, const std::string &name,
 	AutoPtr<ON_Brep, autoptr_wrap_delete> temp(geometry->BrepForm());
 	write_geometry(wdb, name, *temp.ptr);
         members.insert(name);
-    } else if (const ON_InstanceRef* iref = ON_InstanceRef::Cast(geometry)) {
-        const ON_InstanceDefinition* idef = ON_InstanceDefinition::FromModelComponentRef(model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, iref->m_instance_definition_uuid), nullptr);
-        if (idef) {
-            const ON_SimpleArray<ON_UUID> id_list = idef->InstanceGeometryIdList();
-            for (int i = 0; i < id_list.Count(); i++) {
-                const ON_ModelGeometryComponent internal_gc = model.ModelGeometryComponentFromId(id_list[i]);
-                if (const ON_Geometry* internal_g = internal_gc.Geometry(nullptr)) {
-                    ON_String internal_name = internal_gc.Name();
-                    if (!internal_name.Array()) {
-                        /* if our load_model is working correctly, we should never get here */
-                        char cuid[37];
-                        ON_UuidToString(internal_gc.Id(), cuid);
-                        bu_log("ERROR: unnamed reference to uid: %s\n", cuid);
-                        continue;
-                    }
-                    const std::string internal_name_stdstr = std::string(internal_name.Array()) + ".s";
-                    write_geometry(wdb, internal_name_stdstr, model, internal_g, matrix, members, to_remove, id_list[i]);
-                }
-            }
-
-            for (std::size_t i = 0; i < 4; ++i)
-                for (std::size_t j = 0; j < 4; ++j)
-                    matrix[4 * i + j] = iref->m_xform[i][j];
-        }
+    } else if (ON_InstanceRef::Cast(geometry)) {
+        /* InstanceRef are valid geometry so we do not want to add them 'to_remove', 
+         * but their referenced geometry is already written.
+         * ie do nothing here
+         */
     } else if (const ON_SubD* subd = ON_SubD::Cast(geometry)) {
 	/* NOTE: pending proper support for subdivision surfaces, 
 	 * this is a very poor approximation just to have *something*
@@ -576,6 +557,34 @@ write_comb(rt_wdb &wdb, const std::string &name,
 	 it != members.end(); ++it)
 	mk_addmember(it->c_str(), &wmembers.l, const_cast<fastf_t *>(matrix),
 		     WMOP_UNION);
+
+    if (mk_comb(&wdb, name.c_str(), &wmembers.l, false, shader_name, shader_options,
+		rgb, 0, 0, 0, 0, false, false, false))
+	bu_bomb("mk_comb() failed");
+}
+
+void
+write_layer_comb(rt_wdb &wdb, const std::string &name,
+	   const std::unordered_map<std::string, std::vector<fastf_t*>> &members,
+	   const char *shader_name = NULL, const char *shader_options = NULL,
+	   const unsigned char *rgb = NULL)
+{
+    wmember wmembers;
+    BU_LIST_INIT(&wmembers.l);
+
+    for (auto mem : members)
+        for (auto mat : mem.second) {
+            /* NOTE: we load the matrix vector with either a valid transformation matrix
+             * or nullptr if we want the identity. When an object is referenced, there is
+             * a redundant 'identity' object that we do not want to write
+             */
+            if (mem.second.size() == 1 || mat)
+                mk_addmember(mem.first.c_str(), &wmembers.l, mat, WMOP_UNION);
+            
+            /* cleanup memory */
+            delete mat;
+        }
+
 
     if (mk_comb(&wdb, name.c_str(), &wmembers.l, false, shader_name, shader_options,
 		rgb, 0, 0, 0, 0, false, false, false))
@@ -801,10 +810,11 @@ get_all_idef_members(const ONX_Model &model)
 // .g file.
 //
 // TODO - should we also be doing something for the Group type?
-std::set<std::string>
-get_layer_members(const ON_Layer *layer, const ONX_Model &model, const std::set<std::string> &model_idef_members)
+// std::set<std::string>
+std::unordered_map<std::string, std::vector<fastf_t*>>
+get_layer_members(const ON_Layer *layer, const ONX_Model &model, const std::set<std::string> &UNUSED(model_idef_members))
 {
-    std::set<std::string> members;
+    std::unordered_map<std::string, std::vector<fastf_t*>>members;
     {
 	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::Layer);
 	for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
@@ -813,7 +823,7 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model, const std::set<
 	    if (!cl)
 		continue;
 	    if (cl->ParentLayerId() == layer->ModelObjectId()) {
-                members.insert(clean_name(cl->Name()));
+                members[clean_name(cl->Name())].push_back(nullptr);
 	    }
 	}
     }
@@ -828,7 +838,40 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model, const std::set<
 	    const ON_3dmObjectAttributes* attributes = mg->Attributes(nullptr);
 	    if (!attributes)
 		continue;
-	    ON_String ns(attributes->Name());
+            /* if the layer has refs, add them in accordingly */
+	    if (const ON_InstanceRef* iref = ON_InstanceRef::Cast(mg->Geometry(nullptr))) {
+                const ON_InstanceDefinition* idef = ON_InstanceDefinition::FromModelComponentRef(model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, iref->m_instance_definition_uuid), nullptr);
+                if (idef) {
+                    const ON_SimpleArray<ON_UUID> id_list = idef->InstanceGeometryIdList();
+                    for (int i = 0; i < id_list.Count(); i++) {
+                        const ON_ModelGeometryComponent internal_gc = model.ModelGeometryComponentFromId(id_list[i]);
+                        if (internal_gc.Geometry(nullptr)) {
+                            ON_String internal_name = internal_gc.Name();
+                            if (!internal_name.Array()) {
+                                /* if our load_model is working correctly, we should never get here */
+                                char cuid[37];
+                                ON_UuidToString(internal_gc.Id(), cuid);
+                                bu_log("ERROR: unnamed reference to uid: %s\n", cuid);
+                                continue;
+                            }
+                            if (const ON_3dmObjectAttributes* internal_attributes = internal_gc.Attributes(nullptr)) {
+                                if (internal_attributes->m_layer_index == layer->Index()) {
+                                    const std::string internal_name_stdstr = std::string(internal_name.Array());
+                                
+                                    fastf_t* matrix = new fastf_t[16];
+                                    for (std::size_t row = 0; row < 4; ++row)
+                                        for (std::size_t col = 0; col < 4; ++col)
+                                            matrix[4 * row + col] = iref->m_xform[row][col];
+                                
+                                    members[internal_name_stdstr].push_back(matrix);
+                                }
+                            }
+                        }
+                    }
+                }
+                continue;
+            }
+            ON_String ns(attributes->Name());
 	    const char *gname = ns.Array();
 	    ON_String nsu;
 	    const char *uuidstr = ON_UuidToString(attributes->m_uuid, nsu);
@@ -836,17 +879,17 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model, const std::set<
 		gname = uuidstr;
 	    }
 	    if (attributes->m_layer_index == layer->Index()) {
-		members.insert(std::string(gname));
-		//std::cout << "Object " << gname << " is a child of " << ON_String(layer->Name()).Array() << "\n";
+                members[std::string(gname)].push_back(nullptr);
 	    }
 	}
     }
 
-    std::set<std::string> result;
-    std::set_difference(members.begin(), members.end(), model_idef_members.begin(),
-	    model_idef_members.end(), std::inserter(result, result.end()));
+//     std::set<std::string> result;
+//     std::set_difference(members.begin(), members.end(), model_idef_members.begin(),
+// 	    model_idef_members.end(), std::inserter(result, result.end()));
 
-    return result;
+//     return result;
+    return members;
 }
 
 
@@ -869,9 +912,9 @@ import_layer(rt_wdb &wdb, const ON_Layer *l, const ONX_Model &model, const std::
 
     const Shader shader = get_shader(mp);
 
-    std::set<std::string> layer_children = get_layer_members(l, model, model_idef_members);
+    auto layer_children = get_layer_members(l, model, model_idef_members);
 
-    write_comb(wdb, name, layer_children, NULL, shader.first.c_str(), shader.second.c_str(), rgb);
+    write_layer_comb(wdb, name, layer_children, shader.first.c_str(), shader.second.c_str(), rgb);
     int ret1 = db5_update_attribute(name.c_str(), "rhino::type", l->ClassId()->ClassName(), wdb.dbip);
     int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", lid_str, wdb.dbip);
     if (ret1 || ret2)
