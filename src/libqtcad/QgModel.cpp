@@ -861,8 +861,14 @@ QgModel::flags(const QModelIndex &index) const
     if (!index.isValid())
 	return Qt::NoItemFlags;
 
-    return QAbstractItemModel::flags(index);
-    //return Qt::ItemIsEditable | QAbstractItemModel::flags(index);
+    Qt::ItemFlags flags = QAbstractItemModel::flags(index);
+
+    if (index.column() == 0)
+        flags |= Qt::ItemIsUserCheckable;
+
+    // flags |= Qt::ItemIsEditable;
+
+    return flags;
 }
 
 QVariant
@@ -884,6 +890,10 @@ QgModel::data(const QModelIndex &index, int role) const
     if (role == HighlightDisplayRole) {
 	return qi->instance()->active_flag;
     }
+    if (role == Qt::CheckStateRole && index.column() == 0) {
+	return QVariant(qi->isChecked() ? Qt::Checked : Qt::Unchecked);
+    }
+
     return QVariant();
 }
 

@@ -28,6 +28,7 @@
  */
 
 #include "common.h"
+#include <QApplication>
 #include <QPainter>
 #include <QHeaderView>
 #include <QMenu>
@@ -87,11 +88,22 @@ text_string:
     QImage type_icon = index.data(QgModel::TypeIconDisplayRole).value<QImage>().scaledToHeight(option.rect.height()-2);
     QRect image_rect = type_icon.rect();
     image_rect.moveTo(option.rect.topLeft());
-    QRect text_rect(type_icon.rect().topRight(), option.rect.bottomRight());
-    text_rect.moveTo(image_rect.topRight());
     image_rect.translate(0, 1);
     painter->drawImage(image_rect, type_icon);
 
+#if 0
+    const QStyle *style = QApplication::style();
+    QStyleOptionButton opt;
+    opt.state = (index.data(Qt::CheckStateRole) == Qt::Checked) ? QStyle::State_On : QStyle::State_Off;
+    opt.state = QStyle::State_Enabled;
+    opt.rect = image_rect;
+    opt.rect.moveTo(image_rect.topRight());
+    opt.rect.translate(5, 0);
+    style->drawControl(QStyle::CE_CheckBox,&opt,painter);
+#endif
+    QRect text_rect(type_icon.rect().topRight(), option.rect.bottomRight());
+    //text_rect.moveTo(opt.rect.topRight());
+    text_rect.moveTo(image_rect.topRight());
     painter->drawText(text_rect, text, QTextOption(Qt::AlignLeft));
 }
 

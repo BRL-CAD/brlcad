@@ -194,6 +194,8 @@ class QTCAD_EXPORT QgItem
 	std::vector<QgItem *> children;
 	std::unordered_map<QgItem *, int> c_noderow;
 	size_t c_count = 0;
+	bool isChecked() const {return drawn;}
+	void setChecked(bool d) {drawn = d;}
 
 	// Return the full path to this particular item (equivalent to
 	// db_path_to_vls)
@@ -206,6 +208,9 @@ class QTCAD_EXPORT QgItem
 	db_op_t op = DB_OP_UNION;
 	struct directory *dp = NULL;
 	QImage icon;
+
+	// Flag to determine whether the item is currently drawn
+	bool drawn = false;
 };
 
 /* The primary expression in a Qt context of a .g database and its contents.
