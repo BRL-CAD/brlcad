@@ -427,31 +427,26 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 	bu_bomb("mk_bot_w_normals() failed");
 }
 
-void
-write_geometry(rt_wdb &wdb, const std::string &name,
-	       const ONX_Model& UNUSED(model), const ON_Geometry *geometry, 
-               mat_t& UNUSED(matrix), std::set<std::string>& members,
-               std::unordered_map<std::string, ON_UUID>& to_remove, ON_UUID id)
+/* filters acceptable geometry types and writes accordingly
+ * RETURNS: 1 when geometry is written
+ *          0 when geometry is valid, but no new geometry is written - ie InstanceRef's
+ *         -1 when geoemtry is not written
+ */
+int
+write_geometry(rt_wdb &wdb, const std::string &name, const ON_Geometry *geometry)
 {
-    /* geometry we've come across that is not writable */
-    if (to_remove.find(name) != to_remove.end())
-        return;
-
     if (const ON_Brep * const brep = ON_Brep::Cast(geometry)) {
 	write_geometry(wdb, name, *brep);
-        members.insert(name);
     } else if (const ON_Mesh * const mesh = ON_Mesh::Cast(geometry)) {
 	write_geometry(wdb, name, *mesh);
-        members.insert(name);
     } else if (geometry->HasBrepForm()) {
 	AutoPtr<ON_Brep, autoptr_wrap_delete> temp(geometry->BrepForm());
 	write_geometry(wdb, name, *temp.ptr);
-        members.insert(name);
     } else if (ON_InstanceRef::Cast(geometry)) {
-        /* InstanceRef are valid geometry so we do not want to add them 'to_remove', 
-         * but their referenced geometry is already written.
+        /* InstanceRef are valid geometry but their referenced geometry is already written.
          * ie do nothing here
          */
+        return 0;
     } else if (const ON_SubD* subd = ON_SubD::Cast(geometry)) {
 	/* NOTE: pending proper support for subdivision surfaces, 
 	 * this is a very poor approximation just to have *something*
@@ -467,14 +462,15 @@ write_geometry(rt_wdb &wdb, const std::string &name,
 	    ON_Mesh* nmesh = new_subd->GetControlNetMesh(nullptr, ON_SubDGetControlNetMeshPriority::Geometry);
 	    if (nullptr != nmesh) {
 		write_geometry(wdb, name, *nmesh);
-                members.insert(name);
 		delete nmesh;
 	    }
 	    delete new_subd;
 	}
     } else {
-        to_remove.insert(std::make_pair(name, id));
+        return -1;
     }
+
+    return 1;
 }
 
 
@@ -644,13 +640,15 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 
 	const ON_Geometry *g = mg->Geometry(nullptr);
 	if (g) {
-            mat_t matrix = MAT_INIT_IDN;
-            std::set<std::string>members;
+            int write_ret = write_geometry(wdb, member_name, g);
 
-            write_geometry(wdb, member_name, model, g, matrix, members, to_remove, mg->Id());
-            if (members.size() > 0) {
-                write_comb(wdb, name, members, matrix, own_shader ? shader.first.c_str() : NULL,
+            if (write_ret == 1) {
+                std::unordered_map<std::string, std::vector<fastf_t*>>members;
+                members[member_name].push_back(nullptr);
+
+                write_layer_comb(wdb, name, members, own_shader ? shader.first.c_str() : NULL,
 			   own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
+
                 if (attributes) {
                     ON_String uuid;
                     const char *uuid_str = ON_UuidToString(attributes->m_uuid, uuid);
@@ -659,8 +657,11 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
                     if (ret1 || ret2)
                         bu_bomb("db5_update_attribute() failed");
                 }
-                success_count += members.size();
-            }
+                ++success_count;
+            } else if (write_ret == 0)
+                ++success_count;
+              else
+                to_remove.insert(std::make_pair(member_name, mg->Id()));
 	} else {
 	    if (gcv_options.verbosity_level)
 		std::cerr << "skipped " << name << ", no geometry associated with ModelGeometryComponent (?)\n";
@@ -689,7 +690,7 @@ import_idef(rt_wdb &wdb, std::string &name, const ON_InstanceDefinition *idef, c
     //double munit = idef->UnitSystem().MillimetersPerUnit(ON_DBL_QNAN);
     //std::cout << name << " units: " << bu_units_string(munit) << "\n";
 
-    std::set<std::string> members;
+    std::unordered_map<std::string, std::vector<fastf_t*>> members;
     const ON_SimpleArray<ON_UUID>& g_ids = idef->InstanceGeometryIdList();
     for (int i = 0; i < g_ids.Count(); i++) {
 	const ON_ModelComponentReference& m_cr = model.ComponentFromId(ON_ModelComponent::Type::ModelGeometry, g_ids[i]);
@@ -700,10 +701,10 @@ import_idef(rt_wdb &wdb, std::string &name, const ON_InstanceDefinition *idef, c
 	if (!attributes)
 	    continue;
 	const char *nstr = ON_String(attributes->Name()).Array();
-	members.insert(std::string(nstr));
+	members[std::string(nstr)].push_back(nullptr);
     }
 
-    write_comb(wdb, name, members);
+    write_layer_comb(wdb, name, members);
     ON_String nsu;
     const char *uuidstr = ON_UuidToString(idef->Id(), nsu);
     int ret1 = db5_update_attribute(name.c_str(), "rhino::type", idef->ClassId()->ClassName(), wdb.dbip);
