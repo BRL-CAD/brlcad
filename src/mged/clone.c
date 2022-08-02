@@ -64,7 +64,7 @@
 
 
 #define CLONE_VERSION "Clone ver 4.0\n2006-08-08\n"
-#define CLONE_BUFSIZE 512
+#define CLONE_BUFSIZE 511
 
 /*
  * NOTE: in order to not shadow the global "dbip" pointer used
@@ -225,21 +225,21 @@ static struct bu_vls *
 get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, int iter)
 {
     struct bu_vls *newname;
-    char prefix[CLONE_BUFSIZE] = {0}, suffix[CLONE_BUFSIZE] = {0}, buf[CLONE_BUFSIZE + 1] = {0}, suffix2[CLONE_BUFSIZE] = {0};
+    char prefix[CLONE_BUFSIZE+1] = {0}, suffix[CLONE_BUFSIZE+1] = {0}, buf[CLONE_BUFSIZE+1] = {0}, suffix2[CLONE_BUFSIZE+1] = {0};
     int num = 0, i = 1, j = 0;
 
     newname = bu_vls_vlsinit();
 
     /* Ugh. This needs much repair/cleanup. */
     if (state->updpos == 0) {
-	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%512s", prefix, &num, suffix, suffix2); /* CLONE_BUFSIZE */
-	snprintf(suffix, CLONE_BUFSIZE, "%s", suffix2);
+	bu_sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%" CPP_XSTR(CLONE_BUFSIZE) "s", prefix, &num, suffix, suffix2);
+	snprintf(suffix, CLONE_BUFSIZE+1, "%s", suffix2);
     } else if (state->updpos == 1) {
 	struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
 	int num2 = 0;
 	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", prefix, &num2, suffix2, &num, suffix);
 	bu_vls_sprintf(&tmpbuf, "%s%d%s", prefix, num2, suffix2);
-	snprintf(prefix, CLONE_BUFSIZE, "%s", bu_vls_addr(&tmpbuf));
+	snprintf(prefix, CLONE_BUFSIZE+1, "%s", bu_vls_addr(&tmpbuf));
 	bu_vls_free(&tmpbuf);
     } else
 	bu_exit(EXIT_FAILURE, "multiple -c options not supported yet.");
