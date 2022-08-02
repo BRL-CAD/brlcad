@@ -17,25 +17,21 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file asc_v5.cpp
- *
- * Brief description
- *
- */
 
 #include "common.h"
 #include "vmath.h"
 
-#include <cstdio>
 #include <fstream>
-#include <regex>
 #include <sstream>
 #include <string>
+
+#include "bio.h"
 
 #include "bu/units.h"
 #include "raytrace.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
+
 
 static int
 check_bracket_balance(int *ocnt, int *ccnt, std::string &s)
@@ -49,6 +45,7 @@ check_bracket_balance(int *ocnt, int *ccnt, std::string &s)
     }
     return (*ocnt == *ccnt);
 }
+
 
 /* Note - in its full generality, a "v5 ASCII BRL-CAD geometry file" may
  * technically be a completely arbitrary Tcl script, given the way the
