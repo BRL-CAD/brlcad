@@ -253,8 +253,11 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 	    /* primitives and regions */
 	    if (suffix[0] != 0)
 		if ((i == 1) && is_in_list(obj_list, buf)) {
+		    /* save the name for the next pass */
+		    struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
 		    j = index_in_list(obj_list, buf);
-		    snprintf(buf, sizeof(buf), "%s%d", prefix, num);	/* save the name for the next pass */
+		    bu_vls_sprintf(&tmpbuf, "%s%d", prefix, num);
+		    snprintf(buf, sizeof(buf), "%s", bu_vls_cstr(&tmpbuf));
 		    /* clear and set the name */
 		    bu_vls_trunc(newname, 0);
 		    bu_vls_printf(newname, "%s%s", bu_vls_addr(&obj_list.names[j].dest[iter]), suffix);
