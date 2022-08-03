@@ -210,7 +210,7 @@ QgTreeSelectionModel::ged_selection_sync(QgItem *start, struct ged_selection_set
 	bu_vls_sprintf(&pstr, "%s", qstr.toLocal8Bit().data());
 	QModelIndex pind = cnode->ctx->NodeIndex(cnode);
 	if (ged_selection_find(gs, bu_vls_cstr(&pstr))) {
-	    bu_log("ged sync select\n");
+	    bu_log("ged sync select: %s\n", bu_vls_cstr(&pstr));
 	    select(pind, QItemSelectionModel::Select);
 	} else {
 	    select(pind, QItemSelectionModel::Deselect);
@@ -357,18 +357,12 @@ QgTreeSelectionModel::ged_drawn_sync(QgItem *start, struct ged *gedp)
 }
 
 void
-QgTreeSelectionModel::illuminate(const QItemSelection &selected, const QItemSelection &deselected)
+QgTreeSelectionModel::ged_deselect(const QItemSelection &UNUSED(selected), const QItemSelection &deselected)
 {
-    // Probably not possible?
-    if (!selected.size() && !deselected.size())
+    if (!deselected.size())
 	return;
-    // TODO - The GED syncing and selected path calculations need to happen
-    // before we get to this point.  Probably what is needed is a custom
-    // subclassing of QItemSelectionModel with a select that deals with these
-    // ged operations.
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
-#if 0
     if (!gedp->ged_selection_sets)
 	return;
     struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
@@ -386,22 +380,8 @@ QgTreeSelectionModel::illuminate(const QItemSelection &selected, const QItemSele
 	QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
 	QString nstr = snode->toString();
 	bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-	std::cout << "deselected: " << bu_vls_cstr(&tpath) << "\n";
 	ged_selection_remove(gs, bu_vls_cstr(&tpath));
     }
-    std::cout << "TODO: update any illumination flags that need unsetting on already drawn objects\n";
-
-    QModelIndexList sl = selected.indexes();
-    for (long int i = 0; i < sl.size(); i++) {
-	QgItem *snode = static_cast<QgItem *>(sl.at(i).internalPointer());
-	QString nstr = snode->toString();
-	bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-	std::cout << "selected: " << bu_vls_cstr(&tpath) << "\n";
-	ged_selection_insert(gs, bu_vls_cstr(&tpath));
-    }
-    std::cout << "TODO: update any illumination flags that need setting on already drawn objects\n";
-#endif
-    emit m->view_change(&gedp->ged_gvp);
 }
 
 // These functions tell the related-object highlighting logic what the current
