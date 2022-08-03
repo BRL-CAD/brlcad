@@ -562,7 +562,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 	return NULL;
     } BU_UNSETJUMP;
 
-    if (failed || i < 0) {
+    if (i < 0) {
 	/* Destroy NMG */
 	_ged_facetize_log_default(o);
 	return NULL;
