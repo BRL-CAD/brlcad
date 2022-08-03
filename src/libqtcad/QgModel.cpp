@@ -1013,6 +1013,7 @@ QgModel::draw(QString &qpath)
     bu_free((void *)inst_path, "inst_path");
 
     emit view_change(&gedp->ged_gvp);
+    emit draw_change();
 
     return ret;
 }
@@ -1042,6 +1043,7 @@ QgModel::erase(QString &qpath)
     bu_free((void *)inst_path, "inst_path");
 
     emit view_change(&gedp->ged_gvp);
+    emit draw_change();
 
     return ret;
 }

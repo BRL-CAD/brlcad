@@ -256,19 +256,7 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
     }
 
     CADApp *ap = (CADApp *)qApp;
-    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)ap->treeview->selectionModel();
-    struct ged_selection_set *gs = NULL;
-    if (gedp->ged_selection_sets) {
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
-	if (scnt == 1)
-	    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
-	bu_ptbl_free(&ssets);
-    }
-    if (gs)
-	selm->ged_selection_sync(NULL, gs);
-    selm->ged_drawn_sync(NULL, gedp);
-    emit ap->mdl->layoutChanged();
+    ap->treeview->draw_sync();
 
     return (int)(regen.size() + erase.size());
 }

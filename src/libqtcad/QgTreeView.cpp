@@ -398,6 +398,24 @@ void QgTreeView::qgitem_select_sync(QgItem *itm)
     selm->ged_drawn_sync(itm, gedp);
 }
 
+void QgTreeView::draw_sync()
+{
+    struct ged *gedp = m->gedp;
+    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
+    struct ged_selection_set *gs = NULL;
+    if (gedp->ged_selection_sets) {
+	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
+	if (scnt == 1)
+	    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
+	bu_ptbl_free(&ssets);
+    }
+    if (gs)
+	selm->ged_selection_sync(NULL, gs);
+    selm->ged_drawn_sync(NULL, gedp);
+    emit m->layoutChanged();
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++
