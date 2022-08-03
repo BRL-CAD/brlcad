@@ -184,7 +184,7 @@ QgTreeSelectionModel::mode_change(int i)
 }
 
 void
-QgTreeSelectionModel::ged_sync(QgItem *start, struct ged_selection_set *gs)
+QgTreeSelectionModel::ged_selection_sync(QgItem *start, struct ged_selection_set *gs)
 {
     if (!gs)
 	return;
@@ -217,6 +217,33 @@ QgTreeSelectionModel::ged_sync(QgItem *start, struct ged_selection_set *gs)
 	}
     }
 
+    ged_doing_sync = false;
+}
+
+void
+QgTreeSelectionModel::ged_drawn_sync(QgItem *start, struct ged *gedp)
+{
+    if (!gedp)
+	return;
+
+    ged_doing_sync = true;
+    QgModel *m = treeview->m;
+    std::queue<QgItem *> to_check;
+    if (start && start != m->root()) {
+	to_check.push(start);
+    } else {
+	for (size_t i = 0; i < m->root()->children.size(); i++) {
+	    to_check.push(m->root()->children[i]);
+	}
+    }
+    //struct bu_vls pstr = BU_VLS_INIT_ZERO;
+    while (!to_check.empty()) {
+	QgItem *cnode = to_check.front();
+	to_check.pop();
+	for (size_t i = 0; i < cnode->children.size(); i++) {
+	    to_check.push(cnode->children[i]);
+	}
+    }
     ged_doing_sync = false;
 }
 

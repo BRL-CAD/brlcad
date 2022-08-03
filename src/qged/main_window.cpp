@@ -40,7 +40,7 @@ qged_select_clbk(struct ged_selection_set *gs)
 {
     CADApp *ap = (CADApp *)qApp;
     QgTreeSelectionModel *selm = (QgTreeSelectionModel *)ap->treeview->selectionModel();
-    selm->ged_sync(NULL, gs);
+    selm->ged_selection_sync(NULL, gs);
 }
 
 BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)

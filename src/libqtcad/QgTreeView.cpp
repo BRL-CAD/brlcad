@@ -392,7 +392,8 @@ void QgTreeView::qgitem_select_sync(QgItem *itm)
 	return;
 
     QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
-    selm->ged_sync(itm, gs);
+    selm->ged_selection_sync(itm, gs);
+    selm->ged_drawn_sync(itm, gedp);
 }
 
 // Local Variables:
