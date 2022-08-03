@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <queue>
 #include <unordered_set>
+#include <stack>
 #include <vector>
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgModel.h"
@@ -48,7 +49,7 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 	gedp->ged_select_callback = NULL;
 	if (!(flags & QItemSelectionModel::Deselect)) {
 	    QModelIndexList dl = selection.indexes();
-	    std::queue<QgItem *> to_process;
+	    std::stack<QgItem *> to_process;
 	    for (long int i = 0; i < dl.size(); i++) {
 		QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
 		QgItem *pnode = snode->parent();
@@ -75,7 +76,7 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 		}
 	    }
 	    while (!to_process.empty()) {
-		QgItem *itm = to_process.front();
+		QgItem *itm = to_process.top();
 		to_process.pop();
 		QModelIndex pind = itm->ctx->NodeIndex(itm);
 		select(pind, QItemSelectionModel::Deselect);
@@ -121,7 +122,7 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 {
 
     if (!ged_doing_sync && !(flags & QItemSelectionModel::Deselect)) {
-	std::queue<QgItem *> to_process;
+	std::stack<QgItem *> to_process;
 	QgItem *snode = static_cast<QgItem *>(index.internalPointer());
 	if (snode) {
 	    QgItem *pnode = snode->parent();
@@ -147,7 +148,7 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 		}
 	    }
 	    while (!to_process.empty()) {
-		QgItem *itm = to_process.front();
+		QgItem *itm = to_process.top();
 		to_process.pop();
 		QModelIndex pind = itm->ctx->NodeIndex(itm);
 		select(pind, QItemSelectionModel::Deselect);
