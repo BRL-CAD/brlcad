@@ -264,9 +264,18 @@ chk_geometry_names(ONX_Model& model, const char* default_name)
 {
     std::unordered_map <std::string, int> used_names;			/* used names, times used */
     std::vector<std::pair<ON_UUID, ON_ModelComponent*>>to_remove;	/* remove ID, replacing copy */
-    ON_ModelComponent::Type curr_type = ON_ModelComponent::Type::ModelGeometry;
-    ONX_ModelComponentIterator it(model, curr_type);
 
+    /* Layer names are guaranteed to be unique with one another, but not necessarily with geometry.
+     * load used layer names before checking geometry to avoid cyclic naming
+     */
+    ON_ModelComponent::Type curr_type = ON_ModelComponent::Type::Layer;
+    ONX_ModelComponentIterator it(model, curr_type);
+    for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
+        used_names.insert({clean_name(cr.ModelComponent()->Name(), default_name), 0});
+
+    /* check all geometry names for uniqueness */
+    curr_type = ON_ModelComponent::Type::ModelGeometry;
+    it = ONX_ModelComponentIterator(model, curr_type);
     for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference()) {
         std::string name = clean_name(cr.ModelComponent()->Name(), default_name);
 
