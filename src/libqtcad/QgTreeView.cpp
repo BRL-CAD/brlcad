@@ -97,8 +97,13 @@ text_string:
 #endif
     QPen tpen = painter->pen();
     int drawn_state = index.data(QgModel::DrawnDisplayRole).toInt();
-    if (drawn_state == 1)
-	painter->setPen(QColor(0, 200, 0));
+    if (drawn_state == 1) {
+	if (option.state & QStyle::State_Selected) {
+	    painter->setPen(QColor(0, 70, 0));
+	} else {
+	    painter->setPen(QColor(0, 200, 0));
+	}
+    }
     if (drawn_state == 2)
 	painter->setPen(QColor(150, 70, 200));
     text_rect.moveTo(image_rect.topRight());
