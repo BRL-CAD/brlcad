@@ -208,7 +208,7 @@ class QTCAD_EXPORT QgItem
 	QImage icon;
 
 	// Flag to determine whether the item is fully or partially drawn
-	bool draw_state = 0;
+	int draw_state = 0;
 };
 
 /* The primary expression in a Qt context of a .g database and its contents.

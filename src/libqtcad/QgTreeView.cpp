@@ -94,14 +94,16 @@ text_string:
     QFont f = option.font;
     f.setItalic(true);
     painter->setFont(f);
+#endif
+    QPen tpen = painter->pen();
     int drawn_state = index.data(QgModel::DrawnDisplayRole).toInt();
     if (drawn_state == 1)
-	painter->setPen(QColor(150, 70, 200));
-    if (drawn_state == 2)
 	painter->setPen(QColor(0, 200, 0));
-#endif
+    if (drawn_state == 2)
+	painter->setPen(QColor(150, 70, 200));
     text_rect.moveTo(image_rect.topRight());
     painter->drawText(text_rect, text, QTextOption(Qt::AlignLeft));
+    painter->setPen(tpen);
 }
 
 QSize gObjDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
