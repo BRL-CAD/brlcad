@@ -807,6 +807,49 @@ get_all_idef_members(const ONX_Model &model)
 #endif
 }
 
+/* recursive function to unpack nested irefs 
+ * adds geometry to 'members' with respective transformation matrix if
+ * name is valid and layer index matches requested
+ */
+void
+unpack_iref(const ONX_Model& model, const ON_InstanceRef* iref, int index,
+             std::unordered_map<std::string, std::vector<fastf_t*>>& members)
+{
+    const ON_InstanceDefinition* idef = ON_InstanceDefinition::FromModelComponentRef(model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, iref->m_instance_definition_uuid), nullptr);
+    if (idef) {
+        const ON_SimpleArray<ON_UUID> id_list = idef->InstanceGeometryIdList();
+        for (int i = 0; i < id_list.Count(); i++) {
+            const ON_ModelGeometryComponent internal_gc = model.ModelGeometryComponentFromId(id_list[i]);
+            if (const ON_Geometry* internal_g = internal_gc.Geometry(nullptr)) {
+                if (const ON_InstanceRef* nested_iref = ON_InstanceRef::Cast(internal_g)) {
+                    unpack_iref(model, nested_iref, index, members);
+                } else {
+                    ON_String internal_name = internal_gc.Name();
+                    if (!internal_name.Array()) {
+                        /* if our load_model is working correctly, we should never get here */
+                        char cuid[37];
+                        ON_UuidToString(internal_gc.Id(), cuid);
+                        bu_log("ERROR: unnamed reference to uid: %s\n", cuid);
+                        continue;
+                    }
+                    if (const ON_3dmObjectAttributes* internal_attributes = internal_gc.Attributes(nullptr)) {
+                        if (internal_attributes->m_layer_index == index) {
+                            const std::string internal_name_stdstr = std::string(internal_name.Array());
+
+                            fastf_t* matrix = new fastf_t[16];
+                            for (std::size_t row = 0; row < 4; ++row)
+                                for (std::size_t col = 0; col < 4; ++col)
+                                    matrix[4 * row + col] = iref->m_xform[row][col];
+
+                            members[internal_name_stdstr].push_back(matrix);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // Layer members (translated to comb children in BRL-CAD terms) may be either
 // other layers (additional combs) or objects.
 //
@@ -850,35 +893,7 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model, const std::set<
 		continue;
             /* if the layer has refs, add them in accordingly */
 	    if (const ON_InstanceRef* iref = ON_InstanceRef::Cast(mg->Geometry(nullptr))) {
-                const ON_InstanceDefinition* idef = ON_InstanceDefinition::FromModelComponentRef(model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, iref->m_instance_definition_uuid), nullptr);
-                if (idef) {
-                    const ON_SimpleArray<ON_UUID> id_list = idef->InstanceGeometryIdList();
-                    for (int i = 0; i < id_list.Count(); i++) {
-                        const ON_ModelGeometryComponent internal_gc = model.ModelGeometryComponentFromId(id_list[i]);
-                        if (internal_gc.Geometry(nullptr)) {
-                            ON_String internal_name = internal_gc.Name();
-                            if (!internal_name.Array()) {
-                                /* if our load_model is working correctly, we should never get here */
-                                char cuid[37];
-                                ON_UuidToString(internal_gc.Id(), cuid);
-                                bu_log("ERROR: unnamed reference to uid: %s\n", cuid);
-                                continue;
-                            }
-                            if (const ON_3dmObjectAttributes* internal_attributes = internal_gc.Attributes(nullptr)) {
-                                if (internal_attributes->m_layer_index == layer->Index()) {
-                                    const std::string internal_name_stdstr = std::string(internal_name.Array());
-                                
-                                    fastf_t* matrix = new fastf_t[16];
-                                    for (std::size_t row = 0; row < 4; ++row)
-                                        for (std::size_t col = 0; col < 4; ++col)
-                                            matrix[4 * row + col] = iref->m_xform[row][col];
-                                
-                                    members[internal_name_stdstr].push_back(matrix);
-                                }
-                            }
-                        }
-                    }
-                }
+                unpack_iref(model, iref, layer->Index(), members);
                 continue;
             }
             ON_String ns(attributes->Name());
