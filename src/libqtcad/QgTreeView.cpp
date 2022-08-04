@@ -94,14 +94,21 @@ text_string:
     QFont f = option.font;
     f.setItalic(true);
     painter->setFont(f);
-    int drawn_state = index.data(QgModel::DrawnDisplayRole).toInt();
-    if (drawn_state == 1)
-	painter->setPen(QColor(150, 70, 200));
-    if (drawn_state == 2)
-	painter->setPen(QColor(0, 200, 0));
 #endif
+    QPen tpen = painter->pen();
+    int drawn_state = index.data(QgModel::DrawnDisplayRole).toInt();
+    if (drawn_state == 1) {
+	if (option.state & QStyle::State_Selected) {
+	    painter->setPen(QColor(0, 70, 0));
+	} else {
+	    painter->setPen(QColor(0, 200, 0));
+	}
+    }
+    if (drawn_state == 2)
+	painter->setPen(QColor(150, 70, 200));
     text_rect.moveTo(image_rect.topRight());
     painter->drawText(text_rect, text, QTextOption(Qt::AlignLeft));
+    painter->setPen(tpen);
 }
 
 QSize gObjDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
@@ -154,7 +161,7 @@ QgTreeView::QgTreeView(QWidget *pparent, QgModel *treemodel) : QTreeView(pparent
     header()->setStretchLastSection(true);
     QObject::connect(this, &QgTreeView::expanded, this, &QgTreeView::tree_column_size);
     QObject::connect(this, &QgTreeView::collapsed, this, &QgTreeView::tree_column_size);
-    QObject::connect(this->selectionModel(), &QItemSelectionModel::selectionChanged, sm, &QgTreeSelectionModel::illuminate);
+    QObject::connect(this->selectionModel(), &QItemSelectionModel::selectionChanged, sm, &QgTreeSelectionModel::ged_deselect);
     QObject::connect(this, &QgTreeView::clicked, sm, &QgTreeSelectionModel::update_selected_node_relationships);
     QObject::connect(this, &QgTreeView::customContextMenuRequested, (QgTreeView *)this, &QgTreeView::context_menu);
     QObject::connect(this, &QgTreeView::doubleClicked, (QgTreeView *)this, &QgTreeView::do_draw_toggle);
@@ -221,10 +228,10 @@ void QgTreeView::context_menu(const QPoint &point)
     QAction* draw_action = new QAction("Draw", NULL);
     // https://stackoverflow.com/a/28647342/2037687
     QVariant draw_action_v;
-#ifdef USE_QT6
-    draw_action_v = QVariant::fromValue((void *)cnode);
-#else
+#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
     draw_action_v = qVariantFromValue((void *)cnode);
+#else
+    draw_action_v = QVariant::fromValue((void *)cnode);
 #endif
     draw_action->setData(draw_action_v);
     connect(draw_action, &QAction::triggered, m, &QgModel::draw_action);
@@ -232,10 +239,10 @@ void QgTreeView::context_menu(const QPoint &point)
 
     QAction* erase_action = new QAction("Erase", NULL);
     QVariant erase_action_v;
-#ifdef USE_QT6
-    erase_action_v = QVariant::fromValue((void *)cnode);
-#else
+#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
     erase_action_v = qVariantFromValue((void *)cnode);
+#else
+    erase_action_v = QVariant::fromValue((void *)cnode);
 #endif
     erase_action->setData(erase_action_v);
     connect(erase_action, &QAction::triggered, m, &QgModel::erase_action);
@@ -392,7 +399,26 @@ void QgTreeView::qgitem_select_sync(QgItem *itm)
 	return;
 
     QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
-    selm->ged_sync(itm, gs);
+    selm->ged_selection_sync(itm, gs);
+    selm->ged_drawn_sync(itm, gedp);
+}
+
+void QgTreeView::draw_sync()
+{
+    struct ged *gedp = m->gedp;
+    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
+    struct ged_selection_set *gs = NULL;
+    if (gedp->ged_selection_sets) {
+	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
+	if (scnt == 1)
+	    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
+	bu_ptbl_free(&ssets);
+    }
+    if (gs)
+	selm->ged_selection_sync(NULL, gs);
+    selm->ged_drawn_sync(NULL, gedp);
+    emit m->layoutChanged();
 }
 
 // Local Variables:

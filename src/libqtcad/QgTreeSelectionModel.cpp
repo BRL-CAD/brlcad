@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <queue>
 #include <unordered_set>
+#include <stack>
 #include <vector>
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgModel.h"
@@ -48,7 +49,7 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 	gedp->ged_select_callback = NULL;
 	if (!(flags & QItemSelectionModel::Deselect)) {
 	    QModelIndexList dl = selection.indexes();
-	    std::queue<QgItem *> to_process;
+	    std::stack<QgItem *> to_process;
 	    for (long int i = 0; i < dl.size(); i++) {
 		QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
 		QgItem *pnode = snode->parent();
@@ -75,7 +76,7 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 		}
 	    }
 	    while (!to_process.empty()) {
-		QgItem *itm = to_process.front();
+		QgItem *itm = to_process.top();
 		to_process.pop();
 		QModelIndex pind = itm->ctx->NodeIndex(itm);
 		select(pind, QItemSelectionModel::Deselect);
@@ -121,7 +122,7 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 {
 
     if (!ged_doing_sync && !(flags & QItemSelectionModel::Deselect)) {
-	std::queue<QgItem *> to_process;
+	std::stack<QgItem *> to_process;
 	QgItem *snode = static_cast<QgItem *>(index.internalPointer());
 	if (snode) {
 	    QgItem *pnode = snode->parent();
@@ -147,7 +148,7 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 		}
 	    }
 	    while (!to_process.empty()) {
-		QgItem *itm = to_process.front();
+		QgItem *itm = to_process.top();
 		to_process.pop();
 		QModelIndex pind = itm->ctx->NodeIndex(itm);
 		select(pind, QItemSelectionModel::Deselect);
@@ -184,7 +185,7 @@ QgTreeSelectionModel::mode_change(int i)
 }
 
 void
-QgTreeSelectionModel::ged_sync(QgItem *start, struct ged_selection_set *gs)
+QgTreeSelectionModel::ged_selection_sync(QgItem *start, struct ged_selection_set *gs)
 {
     if (!gs)
 	return;
@@ -210,7 +211,7 @@ QgTreeSelectionModel::ged_sync(QgItem *start, struct ged_selection_set *gs)
 	bu_vls_sprintf(&pstr, "%s", qstr.toLocal8Bit().data());
 	QModelIndex pind = cnode->ctx->NodeIndex(cnode);
 	if (ged_selection_find(gs, bu_vls_cstr(&pstr))) {
-	    bu_log("ged sync select\n");
+	    bu_log("ged sync select: %s\n", bu_vls_cstr(&pstr));
 	    select(pind, QItemSelectionModel::Select);
 	} else {
 	    select(pind, QItemSelectionModel::Deselect);
@@ -220,19 +221,149 @@ QgTreeSelectionModel::ged_sync(QgItem *start, struct ged_selection_set *gs)
     ged_doing_sync = false;
 }
 
-void
-QgTreeSelectionModel::illuminate(const QItemSelection &selected, const QItemSelection &deselected)
+static void
+_fp_path_split(std::vector<std::string> &objs, const char *str)
 {
-    // Probably not possible?
-    if (!selected.size() && !deselected.size())
+    std::string s(str);
+    size_t pos = 0;
+    if (s.c_str()[0] == '/')
+	s.erase(0, 1);  //Remove leading slash
+    while ((pos = s.find_first_of("/", 0)) != std::string::npos) {
+	std::string ss = s.substr(0, pos);
+	objs.push_back(ss);
+	s.erase(0, pos + 1);
+    }
+    objs.push_back(s);
+}
+
+static bool
+_path_top_match(std::vector<std::string> &top, std::vector<std::string> &candidate)
+{
+    for (size_t i = 0; i < top.size(); i++) {
+	if (i == candidate.size())
+	    return false;
+	if (top[i] != candidate[i])
+	    return false;
+    }
+    return true;
+}
+
+/* There are three possible determinations - 0, which is not drawn, 1, which is
+ * fully drawn, and 2 which is partially drawn */
+static int
+_get_draw_state(std::vector<std::vector<std::string>> &view_objs, std::vector<std::string> &candidate)
+{
+    for (size_t i = 0; i < view_objs.size(); i++) {
+	// If view_objs is a top path for candidate, it is fully drawn
+	if (_path_top_match(view_objs[i], candidate))
+	    return 1;
+	// If we don't have a match, see if the candidate is a top path of a
+	// view_obj.  If so, candidate is partially drawn
+	if (_path_top_match(candidate, view_objs[i]))
+	    return 2;
+    }
+
+    return 0;
+}
+
+void
+QgTreeSelectionModel::ged_drawn_sync(QgItem *start, struct ged *gedp)
+{
+    if (!gedp)
 	return;
-    // TODO - The GED syncing and selected path calculations need to happen
-    // before we get to this point.  Probably what is needed is a custom
-    // subclassing of QItemSelectionModel with a select that deals with these
-    // ged operations.
+
+    bu_log("ged_drawn_sync\n");
+
+    // Query from GED to get the drawn view objects (i.e. the "who" list).
+    // This will tell us what the current drawn state is.
+    std::vector<std::vector<std::string>> view_objs;
+    struct bu_ptbl *sg = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
+    if (!sg)
+	return;
+    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+	std::vector<std::string> cg_p;
+	_fp_path_split(cg_p, bu_vls_cstr(&cg->s_name));
+	view_objs.push_back(cg_p);
+    }
+
+    ged_doing_sync = true;
+
+    QgModel *m = treeview->m;
+    std::queue<QgItem *> to_check;
+    if (start && start != m->root()) {
+	to_check.push(start);
+    } else {
+	for (size_t i = 0; i < m->root()->children.size(); i++) {
+	    to_check.push(m->root()->children[i]);
+	}
+    }
+
+    // Note that we always have to visit all the QgItem children, regardless of
+    // parent drawn determinations, to make sure all the flags are consistent
+    // with the current state.  We don't have to do path tests if the parent
+    // state is decisive, but we do need to track and set the flags.
+    struct bu_vls pstr = BU_VLS_INIT_ZERO;
+    while (!to_check.empty()) {
+	QgItem *cnode = to_check.front();
+	to_check.pop();
+	QString qstr = cnode->toString();
+	bu_vls_sprintf(&pstr, "%s", qstr.toLocal8Bit().data());
+	std::vector<std::string> cg_p;
+	_fp_path_split(cg_p, bu_vls_cstr(&pstr));
+	cnode->draw_state = _get_draw_state(view_objs, cg_p);
+	if (cnode->draw_state == 0) {
+	    // Not drawn - none of the children are drawn either, zero
+	    // all of them out.
+	    std::queue<QgItem *> to_clear;
+	    for (size_t i = 0; i < cnode->children.size(); i++) {
+		to_clear.push(cnode->children[i]);
+	    }
+	    while (!to_clear.empty()) {
+		QgItem *nnode = to_clear.front();
+		to_clear.pop();
+		nnode->draw_state = 0;
+		for (size_t i = 0; i < nnode->children.size(); i++) {
+		    to_clear.push(nnode->children[i]);
+		}
+	    }
+	    continue;
+	}
+	if (cnode->draw_state == 1) {
+	    // Fully drawn - all of the children are drawn, set
+	    // all of them.
+	    std::queue<QgItem *> to_set;
+	    for (size_t i = 0; i < cnode->children.size(); i++) {
+		to_set.push(cnode->children[i]);
+	    }
+	    while (!to_set.empty()) {
+		QgItem *nnode = to_set.front();
+		to_set.pop();
+		nnode->draw_state = 1;
+		for (size_t i = 0; i < nnode->children.size(); i++) {
+		    to_set.push(nnode->children[i]);
+		}
+	    }
+	    continue;
+	}
+
+	// Partially drawn.  cnode draw state is set to 2 - we need to look
+	// more closely at the children
+	for (size_t i = 0; i < cnode->children.size(); i++) {
+	    to_check.push(cnode->children[i]);
+	}
+    }
+
+    ged_doing_sync = false;
+}
+
+void
+QgTreeSelectionModel::ged_deselect(const QItemSelection &UNUSED(selected), const QItemSelection &deselected)
+{
+    if (!deselected.size())
+	return;
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
-#if 0
     if (!gedp->ged_selection_sets)
 	return;
     struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
@@ -250,22 +381,8 @@ QgTreeSelectionModel::illuminate(const QItemSelection &selected, const QItemSele
 	QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
 	QString nstr = snode->toString();
 	bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-	std::cout << "deselected: " << bu_vls_cstr(&tpath) << "\n";
 	ged_selection_remove(gs, bu_vls_cstr(&tpath));
     }
-    std::cout << "TODO: update any illumination flags that need unsetting on already drawn objects\n";
-
-    QModelIndexList sl = selected.indexes();
-    for (long int i = 0; i < sl.size(); i++) {
-	QgItem *snode = static_cast<QgItem *>(sl.at(i).internalPointer());
-	QString nstr = snode->toString();
-	bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-	std::cout << "selected: " << bu_vls_cstr(&tpath) << "\n";
-	ged_selection_insert(gs, bu_vls_cstr(&tpath));
-    }
-    std::cout << "TODO: update any illumination flags that need setting on already drawn objects\n";
-#endif
-    emit m->view_change(&gedp->ged_gvp);
 }
 
 // These functions tell the related-object highlighting logic what the current

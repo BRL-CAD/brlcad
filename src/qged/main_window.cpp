@@ -40,7 +40,7 @@ qged_select_clbk(struct ged_selection_set *gs)
 {
     CADApp *ap = (CADApp *)qApp;
     QgTreeSelectionModel *selm = (QgTreeSelectionModel *)ap->treeview->selectionModel();
-    selm->ged_sync(NULL, gs);
+    selm->ged_selection_sync(NULL, gs);
 }
 
 BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
@@ -369,6 +369,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     connect(tree_dock, &QgDockWidget::banner_click, m, &QgModel::toggle_hierarchy);
     connect(vm_topview, &QAction::triggered, m, &QgModel::toggle_hierarchy);
     connect(m, &QgModel::opened_item, treeview, &QgTreeView::qgitem_select_sync);
+    connect(m, &QgModel::draw_change, treeview, &QgTreeView::draw_sync);
 
     // We need to record the expanded/contracted state of the tree items,
     // and restore them after a model reset

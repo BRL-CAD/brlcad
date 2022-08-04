@@ -208,7 +208,7 @@ class QTCAD_EXPORT QgItem
 	QImage icon;
 
 	// Flag to determine whether the item is fully or partially drawn
-	bool draw_state = 0;
+	int draw_state = 0;
 };
 
 /* The primary expression in a Qt context of a .g database and its contents.
@@ -371,6 +371,10 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// Signal emitted when a model item is opened (there is work that
 	// needs to be done in the view after this happens...)
 	void opened_item(QgItem *);
+
+	// Emit when some model action change will require a view to update
+	// its awareness of what is drawn
+	void draw_change();
 
     public slots:
 	int draw_action();

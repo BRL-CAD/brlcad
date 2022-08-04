@@ -255,6 +255,9 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 	bu_vls_free(&opath);
     }
 
+    CADApp *ap = (CADApp *)qApp;
+    ap->treeview->draw_sync();
+
     return (int)(regen.size() + erase.size());
 }
 
