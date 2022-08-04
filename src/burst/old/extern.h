@@ -37,7 +37,7 @@
 
 /* External functions from application. */
 
-extern Func *getTrie(char *name, Trie *triep);
+extern Func *getTrie(char *name, int buflen, Trie *triep);
 extern Trie *addTrie(char *name, Trie **triepp);
 extern void prntTrie(Trie *triep, int level);
 
