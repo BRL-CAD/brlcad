@@ -57,6 +57,8 @@ class CADViewSelecter : public QWidget
 	QPushButton *erase_selections;
 	QPushButton *erase_non_selections;
 
+	void erase_obj_set(int scnt, struct bv_scene_obj **sset);
+
     signals:
 	void view_updated(struct bview **);
 
