@@ -22,10 +22,14 @@
  */
 
 #include <QWidget>
+#include <QPushButton>
+#include <QButtonGroup>
 #include <QGroupBox>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QRadioButton>
 #include "ged.h"
 
 class CADViewSelecter : public QWidget
@@ -36,11 +40,31 @@ class CADViewSelecter : public QWidget
 	CADViewSelecter(QWidget *p = 0);
 	~CADViewSelecter();
 
+	QRadioButton *use_pnt_select_button;
+	QRadioButton *use_rect_select_button;
+
 	QCheckBox *use_ray_test_ckbx;
-	QCheckBox *select_all_ckbx;
+	QCheckBox *select_all_depth_ckbx;
+
+	QRadioButton *erase_from_scene_button;
+	QRadioButton *add_to_group_button;
+	QRadioButton *rm_from_group_button;
+	QComboBox *current_group;
+	QPushButton *add_new_group;
+	QPushButton *rm_group;
+
+	QPushButton *draw_selections;
+	QPushButton *erase_selections;
+	QPushButton *erase_non_selections;
 
     signals:
 	void view_updated(struct bview **);
+
+    public slots:
+	void enable_groups(bool);
+    	void disable_groups(bool);
+	void enable_raytrace_opt(bool);
+    	void disable_raytrace_opt(bool);
 
     protected:
 	bool eventFilter(QObject *, QEvent *);

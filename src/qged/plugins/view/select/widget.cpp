@@ -40,16 +40,125 @@ CADViewSelecter::CADViewSelecter(QWidget *)
     QVBoxLayout *wl = new QVBoxLayout;
     wl->setAlignment(Qt::AlignTop);
 
-    use_ray_test_ckbx = new QCheckBox("Use Raytracing");
-    select_all_ckbx = new QCheckBox("Erase all under pointer");
+    QGroupBox *sstyle_box = new QGroupBox("Selection Style");
+    QButtonGroup *sstyle_grp = new QButtonGroup();
+    QVBoxLayout *sstyle_gl = new QVBoxLayout;
+    sstyle_gl->setAlignment(Qt::AlignTop);
+
+    use_pnt_select_button = new QRadioButton("Select Under Point");
+    use_pnt_select_button->setChecked(true);
+    sstyle_grp->addButton(use_pnt_select_button);
+    sstyle_gl->addWidget(use_pnt_select_button);
+
+    use_rect_select_button = new QRadioButton("Select Under Rectangle");
+    sstyle_grp->addButton(use_rect_select_button);
+    sstyle_gl->addWidget(use_rect_select_button);
+
+    sstyle_box->setLayout(sstyle_gl);
+
+    select_all_depth_ckbx = new QCheckBox("Use All Intersections");
+    use_ray_test_ckbx = new QCheckBox("Test with Raytracing");
+
+    QObject::connect(use_pnt_select_button, &QRadioButton::clicked, this, &CADViewSelecter::enable_raytrace_opt);
+    QObject::connect(use_rect_select_button, &QRadioButton::clicked, this, &CADViewSelecter::disable_raytrace_opt);
+
+    QGroupBox *smode_box = new QGroupBox("Selection Mode");
+    QVBoxLayout *smode_gl = new QVBoxLayout;
+    smode_gl->setAlignment(Qt::AlignTop);
+
+    QButtonGroup *smode_grp = new QButtonGroup();
+    erase_from_scene_button = new QRadioButton("Erase from Scene");
+    erase_from_scene_button->setChecked(true);
+    smode_grp->addButton(erase_from_scene_button);
+    smode_gl->addWidget(erase_from_scene_button);
+
+    add_to_group_button = new QRadioButton("Add to Current Set");
+    smode_grp->addButton(add_to_group_button);
+    smode_gl->addWidget(add_to_group_button);
+
+    rm_from_group_button = new QRadioButton("Remove from Current Set");
+    smode_grp->addButton(rm_from_group_button);
+    smode_gl->addWidget(rm_from_group_button);
+
+    QGroupBox *wgroups = new QGroupBox("Current Selection Set");
+    QVBoxLayout *sgrp_gl = new QVBoxLayout;
+    sgrp_gl->setAlignment(Qt::AlignTop);
+
+
+    QWidget *sgrp = new QWidget();
+    QHBoxLayout *groups_gl = new QHBoxLayout;
+    groups_gl->setAlignment(Qt::AlignLeft);
+    current_group = new QComboBox();
+    groups_gl->addWidget(current_group);
+    add_new_group = new QPushButton("+");
+    groups_gl->addWidget(add_new_group);
+    rm_group = new QPushButton("-");
+    groups_gl->addWidget(rm_group);
+    sgrp->setLayout(groups_gl);
+    sgrp_gl->addWidget(sgrp);
+
+    draw_selections = new QPushButton("Draw selected");
+    sgrp_gl->addWidget(draw_selections);
+    erase_selections = new QPushButton("Erase selected");
+    sgrp_gl->addWidget(erase_selections);
+    erase_non_selections = new QPushButton("Erase non-selected");
+    sgrp_gl->addWidget(erase_non_selections);
+
+    disable_groups(false);
+
+    QObject::connect(erase_from_scene_button , &QRadioButton::clicked, this, &CADViewSelecter::disable_groups);
+    QObject::connect(add_to_group_button , &QRadioButton::clicked, this, &CADViewSelecter::enable_groups);
+    QObject::connect(rm_from_group_button , &QRadioButton::clicked, this, &CADViewSelecter::enable_groups);
+
+    wgroups->setLayout(sgrp_gl);
+    smode_gl->addWidget(wgroups);
+
+    smode_box->setLayout(smode_gl);
+
+    wl->addWidget(sstyle_box);
+    wl->addWidget(select_all_depth_ckbx);
     wl->addWidget(use_ray_test_ckbx);
-    wl->addWidget(select_all_ckbx);
+    wl->addWidget(smode_box );
 
     this->setLayout(wl);
 }
 
 CADViewSelecter::~CADViewSelecter()
 {
+}
+
+void
+CADViewSelecter::enable_groups(bool)
+{
+    current_group->setEnabled(true);
+    add_new_group->setEnabled(true);
+    rm_group->setEnabled(true);
+    draw_selections->setEnabled(true);
+    erase_selections->setEnabled(true);
+    erase_non_selections->setEnabled(true);
+}
+
+void
+CADViewSelecter::disable_groups(bool)
+{
+    current_group->setEnabled(false);
+    add_new_group->setEnabled(false);
+    rm_group->setEnabled(false);
+    draw_selections->setEnabled(false);
+    erase_selections->setEnabled(false);
+    erase_non_selections->setEnabled(false);
+}
+
+void
+CADViewSelecter::enable_raytrace_opt(bool)
+{
+    use_ray_test_ckbx->setEnabled(true);
+}
+
+void
+CADViewSelecter::disable_raytrace_opt(bool)
+{
+    use_ray_test_ckbx->setEnabled(false);
 }
 
 struct rec_state {
@@ -157,7 +266,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	if (!scnt)
 	    return false;
 
-	if (select_all_ckbx->isChecked() && !use_ray_test_ckbx->isChecked()) {
+	if (select_all_depth_ckbx->isChecked() && !use_ray_test_ckbx->isChecked()) {
 	    // We're clearing everything - construct the select command and
 	    // run it.
 	    const char **av = (const char **)bu_calloc(scnt+2, sizeof(char *), "av");
@@ -175,7 +284,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	}
 
 
-	if (!select_all_ckbx->isChecked() && !use_ray_test_ckbx->isChecked()) {
+	if (!select_all_depth_ckbx->isChecked() && !use_ray_test_ckbx->isChecked()) {
 	    // Only removing one object, not using all-up librt raytracing -
 	    // need to find the first bbox intersection, then run the select
 	    // command.
@@ -267,7 +376,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    // Since most of the work of the raytracing approach is the same,
 	    // we just change what we record in the hit function based on
 	    // the checkbox settings
-	    if (select_all_ckbx->isChecked()) {
+	    if (select_all_depth_ckbx->isChecked()) {
 		rc.rec_all = 1;
 	    } else {
 		rc.rec_all = 0;
@@ -281,7 +390,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    BU_PUT(resp, struct resource);
 	    BU_PUT(ap, struct appliation);
 
-	    if (select_all_ckbx->isChecked()) {
+	    if (select_all_depth_ckbx->isChecked()) {
 		if (rc.active.size()) {
 		    std::unordered_set<std::string>::iterator a_it;
 		    const char **av = (const char **)bu_calloc(rc.active.size()+2, sizeof(char *), "av");
