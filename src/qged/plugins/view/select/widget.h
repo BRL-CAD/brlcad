@@ -28,16 +28,16 @@
 #include <QLineEdit>
 #include "ged.h"
 
-class CADViewEraser : public QWidget
+class CADViewSelecter : public QWidget
 {
     Q_OBJECT
 
     public:
-	CADViewEraser(QWidget *p = 0);
-	~CADViewEraser();
+	CADViewSelecter(QWidget *p = 0);
+	~CADViewSelecter();
 
 	QCheckBox *use_ray_test_ckbx;
-	QCheckBox *erase_all_ckbx;
+	QCheckBox *select_all_ckbx;
 
     signals:
 	void view_updated(struct bview **);

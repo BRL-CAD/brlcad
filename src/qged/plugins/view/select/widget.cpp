@@ -1,4 +1,4 @@
-/*                 V I E W _ W I D G E T . C P P
+/*                     W I D G E T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2022 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view_widget.cpp
+/** @file widget.cpp
  *
  */
 
@@ -35,20 +35,20 @@
 
 #include "./widget.h"
 
-CADViewEraser::CADViewEraser(QWidget *)
+CADViewSelecter::CADViewSelecter(QWidget *)
 {
     QVBoxLayout *wl = new QVBoxLayout;
     wl->setAlignment(Qt::AlignTop);
 
     use_ray_test_ckbx = new QCheckBox("Use Raytracing");
-    erase_all_ckbx = new QCheckBox("Erase all under pointer");
+    select_all_ckbx = new QCheckBox("Erase all under pointer");
     wl->addWidget(use_ray_test_ckbx);
-    wl->addWidget(erase_all_ckbx);
+    wl->addWidget(select_all_ckbx);
 
     this->setLayout(wl);
 }
 
-CADViewEraser::~CADViewEraser()
+CADViewSelecter::~CADViewSelecter()
 {
 }
 
@@ -95,7 +95,7 @@ _ovlp_record(struct application *ap, struct partition *pp, struct region *reg1, 
 
 
 bool
-CADViewEraser::eventFilter(QObject *, QEvent *e)
+CADViewSelecter::eventFilter(QObject *, QEvent *e)
 {
 
     QgModel *m = ((CADApp *)qApp)->mdl;
@@ -112,7 +112,7 @@ CADViewEraser::eventFilter(QObject *, QEvent *e)
 
     // If certain kinds of mouse events take place, we know we are manipulating the
     // view to achieve something other than erasure.  Flag accordingly, so we don't
-    // fire off the erase event at the end of whatever we're doing instead.
+    // fire off the select event at the end of whatever we're doing instead.
     if (e->type() == QEvent::MouseMove) {
 	enabled = false;
 	return false;
@@ -129,13 +129,13 @@ CADViewEraser::eventFilter(QObject *, QEvent *e)
 
 
 	// If we were doing something else and the mouse release signals we're
-	// done, re-enable the erase behavior
+	// done, re-enable the select behavior
 	if (!enabled) {
 	    enabled = true;
 	    return false;
 	}
 
-	// If any other keys are down, we're not doing an erase
+	// If any other keys are down, we're not doing an select
 	if (m_e->modifiers() != Qt::NoModifier)
 	    return false;
 
@@ -157,8 +157,8 @@ CADViewEraser::eventFilter(QObject *, QEvent *e)
 	if (!scnt)
 	    return false;
 
-	if (erase_all_ckbx->isChecked() && !use_ray_test_ckbx->isChecked()) {
-	    // We're clearing everything - construct the erase command and
+	if (select_all_ckbx->isChecked() && !use_ray_test_ckbx->isChecked()) {
+	    // We're clearing everything - construct the select command and
 	    // run it.
 	    const char **av = (const char **)bu_calloc(scnt+2, sizeof(char *), "av");
 	    av[0] = "erase";
@@ -175,9 +175,9 @@ CADViewEraser::eventFilter(QObject *, QEvent *e)
 	}
 
 
-	if (!erase_all_ckbx->isChecked() && !use_ray_test_ckbx->isChecked()) {
+	if (!select_all_ckbx->isChecked() && !use_ray_test_ckbx->isChecked()) {
 	    // Only removing one object, not using all-up librt raytracing -
-	    // need to find the first bbox intersection, then run the erase
+	    // need to find the first bbox intersection, then run the select
 	    // command.
 	    struct bv_scene_obj *s_closest = NULL;
 	    double dist = DBL_MAX;
@@ -267,7 +267,7 @@ CADViewEraser::eventFilter(QObject *, QEvent *e)
 	    // Since most of the work of the raytracing approach is the same,
 	    // we just change what we record in the hit function based on
 	    // the checkbox settings
-	    if (erase_all_ckbx->isChecked()) {
+	    if (select_all_ckbx->isChecked()) {
 		rc.rec_all = 1;
 	    } else {
 		rc.rec_all = 0;
@@ -281,7 +281,7 @@ CADViewEraser::eventFilter(QObject *, QEvent *e)
 	    BU_PUT(resp, struct resource);
 	    BU_PUT(ap, struct appliation);
 
-	    if (erase_all_ckbx->isChecked()) {
+	    if (select_all_ckbx->isChecked()) {
 		if (rc.active.size()) {
 		    std::unordered_set<std::string>::iterator a_it;
 		    const char **av = (const char **)bu_calloc(rc.active.size()+2, sizeof(char *), "av");
