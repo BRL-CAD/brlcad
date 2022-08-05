@@ -202,27 +202,158 @@ _ovlp_record(struct application *ap, struct partition *pp, struct region *reg1, 
     return 1;
 }
 
-void
-CADViewSelecter::erase_obj_set(int scnt, struct bv_scene_obj **sset)
+bool
+CADViewSelecter::erase_obj_bbox()
 {
-    // We're clearing everything - construct the select command and
-    // run it.
-    QgModel *m = ((CADApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->gedp;
-    if (!gedp || !gedp->ged_gvp)
-	return;
+    if (select_all_depth_ckbx->isChecked()) {
+	const char **av = (const char **)bu_calloc(scnt+2, sizeof(char *), "av");
+	av[0] = "erase";
+	for (int i = 0; i < scnt; i++) {
+	    struct bv_scene_obj *s = sset[i];
+	    av[i+1] = bu_vls_cstr(&s->s_name);
+	    bu_log("%s\n", av[i+1]);
+	}
+	ged_exec(gedp, scnt+1, av);
+	bu_free(av, "av");
+	return true;
+    }
 
-    const char **av = (const char **)bu_calloc(scnt+2, sizeof(char *), "av");
-    av[0] = "erase";
+    // Only removing one object, not using all-up librt raytracing -
+    // need to find the first bbox intersection, then run the select
+    // command.
+    struct bv_scene_obj *s_closest = NULL;
+    double dist = DBL_MAX;
+    int ix = (int)vx;
+    int iy = (int)vy;
+    bv_screen_to_view(v, &vx, &vy, ix, iy);
+    point_t vpnt, mpnt;
+    VSET(vpnt, vx, vy, 0);
+    MAT4X3PNT(mpnt, v->gv_view2model, vpnt);
+    point_t rmin, rmax;
+    vect_t dir;
+    VMOVEN(dir, v->gv_rotation + 8, 3);
+    VUNITIZE(dir);
+    VSCALE(dir, dir, v->radius);
+    VADD2(mpnt, mpnt, dir);
+    VUNITIZE(dir);
+    bg_ray_invdir(&dir, dir);
     for (int i = 0; i < scnt; i++) {
 	struct bv_scene_obj *s = sset[i];
-	av[i+1] = bu_vls_cstr(&s->s_name);
-	bu_log("%s\n", av[i+1]);
+	if (bg_isect_aabb_ray(rmin, rmax, mpnt, dir, s->bmin, s->bmax)){
+	    double ndist = DIST_PNT_PNT(rmin, v->gv_vc_backout);
+	    if (ndist < dist) {
+		dist = ndist;
+		s_closest = s;
+	    }
+	}
     }
-    ged_exec(gedp, scnt+1, av);
-    bu_free(av, "av");
+    if (s_closest) {
+	const char **av = (const char **)bu_calloc(3, sizeof(char *), "av");
+	av[0] = "erase";
+	av[1] = bu_vls_cstr(&s_closest->s_name);
+	ged_exec(gedp, 2, av);
+	bu_free(av, "av");
+	return true;
+    } else {
+	// no-op
+	return false;
+    }
+}
+
+bool
+CADViewSelecter::erase_obj_ray()
+{
+    // librt intersection test.
+    struct application *ap;
+    BU_GET(ap, struct application);
+    RT_APPLICATION_INIT(ap);
+    ap->a_onehit = 0;
+    ap->a_hit = _obj_record;
+    ap->a_miss = NULL;
+    ap->a_overlap = _ovlp_record;
+    ap->a_logoverlap = NULL;
+
+    struct rt_i *rtip = rt_new_rti(gedp->dbip);
+    struct resource *resp = NULL;
+    BU_GET(resp, struct resource);
+    rt_init_resource(resp, 0, rtip);
+    ap->a_resource = resp;
+    ap->a_rt_i = rtip;
+    const char **objs = (const char **)bu_calloc(scnt + 1, sizeof(char *), "objs");
+    for (int i = 0; i < scnt; i++) {
+	struct bv_scene_obj *s = sset[i];
+	objs[i] = bu_vls_cstr(&s->s_name);
+    }
+    if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
+	bu_free(objs, "objs");
+	rt_free_rti(rtip);
+	BU_PUT(resp, struct resource);
+	BU_PUT(ap, struct appliation);
+	return false;
+    }
+    size_t ncpus = bu_avail_cpus();
+    rt_prep_parallel(rtip, (int)ncpus);
+    int ix = (int)vx;
+    int iy = (int)vy;
+    bv_screen_to_view(v, &vx, &vy, ix, iy);
+    point_t vpnt, mpnt;
+    VSET(vpnt, vx, vy, 0);
+    MAT4X3PNT(mpnt, v->gv_view2model, vpnt);
+    vect_t dir;
+    VMOVEN(dir, v->gv_rotation + 8, 3);
+    VUNITIZE(dir);
+    VSCALE(dir, dir, v->radius);
+    VADD2(ap->a_ray.r_pt, mpnt, dir);
+    VUNITIZE(dir);
+    VSCALE(ap->a_ray.r_dir, dir, -1);
+
+    struct rec_state rc;
+
+    // Since most of the work of the raytracing approach is the same,
+    // we just change what we record in the hit function based on
+    // the checkbox settings
+    if (select_all_depth_ckbx->isChecked()) {
+	rc.rec_all = 1;
+    } else {
+	rc.rec_all = 0;
+	rc.cdist = INFINITY;
+    }
+    ap->a_uptr = (void *)&rc;
+
+    (void)rt_shootray(ap);
+    bu_free(objs, "objs");
+    rt_free_rti(rtip);
+    BU_PUT(resp, struct resource);
+    BU_PUT(ap, struct appliation);
+
+    if (select_all_depth_ckbx->isChecked()) {
+	if (rc.active.size()) {
+	    std::unordered_set<std::string>::iterator a_it;
+	    const char **av = (const char **)bu_calloc(rc.active.size()+2, sizeof(char *), "av");
+	    av[0] = bu_strdup("erase");
+	    int i = 0;
+	    for (a_it = rc.active.begin(); a_it != rc.active.end(); a_it++) {
+		av[i+1] = bu_strdup(a_it->c_str());
+		i++;
+	    }
+	    ged_exec(gedp, rc.active.size()+1, av);
+	    bu_argv_free(rc.active.size()+1, (char **)av);
+	    return true;
+	} else {
+	    return false;
+	}
+    } else {
+	if (rc.cdist < INFINITY) {
+	    const char **av = (const char **)bu_calloc(3, sizeof(char *), "av");
+	    av[0] = "erase";
+	    av[1] = bu_strdup(rc.closest.c_str());
+	    ged_exec(gedp, 2, av);
+	    bu_free((void *)av[1], "ncpy");
+	    return true;
+	} else {
+	    return false;
+	}
+    }
 }
 
 bool
@@ -232,32 +363,59 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
     QgModel *m = ((CADApp *)qApp)->mdl;
     if (!m)
 	return false;
-    struct ged *gedp = m->gedp;
+    gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return false;
-    struct bview *v = gedp->ged_gvp;
+    v = gedp->ged_gvp;
+    scnt = 0;
+    sset = NULL;
+    vx = -FLT_MAX;
+    vy = -FLT_MAX;
 
-    if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonDblClick) {
+    // If this isn't a mouse event, we're done
+    if (e->type() != QEvent::MouseButtonPress &&
+	    e->type() != QEvent::MouseButtonRelease &&
+	    e->type() != QEvent::MouseButtonDblClick &&
+	    e->type() != QEvent::MouseMove &&
+	    e->type() != QEvent::Wheel
+       )
+	return false;
+
+    QMouseEvent *m_e = (QMouseEvent *)e;
+
+    if (e->type() == QEvent::MouseButtonDblClick)
+	return true;
+
+    if (QApplication::keyboardModifiers() != Qt::NoModifier) {
+	enabled = false;
+	return false;
+    }
+
+    if (e->type() == QEvent::MouseButtonPress) {
+	if (use_rect_select_button->isChecked()) {
+#ifdef USE_QT6
+	    px = m_e->position().x();
+	    py = m_e->position().y();
+#else
+	    px = m_e->x();
+	    py = m_e->y();
+#endif
+	}
 	return true;
     }
 
     // If certain kinds of mouse events take place, we know we are manipulating the
     // view to achieve something other than erasure.  Flag accordingly, so we don't
     // fire off the select event at the end of whatever we're doing instead.
-    if (e->type() == QEvent::MouseMove) {
+    if (e->type() == QEvent::MouseMove && !use_rect_select_button->isChecked()) {
 	enabled = false;
 	return false;
     }
 
     if (e->type() == QEvent::MouseButtonRelease) {
 
-	QMouseEvent *m_e = (QMouseEvent *)e;
-
-
-	if (m_e->button() == Qt::RightButton) {
+	if (m_e->button() == Qt::RightButton)
 	    return true;
-	}
-
 
 	// If we were doing something else and the mouse release signals we're
 	// done, re-enable the select behavior
@@ -265,12 +423,11 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    enabled = true;
 	    return false;
 	}
-
+#if 0
 	// If any other keys are down, we're not doing an select
 	if (m_e->modifiers() != Qt::NoModifier)
 	    return false;
-
-	fastf_t vx, vy;
+#endif
 #ifdef USE_QT6
 	vx = m_e->position().x();
 	vy = m_e->position().y();
@@ -278,174 +435,42 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	vx = m_e->x();
 	vy = m_e->y();
 #endif
-	int x = (int)vx;
-	int y = (int)vy;
+	int ix = (int)vx;
+	int iy = (int)vy;
 
-	struct bv_scene_obj **sset = NULL;
-	int scnt = bg_view_objs_select(&sset, v, x, y);
+	if (use_rect_select_button->isChecked()) {
+	    bu_log("TODO\n");
+	} else {
+	    scnt = bg_view_objs_select(&sset, v, ix, iy);
+	}
 
-	// If we didn't hit anything, we have a no-op
+	// If we didn't select anything, we have a no-op
 	if (!scnt)
 	    return false;
 
 	if (erase_from_scene_button->isChecked()) {
-	    if (use_pnt_select_button->isChecked() && select_all_depth_ckbx->isChecked() && !use_ray_test_ckbx->isChecked()) {
-		erase_obj_set(scnt, sset);
+	    if (!use_ray_test_ckbx->isChecked()) {
+		bool ret = erase_obj_bbox();
+		if (ret)
+		    emit view_updated(&gedp->ged_gvp);
 		bu_free(sset, "sset");
-		emit view_updated(&gedp->ged_gvp);
 		return true;
 	    }
 
-
-	    if (use_pnt_select_button->isChecked() && !select_all_depth_ckbx->isChecked() && !use_ray_test_ckbx->isChecked()) {
-		// Only removing one object, not using all-up librt raytracing -
-		// need to find the first bbox intersection, then run the select
-		// command.
-		struct bv_scene_obj *s_closest = NULL;
-		double dist = DBL_MAX;
-		bv_screen_to_view(v, &vx, &vy, x, y);
-		point_t vpnt, mpnt;
-		VSET(vpnt, vx, vy, 0);
-		MAT4X3PNT(mpnt, v->gv_view2model, vpnt);
-		point_t rmin, rmax;
-		vect_t dir;
-		VMOVEN(dir, v->gv_rotation + 8, 3);
-		VUNITIZE(dir);
-		VSCALE(dir, dir, v->radius);
-		VADD2(mpnt, mpnt, dir);
-		VUNITIZE(dir);
-		bg_ray_invdir(&dir, dir);
-		for (int i = 0; i < scnt; i++) {
-		    struct bv_scene_obj *s = sset[i];
-		    if (bg_isect_aabb_ray(rmin, rmax, mpnt, dir, s->bmin, s->bmax)){
-			double ndist = DIST_PNT_PNT(rmin, v->gv_vc_backout);
-			if (ndist < dist) {
-			    dist = ndist;
-			    s_closest = s;
-			}
-		    }
-		}
-		if (s_closest) {
-		    const char **av = (const char **)bu_calloc(3, sizeof(char *), "av");
-		    av[0] = "erase";
-		    av[1] = bu_vls_cstr(&s_closest->s_name);
-		    ged_exec(gedp, 2, av);
-		    bu_free(av, "av");
-		    bu_free(sset, "sset");
+	    if (use_pnt_select_button->isChecked() && use_ray_test_ckbx->isChecked()) {
+		bool ret = erase_obj_ray();
+		if (ret)
 		    emit view_updated(&gedp->ged_gvp);
-		    return true;
-		} else {
-		    // no-op
-		    bu_free(sset, "sset");
-		    return false;
-		}
-	    }
-
-	    if (use_pnt_select_button->isChecked()) {
-		if (use_ray_test_ckbx->isChecked()) {
-		    // librt intersection test.
-		    struct application *ap;
-		    BU_GET(ap, struct application);
-		    RT_APPLICATION_INIT(ap);
-		    ap->a_onehit = 0;
-		    ap->a_hit = _obj_record;
-		    ap->a_miss = NULL;
-		    ap->a_overlap = _ovlp_record;
-		    ap->a_logoverlap = NULL;
-
-		    struct rt_i *rtip = rt_new_rti(gedp->dbip);
-		    struct resource *resp = NULL;
-		    BU_GET(resp, struct resource);
-		    rt_init_resource(resp, 0, rtip);
-		    ap->a_resource = resp;
-		    ap->a_rt_i = rtip;
-		    const char **objs = (const char **)bu_calloc(scnt + 1, sizeof(char *), "objs");
-		    for (int i = 0; i < scnt; i++) {
-			struct bv_scene_obj *s = sset[i];
-			objs[i] = bu_vls_cstr(&s->s_name);
-		    }
-		    if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
-			bu_free(objs, "objs");
-			rt_free_rti(rtip);
-			BU_PUT(resp, struct resource);
-			BU_PUT(ap, struct appliation);
-			return false;
-		    }
-		    size_t ncpus = bu_avail_cpus();
-		    rt_prep_parallel(rtip, (int)ncpus);
-		    bv_screen_to_view(v, &vx, &vy, x, y);
-		    point_t vpnt, mpnt;
-		    VSET(vpnt, vx, vy, 0);
-		    MAT4X3PNT(mpnt, v->gv_view2model, vpnt);
-		    vect_t dir;
-		    VMOVEN(dir, v->gv_rotation + 8, 3);
-		    VUNITIZE(dir);
-		    VSCALE(dir, dir, v->radius);
-		    VADD2(ap->a_ray.r_pt, mpnt, dir);
-		    VUNITIZE(dir);
-		    VSCALE(ap->a_ray.r_dir, dir, -1);
-
-		    struct rec_state rc;
-
-		    // Since most of the work of the raytracing approach is the same,
-		    // we just change what we record in the hit function based on
-		    // the checkbox settings
-		    if (select_all_depth_ckbx->isChecked()) {
-			rc.rec_all = 1;
-		    } else {
-			rc.rec_all = 0;
-			rc.cdist = INFINITY;
-		    }
-		    ap->a_uptr = (void *)&rc;
-
-		    (void)rt_shootray(ap);
-		    bu_free(objs, "objs");
-		    rt_free_rti(rtip);
-		    BU_PUT(resp, struct resource);
-		    BU_PUT(ap, struct appliation);
-
-		    if (select_all_depth_ckbx->isChecked()) {
-			if (rc.active.size()) {
-			    std::unordered_set<std::string>::iterator a_it;
-			    const char **av = (const char **)bu_calloc(rc.active.size()+2, sizeof(char *), "av");
-			    av[0] = bu_strdup("erase");
-			    int i = 0;
-			    for (a_it = rc.active.begin(); a_it != rc.active.end(); a_it++) {
-				av[i+1] = bu_strdup(a_it->c_str());
-				i++;
-			    }
-			    ged_exec(gedp, rc.active.size()+1, av);
-			    bu_argv_free(rc.active.size()+1, (char **)av);
-			} else {
-			    bu_free(sset, "sset");
-			    return false;
-			}
-		    } else {
-			if (rc.cdist < INFINITY) {
-			    const char **av = (const char **)bu_calloc(3, sizeof(char *), "av");
-			    av[0] = "erase";
-			    av[1] = bu_strdup(rc.closest.c_str());
-			    ged_exec(gedp, 2, av);
-			    bu_free((void *)av[1], "ncpy");
-			} else {
-			    bu_free(sset, "sset");
-			    return false;
-
-			}
-		    }
-
-		    bu_free(sset, "sset");
-		    emit view_updated(&gedp->ged_gvp);
-		    return true;
-		}
+		bu_free(sset, "sset");
+		return ret;
 	    }
 	}
 
-	// If we somehow didn't process by this point, no-op
+	// If we didn't process by this point, no-op
 	return false;
     }
 
-     return false;
+    return false;
 }
 
 // Local Variables:

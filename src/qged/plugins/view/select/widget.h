@@ -57,7 +57,8 @@ class CADViewSelecter : public QWidget
 	QPushButton *erase_selections;
 	QPushButton *erase_non_selections;
 
-	void erase_obj_set(int scnt, struct bv_scene_obj **sset);
+	bool erase_obj_bbox();
+	bool erase_obj_ray();
 
     signals:
 	void view_updated(struct bview **);
@@ -72,7 +73,15 @@ class CADViewSelecter : public QWidget
 	bool eventFilter(QObject *, QEvent *);
 
     private:
+	struct ged *gedp = NULL;
+	struct bview *v = NULL;
 	bool enabled = true;
+	fastf_t px = -FLT_MAX;
+	fastf_t py = -FLT_MAX;
+	fastf_t vx = -FLT_MAX;
+	fastf_t vy = -FLT_MAX;
+	int scnt = 0;
+	struct bv_scene_obj **sset = NULL;
 };
 
 // Local Variables:
