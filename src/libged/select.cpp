@@ -114,6 +114,11 @@
 #include <string>
 #include <unordered_map>
 
+extern "C" {
+#define XXH_STATIC_LINKING_ONLY
+#include "xxhash.h"
+}
+
 #include "bu/path.h"
 #include "bu/str.h"
 #include "ged/view/select.h"
@@ -374,9 +379,6 @@ ged_selection_set_clear(struct ged_selection_set *s)
 	BU_PUT(s_it->second, struct ged_selection);
     }
     s->i->m.clear();
-
-    if (s->gedp->ged_select_callback)
-	(*s->gedp->ged_select_callback)(s);
 }
 
 struct ged_selection *
@@ -450,9 +452,6 @@ ged_selection_insert(struct ged_selection_set *s, const char *s_path)
 
     if (match) {
 	bu_vls_free(&tpath);
-
-	if (s->gedp->ged_select_callback)
-	    (*s->gedp->ged_select_callback)(s);
 	return match;
     }
 
@@ -477,8 +476,6 @@ ged_selection_insert(struct ged_selection_set *s, const char *s_path)
 
     bu_vls_free(&tpath);
 
-    if (s->gedp->ged_select_callback)
-	(*s->gedp->ged_select_callback)(s);
     return match;
 }
 
@@ -535,18 +532,12 @@ ged_selection_remove(struct ged_selection_set *s, const char *s_path)
     }
     if (!match) {
 	s->i->m.erase(std::string(s_path));
-
-	if (s->gedp->ged_select_callback)
-	    (*s->gedp->ged_select_callback)(s);
 	return;
     }
 
     // If we have an exact match we're done
     if (BU_STR_EQUAL(s_path, bu_vls_cstr(&match->path))) {
 	_selection_put(s, s_path);
-
-	if (s->gedp->ged_select_callback)
-	    (*s->gedp->ged_select_callback)(s);
 	return;
     }
 
@@ -592,9 +583,6 @@ ged_selection_remove(struct ged_selection_set *s, const char *s_path)
     // Delete temporary selection set
     delete tmp_s->i;
     BU_PUT(tmp_s, struct ged_selection_set);
-
-    if (s->gedp->ged_select_callback)
-	(*s->gedp->ged_select_callback)(s);
 }
 
 void
@@ -777,9 +765,6 @@ ged_selection_set_expand(struct ged_selection_set *s_out, struct ged_selection_s
 	bu_ptbl_free(solid_paths);
 	BU_FREE(solid_paths, struct bu_ptbl);
     }
-
-    if (s_out->gedp->ged_select_callback)
-	(*s_out->gedp->ged_select_callback)(s_out);
 
     return BRLCAD_OK;
 }
@@ -996,9 +981,6 @@ ged_selection_set_collapse(struct ged_selection_set *s_out, struct ged_selection
 	ged_selection_insert(s_out, fpath.c_str());
     }
 
-    if (s_out->gedp->ged_select_callback)
-	(*s_out->gedp->ged_select_callback)(s_out);
-
     return BRLCAD_OK;
 }
 
@@ -1112,9 +1094,52 @@ ged_selection_toggle_illum(struct ged_selection_set *s, char ill_state)
     }
 }
 
+unsigned long long
+ged_selection_hash_set(struct ged_selection_set *s)
+{
+    if (!s)
+	return 0;
+
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    std::map<std::string, struct ged_selection *>::iterator s_it;
+    for (s_it = s->i->m.begin(); s_it != s->i->m.end(); s_it++) {
+	XXH64_update(&h_state, bu_vls_cstr(&s_it->second->path), bu_vls_strlen(&s_it->second->path)*sizeof(char));
+    }
+    XXH64_hash_t hash_val;
+    hash_val = XXH64_digest(&h_state);
+    unsigned long long hash = (unsigned long long)hash_val;
+    return hash;
+}
+
+unsigned long long
+ged_selection_hash_sets(struct ged_selection_sets *ss)
+{
+    if (!ss)
+	return 0;
 
 
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    struct bu_vls sname = BU_VLS_INIT_ZERO;   
 
+    std::map<std::string, struct ged_selection_set *>::iterator ss_it;
+    std::map<std::string, struct ged_selection *>::iterator s_it;
+    for (ss_it = ss->i->s->begin(); ss_it != ss->i->s->end(); ss_it++) {
+	bu_vls_sprintf(&sname, "%s", ss_it->first.c_str());
+	XXH64_update(&h_state, bu_vls_cstr(&sname), bu_vls_strlen(&sname)*sizeof(char));
+	struct ged_selection_set *s = ss_it->second;
+	for (s_it = s->i->m.begin(); s_it != s->i->m.end(); s_it++) {
+	    XXH64_update(&h_state, bu_vls_cstr(&s_it->second->path), bu_vls_strlen(&s_it->second->path)*sizeof(char));
+	}
+    }
+    bu_vls_free(&sname);
+
+    XXH64_hash_t hash_val;
+    hash_val = XXH64_digest(&h_state);
+    unsigned long long hash = (unsigned long long)hash_val;
+    return hash;
+}
 
 
 struct rt_object_selections *

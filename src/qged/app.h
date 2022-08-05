@@ -124,6 +124,7 @@ class CADApp : public QApplication
     private:
 	QMap<QString, app_cmd_ptr> app_cmd_map;
 	std::vector<char *> tmp_av;
+	unsigned long long select_hash = 0;
 	long history_mark_start = -1;
 	long history_mark_end = -1;
 };

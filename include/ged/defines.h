@@ -298,7 +298,6 @@ struct ged {
     void (*fbs_close_client_handler)(struct fbserv_obj *, int);   /**< @brief platform/toolkit method to close handler for client at index client_id */
 
     // Other callbacks...
-    void (*ged_select_callback)(struct ged_selection_set *gs);	/**< @brief  function called when a set is altered */
     // Tcl command strings - these are libtclcad level callbacks that execute user supplied Tcl commands if set:
     // gdv_callback, gdv_edit_motion_delta_callback, go_more_args_callback, go_rt_end_callback
     //

@@ -45,8 +45,6 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 	bu_ptbl_free(&ssets);
     }
     if (!ged_doing_sync) {
-	void (*tmp)(struct ged_selection_set *) = gedp->ged_select_callback;
-	gedp->ged_select_callback = NULL;
 	if (!(flags & QItemSelectionModel::Deselect)) {
 	    QModelIndexList dl = selection.indexes();
 	    std::stack<QgItem *> to_process;
@@ -110,8 +108,6 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 		}
 	    }
 	}
-
-	gedp->ged_select_callback = tmp;
     }
 
     QItemSelectionModel::select(selection, flags);

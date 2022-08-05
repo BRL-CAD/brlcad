@@ -35,6 +35,7 @@
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "qtcad/QgTreeView.h"
+#include "qtcad/SignalFlags.h"
 
 void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
@@ -403,21 +404,29 @@ void QgTreeView::qgitem_select_sync(QgItem *itm)
     selm->ged_drawn_sync(itm, gedp);
 }
 
-void QgTreeView::do_view_update(unsigned long long)
+void QgTreeView::do_view_update(unsigned long long flags)
 {
     struct ged *gedp = m->gedp;
     QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
-    struct ged_selection_set *gs = NULL;
-    if (gedp->ged_selection_sets) {
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
-	if (scnt == 1)
-	    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
-	bu_ptbl_free(&ssets);
+    if (flags & QTCAD_VIEW_SELECT) {
+	// TODO - need some notion of a "current selection set" in GED, similar to
+	// the idea of a current view
+	struct ged_selection_set *gs = NULL;
+	if (gedp->ged_selection_sets) {
+	    struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+	    size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
+	    if (scnt == 1)
+		gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
+	    bu_ptbl_free(&ssets);
+	}
+	if (gs)
+	    selm->ged_selection_sync(NULL, gs);
     }
-    if (gs)
-	selm->ged_selection_sync(NULL, gs);
-    selm->ged_drawn_sync(NULL, gedp);
+    if (flags & QTCAD_VIEW_DRAWN)
+	selm->ged_drawn_sync(NULL, gedp);
+
+    // TODO - can the mode logic be triggered from here as well?
+
     emit m->layoutChanged();
 }
 

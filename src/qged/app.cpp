@@ -278,7 +278,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     struct ged *gedp = mdl->gedp;
 
     /* Set the local unit conversions */
-    if (gedp->dbip && w->c4) {
+    if (gedp->dbip) {
 	for (int i = 1; i < 5; i++) {
 	    QtCADView *c = w->c4->get(i);
 	    c->set_base2local(gedp->dbip->dbi_base2local);
@@ -291,9 +291,8 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// If we're not in the middle of an incremental command,
 	// stash the view state(s) for later comparison and make
 	// sure our unit conversions are right
-	if (w->c4)
-	    w->c4->stash_hashes();
-
+	w->c4->stash_hashes();
+	select_hash = ged_selection_hash_sets(gedp->ged_selection_sets);
 
 	// If we need command-specific subprocess awareness for
 	// a command, set it up
@@ -331,10 +330,14 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
 	/* Check if the ged_exec call changed either the display manager or
 	 * the view settings - in either case we'll need to redraw */
-	if (w->c4) {
-	    if (w->c4->diff_hashes())
-		view_flags |= QTCAD_VIEW_REFRESH;
-	}
+	// TODO - there would be some utility in checking only the camera or only
+	// the who list, since we can set different update flags for each case...
+	if (w->c4->diff_hashes())
+	    view_flags |= QTCAD_VIEW_DRAWN;
+
+	unsigned long long cs_hash = ged_selection_hash_sets(gedp->ged_selection_sets);
+	if (cs_hash != select_hash)
+	    view_flags |= QTCAD_VIEW_SELECT;
     }
 
     if (ret & BRLCAD_MORE) {

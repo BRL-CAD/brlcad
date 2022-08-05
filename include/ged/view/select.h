@@ -85,6 +85,13 @@ GED_EXPORT int ged_selection_set_collapse(struct ged_selection_set *s_out, struc
 GED_EXPORT void ged_selection_assign_objs(struct ged_selection_set *s);
 GED_EXPORT void ged_selection_toggle_illum(struct ged_selection_set *s, char ill_state);
 
+// Given a set, return the hash of its contents
+GED_EXPORT unsigned long long ged_selection_hash_set(struct ged_selection_set *s);
+
+// Given a set of sets, return the hash of all the set names and their contents
+GED_EXPORT unsigned long long ged_selection_hash_sets(struct ged_selection_sets *ss);
+
+
 /**
  * Returns a list of items within the previously defined rectangle.
  */
