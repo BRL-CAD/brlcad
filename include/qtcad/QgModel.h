@@ -374,7 +374,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 
 	// Emit when some model action change will require a view to update
 	// its awareness of what is drawn
-	void draw_change();
+	void view_changed(unsigned long long);
 
     public slots:
 	int draw_action();

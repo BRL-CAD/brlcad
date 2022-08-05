@@ -68,7 +68,6 @@ class CADApp : public QApplication
 	void initialize();
 
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
-	bool view_dirty = false;
 
 	int opendb(QString filename);
 	void closedb();

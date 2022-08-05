@@ -65,7 +65,7 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
 	void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected) override;
 	void do_draw_toggle(const QModelIndex &index);
 	void qgitem_select_sync(QgItem *);
-	void draw_sync();
+	void do_view_update(unsigned long long);
 
     private:
 	void header_state();

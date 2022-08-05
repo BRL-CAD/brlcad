@@ -182,6 +182,7 @@ qged_db_changed(struct db_i *UNUSED(dbip), struct directory *dp, int ctype, void
 int
 qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *changed)
 {
+    int view_flags = 0;
     struct db_i *dbip = gedp->dbip;
     struct bview *v = gedp->ged_gvp;
     struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
@@ -232,6 +233,7 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 	av[2] = NULL;
 	ged_exec(gedp, 2, av);
 	bu_vls_free(&opath);
+	view_flags |= QTCAD_VIEW_DRAWN;
     }
     for (r_it = regen.begin(); r_it != regen.end(); r_it++) {
 	struct bv_scene_group *cg = *r_it;
@@ -244,12 +246,10 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 	av[3] = NULL;
 	ged_exec(gedp, 3, av);
 	bu_vls_free(&opath);
+	view_flags |= QTCAD_VIEW_DRAWN;
     }
 
-    CADApp *ap = (CADApp *)qApp;
-    ap->treeview->draw_sync();
-
-    return (int)(regen.size() + erase.size());
+    return view_flags;
 }
 
 extern "C" void
@@ -270,6 +270,7 @@ int
 CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
     int ret = BRLCAD_OK;
+    int view_flags = 0;
 
     if (!mdl || !argc || !argv)
 	return BRLCAD_ERROR;
@@ -326,15 +327,14 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     if (!(ret & BRLCAD_MORE)) {
 
 	// Handle any necessary redrawing.
-	if (qged_view_update(gedp, &mdl->changed_dp) > 0) {
-	    if (w->c4)
-		w->c4->need_update(QTCAD_VIEW_REFRESH);
-	}
+	view_flags = qged_view_update(gedp, &mdl->changed_dp);
 
 	/* Check if the ged_exec call changed either the display manager or
 	 * the view settings - in either case we'll need to redraw */
-	if (w->c4)
-	    view_dirty = w->c4->diff_hashes();
+	if (w->c4) {
+	    if (w->c4->diff_hashes())
+		view_flags |= QTCAD_VIEW_REFRESH;
+	}
     }
 
     if (ret & BRLCAD_MORE) {
@@ -363,6 +363,11 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		history_mark_end = console->historyCount() - 1;
 	}
     }
+
+    // TODO - should be able to emit this regardless - if execution methods
+    // are well behaved, they'll just ignore a zero flags value...
+    if (view_flags)
+	emit view_update(view_flags);
 
     return ret;
 }
@@ -417,12 +422,7 @@ CADApp::run_qcmd(const QString &command)
 	if (bu_vls_strlen(&msg) > 0 && console) {
 	    console->printString(bu_vls_cstr(&msg));
 	}
-	if (view_dirty && mdl->gedp) {
-	    emit view_update(QTCAD_VIEW_DRAWN);
-	    view_dirty = false;
-	}
     }
-
 
     if (console) {
 	if (ret & BRLCAD_MORE) {

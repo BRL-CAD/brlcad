@@ -403,7 +403,7 @@ void QgTreeView::qgitem_select_sync(QgItem *itm)
     selm->ged_drawn_sync(itm, gedp);
 }
 
-void QgTreeView::draw_sync()
+void QgTreeView::do_view_update(unsigned long long)
 {
     struct ged *gedp = m->gedp;
     QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();

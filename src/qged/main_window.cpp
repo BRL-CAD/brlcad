@@ -114,6 +114,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     cwl->addWidget(c4);
     QObject::connect(vcw, &QViewCtrl::lmouse_mode, c4, &QtCADQuad::set_lmouse_move_default);
+    QObject::connect(ap, &CADApp::view_update, c4, &QtCADQuad::do_view_update);
 
     cw->setLayout(cwl);
     setCentralWidget(cw);
@@ -364,7 +365,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     connect(tree_dock, &QgDockWidget::banner_click, m, &QgModel::toggle_hierarchy);
     connect(vm_topview, &QAction::triggered, m, &QgModel::toggle_hierarchy);
     connect(m, &QgModel::opened_item, treeview, &QgTreeView::qgitem_select_sync);
-    connect(m, &QgModel::draw_change, treeview, &QgTreeView::draw_sync);
+    connect(m, &QgModel::view_change, ca, &CADApp::do_view_changed);
+    QObject::connect(ap, &CADApp::view_update, treeview, &QgTreeView::do_view_update);
 
     // We need to record the expanded/contracted state of the tree items,
     // and restore them after a model reset
@@ -412,20 +414,12 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // If the model does something that it things should trigger a view update, let the app know
     QObject::connect(m, &QgModel::view_change, ap, &CADApp::do_view_changed);
 
-    // If the database changes, we need to update our views
-    if (c4) {
-	QObject::connect((CADApp *)qApp, &CADApp::view_update, c4, &QtCADQuad::need_update);
-	// The Quad View has an additional condition in the sense that the current view may
-	// change.  Probably we won't try to track this for floating dms attached to qged,
-	// but the quad view is a central view widget so we need to support it.
-	QObject::connect(c4, &QtCADQuad::selected, (CADApp *)qApp, &CADApp::do_quad_view_change);
-	ap->curr_view = c4->get(0);
-    }
 
-    // If the view changes, let the GUI know.  The ap supplied signals are used by other
-    // widgets to hide the specifics of the current view implementation (single or quad).
+    // Connect the primary view widget to the app
     if (c4) {
+	QObject::connect(c4, &QtCADQuad::selected, ap, &CADApp::do_quad_view_change);
 	QObject::connect(c4, &QtCADQuad::changed, ap, &CADApp::do_quad_view_change);
+	ap->curr_view = c4->get(0);
     }
 
     // Some of the dm initialization has to be delayed - make the connections so we can
