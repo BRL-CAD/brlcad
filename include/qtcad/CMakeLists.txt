@@ -18,6 +18,7 @@ set(qtcad_headers
   QtConsoleListener.h
   QtGL.h
   QtSW.h
+  SignalFlags.h
   defines.h
   gInstance.h
   )

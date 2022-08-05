@@ -39,6 +39,7 @@
 #include <QTreeView>
 
 #include "ged.h"
+#include "qtcad/SignalFlags.h"
 #include "qtcad/QtCADQuad.h"
 #include "qtcad/QgDockWidget.h"
 #include "qtcad/QgTreeView.h"

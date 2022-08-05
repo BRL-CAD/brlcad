@@ -101,7 +101,7 @@ class QTCAD_EXPORT QtCADView : public QWidget
 	void init_done();
 
     public slots:
-	void need_update(void *);
+	void need_update(unsigned long long);
 	void do_view_changed();
 	void do_init_done();
 	void set_lmouse_move_default(int);

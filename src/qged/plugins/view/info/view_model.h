@@ -44,7 +44,7 @@ class CADViewModel : public QKeyValModel
 	~CADViewModel();
 
     public slots:
-	void refresh(struct bview **);
+	void refresh(unsigned long long);
 	void update();
 
     private:

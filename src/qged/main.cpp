@@ -116,7 +116,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
     }
 
     if (w->c4)
-	w->c4->need_update(NULL);
+	w->c4->need_update(QTCAD_VIEW_REFRESH);
 }
 
 
@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
 
     // Send a view_change signal so widgets depending on view information
     // can initialize themselves
-    emit app.view_change(&m->gedp->ged_gvp);
+    emit app.view_update(QTCAD_VIEW_REFRESH);
 
     // Generally speaking if we're going to have trouble initializing, it will
     // be with either the GED plugins or the dm plugins.  Print relevant

@@ -107,8 +107,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     vcw = new QViewCtrl(cw, gedp);
     vcw->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     cwl->addWidget(vcw);
-    QObject::connect(vcw, &QViewCtrl::gui_changed_view, ap, &CADApp::do_view_change);
-    QObject::connect(ap, &CADApp::view_change, vcw, &QViewCtrl::fb_mode_icon);
+    QObject::connect(vcw, &QViewCtrl::view_changed, ap, &CADApp::do_view_changed);
+    QObject::connect(ap, &CADApp::view_update, vcw, &QViewCtrl::do_view_update);
 
     c4 = new QtCADQuad(cw, gedp, canvas_type);
     c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -164,12 +164,18 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     oc = new CADPalette(2, this);
     ocd->setWidget(oc);
 
-    // The view and edit panels have consequences for the tree widget, so each
-    // needs to know which one is current
+    // The view and edit panels have consequences for the tree widget
     connect(vc, &CADPalette::current, vc, &CADPalette::makeCurrent);
     connect(vc, &CADPalette::current, oc, &CADPalette::makeCurrent);
+    QObject::connect(ap, &CADApp::view_update, vc->tpalette, &QToolPalette::do_view_update);
+    QObject::connect(vc->tpalette, &QToolPalette::view_changed, ap, &CADApp::do_view_changed);
+
+
     connect(oc, &CADPalette::current, vc, &CADPalette::makeCurrent);
     connect(oc, &CADPalette::current, oc, &CADPalette::makeCurrent);
+    QObject::connect(ap, &CADApp::view_update, oc->tpalette, &QToolPalette::do_view_update);
+    QObject::connect(oc->tpalette, &QToolPalette::view_changed, ap, &CADApp::do_view_changed);
+
 
     /****************************************************************************
      * The primary view and palette widgets are now in place.  We are ready to
@@ -274,12 +280,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	    for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
 		QToolPaletteElement *el = *el_it;
 		vc->addTool(el);
-		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_view_sync);
-		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_db_sync);
-		QObject::connect(m, &QgModel::view_change, el, &QToolPaletteElement::do_view_sync);
-
-		QObject::connect(el, &QToolPaletteElement::view_changed, ap, &CADApp::do_view_change);
-		QObject::connect(el, &QToolPaletteElement::db_changed, ap, &CADApp::do_db_change);
 	    }
 	}
 
@@ -288,13 +288,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	    for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
 		QToolPaletteElement *el = *el_it;
 		oc->addTool(el);
-		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_view_sync);
-		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_db_sync);
-		QObject::connect(m, &QgModel::view_change, el, &QToolPaletteElement::do_view_sync);
-		QObject::connect(el, &QToolPaletteElement::view_changed, ap, &CADApp::do_view_change);
 	    }
 	}
-
     }
 
 
@@ -315,8 +310,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // addition would trigger a selection which we're not going to use.  (We
     // default to selecting the default view tool at the end of this
     // procedure by making vc the current palette.)
-    QObject::connect(vc->tpalette, &QToolPalette::element_selected, ap, &CADApp::element_selected);
-    QObject::connect(oc->tpalette, &QToolPalette::element_selected, ap, &CADApp::element_selected);
+    QObject::connect(vc->tpalette, &QToolPalette::palette_element_selected, ap, &CADApp::element_selected);
+    QObject::connect(oc->tpalette, &QToolPalette::palette_element_selected, ap, &CADApp::element_selected);
 
 
 #if 0
@@ -415,12 +410,11 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     QObject::connect(treeview, &QgTreeView::clicked, userpropmodel, &CADAttributesModel::refresh);
 
     // If the model does something that it things should trigger a view update, let the app know
-    QObject::connect(m, &QgModel::view_change, ap, &CADApp::do_view_change);
+    QObject::connect(m, &QgModel::view_change, ap, &CADApp::do_view_changed);
 
     // If the database changes, we need to update our views
     if (c4) {
-	QObject::connect(m, &QgModel::mdl_changed_db, c4, &QtCADQuad::need_update);
-	QObject::connect((CADApp *)qApp, &CADApp::view_change, c4, &QtCADQuad::need_update);
+	QObject::connect((CADApp *)qApp, &CADApp::view_update, c4, &QtCADQuad::need_update);
 	// The Quad View has an additional condition in the sense that the current view may
 	// change.  Probably we won't try to track this for floating dms attached to qged,
 	// but the quad view is a central view widget so we need to support it.
@@ -491,7 +485,7 @@ BRLCAD_MainWindow::do_dm_init()
     av[3] = "1";
     ged_exec(gedp, 4, (const char **)av);
 
-    emit ap->view_change(&gedp->ged_gvp);
+    emit ap->view_update(QTCAD_VIEW_REFRESH);
     ///////////////////////////////////////////////////////////////////////////
 }
 

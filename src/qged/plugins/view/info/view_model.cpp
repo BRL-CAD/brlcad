@@ -30,12 +30,14 @@
 #include "bu/sort.h"
 #include "bu/avs.h"
 #include "bu/malloc.h"
+#include "qtcad/SignalFlags.h"
 
 CADViewModel::CADViewModel(QObject *parentobj, struct bview **v)
     : QKeyValModel(parentobj)
 {
     m_root = NULL;
-    refresh(v);
+    m_v = v;
+    refresh(0);
 }
 
 CADViewModel::~CADViewModel()
@@ -48,13 +50,14 @@ void
 CADViewModel::update()
 {
     printf("view model update\n");
-    refresh(m_v);
+    refresh(QTCAD_VIEW_REFRESH);
 }
 
 void
-CADViewModel::refresh(struct bview **nv)
+CADViewModel::refresh(unsigned long long)
 {
-    m_v = nv;
+    //m_v = gedp->ged_gvp;
+    m_v = NULL;
 
     if (m_v && *m_v) {
 	struct bview *v = *m_v;

@@ -51,10 +51,10 @@ class CADViewSettings : public QWidget
 
 	QLineEdit *vZ;
     signals:
-	void settings_changed(struct bview **);
+	void settings_changed(unsigned long long);
 
     public slots:
-	void checkbox_refresh(struct bview **);
+	void checkbox_refresh(unsigned long long);
 	void checkbox_update();
 	void view_refresh(struct bview **);
 	void view_update_int(int);

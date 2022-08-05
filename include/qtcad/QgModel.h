@@ -362,7 +362,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// (it is sometimes extremely difficult to know if a complex command
 	// will alter the view) but if a particular method knows it will
 	// do so, it may emit this signal
-	void view_change(struct bview **);
+	void view_change(unsigned long long);
 
 	// Let the tree view know it has highlighting work to do it wouldn't
 	// otherwise see

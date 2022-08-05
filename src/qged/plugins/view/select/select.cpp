@@ -36,7 +36,7 @@ view_select_tool_create()
 
     QToolPaletteElement *el = new QToolPaletteElement(obj_icon, er);
 
-    QObject::connect(er, &CADViewSelecter::view_updated, el, &QToolPaletteElement::do_view_changed);
+    QObject::connect(er, &CADViewSelecter::view_updated, el, &QToolPaletteElement::do_view_update);
 
     // Let the element (and hence the application) know that this tool has a
     // locally customized event filter to use with the view widget.

@@ -26,6 +26,7 @@
 #include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
+#include "qtcad/SignalFlags.h"
 
 #include "view_widget.h"
 
@@ -95,7 +96,7 @@ CADViewSettings::~CADViewSettings()
 void
 CADViewSettings::checkbox_update()
 {
-    checkbox_refresh(m_v);
+    checkbox_refresh(0);
 }
 
 void
@@ -111,9 +112,9 @@ CADViewSettings::view_update_int(int)
 }
 
 void
-CADViewSettings::checkbox_refresh(struct bview **nv)
+CADViewSettings::checkbox_refresh(unsigned long long)
 {
-    m_v = nv;
+    m_v = NULL;
     if (m_v && *m_v) {
 	struct bview *v = *m_v;
 	acsg_ckbx->blockSignals(true);
@@ -308,7 +309,7 @@ CADViewSettings::view_refresh(struct bview **nv)
 	}
 	bu_free(vZstr, "vZstr cpy");
 
-	emit settings_changed(m_v);
+	emit settings_changed(QTCAD_VIEW_REFRESH);
     }
 }
 

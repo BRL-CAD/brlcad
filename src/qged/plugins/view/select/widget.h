@@ -61,7 +61,7 @@ class CADViewSelecter : public QWidget
 	bool erase_obj_ray();
 
     signals:
-	void view_updated(struct bview **);
+	void view_updated(unsigned long long);
 
     public slots:
 	void enable_groups(bool);

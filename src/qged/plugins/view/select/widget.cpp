@@ -452,7 +452,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    if (!use_ray_test_ckbx->isChecked()) {
 		bool ret = erase_obj_bbox();
 		if (ret)
-		    emit view_updated(&gedp->ged_gvp);
+		    emit view_updated(QTCAD_VIEW_DRAWN);
 		bu_free(sset, "sset");
 		return true;
 	    }
@@ -460,7 +460,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    if (use_pnt_select_button->isChecked() && use_ray_test_ckbx->isChecked()) {
 		bool ret = erase_obj_ray();
 		if (ret)
-		    emit view_updated(&gedp->ged_gvp);
+		    emit view_updated(QTCAD_VIEW_DRAWN);
 		bu_free(sset, "sset");
 		return ret;
 	    }

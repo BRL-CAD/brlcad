@@ -57,6 +57,7 @@
 #include "qtcad/gInstance.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgUtil.h"
+#include "qtcad/SignalFlags.h"
 
 struct QgItem_cmp {
     inline bool operator() (const QgItem *i1, const QgItem *i2)
@@ -1012,9 +1013,7 @@ QgModel::draw(QString &qpath)
 
     bu_free((void *)inst_path, "inst_path");
 
-    emit view_change(&gedp->ged_gvp);
-    emit draw_change();
-
+    emit view_change(QTCAD_VIEW_DRAWN);
     return ret;
 }
 
@@ -1042,9 +1041,7 @@ QgModel::erase(QString &qpath)
 
     bu_free((void *)inst_path, "inst_path");
 
-    emit view_change(&gedp->ged_gvp);
-    emit draw_change();
-
+    emit view_change(QTCAD_VIEW_DRAWN);
     return ret;
 }
 

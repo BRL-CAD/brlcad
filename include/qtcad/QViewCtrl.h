@@ -55,7 +55,7 @@ class QTCAD_EXPORT QViewCtrl : public QToolBar
 	int icon_size = 25;
 
     signals:
-	void gui_changed_view(struct bview **);
+	void view_changed(unsigned long long);
 	void lmouse_mode(int);
 
     public slots:
@@ -68,7 +68,8 @@ class QTCAD_EXPORT QViewCtrl : public QToolBar
 	void fbclear_cmd();
 
 	void fb_mode_cmd();
-	void fb_mode_icon();
+
+	void do_view_update(unsigned long long);
 
 	// Unlike the other commands, the raytrace button
 	// has to reflect a potentially long-running state -

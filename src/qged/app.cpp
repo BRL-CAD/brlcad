@@ -94,22 +94,13 @@ void
 CADApp::do_quad_view_change(QtCADView *cv)
 {
     mdl->gedp->ged_gvp = cv->view();
-    emit view_change(&mdl->gedp->ged_gvp);
+    emit view_update(QTCAD_VIEW_REFRESH);
 }
 
 void
-CADApp::do_view_change(struct bview **nv)
+CADApp::do_view_changed(unsigned long long flags)
 {
-
-    if (nv)
-	mdl->gedp->ged_gvp = *nv;
-    emit view_change(&mdl->gedp->ged_gvp);
-}
-
-void
-CADApp::do_db_change()
-{
-    emit mdl->mdl_changed_db(NULL);
+    emit view_update(flags);
 }
 
 void
@@ -337,7 +328,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// Handle any necessary redrawing.
 	if (qged_view_update(gedp, &mdl->changed_dp) > 0) {
 	    if (w->c4)
-		w->c4->need_update(NULL);
+		w->c4->need_update(QTCAD_VIEW_REFRESH);
 	}
 
 	/* Check if the ged_exec call changed either the display manager or
@@ -427,7 +418,7 @@ CADApp::run_qcmd(const QString &command)
 	    console->printString(bu_vls_cstr(&msg));
 	}
 	if (view_dirty && mdl->gedp) {
-	    emit view_change(&mdl->gedp->ged_gvp);
+	    emit view_update(QTCAD_VIEW_DRAWN);
 	    view_dirty = false;
 	}
     }
