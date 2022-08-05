@@ -31,13 +31,13 @@
 #include "bu/avs.h"
 #include "bu/malloc.h"
 #include "qtcad/SignalFlags.h"
+#include "app.h"
 
-CADViewModel::CADViewModel(QObject *parentobj, struct bview **v)
+CADViewModel::CADViewModel(QObject *parentobj)
     : QKeyValModel(parentobj)
 {
     m_root = NULL;
-    m_v = v;
-    refresh(0);
+    refresh(QTCAD_VIEW_REFRESH);
 }
 
 CADViewModel::~CADViewModel()
@@ -56,43 +56,39 @@ CADViewModel::update()
 void
 CADViewModel::refresh(unsigned long long)
 {
-    //m_v = gedp->ged_gvp;
-    m_v = NULL;
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
+	return;
+    struct ged *gedp = m->gedp;
+    if (!gedp)
+	return;
 
-    if (m_v && *m_v) {
-	struct bview *v = *m_v;
-	struct bu_vls val = BU_VLS_INIT_ZERO;
-	QMap<QString, QKeyValNode*> standard_nodes;
-	int i = 0;
-	if (m_root)
-	    delete m_root;
-	m_root = new QKeyValNode();
-	beginResetModel();
+    struct bview *v = gedp->ged_gvp;
+    struct bu_vls val = BU_VLS_INIT_ZERO;
+    QMap<QString, QKeyValNode*> standard_nodes;
+    int i = 0;
+    if (m_root)
+	delete m_root;
+    m_root = new QKeyValNode();
+    beginResetModel();
 
-	standard_nodes.insert("Name", add_pair("Name", bu_vls_cstr(&v->gv_name), m_root, i));
-	bu_vls_sprintf(&val, "%g", v->gv_size);
-	standard_nodes.insert("Size", add_pair("Size", bu_vls_cstr(&val), m_root, i));
-	bu_vls_sprintf(&val, "%d", v->gv_width);
-	standard_nodes.insert("Width", add_pair("Width", bu_vls_cstr(&val), m_root, i));
-	bu_vls_sprintf(&val, "%d", v->gv_height);
-	standard_nodes.insert("Height", add_pair("Height", bu_vls_cstr(&val), m_root, i));
-	bu_vls_sprintf(&val, "%g", v->gv_aet[0]);
-	standard_nodes.insert("Az", add_pair("Az", bu_vls_cstr(&val), m_root, i));
-	bu_vls_sprintf(&val, "%g", v->gv_aet[1]);
-	standard_nodes.insert("El", add_pair("El", bu_vls_cstr(&val), m_root, i));
-	bu_vls_sprintf(&val, "%g", v->gv_aet[2]);
-	standard_nodes.insert("Tw", add_pair("Tw", bu_vls_cstr(&val), m_root, i));
+    standard_nodes.insert("Name", add_pair("Name", bu_vls_cstr(&v->gv_name), m_root, i));
+    bu_vls_sprintf(&val, "%g", v->gv_size);
+    standard_nodes.insert("Size", add_pair("Size", bu_vls_cstr(&val), m_root, i));
+    bu_vls_sprintf(&val, "%d", v->gv_width);
+    standard_nodes.insert("Width", add_pair("Width", bu_vls_cstr(&val), m_root, i));
+    bu_vls_sprintf(&val, "%d", v->gv_height);
+    standard_nodes.insert("Height", add_pair("Height", bu_vls_cstr(&val), m_root, i));
+    bu_vls_sprintf(&val, "%g", v->gv_aet[0]);
+    standard_nodes.insert("Az", add_pair("Az", bu_vls_cstr(&val), m_root, i));
+    bu_vls_sprintf(&val, "%g", v->gv_aet[1]);
+    standard_nodes.insert("El", add_pair("El", bu_vls_cstr(&val), m_root, i));
+    bu_vls_sprintf(&val, "%g", v->gv_aet[2]);
+    standard_nodes.insert("Tw", add_pair("Tw", bu_vls_cstr(&val), m_root, i));
 
-	endResetModel();
+    endResetModel();
 
-	bu_vls_free(&val);
-    } else {
-	if (m_root)
-	    delete m_root;
-	m_root = new QKeyValNode();
-	beginResetModel();
-	endResetModel();
-    }
+    bu_vls_free(&val);
 }
 
 // Local Variables:

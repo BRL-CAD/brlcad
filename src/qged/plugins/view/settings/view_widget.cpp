@@ -27,13 +27,12 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "qtcad/SignalFlags.h"
+#include "app.h"
 
 #include "view_widget.h"
 
-CADViewSettings::CADViewSettings(QWidget *, struct bview **v)
+CADViewSettings::CADViewSettings(QWidget *)
 {
-    m_v = v;
-
     QVBoxLayout *wl = new QVBoxLayout;
     wl->setAlignment(Qt::AlignTop);
 
@@ -102,215 +101,226 @@ CADViewSettings::checkbox_update()
 void
 CADViewSettings::view_update()
 {
-    view_refresh(m_v);
+    view_refresh(0);
 }
 
 void
 CADViewSettings::view_update_int(int)
 {
-    view_refresh(m_v);
+    view_refresh(0);
 }
 
 void
 CADViewSettings::checkbox_refresh(unsigned long long)
 {
-    m_v = NULL;
-    if (m_v && *m_v) {
-	struct bview *v = *m_v;
-	acsg_ckbx->blockSignals(true);
-	if (v->gv_s->adaptive_plot_csg) {
-	    acsg_ckbx->setCheckState(Qt::Checked);
-	} else {
-	    acsg_ckbx->setCheckState(Qt::Unchecked);
-	}
-	acsg_ckbx->blockSignals(false);
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
+	return;
+    struct ged *gedp = m->gedp;
+    if (!gedp)
+	return;
 
-	amesh_ckbx->blockSignals(true);
-	if (v->gv_s->adaptive_plot_mesh) {
-	    amesh_ckbx->setCheckState(Qt::Checked);
-	} else {
-	    amesh_ckbx->setCheckState(Qt::Unchecked);
-	}
-	amesh_ckbx->blockSignals(false);
+    struct bview *v = gedp->ged_gvp;
+    if (!v)
+	return;
 
-	adc_ckbx->blockSignals(true);
-	if (v->gv_s->gv_adc.draw) {
-	    adc_ckbx->setCheckState(Qt::Checked);
-	} else {
-	    adc_ckbx->setCheckState(Qt::Unchecked);
-	}
-	adc_ckbx->blockSignals(false);
-
-	cdot_ckbx->blockSignals(true);
-	if (v->gv_s->gv_center_dot.gos_draw) {
-	    cdot_ckbx->setCheckState(Qt::Checked);
-	} else {
-	    cdot_ckbx->setCheckState(Qt::Unchecked);
-	}
-	cdot_ckbx->blockSignals(false);
-
-	fb_ckbx->blockSignals(true);
-	if (v->gv_s->gv_fb_mode != 0) {
-	    fb_ckbx->setCheckState(Qt::Checked);
-	} else {
-	    fb_ckbx->setCheckState(Qt::Unchecked);
-	}
-	fb_ckbx->blockSignals(false);
-
-	fbo_ckbx->blockSignals(true);
-	if (v->gv_s->gv_fb_mode == 1) {
-	    fbo_ckbx->setCheckState(Qt::Checked);
-	} else {
-	    fbo_ckbx->setCheckState(Qt::Unchecked);
-	}
-	fbo_ckbx->blockSignals(false);
-
-	fps_ckbx->blockSignals(true);
-	if (v->gv_s->gv_fps) {
-	    fps_ckbx->setCheckState(Qt::Checked);
-	} else {
-	    fps_ckbx->setCheckState(Qt::Unchecked);
-	}
-	fps_ckbx->blockSignals(false);
-
-	grid_ckbx->blockSignals(true);
-	if (v->gv_s->gv_grid.draw) {
-	    grid_ckbx->setCheckState(Qt::Checked);
-	} else {
-	    grid_ckbx->setCheckState(Qt::Unchecked);
-	}
-	grid_ckbx->blockSignals(false);
-
-	mdlaxes_ckbx->blockSignals(true);
-	if (v->gv_s->gv_model_axes.draw) {
-	    mdlaxes_ckbx->setCheckState(Qt::Checked);
-	} else {
-	    mdlaxes_ckbx->setCheckState(Qt::Unchecked);
-	}
-	mdlaxes_ckbx->blockSignals(false);
-
-	params_ckbx->blockSignals(true);
-	if (v->gv_s->gv_view_params.gos_draw) {
-	    params_ckbx->setCheckState(Qt::Checked);
-	} else {
-	    params_ckbx->setCheckState(Qt::Unchecked);
-	}
-	params_ckbx->blockSignals(false);
-
-	scale_ckbx->blockSignals(true);
-	if (v->gv_s->gv_view_scale.gos_draw) {
-	    scale_ckbx->setCheckState(Qt::Checked);
-	} else {
-	    scale_ckbx->setCheckState(Qt::Unchecked);
-	}
-	scale_ckbx->blockSignals(false);
-
-	viewaxes_ckbx->blockSignals(true);
-	if (v->gv_s->gv_view_axes.draw) {
-	    viewaxes_ckbx->setCheckState(Qt::Checked);
-	} else {
-	    viewaxes_ckbx->setCheckState(Qt::Unchecked);
-	}
-	viewaxes_ckbx->blockSignals(false);
-
-	vZ->blockSignals(true);
-	vZ->setText(QVariant(v->gv_data_vZ).toString());
-	vZ->blockSignals(false);
-
+    acsg_ckbx->blockSignals(true);
+    if (v->gv_s->adaptive_plot_csg) {
+	acsg_ckbx->setCheckState(Qt::Checked);
+    } else {
+	acsg_ckbx->setCheckState(Qt::Unchecked);
     }
+    acsg_ckbx->blockSignals(false);
+
+    amesh_ckbx->blockSignals(true);
+    if (v->gv_s->adaptive_plot_mesh) {
+	amesh_ckbx->setCheckState(Qt::Checked);
+    } else {
+	amesh_ckbx->setCheckState(Qt::Unchecked);
+    }
+    amesh_ckbx->blockSignals(false);
+
+    adc_ckbx->blockSignals(true);
+    if (v->gv_s->gv_adc.draw) {
+	adc_ckbx->setCheckState(Qt::Checked);
+    } else {
+	adc_ckbx->setCheckState(Qt::Unchecked);
+    }
+    adc_ckbx->blockSignals(false);
+
+    cdot_ckbx->blockSignals(true);
+    if (v->gv_s->gv_center_dot.gos_draw) {
+	cdot_ckbx->setCheckState(Qt::Checked);
+    } else {
+	cdot_ckbx->setCheckState(Qt::Unchecked);
+    }
+    cdot_ckbx->blockSignals(false);
+
+    fb_ckbx->blockSignals(true);
+    if (v->gv_s->gv_fb_mode != 0) {
+	fb_ckbx->setCheckState(Qt::Checked);
+    } else {
+	fb_ckbx->setCheckState(Qt::Unchecked);
+    }
+    fb_ckbx->blockSignals(false);
+
+    fbo_ckbx->blockSignals(true);
+    if (v->gv_s->gv_fb_mode == 1) {
+	fbo_ckbx->setCheckState(Qt::Checked);
+    } else {
+	fbo_ckbx->setCheckState(Qt::Unchecked);
+    }
+    fbo_ckbx->blockSignals(false);
+
+    fps_ckbx->blockSignals(true);
+    if (v->gv_s->gv_fps) {
+	fps_ckbx->setCheckState(Qt::Checked);
+    } else {
+	fps_ckbx->setCheckState(Qt::Unchecked);
+    }
+    fps_ckbx->blockSignals(false);
+
+    grid_ckbx->blockSignals(true);
+    if (v->gv_s->gv_grid.draw) {
+	grid_ckbx->setCheckState(Qt::Checked);
+    } else {
+	grid_ckbx->setCheckState(Qt::Unchecked);
+    }
+    grid_ckbx->blockSignals(false);
+
+    mdlaxes_ckbx->blockSignals(true);
+    if (v->gv_s->gv_model_axes.draw) {
+	mdlaxes_ckbx->setCheckState(Qt::Checked);
+    } else {
+	mdlaxes_ckbx->setCheckState(Qt::Unchecked);
+    }
+    mdlaxes_ckbx->blockSignals(false);
+
+    params_ckbx->blockSignals(true);
+    if (v->gv_s->gv_view_params.gos_draw) {
+	params_ckbx->setCheckState(Qt::Checked);
+    } else {
+	params_ckbx->setCheckState(Qt::Unchecked);
+    }
+    params_ckbx->blockSignals(false);
+
+    scale_ckbx->blockSignals(true);
+    if (v->gv_s->gv_view_scale.gos_draw) {
+	scale_ckbx->setCheckState(Qt::Checked);
+    } else {
+	scale_ckbx->setCheckState(Qt::Unchecked);
+    }
+    scale_ckbx->blockSignals(false);
+
+    viewaxes_ckbx->blockSignals(true);
+    if (v->gv_s->gv_view_axes.draw) {
+	viewaxes_ckbx->setCheckState(Qt::Checked);
+    } else {
+	viewaxes_ckbx->setCheckState(Qt::Unchecked);
+    }
+    viewaxes_ckbx->blockSignals(false);
+
+    vZ->blockSignals(true);
+    vZ->setText(QVariant(v->gv_data_vZ).toString());
+    vZ->blockSignals(false);
 }
 
 void
-CADViewSettings::view_refresh(struct bview **nv)
+CADViewSettings::view_refresh(unsigned long long)
 {
-    m_v = nv;
-    if (m_v && *m_v) {
-	struct bview *v = *m_v;
-	if (acsg_ckbx->checkState() == Qt::Checked) {
-	    v->gv_s->adaptive_plot_csg = 1;
-	} else {
-	    v->gv_s->adaptive_plot_csg = 0;
-	}
-	if (amesh_ckbx->checkState() == Qt::Checked) {
-	    v->gv_s->adaptive_plot_mesh = 1;
-	} else {
-	    v->gv_s->adaptive_plot_mesh = 0;
-	}
-	if (adc_ckbx->checkState() == Qt::Checked) {
-	    v->gv_s->gv_adc.draw = 1;
-	} else {
-	    v->gv_s->gv_adc.draw = 0;
-	}
-	if (cdot_ckbx->checkState() == Qt::Checked) {
-	    v->gv_s->gv_center_dot.gos_draw = 1;
-	} else {
-	    v->gv_s->gv_center_dot.gos_draw = 0;
-	}
-	if (fb_ckbx->checkState() == Qt::Checked) {
-	    if (fbo_ckbx->checkState() == Qt::Checked) {
-		v->gv_s->gv_fb_mode = 1;
-	    } else {
-		v->gv_s->gv_fb_mode = 2;
-	    }
-	} else {
-	    v->gv_s->gv_fb_mode = 0;
-	}
-	if (fps_ckbx->checkState() == Qt::Checked) {
-	    v->gv_s->gv_fps = 1;
-	} else {
-	    v->gv_s->gv_fps = 0;
-	}
-	if (grid_ckbx->checkState() == Qt::Checked) {
-	    v->gv_s->gv_grid.draw = 1;
-	} else {
-	    v->gv_s->gv_grid.draw = 0;
-	}
-	if (mdlaxes_ckbx->checkState() == Qt::Checked) {
-	    v->gv_s->gv_model_axes.draw = 1;
-	} else {
-	    v->gv_s->gv_model_axes.draw = 0;
-	}
-	if (params_ckbx->checkState() == Qt::Checked) {
-	    v->gv_s->gv_view_params.gos_draw = 1;
-	} else {
-	    v->gv_s->gv_view_params.gos_draw = 0;
-	}
-	if (scale_ckbx->checkState() == Qt::Checked) {
-	    v->gv_s->gv_view_scale.gos_draw = 1;
-	} else {
-	    v->gv_s->gv_view_scale.gos_draw = 0;
-	}
-	if (viewaxes_ckbx->checkState() == Qt::Checked) {
-	    v->gv_s->gv_view_axes.draw = 1;
-	} else {
-	    v->gv_s->gv_view_axes.draw = 0;
-	}
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
+	return;
+    struct ged *gedp = m->gedp;
+    if (!gedp)
+	return;
 
-	char *vZstr = bu_strdup(vZ->text().toLocal8Bit().data());
-	fastf_t val;
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&vZstr, (void *)&val) == 1) {
-	    v->gv_data_vZ = val;
-	} else {
-	    char **av = (char **)bu_calloc(strlen(vZstr) + 1, sizeof(char *), "argv array");
-	    int nargs = bu_argv_from_string(av, strlen(vZstr), vZstr);
-	    if (nargs) {
-		vect_t mpt;
-		int acnt = bu_opt_vect_t(NULL, nargs, (const char **)av, (void *)&mpt);
-		if (acnt == 1 || acnt == 3) {
-		    vect_t vpt;
-		    MAT4X3PNT(vpt, v->gv_model2view, mpt);
-		    v->gv_data_vZ = vpt[Z];
-		    vZ->blockSignals(true);
-		    vZ->setText(QVariant(v->gv_data_vZ).toString());
-		    vZ->blockSignals(false);
-		}
-	    }
-	    bu_free(av, "argv array");
-	}
-	bu_free(vZstr, "vZstr cpy");
+    struct bview *v = gedp->ged_gvp;
 
-	emit settings_changed(QTCAD_VIEW_REFRESH);
+    if (acsg_ckbx->checkState() == Qt::Checked) {
+	v->gv_s->adaptive_plot_csg = 1;
+    } else {
+	v->gv_s->adaptive_plot_csg = 0;
     }
+    if (amesh_ckbx->checkState() == Qt::Checked) {
+	v->gv_s->adaptive_plot_mesh = 1;
+    } else {
+	v->gv_s->adaptive_plot_mesh = 0;
+    }
+    if (adc_ckbx->checkState() == Qt::Checked) {
+	v->gv_s->gv_adc.draw = 1;
+    } else {
+	v->gv_s->gv_adc.draw = 0;
+    }
+    if (cdot_ckbx->checkState() == Qt::Checked) {
+	v->gv_s->gv_center_dot.gos_draw = 1;
+    } else {
+	v->gv_s->gv_center_dot.gos_draw = 0;
+    }
+    if (fb_ckbx->checkState() == Qt::Checked) {
+	if (fbo_ckbx->checkState() == Qt::Checked) {
+	    v->gv_s->gv_fb_mode = 1;
+	} else {
+	    v->gv_s->gv_fb_mode = 2;
+	}
+    } else {
+	v->gv_s->gv_fb_mode = 0;
+    }
+    if (fps_ckbx->checkState() == Qt::Checked) {
+	v->gv_s->gv_fps = 1;
+    } else {
+	v->gv_s->gv_fps = 0;
+    }
+    if (grid_ckbx->checkState() == Qt::Checked) {
+	v->gv_s->gv_grid.draw = 1;
+    } else {
+	v->gv_s->gv_grid.draw = 0;
+    }
+    if (mdlaxes_ckbx->checkState() == Qt::Checked) {
+	v->gv_s->gv_model_axes.draw = 1;
+    } else {
+	v->gv_s->gv_model_axes.draw = 0;
+    }
+    if (params_ckbx->checkState() == Qt::Checked) {
+	v->gv_s->gv_view_params.gos_draw = 1;
+    } else {
+	v->gv_s->gv_view_params.gos_draw = 0;
+    }
+    if (scale_ckbx->checkState() == Qt::Checked) {
+	v->gv_s->gv_view_scale.gos_draw = 1;
+    } else {
+	v->gv_s->gv_view_scale.gos_draw = 0;
+    }
+    if (viewaxes_ckbx->checkState() == Qt::Checked) {
+	v->gv_s->gv_view_axes.draw = 1;
+    } else {
+	v->gv_s->gv_view_axes.draw = 0;
+    }
+
+    char *vZstr = bu_strdup(vZ->text().toLocal8Bit().data());
+    fastf_t val;
+    if (bu_opt_fastf_t(NULL, 1, (const char **)&vZstr, (void *)&val) == 1) {
+	v->gv_data_vZ = val;
+    } else {
+	char **av = (char **)bu_calloc(strlen(vZstr) + 1, sizeof(char *), "argv array");
+	int nargs = bu_argv_from_string(av, strlen(vZstr), vZstr);
+	if (nargs) {
+	    vect_t mpt;
+	    int acnt = bu_opt_vect_t(NULL, nargs, (const char **)av, (void *)&mpt);
+	    if (acnt == 1 || acnt == 3) {
+		vect_t vpt;
+		MAT4X3PNT(vpt, v->gv_model2view, mpt);
+		v->gv_data_vZ = vpt[Z];
+		vZ->blockSignals(true);
+		vZ->setText(QVariant(v->gv_data_vZ).toString());
+		vZ->blockSignals(false);
+	    }
+	}
+	bu_free(av, "argv array");
+    }
+    bu_free(vZstr, "vZstr cpy");
+
+    emit settings_changed(QTCAD_VIEW_DRAWN);
 }
 
 

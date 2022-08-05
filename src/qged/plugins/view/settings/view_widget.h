@@ -33,7 +33,7 @@ class CADViewSettings : public QWidget
     Q_OBJECT
 
     public:
-	CADViewSettings(QWidget *p = 0, struct bview **v = NULL);
+	CADViewSettings(QWidget *p = 0);
 	~CADViewSettings();
 
 	QCheckBox *acsg_ckbx;
@@ -56,12 +56,9 @@ class CADViewSettings : public QWidget
     public slots:
 	void checkbox_refresh(unsigned long long);
 	void checkbox_update();
-	void view_refresh(struct bview **);
+	void view_refresh(unsigned long long);
 	void view_update_int(int);
 	void view_update();
-
-    private:
-	struct bview **m_v = NULL;
 };
 
 // Local Variables:

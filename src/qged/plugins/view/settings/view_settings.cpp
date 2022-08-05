@@ -36,8 +36,8 @@ view_settings_tool_create()
 
     QToolPaletteElement *el = new QToolPaletteElement(obj_icon, vs);
 
-    QObject::connect(el, &QToolPaletteElement::view_changed, vs, &CADViewSettings::checkbox_refresh);
-    QObject::connect(vs, &CADViewSettings::settings_changed, el, &QToolPaletteElement::do_view_update);
+    QObject::connect(el, &QToolPaletteElement::element_view_update, vs, &CADViewSettings::checkbox_refresh);
+    QObject::connect(vs, &CADViewSettings::settings_changed, el, &QToolPaletteElement::element_view_changed);
 
     return el;
 }
