@@ -226,6 +226,7 @@ struct ged {
 
     /* Selection data */
     struct ged_selection_sets	*ged_selection_sets;
+    struct ged_selection_set    *ged_cset;
 
 
     /* FIXME -- this ugly hack needs to die.  the result string should

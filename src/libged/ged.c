@@ -160,6 +160,7 @@ ged_free(struct ged *gedp)
 
     ged_selection_sets_destroy(gedp->ged_selection_sets);
     gedp->ged_selection_sets = NULL;
+    gedp->ged_cset = NULL;
 
     BU_PUT(gedp->ged_cbs, struct ged_callback_state);
 
@@ -218,7 +219,7 @@ ged_init(struct ged *gedp)
     qray_init(gedp->ged_gdp);
 
     gedp->ged_selection_sets = ged_selection_sets_create(gedp);
-
+    gedp->ged_cset = ged_selection_sets_get(gedp->ged_selection_sets, NULL); // default set
 
     BU_GET(gedp->ged_log, struct bu_vls);
     bu_vls_init(gedp->ged_log);
