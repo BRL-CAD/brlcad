@@ -65,7 +65,7 @@ polygon_tool_modify()
 
     // However the view changed, we need to make sure our list is current
     QObject::connect(poly_mod, &QPolyMod::view_updated, poly_mod, &QPolyMod::mod_names_reset);
-    QObject::connect(el, &QToolPaletteElement::view_changed, poly_mod, &QPolyMod::mod_names_reset);
+    QObject::connect(el, &QToolPaletteElement::element_view_changed, poly_mod, &QPolyMod::mod_names_reset);
     // //Make sure the list is current whenever we display the control widget
     QObject::connect(el, &QToolPaletteElement::element_unhide, poly_mod, &QPolyMod::mod_names_reset);
 
