@@ -55,6 +55,9 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
     protected:
 	void resizeEvent(QResizeEvent *pevent) override;
 
+    signals:
+	void view_changed(unsigned long long);
+
     public slots:
 	void tree_column_size(const QModelIndex &index);
 	void context_menu(const QPoint &point);

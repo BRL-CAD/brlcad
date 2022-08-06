@@ -30,20 +30,14 @@
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeSelectionModel.h"
+#include "qtcad/SignalFlags.h"
 
 void
 QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags)
 {
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
-    struct ged_selection_set *gs = NULL;
-    if (gedp->ged_selection_sets) {
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
-	if (scnt == 1)
-	    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
-	bu_ptbl_free(&ssets);
-    }
+    struct ged_selection_set *gs = gedp->ged_cset;
     if (!ged_doing_sync) {
 	if (!(flags & QItemSelectionModel::Deselect)) {
 	    QModelIndexList dl = selection.indexes();
@@ -92,6 +86,8 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 		}
 	    }
 
+	    emit treeview->view_changed(QTCAD_VIEW_SELECT);
+
 	} else {
 
 	    QModelIndexList dl = selection.indexes();
@@ -107,6 +103,8 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 		    bu_vls_free(&tpath);
 		}
 	    }
+
+	    emit treeview->view_changed(QTCAD_VIEW_SELECT);
 	}
     }
 
@@ -116,7 +114,6 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 void
 QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags)
 {
-
     if (!ged_doing_sync && !(flags & QItemSelectionModel::Deselect)) {
 	std::stack<QgItem *> to_process;
 	QgItem *snode = static_cast<QgItem *>(index.internalPointer());

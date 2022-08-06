@@ -386,6 +386,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     connect(vm_topview, &QAction::triggered, m, &QgModel::toggle_hierarchy);
     connect(m, &QgModel::opened_item, treeview, &QgTreeView::qgitem_select_sync);
     connect(m, &QgModel::view_change, ca, &CADApp::do_view_changed);
+    QObject::connect(treeview, &QgTreeView::view_changed, ap, &CADApp::do_view_changed);
     QObject::connect(ap, &CADApp::view_update, treeview, &QgTreeView::do_view_update);
 
     // We need to record the expanded/contracted state of the tree items,

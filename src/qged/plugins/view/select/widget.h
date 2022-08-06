@@ -29,6 +29,7 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QListWidget>
 #include <QRadioButton>
 #include "ged.h"
 
@@ -50,6 +51,7 @@ class CADViewSelecter : public QWidget
 	QRadioButton *add_to_group_button;
 	QRadioButton *rm_from_group_button;
 	QComboBox *current_group;
+	QListWidget *group_contents;
 	QPushButton *add_new_group;
 	QPushButton *rm_group;
 
@@ -82,6 +84,7 @@ class CADViewSelecter : public QWidget
 	int scnt = 0;
 	struct bv_scene_obj **sset = NULL;
 	unsigned long long ohash = 0;
+	unsigned long long omhash = 0;
 };
 
 // Local Variables:

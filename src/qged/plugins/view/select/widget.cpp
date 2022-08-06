@@ -86,6 +86,14 @@ CADViewSelecter::CADViewSelecter(QWidget *)
     sgrp_gl->setAlignment(Qt::AlignTop);
 
 
+    draw_selections = new QPushButton("Draw selected");
+    sgrp_gl->addWidget(draw_selections);
+    erase_selections = new QPushButton("Erase selected");
+    sgrp_gl->addWidget(erase_selections);
+    erase_non_selections = new QPushButton("Erase non-selected");
+    sgrp_gl->addWidget(erase_non_selections);
+
+
     QWidget *sgrp = new QWidget();
     QHBoxLayout *groups_gl = new QHBoxLayout;
     groups_gl->setAlignment(Qt::AlignLeft);
@@ -98,12 +106,8 @@ CADViewSelecter::CADViewSelecter(QWidget *)
     sgrp->setLayout(groups_gl);
     sgrp_gl->addWidget(sgrp);
 
-    draw_selections = new QPushButton("Draw selected");
-    sgrp_gl->addWidget(draw_selections);
-    erase_selections = new QPushButton("Erase selected");
-    sgrp_gl->addWidget(erase_selections);
-    erase_non_selections = new QPushButton("Erase non-selected");
-    sgrp_gl->addWidget(erase_non_selections);
+    group_contents = new QListWidget();
+    sgrp_gl->addWidget(group_contents);
 
     disable_groups(false);
 
@@ -132,6 +136,7 @@ void
 CADViewSelecter::enable_groups(bool)
 {
     current_group->setEnabled(true);
+    group_contents->setEnabled(true);
     add_new_group->setEnabled(true);
     rm_group->setEnabled(true);
     draw_selections->setEnabled(true);
@@ -143,6 +148,7 @@ void
 CADViewSelecter::disable_groups(bool)
 {
     current_group->setEnabled(false);
+    group_contents->setEnabled(false);
     add_new_group->setEnabled(false);
     rm_group->setEnabled(false);
     draw_selections->setEnabled(false);
@@ -172,14 +178,26 @@ CADViewSelecter::do_view_update(unsigned long long flags)
     if (!gedp)
 	return;
 
+    unsigned long long mhash = ged_selection_hash_sets(gedp->ged_selection_sets);
+    if ((flags & QTCAD_VIEW_SELECT) || mhash != omhash) {
+	current_group->clear();
+	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+	size_t sscnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "*");
+	for (size_t i = 0; i < sscnt; i++) {
+	    struct ged_selection_set *s = (struct ged_selection_set *)BU_PTBL_GET  (&ssets, i);
+	    current_group->addItem(QString(bu_vls_cstr(&s->name)));
+	}
+	bu_ptbl_free(&ssets);
+    }
+
     unsigned long long chash = ged_selection_hash_set(gedp->ged_cset);
     if ((flags & QTCAD_VIEW_SELECT) || chash != ohash) {
-	current_group->clear();
+	group_contents->clear();
 	ohash = chash;
 	char **spaths = NULL;
 	int pscnt = ged_selection_set_list(&spaths, gedp->ged_cset);
 	for (int i = 0; i < pscnt; i++) {
-	    current_group->addItem(QString(spaths[i]));
+	    group_contents->addItem(QString(spaths[i]));
 	}
 	bu_free(spaths, "spaths");
     }
