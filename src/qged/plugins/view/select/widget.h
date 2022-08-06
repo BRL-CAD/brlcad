@@ -62,6 +62,9 @@ class CADViewSelecter : public QWidget
 	bool erase_obj_bbox();
 	bool erase_obj_ray();
 
+	bool add_obj_bbox();
+	bool add_obj_ray();
+
     signals:
 	void view_changed(unsigned long long);
 

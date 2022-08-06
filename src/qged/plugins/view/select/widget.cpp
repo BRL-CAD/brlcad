@@ -418,6 +418,191 @@ CADViewSelecter::erase_obj_ray()
 }
 
 bool
+CADViewSelecter::add_obj_bbox()
+{
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
+	return false;
+    struct ged *gedp = m->gedp;
+    if (!gedp || !gedp->ged_gvp || !gedp->ged_cset)
+	return false;
+    struct bview *v = gedp->ged_gvp;
+    struct ged_selection_set *gs = gedp->ged_cset;
+
+    if (select_all_depth_ckbx->isChecked()) {
+	struct bu_vls dpath = BU_VLS_INIT_ZERO;
+	for (int i = 0; i < scnt; i++) {
+	    struct bv_scene_obj *s = sset[i];
+	    bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s->s_name));
+	    if (bu_vls_cstr(&dpath)[0] != '/')
+		bu_vls_prepend(&dpath, "/");
+	    if (!ged_selection_insert(gs, bu_vls_cstr(&dpath))) {
+		bu_vls_free(&dpath);
+		return false;
+	    }
+	}
+	bu_vls_free(&dpath);
+	return true;
+    }
+
+    // Only removing one object, not using all-up librt raytracing -
+    // need to find the first bbox intersection, then run the select
+    // command.
+    struct bv_scene_obj *s_closest = NULL;
+    double dist = DBL_MAX;
+    int ix = (int)vx;
+    int iy = (int)vy;
+    bv_screen_to_view(v, &vx, &vy, ix, iy);
+    point_t vpnt, mpnt;
+    VSET(vpnt, vx, vy, 0);
+    MAT4X3PNT(mpnt, v->gv_view2model, vpnt);
+    point_t rmin, rmax;
+    vect_t dir;
+    VMOVEN(dir, v->gv_rotation + 8, 3);
+    VUNITIZE(dir);
+    VSCALE(dir, dir, v->radius);
+    VADD2(mpnt, mpnt, dir);
+    VUNITIZE(dir);
+    bg_ray_invdir(&dir, dir);
+    for (int i = 0; i < scnt; i++) {
+	struct bv_scene_obj *s = sset[i];
+	if (bg_isect_aabb_ray(rmin, rmax, mpnt, dir, s->bmin, s->bmax)){
+	    double ndist = DIST_PNT_PNT(rmin, v->gv_vc_backout);
+	    if (ndist < dist) {
+		dist = ndist;
+		s_closest = s;
+	    }
+	}
+    }
+    if (s_closest) {
+	struct bu_vls dpath = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s_closest->s_name));
+	if (bu_vls_cstr(&dpath)[0] != '/')
+	    bu_vls_prepend(&dpath, "/");
+	if (!ged_selection_insert(gs, bu_vls_cstr(&dpath))) {
+	    bu_vls_free(&dpath);
+	    return false;
+	}
+	bu_vls_free(&dpath);
+	return true;
+    } else {
+	// no-op
+	return false;
+    }
+}
+
+bool
+CADViewSelecter::add_obj_ray()
+{
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
+	return false;
+    struct ged *gedp = m->gedp;
+    if (!gedp || !gedp->ged_gvp || !gedp->ged_cset)
+	return false;
+    struct bview *v = gedp->ged_gvp;
+    struct ged_selection_set *gs = gedp->ged_cset;
+
+    // librt intersection test.
+    struct application *ap;
+    BU_GET(ap, struct application);
+    RT_APPLICATION_INIT(ap);
+    ap->a_onehit = 0;
+    ap->a_hit = _obj_record;
+    ap->a_miss = NULL;
+    ap->a_overlap = _ovlp_record;
+    ap->a_logoverlap = NULL;
+
+    struct rt_i *rtip = rt_new_rti(gedp->dbip);
+    struct resource *resp = NULL;
+    BU_GET(resp, struct resource);
+    rt_init_resource(resp, 0, rtip);
+    ap->a_resource = resp;
+    ap->a_rt_i = rtip;
+    const char **objs = (const char **)bu_calloc(scnt + 1, sizeof(char *), "objs");
+    for (int i = 0; i < scnt; i++) {
+	struct bv_scene_obj *s = sset[i];
+	objs[i] = bu_vls_cstr(&s->s_name);
+    }
+    if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
+	bu_free(objs, "objs");
+	rt_free_rti(rtip);
+	BU_PUT(resp, struct resource);
+	BU_PUT(ap, struct appliation);
+	return false;
+    }
+    size_t ncpus = bu_avail_cpus();
+    rt_prep_parallel(rtip, (int)ncpus);
+    int ix = (int)vx;
+    int iy = (int)vy;
+    bv_screen_to_view(v, &vx, &vy, ix, iy);
+    point_t vpnt, mpnt;
+    VSET(vpnt, vx, vy, 0);
+    MAT4X3PNT(mpnt, v->gv_view2model, vpnt);
+    vect_t dir;
+    VMOVEN(dir, v->gv_rotation + 8, 3);
+    VUNITIZE(dir);
+    VSCALE(dir, dir, v->radius);
+    VADD2(ap->a_ray.r_pt, mpnt, dir);
+    VUNITIZE(dir);
+    VSCALE(ap->a_ray.r_dir, dir, -1);
+
+    struct rec_state rc;
+
+    // Since most of the work of the raytracing approach is the same,
+    // we just change what we record in the hit function based on
+    // the checkbox settings
+    if (select_all_depth_ckbx->isChecked()) {
+	rc.rec_all = 1;
+    } else {
+	rc.rec_all = 0;
+	rc.cdist = INFINITY;
+    }
+    ap->a_uptr = (void *)&rc;
+
+    (void)rt_shootray(ap);
+    bu_free(objs, "objs");
+    rt_free_rti(rtip);
+    BU_PUT(resp, struct resource);
+    BU_PUT(ap, struct appliation);
+
+    if (select_all_depth_ckbx->isChecked()) {
+	struct bu_vls dpath = BU_VLS_INIT_ZERO;
+	if (rc.active.size()) {
+	    std::unordered_set<std::string>::iterator a_it;
+	    for (a_it = rc.active.begin(); a_it != rc.active.end(); a_it++) {
+		bu_vls_sprintf(&dpath, "%s",  a_it->c_str());
+		if (bu_vls_cstr(&dpath)[0] != '/')
+		    bu_vls_prepend(&dpath, "/");
+		if (!ged_selection_insert(gs, bu_vls_cstr(&dpath))) {
+		    bu_vls_free(&dpath);
+		    return false;
+		}
+	    }
+	    bu_vls_free(&dpath);
+	    return true;
+	} else {
+	    return false;
+	}
+    } else {
+	if (rc.cdist < INFINITY) {
+	    struct bu_vls dpath = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&dpath, "%s",  rc.closest.c_str());
+	    if (bu_vls_cstr(&dpath)[0] != '/')
+		bu_vls_prepend(&dpath, "/");
+	    if (!ged_selection_insert(gs, bu_vls_cstr(&dpath))) {
+		bu_vls_free(&dpath);
+		return false;
+	    }
+	    bu_vls_free(&dpath);
+	    return true;
+	} else {
+	    return false;
+	}
+    }
+}
+
+bool
 CADViewSelecter::eventFilter(QObject *, QEvent *e)
 {
     QgModel *m = ((CADApp *)qApp)->mdl;
@@ -526,6 +711,22 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	}
 
 	if (add_to_group_button->isChecked()) {
+	    if (!use_ray_test_ckbx->isChecked()) {
+		bool ret = add_obj_bbox();
+		if (ret)
+		    emit view_changed(QTCAD_VIEW_SELECT);
+		bu_free(sset, "sset");
+		return true;
+	    }
+
+	    if (use_pnt_select_button->isChecked() && use_ray_test_ckbx->isChecked()) {
+		bool ret = add_obj_ray();
+		if (ret)
+		    emit view_changed(QTCAD_VIEW_SELECT);
+		bu_free(sset, "sset");
+		return ret;
+	    }
+
 	    // If we didn't process by this point, no-op
 	    return false;
 	}
