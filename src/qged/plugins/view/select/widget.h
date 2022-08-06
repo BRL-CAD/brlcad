@@ -61,20 +61,19 @@ class CADViewSelecter : public QWidget
 	bool erase_obj_ray();
 
     signals:
-	void view_updated(unsigned long long);
+	void view_changed(unsigned long long);
 
     public slots:
 	void enable_groups(bool);
     	void disable_groups(bool);
 	void enable_raytrace_opt(bool);
     	void disable_raytrace_opt(bool);
+	void do_view_update(unsigned long long);
 
     protected:
 	bool eventFilter(QObject *, QEvent *);
 
     private:
-	struct ged *gedp = NULL;
-	struct bview *v = NULL;
 	bool enabled = true;
 	fastf_t px = -FLT_MAX;
 	fastf_t py = -FLT_MAX;
@@ -82,6 +81,7 @@ class CADViewSelecter : public QWidget
 	fastf_t vy = -FLT_MAX;
 	int scnt = 0;
 	struct bv_scene_obj **sset = NULL;
+	unsigned long long ohash = 0;
 };
 
 // Local Variables:

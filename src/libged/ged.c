@@ -219,7 +219,7 @@ ged_init(struct ged *gedp)
     qray_init(gedp->ged_gdp);
 
     gedp->ged_selection_sets = ged_selection_sets_create(gedp);
-    gedp->ged_cset = ged_selection_sets_get(gedp->ged_selection_sets, NULL); // default set
+    gedp->ged_cset = ged_selection_sets_get(gedp->ged_selection_sets, "default"); // default set
 
     BU_GET(gedp->ged_log, struct bu_vls);
     bu_vls_init(gedp->ged_log);

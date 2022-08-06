@@ -32,6 +32,7 @@
 #include "bg/aabb_ray.h"
 #include "bg/plane.h"
 #include "bg/lod.h"
+#include "app.h"
 
 #include "./widget.h"
 
@@ -161,6 +162,32 @@ CADViewSelecter::disable_raytrace_opt(bool)
     use_ray_test_ckbx->setEnabled(false);
 }
 
+void
+CADViewSelecter::do_view_update(unsigned long long flags)
+{
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
+	return;
+    struct ged *gedp = m->gedp;
+    if (!gedp)
+	return;
+
+    unsigned long long chash = ged_selection_hash_set(gedp->ged_cset);
+    if ((flags & QTCAD_VIEW_SELECT) || chash != ohash) {
+	current_group->clear();
+	ohash = chash;
+	char **spaths = NULL;
+	int pscnt = ged_selection_set_list(&spaths, gedp->ged_cset);
+	for (int i = 0; i < pscnt; i++) {
+	    current_group->addItem(QString(spaths[i]));
+	}
+	bu_free(spaths, "spaths");
+    }
+}
+
+
+
+
 struct rec_state {
     std::unordered_set<std::string> active;
     int rec_all;
@@ -205,6 +232,14 @@ _ovlp_record(struct application *ap, struct partition *pp, struct region *reg1, 
 bool
 CADViewSelecter::erase_obj_bbox()
 {
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
+	return false;
+    struct ged *gedp = m->gedp;
+    if (!gedp || !gedp->ged_gvp)
+	return false;
+    struct bview *v = gedp->ged_gvp;
+
     if (select_all_depth_ckbx->isChecked()) {
 	const char **av = (const char **)bu_calloc(scnt+2, sizeof(char *), "av");
 	av[0] = "erase";
@@ -263,6 +298,14 @@ CADViewSelecter::erase_obj_bbox()
 bool
 CADViewSelecter::erase_obj_ray()
 {
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
+	return false;
+    struct ged *gedp = m->gedp;
+    if (!gedp || !gedp->ged_gvp)
+	return false;
+    struct bview *v = gedp->ged_gvp;
+
     // librt intersection test.
     struct application *ap;
     BU_GET(ap, struct application);
@@ -359,14 +402,13 @@ CADViewSelecter::erase_obj_ray()
 bool
 CADViewSelecter::eventFilter(QObject *, QEvent *e)
 {
-
     QgModel *m = ((CADApp *)qApp)->mdl;
     if (!m)
 	return false;
-    gedp = m->gedp;
+    struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return false;
-    v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
     scnt = 0;
     sset = NULL;
     vx = -FLT_MAX;
@@ -423,11 +465,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    enabled = true;
 	    return false;
 	}
-#if 0
-	// If any other keys are down, we're not doing an select
-	if (m_e->modifiers() != Qt::NoModifier)
-	    return false;
-#endif
+
 #ifdef USE_QT6
 	vx = m_e->position().x();
 	vy = m_e->position().y();
@@ -452,7 +490,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    if (!use_ray_test_ckbx->isChecked()) {
 		bool ret = erase_obj_bbox();
 		if (ret)
-		    emit view_updated(QTCAD_VIEW_DRAWN);
+		    emit view_changed(QTCAD_VIEW_DRAWN);
 		bu_free(sset, "sset");
 		return true;
 	    }
@@ -460,14 +498,29 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    if (use_pnt_select_button->isChecked() && use_ray_test_ckbx->isChecked()) {
 		bool ret = erase_obj_ray();
 		if (ret)
-		    emit view_updated(QTCAD_VIEW_DRAWN);
+		    emit view_changed(QTCAD_VIEW_DRAWN);
 		bu_free(sset, "sset");
 		return ret;
 	    }
+
+	    // If we didn't process by this point, no-op
+	    return false;
 	}
 
-	// If we didn't process by this point, no-op
+	if (add_to_group_button->isChecked()) {
+	    // If we didn't process by this point, no-op
+	    return false;
+	}
+
+
+	if (rm_from_group_button->isChecked()) {
+	    // If we didn't process by this point, no-op
+	    return false;
+	}
+
+	// If we didn't process by this point (??), no-op
 	return false;
+
     }
 
     return false;
