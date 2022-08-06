@@ -180,8 +180,14 @@ QgTreeSelectionModel::mode_change(int i)
 void
 QgTreeSelectionModel::ged_selection_sync(QgItem *start, struct ged_selection_set *gs)
 {
-    if (!gs)
+    if (!gs || ged_doing_sync)
 	return;
+
+    char **contents = NULL;
+    int scnt = ged_selection_set_list(&contents, gs);
+    for (int i = 0; i < scnt; i++) {
+	bu_log("%s\n", contents[i]);
+    }
 
     ged_doing_sync = true;
     QgModel *m = treeview->m;
@@ -353,7 +359,7 @@ QgTreeSelectionModel::ged_drawn_sync(QgItem *start, struct ged *gedp)
 void
 QgTreeSelectionModel::ged_deselect(const QItemSelection &UNUSED(selected), const QItemSelection &deselected)
 {
-    if (!deselected.size())
+    if (!deselected.size() || ged_doing_sync)
 	return;
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
