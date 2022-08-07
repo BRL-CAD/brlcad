@@ -31,6 +31,7 @@
 #include <QPainter>
 #include <QHeaderView>
 #include <QMenu>
+#include <QMouseEvent>
 #include <QUrl>
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeSelectionModel.h"
@@ -215,6 +216,19 @@ void QgTreeView::resizeEvent(QResizeEvent *)
     emit m->layoutChanged();
 }
 
+void QgTreeView::mousePressEvent(QMouseEvent *e)
+{
+    if (e->button() == Qt::RightButton && e->type() == QEvent::MouseButtonPress) {
+	// We want the context menu, but NOT the selection
+	// behavior
+	e->accept();
+	return;
+    }
+
+    // Otherwise, do the normal event handling
+    QTreeView::mousePressEvent(e);
+}
+
 void QgTreeView::tree_column_size(const QModelIndex &)
 {
     header_state();
@@ -253,6 +267,7 @@ void QgTreeView::context_menu(const QPoint &point)
     menu->addAction(draw_action);
     menu->addAction(erase_action);
     menu->exec(mapToGlobal(point));
+    delete menu;
 }
 
 void QgTreeView::selectionChanged(const QItemSelection &selected, const QItemSelection &deselected)

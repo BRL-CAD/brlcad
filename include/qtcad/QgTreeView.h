@@ -54,6 +54,7 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
 
     protected:
 	void resizeEvent(QResizeEvent *pevent) override;
+	void mousePressEvent(QMouseEvent *e) override;
 
     signals:
 	void view_changed(unsigned long long);
