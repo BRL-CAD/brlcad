@@ -1,4 +1,4 @@
-/*                 V I E W _ E R A S E R . C P P
+/*                     S E L E C T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2022 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view_info.cpp
+/** @file select.cpp
  *
  */
 
@@ -28,15 +28,16 @@
 #include "./widget.h"
 
 void *
-view_eraser_tool_create()
+view_select_tool_create()
 {
-    QIcon *obj_icon = new QIcon(QPixmap(":eraser.svg"));
+    QIcon *obj_icon = new QIcon(QPixmap(":selective-tool.svg"));
 
-    CADViewEraser *er = new CADViewEraser();
+    CADViewSelecter *er = new CADViewSelecter();
 
     QToolPaletteElement *el = new QToolPaletteElement(obj_icon, er);
 
-    QObject::connect(er, &CADViewEraser::view_updated, el, &QToolPaletteElement::do_view_changed);
+    QObject::connect(er, &CADViewSelecter::view_changed, el, &QToolPaletteElement::element_view_changed);
+    QObject::connect(el, &QToolPaletteElement::element_view_update, er, &CADViewSelecter::do_view_update);
 
     // Let the element (and hence the application) know that this tool has a
     // locally customized event filter to use with the view widget.
@@ -46,14 +47,14 @@ view_eraser_tool_create()
 }
 
 extern "C" {
-    struct qged_tool_impl view_eraser_tool_impl = {
-	view_eraser_tool_create
+    struct qged_tool_impl view_select_tool_impl = {
+	view_select_tool_create
     };
 
-    const struct qged_tool view_eraser_tool = { &view_eraser_tool_impl, 2 };
-    const struct qged_tool *view_eraser_tools[] = { &view_eraser_tool, NULL };
+    const struct qged_tool view_select_tool = { &view_select_tool_impl, 2 };
+    const struct qged_tool *view_select_tools[] = { &view_select_tool, NULL };
 
-    static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, view_eraser_tools, 1 };
+    static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, view_select_tools, 1 };
 
     COMPILER_DLLEXPORT const struct qged_plugin *qged_plugin_info()
     {

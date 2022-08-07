@@ -31,10 +31,12 @@
 #include <QPainter>
 #include <QHeaderView>
 #include <QMenu>
+#include <QMouseEvent>
 #include <QUrl>
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "qtcad/QgTreeView.h"
+#include "qtcad/SignalFlags.h"
 
 void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
@@ -214,6 +216,19 @@ void QgTreeView::resizeEvent(QResizeEvent *)
     emit m->layoutChanged();
 }
 
+void QgTreeView::mousePressEvent(QMouseEvent *e)
+{
+    if (e->button() == Qt::RightButton && e->type() == QEvent::MouseButtonPress) {
+	// We want the context menu, but NOT the selection
+	// behavior
+	e->accept();
+	return;
+    }
+
+    // Otherwise, do the normal event handling
+    QTreeView::mousePressEvent(e);
+}
+
 void QgTreeView::tree_column_size(const QModelIndex &)
 {
     header_state();
@@ -252,6 +267,7 @@ void QgTreeView::context_menu(const QPoint &point)
     menu->addAction(draw_action);
     menu->addAction(erase_action);
     menu->exec(mapToGlobal(point));
+    delete menu;
 }
 
 void QgTreeView::selectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
@@ -403,21 +419,19 @@ void QgTreeView::qgitem_select_sync(QgItem *itm)
     selm->ged_drawn_sync(itm, gedp);
 }
 
-void QgTreeView::draw_sync()
+void QgTreeView::do_view_update(unsigned long long flags)
 {
     struct ged *gedp = m->gedp;
     QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
-    struct ged_selection_set *gs = NULL;
-    if (gedp->ged_selection_sets) {
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
-	if (scnt == 1)
-	    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
-	bu_ptbl_free(&ssets);
-    }
-    if (gs)
-	selm->ged_selection_sync(NULL, gs);
-    selm->ged_drawn_sync(NULL, gedp);
+
+    if (flags & QTCAD_VIEW_SELECT && gedp->ged_cset)
+	selm->ged_selection_sync(NULL, gedp->ged_cset);
+
+    if (flags & QTCAD_VIEW_DRAWN)
+	selm->ged_drawn_sync(NULL, gedp);
+
+    // TODO - can the mode logic be triggered from here as well?
+
     emit m->layoutChanged();
 }
 

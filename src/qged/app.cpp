@@ -94,22 +94,13 @@ void
 CADApp::do_quad_view_change(QtCADView *cv)
 {
     mdl->gedp->ged_gvp = cv->view();
-    emit view_change(&mdl->gedp->ged_gvp);
+    emit view_update(QTCAD_VIEW_REFRESH);
 }
 
 void
-CADApp::do_view_change(struct bview **nv)
+CADApp::do_view_changed(unsigned long long flags)
 {
-
-    if (nv)
-	mdl->gedp->ged_gvp = *nv;
-    emit view_change(&mdl->gedp->ged_gvp);
-}
-
-void
-CADApp::do_db_change()
-{
-    emit mdl->mdl_changed_db(NULL);
+    emit view_update(flags);
 }
 
 void
@@ -191,6 +182,7 @@ qged_db_changed(struct db_i *UNUSED(dbip), struct directory *dp, int ctype, void
 int
 qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *changed)
 {
+    int view_flags = 0;
     struct db_i *dbip = gedp->dbip;
     struct bview *v = gedp->ged_gvp;
     struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
@@ -241,6 +233,7 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 	av[2] = NULL;
 	ged_exec(gedp, 2, av);
 	bu_vls_free(&opath);
+	view_flags |= QTCAD_VIEW_DRAWN;
     }
     for (r_it = regen.begin(); r_it != regen.end(); r_it++) {
 	struct bv_scene_group *cg = *r_it;
@@ -253,12 +246,10 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 	av[3] = NULL;
 	ged_exec(gedp, 3, av);
 	bu_vls_free(&opath);
+	view_flags |= QTCAD_VIEW_DRAWN;
     }
 
-    CADApp *ap = (CADApp *)qApp;
-    ap->treeview->draw_sync();
-
-    return (int)(regen.size() + erase.size());
+    return view_flags;
 }
 
 extern "C" void
@@ -279,6 +270,7 @@ int
 CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
     int ret = BRLCAD_OK;
+    int view_flags = 0;
 
     if (!mdl || !argc || !argv)
 	return BRLCAD_ERROR;
@@ -286,7 +278,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     struct ged *gedp = mdl->gedp;
 
     /* Set the local unit conversions */
-    if (gedp->dbip && w->c4) {
+    if (gedp->dbip) {
 	for (int i = 1; i < 5; i++) {
 	    QtCADView *c = w->c4->get(i);
 	    c->set_base2local(gedp->dbip->dbi_base2local);
@@ -299,9 +291,8 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// If we're not in the middle of an incremental command,
 	// stash the view state(s) for later comparison and make
 	// sure our unit conversions are right
-	if (w->c4)
-	    w->c4->stash_hashes();
-
+	w->c4->stash_hashes();
+	select_hash = ged_selection_hash_sets(gedp->ged_selection_sets);
 
 	// If we need command-specific subprocess awareness for
 	// a command, set it up
@@ -335,15 +326,18 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     if (!(ret & BRLCAD_MORE)) {
 
 	// Handle any necessary redrawing.
-	if (qged_view_update(gedp, &mdl->changed_dp) > 0) {
-	    if (w->c4)
-		w->c4->need_update(NULL);
-	}
+	view_flags = qged_view_update(gedp, &mdl->changed_dp);
 
 	/* Check if the ged_exec call changed either the display manager or
 	 * the view settings - in either case we'll need to redraw */
-	if (w->c4)
-	    view_dirty = w->c4->diff_hashes();
+	// TODO - there would be some utility in checking only the camera or only
+	// the who list, since we can set different update flags for each case...
+	if (w->c4->diff_hashes())
+	    view_flags |= QTCAD_VIEW_DRAWN;
+
+	unsigned long long cs_hash = ged_selection_hash_sets(gedp->ged_selection_sets);
+	if (cs_hash != select_hash)
+	    view_flags |= QTCAD_VIEW_SELECT;
     }
 
     if (ret & BRLCAD_MORE) {
@@ -372,6 +366,11 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		history_mark_end = console->historyCount() - 1;
 	}
     }
+
+    // TODO - should be able to emit this regardless - if execution methods
+    // are well behaved, they'll just ignore a zero flags value...
+    if (view_flags)
+	emit view_update(view_flags);
 
     return ret;
 }
@@ -426,12 +425,7 @@ CADApp::run_qcmd(const QString &command)
 	if (bu_vls_strlen(&msg) > 0 && console) {
 	    console->printString(bu_vls_cstr(&msg));
 	}
-	if (view_dirty && mdl->gedp) {
-	    emit view_change(&mdl->gedp->ged_gvp);
-	    view_dirty = false;
-	}
     }
-
 
     if (console) {
 	if (ret & BRLCAD_MORE) {

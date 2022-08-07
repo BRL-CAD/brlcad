@@ -86,6 +86,8 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
 	return false;
     }
     QMouseEvent *m_e = (QMouseEvent *)e;
+    if (!c || !c->treeview)
+	return false;
     QgTreeSelectionModel *tvsm = (QgTreeSelectionModel *)c->treeview->selectionModel();
     QWidget *vcp = c->w->vc->tpalette;
 #ifdef USE_QT6
@@ -98,7 +100,7 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
 	QPoint mpos = vcp->mapFromGlobal(gpos);
 	if (lrect.contains(mpos) && tvsm->interaction_mode != 0) {
 	    tvsm->mode_change(0);
-	    QTimer::singleShot(0, c, &CADApp::tree_update);
+	    emit c->view_update(QTCAD_VIEW_MODE);
 	    return false;
 	}
     }
@@ -108,7 +110,7 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
 	QPoint mpos = ocp->mapFromGlobal(gpos);
 	if (lrect.contains(mpos) && tvsm->interaction_mode != 2) {
 	    tvsm->mode_change(2);
-	    QTimer::singleShot(0, c, &CADApp::tree_update);
+	    emit c->view_update(QTCAD_VIEW_MODE);
 	    return false;
 	}
     }

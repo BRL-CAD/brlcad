@@ -11,6 +11,8 @@ BRLCAD_ADDEXEC(ged_test_material test_material.c libged TEST)
 BRLCAD_ADD_TEST(NAME ged_test_material COMMAND ged_test_material "${CMAKE_CURRENT_BINARY_DIR}/ged_test_material.g")
 set_property(TEST ged_test_material APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
 
+BRLCAD_ADDEXEC(ged_test_select test_select.c libged TEST)
+
 # Note: it is particularly important that the lint tests in particular are kept
 # in a separate file, since its bad input examples stand an excellent chance of
 # breaking commands.

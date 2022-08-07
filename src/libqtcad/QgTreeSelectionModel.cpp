@@ -30,23 +30,15 @@
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeSelectionModel.h"
+#include "qtcad/SignalFlags.h"
 
 void
 QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags)
 {
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
-    struct ged_selection_set *gs = NULL;
-    if (gedp->ged_selection_sets) {
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
-	if (scnt == 1)
-	    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
-	bu_ptbl_free(&ssets);
-    }
+    struct ged_selection_set *gs = gedp->ged_cset;
     if (!ged_doing_sync) {
-	void (*tmp)(struct ged_selection_set *) = gedp->ged_select_callback;
-	gedp->ged_select_callback = NULL;
 	if (!(flags & QItemSelectionModel::Deselect)) {
 	    QModelIndexList dl = selection.indexes();
 	    std::stack<QgItem *> to_process;
@@ -94,6 +86,8 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 		}
 	    }
 
+	    emit treeview->view_changed(QTCAD_VIEW_SELECT);
+
 	} else {
 
 	    QModelIndexList dl = selection.indexes();
@@ -109,9 +103,9 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 		    bu_vls_free(&tpath);
 		}
 	    }
-	}
 
-	gedp->ged_select_callback = tmp;
+	    emit treeview->view_changed(QTCAD_VIEW_SELECT);
+	}
     }
 
     QItemSelectionModel::select(selection, flags);
@@ -120,7 +114,6 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 void
 QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags)
 {
-
     if (!ged_doing_sync && !(flags & QItemSelectionModel::Deselect)) {
 	std::stack<QgItem *> to_process;
 	QgItem *snode = static_cast<QgItem *>(index.internalPointer());
@@ -187,7 +180,7 @@ QgTreeSelectionModel::mode_change(int i)
 void
 QgTreeSelectionModel::ged_selection_sync(QgItem *start, struct ged_selection_set *gs)
 {
-    if (!gs)
+    if (!gs || ged_doing_sync)
 	return;
 
     ged_doing_sync = true;
@@ -360,7 +353,7 @@ QgTreeSelectionModel::ged_drawn_sync(QgItem *start, struct ged *gedp)
 void
 QgTreeSelectionModel::ged_deselect(const QItemSelection &UNUSED(selected), const QItemSelection &deselected)
 {
-    if (!deselected.size())
+    if (!deselected.size() || ged_doing_sync)
 	return;
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
@@ -383,6 +376,7 @@ QgTreeSelectionModel::ged_deselect(const QItemSelection &UNUSED(selected), const
 	bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
 	ged_selection_remove(gs, bu_vls_cstr(&tpath));
     }
+    emit treeview->view_changed(QTCAD_VIEW_SELECT);
 }
 
 // These functions tell the related-object highlighting logic what the current

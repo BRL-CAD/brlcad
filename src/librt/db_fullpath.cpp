@@ -850,9 +850,9 @@ db_path_to_mat(
 	return -1;
 
     mat_t all_m = MAT_INIT_IDN;
-    mat_t cur_m = MAT_INIT_IDN;
     mat_t mtmp = MAT_INIT_IDN;
     for (size_t i = 1; i < pathp->fp_len; i++) {
+	mat_t cur_m = MAT_INIT_IDN;
 	if (depth && i + 1 > (size_t)depth)
 	    break;
 	struct directory *cdp = pathp->fp_names[i-1];

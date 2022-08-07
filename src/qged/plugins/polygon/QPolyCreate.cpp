@@ -28,6 +28,7 @@
 #include <QGroupBox>
 #include "../../app.h"
 #include "QPolyCreate.h"
+#include "qtcad/SignalFlags.h"
 
 QPolyCreate::QPolyCreate()
     : QWidget()
@@ -171,7 +172,7 @@ QPolyCreate::finalize(bool)
 	    bv_obj_put(p);
 	    do_bool = false;
 	    p = NULL;
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return;
 	}
 
@@ -231,7 +232,7 @@ QPolyCreate::finalize(bool)
 	    bv_obj_put(p);
 	    do_bool = false;
 	    p = NULL;
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return;
 	}
 
@@ -266,7 +267,7 @@ QPolyCreate::finalize(bool)
 	    }
 	    if (sk_name && db_lookup(gedp->dbip, sk_name, LOOKUP_QUIET) == RT_DIR_NULL) {
 		ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
-		emit db_updated();
+		emit view_updated(QTCAD_VIEW_DB);
 	    }
 	    bu_free(sk_name, "name cpy");
 	} else {
@@ -281,7 +282,7 @@ QPolyCreate::finalize(bool)
 
     do_bool = false;
     p = NULL;
-    emit view_updated(&gedp->ged_gvp);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 void
@@ -353,7 +354,7 @@ QPolyCreate::do_vpoly_copy()
 
     do_bool = false;
     p = NULL;
-    emit view_updated(&gedp->ged_gvp);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 void
@@ -419,7 +420,7 @@ QPolyCreate::do_import_sketch()
 
     do_bool = false;
     p = NULL;
-    emit view_updated(&gedp->ged_gvp);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 void
@@ -565,7 +566,7 @@ QPolyCreate::toplevel_config(bool)
     }
 
     if (draw_change && gedp)
-	emit view_updated(&gedp->ged_gvp);
+	emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 bool
@@ -677,7 +678,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    // It doesn't get a "proper" name until its finalized
 	    bu_vls_printf(&p->s_uuid, "_tmp_view_polygon");
 
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
 
@@ -694,7 +695,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 #endif
 	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_APPEND);
 
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
 
@@ -741,7 +742,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	// with the view's x,y coordinates
 	if (m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
 	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
     }
