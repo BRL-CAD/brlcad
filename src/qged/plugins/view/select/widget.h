@@ -76,6 +76,8 @@ class CADViewSelecter : public QWidget
 	void enable_raytrace_opt(bool);
     	void disable_raytrace_opt(bool);
 	void do_view_update(unsigned long long);
+	void do_draw_selections();
+	void do_erase_selections();
 
     protected:
 	bool eventFilter(QObject *, QEvent *);

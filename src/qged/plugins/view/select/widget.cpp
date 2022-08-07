@@ -88,8 +88,11 @@ CADViewSelecter::CADViewSelecter(QWidget *)
 
     draw_selections = new QPushButton("Draw selected");
     sgrp_gl->addWidget(draw_selections);
+    QObject::connect(draw_selections, &QPushButton::clicked, this, &CADViewSelecter::do_draw_selections);
+
     erase_selections = new QPushButton("Erase selected");
     sgrp_gl->addWidget(erase_selections);
+    QObject::connect(erase_selections, &QPushButton::clicked, this, &CADViewSelecter::do_erase_selections);
 
 
     QWidget *sgrp = new QWidget();
@@ -777,7 +780,53 @@ CADViewSelecter::rm_obj_ray()
     }
 }
 
+void
+CADViewSelecter::do_draw_selections()
+{
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
+	return;
+    struct ged *gedp = m->gedp;
+    if (!gedp || !gedp->ged_gvp)
+	return;
 
+    char **spaths = NULL;
+    int pscnt = ged_selection_set_list(&spaths, gedp->ged_cset);
+    const char **av = (const char **)bu_calloc(pscnt+2, sizeof(char *), "av");
+    av[0] = "draw";
+    for (int i = 0; i < pscnt; i++) {
+	av[i+1] = spaths[i];
+    }
+    ged_exec(gedp, pscnt+1, av);
+    bu_free(spaths, "spaths");
+    bu_free(av, "av");
+
+    emit view_changed(QTCAD_VIEW_DRAWN);
+}
+
+void
+CADViewSelecter::do_erase_selections()
+{
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
+	return;
+    struct ged *gedp = m->gedp;
+    if (!gedp || !gedp->ged_gvp)
+	return;
+
+    char **spaths = NULL;
+    int pscnt = ged_selection_set_list(&spaths, gedp->ged_cset);
+    const char **av = (const char **)bu_calloc(pscnt+2, sizeof(char *), "av");
+    av[0] = "erase";
+    for (int i = 0; i < pscnt; i++) {
+	av[i+1] = spaths[i];
+    }
+    ged_exec(gedp, pscnt+1, av);
+    bu_free(spaths, "spaths");
+    bu_free(av, "av");
+
+    emit view_changed(QTCAD_VIEW_DRAWN);
+}
 
 bool
 CADViewSelecter::eventFilter(QObject *, QEvent *e)
