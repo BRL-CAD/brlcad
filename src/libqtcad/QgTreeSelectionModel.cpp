@@ -183,12 +183,6 @@ QgTreeSelectionModel::ged_selection_sync(QgItem *start, struct ged_selection_set
     if (!gs || ged_doing_sync)
 	return;
 
-    char **contents = NULL;
-    int scnt = ged_selection_set_list(&contents, gs);
-    for (int i = 0; i < scnt; i++) {
-	bu_log("%s\n", contents[i]);
-    }
-
     ged_doing_sync = true;
     QgModel *m = treeview->m;
     std::queue<QgItem *> to_check;
