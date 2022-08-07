@@ -996,6 +996,8 @@ QgModel::draw_action()
     QAction *a = qobject_cast<QAction *>(sender());
     QVariant v = a->data();
     QgItem *cnode  = (QgItem *) v.value<void *>();
+    if (!cnode)
+	return BRLCAD_ERROR;
     QString cnode_str = cnode->toString();
     return draw(cnode_str);
 }
@@ -1024,6 +1026,8 @@ QgModel::erase_action()
     QAction *a = qobject_cast<QAction *>(sender());
     QVariant v = a->data();
     QgItem *cnode  = (QgItem *) v.value<void *>();
+    if (!cnode)
+	return BRLCAD_ERROR;
     QString cnode_str = cnode->toString();
     return erase(cnode_str);
 }
