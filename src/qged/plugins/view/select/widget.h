@@ -57,7 +57,6 @@ class CADViewSelecter : public QWidget
 
 	QPushButton *draw_selections;
 	QPushButton *erase_selections;
-	QPushButton *erase_non_selections;
 
 	bool erase_obj_bbox();
 	bool erase_obj_ray();

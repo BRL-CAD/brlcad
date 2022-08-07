@@ -90,8 +90,6 @@ CADViewSelecter::CADViewSelecter(QWidget *)
     sgrp_gl->addWidget(draw_selections);
     erase_selections = new QPushButton("Erase selected");
     sgrp_gl->addWidget(erase_selections);
-    erase_non_selections = new QPushButton("Erase non-selected");
-    sgrp_gl->addWidget(erase_non_selections);
 
 
     QWidget *sgrp = new QWidget();
@@ -141,7 +139,6 @@ CADViewSelecter::enable_groups(bool)
     rm_group->setEnabled(true);
     draw_selections->setEnabled(true);
     erase_selections->setEnabled(true);
-    erase_non_selections->setEnabled(true);
 }
 
 void
@@ -153,7 +150,6 @@ CADViewSelecter::disable_groups(bool)
     rm_group->setEnabled(false);
     draw_selections->setEnabled(false);
     erase_selections->setEnabled(false);
-    erase_non_selections->setEnabled(false);
 }
 
 void
