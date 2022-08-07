@@ -194,37 +194,62 @@ ged_selection_sets_destroy(struct ged_selection_sets *s)
 
 
 int
-ged_selection_set_cpy(struct ged_selection_sets *s, const char *from, const char *to)
+ged_selection_set_cpy(struct ged_selection_set *to, struct ged_selection_set *from)
 {
-    if (!s || from == to)
+    if (!from || !to || from == to)
 	return 0;
 
-    struct ged_selection_set *s_from = ged_selection_sets_get(s, from);
-    struct ged_selection_set *s_to = ged_selection_sets_get(s, to);
-    if (s_from == s_to) {
-	return 0;
-    }
-    ged_selection_set_clear(s_to);
-    std::map<std::string, struct ged_selection *>::iterator s_it;
+    ged_selection_set_clear(to);
+    std::map<std::string, struct ged_selection *>::iterator it;
     int i = 0;
-    for (s_it = s_from->i->m.begin(); s_it != s_from->i->m.end(); s_it++) {
-	struct ged_selection *s_o;
-	BU_GET(s_o, struct ged_selection);
-	bu_vls_init(&s_o->path);
-	bu_vls_sprintf(&s_o->path, "%s", bu_vls_cstr(&s_it->second->path));
-	s_o->r_os = s_it->second->r_os;
-	bu_ptbl_init(&s_o->sobjs, 8, "selection objs");
-	for (size_t s_i = 0; s_i < BU_PTBL_LEN(&s_it->second->sobjs); s_i++) {
-	    bu_ptbl_ins(&s_o->sobjs, BU_PTBL_GET(&s_it->second->sobjs, s_i));
+    for (it = from->i->m.begin(); it != from->i->m.end(); it++) {
+	struct ged_selection *o;
+	BU_GET(o, struct ged_selection);
+	bu_vls_init(&o->path);
+	bu_vls_sprintf(&o->path, "%s", bu_vls_cstr(&it->second->path));
+	o->r_os = it->second->r_os;
+	bu_ptbl_init(&o->sobjs, 8, "selection objs");
+	for (size_t j = 0; j < BU_PTBL_LEN(&it->second->sobjs); j++) {
+	    bu_ptbl_ins(&o->sobjs, BU_PTBL_GET(&it->second->sobjs, j));
 	}
-	s_to->i->m[s_it->first] = s_o;
+	to->i->m[it->first] = o;
 	i++;
     }
 
     return i;
 }
 
+struct ged_selection_set *
+ged_selection_set_create(const char *s_name, struct ged *gedp)
+{
+    struct ged_selection_set *ds;
+    BU_GET(ds, struct ged_selection_set);
+    ds->gedp = gedp;
+    bu_vls_init(&ds->name);
+    if (s_name)
+	bu_vls_sprintf(&ds->name, "%s", s_name);
+    ds->i = new ged_selection_set_impl;
+    return ds;
+}
 
+void
+ged_selection_set_destroy(struct ged_selection_set *s)
+{
+    if (!s)
+	return;
+
+    ged_selection_set_clear(s);
+
+    // If we have a null or empty s_name, we're targeting the "default" set.  We don't
+    // delete it, since there is always a default set
+    if (BU_STR_EQUAL(bu_vls_cstr(&s->name), "default")) {
+	return;
+    }
+
+    bu_vls_free(&s->name);
+    delete s->i;
+    BU_PUT(s, struct ged_selection_set);
+}
 
 struct ged_selection_set *
 ged_selection_sets_get(struct ged_selection_sets *s, const char *s_name)
@@ -235,12 +260,7 @@ ged_selection_sets_get(struct ged_selection_sets *s, const char *s_name)
     std::string sname = (s_name || !strlen(s_name)) ? std::string("default") : std::string(s_name);
     s_it = s->i->s->find(sname);
     if (s_it == s->i->s->end()) {
-	struct ged_selection_set *ds;
-	BU_GET(ds, struct ged_selection_set);
-	ds->gedp = s->gedp;
-	bu_vls_init(&ds->name);
-	bu_vls_sprintf(&ds->name, "%s", s_name);
-	ds->i = new ged_selection_set_impl;
+	struct ged_selection_set *ds = ged_selection_set_create(s_name, s->gedp);
 	(*s->i->s)[sname] = ds;
 	s_it = s->i->s->find(sname);
     }
@@ -258,7 +278,7 @@ ged_selection_sets_put(struct ged_selection_sets *s, const char *s_name)
     if (s_it == s->i->s->end())
 	return;
 
-    ged_selection_set_clear(s_it->second);
+    ged_selection_set_destroy(s_it->second);
 
     // If we have a null or empty s_name, we're targeting the "default" set.  We don't
     // delete it, since there is always a default set
@@ -266,9 +286,6 @@ ged_selection_sets_put(struct ged_selection_sets *s, const char *s_name)
 	return;
     }
 
-    bu_vls_free(&s_it->second->name);
-    delete s_it->second->i;
-    BU_PUT(s_it->second, struct ged_selection_set);
     s->i->s->erase(s_it);
 }
 
@@ -749,13 +766,17 @@ ged_selection_set_expand(struct ged_selection_set *s_out, struct ged_selection_s
 	db_free_full_path(&dfp);
 
 	if (BU_PTBL_LEN(solid_paths)) {
+	    bool keep_orig = false;
 	    for (size_t i = 0; i < BU_PTBL_LEN(solid_paths); i++) {
 		struct db_full_path *sfp = (struct db_full_path *)BU_PTBL_GET(solid_paths, i);
 		char *s_path = db_path_to_string(sfp);
 		_selection_get(s_out, s_path);
+		if (BU_STR_EQUAL(s_path, bu_vls_cstr(&ss->path)))
+		    keep_orig = true;
 	    }
 	    // Expanded - remove original
-	    _selection_put(s_out, bu_vls_cstr(&ss->path));
+	    if (!keep_orig)
+		_selection_put(s_out, bu_vls_cstr(&ss->path));
 	} else {
 	    // No expansion - keep initial
 	    if (s_out != s) {

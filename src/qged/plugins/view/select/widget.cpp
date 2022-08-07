@@ -98,12 +98,12 @@ CADViewSelecter::CADViewSelecter(QWidget *)
     QWidget *sgrp = new QWidget();
     QHBoxLayout *groups_gl = new QHBoxLayout;
     groups_gl->setAlignment(Qt::AlignLeft);
-    current_group = new QComboBox();
-    groups_gl->addWidget(current_group);
-    add_new_group = new QPushButton("+");
-    groups_gl->addWidget(add_new_group);
-    rm_group = new QPushButton("-");
-    groups_gl->addWidget(rm_group);
+    //current_group = new QComboBox();
+    //groups_gl->addWidget(current_group);
+    //add_new_group = new QPushButton("+");
+    //groups_gl->addWidget(add_new_group);
+    //rm_group = new QPushButton("-");
+    //groups_gl->addWidget(rm_group);
     sgrp->setLayout(groups_gl);
     sgrp_gl->addWidget(sgrp);
 
@@ -136,10 +136,10 @@ CADViewSelecter::~CADViewSelecter()
 void
 CADViewSelecter::enable_groups(bool)
 {
-    current_group->setEnabled(true);
+    //current_group->setEnabled(true);
     group_contents->setEnabled(true);
-    add_new_group->setEnabled(true);
-    rm_group->setEnabled(true);
+    //add_new_group->setEnabled(true);
+    //rm_group->setEnabled(true);
     draw_selections->setEnabled(true);
     erase_selections->setEnabled(true);
 }
@@ -147,10 +147,10 @@ CADViewSelecter::enable_groups(bool)
 void
 CADViewSelecter::disable_groups(bool)
 {
-    current_group->setEnabled(false);
+    //current_group->setEnabled(false);
     group_contents->setEnabled(false);
-    add_new_group->setEnabled(false);
-    rm_group->setEnabled(false);
+    //add_new_group->setEnabled(false);
+    //rm_group->setEnabled(false);
     draw_selections->setEnabled(false);
     erase_selections->setEnabled(false);
 }
@@ -179,6 +179,7 @@ CADViewSelecter::do_view_update(unsigned long long flags)
 
     unsigned long long mhash = ged_selection_hash_sets(gedp->ged_selection_sets);
     if ((flags & QTCAD_VIEW_SELECT) || mhash != omhash) {
+#if 0
 	current_group->clear();
 	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
 	size_t sscnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "*");
@@ -187,6 +188,7 @@ CADViewSelecter::do_view_update(unsigned long long flags)
 	    current_group->addItem(QString(bu_vls_cstr(&s->name)));
 	}
 	bu_ptbl_free(&ssets);
+#endif
     }
 
     unsigned long long chash = ged_selection_hash_set(gedp->ged_cset);
@@ -801,7 +803,7 @@ CADViewSelecter::do_draw_selections()
     bu_free(spaths, "spaths");
     bu_free(av, "av");
 
-    emit view_changed(QTCAD_VIEW_DRAWN);
+    emit view_changed(QTCAD_VIEW_DRAWN|QTCAD_VIEW_SELECT);
 }
 
 void
@@ -825,7 +827,7 @@ CADViewSelecter::do_erase_selections()
     bu_free(spaths, "spaths");
     bu_free(av, "av");
 
-    emit view_changed(QTCAD_VIEW_DRAWN);
+    emit view_changed(QTCAD_VIEW_DRAWN|QTCAD_VIEW_SELECT);
 }
 
 bool

@@ -88,6 +88,8 @@ CADApp::initialize()
     //app_cmd_map[QString("open")] = &app_open;
     app_cmd_map[QString("close")] = &app_close;
     app_cmd_map[QString("man")] = &app_man;
+
+    QObject::connect(this, &CADApp::view_update, this, &CADApp::do_view_update);
 }
 
 void
@@ -101,6 +103,71 @@ void
 CADApp::do_view_changed(unsigned long long flags)
 {
     emit view_update(flags);
+}
+
+void
+CADApp::do_view_update(unsigned long long flags)
+{
+    if (flags & QTCAD_VIEW_SELECT) {
+	bu_log("\n\napp select update\n\n");
+	// Get the paths of all drawn solid objects and the
+	// expanded list of all selected objects
+	std::set<std::string> drawn_solids;
+	std::map<std::string, struct bv_scene_obj *> drawn_objs;
+	struct bu_ptbl *sg = bv_view_objs(mdl->gedp->ged_gvp, BV_DB_OBJS);
+	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
+	    for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
+		struct bv_scene_obj *sc = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, j);
+		drawn_solids.insert(std::string(bu_vls_cstr(&sc->s_name)));
+		drawn_objs[(std::string(bu_vls_cstr(&sc->s_name)))] = sc;
+	    }
+	}
+	std::set<std::string>::iterator s_it;
+	for (s_it = drawn_solids.begin(); s_it != drawn_solids.end(); s_it++) {
+	    std::cout << *s_it << "\n";
+	}
+
+	std::set<std::string> selected_solids;
+	struct ged_selection_set *tmp_set = ged_selection_set_create(NULL, mdl->gedp);
+	ged_selection_set_expand(tmp_set, mdl->gedp->ged_cset);
+	char **spaths = NULL;
+	int ocnt = ged_selection_set_list(&spaths, tmp_set);
+	for (int i = 0; i < ocnt; i++) {
+	    selected_solids.insert(std::string(spaths[i]));
+	}
+	bu_free(spaths, "spaths");
+	ged_selection_set_destroy(tmp_set);
+
+	for (s_it = selected_solids.begin(); s_it != selected_solids.end(); s_it++) {
+	    std::cout << "selected: " << *s_it << "\n";
+	}
+
+	std::set<std::string> unselected_objs;
+	std::set_difference(drawn_solids.begin(), drawn_solids.end(), selected_solids.begin(), selected_solids.end(), std::inserter(unselected_objs, unselected_objs.end()));
+	for (s_it = unselected_objs.begin(); s_it != unselected_objs.end(); s_it++) {
+	    std::cout << "drawn, unselected: " << *s_it << "\n";
+	    drawn_objs[*s_it]->s_iflag = DOWN;
+	    drawn_objs[*s_it]->s_os.color_override = 0;
+	    drawn_objs[*s_it]->s_os.s_line_width= 1;
+	}
+
+	std::set<std::string> selected_objs = drawn_solids;
+	for (s_it = unselected_objs.begin(); s_it != unselected_objs.end(); s_it++) {
+	    selected_objs.erase(*s_it);
+	}
+	for (s_it = selected_objs.begin(); s_it != selected_objs.end(); s_it++) {
+	    std::cout << "drawn, selected: " << *s_it << "\n";
+	    drawn_objs[*s_it]->s_iflag = UP;
+	    drawn_objs[*s_it]->s_os.color_override = 1;
+	    drawn_objs[*s_it]->s_os.s_line_width= 2;
+	    drawn_objs[*s_it]->s_os.color[0] = 255;
+	    drawn_objs[*s_it]->s_os.color[1] = 255;
+	    drawn_objs[*s_it]->s_os.color[2] = 255;
+	}
+
+	emit view_update(QTCAD_VIEW_REFRESH);
+    }
 }
 
 void

@@ -50,10 +50,10 @@ class CADViewSelecter : public QWidget
 	QRadioButton *erase_from_scene_button;
 	QRadioButton *add_to_group_button;
 	QRadioButton *rm_from_group_button;
-	QComboBox *current_group;
+	//QComboBox *current_group;
 	QListWidget *group_contents;
-	QPushButton *add_new_group;
-	QPushButton *rm_group;
+	//QPushButton *add_new_group;
+	//QPushButton *rm_group;
 
 	QPushButton *draw_selections;
 	QPushButton *erase_selections;

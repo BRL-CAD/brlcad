@@ -105,6 +105,9 @@ class CADApp : public QApplication
 	// refer to the now-current view.
 	void do_quad_view_change(QtCADView *);
 
+	// Method for graphical updates that are best handled at an app level
+	void do_view_update(unsigned long long);
+
        	/* Utility slots */
     public slots:
 	void run_qcmd(const QString &command);

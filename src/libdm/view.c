@@ -567,7 +567,11 @@ draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
     }
 
     // Assign color attributes
-    dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os.transparency);
+    if (s->s_os.color_override) {
+	dm_set_fg(dmp, s->s_os.color[0], s->s_os.color[1], s->s_os.color[2], 0, s->s_os.transparency);
+    } else {
+	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os.transparency);
+    }
     dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
 
     // Primary object drawing
