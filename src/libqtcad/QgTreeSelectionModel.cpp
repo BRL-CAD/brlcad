@@ -382,6 +382,7 @@ QgTreeSelectionModel::ged_deselect(const QItemSelection &UNUSED(selected), const
 	bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
 	ged_selection_remove(gs, bu_vls_cstr(&tpath));
     }
+    emit treeview->view_changed(QTCAD_VIEW_SELECT);
 }
 
 // These functions tell the related-object highlighting logic what the current
