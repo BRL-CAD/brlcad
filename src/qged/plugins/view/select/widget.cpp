@@ -873,6 +873,13 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    px = m_e->x();
 	    py = m_e->y();
 #endif
+	    gedp->ged_gvp->gv_s->gv_rect.line_width = 1;
+	    gedp->ged_gvp->gv_s->gv_rect.pos[0] = px;
+	    gedp->ged_gvp->gv_s->gv_rect.pos[1] = dm_get_height((struct dm *)gedp->ged_gvp->dmp) - py;
+	    gedp->ged_gvp->gv_s->gv_rect.cdim[0] = dm_get_width((struct dm *)gedp->ged_gvp->dmp);
+	    gedp->ged_gvp->gv_s->gv_rect.cdim[1] = dm_get_height((struct dm *)gedp->ged_gvp->dmp);
+	    gedp->ged_gvp->gv_s->gv_rect.aspect = (fastf_t)gedp->ged_gvp->gv_s->gv_rect.cdim[X] / gedp->ged_gvp->gv_s->gv_rect.cdim[Y];
+	    emit view_changed(QTCAD_VIEW_DRAWN);
 	}
 	return true;
     }
@@ -883,6 +890,28 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
     if (e->type() == QEvent::MouseMove && !use_rect_select_button->isChecked()) {
 	enabled = false;
 	return false;
+    }
+
+    if (e->type() == QEvent::MouseMove && enabled && use_rect_select_button->isChecked()) {
+#ifdef USE_QT6
+	vx = m_e->position().x();
+	vy = m_e->position().y();
+#else
+	vx = m_e->x();
+	vy = m_e->y();
+#endif
+	gedp->ged_gvp->gv_s->gv_rect.draw = 1;
+	gedp->ged_gvp->gv_s->gv_rect.dim[0] = vx - px;
+	gedp->ged_gvp->gv_s->gv_rect.dim[1] = (dm_get_height((struct dm *)gedp->ged_gvp->dmp) - vy) - gedp->ged_gvp->gv_s->gv_rect.pos[1];
+
+	struct bv_interactive_rect_state *grsp = &gedp->ged_gvp->gv_s->gv_rect;
+	grsp->x = (grsp->pos[X] / (fastf_t)grsp->cdim[X] - 0.5) * 2.0;
+	grsp->y = ((0.5 - (grsp->cdim[Y] - grsp->pos[Y]) / (fastf_t)grsp->cdim[Y]) / grsp->aspect * 2.0);
+	grsp->width = grsp->dim[X] * 2.0 / (fastf_t)grsp->cdim[X];
+	grsp->height = grsp->dim[Y] * 2.0 / (fastf_t)grsp->cdim[X];
+
+	emit view_changed(QTCAD_VIEW_DRAWN);
+	return true;
     }
 
     if (e->type() == QEvent::MouseButtonRelease) {
@@ -908,7 +937,19 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	int iy = (int)vy;
 
 	if (use_rect_select_button->isChecked()) {
-	    bu_log("TODO\n");
+	    int ipx = (int)px;
+	    int ipy = (int)py;
+	    scnt = bg_view_objs_rect_select(&sset, v, ipx, ipy, ix, iy);
+
+	    // reset rectangle
+	    struct bv_interactive_rect_state *grsp = &gedp->ged_gvp->gv_s->gv_rect;
+	    grsp->draw = 0;
+	    grsp->line_width = 0;
+	    grsp->pos[0] = 0;
+	    grsp->pos[1] = 0;
+	    grsp->dim[0] = 0;
+	    grsp->dim[1] = 0;
+	    emit view_changed(QTCAD_VIEW_DRAWN);
 	} else {
 	    scnt = bg_view_objs_select(&sset, v, ix, iy);
 	}

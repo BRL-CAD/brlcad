@@ -435,6 +435,93 @@ bg_view_objs_select(struct bv_scene_obj ***sset, struct bview *v, int x, int y)
     return active.size();
 }
 
+int
+bg_view_objs_rect_select(struct bv_scene_obj ***sset, struct bview *v, int x1, int y1, int x2, int y2)
+{
+    if (!v || !sset || !v->gv_width || !v->gv_height)
+	return 0;
+
+    if (x1 < 0 || y1 < 0 || x1 > v->gv_width || y1 > v->gv_height)
+	return 0;
+
+    if (x2 < 0 || y2 < 0 || x2 > v->gv_width || y2 > v->gv_height)
+	return 0;
+
+    // Get the radius of the scene.
+    point_t sbbc = VINIT_ZERO;
+    fastf_t radius = 1.0;
+    _scene_radius(&sbbc, &radius, v);
+
+    // Using the pixel width and height of the current "window", construct some
+    // view space dimensions related to that window
+    fastf_t fx1 = 0.0, fy1 = 0.0, fx2 = 0.0, fy2 = 0.0, fxc = 0.0, fyc = 0.0;
+    bv_screen_to_view(v, &fx1, &fy1, x1, y1);
+    bv_screen_to_view(v, &fx2, &fy2, x2, y2);
+    bv_screen_to_view(v, &fxc, &fyc, (int)(0.5*(x1+x2)), (int)(0.5*(y1+y2)));
+
+    // Get the model space points for the mid points of the top and right edges
+    // of the box.
+    point_t vp1, vp2, vc, ep1, ep2, ec;
+    VSET(vp1, fx1, fy1, 0);
+    VSET(vp2, fx2, fy2, 0);
+    VSET(vc, fxc, fyc, 0);
+    MAT4X3PNT(ep1, v->gv_view2model, vp1);
+    MAT4X3PNT(ep2, v->gv_view2model, vp2);
+    MAT4X3PNT(ec, v->gv_view2model, vc);
+    //bu_log("in sph1.s sph %f %f %f\n", V3ARGS(ep1));
+    //bu_log("in sph2.s sph %f %f %f\n", V3ARGS(ep2));
+    //bu_log("in sphc.s sph %f %f %f\n", V3ARGS(ec));
+
+    // Need the direction vector - i.e., where the camera is looking.  Got this
+    // trick from the libged nirt code...
+    vect_t dir;
+    VMOVEN(dir, v->gv_rotation + 8, 3);
+    VUNITIZE(dir);
+    VSCALE(dir, dir, -1.0);
+
+
+    // Construct the box values needed for the SAT test
+    point_t obb_c, obb_e1, obb_e2, obb_e3;
+
+    // Box center is the closest point to the view center on the plane defined
+    // by the scene's center and the view dir
+    plane_t p;
+    bg_plane_pt_nrml(&p, sbbc, dir);
+    fastf_t pu, pv;
+    bg_plane_closest_pt(&pu, &pv, p, ec);
+    bg_plane_pt_at(&obb_c, p, pu, pv);
+
+
+    // The first extent is just the scene radius in the lookat direction
+    VSCALE(dir, dir, radius);
+    VMOVE(obb_e1, dir);
+
+    // The other two extents we find by subtracting the view center from the edge points
+    VSUB2(obb_e2, ep1, ec);
+    VSUB2(obb_e3, ep2, ec);
+
+
+    // Having constructed the box, test the scene objects against it.  Any that intersect,
+    // add them to the set
+    std::set<struct bv_scene_obj *> active;
+    struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	_find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
+    }
+    if (active.size()) {
+	std::set<struct bv_scene_obj *>::iterator a_it;
+	(*sset) = (struct bv_scene_obj **)bu_calloc(active.size(), sizeof(struct bv_scene_obj *), "objs");
+	int i = 0;
+	for (a_it = active.begin(); a_it != active.end(); a_it++) {
+	    (*sset)[i] = *a_it;
+	    i++;
+	}
+    }
+
+    return active.size();
+}
+
 static int
 _obj_visible(struct bv_scene_obj *s, struct bview *v)
 {
