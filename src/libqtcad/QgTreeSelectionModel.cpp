@@ -71,7 +71,8 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 		QgItem *itm = to_process.top();
 		to_process.pop();
 		QModelIndex pind = itm->ctx->NodeIndex(itm);
-		select(pind, QItemSelectionModel::Deselect);
+		if (isSelected(pind))
+		    select(pind, QItemSelectionModel::Deselect);
 	    }
 
 	    if (gs) {
@@ -144,7 +145,8 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 		QgItem *itm = to_process.top();
 		to_process.pop();
 		QModelIndex pind = itm->ctx->NodeIndex(itm);
-		select(pind, QItemSelectionModel::Deselect);
+		if (isSelected(pind))
+		    select(pind, QItemSelectionModel::Deselect);
 	    }
 	} else {
 	    // If we have an empty selection, clear the GED set
@@ -205,9 +207,11 @@ QgTreeSelectionModel::ged_selection_sync(QgItem *start, struct ged_selection_set
 	QModelIndex pind = cnode->ctx->NodeIndex(cnode);
 	if (ged_selection_find(gs, bu_vls_cstr(&pstr))) {
 	    bu_log("ged sync select: %s\n", bu_vls_cstr(&pstr));
-	    select(pind, QItemSelectionModel::Select);
+	    if (!isSelected(pind))
+		select(pind, QItemSelectionModel::Select);
 	} else {
-	    select(pind, QItemSelectionModel::Deselect);
+	    if (isSelected(pind))
+		select(pind, QItemSelectionModel::Deselect);
 	}
     }
 
