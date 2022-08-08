@@ -163,6 +163,54 @@ obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct 
     }
 }
 
+// Debugging function to see constructed arb
+void
+obb_arb(vect_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3)
+{
+    // For debugging purposes, construct an arb
+    point_t arb[8];
+    // 1 - c - e1 - e2 - e3
+    VSUB2(arb[0], obb_center, obb_extent1);
+    VSUB2(arb[0], arb[0], obb_extent2);
+    VSUB2(arb[0], arb[0], obb_extent3);
+    // 2 - c - e1 - e2 + e3
+    VSUB2(arb[1], obb_center, obb_extent1);
+    VSUB2(arb[1], arb[1], obb_extent2);
+    VADD2(arb[1], arb[1], obb_extent3);
+    // 3 - c - e1 + e2 + e3
+    VSUB2(arb[2], obb_center, obb_extent1);
+    VADD2(arb[2], arb[2], obb_extent2);
+    VADD2(arb[2], arb[2], obb_extent3);
+    // 4 - c - e1 + e2 - e3
+    VSUB2(arb[3], obb_center, obb_extent1);
+    VADD2(arb[3], arb[3], obb_extent2);
+    VSUB2(arb[3], arb[3], obb_extent3);
+    // 1 - c + e1 - e2 - e3
+    VADD2(arb[4], obb_center, obb_extent1);
+    VSUB2(arb[4], arb[4], obb_extent2);
+    VSUB2(arb[4], arb[4], obb_extent3);
+    // 2 - c + e1 - e2 + e3
+    VADD2(arb[5], obb_center, obb_extent1);
+    VSUB2(arb[5], arb[5], obb_extent2);
+    VADD2(arb[5], arb[5], obb_extent3);
+    // 3 - c + e1 + e2 + e3
+    VADD2(arb[6], obb_center, obb_extent1);
+    VADD2(arb[6], arb[6], obb_extent2);
+    VADD2(arb[6], arb[6], obb_extent3);
+    // 4 - c + e1 + e2 - e3
+    VADD2(arb[7], obb_center, obb_extent1);
+    VADD2(arb[7], arb[7], obb_extent2);
+    VSUB2(arb[7], arb[7], obb_extent3);
+
+    bu_log("center: %f %f %f\n", V3ARGS(obb_center));
+    bu_log("e1: %f %f %f\n", V3ARGS(obb_extent1));
+    bu_log("e2: %f %f %f\n", V3ARGS(obb_extent2));
+    bu_log("e3: %f %f %f\n", V3ARGS(obb_extent3));
+
+    bu_log("in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+	    V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb  [6]), V3ARGS(arb[7]));
+}
+
 static void
 view_obb(struct bview *v,
        	point_t sbbc, fastf_t radius,
@@ -187,48 +235,7 @@ view_obb(struct bview *v,
     VSUB2(v->obb_extent3, ep2, ec);
 
 #if 0
-    // For debugging purposes, construct an arb
-    point_t arb[8];
-    // 1 - c - e1 - e2 - e3
-    VSUB2(arb[0], v->obb_center, v->obb_extent1);
-    VSUB2(arb[0], arb[0], v->obb_extent2);
-    VSUB2(arb[0], arb[0], v->obb_extent3);
-    // 2 - c - e1 - e2 + e3
-    VSUB2(arb[1], v->obb_center, v->obb_extent1);
-    VSUB2(arb[1], arb[1], v->obb_extent2);
-    VADD2(arb[1], arb[1], v->obb_extent3);
-    // 3 - c - e1 + e2 + e3
-    VSUB2(arb[2], v->obb_center, v->obb_extent1);
-    VADD2(arb[2], arb[2], v->obb_extent2);
-    VADD2(arb[2], arb[2], v->obb_extent3);
-    // 4 - c - e1 + e2 - e3
-    VSUB2(arb[3], v->obb_center, v->obb_extent1);
-    VADD2(arb[3], arb[3], v->obb_extent2);
-    VSUB2(arb[3], arb[3], v->obb_extent3);
-    // 1 - c + e1 - e2 - e3
-    VADD2(arb[4], v->obb_center, v->obb_extent1);
-    VSUB2(arb[4], arb[4], v->obb_extent2);
-    VSUB2(arb[4], arb[4], v->obb_extent3);
-    // 2 - c + e1 - e2 + e3
-    VADD2(arb[5], v->obb_center, v->obb_extent1);
-    VSUB2(arb[5], arb[5], v->obb_extent2);
-    VADD2(arb[5], arb[5], v->obb_extent3);
-    // 3 - c + e1 + e2 + e3
-    VADD2(arb[6], v->obb_center, v->obb_extent1);
-    VADD2(arb[6], arb[6], v->obb_extent2);
-    VADD2(arb[6], arb[6], v->obb_extent3);
-    // 4 - c + e1 + e2 - e3
-    VADD2(arb[7], v->obb_center, v->obb_extent1);
-    VADD2(arb[7], arb[7], v->obb_extent2);
-    VSUB2(arb[7], arb[7], v->obb_extent3);
-
-    bu_log("center: %f %f %f\n", V3ARGS(v->obb_center));
-    bu_log("e1: %f %f %f\n", V3ARGS(v->obb_extent1));
-    bu_log("e2: %f %f %f\n", V3ARGS(v->obb_extent2));
-    bu_log("e3: %f %f %f\n", V3ARGS(v->obb_extent3));
-
-    bu_log("in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
-	    V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb  [6]), V3ARGS(arb[7]));
+    obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3);
 #endif
 }
 
@@ -413,7 +420,6 @@ bg_view_objs_select(struct bv_scene_obj ***sset, struct bview *v, int x, int y)
     VSUB2(obb_e2, ep1, ec);
     VSUB2(obb_e3, ep2, ec);
 
-
     // Having constructed the box, test the scene objects against it.  Any that intersect,
     // add them to the set
     std::set<struct bv_scene_obj *> active;
@@ -455,8 +461,8 @@ bg_view_objs_rect_select(struct bv_scene_obj ***sset, struct bview *v, int x1, i
     // Using the pixel width and height of the current "window", construct some
     // view space dimensions related to that window
     fastf_t fx1 = 0.0, fy1 = 0.0, fx2 = 0.0, fy2 = 0.0, fxc = 0.0, fyc = 0.0;
-    bv_screen_to_view(v, &fx1, &fy1, x1, y1);
-    bv_screen_to_view(v, &fx2, &fy2, x2, y2);
+    bv_screen_to_view(v, &fx1, &fy1, (int)(0.5*(x1+x2)), y2);
+    bv_screen_to_view(v, &fx2, &fy2, x2, (int)(0.5*(y1+y2)));
     bv_screen_to_view(v, &fxc, &fyc, (int)(0.5*(x1+x2)), (int)(0.5*(y1+y2)));
 
     // Get the model space points for the mid points of the top and right edges
@@ -468,9 +474,9 @@ bg_view_objs_rect_select(struct bv_scene_obj ***sset, struct bview *v, int x1, i
     MAT4X3PNT(ep1, v->gv_view2model, vp1);
     MAT4X3PNT(ep2, v->gv_view2model, vp2);
     MAT4X3PNT(ec, v->gv_view2model, vc);
-    //bu_log("in sph1.s sph %f %f %f\n", V3ARGS(ep1));
-    //bu_log("in sph2.s sph %f %f %f\n", V3ARGS(ep2));
-    //bu_log("in sphc.s sph %f %f %f\n", V3ARGS(ec));
+    //bu_log("in sph1.s sph %f %f %f 1\n", V3ARGS(ep1));
+    //bu_log("in sph2.s sph %f %f %f 2\n", V3ARGS(ep2));
+    //bu_log("in sphc.s sph %f %f %f 3\n", V3ARGS(ec));
 
     // Need the direction vector - i.e., where the camera is looking.  Got this
     // trick from the libged nirt code...
@@ -500,6 +506,9 @@ bg_view_objs_rect_select(struct bv_scene_obj ***sset, struct bview *v, int x1, i
     VSUB2(obb_e2, ep1, ec);
     VSUB2(obb_e3, ep2, ec);
 
+#if 0
+    obb_arb(obb_c, obb_e1, obb_e2, obb_e3);
+#endif
 
     // Having constructed the box, test the scene objects against it.  Any that intersect,
     // add them to the set
