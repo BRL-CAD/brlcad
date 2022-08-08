@@ -272,6 +272,10 @@ CADViewSelecter::erase_obj_bbox()
 	return true;
     }
 
+    // TODO - this does not work if we're using the rect selection - 
+    // in that case, we need to grab the bbox closest to the plane
+    // of the rectangle, backed out to the bbox of the scene sphere.
+
     // Only removing one object, not using all-up librt raytracing -
     // need to find the first bbox intersection, then run the select
     // command.
