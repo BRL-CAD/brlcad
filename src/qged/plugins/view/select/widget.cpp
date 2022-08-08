@@ -61,7 +61,9 @@ CADViewSelecter::CADViewSelecter(QWidget *)
     use_ray_test_ckbx = new QCheckBox("Test with Raytracing");
 
     QObject::connect(use_pnt_select_button, &QRadioButton::clicked, this, &CADViewSelecter::enable_raytrace_opt);
+    QObject::connect(use_pnt_select_button, &QRadioButton::clicked, this, &CADViewSelecter::enable_useall_opt);
     QObject::connect(use_rect_select_button, &QRadioButton::clicked, this, &CADViewSelecter::disable_raytrace_opt);
+    QObject::connect(use_rect_select_button, &QRadioButton::clicked, this, &CADViewSelecter::disable_useall_opt);
 
     QGroupBox *smode_box = new QGroupBox("Selection Mode");
     QVBoxLayout *smode_gl = new QVBoxLayout;
@@ -168,6 +170,18 @@ CADViewSelecter::disable_raytrace_opt(bool)
 }
 
 void
+CADViewSelecter::enable_useall_opt(bool)
+{
+    select_all_depth_ckbx->setEnabled(true);
+}
+
+void
+CADViewSelecter::disable_useall_opt(bool)
+{
+    select_all_depth_ckbx->setEnabled(false);
+}
+
+void
 CADViewSelecter::do_view_update(unsigned long long flags)
 {
     QgModel *m = ((CADApp *)qApp)->mdl;
@@ -259,7 +273,7 @@ CADViewSelecter::erase_obj_bbox()
 	return false;
     struct bview *v = gedp->ged_gvp;
 
-    if (select_all_depth_ckbx->isChecked()) {
+    if (select_all_depth_ckbx->isChecked() || use_rect_select_button->isChecked()) {
 	const char **av = (const char **)bu_calloc(scnt+2, sizeof(char *), "av");
 	av[0] = "erase";
 	for (int i = 0; i < scnt; i++) {
@@ -271,10 +285,6 @@ CADViewSelecter::erase_obj_bbox()
 	bu_free(av, "av");
 	return true;
     }
-
-    // TODO - this does not work if we're using the rect selection - 
-    // in that case, we need to grab the bbox closest to the plane
-    // of the rectangle, backed out to the bbox of the scene sphere.
 
     // Only removing one object, not using all-up librt raytracing -
     // need to find the first bbox intersection, then run the select
@@ -434,7 +444,7 @@ CADViewSelecter::add_obj_bbox()
     struct bview *v = gedp->ged_gvp;
     struct ged_selection_set *gs = gedp->ged_cset;
 
-    if (select_all_depth_ckbx->isChecked()) {
+    if (select_all_depth_ckbx->isChecked() || use_rect_select_button->isChecked()) {
 	struct bu_vls dpath = BU_VLS_INIT_ZERO;
 	for (int i = 0; i < scnt; i++) {
 	    struct bv_scene_obj *s = sset[i];

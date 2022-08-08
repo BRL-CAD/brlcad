@@ -75,6 +75,8 @@ class CADViewSelecter : public QWidget
     	void disable_groups(bool);
 	void enable_raytrace_opt(bool);
     	void disable_raytrace_opt(bool);
+	void enable_useall_opt(bool);
+    	void disable_useall_opt(bool);
 	void do_view_update(unsigned long long);
 	void do_draw_selections();
 	void do_erase_selections();
