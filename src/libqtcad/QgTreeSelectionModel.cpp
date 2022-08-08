@@ -38,7 +38,7 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
     struct ged_selection_set *gs = gedp->ged_cset;
-    if (!ged_doing_sync) {
+    if (!ged_doing_sync && !ged_local_setting) {
 	if (!(flags & QItemSelectionModel::Deselect)) {
 	    QModelIndexList dl = selection.indexes();
 	    std::stack<QgItem *> to_process;
@@ -67,6 +67,7 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 		    }
 		}
 	    }
+	    ged_local_setting = true;
 	    while (!to_process.empty()) {
 		QgItem *itm = to_process.top();
 		to_process.pop();
@@ -74,6 +75,7 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 		if (isSelected(pind))
 		    select(pind, QItemSelectionModel::Deselect);
 	    }
+	    ged_local_setting = false;
 
 	    if (gs) {
 		for (long int i = 0; i < dl.size(); i++) {
@@ -115,7 +117,7 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 void
 QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags)
 {
-    if (!ged_doing_sync && !(flags & QItemSelectionModel::Deselect)) {
+    if (!ged_doing_sync && !ged_local_setting && !(flags & QItemSelectionModel::Deselect)) {
 	std::stack<QgItem *> to_process;
 	QgItem *snode = static_cast<QgItem *>(index.internalPointer());
 	if (snode) {
@@ -141,6 +143,7 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 		    to_process.push(ccnode);
 		}
 	    }
+	    ged_local_setting = true;
 	    while (!to_process.empty()) {
 		QgItem *itm = to_process.top();
 		to_process.pop();
@@ -148,6 +151,7 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 		if (isSelected(pind))
 		    select(pind, QItemSelectionModel::Deselect);
 	    }
+	    ged_local_setting = false;
 	} else {
 	    // If we have an empty selection, clear the GED set
 	    QgModel *m = treeview->m;
@@ -357,7 +361,7 @@ QgTreeSelectionModel::ged_drawn_sync(QgItem *start, struct ged *gedp)
 void
 QgTreeSelectionModel::ged_deselect(const QItemSelection &UNUSED(selected), const QItemSelection &deselected)
 {
-    if (!deselected.size() || ged_doing_sync)
+    if (!deselected.size() || ged_doing_sync || ged_local_setting)
 	return;
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;

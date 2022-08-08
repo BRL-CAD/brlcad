@@ -76,6 +76,7 @@ class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel
 
     private:
 	bool ged_doing_sync = false;
+	bool ged_local_setting = false;
 };
 
 #endif //QGTREESELECTIONMODEL_H
