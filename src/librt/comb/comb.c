@@ -46,26 +46,12 @@
 #include <ctype.h>
 #include "bio.h"
 
-#include <stack>
-
 #include "bu/parse.h"
 #include "bu/cv.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rt/db5.h"
 #include "raytrace.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-    void rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern);
-    int rt_comb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip, struct resource *resp);
-    int rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv);
-    int rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp);
-    int rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *item);
-#ifdef __cplusplus
-}
-#endif
 
 /**
  * Number of bytes used for each value of DB5HDR_WIDTHCODE_*
@@ -185,29 +171,38 @@ rt_comb_v5_serialize(
     RT_CK_COMB_V5_SERIALIZE_STATE(ssp);
 
     /* setup stack for iterative traversal */
-    std::stack<union tree*>stack;
-    std::stack<union tree*>rev;
+    union tree** stack = (union tree**)0;
+    union tree** rev = (union tree**)0;
     union tree* curr = NULL;
-    stack.push(tp);
+    int size = 128;
+    int idx = 0;
+    int depth = 0;
+    stack = (union tree**)bu_malloc(sizeof(union tree*) * size, "init stack");
+    rev = (union tree**)bu_malloc(sizeof(union tree*) * size, "init rev");
+    stack[idx++] = TREE_NULL;
+    stack[idx++] = tp;
+    rev[depth] = TREE_NULL;
 
     /* the first traversal gives us a reversed order */
-    while (!stack.empty()) {
-        curr = stack.top();
-        stack.pop();
-        rev.push(curr);
+    while ((curr = stack[--idx]) != TREE_NULL) {
+        if (depth++ >= size - 1 || idx >= size - 3) {
+            size <<= 1;
+            stack = (union tree**)bu_realloc(stack, sizeof(union tree*) * size, "double stack");
+            rev = (union tree**)bu_realloc(rev, sizeof(union tree*) * size, "double rev");
+        }
+        rev[depth] = curr;
 
         if (curr->tr_b.tb_left && curr->tr_op != OP_DB_LEAF)
-            stack.push(curr->tr_b.tb_left);
+            stack[idx++] = curr->tr_b.tb_left;
 
         if (curr->tr_b.tb_right && curr->tr_op != OP_DB_LEAF)
-            stack.push(curr->tr_b.tb_right);
+            stack[idx++] = curr->tr_b.tb_right;
     }
+    bu_free(stack, "free stack");
+    depth++;
 
     /* actually do the serialize with the correct order */
-    while (!rev.empty()) {
-        curr = rev.top();
-        rev.pop();
-
+    while ((curr = rev[--depth]) != TREE_NULL) {
         switch (curr->tr_op) {
     	    case OP_DB_LEAF:
     	        /*
@@ -279,6 +274,7 @@ rt_comb_v5_serialize(
     	        bu_bomb("rt_comb_v5_serialize\n");
         }
     }
+    bu_free(rev, "free rev");
 }
 
 
