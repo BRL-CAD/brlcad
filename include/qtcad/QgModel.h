@@ -209,6 +209,9 @@ class QTCAD_EXPORT QgItem
 
 	// Flag to determine whether the item is fully or partially drawn
 	int draw_state = 0;
+
+	// Flag to determine whether the item is selected
+	int select_state = 0;
 };
 
 /* The primary expression in a Qt context of a .g database and its contents.
@@ -286,7 +289,8 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	    DirectoryInternalRole = Qt::UserRole + 1002,
 	    TypeIconDisplayRole = Qt::UserRole + 1003,
 	    HighlightDisplayRole = Qt::UserRole + 1004,
-	    DrawnDisplayRole = Qt::UserRole + 1005
+	    DrawnDisplayRole = Qt::UserRole + 1005,
+	    SelectDisplayRole = Qt::UserRole + 1006
 	};
 
 	// Return data used for displaying each individual entry

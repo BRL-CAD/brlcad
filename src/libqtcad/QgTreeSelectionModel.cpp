@@ -33,145 +33,213 @@
 #include "qtcad/SignalFlags.h"
 
 void
+QgTreeSelectionModel::clear_all()
+{
+    QgModel *m = treeview->m;
+    QgItem *snode = m->root();
+    std::queue<QgItem *> get_children;
+    if (snode->children.size())
+	get_children.push(snode);
+
+    while (!get_children.empty()) {
+	QgItem *cnode = get_children.front();
+	get_children.pop();
+	cnode->select_state = 0;
+	for (size_t j = 0; j < cnode->children.size(); j++) {
+	    QgItem *ccnode = cnode->children[j];
+	    get_children.push(ccnode);
+	}
+    }
+}
+
+
+void
 QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags)
 {
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
     struct ged_selection_set *gs = gedp->ged_cset;
-    if (!ged_doing_sync && !ged_local_setting) {
-	if (!(flags & QItemSelectionModel::Deselect)) {
-	    QModelIndexList dl = selection.indexes();
-	    std::stack<QgItem *> to_process;
-	    for (long int i = 0; i < dl.size(); i++) {
-		QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
-		QgItem *pnode = snode->parent();
-		while (pnode) {
-		    QString nstr = pnode->toString();
-		    if (nstr == QString())
-			break;
-		    to_process.push(pnode);
-		    pnode = pnode->parent();
-		}
 
-		std::queue<QgItem *> get_children;
-		if (snode->children.size()) {
-		    get_children.push(snode);
-		}
-		while (!get_children.empty()) {
-		    QgItem *cnode = get_children.front();
-		    get_children.pop();
-		    for (size_t j = 0; j < cnode->children.size(); j++) {
-			QgItem *ccnode = cnode->children[j];
-			get_children.push(ccnode);
-			to_process.push(ccnode);
-		    }
-		}
-	    }
-	    ged_local_setting = true;
-	    while (!to_process.empty()) {
-		QgItem *itm = to_process.top();
-		to_process.pop();
-		QModelIndex pind = itm->ctx->NodeIndex(itm);
-		if (isSelected(pind))
-		    select(pind, QItemSelectionModel::Deselect);
-	    }
-	    ged_local_setting = false;
-
-	    if (gs) {
-		for (long int i = 0; i < dl.size(); i++) {
-		    QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
-		    struct bu_vls tpath = BU_VLS_INIT_ZERO;
-		    QString nstr = snode->toString();
-		    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-		    std::cout << "ged insert: " << bu_vls_cstr(&tpath) << "\n";
-		    ged_selection_insert(gs, bu_vls_cstr(&tpath));
-		    bu_vls_free(&tpath);
-		}
-	    }
-
-	    emit treeview->view_changed(QTCAD_VIEW_SELECT);
-
-	} else {
-
-	    QModelIndexList dl = selection.indexes();
-	    std::queue<QgItem *> to_process;
-	    for (long int i = 0; i < dl.size(); i++) {
-		QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
-		QString nstr = snode->toString();
-		if (nstr != QString()) {
-		    struct bu_vls tpath = BU_VLS_INIT_ZERO;
-		    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-		    std::cout << "ged remove: " << bu_vls_cstr(&tpath) << "\n";
-		    ged_selection_remove(gs, bu_vls_cstr(&tpath));
-		    bu_vls_free(&tpath);
-		}
-	    }
-
-	    emit treeview->view_changed(QTCAD_VIEW_SELECT);
-	}
+    if (flags & QItemSelectionModel::Clear) {
+	if (gs)
+	    ged_selection_set_clear(gs);
     }
 
-    QItemSelectionModel::select(selection, flags);
-}
+    QModelIndexList dl = selection.indexes();
+    for (long int i = 0; i < dl.size(); i++) {
+	QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
 
-void
-QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags)
-{
-    if (!ged_doing_sync && !ged_local_setting && !(flags & QItemSelectionModel::Deselect)) {
-	std::stack<QgItem *> to_process;
-	QgItem *snode = static_cast<QgItem *>(index.internalPointer());
-	if (snode) {
+	// If we are selecting an already selected node, clear it
+	if (flags & QItemSelectionModel::Select && snode->select_state) {
+	    snode->select_state = 0;
+	    struct bu_vls tpath = BU_VLS_INIT_ZERO;
+	    QString nstr = snode->toString();
+	    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+	    ged_selection_remove(gs, bu_vls_cstr(&tpath));
+	    bu_vls_free(&tpath);
+
+	    // This toggle is a local operation
+	    continue;
+	}
+
+	// If a node is being selected, all of its parents and children
+	// will be de-selected
+	if (!(flags & QItemSelectionModel::Deselect)) {
+
+	    // Find the parents
 	    QgItem *pnode = snode->parent();
 	    while (pnode) {
 		QString nstr = pnode->toString();
 		if (nstr == QString())
 		    break;
-		to_process.push(pnode);
+		std::cout << "Parent: " << nstr.toLocal8Bit().data() << "\n";
+		if (pnode->select_state && gs) {
+		    struct bu_vls tpath = BU_VLS_INIT_ZERO;
+		    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+		    ged_selection_remove(gs, bu_vls_cstr(&tpath));
+		    bu_vls_free(&tpath);
+		}
+		pnode->select_state = 0;
 		pnode = pnode->parent();
 	    }
 
 	    std::queue<QgItem *> get_children;
-	    if (snode->children.size()) {
+	    if (snode->children.size())
 		get_children.push(snode);
-	    }
+
 	    while (!get_children.empty()) {
 		QgItem *cnode = get_children.front();
 		get_children.pop();
+		cnode->select_state = 0;
 		for (size_t j = 0; j < cnode->children.size(); j++) {
 		    QgItem *ccnode = cnode->children[j];
 		    get_children.push(ccnode);
-		    to_process.push(ccnode);
 		}
 	    }
-	    ged_local_setting = true;
-	    while (!to_process.empty()) {
-		QgItem *itm = to_process.top();
-		to_process.pop();
-		QModelIndex pind = itm->ctx->NodeIndex(itm);
-		if (isSelected(pind))
-		    select(pind, QItemSelectionModel::Deselect);
-	    }
-	    ged_local_setting = false;
-	} else {
-	    // If we have an empty selection, clear the GED set
-	    QgModel *m = treeview->m;
-	    struct ged *gedp = m->gedp;
-	    struct ged_selection_set *gs = NULL;
-	    if (gedp->ged_selection_sets) {
-		struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-		size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
-		if (scnt == 1)
-		    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
-		bu_ptbl_free(&ssets);
-	    }
+
+
+	    // This node is selected
+	    snode->select_state = 1;
+
 	    if (gs) {
-		ged_selection_set_clear(gs);
+		struct bu_vls tpath = BU_VLS_INIT_ZERO;
+		QString nstr = snode->toString();
+		bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+		std::cout << "ged insert: " << bu_vls_cstr(&tpath) << "\n";
+		ged_selection_insert(gs, bu_vls_cstr(&tpath));
+		bu_vls_free(&tpath);
+	    }
+
+
+	} else {
+
+	    snode->select_state = 0;
+
+	    QString nstr = snode->toString();
+	    if (gs && nstr != QString()) {
+		struct bu_vls tpath = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+		std::cout << "ged remove: " << bu_vls_cstr(&tpath) << "\n";
+		ged_selection_remove(gs, bu_vls_cstr(&tpath));
+		bu_vls_free(&tpath);
+	    }
+	}
+    }
+
+
+    emit treeview->view_changed(QTCAD_VIEW_SELECT);
+    emit treeview->m->layoutChanged();
+}
+
+void
+QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags)
+{
+    QgModel *m = treeview->m;
+    struct ged *gedp = m->gedp;
+    struct ged_selection_set *gs = gedp->ged_cset;
+
+    QgItem *snode = static_cast<QgItem *>(index.internalPointer());
+    if (!snode) {
+	if (gs)
+	    ged_selection_set_clear(gs);
+	return;
+    }
+
+    if (!(flags & QItemSelectionModel::Deselect)) {
+
+	// If we are selecting an already selected node, clear it
+	if (flags & QItemSelectionModel::Select && snode->select_state) {
+	    snode->select_state = 0;
+	    struct bu_vls tpath = BU_VLS_INIT_ZERO;
+	    QString nstr = snode->toString();
+	    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+	    ged_selection_remove(gs, bu_vls_cstr(&tpath));
+	    bu_vls_free(&tpath);
+
+	    // This toggle is a local operation
+	    emit treeview->view_changed(QTCAD_VIEW_SELECT);
+	    emit treeview->m->layoutChanged();
+	    return;
+	}
+
+	// Find the parents
+	QgItem *pnode = snode->parent();
+	while (pnode) {
+	    QString nstr = pnode->toString();
+	    if (nstr == QString())
+		break;
+	    std::cout << "IParent: " << nstr.toLocal8Bit().data() << "\n";
+	    if (pnode->select_state && gs) {
+		struct bu_vls tpath = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+		ged_selection_remove(gs, bu_vls_cstr(&tpath));
+		bu_vls_free(&tpath);
+	    }
+	    pnode->select_state = 0;
+	    pnode = pnode->parent();
+	}
+
+	std::queue<QgItem *> get_children;
+	if (snode->children.size())
+	    get_children.push(snode);
+
+	while (!get_children.empty()) {
+	    QgItem *cnode = get_children.front();
+	    get_children.pop();
+	    cnode->select_state = 0;
+	    for (size_t j = 0; j < cnode->children.size(); j++) {
+		QgItem *ccnode = cnode->children[j];
+		get_children.push(ccnode);
 	    }
 	}
 
+	// This node is selected
+	snode->select_state = 1;
+
+	if (gs) {
+	    struct bu_vls tpath = BU_VLS_INIT_ZERO;
+	    QString nstr = snode->toString();
+	    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+	    std::cout << "ged insert: " << bu_vls_cstr(&tpath) << "\n";
+	    ged_selection_insert(gs, bu_vls_cstr(&tpath));
+	    bu_vls_free(&tpath);
+	}
+
+    } else {
+	snode->select_state = 0;
+
+	QString nstr = snode->toString();
+	if (gs && nstr != QString()) {
+	    struct bu_vls tpath = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
+	    std::cout << "ged remove: " << bu_vls_cstr(&tpath) << "\n";
+	    ged_selection_remove(gs, bu_vls_cstr(&tpath));
+	    bu_vls_free(&tpath);
+	}
     }
 
-    QItemSelectionModel::select(index, flags);
+    emit treeview->view_changed(QTCAD_VIEW_SELECT);
+    emit treeview->m->layoutChanged();
 }
 
 void
@@ -186,10 +254,12 @@ QgTreeSelectionModel::mode_change(int i)
 void
 QgTreeSelectionModel::ged_selection_sync(QgItem *start, struct ged_selection_set *gs)
 {
-    if (!gs || ged_doing_sync)
+    if (!gs)
 	return;
+    bu_log("ged_selection_sync\n");
 
-    ged_doing_sync = true;
+    clear_all();
+
     QgModel *m = treeview->m;
     std::queue<QgItem *> to_check;
     if (start && start != m->root()) {
@@ -208,18 +278,12 @@ QgTreeSelectionModel::ged_selection_sync(QgItem *start, struct ged_selection_set
 	}
 	QString qstr = cnode->toString();
 	bu_vls_sprintf(&pstr, "%s", qstr.toLocal8Bit().data());
-	QModelIndex pind = cnode->ctx->NodeIndex(cnode);
 	if (ged_selection_find(gs, bu_vls_cstr(&pstr))) {
-	    bu_log("ged sync select: %s\n", bu_vls_cstr(&pstr));
-	    if (!isSelected(pind))
-		select(pind, QItemSelectionModel::Select);
+	    cnode->select_state = 1;
 	} else {
-	    if (isSelected(pind))
-		select(pind, QItemSelectionModel::Deselect);
+	    cnode->select_state = 0;
 	}
     }
-
-    ged_doing_sync = false;
 }
 
 static void
@@ -288,8 +352,6 @@ QgTreeSelectionModel::ged_drawn_sync(QgItem *start, struct ged *gedp)
 	view_objs.push_back(cg_p);
     }
 
-    ged_doing_sync = true;
-
     QgModel *m = treeview->m;
     std::queue<QgItem *> to_check;
     if (start && start != m->root()) {
@@ -354,37 +416,6 @@ QgTreeSelectionModel::ged_drawn_sync(QgItem *start, struct ged *gedp)
 	    to_check.push(cnode->children[i]);
 	}
     }
-
-    ged_doing_sync = false;
-}
-
-void
-QgTreeSelectionModel::ged_deselect(const QItemSelection &UNUSED(selected), const QItemSelection &deselected)
-{
-    if (!deselected.size() || ged_doing_sync || ged_local_setting)
-	return;
-    QgModel *m = treeview->m;
-    struct ged *gedp = m->gedp;
-    if (!gedp->ged_selection_sets)
-	return;
-    struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-    size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
-    if (scnt != 1) {
-	bu_ptbl_free(&ssets);
-	return;
-    }
-    struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
-    bu_ptbl_free(&ssets);
-
-    struct bu_vls tpath = BU_VLS_INIT_ZERO;
-    QModelIndexList dl = deselected.indexes();
-    for (long int i = 0; i < dl.size(); i++) {
-	QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
-	QString nstr = snode->toString();
-	bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-	ged_selection_remove(gs, bu_vls_cstr(&tpath));
-    }
-    emit treeview->view_changed(QTCAD_VIEW_SELECT);
 }
 
 // These functions tell the related-object highlighting logic what the current

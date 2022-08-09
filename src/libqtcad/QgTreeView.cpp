@@ -44,7 +44,8 @@ void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
     if (!cadtreeview)
 	return;
 
-    if (option.state & QStyle::State_Selected) {
+    int sflag = index.data(QgModel::SelectDisplayRole).toInt();
+    if (sflag == 1) {
 	painter->fillRect(option.rect, option.palette.highlight());
 	goto text_string;
     }
@@ -163,7 +164,6 @@ QgTreeView::QgTreeView(QWidget *pparent, QgModel *treemodel) : QTreeView(pparent
     header()->setStretchLastSection(true);
     QObject::connect(this, &QgTreeView::expanded, this, &QgTreeView::tree_column_size);
     QObject::connect(this, &QgTreeView::collapsed, this, &QgTreeView::tree_column_size);
-    QObject::connect(this->selectionModel(), &QItemSelectionModel::selectionChanged, sm, &QgTreeSelectionModel::ged_deselect);
     QObject::connect(this, &QgTreeView::clicked, sm, &QgTreeSelectionModel::update_selected_node_relationships);
     QObject::connect(this, &QgTreeView::customContextMenuRequested, (QgTreeView *)this, &QgTreeView::context_menu);
     QObject::connect(this, &QgTreeView::doubleClicked, (QgTreeView *)this, &QgTreeView::do_draw_toggle);

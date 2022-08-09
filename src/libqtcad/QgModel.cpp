@@ -888,6 +888,8 @@ QgModel::data(const QModelIndex &index, int role) const
 	return QVariant::fromValue((void *)(qi->dp));
     if (role == DrawnDisplayRole)
 	return QVariant(qi->draw_state);
+    if (role == SelectDisplayRole)
+	return QVariant(qi->select_state);
 
     if (role == TypeIconDisplayRole)
 	return QVariant(qi->icon);
