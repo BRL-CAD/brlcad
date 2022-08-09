@@ -101,7 +101,7 @@ text_string:
     QPen tpen = painter->pen();
     int drawn_state = index.data(QgModel::DrawnDisplayRole).toInt();
     if (drawn_state == 1) {
-	if (option.state & QStyle::State_Selected) {
+	if (sflag) {
 	    painter->setPen(QColor(0, 70, 0));
 	} else {
 	    painter->setPen(QColor(0, 200, 0));
