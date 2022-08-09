@@ -901,6 +901,8 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
 	for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
 	{
+            if (!layer->IndexIsSet())
+                continue;
 	    const ON_ModelGeometryComponent *mg = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
 	    if (!mg)
 		continue;
@@ -909,7 +911,7 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 		continue;
             /* if the layer has refs, add them in accordingly */
 	    if (const ON_InstanceRef* iref = ON_InstanceRef::Cast(mg->Geometry(nullptr))) {
-                unpack_iref(model, iref, layer->Index(), members);
+                unpack_iref(model, iref, moved_layers[layer->Index()], members);
                 continue;
             }
             ON_String ns(attributes->Name());
@@ -919,7 +921,7 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 	    if (!gname) {
 		gname = uuidstr;
 	    }
-	    if (layer->IndexIsSet() && attributes->m_layer_index == moved_layers[layer->Index()]) {
+	    if (attributes->m_layer_index == moved_layers[layer->Index()]) {
                 members[std::string(gname)].push_back(nullptr);
 	    }
 	}
