@@ -148,8 +148,10 @@ CADApp::do_view_update(unsigned long long flags)
 	for (s_it = unselected_objs.begin(); s_it != unselected_objs.end(); s_it++) {
 	    std::cout << "drawn, unselected: " << *s_it << "\n";
 	    drawn_objs[*s_it]->s_iflag = DOWN;
-	    drawn_objs[*s_it]->s_os.color_override = 0;
-	    drawn_objs[*s_it]->s_os.s_line_width= 1;
+	    drawn_objs[*s_it]->s_os->s_line_width= 1;
+	    drawn_objs[*s_it]->s_os->color_override = 0;
+	    // Mark as stale so the display knows to update object data (e.g. LoD)
+	    bv_obj_stale(drawn_objs[*s_it]);
 	}
 
 	std::set<std::string> selected_objs = drawn_solids;
@@ -159,11 +161,13 @@ CADApp::do_view_update(unsigned long long flags)
 	for (s_it = selected_objs.begin(); s_it != selected_objs.end(); s_it++) {
 	    std::cout << "drawn, selected: " << *s_it << "\n";
 	    drawn_objs[*s_it]->s_iflag = UP;
-	    drawn_objs[*s_it]->s_os.color_override = 1;
-	    drawn_objs[*s_it]->s_os.s_line_width= 2;
-	    drawn_objs[*s_it]->s_os.color[0] = 255;
-	    drawn_objs[*s_it]->s_os.color[1] = 255;
-	    drawn_objs[*s_it]->s_os.color[2] = 255;
+	    drawn_objs[*s_it]->s_os->s_line_width= 2;
+	    drawn_objs[*s_it]->s_os->color_override = 1;
+	    drawn_objs[*s_it]->s_os->color[0] = 255;
+	    drawn_objs[*s_it]->s_os->color[1] = 255;
+	    drawn_objs[*s_it]->s_os->color[2] = 255;
+	    // Mark as stale so the display knows to update object data (e.g. LoD)
+	    bv_obj_stale(drawn_objs[*s_it]);
 	}
 
 	emit view_update(QTCAD_VIEW_REFRESH);

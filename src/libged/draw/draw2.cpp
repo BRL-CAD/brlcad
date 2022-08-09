@@ -333,7 +333,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		clear.insert(cg);
 		db_free_full_path(&gfp);
 		if (refresh)
-		    bv_obj_settings_sync(&fpvs, &cg->s_os);
+		    bv_obj_settings_sync(&fpvs, cg->s_os);
 		continue;
 	    }
 	    // 2.  existing path is a top match encompassing the proposed path
@@ -343,7 +343,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		g = cg;
 		db_free_full_path(&gfp);
 		if (refresh)
-		    bv_obj_settings_sync(&fpvs, &cg->s_os);
+		    bv_obj_settings_sync(&fpvs, cg->s_os);
 		// We continue to weed out any other invalid paths in sg, even
 		// though cg should be the only path in sg that matches in this
 		// condition.  However, we no longer need to do the top matches,
@@ -365,7 +365,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		bv_obj_put(g);
 		g = bv_obj_get(v, BV_DB_OBJS);
 		db_path_to_vls(&g->s_name, fp);
-		bv_obj_settings_sync(&g->s_os, &fpvs);
+		bv_obj_settings_sync(g->s_os, &fpvs);
 	    } else {
 		std::set<struct bv_scene_obj *> sclear;
 		std::set<struct bv_scene_obj *>::iterator s_it;
@@ -392,7 +392,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    // will be stored in this object directly.
 	    g = bv_obj_get(v, BV_DB_OBJS);
 	    db_path_to_vls(&g->s_name, fp);
-	    bv_obj_settings_sync(&g->s_os, &fpvs);
+	    bv_obj_settings_sync(g->s_os, &fpvs);
 	}
 
 	// If we're a blank slate, we're adaptive, and autoview isn't off

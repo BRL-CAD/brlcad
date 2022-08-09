@@ -219,26 +219,26 @@ _objs_cmd_arrow(void *bs, int argc, const char **argv)
     }
     if (BU_STR_EQUAL(argv[0], "width"))  {
 	if (argc == 2) {
-	    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&s->s_os.s_arrow_tip_width) != 1) {
+	    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&s->s_os->s_arrow_tip_width) != 1) {
 		bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 		return BRLCAD_ERROR;
 	    }
 	    return BRLCAD_OK;
 	} else {
-	    bu_vls_printf(gedp->ged_result_str, "%f\n", s->s_os.s_arrow_tip_width);
+	    bu_vls_printf(gedp->ged_result_str, "%f\n", s->s_os->s_arrow_tip_width);
 	    return BRLCAD_OK;
 	}
     }
 
     if (BU_STR_EQUAL(argv[0], "length"))  {
 	if (argc == 2) {
-	    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&s->s_os.s_arrow_tip_length) != 1) {
+	    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&s->s_os->s_arrow_tip_length) != 1) {
 		bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 		return BRLCAD_ERROR;
 	    }
 	    return BRLCAD_OK;
 	} else {
-	    bu_vls_printf(gedp->ged_result_str, "%f\n", s->s_os.s_arrow_tip_length);
+	    bu_vls_printf(gedp->ged_result_str, "%f\n", s->s_os->s_arrow_tip_length);
 	    return BRLCAD_OK;
 	}
     }

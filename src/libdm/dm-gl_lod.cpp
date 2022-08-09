@@ -73,7 +73,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
     const int *face_normals = lod->face_normals;
     const vect_t *normals = lod->normals;
     struct bv_scene_obj *s = lod->s;
-    int mode = s->s_os.s_dmode;
+    int mode = s->s_os->s_dmode;
     mat_t save_mat, draw_mat;
 
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
@@ -288,7 +288,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 static int
 gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
 {
-    int mode = s->s_os.s_dmode;
+    int mode = s->s_os->s_dmode;
     mat_t save_mat, draw_mat;
 
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
@@ -453,7 +453,7 @@ int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
 
     // "Standard" vlist object drawing
     if (bu_list_len(&s->s_vlist)) {
-	if (s->s_os.s_dmode == 4) {
+	if (s->s_os->s_dmode == 4) {
 	    dm_draw_vlist_hidden_line(dmp, (struct bv_vlist *)&s->s_vlist);
 	} else {
 	    dm_draw_vlist(dmp, (struct bv_vlist *)&s->s_vlist);

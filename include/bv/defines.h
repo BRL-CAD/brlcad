@@ -257,7 +257,8 @@ struct bv_scene_obj  {
 
     /* Scene object settings which also (potentially) have global defaults but
      * may be overridden locally */
-    struct bv_obj_settings s_os;
+    struct bv_obj_settings *s_os;
+    struct bv_obj_settings s_local_os;
 
     /* Settings that may be less necessary... */
     struct bv_scene_obj_old_settings s_old;

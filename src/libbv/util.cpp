@@ -727,6 +727,26 @@ bv_clear(struct bview *v, int flags)
     ocnt += (svl && svl != sv) ? BU_PTBL_LEN(svl) : 0;
     return ocnt ;
 }
+
+void
+bv_obj_stale(struct bv_scene_obj *s)
+{
+    s->s_dlist_stale = 1;
+
+    if (BU_PTBL_IS_INITIALIZED(&s->children)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	    bv_obj_stale(s_c);
+	}
+    }
+
+    std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
+    for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {
+	struct bv_scene_obj *sv = vo_it->second; 
+	bv_obj_stale(sv);
+    }
+}
+
 struct bv_scene_obj *
 bv_obj_create(struct bview *v, int type)
 {
@@ -811,7 +831,8 @@ bv_obj_create(struct bview *v, int type)
     s->s_arrow = 0;
 
     struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
-    bv_obj_settings_sync(&s->s_os, &defaults);
+    bv_obj_settings_sync(&s->s_local_os, &defaults);
+    s->s_os = &s->s_local_os;
 
     if (!BU_PTBL_IS_INITIALIZED(&s->children)) {
 	BU_PTBL_INIT(&s->children);
@@ -891,7 +912,8 @@ bv_obj_get_child(struct bv_scene_obj *sp)
     s->s_arrow = 0;
 
     struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
-    bv_obj_settings_sync(&s->s_os, &defaults);
+    bv_obj_settings_sync(&s->s_local_os, &defaults);
+    s->s_os = &s->s_local_os;
 
     if (!BU_PTBL_IS_INITIALIZED(&s->children)) {
 	BU_PTBL_INIT(&s->children);
@@ -1074,6 +1096,7 @@ bv_set_view_obj(struct bv_scene_obj *s, struct bview *v, struct bv_scene_obj *sv
     if (vo_it != s->i->vobjs.end())
 	bv_obj_put(vo_it->second);
     s->i->vobjs[v] = sv;
+    sv->s_os = s->s_os;
 }
 
 struct bv_scene_obj *
@@ -1206,7 +1229,7 @@ bv_view_objs(struct bview *v, int type)
 void
 bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj *src)
 {
-    bv_obj_settings_sync(&dest->s_os, &src->s_os);
+    bv_obj_settings_sync(dest->s_os, src->s_os);
     VMOVE(dest->s_center, src->s_center);
     VMOVE(dest->s_color, src->s_color);
     VMOVE(dest->bmin, src->bmin);

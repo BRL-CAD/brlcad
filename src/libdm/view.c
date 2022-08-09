@@ -90,7 +90,7 @@ dm_add_arrows(struct dm *dmp, struct bv_scene_obj *s)
     int pcnt = 0;
     if (!s->s_arrow)
 	return;
-    if (NEAR_ZERO(s->s_os.s_arrow_tip_length, SMALL_FASTF) || NEAR_ZERO(s->s_os.s_arrow_tip_width, SMALL_FASTF))
+    if (NEAR_ZERO(s->s_os->s_arrow_tip_length, SMALL_FASTF) || NEAR_ZERO(s->s_os->s_arrow_tip_width, SMALL_FASTF))
        return;
     for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
 	int nused = tvp->nused;
@@ -103,7 +103,7 @@ dm_add_arrows(struct dm *dmp, struct bv_scene_obj *s)
 		    if (pcnt > 1) {
 			// We have a move and more than one point - add an arrow
 			// to the A -> B segment at B
-			dm_draw_arrow(dmp, A, B, s->s_os.s_arrow_tip_length, s->s_os.s_arrow_tip_width, 1.0);
+			dm_draw_arrow(dmp, A, B, s->s_os->s_arrow_tip_length, s->s_os->s_arrow_tip_width, 1.0);
 		    }
 		    VMOVE(B,*pt);
 		    break;
@@ -120,7 +120,7 @@ dm_add_arrows(struct dm *dmp, struct bv_scene_obj *s)
     }
     // Get the last pairing
     if (pcnt > 1)
-	dm_draw_arrow(dmp, A, B, s->s_os.s_arrow_tip_length, s->s_os.s_arrow_tip_width, 1.0);
+	dm_draw_arrow(dmp, A, B, s->s_os->s_arrow_tip_length, s->s_os->s_arrow_tip_width, 1.0);
 }
 
 void
@@ -521,7 +521,7 @@ dm_draw_label(struct dm *dmp, struct bv_scene_obj *s)
     }
 
     if (l->arrow) {
-	dm_draw_arrow(dmp, mpt, l->target, s->s_os.s_arrow_tip_length, s->s_os.s_arrow_tip_width, 1.0);
+	dm_draw_arrow(dmp, mpt, l->target, s->s_os->s_arrow_tip_length, s->s_os->s_arrow_tip_width, 1.0);
     } else {
 	dm_draw_line_3d(dmp, mpt, l->target);
     }
@@ -567,12 +567,12 @@ draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
     }
 
     // Assign color attributes
-    if (s->s_os.color_override) {
-	dm_set_fg(dmp, s->s_os.color[0], s->s_os.color[1], s->s_os.color[2], 0, s->s_os.transparency);
+    if (s->s_os->color_override) {
+	dm_set_fg(dmp, s->s_os->color[0], s->s_os->color[1], s->s_os->color[2], 0, s->s_os->transparency);
     } else {
-	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os.transparency);
+	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os->transparency);
     }
-    dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
+    dm_set_line_attr(dmp, s->s_os->s_line_width, s->s_soldash);
 
     // Primary object drawing
     dm_draw_obj(dmp, s);

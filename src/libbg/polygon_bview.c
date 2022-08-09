@@ -92,7 +92,7 @@ bv_fill_polygon(struct bv_scene_obj *s)
     // Got fill, create lines
     fobj = bv_obj_get_child(s);
     bu_vls_printf(&fobj->s_uuid, ":fill");
-    fobj->s_os.s_line_width = 1;
+    fobj->s_os->s_line_width = 1;
     fobj->s_soldash = 0;
     bu_color_to_rgb_chars(&p->fill_color, fobj->s_color);
     for (size_t i = 0; i < fill->num_contours; i++) {
@@ -172,7 +172,7 @@ bv_create_polygon(struct bview *v, int type, int x, int y)
     // Save the current view for later processing
     bv_sync(&p->v, s->s_v);
 
-    s->s_os.s_line_width = 1;
+    s->s_os->s_line_width = 1;
     s->s_color[0] = 255;
     s->s_color[1] = 255;
     s->s_color[2] = 0;

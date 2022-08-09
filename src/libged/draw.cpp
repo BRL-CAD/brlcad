@@ -452,7 +452,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 
     /* Mode 3 generates an evaluated wireframe rather than drawing
      * the individual solid wireframes */
-    if (s->s_os.s_dmode == 3) {
+    if (s->s_os->s_dmode == 3) {
 	draw_m3(s);
 	bv_scene_obj_bound(s, v);
 	s->current = 1;
@@ -460,7 +460,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     }
 
     /* Mode 5 draws a point cloud in lieu of wireframes */
-    if (s->s_os.s_dmode == 5) {
+    if (s->s_os->s_dmode == 5) {
 	draw_points(s);
 	bv_scene_obj_bound(s, v);
 	s->current = 1;
@@ -512,7 +512,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 
     // For anything other than mode 0, we call specific routines for
     // some of the primitives.
-    if (s->s_os.s_dmode > 0) {
+    if (s->s_os->s_dmode > 0) {
 	switch (ip->idb_minor_type) {
 	    case DB5_MINORTYPE_BRLCAD_BOT:
 		(void)rt_bot_plot_poly(&s->s_vlist, ip, ttol, tol);
@@ -532,20 +532,20 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     }
 
     // Now the more general cases
-    switch (s->s_os.s_dmode) {
+    switch (s->s_os->s_dmode) {
 	case 0:
 	case 1:
 	    // Get wireframe (for mode 1, all the non-wireframes are handled
 	    // by the above BOT/POLY/BREP cases
 	    wireframe_plot(s, v, ip);
-	    s->s_os.s_dmode = 0;
+	    s->s_os->s_dmode = 0;
 	    break;
 	case 2:
 	    // Shade everything except pipe, don't evaluate, fall
 	    // back to wireframe in case of failure
 	    if (prim_tess(s, ip) < 0) {
 		wireframe_plot(s, v, ip);
-		s->s_os.s_dmode = 0;
+		s->s_os->s_dmode = 0;
 	    }
 	    break;
 	case 3:
@@ -558,7 +558,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 	    // un-hidden wireframe in case of failure
 	    if (prim_tess(s, ip) < 0) {
 		wireframe_plot(s, v, ip);
-		s->s_os.s_dmode = 0;
+		s->s_os->s_dmode = 0;
 	    }
 	    break;
 	case 5:
@@ -594,7 +594,7 @@ tree_color(struct directory *dp, struct draw_data_t *dd)
     struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
 
     // Easy answer - if we're overridden, dd color is already set.
-    if (dd->g->s_os.color_override)
+    if (dd->g->s_os->color_override)
 	return;
 
     // Not overridden by settings.  Next question - are we under an inherit?
@@ -796,7 +796,7 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 
 	// If we're skipping subtractions there's no
 	// point in going further.
-	if (dd->g->s_os.draw_non_subtract_only && dd->bool_op == 4) {
+	if (dd->g->s_os->draw_non_subtract_only && dd->bool_op == 4) {
 	    return;
 	}
 
@@ -808,11 +808,11 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	struct bv_scene_obj *s = bv_obj_get_child(dd->g);
 	db_path_to_vls(&s->s_name, path);
 	MAT_COPY(s->s_mat, *curr_mat);
-	bv_obj_settings_sync(&s->s_os, &dd->g->s_os);
+	bv_obj_settings_sync(s->s_os, dd->g->s_os);
 	s->s_type_flags = BV_DBOBJ_BASED;
 	s->current = 0;
 	s->s_changed++;
-	if (!s->s_os.draw_solid_lines_only) {
+	if (!s->s_os->draw_solid_lines_only) {
 	    s->s_soldash = (dd->bool_op == 4) ? 1 : 0;
 	}
 	bu_color_to_rgb_chars(&dd->c, s->s_color);
