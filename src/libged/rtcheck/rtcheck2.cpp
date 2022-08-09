@@ -117,7 +117,7 @@ rtcheck_vector_handler(void *clientData, int type)
 	std::set<struct bv_scene_obj *> robjs;
 	for (i = 0; i < BU_PTBL_LEN(vobjs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(vobjs, i);
-	    if (!bu_strncmp(sname, bu_vls_cstr(&s->s_name), strlen(sname))) {
+	    if (!bu_strncmp(sname, bu_vls_cstr(&s->s_bvname), strlen(sname))) {
 		robjs.insert(s);
 	    }
 	}

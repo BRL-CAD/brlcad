@@ -119,8 +119,8 @@ CADApp::do_view_update(unsigned long long flags)
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
 	    for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
 		struct bv_scene_obj *sc = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, j);
-		drawn_solids.insert(std::string(bu_vls_cstr(&sc->s_name)));
-		drawn_objs[(std::string(bu_vls_cstr(&sc->s_name)))] = sc;
+		drawn_solids.insert(std::string(bu_vls_cstr(&sc->s_bvname)));
+		drawn_objs[(std::string(bu_vls_cstr(&sc->s_bvname)))] = sc;
 	    }
 	}
 	std::set<std::string>::iterator s_it;
@@ -297,7 +297,7 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
     for (r_it = erase.begin(); r_it != erase.end(); r_it++) {
 	struct bv_scene_group *cg = *r_it;
 	struct bu_vls opath = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->s_name));
+	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->s_bvname));
 	const char *av[3];
 	av[0] = "erase";
 	av[1] = bu_vls_cstr(&opath);
@@ -309,7 +309,7 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
     for (r_it = regen.begin(); r_it != regen.end(); r_it++) {
 	struct bv_scene_group *cg = *r_it;
 	struct bu_vls opath = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->s_name));
+	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->s_bvname));
 	const char *av[4];
 	av[0] = "draw";
 	av[1] = "-R";

@@ -308,10 +308,7 @@ QgTreeView::do_draw_toggle(const QModelIndex &index)
     struct bu_ptbl *sg = bv_view_objs(m->gedp->ged_gvp, BV_DB_OBJS);
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	struct db_full_path currently_drawn;
-	db_full_path_init(&currently_drawn);
-	db_string_to_path(&currently_drawn, m->gedp->dbip, bu_vls_cstr(&cg->s_name));
-	if (db_full_path_match_top(&currently_drawn, clicked_path)) {
+	if (db_full_path_match_top((struct db_full_path *)cg->s_path, clicked_path)) {
 	    do_draw = false;
 	    break;
 	}

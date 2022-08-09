@@ -212,7 +212,7 @@ CADViewMeasure::get_point(QMouseEvent *m_e)
 	const char **objs = (const char **)bu_calloc(scene_obj_set_cnt + 1, sizeof(char *), "objs");
 	for (int i = 0; i < scene_obj_set_cnt; i++) {
 	    struct bv_scene_obj *l_s = scene_obj_set[i];
-	    objs[i] = bu_vls_cstr(&l_s->s_name);
+	    objs[i] = bu_vls_cstr(&l_s->s_bvname);
 	}
 	if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
 	    bu_free(objs, "objs");

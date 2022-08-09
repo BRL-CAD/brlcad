@@ -797,8 +797,9 @@ bv_obj_create(struct bview *v, int type)
     // Do the initializations
     s->s_type_flags = 0;
     BU_LIST_INIT(&(s->s_vlist));
-    BU_VLS_INIT(&s->s_name);
-    bu_vls_trunc(&s->s_name, 0);
+    BU_VLS_INIT(&s->s_bvname);
+    bu_vls_trunc(&s->s_bvname, 0);
+    s->s_path = NULL;
     BU_VLS_INIT(&s->s_uuid);
     if (type & BV_LOCAL_OBJS) {
 	if (type & BV_DB_OBJS) {
@@ -888,9 +889,10 @@ bv_obj_get_child(struct bv_scene_obj *sp)
     // Do the initializations
     s->s_type_flags = 0;
     BU_LIST_INIT(&(s->s_vlist));
-    if (!BU_VLS_IS_INITIALIZED(&s->s_name))
-	BU_VLS_INIT(&s->s_name);
-    bu_vls_trunc(&s->s_name, 0);
+    if (!BU_VLS_IS_INITIALIZED(&s->s_bvname))
+	BU_VLS_INIT(&s->s_bvname);
+    bu_vls_trunc(&s->s_bvname, 0);
+    s->s_path = NULL;
     if (!BU_VLS_IS_INITIALIZED(&s->s_uuid))
 	BU_VLS_INIT(&s->s_uuid);
     bu_vls_sprintf(&s->s_uuid, "child:%s:%zd", bu_vls_cstr(&sp->s_uuid), BU_PTBL_LEN(&sp->children));
@@ -999,7 +1001,8 @@ bv_obj_put(struct bv_scene_obj *s)
 
     // Clear names
     bu_vls_trunc(&s->s_uuid, 0);
-    bu_vls_trunc(&s->s_name, 0);
+    bu_vls_trunc(&s->s_bvname, 0);
+    s->s_path = NULL;
 
     if (s->otbl)
 	bu_ptbl_rm(s->otbl, (long *)s);
@@ -1022,12 +1025,12 @@ bv_find_obj(struct bview *v, const char *name)
     if (!v->independent && v->vset) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->i->shared_db_objs); i++) {
 	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->i->shared_db_objs, i);
-	    if (!bu_path_match(name, bu_vls_cstr(&s_c->s_name), 0))
+	    if (!bu_path_match(name, bu_vls_cstr(&s_c->s_bvname), 0))
 		return s_c;
 	}
 	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->i->shared_view_objs); i++) {
 	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->i->shared_view_objs, i);
-	    if (!bu_path_match(name, bu_vls_cstr(&s_c->s_name), 0))
+	    if (!bu_path_match(name, bu_vls_cstr(&s_c->s_bvname), 0))
 		return s_c;
 	}
     }
@@ -1035,13 +1038,13 @@ bv_find_obj(struct bview *v, const char *name)
     // Next look locally
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_objs); i++) {
 	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.db_objs, i);
-	if (!bu_path_match(name, bu_vls_cstr(&s_c->s_name), 0))
+	if (!bu_path_match(name, bu_vls_cstr(&s_c->s_bvname), 0))
 	    return s_c;
     }
 
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
 	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
-	if (!bu_path_match(name, bu_vls_cstr(&s_c->s_name), 0))
+	if (!bu_path_match(name, bu_vls_cstr(&s_c->s_bvname), 0))
 	    return s_c;
     }
 
@@ -1106,7 +1109,7 @@ bv_find_child(struct bv_scene_obj *s, const char *vname)
 	return NULL;
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-	if (!bu_path_match(vname, bu_vls_cstr(&s_c->s_name), 0))
+	if (!bu_path_match(vname, bu_vls_cstr(&s_c->s_bvname), 0))
 	    return s_c;
     }
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {

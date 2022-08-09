@@ -243,7 +243,7 @@ QEll::update_viewobj_name(const QString &)
 	bu_vls_sprintf(&oname, "%s", ell_name->text().toLocal8Bit().data());
     if (!bu_vls_strlen(&oname))
 	return;
-    bu_vls_sprintf(&p->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&oname));
+    bu_vls_sprintf(&p->s_bvname, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&oname));
     bu_vls_sprintf(&p->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&oname));
 
     // Update the directory pointer to reflect the name.  If there is a change,

@@ -519,7 +519,7 @@ ged_selection_insert_obj(struct ged_selection_set *s, struct bv_scene_obj *o)
 {
     if (!s || !o)
 	return NULL;
-    struct ged_selection *ss = ged_selection_insert(s, bu_vls_cstr(&o->s_name));
+    struct ged_selection *ss = ged_selection_insert(s, bu_vls_cstr(&o->s_bvname));
     if (ss)
 	bu_ptbl_ins(&ss->sobjs, (long *)o);
     return ss;
@@ -625,7 +625,7 @@ ged_selection_remove_obj(struct ged_selection_set *s, struct bv_scene_obj *o)
 {
     if (!s || !o)
 	return;
-    ged_selection_remove(s, bu_vls_cstr(&o->s_name));
+    ged_selection_remove(s, bu_vls_cstr(&o->s_bvname));
 }
 
 
@@ -1013,14 +1013,7 @@ ged_selection_assign_objs(struct ged_selection_set *s)
     std::map<struct db_full_path *, struct bv_scene_obj *> path_to_obj;
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
-	struct db_full_path *dfp;
-	BU_GET(dfp, struct db_full_path);
-	db_full_path_init(dfp);
-	if (db_string_to_path(dfp, s->gedp->dbip, bu_vls_cstr(&so->s_name))) {
-	    db_free_full_path(dfp);
-	    BU_PUT(dfp, struct db_full_path);
-	    continue;
-	}
+	struct db_full_path *dfp = (struct db_full_path *)so->s_path;
 	so_paths[DB_FULL_PATH_GET(dfp, 0)].insert(dfp);
 	path_to_obj[dfp] = so;
     }
@@ -1063,16 +1056,6 @@ ged_selection_assign_objs(struct ged_selection_set *s)
 	}
 	db_free_full_path(sel_fp);
 	BU_PUT(sel_fp, struct db_full_path);
-    }
-
-    std::map<struct directory *, std::set<struct db_full_path *>>::iterator sp_it;
-    for (sp_it = so_paths.begin(); sp_it != so_paths.end(); sp_it++) {
-	std::set<struct db_full_path *>::iterator d_it;
-	for (d_it = sp_it->second.begin(); d_it != sp_it->second.end(); d_it++) {
-	    struct db_full_path *dfp = *d_it;
-	    db_free_full_path(dfp);
-	    BU_PUT(dfp, struct db_full_path);
-	}
     }
 }
 

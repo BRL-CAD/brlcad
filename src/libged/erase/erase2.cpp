@@ -46,7 +46,7 @@ print_names(struct bu_ptbl *so, int depth)
 	return;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_group *s = (struct bv_scene_group *)BU_PTBL_GET(so, i) ;
-	bu_log("%*s%s\n", depth, " ", bu_vls_cstr(&s->s_name));
+	bu_log("%*s%s\n", depth, " ", bu_vls_cstr(&s->s_bvname));
 	print_names(&s->children, depth+2);
     }
 }
@@ -154,8 +154,11 @@ path_add_children_walk_tree(struct db_full_path *path, union tree *tp,
 		    (*traverse_func)(ed->ngrps, ed->dbip, path, ed->fp, ed->v);
 	    } else {
 		g = bv_obj_create(ed->v, BV_DB_OBJS);
+		BU_GET(g->s_path, struct db_full_path);
+		db_full_path_init((struct db_full_path *)g->s_path);
+		db_dup_full_path((struct db_full_path *)g->s_path, path);
 		db_path_to_vls(&pvls, path);
-		bu_vls_sprintf(&g->s_name, "%s", bu_vls_cstr(&pvls));
+		bu_vls_sprintf(&g->s_bvname, "%s", bu_vls_cstr(&pvls));
 		BU_ALLOC(nfp, struct db_full_path);
 		db_full_path_init(nfp);
 		db_dup_full_path(nfp, path);
@@ -246,16 +249,7 @@ new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct
     // Seed our group set with the top level group
     std::unordered_map<struct bv_scene_group *, struct db_full_path *> ngrps;
     {
-	struct db_full_path *gfp = NULL;
-	BU_ALLOC(gfp, struct db_full_path);
-	db_full_path_init(gfp);
-	int ret = db_string_to_path(gfp, dbip, bu_vls_cstr(&cg->s_name));
-	if (ret < 0) {
-	    // Invalid path
-	    db_free_full_path(gfp);
-	    BU_FREE(gfp, struct db_full_path);
-	    return;
-	}
+	struct db_full_path *gfp = (struct db_full_path *)cg->s_path;
 	ngrps[cg] = gfp;
     }
 
@@ -330,7 +324,7 @@ static int
 alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
     struct bv_scene_group *ga = *(struct bv_scene_group **)a;
     struct bv_scene_group *gb = *(struct bv_scene_group **)b;
-    return alphanum_impl(bu_vls_cstr(&ga->s_name), bu_vls_cstr(&gb->s_name), NULL);
+    return alphanum_impl(bu_vls_cstr(&ga->s_bvname), bu_vls_cstr(&gb->s_bvname), NULL);
 }
 
 /*
@@ -441,7 +435,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	for (c_it = all.begin(); c_it != all.end(); c_it++) {
 	    struct bv_scene_group *cg = *c_it;
 	    std::vector<std::string> cg_objs;
-	    fp_path_split(cg_objs, bu_vls_cstr(&cg->s_name));
+	    fp_path_split(cg_objs, bu_vls_cstr(&cg->s_bvname));
 	    if (u_objs.size() > cg_objs.size()) {
 		if (fp_path_top_match(cg_objs, u_objs)) {
 		    // The hard case - upath matches all of sname.  We're
@@ -456,7 +450,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 		}
 	    } else {
 		if (fp_path_top_match(u_objs, cg_objs)) {
-		    // Easy case.  Drawn path (s_name) is equal to or below
+		    // Easy case.  Drawn path (s_bvname) is equal to or below
 		    // hierarchy of specified upath, so it will be subsumed in
 		    // upath - just clear it.  This may happen to multiple
 		    // paths, so we don't stop the check if we find a match.
@@ -491,7 +485,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     for (g_it = split.begin(); g_it != split.end(); g_it++) {
 	struct bv_scene_group *cg = &(*g_it->first);
 	std::vector<std::string> cg_objs;
-	fp_path_split(cg_objs, bu_vls_cstr(&cg->s_name));
+	fp_path_split(cg_objs, bu_vls_cstr(&cg->s_bvname));
 	std::set<struct bv_scene_obj *> sclear;
 	std::set<struct bv_scene_obj *>::iterator s_it;
 	std::set<std::string>::iterator st_it;
@@ -500,7 +494,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	    if (bu_vls_cstr(&upath)[0] != '/') {
 		bu_vls_prepend(&upath, "/");
 	    }
-	    // Select the scene objects that contain upath in their hierarchy (i.e. s_name
+	    // Select the scene objects that contain upath in their hierarchy (i.e. s_bvname
 	    // is a full subset of upath).  These objects are removed.
 	    std::vector<std::string> u_objs;
 	    fp_path_split(u_objs, bu_vls_cstr(&upath));
@@ -509,9 +503,9 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 		for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
 		    // For the solids in cg, any that are below upath in the hierarchy
-		    // (that is, upath is a full subset of s_name) are being erased.
+		    // (that is, upath is a full subset of s_bvname) are being erased.
 		    std::vector<std::string> s_objs;
-		    fp_path_split(s_objs, bu_vls_cstr(&s->s_name));
+		    fp_path_split(s_objs, bu_vls_cstr(&s->s_bvname));
 		    bool smatch = fp_path_top_match(u_objs, s_objs);
 		    if (smatch)
 			sclear.insert(s);

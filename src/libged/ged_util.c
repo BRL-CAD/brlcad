@@ -1038,9 +1038,9 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	    if ((vp != NULL) && ((const char **)vp < end)) {
-		*vp++ = bu_strdup(bu_vls_cstr(&g->s_name));
+		*vp++ = bu_strdup(bu_vls_cstr(&g->s_bvname));
 	    } else {
-		bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", bu_vls_cstr(&g->s_name));
+		bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", bu_vls_cstr(&g->s_bvname));
 		break;
 	    }
 	}
@@ -1644,7 +1644,7 @@ _ged_rt_write(struct ged *gedp,
 		struct bu_ptbl *sg = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		    fprintf(fp, "draw %s;\n", bu_vls_cstr(&g->s_name));
+		    fprintf(fp, "draw %s;\n", bu_vls_cstr(&g->s_bvname));
 		}
 	    } else {
 		struct display_list *gdlp;

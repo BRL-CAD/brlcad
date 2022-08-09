@@ -176,7 +176,7 @@ static int
 alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
     struct bv_scene_group *ga = *(struct bv_scene_group **)a;
     struct bv_scene_group *gb = *(struct bv_scene_group **)b;
-    return alphanum_impl(bu_vls_cstr(&ga->s_name), bu_vls_cstr(&gb->s_name), NULL);
+    return alphanum_impl(bu_vls_cstr(&ga->s_bvname), bu_vls_cstr(&gb->s_bvname), NULL);
 }
 
 /* This function digests the paths into scene object sets.  It does NOT trigger
@@ -210,6 +210,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
     /* Validate that the supplied args are current, valid paths in the
      * database.  If one or more are not, bail */
     std::set<struct db_full_path *> fps;
+    std::vector<struct db_full_path *> fps_free;
     std::set<struct db_full_path *>::iterator f_it;
     for (size_t i = 0; i < (size_t)argc; ++i) {
 	struct db_full_path *fp;
@@ -234,12 +235,12 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    }
 	}
 	fps.insert(fp);
+	fps_free.push_back(fp);
     }
     if (fps.size() != (size_t)argc) {
-	for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
-	    struct db_full_path *fp = *f_it;
-	    db_free_full_path(fp);
-	    BU_PUT(fp, struct db_full_path);
+	for (size_t i = 0; i < fps_free.size(); i++) {
+	    db_free_full_path(fps_free[i]);
+	    BU_PUT(fps_free[i], struct db_full_path);
 	}
 	return BRLCAD_ERROR;
     }
@@ -247,27 +248,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
     if (!argc) {
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
-	    struct db_full_path *fp;
-	    BU_GET(fp, struct db_full_path);
-	    db_full_path_init(fp);
-	    int ret = db_string_to_path(fp, dbip, bu_vls_cstr(&s->s_name));
-	    if (ret < 0) {
-		// If that didn't work, there's one other thing we have to check
-		// for - a really strange path with the "/" character in it.
-		db_free_full_path(fp);
-		struct directory *fdp = db_lookup(dbip, bu_vls_cstr(&s->s_name), LOOKUP_QUIET);
-		if (fdp == RT_DIR_NULL) {
-		    // Invalid path
-		    db_free_full_path(fp);
-		    BU_PUT(fp, struct db_full_path);
-		    continue;
-		} else {
-		    // Object name contained forward slash (urk!)
-		    db_free_full_path(fp);
-		    db_full_path_init(fp);
-		    db_add_node_to_full_path(fp, fdp);
-		}
-	    }
+	    struct db_full_path *fp = (struct db_full_path *)s->s_path;
 	    fps.insert(fp);
 	}
     }
@@ -290,8 +271,6 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	mat_t mat;
 	MAT_IDN(mat);
 	if (db_path_to_mat(dbip, fp, mat, 0, local_res)) {
-	    db_free_full_path(fp);
-	    BU_PUT(fp, struct db_full_path);
 	    continue;
 	}
 
@@ -310,38 +289,27 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    }
 
 	    // Not already clearing, need to check
-	    struct db_full_path gfp;
-	    db_full_path_init(&gfp);
-	    int ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->s_name));
-	    if (ret < 0) {
-		// If we can't get a db_fullpath, it's invalid
-		clear.insert(cg);
-		db_free_full_path(&gfp);
-		continue;
-	    }
+	    struct db_full_path *gfp = (struct db_full_path *)cg->s_path;
 
 	    // If we found an encompassing path, we don't need to do any more work
 	    if (clear_invalid_only) {
-		db_free_full_path(&gfp);
 		continue;
 	    }
 
 	    // Two conditions to check for here:
 	    // 1.  proposed draw path is a top match for existing path
-	    if (db_full_path_match_top(fp, &gfp)) {
+	    if (db_full_path_match_top(fp, gfp)) {
 		// New path will replace the currently drawn path - clear it
 		clear.insert(cg);
-		db_free_full_path(&gfp);
 		if (refresh)
 		    bv_obj_settings_sync(&fpvs, cg->s_os);
 		continue;
 	    }
 	    // 2.  existing path is a top match encompassing the proposed path
-	    if (db_full_path_match_top(&gfp, fp)) {
+	    if (db_full_path_match_top(gfp, fp)) {
 		// Already drawn - replace just the children of g that match this
 		// path to update their contents
 		g = cg;
-		db_free_full_path(&gfp);
 		if (refresh)
 		    bv_obj_settings_sync(&fpvs, cg->s_os);
 		// We continue to weed out any other invalid paths in sg, even
@@ -351,8 +319,6 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		clear_invalid_only = true;
 		continue;
 	    }
-
-	    db_free_full_path(&gfp);
 	}
 
 	// IFF we are just redrawing part or all of an already drawn path, we don't
@@ -362,19 +328,21 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    // to g to update them.  If g has no children, it was probably an
 	    // evaluated shape - in that case, replace it with a fresh instance.
 	    if (!BU_PTBL_LEN(&g->children)) {
+		struct db_full_path *fpcpy;
+		BU_GET(fpcpy, struct db_full_path);
+		db_full_path_init(fpcpy);
+		db_dup_full_path(fpcpy, fp);
 		bv_obj_put(g);
 		g = bv_obj_get(v, BV_DB_OBJS);
-		db_path_to_vls(&g->s_name, fp);
+		db_path_to_vls(&g->s_bvname, fpcpy);
+		g->s_path = fpcpy;
 		bv_obj_settings_sync(g->s_os, &fpvs);
 	    } else {
 		std::set<struct bv_scene_obj *> sclear;
 		std::set<struct bv_scene_obj *>::iterator s_it;
 		for (size_t i = 0; i < BU_PTBL_LEN(&g->children); i++) {
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, i);
-		    struct db_full_path gfp;
-		    db_full_path_init(&gfp);
-		    db_string_to_path(&gfp, dbip, bu_vls_cstr(&s->s_name));
-		    if (db_full_path_match_top(&gfp, fp)) {
+		    if (db_full_path_match_top((struct db_full_path *)s->s_path, fp)) {
 			sclear.insert(s);
 		    }
 		}
@@ -390,8 +358,13 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    // "evaluated" drawing modes the visualization in the scene is
 	    // unique to this object and in those cases drawing information
 	    // will be stored in this object directly.
+	    struct db_full_path *fpcpy;
+	    BU_GET(fpcpy, struct db_full_path);
+	    db_full_path_init(fpcpy);
+	    db_dup_full_path(fpcpy, fp);
 	    g = bv_obj_get(v, BV_DB_OBJS);
-	    db_path_to_vls(&g->s_name, fp);
+	    db_path_to_vls(&g->s_bvname, fp);
+	    g->s_path = fpcpy;
 	    bv_obj_settings_sync(g->s_os, &fpvs);
 	}
 
@@ -430,8 +403,6 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	mat_t mat;
 	MAT_IDN(mat);
 	if (db_path_to_mat(dbip, fp, mat, 0, local_res)) {
-	    db_free_full_path(fp);
-	    BU_PUT(fp, struct db_full_path);
 	    continue;
 	}
 
@@ -486,9 +457,6 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    ud->mesh_c = dd.mesh_c;
 	    g->s_i_data = (void *)ud;
 	    g->s_v = dd.v;
-	    // Done with path
-	    db_free_full_path(fp);
-	    BU_PUT(fp, struct db_full_path);
 	    continue;
 	}
 
@@ -496,16 +464,18 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	// each instance's wireframe.  These scene objects will be stored as
 	// children of g (which is the "who" level drawn object).
 	draw_gather_paths(fp, &mat, (void *)&dd);
-
-	// Done with path
-	db_free_full_path(fp);
-	BU_PUT(fp, struct db_full_path);
     }
     rt_clean_resource_basic(NULL, local_res);
     BU_PUT(local_res, struct resource);
 
     // Sort
     bu_sort(BU_PTBL_BASEADDR(sg), BU_PTBL_LEN(sg), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
+
+    // Clean up
+    for (size_t i = 0; i < fps_free.size(); i++) {
+	db_free_full_path(fps_free[i]);
+	BU_PUT(fps_free[i], struct db_full_path);
+    }
 
     // Scene objects are created and stored. The next step is to generate
     // wireframes, triangles, etc. for each object based on current settings.
@@ -775,7 +745,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	    av[oind] = bu_vls_cstr(&cg->s_name);
+	    av[oind] = bu_vls_cstr(&cg->s_bvname);
 	    ged_exec(gedp, ac, (const char **)av);
 	}
 	return BRLCAD_OK;
