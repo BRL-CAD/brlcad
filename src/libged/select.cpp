@@ -712,6 +712,15 @@ expand_list(struct db_full_path *path, void *client_data)
 
 	std::unordered_map<std::string, int> c_inst_map;
 	comb = (struct rt_comb_internal *)in.idb_ptr;
+	// For these purposes, treat an empty comb as a leaf
+	if (!comb->tree) {
+	    struct db_full_path *newpath;
+	    BU_ALLOC(newpath, struct db_full_path);
+	    db_full_path_init(newpath);
+	    db_dup_full_path(newpath, path);
+	    bu_ptbl_ins(ecd->full_paths, (long *)newpath);
+	    return;
+	}
 	expand_subtree(path, OP_UNION, comb->tree, expand_list, &c_inst_map, client_data);
 	rt_db_free_internal(&in);
     } else {
@@ -836,7 +845,7 @@ child_name_set_tree(union tree *tp, struct db_i *dbip, void *cmap, void *client_
 }
 
 void
-child_name_set(std::set<std::string> *g_c, struct ged *gedp, std::string &dp_name)
+child_name_set(std::set<std::string> *g_c, struct ged *gedp, const std::string &dp_name)
 {
     if (!g_c || !gedp || !dp_name.size())
 	return;
@@ -880,128 +889,96 @@ ged_selection_set_collapse(struct ged_selection_set *s_out, struct ged_selection
     if (!s_out || !s)
 	return BRLCAD_ERROR;
 
-    std::set<std::vector<std::string>> final_paths;
-    std::set<std::vector<std::string>, vstr_cmp> s1, s2;
-    std::set<std::vector<std::string>, vstr_cmp> *ps, *pnext, *tmp;
-    ps = &s1;
-    pnext = &s2;
-
     // Seed the set with the current paths
+    std::vector<std::vector<std::string> *> split_paths;
     std::map<std::string, struct ged_selection *>::iterator s_it;
     for (s_it = s->i->m.begin(); s_it != s->i->m.end(); s_it++) {
-	std::vector<std::string> s_p;
-	fp_path_split(s_p, s_it->first.c_str());
-	ps->insert(s_p);
+	std::vector<std::string> *s_p = new std::vector<std::string>;
+	fp_path_split(*s_p, s_it->first.c_str());
+	bu_log("path size: %zd\n", s_p->size());
+	split_paths.push_back(s_p);
     }
     ged_selection_set_clear(s_out);
 
-    size_t longest = (ps->size()) ? ((*ps->begin()).size()) : 0;
-    std::vector<std::string> cparent;
-    std::set<std::string> found_children;
-    while (ps->size() || pnext->size() || found_children.size()) {
-	std::vector<std::string> s_p;
-	bool empty = false;
-	if (ps->size()) {
-	    s_p = *ps->begin();
-	    ps->erase(ps->begin());
-	    std::cout << "Process: ";
-	    for(size_t i = 0; i < s_p.size(); i++)
-		std::cout << "/" << s_p[i];
-	    std::cout << "\n";
-	} else {
-	    empty = true;
+    std::map<size_t, std::set<std::vector<std::string> *>> grouped_paths;
+    for (size_t i = 0; i < split_paths.size(); i++) {
+	bu_log("path size: %zd\n", split_paths[i]->size());
+	grouped_paths[split_paths[i]->size()].insert(split_paths[i]);
+	bu_log("gp: %zd\n", grouped_paths.size());
+    }
+
+    std::set<std::vector<std::string> *> final_paths;
+
+    while (grouped_paths.size() > 0) {
+	size_t plen = grouped_paths.rbegin()->first;
+	std::set<std::vector<std::string> *> &lset = grouped_paths.rbegin()->second;
+	if (plen < 2)
+	    break;
+	bu_log("%zd: %zd\n", plen, lset.size());
+
+	// Group paths of the same depth by common parents
+	std::map<std::string, std::set<std::vector<std::string> *>> c_ind;
+	std::set<std::vector<std::string> *>::iterator ss_it;
+	for (ss_it = lset.begin(); ss_it != lset.end(); ss_it++) {
+	    std::vector<std::string> *sp = *ss_it;
+	    c_ind[(*sp)[plen - 2]].insert(sp);
 	}
-	if (empty || s_p.size() < longest) {
-	    // Because the set was ordered by path length, if we've hit a
-	    // shorter path that means we've processed all the paths with the
-	    // correct length - now it's time to find out if we have a fully
-	    // realized parent.  If we do, we insert cparent int pnext.  If
-	    // not, we put all the found_children of cparent into final_paths.
-	    std::cout << "End check\n";
+	bu_log("parent groups: %zd\n", c_ind.size());
+
+	std::map<std::string, std::set<std::vector<std::string> *>>::iterator c_it;
+	for (c_it = c_ind.begin(); c_it != c_ind.end(); c_it++) {
 	    std::set<std::string> g_c;
-	    child_name_set(&g_c, s->gedp, cparent[cparent.size()-1]);
-	    if (g_c == found_children) {
-		// Have all the children - collapse.  cparent may be part of
-		// a higher level collapse, so we insert into pnext for further
-		// processing
-		pnext->insert(cparent);
+	    child_name_set(&g_c, s->gedp, c_it->first);
+	    std::set<std::vector<std::string> *>::iterator cf_it;
+	    for (cf_it = c_it->second.begin(); cf_it != c_it->second.end(); cf_it++) {
+		g_c.erase((*(*cf_it))[plen - 1]);
+	    }
+	    if (!g_c.size()) {
+		cf_it = c_it->second.begin();
+		std::vector<std::string> *ssp = *cf_it;
+		ssp->pop_back();
+		grouped_paths[plen - 1].insert(ssp);
+		bu_log("%s: fully active\n", c_it->first.c_str());
 	    } else {
-		// Not all children present - cparent + found_children constitute
-		// final paths
-		std::set<std::string>::iterator f_it;
-		for (f_it = found_children.begin(); f_it != found_children.end(); f_it++) {
-		    cparent.push_back(*f_it);
-		    final_paths.insert(cparent);
-		    cparent.pop_back();
+		bu_log("%s: partially active\n", c_it->first.c_str());
+		std::set<std::string>::iterator a_it;
+		for (a_it = g_c.begin(); a_it != g_c.end(); a_it++) {
+		    bu_log("\t%s\n", (*a_it).c_str());
+		}
+		for (cf_it = c_it->second.begin(); cf_it != c_it->second.end(); cf_it++) {
+		    final_paths.insert(*cf_it);
 		}
 	    }
-
-	    // Having figured out the answer for the previous case, move
-	    // remaining paths to pnext, swap ps and pnext, and continue
-	    if (!empty) {
-		pnext->insert(s_p);
-		while (ps->size()) {
-		    s_p = *ps->begin();
-		    ps->erase(ps->begin());
-		    pnext->insert(s_p);
-		}
-	    }
-	    tmp = ps;
-	    ps = pnext;
-	    pnext = tmp;
-	    longest = (ps->size()) ? ((*ps->begin()).size()) : 0;
-	    cparent.clear();
-	    found_children.clear();
-	    continue;
 	}
 
-	if (s_p.size() == 1) {
-	    // Already as collapsed as it can get
-	    final_paths.insert(s_p);
-	    continue;
-	}
+	bu_log("\n\n\n\n\n\n");
 
-	if (!cparent.size()) {
-	    // Starting a new comb check - initialize parent
-	    cparent = s_p;
-	    std::cout << "Starting new: ";
-	    for(size_t i = 0; i < cparent.size(); i++)
-		std::cout << "/" << cparent[i];
-	    std::cout << "\n";
+	grouped_paths.erase(plen);
+    }
 
-	    found_children.insert(cparent[cparent.size()-1]);
-	    cparent.pop_back();
-	    continue;
-	}
-
-	if (s_p[s_p.size()-2] != cparent[cparent.size()-1]) {
-	    // Right length, but wrong parent - defer
-	    std::cout << "Defer: ";
-	    for(size_t i = 0; i < s_p.size(); i++)
-		std::cout << "/" << s_p[i];
-	    std::cout << "\n";
-
-	    pnext->insert(s_p);
-	    continue;
-	} else {
-	    std::cout << "Found child\n";
-	    found_children.insert(s_p[s_p.size()-1]);
-	    continue;
+    if (grouped_paths.find(1) != grouped_paths.end()) {
+	std::set<std::vector<std::string> *> &lset = grouped_paths[1];
+	std::set<std::vector<std::string> *>::iterator l_it;
+	for (l_it = lset.begin(); l_it != lset.end(); l_it++) {
+	    final_paths.insert(*l_it);
 	}
     }
 
     // Have final path set, add it to s_out
-    std::set<std::vector<std::string>>::iterator fp_it;
+    std::set<std::vector<std::string> *>::iterator fp_it;
     for (fp_it = final_paths.begin(); fp_it != final_paths.end(); fp_it++) {
-	const std::vector<std::string> &v = *fp_it;
+	const std::vector<std::string> *v = *fp_it;
 	std::string fpath;
-	for (size_t i = 0; i < v.size();  i++) {
+	for (size_t i = 0; i < v->size();  i++) {
 	    fpath.append("/");
-	    fpath.append(v[i]);
+	    fpath.append((*v)[i]);
 	}
 	ged_selection_insert(s_out, fpath.c_str());
     }
 
+    for (size_t i = 0; i < split_paths.size(); i++) {
+	delete split_paths[i];
+    }
     return BRLCAD_OK;
 }
 
