@@ -134,7 +134,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     BU_GET(g->s_path, struct db_full_path);
     db_full_path_init((struct db_full_path *)g->s_path);
     db_dup_full_path((struct db_full_path *)g->s_path, fp);
-    db_path_to_vls(&g->s_bvname, fp);
+    db_path_to_vls(&g->s_name, fp);
     bu_vls_sprintf(&g->s_uuid, "%s", argv[1]);
     g->s_i_data = (void *)ip;
     g->s_free_callback = &gobjs_scene_free;

@@ -527,7 +527,7 @@ bv_plot_vlblock(FILE *fp, const struct bv_vlblock *vbp)
 	p = BU_LIST_NEXT(bv_scene_obj, fp); \
 	BU_LIST_DEQUEUE(&((p)->l)); \
     } \
-    bu_vls_init(&(p)->s_bvname); \
+    bu_vls_init(&(p)->s_name); \
     (p)->s_path = NULL; \
     bu_vls_init(&(p)->s_uuid); \
     BU_LIST_INIT( &((p)->s_vlist) ); }
@@ -551,7 +551,7 @@ bv_vlblock_to_objs(struct bu_ptbl *out, const char *name_root, struct bv_vlblock
 	    bu_vls_sprintf(&cname, "%sobj%zd", name_root, i);
 	    for (size_t j = 0; j < BU_PTBL_LEN(out); j++) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(out, j);
-		if (BU_STR_EQUAL(bu_vls_cstr(&cname), bu_vls_cstr(&s->s_bvname))) {
+		if (BU_STR_EQUAL(bu_vls_cstr(&cname), bu_vls_cstr(&s->s_name))) {
 		    bu_ptbl_ins_unique(&oobjs, (long *)s);
 		}
 	    }
@@ -568,7 +568,7 @@ bv_vlblock_to_objs(struct bu_ptbl *out, const char *name_root, struct bv_vlblock
 	    GET_BV_SCENE_OBJ(s, &f->l);
 	    s->s_type_flags = BV_VIEWONLY;
 	    s->s_v = v;
-	    bu_vls_sprintf(&s->s_bvname, "%sobj%zd", name_root, i);
+	    bu_vls_sprintf(&s->s_name, "%sobj%zd", name_root, i);
 	    bu_vls_sprintf(&s->s_uuid, "%sobj%zd", name_root, i);
 	    struct bv_vlist *bvl = (struct bv_vlist *)&vbp->head[i];
 	    long int rgb = vbp->rgb[i];
@@ -607,7 +607,7 @@ bv_vlblock_obj(struct bv_vlblock *vbp, struct bview *v, const char *name)
 	    sc->s_color[0] = (rgb>>16);
 	    sc->s_color[1] = (rgb>>8);
 	    sc->s_color[2] = (rgb) & 0xFF;
-	    bu_vls_sprintf(&sc->s_bvname, "%s_%d_%d_%d", name, V3ARGS(sc->s_color));
+	    bu_vls_sprintf(&sc->s_name, "%s_%d_%d_%d", name, V3ARGS(sc->s_color));
 	}
     }
 

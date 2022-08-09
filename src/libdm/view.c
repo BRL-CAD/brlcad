@@ -635,7 +635,7 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
     for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
 	struct bv_scene_obj *s = bv_obj_for_view(g, v);
-	bu_log("Draw %s\n", bu_vls_cstr(&g->s_bvname));
+	bu_log("Draw %s\n", bu_vls_cstr(&g->s_name));
 	draw_scene_obj(dmp, s, v);
     }
 

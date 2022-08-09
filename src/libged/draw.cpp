@@ -355,7 +355,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     vo->s_type_flags |= BV_MESH_LOD;
 
     // Make the names unique
-    bu_vls_sprintf(&vo->s_bvname, "%s", bu_vls_cstr(&s->s_bvname));
+    bu_vls_sprintf(&vo->s_name, "%s", bu_vls_cstr(&s->s_name));
     vo->s_path = NULL;  // I don't think the vo objects will need the db_fullpath...
     bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
 
@@ -406,7 +406,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	bv_obj_sync(vo, s);
 
 	// Make the names unique
-	bu_vls_sprintf(&vo->s_bvname, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_bvname));
+	bu_vls_sprintf(&vo->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_name));
 	vo->s_path = NULL;  // I don't think the vo objects will need the db_fullpath...
 	bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
 
@@ -814,7 +814,7 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// job here will just be to set up the key data for later use...
 
 	struct bv_scene_obj *s = bv_obj_get_child(dd->g);
-	db_path_to_vls(&s->s_bvname, path);
+	db_path_to_vls(&s->s_name, path);
 	BU_GET(s->s_path, struct db_full_path);
 	db_full_path_init((struct db_full_path *)s->s_path);
 	db_dup_full_path((struct db_full_path *)s->s_path, path);

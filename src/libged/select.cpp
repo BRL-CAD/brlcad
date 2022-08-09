@@ -519,7 +519,7 @@ ged_selection_insert_obj(struct ged_selection_set *s, struct bv_scene_obj *o)
 {
     if (!s || !o)
 	return NULL;
-    struct ged_selection *ss = ged_selection_insert(s, bu_vls_cstr(&o->s_bvname));
+    struct ged_selection *ss = ged_selection_insert(s, bu_vls_cstr(&o->s_name));
     if (ss)
 	bu_ptbl_ins(&ss->sobjs, (long *)o);
     return ss;
@@ -625,7 +625,7 @@ ged_selection_remove_obj(struct ged_selection_set *s, struct bv_scene_obj *o)
 {
     if (!s || !o)
 	return;
-    ged_selection_remove(s, bu_vls_cstr(&o->s_bvname));
+    ged_selection_remove(s, bu_vls_cstr(&o->s_name));
 }
 
 

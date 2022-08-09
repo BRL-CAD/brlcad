@@ -347,7 +347,7 @@ QgTreeSelectionModel::ged_drawn_sync(QgItem *start, struct ged *gedp)
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	std::vector<std::string> cg_p;
-	_fp_path_split(cg_p, bu_vls_cstr(&cg->s_bvname));
+	_fp_path_split(cg_p, bu_vls_cstr(&cg->s_name));
 	view_objs.push_back(cg_p);
     }
 

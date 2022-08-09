@@ -176,7 +176,7 @@ static int
 alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
     struct bv_scene_group *ga = *(struct bv_scene_group **)a;
     struct bv_scene_group *gb = *(struct bv_scene_group **)b;
-    return alphanum_impl(bu_vls_cstr(&ga->s_bvname), bu_vls_cstr(&gb->s_bvname), NULL);
+    return alphanum_impl(bu_vls_cstr(&ga->s_name), bu_vls_cstr(&gb->s_name), NULL);
 }
 
 /* This function digests the paths into scene object sets.  It does NOT trigger
@@ -334,7 +334,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		db_dup_full_path(fpcpy, fp);
 		bv_obj_put(g);
 		g = bv_obj_get(v, BV_DB_OBJS);
-		db_path_to_vls(&g->s_bvname, fpcpy);
+		db_path_to_vls(&g->s_name, fpcpy);
 		g->s_path = fpcpy;
 		bv_obj_settings_sync(g->s_os, &fpvs);
 	    } else {
@@ -363,7 +363,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    db_full_path_init(fpcpy);
 	    db_dup_full_path(fpcpy, fp);
 	    g = bv_obj_get(v, BV_DB_OBJS);
-	    db_path_to_vls(&g->s_bvname, fp);
+	    db_path_to_vls(&g->s_name, fp);
 	    g->s_path = fpcpy;
 	    bv_obj_settings_sync(g->s_os, &fpvs);
 	}
@@ -745,7 +745,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	    av[oind] = bu_vls_cstr(&cg->s_bvname);
+	    av[oind] = bu_vls_cstr(&cg->s_name);
 	    ged_exec(gedp, ac, (const char **)av);
 	}
 	return BRLCAD_OK;

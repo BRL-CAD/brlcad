@@ -278,7 +278,7 @@ CADViewSelecter::erase_obj_bbox()
 	av[0] = "erase";
 	for (int i = 0; i < scnt; i++) {
 	    struct bv_scene_obj *s = sset[i];
-	    av[i+1] = bu_vls_cstr(&s->s_bvname);
+	    av[i+1] = bu_vls_cstr(&s->s_name);
 	    bu_log("%s\n", av[i+1]);
 	}
 	ged_exec(gedp, scnt+1, av);
@@ -318,7 +318,7 @@ CADViewSelecter::erase_obj_bbox()
     if (s_closest) {
 	const char **av = (const char **)bu_calloc(3, sizeof(char *), "av");
 	av[0] = "erase";
-	av[1] = bu_vls_cstr(&s_closest->s_bvname);
+	av[1] = bu_vls_cstr(&s_closest->s_name);
 	ged_exec(gedp, 2, av);
 	bu_free(av, "av");
 	return true;
@@ -358,7 +358,7 @@ CADViewSelecter::erase_obj_ray()
     const char **objs = (const char **)bu_calloc(scnt + 1, sizeof(char *), "objs");
     for (int i = 0; i < scnt; i++) {
 	struct bv_scene_obj *s = sset[i];
-	objs[i] = bu_vls_cstr(&s->s_bvname);
+	objs[i] = bu_vls_cstr(&s->s_name);
     }
     if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
 	bu_free(objs, "objs");
@@ -448,7 +448,7 @@ CADViewSelecter::add_obj_bbox()
 	struct bu_vls dpath = BU_VLS_INIT_ZERO;
 	for (int i = 0; i < scnt; i++) {
 	    struct bv_scene_obj *s = sset[i];
-	    bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s->s_bvname));
+	    bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s->s_name));
 	    if (bu_vls_cstr(&dpath)[0] != '/')
 		bu_vls_prepend(&dpath, "/");
 	    if (!ged_selection_insert(gs, bu_vls_cstr(&dpath))) {
@@ -491,7 +491,7 @@ CADViewSelecter::add_obj_bbox()
     }
     if (s_closest) {
 	struct bu_vls dpath = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s_closest->s_bvname));
+	bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s_closest->s_name));
 	if (bu_vls_cstr(&dpath)[0] != '/')
 	    bu_vls_prepend(&dpath, "/");
 	if (!ged_selection_insert(gs, bu_vls_cstr(&dpath))) {
@@ -537,7 +537,7 @@ CADViewSelecter::add_obj_ray()
     const char **objs = (const char **)bu_calloc(scnt + 1, sizeof(char *), "objs");
     for (int i = 0; i < scnt; i++) {
 	struct bv_scene_obj *s = sset[i];
-	objs[i] = bu_vls_cstr(&s->s_bvname);
+	objs[i] = bu_vls_cstr(&s->s_name);
     }
     if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
 	bu_free(objs, "objs");
@@ -633,7 +633,7 @@ CADViewSelecter::rm_obj_bbox()
 	struct bu_vls dpath = BU_VLS_INIT_ZERO;
 	for (int i = 0; i < scnt; i++) {
 	    struct bv_scene_obj *s = sset[i];
-	    bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s->s_bvname));
+	    bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s->s_name));
 	    if (bu_vls_cstr(&dpath)[0] != '/')
 		bu_vls_prepend(&dpath, "/");
 	    ged_selection_remove(gs, bu_vls_cstr(&dpath));
@@ -673,7 +673,7 @@ CADViewSelecter::rm_obj_bbox()
     }
     if (s_closest) {
 	struct bu_vls dpath = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s_closest->s_bvname));
+	bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s_closest->s_name));
 	if (bu_vls_cstr(&dpath)[0] != '/')
 	    bu_vls_prepend(&dpath, "/");
 	ged_selection_remove(gs, bu_vls_cstr(&dpath));
@@ -716,7 +716,7 @@ CADViewSelecter::rm_obj_ray()
     const char **objs = (const char **)bu_calloc(scnt + 1, sizeof(char *), "objs");
     for (int i = 0; i < scnt; i++) {
 	struct bv_scene_obj *s = sset[i];
-	objs[i] = bu_vls_cstr(&s->s_bvname);
+	objs[i] = bu_vls_cstr(&s->s_name);
     }
     if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
 	bu_free(objs, "objs");

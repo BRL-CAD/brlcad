@@ -159,7 +159,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	    struct bu_vls opath = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->s_bvname));
+	    bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->s_name));
 	    const char *av[6];
 	    av[0] = "draw";
 	    av[1] = "-R";
@@ -370,14 +370,14 @@ struct bv_scene_obj *wobj = NULL;
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 		    if (bu_list_len(&cg->s_vlist)) {
-			if (!bu_vls_strcmp(&cg->s_bvname, &calc_target)) {
+			if (!bu_vls_strcmp(&cg->s_name, &calc_target)) {
 			    wobj = cg;
 			    break;
 			}
 		    } else {
 			for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
 			    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
-			    if (!bu_vls_strcmp(&s->s_bvname, &calc_target)) {
+			    if (!bu_vls_strcmp(&s->s_name, &calc_target)) {
 				wobj = s;
 				break;
 			    }
