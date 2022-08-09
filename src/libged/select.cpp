@@ -431,10 +431,14 @@ _selection_put(struct ged_selection_set *s, const char *s_name)
     if (s_it == s->i->m.end())
 	return;
     struct ged_selection *gs = s_it->second.first;
-    delete s_it->second.second;
+    if (gs) {
+	bu_vls_free(&gs->path);
+	BU_PUT(gs, struct ged_selection);
+    }
+    if (s_it->second.second)
+	delete s_it->second.second;
+
     s->i->m.erase(s_it);
-    bu_vls_free(&gs->path);
-    BU_PUT(gs, struct ged_selection);
 }
 
 struct ged_selection *
