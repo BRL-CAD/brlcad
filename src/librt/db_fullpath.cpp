@@ -532,6 +532,8 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	    // the parent comb (if there is one) does in fact contain the specified instance
 	    // of the dp
 	    if (nslash > 0 && pp->fp_names[nslash -1] != RT_DIR_NULL) {
+		// TODO - according to perf db_comb_has_instance is slow, at
+		// least as currently implemented...  CY 2022-08-09
 		if (!db_comb_has_instance(&bool_op, dbip, pp->fp_names[nslash -1], dp, comb_instance_index)) {
 		    // NOT falling through here, since we do have a dp but it's
 		    // not under the parent
