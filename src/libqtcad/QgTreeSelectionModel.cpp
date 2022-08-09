@@ -258,13 +258,12 @@ QgTreeSelectionModel::ged_selection_sync(QgItem *start, struct ged_selection_set
 	return;
     bu_log("ged_selection_sync\n");
 
-    clear_all();
-
     QgModel *m = treeview->m;
     std::queue<QgItem *> to_check;
     if (start && start != m->root()) {
 	to_check.push(start);
     } else {
+	clear_all();
 	for (size_t i = 0; i < m->root()->children.size(); i++) {
 	    to_check.push(m->root()->children[i]);
 	}
