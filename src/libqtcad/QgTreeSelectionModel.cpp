@@ -65,9 +65,17 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 	    ged_selection_set_clear(gs);
     }
 
+#if 0
     QModelIndexList dl = selection.indexes();
     for (long int i = 0; i < dl.size(); i++) {
 	QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
+#else
+    // Above should work (and does on Linux) - using a Windows workaround from
+    // https://stackoverflow.com/q/15123109/2037687 for the moment...
+    QModelIndexList *dl = new QModelIndexList(selection.indexes());
+    for (long int i = 0; i < dl->size(); i++) {
+	QgItem *snode = static_cast<QgItem *>(dl->at(i).internalPointer());
+#endif
 
 	// If we are selecting an already selected node, clear it
 	if (flags & QItemSelectionModel::Select && snode->select_state) {
