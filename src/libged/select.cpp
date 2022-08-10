@@ -794,7 +794,7 @@ ged_selection_set_expand(struct ged_selection_set *s_out, struct ged_selection_s
 		    keep_orig = true;
 	    }
 	    // Expanded - remove original
-	    if (!keep_orig)
+	    if (!keep_orig && s_out == s)
 		_selection_put(s_out, bu_vls_cstr(&ss->path));
 	} else {
 	    // No expansion - keep initial
@@ -906,7 +906,6 @@ ged_selection_set_collapse(struct ged_selection_set *s_out, struct ged_selection
 	bu_log("path size: %zd\n", s_it->second.second->size());
 	split_paths.push_back(s_it->second.second);
     }
-    ged_selection_set_clear(s_out);
 
     std::map<size_t, std::set<std::vector<std::string> *>> grouped_paths;
     for (size_t i = 0; i < split_paths.size(); i++) {
@@ -973,6 +972,7 @@ ged_selection_set_collapse(struct ged_selection_set *s_out, struct ged_selection
     }
 
     // Have final path set, add it to s_out
+    std::vector<std::string> fpaths;
     std::set<std::vector<std::string> *>::iterator fp_it;
     for (fp_it = final_paths.begin(); fp_it != final_paths.end(); fp_it++) {
 	const std::vector<std::string> *v = *fp_it;
@@ -981,12 +981,15 @@ ged_selection_set_collapse(struct ged_selection_set *s_out, struct ged_selection
 	    fpath.append("/");
 	    fpath.append((*v)[i]);
 	}
-	ged_selection_insert(s_out, fpath.c_str());
+	fpaths.push_back(fpath);
     }
 
-    for (size_t i = 0; i < split_paths.size(); i++) {
-	delete split_paths[i];
+    ged_selection_set_clear(s_out);
+
+    for (size_t i = 0; i < fpaths.size(); i++) {
+	ged_selection_insert(s_out, fpaths[i].c_str());
     }
+
     return BRLCAD_OK;
 }
 
