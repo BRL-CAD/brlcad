@@ -139,6 +139,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add basic bot validation so we can have a means to sanity check
+  that vertex, edge, and other indices are valid.
+
 * automatic tops
 
   implement db_tops() to return list of top-level entities.  then,
