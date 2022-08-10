@@ -203,6 +203,7 @@ bot_mesh_info_clbk(struct bv_mesh_lod *lod, void *cb_data)
 
     lod->faces = bot->faces;
     lod->fcnt = bot->num_faces;
+    lod->pcnt = bot->num_vertices;
     lod->points = (const point_t *)bot->vertices;
     lod->points_orig = (const point_t *)bot->vertices;
 
@@ -222,6 +223,7 @@ bot_mesh_info_clear_clbk(struct bv_mesh_lod *lod, void *cb_data)
 
     lod->faces = NULL;
     lod->fcnt = 0;
+    lod->pcnt = 0;
     lod->points = NULL;
     lod->points_orig = NULL;
 

@@ -67,6 +67,7 @@ static int
 gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 {
     int fcnt = lod->fcnt;
+    int pcnt = lod->pcnt;
     const int *faces = lod->faces;
     const point_t *points = lod->points;
     const point_t *points_orig = lod->points_orig;
@@ -147,6 +148,19 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 
 	// Draw all the triangles in faces array
 	for (int i = 0; i < fcnt; i++) {
+
+	    bool bad_face = false;
+	    for (int j = 0; j < 3; j++) {
+		int f_ind = faces[3*i+j];
+		if (f_ind >= pcnt || f_ind < 0) {
+		    bu_log("bad face %d - skipping\n", i);
+		    bad_face = true;
+		    break;
+		}
+	    }
+	    if (bad_face)
+		continue;
+
 	    glBegin(GL_LINE_STRIP);
 	    VMOVE(dpt, points[faces[3*i+0]]);
 	    glVertex3dv(dpt);
@@ -226,6 +240,18 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 
 	// Draw all the triangles in faces array
 	for (int i = 0; i < fcnt; i++) {
+
+	    bool bad_face = false;
+	    for (int j = 0; j < 3; j++) {
+		int f_ind = faces[3*i+j];
+		if (f_ind >= pcnt || f_ind < 0) {
+		    bu_log("bad face %d - skipping\n", i);
+		    bad_face = true;
+		    break;
+		}
+	    }
+	    if (bad_face)
+		continue;
 
 	    // Set surface normal
 	    vect_t ab, ac, norm;

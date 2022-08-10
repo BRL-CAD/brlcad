@@ -963,11 +963,20 @@ POPState::tri_process()
     for (size_t i = 0; i < faces_cnt; i++) {
 	rec triangle[3];
 	// Transform triangle vertices
+	bool bad_face = false;
 	for (size_t j = 0; j < 3; j++) {
-	    triangle[j].x = floor((verts_array[faces_array[3*i+j]][X] - minx) / (maxx - minx) * USHRT_MAX);
-	    triangle[j].y = floor((verts_array[faces_array[3*i+j]][Y] - miny) / (maxy - miny) * USHRT_MAX);
-	    triangle[j].z = floor((verts_array[faces_array[3*i+j]][Z] - minz) / (maxz - minz) * USHRT_MAX);
+	    int f_ind = faces_array[3*i+j];
+	    if ((size_t)f_ind >= vert_cnt || f_ind < 0) {
+		bu_log("bad face %zd - skipping\n", i);
+		bad_face = true;
+		break;
+	    }
+	    triangle[j].x = floor((verts_array[f_ind][X] - minx) / (maxx - minx) * USHRT_MAX);
+	    triangle[j].y = floor((verts_array[f_ind][Y] - miny) / (maxy - miny) * USHRT_MAX);
+	    triangle[j].z = floor((verts_array[f_ind][Z] - minz) / (maxz - minz) * USHRT_MAX);
 	}
+	if (bad_face)
+	    continue;
 
 	// Find the pop up level for this triangle (i.e., when it will first
 	// appear as we step up the zoom levels.)
@@ -1875,7 +1884,9 @@ bg_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
 	l->fcnt = (int)sp->lod_tris.size()/3;
 	l->faces = sp->lod_tris.data();
 	l->points_orig = (const point_t *)sp->lod_tri_pnts.data();
+	l->porig_cnt = (int)sp->lod_tri_pnts.size();
 	l->points = (const point_t *)sp->lod_tri_pnts_snapped.data();
+	l->pcnt = (int)sp->lod_tri_pnts_snapped.size();
     }
     // TODO...
     l->face_normals = NULL;

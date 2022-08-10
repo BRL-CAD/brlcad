@@ -368,7 +368,9 @@ struct bv_mesh_lod {
     const int *faces;
 
     // The vertices used by the faces array
+    int pcnt;
     const point_t *points;      // If using snapped points, that's this array.  Else, points == points_orig.
+    int porig_cnt;
     const point_t *points_orig;
 
     // Optional: per-face-vertex normals
