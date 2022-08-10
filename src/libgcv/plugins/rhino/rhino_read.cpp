@@ -826,7 +826,7 @@ get_all_idef_members(const ONX_Model &model)
  * name is valid and layer index matches requested
  */
 void
-unpack_iref(const ONX_Model& model, const ON_InstanceRef* iref, int index,
+unpack_iref(const ONX_Model& model, const ON_InstanceRef* iref, std::pair<int, int> index,
              std::unordered_map<std::string, std::vector<fastf_t*>>& members)
 {
     const ON_InstanceDefinition* idef = ON_InstanceDefinition::FromModelComponentRef(model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, iref->m_instance_definition_uuid), nullptr);
@@ -847,7 +847,7 @@ unpack_iref(const ONX_Model& model, const ON_InstanceRef* iref, int index,
                         continue;
                     }
                     if (const ON_3dmObjectAttributes* internal_attributes = internal_gc.Attributes(nullptr)) {
-                        if (internal_attributes->m_layer_index == index) {
+                        if (internal_attributes->m_layer_index == index.first || internal_attributes->m_layer_index == index.second) {
                             const std::string internal_name_stdstr = std::string(internal_name.Array());
 
                             fastf_t* matrix = new fastf_t[16];
@@ -911,7 +911,7 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 		continue;
             /* if the layer has refs, add them in accordingly */
 	    if (const ON_InstanceRef* iref = ON_InstanceRef::Cast(mg->Geometry(nullptr))) {
-                unpack_iref(model, iref, moved_layers[layer->Index()], members);
+                unpack_iref(model, iref, std::make_pair(moved_layers[layer->Index()], layer->Index()), members);
                 continue;
             }
             ON_String ns(attributes->Name());
@@ -921,7 +921,7 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 	    if (!gname) {
 		gname = uuidstr;
 	    }
-	    if (attributes->m_layer_index == moved_layers[layer->Index()]) {
+	    if (attributes->m_layer_index == moved_layers[layer->Index()] || attributes->m_layer_index == layer->Index()) {
                 members[std::string(gname)].push_back(nullptr);
 	    }
 	}
