@@ -85,6 +85,10 @@ class CADViewSelecter : public QWidget
 	bool eventFilter(QObject *, QEvent *);
 
     private:
+
+	bool process_obj_bbox(int);
+	bool process_obj_ray(int);
+
 	bool enabled = true;
 	fastf_t px = -FLT_MAX;
 	fastf_t py = -FLT_MAX;
