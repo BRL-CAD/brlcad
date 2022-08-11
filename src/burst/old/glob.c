@@ -76,8 +76,8 @@ int userinterrupt;		/* has the ray trace been interrupted */
 char airfile[LNBUFSZ]={0};	/* input file name for burst air ids */
 char armorfile[LNBUFSZ]={0};	/* input file name for burst armor ids */
 char burstfile[LNBUFSZ]={0};	/* input file name for burst points */
-char cmdbuf[LNBUFSZ];
-char cmdname[LNBUFSZ];
+char cmdbuf[LNBUFSZ]={0};
+char cmdname[LNBUFSZ]={0};
 char colorfile[LNBUFSZ]={0};	/* ident range-to-color file name */
 char critfile[LNBUFSZ]={0};	/* input file for critical components */
 char errfile[LNBUFSZ]={0};	/* errors/diagnostics log file name */
@@ -88,13 +88,13 @@ char histfile[LNBUFSZ]={0};	/* histogram file name (statistics) */
 char objects[LNBUFSZ]={0};	/* list of objects from MGED file */
 char outfile[LNBUFSZ]={0};	/* burst point library output file name */
 char plotfile[LNBUFSZ]={0};	/* 3-D UNIX plot file name (debugging) */
-char scrbuf[LNBUFSZ];		/* scratch buffer for temporary use */
+char scrbuf[LNBUFSZ]={0};	/* scratch buffer for temporary use */
 char scriptfile[LNBUFSZ]={0};	/* shell script file name */
-char shotfile[LNBUFSZ];		/* input file of firing coordinates */
+char shotfile[LNBUFSZ]={0};	/* input file of firing coordinates */
 char shotlnfile[LNBUFSZ]={0};	/* shotline output file name */
-char title[TITLE_LEN];		/* title of MGED target description */
-char timer[TIMER_LEN];		/* CPU usage statistics */
-char tmpfname[TIMER_LEN];	/* temporary file for logging input */
+char title[TITLE_LEN]={0};	/* title of MGED target description */
+char timer[TIMER_LEN]={0};	/* CPU usage statistics */
+char tmpfname[TIMER_LEN]={0};	/* temporary file for logging input */
 
 char *cmdptr;
 
@@ -170,8 +170,8 @@ int zoom = 1;		/* magnification factor on frame buffer */
 struct rt_i *rtip = RTI_NULL; /* model specific access from librt */
 
 /* signal handlers */
-void (*norml_sig)();	/* active during interactive operation */
-void (*abort_sig)(); /* active during ray tracing only */
+void (*norml_sig)(int);	/* active during interactive operation */
+void (*abort_sig)(int); /* active during ray tracing only */
 
 /*
  * Local Variables:

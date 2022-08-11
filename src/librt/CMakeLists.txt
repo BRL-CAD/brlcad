@@ -375,6 +375,35 @@ if(HIDE_INTERNAL_SYMBOLS)
   endif (TARGET librt-obj)
 endif(HIDE_INTERNAL_SYMBOLS)
 
+# loudly append an underscore on musl so that we build by default but           
+# not without protest.
+find_program(MUSL_LD NAMES /lib/ld-musl-x86_64.so.1) 
+if (MUSL_LD)
+  message("WARNING: MUSL LibC Detected.  Protecting BRL-CAD's librt.
+
+     MUSL's dynamic linker erroneously overrides AT RUNTIME 'librt'
+     references regardless of rpath or search logic specified during
+     compilation and linking.  MUSL claims POSIX allows this despite
+     POSIX not defining any dynamic linker behavior whatsoever. They
+     (reportedly) do so to ease porting glibc-assuming apps to their
+     libc, auto-converting those linked with -lm, -lpthread, -lrt
+     and such during runtime loading regardless of search path logic.
+
+     Legacy mention in POSIX 'c99' man page would allow (only) the
+     c99 tool to treat BRL-CAD's librt as undefined (not C++, fort77,
+     or other tools like ld), however clang/gcc/c99 compiling and
+     linking are all well-behaved. Issue reported with suggestion to
+     only override as fallback behavior in July 2022.
+
+     Until MUSL changes (see root/ldso/dynlink.c), a workaround is
+     employed to avoid user action.  Setting LD_PRELOAD also works.
+
+     WARNING: MUSL ENVIRONMENT UNSUPPORTED. DO NOT RELY ON 'librt_'
+     WORKAROUND. PLEASE REPORT IF YOU DEVELOP AGAINST BRL-CAD LIBRT
+     AND ENCOUNTER THIS MESSAGE: devs@brlcad.org")
+  set_target_properties(librt PROPERTIES OUTPUT_NAME "librt_")
+endif (MUSL_LD)
+
 # The following is build code for test applications used during
 # development
 #
@@ -408,3 +437,4 @@ CMAKEFILES(
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
+

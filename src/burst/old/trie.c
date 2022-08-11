@@ -84,30 +84,36 @@ addTrie(char *name, Trie **triepp)
 
 
 Func *
-getTrie(char *name, Trie *triep)
+getTrie(char *name, int buflen, Trie *triep)
 {
+    int orig_buflen = buflen;
     Trie *curp = NULL;
-    assert(triep != TRIE_NULL);
+
+    if (triep == TRIE_NULL)
+	return NULL_FUNC;
 
     /* Traverse next links to end of region name. */
     for (; triep != TRIE_NULL; triep = triep->n.t_next) {
 	curp = triep;
 	if (*name == NUL) {
 	    /* End of user-typed name. */
-	    if (triep->n.t_altr != TRIE_NULL)
+	    if (triep->n.t_altr != TRIE_NULL) {
 		/* Ambiguous at this point. */
 		return NULL_FUNC;
-	    else {
-		/* Complete next character. */
-		*name++ = triep->n.t_char;
-		*name = NUL;
+	    } else {
+		if (buflen > 1) {
+		    /* Complete next character. */
+		    *name++ = triep->n.t_char;
+		    buflen--;
+		    *name = NUL;
+		}
 	    }
-	} else
-	    if (*name == '*')
+	} else {
+	    if (*name == '*') {
 		return matchTrie(triep);
-	    else	/* Not at end of user-typed name yet, traverse
+	    } else {	/* Not at end of user-typed name yet, traverse
 			   alternate list to find current letter.
-			*/ {
+			*/
 		for (;
 		     triep != TRIE_NULL
 			 &&	*name != triep->n.t_char;
@@ -116,15 +122,22 @@ getTrie(char *name, Trie *triep)
 		    ;
 		if (triep == TRIE_NULL) {
 		    /* Non-existent name, truncate bad part. */
-		    *name = NUL;
+		    if (buflen > 0)
+			*name = NUL;
 		    return NULL_FUNC;
-		} else
+		} else {
 		    name++;
+		    buflen--;
+		}
 	    }
+	}
     }
     /* Clobber key-stroke, and return it. */
-    --name;
-    *name = NUL;
+    if (buflen > 0 && orig_buflen != buflen) {
+	--name;
+	*name = NUL;
+	buflen++;
+    }
     if (curp == TRIE_NULL) {
 	bu_exit(BRLCAD_ERROR, "curp == TRIE_NULL, trie.c line %d\n", __LINE__);
     }

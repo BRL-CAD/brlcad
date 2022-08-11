@@ -76,11 +76,11 @@ path_match(const char ***completions, struct bu_vls *prefix, struct db_i *dbip, 
     std::string seed;
     std::string context;
     struct directory *dp = db_lookup(dbip, objs[objs.size()-1].c_str(), LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL && lstr[lstr.length() - 1] != '/') {
+    if (dp == RT_DIR_NULL && (!lstr.length() || lstr[lstr.length() - 1] != '/')) {
 	seed = objs[objs.size() - 1];
 	context = objs[objs.size() - 2];
     } else {
-	if (lstr[lstr.length() - 1] != '/') {
+	if (lstr.length() && lstr[lstr.length() - 1] != '/') {
 	    seed = objs[objs.size() - 1];
 	    context = objs[objs.size() - 2];
 	} else {

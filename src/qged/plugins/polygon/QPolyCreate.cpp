@@ -28,6 +28,7 @@
 #include <QGroupBox>
 #include "../../app.h"
 #include "QPolyCreate.h"
+#include "qtcad/SignalFlags.h"
 
 QPolyCreate::QPolyCreate()
     : QWidget()
@@ -150,11 +151,9 @@ QPolyCreate::~QPolyCreate()
 void
 QPolyCreate::finalize(bool)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl || !p)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m || !p)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -173,7 +172,7 @@ QPolyCreate::finalize(bool)
 	    bv_obj_put(p);
 	    do_bool = false;
 	    p = NULL;
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return;
 	}
 
@@ -233,7 +232,7 @@ QPolyCreate::finalize(bool)
 	    bv_obj_put(p);
 	    do_bool = false;
 	    p = NULL;
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return;
 	}
 
@@ -268,7 +267,7 @@ QPolyCreate::finalize(bool)
 	    }
 	    if (sk_name && db_lookup(gedp->dbip, sk_name, LOOKUP_QUIET) == RT_DIR_NULL) {
 		ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
-		emit db_updated();
+		emit view_updated(QTCAD_VIEW_DB);
 	    }
 	    bu_free(sk_name, "name cpy");
 	} else {
@@ -283,17 +282,15 @@ QPolyCreate::finalize(bool)
 
     do_bool = false;
     p = NULL;
-    emit view_updated(&gedp->ged_gvp);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 void
 QPolyCreate::do_vpoly_copy()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -357,17 +354,15 @@ QPolyCreate::do_vpoly_copy()
 
     do_bool = false;
     p = NULL;
-    emit view_updated(&gedp->ged_gvp);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 void
 QPolyCreate::do_import_sketch()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -425,7 +420,7 @@ QPolyCreate::do_import_sketch()
 
     do_bool = false;
     p = NULL;
-    emit view_updated(&gedp->ged_gvp);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 void
@@ -443,11 +438,9 @@ QPolyCreate::sketch_sync_str(const QString &)
 void
 QPolyCreate::sketch_sync()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp) {
 	ps->sketch_name->setPlaceholderText("No .g file open");
@@ -505,11 +498,9 @@ QPolyCreate::view_sync_str(const QString &)
 void
 QPolyCreate::view_sync()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -542,11 +533,9 @@ void
 QPolyCreate::toplevel_config(bool)
 {
     // Initialize
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -577,17 +566,15 @@ QPolyCreate::toplevel_config(bool)
     }
 
     if (draw_change && gedp)
-	emit view_updated(&gedp->ged_gvp);
+	emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 bool
 QPolyCreate::eventFilter(QObject *, QEvent *e)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return false;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return false;
@@ -612,6 +599,10 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
     }
 
     if (!m_e)
+	return false;
+
+    // If we have modifiers, we're most likely doing shift grips
+    if (m_e->modifiers() != Qt::NoModifier)
 	return false;
 
     printf("polygon add\n");
@@ -687,7 +678,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    // It doesn't get a "proper" name until its finalized
 	    bu_vls_printf(&p->s_uuid, "_tmp_view_polygon");
 
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
 
@@ -704,7 +695,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 #endif
 	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_APPEND);
 
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
 
@@ -751,7 +742,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	// with the view's x,y coordinates
 	if (m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
 	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
     }

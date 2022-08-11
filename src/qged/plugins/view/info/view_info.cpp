@@ -35,7 +35,7 @@ view_info_tool_create()
     vview->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     vview->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     QToolPaletteElement *el = new QToolPaletteElement(obj_icon, vview);
-    QObject::connect(el, &QToolPaletteElement::app_view_sync, vmodel, &CADViewModel::refresh);
+    QObject::connect(el, &QToolPaletteElement::element_view_update, vmodel, &CADViewModel::refresh);
 
     return el;
 }

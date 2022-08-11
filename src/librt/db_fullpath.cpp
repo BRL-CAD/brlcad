@@ -375,8 +375,6 @@ _db_comb_instance(matp_t m, int *icnt, int *bval, int bool_val, const struct db_
     RT_CK_TREE(tp);
 
     switch (tp->tr_op) {
-
-
 	case OP_DB_LEAF:
 	    if (!BU_STR_EQUAL(cp, tp->tr_l.tl_name))
 		return 0;               /* NO-OP */
@@ -408,6 +406,8 @@ _db_comb_instance(matp_t m, int *icnt, int *bval, int bool_val, const struct db_
 	    bu_log("_db_comb_instance: bad op %d\n", tp->tr_op);
 	    bu_bomb("_db_comb_instance\n");
     }
+
+    return 0;
 }
 
 static int
@@ -532,6 +532,8 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	    // the parent comb (if there is one) does in fact contain the specified instance
 	    // of the dp
 	    if (nslash > 0 && pp->fp_names[nslash -1] != RT_DIR_NULL) {
+		// TODO - according to perf db_comb_has_instance is slow, at
+		// least as currently implemented...  CY 2022-08-09
 		if (!db_comb_has_instance(&bool_op, dbip, pp->fp_names[nslash -1], dp, comb_instance_index)) {
 		    // NOT falling through here, since we do have a dp but it's
 		    // not under the parent
@@ -850,9 +852,9 @@ db_path_to_mat(
 	return -1;
 
     mat_t all_m = MAT_INIT_IDN;
-    mat_t cur_m = MAT_INIT_IDN;
     mat_t mtmp = MAT_INIT_IDN;
     for (size_t i = 1; i < pathp->fp_len; i++) {
+	mat_t cur_m = MAT_INIT_IDN;
 	if (depth && i + 1 > (size_t)depth)
 	    break;
 	struct directory *cdp = pathp->fp_names[i-1];

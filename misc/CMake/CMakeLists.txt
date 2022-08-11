@@ -1,4 +1,5 @@
 set(cmake_ignore_files
+  BRLCAD_API_Flag.cmake
   BRLCAD_Build_Types.cmake
   BRLCAD_CPack.cmake
   BRLCAD_CPackOptions.cmake.in
@@ -26,6 +27,7 @@ set(cmake_ignore_files
   FindADAPTAGRAMS.cmake
   FindASTYLE.cmake
   FindAppleseed.cmake
+  FindASSIMP.cmake
   FindBlosc.cmake
   FindBSON.cmake
   FindFontconfig.cmake

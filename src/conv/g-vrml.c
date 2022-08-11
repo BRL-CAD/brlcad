@@ -229,7 +229,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
     RT_CK_FULL_PATH(pathp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-    if (!(dp->d_flags & RT_DIR_COMB)) {
+    if (!dp || !(dp->d_flags & RT_DIR_COMB)) {
 	/* object is not a combination therefore can not be a light */
 	return 0;
     }
@@ -272,6 +272,8 @@ select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *
 
     RT_CK_FULL_PATH(pathp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
+    if (!dp)
+	return 0;
 
     id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
     if (id < 0) {
@@ -659,10 +661,10 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		bu_sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		bu_sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
 		NMG_debug = nmg_debug;
 		break;
 	    case 'u':
@@ -695,7 +697,7 @@ main(int argc, char **argv)
 
     if (out_file == NULL) {
 	fp_out = stdout;
-	setmode(fileno(fp_out), O_BINARY);
+	(void)setmode(fileno(fp_out), O_BINARY);
     } else {
 	if ((fp_out = fopen(out_file, "wb")) == NULL) {
 	    perror(argv[0]);

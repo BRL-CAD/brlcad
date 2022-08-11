@@ -1550,12 +1550,14 @@ int gl_draw_display_list(struct dm *dmp, struct display_list *obj)
 	(void)dm_make_current(dmp);
 	(void)gl_beginDList(dmp, sp->s_dlist);
 	if (sp->s_iflag == UP)
-	    (void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_os.transparency);
-	else
+	    (void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_os->transparency);
+	else {
+	    // TODO - do we need to respect override color here??
 	    (void)dm_set_fg(dmp,
 		    (unsigned char)sp->s_color[0],
 		    (unsigned char)sp->s_color[1],
-		    (unsigned char)sp->s_color[2], 0, sp->s_os.transparency);
+		    (unsigned char)sp->s_color[2], 0, sp->s_os->transparency);
+	}
 	(void)dm_draw_vlist(dmp, (struct bv_vlist *)&sp->s_vlist);
 	(void)gl_endDList(dmp);
     }

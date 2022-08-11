@@ -57,14 +57,20 @@ struct ged_selection_sets {
 // Routines to manage a set of selection sets
 GED_EXPORT extern struct ged_selection_sets *ged_selection_sets_create(struct ged *gedp);
 GED_EXPORT extern void ged_selection_sets_destroy(struct ged_selection_sets *s);
-GED_EXPORT int ged_selection_set_cpy(struct ged_selection_sets *s, const char *from, const char *to);
+
+// Routines for creating and destroying temporary sets (normally should be created within
+// the context of a selection set - these are for temporary processing sets)
+GED_EXPORT struct ged_selection_set *ged_selection_set_create(const char *s_name, struct ged *gedp);
+GED_EXPORT void ged_selection_set_destroy(struct ged_selection_set *);
 
 // Routines to retrieve and remove individual selection sets
 GED_EXPORT struct ged_selection_set *ged_selection_sets_get(struct ged_selection_sets *s, const char *s_path);
 GED_EXPORT void ged_selection_sets_put(struct ged_selection_sets *s, const char *s_path);
+GED_EXPORT int ged_selection_set_cpy(struct ged_selection_set *to, struct ged_selection_set *from);
 GED_EXPORT size_t ged_selection_sets_lookup(struct bu_ptbl *sets, struct ged_selection_sets *s, const char *pattern);
 
 // Retrieve data.
+GED_EXPORT int ged_selection_find(struct ged_selection_set *s, const char *s_name);
 GED_EXPORT size_t ged_selection_lookup(struct bu_ptbl *matches, struct ged_selection_set *s, const char *s_path);
 GED_EXPORT size_t ged_selection_lookup_fp(struct bu_ptbl *matches, struct ged_selection_set *s, struct db_full_path *fp);
 GED_EXPORT int ged_selection_set_list(char ***keys, struct ged_selection_set *s);
@@ -83,6 +89,13 @@ GED_EXPORT int ged_selection_set_collapse(struct ged_selection_set *s_out, struc
 // Given a set, associate the DBOBJ scene objects with any matching selection objects.
 GED_EXPORT void ged_selection_assign_objs(struct ged_selection_set *s);
 GED_EXPORT void ged_selection_toggle_illum(struct ged_selection_set *s, char ill_state);
+
+// Given a set, return the hash of its contents
+GED_EXPORT unsigned long long ged_selection_hash_set(struct ged_selection_set *s);
+
+// Given a set of sets, return the hash of all the set names and their contents
+GED_EXPORT unsigned long long ged_selection_hash_sets(struct ged_selection_sets *ss);
+
 
 /**
  * Returns a list of items within the previously defined rectangle.

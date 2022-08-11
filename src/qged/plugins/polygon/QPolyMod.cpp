@@ -172,11 +172,9 @@ QPolyMod::app_mod_names_reset(void *)
 void
 QPolyMod::mod_names_reset()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -241,11 +239,9 @@ QPolyMod::poly_type_settings(struct bv_polygon *ip)
 void
 QPolyMod::polygon_update_props()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -271,18 +267,16 @@ QPolyMod::polygon_update_props()
 
     // TODO - this should be a visual-properties-only update, but libbg doesn't support that yet.
     bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
-    emit view_updated(&gedp->ged_gvp);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 void
 QPolyMod::toplevel_config(bool)
 {
     // Initialize
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     bool draw_change = false;
 
@@ -320,7 +314,7 @@ QPolyMod::toplevel_config(bool)
     }
 
     if (draw_change && gedp)
-	emit view_updated(&gedp->ged_gvp);
+	emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 
@@ -344,26 +338,22 @@ QPolyMod::clear_pnt_selection(bool checked)
 
     bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
 
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
 
-    emit view_updated(&gedp->ged_gvp);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 void
 QPolyMod::select(const QString &poly)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -451,11 +441,9 @@ QPolyMod::toggle_closed_poly(bool checked)
     append_pnt->blockSignals(false);
     select_pnt->blockSignals(false);
 
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -489,17 +477,15 @@ QPolyMod::toggle_closed_poly(bool checked)
 
     toplevel_config(false);
 
-    emit view_updated(&gedp->ged_gvp);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 void
 QPolyMod::apply_bool_op()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl || !p)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m || !p)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -531,17 +517,15 @@ QPolyMod::apply_bool_op()
 	}
     }
 
-    emit view_updated(&gedp->ged_gvp);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 void
 QPolyMod::align_to_poly()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl || !p)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m || !p)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -550,17 +534,15 @@ QPolyMod::align_to_poly()
     bv_sync(gedp->ged_gvp, &ip->v);
     bv_update(gedp->ged_gvp);
 
-    emit view_updated(&gedp->ged_gvp);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 void
 QPolyMod::delete_poly()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl || !p)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m || !p)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -576,7 +558,7 @@ QPolyMod::delete_poly()
 	p = NULL;
     }
 
-    emit view_updated(&gedp->ged_gvp);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 void
@@ -595,11 +577,9 @@ QPolyMod::sketch_name_edit_str(const QString &)
 void
 QPolyMod::sketch_name_edit()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp) {
 	ps->sketch_name->setPlaceholderText("No .g file open");
@@ -674,11 +654,9 @@ QPolyMod::sketch_name_edit()
 void
 QPolyMod::sketch_name_update()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -737,7 +715,7 @@ QPolyMod::sketch_name_update()
     }
 
     ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
-    emit db_updated();
+    emit view_updated(QTCAD_VIEW_DB);
 
     bu_free(sk_name, "name copy");
 }
@@ -753,11 +731,9 @@ QPolyMod::view_name_edit_str(const QString &)
 void
 QPolyMod::view_name_edit()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -790,11 +766,9 @@ QPolyMod::view_name_edit()
 void
 QPolyMod::view_name_update()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -826,18 +800,16 @@ QPolyMod::view_name_update()
 
     bu_vls_sprintf(&p->s_uuid, "%s", vname);
     bu_free(vname, "vname");
-    emit view_updated(&gedp->ged_gvp);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 
 }
 
 bool
 QPolyMod::eventFilter(QObject *, QEvent *e)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return false;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return false;
@@ -902,7 +874,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 #endif
 	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_APPEND);
 
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
 
@@ -915,7 +887,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 	    p->s_v->gv_mouse_y = m_e->y();
 #endif
 	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_SELECT);
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
 
@@ -940,22 +912,22 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	    if (!move_mode->isChecked() && select_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
 		bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_MOVE);
-		emit view_updated(&gedp->ged_gvp);
+		emit view_updated(QTCAD_VIEW_REFRESH);
 	    } else if (move_mode->isChecked()) {
 		bu_log("move polygon mode\n");
 		clear_pnt_selection(false);
 		bv_move_polygon(p);
-		emit view_updated(&gedp->ged_gvp);
+		emit view_updated(QTCAD_VIEW_REFRESH);
 	    } else {
 		bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
-		emit view_updated(&gedp->ged_gvp);
+		emit view_updated(QTCAD_VIEW_REFRESH);
 	    }
 	    return true;
 	}
     }
 
     if (m_e->type() == QEvent::MouseButtonRelease) {
-	emit view_updated(&gedp->ged_gvp);
+	emit view_updated(QTCAD_VIEW_REFRESH);
 	return true;
     }
 

@@ -32,6 +32,7 @@
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "qtcad/QtAppExecDialog.h"
+#include "qtcad/QgTreeSelectionModel.h"
 #include "app.h"
 #include "fbserv.h"
 
@@ -87,31 +88,90 @@ CADApp::initialize()
     //app_cmd_map[QString("open")] = &app_open;
     app_cmd_map[QString("close")] = &app_close;
     app_cmd_map[QString("man")] = &app_man;
+
+    QObject::connect(this, &CADApp::view_update, this, &CADApp::do_view_update);
 }
 
 void
 CADApp::do_quad_view_change(QtCADView *cv)
 {
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    m->gedp->ged_gvp = cv->view();
-    emit view_change(&m->gedp->ged_gvp);
+    mdl->gedp->ged_gvp = cv->view();
+    emit view_update(QTCAD_VIEW_REFRESH);
 }
 
 void
-CADApp::do_view_change(struct bview **nv)
+CADApp::do_view_changed(unsigned long long flags)
 {
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    if (nv)
-	m->gedp->ged_gvp = *nv;
-    emit view_change(&m->gedp->ged_gvp);
+    emit view_update(flags);
 }
 
 void
-CADApp::do_db_change()
+CADApp::do_view_update(unsigned long long flags)
 {
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    emit m->mdl_changed_db(NULL);
+    if (flags & QTCAD_VIEW_SELECT) {
+	bu_log("\n\napp select update\n\n");
+	// Get the paths of all drawn solid objects and the
+	// expanded list of all selected objects
+	std::set<std::string> drawn_solids;
+	std::map<std::string, struct bv_scene_obj *> drawn_objs;
+	struct bu_ptbl *sg = bv_view_objs(mdl->gedp->ged_gvp, BV_DB_OBJS);
+	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
+	    for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
+		struct bv_scene_obj *sc = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, j);
+		drawn_solids.insert(std::string(bu_vls_cstr(&sc->s_name)));
+		drawn_objs[(std::string(bu_vls_cstr(&sc->s_name)))] = sc;
+	    }
+	}
+	std::set<std::string>::iterator s_it;
+	for (s_it = drawn_solids.begin(); s_it != drawn_solids.end(); s_it++) {
+	    std::cout << *s_it << "\n";
+	}
+
+	std::set<std::string> selected_solids;
+	struct ged_selection_set *tmp_set = ged_selection_set_create(NULL, mdl->gedp);
+	ged_selection_set_expand(tmp_set, mdl->gedp->ged_cset);
+	char **spaths = NULL;
+	int ocnt = ged_selection_set_list(&spaths, tmp_set);
+	for (int i = 0; i < ocnt; i++) {
+	    selected_solids.insert(std::string(spaths[i]));
+	}
+	bu_free(spaths, "spaths");
+	ged_selection_set_destroy(tmp_set);
+
+	for (s_it = selected_solids.begin(); s_it != selected_solids.end(); s_it++) {
+	    std::cout << "selected: " << *s_it << "\n";
+	}
+
+	std::set<std::string> unselected_objs;
+	std::set_difference(drawn_solids.begin(), drawn_solids.end(), selected_solids.begin(), selected_solids.end(), std::inserter(unselected_objs, unselected_objs.end()));
+	for (s_it = unselected_objs.begin(); s_it != unselected_objs.end(); s_it++) {
+	    std::cout << "drawn, unselected: " << *s_it << "\n";
+	    drawn_objs[*s_it]->s_iflag = DOWN;
+	    drawn_objs[*s_it]->s_os->s_line_width= 1;
+	    drawn_objs[*s_it]->s_os->color_override = 0;
+	    // Mark as stale so the display knows to update object data (e.g. LoD)
+	    bv_obj_stale(drawn_objs[*s_it]);
+	}
+
+	std::set<std::string> selected_objs = drawn_solids;
+	for (s_it = unselected_objs.begin(); s_it != unselected_objs.end(); s_it++) {
+	    selected_objs.erase(*s_it);
+	}
+	for (s_it = selected_objs.begin(); s_it != selected_objs.end(); s_it++) {
+	    std::cout << "drawn, selected: " << *s_it << "\n";
+	    drawn_objs[*s_it]->s_iflag = UP;
+	    drawn_objs[*s_it]->s_os->s_line_width= 2;
+	    drawn_objs[*s_it]->s_os->color_override = 1;
+	    drawn_objs[*s_it]->s_os->color[0] = 255;
+	    drawn_objs[*s_it]->s_os->color[1] = 255;
+	    drawn_objs[*s_it]->s_os->color[2] = 255;
+	    // Mark as stale so the display knows to update object data (e.g. LoD)
+	    bv_obj_stale(drawn_objs[*s_it]);
+	}
+
+	emit view_update(QTCAD_VIEW_REFRESH);
+    }
 }
 
 void
@@ -122,7 +182,9 @@ CADApp::tree_update()
     CADPalette *v = NULL;
     CADPalette *vc = w->vc;
     CADPalette *oc = w->oc;
-    switch (mdl->interaction_mode) {
+    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)treeview->selectionModel();
+
+    switch (selm->interaction_mode) {
 	case 0:
 	    v = vc;
 	    break;
@@ -142,7 +204,6 @@ CADApp::tree_update()
 void
 CADApp::open_file()
 {
-    QgModel *m = (QgModel *)mdl->sourceModel();
     const char *file_filters = "BRL-CAD (*.g *.asc);;Rhino (*.3dm);;STEP (*.stp *.step);;All Files (*)";
     QString fileName = QFileDialog::getOpenFileName((QWidget *)this->w,
 	    "Open Geometry File",
@@ -156,7 +217,7 @@ CADApp::open_file()
 	av[0] = "open";
 	av[1] = bu_strdup(fileName.toLocal8Bit().data());
 	av[2] = NULL;
-	int ret = m->run_cmd(m->gedp->ged_result_str, ac, (const char **)av);
+	int ret = mdl->run_cmd(mdl->gedp->ged_result_str, ac, (const char **)av);
 	bu_free((void *)av[1], "filename cpy");
 	if (w) {
 	    if (ret) {
@@ -168,7 +229,7 @@ CADApp::open_file()
     }
 
     // Let the shell's completer know what the current gedp is (if any)
-    w->cshellcomp->gedp = m->gedp;
+    w->cshellcomp->gedp = mdl->gedp;
 }
 
 
@@ -192,6 +253,7 @@ qged_db_changed(struct db_i *UNUSED(dbip), struct directory *dp, int ctype, void
 int
 qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *changed)
 {
+    int view_flags = 0;
     struct db_i *dbip = gedp->dbip;
     struct bview *v = gedp->ged_gvp;
     struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
@@ -242,6 +304,7 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 	av[2] = NULL;
 	ged_exec(gedp, 2, av);
 	bu_vls_free(&opath);
+	view_flags |= QTCAD_VIEW_DRAWN;
     }
     for (r_it = regen.begin(); r_it != regen.end(); r_it++) {
 	struct bv_scene_group *cg = *r_it;
@@ -254,9 +317,10 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 	av[3] = NULL;
 	ged_exec(gedp, 3, av);
 	bu_vls_free(&opath);
+	view_flags |= QTCAD_VIEW_DRAWN;
     }
 
-    return (int)(regen.size() + erase.size());
+    return view_flags;
 }
 
 extern "C" void
@@ -277,16 +341,15 @@ int
 CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
     int ret = BRLCAD_OK;
+    int view_flags = 0;
 
     if (!mdl || !argc || !argv)
 	return BRLCAD_ERROR;
 
-    QgModel *m = (QgModel *)mdl->sourceModel();
-
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = mdl->gedp;
 
     /* Set the local unit conversions */
-    if (gedp->dbip && w->c4) {
+    if (gedp->dbip) {
 	for (int i = 1; i < 5; i++) {
 	    QtCADView *c = w->c4->get(i);
 	    c->set_base2local(gedp->dbip->dbi_base2local);
@@ -299,9 +362,8 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// If we're not in the middle of an incremental command,
 	// stash the view state(s) for later comparison and make
 	// sure our unit conversions are right
-	if (w->c4)
-	    w->c4->stash_hashes();
-
+	w->c4->stash_hashes();
+	select_hash = ged_selection_hash_sets(gedp->ged_selection_sets);
 
 	// If we need command-specific subprocess awareness for
 	// a command, set it up
@@ -312,7 +374,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	}
 
 	// Ask the model to execute the command
-	ret = m->run_cmd(msg, argc, argv);
+	ret = mdl->run_cmd(msg, argc, argv);
 
 	gedp->ged_subprocess_init_callback = NULL;
 	gedp->ged_subprocess_end_callback = NULL;
@@ -329,21 +391,24 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    av[i] = tmp_av[i];
 	}
 	int ac = (int)tmp_av.size();
-	ret = m->run_cmd(msg, ac, (const char **)av);
+	ret = mdl->run_cmd(msg, ac, (const char **)av);
     }
 
     if (!(ret & BRLCAD_MORE)) {
 
 	// Handle any necessary redrawing.
-	if (qged_view_update(gedp, &m->changed_dp) > 0) {
-	    if (w->c4)
-		w->c4->need_update(NULL);
-	}
+	view_flags = qged_view_update(gedp, &mdl->changed_dp);
 
 	/* Check if the ged_exec call changed either the display manager or
 	 * the view settings - in either case we'll need to redraw */
-	if (w->c4)
-	    view_dirty = w->c4->diff_hashes();
+	// TODO - there would be some utility in checking only the camera or only
+	// the who list, since we can set different update flags for each case...
+	if (w->c4->diff_hashes())
+	    view_flags |= QTCAD_VIEW_DRAWN;
+
+	unsigned long long cs_hash = ged_selection_hash_sets(gedp->ged_selection_sets);
+	if (cs_hash != select_hash)
+	    view_flags |= QTCAD_VIEW_SELECT;
     }
 
     if (ret & BRLCAD_MORE) {
@@ -372,6 +437,11 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		history_mark_end = console->historyCount() - 1;
 	}
     }
+
+    // TODO - should be able to emit this regardless - if execution methods
+    // are well behaved, they'll just ignore a zero flags value...
+    if (view_flags)
+	emit view_update(view_flags);
 
     return ret;
 }
@@ -402,8 +472,6 @@ CADApp::run_qcmd(const QString &command)
 	return;
     }
 
-    QgModel *m  = (QgModel *)mdl->sourceModel();
-
     // make an argv array
     struct bu_vls ged_prefixed = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&ged_prefixed, "%s", cmd);
@@ -428,16 +496,11 @@ CADApp::run_qcmd(const QString &command)
 	if (bu_vls_strlen(&msg) > 0 && console) {
 	    console->printString(bu_vls_cstr(&msg));
 	}
-	if (view_dirty && m->gedp) {
-	    emit view_change(&m->gedp->ged_gvp);
-	    view_dirty = false;
-	}
     }
-
 
     if (console) {
 	if (ret & BRLCAD_MORE) {
-	    console->prompt(bu_vls_cstr(m->gedp->ged_result_str));
+	    console->prompt(bu_vls_cstr(mdl->gedp->ged_result_str));
 	} else {
 	    console->prompt("$ ");
 	    if (history_mark_start >= 0 && history_mark_end >= 0) {
@@ -448,8 +511,8 @@ CADApp::run_qcmd(const QString &command)
 	}
     }
 
-    if (m->gedp) {
-	bu_vls_trunc(m->gedp->ged_result_str, 0);
+    if (mdl->gedp) {
+	bu_vls_trunc(mdl->gedp->ged_result_str, 0);
     }
 
     bu_free((void *)cmd, "cmd");

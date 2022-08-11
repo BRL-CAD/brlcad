@@ -149,6 +149,21 @@ if(HAVE_NULLPTR)
   add_definitions(-DNULL_AS_NULLPTR)
 endif(HAVE_NULLPTR)
 
+# see if we have std::isnan
+set(isnan_src "
+#include <cmath>
+#include <iostream>
+int main() {
+  if (std::isnan(0.0))
+     std::cout << \"0.0 is nan\";
+  return 0;
+}")
+check_cxx_source_runs("${isnan_src}" HAVE_STD_IS_NAN)
+if(HAVE_STD_IS_NAN)
+  add_definitions(-DHAVE_STD_IS_NAN)
+endif(HAVE_STD_IS_NAN)
+
+
 if(MSVC)
   add_definitions(-DUSE_WIN32_MUTEX)
   add_definitions(-DNOMINMAX)

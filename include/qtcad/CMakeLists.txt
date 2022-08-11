@@ -8,7 +8,7 @@ set(qtcad_headers
   QgDockWidget.h
   QgEdit.h
   QgModel.h
-  QgSelectionProxyModel.h
+  QgTreeSelectionModel.h
   QgTreeView.h
   QgUtil.h
   QtAppExecDialog.h
@@ -18,6 +18,7 @@ set(qtcad_headers
   QtConsoleListener.h
   QtGL.h
   QtSW.h
+  SignalFlags.h
   defines.h
   gInstance.h
   )

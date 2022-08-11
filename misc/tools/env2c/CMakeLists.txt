@@ -56,6 +56,19 @@ endif(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND 
 add_executable(env2c env2c.cxx)
 target_link_libraries(env2c Threads::Threads)
 
+set(STACK_SIZE_FLAGS "-Wl,-z,stack-size=4194304")
+if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.17")
+  include(CheckLinkerFlag)
+  check_linker_flag("CXX" "${STACK_SIZE_FLAGS}" HAVE_STACK_SIZE_FLAG)
+else (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.17")
+  include(CheckCXXCompilerFlag)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${STACK_SIZE_FLAGS}")
+  check_cxx_compiler_flag("${STACK_SIZE_FLAGS}" HAVE_STACK_SIZE_FLAG)
+endif (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.17")
+if (HAVE_STACK_SIZE_FLAG)
+  target_link_options(env2c PRIVATE "${STACK_SIZE_FLAGS}")
+endif (HAVE_STACK_SIZE_FLAG)
+
 if (O3_COMPILER_FLAG)
   # If we have the O3 flag, use it
   target_compile_options(env2c PRIVATE "-O3")

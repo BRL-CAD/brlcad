@@ -394,13 +394,13 @@ char *allocate_method[] = {
 static char *
 stamp(void)
 {
-    static char buf[128];
+    static char buf[256];
     time_t now;
     struct tm *tmp;
 
     (void)time(&now);
     tmp = localtime(&now);
-    sprintf(buf, "%2.2d/%2.2d %2.2d:%2.2d:%2.2d",
+    snprintf(buf, sizeof(buf), "%2.2d/%2.2d %2.2d:%2.2d:%2.2d",
 	    tmp->tm_mon+1, tmp->tm_mday,
 	    tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
 
@@ -437,7 +437,7 @@ state_to_string(int state)
 	case SRST_DOING_GETTREES:
 	    return "GetTrees";
     }
-    sprintf(buf, "UNKNOWN_x%x", state);
+    snprintf(buf, sizeof(buf), "UNKNOWN_x%x", state);
     return buf;
 }
 
@@ -823,7 +823,7 @@ prep_frame(struct frame *fr)
     fr->fr_height = height;
 
     bu_vls_trunc(&fr->fr_cmd, 0);	/* Start fresh */
-    sprintf(buf, "opt -w%d -n%d -H%d -p%g -U%d -J%x -A%g -l%d -E%g -x%x -X%x -T%e/%e",
+    snprintf(buf, sizeof(buf), "opt -w%d -n%d -H%d -p%g -U%d -J%x -A%g -l%d -E%g -x%x -X%x -T%e/%e",
 	    fr->fr_width, fr->fr_height,
 	    hypersample, rt_perspective,
 	    use_air, jitter,
@@ -835,7 +835,7 @@ prep_frame(struct frame *fr)
     bu_vls_strcat(&fr->fr_cmd, buf);
     if (benchmark) bu_vls_strcat(&fr->fr_cmd, " -B");
     if (!EQUAL(aspect, 1.0)) {
-	sprintf(buf, " -V%g", aspect);
+	snprintf(buf, sizeof(buf), " -V%g", aspect);
 	bu_vls_strcat(&fr->fr_cmd, buf);
     }
     bu_vls_strcat(&fr->fr_cmd, ";");
@@ -873,21 +873,21 @@ read_matrix(FILE *fp, struct frame *fr)
     CHECK_FRAME(fr);
 
     /* Visible part is from -1 to +1 in view space */
-    if (fscanf(fp, "%128s", number) != 1) goto eof;
+    if (fscanf(fp, "%127s", number) != 1) goto eof;
     snprintf(cmd, sizeof(cmd), "viewsize %s; eye_pt ", number);
     bu_vls_strcat(&(fr->fr_cmd), cmd);
 
     for (i = 0; i < 3; i++) {
-	if (fscanf(fp, "%128s", number) != 1) goto out;
+	if (fscanf(fp, "%127s", number) != 1) goto out;
 	snprintf(cmd, sizeof(cmd), "%s ", number);
 	bu_vls_strcat(&fr->fr_cmd, cmd);
     }
 
-    sprintf(cmd, "; viewrot ");
+    snprintf(cmd, sizeof(cmd), "; viewrot ");
     bu_vls_strcat(&fr->fr_cmd, cmd);
 
     for (i = 0; i < 16; i++) {
-	if (fscanf(fp, "%128s", number) != 1) goto out;
+	if (fscanf(fp, "%127s", number) != 1) goto out;
 	snprintf(cmd, sizeof(cmd), "%s ", number);
 	bu_vls_strcat(&fr->fr_cmd, cmd);
     }
@@ -1042,10 +1042,10 @@ create_outputfilename(struct frame *fr)
 
     /* Always create a file name to write into */
     if (outputfile) {
-	snprintf(name, 512, "%s.%ld", outputfile, fr->fr_number);
+	snprintf(name, sizeof(name), "%s.%ld", outputfile, fr->fr_number);
 	fr->fr_tempfile = 0;
     } else {
-	sprintf(name, "remrt.pix.%ld", fr->fr_number);
+	snprintf(name, sizeof(name), "remrt.pix.%ld", fr->fr_number);
 	fr->fr_tempfile = 1;
     }
     fr->fr_filename = bu_strdup(name);
@@ -1590,7 +1590,7 @@ send_do_lines(struct servers *sp, int start, int stop, int framenum)
 
     if (sp->sr_pc == PKC_NULL) return;
 
-    sprintf(obuf, "%d %d %d", start, stop, framenum);
+    snprintf(obuf, sizeof(obuf), "%d %d %d", start, stop, framenum);
     if (pkg_send(MSG_LINES, obuf, strlen(obuf)+1, sp->sr_pc) < 0)
 	drop_server(sp, "MSG_LINES pkg_send error");
 
@@ -2424,7 +2424,7 @@ cd_stat(const int UNUSED(argc), const char **UNUSED(argv))
 	if (sp->sr_state != SRST_READY) {
 	    state = state_to_string(sp->sr_state);
 	} else {
-	    sprintf(buf, "Running%d",
+	    snprintf(buf, sizeof(buf), "Running%d",
 		    server_q_len(sp));
 	    state = buf;
 	}
@@ -3386,7 +3386,7 @@ out:
 static void
 host_helper(FILE *fp)
 {
-    char line[512];
+    char line[1024];
     char cmd[553];
     char host[128];
     char loc_db[128];
@@ -3405,7 +3405,7 @@ host_helper(FILE *fp)
 	loc_db[0] = '\0';
 	rem_db[0] = '\0';
 	rem_dir[0] = '\0';
-	cnt = sscanf(line, "%128s %d %128s %128s %128s",
+	cnt = sscanf(line, "%127s %d %127s %127s %127s",
 		     host, &port, rem_dir, loc_db, rem_db);
 	if (cnt != 3 && cnt != 5) {
 	    bu_log("host_helper: cnt=%d, aborting\n", cnt);
@@ -3590,11 +3590,11 @@ main(int argc, char *argv[])
     /* Listen for our PKG connections */
     int tcp_num = 0;
     if ((tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, remrt_log)) < 0) {
-	char num[12];
+	char num[128];
 	/* Do it by the numbers */
 	for (i = 0; i < 10; i++) {
 	    tcp_num = REMRT_TCP_DEFAULT_PORT+i;
-	    sprintf(num, "%d", tcp_num);
+	    snprintf(num, sizeof(num), "%d", tcp_num);
 	    if ((tcp_listen_fd = pkg_permserver(num, "tcp", 8, remrt_log)) < 0)
 		continue;
 	    break;
@@ -3668,11 +3668,11 @@ main(int argc, char *argv[])
 	/* Build queue of work to be done */
 	if (!matflag) {
 	    struct frame *fr;
-	    char buf[128];
+	    char buf[256];
 	    /* if not -M, queue off single az/el frame */
 	    GET_FRAME(fr);
 	    prep_frame(fr);
-	    sprintf(buf, "ae %g %g;", azimuth, elevation);
+	    snprintf(buf, sizeof(buf), "ae %g %g;", azimuth, elevation);
 	    bu_vls_strcat(&fr->fr_cmd, buf);
 	    if (create_outputfilename(fr) < 0) {
 		FREE_FRAME(fr);

@@ -208,6 +208,12 @@ class QTCAD_EXPORT QgItem
 	db_op_t op = DB_OP_UNION;
 	struct directory *dp = NULL;
 	QImage icon;
+
+	// Flag to determine whether the item is fully or partially drawn
+	int draw_state = 0;
+
+	// Flag to determine whether the item is selected
+	int select_state = 0;
 };
 
 /* The primary expression in a Qt context of a .g database and its contents.
@@ -278,6 +284,16 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// convenience functions will translate each reference type.
 	QModelIndex NodeIndex(QgItem *node) const;
 	QgItem *getItem(const QModelIndex &index) const;
+
+	enum CADDataRoles {
+	    BoolInternalRole = Qt::UserRole + 1000,
+	    BoolDisplayRole = Qt::UserRole + 1001,
+	    DirectoryInternalRole = Qt::UserRole + 1002,
+	    TypeIconDisplayRole = Qt::UserRole + 1003,
+	    HighlightDisplayRole = Qt::UserRole + 1004,
+	    DrawnDisplayRole = Qt::UserRole + 1005,
+	    SelectDisplayRole = Qt::UserRole + 1006
+	};
 
 	// Return data used for displaying each individual entry
 	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
@@ -352,11 +368,19 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// (it is sometimes extremely difficult to know if a complex command
 	// will alter the view) but if a particular method knows it will
 	// do so, it may emit this signal
-	void view_change(struct bview **);
+	void view_change(unsigned long long);
 
 	// Let the tree view know it has highlighting work to do it wouldn't
 	// otherwise see
 	void check_highlights();
+
+	// Signal emitted when a model item is opened (there is work that
+	// needs to be done in the view after this happens...)
+	void opened_item(QgItem *);
+
+	// Emit when some model action change will require a view to update
+	// its awareness of what is drawn
+	void view_changed(unsigned long long);
 
     public slots:
 	int draw_action();
@@ -364,6 +388,8 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	int erase_action();
 	int erase(QString &qpath);
 	void toggle_hierarchy();
+	void item_collapsed(const QModelIndex &index);
+	void item_expanded(const QModelIndex &index);
 
     private:
 	int NodeRow(QgItem *node) const;

@@ -55,9 +55,9 @@
 
 struct Buf {
     void   *elts;	/* elements. */
-    int     nelts;	/* number of elements. */
+    size_t  nelts;	/* number of elements. */
     size_t  elt_size;	/* in bytes. */
-    int     nmax;	/* max capacity of elements. */
+    size_t  nmax;	/* max capacity of elements. */
 };
 
 /* scanner data */
@@ -149,26 +149,26 @@ int PERPLEX_PUBLIC_LEXER;
 /* --- from flex's flexdef.h --- */
 void buf_init(struct Buf * buf, size_t elem_size);
 void buf_destroy(struct Buf * buf);
-struct Buf *buf_append(struct Buf * buf, const void *ptr, int n_elem);
+struct Buf *buf_append(struct Buf * buf, const void *ptr, size_t n_elem);
 struct Buf *buf_concat(struct Buf* dest, const struct Buf* src);
 struct Buf *buf_strappend(struct Buf *, const char *str);
-struct Buf *buf_strnappend(struct Buf *, const char *str, int nchars);
+struct Buf *buf_strnappend(struct Buf *, const char *str, size_t nchars);
 struct Buf *buf_strdefine(struct Buf * buf, const char *str, const char *def);
 struct Buf *buf_prints(struct Buf *buf, const char *fmt, const char* s);
 struct Buf *buf_m4_define(struct Buf *buf, const char* def, const char* val);
 struct Buf *buf_m4_undefine(struct Buf *buf, const char* def);
 struct Buf *buf_print_strings(struct Buf * buf, FILE* out);
-struct Buf *buf_linedir(struct Buf *buf, const char* filename, int lineno);
+struct Buf *buf_linedir(struct Buf *buf, const char* filename, size_t lineno);
 
 /* --- from flex's misc.c --- */
 static void*
-allocate_array(int size, size_t element_size)
+allocate_array(size_t size, size_t element_size)
 {
     return malloc(element_size * size);
 }
 
 static void*
-reallocate_array(void *array, int size, size_t element_size)
+reallocate_array(void *array, size_t size, size_t element_size)
 {
     return realloc(array, element_size * size);
 }
@@ -177,19 +177,19 @@ reallocate_array(void *array, int size, size_t element_size)
 /* Take note: The buffer object is sometimes used as a String buffer (one
  * continuous string), and sometimes used as a list of strings, usually line by
  * line.
- * 
+ *
  * The type is specified in buf_init by the elt_size. If the elt_size is
  * sizeof(char), then the buffer should be treated as string buffer. If the
  * elt_size is sizeof(char*), then the buffer should be treated as a list of
  * strings.
  *
- * Certain functions are only appropriate for one type or the other. 
+ * Certain functions are only appropriate for one type or the other.
  */
 
 struct Buf*
 buf_print_strings(struct Buf * buf, FILE* out)
 {
-    int i;
+    size_t i;
 
     if(!buf || !out) {
         return buf;
@@ -242,12 +242,12 @@ int numDigits(int n)
  * @return buf
  */
 struct Buf*
-buf_linedir(struct Buf *buf, const char* filename, int lineno)
+buf_linedir(struct Buf *buf, const char* filename, size_t lineno)
 {
     char *t;
-    const char fmt[] = "#line %d \"%s\"\n";
-    
-    t = (char*)malloc(strlen(fmt) + strlen(filename) + numDigits(lineno) + 1);
+    const char fmt[] = "#line %zu \"%s\"\n";
+
+    t = (char*)malloc(strlen(fmt) + strlen(filename) + numDigits((int)lineno) + 1);
     sprintf(t, fmt, lineno, filename);
     buf = buf_strappend(buf, t);
     free(t);
@@ -270,7 +270,7 @@ buf_concat(struct Buf* dest, const struct Buf* src)
 
 /* Appends n characters in str to buf. */
 struct Buf*
-buf_strnappend(struct Buf *buf, const char *str, int n)
+buf_strnappend(struct Buf *buf, const char *str, size_t n)
 {
     buf_append(buf, str, n + 1);
 
@@ -284,7 +284,7 @@ buf_strnappend(struct Buf *buf, const char *str, int n)
 struct Buf*
 buf_strappend(struct Buf *buf, const char *str)
 {
-  return buf_strnappend(buf, str, (int)strlen(str));
+  return buf_strnappend(buf, str, strlen(str));
 }
 
 /* appends "#define str def\n" */
@@ -365,9 +365,9 @@ buf_destroy(struct Buf *buf)
  * We grow by mod(512) boundaries.
  */
 struct Buf*
-buf_append(struct Buf *buf, const void *ptr, int n_elem)
+buf_append(struct Buf *buf, const void *ptr, size_t n_elem)
 {
-    int n_alloc = 0;
+    size_t n_alloc = 0;
 
     if (!ptr || n_elem == 0) {
 	return buf;

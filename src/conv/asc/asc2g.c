@@ -52,8 +52,8 @@
 /* maximum input line buffer size */
 #define BUFSIZE (16*1024)
 #define SIZE (128*1024*1024)
-#define TYPE_LEN 200
-#define NAME_LEN 200
+#define TYPE_LEN 255
+#define NAME_LEN 255
 
 
 /* GED database record */
@@ -61,7 +61,7 @@ static union record record;
 
 /* Record input buffer */
 char *buf = NULL;
-char NAME[NAME_LEN + 2] = {0};
+char NAME[NAME_LEN+1] = {0};
 
 FILE *ifp = NULL;
 struct rt_wdb *ofp = NULL;
@@ -274,7 +274,7 @@ sktbld(void)
     point_t V;
     vect_t u, v;
     point2d_t *verts;
-    char name[NAME_LEN+1];
+    char name[NAME_LEN+1] = {0};
     struct rt_sketch_internal *skt;
     struct rt_curve *crv;
     struct line_seg *lsg;
@@ -286,12 +286,12 @@ sktbld(void)
     cp++;
     cp++;
 
-    sscanf(cp, "%200s %f %f %f %f %f %f %f %f %f %lu %lu", /* NAME_LEN */
-	   name,
-	   &fV[0], &fV[1], &fV[2],
-	   &fu[0], &fu[1], &fu[2],
-	   &fv[0], &fv[1], &fv[2],
-	   &vert_count, &seg_count);
+    bu_sscanf(cp, "%" CPP_XSTR(NAME_LEN) "s %f %f %f %f %f %f %f %f %f %lu %lu",
+	      name,
+	      &fV[0], &fV[1], &fV[2],
+	      &fu[0], &fu[1], &fu[2],
+	      &fv[0], &fv[1], &fv[2],
+	      &vert_count, &seg_count);
 
     VMOVE(V, fV);
     VMOVE(u, fu);
@@ -338,13 +338,13 @@ sktbld(void)
 	switch (*cp) {
 	    case LSEG:
 		BU_ALLOC(lsg, struct line_seg);
-		sscanf(cp+1, "%d %d %d", &crv->reverse[j], &lsg->start, &lsg->end);
+		bu_sscanf(cp+1, "%d %d %d", &crv->reverse[j], &lsg->start, &lsg->end);
 		lsg->magic = CURVE_LSEG_MAGIC;
 		crv->segment[j] = lsg;
 		break;
 	    case CARC:
 		BU_ALLOC(csg, struct carc_seg);
-		sscanf(cp+1, "%d %d %d %lf %d %d", &crv->reverse[j], &csg->start, &csg->end,
+		bu_sscanf(cp+1, "%d %d %d %lf %d %d", &crv->reverse[j], &csg->start, &csg->end,
 		       &radius, &csg->center_is_left, &csg->orientation);
 		csg->radius = radius;
 		csg->magic = CURVE_CARC_MAGIC;
@@ -352,39 +352,45 @@ sktbld(void)
 		break;
 	    case NURB:
 		BU_ALLOC(nsg, struct nurb_seg);
-		sscanf(cp+1, "%d %d %d %d %d", &crv->reverse[j], &nsg->order, &nsg->pt_type,
+		bu_sscanf(cp+1, "%d %d %d %d %d", &crv->reverse[j], &nsg->order, &nsg->pt_type,
 		       &nsg->k.k_size, &nsg->c_size);
 		nsg->k.knots = (fastf_t *)bu_calloc(nsg->k.k_size, sizeof(fastf_t), "knots");
 		nsg->ctl_points = (int *)bu_calloc(nsg->c_size, sizeof(int), "control points");
-		if (bu_fgets(buf, BUFSIZE, ifp) == (char *)0)
-		    bu_exit(-1, "Unexpected EOF while reading sketch (%s) data\n", name);
+		if (bu_fgets(buf, BUFSIZE, ifp) == (char*)0) {
+		    bu_exit(BRLCAD_ERROR, "ERROR: Unexpected EOF while reading sketch (%s) data\n", name);
+		}
 		cp = buf + 3;
 		ptr = strtok(cp, " ");
-		if (!ptr)
-		    bu_exit(1, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name);
+		if (!ptr) {
+		    bu_exit(BRLCAD_ERROR, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name);
+		}
 		for (k=0; k<nsg->k.k_size; k++) {
 		    nsg->k.knots[k] = atof(ptr);
 		    ptr = strtok((char *)NULL, " ");
-		    if (!ptr && k<nsg->k.k_size-1)
-			bu_exit(1, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name);
+		    if (!ptr || k < nsg->k.k_size - 1) {
+			bu_exit(BRLCAD_ERROR, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name);
+		    }
 		}
-		if (bu_fgets(buf, BUFSIZE, ifp) == (char *)0)
-		    bu_exit(-1, "Unexpected EOF while reading sketch (%s) data\n", name);
+		if (bu_fgets(buf, BUFSIZE, ifp) == (char*)0) {
+		    bu_exit(BRLCAD_ERROR, "ERROR: Unexpected EOF while reading sketch (%s) data\n", name);
+		}
 		cp = buf + 3;
 		ptr = strtok(cp, " ");
-		if (!ptr)
-		    bu_exit(1, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
+		if (!ptr) {
+		    bu_exit(BRLCAD_ERROR, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
+		}
 		for (k=0; k<nsg->c_size; k++) {
 		    nsg->ctl_points[k] = atoi(ptr);
 		    ptr = strtok((char *)NULL, " ");
-		    if (!ptr && k<nsg->c_size-1)
-			bu_exit(1, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
+		    if (!ptr || k < nsg->c_size - 1) {
+			bu_exit(BRLCAD_ERROR, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
+		    }
 		}
 		nsg->magic = CURVE_NURB_MAGIC;
 		crv->segment[j] = nsg;
 		break;
 	    default:
-		bu_exit(1, "Unrecognized segment type (%c) in sketch (%s)\n", *cp, name);
+		bu_exit(BRLCAD_ERROR, "ERROR: Unrecognized segment type (%c) in sketch (%s)\n", *cp, name);
 	}
 
     }
@@ -397,8 +403,8 @@ void
 extrbld(void)
 {
     char *cp;
-    char name[NAME_LEN+1];
-    char sketch_name[NAME_LEN+1];
+    char name[NAME_LEN+1] = {0};
+    char sketch_name[NAME_LEN+1] = {0};
     int keypoint;
     float fV[3];
     float fh[3];
@@ -411,7 +417,7 @@ extrbld(void)
     cp++;
 
     cp++;
-    sscanf(cp, "%200s %200s %d %f %f %f  %f %f %f %f %f %f %f %f %f", /* NAME_LEN */
+    bu_sscanf(cp, "%" CPP_XSTR(NAME_LEN) "s %" CPP_XSTR(NAME_LEN) "s %d %f %f %f  %f %f %f %f %f %f %f %f %f",
 	   name, sketch_name, &keypoint, &fV[0], &fV[1], &fV[2], &fh[0], &fh[1], &fh[2],
 	   &fu_vec[0], &fu_vec[1], &fu_vec[2], &fv_vec[0], &fv_vec[1], &fv_vec[2]);
 
@@ -444,7 +450,7 @@ nmgbld(void)
     int j;
 
     /* First, process the header line */
-    strtok(buf, " ");
+    (void)strtok(buf, " ");
     /* This is nmg_id, unused here. */
     cp = strtok(NULL, " ");
     version = atoi(cp);
@@ -698,7 +704,7 @@ membbld(struct bu_list *headp)
     char *np;
     int i;
     char relation;	/* boolean operation */
-    char inst_name[NAME_LEN+2];
+    char inst_name[NAME_LEN+1] = {0};
     struct wmember *memb;
 
     cp = buf;
@@ -1159,7 +1165,7 @@ materbld(void)
 void
 clinebld(void)
 {
-    char my_name[NAME_LEN];
+    char my_name[NAME_LEN+1] = {0};
     fastf_t thickness;
     fastf_t radius;
     point_t V;
@@ -1200,7 +1206,7 @@ clinebld(void)
 void
 botbld(void)
 {
-    char my_name[NAME_LEN];
+    char my_name[NAME_LEN+1] = {0};
     char type;
     int mode, orientation, error_mode;
     unsigned long int num_vertices, num_faces;
@@ -1211,7 +1217,7 @@ botbld(void)
     int *faces;
     struct bu_bitv *facemode=NULL;
 
-    sscanf(buf, "%c %200s %d %d %d %lu %lu", &type, my_name, &mode, &orientation, /* NAME_LEN */
+    sscanf(buf, "%c %" CPP_XSTR(NAME_LEN) "s %d %d %d %lu %lu", &type, my_name, &mode, &orientation,
 	   &error_mode, &num_vertices, &num_faces);
 
     /* get vertices */
@@ -1286,7 +1292,7 @@ void
 pipebld(void)
 {
 
-    char name[NAME_LEN];
+    char name[NAME_LEN+1] = {0};
     char *cp;
     char *np;
     struct wdb_pipe_pnt *sp;
@@ -1342,7 +1348,7 @@ void
 particlebld(void)
 {
 
-    char name[NAME_LEN];
+    char name[NAME_LEN+1] = {0};
     char ident;
     point_t vertex;
     vect_t height;
@@ -1356,7 +1362,7 @@ particlebld(void)
      * particles fit into one granule.
      */
 
-    sscanf(buf, "%c %200s %le %le %le %le %le %le %le %le", /* NAME_LEN */
+    sscanf(buf, "%c %" CPP_XSTR(NAME_LEN) "s %le %le %le %le %le %le %le %le",
 	   &ident, name,
 	   &scanvertex[0],
 	   &scanvertex[1],
@@ -1380,9 +1386,8 @@ particlebld(void)
 void
 arbnbld(void)
 {
-
-    char name[NAME_LEN] = {0};
-    char type[TYPE_LEN] = {0};
+    char name[NAME_LEN+1] = {0};
+    char type[TYPE_LEN+1] = {0};
     int i;
     int neqn;     /* number of eqn expected */
     plane_t *eqn; /* pointer to plane equations for faces */
@@ -1419,7 +1424,7 @@ arbnbld(void)
 	double scan[4];
 
 	bu_fgets(buf, BUFSIZE, ifp);
-	sscanf(buf, "%200s %le %le %le %le", type, /* TYPE_LEN */
+	sscanf(buf, "%" CPP_XSTR(TYPE_LEN) "s %le %le %le %le", type,
 	       &scan[0], &scan[1], &scan[2], &scan[3]);
 	/* convert double to fastf_t */
 	HMOVE(eqn[i], scan);

@@ -68,6 +68,7 @@ __BEGIN_DECLS
 
 /* Forward declaration */
 struct ged;
+struct ged_selection_set;
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 #define GED_FUNC_PTR_NULL ((ged_func_ptr)0)
@@ -225,6 +226,7 @@ struct ged {
 
     /* Selection data */
     struct ged_selection_sets	*ged_selection_sets;
+    struct ged_selection_set    *ged_cset;
 
 
     /* FIXME -- this ugly hack needs to die.  the result string should

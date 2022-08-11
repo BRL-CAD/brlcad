@@ -17,7 +17,10 @@
 #define UG_SHIM_H 1
 
 #include "common.h"
+
 #include "vmath.h"
+#include "bu/malloc.h"
+
 
 #ifdef __cplusplus
 #define EXTLANG "C"
@@ -28,7 +31,7 @@
 #define MAX_FSPEC_SIZE 100
 #define NULL_TAG 0
 #define UF_NULLSIGN 0
-#define UF_free(X) free((void*)X);
+#define UF_free(X) bu_free((void*)X, "UF_free");
 
 #define UF_ASSEM_dont_maintain_work_part 	1
 #define UF_DEFORM_NEGATIVE 			2

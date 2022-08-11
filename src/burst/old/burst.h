@@ -65,7 +65,7 @@
 #define TIMER_Y		1
 
 /* buffer sizes */
-#define LNBUFSZ		1330	/* buffer for one-line messages */
+#define LNBUFSZ		256	/* buffer for one-line messages */
 #define MAXDEVWID	10000	/* maximum width of frame buffer */
 
 #define CHAR_COMMENT	'#'

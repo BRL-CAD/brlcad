@@ -440,11 +440,52 @@ _bu_dir_brlcad_root(const char *rhs, int fail_quietly)
 	bu_vls_strcat(&searched, where);
     }
 
-    /* run-time path identification, if we can do it */
+    /* Try exec run-time path identification, if we can do it */
     length = wai_getExecutablePath(NULL, 0, &dirname_length);
     if (length > 0) {
 	char *plhs  = (char *)bu_calloc(length+1, sizeof(char), "program path");
 	wai_getExecutablePath(plhs, length, &dirname_length);
+	plhs[length] = '\0';
+	snprintf(where, MAX_WHERE_SIZE, "\trun-time path identification (exec) [UNKNOWN]\n");
+	if (strlen(plhs)) {
+	    char *dirpath;
+	    char *real_path = bu_file_realpath(plhs, NULL);
+	    dirpath = bu_path_dirname(real_path);
+	    snprintf(real_path, MAXPATHLEN, "%s", dirpath);
+	    bu_free(dirpath, "free bu_path_dirname");
+	    dirpath = bu_path_dirname(real_path);
+	    snprintf(real_path, MAXPATHLEN, "%s", dirpath);
+	    bu_free(dirpath, "free bu_path_dirname");
+	    if (_bu_dir_join_path(result, real_path, rhs, &searched, where)) {
+		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+		    bu_log("Found: Run-time path identification [%s]\n", result);
+		}
+		bu_vls_free(&searched);
+		bu_free(real_path, "free real_path");
+		bu_free(plhs, "free plhs");
+		return result;
+	    }
+	    // TODO - should we verify libbu is present in the expected place
+	    // relative to this root to verify that this is in fact a BRL-CAD
+	    // path and not something coming from a 3rd party executable?
+	    bu_free(real_path, "free real_path");
+	} else {
+	    bu_vls_strcat(&searched, where);
+	}
+	bu_free(plhs, "free plhs");
+    }
+
+    /* Try run-time path identification based on libbu's location, if the
+     * executable location didn't work.  While this location is preferable to
+     * the executable path when available (i.e. external codes may link into
+     * BRL-CAD's libraries but be installed elsewhere on the filesystem) this
+     * mechanism is considerably slower than the executable method above.
+     * Accordingly, we only fall back on this if the exec approach didn't work.
+     */
+    length = wai_getModulePath(NULL, 0, &dirname_length);
+    if (length > 0) {
+	char *plhs  = (char *)bu_calloc(length+1, sizeof(char), "library path");
+	wai_getModulePath(plhs, length, &dirname_length);
 	plhs[length] = '\0';
 	snprintf(where, MAX_WHERE_SIZE, "\trun-time path identification [UNKNOWN]\n");
 	if (strlen(plhs)) {
@@ -458,7 +499,7 @@ _bu_dir_brlcad_root(const char *rhs, int fail_quietly)
 	    bu_free(dirpath, "free bu_path_dirname");
 	    if (_bu_dir_join_path(result, real_path, rhs, &searched, where)) {
 		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-		    bu_log("Found: Run-time path identification [%s]\n", result);
+		    bu_log("Found: Run-time path identification (lib) [%s]\n", result);
 		}
 		bu_vls_free(&searched);
 		bu_free(real_path, "free real_path");

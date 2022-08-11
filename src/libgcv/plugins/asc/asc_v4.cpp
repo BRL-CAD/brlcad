@@ -17,20 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file asc_v4.cpp
- *
- * Brief description
- *
- */
 
 #include "common.h"
 #include "vmath.h"
 
-#include <cstdio>
 #include <fstream>
-#include <regex>
 #include <sstream>
 #include <string>
+
+#include "bio.h"
 
 #include "bu/units.h"
 #include "bu/vls.h"
@@ -39,6 +34,14 @@
 #include "wdb.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
+
+
+#define LSEG 'L'
+#define CARC 'A'
+#define NURB 'N'
+#define NAME_LEN 255
+#define TYPE_LEN 255
+
 
 struct ascv4_rstate {
     struct bu_vls *buf;
@@ -249,10 +252,6 @@ out:
 }
 
 
-#define LSEG 'L'
-#define CARC 'A'
-#define NURB 'N'
-#define NAME_LEN 200
 void
 sktbld(struct ascv4_rstate *s)
 {
@@ -263,7 +262,7 @@ sktbld(struct ascv4_rstate *s)
     point_t V;
     vect_t u, v;
     point2d_t *verts;
-    char name[NAME_LEN+1];
+    char name[NAME_LEN+1] = {0};
     struct rt_sketch_internal *skt;
     struct rt_curve *crv;
     struct line_seg *lsg;
@@ -275,7 +274,7 @@ sktbld(struct ascv4_rstate *s)
     cp++;
     cp++;
 
-    sscanf(cp, "%200s %f %f %f %f %f %f %f %f %f %lu %lu", /* NAME_LEN */
+    sscanf(cp, "%" CPP_XSTR(NAME_LEN) "s %f %f %f %f %f %f %f %f %f %lu %lu",
 	   name,
 	   &fV[0], &fV[1], &fV[2],
 	   &fu[0], &fu[1], &fu[2],
@@ -399,8 +398,8 @@ void
 extrbld(struct ascv4_rstate *s)
 {
     char *cp;
-    char name[NAME_LEN+1];
-    char sketch_name[NAME_LEN+1];
+    char name[NAME_LEN+1] = {0};
+    char sketch_name[NAME_LEN+1] = {0};
     int keypoint;
     float fV[3];
     float fh[3];
@@ -413,7 +412,7 @@ extrbld(struct ascv4_rstate *s)
     cp++;
 
     cp++;
-    sscanf(cp, "%200s %200s %d %f %f %f  %f %f %f %f %f %f %f %f %f", /* NAME_LEN */
+    sscanf(cp, "%" CPP_XSTR(NAME_LEN) "s %" CPP_XSTR(NAME_LEN) "s %d %f %f %f  %f %f %f %f %f %f %f %f %f",
 	   name, sketch_name, &keypoint, &fV[0], &fV[1], &fV[2], &fh[0], &fh[1], &fh[2],
 	   &fu_vec[0], &fu_vec[1], &fu_vec[2], &fv_vec[0], &fv_vec[1], &fv_vec[2]);
 
@@ -1181,7 +1180,7 @@ materbld(struct ascv4_rstate *s)
 void
 clinebld(struct ascv4_rstate *s)
 {
-    char my_name[NAME_LEN];
+    char my_name[NAME_LEN+1] = {0};
     fastf_t thickness;
     fastf_t radius;
     point_t V;
@@ -1222,7 +1221,7 @@ clinebld(struct ascv4_rstate *s)
 void
 botbld(struct ascv4_rstate *s)
 {
-    char my_name[NAME_LEN];
+    char my_name[NAME_LEN+1] = {0};
     char type;
     int mode, orientation, error_mode;
     unsigned long int num_vertices, num_faces;
@@ -1233,7 +1232,7 @@ botbld(struct ascv4_rstate *s)
     int *faces;
     struct bu_bitv *facemode=NULL;
 
-    sscanf(bu_vls_cstr(s->buf), "%c %200s %d %d %d %lu %lu", &type, my_name, &mode, &orientation, /* NAME_LEN */
+    sscanf(bu_vls_cstr(s->buf), "%c %" CPP_XSTR(NAME_LEN) "s %d %d %d %lu %lu", &type, my_name, &mode, &orientation,
 	   &error_mode, &num_vertices, &num_faces);
 
     /* get vertices */
@@ -1324,7 +1323,7 @@ void
 pipebld(struct ascv4_rstate *s)
 {
 
-    char name[NAME_LEN];
+    char name[NAME_LEN+1] = {0};
     char *cp;
     char *np;
     struct wdb_pipe_pnt *sp;
@@ -1384,7 +1383,7 @@ void
 particlebld(struct ascv4_rstate *s)
 {
 
-    char name[NAME_LEN];
+    char name[NAME_LEN+1] = {0};
     char ident;
     point_t vertex;
     vect_t height;
@@ -1398,7 +1397,7 @@ particlebld(struct ascv4_rstate *s)
      * particles fit into one granule.
      */
 
-    sscanf(bu_vls_cstr(s->buf), "%c %200s %le %le %le %le %le %le %le %le", /* NAME_LEN */
+    sscanf(bu_vls_cstr(s->buf), "%c %" CPP_XSTR(NAME_LEN) "s %le %le %le %le %le %le %le %le",
 	   &ident, name,
 	   &scanvertex[0],
 	   &scanvertex[1],
@@ -1419,13 +1418,12 @@ particlebld(struct ascv4_rstate *s)
  * This routine reads arbn data from standard in and sends it to
  * mk_arbn().
  */
-#define TYPE_LEN 200
 void
 arbnbld(struct ascv4_rstate *s)
 {
 
-    char name[NAME_LEN] = {0};
-    char type[TYPE_LEN] = {0};
+    char name[NAME_LEN+1] = {0};
+    char type[TYPE_LEN+1] = {0};
     int i;
     int neqn;     /* number of eqn expected */
     plane_t *eqn; /* pointer to plane equations for faces */
@@ -1463,7 +1461,7 @@ arbnbld(struct ascv4_rstate *s)
 	std::string sline;
 	std::getline(*s->fs, sline);
 	bu_vls_sprintf(s->buf, "%s", sline.c_str());
-	sscanf(bu_vls_cstr(s->buf), "%200s %le %le %le %le", type, /* TYPE_LEN */
+	sscanf(bu_vls_cstr(s->buf), "%" CPP_XSTR(TYPE_LEN) "s %le %le %le %le", type,
 	       &scan[0], &scan[1], &scan[2], &scan[3]);
 	/* convert double to fastf_t */
 	HMOVE(eqn[i], scan);
@@ -2093,7 +2091,7 @@ arbn_dump(struct ascv4_wstate *s)
 
     fprintf(s->ofp, "%c %.16s %lu\n", 'n', name, (unsigned long)arbn->neqn);
     for (i = 0; i < arbn->neqn; i++) {
-	fprintf(s->ofp, "n %26.20e %20.26e %26.20e %26.20e\n",
+	fprintf(s->ofp, "n %26.20e %26.20e %26.20e %26.20e\n",
 		arbn->eqn[i][X], arbn->eqn[i][Y],
 		arbn->eqn[i][Z], arbn->eqn[i][3]);
     }

@@ -57,6 +57,7 @@
 #include "qtcad/gInstance.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgUtil.h"
+#include "qtcad/SignalFlags.h"
 
 struct QgItem_cmp {
     inline bool operator() (const QgItem *i1, const QgItem *i2)
@@ -224,6 +225,8 @@ QgItem::fp()
 	path_items.push_back(citem);
     }
     std::reverse(path_items.begin(), path_items.end());
+    if (!path_items[0]->instance())
+	return NULL;
     struct db_full_path *ifp;
     BU_GET(ifp, struct db_full_path);
     db_full_path_init(ifp);
@@ -247,6 +250,8 @@ QgItem::toString()
     }
     std::reverse(path_items.begin(), path_items.end());
     struct db_full_path *ifp = fp();
+    if (!ifp)
+	return QString();
     struct bu_vls fpstr = BU_VLS_INIT_ZERO;
     db_path_to_vls(&fpstr, ifp);
     QString fpqstr(bu_vls_cstr(&fpstr));
@@ -799,6 +804,7 @@ QgModel::fetchMore(const QModelIndex &idx)
     }
     endInsertRows();
     emit check_highlights();
+    emit item->ctx->opened_item(item);
 }
 
 
@@ -861,8 +867,11 @@ QgModel::flags(const QModelIndex &index) const
     if (!index.isValid())
 	return Qt::NoItemFlags;
 
-    return QAbstractItemModel::flags(index);
-    //return Qt::ItemIsEditable | QAbstractItemModel::flags(index);
+    Qt::ItemFlags flags = QAbstractItemModel::flags(index);
+
+    // flags |= Qt::ItemIsEditable;
+
+    return flags;
 }
 
 QVariant
@@ -871,11 +880,23 @@ QgModel::data(const QModelIndex &index, int role) const
     if (!index.isValid())
 	return QVariant();
     QgItem *qi= getItem(index);
-    gInstance *gi = qi->instance();
-    if (!gi)
-	return QVariant();
     if (role == Qt::DisplayRole)
-	return QVariant(gi->dp->d_namep);
+	return QVariant(bu_vls_cstr(&qi->name));
+    if (role == BoolInternalRole)
+	return QVariant(qi->op);
+    if (role == DirectoryInternalRole)
+	return QVariant::fromValue((void *)(qi->dp));
+    if (role == DrawnDisplayRole)
+	return QVariant(qi->draw_state);
+    if (role == SelectDisplayRole)
+	return QVariant(qi->select_state);
+
+    if (role == TypeIconDisplayRole)
+	return QVariant(qi->icon);
+    if (role == HighlightDisplayRole) {
+	return qi->instance()->active_flag;
+    }
+
     return QVariant();
 }
 
@@ -977,6 +998,8 @@ QgModel::draw_action()
     QAction *a = qobject_cast<QAction *>(sender());
     QVariant v = a->data();
     QgItem *cnode  = (QgItem *) v.value<void *>();
+    if (!cnode)
+	return BRLCAD_ERROR;
     QString cnode_str = cnode->toString();
     return draw(cnode_str);
 }
@@ -994,8 +1017,7 @@ QgModel::draw(QString &qpath)
 
     bu_free((void *)inst_path, "inst_path");
 
-    emit view_change(&gedp->ged_gvp);
-
+    emit view_change(QTCAD_VIEW_DRAWN);
     return ret;
 }
 
@@ -1006,6 +1028,8 @@ QgModel::erase_action()
     QAction *a = qobject_cast<QAction *>(sender());
     QVariant v = a->data();
     QgItem *cnode  = (QgItem *) v.value<void *>();
+    if (!cnode)
+	return BRLCAD_ERROR;
     QString cnode_str = cnode->toString();
     return erase(cnode_str);
 }
@@ -1023,8 +1047,7 @@ QgModel::erase(QString &qpath)
 
     bu_free((void *)inst_path, "inst_path");
 
-    emit view_change(&gedp->ged_gvp);
-
+    emit view_change(QTCAD_VIEW_DRAWN);
     return ret;
 }
 
@@ -1037,6 +1060,20 @@ QgModel::toggle_hierarchy()
     flatten_hierarchy = !flatten_hierarchy;
     changed_db_flag = 1;
     g_update(gedp->dbip);
+}
+
+void
+QgModel::item_collapsed(const QModelIndex &index)
+{
+    QgItem *itm = getItem(index);
+    itm->open_itm = false;
+}
+
+void
+QgModel::item_expanded(const QModelIndex &index)
+{
+    QgItem *itm = getItem(index);
+    itm->open_itm = true;
 }
 
 // Local Variables:

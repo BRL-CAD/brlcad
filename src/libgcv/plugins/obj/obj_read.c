@@ -215,9 +215,9 @@ struct ga_t {
     const char * const *str_arr_obj_objects;   /* obj_objects */
     const char * const *str_arr_obj_materials; /* obj_materials */
     const char * const *str_arr_obj_texmaps;   /* obj_texmaps */
-    const float (*vert_list)[4];          /* obj_vertices */
-    const float (*norm_list)[3];          /* obj_normals */
-    const float (*texture_coord_list)[3]; /* obj_texture_coord */
+    const double (*vert_list)[4];          /* obj_vertices */
+    const double (*norm_list)[3];          /* obj_normals */
+    const double (*texture_coord_list)[3]; /* obj_texture_coord */
     const size_t *attindex_arr_nv_faces;  /* obj_polygonal_nv_faces */
     const size_t *attindex_arr_v_faces;   /* obj_polygonal_v_faces */
     const size_t *attindex_arr_tv_faces;  /* obj_polygonal_tv_faces */

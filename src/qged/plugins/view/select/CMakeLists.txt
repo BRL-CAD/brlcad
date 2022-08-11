@@ -13,33 +13,33 @@ if(BRLCAD_ENABLE_QT)
 
 endif(BRLCAD_ENABLE_QT)
 
-set(erase_srcs
-  erase.cpp
+set(select_srcs
+  select.cpp
   widget.cpp
   )
 
-set(erase_moc_hdrs
+set(select_moc_hdrs
   widget.h
   )
 
 if(BRLCAD_ENABLE_QT)
 
   if(Qt6Widgets_FOUND)
-    QT6_WRAP_CPP(erase_moc_srcs ${erase_moc_hdrs})
+    QT6_WRAP_CPP(select_moc_srcs ${select_moc_hdrs})
     QT6_ADD_RESOURCES(icon_qrc icon.qrc)
   else()
-    QT5_WRAP_CPP(erase_moc_srcs ${erase_moc_hdrs})
+    QT5_WRAP_CPP(select_moc_srcs ${select_moc_hdrs})
     QT5_ADD_RESOURCES(icon_qrc icon.qrc)
   endif(Qt6Widgets_FOUND)
-  qged_plugin(qged_erase SHARED ${erase_srcs} ${erase_moc_srcs} ${icon_qrc})
+  qged_plugin(qged_select SHARED ${select_srcs} ${select_moc_srcs} ${icon_qrc})
   if(Qt6Widgets_FOUND)
-    target_link_libraries(qged_erase libqtcad libged librt libbu Qt6::Widgets)
+    target_link_libraries(qged_select libqtcad libged librt libbu Qt6::Widgets)
   else()
-    target_link_libraries(qged_erase libqtcad libged librt libbu Qt5::Widgets)
+    target_link_libraries(qged_select libqtcad libged librt libbu Qt5::Widgets)
   endif(Qt6Widgets_FOUND)
-  set_property(TARGET qged_erase APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-  VALIDATE_STYLE(qged_erase erase.cpp)
-  PLUGIN_SETUP(qged_erase qged)
+  set_property(TARGET qged_select APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+  VALIDATE_STYLE(qged_select select.cpp)
+  PLUGIN_SETUP(qged_select qged)
 
   DISTCLEAN(
     icon.qrc.depends
@@ -50,10 +50,10 @@ endif(BRLCAD_ENABLE_QT)
 
 set(ignore_srcs
   CMakeLists.txt
-  ${erase_srcs}
-  ${erase_moc_hdrs}
+  ${select_srcs}
+  ${select_moc_hdrs}
   icon.qrc
-  eraser.svg
+  selective-tool.svg
   README
   )
 
