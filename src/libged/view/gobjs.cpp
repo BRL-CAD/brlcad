@@ -49,11 +49,6 @@ gobjs_scene_free(struct bv_scene_obj *s)
 {
     if (!s)
 	return;
-    if (s->s_path) {
-	struct db_full_path *sfp = (struct db_full_path *)s->s_path;
-	db_free_full_path(sfp);
-	BU_PUT(sfp, struct db_full_path);
-    }
 }
 
 int
@@ -131,9 +126,6 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     struct bv_scene_group *g = bv_obj_get(v, BV_DB_OBJS);
     if (!g)
 	return BRLCAD_ERROR;
-    BU_GET(g->s_path, struct db_full_path);
-    db_full_path_init((struct db_full_path *)g->s_path);
-    db_dup_full_path((struct db_full_path *)g->s_path, fp);
     db_path_to_vls(&g->s_name, fp);
     bu_vls_sprintf(&g->s_uuid, "%s", argv[1]);
     g->s_i_data = (void *)ip;

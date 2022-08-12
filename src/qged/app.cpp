@@ -267,22 +267,26 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 	// If either of these things is not true, the group must be
 	// regenerated.
 	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+	struct draw_update_data_t *c_ud = (struct draw_update_data_t *)cg->s_i_data;
+	struct db_full_path *cfp = &c_ud->fp;
+
 	int invalid = 0;
 	int do_erase = 0;
 	for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
 	    struct draw_update_data_t *ud = (struct draw_update_data_t *)s->s_i_data;
+	    struct db_full_path *gfp = &ud->fp;
 
 	    // First, check the root - if it is no longer present, we're
 	    // erasing rather than redrawing.
-	    struct directory *dp = db_lookup(dbip, ud->fp.fp_names[0]->d_namep, LOOKUP_QUIET);
+	    struct directory *dp = db_lookup(dbip, gfp->fp_names[0]->d_namep, LOOKUP_QUIET);
 	    if (dp == RT_DIR_NULL) {
 		do_erase = 1;
 	    } else {
 		// Root OK, check the path
-		for (size_t fp_i = 0; fp_i < ud->fp.fp_len; fp_i++) {
-		    dp = db_lookup(dbip, ud->fp.fp_names[fp_i]->d_namep, LOOKUP_QUIET);
-		    if (dp == RT_DIR_NULL || dp != ud->fp.fp_names[fp_i]) {
+		for (size_t fp_i = 0; fp_i < gfp->fp_len; fp_i++) {
+		    dp = db_lookup(dbip, gfp->fp_names[fp_i]->d_namep, LOOKUP_QUIET);
+		    if (dp == RT_DIR_NULL || dp != gfp->fp_names[fp_i]) {
 			do_erase = 1;
 			break;
 		    }
@@ -291,7 +295,7 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 			// The path isn't valid - update the parent name to match it's
 			// current s_path so the redraw succeeds
 			bu_vls_trunc(&cg->s_name, 0);
-			db_path_to_vls(&cg->s_name, (struct db_full_path *)cg->s_path);
+			db_path_to_vls(&cg->s_name, cfp);
 			break;
 		    }
 		}

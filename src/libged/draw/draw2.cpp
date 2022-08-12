@@ -249,8 +249,9 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
     if (!argc) {
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
-	    struct db_full_path *fp = (struct db_full_path *)s->s_path;
-	    fps.insert(fp);
+	    struct draw_update_data_t *ud = (struct draw_update_data_t *)s->s_i_data;
+	    struct db_full_path *dfp = &ud->fp;
+	    fps.insert(dfp);
 	}
     }
 
@@ -290,7 +291,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    }
 
 	    // Not already clearing, need to check
-	    struct db_full_path *gfp = (struct db_full_path *)cg->s_path;
+	    struct draw_update_data_t *ud = (struct draw_update_data_t *)cg->s_i_data;
+	    struct db_full_path *gfp = &ud->fp;
 
 	    // If we found an encompassing path, we don't need to do any more work
 	    if (clear_invalid_only) {
@@ -329,21 +331,18 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    // to g to update them.  If g has no children, it was probably an
 	    // evaluated shape - in that case, replace it with a fresh instance.
 	    if (!BU_PTBL_LEN(&g->children)) {
-		struct db_full_path *fpcpy;
-		BU_GET(fpcpy, struct db_full_path);
-		db_full_path_init(fpcpy);
-		db_dup_full_path(fpcpy, fp);
 		bv_obj_put(g);
 		g = bv_obj_get(v, BV_DB_OBJS);
-		db_path_to_vls(&g->s_name, fpcpy);
-		g->s_path = fpcpy;
+		db_path_to_vls(&g->s_name, fp);
 		bv_obj_settings_sync(g->s_os, &fpvs);
 	    } else {
 		std::set<struct bv_scene_obj *> sclear;
 		std::set<struct bv_scene_obj *>::iterator s_it;
 		for (size_t i = 0; i < BU_PTBL_LEN(&g->children); i++) {
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, i);
-		    if (db_full_path_match_top((struct db_full_path *)s->s_path, fp)) {
+		    struct draw_update_data_t *ud = (struct draw_update_data_t *)s->s_i_data;
+		    struct db_full_path *dfp = &ud->fp;
+		    if (db_full_path_match_top(dfp, fp)) {
 			sclear.insert(s);
 		    }
 		}
@@ -359,13 +358,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    // "evaluated" drawing modes the visualization in the scene is
 	    // unique to this object and in those cases drawing information
 	    // will be stored in this object directly.
-	    struct db_full_path *fpcpy;
-	    BU_GET(fpcpy, struct db_full_path);
-	    db_full_path_init(fpcpy);
-	    db_dup_full_path(fpcpy, fp);
 	    g = bv_obj_get(v, BV_DB_OBJS);
 	    db_path_to_vls(&g->s_name, fp);
-	    g->s_path = fpcpy;
 	    bv_obj_settings_sync(g->s_os, &fpvs);
 	}
 
