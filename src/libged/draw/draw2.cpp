@@ -292,6 +292,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 
 	    // Not already clearing, need to check
 	    struct draw_update_data_t *ud = (struct draw_update_data_t *)cg->s_i_data;
+	    if (!ud)
+		continue;
 	    struct db_full_path *gfp = &ud->fp;
 
 	    // If we found an encompassing path, we don't need to do any more work
