@@ -211,7 +211,6 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
     /* Validate that the supplied args are current, valid paths in the
      * database.  If one or more are not, bail */
     std::set<struct db_full_path *> fps;
-    std::vector<struct db_full_path *> fps_free;
     std::set<struct db_full_path *>::iterator f_it;
     for (size_t i = 0; i < (size_t)argc; ++i) {
 	struct db_full_path *fp;
@@ -236,12 +235,12 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    }
 	}
 	fps.insert(fp);
-	fps_free.push_back(fp);
     }
     if (fps.size() != (size_t)argc) {
-	for (size_t i = 0; i < fps_free.size(); i++) {
-	    db_free_full_path(fps_free[i]);
-	    BU_PUT(fps_free[i], struct db_full_path);
+	for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
+	    struct db_full_path *fp = *f_it;
+	    db_free_full_path(fp);
+	    BU_PUT(fp, struct db_full_path);
 	}
 	return BRLCAD_ERROR;
     }
@@ -249,9 +248,28 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
     if (!argc) {
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
-	    struct draw_update_data_t *ud = (struct draw_update_data_t *)s->s_i_data;
-	    struct db_full_path *dfp = &ud->fp;
-	    fps.insert(dfp);
+	    struct db_full_path *fp;
+	    BU_GET(fp, struct db_full_path);
+	    db_full_path_init(fp);
+	    int ret = db_string_to_path(fp, dbip, bu_vls_cstr(&s->s_name));
+	    if (ret < 0) {
+		// If that didn't work, there's one other thing we have to check
+		// for - a really strange path with the "/" character in it.
+		db_free_full_path(fp);
+		struct directory *fdp = db_lookup(dbip, bu_vls_cstr(&s->s_name), LOOKUP_QUIET);
+		if (fdp == RT_DIR_NULL) {
+		    // Invalid path
+		    db_free_full_path(fp);
+		    BU_PUT(fp, struct db_full_path);
+		    continue;
+		} else {
+		    // Object name contained forward slash (urk!)
+		    db_free_full_path(fp);
+		    db_full_path_init(fp);
+		    db_add_node_to_full_path(fp, fdp);
+		}
+	    }
+	    fps.insert(fp);
 	}
     }
 
@@ -291,19 +309,25 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    }
 
 	    // Not already clearing, need to check
-	    struct draw_update_data_t *ud = (struct draw_update_data_t *)cg->s_i_data;
-	    if (!ud)
+	    struct db_full_path gfp;
+	    db_full_path_init(&gfp);
+	    int ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->s_name));
+	    if (ret < 0) {
+		// If we can't get a db_fullpath, it's invalid
+		clear.insert(cg);
+		db_free_full_path(&gfp);
 		continue;
-	    struct db_full_path *gfp = &ud->fp;
+	    }
 
 	    // If we found an encompassing path, we don't need to do any more work
 	    if (clear_invalid_only) {
+		db_free_full_path(&gfp);
 		continue;
 	    }
 
 	    // Two conditions to check for here:
 	    // 1.  proposed draw path is a top match for existing path
-	    if (db_full_path_match_top(fp, gfp)) {
+	    if (db_full_path_match_top(fp, &gfp)) {
 		// New path will replace the currently drawn path - clear it
 		clear.insert(cg);
 		if (refresh)
@@ -311,10 +335,11 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		continue;
 	    }
 	    // 2.  existing path is a top match encompassing the proposed path
-	    if (db_full_path_match_top(gfp, fp)) {
+	    if (db_full_path_match_top(&gfp, fp)) {
 		// Already drawn - replace just the children of g that match this
 		// path to update their contents
 		g = cg;
+		db_free_full_path(&gfp);
 		if (refresh)
 		    bv_obj_settings_sync(&fpvs, cg->s_os);
 		// We continue to weed out any other invalid paths in sg, even
@@ -324,6 +349,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		clear_invalid_only = true;
 		continue;
 	    }
+
+	    db_free_full_path(&gfp);
 	}
 
 	// IFF we are just redrawing part or all of an already drawn path, we don't
@@ -342,11 +369,13 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		std::set<struct bv_scene_obj *>::iterator s_it;
 		for (size_t i = 0; i < BU_PTBL_LEN(&g->children); i++) {
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, i);
-		    struct draw_update_data_t *ud = (struct draw_update_data_t *)s->s_i_data;
-		    struct db_full_path *dfp = &ud->fp;
-		    if (db_full_path_match_top(dfp, fp)) {
+		    struct db_full_path gfp;
+		    db_full_path_init(&gfp);
+		    db_string_to_path(&gfp, dbip, bu_vls_cstr(&s->s_name));
+		    if (db_full_path_match_top(&gfp, fp)) {
 			sclear.insert(s);
 		    }
+		    db_free_full_path(&gfp);
 		}
 		for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
 		    struct bv_scene_obj *s = *s_it;
@@ -469,9 +498,10 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
     bu_sort(BU_PTBL_BASEADDR(sg), BU_PTBL_LEN(sg), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
 
     // Clean up
-    for (size_t i = 0; i < fps_free.size(); i++) {
-	db_free_full_path(fps_free[i]);
-	BU_PUT(fps_free[i], struct db_full_path);
+    for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
+	struct db_full_path *fp = *f_it;
+	db_free_full_path(fp);
+	BU_PUT(fp, struct db_full_path);
     }
 
     // Scene objects are created and stored. The next step is to generate
