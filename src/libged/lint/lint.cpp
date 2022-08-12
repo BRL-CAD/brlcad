@@ -512,6 +512,14 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	goto ged_lint_memfree;
     }
 
+    /* Skip empty strings */
+    for (int i = 0; i < argc; i++) {
+	if (!strlen(argv[i])) {
+	    argc-=(argc>0); argv+=(argc>0);
+	    i--;
+	}
+    }
+
     if (argc) {
 	dpa = (struct directory **)bu_calloc(argc+1, sizeof(struct directory *), "dp array");
 	nonexist_obj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
