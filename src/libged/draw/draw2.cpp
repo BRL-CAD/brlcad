@@ -72,6 +72,7 @@ _fp_bbox(fastf_t *s_size, point_t *bmin, point_t *bmax,
     if (ip->idb_meth->ft_bbox) {
 	bbret = ip->idb_meth->ft_bbox(ip, bmin, bmax, tol);
     }
+
     if (bbret < 0 && ip->idb_meth->ft_plot) {
 	/* As a fallback for primitives that don't have a bbox function,
 	 * (there are still some as of 2021) use the old bounding method of
@@ -500,36 +501,8 @@ ged_draw_view(struct bview *v, int bot_threshold, int no_autoview, int blank_sla
     // Do an initial autoview so adaptive routines will have approximately
     // the right starting point
     if (blank_slate && !no_autoview) {
-	point_t center, radial;
-	point_t bmin, bmax;
-	VSETALL(bmin, INFINITY);
-	VSETALL(bmax, -INFINITY);
-	if (BU_PTBL_LEN(sg)) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
-		VMINMAX(bmin, bmax, s->bmin);
-		VMINMAX(bmin, bmax, s->bmax);
-	    }
-	} else {
-	    VSETALL(bmin, -1000);
-	    VSETALL(bmax, 1000);
-	}
-	VADD2SCALE(center, bmax, bmin, 0.5);
-	VSUB2(radial, bmax, center);
-	vect_t sqrt_small;
-	VSETALL(sqrt_small, SQRT_SMALL_FASTF);
-	VMAX(radial, sqrt_small);
-	if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
-	    VSETALL(radial, 1.0);
-	MAT_IDN(v->gv_center);
-	MAT_DELTAS_VEC_NEG(v->gv_center, center);
-	v->gv_scale = radial[X];
-	V_MAX(v->gv_scale, radial[Y]);
-	V_MAX(v->gv_scale, radial[Z]);
-	v->gv_isize = 1.0 / v->gv_size;
-	bv_update(v);
+	bv_autoview(v, BV_AUTOVIEW_SCALE_DEFAULT, 0);
     }
-
 
     // Do the actual drawing
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
