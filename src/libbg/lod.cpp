@@ -534,8 +534,6 @@ bg_view_objs_rect_select(struct bv_scene_obj ***sset, struct bview *v, int x1, i
 static int
 _obj_visible(struct bv_scene_obj *s, struct bview *v)
 {
-    // obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3);
-    // bu_log("in obj.s rpp %f %f %f %f %f %f\n", s->bmin[0], s->bmax[0], s->bmin[1], s->bmax[1], s->bmin[2], s->bmax[2]);
     if (bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3))
 	return 1;
 

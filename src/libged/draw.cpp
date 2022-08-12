@@ -322,11 +322,15 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     vo->draw_data = (void *)lod;
     lod->s = vo;
 
-    // The object bounds are based on the LoD's calculations
-    VMOVE(vo->bmin, lod->bmin);
-    VMOVE(vo->bmax, lod->bmax);
-    VMOVE(s->bmin, lod->bmin);
-    VMOVE(s->bmax, lod->bmax);
+    // The object bounds are based on the LoD's calculations.  Because the LoD
+    // cache stores only one cached data set per object, but full path
+    // instances in the scene can be placed with matrices, we must apply the
+    // s_mat transformation to the "baseline" LoD bbox info to get the correct
+    // box for the instance.
+    MAT4X3PNT(vo->bmin, s->s_mat, lod->bmin);
+    MAT4X3PNT(vo->bmax, s->s_mat, lod->bmax);
+    VMOVE(s->bmin, vo->bmin);
+    VMOVE(s->bmax, vo->bmax);
 
     // Record the necessary information for full detail information recovery.  We
     // don't duplicate the full mesh detail in the on-disk LoD storage, since we
