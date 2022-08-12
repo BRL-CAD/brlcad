@@ -781,6 +781,14 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
     dp = DB_FULL_PATH_CUR_DIR(path);
     if (!dp)
 	return;
+
+    // If we're skipping subtractions and we have a subtraction op there's no
+    // point in going further.
+    if (dd->g->s_os->draw_non_subtract_only && dd->bool_op == 4) {
+	return;
+    }
+
+
     if (dp->d_flags & RT_DIR_COMB) {
 
 	struct rt_db_internal in;
@@ -799,12 +807,6 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	rt_db_free_internal(&in);
 
     } else {
-
-	// If we're skipping subtractions there's no
-	// point in going further.
-	if (dd->g->s_os->draw_non_subtract_only && dd->bool_op == 4) {
-	    return;
-	}
 
 	// If we've got a solid, things get interesting.  There are a lot of
 	// potentially relevant options to sort through.  It may be that most
