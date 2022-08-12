@@ -157,6 +157,12 @@ draw_free_data(struct bv_scene_obj *s)
     if (!s)
 	return;
 
+    if (s->s_path) {
+	struct db_full_path *sfp = (struct db_full_path *)s->s_path;
+	db_free_full_path(sfp);
+	BU_PUT(sfp, struct db_full_path);
+    }
+
     /* free drawing info */
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     if (!d)
@@ -356,6 +362,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 
     // Make the names unique
     bu_vls_sprintf(&vo->s_name, "%s", bu_vls_cstr(&s->s_name));
+    vo->s_path = NULL;  // I don't think the vo objects will need the db_fullpath...
     bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
 
     return;
@@ -406,6 +413,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 
 	// Make the names unique
 	bu_vls_sprintf(&vo->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_name));
+	vo->s_path = NULL;  // I don't think the vo objects will need the db_fullpath...
 	bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
 
 	return;
@@ -815,6 +823,10 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 
 	struct bv_scene_obj *s = bv_obj_get_child(dd->g);
 	db_path_to_vls(&s->s_name, path);
+	BU_GET(s->s_path, struct db_full_path);
+	db_full_path_init((struct db_full_path *)s->s_path);
+	db_dup_full_path((struct db_full_path *)s->s_path, path);
+
 	MAT_COPY(s->s_mat, *curr_mat);
 	bv_obj_settings_sync(s->s_os, dd->g->s_os);
 	s->s_type_flags = BV_DBOBJ_BASED;

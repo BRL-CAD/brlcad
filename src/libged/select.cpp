@@ -1016,8 +1016,7 @@ ged_selection_assign_objs(struct ged_selection_set *s)
     std::map<struct db_full_path *, struct bv_scene_obj *> path_to_obj;
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
-	struct draw_update_data_t *ud = (struct draw_update_data_t *)so->s_i_data;
-	struct db_full_path *dfp = &ud->fp;
+	struct db_full_path *dfp = (struct db_full_path *)so->s_path;
 	so_paths[DB_FULL_PATH_GET(dfp, 0)].insert(dfp);
 	path_to_obj[dfp] = so;
     }

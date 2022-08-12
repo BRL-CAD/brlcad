@@ -799,6 +799,7 @@ bv_obj_create(struct bview *v, int type)
     BU_LIST_INIT(&(s->s_vlist));
     BU_VLS_INIT(&s->s_name);
     bu_vls_trunc(&s->s_name, 0);
+    s->s_path = NULL;
     BU_VLS_INIT(&s->s_uuid);
     if (type & BV_LOCAL_OBJS) {
 	if (type & BV_DB_OBJS) {
@@ -891,6 +892,7 @@ bv_obj_get_child(struct bv_scene_obj *sp)
     if (!BU_VLS_IS_INITIALIZED(&s->s_name))
 	BU_VLS_INIT(&s->s_name);
     bu_vls_trunc(&s->s_name, 0);
+    s->s_path = NULL;
     if (!BU_VLS_IS_INITIALIZED(&s->s_uuid))
 	BU_VLS_INIT(&s->s_uuid);
     bu_vls_sprintf(&s->s_uuid, "child:%s:%zd", bu_vls_cstr(&sp->s_uuid), BU_PTBL_LEN(&sp->children));
@@ -1000,6 +1002,7 @@ bv_obj_put(struct bv_scene_obj *s)
     // Clear names
     bu_vls_trunc(&s->s_uuid, 0);
     bu_vls_trunc(&s->s_name, 0);
+    s->s_path = NULL;
 
     if (s->otbl)
 	bu_ptbl_rm(s->otbl, (long *)s);
