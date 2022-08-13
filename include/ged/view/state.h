@@ -138,7 +138,7 @@ __BEGIN_DECLS
 // check it after a void cast
 struct draw_update_data_t {
     struct db_i *dbip;
-    struct db_full_path fp;
+    struct db_full_path *fp;
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
     struct bg_mesh_lod_context *mesh_c;

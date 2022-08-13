@@ -53,7 +53,7 @@ static int
 prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
-    struct db_full_path *fp = &d->fp;
+    struct db_full_path *fp = (struct db_full_path *)s->s_path;
     const struct bn_tol *tol = d->tol;
     const struct bg_tess_tol *ttol = d->ttol;
     struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
@@ -132,8 +132,8 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
     }
 
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+    struct db_full_path *fp = (struct db_full_path *)s->s_path;
     struct db_i *dbip = d->dbip;
-    struct db_full_path *fp = &d->fp;
     struct rt_db_internal dbintern;
     RT_DB_INTERNAL_INIT(&dbintern);
     struct rt_db_internal *ip = &dbintern;
@@ -167,7 +167,6 @@ draw_free_data(struct bv_scene_obj *s)
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     if (!d)
 	return;
-    db_free_full_path(&d->fp);
     BU_PUT(d, struct draw_update_data_t);
     s->s_i_data = NULL;
 }
@@ -249,7 +248,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     if (!d)
 	return;
     struct db_i *dbip = d->dbip;
-    struct db_full_path *fp = &d->fp;
+    struct db_full_path *fp = (struct db_full_path *)s->s_path;
     struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
 
     // We need the key to look up the LoD data from the cache, and if we don't
@@ -395,8 +394,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	// Make a copy of the draw info for vo.
 	struct draw_update_data_t *ld;
 	BU_GET(ld, struct draw_update_data_t);
-	db_full_path_init(&ld->fp);
-	db_dup_full_path(&ld->fp, &d->fp);
+	ld->fp = (struct db_full_path *)s->s_path;
 	ld->dbip = d->dbip;
 	ld->tol = d->tol;
 	ld->ttol = d->ttol;
@@ -487,7 +485,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
      * special handling of difficult drawing cases.  Look for those as well.
      **************************************************************************/
     struct db_i *dbip = d->dbip;
-    struct db_full_path *fp = &d->fp;
+    struct db_full_path *fp = (struct db_full_path *)s->s_path;
     struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
 
     // Adaptive BoTs have specialized LoD routines to help cope with very large
@@ -844,8 +842,7 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// Stash the information needed for a draw update callback
 	struct draw_update_data_t *ud;
 	BU_GET(ud, struct draw_update_data_t);
-	db_full_path_init(&ud->fp);
-	db_dup_full_path(&ud->fp, path);
+	ud->fp = (struct db_full_path *)s->s_path;
 	ud->dbip = dd->dbip;
 	ud->tol = dd->tol;
 	ud->ttol = dd->ttol;

@@ -302,7 +302,7 @@ new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct
 	for (g_it = ngrps.begin(); g_it != ngrps.end(); g_it++) {
 	    struct bv_scene_group *ng = g_it->first;
 	    struct db_full_path *gfp = g_it->second;
-	    if (db_full_path_match_top(gfp, &ud->fp)) {
+	    if (db_full_path_match_top(gfp, ud->fp)) {
 		bu_ptbl_ins(&ng->children, (long *)sobj);
 		break;
 	    }

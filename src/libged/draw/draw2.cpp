@@ -449,8 +449,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    // TODO - check object against default GED selection set
 	    struct draw_update_data_t *ud;
 	    BU_GET(ud, struct draw_update_data_t);
-	    db_full_path_init(&ud->fp);
-	    db_dup_full_path(&ud->fp, fp);
+	    ud->fp = (struct db_full_path *)g->s_path;
 	    ud->dbip = dd.dbip;
 	    ud->tol = dd.tol;
 	    ud->ttol = dd.ttol;

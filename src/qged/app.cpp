@@ -275,14 +275,14 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 
 	    // First, check the root - if it is no longer present, we're
 	    // erasing rather than redrawing.
-	    struct directory *dp = db_lookup(dbip, ud->fp.fp_names[0]->d_namep, LOOKUP_QUIET);
+	    struct directory *dp = db_lookup(dbip, ud->fp->fp_names[0]->d_namep, LOOKUP_QUIET);
 	    if (dp == RT_DIR_NULL) {
 		do_erase = 1;
 	    } else {
 		// Root OK, check the path
-		for (size_t fp_i = 0; fp_i < ud->fp.fp_len; fp_i++) {
-		    dp = db_lookup(dbip, ud->fp.fp_names[fp_i]->d_namep, LOOKUP_QUIET);
-		    if (dp == RT_DIR_NULL || dp != ud->fp.fp_names[fp_i]) {
+		for (size_t fp_i = 0; fp_i < ud->fp->fp_len; fp_i++) {
+		    dp = db_lookup(dbip, ud->fp->fp_names[fp_i]->d_namep, LOOKUP_QUIET);
+		    if (dp == RT_DIR_NULL || dp != ud->fp->fp_names[fp_i]) {
 			do_erase = 1;
 			break;
 		    }
