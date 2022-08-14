@@ -405,27 +405,54 @@ main(int ac, char *av[]) {
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
     std::unordered_set<unsigned long long>::iterator cs_it;
     for (pc_it = ctx.p_c.begin(); pc_it != ctx.p_c.end(); pc_it++) {
+	bool found_entry = false;
 	std::unordered_map<unsigned long long, struct directory *>::iterator dpn = ctx.d_map.find(pc_it->first);
 	if (dpn != ctx.d_map.end()) {
 	    bu_log("%s	(%llu):\n", dpn->second->d_namep, pc_it->first);
-	} else {
-	    std::unordered_map<unsigned long long, std::string>::iterator en = ctx.invalid_entry_map.find(pc_it->first);
-	    if (en != ctx.invalid_entry_map.end()) {
-		bu_log("%s	(%llu):\n", en->second.c_str(), pc_it->first);
-	    } else {
-		bu_log("ERROR: %llu:\n", pc_it->first);
+	    found_entry = true;
+	}
+	if (!found_entry) {
+	    unsigned long long chash = ctx.i_map[pc_it->first];
+	    dpn = ctx.d_map.find(chash);
+	    if (dpn != ctx.d_map.end()) {
+		bu_log("%s	(%llu->%llu):\n", dpn->second->d_namep, pc_it->first, chash);
+		found_entry = true;
 	    }
 	}
-	for (cs_it = pc_it->second.begin(); cs_it != pc_it->second.end(); cs_it++) {
-	    std::unordered_map<unsigned long long, struct directory *>::iterator cdpn = ctx.d_map.find(*cs_it);
-	    if (cdpn != ctx.d_map.end()) {
-		bu_log("	%s	(%llu):\n", cdpn->second->d_namep, *cs_it);
+	if (!found_entry) {
+	    std::unordered_map<unsigned long long, std::string>::iterator en = ctx.invalid_entry_map.find(pc_it->first);
+	    if (en != ctx.invalid_entry_map.end()) {
+		bu_log("%s[I]	(%llu)\n", en->second.c_str(), pc_it->first);
+		found_entry = true;
 	    } else {
+		bu_log("P ERROR: %llu\n", pc_it->first);
+	    }
+	}
+	if (!found_entry)
+	    continue;
+
+	for (cs_it = pc_it->second.begin(); cs_it != pc_it->second.end(); cs_it++) {
+	    found_entry = false;
+	    dpn = ctx.d_map.find(*cs_it);
+	    if (dpn != ctx.d_map.end()) {
+		bu_log("	%s	(%llu)\n", dpn->second->d_namep, *cs_it);
+		found_entry = true;
+	    }
+	    if (!found_entry) {
+		unsigned long long chash = ctx.i_map[*cs_it];
+		dpn = ctx.d_map.find(chash);
+		if (dpn != ctx.d_map.end()) {
+		    bu_log("	%s	(%llu->%llu)\n", dpn->second->d_namep, *cs_it, chash);
+		    found_entry = true;
+		}
+	    }
+	    if (!found_entry) {
 		std::unordered_map<unsigned long long, std::string>::iterator en = ctx.invalid_entry_map.find(*cs_it);
 		if (en != ctx.invalid_entry_map.end()) {
-		    bu_log("	%s	(%llu):\n", en->second.c_str(), *cs_it);
+		    bu_log("	%s[I] (%llu)\n", en->second.c_str(), *cs_it);
+		    found_entry = true;
 		} else {
-		    bu_log("ERROR: %llu:\n", *cs_it);
+		    bu_log("P ERROR: %llu:\n", pc_it->first);
 		}
 	    }
 	}
