@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -662,6 +663,141 @@ draw(struct ged *gedp, struct draw_ctx *ctx, const char *path)
 
 
 static void
+erase(struct draw_ctx *ctx, const char *path)
+{
+    std::vector<std::string> pe;
+    path_elements(pe, path);
+    std::vector<unsigned long long> root;
+    for (size_t i = 0; i < pe.size(); i++) {
+	XXH64_state_t h_state;
+	unsigned long long chash;
+	XXH64_reset(&h_state, 0);
+	XXH64_update(&h_state, pe[i].c_str(), pe[i].length()*sizeof(char));
+	chash = (unsigned long long)XXH64_digest(&h_state);
+	root.push_back(chash);
+    }
+
+    std::vector<unsigned long long> bad_paths;
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
+    for (k_it = ctx->s_keys.begin(); k_it != ctx->s_keys.end(); k_it++) {
+	if (k_it->second.size() < root.size())
+	    continue;
+	bool match = std::equal(root.begin(), root.end(), k_it->second.begin());
+	if (match) {
+	    bad_paths.push_back(k_it->first);
+	}
+    }
+    bu_log("Starting size: %zd\n", ctx->s_keys.size());
+    bu_log("To erase: %zd\n", bad_paths.size());
+    for (size_t i = 0; i < bad_paths.size(); i++) {
+	ctx->s_keys.erase(bad_paths[i]);
+    }
+    bu_log("Ending size: %zd\n", ctx->s_keys.size());
+}
+
+static void
+collapse(struct draw_ctx *ctx)
+{
+    std::unordered_set<unsigned long long>::iterator s_it;
+    std::map<size_t, std::unordered_set<unsigned long long>> depth_groups;
+
+    std::vector<std::vector<unsigned long long>> drawn_paths;
+
+    // Group paths of the same depth.  Depth == 1 paths are already
+    // top level objects and need no further processing
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
+    for (k_it = ctx->s_keys.begin(); k_it != ctx->s_keys.end(); k_it++) {
+	if (k_it->second.size() == 1) {
+	    drawn_paths.push_back(k_it->second);
+	} else {
+	    depth_groups[k_it->second.size()].insert(k_it->first);
+	}
+    }
+    bu_log("depth groups: %zd\n", depth_groups.size());
+
+
+    // Whittle down the depth groups until we find not-fully-drawn parents - when
+    // we find that, the children constitute non-collapsible paths
+    while (depth_groups.size()) {
+	size_t plen = depth_groups.rbegin()->first;
+	if (plen == 1)
+	    break;
+	std::unordered_set<unsigned long long> &pckeys = depth_groups.rbegin()->second;
+	bu_log("depth_groups(%zd) key count: %zd\n", plen, pckeys.size());
+
+	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> grouped_pckeys;
+	for (s_it = pckeys.begin(); s_it != pckeys.end(); s_it++) {
+	    std::vector<unsigned long long> &pc_path = ctx->s_keys[*s_it];
+	    grouped_pckeys[pc_path[plen-2]].insert(*s_it);
+	}
+
+	// For each parent/child grouping, compare it against the .g ground
+	// truth set.  If they match, fully drawn and we promote the path to
+	// the parent depth.  If not, the paths do not collapse further and are
+	// added to drawn paths.
+	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pg_it;
+	for (pg_it = grouped_pckeys.begin(); pg_it != grouped_pckeys.end(); pg_it++) {
+
+	    // Because we store keys to full paths, we construct the set of the children
+	    // needed at this specific depth from the full paths for comparison purposes
+	    std::unordered_set<unsigned long long> g_children;
+	    std::unordered_set<unsigned long long> &g_pckeys = pg_it->second;
+	    for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
+		std::vector<unsigned long long> &pc_path = ctx->s_keys[*s_it];
+		g_children.insert(pc_path[plen-1]);
+	    }
+
+	    // Do the check against the .g comb children info
+	    bool fully_drawn = true;
+	    std::unordered_set<unsigned long long> &ground_truth = ctx->p_c[pg_it->first];
+	    for (s_it = ground_truth.begin(); s_it != ground_truth.end(); s_it++) {
+		if (g_children.find(*s_it) == g_children.end()) {
+		    fully_drawn = false;
+		    break;
+		}
+	    }
+
+	    if (fully_drawn) {
+		// If fully drawn, depth_groups[plen-1] gets the first path in g_pckeys.  The path is longer
+		// than that depth, but contains all the necessary information and using that approach avoids
+		// the need to duplicate paths.
+		depth_groups[plen - 1].insert(*g_pckeys.begin());
+	    } else {
+		// No further collapsing - add to final.  We must make trimmed
+		// versions of the paths in case this depth holds promoted paths
+		// from deeper levels.
+		for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
+		    std::vector<unsigned long long> trimmed = ctx->s_keys[*s_it];
+		    trimmed.resize(plen);
+		    drawn_paths.push_back(trimmed);
+		}
+	    }
+	}
+
+	// Done with this depth
+	depth_groups.erase(plen);
+    }
+
+    // If we collapsed all the way to top level objects, make sure to add them
+    if (depth_groups.find(1) != depth_groups.end()) {
+	std::unordered_set<unsigned long long> &pckeys = depth_groups.rbegin()->second;
+	for (s_it = pckeys.begin(); s_it != pckeys.end(); s_it++) {
+	    std::vector<unsigned long long> trimmed = ctx->s_keys[*s_it];
+	    trimmed.resize(1);
+	    drawn_paths.push_back(trimmed);
+	}
+    }
+
+    // DEBUG - print results
+    struct bu_vls path_str = BU_VLS_INIT_ZERO;
+    for (size_t i = 0; i < drawn_paths.size(); i++) {
+	print_path(&path_str, drawn_paths[i], ctx);
+	bu_log("%s\n", bu_vls_cstr(&path_str));
+    }
+    bu_vls_free(&path_str);
+}
+
+static void
 split_test(const char *path)
 {
     std::vector<std::string> substrs;
@@ -816,6 +952,16 @@ main(int ac, char *av[]) {
     }
 
     draw(gedp, &ctx, "all.g");
+
+    collapse(&ctx);
+
+    erase(&ctx, "all.g/havoc/havoc_middle");
+
+    collapse(&ctx);
+
+    erase(&ctx, "all.g");
+
+    collapse(&ctx);
 
     ged_close(gedp);
 
