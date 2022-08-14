@@ -27,6 +27,7 @@
 
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 extern "C" {
 #define XXH_STATIC_LINKING_ONLY
@@ -39,65 +40,136 @@ extern "C" {
 #include <ged.h>
 
 struct draw_ctx {
+    // This map is the ".g ground truth" of the comb structures - the set associated
+    // with each has contains all the child hashes from the comb definition in the
+    // database.  It can be used to tell if a comb is fully drawn.
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> p_c;
+
+    // Translate individual object hashes to their directory names.  This map must
+    // be updated any time a database object changes to remain valid.
+    std::unordered_map<unsigned long long, struct directory *> d_map;
+
+    // For invalid comb entry strings, we can't point to a directory pointer.  This
+    // map must also be updated after every db change - if a directory pointer hash
+    // maps to an entry in this map it needs to be removed, and newly invalid entries
+    // need to be added.
+    std::unordered_map<unsigned long long, std::string> invalid_entry_map;
+
+    // This is a map of non-uniquely named child instances (i.e. instances that must be
+    // numbered) to the .g database name associated with those instances.  Allows for
+    // one unique entry in p_c rather than requiring per-instance duplication
     std::unordered_map<unsigned long long, unsigned long long> i_map;
+
+
+    // The above containers are universal to the .g - the following will need
+    // both shared and view specific instances
+
+    // Sets defining all drawn solid paths (including invalid paths).  The
+    // s_keys holds the ordered individual keys of each drawn solid path - it
+    // is the latter that allows for the collapse operation to populate
+    // drawn_paths.  s_map uses the same key as s_keys to map instances to
+    // actual scene objects.
+    std::unordered_map<unsigned long long, struct bv_scene_obj *> s_map;
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>> s_keys;
+
+    // Set of hashes of all drawn paths and subpaths, constructed during the collapse
+    // operation from the set of drawn solid paths.  This allows calling codes to
+    // spot check any path to see if it is active, without having to interrogate
+    // other data structures or walk down the tree.
+    std::unordered_set<unsigned long long> drawn_paths;
 };
 
 HIDDEN void
-list_children(struct draw_ctx *ctx, unsigned long long phash, struct db_i *dbip, union tree *tp,
-    std::unordered_map<unsigned long long, unsigned long long> &i_count)
+draw_walk_tree(union tree *tp, void *d, int subtract_skip,
+	void (*leaf_func)(void *, const char *, matp_t, int)
+	)
 {
     if (!tp)
 	return;
 
-    RT_CHECK_DBI(dbip);
     RT_CK_TREE(tp);
-    XXH64_state_t h_state;
-    unsigned long long chash;
 
     switch (tp->tr_op) {
+	case OP_SUBTRACT:
+	    if (subtract_skip)
+		return;
+	    /* fall through */
 	case OP_UNION:
 	case OP_INTERSECT:
-	case OP_SUBTRACT:
 	case OP_XOR:
-	    list_children(ctx, phash, dbip, tp->tr_b.tb_right, i_count);
+	    draw_walk_tree(tp->tr_b.tb_right, d, subtract_skip, leaf_func);
 	    /* fall through */
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-	    list_children(ctx, phash, dbip, tp->tr_b.tb_left, i_count);
+	    draw_walk_tree(tp->tr_b.tb_left, d, subtract_skip, leaf_func);
 	    break;
 	case OP_DB_LEAF:
-	    XXH64_reset(&h_state, 0);
-	    XXH64_update(&h_state, tp->tr_l.tl_name, strlen(tp->tr_l.tl_name)*sizeof(char));
-	    chash = (unsigned long long)XXH64_digest(&h_state);
-	    i_count[chash] += 1;
-	    if (i_count[chash] > 1) {
-		// If we've got multiple instances of the same object in the tree,
-		// hash the string labeling the instance and map it to the correct
-		// parent comb so we can associate it with the tree contents
-		struct bu_vls iname = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&iname, "%s@%llu", tp->tr_l.tl_name, i_count[chash]);
-		XXH64_reset(&h_state, 0);
-		XXH64_update(&h_state, bu_vls_cstr(&iname), bu_vls_strlen(&iname)*sizeof(char));
-		unsigned long long ihash = (unsigned long long)XXH64_digest(&h_state);
-		ctx->i_map[ihash] = chash;
-		ctx->p_c[phash].insert(ihash);
-	    } else {
-		ctx->p_c[phash].insert(chash);
-	    }
+	    (*leaf_func)(d, tp->tr_l.tl_name, tp->tr_l.tl_mat, tp->tr_op);
 	    break;
 	default:
-	    bu_log("list_children: unrecognized operator %d\n", tp->tr_op);
-	    bu_bomb("list_children\n");
+	    bu_log("unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("draw walk\n");
+    }
+}
+
+struct walk_data {
+    struct draw_ctx *ctx;
+    struct ged *gedp;
+    std::unordered_map<unsigned long long, unsigned long long> i_count;
+    mat_t *curr_mat = NULL;
+    unsigned long long phash = 0;
+};
+
+static void
+list_children_leaf(void *client_data, const char *name, matp_t UNUSED(c_m), int UNUSED(op))
+{
+    struct walk_data *d = (struct walk_data *)client_data;
+    struct db_i *dbip = d->gedp->dbip;
+    RT_CHECK_DBI(dbip);
+
+    std::unordered_map<unsigned long long, unsigned long long> &i_count = d->i_count;
+    XXH64_state_t h_state;
+    unsigned long long chash;
+    struct directory *dp = db_lookup(dbip, name, LOOKUP_QUIET);
+    XXH64_reset(&h_state, 0);
+    XXH64_update(&h_state, name, strlen(name)*sizeof(char));
+    chash = (unsigned long long)XXH64_digest(&h_state);
+    i_count[chash] += 1;
+    if (i_count[chash] > 1) {
+	// If we've got multiple instances of the same object in the tree,
+	// hash the string labeling the instance and map it to the correct
+	// parent comb so we can associate it with the tree contents
+	struct bu_vls iname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&iname, "%s@%llu", name, i_count[chash]);
+	XXH64_reset(&h_state, 0);
+	XXH64_update(&h_state, bu_vls_cstr(&iname), bu_vls_strlen(&iname)*sizeof(char));
+	unsigned long long ihash = (unsigned long long)XXH64_digest(&h_state);
+	d->ctx->i_map[ihash] = chash;
+	d->ctx->p_c[d->phash].insert(ihash);
+	if (dp == RT_DIR_NULL) {
+	    // Invalid comb reference - goes into map
+	    d->ctx->invalid_entry_map[ihash] = std::string(bu_vls_cstr(&iname));
+	} else {
+	    // In case this was previously invalid, remove
+	    d->ctx->invalid_entry_map.erase(ihash);
+	}
+    } else {
+	d->ctx->p_c[d->phash].insert(chash);
+	if (dp == RT_DIR_NULL) {
+	    // Invalid comb reference - goes into map
+	    d->ctx->invalid_entry_map[chash] = std::string(name);
+	} else {
+	    // In case this was previously invalid, remove
+	    d->ctx->invalid_entry_map.erase(chash);
+	}
     }
 }
 
 static void
-comb_hash(struct ged *gedp, struct draw_ctx *ctx, struct directory *dp)
+populate_maps(struct ged *gedp, struct draw_ctx *ctx, struct directory *dp, int reset)
 {
-    if (!(dp->d_flags & RT_DIR_COMB))
-	return;
+
 
     struct bu_vls hname = BU_VLS_INIT_ZERO;
     XXH64_state_t h_state;
@@ -108,10 +180,17 @@ comb_hash(struct ged *gedp, struct draw_ctx *ctx, struct directory *dp)
     XXH64_update(&h_state, bu_vls_cstr(&hname), bu_vls_strlen(&hname)*sizeof(char));
     unsigned long long phash = (unsigned long long)XXH64_digest(&h_state);
 
+    // Set up to go from hash back to name
+    ctx->d_map[phash] = dp;
+
+    if (!(dp->d_flags & RT_DIR_COMB))
+	return;
+
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
     pc_it = ctx->p_c.find(phash);
-    //pc_it->second.clear();
-    if (pc_it == ctx->p_c.end()) {
+    if (pc_it == ctx->p_c.end() || reset) {
+	if (reset)
+	    pc_it->second.clear();
 	struct rt_db_internal in;
 	if (rt_db_get_internal(&in, dp, gedp->dbip, NULL, &rt_uniresource) < 0)
 	    return;
@@ -120,18 +199,14 @@ comb_hash(struct ged *gedp, struct draw_ctx *ctx, struct directory *dp)
 	    return;
 
 	std::unordered_map<unsigned long long, unsigned long long> i_count;
-	list_children(ctx, phash, gedp->dbip, comb->tree, i_count);
+	struct walk_data d;
+	d.ctx = ctx;
+	d.gedp = gedp;
+	d.phash = phash;
+	draw_walk_tree(comb->tree, (void *)&d, 0, list_children_leaf);
 	rt_db_free_internal(&in);
     }
 
-    std::unordered_set<unsigned long long>::iterator cs_it;
-    for (pc_it = ctx->p_c.begin(); pc_it != ctx->p_c.end(); pc_it++) {
-	bu_log("%llu:\n", pc_it->first);
-	for (cs_it = pc_it->second.begin(); cs_it != pc_it->second.end(); cs_it++) {
-	    bu_log("	%llu\n", *cs_it);
-	}
-    }
-    bu_log("\n");
 }
 
 static void
@@ -197,6 +272,25 @@ path_elements(std::vector<std::string> &elements, const char *path)
     return elements.size();
 }
 
+#if 0
+static void
+draw_gather_paths(std::vector<unsigned long long> *path, struct directory *dp, mat_t *curr_mat, void *client_data)
+{
+    struct walk_data *d = (struct walk_data *)client_data;
+}
+
+static void
+draw(struct ged *gedp, struct draw_ctx *ctx, const char *path)
+{
+    std::vector<std::string> pe;
+    path_elements(pe, path);
+    // TODO: path color
+    // TODO: path matrix
+
+}
+#endif
+
+
 static void
 split_test(const char *path)
 {
@@ -220,7 +314,7 @@ check_elements(struct ged *gedp, struct draw_ctx *ctx, std::vector<std::string> 
 	struct directory *dp = db_lookup(gedp->dbip, elements[0].c_str(), LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL)
 	    return false;
-	comb_hash(gedp, ctx, dp);
+	populate_maps(gedp, ctx, dp, 1);
 	return true;
     }
 
@@ -236,7 +330,7 @@ check_elements(struct ged *gedp, struct draw_ctx *ctx, std::vector<std::string> 
 	    bu_log("invalid path: %s\n", elements[i].c_str());
 	    return false;
 	}
-	comb_hash(gedp, ctx, dp);
+	populate_maps(gedp, ctx, dp, 1);
     }
 
     // parent/child relationship validate
@@ -298,6 +392,46 @@ main(int ac, char *av[]) {
 
     gedp = ged_open("db", av[1], 1);
 
+    struct draw_ctx ctx;
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	struct directory *dp;
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_flags & DB_LS_HIDDEN)
+		continue;
+	    populate_maps(gedp, &ctx, dp, 0);
+	}
+    }
+#if 1
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    std::unordered_set<unsigned long long>::iterator cs_it;
+    for (pc_it = ctx.p_c.begin(); pc_it != ctx.p_c.end(); pc_it++) {
+	std::unordered_map<unsigned long long, struct directory *>::iterator dpn = ctx.d_map.find(pc_it->first);
+	if (dpn != ctx.d_map.end()) {
+	    bu_log("%s	(%llu):\n", dpn->second->d_namep, pc_it->first);
+	} else {
+	    std::unordered_map<unsigned long long, std::string>::iterator en = ctx.invalid_entry_map.find(pc_it->first);
+	    if (en != ctx.invalid_entry_map.end()) {
+		bu_log("%s	(%llu):\n", en->second.c_str(), pc_it->first);
+	    } else {
+		bu_log("ERROR: %llu:\n", pc_it->first);
+	    }
+	}
+	for (cs_it = pc_it->second.begin(); cs_it != pc_it->second.end(); cs_it++) {
+	    std::unordered_map<unsigned long long, struct directory *>::iterator cdpn = ctx.d_map.find(*cs_it);
+	    if (cdpn != ctx.d_map.end()) {
+		bu_log("	%s	(%llu):\n", cdpn->second->d_namep, *cs_it);
+	    } else {
+		std::unordered_map<unsigned long long, std::string>::iterator en = ctx.invalid_entry_map.find(*cs_it);
+		if (en != ctx.invalid_entry_map.end()) {
+		    bu_log("	%s	(%llu):\n", en->second.c_str(), *cs_it);
+		} else {
+		    bu_log("ERROR: %llu:\n", *cs_it);
+		}
+	    }
+	}
+    }
+    bu_log("\n");
+#endif
 
     split_test("all.g/cone.r/cone.s");
     split_test("all.g/cone.r/cone.s/");
@@ -312,7 +446,6 @@ main(int ac, char *av[]) {
     split_test("all.g\\\\\\cone.r\\//cone.s");
     split_test("all.g\\\\\\\\cone.r\\//cone.s");
 
-    struct draw_ctx ctx;
     {
 	std::vector<std::string> pe;
 	path_elements(pe, "all.g/cone.r/cone.s");
