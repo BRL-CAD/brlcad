@@ -59,6 +59,10 @@ struct draw_ctx {
     // numbered) to the .g database name associated with those instances.  Allows for
     // one unique entry in p_c rather than requiring per-instance duplication
     std::unordered_map<unsigned long long, unsigned long long> i_map;
+    std::unordered_map<unsigned long long, std::string> i_str;
+    // TODO - the opposite mapping of i_map - allow a comb edit to also get all
+    // instance using paths
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> i_sets;
 
 
     // The above containers are universal to the .g - the following will need
@@ -79,7 +83,113 @@ struct draw_ctx {
     std::unordered_set<unsigned long long> drawn_paths;
 };
 
-HIDDEN void
+void
+print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, struct draw_ctx *ctx)
+{
+    if (!opath || !path.size() || !ctx)
+	return;
+    bu_vls_trunc(opath, 0);
+    for (size_t i = 0; i < path.size(); i++) {
+	// First, see if the hash is an instance string
+	if (ctx->i_str.find(path[i]) != ctx->i_str.end()) {
+	    bu_vls_printf(opath, "%s", ctx->i_str[path[i]].c_str());
+	    if (i < path.size() - 1)
+		bu_vls_printf(opath, "/");
+	    continue;
+	}
+	// If not, try the directory pointer
+	if (ctx->d_map.find(path[i]) != ctx->d_map.end()) {
+	    bu_vls_printf(opath, "%s", ctx->d_map[path[i]]->d_namep);
+	    if (i < path.size() - 1)
+		bu_vls_printf(opath, "/");
+	    continue;
+	}
+	// Last option - invalid string
+	if (ctx->invalid_entry_map.find(path[i]) != ctx->invalid_entry_map.end()) {
+	    bu_vls_printf(opath, "%s", ctx->invalid_entry_map[path[i]].c_str());
+	    if (i < path.size() - 1)
+		bu_vls_printf(opath, "/");
+	    continue;
+	}
+	bu_vls_printf(opath, "ERROR!!!");
+    }
+}
+
+
+void
+print_ctx(struct draw_ctx *ctx)
+{
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    std::unordered_set<unsigned long long>::iterator cs_it;
+    for (pc_it = ctx->p_c.begin(); pc_it != ctx->p_c.end(); pc_it++) {
+	bool found_entry = false;
+	std::unordered_map<unsigned long long, struct directory *>::iterator dpn = ctx->d_map.find(pc_it->first);
+	if (dpn != ctx->d_map.end()) {
+	    bu_log("%s	(%llu):\n", dpn->second->d_namep, pc_it->first);
+	    found_entry = true;
+	}
+	if (!found_entry) {
+	    unsigned long long chash = ctx->i_map[pc_it->first];
+	    dpn = ctx->d_map.find(chash);
+	    if (dpn != ctx->d_map.end()) {
+		bu_log("%s	(%llu->%llu):\n", dpn->second->d_namep, pc_it->first, chash);
+		found_entry = true;
+	    }
+	}
+	if (!found_entry) {
+	    std::unordered_map<unsigned long long, std::string>::iterator en = ctx->invalid_entry_map.find(pc_it->first);
+	    if (en != ctx->invalid_entry_map.end()) {
+		bu_log("%s[I]	(%llu)\n", en->second.c_str(), pc_it->first);
+		found_entry = true;
+	    } else {
+		bu_log("P ERROR: %llu\n", pc_it->first);
+	    }
+	}
+	if (!found_entry)
+	    continue;
+
+	for (cs_it = pc_it->second.begin(); cs_it != pc_it->second.end(); cs_it++) {
+	    found_entry = false;
+	    dpn = ctx->d_map.find(*cs_it);
+	    if (dpn != ctx->d_map.end()) {
+		bu_log("	%s	(%llu)\n", dpn->second->d_namep, *cs_it);
+		found_entry = true;
+	    }
+	    if (!found_entry) {
+		unsigned long long chash = ctx->i_map[*cs_it];
+		dpn = ctx->d_map.find(chash);
+		if (dpn != ctx->d_map.end()) {
+		    bu_log("	%s	(%llu->%llu)\n", dpn->second->d_namep, *cs_it, chash);
+		    found_entry = true;
+		}
+	    }
+	    if (!found_entry) {
+		std::unordered_map<unsigned long long, std::string>::iterator en = ctx->invalid_entry_map.find(*cs_it);
+		if (en != ctx->invalid_entry_map.end()) {
+		    bu_log("	%s[I] (%llu)\n", en->second.c_str(), *cs_it);
+		    found_entry = true;
+		} else {
+		    bu_log("P ERROR: %llu:\n", pc_it->first);
+		}
+	    }
+	}
+    }
+    bu_log("\n");
+}
+
+unsigned long long
+path_hash(std::vector<unsigned long long> &path)
+{
+
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    XXH64_update(&h_state, path.data(), path.size() * sizeof(unsigned long long));
+    return (unsigned long long)XXH64_digest(&h_state);
+}
+
+
+
+static void
 draw_walk_tree(union tree *tp, void *d, int subtract_skip,
 	void (*leaf_func)(void *, const char *, matp_t, int)
 	)
@@ -180,6 +290,7 @@ populate_leaf(void *client_data, const char *name, matp_t UNUSED(c_m), int UNUSE
 	XXH64_update(&h_state, bu_vls_cstr(&iname), bu_vls_strlen(&iname)*sizeof(char));
 	unsigned long long ihash = (unsigned long long)XXH64_digest(&h_state);
 	d->ctx->i_map[ihash] = chash;
+	d->ctx->i_str[ihash] = std::string(bu_vls_cstr(&iname));
 	d->ctx->p_c[d->phash].insert(ihash);
 	if (dp == RT_DIR_NULL) {
 	    // Invalid comb reference - goes into map
@@ -188,6 +299,7 @@ populate_leaf(void *client_data, const char *name, matp_t UNUSED(c_m), int UNUSE
 	    // In case this was previously invalid, remove
 	    d->ctx->invalid_entry_map.erase(ihash);
 	}
+	bu_vls_free(&iname);
     } else {
 	d->ctx->p_c[d->phash].insert(chash);
 	if (dp == RT_DIR_NULL) {
@@ -394,6 +506,7 @@ name_deinstance(struct bu_vls *nstr, const char *i_name)
 }
 #endif
 
+
 static size_t
 path_elements(std::vector<std::string> &elements, const char *path)
 {
@@ -406,23 +519,146 @@ path_elements(std::vector<std::string> &elements, const char *path)
     return elements.size();
 }
 
-#if 0
-static void
-draw_gather_paths(std::vector<unsigned long long> *path, struct directory *dp, mat_t *curr_mat, void *client_data)
+static bool
+path_cyclic(std::vector<unsigned long long> &path)
 {
-    struct walk_data *d = (struct walk_data *)client_data;
+    int i = path.size() - 1;
+    while (i > 0) {
+	int j = i - 1;
+	while (j >= 0) {
+	    if (path[i] == path[j])
+		return true;
+	    j--;
+	}
+	i--;
+    }
+    return false;
+}
+
+struct dd_t {
+    struct ged *gedp;
+    struct draw_ctx *ctx;
+    matp_t m;
+    int subtract_skip;
+    std::vector<unsigned long long> path_hashes;
+    std::unordered_map<unsigned long long, unsigned long long> *i_count;
+};
+
+void
+draw_gather_paths(void *d, const char *name, matp_t m, int UNUSED(op))
+{
+    struct dd_t *dd = (struct dd_t *)d;
+    struct directory *dp = db_lookup(dd->gedp->dbip, name, LOOKUP_QUIET);
+    if (!dp)
+	return;
+
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    XXH64_update(&h_state, name, strlen(name)*sizeof(char));
+    unsigned long long chash = (unsigned long long)XXH64_digest(&h_state);
+    (*dd->i_count)[chash] += 1;
+    if ((*dd->i_count)[chash] > 1) {
+	// If we've got multiple instances of the same object in the tree,
+	// hash the string labeling the instance and map it to the correct
+	// parent comb so we can associate it with the tree contents
+	struct bu_vls iname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&iname, "%s@%llu", name, (*dd->i_count)[chash]);
+	XXH64_reset(&h_state, 0);
+	XXH64_update(&h_state, bu_vls_cstr(&iname), bu_vls_strlen(&iname)*sizeof(char));
+	unsigned long long ihash = (unsigned long long)XXH64_digest(&h_state);
+	dd->path_hashes.push_back(ihash);
+    } else {	
+	dd->path_hashes.push_back(chash);
+    }
+
+    struct bu_vls path_str = BU_VLS_INIT_ZERO;
+    print_path(&path_str, dd->path_hashes, dd->ctx);
+    bu_log("%s\n", bu_vls_cstr(&path_str));
+    bu_vls_free(&path_str);
+
+    mat_t om, nm;
+    /* Update current matrix state to reflect the new branch of
+     * the tree. Either we have a local matrix, or we have an
+     * implicit IDN matrix. */
+    MAT_COPY(om, dd->m);
+    if (m) {
+	MAT_COPY(nm, m);
+    } else {
+	MAT_IDN(nm);
+    }
+    bn_mat_mul(dd->m, om, nm);
+
+#if 0
+    // Stash current color settings and see if we're getting new ones
+    struct bu_color oc;
+    int inherit_old = dd->color_inherit;
+    HSET(oc.buc_rgb, dd->c.buc_rgb[0], dd->c.buc_rgb[1], dd->c.buc_rgb[2], dd->c.buc_rgb[3]);
+    if (!dd->bound_only) {
+	tree_color(dp, dd);
+    }
+#endif
+
+    if (dp->d_flags & RT_DIR_COMB) {
+	// Two things may prevent further processing of a comb - a hidden dp, or
+	// a cyclic path.  Can check either here or in traverse_func -
+	// just do it here since otherwise the logic would have to be
+	// duplicated in all traverse functions.
+	if (!(dp->d_flags & RT_DIR_HIDDEN) && !path_cyclic(dd->path_hashes)) {
+	    /* Keep going */
+	    struct rt_db_internal in;
+	    struct rt_comb_internal *comb;
+
+	    if (rt_db_get_internal(&in, dp, dd->gedp->dbip, NULL, &rt_uniresource) < 0)
+		return;
+
+	    comb = (struct rt_comb_internal *)in.idb_ptr;
+	    std::unordered_map<unsigned long long, unsigned long long> i_count;
+	    std::unordered_map<unsigned long long, unsigned long long> *tmp = dd->i_count;
+	    dd->i_count = &i_count;
+	    draw_walk_tree(comb->tree, d, dd->subtract_skip, draw_gather_paths);
+	    dd->i_count = tmp;
+	    rt_db_free_internal(&in);
+	}
+    } else {
+	// Solid - scene object time
+	bu_log("make solid\n");
+	unsigned long long phash = path_hash(dd->path_hashes);
+	dd->ctx->s_keys[phash] = dd->path_hashes;
+    }
+
+    /* Done with branch - restore path, put back the old matrix state,
+     * and restore previous color settings */
+    dd->path_hashes.pop_back();
+    MAT_COPY(dd->m, om);
+#if 0
+    if (!dd->bound_only) {
+	dd->color_inherit = inherit_old;
+	HSET(dd->c.buc_rgb, oc.buc_rgb[0], oc.buc_rgb[1], oc.buc_rgb[2], oc.buc_rgb[3]);
+    }
+#endif
 }
 
 static void
 draw(struct ged *gedp, struct draw_ctx *ctx, const char *path)
 {
+    mat_t m;
+    MAT_IDN(m);
+    int op = OP_UNION;
+    std::unordered_map<unsigned long long, unsigned long long> i_count;
     std::vector<std::string> pe;
     path_elements(pe, path);
     // TODO: path color
     // TODO: path matrix
-
+    // TODO: op check (specific instances specified may contain subtractions...)
+    struct dd_t d;
+    d.gedp = gedp;
+    d.ctx = ctx;
+    d.m = m;
+    d.subtract_skip = 0;
+    d.i_count = &i_count;
+    path_elements(pe, path);
+    draw_gather_paths((void *)&d, pe[pe.size()-1].c_str(), m, op);
 }
-#endif
 
 
 static void
@@ -514,67 +750,6 @@ check_elements(struct ged *gedp, struct draw_ctx *ctx, std::vector<std::string> 
     return true;
 }
 
-void
-print_ctx(struct draw_ctx *ctx)
-{
-    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    std::unordered_set<unsigned long long>::iterator cs_it;
-    for (pc_it = ctx->p_c.begin(); pc_it != ctx->p_c.end(); pc_it++) {
-	bool found_entry = false;
-	std::unordered_map<unsigned long long, struct directory *>::iterator dpn = ctx->d_map.find(pc_it->first);
-	if (dpn != ctx->d_map.end()) {
-	    bu_log("%s	(%llu):\n", dpn->second->d_namep, pc_it->first);
-	    found_entry = true;
-	}
-	if (!found_entry) {
-	    unsigned long long chash = ctx->i_map[pc_it->first];
-	    dpn = ctx->d_map.find(chash);
-	    if (dpn != ctx->d_map.end()) {
-		bu_log("%s	(%llu->%llu):\n", dpn->second->d_namep, pc_it->first, chash);
-		found_entry = true;
-	    }
-	}
-	if (!found_entry) {
-	    std::unordered_map<unsigned long long, std::string>::iterator en = ctx->invalid_entry_map.find(pc_it->first);
-	    if (en != ctx->invalid_entry_map.end()) {
-		bu_log("%s[I]	(%llu)\n", en->second.c_str(), pc_it->first);
-		found_entry = true;
-	    } else {
-		bu_log("P ERROR: %llu\n", pc_it->first);
-	    }
-	}
-	if (!found_entry)
-	    continue;
-
-	for (cs_it = pc_it->second.begin(); cs_it != pc_it->second.end(); cs_it++) {
-	    found_entry = false;
-	    dpn = ctx->d_map.find(*cs_it);
-	    if (dpn != ctx->d_map.end()) {
-		bu_log("	%s	(%llu)\n", dpn->second->d_namep, *cs_it);
-		found_entry = true;
-	    }
-	    if (!found_entry) {
-		unsigned long long chash = ctx->i_map[*cs_it];
-		dpn = ctx->d_map.find(chash);
-		if (dpn != ctx->d_map.end()) {
-		    bu_log("	%s	(%llu->%llu)\n", dpn->second->d_namep, *cs_it, chash);
-		    found_entry = true;
-		}
-	    }
-	    if (!found_entry) {
-		std::unordered_map<unsigned long long, std::string>::iterator en = ctx->invalid_entry_map.find(*cs_it);
-		if (en != ctx->invalid_entry_map.end()) {
-		    bu_log("	%s[I] (%llu)\n", en->second.c_str(), *cs_it);
-		    found_entry = true;
-		} else {
-		    bu_log("P ERROR: %llu:\n", pc_it->first);
-		}
-	    }
-	}
-    }
-    bu_log("\n");
-}
-
 int
 main(int ac, char *av[]) {
     struct ged *gedp;
@@ -640,6 +815,7 @@ main(int ac, char *av[]) {
 	check_elements(gedp, &ctx, pe);
     }
 
+    draw(gedp, &ctx, "all.g");
 
     ged_close(gedp);
 
