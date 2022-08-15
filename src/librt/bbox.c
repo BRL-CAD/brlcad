@@ -401,6 +401,57 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
     return 0;
 }
 
+int
+rt_bound_instance(point_t *bmin, point_t *bmax,
+           struct directory *dp,
+           struct db_i *dbip,
+           const struct bg_tess_tol *ttol,
+           const struct bn_tol *tol,
+           mat_t *s_mat,
+           struct resource *res,
+           struct bview *v
+	)
+{
+    if (UNLIKELY(!bmin || !bmax || !dp || !dbip || !res))
+	return -1;
+
+    VSET(*bmin, INFINITY, INFINITY, INFINITY);
+    VSET(*bmax, -INFINITY, -INFINITY, -INFINITY);
+
+    struct rt_db_internal dbintern;
+    RT_DB_INTERNAL_INIT(&dbintern);
+    struct rt_db_internal *ip = &dbintern;
+    int ret = rt_db_get_internal(ip, dp, dbip, *s_mat, res);
+    if (ret < 0)
+	return -1;
+
+    int bbret = -1;
+    if (ip->idb_meth->ft_bbox) {
+	bbret = ip->idb_meth->ft_bbox(ip, bmin, bmax, tol);
+    }
+
+    if (bbret < 0 && ip->idb_meth->ft_plot) {
+	/* As a fallback for primitives that don't have a bbox function,
+	 * (there are still some as of 2021) use the old bounding method of
+	 * calculating the default (non-adaptive) plot for the primitive
+	 * and using the extent of the plotted segments as the bounds.
+	 */
+	struct bu_list vhead;
+	BU_LIST_INIT(&(vhead));
+	if (ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, v) >= 0) {
+	    if (bv_vlist_bbox(&vhead, bmin, bmax, NULL, NULL)) {
+		BV_FREE_VLIST(&v->gv_objs.gv_vlfree, &vhead);
+		rt_db_free_internal(&dbintern);
+		return -1;
+	    }
+	    BV_FREE_VLIST(&v->gv_objs.gv_vlfree, &vhead);
+	    bbret = 0;
+	}
+    }
+
+    rt_db_free_internal(&dbintern);
+    return bbret;
+}
 
 int
 rt_bound_internal(struct db_i *dbip, struct directory *dp,
