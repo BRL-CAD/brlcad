@@ -179,12 +179,12 @@ print_ctx(struct draw_ctx *ctx)
 }
 
 unsigned long long
-path_hash(std::vector<unsigned long long> &path)
+path_hash(std::vector<unsigned long long> &path, size_t max_len)
 {
-
+    size_t mlen = (max_len) ? max_len : path.size();
     XXH64_state_t h_state;
     XXH64_reset(&h_state, 0);
-    XXH64_update(&h_state, path.data(), path.size() * sizeof(unsigned long long));
+    XXH64_update(&h_state, path.data(), mlen * sizeof(unsigned long long));
     return (unsigned long long)XXH64_digest(&h_state);
 }
 
@@ -623,7 +623,7 @@ draw_gather_paths(void *d, const char *name, matp_t m, int UNUSED(op))
     } else {
 	// Solid - scene object time
 	bu_log("make solid\n");
-	unsigned long long phash = path_hash(dd->path_hashes);
+	unsigned long long phash = path_hash(dd->path_hashes, 0);
 	dd->ctx->s_keys[phash] = dd->path_hashes;
     }
 
@@ -702,6 +702,7 @@ collapse(struct draw_ctx *ctx)
     std::map<size_t, std::unordered_set<unsigned long long>> depth_groups;
 
     std::vector<std::vector<unsigned long long>> drawn_paths;
+    ctx->drawn_paths.clear();
 
     // Group paths of the same depth.  Depth == 1 paths are already
     // top level objects and need no further processing
@@ -709,6 +710,7 @@ collapse(struct draw_ctx *ctx)
     for (k_it = ctx->s_keys.begin(); k_it != ctx->s_keys.end(); k_it++) {
 	if (k_it->second.size() == 1) {
 	    drawn_paths.push_back(k_it->second);
+	    ctx->drawn_paths.insert(k_it->first);
 	} else {
 	    depth_groups[k_it->second.size()].insert(k_it->first);
 	}
@@ -762,6 +764,10 @@ collapse(struct draw_ctx *ctx)
 		// than that depth, but contains all the necessary information and using that approach avoids
 		// the need to duplicate paths.
 		depth_groups[plen - 1].insert(*g_pckeys.begin());
+		for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
+		    std::vector<unsigned long long> &pc_path = ctx->s_keys[*s_it];
+		    ctx->drawn_paths.insert(path_hash(pc_path, plen));
+		}
 	    } else {
 		// No further collapsing - add to final.  We must make trimmed
 		// versions of the paths in case this depth holds promoted paths
@@ -770,6 +776,7 @@ collapse(struct draw_ctx *ctx)
 		    std::vector<unsigned long long> trimmed = ctx->s_keys[*s_it];
 		    trimmed.resize(plen);
 		    drawn_paths.push_back(trimmed);
+		    ctx->drawn_paths.insert(path_hash(trimmed, 0));
 		}
 	    }
 	}
@@ -954,14 +961,17 @@ main(int ac, char *av[]) {
     draw(gedp, &ctx, "all.g");
 
     collapse(&ctx);
+    bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
 
     erase(&ctx, "all.g/havoc/havoc_middle");
 
     collapse(&ctx);
+    bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
 
     erase(&ctx, "all.g");
 
     collapse(&ctx);
+    bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
 
     ged_close(gedp);
 
