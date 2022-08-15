@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
+#include <stack>
 #include <vector>
 
 extern "C" {
@@ -61,9 +62,26 @@ struct draw_ctx {
     // one unique entry in p_c rather than requiring per-instance duplication
     std::unordered_map<unsigned long long, unsigned long long> i_map;
     std::unordered_map<unsigned long long, std::string> i_str;
-    // TODO - the opposite mapping of i_map - allow a comb edit to also get all
-    // instance using paths
-    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> i_sets;
+
+    // Matrices above comb instances are critical to geometry placement.  For non-identity
+    // matrices, we store them locally so they may be accessed without having to unpack
+    // the comb from disk.  Because these are unique to an instance, they are accessed with
+    // the i_map key, not the i_map value.  The i_mats key is the parent comb, which is
+    // not an i_map key.
+    std::unordered_map<unsigned long long, std::vector<fastf_t>> matrices;
+    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, size_t>> i_mats;
+
+    // Similar to matrices, store non-union bool ops for instances
+    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, size_t>> i_bool;
+
+
+    // Bounding boxes for each solid.  To calculate the bbox for a comb, the
+    // children are walked combining the bboxes.  The idea is to be able to
+    // retrieve solid bboxes and calculate comb bboxes without having to touch
+    // the disk beyond the initial per-solid calculations, which may be done
+    // once per load and/or dimensional change.
+    std::vector<fastf_t> bboxes;
+    std::unordered_map<unsigned long long, size_t> bbox_indices;
 
 
     // The above containers are universal to the .g - the following will need
@@ -83,6 +101,146 @@ struct draw_ctx {
     // other data structures or walk down the tree.
     std::unordered_set<unsigned long long> drawn_paths;
 };
+
+static bool
+get_matrix(matp_t m, struct draw_ctx *ctx, unsigned long long p_key, unsigned long long i_key)
+{
+    if (UNLIKELY(!m || !ctx || p_key == 0 || i_key == 0))
+	return false;
+
+    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, size_t>>::iterator ms_it;
+    std::unordered_map<unsigned long long, std::vector<fastf_t>>::iterator mv_it;
+    mv_it = ctx->matrices.find(p_key);
+    ms_it = ctx->i_mats.find(p_key);
+    if (ms_it == ctx->i_mats.end() || mv_it == ctx->matrices.end())
+	return false;
+
+    std::unordered_map<unsigned long long, size_t>::iterator m_it = ms_it->second.find(i_key);
+    if (m_it == ms_it->second.end())
+	return false;
+
+    // If we got this far, we have an index into the matrices vector.  Assign
+    // the result to m
+    std::vector<fastf_t> &mv = mv_it->second;
+    size_t ind = m_it->second;
+
+    for (size_t i = 0; i < 16; i++) {
+	m[i] = mv[16*ind + i];
+    }
+
+    return true;
+}
+
+static bool
+get_bbox(point_t *bbmin, point_t *bbmax, struct draw_ctx *ctx, matp_t curr_mat, unsigned long long hash)
+{
+
+    if (UNLIKELY(!bbmin || !bbmax || !ctx || hash == 0))
+	return false;
+
+    bool ret = false;
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    std::unordered_set<unsigned long long>::iterator s_it;
+    unsigned long long key = hash;
+    // First, see if this is an instance we need to translate to its canonical
+    // .g database name
+    if (ctx->i_map.find(hash) != ctx->i_map.end())
+	key = ctx->i_map[hash];
+
+    // See if we have a direct bbox lookup available
+    std::unordered_map<unsigned long long, size_t>::iterator b_it;
+    b_it = ctx->bbox_indices.find(key);
+    if (b_it != ctx->bbox_indices.end()) {
+	point_t lbmin, lbmax;
+	lbmin[X] = ctx->bboxes[6*b_it->second+0];
+	lbmin[Y] = ctx->bboxes[6*b_it->second+1];
+	lbmin[Z] = ctx->bboxes[6*b_it->second+2];
+	lbmax[X] = ctx->bboxes[6*b_it->second+3];
+	lbmax[Y] = ctx->bboxes[6*b_it->second+4];
+	lbmax[Z] = ctx->bboxes[6*b_it->second+5];
+
+	if (curr_mat) {
+	    point_t tbmin, tbmax;
+	    MAT4X3PNT(tbmin, curr_mat, lbmin);
+	    VMOVE(lbmin, tbmin);
+	    MAT4X3PNT(tbmax, curr_mat, lbmax);
+	    VMOVE(lbmax, tbmax);
+	}
+
+	VMINMAX(*bbmin, *bbmax, lbmin);
+	VMINMAX(*bbmin, *bbmax, lbmax);
+	return true;
+    }
+
+    // We might have a comb.  If that's the case, we need to work
+    // through the hierarchy to get the bboxes of the children.  When
+    // we have an object that is not a comb, look up its pre-calculated
+    // box and incorporate it into bmin/bmax.
+    pc_it = ctx->p_c.find(key);
+    if (pc_it != ctx->p_c.end()) {
+	// Have comb children - incorporate each one
+	for (s_it = pc_it->second.begin(); s_it != pc_it->second.end(); s_it++) {
+	    unsigned long long child_hash = *s_it;
+	    // See if we have a matrix for this case - if so, we need to
+	    // incorporate it
+	    mat_t nm;
+	    bool have_mat = get_matrix(nm, ctx, key, child_hash);
+	    if (have_mat) {
+		// Construct new "current" matrix
+		if (curr_mat) {
+		    // If we already have a non-IDN matrix from parent
+		    // path elements, we need to multiply the matrices
+		    // to accumulate the position changes
+		    mat_t om;
+		    MAT_COPY(om, curr_mat);
+		    bn_mat_mul(curr_mat, om, nm);
+		    if (get_bbox(bbmin, bbmax, ctx, curr_mat, child_hash))
+			ret = true;
+		    MAT_COPY(curr_mat, om);
+		} else {
+		    // If this is the first non-IDN matrix, we don't
+		    // need to combine it with parent matrices
+		    if (get_bbox(bbmin, bbmax, ctx, nm, child_hash))
+			ret = true;
+		}
+	    } else {
+		if (get_bbox(bbmin, bbmax, ctx, curr_mat, child_hash))
+		    ret = true;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+static bool
+get_path_bbox(point_t *bbmin, point_t *bbmax, struct draw_ctx *ctx, std::vector<unsigned long long> &elements)
+{
+    if (UNLIKELY(!bbmin || !bbmax || !ctx || !elements.size()))
+	return false;
+
+    // Everything but the last element should be a comb - we only need to
+    // assemble a matrix from the path (if there are any non-identity matrices)
+    // and call get_bbox on the last element.
+    bool have_mat = false;
+    mat_t start_mat;
+    MAT_IDN(start_mat);
+    for (size_t i = 0; i < elements.size() - 1; i++) {
+	mat_t nm;
+	bool got_mat = get_matrix(nm, ctx, elements[i], elements[i+1]);
+	if (got_mat) {
+	    mat_t cmat;
+	    bn_mat_mul(cmat, start_mat, nm);
+	    MAT_COPY(start_mat, cmat);
+	    have_mat = true;
+	}
+    }
+    if (have_mat) {
+	return get_bbox(bbmin, bbmax, ctx, start_mat, elements[elements.size() - 1]);
+    }
+
+    return get_bbox(bbmin, bbmax, ctx, NULL, elements[elements.size() - 1]);
+}
 
 void
 print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, struct draw_ctx *ctx)
@@ -267,7 +425,7 @@ struct walk_data {
 
 
 static void
-populate_leaf(void *client_data, const char *name, matp_t UNUSED(c_m), int UNUSED(op))
+populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
 {
     struct walk_data *d = (struct walk_data *)client_data;
     struct db_i *dbip = d->gedp->dbip;
@@ -301,7 +459,12 @@ populate_leaf(void *client_data, const char *name, matp_t UNUSED(c_m), int UNUSE
 	    d->ctx->invalid_entry_map.erase(ihash);
 	}
 	bu_vls_free(&iname);
+
+	// For the next stages, if we have an ihash use it
+	chash = ihash;
+
     } else {
+
 	d->ctx->p_c[d->phash].insert(chash);
 	if (dp == RT_DIR_NULL) {
 	    // Invalid comb reference - goes into map
@@ -310,7 +473,20 @@ populate_leaf(void *client_data, const char *name, matp_t UNUSED(c_m), int UNUSE
 	    // In case this was previously invalid, remove
 	    d->ctx->invalid_entry_map.erase(chash);
 	}
+
     }
+
+    // If we have a non-IDN matrix, store it
+    if (c_m) {
+	for (int i = 0; i < 16; i++) {
+	    d->ctx->matrices[d->phash].push_back(c_m[i]);
+	}
+	d->ctx->i_mats[d->phash][chash] = d->ctx->matrices[d->phash].size()/16 - 1;
+    }
+
+    // If we have a non-UNION op, store it
+    d->ctx->i_bool[d->phash][chash] = op;
+
 }
 
 static void
@@ -330,8 +506,23 @@ populate_maps(struct ged *gedp, struct draw_ctx *ctx, struct directory *dp, int 
     // Set up to go from hash back to name
     ctx->d_map[phash] = dp;
 
-    if (!(dp->d_flags & RT_DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB)) {
+	point_t bmin, bmax;
+	mat_t m;
+	MAT_IDN(m);
+	int bret = rt_bound_instance(&bmin, &bmax, dp, gedp->dbip,
+		&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol,
+		&m, &rt_uniresource, gedp->ged_gvp);
+	if (bret != -1) {
+	    size_t ind = ctx->bboxes.size() / 6;
+	    for (size_t i = 0; i < 3; i++)
+		ctx->bboxes.push_back(bmin[i]);
+	    for (size_t i = 0; i < 3; i++)
+		ctx->bboxes.push_back(bmax[i]);
+	    ctx->bbox_indices[phash] = ind;
+	}
 	return;
+    }
 
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
     pc_it = ctx->p_c.find(phash);
@@ -690,6 +881,12 @@ draw(struct ged *gedp, struct draw_ctx *ctx, const char *path)
 	return;
     }
 
+    point_t bbmin, bbmax;
+    VSETALL(bbmin, INFINITY);
+    VSETALL(bbmax, -INFINITY);
+    get_path_bbox(&bbmin, &bbmax, ctx, elements);
+    bu_log("bbmin: %f %f %f  bbmax: %f %f %f\n", V3ARGS(bbmin), V3ARGS(bbmax));
+
     draw_gather_paths((void *)&d, pe[pe.size()-1].c_str(), m, op);
 }
 
@@ -995,7 +1192,8 @@ main(int ac, char *av[]) {
     collapse(&ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
 
-    erase(&ctx, "all.g/havoc/havoc_middle");
+    //erase(&ctx, "all.g/havoc/havoc_middle");
+    erase(&ctx, "all.g/box.r");
 
     collapse(&ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
@@ -1004,6 +1202,10 @@ main(int ac, char *av[]) {
 
     collapse(&ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+
+    draw(gedp, &ctx, "all.g/box2.r");
+
+    draw(gedp, &ctx, "box2.r");
 
     ged_close(gedp);
 
