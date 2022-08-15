@@ -520,9 +520,13 @@ path_elements(std::vector<std::string> &elements, const char *path)
     return elements.size();
 }
 
-static bool
+// This is a full (and more expensive) check to ensure
+// a path has no cycles anywhere in it.
+bool
 path_cyclic(std::vector<unsigned long long> &path)
 {
+    if (path.size() == 1)
+	return false;
     int i = path.size() - 1;
     while (i > 0) {
 	int j = i - 1;
@@ -531,6 +535,23 @@ path_cyclic(std::vector<unsigned long long> &path)
 		return true;
 	    j--;
 	}
+	i--;
+    }
+    return false;
+}
+
+// This version assumes the path entries other than the last
+// one are OK, and checks only against that last entry.
+static bool
+path_addition_cyclic(std::vector<unsigned long long> &path)
+{
+    if (path.size() == 1)
+	return false;
+    int new_entry = path.size() - 1;
+    int i = new_entry - 1;
+    while (i >= 0) {
+	if (path[new_entry] == path[i])
+	    return true;
 	i--;
     }
     return false;
@@ -601,10 +622,8 @@ draw_gather_paths(void *d, const char *name, matp_t m, int UNUSED(op))
 
     if (dp->d_flags & RT_DIR_COMB) {
 	// Two things may prevent further processing of a comb - a hidden dp, or
-	// a cyclic path.  Can check either here or in traverse_func -
-	// just do it here since otherwise the logic would have to be
-	// duplicated in all traverse functions.
-	if (!(dp->d_flags & RT_DIR_HIDDEN) && !path_cyclic(dd->path_hashes)) {
+	// a cyclic path.
+	if (!(dp->d_flags & RT_DIR_HIDDEN) && !path_addition_cyclic(dd->path_hashes)) {
 	    /* Keep going */
 	    struct rt_db_internal in;
 	    struct rt_comb_internal *comb;
