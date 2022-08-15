@@ -508,21 +508,9 @@ name_deinstance(struct bu_vls *nstr, const char *i_name)
 #endif
 
 
-static size_t
-path_elements(std::vector<std::string> &elements, const char *path)
-{
-    std::vector<std::string> substrs;
-    fp_path_split(substrs, path);
-    for (size_t i = 0; i < substrs.size(); i++) {
-	std::string cleared = name_deescape(substrs[i]);
-	elements.push_back(cleared);
-    }
-    return elements.size();
-}
-
 // This is a full (and more expensive) check to ensure
 // a path has no cycles anywhere in it.
-bool
+static bool
 path_cyclic(std::vector<unsigned long long> &path)
 {
     if (path.size() == 1)
@@ -557,6 +545,18 @@ path_addition_cyclic(std::vector<unsigned long long> &path)
     return false;
 }
 
+static size_t
+path_elements(std::vector<std::string> &elements, const char *path)
+{
+    std::vector<std::string> substrs;
+    fp_path_split(substrs, path);
+    for (size_t i = 0; i < substrs.size(); i++) {
+	std::string cleared = name_deescape(substrs[i]);
+	elements.push_back(cleared);
+    }
+    return elements.size();
+}
+
 struct dd_t {
     struct ged *gedp;
     struct draw_ctx *ctx;
@@ -589,7 +589,7 @@ draw_gather_paths(void *d, const char *name, matp_t m, int UNUSED(op))
 	XXH64_update(&h_state, bu_vls_cstr(&iname), bu_vls_strlen(&iname)*sizeof(char));
 	unsigned long long ihash = (unsigned long long)XXH64_digest(&h_state);
 	dd->path_hashes.push_back(ihash);
-    } else {	
+    } else {
 	dd->path_hashes.push_back(chash);
     }
 
@@ -666,7 +666,6 @@ draw(struct ged *gedp, struct draw_ctx *ctx, const char *path)
     int op = OP_UNION;
     std::unordered_map<unsigned long long, unsigned long long> i_count;
     std::vector<std::string> pe;
-    path_elements(pe, path);
     // TODO: path color
     // TODO: path matrix
     // TODO: op check (specific instances specified may contain subtractions...)
@@ -677,6 +676,20 @@ draw(struct ged *gedp, struct draw_ctx *ctx, const char *path)
     d.subtract_skip = 0;
     d.i_count = &i_count;
     path_elements(pe, path);
+
+    std::vector<unsigned long long> elements;
+    XXH64_state_t h_state;
+    for (size_t i = 0; i < pe.size(); i++) {
+	XXH64_reset(&h_state, 0);
+	XXH64_update(&h_state, pe[i].c_str(), pe[i].length()*sizeof(char));
+	elements.push_back((unsigned long long)XXH64_digest(&h_state));
+    }
+
+    if (path_cyclic(elements)) {
+	bu_log("Error - %s is a cyclic path\n", path);
+	return;
+    }
+
     draw_gather_paths((void *)&d, pe[pe.size()-1].c_str(), m, op);
 }
 
