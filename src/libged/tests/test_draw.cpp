@@ -42,10 +42,13 @@ extern "C" {
 #include <ged.h>
 
 struct draw_ctx {
-    // This map is the ".g ground truth" of the comb structures - the set associated
-    // with each has contains all the child hashes from the comb definition in the
-    // database.  It can be used to tell if a comb is fully drawn.
+    // These maps are the ".g ground truth" of the comb structures - the set
+    // associated with each has contains all the child hashes from the comb
+    // definition in the database for quick lookup, and the vector preserves
+    // the comb ordering for listing.
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> p_c;
+    // Note: to match MGED's 'l' printing you need to use a reverse_iterator
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>> p_v;
 
     // Translate individual object hashes to their directory names.  This map must
     // be updated any time a database object changes to remain valid.
@@ -379,7 +382,7 @@ print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, struct d
 
 
 void
-print_ctx(struct draw_ctx *ctx)
+print_ctx_unordered(struct draw_ctx *ctx)
 {
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
     std::unordered_set<unsigned long long>::iterator cs_it;
@@ -432,6 +435,67 @@ print_ctx(struct draw_ctx *ctx)
 		    found_entry = true;
 		} else {
 		    bu_log("P ERROR: %llu:\n", pc_it->first);
+		}
+	    }
+	}
+    }
+    bu_log("\n");
+}
+
+void
+print_ctx_ordered(struct draw_ctx *ctx)
+{
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator pv_it;
+    std::vector<unsigned long long>::reverse_iterator cs_it;
+    for (pv_it = ctx->p_v.begin(); pv_it != ctx->p_v.end(); pv_it++) {
+	bool found_entry = false;
+	std::unordered_map<unsigned long long, struct directory *>::iterator dpn = ctx->d_map.find(pv_it->first);
+	if (dpn != ctx->d_map.end()) {
+	    bu_log("%s	(%llu):\n", dpn->second->d_namep, pv_it->first);
+	    found_entry = true;
+	}
+	if (!found_entry) {
+	    unsigned long long chash = ctx->i_map[pv_it->first];
+	    dpn = ctx->d_map.find(chash);
+	    if (dpn != ctx->d_map.end()) {
+		bu_log("%s	(%llu->%llu):\n", dpn->second->d_namep, pv_it->first, chash);
+		found_entry = true;
+	    }
+	}
+	if (!found_entry) {
+	    std::unordered_map<unsigned long long, std::string>::iterator en = ctx->invalid_entry_map.find(pv_it->first);
+	    if (en != ctx->invalid_entry_map.end()) {
+		bu_log("%s[I]	(%llu)\n", en->second.c_str(), pv_it->first);
+		found_entry = true;
+	    } else {
+		bu_log("P ERROR: %llu\n", pv_it->first);
+	    }
+	}
+	if (!found_entry)
+	    continue;
+
+	for (cs_it = pv_it->second.rbegin(); cs_it != pv_it->second.rend(); cs_it++) {
+	    found_entry = false;
+	    dpn = ctx->d_map.find(*cs_it);
+	    if (dpn != ctx->d_map.end()) {
+		bu_log("	%s	(%llu)\n", dpn->second->d_namep, *cs_it);
+		found_entry = true;
+	    }
+	    if (!found_entry) {
+		unsigned long long chash = ctx->i_map[*cs_it];
+		dpn = ctx->d_map.find(chash);
+		if (dpn != ctx->d_map.end()) {
+		    bu_log("	%s	(%llu->%llu)\n", dpn->second->d_namep, *cs_it, chash);
+		    found_entry = true;
+		}
+	    }
+	    if (!found_entry) {
+		std::unordered_map<unsigned long long, std::string>::iterator en = ctx->invalid_entry_map.find(*cs_it);
+		if (en != ctx->invalid_entry_map.end()) {
+		    bu_log("	%s[I] (%llu)\n", en->second.c_str(), *cs_it);
+		    found_entry = true;
+		} else {
+		    bu_log("P ERROR: %llu:\n", pv_it->first);
 		}
 	    }
 	}
@@ -553,6 +617,7 @@ populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
 	d->ctx->i_map[ihash] = chash;
 	d->ctx->i_str[ihash] = std::string(bu_vls_cstr(&iname));
 	d->ctx->p_c[d->phash].insert(ihash);
+	d->ctx->p_v[d->phash].push_back(ihash);
 	if (dp == RT_DIR_NULL) {
 	    // Invalid comb reference - goes into map
 	    d->ctx->invalid_entry_map[ihash] = std::string(bu_vls_cstr(&iname));
@@ -567,6 +632,7 @@ populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
 
     } else {
 
+	d->ctx->p_v[d->phash].push_back(chash);
 	d->ctx->p_c[d->phash].insert(chash);
 	if (dp == RT_DIR_NULL) {
 	    // Invalid comb reference - goes into map
@@ -596,10 +662,16 @@ populate_maps(struct ged *gedp, struct draw_ctx *ctx, struct directory *dp, unsi
     if (!(dp->d_flags & RT_DIR_COMB))
 	return;
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator pv_it;
     pc_it = ctx->p_c.find(phash);
-    if (pc_it == ctx->p_c.end() || reset) {
-	if (reset)
+    pv_it = ctx->p_v.find(phash);
+    if (pc_it == ctx->p_c.end() || pv_it != ctx->p_v.end() || reset) {
+	if (reset && pc_it != ctx->p_c.end()) {
 	    pc_it->second.clear();
+	}
+	if (reset && pv_it != ctx->p_v.end()) {
+	    pv_it->second.clear();
+	}
 	struct rt_db_internal in;
 	if (rt_db_get_internal(&in, dp, gedp->dbip, NULL, &rt_uniresource) < 0)
 	    return;
@@ -871,16 +943,6 @@ draw_gather_paths(void *d, const char *name, matp_t m, int UNUSED(op))
     }
     bn_mat_mul(dd->m, om, nm);
 
-#if 0
-    // Stash current color settings and see if we're getting new ones
-    struct bu_color oc;
-    int inherit_old = dd->color_inherit;
-    HSET(oc.buc_rgb, dd->c.buc_rgb[0], dd->c.buc_rgb[1], dd->c.buc_rgb[2], dd->c.buc_rgb[3]);
-    if (!dd->bound_only) {
-	tree_color(dp, dd);
-    }
-#endif
-
     if (dp->d_flags & RT_DIR_COMB) {
 	// Two things may prevent further processing of a comb - a hidden dp, or
 	// a cyclic path.
@@ -911,12 +973,6 @@ draw_gather_paths(void *d, const char *name, matp_t m, int UNUSED(op))
      * and restore previous color settings */
     dd->path_hashes.pop_back();
     MAT_COPY(dd->m, om);
-#if 0
-    if (!dd->bound_only) {
-	dd->color_inherit = inherit_old;
-	HSET(dd->c.buc_rgb, oc.buc_rgb[0], oc.buc_rgb[1], oc.buc_rgb[2], oc.buc_rgb[3]);
-    }
-#endif
 }
 
 static void
@@ -1295,7 +1351,8 @@ main(int ac, char *av[]) {
 	}
     }
 
-    print_ctx(&ctx);
+    //print_ctx_unordered(&ctx);
+    print_ctx_ordered(&ctx);
 
     split_test("all.g/cone.r/cone.s");
     split_test("all.g/cone.r/cone.s/");
