@@ -84,6 +84,15 @@ struct draw_ctx {
     std::unordered_map<unsigned long long, size_t> bbox_indices;
 
 
+    // We also have a number of standard attributes that can impact drawing,
+    // which are normally only accessible by loading in the attributes of
+    // the object.  We stash them in maps to have the information available
+    // without having to interrogate the disk
+    std::unordered_map<unsigned long long, int> c_inherit; // color inheritance flag
+    std::unordered_map<unsigned long long, unsigned int> rgb; // color RGB value  (r + (g << 8) + (b << 16))
+    std::unordered_map<unsigned long long, int> region_id; // region_id
+
+
     // The above containers are universal to the .g - the following will need
     // both shared and view specific instances
 
@@ -101,6 +110,100 @@ struct draw_ctx {
     // other data structures or walk down the tree.
     std::unordered_set<unsigned long long> drawn_paths;
 };
+
+unsigned int
+color_int(struct bu_color *c)
+{
+    int r, g, b;
+    bu_color_to_rgb_ints(c, &r, &g, &b);
+    unsigned int colors = r + (g << 8) + (b << 16);
+    return colors;
+}
+
+int
+int_color(struct bu_color *c, unsigned int cval)
+{
+    if (!c)
+	return 0;
+    int r, g, b;
+    r = cval & 0xFF;
+    g = (cval >> 8) & 0xFF;
+    b = (cval >> 16) & 0xFF;
+
+    unsigned char rgb[3];
+    rgb[0] = (unsigned char)r;
+    rgb[1] = (unsigned char)g;
+    rgb[2] = (unsigned char)b;
+
+    return bu_color_from_rgb_chars(c, rgb);
+}
+
+bool
+get_path_color(struct bu_color *c, struct draw_ctx *ctx, std::vector<unsigned long long> &elements)
+{
+    // This may not be how we'll always want to do this, but at least for the
+    // moment (to duplicate observed MGED behavior) the first region_id seen
+    // along the path with an active color in rt_material_head trumps all other
+    // color values set by any other means.
+    if (rt_material_head() != MATER_NULL) {
+	std::unordered_map<unsigned long long, int>::iterator r_it;
+	int region_id;
+	for (size_t i = 0; i < elements.size(); i++) {
+	    r_it = ctx->region_id.find(elements[i]);
+	    if (r_it == ctx->region_id.end())
+		continue;
+	    region_id = r_it->second;
+	    const struct mater *mp;
+	    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+		if (region_id > mp->mt_high || region_id < mp->mt_low)
+		    continue;
+		unsigned char mt[3];
+		mt[0] = mp->mt_r;
+		mt[1] = mp->mt_g;
+		mt[2] = mp->mt_b;
+		bu_color_from_rgb_chars(c, mt);
+		return true;
+	    }
+	}
+    }
+
+    // Next, check for an inherited color.  If we have one (the behavior seen in MGED
+    // appears to require a comb with both inherit and a color value set to override
+    // lower colors) then we are done.
+    std::unordered_map<unsigned long long, int>::iterator ci_it;
+    std::unordered_map<unsigned long long, unsigned int>::iterator rgb_it;
+    for (size_t i = 0; i < elements.size(); i++) {
+	ci_it = ctx->c_inherit.find(elements[i]);
+	if (ci_it == ctx->c_inherit.end())
+	    continue;
+	rgb_it = ctx->rgb.find(elements[i]);
+	if (rgb_it == ctx->rgb.end())
+	    continue;
+	int_color(c, rgb_it->second);
+	return true;
+    }
+
+    // If we don't have an inherited color, it works the other way around - the
+    // lowest set color wins.  Note that a region flag doesn't automatically
+    // override a lower color level - i.e. there is no implicit inherit flag
+    // in a region being set on a comb.
+    std::vector<unsigned long long>::reverse_iterator v_it;
+    for (v_it = elements.rbegin(); v_it != elements.rend(); v_it++) {
+	rgb_it = ctx->rgb.find(*v_it);
+	if (rgb_it == ctx->rgb.end())
+	    continue;
+	int_color(c, rgb_it->second);
+	return true;
+    }
+
+    // If we don't have anything else, default to red
+    unsigned char mt[3];
+    mt[0] = 255;
+    mt[1] = 0;
+    mt[2] = 0;
+    bu_color_from_rgb_chars(c, mt);
+    return false;
+}
 
 static bool
 get_matrix(matp_t m, struct draw_ctx *ctx, unsigned long long p_key, unsigned long long i_key)
@@ -423,7 +526,6 @@ struct walk_data {
     unsigned long long phash = 0;
 };
 
-
 static void
 populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
 {
@@ -486,44 +588,13 @@ populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
 
     // If we have a non-UNION op, store it
     d->ctx->i_bool[d->phash][chash] = op;
-
 }
 
 static void
-populate_maps(struct ged *gedp, struct draw_ctx *ctx, struct directory *dp, int reset)
+populate_maps(struct ged *gedp, struct draw_ctx *ctx, struct directory *dp, unsigned long long phash, int reset)
 {
-
-
-    struct bu_vls hname = BU_VLS_INIT_ZERO;
-    XXH64_state_t h_state;
-
-    // First, get parent name hash
-    XXH64_reset(&h_state, 0);
-    bu_vls_sprintf(&hname, "%s", dp->d_namep);
-    XXH64_update(&h_state, bu_vls_cstr(&hname), bu_vls_strlen(&hname)*sizeof(char));
-    unsigned long long phash = (unsigned long long)XXH64_digest(&h_state);
-
-    // Set up to go from hash back to name
-    ctx->d_map[phash] = dp;
-
-    if (!(dp->d_flags & RT_DIR_COMB)) {
-	point_t bmin, bmax;
-	mat_t m;
-	MAT_IDN(m);
-	int bret = rt_bound_instance(&bmin, &bmax, dp, gedp->dbip,
-		&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol,
-		&m, &rt_uniresource, gedp->ged_gvp);
-	if (bret != -1) {
-	    size_t ind = ctx->bboxes.size() / 6;
-	    for (size_t i = 0; i < 3; i++)
-		ctx->bboxes.push_back(bmin[i]);
-	    for (size_t i = 0; i < 3; i++)
-		ctx->bboxes.push_back(bmax[i]);
-	    ctx->bbox_indices[phash] = ind;
-	}
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return;
-    }
-
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
     pc_it = ctx->p_c.find(phash);
     if (pc_it == ctx->p_c.end() || reset) {
@@ -544,7 +615,6 @@ populate_maps(struct ged *gedp, struct draw_ctx *ctx, struct directory *dp, int 
 	draw_walk_tree(comb->tree, (void *)&d, 0, populate_leaf);
 	rt_db_free_internal(&in);
     }
-
 }
 
 static bool
@@ -1056,7 +1126,11 @@ check_elements(struct ged *gedp, struct draw_ctx *ctx, std::vector<std::string> 
 	struct directory *dp = db_lookup(gedp->dbip, elements[0].c_str(), LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL)
 	    return false;
-	populate_maps(gedp, ctx, dp, 1);
+	XXH64_state_t h_state;
+	XXH64_reset(&h_state, 0);
+	XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+	populate_maps(gedp, ctx, dp, hash, 1);
 	return true;
     }
 
@@ -1072,7 +1146,11 @@ check_elements(struct ged *gedp, struct draw_ctx *ctx, std::vector<std::string> 
 	    bu_log("invalid path: %s\n", elements[i].c_str());
 	    return false;
 	}
-	populate_maps(gedp, ctx, dp, 1);
+	XXH64_state_t h_state;
+	XXH64_reset(&h_state, 0);
+	XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+	populate_maps(gedp, ctx, dp, hash, 1);
     }
 
 
@@ -1147,7 +1225,73 @@ main(int ac, char *av[]) {
 	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_flags & DB_LS_HIDDEN)
 		continue;
-	    populate_maps(gedp, &ctx, dp, 0);
+
+	    // Set up to go from hash back to name
+	    XXH64_state_t h_state;
+	    XXH64_reset(&h_state, 0);
+	    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	    unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+	    ctx.d_map[hash] = dp;
+
+	    // If this isn't a comb, find and record the untransformed
+	    // bounding box
+	    if (!(dp->d_flags & RT_DIR_COMB)) {
+		point_t bmin, bmax;
+		mat_t m;
+		MAT_IDN(m);
+		int bret = rt_bound_instance(&bmin, &bmax, dp, gedp->dbip,
+			&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol,
+			&m, &rt_uniresource, gedp->ged_gvp);
+		if (bret != -1) {
+		    size_t ind = ctx.bboxes.size() / 6;
+		    for (size_t j = 0; j < 3; j++)
+			ctx.bboxes.push_back(bmin[j]);
+		    for (size_t j = 0; j < 3; j++)
+			ctx.bboxes.push_back(bmax[j]);
+		    ctx.bbox_indices[hash] = ind;
+		}
+	    }
+
+	    // Encode hierarchy info if this is a comb
+	    if (dp->d_flags & RT_DIR_COMB)
+		populate_maps(gedp, &ctx, dp, hash, 0);
+
+	    // Check for various drawing related attributes
+	    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
+	    db5_get_attributes(gedp->dbip, &c_avs, dp);
+
+	    // Check for region id.  For drawing purposes this needs to be a number.
+	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
+	    int region_id = -1;
+	    if (region_id_val) {
+		if (bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id) != -1) {
+		    ctx.region_id[hash] = region_id;
+		} else {
+		    bu_log("%s is not a valid region_id\n", region_id_val);
+		    region_id = -1;
+		}
+	    }
+
+	    // Check for an inherit flag
+	    int color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
+	    if (color_inherit)
+		ctx.c_inherit[hash] = color_inherit;
+
+	    // Color (note that the rt_material_head colors and a region_id may
+	    // override this, as might a parent comb with color and the inherit
+	    // flag both set.
+	    struct bu_color c = BU_COLOR_INIT_ZERO;
+	    const char *color_val = bu_avs_get(&c_avs, "color");
+	    if (!color_val)
+		color_val = bu_avs_get(&c_avs, "rgb");
+	    if (color_val){
+		bu_opt_color(NULL, 1, &color_val, (void *)&c);
+		unsigned int cval = color_int(&c);
+		ctx.rgb[hash] = cval;
+	    }
+
+	    // Done with attributes
+	    bu_avs_free(&c_avs);
 	}
     }
 
@@ -1188,6 +1332,19 @@ main(int ac, char *av[]) {
     }
 
     draw(gedp, &ctx, "all.g");
+
+
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
+    for (k_it = ctx.s_keys.begin(); k_it != ctx.s_keys.end(); k_it++) {
+	struct bu_color c = BU_COLOR_INIT_ZERO;
+	if (get_path_color(&c, &ctx, k_it->second)) {
+	    int r, g, b;
+	     bu_color_to_rgb_ints(&c, &r, &g, &b);
+	     bu_log("%llu: %d/%d/%d\n", k_it->first, r, g, b);
+	} else {
+	     bu_log("%llu: no color\n", k_it->first);
+	}
+    }
 
     collapse(&ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
