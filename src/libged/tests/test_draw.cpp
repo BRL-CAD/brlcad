@@ -1284,26 +1284,27 @@ ctx_update(struct draw_ctx *ctx,
     // pre-evaluate that?
     //
     // collect all the paths with either removed or changed dps, then collapse
-    // until the leaf is a changed dp or not fully drawn.  Then, work down from
-    // the root looking for changed or removed.
-    //
-    // If changed is first and is a leaf, redraw
-    // If removed is first, erase
+    // until the leaf is a changed dp or not fully drawn.  The principle for
+    // redrawing will be that anything that was previously fully drawn should
+    // stay fully drawn, if its definition is still valid.  Once we have reduced
+    // the set to the originally fully drawn paths, work down from
+    // the root of each path looking for the first changed or removed entry.
     //
     // If changed is first and is not a leaf, we need to validate the next
     // entry of the path against the new comb definition to see if it is still
-    // a valid child entry.  If it is, reset and continue to next
-    // changed/removed and use above criteria. If no longer a child of the
-    // tree, remove.  If the next is a valid comb child entry but is a
-    // removed/invalid database entry now, we have a dilemma - we can either
-    // terminate the path at that point and add it as a "drawn" invalid path,
-    // or remove it.  If the now invalid entry is also a leaf, we draw it.
-    // If it was not a leaf, that implies the prior, now invalid entry was
-    // only partially drawn.  My thought is in that case we remove it, since
-    // it was not fully drawn and we have no way to preserve correctly the
-    // partial state.  Redrawing a new valid entry down the road fully could
-    // be quite surprising to the user.
-
+    // a valid child entry.
+    //
+    // If it is not a child of the comb any longer, erase the path.
+    //
+    // If it is still a child of the comb:
+    //    If the child is not being removed, reset and continue to next changed/removed using the same criteria.
+    //    If the child is being removed, evaluate according to remove criteria.
+    //
+    // If removed is first and not a leaf, erase - the parent comb wasn't changed,
+    // so the state here is not preservable.
+    // If removed is first is a leaf draw as invalid path - the parent comb
+    // wasn't changed
+    
     for(size_t i = 0; i < added.size(); i++) {
 	bu_log("added: %s\n", added[i]->d_namep);
 	// package up dbi_Head procedure used in main to initialize, apply to
