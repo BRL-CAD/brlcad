@@ -96,6 +96,8 @@ struct draw_ctx {
     std::unordered_map<unsigned long long, int> region_id; // region_id
 
 
+
+
     // The above containers are universal to the .g - the following will need
     // both shared and view specific instances
 
@@ -1255,6 +1257,93 @@ check_elements(struct ged *gedp, struct draw_ctx *ctx, std::vector<std::string> 
 
     return true;
 }
+
+// The most involved task we must perform with these containers, in some ways,
+// is to update them in response to .g database changes...  need to figure out
+// if and how that will be accomplished.
+//
+// NOTE:  If this scheme ultimately proves viable, draw_ctx also has the
+// potential to replace the gInstance container, since all the information
+// stored in each instance is implicit in the containers
+//
+// Order of operations needs some careful consideration here, since the
+// validity or invalidity of some stages may depend on others.  Worst case
+// we need to fully process for each removed and changed pointer...
+void
+ctx_update(struct draw_ctx *ctx,
+	std::vector<struct directory *> &added,
+	std::vector<struct directory *> &removed,
+	std::vector<struct directory *> &changed
+	)
+{
+    if (!ctx)
+	return;
+
+    // May need to save the "old" states for changed dps so we can evaluate
+    // if prior states were fully drawn for collapse/re-expand purposes, or maybe
+    // pre-evaluate that?
+    //
+    // collect all the paths with either removed or changed dps, then collapse
+    // until the leaf is a changed dp or not fully drawn.  Then, work down from
+    // the root looking for changed or removed.
+    //
+    // If changed is first and is a leaf, redraw
+    // If removed is first, erase
+    //
+    // If changed is first and is not a leaf, we need to validate the next
+    // entry of the path against the new comb definition to see if it is still
+    // a valid child entry.  If it is, reset and continue to next
+    // changed/removed and use above criteria. If no longer a child of the
+    // tree, remove.  If the next is a valid comb child entry but is a
+    // removed/invalid database entry now, we have a dilemma - we can either
+    // terminate the path at that point and add it as a "drawn" invalid path,
+    // or remove it.  If the now invalid entry is also a leaf, we draw it.
+    // If it was not a leaf, that implies the prior, now invalid entry was
+    // only partially drawn.  My thought is in that case we remove it, since
+    // it was not fully drawn and we have no way to preserve correctly the
+    // partial state.  Redrawing a new valid entry down the road fully could
+    // be quite surprising to the user.
+
+    for(size_t i = 0; i < added.size(); i++) {
+	bu_log("added: %s\n", added[i]->d_namep);
+	// package up dbi_Head procedure used in main to initialize, apply to
+	// these dps
+	//
+	// need to check if invalid instances are made valid by the addition of
+	// these dps
+	//
+	// NOTE:  if paths ending in invalid dps are present in the drawn set
+	// that are now valid, we need to expand them after the initial dp
+	// processing is complete and replace them with the expansions
+    }
+
+    for(size_t i = 0; i < removed.size(); i++) {
+	bu_log("removed: %s\n", removed[i]->d_namep);
+	// Entries with this hash as their key are erased.  Combs with this
+	// key in their child set need to be updated to refer to it as an invalid
+	// entry.
+	//
+	// Any comb paths with this key in them need to be collected into a
+	// set, truncated back to the now-invalid key, and consolidated into
+	// a unique set of invalid paths to re-add to the "drawn" set so we
+	// don't lose track of their "actively drawn" status
+    }
+
+    for(size_t i = 0; i < changed.size(); i++) {
+	bu_log("changed: %s\n", changed[i]->d_namep);
+	// Properties need to be updated - comb children, colors, matrices,
+	// etc.  Paths with changed items in their array need to be collected,
+	// collapsed to the minimum fully drawn paths, and considered.  If
+	// the changed pointer is the leaf then it can simply be re-expanded
+	// as it was fully drawn before, but if it is a parent then we need
+	// to check and see if the children below the parent are still valid.
+	// If not, those paths are removed from the drawn set
+    }
+
+    // May want to "garbage collect" invalid entires and instances sets...
+}
+
+
 
 int
 main(int ac, char *av[]) {
