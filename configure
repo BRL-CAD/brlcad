@@ -130,6 +130,10 @@ do
                                   shift;;
      --disable-gdal)                options="$options -DBRLCAD_GDAL=SYSTEM";
                                   shift;;
+     --enable-assimp)                options="$options -DBRLCAD_ASSIMP=BUNDLED";
+                                  shift;;
+     --disable-assimp)                options="$options -DBRLCAD_ASSIMP=SYSTEM";
+                                  shift;;
      --enable-tcl)                options="$options -DBRLCAD_TCL=BUNDLED";
                                   shift;;
      --disable-tcl)                options="$options -DBRLCAD_TCL=SYSTEM";
