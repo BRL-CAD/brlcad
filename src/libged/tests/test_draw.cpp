@@ -1062,6 +1062,7 @@ static void
 collapse(
 	std::vector<std::vector<unsigned long long>> &collapsed,
 	std::unordered_set<unsigned long long> &fully_drawn,
+	std::vector<unsigned long long> &active_paths,
 	std::unordered_map<unsigned long long, std::vector<unsigned long long>> input_map,
 	struct draw_ctx *ctx)
 {
@@ -1073,14 +1074,29 @@ collapse(
     fully_drawn.clear();
 
     // Group paths of the same depth.  Depth == 1 paths are already
-    // top level objects and need no further processing
+    // top level objects and need no further processing.  If active_paths
+    // is empty, the active set is all paths in input_map
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
-    for (k_it = input_map.begin(); k_it != input_map.end(); k_it++) {
-	if (k_it->second.size() == 1) {
-	    collapsed.push_back(k_it->second);
-	    fully_drawn.insert(k_it->first);
-	} else {
-	    depth_groups[k_it->second.size()].insert(k_it->first);
+    if (active_paths.size()) {
+	for (size_t i = 0; i != active_paths.size(); i++) {
+	    k_it = input_map.find(active_paths[i]);
+	    if (k_it == input_map.end())
+		continue;
+	    if (k_it->second.size() == 1) {
+		collapsed.push_back(k_it->second);
+		fully_drawn.insert(k_it->first);
+	    } else {
+		depth_groups[k_it->second.size()].insert(k_it->first);
+	    }
+	}
+    } else {
+	for (k_it = input_map.begin(); k_it != input_map.end(); k_it++) {
+	    if (k_it->second.size() == 1) {
+		collapsed.push_back(k_it->second);
+		fully_drawn.insert(k_it->first);
+	    } else {
+		depth_groups[k_it->second.size()].insert(k_it->first);
+	    }
 	}
     }
     bu_log("depth groups: %zd\n", depth_groups.size());
@@ -1523,8 +1539,9 @@ main(int ac, char *av[]) {
 	}
     }
 
+    std::vector<unsigned long long> active_paths;
     std::vector<std::vector<unsigned long long>> collapsed;
-    collapse(collapsed, ctx.drawn_paths, ctx.s_keys, &ctx);
+    collapse(collapsed, ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
     {
 	// DEBUG - print results
@@ -1541,7 +1558,7 @@ main(int ac, char *av[]) {
     //erase(&ctx, "all.g/havoc/havoc_middle");
     erase(&ctx, "all.g/box.r");
 
-    collapse(collapsed, ctx.drawn_paths, ctx.s_keys, &ctx);
+    collapse(collapsed, ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
     {
 	// DEBUG - print results
@@ -1557,7 +1574,7 @@ main(int ac, char *av[]) {
 
     erase(&ctx, "all.g");
 
-    collapse(collapsed, ctx.drawn_paths, ctx.s_keys, &ctx);
+    collapse(collapsed, ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
     {
 	// DEBUG - print results
@@ -1573,7 +1590,7 @@ main(int ac, char *av[]) {
 
     draw(gedp, &ctx, "all.g/box2.r");
 
-    collapse(collapsed, ctx.drawn_paths, ctx.s_keys, &ctx);
+    collapse(collapsed, ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
     {
 	// DEBUG - print results
@@ -1590,7 +1607,7 @@ main(int ac, char *av[]) {
 
     draw(gedp, &ctx, "box2.r");
 
-    collapse(collapsed, ctx.drawn_paths, ctx.s_keys, &ctx);
+    collapse(collapsed, ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
     {
 	// DEBUG - print results
