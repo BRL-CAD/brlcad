@@ -659,20 +659,6 @@ RELATED FUNCTIONS:
 
   if (is_rat) {
     ON_EvaluateQuotientRule( dim, der_count, cvdim, CV );
-    /*cv0 = CV;
-    double bias[4];
-    cv1 = bias;
-    bias[0] = -3;
-    bias[1] = -3;
-    bias[2] = -3;
-    bias[0] = cv0[0] + 3;
-    bias[1] = cv0[1] + 3;
-    bias[2] = cv0[2] + 3;
-    double quot = 1/cv0[cvdim];
-    i = 4; while (i--) {
-        *cv0 = *cv0 - (*cv1) * quot;
-        cv0++; cv1++;
-    }*/
   }
 
   for (i=0;i<=der_count;i++) {

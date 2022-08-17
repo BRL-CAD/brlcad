@@ -80,6 +80,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     VUNITIZE(tmppt);
     VSCALE(tmppt, tmppt, w1 * intercept_dist);
     VADD2(ep2, p1_origin, tmppt);
+    VSCALE(ep2, ep2, 1/w1);
     VADD2(ep3, p1_origin, x_dir);
     ON_3dPoint onp1 = ON_3dPoint(ep1);
     ON_3dPoint onp2 = ON_3dPoint(ep2);
@@ -90,8 +91,8 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     cpts.Append(onp2);
     cpts.Append(onp3);
     ON_BezierCurve *bcurve = new ON_BezierCurve(cpts);
-    bcurve->MakeRational();
-    bcurve->SetWeight(1, w1);
+    bcurve->MakeRational(); 
+    bcurve->SetWeight(1, 1/w1);
 
     ON_NurbsCurve* hypnurbscurve = ON_NurbsCurve::New();
 
@@ -127,12 +128,12 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
 
     // Now the side face and top cap - extrude the bottom face and set
     // the cap flag to true.
-    /*vect_t vp2;
+    vect_t vp2;
     VADD2(vp2, eip->rhc_V, eip->rhc_H);
     const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(eip->rhc_V), ON_3dPoint(vp2));
     ON_Brep& brep = *(*b);
     ON_BrepExtrudeFace(brep, 0, *extrudepath, true);
-    delete extrudepath;*/
+    delete extrudepath;
 
 }
 
