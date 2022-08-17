@@ -39,6 +39,7 @@ extern "C" {
 
 #include <stdio.h>
 #include <bu.h>
+#include <bg/lod.h>
 #include <ged.h>
 
 struct draw_ctx {
@@ -115,6 +116,60 @@ struct draw_ctx {
     // other data structures or walk down the tree.
     std::unordered_set<unsigned long long> drawn_paths;
 };
+
+struct g_ctx {
+    struct ged *gedp = NULL;
+    std::unordered_set<unsigned long long> added;
+    std::unordered_set<unsigned long long> removed;
+    std::unordered_set<unsigned long long> changed;
+    std::unordered_map<unsigned long long, std::string> old_names;
+    bool need_update_nref = false;
+    bool changed_flag = false;
+};
+
+
+extern "C" void
+dp_changed_clbk(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
+{
+    struct g_ctx *gd = (struct g_ctx *)u_data;
+
+    // When this callback is made, dp is still valid, but in subsequent processing
+    // it will not be.  We need to capture everything we will need from this dp
+    // now, for later use when updating state
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+    unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+
+    gd->need_update_nref = true;
+    gd->changed_flag = true;
+
+    // Need to invalidate any LoD caches associated with this dp
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && gd->gedp) {
+	unsigned long long key = bg_mesh_lod_key_get(gd->gedp->ged_lod, dp->d_namep);
+	if (key) {
+	    bg_mesh_lod_clear_cache(gd->gedp->ged_lod, key);
+	    bg_mesh_lod_key_put(gd->gedp->ged_lod, dp->d_namep, 0);
+	}
+    }
+
+    switch(mode) {
+	case 0:
+	    gd->changed.insert(hash);
+	    break;
+	case 1:
+	    gd->added.insert(hash);
+	    break;
+	case 2:
+	    gd->removed.insert(hash);
+	    gd->old_names[hash] = std::string(dp->d_namep);
+	    break;
+	default:
+	    bu_log("changed callback mode error: %d\n", mode);
+    }
+}
+
+
 
 unsigned int
 color_int(struct bu_color *c)
@@ -351,7 +406,7 @@ get_path_bbox(point_t *bbmin, point_t *bbmax, struct draw_ctx *ctx, std::vector<
 }
 
 void
-print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, struct draw_ctx *ctx)
+print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, struct draw_ctx *ctx, std::unordered_map<unsigned long long, std::string> *old_names)
 {
     if (!opath || !path.size() || !ctx)
 	return;
@@ -360,6 +415,14 @@ print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, struct d
 	// First, see if the hash is an instance string
 	if (ctx->i_str.find(path[i]) != ctx->i_str.end()) {
 	    bu_vls_printf(opath, "%s", ctx->i_str[path[i]].c_str());
+	    if (i < path.size() - 1)
+		bu_vls_printf(opath, "/");
+	    continue;
+	}
+	// If we have potentially obsolete names, check those
+	// before trying the dp (which may no longer be invalid)
+	if (old_names && old_names->find(path[i]) != old_names->end()) {
+	    bu_vls_printf(opath, "%s", (*old_names)[path[i]].c_str());
 	    if (i < path.size() - 1)
 		bu_vls_printf(opath, "/");
 	    continue;
@@ -927,12 +990,12 @@ draw_gather_paths(void *d, const char *name, matp_t m, int UNUSED(op))
     } else {
 	dd->path_hashes.push_back(chash);
     }
-
+#if 0
     struct bu_vls path_str = BU_VLS_INIT_ZERO;
     print_path(&path_str, dd->path_hashes, dd->ctx);
     bu_log("%s\n", bu_vls_cstr(&path_str));
     bu_vls_free(&path_str);
-
+#endif
     mat_t om, nm;
     /* Update current matrix state to reflect the new branch of
      * the tree. Either we have a local matrix, or we have an
@@ -966,7 +1029,7 @@ draw_gather_paths(void *d, const char *name, matp_t m, int UNUSED(op))
 	}
     } else {
 	// Solid - scene object time
-	bu_log("make solid\n");
+	//bu_log("make solid\n");
 	unsigned long long phash = path_hash(dd->path_hashes, 0);
 	dd->ctx->s_keys[phash] = dd->path_hashes;
     }
@@ -978,7 +1041,7 @@ draw_gather_paths(void *d, const char *name, matp_t m, int UNUSED(op))
 }
 
 static void
-draw(struct ged *gedp, struct draw_ctx *ctx, const char *path)
+draw_path(struct ged *gedp, struct draw_ctx *ctx, const char *path)
 {
     mat_t m;
     MAT_IDN(m);
@@ -1025,8 +1088,8 @@ draw(struct ged *gedp, struct draw_ctx *ctx, const char *path)
 }
 
 
-static void
-erase(struct draw_ctx *ctx, const char *path)
+void
+erase_path(struct draw_ctx *ctx, const char *path)
 {
     std::vector<std::string> pe;
     path_elements(pe, path);
@@ -1198,7 +1261,7 @@ collapse(
     }
 }
 
-static void
+void
 split_test(const char *path)
 {
     std::vector<std::string> substrs;
@@ -1210,7 +1273,7 @@ split_test(const char *path)
 }
 
 
-static bool
+bool
 check_elements(struct ged *gedp, struct draw_ctx *ctx, std::vector<std::string> &elements)
 {
     if (!gedp || !elements.size())
@@ -1307,53 +1370,28 @@ check_elements(struct ged *gedp, struct draw_ctx *ctx, std::vector<std::string> 
 // validity or invalidity of some stages may depend on others.  Worst case
 // we need to fully process for each removed and changed pointer...
 void
-ctx_update(struct draw_ctx *ctx,
-	std::vector<struct directory *> &added,
-	std::vector<struct directory *> &removed,
-	std::vector<struct directory *> &changed
-	)
+ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 {
+    std::unordered_set<unsigned long long>::iterator s_it;
     if (!ctx)
 	return;
-
-    // Convert the directory pointers into hash sets
-    std::unordered_set<unsigned long long> a_hash, r_hash, c_hash;
-    std::unordered_set<unsigned long long>::iterator s_it;
-    XXH64_state_t h_state;
-    for (size_t i = 0; i < added.size(); i++) {
-	struct directory *dp = added[i];
-	XXH64_reset(&h_state, 0);
-	XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
-	a_hash.insert(hash);
-    }
-	
-    for (size_t i = 0; i < removed.size(); i++) {
-	struct directory *dp = removed[i];
-	XXH64_reset(&h_state, 0);
-	XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
-	r_hash.insert(hash);
-    }
-
-    for (size_t i = 0; i < changed.size(); i++) {
-	struct directory *dp = changed[i];
-	XXH64_reset(&h_state, 0);
-	XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
-	c_hash.insert(hash);
-    }
 
     // collect all the paths with either removed or changed dps
     std::vector<unsigned long long> active_paths;
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
     for (k_it = ctx->s_keys.begin(); k_it != ctx->s_keys.end(); k_it++) {
 	for (size_t i = 0; i < k_it->second.size(); i++) {
-	    if (r_hash.find(k_it->second[i]) != r_hash.end()) {
+	    unsigned long long hash = k_it->second[i];
+	    // If this is an instance, we need to map it to its canonical
+	    // comb hash for the check
+	    if (ctx->i_map.find(hash) != ctx->i_map.end()) { 
+		hash = ctx->i_map[hash];
+	    }
+	    if (g->removed.find(hash) != g->removed.end()) {
 		active_paths.push_back(k_it->first);
 		break;
 	    }
-	    if (c_hash.find(k_it->second[i]) != c_hash.end()) {
+	    if (g->changed.find(hash) != g->changed.end()) {
 		active_paths.push_back(k_it->first);
 		break;
 	    }
@@ -1361,6 +1399,7 @@ ctx_update(struct draw_ctx *ctx,
     }
     bu_log("active_paths: %zd\n", active_paths.size());
 
+    // collapse until the leaf is a changed dp or not fully drawn.
     std::vector<std::vector<unsigned long long>> collapsed;
     collapse(collapsed, NULL, active_paths, ctx->s_keys, ctx);
     {
@@ -1368,21 +1407,27 @@ ctx_update(struct draw_ctx *ctx,
 	bu_log("\n\nCollapsed altered paths:\n");
 	struct bu_vls path_str = BU_VLS_INIT_ZERO;
 	for (size_t i = 0; i < collapsed.size(); i++) {
-	    print_path(&path_str, collapsed[i], ctx);
+	    print_path(&path_str, collapsed[i], ctx, &g->old_names);
 	    bu_log("\t%s\n", bu_vls_cstr(&path_str));
 	}
 	bu_vls_free(&path_str);
 	bu_log("\n");
     }
  
-    //
-    //
-    // , then collapse
-    // until the leaf is a changed dp or not fully drawn.  The principle for
-    // redrawing will be that anything that was previously fully drawn should
-    // stay fully drawn, if its definition is still valid.  Once we have reduced
-    // the set to the originally fully drawn paths, work down from
-    // the root of each path looking for the first changed or removed entry.
+    // The principle for redrawing will be that anything that was previously
+    // fully drawn should stay fully drawn, if its definition is still valid,
+    // even if the tree structure below has changed.
+    // Once we have reduced the set to the originally fully drawn paths, work
+    // down from the root of each path looking for the first changed or removed
+    // entry.
+    for (size_t i = 0; i < collapsed.size(); i++) {
+	std::vector<unsigned long long> &cpath = ctx->s_keys[collapsed[i]];
+	bool parent_changed = false;
+	for (size_t j = 0; j < cpath.size(); j++) {
+	    bool is_removed = (g->removed.find(hash) != g->removed.end());
+	    bool is_changed = (g->changed.find(hash) != g->changed.end());
+	}
+    }
     //
     // If changed is first and is not a leaf, we need to validate the next
     // entry of the path against the new comb definition to see if it is still
@@ -1400,8 +1445,8 @@ ctx_update(struct draw_ctx *ctx,
     // wasn't changed
     //
    
-    for(size_t i = 0; i < added.size(); i++) {
-	bu_log("added: %s\n", added[i]->d_namep);
+    for(s_it = g->added.begin(); s_it != g->added.end(); s_it++) {
+	bu_log("added: %llu\n", *s_it);
 	// package up dbi_Head procedure used in main to initialize, apply to
 	// these dps
 	//
@@ -1412,9 +1457,9 @@ ctx_update(struct draw_ctx *ctx,
 	// that are now valid, we need to expand them after the initial dp
 	// processing is complete and replace them with the expansions
     }
-
-    for(size_t i = 0; i < removed.size(); i++) {
-	bu_log("removed: %s\n", removed[i]->d_namep);
+ 
+    for(s_it = g->removed.begin(); s_it != g->removed.end(); s_it++) {
+	bu_log("removed: %llu\n", *s_it);
 	// Entries with this hash as their key are erased.  Combs with this
 	// key in their child set need to be updated to refer to it as an invalid
 	// entry.
@@ -1425,8 +1470,8 @@ ctx_update(struct draw_ctx *ctx,
 	// don't lose track of their "actively drawn" status
     }
 
-    for(size_t i = 0; i < changed.size(); i++) {
-	bu_log("changed: %s\n", changed[i]->d_namep);
+    for(s_it = g->changed.begin(); s_it != g->changed.end(); s_it++) {
+	bu_log("changed: %llu\n", *s_it);
 	// Properties need to be updated - comb children, colors, matrices,
 	// etc.  Paths with changed items in their array need to be collected,
 	// collapsed to the minimum fully drawn paths, and considered.  If
@@ -1457,23 +1502,27 @@ ctx_update(struct draw_ctx *ctx,
 
 
 int
-main(int ac, char *av[]) {
+main(int argc, char *argv[]) {
     struct ged *gedp;
 
-    bu_setprogname(av[0]);
+    bu_setprogname(argv[0]);
 
-    if (ac != 2) {
-	printf("Usage: %s file.g\n", av[0]);
+    if (argc != 2) {
+	printf("Usage: %s file.g\n", argv[0]);
 	return 1;
     }
-    if (!bu_file_exists(av[1], NULL)) {
-	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
+    if (!bu_file_exists(argv[1], NULL)) {
+	printf("ERROR: [%s] does not exist, expecting .g file\n", argv[1]);
 	return 2;
     }
 
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
 
-    gedp = ged_open("db", av[1], 1);
+    gedp = ged_open("db", argv[1], 1);
+
+    struct g_ctx g;
+
+    db_add_changed_clbk(gedp->dbip, &dp_changed_clbk, (void *)&g);
 
     struct draw_ctx ctx;
     for (int i = 0; i < RT_DBNHASH; i++) {
@@ -1552,8 +1601,8 @@ main(int ac, char *av[]) {
     }
 
     //print_ctx_unordered(&ctx);
-    print_ctx_ordered(&ctx);
-
+    //print_ctx_ordered(&ctx);
+#if 0
     split_test("all.g/cone.r/cone.s");
     split_test("all.g/cone.r/cone.s/");
     split_test("all.g/cone.r/cone.s//");
@@ -1587,10 +1636,10 @@ main(int ac, char *av[]) {
 	path_elements(pe, "cone2.r\\//cone.s");
 	check_elements(gedp, &ctx, pe);
     }
+#endif
 
-    draw(gedp, &ctx, "all.g");
-
-
+    draw_path(gedp, &ctx, "all.g");
+#if 0
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
     for (k_it = ctx.s_keys.begin(); k_it != ctx.s_keys.end(); k_it++) {
 	struct bu_color c = BU_COLOR_INIT_ZERO;
@@ -1602,6 +1651,16 @@ main(int ac, char *av[]) {
 	     bu_log("%llu: no color\n", k_it->first);
 	}
     }
+#endif
+
+    if (g.changed_flag) {
+	bu_log("changed\n");
+	ctx_update(&ctx, &g);
+	g.added.clear();
+	g.removed.clear();
+	g.changed.clear();
+	g.changed_flag = false;
+    }
 
     std::vector<unsigned long long> active_paths;
     std::vector<std::vector<unsigned long long>> collapsed;
@@ -1612,15 +1671,18 @@ main(int ac, char *av[]) {
 	bu_log("\n\nCollapsed paths:\n");
 	struct bu_vls path_str = BU_VLS_INIT_ZERO;
 	for (size_t i = 0; i < collapsed.size(); i++) {
-	    print_path(&path_str, collapsed[i], &ctx);
+	    print_path(&path_str, collapsed[i], &ctx, NULL);
 	    bu_log("%s\n", bu_vls_cstr(&path_str));
 	}
 	bu_vls_free(&path_str);
 	bu_log("\n");
     }
 
-    //erase(&ctx, "all.g/havoc/havoc_middle");
-    erase(&ctx, "all.g/box.r");
+
+#if 0
+
+    //erase_path(&ctx, "all.g/havoc/havoc_middle");
+    erase_path(&ctx, "all.g/box.r");
 
     collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
@@ -1636,7 +1698,7 @@ main(int ac, char *av[]) {
 	bu_log("\n");
     }
 
-    erase(&ctx, "all.g");
+    erase_path(&ctx, "all.g");
 
     collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
@@ -1652,7 +1714,7 @@ main(int ac, char *av[]) {
 	bu_log("\n");
     }
 
-    draw(gedp, &ctx, "all.g/box2.r");
+    draw_path(gedp, &ctx, "all.g/box2.r");
 
     collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
@@ -1669,7 +1731,7 @@ main(int ac, char *av[]) {
     }
 
 
-    draw(gedp, &ctx, "box2.r");
+    draw_path(gedp, &ctx, "box2.r");
 
     collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
@@ -1684,6 +1746,47 @@ main(int ac, char *av[]) {
 	bu_vls_free(&path_str);
 	bu_log("\n");
     }
+#endif
+
+    const char *av[5] = {NULL};
+    av[0] = "kill";
+    av[1] = "rt_s.ecov1";
+    ged_exec(gedp, 2, av);
+
+    av[0] = "rm";
+    av[1] = "havoc_middle";
+    av[2] = "mid_body";
+    ged_exec(gedp, 3, av);
+
+    av[0] = "rm";
+    av[1] = "havoc_middle";
+    av[2] = "apu_cover";
+    ged_exec(gedp, 3, av);
+
+    if (g.changed_flag) {
+	bu_log("changed\n");
+	ctx_update(&ctx, &g);
+	g.added.clear();
+	g.removed.clear();
+	g.changed.clear();
+	g.changed_flag = false;
+    }
+
+    collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
+    bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], &ctx, NULL);
+	    bu_log("%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
+
+
     ged_close(gedp);
 
     return 0;
