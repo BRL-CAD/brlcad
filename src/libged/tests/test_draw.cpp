@@ -1061,7 +1061,7 @@ erase(struct draw_ctx *ctx, const char *path)
 static void
 collapse(
 	std::vector<std::vector<unsigned long long>> &collapsed,
-	std::unordered_set<unsigned long long> &fully_drawn,
+	std::unordered_set<unsigned long long> *all_fully_drawn,
 	std::vector<unsigned long long> &active_paths,
 	std::unordered_map<unsigned long long, std::vector<unsigned long long>> input_map,
 	struct draw_ctx *ctx)
@@ -1071,7 +1071,8 @@ collapse(
 
     // Reset containers
     collapsed.clear();
-    fully_drawn.clear();
+    if (all_fully_drawn)
+	all_fully_drawn->clear();
 
     // Group paths of the same depth.  Depth == 1 paths are already
     // top level objects and need no further processing.  If active_paths
@@ -1084,7 +1085,8 @@ collapse(
 		continue;
 	    if (k_it->second.size() == 1) {
 		collapsed.push_back(k_it->second);
-		fully_drawn.insert(k_it->first);
+		if (all_fully_drawn)
+		    all_fully_drawn->insert(k_it->first);
 	    } else {
 		depth_groups[k_it->second.size()].insert(k_it->first);
 	    }
@@ -1093,7 +1095,8 @@ collapse(
 	for (k_it = input_map.begin(); k_it != input_map.end(); k_it++) {
 	    if (k_it->second.size() == 1) {
 		collapsed.push_back(k_it->second);
-		fully_drawn.insert(k_it->first);
+		if (all_fully_drawn)
+		    all_fully_drawn->insert(k_it->first);
 	    } else {
 		depth_groups[k_it->second.size()].insert(k_it->first);
 	    }
@@ -1154,11 +1157,13 @@ collapse(
 		// all the necessary information and using that approach avoids
 		// the need to duplicate paths.
 		depth_groups[plen - 1].insert(*g_pckeys.begin());
-		for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
-		    std::vector<unsigned long long> &pc_path = input_map[*s_it];
-		    // Hash only to the current path length (we may have deeper
-		    // promoted paths being used at this level)
-		    fully_drawn.insert(path_hash(pc_path, plen));
+		if (all_fully_drawn) {
+		    for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
+			std::vector<unsigned long long> &pc_path = input_map[*s_it];
+			// Hash only to the current path length (we may have deeper
+			// promoted paths being used at this level)
+			all_fully_drawn->insert(path_hash(pc_path, plen));
+		    }
 		}
 	    } else {
 		// No further collapsing - add to final.  We must make trimmed
@@ -1169,9 +1174,11 @@ collapse(
 		    std::vector<unsigned long long> trimmed = input_map[*s_it];
 		    trimmed.resize(plen);
 		    collapsed.push_back(trimmed);
-		    // Hash is calculated on that trimmed path, so this time we
-		    // don't need to specify a depth limit.
-		    fully_drawn.insert(path_hash(trimmed, 0));
+		    if (all_fully_drawn) {
+			// Hash is calculated on that trimmed path, so this time we
+			// don't need to specify a depth limit.
+			all_fully_drawn->insert(path_hash(trimmed, 0));
+		    }
 		}
 	    }
 	}
@@ -1309,11 +1316,68 @@ ctx_update(struct draw_ctx *ctx,
     if (!ctx)
 	return;
 
-    // May need to save the "old" states for changed dps so we can evaluate
-    // if prior states were fully drawn for collapse/re-expand purposes, or maybe
-    // pre-evaluate that?
+    // Convert the directory pointers into hash sets
+    std::unordered_set<unsigned long long> a_hash, r_hash, c_hash;
+    std::unordered_set<unsigned long long>::iterator s_it;
+    XXH64_state_t h_state;
+    for (size_t i = 0; i < added.size(); i++) {
+	struct directory *dp = added[i];
+	XXH64_reset(&h_state, 0);
+	XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+	a_hash.insert(hash);
+    }
+	
+    for (size_t i = 0; i < removed.size(); i++) {
+	struct directory *dp = removed[i];
+	XXH64_reset(&h_state, 0);
+	XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+	r_hash.insert(hash);
+    }
+
+    for (size_t i = 0; i < changed.size(); i++) {
+	struct directory *dp = changed[i];
+	XXH64_reset(&h_state, 0);
+	XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+	c_hash.insert(hash);
+    }
+
+    // collect all the paths with either removed or changed dps
+    std::vector<unsigned long long> active_paths;
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
+    for (k_it = ctx->s_keys.begin(); k_it != ctx->s_keys.end(); k_it++) {
+	for (size_t i = 0; i < k_it->second.size(); i++) {
+	    if (r_hash.find(k_it->second[i]) != r_hash.end()) {
+		active_paths.push_back(k_it->first);
+		break;
+	    }
+	    if (c_hash.find(k_it->second[i]) != c_hash.end()) {
+		active_paths.push_back(k_it->first);
+		break;
+	    }
+	}
+    }
+    bu_log("active_paths: %zd\n", active_paths.size());
+
+    std::vector<std::vector<unsigned long long>> collapsed;
+    collapse(collapsed, NULL, active_paths, ctx->s_keys, ctx);
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed altered paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], ctx);
+	    bu_log("\t%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
+ 
     //
-    // collect all the paths with either removed or changed dps, then collapse
+    //
+    // , then collapse
     // until the leaf is a changed dp or not fully drawn.  The principle for
     // redrawing will be that anything that was previously fully drawn should
     // stay fully drawn, if its definition is still valid.  Once we have reduced
@@ -1541,7 +1605,7 @@ main(int ac, char *av[]) {
 
     std::vector<unsigned long long> active_paths;
     std::vector<std::vector<unsigned long long>> collapsed;
-    collapse(collapsed, ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
+    collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
     {
 	// DEBUG - print results
@@ -1558,7 +1622,7 @@ main(int ac, char *av[]) {
     //erase(&ctx, "all.g/havoc/havoc_middle");
     erase(&ctx, "all.g/box.r");
 
-    collapse(collapsed, ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
+    collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
     {
 	// DEBUG - print results
@@ -1574,7 +1638,7 @@ main(int ac, char *av[]) {
 
     erase(&ctx, "all.g");
 
-    collapse(collapsed, ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
+    collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
     {
 	// DEBUG - print results
@@ -1590,7 +1654,7 @@ main(int ac, char *av[]) {
 
     draw(gedp, &ctx, "all.g/box2.r");
 
-    collapse(collapsed, ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
+    collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
     {
 	// DEBUG - print results
@@ -1607,7 +1671,7 @@ main(int ac, char *av[]) {
 
     draw(gedp, &ctx, "box2.r");
 
-    collapse(collapsed, ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
+    collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
     {
 	// DEBUG - print results
