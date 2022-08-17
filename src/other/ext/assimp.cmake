@@ -179,10 +179,8 @@ if (BRLCAD_ASSIMP_BUILD)
     )
   set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} assimp CACHE STRING "Bundled system include dirs" FORCE)
 
-  set(ASSIMP_LIBRARY 
-      "${CMAKE_BINARY_ROOT}/${LIB_DIR}/${ASSIMP_BASENAME}${CMAKE_STATIC_LIBRARY_SUFFIX}" 
-      CACHE STRING "Building bundled assimp" FORCE)
-  set(ASSIMP_LIBRARIES "${ASSIMP_LIBRARY}" CACHE STRING "Building bundled assimp" FORCE)
+  set(ASSIMP_LIBRARY assimp CACHE STRING "Building bundled assimp" FORCE)
+  set(ASSIMP_LIBRARIES assimp CACHE STRING "Building bundled assimp" FORCE)
 
   set(ASSIMP_INCLUDE_DIR
     "${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/assimp"
