@@ -1009,6 +1009,12 @@ draw(struct ged *gedp, struct draw_ctx *ctx, const char *path)
 	return;
     }
 
+    // If we have a non-toplevel to draw, we need to "seed" path hashes
+    // with all but the last hash from elements so the correct paths
+    // are recorded
+    d.path_hashes = elements;
+    d.path_hashes.pop_back();
+
     point_t bbmin, bbmax;
     VSETALL(bbmin, INFINITY);
     VSETALL(bbmax, -INFINITY);
@@ -1053,21 +1059,26 @@ erase(struct draw_ctx *ctx, const char *path)
 }
 
 static void
-collapse(struct draw_ctx *ctx)
+collapse(
+	std::vector<std::vector<unsigned long long>> &collapsed,
+	std::unordered_set<unsigned long long> &fully_drawn,
+	std::unordered_map<unsigned long long, std::vector<unsigned long long>> input_map,
+	struct draw_ctx *ctx)
 {
     std::unordered_set<unsigned long long>::iterator s_it;
     std::map<size_t, std::unordered_set<unsigned long long>> depth_groups;
 
-    std::vector<std::vector<unsigned long long>> drawn_paths;
-    ctx->drawn_paths.clear();
+    // Reset containers
+    collapsed.clear();
+    fully_drawn.clear();
 
     // Group paths of the same depth.  Depth == 1 paths are already
     // top level objects and need no further processing
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
-    for (k_it = ctx->s_keys.begin(); k_it != ctx->s_keys.end(); k_it++) {
+    for (k_it = input_map.begin(); k_it != input_map.end(); k_it++) {
 	if (k_it->second.size() == 1) {
-	    drawn_paths.push_back(k_it->second);
-	    ctx->drawn_paths.insert(k_it->first);
+	    collapsed.push_back(k_it->second);
+	    fully_drawn.insert(k_it->first);
 	} else {
 	    depth_groups[k_it->second.size()].insert(k_it->first);
 	}
@@ -1084,9 +1095,12 @@ collapse(struct draw_ctx *ctx)
 	std::unordered_set<unsigned long long> &pckeys = depth_groups.rbegin()->second;
 	bu_log("depth_groups(%zd) key count: %zd\n", plen, pckeys.size());
 
+	// For a given depth, group the paths by parent comb.  This results
+	// in path sub-groups which will define for us how "fully drawn"
+	// that particular parent comb is.
 	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> grouped_pckeys;
 	for (s_it = pckeys.begin(); s_it != pckeys.end(); s_it++) {
-	    std::vector<unsigned long long> &pc_path = ctx->s_keys[*s_it];
+	    std::vector<unsigned long long> &pc_path = input_map[*s_it];
 	    grouped_pckeys[pc_path[plen-2]].insert(*s_it);
 	}
 
@@ -1097,43 +1111,51 @@ collapse(struct draw_ctx *ctx)
 	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pg_it;
 	for (pg_it = grouped_pckeys.begin(); pg_it != grouped_pckeys.end(); pg_it++) {
 
-	    // Because we store keys to full paths, we construct the set of the children
-	    // needed at this specific depth from the full paths for comparison purposes
+	    // As above, use the full path from the input_map, but this time
+	    // we're collecting the children.  This is the set we need to compare
+	    // against the .g ground truth to determine fully or partially drawn.
 	    std::unordered_set<unsigned long long> g_children;
 	    std::unordered_set<unsigned long long> &g_pckeys = pg_it->second;
 	    for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
-		std::vector<unsigned long long> &pc_path = ctx->s_keys[*s_it];
+		std::vector<unsigned long long> &pc_path = input_map[*s_it];
 		g_children.insert(pc_path[plen-1]);
 	    }
 
-	    // Do the check against the .g comb children info
-	    bool fully_drawn = true;
+	    // Do the check against the .g comb children info - the "ground truth"
+	    // that defines what must be present for a fully drawn comb
+	    bool is_fully_drawn = true;
 	    std::unordered_set<unsigned long long> &ground_truth = ctx->p_c[pg_it->first];
 	    for (s_it = ground_truth.begin(); s_it != ground_truth.end(); s_it++) {
 		if (g_children.find(*s_it) == g_children.end()) {
-		    fully_drawn = false;
+		    is_fully_drawn = false;
 		    break;
 		}
 	    }
 
-	    if (fully_drawn) {
-		// If fully drawn, depth_groups[plen-1] gets the first path in g_pckeys.  The path is longer
-		// than that depth, but contains all the necessary information and using that approach avoids
+	    if (is_fully_drawn) {
+		// If fully drawn, depth_groups[plen-1] gets the first path in
+		// g_pckeys.  The path is longer than that depth, but contains
+		// all the necessary information and using that approach avoids
 		// the need to duplicate paths.
 		depth_groups[plen - 1].insert(*g_pckeys.begin());
 		for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
-		    std::vector<unsigned long long> &pc_path = ctx->s_keys[*s_it];
-		    ctx->drawn_paths.insert(path_hash(pc_path, plen));
+		    std::vector<unsigned long long> &pc_path = input_map[*s_it];
+		    // Hash only to the current path length (we may have deeper
+		    // promoted paths being used at this level)
+		    fully_drawn.insert(path_hash(pc_path, plen));
 		}
 	    } else {
 		// No further collapsing - add to final.  We must make trimmed
-		// versions of the paths in case this depth holds promoted paths
-		// from deeper levels.
+		// versions of the paths in case this depth holds promoted
+		// paths from deeper levels, since we are duplicating the full
+		// path contents.
 		for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
-		    std::vector<unsigned long long> trimmed = ctx->s_keys[*s_it];
+		    std::vector<unsigned long long> trimmed = input_map[*s_it];
 		    trimmed.resize(plen);
-		    drawn_paths.push_back(trimmed);
-		    ctx->drawn_paths.insert(path_hash(trimmed, 0));
+		    collapsed.push_back(trimmed);
+		    // Hash is calculated on that trimmed path, so this time we
+		    // don't need to specify a depth limit.
+		    fully_drawn.insert(path_hash(trimmed, 0));
 		}
 	    }
 	}
@@ -1146,19 +1168,11 @@ collapse(struct draw_ctx *ctx)
     if (depth_groups.find(1) != depth_groups.end()) {
 	std::unordered_set<unsigned long long> &pckeys = depth_groups.rbegin()->second;
 	for (s_it = pckeys.begin(); s_it != pckeys.end(); s_it++) {
-	    std::vector<unsigned long long> trimmed = ctx->s_keys[*s_it];
+	    std::vector<unsigned long long> trimmed = input_map[*s_it];
 	    trimmed.resize(1);
-	    drawn_paths.push_back(trimmed);
+	    collapsed.push_back(trimmed);
 	}
     }
-
-    // DEBUG - print results
-    struct bu_vls path_str = BU_VLS_INIT_ZERO;
-    for (size_t i = 0; i < drawn_paths.size(); i++) {
-	print_path(&path_str, drawn_paths[i], ctx);
-	bu_log("%s\n", bu_vls_cstr(&path_str));
-    }
-    bu_vls_free(&path_str);
 }
 
 static void
@@ -1304,7 +1318,8 @@ ctx_update(struct draw_ctx *ctx,
     // so the state here is not preservable.
     // If removed is first is a leaf draw as invalid path - the parent comb
     // wasn't changed
-    
+    //
+   
     for(size_t i = 0; i < added.size(); i++) {
 	bu_log("added: %s\n", added[i]->d_namep);
 	// package up dbi_Head procedure used in main to initialize, apply to
@@ -1341,6 +1356,21 @@ ctx_update(struct draw_ctx *ctx,
 	// If not, those paths are removed from the drawn set
     }
 
+    // Added dps present their own challenge, in terms of whether or not to
+    // automatically draw them.  (I think this decision comes after the existing
+    // draw paths' removed/changed processing and the main .g reflecting maps are
+    // updated.)  The cases:
+    //
+    // 1.  Already part of a drawn invalid path - draw and expand, as path was
+    // drawn but is no longer invalid
+    //
+    // 2.  Already part of a non-drawn invalid path - do not draw (? - could see
+    // a case for either behavior here, if the user wants to see the instances
+    // of the newly enabled part... this may have to be a user option)
+    //
+    // 2.  Not part of any path, pre or post removed/changed draw states (i.e.
+    // a tops object) - draw
+  
     // May want to "garbage collect" invalid entires and instances sets...
 }
 
@@ -1493,24 +1523,86 @@ main(int ac, char *av[]) {
 	}
     }
 
-    collapse(&ctx);
+    std::vector<std::vector<unsigned long long>> collapsed;
+    collapse(collapsed, ctx.drawn_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], &ctx);
+	    bu_log("%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
 
     //erase(&ctx, "all.g/havoc/havoc_middle");
     erase(&ctx, "all.g/box.r");
 
-    collapse(&ctx);
+    collapse(collapsed, ctx.drawn_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], &ctx);
+	    bu_log("%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
 
     erase(&ctx, "all.g");
 
-    collapse(&ctx);
+    collapse(collapsed, ctx.drawn_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], &ctx);
+	    bu_log("%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
 
     draw(gedp, &ctx, "all.g/box2.r");
 
+    collapse(collapsed, ctx.drawn_paths, ctx.s_keys, &ctx);
+    bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], &ctx);
+	    bu_log("%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
+
+
     draw(gedp, &ctx, "box2.r");
 
+    collapse(collapsed, ctx.drawn_paths, ctx.s_keys, &ctx);
+    bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], &ctx);
+	    bu_log("%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
     ged_close(gedp);
 
     return 0;
