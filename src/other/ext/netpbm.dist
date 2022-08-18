@@ -20,7 +20,6 @@ libpbm1.c
 libpbm2.c
 libpbm3.c
 libpbmfont.c
-libpbmvms.c
 libpgm.h
 libpgm1.c
 libpgm2.c
@@ -39,7 +38,6 @@ libppmfuzzy.c
 libsystem.c
 libsystem_dummy.c
 lum.h
-mkstemp.c
 pam.h
 pammap.h
 path.c
