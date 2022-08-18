@@ -23,7 +23,7 @@ libpbmfont.c
 libpgm.h
 libpgm1.c
 libpgm2.c
-libpm.cxx
+libpm.c
 libpnm1.c
 libpnm2.c
 libpnm3.c
@@ -48,6 +48,7 @@ pm.h
 pm_config.h.in
 pm_gamma.h
 pm_system.h
+pmfileio.cxx
 pnm.h
 ppm.h
 ppmcmap.h
