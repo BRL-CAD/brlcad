@@ -125,6 +125,7 @@ set(NETPBM_SRCS
   libpamn.c
   libpammap.c
   libpamcolor.c
+  util/mallocvar.c
   )
 
 set(NETPBM_HEADERS

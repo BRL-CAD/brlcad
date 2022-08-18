@@ -60,6 +60,7 @@ standard.ppmdfont
 standardppmdfont.c
 util/bitreverse.h
 util/intcode.h
+util/mallocvar.c
 util/mallocvar.h
 util/pm_c_util.h
 util/ppmdcfont.c

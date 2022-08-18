@@ -1,26 +1,29 @@
 /**************************************************************************
                                   libpm.c
 ***************************************************************************
-  This is the most fundamental Netpbm library.  It contains routines
-  not specific to any particular Netpbm format.
+  This file contains fundamental libnetpbm services.
 
   Some of the subroutines in this library are intended and documented
   for use by Netpbm users, but most of them are just used by other
   Netpbm library subroutines.
-
-  Before May 2001, this function was served by the libpbm library
-  (in addition to being the library for handling the PBM format).
-
 **************************************************************************/
 
 #include <string>
+
+#ifndef __APPLE__
+#define _BSD_SOURCE          /* Make sure strdup is in string.h */
+#endif
+
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 500    /* Make sure ftello, fseeko are defined */
+#endif
 
 #define _SVID_SOURCE
     /* Make sure P_tmpdir is defined in GNU libc 2.0.7 (_XOPEN_SOURCE 500
        does it in other libc's).  pm_config.h defines TMPDIR as P_tmpdir
        in some environments.
     */
-#define _XOPEN_SOURCE 500    /* Make sure ftello, fseeko are defined */
+
 #define _LARGEFILE_SOURCE 1  /* Make sure ftello, fseeko are defined */
 #define _LARGEFILE64_SOURCE 1 
 #define _FILE_OFFSET_BITS 64
@@ -69,34 +72,46 @@
 # include <io.h>
 #endif
 
+#include "pm_config.h"
+
 extern "C" {
+#include <assert.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
 #include <setjmp.h>
-#ifdef __DJGPP__
-  #include <io.h>
+#include <time.h>
+#include <limits.h>
+#if HAVE_FORK
+#include <sys/wait.h>
 #endif
+#include <sys/types.h>
 
 #include "pm_c_util.h"
-#include "version.h"
-#include "compile.h"
 #include "mallocvar.h"
+#include "version.h"
+
+
+#include "compile.h"
+
 #include "pm.h"
 
 /* The following are set by pm_init(), then used by subsequent calls to other
    pm_xxx() functions.
    */
-static const char* pm_progname;
-static bool pm_showmessages;  
-    /* Programs should display informational messages (because the user didn't
-       specify the --quiet option).
-    */
+const char * pm_progname;
 
 int pm_plain_output;
     /* Boolean: programs should produce output in plain format */
 
+bool pm_showmessages;  
+    /* Programs should display informational messages (because the user didn't
+       specify the --quiet option).
+    */
 static jmp_buf * pm_jmpbufP = NULL;
     /* A description of the point to which the program should hyperjump
        if a libnetpbm function encounters an error (libnetpbm functions
@@ -108,6 +123,17 @@ static jmp_buf * pm_jmpbufP = NULL;
 
        NULL, which is the default value, means when a libnetpbm function
        encounters an error, it causes the process to exit.
+    */
+static pm_usererrormsgfn * userErrorMsgFn = NULL;
+    /* A function to call to issue an error message.
+
+       NULL means use the library default: print to Standard Error
+    */
+
+static pm_usermessagefn * userMessageFn = NULL;
+    /* A function to call to issue an error message.
+
+       NULL means use the library default: print to Standard Error
     */
 
 
@@ -141,20 +167,104 @@ pm_longjmp(void) {
 
 
 void
-pm_usage(const char usage[]) {
-    pm_error("usage:  %s %s", pm_progname, usage);
+pm_fork(int *         const iAmParentP,
+        pid_t *       const childPidP,
+        const char ** const errorP) {
+/*----------------------------------------------------------------------------
+   Same as POSIX fork, except with a nicer interface and works
+   (fails cleanly) on systems that don't have POSIX fork().
+-----------------------------------------------------------------------------*/
+#if HAVE_FORK
+    int rc;
+
+    rc = fork();
+
+    if (rc < 0) {
+        pm_asprintf(errorP, "Failed to fork a process.  errno=%d (%s)",
+                    errno, strerror(errno));
+    } else {
+        *errorP = NULL;
+
+        if (rc == 0) {
+            *iAmParentP = FALSE;
+        } else {
+            *iAmParentP = TRUE;
+            *childPidP = rc;
+        }
+    }
+#else
+    pm_error("Cannot fork a process, because this system does "
+                "not have POSIX fork()");
+#endif
 }
 
 
 
 void
-pm_perror(const char reason[] ) {
+pm_waitpid(pid_t         const pid,
+           int *         const statusP,
+           int           const options,
+           pid_t *       const exitedPidP,
+           const char ** const errorP) {
 
-    if (reason != NULL && strlen(reason) != 0)
-        pm_error("%s - errno=%d (%s)", reason, errno, strerror(errno));
-    else
-        pm_error("Something failed with errno=%d (%s)", 
-                 errno, strerror(errno));
+#if HAVE_FORK
+    pid_t rc;
+    rc = waitpid(pid, statusP, options);
+    if (rc == (pid_t)-1) {
+        pm_asprintf(errorP, "Failed to wait for process exit.  "
+                    "waitpid() errno = %d (%s)",
+                    errno, strerror(errno));
+    } else {
+        *exitedPidP = rc;
+        *errorP = NULL;
+    }
+#else
+    pm_error("INTERNAL ERROR: Attempt to wait for a process we created on "
+             "a system on which we can't create processes");
+#endif
+}
+
+
+
+void
+pm_waitpidSimple(pid_t const pid) {
+
+    int status;
+    pid_t exitedPid;
+    const char * error = NULL;
+
+    pm_waitpid(pid, &status, 0, &exitedPid, &error);
+
+    if (error) {
+        pm_error("%s", error);
+        free((void *)error);
+        pm_longjmp();
+    } else {
+        assert(exitedPid != 0);
+    }
+}
+
+
+
+void
+pm_setusererrormsgfn(pm_usererrormsgfn * fn) {
+
+    userErrorMsgFn = fn;
+}
+
+
+
+void
+pm_setusermessagefn(pm_usermessagefn * fn) {
+
+    userMessageFn = fn;
+}
+
+
+
+void
+pm_usage(const char usage[]) {
+    pm_error("usage:  %s %s", pm_progname, usage);
 }
 
 
@@ -174,7 +284,15 @@ pm_message(const char format[], ...) {
     va_end(args);
 }
 
+void
+pm_perror(const char reason[] ) {
 
+    if (reason != NULL && strlen(reason) != 0)
+        pm_error("%s - errno=%d (%s)", reason, errno, strerror(errno));
+    else
+        pm_error("Something failed with errno=%d (%s)", 
+                 errno, strerror(errno));
+}
 
 void PM_GNU_PRINTF_ATTR(1,2)
 pm_error(const char format[], ...) {
@@ -191,23 +309,44 @@ pm_error(const char format[], ...) {
 }
 
 
-/* Variable-sized arrays. */
+
+int
+pm_have_float_format(void) {
+/*----------------------------------------------------------------------------
+  Return 1 if %f, %e, and %g work in format strings for pm_message, etc.;
+  0 otherwise.
+
+  Where they don't "work," that means the specifier just appears itself in
+  the formatted strings, e.g. "the number is g".
+-----------------------------------------------------------------------------*/
+    return 1;
+}
+
+
+
+static void *
+mallocz(size_t const size) {
+
+    return malloc(MAX(1, size));
+}
+
+
 
 char *
 pm_allocrow(unsigned int const cols,
             unsigned int const size) {
 
-    char * itrow;
+    unsigned char * itrow;
 
-    if (UINT_MAX / cols < size)
+    if (cols != 0 && UINT_MAX / cols < size)
         pm_error("Arithmetic overflow multiplying %u by %u to get the "
                  "size of a row to allocate.", cols, size);
 
-    itrow = (char *)malloc(cols * size);
+    itrow = (unsigned char *)mallocz(cols * size);
     if (itrow == NULL)
         pm_error("out of memory allocating a row");
 
-    return itrow;
+    return (char *)itrow;
 }
 
 
@@ -302,12 +441,12 @@ pm_freearray(char ** const rowIndex,
 /* Case-insensitive keyword matcher. */
 
 int
-pm_keymatch(char *       const strarg, 
+pm_keymatch(const char *       const strarg, 
             const char * const keywordarg, 
             int          const minchars) {
     int len;
-    const char *keyword;
-    char *str;
+    const char * keyword;
+    const char * str;
 
     str = strarg;
     keyword = keywordarg;
@@ -323,9 +462,13 @@ pm_keymatch(char *       const strarg,
         c2 = *keyword++;
         if ( c2 == '\0' )
             return 0;
-	if ( tolower(c1) != tolower(c2) )
-		return 0;
-	}
+        if ( isupper( c1 ) )
+            c1 = tolower( c1 );
+        if ( isupper( c2 ) )
+            c2 = tolower( c2 );
+        if ( c1 != c2 )
+            return 0;
+        }
     return 1;
 }
 
@@ -408,40 +551,10 @@ pm_lcm(unsigned int const x,
 }
 
 
-/* Initialization. */
-
-
-#ifdef VMS
-static const char *
-vmsProgname(int * const argcP, char * argv[]) {   
-    char **temp_argv = argv;
-    int old_argc = *argcP;
-    int i;
-    const char * retval;
-    
-    getredirection( argcP, &temp_argv );
-    if (*argcP > old_argc) {
-        /* Number of command line arguments has increased */
-        fprintf( stderr, "Sorry!! getredirection() for VMS has "
-                 "changed the argument list!!!\n");
-        fprintf( stderr, "This is intolerable at the present time, "
-                 "so we must stop!!!\n");
-        exit(1);
-    }
-    for (i=0; i<*argcP; i++)
-        argv[i] = temp_argv[i];
-    retval = strrchr( argv[0], '/');
-    if ( retval == NULL ) retval = rindex( argv[0], ']');
-    if ( retval == NULL ) retval = rindex( argv[0], '>');
-
-    return retval;
-}
-#endif
-
-
 
 void
-pm_init(const char * const progname, unsigned int const flags) {
+pm_init(const char * const progname,
+        unsigned int const flags) {
 /*----------------------------------------------------------------------------
    Initialize static variables that Netpbm library routines use.
 
@@ -487,11 +600,7 @@ showVersion(void) {
     pm_message( "BSD defined" );
 #endif /*BSD*/
 #ifdef SYSV
-#ifdef VMS
-    pm_message( "VMS & SYSV defined" );
-#else
     pm_message( "SYSV defined" );
-#endif
 #endif /*SYSV*/
 #ifdef MSDOS
     pm_message( "MSDOS defined" );
@@ -558,6 +667,8 @@ showNetpbmHelp(const char progname[]) {
         if (docurl == NULL)
             pm_message("No 'docurl=' line in Netpbm configuration file '%s'.",
                        netpbmConfigFileName);
+
+        fclose(netpbmConfigFile);
     }
     if (docurl == NULL)
         pm_message("We have no reliable indication of where the Netpbm "
@@ -572,7 +683,7 @@ showNetpbmHelp(const char progname[]) {
 
 
 void
-pm_proginit(int * const argcP, char * argv[]) {
+pm_proginit(int * const argcP, const char * argv[]) {
 /*----------------------------------------------------------------------------
    Do various initialization things that all programs in the Netpbm package,
    and programs that emulate such programs, should do.
