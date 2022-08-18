@@ -84,6 +84,7 @@ struct draw_ctx {
     // retrieve solid bboxes and calculate comb bboxes without having to touch
     // the disk beyond the initial per-solid calculations, which may be done
     // once per load and/or dimensional change.
+    // TODO - just store the vector directly in the map, if we can...
     std::vector<fastf_t> bboxes;
     std::unordered_map<unsigned long long, size_t> bbox_indices;
 
@@ -1376,7 +1377,7 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
     if (!ctx)
 	return;
 
-    // collect all the paths with either removed or changed dps
+    // Collect all the paths with either removed or changed dps
     std::vector<unsigned long long> active_paths;
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
     for (k_it = ctx->s_keys.begin(); k_it != ctx->s_keys.end(); k_it++) {
@@ -1399,7 +1400,10 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
     }
     bu_log("active_paths: %zd\n", active_paths.size());
 
-    // collapse until the leaf is a changed dp or not fully drawn.
+    // Collapse until the leaf is a changed dp or not fully drawn.  We must do
+    // this before the comb p_c relationships are updated in the context, since
+    // we want the answers for this collapse to be from the prior state, not
+    // the current state.
     std::vector<std::vector<unsigned long long>> collapsed;
     collapse(collapsed, NULL, active_paths, ctx->s_keys, ctx);
     {
@@ -1413,38 +1417,43 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 	bu_vls_free(&path_str);
 	bu_log("\n");
     }
- 
-    // The principle for redrawing will be that anything that was previously
-    // fully drawn should stay fully drawn, if its definition is still valid,
-    // even if the tree structure below has changed.
-    // Once we have reduced the set to the originally fully drawn paths, work
-    // down from the root of each path looking for the first changed or removed
-    // entry.
-    for (size_t i = 0; i < collapsed.size(); i++) {
-	std::vector<unsigned long long> &cpath = ctx->s_keys[collapsed[i]];
-	bool parent_changed = false;
-	for (size_t j = 0; j < cpath.size(); j++) {
-	    bool is_removed = (g->removed.find(hash) != g->removed.end());
-	    bool is_changed = (g->changed.find(hash) != g->changed.end());
+
+    // Update the primary data structures 
+    for(s_it = g->removed.begin(); s_it != g->removed.end(); s_it++) {
+	bu_log("removed: %llu\n", *s_it);
+	ctx->d_map.erase(*s_it);
+
+	// If we're removing a comb, all of its instances need to go as well
+	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+	pc_it = ctx->p_c.find(*s_it);
+	if (pc_it != ctx->p_c.end()) {
+	    std::unordered_set<unsigned long long>::iterator pcs_it;
+	    for (pcs_it = pc_it->second.begin(); pcs_it != pc_it->second.end(); pcs_it++) {
+		ctx->matrices.erase(*pcs_it);
+	    }
+
 	}
+
+	
+	ctx->p_c.erase(*s_it);
+	ctx->p_v.erase(*s_it);
+
+	// NOTE - not removed from the instance map or invalid entry
+	// map - those structures relate to comb instances, not the
+	// removal of the entry itself.
+
+#if 0
+	// Combs with this key in their child set need to be updated to refer
+	// to it as an invalid entry.
+	std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator pv_it;
+	bool referenced = false;
+	for (pv_it = ctx->p_v.begin(); pv_it != ctx->p_v.end(); pv_it++) {
+	}
+#endif	
+
+	// Entries with this hash as their key are erased.  
     }
-    //
-    // If changed is first and is not a leaf, we need to validate the next
-    // entry of the path against the new comb definition to see if it is still
-    // a valid child entry.
-    //
-    // If it is not a child of the comb any longer, erase the path.
-    //
-    // If it is still a child of the comb:
-    //    If the child is not being removed, reset and continue to next changed/removed using the same criteria.
-    //    If the child is being removed, evaluate according to remove criteria.
-    //
-    // If removed is first and not a leaf, erase - the parent comb wasn't changed,
-    // so the state here is not preservable.
-    // If removed is first is a leaf draw as invalid path - the parent comb
-    // wasn't changed
-    //
-   
+
     for(s_it = g->added.begin(); s_it != g->added.end(); s_it++) {
 	bu_log("added: %llu\n", *s_it);
 	// package up dbi_Head procedure used in main to initialize, apply to
@@ -1458,18 +1467,6 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 	// processing is complete and replace them with the expansions
     }
  
-    for(s_it = g->removed.begin(); s_it != g->removed.end(); s_it++) {
-	bu_log("removed: %llu\n", *s_it);
-	// Entries with this hash as their key are erased.  Combs with this
-	// key in their child set need to be updated to refer to it as an invalid
-	// entry.
-	//
-	// Any comb paths with this key in them need to be collected into a
-	// set, truncated back to the now-invalid key, and consolidated into
-	// a unique set of invalid paths to re-add to the "drawn" set so we
-	// don't lose track of their "actively drawn" status
-    }
-
     for(s_it = g->changed.begin(); s_it != g->changed.end(); s_it++) {
 	bu_log("changed: %llu\n", *s_it);
 	// Properties need to be updated - comb children, colors, matrices,
@@ -1480,6 +1477,73 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 	// to check and see if the children below the parent are still valid.
 	// If not, those paths are removed from the drawn set
     }
+
+#if 0
+    // The principle for redrawing will be that anything that was previously
+    // fully drawn should stay fully drawn, even if its tree structure has
+    // changed.
+    // Work down from the root of each path looking for the first changed or
+    // removed entry.
+    std::unordered_set<size_t> active_collapsed;
+    for (size_t i = 0; i < collapsed.size(); i++) {
+	std::vector<unsigned long long> &cpath = ctx->s_keys[collapsed[i]];
+	bool parent_changed = false;
+	for (size_t j = 0; j < cpath.size(); j++) {
+	    if (parent_changed) {
+		// TODO - need to see if this is still a parent of the new
+		// comb.  If not, we're done, whether or not the parent dp was
+		// removed from the database.  If it's still in the comb tree,
+		// proceed with the evaluation.  This step is why the draw
+		// update has to come AFTER the above primitive update
+		// passes
+	    }
+
+	    bool is_removed = (g->removed.find(hash) != g->removed.end());
+	    bool is_changed = (g->changed.find(hash) != g->changed.end());
+	    if (is_removed) {
+		if (is_removed && !j) {
+		    // Top level removed - everything else is gone
+		    break;
+		}
+
+		if (is_removed && j != cpath.size()-1) {
+		    // If removed is first and not a leaf, erase - if we got here
+		    // the parent comb either wasn't changed at all or this
+		    // particular instance is still there; either way the state
+		    // here is not preservable, since the path is trying to refer
+		    // to a tree path which no longer exists in the hierarchy.
+		    break;
+		}
+		if (is_removed && j == cpath.size()-1) {
+		    // If removed is a leaf and the comb instance is intact,
+		    // "draw" as invalid path.  In this case there is no subtree
+		    // state we are trying to preserve, and the referenced instance
+		    // path DOES still exist in the .g file, even though it is
+		    // (at the moment) invalid.
+		    active_collapsed.insert(i);
+		    break;
+		}
+	    }
+	    if (is_changed) {
+		if (j == cpath.size()-1) {
+		    // Changed, but a leaf - stays drawn
+		    active_collapsed.insert(i);
+		    break;
+		}
+		// Not a leaf - check child
+		parent_changed = true;
+		continue;
+	    }
+
+	    // If we got here, reset the parent changed flag
+	    parent_changed = false;
+
+	    // If we got all the way through the path, it's a keeper
+	    if (j == cpath.size()-1)
+		active_collapsed.insert(i);
+	}
+    }
+#endif
 
     // Added dps present their own challenge, in terms of whether or not to
     // automatically draw them.  (I think this decision comes after the existing
