@@ -227,21 +227,72 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
 
     /* set material data using shader string */
     if (tsp->ts_mater.ma_shader) {
-	std::string shader_name(tsp->ts_mater.ma_shader);
-	auto it = pstate->mat_names.find(shader_name);
+	std::string raw_shader(tsp->ts_mater.ma_shader);
+	auto it = pstate->mat_names.find(raw_shader);
 	if (it != pstate->mat_names.end()) {
 	    curr_mesh->mMaterialIndex = it->second;
 	} else {
-	    /* we create a new material and give it the name of the raw ma_shader
-	     * NOTE: this hack-ily handles any modifiers (re, sh, etc)
-	     * by stuffing them into the string rather than setting them properly
-	     * in the material properties. This works internally because assimp_read.cpp
-	     * re-sets the shader string but this will NOT work to relate material data
-	     * to other readers using the file format */
 	    aiMaterial* mat = new aiMaterial();
 
-	    aiString* str_to_aistr = new aiString(shader_name);
+	    /* for brlcad shaders, a space means we have additional shader params
+	    * in the form "shader_name param1=x .."
+	    */
+	    size_t space = raw_shader.find(" ");
+	    std::string mat_name;
+	    std::string mat_args;
+	    if (space != std::string::npos) {
+		mat_name = raw_shader.substr(0, space);
+		mat_args = raw_shader.substr(space + 1);
+	    } else {
+		mat_name = raw_shader;
+		mat_args = "";
+	    }
+
+	    /* TODO: map defaults for all brlcad shader keywords */
+	    /* 'plastic' defaults */
+	    std::map<std::string, float> def_args = {
+							{"tr", 0.0},
+							{"re", 0.0},
+							{"sp", 0.7},
+							{"di", 0.3},
+							{"ri", 1.0},
+							{"ex", 0.0},
+							{"sh", 10.0},
+							{"em", 0.0}
+						    };
+	    float tr = 0.0;		/* transparency */
+	    float re = 0.0;		/* mirror reflectance */
+	    float sp = 0.7;		/* specular reflectivity */
+	    float di = 0.3;		/* diffuse reflectivity */
+	    float ri = 1.0;		/* refractive index */
+	    float ex = 0.0;		/* extinction */
+	    float sh = 10.0;		/* shininess */
+	    float em = 0.0;		/* emission */
+	    
+	    /* parse pairs, updating values in def_args map */
+	    size_t pos;
+	    while ((pos = mat_args.find(" ")) != std::string::npos) {
+		std::string curr = mat_args.substr(0, pos);
+		size_t eq;
+		if ((eq = curr.find("=")) != std::string::npos) {
+		    def_args[curr.substr(0, eq)] = std::stof(curr.substr(eq + 1));
+		}
+		mat_args.erase(0, pos + 1);
+	    }
+
+	    /* assign shader properties */
+	    aiString* str_to_aistr = new aiString(mat_name);
 	    mat->AddProperty(str_to_aistr, AI_MATKEY_NAME);
+
+	    mat->AddProperty<float>(&def_args["tr"], 1, AI_MATKEY_OPACITY);
+	    mat->AddProperty<float>(&def_args["re"], 1, AI_MATKEY_REFLECTIVITY);
+	    mat->AddProperty<float>(&def_args["sp"], 1, AI_MATKEY_SPECULAR_FACTOR);
+	    mat->AddProperty<float>(&def_args["di"], 1, AI_MATKEY_SHININESS_STRENGTH);
+	    mat->AddProperty<float>(&def_args["ri"], 1, AI_MATKEY_REFRACTI);
+	    mat->AddProperty<float>(&def_args["ex"], 1, AI_MATKEY_ANISOTROPY_FACTOR);
+	    mat->AddProperty<float>(&def_args["sh"], 1, AI_MATKEY_SHININESS);
+	    mat->AddProperty<float>(&def_args["em"], 1, AI_MATKEY_EMISSIVE_INTENSITY);
+
 
 	    /* TODO set properties the correct way */
 	    //     int blinn = aiShadingMode_Blinn;
@@ -255,7 +306,7 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
 	    /* add new material to map */
 	    pstate->mats.push_back(mat);
 	    curr_mesh->mMaterialIndex = pstate->mats.size();
-	    pstate->mat_names.emplace(shader_name, pstate->mats.size());
+	    pstate->mat_names.emplace(raw_shader, pstate->mats.size());
 	}
     } else {
 	curr_mesh->mMaterialIndex = 0;
@@ -313,7 +364,7 @@ HIDDEN int
 assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *dest_path)
 {
     assimp_write_state_t state;
-    struct gcv_region_end_data gcvwriter;
+    struct gcv_region_end_data gcvwriter { NULL, NULL };
     struct db_tree_state tree_state;
     int ret = 1;
 

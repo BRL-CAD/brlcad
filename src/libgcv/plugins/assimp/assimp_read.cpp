@@ -163,6 +163,12 @@ generate_shader(assimp_read_state_t* pstate, unsigned int mesh_idx)
 	    mat->Get(AI_MATKEY_COLOR_DIFFUSE, diff);
 	    mesh_color = &diff;
 	}
+
+	for (int i = 0; i < mat->mNumProperties; i++) {
+	    aiMaterialProperty* currProp = mat->mProperties[i];
+	    bu_log("%s\n", currProp->mData);
+	    bu_log("breakpoint203");
+	}
     }
 
     /* set the color of the face using the first vertex color data we 
