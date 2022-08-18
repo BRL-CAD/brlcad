@@ -20,7 +20,7 @@ if (BRLCAD_ZLIB_BUILD)
   add_definitions(-DZ_PREFIX_STR=${Z_PREFIX_STR})
   set(Z_PREFIX_STR "${Z_PREFIX_STR}" CACHE STRING "prefix for zlib functions" FORCE)
 
-  set_lib_vars(ZLIB z_brl "1" "2" "11")
+  set_lib_vars(ZLIB z_brl "1" "2" "12")
 
   set(ZLIB_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/zlib)
 
