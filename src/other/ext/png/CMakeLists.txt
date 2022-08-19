@@ -261,10 +261,9 @@ else()
 
   if(PNG_PREFIX)
     set(PNGLIBCONF_H_EXTRA_DEPENDS
-      "${CMAKE_CURRENT_BINARY_DIR}/scripts/prefix.out"
-      "${CMAKE_CURRENT_SOURCE_DIR}/scripts/macro.lst")
+      scripts_prefix_out)
     set(PNGPREFIX_H_EXTRA_DEPENDS
-      "${CMAKE_CURRENT_BINARY_DIR}/scripts/intprefix.out")
+      scripts_intprefix_out)
   endif()
 
   generate_out(INPUT "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.c"
