@@ -96,7 +96,6 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BI
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/pm_config_new.h)
 
 set(NETPBM_SRCS
-  bitio.c
   colorname.c
   fileio.c
   libpam.c
@@ -126,11 +125,11 @@ set(NETPBM_SRCS
   pmfileio.cxx
   ppmdfont.c
   standardppmdfont.c
+  util/bitio.c
   util/mallocvar.c
   )
 
 set(NETPBM_HEADERS
-  bitio.h
   colorname.h
   pam.h
   pammap.h
@@ -143,6 +142,7 @@ set(NETPBM_HEADERS
   ppm.h
   ppmcmap.h
   ppmfloyd.h
+  util/bitio.h
   ${CMAKE_CURRENT_BINARY_DIR}/pm_config.h
   )
 
