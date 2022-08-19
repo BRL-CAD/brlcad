@@ -238,17 +238,10 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
 	    * in the form "shader_name param1=x .."
 	    */
 	    size_t space = raw_shader.find(" ");
-	    std::string mat_name;
-	    std::string mat_args;
-	    if (space != std::string::npos) {
-		mat_name = raw_shader.substr(0, space);
+	    std::string mat_args = "";
+	    if (space != std::string::npos)
 		mat_args = raw_shader.substr(space + 1);
-	    } else {
-		mat_name = raw_shader;
-		mat_args = "";
-	    }
 
-	    /* TODO: map defaults for all brlcad shader keywords */
 	    /* 'plastic' defaults */
 	    std::map<std::string, float> def_args = {
 							{"tr", 0.0},
@@ -260,14 +253,6 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
 							{"sh", 10.0},
 							{"em", 0.0}
 						    };
-	    float tr = 0.0;		/* transparency */
-	    float re = 0.0;		/* mirror reflectance */
-	    float sp = 0.7;		/* specular reflectivity */
-	    float di = 0.3;		/* diffuse reflectivity */
-	    float ri = 1.0;		/* refractive index */
-	    float ex = 0.0;		/* extinction */
-	    float sh = 10.0;		/* shininess */
-	    float em = 0.0;		/* emission */
 	    
 	    /* parse pairs, updating values in def_args map */
 	    size_t pos;
@@ -280,11 +265,16 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
 		mat_args.erase(0, pos + 1);
 	    }
 
-	    /* assign shader properties */
-	    aiString* str_to_aistr = new aiString(mat_name);
+	    /* assign shader properties
+             * NOTE: all these attributes are not guaranteed to survive the export 
+             * depending on the output format 
+             */
+	    aiString* str_to_aistr = new aiString(raw_shader);
 	    mat->AddProperty(str_to_aistr, AI_MATKEY_NAME);
 
-	    mat->AddProperty<float>(&def_args["tr"], 1, AI_MATKEY_OPACITY);
+            /* exporter seems to prefer opacity over transparency matkey */
+            float opacity = 1 - def_args["tr"];
+	    mat->AddProperty<float>(&opacity, 1, AI_MATKEY_OPACITY);
 	    mat->AddProperty<float>(&def_args["re"], 1, AI_MATKEY_REFLECTIVITY);
 	    mat->AddProperty<float>(&def_args["sp"], 1, AI_MATKEY_SPECULAR_FACTOR);
 	    mat->AddProperty<float>(&def_args["di"], 1, AI_MATKEY_SHININESS_STRENGTH);
@@ -293,15 +283,8 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
 	    mat->AddProperty<float>(&def_args["sh"], 1, AI_MATKEY_SHININESS);
 	    mat->AddProperty<float>(&def_args["em"], 1, AI_MATKEY_EMISSIVE_INTENSITY);
 
-
-	    /* TODO set properties the correct way */
-	    //     int blinn = aiShadingMode_Blinn;
-	    //     mat->AddProperty<int>(&blinn, 1, AI_MATKEY_SHADING_MODEL);
-
-	    //     aiColor3D col(final_color->r, final_color->g, final_color->b);
-
-	    //     mat->AddProperty<aiColor3D>(&col, 1, AI_MATKEY_COLOR_DIFFUSE);
-	    //     aiTextureType_UNKNOWN for mat_code?
+            aiColor3D col(tsp->ts_mater.ma_color[0] * 255, tsp->ts_mater.ma_color[1] * 255, tsp->ts_mater.ma_color[2] * 255);
+            mat->AddProperty<aiColor3D>(&col, 1, AI_MATKEY_COLOR_DIFFUSE);
 
 	    /* add new material to map */
 	    pstate->mats.push_back(mat);
