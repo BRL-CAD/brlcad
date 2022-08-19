@@ -35,7 +35,6 @@ libppmcolor.c
 libppmd.c
 libppmfloyd.c
 libppmfuzzy.c
-lum.h
 pam.h
 pammap.h
 path.c
@@ -45,7 +44,6 @@ pgm.h
 pm.h
 pm_config.h.in
 pm_gamma.h
-pm_system.h
 pmfileio.cxx
 pnm.h
 ppm.h
