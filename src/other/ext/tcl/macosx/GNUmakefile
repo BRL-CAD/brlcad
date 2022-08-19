@@ -32,6 +32,18 @@ MANDIR			?= ${PREFIX}/man
 # set to non-empty value to install manpages in addition to html help:
 INSTALL_MANPAGES	?=
 
+# Checks and overrides for subframework builds
+ifeq (${SUBFRAMEWORK},1)
+ifeq (${DYLIB_INSTALL_DIR},)
+	@echo "Cannot install subframework with empty DYLIB_INSTALL_DIR !" && false
+endif
+ifeq (${DESTDIR},)
+	@echo "Cannot install subframework with empty DESTDIR !" && false
+endif
+override BUILD_DIR = ${DESTDIR}/build
+override INSTALL_PATH = /Frameworks
+endif
+
 #-------------------------------------------------------------------------------------------------------
 # meta targets
 

@@ -29,7 +29,8 @@
 #    {....}
 # }
 #
-# flags = currently unused.
+# flags = a list of flags. Currently supported flags are:
+#     DONTSETDEFAULTS = skip default values setting
 #
 # argList = The list of  "-option value" pairs.
 #
@@ -63,8 +64,10 @@ proc tclParseConfigSpec {w specs flags argList} {
 
     # 2: set the default values
     #
-    foreach cmdsw [array names cmd] {
-	set data($cmdsw) $def($cmdsw)
+    if {"DONTSETDEFAULTS" ni $flags} {
+        foreach cmdsw [array names cmd] {
+	    set data($cmdsw) $def($cmdsw)
+        }
     }
 
     # 3: parse the argument list

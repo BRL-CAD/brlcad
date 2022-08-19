@@ -11,7 +11,7 @@
 .SH NAME
 safe::loadTk \- Load Tk into a safe interpreter.
 .SH SYNOPSIS
-\fBsafe::loadTk \fIslave\fR ?\fB\-use\fR \fIwindowId\fR? ?\fB\-display\fR \fIdisplayName\fR?
+\fBsafe::loadTk \fIchild\fR ?\fB\-use\fR \fIwindowId\fR? ?\fB\-display\fR \fIdisplayName\fR?
 .BE
 .SH DESCRIPTION
 .PP
@@ -43,13 +43,13 @@ the \fBSECURITY ISSUES\fR section below for implementation details.
 Please read the \fBsafe\fR manual page for Tcl to learn about the basic
 security considerations for Safe Tcl.
 .PP
-\fBsafe::loadTk\fR adds the value of \fBtk_library\fR taken from the master
+\fBsafe::loadTk\fR adds the value of \fBtk_library\fR taken from the parent
 interpreter to the virtual access path of the safe interpreter so that
 auto-loading will work in the safe interpreter.
 .PP
-Tk initialization is now safe with respect to not trusting the slave's state
-for startup. \fBsafe::loadTk\fR registers the slave's name so when the Tk
-initialization (\fBTk_SafeInit\fR) is called and in turn calls the master's
+Tk initialization is now safe with respect to not trusting the child's state
+for startup. \fBsafe::loadTk\fR registers the child's name so when the Tk
+initialization (\fBTk_SafeInit\fR) is called and in turn calls the parent's
 \fBsafe::InitTk\fR it will return the desired \fBargv\fR equivalent
 (\fB\-use\fR \fIwindowId\fR, correct \fB\-display\fR, etc.)
 .PP
@@ -62,8 +62,8 @@ fatal X error.
 .SH "SEE ALSO"
 safe(n), interp(n), library(n), load(n), package(n), source(n), unknown(n)
 .SH KEYWORDS
-alias, auto-loading, auto_mkindex, load, master interpreter, safe
-interpreter, slave interpreter, source
+alias, auto-loading, auto_mkindex, load, parent interpreter, safe
+interpreter, child interpreter, source
 '\" Local Variables:
 '\" mode: nroff
 '\" End:

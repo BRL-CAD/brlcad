@@ -3,8 +3,8 @@
 ## Derived from core test suite entry-19.1 through entry-19.20
 ##
 
-package require Tk 8.5
-package require tcltest 2.1
+package require Tk
+package require tcltest 2.2
 namespace import -force tcltest::*
 
 loadTestedCommands
@@ -78,54 +78,63 @@ test validate-1.7 {entry widget validation - vmode focus} -body {
 } -result {}
 
 test validate-1.8 {entry widget validation - vmode focus} -body {
+    set ::vVals {}
+    set timer [after 300 lappend ::vVals timeout]
     focus -force .e
-    # update necessary to process FocusIn event
-    update
+    vwait ::vVals
+    after cancel $timer
     set ::vVals
 } -result {.e -1 -1 abcd abcd {} focus focusin}
 
 test validate-1.9 {entry widget validation - vmode focus} -body {
+    set ::vVals {}
+    set timer [after 300 lappend ::vVals timeout]
     focus -force .
-    # update necessary to process FocusOut event
-    update
+    vwait ::vVals
+    after cancel $timer
     set ::vVals
 } -result {.e -1 -1 abcd abcd {} focus focusout}
 
 .e configure -validate all
 test validate-1.10 {entry widget validation - vmode all} -body {
+    set ::vVals {}
+    set timer [after 300 lappend ::vVals timeout]
     focus -force .e
-    # update necessary to process FocusIn event
-    update
+    vwait ::vVals
+    after cancel $timer
     set ::vVals
 } -result {.e -1 -1 abcd abcd {} all focusin}
 
 test validate-1.11 {entry widget validation} -body {
+    set ::vVals {}
+    set timer [after 300 lappend ::vVals timeout]
     focus -force .
-    # update necessary to process FocusOut event
-    update
+    vwait ::vVals
+    after cancel $timer
     set ::vVals
 } -result {.e -1 -1 abcd abcd {} all focusout}
 .e configure -validate focusin
 
 test validate-1.12 {entry widget validation} -body {
+    set ::vVals {}
+    set timer [after 300 lappend ::vVals timeout]
     focus -force .e
-    # update necessary to process FocusIn event
-    update
+    vwait ::vVals
+    after cancel $timer
     set ::vVals
 } -result {.e -1 -1 abcd abcd {} focusin focusin}
 
 test validate-1.13 {entry widget validation} -body {
     set ::vVals {}
     focus -force .
-    # update necessary to process FocusOut event
     update
     set ::vVals
 } -result {}
 .e configure -validate focuso
 
 test validate-1.14 {entry widget validation} -body {
+    set ::vVals {}
     focus -force .e
-    # update necessary to process FocusIn event
     update
     set ::vVals
 } -result {}
@@ -161,7 +170,7 @@ test validate-1.18 {entry widget validation} -constraints coreEntry -body {
     list [.e cget -validate] $::vVals
 } -result {none {.e -1 -1 nextdata newdata {} all forced}}
 # DIFFERENCE: ttk::entry doesn't validate when setting linked -variable
-# DIFFERENCE: ttk::entry doesn't disable validation 
+# DIFFERENCE: ttk::entry doesn't disable validation
 
 proc doval {W d i P s S v V} {
     set ::vVals [list $W $d $i $P $s $S $v $V]

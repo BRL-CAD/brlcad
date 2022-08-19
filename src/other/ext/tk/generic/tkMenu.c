@@ -39,12 +39,12 @@
  * right; they have a Tk window and pathname associated with them; they have a
  * TkMenu structure and array of entries. However, they are linked with the
  * original menu that they were cloned from. The reflect the attributes of the
- * original, or "master", menu. So if an item is added to a menu, and that
+ * original, or "main", menu. So if an item is added to a menu, and that
  * menu has clones, then the item must be added to all of its clones also.
  * Menus are cloned when a menu is torn-off or when a menu is assigned as a
  * menubar using the "-menu" option of the toplevel's pathname configure
  * subcommand. When a clone is destroyed, only the clone is destroyed, but
- * when the master menu is destroyed, all clones are also destroyed. This
+ * when the main menu is destroyed, all clones are also destroyed. This
  * allows the developer to just deal with one set of menus when creating and
  * destroying.
  *
@@ -406,7 +406,7 @@ Tk_MenuObjCmd(
 {
     Tk_Window tkwin = clientData;
     Tk_Window newWin;
-    register TkMenu *menuPtr;
+    TkMenu *menuPtr;
     TkMenuReferences *menuRefPtr;
     int i, index, toplevel;
     const char *windowName;
@@ -513,7 +513,7 @@ Tk_MenuObjCmd(
 	    nextCascadePtr = cascadeListPtr->nextCascadePtr;
 
      	    /*
-	     * If we have a new master menu, and an existing cloned menu
+	     * If we have a new main menu, and an existing cloned menu
 	     * points to this menu in a cascade entry, we have to clone the
 	     * new menu and point the entry to the clone instead of the menu
 	     * we are creating. Otherwise, ConfigureMenuEntry will hook up the
@@ -617,8 +617,8 @@ MenuWidgetObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])	/* Argument strings. */
 {
-    register TkMenu *menuPtr = clientData;
-    register TkMenuEntry *mePtr;
+    TkMenu *menuPtr = clientData;
+    TkMenuEntry *mePtr;
     int result = TCL_OK;
     int option;
     ThreadSpecificData *tsdPtr =
@@ -1019,7 +1019,7 @@ TkInvokeMenu(
 	Tcl_DStringInit(&ds);
 	Tcl_DStringAppend(&ds, "tk::TearOffMenu ", -1);
 	Tcl_DStringAppend(&ds, Tk_PathName(menuPtr->tkwin), -1);
-	result = Tcl_EvalEx(interp, Tcl_DStringValue(&ds), -1, 0);
+	result = Tcl_EvalEx(interp, Tcl_DStringValue(&ds), -1, TCL_EVAL_GLOBAL);
 	Tcl_DStringFree(&ds);
     } else if ((mePtr->type == CHECK_BUTTON_ENTRY)
 	    && (mePtr->namePtr != NULL)) {
@@ -1100,8 +1100,8 @@ DestroyMenuInstance(
     TkMenu *menuInstancePtr;
     TkMenuEntry *cascadePtr, *nextCascadePtr;
     Tcl_Obj *newObjv[2];
-    TkMenu *parentMasterMenuPtr;
-    TkMenuEntry *parentMasterEntryPtr;
+    TkMenu *parentMainMenuPtr;
+    TkMenuEntry *parentMainEntryPtr;
     ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
@@ -1110,11 +1110,11 @@ DestroyMenuInstance(
      * entries need to be told that the menu is going away. We need to clear
      * the menu ptr field in the menu reference at this point in the code so
      * that everything else can forget about this menu properly. We also need
-     * to reset -menu field of all entries that are not master menus back to
-     * this entry name if this is a master menu pointed to by another master
+     * to reset -menu field of all entries that are not main menus back to
+     * this entry name if this is a main menu pointed to by another main
      * menu. If there is a clone menu that points to this menu, then this menu
      * is itself a clone, so when this menu goes away, the -menu field of the
-     * pointing entry must be set back to this menu's master menu name so that
+     * pointing entry must be set back to this menu's main menu name so that
      * later if another menu is created the cascade hierarchy can be
      * maintained.
      */
@@ -1135,11 +1135,11 @@ DestroyMenuInstance(
     	if (menuPtr->masterMenuPtr != menuPtr) {
 	    Tcl_Obj *menuNamePtr = Tcl_NewStringObj("-menu", -1);
 
-	    parentMasterMenuPtr = cascadePtr->menuPtr->masterMenuPtr;
-	    parentMasterEntryPtr =
-		    parentMasterMenuPtr->entries[cascadePtr->index];
+	    parentMainMenuPtr = cascadePtr->menuPtr->masterMenuPtr;
+	    parentMainEntryPtr =
+		    parentMainMenuPtr->entries[cascadePtr->index];
 	    newObjv[0] = menuNamePtr;
-	    newObjv[1] = parentMasterEntryPtr->namePtr;
+	    newObjv[1] = parentMainEntryPtr->namePtr;
 
 	    /*
 	     * It is possible that the menu info is out of sync, and these
@@ -1169,7 +1169,7 @@ DestroyMenuInstance(
 	    }
 	}
     } else if (menuPtr->nextInstancePtr != NULL) {
-	Tcl_Panic("Attempting to delete master menu when there are still clones");
+	Tcl_Panic("Attempting to delete main menu when there are still clones");
     }
 
     /*
@@ -1209,8 +1209,8 @@ DestroyMenuInstance(
  *
  *	This function is invoked by Tcl_EventuallyFree or Tcl_Release to clean
  *	up the internal structure of a menu at a safe time (when no-one is
- *	using it anymore). If called on a master instance, destroys all of the
- *	slave instances. If called on a non-master instance, just destroys
+ *	using it anymore). If called on a main instance, destroys all of the
+ *	instances. If called on a non-main instance, just destroys
  *	that instance.
  *
  * Results:
@@ -1385,7 +1385,7 @@ static void
 DestroyMenuEntry(
     void *memPtr)		/* Pointer to entry to be freed. */
 {
-    register TkMenuEntry *mePtr = memPtr;
+    TkMenuEntry *mePtr = memPtr;
     TkMenu *menuPtr = mePtr->menuPtr;
 
     if (menuPtr->postedCascade == mePtr) {
@@ -1519,7 +1519,7 @@ MenuWorldChanged(
 static int
 ConfigureMenu(
     Tcl_Interp *interp,		/* Used for error reporting. */
-    register TkMenu *menuPtr,	/* Information about widget; may or may not
+    TkMenu *menuPtr,	/* Information about widget; may or may not
 				 * already have values for some fields. */
     int objc,			/* Number of valid entries in argv. */
     Tcl_Obj *const objv[])	/* Arguments. */
@@ -1571,7 +1571,7 @@ ConfigureMenu(
 	     * menuTypeName field to tell that this is a menu bar.
 	     */
 
-	    if (menuListPtr->menuType == MASTER_MENU) {
+	    if (menuListPtr->menuType == MAIN_MENU) {
 		int typeFlag = TK_MAKE_MENU_POPUP;
 		Tk_Window tkwin = menuPtr->tkwin;
 
@@ -1623,7 +1623,6 @@ ConfigureMenu(
 	    }
 	} else if ((menuListPtr->numEntries > 0)
 		&& (menuListPtr->entries[0]->type == TEAROFF_ENTRY)) {
-	    int i;
 
 	    Tcl_EventuallyFree(menuListPtr->entries[0], (Tcl_FreeProc *) DestroyMenuEntry);
 
@@ -1819,7 +1818,6 @@ PostProcessEntry(
     if ((mePtr->type == CHECK_BUTTON_ENTRY)
 	    || (mePtr->type == RADIO_BUTTON_ENTRY)) {
 	Tcl_Obj *valuePtr;
-	const char *name;
 
 	if (mePtr->namePtr == NULL) {
 	    if (mePtr->labelPtr == NULL) {
@@ -1903,7 +1901,7 @@ PostProcessEntry(
 
 static int
 ConfigureMenuEntry(
-    register TkMenuEntry *mePtr,/* Information about menu entry; may or may
+    TkMenuEntry *mePtr,/* Information about menu entry; may or may
 				 * not already have values for some fields. */
     int objc,			/* Number of valid entries in argv. */
     Tcl_Obj *const objv[])	/* Arguments. */
@@ -1982,7 +1980,7 @@ ConfigureMenuCloneEntries(
 
     /*
      * Cascades are kind of tricky here. This is special case #3 in the
-     * comment at the top of this file. Basically, if a menu is the master
+     * comment at the top of this file. Basically, if a menu is the main
      * menu of a clone chain, and has an entry with a cascade menu, the clones
      * of the menu will point to clones of the cascade menu. We have to
      * destroy the clones of the cascades, clone the new cascade menu, and
@@ -2144,7 +2142,7 @@ TkGetMenuIndex(
     }
 
     if (isdigit(UCHAR(string[0]))) {
-	if (Tcl_GetInt(interp, string, &i) == TCL_OK) {
+	if (Tcl_GetIntFromObj(interp, objPtr, &i) == TCL_OK) {
 	    if (i >= menuPtr->numEntries) {
 		if (lastOK) {
 		    i = menuPtr->numEntries;
@@ -2416,7 +2414,7 @@ MenuAddOrInsert(
 	 * If a menu has cascades, then every instance of the menu has to have
 	 * its own parallel cascade structure. So adding an entry to a menu
 	 * with clones means that the menu that the entry points to has to be
-	 * cloned for every clone the master menu has. This is special case #2
+	 * cloned for every clone the main menu has. This is special case #2
 	 * in the comment at the top of this file.
     	 */
 
@@ -2591,11 +2589,11 @@ MenuVarProc(
 
 int
 TkActivateMenuEntry(
-    register TkMenu *menuPtr,	/* Menu in which to activate. */
+    TkMenu *menuPtr,	/* Menu in which to activate. */
     int index)			/* Index of entry to activate, or -1 to
 				 * deactivate all entries. */
 {
-    register TkMenuEntry *mePtr;
+    TkMenuEntry *mePtr;
     int result = TCL_OK;
 
     if (menuPtr->active >= 0) {
@@ -2697,7 +2695,7 @@ CloneMenu(
     Tcl_Obj *menuDupCommandArray[4];
 
     if (newMenuTypePtr == NULL) {
-	menuType = MASTER_MENU;
+	menuType = MAIN_MENU;
     } else {
 	if (Tcl_GetIndexFromObjStruct(menuPtr->interp, newMenuTypePtr,
 		menuTypeStrings, sizeof(char *), "menu type", 0, &menuType) != TCL_OK) {
@@ -2732,7 +2730,7 @@ CloneMenu(
 	    && (menuPtr->numEntries == menuRefPtr->menuPtr->numEntries)) {
 	TkMenu *newMenuPtr = menuRefPtr->menuPtr;
 	Tcl_Obj *newObjv[3];
-	int i, numElements;
+	int numElements;
 
 	/*
 	 * Now put this newly created menu into the parent menu's instance
@@ -2752,7 +2750,7 @@ CloneMenu(
 	}
 
 	/*
-	 * Add the master menu's window to the bind tags for this window after
+	 * Add the main menu's window to the bind tags for this window after
 	 * this window's tag. This is so the user can bind to either this
 	 * clone (which may not be easy to do) or the entire menu clone
 	 * structure.

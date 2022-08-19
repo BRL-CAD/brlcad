@@ -1,5 +1,5 @@
 '\"
-'\" Copyright (c) 1998 by Scriptics Corporation.
+'\" Copyright (c) 1998 Scriptics Corporation.
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -81,29 +81,13 @@ omitted then the command returns the current system encoding.  The
 system encoding is used whenever Tcl passes strings to system calls.
 .SH EXAMPLE
 .PP
-It is common practice to write script files using a text editor that
-produces output in the euc-jp encoding, which represents the ASCII
-characters as singe bytes and Japanese characters as two bytes.  This
-makes it easy to embed literal strings that correspond to non-ASCII
-characters by simply typing the strings in place in the script.
-However, because the \fBsource\fR command always reads files using the
-current system encoding, Tcl will only source such files correctly
-when the encoding used to write the file is the same.  This tends not
-to be true in an internationalized setting.  For example, if such a
-file was sourced in North America (where the ISO8859\-1 is normally
-used), each byte in the file would be treated as a separate character
-that maps to the 00 page in Unicode.  The resulting Tcl strings will
-not contain the expected Japanese characters.  Instead, they will
-contain a sequence of Latin-1 characters that correspond to the bytes
-of the original string.  The \fBencoding\fR command can be used to
-convert this string to the expected Japanese Unicode characters.  For
-example,
+The following example converts a byte sequence in Japanese euc-jp encoding to a TCL string:
 .PP
 .CS
 set s [\fBencoding convertfrom\fR euc-jp "\exA4\exCF"]
 .CE
 .PP
-would return the Unicode string
+The result is the unicode codepoint:
 .QW "\eu306F" ,
 which is the Hiragana letter HA.
 .SH "SEE ALSO"

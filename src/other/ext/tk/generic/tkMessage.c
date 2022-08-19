@@ -219,7 +219,7 @@ Tk_MessageObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])	/* Argument strings. */
 {
-    register Message *msgPtr;
+    Message *msgPtr;
     Tk_OptionTable optionTable;
     Tk_Window tkwin;
 
@@ -306,7 +306,7 @@ MessageWidgetObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])	/* Argument strings. */
 {
-    register Message *msgPtr = clientData;
+    Message *msgPtr = clientData;
     static const char *const optionStrings[] = { "cget", "configure", NULL };
     enum options { MESSAGE_CGET, MESSAGE_CONFIGURE };
     int index;
@@ -384,7 +384,7 @@ static void
 DestroyMessage(
     char *memPtr)		/* Info about message widget. */
 {
-    register Message *msgPtr = (Message *) memPtr;
+    Message *msgPtr = (Message *) memPtr;
 
     msgPtr->flags |= MESSAGE_DELETED;
 
@@ -437,7 +437,7 @@ DestroyMessage(
 static int
 ConfigureMessage(
     Tcl_Interp *interp,		/* Used for error reporting. */
-    register Message *msgPtr,	/* Information about widget; may or may not
+    Message *msgPtr,	/* Information about widget; may or may not
 				 * already have values for some fields. */
     int objc,			/* Number of valid entries in argv. */
     Tcl_Obj *const objv[],	/* Arguments. */
@@ -582,7 +582,7 @@ MessageWorldChanged(
 
 static void
 ComputeMessageGeometry(
-    register Message *msgPtr)	/* Information about window. */
+    Message *msgPtr)	/* Information about window. */
 {
     int width, inc, height;
     int thisWidth, thisHeight, maxWidth;
@@ -666,8 +666,8 @@ static void
 DisplayMessage(
     ClientData clientData)	/* Information about window. */
 {
-    register Message *msgPtr = clientData;
-    register Tk_Window tkwin = msgPtr->tkwin;
+    Message *msgPtr = clientData;
+    Tk_Window tkwin = msgPtr->tkwin;
     int x, y;
     int borderWidth = msgPtr->highlightWidth;
 
@@ -835,7 +835,7 @@ MessageTextVarProc(
     const char *name2,		/* Second part of variable name. */
     int flags)			/* Information about what happened. */
 {
-    register Message *msgPtr = clientData;
+    Message *msgPtr = clientData;
     const char *value;
 
     /*

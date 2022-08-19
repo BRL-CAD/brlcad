@@ -25,7 +25,7 @@
 #
 #----------------------------------------------------------------------
 #
-# Copyright (c) 2004 by Kevin B. Kenny.	 All rights reserved.
+# Copyright (c) 2004 Kevin B. Kenny.	 All rights reserved.
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #----------------------------------------------------------------------
@@ -36,7 +36,7 @@
 set olsonFiles {
     africa antarctica asia australasia
     backward etcetera europe northamerica
-    pacificnew southamerica systemv
+    southamerica
 }
 
 # Define the year at which the DST information will stop.

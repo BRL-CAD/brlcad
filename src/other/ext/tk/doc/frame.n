@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH frame n 8.4 Tk "Tk Built-In Commands"
 .so man.macros
 .BS
@@ -116,7 +116,7 @@ by \fIoption\fR.
 \fIOption\fR may have any of the values accepted by the \fBframe\fR
 command.
 .TP
-\fIpathName \fBconfigure\fR ?\fIoption\fR? \fI?value option value ...\fR?
+\fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
 .
 Query or modify the configuration options of the widget.
 If no \fIoption\fR is specified, returns a list describing all of

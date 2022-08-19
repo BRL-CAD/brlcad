@@ -3,7 +3,7 @@
  *
  *	This file provides procedures that implement the "send" command,
  *	allowing commands to be passed from interpreter to interpreter. This
- *	current implementation for the Mac has most functionality stubed out.
+ *	current implementation for the Mac has most functionality stubbed out.
  *
  *	The current plan, which we have not had time to implement, is for the
  *	first Wish app to create a gestalt of type 'WIsH'. This gestalt will

@@ -15,7 +15,7 @@ test bell-1.1 {bell command} -body {
 } -returnCodes {error} -result {bad option "a": must be -displayof or -nice}
 
 test bell-1.2 {bell command} -body {
-    bell a b 
+    bell a b
 } -returnCodes {error} -result {bad option "a": must be -displayof or -nice}
 
 test bell-1.3 {bell command} -body {

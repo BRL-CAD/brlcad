@@ -1,5 +1,5 @@
 '\"
-'\" Copyright (c) 1998-2000 by Scriptics Corporation.
+'\" Copyright (c) 1998-2000 Scriptics Corporation.
 '\" All rights reserved.
 '\"
 .TH keysyms n 8.3 Tk "Tk Built-In Commands"
@@ -214,6 +214,8 @@ udiaeresis                         252     0xFC
 yacute                             253     0xFD
 thorn                              254     0xFE
 ydiaeresis                         255     0xFF
+.CE
+.CS
 Aogonek                            417     0x1A1
 breve                              418     0x1A2
 Lstroke                            419     0x1A3
@@ -223,8 +225,6 @@ Scaron                             425     0x1A9
 Scedilla                           426     0x1AA
 Tcaron                             427     0x1AB
 Zacute                             428     0x1AC
-.CE
-.CS
 Zcaron                             430     0x1AE
 Zabovedot                          431     0x1AF
 aogonek                            433     0x1B1
@@ -394,6 +394,8 @@ kana_WA                           1244     0x4DC
 kana_N                            1245     0x4DD
 voicedsound                       1246     0x4DE
 semivoicedsound                   1247     0x4DF
+.CE
+.CS
 Arabic_comma                      1452     0x5AC
 Arabic_semicolon                  1467     0x5BB
 Arabic_question_mark              1471     0x5BF
@@ -429,8 +431,6 @@ Arabic_qaf                        1506     0x5E2
 Arabic_kaf                        1507     0x5E3
 Arabic_lam                        1508     0x5E4
 Arabic_meem                       1509     0x5E5
-.CE
-.CS
 Arabic_noon                       1510     0x5E6
 Arabic_ha                         1511     0x5E7
 Arabic_waw                        1512     0x5E8
@@ -456,6 +456,7 @@ Cyrillic_lje                      1705     0x6A9
 Cyrillic_nje                      1706     0x6AA
 Serbian_tshe                      1707     0x6AB
 Macedonia_kje                     1708     0x6AC
+Ukrainian_ghe_with_upturn         1709     0x6AD
 Byelorussian_shortu               1710     0x6AE
 Cyrillic_dzhe                     1711     0x6AF
 numerosign                        1712     0x6B0
@@ -471,6 +472,7 @@ Cyrillic_LJE                      1721     0x6B9
 Cyrillic_NJE                      1722     0x6BA
 Serbian_TSHE                      1723     0x6BB
 Macedonia_KJE                     1724     0x6BC
+Ukrainian_GHE_WITH_UPTURN         1725     0x6BD
 Byelorussian_SHORTU               1726     0x6BE
 Cyrillic_DZHE                     1727     0x6BF
 Cyrillic_yu                       1728     0x6C0
@@ -610,6 +612,8 @@ Greek_phi                         2038     0x7F6
 Greek_chi                         2039     0x7F7
 Greek_psi                         2040     0x7F8
 Greek_omega                       2041     0x7F9
+.CE
+.CS
 leftradical                       2209     0x8A1
 topleftradical                    2210     0x8A2
 horizconnector                    2211     0x8A3
@@ -633,8 +637,6 @@ botvertsummationconnector         2228     0x8B4
 toprightsummation                 2229     0x8B5
 botrightsummation                 2230     0x8B6
 rightmiddlesummation              2231     0x8B7
-.CE
-.CS
 lessthanequal                     2236     0x8BC
 notequal                          2237     0x8BD
 greaterthanequal                  2238     0x8BE
@@ -728,6 +730,7 @@ rightsinglequotemark              2769     0xAD1
 leftdoublequotemark               2770     0xAD2
 rightdoublequotemark              2771     0xAD3
 prescription                      2772     0xAD4
+permille                          2773     0xAD5
 minutes                           2774     0xAD6
 seconds                           2775     0xAD7
 latincross                        2777     0xAD9
@@ -815,6 +818,11 @@ hebrew_qoph                       3319     0xCF7
 hebrew_resh                       3320     0xCF8
 hebrew_shin                       3321     0xCF9
 hebrew_taw                        3322     0xCFA
+OE                                5052     0x13BC
+oe                                5053     0x13BD
+Ydiaeresis                        5054     0x13BE
+.CE
+.CS
 BackSpace                        65288     0xFF08
 Tab                              65289     0xFF09
 Linefeed                         65290     0xFF0A
@@ -841,6 +849,10 @@ Kana_Lock                        65325     0xFF2D
 Kana_Shift                       65326     0xFF2E
 Eisu_Shift                       65327     0xFF2F
 Eisu_toggle                      65328     0xFF30
+Codeinput                        65335     0xFF37
+SingleCandidate                  65340     0xFF3C
+MultipleCandidate                65341     0xFF3D
+PreviousCandidate                65342     0xFF3E
 Home                             65360     0xFF50
 Left                             65361     0xFF51
 Up                               65362     0xFF52
@@ -852,8 +864,6 @@ End                              65367     0xFF57
 Begin                            65368     0xFF58
 Win_L                            65371     0xFF5B
 Win_R                            65372     0xFF5C
-.CE
-.CS
 App                              65373     0xFF5D
 Select                           65376     0xFF60
 Print                            65377     0xFF61
@@ -953,6 +963,34 @@ Super_R                          65516     0xFFEC
 Hyper_L                          65517     0xFFED
 Hyper_R                          65518     0xFFEE
 Delete                           65535     0xFFFF
+.CE
+.CS
+XF86Switch_VT_1              269024769     0x1008FE01
+XF86Switch_VT_2              269024770     0x1008FE02
+XF86Switch_VT_3              269024771     0x1008FE03
+XF86Switch_VT_4              269024772     0x1008FE04
+XF86Switch_VT_5              269024773     0x1008FE05
+XF86Switch_VT_6              269024774     0x1008FE06
+XF86Switch_VT_7              269024775     0x1008FE07
+XF86Switch_VT_8              269024776     0x1008FE08
+XF86Switch_VT_9              269024777     0x1008FE09
+XF86Switch_VT_10             269024778     0x1008FE0A
+XF86Switch_VT_11             269024779     0x1008FE0B
+XF86Switch_VT_12             269024780     0x1008FE0C
+XF86Ungrab                   269024800     0x1008FE20
+XF86ClearGrab                269024801     0x1008FE21
+XF86Next_VMode               269024802     0x1008FE22
+XF86Prev_VMode               269024803     0x1008FE23
+XF86LogWindowTree            269024804     0x1008FE24
+XF86LogGrabInfo              269024805     0x1008FE25
+XF86ModeLock                 269025025     0x1008FF01
+XF86MonBrightnessUp          269025026     0x1008FF02
+XF86MonBrightnessDown        269025027     0x1008FF03
+XF86KbdLightOnOff            269025028     0x1008FF04
+XF86KbdBrightnessUp          269025029     0x1008FF05
+XF86KbdBrightnessDown        269025030     0x1008FF06
+XF86MonBrightnessCycle       269025031     0x1008FF07
+XF86Standby                  269025040     0x1008FF10
 XF86AudioLowerVolume         269025041     0x1008FF11
 XF86AudioMute                269025042     0x1008FF12
 XF86AudioRaiseVolume         269025043     0x1008FF13
@@ -960,6 +998,156 @@ XF86AudioPlay                269025044     0x1008FF14
 XF86AudioStop                269025045     0x1008FF15
 XF86AudioPrev                269025046     0x1008FF16
 XF86AudioNext                269025047     0x1008FF17
+XF86HomePage                 269025048     0x1008FF18
+XF86Mail                     269025049     0x1008FF19
+XF86Start                    269025050     0x1008FF1A
+XF86Search                   269025051     0x1008FF1B
+XF86AudioRecord              269025052     0x1008FF1C
+XF86Calculator               269025053     0x1008FF1D
+XF86Memo                     269025054     0x1008FF1E
+XF86ToDoList                 269025055     0x1008FF1F
+XF86Calendar                 269025056     0x1008FF20
+XF86PowerDown                269025057     0x1008FF21
+XF86ContrastAdjust           269025058     0x1008FF22
+XF86RockerUp                 269025059     0x1008FF23
+XF86RockerDown               269025060     0x1008FF24
+XF86RockerEnter              269025061     0x1008FF25
+XF86Back                     269025062     0x1008FF26
+XF86Forward                  269025063     0x1008FF27
+XF86Stop                     269025064     0x1008FF28
+XF86Refresh                  269025065     0x1008FF29
+XF86PowerOff                 269025066     0x1008FF2A
+XF86WakeUp                   269025067     0x1008FF2B
+XF86Eject                    269025068     0x1008FF2C
+XF86ScreenSaver              269025069     0x1008FF2D
+XF86WWW                      269025070     0x1008FF2E
+XF86Sleep                    269025071     0x1008FF2F
+XF86Favorites                269025072     0x1008FF30
+XF86AudioPause               269025073     0x1008FF31
+XF86AudioMedia               269025074     0x1008FF32
+XF86MyComputer               269025075     0x1008FF33
+XF86VendorHome               269025076     0x1008FF34
+XF86LightBulb                269025077     0x1008FF35
+XF86Shop                     269025078     0x1008FF36
+XF86History                  269025079     0x1008FF37
+XF86OpenURL                  269025080     0x1008FF38
+XF86AddFavorite              269025081     0x1008FF39
+XF86HotLinks                 269025082     0x1008FF3A
+XF86BrightnessAdjust         269025083     0x1008FF3B
+XF86Finance                  269025084     0x1008FF3C
+XF86Community                269025085     0x1008FF3D
+XF86AudioRewind              269025086     0x1008FF3E
+XF86BackForward              269025087     0x1008FF3F
+XF86Launch0                  269025088     0x1008FF40
+XF86Launch1                  269025089     0x1008FF41
+XF86Launch2                  269025090     0x1008FF42
+XF86Launch3                  269025091     0x1008FF43
+XF86Launch4                  269025092     0x1008FF44
+XF86Launch5                  269025093     0x1008FF45
+XF86Launch6                  269025094     0x1008FF46
+XF86Launch7                  269025095     0x1008FF47
+XF86Launch8                  269025096     0x1008FF48
+XF86Launch9                  269025097     0x1008FF49
+XF86LaunchA                  269025098     0x1008FF4A
+XF86LaunchB                  269025099     0x1008FF4B
+XF86LaunchC                  269025100     0x1008FF4C
+XF86LaunchD                  269025101     0x1008FF4D
+XF86LaunchE                  269025102     0x1008FF4E
+XF86LaunchF                  269025103     0x1008FF4F
+XF86ApplicationLeft          269025104     0x1008FF50
+XF86ApplicationRight         269025105     0x1008FF51
+XF86Book                     269025106     0x1008FF52
+XF86CD                       269025107     0x1008FF53
+XF86Calculater               269025108     0x1008FF54
+XF86Clear                    269025109     0x1008FF55
+XF86Close                    269025110     0x1008FF56
+XF86Copy                     269025111     0x1008FF57
+XF86Cut                      269025112     0x1008FF58
+XF86Display                  269025113     0x1008FF59
+XF86DOS                      269025114     0x1008FF5A
+XF86Documents                269025115     0x1008FF5B
+XF86Excel                    269025116     0x1008FF5C
+XF86Explorer                 269025117     0x1008FF5D
+XF86Game                     269025118     0x1008FF5E
+XF86Go                       269025119     0x1008FF5F
+XF86iTouch                   269025120     0x1008FF60
+XF86LogOff                   269025121     0x1008FF61
+XF86Market                   269025122     0x1008FF62
+XF86Meeting                  269025123     0x1008FF63
+XF86MenuKB                   269025125     0x1008FF65
+XF86MenuPB                   269025126     0x1008FF66
+XF86MySites                  269025127     0x1008FF67
+XF86New                      269025128     0x1008FF68
+XF86News                     269025129     0x1008FF69
+XF86OfficeHome               269025130     0x1008FF6A
+XF86Open                     269025131     0x1008FF6B
+XF86Option                   269025132     0x1008FF6C
+XF86Paste                    269025133     0x1008FF6D
+XF86Phone                    269025134     0x1008FF6E
+XF86Q                        269025136     0x1008FF70
+XF86Reply                    269025138     0x1008FF72
+XF86Reload                   269025139     0x1008FF73
+XF86RotateWindows            269025140     0x1008FF74
+XF86RotationPB               269025141     0x1008FF75
+XF86RotationKB               269025142     0x1008FF76
+XF86Save                     269025143     0x1008FF77
+XF86ScrollUp                 269025144     0x1008FF78
+XF86ScrollDown               269025145     0x1008FF79
+XF86ScrollClick              269025146     0x1008FF7A
+XF86Send                     269025147     0x1008FF7B
+XF86Spell                    269025148     0x1008FF7C
+XF86SplitScreen              269025149     0x1008FF7D
+XF86Support                  269025150     0x1008FF7E
+XF86TaskPane                 269025151     0x1008FF7F
+XF86Terminal                 269025152     0x1008FF80
+XF86Tools                    269025153     0x1008FF81
+XF86Travel                   269025154     0x1008FF82
+XF86UserPB                   269025156     0x1008FF84
+XF86User1KB                  269025157     0x1008FF85
+XF86User2KB                  269025158     0x1008FF86
+XF86Video                    269025159     0x1008FF87
+XF86WheelButton              269025160     0x1008FF88
+XF86Word                     269025161     0x1008FF89
+XF86Xfer                     269025162     0x1008FF8A
+XF86ZoomIn                   269025163     0x1008FF8B
+XF86ZoomOut                  269025164     0x1008FF8C
+XF86Away                     269025165     0x1008FF8D
+XF86Messenger                269025166     0x1008FF8E
+XF86WebCam                   269025167     0x1008FF8F
+XF86MailForward              269025168     0x1008FF90
+XF86Pictures                 269025169     0x1008FF91
+XF86Music                    269025170     0x1008FF92
+XF86Battery                  269025171     0x1008FF93
+XF86Bluetooth                269025172     0x1008FF94
+XF86WLAN                     269025173     0x1008FF95
+XF86UWB                      269025174     0x1008FF96
+XF86AudioForward             269025175     0x1008FF97
+XF86AudioRepeat              269025176     0x1008FF98
+XF86AudioRandomPlay          269025177     0x1008FF99
+XF86Subtitle                 269025178     0x1008FF9A
+XF86AudioCycleTrack          269025179     0x1008FF9B
+XF86CycleAngle               269025180     0x1008FF9C
+XF86FrameBack                269025181     0x1008FF9D
+XF86FrameForward             269025182     0x1008FF9E
+XF86Time                     269025183     0x1008FF9F
+XF86Select                   269025184     0x1008FFA0
+XF86View                     269025185     0x1008FFA1
+XF86TopMenu                  269025186     0x1008FFA2
+XF86Red                      269025187     0x1008FFA3
+XF86Green                    269025188     0x1008FFA4
+XF86Yellow                   269025189     0x1008FFA5
+XF86Blue                     269025190     0x1008FFA6
+XF86Suspend                  269025191     0x1008FFA7
+XF86Hibernate                269025192     0x1008FFA8
+XF86TouchpadToggle           269025193     0x1008FFA9
+XF86TouchpadOn               269025200     0x1008FFB0
+XF86TouchpadOff              269025201     0x1008FFB1
+XF86AudioMicMute             269025202     0x1008FFB2
+XF86Keyboard                 269025203     0x1008FFB3
+XF86WWAN                     269025204     0x1008FFB4
+XF86RFKill                   269025205     0x1008FFB5
+XF86AudioPreset              269025206     0x1008FFB6
+XF86RotationLockToggle       269025207     0x1008FFB7
 .CE
 .SH "SEE ALSO"
 bind(n), event(n)

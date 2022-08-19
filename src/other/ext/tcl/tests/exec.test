@@ -14,14 +14,19 @@
 # There is no point in running Valgrind on cases where [exec] forks but then
 # fails and the child process doesn't go through full cleanup.
 
-package require tcltest 2
-namespace import -force ::tcltest::*
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
+    namespace import -force ::tcltest::*
+}
 
 package require tcltests
 
 # All tests require the "exec" command.
 # Skip them if exec is not defined.
 testConstraint exec [llength [info commands exec]]
+# Some skips when running in a macOS CI environment
+testConstraint noosxCI [expr {![info exists ::env(MAC_CI)]}]
+
 unset -nocomplain path
 
 # Utilities that are like bourne shell stalwarts, but cross-platform.
@@ -106,7 +111,7 @@ set path(sh2) [makeFile {
     exit
 } sh2]
 set path(sleep) [makeFile {
-    after [expr $argv*1000]
+    after [expr {$argv*1000}]
     exit
 } sleep]
 set path(exit) [makeFile {
@@ -667,7 +672,9 @@ test exec-18.2 {exec cat deals with weird file names} -body {
 # Note that this test cannot be adapted to work on Windows; that platform has
 # no kernel support for an analog of O_APPEND. OTOH, that means we can assume
 # that there is a POSIX shell...
-test exec-19.1 {exec >> uses O_APPEND} -constraints {exec unix notValgrind} -setup {
+#
+# This test also fails in some cases when building with macOS
+test exec-19.1 {exec >> uses O_APPEND} -constraints {exec unix notValgrind noosxCI} -setup {
     set tmpfile [makeFile {0} tmpfile.exec-19.1]
 } -body {
     # Note that we have to allow for the current contents of the temporary
@@ -703,9 +710,6 @@ test exec-20.1 {exec .CMD file} -constraints {win} -body {
     exec [makeFile "echo %1> $log" exec201.CMD] "Testing exec-20.1"
     viewFile $log
 } -result "\"Testing exec-20.1\""
-    
-
-
 
 # ----------------------------------------------------------------------
 # cleanup

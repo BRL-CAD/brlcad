@@ -11,9 +11,9 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-#include "default.h"
 #include "tkInt.h"
 #include "tkText.h"
+#include "default.h"
 
 /*
  * Index to use to select last character in line (very large integer):
@@ -62,7 +62,7 @@ static void		UpdateStringOfTextIndex(Tcl_Obj *objPtr);
 #define GET_INDEXEPOCH(objPtr) \
 	(PTR2INT((objPtr)->internalRep.twoPtrValue.ptr2))
 #define SET_TEXTINDEX(objPtr, indexPtr) \
-	((objPtr)->internalRep.twoPtrValue.ptr1 = (void *) (indexPtr))
+	((objPtr)->internalRep.twoPtrValue.ptr1 = (void *)(indexPtr))
 #define SET_INDEXEPOCH(objPtr, epoch) \
 	((objPtr)->internalRep.twoPtrValue.ptr2 = INT2PTR(epoch))
 
@@ -107,7 +107,7 @@ DupTextIndexInternalRep(
     int epoch;
     TkTextIndex *dupIndexPtr, *indexPtr;
 
-    dupIndexPtr = ckalloc(sizeof(TkTextIndex));
+    dupIndexPtr = (TkTextIndex *)ckalloc(sizeof(TkTextIndex));
     indexPtr = GET_TEXTINDEX(srcPtr);
     epoch = GET_INDEXEPOCH(srcPtr);
 
@@ -139,7 +139,7 @@ UpdateStringOfTextIndex(
 
     len = TkTextPrintIndex(indexPtr->textPtr, indexPtr, buffer);
 
-    objPtr->bytes = ckalloc(len + 1);
+    objPtr->bytes = (char *)ckalloc(len + 1);
     strcpy(objPtr->bytes, buffer);
     objPtr->length = len;
 }
@@ -176,7 +176,7 @@ MakeObjIndex(
 				 * position. */
     const TkTextIndex *origPtr)	/* Pointer to index. */
 {
-    TkTextIndex *indexPtr = ckalloc(sizeof(TkTextIndex));
+    TkTextIndex *indexPtr = (TkTextIndex *)ckalloc(sizeof(TkTextIndex));
 
     indexPtr->tree = origPtr->tree;
     indexPtr->linePtr = origPtr->linePtr;
@@ -436,7 +436,7 @@ TkTextMakeByteIndex(
 		 */
 
 		start = segPtr->body.chars + (byteIndex - index);
-		p = Tcl_UtfPrev(start, segPtr->body.chars);
+		p = TkUtfPrev(start, segPtr->body.chars);
 		p += TkUtfToUniChar(p, &ch);
 		indexPtr->byteIndex += p - start;
 	    }
@@ -477,10 +477,10 @@ TkTextMakeCharIndex(
     int charIndex,		/* Index of desired character. */
     TkTextIndex *indexPtr)	/* Structure to fill in. */
 {
-    register TkTextSegment *segPtr;
+    TkTextSegment *segPtr;
     char *p, *start, *end;
     int index, offset;
-    int ch;
+    Tcl_UniChar ch = 0;
 
     indexPtr->tree = tree;
     if (lineIndex < 0) {
@@ -527,7 +527,7 @@ TkTextMakeCharIndex(
 		    return indexPtr;
 		}
 		charIndex--;
-		offset = TkUtfToUniChar(p, &ch);
+		offset = Tcl_UtfToUniChar(p, &ch);
 		index += offset;
 	    }
 	} else {
@@ -761,11 +761,11 @@ GetIndex(
 	goto done;
     }
 
-    if (TkTextWindowIndex(textPtr, string, indexPtr) != 0) {
+    if (TkTextWindowIndex(textPtr, string, indexPtr) == TCL_OK) {
 	goto done;
     }
 
-    if (TkTextImageIndex(textPtr, string, indexPtr) != 0) {
+    if (TkTextImageIndex(textPtr, string, indexPtr) == TCL_OK) {
 	goto done;
     }
 
@@ -816,7 +816,7 @@ GetIndex(
 	    hPtr = Tcl_FindHashEntry(&sharedPtr->tagTable, tagName);
 	    *p = '.';
 	    if (hPtr != NULL) {
-		tagPtr = Tcl_GetHashValue(hPtr);
+		tagPtr = (TkTextTag *)Tcl_GetHashValue(hPtr);
 	    }
 	}
 
@@ -832,7 +832,7 @@ GetIndex(
 	    if (tagPtr == textPtr->selTagPtr) {
 		tagName = "sel";
 	    } else if (hPtr != NULL) {
-		tagName = Tcl_GetHashKey(&sharedPtr->tagTable, hPtr);
+		tagName = (const char *)Tcl_GetHashKey(&sharedPtr->tagTable, hPtr);
 	    }
 	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 		    "text doesn't contain any characters tagged with \"%s\"",
@@ -917,13 +917,13 @@ GetIndex(
 	*endOfBase = 0;
 	result = TkTextWindowIndex(textPtr, Tcl_DStringValue(&copy), indexPtr);
 	*endOfBase = c;
-	if (result != 0) {
+	if (result == TCL_OK) {
 	    goto gotBase;
 	}
     }
     if ((string[0] == 'e')
 	    && (strncmp(string, "end",
-	    (size_t) (endOfBase-Tcl_DStringValue(&copy))) == 0)) {
+	    endOfBase-Tcl_DStringValue(&copy)) == 0)) {
 	/*
 	 * Base position is end of text.
 	 */
@@ -954,7 +954,7 @@ GetIndex(
 	*endOfBase = 0;
 	result = TkTextImageIndex(textPtr, Tcl_DStringValue(&copy), indexPtr);
 	*endOfBase = c;
-	if (result != 0) {
+	if (result == TCL_OK) {
 	    goto gotBase;
 	}
     }
@@ -997,6 +997,7 @@ GetIndex(
     if (indexPtr->linePtr == NULL) {
 	Tcl_Panic("Bad index created");
     }
+    TkTextIndexAdjustToStartEnd(textPtr, indexPtr, 0);
     return TCL_OK;
 
   error:
@@ -1004,6 +1005,67 @@ GetIndex(
     Tcl_SetObjResult(interp, Tcl_ObjPrintf("bad text index \"%s\"", string));
     Tcl_SetErrorCode(interp, "TK", "TEXT", "BAD_INDEX", NULL);
     return TCL_ERROR;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TkTextIndexAdjustToStartEnd --
+ *
+ *      Adjust indexPtr to the -startline/-endline range, or just check
+ *      if indexPtr is out of this range.
+ *
+ * Results:
+ *	The return value is a standard Tcl return result. If check is true,
+ *      return TCL_ERROR if indexPtr is outside the -startline/-endline
+ *      range (indexPtr is not modified).
+ *      If check is false, adjust indexPtr to -startline/-endline.
+ *
+ * Side effects:
+ *	None.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+int
+TkTextIndexAdjustToStartEnd(
+    TkText *textPtr,
+    TkTextIndex *indexPtr,  /* Pointer to index. */
+    int check)		    /* 1 means only check indexPtr against
+			     * the -startline/-endline range
+			     * 0 means adjust to this range */
+{
+    int bound;
+    TkTextIndex indexBound;
+
+    if (!textPtr) {
+	return TCL_OK;
+    }
+    if (textPtr->start != NULL) {
+	bound = TkBTreeLinesTo(NULL, textPtr->start);
+	TkTextMakeByteIndex(textPtr->sharedTextPtr->tree, NULL, bound, 0,
+		&indexBound);
+	if (TkTextIndexCmp(indexPtr, &indexBound) < 0) {
+	    if (check) {
+		return TCL_ERROR;
+	    }
+	    TkTextMakeByteIndex(textPtr->sharedTextPtr->tree, NULL, bound, 0,
+		    indexPtr);
+	}
+    }
+    if (textPtr->end != NULL) {
+	bound = TkBTreeLinesTo(NULL, textPtr->end);
+	TkTextMakeByteIndex(textPtr->sharedTextPtr->tree, NULL, bound, 0,
+		&indexBound);
+	if (TkTextIndexCmp(indexPtr, &indexBound) > 0) {
+	    if (check) {
+		return TCL_ERROR;
+	    }
+	    TkTextMakeByteIndex(textPtr->sharedTextPtr->tree, NULL, bound, 0,
+		    indexPtr);
+	}
+    }
+    return TCL_OK;
 }
 
 /*
@@ -1151,7 +1213,7 @@ ForwBack(
 				 * or "-" that starts modifier. */
     TkTextIndex *indexPtr)	/* Index to update as specified in string. */
 {
-    register const char *p, *units;
+    const char *p, *units;
     char *end;
     int count, lineIndex, modifier;
     size_t length;
@@ -1499,7 +1561,7 @@ TkTextIndexForwChars(
 	return;
     }
     if (checkElided) {
-	infoPtr = ckalloc(sizeof(TkTextElideInfo));
+	infoPtr = (TkTextElideInfo *)ckalloc(sizeof(TkTextElideInfo));
 	elide = TkTextIsElided(textPtr, srcPtr, infoPtr);
     }
 
@@ -1597,7 +1659,7 @@ TkTextIndexForwChars(
 			charCount--;
 		    }
 		} else if (type & COUNT_INDICES) {
-		    if (charCount < segPtr->size - byteOffset) {
+		    if (charCount + byteOffset < segPtr->size) {
 			dstPtr->byteIndex += charCount;
 			goto forwardCharDone;
 		    }
@@ -1767,7 +1829,7 @@ TkTextIndexCount(
     seg2Ptr = TkTextIndexToSeg(indexPtr2, &maxBytes);
 
     if (checkElided) {
-	infoPtr = ckalloc(sizeof(TkTextElideInfo));
+	infoPtr = (TkTextElideInfo *)ckalloc(sizeof(TkTextElideInfo));
 	elide = TkTextIsElided(textPtr, indexPtr1, infoPtr);
     }
 
@@ -1844,12 +1906,12 @@ TkTextIndexCount(
 
 	    if (segPtr->typePtr == &tkTextCharType) {
 		int byteLen = segPtr->size - byteOffset;
-		register unsigned char *str = (unsigned char *)
+		unsigned char *str = (unsigned char *)
 			segPtr->body.chars + byteOffset;
-		register int i;
+		int i;
 
 		if (segPtr == seg2Ptr) {
-		    if (byteLen > (maxBytes - byteOffset)) {
+		    if (byteLen + byteOffset > maxBytes) {
 			byteLen = maxBytes - byteOffset;
 		    }
 		}
@@ -1879,7 +1941,7 @@ TkTextIndexCount(
 		    int byteLen = segPtr->size - byteOffset;
 
 		    if (segPtr == seg2Ptr) {
-			if (byteLen > (maxBytes - byteOffset)) {
+			if (byteLen + byteOffset > maxBytes) {
 			    byteLen = maxBytes - byteOffset;
 			}
 		    }
@@ -2025,7 +2087,7 @@ TkTextIndexBackChars(
 	return;
     }
     if (checkElided) {
-	infoPtr = ckalloc(sizeof(TkTextElideInfo));
+	infoPtr = (TkTextElideInfo *)ckalloc(sizeof(TkTextElideInfo));
 	elide = TkTextIsElided(textPtr, srcPtr, infoPtr);
     }
 
@@ -2125,7 +2187,7 @@ TkTextIndexBackChars(
 	    if (segPtr->typePtr == &tkTextCharType) {
 		start = segPtr->body.chars;
 		end = segPtr->body.chars + segSize;
-		for (p = end; ; p = Tcl_UtfPrev(p, start)) {
+		for (p = end; ; p = TkUtfPrev(p, start)) {
 		    if (charCount == 0) {
 			dstPtr->byteIndex -= (end - p);
 			goto backwardCharDone;
@@ -2225,7 +2287,7 @@ StartEnd(
 {
     const char *p;
     size_t length;
-    register TkTextSegment *segPtr;
+    TkTextSegment *segPtr;
     int modifier;
 
     /*
@@ -2366,7 +2428,7 @@ StartEnd(
 		}
 		if (offset > 0) {
 		    chSize = (segPtr->body.chars + offset
-			    - Tcl_UtfPrev(segPtr->body.chars + offset,
+			    - TkUtfPrev(segPtr->body.chars + offset,
 			    segPtr->body.chars));
 		}
 		firstChar = 0;

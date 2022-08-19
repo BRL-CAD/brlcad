@@ -280,14 +280,27 @@ bind Spinbox <Meta-Delete> {
 
 # A few additional bindings of my own.
 
-bind Spinbox <2> {
-    if {!$tk_strictMotif} {
-	::tk::EntryScanMark %W %x
+if {[tk windowingsystem] ne "aqua"} {
+    bind Spinbox <2> {
+        if {!$tk_strictMotif} {
+        ::tk::EntryScanMark %W %x
+        }
     }
-}
-bind Spinbox <B2-Motion> {
-    if {!$tk_strictMotif} {
-	::tk::EntryScanDrag %W %x
+    bind Spinbox <B2-Motion> {
+        if {!$tk_strictMotif} {
+        ::tk::EntryScanDrag %W %x
+        }
+    }
+} else {
+    bind Spinbox <3> {
+        if {!$tk_strictMotif} {
+        ::tk::EntryScanMark %W %x
+        }
+    }
+    bind Spinbox <B3-Motion> {
+        if {!$tk_strictMotif} {
+        ::tk::EntryScanDrag %W %x
+        }
     }
 }
 
@@ -470,10 +483,10 @@ proc ::tk::spinbox::MouseSelect {w x {cursor {}}} {
 	word {
 	    if {$cur < [$w index anchor]} {
 		set before [tcl_wordBreakBefore [$w get] $cur]
-		set after [tcl_wordBreakAfter [$w get] [expr {$anchor-1}]]
+		set after [tcl_wordBreakAfter [$w get] $anchor-1]
 	    } else {
 		set before [tcl_wordBreakBefore [$w get] $anchor]
-		set after [tcl_wordBreakAfter [$w get] [expr {$cur - 1}]]
+		set after [tcl_wordBreakAfter [$w get] $cur-1]
 	    }
 	    if {$before < 0} {
 		set before 0

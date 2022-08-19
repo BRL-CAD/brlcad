@@ -364,7 +364,7 @@ SOURCE=..\doc\CrtObjCmd.3
 # End Source File
 # Begin Source File
 
-SOURCE=..\doc\CrtSlave.3
+SOURCE=..\doc\CrtAlias.3
 # End Source File
 # Begin Source File
 

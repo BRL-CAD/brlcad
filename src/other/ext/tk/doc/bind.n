@@ -201,14 +201,27 @@ substitutions you would make when binding to these events.
 Many contemporary mice support a mouse wheel, which is used
 for scrolling documents without using the scrollbars.  By rolling the
 wheel, the system will generate \fBMouseWheel\fR events that the
-application can use to scroll.  Like \fBKey\fR events the event is
-always routed to the window that currently has focus. When the event
+application can use to scroll.  The event is routed to the
+window currently under the mouse pointer. When the event
 is received you can use the \fB%D\fR substitution to get the
-\fIdelta\fR field for the event, which is a integer value describing how
+\fIdelta\fR field for the event, which is an integer value describing how
 the mouse wheel has moved.  The smallest value for which the
-system will report is defined by the OS. The sign of the
+system will report is defined by the OS.  The sign of the
 value determines which direction your widget should scroll.  Positive
 values should scroll up and negative values should scroll down.
+.RS
+.PP
+Horizontal scrolling uses \fBShift-MouseWheel\fR events, with positive
+\fB%D\fR \fIdelta\fR substitution indicating left scrolling and negative
+right scrolling.
+Only Windows and macOS Aqua typically fire \fBMouseWheel\fR and
+\fBShift-MouseWheel\fR events.  On
+X11 vertical scrolling is rather supported through \fBButton-4\fR and
+\fBButton-5\fR events, and horizontal scrolling through \fBShift-Button-4\fR
+and \fBShift-Button-5\fR events.  Horizontal scrolling events may fire from
+many different hardware units such as tilt wheels or touchpads.  Horizontal
+scrolling can also be emulated by holding Shift and scrolling vertically.
+.RE
 .IP "\fBKeyPress\fR, \fBKeyRelease\fR" 5
 The \fBKeyPress\fR and \fBKeyRelease\fR events are generated
 whenever a key is pressed or released.  \fBKeyPress\fR and \fBKeyRelease\fR
@@ -270,7 +283,8 @@ it is destroyed.
 When the \fBDestroy\fR event is delivered
 to a widget, it is in a
 .QW half-dead
-state: the widget still exists, but most operations on it will fail.
+state: the widget still exists, but operations that involve it
+may return invalid results, or return an error.
 .RE
 .IP "\fBFocusIn\fR, \fBFocusOut\fR" 5
 The \fBFocusIn\fR and \fBFocusOut\fR events are generated
@@ -510,6 +524,9 @@ For \fBButtonPress\fR, \fBButtonRelease\fR, \fBMotion\fR,
 \fBKeyPress\fR, \fBKeyRelease\fR, and \fBMouseWheel\fR events,
 \fB%x\fR and \fB%y\fR indicate the position of the mouse pointer
 relative to the receiving window.
+For key events on the Macintosh these are the coordinates of the
+mouse at the moment when an X11 KeyEvent is sent to Tk, which could
+be slightly later than the time of the physical press or release.
 For \fBEnter\fR and \fBLeave\fR events, the position where the
 mouse pointer crossed the window, relative to the receiving window.
 For \fBConfigure\fR and \fBCreate\fR requests, the \fIx\fR and \fIy\fR
@@ -517,10 +534,11 @@ coordinates of the window relative to its parent window.
 .IP \fB%A\fR 5
 Substitutes the UNICODE character corresponding to the event, or
 the empty string if the event does not correspond to a UNICODE character
-(e.g. the shift key was pressed). \fBXmbLookupString\fR (or
+(e.g. the shift key was pressed). On X11, \fBXmbLookupString\fR (or
 \fBXLookupString\fR when input method support is turned off) does all
 the work of translating from the event to a UNICODE character.
-Valid only for \fBKeyPress\fR and \fBKeyRelease\fR events.
+On X11, valid only for \fBKeyPress\fR event. On Windows and macOS/aqua,
+valid only for \fBKeyPress\fR and \fBKeyRelease\fR events.
 .IP \fB%B\fR 5
 The \fIborder_width\fR field from the event.  Valid only for
 \fBConfigure\fR, \fBConfigureRequest\fR, and \fBCreate\fR events.

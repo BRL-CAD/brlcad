@@ -9,8 +9,8 @@
 #
 # Copyright (c) 1998, 1999 Henry Spencer.  All rights reserved.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
 }
 
 ::tcltest::loadTestedCommands
@@ -49,9 +49,9 @@ catch [list package require -exact Tcltest [info patchlevel]]
 # subexpressions, checking where empty substrings are located,
 # etc. should be done using expectIndices and expectPartial.
 
-# The flag characters are complex and a bit eclectic.  Generally speaking, 
+# The flag characters are complex and a bit eclectic.  Generally speaking,
 # lowercase letters are compile options, uppercase are expected re_info
-# bits, and nonalphabetics are match options, controls for how the test is 
+# bits, and nonalphabetics are match options, controls for how the test is
 # run, or testing options.  The one small surprise is that AREs are the
 # default, and you must explicitly request lesser flavors of RE.  The flags
 # are as follows.  It is admitted that some are not very mnemonic.
@@ -287,7 +287,7 @@ namespace eval RETest {
 	set infoflags [TestInfoFlags $flags]
 	set ccmd [list testregexp -about {*}$f $re]
 	set nsub [expr {[llength $args] - 1}]
-	if {$nsub == -1} {
+	if {$nsub < 0} {
 	    # didn't tell us number of subexps
 	    set ccmd "lreplace \[$ccmd\] 0 0"
 	    set info [list $infoflags]
@@ -311,7 +311,7 @@ namespace eval RETest {
     # match expected (full fanciness)
     # expectIndices testno flags re target mat submat ...
     proc expectIndices {args} {
-	MatchExpected -indices {*}$args 
+	MatchExpected -indices {*}$args
     }
 
     # partial match expected
@@ -626,6 +626,7 @@ expectMatch	13.14 P		"a\\rb"		"a\rb"	"a\rb"
 expectMatch	13.15 P		"a\\tb"		"a\tb"	"a\tb"
 expectMatch	13.16 P		"a\\u0008x"	"a\bx"	"a\bx"
 expectMatch	13.17 P		{a\u008x}	"a\bx"	"a\bx"
+expectError	13.17.1 -	{a\ux}		EESCAPE
 expectMatch	13.18 P		"a\\u00088x"	"a\b8x"	"a\b8x"
 expectMatch	13.19 P		"a\\U00000008x"	"a\bx"	"a\bx"
 expectMatch	13.20 P		{a\U0000008x}	"a\bx"	"a\bx"
@@ -1219,6 +1220,10 @@ test reg-33.29 {} {
 test reg-33.30 {Bug 1080042} {
     regexp {(\Y)+} foo
 } 1
+test reg-33.31 {Bug 7c64aa5e1a} {
+    regexp -inline {(?b).\{1,10\}} {abcdef}
+} abcdef
+
 
 # cleanup
 ::tcltest::cleanupTests

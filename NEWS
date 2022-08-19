@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2022-XX-XX  Release 7.34.X                                     ---
 ----------------------------------------------------------------------
 
+* updated Tcl/Tk to version 8.6.12 - Cliff Yapp
 * updated netpbm to version 10.73.40 - Cliff Yapp
 * updated zlib to version 1.2.12 - Cliff Yapp
 * fixed mged -c unknown variable windows on keypresses- Sean Morrison

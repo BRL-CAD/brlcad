@@ -22,23 +22,23 @@ typedef struct ThreadSpecificData {
 static Tcl_ThreadDataKey dataKey;
 
 /*
- * masterLock is used to serialize creation of mutexes, condition variables,
+ * globalLock is used to serialize creation of mutexes, condition variables,
  * and thread local storage. This is the only place that can count on the
  * ability to statically initialize the mutex.
  */
 
-static pthread_mutex_t masterLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t globalLock = PTHREAD_MUTEX_INITIALIZER;
 
 /*
  * initLock is used to serialize initialization and finalization of Tcl. It
- * cannot use any dyamically allocated storage.
+ * cannot use any dynamically allocated storage.
  */
 
 static pthread_mutex_t initLock = PTHREAD_MUTEX_INITIALIZER;
 
 /*
  * allocLock is used by Tcl's version of malloc for synchronization. For
- * obvious reasons, cannot use any dyamically allocated storage.
+ * obvious reasons, cannot use any dynamically allocated storage.
  */
 
 static pthread_mutex_t allocLock = PTHREAD_MUTEX_INITIALIZER;
@@ -48,8 +48,8 @@ static pthread_mutex_t *allocLockPtr = &allocLock;
  * These are for the critical sections inside this file.
  */
 
-#define MASTER_LOCK	pthread_mutex_lock(&masterLock)
-#define MASTER_UNLOCK	pthread_mutex_unlock(&masterLock)
+#define GLOBAL_LOCK	pthread_mutex_lock(&globalLock)
+#define GLOBAL_UNLOCK	pthread_mutex_unlock(&globalLock)
 
 #endif /* TCL_THREADS */
 
@@ -89,7 +89,7 @@ TclpThreadCreate(
 
 #ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
     if (stackSize != TCL_THREAD_STACK_DEFAULT) {
-	pthread_attr_setstacksize(&attr, (size_t) stackSize);
+	pthread_attr_setstacksize(&attr, stackSize);
 #ifdef TCL_THREAD_STACK_MIN
     } else {
 	/*
@@ -114,14 +114,14 @@ TclpThreadCreate(
     }
 #endif /* HAVE_PTHREAD_ATTR_SETSTACKSIZE */
 
-    if (! (flags & TCL_THREAD_JOINABLE)) {
-	pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_DETACHED);
+    if (!(flags & TCL_THREAD_JOINABLE)) {
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     }
 
     if (pthread_create(&theThread, &attr,
-	    (void * (*)(void *))proc, (void *)clientData) &&
+	    (void * (*)(void *))(void *)proc, (void *)clientData) &&
 	    pthread_create(&theThread, NULL,
-		    (void * (*)(void *))proc, (void *)clientData)) {
+		    (void * (*)(void *))(void *)proc, (void *)clientData)) {
 	result = TCL_ERROR;
     } else {
 	*idPtr = (Tcl_ThreadId)theThread;
@@ -252,7 +252,7 @@ TclpInitLock(void)
 /*
  *----------------------------------------------------------------------
  *
- * TclpFinalizeLock
+ * TclFinalizeLock
  *
  *	This procedure is used to destroy all private resources used in this
  *	file.
@@ -274,7 +274,7 @@ TclFinalizeLock(void)
     /*
      * You do not need to destroy mutexes that were created with the
      * PTHREAD_MUTEX_INITIALIZER macro. These mutexes do not need any
-     * destruction: masterLock, allocLock, and initLock.
+     * destruction: globalLock, allocLock, and initLock.
      */
 
     pthread_mutex_unlock(&initLock);
@@ -309,7 +309,7 @@ TclpInitUnlock(void)
 /*
  *----------------------------------------------------------------------
  *
- * TclpMasterLock
+ * TclpGlobalLock
  *
  *	This procedure is used to grab a lock that serializes creation and
  *	finalization of serialization objects. This interface is only needed
@@ -322,24 +322,23 @@ TclpInitUnlock(void)
  *	None.
  *
  * Side effects:
- *	Acquire the master mutex.
+ *	Acquire the global mutex.
  *
  *----------------------------------------------------------------------
  */
 
 void
-TclpMasterLock(void)
+TclpGlobalLock(void)
 {
 #ifdef TCL_THREADS
-    pthread_mutex_lock(&masterLock);
+    pthread_mutex_lock(&globalLock);
 #endif
 }
-
 
 /*
  *----------------------------------------------------------------------
  *
- * TclpMasterUnlock
+ * TclpGlobalUnlock
  *
  *	This procedure is used to release a lock that serializes creation and
  *	finalization of synchronization objects.
@@ -348,16 +347,16 @@ TclpMasterLock(void)
  *	None.
  *
  * Side effects:
- *	Release the master mutex.
+ *	Release the global mutex.
  *
  *----------------------------------------------------------------------
  */
 
 void
-TclpMasterUnlock(void)
+TclpGlobalUnlock(void)
 {
 #ifdef TCL_THREADS
-    pthread_mutex_unlock(&masterLock);
+    pthread_mutex_unlock(&globalLock);
 #endif
 }
 
@@ -367,7 +366,7 @@ TclpMasterUnlock(void)
  * Tcl_GetAllocMutex
  *
  *	This procedure returns a pointer to a statically initialized mutex for
- *	use by the memory allocator. The alloctor must use this lock, because
+ *	use by the memory allocator. The allocator must use this lock, because
  *	all other locks are allocated...
  *
  * Results:
@@ -421,18 +420,18 @@ Tcl_MutexLock(
     pthread_mutex_t *pmutexPtr;
 
     if (*mutexPtr == NULL) {
-	MASTER_LOCK;
+	GLOBAL_LOCK;
 	if (*mutexPtr == NULL) {
 	    /*
-	     * Double inside master lock check to avoid a race condition.
+	     * Double inside global lock check to avoid a race condition.
 	     */
 
-	    pmutexPtr = ckalloc(sizeof(pthread_mutex_t));
+	    pmutexPtr = (pthread_mutex_t *)ckalloc(sizeof(pthread_mutex_t));
 	    pthread_mutex_init(pmutexPtr, NULL);
 	    *mutexPtr = (Tcl_Mutex)pmutexPtr;
 	    TclRememberMutex(mutexPtr);
 	}
-	MASTER_UNLOCK;
+	GLOBAL_UNLOCK;
     }
     pmutexPtr = *((pthread_mutex_t **)mutexPtr);
     pthread_mutex_lock(pmutexPtr);
@@ -472,7 +471,7 @@ Tcl_MutexUnlock(
  *	This procedure is invoked to clean up one mutex. This is only safe to
  *	call at the end of time.
  *
- *	This assumes the Master Lock is held.
+ *	This assumes the Global Lock is held.
  *
  * Results:
  *	None.
@@ -529,7 +528,7 @@ Tcl_ConditionWait(
     struct timespec ptime;
 
     if (*condPtr == NULL) {
-	MASTER_LOCK;
+	GLOBAL_LOCK;
 
 	/*
 	 * Double check inside mutex to avoid race, then initialize condition
@@ -537,12 +536,12 @@ Tcl_ConditionWait(
 	 */
 
 	if (*condPtr == NULL) {
-	    pcondPtr = ckalloc(sizeof(pthread_cond_t));
+	    pcondPtr = (pthread_cond_t *)ckalloc(sizeof(pthread_cond_t));
 	    pthread_cond_init(pcondPtr, NULL);
 	    *condPtr = (Tcl_Condition) pcondPtr;
 	    TclRememberCondition(condPtr);
 	}
-	MASTER_UNLOCK;
+	GLOBAL_UNLOCK;
     }
     pmutexPtr = *((pthread_mutex_t **)mutexPtr);
     pcondPtr = *((pthread_cond_t **)condPtr);
@@ -588,11 +587,12 @@ Tcl_ConditionNotify(
     Tcl_Condition *condPtr)
 {
     pthread_cond_t *pcondPtr = *((pthread_cond_t **)condPtr);
+
     if (pcondPtr != NULL) {
 	pthread_cond_broadcast(pcondPtr);
     } else {
 	/*
-	 * Noone has used the condition variable, so there are no waiters.
+	 * No-one has used the condition variable, so there are no waiters.
 	 */
     }
 }
@@ -605,7 +605,7 @@ Tcl_ConditionNotify(
  *	This procedure is invoked to clean up a condition variable. This is
  *	only safe to call at the end of time.
  *
- *	This assumes the Master Lock is held.
+ *	This assumes the Global Lock is held.
  *
  * Results:
  *	None.
@@ -683,18 +683,18 @@ TclpInetNtoa(
 static volatile int initialized = 0;
 static pthread_key_t key;
 
-typedef struct allocMutex {
+typedef struct {
     Tcl_Mutex tlock;
     pthread_mutex_t plock;
-} allocMutex;
+} AllocMutex;
 
 Tcl_Mutex *
 TclpNewAllocMutex(void)
 {
-    struct allocMutex *lockPtr;
-    register pthread_mutex_t *plockPtr;
+    AllocMutex *lockPtr;
+    pthread_mutex_t *plockPtr;
 
-    lockPtr = malloc(sizeof(struct allocMutex));
+    lockPtr = (AllocMutex *)malloc(sizeof(AllocMutex));
     if (lockPtr == NULL) {
 	Tcl_Panic("could not allocate lock");
     }
@@ -708,7 +708,8 @@ void
 TclpFreeAllocMutex(
     Tcl_Mutex *mutex)		/* The alloc mutex to free. */
 {
-    allocMutex* lockPtr = (allocMutex*) mutex;
+    AllocMutex *lockPtr = (AllocMutex *)mutex;
+
     if (!lockPtr) {
 	return;
     }
@@ -767,7 +768,7 @@ TclpThreadCreateKey(void)
 {
     pthread_key_t *ptkeyPtr;
 
-    ptkeyPtr = TclpSysAlloc(sizeof *ptkeyPtr, 0);
+    ptkeyPtr = (pthread_key_t *)TclpSysAlloc(sizeof(pthread_key_t), 0);
     if (NULL == ptkeyPtr) {
 	Tcl_Panic("unable to allocate thread key!");
     }
@@ -783,7 +784,7 @@ void
 TclpThreadDeleteKey(
     void *keyPtr)
 {
-    pthread_key_t *ptkeyPtr = keyPtr;
+    pthread_key_t *ptkeyPtr = (pthread_key_t *)keyPtr;
 
     if (pthread_key_delete(*ptkeyPtr)) {
 	Tcl_Panic("unable to delete key!");
@@ -793,22 +794,22 @@ TclpThreadDeleteKey(
 }
 
 void
-TclpThreadSetMasterTSD(
+TclpThreadSetGlobalTSD(
     void *tsdKeyPtr,
     void *ptr)
 {
-    pthread_key_t *ptkeyPtr = tsdKeyPtr;
+    pthread_key_t *ptkeyPtr = (pthread_key_t *)tsdKeyPtr;
 
     if (pthread_setspecific(*ptkeyPtr, ptr)) {
-	Tcl_Panic("unable to set master TSD value");
+	Tcl_Panic("unable to set global TSD value");
     }
 }
 
 void *
-TclpThreadGetMasterTSD(
+TclpThreadGetGlobalTSD(
     void *tsdKeyPtr)
 {
-    pthread_key_t *ptkeyPtr = tsdKeyPtr;
+    pthread_key_t *ptkeyPtr = (pthread_key_t *)tsdKeyPtr;
 
     return pthread_getspecific(*ptkeyPtr);
 }

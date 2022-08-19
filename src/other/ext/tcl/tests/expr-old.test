@@ -420,13 +420,13 @@ test expr-old-21.3 {parenthesization} {expr +(3-4)} -1
 
 # Embedded commands and variable names.
 
-set a 16 
-test expr-old-22.1 {embedded variables} {expr {2*$a}} 32 
+set a 16
+test expr-old-22.1 {embedded variables} {expr {2*$a}} 32
 test expr-old-22.2 {embedded variables} {
     set x -5
     set y 10
     expr {$x + $y}
-} {5} 
+} {5}
 test expr-old-22.3 {embedded variables} {
     set x "  -5"
     set y "  +10"
@@ -861,7 +861,7 @@ test expr-old-32.46 {math functions in expressions} -body {
 } -match glob -result {1 {too many arguments for math function*}}
 test expr-old-32.47 {math functions in expressions} -body {
     list [catch {expr srand()} msg] $msg
-} -match glob -result {1 {too few arguments for math function*}}
+} -match glob -result {1 {not enough arguments for math function*}}
 test expr-old-32.48 {math functions in expressions} -body {
     expr srand(3.79)
 } -returnCodes error -match glob -result *
@@ -918,7 +918,7 @@ test expr-old-34.6 {errors in math functions} -body {
 } -returnCodes error -match glob -result *
 test expr-old-34.7 {errors in math functions} -body {
     list [catch {expr hypot(1.0)} msg] $msg
-} -match glob -result {1 {too few arguments for math function*}}
+} -match glob -result {1 {not enough arguments for math function*}}
 test expr-old-34.8 {errors in math functions} -body {
     list [catch {expr hypot(1.0, 2.0, 3.0)} msg] $msg
 } -match glob -result {1 {too many arguments for math function*}}
@@ -1120,7 +1120,7 @@ test expr-old-37.25 {Tcl_ExprDouble and NaN} \
     {ieeeFloatingPoint testexprdouble} {
 	list [catch {testexprdouble 0.0/0.0} result] $result
     } {1 {domain error: argument not in valid range}}
-    
+
 test expr-old-38.1 {Verify Tcl_ExprString's basic operation} -constraints {testexprstring} -body {
     list [testexprstring "1+4"] [testexprstring "2*3+4.2"] \
 	    [catch {testexprstring "1+"} msg] $msg
@@ -1160,7 +1160,7 @@ test expr-old-40.2 {min math function} -body {
 } -result 0.0
 test expr-old-40.3 {min math function} -body {
     list [catch {expr {min()}} msg] $msg
-} -result {1 {too few arguments to math function "min"}}
+} -result {1 {not enough arguments to math function "min"}}
 test expr-old-40.4 {min math function} -body {
     expr {min(wide(-1) << 30, 4.5, -10)}
 } -result [expr {wide(-1) << 30}]
@@ -1179,7 +1179,7 @@ test expr-old-41.2 {max math function} -body {
 } -result 0.0
 test expr-old-41.3 {max math function} -body {
     list [catch {expr {max()}} msg] $msg
-} -result {1 {too few arguments to math function "max"}}
+} -result {1 {not enough arguments to math function "max"}}
 test expr-old-41.4 {max math function} -body {
     expr {max(wide(1) << 30, 4.5, -10)}
 } -result [expr {wide(1) << 30}]

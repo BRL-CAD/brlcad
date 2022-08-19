@@ -9,8 +9,8 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -28,9 +28,9 @@ if {[testConstraint testnrelevels]} {
     namespace eval testnre {
 	#
 	# [testnrelevels] returns a 6-list with: C-stack depth, iPtr->numlevels,
-	# cmdFrame level, callFrame level, tosPtr and callback depth 
+	# cmdFrame level, callFrame level, tosPtr and callback depth
 	#
-	variable last [testnrelevels] 
+	variable last [testnrelevels]
 	proc depthDiff {} {
 	    variable last
 	    set depth [testnrelevels]
@@ -148,7 +148,7 @@ test tailcall-0.5 {tailcall is constant space} -constraints testnrelevels -setup
 } -result {0 0 0 0 0 0}
 
 test tailcall-0.5.1 {tailcall is constant space} -constraints testnrelevels -setup {
-    # 
+    #
     # This test is related to [bug d87cb182053fd79b3]: the fix to that bug was
     # to remove a call to TclSkipTailcall, which caused a violation of the
     # constant-space property of tailcall in that particular
@@ -245,7 +245,7 @@ test tailcall-1 {tailcall} -body {
     }
     variable x *::
     proc xset args {error ::xset}
-    list [::b::moo] | $x $a::x $b::x | $::b::y 
+    list [::b::moo] | $x $a::x $b::x | $::b::y
 } -cleanup {
     unset x
     rename xset {}
@@ -619,7 +619,7 @@ test tailcall-12.3a3 {[Bug 2695587]} -body {
     set x
 } -cleanup {
     unset x
-} -result {0 1} 
+} -result {0 1}
 
 test tailcall-12.3b0 {[Bug 2695587]} -body {
     apply {{} {
@@ -654,7 +654,7 @@ test tailcall-12.3b3 {[Bug 2695587]} -body {
     set x
 } -cleanup {
     unset x
-} -result {0 1} 
+} -result {0 1}
 
 # MORE VARIANTS MISSING: bc'ed caught script vs (bc'ed, not-bc'ed)
 # catch. Actually superfluous now, as tailcall just returns TCL_RETURN so that

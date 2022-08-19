@@ -150,9 +150,7 @@ The safest approach is to use names consisting of
 alphanumeric characters only.  Care should be taken with filenames
 which contain spaces (common on Windows systems) and
 filenames where the backslash is the directory separator (Windows
-native path names).  Also Windows 3.1 only supports file
-names with a root of no more than 8 characters and an extension of no
-more than 3 characters.
+native path names).
 .PP
 On Windows platforms there are file and path length restrictions.
 Complete paths or filenames longer than about 260 characters will lead

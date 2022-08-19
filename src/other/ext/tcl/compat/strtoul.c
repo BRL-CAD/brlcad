@@ -62,9 +62,9 @@ strtoul(
 				 * hex, "0" means octal, anything else means
 				 * decimal. */
 {
-    register const char *p;
-    register unsigned long int result = 0;
-    register unsigned digit;
+    const char *p;
+    unsigned long int result = 0;
+    unsigned digit;
     int anyDigits = 0;
     int negative=0;
     int overflow=0;

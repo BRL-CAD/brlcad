@@ -178,7 +178,7 @@ particularly important website:
 .PP
 .CS
 package require dde
-\fBdde execute\fR -async iexplore WWW_OpenURL http://www.tcl.tk/
+\fBdde execute\fR -async iexplore WWW_OpenURL http://www.tcl-lang.org/
 .CE
 .SH "SEE ALSO"
 tk(n), winfo(n), send(n)

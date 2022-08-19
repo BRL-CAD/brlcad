@@ -6,7 +6,7 @@
 #
 # Copyright (c) 1998-2000 by Jos Decoster. All rights reserved.
 
-package require tcltest 2.1
+package require tcltest 2.2
 tcltest::configure {*}$argv
 tcltest::loadTestedCommands
 namespace import -force tcltest::test

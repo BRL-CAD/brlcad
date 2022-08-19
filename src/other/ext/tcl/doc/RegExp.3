@@ -51,14 +51,14 @@ can be efficiently searched.
 .AP Tcl_Obj *patObj in/out
 Refers to the value from which to get a regular expression. The
 compiled regular expression is cached in the value.
-.AP char *text in
+.AP "const char" *text in
 Text to search for a match with a regular expression.
 .AP "const char" *pattern in
 String in the form of a regular expression pattern.
 .AP Tcl_RegExp regexp in
 Compiled regular expression.  Must have been returned previously
 by \fBTcl_GetRegExpFromObj\fR or \fBTcl_RegExpCompile\fR.
-.AP char *start in
+.AP "const char" *start in
 If \fItext\fR is just a portion of some other string, this argument
 identifies the beginning of the larger string.
 If it is not the same as \fItext\fR, then no

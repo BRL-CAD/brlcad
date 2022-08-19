@@ -11,7 +11,7 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 if {"::tcltest" ni [namespace children]} {
-    package require tcltest 2.1
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -140,7 +140,7 @@ test zlib-7.7 {zlib stream: Bug 25842c161} -constraints zlib -body {
 } -result ""
 # Also causes Tk Bug 10f2e7872b
 test zlib-7.8 {zlib stream: Bug b26e38a3e4} -constraints zlib -setup {
-    expr srand(12345)
+    expr {srand(12345)}
     set randdata {}
     for {set i 0} {$i<6001} {incr i} {
 	append randdata [binary format c [expr {int(256*rand())}]]
@@ -451,7 +451,7 @@ test zlib-8.16 {Bug 3603553: buffer transfer with large writes} -setup {
     # Actual data isn't very important; needs to be substantially larger than
     # the internal buffer (32kB) and incompressible.
     set largeData {}
-    for {set i 0;expr srand(1)} {$i < 100000} {incr i} {
+    for {set i 0;expr {srand(1)}} {$i < 100000} {incr i} {
 	append largeData [lindex "a b c d e f g h i j k l m n o p" \
 		[expr {int(16*rand())}]]
     }
@@ -920,7 +920,7 @@ test zlib-10.2 "bug #2818131 (mismatch gets)" -constraints {
     rename zlibRead {}
 } -result {error {invalid block type}}
 
-test zlib-11.1 "Bug #3390073: mis-appled gzip filtering" -setup {
+test zlib-11.1 "Bug #3390073: mis-applied gzip filtering" -setup {
     set file [makeFile {} test.input]
 } -constraints zlib -body {
     set f [open $file wb]
@@ -934,7 +934,7 @@ test zlib-11.1 "Bug #3390073: mis-appled gzip filtering" -setup {
 } -cleanup {
     removeFile $file
 } -result {1000 0}
-test zlib-11.2 "Bug #3390073: mis-appled gzip filtering" -setup {
+test zlib-11.2 "Bug #3390073: mis-applied gzip filtering" -setup {
     set file [makeFile {} test.input]
 } -constraints zlib -body {
     set f [open $file wb]
@@ -1005,6 +1005,86 @@ test zlib-12.2 {Patrick Dunnigan's issue} -constraints zlib -setup {
     removeFile $filesrc
     removeFile $filedst
 } -result 56
+
+set zlibbinf ""
+proc _zlibbinf {} {
+  # inlined zlib.bin file creator:
+  variable zlibbinf
+  if {$zlibbinf eq ""} {
+    set zlibbinf [makeFile {} test-zlib-13.bin]
+    set f [open $zlibbinf wb]
+    puts -nonewline $f [zlib decompress [binary decode base64 {
+      eJx7e+6s1+EAgYaLjK3ratptGmOck0vT/y/ZujHAd0qJelDBXfUPJ3tfrtLbpX+wOOFHmtn03/tizm
+      /+tXROXU3d203b79p5X6/0cvUyFzTsqOj4sa9r8SrZI5zT7265e2Xzq595Fb9LbpgffVy7cZaJ/d15
+      4U9L7LLM2vdqut8+aSU/r6q9Ltv6+T9mBhTgIK97bH33m/O1C1eBwf9FDKNgaIDaj9wA+5hToA==
+    }]]
+    close $f
+  }
+  return $zlibbinf
+}
+test zlib-13.1 {Ticket [8af92dfb66] - zlib stream mis-expansion} -constraints zlib -setup {
+    set pathin  [_zlibbinf]
+    set chanin  [open $pathin rb]
+    set pathout [makeFile {} test-zlib-13.deflated]
+    set chanout [open $pathout wb]
+    zlib push inflate $chanin
+    fcopy $chanin $chanout
+    close $chanin
+    close $chanout
+} -body {
+    file size $pathout
+} -cleanup {
+    removeFile $pathout
+    unset chanin pathin chanout pathout
+} -result 458752
+
+test zlib-13.2 {Ticket [f70ce1fead] - zlib multi-stream expansion} -constraints zlib -setup {
+    # Start from the basic asset
+    set pathin  [_zlibbinf]
+    set chanin  [open $pathin rb]
+    # Create a multi-stream by copying the asset twice into it.
+    set pathout [makeFile {} test-zlib-13.multi]
+    set chanout [open $pathout wb]
+    fcopy $chanin $chanout
+    seek  $chanin 0 start
+    fcopy $chanin $chanout
+    close $chanin
+    close $chanout
+    # The multi-stream file shall be our input
+    set pathin $pathout
+    set chanin [open $pathin rb]
+    # And our destinations
+    set pathout1 [makeFile {} test-zlib-13.multi-1]
+    set pathout2 [makeFile {} test-zlib-13.multi-2]
+} -body {
+    # Decode first stream
+    set chanout [open $pathout1 wb]
+    zlib push inflate $chanin
+    fcopy $chanin $chanout
+    chan pop $chanin
+    close $chanout
+    # Decode second stream
+    set chanout [open $pathout2 wb]
+    zlib push inflate $chanin
+    fcopy $chanin $chanout
+    chan pop $chanin
+    close $chanout
+    #
+    list [file size $pathout1] [file size $pathout2]
+} -cleanup {
+    close $chanin
+    removeFile $pathout
+    removeFile $pathout1
+    removeFile $pathout2
+    unset chanin pathin chanout pathout pathout1 pathout2
+} -result {458752 458752}
+
+if {$zlibbinf ne ""} {
+   removeFile $zlibbinf
+}
+unset zlibbinf
+rename _zlibbinf {}
+
 
 ::tcltest::cleanupTests
 return

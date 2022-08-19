@@ -311,11 +311,9 @@ test image-5.7 {Tk_ImageCmd procedure, "type" option} -constraints {
 test image-6.1 {Tk_ImageCmd procedure, "types" option} -body {
     image types x
 } -returnCodes error -result {wrong # args: should be "image types"}
-test image-6.2 {Tk_ImageCmd procedure, "types" option} -constraints {
-    testImageType
-} -body {
+test image-6.2 {Tk_ImageCmd procedure, "types" option} -body {
     lsort [image types]
-} -result {bitmap oldtest photo test}
+} -match glob -result {bitmap*photo test}
 
 
 test image-7.1 {Tk_ImageCmd procedure, "width" option} -body {
@@ -357,12 +355,6 @@ test image-8.1 {Tk_ImageCmd procedure, "inuse" option} -constraints {
     catch {destroy .b}
 } -result [list 0 1]
 
-if {[tk windowingsystem] == "aqua" && $tcl_platform(osVersion) > 18} {
-    # Aqua >= 10.14 will redraw the entire image in drawRect.
-    set result_9_1 {{foo display 0 0 30 15}}
-} else {
-    set result_9_1 {{foo display 5 6 7 8}}
-}
 test image-9.1 {Tk_ImageChanged procedure} -constraints testImageType -setup {
     .c delete all
     imageCleanup
@@ -385,13 +377,8 @@ test image-9.1 {Tk_ImageChanged procedure} -constraints testImageType -setup {
 } -cleanup {
     .c delete all
     imageCleanup
-} -result $result_9_1
-if {[tk windowingsystem] == "aqua" && $tcl_platform(osVersion) > 18} {
-    # Aqua >= 10.14 will redraw the entire image.
-    set result_9_2 {{foo display 0 0 30 15} {foo display 0 0 30 15}}
-} else {
-    set result_9_2 {{foo display 5 6 25 9} {foo display 0 0 12 14}}
-}
+} -result {{foo display 5 6 7 8}}
+
 test image-9.2 {Tk_ImageChanged procedure} -constraints testImageType -setup {
     .c delete all
     imageCleanup
@@ -411,7 +398,7 @@ test image-9.2 {Tk_ImageChanged procedure} -constraints testImageType -setup {
 } -cleanup {
     .c delete all
     imageCleanup
-} -result $result_9_2
+} -result {{foo display 5 6 25 9} {foo display 0 0 12 14}}
 
 test image-10.1 {Tk_GetImage procedure} -setup {
     imageCleanup

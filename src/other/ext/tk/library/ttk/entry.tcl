@@ -40,20 +40,20 @@ option add *TEntry.cursor [ttk::cursor text] widgetDefault
 #
 # Removed the following standard Tk bindings:
 #
-# <Control-Key-space>, <Control-Shift-Key-space>,
-# <Key-Select>,  <Shift-Key-Select>:
+# <Control-space>, <Control-Shift-space>,
+# <Select>,  <Shift-Select>:
 #	Ttk entry widget doesn't use selection anchor.
-# <Key-Insert>:
+# <Insert>:
 #	Inserts PRIMARY selection (on non-Windows platforms).
 #	This is inconsistent with typical platform bindings.
-# <Double-Shift-ButtonPress-1>, <Triple-Shift-ButtonPress-1>:
+# <Double-Shift-Button-1>, <Triple-Shift-Button-1>:
 #	These don't do the right thing to start with.
-# <Meta-Key-b>, <Meta-Key-d>, <Meta-Key-f>,
-# <Meta-Key-BackSpace>, <Meta-Key-Delete>:
+# <Meta-b>, <Meta-d>, <Meta-f>,
+# <Meta-BackSpace>, <Meta-Delete>:
 #	Judgment call.  If <Meta> happens to be assigned to the Alt key,
 #	these could conflict with application accelerators.
 #	(Plus, who has a Meta key these days?)
-# <Control-Key-t>:
+# <Control-t>:
 #	Another judgment call.  If anyone misses this, let me know
 #	and I'll put it back.
 #
@@ -68,27 +68,34 @@ bind TEntry <<Clear>> 			{ ttk::entry::Clear %W }
 ## Button1 bindings:
 #	Used for selection and navigation.
 #
-bind TEntry <ButtonPress-1> 		{ ttk::entry::Press %W %x }
-bind TEntry <Shift-ButtonPress-1>	{ ttk::entry::Shift-Press %W %x }
-bind TEntry <Double-ButtonPress-1> 	{ ttk::entry::Select %W %x word }
-bind TEntry <Triple-ButtonPress-1> 	{ ttk::entry::Select %W %x line }
+bind TEntry <Button-1> 			{ ttk::entry::Press %W %x }
+bind TEntry <Shift-Button-1>		{ ttk::entry::Shift-Press %W %x }
+bind TEntry <Double-Button-1> 		{ ttk::entry::Select %W %x word }
+bind TEntry <Triple-Button-1> 		{ ttk::entry::Select %W %x line }
 bind TEntry <B1-Motion>			{ ttk::entry::Drag %W %x }
 
-bind TEntry <B1-Leave> 		{ ttk::entry::DragOut %W %m }
-bind TEntry <B1-Enter>		{ ttk::entry::DragIn %W }
-bind TEntry <ButtonRelease-1>	{ ttk::entry::Release %W }
+bind TEntry <B1-Leave> 			{ ttk::entry::DragOut %W %m }
+bind TEntry <B1-Enter>			{ ttk::entry::DragIn %W }
+bind TEntry <ButtonRelease-1>		{ ttk::entry::Release %W }
 
 bind TEntry <<ToggleSelection>> {
     %W instate {!readonly !disabled} { %W icursor @%x ; focus %W }
 }
 
-## Button2 bindings:
+## Button2 (Button3 on Aqua) bindings:
 #	Used for scanning and primary transfer.
-#	Note: ButtonRelease-2 is mapped to <<PasteSelection>> in tk.tcl.
+#	Note: ButtonRelease-2 (ButtonRelease-3 on Aqua)
+#	is mapped to <<PasteSelection>> in tk.tcl.
 #
-bind TEntry <ButtonPress-2> 		{ ttk::entry::ScanMark %W %x }
-bind TEntry <B2-Motion> 		{ ttk::entry::ScanDrag %W %x }
-bind TEntry <ButtonRelease-2>		{ ttk::entry::ScanRelease %W %x }
+if {[tk windowingsystem] ne "aqua"} {
+    bind TEntry <Button-2> 		{ ttk::entry::ScanMark %W %x }
+    bind TEntry <B2-Motion> 		{ ttk::entry::ScanDrag %W %x }
+    bind TEntry <ButtonRelease-2>	{ ttk::entry::ScanRelease %W %x }
+} else {
+    bind TEntry <Button-3> 		{ ttk::entry::ScanMark %W %x }
+    bind TEntry <B3-Motion> 		{ ttk::entry::ScanDrag %W %x }
+    bind TEntry <ButtonRelease-3>	{ ttk::entry::ScanRelease %W %x }
+}
 bind TEntry <<PasteSelection>>		{ ttk::entry::ScanRelease %W %x }
 
 ## Keyboard navigation bindings:
@@ -114,26 +121,26 @@ bind TEntry <<TraverseIn>> 	{ %W selection range 0 end; %W icursor end }
 
 ## Edit bindings:
 #
-bind TEntry <KeyPress> 			{ ttk::entry::Insert %W %A }
-bind TEntry <Key-Delete>		{ ttk::entry::Delete %W }
-bind TEntry <Key-BackSpace> 		{ ttk::entry::Backspace %W }
+bind TEntry <Key> 			{ ttk::entry::Insert %W %A }
+bind TEntry <Delete>			{ ttk::entry::Delete %W }
+bind TEntry <BackSpace> 		{ ttk::entry::Backspace %W }
 
 # Ignore all Alt, Meta, and Control keypresses unless explicitly bound.
-# Otherwise, the <KeyPress> class binding will fire and insert the character.
+# Otherwise, the <Key> class binding will fire and insert the character.
 # Ditto for Escape, Return, and Tab.
 #
-bind TEntry <Alt-KeyPress>		{# nothing}
-bind TEntry <Meta-KeyPress>		{# nothing}
-bind TEntry <Control-KeyPress> 		{# nothing}
-bind TEntry <Key-Escape> 		{# nothing}
-bind TEntry <Key-Return> 		{# nothing}
-bind TEntry <Key-KP_Enter> 		{# nothing}
-bind TEntry <Key-Tab> 			{# nothing}
+bind TEntry <Alt-Key>			{# nothing}
+bind TEntry <Meta-Key>			{# nothing}
+bind TEntry <Control-Key> 		{# nothing}
+bind TEntry <Escape> 			{# nothing}
+bind TEntry <Return> 			{# nothing}
+bind TEntry <KP_Enter> 			{# nothing}
+bind TEntry <Tab> 			{# nothing}
 
 # Argh.  Apparently on Windows, the NumLock modifier is interpreted
 # as a Command modifier.
 if {[tk windowingsystem] eq "aqua"} {
-    bind TEntry <Command-KeyPress>	{# nothing}
+    bind TEntry <Command-Key>		{# nothing}
 }
 # Tk-on-Cocoa generates characters for these two keys. [Bug 2971663]
 bind TEntry <<PrevLine>>		{# nothing}
@@ -141,9 +148,9 @@ bind TEntry <<NextLine>>		{# nothing}
 
 ## Additional emacs-like bindings:
 #
-bind TEntry <Control-Key-d>		{ ttk::entry::Delete %W }
-bind TEntry <Control-Key-h>		{ ttk::entry::Backspace %W }
-bind TEntry <Control-Key-k>		{ %W delete insert end }
+bind TEntry <Control-d>			{ ttk::entry::Delete %W }
+bind TEntry <Control-h>			{ ttk::entry::Backspace %W }
+bind TEntry <Control-k>			{ %W delete insert end }
 
 # Bindings for IME text input.
 
@@ -351,7 +358,7 @@ proc ttk::entry::Extend {w where} {
 # Triple-clicking enters "line-select" mode.
 #
 
-## Press -- ButtonPress-1 binding.
+## Press -- Button-1 binding.
 #	Set the insertion cursor, claim the input focus, set up for
 #	future drag operations.
 #
@@ -368,7 +375,7 @@ proc ttk::entry::Press {w x} {
     set State(anchor) [$w index insert]
 }
 
-## Shift-Press -- Shift-ButtonPress-1 binding.
+## Shift-Press -- Shift-Button-1 binding.
 #	Extends the selection, sets anchor for future drag operations.
 #
 proc ttk::entry::Shift-Press {w x} {
@@ -517,7 +524,7 @@ proc ttk::entry::LineSelect {w _ _} {
 ### Button 2 binding procedures.
 #
 
-## ScanMark -- ButtonPress-2 binding.
+## ScanMark -- Button-2 binding.
 #	Marks the start of a scan or primary transfer operation.
 #
 proc ttk::entry::ScanMark {w x} {

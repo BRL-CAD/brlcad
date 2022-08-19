@@ -259,15 +259,15 @@ static const chr brbacks[] = {	/* \s within brackets */
 
 #define PUNCT_CONN \
 	CHR('_'), \
-	0x203f /* UNDERTIE */, \
+	0x203F /* UNDERTIE */, \
 	0x2040 /* CHARACTER TIE */,\
 	0x2054 /* INVERTED UNDERTIE */,\
-	0xfe33 /* PRESENTATION FORM FOR VERTICAL LOW LINE */, \
-	0xfe34 /* PRESENTATION FORM FOR VERTICAL WAVY LOW LINE */, \
-	0xfe4d /* DASHED LOW LINE */, \
-	0xfe4e /* CENTRELINE LOW LINE */, \
-	0xfe4f /* WAVY LOW LINE */, \
-	0xff3f /* FULLWIDTH LOW LINE */
+	0xFE33 /* PRESENTATION FORM FOR VERTICAL LOW LINE */, \
+	0xFE34 /* PRESENTATION FORM FOR VERTICAL WAVY LOW LINE */, \
+	0xFE4D /* DASHED LOW LINE */, \
+	0xFE4E /* CENTRELINE LOW LINE */, \
+	0xFE4F /* WAVY LOW LINE */, \
+	0xFF3F /* FULLWIDTH LOW LINE */
 
 static const chr backw[] = {	/* \w */
     CHR('['), CHR('['), CHR(':'),
@@ -427,7 +427,7 @@ next(
 	    if (INCON(L_BBND) && NEXT1('}')) {
 		v->now++;
 		INTOCON(L_BRE);
-		RET('}');
+		RETV('}', 1);
 	    } else {
 		FAILW(REG_BADBR);
 	    }
@@ -914,7 +914,7 @@ lexescape(
 	if (ISERR()) {
 	    FAILW(REG_EESCAPE);
 	}
-	if (c > 0xff) {
+	if (c > 0xFF) {
 	    /* out of range, so we handled one digit too much */
 	    v->now--;
 	    c >>= 3;
@@ -948,7 +948,7 @@ lexdigits(
 
     n = 0;
     for (len = 0; len < maxlen && !ATEOS(); len++) {
-	if (n > 0x10fff) {
+	if (n > 0x10FFF) {
 	    /* Stop when continuing would otherwise overflow */
 	    break;
 	}
@@ -1005,7 +1005,7 @@ brenext(
 	if (LASTTYPE(EMPTY) || LASTTYPE('(') || LASTTYPE('^')) {
 	    RETV(PLAIN, c);
 	}
-	RET('*');
+	RETV('*', 1);
 	break;
     case CHR('['):
 	if (HAVE(6) &&	*(v->now+0) == CHR('[') &&

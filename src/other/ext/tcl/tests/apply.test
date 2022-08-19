@@ -12,8 +12,8 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2.2
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -25,7 +25,7 @@ testConstraint memory [llength [info commands memory]]
 
 # Tests for wrong number of arguments
 
-test apply-1.1 {too few arguments} -returnCodes error -body {
+test apply-1.1 {not enough arguments} -returnCodes error -body {
     apply
 } -result {wrong # args: should be "apply lambdaExpr ?arg ...?"}
 
@@ -228,7 +228,7 @@ test apply-8.3 {args treatment} {
     apply [list {x args} $applyBody] 1 2 3
 } {{x 1} {args {2 3}}}
 test apply-8.4 {default values} {
-    apply [list {{x 1} {y 2}} $applyBody] 
+    apply [list {{x 1} {y 2}} $applyBody]
 } {{x 1} {y 2}}
 test apply-8.5 {default values} {
     apply [list {{x 1} {y 2}} $applyBody] 3 4

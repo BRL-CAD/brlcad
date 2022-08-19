@@ -12,7 +12,7 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 if {"::tcltest" ni [namespace children]} {
-    package require tcltest
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -180,16 +180,37 @@ test dstring-2.12 {appending list elements} -constraints testdstring -setup {
 } -cleanup {
     testdstring free
 } -result {x #}
-test dstring-2.13 {appending list elements} -constraints testdstring -body {
-    # This test shows lack of sophistication in Tcl_DStringAppendElement's
-    # decision about whether #-quoting can be disabled.
+test dstring-2.13 {appending list elements} -constraints testdstring -setup {
     testdstring free
+} -body {
+    # This test checks the sophistication in Tcl_DStringAppendElement's
+    # decision about whether #-quoting can be disabled.
     testdstring append "x " -1
     testdstring element #
     testdstring get
 } -cleanup {
     testdstring free
-} -result {x {#}}
+} -result {x #}
+test dstring-2.14 {appending list elements} -constraints testdstring -setup {
+    testdstring free
+} -body {
+    testdstring append "  " -1
+    testdstring element #
+    testdstring get
+} -cleanup {
+    testdstring free
+} -result {  {#}}
+test dstring-2.15 {appending list elements} -constraints testdstring -setup {
+    testdstring free
+} -body {
+    # This test checks the sophistication in Tcl_DStringAppendElement's
+    # decision about whether #-quoting can be disabled.
+    testdstring append "x  " -1
+    testdstring element #
+    testdstring get
+} -cleanup {
+    testdstring free
+} -result {x  #}
 
 test dstring-3.1 {nested sublists} -constraints testdstring -setup {
     testdstring free
@@ -306,10 +327,11 @@ test dstring-3.9 {appending list elements} -constraints testdstring -setup {
 } -cleanup {
     testdstring free
 } -result {x {x #}}
-test dstring-3.10 {appending list elements} -constraints testdstring -body {
-    # This test shows lack of sophistication in Tcl_DStringAppendElement's
-    # decision about whether #-quoting can be disabled.
+test dstring-3.10 {appending list elements} -constraints testdstring -setup {
     testdstring free
+} -body {
+    # This test checks the sophistication in Tcl_DStringAppendElement's
+    # decision about whether #-quoting can be disabled.
     testdstring append x -1
     testdstring start
     testdstring append "x " -1
@@ -318,7 +340,33 @@ test dstring-3.10 {appending list elements} -constraints testdstring -body {
     testdstring get
 } -cleanup {
     testdstring free
-} -result {x {x {#}}}
+} -result {x {x #}}
+test dstring-3.11 {appending list elements} -constraints testdstring -setup {
+    testdstring free
+} -body {
+    testdstring append x -1
+    testdstring start
+    testdstring append "  " -1
+    testdstring element #
+    testdstring end
+    testdstring get
+} -cleanup {
+    testdstring free
+} -result {x {  {#}}}
+test dstring-3.12 {appending list elements} -constraints testdstring -setup {
+    testdstring free
+} -body {
+    # This test checks the sophistication in Tcl_DStringAppendElement's
+    # decision about whether #-quoting can be disabled.
+    testdstring append x -1
+    testdstring start
+    testdstring append "x  " -1
+    testdstring element #
+    testdstring end
+    testdstring get
+} -cleanup {
+    testdstring free
+} -result {x {x  #}}
 
 test dstring-4.1 {truncation} -constraints testdstring -setup {
     testdstring free

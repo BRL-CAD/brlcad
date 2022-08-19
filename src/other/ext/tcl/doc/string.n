@@ -290,9 +290,10 @@ specified as for the \fBindex\fR method.  If \fInewstring\fR is
 specified, then it is placed in the removed character range.  If
 \fIfirst\fR is less than zero then it is treated as if it were zero,
 and if \fIlast\fR is greater than or equal to the length of the string
-then it is treated as if it were \fBend\fR.  If \fIfirst\fR is greater
-than \fIlast\fR or the length of the initial string, or \fIlast\fR is
-less than 0, then the initial string is returned untouched.
+then it is treated as if it were \fBend\fR.  The initial string is
+returned untouched, if \fIfirst\fR is greater than \fIlast\fR, or if
+\fIfirst\fR is equal to or greater than the length of the initial string,
+or \fIlast\fR is less than 0.
 .TP
 \fBstring reverse \fIstring\fR
 .

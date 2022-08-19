@@ -105,7 +105,7 @@ void
 TclOODeleteContext(
     CallContext *contextPtr)
 {
-    register Object *oPtr = contextPtr->oPtr;
+    Object *oPtr = contextPtr->oPtr;
 
     TclOODeleteChain(contextPtr->callPtr);
     if (oPtr != NULL) {
@@ -215,7 +215,7 @@ DupMethodNameRep(
     Tcl_Obj *srcPtr,
     Tcl_Obj *dstPtr)
 {
-    register CallChain *callPtr = srcPtr->internalRep.twoPtrValue.ptr1;
+    CallChain *callPtr = srcPtr->internalRep.twoPtrValue.ptr1;
 
     dstPtr->typePtr = &methodNameType;
     dstPtr->internalRep.twoPtrValue.ptr1 = callPtr;
@@ -226,7 +226,7 @@ static void
 FreeMethodNameRep(
     Tcl_Obj *objPtr)
 {
-    register CallChain *callPtr = objPtr->internalRep.twoPtrValue.ptr1;
+    CallChain *callPtr = objPtr->internalRep.twoPtrValue.ptr1;
 
     TclOODeleteChain(callPtr);
     objPtr->typePtr = NULL;
@@ -255,7 +255,7 @@ TclOOInvokeContext(
     int objc,			/* The number of arguments. */
     Tcl_Obj *const objv[])	/* The arguments as actually seen. */
 {
-    register CallContext *const contextPtr = clientData;
+    CallContext *const contextPtr = clientData;
     Method *const mPtr = contextPtr->callPtr->chain[contextPtr->index].mPtr;
     const int isFilter =
 	    contextPtr->callPtr->chain[contextPtr->index].isFilter;
@@ -487,7 +487,7 @@ TclOOGetSortedMethodList(
 
 	if (i > 0) {
 	    if (i > 1) {
-		qsort((void *) strings, (unsigned) i, sizeof(char *), CmpStr);
+		qsort((void *) strings, i, sizeof(char *), CmpStr);
 	    }
 	    *stringsPtr = strings;
 	} else {
@@ -560,7 +560,7 @@ TclOOGetSortedClassMethodList(
 
 	if (i > 0) {
 	    if (i > 1) {
-		qsort((void *) strings, (unsigned) i, sizeof(char *), CmpStr);
+		qsort((void *) strings, i, sizeof(char *), CmpStr);
 	    }
 	    *stringsPtr = strings;
 	} else {
@@ -792,7 +792,7 @@ AddMethodToCallChain(
 				 * looking to add things from a mixin and have
 				 * not passed a mixin. */
 {
-    register CallChain *callPtr = cbPtr->callChainPtr;
+    CallChain *callPtr = cbPtr->callChainPtr;
     int i;
 
     /*
@@ -1463,7 +1463,7 @@ AddSimpleClassChainToCallContext(
 		(char *) methodNameObj);
 
 	if (hPtr != NULL) {
-	    register Method *mPtr = Tcl_GetHashValue(hPtr);
+	    Method *mPtr = Tcl_GetHashValue(hPtr);
 
 	    if (!(flags & KNOWN_STATE)) {
 		if (flags & PUBLIC_METHOD) {

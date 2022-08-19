@@ -3,7 +3,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH console n 8.4 Tk "Tk Built-In Commands"
 .so man.macros
 .BS
@@ -25,9 +25,12 @@ the Tk library. Except for TkAqua, this command is not available when
 Tk is loaded into a tclsh interpreter with
 .QW "\fBpackage require Tk\fR" ,
 as a conventional terminal is expected to be present in that case.
-In TkAqua, this command is only available when stdin is \fB/dev/null\fR
-(as is the case e.g. when the application embedding Tk is started
-from the Mac OS X Finder).
+In TkAqua, this command is disabled when there is a startup script
+and stdin is \fB/dev/null\fR (as is the case e.g. when a bundled application
+embedding Tk is started by the macOS Launcher).  To enable the command
+in that case, define the environment variable \fBTK_CONSOLE\fR.  This can be
+done by modifying the Info.plist file by adding the LSEnvironment key
+to the main dict and setting its value to be a dict with the key \fBTK_CONSOLE\fR.
 .PP
 .TP
 \fBconsole eval \fIscript\fR

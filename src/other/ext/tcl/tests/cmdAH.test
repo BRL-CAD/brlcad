@@ -965,10 +965,10 @@ test cmdAH-19.11 {Tcl_FileObjCmd: exists} -constraints {unix notRoot} -setup {
 } -body {
     makeDirectory /tmp/tcl.foo.dir
     makeFile 12345 /tmp/tcl.foo.dir/file
-    file attributes /tmp/tcl.foo.dir -permissions 0000
+    file attributes /tmp/tcl.foo.dir -permissions 0o000
     file exists /tmp/tcl.foo.dir/file
 } -cleanup {
-    file attributes /tmp/tcl.foo.dir -permissions 0775
+    file attributes /tmp/tcl.foo.dir -permissions 0o775
     removeFile /tmp/tcl.foo.dir/file
     removeDirectory /tmp/tcl.foo.dir
 } -result 0
@@ -991,7 +991,7 @@ test cmdAH-19.12 {Bug 3608360: [file exists] mustn't do globbing} -setup {
 catch {testsetplatform $platform}
 removeFile $gorpfile
 set gorpfile [makeFile "Test string" gorp.file]
-catch {file attributes $gorpfile -permissions 0765}
+catch {file attributes $gorpfile -permissions 0o765}
 
 # avoid problems with non-local filesystems
 if {[testConstraint unix] && [file exists /tmp]} {
@@ -1092,7 +1092,7 @@ test cmdAH-23.4 {Tcl_FileObjCmd: lstat} -setup {
     unset -nocomplain stat
 } -constraints {unix nonPortable} -body {
     file lstat $linkfile stat
-    list $stat(nlink) [expr $stat(mode)&0777] $stat(type)
+    list $stat(nlink) [expr {$stat(mode) & 0o777}] $stat(type)
 } -result {1 511 link}
 test cmdAH-23.5 {Tcl_FileObjCmd: lstat errors} {nonPortable} {
     list [catch {file lstat _bogus_ stat} msg] [string tolower $msg] \
@@ -1407,7 +1407,7 @@ test cmdAH-27.4.1 {
 catch {testsetplatform $platform}
 removeFile $gorpfile
 set gorpfile [makeFile "Test string" gorp.file]
-catch {file attributes $gorpfile -permissions 0765}
+catch {file attributes $gorpfile -permissions 0o765}
 
 # stat
 test cmdAH-28.1 {Tcl_FileObjCmd: stat} -returnCodes error -body {
@@ -1434,8 +1434,8 @@ test cmdAH-28.5 {Tcl_FileObjCmd: stat} -constraints {unix} -setup {
     unset -nocomplain stat
 } -body {
     file stat $gorpfile stat
-    expr {$stat(mode) & 0o777}
-} -result {501}
+    format 0o%03o [expr {$stat(mode) & 0o777}]
+} -result 0o765
 test cmdAH-28.6 {Tcl_FileObjCmd: stat} {
     list [catch {file stat _bogus_ stat} msg] [string tolower $msg] $errorCode
 } {1 {could not read "_bogus_": no such file or directory} {POSIX ENOENT {no such file or directory}}}
@@ -1638,7 +1638,7 @@ test cmdAH-31.9 {Tcl_FileObjCmd: channels in other interp} {
     lsort [safeInterp eval [list file channels]]
 } [lsort [list stdout $newFileId]]
 test cmdAH-31.10 {Tcl_FileObjCmd: channels in other interp} {
-    # we can now write to $newFileId from slave
+    # we can now write to $newFileId from child
     safeInterp eval [list puts $newFileId "hello"]
 } {}
 interp transfer {} $newFileId safeInterp
@@ -1715,7 +1715,7 @@ unset -nocomplain platform
 
 # Tcl_ForObjCmd is tested in for.test
 
-catch {file attributes $dirfile -permissions 0777}
+catch {file attributes $dirfile -permissions 0o777}
 removeDirectory $dirfile
 removeFile $gorpfile
 # No idea how well [removeFile] copes with links...

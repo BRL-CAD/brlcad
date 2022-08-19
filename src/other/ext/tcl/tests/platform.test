@@ -9,7 +9,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require tcltest 2
+package require tcltest 2.5
 package require tcltests
 
 namespace eval ::tcl::test::platform {
@@ -54,12 +54,12 @@ test platform-2.1 {tcl_platform(wordSize) indicates size of native word} {
 
 test platform-3.1 {CPU ID on Windows/UNIX} \
     -constraints testCPUID \
-    -body {		
+    -body {
 	set cpudata [testcpuid 0]
 	binary format iii \
 	    [lindex $cpudata 1] \
 	    [lindex $cpudata 3] \
-	    [lindex $cpudata 2] 
+	    [lindex $cpudata 2]
     } \
     -match regexp \
     -result {^(?:AuthenticAMD|CentaurHauls|CyrixInstead|GenuineIntel)$}

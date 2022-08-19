@@ -58,7 +58,7 @@ of the given patterns (in the style of \fBstring match\fR.)
 .
 The script rule tests for matching by assigning the key to the
 \fIkeyVariable\fR and the value to the \fIvalueVariable\fR, and then evaluating
-the given script which should return a boolean value (with the
+the given script which should result in a boolean value (with the
 key/value pair only being included in the result of the \fBdict
 filter\fR when a true value is returned.)  Note that the first
 argument after the rule selection word is a two-element list.  If the

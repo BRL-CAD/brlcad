@@ -120,7 +120,8 @@ static TimeInfo timeInfo = {
  */
 static struct {
     int initialized;		/* 1 if initialized, 0 otherwise */
-    int perfCounter;		/* 1 if performance counter usable for wide clicks */
+    int perfCounter;		/* 1 if performance counter usable for wide
+				 * clicks */
     double microsecsScale;	/* Denominator scale between clock / microsecs */
 } wideClick = {0, 0, 0.0};
 
@@ -464,7 +465,6 @@ NativeGetMicroseconds(void)
     if (!timeInfo.initialized) {
 	TclpInitLock();
 	if (!timeInfo.initialized) {
-
 	    timeInfo.posixEpoch.LowPart = 0xD53E8000;
 	    timeInfo.posixEpoch.HighPart = 0x019DB1DE;
 
@@ -519,9 +519,9 @@ NativeGetMicroseconds(void)
 
 		GetSystemInfo(&systemInfo);
 		if (TclWinCPUID(0, regs) == TCL_OK
-			&& regs[1] == 0x756e6547	/* "Genu" */
-			&& regs[3] == 0x49656e69	/* "ineI" */
-			&& regs[2] == 0x6c65746e	/* "ntel" */
+			&& regs[1] == 0x756E6547	/* "Genu" */
+			&& regs[3] == 0x49656E69	/* "ineI" */
+			&& regs[2] == 0x6C65746E	/* "ntel" */
 			&& TclWinCPUID(1, regs) == TCL_OK
 			&& ((regs[0]&0x00000F00) == 0x00000F00 /* Pentium 4 */
 			|| ((regs[0] & 0x00F00000)	/* Extended family */
@@ -595,8 +595,12 @@ NativeGetMicroseconds(void)
 	/*
 	 * If calibration cycle occurred after we get curCounter
 	 */
+
 	if (curCounter.QuadPart <= perfCounterLastCall) {
-	    /* Calibrated file-time is saved from posix in 100-ns ticks */
+	    /*
+	     * Calibrated file-time is saved from posix in 100-ns ticks
+	     */
+
 	    return fileTimeLastCall / 10;
 	}
 
@@ -1011,7 +1015,6 @@ CalibrationThread(
 	UpdateTimeEachSecond();
     }
 
-    /* lint */
     return (DWORD) 0;
 }
 
@@ -1042,7 +1045,8 @@ UpdateTimeEachSecond(void)
 				/* Current value returned from
 				 * QueryPerformanceCounter. */
     FILETIME curSysTime;	/* Current system time. */
-    static LARGE_INTEGER lastFileTime; /* File time of the previous calibration */
+    static LARGE_INTEGER lastFileTime;
+				/* File time of the previous calibration */
     LARGE_INTEGER curFileTime;	/* File time at the time this callback was
 				 * scheduled. */
     Tcl_WideInt estFreq;	/* Estimated perf counter frequency. */
@@ -1358,7 +1362,7 @@ TclpGmtime(
 #if defined(_WIN64) || defined(_USE_64BIT_TIME_T) || (defined(_MSC_VER) && _MSC_VER < 1400)
     return gmtime(timePtr);
 #else
-    return _gmtime32((CONST __time32_t *)timePtr);
+    return _gmtime32((const __time32_t *)timePtr);
 #endif
 }
 
@@ -1393,7 +1397,7 @@ TclpLocaltime(
 #if defined(_WIN64) || defined(_USE_64BIT_TIME_T) || (defined(_MSC_VER) && _MSC_VER < 1400)
     return localtime(timePtr);
 #else
-    return _localtime32((CONST __time32_t *)timePtr);
+    return _localtime32((const __time32_t *)timePtr);
 #endif
 }
 

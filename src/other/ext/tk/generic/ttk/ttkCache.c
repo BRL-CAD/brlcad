@@ -28,8 +28,7 @@
  * but this will be a transient effect.
  */
 
-#include <stdio.h>	/* for sprintf */
-#include <tk.h>
+#include "tkInt.h"
 #include "ttkTheme.h"
 
 struct Ttk_ResourceCache_ {

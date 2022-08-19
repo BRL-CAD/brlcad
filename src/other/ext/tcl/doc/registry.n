@@ -152,7 +152,7 @@ nulls.
 .TP
 \fBsz\fR
 .
-The registry value contains a null-terminated string.  The data is 
+The registry value contains a null-terminated string.  The data is
 represented in Tcl as a string.
 .TP
 \fBexpand_sz\fR

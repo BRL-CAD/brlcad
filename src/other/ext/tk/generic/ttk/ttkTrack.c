@@ -23,7 +23,7 @@
  * TODO: Handle "chords" properly (e.g., <B1-ButtonPress-2>)
  */
 
-#include <tk.h>
+#include "tkInt.h"
 #include "ttkTheme.h"
 #include "ttkWidget.h"
 

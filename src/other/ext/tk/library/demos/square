@@ -18,7 +18,7 @@ square .s
 pack .s -expand yes -fill both
 wm minsize . 1 1
 
-bind .s <1> {center %x %y}
+bind .s <Button-1> {center %x %y}
 bind .s <B1-Motion> {center %x %y}
 bind .s a animate
 focus .s

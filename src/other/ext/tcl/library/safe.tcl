@@ -1,9 +1,9 @@
 # safe.tcl --
 #
 # This file provide a safe loading/sourcing mechanism for safe interpreters.
-# It implements a virtual path mecanism to hide the real pathnames from the
-# slave. It runs in a master interpreter and sets up data structure and
-# aliases that will be invoked when used from a slave interpreter.
+# It implements a virtual path mechanism to hide the real pathnames from the
+# child. It runs in a parent interpreter and sets up data structure and
+# aliases that will be invoked when used from a child interpreter.
 #
 # See the safe.n man page for details.
 #
@@ -20,7 +20,7 @@
 #
 
 # Needed utilities package
-package require opt 0.4.1
+package require opt 0.4.8
 
 # Create the safe namespace
 namespace eval ::safe {
@@ -79,6 +79,7 @@ proc ::safe::InterpNested {} {
 # Interface/entry point function and front end for "Create"
 proc ::safe::interpCreate {args} {
     set Args [::tcl::OptKeyParse ::safe::interpCreate $args]
+    RejectExcessColons $slave
     InterpCreate $slave $accessPath \
 	[InterpStatics] [InterpNested] $deleteHook
 }
@@ -88,16 +89,17 @@ proc ::safe::interpInit {args} {
     if {![::interp exists $slave]} {
 	return -code error "\"$slave\" is not an interpreter"
     }
+    RejectExcessColons $slave
     InterpInit $slave $accessPath \
 	[InterpStatics] [InterpNested] $deleteHook
 }
 
-# Check that the given slave is "one of us"
-proc ::safe::CheckInterp {slave} {
-    namespace upvar ::safe S$slave state
-    if {![info exists state] || ![::interp exists $slave]} {
+# Check that the given child is "one of us"
+proc ::safe::CheckInterp {child} {
+    namespace upvar ::safe [VarName $child] state
+    if {![info exists state] || ![::interp exists $child]} {
 	return -code error \
-	    "\"$slave\" is not an interpreter managed by ::safe::"
+	    "\"$child\" is not an interpreter managed by ::safe::"
     }
 }
 
@@ -119,17 +121,17 @@ proc ::safe::interpConfigure {args} {
 	1 {
 	    # If we have exactly 1 argument the semantic is to return all
 	    # the current configuration. We still call OptKeyParse though
-	    # we know that "slave" is our given argument because it also
+	    # we know that "child" is our given argument because it also
 	    # checks for the "-help" option.
 	    set Args [::tcl::OptKeyParse ::safe::interpIC $args]
 	    CheckInterp $slave
-	    namespace upvar ::safe S$slave state
+	    namespace upvar ::safe [VarName $slave] state
 
 	    return [join [list \
 		[list -accessPath $state(access_path)] \
 		[list -statics    $state(staticsok)]   \
 		[list -nested     $state(nestedok)]    \
-	        [list -deleteHook $state(cleanupHook)]]]
+		[list -deleteHook $state(cleanupHook)]]]
 	}
 	2 {
 	    # If we have exactly 2 arguments the semantic is a "configure
@@ -146,7 +148,7 @@ proc ::safe::interpConfigure {args} {
 		return -code error [::tcl::OptFlagUsage $desc $arg]
 	    }
 	    CheckInterp $slave
-	    namespace upvar ::safe S$slave state
+	    namespace upvar ::safe [VarName $slave] state
 
 	    set item [::tcl::OptCurDesc $desc]
 	    set name [::tcl::OptName $item]
@@ -187,15 +189,15 @@ proc ::safe::interpConfigure {args} {
 	    # create did
 	    set Args [::tcl::OptKeyParse ::safe::interpIC $args]
 	    CheckInterp $slave
-	    namespace upvar ::safe S$slave state
+	    namespace upvar ::safe [VarName $slave] state
 
 	    # Get the current (and not the default) values of whatever has
 	    # not been given:
 	    if {![::tcl::OptProcArgGiven -accessPath]} {
-		set doreset 1
+		set doreset 0
 		set accessPath $state(access_path)
 	    } else {
-		set doreset 0
+		set doreset 1
 	    }
 	    if {
 		![::tcl::OptProcArgGiven -statics]
@@ -218,14 +220,33 @@ proc ::safe::interpConfigure {args} {
 	    }
 	    # we can now reconfigure :
 	    InterpSetConfig $slave $accessPath $statics $nested $deleteHook
-	    # auto_reset the slave (to completly synch the new access_path)
+	    # auto_reset the child (to completly synch the new access_path)
 	    if {$doreset} {
 		if {[catch {::interp eval $slave {auto_reset}} msg]} {
 		    Log $slave "auto_reset failed: $msg"
 		} else {
 		    Log $slave "successful auto_reset" NOTICE
 		}
+
+		# Sync the paths used to search for Tcl modules.
+		::interp eval $slave {tcl::tm::path remove {*}[tcl::tm::list]}
+		if {[llength $state(tm_path_slave)] > 0} {
+		    ::interp eval $slave [list \
+			    ::tcl::tm::add {*}[lreverse $state(tm_path_slave)]]
+		}
+
+		# Remove stale "package ifneeded" data for non-loaded packages.
+		# - Not for loaded packages, because "package forget" erases
+		#   data from "package provide" as well as "package ifneeded".
+		# - This is OK because the script cannot reload any version of
+		#   the package unless it first does "package forget".
+		foreach pkg [::interp eval $slave {package names}] {
+		    if {[::interp eval $slave [list package provide $pkg]] eq ""} {
+			::interp eval $slave [list package forget $pkg]
+		    }
+		}
 	    }
+	    return
 	}
     }
 }
@@ -239,17 +260,17 @@ proc ::safe::interpConfigure {args} {
 #
 # safe::InterpCreate : doing the real job
 #
-# This procedure creates a safe slave and initializes it with the safe
+# This procedure creates a safe interpreter and initializes it with the safe
 # base aliases.
-# NB: slave name must be simple alphanumeric string, no spaces, no (), no
+# NB: child name must be simple alphanumeric string, no spaces, no (), no
 # {},...  {because the state array is stored as part of the name}
 #
-# Returns the slave name.
+# Returns the child name.
 #
 # Optional Arguments :
-# + slave name : if empty, generated name will be used
+# + child name : if empty, generated name will be used
 # + access_path: path list controlling where load/source can occur,
-#                if empty: the master auto_path will be used.
+#                if empty: the parent auto_path will be used.
 # + staticsok  : flag, if 0 :no static package can be loaded (load {} Xxx)
 #                      if 1 :static packages are ok.
 # + nestedok: flag, if 0 :no loading to sub-sub interps (load xx xx sub)
@@ -257,35 +278,37 @@ proc ::safe::interpConfigure {args} {
 
 # use the full name and no indent so auto_mkIndex can find us
 proc ::safe::InterpCreate {
-			   slave
+			   child
 			   access_path
 			   staticsok
 			   nestedok
 			   deletehook
 		       } {
-    # Create the slave.
-    if {$slave ne ""} {
-	::interp create -safe $slave
+    # Create the child.
+    # If evaluated in ::safe, the interpreter command for foo is ::foo;
+    # but for foo::bar is safe::foo::bar.  So evaluate in :: instead.
+    if {$child ne ""} {
+	namespace eval :: [list ::interp create -safe $child]
     } else {
-	# empty argument: generate slave name
-	set slave [::interp create -safe]
+	# empty argument: generate child name
+	set child [::interp create -safe]
     }
-    Log $slave "Created" NOTICE
+    Log $child "Created" NOTICE
 
-    # Initialize it. (returns slave name)
-    InterpInit $slave $access_path $staticsok $nestedok $deletehook
+    # Initialize it. (returns child name)
+    InterpInit $child $access_path $staticsok $nestedok $deletehook
 }
 
 #
 # InterpSetConfig (was setAccessPath) :
-#    Sets up slave virtual auto_path and corresponding structure within
-#    the master. Also sets the tcl_library in the slave to be the first
+#    Sets up child virtual auto_path and corresponding structure within
+#    the parent. Also sets the tcl_library in the child to be the first
 #    directory in the path.
-#    NB: If you change the path after the slave has been initialized you
-#    probably need to call "auto_reset" in the slave in order that it gets
+#    NB: If you change the path after the child has been initialized you
+#    probably need to call "auto_reset" in the child in order that it gets
 #    the right auto_index() array values.
 
-proc ::safe::InterpSetConfig {slave access_path staticsok nestedok deletehook} {
+proc ::safe::InterpSetConfig {child access_path staticsok nestedok deletehook} {
     global auto_path
 
     # determine and store the access path if empty
@@ -295,36 +318,36 @@ proc ::safe::InterpSetConfig {slave access_path staticsok nestedok deletehook} {
 	# Make sure that tcl_library is in auto_path and at the first
 	# position (needed by setAccessPath)
 	set where [lsearch -exact $access_path [info library]]
-	if {$where == -1} {
+	if {$where < 0} {
 	    # not found, add it.
 	    set access_path [linsert $access_path 0 [info library]]
-	    Log $slave "tcl_library was not in auto_path,\
+	    Log $child "tcl_library was not in auto_path,\
 			added it to slave's access_path" NOTICE
 	} elseif {$where != 0} {
 	    # not first, move it first
 	    set access_path [linsert \
 				 [lreplace $access_path $where $where] \
 				 0 [info library]]
-	    Log $slave "tcl_libray was not in first in auto_path,\
+	    Log $child "tcl_libray was not in first in auto_path,\
 			moved it to front of slave's access_path" NOTICE
 	}
 
 	# Add 1st level sub dirs (will searched by auto loading from tcl
-	# code in the slave using glob and thus fail, so we add them here
+	# code in the child using glob and thus fail, so we add them here
 	# so by default it works the same).
 	set access_path [AddSubDirs $access_path]
     }
 
-    Log $slave "Setting accessPath=($access_path) staticsok=$staticsok\
+    Log $child "Setting accessPath=($access_path) staticsok=$staticsok\
 		nestedok=$nestedok deletehook=($deletehook)" NOTICE
 
-    namespace upvar ::safe S$slave state
+    namespace upvar ::safe [VarName $child] state
 
     # clear old autopath if it existed
     # build new one
     # Extend the access list with the paths used to look for Tcl Modules.
     # We save the virtual form separately as well, as syncing it with the
-    # slave has to be defered until the necessary commands are present for
+    # child has to be deferred until the necessary commands are present for
     # setup.
 
     set norm_access_path  {}
@@ -344,6 +367,7 @@ proc ::safe::InterpSetConfig {slave access_path staticsok nestedok deletehook} {
     }
 
     set morepaths [::tcl::tm::list]
+    set firstpass 1
     while {[llength $morepaths]} {
 	set addpaths $morepaths
 	set morepaths {}
@@ -352,6 +376,12 @@ proc ::safe::InterpSetConfig {slave access_path staticsok nestedok deletehook} {
 	    # Prevent the addition of dirs on the tm list to the
 	    # result if they are already known.
 	    if {[dict exists $remap_access_path $dir]} {
+	        if {$firstpass} {
+		    # $dir is in [::tcl::tm::list] and belongs in the slave_tm_path.
+		    # Later passes handle subdirectories, which belong in the
+		    # access path but not in the module path.
+		    lappend slave_tm_path  [dict get $remap_access_path $dir]
+		}
 		continue
 	    }
 
@@ -361,7 +391,12 @@ proc ::safe::InterpSetConfig {slave access_path staticsok nestedok deletehook} {
 	    lappend map_access_path    $token $dir
 	    lappend remap_access_path  $dir $token
 	    lappend norm_access_path   [file normalize $dir]
-	    lappend slave_tm_path $token
+	    if {$firstpass} {
+		# $dir is in [::tcl::tm::list] and belongs in the slave_tm_path.
+		# Later passes handle subdirectories, which belong in the
+		# access path but not in the module path.
+		lappend slave_tm_path  $token
+	    }
 	    incr i
 
 	    # [Bug 2854929]
@@ -372,6 +407,7 @@ proc ::safe::InterpSetConfig {slave access_path staticsok nestedok deletehook} {
 	    # subdirectories.
 	    lappend morepaths {*}[glob -nocomplain -directory $dir -type d *]
 	}
+	set firstpass 0
     }
 
     set state(access_path)       $access_path
@@ -384,7 +420,8 @@ proc ::safe::InterpSetConfig {slave access_path staticsok nestedok deletehook} {
     set state(nestedok)          $nestedok
     set state(cleanupHook)       $deletehook
 
-    SyncAccessPath $slave
+    SyncAccessPath $child
+    return
 }
 
 #
@@ -392,11 +429,12 @@ proc ::safe::InterpSetConfig {slave access_path staticsok nestedok deletehook} {
 # FindInAccessPath:
 #    Search for a real directory and returns its virtual Id (including the
 #    "$")
-proc ::safe::interpFindInAccessPath {slave path} {
-    namespace upvar ::safe S$slave state
+proc ::safe::interpFindInAccessPath {child path} {
+    CheckInterp $child
+    namespace upvar ::safe [VarName $child] state
 
     if {![dict exists $state(access_path,remap) $path]} {
-	return -code error "$path not found in access path $access_path"
+	return -code error "$path not found in access path"
     }
 
     return [dict get $state(access_path,remap) $path]
@@ -406,10 +444,11 @@ proc ::safe::interpFindInAccessPath {slave path} {
 # addToAccessPath:
 #    add (if needed) a real directory to access path and return its
 #    virtual token (including the "$").
-proc ::safe::interpAddToAccessPath {slave path} {
+proc ::safe::interpAddToAccessPath {child path} {
     # first check if the directory is already in there
     # (inlined interpFindInAccessPath).
-    namespace upvar ::safe S$slave state
+    CheckInterp $child
+    namespace upvar ::safe [VarName $child] state
 
     if {[dict exists $state(access_path,remap) $path]} {
 	return [dict get $state(access_path,remap) $path]
@@ -424,7 +463,7 @@ proc ::safe::interpAddToAccessPath {slave path} {
     lappend state(access_path,remap) $path $token
     lappend state(access_path,norm)  [file normalize $path]
 
-    SyncAccessPath $slave
+    SyncAccessPath $child
     return $token
 }
 
@@ -432,25 +471,25 @@ proc ::safe::interpAddToAccessPath {slave path} {
 # interpreter. It is useful when you want to install the safe base aliases
 # into a preexisting safe interpreter.
 proc ::safe::InterpInit {
-			 slave
+			 child
 			 access_path
 			 staticsok
 			 nestedok
 			 deletehook
 		     } {
     # Configure will generate an access_path when access_path is empty.
-    InterpSetConfig $slave $access_path $staticsok $nestedok $deletehook
+    InterpSetConfig $child $access_path $staticsok $nestedok $deletehook
 
     # NB we need to add [namespace current], aliases are always absolute
     # paths.
 
-    # These aliases let the slave load files to define new commands
-    # This alias lets the slave use the encoding names, convertfrom,
+    # These aliases let the child load files to define new commands
+    # This alias lets the child use the encoding names, convertfrom,
     # convertto, and system, but not "encoding system <name>" to set the
     # system encoding.
     # Handling Tcl Modules, we need a restricted form of Glob.
     # This alias interposes on the 'exit' command and cleanly terminates
-    # the slave.
+    # the child.
 
     foreach {command alias} {
 	source   AliasSource
@@ -459,61 +498,61 @@ proc ::safe::InterpInit {
 	exit     interpDelete
 	glob     AliasGlob
     } {
-	::interp alias $slave $command {} [namespace current]::$alias $slave
+	::interp alias $child $command {} [namespace current]::$alias $child
     }
 
-    # This alias lets the slave have access to a subset of the 'file'
+    # This alias lets the child have access to a subset of the 'file'
     # command functionality.
 
-    ::interp expose $slave file
+    ::interp expose $child file
     foreach subcommand {dirname extension rootname tail} {
-	::interp alias $slave ::tcl::file::$subcommand {} \
-	    ::safe::AliasFileSubcommand $slave $subcommand
+	::interp alias $child ::tcl::file::$subcommand {} \
+	    ::safe::AliasFileSubcommand $child $subcommand
     }
     foreach subcommand {
 	atime attributes copy delete executable exists isdirectory isfile
 	link lstat mtime mkdir nativename normalize owned readable readlink
 	rename size stat tempfile type volumes writable
     } {
-	::interp alias $slave ::tcl::file::$subcommand {} \
-	    ::safe::BadSubcommand $slave file $subcommand
+	::interp alias $child ::tcl::file::$subcommand {} \
+	    ::safe::BadSubcommand $child file $subcommand
     }
 
     # Subcommands of info
     foreach {subcommand alias} {
 	nameofexecutable   AliasExeName
     } {
-	::interp alias $slave ::tcl::info::$subcommand \
-	    {} [namespace current]::$alias $slave
+	::interp alias $child ::tcl::info::$subcommand \
+	    {} [namespace current]::$alias $child
     }
 
-    # The allowed slave variables already have been set by Tcl_MakeSafe(3)
+    # The allowed child variables already have been set by Tcl_MakeSafe(3)
 
-    # Source init.tcl and tm.tcl into the slave, to get auto_load and
+    # Source init.tcl and tm.tcl into the child, to get auto_load and
     # other procedures defined:
 
-    if {[catch {::interp eval $slave {
+    if {[catch {::interp eval $child {
 	source [file join $tcl_library init.tcl]
     }} msg opt]} {
-	Log $slave "can't source init.tcl ($msg)"
-	return -options $opt "can't source init.tcl into slave $slave ($msg)"
+	Log $child "can't source init.tcl ($msg)"
+	return -options $opt "can't source init.tcl into slave $child ($msg)"
     }
 
-    if {[catch {::interp eval $slave {
+    if {[catch {::interp eval $child {
 	source [file join $tcl_library tm.tcl]
     }} msg opt]} {
-	Log $slave "can't source tm.tcl ($msg)"
-	return -options $opt "can't source tm.tcl into slave $slave ($msg)"
+	Log $child "can't source tm.tcl ($msg)"
+	return -options $opt "can't source tm.tcl into slave $child ($msg)"
     }
 
     # Sync the paths used to search for Tcl modules. This can be done only
     # now, after tm.tcl was loaded.
-    namespace upvar ::safe S$slave state
+    namespace upvar ::safe [VarName $child] state
     if {[llength $state(tm_path_slave)] > 0} {
-	::interp eval $slave [list \
+	::interp eval $child [list \
 		::tcl::tm::add {*}[lreverse $state(tm_path_slave)]]
     }
-    return $slave
+    return $child
 }
 
 # Add (only if needed, avoid duplicates) 1 level of sub directories to an
@@ -539,15 +578,30 @@ proc ::safe::AddSubDirs {pathList} {
     return $res
 }
 
-# This procedure deletes a safe slave managed by Safe Tcl and cleans up
-# associated state:
+# This procedure deletes a safe interpreter managed by Safe Tcl and cleans up
+# associated state.
+# - The command will also delete non-Safe-Base interpreters.
+# - This is regrettable, but to avoid breaking existing code this should be
+#   amended at the next major revision by uncommenting "CheckInterp".
 
-proc ::safe::interpDelete {slave} {
-    Log $slave "About to delete" NOTICE
+proc ::safe::interpDelete {child} {
+    Log $child "About to delete" NOTICE
 
-    namespace upvar ::safe S$slave state
+    # CheckInterp $child
+    namespace upvar ::safe [VarName $child] state
 
-    # If the slave has a cleanup hook registered, call it.  Check the
+    # When an interpreter is deleted with [interp delete], any sub-interpreters
+    # are deleted automatically, but this leaves behind their data in the Safe
+    # Base. To clean up properly, we call safe::interpDelete recursively on each
+    # Safe Base sub-interpreter, so each one is deleted cleanly and not by
+    # the automatic mechanism built into [interp delete].
+    foreach sub [interp children $child] {
+        if {[info exists ::safe::[VarName [list $child $sub]]]} {
+            ::safe::interpDelete [list $child $sub]
+        }
+    }
+
+    # If the child has a cleanup hook registered, call it.  Check the
     # existance because we might be called to delete an interp which has
     # not been registered with us at all
 
@@ -558,14 +612,14 @@ proc ::safe::interpDelete {slave} {
 	    # we'll loop
 	    unset state(cleanupHook)
 	    try {
-		{*}$hook $slave
+		{*}$hook $child
 	    } on error err {
-		Log $slave "Delete hook error ($err)"
+		Log $child "Delete hook error ($err)"
 	    }
 	}
     }
 
-    # Discard the global array of state associated with the slave, and
+    # Discard the global array of state associated with the child, and
     # delete the interpreter.
 
     if {[info exists state]} {
@@ -574,9 +628,9 @@ proc ::safe::interpDelete {slave} {
 
     # if we have been called twice, the interp might have been deleted
     # already
-    if {[::interp exists $slave]} {
-	::interp delete $slave
-	Log $slave "Deleted" NOTICE
+    if {[::interp exists $child]} {
+	::interp delete $child
+	Log $child "Deleted" NOTICE
     }
 
     return
@@ -602,9 +656,9 @@ proc ::safe::setLogCmd {args} {
     } else {
 	# Activate logging, define proper command.
 
-	proc ::safe::Log {slave msg {type ERROR}} {
+	proc ::safe::Log {child msg {type ERROR}} {
 	    variable Log
-	    {*}$Log "$type for slave $slave : $msg"
+	    {*}$Log "$type for slave $child : $msg"
 	    return
 	}
     }
@@ -613,23 +667,23 @@ proc ::safe::setLogCmd {args} {
 # ------------------- END OF PUBLIC METHODS ------------
 
 #
-# Sets the slave auto_path to the master recorded value.  Also sets
+# Sets the child auto_path to the parent recorded value.  Also sets
 # tcl_library to the first token of the virtual path.
 #
-proc ::safe::SyncAccessPath {slave} {
-    namespace upvar ::safe S$slave state
+proc ::safe::SyncAccessPath {child} {
+    namespace upvar ::safe [VarName $child] state
 
     set slave_access_path $state(access_path,slave)
-    ::interp eval $slave [list set auto_path $slave_access_path]
+    ::interp eval $child [list set auto_path $slave_access_path]
 
-    Log $slave "auto_path in $slave has been set to $slave_access_path"\
+    Log $child "auto_path in $child has been set to $slave_access_path"\
 	NOTICE
 
     # This code assumes that info library is the first element in the
     # list of auto_path's. See -> InterpSetConfig for the code which
     # ensures this condition.
 
-    ::interp eval $slave [list \
+    ::interp eval $child [list \
 	      set tcl_library [lindex $slave_access_path 0]]
 }
 
@@ -643,8 +697,8 @@ proc ::safe::PathToken {n} {
 #
 # translate virtual path into real path
 #
-proc ::safe::TranslatePath {slave path} {
-    namespace upvar ::safe S$slave state
+proc ::safe::TranslatePath {child path} {
+    namespace upvar ::safe [VarName $child] state
 
     # somehow strip the namespaces 'functionality' out (the danger is that
     # we would strip valid macintosh "../" queries... :
@@ -659,7 +713,7 @@ proc ::safe::TranslatePath {slave path} {
 
 # file name control (limit access to files/resources that should be a
 # valid tcl source file)
-proc ::safe::CheckFileName {slave file} {
+proc ::safe::CheckFileName {child file} {
     # This used to limit what can be sourced to ".tcl" and forbid files
     # with more than 1 dot and longer than 14 chars, but I changed that
     # for 8.4 as a safe interp has enough internal protection already to
@@ -680,17 +734,17 @@ proc ::safe::CheckFileName {slave file} {
 # interpreters that are *almost* safe. In particular, it just acts to
 # prevent discovery of what home directories exist.
 
-proc ::safe::AliasFileSubcommand {slave subcommand name} {
+proc ::safe::AliasFileSubcommand {child subcommand name} {
     if {[string match ~* $name]} {
 	set name ./$name
     }
-    tailcall ::interp invokehidden $slave tcl:file:$subcommand $name
+    tailcall ::interp invokehidden $child tcl:file:$subcommand $name
 }
 
 # AliasGlob is the target of the "glob" alias in safe interpreters.
 
-proc ::safe::AliasGlob {slave args} {
-    Log $slave "GLOB ! $args" NOTICE
+proc ::safe::AliasGlob {child args} {
+    Log $child "GLOB ! $args" NOTICE
     set cmd {}
     set at 0
     array set got {
@@ -712,8 +766,12 @@ proc ::safe::AliasGlob {slave args} {
 
     while {$at < [llength $args]} {
 	switch -glob -- [set opt [lindex $args $at]] {
-	    -nocomplain - -- - -join - -tails {
+	    -nocomplain - -- - -tails {
 		lappend cmd $opt
+		set got($opt) 1
+		incr at
+	    }
+	    -join {
 		set got($opt) 1
 		incr at
 	    }
@@ -730,15 +788,8 @@ proc ::safe::AliasGlob {slave args} {
 		set virtualdir [lindex $args [incr at]]
 		incr at
 	    }
-	    pkgIndex.tcl {
-		# Oops, this is globbing a subdirectory in regular package
-		# search. That is not wanted. Abort, handler does catch
-		# already (because glob was not defined before). See
-		# package.tcl, lines 484ff in tclPkgUnknown.
-		return -code error "unknown command glob"
-	    }
 	    -* {
-		Log $slave "Safe base rejecting glob option '$opt'"
+		Log $child "Safe base rejecting glob option '$opt'"
 		return -code error "Safe base rejecting glob option '$opt'"
 	    }
 	    default {
@@ -749,73 +800,116 @@ proc ::safe::AliasGlob {slave args} {
     }
 
     # Get the real path from the virtual one and check that the path is in the
-    # access path of that slave. Done after basic argument processing so that
+    # access path of that child. Done after basic argument processing so that
     # we know if -nocomplain is set.
     if {$got(-directory)} {
 	try {
-	    set dir [TranslatePath $slave $virtualdir]
-	    DirInAccessPath $slave $dir
+	    set dir [TranslatePath $child $virtualdir]
+	    DirInAccessPath $child $dir
 	} on error msg {
-	    Log $slave $msg
+	    Log $child $msg
 	    if {$got(-nocomplain)} return
 	    return -code error "permission denied"
 	}
-	lappend cmd -directory $dir
+	if {$got(--)} {
+	    set cmd [linsert $cmd end-1 -directory $dir]
+	} else {
+	    lappend cmd -directory $dir
+	}
+    } else {
+	# The code after this "if ... else" block would conspire to return with
+	# no results in this case, if it were allowed to proceed.  Instead,
+	# return now and reduce the number of cases to be considered later.
+	Log $child {option -directory must be supplied}
+	if {$got(-nocomplain)} return
+	return -code error "permission denied"
     }
 
-    # Apply the -join semantics ourselves
+    # Apply the -join semantics ourselves.
     if {$got(-join)} {
 	set args [lreplace $args $at end [join [lrange $args $at end] "/"]]
     }
 
-    # Process remaining pattern arguments
+    # Process the pattern arguments.  If we've done a join there is only one
+    # pattern argument.
+
     set firstPattern [llength $cmd]
     foreach opt [lrange $args $at end] {
 	if {![regexp $dirPartRE $opt -> thedir thefile]} {
 	    set thedir .
-	} elseif {[string match ~* $thedir]} {
-	    set thedir ./$thedir
+	    # The *.tm search comes here.
 	}
-	if {$thedir eq "*" &&
-		($thefile eq "pkgIndex.tcl" || $thefile eq "*.tm")} {
+	# "Special" treatment for (joined) argument {*/pkgIndex.tcl}.
+	# Do the expansion of "*" here, and filter out any directories that are
+	# not in the access path.  The outcome is to lappend to cmd a path of
+	# the form $virtualdir/subdir/pkgIndex.tcl for each subdirectory subdir,
+	# after removing any subdir that are not in the access path.
+	if {($thedir eq "*") && ($thefile eq "pkgIndex.tcl")} {
 	    set mapped 0
-	    foreach d [glob -directory [TranslatePath $slave $virtualdir] \
+	    foreach d [glob -directory [TranslatePath $child $virtualdir] \
 			   -types d -tails *] {
 		catch {
-		    DirInAccessPath $slave \
-			[TranslatePath $slave [file join $virtualdir $d]]
+		    DirInAccessPath $child \
+			[TranslatePath $child [file join $virtualdir $d]]
 		    lappend cmd [file join $d $thefile]
 		    set mapped 1
 		}
 	    }
 	    if {$mapped} continue
+	    # Don't [continue] if */pkgIndex.tcl has no matches in the access
+	    # path.  The pattern will now receive the same treatment as a
+	    # "non-special" pattern (and will fail because it includes a "*" in
+	    # the directory name).
 	}
+	# Any directory pattern that is not an exact (i.e. non-glob) match to a
+	# directory in the access path will be rejected here.
+	# - Rejections include any directory pattern that has glob matching
+	#   patterns "*", "?", backslashes, braces or square brackets, (UNLESS
+	#   it corresponds to a genuine directory name AND that directory is in
+	#   the access path).
+	# - The only "special matching characters" that remain in patterns for
+	#   processing by glob are in the filename tail.
+	# - [file join $anything ~${foo}] is ~${foo}, which is not an exact
+	#   match to any directory in the access path.  Hence directory patterns
+	#   that begin with "~" are rejected here.  Tests safe-16.[5-8] check
+	#   that "file join" remains as required and does not expand ~${foo}.
+	# - Bug [3529949] relates to unwanted expansion of ~${foo} and this is
+	#   how the present code avoids the bug.  All tests safe-16.* relate.
 	try {
-	    DirInAccessPath $slave [TranslatePath $slave \
+	    DirInAccessPath $child [TranslatePath $child \
 		    [file join $virtualdir $thedir]]
 	} on error msg {
-	    Log $slave $msg
+	    Log $child $msg
 	    if {$got(-nocomplain)} continue
 	    return -code error "permission denied"
 	}
 	lappend cmd $opt
     }
 
-    Log $slave "GLOB = $cmd" NOTICE
+    Log $child "GLOB = $cmd" NOTICE
 
     if {$got(-nocomplain) && [llength $cmd] eq $firstPattern} {
 	return
     }
     try {
-	set entries [::interp invokehidden $slave glob {*}$cmd]
+	# >>>>>>>>>> HERE'S THE CALL TO SAFE INTERP GLOB <<<<<<<<<<
+	# - Pattern arguments added to cmd have NOT been translated from tokens.
+	#   Only the virtualdir is translated (to dir).
+	# - In the pkgIndex.tcl case, there is no "*" in the pattern arguments,
+	#   which are a list of names each with tail pkgIndex.tcl.  The purpose
+	#   of the call to glob is to remove the names for which the file does
+	#   not exist.
+	set entries [::interp invokehidden $child glob {*}$cmd]
     } on error msg {
-	Log $slave $msg
+	# This is the only place that a call with -nocomplain and no invalid
+	# "dash-options" can return an error.
+	Log $child $msg
 	return -code error "script error"
     }
 
-    Log $slave "GLOB < $entries" NOTICE
+    Log $child "GLOB < $entries" NOTICE
 
-    # Translate path back to what the slave should see.
+    # Translate path back to what the child should see.
     set res {}
     set l [string length $dir]
     foreach p $entries {
@@ -825,13 +919,13 @@ proc ::safe::AliasGlob {slave args} {
 	lappend res $p
     }
 
-    Log $slave "GLOB > $res" NOTICE
+    Log $child "GLOB > $res" NOTICE
     return $res
 }
 
 # AliasSource is the target of the "source" alias in safe interpreters.
 
-proc ::safe::AliasSource {slave args} {
+proc ::safe::AliasSource {child args} {
     set argc [llength $args]
     # Extended for handling of Tcl Modules to allow not only "source
     # filename", but "source -encoding E filename" as well.
@@ -840,7 +934,7 @@ proc ::safe::AliasSource {slave args} {
 	set encoding [lindex $args 1]
 	set at 2
 	if {$encoding eq "identity"} {
-	    Log $slave "attempt to use the identity encoding"
+	    Log $child "attempt to use the identity encoding"
 	    return -code error "permission denied"
 	}
     } else {
@@ -849,59 +943,62 @@ proc ::safe::AliasSource {slave args} {
     }
     if {$argc != 1} {
 	set msg "wrong # args: should be \"source ?-encoding E? fileName\""
-	Log $slave "$msg ($args)"
+	Log $child "$msg ($args)"
 	return -code error $msg
     }
     set file [lindex $args $at]
 
     # get the real path from the virtual one.
     if {[catch {
-	set realfile [TranslatePath $slave $file]
+	set realfile [TranslatePath $child $file]
     } msg]} {
-	Log $slave $msg
+	Log $child $msg
 	return -code error "permission denied"
     }
 
-    # check that the path is in the access path of that slave
+    # check that the path is in the access path of that child
     if {[catch {
-	FileInAccessPath $slave $realfile
+	FileInAccessPath $child $realfile
     } msg]} {
-	Log $slave $msg
+	Log $child $msg
 	return -code error "permission denied"
     }
 
-    # do the checks on the filename :
+    # Check that the filename exists and is readable.  If it is not, deliver
+    # this -errorcode so that caller in tclPkgUnknown does not write a message
+    # to tclLog.  Has no effect on other callers of ::source, which are in
+    # "package ifneeded" scripts.
     if {[catch {
-	CheckFileName $slave $realfile
+	CheckFileName $child $realfile
     } msg]} {
-	Log $slave "$realfile:$msg"
-	return -code error $msg
+	Log $child "$realfile:$msg"
+	return -code error -errorcode {POSIX EACCES} $msg
     }
 
     # Passed all the tests, lets source it. Note that we do this all manually
-    # because we want to control [info script] in the slave so information
+    # because we want to control [info script] in the child so information
     # doesn't leak so much. [Bug 2913625]
-    set old [::interp eval $slave {info script}]
+    set old [::interp eval $child {info script}]
     set replacementMsg "script error"
     set code [catch {
 	set f [open $realfile]
-	fconfigure $f -eofchar \032
+	fconfigure $f -eofchar "\032 {}"
 	if {$encoding ne ""} {
 	    fconfigure $f -encoding $encoding
 	}
 	set contents [read $f]
 	close $f
-	::interp eval $slave [list info script $file]
+	::interp eval $child [list info script $file]
     } msg opt]
     if {$code == 0} {
-	set code [catch {::interp eval $slave $contents} msg opt]
+	set code [catch {::interp eval $child $contents} msg opt]
 	set replacementMsg $msg
     }
-    catch {interp eval $slave [list info script $old]}
+    catch {interp eval $child [list info script $old]}
     # Note that all non-errors are fine result codes from [source], so we must
     # take a little care to do it properly. [Bug 2923613]
     if {$code == 1} {
-	Log $slave $msg
+	Log $child $msg
 	return -code error $replacementMsg
     }
     return -code $code -options $opt $msg
@@ -909,18 +1006,18 @@ proc ::safe::AliasSource {slave args} {
 
 # AliasLoad is the target of the "load" alias in safe interpreters.
 
-proc ::safe::AliasLoad {slave file args} {
+proc ::safe::AliasLoad {child file args} {
     set argc [llength $args]
     if {$argc > 2} {
 	set msg "load error: too many arguments"
-	Log $slave "$msg ($argc) {$file $args}"
+	Log $child "$msg ($argc) {$file $args}"
 	return -code error $msg
     }
 
     # package name (can be empty if file is not).
     set package [lindex $args 0]
 
-    namespace upvar ::safe S$slave state
+    namespace upvar ::safe [VarName $child] state
 
     # Determine where to load. load use a relative interp path and {}
     # means self, so we can directly and safely use passed arg.
@@ -929,7 +1026,7 @@ proc ::safe::AliasLoad {slave file args} {
 	# we will try to load into a sub sub interp; check that we want to
 	# authorize that.
 	if {!$state(nestedok)} {
-	    Log $slave "loading to a sub interp (nestedok)\
+	    Log $child "loading to a sub interp (nestedok)\
 			disabled (trying to load $package to $target)"
 	    return -code error "permission denied (nested load)"
 	}
@@ -940,11 +1037,11 @@ proc ::safe::AliasLoad {slave file args} {
 	# static package loading
 	if {$package eq ""} {
 	    set msg "load error: empty filename and no package name"
-	    Log $slave $msg
+	    Log $child $msg
 	    return -code error $msg
 	}
 	if {!$state(staticsok)} {
-	    Log $slave "static packages loading disabled\
+	    Log $child "static packages loading disabled\
 			(trying to load $package to $target)"
 	    return -code error "permission denied (static package)"
 	}
@@ -953,36 +1050,43 @@ proc ::safe::AliasLoad {slave file args} {
 
 	# get the real path from the virtual one.
 	try {
-	    set file [TranslatePath $slave $file]
+	    set file [TranslatePath $child $file]
 	} on error msg {
-	    Log $slave $msg
+	    Log $child $msg
 	    return -code error "permission denied"
 	}
 
 	# check the translated path
 	try {
-	    FileInAccessPath $slave $file
+	    FileInAccessPath $child $file
 	} on error msg {
-	    Log $slave $msg
+	    Log $child $msg
 	    return -code error "permission denied (path)"
 	}
     }
 
     try {
-	return [::interp invokehidden $slave load $file $package $target]
+	return [::interp invokehidden $child load $file $package $target]
     } on error msg {
-	Log $slave $msg
+	# Some packages return no error message.
+	set msg0 "load of binary library for package $package failed"
+	if {$msg eq {}} {
+	    set msg $msg0
+	} else {
+	    set msg "$msg0: $msg"
+	}
+	Log $child $msg
 	return -code error $msg
     }
 }
 
 # FileInAccessPath raises an error if the file is not found in the list of
-# directories contained in the (master side recorded) slave's access path.
+# directories contained in the (parent side recorded) child's access path.
 
 # the security here relies on "file dirname" answering the proper
 # result... needs checking ?
-proc ::safe::FileInAccessPath {slave file} {
-    namespace upvar ::safe S$slave state
+proc ::safe::FileInAccessPath {child file} {
+    namespace upvar ::safe [VarName $child] state
     set access_path $state(access_path)
 
     if {[file isdirectory $file]} {
@@ -994,14 +1098,14 @@ proc ::safe::FileInAccessPath {slave file} {
     # potential pathname anomalies.
     set norm_parent [file normalize $parent]
 
-    namespace upvar ::safe S$slave state
+    namespace upvar ::safe [VarName $child] state
     if {$norm_parent ni $state(access_path,norm)} {
 	return -code error "\"$file\": not in access_path"
     }
 }
 
-proc ::safe::DirInAccessPath {slave dir} {
-    namespace upvar ::safe S$slave state
+proc ::safe::DirInAccessPath {child dir} {
+    namespace upvar ::safe [VarName $child] state
     set access_path $state(access_path)
 
     if {[file isfile $dir]} {
@@ -1012,7 +1116,7 @@ proc ::safe::DirInAccessPath {slave dir} {
     # potential pathname anomalies.
     set norm_dir [file normalize $dir]
 
-    namespace upvar ::safe S$slave state
+    namespace upvar ::safe [VarName $child] state
     if {$norm_dir ni $state(access_path,norm)} {
 	return -code error "\"$dir\": not in access_path"
     }
@@ -1021,16 +1125,16 @@ proc ::safe::DirInAccessPath {slave dir} {
 # This procedure is used to report an attempt to use an unsafe member of an
 # ensemble command.
 
-proc ::safe::BadSubcommand {slave command subcommand args} {
+proc ::safe::BadSubcommand {child command subcommand args} {
     set msg "not allowed to invoke subcommand $subcommand of $command"
-    Log $slave $msg
+    Log $child $msg
     return -code error -errorcode {TCL SAFE SUBCOMMAND} $msg
 }
 
 # AliasEncoding is the target of the "encoding" alias in safe interpreters.
 
-proc ::safe::AliasEncoding {slave option args} {
-    # Note that [encoding dirs] is not supported in safe slaves at all
+proc ::safe::AliasEncoding {child option args} {
+    # Note that [encoding dirs] is not supported in safe children at all
     set subcommands {convertfrom convertto names system}
     try {
 	set option [tcl::prefix match -error [list -level 1 -errorcode \
@@ -1041,16 +1145,68 @@ proc ::safe::AliasEncoding {slave option args} {
 		"wrong # args: should be \"encoding system\""
 	}
     } on error {msg options} {
-	Log $slave $msg
+	Log $child $msg
 	return -options $options $msg
     }
-    tailcall ::interp invokehidden $slave encoding $option {*}$args
+    tailcall ::interp invokehidden $child encoding $option {*}$args
 }
 
 # Various minor hiding of platform features. [Bug 2913625]
 
-proc ::safe::AliasExeName {slave} {
+proc ::safe::AliasExeName {child} {
     return ""
+}
+
+# ------------------------------------------------------------------------------
+# Using Interpreter Names with Namespace Qualifiers
+# ------------------------------------------------------------------------------
+# (1) We wish to preserve compatibility with existing code, in which Safe Base
+#     interpreter names have no namespace qualifiers.
+# (2) safe::interpCreate and the rest of the Safe Base previously could not
+#     accept namespace qualifiers in an interpreter name.
+# (3) The interp command will accept namespace qualifiers in an interpreter
+#     name, but accepts distinct interpreters that will have the same command
+#     name (e.g. foo, ::foo, and :::foo) (bug 66c2e8c974).
+# (4) To satisfy these constraints, Safe Base interpreter names will be fully
+#     qualified namespace names with no excess colons and with the leading "::"
+#     omitted.
+# (5) Trailing "::" implies a namespace tail {}, which interp reads as {{}}.
+#     Reject such names.
+# (6) We could:
+#     (a) EITHER reject usable but non-compliant names (e.g. excess colons) in
+#         interpCreate, interpInit;
+#     (b) OR accept such names and then translate to a compliant name in every
+#         command.
+#     The problem with (b) is that the user will expect to use the name with the
+#     interp command and will find that it is not recognised.
+#     E.g "interpCreate ::foo" creates interpreter "foo", and the user's name
+#     "::foo" works with all the Safe Base commands, but "interp eval ::foo"
+#     fails.
+#     So we choose (a).
+# (7) The command
+#         namespace upvar ::safe S$child state
+#     becomes
+#         namespace upvar ::safe [VarName $child] state
+# ------------------------------------------------------------------------------
+
+proc ::safe::RejectExcessColons {child} {
+    set stripped [regsub -all -- {:::*} $child ::]
+    if {[string range $stripped end-1 end] eq {::}} {
+        return -code error {interpreter name must not end in "::"}
+    }
+    if {$stripped ne $child} {
+        set msg {interpreter name has excess colons in namespace separators}
+        return -code error $msg
+    }
+    if {[string range $stripped 0 1] eq {::}} {
+        return -code error {interpreter name must not begin "::"}
+    }
+    return
+}
+
+proc ::safe::VarName {child} {
+    # return S$child
+    return S[string map {:: @N @ @A} $child]
 }
 
 proc ::safe::Setup {} {
@@ -1111,20 +1267,20 @@ namespace eval ::safe {
     # Log command, set via 'setLogCmd'. Logging is disabled when empty.
     variable Log {}
 
-    # The package maintains a state array per slave interp under its
+    # The package maintains a state array per child interp under its
     # control. The name of this array is S<interp-name>. This array is
     # brought into scope where needed, using 'namespace upvar'. The S
-    # prefix is used to avoid that a slave interp called "Log" smashes
+    # prefix is used to avoid that a child interp called "Log" smashes
     # the "Log" variable.
     #
     # The array's elements are:
     #
-    # access_path       : List of paths accessible to the slave.
+    # access_path       : List of paths accessible to the child.
     # access_path,norm  : Ditto, in normalized form.
-    # access_path,slave : Ditto, as the path tokens as seen by the slave.
+    # access_path,slave : Ditto, as the path tokens as seen by the child.
     # access_path,map   : dict ( token -> path )
     # access_path,remap : dict ( path -> token )
-    # tm_path_slave     : List of TM root directories, as tokens seen by the slave.
+    # tm_path_slave     : List of TM root directories, as tokens seen by the child.
     # staticsok         : Value of option -statics
     # nestedok          : Value of option -nested
     # cleanupHook       : Value of option -deleteHook

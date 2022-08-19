@@ -99,7 +99,7 @@ The class name for a \fBttk::scale\fP is \fBTScale\fP.
 .PP
 Dynamic states: \fBactive\fP.
 .PP
-\fBTProgressbar\fP styling options configurable with \fBttk::style\fP
+\fBTScale\fP styling options configurable with \fBttk::style\fP
 are:
 .PP
 \fB\-background\fP \fIcolor\fP

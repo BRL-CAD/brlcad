@@ -13,14 +13,14 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
 test while-old-1.1 {basic while loops} {
     set count 0
-    while {$count < 10} {set count [expr $count+1]}
+    while {$count < 10} {set count [expr {$count + 1}]}
     set count
 } 10
 test while-old-1.2 {basic while loops} {
@@ -58,9 +58,9 @@ test while-old-2.1 {continue in while loop} {
     set index 0
     set result {}
     while {$index < 5} {
-	if {$index == 2} {set index [expr $index+1]; continue}
+	if {$index == 2} {set index [expr {$index + 1}]; continue}
 	set result [concat $result [lindex $list $index]]
-	set index [expr $index+1]
+	set index [expr {$index + 1}]
     }
     set result
 } {1 2 4 5}
@@ -72,7 +72,7 @@ test while-old-3.1 {break in while loop} {
     while {$index < 5} {
 	if {$index == 3} break
 	set result [concat $result [lindex $list $index]]
-	set index [expr $index+1]
+	set index [expr {$index + 1}]
     }
     set result
 } {1 2 3}

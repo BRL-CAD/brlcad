@@ -22,7 +22,8 @@ This command searches the elements of \fIlist\fR to see if one
 of them matches \fIpattern\fR.  If so, the command returns the index
 of the first matching element
 (unless the options \fB\-all\fR or \fB\-inline\fR are specified.)
-If not, the command returns \fB\-1\fR.  The \fIoption\fR arguments
+If not, the command returns \fB\-1\fR or (if options \fB\-all\fR
+or \fB\-inline\fR are specified) the empty string.  The \fIoption\fR arguments
 indicates how the elements of the list are to be matched against
 \fIpattern\fR and must have one of the values below:
 .SS "MATCHING STYLE OPTIONS"

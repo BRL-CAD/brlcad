@@ -28,23 +28,38 @@ namespace import -force tcltest::test
 # This probably means that tk wasn't installed properly.
 
 ## it indicates that something went wrong sourcing tk.tcl.
-## Ensure that any changes that occured to tk.tcl will work or are properly
+## Ensure that any changes that occurred to tk.tcl will work or are properly
 ## prevented in a safe interpreter.  -- hobbs
 
 # The set of hidden commands is platform dependent:
 
-set hidden_cmds {bell cd clipboard encoding exec exit fconfigure glob grab load menu open pwd selection socket source tcl:encoding:dirs toplevel unload wm}
-lappend hidden_cmds {*}[apply {{} {
+set hidden_cmds [list bell cd clipboard encoding exec exit \
+	fconfigure glob grab load menu open pwd selection \
+	socket source toplevel unload wm]
+if {[package vsatisfies [package provide Tcl] 8.6.7-]} {
+    lappend hidden_cmds tcl:encoding:dirs
+}
+if {[package vsatisfies [package provide Tcl] 8.7-]} {
+    lappend hidden_cmds file tcl:encoding:system tcl:file:tempdir
     foreach cmd {
-	atime attributes copy delete dirname executable exists extension
-	isdirectory isfile link lstat mkdir mtime nativename normalize owned
-	readable readlink rename rootname size stat tail tempfile type
-	volumes writable
-    } {lappend result tcl:file:$cmd}; return $result
-}}]
+	cmdtype nameofexecutable
+    } {lappend hidden_cmds tcl:info:$cmd}
+    foreach cmd {
+	autopurge list purge status
+    } {lappend hidden_cmds tcl:process:$cmd}
+    foreach cmd {
+	lmkimg lmkzip mkimg mkkey mkzip mount  mount_data unmount
+    } {lappend hidden_cmds tcl:zipfs:$cmd}
+}
+foreach cmd {
+    atime attributes copy delete dirname executable exists extension
+    isdirectory isfile link lstat mkdir mtime nativename normalize
+    owned readable readlink rename rootname size stat tail tempfile
+    type volumes writable
+} {lappend hidden_cmds tcl:file:$cmd}
 if {[tk windowingsystem] ne "x11"} {
-    lappend hidden_cmds tk_chooseColor tk_chooseDirectory tk_getOpenFile \
-	tk_getSaveFile tk_messageBox
+    lappend hidden_cmds tk_chooseColor tk_chooseDirectory \
+	tk_getOpenFile tk_getSaveFile tk_messageBox
 }
 if {[llength [info commands send]]} {
     lappend hidden_cmds send
@@ -182,12 +197,12 @@ test safe-4.2 {testing loadTk -use} -setup {
     destroy $w
 } -result {}
 
-test safe-5.1 {loading Tk in safe interps without master's clearance} -body {
+test safe-5.1 {loading Tk in safe interps without parent's clearance} -body {
     set i [safe::interpCreate]
     interp eval $i {load {} Tk}
 } -cleanup {
     safe::interpDelete $i
-} -returnCodes error -result {not allowed}
+} -returnCodes error -match glob -result {*not allowed}
 test safe-5.2 {multi-level Tk loading with clearance} -setup {
     set safeParent [safe::interpCreate]
 } -body {

@@ -196,7 +196,7 @@ test config-3.7 {Tk_InitOptions - bad initial value} -constraints {
     testobjconfig
 } -body {
     option add *a.color non-existent
-    catch {testobjconfig alltypes .a} 
+    catch {testobjconfig alltypes .a}
     return $errorInfo
 } -cleanup {
     killTables
@@ -558,7 +558,7 @@ test config-4.41 {DoObjConfig - null color} -constraints testobjconfig -body {
     killTables
 } -returnCodes ok
 test config-4.42 {DoObjConfig - getting rid of old color} -constraints {
-    testobjconfig 
+    testobjconfig
 } -body {
     testobjconfig alltypes .foo -color #333333
     .foo configure -color #444444
@@ -566,7 +566,7 @@ test config-4.42 {DoObjConfig - getting rid of old color} -constraints {
     killTables
 } -returnCodes ok -result {32}
 test config-4.43 {DoObjConfig - getting rid of old color} -constraints {
-    testobjconfig 
+    testobjconfig
 } -body {
     testobjconfig alltypes .foo -color #333333
     .foo configure -color #444444
@@ -575,7 +575,7 @@ test config-4.43 {DoObjConfig - getting rid of old color} -constraints {
     killTables
 } -returnCodes ok -result {#444444}
 test config-4.44 {DoObjConfig - getting rid of old color} -constraints {
-    testobjconfig 
+    testobjconfig
 } -body {
     testobjconfig alltypes .foo -color #333333
     .foo configure -color #444444
@@ -665,13 +665,13 @@ test config-4.54 {DoObjConfig - bitmap} -constraints testobjconfig -body {
 } -returnCodes ok -result {gray75}
 test config-4.55 {DoObjConfig - new bitmap} -constraints testobjconfig -body {
     testobjconfig alltypes .foo -bitmap gray75
-    .foo configure -bitmap gray50 
+    .foo configure -bitmap gray50
 } -cleanup {
     killTables
 } -returnCodes ok -result {128}
 test config-4.56 {DoObjConfig - new bitmap} -constraints testobjconfig -body {
     testobjconfig alltypes .foo -bitmap gray75
-    .foo configure -bitmap gray50 
+    .foo configure -bitmap gray50
     .foo cget -bitmap
 } -cleanup {
     killTables
@@ -745,7 +745,7 @@ test config-4.66 {DoObjConfig - border internal value} -constraints {
     killTables
 } -result {#123456}
 test config-4.67 {DoObjConfig - getting rid of old border} -constraints {
-    testobjconfig 
+    testobjconfig
 } -body {
     testobjconfig alltypes .foo -border #333333
     .foo configure -border #444444
@@ -753,7 +753,7 @@ test config-4.67 {DoObjConfig - getting rid of old border} -constraints {
     killTables
 } -returnCodes ok -result {256}
 test config-4.68 {DoObjConfig - getting rid of old border} -constraints {
-    testobjconfig 
+    testobjconfig
 } -body {
     testobjconfig alltypes .foo -border #333333
     .foo configure -border #444444
@@ -790,13 +790,13 @@ test config-4.72 {DoObjConfig - relief internal value} -constraints testobjconfi
 } -result {ridge}
 test config-4.73 {DoObjConfig - new relief} -constraints testobjconfig -body {
     testobjconfig alltypes .foo -relief raised
-    .foo configure -relief flat 
+    .foo configure -relief flat
 } -cleanup {
     killTables
 } -returnCodes ok -result {512}
 test config-4.74 {DoObjConfig - new relief} -constraints testobjconfig -body {
     testobjconfig alltypes .foo -relief raised
-    .foo configure -relief flat 
+    .foo configure -relief flat
     .foo cget -relief
 } -cleanup {
     killTables
@@ -915,7 +915,7 @@ test config-4.91 {DoObjConfig - invalid anchor} -constraints testobjconfig -body
 } -returnCodes error -result {bad anchor "foo": must be n, ne, e, se, s, sw, w, nw, or center}
 test config-4.92 {DoObjConfig - new anchor} -constraints testobjconfig -body {
     testobjconfig alltypes .foo -anchor e
-    .foo configure -anchor n 
+    .foo configure -anchor n
 } -cleanup {
     killTables
 } -returnCodes ok -result {4096}
@@ -993,7 +993,7 @@ test config-4.102 {DoObjConfig - window} -constraints testobjconfig -body {
 } -returnCodes ok -result {.bar}
 test config-4.103 {DoObjConfig - invalid window} -constraints testobjconfig -body {
     toplevel .bar
-    testobjconfig twowindows .foo -window foo 
+    testobjconfig twowindows .foo -window foo
 } -cleanup {
     killTables
 } -returnCodes error -result {bad window path name "foo"}
@@ -1205,19 +1205,19 @@ test config-7.3 {Tk_SetOptions - synonym} -constraints testobjconfig -body {
 test config-7.4 {Tk_SetOptions - missing value} -constraints {
     testobjconfig
 } -body {
-    .a configure -color green -relief 
+    .a configure -color green -relief
 } -returnCodes error -result {value for "-relief" missing}
 test config-7.5 {Tk_SetOptions - missing value} -constraints {
     testobjconfig
 } -body {
-    catch {.a configure -color green -relief} 
+    catch {.a configure -color green -relief}
     .a cget -color
 } -result {green}
 test config-7.6 {Tk_SetOptions - saving old values} -constraints {
     testobjconfig
 } -body {
     .a configure -color red -int 7 -relief raised -double 3.14159
-    .a csave -color green -int 432 -relief sunken -double 2.0 -color bogus 
+    .a csave -color green -int 432 -relief sunken -double 2.0 -color bogus
 } -returnCodes error -result {unknown color name "bogus"}
 test config-7.7 {Tk_SetOptions - saving old values} -constraints {
     testobjconfig
@@ -1230,7 +1230,7 @@ test config-7.7 {Tk_SetOptions - saving old values} -constraints {
 test config-7.8 {Tk_SetOptions - error in DoObjConfig call} -constraints {
     testobjconfig
 } -body {
-    .a configure -color bogus 
+    .a configure -color bogus
 } -returnCodes error -result {unknown color name "bogus"}
 test config-7.9 {Tk_SetOptions - error in DoObjConfig call} -constraints {
     testobjconfig
@@ -1262,7 +1262,7 @@ test config-7.12 {Tk_SetOptions - returning mask} -constraints testobjconfig -bo
 test config-7.13 {Tk_SetOptions - error in DoObjConfig with custom option} -constraints {
     testobjconfig
 } -body {
-    .a configure -custom bad 
+    .a configure -custom bad
 } -returnCodes error -result {expected good value, got "BAD"}
 test config-7.14 {Tk_SetOptions - error in DoObjConfig with custom option} -constraints {
     testobjconfig

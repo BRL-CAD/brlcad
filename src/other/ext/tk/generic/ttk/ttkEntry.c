@@ -339,8 +339,8 @@ EntryFetchSelection(
     }
     string = entryPtr->entry.displayString;
 
-    selStart = Tcl_UtfAtIndex(string, entryPtr->entry.selectFirst);
-    selEnd = Tcl_UtfAtIndex(selStart,
+    selStart = TkUtfAtIndex(string, entryPtr->entry.selectFirst);
+    selEnd = TkUtfAtIndex(selStart,
 	    entryPtr->entry.selectLast - entryPtr->entry.selectFirst);
     byteCount = selEnd - selStart - offset;
     if (byteCount > maxBytes) {
@@ -458,11 +458,11 @@ ExpandPercents(
 		break;
 	    case 'S': /* string to be inserted/deleted, if any */
 		if (reason == VALIDATE_INSERT) {
-		    string = Tcl_UtfAtIndex(new, index);
-		    stringLength = Tcl_UtfAtIndex(string, count) - string;
+		    string = TkUtfAtIndex(new, index);
+		    stringLength = TkUtfAtIndex(string, count) - string;
 		} else if (reason == VALIDATE_DELETE) {
-		    string = Tcl_UtfAtIndex(entryPtr->entry.string, index);
-		    stringLength = Tcl_UtfAtIndex(string, count) - string;
+		    string = TkUtfAtIndex(entryPtr->entry.string, index);
+		    stringLength = TkUtfAtIndex(string, count) - string;
 		} else {
 		    string = "";
 		    stringLength = 0;
@@ -557,7 +557,7 @@ static int EntryNeedsValidation(VMODE vmode, VREASON reason)
  * Returns:
  *	TCL_OK if the change is accepted
  *	TCL_BREAK if the change is rejected
- *      TCL_ERROR if any errors occured
+ *	TCL_ERROR if any errors occurred
  *
  * The change will be rejected if -validatecommand returns 0,
  * or if -validatecommand or -invalidcommand modifies the value.
@@ -650,8 +650,12 @@ static int EntryRevalidate(Tcl_Interp *interp, Entry *entryPtr, VREASON reason)
 static void EntryRevalidateBG(Entry *entryPtr, VREASON reason)
 {
     Tcl_Interp *interp = entryPtr->core.interp;
-    if (EntryRevalidate(interp, entryPtr, reason) == TCL_ERROR) {
-	Tcl_BackgroundException(interp, TCL_ERROR);
+    VMODE vmode = entryPtr->entry.validate;
+
+    if (EntryNeedsValidation(vmode, reason)) {
+        if (EntryRevalidate(interp, entryPtr, reason) == TCL_ERROR) {
+	    Tcl_BackgroundException(interp, TCL_ERROR);
+        }
     }
 }
 
@@ -808,7 +812,7 @@ InsertChars(
     const char *value)		/* New characters to add */
 {
     char *string = entryPtr->entry.string;
-    size_t byteIndex = Tcl_UtfAtIndex(string, index) - string;
+    size_t byteIndex = TkUtfAtIndex(string, index) - string;
     size_t byteCount = strlen(value);
     int charsAdded = Tcl_NumUtfChars(value, byteCount);
     size_t newByteCount = entryPtr->entry.numBytes + byteCount + 1;
@@ -862,8 +866,8 @@ DeleteChars(
 	return TCL_OK;
     }
 
-    byteIndex = Tcl_UtfAtIndex(string, index) - string;
-    byteCount = Tcl_UtfAtIndex(string+byteIndex, count) - (string+byteIndex);
+    byteIndex = TkUtfAtIndex(string, index) - string;
+    byteCount = TkUtfAtIndex(string+byteIndex, count) - (string+byteIndex);
 
     newByteCount = entryPtr->entry.numBytes + 1 - byteCount;
     new =  ckalloc(newByteCount);
@@ -1270,21 +1274,42 @@ static void EntryDisplay(void *clientData, Drawable d)
     /* Draw the text:
      */
     gc = EntryGetGC(entryPtr, es.foregroundObj, clipRegion);
-    Tk_DrawTextLayout(
-	Tk_Display(tkwin), d, gc, entryPtr->entry.textLayout,
-	entryPtr->entry.layoutX, entryPtr->entry.layoutY,
-	leftIndex, rightIndex);
-    XSetClipMask(Tk_Display(tkwin), gc, None);
-    Tk_FreeGC(Tk_Display(tkwin), gc);
-
-    /* Overwrite the selected portion (if any) in the -selectforeground color:
-     */
     if (showSelection) {
+
+        /* Draw the selected and unselected portions separately.
+	 */
+	if (leftIndex < selFirst) {
+	    Tk_DrawTextLayout(
+		Tk_Display(tkwin), d, gc, entryPtr->entry.textLayout,
+		entryPtr->entry.layoutX, entryPtr->entry.layoutY,
+		leftIndex, selFirst);
+	}
+	if (selLast < rightIndex) {
+	    Tk_DrawTextLayout(
+		Tk_Display(tkwin), d, gc, entryPtr->entry.textLayout,
+		entryPtr->entry.layoutX, entryPtr->entry.layoutY,
+		selLast, rightIndex);
+	}
+	XSetClipMask(Tk_Display(tkwin), gc, None);
+	Tk_FreeGC(Tk_Display(tkwin), gc);
+
+	/* Draw the selected portion in the -selectforeground color:
+	 */
 	gc = EntryGetGC(entryPtr, es.selForegroundObj, clipRegion);
 	Tk_DrawTextLayout(
 	    Tk_Display(tkwin), d, gc, entryPtr->entry.textLayout,
 	    entryPtr->entry.layoutX, entryPtr->entry.layoutY,
 	    selFirst, selLast);
+	XSetClipMask(Tk_Display(tkwin), gc, None);
+	Tk_FreeGC(Tk_Display(tkwin), gc);
+    } else {
+
+        /* Draw the entire visible text
+         */
+	Tk_DrawTextLayout(
+	    Tk_Display(tkwin), d, gc, entryPtr->entry.textLayout,
+	    entryPtr->entry.layoutX, entryPtr->entry.layoutY,
+	    leftIndex, rightIndex);
 	XSetClipMask(Tk_Display(tkwin), gc, None);
 	Tk_FreeGC(Tk_Display(tkwin), gc);
     }
@@ -1378,7 +1403,7 @@ EntryIndex(
 	    *indexPtr += 1;
 	}
     } else {
-	if (Tcl_GetInt(interp, string, indexPtr) != TCL_OK) {
+	if (Tcl_GetIntFromObj(interp, indexObj, indexPtr) != TCL_OK) {
 	    goto badIndex;
 	}
 	if (*indexPtr < 0) {
@@ -2068,7 +2093,7 @@ TTK_END_LAYOUT
 TTK_BEGIN_LAYOUT(ComboboxLayout)
     TTK_GROUP("Combobox.field", TTK_FILL_BOTH,
 	TTK_NODE("Combobox.downarrow", TTK_PACK_RIGHT|TTK_FILL_Y)
-	TTK_GROUP("Combobox.padding", TTK_FILL_BOTH|TTK_PACK_LEFT|TTK_EXPAND,
+	TTK_GROUP("Combobox.padding", TTK_FILL_BOTH,
 	    TTK_NODE("Combobox.textarea", TTK_FILL_BOTH)))
 TTK_END_LAYOUT
 

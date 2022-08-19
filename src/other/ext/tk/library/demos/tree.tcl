@@ -39,6 +39,7 @@ proc populateTree {tree node} {
     set path [$tree set $node fullpath]
     $tree delete [$tree children $node]
     foreach f [lsort -dictionary [glob -nocomplain -dir $path *]] {
+	set f [file normalize $f]
 	set type [file type $f]
 	set id [$tree insert $node end -text [file tail $f] \
 		-values [list $f $type]]

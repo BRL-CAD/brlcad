@@ -292,8 +292,9 @@ TclpDlopen(
 	*loadHandle = newHandle;
 	result = TCL_OK;
     } else {
-	Tcl_Obj *errObj = Tcl_NewObj();
+	Tcl_Obj *errObj;
 
+	TclNewObj(errObj);
 	if (errMsg != NULL) {
 	    Tcl_AppendToObj(errObj, errMsg, -1);
 	}

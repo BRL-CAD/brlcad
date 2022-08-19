@@ -498,7 +498,7 @@ test panedwindow-6.9 {sash coord subcommand, errors} -setup {
     .p add [frame .p.f]
     list [catch {.p sash coord -1} msg] $msg \
 	    [catch {.p sash coord  0} msg] $msg \
-	    [catch {.p sash coord  1} msg] $msg 
+	    [catch {.p sash coord  1} msg] $msg
 } -cleanup {
 	deleteWindows
 } -result [list 1 "invalid sash index" 1 "invalid sash index" 1 "invalid sash index"]
@@ -511,7 +511,7 @@ test panedwindow-6.10 {sash coord subcommand, errors} -setup {
     list [catch {.p sash coord -1} msg] $msg \
 	    [catch {.p sash coord  0} msg] \
 	    [catch {.p sash coord  1} msg] $msg \
-	    [catch {.p sash coord  2} msg] $msg 
+	    [catch {.p sash coord  2} msg] $msg
 } -cleanup {
 	deleteWindows
 } -result [list 1 "invalid sash index" 0 1 "invalid sash index" 1 "invalid sash index"]
@@ -622,7 +622,7 @@ test panedwindow-8.5 {sash dragto subcommand, errors} -setup {
 } -cleanup {
 	deleteWindows
 } -returnCodes error -result {expected integer but got "bar"}
-    
+
 
 test panedwindow-9.1 {sash mark/sash dragto interaction} -setup {
 	deleteWindows
@@ -925,7 +925,7 @@ test panedwindow-11.15 {moving sash into "virtual" space on last pane increases 
 } -cleanup {
 	deleteWindows
 } -result {68 100}
-    
+
 
 test panedwindow-12.1 {horizontal panedwindow lays out widgets properly} -setup {
 	deleteWindows
@@ -1022,7 +1022,7 @@ test panedwindow-12.6 {panedwindow takes explicit widget width over reqwidth} -s
 } -cleanup {
 	deleteWindows
 } -result [list 20 20]
-test panedwindow-12.7 {horizontal panedwindow reqheight is max slave height} -setup {
+test panedwindow-12.7 {horizontal panedwindow reqheight is max pane height} -setup {
 	deleteWindows
 } -body {
     panedwindow .p -showhandle false -borderwidth 0 -sashpad 0 -sashwidth 4
@@ -1033,7 +1033,7 @@ test panedwindow-12.7 {horizontal panedwindow reqheight is max slave height} -se
 } -cleanup {
 	deleteWindows
 } -result {20 40}
-test panedwindow-12.8 {horizontal panedwindow reqheight is max slave height} -setup {
+test panedwindow-12.8 {horizontal panedwindow reqheight is max pane height} -setup {
 	deleteWindows
 } -body {
     panedwindow .p -showhandle false -borderwidth 0 -sashpad 0 -sashwidth 4
@@ -1087,7 +1087,7 @@ test panedwindow-12.11 {panedwindow takes explicit height over reqheight} -setup
 } -cleanup {
 	deleteWindows
 } -result [list 20 20]
-test panedwindow-12.12 {vertical panedwindow reqwidth is max slave width} -setup {
+test panedwindow-12.12 {vertical panedwindow reqwidth is max pane width} -setup {
 	deleteWindows
 } -body {
     panedwindow .p -showhandle false -borderwidth 0 -sashpad 0 -sashwidth 4 \
@@ -1099,7 +1099,7 @@ test panedwindow-12.12 {vertical panedwindow reqwidth is max slave width} -setup
 } -cleanup {
 	deleteWindows
 } -result {20 40}
-test panedwindow-12.13 {vertical panedwindow reqwidth is max slave width} -setup {
+test panedwindow-12.13 {vertical panedwindow reqwidth is max pane width} -setup {
 	deleteWindows
 } -body {
     panedwindow .p -showhandle false -borderwidth 0 -sashpad 0 -sashwidth 4 \
@@ -1133,7 +1133,7 @@ test panedwindow-13.1 {PanestructureProc, widget yields managements} -setup {
 	deleteWindows
 } -body {
     # Check that the panedwindow correctly yields geometry management of
-    # a slave when the slave is destroyed.
+    # a pane when the pane is destroyed.
 
     # This test should not cause a core dump, and it should not cause
     # a memory leak.
@@ -1144,12 +1144,12 @@ test panedwindow-13.1 {PanestructureProc, widget yields managements} -setup {
     destroy .b
     set result ""
 } -result {}
-test panedwindow-13.2 {PanedWindowLostSlaveProc, widget yields management} -setup {
+test panedwindow-13.2 {PanedWindowLostPaneProc, widget yields management} -setup {
 	deleteWindows
 } -body {
     # Check that the paned window correctly yields geometry management of
-    # a slave when some other geometry manager steals the slave from us.
-    
+    # a pane when some other geometry manager steals the pane from us.
+
     # This test should not cause a core dump, and it should not cause a
     # memory leak.
     panedwindow .p
@@ -1518,9 +1518,9 @@ test panedwindow-17.1 {MoveSash, move right} -setup {
 
     # Get the requested width of the paned window
     lappend result [winfo reqwidth .p]
-    
+
     .p sash place 0 30 0
-    
+
     # Get the reqwidth again, to make sure it hasn't changed
     lappend result [winfo reqwidth .p]
 
@@ -1538,7 +1538,7 @@ test panedwindow-17.2 {MoveSash, move right (unmapped) clipped by reqwidth} -set
     }
 
     .p sash place 0 100 0
-    
+
     # Get the new sash coord; it should be clipped by the reqwidth of
     # the panedwindow.
     .p sash coord 0
@@ -1552,13 +1552,13 @@ test panedwindow-17.3 {MoveSash, move right (mapped, width < reqwidth) clipped b
     foreach w {.f1 .f2} c {red blue} {
 	    .p add [frame $w -height 20 -width 20 -bg $c] -sticky nsew
     }
-    
+
     # Put the panedwindow up on the display and give it a width < reqwidth
     place .p -x 0 -y 0 -width 32
     update
 
     .p sash place 0 100 0
-    
+
     # Get the new sash coord; it should be clipped by the visible width of
     # the panedwindow.
     .p sash coord 0
@@ -1572,13 +1572,13 @@ test panedwindow-17.4 {MoveSash, move right (mapped, width > reqwidth) clipped b
     foreach w {.f1 .f2} c {red blue} {
 	    .p add [frame $w -height 20 -width 20 -bg $c] -sticky nsew
     }
-    
+
     # Put the panedwindow up on the display and give it a width > reqwidth
     place .p -x 0 -y 0 -width 102
     update
 
     .p sash place 0 200 0
-    
+
     # Get the new sash coord; it should be clipped by the visible width of
     # the panedwindow.
     .p sash coord 0
@@ -1594,7 +1594,7 @@ test panedwindow-17.5 {MoveSash, move right respects minsize} -setup {
     }
 
     .p sash place 0 100 0
-    
+
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     .p sash coord 0
@@ -1610,7 +1610,7 @@ test panedwindow-17.6 {MoveSash, move right respects minsize} -setup {
     }
 
     .p sash place 0 100 0
-    
+
     # Get the new sash coord; it should have moved as far as possible.
     .p sash coord 0
 } -cleanup {
@@ -1625,7 +1625,7 @@ test panedwindow-17.7 {MoveSash, move right pushes other sashes} -setup {
     }
 
     .p sash place 0 100 0
-    
+
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     .p sash coord 1
@@ -1641,7 +1641,7 @@ test panedwindow-17.8 {MoveSash, move right pushes other sashes, respects minsiz
     }
 
     .p sash place 0 100 0
-    
+
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     .p sash coord 1
@@ -1658,8 +1658,8 @@ test panedwindow-17.9 {MoveSash, move right respects minsize, exludes pad} -setu
     }
 
     .p sash place 0 100 0
-    
-    # Get the new sash coord; it should have moved as far as possible, 
+
+    # Get the new sash coord; it should have moved as far as possible,
     # respecting minsizes.
     .p sash coord 0
 } -cleanup {
@@ -1675,8 +1675,8 @@ test panedwindow-17.10 {MoveSash, move right, negative minsize becomes 0} -setup
     }
 
     .p sash place 0 50 0
-    
-    # Get the new sash coord; it should have moved as far as possible, 
+
+    # Get the new sash coord; it should have moved as far as possible,
     # respecting minsizes.
     list [.p sash coord 0] [.p sash coord 1]
 } -cleanup {
@@ -1693,9 +1693,9 @@ test panedwindow-17.11 {MoveSash, move left} -setup {
 
     # Get the requested width of the paned window
     lappend result [winfo reqwidth .p]
-    
+
     .p sash place 0 10 0
-    
+
     # Get the reqwidth again, to make sure it hasn't changed
     lappend result [winfo reqwidth .p]
 
@@ -1713,7 +1713,7 @@ test panedwindow-17.12 {MoveSash, move left, can't move outside of window} -setu
     }
 
     .p sash place 0 -100 0
-    
+
     # Get the new sash coord; it should be clipped by the reqwidth of
     # the panedwindow.
     .p sash coord 0
@@ -1729,7 +1729,7 @@ test panedwindow-17.13 {MoveSash, move left respects minsize} -setup {
     }
 
     .p sash place 0 0 0
-    
+
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     .p sash coord 0
@@ -1745,7 +1745,7 @@ test panedwindow-17.14 {MoveSash, move left respects minsize} -setup {
     }
 
     .p sash place 1 0 0
-    
+
     # Get the new sash coord; it should have moved as far as possible.
     .p sash coord 1
 } -cleanup {
@@ -1760,7 +1760,7 @@ test panedwindow-17.15 {MoveSash, move left pushes other sashes} -setup {
     }
 
     .p sash place 1 0 0
-    
+
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     .p sash coord 0
@@ -1776,7 +1776,7 @@ test panedwindow-17.16 {MoveSash, move left pushes other sashes, respects minsiz
     }
 
     .p sash place 1 0 0
-    
+
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     .p sash coord 0
@@ -1793,8 +1793,8 @@ test panedwindow-17.17 {MoveSash, move left respects minsize, exludes pad} -setu
     }
 
     .p sash place 1 0 0
-    
-    # Get the new sash coord; it should have moved as far as possible, 
+
+    # Get the new sash coord; it should have moved as far as possible,
     # respecting minsizes.
     .p sash coord 1
 } -cleanup {
@@ -1810,8 +1810,8 @@ test panedwindow-17.18 {MoveSash, move left, negative minsize becomes 0} -setup 
     }
 
     .p sash place 1 10 0
-    
-    # Get the new sash coord; it should have moved as far as possible, 
+
+    # Get the new sash coord; it should have moved as far as possible,
     # respecting minsizes.
     list [.p sash coord 0] [.p sash coord 1]
 } -cleanup {
@@ -1831,9 +1831,9 @@ test panedwindow-18.1 {MoveSash, move down} -setup {
 
     # Get the requested width of the paned window
     lappend result [winfo reqheight .p]
-    
+
     .p sash place 0 0 30
-    
+
     # Get the reqwidth again, to make sure it hasn't changed
     lappend result [winfo reqheight .p]
 
@@ -1852,7 +1852,7 @@ test panedwindow-18.2 {MoveSash, move down (unmapped) clipped by reqheight} -set
     }
 
     .p sash place 0 0 100
-    
+
     # Get the new sash coord; it should be clipped by the reqheight of
     # the panedwindow.
     .p sash coord 0
@@ -1867,13 +1867,13 @@ test panedwindow-18.3 {MoveSash, move down (mapped, height < reqheight) clipped 
     foreach w {.f1 .f2} c {red blue} {
 	    .p add [frame $w -height 20 -width 20 -bg $c] -sticky nsew
     }
-    
+
     # Put the panedwindow up on the display and give it a height < reqheight
     place .p -x 0 -y 0 -height 32
     update
 
     .p sash place 0 0 100
-    
+
     # Get the new sash coord; it should be clipped by the visible height of
     # the panedwindow.
     .p sash coord 0
@@ -1888,13 +1888,13 @@ test panedwindow-18.4 {MoveSash, move down (mapped, height > reqheight) clipped 
     foreach w {.f1 .f2} c {red blue} {
 	    .p add [frame $w -height 20 -width 20 -bg $c] -sticky nsew
     }
-    
+
     # Put the panedwindow up on the display and give it a width > reqwidth
     place .p -x 0 -y 0 -height 102
     update
 
     .p sash place 0 0 200
-    
+
     # Get the new sash coord; it should be clipped by the visible width of
     # the panedwindow.
     .p sash coord 0
@@ -1911,7 +1911,7 @@ test panedwindow-18.5 {MoveSash, move down respects minsize} -setup {
     }
 
     .p sash place 0 0 100
-    
+
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     .p sash coord 0
@@ -1928,7 +1928,7 @@ test panedwindow-18.6 {MoveSash, move down respects minsize} -setup {
     }
 
     .p sash place 0 0 100
-    
+
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     .p sash coord 0
@@ -1945,7 +1945,7 @@ test panedwindow-18.7 {MoveSash, move down pushes other sashes} -setup {
     }
 
     .p sash place 0 0 100
-    
+
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     .p sash coord 1
@@ -1962,7 +1962,7 @@ test panedwindow-18.8 {MoveSash, move down pushes other sashes, respects minsize
     }
 
     .p sash place 0 0 100
-    
+
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     .p sash coord 1
@@ -1980,8 +1980,8 @@ test panedwindow-18.9 {MoveSash, move down respects minsize, exludes pad} -setup
     }
 
     .p sash place 0 0 100
-    
-    # Get the new sash coord; it should have moved as far as possible, 
+
+    # Get the new sash coord; it should have moved as far as possible,
     # respecting minsizes.
     .p sash coord 0
 } -cleanup {
@@ -1998,8 +1998,8 @@ test panedwindow-18.10 {MoveSash, move right, negative minsize becomes 0} -setup
     }
 
     .p sash place 0 0 50
-    
-    # Get the new sash coord; it should have moved as far as possible, 
+
+    # Get the new sash coord; it should have moved as far as possible,
     # respecting minsizes.
     list [.p sash coord 0] [.p sash coord 1]
 } -cleanup {
@@ -2017,9 +2017,9 @@ test panedwindow-18.11 {MoveSash, move up} -setup {
 
     # Get the requested width of the paned window
     lappend result [winfo reqheight .p]
-    
+
     .p sash place 0 0 10
-    
+
     # Get the reqwidth again, to make sure it hasn't changed
     lappend result [winfo reqheight .p]
 
@@ -2038,7 +2038,7 @@ test panedwindow-18.12 {MoveSash, move up, can't move outside of window} -setup 
     }
 
     .p sash place 0 0 -100
-    
+
     # Get the new sash coord; it should be clipped by the reqwidth of
     # the panedwindow.
     .p sash coord 0
@@ -2055,7 +2055,7 @@ test panedwindow-18.13 {MoveSash, move up respects minsize} -setup {
     }
 
     .p sash place 0 0 0
-    
+
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     .p sash coord 0
@@ -2072,7 +2072,7 @@ test panedwindow-18.14 {MoveSash, move up respects minsize} -setup {
     }
 
     .p sash place 1 0 0
-    
+
     # Get the new sash coord; it should have moved as far as possible.
     .p sash coord 1
 } -cleanup {
@@ -2088,7 +2088,7 @@ test panedwindow-18.15 {MoveSash, move up pushes other sashes} -setup {
     }
 
     .p sash place 1 0 0
-    
+
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     .p sash coord 0
@@ -2105,7 +2105,7 @@ test panedwindow-18.16 {MoveSash, move up pushes other sashes, respects minsize}
     }
 
     .p sash place 1 0 0
-    
+
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     .p sash coord 0
@@ -2123,8 +2123,8 @@ test panedwindow-18.17 {MoveSash, move up respects minsize, exludes pad} -setup 
     }
 
     .p sash place 1 0 0
-    
-    # Get the new sash coord; it should have moved as far as possible, 
+
+    # Get the new sash coord; it should have moved as far as possible,
     # respecting minsizes.
     .p sash coord 1
 } -cleanup {
@@ -2141,8 +2141,8 @@ test panedwindow-18.18 {MoveSash, move up, negative minsize becomes 0} -setup {
     }
 
     .p sash place 1 0 10
-    
-    # Get the new sash coord; it should have moved as far as possible, 
+
+    # Get the new sash coord; it should have moved as far as possible,
     # respecting minsizes.
     list [.p sash coord 0] [.p sash coord 1]
 } -cleanup {
@@ -2241,10 +2241,10 @@ test panedwindow-19.6 {ComputeGeometry, reqwidth taken from widgets} -setup {
 	deleteWindows
 } -result [list [list 60 60] [list 80 60]]
 
-test panedwindow-19.7 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.7 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2282,7 +2282,7 @@ test panedwindow-19.9 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{20 0} {40 0}}
 
-test panedwindow-19.10 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.10 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2303,10 +2303,10 @@ test panedwindow-19.10 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{11 3 20 20} {53 3 20 20} {95 3 20 20}}
 
-test panedwindow-19.11 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.11 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2349,7 +2349,7 @@ test panedwindow-19.13 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{0 20} {0 40}}
 
-test panedwindow-19.14 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.14 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2370,10 +2370,10 @@ test panedwindow-19.14 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup
 } -cleanup {
     deleteWindows
 } -result {{3 11 20 20} {3 53 20 20} {3 95 20 20}}
-test panedwindow-19.15 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.15 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2411,7 +2411,7 @@ test panedwindow-19.17 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{23 0} {49 0}}
 
-test panedwindow-19.18 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.18 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2432,10 +2432,10 @@ test panedwindow-19.18 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{11 3 20 20} {59 3 20 20} {107 3 20 20}}
 
-test panedwindow-19.19 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.19 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2478,7 +2478,7 @@ test panedwindow-19.21 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{0 23} {0 49}}
 
-test panedwindow-19.22 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.22 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2499,10 +2499,10 @@ test panedwindow-19.22 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup
 } -cleanup {
     deleteWindows
 } -result {{3 11 20 20} {3 59 20 20} {3 107 20 20}}
-test panedwindow-19.23 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.23 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2540,7 +2540,7 @@ test panedwindow-19.25 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{20 0} {43 0}}
 
-test panedwindow-19.26 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.26 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2561,10 +2561,10 @@ test panedwindow-19.26 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{11 3 20 20} {56 3 20 20} {101 3 20 20}}
 
-test panedwindow-19.27 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.27 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2607,7 +2607,7 @@ test panedwindow-19.29 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{0 20} {0 43}}
 
-test panedwindow-19.30 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.30 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2628,10 +2628,10 @@ test panedwindow-19.30 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup
 } -cleanup {
     deleteWindows
 } -result {{3 11 20 20} {3 56 20 20} {3 101 20 20}}
-test panedwindow-19.31 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.31 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2669,7 +2669,7 @@ test panedwindow-19.33 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{21 0} {47 0}}
 
-test panedwindow-19.34 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.34 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2690,10 +2690,10 @@ test panedwindow-19.34 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{11 3 20 20} {59 3 20 20} {107 3 20 20}}
 
-test panedwindow-19.35 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.35 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2736,7 +2736,7 @@ test panedwindow-19.37 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{0 21} {0 47}}
 
-test panedwindow-19.38 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.38 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 0 \
@@ -2757,10 +2757,10 @@ test panedwindow-19.38 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup
 } -cleanup {
     deleteWindows
 } -result {{3 11 20 20} {3 59 20 20} {3 107 20 20}}
-test panedwindow-19.39 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.39 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -2798,7 +2798,7 @@ test panedwindow-19.41 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{25 0} {55 0}}
 
-test panedwindow-19.42 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.42 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -2819,10 +2819,10 @@ test panedwindow-19.42 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{11 3 20 20} {63 3 20 20} {115 3 20 20}}
 
-test panedwindow-19.43 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.43 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -2865,7 +2865,7 @@ test panedwindow-19.45 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{0 25} {0 55}}
 
-test panedwindow-19.46 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.46 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -2886,10 +2886,10 @@ test panedwindow-19.46 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup
 } -cleanup {
     deleteWindows
 } -result {{3 11 20 20} {3 63 20 20} {3 115 20 20}}
-test panedwindow-19.47 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.47 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -2927,7 +2927,7 @@ test panedwindow-19.49 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{28 0} {64 0}}
 
-test panedwindow-19.50 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.50 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -2948,10 +2948,10 @@ test panedwindow-19.50 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{11 3 20 20} {69 3 20 20} {127 3 20 20}}
 
-test panedwindow-19.51 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.51 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -2994,7 +2994,7 @@ test panedwindow-19.53 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{0 28} {0 64}}
 
-test panedwindow-19.54 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.54 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -3015,10 +3015,10 @@ test panedwindow-19.54 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup
 } -cleanup {
     deleteWindows
 } -result {{3 11 20 20} {3 69 20 20} {3 127 20 20}}
-test panedwindow-19.55 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.55 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -3056,7 +3056,7 @@ test panedwindow-19.57 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{25 0} {58 0}}
 
-test panedwindow-19.58 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.58 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -3077,10 +3077,10 @@ test panedwindow-19.58 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{11 3 20 20} {66 3 20 20} {121 3 20 20}}
 
-test panedwindow-19.59 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.59 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -3123,7 +3123,7 @@ test panedwindow-19.61 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{0 25} {0 58}}
 
-test panedwindow-19.62 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.62 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -3144,10 +3144,10 @@ test panedwindow-19.62 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup
 } -cleanup {
     deleteWindows
 } -result {{3 11 20 20} {3 66 20 20} {3 121 20 20}}
-test panedwindow-19.63 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.63 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -3185,7 +3185,7 @@ test panedwindow-19.65 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{26 0} {62 0}}
 
-test panedwindow-19.66 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.66 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -3206,10 +3206,10 @@ test panedwindow-19.66 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{11 3 20 20} {69 3 20 20} {127 3 20 20}}
 
-test panedwindow-19.67 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.67 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -3252,7 +3252,7 @@ test panedwindow-19.69 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{0 26} {0 62}}
 
-test panedwindow-19.70 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.70 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 5 \
@@ -3273,10 +3273,10 @@ test panedwindow-19.70 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup
 } -cleanup {
     deleteWindows
 } -result {{3 11 20 20} {3 69 20 20} {3 127 20 20}}
-test panedwindow-19.71 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.71 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3314,7 +3314,7 @@ test panedwindow-19.73 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{22 2} {42 2}}
 
-test panedwindow-19.74 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.74 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3335,10 +3335,10 @@ test panedwindow-19.74 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{13 5 20 20} {55 5 20 20} {97 5 20 20}}
 
-test panedwindow-19.75 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.75 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3381,7 +3381,7 @@ test panedwindow-19.77 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{2 22} {2 42}}
 
-test panedwindow-19.78 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.78 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3402,10 +3402,10 @@ test panedwindow-19.78 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup
 } -cleanup {
     deleteWindows
 } -result {{5 13 20 20} {5 55 20 20} {5 97 20 20}}
-test panedwindow-19.79 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.79 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3443,7 +3443,7 @@ test panedwindow-19.81 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{25 2} {51 2}}
 
-test panedwindow-19.82 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.82 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3464,10 +3464,10 @@ test panedwindow-19.82 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{13 5 20 20} {61 5 20 20} {109 5 20 20}}
 
-test panedwindow-19.83 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.83 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3510,7 +3510,7 @@ test panedwindow-19.85 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{2 25} {2 51}}
 
-test panedwindow-19.86 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.86 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3531,10 +3531,10 @@ test panedwindow-19.86 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup
 } -cleanup {
     deleteWindows
 } -result {{5 13 20 20} {5 61 20 20} {5 109 20 20}}
-test panedwindow-19.87 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.87 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3572,7 +3572,7 @@ test panedwindow-19.89 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{22 2} {45 2}}
 
-test panedwindow-19.90 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.90 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3593,10 +3593,10 @@ test panedwindow-19.90 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{13 5 20 20} {58 5 20 20} {103 5 20 20}}
 
-test panedwindow-19.91 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.91 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3639,7 +3639,7 @@ test panedwindow-19.93 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{2 22} {2 45}}
 
-test panedwindow-19.94 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.94 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3660,10 +3660,10 @@ test panedwindow-19.94 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup
 } -cleanup {
     deleteWindows
 } -result {{5 13 20 20} {5 58 20 20} {5 103 20 20}}
-test panedwindow-19.95 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.95 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3701,7 +3701,7 @@ test panedwindow-19.97 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{23 2} {49 2}}
 
-test panedwindow-19.98 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.98 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3722,10 +3722,10 @@ test panedwindow-19.98 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{13 5 20 20} {61 5 20 20} {109 5 20 20}}
 
-test panedwindow-19.99 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.99 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3768,7 +3768,7 @@ test panedwindow-19.101 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{2 23} {2 49}}
 
-test panedwindow-19.102 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.102 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 0 \
@@ -3789,10 +3789,10 @@ test panedwindow-19.102 {ComputeGeometry/ArrangePanes, slave coords, vert} -setu
 } -cleanup {
     deleteWindows
 } -result {{5 13 20 20} {5 61 20 20} {5 109 20 20}}
-test panedwindow-19.103 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.103 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -3830,7 +3830,7 @@ test panedwindow-19.105 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{27 2} {57 2}}
 
-test panedwindow-19.106 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.106 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -3851,10 +3851,10 @@ test panedwindow-19.106 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{13 5 20 20} {65 5 20 20} {117 5 20 20}}
 
-test panedwindow-19.107 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.107 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -3897,7 +3897,7 @@ test panedwindow-19.109 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{2 27} {2 57}}
 
-test panedwindow-19.110 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.110 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -3918,10 +3918,10 @@ test panedwindow-19.110 {ComputeGeometry/ArrangePanes, slave coords, vert} -setu
 } -cleanup {
     deleteWindows
 } -result {{5 13 20 20} {5 65 20 20} {5 117 20 20}}
-test panedwindow-19.111 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.111 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -3959,7 +3959,7 @@ test panedwindow-19.113 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{30 2} {66 2}}
 
-test panedwindow-19.114 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.114 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -3980,10 +3980,10 @@ test panedwindow-19.114 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{13 5 20 20} {71 5 20 20} {129 5 20 20}}
 
-test panedwindow-19.115 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.115 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -4026,7 +4026,7 @@ test panedwindow-19.117 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{2 30} {2 66}}
 
-test panedwindow-19.118 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.118 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -4047,10 +4047,10 @@ test panedwindow-19.118 {ComputeGeometry/ArrangePanes, slave coords, vert} -setu
 } -cleanup {
     deleteWindows
 } -result {{5 13 20 20} {5 71 20 20} {5 129 20 20}}
-test panedwindow-19.119 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.119 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -4088,7 +4088,7 @@ test panedwindow-19.121 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{27 2} {60 2}}
 
-test panedwindow-19.122 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.122 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -4109,10 +4109,10 @@ test panedwindow-19.122 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{13 5 20 20} {68 5 20 20} {123 5 20 20}}
 
-test panedwindow-19.123 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.123 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -4155,7 +4155,7 @@ test panedwindow-19.125 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{2 27} {2 60}}
 
-test panedwindow-19.126 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.126 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -4176,10 +4176,10 @@ test panedwindow-19.126 {ComputeGeometry/ArrangePanes, slave coords, vert} -setu
 } -cleanup {
     deleteWindows
 } -result {{5 13 20 20} {5 68 20 20} {5 123 20 20}}
-test panedwindow-19.127 {ComputeGeometry, one slave, reqsize set properly} -setup {
+test panedwindow-19.127 {ComputeGeometry, one pane, reqsize set properly} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -4217,7 +4217,7 @@ test panedwindow-19.129 {ComputeGeometry, sash coords} -setup {
     deleteWindows
 } -result {{28 2} {64 2}}
 
-test panedwindow-19.130 {ComputeGeometry/ArrangePanes, slave coords} -setup {
+test panedwindow-19.130 {ComputeGeometry/ArrangePanes, pane coords} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -4238,10 +4238,10 @@ test panedwindow-19.130 {ComputeGeometry/ArrangePanes, slave coords} -setup {
     deleteWindows
 } -result {{13 5 20 20} {71 5 20 20} {129 5 20 20}}
 
-test panedwindow-19.131 {ComputeGeometry, one slave, vertical} -setup {
+test panedwindow-19.131 {ComputeGeometry, one pane, vertical} -setup {
     deleteWindows
 } -body {
-    # With just one slave, sashpad and sashwidth should not
+    # With just one pane, sashpad and sashwidth should not
     # affect the panedwindow's geometry, since no sash should
     # ever be drawn.
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -4284,7 +4284,7 @@ test panedwindow-19.133 {ComputeGeometry, sash coords, vertical} -setup {
     deleteWindows
 } -result {{2 28} {2 64}}
 
-test panedwindow-19.134 {ComputeGeometry/ArrangePanes, slave coords, vert} -setup {
+test panedwindow-19.134 {ComputeGeometry/ArrangePanes, pane coords, vert} -setup {
     deleteWindows
 } -body {
     panedwindow .p -borderwidth 2 -sashpad 5 \
@@ -4317,7 +4317,7 @@ test panedwindow-20.1 {destroyed widgets are removed from panedwindow} -setup {
 } -cleanup {
 	deleteWindows
 } -result {}
-test panedwindow-20.2 {destroyed slave causes geometry recomputation} -setup {
+test panedwindow-20.2 {destroyed pane causes geometry recomputation} -setup {
 	deleteWindows
 } -body {
     panedwindow .p -borderwidth 0 -sashpad 0 -sashwidth 2
@@ -4328,7 +4328,7 @@ test panedwindow-20.2 {destroyed slave causes geometry recomputation} -setup {
 } -cleanup {
     deleteWindows
 } -result 20
-    
+
 
 test panedwindow-21.1 {ArrangePanes, extra space is given to the last pane} -setup {
 	deleteWindows
@@ -4537,7 +4537,7 @@ test panedwindow-21.15 {ArrangePanes, last pane grows} -setup {
 } -result {50 150 1 1 211 50 150 1 89 300}
 
 
-test panedwindow-22.1 {PanedWindowReqProc, react to slave geometry changes} -setup {
+test panedwindow-22.1 {PanedWindowReqProc, react to pane geometry changes} -setup {
 	deleteWindows
 } -body {
     # Basically just want to make sure that the PanedWindowReqProc is called
@@ -4550,7 +4550,7 @@ test panedwindow-22.1 {PanedWindowReqProc, react to slave geometry changes} -set
 } -cleanup {
 	deleteWindows
 } -result {40 80}
-test panedwindow-22.2 {PanedWindowReqProc, react to slave geometry changes} -setup {
+test panedwindow-22.2 {PanedWindowReqProc, react to pane geometry changes} -setup {
 	deleteWindows
 } -body {
     panedwindow .p -orient horizontal -sashpad 0 -sashwidth 2
@@ -4824,7 +4824,7 @@ test panedwindow-23.21 {ConfigurePanes, -before, relocate existing windows} -set
 } -cleanup {
 	deleteWindows
 } -result {.d .b .a .c}
-test panedwindow-23.22 {ConfigurePanes, slave specified multiple times} -setup {
+test panedwindow-23.22 {ConfigurePanes, pane specified multiple times} -setup {
 	deleteWindows
 } -body {
     # This test should not cause a core dump
@@ -4839,7 +4839,7 @@ test panedwindow-23.22 {ConfigurePanes, slave specified multiple times} -setup {
 } -cleanup {
 	deleteWindows
 } -result {.a .b .c}
-test panedwindow-23.23 {ConfigurePanes, slave specified multiple times} -setup {
+test panedwindow-23.23 {ConfigurePanes, pane specified multiple times} -setup {
 	deleteWindows
 } -body {
     # This test should not cause a core dump
@@ -5146,7 +5146,7 @@ test panedwindow-25.1 {DestroyPanedWindow} -setup {
     }
     set result {}
 } -result {}
-test panedwindow-25.2 {UnmapNotify and MapNotify events are propagated to slaves} -setup {
+test panedwindow-25.2 {UnmapNotify and MapNotify events are propagated to panes} -setup {
     deleteWindows
 } -body {
     panedwindow .pw

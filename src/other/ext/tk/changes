@@ -7572,9 +7572,9 @@ Tk Cocoa 2.0: More drawing internals refinements (culler,walzer)
 
 2018-11-19 (bug)[0a9c91] crash in text-11a.22 (vogel)
 
-2018-11-20 (bug)[9705d1] crash activating "Alt" theme (culler) 
+2018-11-20 (bug)[9705d1] crash activating "Alt" theme (culler)
 
-2018-11-24 (bug)[e3b954] cursor offset at full screen display (culler) 
+2018-11-24 (bug)[e3b954] cursor offset at full screen display (culler)
 
 2019-01-04 (bug)[18a4ba] cross-platform [winfo containing] (culler)
 
@@ -7698,3 +7698,208 @@ Tk Cocoa 2.0: More drawing internals refinements (culler,walzer)
 2019-11-19 (new) Partial Emoji support in text displays (nijtmans,culler)
 
 - Released 8.6.10, Nov 21, 2019 - https://core.tcl-lang.org/tk/ for details
+
+2019-11-25 (bug)[a95373] TkKeyEvent platform variations (werner)
+
+2019-11-26 (bug) workaround Win bug so test bind-34.3 passes (nijtmans)
+
+2019-12-03 Aqua: white cursors in dark mode (culler)
+
+2019-12-04 (bug)[749bd9] Aqua: systemControlAccentColor (bll,culler)
+
+2019-12-14 (bug)[b3b56a] ttk respect -cursor option (vogel)
+
+2019-12-14 (bug)[b094cb] Win: $tv -show grows widget width 1 pixel (vogel)
+
+2019-12-14 (bug)[02a694] spinbox options used wrong db names (vogel)
+
+2020-01-11 (bug)[2b8fa6] MouseWheel for ttk::scrollbar (oehlmann)
+
+2020-01-18 (bug)[1771594] icursor and scrollregion, canvText-14.7 (vogel)
+
+2020-01-18 (bug)[587937] tag list ops preserve list order (vogel)
+
+2020-01-18 (bug)[2830360] lose invalid state at focus event, entry-10.1 (vogel)
+
+2020-01-18 (bug)[077d49] string table options support null ok (vogel)
+
+2020-01-18 (bug)[bf93d0] Aqua: unresponsive menubar (culler)
+
+2020-01-31 (bug)[a196fb] restore support for unthreaded Tcl (porter,sebres)
+
+2020-02-09 (bug)[90a4d7] fontconfig crash when no font installed (vogel)
+
+2020-02-24 (bug) Aqua: incomplete floating window display (walzer)
+
+2020-03-11 (bug)[fb2ec3] OSX 10.15+: full screen options (nicolas,walzer)
+
+2020-03-12 (bug)[08e2f8] focus on unmapped windows, focus-7.1 (vogel)
+
+2020-03-12 (bug)[2edd84] [$c postscript] result management (gavilan)
+
+2020-03-22 (bug)[98662d] restore TK_MAC_DEBUG_DRAWING build (chavez)
+
+2020-03-29 (bug)[655fe2] tearoff menu redraw artifacts (vogel)
+
+2020-04-03 (bug)[efbedd] Aqua: compund button-like widget appearance (chavez)
+
+2020-04-14 (bug)[87bade] Aqua: improved dealing with PressAndHold (culler)
+
+2020-04-14 (bug)[376788] X: stop crash w/Noto Color Emoji font (nijtmans)
+
+2020-04-15 (bug)[89354d] Aqua: text color w/o clipping (culler)
+
+2020-04-15 (new) Aqua: assign Button 3 to the middle button (chavez)
+
+2020-04-25 (bug)[3519111] treeview horizontal scroll, entry-2.1.1 (vogel)
+
+2020-04-25 (bug)[141881] treeview vertical scroll, treeview-9.2 (vogel)
+
+2020-05-01 (bug)[2712f4] X: crash angled text w/o Xft, canvText-20.2 (vogel)
+
+2020-05-01 (bug)[cd8714] Win: long angled text (chavez)
+
+2020-05-09 (bug)[88c9e0] treeview -selectmode none focus ring (gavilan)
+
+2020-05-12 (new) Aqua: Rewrite of the Key event system (culler)
+
+2020-05-12 (bug)[411359] Aqua: stop crashes/zombies related to TouchBar (culler)
+
+2020-05-12 (new) Aqua: systemLinkColor (chavez)
+
+2020-05-16 (bug)[40ada9] crash when active button is destroyed (chavez)
+
+2020-05-28 (bug)[3c6660,601cea,4b50b7] Win10: ttk scale (nemethi,lanam)
+
+2020-06-08 (bug)[2790615] Some callbacks not eval'd in global scope (nijtmans)
+
+2020-06-25 Aqua: Update OSX version tests to support Big Sur (culler)
+
+2020-06-27 (bug)[6920b2] dup in spinbox -values causes trouble (lanam)
+
+2020-06-27 (bug)[5c51be] invalid mem read buffer in Tk_PhotoPut* (chavez)
+
+2020-06-27 (bug)[16ef16] restore bind sequence support, bind-33.(16-21) (vogel)
+
+2020-07-02 (bug)[2d2459] default style for combobox (bll)
+
+2020-07-06 (bug)[40c4bf] double free, entry-19.21 (vogel)
+
+2020-07-06 (bug)[e3888d] grab & warp, bind-36.1 (vogel)
+
+2020-07-12 (bug)[2442314] fontchooser i18n (nijtmans)
+
+2020-07-13 (bug)[7655f6] [*entry]: selected text drawing reform (chavez)
+
+2020-07-14 (bug)[09abd7] workaround invalid key codes from Debian 10 (vogel)
+
+2020-07-20 (bug)[cf3853] Aqua: improve bounds on non-Retina displays (chavez)
+
+2020-08-01 Aqua: [winfo rgb] light and dark mode support (culler)
+
+2020-08-15 (bug)[315104] Aqua: appearance change virtual events (culler)
+
+2020-08-21 (bug)[291699] mouse binding for scrollbar grip (bll)
+
+2020-09-08 (bug)[6c2425] buffer bounds violation (chavez)
+
+2020-09-08 (bug)[2a6d63] OSX 10.6 crash (hellstrom,culler)
+
+2020-09-08 (bug)[420feb] undefined behavior due to alignment (chavez,nijtmans)
+
+2020-09-10 (bug)[ab1fea] Aqua init issues (culler)
+
+2020-09-14 (bug)[71e18c] Aqua: crash in full screen toggle (culler)
+
+2020-09-18 (bug)[4f4f03] Aqua: mouse drags across title bar (nab,culler)
+
+2020-09-21 (bug)[d91e05] select/copy in disabled text (bll)
+
+2020-09-27 (TIP #581) disfavor Master/Slave terminology (nijtmans)
+
+2020-09-30 (bug)[59cba3] win: improve theme detection (bll,nijtmans)
+
+2020-10-06 (bug)[175a6e] Aqua: support tiled windows (culler)
+
+2020-10-07 (bug)[1fa8c3] Aqua: crash on resize during display (nab,culler)
+
+2020-10-16 (bug)[c2483b] Aqua: consistent finalization (culler,nijtmans)
+
+2020-11-06 (bug)[c9ebac] Aqua: use standard about dialog (culler)
+
+2020-11-07 (bug)[4ebcc0] sticky fontchooser options (roseman,vogel)
+
+2020-11-10 (bug)[f9fa92] Aqua: crash in color caching scheme (culler)
+
+2020-11-20 (bug)[7185d2] Aqua: fixes to special menu support (culler)
+
+2020-11-24 (bug)[4a40c6] Aqua: [wm manage] frame offset (chavez)
+
+2020-12-04 (bug)[3ef77f] Aqua dark mode combobox focus ring (walzer,culler)
+
+2020-12-15 (bug)[80e4c6] Aqua: progressbar animation (nab,culler)
+
+2020-12-24 (bug)[6157a8] Aqua: file dialog -filetypes (davis,culler)
+
+- Released 8.6.11, Dec 31, 2020 - https://core.tcl-lang.org/tk/ for details
+
+2021-01-04 (bug)[19fb7a] Mac: [tk_messageBox] use proper icons (ericwb,culler)
+
+2021-01-11 (bug)[7beaed] ttk::bindMouseWheel syntax error (nemethi)
+
+2021-01-15 (new) support 4 new keycodes: CodeInput, SingleCandidate,
+	MultipleCandidate, PreviousCandidate (nijtmans)
+
+2021-01-18 (new) Portable keycodes: OE, oe, Ydiaeresis (nijtmans)
+
+2021-01-27 (bug)[bdcab8] Mac crash on non-BMP menu label (nab,culler)
+
+2021-02-07 (bug)[9e1312] <Enter> to parent after child destroyed (leunissen)
+
+2021-02-10 (bug)[d3cd4c] more robust notebook processing (nemethi)
+
+2021-02-25 (bug)[234ee4] crash in [clipboard get] invalid encoding (nijtmans)
+
+2021-02-25 (bug)[be9cad] Poor trace housekeeping -> tkwait segfault (michael)
+
+2021-03-02 (bug)[1626ed] Mac: crash with dead key as menu accelerator (culler)
+
+2021-03-22 (bug)[9b6065] restore Tcl [update], see window-2.12 (leunissen)
+
+2021-04-07 (bug)[58222c] Mac: entry and spinbox bg colors (chavez,culler)
+
+2021-04-18 (bug)[34db75,ea876b] cursor motion in peer text (vogel)
+
+2021-04-26 (bug)[c97464] memleak in TkpDrawAngledChars (nab,culler)
+
+2021-04-29 Mac: explicit backing CALayer to fix rendering issues (culler)
+
+2021-05-02 Mac: respect key repeat system setting (culler)
+
+2021-05-10 (bug)[171ba7] crash when grab and focus are not coordinated (culler)
+
+2021-05-24 crash due to failed transient record housekeeping (culler)
+
+2021-05-25 (bug)[7bda98] Mac: <Double-1> bindings fire twice on app activation
+
+2021-06-03 (bug)[4401d3] Mac: improved support of pixel formats (chavez,culler)
+
+2021-06-03 (bug)[8ecc3e] Mac: window exposed by Mission Control (chavez,culler)
+
+2021-06-04 (bug)[099109] segfault reusing a container toplevel (culler)
+
+2021-06-22 (bug)[4efbfe] static package init order in wish (werner)
+
+2021-09-21 (bug)[033886] Win: hang in font loading (e-paine,vogel)
+
+2021-10-14 (bug)[8ebed3] multi-thread safety in Xft use (werner)
+
+2021-10-22 (new)[TIP 608] New virtual event <<TkWorldChanged>> (griffin)
+
+2021-10-27 (bug) file dialog compatibility with Mac OS 12 (culler)
+
+2021-10-29 (bug) Mac: stop crash when non-Tk windows go full screen (werner)
+
+2021-10-30 (bug)[6ea0b3] Mac: grab from menu makes dead window (culler)
+
+- Released 8.6.12, Nov 5, 2021 - https://core.tcl-lang.org/tk/ for details

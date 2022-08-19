@@ -217,7 +217,7 @@ fake_getaddrinfo(const char *hostname, const char *servname,
 	}
 
 	if (!hostname) {
-		*res = malloc_ai(port, htonl(0x7f000001), hints);
+		*res = malloc_ai(port, htonl(0x7F000001), hints);
 		if (*res == NULL)
 			return (EAI_MEMORY);
 		return (0);

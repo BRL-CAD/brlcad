@@ -8,8 +8,8 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 package require TclOO 1.0.3
-package require tcltest 2
-if {"::tcltest" in [namespace children]} {
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -882,9 +882,9 @@ test oo-call-3.4 {current call introspection: in destructors} -setup {
 #	caller
 set testopts {
     -setup {
-	oo::class create Master
+	oo::class create Parent
 	oo::class create Foo {
-	    superclass Master
+	    superclass Parent
 	    method bar {} {
 		puts abc
 		tailcall puts hi
@@ -892,11 +892,11 @@ set testopts {
 	    }
 	}
 	oo::class create Foo2 {
-	    superclass Master
+	    superclass Parent
 	}
     }
     -cleanup {
-	Master destroy
+	Parent destroy
     }
 }
 

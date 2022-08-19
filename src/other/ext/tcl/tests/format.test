@@ -10,18 +10,22 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
 # %u output depends on word length, so this test is not portable.
 testConstraint longIs32bit [expr {int(0x80000000) < 0}]
 testConstraint longIs64bit [expr {int(0x8000000000000000) < 0}]
-testConstraint wideIs64bit \
-	[expr {(wide(0x80000000) > 0) && (wide(0x8000000000000000) < 0)}]
+testConstraint wideIs64bit [expr {
+    (wide(0x80000000) > 0) && (wide(0x8000000000000000) < 0)}]
 testConstraint wideBiggerThanInt [expr {wide(0x80000000) != int(0x80000000)}]
-testConstraint knownMsvcBug [expr {![info exists ::env(TRAVIS_OS_NAME)] || ![string match windows $::env(TRAVIS_OS_NAME)]}]
+# MSVC uses a broken libc that gets sprintf("%g") wrong. This is a pain
+# particularly in Continuous Integration, and there isn't anything much we can
+# do about it.
+testConstraint notWinCI [expr {
+    ($::tcl_platform(platform) ne "windows") || ![info exists ::env(CI)]}]
 
 test format-1.1 {integer formatting} {
     format "%*d %d %d %d" 6 34 16923 -12 -1
@@ -274,13 +278,13 @@ test format-6.1 {floating-point zeroes} {eformat} {
 test format-6.2 {floating-point zeroes} {eformat} {
     format "%.4e %.4f %.4g" 0.0 0.0 0.0 0.0
 } {0.0000e+00 0.0000 0}
-test format-6.3 {floating-point zeroes} {eformat knownMsvcBug} {
+test format-6.3 {floating-point zeroes} {eformat notWinCI} {
     format "%#.4e %#.4f %#.4g" 0.0 0.0 0.0 0.0
 } {0.0000e+00 0.0000 0.000}
 test format-6.4 {floating-point zeroes} {eformat} {
     format "%.0e %.0f %.0g" 0.0 0.0 0.0 0.0
 } {0e+00 0 0}
-test format-6.5 {floating-point zeroes} {eformat knownMsvcBug} {
+test format-6.5 {floating-point zeroes} {eformat notWinCI} {
     format "%#.0e %#.0f %#.0g" 0.0 0.0 0.0 0.0
 } {0.e+00 0. 0.}
 test format-6.6 {floating-point zeroes} {
@@ -456,7 +460,7 @@ test format-13.1 {tcl_precision fuzzy comparison} {
     set a 0.0000000000001
     set b 0.00000000000001
     set c 0.00000000000000001
-    set d [expr $a + $b + $c]
+    set d [expr {$a + $b + $c}]
     format {%0.10f %0.12f %0.15f %0.17f} $d $d $d $d
 } {0.0000000000 0.000000000000 0.000000000000110 0.00000000000011001}
 test format-13.2 {tcl_precision fuzzy comparison} {
@@ -467,7 +471,7 @@ test format-13.2 {tcl_precision fuzzy comparison} {
     set a 0.000000000001
     set b 0.000000000000005
     set c 0.0000000000000008
-    set d [expr $a + $b + $c]
+    set d [expr {$a + $b + $c}]
     format {%0.10f %0.12f %0.15f %0.17f} $d $d $d $d
 } {0.0000000000 0.000000000001 0.000000000001006 0.00000000000100580}
 test format-13.3 {tcl_precision fuzzy comparison} {
@@ -476,7 +480,7 @@ test format-13.3 {tcl_precision fuzzy comparison} {
     catch {unset c}
     set a 0.00000000000099
     set b 0.000000000000011
-    set c [expr $a + $b]
+    set c [expr {$a + $b}]
     format {%0.10f %0.12f %0.15f %0.17f} $c $c $c $c
 } {0.0000000000 0.000000000001 0.000000000001001 0.00000000000100100}
 test format-13.4 {tcl_precision fuzzy comparison} {
@@ -485,7 +489,7 @@ test format-13.4 {tcl_precision fuzzy comparison} {
     catch {unset c}
     set a 0.444444444444
     set b 0.33333333333333
-    set c [expr $a + $b]
+    set c [expr {$a + $b}]
     format {%0.10f %0.12f %0.15f %0.16f} $c $c $c $c
 } {0.7777777778 0.777777777777 0.777777777777330 0.7777777777773300}
 test format-13.5 {tcl_precision fuzzy comparison} {
@@ -494,7 +498,7 @@ test format-13.5 {tcl_precision fuzzy comparison} {
     catch {unset c}
     set a 0.444444444444
     set b 0.99999999999999
-    set c [expr $a + $b]
+    set c [expr {$a + $b}]
     format {%0.10f %0.12f %0.15f} $c $c $c
 } {1.4444444444 1.444444444444 1.444444444443990}
 
@@ -530,7 +534,7 @@ for {set i 0} {$i < 290} {incr i} {
     append b $a
 }
 for {set i 290} {$i < 400} {incr i} {
-    test format-16.[expr $i -289] {testing MAX_FLOAT_SIZE} {
+    test format-16.[expr {$i -289}] {testing MAX_FLOAT_SIZE} {
         format {%s} $b
     } $b
     append b "x"
@@ -601,12 +605,12 @@ test format-19.4.2 {Bug d498578df4: width overflow should cause limit exceeded} 
 } -returnCodes error -result "max size for a Tcl value exceeded"
 
 # Note that this test may fail in future versions
-test format-20.1 {Bug 2932421: plain %s caused intrep change of args} -body {
+test format-20.1 {Bug 2932421: plain %s caused internalrep change of args} -body {
     set x [dict create a b c d]
     format %s $x
     # After this, obj in $x should be a dict
     # We are testing to make sure it has not been shimmered to a
-    # different intrep when that is not necessary.
+    # different internalrep when that is not necessary.
     # Whether or not there is a string rep - we should not care!
     tcl::unsupported::representation $x
 } -match glob -result {value is a dict *}

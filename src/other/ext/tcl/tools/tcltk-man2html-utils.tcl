@@ -50,7 +50,7 @@ proc indexfile {} {
 proc copyright {copyright {level {}}} {
     # We don't actually generate a separate copyright page anymore
     #set page "${level}copyright.htm"
-    #return "<A HREF=\"$page\">Copyright</A> &#169; [htmlize-text [lrange $copyright 2 end]]"
+    #return "<A HREF=\"$page\">Copyright</A> &copy; [htmlize-text [lrange $copyright 2 end]]"
     # obfuscate any email addresses that may appear in name
     set who [string map {@ (at)} [lrange $copyright 2 end]]
     return "Copyright &copy; [htmlize-text $who]"
@@ -130,8 +130,8 @@ proc htmlize-text {text {charmap {}}} {
 	\"	{&quot;} \
 	{<}	{&lt;} \
 	{>}	{&gt;} \
-	\u201c "&#8220;" \
-	\u201d "&#8221;"
+	\u201C "&ldquo;" \
+	\u201D "&rdquo;"
 
     return [string map $charmap $text]
 }
@@ -144,20 +144,73 @@ proc process-text {text} {
 	    {\&}	"\t" \
 	    {\%}	{} \
 	    "\\\n"	"\n" \
-	    {\(+-}	"&#177;" \
+	    {\(r!}	"&iexcl;" \
+	    {\(ct}	"&cent;" \
+	    {\(Po}	"&pound;" \
+	    {\(Cs}	"&curren;" \
+	    {\(Ye}	"&yen;" \
+	    {\(bb}	"&brvbar;" \
+	    {\(sc}	"&sect;" \
+	    {\(ad}	"&die;" \
 	    {\(co}	"&copy;" \
-	    {\(em}	"&#8212;" \
-	    {\(en}	"&#8211;" \
-	    {\(fm}	"&#8242;" \
-	    {\(mc}	"&#181;" \
-	    {\(mu}	"&#215;" \
-	    {\(mi}	"&#8722;" \
-	    {\(->}	"<font size=\"+1\">&#8594;</font>" \
+	    {\(Of}	"&ordf;" \
+	    {\(Fo}	"&laquo;" \
+	    {\(no}	"&not;" \
+	    {\(rg}	"&reg;" \
+	    {\(a-}	"&macr;" \
+	    {\(de}	"&deg;" \
+	    {\(+-}	"&plusmn;" \
+	    {\(S2}	"&sup2;" \
+	    {\(S3}	"&sup3;" \
+	    {\(aa}	"&acute;" \
+	    {\(mc}	"&micro;" \
+	    {\(ps}	"&para;" \
+	    {\(pc}	"&middot;" \
+	    {\(ac}	"&cedil;" \
+	    {\(S1}	"&sup1;" \
+	    {\(Om}	"&ordm;" \
+	    {\(Fc}	"&raquo;" \
+	    {\(14}	"&frac14;" \
+	    {\(12}	"&frac12;" \
+	    {\(34}	"&frac34;" \
+	    {\(r?}	"&iquest;" \
+	    {\(AE}	"&AElig;" \
+	    {\(-D}	"&ETH;" \
+	    {\(mu}	"&times;" \
+	    {\(TP}	"&THORN;" \
+	    {\(ss}	"&szlig;" \
+	    {\(ae}	"&aelig;" \
+	    {\(Sd}	"&eth;" \
+	    {\(di}	"&divide;" \
+	    {\(Tp}	"&thorn;" \
+	    {\(em}	"&mdash;" \
+	    {\(en}	"&ndash;" \
+	    {\(fm}	"&prime;" \
+	    {\(mi}	"&minus;" \
+	    {\(.i}	"&imath;" \
+	    {\(.j}	"&jmath;" \
+	    {\(Fn}	"&fnof;" \
+	    {\(OE}	"&OElig;" \
+	    {\(oe}	"&oelig;" \
+	    {\(IJ}	"&IJlig;" \
+	    {\(ij}	"&ijlig;" \
+	    {\(<-}	"<font size=\"+1\">&larr;</font>" \
+	    {\(->}	"<font size=\"+1\">&rarr;</font>" \
+	    {\(eu}	"&euro;" \
 	    {\fP}	{\fR} \
 	    {\.}	. \
-	    {\(bu}	"&#8226;" \
+	    {\(bu}	"&bull;" \
 	    {\*(qo}	"&ocirc;" \
 	    ]
+    # This might make a few invalid mappings, but we don't use them
+    foreach c {a c e g i l n o s t u y z A C E G I L N O S T U Y Z} {
+	foreach {prefix suffix} {
+	    o ring / slash : uml ' acute ^ circ ` grave ~ tilde , cedil v caron
+	} {
+	    lappend charmap "\\\[${prefix}${c}\]" "&${c}${suffix};"
+	    lappend charmap "\\(${prefix}${c}" "&${c}${suffix};"
+	}
+    }
     lappend charmap {\-\|\-} --        ; # two hyphens
     lappend charmap {\-} -             ; # a hyphen
 
@@ -520,7 +573,7 @@ proc output-IP-list {context code rest} {
 	    if {[regexp {^\[[\da-f]+\]|\(?[\da-f]+\)$} $rest]} {
 		set dl "<OL class=\"[string tolower $manual(section)]\">"
 		set enddl "</OL>"
-	    } elseif {"&#8226;" eq $rest} {
+	    } elseif {"&bull;" eq $rest} {
 		set dl "<UL class=\"[string tolower $manual(section)]\">"
 		set enddl "</UL>"
 	    }
@@ -546,7 +599,7 @@ proc output-IP-list {context code rest} {
 			    man-puts "$para<LI value=\"$value\">"
 			} elseif {[regexp {^\(?([\da-f]+)\)$} $rest -> value]} {
 			    man-puts "$para<LI value=\"$value\">"
-			} elseif {"&#8226;" eq $rest} {
+			} elseif {"&bull;" eq $rest} {
 			    man-puts "$para<LI>"
 			} else {
 			    man-puts "$para<DT>[long-toc $rest]<DD>"
@@ -1250,8 +1303,8 @@ proc make-manpage-section {outputDir sectionDescriptor} {
     global manual overall_title tcltkdesc verbose
     global excluded_pages forced_index_pages process_first_patterns
 
-    set LQ \u201c
-    set RQ \u201d
+    set LQ \u201C
+    set RQ \u201D
 
     lassign $sectionDescriptor \
 	manual(wing-glob) \
@@ -1261,6 +1314,7 @@ proc make-manpage-section {outputDir sectionDescriptor} {
     set manual(wing-copyrights) {}
     makedirhier $outputDir/$manual(wing-file)
     set manual(wing-toc-fp) [open $outputDir/$manual(wing-file)/[indexfile] w]
+    fconfigure $manual(wing-toc-fp) -translation lf -encoding utf-8
     # whistle
     puts stderr "scanning section $manual(wing-name)"
     # put the entry for this section into the short table of contents
@@ -1311,6 +1365,7 @@ proc make-manpage-section {outputDir sectionDescriptor} {
 	    continue
 	}
 	set manual(infp) [open $manual(page)]
+	fconfigure $manual(infp) -encoding utf-8
 	set manual(text) {}
 	set manual(partial-text) {}
 	foreach p {.RS .DS .CS .SO} {
@@ -1557,6 +1612,10 @@ proc make-manpage-section {outputDir sectionDescriptor} {
     }
     if {!$verbose} {
 	puts stderr ""
+    }
+
+    if {![llength $manual(wing-toc)]} {
+	fatal "not table of contents."
     }
 
     #

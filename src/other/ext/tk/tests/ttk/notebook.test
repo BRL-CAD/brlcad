@@ -1,5 +1,6 @@
-package require Tk 8.5
-package require tcltest ; namespace import -force tcltest::*
+package require Tk
+package require tcltest 2.2
+namespace import -force tcltest::*
 loadTestedCommands
 
 test notebook-1.0 "Setup" -body {
@@ -24,11 +25,11 @@ test notebook-1.3 "Cannot add toplevel" -body {
     .nb add [toplevel .nb.t]
 } -cleanup {
     destroy .t.nb
-} -returnCodes 1 -match glob -result "can't add .nb.t*"
+} -returnCodes error -match glob -result "can't add .nb.t*"
 
 test notebook-1.4 "Try to select bad tab" -body {
     .nb select @6000,6000
-} -returnCodes 1 -match glob -result "* not found"
+} -returnCodes error -match glob -result "* not found"
 
 #
 # Now add stuff:

@@ -173,7 +173,7 @@ TkpDrawCheckIndicator(
      * Sanity check.
      */
 
-    if (tkwin == NULL || display == None || d == None || bgBorder == NULL
+    if (tkwin == NULL || display == NULL || d == None || bgBorder == NULL
 	    || indicatorColor == NULL) {
 	return;
     }
@@ -326,11 +326,9 @@ TkpDrawCheckIndicator(
 
 TkButton *
 TkpCreateButton(
-    Tk_Window tkwin)
+    TCL_UNUSED(Tk_Window))
 {
-    UnixButton *butPtr = ckalloc(sizeof(UnixButton));
-
-    return (TkButton *) butPtr;
+    return (TkButton *)ckalloc(sizeof(UnixButton));
 }
 
 /*
@@ -396,7 +394,7 @@ void
 TkpDisplayButton(
     ClientData clientData)	/* Information about widget. */
 {
-    register TkButton *butPtr = (TkButton *) clientData;
+    TkButton *butPtr = (TkButton *)clientData;
     GC gc;
     Tk_3DBorder border;
     Pixmap pixmap;
@@ -807,8 +805,6 @@ TkpDisplayButton(
 		butPtr->borderWidth, relief);
     }
     if (butPtr->highlightWidth > 0) {
-	GC gc;
-
 	if (butPtr->flags & GOT_FOCUS) {
 	    gc = Tk_GCForColor(butPtr->highlightColorPtr, pixmap);
 	} else {
@@ -860,7 +856,7 @@ TkpDisplayButton(
 
 void
 TkpComputeButtonGeometry(
-    register TkButton *butPtr)	/* Button whose geometry may have changed. */
+    TkButton *butPtr)	/* Button whose geometry may have changed. */
 {
     int width, height, avgWidth, txtWidth, txtHeight;
     int haveImage = 0, haveText = 0;

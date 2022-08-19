@@ -11,7 +11,7 @@
 package require Tcl 8.6-
 # Keep this in sync with pkgIndex.tcl and with the install directories in
 # Makefiles
-package provide http 2.9.1
+package provide http 2.9.5
 
 namespace eval http {
     # Allow resourcing to not clobber existing data
@@ -531,7 +531,7 @@ proc http::CloseSocket {s {token {}}} {
     } else {
 	set map [array get socketMapping]
 	set ndx [lsearch -exact $map $s]
-	if {$ndx != -1} {
+	if {$ndx >= 0} {
 	    incr ndx -1
 	    set connId [lindex $map $ndx]
 	}
@@ -721,7 +721,7 @@ proc http::geturl {url args} {
 	body		{}
 	status		""
 	http		""
-	connection	close
+	connection	keep-alive
     }
     set state(-keepalive) $defaultKeepalive
     set state(-strict) $strict
@@ -733,6 +733,7 @@ proc http::geturl {url args} {
 	-strict		boolean
 	-timeout	integer
 	-validate	boolean
+	-headers	dict
     }
     set state(charset)	$defaultCharset
     set options {
@@ -746,9 +747,8 @@ proc http::geturl {url args} {
     foreach {flag value} $args {
 	if {[regexp -- $pat $flag]} {
 	    # Validate numbers
-	    if {
-		[info exists type($flag)] &&
-		![string is $type($flag) -strict $value]
+	    if {($flag eq "-headers") ? [catch {dict size $value}] :
+		([info exists type($flag)] && ![string is $type($flag) -strict $value])
 	    } {
 		unset $token
 		return -code error \
@@ -966,6 +966,18 @@ proc http::geturl {url args} {
 	set state(-pipeline) $http(-pipeline)
     }
 
+    # We cannot handle chunked encodings with -handler, so force HTTP/1.0
+    # until we can manage this.
+    if {[info exists state(-handler)]} {
+	set state(-protocol) 1.0
+    }
+
+    # RFC 7320 A.1 - HTTP/1.0 Keep-Alive is problematic. We do not support it.
+    if {$state(-protocol) eq "1.0"} {
+	set state(connection) close
+	set state(-keepalive) 0
+    }
+
     # See if we are supposed to use a previously opened channel.
     # - In principle, ANY call to http::geturl could use a previously opened
     #   channel if it is available - the "Connection: keep-alive" header is a
@@ -1037,7 +1049,7 @@ proc http::geturl {url args} {
 
 	    }
 	    # Do not automatically close the connection socket.
-	    set state(connection) {}
+	    set state(connection) keep-alive
 	}
     }
 
@@ -1332,18 +1344,11 @@ proc http::Connected {token proto phost srvurl} {
 	set how POST
 	# The query channel must be blocking for the async Write to
 	# work properly.
-	lassign [fconfigure $sock -translation] trRead trWrite
-	fconfigure $state(-querychannel) -blocking 1 \
-					 -translation [list $trRead binary]
+	fconfigure $state(-querychannel) -blocking 1 -translation binary
 	set contDone 0
     }
     if {[info exists state(-method)] && ($state(-method) ne "")} {
 	set how $state(-method)
-    }
-    # We cannot handle chunked encodings with -handler, so force HTTP/1.0
-    # until we can manage this.
-    if {[info exists state(-handler)]} {
-	set state(-protocol) 1.0
     }
     set accept_types_seen 0
 
@@ -1363,7 +1368,7 @@ proc http::Connected {token proto phost srvurl} {
 	    puts $sock "Host: $host:$port"
 	}
 	puts $sock "User-Agent: $http(-useragent)"
-	if {($state(-protocol) >= 1.0) && $state(-keepalive)} {
+	if {($state(-protocol) > 1.0) && $state(-keepalive)} {
 	    # Send this header, because a 1.1 server is not compelled to treat
 	    # this as the default.
 	    puts $sock "Connection: keep-alive"
@@ -1371,9 +1376,17 @@ proc http::Connected {token proto phost srvurl} {
 	if {($state(-protocol) > 1.0) && !$state(-keepalive)} {
 	    puts $sock "Connection: close" ;# RFC2616 sec 8.1.2.1
 	}
-	if {[info exists phost] && ($phost ne "") && $state(-keepalive)} {
-	    puts $sock "Proxy-Connection: Keep-Alive"
+	if {($state(-protocol) < 1.1)} {
+	    # RFC7230 A.1
+	    # Some server implementations of HTTP/1.0 have a faulty
+	    # implementation of RFC 2068 Keep-Alive.
+	    # Don't leave this to chance.
+	    # For HTTP/1.0 we have already "set state(connection) close"
+	    # and "state(-keepalive) 0".
+	    puts $sock "Connection: close"
 	}
+	# RFC7230 A.1 - "clients are encouraged not to send the
+	# Proxy-Connection header field in any requests"
 	set accept_encoding_seen 0
 	set content_type_seen 0
 	dict for {key value} $state(-headers) {
@@ -1633,8 +1646,50 @@ proc http::ReceiveResponse {token} {
     Log ^D$tk begin receiving response - token $token
 
     coroutine ${token}EventCoroutine http::Event $sock $token
-    fileevent $sock readable ${token}EventCoroutine
+    if {[info exists state(-handler)] || [info exists state(-progress)]} {
+        fileevent $sock readable [list http::EventGateway $sock $token]
+    } else {
+        fileevent $sock readable ${token}EventCoroutine
+    }
+    return
 }
+
+
+# http::EventGateway
+#
+#	Bug [c2dc1da315].
+#	- Recursive launch of the coroutine can occur if a -handler or -progress
+#	  callback is used, and the callback command enters the event loop.
+#	- To prevent this, the fileevent "binding" is disabled while the
+#	  coroutine is in flight.
+#	- If a recursive call occurs despite these precautions, it is not
+#	  trapped and discarded here, because it is better to report it as a
+#	  bug.
+#	- Although this solution is believed to be sufficiently general, it is
+#	  used only if -handler or -progress is specified.  In other cases,
+#	  the coroutine is called directly.
+
+proc http::EventGateway {sock token} {
+    variable $token
+    upvar 0 $token state
+    fileevent $sock readable {}
+    catch {${token}EventCoroutine} res opts
+    if {[info commands ${token}EventCoroutine] ne {}} {
+        # The coroutine can be deleted by completion (a non-yield return), by
+        # http::Finish (when there is a premature end to the transaction), by
+        # http::reset or http::cleanup, or if the caller set option -channel
+        # but not option -handler: in the last case reading from the socket is
+        # now managed by commands ::http::Copy*, http::ReceiveChunked, and
+        # http::make-transformation-chunked.
+        #
+        # Catch in case the coroutine has closed the socket.
+        catch {fileevent $sock readable [list http::EventGateway $sock $token]}
+    }
+
+    # If there was an error, re-throw it.
+    return -options $opts $res
+}
+
 
 # http::NextPipelinedWrite
 #
@@ -2690,8 +2745,32 @@ proc http::Event {sock token} {
 			}
 			proxy-connection -
 			connection {
-			    set state(connection) \
-				    [string trim [string tolower $value]]
+			    set tmpHeader [string trim [string tolower $value]]
+			    # RFC 7230 Section 6.1 states that a comma-separated
+			    # list is an acceptable value.  According to
+			    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection
+			    # any comma-separated list implies keep-alive, but I
+			    # don't see this in the RFC so we'll play safe and
+			    # scan any list for "close".
+			    if {$tmpHeader in {close keep-alive}} {
+				# The common cases, continue.
+			    } elseif {[string first , $tmpHeader] < 0} {
+				# Not a comma-separated list, not "close",
+				# therefore "keep-alive".
+				set tmpHeader keep-alive
+			    } else {
+				set tmpResult keep-alive
+				set tmpCsl [split $tmpHeader ,]
+				# Optional whitespace either side of separator.
+				foreach el $tmpCsl {
+				    if {[string trim $el] eq {close}} {
+					set tmpResult close
+					break
+				    }
+			        }
+				set tmpHeader $tmpResult
+			    }
+			    set state(connection) $tmpHeader
 			}
 		    }
 		    lappend state(meta) $key [string trim $value]

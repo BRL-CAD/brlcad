@@ -21,10 +21,11 @@ gettimeofday(
     struct timezone *tz)
 {
     struct timeb t;
+    (void)tz;
 
     ftime(&t);
     tp->tv_sec = t.time;
-    tp->tv_usec = t. millitm * 1000;
+    tp->tv_usec = t.millitm * 1000;
     return 0;
 }
 

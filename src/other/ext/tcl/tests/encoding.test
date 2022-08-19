@@ -8,12 +8,13 @@
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require tcltest 2
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
+    namespace import -force ::tcltest::*
+}
 
 namespace eval ::tcl::test::encoding {
     variable x
-
-namespace import -force ::tcltest::*
 
 catch {
     ::tcltest::loadTestedCommands
@@ -34,7 +35,10 @@ proc runtests {} {
 
 # Some tests require the testencoding command
 testConstraint testencoding [llength [info commands testencoding]]
-testConstraint fullutf [expr {[format %c 0x010000] != "\ufffd"}]
+testConstraint testbytestring [llength [info commands testbytestring]]
+testConstraint teststringbytes [llength [info commands teststringbytes]]
+testConstraint ucs2 [expr {[format %c 0x010000] eq "\uFFFD"}]
+testConstraint fullutf [expr {[format %c 0x010000] ne "\uFFFD"}]
 testConstraint exec [llength [info commands exec]]
 testConstraint testgetdefenc [llength [info commands testgetdefenc]]
 
@@ -282,16 +286,16 @@ test encoding-11.6 {LoadEncodingFile: invalid file} -constraints {testencoding} 
 # OpenEncodingFile is fully tested by the rest of the tests in this file.
 
 test encoding-12.1 {LoadTableEncoding: normal encoding} {
-    set x [encoding convertto iso8859-3 \u120]
-    append x [encoding convertto iso8859-3 \ud5]
-    append x [encoding convertfrom iso8859-3 \xd5]
+    set x [encoding convertto iso8859-3 \u0120]
+    append x [encoding convertto iso8859-3 \xD5]
+    append x [encoding convertfrom iso8859-3 \xD5]
 } "\xd5?\u120"
 test encoding-12.2 {LoadTableEncoding: single-byte encoding} {
     set x [encoding convertto iso8859-3 ab\u0120g]
-    append x [encoding convertfrom iso8859-3 ab\xd5g]
+    append x [encoding convertfrom iso8859-3 ab\xD5g]
 } "ab\xd5gab\u120g"
 test encoding-12.3 {LoadTableEncoding: multi-byte encoding} {
-    set x [encoding convertto shiftjis ab\u4e4eg]
+    set x [encoding convertto shiftjis ab\u4E4Eg]
     append x [encoding convertfrom shiftjis ab\x8c\xc1g]
 } "ab\x8c\xc1gab\u4e4eg"
 test encoding-12.4 {LoadTableEncoding: double-byte encoding} {
@@ -303,6 +307,9 @@ test encoding-12.5 {LoadTableEncoding: symbol encoding} {
     append x [encoding convertto symbol \u67]
     append x [encoding convertfrom symbol \x67]
 } "\x67\x67\u3b3"
+test encoding-12.6 {LoadTableEncoding: overflow in char value} ucs2 {
+    encoding convertto iso8859-3 \U010000
+} "?"
 
 test encoding-13.1 {LoadEscapeTable} {
     viewable [set x [encoding convertto iso2022 ab\u4e4e\u68d9g]]
@@ -315,35 +322,31 @@ test encoding-14.1 {BinaryProc} {
 test encoding-15.1 {UtfToUtfProc} {
     encoding convertto utf-8 \xa3
 } "\xc2\xa3"
-test encoding-15.2 {UtfToUtfProc null character output} {
-    set x \u0000
-    set y [encoding convertto utf-8 \u0000]
-    set y [encoding convertfrom identity $y]
-    binary scan $y H* z
-    list [string bytelength $x] [string bytelength $y] $z
-} {2 1 00}
-test encoding-15.3 {UtfToUtfProc null character input} {
-    set x [encoding convertfrom identity \x00]
-    set y [encoding convertfrom utf-8 $x]
-    binary scan [encoding convertto identity $y] H* z
-    list [string bytelength $x] [string bytelength $y] $z
-} {1 2 c080}
-test encoding-15.4 {UtfToUtfProc emoji character input} {
+test encoding-15.2 {UtfToUtfProc null character output} testbytestring {
+    binary scan [testbytestring [encoding convertto utf-8 \u0000]] H* z
+    set z
+} 00
+test encoding-15.3 {UtfToUtfProc null character input} teststringbytes {
+    set y [encoding convertfrom utf-8 [encoding convertto utf-8 \u0000]]
+    binary scan [teststringbytes $y] H* z
+    set z
+} c080
+test encoding-15.4 {UtfToUtfProc emoji character input} -body {
     set x \xED\xA0\xBD\xED\xB8\x82
     set y [encoding convertfrom utf-8 \xED\xA0\xBD\xED\xB8\x82]
-    list [string length $x] [string length $y] $y
-} "6 2 \uD83D\uDE02"
+    list [string length $x] $y
+} -result "6 \uD83D\uDE02"
 test encoding-15.5 {UtfToUtfProc emoji character input} {
     set x \xF0\x9F\x98\x82
     set y [encoding convertfrom utf-8 \xF0\x9F\x98\x82]
-    list [string length $x] [string length $y] $y
-} "4 2 \uD83D\uDE02"
+    list [string length $x] $y
+} "4 \uD83D\uDE02"
 test encoding-15.6 {UtfToUtfProc emoji character output} {
     set x \uDE02\uD83D\uDE02\uD83D
     set y [encoding convertto utf-8 \uDE02\uD83D\uDE02\uD83D]
     binary scan $y H* z
-    list [string length $x] [string length $y] $z
-} {4 10 edb882f09f9882eda0bd}
+    list [string length $y] $z
+} {10 edb882f09f9882eda0bd}
 test encoding-15.7 {UtfToUtfProc emoji character output} {
     set x \uDE02\uD83D\uD83D
     set y [encoding convertto utf-8 \uDE02\uD83D\uD83D]
@@ -362,19 +365,70 @@ test encoding-15.9 {UtfToUtfProc emoji character output} {
     binary scan $y H* z
     list [string length $x] [string length $y] $z
 } {3 7 edb882eda0bd58}
+test encoding-15.10 {UtfToUtfProc high surrogate character output} {
+    set x \uDE02\xE9
+    set y [encoding convertto utf-8 \uDE02\xE9]
+    binary scan $y H* z
+    list [string length $x] [string length $y] $z
+} {2 5 edb882c3a9}
+test encoding-15.11 {UtfToUtfProc low surrogate character output} {
+    set x \uDA02\xE9
+    set y [encoding convertto utf-8 \uDA02\xE9]
+    binary scan $y H* z
+    list [string length $x] [string length $y] $z
+} {2 5 eda882c3a9}
+test encoding-15.12 {UtfToUtfProc high surrogate character output} {
+    set x \uDE02Y
+    set y [encoding convertto utf-8 \uDE02Y]
+    binary scan $y H* z
+    list [string length $x] [string length $y] $z
+} {2 4 edb88259}
+test encoding-15.13 {UtfToUtfProc low surrogate character output} {
+    set x \uDA02Y
+    set y [encoding convertto utf-8 \uDA02Y]
+    binary scan $y H* z
+    list [string length $x] [string length $y] $z
+} {2 4 eda88259}
+test encoding-15.14 {UtfToUtfProc high surrogate character output} {
+    set x \uDE02
+    set y [encoding convertto utf-8 \uDE02]
+    binary scan $y H* z
+    list [string length $x] [string length $y] $z
+} {1 3 edb882}
+test encoding-15.15 {UtfToUtfProc low surrogate character output} {
+    set x \uDA02
+    set y [encoding convertto utf-8 \uDA02]
+    binary scan $y H* z
+    list [string length $x] [string length $y] $z
+} {1 3 eda882}
+test encoding-15.16 {UtfToUtfProc: Invalid 4-byte UTF-8, see [ed29806ba]} {
+    set x \xF0\xA0\xA1\xC2
+    set y [encoding convertfrom utf-8 \xF0\xA0\xA1\xC2]
+    list [string length $x] $y
+} "4 \xF0\xA0\xA1\xC2"
 
 test encoding-16.1 {UnicodeToUtfProc} {
     set val [encoding convertfrom unicode NN]
     list $val [format %x [scan $val %c]]
 } "\u4e4e 4e4e"
 test encoding-16.2 {UnicodeToUtfProc} -constraints fullutf -body {
-    set val [encoding convertfrom unicode "\xd8\xd8\xdc\xdc"]
+    set val [encoding convertfrom unicode "\xD8\xD8\xDC\xDC"]
     list $val [format %x [scan $val %c]]
-} -result "\U460dc 460dc"
+} -result "\U460DC 460dc"
+test encoding-16.3 {UnicodeToUtfProc} -body {
+    set val [encoding convertfrom unicode "\xDC\xDC"]
+    list $val [format %x [scan $val %c]]
+} -result "\uDCDC dcdc"
 
 test encoding-17.1 {UtfToUnicodeProc} -constraints fullutf -body {
-    encoding convertto unicode "\U460dc"
-} -result "\xd8\xd8\xdc\xdc"
+    encoding convertto unicode "\U460DC"
+} -result "\xD8\xD8\xDC\xDC"
+test encoding-17.2 {UtfToUnicodeProc} -body {
+    encoding convertto unicode "\uDCDC"
+} -result "\xDC\xDC"
+test encoding-17.3 {UtfToUnicodeProc} -body {
+    encoding convertto unicode "\uD8D8"
+} -result "\xD8\xD8"
 
 test encoding-18.1 {TableToUtfProc} {
 } {}
@@ -661,6 +715,21 @@ test encoding-27.2 {encoding dirs basic behavior} -returnCodes error -body {
 } -result "expected directory list but got \"\{not a list\""
 
 }
+
+
+test encoding-28.0 {all encodings load} -body {
+	set string hello
+	foreach name [encoding names] {
+		incr count
+		encoding convertto $name $string
+
+		# discard the cached internal representation of Tcl_Encoding
+		# Unfortunately, without this, encoding 2-1 fails.
+		llength $name
+	}
+	return $count
+} -result 83
+
 runtests
 
 }

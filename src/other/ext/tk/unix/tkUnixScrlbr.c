@@ -63,7 +63,7 @@ TkScrollbar *
 TkpCreateScrollbar(
     Tk_Window tkwin)
 {
-    UnixScrollbar *scrollPtr = ckalloc(sizeof(UnixScrollbar));
+    UnixScrollbar *scrollPtr = (UnixScrollbar *)ckalloc(sizeof(UnixScrollbar));
 
     scrollPtr->troughGC = NULL;
     scrollPtr->copyGC = NULL;
@@ -97,8 +97,8 @@ void
 TkpDisplayScrollbar(
     ClientData clientData)	/* Information about window. */
 {
-    register TkScrollbar *scrollPtr = (TkScrollbar *) clientData;
-    register Tk_Window tkwin = scrollPtr->tkwin;
+    TkScrollbar *scrollPtr = (TkScrollbar *)clientData;
+    Tk_Window tkwin = scrollPtr->tkwin;
     XPoint points[7];
     Tk_3DBorder border;
     int relief, width, elementBorderWidth;
@@ -277,7 +277,7 @@ TkpDisplayScrollbar(
 
 extern void
 TkpComputeScrollbarGeometry(
-    register TkScrollbar *scrollPtr)
+    TkScrollbar *scrollPtr)
 				/* Scrollbar whose geometry may have
 				 * changed. */
 {
@@ -394,22 +394,22 @@ TkpDestroyScrollbar(
 
 void
 TkpConfigureScrollbar(
-    register TkScrollbar *scrollPtr)
+    TkScrollbar *scrollPtr)
 				/* Information about widget; may or may not
 				 * already have values for some fields. */
 {
     XGCValues gcValues;
-    GC new;
+    GC newGC;
     UnixScrollbar *unixScrollPtr = (UnixScrollbar *) scrollPtr;
 
     Tk_SetBackgroundFromBorder(scrollPtr->tkwin, scrollPtr->bgBorder);
 
     gcValues.foreground = scrollPtr->troughColorPtr->pixel;
-    new = Tk_GetGC(scrollPtr->tkwin, GCForeground, &gcValues);
+    newGC = Tk_GetGC(scrollPtr->tkwin, GCForeground, &gcValues);
     if (unixScrollPtr->troughGC != NULL) {
 	Tk_FreeGC(scrollPtr->display, unixScrollPtr->troughGC);
     }
-    unixScrollPtr->troughGC = new;
+    unixScrollPtr->troughGC = newGC;
     if (unixScrollPtr->copyGC == NULL) {
 	gcValues.graphics_exposures = False;
 	unixScrollPtr->copyGC = Tk_GetGC(scrollPtr->tkwin,
@@ -437,12 +437,12 @@ TkpConfigureScrollbar(
 
 int
 TkpScrollbarPosition(
-    register TkScrollbar *scrollPtr,
+    TkScrollbar *scrollPtr,
 				/* Scrollbar widget record. */
     int x, int y)		/* Coordinates within scrollPtr's window. */
 {
     int length, width, tmp;
-    register const int inset = scrollPtr->inset;
+    const int inset = scrollPtr->inset;
 
     if (scrollPtr->vertical) {
 	length = Tk_Height(scrollPtr->tkwin);

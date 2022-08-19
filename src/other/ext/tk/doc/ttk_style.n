@@ -34,28 +34,8 @@ The \fBttk::style\fR command takes the following arguments:
 \fBttk::style configure \fIstyle\fR ?\fI\-option\fR ?\fIvalue option value...\fR? ?
 Sets the default value of the specified option(s) in \fIstyle\fR.
 .TP
-\fBttk::style map \fIstyle\fR ?\fI\-option\fB { \fIstatespec value...\fB }\fR?
-Sets dynamic values of the specified option(s) in \fIstyle\fR.
-Each \fIstatespec / value\fR pair is examined in order;
-the value corresponding to the first matching \fIstatespec\fR
-is used.
-.TP
-\fBttk::style lookup \fIstyle\fR \fI\-option \fR?\fIstate \fR?\fIdefault\fR??
-Returns the value specified for \fI\-option\fR in style \fIstyle\fR
-in state \fIstate\fR, using the standard lookup rules for element options.
-\fIstate\fR is a list of state names; if omitted,
-it defaults to all bits off (the
-.QW normal
-state).
-If the \fIdefault\fR argument is present, it is used as a fallback
-value in case no specification for \fI\-option\fR is found.
-.\" Otherwise -- signal error? return empty string? Leave unspecified for now.
-.TP
-\fBttk::style layout \fIstyle\fR ?\fIlayoutSpec\fR?
-Define the widget layout for style \fIstyle\fR.
-See \fBLAYOUTS\fR below for the format of \fIlayoutSpec\fR.
-If \fIlayoutSpec\fR is omitted, return the layout specification
-for style \fIstyle\fR.
+\fBttk::style element\fR \fIargs\fR
+.RS
 .TP
 \fBttk::style element create\fR \fIelementName\fR \fItype\fR ?\fIargs...\fR?
 Creates a new element in the current theme of type \fItype\fR.
@@ -70,6 +50,33 @@ Returns the list of elements defined in the current theme.
 .TP
 \fBttk::style element options \fIelement\fR
 Returns the list of \fIelement\fR's options.
+.RE
+.TP
+\fBttk::style layout \fIstyle\fR ?\fIlayoutSpec\fR?
+Define the widget layout for style \fIstyle\fR.
+See \fBLAYOUTS\fR below for the format of \fIlayoutSpec\fR.
+If \fIlayoutSpec\fR is omitted, return the layout specification
+for style \fIstyle\fR.
+.TP
+\fBttk::style lookup \fIstyle\fR \fI\-option \fR?\fIstate \fR?\fIdefault\fR??
+Returns the value specified for \fI\-option\fR in style \fIstyle\fR
+in state \fIstate\fR, using the standard lookup rules for element options.
+\fIstate\fR is a list of state names; if omitted,
+it defaults to all bits off (the
+.QW normal
+state).
+If the \fIdefault\fR argument is present, it is used as a fallback
+value in case no specification for \fI\-option\fR is found.
+.\" Otherwise -- signal error? return empty string? Leave unspecified for now.
+.TP
+\fBttk::style map \fIstyle\fR ?\fI\-option\fB { \fIstatespec value...\fB }\fR?
+Sets dynamic values of the specified option(s) in \fIstyle\fR.
+Each \fIstatespec / value\fR pair is examined in order;
+the value corresponding to the first matching \fIstatespec\fR
+is used.
+.TP
+\fBttk::style theme\fR \fIargs\fR
+.RS
 .TP
 \fBttk::style theme create\fR \fIthemeName\fR ?\fB\-parent \fIbasedon\fR? ?\fB\-settings \fIscript...\fR ?
 Creates a new theme.  It is an error if \fIthemeName\fR already exists.
@@ -78,19 +85,20 @@ styles, elements, and layouts from the parent theme \fIbasedon\fR.
 If \fB\-settings\fR is present, \fIscript\fR is evaluated in the
 context of the new theme as per \fBttk::style theme settings\fR.
 .TP
+\fBttk::style theme names\fR
+Returns a list of all known themes.
+.TP
 \fBttk::style theme settings \fIthemeName\fR \fIscript\fR
 Temporarily sets the current theme to \fIthemeName\fR,
 evaluate \fIscript\fR, then restore the previous theme.
 Typically \fIscript\fR simply defines styles and elements,
 though arbitrary Tcl code may appear.
 .TP
-\fBttk::style theme names\fR
-Returns a list of all known themes.
-.TP
 \fBttk::style theme use\fR ?\fIthemeName\fR?
 Without an argument the result is the name of the current theme.
 Otherwise this command sets the current theme to \fIthemeName\fR,
 and refreshes all widgets.
+.RE
 .SH LAYOUTS
 .PP
 A \fIlayout\fR specifies a list of elements, each followed
@@ -98,19 +106,40 @@ by one or more options specifying how to arrange the element.
 The layout mechanism uses a simplified version of the \fBpack\fR
 geometry manager: given an initial cavity,
 each element is allocated a parcel.
+Then the parcel actually used by the element is adjusted within
+the allocated parcel.
 Valid options are:
+.\" -border should remain undocumented for now (dubious usefulness)
+.\" .TP
+.\" \fB\-border\fR \fIboolean\fR
+.\" Specifies whether the element is drawn after its children. Defaults to 0.
+.TP
+\fB\-children { \fIsublayout...\fB }\fR
+Specifies a list of elements to place inside the element.
+.TP
+\fB\-expand\fR \fIboolean\fR
+Specifies whether the allocated parcel is the entire cavity. If so,
+simultaneous specification of \fB\-side\fR is ignored.
+Defaults to 0.
 .TP
 \fB\-side \fIside\fR
 Specifies which side of the cavity to place the element;
 one of \fBleft\fR, \fBright\fR, \fBtop\fR, or \fBbottom\fR.
-If omitted, the element occupies the entire cavity.
+For instance, \fB\-side top\fR allocates the parcel along the top of
+the cavity having width and height respectively the width of the cavity
+and the height of the element.
+If omitted, the allocated parcel is the entire cavity (same effect
+as \fB\-expand\fR 1).
 .TP
 \fB\-sticky\fR \fB[\fInswe\fB]\fR
-Specifies where the element is placed inside its allocated parcel.
-.TP
-\fB\-children { \fIsublayout... \fB}\fR
-Specifies a list of elements to place inside the element.
-.\" Also: -border, -unit, -expand: may go away.
+Specifies the actual parcel position and size inside the allocated parcel.
+If specified as an empty string then the actual parcel is centered in
+the allocated parcel. Default is \fBnswe\fR.
+.\" -unit should remain undocumented for now (dubious usefulness)
+.\" .TP
+.\" \fB\-unit\fR \fIboolean\fR
+.\" Specifies whether the element propagates its state to its children.
+.\" Defaults to 0.
 .PP
 For example:
 .CS

@@ -108,7 +108,7 @@ test cursor-2.3 {Tk_GetCursor procedure: cursor specs are lists} -constraints {
 } -cleanup {
     destroy .b
 	removeDirectory $wincur(dir)
-	unset wincur	
+	unset wincur
 } -result {.b}
 test cursor-2.4 {Tk_GetCursor procedure: cursor specs are lists} -constraints {
     win

@@ -45,7 +45,7 @@ test grid-1.1 {basic argument checking} -body {
 } -returnCodes error -result {wrong # args: should be "grid option arg ?arg ...?"}
 test grid-1.2 {basic argument checking} -body {
     grid foo bar
-} -returnCodes error -result {bad option "foo": must be anchor, bbox, columnconfigure, configure, forget, info, location, propagate, remove, rowconfigure, size, or slaves}
+} -returnCodes error -result {bad option "foo": must be anchor, bbox, columnconfigure, configure, content, forget, info, location, propagate, remove, rowconfigure, size, or slaves}
 test grid-1.3 {basic argument checking} -body {
     button .b
     grid .b -row 0 -column
@@ -145,7 +145,7 @@ test grid-3.1 {configure: basic argument checking} -body {
 test grid-3.2 {configure: basic argument checking} -body {
     button .b
     grid configure .b
-    grid slaves .
+    grid content .
 } -cleanup {
     grid_reset 3.2
 } -result {.b}
@@ -183,7 +183,7 @@ test grid-3.7 {configure: basic argument checking} -body {
 test grid-3.8 {configure: basic argument checking} -body {
     button .b
     grid configure x .b
-    grid slaves .
+    grid content .
 } -cleanup {
     grid_reset 3.8
 } -result {.b}
@@ -193,7 +193,7 @@ test grid-3.9 {configure: basic argument checking} -body {
 } -cleanup {
     grid_reset 3.9
 } -returnCodes error -result {invalid window shortcut, "y" should be '-', 'x', or '^'}
-test grid-3.10 {ConfigureSlave procedure, bad -in option} -body {
+test grid-3.10 {ConfigureContent procedure, bad -in option} -body {
     frame .f
     grid .f -in .f
 } -cleanup {
@@ -224,9 +224,9 @@ test grid-4.1 {forget: basic argument checking} -body {
 test grid-4.2 {forget} -body {
     button .c
     grid [button .b]
-    set a [grid slaves .]
+    set a [grid content .]
     grid forget .b .c
-    lappend a [grid slaves .]
+    lappend a [grid content .]
     return $a
 } -cleanup {
     grid_reset 4.2
@@ -516,43 +516,43 @@ test grid-8.6 {size} -body {
     grid_reset 8.6
 } -result {{51 11} {51 11} {31 11} {21 11} {16 1} {1 1}}
 
-test grid-9.1 {slaves} -body {
-    grid slaves .
+test grid-9.1 {content} -body {
+    grid content .
 } -returnCodes ok -result {}
-test grid-9.2 {slaves} -body {
-    grid slaves .foo
+test grid-9.2 {content} -body {
+    grid content .foo
 } -returnCodes error -result {bad window path name ".foo"}
-test grid-9.3 {slaves} -body {
-    grid slaves a b
-} -returnCodes error -result {wrong # args: should be "grid slaves window ?-option value ...?"}
-test grid-9.4 {slaves} -body {
-    grid slaves . a b
+test grid-9.3 {content} -body {
+    grid content a b
+} -returnCodes error -result {wrong # args: should be "grid content window ?-option value ...?"}
+test grid-9.4 {content} -body {
+    grid content . a b
 } -returnCodes error -result {bad option "a": must be -column or -row}
-test grid-9.5 {slaves} -body {
-    grid slaves . -column x
+test grid-9.5 {content} -body {
+    grid content . -column x
 } -returnCodes error -result {expected integer but got "x"}
-test grid-9.6 {slaves} -body {
-    grid slaves . -row -3
+test grid-9.6 {content} -body {
+    grid content . -row -3
 } -returnCodes error -result {-3 is an invalid value: should NOT be < 0}
-test grid-9.7 {slaves} -body {
-    grid slaves . -foo 3
+test grid-9.7 {content} -body {
+    grid content . -foo 3
 } -returnCodes error -result {bad option "-foo": must be -column or -row}
-test grid-9.8 {slaves} -body {
-    grid slaves .x -row 3
+test grid-9.8 {content} -body {
+    grid content .x -row 3
 } -returnCodes error -result {bad window path name ".x"}
-test grid-9.9 {slaves} -body {
-    grid slaves . -row 3
+test grid-9.9 {content} -body {
+    grid content . -row 3
 } -returnCodes ok -result {}
-test grid-9.10 {slaves} -body {
+test grid-9.10 {content} -body {
     foreach i {0 1 2} {
 	label .$i -text $i
 	grid .$i -row $i -column $i
     }
-    grid slaves .
+    grid content .
 } -cleanup {
     grid_reset 9.10
 } -result {.2 .1 .0}
-test grid-9.11 {slaves} -body {
+test grid-9.11 {content} -body {
     catch {unset a}
     foreach i {0 1 2} {
 	label .$i -text $i
@@ -561,10 +561,10 @@ test grid-9.11 {slaves} -body {
 	grid .$i-x -row $i -column [incr i]
     }
     foreach row {0 1 2 3} {
-	lappend a $row{[grid slaves . -row $row]}
+	lappend a $row{[grid content . -row $row]}
     }
     foreach col {0 1 2 3} {
-	lappend a $col{[grid slaves . -column $col]}
+	lappend a $col{[grid content . -column $col]}
     }
     return $a
 } -cleanup {
@@ -1305,10 +1305,10 @@ test grid-13.20 {reparenting} -body {
     grid .b -in .1
     set a ""
     catch {unset info}; array set info [grid info .b]
-    lappend a [grid slaves .1],[grid slaves .2],$info(-in)
+    lappend a [grid content .1],[grid content .2],$info(-in)
     grid .b -in .2
     catch {unset info}; array set info [grid info .b]
-    lappend a [grid slaves .1],[grid slaves .2],$info(-in)
+    lappend a [grid content .1],[grid content .2],$info(-in)
     unset info
     return $a
 } -cleanup {
@@ -1369,27 +1369,27 @@ test grid-14.3 {map notify: bug 1648} -constraints {nonPortable} -body {
     grid_reset 14.3
 } -result {.2 2 .0 1 . 2 .1 1}
 
-test grid-15.1 {lost slave} -body {
+test grid-15.1 {lost content} -body {
     button .b
     grid .b
-    set a [grid slaves .]
+    set a [grid content .]
     pack .b
-    lappend a [grid slaves .]
+    lappend a [grid content .]
     grid .b
-    lappend a [grid slaves .]
+    lappend a [grid content .]
 } -cleanup {
     grid_reset 15.1
 } -result {.b {} .b}
-test grid-15.2 {lost slave} -body {
+test grid-15.2 {lost content} -body {
     frame .f
     grid .f
     button .b
     grid .b -in .f
-    set a [grid slaves .f]
+    set a [grid content .f]
     pack .b -in .f
-    lappend a [grid slaves .f]
+    lappend a [grid content .f]
     grid .b -in .f
-    lappend a [grid slaves .f]
+    lappend a [grid content .f]
 } -cleanup {
     grid_reset 15.2
 } -result {.b {} .b}
@@ -1975,9 +1975,9 @@ test grid-22.1 {remove: basic argument checking} {
 test grid-22.2 {remove} {
     button .c
     grid [button .b]
-    set a [grid slaves .]
+    set a [grid content .]
     grid remove .b .c
-    lappend a [grid slaves .]
+    lappend a [grid content .]
     return $a
 } {.b {}}
 grid_reset 22.2
@@ -2024,7 +2024,7 @@ test grid-22.5 {remove} {
 } {-in . -column 0 -row 0 -columnspan 2 -rowspan 2 -ipadx 0 -ipady 0 -padx {3 5} -pady {4 7} -sticky ns}
 grid_reset 22.5
 
-test grid-23 {grid configure -in leaked from previous master - bug
+test grid-23 {grid configure -in leaked from previous container window - bug
               6aea69fccbb266b7f0437686379fbe5b55442958} {
     frame .f
     frame .g
