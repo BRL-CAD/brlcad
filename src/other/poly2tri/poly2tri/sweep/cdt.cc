@@ -32,55 +32,64 @@
 
 namespace p2t {
 
-CDT::CDT()
-{
-  sweep_context_ = new SweepContext();
-  sweep_ = new Sweep;
+    CDT::CDT()
+    {
+	sweep_context_ = new SweepContext();
+	sweep_ = new Sweep;
+    }
+
+    CDT::CDT(std::vector<Point*> &polyline)
+    {
+	sweep_context_ = new SweepContext(polyline);
+	sweep_ = new Sweep;
+    }
+
+    void CDT::AddOuterLoop(std::vector<Point*> &polyline)
+    {
+	sweep_context_->AddOuterLoop(polyline);
+    }
+    void CDT::AddHole(std::vector<Point*> &polyline)
+    {
+	sweep_context_->AddHole(polyline);
+    }
+
+    void CDT::AddPoint(Point* point) {
+	sweep_context_->AddPoint(point);
+    }
+
+    std::vector<Point*>& CDT::GetPoints() {
+	return sweep_context_->GetPoints();
+    }
+
+    void CDT::Triangulate(bool finalize, int num_points)
+    {
+	sweep_->Triangulate(*sweep_context_, finalize, num_points);
+    }
+
+    std::vector<p2t::Triangle*>& CDT::GetTriangles()
+    {
+	return sweep_context_->GetTriangles();
+    }
+
+    std::list<p2t::Triangle*>& CDT::GetMap()
+    {
+	return sweep_context_->GetMap();
+    }
+
+    CDT::~CDT()
+    {
+	delete sweep_context_;
+	delete sweep_;
+    }
+
 }
 
-CDT::CDT(std::vector<Point*> &polyline)
-{
-  sweep_context_ = new SweepContext(polyline);
-  sweep_ = new Sweep;
-}
-
-void CDT::AddOuterLoop(std::vector<Point*> &polyline)
-{
-  sweep_context_->AddOuterLoop(polyline);
-}
-void CDT::AddHole(std::vector<Point*> &polyline)
-{
-  sweep_context_->AddHole(polyline);
-}
-
-void CDT::AddPoint(Point* point) {
-  sweep_context_->AddPoint(point);
-}
-
-std::vector<Point*>& CDT::GetPoints() {
-  return sweep_context_->GetPoints();
-}
-
-void CDT::Triangulate(bool finalize, int num_points)
-{
-  sweep_->Triangulate(*sweep_context_, finalize, num_points);
-}
-
-std::vector<p2t::Triangle*>& CDT::GetTriangles()
-{
-  return sweep_context_->GetTriangles();
-}
-
-std::list<p2t::Triangle*>& CDT::GetMap()
-{
-  return sweep_context_->GetMap();
-}
-
-CDT::~CDT()
-{
-  delete sweep_context_;
-  delete sweep_;
-}
-
-}
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
 

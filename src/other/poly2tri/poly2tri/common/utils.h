@@ -34,26 +34,35 @@
 
 namespace p2t {
 
-struct Point;
-extern const double PI_3div4;
-extern const double PI_div2;
-extern const double EPSILON;
+    struct Point;
+    extern const double PI_3div4;
+    extern const double PI_div2;
+    extern const double EPSILON;
 
-enum Orientation { CW, CCW, COLLINEAR, INVALID_ORIENTATION };
+    enum Orientation { CW, CCW, COLLINEAR, INVALID_ORIENTATION };
 
-/**
- * Forumla to calculate signed area<br>
- * Positive if CCW<br>
- * Negative if CW<br>
- * 0 if collinear<br>
- * <pre>
- * A[P1,P2,P3]  =  (x1*y2 - y1*x2) + (x2*y3 - y2*x3) + (x3*y1 - y3*x1)
- *              =  (x1-x3)*(y2-y3) - (y1-y3)*(x2-x3)
- * </pre>
- */
-extern Orientation Orient2d(Point *pa, Point *pb, Point *pc);
-extern bool InScanArea(Point *pa, Point *pb, Point *pc, Point *pd);
+    /**
+     * Forumla to calculate signed area<br>
+     * Positive if CCW<br>
+     * Negative if CW<br>
+     * 0 if collinear<br>
+     * <pre>
+     * A[P1,P2,P3]  =  (x1*y2 - y1*x2) + (x2*y3 - y2*x3) + (x3*y1 - y3*x1)
+     *              =  (x1-x3)*(y2-y3) - (y1-y3)*(x2-x3)
+     * </pre>
+     */
+    extern Orientation Orient2d(Point *pa, Point *pb, Point *pc);
+    extern bool InScanArea(Point *pa, Point *pb, Point *pc, Point *pd);
 }
 
 #endif
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
 
