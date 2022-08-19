@@ -367,6 +367,7 @@ if (COMMAND CMAKEFILES)
     CMake/FindPROJ4.cmake
     CMake/FindRE2C.cmake
     CMake/FindREGEX.cmake
+    CMake/FindSQLite3.cmake
     CMake/FindSTEPCODE.cmake
     CMake/FindTCL.cmake
     CMake/FindUTAHRLE.cmake
