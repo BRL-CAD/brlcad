@@ -310,7 +310,7 @@ readRppmRow(FILE *       const fileP,
         free(rowBuffer);
     }
     if (error) {
-        pm_errormsg("%s", error);
+        pm_error("%s", error);
         free((void *)error);
         pm_longjmp();
     }

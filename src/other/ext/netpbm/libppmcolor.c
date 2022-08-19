@@ -748,7 +748,7 @@ ppm_readcolordict(const char *      const fileName,
                   &error);
 
     if (error) {
-        pm_errormsg("%s", error);
+        pm_error("%s", error);
         free((void *)error);
         ppm_freecolorhash(cht);
     } else {

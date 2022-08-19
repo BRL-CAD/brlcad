@@ -333,7 +333,7 @@ ppm_computecolorhash(pixel ** const pixels,
                      NULL, 0, 0, &cht, &error);
 
     if (error) {
-        pm_errormsg("%s", error);
+        pm_error("%s", error);
         free((void *)error);
         pm_longjmp();
     }
@@ -358,7 +358,7 @@ ppm_computecolorhash2(FILE * const ifP,
                      ifP, maxval, format, &cht, &error);
 
     if (error) {
-        pm_errormsg("%s", error);
+        pm_error("%s", error);
         free((void *)error);
         pm_longjmp();
     }
@@ -522,7 +522,7 @@ ppm_colorhisttocolorhash(colorhist_vector const chv,
             ppm_freecolorhash(cht);
     }
     if (error) {
-        pm_errormsg("%s", error);
+        pm_error("%s", error);
         free((void *)error);
         pm_longjmp();
     } else

@@ -66,7 +66,6 @@ if (BRLCAD_NETPBM_BUILD)
    pgm.h
    pm.h
    pm_gamma.h
-   pm_system.h
    pnm.h
    ppm.h
    ppmcmap.h
