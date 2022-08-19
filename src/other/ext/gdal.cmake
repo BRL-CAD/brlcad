@@ -58,6 +58,12 @@ if (BRLCAD_GDAL_BUILD)
 
   set(GDAL_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/gdal)
 
+
+  # This option list needs to get a LOT more extensive - see
+  # https://gdal.org/build_hints.html for more details.  We'll
+  # probably need to disable the optional packages by default
+  # and build up as we figure out which ones can be turned on
+  # without requiring additional dependencies
   ExternalProject_Add(GDAL_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/gdal"
     BUILD_ALWAYS ${EXT_BUILD_ALWAYS} ${LOG_OPTS}
@@ -75,9 +81,17 @@ if (BRLCAD_GDAL_BUILD)
     -DLIB_DIR=${LIB_DIR}
     -DPNG_LIBRARY=$<$<BOOL:${PNG_TARGET}>:${PNG_LIBRARY}>
     -DPNG_ROOT=${CMAKE_BINARY_ROOT}
-    -DPROJ4_ROOT=${CMAKE_BINARY_ROOT}
+    -DPROJ_ROOT=${CMAKE_BINARY_ROOT}
     -DZLIB_LIBRARY=$<$<BOOL:${ZLIB_TARGET}>:${ZLIB_LIBRARY}>
     -DZLIB_ROOT=${CMAKE_BINARY_ROOT}
+    -DGDAL_USE_EXTERNAL_LIBS=OFF
+    -DGDAL_USE_INTERNAL_LIBS=OFF
+    -DGDAL_USE_ZLIB=ON
+    -DGDAL_USE_JSONC_INTERNAL=ON
+    -DGDAL_USE_TIFF_INTERNAL=ON
+    -DGDAL_USE_GEOTIFF_INTERNAL=ON
+    -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF
+    -DOGR_BUILD_OPTIONAL_DRIVERS=OFF
     DEPENDS ${GDAL_DEPS}
     LOG_CONFIGURE ${EXT_BUILD_QUIET}
     LOG_BUILD ${EXT_BUILD_QUIET}
