@@ -97,7 +97,7 @@ pm_openw(const char * const name) {
 
 
 static const char *
-tmpDir(void) {
+tmpDir(char *tmpdir_aux_win32) {
 /*----------------------------------------------------------------------------
    Return the name of the directory in which we should create temporary
    files.
@@ -115,8 +115,14 @@ tmpDir(void) {
     if (!tmpdir || strlen(tmpdir) == 0)
         tmpdir = getenv("TEMP"); /* Windows convention */
 
-    if (!tmpdir || strlen(tmpdir) == 0)
+    if (!tmpdir || strlen(tmpdir) == 0) {
+#if defined(_MSC_VER) && (_MSC_VER > 1800)
+        GetTempPathA(MAX_PATH + 1, tmpdir_aux_win32);
+        tmpdir = tmpdir_aux_win32;
+#else
         tmpdir = TMPDIR;
+#endif
+    }
 
     return tmpdir;
 }
@@ -299,7 +305,12 @@ pm_make_tmpfile_fd(int *         const fdP,
 
     const char * dirseparator;
     const char * error = NULL;
-    const char * tmpdir = tmpDir();
+#if defined(_MSC_VER) && (_MSC_VER > 1800)
+    char tmpdir_aux_win32[MAX_PATH + 1];
+#else
+    char *tmpdir_aux_win32;
+#endif
+    const char * tmpdir = tmpDir(tmpdir_aux_win32);
 
     if (tmpdir[strlen(tmpdir) - 1] == '/')
         dirseparator = "";
