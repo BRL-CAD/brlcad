@@ -35,8 +35,6 @@ libppmcolor.c
 libppmd.c
 libppmfloyd.c
 libppmfuzzy.c
-libsystem.c
-libsystem_dummy.c
 lum.h
 pam.h
 pammap.h
