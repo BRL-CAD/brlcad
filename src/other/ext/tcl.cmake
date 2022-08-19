@@ -376,7 +376,6 @@ if (BRLCAD_TCL_BUILD)
     tclOODecls.h
     tclOO.h
     tclPlatDecls.h
-    tclThread.h
     tclTomMathDecls.h
     tclTomMath.h
     )
