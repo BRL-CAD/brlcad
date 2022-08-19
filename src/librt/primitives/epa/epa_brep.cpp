@@ -106,140 +106,96 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     double r1 = eip->epa_r1;
     double r2 = eip->epa_r2;
 
-    ON_4dPoint pt01 = ON_4dPoint(plane1_origin.x, plane1_origin.y, plane1_origin.z + h, 1);
+    ON_4dPoint pt01 = ON_4dPoint(0, 0, h, 1);
     epacurvedsurf->SetCV(0, 0, pt01);
-    ON_4dPoint pt02 = ON_4dPoint(plane1_origin.x, plane1_origin.y + r2 / 2, plane1_origin.z + h, 1);
+    ON_4dPoint pt02 = ON_4dPoint(0, r2/2, h, 1);
     epacurvedsurf->SetCV(0, 1, pt02);
-    ON_4dPoint pt03 = ON_4dPoint(plane1_origin.x, plane1_origin.y + r2, plane1_origin.z, 1);
+    ON_4dPoint pt03 = ON_4dPoint(0, r2, 0, 1);
     epacurvedsurf->SetCV(0, 2, pt03);
 
-    ON_4dPoint pt04 = ON_4dPoint(plane1_origin.x, plane1_origin.y, plane1_origin.z + h / sqrt(2.), 1 / sqrt(2.));
+    ON_4dPoint pt04 = ON_4dPoint(0, 0, h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(1, 0, pt04);
-    ON_4dPoint pt05 = ON_4dPoint(plane1_origin.x + r1 / 2 / sqrt(2.), plane1_origin.y + r2 / 2 / sqrt(2.), plane1_origin.z + h / sqrt(2.), 1 / sqrt(2.));
+    ON_4dPoint pt05 = ON_4dPoint(r1/2/sqrt(2.), r2/2/sqrt(2.), h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(1, 1, pt05);
-    ON_4dPoint pt06 = ON_4dPoint(plane1_origin.x + r1 / sqrt(2.), plane1_origin.y + r2 / sqrt(2.), plane1_origin.z, 1 / sqrt(2.));
+    ON_4dPoint pt06 = ON_4dPoint(r1/sqrt(2.), r2/sqrt(2.), 0, 1/sqrt(2.));
     epacurvedsurf->SetCV(1, 2, pt06);
 
-    ON_4dPoint pt07 = ON_4dPoint(plane1_origin.x, plane1_origin.y, plane1_origin.z + h, 1);
+    ON_4dPoint pt07 = ON_4dPoint(0, 0, h, 1);
     epacurvedsurf->SetCV(2, 0, pt07);
-    ON_4dPoint pt08 = ON_4dPoint(plane1_origin.x + r1 / 2, plane1_origin.y, plane1_origin.z + h, 1);
+    ON_4dPoint pt08 = ON_4dPoint(r1/2, 0, h, 1);
     epacurvedsurf->SetCV(2, 1, pt08);
-    ON_4dPoint pt09 = ON_4dPoint(plane1_origin.x + r1, plane1_origin.y, plane1_origin.z, 1);
+    ON_4dPoint pt09 = ON_4dPoint(r1, 0, 0, 1);
     epacurvedsurf->SetCV(2, 2, pt09);
 
-    ON_4dPoint pt10 = ON_4dPoint(plane1_origin.x, plane1_origin.y, plane1_origin.z + h / sqrt(2.), 1 / sqrt(2.));
+    ON_4dPoint pt10 = ON_4dPoint(0, 0, h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(3, 0, pt10);
-    ON_4dPoint pt11 = ON_4dPoint(plane1_origin.x + r1 / 2 / sqrt(2.), plane1_origin.y -r2 / 2 / sqrt(2.), plane1_origin.z + h / sqrt(2.), 1 / sqrt(2.));
+    ON_4dPoint pt11 = ON_4dPoint(r1/2/sqrt(2.), -r2/2/sqrt(2.), h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(3, 1, pt11);
-    ON_4dPoint pt12 = ON_4dPoint(plane1_origin.x + r1 / sqrt(2.), plane1_origin.y -r2 / sqrt(2.), plane1_origin.z, 1 / sqrt(2.));
+    ON_4dPoint pt12 = ON_4dPoint(r1/sqrt(2.), -r2/sqrt(2.), 0, 1/sqrt(2.));
     epacurvedsurf->SetCV(3, 2, pt12);
 
-    ON_4dPoint pt13 = ON_4dPoint(plane1_origin.x, plane1_origin.y, plane1_origin.z + h, 1);
+    ON_4dPoint pt13 = ON_4dPoint(0, 0, h, 1);
     epacurvedsurf->SetCV(4, 0, pt13);
-    ON_4dPoint pt14 = ON_4dPoint(plane1_origin.x, plane1_origin.y -r2 / 2, plane1_origin.z + h, 1);
+    ON_4dPoint pt14 = ON_4dPoint(0, -r2/2, h, 1);
     epacurvedsurf->SetCV(4, 1, pt14);
-    ON_4dPoint pt15 = ON_4dPoint(plane1_origin.x, plane1_origin.y -r2, plane1_origin.z, 1);
+    ON_4dPoint pt15 = ON_4dPoint(0, -r2, 0, 1);
     epacurvedsurf->SetCV(4, 2, pt15);
 
-    ON_4dPoint pt16 = ON_4dPoint(plane1_origin.x, plane1_origin.y, plane1_origin.z + h / sqrt(2.), 1 / sqrt(2.));
+    ON_4dPoint pt16 = ON_4dPoint(0, 0, h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(5, 0, pt16);
-    ON_4dPoint pt17 = ON_4dPoint(plane1_origin.x -r1 / 2 / sqrt(2.), plane1_origin.y -r2 / 2 / sqrt(2.), plane1_origin.z + h / sqrt(2.), 1 / sqrt(2.));
+    ON_4dPoint pt17 = ON_4dPoint(-r1/2/sqrt(2.), -r2/2/sqrt(2.), h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(5, 1, pt17);
-    ON_4dPoint pt18 = ON_4dPoint(plane1_origin.x -r1 / sqrt(2.), plane1_origin.y -r2 / sqrt(2.), plane1_origin.z, 1 / sqrt(2.));
+    ON_4dPoint pt18 = ON_4dPoint(-r1/sqrt(2.), -r2/sqrt(2.), 0, 1/sqrt(2.));
     epacurvedsurf->SetCV(5, 2, pt18);
 
-    ON_4dPoint pt19 = ON_4dPoint(plane1_origin.x, plane1_origin.y, plane1_origin.z + h, 1);
+    ON_4dPoint pt19 = ON_4dPoint(0, 0, h, 1);
     epacurvedsurf->SetCV(6, 0, pt19);
-    ON_4dPoint pt20 = ON_4dPoint(plane1_origin.x -r1 / 2, plane1_origin.y, plane1_origin.z + h, 1);
+    ON_4dPoint pt20 = ON_4dPoint(-r1/2, 0, h, 1);
     epacurvedsurf->SetCV(6, 1, pt20);
-    ON_4dPoint pt21 = ON_4dPoint(plane1_origin.x -r1, plane1_origin.y, plane1_origin.z, 1);
+    ON_4dPoint pt21 = ON_4dPoint(-r1, 0, 0, 1);
     epacurvedsurf->SetCV(6, 2, pt21);
 
-    ON_4dPoint pt22 = ON_4dPoint(plane1_origin.x, plane1_origin.y, plane1_origin.z + h / sqrt(2.), 1 / sqrt(2.));
+    ON_4dPoint pt22 = ON_4dPoint(0, 0, h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(7, 0, pt22);
-    ON_4dPoint pt23 = ON_4dPoint(plane1_origin.x -r1 / 2 / sqrt(2.), plane1_origin.y+r2 / 2 / sqrt(2.), plane1_origin.z + h / sqrt(2.), 1 / sqrt(2.));
+    ON_4dPoint pt23 = ON_4dPoint(-r1/2/sqrt(2.), r2/2/sqrt(2.), h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(7, 1, pt23);
-    ON_4dPoint pt24 = ON_4dPoint(plane1_origin.x -r1 / sqrt(2.), plane1_origin.y+ r2 / sqrt(2.), plane1_origin.z, 1 / sqrt(2.));
+    ON_4dPoint pt24 = ON_4dPoint(-r1/sqrt(2.), r2/sqrt(2.), 0, 1/sqrt(2.));
     epacurvedsurf->SetCV(7, 2, pt24);
 
-    ON_4dPoint pt25 = ON_4dPoint(plane1_origin.x, plane1_origin.y, plane1_origin.z + h, 1);
+    ON_4dPoint pt25 = ON_4dPoint(0, 0, h, 1);
     epacurvedsurf->SetCV(8, 0, pt25);
-    ON_4dPoint pt26 = ON_4dPoint(plane1_origin.x, plane1_origin.y + r2 / 2, plane1_origin.z + h, 1);
+    ON_4dPoint pt26 = ON_4dPoint(0, r2/2, h, 1);
     epacurvedsurf->SetCV(8, 1, pt26);
-    ON_4dPoint pt27 = ON_4dPoint(plane1_origin.x, plane1_origin.y + r2, plane1_origin.z, 1);
+    ON_4dPoint pt27 = ON_4dPoint(0, r2, 0, 1);
     epacurvedsurf->SetCV(8, 2, pt27);
 
+    vect_t origin = { 0,1,0 };
+    vect_t end;
+    vect_t axis_n;
+    VMOVE(end, eip->epa_Au);
+    VCROSS(axis_n, origin, end);
+
+    double cos_a = VDOT(origin, end);
+    double sin_a = sqrt(1 - cos_a);
+    /*fastf_t rot1[9] = { cos_a ,-sin_a*axis_n[2], sin_a * axis_n[1],
+                       sin_a* axis_n[2], cos_a ,-sin_a* axis_n[0],
+                       -sin_a* axis_n[1], sin_a* axis_n[0], cos_a  };*/
     
+    double tran_matrix[4][4]{
+            {cos_a, -sin_a * axis_n[2], sin_a * axis_n[1], plane1_origin.x},
+            {sin_a * axis_n[2], cos_a, -sin_a * axis_n[0], plane1_origin.y},
+            {-sin_a * axis_n[1], sin_a * axis_n[0], cos_a , plane1_origin.z},
+            {0,0,0,1}
+    };
 
-    //ON_4dPoint pt01 = ON_4dPoint(plane1_origin.x, plane1_origin.y, plane1_origin.z + h, 1);
-    //epacurvedsurf->SetCV(0, 0, pt01);
-    //ON_4dPoint pt02 = ON_4dPoint(plane1_origin.x, plane1_origin.y + r2 / 2, plane1_origin.z + h, 1);
-    //epacurvedsurf->SetCV(0, 1, pt02);
-    //ON_4dPoint pt03 = ON_4dPoint(plane1_origin.x, plane1_origin.y + r2, plane1_origin.z, 1);
-    //epacurvedsurf->SetCV(0, 2, pt03);
-
-    //ON_4dPoint pt01 = ON_4dPoint(0, 0, h, 1);
-    //epacurvedsurf->SetCV(0, 0, pt01);
-    //ON_4dPoint pt02 = ON_4dPoint(0, r2/2, h, 1);
-    //epacurvedsurf->SetCV(0, 1, pt02);
-    //ON_4dPoint pt03 = ON_4dPoint(0, r2, 0, 1);
-    //epacurvedsurf->SetCV(0, 2, pt03);
-
-    //ON_4dPoint pt04 = ON_4dPoint(0, 0, h/sqrt(2.), 1/sqrt(2.));
-    //epacurvedsurf->SetCV(1, 0, pt04);
-    //ON_4dPoint pt05 = ON_4dPoint(r1/2/sqrt(2.), r2/2/sqrt(2.), h/sqrt(2.), 1/sqrt(2.));
-    //epacurvedsurf->SetCV(1, 1, pt05);
-    //ON_4dPoint pt06 = ON_4dPoint(r1/sqrt(2.), r2/sqrt(2.), 0, 1/sqrt(2.));
-    //epacurvedsurf->SetCV(1, 2, pt06);
-
-    //ON_4dPoint pt07 = ON_4dPoint(0, 0, h, 1);
-    //epacurvedsurf->SetCV(2, 0, pt07);
-    //ON_4dPoint pt08 = ON_4dPoint(r1/2, 0, h, 1);
-    //epacurvedsurf->SetCV(2, 1, pt08);
-    //ON_4dPoint pt09 = ON_4dPoint(r1, 0, 0, 1);
-    //epacurvedsurf->SetCV(2, 2, pt09);
-
-    //ON_4dPoint pt10 = ON_4dPoint(0, 0, h/sqrt(2.), 1/sqrt(2.));
-    //epacurvedsurf->SetCV(3, 0, pt10);
-    //ON_4dPoint pt11 = ON_4dPoint(r1/2/sqrt(2.), -r2/2/sqrt(2.), h/sqrt(2.), 1/sqrt(2.));
-    //epacurvedsurf->SetCV(3, 1, pt11);
-    //ON_4dPoint pt12 = ON_4dPoint(r1/sqrt(2.), -r2/sqrt(2.), 0, 1/sqrt(2.));
-    //epacurvedsurf->SetCV(3, 2, pt12);
-
-    //ON_4dPoint pt13 = ON_4dPoint(0, 0, h, 1);
-    //epacurvedsurf->SetCV(4, 0, pt13);
-    //ON_4dPoint pt14 = ON_4dPoint(0, -r2/2, h, 1);
-    //epacurvedsurf->SetCV(4, 1, pt14);
-    //ON_4dPoint pt15 = ON_4dPoint(0, -r2, 0, 1);
-    //epacurvedsurf->SetCV(4, 2, pt15);
-
-    //ON_4dPoint pt16 = ON_4dPoint(0, 0, h/sqrt(2.), 1/sqrt(2.));
-    //epacurvedsurf->SetCV(5, 0, pt16);
-    //ON_4dPoint pt17 = ON_4dPoint(-r1/2/sqrt(2.), -r2/2/sqrt(2.), h/sqrt(2.), 1/sqrt(2.));
-    //epacurvedsurf->SetCV(5, 1, pt17);
-    //ON_4dPoint pt18 = ON_4dPoint(-r1/sqrt(2.), -r2/sqrt(2.), 0, 1/sqrt(2.));
-    //epacurvedsurf->SetCV(5, 2, pt18);
-
-    //ON_4dPoint pt19 = ON_4dPoint(0, 0, h, 1);
-    //epacurvedsurf->SetCV(6, 0, pt19);
-    //ON_4dPoint pt20 = ON_4dPoint(-r1/2, 0, h, 1);
-    //epacurvedsurf->SetCV(6, 1, pt20);
-    //ON_4dPoint pt21 = ON_4dPoint(-r1, 0, 0, 1);
-    //epacurvedsurf->SetCV(6, 2, pt21);
-
-    //ON_4dPoint pt22 = ON_4dPoint(0, 0, h/sqrt(2.), 1/sqrt(2.));
-    //epacurvedsurf->SetCV(7, 0, pt22);
-    //ON_4dPoint pt23 = ON_4dPoint(-r1/2/sqrt(2.), r2/2/sqrt(2.), h/sqrt(2.), 1/sqrt(2.));
-    //epacurvedsurf->SetCV(7, 1, pt23);
-    //ON_4dPoint pt24 = ON_4dPoint(-r1/sqrt(2.), r2/sqrt(2.), 0, 1/sqrt(2.));
-    //epacurvedsurf->SetCV(7, 2, pt24);
-
-    //ON_4dPoint pt25 = ON_4dPoint(0, 0, h, 1);
-    //epacurvedsurf->SetCV(8, 0, pt25);
-    //ON_4dPoint pt26 = ON_4dPoint(0, r2/2, h, 1);
-    //epacurvedsurf->SetCV(8, 1, pt26);
-    //ON_4dPoint pt27 = ON_4dPoint(0, r2, 0, 1);
-    //epacurvedsurf->SetCV(8, 2, pt27);
+    double cos_a_1 = 1 - cos_a;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            tran_matrix[i][j] += cos_a_1 * axis_n[i] * axis_n[j];
+        }
+    }
+    ON_Xform trans(tran_matrix);
+    epacurvedsurf->Transform(trans);
 
     (*b)->m_S.Append(epacurvedsurf);
     int surfindex = (*b)->m_S.Count();
