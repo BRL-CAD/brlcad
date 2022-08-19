@@ -19,6 +19,10 @@ if (BRLCAD_PROJ_BUILD)
   set(PROJ_API_VERSION 1)
   set(PROJ_VERSION 25.${PROJ_MAJOR_VERSION}.${PROJ_MINOR_VERSION}.${PROJ_API_VERSION})
 
+  # Our logic needs to know what files we are looking for to incorporate into
+  # our build, and unfortunately those names are not only platform specific but
+  # also project specific - they can (and do) define their own conventions, so
+  # we have to define these uniquely for each situation.
   if (MSVC)
     set(PROJ_BASENAME proj)
     set(PROJ_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
@@ -39,12 +43,15 @@ if (BRLCAD_PROJ_BUILD)
     set(PROJ_SYMLINK_2 ${PROJ_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}.${PROJ_API_VERSION})
   endif (MSVC)
 
+  # Unfortunately, because PROJ is a separate build, the custom import targets we have
+  # defined can't be passed to the PROJ build to identify these components - we need
+  # actual file paths.  We also need to depend on the staging targets that will actually
+  # place these files where we're telling the PROJ build they will be.
   set(PROJ_DEPS)
   if (TARGET SQLITE3_BLD)
     set(SQLITE3_TARGET SQLITE3_BLD)
     list(APPEND PROJ_DEPS SQLITE3_BLD sqlite3_stage sqlite3_exe_stage)
   endif (TARGET SQLITE3_BLD)
-
   if (MSVC)
     set(SQLITE3_LIBRARY ${CMAKE_BINARY_ROOT}/${LIB_DIR}/libsqlite3.lib)
   elseif (OPENBSD)
