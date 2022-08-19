@@ -1,8 +1,6 @@
 set(netpbm_ignore_files
 CMakeLists.txt
 README
-bitio.c
-bitio.h
 colorname.c
 colorname.h
 compile.h.in
@@ -55,6 +53,8 @@ ppmfloyd.h
 rgb.txt
 standard.ppmdfont
 standardppmdfont.c
+util/bitio.c
+util/bitio.h
 util/mallocvar.c
 util/mallocvar.h
 util/pm_c_util.h

@@ -172,7 +172,7 @@ pm_parse_dictionary_name(char    const colorname[],
         colorfile_entry = pm_colorget(f);
         if (colorfile_entry.colorname) {
             pm_canonstr(colorfile_entry.colorname);
-            if (strcmp( canoncolor, colorfile_entry.colorname) == 0)
+            if (!strcmp( canoncolor, colorfile_entry.colorname))
                 gotit = TRUE;
         } else
             colorfileExhausted = TRUE;

@@ -551,25 +551,25 @@ processHeaderLine(char                const buffer[],
 
     parseHeaderLine(buffer, label, value);
 
-    if (strcmp(label, "ENDHDR") == 0)
+    if (!strcmp(label, "ENDHDR"))
         headerSeenP->endhdr = TRUE;
-    else if (strcmp(label, "WIDTH") == 0) {
+    else if (!strcmp(label, "WIDTH")) {
         parseHeaderInt(value, &pamP->width, label);
         headerSeenP->width = TRUE;
-    } else if (strcmp(label, "HEIGHT") == 0) {
+    } else if (!strcmp(label, "HEIGHT")) {
         parseHeaderInt(value, &pamP->height, label);
         headerSeenP->height = TRUE;
-    } else if (strcmp(label, "DEPTH") == 0) {
+    } else if (!strcmp(label, "DEPTH")) {
         parseHeaderUint(value, &pamP->depth, label);
         headerSeenP->depth = TRUE;
-    } else if (strcmp(label, "MAXVAL") == 0) {
+    } else if (!strcmp(label, "MAXVAL")) {
         unsigned int maxval;
         parseHeaderUint(value, &maxval, label);
         if (maxval >= (1<<16))
             pm_error("Maxval too large: %u.  Max is 65535", maxval);
         pamP->maxval = maxval;
         headerSeenP->maxval = TRUE;
-    } else if (strcmp(label, "TUPLTYPE") == 0) {
+    } else if (!strcmp(label, "TUPLTYPE")) {
         if (strlen(value) == 0)
             pm_error("TUPLTYPE header does not have any tuple type text");
         else {
@@ -817,7 +817,7 @@ interpretTupleType(struct pam * const pamP) {
 
     switch (PAM_FORMAT_TYPE(pamP->format)) {
     case PAM_TYPE: {
-        if (strcmp(tupleType, "BLACKANDWHITE") == 0) {
+        if (!strcmp(tupleType, "BLACKANDWHITE")) {
             visual = true;
             colorDepth = 1;
             haveOpacity = false;
@@ -825,22 +825,22 @@ interpretTupleType(struct pam * const pamP) {
                 pm_error("maxval %u is not consistent with tuple type "
                          "BLACKANDWHITE (should be 1)",
                          (unsigned)pamP->maxval);
-        } else if (strcmp(tupleType, "GRAYSCALE") == 0) {
+        } else if (!strcmp(tupleType, "GRAYSCALE")) {
             visual = true;
             colorDepth = 1;
             haveOpacity = false;
-        } else if (strcmp(tupleType, "GRAYSCALE_ALPHA") == 0) {
+        } else if (!strcmp(tupleType, "GRAYSCALE_ALPHA")) {
             visual = true;
             colorDepth = 1;
             haveOpacity = true;
             opacityPlane = PAM_GRAY_TRN_PLANE;
             validateMinDepth(pamP, 2);
-        } else if (strcmp(tupleType, "RGB") == 0) {
+        } else if (!strcmp(tupleType, "RGB")) {
             visual = true;
             colorDepth = 3;
             haveOpacity = false;
             validateMinDepth(pamP, 3);
-        } else if (strcmp(tupleType, "RGB_ALPHA") == 0) {
+        } else if (!strcmp(tupleType, "RGB_ALPHA")) {
             visual = true;
             colorDepth = 3;
             haveOpacity = true;
@@ -1324,10 +1324,10 @@ pnm_getopacity(const struct pam * const pamP,
     /* Usage note: this is obsolete since we added 'have_opacity', etc.
        to struct pam.
     */
-    if (strcmp(pamP->tuple_type, "RGB_ALPHA") == 0) {
+    if (!strcmp(pamP->tuple_type, "RGB_ALPHA")) {
         *haveOpacityP = TRUE;
         *opacityPlaneP = PAM_TRN_PLANE;
-    } else if (strcmp(pamP->tuple_type, "GRAYSCALE_ALPHA") == 0) {
+    } else if (!strcmp(pamP->tuple_type, "GRAYSCALE_ALPHA")) {
         *haveOpacityP = TRUE;
         *opacityPlaneP = PAM_GRAY_TRN_PLANE;
     } else

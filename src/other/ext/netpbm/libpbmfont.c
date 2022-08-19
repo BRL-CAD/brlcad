@@ -1291,14 +1291,14 @@ createBmap(unsigned int  const glyphWidth,
         pm_error("End of file encountered reading font glyph byte map from "
                  "BDF font file.");
     
-    if (strcmp(readlineP->arg[0], "ATTRIBUTES") == 0) {
+    if (!strcmp(readlineP->arg[0], "ATTRIBUTES")) {
         bool eof;
         readline_read(readlineP, &eof);
         if (eof)
             pm_error("End of file encountered after ATTRIBUTES in BDF "
                      "font file.");
     }                
-    if (!strcmp(readlineP->arg[0], "BITMAP") == 0)
+    if (strcmp(readlineP->arg[0], "BITMAP"))
         pm_error("'%s' found where BITMAP expected in definition of "
                  "character '%s' in BDF font file.",
                  readlineP->arg[0], charName);
@@ -1327,7 +1327,7 @@ readExpectedStatement(readline *    const readlineP,
 
     if (eof)
         pm_error("EOF in BDF font file where '%s' expected", expected);
-    else if (!(strcmp(readlineP->arg[0], expected) == 0))
+    else if (strcmp(readlineP->arg[0], expected))
         pm_error("Statement of type '%s' where '%s' expected in BDF font file",
                  readlineP->arg[0], expected);
 }
@@ -1350,7 +1350,7 @@ skipCharacter(readline * const readlineP) {
         if (eof)
             pm_error("End of file in the middle of a character (before "
                      "ENDCHAR) in BDF font file.");
-        endChar = (strcmp(readlineP->arg[0], "ENDCHAR") == 0);
+        endChar = (!strcmp(readlineP->arg[0], "ENDCHAR"));
     }                        
 }
 
@@ -1436,9 +1436,9 @@ processChars(readline *    const readlineP,
         if (eof)
             pm_error("End of file after CHARS reading BDF font file");
 
-        if (strcmp(readlineP->arg[0], "COMMENT") == 0) {
+        if (!strcmp(readlineP->arg[0], "COMMENT")) {
             /* ignore */
-        } else if (!strcmp(readlineP->arg[0], "STARTCHAR") == 0)
+        } else if (strcmp(readlineP->arg[0], "STARTCHAR"))
             pm_error("no STARTCHAR after CHARS in BDF font file");
         else if (!readlineP->arg[1])
             pm_error("Invalid STARTCHAR - no arguments");
@@ -1513,11 +1513,11 @@ processBdfFontLine(readline *    const readlineP,
 
     assert(readlineP->arg[0] != NULL);  /* Entry condition */
 
-    if (strcmp(readlineP->arg[0], "COMMENT") == 0) {
+    if (!strcmp(readlineP->arg[0], "COMMENT")) {
         /* ignore */
-    } else if (strcmp(readlineP->arg[0], "SIZE") == 0) {
+    } else if (!strcmp(readlineP->arg[0], "SIZE")) {
         /* ignore */
-    } else if (strcmp(readlineP->arg[0], "STARTPROPERTIES") == 0) {
+    } else if (!strcmp(readlineP->arg[0], "STARTPROPERTIES")) {
         /* Read off the properties and ignore them all */
         unsigned int propCount;
         unsigned int i;
@@ -1532,7 +1532,7 @@ processBdfFontLine(readline *    const readlineP,
             if (eof)
                 pm_error("End of file after STARTPROPERTIES in BDF font file");
         }
-    } else if (strcmp(readlineP->arg[0], "FONTBOUNDINGBOX") == 0) {
+    } else if (!strcmp(readlineP->arg[0], "FONTBOUNDINGBOX")) {
         if (!readlineP->arg[1])
             pm_error("Invalid FONTBOUNDINGBOX  statement - no arguments");
         fontP->maxwidth  = atoi(readlineP->arg[1]);
@@ -1545,9 +1545,9 @@ processBdfFontLine(readline *    const readlineP,
         if (!readlineP->arg[4])
             pm_error("Invalid FONTBOUNDINGBOX  statement - only 3 arguments");
         fontP->y         = atoi(readlineP->arg[4]);
-    } else if (strcmp(readlineP->arg[0], "ENDFONT") == 0) {
+    } else if (!strcmp(readlineP->arg[0], "ENDFONT")) {
         *endOfFontP = true;
-    } else if (strcmp(readlineP->arg[0], "CHARS") == 0) {
+    } else if (!strcmp(readlineP->arg[0], "CHARS")) {
         processChars(readlineP, fontP);
     } else {
         /* ignore */
