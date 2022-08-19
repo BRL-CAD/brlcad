@@ -200,6 +200,7 @@ set(PATCHELF_FILES
   patchelf/COPYING
   patchelf/patchelf.cc
   patchelf/elf.h
+  patchelf/UPGRADE_NOTE.txt
   )
 CMAKEFILES(${PATCHELF_FILES})
 

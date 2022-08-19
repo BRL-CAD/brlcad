@@ -1,0 +1,10 @@
+Newer versions of patchelf (noticed with 0.15) require a C++17 compiler.  We
+need to stick with the older version until BRL-CAD's minimum C++ support
+requirement (currently at C++14) is bumped up to C++17.
+
+Although it is enormously heavier, in the connotation of elf binary editing it
+is worth making a note about the LIEF project:  https://lief-project.github.io/
+It's a very large C++ build (as opposed to a single, easily built file with
+patchelf) so it's not a great candidate for bundling but it comes up when
+possible alternatives to patchelf are discussed.
+
