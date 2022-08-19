@@ -8,6 +8,9 @@
 
 #include <cstring>
 #include <string>
+#ifdef _WIN32
+#include <io.h> // for close
+#endif
 
 #define _SVID_SOURCE
     /* Make sure P_tmpdir is defined in GNU libc 2.0.7 (_XOPEN_SOURCE 500
