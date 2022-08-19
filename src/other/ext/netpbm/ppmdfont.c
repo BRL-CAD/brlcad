@@ -3,8 +3,8 @@
 #include <errno.h>
 #include <string.h>
 
-#include "pm.h"
 #include "mallocvar.h"
+#include "pm.h"
 #include "ppmdfont.h"
 
 

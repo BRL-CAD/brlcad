@@ -172,7 +172,7 @@ NETPBM_EXPORT extern void
 pm_freearray (char** const its, int const rows);
 
 NETPBM_EXPORT extern void 
-pm_freerow(char* const itrow);
+pm_freerow(void * const row);
 
 
 /* Obsolete -- use shhopt instead */

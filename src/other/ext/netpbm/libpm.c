@@ -295,7 +295,7 @@ pm_allocrow(unsigned int const cols,
 
 
 void
-pm_freerow(char * const itrow) {
+pm_freerow(void * const itrow) {
     free(itrow);
 }
 
