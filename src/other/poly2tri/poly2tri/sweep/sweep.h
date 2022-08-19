@@ -150,10 +150,11 @@ private:
 
   // Decision-making about when to Fill hole.
   // Contributed by ToolmakerSteve2
-  bool LargeHole_DontFill(Node* node);
-  bool AngleExceeds90Degrees(Point* origin, Point* pa, Point* pb);
-  bool AngleExceedsPlus90DegreesOrIsNegative(Point* origin, Point* pa, Point* pb);
-  double Angle(Point *origin, Point *pa, Point *pb);
+  bool LargeHole_DontFill(const Node* node) const;
+  bool AngleIsNegative(const Point* origin, const Point* pa, const Point* pb) const;
+  bool AngleExceeds90Degrees(const Point* origin, const Point* pa, const Point* pb) const;
+  bool AngleExceedsPlus90DegreesOrIsNegative(const Point* origin, const Point* pa, const Point* pb) const;
+  double Angle(const Point* origin, const Point* pa, const Point* pb) const;
 
   /**
    *

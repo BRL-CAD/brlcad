@@ -367,42 +367,77 @@ namespace p2t {
     }
 
     // True if HoleAngle exceeds 90 degrees.
-    bool Sweep::LargeHole_DontFill(Node* node)
-    {
-	if (!node) return false;
+    // LargeHole_DontFill checks if the advancing front has a large hole.
+    // A "Large hole" is a triangle formed by a sequence of points in the advancing
+    // front where three neighbor points form a triangle.
+    // And angle between left-top, bottom, and right-top points is more than 90 degrees.
+    // The first part of the algorithm reviews only three neighbor points, e.g. named A, B, C.
+    // Additional part of this logic reviews a sequence of 5 points -
+    // additionally reviews one point before and one after the sequence of three (A, B, C),
+    // e.g. named X and Y.
+    // In this case, angles are XBC and ABY and this if angles are negative or more
+    // than 90 degrees LargeHole_DontFill returns true.
+    // But there is a configuration when ABC has a negative angle but XBC or ABY is less
+    // than 90 degrees and positive.
+    // Then function LargeHole_DontFill return false and initiates filling.
+    // This filling creates a triangle ABC and adds it to the advancing front.
+    // But in the case when angle ABC is negative this triangle goes inside the advancing front
+    // and can intersect previously created triangles.
+    // This triangle leads to making wrong advancing front and problems in triangulation in the future.
+    // Looks like such a triangle should not be created.
+    // The simplest way to check and fix it is to check an angle ABC.
+    // If it is negative LargeHole_DontFill should return true and
+    // not initiate creating the ABC triangle in the advancing front.
+    // X______A         Y
+    //        \        /
+    //         \      /
+    //          \ B  /
+    //           |  /
+    //           | /
+    //           |/
+    //           C
+    bool Sweep::LargeHole_DontFill(const Node* node) const {
 
-	Node* nextNode = node->next;
-	Node* prevNode = node->prev;
-	if (!AngleExceedsPlus90DegreesOrIsNegative(node->point, nextNode->point, prevNode->point))
+	const Node* nextNode = node->next;
+	const Node* prevNode = node->prev;
+	if (!AngleExceeds90Degrees(node->point, nextNode->point, prevNode->point))
 	    return false;
+
+	if (AngleIsNegative(node->point, nextNode->point, prevNode->point))
+	    return true;
 
 	// Check additional points on front.
-	Node* next2Node = nextNode->next;
+	const Node* next2Node = nextNode->next;
 	// "..Plus.." because only want angles on same side as point being added.
-	if ((next2Node != NULL) && !AngleExceedsPlus90DegreesOrIsNegative(node->point, next2Node->point, prevNode->point))
+	if ((next2Node != nullptr) && !AngleExceedsPlus90DegreesOrIsNegative(node->point, next2Node->point, prevNode->point))
 	    return false;
 
-	Node* prev2Node = prevNode->prev;
+	const Node* prev2Node = prevNode->prev;
 	// "..Plus.." because only want angles on same side as point being added.
-	if ((prev2Node != NULL) && !AngleExceedsPlus90DegreesOrIsNegative(node->point, nextNode->point, prev2Node->point))
+	if ((prev2Node != nullptr) && !AngleExceedsPlus90DegreesOrIsNegative(node->point, nextNode->point, prev2Node->point))
 	    return false;
 
 	return true;
     }
 
-    bool Sweep::AngleExceeds90Degrees(Point* origin, Point* pa, Point* pb) {
+    bool Sweep::AngleIsNegative(const Point* origin, const Point* pa, const Point* pb) const {
+	const double angle = Angle(origin, pa, pb);
+	return angle < 0;
+    }
+
+    bool Sweep::AngleExceeds90Degrees(const Point* origin, const Point* pa, const Point* pb) const {
 	double angle = Angle(origin, pa, pb);
 	bool exceeds90Degrees = ((angle > PI_div2) || (angle < -PI_div2));
 	return exceeds90Degrees;
     }
 
-    bool Sweep::AngleExceedsPlus90DegreesOrIsNegative(Point* origin, Point* pa, Point* pb) {
+    bool Sweep::AngleExceedsPlus90DegreesOrIsNegative(const Point* origin, const Point* pa, const Point* pb) const {
 	double angle = Angle(origin, pa, pb);
 	bool exceedsPlus90DegreesOrIsNegative = (angle > PI_div2) || (angle < 0);
 	return exceedsPlus90DegreesOrIsNegative;
     }
 
-    double Sweep::Angle(Point *origin, Point *pa, Point *pb) {
+    double Sweep::Angle(const Point *origin, const Point *pa, const Point *pb) const {
 	/* Complex plane
 	 * ab = cosA +i*sinA
 	 * ab = (ax + ay*i)(bx + by*i) = (ax*bx + ay*by) + i(ax*by-ay*bx)
