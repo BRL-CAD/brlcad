@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,10 +31,10 @@
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
-S57ClassRegistrar *OGRS57Driver::poRegistrar = NULL;
-static CPLMutex* hS57RegistrarMutex = NULL;
+S57ClassRegistrar *OGRS57Driver::poRegistrar = nullptr;
+static CPLMutex* hS57RegistrarMutex = nullptr;
 
 /************************************************************************/
 /*                            OGRS57Driver()                            */
@@ -49,16 +49,16 @@ OGRS57Driver::OGRS57Driver() {}
 OGRS57Driver::~OGRS57Driver()
 
 {
-    if( poRegistrar != NULL )
+    if( poRegistrar != nullptr )
     {
         delete poRegistrar;
-        poRegistrar = NULL;
+        poRegistrar = nullptr;
     }
 
-    if( hS57RegistrarMutex != NULL )
+    if( hS57RegistrarMutex != nullptr )
     {
         CPLDestroyMutex(hS57RegistrarMutex);
-        hS57RegistrarMutex = NULL;
+        hS57RegistrarMutex = nullptr;
     }
 }
 
@@ -79,7 +79,7 @@ static int OGRS57DriverIdentify( GDALOpenInfo* poOpenInfo )
     {
         return false;
     }
-    return strstr( pachLeader, "DSID") != NULL;
+    return strstr( pachLeader, "DSID") != nullptr;
 }
 
 /************************************************************************/
@@ -90,13 +90,13 @@ GDALDataset *OGRS57Driver::Open( GDALOpenInfo* poOpenInfo )
 
 {
     if( !OGRS57DriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     OGRS57DataSource *poDS = new OGRS57DataSource(poOpenInfo->papszOpenOptions);
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     if( poDS && poOpenInfo->eAccess == GA_Update )
@@ -104,7 +104,7 @@ GDALDataset *OGRS57Driver::Open( GDALOpenInfo* poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "S57 Driver doesn't support update." );
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -127,7 +127,7 @@ GDALDataset *OGRS57Driver::Create( const char * pszName,
         return poDS;
 
     delete poDS;
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -142,14 +142,14 @@ S57ClassRegistrar *OGRS57Driver::GetS57Registrar()
 /* -------------------------------------------------------------------- */
     CPLMutexHolderD(&hS57RegistrarMutex);
 
-    if( poRegistrar == NULL )
+    if( poRegistrar == nullptr )
     {
         poRegistrar = new S57ClassRegistrar();
 
-        if( !poRegistrar->LoadInfo( NULL, NULL, false ) )
+        if( !poRegistrar->LoadInfo( nullptr, nullptr, false ) )
         {
             delete poRegistrar;
-            poRegistrar = NULL;
+            poRegistrar = nullptr;
         }
     }
 
@@ -163,7 +163,7 @@ S57ClassRegistrar *OGRS57Driver::GetS57Registrar()
 void RegisterOGRS57()
 
 {
-    if( GDALGetDriverByName( "S57" ) != NULL )
+    if( GDALGetDriverByName( "S57" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new OGRS57Driver();
@@ -172,7 +172,7 @@ void RegisterOGRS57()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "IHO S-57 (ENC)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "000" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_s57.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/s57.html" );
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
@@ -185,9 +185,10 @@ void RegisterOGRS57()
         "  <Option name='" S57O_ADD_SOUNDG_DEPTH "' type='boolean' description='Should a DEPTH attribute be added on SOUNDG features and assign the depth of the sounding' default='NO'/>"
         "  <Option name='" S57O_RETURN_PRIMITIVES "' type='boolean' description='Should all the low level geometry primitives be returned as special IsolatedNode, ConnectedNode, Edge and Face layers' default='NO'/>"
         "  <Option name='" S57O_PRESERVE_EMPTY_NUMBERS "' type='boolean' description='If enabled, numeric attributes assigned an empty string as a value will be preserved as a special numeric value' default='NO'/>"
-        "  <Option name='" S57O_LNAM_REFS "' type='boolean' description='Should LNAM and LNAM_REFS fields be attached to features capturing the feature to feature relationships in the FFPT group of the S-57 file' default='YES'/>"
+        "  <Option name='" S57O_LNAM_REFS "' type='boolean' description='Should LNAM and LNAM_REFS fields be attached to features capturing the feature to feature relationships in the FFPT group of the S-57 file' default='NO'/>"
         "  <Option name='" S57O_RETURN_LINKAGES "' type='boolean' description='Should additional attributes relating features to their underlying geometric primitives be attached' default='NO'/>"
-        "  <Option name='" S57O_RECODE_BY_DSSI "' type='boolean' description='Should attribute values be recoded to UTF-8 from the character encoding specified in the S57 DSSI record.' default='NO'/>"
+        "  <Option name='" S57O_RECODE_BY_DSSI "' type='boolean' description='Should attribute values be recoded to UTF-8 from the character encoding specified in the S57 DSSI record.' default='YES'/>"
+        "  <Option name='" S57O_LIST_AS_STRING "' type='boolean' description='Whether attributes tagged as list in S57 dictionaries should be reported as a String field' default='NO'/>"
         "</OpenOptionList>");
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,
@@ -201,6 +202,8 @@ void RegisterOGRS57()
         "   <Option name='S57_STED' type='string' description='Edition number of S-57' default='03.1'/>"
         "   <Option name='S57_AGEN' type='int' description='Producing agency' default='540'/>"
         "   <Option name='S57_COMT' type='string' description='Comment' default=''/>"
+        "   <Option name='S57_AALL' type='int' description='Lexical level used for the ATTF fields' default='0'/>"
+        "   <Option name='S57_NALL' type='int' description='Lexical level used for the NATF fields' default='0'/>"
         "   <Option name='S57_NOMR' type='int' description='Number of meta records (objects with acronym starting with \"M_\")' default='0'/>"
         "   <Option name='S57_NOGR' type='int' description='Number of geo records' default='0'/>"
         "   <Option name='S57_NOLR' type='int' description='Number of collection records' default='0'/>"
@@ -211,9 +214,12 @@ void RegisterOGRS57()
         "   <Option name='S57_VDAT' type='int' description='Vertical datum' default='17'/>"
         "   <Option name='S57_SDAT' type='int' description='Sounding datum' default='23'/>"
         "   <Option name='S57_CSCL' type='int' description='Compilation scale of data (1:X)' default='52000'/>"
+        "   <Option name='S57_COMF' type='int' description='Floating-point to integer multiplication factor for coordinate values' default='10000000'/>"
+        "   <Option name='S57_SOMF' type='int' description='Floating point to integer multiplication factor for 3-D (sounding) values' default='10'/>"
         "</CreationOptionList>" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
     poDriver->pfnOpen = OGRS57Driver::Open;
     poDriver->pfnIdentify = OGRS57DriverIdentify;

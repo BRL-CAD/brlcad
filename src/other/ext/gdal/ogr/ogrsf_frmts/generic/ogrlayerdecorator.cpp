@@ -2,10 +2,10 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRLayerDecorator class
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,14 +30,14 @@
 
 #include "ogrlayerdecorator.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 OGRLayerDecorator::OGRLayerDecorator( OGRLayer* poDecoratedLayer,
                                       int bTakeOwnership ) :
     m_poDecoratedLayer(poDecoratedLayer),
     m_bHasOwnership(bTakeOwnership)
 {
-    CPLAssert(poDecoratedLayer != NULL);
+    CPLAssert(poDecoratedLayer != nullptr);
     SetDescription( poDecoratedLayer->GetDescription() );
 }
 
@@ -49,7 +49,7 @@ OGRLayerDecorator::~OGRLayerDecorator()
 
 OGRGeometry *OGRLayerDecorator::GetSpatialFilter()
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetSpatialFilter();
 }
 
@@ -93,7 +93,7 @@ void        OGRLayerDecorator::ResetReading()
 
 OGRFeature *OGRLayerDecorator::GetNextFeature()
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetNextFeature();
 }
 
@@ -105,7 +105,7 @@ OGRErr      OGRLayerDecorator::SetNextByIndex( GIntBig nIndex )
 
 OGRFeature *OGRLayerDecorator::GetFeature( GIntBig nFID )
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetFeature(nFID);
 }
 
@@ -141,13 +141,13 @@ OGRwkbGeometryType OGRLayerDecorator::GetGeomType()
 
 OGRFeatureDefn *OGRLayerDecorator::GetLayerDefn()
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetLayerDefn();
 }
 
 OGRSpatialReference *OGRLayerDecorator::GetSpatialRef()
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetSpatialRef();
 }
 
@@ -215,7 +215,7 @@ OGRErr      OGRLayerDecorator::SyncToDisk()
 
 OGRStyleTable *OGRLayerDecorator::GetStyleTable()
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetStyleTable();
 }
 
@@ -269,7 +269,7 @@ OGRErr      OGRLayerDecorator::SetIgnoredFields( const char **papszFields )
 
 char      **OGRLayerDecorator::GetMetadata( const char * pszDomain )
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetMetadata(pszDomain);
 }
 
@@ -283,7 +283,7 @@ CPLErr      OGRLayerDecorator::SetMetadata( char ** papszMetadata,
 const char *OGRLayerDecorator::GetMetadataItem( const char * pszName,
                                               const char * pszDomain )
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetMetadataItem(pszName, pszDomain);
 }
 
@@ -293,6 +293,17 @@ CPLErr      OGRLayerDecorator::SetMetadataItem( const char * pszName,
 {
     if( !m_poDecoratedLayer ) return CE_Failure;
     return m_poDecoratedLayer->SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
+OGRErr OGRLayerDecorator::Rename(const char* pszNewName)
+{
+    if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+    OGRErr eErr = m_poDecoratedLayer->Rename(pszNewName);
+    if( eErr == OGRERR_NONE )
+    {
+        SetDescription( m_poDecoratedLayer->GetDescription() );
+    }
+    return eErr;
 }
 
 #endif /* #ifndef DOXYGEN_SKIP */

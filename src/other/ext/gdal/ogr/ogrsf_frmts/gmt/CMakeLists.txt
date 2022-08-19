@@ -1,2 +1,3 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(ogr_frmt_gmt OBJECT ogrgmtdriver.cpp ogrgmtdatasource.cpp ogrgmtlayer.cpp)
+add_gdal_driver(TARGET ogr_GMT SOURCES ogr_gmt.h ogrgmtdatasource.cpp ogrgmtdriver.cpp ogrgmtlayer.cpp PLUGIN_CAPABLE
+                                       NO_DEPS)
+gdal_standard_includes(ogr_GMT)

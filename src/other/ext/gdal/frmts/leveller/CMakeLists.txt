@@ -1,2 +1,2 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(frmt_leveller OBJECT levellerdataset.cpp)
+add_gdal_driver(TARGET gdal_Leveller SOURCES levellerdataset.cpp PLUGIN_CAPABLE NO_DEPS)
+gdal_standard_includes(gdal_Leveller)

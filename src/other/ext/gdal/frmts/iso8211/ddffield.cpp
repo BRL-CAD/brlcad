@@ -36,7 +36,7 @@
 
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // Note, we implement no constructor for this class to make instantiation
 // cheaper.  It is required that the Initialize() be called before anything
@@ -74,7 +74,7 @@ void DDFField::Dump( FILE * fp )
 {
     int nMaxRepeat = 8;
 
-    if( getenv("DDF_MAXDUMP") != NULL )
+    if( getenv("DDF_MAXDUMP") != nullptr )
         nMaxRepeat = atoi(getenv("DDF_MAXDUMP"));
 
     fprintf( fp, "  DDFField:\n" );
@@ -153,8 +153,8 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
                                        int *pnMaxBytes, int iSubfieldIndex )
 
 {
-    if( poSFDefn == NULL )
-        return NULL;
+    if( poSFDefn == nullptr )
+        return nullptr;
 
     int iOffset = 0;
     if( iSubfieldIndex > 0 && poDefn->GetFixedWidth() > 0 )
@@ -169,17 +169,17 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
         {
             DDFSubfieldDefn * poThisSFDefn = poDefn->GetSubfield( iSF );
 
-            if( nDataSize < iOffset )
+            if( nDataSize <= iOffset )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid data size for subfield %s of %s",
                          poThisSFDefn->GetName(), poDefn->GetName());
-                return NULL;
+                return nullptr;
             }
 
             if( poThisSFDefn == poSFDefn && iSubfieldIndex == 0 )
             {
-                if( pnMaxBytes != NULL )
+                if( pnMaxBytes != nullptr )
                     *pnMaxBytes = nDataSize - iOffset;
 
                 return pachData + iOffset;
@@ -195,7 +195,7 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
     }
 
     // We didn't find our target subfield or instance!
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -242,6 +242,7 @@ int DDFField::GetRepeatCount()
 
     while( true )
     {
+        const int iOffsetBefore = iOffset;
         for( int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++ )
         {
             DDFSubfieldDefn * poThisSFDefn = poDefn->GetSubfield( iSF );
@@ -257,6 +258,11 @@ int DDFField::GetRepeatCount()
             iOffset += nBytesConsumed;
             if( iOffset > nDataSize )
                 return iRepeatCount - 1;
+        }
+        if( iOffset == iOffsetBefore )
+        {
+            // Should probably emit error
+            return iRepeatCount - 1;
         }
 
         if( iOffset > nDataSize - 2 )
@@ -292,7 +298,7 @@ const char *DDFField::GetInstanceData( int nInstance,
     int nRepeatCount = GetRepeatCount();
 
     if( nInstance < 0 || nInstance >= nRepeatCount )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Special case for fields without subfields (like "0001").  We    */
@@ -301,7 +307,7 @@ const char *DDFField::GetInstanceData( int nInstance,
     if( poDefn->GetSubfieldCount() == 0 )
     {
         const char *pachWrkData = GetData();
-        if( pnInstanceSize != NULL )
+        if( pnInstanceSize != nullptr )
             *pnInstanceSize = GetDataSize();
         return pachWrkData;
     }
@@ -316,22 +322,22 @@ const char *DDFField::GetInstanceData( int nInstance,
 
     const char *pachWrkData =
         GetSubfieldData(poFirstSubfield, &nBytesRemaining1, nInstance);
-    if( pachWrkData == NULL )
-        return NULL;
+    if( pachWrkData == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Figure out the size of the entire field instance, including     */
 /*      unit terminators, but not any trailing field terminator.        */
 /* -------------------------------------------------------------------- */
-    if( pnInstanceSize != NULL )
+    if( pnInstanceSize != nullptr )
     {
         DDFSubfieldDefn *poLastSubfield =
             poDefn->GetSubfield(poDefn->GetSubfieldCount()-1);
 
         const char *pachLastData =
             GetSubfieldData( poLastSubfield, &nBytesRemaining2, nInstance );
-        if( pachLastData == NULL )
-            return NULL;
+        if( pachLastData == nullptr )
+            return nullptr;
 
         int nLastSubfieldWidth = 0;
         poLastSubfield->GetDataLength( pachLastData, nBytesRemaining2,

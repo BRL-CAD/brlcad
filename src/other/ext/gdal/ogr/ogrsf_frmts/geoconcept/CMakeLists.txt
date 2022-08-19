@@ -1,13 +1,18 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
-add_definitions(-DUSE_CPL)
-
-set(geoconcept_srcs
-	geoconcept.c
-	geoconcept_syscoord.c
-	ogrgeoconceptdriver.cpp
-	ogrgeoconceptdatasource.cpp
-	ogrgeoconceptlayer.cpp
-	)
-
-add_library(ogr_frmt_geoconcept OBJECT ${geoconcept_srcs})
+add_gdal_driver(
+  TARGET ogr_Geoconcept
+  SOURCES geoconcept.h
+          ogrgeoconceptdatasource.cpp
+          ogrgeoconceptdriver.cpp
+          ogrgeoconceptlayer.cpp
+          geoconcept_syscoord.h
+          ogrgeoconceptdatasource.h
+          ogrgeoconceptdriver.h
+          ogrgeoconceptlayer.h
+          geoconcept.c
+          geoconcept_syscoord.c
+          PLUGIN_CAPABLE
+          NO_DEPS)
+gdal_standard_includes(ogr_Geoconcept)
+if (MSVC)
+  target_compile_options(ogr_Geoconcept PRIVATE /wd4706)
+endif ()

@@ -3,10 +3,10 @@
  *
  * Project:  GeoTIFF Driver
  * Purpose:  Specialized copy of JPEG content into TIFF.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,7 +42,7 @@ int GTIFF_CanDirectCopyFromJPEG( GDALDataset* poSrcDS,
 CPLErr GTIFF_DirectCopyFromJPEG( GDALDataset* poDS, GDALDataset* poSrcDS,
                                  GDALProgressFunc pfnProgress,
                                  void * pProgressData,
-                                 int& bShouldFallbackToNormalCopyIfFail );
+                                 bool& bShouldFallbackToNormalCopyIfFail );
 
 #endif // JPEG_DIRECT_COPY
 
@@ -57,7 +57,7 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags( TIFF* hTIFF,
 
 CPLErr GTIFF_CopyFromJPEG( GDALDataset* poDS, GDALDataset* poSrcDS,
                            GDALProgressFunc pfnProgress, void * pProgressData,
-                           int& bShouldFallbackToNormalCopyIfFail );
+                           bool& bShouldFallbackToNormalCopyIfFail );
 
 #endif // HAVE_LIBJPEG
 

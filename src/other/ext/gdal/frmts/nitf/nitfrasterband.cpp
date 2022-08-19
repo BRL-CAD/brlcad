@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Portions Copyright (c) Her majesty the Queen in right of Canada as
  * represented by the Minister of National Defence, 2006.
@@ -54,7 +54,7 @@
 #include "nitflib.h"
 
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       NITFMakeColorTable()                           */
@@ -62,7 +62,7 @@ CPL_CVSID("$Id$");
 
 static GDALColorTable* NITFMakeColorTable(NITFImage* psImage, NITFBandInfo *psBandInfo)
 {
-    GDALColorTable* poColorTable = NULL;
+    GDALColorTable* poColorTable = nullptr;
 
     if( psBandInfo->nSignificantLUTEntries > 0 )
     {
@@ -89,7 +89,7 @@ static GDALColorTable* NITFMakeColorTable(NITFImage* psImage, NITFBandInfo *psBa
 /* -------------------------------------------------------------------- */
 /*      We create a color table for 1 bit data too...                   */
 /* -------------------------------------------------------------------- */
-    if( poColorTable == NULL && psImage->nBitsPerSample == 1 )
+    if( poColorTable == nullptr && psImage->nBitsPerSample == 1 )
     {
         poColorTable = new GDALColorTable();
 
@@ -136,7 +136,7 @@ char **NITFProxyPamRasterBand::GetMetadata( const char * pszDomain  )
         char** papszMD = CSLDuplicate(_poSrcBand->GetMetadata( pszDomain ));
         papszMD = CSLMerge( papszMD, GDALPamRasterBand::GetMetadata(pszDomain) );
 
-        if (pszDomain == NULL)
+        if (pszDomain == nullptr)
             pszDomain = "";
 
         std::map<CPLString, char**>::iterator oIter = oMDMap.find(pszDomain);
@@ -175,10 +175,10 @@ CPLErr NITFProxyPamRasterBand::GetStatistics( int bApproxOK, int bForce,
 /* -------------------------------------------------------------------- */
 /*      Do we already have metadata items for the requested values?     */
 /* -------------------------------------------------------------------- */
-    if( (pdfMin == NULL || GetMetadataItem("STATISTICS_MINIMUM") != NULL)
-     && (pdfMax == NULL || GetMetadataItem("STATISTICS_MAXIMUM") != NULL)
-     && (pdfMean == NULL || GetMetadataItem("STATISTICS_MEAN") != NULL)
-     && (pdfStdDev == NULL || GetMetadataItem("STATISTICS_STDDEV") != NULL) )
+    if( (pdfMin == nullptr || GetMetadataItem("STATISTICS_MINIMUM") != nullptr)
+     && (pdfMax == nullptr || GetMetadataItem("STATISTICS_MAXIMUM") != nullptr)
+     && (pdfMean == nullptr || GetMetadataItem("STATISTICS_MEAN") != nullptr)
+     && (pdfStdDev == nullptr || GetMetadataItem("STATISTICS_STDDEV") != nullptr) )
     {
         return GDALPamRasterBand::GetStatistics( bApproxOK, bForce,
                                                  pdfMin, pdfMax,
@@ -319,10 +319,10 @@ retType NITFProxyPamRasterBand::methodName argList \
     return ret; \
 }
 
-RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, FlushCache, (), ())
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, FlushCache, (bool bAtClosing), (bAtClosing))
 
 RB_PROXY_METHOD_WITH_RET(GDALColorInterp, GCI_Undefined, GetColorInterpretation, (), ())
-RB_PROXY_METHOD_WITH_RET(GDALColorTable*, NULL, GetColorTable, (), ())
+RB_PROXY_METHOD_WITH_RET(GDALColorTable*, nullptr, GetColorTable, (), ())
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, Fill,
                         (double dfRealValue, double dfImaginaryValue),
                         (dfRealValue, dfImaginaryValue))
@@ -332,8 +332,8 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, ComputeRasterMinMax,
 
 RB_PROXY_METHOD_WITH_RET(int, 0, HasArbitraryOverviews, (), ())
 RB_PROXY_METHOD_WITH_RET(int, 0,  GetOverviewCount, (), ())
-RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL,  GetOverview, (int arg1), (arg1))
-RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL,  GetRasterSampleOverview,
+RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, nullptr,  GetOverview, (int arg1), (arg1))
+RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, nullptr,  GetRasterSampleOverview,
                         (GUIntBig arg1), (arg1))
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
@@ -347,7 +347,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
                         GDALDataType eDT, char **papszOptions ),
                         (nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, eDT, papszOptions))
 
-RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL, GetMaskBand, (), ())
+RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, nullptr, GetMaskBand, (), ())
 RB_PROXY_METHOD_WITH_RET(int, 0, GetMaskFlags, (), ())
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlagsIn ), (nFlagsIn))
 
@@ -369,8 +369,8 @@ void NITFProxyPamRasterBand::UnrefUnderlyingRasterBand(CPL_UNUSED GDALRasterBand
 
 NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn ) :
     psImage(poDSIn->psImage),
-    poColorTable(NULL),
-    pUnpackData(NULL),
+    poColorTable(nullptr),
+    pUnpackData(nullptr),
     bScanlineAccess(FALSE)
 {
     NITFBandInfo *psBandInfo = poDSIn->psImage->pasBandInfo + nBandIn - 1;
@@ -472,7 +472,7 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn ) :
         else
         {
             pUnpackData = static_cast<GByte*>(VSI_MALLOC_VERBOSE(((nBlockXSize*nBlockYSize+7)/8)*8));
-            if( pUnpackData == NULL )
+            if( pUnpackData == nullptr )
                 eDataType = GDT_Unknown;
         }
     }
@@ -485,7 +485,7 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn ) :
 NITFRasterBand::~NITFRasterBand()
 
 {
-    if( poColorTable != NULL )
+    if( poColorTable != nullptr )
         delete poColorTable;
 
     VSIFree(pUnpackData);
@@ -600,7 +600,7 @@ CPLErr NITFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 double NITFRasterBand::GetNoDataValue( int *pbSuccess )
 
 {
-    if( pbSuccess != NULL )
+    if( pbSuccess != nullptr )
         *pbSuccess = psImage->bNoDataSet;
 
     if( psImage->bNoDataSet )
@@ -618,7 +618,7 @@ GDALColorInterp NITFRasterBand::GetColorInterpretation()
 {
     NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
 
-    if( poColorTable != NULL )
+    if( poColorTable != nullptr )
         return GCI_PaletteIndex;
 
     if( EQUAL(psBandInfo->szIREPBAND,"R") )
@@ -648,7 +648,7 @@ CPLErr NITFSetColorInterpretation( NITFImage *psImage,
                                    GDALColorInterp eInterp )
 
 {
-    const char *pszREP = NULL;
+    const char *pszREP = nullptr;
 
     if( eInterp == GCI_RedBand )
         pszREP = "R";
@@ -667,7 +667,7 @@ CPLErr NITFSetColorInterpretation( NITFImage *psImage,
     else if( eInterp == GCI_Undefined )
         return CE_None;
 
-    if( pszREP == NULL )
+    if( pszREP == nullptr )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Requested color interpretation (%s) not supported in NITF.",
@@ -738,7 +738,7 @@ CPLErr NITFRasterBand::SetColorTable( GDALColorTable *poNewCT )
     if( poGDS->bInLoadXML )
         return GDALPamRasterBand::SetColorTable(poNewCT);
 
-    if( poNewCT == NULL )
+    if( poNewCT == nullptr )
         return CE_Failure;
 
     GByte abyNITFLUT[768];
@@ -791,7 +791,7 @@ void NITFRasterBand::Unpack( GByte* pData )
     }
     case 2:
     {
-      static const int s_Shift2[] = {6, 4, 2, 0};
+      constexpr int s_Shift2[] = {6, 4, 2, 0};
       // unpack 2-bit in-place in reverse
       // DANGER: Non-standard decrement of counter in the test section of for.
       for (int i = n; --i >= 0; )
@@ -801,7 +801,7 @@ void NITFRasterBand::Unpack( GByte* pData )
     }
     case 4:
     {
-      static const int s_Shift4[] = {4, 0};
+      constexpr int s_Shift4[] = {4, 0};
       // unpack 4-bit in-place in reverse
       // DANGER: Non-standard decrement of counter in the test section of for.
       for( int i = n; --i >= 0; )
@@ -812,7 +812,9 @@ void NITFRasterBand::Unpack( GByte* pData )
     case 3:
     {
       // unpacks 8 pixels (3 bytes) at time
-      for( int i = 0, k = 0; i < n; i += 8, k += 3 )
+      int i = 0;
+      int k = 0;
+      for( ; i + 7 < n; i += 8, k += 3 )
       {
         pUnpackData[i+0] = ((pDataSrc[k+0] >> 5));
         pUnpackData[i+1] = ((pDataSrc[k+0] >> 2) & 0x07);
@@ -823,6 +825,22 @@ void NITFRasterBand::Unpack( GByte* pData )
         pUnpackData[i+6] = ((pDataSrc[k+2] >> 3) & 0x07);
         pUnpackData[i+7] = ((pDataSrc[k+2]) & 0x7);
       }
+      if( i < n )
+      {
+        pUnpackData[i+0] = ((pDataSrc[k+0] >> 5));
+        if( i + 1 < n )
+            pUnpackData[i+1] = ((pDataSrc[k+0] >> 2) & 0x07);
+        if( i + 2 < n )
+            pUnpackData[i+2] = ((pDataSrc[k+0] << 1) & 0x07) | (pDataSrc[k+1] >> 7);
+        if( i + 3 < n )
+            pUnpackData[i+3] = ((pDataSrc[k+1] >> 4) & 0x07);
+        if( i + 4 < n )
+            pUnpackData[i+4] = ((pDataSrc[k+1] >> 1) & 0x07);
+        if( i + 5 < n )
+            pUnpackData[i+5] = ((pDataSrc[k+1] << 2) & 0x07) | (pDataSrc[k+2] >> 6);
+        if( i + 6 < n )
+            pUnpackData[i+6] = ((pDataSrc[k+2] >> 3) & 0x07);
+      }
 
       memcpy(pData, pUnpackData, n);
       break;
@@ -830,7 +848,9 @@ void NITFRasterBand::Unpack( GByte* pData )
     case 5:
     {
       // unpacks 8 pixels (5 bytes) at time
-      for( int i = 0, k = 0; i < n; i += 8, k += 5 )
+      int i = 0;
+      int k = 0;
+      for( ; i + 7 < n; i += 8, k += 5 )
       {
         pUnpackData[i+0] = ((pDataSrc[k+0] >> 3));
         pUnpackData[i+1] = ((pDataSrc[k+0] << 2) & 0x1f) | (pDataSrc[k+1] >> 6);
@@ -841,6 +861,22 @@ void NITFRasterBand::Unpack( GByte* pData )
         pUnpackData[i+6] = ((pDataSrc[k+3] << 3) & 0x1f) | (pDataSrc[k+4] >> 5);
         pUnpackData[i+7] = ((pDataSrc[k+4]) & 0x1f);
       }
+      if( i < n )
+      {
+        pUnpackData[i+0] = ((pDataSrc[k+0] >> 3));
+        if( i + 1 < n )
+            pUnpackData[i+1] = ((pDataSrc[k+0] << 2) & 0x1f) | (pDataSrc[k+1] >> 6);
+        if( i + 2 < n )
+            pUnpackData[i+2] = ((pDataSrc[k+1] >> 1) & 0x1f);
+        if( i + 3 < n )
+            pUnpackData[i+3] = ((pDataSrc[k+1] << 4) & 0x1f) | (pDataSrc[k+2] >> 4);
+        if( i + 4 < n )
+            pUnpackData[i+4] = ((pDataSrc[k+2] << 1) & 0x1f) | (pDataSrc[k+3] >> 7);
+        if( i + 5 < n )
+            pUnpackData[i+5] = ((pDataSrc[k+3] >> 2) & 0x1f);
+        if( i + 6 < n )
+            pUnpackData[i+6] = ((pDataSrc[k+3] << 3) & 0x1f) | (pDataSrc[k+4] >> 5);
+      }
 
       memcpy(pData, pUnpackData, n);
       break;
@@ -848,12 +884,22 @@ void NITFRasterBand::Unpack( GByte* pData )
     case 6:
     {
       // unpacks 4 pixels (3 bytes) at time
-      for( int i = 0, k = 0; i < n; i += 4, k += 3 )
+      int i = 0;
+      int k = 0;
+      for( ; i + 3 < n; i += 4, k += 3 )
       {
         pUnpackData[i+0] = ((pDataSrc[k+0] >> 2));
         pUnpackData[i+1] = ((pDataSrc[k+0] << 4) & 0x3f) | (pDataSrc[k+1] >> 4);
         pUnpackData[i+2] = ((pDataSrc[k+1] << 2) & 0x3f) | (pDataSrc[k+2] >> 6);
         pUnpackData[i+3] = ((pDataSrc[k+2]) & 0x3f);
+      }
+      if( i < n )
+      {
+        pUnpackData[i+0] = ((pDataSrc[k+0] >> 2));
+        if( i + 1 < n )
+            pUnpackData[i+1] = ((pDataSrc[k+0] << 4) & 0x3f) | (pDataSrc[k+1] >> 4);
+        if( i + 2 < n )
+            pUnpackData[i+2] = ((pDataSrc[k+1] << 2) & 0x3f) | (pDataSrc[k+2] >> 6);
       }
 
       memcpy(pData, pUnpackData, n);
@@ -862,7 +908,9 @@ void NITFRasterBand::Unpack( GByte* pData )
     case 7:
     {
       // unpacks 8 pixels (7 bytes) at time
-      for( int i = 0, k = 0; i < n; i += 8, k += 7 )
+      int i = 0;
+      int k = 0;
+      for( ; i + 7 < n; i += 8, k += 7 )
       {
         pUnpackData[i+0] = ((pDataSrc[k+0] >> 1));
         pUnpackData[i+1] = ((pDataSrc[k+0] << 6) & 0x7f) | (pDataSrc[k+1] >> 2);
@@ -872,6 +920,22 @@ void NITFRasterBand::Unpack( GByte* pData )
         pUnpackData[i+5] = ((pDataSrc[k+4] << 2) & 0x7f) | (pDataSrc[k+5] >> 6);
         pUnpackData[i+6] = ((pDataSrc[k+5] << 1) & 0x7f) | (pDataSrc[k+6] >> 7);
         pUnpackData[i+7] = ((pDataSrc[k+6]) & 0x7f);
+      }
+      if( i < n )
+      {
+        pUnpackData[i+0] = ((pDataSrc[k+0] >> 1));
+        if( i + 1 < n )
+            pUnpackData[i+1] = ((pDataSrc[k+0] << 6) & 0x7f) | (pDataSrc[k+1] >> 2);
+        if( i + 2 < n )
+            pUnpackData[i+2] = ((pDataSrc[k+1] << 5) & 0x7f) | (pDataSrc[k+2] >> 3) ;
+        if( i + 3 < n )
+            pUnpackData[i+3] = ((pDataSrc[k+2] << 4) & 0x7f) | (pDataSrc[k+3] >> 4);
+        if( i + 4 < n )
+            pUnpackData[i+4] = ((pDataSrc[k+3] << 3) & 0x7f) | (pDataSrc[k+4] >> 5);
+        if( i + 5 < n )
+            pUnpackData[i+5] = ((pDataSrc[k+4] << 2) & 0x7f) | (pDataSrc[k+5] >> 6);
+        if( i + 6 < n )
+            pUnpackData[i+6] = ((pDataSrc[k+5] << 1) & 0x7f) | (pDataSrc[k+6] >> 7);
       }
 
       memcpy(pData, pUnpackData, n);
@@ -912,10 +976,10 @@ NITFWrapperRasterBand::NITFWrapperRasterBand( NITFDataset * poDSIn,
                                               GDALRasterBand* poBaseBandIn,
                                               int nBandIn) :
     poBaseBand(poBaseBandIn),
-    poColorTable(NULL),
+    poColorTable(nullptr),
     eInterp(poBaseBandIn->GetColorInterpretation()),
-    bIsJPEG(poBaseBandIn->GetDataset() != NULL &&
-            poBaseBandIn->GetDataset()->GetDriver() != NULL &&
+    bIsJPEG(poBaseBandIn->GetDataset() != nullptr &&
+            poBaseBandIn->GetDataset()->GetDriver() != nullptr &&
             EQUAL(poBaseBandIn->GetDataset()->GetDriver()->GetDescription(),
                   "JPEG"))
 {
@@ -931,7 +995,7 @@ NITFWrapperRasterBand::NITFWrapperRasterBand( NITFDataset * poDSIn,
 
 NITFWrapperRasterBand::~NITFWrapperRasterBand()
 {
-    if( poColorTable != NULL )
+    if( poColorTable != nullptr )
         delete poColorTable;
 }
 
@@ -981,8 +1045,8 @@ GDALColorInterp NITFWrapperRasterBand::GetColorInterpretation()
 CPLErr NITFWrapperRasterBand::SetColorInterpretation( GDALColorInterp eInterpIn)
 {
     this->eInterp = eInterpIn;
-    if( poBaseBand->GetDataset() != NULL &&
-        poBaseBand->GetDataset()->GetDriver() != NULL &&
+    if( poBaseBand->GetDataset() != nullptr &&
+        poBaseBand->GetDataset()->GetDriver() != nullptr &&
         EQUAL(poBaseBand->GetDataset()->GetDriver()->GetDescription(), "JP2ECW") )
         poBaseBand->SetColorInterpretation( eInterp );
     return CE_None;

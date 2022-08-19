@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2011-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -75,7 +75,7 @@
 #define ESRI_LAYERGEOMTYPE_POLYGON       4
 #define ESRI_LAYERGEOMTYPE_MULTIPATCH    9
 
-OGRGeometry* OGRCreateFromMultiPatch( int nParts,
+OGRGeometry CPL_DLL* OGRCreateFromMultiPatch( int nParts,
                                       const GInt32* panPartStart,
                                       const GInt32* panPartType,
                                       int nPoints,
@@ -87,11 +87,11 @@ OGRErr CPL_DLL OGRCreateFromShapeBin( GByte *pabyShape,
                               OGRGeometry **ppoGeom,
                               int nBytes );
 
-OGRErr CPL_DLL OGRWriteToShapeBin( OGRGeometry *poGeom,
+OGRErr CPL_DLL OGRWriteToShapeBin( const OGRGeometry *poGeom,
                            GByte **ppabyShape,
                            int *pnBytes );
 
-OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
+OGRErr OGRCreateMultiPatch( const OGRGeometry *poGeom,
                             int bAllowSHPTTriangle,
                             int& nParts,
                             int*& panPartStart,
@@ -100,7 +100,7 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
                             OGRRawPoint*& poPoints,
                             double*& padfZ );
 
-OGRErr CPL_DLL OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
+OGRErr CPL_DLL OGRWriteMultiPatchToShapeBin( const OGRGeometry *poGeom,
                            GByte **ppabyShape,
                            int *pnBytes );
 

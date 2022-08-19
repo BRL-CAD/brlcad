@@ -30,7 +30,7 @@
 #include "cpl_string.h"
 #include "cpl_cpu_features.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 
@@ -67,29 +67,6 @@ CPL_CVSID("$Id$");
 
 #define CPL_CPUID(level, array) GCC_CPUID(level, array[0], array[1], array[2], array[3])
 
-#elif defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER <= 1310
-static void inline __cpuid( int cpuinfo[4], int level )
-{
-    __asm
-    {
-        push   ebx
-        push   esi
-
-        mov    esi,cpuinfo
-        mov    eax, level
-        cpuid
-        mov    dword ptr [esi], eax
-        mov    dword ptr [esi+4], ebx
-        mov    dword ptr [esi+8], ecx
-        mov    dword ptr [esi+0Ch], edx
-
-        pop    esi
-        pop    ebx
-    }
-}
-
-#define CPL_CPUID(level, array) __cpuid(array, level)
-
 #elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
 
 #include <intrin.h>
@@ -118,18 +95,32 @@ bool CPLHaveRuntimeSSE()
 /*                         CPLHaveRuntimeSSSE3()                        */
 /************************************************************************/
 
+static inline bool CPLDetectSSSE3()
+{
+    int cpuinfo[4] = { 0, 0, 0, 0 };
+    CPL_CPUID(1, cpuinfo);
+    return (cpuinfo[REG_ECX] & (1 << CPUID_SSSE3_ECX_BIT)) != 0;
+}
+
+#if defined(__GNUC__) && !defined(DEBUG)
+bool bCPLHasSSSE3 = false;
+static void CPLHaveRuntimeSSSE3Initialize() __attribute__ ((constructor));
+static void CPLHaveRuntimeSSSE3Initialize()
+{
+    bCPLHasSSSE3 = CPLDetectSSSE3();
+}
+#else
 bool CPLHaveRuntimeSSSE3()
 {
 #ifdef DEBUG
     if( !CPLTestBool(CPLGetConfigOption("GDAL_USE_SSSE3", "YES")) )
         return false;
 #endif
-    int cpuinfo[4] = { 0, 0, 0, 0 };
-    CPL_CPUID(1, cpuinfo);
-    return (cpuinfo[REG_ECX] & (1 << CPUID_SSSE3_ECX_BIT)) != 0;
+    return CPLDetectSSSE3();
 }
-
 #endif
+
+#endif // defined(HAVE_SSSE3_AT_COMPILE_TIME) && !defined(HAVE_INLINE_SSSE3)
 
 #if defined(HAVE_AVX_AT_COMPILE_TIME) && !defined(HAVE_INLINE_AVX)
 
@@ -137,9 +128,9 @@ bool CPLHaveRuntimeSSSE3()
 /*                          CPLHaveRuntimeAVX()                         */
 /************************************************************************/
 
-#if defined(__GNUC__) && (defined(__i386__) ||defined(__x86_64))
+#if defined(__GNUC__)
 
-bool CPLHaveRuntimeAVX()
+static bool CPLDetectRuntimeAVX()
 {
     int cpuinfo[4] = { 0, 0, 0, 0 };
     CPL_CPUID(1, cpuinfo);
@@ -165,8 +156,16 @@ bool CPLHaveRuntimeAVX()
     {
         return false;
     }
+    CPL_IGNORE_RET_VAL(nXCRHigh); // unused
 
     return true;
+}
+
+bool bCPLHasAVX = false;
+static void CPLHaveRuntimeAVXInitialize() __attribute__ ((constructor));
+static void CPLHaveRuntimeAVXInitialize()
+{
+    bCPLHasAVX = CPLDetectRuntimeAVX();
 }
 
 #elif defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 160040219) && (defined(_M_IX86) || defined(_M_X64))

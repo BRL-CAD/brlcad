@@ -54,11 +54,11 @@ public:
     virtual char** GetMetadataFiles() const override;
 protected:
     virtual void LoadMetadata() override;
-    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime) override;
+    virtual GIntBig GetAcquisitionTimeFromString(const char* pszDateTime) override;
     virtual char** AddXMLNameValueToList(char** papszList, const char *pszName,
                                          const char *pszValue) override;
 protected:
-    CPLString m_osXMLSourceFilename;
+    CPLString m_osXMLSourceFilename{};
 };
 
 #endif // READER_RDK1_H_INCLUDED

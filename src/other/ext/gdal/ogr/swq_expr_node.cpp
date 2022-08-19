@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (C) 2010 Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@
 #ifndef DOXYGEN_SKIP
 
 #include "cpl_port.h"
-#include "swq.h"
+#include "ogr_swq.h"
 
 #include <cctype>
 #include <cstdio>
@@ -45,122 +45,73 @@
 #include "cpl_string.h"
 #include "ogr_geometry.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           swq_expr_node()                            */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node()
-
-{
-    Initialize();
-}
+swq_expr_node::swq_expr_node() = default;
 
 /************************************************************************/
 /*                          swq_expr_node(int)                          */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node( int nValueIn )
-
+swq_expr_node::swq_expr_node( int nValueIn ):
+    int_value(nValueIn)
 {
-    Initialize();
-
-    int_value = nValueIn;
 }
 
 /************************************************************************/
 /*                        swq_expr_node(GIntBig)                        */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node( GIntBig nValueIn )
-
+swq_expr_node::swq_expr_node( GIntBig nValueIn ):
+    field_type(SWQ_INTEGER64),
+    int_value(nValueIn)
 {
-    Initialize();
-
-    field_type = SWQ_INTEGER64;
-    int_value = nValueIn;
 }
 
 /************************************************************************/
 /*                        swq_expr_node(double)                         */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node( double dfValueIn )
-
+swq_expr_node::swq_expr_node( double dfValueIn ):
+    field_type(SWQ_FLOAT),
+    float_value(dfValueIn)
 {
-    Initialize();
-
-    field_type = SWQ_FLOAT;
-    float_value = dfValueIn;
 }
 
 /************************************************************************/
 /*                        swq_expr_node(const char*)                    */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node( const char *pszValueIn )
-
+swq_expr_node::swq_expr_node( const char *pszValueIn ):
+    field_type(SWQ_STRING),
+    is_null(pszValueIn == nullptr),
+    string_value(CPLStrdup( pszValueIn ? pszValueIn : "" ))
 {
-    Initialize();
-
-    field_type = SWQ_STRING;
-    string_value = CPLStrdup( pszValueIn ? pszValueIn : "" );
-    is_null = pszValueIn == NULL;
 }
 
 /************************************************************************/
 /*                      swq_expr_node(OGRGeometry *)                    */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node( OGRGeometry *poGeomIn )
-
+swq_expr_node::swq_expr_node( OGRGeometry *poGeomIn ):
+    field_type(SWQ_GEOMETRY),
+    is_null(poGeomIn == nullptr),
+    geometry_value(poGeomIn ? poGeomIn->clone() : nullptr)
 {
-    Initialize();
-
-    field_type = SWQ_GEOMETRY;
-    geometry_value = poGeomIn ? poGeomIn->clone() : NULL;
-    is_null = poGeomIn == NULL;
 }
 
 /************************************************************************/
 /*                        swq_expr_node(swq_op)                         */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node( swq_op eOp )
-
+swq_expr_node::swq_expr_node( swq_op eOp ):
+    eNodeType(SNT_OPERATION),
+    nOperation(eOp)
 {
-    Initialize();
-
-    eNodeType = SNT_OPERATION;
-
-    nOperation = static_cast<int>(eOp);
-    nSubExprCount = 0;
-    papoSubExpr = NULL;
-}
-
-/************************************************************************/
-/*                             Initialize()                             */
-/************************************************************************/
-
-void swq_expr_node::Initialize()
-
-{
-    nOperation = 0;
-    nSubExprCount = 0;
-    papoSubExpr = NULL;
-
-    field_index = 0;
-    table_index = 0;
-    table_name = NULL;
-    eNodeType = SNT_CONSTANT;
-    field_type = SWQ_INTEGER;
-
-    is_null = FALSE;
-    string_value = NULL;
-    int_value = 0;
-    float_value = 0;
-    geometry_value = NULL;
 }
 
 /************************************************************************/
@@ -228,9 +179,17 @@ swq_field_type
 swq_expr_node::Check( swq_field_list *poFieldList,
                       int bAllowFieldsInSecondaryTables,
                       int bAllowMismatchTypeOnFieldComparison,
-                      swq_custom_func_registrar* poCustomFuncRegistrar )
+                      swq_custom_func_registrar* poCustomFuncRegistrar,
+                      int nDepth )
 
 {
+    if( nDepth == 32 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too many recursion levels in expression");
+        return SWQ_ERROR;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Otherwise we take constants literally.                          */
 /* -------------------------------------------------------------------- */
@@ -251,7 +210,7 @@ swq_expr_node::Check( swq_field_list *poFieldList,
         {
             if( table_name )
                 CPLError( CE_Failure, CPLE_AppDefined,
-                      "\"%s\".\"%s\" not recognised as an available field.",
+                      R"("%s"."%s" not recognised as an available field.)",
                       table_name, string_value );
             else
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -278,11 +237,11 @@ swq_expr_node::Check( swq_field_list *poFieldList,
 /*      We are dealing with an operation - fetch the definition.        */
 /* -------------------------------------------------------------------- */
     const swq_operation *poOp =
-        (nOperation == SWQ_CUSTOM_FUNC && poCustomFuncRegistrar != NULL ) ?
+        (nOperation == SWQ_CUSTOM_FUNC && poCustomFuncRegistrar != nullptr ) ?
             poCustomFuncRegistrar->GetOperator(string_value) :
-            swq_op_registrar::GetOperator((swq_op)nOperation);
+            swq_op_registrar::GetOperator(nOperation);
 
-    if( poOp == NULL )
+    if( poOp == nullptr )
     {
         if( nOperation == SWQ_CUSTOM_FUNC )
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -302,7 +261,8 @@ swq_expr_node::Check( swq_field_list *poFieldList,
     {
         if( papoSubExpr[i]->Check(poFieldList, bAllowFieldsInSecondaryTables,
                                   bAllowMismatchTypeOnFieldComparison,
-                                  poCustomFuncRegistrar) == SWQ_ERROR )
+                                  poCustomFuncRegistrar,
+                                  nDepth + 1) == SWQ_ERROR )
             return SWQ_ERROR;
     }
 
@@ -323,10 +283,12 @@ void swq_expr_node::Dump( FILE * fp, int depth )
 {
     char spaces[60] = {};
 
-    int i = 0;  // Used after for.
-    for( ; i < depth*2 && i < (int) sizeof(spaces) - 1; i++ )
-        spaces[i] = ' ';
-    spaces[i] = '\0';
+    {
+        int i = 0;  // Used after for.
+        for( ; i < depth*2 && i < static_cast<int>(sizeof(spaces)) - 1; i++ )
+            spaces[i] = ' ';
+        spaces[i] = '\0';
+    }
 
     if( eNodeType == SNT_COLUMN )
     {
@@ -343,11 +305,11 @@ void swq_expr_node::Dump( FILE * fp, int depth )
             fprintf( fp, "%s  %.15g\n", spaces, float_value );
         else if( field_type == SWQ_GEOMETRY )
         {
-            if( geometry_value == NULL )
+            if( geometry_value == nullptr )
                 fprintf( fp, "%s  (null)\n", spaces );
             else
             {
-                char* pszWKT = NULL;
+                char* pszWKT = nullptr;
                 geometry_value->exportToWkt(&pszWKT);
                 fprintf( fp, "%s  %s\n", spaces, pszWKT );
                 CPLFree(pszWKT);
@@ -361,13 +323,13 @@ void swq_expr_node::Dump( FILE * fp, int depth )
     CPLAssert( eNodeType == SNT_OPERATION );
 
     const swq_operation *op_def =
-        swq_op_registrar::GetOperator( (swq_op) nOperation );
+        swq_op_registrar::GetOperator( nOperation );
     if( op_def )
         fprintf( fp, "%s%s\n", spaces, op_def->pszName );
     else
         fprintf( fp, "%s%s\n", spaces, string_value );
 
-    for( i = 0; i < nSubExprCount; i++ )
+    for( int i = 0; i < nSubExprCount; i++ )
         papoSubExpr[i]->Dump( fp, depth+1 );
 }
 
@@ -456,8 +418,8 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
             osExpr.Printf( "%.15g", float_value );
             // Make sure this is interpreted as a floating point value
             // and not as an integer later.
-            if( strchr(osExpr, '.') == NULL && strchr(osExpr, 'e') == NULL &&
-                strchr(osExpr, 'E') == NULL )
+            if( strchr(osExpr, '.') == nullptr && strchr(osExpr, 'e') == nullptr &&
+                strchr(osExpr, 'E') == nullptr )
                 osExpr += '.';
         }
         else
@@ -473,7 +435,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
 /* -------------------------------------------------------------------- */
     if( eNodeType == SNT_COLUMN )
     {
-        if( field_list == NULL )
+        if( field_list == nullptr )
         {
             if( table_name )
                 osExpr.Printf(
@@ -489,7 +451,10 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
             && table_index < field_list->table_count
             && table_index > 0 )
         {
-            for( int i = 0; i < field_list->count; i++ )
+            // We deliberately browse through the list starting from the end
+            // This is for the case where the FID column exists both as
+            // FID and then real_fid_name. We want real_fid_name to be used
+            for( int i = field_list->count - 1; i >= 0; i-- )
             {
                 if( field_list->table_ids[i] == table_index &&
                     field_list->ids[i] == field_index )
@@ -503,7 +468,10 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         }
         else if( field_index != -1 )
         {
-            for( int i = 0; i < field_list->count; i++ )
+            // We deliberately browse through the list starting from the end
+            // This is for the case where the FID column exists both as
+            // FID and then real_fid_name. We want real_fid_name to be used
+            for( int i = field_list->count - 1; i >= 0; i-- )
             {
                 if( field_list->table_ids[i] == table_index &&
                     field_list->ids[i] == field_index )
@@ -528,7 +496,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
 /*      Operation - start by unparsing all the subexpressions.          */
 /* -------------------------------------------------------------------- */
     std::vector<char*> apszSubExpr;
-
+    apszSubExpr.reserve(nSubExprCount);
     for( int i = 0; i < nSubExprCount; i++ )
         apszSubExpr.push_back( papoSubExpr[i]->Unparse(field_list, chColumnQuote) );
 
@@ -555,9 +523,9 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
 /*      Put things together in a fashion depending on the operator.     */
 /* -------------------------------------------------------------------- */
     const swq_operation *poOp =
-        swq_op_registrar::GetOperator( (swq_op) nOperation );
+        swq_op_registrar::GetOperator( nOperation );
 
-    if( poOp == NULL && nOperation != SWQ_CUSTOM_FUNC )
+    if( poOp == nullptr && nOperation != SWQ_CUSTOM_FUNC )
     {
         CPLAssert( false );
         return osExpr;
@@ -575,6 +543,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
       case SWQ_GE:
       case SWQ_LE:
       case SWQ_LIKE:
+      case SWQ_ILIKE:
       case SWQ_ADD:
       case SWQ_SUBTRACT:
       case SWQ_MULTIPLY:
@@ -606,7 +575,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
             osExpr += apszSubExpr[1];
             osExpr += ")";
         }
-        if( nOperation == SWQ_LIKE && nSubExprCount == 3 )
+        if( (nOperation == SWQ_LIKE || nOperation == SWQ_ILIKE) && nSubExprCount == 3 )
             osExpr += CPLSPrintf( " ESCAPE (%s)", apszSubExpr[2] );
         break;
 
@@ -714,7 +683,7 @@ swq_expr_node *swq_expr_node::Clone()
     {
         poRetNode->field_index = field_index;
         poRetNode->table_index = table_index;
-        poRetNode->table_name = table_name ? CPLStrdup(table_name) : NULL;
+        poRetNode->table_name = table_name ? CPLStrdup(table_name) : nullptr;
     }
     else if( eNodeType == SNT_CONSTANT )
     {
@@ -724,9 +693,9 @@ swq_expr_node *swq_expr_node::Clone()
         if( geometry_value )
             poRetNode->geometry_value = geometry_value->clone();
         else
-            poRetNode->geometry_value = NULL;
+            poRetNode->geometry_value = nullptr;
     }
-    poRetNode->string_value = string_value ? CPLStrdup(string_value) : NULL;
+    poRetNode->string_value = string_value ? CPLStrdup(string_value) : nullptr;
     return poRetNode;
 }
 
@@ -738,7 +707,20 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
                                         void *pRecord )
 
 {
-    swq_expr_node *poRetNode = NULL;
+    return Evaluate(pfnFetcher, pRecord, 0);
+}
+
+swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
+                                        void *pRecord, int nRecLevel )
+
+{
+    swq_expr_node *poRetNode = nullptr;
+    if( nRecLevel == 32 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too many recursion levels in expression");
+        return nullptr;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Duplicate ourselves if we are already a constant.               */
@@ -763,7 +745,7 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
     std::vector<swq_expr_node*> apoValues;
     std::vector<int> anValueNeedsFree;
     bool bError = false;
-
+    apoValues.reserve(nSubExprCount);
     for( int i = 0; i < nSubExprCount && !bError; i++ )
     {
         if( papoSubExpr[i]->eNodeType == SNT_CONSTANT )
@@ -775,8 +757,8 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
         else
         {
             swq_expr_node* poSubExprVal =
-                papoSubExpr[i]->Evaluate(pfnFetcher, pRecord);
-            if( poSubExprVal == NULL )
+                papoSubExpr[i]->Evaluate(pfnFetcher, pRecord, nRecLevel + 1);
+            if( poSubExprVal == nullptr )
                 bError = true;
             else
             {
@@ -792,8 +774,8 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
     if( !bError )
     {
         const swq_operation *poOp =
-            swq_op_registrar::GetOperator( (swq_op) nOperation );
-        if( poOp == NULL )
+            swq_op_registrar::GetOperator( nOperation );
+        if( poOp == nullptr )
         {
             if( nOperation == SWQ_CUSTOM_FUNC )
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -804,7 +786,7 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
                     CE_Failure, CPLE_AppDefined,
                     "Evaluate(): Unable to find definition for operator %d.",
                     nOperation );
-            poRetNode = NULL;
+            poRetNode = nullptr;
         }
         else
             poRetNode = poOp->pfnEvaluator( this, &(apoValues[0]) );

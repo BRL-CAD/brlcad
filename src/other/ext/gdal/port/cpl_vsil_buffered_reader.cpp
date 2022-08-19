@@ -2,10 +2,10 @@
  *
  * Project:  VSI Virtual File System
  * Purpose:  Implementation of buffered reader IO functions.
- * Author:   Even Rouault, even.rouault at mines-paris.org
+ * Author:   Even Rouault, even.rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2010-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,20 +50,22 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-static const int MAX_BUFFER_SIZE = 65536;
+constexpr int MAX_BUFFER_SIZE = 65536;
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
-class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
+class VSIBufferedReaderHandle final : public VSIVirtualHandle
 {
-    VSIVirtualHandle* m_poBaseHandle;
-    GByte*            pabyBuffer;
-    GUIntBig          nBufferOffset;
-    int               nBufferSize;
-    GUIntBig          nCurOffset;
-    bool              bNeedBaseHandleSeek;
-    bool              bEOF;
-    vsi_l_offset      nCheatFileSize;
+    CPL_DISALLOW_COPY_ASSIGN(VSIBufferedReaderHandle)
+
+    VSIVirtualHandle* m_poBaseHandle = nullptr;
+    GByte*            pabyBuffer = nullptr;
+    GUIntBig          nBufferOffset = 0;
+    int               nBufferSize = 0;
+    GUIntBig          nCurOffset = 0;
+    bool              bNeedBaseHandleSeek = false;
+    bool              bEOF =  false;
+    vsi_l_offset      nCheatFileSize = 0;
 
     int               SeekBaseTo( vsi_l_offset nTargetOffset );
 
@@ -73,17 +75,17 @@ class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
                              const GByte* pabyBeginningContent,
                              vsi_l_offset nCheatFileSizeIn );
     // TODO(schwehr): Add override when support dropped for VS2008.
-    virtual ~VSIBufferedReaderHandle();
+    ~VSIBufferedReaderHandle() override;
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize,
-                            size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize,
-                             size_t nMemb ) override;
-    virtual int       Eof() override;
-    virtual int       Flush() override;
-    virtual int       Close() override;
+    int Seek( vsi_l_offset nOffset, int nWhence ) override;
+    vsi_l_offset Tell() override;
+    size_t Read( void *pBuffer, size_t nSize,
+                 size_t nMemb ) override;
+    size_t Write( const void *pBuffer, size_t nSize,
+                  size_t nMemb ) override;
+    int Eof() override;
+    int Flush() override;
+    int Close() override;
 };
 
 //! @endcond
@@ -117,13 +119,7 @@ VSIVirtualHandle* VSICreateBufferedReaderHandle(
 VSIBufferedReaderHandle::VSIBufferedReaderHandle(
     VSIVirtualHandle* poBaseHandle) :
     m_poBaseHandle(poBaseHandle),
-    pabyBuffer(static_cast<GByte*>(CPLMalloc(MAX_BUFFER_SIZE))),
-    nBufferOffset(0),
-    nBufferSize(0),
-    nCurOffset(0),
-    bNeedBaseHandleSeek(false),
-    bEOF(false),
-    nCheatFileSize(0)
+    pabyBuffer(static_cast<GByte*>(CPLMalloc(MAX_BUFFER_SIZE)))
 {}
 
 VSIBufferedReaderHandle::VSIBufferedReaderHandle(
@@ -165,6 +161,7 @@ int VSIBufferedReaderHandle::Seek( vsi_l_offset nOffset, int nWhence )
               static_cast<int>(nOffset), static_cast<int>(nWhence) );
 #endif
     bEOF = false;
+    int ret = 0;
     if( nWhence == SEEK_CUR )
     {
         nCurOffset += nOffset;
@@ -177,7 +174,7 @@ int VSIBufferedReaderHandle::Seek( vsi_l_offset nOffset, int nWhence )
         }
         else
         {
-            m_poBaseHandle->Seek(nOffset, nWhence);
+            ret = m_poBaseHandle->Seek(nOffset, nWhence);
             nCurOffset = m_poBaseHandle->Tell();
             bNeedBaseHandleSeek = true;
         }
@@ -187,7 +184,7 @@ int VSIBufferedReaderHandle::Seek( vsi_l_offset nOffset, int nWhence )
         nCurOffset = nOffset;
     }
 
-    return 0;
+    return ret;
 }
 
 /************************************************************************/
@@ -382,7 +379,7 @@ int VSIBufferedReaderHandle::Close()
     {
         m_poBaseHandle->Close();
         delete m_poBaseHandle;
-        m_poBaseHandle = NULL;
+        m_poBaseHandle = nullptr;
     }
     return 0;
 }

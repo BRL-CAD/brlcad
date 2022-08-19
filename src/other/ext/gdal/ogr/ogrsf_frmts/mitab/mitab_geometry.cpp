@@ -39,7 +39,7 @@
 
 #include "ogr_core.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define OGR_NUM_RINGS(poly)   (poly->getNumInteriorRings()+1)
 #define OGR_GET_RING(poly, i) (i==0?poly->getExteriorRing():poly->getInteriorRing(i-1))
@@ -126,11 +126,11 @@ static CLIP_STATE EDGE_CHECK( double x0, double x, double x1 )
     return CLIP_MIDDLE;
 }
 
-static const int NUM_SCANLINES = 5;
+constexpr int NUM_SCANLINES = 5;
 
 int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
 {
-    if (poPoly == NULL)
+    if (poPoly == nullptr)
         return OGRERR_FAILURE;
 
     OGREnvelope   oEnv;
@@ -157,8 +157,8 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
     if( n == 0 )
         return OGRERR_FAILURE;
 
-    double *xintersect = (double *)calloc(n, sizeof(double));
-    if( xintersect == NULL )
+    double *xintersect = static_cast<double *>(calloc(n, sizeof(double)));
+    if( xintersect == nullptr )
         return OGRERR_FAILURE;
 
     double max_len = 0.0;
@@ -221,6 +221,8 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
         for( int j = 0; j < OGR_NUM_RINGS(poPoly); j++ )   // For each line.
         {
             OGRLinearRing *poRing = OGR_GET_RING(poPoly,j);
+            if( poRing->IsEmpty() )
+                continue;
             point1.x = poRing->getX(poRing->getNumPoints()-1);
             point1.y = poRing->getY(poRing->getNumPoints()-1);
 
@@ -263,7 +265,7 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
         // Great, now find longest span.
         // point1.y = y;
         // point2.y = y;
-        for( int i = 0; i < nfound; i += 2 )
+        for( int i = 0; i < nfound-1; i += 2 )
         {
             point1.x = xintersect[i];
             point2.x = xintersect[i+1];
@@ -371,7 +373,7 @@ int OGRGetCentroid(OGRPolygon *poPoly, OGRPoint *poCentroid)
 
 int OGRPolylineCenterPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
 {
-    if (poLine == NULL || poLine->getNumPoints() < 2)
+    if (poLine == nullptr || poLine->getNumPoints() < 2)
         return OGRERR_FAILURE;
 
     if (poLine->getNumPoints() % 2 == 0)
@@ -400,7 +402,7 @@ int OGRPolylineCenterPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
 
 int OGRPolylineLabelPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
 {
-    if (poLine == NULL || poLine->getNumPoints() < 2)
+    if (poLine == nullptr || poLine->getNumPoints() < 2)
         return OGRERR_FAILURE;
 
     double max_segment_length = -1.0;

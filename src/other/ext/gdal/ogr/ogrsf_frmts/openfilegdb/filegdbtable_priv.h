@@ -3,10 +3,10 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements reading of FileGDB tables
- * Author:   Even Rouault, <even dot rouault at mines-dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -133,6 +133,6 @@ void FileGDBTablePrintError(const char* pszFile, int nLineNumber);
 #define returnErrorAndCleanupIf(expr, cleanup) \
     do { if( (expr) ) { cleanup; returnError(); } } while(0)
 
-}; /* namespace OpenFileGDB */
+} /* namespace OpenFileGDB */
 
 #endif /* FILEGDBTABLE_PRIV_H_INCLUDED */

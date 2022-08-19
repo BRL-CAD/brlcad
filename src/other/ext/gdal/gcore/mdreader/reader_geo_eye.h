@@ -56,12 +56,12 @@ public:
     virtual char** GetMetadataFiles() const override;
 protected:
     virtual void LoadMetadata() override;
-    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime) override;
+    virtual GIntBig GetAcquisitionTimeFromString(const char* pszDateTime) override;
     char **LoadRPCWktFile() const;
     char **LoadIMDWktFile() const;
 protected:
-    CPLString m_osIMDSourceFilename;
-    CPLString m_osRPBSourceFilename;
+    CPLString m_osIMDSourceFilename{};
+    CPLString m_osRPBSourceFilename{};
 };
 
 #endif // READER_GEO_EYE_H_INCLUDED

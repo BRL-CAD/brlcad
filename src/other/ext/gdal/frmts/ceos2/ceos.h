@@ -141,6 +141,11 @@ Link_t *AddLink( Link_t *psList, Link_t *psLink );
 #define CEOS_RADAR_FLIP_DATE 19980101
 #define CEOS_RADAR_FACILITY "CDPF-RSAT"
 
+/* Defines for GCP Ordering mode */
+#define CEOS_STD_MAPREC_GCP_ORDER 0
+#define CEOS_ASF_MAPREC_GCP_ORDER 1
+#define CEOS_ASF_FACREC_GCP_ORDER 2
+
 typedef union
 {
     int32          Int32Code;
@@ -234,7 +239,7 @@ typedef struct
     int32     AcquisitionMsec;
     int32     TransmittedPolarization;
     int32     ReceivedPolarization;
-    int32     PulsRepetitionFrequency;
+    int32     PulseRepetitionFrequency;
     int32     SlantRangeFirstPixel;
     int32     SlantRangeMidPixel;
     int32     SlantRangeLastPixel;
@@ -270,7 +275,7 @@ void PutCeosRecordStruct(CeosRecord_t *record, const void *struct_ptr);
 
 void GetCeosField(CeosRecord_t *, int32, const char *, void *);
 
-void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *value);
+void SetCeosField(CeosRecord_t *record, int32 start_byte, const char *format, int intValue, double dblValue);
 
 void SetIntCeosField(CeosRecord_t *record, int32 start_byte, int32 length, int32 value);
 

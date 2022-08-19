@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,10 +31,26 @@
 #include "ogr_geos.h"
 #include "ogr_p.h"
 
+#include <cmath>
 #include <cstdlib>
 #include <algorithm>
+#include <limits>
+#include <new>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
+
+namespace {
+
+int DoubleToIntClamp(double dfValue) {
+  if( CPLIsNan(dfValue) ) return 0;
+  if( dfValue >= std::numeric_limits<int>::max() )
+      return std::numeric_limits<int>::max();
+  if( dfValue <= std::numeric_limits<int>::min() )
+      return std::numeric_limits<int>::min();
+  return static_cast<int>(dfValue);
+}
+
+}  // namespace
 
 /************************************************************************/
 /*                           OGRSimpleCurve()                           */
@@ -43,9 +59,9 @@ CPL_CVSID("$Id$");
 /** Constructor */
 OGRSimpleCurve::OGRSimpleCurve() :
     nPointCount(0),
-    paoPoints(NULL),
-    padfZ(NULL),
-    padfM(NULL)
+    paoPoints(nullptr),
+    padfZ(nullptr),
+    padfM(nullptr)
 {}
 
 /************************************************************************/
@@ -64,11 +80,12 @@ OGRSimpleCurve::OGRSimpleCurve() :
 OGRSimpleCurve::OGRSimpleCurve( const OGRSimpleCurve& other ) :
     OGRCurve(other),
     nPointCount(0),
-    paoPoints(NULL),
-    padfZ(NULL),
-    padfM(NULL)
+    paoPoints(nullptr),
+    padfZ(nullptr),
+    padfM(nullptr)
 {
-    setPoints( other.nPointCount, other.paoPoints, other.padfZ, other.padfM );
+    if( other.nPointCount > 0 )
+        setPoints( other.nPointCount, other.paoPoints, other.padfZ, other.padfM );
 }
 
 /************************************************************************/
@@ -104,6 +121,7 @@ OGRSimpleCurve& OGRSimpleCurve::operator=( const OGRSimpleCurve& other )
     OGRCurve::operator=( other );
 
     setPoints(other.nPointCount, other.paoPoints, other.padfZ, other.padfM);
+    flags = other.flags;
 
     return *this;
 }
@@ -117,30 +135,6 @@ void OGRSimpleCurve::flattenTo2D()
 {
     Make2D();
     setMeasured(FALSE);
-}
-
-/************************************************************************/
-/*                               clone()                                */
-/************************************************************************/
-
-OGRGeometry *OGRSimpleCurve::clone() const
-
-{
-    OGRSimpleCurve *poCurve = dynamic_cast<OGRSimpleCurve *>(
-            OGRGeometryFactory::createGeometry(getGeometryType()));
-    if( poCurve == NULL )
-        return NULL;
-
-    poCurve->assignSpatialReference( getSpatialReference() );
-    poCurve->setPoints( nPointCount, paoPoints, padfZ, padfM );
-    if( poCurve->getNumPoints() != nPointCount )
-    {
-        delete poCurve;
-        return NULL;
-    }
-    poCurve->flags = flags;
-
-    return poCurve;
 }
 
 /************************************************************************/
@@ -192,10 +186,10 @@ void OGRSimpleCurve::setMeasured( OGRBoolean bIsMeasured )
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
 
-int OGRSimpleCurve::WkbSize() const
+size_t OGRSimpleCurve::WkbSize() const
 
 {
-    return 5 + 4 + 8 * nPointCount * CoordinateDimension();
+    return 5 + 4 + 8 * static_cast<size_t>(nPointCount) * CoordinateDimension();
 }
 
 //! @cond Doxygen_Suppress
@@ -207,10 +201,10 @@ int OGRSimpleCurve::WkbSize() const
 void OGRSimpleCurve::Make2D()
 
 {
-    if( padfZ != NULL )
+    if( padfZ != nullptr )
     {
         CPLFree( padfZ );
-        padfZ = NULL;
+        padfZ = nullptr;
     }
     flags &= ~OGR_G_3D;
 }
@@ -222,7 +216,7 @@ void OGRSimpleCurve::Make2D()
 void OGRSimpleCurve::Make3D()
 
 {
-    if( padfZ == NULL )
+    if( padfZ == nullptr )
     {
         if( nPointCount == 0 )
             padfZ =
@@ -230,7 +224,7 @@ void OGRSimpleCurve::Make3D()
         else
             padfZ = static_cast<double *>(VSI_CALLOC_VERBOSE(
                 sizeof(double), nPointCount));
-        if( padfZ == NULL )
+        if( padfZ == nullptr )
         {
             flags &= ~OGR_G_3D;
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -248,10 +242,10 @@ void OGRSimpleCurve::Make3D()
 void OGRSimpleCurve::RemoveM()
 
 {
-    if( padfM != NULL )
+    if( padfM != nullptr )
     {
         CPLFree( padfM );
-        padfM = NULL;
+        padfM = nullptr;
     }
     flags &= ~OGR_G_MEASURED;
 }
@@ -263,7 +257,7 @@ void OGRSimpleCurve::RemoveM()
 void OGRSimpleCurve::AddM()
 
 {
-    if( padfM == NULL )
+    if( padfM == nullptr )
     {
         if( nPointCount == 0 )
             padfM =
@@ -271,7 +265,7 @@ void OGRSimpleCurve::AddM()
         else
             padfM = static_cast<double *>(
                 VSI_CALLOC_VERBOSE(sizeof(double), nPointCount));
-        if( padfM == NULL )
+        if( padfM == nullptr )
         {
             flags &= ~OGR_G_MEASURED;
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -302,14 +296,14 @@ void OGRSimpleCurve::getPoint( int i, OGRPoint * poPoint ) const
 {
     CPLAssert( i >= 0 );
     CPLAssert( i < nPointCount );
-    CPLAssert( poPoint != NULL );
+    CPLAssert( poPoint != nullptr );
 
     poPoint->setX( paoPoints[i].x );
     poPoint->setY( paoPoints[i].y );
 
-    if( (flags & OGR_G_3D) && padfZ != NULL )
+    if( (flags & OGR_G_3D) && padfZ != nullptr )
         poPoint->setZ( padfZ[i] );
-    if( (flags & OGR_G_MEASURED) && padfM != NULL )
+    if( (flags & OGR_G_MEASURED) && padfM != nullptr )
         poPoint->setM( padfM[i] );
 }
 
@@ -368,7 +362,7 @@ void OGRSimpleCurve::getPoint( int i, OGRPoint * poPoint ) const
 double OGRSimpleCurve::getZ( int iVertex ) const
 
 {
-    if( padfZ != NULL && iVertex >= 0 && iVertex < nPointCount
+    if( padfZ != nullptr && iVertex >= 0 && iVertex < nPointCount
         && (flags & OGR_G_3D) )
         return( padfZ[iVertex] );
     else
@@ -383,8 +377,7 @@ double OGRSimpleCurve::getZ( int iVertex ) const
  * \brief Get measure at vertex.
  *
  * Returns the M (measure) value at the indicated vertex.  If no M
- * value is available, 0.0 is returned.  If iVertex is out of range a
- * crash may occur, no internal range checking is performed.
+ * value is available, 0.0 is returned.
  *
  * @param iVertex the vertex to return, between 0 and getNumPoints()-1.
  *
@@ -394,7 +387,7 @@ double OGRSimpleCurve::getZ( int iVertex ) const
 double OGRSimpleCurve::getM( int iVertex ) const
 
 {
-    if( padfM != NULL && iVertex >= 0 && iVertex < nPointCount
+    if( padfM != nullptr && iVertex >= 0 && iVertex < nPointCount
         && (flags & OGR_G_MEASURED) )
         return( padfM[iVertex] );
     else
@@ -427,13 +420,13 @@ void OGRSimpleCurve::setNumPoints( int nNewPointCount, int bZeroizeNewContent )
     if( nNewPointCount == 0 )
     {
         CPLFree( paoPoints );
-        paoPoints = NULL;
+        paoPoints = nullptr;
 
         CPLFree( padfZ );
-        padfZ = NULL;
+        padfZ = nullptr;
 
         CPLFree( padfM );
-        padfM = NULL;
+        padfM = nullptr;
 
         nPointCount = 0;
         return;
@@ -441,24 +434,41 @@ void OGRSimpleCurve::setNumPoints( int nNewPointCount, int bZeroizeNewContent )
 
     if( nNewPointCount > nPointCount )
     {
+        // Overflow of sizeof(OGRRawPoint) * nNewPointCount can only occur on
+        // 32 bit, but we don't really want to allocate 2 billion points even on
+        // 64 bit...
+        if( nNewPointCount > std::numeric_limits<int>::max() /
+                                    static_cast<int>(sizeof(OGRRawPoint)) )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Too big point count.");
+            return;
+        }
         OGRRawPoint* paoNewPoints = static_cast<OGRRawPoint *>(
             VSI_REALLOC_VERBOSE(paoPoints,
                                 sizeof(OGRRawPoint) * nNewPointCount));
-        if( paoNewPoints == NULL )
+        if( paoNewPoints == nullptr )
         {
             return;
         }
         paoPoints = paoNewPoints;
 
         if( bZeroizeNewContent )
-            memset( paoPoints + nPointCount,
-                0, sizeof(OGRRawPoint) * (nNewPointCount - nPointCount) );
+        {
+            // gcc 8.0 (dev) complains about -Wclass-memaccess since
+            // OGRRawPoint() has a constructor. So use a void* pointer.  Doing
+            // the memset() here is correct since the constructor sets to 0.  We
+            // could instead use a std::fill(), but at every other place, we
+            // treat this class as a regular POD (see above use of realloc())
+            void* dest = static_cast<void*>(paoPoints + nPointCount);
+            memset( dest,
+                    0, sizeof(OGRRawPoint) * (nNewPointCount - nPointCount) );
+        }
 
         if( flags & OGR_G_3D )
         {
             double* padfNewZ = static_cast<double *>(
                 VSI_REALLOC_VERBOSE(padfZ, sizeof(double) * nNewPointCount));
-            if( padfNewZ == NULL )
+            if( padfNewZ == nullptr )
             {
                 return;
             }
@@ -472,7 +482,7 @@ void OGRSimpleCurve::setNumPoints( int nNewPointCount, int bZeroizeNewContent )
         {
             double* padfNewM = static_cast<double *>(
                 VSI_REALLOC_VERBOSE(padfM, sizeof(double) * nNewPointCount));
-            if( padfNewM == NULL )
+            if( padfNewM == nullptr )
             {
                 return;
             }
@@ -507,11 +517,11 @@ void OGRSimpleCurve::setPoint( int iPoint, OGRPoint * poPoint )
 
 {
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
-        setPoint( iPoint, poPoint->getX(), poPoint->getY(), poPoint->getM() );
-    else if( flags & OGR_G_MEASURED )
-        setPointM( iPoint, poPoint->getX(), poPoint->getY(), poPoint->getM() );
+        setPoint( iPoint, poPoint->getX(), poPoint->getY(), poPoint->getZ(), poPoint->getM() );
     else if( flags & OGR_G_3D )
         setPoint( iPoint, poPoint->getX(), poPoint->getY(), poPoint->getZ() );
+    else if( flags & OGR_G_MEASURED )
+        setPointM( iPoint, poPoint->getX(), poPoint->getY(), poPoint->getM() );
     else
         setPoint( iPoint, poPoint->getX(), poPoint->getY() );
 }
@@ -548,14 +558,14 @@ void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn, double zIn )
             return;
     }
 #ifdef DEBUG
-    if( paoPoints == NULL )
+    if( paoPoints == nullptr )
         return;
 #endif
 
     paoPoints[iPoint].x = xIn;
     paoPoints[iPoint].y = yIn;
 
-    if( padfZ != NULL )
+    if( padfZ != nullptr )
     {
         padfZ[iPoint] = zIn;
     }
@@ -589,14 +599,14 @@ void OGRSimpleCurve::setPointM( int iPoint, double xIn, double yIn, double mIn )
             return;
     }
 #ifdef DEBUG
-    if( paoPoints == NULL )
+    if( paoPoints == nullptr )
         return;
 #endif
 
     paoPoints[iPoint].x = xIn;
     paoPoints[iPoint].y = yIn;
 
-    if( padfM != NULL )
+    if( padfM != nullptr )
     {
         padfM[iPoint] = mIn;
     }
@@ -634,18 +644,18 @@ void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn,
             return;
     }
 #ifdef DEBUG
-    if( paoPoints == NULL )
+    if( paoPoints == nullptr )
         return;
 #endif
 
     paoPoints[iPoint].x = xIn;
     paoPoints[iPoint].y = yIn;
 
-    if( padfZ != NULL )
+    if( padfZ != nullptr )
     {
         padfZ[iPoint] = zIn;
     }
-    if( padfM != NULL )
+    if( padfM != nullptr )
     {
         padfM[iPoint] = mIn;
     }
@@ -671,7 +681,7 @@ void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn )
     if( iPoint >= nPointCount )
     {
         setNumPoints( iPoint+1 );
-        if( nPointCount < iPoint + 1 )
+        if( nPointCount < iPoint + 1 || paoPoints == nullptr )
             return;
     }
 
@@ -708,7 +718,7 @@ void OGRSimpleCurve::setZ( int iPoint, double zIn )
             return;
     }
 
-    if( padfZ != NULL )
+    if( padfZ != nullptr )
         padfZ[iPoint] = zIn;
 }
 
@@ -741,7 +751,7 @@ void OGRSimpleCurve::setM( int iPoint, double mIn )
             return;
     }
 
-    if( padfM != NULL )
+    if( padfM != nullptr )
         padfM[iPoint] = mIn;
 }
 
@@ -763,10 +773,14 @@ void OGRSimpleCurve::setM( int iPoint, double mIn )
 void OGRSimpleCurve::addPoint( const OGRPoint * poPoint )
 
 {
-    if( poPoint->getCoordinateDimension() < 3 )
-        setPoint( nPointCount, poPoint->getX(), poPoint->getY() );
-    else
+    if( poPoint->Is3D() && poPoint->IsMeasured() )
+        setPoint( nPointCount, poPoint->getX(), poPoint->getY(), poPoint->getZ(), poPoint->getM() );
+    else if( poPoint->Is3D() )
         setPoint( nPointCount, poPoint->getX(), poPoint->getY(), poPoint->getZ() );
+    else if( poPoint->IsMeasured() )
+        setPointM( nPointCount, poPoint->getX(), poPoint->getY(), poPoint->getM() );
+    else
+        setPoint( nPointCount, poPoint->getX(), poPoint->getY() );
 }
 
 /************************************************************************/
@@ -850,6 +864,43 @@ void OGRSimpleCurve::addPointM( double x, double y, double m )
 }
 
 /************************************************************************/
+/*                            removePoint()                             */
+/************************************************************************/
+
+/**
+ * \brief Remove a point from a line string.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param nIndex Point index
+ * @since GDAL 3.3
+ */
+
+bool OGRSimpleCurve::removePoint( int nIndex )
+{
+    if( nIndex < 0 || nIndex >= nPointCount )
+        return false;
+    if( nIndex < nPointCount - 1 )
+    {
+        memmove( paoPoints + nIndex, paoPoints + nIndex + 1,
+                 sizeof(OGRRawPoint) * (nPointCount - 1 - nIndex));
+        if( padfZ )
+        {
+            memmove( padfZ + nIndex, padfZ + nIndex + 1,
+                 sizeof(double) * (nPointCount - 1 - nIndex));
+        }
+        if( padfM )
+        {
+            memmove( padfM + nIndex, padfM + nIndex + 1,
+                 sizeof(double) * (nPointCount - 1 - nIndex));
+        }
+    }
+    nPointCount --;
+    return true;
+}
+
+
+/************************************************************************/
 /*                             setPointsM()                             */
 /************************************************************************/
 
@@ -867,14 +918,15 @@ void OGRSimpleCurve::addPointM( double x, double y, double m )
  * @param padfMIn the M values that go with the points.
  */
 
-void OGRSimpleCurve::setPointsM( int nPointsIn, OGRRawPoint * paoPointsIn,
-                                 double * padfMIn )
+void OGRSimpleCurve::setPointsM( int nPointsIn,
+                                 const OGRRawPoint * paoPointsIn,
+                                 const double * padfMIn )
 
 {
     setNumPoints( nPointsIn, FALSE );
     if( nPointCount < nPointsIn
 #ifdef DEBUG
-        || paoPoints == NULL
+        || paoPoints == nullptr
 #endif
         )
         return;
@@ -885,7 +937,7 @@ void OGRSimpleCurve::setPointsM( int nPointsIn, OGRRawPoint * paoPointsIn,
 /* -------------------------------------------------------------------- */
 /*      Check measures.                                                 */
 /* -------------------------------------------------------------------- */
-    if( padfMIn == NULL && (flags & OGR_G_MEASURED) )
+    if( padfMIn == nullptr && (flags & OGR_G_MEASURED) )
     {
         RemoveM();
     }
@@ -916,14 +968,16 @@ void OGRSimpleCurve::setPointsM( int nPointsIn, OGRRawPoint * paoPointsIn,
  * @param padfMIn the M values that go with the points.
  */
 
-void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
-                                double * padfZIn, double * padfMIn )
+void OGRSimpleCurve::setPoints( int nPointsIn,
+                                const OGRRawPoint * paoPointsIn,
+                                const double * padfZIn,
+                                const double * padfMIn )
 
 {
     setNumPoints( nPointsIn, FALSE );
     if( nPointCount < nPointsIn
 #ifdef DEBUG
-        || paoPoints == NULL
+        || paoPoints == nullptr
 #endif
         )
         return;
@@ -934,7 +988,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
 /* -------------------------------------------------------------------- */
 /*      Check 2D/3D.                                                    */
 /* -------------------------------------------------------------------- */
-    if( padfZIn == NULL && getCoordinateDimension() > 2 )
+    if( padfZIn == nullptr && getCoordinateDimension() > 2 )
     {
         Make2D();
     }
@@ -948,7 +1002,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
 /* -------------------------------------------------------------------- */
 /*      Check measures.                                                 */
 /* -------------------------------------------------------------------- */
-    if( padfMIn == NULL && (flags & OGR_G_MEASURED) )
+    if( padfMIn == nullptr && (flags & OGR_G_MEASURED) )
     {
         RemoveM();
     }
@@ -978,14 +1032,15 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
  * @param padfZIn the Z values that go with the points (optional, may be NULL).
  */
 
-void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
-                               double * padfZIn )
+void OGRSimpleCurve::setPoints( int nPointsIn,
+                                const OGRRawPoint * paoPointsIn,
+                                const double * padfZIn )
 
 {
     setNumPoints( nPointsIn, FALSE );
     if( nPointCount < nPointsIn
 #ifdef DEBUG
-        || paoPoints == NULL
+        || paoPoints == nullptr
 #endif
         )
         return;
@@ -996,7 +1051,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
 /* -------------------------------------------------------------------- */
 /*      Check 2D/3D.                                                    */
 /* -------------------------------------------------------------------- */
-    if( padfZIn == NULL && getCoordinateDimension() > 2 )
+    if( padfZIn == nullptr && getCoordinateDimension() > 2 )
     {
         Make2D();
     }
@@ -1027,14 +1082,16 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
  * NULL for 2D objects).
  */
 
-void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
-                                double * padfZIn )
+void OGRSimpleCurve::setPoints( int nPointsIn,
+                                const double * padfX,
+                                const double * padfY,
+                                const double * padfZIn )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Check 2D/3D.                                                    */
 /* -------------------------------------------------------------------- */
-    if( padfZIn == NULL )
+    if( padfZIn == nullptr )
         Make2D();
     else
         Make3D();
@@ -1052,7 +1109,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
         paoPoints[i].y = padfY[i];
     }
 
-    if( padfZ == NULL || !padfZIn || !nPointsIn )
+    if( padfZ == nullptr || !padfZIn || !nPointsIn )
     {
         return;
     }
@@ -1078,14 +1135,16 @@ void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
  * @param padfMIn list of M coordinates of points being assigned.
  */
 
-void OGRSimpleCurve::setPointsM( int nPointsIn, double * padfX, double * padfY,
-                                 double * padfMIn )
+void OGRSimpleCurve::setPointsM( int nPointsIn,
+                                 const double * padfX,
+                                 const double * padfY,
+                                 const double * padfMIn )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Check 2D/3D.                                                    */
 /* -------------------------------------------------------------------- */
-    if( padfMIn == NULL )
+    if( padfMIn == nullptr )
         RemoveM();
     else
         AddM();
@@ -1103,7 +1162,7 @@ void OGRSimpleCurve::setPointsM( int nPointsIn, double * padfX, double * padfY,
         paoPoints[i].y = padfY[i];
     }
 
-    if( padfMIn == NULL || !padfM || !nPointsIn )
+    if( padfMIn == nullptr || !padfM || !nPointsIn )
     {
         return;
     }
@@ -1130,14 +1189,17 @@ void OGRSimpleCurve::setPointsM( int nPointsIn, double * padfX, double * padfY,
  * @param padfMIn list of M coordinates of points being assigned.
  */
 
-void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
-                                double * padfZIn, double * padfMIn )
+void OGRSimpleCurve::setPoints( int nPointsIn,
+                                const double * padfX,
+                                const double * padfY,
+                                const double * padfZIn,
+                                const double * padfMIn )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Check 2D/3D.                                                    */
 /* -------------------------------------------------------------------- */
-    if( padfZIn == NULL )
+    if( padfZIn == nullptr )
         Make2D();
     else
         Make3D();
@@ -1145,7 +1207,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
 /* -------------------------------------------------------------------- */
 /*      Check measures.                                                 */
 /* -------------------------------------------------------------------- */
-    if( padfMIn == NULL )
+    if( padfMIn == nullptr )
         RemoveM();
     else
         AddM();
@@ -1163,9 +1225,9 @@ void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
         paoPoints[i].y = padfY[i];
     }
 
-    if( padfZ != NULL && padfZIn && nPointsIn )
+    if( padfZ != nullptr && padfZIn && nPointsIn )
         memcpy( padfZ, padfZIn, sizeof(double) * nPointsIn );
-    if( padfM != NULL && padfMIn && nPointsIn )
+    if( padfM != nullptr && padfMIn && nPointsIn )
         memcpy( padfM, padfMIn, sizeof(double) * nPointsIn );
 }
 
@@ -1206,72 +1268,6 @@ void OGRSimpleCurve::getPoints( OGRRawPoint * paoPointsOut,
     }
 }
 
-/************************************************************************/
-/*                          getPoints()                                 */
-/************************************************************************/
-
-/**
- * \brief Returns all points of line string.
- *
- * This method copies all points into user arrays. The user provides the
- * stride between 2 consecutive elements of the array.
- *
- * On some CPU architectures, care must be taken so that the arrays are properly
- * aligned.
- *
- * There is no SFCOM analog to this method.
- *
- * @param pabyX a buffer of at least (sizeof(double) * nXStride * nPointCount)
- * bytes, may be NULL.
- * @param nXStride the number of bytes between 2 elements of pabyX.
- * @param pabyY a buffer of at least (sizeof(double) * nYStride * nPointCount)
- * bytes, may be NULL.
- * @param nYStride the number of bytes between 2 elements of pabyY.
- * @param pabyZ a buffer of at last size (sizeof(double) * nZStride *
- * nPointCount) bytes, may be NULL.
- * @param nZStride the number of bytes between 2 elements of pabyZ.
- *
- * @since OGR 1.9.0
- */
-
-void OGRSimpleCurve::getPoints( void* pabyX, int nXStride,
-                                void* pabyY, int nYStride,
-                                void* pabyZ, int nZStride ) const
-{
-    if( pabyX != NULL && nXStride == 0 )
-        return;
-    if( pabyY != NULL && nYStride == 0 )
-        return;
-    if( pabyZ != NULL && nZStride == 0 )
-        return;
-    if( nXStride == 2 * sizeof(double) &&
-        nYStride == 2 * sizeof(double) &&
-        static_cast<char *>(pabyY) ==
-        static_cast<char *>(pabyX) + sizeof(double) &&
-        (pabyZ == NULL || nZStride == sizeof(double)) )
-    {
-        getPoints(static_cast<OGRRawPoint *>(pabyX),
-                  static_cast<double *>(pabyZ));
-        return;
-    }
-    for( int i = 0; i < nPointCount; i++ )
-    {
-        if( pabyX )
-            *(double*)(static_cast<char*>(pabyX) + i * nXStride) = paoPoints[i].x;
-        if( pabyY )
-            *(double*)(static_cast<char*>(pabyY) + i * nYStride) = paoPoints[i].y;
-    }
-
-    if( pabyZ )
-    {
-        for( int i = 0; i < nPointCount; i++ )
-        {
-            *(double*)(static_cast<char*>(pabyZ) + i * nZStride) =
-                padfZ ? padfZ[i] : 0.0;
-        }
-    }
-}
-
 /**
  * \brief Returns all points of line string.
  *
@@ -1282,13 +1278,13 @@ void OGRSimpleCurve::getPoints( void* pabyX, int nXStride,
  *
  * There is no SFCOM analog to this method.
  *
- * @param pabyX a buffer of at least (sizeof(double) * nXStride * nPointCount) bytes, may be NULL.
+ * @param pabyX a buffer of at least (nXStride * nPointCount) bytes, may be NULL.
  * @param nXStride the number of bytes between 2 elements of pabyX.
- * @param pabyY a buffer of at least (sizeof(double) * nYStride * nPointCount) bytes, may be NULL.
+ * @param pabyY a buffer of at least (nYStride * nPointCount) bytes, may be NULL.
  * @param nYStride the number of bytes between 2 elements of pabyY.
- * @param pabyZ a buffer of at last size (sizeof(double) * nZStride * nPointCount) bytes, may be NULL.
+ * @param pabyZ a buffer of at last size (nZStride * nPointCount) bytes, may be NULL.
  * @param nZStride the number of bytes between 2 elements of pabyZ.
- * @param pabyM a buffer of at last size (sizeof(double) * nMStride * nPointCount) bytes, may be NULL.
+ * @param pabyM a buffer of at last size (nMStride * nPointCount) bytes, may be NULL.
  * @param nMStride the number of bytes between 2 elements of pabyM.
  *
  * @since OGR 2.1.0
@@ -1299,32 +1295,64 @@ void OGRSimpleCurve::getPoints( void* pabyX, int nXStride,
                                 void* pabyZ, int nZStride,
                                 void* pabyM, int nMStride ) const
 {
-    if( pabyX != NULL && nXStride == 0 )
+    if( pabyX != nullptr && nXStride == 0 )
         return;
-    if( pabyY != NULL && nYStride == 0 )
+    if( pabyY != nullptr && nYStride == 0 )
         return;
-    if( pabyZ != NULL && nZStride == 0 )
+    if( pabyZ != nullptr && nZStride == 0 )
         return;
-    if( pabyM != NULL && nMStride == 0 )
+    if( pabyM != nullptr && nMStride == 0 )
         return;
-    for( int i = 0; i < nPointCount; i++ )
+    if( nXStride == sizeof(OGRRawPoint) &&
+        nYStride == sizeof(OGRRawPoint) &&
+        static_cast<char *>(pabyY) ==
+        static_cast<char *>(pabyX) + sizeof(double) &&
+        (pabyZ == nullptr || nZStride == sizeof(double)) )
     {
-        if( pabyX ) *(double*)((char*)pabyX + i * nXStride) = paoPoints[i].x;
-        if( pabyY ) *(double*)((char*)pabyY + i * nYStride) = paoPoints[i].y;
+        getPoints(static_cast<OGRRawPoint *>(pabyX),
+                  static_cast<double *>(pabyZ));
     }
-
-    if( pabyZ )
+    else
     {
         for( int i = 0; i < nPointCount; i++ )
         {
-            *(double*)((char*)pabyZ + i * nZStride) = (padfZ) ? padfZ[i] : 0.0;
+            if( pabyX ) *reinterpret_cast<double*>(static_cast<char*>(pabyX) + i * nXStride) = paoPoints[i].x;
+            if( pabyY ) *reinterpret_cast<double*>(static_cast<char*>(pabyY) + i * nYStride) = paoPoints[i].y;
+        }
+
+        if( pabyZ )
+        {
+            if( nZStride == sizeof(double) )
+            {
+                if( padfZ )
+                    memcpy( pabyZ, padfZ, sizeof(double) * nPointCount );
+                else
+                    memset( pabyZ, 0, sizeof(double) * nPointCount );
+            }
+            else
+            {
+                for( int i = 0; i < nPointCount; i++ )
+                {
+                    *reinterpret_cast<double*>(static_cast<char*>(pabyZ) + i * nZStride) = (padfZ) ? padfZ[i] : 0.0;
+                }
+            }
         }
     }
     if( pabyM )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        if( nMStride == sizeof(double) )
         {
-            *(double*)((char*)pabyM + i * nZStride) = (padfM) ? padfM[i] : 0.0;
+            if( padfM )
+                memcpy( pabyM, padfM, sizeof(double) * nPointCount );
+            else
+                memset( pabyM, 0, sizeof(double) * nPointCount );
+        }
+        else
+        {
+            for( int i = 0; i < nPointCount; i++ )
+            {
+                *reinterpret_cast<double*>(static_cast<char*>(pabyM) + i * nMStride) = (padfM) ? padfM[i] : 0.0;
+            }
         }
     }
 }
@@ -1345,17 +1373,15 @@ void OGRSimpleCurve::reversePoints()
 {
     for( int i = 0; i < nPointCount/2; i++ )
     {
-        const OGRRawPoint sPointTemp = paoPoints[i];
-
-        paoPoints[i] = paoPoints[nPointCount-i-1];
-        paoPoints[nPointCount-i-1] = sPointTemp;
-
+        std::swap(paoPoints[i], paoPoints[nPointCount-i-1]);
         if( padfZ )
         {
-            const double dfZTemp = padfZ[i];
+            std::swap(padfZ[i], padfZ[nPointCount-i-1]);
+        }
 
-            padfZ[i] = padfZ[nPointCount-i-1];
-            padfZ[nPointCount-i-1] = dfZTemp;
+        if( padfM )
+        {
+            std::swap(padfM[i], padfM[nPointCount-i-1]);
         }
     }
 }
@@ -1409,7 +1435,7 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
     setNumPoints( nPointsToAdd + nOldPoints, FALSE );
     if( nPointCount < nPointsToAdd + nOldPoints
 #ifdef DEBUG
-        || paoPoints == NULL
+        || paoPoints == nullptr
 #endif
         )
         return;
@@ -1422,12 +1448,21 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
         memcpy( paoPoints + nOldPoints,
                 poOtherLine->paoPoints + nStartVertex,
                 sizeof(OGRRawPoint) * nPointsToAdd );
-        if( poOtherLine->padfZ != NULL )
+        if( poOtherLine->padfZ != nullptr )
         {
             Make3D();
-            if( padfZ != NULL )
+            if( padfZ != nullptr )
             {
                 memcpy( padfZ + nOldPoints, poOtherLine->padfZ + nStartVertex,
+                        sizeof(double) * nPointsToAdd );
+            }
+        }
+        if( poOtherLine->padfM != nullptr )
+        {
+            AddM();
+            if( padfM != nullptr )
+            {
+                memcpy( padfM + nOldPoints, poOtherLine->padfM + nStartVertex,
                         sizeof(double) * nPointsToAdd );
             }
         }
@@ -1446,14 +1481,25 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
                 poOtherLine->paoPoints[nStartVertex-i].y;
         }
 
-        if( poOtherLine->padfZ != NULL )
+        if( poOtherLine->padfZ != nullptr )
         {
             Make3D();
-            if( padfZ != NULL )
+            if( padfZ != nullptr )
             {
                 for( int i = 0; i < nPointsToAdd; i++ )
                 {
                     padfZ[i+nOldPoints] = poOtherLine->padfZ[nStartVertex-i];
+                }
+            }
+        }
+        if( poOtherLine->padfM != nullptr )
+        {
+            AddM();
+            if( padfM != nullptr )
+            {
+                for( int i = 0; i < nPointsToAdd; i++ )
+                {
+                    padfM[i+nOldPoints] = poOtherLine->padfM[nStartVertex-i];
                 }
             }
         }
@@ -1467,16 +1513,18 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
 /*      format.                                                         */
 /************************************************************************/
 
-OGRErr OGRSimpleCurve::importFromWkb( unsigned char * pabyData,
-                                      int nSize,
-                                      OGRwkbVariant eWkbVariant )
+OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
+                                      size_t nSize,
+                                      OGRwkbVariant eWkbVariant,
+                                      size_t& nBytesConsumedOut )
 
 {
     OGRwkbByteOrder     eByteOrder;
-    int                 nDataOffset = 0;
+    size_t              nDataOffset = 0;
     int                 nNewNumPoints = 0;
 
-    OGRErr eErr = importPreambuleOfCollectionFromWkb( pabyData,
+    nBytesConsumedOut = 0;
+    OGRErr eErr = importPreambleOfCollectionFromWkb( pabyData,
                                                       nSize,
                                                       nDataOffset,
                                                       eByteOrder,
@@ -1489,12 +1537,15 @@ OGRErr OGRSimpleCurve::importFromWkb( unsigned char * pabyData,
     // Check if the wkb stream buffer is big enough to store
     // fetched number of points.
     const int dim = CoordinateDimension();
-    int nPointSize = dim*sizeof(double);
-    if( nNewNumPoints < 0 || nNewNumPoints > INT_MAX / nPointSize )
+    const size_t nPointSize = dim*sizeof(double);
+    if( nNewNumPoints < 0 ||
+        static_cast<size_t>(nNewNumPoints) > std::numeric_limits<size_t>::max() / nPointSize )
+    {
         return OGRERR_CORRUPT_DATA;
-    int nBufferMinSize = nPointSize * nNewNumPoints;
+    }
+    const size_t nBufferMinSize = nPointSize * nNewNumPoints;
 
-    if( nSize != -1 && nBufferMinSize > nSize )
+    if( nSize != static_cast<size_t>(-1) && nBufferMinSize > nSize )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Length of input WKB is too small" );
@@ -1505,14 +1556,16 @@ OGRErr OGRSimpleCurve::importFromWkb( unsigned char * pabyData,
     if( nPointCount < nNewNumPoints )
         return OGRERR_FAILURE;
 
+    nBytesConsumedOut = 9 + 8 * static_cast<size_t>(nPointCount) *
+                                    (2 + ((flags & OGR_G_3D) ? 1 : 0)+
+                                         ((flags & OGR_G_MEASURED) ? 1 : 0));
+
 /* -------------------------------------------------------------------- */
 /*      Get the vertex.                                                 */
 /* -------------------------------------------------------------------- */
-    int i = 0;
-
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
     {
-        for( i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( paoPoints + i, pabyData + 9 + i*32, 16 );
             memcpy( padfZ + i, pabyData + 9 + 16 + i*32, 8 );
@@ -1521,7 +1574,7 @@ OGRErr OGRSimpleCurve::importFromWkb( unsigned char * pabyData,
     }
     else if( flags & OGR_G_MEASURED )
     {
-        for( i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( paoPoints + i, pabyData + 9 + i*24, 16 );
             memcpy( padfM + i, pabyData + 9 + 16 + i*24, 8 );
@@ -1529,7 +1582,7 @@ OGRErr OGRSimpleCurve::importFromWkb( unsigned char * pabyData,
     }
     else if( flags & OGR_G_3D )
     {
-        for( i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( paoPoints + i, pabyData + 9 + i*24, 16 );
             memcpy( padfZ + i, pabyData + 9 + 16 + i*24, 8 );
@@ -1537,7 +1590,7 @@ OGRErr OGRSimpleCurve::importFromWkb( unsigned char * pabyData,
     }
     else if( nPointCount )
     {
-        memcpy( paoPoints, pabyData + 9, 16 * nPointCount );
+        memcpy( paoPoints, pabyData + 9, 16 * static_cast<size_t>(nPointCount) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1545,7 +1598,7 @@ OGRErr OGRSimpleCurve::importFromWkb( unsigned char * pabyData,
 /* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        for( i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             CPL_SWAPDOUBLE( &(paoPoints[i].x) );
             CPL_SWAPDOUBLE( &(paoPoints[i].y) );
@@ -1553,7 +1606,7 @@ OGRErr OGRSimpleCurve::importFromWkb( unsigned char * pabyData,
 
         if( flags & OGR_G_3D )
         {
-            for( i = 0; i < nPointCount; i++ )
+            for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
             {
                 CPL_SWAPDOUBLE( padfZ + i );
             }
@@ -1561,7 +1614,7 @@ OGRErr OGRSimpleCurve::importFromWkb( unsigned char * pabyData,
 
         if( flags & OGR_G_MEASURED )
         {
-            for( i = 0; i < nPointCount; i++ )
+            for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
             {
                 CPL_SWAPDOUBLE( padfM + i );
             }
@@ -1585,7 +1638,7 @@ OGRErr OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
 /*      Set the byte order.                                             */
 /* -------------------------------------------------------------------- */
-    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER((unsigned char) eByteOrder);
+    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER(static_cast<unsigned char>(eByteOrder));
 
 /* -------------------------------------------------------------------- */
 /*      Set the geometry feature type.                                  */
@@ -1597,17 +1650,21 @@ OGRErr OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
         nGType = wkbFlatten(nGType);
         if( Is3D() )
             // Explicitly set wkb25DBit.
-            nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse);
+            nGType = static_cast<OGRwkbGeometryType>(nGType | wkb25DBitInternalUse);
         if( IsMeasured() )
-            nGType = (OGRwkbGeometryType)(nGType | 0x40000000);
+            nGType = static_cast<OGRwkbGeometryType>(nGType | 0x40000000);
     }
     else if( eWkbVariant == wkbVariantIso )
         nGType = getIsoGeometryType();
 
     if( eByteOrder == wkbNDR )
-        nGType = CPL_LSBWORD32( nGType );
+    {
+        CPL_LSBPTR32( &nGType );
+    }
     else
-        nGType = CPL_MSBWORD32( nGType );
+    {
+        CPL_MSBPTR32( &nGType );
+    }
 
     memcpy( pabyData + 1, &nGType, 4 );
 
@@ -1621,7 +1678,7 @@ OGRErr OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( pabyData + 9 + 32*i, paoPoints+i, 16 );
             memcpy( pabyData + 9 + 16 + 32*i, padfZ+i, 8 );
@@ -1630,7 +1687,7 @@ OGRErr OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
     }
     else if( flags & OGR_G_MEASURED )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( pabyData + 9 + 24*i, paoPoints+i, 16 );
             memcpy( pabyData + 9 + 16 + 24*i, padfM+i, 8 );
@@ -1638,24 +1695,25 @@ OGRErr OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
     }
     else if( flags & OGR_G_3D )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( pabyData + 9 + 24*i, paoPoints+i, 16 );
             memcpy( pabyData + 9 + 16 + 24*i, padfZ+i, 8 );
         }
     }
     else if( nPointCount )
-        memcpy( pabyData+9, paoPoints, 16 * nPointCount );
+        memcpy( pabyData+9, paoPoints, 16 * static_cast<size_t>(nPointCount) );
 
 /* -------------------------------------------------------------------- */
 /*      Swap if needed.                                                 */
 /* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        int nCount = CPL_SWAP32( nPointCount );
+        const int nCount = CPL_SWAP32( nPointCount );
         memcpy( pabyData+5, &nCount, 4 );
 
-        for( int i = CoordinateDimension() * nPointCount - 1; i >= 0; i-- )
+        const size_t nCoords = CoordinateDimension() * static_cast<size_t>(nPointCount);
+        for( size_t i = 0; i < nCoords; i++ )
         {
             CPL_SWAP64PTR( pabyData + 9 + 8 * i );
         }
@@ -1671,14 +1729,14 @@ OGRErr OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      `LINESTRING ( x y, x y, ...)',                                  */
 /************************************************************************/
 
-OGRErr OGRSimpleCurve::importFromWkt( char ** ppszInput )
+OGRErr OGRSimpleCurve::importFromWkt( const char ** ppszInput )
 
 {
     int bHasZ = FALSE;
     int bHasM = FALSE;
     bool bIsEmpty = false;
     const OGRErr eErr =
-        importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+        importPreambleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     flags = 0;
     if( eErr != OGRERR_NONE )
         return eErr;
@@ -1686,9 +1744,6 @@ OGRErr OGRSimpleCurve::importFromWkt( char ** ppszInput )
     if( bHasM ) flags |= OGR_G_MEASURED;
     if( bIsEmpty )
     {
-        // we should be at the end
-        if( !((*ppszInput[0] == '\000') || (*ppszInput[0] == ',')) )
-            return OGRERR_CORRUPT_DATA;
         return OGRERR_NONE;
     }
 
@@ -1704,7 +1759,7 @@ OGRErr OGRSimpleCurve::importFromWkt( char ** ppszInput )
     pszInput = OGRWktReadPointsM( pszInput, &paoPoints, &padfZ, &padfM,
                                   &flagsFromInput,
                                   &nMaxPoints, &nPointCount );
-    if( pszInput == NULL )
+    if( pszInput == nullptr )
         return OGRERR_CORRUPT_DATA;
 
     if( (flagsFromInput & OGR_G_3D) && !(flags & OGR_G_3D) )
@@ -1716,7 +1771,7 @@ OGRErr OGRSimpleCurve::importFromWkt( char ** ppszInput )
         setMeasured(TRUE);
     }
 
-    *ppszInput = (char *) pszInput;
+    *ppszInput = pszInput;
 
     return OGRERR_NONE;
 }
@@ -1728,7 +1783,7 @@ OGRErr OGRSimpleCurve::importFromWkt( char ** ppszInput )
 /*      Instantiate from "(x y, x y, ...)"                              */
 /************************************************************************/
 
-OGRErr OGRSimpleCurve::importFromWKTListOnly( char ** ppszInput,
+OGRErr OGRSimpleCurve::importFromWKTListOnly( const char ** ppszInput,
                                               int bHasZ, int bHasM,
                                               OGRRawPoint*& paoPointsIn,
                                               int& nMaxPointsIn,
@@ -1742,7 +1797,7 @@ OGRErr OGRSimpleCurve::importFromWKTListOnly( char ** ppszInput,
 /* -------------------------------------------------------------------- */
     int flagsFromInput = flags;
     int nPointCountRead = 0;
-    double *padfMIn = NULL;
+    double *padfMIn = nullptr;
     if( flagsFromInput == 0 )  // Flags was not set, this is not called by us.
     {
         if( bHasM )
@@ -1755,7 +1810,7 @@ OGRErr OGRSimpleCurve::importFromWKTListOnly( char ** ppszInput,
                                   &flagsFromInput,
                                   &nMaxPointsIn, &nPointCountRead );
 
-    if( pszInput == NULL )
+    if( pszInput == nullptr )
     {
         CPLFree( padfMIn );
         return OGRERR_CORRUPT_DATA;
@@ -1771,7 +1826,7 @@ OGRErr OGRSimpleCurve::importFromWKTListOnly( char ** ppszInput,
         bHasM = TRUE;
     }
 
-    *ppszInput = (char *) pszInput;
+    *ppszInput = pszInput;
 
     if( bHasM && bHasZ )
         setPoints( nPointCountRead, paoPointsIn, padfZIn, padfMIn );
@@ -1789,100 +1844,58 @@ OGRErr OGRSimpleCurve::importFromWKTListOnly( char ** ppszInput,
 /************************************************************************/
 /*                            exportToWkt()                             */
 /*                                                                      */
-/*      Translate this structure into it's well known text format       */
+/*      Translate this structure into its well known text format       */
 /*      equivalent.  This could be made a lot more CPU efficient.       */
 /************************************************************************/
 
-OGRErr OGRSimpleCurve::exportToWkt( char ** ppszDstText,
-                                   OGRwkbVariant eWkbVariant ) const
-
+std::string OGRSimpleCurve::exportToWkt(const OGRWktOptions& opts, OGRErr *err) const
 {
-    const size_t nMaxString = static_cast<size_t>(nPointCount) * 40 * 4 + 26;
-
-/* -------------------------------------------------------------------- */
-/*      Handle special empty case.                                      */
-/* -------------------------------------------------------------------- */
+    // LINEARRING or LINESTRING or CIRCULARSTRING
+    std::string wkt = getGeometryName();
+    wkt += wktTypeString(opts.variant);
     if( IsEmpty() )
     {
-        CPLString osEmpty;
-        if( eWkbVariant == wkbVariantIso )
-        {
-            if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
-                osEmpty.Printf("%s ZM EMPTY", getGeometryName());
-            else if( flags & OGR_G_MEASURED )
-                osEmpty.Printf("%s M EMPTY", getGeometryName());
-            else if( flags & OGR_G_3D )
-                osEmpty.Printf("%s Z EMPTY", getGeometryName());
-            else
-                osEmpty.Printf("%s EMPTY", getGeometryName());
-        }
-        else
-            osEmpty.Printf("%s EMPTY", getGeometryName());
-        *ppszDstText = CPLStrdup(osEmpty);
-        return OGRERR_NONE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      General case.                                                   */
-/* -------------------------------------------------------------------- */
-    *ppszDstText = static_cast<char *>(VSI_MALLOC_VERBOSE( nMaxString ));
-    if( *ppszDstText == NULL )
-        return OGRERR_NOT_ENOUGH_MEMORY;
-
-    if( eWkbVariant == wkbVariantIso )
-    {
-        if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
-            snprintf( *ppszDstText, nMaxString, "%s ZM (", getGeometryName() );
-        else if( flags & OGR_G_MEASURED )
-            snprintf( *ppszDstText, nMaxString, "%s M (", getGeometryName() );
-        else if( flags & OGR_G_3D )
-            snprintf( *ppszDstText, nMaxString, "%s Z (", getGeometryName() );
-        else
-            snprintf( *ppszDstText, nMaxString, "%s (", getGeometryName() );
+        wkt += "EMPTY";
     }
     else
-        snprintf( *ppszDstText, nMaxString, "%s (", getGeometryName() );
-
-    OGRBoolean hasZ = Is3D();
-    OGRBoolean hasM = IsMeasured();
-    if( eWkbVariant != wkbVariantIso )
-        hasM = FALSE;
-
-    size_t nRetLen = 0;
-
-    for( int i = 0; i < nPointCount; i++ )
     {
-        if( nMaxString <= strlen(*ppszDstText+nRetLen) + 32 + nRetLen )
+        wkt += '(';
+
+        OGRBoolean hasZ = Is3D();
+        OGRBoolean hasM =
+            (opts.variant != wkbVariantIso ? FALSE : IsMeasured());
+
+        try
         {
-            CPLDebug( "OGR",
-                      "OGRSimpleCurve::exportToWkt() ... buffer overflow.\n"
-                      "nMaxString=%d, strlen(*ppszDstText) = %d, i=%d\n"
-                      "*ppszDstText = %s",
-                      static_cast<int>(nMaxString),
-                      static_cast<int>(strlen(*ppszDstText)), i, *ppszDstText );
+            const int nOrdinatesPerVertex =
+                2 + ((hasZ) ? 1 : 0) + ((hasM) ? 1 : 0);
+            // At least 2 bytes per ordinate: one for the value,
+            // and one for the separator...
+            wkt.reserve(wkt.size() + 2 * nPointCount * nOrdinatesPerVertex);
 
-            VSIFree( *ppszDstText );
-            *ppszDstText = NULL;
-            return OGRERR_NOT_ENOUGH_MEMORY;
+            for( int i = 0; i < nPointCount; i++ )
+            {
+                if (i > 0)
+                    wkt += ',';
+
+                wkt += OGRMakeWktCoordinateM(paoPoints[i].x, paoPoints[i].y,
+                                             padfZ ? padfZ[i] : 0.0,
+                                             padfM ? padfM[i] : 0.0,
+                                             hasZ, hasM, opts );
+            }
+            wkt += ')';
         }
-
-        if( i > 0 )
-            strcat( *ppszDstText + nRetLen, "," );
-
-        nRetLen += strlen(*ppszDstText + nRetLen);
-        OGRMakeWktCoordinateM( *ppszDstText + nRetLen,
-                               paoPoints[i].x,
-                               paoPoints[i].y,
-                               padfZ ? padfZ[i] : 0.0,
-                               padfM ? padfM[i] : 0.0,
-                               hasZ, hasM );
-
-        nRetLen += strlen(*ppszDstText + nRetLen);
+        catch( const std::bad_alloc& e )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            if (err)
+                *err = OGRERR_FAILURE;
+            return std::string();
+        }
     }
-
-    strcat( *ppszDstText+nRetLen, ")" );
-
-    return OGRERR_NONE;
+    if (err)
+        *err = OGRERR_NONE;
+    return wkt;
 }
 
 /************************************************************************/
@@ -2019,13 +2032,13 @@ double OGRSimpleCurve::Project(const OGRPoint *
         "GEOS support not enabled.");
     return dfResult;
 #else
-    GEOSGeom hThisGeosGeom = NULL;
-    GEOSGeom hPointGeosGeom = NULL;
+    GEOSGeom hThisGeosGeom = nullptr;
+    GEOSGeom hPointGeosGeom = nullptr;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
     hThisGeosGeom = exportToGEOS(hGEOSCtxt);
     hPointGeosGeom = poPoint->exportToGEOS(hGEOSCtxt);
-    if( hThisGeosGeom != NULL && hPointGeosGeom != NULL )
+    if( hThisGeosGeom != nullptr && hPointGeosGeom != nullptr )
     {
         dfResult = GEOSProject_r(hGEOSCtxt, hThisGeosGeom, hPointGeosGeom);
     }
@@ -2087,7 +2100,7 @@ OGRLineString* OGRSimpleCurve::getSubLine(double dfDistanceFrom,
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Input distances are invalid.");
 
-        return NULL;
+        return nullptr;
     }
 
     double dfLength = 0.0;
@@ -2159,7 +2172,7 @@ OGRLineString* OGRSimpleCurve::getSubLine(double dfDistanceFrom,
                         if( poNewLineString->getNumPoints() < 2 )
                         {
                             delete poNewLineString;
-                            poNewLineString = NULL;
+                            poNewLineString = nullptr;
                         }
 
                         return poNewLineString;
@@ -2224,7 +2237,7 @@ OGRLineString* OGRSimpleCurve::getSubLine(double dfDistanceFrom,
     if( poNewLineString->getNumPoints() < 2 )
     {
         delete poNewLineString;
-        poNewLineString = NULL;
+        poNewLineString = nullptr;
     }
 
     return poNewLineString;
@@ -2276,9 +2289,9 @@ void OGRSimpleCurve::getEnvelope( OGREnvelope * psEnvelope ) const
 void OGRSimpleCurve::getEnvelope( OGREnvelope3D * psEnvelope ) const
 
 {
-    getEnvelope((OGREnvelope*)psEnvelope);
+    getEnvelope(static_cast<OGREnvelope*>(psEnvelope));
 
-    if( IsEmpty() || padfZ == NULL )
+    if( IsEmpty() || padfZ == nullptr )
     {
         psEnvelope->MinZ = 0.0;
         psEnvelope->MaxZ = 0.0;
@@ -2301,10 +2314,10 @@ void OGRSimpleCurve::getEnvelope( OGREnvelope3D * psEnvelope ) const
 }
 
 /************************************************************************/
-/*                               Equals()                                */
+/*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRSimpleCurve::Equals( OGRGeometry * poOther ) const
+OGRBoolean OGRSimpleCurve::Equals( const OGRGeometry * poOther ) const
 
 {
     if( poOther == this )
@@ -2318,7 +2331,7 @@ OGRBoolean OGRSimpleCurve::Equals( OGRGeometry * poOther ) const
 
     // TODO(schwehr): Test the SRS.
 
-    OGRSimpleCurve *poOLine = (OGRSimpleCurve *) poOther;
+    auto poOLine = poOther->toSimpleCurve();
     if( getNumPoints() != poOLine->getNumPoints() )
         return FALSE;
 
@@ -2350,7 +2363,7 @@ OGRErr OGRSimpleCurve::transform( OGRCoordinateTransformation *poCT )
         VSI_MALLOC_VERBOSE(sizeof(double) * nPointCount * 3));
     int *pabSuccess = static_cast<int *>(
         VSI_CALLOC_VERBOSE(sizeof(int), nPointCount));
-    if( xyz == NULL || pabSuccess == NULL )
+    if( xyz == nullptr || pabSuccess == nullptr )
     {
         VSIFree(xyz);
         VSIFree(pabSuccess);
@@ -2370,10 +2383,10 @@ OGRErr OGRSimpleCurve::transform( OGRCoordinateTransformation *poCT )
 /* -------------------------------------------------------------------- */
 /*      Transform and reapply.                                          */
 /* -------------------------------------------------------------------- */
-    poCT->TransformEx( nPointCount, xyz, xyz + nPointCount,
-                       xyz+nPointCount*2, pabSuccess );
+    poCT->Transform( nPointCount, xyz, xyz + nPointCount,
+                     xyz+nPointCount*2, nullptr, pabSuccess );
 
-    const char* pszEnablePartialReprojection = NULL;
+    const char* pszEnablePartialReprojection = nullptr;
 
     int j = 0;  // Used after for.
     for( int i = 0; i < nPointCount; i++ )
@@ -2387,10 +2400,10 @@ OGRErr OGRSimpleCurve::transform( OGRCoordinateTransformation *poCT )
         }
         else
         {
-            if( pszEnablePartialReprojection == NULL )
+            if( pszEnablePartialReprojection == nullptr )
                 pszEnablePartialReprojection =
-                    CPLGetConfigOption("OGR_ENABLE_PARTIAL_REPROJECTION", NULL);
-            if( pszEnablePartialReprojection == NULL )
+                    CPLGetConfigOption("OGR_ENABLE_PARTIAL_REPROJECTION", nullptr);
+            if( pszEnablePartialReprojection == nullptr )
             {
                 static bool bHasWarned = false;
                 if( !bHasWarned )
@@ -2436,7 +2449,7 @@ OGRErr OGRSimpleCurve::transform( OGRCoordinateTransformation *poCT )
     }
 
     setPoints( j, xyz, xyz+nPointCount,
-            ( padfZ ) ? xyz+nPointCount*2 : NULL);
+            ( padfZ ) ? xyz+nPointCount*2 : nullptr);
     CPLFree( xyz );
     CPLFree( pabSuccess );
 
@@ -2455,7 +2468,7 @@ OGRBoolean OGRSimpleCurve::IsEmpty() const
 }
 
 /************************************************************************/
-/*                     OGRSimpleCurve::segmentize()                      */
+/*                     OGRSimpleCurve::segmentize()                     */
 /************************************************************************/
 
 void OGRSimpleCurve::segmentize( double dfMaxLength )
@@ -2478,26 +2491,95 @@ void OGRSimpleCurve::segmentize( double dfMaxLength )
         reversePoints();
         segmentize(dfMaxLength);
         reversePoints();
+        return;
     }
 
-    OGRRawPoint* paoNewPoints = NULL;
-    double* padfNewZ = NULL;
     int nNewPointCount = 0;
     const double dfSquareMaxLength = dfMaxLength * dfMaxLength;
-    const int nCoordinateDimension = getCoordinateDimension();
 
+    // First pass to compute new number of points
     for( int i = 0; i < nPointCount; i++ )
     {
-        paoNewPoints = static_cast<OGRRawPoint *>(
-            CPLRealloc(paoNewPoints,
-                       sizeof(OGRRawPoint) * (nNewPointCount + 1)));
+        nNewPointCount++;
+
+        if( i == nPointCount - 1 )
+            break;
+
+        // Must be kept in sync with the second pass loop
+        const double dfX = paoPoints[i+1].x - paoPoints[i].x;
+        const double dfY = paoPoints[i+1].y - paoPoints[i].y;
+        const double dfSquareDist = dfX * dfX + dfY * dfY;
+        if( dfSquareDist - dfSquareMaxLength > 1e-5 * dfSquareMaxLength )
+        {
+            const double dfIntermediatePoints =
+                floor(sqrt(dfSquareDist / dfSquareMaxLength) - 1e-2);
+            const int nIntermediatePoints =
+                DoubleToIntClamp(dfIntermediatePoints);
+
+            // TODO(schwehr): Can these be tighter?
+            // Limit allocation of paoNewPoints to a few GB of memory.
+            // An OGRRawPoint is 2 doubles.
+            // kMax is a guess of what a reasonable max might be.
+            constexpr int kMax = 2 << 26;
+            if ( nNewPointCount > kMax || nIntermediatePoints > kMax )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Too many points in a segment: %d or %d",
+                         nNewPointCount, nIntermediatePoints);
+                return;
+            }
+
+            nNewPointCount += nIntermediatePoints;
+        }
+    }
+
+    if( nPointCount == nNewPointCount )
+        return;
+
+    // Allocate new arrays
+    OGRRawPoint* paoNewPoints = static_cast<OGRRawPoint *>(
+        VSI_MALLOC_VERBOSE(sizeof(OGRRawPoint) * nNewPointCount));
+    if( paoNewPoints == nullptr )
+        return;
+    double* padfNewZ = nullptr;
+    double* padfNewM = nullptr;
+    if( padfZ != nullptr )
+    {
+        padfNewZ = static_cast<double *>(
+            VSI_MALLOC_VERBOSE(sizeof(double) * nNewPointCount));
+        if( padfNewZ == nullptr )
+        {
+            VSIFree(paoNewPoints);
+            return;
+        }
+    }
+    if( padfM != nullptr )
+    {
+        padfNewM = static_cast<double *>(
+            VSI_MALLOC_VERBOSE(sizeof(double) * nNewPointCount));
+        if( padfNewM == nullptr )
+        {
+            VSIFree(paoNewPoints);
+            VSIFree(padfNewZ);
+            return;
+        }
+    }
+
+    // Second pass to fill new arrays
+    // Must be kept in sync with the first pass loop
+    nNewPointCount = 0;
+    for( int i = 0; i < nPointCount; i++ )
+    {
         paoNewPoints[nNewPointCount] = paoPoints[i];
 
-        if( nCoordinateDimension == 3 )
+        if( padfZ != nullptr )
         {
-            padfNewZ = static_cast<double *>(
-                CPLRealloc(padfNewZ, sizeof(double) * (nNewPointCount + 1)));
             padfNewZ[nNewPointCount] = padfZ[i];
+        }
+
+        if( padfM != nullptr )
+        {
+            padfNewM[nNewPointCount] = padfM[i];
         }
 
         nNewPointCount++;
@@ -2508,22 +2590,12 @@ void OGRSimpleCurve::segmentize( double dfMaxLength )
         const double dfX = paoPoints[i+1].x - paoPoints[i].x;
         const double dfY = paoPoints[i+1].y - paoPoints[i].y;
         const double dfSquareDist = dfX * dfX + dfY * dfY;
-        if( dfSquareDist > dfSquareMaxLength )
+        if( dfSquareDist - dfSquareMaxLength > 1e-5 * dfSquareMaxLength )
         {
+            const double dfIntermediatePoints =
+                floor(sqrt(dfSquareDist / dfSquareMaxLength) - 1e-2);
             const int nIntermediatePoints =
-                static_cast<int>(floor(sqrt(dfSquareDist / dfSquareMaxLength)));
-
-            paoNewPoints = static_cast<OGRRawPoint *>(
-                CPLRealloc(paoNewPoints,
-                           sizeof(OGRRawPoint) * (nNewPointCount +
-                                                  nIntermediatePoints)));
-            if( nCoordinateDimension == 3 )
-            {
-                padfNewZ = static_cast<double *>(
-                    CPLRealloc(padfNewZ,
-                               sizeof(double) * (nNewPointCount +
-                                                 nIntermediatePoints)));
-            }
+                DoubleToIntClamp(dfIntermediatePoints);
 
             for( int j = 1; j <= nIntermediatePoints; j++ )
             {
@@ -2531,10 +2603,15 @@ void OGRSimpleCurve::segmentize( double dfMaxLength )
                     paoPoints[i].x + j * dfX / (nIntermediatePoints + 1);
                 paoNewPoints[nNewPointCount + j - 1].y =
                     paoPoints[i].y + j * dfY / (nIntermediatePoints + 1);
-                if( nCoordinateDimension == 3 )
+                if( padfZ != nullptr )
                 {
                     // No interpolation.
                     padfNewZ[nNewPointCount + j - 1] = padfZ[i];
+                }
+                if( padfM != nullptr )
+                {
+                    // No interpolation.
+                    padfNewM[nNewPointCount + j - 1] = padfM[i];
                 }
             }
 
@@ -2546,10 +2623,15 @@ void OGRSimpleCurve::segmentize( double dfMaxLength )
     paoPoints = paoNewPoints;
     nPointCount = nNewPointCount;
 
-    if( nCoordinateDimension == 3 )
+    if( padfZ != nullptr )
     {
         CPLFree(padfZ);
         padfZ = padfNewZ;
+    }
+    if( padfM != nullptr )
+    {
+        CPLFree(padfM);
+        padfM = padfNewM;
     }
 }
 
@@ -2569,17 +2651,18 @@ void OGRSimpleCurve::swapXY()
 /*                       OGRSimpleCurvePointIterator                    */
 /************************************************************************/
 
-class OGRSimpleCurvePointIterator: public OGRPointIterator
+class OGRSimpleCurvePointIterator final: public OGRPointIterator
 {
-        const OGRSimpleCurve* poSC;
-        int                   iCurPoint;
+        CPL_DISALLOW_COPY_ASSIGN(OGRSimpleCurvePointIterator)
+
+        const OGRSimpleCurve* poSC = nullptr;
+        int                   iCurPoint = 0;
 
     public:
         explicit OGRSimpleCurvePointIterator(const OGRSimpleCurve* poSCIn) :
-            poSC(poSCIn),
-            iCurPoint(0) {}
+            poSC(poSCIn) {}
 
-        virtual OGRBoolean getNextPoint( OGRPoint* p ) override;
+        OGRBoolean getNextPoint( OGRPoint* p ) override;
 };
 
 /************************************************************************/
@@ -2612,7 +2695,7 @@ OGRPointIterator* OGRSimpleCurve::getPointIterator() const
  * \brief Create an empty line string.
  */
 
-OGRLineString::OGRLineString() {}
+OGRLineString::OGRLineString() = default;
 
 /************************************************************************/
 /*                  OGRLineString( const OGRLineString& )               */
@@ -2627,15 +2710,13 @@ OGRLineString::OGRLineString() {}
  * @since GDAL 2.1
  */
 
-OGRLineString::OGRLineString( const OGRLineString& other ) :
-    OGRSimpleCurve( other )
-{}
+OGRLineString::OGRLineString( const OGRLineString& ) = default;
 
 /************************************************************************/
 /*                          ~OGRLineString()                            */
 /************************************************************************/
 
-OGRLineString::~OGRLineString() {}
+OGRLineString::~OGRLineString() = default;
 
 /************************************************************************/
 /*                    operator=( const OGRLineString& )                 */
@@ -2694,18 +2775,11 @@ OGRLineString* OGRLineString::CurveToLine(
     CPL_UNUSED double /* dfMaxAngleStepSizeDegrees */,
     CPL_UNUSED const char* const* /* papszOptions */ ) const
 {
-    // Downcast.
-    OGRLineString * poLineString = dynamic_cast<OGRLineString *>(clone());
-    if( poLineString == NULL )
-    {
-        CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRLineString.");
-    }
-    return poLineString;
+    return clone();
 }
 
 /************************************************************************/
-/*                          get_LinearArea()                          */
+/*                          get_LinearArea()                            */
 /************************************************************************/
 
 /**
@@ -2722,8 +2796,13 @@ OGRLineString* OGRLineString::CurveToLine(
 double OGRSimpleCurve::get_LinearArea() const
 
 {
-    if( nPointCount < 2 )
+    if( nPointCount < 2 ||
+        (WkbSize() != 0 && /* if not a linearring, check it is closed */
+            (paoPoints[0].x != paoPoints[nPointCount-1].x ||
+             paoPoints[0].y != paoPoints[nPointCount-1].y)) )
+    {
         return 0;
+    }
 
     double dfAreaSum =
         paoPoints[0].x * (paoPoints[1].y - paoPoints[nPointCount-1].y);
@@ -2758,15 +2837,19 @@ OGRLineString* OGRLineString::TransferMembersAndDestroy(
     OGRLineString* poSrc,
     OGRLineString* poDst )
 {
-    poDst->set3D(poSrc->Is3D());
-    poDst->setMeasured(poSrc->IsMeasured());
+    if( poSrc->Is3D())
+        poDst->flags |= OGR_G_3D;
+    if( poSrc->IsMeasured())
+        poDst->flags |= OGR_G_MEASURED;
     poDst->assignSpatialReference(poSrc->getSpatialReference());
     poDst->nPointCount = poSrc->nPointCount;
     poDst->paoPoints = poSrc->paoPoints;
     poDst->padfZ = poSrc->padfZ;
+    poDst->padfM = poSrc->padfM;
     poSrc->nPointCount = 0;
-    poSrc->paoPoints = NULL;
-    poSrc->padfZ = NULL;
+    poSrc->paoPoints = nullptr;
+    poSrc->padfZ = nullptr;
+    poSrc->padfM = nullptr;
     delete poSrc;
     return poDst;
 }
@@ -2792,17 +2875,20 @@ OGRLinearRing* OGRLineString::CastToLinearRing( OGRLineString* poLS )
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot convert non-closed linestring to linearring");
         delete poLS;
-        return NULL;
+        return nullptr;
     }
-    // Downcast.
-    OGRLinearRing * poRing = dynamic_cast<OGRLinearRing *>(
-        TransferMembersAndDestroy(poLS, new OGRLinearRing()));
-    if( poRing == NULL )
-    {
-        CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRLinearRing.");
-    }
-    return poRing;
+    OGRLinearRing* poLR = new OGRLinearRing();
+    TransferMembersAndDestroy(poLS, poLR);
+    return poLR;
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRLineString *OGRLineString::clone() const
+{
+    return new (std::nothrow) OGRLineString(*this);
 }
 
 //! @cond Doxygen_Suppress
@@ -2811,18 +2897,28 @@ OGRLinearRing* OGRLineString::CastToLinearRing( OGRLineString* poLS )
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
 
+static OGRLineString* CasterToLineString(OGRCurve* poCurve)
+{
+    return poCurve->toLineString();
+}
+
 OGRCurveCasterToLineString OGRLineString::GetCasterToLineString() const
 {
-    return (OGRCurveCasterToLineString) OGRGeometry::CastToIdentity;
+    return ::CasterToLineString;
 }
 
 /************************************************************************/
 /*                        GetCasterToLinearRing()                       */
 /************************************************************************/
 
+OGRLinearRing* OGRLineString::CasterToLinearRing(OGRCurve* poCurve)
+{
+    return OGRLineString::CastToLinearRing(poCurve->toLineString());
+}
+
 OGRCurveCasterToLinearRing OGRLineString::GetCasterToLinearRing() const
 {
-    return (OGRCurveCasterToLinearRing) OGRLineString::CastToLinearRing;
+    return OGRLineString::CasterToLinearRing;
 }
 
 /************************************************************************/

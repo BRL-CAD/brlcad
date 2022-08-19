@@ -72,16 +72,18 @@ class VizGeorefSpline2D
 #endif
         _dx(0.0),
         _dy(0.0),
-        x(NULL),
-        y(NULL),
-        u(NULL),
-        unused(NULL),
-        index(NULL)
+        x(nullptr),
+        y(nullptr),
+        u(nullptr),
+        unused(nullptr),
+        index(nullptr),
+        x_mean(0),
+        y_mean(0)
     {
         for( int i = 0; i < VIZGEOREF_MAX_VARS; i++ )
         {
-            rhs[i] = NULL;
-            coef[i] = NULL;
+            rhs[i] = nullptr;
+            coef[i] = nullptr;
         }
 
         grow_points();
@@ -187,6 +189,8 @@ class VizGeorefSpline2D
     int *unused; // [VIZ_GEOREF_SPLINE_MAX_POINTS];
     int *index; // [VIZ_GEOREF_SPLINE_MAX_POINTS];
 
+    double x_mean;
+    double y_mean;
   private:
     CPL_DISALLOW_COPY_ASSIGN(VizGeorefSpline2D)
 };

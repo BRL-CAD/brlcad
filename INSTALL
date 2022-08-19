@@ -480,15 +480,25 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Aliases:  ENABLE_SCL, ENABLE_STEP, ENABLE_STEP_CLASS_LIBRARIES
 
 
---- BRLCAD_PROJ4 ---
+--- BRLCAD_SQLITE3 ---
 
-Option for enabling and disabling compilation of the PROJ.4 geographic
+Option for enabling and disabling compilation of the sqlite3 database command
+and library provided with BRL-CAD's source distribution.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a
+system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_SQLITE3, ENABLE_SQLITE3
+
+
+--- BRLCAD_PROJ ---
+
+Option for enabling and disabling compilation of the PROJ geographic
 projection library provided with BRL-CAD's source code.  Default
 is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 
-Aliases:  ENABLE_PROJ4
+Aliases:  ENABLE_PROJ
 
 
 --- BRLCAD_GDAL ---

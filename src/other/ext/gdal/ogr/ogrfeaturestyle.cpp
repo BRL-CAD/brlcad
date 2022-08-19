@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000-2001, Stephane Villeneuve
- * Copyright (c) 2008-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,7 +45,7 @@
 #include "ogr_core.h"
 #include "ogr_feature.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /****************************************************************************/
 /*                Class Parameter (used in the String)                      */
@@ -112,8 +112,8 @@ static const OGRStyleParamId asStyleLabel[] =
     {OGRSTLabelPriority, "l", FALSE, OGRSTypeInteger},
     {OGRSTLabelStrikeout, "st", FALSE, OGRSTypeBoolean},
     {OGRSTLabelStretch, "w", FALSE, OGRSTypeDouble},
-    {OGRSTLabelAdjHor, "ah", FALSE, OGRSTypeString},
-    {OGRSTLabelAdjVert, "av", FALSE, OGRSTypeString},
+    {-1, nullptr, FALSE, OGRSTypeUnused}, // was OGRSTLabelAdjHor
+    {-1, nullptr, FALSE, OGRSTypeUnused}, // was OGRSTLabelAdjVert
     {OGRSTLabelHColor, "h", FALSE, OGRSTypeString},
     {OGRSTLabelOColor, "o", FALSE, OGRSTypeString}
 };
@@ -134,10 +134,9 @@ static const OGRStyleParamId asStyleLabel[] =
  * @param poDataSetStyleTable (currently unused, reserved for future use),
  * pointer to OGRStyleTable. Pass NULL for now.
  */
-OGRStyleMgr::OGRStyleMgr( OGRStyleTable *poDataSetStyleTable )
+OGRStyleMgr::OGRStyleMgr( OGRStyleTable *poDataSetStyleTable ):
+    m_poDataSetStyleTable( poDataSetStyleTable )
 {
-    m_poDataSetStyleTable = poDataSetStyleTable;
-    m_pszStyleString = NULL;
 }
 
 /************************************************************************/
@@ -151,7 +150,7 @@ OGRStyleMgr::OGRStyleMgr( OGRStyleTable *poDataSetStyleTable )
  * @param hStyleTable pointer to OGRStyleTable or NULL if not working with
  *  a style table.
  *
- * @return an handle to the new style manager object.
+ * @return a handle to the new style manager object.
  */
 
 OGRStyleMgrH OGR_SM_Create( OGRStyleTableH hStyleTable )
@@ -216,16 +215,16 @@ GBool OGRStyleMgr::SetFeatureStyleString( OGRFeature *poFeature,
                                           const char *pszStyleString,
                                           GBool bNoMatching )
 {
-    if( poFeature == NULL )
+    if( poFeature == nullptr )
         return FALSE;
 
-    const char *pszName = NULL;
+    const char *pszName = nullptr;
 
-    if( pszStyleString == NULL )
+    if( pszStyleString == nullptr )
         poFeature->SetStyleString("");
     else if( bNoMatching == TRUE )
         poFeature->SetStyleString(pszStyleString);
-    else if( (pszName = GetStyleName(pszStyleString)) != NULL )
+    else if( (pszName = GetStyleName(pszStyleString)) != nullptr )
         poFeature->SetStyleString(pszName);
     else
         poFeature->SetStyleString(pszStyleString);
@@ -252,12 +251,12 @@ GBool OGRStyleMgr::SetFeatureStyleString( OGRFeature *poFeature,
 const char *OGRStyleMgr::InitFromFeature( OGRFeature *poFeature )
 {
     CPLFree(m_pszStyleString);
-    m_pszStyleString = NULL;
+    m_pszStyleString = nullptr;
 
     if( poFeature )
         InitStyleString(poFeature->GetStyleString());
     else
-        m_pszStyleString = NULL;
+        m_pszStyleString = nullptr;
 
     return m_pszStyleString;
 }
@@ -282,8 +281,8 @@ const char *OGRStyleMgr::InitFromFeature( OGRFeature *poFeature )
 const char *OGR_SM_InitFromFeature( OGRStyleMgrH hSM, OGRFeatureH hFeat )
 
 {
-    VALIDATE_POINTER1( hSM, "OGR_SM_InitFromFeature", NULL );
-    VALIDATE_POINTER1( hFeat, "OGR_SM_InitFromFeature", NULL );
+    VALIDATE_POINTER1( hSM, "OGR_SM_InitFromFeature", nullptr );
+    VALIDATE_POINTER1( hFeat, "OGR_SM_InitFromFeature", nullptr );
 
     return reinterpret_cast<OGRStyleMgr *>(hSM)->
         InitFromFeature(reinterpret_cast<OGRFeature *>(hFeat));
@@ -297,6 +296,10 @@ const char *OGR_SM_InitFromFeature( OGRStyleMgrH hSM, OGRFeatureH hFeat )
 /**
  * \brief Initialize style manager from the style string.
  *
+ * Style string can be an expanded style string (e.g. "PEN(c:#FF0000,w:5px)"),
+ * or (starting with GDAL 3.5.1), a reference to a style name starting with @
+ * (e.g. "@my_style") registered in the associated style table.
+ *
  * This method is the same as the C function OGR_SM_InitStyleString().
  *
  * @param pszStyleString the style string to use (can be NULL).
@@ -306,14 +309,16 @@ const char *OGR_SM_InitFromFeature( OGRStyleMgrH hSM, OGRFeatureH hFeat )
 GBool OGRStyleMgr::InitStyleString( const char *pszStyleString )
 {
     CPLFree(m_pszStyleString);
-    m_pszStyleString = NULL;
+    m_pszStyleString = nullptr;
 
     if( pszStyleString && pszStyleString[0] == '@' )
-        m_pszStyleString = CPLStrdup(GetStyleByName(pszStyleString));
-    else
-        m_pszStyleString = NULL;
-
-    if( m_pszStyleString == NULL && pszStyleString )
+    {
+        const char* pszStyleStringFromName = GetStyleByName(pszStyleString + 1);
+        if( pszStyleStringFromName == nullptr )
+            return FALSE;
+        m_pszStyleString = CPLStrdup(pszStyleStringFromName);
+    }
+    else if( pszStyleString )
         m_pszStyleString = CPLStrdup(pszStyleString);
 
     return TRUE;
@@ -325,6 +330,10 @@ GBool OGRStyleMgr::InitStyleString( const char *pszStyleString )
 
 /**
  * \brief Initialize style manager from the style string.
+ *
+ * Style string can be an expanded style string (e.g. "PEN(c:#FF0000,w:5px)"),
+ * or (starting with GDAL 3.5.1), a reference to a style name starting with @
+ * (e.g. "@my_style") registered in the associated style table.
  *
  * This function is the same as the C++ method OGRStyleMgr::InitStyleString().
  *
@@ -368,7 +377,7 @@ const char *OGRStyleMgr::GetStyleName( const char *pszStyleString )
         if( m_poDataSetStyleTable )
             return m_poDataSetStyleTable->GetStyleName(pszStyle);
     }
-    return NULL;
+    return nullptr;
 }
 /****************************************************************************/
 /*      const char *OGRStyleMgr::GetStyleByName(const char *pszStyleName)   */
@@ -389,7 +398,7 @@ const char *OGRStyleMgr::GetStyleByName( const char *pszStyleName )
     {
         return m_poDataSetStyleTable->Find(pszStyleName);
     }
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************/
@@ -469,7 +478,7 @@ int OGR_SM_AddStyle( OGRStyleMgrH hSM, const char *pszStyleName,
 
 const char *OGRStyleMgr::GetStyleString( OGRFeature *poFeature )
 {
-    if( poFeature == NULL )
+    if( poFeature == nullptr )
         return m_pszStyleString;
 
     return InitFromFeature(poFeature);
@@ -490,7 +499,7 @@ const char *OGRStyleMgr::GetStyleString( OGRFeature *poFeature )
 
 GBool OGRStyleMgr::AddPart( const char *pszPart )
 {
-    if( pszPart == NULL )
+    if( pszPart == nullptr )
         return FALSE;
 
     if( m_pszStyleString )
@@ -526,7 +535,7 @@ GBool OGRStyleMgr::AddPart( const char *pszPart )
 
 GBool OGRStyleMgr::AddPart( OGRStyleTool *poStyleTool )
 {
-    if( poStyleTool == NULL || !poStyleTool->GetStyleString() )
+    if( poStyleTool == nullptr || !poStyleTool->GetStyleString() )
         return FALSE;
 
     if( m_pszStyleString )
@@ -593,19 +602,19 @@ int OGR_SM_AddPart( OGRStyleMgrH hSM, OGRStyleToolH hST )
 
 int OGRStyleMgr::GetPartCount( const char *pszStyleString )
 {
-    const char *pszString = pszStyleString != NULL
+    const char *pszString = pszStyleString != nullptr
         ? pszStyleString
         : m_pszStyleString;
 
-    if( pszString == NULL )
+    if( pszString == nullptr )
       return 0;
 
     int nPartCount = 1;
     const char *pszStrTmp = pszString;
     // Search for parts separated by semicolons not counting the possible
     // semicolon at the and of string.
-    const char *pszPart = NULL;
-    while( (pszPart = strstr(pszStrTmp, ";")) != NULL && pszPart[1] != '\0' )
+    const char *pszPart = nullptr;
+    while( (pszPart = strstr(pszStrTmp, ";")) != nullptr && pszPart[1] != '\0' )
     {
         pszStrTmp = &pszPart[1];
         nPartCount++;
@@ -664,8 +673,8 @@ OGRStyleTool *OGRStyleMgr::GetPart( int nPartId,
 {
     const char *pszStyle = pszStyleString ? pszStyleString : m_pszStyleString;
 
-    if( pszStyle == NULL )
-      return NULL;
+    if( pszStyle == nullptr )
+      return nullptr;
 
     char **papszStyleString =
         CSLTokenizeString2(pszStyle, ";",
@@ -675,7 +684,7 @@ OGRStyleTool *OGRStyleMgr::GetPart( int nPartId,
 
     const char *pszString = CSLGetField( papszStyleString, nPartId );
 
-    OGRStyleTool *poStyleTool = NULL;
+    OGRStyleTool *poStyleTool = nullptr;
     if( strlen(pszString) > 0 )
     {
         poStyleTool = CreateStyleToolFromStyleString(pszString);
@@ -712,7 +721,7 @@ OGRStyleToolH OGR_SM_GetPart( OGRStyleMgrH hSM, int nPartId,
                               const char *pszStyleString )
 
 {
-    VALIDATE_POINTER1( hSM, "OGR_SM_InitStyleString", NULL );
+    VALIDATE_POINTER1( hSM, "OGR_SM_InitStyleString", nullptr );
 
     return
         reinterpret_cast<OGRStyleToolH>(
@@ -735,10 +744,10 @@ OGRStyleMgr::CreateStyleToolFromStyleString( const char *pszStyleString )
                                            CSLT_HONOURSTRINGS
                                            | CSLT_PRESERVEQUOTES
                                            | CSLT_PRESERVEESCAPES );
-    OGRStyleTool *poStyleTool = NULL;
+    OGRStyleTool *poStyleTool = nullptr;
 
     if( CSLCount(papszToken) < 2 )
-        poStyleTool = NULL;
+        poStyleTool = nullptr;
     else if( EQUAL(papszToken[0], "PEN") )
         poStyleTool = new OGRStylePen();
     else if( EQUAL(papszToken[0], "BRUSH") )
@@ -748,7 +757,7 @@ OGRStyleMgr::CreateStyleToolFromStyleString( const char *pszStyleString )
     else if( EQUAL(papszToken[0], "LABEL") )
         poStyleTool = new OGRStyleLabel();
     else
-        poStyleTool = NULL;
+        poStyleTool = nullptr;
 
     CSLDestroy( papszToken );
 
@@ -767,7 +776,7 @@ OGRStyleMgr::CreateStyleToolFromStyleString( const char *pszStyleString )
 /****************************************************************************/
 OGRStyleTable::OGRStyleTable()
 {
-    m_papszStyleTable = NULL;
+    m_papszStyleTable = nullptr;
     iNextStyle = 0;
 }
 
@@ -780,7 +789,7 @@ OGRStyleTable::OGRStyleTable()
  * This function is the same as the C++ method OGRStyleTable::OGRStyleTable().
  *
  *
- * @return an handle to the new style table object.
+ * @return a handle to the new style table object.
  */
 
 OGRStyleTableH OGR_STBL_Create( void )
@@ -803,7 +812,7 @@ void OGRStyleTable::Clear()
 {
     if( m_papszStyleTable )
       CSLDestroy(m_papszStyleTable);
-    m_papszStyleTable = NULL;
+    m_papszStyleTable = nullptr;
 }
 
 /****************************************************************************/
@@ -864,7 +873,7 @@ const char *OGRStyleTable::GetStyleName( const char *pszStyleString )
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************/
@@ -888,7 +897,7 @@ const char *OGRStyleTable::GetStyleName( const char *pszStyleString )
 
 GBool OGRStyleTable::AddStyle( const char *pszName, const char *pszStyleString )
 {
-    if( pszName == NULL || pszStyleString == NULL )
+    if( pszName == nullptr || pszStyleString == nullptr )
         return FALSE;
 
     const int nPos = IsExist(pszName);
@@ -948,7 +957,7 @@ GBool OGRStyleTable::RemoveStyle( const char *pszName )
     if( nPos == -1 )
         return FALSE;
 
-    m_papszStyleTable = CSLRemoveStrings(m_papszStyleTable, nPos, 1, NULL);
+    m_papszStyleTable = CSLRemoveStrings(m_papszStyleTable, nPos, 1, nullptr);
     return TRUE;
 }
 
@@ -973,7 +982,7 @@ GBool OGRStyleTable::RemoveStyle( const char *pszName )
 GBool OGRStyleTable::ModifyStyle( const char *pszName,
                                   const char * pszStyleString )
 {
-    if( pszName == NULL || pszStyleString == NULL )
+    if( pszName == nullptr || pszStyleString == nullptr )
       return FALSE;
 
     RemoveStyle(pszName);
@@ -997,7 +1006,7 @@ GBool OGRStyleTable::ModifyStyle( const char *pszName,
 
 GBool OGRStyleTable::SaveStyleTable( const char *pszFilename )
 {
-    if( pszFilename == NULL )
+    if( pszFilename == nullptr )
       return FALSE;
 
     if( CSLSave(m_papszStyleTable, pszFilename) == 0 )
@@ -1048,14 +1057,14 @@ int OGR_STBL_SaveStyleTable( OGRStyleTableH hStyleTable,
 
 GBool OGRStyleTable::LoadStyleTable( const char *pszFilename )
 {
-    if( pszFilename == NULL )
+    if( pszFilename == nullptr )
       return FALSE;
 
     CSLDestroy(m_papszStyleTable);
 
     m_papszStyleTable = CSLLoad(pszFilename);
 
-    return m_papszStyleTable != NULL;
+    return m_papszStyleTable != nullptr;
 }
 
 /************************************************************************/
@@ -1102,14 +1111,14 @@ const char *OGRStyleTable::Find(const char *pszName)
 {
     const int nPos = IsExist(pszName);
     if( nPos == -1 )
-        return NULL;
+        return nullptr;
 
     const char *pszOutput = CSLGetField(m_papszStyleTable, nPos);
 
     const char *pszDash = strstr(pszOutput, ":");
 
-    if( pszDash == NULL )
-        return NULL;
+    if( pszDash == nullptr )
+        return nullptr;
 
     return &pszDash[1];
 }
@@ -1131,8 +1140,8 @@ const char *OGRStyleTable::Find(const char *pszName)
 
 const char *OGR_STBL_Find( OGRStyleTableH hStyleTable, const char *pszName )
 {
-    VALIDATE_POINTER1( hStyleTable, "OGR_STBL_Find", NULL );
-    VALIDATE_POINTER1( pszName, "OGR_STBL_Find", NULL );
+    VALIDATE_POINTER1( hStyleTable, "OGR_STBL_Find", nullptr );
+    VALIDATE_POINTER1( pszName, "OGR_STBL_Find", nullptr );
 
     return reinterpret_cast<OGRStyleTable *>(hStyleTable)->Find(pszName);
 }
@@ -1176,7 +1185,7 @@ void OGRStyleTable::Print( FILE *fpOut )
 
 int OGRStyleTable::IsExist( const char *pszName )
 {
-    if( pszName == NULL )
+    if( pszName == nullptr )
       return -1;
 
     const int nCount = CSLCount(m_papszStyleTable);
@@ -1184,7 +1193,7 @@ int OGRStyleTable::IsExist( const char *pszName )
 
     for( int i = 0; i < nCount; i++ )
     {
-        if( strstr(m_papszStyleTable[i], pszNewString) != NULL )
+        if( strstr(m_papszStyleTable[i], pszNewString) != nullptr )
         {
             return i;
         }
@@ -1200,7 +1209,7 @@ int OGRStyleTable::IsExist( const char *pszName )
 /**
  * \brief Duplicate style table.
  *
- * The newly created style table is owned by the caller, and will have it's
+ * The newly created style table is owned by the caller, and will have its
  * own reference to the OGRStyleTable.
  *
  * @return new style table, exactly matching this style table.
@@ -1263,7 +1272,7 @@ const char *OGRStyleTable::GetNextStyle()
     while( iNextStyle < CSLCount(m_papszStyleTable) )
     {
         const char *pszOutput = CSLGetField(m_papszStyleTable, iNextStyle++);
-        if( pszOutput == NULL )
+        if( pszOutput == nullptr )
             continue;
 
         const char *pszDash = strstr(pszOutput, ":");
@@ -1277,7 +1286,7 @@ const char *OGRStyleTable::GetNextStyle()
         if( pszDash )
             return pszDash + 1;
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1296,7 +1305,7 @@ const char *OGRStyleTable::GetNextStyle()
 
 const char *OGR_STBL_GetNextStyle( OGRStyleTableH hStyleTable)
 {
-    VALIDATE_POINTER1( hStyleTable, "OGR_STBL_GetNextStyle", NULL );
+    VALIDATE_POINTER1( hStyleTable, "OGR_STBL_GetNextStyle", nullptr );
 
     return reinterpret_cast<OGRStyleTable *>(hStyleTable)->GetNextStyle();
 }
@@ -1334,7 +1343,7 @@ const char *OGRStyleTable::GetLastStyleName()
 
 const char *OGR_STBL_GetLastStyleName( OGRStyleTableH hStyleTable)
 {
-    VALIDATE_POINTER1( hStyleTable, "OGR_STBL_GetLastStyleName", NULL );
+    VALIDATE_POINTER1( hStyleTable, "OGR_STBL_GetLastStyleName", nullptr );
 
     return reinterpret_cast<OGRStyleTable *>(hStyleTable)->GetLastStyleName();
 }
@@ -1346,12 +1355,7 @@ const char *OGR_STBL_GetLastStyleName( OGRStyleTableH hStyleTable)
 
 /** Constructor */
 OGRStyleTool::OGRStyleTool( OGRSTClassId eClassId ) :
-    m_bModified(FALSE),
-    m_bParsed(FALSE),
-    m_dfScale(1.0),
-    m_eUnit(OGRSTUMM),
-    m_eClassId(eClassId),
-    m_pszStyleString(NULL)
+    m_eClassId(eClassId)
 {
 }
 
@@ -1366,7 +1370,7 @@ OGRStyleTool::OGRStyleTool( OGRSTClassId eClassId ) :
  * @param eClassId subclass of style tool to create. One of OGRSTCPen (1),
  * OGRSTCBrush (2), OGRSTCSymbol (3) or OGRSTCLabel (4).
  *
- * @return an handle to the new style tool object or NULL if the creation
+ * @return a handle to the new style tool object or NULL if the creation
  * failed.
  */
 
@@ -1384,7 +1388,7 @@ OGRStyleToolH OGR_ST_Create( OGRSTClassId eClassId )
       case OGRSTCLabel:
         return reinterpret_cast<OGRStyleToolH>(new OGRStyleLabel());
       default:
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -1445,7 +1449,7 @@ const char *OGRStyleTool::GetStyleString( const OGRStyleParamId *pasStyleParam,
     {
         CPLFree(m_pszStyleString);
 
-        const char *pszClass = NULL;
+        const char *pszClass = nullptr;
         switch( GetType() )
         {
           case OGRSTCPen:
@@ -1469,8 +1473,11 @@ const char *OGRStyleTool::GetStyleString( const OGRStyleParamId *pasStyleParam,
         bool bFound = false;
         for( int i = 0; i < nSize; i++ )
         {
-            if( !pasStyleValue[i].bValid )
+            if( !pasStyleValue[i].bValid ||
+                pasStyleParam[i].eType == OGRSTypeUnused )
+            {
                 continue;
+            }
 
             if( bFound )
                 osCurrent += ",";
@@ -1489,6 +1496,10 @@ const char *OGRStyleTool::GetStyleString( const OGRStyleParamId *pasStyleParam,
                 break;
               case OGRSTypeInteger:
                 osCurrent += CPLString().Printf(":%d", pasStyleValue[i].nValue);
+                break;
+              case OGRSTypeBoolean:
+                osCurrent += CPLString().Printf(":%d",
+                    pasStyleValue[i].nValue != 0);
                 break;
               default:
                 break;
@@ -1587,15 +1598,15 @@ int OGRStyleTool::GetSpecificId( const char *pszId, const char *pszWanted )
 {
     const char *pszRealWanted = pszWanted;
 
-    if( pszWanted == NULL || strlen(pszWanted) == 0 )
+    if( pszWanted == nullptr || strlen(pszWanted) == 0 )
         pszRealWanted = "ogr-pen";
 
-    if( pszId == NULL )
+    if( pszId == nullptr )
         return -1;
 
     int nValue = -1;
     const char *pszFound = strstr(pszId, pszRealWanted);
-    if( pszFound != NULL )
+    if( pszFound != nullptr )
     {
         // We found the string, it could be no value after it, use default one.
         nValue = 0;
@@ -1722,7 +1733,7 @@ GBool OGRStyleTool::Parse( const OGRStyleParamId *pasStyle,
 
     StyleParsed();
 
-    if( m_pszStyleString == NULL )
+    if( m_pszStyleString == nullptr )
         return FALSE;
 
     // Token to contains StyleString Type and content.
@@ -1808,18 +1819,18 @@ GBool OGRStyleTool::Parse( const OGRStyleParamId *pasStyle,
     }
 
     ////////////////////////////////////////////////////////////////////////
-    // Here we will loop on each element in the StyleString. If it's
+    // Here we will loop on each element in the StyleString. If it is
     // a valid element, we will add it in the StyleTool with
     // SetParamStr().
     //
-    // It's important to note that the SetInternalUnit...() is use to update
+    // It is important to note that the SetInternalUnit...() is use to update
     // the unit of the StyleTool param (m_eUnit).
     // See OGRStyleTool::SetParamStr().
     // There's a StyleTool unit (m_eUnit), which is the output unit, and each
     // parameter of the style have its own unit value (the input unit). Here we
     // set m_eUnit to the input unit and in SetParamStr(), we will use this
     // value to set the input unit. Then after the loop we will reset m_eUnit
-    // to it's original value. (Yes it's a side effect / black magic)
+    // to its original value. (Yes it is a side effect / black magic)
     //
     // The pasStyle variable is a global variable passed in argument to the
     // function. See at the top of this file the four OGRStyleParamId
@@ -1857,18 +1868,18 @@ GBool OGRStyleTool::Parse( const OGRStyleParamId *pasStyle,
 
         for( int j = 0; j < nCount; j++ )
         {
-            if( EQUAL(pasStyle[j].pszToken, papszStylePair[0]) )
+            if( pasStyle[j].pszToken &&
+                EQUAL(pasStyle[j].pszToken, papszStylePair[0]) )
             {
-                if( papszStylePair[1] != NULL && pasStyle[j].bGeoref == TRUE )
+                if( papszStylePair[1] != nullptr && pasStyle[j].bGeoref == TRUE )
                     SetInternalInputUnitFromParam(papszStylePair[1]);
 
                 // Set either the actual value of style parameter or "1"
-                // for boolean parameters which do not have values.
-                // "1" means that boolean parameter is present in the style
-                // string.
+                // for boolean parameters which do not have values (legacy
+                // behavior).
                 OGRStyleTool::SetParamStr(
                     pasStyle[j], pasValue[j],
-                    papszStylePair[1] != NULL ? papszStylePair[1] : "1" );
+                    papszStylePair[1] != nullptr ? papszStylePair[1] : "1" );
 
                 break;
             }
@@ -1894,7 +1905,7 @@ GBool OGRStyleTool::Parse( const OGRStyleParamId *pasStyle,
 //! @cond Doxygen_Suppress
 void OGRStyleTool::SetInternalInputUnitFromParam( char *pszString )
 {
-    if( pszString == NULL )
+    if( pszString == nullptr )
         return;
 
     char *pszUnit = strstr(pszString, "g");
@@ -2032,13 +2043,13 @@ const char *OGRStyleTool::GetParamStr( const OGRStyleParamId &sStyleParam ,
     if( !Parse() )
     {
         bValueIsNull = TRUE;
-        return NULL;
+        return nullptr;
     }
 
     bValueIsNull = !sStyleValue.bValid;
 
     if( bValueIsNull == TRUE )
-        return NULL;
+        return nullptr;
 
     switch( sStyleParam.eType )
     {
@@ -2059,10 +2070,10 @@ const char *OGRStyleTool::GetParamStr( const OGRStyleParamId &sStyleParam ,
         else
           return CPLSPrintf("%d", sStyleValue.nValue);
       case OGRSTypeBoolean:
-        return CPLSPrintf("%d", sStyleValue.nValue);
+        return CPLSPrintf("%d", sStyleValue.nValue != 0);
       default:
         bValueIsNull = TRUE;
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -2138,7 +2149,7 @@ double OGRStyleTool::GetParamDbl( const OGRStyleParamId &sStyleParam ,
         else
           return static_cast<double>(sStyleValue.nValue);
       case OGRSTypeBoolean:
-        return static_cast<double>(sStyleValue.nValue);
+        return static_cast<double>(sStyleValue.nValue != 0);
       default:
         bValueIsNull = TRUE;
         return 0.0;
@@ -2175,8 +2186,10 @@ void OGRStyleTool::SetParamStr( const OGRStyleParamId &sStyleParam ,
         sStyleValue.dfValue = CPLAtof(pszParamString);
         break;
       case OGRSTypeInteger:
-      case OGRSTypeBoolean:
         sStyleValue.nValue = atoi(pszParamString);
+        break;
+      case OGRSTypeBoolean:
+        sStyleValue.nValue = atoi(pszParamString) != 0;
         break;
       default:
         sStyleValue.bValid = FALSE;
@@ -2215,8 +2228,10 @@ void OGRStyleTool::SetParamNum( const OGRStyleParamId &sStyleParam ,
         sStyleValue.dfValue = static_cast<double>(nParam);
         break;
       case OGRSTypeInteger:
-      case OGRSTypeBoolean:
         sStyleValue.nValue = nParam;
+        break;
+      case OGRSTypeBoolean:
+        sStyleValue.nValue = nParam != 0;
         break;
       default:
         sStyleValue.bValid = FALSE;
@@ -2254,8 +2269,10 @@ void OGRStyleTool::SetParamDbl( const OGRStyleParamId &sStyleParam,
         sStyleValue.dfValue = dfParam;
         break;
       case OGRSTypeInteger:
-      case OGRSTypeBoolean:
         sStyleValue.nValue = static_cast<int>(dfParam);
+        break;
+      case OGRSTypeBoolean:
+        sStyleValue.nValue = static_cast<int>(dfParam) != 0;
         break;
       default:
         sStyleValue.bValid = FALSE;
@@ -2647,10 +2664,11 @@ int OGR_ST_GetRGBFromString( OGRStyleToolH hST, const char *pszColor,
 /*                      OGRStylePen::OGRStylePen()                          */
 /*                                                                          */
 /****************************************************************************/
-OGRStylePen::OGRStylePen() : OGRStyleTool(OGRSTCPen)
+OGRStylePen::OGRStylePen() :
+    OGRStyleTool(OGRSTCPen),
+    m_pasStyleValue( static_cast<OGRStyleValue *>(
+        CPLCalloc(OGRSTPenLast, sizeof(OGRStyleValue))))
 {
-    m_pasStyleValue = static_cast<OGRStyleValue *>(
-        CPLCalloc(OGRSTPenLast, sizeof(OGRStyleValue)));
 }
 
 /****************************************************************************/
@@ -2661,10 +2679,10 @@ OGRStylePen::~OGRStylePen()
 {
     for( int i = 0; i < OGRSTPenLast; i++ )
     {
-        if( m_pasStyleValue[i].pszValue != NULL )
+        if( m_pasStyleValue[i].pszValue != nullptr )
         {
             CPLFree(m_pasStyleValue[i].pszValue);
-            m_pasStyleValue[i].pszValue = NULL;
+            m_pasStyleValue[i].pszValue = nullptr;
         }
     }
 
@@ -2752,10 +2770,11 @@ const char *OGRStylePen::GetStyleString()
 /*                      OGRStyleBrush::OGRStyleBrush()                      */
 /*                                                                          */
 /****************************************************************************/
-OGRStyleBrush::OGRStyleBrush() : OGRStyleTool(OGRSTCBrush)
+OGRStyleBrush::OGRStyleBrush() :
+    OGRStyleTool(OGRSTCBrush),
+    m_pasStyleValue( static_cast<OGRStyleValue *>(
+        CPLCalloc(OGRSTBrushLast, sizeof(OGRStyleValue))))
 {
-    m_pasStyleValue = static_cast<OGRStyleValue *>(
-        CPLCalloc(OGRSTBrushLast, sizeof(OGRStyleValue)));
 }
 
 /****************************************************************************/
@@ -2766,10 +2785,10 @@ OGRStyleBrush::~OGRStyleBrush()
 {
     for( int i = 0; i < OGRSTBrushLast; i++ )
     {
-        if( m_pasStyleValue[i].pszValue != NULL )
+        if( m_pasStyleValue[i].pszValue != nullptr )
         {
             CPLFree(m_pasStyleValue[i].pszValue);
-            m_pasStyleValue[i].pszValue = NULL;
+            m_pasStyleValue[i].pszValue = nullptr;
         }
     }
 
@@ -2854,10 +2873,11 @@ const char *OGRStyleBrush::GetStyleString()
 /****************************************************************************/
 /*                      OGRStyleSymbol::OGRStyleSymbol()                    */
 /****************************************************************************/
-OGRStyleSymbol::OGRStyleSymbol() : OGRStyleTool(OGRSTCSymbol)
+OGRStyleSymbol::OGRStyleSymbol() :
+    OGRStyleTool(OGRSTCSymbol),
+    m_pasStyleValue( static_cast<OGRStyleValue *>(
+        CPLCalloc(OGRSTSymbolLast, sizeof(OGRStyleValue))))
 {
-    m_pasStyleValue = static_cast<OGRStyleValue *>(
-        CPLCalloc(OGRSTSymbolLast, sizeof(OGRStyleValue)));
 }
 
 /****************************************************************************/
@@ -2868,10 +2888,10 @@ OGRStyleSymbol::~OGRStyleSymbol()
 {
     for( int i = 0; i < OGRSTSymbolLast; i++ )
     {
-        if( m_pasStyleValue[i].pszValue != NULL )
+        if( m_pasStyleValue[i].pszValue != nullptr )
         {
             CPLFree(m_pasStyleValue[i].pszValue);
-            m_pasStyleValue[i].pszValue = NULL;
+            m_pasStyleValue[i].pszValue = nullptr;
         }
     }
 
@@ -2955,10 +2975,11 @@ const char *OGRStyleSymbol::GetStyleString()
 /*                      OGRStyleLabel::OGRStyleLabel()                      */
 /*                                                                          */
 /****************************************************************************/
-OGRStyleLabel::OGRStyleLabel() : OGRStyleTool(OGRSTCLabel)
+OGRStyleLabel::OGRStyleLabel() :
+    OGRStyleTool(OGRSTCLabel),
+    m_pasStyleValue( static_cast<OGRStyleValue *>(
+        CPLCalloc(OGRSTLabelLast, sizeof(OGRStyleValue))))
 {
-    m_pasStyleValue = static_cast<OGRStyleValue *>(
-        CPLCalloc(OGRSTLabelLast, sizeof(OGRStyleValue)));
 }
 
 /****************************************************************************/
@@ -2969,10 +2990,10 @@ OGRStyleLabel::~OGRStyleLabel()
 {
     for( int i = 0; i < OGRSTLabelLast; i++ )
     {
-        if( m_pasStyleValue[i].pszValue != NULL )
+        if( m_pasStyleValue[i].pszValue != nullptr )
         {
             CPLFree(m_pasStyleValue[i].pszValue);
-            m_pasStyleValue[i].pszValue = NULL;
+            m_pasStyleValue[i].pszValue = nullptr;
         }
     }
 

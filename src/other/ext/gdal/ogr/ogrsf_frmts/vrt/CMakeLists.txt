@@ -1,6 +1,7 @@
-include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/../generic
-	)
-
-add_library(ogr_frmt_vrt OBJECT ogrvrtdatasource.cpp ogrvrtlayer.cpp ogrvrtdriver.cpp)
+# Depend from ogr_gpkg
+add_gdal_driver(
+  TARGET ogr_VRT
+  SOURCES ogr_vrt.h ogrvrtdatasource.cpp ogrvrtdriver.cpp ogrvrtlayer.cpp
+  BUILTIN)
+gdal_standard_includes(ogr_VRT)
+target_include_directories(ogr_VRT PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)

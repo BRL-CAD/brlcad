@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Waypoint Information Technology
- * Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,11 +32,12 @@
 #include "northwood.h"
 
 #include <algorithm>
+#include <limits>
 #include <string>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
-int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
+int nwt_ParseHeader( NWT_GRID * pGrd, const unsigned char *nwtHeader )
 {
     /* double dfTmp; */
 
@@ -45,87 +46,89 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
     else if( nwtHeader[4] == '8' )
         pGrd->cFormat = 0x80;        //  grc classified type
 
-    pGrd->stClassDict = NULL;
+    pGrd->stClassDict = nullptr;
 
-    memcpy( reinterpret_cast<void *>( &pGrd->fVersion ),
-            reinterpret_cast<void *>( &nwtHeader[5] ),
+    memcpy( &pGrd->fVersion,
+            &nwtHeader[5],
             sizeof( pGrd->fVersion ) );
     CPL_LSBPTR32(&pGrd->fVersion);
 
     unsigned short usTmp;
-    memcpy( reinterpret_cast<void *>( &usTmp ),
-            reinterpret_cast<void *>( &nwtHeader[9] ),
+    memcpy( &usTmp,
+            &nwtHeader[9],
             2 );
     CPL_LSBPTR16(&usTmp);
     pGrd->nXSide = static_cast<unsigned int>( usTmp );
     if( pGrd->nXSide == 0 )
     {
-        memcpy( reinterpret_cast<void *>( &pGrd->nXSide ),
-                reinterpret_cast<void *>( &nwtHeader[128] ),
+        memcpy( &pGrd->nXSide,
+                &nwtHeader[128],
                 sizeof(pGrd->nXSide) );
         CPL_LSBPTR32(&pGrd->nXSide);
     }
+    if( pGrd->nXSide <= 1 )
+        return FALSE;
 
-    memcpy( reinterpret_cast<void *>( &usTmp ),
-            reinterpret_cast<void *>( &nwtHeader[11] ),
+    memcpy( &usTmp,
+            &nwtHeader[11],
             2 );
     CPL_LSBPTR16(&usTmp);
     pGrd->nYSide = static_cast<unsigned int>( usTmp );
     if( pGrd->nYSide == 0 )
     {
-        memcpy( reinterpret_cast<void *>( &pGrd->nYSide ),
-                reinterpret_cast<void *>( &nwtHeader[132] ),
+        memcpy( &pGrd->nYSide,
+                &nwtHeader[132],
                 sizeof( pGrd->nYSide ) );
         CPL_LSBPTR32(&pGrd->nYSide);
     }
 
-    memcpy( reinterpret_cast<void *>( &pGrd->dfMinX ),
-            reinterpret_cast<void *>( &nwtHeader[13] ),
+    memcpy( &pGrd->dfMinX,
+            &nwtHeader[13],
             sizeof(pGrd->dfMinX) );
     CPL_LSBPTR64(&pGrd->dfMinX);
-    memcpy( reinterpret_cast<void *>( &pGrd->dfMaxX ),
-            reinterpret_cast<void *>( &nwtHeader[21] ),
+    memcpy( &pGrd->dfMaxX,
+            &nwtHeader[21],
             sizeof(pGrd->dfMaxX) );
     CPL_LSBPTR64(&pGrd->dfMaxX);
-    memcpy( reinterpret_cast<void *>( &pGrd->dfMinY ),
-            reinterpret_cast<void *>( &nwtHeader[29] ),
+    memcpy( &pGrd->dfMinY,
+            &nwtHeader[29],
             sizeof(pGrd->dfMinY) );
     CPL_LSBPTR64(&pGrd->dfMinY);
-    memcpy( reinterpret_cast<void *>( &pGrd->dfMaxY ),
-            reinterpret_cast<void *>( &nwtHeader[37] ),
+    memcpy( &pGrd->dfMaxY,
+            &nwtHeader[37],
             sizeof(pGrd->dfMaxY) );
     CPL_LSBPTR64(&pGrd->dfMaxY);
 
     pGrd->dfStepSize = (pGrd->dfMaxX - pGrd->dfMinX) / (pGrd->nXSide - 1);
     /* dfTmp = (pGrd->dfMaxY - pGrd->dfMinY) / (pGrd->nYSide - 1); */
 
-    memcpy( reinterpret_cast<void *>( &pGrd->fZMin ),
-            reinterpret_cast<void *>( &nwtHeader[45] ),
+    memcpy( &pGrd->fZMin,
+            &nwtHeader[45],
             sizeof(pGrd->fZMin) );
     CPL_LSBPTR32(&pGrd->fZMin);
-    memcpy( reinterpret_cast<void *>( &pGrd->fZMax ),
-            reinterpret_cast<void *>( &nwtHeader[49] ),
+    memcpy( &pGrd->fZMax,
+            &nwtHeader[49],
             sizeof(pGrd->fZMax) );
     CPL_LSBPTR32(&pGrd->fZMax);
-    memcpy( reinterpret_cast<void *>( &pGrd->fZMinScale ),
-            reinterpret_cast<void *>( &nwtHeader[53] ),
+    memcpy( &pGrd->fZMinScale,
+            &nwtHeader[53],
             sizeof(pGrd->fZMinScale) );
     CPL_LSBPTR32(&pGrd->fZMinScale);
-    memcpy( reinterpret_cast<void *>( &pGrd->fZMaxScale ),
-            reinterpret_cast<void *>( &nwtHeader[57] ),
+    memcpy( &pGrd->fZMaxScale,
+            &nwtHeader[57],
             sizeof(pGrd->fZMaxScale) );
     CPL_LSBPTR32(&pGrd->fZMaxScale);
 
-    memcpy( reinterpret_cast<void *>( &pGrd->cDescription ),
-            reinterpret_cast<void *>( &nwtHeader[61] ),
+    memcpy( &pGrd->cDescription,
+            &nwtHeader[61],
             sizeof(pGrd->cDescription) );
-    memcpy( reinterpret_cast<void *>( &pGrd->cZUnits ),
-            reinterpret_cast<void *>( &nwtHeader[93] ),
+    memcpy( &pGrd->cZUnits,
+            &nwtHeader[93],
             sizeof(pGrd->cZUnits) );
 
     int i;
-    memcpy( reinterpret_cast<void *>( &i ),
-            reinterpret_cast<void *>( &nwtHeader[136] ),
+    memcpy( &i,
+            &nwtHeader[136],
             4 );
     CPL_LSBPTR32(&i);
 
@@ -138,8 +141,8 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
         }
     }
 
-    memcpy( reinterpret_cast<void *>( &pGrd->cMICoordSys ),
-            reinterpret_cast<void *>( &nwtHeader[256] ),
+    memcpy( &pGrd->cMICoordSys,
+            &nwtHeader[256],
             sizeof(pGrd->cMICoordSys) );
     pGrd->cMICoordSys[sizeof(pGrd->cMICoordSys)-1] = '\0';
 
@@ -154,8 +157,8 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
     if( nwtHeader[513] & 0x20 )
         pGrd->bHillShadeExists = true;
 
-    memcpy( reinterpret_cast<void *>( &pGrd->iNumColorInflections ),
-            reinterpret_cast<void *>( &nwtHeader[516] ),
+    memcpy( &pGrd->iNumColorInflections,
+            &nwtHeader[516],
             2 );
     CPL_LSBPTR16(&pGrd->iNumColorInflections);
 
@@ -168,23 +171,23 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 
     for( i = 0; i < pGrd->iNumColorInflections; i++ )
     {
-        memcpy( reinterpret_cast<void *>( &pGrd->stInflection[i].zVal ),
-                reinterpret_cast<void *>( &nwtHeader[518 + (7 * i)] ), 4 );
+        memcpy( &pGrd->stInflection[i].zVal,
+                &nwtHeader[518 + (7 * i)], 4 );
         CPL_LSBPTR32(&pGrd->stInflection[i].zVal);
-        memcpy( reinterpret_cast<void *>( &pGrd->stInflection[i].r ),
-                reinterpret_cast<void *>( &nwtHeader[522 + (7 * i)] ), 1 );
-        memcpy( reinterpret_cast<void *>( &pGrd->stInflection[i].g ),
-                reinterpret_cast<void *>( &nwtHeader[523 + (7 * i)] ), 1 );
-        memcpy( reinterpret_cast<void *>( &pGrd->stInflection[i].b ),
-                reinterpret_cast<void *>( &nwtHeader[524 + (7 * i)] ), 1 );
+        memcpy( &pGrd->stInflection[i].r,
+                &nwtHeader[522 + (7 * i)], 1 );
+        memcpy( &pGrd->stInflection[i].g,
+                &nwtHeader[523 + (7 * i)], 1 );
+        memcpy( &pGrd->stInflection[i].b,
+                &nwtHeader[524 + (7 * i)], 1 );
     }
 
-    memcpy( reinterpret_cast<void *>( &pGrd->fHillShadeAzimuth ),
-            reinterpret_cast<void *>( &nwtHeader[966] ),
+    memcpy( &pGrd->fHillShadeAzimuth,
+            &nwtHeader[966],
             sizeof(pGrd->fHillShadeAzimuth) );
     CPL_LSBPTR32(&pGrd->fHillShadeAzimuth);
-    memcpy( reinterpret_cast<void *>( &pGrd->fHillShadeAngle ),
-            reinterpret_cast<void *>( &nwtHeader[970] ),
+    memcpy( &pGrd->fHillShadeAngle,
+            &nwtHeader[970],
             sizeof(pGrd->fHillShadeAngle) );
     CPL_LSBPTR32(&pGrd->fHillShadeAngle);
 
@@ -203,8 +206,18 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 
     if( pGrd->cFormat & 0x80 )        // if is GRC load the Dictionary
     {
+        vsi_l_offset nPixels = static_cast<vsi_l_offset>(pGrd->nXSide) * pGrd->nYSide;
+        unsigned int nBytesPerPixel = pGrd->nBitsPerPixel/8;
+        if( nPixels > 0 &&
+            (nBytesPerPixel > std::numeric_limits<vsi_l_offset>::max() / nPixels ||
+             nPixels * nBytesPerPixel > std::numeric_limits<vsi_l_offset>::max() - 1024 ) )
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Invalid file dimension / bits per pixel" );
+            return FALSE;
+        }
         VSIFSeekL( pGrd->fp,
-                   1024 + (pGrd->nXSide * pGrd->nYSide) * (pGrd->nBitsPerPixel/8),
+                   1024 + nPixels * nBytesPerPixel,
                    SEEK_SET );
 
         if( !VSIFReadL( &usTmp, 2, 1, pGrd->fp) )
@@ -219,7 +232,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 
         pGrd->stClassDict->nNumClassifiedItems = usTmp;
 
-        pGrd->stClassDict->stClassifedItem
+        pGrd->stClassDict->stClassifiedItem
             = reinterpret_cast<NWT_CLASSIFIED_ITEM **> (
               calloc( sizeof(NWT_CLASSIFIED_ITEM *),
                       pGrd->stClassDict->nNumClassifiedItems + 1 ) );
@@ -228,7 +241,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
         for( usTmp=0; usTmp < pGrd->stClassDict->nNumClassifiedItems; usTmp++ )
         {
             NWT_CLASSIFIED_ITEM *psItem =
-                pGrd->stClassDict->stClassifedItem[usTmp] =
+                pGrd->stClassDict->stClassifiedItem[usTmp] =
                 reinterpret_cast<NWT_CLASSIFIED_ITEM *>(
                     calloc(sizeof(NWT_CLASSIFIED_ITEM), 1) );
 
@@ -239,21 +252,21 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
                           "Read failure, file short?" );
                 return FALSE;
             }
-            memcpy( reinterpret_cast<void *>( &psItem->usPixVal ),
-                    reinterpret_cast<void *>( &cTmp[0]) , 2 );
+            memcpy( &psItem->usPixVal,
+                    &cTmp[0], 2 );
             CPL_LSBPTR16(&psItem->usPixVal);
-            memcpy( reinterpret_cast<void *>( &psItem->res1 ),
-                    reinterpret_cast<void *>( &cTmp[2] ), 1 );
-            memcpy( reinterpret_cast<void *>( &psItem->r ),
-                    reinterpret_cast<void *>( &cTmp[3] ), 1 );
-            memcpy( reinterpret_cast<void *>( &psItem->g ),
-                    reinterpret_cast<void *>( &cTmp[4] ), 1 );
-            memcpy( reinterpret_cast<void *>( &psItem->b ),
-                    reinterpret_cast<void *>( &cTmp[5] ), 1 );
-            memcpy( reinterpret_cast<void *>( &psItem->res2 ),
-                    reinterpret_cast<void *>( &cTmp[6] ), 1 );
-            memcpy( reinterpret_cast<void *>( &psItem->usLen ),
-                    reinterpret_cast<void *>( &cTmp[7] ), 2 );
+            memcpy( &psItem->res1,
+                    &cTmp[2], 1 );
+            memcpy( &psItem->r,
+                    &cTmp[3], 1 );
+            memcpy( &psItem->g,
+                    &cTmp[4], 1 );
+            memcpy( &psItem->b,
+                    &cTmp[5], 1 );
+            memcpy( &psItem->res2,
+                    &cTmp[6], 1 );
+            memcpy( &psItem->usLen,
+                    &cTmp[7], 2 );
             CPL_LSBPTR16(&psItem->usLen);
 
             if ( psItem->usLen > sizeof(psItem->szClassName)-1 )
@@ -296,7 +309,7 @@ int nwt_LoadColors( NWT_RGB * pMap, int mapSize, NWT_GRID * pGrd )
                      pGrd->stInflection[0].b, pMap, &nWarkerMark );
     }
     // find what inflections zmin is between
-    for( i = 0; i < pGrd->iNumColorInflections; i++ )
+    for( i = 1; i < pGrd->iNumColorInflections; i++ )
     {
         if( pGrd->fZMin < pGrd->stInflection[i].zVal )
         {
@@ -426,7 +439,7 @@ void createIP( int index, unsigned char r, unsigned char g, unsigned char b,
 }
 
 void nwt_HillShade( unsigned char *r, unsigned char *g, unsigned char *b,
-                    char *h )
+                    unsigned char *h )
 {
     HLS hls;
     NWT_RGB rgb;
@@ -434,7 +447,7 @@ void nwt_HillShade( unsigned char *r, unsigned char *g, unsigned char *b,
     rgb.g = *g;
     rgb.b = *b;
     hls = RGBtoHLS( rgb );
-    hls.l += ((short) *h) * HLSMAX / 256;
+    hls.l = static_cast<short>(hls.l + (*h) * HLSMAX / 256);
     rgb = HLStoRGB( hls );
 
     *r = rgb.r;
@@ -445,23 +458,23 @@ void nwt_HillShade( unsigned char *r, unsigned char *g, unsigned char *b,
 
 NWT_GRID *nwtOpenGrid( char *filename )
 {
-    char nwtHeader[1024];
+    unsigned char nwtHeader[1024];
     VSILFILE *fp = VSIFOpenL( filename, "rb" );
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Can't open %s", filename );
-        return NULL;
+        return nullptr;
     }
 
     if( !VSIFReadL( nwtHeader, 1024, 1, fp ) )
-        return NULL;
+        return nullptr;
 
     if( nwtHeader[0] != 'H' ||
         nwtHeader[1] != 'G' ||
         nwtHeader[2] != 'P' ||
         nwtHeader[3] != 'C' )
-          return NULL;
+          return nullptr;
 
     NWT_GRID *pGrd = reinterpret_cast<NWT_GRID *>(
         calloc( sizeof(NWT_GRID), 1 ) );
@@ -477,7 +490,7 @@ NWT_GRID *nwtOpenGrid( char *filename )
                  nwtHeader[4] );
         if( pGrd )
             free( pGrd );
-        return NULL;
+        return nullptr;
     }
 
     strncpy( pGrd->szFileName, filename, sizeof(pGrd->szFileName) );
@@ -495,9 +508,9 @@ void nwtCloseGrid( NWT_GRID * pGrd )
     {
         for( unsigned short usTmp = 0; usTmp < pGrd->stClassDict->nNumClassifiedItems; usTmp++ )
         {
-            free( pGrd->stClassDict->stClassifedItem[usTmp] );
+            free( pGrd->stClassDict->stClassifiedItem[usTmp] );
         }
-        free( pGrd->stClassDict->stClassifedItem );
+        free( pGrd->stClassDict->stClassifiedItem );
         free( pGrd->stClassDict );
     }
     if( pGrd->fp )
@@ -581,13 +594,13 @@ void nwtPrintGridHeader( NWT_GRID * pGrd )
         for( int i = 0; i < static_cast<int>( pGrd->stClassDict->nNumClassifiedItems ); i++ )
         {
             printf( "\n%s - (%d,%d,%d)  Raw = %d  %d %d",/*ok*/
-                    pGrd->stClassDict->stClassifedItem[i]->szClassName,
-                    pGrd->stClassDict->stClassifedItem[i]->r,
-                    pGrd->stClassDict->stClassifedItem[i]->g,
-                    pGrd->stClassDict->stClassifedItem[i]->b,
-                    pGrd->stClassDict->stClassifedItem[i]->usPixVal,
-                    pGrd->stClassDict->stClassifedItem[i]->res1,
-                    pGrd->stClassDict->stClassifedItem[i]->res2 );
+                    pGrd->stClassDict->stClassifiedItem[i]->szClassName,
+                    pGrd->stClassDict->stClassifiedItem[i]->r,
+                    pGrd->stClassDict->stClassifiedItem[i]->g,
+                    pGrd->stClassDict->stClassifiedItem[i]->b,
+                    pGrd->stClassDict->stClassifiedItem[i]->usPixVal,
+                    pGrd->stClassDict->stClassifiedItem[i]->res1,
+                    pGrd->stClassDict->stClassifiedItem[i]->res2 );
         }
     }
 }

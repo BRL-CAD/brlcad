@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2009-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@
 #include "cpl_string.h"
 #include "ogr_s57.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRS57Layer()                             */
@@ -55,7 +55,7 @@ OGRS57Layer::OGRS57Layer( OGRS57DataSource *poDSIn,
     SetDescription( poFeatureDefn->GetName() );
     if( poFeatureDefn->GetGeomFieldCount() > 0 )
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(
-            poDS->GetSpatialRef() );
+            poDS->DSGetSpatialRef() );
 
     if( EQUAL(poDefnIn->GetName(),OGRN_VI) )
         nRCNM = RCNM_VI;
@@ -109,16 +109,16 @@ OGRFeature *OGRS57Layer::GetNextUnfilteredFeature()
 /*      Are we out of modules to request features from?                 */
 /* -------------------------------------------------------------------- */
     if( nCurrentModule >= poDS->GetModuleCount() )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Set the current position on the current module and fetch a      */
 /*      feature.                                                        */
 /* -------------------------------------------------------------------- */
     S57Reader   *poReader = poDS->GetModule(nCurrentModule);
-    OGRFeature  *poFeature = NULL;
+    OGRFeature  *poFeature = nullptr;
 
-    if( poReader != NULL )
+    if( poReader != nullptr )
     {
         poReader->SetNextFEIndex( nNextFEIndex, nRCNM );
         poFeature = poReader->ReadNextFeature( poFeatureDefn );
@@ -128,15 +128,15 @@ OGRFeature *OGRS57Layer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      If we didn't get a feature we need to move onto the next file.  */
 /* -------------------------------------------------------------------- */
-    if( poFeature == NULL )
+    if( poFeature == nullptr )
     {
         nCurrentModule++;
         poReader = poDS->GetModule(nCurrentModule);
 
-        if( poReader != NULL && poReader->GetModule() == NULL )
+        if( poReader != nullptr && poReader->GetModule() == nullptr )
         {
             if( !poReader->Open( FALSE ) )
-                return NULL;
+                return nullptr;
         }
 
         return GetNextUnfilteredFeature();
@@ -144,7 +144,7 @@ OGRFeature *OGRS57Layer::GetNextUnfilteredFeature()
     else
     {
         m_nFeaturesRead++;
-        if( poFeature->GetGeometryRef() != NULL )
+        if( poFeature->GetGeometryRef() != nullptr )
             poFeature->GetGeometryRef()->assignSpatialReference(
                 GetSpatialRef() );
     }
@@ -159,7 +159,7 @@ OGRFeature *OGRS57Layer::GetNextUnfilteredFeature()
 OGRFeature *OGRS57Layer::GetNextFeature()
 
 {
-    OGRFeature  *poFeature = NULL;
+    OGRFeature  *poFeature = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read features till we find one that satisfies our current       */
@@ -168,12 +168,12 @@ OGRFeature *OGRS57Layer::GetNextFeature()
     while( true )
     {
         poFeature = GetNextUnfilteredFeature();
-        if( poFeature == NULL )
+        if( poFeature == nullptr )
             break;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
              || FilterGeometry(poFeature->GetGeometryRef()) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
             break;
 
@@ -200,10 +200,10 @@ int OGRS57Layer::TestCapability( const char * pszCap )
         return false;
 
     if( EQUAL(pszCap, OLCFastFeatureCount) )
-        return !(m_poFilterGeom != NULL || m_poAttrQuery != NULL
+        return !(m_poFilterGeom != nullptr || m_poAttrQuery != nullptr
                  || nFeatureCount == -1 ||
                  ( EQUAL(poFeatureDefn->GetName(), "SOUNDG") &&
-                   poDS->GetModule(0) != NULL &&
+                   poDS->GetModule(0) != nullptr &&
                    (poDS->GetModule(0)->GetOptionFlags()
                     & S57M_SPLIT_MULTIPOINT)));
 
@@ -216,6 +216,13 @@ int OGRS57Layer::TestCapability( const char * pszCap )
 
     if( EQUAL(pszCap, OLCFastSpatialFilter) )
         return false;
+
+    if( EQUAL(pszCap, OLCStringsAsUTF8) )
+    {
+        return poDS->GetModule(0) != nullptr &&
+               (poDS->GetModule(0)->GetOptionFlags()
+                    & S57M_RECODE_BY_DSSI);
+    }
 
     return false;
 }
@@ -254,18 +261,18 @@ OGRFeature *OGRS57Layer::GetFeature( GIntBig nFeatureId )
 {
     S57Reader   *poReader = poDS->GetModule(0); // not multi-reader aware
 
-    if( poReader != NULL && nFeatureId <= INT_MAX )
+    if( poReader != nullptr && nFeatureId <= INT_MAX )
     {
         OGRFeature *poFeature = poReader->ReadFeature(
             static_cast<int>(nFeatureId), poFeatureDefn );
 
-        if( poFeature != NULL &&  poFeature->GetGeometryRef() != NULL )
+        if( poFeature != nullptr &&  poFeature->GetGeometryRef() != nullptr )
             poFeature->GetGeometryRef()->assignSpatialReference(
                 GetSpatialRef() );
         return poFeature;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/

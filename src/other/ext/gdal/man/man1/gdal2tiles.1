@@ -1,0 +1,302 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "GDAL2TILES" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+gdal2tiles \- Generates directory with TMS tiles, KMLs and simple web viewers.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal2tiles.py [\-p profile] [\-r resampling] [\-s srs] [\-z zoom]
+              [\-e] [\-a nodata] [\-v] [\-q] [\-h] [\-k] [\-n] [\-u url]
+              [\-w webviewer] [\-t title] [\-c copyright]
+              [\-\-processes=NB_PROCESSES] [\-\-mpi] [\-\-xyz]
+              \-\-tilesize=PIXELS
+              [\-g googlekey] [\-b bingkey] input_file [output_dir] [COMMON_OPTIONS]
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+This utility generates a directory with small tiles and metadata, following
+the OSGeo Tile Map Service Specification. Simple web pages with viewers based on
+Google Maps, OpenLayers and Leaflet are generated as well \- so anybody can comfortably
+explore your maps on\-line and you do not need to install or configure any
+special software (like MapServer) and the map displays very fast in the
+web browser. You only need to upload the generated directory onto a web server.
+.sp
+GDAL2Tiles also creates the necessary metadata for Google Earth (KML
+SuperOverlay), in case the supplied map uses EPSG:4326 projection.
+.sp
+World files and embedded georeferencing is used during tile generation, but you
+can publish a picture without proper georeferencing too.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+Inputs with non\-Byte data type (i.e. \fBInt16\fP, \fBUInt16\fP,...) will be clamped to
+the \fBByte\fP data type, causing wrong results. To avoid this it is necessary to
+rescale input to the \fBByte\fP data type using \fIgdal_translate\fP utility.
+.UNINDENT
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+Config options of the input drivers may have an effect on the output of gdal2tiles. An example driver config option is GDAL_PDF_DPI, which can be found at \fI\%Configuration options\fP
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-p <PROFILE>, \-\-profile=<PROFILE>
+Tile cutting profile (mercator, geodetic, raster) \- default \(aqmercator\(aq (Google Maps compatible).
+.sp
+Starting with GDAL 3.2, additional profiles are available from tms_XXXX.json files
+placed in GDAL data directory (provided all zoom levels use same origin, tile dimensions,
+and resolution between consecutive zoom levels vary by a factor of two).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-r <RESAMPLING>, \-\-resampling=<RESAMPLING>
+Resampling method (average, near, bilinear, cubic, cubicspline, lanczos, antialias, mode, max, min, med, q1, q3) \- default \(aqaverage\(aq.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-s <SRS>, \-\-s_srs=<SRS>
+The spatial reference system used for the source input data.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-xyz
+Generate XYZ tiles (OSM Slippy Map standard) instead of TMS.
+In the default mode (TMS), tiles at y=0 are the southern\-most tiles, whereas
+in XYZ mode (used by OGC WMTS too), tiles at y=0 are the northern\-most tiles.
+.sp
+New in version 3.1.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-z <ZOOM>, \-\-zoom=<ZOOM>
+Zoom levels to render (format:\(aq2\-5\(aq, \(aq10\-\(aq or \(aq10\(aq).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-e, \-\-resume
+Resume mode. Generate only missing files.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a <NODATA>, \-\-srcnodata=<NODATA>
+Value in the input dataset considered as transparent. If the input dataset
+had already an associate nodata value, it is overridden by the specified value.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-v, \-\-verbose
+Generate verbose output of tile generation.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-x, \-\-exclude
+Exclude transparent tiles from result tileset.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-q, \-\-quiet
+Disable messages and status to stdout
+.sp
+New in version 2.1.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-processes=<NB_PROCESSES>
+Number of parallel processes to use for tiling, to speed\-up the computation.
+.sp
+New in version 2.3.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-mpi
+Assume launched by mpiexec, enable MPI parallelism and ignore \-\-processes.
+Requires working MPI environment and the MPI for Python (mpi4py) package.
+User should set GDAL_CACHEMAX to an appropriate cache size per process
+based on memory per node and the number of processes launched per node.
+.sp
+New in version 3.5.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-tilesize=<PIXELS>
+Width and height in pixel of a tile. Default is 256.
+.sp
+New in version 3.1.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-h, \-\-help
+Show help message and exit.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-version
+Show program\(aqs version number and exit.
+.UNINDENT
+.SS KML (Google Earth) options
+.sp
+Options for generated Google Earth SuperOverlay metadata
+.INDENT 0.0
+.TP
+.B \-k, \-\-force\-kml
+Generate KML for Google Earth \- default for \(aqgeodetic\(aq profile and \(aqraster\(aq in EPSG:4326. For a dataset with different projection use with caution!
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-n, \-\-no\-kml
+Avoid automatic generation of KML files for EPSG:4326.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-u <URL>, \-\-url=<URL>
+URL address where the generated tiles are going to be published.
+.UNINDENT
+.SS Web viewer options
+.sp
+Options for generated HTML viewers a la Google Maps
+.INDENT 0.0
+.TP
+.B \-w <WEBVIEWER>, \-\-webviewer=<WEBVIEWER>
+Web viewer to generate (all, google, openlayers, leaflet, mapml, none) \- default \(aqall\(aq.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-t <TITLE>, \-\-title=<TITLE>
+Title of the map.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-c <COPYRIGHT>, \-\-copyright=<COPYRIGHT>
+Copyright for the map.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-g <GOOGLEKEY>, \-\-googlekey=<GOOGLEKEY>
+Google Maps API key from \fI\%http://code.google.com/apis/maps/signup.html\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-b <BINGKEY>, \-\-bingkey=<BINGKEY>
+Bing Maps API key from \fI\%https://www.bingmapsportal.com/\fP
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+gdal2tiles.py is a Python script that needs to be run against Python GDAL binding.
+.UNINDENT
+.UNINDENT
+.SS MapML options
+.sp
+MapML support is new to GDAL 3.2. When \-\-webviewer=mapml is specified,
+\-\-xyz is implied, as well as \-\-tmscompatible if \-\-profile=geodetic.
+.sp
+The following profiles are supported:
+.INDENT 0.0
+.IP \(bu 2
+mercator: mapped to OSMTILE MapML tiling scheme
+.IP \(bu 2
+geodetic: mapped to WGS84 MapML tiling scheme
+.IP \(bu 2
+APSTILE: from the tms_MapML_APSTILE.json data file
+.UNINDENT
+.sp
+The generated MapML file in the output directory is \fBmapml.mapl\fP
+.sp
+Available options are:
+.INDENT 0.0
+.TP
+.B \-\-mapml\-template=<filename>
+Filename of a template mapml file where variables will
+be substituted. If not specified, the generic
+template_tiles.mapml file from GDAL data resources
+will be used
+.UNINDENT
+.sp
+The \-\-url option is also used to substitute \fB${URL}\fP in the template MapML file.
+.SH EXAMPLES
+.sp
+Basic example:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal2tiles.py \-\-zoom=2\-5 input.tif output_folder
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+MapML generation:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal2tiles.py \-\-zoom=16\-18 \-w mapml \-p APSTILE \-\-url "https://example.com" input.tif output_folder
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+MPI example:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+mpiexec \-n $NB_PROCESSES gdal2tiles.py \-\-mpi \-\-config GDAL_CACHEMAX 500 \-\-zoom=2\-5 input.tif output_folder
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Klokan Petr Pridal <klokan@klokan.cz>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

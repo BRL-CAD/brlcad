@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam
- * Copyright (c) 2007-2008, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2008, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,7 +39,7 @@
 #include "gdal.h"
 
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         GDALChecksumImage()                          */
@@ -83,8 +83,9 @@ GDALChecksumImage( GDALRasterBandH hBand,
         const GDALDataType eDstDataType = bComplex ? GDT_CFloat64 : GDT_Float64;
 
         double* padfLineData = static_cast<double *>(
-            VSI_MALLOC2_VERBOSE(nXSize, sizeof(double) * 2));
-        if( padfLineData == NULL )
+            VSI_MALLOC2_VERBOSE(nXSize,
+                                GDALGetDataTypeSizeBytes(eDstDataType)));
+        if( padfLineData == nullptr )
         {
             return 0;
         }
@@ -115,7 +116,7 @@ GDALChecksumImage( GDALRasterBandH hBand,
                 }
                 else
                 {
-                    // Standard behaviour of GDALCopyWords when converting
+                    // Standard behavior of GDALCopyWords when converting
                     // from floating point to Int32.
                     dfVal += 0.5;
 
@@ -142,8 +143,9 @@ GDALChecksumImage( GDALRasterBandH hBand,
         const GDALDataType eDstDataType = bComplex ? GDT_CInt32 : GDT_Int32;
 
         int *panLineData = static_cast<GInt32 *>(
-            VSI_MALLOC2_VERBOSE(nXSize, sizeof(GInt32) * 2));
-        if( panLineData == NULL )
+            VSI_MALLOC2_VERBOSE(nXSize,
+                                GDALGetDataTypeSizeBytes(eDstDataType)));
+        if( panLineData == nullptr )
         {
             return 0;
         }

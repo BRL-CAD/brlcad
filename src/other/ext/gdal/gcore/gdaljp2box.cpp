@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,7 +44,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*! @cond Doxygen_Suppress */
 
@@ -52,19 +52,10 @@ CPL_CVSID("$Id$");
 /*                             GDALJP2Box()                             */
 /************************************************************************/
 
+// GDALJP2Box does *not* take ownership of fpIn
 GDALJP2Box::GDALJP2Box( VSILFILE *fpIn ) :
-    fpVSIL(fpIn),
-#if HAVE_CXX11 && !defined(_WIN32)
-    szBoxType{'\0', '\0', '\0', '\0', '\0'},
-#endif
-    nBoxOffset(-1),
-    nBoxLength(0),
-    nDataOffset(-1),
-    pabyData(NULL)
+    fpVSIL(fpIn)
 {
-#if !HAVE_CXX11 || defined(_WIN32)
-    std::fill_n(szBoxType, CPL_ARRAYSIZE(szBoxType), '\0');
-#endif
 }
 
 /************************************************************************/
@@ -74,7 +65,8 @@ GDALJP2Box::GDALJP2Box( VSILFILE *fpIn ) :
 GDALJP2Box::~GDALJP2Box()
 
 {
-    // TODO(schwher): Need to close fpVSIL?
+    // Do not close fpVSIL. Ownership remains to the caller of GDALJP2Box
+    // constructor
     CPLFree( pabyData );
 }
 
@@ -116,7 +108,7 @@ int GDALJP2Box::ReadNext()
 int GDALJP2Box::ReadFirstChild( GDALJP2Box *poSuperBox )
 
 {
-    if( poSuperBox == NULL )
+    if( poSuperBox == nullptr )
         return ReadFirst();
 
     szBoxType[0] = '\0';
@@ -133,7 +125,7 @@ int GDALJP2Box::ReadFirstChild( GDALJP2Box *poSuperBox )
 int GDALJP2Box::ReadNextChild( GDALJP2Box *poSuperBox )
 
 {
-    if( poSuperBox == NULL )
+    if( poSuperBox == nullptr )
         return ReadNext();
 
     if( !ReadNext() )
@@ -257,16 +249,16 @@ GByte *GDALJP2Box::ReadBoxData()
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Too big box : " CPL_FRMT_GIB " bytes",
                   nDataLength );
-        return NULL;
+        return nullptr;
     }
 
     if( VSIFSeekL( fpVSIL, nDataOffset, SEEK_SET ) != 0 )
-        return NULL;
+        return nullptr;
 
     char *pszData = static_cast<char *>(
         VSI_MALLOC_VERBOSE( static_cast<int>(nDataLength) + 1) );
-    if( pszData == NULL )
-        return NULL;
+    if( pszData == nullptr )
+        return nullptr;
 
     if( static_cast<GIntBig>( VSIFReadL(
            pszData, 1, static_cast<int>(nDataLength), fpVSIL ) )
@@ -274,7 +266,7 @@ GByte *GDALJP2Box::ReadBoxData()
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot read box content");
         CPLFree( pszData );
-        return NULL;
+        return nullptr;
     }
 
     pszData[nDataLength] = '\0';
@@ -298,7 +290,7 @@ GIntBig GDALJP2Box::GetDataLength()
 int GDALJP2Box::DumpReadable( FILE *fpOut, int nIndentLevel )
 
 {
-    if( fpOut == NULL )
+    if( fpOut == nullptr )
         fpOut = stdout;
 
     for( int i=0; i < nIndentLevel; ++i)
@@ -391,7 +383,7 @@ void GDALJP2Box::SetWritableData( int nLength, const GByte *pabyDataIn )
 void GDALJP2Box::AppendWritableData( int nLength, const void *pabyDataIn )
 
 {
-    if( pabyData == NULL )
+    if( pabyData == nullptr )
     {
         nBoxOffset = -9; // Virtual offsets for data length computation.
         nDataOffset = -1;

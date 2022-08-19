@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id$
+ * $Id: ogrgeoconceptlayer.h$
  *
  * Name:     ogrgeoconceptlayer.h
  * Project:  OpenGIS Simple Features Reference Implementation
@@ -37,7 +37,7 @@
 /**********************************************************************/
 /*            OGCGeoconceptLayer Class                           */
 /**********************************************************************/
-class OGRGeoconceptLayer : public OGRLayer
+class OGRGeoconceptLayer final: public OGRLayer
 {
   private:
     OGRFeatureDefn      *_poFeatureDefn;

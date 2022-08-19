@@ -58,11 +58,11 @@ public:
 protected:
     virtual void LoadMetadata() override;
     char** LoadRPCTxtFile();
-    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime) override;
+    virtual GIntBig GetAcquisitionTimeFromString(const char* pszDateTime) override;
 protected:
-    CPLString m_osIMDSourceFilename;
-    CPLString m_osHDRSourceFilename;
-    CPLString m_osRPBSourceFilename;
+    CPLString m_osIMDSourceFilename{};
+    CPLString m_osHDRSourceFilename{};
+    CPLString m_osRPBSourceFilename{};
 };
 
 #endif // READER_ALOS_H_INCLUDED

@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,7 +33,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
                            unsigned char *pabyTarget );
@@ -59,7 +59,7 @@ static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
  * loaded element, and afterwards the raw_data would be updated before calling
  * DGNWriteElement().  If DGNWriteElement() isn't called after
  * DGNResizeElement() then the element will be lost having been marked as
- * deleted in it's old position but never written at the new location.
+ * deleted in its old position but never written at the new location.
  *
  * @param hDGN the DGN file on which the element lives.
  * @param psElement the element to alter.
@@ -104,11 +104,11 @@ int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
 
     if( psElement->offset != -1 )
     {
-        long nOldFLoc = VSIFTell( psDGN->fp );
+        vsi_l_offset nOldFLoc = VSIFTellL( psDGN->fp );
         unsigned char abyLeader[2];
 
-        if( VSIFSeek( psDGN->fp, psElement->offset, SEEK_SET ) != 0
-            || VSIFRead( abyLeader, sizeof(abyLeader), 1, psDGN->fp ) != 1 )
+        if( VSIFSeekL( psDGN->fp, psElement->offset, SEEK_SET ) != 0
+            || VSIFReadL( abyLeader, sizeof(abyLeader), 1, psDGN->fp ) != 1 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed seek or read when trying to mark existing\n"
@@ -118,9 +118,9 @@ int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
 
         abyLeader[1] |= 0x80;
 
-        if( VSIFSeek( psDGN->fp, psElement->offset, SEEK_SET ) != 0
-            || VSIFWrite( abyLeader, sizeof(abyLeader), 1, psDGN->fp ) != 1
-            || VSIFSeek( psDGN->fp, nOldFLoc, SEEK_SET ) != 0 )
+        if( VSIFSeekL( psDGN->fp, psElement->offset, SEEK_SET ) != 0
+            || VSIFWriteL( abyLeader, sizeof(abyLeader), 1, psDGN->fp ) != 1
+            || VSIFSeekL( psDGN->fp, nOldFLoc, SEEK_SET ) != 0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed seek or write when trying to mark existing\n"
@@ -209,7 +209,7 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
             return FALSE;
 
         // Establish the position of the new element.
-        psElement->offset = static_cast<int>(VSIFTell( psDGN->fp ));
+        psElement->offset = static_cast<int>(VSIFTellL( psDGN->fp ));
         psElement->element_id = psDGN->element_count;
 
         // Grow element buffer if needed.
@@ -239,8 +239,8 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
 /* -------------------------------------------------------------------- */
 /*      Write out the element.                                          */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeek( psDGN->fp, psElement->offset, SEEK_SET ) != 0
-        || VSIFWrite( psElement->raw_data, psElement->raw_bytes,
+    if( VSIFSeekL( psDGN->fp, psElement->offset, SEEK_SET ) != 0
+        || VSIFWriteL( psElement->raw_data, psElement->raw_bytes,
                       1, psDGN->fp) != 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -261,8 +261,8 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
     {
         const unsigned char abyEOF[2] = { 0xff, 0xff };
 
-        VSIFWrite( abyEOF, 2, 1, psDGN->fp );
-        VSIFSeek( psDGN->fp, -2, SEEK_CUR );
+        VSIFWriteL( abyEOF, 2, 1, psDGN->fp );
+        VSIFSeekL( psDGN->fp, VSIFTellL(psDGN->fp)-2, SEEK_SET );
     }
 
     return TRUE;
@@ -315,28 +315,31 @@ DGNHandle
 
 {
 /* -------------------------------------------------------------------- */
+/*      Open output file.                                               */
+/* -------------------------------------------------------------------- */
+    VSILFILE *fpNew = VSIFOpenL( pszNewFilename, "wb" );
+    if( fpNew == nullptr )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to open output file: %s", pszNewFilename );
+        return nullptr;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Open seed file, and read TCB element.                           */
 /* -------------------------------------------------------------------- */
     DGNInfo *psSeed = (DGNInfo *) DGNOpen( pszSeedFile, FALSE );
-    if( psSeed == NULL )
-        return NULL;
+    if( psSeed == nullptr )
+    {
+        VSIFCloseL( fpNew );
+        return nullptr;
+    }
 
     DGNSetOptions( psSeed, DGNO_CAPTURE_RAW_DATA );
 
     DGNElemCore *psSrcTCB = DGNReadElement( psSeed );
 
     CPLAssert( psSrcTCB->raw_bytes >= 1536 );
-
-/* -------------------------------------------------------------------- */
-/*      Open output file.                                               */
-/* -------------------------------------------------------------------- */
-    FILE *fpNew = VSIFOpen( pszNewFilename, "wb" );
-    if( fpNew == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to open output file: %s", pszNewFilename );
-        return NULL;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Modify TCB appropriately for the output file.                   */
@@ -377,29 +380,29 @@ DGNHandle
 /* -------------------------------------------------------------------- */
 /*      Write TCB and EOF to new file.                                  */
 /* -------------------------------------------------------------------- */
-    VSIFWrite( pabyRawTCB, psSrcTCB->raw_bytes, 1, fpNew );
+    VSIFWriteL( pabyRawTCB, psSrcTCB->raw_bytes, 1, fpNew );
     CPLFree( pabyRawTCB );
 
     unsigned char abyEOF[2] = { 0xff,  0xff };
 
-    VSIFWrite( abyEOF, 2, 1, fpNew );
+    VSIFWriteL( abyEOF, 2, 1, fpNew );
 
     DGNFreeElement( psSeed, psSrcTCB );
 
 /* -------------------------------------------------------------------- */
 /*      Close and re-open using DGN API.                                */
 /* -------------------------------------------------------------------- */
-    VSIFClose( fpNew );
+    VSIFCloseL( fpNew );
 
     DGNInfo *psDGN = (DGNInfo *) DGNOpen( pszNewFilename, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Now copy over elements according to options in effect.          */
 /* -------------------------------------------------------------------- */
-    DGNElemCore *psSrcElement = NULL;
-    DGNElemCore *psDstElement = NULL;
+    DGNElemCore *psSrcElement = nullptr;
+    DGNElemCore *psDstElement = nullptr;
 
-    while( (psSrcElement = DGNReadElement( psSeed )) != NULL )
+    while( (psSrcElement = DGNReadElement( psSeed )) != nullptr )
     {
         if( (nCreationFlags & DGNCF_COPY_WHOLE_SEED_FILE)
             || (psSrcElement->stype == DGNST_COLORTABLE
@@ -446,7 +449,7 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
                               DGNElemCore *psSrcElement )
 
 {
-    DGNElemCore *psClone = NULL;
+    DGNElemCore *psClone = nullptr;
 
     DGNLoadTCB( hDGNDst );
 
@@ -463,7 +466,7 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
         DGNElemMultiPoint *psSrcMP = (DGNElemMultiPoint *) psSrcElement;
 
         const size_t nSize = sizeof(DGNElemMultiPoint)
-            + sizeof(DGNPoint) * (psSrcMP->num_vertices-2);
+            + sizeof(DGNPoint) * (psSrcMP->num_vertices-1);
 
         DGNElemMultiPoint *psMP =
             static_cast<DGNElemMultiPoint *>(CPLMalloc( nSize ));
@@ -644,7 +647,7 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
     else
     {
         CPLAssert( false );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -737,7 +740,7 @@ int DGNUpdateElemCoreExtended( CPL_UNUSED DGNHandle hDGN,
     GByte *rd = psElement->raw_data;
     const int nWords = (psElement->raw_bytes / 2) - 2;
 
-    if( psElement->raw_data == NULL
+    if( psElement->raw_data == nullptr
         || psElement->raw_bytes < 36 )
     {
         CPLAssert( false );
@@ -870,7 +873,7 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
                   "Attempt to create %s element with %d points failed.\n"
                   "Element would be too large.",
                   DGNTypeToName( nType ), nPointCount );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -878,7 +881,7 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
     DGNElemMultiPoint *psMP = static_cast<DGNElemMultiPoint *>(
         CPLCalloc( sizeof(DGNElemMultiPoint)
-                   + sizeof(DGNPoint) * (nPointCount-2), 1 ));
+                   + sizeof(DGNPoint) * (nPointCount-1), 1 ));
     DGNElemCore *psCore = &(psMP->core);
 
     DGNInitializeElemCore( hDGN, psCore );
@@ -964,7 +967,7 @@ DGNCreateArcElem2D( DGNHandle hDGN, int nType,
     return DGNCreateArcElem( hDGN, nType, dfOriginX, dfOriginY, 0.0,
                              dfPrimaryAxis, dfSecondaryAxis,
                              dfStartAngle, dfSweepAngle,
-                             dfRotation, NULL );
+                             dfRotation, nullptr );
 }
 
 /************************************************************************/
@@ -1033,7 +1036,7 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
     psArc->sweepang = dfSweepAngle;
 
     psArc->rotation = dfRotation;
-    if( panQuaternion == NULL )
+    if( panQuaternion == nullptr )
     {
         DGNRotationToQuaternion( dfRotation, psArc->quat );
     }
@@ -1045,8 +1048,6 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
 /*      Setup Raw data for the arc section.                             */
 /* -------------------------------------------------------------------- */
-    GInt32 nAngle = 0;
-
     if( nType == DGNT_ARC )
     {
         double dfScaledAxis;
@@ -1059,7 +1060,7 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
             CPLCalloc(psCore->raw_bytes, 1));
 
         /* start angle */
-        nAngle = (int) (dfStartAngle * 360000.0);
+        GInt32 nAngle = (int) (dfStartAngle * 360000.0);
         DGN_WRITE_INT32( nAngle, psCore->raw_data + 36 );
 
         /* sweep angle */
@@ -1161,7 +1162,7 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
         else
         {
             /* rotation */
-            nAngle = (int) (dfRotation * 360000.0);
+            GInt32 nAngle = (int) (dfRotation * 360000.0);
             DGN_WRITE_INT32( nAngle, psCore->raw_data + 52 );
 
             /* origin */
@@ -1257,13 +1258,13 @@ DGNCreateConeElem( DGNHandle hDGN,
     psCone->radius_2 = dfRadius_2;
 
     memset( psCone->quat, 0, sizeof(int) * 4 );
-    if( panQuaternion != NULL )
+    if( panQuaternion != nullptr )
     {
         memcpy( psCone->quat, panQuaternion, sizeof(int)*4 );
     }
     else
     {
-      psCone->quat[0] = 1 << 31;
+      psCone->quat[0] = static_cast<int>(1U << 31);
       psCone->quat[1] = 0;
       psCone->quat[2] = 0;
       psCone->quat[3] = 0;
@@ -1440,7 +1441,7 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     {
         int anQuaternion[4];
 
-        if( panQuaternion == NULL )
+        if( panQuaternion == nullptr )
             DGNRotationToQuaternion( dfRotation, anQuaternion );
         else
             memcpy( anQuaternion, panQuaternion, sizeof(int) * 4 );
@@ -1474,6 +1475,7 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
         0.0
     };
 
+#if 0
     //calculate rotated bounding box coordinates
     const double length = sMax.x-sMin.x;
     const double height = sMax.y-sMin.y;
@@ -1504,6 +1506,7 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
                       std::max(sLowRight.x, std::max(sUpLeft.x, sUpRight.x)));
     sMax.y = std::max(sLowLeft.y,
                       std::max(sLowRight.y, std::max(sUpLeft.y, sUpRight.y)));
+#endif
     sMin.x = dfOriginX - dfLengthMult * strlen(pszText);
     sMin.y = dfOriginY - dfHeightMult;
     sMin.z = 0.0;
@@ -1698,11 +1701,11 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
 {
     DGNLoadTCB( hDGN );
 
-    if( nNumElems < 1 || papsElems == NULL )
+    if( nNumElems < 1 || papsElems == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Need at least one element to form a complex group." );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1875,11 +1878,11 @@ DGNCreateSolidHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
 {
     DGNLoadTCB( hDGN );
 
-    if( nNumElems < 1 || papsElems == NULL )
+    if( nNumElems < 1 || papsElems == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Need at least one element to form a solid." );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2120,18 +2123,19 @@ static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
     {
         GInt32 nCTI = static_cast<GInt32>(
             std::max(-2147483647.0, std::min(2147483647.0,adfCT[i])));
-        unsigned char *pabyCTI = (unsigned char *) &nCTI;
+        unsigned char abyCTI[4];
+        memcpy(abyCTI, &nCTI, sizeof(GInt32));
 
 #ifdef WORDS_BIGENDIAN
-        pabyTarget[i*4+0] = pabyCTI[1];
-        pabyTarget[i*4+1] = pabyCTI[0];
-        pabyTarget[i*4+2] = pabyCTI[3];
-        pabyTarget[i*4+3] = pabyCTI[2];
+        pabyTarget[i*4+0] = abyCTI[1];
+        pabyTarget[i*4+1] = abyCTI[0];
+        pabyTarget[i*4+2] = abyCTI[3];
+        pabyTarget[i*4+3] = abyCTI[2];
 #else
-        pabyTarget[i*4+3] = pabyCTI[1];
-        pabyTarget[i*4+2] = pabyCTI[0];
-        pabyTarget[i*4+1] = pabyCTI[3];
-        pabyTarget[i*4+0] = pabyCTI[2];
+        pabyTarget[i*4+3] = abyCTI[1];
+        pabyTarget[i*4+2] = abyCTI[0];
+        pabyTarget[i*4+1] = abyCTI[3];
+        pabyTarget[i*4+0] = abyCTI[2];
 #endif
     }
 }
@@ -2184,11 +2188,11 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
 
     DGNLoadTCB( hDGN );
 
-    if( nNumElems < 1 || papsElems == NULL )
+    if( nNumElems < 1 || papsElems == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Need at least one element to form a cell." );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2258,7 +2262,7 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
 /* -------------------------------------------------------------------- */
 /*      Create the corresponding cell header.                           */
 /* -------------------------------------------------------------------- */
-    if( panLevels == NULL )
+    if( panLevels == nullptr )
         panLevels = (short *) abyLevelsOccurring + 0;
 
     DGNElemCore *psCH =
@@ -2432,8 +2436,8 @@ int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
     int iLinkage = 0;  // Used after for.
     for( ; ; iLinkage++ )
     {
-        if( DGNGetLinkage( hDGN, psElement, iLinkage, NULL, NULL, NULL, NULL )
-            == NULL )
+        if( DGNGetLinkage( hDGN, psElement, iLinkage, nullptr, nullptr, nullptr, nullptr )
+            == nullptr )
             break;
     }
 
@@ -2469,5 +2473,6 @@ int DGNAddShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElement,
 
     abyFillInfo[8] = (unsigned char) nColor;
 
+    // coverity[overrun-buffer-arg]
     return DGNAddRawAttrLink( hDGN, psElement, 16, abyFillInfo );
 }

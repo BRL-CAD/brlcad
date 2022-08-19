@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,10 +36,10 @@
 CPL_C_START
 void CPL_DLL GDALRegister_GTiff(void);
 void CPL_DLL GDALRegister_GXF(void);
-void CPL_DLL GDALRegister_OGDI(void);
 void CPL_DLL GDALRegister_HFA(void);
 void CPL_DLL GDALRegister_AAIGrid(void);
 void CPL_DLL GDALRegister_GRASSASCIIGrid(void);
+void CPL_DLL GDALRegister_ISG(void);
 void CPL_DLL GDALRegister_AIGrid(void);
 // void CPL_DLL GDALRegister_AIGrid2(void);
 void CPL_DLL GDALRegister_CEOS(void);
@@ -59,13 +59,11 @@ void CPL_DLL GDALRegister_PNG(void);
 void CPL_DLL GDALRegister_DDS(void);
 void CPL_DLL GDALRegister_GTA(void);
 void CPL_DLL GDALRegister_JPEG(void);
-void CPL_DLL GDALRegister_JPEG2000(void);
 void CPL_DLL GDALRegister_JP2KAK(void);
 void CPL_DLL GDALRegister_JPIPKAK(void);
 void CPL_DLL GDALRegister_MEM(void);
 void CPL_DLL GDALRegister_JDEM(void);
 void CPL_DLL GDALRegister_RASDAMAN(void);
-void CPL_DLL GDALRegister_GRASS(void);
 void CPL_DLL GDALRegister_PNM(void);
 void CPL_DLL GDALRegister_GIF(void);
 void CPL_DLL GDALRegister_BIGGIF(void);
@@ -94,8 +92,6 @@ void CPL_DLL GDALRegister_MrSID(void);
 void CPL_DLL GDALRegister_MG4Lidar(void);
 void CPL_DLL GDALRegister_PCIDSK(void);
 void CPL_DLL GDALRegister_BT(void);
-void CPL_DLL GDALRegister_DODS(void);
-void CPL_DLL GDALRegister_GMT(void);
 void CPL_DLL GDALRegister_netCDF(void);
 void CPL_DLL GDALRegister_LAN(void);
 void CPL_DLL GDALRegister_CPG(void);
@@ -119,13 +115,13 @@ void CPL_DLL GDALRegister_DIPEx(void);
 void CPL_DLL GDALRegister_ISIS3(void);
 void CPL_DLL GDALRegister_ISIS2(void);
 void CPL_DLL GDALRegister_PDS(void);
+void CPL_DLL GDALRegister_PDS4(void);
 void CPL_DLL GDALRegister_VICAR(void);
 void CPL_DLL GDALRegister_IDRISI(void);
 void CPL_DLL GDALRegister_Terragen(void);
 void CPL_DLL GDALRegister_WCS(void);
 void CPL_DLL GDALRegister_WMS(void);
 void CPL_DLL GDALRegister_HTTP(void);
-void CPL_DLL GDALRegister_SDE(void);
 void CPL_DLL GDALRegister_GSAG(void);
 void CPL_DLL GDALRegister_GSBG(void);
 void CPL_DLL GDALRegister_GS7BG(void);
@@ -142,13 +138,12 @@ void CPL_DLL GDALRegister_SRP(void);
 void CPL_DLL GDALRegister_COASP(void);
 void CPL_DLL GDALRegister_BLX(void);
 void CPL_DLL GDALRegister_LCP(void);
-void CPL_DLL GDALRegister_TMS(void);
 void CPL_DLL GDALRegister_EIR(void);
+void CPL_DLL GDALRegister_ESRIC(void);
 void CPL_DLL GDALRegister_GEOR(void);
 void CPL_DLL GDALRegister_TIL(void);
 void CPL_DLL GDALRegister_R(void);
 void CPL_DLL GDALRegister_Rasterlite(void);
-void CPL_DLL GDALRegister_EPSILON(void);
 void CPL_DLL GDALRegister_PostGISRaster(void);
 void CPL_DLL GDALRegister_NWT_GRD(void);
 void CPL_DLL GDALRegister_NWT_GRC(void);
@@ -168,7 +163,6 @@ void CPL_DLL GDALRegister_MAP(void);
 void CPL_DLL GDALRegister_OZI(void);
 void CPL_DLL GDALRegister_ACE2(void);
 void CPL_DLL GDALRegister_CTG(void);
-void CPL_DLL GDALRegister_E00GRID(void);
 void CPL_DLL GDALRegister_SNODAS(void);
 void CPL_DLL GDALRegister_WEBP(void);
 void CPL_DLL GDALRegister_ZMap(void);
@@ -190,6 +184,22 @@ void CPL_DLL GDALRegister_RRASTER(void);
 void CPL_DLL GDALRegister_Derived(void);
 void CPL_DLL GDALRegister_JP2Lura(void);
 void CPL_DLL GDALRegister_PRF(void);
+void CPL_DLL GDALRegister_NULL(void);
+void CPL_DLL GDALRegister_EEDAI(void);
+void CPL_DLL GDALRegister_EEDA(void);
+void CPL_DLL GDALRegister_SIGDEM(void);
+void CPL_DLL GDALRegister_BYN(void);
+void CPL_DLL GDALRegister_TileDB(void);
+void CPL_DLL GDALRegister_DAAS(void);
+void CPL_DLL GDALRegister_COG(void);
+void CPL_DLL GDALRegister_RDB(void);
+void CPL_DLL GDALRegister_EXR(void);
+void CPL_DLL GDALRegister_HEIF(void);
+void CPL_DLL GDALRegister_TGA(void);
+void CPL_DLL GDALRegister_OGCAPI(void);
+void CPL_DLL GDALRegister_STACTA(void);
+void CPL_DLL GDALRegister_Zarr(void);
+void CPL_DLL GDALRegister_STACIT(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

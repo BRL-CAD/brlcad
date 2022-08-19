@@ -3,10 +3,10 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Defines OGRLayerPool and OGRProxiedLayer class
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -43,8 +43,10 @@ class OGRLayerPool;
 /*                      OGRAbstractProxiedLayer                         */
 /************************************************************************/
 
-class OGRAbstractProxiedLayer : public OGRLayer
+class CPL_DLL OGRAbstractProxiedLayer : public OGRLayer
 {
+        CPL_DISALLOW_COPY_ASSIGN(OGRAbstractProxiedLayer)
+
         friend class OGRLayerPool;
 
         OGRAbstractProxiedLayer   *poPrevLayer; /* Chain to a layer that was used more recently */
@@ -64,8 +66,10 @@ class OGRAbstractProxiedLayer : public OGRLayer
 /*                             OGRLayerPool                             */
 /************************************************************************/
 
-class OGRLayerPool
+class CPL_DLL OGRLayerPool
 {
+        CPL_DISALLOW_COPY_ASSIGN(OGRLayerPool)
+
     protected:
         OGRAbstractProxiedLayer *poMRULayer; /* the most recently used layer */
         OGRAbstractProxiedLayer *poLRULayer; /* the least recently used layer (still opened) */
@@ -89,6 +93,8 @@ class OGRLayerPool
 
 class OGRProxiedLayer : public OGRAbstractProxiedLayer
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRProxiedLayer)
+
     OpenLayerFunc       pfnOpenLayer;
     FreeUserDataFunc    pfnFreeUserData;
     void               *pUserData;
@@ -159,6 +165,8 @@ class OGRProxiedLayer : public OGRAbstractProxiedLayer
     virtual const char *GetGeometryColumn() override;
 
     virtual OGRErr      SetIgnoredFields( const char **papszFields ) override;
+
+    virtual OGRErr      Rename(const char* pszNewName) override;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */

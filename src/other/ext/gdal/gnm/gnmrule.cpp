@@ -30,26 +30,21 @@
 #include "gnm.h"
 #include "gnm_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*! @cond Doxygen_Suppress */
-GNMRule::GNMRule()
-{
-    m_bValid = false;
-    m_bAllow = false;
-    m_bAny = false;
-}
+GNMRule::GNMRule() = default;
 
 GNMRule::GNMRule(const std::string &oRule) :
     m_soRuleString( oRule )
 {
-    m_bValid = ParseRuleString();
+    m_bValid = GNMRule::ParseRuleString();
 }
 
 GNMRule::GNMRule(const char *pszRule) :
     m_soRuleString( pszRule )
 {
-    m_bValid = ParseRuleString();
+    m_bValid = GNMRule::ParseRuleString();
 }
 
 GNMRule::GNMRule(const GNMRule &oRule) :
@@ -150,7 +145,7 @@ bool GNMRule::ParseRuleString()
     }
 
     // now just test if the value == connects
-    // in future shoult set rule type
+    // in future should set rule type
 
     if(!EQUAL(aTokens[1], GNM_RULEKW_CONNECTS))
     {

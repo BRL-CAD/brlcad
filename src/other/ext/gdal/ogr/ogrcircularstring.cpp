@@ -40,7 +40,7 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static inline double dist(double x0, double y0, double x1, double y1)
 {
@@ -55,7 +55,7 @@ static inline double dist(double x0, double y0, double x1, double y1)
  * \brief Create an empty circular string.
  */
 
-OGRCircularString::OGRCircularString() {}
+OGRCircularString::OGRCircularString() = default;
 
 /************************************************************************/
 /*              OGRCircularString( const OGRCircularString& )           */
@@ -70,15 +70,13 @@ OGRCircularString::OGRCircularString() {}
  * @since GDAL 2.1
  */
 
-OGRCircularString::OGRCircularString( const OGRCircularString& other ) :
-    OGRSimpleCurve( other )
-{}
+OGRCircularString::OGRCircularString( const OGRCircularString& ) = default;
 
 /************************************************************************/
 /*                        ~OGRCircularString()                          */
 /************************************************************************/
 
-OGRCircularString::~OGRCircularString() {}
+OGRCircularString::~OGRCircularString() = default;
 
 /************************************************************************/
 /*                  operator=( const OGRCircularString& )               */
@@ -131,18 +129,31 @@ const char * OGRCircularString::getGeometryName() const
 }
 
 /************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRCircularString *OGRCircularString::clone() const
+
+{
+    return new (std::nothrow) OGRCircularString(*this);
+}
+
+/************************************************************************/
 /*                           importFromWkb()                            */
 /*                                                                      */
 /*      Initialize from serialized stream in well known binary          */
 /*      format.                                                         */
 /************************************************************************/
 
-OGRErr OGRCircularString::importFromWkb( unsigned char * pabyData,
-                                         int nSize,
-                                         OGRwkbVariant eWkbVariant )
+OGRErr OGRCircularString::importFromWkb( const unsigned char * pabyData,
+                                         size_t nSize,
+                                         OGRwkbVariant eWkbVariant,
+                                         size_t& nBytesConsumedOut )
 
 {
-    OGRErr eErr = OGRSimpleCurve::importFromWkb(pabyData, nSize, eWkbVariant);
+    OGRErr eErr = OGRSimpleCurve::importFromWkb(pabyData, nSize,
+                                                eWkbVariant,
+                                                nBytesConsumedOut);
     if( eErr == OGRERR_NONE )
     {
         if( !IsValidFast() )
@@ -183,7 +194,7 @@ OGRErr OGRCircularString::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      `CIRCULARSTRING [Z] ( x y [z], x y [z], ...)',                  */
 /************************************************************************/
 
-OGRErr OGRCircularString::importFromWkt( char ** ppszInput )
+OGRErr OGRCircularString::importFromWkt( const char ** ppszInput )
 
 {
     const OGRErr eErr = OGRSimpleCurve::importFromWkt(ppszInput);
@@ -202,17 +213,19 @@ OGRErr OGRCircularString::importFromWkt( char ** ppszInput )
 /*                            exportToWkt()                             */
 /************************************************************************/
 
-OGRErr
-OGRCircularString::exportToWkt( char ** ppszDstText,
-                                CPL_UNUSED OGRwkbVariant eWkbVariant ) const
-
+std::string OGRCircularString::exportToWkt(const OGRWktOptions& opts,
+                                           OGRErr *err) const
 {
     if( !IsValidFast() )
     {
-        return OGRERR_FAILURE;
+        if (err)
+            *err = OGRERR_FAILURE;
+        return std::string();
     }
 
-    return OGRSimpleCurve::exportToWkt(ppszDstText, wkbVariantIso);
+    OGRWktOptions optsModified(opts);
+    optsModified.variant = wkbVariantIso;
+    return OGRSimpleCurve::exportToWkt(optsModified, err);
 }
 
 /************************************************************************/
@@ -239,7 +252,7 @@ double OGRCircularString::get_Length() const
         double alpha0 = 0.0;
         double alpha1 = 0.0;
         double alpha2 = 0.0;
-        if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
+        if( OGRGeometryFactory::GetCurveParameters(x0, y0, x1, y1, x2, y2,
                                                   R, cx, cy,
                                                   alpha0, alpha1, alpha2) )
         {
@@ -267,7 +280,7 @@ void OGRCircularString::ExtendEnvelopeWithCircular(
     // extremities of the circle.
     for( int i = 0; i < nPointCount - 2; i += 2 )
     {
-        double x0 = paoPoints[i].x;
+        const double x0 = paoPoints[i].x;
         const double y0 = paoPoints[i].y;
         const double x1 = paoPoints[i+1].x;
         const double y1 = paoPoints[i+1].y;
@@ -279,10 +292,15 @@ void OGRCircularString::ExtendEnvelopeWithCircular(
         double alpha0 = 0.0;
         double alpha1 = 0.0;
         double alpha2 = 0.0;
-        if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
+        if( OGRGeometryFactory::GetCurveParameters(x0, y0, x1, y1, x2, y2,
                                                   R, cx, cy,
                                                   alpha0, alpha1, alpha2))
         {
+            if( CPLIsNan(alpha0) || CPLIsNan(alpha2) ) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "GetCurveParameters returned NaN");
+                continue;
+            }
             int quadrantStart =
                 static_cast<int>(std::floor(alpha0 / (M_PI / 2)));
             int quadrantEnd = static_cast<int>(std::floor(alpha2 / (M_PI / 2)));
@@ -375,14 +393,14 @@ void OGRCircularString::segmentize( double dfMaxLength )
         double alpha1 = 0.0;
         double alpha2 = 0.0;
 
-        aoRawPoint.push_back(OGRRawPoint(x0, y0));
+        aoRawPoint.emplace_back(x0, y0);
         if( padfZ )
-            adfZ.push_back(padfZ[i]);
+            adfZ.emplace_back(padfZ[i]);
 
         // We have strong constraints on the number of intermediate points
         // we can add.
 
-        if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
+        if( OGRGeometryFactory::GetCurveParameters(x0, y0, x1, y1, x2, y2,
                                                   R, cx, cy,
                                                   alpha0, alpha1, alpha2) )
         {
@@ -392,10 +410,18 @@ void OGRCircularString::segmentize( double dfMaxLength )
             if( dfSegmentLength1 > dfMaxLength ||
                 dfSegmentLength2 > dfMaxLength )
             {
-                const int nIntermediatePoints =
-                    1 +
-                    2 * static_cast<int>(std::floor(dfSegmentLength1
-                                                    / dfMaxLength / 2.0));
+                const double dfVal =
+                    1 + 2 * std::floor(dfSegmentLength1 / dfMaxLength / 2.0);
+                if ( dfVal >= std::numeric_limits<int>::max() ||
+                     dfVal < 0.0 ||
+                     CPLIsNan(dfVal) )
+                {
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "segmentize nIntermediatePoints invalid: %lf", dfVal);
+                    break;
+                }
+                const int nIntermediatePoints = static_cast<int>(dfVal);
                 const double dfStep =
                     (alpha1 - alpha0) / (nIntermediatePoints + 1);
                 for( int j = 1; j <= nIntermediatePoints; ++j )
@@ -403,28 +429,36 @@ void OGRCircularString::segmentize( double dfMaxLength )
                     double alpha = alpha0 + dfStep * j;
                     const double x = cx + R * cos(alpha);
                     const double y = cy + R * sin(alpha);
-                    aoRawPoint.push_back(OGRRawPoint(x, y));
+                    aoRawPoint.emplace_back(x, y);
                     if( padfZ )
                     {
                         const double z =
                             padfZ[i] +
                             (padfZ[i+1] - padfZ[i]) * (alpha - alpha0) /
                             (alpha1 - alpha0);
-                        adfZ.push_back(z);
+                        adfZ.emplace_back(z);
                     }
                 }
             }
-            aoRawPoint.push_back(OGRRawPoint(x1, y1));
+            aoRawPoint.emplace_back(x1, y1);
             if( padfZ )
-                adfZ.push_back(padfZ[i+1]);
+                adfZ.emplace_back(padfZ[i+1]);
 
             if( dfSegmentLength1 > dfMaxLength ||
                 dfSegmentLength2 > dfMaxLength )
             {
-                int nIntermediatePoints =
-                    1 +
-                    2 * static_cast<int>(std::floor(dfSegmentLength2
-                                                    / dfMaxLength / 2.0));
+                const double dfVal =
+                    1 + 2 * std::floor(dfSegmentLength2 / dfMaxLength / 2.0);
+                if ( dfVal >= std::numeric_limits<int>::max() ||
+                     dfVal < 0.0 ||
+                     CPLIsNan(dfVal) )
+                {
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "segmentize nIntermediatePoints invalid 2: %lf", dfVal);
+                    break;
+                }
+                int nIntermediatePoints = static_cast<int>(dfVal);
                 const double dfStep =
                     (alpha2 - alpha1) / (nIntermediatePoints + 1);
                 for( int j = 1; j <= nIntermediatePoints; ++j )
@@ -432,14 +466,14 @@ void OGRCircularString::segmentize( double dfMaxLength )
                     const double alpha = alpha1 + dfStep * j;
                     const double x = cx + R * cos(alpha);
                     const double y = cy + R * sin(alpha);
-                    aoRawPoint.push_back(OGRRawPoint(x, y));
+                    aoRawPoint.emplace_back(x, y);
                     if( padfZ )
                     {
                         const double z =
                             padfZ[i+1] +
                             (padfZ[i+2] - padfZ[i+1]) *
                             (alpha - alpha1) / (alpha2 - alpha1);
-                        adfZ.push_back(z);
+                        adfZ.emplace_back(z);
                     }
                 }
             }
@@ -452,37 +486,56 @@ void OGRCircularString::segmentize( double dfMaxLength )
             if( dfSegmentLength1 > dfMaxLength ||
                 dfSegmentLength2 > dfMaxLength )
             {
-                int nIntermediatePoints =
-                    1 + 2 * static_cast<int>(ceil(dfSegmentLength1 /
-                                                  dfMaxLength / 2.0));
+                const double dfVal =
+                    1 + 2 * std::ceil(dfSegmentLength1 / dfMaxLength / 2.0);
+                if ( dfVal >= std::numeric_limits<int>::max() ||
+                     dfVal < 0.0 ||
+                     CPLIsNan(dfVal) )
+                {
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "segmentize nIntermediatePoints invalid 2: %lf", dfVal);
+                    break;
+                }
+                int nIntermediatePoints = static_cast<int>(dfVal);
                 for( int j = 1; j <= nIntermediatePoints; ++j )
                 {
-                    aoRawPoint.push_back(OGRRawPoint(
+                    aoRawPoint.emplace_back(
                             x0 + j * (x1-x0) / (nIntermediatePoints + 1),
-                            y0 + j * (y1-y0) / (nIntermediatePoints + 1)));
+                            y0 + j * (y1-y0) / (nIntermediatePoints + 1));
                     if( padfZ )
-                        adfZ.push_back(padfZ[i] + j * (padfZ[i+1]-padfZ[i]) /
+                        adfZ.emplace_back(padfZ[i] + j * (padfZ[i+1]-padfZ[i]) /
                                        (nIntermediatePoints + 1));
                 }
             }
 
-            aoRawPoint.push_back(OGRRawPoint(x1, y1));
+            aoRawPoint.emplace_back(x1, y1);
             if( padfZ )
-                adfZ.push_back(padfZ[i+1]);
+                adfZ.emplace_back(padfZ[i+1]);
 
             if( dfSegmentLength1 > dfMaxLength ||
                 dfSegmentLength2 > dfMaxLength )
             {
-                const int nIntermediatePoints =
-                    1 + 2 * static_cast<int>(ceil(dfSegmentLength2 /
-                                                  dfMaxLength / 2.0));
+                const double dfVal =
+                    1 + 2 * std::ceil(dfSegmentLength2 / dfMaxLength / 2.0);
+                if ( dfVal >= std::numeric_limits<int>::max() ||
+                     dfVal < 0.0 ||
+                     CPLIsNan(dfVal) )
+                {
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "segmentize nIntermediatePoints invalid 3: %lf", dfVal);
+                     break;
+                }
+                const int nIntermediatePoints = static_cast<int>(dfVal);
+
                 for( int j = 1; j <= nIntermediatePoints; ++j )
                 {
-                    aoRawPoint.push_back(OGRRawPoint(
+                    aoRawPoint.emplace_back(
                             x1 + j * (x2-x1) / (nIntermediatePoints + 1),
-                            y1 + j * (y2-y1) / (nIntermediatePoints + 1)));
+                            y1 + j * (y2-y1) / (nIntermediatePoints + 1));
                     if( padfZ )
-                        adfZ.push_back(padfZ[i+1] + j * (padfZ[i+2]-padfZ[i+1])
+                        adfZ.emplace_back(padfZ[i+1] + j * (padfZ[i+2]-padfZ[i+1])
                                        / (nIntermediatePoints + 1));
                 }
             }
@@ -550,7 +603,7 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
         // We have strong constraints on the number of intermediate points
         // we can add.
 
-        if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
+        if( OGRGeometryFactory::GetCurveParameters(x0, y0, x1, y1, x2, y2,
                                                   R, cx, cy,
                                                   alpha0, alpha1, alpha2) )
         {
@@ -693,16 +746,32 @@ OGRCircularString::getLinearGeometry( double dfMaxAngleStepSizeDegrees,
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
 
+static OGRLineString* CasterToLineString(OGRCurve* poGeom)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "%s found. Conversion impossible", poGeom->getGeometryName());
+    delete poGeom;
+    return nullptr;
+}
+
 OGRCurveCasterToLineString OGRCircularString::GetCasterToLineString() const {
-    return (OGRCurveCasterToLineString) OGRGeometry::CastToError;
+    return ::CasterToLineString;
 }
 
 /************************************************************************/
 /*                        GetCasterToLinearRing()                       */
 /************************************************************************/
 
+static OGRLinearRing* CasterToLinearRing(OGRCurve* poGeom)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "%s found. Conversion impossible", poGeom->getGeometryName());
+    delete poGeom;
+    return nullptr;
+}
+
 OGRCurveCasterToLinearRing OGRCircularString::GetCasterToLinearRing() const {
-    return (OGRCurveCasterToLinearRing) OGRGeometry::CastToError;
+    return ::CasterToLinearRing;
 }
 //! @endcond
 
@@ -739,12 +808,12 @@ int OGRCircularString::IsFullCircle( double& cx, double& cy,
         double alpha0_2 = 0.0;
         double alpha1_2 = 0.0;
         double alpha2_2 = 0.0;
-        if( OGRGeometryFactory::GetCurveParmeters(
+        if( OGRGeometryFactory::GetCurveParameters(
                 getX(0), getY(0),
                 getX(1), getY(1),
                 getX(2), getY(2),
                 R_1, cx_1, cy_1, alpha0_1, alpha1_1, alpha2_1) &&
-            OGRGeometryFactory::GetCurveParmeters(
+            OGRGeometryFactory::GetCurveParameters(
                 getX(2), getY(2),
                 getX(3), getY(3),
                 getX(4), getY(4),
@@ -785,7 +854,7 @@ double OGRCircularString::get_AreaOfCurveSegments() const
         double alpha0 = 0.0;
         double alpha1 = 0.0;
         double alpha2 = 0.0;
-        if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
+        if( OGRGeometryFactory::GetCurveParameters(x0, y0, x1, y1, x2, y2,
                                                   R, cx, cy,
                                                   alpha0, alpha1, alpha2))
         {
@@ -838,12 +907,32 @@ double OGRCircularString::get_Area() const
     return dfArea;
 }
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /*                           ContainsPoint()                            */
 /************************************************************************/
 
-//! @cond Doxygen_Suppress
 int OGRCircularString::ContainsPoint( const OGRPoint* p ) const
+{
+    double cx = 0.0;
+    double cy = 0.0;
+    double square_R = 0.0;
+    if( IsFullCircle(cx, cy, square_R) )
+    {
+        const double square_dist =
+            (p->getX() - cx) * (p->getX() - cx) +
+            (p->getY() - cy) * (p->getY() - cy);
+        return square_dist < square_R;
+    }
+    return -1;
+}
+
+/************************************************************************/
+/*                       IntersectsPoint()                              */
+/************************************************************************/
+
+int OGRCircularString::IntersectsPoint( const OGRPoint* p ) const
 {
     double cx = 0.0;
     double cy = 0.0;
@@ -857,4 +946,5 @@ int OGRCircularString::ContainsPoint( const OGRPoint* p ) const
     }
     return -1;
 }
+
 //! @endcond

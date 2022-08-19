@@ -35,6 +35,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_http.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 // #include "json_object.h"
@@ -45,7 +46,11 @@
 #include "ogrgeojsonutils.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
+
+static CPLMutex* ghMutex = nullptr;
+static char* gpszSource = nullptr;
+static char* gpszText = nullptr;
 
 class OGRESRIFeatureServiceDataset;
 
@@ -53,7 +58,7 @@ class OGRESRIFeatureServiceDataset;
 /*                      OGRESRIFeatureServiceLayer                      */
 /************************************************************************/
 
-class OGRESRIFeatureServiceLayer: public OGRLayer
+class OGRESRIFeatureServiceLayer final: public OGRLayer
 {
     OGRESRIFeatureServiceDataset* poDS;
     OGRFeatureDefn* poFeatureDefn;
@@ -82,7 +87,7 @@ class OGRESRIFeatureServiceLayer: public OGRLayer
 /*                       OGRESRIFeatureServiceDataset                   */
 /************************************************************************/
 
-class OGRESRIFeatureServiceDataset: public GDALDataset
+class OGRESRIFeatureServiceDataset final: public GDALDataset
 {
     CPLString              osURL;
     GIntBig                nFirstOffset;
@@ -99,7 +104,7 @@ class OGRESRIFeatureServiceDataset: public GDALDataset
 
     int GetLayerCount() override { return 1; }
     OGRLayer* GetLayer( int nLayer ) override
-        { return (nLayer == 0) ? poLayer : NULL; }
+        { return (nLayer == 0) ? poLayer : nullptr; }
 
     OGRLayer* GetUnderlyingLayer() { return poCurrent->GetLayer(0); }
 
@@ -167,13 +172,13 @@ OGRFeature* OGRESRIFeatureServiceLayer::GetNextFeature()
     {
         const bool bWasInFirstPage = !bOtherPage;
         OGRFeature* poSrcFeat = poDS->GetUnderlyingLayer()->GetNextFeature();
-        if( poSrcFeat == NULL )
+        if( poSrcFeat == nullptr )
         {
             if( !poDS->LoadNextPage() )
-                return NULL;
+                return nullptr;
             poSrcFeat = poDS->GetUnderlyingLayer()->GetNextFeature();
-            if( poSrcFeat == NULL )
-                return NULL;
+            if( poSrcFeat == nullptr )
+                return nullptr;
             bOtherPage = true;
             if( bWasInFirstPage && poSrcFeat->GetFID() != 0 &&
                 poSrcFeat->GetFID() == nFirstFID )
@@ -181,7 +186,7 @@ OGRFeature* OGRESRIFeatureServiceLayer::GetNextFeature()
                 // End-less looping
                 CPLDebug("ESRIJSON", "Scrolling not working. Stopping");
                 delete poSrcFeat;
-                return NULL;
+                return nullptr;
             }
             if( bWasInFirstPage && poSrcFeat->GetFID() == 0 &&
                 nLastFID == nFeaturesRead - 1 )
@@ -202,9 +207,9 @@ OGRFeature* OGRESRIFeatureServiceLayer::GetNextFeature()
         nFeaturesRead ++;
         delete poSrcFeat;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
              || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -220,7 +225,7 @@ OGRFeature* OGRESRIFeatureServiceLayer::GetNextFeature()
 int OGRESRIFeatureServiceLayer::TestCapability( const char* pszCap )
 {
     if( EQUAL(pszCap, OLCFastFeatureCount) )
-        return m_poAttrQuery == NULL && m_poFilterGeom == NULL;
+        return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
     if( EQUAL(pszCap, OLCFastGetExtent) )
         return FALSE;
     return poDS->GetUnderlyingLayer()->TestCapability(pszCap);
@@ -233,14 +238,14 @@ int OGRESRIFeatureServiceLayer::TestCapability( const char* pszCap )
 GIntBig OGRESRIFeatureServiceLayer::GetFeatureCount( int bForce )
 {
     GIntBig nFeatureCount = -1;
-    if( m_poAttrQuery == NULL && m_poFilterGeom == NULL )
+    if( m_poAttrQuery == nullptr && m_poFilterGeom == nullptr )
     {
-        const CPLString osNewURL =
+        CPLString osNewURL =
             CPLURLAddKVP(poDS->GetURL(), "returnCountOnly", "true");
-        CPLHTTPResult* pResult = NULL;
+        osNewURL = CPLURLAddKVP(osNewURL, "resultRecordCount", nullptr);
         CPLErrorReset();
-        pResult = CPLHTTPFetch( osNewURL, NULL );
-        if( pResult != NULL &&
+        CPLHTTPResult* pResult = CPLHTTPFetch( osNewURL, nullptr );
+        if( pResult != nullptr &&
             pResult->nDataLen != 0 &&
             CPLGetLastErrorNo() == 0 &&
             pResult->nStatus == 0 )
@@ -274,10 +279,11 @@ OGRErr OGRESRIFeatureServiceLayer::GetExtent( OGREnvelope *psExtent,
     OGRErr eErr = OGRERR_FAILURE;
     CPLString osNewURL =
         CPLURLAddKVP(poDS->GetURL(), "returnExtentOnly", "true");
+    osNewURL = CPLURLAddKVP(osNewURL, "resultRecordCount", nullptr);
     osNewURL = CPLURLAddKVP(osNewURL, "f", "geojson");
     CPLErrorReset();
-    CPLHTTPResult* pResult = CPLHTTPFetch( osNewURL, NULL );
-    if( pResult != NULL && pResult->nDataLen != 0 && CPLGetLastErrorNo() == 0 &&
+    CPLHTTPResult* pResult = CPLHTTPFetch( osNewURL, nullptr );
+    if( pResult != nullptr && pResult->nDataLen != 0 && CPLGetLastErrorNo() == 0 &&
         pResult->nStatus == 0 )
     {
         const char* pszBBox =
@@ -338,7 +344,7 @@ OGRESRIFeatureServiceDataset::OGRESRIFeatureServiceDataset(
         if( nUserSetRecordCount > poFirst->GetLayer(0)->GetFeatureCount() )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Specificied resultRecordCount=%d is greater than "
+                     "Specified resultRecordCount=%d is greater than "
                      "the maximum %d supported by the server",
                      nUserSetRecordCount,
                      static_cast<int>(poFirst->GetLayer(0)->GetFeatureCount()));
@@ -396,11 +402,17 @@ int OGRESRIFeatureServiceDataset::LoadPage()
                                       CPLSPrintf(CPL_FRMT_GIB, nLastOffset));
     OGRGeoJSONDataSource* poDS = new OGRGeoJSONDataSource();
     GDALOpenInfo oOpenInfo(osNewURL, GA_ReadOnly);
-    if( !poDS->Open( &oOpenInfo, GeoJSONGetSourceType( &oOpenInfo ) ) ||
+    GeoJSONSourceType nSrcType;
+    if( EQUAL(poCurrent->GetJSonFlavor(), "GeoJSON") )
+        nSrcType = GeoJSONGetSourceType( &oOpenInfo );
+    else
+        nSrcType = ESRIJSONDriverGetSourceType( &oOpenInfo );
+    if( !poDS->Open( &oOpenInfo, nSrcType,
+                     poCurrent->GetJSonFlavor() ) ||
         poDS->GetLayerCount() == 0 )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
         return FALSE;
     }
     delete poCurrent;
@@ -423,8 +435,23 @@ static int OGRGeoJSONDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
     nSrcType = GeoJSONGetSourceType( poOpenInfo );
     if( nSrcType == eGeoJSONSourceUnknown )
         return FALSE;
-    if( nSrcType == eGeoJSONSourceService )
+    if( nSrcType == eGeoJSONSourceService &&
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "GeoJSON:") )
+    {
         return -1;
+    }
+
+    // If this looks like a file that can be handled by the STACTA driver,
+    // and that one is available, then don't identify the file.
+    const char* pszHeader = reinterpret_cast<const char*>(poOpenInfo->pabyHeader);
+    if( pszHeader != nullptr &&
+        strstr(pszHeader, "\"stac_extensions\"") != nullptr &&
+        strstr(pszHeader, "\"tiled-assets\"") != nullptr &&
+        GDALGetDriverByName("STACTA") != nullptr )
+    {
+        return FALSE;
+    }
+
     return TRUE;
 }
 
@@ -446,8 +473,20 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     GeoJSONSourceType nSrcType;
     if( OGRGeoJSONDriverIdentifyInternal(poOpenInfo, nSrcType) == FALSE )
-        return NULL;
+    {
+        return nullptr;
+    }
+    return OGRGeoJSONDriverOpenInternal(poOpenInfo, nSrcType, "GeoJSON");
+}
 
+/************************************************************************/
+/*                     OGRGeoJSONDriverOpenInternal()                   */
+/************************************************************************/
+
+GDALDataset* OGRGeoJSONDriverOpenInternal( GDALOpenInfo* poOpenInfo,
+                                           GeoJSONSourceType nSrcType,
+                                           const char* pszJSonFlavor )
+{
     OGRGeoJSONDataSource* poDS = new OGRGeoJSONDataSource();
 
 /* -------------------------------------------------------------------- */
@@ -459,16 +498,16 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
     //       described in document 'RFC 10: OGR Open Parameters'.
 
     poDS->SetGeometryTranslation( OGRGeoJSONDataSource::eGeometryPreserve );
-    const char* pszOpt = CPLGetConfigOption("GEOMETRY_AS_COLLECTION", NULL);
-    if( NULL != pszOpt && STARTS_WITH_CI(pszOpt, "YES") )
+    const char* pszOpt = CPLGetConfigOption("GEOMETRY_AS_COLLECTION", nullptr);
+    if( nullptr != pszOpt && STARTS_WITH_CI(pszOpt, "YES") )
     {
         poDS->SetGeometryTranslation(
             OGRGeoJSONDataSource::eGeometryAsCollection );
     }
 
     poDS->SetAttributesTranslation( OGRGeoJSONDataSource::eAttributesPreserve );
-    pszOpt = CPLGetConfigOption("ATTRIBUTES_SKIP", NULL);
-    if( NULL != pszOpt && STARTS_WITH_CI(pszOpt, "YES") )
+    pszOpt = CPLGetConfigOption("ATTRIBUTES_SKIP", nullptr);
+    if( nullptr != pszOpt && STARTS_WITH_CI(pszOpt, "YES") )
     {
         poDS->SetAttributesTranslation(
             OGRGeoJSONDataSource::eAttributesSkip );
@@ -477,23 +516,30 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open and start processing GeoJSON datasource to OGR objects.    */
 /* -------------------------------------------------------------------- */
-    if( !poDS->Open( poOpenInfo, nSrcType ) )
+    if( !poDS->Open( poOpenInfo, nSrcType, pszJSonFlavor ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
-    if( poDS != NULL && poDS->HasOtherPages() )
+    if( poDS != nullptr && poDS->HasOtherPages() )
     {
-        const char* pszFSP = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
-                                               "FEATURE_SERVER_PAGING");
-        const bool bHasResultOffset =
-          !CPLURLGetValue(poOpenInfo->pszFilename, "resultOffset").empty();
-        if( (!bHasResultOffset && (pszFSP == NULL || CPLTestBool(pszFSP))) ||
-            (bHasResultOffset && pszFSP != NULL && CPLTestBool(pszFSP)) )
+        const char* pszFilename = poOpenInfo->pszFilename;
+        if( STARTS_WITH_CI(pszFilename, "ESRIJSON:") )
+            pszFilename += strlen("ESRIJSON:");
+        if( STARTS_WITH(pszFilename, "http") ||
+            STARTS_WITH(pszFilename, "/vsimem/") )
         {
-            return new OGRESRIFeatureServiceDataset(poOpenInfo->pszFilename,
-                                                    poDS);
+            const char* pszFSP = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
+                                                   "FEATURE_SERVER_PAGING");
+            const bool bHasResultOffset =
+              !CPLURLGetValue(pszFilename, "resultOffset").empty();
+            if( (!bHasResultOffset && (pszFSP == nullptr || CPLTestBool(pszFSP))) ||
+                (bHasResultOffset && pszFSP != nullptr && CPLTestBool(pszFSP)) )
+            {
+                return new OGRESRIFeatureServiceDataset(pszFilename,
+                                                        poDS);
+            }
         }
     }
 
@@ -516,7 +562,7 @@ static GDALDataset *OGRGeoJSONDriverCreate( const char * pszName,
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -539,6 +585,55 @@ static CPLErr OGRGeoJSONDriverDelete( const char *pszFilename )
 }
 
 /************************************************************************/
+/*                      OGRGeoJSONDriverStoreContent()                  */
+/************************************************************************/
+
+void OGRGeoJSONDriverStoreContent( const char* pszSource, char* pszText )
+{
+    CPLMutexHolderD(&ghMutex);
+    CPLAssert( pszSource );
+    CPLAssert( pszText );
+
+    CPLFree(gpszSource);
+    CPLFree(gpszText);
+    gpszSource = CPLStrdup(pszSource);
+    gpszText = pszText;
+}
+
+/************************************************************************/
+/*                    OGRGeoJSONDriverStealStoredContent()              */
+/************************************************************************/
+
+char* OGRGeoJSONDriverStealStoredContent( const char* pszSource )
+{
+    CPLMutexHolderD(&ghMutex);
+    if( gpszSource && EQUAL(pszSource, gpszSource) )
+    {
+        char* pszRet = gpszText;
+        CPLFree(gpszSource);
+        gpszSource = nullptr;
+        gpszText = nullptr;
+        return pszRet;
+    }
+    return nullptr;
+}
+
+/************************************************************************/
+/*                        OGRGeoJSONDriverUnload()                      */
+/************************************************************************/
+
+static void OGRGeoJSONDriverUnload( GDALDriver* )
+{
+    if( ghMutex )
+        CPLDestroyMutex(ghMutex);
+    ghMutex = nullptr;
+    CPLFree(gpszSource);
+    CPLFree(gpszText);
+    gpszSource = nullptr;
+    gpszText = nullptr;
+}
+
+/************************************************************************/
 /*                           RegisterOGRGeoJSON()                       */
 /************************************************************************/
 
@@ -547,7 +642,7 @@ void RegisterOGRGeoJSON()
     if( !GDAL_CHECK_VERSION("OGR/GeoJSON driver") )
         return;
 
-    if( GDALGetDriverByName( "GeoJSON" ) != NULL )
+    if( GDALGetDriverByName( "GeoJSON" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -555,8 +650,8 @@ void RegisterOGRGeoJSON()
     poDriver->SetDescription( "GeoJSON" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoJSON" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "json geojson topojson" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_geojson.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "json geojson" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/geojson.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
@@ -565,6 +660,7 @@ void RegisterOGRGeoJSON()
 "  <Option name='FEATURE_SERVER_PAGING' type='boolean' description='Whether to automatically scroll through results with a ArcGIS Feature Service endpoint'/>"
 "  <Option name='NATIVE_DATA' type='boolean' description='Whether to store the native JSon representation at FeatureCollection and Feature level' default='NO'/>"
 "  <Option name='ARRAY_AS_STRING' type='boolean' description='Whether to expose JSon arrays of strings, integers or reals as a OGR String' default='NO'/>"
+"  <Option name='DATE_AS_STRING' type='boolean' description='Whether to expose date/time/date-time content using dedicated OGR date/time/date-time types or as a OGR String' default='NO'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
@@ -580,17 +676,27 @@ void RegisterOGRGeoJSON()
 "  <Option name='RFC7946' type='boolean' description='Whether to use RFC 7946 standard. Otherwise GeoJSON 2008 initial version will be used' default='NO'/>"
 "  <Option name='WRITE_NAME' type='boolean' description='Whether to write a &quot;name&quot; property at feature collection level with layer name' default='YES'/>"
 "  <Option name='DESCRIPTION' type='string' description='(Long) description to write in a &quot;description&quot; property at feature collection level'/>"
+"  <Option name='ID_FIELD' type='string' description='Name of the source field that must be used as the id member of Feature features'/>"
+"  <Option name='ID_TYPE' type='string-select' description='Type of the id member of Feature features'>"
+"    <Value>AUTO</Value>"
+"    <Value>String</Value>"
+"    <Value>Integer</Value>"
+"  </Option>"
+"  <Option name='ID_GENERATE' type='boolean' description='Auto-generate feature ids' />"
+"  <Option name='WRITE_NON_FINITE_VALUES' type='boolean' description='Whether to write NaN / Infinity values' default='NO'/>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String IntegerList "
-                               "Integer64List RealList StringList" );
+                               "Integer64List RealList StringList Date DateTime" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean" );
 
     poDriver->pfnOpen = OGRGeoJSONDriverOpen;
     poDriver->pfnIdentify = OGRGeoJSONDriverIdentify;
     poDriver->pfnCreate = OGRGeoJSONDriverCreate;
     poDriver->pfnDelete = OGRGeoJSONDriverDelete;
+    poDriver->pfnUnloadDriver = OGRGeoJSONDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

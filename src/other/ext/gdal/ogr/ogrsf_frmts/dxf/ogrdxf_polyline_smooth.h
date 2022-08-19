@@ -92,7 +92,7 @@ public:
 class DXFSmoothPolyline
 {
     // A DXF polyline that includes vertex bulge information.
-    // Call Tesselate() to convert to an OGRGeometry.
+    // Call Tessellate() to convert to an OGRGeometry.
     // We treat Z as constant over the entire string; this may
     // change in the future.
 
@@ -101,12 +101,13 @@ private:
     mutable bool                         m_blinestringstarted;
     bool                                 m_bClosed;
     int                                  m_dim;
+    bool                                 m_bUseMaxGapWhenTessellatingArcs;
 
 public:
     DXFSmoothPolyline() : m_blinestringstarted(false), m_bClosed(false),
-                          m_dim(2) { }
+                          m_dim(2), m_bUseMaxGapWhenTessellatingArcs(false) { }
 
-    OGRGeometry* Tesselate() const;  // TODO: Spelling.
+    OGRGeometry* Tessellate() const;
 
     size_t size() const { return m_vertices.size(); }
 
@@ -121,17 +122,18 @@ public:
 
     bool IsEmpty() const { return m_vertices.empty(); }
 
-    bool HasConstantZ(double&) const;
-
     void setCoordinateDimension( int n ) { m_dim = n; }
 
+    void SetUseMaxGapWhenTessellatingArcs( bool bVal )
+    { m_bUseMaxGapWhenTessellatingArcs = bVal; }
+
 private:
-    static void EmitArc(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
+    void EmitArc(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
                  double radius, double len, double saggita,
-                 OGRLineString*, double dfZ = 0.0);
+                 OGRLineString*, double dfZ = 0.0) const;
 
     void EmitLine(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
-                  OGRLineString*, bool bConstantZ, double dfZ) const;
+                  OGRLineString*) const;
 };
 
 #endif  /* OGRDXF_SMOOTH_POLYLINE_H_INCLUDED */

@@ -36,10 +36,13 @@
 #include "hfa.h"
 
 #include <cstdio>
+#include <memory>
 #include <vector>
+#include <set>
 
 #include "cpl_error.h"
 #include "cpl_vsi.h"
+#include "ogr_spatialref.h"
 
 #ifdef CPL_LSB
 #  define HFAStandard(n,p) {}
@@ -133,11 +136,14 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                 GIntBig nStackDataOffset,
                 int nStackCount, int nStackIndex );
 
-char *
-HFAPCSStructToWKT( const Eprj_Datum *psDatum,
+std::unique_ptr<OGRSpatialReference>
+HFAPCSStructToOSR( const Eprj_Datum *psDatum,
                    const Eprj_ProParameters *psPro,
                    const Eprj_MapInfo *psMapInfo,
                    HFAEntry *poMapInformation );
+
+const char *const* HFAGetDatumMap();
+const char *const* HFAGetUnitMap();
 
 /************************************************************************/
 /*                               HFABand                                */
@@ -296,7 +302,7 @@ public:
     const char  *GetName() const CPL_WARN_UNUSED_RESULT { return szName; }
     void SetName( const char *pszNodeName );
 
-    const char  *GetType() CPL_WARN_UNUSED_RESULT { return szType; }
+    const char  *GetType() const CPL_WARN_UNUSED_RESULT { return szType; }
     HFAType     *GetTypeObject() CPL_WARN_UNUSED_RESULT;
 
     GByte      *GetData() CPL_WARN_UNUSED_RESULT { LoadData(); return pabyData; }
@@ -309,17 +315,17 @@ public:
     std::vector<HFAEntry*> FindChildren( const char *pszName,
                                          const char *pszType) CPL_WARN_UNUSED_RESULT;
 
-    GInt32      GetIntField( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
-    double      GetDoubleField( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
-    const char  *GetStringField( const char *, CPLErr * = NULL, int *pnRemainingDataSize = NULL ) CPL_WARN_UNUSED_RESULT;
-    GIntBig     GetBigIntField( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
-    int         GetFieldCount( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
+    GInt32      GetIntField( const char *, CPLErr * = nullptr ) CPL_WARN_UNUSED_RESULT;
+    double      GetDoubleField( const char *, CPLErr * = nullptr ) CPL_WARN_UNUSED_RESULT;
+    const char  *GetStringField( const char *, CPLErr * = nullptr, int *pnRemainingDataSize = nullptr ) CPL_WARN_UNUSED_RESULT;
+    GIntBig     GetBigIntField( const char *, CPLErr * = nullptr ) CPL_WARN_UNUSED_RESULT;
+    int         GetFieldCount( const char *, CPLErr * = nullptr ) CPL_WARN_UNUSED_RESULT;
 
     CPLErr      SetIntField( const char *, int );
     CPLErr      SetDoubleField( const char *, double );
     CPLErr      SetStringField( const char *, const char * );
 
-    void        DumpFieldValues( FILE *, const char * = NULL );
+    void        DumpFieldValues( FILE *, const char * = nullptr );
 
     void        SetPosition();
     CPLErr      FlushToDisk();
@@ -359,7 +365,7 @@ class HFAField
 
     const char *Initialize( const char * );
 
-    void        CompleteDefn( HFADictionary * );
+    bool        CompleteDefn( HFADictionary * );
 
     void        Dump( FILE * );
 
@@ -367,7 +373,7 @@ class HFAField
                                   GByte *pabyData, GUInt32 nDataOffset,
                                   int nDataSize, char chReqType,
                                   void *pReqReturn,
-                                  int *pnRemainingDataSize = NULL );
+                                  int *pnRemainingDataSize = nullptr );
 
     CPLErr      SetInstValue( const char * pszField, int nIndexValue,
                               GByte *pabyData, GUInt32 nDataOffset,
@@ -376,10 +382,10 @@ class HFAField
 
     void        DumpInstValue( FILE *fpOut, GByte *pabyData,
                                GUInt32 nDataOffset, int nDataSize,
-                               const char *pszPrefix = NULL );
+                               const char *pszPrefix = nullptr );
 
-    int         GetInstBytes( GByte *, int );
-    int         GetInstCount( GByte * pabyData, int nDataSize );
+    int         GetInstBytes( GByte *, int, std::set<HFAField*>& oVisitedFields );
+    int         GetInstCount( GByte * pabyData, int nDataSize ) const;
 };
 
 /************************************************************************/
@@ -395,8 +401,7 @@ class HFAType
   public:
     int         nBytes;
 
-    int         nFields;
-    HFAField    **papoFields;
+    std::vector<std::unique_ptr<HFAField>> apoFields;
 
     char        *pszTypeName;
 
@@ -405,11 +410,11 @@ class HFAType
 
     const char *Initialize( const char * );
 
-    void        CompleteDefn( HFADictionary * );
+    bool        CompleteDefn( HFADictionary * );
 
     void        Dump( FILE * );
 
-    int         GetInstBytes( GByte *, int );
+    int         GetInstBytes( GByte *, int, std::set<HFAField*>& oVisitedFields ) const;
     int         GetInstCount( const char *pszField, GByte *pabyData,
                               GUInt32 nDataOffset, int nDataSize );
     bool        ExtractInstValue( const char * pszField,
@@ -421,7 +426,7 @@ class HFAType
                               char chReqType, void * pValue );
     void        DumpInstValue( FILE *fpOut, GByte *pabyData,
                                GUInt32 nDataOffset, int nDataSize,
-                               const char *pszPrefix = NULL );
+                               const char *pszPrefix = nullptr ) const;
 };
 
 /************************************************************************/
@@ -472,13 +477,13 @@ public:
   static bool QueryDataTypeSupported( EPTType eHFADataType );
 
   // Get methods - only valid after compressBlock has been called.
-  GByte*  getCounts() const { return m_pCounts; };
-  GUInt32 getCountSize() const { return m_nSizeCounts; };
-  GByte*  getValues() const { return m_pValues; };
-  GUInt32 getValueSize() const { return m_nSizeValues; };
-  GUInt32 getMin() const { return m_nMin; };
-  GUInt32 getNumRuns() const { return m_nNumRuns; };
-  GByte   getNumBits() const { return m_nNumBits; };
+  GByte*  getCounts() const { return m_pCounts; }
+  GUInt32 getCountSize() const { return m_nSizeCounts; }
+  GByte*  getValues() const { return m_pValues; }
+  GUInt32 getValueSize() const { return m_nSizeValues; }
+  GUInt32 getMin() const { return m_nMin; }
+  GUInt32 getNumRuns() const { return m_nNumRuns; }
+  GByte   getNumBits() const { return m_nNumBits; }
 
 private:
   static void makeCount( GUInt32 count, GByte *pCounter, GUInt32 *pnSizeCount );

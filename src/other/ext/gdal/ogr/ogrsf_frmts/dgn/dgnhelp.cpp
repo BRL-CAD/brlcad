@@ -28,7 +28,7 @@
 
 #include "dgnlibp.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const unsigned char abyDefaultPCT[256][3] =
 {
@@ -365,11 +365,11 @@ int DGNGetShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElem, int *pnColor )
         int nLinkSize = 0;
         unsigned char *pabyData =
             DGNGetLinkage( hDGN, psElem, iLink, &nLinkType,
-                           NULL, NULL, &nLinkSize );
-        if( pabyData == NULL )
+                           nullptr, nullptr, &nLinkSize );
+        if( pabyData == nullptr )
             return FALSE;
 
-        if( nLinkType == DGNLT_SHAPE_FILL && nLinkSize >= 7 )
+        if( nLinkType == DGNLT_SHAPE_FILL && nLinkSize >= 9 )
         {
             *pnColor = pabyData[8];
             return TRUE;
@@ -403,8 +403,8 @@ int DGNGetAssocID( DGNHandle hDGN, DGNElemCore *psElem )
         int nLinkSize = 0;
         unsigned char *pabyData =
             DGNGetLinkage( hDGN, psElem, iLink, &nLinkType,
-                           NULL, NULL, &nLinkSize );
-        if( pabyData == NULL )
+                           nullptr, nullptr, &nLinkSize );
+        if( pabyData == nullptr )
             return -1;
 
         if( nLinkType == DGNLT_ASSOC_ID && nLinkSize >= 8 )
@@ -435,7 +435,7 @@ void DGNRad50ToAscii(unsigned short sRad50, char *str )
         /* Map 0..39 to ASCII */
         if (sValue==0)
             ch = ' ';          /* space */
-        else if (sValue >= 1 && sValue <= 26)
+        else if (/*sValue >= 1 &&*/ sValue <= 26)
             ch = (char) (sValue-1+'A');/* printable alpha A..Z */
         else if (sValue == 27)
             ch = '$';          /* dollar */
@@ -443,7 +443,7 @@ void DGNRad50ToAscii(unsigned short sRad50, char *str )
             ch = '.';          /* period */
         else if (sValue == 29)
             ch = ' ';          /* unused char, emit a space instead */
-        else if (sValue >= 30 && sValue <= 39)
+        else if (/*sValue >= 30 &&*/ sValue <= 39)
             ch = (char) (sValue-30+'0');   /* digit 0..9 */
         *str = ch;
         str++;
@@ -1018,10 +1018,11 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             int nEntityNum = 0;
             int nMSLink = 0;
             int nLinkSize = 0;
+            // coverity[tained_data]
             unsigned char *pabyData =
                 DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
                                &nEntityNum, &nMSLink, &nLinkSize );
-            if( pabyData == NULL )
+            if( pabyData == nullptr )
                 break;
 
             fprintf( fp, "Type=0x%04x", nLinkType );
@@ -1256,13 +1257,20 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
             if( nLinkSize <= 4 )
             {
                 CPLError(CE_Failure, CPLE_AssertionFailed, "nLinkSize <= 4");
-                return NULL;
+                return nullptr;
+            }
+            if( nLinkSize + nAttrOffset > psElement->attr_bytes )
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed,
+                         "nLinkSize + nAttrOffset > psElement->attr_bytes");
+                return nullptr;
             }
 
             int nLinkageType = 0;
             int nEntityNum = 0;
             int nMSLink = 0;
-            if( psElement->attr_data[nAttrOffset+0] == 0x00
+            if( psElement->attr_bytes >= nAttrOffset + 7 &&
+                psElement->attr_data[nAttrOffset+0] == 0x00
                 && (psElement->attr_data[nAttrOffset+1] == 0x00
                     || psElement->attr_data[nAttrOffset+1] == 0x80) )
             {
@@ -1273,12 +1281,13 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
                     + psElement->attr_data[nAttrOffset+5] * 256
                     + psElement->attr_data[nAttrOffset+6] * 65536;
             }
-            else
+            else if( psElement->attr_bytes >= nAttrOffset + 4 )
                 nLinkageType = psElement->attr_data[nAttrOffset+2]
                     + psElement->attr_data[nAttrOffset+3] * 256;
 
             // Possibly an external database linkage?
-            if( nLinkSize == 16 && nLinkageType != DGNLT_SHAPE_FILL )
+            if( nLinkSize == 16 && nLinkageType != DGNLT_SHAPE_FILL &&
+                psElement->attr_bytes >= nAttrOffset + 12 )
             {
                 nEntityNum = psElement->attr_data[nAttrOffset+6]
                     + psElement->attr_data[nAttrOffset+7] * 256;
@@ -1288,20 +1297,20 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
                     | (psElement->attr_data[nAttrOffset+11] << 24);
             }
 
-            if( pnLinkageType != NULL )
+            if( pnLinkageType != nullptr )
                 *pnLinkageType = nLinkageType;
-            if( pnEntityNum != NULL )
+            if( pnEntityNum != nullptr )
                 *pnEntityNum = nEntityNum;
-            if( pnMSLink != NULL )
+            if( pnMSLink != nullptr )
                 *pnMSLink = nMSLink;
-            if( pnLength != NULL )
+            if( pnLength != nullptr )
                 *pnLength = nLinkSize;
 
             return psElement->attr_data + nAttrOffset;
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1333,10 +1342,10 @@ void DGNRotationToQuaternion( double dfRotation, int *panQuaternion )
 void DGNQuaternionToMatrix( int *quat, float *mat )
 {
     const double q[4] = {
-        1.0 * quat[1] / (1<<31),
-        1.0 * quat[2] / (1<<31),
-        1.0 * quat[3] / (1<<31),
-        1.0 * quat[0] / (1<<31)
+        1.0 * quat[1] / (1U<<31),
+        1.0 * quat[2] / (1U<<31),
+        1.0 * quat[3] / (1U<<31),
+        1.0 * quat[0] / (1U<<31)
     };
 
     mat[0*3+0] = (float) (q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3]);

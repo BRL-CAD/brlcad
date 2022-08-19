@@ -1,0 +1,716 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "OGR2OGR" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+ogr2ogr \- Converts simple features data between file formats.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+ogr2ogr [\-\-help\-general] [\-skipfailures] [\-append] [\-update]
+        [\-select field_list] [\-where restricted_where|@filename]
+        [\-progress] [\-sql <sql statement>|@filename] [\-dialect dialect]
+        [\-preserve_fid] [\-fid FID] [\-limit nb_features]
+        [\-spat xmin ymin xmax ymax] [\-spat_srs srs_def] [\-geomfield field]
+        [\-a_srs srs_def] [\-t_srs srs_def] [\-s_srs srs_def] [\-ct string]
+        [\-f format_name] [\-overwrite] [[\-dsco NAME=VALUE] ...]
+        dst_datasource_name src_datasource_name
+        [\-lco NAME=VALUE] [\-nln name]
+        [\-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR|CONVERT_TO_CURVE]
+        [\-dim XY|XYZ|XYM|XYZM|2|3|layer_dim] [layer [layer ...]]
+
+        # Advanced options
+        [\-gt n]
+        [[\-oo NAME=VALUE] ...] [[\-doo NAME=VALUE] ...]
+        [\-clipsrc [xmin ymin xmax ymax]|WKT|datasource|spat_extent]
+        [\-clipsrcsql sql_statement] [\-clipsrclayer layer]
+        [\-clipsrcwhere expression]
+        [\-clipdst [xmin ymin xmax ymax]|WKT|datasource]
+        [\-clipdstsql sql_statement] [\-clipdstlayer layer]
+        [\-clipdstwhere expression]
+        [\-wrapdateline] [\-datelineoffset val]
+        [[\-simplify tolerance] | [\-segmentize max_dist]]
+        [\-makevalid]
+        [\-addfields] [\-unsetFid] [\-emptyStrAsNull]
+        [\-relaxedFieldNameMatch] [\-forceNullable] [\-unsetDefault]
+        [\-fieldTypeToString All|(type1[,type2]*)] [\-unsetFieldWidth]
+        [\-mapFieldType type1|All=type2[,type3=type4]*]
+        [\-fieldmap identity | index1[,index2]*]
+        [\-splitlistfields] [\-maxsubfields val]
+        [\-resolveDomains]
+        [\-explodecollections] [\-zfield field_name]
+        [\-gcp ungeoref_x ungeoref_y georef_x georef_y [elevation]]* [\-order n | \-tps]
+        [[\-s_coord_epoch epoch] | [\-t_coord_epoch epoch] | [\-a_coord_epoch epoch]]
+        [\-nomd] [\-mo "META\-TAG=VALUE"]* [\-noNativeData]
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+\fBogr2ogr\fP can be used to convert simple features data between file
+formats. It can also perform various operations during the process, such as
+spatial or attribute selection, reducing the set of attributes, setting the
+output coordinate system or even reprojecting the features during translation.
+.INDENT 0.0
+.TP
+.B \-f <format_name>
+Output file format name, e.g. \fBESRI Shapefile\fP, \fBMapInfo File\fP,
+\fBPostgreSQL\fP\&.  Starting with GDAL 2.3, if not specified, the format is
+guessed from the extension (previously was ESRI Shapefile).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-append
+Append to existing layer instead of creating new
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-overwrite
+Delete the output layer and recreate it empty
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-update
+Open existing output datasource in update mode rather than trying to create
+a new one
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-select <field_list>
+Comma\-delimited list of fields from input layer to copy to the new layer. A
+field is skipped if mentioned previously in the list even if the input
+layer has duplicate field names. (Defaults to \fBall\fP; any field is skipped
+if a subsequent field with same name is found.) Geometry fields can also be
+specified in the list.
+.sp
+Note this setting cannot be used together with \fB\-append\fP\&. To control the
+selection of fields when appending to a layer, use \fB\-fieldmap\fP or \fB\-sql\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-progress
+Display progress on terminal. Only works if input layers have the "fast
+feature count" capability.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-sql <sql_statement>
+SQL statement to execute. The resulting table/layer will be saved to the
+output. Starting with GDAL 2.1, the \fB@filename\fP syntax can be used to
+indicate that the content is in the pointed filename.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-dialect <dialect>
+SQL dialect. In some cases can be used to use (unoptimized) \fI\%OGR SQL dialect\fP instead
+of the native SQL of an RDBMS by passing the \fBOGRSQL\fP dialect value.
+The \fI\%SQL SQLite dialect\fP dialect can be select with the \fBSQLITE\fP
+and \fBINDIRECT_SQLITE\fP dialect values, and this can be used with any datasource.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-where restricted_where
+Attribute query (like SQL WHERE). Starting with GDAL 2.1, the \fB@filename\fP
+syntax can be used to indicate that the content is in the pointed filename.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-skipfailures
+Continue after a failure, skipping the failed feature.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-spat <xmin> <ymin> <xmax> <ymax>
+spatial query extents, in the SRS of the source layer(s) (or the one
+specified with \fB\-spat_srs\fP). Only features whose geometry intersects the
+extents will be selected. The geometries will not be clipped unless
+\fB\-clipsrc\fP is specified.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-spat_srs <srs_def>
+Override spatial filter SRS.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-geomfield <field>
+Name of the geometry field on which the spatial filter operates on.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-dsco NAME=VALUE
+Dataset creation option (format specific)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-lco NAME=VALUE
+Layer creation option (format specific)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-nln <name>
+Assign an alternate name to the new layer
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-nlt <type>
+Define the geometry type for the created layer. One of \fBNONE\fP,
+\fBGEOMETRY\fP, \fBPOINT\fP, \fBLINESTRING\fP, \fBPOLYGON\fP,
+\fBGEOMETRYCOLLECTION\fP, \fBMULTIPOINT\fP, \fBMULTIPOLYGON\fP,
+\fBMULTILINESTRING\fP, \fBCIRCULARSTRING\fP, \fBCOMPOUNDCURVE\fP,
+\fBCURVEPOLYGON\fP, \fBMULTICURVE\fP, and \fBMULTISURFACE\fP non\-linear geometry
+types. Add \fBZ\fP, \fBM\fP, or \fBZM\fP to the type name to specify coordinates
+with elevation, measure, or elevation and measure. \fBPROMOTE_TO_MULTI\fP can
+be used to automatically promote layers that mix polygon or multipolygons
+to multipolygons, and layers that mix linestrings or multilinestrings to
+multilinestrings. Can be useful when converting shapefiles to PostGIS and
+other target drivers that implement strict checks for geometry types.
+\fBCONVERT_TO_LINEAR\fP can be used to to convert non\-linear geometry types
+into linear geometry types by approximating them, and \fBCONVERT_TO_CURVE\fP to
+promote a non\-linear type to its generalized curve type (\fBPOLYGON\fP to
+\fBCURVEPOLYGON\fP, \fBMULTIPOLYGON\fP to \fBMULTISURFACE\fP, \fBLINESTRING\fP to
+\fBCOMPOUNDCURVE\fP, \fBMULTILINESTRING\fP to \fBMULTICURVE\fP). Starting with
+version 2.1 the type can be defined as measured ("25D" remains as an alias for
+single "Z"). Some forced geometry conversions may result in invalid
+geometries, for example when forcing conversion of multi\-part multipolygons
+with \fB\-nlt POLYGON\fP, the resulting polygon will break the Simple Features
+rules.
+.sp
+Starting with GDAL 3.0.5, \fB\-nlt CONVERT_TO_LINEAR\fP and \fB\-nlt PROMOTE_TO_MULTI\fP
+can be used simultaneously.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-dim <val>
+Force the coordinate dimension to val (valid values are \fBXY\fP, \fBXYZ\fP,
+\fBXYM\fP, and \fBXYZM\fP \- for backwards compatibility \fB2\fP is an alias for
+\fBXY\fP and \fB3\fP is an alias for \fBXYZ\fP). This affects both the layer
+geometry type, and feature geometries. The value can be set to \fBlayer_dim\fP
+to instruct feature geometries to be promoted to the coordinate dimension
+declared by the layer. Support for M was added in GDAL 2.1.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a_srs <srs_def>
+Assign an output SRS, but without reprojecting (use \fI\%\-t_srs\fP
+to reproject)
+.sp
+The coordinate reference systems that can be passed are anything supported by the
+OGRSpatialReference.SetFromUserInput() call, which includes EPSG Projected,
+Geographic or Compound CRS (i.e. EPSG:4296), a well known text (WKT) CRS definition,
+PROJ.4 declarations, or the name of a .prj file containing a WKT CRS definition.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a_coord_epoch <epoch>
+New in version 3.4.
+
+.sp
+Assign a coordinate epoch, linked with the output SRS. Useful when the
+output SRS is a dynamic CRS. Only taken into account if \fI\%\-a_srs\fP
+is used.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-t_srs <srs_def>
+Reproject/transform to this SRS on output, and assign it as output SRS.
+.sp
+A source SRS must be available for reprojection to occur. The source SRS
+will be by default the one found in the source layer when it is available,
+or as overridden by the user with \fI\%\-s_srs\fP
+.sp
+The coordinate reference systems that can be passed are anything supported by the
+OGRSpatialReference.SetFromUserInput() call, which includes EPSG Projected,
+Geographic or Compound CRS (i.e. EPSG:4296), a well known text (WKT) CRS definition,
+PROJ.4 declarations, or the name of a .prj file containing a WKT CRS definition.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-t_coord_epoch <epoch>
+New in version 3.4.
+
+.sp
+Assign a coordinate epoch, linked with the output SRS. Useful when the
+output SRS is a dynamic CRS. Only taken into account if \fI\%\-t_srs\fP
+is used. It is also mutually exclusive with  \fI\%\-a_coord_epoch\fP\&.
+.sp
+Currently \fI\%\-s_coord_epoch\fP and \fI\%\-t_coord_epoch\fP are
+mutually exclusive, due to lack of support for transformations between two dynamic CRS.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-s_srs <srs_def>
+Override source SRS. If not specified the SRS found in the input layer will
+be used. This option has only an effect if used together with \fI\%\-t_srs\fP
+to reproject.
+.sp
+The coordinate reference systems that can be passed are anything supported by the
+OGRSpatialReference.SetFromUserInput() call, which includes EPSG Projected,
+Geographic or Compound CRS (i.e. EPSG:4296), a well known text (WKT) CRS definition,
+PROJ.4 declarations, or the name of a .prj file containing a WKT CRS definition.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-s_coord_epoch <epoch>
+New in version 3.4.
+
+.sp
+Assign a coordinate epoch, linked with the source SRS. Useful when the
+source SRS is a dynamic CRS. Only taken into account if \fI\%\-s_srs\fP
+is used.
+.sp
+Currently \fI\%\-s_coord_epoch\fP and \fI\%\-t_coord_epoch\fP are
+mutually exclusive, due to lack of support for transformations between two dynamic CRS.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-ct <string>
+A PROJ string (single step operation or multiple step string starting with
++proj=pipeline), a WKT2 string describing a CoordinateOperation, or a
+\fI\%urn:ogc:def:coordinateOperation:EPSG::XXXX\fP URN overriding the default
+transformation from the source to the target CRS. It must take into account
+the axis order of the source and target CRS.
+.sp
+New in version 3.0.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-preserve_fid
+Use the FID of the source features instead of letting the output driver
+automatically assign a new one (for formats that require a FID). If not
+in append mode, this behavior is the default if the output driver has
+a FID layer creation option, in which case the name of the source FID
+column will be used and source feature IDs will be attempted to be
+preserved. This behavior can be disabled by setting \fB\-unsetFid\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-fid fid
+If provided, only the feature with the specified feature id will be
+processed.  Operates exclusive of the spatial or attribute queries. Note: if
+you want to select several features based on their feature id, you can also
+use the fact the \(aqfid\(aq is a special field recognized by OGR SQL. So,
+\fI\-where "fid in (1,3,5)"\fP would select features 1, 3 and 5.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-limit nb_features
+Limit the number of features per layer.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-oo NAME=VALUE
+Input dataset open option (format specific).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-doo NAME=VALUE
+Destination dataset open option (format specific), only valid in \-update mode.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-gt n
+Group n features per transaction (default 100 000). Increase the value for
+better performance when writing into DBMS drivers that have transaction
+support. \fBn\fP can be set to unlimited to load the data into a single
+transaction.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-ds_transaction
+Force the use of a dataset level transaction (for drivers that support such
+mechanism), especially for drivers such as FileGDB that only support
+dataset level transaction in emulation mode.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-clipsrc [xmin ymin xmax ymax]|WKT|datasource|spat_extent
+Clip geometries to the specified bounding box (expressed in source SRS),
+WKT geometry (POLYGON or MULTIPOLYGON), from a datasource or to the spatial
+extent of the \-spat option if you use the spat_extent keyword. When
+specifying a datasource, you will generally want to use it in combination
+of the \-clipsrclayer, \-clipsrcwhere or \-clipsrcsql options
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-clipsrcsql <sql_statement>
+Select desired geometries using an SQL query instead.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-clipsrclayer <layername>
+Select the named layer from the source clip datasource.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-clipsrcwhere <expression>
+Restrict desired geometries based on attribute query.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-clipdst <xmin> <ymin> <xmax> <ymax>
+Clip geometries after reprojection to the specified bounding box (expressed
+in dest SRS), WKT geometry (POLYGON or MULTIPOLYGON) or from a datasource.
+When specifying a datasource, you will generally want to use it in
+combination of the \-clipdstlayer, \-clipdstwhere or \-clipdstsql options
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-clipdstsql <sql_statement>
+Select desired geometries using an SQL query instead.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-clipdstlayer <layername>
+Select the named layer from the destination clip datasource.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-clipdstwhere <expression>
+Restrict desired geometries based on attribute query.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-wrapdateline
+Split geometries crossing the dateline meridian (long. = +/\- 180deg)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-datelineoffset
+Offset from dateline in degrees (default long. = +/\- 10deg, geometries
+within 170deg to \-170deg will be split)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-simplify <tolerance>
+Distance tolerance for simplification. Note: the algorithm used preserves
+topology per feature, in particular for polygon geometries, but not for a
+whole layer.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-segmentize <max_dist>
+Maximum distance between 2 nodes. Used to create intermediate points.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-makevalid
+Run the \fI\%OGRGeometry::MakeValid()\fP operation, followed by
+\fI\%OGRGeometryFactory::removeLowerDimensionSubGeoms()\fP, on geometries
+to ensure they are valid regarding the rules of the Simple Features specification.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-fieldTypeToString type1,...
+Converts any field of the specified type to a field of type string in the
+destination layer. Valid types are : Integer, Integer64, Real, String,
+Date, Time, DateTime, Binary, IntegerList, Integer64List, RealList,
+StringList. Special value All can be used to convert all fields to strings.
+This is an alternate way to using the CAST operator of OGR SQL, that may
+avoid typing a long SQL query. Note that this does not influence the field
+types used by the source driver, and is only an afterwards conversion.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-mapFieldType srctype|All=dsttype,...
+Converts any field of the specified type to another type. Valid types are :
+Integer, Integer64, Real, String, Date, Time, DateTime, Binary,
+IntegerList, Integer64List, RealList, StringList. Types can also include
+subtype between parenthesis, such as Integer(Boolean), Real(Float32), ...
+Special value All can be used to convert all fields to another type. This
+is an alternate way to using the CAST operator of OGR SQL, that may avoid
+typing a long SQL query. This is a generalization of \-fieldTypeToString.
+Note that this does not influence the field types used by the source
+driver, and is only an afterwards conversion.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-unsetFieldWidth
+Set field width and precision to 0.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-splitlistfields
+Split fields of type StringList, RealList or IntegerList into as many
+fields of type String, Real or Integer as necessary.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-maxsubfields <val>
+To be combined with \fB\-splitlistfields\fP to limit the number of subfields
+created for each split field.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-explodecollections
+Produce one feature for each geometry in any kind of geometry collection in
+the source file, applied after any \fB\-sql\fP option.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-zfield <field_name>
+Uses the specified field to fill the Z coordinate of geometries.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-gcp <ungeoref_x> <ungeoref_y> <georef_x> <georef_y> <elevation>
+Add the indicated ground control point. This option may be provided
+multiple times to provide a set of GCPs.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-order <n>
+Order of polynomial used for warping (1 to 3). The default is to select a
+polynomial order based on the number of GCPs.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-tps
+Force use of thin plate spline transformer based on available GCPs.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-fieldmap
+Specifies the list of field indexes to be copied from the source to the
+destination. The (n)th value specified in the list is the index of the
+field in the target layer definition in which the n(th) field of the source
+layer must be copied. Index count starts at zero. To omit a field, specify
+a value of \-1. There must be exactly as many values in the list as the
+count of the fields in the source layer. We can use the \(aqidentity\(aq setting
+to specify that the fields should be transferred by using the same order.
+This setting should be used along with the \fB\-append\fP setting.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-addfields
+This is a specialized version of \fB\-append\fP\&. Contrary to \fB\-append\fP,
+\fB\-addfields\fP has the effect of adding, to existing target layers, the new
+fields found in source layers. This option is useful when merging files
+that have non\-strictly identical structures. This might not work for output
+formats that don\(aqt support adding fields to existing non\-empty layers. Note
+that if you plan to use \-addfields, you may need to combine it with
+\-forceNullable, including for the initial import.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-relaxedFieldNameMatch
+Do field name matching between source and existing target layer in a more
+relaxed way if the target driver has an implementation for it.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-forceNullable
+Do not propagate not\-nullable constraints to target layer if they exist in
+source layer.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-unsetDefault
+Do not propagate default field values to target layer if they exist in
+source layer.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-unsetFid
+Can be specified to prevent the name of the source FID column and source
+feature IDs from being re\-used for the target layer. This option can for
+example be useful if selecting source features with a ORDER BY clause.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-emptyStrAsNull
+New in version 3.3.
+
+.sp
+Treat empty string values as null.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-resolveDomains
+New in version 3.3.
+
+.sp
+When this is specified, any selected field that is linked to a coded field
+domain will be accompanied by an additional field (\fB{dstfield}_resolved\fP),
+that will contain the description of the coded value.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-nomd
+To disable copying of metadata from source dataset and layers into target
+dataset and layers, when supported by output driver.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-mo META\-TAG=VALUE
+Passes a metadata key and value to set on the output dataset, when
+supported by output driver.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-noNativeData
+To disable copying of native data, i.e. details of source format not
+captured by OGR abstraction, that are otherwise preserved by some drivers
+(like GeoJSON) when converting to same format.
+.sp
+New in version 2.1.
+
+.UNINDENT
+.SH PERFORMANCE HINTS
+.sp
+When writing into transactional DBMS (SQLite/PostgreSQL,MySQL, etc...), it
+might be beneficial to increase the number of INSERT statements executed
+between BEGIN TRANSACTION and COMMIT TRANSACTION statements. This number is
+specified with the \-gt option. For example, for SQLite, explicitly defining \-gt
+65536 ensures optimal performance while populating some table containing many
+hundreds of thousands or millions of rows. However, note that \-skipfailures
+overrides \-gt and sets the size of transactions to 1.
+.sp
+For PostgreSQL, the PG_USE_COPY config option can be set to YES for a
+significant insertion performance boost. See the PG driver documentation page.
+.sp
+More generally, consult the documentation page of the input and output drivers
+for performance hints.
+.SH C API
+.sp
+This utility is also callable from C with \fI\%GDALVectorTranslate()\fP\&.
+.SH EXAMPLES
+.sp
+Basic conversion from Shapefile to GeoPackage:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+ogr2ogr \e
+  \-f GPKG output.gpkg \e
+  input.shp
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Change the coordinate reference system from \fBEPSG:4326\fP to \fBEPSG:3857\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+ogr2ogr \e
+  \-s_srs EPSG:4326 \e
+  \-t_srs EPSG:3857 \e
+  \-f GPKG output.gpkg \e
+  input.gpkg
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Example appending to an existing layer (both \fB\-update\fP and \fB\-append\fP flags need to be used):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+ogr2ogr \-update \-append \-f PostgreSQL PG:dbname=warmerda abc.tab
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Clip input layer with a bounding box (<xmin> <ymin> <xmax> <ymax>):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+ogr2ogr \e
+  \-spat \-13.931 34.886 46.23 74.12 \e
+  \-f GPKG output.gpkg \e
+  natural_earth_vector.gpkg
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Filter Features by a \fB\-where\fP clause:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+ogr2ogr \e
+  \-where "\e"POP_EST\e" < 1000000" \e
+  \-f GPKG output.gpkg \e
+  natural_earth_vector.gpkg \e
+  ne_10m_admin_0_countries
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Example reprojecting from ETRS_1989_LAEA_52N_10E to EPSG:4326 and clipping to a bounding box:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+ogr2ogr \-wrapdateline \-t_srs EPSG:4326 \-clipdst \-5 40 15 55 france_4326.shp europe_laea.shp
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Example for using the \fB\-fieldmap\fP setting. The first field of the source layer is
+used to fill the third field (index 2 = third field) of the target layer, the
+second field of the source layer is ignored, the third field of the source
+layer used to fill the fifth field of the target layer.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+ogr2ogr \-append \-fieldmap 2,\-1,4 dst.shp src.shp
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+More examples are given in the individual format pages.
+.SH AUTHOR
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

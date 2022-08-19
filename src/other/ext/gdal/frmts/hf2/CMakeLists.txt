@@ -1,2 +1,2 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(frmt_hf2 OBJECT hf2dataset.cpp)
+add_gdal_driver(TARGET gdal_HF2 SOURCES hf2dataset.cpp PLUGIN_CAPABLE NO_DEPS)
+gdal_standard_includes(gdal_HF2)

@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2009-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@
 #include "gxfopen.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* -------------------------------------------------------------------- */
 /* the following #defines come from ogr_spatialref.h in the GDAL/OGR	*/
@@ -206,29 +206,29 @@ static void OGCWKTSetProj( char * pszProjection,
                            const char * pszParm7 )
 
 {
-    int		iParm, nCount = CSLCount(papszMethods);
-    const char	*apszParmNames[8] = { NULL };
+    int		iParam, nCount = CSLCount(papszMethods);
+    const char	*apszParamNames[8] = { NULL };
 
-    apszParmNames[0] = pszParm1;
-    apszParmNames[1] = pszParm2;
-    apszParmNames[2] = pszParm3;
-    apszParmNames[3] = pszParm4;
-    apszParmNames[4] = pszParm5;
-    apszParmNames[5] = pszParm6;
-    apszParmNames[6] = pszParm7;
-    apszParmNames[7] = NULL;
+    apszParamNames[0] = pszParm1;
+    apszParamNames[1] = pszParm2;
+    apszParamNames[2] = pszParm3;
+    apszParamNames[3] = pszParm4;
+    apszParamNames[4] = pszParm5;
+    apszParamNames[5] = pszParm6;
+    apszParamNames[6] = pszParm7;
+    apszParamNames[7] = NULL;
 
     snprintf( pszProjection, nProjectionSize,
              "PROJECTION[\"%s\"]",
              pszTransformName );
 
-    for( iParm = 0; iParm < nCount-1 && apszParmNames[iParm] != NULL; iParm++ )
+    for( iParam = 0; iParam < nCount-1 && apszParamNames[iParam] != NULL; iParam++ )
     {
         snprintf( pszProjection + strlen(pszProjection),
                  nProjectionSize - strlen(pszProjection),
                  ",PARAMETER[\"%s\",%s]",
-                 apszParmNames[iParm],
-                 papszMethods[iParm+1] );
+                 apszParamNames[iParam],
+                 papszMethods[iParam+1] );
     }
 }
 
@@ -290,7 +290,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
 {
     GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
     char	**papszMethods = NULL;
-    char	szWKT[1024];
+    char	szWKT[1024+32];
     char	szGCS[512];
     char	szProjection[512];
 
@@ -316,10 +316,6 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
         papszMethods = CSLTokenizeStringComplex(psGXF->papszMapProjection[2],
                                                 ",", TRUE, TRUE );
     }
-
-#ifdef DBMALLOC
-    malloc_chain_check(1);
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Create the PROJCS.                                              */

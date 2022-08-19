@@ -1,0 +1,236 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "OGRLINEREF" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+ogrlineref \- Create linear reference and provide some calculations using it.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+ogrlineref [\-\-help\-general] [\-progress] [\-quiet]
+       [\-f format_name] [[\-dsco NAME=VALUE] ...] [[\-lco NAME=VALUE]...]
+       [\-create]
+       [\-l src_line_datasource_name] [\-ln layer_name] [\-lf field_name]
+       [\-p src_repers_datasource_name] [\-pn layer_name] [\-pm pos_field_name] [\-pf field_name]
+       [\-r src_parts_datasource_name] [\-rn layer_name]
+       [\-o dst_datasource_name] [\-on layer_name]  [\-of field_name] [\-s step]
+       [\-get_pos] [\-x long] [\-y lat]
+       [\-get_coord] [\-m position]
+       [\-get_subline] [\-mb position] [\-me position]
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+The \fBogrlineref\fP program can be used for:
+.INDENT 0.0
+.IP \(bu 2
+create linear reference file from input data
+.IP \(bu 2
+return the "linear referenced" distance for the projection of the
+input coordinates (point) on the path
+.IP \(bu 2
+return the coordinates (point) on the path according to the "linear
+referenced" distance
+.IP \(bu 2
+return the portion of the path according to the "linear referenced"
+begin and end distances
+.UNINDENT
+.sp
+The \fBogrlineref\fP creates a linear reference \- a file containing
+a segments of special length (e.g. 1 km in reference units) and get coordinates,
+linear referenced distances or sublines (subpaths) from this file.
+The utility not required the \fBM\fP or \fBZ\fP values in geometry.
+The results can be stored in any OGR supported format.
+Also some information is written to the stdout.
+.INDENT 0.0
+.TP
+.B \-\-help\-general
+Show the usage.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-progress
+Show progress.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-quiet
+Suppress all messages except errors and results.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-f <format_name>
+Select an output format name. The default is to create a shapefile.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-dsco <NAME=VALUE>
+Dataset creation option (format specific)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-lco <NAME=VALUE>
+Layer creation option (format specific).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-create
+Create the linear reference file (linestring of parts).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-l <src_line_datasource_name>
+The path to input linestring datasource (e.g. the road)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-ln <layer_name>
+The layer name in datasource
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-lf <field_name>
+The field name of unique values to separate the input lines (e.g.
+the set of roads).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-p <src_repers_datasource_name>
+The path to linear references points (e.g. the road mile\-stones)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-pn <layer_name>
+The layer name in datasource
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-pm <pos_field_name>
+The field name of distances along path (e.g. mile\-stones values)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-pf <field_name>
+The field name of unique values to map input reference points to lines.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-r <src_parts_datasource_name>
+The path to linear reference file.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-rn <layer_name>
+The layer name in datasource
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-o <dst_datasource_name>
+The path to output linear reference file (linestring datasource)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-on <layer_name>
+The layer name in datasource
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-of <field_name>
+The field name for storing the unique values of input lines
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-s <step>
+The part size in linear units
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-get_pos
+Return linear referenced position for input X, Y
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-x <long>
+Input X coordinate
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-y <lat>
+Input Y coordinate
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-get_coord
+Return point on path for input linear distance
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-m <position>
+The input linear distance
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-get_subline
+Return the portion of the input path from and to input linear positions.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-mb <position>
+The input begin linear distance
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-me <position>
+The input end linear distance
+.UNINDENT
+.SH EXAMPLE
+.sp
+This example would create a shapefile (\fBparts.shp\fP) containing
+a data needed for linear referencing (1 km parts):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+ogrlineref \-create \-l roads.shp \-p references.shp \-pm dist \-o parts.shp \-s 1000 \-progress
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Dmitry Baryshnikov <polimax@mail.ru>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

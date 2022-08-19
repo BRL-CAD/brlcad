@@ -81,7 +81,6 @@ typedef enum
   CPLE_UserInterrupt,
   CPLE_ObjectNull,
   CPLE_HttpResponse,
-  CPLE_HttpResponse,
   CPLE_AWSBucketNotFound,
   CPLE_AWSObjectNotFound,
   CPLE_AWSAccessDenied,
@@ -131,7 +130,9 @@ typedef int CPLErrorNum;
 /** AWSInvalidCredentials */
 #define CPLE_AWSInvalidCredentials      15
 /** AWSSignatureDoesNotMatch */
-#define CPLE_AWSSignatureDoesNotMatch    16
+#define CPLE_AWSSignatureDoesNotMatch   16
+/** VSIE_AWSError */
+#define CPLE_AWSError                   17
 
 /* 100 - 299 reserved for GDAL */
 
@@ -144,6 +145,7 @@ void CPL_DLL CPL_STDCALL CPLErrorReset( void );
 CPLErrorNum CPL_DLL CPL_STDCALL CPLGetLastErrorNo( void );
 CPLErr CPL_DLL CPL_STDCALL CPLGetLastErrorType( void );
 const char CPL_DLL * CPL_STDCALL CPLGetLastErrorMsg( void );
+GUInt32 CPL_DLL CPL_STDCALL CPLGetErrorCounter( void );
 void CPL_DLL * CPL_STDCALL CPLGetErrorHandlerUserData(void);
 void CPL_DLL CPLErrorSetState( CPLErr eErrClass, CPLErrorNum err_no, const char* pszMsg );
 /*! @cond Doxygen_Suppress */
@@ -168,18 +170,39 @@ void CPL_DLL CPL_STDCALL CPLPopErrorHandler(void);
 #ifdef WITHOUT_CPLDEBUG
 #define CPLDebug(...)  /* Eat all CPLDebug calls. */
 #else
-void CPL_DLL CPL_STDCALL CPLDebug(const char *, CPL_FORMAT_STRING(const char *), ...)
+void CPL_DLL CPLDebug(const char *, CPL_FORMAT_STRING(const char *), ...)
     CPL_PRINT_FUNC_FORMAT(2, 3);
+#endif
+
+#ifdef DEBUG
+/** Same as CPLDebug(), but expands to nothing for non-DEBUG builds.
+ * @since GDAL 3.1
+ */
+#define CPLDebugOnly(...) CPLDebug(__VA_ARGS__)
+#else
+/** Same as CPLDebug(), but expands to nothing for non-DEBUG builds.
+ * @since GDAL 3.1
+ */
+#define CPLDebugOnly(...)
 #endif
 
 void CPL_DLL CPL_STDCALL _CPLAssert( const char *, const char *, int ) CPL_NO_RETURN;
 
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(CPPCHECK)
 /** Assert on an expression. Only enabled in DEBUG mode */
 #  define CPLAssert(expr)  ((expr) ? (void)(0) : _CPLAssert(#expr,__FILE__,__LINE__))
+/** Assert on an expression in DEBUG mode. Evaluate it also in non-DEBUG mode (useful to 'consume' a error return variable) */
+#  define CPLAssertAlwaysEval(expr) CPLAssert(expr)
 #else
 /** Assert on an expression. Only enabled in DEBUG mode */
 #  define CPLAssert(expr)
+#ifdef __cplusplus
+/** Assert on an expression in DEBUG mode. Evaluate it also in non-DEBUG mode (useful to 'consume' a error return variable) */
+#  define CPLAssertAlwaysEval(expr) CPL_IGNORE_RET_VAL(expr)
+#else
+/** Assert on an expression in DEBUG mode. Evaluate it also in non-DEBUG mode (useful to 'consume' a error return variable) */
+#  define CPLAssertAlwaysEval(expr) (void)(expr)
+#endif
 #endif
 
 CPL_C_END
@@ -193,11 +216,70 @@ CPL_C_END
 #else
 #  define VALIDATE_POINTER_ERR CE_Failure
 #endif
+
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(DOXYGEN_SKIP)
+
+extern "C++"
+{
+template<class T> T* CPLAssertNotNull(T* x) CPL_RETURNS_NONNULL;
+template<class T> T* CPLAssertNotNull(T* x) { CPLAssert(x); return x; }
+
+#include <string>
+
+class CPLErrorHandlerPusher
+{
+    public:
+        explicit CPLErrorHandlerPusher(CPLErrorHandler hHandler)
+        {
+            CPLPushErrorHandler(hHandler);
+        }
+
+        CPLErrorHandlerPusher(CPLErrorHandler hHandler, void* user_data)
+        {
+            CPLPushErrorHandlerEx(hHandler, user_data);
+        }
+
+        ~CPLErrorHandlerPusher()
+        {
+            CPLPopErrorHandler();
+        }
+};
+
+class CPLErrorStateBackuper
+{
+        CPLErrorNum m_nLastErrorNum;
+        CPLErr      m_nLastErrorType;
+        std::string m_osLastErrorMsg;
+
+    public:
+        CPLErrorStateBackuper() :
+            m_nLastErrorNum(CPLGetLastErrorNo()),
+            m_nLastErrorType(CPLGetLastErrorType()),
+            m_osLastErrorMsg(CPLGetLastErrorMsg())
+        {}
+
+        ~CPLErrorStateBackuper()
+        {
+            CPLErrorSetState(m_nLastErrorType, m_nLastErrorNum,
+                             m_osLastErrorMsg.c_str());
+        }
+};
+
+}
+
+#ifdef GDAL_COMPILATION
+// internal only
+bool CPLIsDefaultErrorHandlerAndCatchDebug();
+#endif
+
+#endif
+
 /*! @endcond */
 
 /** Validate that a pointer is not NULL */
 #define VALIDATE_POINTER0(ptr, func) \
-   do { if( NULL == ptr ) \
+   do { if( CPL_NULLPTR == ptr ) \
       { \
         CPLErr const ret = VALIDATE_POINTER_ERR; \
         CPLError( ret, CPLE_ObjectNull, \
@@ -206,7 +288,7 @@ CPL_C_END
 
 /** Validate that a pointer is not NULL, and return rc if it is NULL */
 #define VALIDATE_POINTER1(ptr, func, rc) \
-   do { if( NULL == ptr ) \
+   do { if( CPL_NULLPTR == ptr ) \
       { \
           CPLErr const ret = VALIDATE_POINTER_ERR; \
           CPLError( ret, CPLE_ObjectNull, \

@@ -1,0 +1,248 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "GDALMDIMTRANSLATE" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+gdalmdimtranslate \- Converts multidimensional data between different formats, and perform subsetting.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdalmdimtranslate [\-\-help\-general] [\-co "NAME=VALUE"]*
+                  [\-of format] [\-array <array_spec>]*
+                  [\-group <group_spec>]*
+                  [\-subset <subset_spec>]*
+                  [\-scaleaxes <scaleaxes_spec>]*
+                  [\-oo NAME=VALUE]*
+                  <src_filename> <dst_filename>
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+\fBgdalmdimtranslate\fP program converts multidimensional raster between
+different formats, and/or can perform selective conversion of specific arrays
+and groups, and/or subsetting operations.
+.sp
+The following command line parameters can appear in any order.
+.INDENT 0.0
+.TP
+.B \-of <format>
+Select the output format. This can be a format that supports multidimensional
+output (such as \fI\%NetCDF: Network Common Data Form\fP, \fI\%Multidimensional VRT\fP), or a "classic" 2D formats, if only one single 2D array
+results of the other specified conversion operations. When this option is
+not specified, the format is guessed when possible from the extension of the
+destination filename.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-co <NAME=VALUE>
+Many formats have one or more optional creation options that can be
+used to control particulars about the file created.
+.sp
+The creation options available vary by format driver, and some
+simple formats have no creation options at all. A list of options
+supported for a format can be listed with the
+\fI\%\-\-formats\fP
+command line option but the documentation for the format is the
+definitive source of information on driver creation options.
+See \fI\%Raster drivers\fP format
+specific documentation for legal creation options for each format.
+.sp
+Array\-level creation options may be passed by prefixing them with \fBARRAY:\fP\&.
+See \fI\%GDALGroup::CopyFrom()\fP for further details regarding such options.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-array <array_spec>
+Instead of converting the whole dataset, select one array, and possibly
+perform operations on it. This option can be specified several times to
+operate on different arrays.
+.sp
+<array_spec> may be just an array name, potentially using a fully qualified
+syntax (/group/subgroup/array_name). Or it can be a combination of options
+with the syntax:
+name={src_array_name}[,dstname={dst_array_name}][,transpose=[{axis1},{axis2},...][,view={view_expr}]
+.sp
+[{axis1},{axis2},...] is the argument of  \fI\%GDALMDArray::Transpose()\fP\&.
+For example, transpose=[1,0] switches the axis order of a 2D array.
+.sp
+{view_expr} is the value of the \fIviewExpr\fP argument of \fI\%GDALMDArray::GetView()\fP
+.sp
+When specifying a view_expr that performs a slicing or subsetting on a dimension, the
+equivalent operation will be applied to the corresponding indexing variable.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-group <group_spec>
+Instead of converting the whole dataset, select one group, and possibly
+perform operations on it. This option can be specified several times to
+operate on different groups. If only one group is specified, its content will be
+copied directly to the target root group. If several ones are specified,
+they are copied under the target root group
+.sp
+<group_spec> may be just a group name, potentially using a fully qualified
+syntax (/group/subgroup/subsubgroup_name). Or it can be a combination of options
+with the syntax:
+name={src_group_name}[,dstname={dst_group_name}][,recursive=no]
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-subset <subset_spec>
+Performs a subsetting (trimming or slicing) operation along a dimension,
+provided that it is indexed by a 1D variable of numeric or string data type,
+and whose values are monotically sorted.
+<subset_spec> follows exactly the \fI\%OGC WCS 2.0 KVP encoding\fP
+for subsetting.
+.sp
+That is dim_name(min_val,max_val) or dim_name(sliced_val)
+The first syntax will subset the dimension dim_name to values in the
+[min_val,max_val] range. The second syntax will slice the dimension dim_name
+to value sliced_val (and this dimension will be removed from the arrays
+that reference to it)
+.sp
+Using \-subset is incompatible of specifying a \fIview\fP option in \-array.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-scaleaxes <scaleaxes_spec>
+Applies a integral scale factor to one or several dimensions, that is
+extract 1 value every N values (without resampling).
+.sp
+<scaleaxes_spec> follows exactly the syntax of the KVP encoding of the
+SCALEAXES parameter of
+\fI\%OGC WCS 2.0 Scaling Extension\fP,
+but limited to integer scale factors.
+.sp
+That is dim1_name(scale_factor)[,dim2_name(scale_factor)]*
+.sp
+Using \-scaleaxes is incompatible of specifying a \fIview\fP option in \-array.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-oo <NAME=VALUE>
+New in version 3.4.
+
+.sp
+Source dataset open option (format specific)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B <src_dataset>
+The source dataset name.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B <dst_dataset>
+The destination file name.
+.UNINDENT
+.SH C API
+.sp
+This utility is also callable from C with \fI\%GDALMultiDimTranslate()\fP\&.
+.SH EXAMPLES
+.INDENT 0.0
+.IP \(bu 2
+Convert a netCDF file to a multidimensional VRT file
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ gdalmdimtranslate in.nc out.vrt
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.IP \(bu 2
+Extract a 2D slice of a time,Y,X array
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ gdalmdimtranslate in.nc out.tif \-subset \(aqtime("2010\-01\-01")\(aq \-array temperature
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.IP \(bu 2
+Subsample along X and Y axis
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ gdalmdimtranslate in.nc out.nc \-scaleaxes "X(2),Y(2)"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.IP \(bu 2
+Reorder the values of a time,Y,X array along the Y axis from top\-to\-bottom
+to bottom\-to\-top (or the reverse)
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ gdalmdimtranslate in.nc out.nc \-array "name=temperature,view=[:,::\-1,:]"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.IP \(bu 2
+Transpose an array that has X,Y,time dimension order to time,Y,X
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ gdalmdimtranslate in.nc out.nc \-array "name=temperature,transpose=[2,1,0]"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Even Rouault <even.rouault@spatialys.com>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

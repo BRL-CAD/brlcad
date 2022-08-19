@@ -33,7 +33,7 @@
 #include <string.h>
 #include "cpl_sha1.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 
 typedef struct {
@@ -49,6 +49,7 @@ typedef struct {
 /*                         sha1_transform()                             */
 /************************************************************************/
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static
 void sha1_transform(CPL_SHA1Context *ctx, const GByte data[])
 {

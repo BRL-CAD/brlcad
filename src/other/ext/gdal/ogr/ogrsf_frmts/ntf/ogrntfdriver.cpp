@@ -29,7 +29,7 @@
 #include "ntf.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -45,14 +45,15 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( !poOpenInfo->bStatOK )
-        return NULL;
-    if( poOpenInfo->fpL != NULL )
+        return nullptr;
+
+    if( poOpenInfo->nHeaderBytes != 0 )
     {
         if( poOpenInfo->nHeaderBytes < 80 )
-            return NULL;
+            return nullptr;
         const char* pszHeader = (const char*)poOpenInfo->pabyHeader;
         if( !STARTS_WITH_CI(pszHeader, "01") )
-            return NULL;
+            return nullptr;
 
         int j = 0;  // Used after for.
         for( ; j < 80; j++ )
@@ -62,22 +63,22 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
         }
 
         if( j == 80 || pszHeader[j-1] != '%' )
-            return NULL;
+            return nullptr;
     }
 
     OGRNTFDataSource *poDS = new OGRNTFDataSource;
     if( !poDS->Open( poOpenInfo->pszFilename, TRUE ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
-    if( poDS != NULL && poOpenInfo->eAccess == GA_Update )
+    if( poDS != nullptr && poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "NTF Driver doesn't support update." );
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -90,7 +91,7 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRNTF()
 
 {
-    if( GDALGetDriverByName( "UK .NTF" ) != NULL )
+    if( GDALGetDriverByName( "UK .NTF" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -98,7 +99,8 @@ void RegisterOGRNTF()
     poDriver->SetDescription( "UK .NTF" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "UK .NTF" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_ntf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/ntf.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRNTFDriverOpen;
 

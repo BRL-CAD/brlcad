@@ -30,18 +30,15 @@
 
 #include "gnm_frmts.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 void GNMRegisterAllInternal()
 {
-    CPLDebug("GNM", "GNMRegisterAllInternal");
 #ifdef GNMFILE_ENABLED
-    CPLDebug("GNM", "RegisterGNMFile");
     RegisterGNMFile();
 #endif
 
 #ifdef GNMDB_ENABLED
-    CPLDebug("GNM", "RegisterGNMdatabase");
     RegisterGNMDatabase();
 #endif
 

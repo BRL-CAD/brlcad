@@ -1,10 +1,10 @@
-/* geo_config.h.  Generated automatically by configure.  */
+/* This is a GDAL specific variant and not the same as the libgeotiff generated geo_config.h */
 #ifndef GEO_CONFIG_H
 #define GEO_CONFIG_H
 
 #include "cpl_config.h"
 
-#ifndef COVERITY_SCAN
+#ifndef __COVERITY__
 #include "cpl_string.h"
 #ifdef sprintf
 #undef sprintf

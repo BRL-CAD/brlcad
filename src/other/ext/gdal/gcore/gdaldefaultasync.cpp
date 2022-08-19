@@ -37,7 +37,7 @@
 #include "cpl_string.h"
 #include "gdal.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 CPL_C_START
 GDALAsyncReader *
@@ -61,17 +61,17 @@ CPL_C_END
 /************************************************************************/
 
 GDALAsyncReader::GDALAsyncReader() :
-    poDS(NULL),
+    poDS(nullptr),
     nXOff(0),
     nYOff(0),
     nXSize(0),
     nYSize(0),
-    pBuf(NULL),
+    pBuf(nullptr),
     nBufXSize(0),
     nBufYSize(0),
     eBufType(GDT_Unknown),
     nBandCount(0),
-    panBandMap(NULL),
+    panBandMap(nullptr),
     nPixelSpace(0),
     nLineSpace(0),
     nBandSpace(0)
@@ -81,9 +81,7 @@ GDALAsyncReader::GDALAsyncReader() :
 /************************************************************************/
 /*                         ~GDALAsyncReader()                           */
 /************************************************************************/
-GDALAsyncReader::~GDALAsyncReader()
-{
-}
+GDALAsyncReader::~GDALAsyncReader() = default;
 
 /************************************************************************/
 /*                        GetNextUpdatedRegion()                        */
@@ -178,7 +176,7 @@ GDALARGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double dfTimeout,
                            int* pnBufXSize, int* pnBufYSize)
 {
     VALIDATE_POINTER1(hARIO, "GDALARGetNextUpdatedRegion", GARIO_ERROR);
-    return ((GDALAsyncReader *)hARIO)->GetNextUpdatedRegion(
+    return static_cast<GDALAsyncReader *>(hARIO)->GetNextUpdatedRegion(
         dfTimeout, pnBufXOff, pnBufYOff, pnBufXSize, pnBufYSize);
 }
 
@@ -235,7 +233,7 @@ int GDALAsyncReader::LockBuffer( double /* dfTimeout */ )
 int CPL_STDCALL GDALARLockBuffer(GDALAsyncReaderH hARIO, double dfTimeout )
 {
     VALIDATE_POINTER1(hARIO, "GDALARLockBuffer",FALSE);
-    return ((GDALAsyncReader *)hARIO)->LockBuffer( dfTimeout );
+    return static_cast<GDALAsyncReader *>(hARIO)->LockBuffer( dfTimeout );
 }
 
 /************************************************************************/
@@ -270,7 +268,7 @@ void GDALAsyncReader::UnlockBuffer()
 void CPL_STDCALL GDALARUnlockBuffer(GDALAsyncReaderH hARIO)
 {
     VALIDATE_POINTER0(hARIO, "GDALARUnlockBuffer");
-    ((GDALAsyncReader *)hARIO)->UnlockBuffer();
+    static_cast<GDALAsyncReader *>(hARIO)->UnlockBuffer();
 }
 
 /************************************************************************/
@@ -282,7 +280,9 @@ void CPL_STDCALL GDALARUnlockBuffer(GDALAsyncReaderH hARIO)
 class GDALDefaultAsyncReader : public GDALAsyncReader
 {
   private:
-    char **         papszOptions;
+    char **papszOptions = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALDefaultAsyncReader)
 
   public:
     GDALDefaultAsyncReader(GDALDataset* poDS,
@@ -294,13 +294,13 @@ class GDALDefaultAsyncReader : public GDALAsyncReader
                              int nBandCount, int* panBandMap,
                              int nPixelSpace, int nLineSpace,
                              int nBandSpace, char **papszOptions);
-    virtual ~GDALDefaultAsyncReader();
+    ~GDALDefaultAsyncReader() override;
 
-    virtual GDALAsyncStatusType GetNextUpdatedRegion(double dfTimeout,
-                                                     int* pnBufXOff,
-                                                     int* pnBufYOff,
-                                                     int* pnBufXSize,
-                                                     int* pnBufYSize) override;
+    GDALAsyncStatusType GetNextUpdatedRegion(double dfTimeout,
+                                             int* pnBufXOff,
+                                             int* pnBufYOff,
+                                             int* pnBufXSize,
+                                             int* pnBufYSize) override;
 };
 
 /************************************************************************/
@@ -353,9 +353,9 @@ GDALDefaultAsyncReader( GDALDataset* poDSIn,
     nBufYSize = nBufYSizeIn;
     eBufType = eBufTypeIn;
     nBandCount = nBandCountIn;
-    panBandMap = (int *) CPLMalloc(sizeof(int)*nBandCountIn);
+    panBandMap = static_cast<int*>(CPLMalloc(sizeof(int)*nBandCountIn));
 
-    if( panBandMapIn != NULL )
+    if( panBandMapIn != nullptr )
         memcpy( panBandMap, panBandMapIn, sizeof(int)*nBandCount );
     else
     {
@@ -398,7 +398,7 @@ GDALDefaultAsyncReader::GetNextUpdatedRegion( double /*dfTimeout*/,
                            pBuf, nBufXSize, nBufYSize, eBufType,
                            nBandCount, panBandMap,
                            nPixelSpace, nLineSpace, nBandSpace,
-                           NULL );
+                           nullptr );
 
     *pnBufXOff = 0;
     *pnBufYOff = 0;

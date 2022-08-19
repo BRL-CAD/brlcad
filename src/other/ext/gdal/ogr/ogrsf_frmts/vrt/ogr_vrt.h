@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2009-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,7 @@
 
 #include "cpl_error.h"
 #include "cpl_minixml.h"
+#include "cpl_string.h"
 #include "ogrlayerpool.h"
 #include "ogrsf_frmts.h"
 
@@ -91,7 +92,7 @@ class OGRVRTGeomFieldProps
 
 class OGRVRTDataSource;
 
-class OGRVRTLayer : public OGRLayer
+class OGRVRTLayer final: public OGRLayer
 {
   protected:
     OGRVRTDataSource*   poDS;
@@ -167,8 +168,6 @@ class OGRVRTLayer : public OGRLayer
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
-
     virtual GIntBig     GetFeatureCount( int ) override;
 
     virtual OGRErr      SetAttributeFilter( const char * ) override;
@@ -213,7 +212,7 @@ typedef enum
     OGR_VRT_OTHER_LAYER,
 } OGRLayerType;
 
-class OGRVRTDataSource : public OGRDataSource
+class OGRVRTDataSource final: public OGRDataSource
 {
     OGRLayer          **papoLayers;
     OGRLayerType       *paeLayerType;
@@ -287,5 +286,6 @@ class OGRVRTDataSource : public OGRDataSource
 };
 
 OGRwkbGeometryType OGRVRTGetGeometryType(const char* pszGType, int* pbError);
+CPLString OGRVRTGetSerializedGeometryType(OGRwkbGeometryType eGeomType);
 
 #endif  // ndef OGR_VRT_H_INCLUDED

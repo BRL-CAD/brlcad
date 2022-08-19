@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
- * Copyright (c) 2007-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,7 +35,12 @@
 #include <cstdlib>
 
 #include <algorithm>
+#include <complex>
+#include <condition_variable>
 #include <limits>
+#include <list>
+#include <memory>
+#include <mutex>
 #include <vector>
 
 #include "cpl_conv.h"
@@ -43,11 +48,29 @@
 #include "cpl_progress.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
-// TODO(schwehr): Fix warning: Software emulation of SSE2.
-// #include "gdalsse_priv.h"
+#include "gdal_thread_pool.h"
 #include "gdalwarper.h"
 
-CPL_CVSID("$Id$");
+// Restrict to 64bit processors because they are guaranteed to have SSE2.
+// Could possibly be used too on 32bit, but we would need to check at runtime.
+#if defined(__x86_64) || defined(_M_X64)
+#define USE_SSE2
+
+#include "gdalsse_priv.h"
+
+#ifdef __SSE3__
+#include <pmmintrin.h>
+#endif
+#ifdef __SSSE3__
+#include <tmmintrin.h>
+#endif
+#ifdef __SSE4_1__
+#include <smmintrin.h>
+#endif
+
+#endif
+
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     GDALResampleChunk32R_Near()                      */
@@ -58,29 +81,33 @@ static CPLErr
 GDALResampleChunk32R_NearT( double dfXRatioDstToSrc,
                             double dfYRatioDstToSrc,
                             GDALDataType eWrkDataType,
-                            T * pChunk,
+                            const T * pChunk,
                             int nChunkXOff, int nChunkXSize,
                             int nChunkYOff,
                             int nDstXOff, int nDstXOff2,
                             int nDstYOff, int nDstYOff2,
-                            GDALRasterBand * poOverview )
+                            T** ppDstBuffer )
 
 {
     const int nDstXWidth = nDstXOff2 - nDstXOff;
 
 /* -------------------------------------------------------------------- */
-/*      Allocate scanline buffer.                                       */
+/*      Allocate buffers.                                               */
 /* -------------------------------------------------------------------- */
+    *ppDstBuffer = static_cast<T *>(
+        VSI_MALLOC3_VERBOSE(nDstXWidth, nDstYOff2 - nDstYOff,
+                            GDALGetDataTypeSizeBytes(eWrkDataType)));
+    if( *ppDstBuffer == nullptr )
+    {
+        return CE_Failure;
+    }
+    T* const pDstBuffer = *ppDstBuffer;
 
-    T* pDstScanline = static_cast<T *>(
-        VSI_MALLOC_VERBOSE(
-            nDstXWidth * GDALGetDataTypeSizeBytes(eWrkDataType) ) );
     int* panSrcXOff = static_cast<int *>(
         VSI_MALLOC_VERBOSE(nDstXWidth * sizeof(int)) );
 
-    if( pDstScanline == NULL || panSrcXOff == NULL )
+    if( panSrcXOff == nullptr )
     {
-        VSIFree(pDstScanline);
         VSIFree(panSrcXOff);
         return CE_Failure;
     }
@@ -100,36 +127,28 @@ GDALResampleChunk32R_NearT( double dfXRatioDstToSrc,
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
 /* ==================================================================== */
-    CPLErr eErr = CE_None;
-    for( int iDstLine = nDstYOff;
-         iDstLine < nDstYOff2 && eErr == CE_None;
-         ++iDstLine )
+    for( int iDstLine = nDstYOff; iDstLine < nDstYOff2; ++iDstLine )
     {
         int   nSrcYOff = static_cast<int>(0.5 + iDstLine * dfYRatioDstToSrc);
         if( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
 
         const T * const pSrcScanline =
-            pChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize) - nChunkXOff;
+            pChunk + (static_cast<GPtrDiff_t>(nSrcYOff-nChunkYOff) * nChunkXSize) - nChunkXOff;
 
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
 /* -------------------------------------------------------------------- */
+        T* pDstScanline = pDstBuffer + (iDstLine - nDstYOff) * nDstXWidth;
         for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
         {
             pDstScanline[iDstPixel] = pSrcScanline[panSrcXOff[iDstPixel]];
         }
-
-        eErr = poOverview->RasterIO(
-            GF_Write, nDstXOff, iDstLine, nDstXWidth, 1,
-            pDstScanline, nDstXWidth, 1, eWrkDataType,
-            0, 0, NULL );
     }
 
-    CPLFree( pDstScanline );
     CPLFree( panSrcXOff );
 
-    return eErr;
+    return CE_None;
 }
 
 static CPLErr
@@ -138,13 +157,15 @@ GDALResampleChunk32R_Near( double dfXRatioDstToSrc,
                            double /* dfSrcXDelta */,
                            double /* dfSrcYDelta */,
                            GDALDataType eWrkDataType,
-                           void * pChunk,
-                           GByte * /* pabyChunkNodataMask_unused */,
+                           const void * pChunk,
+                           const GByte * /* pabyChunkNodataMask_unused */,
                            int nChunkXOff, int nChunkXSize,
                            int nChunkYOff, int /* nChunkYSize */,
                            int nDstXOff, int nDstXOff2,
                            int nDstYOff, int nDstYOff2,
-                           GDALRasterBand * poOverview,
+                           GDALRasterBand * /*poOverview*/,
+                           void** ppDstBuffer,
+                           GDALDataType* peDstBufferDataType,
                            const char * /* pszResampling_unused */,
                            int /* bHasNoData_unused */,
                            float /* fNoDataValue_unused */,
@@ -152,115 +173,982 @@ GDALResampleChunk32R_Near( double dfXRatioDstToSrc,
                            GDALDataType /* eSrcDataType */,
                            bool /* bPropagateNoData */ )
 {
+    *peDstBufferDataType = eWrkDataType;
     if( eWrkDataType == GDT_Byte )
         return GDALResampleChunk32R_NearT(
             dfXRatioDstToSrc,
             dfYRatioDstToSrc,
             eWrkDataType,
-            static_cast<GByte *>( pChunk ),
+            static_cast<const GByte *>( pChunk ),
             nChunkXOff, nChunkXSize,
             nChunkYOff,
             nDstXOff, nDstXOff2,
             nDstYOff, nDstYOff2,
-            poOverview );
+            reinterpret_cast<GByte **>( ppDstBuffer ) );
     else if( eWrkDataType == GDT_UInt16 )
         return GDALResampleChunk32R_NearT(
             dfXRatioDstToSrc,
             dfYRatioDstToSrc,
             eWrkDataType,
-            static_cast<GInt16 *>( pChunk ),
+            static_cast<const GInt16 *>( pChunk ),
             nChunkXOff, nChunkXSize,
             nChunkYOff,
             nDstXOff, nDstXOff2,
             nDstYOff, nDstYOff2,
-            poOverview );
+            reinterpret_cast<GInt16 **>( ppDstBuffer ) );
     else if( eWrkDataType == GDT_Float32 )
         return GDALResampleChunk32R_NearT(
             dfXRatioDstToSrc,
             dfYRatioDstToSrc,
             eWrkDataType,
-            static_cast<float *>( pChunk ),
+            static_cast<const float *>( pChunk ),
             nChunkXOff, nChunkXSize,
             nChunkYOff,
             nDstXOff, nDstXOff2,
             nDstYOff, nDstYOff2,
-            poOverview);
+            reinterpret_cast<float **>( ppDstBuffer ));
 
     CPLAssert(false);
     return CE_Failure;
 }
 
-/************************************************************************/
-/*                          GDALFindBestEntry()                         */
-/************************************************************************/
+namespace
+{
 
-// Find in the color table the entry whose (c1,c2,c3) value is the closest
-// (using quadratic distance) to the passed (nR,nG,nB) triplet, ignoring
-// transparent entries.
-static int GDALFindBestEntry( int nEntryCount, const GDALColorEntry* aEntries,
-                              int nR, int nG, int nB )
+// Find in the color table the entry whose RGB value is the closest
+// (using quadratic distance) to the test color, ignoring transparent entries.
+int BestColorEntry(const std::vector<GDALColorEntry>& entries, const GDALColorEntry& test)
 {
     int nMinDist = std::numeric_limits<int>::max();
-    int iBestEntry = 0;
-    for( int i = 0; i < nEntryCount; ++i )
+    size_t bestEntry = 0;
+    for (size_t i = 0; i < entries.size(); ++i)
     {
+        const GDALColorEntry& entry = entries[i];
         // Ignore transparent entries
-        if( aEntries[i].c4 == 0 )
+        if( entry.c4 == 0 )
             continue;
-        int nDist = (nR - aEntries[i].c1) *  (nR - aEntries[i].c1) +
-            (nG - aEntries[i].c2) *  (nG - aEntries[i].c2) +
-            (nB - aEntries[i].c3) *  (nB - aEntries[i].c3);
+
+        int nDist = ((test.c1 - entry.c1) * (test.c1 - entry.c1)) +
+                ((test.c2 - entry.c2) *  (test.c2 - entry.c2)) +
+                ((test.c3 - entry.c3) *  (test.c3 - entry.c3));
         if( nDist < nMinDist )
         {
             nMinDist = nDist;
-            iBestEntry = i;
+            bestEntry = i;
         }
     }
-    return iBestEntry;
+    return static_cast<int>(bestEntry);
 }
 
-/************************************************************************/
-/*                      ReadColorTableAsArray()                         */
-/************************************************************************/
 
-static bool ReadColorTableAsArray( const GDALColorTable* poColorTable,
-                                   int& nEntryCount,
-                                   GDALColorEntry*& aEntries,
-                                   int& nTransparentIdx )
+std::vector<GDALColorEntry> ReadColorTable(const GDALColorTable& table, int& transparentIdx)
 {
-    nEntryCount = poColorTable->GetColorEntryCount();
-    aEntries = static_cast<GDALColorEntry *>(
-        VSI_MALLOC2_VERBOSE(sizeof(GDALColorEntry), nEntryCount) );
-    nTransparentIdx = -1;
-    if( aEntries == NULL )
-        return false;
-    for( int i = 0; i < nEntryCount; ++i )
+    std::vector<GDALColorEntry> entries(table.GetColorEntryCount());
+
+    transparentIdx = -1;
+    int i = 0;
+    for (auto& entry : entries)
     {
-        poColorTable->GetColorEntryAsRGB(i, &aEntries[i]);
-        if( nTransparentIdx < 0 && aEntries[i].c4 == 0 )
-            nTransparentIdx = i;
+        table.GetColorEntryAsRGB(i, &entry);
+        if ( transparentIdx < 0 && entry.c4 == 0 )
+            transparentIdx = i;
+        ++i;
     }
-    return true;
+    return entries;
 }
+
+} // unnamed  namespace
+
+/************************************************************************/
+/*                    GetReplacementValueIfNoData()                     */
+/************************************************************************/
+
+static float GetReplacementValueIfNoData(GDALDataType dt, int bHasNoData,
+                                         float fNoDataValue)
+{
+    float fReplacementVal = 0.0f;
+    if( bHasNoData )
+    {
+        if( dt == GDT_Byte )
+        {
+            if( fNoDataValue == std::numeric_limits<unsigned char>::max() )
+                fReplacementVal = static_cast<float>(
+                    std::numeric_limits<unsigned char>::max() - 1);
+            else
+                fReplacementVal = fNoDataValue + 1;
+        }
+        else if( dt == GDT_UInt16 )
+        {
+            if( fNoDataValue == std::numeric_limits<GUInt16>::max() )
+                fReplacementVal = static_cast<float>(
+                    std::numeric_limits<GUInt16>::max() - 1);
+            else
+                fReplacementVal = fNoDataValue + 1;
+        }
+        else if( dt == GDT_Int16 )
+        {
+            if( fNoDataValue == std::numeric_limits<GInt16>::max() )
+                fReplacementVal = static_cast<float>(
+                    std::numeric_limits<GInt16>::max() - 1);
+            else
+                fReplacementVal = fNoDataValue + 1;
+        }
+        else if( dt == GDT_UInt32 )
+        {
+            // Be careful to limited precision of float
+            fReplacementVal = fNoDataValue + 1;
+            double dfVal = fNoDataValue;
+            if( fReplacementVal >= static_cast<double>(std::numeric_limits<GUInt32>::max() - 128) )
+            {
+                while( fReplacementVal == fNoDataValue )
+                {
+                    dfVal -= 1.0;
+                    fReplacementVal = static_cast<float>(dfVal);
+                }
+            }
+            else
+            {
+                while( fReplacementVal == fNoDataValue )
+                {
+                    dfVal += 1.0;
+                    fReplacementVal = static_cast<float>(dfVal);
+                }
+            }
+        }
+        else if( dt == GDT_Int32 )
+        {
+            // Be careful to limited precision of float
+            fReplacementVal = fNoDataValue + 1;
+            double dfVal = fNoDataValue;
+            if( fReplacementVal >= static_cast<double>(std::numeric_limits<GInt32>::max() - 64) )
+            {
+                while( fReplacementVal == fNoDataValue )
+                {
+                    dfVal -= 1.0;
+                    fReplacementVal = static_cast<float>(dfVal);
+                }
+            }
+            else
+            {
+                while( fReplacementVal == fNoDataValue )
+                {
+                    dfVal += 1.0;
+                    fReplacementVal = static_cast<float>(dfVal);
+                }
+            }
+        }
+        else if( dt == GDT_Float32 || dt == GDT_Float64 )
+        {
+            if( fNoDataValue == 0 )
+            {
+                fReplacementVal = std::numeric_limits<float>::min();
+            }
+            else
+            {
+                fReplacementVal = static_cast<float>(
+                    fNoDataValue + 1e-7 * fNoDataValue);
+            }
+        }
+    }
+    return fReplacementVal;
+}
+
+/************************************************************************/
+/*                             SQUARE()                                 */
+/************************************************************************/
+
+template <class T, class Tsquare = T> inline Tsquare SQUARE(T val)
+{
+    return static_cast<Tsquare>(val) * val;
+}
+
+/************************************************************************/
+/*                          ComputeIntegerRMS()                         */
+/************************************************************************/
+// Compute rms = sqrt(sumSquares / weight) in such a way that it is the
+// integer that minimizes abs(rms**2 - sumSquares / weight)
+template <class T> inline T ComputeIntegerRMS(double sumSquares, double weight)
+{
+    const double sumDivWeight = sumSquares / weight;
+    T rms = static_cast<T>(sqrt(sumDivWeight));
+
+    // Is rms**2 or (rms+1)**2 closest to sumSquares / weight ?
+    // Naive version:
+    // if( weight * (rms+1)**2 - sumSquares < sumSquares - weight * rms**2 )
+    if( 2 * rms * (rms + 1) + 1 < 2 * sumDivWeight )
+        rms += 1;
+    return rms;
+}
+
+template <class T, class Tsum> inline T ComputeIntegerRMS_4values(Tsum)
+{
+    CPLAssert(false);
+    return 0;
+}
+
+template<> inline GByte ComputeIntegerRMS_4values<GByte, int>(int sumSquares)
+{
+    // It has been verified that given the correction on rms below, using
+    // sqrt((float)((sumSquares + 1)/ 4)) or sqrt((float)sumSquares * 0.25f)
+    // is equivalent, so use the former as it is used twice.
+    const int sumSquaresPlusOneDiv4 = (sumSquares + 1) / 4;
+    const float sumDivWeight = static_cast<float>(sumSquaresPlusOneDiv4);
+    GByte rms = static_cast<GByte>(std::sqrt(sumDivWeight));
+
+    // Is rms**2 or (rms+1)**2 closest to sumSquares / weight ?
+    // Naive version:
+    // if( weight * (rms+1)**2 - sumSquares < sumSquares - weight * rms**2 )
+    // Optimized version for integer case and weight == 4
+    if( static_cast<int>(rms) * (rms + 1) < sumSquaresPlusOneDiv4 )
+        rms += 1;
+    return rms;
+}
+
+template<> inline GUInt16 ComputeIntegerRMS_4values<GUInt16, double>(double sumSquares)
+{
+    const double sumDivWeight = sumSquares * 0.25;
+    GUInt16 rms = static_cast<GUInt16>(std::sqrt(sumDivWeight));
+
+    // Is rms**2 or (rms+1)**2 closest to sumSquares / weight ?
+    // Naive version:
+    // if( weight * (rms+1)**2 - sumSquares < sumSquares - weight * rms**2 )
+    // Optimized version for integer case and weight == 4
+    if( static_cast<GUInt32>(rms) * (rms + 1) < static_cast<GUInt32>(sumDivWeight + 0.25) )
+        rms += 1;
+    return rms;
+}
+
+#ifdef USE_SSE2
+
+/************************************************************************/
+/*                   QuadraticMeanByteSSE2OrAVX2()                      */
+/************************************************************************/
+
+#ifdef __SSE4_1__
+#define sse2_packus_epi32    _mm_packus_epi32
+#else
+inline __m128i sse2_packus_epi32(__m128i a, __m128i b)
+{
+    const auto minus32768_32 = _mm_set1_epi32(-32768);
+    const auto minus32768_16 = _mm_set1_epi16(-32768);
+    a = _mm_add_epi32(a, minus32768_32);
+    b = _mm_add_epi32(b, minus32768_32);
+    a = _mm_packs_epi32(a, b);
+    a = _mm_sub_epi16(a, minus32768_16);
+    return a;
+}
+#endif
+
+#ifdef __SSSE3__
+#define sse2_hadd_epi16     _mm_hadd_epi16
+#else
+inline __m128i sse2_hadd_epi16(__m128i a, __m128i b)
+{
+    // Horizontal addition of adjacent pairs
+    const auto mask = _mm_set1_epi32(0xFFFF);
+    const auto horizLo = _mm_add_epi32(_mm_and_si128(a, mask), _mm_srli_epi32(a, 16));
+    const auto horizHi = _mm_add_epi32(_mm_and_si128(b, mask), _mm_srli_epi32(b, 16));
+
+    // Recombine low and high parts
+    return _mm_packs_epi32(horizLo, horizHi);
+}
+#endif
+
+
+#ifdef __AVX2__
+#define DEST_ELTS       16
+#define set1_epi16      _mm256_set1_epi16
+#define set1_epi32      _mm256_set1_epi32
+#define setzero         _mm256_setzero_si256
+#define set1_ps         _mm256_set1_ps
+#define loadu_int(x)    _mm256_loadu_si256(reinterpret_cast<__m256i const*>(x))
+#define unpacklo_epi8   _mm256_unpacklo_epi8
+#define unpackhi_epi8   _mm256_unpackhi_epi8
+#define madd_epi16      _mm256_madd_epi16
+#define add_epi32       _mm256_add_epi32
+#define mul_ps          _mm256_mul_ps
+#define cvtepi32_ps     _mm256_cvtepi32_ps
+#define sqrt_ps         _mm256_sqrt_ps
+#define cvttps_epi32    _mm256_cvttps_epi32
+#define packs_epi32     _mm256_packs_epi32
+#define packus_epi32    _mm256_packus_epi32
+#define srli_epi32      _mm256_srli_epi32
+#define mullo_epi16     _mm256_mullo_epi16
+#define srli_epi16      _mm256_srli_epi16
+#define cmpgt_epi16     _mm256_cmpgt_epi16
+#define add_epi16       _mm256_add_epi16
+#define sub_epi16       _mm256_sub_epi16
+#define packus_epi16    _mm256_packus_epi16
+/* AVX2 operates on 2 separate 128-bit lanes, so we have to do shuffling */
+/* to get the lower 128-bit bits of what would be a true 256-bit vector register */
+#define store_lo(x,y)   _mm_storeu_si128(reinterpret_cast<__m128i*>(x), \
+                            _mm256_extracti128_si256(_mm256_permute4x64_epi64((y), 0 | (2 << 2)), 0))
+#define hadd_epi16      _mm256_hadd_epi16
+#define zeroupper()     _mm256_zeroupper()
+#else
+#define DEST_ELTS       8
+#define set1_epi16      _mm_set1_epi16
+#define set1_epi32      _mm_set1_epi32
+#define setzero         _mm_setzero_si128
+#define set1_ps         _mm_set1_ps
+#define loadu_int(x)    _mm_loadu_si128(reinterpret_cast<__m128i const*>(x))
+#define unpacklo_epi8   _mm_unpacklo_epi8
+#define unpackhi_epi8   _mm_unpackhi_epi8
+#define madd_epi16      _mm_madd_epi16
+#define add_epi32       _mm_add_epi32
+#define mul_ps          _mm_mul_ps
+#define cvtepi32_ps     _mm_cvtepi32_ps
+#define sqrt_ps         _mm_sqrt_ps
+#define cvttps_epi32    _mm_cvttps_epi32
+#define packs_epi32     _mm_packs_epi32
+#define packus_epi32    sse2_packus_epi32
+#define srli_epi32      _mm_srli_epi32
+#define mullo_epi16     _mm_mullo_epi16
+#define srli_epi16      _mm_srli_epi16
+#define cmpgt_epi16     _mm_cmpgt_epi16
+#define add_epi16       _mm_add_epi16
+#define sub_epi16       _mm_sub_epi16
+#define packus_epi16    _mm_packus_epi16
+#define store_lo(x,y)   _mm_storel_epi64(reinterpret_cast<__m128i*>(x), (y))
+#define hadd_epi16      sse2_hadd_epi16
+#define zeroupper()     (void)0
+#endif
+
+template<class T> static int QuadraticMeanByteSSE2OrAVX2(
+                                                   int nDstXWidth,
+                                                   int nChunkXSize,
+                                                   const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
+                                                   T* CPL_RESTRICT pDstScanline)
+{
+    // Optimized implementation for RMS on Byte by
+    // processing by group of 8 output pixels, so as to use
+    // a single _mm_sqrt_ps() call for 4 output pixels
+    const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+
+    int iDstPixel = 0;
+    const auto one16 = set1_epi16(1);
+    const auto one32 = set1_epi32(1);
+    const auto zero = setzero();
+    const auto minus32768 = set1_epi16(-32768);
+
+    for( ; iDstPixel < nDstXWidth - (DEST_ELTS-1); iDstPixel += DEST_ELTS )
+    {
+        // Load 2 * DEST_ELTS bytes from each line
+        auto firstLine = loadu_int(pSrcScanlineShifted);
+        auto secondLine = loadu_int(pSrcScanlineShifted + nChunkXSize);
+        // Extend those Bytes as UInt16s
+        auto firstLineLo = unpacklo_epi8(firstLine, zero);
+        auto firstLineHi = unpackhi_epi8(firstLine, zero);
+        auto secondLineLo = unpacklo_epi8(secondLine, zero);
+        auto secondLineHi = unpackhi_epi8(secondLine, zero);
+
+        // Multiplication of 16 bit values and horizontal
+        // addition of 32 bit results
+        // [ src[2*i+0]^2 + src[2*i+1]^2 for i in range(4) ]
+        firstLineLo = madd_epi16(firstLineLo, firstLineLo);
+        firstLineHi = madd_epi16(firstLineHi, firstLineHi);
+        secondLineLo = madd_epi16(secondLineLo, secondLineLo);
+        secondLineHi = madd_epi16(secondLineHi, secondLineHi);
+
+        // Vertical addition
+        const auto sumSquaresLo = add_epi32(firstLineLo, secondLineLo);
+        const auto sumSquaresHi = add_epi32(firstLineHi, secondLineHi);
+
+        const auto sumSquaresPlusOneDiv4Lo =
+            srli_epi32(add_epi32(sumSquaresLo, one32), 2);
+        const auto sumSquaresPlusOneDiv4Hi =
+            srli_epi32(add_epi32(sumSquaresHi, one32), 2);
+
+        // Take square root and truncate/floor to int32
+        const auto rmsLo = cvttps_epi32(sqrt_ps(cvtepi32_ps(sumSquaresPlusOneDiv4Lo)));
+        const auto rmsHi = cvttps_epi32(sqrt_ps(cvtepi32_ps(sumSquaresPlusOneDiv4Hi)));
+
+        // Merge back low and high registers with each RMS value
+        // as a 16 bit value.
+        auto rms = packs_epi32(rmsLo, rmsHi);
+
+        // Round to upper value if it minimizes the
+        // error |rms^2 - sumSquares/4|
+        // if( 2 * (2 * rms * (rms + 1) + 1) < sumSquares )
+        //    rms += 1;
+        // which is equivalent to:
+        // if( rms * (rms + 1) < (sumSquares+1) / 4 )
+        //    rms += 1;
+        // And both left and right parts fit on 16 (unsigned) bits
+        const auto sumSquaresPlusOneDiv4 = packus_epi32(
+            sumSquaresPlusOneDiv4Lo, sumSquaresPlusOneDiv4Hi);
+        // cmpgt_epi16 operates on signed int16, but here
+        // we have unsigned values, so shift them by -32768 before
+        auto mask = cmpgt_epi16(
+            add_epi16(sumSquaresPlusOneDiv4, minus32768),
+            add_epi16(mullo_epi16(rms, add_epi16(rms, one16)), minus32768));
+        // The value of the mask will be -1 when the correction needs to be applied
+        rms = sub_epi16(rms, mask);
+
+        // Pack each 16 bit RMS value to 8 bits
+        rms = packus_epi16(rms, rms /* could be anything */);
+        store_lo(&pDstScanline[iDstPixel], rms);
+        pSrcScanlineShifted += 2 * DEST_ELTS;
+    }
+    zeroupper();
+
+    pSrcScanlineShiftedInOut = pSrcScanlineShifted;
+    return iDstPixel;
+}
+
+/************************************************************************/
+/*                      AverageByteSSE2OrAVX2()                         */
+/************************************************************************/
+
+template<class T> static int AverageByteSSE2OrAVX2(
+                                             int nDstXWidth,
+                                             int nChunkXSize,
+                                             const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
+                                             T* CPL_RESTRICT pDstScanline)
+{
+    // Optimized implementation for average on Byte by
+    // processing by group of 8 output pixels.
+
+    const auto zero = setzero();
+    const auto two16 = set1_epi16(2);
+    const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+
+    int iDstPixel = 0;
+    for( ; iDstPixel < nDstXWidth - (DEST_ELTS-1); iDstPixel += DEST_ELTS )
+    {
+        // Load 2 * DEST_ELTS bytes from each line
+        const auto firstLine = loadu_int(pSrcScanlineShifted);
+        const auto secondLine = loadu_int(pSrcScanlineShifted + nChunkXSize);
+        // Extend those Bytes as UInt16s
+        const auto firstLineLo = unpacklo_epi8(firstLine, zero);
+        const auto firstLineHi = unpackhi_epi8(firstLine, zero);
+        const auto secondLineLo = unpacklo_epi8(secondLine, zero);
+        const auto secondLineHi = unpackhi_epi8(secondLine, zero);
+
+        // Vertical addition
+        const auto sumLo = add_epi16(firstLineLo, secondLineLo);
+        const auto sumHi = add_epi16(firstLineHi, secondLineHi);
+
+        // Horizontal addition of adjacent pairs, and recombine low and high parts
+        const auto sum = hadd_epi16(sumLo, sumHi);
+
+        // average = (sum + 2) / 4
+        auto average = srli_epi16(add_epi16(sum, two16), 2);
+
+        // Pack each 16 bit average value to 8 bits
+        average = packus_epi16(average, average /* could be anything */);
+        store_lo(&pDstScanline[iDstPixel], average);
+        pSrcScanlineShifted += 2 * DEST_ELTS;
+    }
+    zeroupper();
+
+    pSrcScanlineShiftedInOut = pSrcScanlineShifted;
+    return iDstPixel;
+}
+
+/************************************************************************/
+/*                     QuadraticMeanUInt16SSE2()                        */
+/************************************************************************/
+
+#ifdef __SSE3__
+#define sse2_hadd_pd _mm_hadd_pd
+#else
+inline __m128d sse2_hadd_pd(__m128d a, __m128d b)
+{
+    auto aLo_bLo = _mm_castps_pd(_mm_movelh_ps(_mm_castpd_ps(a), _mm_castpd_ps(b)));
+    auto aHi_bHi = _mm_castps_pd(_mm_movehl_ps(_mm_castpd_ps(b), _mm_castpd_ps(a)));
+    return _mm_add_pd(aLo_bLo, aHi_bHi); // (aLo + aHi, bLo + bHi)
+}
+#endif
+
+inline __m128d SQUARE(__m128d x)
+{
+    return _mm_mul_pd(x, x);
+}
+
+#ifdef __AVX2__
+
+inline __m256d FIXUP_LANES(__m256d x)
+{
+    return _mm256_permute4x64_pd(x, _MM_SHUFFLE(3,1,2,0));
+}
+
+inline __m256 FIXUP_LANES(__m256 x)
+{
+    return _mm256_castpd_ps(FIXUP_LANES(_mm256_castps_pd(x)));
+}
+
+#endif
+
+template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
+                                                     int nChunkXSize,
+                                                     const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
+                                                     T* CPL_RESTRICT pDstScanline)
+{
+    // Optimized implementation for RMS on UInt16 by
+    // processing by group of 4 output pixels.
+    const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+
+    int iDstPixel = 0;
+    const auto zero = _mm_setzero_si128();
+
+#ifdef __AVX2__
+    const auto zeroDot25 = _mm256_set1_pd(0.25);
+    const auto zeroDot5 = _mm256_set1_pd(0.5);
+
+    // The first four 0's could be anything, as we only take the bottom
+    // 128 bits.
+    const auto permutation =  _mm256_set_epi32(0,0,0,0,6,4,2,0);
+#else
+    const auto zeroDot25 = _mm_set1_pd(0.25);
+    const auto zeroDot5 = _mm_set1_pd(0.5);
+#endif
+
+    for( ; iDstPixel < nDstXWidth - 3; iDstPixel += 4 )
+    {
+        // Load 8 UInt16 from each line
+        const auto firstLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted));
+        const auto secondLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted + nChunkXSize));
+
+        // Detect if all of the source values fit in 14 bits.
+        // because if x < 2^14, then 4 * x^2 < 2^30 which fits in a signed int32
+        // and we can do a much faster implementation.
+        const auto maskTmp = _mm_srli_epi16(_mm_or_si128(firstLine, secondLine), 14);
+        const auto nMaskFitsIn14Bits = _mm_cvtsi128_si64(
+            _mm_packus_epi16(maskTmp, maskTmp /* could be anything */));
+        if( nMaskFitsIn14Bits == 0 )
+        {
+            // Multiplication of 16 bit values and horizontal
+            // addition of 32 bit results
+            const auto firstLineHSumSquare = _mm_madd_epi16(firstLine, firstLine);
+            const auto secondLineHSumSquare = _mm_madd_epi16(secondLine, secondLine);
+            // Vertical addition
+            const auto sumSquares = _mm_add_epi32(firstLineHSumSquare,
+                                                  secondLineHSumSquare);
+            // In theory we should take sqrt(sumSquares * 0.25f)
+            // but given the rounding we do, this is equivalent to
+            // sqrt((sumSquares + 1)/4). This has been verified exhaustively for
+            // sumSquares <= 4 * 16383^2
+            const auto one32 = _mm_set1_epi32(1);
+            const auto sumSquaresPlusOneDiv4 =
+                _mm_srli_epi32(_mm_add_epi32(sumSquares, one32), 2);
+            // Take square root and truncate/floor to int32
+            auto rms = _mm_cvttps_epi32(_mm_sqrt_ps(_mm_cvtepi32_ps(sumSquaresPlusOneDiv4)));
+
+            // Round to upper value if it minimizes the
+            // error |rms^2 - sumSquares/4|
+            // if( 2 * (2 * rms * (rms + 1) + 1) < sumSquares )
+            //    rms += 1;
+            // which is equivalent to:
+            // if( rms * rms + rms < (sumSquares+1) / 4 )
+            //    rms += 1;
+            auto mask = _mm_cmpgt_epi32(
+                sumSquaresPlusOneDiv4,
+                _mm_add_epi32(_mm_madd_epi16(rms, rms), rms));
+            rms = _mm_sub_epi32(rms, mask);
+            // Pack each 32 bit RMS value to 16 bits
+            rms = _mm_packs_epi32(rms, rms /* could be anything */);
+            _mm_storel_epi64(reinterpret_cast<__m128i*>(&pDstScanline[iDstPixel]), rms);
+            pSrcScanlineShifted += 8;
+            continue;
+        }
+
+        // An approach using _mm_mullo_epi16, _mm_mulhi_epu16 before extending
+        // to 32 bit would result in 4 multiplications instead of 8, but mullo/mulhi
+        // have a worse throughput than mul_pd.
+
+        // Extend those UInt16s as UInt32s
+        const auto firstLineLo = _mm_unpacklo_epi16(firstLine, zero);
+        const auto firstLineHi = _mm_unpackhi_epi16(firstLine, zero);
+        const auto secondLineLo = _mm_unpacklo_epi16(secondLine, zero);
+        const auto secondLineHi = _mm_unpackhi_epi16(secondLine, zero);
+
+#ifdef __AVX2__
+        // Multiplication of 32 bit values previously converted to 64 bit double
+        const auto firstLineLoDbl = SQUARE(_mm256_cvtepi32_pd(firstLineLo));
+        const auto firstLineHiDbl = SQUARE(_mm256_cvtepi32_pd(firstLineHi));
+        const auto secondLineLoDbl = SQUARE(_mm256_cvtepi32_pd(secondLineLo));
+        const auto secondLineHiDbl = SQUARE(_mm256_cvtepi32_pd(secondLineHi));
+
+        // Vertical addition of squares
+        const auto sumSquaresLo = _mm256_add_pd(firstLineLoDbl, secondLineLoDbl);
+        const auto sumSquaresHi = _mm256_add_pd(firstLineHiDbl, secondLineHiDbl);
+
+        // Horizontal addition of squares
+        const auto sumSquares = FIXUP_LANES(_mm256_hadd_pd(sumSquaresLo, sumSquaresHi));
+
+        const auto sumDivWeight = _mm256_mul_pd(sumSquares, zeroDot25);
+
+        // Take square root and truncate/floor to int32
+        auto rms = _mm256_cvttpd_epi32(_mm256_sqrt_pd(sumDivWeight));
+        const auto rmsDouble = _mm256_cvtepi32_pd(rms);
+        const auto right = _mm256_sub_pd(sumDivWeight,
+                                _mm256_add_pd(SQUARE(rmsDouble), rmsDouble));
+
+        auto mask = _mm256_castpd_ps(_mm256_cmp_pd(zeroDot5, right, _CMP_LT_OS));
+        // Extract 32-bit from each of the 4 64-bit masks
+        //mask = FIXUP_LANES(_mm256_shuffle_ps(mask, mask, _MM_SHUFFLE(2,0,2,0)));
+        mask = _mm256_permutevar8x32_ps(mask, permutation);
+        const auto maskI = _mm_castps_si128(_mm256_extractf128_ps(mask, 0));
+
+        // Apply the correction
+        rms = _mm_sub_epi32(rms, maskI);
+
+        // Pack each 32 bit RMS value to 16 bits
+        rms = _mm_packus_epi32(rms, rms /* could be anything */);
+#else
+        // Multiplication of 32 bit values previously converted to 64 bit double
+        const auto firstLineLoLo = SQUARE(_mm_cvtepi32_pd(firstLineLo));
+        const auto firstLineLoHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(firstLineLo,8)));
+        const auto firstLineHiLo = SQUARE(_mm_cvtepi32_pd(firstLineHi));
+        const auto firstLineHiHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(firstLineHi,8)));
+
+        const auto secondLineLoLo = SQUARE(_mm_cvtepi32_pd(secondLineLo));
+        const auto secondLineLoHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(secondLineLo,8)));
+        const auto secondLineHiLo = SQUARE(_mm_cvtepi32_pd(secondLineHi));
+        const auto secondLineHiHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(secondLineHi,8)));
+
+        // Vertical addition of squares
+        const auto sumSquaresLoLo = _mm_add_pd(firstLineLoLo, secondLineLoLo);
+        const auto sumSquaresLoHi = _mm_add_pd(firstLineLoHi, secondLineLoHi);
+        const auto sumSquaresHiLo = _mm_add_pd(firstLineHiLo, secondLineHiLo);
+        const auto sumSquaresHiHi = _mm_add_pd(firstLineHiHi, secondLineHiHi);
+
+        // Horizontal addition of squares
+        const auto sumSquaresLo = sse2_hadd_pd(sumSquaresLoLo, sumSquaresLoHi);
+        const auto sumSquaresHi = sse2_hadd_pd(sumSquaresHiLo, sumSquaresHiHi);
+
+        const auto sumDivWeightLo = _mm_mul_pd(sumSquaresLo, zeroDot25);
+        const auto sumDivWeightHi = _mm_mul_pd(sumSquaresHi, zeroDot25);
+        // Take square root and truncate/floor to int32
+        const auto rmsLo = _mm_cvttpd_epi32(_mm_sqrt_pd(sumDivWeightLo));
+        const auto rmsHi = _mm_cvttpd_epi32(_mm_sqrt_pd(sumDivWeightHi));
+
+        // Correctly round rms to minimize | rms^2 - sumSquares / 4 |
+        // if( 0.5 < sumDivWeight - (rms * rms + rms) )
+        //     rms += 1;
+        const auto rmsLoDouble = _mm_cvtepi32_pd(rmsLo);
+        const auto rmsHiDouble = _mm_cvtepi32_pd(rmsHi);
+        const auto rightLo = _mm_sub_pd(sumDivWeightLo,
+                                _mm_add_pd(SQUARE(rmsLoDouble), rmsLoDouble));
+        const auto rightHi = _mm_sub_pd(sumDivWeightHi,
+                                _mm_add_pd(SQUARE(rmsHiDouble), rmsHiDouble));
+
+        const auto maskLo = _mm_castpd_ps(_mm_cmplt_pd(zeroDot5, rightLo));
+        const auto maskHi = _mm_castpd_ps(_mm_cmplt_pd(zeroDot5, rightHi));
+        // The value of the mask will be -1 when the correction needs to be applied
+        const auto mask = _mm_castps_si128(_mm_shuffle_ps(
+            maskLo, maskHi, (0 << 0) | (2 << 2) | (0 << 4) | (2 << 6)));
+
+        auto rms = _mm_castps_si128(_mm_movelh_ps(
+            _mm_castsi128_ps(rmsLo), _mm_castsi128_ps(rmsHi)));
+        // Apply the correction
+        rms = _mm_sub_epi32(rms, mask);
+
+        // Pack each 32 bit RMS value to 16 bits
+        rms = sse2_packus_epi32(rms, rms /* could be anything */);
+#endif
+
+        _mm_storel_epi64(reinterpret_cast<__m128i*>(&pDstScanline[iDstPixel]), rms);
+        pSrcScanlineShifted += 8;
+    }
+
+    zeroupper();
+
+    pSrcScanlineShiftedInOut = pSrcScanlineShifted;
+    return iDstPixel;
+}
+
+/************************************************************************/
+/*                         AverageUInt16SSE2()                          */
+/************************************************************************/
+
+template<class T> static int AverageUInt16SSE2(
+                                             int nDstXWidth,
+                                             int nChunkXSize,
+                                             const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
+                                             T* CPL_RESTRICT pDstScanline)
+{
+    // Optimized implementation for average on UInt16 by
+    // processing by group of 8 output pixels.
+
+    const auto mask = _mm_set1_epi32(0xFFFF);
+    const auto two = _mm_set1_epi32(2);
+    const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+
+    int iDstPixel = 0;
+    for( ; iDstPixel < nDstXWidth - 7; iDstPixel += 8 )
+    {
+        __m128i averageLow;
+        // Load 8 UInt16 from each line
+        {
+        const auto firstLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted));
+        const auto secondLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted + nChunkXSize));
+
+        // Horizontal addition and extension to 32 bit
+        const auto horizAddFirstLine = _mm_add_epi32(_mm_and_si128(firstLine, mask), _mm_srli_epi32(firstLine, 16));
+        const auto horizAddSecondLine = _mm_add_epi32(_mm_and_si128(secondLine, mask), _mm_srli_epi32(secondLine, 16));
+
+        // Vertical addition and average computation
+        // average = (sum + 2) >> 2
+        const auto sum = _mm_add_epi32(_mm_add_epi32(horizAddFirstLine, horizAddSecondLine), two);
+        averageLow = _mm_srli_epi32(sum, 2);
+        }
+        // Load 8 UInt16 from each line
+        __m128i averageHigh;
+        {
+        const auto firstLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted + 8));
+        const auto secondLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted + 8 + nChunkXSize));
+
+        // Horizontal addition and extension to 32 bit
+        const auto horizAddFirstLine = _mm_add_epi32(_mm_and_si128(firstLine, mask), _mm_srli_epi32(firstLine, 16));
+        const auto horizAddSecondLine = _mm_add_epi32(_mm_and_si128(secondLine, mask), _mm_srli_epi32(secondLine, 16));
+
+        // Vertical addition and average computation
+        // average = (sum + 2) >> 2
+        const auto sum = _mm_add_epi32(_mm_add_epi32(horizAddFirstLine, horizAddSecondLine), two);
+        averageHigh = _mm_srli_epi32(sum, 2);
+        }
+
+        // Pack each 32 bit average value to 16 bits
+        auto average = sse2_packus_epi32(averageLow, averageHigh);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(&pDstScanline[iDstPixel]), average);
+        pSrcScanlineShifted += 16;
+    }
+
+    pSrcScanlineShiftedInOut = pSrcScanlineShifted;
+    return iDstPixel;
+}
+
+/************************************************************************/
+/*                      QuadraticMeanFloatSSE2()                        */
+/************************************************************************/
+
+#ifdef __AVX2__
+#define RMS_FLOAT_ELTS 8
+#define set1_ps     _mm256_set1_ps
+#define loadu_ps    _mm256_loadu_ps
+#define andnot_ps   _mm256_andnot_ps
+#define and_ps      _mm256_and_ps
+#define max_ps      _mm256_max_ps
+#define shuffle_ps  _mm256_shuffle_ps
+#define div_ps      _mm256_div_ps
+#define cmpeq_ps(x,y) _mm256_cmp_ps(x,y,_CMP_EQ_OQ)
+#define mul_ps      _mm256_mul_ps
+#define add_ps      _mm256_add_ps
+#define hadd_ps     _mm256_hadd_ps
+#define sqrt_ps     _mm256_sqrt_ps
+#define or_ps       _mm256_or_ps
+#define unpacklo_ps _mm256_unpacklo_ps
+#define unpackhi_ps _mm256_unpackhi_ps
+#define storeu_ps   _mm256_storeu_ps
+
+inline __m256 SQUARE(__m256 x)
+{
+    return _mm256_mul_ps(x, x);
+}
+
+#else
+
+#ifdef __SSE3__
+#define sse2_hadd_ps _mm_hadd_ps
+#else
+inline __m128 sse2_hadd_ps(__m128 a, __m128 b)
+{
+    auto aEven_bEven = _mm_shuffle_ps(a, b, _MM_SHUFFLE(2,0,2,0));
+    auto aOdd_bOdd = _mm_shuffle_ps(a, b, _MM_SHUFFLE(3,1,3,1));
+    return _mm_add_ps(aEven_bEven, aOdd_bOdd); // (aEven + aOdd, bEven + bOdd)
+}
+#endif
+
+#define RMS_FLOAT_ELTS 4
+#define set1_ps     _mm_set1_ps
+#define loadu_ps    _mm_loadu_ps
+#define andnot_ps   _mm_andnot_ps
+#define and_ps      _mm_and_ps
+#define max_ps      _mm_max_ps
+#define shuffle_ps  _mm_shuffle_ps
+#define div_ps      _mm_div_ps
+#define cmpeq_ps    _mm_cmpeq_ps
+#define mul_ps      _mm_mul_ps
+#define add_ps      _mm_add_ps
+#define hadd_ps     sse2_hadd_ps
+#define sqrt_ps     _mm_sqrt_ps
+#define or_ps       _mm_or_ps
+#define unpacklo_ps _mm_unpacklo_ps
+#define unpackhi_ps _mm_unpackhi_ps
+#define storeu_ps   _mm_storeu_ps
+
+inline __m128 SQUARE(__m128 x)
+{
+    return _mm_mul_ps(x, x);
+}
+
+inline __m128 FIXUP_LANES(__m128 x)
+{
+    return x;
+}
+
+#endif
+
+#if defined(__GNUC__) && defined(__AVX2__)
+// Disabling inlining works around a bug with gcc 9.3 (Ubuntu 20.04) in
+// -O2 -mavx2 mode, where the registry that contains minus_zero is correctly
+// loaded the first time the function is called (looking at the disassembly,
+// one sees it is loaded much earlier than the function), but gets corrupted
+// (zeroed) in following iterations.
+// It appears the bug is due to the explicit zeroupper() call at the end of
+// the function.
+// The bug is at least solved in gcc 10.2.
+// Inlining doesn't bring much here to performance.
+#define NOINLINE __attribute__ ((noinline))
+#else
+#define NOINLINE
+#endif
+
+template<class T> static int NOINLINE QuadraticMeanFloatSSE2(int nDstXWidth,
+                                                    int nChunkXSize,
+                                                    const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
+                                                    T* CPL_RESTRICT pDstScanline)
+{
+    // Optimized implementation for RMS on Float32 by
+    // processing by group of RMS_FLOAT_ELTS output pixels.
+    const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+
+    int iDstPixel = 0;
+    const auto minus_zero = set1_ps(-0.0f);
+    const auto zeroDot25 = set1_ps(0.25f);
+    const auto one = set1_ps(1.0f);
+    const auto infv = set1_ps(std::numeric_limits<float>::infinity());
+
+    for( ; iDstPixel < nDstXWidth - (RMS_FLOAT_ELTS-1); iDstPixel += RMS_FLOAT_ELTS )
+    {
+        // Load 2*RMS_FLOAT_ELTS Float32 from each line
+        auto firstLineLo = loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted));
+        auto firstLineHi = loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + RMS_FLOAT_ELTS));
+        auto secondLineLo = loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + nChunkXSize));
+        auto secondLineHi = loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + RMS_FLOAT_ELTS + nChunkXSize));
+
+        // Take the absolute value
+        firstLineLo = andnot_ps(minus_zero, firstLineLo);
+        firstLineHi = andnot_ps(minus_zero, firstLineHi);
+        secondLineLo = andnot_ps(minus_zero, secondLineLo);
+        secondLineHi = andnot_ps(minus_zero, secondLineHi);
+
+        auto firstLineEven = shuffle_ps(firstLineLo, firstLineHi, _MM_SHUFFLE(2,0,2,0));
+        auto firstLineOdd = shuffle_ps(firstLineLo, firstLineHi, _MM_SHUFFLE(3,1,3,1));
+        auto secondLineEven = shuffle_ps(secondLineLo, secondLineHi, _MM_SHUFFLE(2,0,2,0));
+        auto secondLineOdd = shuffle_ps(secondLineLo, secondLineHi, _MM_SHUFFLE(3,1,3,1));
+
+        // Compute the maximum of each RMS_FLOAT_ELTS value to RMS-average
+        const auto maxV = max_ps(max_ps(firstLineEven,firstLineOdd),
+                                 max_ps(secondLineEven, secondLineEven));
+
+        // Normalize each value by the maximum of the RMS_FLOAT_ELTS ones.
+        // This step is important to avoid that the square evaluates to infinity
+        // for sufficiently big input.
+        auto invMax = div_ps(one, maxV);
+        // Deal with 0 being the maximum to correct division by zero
+        // note: comparing to -0 leads to identical results as to comparing with 0
+        invMax = andnot_ps(cmpeq_ps(maxV, minus_zero), invMax);
+
+        firstLineEven = mul_ps(firstLineEven, invMax);
+        firstLineOdd = mul_ps(firstLineOdd, invMax);
+        secondLineEven = mul_ps(secondLineEven, invMax);
+        secondLineOdd = mul_ps(secondLineOdd, invMax);
+
+        // Compute squares
+        firstLineEven = SQUARE(firstLineEven);
+        firstLineOdd = SQUARE(firstLineOdd);
+        secondLineEven = SQUARE(secondLineEven);
+        secondLineOdd = SQUARE(secondLineOdd);
+
+        const auto sumSquares = add_ps(add_ps(firstLineEven, firstLineOdd),
+                                       add_ps(secondLineEven, secondLineOdd));
+
+        auto rms = mul_ps(maxV, sqrt_ps(mul_ps(sumSquares, zeroDot25)));
+
+        // Deal with infinity being the maximum
+        const auto maskIsInf = cmpeq_ps(maxV, infv);
+        rms = or_ps(andnot_ps(maskIsInf, rms), and_ps(maskIsInf, infv));
+
+        rms = FIXUP_LANES(rms);
+
+        // coverity[incompatible_cast]
+        storeu_ps(reinterpret_cast<float*>(&pDstScanline[iDstPixel]), rms);
+        pSrcScanlineShifted += RMS_FLOAT_ELTS * 2;
+    }
+
+    zeroupper();
+
+    pSrcScanlineShiftedInOut = pSrcScanlineShifted;
+    return iDstPixel;
+}
+
+/************************************************************************/
+/*                        AverageFloatSSE2()                            */
+/************************************************************************/
+
+template<class T> static int AverageFloatSSE2(int nDstXWidth,
+                                              int nChunkXSize,
+                                              const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
+                                              T* CPL_RESTRICT pDstScanline)
+{
+    // Optimized implementation for average on Float32 by
+    // processing by group of 4 output pixels.
+    const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+
+    int iDstPixel = 0;
+    const auto zeroDot25 = _mm_set1_ps(0.25f);
+
+    for( ; iDstPixel < nDstXWidth - 3; iDstPixel += 4 )
+    {
+        // Load 8 Float32 from each line
+        const auto firstLineLo = _mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted));
+        const auto firstLineHi = _mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + 4));
+        const auto secondLineLo = _mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + nChunkXSize));
+        const auto secondLineHi = _mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + 4 + nChunkXSize));
+
+        // Vertical addition
+        const auto sumLo = _mm_add_ps(firstLineLo, secondLineLo);
+        const auto sumHi = _mm_add_ps(firstLineHi, secondLineHi);
+
+        // Horizontal addition
+        const auto A = _mm_shuffle_ps(sumLo, sumHi, 0 | (2 << 2) | (0 << 4) | (2 << 6));
+        const auto B = _mm_shuffle_ps(sumLo, sumHi, 1 | (3 << 2) | (1 << 4) | (3 << 6));
+        const auto sum = _mm_add_ps(A, B);
+
+        const auto average = _mm_mul_ps(sum, zeroDot25);
+
+        // coverity[incompatible_cast]
+        _mm_storeu_ps(reinterpret_cast<float*>(&pDstScanline[iDstPixel]), average);
+        pSrcScanlineShifted += 8;
+    }
+
+    pSrcScanlineShiftedInOut = pSrcScanlineShifted;
+    return iDstPixel;
+}
+
+#endif
 
 /************************************************************************/
 /*                    GDALResampleChunk32R_Average()                    */
 /************************************************************************/
 
-template <class T, class Tsum>
+template <class T, class Tsum, GDALDataType eWrkDataType>
 static CPLErr
 GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                double dfYRatioDstToSrc,
                                double dfSrcXDelta,
                                double dfSrcYDelta,
-                               GDALDataType eWrkDataType,
-                               T* pChunk,
-                               GByte * pabyChunkNodataMask,
+                               const T* pChunk,
+                               const GByte * pabyChunkNodataMask,
                                int nChunkXOff, int nChunkXSize,
                                int nChunkYOff, int nChunkYSize,
                                int nDstXOff, int nDstXOff2,
                                int nDstYOff, int nDstYOff2,
                                GDALRasterBand * poOverview,
+                               void** ppDstBuffer,
                                const char * pszResampling,
                                int bHasNoData,  // TODO(schwehr): bool.
                                float fNoDataValue,
@@ -270,62 +1158,62 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     // AVERAGE_BIT2GRAYSCALE
     const bool bBit2Grayscale =
         CPL_TO_BOOL( STARTS_WITH_CI( pszResampling, "AVERAGE_BIT2G" ) );
+    const bool bQuadraticMean =
+        CPL_TO_BOOL( EQUAL( pszResampling, "RMS" ) );
     if( bBit2Grayscale )
-        poColorTable = NULL;
+        poColorTable = nullptr;
 
     T tNoDataValue;
     if( !bHasNoData )
         tNoDataValue = 0;
     else
-        tNoDataValue = (T)fNoDataValue;
+        tNoDataValue = static_cast<T>(fNoDataValue);
+    const T tReplacementVal = static_cast<T>(GetReplacementValueIfNoData(
+        poOverview->GetRasterDataType(), bHasNoData, fNoDataValue));
 
     int nChunkRightXOff = nChunkXOff + nChunkXSize;
     int nChunkBottomYOff = nChunkYOff + nChunkYSize;
     int nDstXWidth = nDstXOff2 - nDstXOff;
 
 /* -------------------------------------------------------------------- */
-/*      Allocate scanline buffer.                                       */
+/*      Allocate buffers.                                               */
 /* -------------------------------------------------------------------- */
-
-    T *pDstScanline = static_cast<T *>(
-        VSI_MALLOC_VERBOSE(
-            nDstXWidth * GDALGetDataTypeSizeBytes(eWrkDataType) ) );
-    int* panSrcXOffShifted = static_cast<int *>(
-        VSI_MALLOC_VERBOSE(2 * nDstXWidth * sizeof(int) ) );
-
-    if( pDstScanline == NULL || panSrcXOffShifted == NULL )
+    *ppDstBuffer = static_cast<T *>(
+        VSI_MALLOC3_VERBOSE(nDstXWidth, nDstYOff2 - nDstYOff,
+                            GDALGetDataTypeSizeBytes(eWrkDataType)));
+    if( *ppDstBuffer == nullptr )
     {
-        VSIFree(pDstScanline);
-        VSIFree(panSrcXOffShifted);
+        return CE_Failure;
+    }
+    T* const pDstBuffer = static_cast<T*>(*ppDstBuffer);
+
+    struct PrecomputedXValue
+    {
+        int nLeftXOffShifted;
+        int nRightXOffShifted;
+        double dfLeftWeight;
+        double dfRightWeight;
+        double dfTotalWeightFullLine;
+    };
+    PrecomputedXValue* pasSrcX = static_cast<PrecomputedXValue *>(
+        VSI_MALLOC_VERBOSE(nDstXWidth * sizeof(PrecomputedXValue) ) );
+
+    if( pasSrcX == nullptr )
+    {
+        VSIFree(pasSrcX);
         return CE_Failure;
     }
 
-    int nEntryCount = 0;
-    GDALColorEntry* aEntries = NULL;
     int nTransparentIdx = -1;
-
-    if( poColorTable &&
-        !ReadColorTableAsArray(poColorTable, nEntryCount, aEntries,
-                               nTransparentIdx) )
-    {
-        VSIFree(pDstScanline);
-        VSIFree(panSrcXOffShifted);
-        return CE_Failure;
-    }
+    std::vector<GDALColorEntry> colorEntries;
+    if( poColorTable )
+        colorEntries = ReadColorTable(*poColorTable, nTransparentIdx);
 
     // Force c4 of nodata entry to 0 so that GDALFindBestEntry() identifies
     // it as nodata value
-    if( bHasNoData && fNoDataValue >= 0.0f && tNoDataValue < nEntryCount )
-    {
-        if( aEntries == NULL )
-        {
-            CPLError(CE_Failure, CPLE_ObjectNull, "No aEntries.");
-            VSIFree(pDstScanline);
-            VSIFree(panSrcXOffShifted);
-            return CE_Failure;
-        }
-        aEntries[static_cast<int>(tNoDataValue)].c4 = 0;
-    }
+    if( bHasNoData && fNoDataValue >= 0.0f && tNoDataValue < colorEntries.size() )
+        colorEntries[static_cast<int>(tNoDataValue)].c4 = 0;
+
     // Or if we have no explicit nodata, but a color table entry that is
     // transparent, consider it as the nodata value
     else if( !bHasNoData && nTransparentIdx >= 0 )
@@ -338,142 +1226,379 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 /*      Precompute inner loop constants.                                */
 /* ==================================================================== */
     bool bSrcXSpacingIsTwo = true;
+    int nLastSrcXOff2 = -1;
     for( int iDstPixel = nDstXOff; iDstPixel < nDstXOff2; ++iDstPixel )
     {
         double dfSrcXOff = dfSrcXDelta + iDstPixel * dfXRatioDstToSrc;
         // Apply some epsilon to avoid numerical precision issues
         int nSrcXOff = static_cast<int>(dfSrcXOff + 1e-8);
-#ifdef only_pixels_with_more_than_10_pct_participation
-        // When oversampling, don't take into account pixels that have a tiny
-        // participation in the resulting pixel
-        if( dfXRatioDstToSrc > 1 && dfSrcXOff - nSrcXOff > 0.9 &&
-            nSrcXOff < nChunkRightXOff)
-            nSrcXOff ++;
-#endif
-        if( nSrcXOff < nChunkXOff )
-            nSrcXOff = nChunkXOff;
-
         double dfSrcXOff2 = dfSrcXDelta + (iDstPixel+1)* dfXRatioDstToSrc;
         int nSrcXOff2 = static_cast<int>(ceil(dfSrcXOff2 - 1e-8));
-#ifdef only_pixels_with_more_than_10_pct_participation
-        // When oversampling, don't take into account pixels that have a tiny
-        // participation in the resulting pixel
-        if( dfXRatioDstToSrc > 1 && nSrcXOff2 - dfSrcXOff2 > 0.9 &&
-            nSrcXOff2 > nChunkXOff)
-            nSrcXOff2 --;
-#endif
+
+        if( nSrcXOff < nChunkXOff )
+            nSrcXOff = nChunkXOff;
         if( nSrcXOff2 == nSrcXOff )
             nSrcXOff2 ++;
         if( nSrcXOff2 > nChunkRightXOff )
             nSrcXOff2 = nChunkRightXOff;
 
-        panSrcXOffShifted[2 * (iDstPixel - nDstXOff)] = nSrcXOff - nChunkXOff;
-        panSrcXOffShifted[2 * (iDstPixel - nDstXOff) + 1] =
-            nSrcXOff2 - nChunkXOff;
-        if( nSrcXOff2 - nSrcXOff != 2 )
+        pasSrcX[iDstPixel - nDstXOff].nLeftXOffShifted = nSrcXOff - nChunkXOff;
+        pasSrcX[iDstPixel - nDstXOff].nRightXOffShifted = nSrcXOff2 - nChunkXOff;
+        pasSrcX[iDstPixel - nDstXOff].dfLeftWeight = ( nSrcXOff2 == nSrcXOff + 1 ) ? 1.0 :  1 - (dfSrcXOff - nSrcXOff);
+        pasSrcX[iDstPixel - nDstXOff].dfRightWeight = 1 - (nSrcXOff2 - dfSrcXOff2);
+        pasSrcX[iDstPixel - nDstXOff].dfTotalWeightFullLine = pasSrcX[iDstPixel - nDstXOff].dfLeftWeight;
+        if( nSrcXOff + 1 < nSrcXOff2 )
+        {
+            pasSrcX[iDstPixel - nDstXOff].dfTotalWeightFullLine += nSrcXOff2 - nSrcXOff - 2;
+            pasSrcX[iDstPixel - nDstXOff].dfTotalWeightFullLine += pasSrcX[iDstPixel - nDstXOff].dfRightWeight;
+        }
+
+        if( nSrcXOff2 - nSrcXOff != 2 ||
+            (nLastSrcXOff2 >= 0 && nLastSrcXOff2 != nSrcXOff) )
+        {
             bSrcXSpacingIsTwo = false;
+        }
+        nLastSrcXOff2 = nSrcXOff2;
     }
 
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
 /* ==================================================================== */
-    CPLErr eErr = CE_None;
-    for( int iDstLine = nDstYOff;
-         iDstLine < nDstYOff2 && eErr == CE_None;
-         ++iDstLine )
+    for( int iDstLine = nDstYOff; iDstLine < nDstYOff2; ++iDstLine )
     {
         double dfSrcYOff = dfSrcYDelta + iDstLine * dfYRatioDstToSrc;
         int nSrcYOff = static_cast<int>(dfSrcYOff + 1e-8);
-#ifdef only_pixels_with_more_than_10_pct_participation
-        // When oversampling, don't take into account pixels that have a tiny
-        // participation in the resulting pixel
-        if( dfYRatioDstToSrc > 1 && dfSrcYOff - nSrcYOff > 0.9 &&
-            nSrcYOff < nChunkBottomYOff)
-            nSrcYOff ++;
-#endif
         if( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
 
         double dfSrcYOff2 = dfSrcYDelta + (iDstLine+1) * dfYRatioDstToSrc;
         int nSrcYOff2 = static_cast<int>(ceil(dfSrcYOff2 - 1e-8));
-#ifdef only_pixels_with_more_than_10_pct_participation
-        // When oversampling, don't take into account pixels that have a tiny
-        // participation in the resulting pixel
-        if( dfYRatioDstToSrc > 1 && nSrcYOff2 - dfSrcYOff2 > 0.9 &&
-            nSrcYOff2 > nChunkYOff)
-            nSrcYOff2 --;
-#endif
         if( nSrcYOff2 == nSrcYOff )
             ++nSrcYOff2;
         if( nSrcYOff2 > nChunkBottomYOff )
             nSrcYOff2 = nChunkBottomYOff;
 
+        T* const pDstScanline = pDstBuffer + (iDstLine - nDstYOff) * nDstXWidth;
+
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
 /* -------------------------------------------------------------------- */
-        if( poColorTable == NULL )
+        if( poColorTable == nullptr )
         {
             if( bSrcXSpacingIsTwo && nSrcYOff2 == nSrcYOff + 2 &&
-                pabyChunkNodataMask == NULL &&
-                (eWrkDataType == GDT_Byte || eWrkDataType == GDT_UInt16) )
+                pabyChunkNodataMask == nullptr )
             {
+              if( eWrkDataType == GDT_Byte || eWrkDataType == GDT_UInt16 )
+              {
                 // Optimized case : no nodata, overview by a factor of 2 and
                 // regular x and y src spacing.
                 const T* pSrcScanlineShifted =
-                    pChunk + panSrcXOffShifted[0] +
-                    (nSrcYOff - nChunkYOff) * nChunkXSize;
-                for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
+                    pChunk + pasSrcX[0].nLeftXOffShifted +
+                    static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize;
+                int iDstPixel = 0;
+#ifdef USE_SSE2
+                if( bQuadraticMean && eWrkDataType == GDT_Byte )
                 {
-                    const Tsum nTotal =
-                        pSrcScanlineShifted[0]
-                        + pSrcScanlineShifted[1]
-                        + pSrcScanlineShifted[nChunkXSize]
-                        + pSrcScanlineShifted[1+nChunkXSize];
+                    iDstPixel = QuadraticMeanByteSSE2OrAVX2(nDstXWidth,
+                                                            nChunkXSize,
+                                                            pSrcScanlineShifted,
+                                                            pDstScanline);
+                }
+                else if( bQuadraticMean /* && eWrkDataType == GDT_UInt16 */ )
+                {
+                    iDstPixel = QuadraticMeanUInt16SSE2(nDstXWidth,
+                                                        nChunkXSize,
+                                                        pSrcScanlineShifted,
+                                                        pDstScanline);
+                }
+                else if( /* !bQuadraticMean && */ eWrkDataType == GDT_Byte )
+                {
+                    iDstPixel = AverageByteSSE2OrAVX2(nDstXWidth,
+                                                      nChunkXSize,
+                                                      pSrcScanlineShifted,
+                                                      pDstScanline);
+                }
+                else /* if( !bQuadraticMean && eWrkDataType == GDT_UInt16 ) */
+                {
+                    iDstPixel = AverageUInt16SSE2(nDstXWidth,
+                                                  nChunkXSize,
+                                                  pSrcScanlineShifted,
+                                                  pDstScanline);
+                }
+#endif
+                for( ; iDstPixel < nDstXWidth; ++iDstPixel )
+                {
+                    Tsum nTotal = 0;
+                    T nVal;
+                    if( bQuadraticMean )
+                        nTotal =
+                            SQUARE<Tsum>(pSrcScanlineShifted[0])
+                            + SQUARE<Tsum>(pSrcScanlineShifted[1])
+                            + SQUARE<Tsum>(pSrcScanlineShifted[nChunkXSize])
+                            + SQUARE<Tsum>(pSrcScanlineShifted[1+nChunkXSize]);
+                    else
+                        nTotal =
+                            pSrcScanlineShifted[0]
+                            + pSrcScanlineShifted[1]
+                            + pSrcScanlineShifted[nChunkXSize]
+                            + pSrcScanlineShifted[1+nChunkXSize];
 
-                    pDstScanline[iDstPixel] = (T) ((nTotal + 2) / 4);
+                    constexpr int nTotalWeight = 4;
+                    if( bQuadraticMean )
+                        nVal = ComputeIntegerRMS_4values<T>(nTotal);
+                    else
+                        nVal = static_cast<T>((nTotal + nTotalWeight/2) / nTotalWeight);
+
+                    // No need to compare nVal against tNoDataValue as we are
+                    // in a case where pabyChunkNodataMask == nullptr implies
+                    // the absence of nodata value.
+                    pDstScanline[iDstPixel] = nVal;
                     pSrcScanlineShifted += 2;
                 }
+              }
+              else
+              {
+                CPLAssert( eWrkDataType == GDT_Float32 );
+                const T* pSrcScanlineShifted =
+                    pChunk + pasSrcX[0].nLeftXOffShifted +
+                    static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize;
+                int iDstPixel = 0;
+#ifdef USE_SSE2
+                if( bQuadraticMean )
+                {
+                    iDstPixel = QuadraticMeanFloatSSE2(nDstXWidth,
+                                                       nChunkXSize,
+                                                       pSrcScanlineShifted,
+                                                       pDstScanline);
+                }
+                else
+                {
+                    iDstPixel = AverageFloatSSE2(nDstXWidth,
+                                                 nChunkXSize,
+                                                 pSrcScanlineShifted,
+                                                 pDstScanline);
+                }
+#endif
+
+                for( ; iDstPixel < nDstXWidth; ++iDstPixel )
+                {
+                    T nVal;
+                    if( bQuadraticMean )
+                    {
+                        // Cast to double to avoid overflows
+                        // (using std::hypot() is much slower)
+                        nVal = static_cast<T>(std::sqrt(0.25 *
+                            ( SQUARE<double>(pSrcScanlineShifted[0])
+                            + SQUARE<double>(pSrcScanlineShifted[1])
+                            + SQUARE<double>(pSrcScanlineShifted[nChunkXSize])
+                            + SQUARE<double>(pSrcScanlineShifted[1+nChunkXSize]))));
+                    }
+                    else
+                    {
+                        nVal = static_cast<T>(0.25f *
+                            ( pSrcScanlineShifted[0]
+                            + pSrcScanlineShifted[1]
+                            + pSrcScanlineShifted[nChunkXSize]
+                            + pSrcScanlineShifted[1+nChunkXSize]));
+                    }
+
+                    // No need to compare nVal against tNoDataValue as we are
+                    // in a case where pabyChunkNodataMask == nullptr implies
+                    // the absence of nodata value.
+                    pDstScanline[iDstPixel] = nVal;
+                    pSrcScanlineShifted += 2;
+                }
+              }
             }
             else
             {
+                const double dfBottomWeight =
+                    (nSrcYOff + 1 == nSrcYOff2) ? 1.0 : 1.0 - (dfSrcYOff - nSrcYOff);
+                const double dfTopWeight = 1.0 - (nSrcYOff2 - dfSrcYOff2);
                 nSrcYOff -= nChunkYOff;
                 nSrcYOff2 -= nChunkYOff;
 
+                double dfTotalWeightFullColumn = dfBottomWeight;
+                if( nSrcYOff + 1 < nSrcYOff2 )
+                {
+                    dfTotalWeightFullColumn += nSrcYOff2 - nSrcYOff - 2;
+                    dfTotalWeightFullColumn += dfTopWeight;
+                }
+
                 for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
                 {
-                    const int nSrcXOff = panSrcXOffShifted[2 * iDstPixel];
-                    const int nSrcXOff2 = panSrcXOffShifted[2 * iDstPixel + 1];
+                    const int nSrcXOff = pasSrcX[iDstPixel].nLeftXOffShifted;
+                    const int nSrcXOff2 = pasSrcX[iDstPixel].nRightXOffShifted;
 
-                    Tsum dfTotal = 0;
-                    int nCount = 0;
-
-                    for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
+                    double dfTotal = 0;
+                    double dfTotalWeight = 0;
+                    if( pabyChunkNodataMask == nullptr )
                     {
-                        for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
+                        auto pChunkShifted = pChunk +
+                                static_cast<GPtrDiff_t>(nSrcYOff) *nChunkXSize;
+                        int nCounterY = nSrcYOff2 - nSrcYOff - 1;
+                        double dfWeightY = dfBottomWeight;
+                        while( true )
                         {
-                            const T val = pChunk[iX + iY *nChunkXSize];
-                            if( pabyChunkNodataMask == NULL ||
-                                pabyChunkNodataMask[iX + iY *nChunkXSize] )
+                            double dfTotalLine;
+                            if( bQuadraticMean )
                             {
-                                dfTotal += val;
-                                ++nCount;
+                                // Left pixel
+                                {
+                                    const T val = pChunkShifted[nSrcXOff];
+                                    dfTotalLine = SQUARE<double>(val) * pasSrcX[iDstPixel].dfLeftWeight;
+                                }
+
+                                if( nSrcXOff + 1 < nSrcXOff2 )
+                                {
+                                    // Middle pixels
+                                    for( int iX = nSrcXOff + 1; iX + 1 < nSrcXOff2; ++iX )
+                                    {
+                                        const T val = pChunkShifted[iX];
+                                        dfTotalLine += SQUARE<double>(val);
+                                    }
+
+                                    // Right pixel
+                                    {
+                                        const T val = pChunkShifted[nSrcXOff2 - 1];
+                                        dfTotalLine += SQUARE<double>(val) * pasSrcX[iDstPixel].dfRightWeight;
+                                    }
+                                }
                             }
+                            else
+                            {
+                                // Left pixel
+                                {
+                                    const T val = pChunkShifted[nSrcXOff];
+                                    dfTotalLine = val * pasSrcX[iDstPixel].dfLeftWeight;
+                                }
+
+                                if( nSrcXOff + 1 < nSrcXOff2 )
+                                {
+                                    // Middle pixels
+                                    for( int iX = nSrcXOff + 1; iX + 1 < nSrcXOff2; ++iX )
+                                    {
+                                        const T val = pChunkShifted[iX];
+                                        dfTotalLine += val;
+                                    }
+
+                                    // Right pixel
+                                    {
+                                        const T val = pChunkShifted[nSrcXOff2 - 1];
+                                        dfTotalLine += val * pasSrcX[iDstPixel].dfRightWeight;
+                                    }
+                                }
+                            }
+
+                            dfTotal += dfTotalLine * dfWeightY;
+                            --nCounterY;
+                            if( nCounterY < 0 )
+                                break;
+                            pChunkShifted += nChunkXSize;
+                            dfWeightY = (nCounterY == 0) ? dfTopWeight : 1.0;
+                        }
+
+                        dfTotalWeight = pasSrcX[iDstPixel].dfTotalWeightFullLine * dfTotalWeightFullColumn;
+                    }
+                    else
+                    {
+                        GPtrDiff_t nCount = 0;
+                        for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
+                        {
+                            const auto pChunkShifted = pChunk +
+                                static_cast<GPtrDiff_t>(iY) *nChunkXSize;
+
+                            double dfTotalLine = 0;
+                            double dfTotalWeightLine = 0;
+                            // Left pixel
+                            {
+                                const int iX = nSrcXOff;
+                                const T val = pChunkShifted[iX];
+                                if( pabyChunkNodataMask[iX + iY *nChunkXSize] )
+                                {
+                                    nCount ++;
+                                    const double dfWeightX = pasSrcX[iDstPixel].dfLeftWeight;
+                                    dfTotalWeightLine = dfWeightX;
+                                    if( bQuadraticMean )
+                                        dfTotalLine = SQUARE<double>(val) * dfWeightX;
+                                    else
+                                        dfTotalLine = val * dfWeightX;
+                                }
+                            }
+
+                            if( nSrcXOff + 1 < nSrcXOff2 )
+                            {
+                                // Middle pixels
+                                for( int iX = nSrcXOff + 1; iX + 1 < nSrcXOff2; ++iX )
+                                {
+                                    const T val = pChunkShifted[iX];
+                                    if( pabyChunkNodataMask[iX + iY *nChunkXSize] )
+                                    {
+                                        nCount ++;
+                                        dfTotalWeightLine += 1;
+                                        if( bQuadraticMean )
+                                            dfTotalLine += SQUARE<double>(val);
+                                        else
+                                            dfTotalLine += val;
+                                    }
+                                }
+
+                                // Right pixel
+                                {
+                                    const int iX = nSrcXOff2 - 1;
+                                    const T val = pChunkShifted[iX];
+                                    if( pabyChunkNodataMask[iX + iY *nChunkXSize] )
+                                    {
+                                        nCount ++;
+                                        const double dfWeightX = pasSrcX[iDstPixel].dfRightWeight;
+                                        dfTotalWeightLine += dfWeightX;
+                                        if( bQuadraticMean )
+                                            dfTotalLine += SQUARE<double>(val) * dfWeightX;
+                                        else
+                                            dfTotalLine += val * dfWeightX;
+                                    }
+                                }
+                            }
+
+                            const double dfWeightY =
+                                (iY == nSrcYOff) ? dfBottomWeight :
+                                (iY + 1 == nSrcYOff2) ? dfTopWeight :
+                                1.0;
+                            dfTotal += dfTotalLine * dfWeightY;
+                            dfTotalWeight += dfTotalWeightLine * dfWeightY;
+                        }
+
+                        if( nCount == 0 ||
+                            (bPropagateNoData && nCount <
+                                static_cast<GPtrDiff_t>(nSrcYOff2 - nSrcYOff) * (nSrcXOff2 - nSrcXOff)))
+                        {
+                            pDstScanline[iDstPixel] = tNoDataValue;
+                            continue;
                         }
                     }
-
-                    if( nCount == 0 ||
-                        (bPropagateNoData && nCount <
-                            (nSrcYOff2 - nSrcYOff) * (nSrcXOff2 - nSrcXOff)))
-                    {
-                        pDstScanline[iDstPixel] = tNoDataValue;
-                    }
-                    else if( eWrkDataType == GDT_Byte ||
+                    if( eWrkDataType == GDT_Byte ||
                              eWrkDataType == GDT_UInt16)
-                        pDstScanline[iDstPixel] =
-                            static_cast<T>((dfTotal + nCount / 2) / nCount);
+                    {
+                        T nVal;
+                        if( bQuadraticMean )
+                            nVal = ComputeIntegerRMS<T>(dfTotal, dfTotalWeight);
+                        else
+                            nVal = static_cast<T>(dfTotal / dfTotalWeight + 0.5);
+                        if( bHasNoData && nVal == tNoDataValue )
+                            nVal = tReplacementVal;
+                        pDstScanline[iDstPixel] = nVal;
+                    }
                     else
-                        pDstScanline[iDstPixel] =
-                            static_cast<T>(dfTotal / nCount);
+                    {
+                        T nVal;
+                        if( bQuadraticMean )
+                            nVal = static_cast<T>(sqrt(dfTotal / dfTotalWeight));
+                        else
+                            nVal = static_cast<T>(dfTotal / dfTotalWeight);
+                        if( bHasNoData && nVal == tNoDataValue )
+                            nVal = tReplacementVal;
+                        pDstScanline[iDstPixel] = nVal;
+                    }
                 }
             }
         }
@@ -484,59 +1609,74 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
             for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
             {
-                const int nSrcXOff = panSrcXOffShifted[2 * iDstPixel];
-                const int nSrcXOff2 = panSrcXOffShifted[2 * iDstPixel + 1];
+                const int nSrcXOff = pasSrcX[iDstPixel].nLeftXOffShifted;
+                const int nSrcXOff2 = pasSrcX[iDstPixel].nRightXOffShifted;
 
-                int nTotalR = 0;
-                int nTotalG = 0;
-                int nTotalB = 0;
-                int nCount = 0;
+                GPtrDiff_t nTotalR = 0;
+                GPtrDiff_t nTotalG = 0;
+                GPtrDiff_t nTotalB = 0;
+                GPtrDiff_t nCount = 0;
 
                 for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
                 {
                     for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
                     {
-                        const T val = pChunk[iX + iY *nChunkXSize];
-                        int nVal = static_cast<int>(val);
-                        if( nVal >= 0 && nVal < nEntryCount &&
-                            aEntries[nVal].c4 )
+                        const T val = pChunk[iX + static_cast<GPtrDiff_t>(iY) *nChunkXSize];
+                        // cppcheck-suppress unsignedLessThanZero
+                        if (val < 0 || val >= colorEntries.size())
+                            continue;
+                        size_t idx = static_cast<size_t>(val);
+                        const auto& entry = colorEntries[idx];
+                        if( entry.c4 )
                         {
-                            nTotalR += aEntries[nVal].c1;
-                            nTotalG += aEntries[nVal].c2;
-                            nTotalB += aEntries[nVal].c3;
-                            ++nCount;
+                            if( bQuadraticMean )
+                            {
+                                nTotalR += SQUARE<int>(entry.c1);
+                                nTotalG += SQUARE<int>(entry.c2);
+                                nTotalB += SQUARE<int>(entry.c3);
+                                ++nCount;
+                            }
+                            else
+                            {
+                                nTotalR += entry.c1;
+                                nTotalG += entry.c2;
+                                nTotalB += entry.c3;
+                                ++nCount;
+                            }
                         }
                     }
                 }
 
                 if( nCount == 0 ||
                     (bPropagateNoData && nCount <
-                        (nSrcYOff2 - nSrcYOff) * (nSrcXOff2 - nSrcXOff)) )
+                        static_cast<GPtrDiff_t>(nSrcYOff2 - nSrcYOff) * (nSrcXOff2 - nSrcXOff)) )
                 {
                     pDstScanline[iDstPixel] = tNoDataValue;
                 }
                 else
                 {
-                    int nR = (nTotalR + nCount / 2) / nCount,
-                        nG = (nTotalG + nCount / 2) / nCount,
-                        nB = (nTotalB + nCount / 2) / nCount;
-                    pDstScanline[iDstPixel] = (T)GDALFindBestEntry(
-                        nEntryCount, aEntries, nR, nG, nB);
+                    GDALColorEntry color;
+                    if( bQuadraticMean )
+                    {
+                        color.c1 = static_cast<short>(sqrt(nTotalR / nCount) + 0.5);
+                        color.c2 = static_cast<short>(sqrt(nTotalG / nCount) + 0.5);
+                        color.c3 = static_cast<short>(sqrt(nTotalB / nCount) + 0.5);
+                    }
+                    else
+                    {
+                        color.c1 = static_cast<short>((nTotalR + nCount / 2) / nCount);
+                        color.c2 = static_cast<short>((nTotalG + nCount / 2) / nCount);
+                        color.c3 = static_cast<short>((nTotalB + nCount / 2) / nCount);
+                    }
+                    pDstScanline[iDstPixel] = static_cast<T>(BestColorEntry(colorEntries, color));
                 }
             }
         }
-
-        eErr = poOverview->RasterIO(
-            GF_Write, nDstXOff, iDstLine, nDstXWidth, 1,
-            pDstScanline, nDstXWidth, 1, eWrkDataType,
-            0, 0, NULL );
     }
 
-    CPLFree( pDstScanline );
-    CPLFree( aEntries );
-    CPLFree( panSrcXOffShifted );
+    CPLFree( pasSrcX );
 
-    return eErr;
+    return CE_None;
 }
 
 static CPLErr
@@ -544,13 +1684,15 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                               double dfSrcXDelta,
                               double dfSrcYDelta,
                               GDALDataType eWrkDataType,
-                              void * pChunk,
-                              GByte * pabyChunkNodataMask,
+                              const void * pChunk,
+                              const GByte * pabyChunkNodataMask,
                               int nChunkXOff, int nChunkXSize,
                               int nChunkYOff, int nChunkYSize,
                               int nDstXOff, int nDstXOff2,
                               int nDstYOff, int nDstYOff2,
                               GDALRasterBand * poOverview,
+                              void** ppDstBuffer,
+                              GDALDataType* peDstBufferDataType,
                               const char * pszResampling,
                               int bHasNoData, float fNoDataValue,
                               GDALColorTable* poColorTable,
@@ -558,54 +1700,84 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                               bool bPropagateNoData )
 {
     if( eWrkDataType == GDT_Byte )
-        return GDALResampleChunk32R_AverageT<GByte, int>(
+    {
+        *peDstBufferDataType = eWrkDataType;
+        return GDALResampleChunk32R_AverageT<GByte, int, GDT_Byte>(
             dfXRatioDstToSrc, dfYRatioDstToSrc,
             dfSrcXDelta, dfSrcYDelta,
-            eWrkDataType,
-            static_cast<GByte *>( pChunk ),
+            static_cast<const GByte *>( pChunk ),
             pabyChunkNodataMask,
             nChunkXOff, nChunkXSize,
             nChunkYOff, nChunkYSize,
             nDstXOff, nDstXOff2,
             nDstYOff, nDstYOff2,
             poOverview,
+            ppDstBuffer,
             pszResampling,
             bHasNoData, fNoDataValue,
             poColorTable,
             bPropagateNoData );
-    else if( eWrkDataType == GDT_UInt16 &&
-             dfXRatioDstToSrc * dfYRatioDstToSrc < 65536 )
-        return GDALResampleChunk32R_AverageT<GUInt16, GUInt32>(
-            dfXRatioDstToSrc, dfYRatioDstToSrc,
-            dfSrcXDelta, dfSrcYDelta,
-            eWrkDataType,
-            static_cast<GUInt16 *>( pChunk ),
-            pabyChunkNodataMask,
-            nChunkXOff, nChunkXSize,
-            nChunkYOff, nChunkYSize,
-            nDstXOff, nDstXOff2,
-            nDstYOff, nDstYOff2,
-            poOverview,
-            pszResampling,
-            bHasNoData, fNoDataValue,
-            poColorTable,
-            bPropagateNoData );
+    }
+    else if( eWrkDataType == GDT_UInt16  )
+    {
+        *peDstBufferDataType = eWrkDataType;
+        if( EQUAL(pszResampling, "RMS") )
+        {
+            // Use double as accumulation type, because UInt32 could overflow
+            return GDALResampleChunk32R_AverageT<GUInt16, double, GDT_UInt16>(
+                dfXRatioDstToSrc, dfYRatioDstToSrc,
+                dfSrcXDelta, dfSrcYDelta,
+                static_cast<const GUInt16 *>( pChunk ),
+                pabyChunkNodataMask,
+                nChunkXOff, nChunkXSize,
+                nChunkYOff, nChunkYSize,
+                nDstXOff, nDstXOff2,
+                nDstYOff, nDstYOff2,
+                poOverview,
+                ppDstBuffer,
+                pszResampling,
+                bHasNoData, fNoDataValue,
+                poColorTable,
+                bPropagateNoData );
+        }
+        else
+        {
+            return GDALResampleChunk32R_AverageT<GUInt16, GUInt32, GDT_UInt16>(
+                dfXRatioDstToSrc, dfYRatioDstToSrc,
+                dfSrcXDelta, dfSrcYDelta,
+                static_cast<const GUInt16 *>( pChunk ),
+                pabyChunkNodataMask,
+                nChunkXOff, nChunkXSize,
+                nChunkYOff, nChunkYSize,
+                nDstXOff, nDstXOff2,
+                nDstYOff, nDstYOff2,
+                poOverview,
+                ppDstBuffer,
+                pszResampling,
+                bHasNoData, fNoDataValue,
+                poColorTable,
+                bPropagateNoData );
+        }
+    }
     else if( eWrkDataType == GDT_Float32 )
-        return GDALResampleChunk32R_AverageT<float, double>(
+    {
+        *peDstBufferDataType = eWrkDataType;
+        return GDALResampleChunk32R_AverageT<float, double, GDT_Float32>(
             dfXRatioDstToSrc, dfYRatioDstToSrc,
             dfSrcXDelta, dfSrcYDelta,
-            eWrkDataType,
-            static_cast<float *>( pChunk ),
+            static_cast<const float *>( pChunk ),
             pabyChunkNodataMask,
             nChunkXOff, nChunkXSize,
             nChunkYOff, nChunkYSize,
             nDstXOff, nDstXOff2,
             nDstYOff, nDstYOff2,
             poOverview,
+            ppDstBuffer,
             pszResampling,
             bHasNoData, fNoDataValue,
             poColorTable,
             bPropagateNoData );
+    }
 
     CPLAssert(false);
     return CE_Failure;
@@ -620,13 +1792,15 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                             double /* dfSrcXDelta */,
                             double /* dfSrcYDelta */,
                             GDALDataType /* eWrkDataType */,
-                            void * pChunk,
-                            GByte * pabyChunkNodataMask,
+                            const void * pChunk,
+                            const GByte * pabyChunkNodataMask,
                             int nChunkXOff, int nChunkXSize,
                             int nChunkYOff, int nChunkYSize,
                             int nDstXOff, int nDstXOff2,
                             int nDstYOff, int nDstYOff2,
                             GDALRasterBand * poOverview,
+                            void** ppDstBuffer,
+                            GDALDataType* peDstBufferDataType,
                             const char * /* pszResampling */,
                             int bHasNoData, float fNoDataValue,
                             GDALColorTable* poColorTable,
@@ -634,25 +1808,35 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                             bool /* bPropagateNoData */ )
 
 {
-    float * pafChunk = static_cast<float *>( pChunk );
+    const float * const pafChunk = static_cast<const float *>( pChunk );
+
+    *ppDstBuffer =
+        VSI_MALLOC3_VERBOSE(nDstXOff2 - nDstXOff, nDstYOff2 - nDstYOff,
+                            GDALGetDataTypeSizeBytes(GDT_Float32));
+    if( *ppDstBuffer == nullptr )
+    {
+        return CE_Failure;
+    }
+    *peDstBufferDataType = GDT_Float32;
+    float* const pafDstBuffer = static_cast<float*>(*ppDstBuffer);
 
 /* -------------------------------------------------------------------- */
 /*      Create the filter kernel and allocate scanline buffer.          */
 /* -------------------------------------------------------------------- */
     int nGaussMatrixDim = 3;
     const int *panGaussMatrix;
-    static const int anGaussMatrix3x3[] ={
+    constexpr int anGaussMatrix3x3[] ={
         1, 2, 1,
         2, 4, 2,
         1, 2, 1
     };
-    static const int anGaussMatrix5x5[] = {
+    constexpr int anGaussMatrix5x5[] = {
         1, 4, 6, 4, 1,
         4, 16, 24, 16, 4,
         6, 24, 36, 24, 6,
         4, 16, 24, 16, 4,
         1, 4, 6, 4, 1};
-    static const int anGaussMatrix7x7[] = {
+    constexpr int anGaussMatrix7x7[] = {
         1, 6, 15, 20, 15, 6, 1,
         6, 36, 90, 120, 90, 36, 6,
         15, 90, 225, 300, 225, 90, 15,
@@ -682,39 +1866,27 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         nGaussMatrixDim=7;
     }
 
-    float *pafDstScanline = static_cast<float *>(
-        VSI_MALLOC_VERBOSE((nDstXOff2 - nDstXOff) * sizeof(float)) );
-    if( pafDstScanline == NULL )
-    {
-        return CE_Failure;
-    }
+#ifdef DEBUG_OUT_OF_BOUND_ACCESS
+    int* panGaussMatrixDup = static_cast<int*>(
+        CPLMalloc(sizeof(int) * nGaussMatrixDim * nGaussMatrixDim));
+    memcpy(panGaussMatrixDup, panGaussMatrix,
+           sizeof(int) * nGaussMatrixDim * nGaussMatrixDim);
+    panGaussMatrix = panGaussMatrixDup;
+#endif
 
     if( !bHasNoData )
         fNoDataValue = 0.0f;
 
-    int nEntryCount = 0;
-    GDALColorEntry* aEntries = NULL;
+    std::vector<GDALColorEntry> colorEntries;
     int nTransparentIdx = -1;
-    if( poColorTable &&
-        !ReadColorTableAsArray(poColorTable, nEntryCount, aEntries,
-                               nTransparentIdx) )
-    {
-        VSIFree(pafDstScanline);
-        return CE_Failure;
-    }
+    if( poColorTable)
+        colorEntries = ReadColorTable(*poColorTable, nTransparentIdx);
 
     // Force c4 of nodata entry to 0 so that GDALFindBestEntry() identifies
     // it as nodata value.
-    if( bHasNoData && fNoDataValue >= 0.0f && fNoDataValue < nEntryCount )
-    {
-        if( aEntries == NULL )
-        {
-            CPLError(CE_Failure, CPLE_ObjectNull, "No aEntries");
-            VSIFree(pafDstScanline);
-            return CE_Failure;
-        }
-        aEntries[static_cast<int>(fNoDataValue)].c4 = 0;
-    }
+    if( bHasNoData && fNoDataValue >= 0.0f && fNoDataValue < colorEntries.size() )
+        colorEntries[static_cast<int>(fNoDataValue)].c4 = 0;
+
     // Or if we have no explicit nodata, but a color table entry that is
     // transparent, consider it as the nodata value.
     else if( !bHasNoData && nTransparentIdx >= 0 )
@@ -724,14 +1896,12 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 
     const int nChunkRightXOff = nChunkXOff + nChunkXSize;
     const int nChunkBottomYOff = nChunkYOff + nChunkYSize;
+    const int nDstXWidth = nDstXOff2 - nDstXOff;
 
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
 /* ==================================================================== */
-    CPLErr eErr = CE_None;
-    for( int iDstLine = nDstYOff;
-         iDstLine < nDstYOff2 && eErr == CE_None;
-         ++iDstLine )
+    for( int iDstLine = nDstYOff; iDstLine < nDstYOff2; ++iDstLine )
     {
         int nSrcYOff = static_cast<int>(0.5 + iDstLine * dfYRatioDstToSrc);
         int nSrcYOff2 =
@@ -746,51 +1916,66 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         const int iSizeY = nSrcYOff2 - nSrcYOff;
         nSrcYOff = nSrcYOff + iSizeY/2 - nGaussMatrixDim/2;
         nSrcYOff2 = nSrcYOff + nGaussMatrixDim;
-        int nYShiftGaussMatrix = 0;
-        if(nSrcYOff < 0)
-        {
-            nYShiftGaussMatrix = -nSrcYOff;
-            nSrcYOff = 0;
-        }
 
         if( nSrcYOff2 > nChunkBottomYOff ||
             (dfYRatioDstToSrc > 1 && iDstLine == nOYSize-1) )
-            nSrcYOff2 = nChunkBottomYOff;
+        {
+            nSrcYOff2 = std::min(nChunkBottomYOff,
+                                 nSrcYOff + nGaussMatrixDim);
+        }
+
+        int nYShiftGaussMatrix = 0;
+        if(nSrcYOff < nChunkYOff)
+        {
+            nYShiftGaussMatrix = -(nSrcYOff - nChunkYOff);
+            nSrcYOff = nChunkYOff;
+        }
 
         const float * const pafSrcScanline =
             pafChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize);
-        GByte *pabySrcScanlineNodataMask = NULL;
-        if( pabyChunkNodataMask != NULL )
+        const GByte *pabySrcScanlineNodataMask = nullptr;
+        if( pabyChunkNodataMask != nullptr )
             pabySrcScanlineNodataMask =
                 pabyChunkNodataMask + ((nSrcYOff-nChunkYOff) * nChunkXSize);
 
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
 /* -------------------------------------------------------------------- */
+        float* const pafDstScanline = pafDstBuffer + (iDstLine - nDstYOff) * nDstXWidth;
         for( int iDstPixel = nDstXOff; iDstPixel < nDstXOff2; ++iDstPixel )
         {
             int nSrcXOff = static_cast<int>(0.5 + iDstPixel * dfXRatioDstToSrc);
             int nSrcXOff2 =
                 static_cast<int>(0.5 + (iDstPixel+1) * dfXRatioDstToSrc) + 1;
 
+            if( nSrcXOff < nChunkXOff )
+            {
+                nSrcXOff = nChunkXOff;
+                nSrcXOff2++;
+            }
+
             const int iSizeX = nSrcXOff2 - nSrcXOff;
             nSrcXOff = nSrcXOff + iSizeX/2 - nGaussMatrixDim/2;
             nSrcXOff2 = nSrcXOff + nGaussMatrixDim;
-            int nXShiftGaussMatrix = 0;
-            if(nSrcXOff < 0)
-            {
-                nXShiftGaussMatrix = -nSrcXOff;
-                nSrcXOff = 0;
-            }
 
             if( nSrcXOff2 > nChunkRightXOff ||
                 (dfXRatioDstToSrc > 1 && iDstPixel == nOXSize-1) )
-                nSrcXOff2 = nChunkRightXOff;
+            {
+                nSrcXOff2 = std::min(nChunkRightXOff,
+                                     nSrcXOff + nGaussMatrixDim);
+            }
 
-            if( poColorTable == NULL )
+            int nXShiftGaussMatrix = 0;
+            if(nSrcXOff < nChunkXOff)
+            {
+                nXShiftGaussMatrix = -(nSrcXOff - nChunkXOff);
+                nSrcXOff = nChunkXOff;
+            }
+
+            if( poColorTable == nullptr )
             {
                 double dfTotal = 0.0;
-                int nCount = 0;
+                GInt64 nCount = 0;
                 const int *panLineWeight = panGaussMatrix +
                     nYShiftGaussMatrix * nGaussMatrixDim + nXShiftGaussMatrix;
 
@@ -801,11 +1986,11 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                     for( int i=0, iX = nSrcXOff; iX < nSrcXOff2; ++iX, ++i )
                     {
                         const double val =
-                            pafSrcScanline[iX-nChunkXOff+(iY-nSrcYOff)
+                            pafSrcScanline[iX-nChunkXOff+static_cast<GPtrDiff_t>(iY-nSrcYOff)
                                            * nChunkXSize];
-                        if( pabySrcScanlineNodataMask == NULL ||
+                        if( pabySrcScanlineNodataMask == nullptr ||
                             pabySrcScanlineNodataMask[iX - nChunkXOff
-                                                      +(iY - nSrcYOff)
+                                                      +static_cast<GPtrDiff_t>(iY - nSrcYOff)
                                                       * nChunkXSize] )
                         {
                             const int nWeight = panLineWeight[i];
@@ -827,10 +2012,10 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             }
             else
             {
-                int nTotalR = 0;
-                int nTotalG = 0;
-                int nTotalB = 0;
-                int nTotalWeight = 0;
+                GInt64 nTotalR = 0;
+                GInt64 nTotalG = 0;
+                GInt64 nTotalB = 0;
+                GInt64 nTotalWeight = 0;
                 const int *panLineWeight =
                     panGaussMatrix + nYShiftGaussMatrix * nGaussMatrixDim +
                     nXShiftGaussMatrix;
@@ -842,15 +2027,17 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                     {
                         const double val =
                             pafSrcScanline[iX - nChunkXOff +
-                                           (iY-nSrcYOff) * nChunkXSize];
-                        int nVal = static_cast<int>(val);
-                        if( nVal >= 0 && nVal < nEntryCount &&
-                            aEntries[nVal].c4 )
+                                           static_cast<GPtrDiff_t>(iY-nSrcYOff) * nChunkXSize];
+                        if (val < 0 || val >= colorEntries.size())
+                            continue;
+
+                        size_t idx = static_cast<size_t>(val);
+                        if( colorEntries[idx].c4 )
                         {
                             const int nWeight = panLineWeight[i];
-                            nTotalR += aEntries[nVal].c1 * nWeight;
-                            nTotalG += aEntries[nVal].c2 * nWeight;
-                            nTotalB += aEntries[nVal].c3 * nWeight;
+                            nTotalR += static_cast<GInt64>(colorEntries[idx].c1 * nWeight);
+                            nTotalG += static_cast<GInt64>(colorEntries[idx].c2 * nWeight);
+                            nTotalB += static_cast<GInt64>(colorEntries[idx].c3 * nWeight);
                             nTotalWeight += nWeight;
                         }
                     }
@@ -862,29 +2049,23 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                 }
                 else
                 {
-                    const int nR =
-                        (nTotalR + nTotalWeight / 2) / nTotalWeight;
-                    const int nG =
-                        (nTotalG + nTotalWeight / 2) / nTotalWeight;
-                    const int nB =
-                        (nTotalB + nTotalWeight / 2) / nTotalWeight;
+                    GDALColorEntry color;
+
+                    color.c1 = static_cast<short>((nTotalR + nTotalWeight / 2) / nTotalWeight);
+                    color.c2 = static_cast<short>((nTotalG + nTotalWeight / 2) / nTotalWeight);
+                    color.c3 = static_cast<short>((nTotalB + nTotalWeight / 2) / nTotalWeight);
                     pafDstScanline[iDstPixel - nDstXOff] =
-                        static_cast<float>( GDALFindBestEntry(
-                            nEntryCount, aEntries, nR, nG, nB ) );
+                        static_cast<float>( BestColorEntry(colorEntries, color) );
                 }
             }
         }
-
-        eErr = poOverview->RasterIO(
-            GF_Write, nDstXOff, iDstLine, nDstXOff2 - nDstXOff, 1,
-            pafDstScanline, nDstXOff2 - nDstXOff, 1, GDT_Float32,
-            0, 0, NULL );
     }
 
-    CPLFree( pafDstScanline );
-    CPLFree( aEntries );
+#ifdef DEBUG_OUT_OF_BOUND_ACCESS
+    CPLFree( panGaussMatrixDup );
+#endif
 
-    return eErr;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -896,13 +2077,15 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                            double dfSrcXDelta,
                            double dfSrcYDelta,
                            GDALDataType /* eWrkDataType */,
-                           void * pChunk,
-                           GByte * pabyChunkNodataMask,
+                           const void * pChunk,
+                           const GByte * pabyChunkNodataMask,
                            int nChunkXOff, int nChunkXSize,
                            int nChunkYOff, int nChunkYSize,
                            int nDstXOff, int nDstXOff2,
                            int nDstYOff, int nDstYOff2,
-                           GDALRasterBand * poOverview,
+                           GDALRasterBand * /* poOverview */,
+                           void** ppDstBuffer,
+                           GDALDataType* peDstBufferDataType,
                            const char * /* pszResampling */,
                            int bHasNoData, float fNoDataValue,
                            GDALColorTable* poColorTable,
@@ -910,45 +2093,38 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                            bool /* bPropagateNoData */ )
 
 {
-    float * pafChunk = static_cast<float*>( pChunk );
+    const float * const pafChunk = static_cast<const float *>( pChunk );
+
+    const int nDstXSize = nDstXOff2 - nDstXOff;
+    *ppDstBuffer =
+        VSI_MALLOC3_VERBOSE(nDstXSize, nDstYOff2 - nDstYOff,
+                            GDALGetDataTypeSizeBytes(GDT_Float32));
+    if( *ppDstBuffer == nullptr )
+    {
+        return CE_Failure;
+    }
+    *peDstBufferDataType = GDT_Float32;
+    float* const pafDstBuffer = static_cast<float*>(*ppDstBuffer);
 
 /* -------------------------------------------------------------------- */
 /*      Create the filter kernel and allocate scanline buffer.          */
 /* -------------------------------------------------------------------- */
-    float *pafDstScanline = static_cast<float *>(
-        VSI_MALLOC_VERBOSE((nDstXOff2 - nDstXOff) * sizeof(float)) );
-    if( pafDstScanline == NULL )
-    {
-        return CE_Failure;
-    }
 
     if( !bHasNoData )
         fNoDataValue = 0.0f;
-    int nEntryCount = 0;
-    GDALColorEntry* aEntries = NULL;
-    int nTransparentIdx = -1;
-    if( poColorTable &&
-        !ReadColorTableAsArray(poColorTable, nEntryCount,
-                               aEntries, nTransparentIdx) )
-    {
-        VSIFree(pafDstScanline);
-        return CE_Failure;
-    }
 
-    int nMaxNumPx = 0;
-    float *pafVals = NULL;
-    int *panSums = NULL;
+    size_t nMaxNumPx = 0;
+    float *pafVals = nullptr;
+    int *panSums = nullptr;
 
     const int nChunkRightXOff = nChunkXOff + nChunkXSize;
     const int nChunkBottomYOff = nChunkYOff + nChunkYSize;
+    std::vector<int> anVals(256, 0);
 
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
 /* ==================================================================== */
-    CPLErr eErr = CE_None;
-    for( int iDstLine = nDstYOff;
-         iDstLine < nDstYOff2 && eErr == CE_None;
-         ++iDstLine )
+    for( int iDstLine = nDstYOff; iDstLine < nDstYOff2; ++iDstLine )
     {
         double dfSrcYOff = dfSrcYDelta + iDstLine * dfYRatioDstToSrc;
         int nSrcYOff = static_cast<int>(dfSrcYOff + 1e-8);
@@ -977,12 +2153,13 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             nSrcYOff2 = nChunkBottomYOff;
 
         const float * const pafSrcScanline =
-            pafChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize);
-        GByte *pabySrcScanlineNodataMask = NULL;
-        if( pabyChunkNodataMask != NULL )
+            pafChunk + (static_cast<GPtrDiff_t>(nSrcYOff-nChunkYOff) * nChunkXSize);
+        const GByte *pabySrcScanlineNodataMask = nullptr;
+        if( pabyChunkNodataMask != nullptr )
             pabySrcScanlineNodataMask =
-                pabyChunkNodataMask + (nSrcYOff-nChunkYOff) * nChunkXSize;
+                pabyChunkNodataMask + static_cast<GPtrDiff_t>(nSrcYOff-nChunkYOff) * nChunkXSize;
 
+        float* const pafDstScanline = pafDstBuffer + (iDstLine - nDstYOff) * nDstXSize;
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
 /* -------------------------------------------------------------------- */
@@ -1015,35 +2192,62 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             if( nSrcXOff2 > nChunkRightXOff )
                 nSrcXOff2 = nChunkRightXOff;
 
-            if( eSrcDataType != GDT_Byte || nEntryCount > 256 )
+            if( eSrcDataType != GDT_Byte ||
+                (poColorTable && poColorTable->GetColorEntryCount() > 256) )
             {
                 // Not sure how much sense it makes to run a majority
                 // filter on floating point data, but here it is for the sake
                 // of compatibility. It won't look right on RGB images by the
                 // nature of the filter.
-                int nNumPx = (nSrcYOff2-nSrcYOff)*(nSrcXOff2-nSrcXOff);
-                int iMaxInd = 0;
-                int iMaxVal = -1;
 
-                if( pafVals == NULL || nNumPx > nMaxNumPx )
+                if( nSrcYOff2 - nSrcYOff <= 0 ||
+                    nSrcXOff2 - nSrcXOff <= 0 ||
+                    nSrcYOff2 - nSrcYOff > INT_MAX / (nSrcXOff2 - nSrcXOff) ||
+                    static_cast<size_t>(nSrcYOff2-nSrcYOff)*
+                        static_cast<size_t>(nSrcXOff2-nSrcXOff) >
+                            std::numeric_limits<size_t>::max() / sizeof(float) )
                 {
-                    pafVals = static_cast<float *>(
-                        CPLRealloc(pafVals, nNumPx * sizeof(float)) );
-                    panSums = static_cast<int *>(
-                        CPLRealloc(panSums, nNumPx * sizeof(int)) );
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Too big downsampling factor");
+                    CPLFree( pafVals );
+                    CPLFree( panSums );
+                    return CE_Failure;
+                }
+                const size_t nNumPx = static_cast<size_t>(nSrcYOff2-nSrcYOff)*
+                                      static_cast<size_t>(nSrcXOff2-nSrcXOff);
+                size_t iMaxInd = 0;
+                size_t iMaxVal = 0;
+                bool biMaxValdValid = false;
+
+                if( pafVals == nullptr || nNumPx > nMaxNumPx )
+                {
+                    float* pafValsNew = static_cast<float *>(
+                        VSI_REALLOC_VERBOSE(pafVals, nNumPx * sizeof(float)) );
+                    int* panSumsNew = static_cast<int *>(
+                        VSI_REALLOC_VERBOSE(panSums, nNumPx * sizeof(int)) );
+                    if( pafValsNew != nullptr )
+                        pafVals = pafValsNew;
+                    if( panSumsNew != nullptr )
+                        panSums = panSumsNew;
+                    if( pafValsNew == nullptr || panSumsNew == nullptr )
+                    {
+                        CPLFree( pafVals );
+                        CPLFree( panSums );
+                        return CE_Failure;
+                    }
                     nMaxNumPx = nNumPx;
                 }
 
                 for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
                 {
-                    const int iTotYOff = (iY-nSrcYOff)*nChunkXSize-nChunkXOff;
+                    const GPtrDiff_t iTotYOff = static_cast<GPtrDiff_t>(iY-nSrcYOff)*nChunkXSize-nChunkXOff;
                     for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
                     {
-                        if( pabySrcScanlineNodataMask == NULL ||
+                        if( pabySrcScanlineNodataMask == nullptr ||
                             pabySrcScanlineNodataMask[iX+iTotYOff] )
                         {
                             const float fVal = pafSrcScanline[iX+iTotYOff];
-                            int i = 0;  // Used after for.
+                            size_t i = 0;  // Used after for.
 
                             // Check array for existing entry.
                             for( ; i < iMaxInd; ++i )
@@ -1051,6 +2255,7 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                                     && ++panSums[i] > panSums[iMaxVal] )
                                 {
                                     iMaxVal = i;
+                                    biMaxValdValid = true;
                                     break;
                                 }
 
@@ -1060,8 +2265,11 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                                 pafVals[iMaxInd] = fVal;
                                 panSums[iMaxInd] = 1;
 
-                                if( iMaxVal < 0 )
+                                if( !biMaxValdValid )
+                                {
                                     iMaxVal = iMaxInd;
+                                    biMaxValdValid = true;
+                                }
 
                                 ++iMaxInd;
                             }
@@ -1069,7 +2277,7 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                     }
                 }
 
-                if( iMaxVal == -1 )
+                if( !biMaxValdValid )
                     pafDstScanline[iDstPixel - nDstXOff] = fNoDataValue;
                 else
                     pafDstScanline[iDstPixel - nDstXOff] = pafVals[iMaxVal];
@@ -1078,14 +2286,18 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             {
                 // So we go here for a paletted or non-paletted byte band.
                 // The input values are then between 0 and 255.
-                std::vector<int> anVals(256, 0);
                 int nMaxVal = 0;
                 int iMaxInd = -1;
 
+                // The cost of this zeroing might be high. Perhaps we should just
+                // use the above generic case, and go to this one if the number
+                // of source pixels is large enough
+                std::fill(anVals.begin(), anVals.end(), 0);
+
                 for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
                 {
-                    const int iTotYOff =
-                        (iY - nSrcYOff) * nChunkXSize - nChunkXOff;
+                    const GPtrDiff_t iTotYOff =
+                        static_cast<GPtrDiff_t>(iY - nSrcYOff) * nChunkXSize - nChunkXOff;
                     for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
                     {
                         const float val = pafSrcScanline[iX+iTotYOff];
@@ -1110,19 +2322,12 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                         static_cast<float>(iMaxInd);
             }
         }
-
-        eErr = poOverview->RasterIO(
-            GF_Write, nDstXOff, iDstLine, nDstXOff2 - nDstXOff, 1,
-            pafDstScanline, nDstXOff2 - nDstXOff, 1, GDT_Float32,
-            0, 0, NULL );
     }
 
-    CPLFree( pafDstScanline );
-    CPLFree( aEntries );
     CPLFree( pafVals );
     CPLFree( panSums );
 
-    return eErr;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1227,6 +2432,18 @@ GDALResampleConvolutionHorizontalPixelCountLess8_3rows(
         dfRes1, dfRes2, dfRes3 );
 }
 
+template<class T> static inline void
+GDALResampleConvolutionHorizontalPixelCount4_3rows(
+    const T* pChunkRow1, const T* pChunkRow2, const T* pChunkRow3,
+    const double* padfWeights,
+    double& dfRes1, double& dfRes2, double& dfRes3 )
+{
+    GDALResampleConvolutionHorizontal_3rows(
+        pChunkRow1, pChunkRow2, pChunkRow3,
+        padfWeights, 4,
+        dfRes1, dfRes2, dfRes3 );
+}
+
 /************************************************************************/
 /*                  GDALResampleConvolutionVertical()                   */
 /************************************************************************/
@@ -1282,15 +2499,101 @@ template<class T> static inline void GDALResampleConvolutionVertical_2cols(
     dfRes2 = dfVal3 + dfVal4;
 }
 
-// TODO(schwehr): Move define of USE_SSE2 and include to the top of the file.
-// Restrict to 64bit processors because they are guaranteed to have SSE2.
-// Could possibly be used too on 32bit, but we would need to check at runtime.
-#if defined(__x86_64) || defined(_M_X64)
-#define USE_SSE2
-#endif
-
 #ifdef USE_SSE2
-#include <gdalsse_priv.h>
+
+#ifdef __AVX__
+/************************************************************************/
+/*             GDALResampleConvolutionVertical_16cols<T>                */
+/************************************************************************/
+
+template<class T> static inline void GDALResampleConvolutionVertical_16cols(
+    const T* pChunk, int nStride, const double* padfWeights, int nSrcLineCount,
+    float* afDest )
+{
+    int i = 0;
+    int j = 0;
+    XMMReg4Double v_acc0 = XMMReg4Double::Zero();
+    XMMReg4Double v_acc1 = XMMReg4Double::Zero();
+    XMMReg4Double v_acc2 = XMMReg4Double::Zero();
+    XMMReg4Double v_acc3 = XMMReg4Double::Zero();
+    for(;i+3<nSrcLineCount;i+=4, j+=4*nStride)
+    {
+        XMMReg4Double w0 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+0);
+        XMMReg4Double w1 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+1);
+        XMMReg4Double w2 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+2);
+        XMMReg4Double w3 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+3);
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0+0*nStride) * w0;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4+0*nStride) * w0;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8+0*nStride) * w0;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12+0*nStride) * w0;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0+1*nStride) * w1;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4+1*nStride) * w1;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8+1*nStride) * w1;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12+1*nStride) * w1;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0+2*nStride) * w2;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4+2*nStride) * w2;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8+2*nStride) * w2;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12+2*nStride) * w2;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0+3*nStride) * w3;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4+3*nStride) * w3;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8+3*nStride) * w3;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12+3*nStride) * w3;
+    }
+    for( ; i < nSrcLineCount; ++i, j += nStride )
+    {
+        XMMReg4Double w = XMMReg4Double::Load1ValHighAndLow(padfWeights+i);
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0) * w;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4) * w;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8) * w;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12) * w;
+    }
+    v_acc0.Store4Val(afDest);
+    v_acc1.Store4Val(afDest+4);
+    v_acc2.Store4Val(afDest+8);
+    v_acc3.Store4Val(afDest+12);
+}
+
+#else
+
+
+/************************************************************************/
+/*              GDALResampleConvolutionVertical_8cols<T>                */
+/************************************************************************/
+
+template<class T> static inline void GDALResampleConvolutionVertical_8cols(
+    const T* pChunk, int nStride, const double* padfWeights, int nSrcLineCount,
+    float* afDest )
+{
+    int i = 0;
+    int j = 0;
+    XMMReg4Double v_acc0 = XMMReg4Double::Zero();
+    XMMReg4Double v_acc1 = XMMReg4Double::Zero();
+    for(;i+3<nSrcLineCount;i+=4, j+=4*nStride)
+    {
+        XMMReg4Double w0 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+0);
+        XMMReg4Double w1 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+1);
+        XMMReg4Double w2 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+2);
+        XMMReg4Double w3 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+3);
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+0*nStride) * w0;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4+0*nStride) * w0;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+1*nStride) * w1;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4+1*nStride) * w1;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+2*nStride) * w2;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4+2*nStride) * w2;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+3*nStride) * w3;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4+3*nStride) * w3;
+    }
+    for( ; i < nSrcLineCount; ++i, j += nStride )
+    {
+        XMMReg4Double w = XMMReg4Double::Load1ValHighAndLow(padfWeights+i);
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0) * w;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4) * w;
+    }
+    v_acc0.Store4Val(afDest);
+    v_acc1.Store4Val(afDest+4);
+}
+
+#endif // __AVX__
 
 /************************************************************************/
 /*              GDALResampleConvolutionHorizontalSSE2<T>                */
@@ -1317,9 +2620,8 @@ template<class T> static inline double GDALResampleConvolutionHorizontalSSE2(
     }
 
     v_acc1 += v_acc2;
-    v_acc1.AddLowAndHigh();
 
-    double dfVal = static_cast<double>(v_acc1.GetLow());
+    double dfVal = v_acc1.GetHorizSum();
     for( ; i < nSrcPixelCount; ++i )
     {
         dfVal += pChunk[i] * padfWeightsAligned[i];
@@ -1369,10 +2671,9 @@ GDALResampleConvolutionHorizontalWithMaskSSE2(
         v_acc += v_pixels * v_weight;
         v_acc_weight += v_weight;
     }
-    v_acc.AddLowAndHigh();
-    v_acc_weight.AddLowAndHigh();
-    dfVal = static_cast<double>(v_acc.GetLow());
-    dfWeightSum = static_cast<double>(v_acc_weight.GetLow());
+
+    dfVal = v_acc.GetHorizSum();
+    dfWeightSum = v_acc_weight.GetHorizSum();
     for( ; i < nSrcPixelCount; ++i )
     {
         const double dfWeight = padfWeightsAligned[i] * pabyMask[i];
@@ -1445,13 +2746,9 @@ GDALResampleConvolutionHorizontal_3rows_SSE2(
         v_acc3 += v_pixels2 * v_weight2;
     }
 
-    v_acc1.AddLowAndHigh();
-    v_acc2.AddLowAndHigh();
-    v_acc3.AddLowAndHigh();
-
-    dfRes1 = static_cast<double>(v_acc1.GetLow());
-    dfRes2 = static_cast<double>(v_acc2.GetLow());
-    dfRes3 = static_cast<double>(v_acc3.GetLow());
+    dfRes1 = v_acc1.GetHorizSum();
+    dfRes2 = v_acc2.GetHorizSum();
+    dfRes3 = v_acc3.GetHorizSum();
     for( ; i < nSrcPixelCount; ++i )
     {
         dfRes1 += pChunkRow1[i] * padfWeightsAligned[i];
@@ -1515,13 +2812,9 @@ GDALResampleConvolutionHorizontalPixelCountLess8_3rows_SSE2(
         v_acc3 += v_pixels3 * v_weight;
     }
 
-    v_acc1.AddLowAndHigh();
-    v_acc2.AddLowAndHigh();
-    v_acc3.AddLowAndHigh();
-
-    dfRes1 = static_cast<double>(v_acc1.GetLow());
-    dfRes2 = static_cast<double>(v_acc2.GetLow());
-    dfRes3 = static_cast<double>(v_acc3.GetLow());
+    dfRes1 = v_acc1.GetHorizSum();
+    dfRes2 = v_acc2.GetHorizSum();
+    dfRes3 = v_acc3.GetHorizSum();
 
     for( ; i < nSrcPixelCount; ++i )
     {
@@ -1560,42 +2853,173 @@ GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GUInt16>(
         dfRes1, dfRes2, dfRes3 );
 }
 
+/************************************************************************/
+/*     GDALResampleConvolutionHorizontalPixelCount4_3rows_SSE2<T>       */
+/************************************************************************/
+
+template<class T> static inline void
+GDALResampleConvolutionHorizontalPixelCount4_3rows_SSE2(
+    const T* pChunkRow1, const T* pChunkRow2, const T* pChunkRow3,
+    const double* padfWeightsAligned,
+    double& dfRes1, double& dfRes2, double& dfRes3)
+{
+    const XMMReg4Double v_weight =
+        XMMReg4Double::Load4ValAligned(padfWeightsAligned);
+
+    // Retrieve the pixel & accumulate.
+    const XMMReg4Double v_pixels1 = XMMReg4Double::Load4Val(pChunkRow1);
+    const XMMReg4Double v_pixels2 = XMMReg4Double::Load4Val(pChunkRow2);
+    const XMMReg4Double v_pixels3 = XMMReg4Double::Load4Val(pChunkRow3);
+
+    XMMReg4Double v_acc1 = v_pixels1 * v_weight;
+    XMMReg4Double v_acc2 = v_pixels2 * v_weight;
+    XMMReg4Double v_acc3 = v_pixels3 * v_weight;
+
+    dfRes1 = v_acc1.GetHorizSum();
+    dfRes2 = v_acc2.GetHorizSum();
+    dfRes3 = v_acc3.GetHorizSum();
+}
+
+/************************************************************************/
+/*       GDALResampleConvolutionHorizontalPixelCount4_3rows<GByte>      */
+/************************************************************************/
+
+template<> inline void
+GDALResampleConvolutionHorizontalPixelCount4_3rows<GByte>(
+    const GByte* pChunkRow1, const GByte* pChunkRow2, const GByte* pChunkRow3,
+    const double* padfWeightsAligned,
+    double& dfRes1, double& dfRes2, double& dfRes3 )
+{
+    GDALResampleConvolutionHorizontalPixelCount4_3rows_SSE2(
+        pChunkRow1, pChunkRow2, pChunkRow3,
+        padfWeightsAligned,
+        dfRes1, dfRes2, dfRes3 );
+}
+
+template<> inline void
+GDALResampleConvolutionHorizontalPixelCount4_3rows<GUInt16>(
+    const GUInt16* pChunkRow1, const GUInt16* pChunkRow2,
+    const GUInt16* pChunkRow3,
+    const double* padfWeightsAligned,
+    double& dfRes1, double& dfRes2, double& dfRes3 )
+{
+    GDALResampleConvolutionHorizontalPixelCount4_3rows_SSE2(
+        pChunkRow1, pChunkRow2, pChunkRow3,
+        padfWeightsAligned,
+        dfRes1, dfRes2, dfRes3 );
+}
+
 #endif  // USE_SSE2
 
 /************************************************************************/
 /*                   GDALResampleChunk32R_Convolution()                 */
 /************************************************************************/
 
-// TODO(schwehr): Does bMultipleBands really have to be a part of the template?
-
-// class MSVCPedanticBool fails with bMultipleBands being a bool.
-template<class T, EMULATED_BOOL bMultipleBands> static CPLErr
+template<class T> static CPLErr
 GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                                    double dfYRatioDstToSrc,
                                    double dfSrcXDelta,
                                    double dfSrcYDelta,
                                    const T * pChunk, int nBands,
-                                   GByte * pabyChunkNodataMask,
+                                   const GByte * pabyChunkNodataMask,
                                    int nChunkXOff, int nChunkXSize,
                                    int nChunkYOff, int nChunkYSize,
                                    int nDstXOff, int nDstXOff2,
                                    int nDstYOff, int nDstYOff2,
-                                   GDALRasterBand ** papoDstBands,
+                                   GDALRasterBand * poDstBand,
+                                   void* pDstBuffer,
                                    int bHasNoData,
                                    float fNoDataValue,
                                    FilterFuncType pfnFilterFunc,
                                    FilterFunc4ValuesType pfnFilterFunc4Values,
                                    int nKernelRadius,
+                                   bool bKernelWithNegativeWeights,
                                    float fMaxVal )
 
 {
     if( !bHasNoData )
         fNoDataValue = 0.0f;
+    const auto dstDataType = poDstBand->GetRasterDataType();
+    const int nDstDataTypeSize = GDALGetDataTypeSizeBytes(dstDataType);
+    const float fReplacementVal = GetReplacementValueIfNoData(
+        dstDataType, bHasNoData, fNoDataValue);
+    // cppcheck-suppress unreadVariable
+    const int isIntegerDT = GDALDataTypeIsInteger(dstDataType);
+    const auto nNodataValueInt64 = static_cast<GInt64>(fNoDataValue);
+
+    // TODO: we should have some generic function to do this.
+    float fDstMin = -std::numeric_limits<float>::max();
+    float fDstMax = std::numeric_limits<float>::max();
+    if( dstDataType == GDT_Byte )
+    {
+        fDstMin = std::numeric_limits<GByte>::min();
+        fDstMax = std::numeric_limits<GByte>::max();
+    }
+    else if( dstDataType == GDT_UInt16 )
+    {
+        fDstMin = std::numeric_limits<GUInt16>::min();
+        fDstMax = std::numeric_limits<GUInt16>::max();
+    }
+    else if( dstDataType == GDT_Int16 )
+    {
+        fDstMin = std::numeric_limits<GInt16>::min();
+        fDstMax = std::numeric_limits<GInt16>::max();
+    }
+    else if( dstDataType == GDT_UInt32 )
+    {
+        fDstMin = static_cast<float>(std::numeric_limits<GUInt32>::min());
+        fDstMax = static_cast<float>(std::numeric_limits<GUInt32>::max());
+    }
+    else if( dstDataType == GDT_Int32 )
+    {
+        // cppcheck-suppress unreadVariable
+        fDstMin = static_cast<float>(std::numeric_limits<GInt32>::min());
+        // cppcheck-suppress unreadVariable
+        fDstMax = static_cast<float>(std::numeric_limits<GInt32>::max());
+    }
+
+    auto replaceValIfNodata =
+        [bHasNoData, isIntegerDT, fDstMin, fDstMax, nNodataValueInt64,
+         fNoDataValue, fReplacementVal](float fVal)
+    {
+        if( !bHasNoData )
+            return fVal;
+
+        // Clamp value before comparing to nodata: this is only needed for
+        // kernels with negative weights (Lanczos)
+        float fClamped = fVal;
+        if( fClamped < fDstMin )
+            fClamped = fDstMin;
+        else if( fClamped > fDstMax )
+            fClamped = fDstMax;
+        if( isIntegerDT )
+        {
+            if( nNodataValueInt64 == static_cast<GInt64>(std::round(fClamped)) )
+            {
+                // Do not use the nodata value
+                return fReplacementVal;
+            }
+        }
+        else if( fNoDataValue == fClamped )
+        {
+            // Do not use the nodata value
+            return fReplacementVal;
+        }
+        return fClamped;
+    };
 
 /* -------------------------------------------------------------------- */
 /*      Allocate work buffers.                                          */
 /* -------------------------------------------------------------------- */
     const int nDstXSize = nDstXOff2 - nDstXOff;
+    float* pafWrkScanline = nullptr;
+    if( dstDataType != GDT_Float32 )
+    {
+        pafWrkScanline = static_cast<float*>(
+            VSI_MALLOC2_VERBOSE(nDstXSize, sizeof(float)));
+        if( pafWrkScanline == nullptr )
+            return CE_Failure;
+    }
 
     const double dfXScale = 1.0 / dfXRatioDstToSrc;
     const double dfXScaleWeight = ( dfXScale >= 1.0 ) ? 1.0 : dfXScale;
@@ -1604,12 +3028,9 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
     const double dfYScaleWeight = ( dfYScale >= 1.0 ) ? 1.0 : dfYScale;
     const double dfYScaledRadius = nKernelRadius / dfYScaleWeight;
 
-    float* pafDstScanline = static_cast<float *>(
-        VSI_MALLOC_VERBOSE(nDstXSize * sizeof(float)) );
-
     // Temporary array to store result of horizontal filter.
     double* padfHorizontalFiltered = static_cast<double*>(
-        VSI_MALLOC_VERBOSE(nChunkYSize * nDstXSize * sizeof(double) * nBands) );
+        VSI_MALLOC3_VERBOSE(nChunkYSize, nDstXSize, sizeof(double) * nBands) );
 
     // To store convolution coefficients.
     double* padfWeights = static_cast<double *>(
@@ -1618,17 +3039,16 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                 2 + 2 * std::max(dfXScaledRadius, dfYScaledRadius) +
                 0.5) * sizeof(double) ) );
 
-    GByte* pabyChunkNodataMaskHorizontalFiltered = NULL;
+    GByte* pabyChunkNodataMaskHorizontalFiltered = nullptr;
     if( pabyChunkNodataMask )
         pabyChunkNodataMaskHorizontalFiltered = static_cast<GByte*>(
-            VSI_MALLOC_VERBOSE(nChunkYSize * nDstXSize) );
-    if( pafDstScanline == NULL ||
-        padfHorizontalFiltered == NULL ||
-        padfWeights == NULL ||
-        (pabyChunkNodataMask != NULL &&
-         pabyChunkNodataMaskHorizontalFiltered == NULL) )
+            VSI_MALLOC2_VERBOSE(nChunkYSize, nDstXSize) );
+    if( padfHorizontalFiltered == nullptr ||
+        padfWeights == nullptr ||
+        (pabyChunkNodataMask != nullptr &&
+         pabyChunkNodataMaskHorizontalFiltered == nullptr) )
     {
-        VSIFree(pafDstScanline);
+        VSIFree(pafWrkScanline);
         VSIFree(padfHorizontalFiltered);
         VSIFreeAligned(padfWeights);
         VSIFree(pabyChunkNodataMaskHorizontalFiltered);
@@ -1691,7 +3111,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
         }
 
         const int nHeight = nChunkYSize * nBands;
-        if( pabyChunkNodataMask == NULL )
+        if( pabyChunkNodataMask == nullptr )
         {
             if( dfWeightSum != 0 )
             {
@@ -1701,12 +3121,34 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             }
             int iSrcLineOff = 0;
 #ifdef USE_SSE2
-            if( bSrcPixelCountLess8 )
+            if( nSrcPixelCount == 4 )
             {
                 for( ; iSrcLineOff+2 < nHeight; iSrcLineOff +=3 )
                 {
-                    const int j =
-                        iSrcLineOff * nChunkXSize +
+                    const GPtrDiff_t j =
+                        static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
+                        (nSrcPixelStart - nChunkXOff);
+                    double dfVal1 = 0.0;
+                    double dfVal2 = 0.0;
+                    double dfVal3 = 0.0;
+                    GDALResampleConvolutionHorizontalPixelCount4_3rows(
+                        pChunk + j, pChunk + j + nChunkXSize,
+                        pChunk + j + 2 * nChunkXSize,
+                        padfWeights, dfVal1, dfVal2, dfVal3);
+                    padfHorizontalFiltered[static_cast<size_t>(iSrcLineOff) * nDstXSize +
+                                           iDstPixel - nDstXOff] = dfVal1;
+                    padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) + 1) * nDstXSize +
+                                           iDstPixel - nDstXOff] = dfVal2;
+                    padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) + 2) * nDstXSize +
+                                           iDstPixel - nDstXOff] = dfVal3;
+                }
+            }
+            else if( bSrcPixelCountLess8 )
+            {
+                for( ; iSrcLineOff+2 < nHeight; iSrcLineOff +=3 )
+                {
+                    const GPtrDiff_t j =
+                        static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
                         (nSrcPixelStart - nChunkXOff);
                     double dfVal1 = 0.0;
                     double dfVal2 = 0.0;
@@ -1715,11 +3157,11 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                         pChunk + j, pChunk + j + nChunkXSize,
                         pChunk + j + 2 * nChunkXSize,
                         padfWeights, nSrcPixelCount, dfVal1, dfVal2, dfVal3);
-                    padfHorizontalFiltered[iSrcLineOff * nDstXSize +
+                    padfHorizontalFiltered[static_cast<size_t>(iSrcLineOff) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal1;
-                    padfHorizontalFiltered[(iSrcLineOff + 1) * nDstXSize +
+                    padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) + 1) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal2;
-                    padfHorizontalFiltered[(iSrcLineOff + 2) * nDstXSize +
+                    padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) + 2) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal3;
                 }
             }
@@ -1728,8 +3170,8 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             {
                 for( ; iSrcLineOff+2 < nHeight; iSrcLineOff +=3 )
                 {
-                    const int j =
-                        iSrcLineOff * nChunkXSize +
+                    const GPtrDiff_t j =
+                        static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
                         (nSrcPixelStart - nChunkXOff);
                     double dfVal1 = 0.0;
                     double dfVal2 = 0.0;
@@ -1739,22 +3181,22 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                         pChunk + j + nChunkXSize,
                         pChunk + j + 2 * nChunkXSize,
                         padfWeights, nSrcPixelCount, dfVal1, dfVal2, dfVal3);
-                    padfHorizontalFiltered[iSrcLineOff * nDstXSize +
+                    padfHorizontalFiltered[static_cast<size_t>(iSrcLineOff) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal1;
-                    padfHorizontalFiltered[(iSrcLineOff + 1) * nDstXSize +
+                    padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) + 1) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal2;
-                    padfHorizontalFiltered[(iSrcLineOff + 2) * nDstXSize +
+                    padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) + 2) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal3;
                 }
             }
             for( ; iSrcLineOff < nHeight; ++iSrcLineOff )
             {
-                const int j =
-                    iSrcLineOff * nChunkXSize + (nSrcPixelStart - nChunkXOff);
+                const GPtrDiff_t j =
+                    static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize + (nSrcPixelStart - nChunkXOff);
                 const double dfVal =
                     GDALResampleConvolutionHorizontal(pChunk + j,
                                                 padfWeights, nSrcPixelCount);
-                padfHorizontalFiltered[iSrcLineOff * nDstXSize +
+                padfHorizontalFiltered[static_cast<size_t>(iSrcLineOff) * nDstXSize +
                                        iDstPixel - nDstXOff] = dfVal;
             }
         }
@@ -1762,15 +3204,43 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
         {
             for( int iSrcLineOff = 0; iSrcLineOff < nHeight; ++iSrcLineOff )
             {
+                const GPtrDiff_t j =
+                    static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize + (nSrcPixelStart - nChunkXOff);
+
+                if( bKernelWithNegativeWeights )
+                {
+                    int nConsecutiveValid = 0;
+                    int nMaxConsecutiveValid = 0;
+                    for( int k = 0; k < nSrcPixelCount; k++ )
+                    {
+                        if( pabyChunkNodataMask[j + k] )
+                            nConsecutiveValid ++;
+                        else if( nConsecutiveValid )
+                        {
+                            nMaxConsecutiveValid = std::max(nMaxConsecutiveValid,
+                                                            nConsecutiveValid);
+                            nConsecutiveValid = 0;
+                        }
+                    }
+                    nMaxConsecutiveValid = std::max(nMaxConsecutiveValid,
+                                                    nConsecutiveValid);
+                    if( nMaxConsecutiveValid < nSrcPixelCount / 2 )
+                    {
+                        const size_t nTempOffset =
+                            static_cast<size_t>(iSrcLineOff) * nDstXSize + iDstPixel - nDstXOff;
+                        padfHorizontalFiltered[nTempOffset] = 0.0;
+                        pabyChunkNodataMaskHorizontalFiltered[nTempOffset] = 0;
+                        continue;
+                    }
+                }
+
                 double dfVal = 0.0;
-                const int j =
-                    iSrcLineOff * nChunkXSize + (nSrcPixelStart - nChunkXOff);
                 GDALResampleConvolutionHorizontalWithMask(
                     pChunk + j, pabyChunkNodataMask + j,
                     padfWeights, nSrcPixelCount,
                     dfVal, dfWeightSum );
-                const int nTempOffset =
-                    iSrcLineOff * nDstXSize + iDstPixel - nDstXOff;
+                const size_t nTempOffset =
+                    static_cast<size_t>(iSrcLineOff) * nDstXSize + iDstPixel - nDstXOff;
                 if( dfWeightSum > 0.0 )
                 {
                     padfHorizontalFiltered[nTempOffset] = dfVal / dfWeightSum;
@@ -1790,14 +3260,11 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
 /* ==================================================================== */
     const int nChunkBottomYOff = nChunkYOff + nChunkYSize;
 
-    CPLErr eErr = CE_None;
-
-  for( int iBand = 0; iBand < (bMultipleBands ? nBands : 1); ++iBand )
-  {
-    const double* padfHorizontalFilteredBand =
-        padfHorizontalFiltered + iBand * nChunkYSize * nDstXSize;
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2; ++iDstLine )
     {
+        float* const pafDstScanline = pafWrkScanline ? pafWrkScanline:
+            static_cast<float*>(pDstBuffer) + (iDstLine - nDstYOff)  * nDstXSize;
+
         const double dfSrcLine =
             (iDstLine + 0.5) * dfYRatioDstToSrc + dfSrcYDelta;
         int nSrcLineStart =
@@ -1842,7 +3309,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             dfWeightSum += dfWeight;
         }
 
-        if( pabyChunkNodataMask == NULL )
+        if( pabyChunkNodataMask == nullptr )
         {
             if( dfWeightSum != 0 )
             {
@@ -1852,11 +3319,58 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             }
         }
 
-        if( pabyChunkNodataMask == NULL )
+        if( pabyChunkNodataMask == nullptr )
         {
             int iFilteredPixelOff = 0;  // Used after for.
             // j used after for.
-            int j = (nSrcLineStart - nChunkYOff) * nDstXSize;
+            size_t j = (nSrcLineStart - nChunkYOff) * static_cast<size_t>(nDstXSize);
+#ifdef USE_SSE2
+
+#ifdef __AVX__
+            for( ;
+                 iFilteredPixelOff+15 < nDstXSize;
+                 iFilteredPixelOff += 16, j += 16 )
+            {
+                GDALResampleConvolutionVertical_16cols(
+                    padfHorizontalFiltered + j, nDstXSize, padfWeights,
+                    nSrcLineCount, pafDstScanline + iFilteredPixelOff );
+                if( bHasNoData )
+                {
+                    for( int k = 0; k < 16; k++ )
+                    {
+                        pafDstScanline[iFilteredPixelOff + k] =
+                            replaceValIfNodata(pafDstScanline[iFilteredPixelOff + k]);
+                    }
+                }
+            }
+#else
+            for( ;
+                 iFilteredPixelOff+7 < nDstXSize;
+                 iFilteredPixelOff += 8, j += 8 )
+            {
+                GDALResampleConvolutionVertical_8cols(
+                    padfHorizontalFiltered + j, nDstXSize, padfWeights,
+                    nSrcLineCount, pafDstScanline + iFilteredPixelOff );
+                if( bHasNoData )
+                {
+                    for( int k = 0; k < 8; k++ )
+                    {
+                        pafDstScanline[iFilteredPixelOff + k] =
+                            replaceValIfNodata(pafDstScanline[iFilteredPixelOff + k]);
+                    }
+                }
+            }
+#endif
+
+            for( ; iFilteredPixelOff < nDstXSize; iFilteredPixelOff++, j++ )
+            {
+                const float fVal = static_cast<float>(
+                    GDALResampleConvolutionVertical(
+                        padfHorizontalFiltered + j,
+                        nDstXSize, padfWeights, nSrcLineCount ));
+                pafDstScanline[iFilteredPixelOff] = replaceValIfNodata(fVal);
+            }
+#else
             for( ;
                  iFilteredPixelOff+1 < nDstXSize;
                  iFilteredPixelOff += 2, j += 2 )
@@ -1864,20 +3378,23 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                 double dfVal1 = 0.0;
                 double dfVal2 = 0.0;
                 GDALResampleConvolutionVertical_2cols(
-                    padfHorizontalFilteredBand + j, nDstXSize, padfWeights,
+                    padfHorizontalFiltered + j, nDstXSize, padfWeights,
                     nSrcLineCount, dfVal1, dfVal2 );
-                pafDstScanline[iFilteredPixelOff] = static_cast<float>(dfVal1);
-                pafDstScanline[iFilteredPixelOff+1] =
-                    static_cast<float>(dfVal2);
+                pafDstScanline[iFilteredPixelOff] = replaceValIfNodata(
+                    static_cast<float>(dfVal1));
+                pafDstScanline[iFilteredPixelOff+1] = replaceValIfNodata(
+                    static_cast<float>(dfVal2));
             }
             if( iFilteredPixelOff < nDstXSize )
             {
                 const double dfVal =
                     GDALResampleConvolutionVertical(
-                        padfHorizontalFilteredBand + j,
+                        padfHorizontalFiltered + j,
                         nDstXSize, padfWeights, nSrcLineCount );
-                pafDstScanline[iFilteredPixelOff] = static_cast<float>(dfVal);
+                pafDstScanline[iFilteredPixelOff] = replaceValIfNodata(
+                    static_cast<float>(dfVal));
             }
+#endif
         }
         else
         {
@@ -1887,22 +3404,53 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             {
                 double dfVal = 0.0;
                 dfWeightSum = 0.0;
-                for( int i = 0,
-                         j = (nSrcLineStart - nChunkYOff) * nDstXSize
+                size_t j = (nSrcLineStart - nChunkYOff) * static_cast<size_t>(nDstXSize)
                              + iFilteredPixelOff;
-                    i < nSrcLineCount;
-                    ++i, j += nDstXSize)
+                if( bKernelWithNegativeWeights )
                 {
-                    const double dfWeight =
-                        padfWeights[i]
-                        * pabyChunkNodataMaskHorizontalFiltered[j];
-                    dfVal += padfHorizontalFilteredBand[j] * dfWeight;
-                    dfWeightSum += dfWeight;
+                    int nConsecutiveValid = 0;
+                    int nMaxConsecutiveValid = 0;
+                    for(int i = 0; i < nSrcLineCount; ++i, j += nDstXSize)
+                    {
+                        const double dfWeight =
+                            padfWeights[i]
+                            * pabyChunkNodataMaskHorizontalFiltered[j];
+                        if( pabyChunkNodataMaskHorizontalFiltered[j] )
+                        {
+                            nConsecutiveValid ++;
+                        }
+                        else if( nConsecutiveValid )
+                        {
+                            nMaxConsecutiveValid = std::max(
+                                nMaxConsecutiveValid, nConsecutiveValid);
+                            nConsecutiveValid = 0;
+                        }
+                        dfVal += padfHorizontalFiltered[j] * dfWeight;
+                        dfWeightSum += dfWeight;
+                    }
+                    nMaxConsecutiveValid = std::max(nMaxConsecutiveValid,
+                                                    nConsecutiveValid);
+                    if( nMaxConsecutiveValid < nSrcLineCount / 2 )
+                    {
+                        pafDstScanline[iFilteredPixelOff] = fNoDataValue;
+                        continue;
+                    }
+                }
+                else
+                {
+                    for(int i = 0; i < nSrcLineCount; ++i, j += nDstXSize)
+                    {
+                        const double dfWeight =
+                            padfWeights[i]
+                            * pabyChunkNodataMaskHorizontalFiltered[j];
+                        dfVal += padfHorizontalFiltered[j] * dfWeight;
+                        dfWeightSum += dfWeight;
+                    }
                 }
                 if( dfWeightSum > 0.0 )
                 {
-                    pafDstScanline[iFilteredPixelOff] =
-                        static_cast<float>(dfVal / dfWeightSum);
+                    pafDstScanline[iFilteredPixelOff] = replaceValIfNodata(
+                        static_cast<float>(dfVal / dfWeightSum));
                 }
                 else
                 {
@@ -1920,19 +3468,23 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             }
         }
 
-        eErr = papoDstBands[iBand]->RasterIO(
-            GF_Write, nDstXOff, iDstLine, nDstXSize, 1,
-            pafDstScanline, nDstXSize, 1, GDT_Float32,
-            0, 0, NULL );
+        if( pafWrkScanline )
+        {
+            GDALCopyWords(pafWrkScanline, GDT_Float32, 4,
+                          static_cast<GByte*>(pDstBuffer) +
+                            static_cast<size_t>(iDstLine - nDstYOff) *
+                                nDstXSize * nDstDataTypeSize,
+                          dstDataType, nDstDataTypeSize,
+                          nDstXSize);
+        }
     }
-  }
 
+    VSIFree(pafWrkScanline);
     VSIFreeAligned( padfWeights );
     VSIFree( padfHorizontalFiltered );
-    VSIFree( pafDstScanline );
     VSIFree( pabyChunkNodataMaskHorizontalFiltered );
 
-    return eErr;
+    return CE_None;
 }
 
 static CPLErr GDALResampleChunk32R_Convolution(
@@ -1940,13 +3492,15 @@ static CPLErr GDALResampleChunk32R_Convolution(
     double dfSrcXDelta,
     double dfSrcYDelta,
     GDALDataType eWrkDataType,
-    void * pChunk,
-    GByte * pabyChunkNodataMask,
+    const void * pChunk,
+    const GByte * pabyChunkNodataMask,
     int nChunkXOff, int nChunkXSize,
     int nChunkYOff, int nChunkYSize,
     int nDstXOff, int nDstXOff2,
     int nDstYOff, int nDstYOff2,
     GDALRasterBand * poOverview,
+    void** ppDstBuffer,
+    GDALDataType* peDstBufferDataType,
     const char * pszResampling,
     int bHasNoData, float fNoDataValue,
     GDALColorTable* /* poColorTable_unused */,
@@ -1954,14 +3508,21 @@ static CPLErr GDALResampleChunk32R_Convolution(
     bool /* bPropagateNoData */ )
 {
     GDALResampleAlg eResample;
+    bool bKernelWithNegativeWeights = false;
     if( EQUAL(pszResampling, "BILINEAR") )
         eResample = GRA_Bilinear;
     else if( EQUAL(pszResampling, "CUBIC") )
+    {
         eResample = GRA_Cubic;
+        bKernelWithNegativeWeights = true;
+    }
     else if( EQUAL(pszResampling, "CUBICSPLINE") )
         eResample = GRA_CubicSpline;
     else if( EQUAL(pszResampling, "LANCZOS") )
+    {
         eResample = GRA_Lanczos;
+        bKernelWithNegativeWeights = true;
+    }
     else
     {
         CPLAssert(false);
@@ -1978,67 +3539,83 @@ static CPLErr GDALResampleChunk32R_Convolution(
     const char* pszNBITS =
         poOverview->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
     GDALDataType eBandDT = poOverview->GetRasterDataType();
-    if( eResample != GRA_Bilinear && pszNBITS != NULL &&
+    if( eResample != GRA_Bilinear && pszNBITS != nullptr &&
         (eBandDT == GDT_Byte || eBandDT == GDT_UInt16 ||
          eBandDT == GDT_UInt32) )
     {
         int nBits = atoi(pszNBITS);
         if( nBits == GDALGetDataTypeSize(eBandDT) )
             nBits = 0;
-        if( nBits )
-            fMaxVal = static_cast<float>((1 << nBits) -1);
+        if( nBits > 0 && nBits < 32 )
+            fMaxVal = static_cast<float>((1U << nBits) -1);
     }
 
+    *ppDstBuffer =
+        VSI_MALLOC3_VERBOSE(nDstXOff2 - nDstXOff,
+                            nDstYOff2 - nDstYOff,
+                            GDALGetDataTypeSizeBytes(eBandDT));
+    if( *ppDstBuffer == nullptr )
+    {
+        return CE_Failure;
+    }
+    *peDstBufferDataType = eBandDT;
+
     if( eWrkDataType == GDT_Byte )
-        return GDALResampleChunk32R_ConvolutionT<GByte, false>(
+        return GDALResampleChunk32R_ConvolutionT<GByte>(
             dfXRatioDstToSrc, dfYRatioDstToSrc,
             dfSrcXDelta, dfSrcYDelta,
-            static_cast<GByte *>( pChunk ),
+            static_cast<const GByte *>( pChunk ),
             1,
             pabyChunkNodataMask,
             nChunkXOff, nChunkXSize,
             nChunkYOff, nChunkYSize,
             nDstXOff, nDstXOff2,
             nDstYOff, nDstYOff2,
-            &poOverview,
+            poOverview,
+            *ppDstBuffer,
             bHasNoData, fNoDataValue,
             pfnFilterFunc,
             pfnFilterFunc4Values,
             nKernelRadius,
+            bKernelWithNegativeWeights,
             fMaxVal );
     else if( eWrkDataType == GDT_UInt16 )
-        return GDALResampleChunk32R_ConvolutionT<GUInt16, false>(
+        return GDALResampleChunk32R_ConvolutionT<GUInt16>(
             dfXRatioDstToSrc, dfYRatioDstToSrc,
             dfSrcXDelta, dfSrcYDelta,
-            static_cast<GUInt16 *>( pChunk ),
+            static_cast<const GUInt16 *>( pChunk ),
             1,
             pabyChunkNodataMask,
             nChunkXOff, nChunkXSize,
             nChunkYOff, nChunkYSize,
             nDstXOff, nDstXOff2,
             nDstYOff, nDstYOff2,
-            &poOverview,
+            poOverview,
+            *ppDstBuffer,
             bHasNoData, fNoDataValue,
             pfnFilterFunc,
             pfnFilterFunc4Values,
             nKernelRadius,
+            bKernelWithNegativeWeights,
             fMaxVal );
     else if( eWrkDataType == GDT_Float32 )
-        return GDALResampleChunk32R_ConvolutionT<float, false>(
+        return GDALResampleChunk32R_ConvolutionT<float>(
             dfXRatioDstToSrc, dfYRatioDstToSrc,
             dfSrcXDelta, dfSrcYDelta,
-            static_cast<float *>( pChunk ),
+            static_cast<const float *>( pChunk ),
             1,
             pabyChunkNodataMask,
             nChunkXOff, nChunkXSize,
             nChunkYOff, nChunkYSize,
             nDstXOff, nDstXOff2,
             nDstYOff, nDstYOff2,
-            &poOverview,
+            poOverview,
+            *ppDstBuffer,
             bHasNoData, fNoDataValue,
             pfnFilterFunc,
             pfnFilterFunc4Values,
             nKernelRadius,
+            bKernelWithNegativeWeights,
             fMaxVal );
 
     CPLAssert(false);
@@ -2051,20 +3628,58 @@ static CPLErr GDALResampleChunk32R_Convolution(
 
 static CPLErr
 GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
-                       float * pafChunk, int nChunkYOff, int nChunkYSize,
+                       const float * pafChunk, int nChunkYOff, int nChunkYSize,
                        int nDstYOff, int nDstYOff2,
                        GDALRasterBand * poOverview,
+                       void** ppDstBuffer,
+                       GDALDataType* peDstBufferDataType,
                        const char * pszResampling )
 
 {
-    const int nOXSize = poOverview->GetXSize();
+    enum Method
+    {
+        NEAR,
+        AVERAGE,
+        AVERAGE_MAGPHASE,
+        RMS,
+    };
 
-    float * const pafDstScanline
-        = static_cast<float *>(VSI_MALLOC_VERBOSE(nOXSize * sizeof(float) * 2));
-    if( pafDstScanline == NULL )
+    Method eMethod = NEAR;
+    if( STARTS_WITH_CI(pszResampling, "NEAR") )
+    {
+        eMethod = NEAR;
+    }
+    else if( EQUAL(pszResampling, "AVERAGE_MAGPHASE") )
+    {
+        eMethod = AVERAGE_MAGPHASE;
+    }
+    else if( EQUAL(pszResampling, "RMS") )
+    {
+        eMethod = RMS;
+    }
+    else if( STARTS_WITH_CI(pszResampling, "AVER") )
+    {
+        eMethod = AVERAGE;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported resampling method %s for GDALResampleChunkC32R",
+                 pszResampling);
+        return CE_Failure;
+    }
+
+    const int nOXSize = poOverview->GetXSize();
+    *ppDstBuffer =
+        VSI_MALLOC3_VERBOSE(nOXSize,
+                            nDstYOff2 - nDstYOff,
+                            GDALGetDataTypeSizeBytes(GDT_CFloat32));
+    if( *ppDstBuffer == nullptr )
     {
         return CE_Failure;
     }
+    float* const pafDstBuffer = static_cast<float*>(*ppDstBuffer);
+    *peDstBufferDataType = GDT_CFloat32;
 
     const int nOYSize = poOverview->GetYSize();
     const double dfXRatioDstToSrc = static_cast<double>(nSrcWidth) / nOXSize;
@@ -2073,10 +3688,7 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
 /* ==================================================================== */
-    CPLErr eErr = CE_None;
-    for( int iDstLine = nDstYOff;
-         iDstLine < nDstYOff2 && eErr == CE_None;
-         ++iDstLine )
+    for( int iDstLine = nDstYOff; iDstLine < nDstYOff2; ++iDstLine )
     {
         int nSrcYOff = static_cast<int>(0.5 + iDstLine * dfYRatioDstToSrc);
         if( nSrcYOff < nChunkYOff )
@@ -2095,8 +3707,10 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
         if( nSrcYOff2 > nChunkYOff + nChunkYSize )
             nSrcYOff2 = nChunkYOff + nChunkYSize;
 
-        float * const pafSrcScanline =
+        const float * const pafSrcScanline =
             pafChunk + ((nSrcYOff - nChunkYOff) * nSrcWidth) * 2;
+        float* const pafDstScanline =
+            pafDstBuffer + (iDstLine - nDstYOff) * 2 * nOXSize;
 
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
@@ -2115,12 +3729,12 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                 nSrcXOff2 = nSrcWidth;
             }
 
-            if( STARTS_WITH_CI(pszResampling, "NEAR") )
+            if( eMethod == NEAR )
             {
                 pafDstScanline[iDstPixel*2] = pafSrcScanline[nSrcXOff*2];
                 pafDstScanline[iDstPixel*2+1] = pafSrcScanline[nSrcXOff*2+1];
             }
-            else if( EQUAL(pszResampling, "AVERAGE_MAGPHASE") )
+            else if( eMethod == AVERAGE_MAGPHASE )
             {
                 double dfTotalR = 0.0;
                 double dfTotalI = 0.0;
@@ -2132,12 +3746,12 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                     for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
                     {
                         const double dfR =
-                            pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2];
+                            pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2];
                         const double dfI =
-                            pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2+1];
+                            pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2+1];
                         dfTotalR += dfR;
                         dfTotalI += dfI;
-                        dfTotalM += sqrt( dfR*dfR + dfI*dfI );
+                        dfTotalM += std::hypot(dfR, dfI);
                         ++nCount;
                     }
                 }
@@ -2154,12 +3768,8 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                         static_cast<float>(dfTotalR/nCount);
                     pafDstScanline[iDstPixel*2+1] =
                         static_cast<float>(dfTotalI/nCount);
-
-                    const double dfM =
-                        sqrt( pafDstScanline[iDstPixel*2]
-                                  * pafDstScanline[iDstPixel*2]
-                              + pafDstScanline[iDstPixel*2+1]
-                                  * pafDstScanline[iDstPixel*2+1] );
+                    const double dfM = std::hypot(pafDstScanline[iDstPixel*2],
+                                                  pafDstScanline[iDstPixel*2+1]);
                     const double dfDesiredM = dfTotalM / nCount;
                     double dfRatio = 1.0;
                     if( dfM != 0.0 )
@@ -2171,7 +3781,40 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                         static_cast<float>(dfRatio);
                 }
             }
-            else if( STARTS_WITH_CI(pszResampling, "AVER") )
+            else if( eMethod == RMS )
+            {
+                double dfTotalR = 0.0;
+                double dfTotalI = 0.0;
+                int nCount = 0;
+
+                for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
+                {
+                    for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
+                    {
+                        const double dfR = pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2];
+                        const double dfI = pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2+1];
+
+                        dfTotalR += SQUARE(dfR);
+                        dfTotalI += SQUARE(dfI);
+
+                        ++nCount;
+                    }
+                }
+
+                CPLAssert( nCount > 0 );
+                if( nCount == 0 )
+                {
+                    pafDstScanline[iDstPixel*2] = 0.0;
+                    pafDstScanline[iDstPixel*2+1] = 0.0;
+                }
+                else
+                {
+                    /* compute RMS */
+                    pafDstScanline[iDstPixel*2  ] = static_cast<float>(sqrt(dfTotalR/nCount));
+                    pafDstScanline[iDstPixel*2+1] = static_cast<float>(sqrt(dfTotalI/nCount));
+                }
+            }
+            else if( eMethod == AVERAGE )
             {
                 double dfTotalR = 0.0;
                 double dfTotalI = 0.0;
@@ -2183,9 +3826,9 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                     {
                         // TODO(schwehr): Maybe use std::complex?
                         dfTotalR +=
-                            pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2];
+                            pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2];
                         dfTotalI +=
-                            pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2+1];
+                            pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2+1];
                         ++nCount;
                     }
                 }
@@ -2205,15 +3848,9 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                 }
             }
         }
-
-        eErr = poOverview->RasterIO( GF_Write, 0, iDstLine, nOXSize, 1,
-                                     pafDstScanline, nOXSize, 1, GDT_CFloat32,
-                                     0, 0, NULL );
     }
 
-    CPLFree( pafDstScanline );
-
-    return eErr;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -2317,7 +3954,7 @@ GDALResampleFunction GDALGetResampleFunction( const char* pszResampling,
     if( pnRadius ) *pnRadius = 0;
     if( STARTS_WITH_CI(pszResampling, "NEAR") )
         return GDALResampleChunk32R_Near;
-    else if( STARTS_WITH_CI(pszResampling, "AVER") )
+    else if( STARTS_WITH_CI(pszResampling, "AVER") || EQUAL(pszResampling, "RMS") )
         return GDALResampleChunk32R_Average;
     else if( STARTS_WITH_CI(pszResampling, "GAUSS") )
     {
@@ -2352,157 +3989,9 @@ GDALResampleFunction GDALGetResampleFunction( const char* pszResampling,
            CE_Failure, CPLE_AppDefined,
            "GDALGetResampleFunction: Unsupported resampling method \"%s\".",
            pszResampling );
-        return NULL;
+        return nullptr;
     }
 }
-
-#ifdef GDAL_ENABLE_RESAMPLING_MULTIBAND
-
-// For some reason, this does not perform better, and sometimes it performs
-// worse that when operating band after band. Probably due to cache misses.
-
-/************************************************************************/
-/*             GDALResampleChunk32RMultiBands_Convolution()             */
-/************************************************************************/
-
-static CPLErr GDALResampleChunk32RMultiBands_Convolution(
-    double dfXRatioDstToSrc, double dfYRatioDstToSrc,
-    double dfSrcXDelta,
-    double dfSrcYDelta,
-    GDALDataType eWrkDataType,
-    void * pChunk, int nBands,
-    GByte * pabyChunkNodataMask,
-    int nChunkXOff, int nChunkXSize,
-    int nChunkYOff, int nChunkYSize,
-    int nDstXOff, int nDstXOff2,
-    int nDstYOff, int nDstYOff2,
-    GDALRasterBand **papoDstBands,
-    const char * pszResampling,
-    int bHasNoData, float fNoDataValue,
-    GDALColorTable* /* poColorTable_unused */,
-    GDALDataType /* eSrcDataType */ )
-{
-    GDALResampleAlg eResample;
-    if( EQUAL(pszResampling, "BILINEAR") )
-        eResample = GRA_Bilinear;
-    else if( EQUAL(pszResampling, "CUBIC") )
-        eResample = GRA_Cubic;
-    else if( EQUAL(pszResampling, "CUBICSPLINE") )
-        eResample = GRA_CubicSpline;
-    else if( EQUAL(pszResampling, "LANCZOS") )
-        eResample = GRA_Lanczos;
-    else
-    {
-        CPLAssert(false);
-        return CE_Failure;
-    }
-    int nKernelRadius = GWKGetFilterRadius(eResample);
-    FilterFuncType pfnFilterFunc = GWKGetFilterFunc(eResample);
-    FilterFunc4ValuesType pfnFilterFunc4Values =
-        GWKGetFilterFunc4Values(eResample);
-
-    float fMaxVal = 0.0f;
-    // Cubic, etc... can have overshoots, so make sure we clamp values to the
-    // maximum value if NBITS is set
-    const char* pszNBITS =
-        papoDstBands[0]->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
-    GDALDataType eBandDT = papoDstBands[0]->GetRasterDataType();
-    if( eResample != GRA_Bilinear && pszNBITS != NULL &&
-        (eBandDT == GDT_Byte || eBandDT == GDT_UInt16 ||
-         eBandDT == GDT_UInt32) )
-    {
-        int nBits = atoi(pszNBITS);
-        if( nBits == GDALGetDataTypeSize(eBandDT) )
-            nBits = 0;
-        if( nBits )
-            fMaxVal = static_cast<float>((1 << nBits) -1);
-    }
-
-    if( eWrkDataType == GDT_Byte )
-        return GDALResampleChunk32R_ConvolutionT<GByte, true>(
-            dfXRatioDstToSrc, dfYRatioDstToSrc,
-            dfSrcXDelta, dfSrcYDelta,
-            static_cast<GByte *>( pChunk ), nBands,
-            pabyChunkNodataMask,
-            nChunkXOff, nChunkXSize,
-            nChunkYOff, nChunkYSize,
-            nDstXOff, nDstXOff2,
-            nDstYOff, nDstYOff2,
-            papoDstBands,
-            bHasNoData, fNoDataValue,
-            pfnFilterFunc,
-            pfnFilterFunc4Values,
-            nKernelRadius,
-            fMaxVal );
-    else if( eWrkDataType == GDT_UInt16 )
-        return GDALResampleChunk32R_ConvolutionT<GUInt16, true>(
-            dfXRatioDstToSrc, dfYRatioDstToSrc,
-            dfSrcXDelta, dfSrcYDelta,
-            static_cast<GUInt16 *>( pChunk ), nBands,
-            pabyChunkNodataMask,
-            nChunkXOff, nChunkXSize,
-            nChunkYOff, nChunkYSize,
-            nDstXOff, nDstXOff2,
-            nDstYOff, nDstYOff2,
-            papoDstBands,
-            bHasNoData, fNoDataValue,
-            pfnFilterFunc,
-            pfnFilterFunc4Values,
-            nKernelRadius,
-            fMaxVal );
-    else if( eWrkDataType == GDT_Float32 )
-        return GDALResampleChunk32R_ConvolutionT<float, true>(
-            dfXRatioDstToSrc, dfYRatioDstToSrc,
-            dfSrcXDelta, dfSrcYDelta,
-            static_cast<float *>( pChunk ), nBands,
-            pabyChunkNodataMask,
-            nChunkXOff, nChunkXSize,
-            nChunkYOff, nChunkYSize,
-            nDstXOff, nDstXOff2,
-            nDstYOff, nDstYOff2,
-            papoDstBands,
-            bHasNoData, fNoDataValue,
-            pfnFilterFunc,
-            pfnFilterFunc4Values,
-            nKernelRadius,
-            fMaxVal );
-
-    CPLAssert(false);
-    return CE_Failure;
-}
-
-/************************************************************************/
-/*                    GDALGetResampleFunctionMultiBands()               */
-/************************************************************************/
-
-GDALResampleFunctionMultiBands GDALGetResampleFunctionMultiBands(
-    const char* pszResampling, int* pnRadius )
-{
-    if( pnRadius ) *pnRadius = 0;
-    if( EQUAL(pszResampling, "CUBIC") )
-    {
-        if( pnRadius ) *pnRadius = GWKGetFilterRadius(GRA_Cubic);
-        return GDALResampleChunk32RMultiBands_Convolution;
-    }
-    else if( EQUAL(pszResampling, "CUBICSPLINE") )
-    {
-        if( pnRadius ) *pnRadius = GWKGetFilterRadius(GRA_CubicSpline);
-        return GDALResampleChunk32RMultiBands_Convolution;
-    }
-    else if( EQUAL(pszResampling, "LANCZOS") )
-    {
-        if( pnRadius ) *pnRadius = GWKGetFilterRadius(GRA_Lanczos);
-        return GDALResampleChunk32RMultiBands_Convolution;
-    }
-    else if( EQUAL(pszResampling, "BILINEAR") )
-    {
-        if( pnRadius ) *pnRadius = GWKGetFilterRadius(GRA_Bilinear);
-        return GDALResampleChunk32RMultiBands_Convolution;
-    }
-
-    return NULL;
-}
-#endif
 
 /************************************************************************/
 /*                      GDALGetOvrWorkDataType()                        */
@@ -2513,6 +4002,7 @@ GDALDataType GDALGetOvrWorkDataType( const char* pszResampling,
 {
     if( (STARTS_WITH_CI(pszResampling, "NEAR") ||
          STARTS_WITH_CI(pszResampling, "AVER") ||
+         EQUAL(pszResampling, "RMS") ||
          EQUAL(pszResampling, "CUBIC") ||
          EQUAL(pszResampling, "CUBICSPLINE") ||
          EQUAL(pszResampling, "LANCZOS") ||
@@ -2523,6 +4013,7 @@ GDALDataType GDALGetOvrWorkDataType( const char* pszResampling,
     }
     else if( (STARTS_WITH_CI(pszResampling, "NEAR") ||
          STARTS_WITH_CI(pszResampling, "AVER") ||
+         EQUAL(pszResampling, "RMS") ||
          EQUAL(pszResampling, "CUBIC") ||
          EQUAL(pszResampling, "CUBICSPLINE") ||
          EQUAL(pszResampling, "LANCZOS") ||
@@ -2533,6 +4024,20 @@ GDALDataType GDALGetOvrWorkDataType( const char* pszResampling,
     }
 
     return GDT_Float32;
+}
+
+
+namespace {
+// Structure to hold a pointer to free with CPLFree()
+struct PointerHolder
+{
+    void* ptr = nullptr;
+
+    explicit PointerHolder(void* ptrIn): ptr(ptrIn) {}
+    ~PointerHolder() { CPLFree(ptr); }
+    PointerHolder(const PointerHolder&) = delete;
+    PointerHolder& operator=(const PointerHolder&) = delete;
+};
 }
 
 /************************************************************************/
@@ -2558,6 +4063,10 @@ GDALDataType GDALGetOvrWorkDataType( const char* pszResampling,
  * considered as the nodata value and not each value of the triplet
  * independently per band.
  *
+ * Starting with GDAL 3.2, the GDAL_NUM_THREADS configuration option can be set
+ * to "ALL_CPUS" or a integer value to specify the number of threads to use for
+ * overview computation.
+ *
  * @param hSrcBand the source (base level) band.
  * @param nOverviewCount the number of downsampled bands being generated.
  * @param pahOvrBands the list of downsampled bands to be generated.
@@ -2573,11 +4082,11 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                          GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-    GDALRasterBand *poSrcBand = static_cast<GDALRasterBand *>( hSrcBand );
+    GDALRasterBand *poSrcBand = GDALRasterBand::FromHandle( hSrcBand );
     GDALRasterBand **papoOvrBands =
         reinterpret_cast<GDALRasterBand **>( pahOvrBands );
 
-    if( pfnProgress == NULL )
+    if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
     if( EQUAL(pszResampling,"NONE") )
@@ -2587,21 +4096,22 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     GDALResampleFunction pfnResampleFn
         = GDALGetResampleFunction(pszResampling, &nKernelRadius);
 
-    if( pfnResampleFn == NULL )
+    if( pfnResampleFn == nullptr )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Check color tables...                                           */
 /* -------------------------------------------------------------------- */
-    GDALColorTable* poColorTable = NULL;
+    GDALColorTable* poColorTable = nullptr;
 
     if( (STARTS_WITH_CI(pszResampling, "AVER")
+         || EQUAL(pszResampling, "RMS")
          || STARTS_WITH_CI(pszResampling, "MODE")
          || STARTS_WITH_CI(pszResampling, "GAUSS")) &&
         poSrcBand->GetColorInterpretation() == GCI_PaletteIndex )
     {
         poColorTable = poSrcBand->GetColorTable();
-        if( poColorTable != NULL )
+        if( poColorTable != nullptr )
         {
             if( poColorTable->GetPaletteInterpretation() != GPI_RGB )
             {
@@ -2610,7 +4120,11 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                     "Computing overviews on palette index raster bands "
                     "with a palette whose color interpretation is not RGB "
                     "will probably lead to unexpected results." );
-                poColorTable = NULL;
+                poColorTable = nullptr;
+            }
+            else if( poColorTable->IsIdentity() )
+            {
+                poColorTable = nullptr;
             }
         }
         else
@@ -2636,27 +4150,28 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     // If we have a nodata mask and we are doing something more complicated
     // than nearest neighbouring, we have to fetch to nodata mask.
 
-    GDALRasterBand* poMaskBand = NULL;
-    int nMaskFlags = 0;
+    GDALRasterBand* poMaskBand = nullptr;
     bool bUseNoDataMask = false;
+    bool bCanUseCascaded = true;
 
     if( !STARTS_WITH_CI(pszResampling, "NEAR") )
     {
-        // Special case if we are the alpha band. We want it to be considered
+        // Special case if we are an alpha/mask band. We want it to be considered
         // as the mask band to avoid alpha=0 to be taken into account in average
         // computation.
-        if( poSrcBand->GetColorInterpretation() == GCI_AlphaBand )
+        if( poSrcBand->IsMaskBand() )
         {
             poMaskBand = poSrcBand;
-            nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
+            bUseNoDataMask = true;
         }
         else
         {
             poMaskBand = poSrcBand->GetMaskBand();
-            nMaskFlags = poSrcBand->GetMaskFlags();
+            const int nMaskFlags = poSrcBand->GetMaskFlags();
+            bCanUseCascaded = (nMaskFlags == GMF_NODATA ||
+                               nMaskFlags == GMF_ALL_VALID);
+            bUseNoDataMask = (nMaskFlags & GMF_ALL_VALID) == 0;
         }
-
-        bUseNoDataMask = (nMaskFlags & GMF_ALL_VALID) == 0;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2668,13 +4183,14 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     // In case the mask made be computed from another band of the dataset,
     // we can't use cascaded generation, as the computation of the overviews
     // of the band used for the mask band may not have yet occurred (#3033).
-    if( (STARTS_WITH_CI(pszResampling, "AVER") |
+    if( (STARTS_WITH_CI(pszResampling, "AVER") ||
          STARTS_WITH_CI(pszResampling, "GAUSS") ||
+         EQUAL(pszResampling, "RMS") ||
          EQUAL(pszResampling, "CUBIC") ||
          EQUAL(pszResampling, "CUBICSPLINE") ||
          EQUAL(pszResampling, "LANCZOS") ||
          EQUAL(pszResampling, "BILINEAR")) && nOverviewCount > 1
-         && !(bUseNoDataMask && nMaskFlags != GMF_NODATA))
+         && bCanUseCascaded )
         return GDALRegenerateCascadingOverviews( poSrcBand,
                                                  nOverviewCount, papoOvrBands,
                                                  pszResampling,
@@ -2688,18 +4204,10 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     int nFRYBlockSize = 0;
     poSrcBand->GetBlockSize( &nFRXBlockSize, &nFRYBlockSize );
 
-    int nFullResYChunk = 0;
-    if( nFRYBlockSize < 16 || nFRYBlockSize > 256 )
-        nFullResYChunk = 64;
-    else
-        nFullResYChunk = nFRYBlockSize;
-
-    GDALDataType eType = GDT_Unknown;
-    if( GDALDataTypeIsComplex( poSrcBand->GetRasterDataType() ) )
-        eType = GDT_CFloat32;
-    else
-        eType = GDALGetOvrWorkDataType( pszResampling,
-                                        poSrcBand->GetRasterDataType() );
+    const GDALDataType eSrcDataType = poSrcBand->GetRasterDataType();
+    const GDALDataType eWrkDataType = GDALDataTypeIsComplex( eSrcDataType )?
+        GDT_CFloat32 :
+        GDALGetOvrWorkDataType( pszResampling, eSrcDataType );
 
     const int nWidth = poSrcBand->GetXSize();
     const int nHeight = poSrcBand->GetYSize();
@@ -2716,24 +4224,69 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             nMaxOvrFactor,
             static_cast<int>(static_cast<double>(nHeight) / nDstHeight + 0.5) );
     }
-    const int nMaxChunkYSizeQueried =
-        nFullResYChunk + 2 * nKernelRadius * nMaxOvrFactor;
 
-    GByte *pabyChunkNodataMask = NULL;
-    void *pChunk =
-        VSI_MALLOC3_VERBOSE(
-            GDALGetDataTypeSizeBytes(eType), nMaxChunkYSizeQueried, nWidth );
-    if( bUseNoDataMask )
+    int nFullResYChunk = nFRYBlockSize;
+    int nMaxChunkYSizeQueried = 0;
+
+    const auto UpdateChunkHeightAndGetChunkSize = [
+        &nFullResYChunk, &nMaxChunkYSizeQueried, nKernelRadius, nMaxOvrFactor, eWrkDataType, nWidth]()
     {
-        pabyChunkNodataMask =
-            (GByte*) VSI_MALLOC2_VERBOSE( nMaxChunkYSizeQueried, nWidth );
+        // Make sure that round(nChunkYOff / nMaxOvrFactor) < round((nChunkYOff + nFullResYChunk) / nMaxOvrFactor)
+        nFullResYChunk = std::max(nFullResYChunk, 2 * nMaxOvrFactor);
+        nMaxChunkYSizeQueried =
+            nFullResYChunk + 2 * nKernelRadius * nMaxOvrFactor;
+        return static_cast<GIntBig>(GDALGetDataTypeSizeBytes(eWrkDataType)) *
+            nMaxChunkYSizeQueried * nWidth;
+    };
+
+    // Only configurable for debug / testing
+    const char* pszChunkYSize = CPLGetConfigOption("GDAL_OVR_CHUNKYSIZE", nullptr);
+    if( pszChunkYSize )
+    {
+        // coverity[tainted_data]
+        nFullResYChunk = atoi(pszChunkYSize);
     }
 
-    if( pChunk == NULL || (bUseNoDataMask && pabyChunkNodataMask == NULL))
+    // Only configurable for debug / testing
+    const int nChunkMaxSize =
+        atoi(CPLGetConfigOption("GDAL_OVR_CHUNK_MAX_SIZE", "10485760"));
+
+    auto nChunkSize = UpdateChunkHeightAndGetChunkSize();
+    if( nChunkSize > nChunkMaxSize )
     {
-        CPLFree(pChunk);
-        CPLFree(pabyChunkNodataMask);
-        return CE_Failure;
+        if( poColorTable == nullptr && nFRXBlockSize < nWidth &&
+            !GDALDataTypeIsComplex( eSrcDataType ) &&
+            (!STARTS_WITH_CI(pszResampling, "AVER") ||
+             EQUAL(pszResampling, "AVERAGE")) )
+        {
+            // If this is tiled, then use GDALRegenerateOverviewsMultiBand()
+            // which use a block based strategy, which is much less memory
+            // hungry.
+            return GDALRegenerateOverviewsMultiBand(1, &poSrcBand,
+                                                    nOverviewCount,
+                                                    &papoOvrBands,
+                                                    pszResampling,
+                                                    pfnProgress,
+                                                    pProgressData);
+        }
+        else if( nOverviewCount > 1 && STARTS_WITH_CI(pszResampling, "NEAR") )
+        {
+            return GDALRegenerateCascadingOverviews(poSrcBand,
+                                                    nOverviewCount,
+                                                    papoOvrBands,
+                                                    pszResampling,
+                                                    pfnProgress,
+                                                    pProgressData );
+        }
+    }
+    else if( pszChunkYSize == nullptr )
+    {
+        // Try to get as close as possible to nChunkMaxSize
+        while( nChunkSize * 2 < nChunkMaxSize )
+        {
+            nFullResYChunk *= 2;
+            nChunkSize = UpdateChunkHeightAndGetChunkSize();
+        }
     }
 
     int bHasNoData = FALSE;
@@ -2741,6 +4294,153 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
         static_cast<float>( poSrcBand->GetNoDataValue(&bHasNoData) );
     const bool bPropagateNoData =
         CPLTestBool( CPLGetConfigOption("GDAL_OVR_PROPAGATE_NODATA", "NO") );
+
+    // Structure describing a resampling job
+    struct OvrJob
+    {
+        // Buffers to free when job is finished
+        std::shared_ptr<PointerHolder> oSrcMaskBufferHolder{};
+        std::shared_ptr<PointerHolder> oSrcBufferHolder{};
+        std::unique_ptr<PointerHolder> oDstBufferHolder{};
+
+        // Input parameters of pfnResampleFn
+        GDALResampleFunction pfnResampleFn = nullptr;
+        double dfXRatioDstToSrc{};
+        double dfYRatioDstToSrc{};
+        GDALDataType eWrkDataType = GDT_Unknown;
+        const void * pChunk = nullptr;
+        const GByte * pabyChunkNodataMask = nullptr;
+        int nWidth = 0;
+        int nHeight = 0;
+        int nChunkYOff= 0;
+        int nChunkYSize = 0;
+        int nDstWidth = 0;
+        int nDstYOff = 0;
+        int nDstYOff2 = 0;
+        GDALRasterBand* poDstBand = nullptr;
+        const char * pszResampling = nullptr;
+        int bHasNoData = 0;
+        float fNoDataValue = 0.0f;
+        GDALColorTable* poColorTable = nullptr;
+        GDALDataType eSrcDataType = GDT_Unknown;
+        bool bPropagateNoData = false;
+
+        // Output values of resampling function
+        CPLErr eErr = CE_Failure;
+        void* pDstBuffer = nullptr;
+        GDALDataType eDstBufferDataType = GDT_Unknown;
+
+        // Synchronization
+        bool                    bFinished = false;
+        std::mutex              mutex{};
+        std::condition_variable cv{};
+    };
+
+    // Thread function to resample
+    const auto JobResampleFunc = [](void* pData)
+    {
+        OvrJob* poJob = static_cast<OvrJob*>(pData);
+
+        if( poJob->eWrkDataType != GDT_CFloat32 )
+        {
+            poJob->eErr = poJob->pfnResampleFn(
+                poJob->dfXRatioDstToSrc,
+                poJob->dfYRatioDstToSrc,
+                0.0, 0.0,
+                poJob->eWrkDataType,
+                poJob->pChunk,
+                poJob->pabyChunkNodataMask,
+                0,
+                poJob->nWidth,
+                poJob->nChunkYOff,
+                poJob->nChunkYSize,
+                0, poJob->nDstWidth,
+                poJob->nDstYOff,
+                poJob->nDstYOff2,
+                poJob->poDstBand,
+                &(poJob->pDstBuffer),
+                &(poJob->eDstBufferDataType),
+                poJob->pszResampling,
+                poJob->bHasNoData,
+                poJob->fNoDataValue,
+                poJob->poColorTable,
+                poJob->eSrcDataType,
+                poJob->bPropagateNoData);
+        }
+        else
+        {
+            poJob->eErr = GDALResampleChunkC32R(
+                poJob->nWidth,
+                poJob->nHeight,
+                static_cast<const float*>(poJob->pChunk),
+                poJob->nChunkYOff,
+                poJob->nChunkYSize,
+                poJob->nDstYOff,
+                poJob->nDstYOff2,
+                poJob->poDstBand,
+                &(poJob->pDstBuffer),
+                &(poJob->eDstBufferDataType),
+                poJob->pszResampling);
+        }
+
+        poJob->oDstBufferHolder.reset(new PointerHolder(poJob->pDstBuffer));
+
+        {
+            std::lock_guard<std::mutex> guard(poJob->mutex);
+            poJob->bFinished = true;
+            poJob->cv.notify_one();
+        }
+    };
+
+    // Function to write resample data to target band
+    const auto WriteJobData = [](const OvrJob* poJob)
+    {
+        return poJob->poDstBand->RasterIO( GF_Write,
+                                            0,
+                                            poJob->nDstYOff,
+                                            poJob->nDstWidth,
+                                            poJob->nDstYOff2 - poJob->nDstYOff,
+                                            poJob->pDstBuffer,
+                                            poJob->nDstWidth,
+                                            poJob->nDstYOff2 - poJob->nDstYOff,
+                                            poJob->eDstBufferDataType,
+                                            0, 0, nullptr );
+    };
+
+    // Wait for completion of oldest job and serialize it
+    const auto WaitAndFinalizeOldestJob = [WriteJobData](
+                        std::list<std::unique_ptr<OvrJob>>& jobList)
+    {
+        auto poOldestJob = jobList.front().get();
+        {
+            std::unique_lock<std::mutex> oGuard(poOldestJob->mutex);
+            while( !poOldestJob->bFinished )
+            {
+                poOldestJob->cv.wait(oGuard);
+            }
+        }
+        CPLErr l_eErr = poOldestJob->eErr;
+        if( l_eErr == CE_None )
+        {
+            l_eErr = WriteJobData(poOldestJob);
+        }
+
+        jobList.pop_front();
+        return l_eErr;
+    };
+
+    // Queue of jobs
+    std::list<std::unique_ptr<OvrJob>> jobList;
+
+    GByte *pabyChunkNodataMask = nullptr;
+    void *pChunk = nullptr;
+
+    const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
+    const int nThreads = std::max(1, std::min(128,
+            EQUAL(pszThreads, "ALL_CPUS") ? CPLGetNumCPUs() : atoi(pszThreads)));
+    auto poThreadPool = nThreads > 1 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
+    auto poJobQueue = poThreadPool ? poThreadPool->CreateJobQueue() :
+                            std::unique_ptr<CPLJobQueue>(nullptr);
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image operating on chunks.                            */
@@ -2753,7 +4453,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
          nChunkYOff += nFullResYChunk )
     {
         if( !pfnProgress( nChunkYOff / static_cast<double>( nHeight ),
-                          NULL, pProgressData ) )
+                          nullptr, pProgressData ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
             eErr = CE_Failure;
@@ -2773,43 +4473,91 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
         if( nChunkYOffQueried + nChunkYSizeQueried > nHeight )
             nChunkYSizeQueried = nHeight - nChunkYOffQueried;
 
+        // Avoid accumulating too many tasks and exhaust RAM
+        // Try to complete already finished jobs
+        while( eErr == CE_None && !jobList.empty() )
+        {
+            auto poOldestJob = jobList.front().get();
+            {
+                std::lock_guard<std::mutex> oGuard(poOldestJob->mutex);
+                if( !poOldestJob->bFinished )
+                {
+                    break;
+                }
+            }
+            eErr = poOldestJob->eErr;
+            if( eErr == CE_None )
+            {
+                eErr = WriteJobData(poOldestJob);
+            }
+
+            jobList.pop_front();
+        }
+
+        // And in case we have saturated the number of threads,
+        // wait for completion of tasks to go below the threshold.
+        while( eErr == CE_None &&
+                jobList.size() >= static_cast<size_t>(nThreads) )
+        {
+            eErr = WaitAndFinalizeOldestJob(jobList);
+        }
+
+        // (Re)allocate buffers if needed
+        if( pChunk == nullptr )
+        {
+            pChunk = VSI_MALLOC3_VERBOSE(
+                GDALGetDataTypeSizeBytes(eWrkDataType), nMaxChunkYSizeQueried, nWidth );
+        }
+        if( bUseNoDataMask && pabyChunkNodataMask == nullptr )
+        {
+            pabyChunkNodataMask = static_cast<GByte*>(
+                VSI_MALLOC2_VERBOSE( nMaxChunkYSizeQueried, nWidth ));
+        }
+
+        if( pChunk == nullptr || (bUseNoDataMask && pabyChunkNodataMask == nullptr))
+        {
+            CPLFree(pChunk);
+            CPLFree(pabyChunkNodataMask);
+            return CE_Failure;
+        }
+
         // Read chunk.
         if( eErr == CE_None )
             eErr = poSrcBand->RasterIO(
                 GF_Read, 0, nChunkYOffQueried, nWidth, nChunkYSizeQueried,
-                pChunk, nWidth, nChunkYSizeQueried, eType,
-                0, 0, NULL );
+                pChunk, nWidth, nChunkYSizeQueried, eWrkDataType,
+                0, 0, nullptr );
         if( eErr == CE_None && bUseNoDataMask )
             eErr = poMaskBand->RasterIO(
                 GF_Read, 0, nChunkYOffQueried, nWidth, nChunkYSizeQueried,
                 pabyChunkNodataMask, nWidth, nChunkYSizeQueried, GDT_Byte,
-                0, 0, NULL );
+                0, 0, nullptr );
 
         // Special case to promote 1bit data to 8bit 0/255 values.
         if( EQUAL(pszResampling, "AVERAGE_BIT2GRAYSCALE") )
         {
-            if( eType == GDT_Float32 )
+            if( eWrkDataType == GDT_Float32 )
             {
                 float* pafChunk = static_cast<float*>(pChunk);
-                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; --i )
+                for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nChunkYSizeQueried)*nWidth; i++)
                 {
                     if( pafChunk[i] == 1.0 )
                         pafChunk[i] = 255.0;
                 }
             }
-            else if( eType == GDT_Byte )
+            else if( eWrkDataType == GDT_Byte )
             {
-              GByte* pabyChunk = static_cast<GByte*>(pChunk);
-                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; --i )
+                GByte* pabyChunk = static_cast<GByte*>(pChunk);
+                for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nChunkYSizeQueried)*nWidth; i++)
                 {
                     if( pabyChunk[i] == 1 )
                         pabyChunk[i] = 255;
                 }
             }
-            else if( eType == GDT_UInt16 )
+            else if( eWrkDataType == GDT_UInt16 )
             {
                 GUInt16* pasChunk = static_cast<GUInt16*>(pChunk);
-                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; --i )
+                for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nChunkYSizeQueried)*nWidth; i++)
                 {
                     if( pasChunk[i] == 1 )
                         pasChunk[i] = 255;
@@ -2821,10 +4569,10 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
         }
         else if( EQUAL(pszResampling, "AVERAGE_BIT2GRAYSCALE_MINISWHITE") )
         {
-            if( eType == GDT_Float32 )
+            if( eWrkDataType == GDT_Float32 )
             {
                 float* pafChunk = static_cast<float*>(pChunk);
-                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; --i )
+                for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nChunkYSizeQueried)*nWidth; i++)
                 {
                     if( pafChunk[i] == 1.0 )
                         pafChunk[i] = 0.0;
@@ -2832,10 +4580,10 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                         pafChunk[i] = 255.0;
                 }
             }
-            else if( eType == GDT_Byte )
+            else if( eWrkDataType == GDT_Byte )
             {
                 GByte* pabyChunk = static_cast<GByte*>(pChunk);
-                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; --i )
+                for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nChunkYSizeQueried)*nWidth; i++)
                 {
                     if( pabyChunk[i] == 1 )
                         pabyChunk[i] = 0;
@@ -2843,10 +4591,10 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                         pabyChunk[i] = 255;
                 }
             }
-            else if( eType == GDT_UInt16 )
+            else if( eWrkDataType == GDT_UInt16 )
             {
                 GUInt16* pasChunk = static_cast<GUInt16*>(pChunk);
-                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; --i )
+                for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nChunkYSizeQueried)*nWidth; i++)
                 {
                     if( pasChunk[i] == 1 )
                         pasChunk[i] = 0;
@@ -2859,12 +4607,18 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             }
         }
 
+        std::shared_ptr<PointerHolder> oSrcBufferHolder(
+            new PointerHolder(poJobQueue ? pChunk : nullptr));
+        std::shared_ptr<PointerHolder> oSrcMaskBufferHolder(
+            new PointerHolder(poJobQueue ? pabyChunkNodataMask : nullptr));
+
         for( int iOverview = 0;
              iOverview < nOverviewCount && eErr == CE_None;
              ++iOverview )
         {
-            const int nDstWidth = papoOvrBands[iOverview]->GetXSize();
-            const int nDstHeight = papoOvrBands[iOverview]->GetYSize();
+            GDALRasterBand* poDstBand = papoOvrBands[iOverview];
+            const int nDstWidth = poDstBand->GetXSize();
+            const int nDstHeight = poDstBand->GetYSize();
 
             const double dfXRatioDstToSrc =
                 static_cast<double>(nWidth) / nDstWidth;
@@ -2878,45 +4632,78 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /*      processed.                                                      */
 /* -------------------------------------------------------------------- */
             int nDstYOff = static_cast<int>(0.5 + nChunkYOff/dfYRatioDstToSrc);
+            if( nDstYOff == nDstHeight )
+                continue;
             int nDstYOff2 = static_cast<int>(
                 0.5 + (nChunkYOff+nFullResYChunk)/dfYRatioDstToSrc);
 
             if( nChunkYOff + nFullResYChunk == nHeight )
                 nDstYOff2 = nDstHeight;
 #if DEBUG_VERBOSE
-            CPLDebug( "GDAL",
-                      "nDstYOff=%d, nDstYOff2=%d", nDstYOff, nDstYOff2 );
+            CPLDebug(
+                "GDAL",
+                "Reading (%dx%d -> %dx%d) for output (%dx%d -> %dx%d)",
+                0, nChunkYOffQueried, nWidth, nChunkYSizeQueried,
+                0, nDstYOff, nDstWidth, nDstYOff2 - nDstYOff );
 #endif
 
-            if( eType == GDT_Byte ||
-                eType == GDT_UInt16 ||
-                eType == GDT_Float32 )
-                eErr = pfnResampleFn(
-                    dfXRatioDstToSrc, dfYRatioDstToSrc,
-                    0.0, 0.0,
-                    eType,
-                    pChunk,
-                    pabyChunkNodataMask,
-                    0, nWidth,
-                    nChunkYOffQueried, nChunkYSizeQueried,
-                    0, nDstWidth,
-                    nDstYOff, nDstYOff2,
-                    papoOvrBands[iOverview], pszResampling,
-                    bHasNoData, fNoDataValue, poColorTable,
-                    poSrcBand->GetRasterDataType(),
-                    bPropagateNoData);
+            auto poJob = std::unique_ptr<OvrJob>(new OvrJob());
+            poJob->pfnResampleFn = pfnResampleFn;
+            poJob->dfXRatioDstToSrc = dfXRatioDstToSrc;
+            poJob->dfYRatioDstToSrc = dfYRatioDstToSrc;
+            poJob->eWrkDataType = eWrkDataType;
+            poJob->pChunk = pChunk;
+            poJob->pabyChunkNodataMask = pabyChunkNodataMask;
+            poJob->nWidth = nWidth;
+            poJob->nHeight = nHeight;
+            poJob->nChunkYOff = nChunkYOffQueried;
+            poJob->nChunkYSize = nChunkYSizeQueried;
+            poJob->nDstWidth = nDstWidth;
+            poJob->nDstYOff = nDstYOff;
+            poJob->nDstYOff2 = nDstYOff2;
+            poJob->poDstBand = poDstBand;
+            poJob->pszResampling = pszResampling;
+            poJob->bHasNoData = bHasNoData;
+            poJob->fNoDataValue = fNoDataValue;
+            poJob->poColorTable = poColorTable;
+            poJob->eSrcDataType = eSrcDataType;
+            poJob->bPropagateNoData = bPropagateNoData;
+
+            if( poJobQueue )
+            {
+                poJob->oSrcMaskBufferHolder = oSrcMaskBufferHolder;
+                poJob->oSrcBufferHolder = oSrcBufferHolder;
+                poJobQueue->SubmitJob(JobResampleFunc, poJob.get());
+                jobList.emplace_back(std::move(poJob));
+            }
             else
-                eErr = GDALResampleChunkC32R(
-                    nWidth, nHeight,
-                    static_cast<float*>(pChunk),
-                    nChunkYOffQueried, nChunkYSizeQueried,
-                    nDstYOff, nDstYOff2,
-                    papoOvrBands[iOverview], pszResampling);
+            {
+                JobResampleFunc(poJob.get());
+                eErr = poJob->eErr;
+                if( eErr == CE_None )
+                {
+                    eErr = WriteJobData(poJob.get());
+                }
+            }
+        }
+
+        if( poJobQueue )
+        {
+            pChunk = nullptr;
+            pabyChunkNodataMask = nullptr;
         }
     }
 
     VSIFree( pChunk );
     VSIFree( pabyChunkNodataMask );
+
+    // Wait for all pending jobs to complete
+    while( !jobList.empty() )
+    {
+        const auto l_eErr = WaitAndFinalizeOldestJob(jobList);
+        if( l_eErr != CE_None && eErr == CE_None )
+            eErr = l_eErr;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Renormalized overview mean / stddev if needed.                  */
@@ -2927,7 +4714,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             poSrcBand,
             nOverviewCount,
             reinterpret_cast<GDALRasterBandH *>( papoOvrBands ),
-            GDALDummyProgress, NULL );
+            GDALDummyProgress, nullptr );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2937,11 +4724,11 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
          eErr == CE_None && iOverview < nOverviewCount;
          ++iOverview )
     {
-        eErr = papoOvrBands[iOverview]->FlushCache();
+        eErr = papoOvrBands[iOverview]->FlushCache(false);
     }
 
     if( eErr == CE_None )
-        pfnProgress( 1.0, NULL, pProgressData );
+        pfnProgress( 1.0, nullptr, pProgressData );
 
     return eErr;
 }
@@ -2963,8 +4750,10 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * The output bands need to exist in advance and share the same characteristics
  * (type, dimensions)
  *
- * The resampling algorithms supported for the moment are "NEAREST", "AVERAGE"
- * and "GAUSS"
+ * The resampling algorithms supported for the moment are "NEAREST", "AVERAGE",
+ * "RMS", "GAUSS", "CUBIC", "CUBICSPLINE", "LANCZOS" and "BILINEAR"
+ *
+ * It does not support color tables or complex data types.
  *
  * The pseudo-algorithm used by the function is :
  *    for each overview
@@ -2978,6 +4767,10 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * considered as the nodata value and not each value of the triplet
  * independently per band.
  *
+ * Starting with GDAL 3.2, the GDAL_NUM_THREADS configuration option can be set
+ * to "ALL_CPUS" or a integer value to specify the number of threads to use for
+ * overview computation.
+ *
  * @param nBands the number of bands, size of papoSrcBands and size of
  *               first dimension of papapoOverviewBands
  * @param papoSrcBands the list of source bands to downsample
@@ -2985,7 +4778,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * @param papapoOverviewBands bidimension array of bands. First dimension is
  *                            indexed by nBands. Second dimension is indexed by
  *                            nOverviews.
- * @param pszResampling Resampling algorithm ("NEAREST", "AVERAGE" or "GAUSS").
+ * @param pszResampling Resampling algorithm ("NEAREST", "AVERAGE", "RMS",
+ * "GAUSS", "CUBIC", "CUBICSPLINE", "LANCZOS" or "BILINEAR").
  * @param pfnProgress progress report function.
  * @param pProgressData progress function callback data.
  * @return CE_None on success or CE_Failure on failure.
@@ -2999,7 +4793,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                                   GDALProgressFunc pfnProgress,
                                   void * pProgressData )
 {
-    if( pfnProgress == NULL )
+    if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
     if( EQUAL(pszResampling,"NONE") )
@@ -3007,6 +4801,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
 
     // Sanity checks.
     if( !STARTS_WITH_CI(pszResampling, "NEAR") &&
+        !EQUAL(pszResampling, "RMS") &&
         !EQUAL(pszResampling, "AVERAGE") &&
         !EQUAL(pszResampling, "GAUSS") &&
         !EQUAL(pszResampling, "CUBIC") &&
@@ -3024,16 +4819,16 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
     int nKernelRadius = 0;
     GDALResampleFunction pfnResampleFn =
         GDALGetResampleFunction(pszResampling, &nKernelRadius);
-    if( pfnResampleFn == NULL )
+    if( pfnResampleFn == nullptr )
         return CE_Failure;
 
-    int nSrcWidth = papoSrcBands[0]->GetXSize();
-    int nSrcHeight = papoSrcBands[0]->GetYSize();
+    const int nToplevelSrcWidth = papoSrcBands[0]->GetXSize();
+    const int nToplevelSrcHeight = papoSrcBands[0]->GetYSize();
     GDALDataType eDataType = papoSrcBands[0]->GetRasterDataType();
     for( int iBand = 1; iBand < nBands; ++iBand )
     {
-        if( papoSrcBands[iBand]->GetXSize() != nSrcWidth ||
-            papoSrcBands[iBand]->GetYSize() != nSrcHeight )
+        if( papoSrcBands[iBand]->GetXSize() != nToplevelSrcWidth ||
+            papoSrcBands[iBand]->GetYSize() != nToplevelSrcHeight )
         {
             CPLError(
                 CE_Failure, CPLE_NotSupported,
@@ -3084,9 +4879,8 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
     double dfTotalPixelCount = 0;
     for( int iOverview = 0; iOverview < nOverviews; ++iOverview )
     {
-        nSrcWidth = papoSrcBands[0]->GetXSize();
-        nSrcHeight = papoSrcBands[0]->GetYSize();
-
+        int nSrcWidth = nToplevelSrcWidth;
+        int nSrcHeight = nToplevelSrcHeight;
         const int nDstWidth = papapoOverviewBands[0][iOverview]->GetXSize();
         // Try to use previous level of overview as the source to compute
         // the next level.
@@ -3100,23 +4894,22 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         dfTotalPixelCount += static_cast<double>(nSrcWidth) * nSrcHeight;
     }
 
-    nSrcWidth = papoSrcBands[0]->GetXSize();
-    nSrcHeight = papoSrcBands[0]->GetYSize();
-
-    GDALDataType eWrkDataType =
+    const GDALDataType eWrkDataType =
         GDALGetOvrWorkDataType(pszResampling, eDataType);
+
+    const bool bIsMask = papoSrcBands[0]->IsMaskBand();
 
     // If we have a nodata mask and we are doing something more complicated
     // than nearest neighbouring, we have to fetch to nodata mask.
     const bool bUseNoDataMask =
         !STARTS_WITH_CI(pszResampling, "NEAR") &&
-        (papoSrcBands[0]->GetMaskFlags() & GMF_ALL_VALID) == 0;
+        (bIsMask || (papoSrcBands[0]->GetMaskFlags() & GMF_ALL_VALID) == 0);
 
     int* const pabHasNoData = static_cast<int *>(
         VSI_MALLOC_VERBOSE(nBands * sizeof(int)) );
     float* const pafNoDataValue = static_cast<float *>(
         VSI_MALLOC_VERBOSE(nBands * sizeof(float)) );
-    if( pabHasNoData == NULL || pafNoDataValue == NULL )
+    if( pabHasNoData == nullptr || pafNoDataValue == nullptr )
     {
         CPLFree(pabHasNoData);
         CPLFree(pafNoDataValue);
@@ -3132,6 +4925,17 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
     const bool bPropagateNoData =
         CPLTestBool( CPLGetConfigOption("GDAL_OVR_PROPAGATE_NODATA", "NO") );
 
+    const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
+    const int nThreads = std::max(1, std::min(128,
+            EQUAL(pszThreads, "ALL_CPUS") ? CPLGetNumCPUs() : atoi(pszThreads)));
+    auto poThreadPool = nThreads > 1 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
+    auto poJobQueue = poThreadPool ? poThreadPool->CreateJobQueue() :
+                            std::unique_ptr<CPLJobQueue>(nullptr);
+
+    // Only configurable for debug / testing
+    const int nChunkMaxSize =
+        atoi(CPLGetConfigOption("GDAL_OVR_CHUNK_MAX_SIZE", "10485760"));
+
     // Second pass to do the real job.
     double dfCurPixelCount = 0;
     CPLErr eErr = CE_None;
@@ -3141,16 +4945,18 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
     {
         int iSrcOverview = -1;  // -1 means the source bands.
 
-        int nDstBlockXSize = 0;
-        int nDstBlockYSize = 0;
-        papapoOverviewBands[0][iOverview]->GetBlockSize( &nDstBlockXSize,
-                                                         &nDstBlockYSize );
+        int nDstChunkXSize = 0;
+        int nDstChunkYSize = 0;
+        papapoOverviewBands[0][iOverview]->GetBlockSize( &nDstChunkXSize,
+                                                         &nDstChunkYSize );
 
         const int nDstWidth = papapoOverviewBands[0][iOverview]->GetXSize();
         const int nDstHeight = papapoOverviewBands[0][iOverview]->GetYSize();
 
         // Try to use previous level of overview as the source to compute
         // the next level.
+        int nSrcWidth = nToplevelSrcWidth;
+        int nSrcHeight = nToplevelSrcHeight;
         if( iOverview > 0 &&
             papapoOverviewBands[0][iOverview - 1]->GetXSize() > nDstWidth )
         {
@@ -3164,81 +4970,182 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         const double dfYRatioDstToSrc =
             static_cast<double>(nSrcHeight) / nDstHeight;
 
-        // Compute the maximum chunk size of the source such as it will match
-        // the size of a block of the overview.
-        const int nFullResXChunk =
-            1 + static_cast<int>(nDstBlockXSize * dfXRatioDstToSrc);
-        const int nFullResYChunk =
-            1 + static_cast<int>(nDstBlockYSize * dfYRatioDstToSrc);
-
         int nOvrFactor = std::max( static_cast<int>(0.5 + dfXRatioDstToSrc),
                                    static_cast<int>(0.5 + dfYRatioDstToSrc) );
         if( nOvrFactor == 0 ) nOvrFactor = 1;
-        const int nFullResXChunkQueried =
-            nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
+
+        // Try to extend the chunk size so that the memory needed to acquire
+        // source pixels goes up to 10 MB.
+        // This can help for drivers that support multi-threaded reading
+        const int nFullResYChunk =
+            2 + static_cast<int>(nDstChunkYSize * dfYRatioDstToSrc);
         const int nFullResYChunkQueried =
             nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
+        while( nDstChunkXSize < nDstWidth )
+        {
+            const int nFullResXChunk =
+                2 + static_cast<int>(2 * nDstChunkXSize * dfXRatioDstToSrc);
 
-        void** papaChunk = static_cast<void **>(
-            VSI_MALLOC_VERBOSE(nBands * sizeof(void*)) );
-        if( papaChunk == NULL )
-        {
-            CPLFree(pabHasNoData);
-            CPLFree(pafNoDataValue);
-            return CE_Failure;
-        }
-        GByte* pabyChunkNoDataMask = NULL;
-        for( int iBand = 0; iBand < nBands; ++iBand )
-        {
-            papaChunk[iBand] = VSI_MALLOC3_VERBOSE(
-                nFullResXChunkQueried,
-                nFullResYChunkQueried,
-                GDALGetDataTypeSizeBytes(eWrkDataType) );
-            if( papaChunk[iBand] == NULL )
+            const int nFullResXChunkQueried =
+                nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
+
+            if( static_cast<GIntBig>(nFullResXChunkQueried) *
+                  nFullResYChunkQueried * nBands *
+                    GDALGetDataTypeSizeBytes(eWrkDataType) > nChunkMaxSize )
             {
-                while ( --iBand >= 0)
-                    CPLFree(papaChunk[iBand]);
-                CPLFree(papaChunk);
-                CPLFree(pabHasNoData);
-                CPLFree(pafNoDataValue);
-                return CE_Failure;
+                break;
             }
+
+            nDstChunkXSize *= 2;
         }
-        if( bUseNoDataMask )
+        nDstChunkXSize = std::min(nDstChunkXSize, nDstWidth);
+
+        const int nFullResXChunk =
+            2 + static_cast<int>(nDstChunkXSize * dfXRatioDstToSrc);
+        const int nFullResXChunkQueried =
+            nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
+
+        // Structure describing a resampling job
+        struct OvrJob
         {
-            pabyChunkNoDataMask = static_cast<GByte *>(
-                VSI_MALLOC2_VERBOSE( nFullResXChunkQueried,
-                                     nFullResYChunkQueried ) );
-            if( pabyChunkNoDataMask == NULL )
+            // Buffers to free when job is finished
+            std::unique_ptr<PointerHolder> oSrcMaskBufferHolder{};
+            std::unique_ptr<PointerHolder> oSrcBufferHolder{};
+            std::unique_ptr<PointerHolder> oDstBufferHolder{};
+
+            // Input parameters of pfnResampleFn
+            GDALResampleFunction pfnResampleFn = nullptr;
+            double dfXRatioDstToSrc{};
+            double dfYRatioDstToSrc{};
+            GDALDataType eWrkDataType = GDT_Unknown;
+            const void * pChunk = nullptr;
+            const GByte * pabyChunkNodataMask = nullptr;
+            int nChunkXOff = 0;
+            int nChunkXSize = 0;
+            int nChunkYOff = 0;
+            int nChunkYSize = 0;
+            int nDstXOff = 0;
+            int nDstXOff2 = 0;
+            int nDstYOff = 0;
+            int nDstYOff2 = 0;
+            GDALRasterBand* poOverview = nullptr;
+            const char * pszResampling = nullptr;
+            int bHasNoData = 0;
+            float fNoDataValue = 0.0f;
+            GDALDataType eSrcDataType = GDT_Unknown;
+            bool bPropagateNoData = false;
+
+            // Output values of resampling function
+            CPLErr eErr = CE_Failure;
+            void* pDstBuffer = nullptr;
+            GDALDataType eDstBufferDataType = GDT_Unknown;
+
+            // Synchronization
+            bool                    bFinished = false;
+            std::mutex              mutex{};
+            std::condition_variable cv{};
+        };
+
+        // Thread function to resample
+        const auto JobResampleFunc = [](void* pData)
+        {
+            OvrJob* poJob = static_cast<OvrJob*>(pData);
+
+            poJob->eErr = poJob->pfnResampleFn(
+                poJob->dfXRatioDstToSrc,
+                poJob->dfYRatioDstToSrc,
+                0.0, 0.0,
+                poJob->eWrkDataType,
+                poJob->pChunk,
+                poJob->pabyChunkNodataMask,
+                poJob->nChunkXOff,
+                poJob->nChunkXSize,
+                poJob->nChunkYOff,
+                poJob->nChunkYSize,
+                poJob->nDstXOff,
+                poJob->nDstXOff2,
+                poJob->nDstYOff,
+                poJob->nDstYOff2,
+                poJob->poOverview,
+                &(poJob->pDstBuffer),
+                &(poJob->eDstBufferDataType),
+                poJob->pszResampling,
+                poJob->bHasNoData,
+                poJob->fNoDataValue,
+                nullptr,
+                poJob->eSrcDataType,
+                poJob->bPropagateNoData);
+
+            poJob->oDstBufferHolder.reset(new PointerHolder(poJob->pDstBuffer));
+
             {
-                for( int iBand = 0; iBand < nBands; ++iBand )
+                std::lock_guard<std::mutex> guard(poJob->mutex);
+                poJob->bFinished = true;
+                poJob->cv.notify_one();
+            }
+        };
+
+        // Function to write resample data to target band
+        const auto WriteJobData = [](const OvrJob* poJob)
+        {
+            return poJob->poOverview->RasterIO(
+                                GF_Write,
+                                poJob->nDstXOff,
+                                poJob->nDstYOff,
+                                poJob->nDstXOff2 - poJob->nDstXOff,
+                                poJob->nDstYOff2 - poJob->nDstYOff,
+                                poJob->pDstBuffer,
+                                poJob->nDstXOff2 - poJob->nDstXOff,
+                                poJob->nDstYOff2 - poJob->nDstYOff,
+                                poJob->eDstBufferDataType,
+                                0, 0, nullptr );
+        };
+
+        // Wait for completion of oldest job and serialize it
+        const auto WaitAndFinalizeOldestJob = [WriteJobData](
+                            std::list<std::unique_ptr<OvrJob>>& jobList)
+        {
+            auto poOldestJob = jobList.front().get();
+            {
+                std::unique_lock<std::mutex> oGuard(poOldestJob->mutex);
+                while( !poOldestJob->bFinished )
                 {
-                    CPLFree(papaChunk[iBand]);
+                    poOldestJob->cv.wait(oGuard);
                 }
-                CPLFree(papaChunk);
-                CPLFree(pabHasNoData);
-                CPLFree(pafNoDataValue);
-                return CE_Failure;
             }
-        }
+            CPLErr l_eErr = poOldestJob->eErr;
+            if( l_eErr == CE_None )
+            {
+                l_eErr = WriteJobData(poOldestJob);
+            }
+
+            jobList.pop_front();
+            return l_eErr;
+        };
+
+        // Queue of jobs
+        std::list<std::unique_ptr<OvrJob>> jobList;
+
+        std::vector<void*> apaChunk(nBands);
+        std::vector<GByte*> apabyChunkNoDataMask(nBands);
 
         int nDstYOff = 0;
         // Iterate on destination overview, block by block.
         for( nDstYOff = 0;
              nDstYOff < nDstHeight && eErr == CE_None;
-             nDstYOff += nDstBlockYSize )
+             nDstYOff += nDstChunkYSize )
         {
             int nDstYCount;
-            if( nDstYOff + nDstBlockYSize <= nDstHeight )
-                nDstYCount = nDstBlockYSize;
+            if( nDstYOff + nDstChunkYSize <= nDstHeight )
+                nDstYCount = nDstChunkYSize;
             else
                 nDstYCount = nDstHeight - nDstYOff;
 
             int nChunkYOff =
-                static_cast<int>(0.5 + nDstYOff * dfYRatioDstToSrc);
+                static_cast<int>(nDstYOff * dfYRatioDstToSrc);
             int nChunkYOff2 =
                 static_cast<int>(
-                    0.5 + (nDstYOff + nDstYCount) * dfYRatioDstToSrc );
+                    ceil((nDstYOff + nDstYCount) * dfYRatioDstToSrc) );
             if( nChunkYOff2 > nSrcHeight || nDstYOff + nDstYCount == nDstHeight)
                 nChunkYOff2 = nSrcHeight;
             int nYCount = nChunkYOff2 - nChunkYOff;
@@ -3256,7 +5163,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
             CPLAssert(nChunkYSizeQueried <= nFullResYChunkQueried);
 
             if( !pfnProgress( dfCurPixelCount / dfTotalPixelCount,
-                              NULL, pProgressData ) )
+                              nullptr, pProgressData ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
                 eErr = CE_Failure;
@@ -3266,19 +5173,19 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
             // Iterate on destination overview, block by block.
             for( nDstXOff = 0;
                  nDstXOff < nDstWidth && eErr == CE_None;
-                 nDstXOff += nDstBlockXSize )
+                 nDstXOff += nDstChunkXSize )
             {
                 int nDstXCount = 0;
-                if( nDstXOff + nDstBlockXSize <= nDstWidth )
-                    nDstXCount = nDstBlockXSize;
+                if( nDstXOff + nDstChunkXSize <= nDstWidth )
+                    nDstXCount = nDstChunkXSize;
                 else
                     nDstXCount = nDstWidth - nDstXOff;
 
                 int nChunkXOff =
-                    static_cast<int>(0.5 + nDstXOff * dfXRatioDstToSrc);
+                    static_cast<int>(nDstXOff * dfXRatioDstToSrc);
                 int nChunkXOff2 =
                     static_cast<int>(
-                        0.5 + (nDstXOff + nDstXCount) * dfXRatioDstToSrc );
+                        ceil((nDstXOff + nDstXCount) * dfXRatioDstToSrc) );
                 if( nChunkXOff2 > nSrcWidth ||
                     nDstXOff + nDstXCount == nDstWidth )
                     nChunkXOff2 = nSrcWidth;
@@ -3300,14 +5207,70 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                 CPLDebug(
                     "GDAL",
                     "Reading (%dx%d -> %dx%d) for output (%dx%d -> %dx%d)",
-                    nChunkXOff, nChunkYOff, nXCount, nYCount,
+                    nChunkXOffQueried, nChunkYOffQueried, nChunkXSizeQueried, nChunkYSizeQueried,
                     nDstXOff, nDstYOff, nDstXCount, nDstYCount );
 #endif
+
+                // Avoid accumulating too many tasks and exhaust RAM
+
+                // Try to complete already finished jobs
+                while( eErr == CE_None && !jobList.empty() )
+                {
+                    auto poOldestJob = jobList.front().get();
+                    {
+                        std::lock_guard<std::mutex> oGuard(poOldestJob->mutex);
+                        if( !poOldestJob->bFinished )
+                        {
+                            break;
+                        }
+                    }
+                    eErr = poOldestJob->eErr;
+                    if( eErr == CE_None )
+                    {
+                        eErr = WriteJobData(poOldestJob);
+                    }
+
+                    jobList.pop_front();
+                }
+
+                // And in case we have saturated the number of threads,
+                // wait for completion of tasks to go below the threshold.
+                while( eErr == CE_None &&
+                       jobList.size() >= static_cast<size_t>(nThreads) )
+                {
+                    eErr = WaitAndFinalizeOldestJob(jobList);
+                }
+
+                // (Re)allocate buffers if needed
+                for( int iBand = 0; iBand < nBands; ++iBand )
+                {
+                    if( apaChunk[iBand] == nullptr )
+                    {
+                        apaChunk[iBand] = VSI_MALLOC3_VERBOSE(
+                            nFullResXChunkQueried,
+                            nFullResYChunkQueried,
+                            GDALGetDataTypeSizeBytes(eWrkDataType) );
+                        if( apaChunk[iBand] == nullptr )
+                        {
+                            eErr = CE_Failure;
+                        }
+                    }
+                    if( bUseNoDataMask && apabyChunkNoDataMask[iBand] == nullptr  )
+                    {
+                        apabyChunkNoDataMask[iBand] = static_cast<GByte *>(
+                            VSI_MALLOC2_VERBOSE( nFullResXChunkQueried,
+                                                nFullResYChunkQueried ) );
+                        if( apabyChunkNoDataMask[iBand] == nullptr )
+                        {
+                            eErr = CE_Failure;
+                        }
+                    }
+                }
 
                 // Read the source buffers for all the bands.
                 for( int iBand = 0; iBand < nBands && eErr == CE_None; ++iBand )
                 {
-                    GDALRasterBand* poSrcBand = NULL;
+                    GDALRasterBand* poSrcBand = nullptr;
                     if( iSrcOverview == -1 )
                         poSrcBand = papoSrcBands[iBand];
                     else
@@ -3316,68 +5279,99 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                         GF_Read,
                         nChunkXOffQueried, nChunkYOffQueried,
                         nChunkXSizeQueried, nChunkYSizeQueried,
-                        papaChunk[iBand],
+                        apaChunk[iBand],
                         nChunkXSizeQueried, nChunkYSizeQueried,
-                        eWrkDataType, 0, 0, NULL );
-                }
+                        eWrkDataType, 0, 0, nullptr );
 
-                if( bUseNoDataMask && eErr == CE_None )
-                {
-                    GDALRasterBand* poSrcBand = NULL;
-                    if( iSrcOverview == -1 )
-                        poSrcBand = papoSrcBands[0];
-                    else
-                        poSrcBand = papapoOverviewBands[0][iSrcOverview];
-                    eErr = poSrcBand->GetMaskBand()->RasterIO(
-                        GF_Read,
-                        nChunkXOffQueried, nChunkYOffQueried,
-                        nChunkXSizeQueried, nChunkYSizeQueried,
-                        pabyChunkNoDataMask,
-                        nChunkXSizeQueried, nChunkYSizeQueried,
-                        GDT_Byte, 0, 0, NULL );
+                    if( bUseNoDataMask && eErr == CE_None )
+                    {
+                        auto poMaskBand = poSrcBand->IsMaskBand() ? poSrcBand : poSrcBand->GetMaskBand();
+                        eErr = poMaskBand->RasterIO(
+                            GF_Read,
+                            nChunkXOffQueried, nChunkYOffQueried,
+                            nChunkXSizeQueried, nChunkYSizeQueried,
+                            apabyChunkNoDataMask[iBand],
+                            nChunkXSizeQueried, nChunkYSizeQueried,
+                            GDT_Byte, 0, 0, nullptr );
+                    }
                 }
 
                 // Compute the resulting overview block.
                 for( int iBand = 0; iBand < nBands && eErr == CE_None; ++iBand )
                 {
-                    eErr = pfnResampleFn(
-                        dfXRatioDstToSrc, dfYRatioDstToSrc,
-                        0.0, 0.0,
-                        eWrkDataType,
-                        papaChunk[iBand],
-                        pabyChunkNoDataMask,
-                        nChunkXOffQueried, nChunkXSizeQueried,
-                        nChunkYOffQueried, nChunkYSizeQueried,
-                        nDstXOff, nDstXOff + nDstXCount,
-                        nDstYOff, nDstYOff + nDstYCount,
-                        papapoOverviewBands[iBand][iOverview],
-                        pszResampling,
-                        pabHasNoData[iBand],
-                        pafNoDataValue[iBand],
-                        /*poColorTable*/ NULL,
-                        eDataType,
-                        bPropagateNoData);
+                    auto poJob = std::unique_ptr<OvrJob>(new OvrJob());
+                    poJob->pfnResampleFn = pfnResampleFn;
+                    poJob->dfXRatioDstToSrc = dfXRatioDstToSrc;
+                    poJob->dfYRatioDstToSrc = dfYRatioDstToSrc;
+                    poJob->eWrkDataType = eWrkDataType;
+                    poJob->pChunk = apaChunk[iBand];
+                    poJob->pabyChunkNodataMask = apabyChunkNoDataMask[iBand];
+                    poJob->nChunkXOff = nChunkXOffQueried;
+                    poJob->nChunkXSize = nChunkXSizeQueried;
+                    poJob->nChunkYOff = nChunkYOffQueried;
+                    poJob->nChunkYSize = nChunkYSizeQueried;
+                    poJob->nDstXOff = nDstXOff;
+                    poJob->nDstXOff2 = nDstXOff + nDstXCount;
+                    poJob->nDstYOff = nDstYOff;
+                    poJob->nDstYOff2 = nDstYOff + nDstYCount;
+                    poJob->poOverview = papapoOverviewBands[iBand][iOverview];
+                    poJob->pszResampling = pszResampling;
+                    poJob->bHasNoData = pabHasNoData[iBand];
+                    poJob->fNoDataValue = pafNoDataValue[iBand];
+                    poJob->eSrcDataType = eDataType;
+                    poJob->bPropagateNoData = bPropagateNoData;
+
+                    if( poJobQueue )
+                    {
+                        poJob->oSrcMaskBufferHolder.reset(
+                            new PointerHolder(apabyChunkNoDataMask[iBand]));
+                        apabyChunkNoDataMask[iBand] = nullptr;
+
+                        poJob->oSrcBufferHolder.reset(
+                            new PointerHolder(apaChunk[iBand]));
+                        apaChunk[iBand] = nullptr;
+
+                        poJobQueue->SubmitJob(JobResampleFunc, poJob.get());
+                        jobList.emplace_back(std::move(poJob));
+                    }
+                    else
+                    {
+                        JobResampleFunc(poJob.get());
+                        eErr = poJob->eErr;
+                        if( eErr == CE_None )
+                        {
+                            eErr = WriteJobData(poJob.get());
+                        }
+                    }
                 }
             }
 
             dfCurPixelCount += static_cast<double>(nYCount) * nSrcWidth;
         }
 
+        // Wait for all pending jobs to complete
+        while( !jobList.empty() )
+        {
+            const auto l_eErr = WaitAndFinalizeOldestJob(jobList);
+            if( l_eErr != CE_None && eErr == CE_None )
+                eErr = l_eErr;
+        }
+
         // Flush the data to overviews.
         for( int iBand = 0; iBand < nBands; ++iBand )
         {
-            CPLFree(papaChunk[iBand]);
-            papapoOverviewBands[iBand][iOverview]->FlushCache();
+            CPLFree(apaChunk[iBand]);
+            papapoOverviewBands[iBand][iOverview]->FlushCache(false);
+
+            CPLFree(apabyChunkNoDataMask[iBand]);
         }
-        CPLFree(papaChunk);
-        CPLFree(pabyChunkNoDataMask);
     }
 
     CPLFree(pabHasNoData);
     CPLFree(pafNoDataValue);
 
     if( eErr == CE_None )
-        pfnProgress( 1.0, NULL, pProgressData );
+        pfnProgress( 1.0, nullptr, pProgressData );
 
     return eErr;
 }
@@ -3405,9 +5399,9 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 {
     VALIDATE_POINTER1( hSrcBand, "GDALComputeBandStats", CE_Failure );
 
-    GDALRasterBand *poSrcBand = static_cast<GDALRasterBand *>( hSrcBand );
+    GDALRasterBand *poSrcBand = GDALRasterBand::FromHandle( hSrcBand );
 
-    if( pfnProgress == NULL )
+    if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
     const int nWidth = poSrcBand->GetXSize();
@@ -3417,7 +5411,7 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
         nSampleStep = 1;
 
     GDALDataType eWrkType = GDT_Unknown;
-    float *pafData = NULL;
+    float *pafData = nullptr;
     GDALDataType eType = poSrcBand->GetRasterDataType();
     const bool bComplex = CPL_TO_BOOL(GDALDataTypeIsComplex(eType));
     if( bComplex )
@@ -3433,7 +5427,7 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
         eWrkType = GDT_Float32;
     }
 
-    if( nWidth == 0 || pafData == NULL )
+    if( nWidth == 0 || pafData == nullptr )
     {
         VSIFree(pafData);
         return CE_Failure;
@@ -3445,12 +5439,12 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
     double dfSum = 0.0;
     double dfSum2 = 0.0;
     int iLine = 0;
-    int nSamples = 0;
+    GIntBig nSamples = 0;
 
     do
     {
         if( !pfnProgress( iLine / static_cast<double>( nHeight ),
-                          NULL, pProgressData ) )
+                          nullptr, pProgressData ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
             CPLFree( pafData );
@@ -3460,7 +5454,7 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
         const CPLErr eErr =
             poSrcBand->RasterIO( GF_Read, 0, iLine, nWidth, 1,
                                  pafData, nWidth, 1, eWrkType,
-                                 0, 0, NULL );
+                                 0, 0, nullptr );
         if( eErr != CE_None )
         {
             CPLFree( pafData );
@@ -3474,9 +5468,8 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
             if( bComplex )
             {
                 // Compute the magnitude of the complex value.
-                fValue = static_cast<float>(
-                    sqrt(pafData[iPixel*2  ] * pafData[iPixel*2  ]
-                         + pafData[iPixel*2+1] * pafData[iPixel*2+1]) );
+                fValue = std::hypot(pafData[iPixel*2],
+                                    pafData[iPixel*2+1]);
             }
             else
             {
@@ -3491,7 +5484,7 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
         iLine += nSampleStep;
     } while( iLine < nHeight );
 
-    if( !pfnProgress( 1.0, NULL, pProgressData ) )
+    if( !pfnProgress( 1.0, nullptr, pProgressData ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
         CPLFree( pafData );
@@ -3501,10 +5494,10 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 /*      Produce the result values.                                      */
 /* -------------------------------------------------------------------- */
-    if( pdfMean != NULL )
+    if( pdfMean != nullptr )
         *pdfMean = dfSum / nSamples;
 
-    if( pdfStdDev != NULL )
+    if( pdfStdDev != nullptr )
     {
         const double dfMean = dfSum / nSamples;
 
@@ -3561,7 +5554,8 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
 /* -------------------------------------------------------------------- */
     for( int iOverview = 0; iOverview < nOverviewCount; ++iOverview )
     {
-        GDALRasterBand *poOverview = (GDALRasterBand *)pahOverviews[iOverview];
+        GDALRasterBand *poOverview = GDALRasterBand::FromHandle(
+            pahOverviews[iOverview]);
         double  dfOverviewMean, dfOverviewStdDev;
 
         const CPLErr eErr =
@@ -3583,7 +5577,7 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
         const int nHeight = poOverview->GetYSize();
 
         GDALDataType eWrkType = GDT_Unknown;
-        float *pafData = NULL;
+        float *pafData = nullptr;
         const GDALDataType eType = poOverview->GetRasterDataType();
         const bool bComplex = CPL_TO_BOOL(GDALDataTypeIsComplex(eType));
         if( bComplex )
@@ -3599,7 +5593,7 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
             eWrkType = GDT_Float32;
         }
 
-        if( pafData == NULL )
+        if( pafData == nullptr )
         {
             return CE_Failure;
         }
@@ -3607,7 +5601,7 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
         for( int iLine = 0; iLine < nHeight; ++iLine )
         {
             if( !pfnProgress( iLine / static_cast<double>( nHeight ),
-                              NULL, pProgressData ) )
+                              nullptr, pProgressData ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
                 CPLFree( pafData );
@@ -3616,7 +5610,7 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
 
             if( poOverview->RasterIO( GF_Read, 0, iLine, nWidth, 1,
                                       pafData, nWidth, 1, eWrkType,
-                                      0, 0, NULL ) != CE_None )
+                                      0, 0, nullptr ) != CE_None )
             {
                 CPLFree( pafData );
                 return CE_Failure;
@@ -3639,14 +5633,14 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
 
             if( poOverview->RasterIO( GF_Write, 0, iLine, nWidth, 1,
                                       pafData, nWidth, 1, eWrkType,
-                                      0, 0, NULL ) != CE_None )
+                                      0, 0, nullptr ) != CE_None )
             {
                 CPLFree( pafData );
                 return CE_Failure;
             }
         }
 
-        if( !pfnProgress( 1.0, NULL, pProgressData ) )
+        if( !pfnProgress( 1.0, nullptr, pProgressData ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
             CPLFree( pafData );

@@ -8,7 +8,7 @@
  *
  **********************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,7 +36,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 
@@ -58,6 +58,8 @@ void NITFGetGCP ( const char* pachCoord, double *pdfXYs, int iCoord );
 int NITFReadBLOCKA_GCPs ( NITFImage *psImage );
 
 #define GOTO_header_too_small() do { nFaultyLine = __LINE__; goto header_too_small; } while(0)
+
+#define DIGIT_ZERO '0'
 
 /************************************************************************/
 /*                          NITFImageAccess()                           */
@@ -359,9 +361,11 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         if ( (int)psSegInfo->nSegmentHeaderSize < nOffset + 80 * nNICOM )
             GOTO_header_too_small();
 
-        psImage->pszComments = (char *) CPLMalloc(nNICOM*80+1);
-        NITFGetField( psImage->pszComments, pachHeader,
-                      nOffset, 80 * nNICOM );
+        char *pszICOM = (char *) CPLMalloc(nNICOM*80+1);
+        psImage->pszComments = CPLRecode(
+            NITFGetField( pszICOM, pachHeader, nOffset, 80 * nNICOM ),
+            CPL_ENC_ISO8859_1, CPL_ENC_UTF8 );
+        CPLFree(pszICOM);
         nOffset += nNICOM * 80;
     }
 
@@ -568,19 +572,16 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             atoi(NITFGetField(szTemp, pachHeader, nOffset+14, 4));
 
         /* See MIL-STD-2500-C, paragraph 5.4.2.2-d (#3263) */
-        if (EQUAL(psImage->szIC, "NC"))
+        if (psImage->nBlocksPerRow == 1 &&
+            psImage->nBlockWidth == 0)
         {
-            if (psImage->nBlocksPerRow == 1 &&
-                psImage->nBlockWidth == 0)
-            {
-                psImage->nBlockWidth = psImage->nCols;
-            }
+            psImage->nBlockWidth = psImage->nCols;
+        }
 
-            if (psImage->nBlocksPerColumn == 1 &&
-                psImage->nBlockHeight == 0)
-            {
-                psImage->nBlockHeight = psImage->nRows;
-            }
+        if (psImage->nBlocksPerColumn == 1 &&
+            psImage->nBlockHeight == 0)
+        {
+            psImage->nBlockHeight = psImage->nRows;
         }
 
         psImage->nBitsPerSample =
@@ -639,7 +640,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
     else if( nOffset+10 <= (int)psSegInfo->nSegmentHeaderSize )
     {
-        int nUserTREBytes, nExtendedTREBytes;
+        int nUserTREBytes, nExtendedTREBytes, nFirstTagUsedLength = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Are there user TRE bytes to skip?                               */
@@ -647,7 +648,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         nUserTREBytes = atoi(NITFGetField( szTemp, pachHeader, nOffset, 5 ));
         nOffset += 5;
 
-        if( nUserTREBytes > 3 )
+        if( nUserTREBytes > 3 + 11 )  /* Must have at least one tag */
         {
             if( (int)psSegInfo->nSegmentHeaderSize < nOffset + nUserTREBytes )
                 GOTO_header_too_small();
@@ -658,6 +659,16 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                     psImage->nTREBytes );
 
             nOffset += nUserTREBytes;
+
+            sscanf(psImage->pachTRE + 6, "%*5d%n", &nFirstTagUsedLength);
+            if (nFirstTagUsedLength != 5)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Cannot read User TRE. First tag's length is invalid");
+                CPLFree( psImage->pachTRE );
+                psImage->nTREBytes = 0;
+                psImage->pachTRE = NULL;
+            }
         }
         else
         {
@@ -707,7 +718,14 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /*      Setup some image access values.  Some of these may not apply    */
 /*      for compressed images, or band interleaved by block images.     */
 /* -------------------------------------------------------------------- */
-    psImage->nWordSize = psImage->nBitsPerSample / 8;
+    if( psImage->nBitsPerSample <= 8 )
+        psImage->nWordSize = 1;
+    else if( psImage->nBitsPerSample <= 16 )
+        psImage->nWordSize = 2;
+    else if( psImage->nBitsPerSample <= 32 )
+        psImage->nWordSize = 4;
+    else
+        psImage->nWordSize = psImage->nBitsPerSample / 8;
     if( psImage->chIMODE == 'S' )
     {
         psImage->nPixelOffset = psImage->nWordSize;
@@ -777,7 +795,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                       "Failed to find spatial data location, guessing." );
 
         for( i=0; i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn; i++ )
-            psImage->panBlockStart[i] = nLocBase + 6144 * i;
+            psImage->panBlockStart[i] = nLocBase + (GUIntBig)(6144) * i;
     }
 
 /* -------------------------------------------------------------------- */
@@ -860,7 +878,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                 bOK &= VSIFReadL( &l_nOffset, 4, 1, psFile->fp ) == 1;
                 CPL_MSBPTR32( &l_nOffset );
                 psImage->panBlockStart[i] = l_nOffset;
-                if( psImage->panBlockStart[i] != 0xffffffff )
+                if( psImage->panBlockStart[i] != UINT_MAX )
                 {
                     psImage->panBlockStart[i]
                         += psSegInfo->nSegmentStart + nIMDATOFF;
@@ -876,7 +894,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                 {
                     for( iBand = 1; iBand < psImage->nBands; iBand++ )
                         psImage->panBlockStart[i + iBand * nStoredBlocks] =
-                            0xffffffff;
+                            UINT_MAX;
                 }
             }
         }
@@ -889,7 +907,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                 bOK &= VSIFReadL( &l_nOffset, 4, 1, psFile->fp ) == 1;
                 CPL_MSBPTR32( &l_nOffset );
                 psImage->panBlockStart[i] = l_nOffset;
-                if( psImage->panBlockStart[i] != 0xffffffff )
+                if( psImage->panBlockStart[i] != UINT_MAX )
                 {
                     if (isM4 && (psImage->panBlockStart[i] % 6144) != 0)
                     {
@@ -926,7 +944,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                     bOK &= VSIFReadL( &l_nOffset, 4, 1, psFile->fp ) == 1;
                     CPL_MSBPTR32( &l_nOffset );
                     psImage->panBlockStart[i] = l_nOffset;
-                    if( psImage->panBlockStart[i] != 0xffffffff )
+                    if( psImage->panBlockStart[i] != UINT_MAX )
                     {
                         if ((psImage->panBlockStart[i] % 6144) != 0)
                         {
@@ -945,7 +963,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             if( EQUAL(psImage->szIC,"M4") )
             {
                 for( i=0; i < nBlockCount; i++ )
-                        psImage->panBlockStart[i] = 6144 * i
+                        psImage->panBlockStart[i] = (GUIntBig)6144 * i
                             + psSegInfo->nSegmentStart + nIMDATOFF;
             }
             else if( EQUAL(psImage->szIC,"NM") )
@@ -1218,7 +1236,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
     if( nBand == 0 )
         return BLKREAD_FAIL;
 
-    if( psImage->panBlockStart[iFullBlock] == 0xffffffff )
+    if( psImage->panBlockStart[iFullBlock] == UINT_MAX )
         return BLKREAD_NULL;
 
 /* -------------------------------------------------------------------- */
@@ -1282,11 +1300,8 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         else
         {
 #ifdef CPL_LSB
-            if( psImage->nWordSize * 8 == psImage->nBitsPerSample )
-            {
-                NITFSwapWords( psImage, pData,
-                            psImage->nBlockWidth * psImage->nBlockHeight);
-            }
+            NITFSwapWords( psImage, pData,
+                        psImage->nBlockWidth * psImage->nBlockHeight);
 #endif
 
             return BLKREAD_OK;
@@ -1312,6 +1327,13 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
                 }
 
                 return BLKREAD_OK;
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_NotSupported,
+                          "ABPP=%d and IMODE=%c not supported",
+                          psImage->nBitsPerSample, psImage->chIMODE );
+                return BLKREAD_FAIL;
             }
         }
     }
@@ -1382,6 +1404,12 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         {
             CPLError( CE_Failure, CPLE_NotSupported,
                       "File lacks VQ LUTs, unable to decode imagery." );
+            return BLKREAD_FAIL;
+        }
+        if( psImage->nBlockWidth != 256 || psImage->nBlockHeight != 256 )
+        {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                      "Invalid block dimension for VQ compressed data." );
             return BLKREAD_FAIL;
         }
 
@@ -2207,6 +2235,12 @@ static void NITFSwapWordsInternal( void *pData, int nWordSize, int nWordCount,
 static void NITFSwapWords( NITFImage *psImage, void *pData, int nWordCount )
 
 {
+    if( psImage->nWordSize * 8 != psImage->nBitsPerSample )
+    {
+        // FIXME ?
+        return;
+    }
+
     if( EQUAL(psImage->szPVType,"C") )
     {
         /* According to http://jitc.fhu.disa.mil/nitf/tag_reg/imagesubheader/pvtype.html */
@@ -2266,7 +2300,7 @@ static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
     // with 3 digits + 1 terminating byte
     char szTemp[12+2+1];
 #if defined(DEBUG) || defined(WIN32)
-    size_t nLen;
+    int nLen;
 #endif
 
     if( fabs(dfVal) > 9.999999e9 )
@@ -2278,13 +2312,14 @@ static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
 
     CPLsnprintf( szTemp, sizeof(szTemp), "%+.6E", dfVal);
 #if defined(DEBUG) || defined(WIN32)
-    nLen = strlen(szTemp);
+    nLen = (int)strlen(szTemp);
+    CPL_IGNORE_RET_VAL_INT(nLen);
 #endif
     CPLAssert( szTemp[9] == 'E' );
 #ifdef WIN32
     if( nLen == 14 ) // Old MSVC versions: 3 digits for the exponent
     {
-        if( szTemp[11] != '0' || szTemp[12] != '0' )
+        if( szTemp[11] != DIGIT_ZERO || szTemp[12] != DIGIT_ZERO )
         {
             CPLError(CE_Warning, CPLE_AppDefined, "%g rounded to 0", dfVal);
             snprintf(pszBuffer, 12 + 1, "%s", "+0.000000E+0");
@@ -2293,11 +2328,11 @@ static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
         }
         szTemp[11] = szTemp[13];
     }
-    else // behaviour of the standard: 2 digits for the exponent
+    else // behavior of the standard: 2 digits for the exponent
 #endif
     {
         CPLAssert( nLen == 13 );
-        if( szTemp[11] != '0')
+        if( szTemp[11] != DIGIT_ZERO)
         {
             CPLError(CE_Warning, CPLE_AppDefined, "%g rounded to 0", dfVal);
             snprintf(pszBuffer, 12 + 1, "%s", "+0.000000E+0");
@@ -2307,7 +2342,7 @@ static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
         szTemp[11] = szTemp[12];
     }
     szTemp[12] = '\0';
-    snprintf(pszBuffer, 12 + 1, "%s", szTemp);
+    memcpy(pszBuffer, szTemp, strlen(szTemp)+1);
     return TRUE;
 }
 
@@ -2320,7 +2355,7 @@ static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
 
 char* NITFFormatRPC00BFromMetadata( char** papszRPC, int* pbPrecisionLoss )
 {
-    GDALRPCInfo sRPC;
+    GDALRPCInfoV2 sRPC;
     char* pszRPC00B;
     double dfErrBIAS;
     double dfErrRAND;
@@ -2332,15 +2367,19 @@ char* NITFFormatRPC00BFromMetadata( char** papszRPC, int* pbPrecisionLoss )
 
     if( pbPrecisionLoss ) *pbPrecisionLoss = FALSE;
 
-    if( !GDALExtractRPCInfo( papszRPC, &sRPC ) )
+    if( !GDALExtractRPCInfoV2( papszRPC, &sRPC ) )
         return NULL;
 
     pszRPC00B = (char*) CPLMalloc(1041 + 1);
     pszRPC00B[0] = '1'; /* success flag */
     nOffset = 1;
 
-    dfErrBIAS = CPLAtof(CSLFetchNameValueDef(papszRPC, "ERR_BIAS", "0"));
-    if( dfErrBIAS < 0 )
+    dfErrBIAS = sRPC.dfERR_BIAS;
+    if( dfErrBIAS == -1.0 ) // value by default to indicate unknown
+    {
+        dfErrBIAS = 0.0;
+    }
+    else if( dfErrBIAS < 0 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Correcting ERR_BIAS from %f to 0", dfErrBIAS);
@@ -2355,8 +2394,12 @@ char* NITFFormatRPC00BFromMetadata( char** papszRPC, int* pbPrecisionLoss )
     CPLsnprintf(pszRPC00B + nOffset, nLength + 1, "%07.2f", dfErrBIAS);
     nOffset += nLength;
 
-    dfErrRAND = CPLAtof(CSLFetchNameValueDef(papszRPC, "ERR_RAND", "0"));
-    if( dfErrRAND < 0 )
+    dfErrRAND = sRPC.dfERR_RAND;
+    if( dfErrRAND == -1.0 ) // value by default to indicate unknown
+    {
+        dfErrRAND = 0.0;
+    }
+    else if( dfErrRAND < 0 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Correcting ERR_RAND from %f to 0", dfErrRAND);
@@ -3390,12 +3433,12 @@ static void NITFLoadColormapSubSection( NITFImage *psImage )
 
     for (i=0; bOK && i<nOffsetRecs; i++)
     {
-        if( VSIFSeekL( psFile->fp, nLocBaseColormapSubSection + colormapRecords[i].colorTableOffset,
-                    SEEK_SET ) != 0  )
+        vsi_l_offset nOffset = (vsi_l_offset)nLocBaseColormapSubSection + colormapRecords[i].colorTableOffset;
+        if( VSIFSeekL( psFile->fp, nOffset, SEEK_SET ) != 0  )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                    "Failed to seek to %d.",
-                    nLocBaseColormapSubSection + colormapRecords[i].colorTableOffset );
+                    "Failed to seek to " CPL_FRMT_GUIB ".",
+                    nOffset );
             CPLFree(colormapRecords);
             return;
         }
@@ -3513,8 +3556,8 @@ static void NITFLoadSubframeMaskTable( NITFImage *psImage )
         bOK &= VSIFReadL( &offset, sizeof(offset), 1,  psFile->fp ) == 1;
         CPL_MSBPTR32( &offset );
         //fprintf(stderr, "%d : %d\n", i, offset);
-        if (!bOK || offset == 0xffffffff)
-            psImage->panBlockStart[i] = 0xffffffff;
+        if (!bOK || offset == UINT_MAX)
+            psImage->panBlockStart[i] = UINT_MAX;
         else
             psImage->panBlockStart[i] = nLocBaseSpatialDataSubsection + offset;
     }
@@ -3669,7 +3712,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
         }
     }
 
-    if( nHeaderOffset != 0 )
+    if( nHeaderOffset > 11 )
     {
         char achHeaderChunk[1000];
 
@@ -3842,10 +3885,17 @@ static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset )
         bOK &= VSIFReadL( &nVQVector, 1, 4, psImage->psFile->fp ) == 4;
         nVQVector = CPL_MSBWORD32( nVQVector );
 
-        bOK &= VSIFSeekL( psImage->psFile->fp, nVQOffset + nVQVector, SEEK_SET ) == 0;
+        bOK &= VSIFSeekL( psImage->psFile->fp, (vsi_l_offset)(nVQOffset) + nVQVector, SEEK_SET ) == 0;
         bOK &= VSIFReadL( psImage->apanVQLUT[i], 4, 4096, psImage->psFile->fp ) == 4096;
         if( !bOK )
+        {
+            for( i = 0; i < 4; i++ )
+            {
+                CPLFree( psImage->apanVQLUT[i] );
+                psImage->apanVQLUT[i] = NULL;
+            }
             return FALSE;
+        }
     }
 
     return TRUE;
@@ -4290,11 +4340,11 @@ int NITFReadIMRFCA( NITFImage *psImage, NITFRPC00BInfo *psRPC )
 
     for( count = 0; count < 20; ++count )
     {
-        psRPC->LINE_NUM_COEFF[count] = CPLAtof( NITFGetField(szTemp, pachTreIMRFCA, count*22,     22) );
-        psRPC->LINE_DEN_COEFF[count] = CPLAtof( NITFGetField(szTemp, pachTreIMRFCA, 440+count*22, 22) );
+        psRPC->SAMP_NUM_COEFF[count] = CPLAtof( NITFGetField(szTemp, pachTreIMRFCA, count*22,     22) );
+        psRPC->SAMP_DEN_COEFF[count] = CPLAtof( NITFGetField(szTemp, pachTreIMRFCA, 440+count*22, 22) );
 
-        psRPC->SAMP_NUM_COEFF[count] = CPLAtof( NITFGetField(szTemp, pachTreIMRFCA, 880+count*22,  22) );
-        psRPC->SAMP_DEN_COEFF[count] = CPLAtof( NITFGetField(szTemp, pachTreIMRFCA, 1320+count*22, 22) );
+        psRPC->LINE_NUM_COEFF[count] = CPLAtof( NITFGetField(szTemp, pachTreIMRFCA, 880+count*22,  22) );
+        psRPC->LINE_DEN_COEFF[count] = CPLAtof( NITFGetField(szTemp, pachTreIMRFCA, 1320+count*22, 22) );
     }
 
     psRPC->SUCCESS = 1;

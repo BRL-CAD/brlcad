@@ -36,50 +36,48 @@
 #include <cstddef>
 
 #include "cpl_conv.h"
+#include "cpl_csv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "mitab_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*=====================================================================
  *                      class MIDDATAFile
  *
  *====================================================================*/
 
-MIDDATAFile::MIDDATAFile() :
-    m_fp(NULL),
+MIDDATAFile::MIDDATAFile( const char* pszEncoding ) :
+    m_fp(nullptr),
     m_pszDelimiter("\t"),  // Encom 2003 (was NULL).
-    m_pszFname(NULL),
+    m_pszFname(nullptr),
     m_eAccessMode(TABRead),
-    // TODO(schwehr): m_szLastRead({}),
-    // TODO(schwehr): m_szSavedLine({}),
     m_dfXMultiplier(1.0),
     m_dfYMultiplier(1.0),
     m_dfXDisplacement(0.0),
     m_dfYDisplacement(0.0),
-    m_bEof(FALSE)
+    m_bEof(FALSE),
+    m_osEncoding(pszEncoding)
 {
-    m_szLastRead[0] = '\0';
-    m_szSavedLine[0] = '\0';
 }
 
 MIDDATAFile::~MIDDATAFile() { Close(); }
 
 void MIDDATAFile::SaveLine(const char *pszLine)
 {
-    if(pszLine == NULL)
+    if(pszLine == nullptr)
     {
-        m_szSavedLine[0] = '\0';
+        m_osSavedLine.clear();
     }
     else
     {
-        CPLStrlcpy(m_szSavedLine, pszLine, MIDMAXCHAR);
+        m_osSavedLine = pszLine;
     }
 }
 
-const char *MIDDATAFile::GetSavedLine() { return m_szSavedLine; }
+const char *MIDDATAFile::GetSavedLine() { return m_osSavedLine.c_str(); }
 
 int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
 {
@@ -108,10 +106,10 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
     m_pszFname = CPLStrdup(pszFname);
     m_fp = VSIFOpenL(m_pszFname, pszAccess);
 
-    if(m_fp == NULL)
+    if(m_fp == nullptr)
     {
         CPLFree(m_pszFname);
-        m_pszFname = NULL;
+        m_pszFname = nullptr;
         return -1;
     }
 
@@ -121,7 +119,7 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
 
 int MIDDATAFile::Rewind()
 {
-    if(m_fp == NULL || m_eAccessMode == TABWrite)
+    if(m_fp == nullptr || m_eAccessMode == TABWrite)
         return -1;
 
     else
@@ -134,18 +132,18 @@ int MIDDATAFile::Rewind()
 
 int MIDDATAFile::Close()
 {
-    if(m_fp == NULL)
+    if(m_fp == nullptr)
         return 0;
 
     // Close file
     VSIFCloseL(m_fp);
-    m_fp = NULL;
+    m_fp = nullptr;
 
     // clear readline buffer.
-    CPLReadLineL(NULL);
+    CPLReadLineL(nullptr);
 
     CPLFree(m_pszFname);
-    m_pszFname = NULL;
+    m_pszFname = nullptr;
 
     return 0;
 }
@@ -155,24 +153,33 @@ const char *MIDDATAFile::GetLine()
     if(m_eAccessMode != TABRead)
     {
         CPLAssert(false);
-        return NULL;
+        return nullptr;
     }
 
-    const char *pszLine = CPLReadLineL(m_fp);
+    static const int nMaxLineLength = atoi(
+        CPLGetConfigOption("MITAB_MAX_LINE_LENGTH", "1000000"));
+    const char *pszLine = CPLReadLine2L(m_fp, nMaxLineLength, nullptr);
 
-    if(pszLine == NULL)
+    if(pszLine == nullptr)
     {
+        if( strstr(CPLGetLastErrorMsg(), "Maximum number of characters allowed reached") )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Maximum number of characters allowed reached. "
+                     "You can set the MITAB_MAX_LINE_LENGTH configuration option "
+                     "to the desired number of bytes (or -1 for unlimited)");
+        }
         SetEof(TRUE);
-        m_szLastRead[0] = '\0';
+        m_osLastRead.clear();
     }
     else
     {
         // Skip leading spaces and tabs except if the delimiter is tab.
-        while(pszLine && (*pszLine == ' ' ||
-                          (*m_pszDelimiter != '\t' && *pszLine == '\t')))
+        while(*pszLine == ' ' ||
+                          (*m_pszDelimiter != '\t' && *pszLine == '\t'))
             pszLine++;
 
-        CPLStrlcpy(m_szLastRead, pszLine, MIDMAXCHAR);
+        m_osLastRead = pszLine;
     }
 
 #if DEBUG_VERBOSE
@@ -188,19 +195,45 @@ const char *MIDDATAFile::GetLastLine()
     // Return NULL if EOF.
     if(GetEof())
     {
-        return NULL;
+        return nullptr;
     }
     if(m_eAccessMode == TABRead)
     {
 #if DEBUG_VERBOSE
-        CPLDebug("MITAB", "m_szLastRead: %s", m_szLastRead);
+        CPLDebug("MITAB", "m_osLastRead: %s", m_osLastRead.c_str());
 #endif
-        return m_szLastRead;
+        return m_osLastRead.c_str();
     }
 
     // We should never get here.  Read/Write mode not implemented.
     CPLAssert(false);
-    return NULL;
+    return nullptr;
+}
+
+char** MIDDATAFile::GetTokenizedNextLine()
+{
+    static const int nMaxLineLength = atoi(
+        CPLGetConfigOption("MITAB_MAX_LINE_LENGTH", "1000000"));
+    char** papszTokens = CSVReadParseLine3L( m_fp,
+                                             nMaxLineLength,
+                                             m_pszDelimiter,
+                                             true, // bHonourStrings
+                                             false, // bKeepLeadingAndClosingQuotes
+                                             false, // bMergeDelimiter
+                                             false // bSkipBOM
+                                            );
+    if( papszTokens == nullptr )
+    {
+        if( strstr(CPLGetLastErrorMsg(), "Maximum number of characters allowed reached") )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Maximum number of characters allowed reached. "
+                     "You can set the MITAB_MAX_LINE_LENGTH configuration option "
+                     "to the desired number of bytes (or -1 for unlimited)");
+        }
+        SetEof(TRUE);
+    }
+    return papszTokens;
 }
 
 void MIDDATAFile::WriteLine(const char *pszFormat, ...)
@@ -266,5 +299,15 @@ GBool MIDDATAFile::IsValidFeature(const char *pszString)
 }
 
 GBool MIDDATAFile::GetEof() { return m_bEof; }
+
+const CPLString& MIDDATAFile::GetEncoding() const
+{
+    return m_osEncoding;
+}
+
+void MIDDATAFile::SetEncoding( const CPLString& osEncoding )
+{
+    m_osEncoding = osEncoding;
+}
 
 void MIDDATAFile::SetEof(GBool bEof) { m_bEof = bEof; }

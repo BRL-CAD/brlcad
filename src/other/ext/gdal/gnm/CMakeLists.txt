@@ -1,20 +1,22 @@
-set(gnm_srcs
-	gnmgenericnetwork.cpp
-	gnmgraph.cpp
-	gnmlayer.cpp
-	gnmnetwork.cpp
-	gnmresultlayer.cpp
-	gnmrule.cpp
-	gnm_frmts/gnmregisterall.cpp
-	gnm_frmts/file/gnmfiledriver.cpp
-	gnm_frmts/file/gnmfilenetwork.cpp
-	gnm_frmts/db/gnmdbdriver.cpp
-	gnm_frmts/db/gnmdbnetwork.cpp
-	)
+# CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 
-include_directories(${GDAL_SOURCE_DIR}/gnm/gnm_frmts)
-include_directories(${GDAL_SOURCE_DIR}/gnm/gnm_frmts/file)
-include_directories(${GDAL_SOURCE_DIR}/gnm/gnm_frmts/db)
-
-add_library(gdal_gnm_obj OBJECT ${gnm_srcs})
-set_target_properties(gdal_gnm_obj PROPERTIES FOLDER "Third Party Libraries/GDAL")
+if (ENABLE_GNM)
+  add_subdirectory(gnm_frmts)
+  add_library(
+    gnm OBJECT
+    gnm_priv.h
+    gnmlayer.cpp
+    gnmgenericnetwork.cpp
+    gnmgraph.cpp
+    gnmnetwork.cpp
+    gnmresultlayer.cpp
+    gnmrule.cpp)
+  include(TargetPublicHeader)
+  target_public_header(TARGET gdal HEADERS gnm.h gnm_api.h gnmgraph.h)
+  gdal_standard_includes(gnm)
+  add_dependencies(gnm generate_gdal_version_h)
+  target_compile_options(gnm PRIVATE ${GDAL_CXX_WARNING_FLAGS})
+  target_include_directories(gnm PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/gnm_frmts)
+  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gnm>)
+  set_property(TARGET gnm PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+endif ()

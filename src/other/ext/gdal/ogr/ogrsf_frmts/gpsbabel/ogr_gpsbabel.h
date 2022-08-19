@@ -3,10 +3,10 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Private definitions for OGR/GPSBabel driver.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,20 +32,21 @@
 
 #include "ogrsf_frmts.h"
 #include "cpl_string.h"
+#include <array>
 
 /************************************************************************/
 /*                        OGRGPSBabelDataSource                         */
 /************************************************************************/
 
-class OGRGPSBabelDataSource : public OGRDataSource
+class OGRGPSBabelDataSource final: public OGRDataSource
 {
-    int                 nLayers;
-    OGRLayer*           apoLayers[5];
-    char               *pszName;
-    char               *pszGPSBabelDriverName;
-    char               *pszFilename;
-    CPLString           osTmpFileName;
-    GDALDataset        *poGPXDS;
+    int                 nLayers = 0;
+    std::array<OGRLayer*, 5>  apoLayers{{nullptr,nullptr,nullptr,nullptr,nullptr}};
+    char               *pszName = nullptr;
+    char               *pszGPSBabelDriverName = nullptr;
+    char               *pszFilename = nullptr;
+    CPLString           osTmpFileName{};
+    GDALDataset        *poGPXDS = nullptr;
 
   public:
                         OGRGPSBabelDataSource();
@@ -71,7 +72,7 @@ class OGRGPSBabelDataSource : public OGRDataSource
 /*                   OGRGPSBabelWriteDataSource                         */
 /************************************************************************/
 
-class OGRGPSBabelWriteDataSource : public OGRDataSource
+class OGRGPSBabelWriteDataSource final: public OGRDataSource
 {
     char               *pszName;
     char               *pszGPSBabelDriverName;

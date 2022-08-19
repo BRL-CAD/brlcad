@@ -300,6 +300,12 @@ TIFFRewriteDirectory( TIFF *tif )
 				return (0);
 			}
 		}
+		else if( tif->tif_diroff > 0xFFFFFFFFU )
+		{
+			TIFFErrorExt(tif->tif_clientdata, module,
+			     "tif->tif_diroff exceeds 32 bit range allowed for Classic TIFF");
+			return (0);
+		}
 		else
 		{
 			uint32_t nextdir;
@@ -337,6 +343,8 @@ TIFFRewriteDirectory( TIFF *tif )
 						return (0);
 					}
 					tif->tif_diroff=0;
+					/* Force a full-traversal to reach the zeroed pointer */
+					tif->tif_lastdiroff=0;
 					break;
 				}
 				nextdir=nextnextdir;
@@ -403,6 +411,8 @@ TIFFRewriteDirectory( TIFF *tif )
 						return (0);
 					}
 					tif->tif_diroff=0;
+					/* Force a full-traversal to reach the zeroed pointer */
+					tif->tif_lastdiroff=0;
 					break;
 				}
 				nextdir=nextnextdir;
@@ -1784,7 +1794,8 @@ static int _WriteAsType(TIFF* tif, uint64_t strile_size, uint64_t uncompressed_t
               compression == COMPRESSION_LZMA ||
               compression == COMPRESSION_LERC ||
               compression == COMPRESSION_ZSTD ||
-              compression == COMPRESSION_WEBP )
+              compression == COMPRESSION_WEBP ||
+              compression == COMPRESSION_JXL )
     {
         /* For a few select compression types, we assume that in the worst */
         /* case the compressed size will be 10 times the uncompressed size */
@@ -3065,7 +3076,12 @@ TIFFWriteDirectoryTagData(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t
 			TIFFErrorExt(tif->tif_clientdata,module,"IO error writing tag data");
 			return(0);
 		}
-		assert(datalength<0x80000000UL);
+		if (datalength >= 0x80000000UL)
+		{
+			TIFFErrorExt(tif->tif_clientdata,module,
+			             "libtiff does not allow writing more than 2147483647 bytes in a tag");
+			return(0);
+		}
 		if (!WriteOK(tif,data,(tmsize_t)datalength))
 		{
 			TIFFErrorExt(tif->tif_clientdata,module,"IO error writing tag data");
@@ -3168,6 +3184,7 @@ TIFFLinkDirectory(TIFF* tif)
 			 * First directory, overwrite offset in header.
 			 */
 			tif->tif_header.classic.tiff_diroff = (uint32_t) tif->tif_diroff;
+			tif->tif_lastdiroff = tif->tif_diroff;
 			(void) TIFFSeekFile(tif,4, SEEK_SET);
 			if (!WriteOK(tif, &m, 4)) {
 				TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
@@ -3179,7 +3196,13 @@ TIFFLinkDirectory(TIFF* tif)
 		/*
 		 * Not the first directory, search to the last and append.
 		 */
-		nextdir = tif->tif_header.classic.tiff_diroff;
+		if (tif->tif_lastdiroff != 0) {
+		    nextdir = (uint32_t) tif->tif_lastdiroff;
+		}
+		else {
+		    nextdir = tif->tif_header.classic.tiff_diroff;
+		}
+
 		while(1) {
 			uint16_t dircount;
 			uint32_t nextnextdir;
@@ -3210,6 +3233,7 @@ TIFFLinkDirectory(TIFF* tif)
 					     "Error writing directory link");
 					return (0);
 				}
+				tif->tif_lastdiroff = tif->tif_diroff;
 				break;
 			}
 			nextdir=nextnextdir;
@@ -3227,6 +3251,7 @@ TIFFLinkDirectory(TIFF* tif)
 			 * First directory, overwrite offset in header.
 			 */
 			tif->tif_header.big.tiff_diroff = tif->tif_diroff;
+			tif->tif_lastdiroff = tif->tif_diroff;
 			(void) TIFFSeekFile(tif,8, SEEK_SET);
 			if (!WriteOK(tif, &m, 8)) {
 				TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
@@ -3238,7 +3263,12 @@ TIFFLinkDirectory(TIFF* tif)
 		/*
 		 * Not the first directory, search to the last and append.
 		 */
-		nextdir = tif->tif_header.big.tiff_diroff;
+		if (tif->tif_lastdiroff != 0) {
+		    nextdir = tif->tif_lastdiroff;
+		}
+		else {
+		    nextdir = tif->tif_header.big.tiff_diroff;
+		}
 		while(1) {
 			uint64_t dircount64;
 			uint16_t dircount;
@@ -3277,6 +3307,7 @@ TIFFLinkDirectory(TIFF* tif)
 					     "Error writing directory link");
 					return (0);
 				}
+				tif->tif_lastdiroff = tif->tif_diroff;
 				break;
 			}
 			nextdir=nextnextdir;

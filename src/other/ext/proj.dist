@@ -1,0 +1,6 @@
+set(proj_ignore_files
+)
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(proj_ignore_files proj)
+endif (COMMAND CMAKEFILES_IN_DIR)
+

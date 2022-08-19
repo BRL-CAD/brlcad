@@ -62,15 +62,15 @@ public:
     ValueRange(double min, double max);  // step = 1
     ValueRange(double min, double max, double step);
     explicit ValueRange(const std::string& str);
-    std::string ToString();
-    ilwisStoreType get_NeededStoreType() { return st; }
-    double get_rLo() { return _rLo; }
-    double get_rHi() { return _rHi; }
-    double get_rStep() { return _rStep; }
-    double get_rRaw0() { return _r0; }
-    int get_iDec() { return _iDec; }
-    double rValue(int raw);
-    int iRaw(double value);
+    std::string ToString() const;
+    ilwisStoreType get_NeededStoreType() const { return st; }
+    double get_rLo() const { return _rLo; }
+    double get_rHi() const { return _rHi; }
+    double get_rStep() const { return _rStep; }
+    double get_rRaw0() const { return _r0; }
+    int get_iDec() const { return _iDec; }
+    double rValue(int raw) const;
+    int iRaw(double value) const;
 
 private:
     void init(double rRaw0);
@@ -103,7 +103,7 @@ struct ILWISInfo
 
 class ILWISDataset;
 
-class ILWISRasterBand : public GDALPamRasterBand
+class ILWISRasterBand final: public GDALPamRasterBand
 {
     friend class ILWISDataset;
 public:
@@ -111,7 +111,7 @@ public:
     ILWISInfo psInfo;
     int nSizePerPixel;
 
-    ILWISRasterBand( ILWISDataset *, int );
+    ILWISRasterBand( ILWISDataset *, int, const std::string& sBandNameIn );
     virtual ~ILWISRasterBand();
     CPLErr GetILWISInfo(const std::string& pszFileName);
     void ILWISOpen( const std::string& pszFilename);
@@ -130,7 +130,7 @@ private:
 /************************************************************************/
 /*                         ILWISDataset                                 */
 /************************************************************************/
-class ILWISDataset : public GDALPamDataset
+class ILWISDataset final: public GDALPamDataset
 {
     friend class ILWISRasterBand;
     CPLString osFileName;
@@ -160,15 +160,21 @@ public:
     static GDALDataset *Create(const char* pszFilename,
                                int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char** papszParmList);
+                               char** papszParamList);
 
     virtual CPLErr  GetGeoTransform( double * padfTransform ) override;
     virtual CPLErr  SetGeoTransform( double * ) override;
 
-    virtual const char *GetProjectionRef() override;
-    virtual CPLErr SetProjection( const char * ) override;
+    virtual const char *_GetProjectionRef() override;
+    virtual CPLErr _SetProjection( const char * ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 
-    virtual void   FlushCache() override;
+    virtual void   FlushCache(bool bAtClosing) override;
 };
 
 // IniFile.h: interface for the IniFile class.

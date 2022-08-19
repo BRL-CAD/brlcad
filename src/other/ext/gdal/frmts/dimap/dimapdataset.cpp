@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,13 +32,13 @@
 #include "cpl_minixml.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
-#include "gdal_proxy.h"
 #include "ogr_spatialref.h"
 #include "mdreader/reader_pleiades.h"
 #include "vrtdataset.h"
 #include <map>
+#include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -46,7 +46,7 @@ CPL_CVSID("$Id$");
 /* ==================================================================== */
 /************************************************************************/
 
-class DIMAPDataset : public GDALPamDataset
+class DIMAPDataset final: public GDALPamDataset
 {
     CPLXMLNode *psProduct;
 
@@ -73,7 +73,7 @@ class DIMAPDataset : public GDALPamDataset
     char          **papszXMLDimapMetadata;
 
   protected:
-    virtual int         CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
     int ReadImageInformation();
     int ReadImageInformation2();  // DIMAP 2.
@@ -82,17 +82,23 @@ class DIMAPDataset : public GDALPamDataset
                              const char * const apszMetadataTranslation[] );
 
   public:
-            DIMAPDataset();
-    virtual ~DIMAPDataset();
+    DIMAPDataset();
+    ~DIMAPDataset() override;
 
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
-    virtual const GDAL_GCP *GetGCPs() override;
-    virtual char      **GetMetadataDomainList() override;
-    virtual char **GetMetadata( const char *pszDomain ) override;
-    virtual char **GetFileList(void) override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr GetGeoTransform( double * ) override;
+    int GetGCPCount() override;
+    const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
+    const GDAL_GCP *GetGCPs() override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata( const char *pszDomain ) override;
+    char **GetFileList() override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -111,23 +117,23 @@ class DIMAPDataset : public GDALPamDataset
 /************************************************************************/
 
 DIMAPDataset::DIMAPDataset() :
-    psProduct(NULL),
-    psProductDim(NULL),
-    psProductStrip(NULL),
-    poVRTDS(NULL),
+    psProduct(nullptr),
+    psProductDim(nullptr),
+    psProductStrip(nullptr),
+    poVRTDS(nullptr),
     nGCPCount(0),
-    pasGCPList(NULL),
+    pasGCPList(nullptr),
     pszGCPProjection(CPLStrdup("")),
     bHaveGeoTransform(FALSE),
     nProductVersion(1),
-    papszXMLDimapMetadata(NULL)
+    papszXMLDimapMetadata(nullptr)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -137,13 +143,13 @@ DIMAPDataset::DIMAPDataset() :
 DIMAPDataset::~DIMAPDataset()
 
 {
-    FlushCache();
+    DIMAPDataset::FlushCache(true);
 
     CPLDestroyXMLNode( psProduct );
 
-    if( psProductDim != NULL )
+    if( psProductDim != nullptr && psProductDim != psProduct )
         CPLDestroyXMLNode( psProductDim );
-    if( psProductStrip != NULL )
+    if( psProductStrip != nullptr )
         CPLDestroyXMLNode( psProductStrip );
     CPLFree( pszGCPProjection );
     if( nGCPCount > 0 )
@@ -154,7 +160,7 @@ DIMAPDataset::~DIMAPDataset()
 
     CSLDestroy(papszXMLDimapMetadata);
 
-    CloseDependentDatasets();
+    DIMAPDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/
@@ -165,10 +171,10 @@ int DIMAPDataset::CloseDependentDatasets()
 {
     int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
-    if( poVRTDS != NULL )
+    if( poVRTDS != nullptr )
     {
         delete poVRTDS;
-        poVRTDS = NULL;
+        poVRTDS = nullptr;
         bHasDroppedRef = TRUE;
     }
 
@@ -183,7 +189,7 @@ char **DIMAPDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "xml:dimap", NULL);
+                                   "xml:dimap", nullptr);
 }
 
 /************************************************************************/
@@ -198,7 +204,7 @@ char **DIMAPDataset::GetMetadata( const char *pszDomain )
 {
     if( pszDomain && EQUAL(pszDomain,"xml:dimap") )
     {
-        if( papszXMLDimapMetadata == NULL )
+        if( papszXMLDimapMetadata == nullptr )
         {
             papszXMLDimapMetadata = reinterpret_cast<char **>(
                 CPLCalloc(sizeof(char*), 2) );
@@ -214,13 +220,13 @@ char **DIMAPDataset::GetMetadata( const char *pszDomain )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *DIMAPDataset::GetProjectionRef()
+const char *DIMAPDataset::_GetProjectionRef()
 
 {
-    if( !osProjection.empty() )
+    if( !osProjection.empty() && bHaveGeoTransform )
         return osProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/
@@ -262,34 +268,34 @@ char **DIMAPDataset::GetFileList()
 /* ==================================================================== */
 /************************************************************************/
 
-class DIMAPRasterBand : public GDALPamRasterBand
+class DIMAPRasterBand final: public GDALPamRasterBand
 {
     friend class DIMAPDataset;
 
     VRTSourcedRasterBand *poVRTBand;
 
   public:
-                   DIMAPRasterBand( DIMAPDataset *, int, VRTSourcedRasterBand * );
-    virtual       ~DIMAPRasterBand() {};
+    DIMAPRasterBand( DIMAPDataset *, int, VRTSourcedRasterBand * );
+    ~DIMAPRasterBand() override {}
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg ) override;
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview( int ) override;
-    virtual CPLErr ComputeRasterMinMax( int bApproxOK,
-                                        double adfMinMax[2] ) override;
-    virtual CPLErr ComputeStatistics( int bApproxOK,
-                                      double *pdfMin, double *pdfMax,
-                                      double *pdfMean, double *pdfStdDev,
-                                      GDALProgressFunc, void *pProgressData ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                      void *, int, int, GDALDataType,
+                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                      GDALRasterIOExtraArg* psExtraArg ) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview( int ) override;
+    CPLErr ComputeRasterMinMax( int bApproxOK,
+                                double adfMinMax[2] ) override;
+    CPLErr ComputeStatistics( int bApproxOK,
+                              double *pdfMin, double *pdfMax,
+                              double *pdfMean, double *pdfStdDev,
+                              GDALProgressFunc, void *pProgressData ) override;
 
-    virtual CPLErr  GetHistogram( double dfMin, double dfMax,
-                                  int nBuckets, GUIntBig * panHistogram,
-                                  int bIncludeOutOfRange, int bApproxOK,
-                                  GDALProgressFunc, void *pProgressData ) override;
+    CPLErr GetHistogram( double dfMin, double dfMax,
+                         int nBuckets, GUIntBig * panHistogram,
+                         int bIncludeOutOfRange, int bApproxOK,
+                         GDALProgressFunc, void *pProgressData ) override;
 };
 
 /************************************************************************/
@@ -430,12 +436,15 @@ CPLErr DIMAPRasterBand::GetHistogram( double dfMin, double dfMax,
 int DIMAPDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
+    if( STARTS_WITH(poOpenInfo->pszFilename, "DIMAP:") )
+        return true;
+
     if( poOpenInfo->nHeaderBytes >= 100 )
     {
         if( ( strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
-                     "<Dimap_Document" ) == NULL ) &&
+                     "<Dimap_Document" ) == nullptr ) &&
             ( strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
-                     "<PHR_DIMAP_Document" ) == NULL ) )
+                     "<PHR_DIMAP_Document" ) == nullptr ) )
             return FALSE;
 
         return TRUE;
@@ -444,17 +453,17 @@ int DIMAPDataset::Identify( GDALOpenInfo * poOpenInfo )
     {
         // DIMAP file.
         CPLString osMDFilename =
-            CPLFormCIFilename( poOpenInfo->pszFilename, "METADATA.DIM", NULL );
+            CPLFormCIFilename( poOpenInfo->pszFilename, "METADATA.DIM", nullptr );
 
         VSIStatBufL sStat;
         if( VSIStatL( osMDFilename, &sStat ) == 0 )
         {
             // Make sure this is really a Dimap format.
-            GDALOpenInfo  oOpenInfo( osMDFilename, GA_ReadOnly, NULL );
+            GDALOpenInfo  oOpenInfo( osMDFilename, GA_ReadOnly, nullptr );
             if( oOpenInfo.nHeaderBytes >= 100 )
             {
                 if( strstr(reinterpret_cast<char *>(oOpenInfo.pabyHeader),
-                           "<Dimap_Document" ) == NULL )
+                           "<Dimap_Document" ) == nullptr )
                     return FALSE;
 
                 return TRUE;
@@ -465,10 +474,19 @@ int DIMAPDataset::Identify( GDALOpenInfo * poOpenInfo )
             // DIMAP 2 file.
             osMDFilename =
                 CPLFormCIFilename( poOpenInfo->pszFilename,
-                                   "VOL_PHR.XML", NULL );
+                                   "VOL_PHR.XML", nullptr );
 
             if( VSIStatL( osMDFilename, &sStat ) == 0 )
-                    return TRUE;
+                return TRUE;
+
+            // DIMAP VHR2020 file.
+            osMDFilename =
+                CPLFormCIFilename( poOpenInfo->pszFilename,
+                                   "VOL_PNEO.XML", nullptr );
+
+            if( VSIStatL( osMDFilename, &sStat ) == 0 )
+                return TRUE;
+
 
             return FALSE;
         }
@@ -485,7 +503,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if( !Identify( poOpenInfo ) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -495,36 +513,55 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The DIMAP driver does not support update access to existing "
                   " datasets." );
-        return NULL;
+        return nullptr;
     }
 /* -------------------------------------------------------------------- */
 /*      Get the metadata filename.                                      */
 /* -------------------------------------------------------------------- */
-    CPLString osMDFilename;
+    CPLString osFilename;
+    CPLString osSelectedSubdataset;
 
-    if( poOpenInfo->bIsDirectory )
+    if( STARTS_WITH(poOpenInfo->pszFilename, "DIMAP:") )
     {
-        VSIStatBufL sStat;
+        CPLStringList aosTokens(CSLTokenizeString2(poOpenInfo->pszFilename, ":", CSLT_HONOURSTRINGS));
+        if( aosTokens.size() != 3 )
+            return nullptr;
 
-        osMDFilename =
-            CPLFormCIFilename( poOpenInfo->pszFilename, "METADATA.DIM", NULL );
-
-        /* DIMAP2 */
-        if( VSIStatL( osMDFilename, &sStat ) != 0 )
-        osMDFilename =
-                CPLFormCIFilename( poOpenInfo->pszFilename, "VOL_PHR.XML", NULL );
+        osFilename = aosTokens[1];
+        osSelectedSubdataset = aosTokens[2];
     }
     else
     {
-        osMDFilename = poOpenInfo->pszFilename;
+        osFilename = poOpenInfo->pszFilename;
+    }
+
+    VSIStatBufL sStat;
+    CPLString osMDFilename(osFilename);
+    if( VSIStatL(osFilename.c_str(), &sStat) == 0 && VSI_ISDIR(sStat.st_mode) )
+    {
+        osMDFilename =
+            CPLFormCIFilename( osFilename, "METADATA.DIM", nullptr );
+
+        /* DIMAP2 */
+        if( VSIStatL( osMDFilename, &sStat ) != 0 )
+        {
+            osMDFilename =
+                CPLFormCIFilename( osFilename, "VOL_PHR.XML", nullptr );
+            if( VSIStatL( osMDFilename, &sStat ) != 0 )
+            {
+                // DIMAP VHR2020 file.
+                osMDFilename =
+                    CPLFormCIFilename( osFilename, "VOL_PNEO.XML", nullptr );
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Ingest the xml file.                                            */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psProduct = CPLParseXMLFile( osMDFilename );
-    if( psProduct == NULL )
-        return NULL;
+    if( psProduct == nullptr )
+        return nullptr;
 
     CPLXMLNode *psDoc = CPLGetXMLNode( psProduct, "=Dimap_Document" );
     if( !psDoc )
@@ -542,90 +579,111 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osImageDSFilename;
     CPLString osDIMAPFilename;
     CPLString osRPCFilename;
-    CPLXMLNode *psProductDim = NULL;
-    CPLXMLNode *psProductStrip = NULL;
+    CPLXMLNode *psProductDim = nullptr;
+    CPLXMLNode *psProductStrip = nullptr;
+
+    CPLStringList aosSubdatasets;
 
     // Check needed information for the DIMAP format.
     if( nProductVersion == 1 )
     {
         CPLXMLNode *psImageAttributes =
             CPLGetXMLNode( psDoc, "Raster_Dimensions" );
-        if( psImageAttributes == NULL )
+        if( psImageAttributes == nullptr )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to find <Raster_Dimensions> in document." );
             CPLDestroyXMLNode(psProduct);
-            return NULL;
+            return nullptr;
         }
     }
     else  // DIMAP2.
     {
-        // Verify the presence of the DIMAP product file.
-        CPLXMLNode *psDatasetComponents =
-            CPLGetXMLNode(psDoc, "Dataset_Content.Dataset_Components");
-
-        if( psDatasetComponents == NULL )
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Failed to find <Dataset_Components> in document." );
-            CPLDestroyXMLNode(psProduct);
-            return NULL;
-        }
-
+        //Verify if the opened file is not already a product dimap
         if( CPLGetXMLNode(psDoc, "Raster_Data") )
         {
+            psProductDim = psProduct;
             osDIMAPFilename = osMDFilename;
         }
+        else {
+            // Verify the presence of the DIMAP product file.
+            CPLXMLNode *psDatasetComponents =
+                CPLGetXMLNode(psDoc, "Dataset_Content.Dataset_Components");
 
-        for( CPLXMLNode *psDatasetComponent = psDatasetComponents->psChild;
-             osDIMAPFilename.empty() && psDatasetComponent != NULL;
-             psDatasetComponent = psDatasetComponent->psNext )
-        {
-            const char* pszComponentType =
-                CPLGetXMLValue(psDatasetComponent, "COMPONENT_TYPE","");
-            if( strcmp(pszComponentType, "DIMAP") == 0 )
+            if( psDatasetComponents == nullptr )
             {
-                const char *pszHref = CPLGetXMLValue(
-                        psDatasetComponent, "COMPONENT_PATH.href", "" );
+                CPLError( CE_Failure, CPLE_OpenFailed,
+                        "Failed to find <Dataset_Components> in document." );
+                CPLDestroyXMLNode(psProduct);
+                return nullptr;
+            }
 
-                if( strlen(pszHref) > 0 )  // DIMAP product found.
+
+            for( CPLXMLNode *psDatasetComponent = psDatasetComponents->psChild;
+                 psDatasetComponent != nullptr;
+                 psDatasetComponent = psDatasetComponent->psNext )
+            {
+                const char* pszComponentType =
+                    CPLGetXMLValue(psDatasetComponent, "COMPONENT_TYPE","");
+                if( strcmp(pszComponentType, "DIMAP") == 0 )
                 {
-                    if( poOpenInfo->bIsDirectory )
+                    // DIMAP product found.
+                    const char *pszHref = CPLGetXMLValue(
+                            psDatasetComponent, "COMPONENT_PATH.href", "" );
+                    const CPLString osComponentTitle(CPLGetXMLValue(
+                        psDatasetComponent, "COMPONENT_TITLE", ""));
+                    const CPLString osComponentTitleLaundered(
+                        CPLString(osComponentTitle).replaceAll(' ', '_'));
+
+                    if( strlen(pszHref) > 0 && osDIMAPFilename.empty() &&
+                        (osSelectedSubdataset.empty() ||
+                         osSelectedSubdataset == osComponentTitleLaundered) )
                     {
-                        osDIMAPFilename =
-                            CPLFormCIFilename( poOpenInfo->pszFilename,
-                                               pszHref, NULL );
-                    }
-                    else
-                    {
-                        CPLString osPath = CPLGetPath(osMDFilename);
-                        osDIMAPFilename =
-                            CPLFormFilename( osPath, pszHref, NULL );
+                        if( poOpenInfo->bIsDirectory )
+                        {
+                            osDIMAPFilename =
+                                CPLFormCIFilename( poOpenInfo->pszFilename,
+                                                pszHref, nullptr );
+                        }
+                        else
+                        {
+                            CPLString osPath = CPLGetPath(osMDFilename);
+                            osDIMAPFilename =
+                                CPLFormFilename( osPath, pszHref, nullptr );
+                        }
+
+                        // Data file might be specified there.
+                        const char *pszDataFileHref = CPLGetXMLValue(
+                            psDatasetComponent,
+                            "Data_Files.Data_File.DATA_FILE_PATH.href",
+                            "" );
+
+                        if( strlen(pszDataFileHref) > 0 )
+                        {
+                            CPLString osPath = CPLGetPath(osMDFilename);
+                            osImageDSFilename =
+                                CPLFormFilename( osPath, pszDataFileHref, nullptr );
+                        }
                     }
 
-                    // Data file might be specified there.
-                    const char *pszDataFileHref = CPLGetXMLValue(
-                        psDatasetComponent,
-                        "Data_Files.Data_File.DATA_FILE_PATH.href",
-                        "" );
-
-                    if( strlen(pszDataFileHref) > 0 )
-                    {
-                        CPLString osPath = CPLGetPath(osMDFilename);
-                        osImageDSFilename =
-                            CPLFormFilename( osPath, pszDataFileHref, NULL );
-                    }
-
-                    break;
+                    const int iIdx = static_cast<int>(aosSubdatasets.size() / 2 + 1);
+                    aosSubdatasets.SetNameValue(
+                        CPLSPrintf("SUBDATASET_%d_NAME", iIdx),
+                        CPLSPrintf("DIMAP:\"%s\":%s",
+                                   poOpenInfo->pszFilename,
+                                   osComponentTitleLaundered.c_str()));
+                    aosSubdatasets.SetNameValue(
+                        CPLSPrintf("SUBDATASET_%d_DESC", iIdx),
+                        CPLSPrintf("Component %s", osComponentTitle.c_str()));
                 }
             }
-        }
 
-        psProductDim = CPLParseXMLFile( osDIMAPFilename );
-        if( psProductDim == NULL )
-        {
-            CPLDestroyXMLNode(psProduct);
-            return NULL;
+            psProductDim = CPLParseXMLFile( osDIMAPFilename );
+            if( psProductDim == nullptr )
+            {
+                CPLDestroyXMLNode(psProduct);
+                return nullptr;
+            }
         }
 
         // We need the {STRIP|RPC}_<product_id>.XML file for a few metadata.
@@ -635,12 +693,12 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CPLXMLNode *psDatasetSources =
             CPLGetXMLNode(psDocDim, "Dataset_Sources");
-        if( psDatasetSources != NULL )
+        if( psDatasetSources != nullptr )
         {
             CPLString osSTRIPFilename;
 
             for( CPLXMLNode *psDatasetSource = psDatasetSources->psChild;
-                 psDatasetSource != NULL;
+                 psDatasetSource != nullptr;
                  psDatasetSource = psDatasetSource->psNext )
             {
                 const char* pszSourceType =
@@ -655,25 +713,27 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
                     {
                         CPLString osPath = CPLGetPath(osDIMAPFilename);
                         osSTRIPFilename =
-                            CPLFormCIFilename( osPath, pszHref, NULL );
-
-                        break;
+                            CPLFormCIFilename( osPath, pszHref, nullptr );
+                        if (VSIStatL(osSTRIPFilename, &sStat) == 0)
+                        {
+                            psProductStrip = CPLParseXMLFile(osSTRIPFilename);
+                            break;
+                        }
                     }
                 }
             }
 
-            psProductStrip = CPLParseXMLFile( osSTRIPFilename );
         }
 
         CPLXMLNode *psDatasetRFMComponents =
             CPLGetXMLNode(
                 psDocDim,
                 "Geoposition.Geoposition_Models.Rational_Function_Model");
-        if( psDatasetRFMComponents != NULL )
+        if( psDatasetRFMComponents != nullptr )
         {
            for( CPLXMLNode *psDatasetRFMComponent =
                     psDatasetRFMComponents->psChild;
-                psDatasetRFMComponent != NULL;
+                psDatasetRFMComponent != nullptr;
                 psDatasetRFMComponent = psDatasetRFMComponent->psNext )
            {
               const char* pszComponentTitle =
@@ -687,7 +747,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
                  {
                     CPLString osPath = CPLGetPath(osDIMAPFilename);
                     osRPCFilename =
-                       CPLFormCIFilename(osPath, pszHref, NULL);
+                       CPLFormCIFilename(osPath, pszHref, nullptr);
 
                     break;
                  }
@@ -701,6 +761,10 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     DIMAPDataset *poDS = new DIMAPDataset();
 
+    if( osSelectedSubdataset.empty() && aosSubdatasets.size() > 2 )
+    {
+        poDS->GDALDataset::SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+    }
     poDS->psProduct = psProduct;
     poDS->psProductDim = psProductDim;
     poDS->psProductStrip = psProductStrip;
@@ -717,7 +781,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
     if( res == FALSE )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -747,15 +811,15 @@ int DIMAPDataset::ReadImageInformation()
         psDoc, "Data_Access.Data_File.DATA_FILE_PATH.href", "" );
     CPLString osPath = CPLGetPath(osMDFilename);
     CPLString osImageFilename =
-        CPLFormFilename( osPath, pszHref, NULL );
+        CPLFormFilename( osPath, pszHref, nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Try and open the file.                                          */
 /* -------------------------------------------------------------------- */
 
-    GDALDataset* poImageDS =
-        static_cast<GDALDataset *>( GDALOpen( osImageFilename, GA_ReadOnly ) );
-    if( poImageDS == NULL )
+    auto poImageDS = std::unique_ptr<GDALDataset>(
+                                        GDALDataset::Open(osImageFilename));
+    if( poImageDS == nullptr )
     {
         return FALSE;
     }
@@ -771,34 +835,22 @@ int DIMAPDataset::ReadImageInformation()
     // Don't try to write a VRT file.
     poVRTDS->SetWritable(FALSE);
 
-    GDALDataset *poTileDS =
-          new GDALProxyPoolDataset( osImageFilename, nRasterXSize, nRasterYSize,
-                                    GA_ReadOnly, TRUE );
-
     for( int iBand = 0; iBand < poImageDS->GetRasterCount(); iBand++ )
     {
         poVRTDS->AddBand(
-            poImageDS->GetRasterBand(iBand+1)->GetRasterDataType(), NULL );
-
-        reinterpret_cast<GDALProxyPoolDataset *>( poTileDS )->
-            AddSrcBandDescription(
-                poImageDS->GetRasterBand(iBand+1)->GetRasterDataType(),
-                nRasterXSize, 1 );
-
-        GDALRasterBand *poSrcBand = poTileDS->GetRasterBand(iBand+1);
+            poImageDS->GetRasterBand(iBand+1)->GetRasterDataType(), nullptr );
 
         VRTSourcedRasterBand *poVRTBand =
             reinterpret_cast<VRTSourcedRasterBand *>(
                 poVRTDS->GetRasterBand(iBand+1) );
 
-        poVRTBand->AddSimpleSource( poSrcBand,
+        poVRTBand->AddSimpleSource( osImageFilename,
+                                    iBand+1,
                                     0, 0,
                                     nRasterXSize, nRasterYSize,
                                     0, 0,
                                     nRasterXSize, nRasterYSize );
     }
-
-    poTileDS->Dereference();
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -820,7 +872,7 @@ int DIMAPDataset::ReadImageInformation()
     CPLXMLNode *psGeoLoc =
         CPLGetXMLNode( psDoc, "Geoposition.Geoposition_Insert" );
 
-    if( psGeoLoc != NULL )
+    if( psGeoLoc != nullptr )
     {
         bHaveGeoTransform = TRUE;
         adfGeoTransform[0] = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULXMAP", "0"));
@@ -842,12 +894,12 @@ int DIMAPDataset::ReadImageInformation()
 /* -------------------------------------------------------------------- */
     psGeoLoc = CPLGetXMLNode( psDoc, "Geoposition.Geoposition_Points" );
 
-    if( psGeoLoc != NULL )
+    if( psGeoLoc != nullptr )
     {
         // Count gcps.
         nGCPCount = 0;
         for( CPLXMLNode *psNode = psGeoLoc->psChild;
-             psNode != NULL;
+             psNode != nullptr;
              psNode = psNode->psNext )
         {
             if( EQUAL(psNode->pszValue,"Tie_Point") )
@@ -860,7 +912,7 @@ int DIMAPDataset::ReadImageInformation()
         nGCPCount = 0;
 
         for( CPLXMLNode *psNode = psGeoLoc->psChild;
-             psNode != NULL;
+             psNode != nullptr;
              psNode = psNode->psNext )
         {
             GDAL_GCP *psGCP = pasGCPList + nGCPCount;
@@ -893,12 +945,12 @@ int DIMAPDataset::ReadImageInformation()
     const char *pszSRS = CPLGetXMLValue(
         psDoc,
         "Coordinate_Reference_System.Horizontal_CS.HORIZONTAL_CS_CODE",
-        NULL );
+        nullptr );
 
-    if( pszSRS != NULL )
+    if( pszSRS != nullptr )
     {
         OGRSpatialReference oSRS;
-        if( oSRS.SetFromUserInput( pszSRS ) == OGRERR_NONE )
+        if( oSRS.SetFromUserInput( pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
         {
             if( nGCPCount > 0 )
             {
@@ -907,7 +959,7 @@ int DIMAPDataset::ReadImageInformation()
             }
             else
             {
-                char *pszProjection = NULL;
+                char *pszProjection = nullptr;
                 oSRS.exportToWkt( &pszProjection );
                 osProjection = pszProjection;
                 CPLFree( pszProjection );
@@ -935,7 +987,7 @@ int DIMAPDataset::ReadImageInformation()
             "Dataset_Sources.Source_Information.Scene_Source", "",
             "Data_Processing", "",
             "Image_Interpretation.Spectral_Band_Info", "SPECTRAL_",
-            NULL, NULL
+            nullptr, nullptr
         };
 
     SetMetadataFromXML(psProduct, apszMetadataTranslation);
@@ -946,21 +998,21 @@ int DIMAPDataset::ReadImageInformation()
 
     CPLXMLNode *psImageInterpretationNode =
         CPLGetXMLNode( psDoc, "Image_Interpretation" );
-    if( psImageInterpretationNode != NULL )
+    if( psImageInterpretationNode != nullptr )
     {
         CPLXMLNode *psSpectralBandInfoNode = psImageInterpretationNode->psChild;
-        while( psSpectralBandInfoNode != NULL )
+        while( psSpectralBandInfoNode != nullptr )
         {
             if( psSpectralBandInfoNode->eType == CXT_Element &&
                 EQUAL(psSpectralBandInfoNode->pszValue, "Spectral_Band_Info") )
             {
                 CPLXMLNode *psTag = psSpectralBandInfoNode->psChild;
                 int nBandIndex = 0;
-                while( psTag != NULL )
+                while( psTag != nullptr )
                 {
-                    if( psTag->eType == CXT_Element && psTag->psChild != NULL &&
+                    if( psTag->eType == CXT_Element && psTag->psChild != nullptr &&
                         psTag->psChild->eType ==
-                        CXT_Text && psTag->pszValue != NULL)
+                        CXT_Text && psTag->pszValue != nullptr)
                     {
                         if( EQUAL(psTag->pszValue, "BAND_INDEX") )
                         {
@@ -987,8 +1039,6 @@ int DIMAPDataset::ReadImageInformation()
             psSpectralBandInfoNode = psSpectralBandInfoNode->psNext;
         }
     }
-
-    GDALClose(poImageDS);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -1018,7 +1068,7 @@ int DIMAPDataset::ReadImageInformation2()
 
     CPLXMLNode *psImageAttributes =
         CPLGetXMLNode( psDoc, "Raster_Data.Raster_Dimensions" );
-    if( psImageAttributes == NULL )
+    if( psImageAttributes == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to find <Raster_Dimensions> in document." );
@@ -1052,6 +1102,13 @@ int DIMAPDataset::ReadImageInformation2()
         atoi(CPLGetXMLValue( psImageAttributes, "NCOLS", "-1" ));
     nRasterYSize =
         atoi(CPLGetXMLValue( psImageAttributes, "NROWS", "-1" ));
+    if( nRasterXSize <= 0 || nRasterYSize <= 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid NCOLS(=%d)/NROWS(=%d) value",
+                 nRasterXSize, nRasterYSize);
+        return FALSE;
+    }
     int nTileWidth = atoi( CPLGetXMLValue( psImageAttributes,
                            "Tile_Set.Regular_Tiling.NTILES_SIZE.ncols", "-1" ));
     int nTileHeight = atoi( CPLGetXMLValue( psImageAttributes,
@@ -1069,6 +1126,12 @@ int DIMAPDataset::ReadImageInformation2()
         SetMetadataItem( "COMPRESSION", "JPEG2000", "IMAGE_STRUCTURE" );
     }
 
+    // For VHR2020: SPECTRAL_PROCESSING = PAN, MS, MS-FS, PMS, PMS-N, PMS-X, PMS-FS
+    const CPLString osSpectralProcessing =
+        CPLGetXMLValue( psDoc, "Processing_Information.Product_Settings.SPECTRAL_PROCESSING", "" );
+    const bool bTwoDataFilesPerTile =
+        osSpectralProcessing == "MS-FS" || osSpectralProcessing == "PMS-FS";
+
 /* -------------------------------------------------------------------- */
 /*      Get the name of the underlying file.                            */
 /* -------------------------------------------------------------------- */
@@ -1084,33 +1147,64 @@ int DIMAPDataset::ReadImageInformation2()
             </Data_File>
          </Data_Files>
     */
-    std::map< std::pair<int,int>, CPLString > oMapRowColumnToName;
+
+    struct TileIdx
+    {
+        int nRow;
+        int nCol;
+        int nPart; // typically 0.  But for VHR2020 0=RGB, 1=NED
+
+        TileIdx(int nRowIn, int nColIn, int nPartIn = 0): nRow(nRowIn), nCol(nColIn), nPart(nPartIn) {}
+
+        bool operator< (const TileIdx& other ) const
+        {
+            if( nRow < other.nRow )
+                return true;
+            if( nRow > other.nRow )
+                return false;
+            if( nCol < other.nCol )
+                return true;
+            if( nCol > other.nCol )
+                return false;
+            return nPart < other.nPart;
+        }
+    };
+
+    std::map< TileIdx, CPLString > oMapTileIdxToName;
+    int nImageDSRow=1, nImageDSCol=1;
     if( psDataFiles )
     {
-        int nRows = 1;
-        int nCols = 1;
-        CPLString osPath = CPLGetPath( osDIMAPFilename );
-        for( CPLXMLNode* psDataFile = psDataFiles->psChild;
-                         psDataFile; psDataFile = psDataFile->psNext )
+        const CPLString osPath = CPLGetPath( osDIMAPFilename );
+        for( int nPart = 0; psDataFiles != nullptr; psDataFiles = psDataFiles->psNext, nPart++ )
         {
-            if( psDataFile->eType == CXT_Element &&
-                strcmp( psDataFile->pszValue, "Data_File") == 0 )
+            for( CPLXMLNode* psDataFile = psDataFiles->psChild;
+                            psDataFile; psDataFile = psDataFile->psNext )
             {
-                const char* pszR = CPLGetXMLValue( psDataFile, "tile_R", NULL );
-                const char* pszC = CPLGetXMLValue( psDataFile, "tile_C", NULL );
-                const char* pszHref =
-                    CPLGetXMLValue(psDataFile, "DATA_FILE_PATH.href", NULL );
-                if( pszR && pszC && pszHref )
+                if( psDataFile->eType == CXT_Element &&
+                    strcmp( psDataFile->pszValue, "Data_File") == 0 )
                 {
-                    int nRow = atoi(pszR);
-                    int nCol = atoi(pszC);
-                    if( nRow == 1 && nCol == 1 )
-                        osImageDSFilename =
-                            CPLFormCIFilename( osPath, pszHref, NULL );
-                    if( nRow > nRows ) nRows = nRow;
-                    if( nCol > nCols ) nCols = nCol;
-                    oMapRowColumnToName[ std::pair<int,int>(nRow, nCol) ] =
-                          CPLFormCIFilename( osPath, pszHref, NULL );
+                    const char* pszR = CPLGetXMLValue( psDataFile, "tile_R", nullptr );
+                    const char* pszC = CPLGetXMLValue( psDataFile, "tile_C", nullptr );
+                    const char* pszHref =
+                        CPLGetXMLValue(psDataFile, "DATA_FILE_PATH.href", nullptr );
+                    if( pszR && pszC && pszHref )
+                    {
+                        int nRow = atoi(pszR);
+                        int nCol = atoi(pszC);
+                        if( nRow < 0 || nCol < 0 )
+                        {
+                            return false;
+                        }
+                        const CPLString osTileFilename(
+                            CPLFormCIFilename( osPath, pszHref, nullptr ));
+                        if( (nRow == 1 && nCol == 1 && nPart == 0) || osImageDSFilename.empty() ) {
+                            osImageDSFilename = osTileFilename;
+                            nImageDSRow = nRow;
+                            nImageDSCol = nCol;
+                        }
+                        oMapTileIdxToName[ TileIdx(nRow, nCol, nPart) ] =
+                            osTileFilename;
+                    }
                 }
             }
         }
@@ -1119,13 +1213,13 @@ int DIMAPDataset::ReadImageInformation2()
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Overlap between tiles is not handled currently. "
                      "Only taking into account top left tile");
-            oMapRowColumnToName.clear();
-            oMapRowColumnToName[ std::pair<int,int>(1,1) ] = osImageDSFilename;
+            oMapTileIdxToName.clear();
+            oMapTileIdxToName[ TileIdx(1,1) ] = osImageDSFilename;
         }
     }
     else
     {
-        oMapRowColumnToName[ std::pair<int,int>(1,1) ] = osImageDSFilename;
+        oMapTileIdxToName[ TileIdx(1,1) ] = osImageDSFilename;
     }
 
     if( osImageDSFilename.empty() )
@@ -1138,23 +1232,40 @@ int DIMAPDataset::ReadImageInformation2()
 /* -------------------------------------------------------------------- */
 /*      Try and open the file.                                          */
 /* -------------------------------------------------------------------- */
-    GDALDataset* poImageDS = static_cast<GDALDataset *>(
-        GDALOpen( osImageDSFilename, GA_ReadOnly ) );
-    if( poImageDS == NULL )
+    auto poImageDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(osImageDSFilename));
+    if( poImageDS == nullptr )
     {
         return FALSE;
     }
-    if( poImageDS->GetRasterCount() != l_nBands )
+    if( bTwoDataFilesPerTile )
+    {
+        if( l_nBands != 6 || poImageDS->GetRasterCount() != 3 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent band count");
+            return FALSE;
+        }
+    }
+    else if( poImageDS->GetRasterCount() != l_nBands )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent band count");
-        GDALClose(poImageDS);
         return FALSE;
     }
 
-    if( oMapRowColumnToName.size() == 1 )
+    if( nTileWidth > 0 && nTileHeight > 0 )
+    {
+        // ok
+    }
+    else if (oMapTileIdxToName.size() == 1 ||
+             (bTwoDataFilesPerTile && oMapTileIdxToName.size() == 2) )
     {
         nTileWidth = poImageDS->GetRasterXSize();
         nTileHeight = poImageDS->GetRasterYSize();
+    }
+
+    if( !(nTileWidth > 0 && nTileHeight > 0) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot get tile dimension");
+        return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1166,43 +1277,21 @@ int DIMAPDataset::ReadImageInformation2()
     // Don't try to write a VRT file.
     poVRTDS->SetWritable(FALSE);
 
-    std::map< std::pair<int,int>, GDALDataset* > oMapRowColumnToProxyPoolDataset;
-    std::map< std::pair<int,int>, CPLString>::iterator oIterRCN =
-        oMapRowColumnToName.begin();
-    for( ; oIterRCN != oMapRowColumnToName.end(); ++oIterRCN )
+    for( int iBand = 0; iBand < l_nBands; iBand++ )
     {
-        const int nRow = oIterRCN->first.first;
-        const int nCol = oIterRCN->first.second;
-        if( (nRow - 1) * nTileHeight < nRasterYSize &&
-            (nCol - 1) * nTileWidth < nRasterXSize )
+        auto poSrcBandFirstImage = poImageDS->GetRasterBand( iBand < poImageDS->GetRasterCount() ? iBand+1 : 1);
+        CPLStringList aosAddBandOptions;
+        int nSrcBlockXSize, nSrcBlockYSize;
+        poSrcBandFirstImage->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
+        if( oMapTileIdxToName.size() == 1 ||
+            ((nTileWidth % nSrcBlockXSize) == 0 &&
+             (nTileHeight % nSrcBlockYSize) == 0) )
         {
-            int nHeight = nTileHeight;
-            if( nRow * nTileHeight > nRasterYSize )
-            {
-                nHeight = nRasterYSize - (nRow - 1) * nTileHeight;
-            }
-            int nWidth = nTileWidth;
-            if( nCol * nTileWidth > nRasterXSize )
-            {
-                nWidth = nRasterXSize - (nCol - 1) * nTileWidth;
-            }
-            GDALProxyPoolDataset* poPPDs = new GDALProxyPoolDataset(
-                oIterRCN->second, nWidth, nHeight, GA_ReadOnly, TRUE );
-            oMapRowColumnToProxyPoolDataset[ oIterRCN->first ] = poPPDs;
-
-            for( int iBand = 0; iBand < poImageDS->GetRasterCount(); iBand++ )
-            {
-                poPPDs->AddSrcBandDescription(
-                    poImageDS->GetRasterBand(iBand+1)->GetRasterDataType(),
-                    nRasterXSize, 1 );
-            }
+            aosAddBandOptions.SetNameValue("BLOCKXSIZE", CPLSPrintf("%d", nSrcBlockXSize));
+            aosAddBandOptions.SetNameValue("BLOCKYSIZE", CPLSPrintf("%d", nSrcBlockYSize));
         }
-    }
-
-    for( int iBand = 0; iBand < poImageDS->GetRasterCount(); iBand++ )
-    {
         poVRTDS->AddBand(
-            poImageDS->GetRasterBand(iBand+1)->GetRasterDataType(), NULL );
+            poSrcBandFirstImage->GetRasterDataType(), aosAddBandOptions.List() );
 
         VRTSourcedRasterBand *poVRTBand =
             reinterpret_cast<VRTSourcedRasterBand *>(
@@ -1213,41 +1302,76 @@ int DIMAPDataset::ReadImageInformation2()
                 "NBITS", CPLSPrintf("%d", nBits), "IMAGE_STRUCTURE" );
         }
 
-        std::map< std::pair<int,int>, GDALDataset*>::iterator oIterRCP =
-            oMapRowColumnToProxyPoolDataset.begin();
-        for( ; oIterRCP != oMapRowColumnToProxyPoolDataset.end(); ++oIterRCP )
+        for( const auto& oTileIdxNameTuple: oMapTileIdxToName )
         {
-            GDALRasterBand *poSrcBand =
-                oIterRCP->second->GetRasterBand(iBand+1);
-
-            const int nRow = oIterRCP->first.first;
-            const int nCol = oIterRCP->first.second;
-            int nHeight = nTileHeight;
-            if( nRow * nTileHeight > nRasterYSize )
+            const int nRow = oTileIdxNameTuple.first.nRow;
+            const int nCol = oTileIdxNameTuple.first.nCol;
+            if( static_cast<int64_t>(nRow - 1) * nTileHeight < nRasterYSize &&
+                static_cast<int64_t>(nCol - 1) * nTileWidth < nRasterXSize )
             {
-                nHeight = nRasterYSize - (nRow - 1) * nTileHeight;
-            }
-            int nWidth = nTileWidth;
-            if( nCol * nTileWidth > nRasterXSize )
-            {
-                nWidth = nRasterXSize - (nCol - 1) * nTileWidth;
-            }
+                int nSrcBand;
+                if( bTwoDataFilesPerTile )
+                {
+                    const int nPart = oTileIdxNameTuple.first.nPart;
+                    if( nPart == 0 && iBand < 3 )
+                    {
+                        nSrcBand = iBand+1;
+                    }
+                    else if( nPart == 1 && iBand >= 3 )
+                    {
+                        nSrcBand = iBand+1 - 3;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    nSrcBand = iBand+1;
+                }
 
-            poVRTBand->AddSimpleSource( poSrcBand,
-                                        0, 0,
-                                        nWidth, nHeight,
-                                        (nCol - 1) * nTileWidth,
-                                        (nRow - 1) * nTileHeight,
-                                        nWidth, nHeight );
+                int nHeight = nTileHeight;
+                if( static_cast<int64_t>(nRow) * nTileHeight > nRasterYSize )
+                {
+                    nHeight = nRasterYSize - (nRow - 1) * nTileHeight;
+                }
+                int nWidth = nTileWidth;
+                if( static_cast<int64_t>(nCol) * nTileWidth > nRasterXSize )
+                {
+                    nWidth = nRasterXSize - (nCol - 1) * nTileWidth;
+                }
+
+                poVRTBand->AddSimpleSource( oTileIdxNameTuple.second,
+                                            nSrcBand,
+                                            0, 0,
+                                            nWidth, nHeight,
+                                            (nCol - 1) * nTileWidth,
+                                            (nRow - 1) * nTileHeight,
+                                            nWidth, nHeight );
+            }
         }
     }
 
-    std::map< std::pair<int,int>, GDALDataset*>::iterator oIterRCP =
-        oMapRowColumnToProxyPoolDataset.begin();
-    for( ; oIterRCP != oMapRowColumnToProxyPoolDataset.end(); ++oIterRCP )
-    {
-        oIterRCP->second->Dereference();
+/* -------------------------------------------------------------------- */
+/*      Expose Overviews if available                                   */
+/* -------------------------------------------------------------------- */
+    auto poSrcBandFirstImage = poImageDS->GetRasterBand(1);
+    const int nSrcOverviews = std::min(30, poSrcBandFirstImage->GetOverviewCount());
+    if(nSrcOverviews>0) {
+        CPLConfigOptionSetter oSetter("VRT_VIRTUAL_OVERVIEWS", "YES", false);
+        std::unique_ptr<int[]> ovrLevels(new int[nSrcOverviews]);
+        int iLvl=1;
+        for(int i=0; i<nSrcOverviews; i++) {
+            iLvl*=2;
+            ovrLevels[i]=iLvl;
+        }
+        poVRTDS->IBuildOverviews("average",nSrcOverviews,ovrLevels.get(),0,nullptr,nullptr,nullptr);
     }
+
+#ifdef DEBUG_VERBOSE
+    CPLDebug("DIMAP", "VRT XML: %s", poVRTDS->GetMetadata("xml:VRT")[0]);
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -1262,6 +1386,47 @@ int DIMAPDataset::ReadImageInformation2()
             poBand->SetMetadataItem(
                 "NBITS", CPLSPrintf("%d", nBits), "IMAGE_STRUCTURE" );
         }
+        if( bTwoDataFilesPerTile )
+        {
+            switch( iBand )
+            {
+                case 1:
+                {
+                    poBand->SetColorInterpretation(GCI_RedBand);
+                    poBand->SetDescription("Red");
+                    break;
+                }
+                case 2:
+                {
+                    poBand->SetColorInterpretation(GCI_GreenBand);
+                    poBand->SetDescription("Green");
+                    break;
+                }
+                case 3:
+                {
+                    poBand->SetColorInterpretation(GCI_BlueBand);
+                    poBand->SetDescription("Blue");
+                    break;
+                }
+                case 4:
+                {
+                    poBand->SetDescription("NIR");
+                    break;
+                }
+                case 5:
+                {
+                    poBand->SetDescription("Red Edge");
+                    break;
+                }
+                case 6:
+                {
+                    poBand->SetDescription("Deep Blue");
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
         SetBand(iBand, poBand);
     }
 
@@ -1271,7 +1436,7 @@ int DIMAPDataset::ReadImageInformation2()
     CPLXMLNode *psGeoLoc =
         CPLGetXMLNode( psDoc, "Geoposition.Geoposition_Insert" );
 
-    if( psGeoLoc != NULL )
+    if( psGeoLoc != nullptr )
     {
         bHaveGeoTransform = TRUE;
         adfGeoTransform[0] = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULXMAP", "0"));
@@ -1286,10 +1451,14 @@ int DIMAPDataset::ReadImageInformation2()
         // Try to get geotransform from underlying raster,
         // but make sure it is a real geotransform.
         if( poImageDS->GetGeoTransform(adfGeoTransform) == CE_None &&
-            !(adfGeoTransform[0] == 0.5 && adfGeoTransform[3] == 1.5 &&
-              adfGeoTransform[1] == 1.0 && adfGeoTransform[5] == -1.0) )
+            !(adfGeoTransform[0] <= 1.5 && fabs(adfGeoTransform[3]) <= 1.5) )
         {
-            bHaveGeoTransform = TRUE;
+                bHaveGeoTransform = TRUE;
+                //fix up the origin if we did not get the geotransform from the top-left tile
+                adfGeoTransform[0] -= (nImageDSCol-1) * adfGeoTransform[1] * nTileWidth +
+                    (nImageDSRow-1) * adfGeoTransform[2] * nTileHeight;
+                adfGeoTransform[3] -= (nImageDSCol-1) * adfGeoTransform[4] * nTileWidth +
+                    (nImageDSRow-1) * adfGeoTransform[5] * nTileHeight;
         }
     }
 
@@ -1299,17 +1468,17 @@ int DIMAPDataset::ReadImageInformation2()
     const char *pszSRS = CPLGetXMLValue(
         psDoc,
         "Coordinate_Reference_System.Projected_CRS.PROJECTED_CRS_CODE",
-        NULL );
-    if( pszSRS == NULL )
+        nullptr );
+    if( pszSRS == nullptr )
         pszSRS = CPLGetXMLValue(
             psDoc,
             "Coordinate_Reference_System.Geodetic_CRS.GEODETIC_CRS_CODE",
-            NULL );
+            nullptr );
 
-    if( pszSRS != NULL )
+    if( pszSRS != nullptr )
     {
         OGRSpatialReference oSRS;
-        if( oSRS.SetFromUserInput( pszSRS ) == OGRERR_NONE )
+        if( oSRS.SetFromUserInput( pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
         {
             if( nGCPCount > 0 )
             {
@@ -1318,7 +1487,7 @@ int DIMAPDataset::ReadImageInformation2()
             }
             else
             {
-                char *pszProjection = NULL;
+                char *pszProjection = nullptr;
                 oSRS.exportToWkt( &pszProjection );
                 osProjection = pszProjection;
                 CPLFree( pszProjection );
@@ -1349,7 +1518,7 @@ int DIMAPDataset::ReadImageInformation2()
         "Processing_Information.Product_Settings", "",
         "Processing_Information.Product_Settings.Geometric_Settings", "GEOMETRIC_",
         "Quality_Assessment.Imaging_Quality_Measurement", "CLOUDCOVER_",
-        NULL, NULL
+        nullptr, nullptr
     };
 
     SetMetadataFromXML(psProductDim, apszMetadataTranslationDim);
@@ -1364,10 +1533,10 @@ int DIMAPDataset::ReadImageInformation2()
         "Data_Strip_Notation", "CLOUDCOVER_",
         "Acquisition_Configuration.Platform_Configuration."
         "Ephemeris_Configuration", "EPHEMERIS_",
-        NULL, NULL
+        nullptr, nullptr
     };
 
-    if( psProductStrip != NULL )
+    if( psProductStrip != nullptr )
         SetMetadataFromXML(psProductStrip, apszMetadataTranslationStrip);
 
     if( !osRPCFilename.empty() )
@@ -1391,10 +1560,10 @@ int DIMAPDataset::ReadImageInformation2()
             psDoc,
             "Radiometric_Data.Radiometric_Calibration.Instrument_Calibration."
             "Band_Measurement_List" );
-    if( psImageInterpretationNode != NULL )
+    if( psImageInterpretationNode != nullptr )
     {
         CPLXMLNode *psSpectralBandInfoNode = psImageInterpretationNode->psChild;
-        while( psSpectralBandInfoNode != NULL )
+        while( psSpectralBandInfoNode != nullptr )
         {
             if( psSpectralBandInfoNode->eType == CXT_Element &&
                 (EQUAL(psSpectralBandInfoNode->pszValue,
@@ -1417,40 +1586,42 @@ int DIMAPDataset::ReadImageInformation2()
 
                 CPLXMLNode *psTag = psSpectralBandInfoNode->psChild;
                 int nBandIndex = 0;
-                while( psTag != NULL )
+                while( psTag != nullptr )
                 {
-                    if( psTag->eType == CXT_Element && psTag->psChild != NULL &&
+                    if( psTag->eType == CXT_Element && psTag->psChild != nullptr &&
                         psTag->psChild->eType == CXT_Text &&
-                        psTag->pszValue != NULL )
+                        psTag->pszValue != nullptr )
                     {
                         if( EQUAL(psTag->pszValue, "BAND_ID") )
                         {
-                            // BAND_ID is: B0, B1, .... P
-                            if( !EQUAL(psTag->psChild->pszValue, "P") )
+                            nBandIndex = 0;
+                            if (EQUAL(psTag->psChild->pszValue, "P") ||
+                                EQUAL(psTag->psChild->pszValue, "PAN") ||
+                                EQUAL(psTag->psChild->pszValue, "B0") ||
+                                EQUAL(psTag->psChild->pszValue, "R"))
+                                nBandIndex = 1;
+                            else if (EQUAL(psTag->psChild->pszValue, "B1") ||
+                                EQUAL(psTag->psChild->pszValue, "G"))
+                                nBandIndex = 2;
+                            else if (EQUAL(psTag->psChild->pszValue, "B2") ||
+                                EQUAL(psTag->psChild->pszValue, "B"))
+                                nBandIndex = 3;
+                            else if (EQUAL(psTag->psChild->pszValue, "B3") ||
+                                EQUAL(psTag->psChild->pszValue, "NIR"))
+                                nBandIndex = 4;
+                            else if (EQUAL(psTag->psChild->pszValue, "RE"))
+                                nBandIndex = 5;
+                            else if (EQUAL(psTag->psChild->pszValue, "DB"))
+                                nBandIndex = 6;
+
+                            if (nBandIndex <= 0 ||
+                                nBandIndex > GetRasterCount())
                             {
-                                if( strlen(psTag->psChild->pszValue) < 2)
-                                {
-                                    // Should not happen.
-                                    CPLError(
-                                        CE_Warning, CPLE_AppDefined,
-                                        "Bad BAND_INDEX value : %s",
-                                        psTag->psChild->pszValue);
-                                    nBandIndex = 0;
-                                }
-                                else
-                                {
-                                    nBandIndex =
-                                        atoi(&psTag->psChild->pszValue[1]) + 1;
-                                    if( nBandIndex <= 0 ||
-                                    nBandIndex > poImageDS->GetRasterCount() )
-                                    {
-                                        CPLError(
-                                            CE_Warning, CPLE_AppDefined,
-                                            "Bad BAND_INDEX value : %s",
-                                            psTag->psChild->pszValue);
-                                        nBandIndex = 0;
-                                    }
-                                }
+                                CPLError(
+                                    CE_Warning, CPLE_AppDefined,
+                                    "Bad BAND_ID value : %s",
+                                    psTag->psChild->pszValue);
+                                nBandIndex = 0;
                             }
                         }
                         else if( nBandIndex >= 1 )
@@ -1468,8 +1639,6 @@ int DIMAPDataset::ReadImageInformation2()
             psSpectralBandInfoNode = psSpectralBandInfoNode->psNext;
         }
     }
-
-    GDALClose(poImageDS);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -1493,49 +1662,59 @@ void DIMAPDataset::SetMetadataFromXML(
     CPLXMLNode *psProductIn, const char * const apszMetadataTranslation[] )
 {
     CPLXMLNode *psDoc = CPLGetXMLNode( psProductIn, "=Dimap_Document" );
-    if( psDoc == NULL )
+    if( psDoc == nullptr )
     {
         psDoc = CPLGetXMLNode( psProductIn, "=PHR_DIMAP_Document" );
     }
 
+    bool bWarnedDiscarding = false;
+
     for( int iTrItem = 0;
-         apszMetadataTranslation[iTrItem] != NULL;
+         apszMetadataTranslation[iTrItem] != nullptr;
          iTrItem += 2 )
     {
         CPLXMLNode *psParent =
             CPLGetXMLNode( psDoc, apszMetadataTranslation[iTrItem] );
 
-        if( psParent == NULL )
+        if( psParent == nullptr )
             continue;
 
         // Hackey logic to support directly access a name/value entry
         // or a parent element with many name/values.
 
-        CPLXMLNode *psTarget = NULL;
-        if( psParent->psChild != NULL
+        CPLXMLNode *psTarget = nullptr;
+        if( psParent->psChild != nullptr
             && psParent->psChild->eType == CXT_Text )
             psTarget = psParent;
         else
             psTarget = psParent->psChild;
 
-        for( ; psTarget != NULL && psTarget != psParent;
+        for( ; psTarget != nullptr && psTarget != psParent;
              psTarget = psTarget->psNext )
         {
             if( psTarget->eType == CXT_Element
-                && psTarget->psChild != NULL)
+                && psTarget->psChild != nullptr)
             {
                 CPLString osName = apszMetadataTranslation[iTrItem+1];
 
                 if( psTarget->psChild->eType == CXT_Text )
                 {
                     osName += psTarget->pszValue;
-                    SetMetadataItem( osName, psTarget->psChild->pszValue );
+                    // Limit size to avoid perf issues when inserting
+                    // in metadata list
+                    if( osName.size() < 128 )
+                        SetMetadataItem( osName, psTarget->psChild->pszValue );
+                    else if( !bWarnedDiscarding )
+                    {
+                        bWarnedDiscarding = true;
+                        CPLDebug("DIMAP", "Discarding too long metadata item");
+                    }
                 }
                 else if( psTarget->psChild->eType == CXT_Attribute )
                 {
                     // find the tag value, at the end of the attributes.
                     for( CPLXMLNode *psNode = psTarget->psChild;
-                         psNode != NULL;
+                         psNode != nullptr;
                          psNode = psNode->psNext )
                     {
                         if( psNode->eType == CXT_Attribute )
@@ -1543,7 +1722,15 @@ void DIMAPDataset::SetMetadataFromXML(
                         else if( psNode->eType == CXT_Text )
                         {
                             osName += psTarget->pszValue;
-                            SetMetadataItem( osName, psNode->pszValue );
+                            // Limit size to avoid perf issues when inserting
+                            // in metadata list
+                            if( osName.size() < 128 )
+                                SetMetadataItem( osName, psNode->pszValue );
+                            else if( !bWarnedDiscarding )
+                            {
+                                bWarnedDiscarding = true;
+                                CPLDebug("DIMAP", "Discarding too long metadata item");
+                            }
                         }
                     }
                 }
@@ -1566,7 +1753,7 @@ int DIMAPDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *DIMAPDataset::GetGCPProjection()
+const char *DIMAPDataset::_GetGCPProjection()
 
 {
     return pszGCPProjection;
@@ -1589,7 +1776,7 @@ const GDAL_GCP *DIMAPDataset::GetGCPs()
 void GDALRegister_DIMAP()
 
 {
-    if( GDALGetDriverByName( "DIMAP" ) != NULL )
+    if( GDALGetDriverByName( "DIMAP" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -1599,8 +1786,9 @@ void GDALRegister_DIMAP()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "SPOT DIMAP" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#DIMAP" );
+                               "drivers/raster/dimap.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
     poDriver->pfnOpen = DIMAPDataset::Open;
     poDriver->pfnIdentify = DIMAPDataset::Identify;

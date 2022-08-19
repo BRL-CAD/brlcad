@@ -8,7 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2011, Paul Ramsey <pramsey at cleverelephant.ca>
- * Copyright (c) 2011-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,11 +34,14 @@
 #include "cpl_port.h"
 #include "ogrpgeogeometry.h"
 
+#include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstring>
 #include <limits>
 #include <map>
+#include <memory>
 #include <set>
 #include <utility>
 #include <vector>
@@ -51,26 +54,26 @@
 #include "ogr_core.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
-static const int SHPP_TRISTRIP  = 0;
-static const int SHPP_TRIFAN    = 1;
-static const int SHPP_OUTERRING = 2;
-static const int SHPP_INNERRING = 3;
-static const int SHPP_FIRSTRING = 4;
-static const int SHPP_RING      = 5;
-static const int SHPP_TRIANGLES = 6;  // Multipatch 9.0 specific.
+constexpr int SHPP_TRISTRIP  = 0;
+constexpr int SHPP_TRIFAN    = 1;
+constexpr int SHPP_OUTERRING = 2;
+constexpr int SHPP_INNERRING = 3;
+constexpr int SHPP_FIRSTRING = 4;
+constexpr int SHPP_RING      = 5;
+constexpr int SHPP_TRIANGLES = 6;  // Multipatch 9.0 specific.
 
-typedef enum
+enum CurveType
 {
     CURVE_ARC_INTERIOR_POINT,
     CURVE_ARC_CENTER_POINT,
     CURVE_BEZIER,
     CURVE_ELLIPSE_BY_CENTER
-} CurveType;
+};
 
 namespace {
-typedef struct
+struct CurveSegment
 {
     int       nStartPointIdx;
     CurveType eType;
@@ -89,7 +92,7 @@ typedef struct
         {
             double dfX;
             double dfY;
-            EMULATED_BOOL bIsCCW;
+            bool bIsCCW;
         } ArcByCenterPoint;
 
         struct
@@ -107,38 +110,38 @@ typedef struct
             double dfRotationDeg;
             double dfSemiMajor;
             double dfRatioSemiMinor;
-            EMULATED_BOOL bIsMinor;
-            EMULATED_BOOL bIsComplete;
+            bool bIsMinor;
+            bool bIsComplete;
         } EllipseByCenter;
     } u;
-} CurveSegment;
+};
 } /* namespace */
 
-static const int EXT_SHAPE_SEGMENT_ARC = 1;
-static const int EXT_SHAPE_SEGMENT_BEZIER = 4;
-static const int EXT_SHAPE_SEGMENT_ELLIPSE = 5;
+constexpr int EXT_SHAPE_SEGMENT_ARC = 1;
+constexpr int EXT_SHAPE_SEGMENT_BEZIER = 4;
+constexpr int EXT_SHAPE_SEGMENT_ELLIPSE = 5;
 
-static const int EXT_SHAPE_ARC_EMPTY = 0x1;
-static const int EXT_SHAPE_ARC_CCW   = 0x8;
+constexpr int EXT_SHAPE_ARC_EMPTY = 0x1;
+constexpr int EXT_SHAPE_ARC_CCW   = 0x8;
 #ifdef DEBUG_VERBOSE
-static const int EXT_SHAPE_ARC_MINOR = 0x10;
+constexpr int EXT_SHAPE_ARC_MINOR = 0x10;
 #endif
-static const int EXT_SHAPE_ARC_LINE  = 0x20;
-static const int EXT_SHAPE_ARC_POINT = 0x40;
-static const int EXT_SHAPE_ARC_IP    = 0x80;
+constexpr int EXT_SHAPE_ARC_LINE  = 0x20;
+constexpr int EXT_SHAPE_ARC_POINT = 0x40;
+constexpr int EXT_SHAPE_ARC_IP    = 0x80;
 
 #ifdef DEBUG_VERBOSE
-static const int EXT_SHAPE_ELLIPSE_EMPTY       = 0x1;
-static const int EXT_SHAPE_ELLIPSE_LINE        = 0x40;
-static const int EXT_SHAPE_ELLIPSE_POINT       = 0x80;
-static const int EXT_SHAPE_ELLIPSE_CIRCULAR    = 0x100;
-static const int EXT_SHAPE_ELLIPSE_CCW         = 0x800;
+constexpr int EXT_SHAPE_ELLIPSE_EMPTY       = 0x1;
+constexpr int EXT_SHAPE_ELLIPSE_LINE        = 0x40;
+constexpr int EXT_SHAPE_ELLIPSE_POINT       = 0x80;
+constexpr int EXT_SHAPE_ELLIPSE_CIRCULAR    = 0x100;
+constexpr int EXT_SHAPE_ELLIPSE_CCW         = 0x800;
 #endif
 
-static const int EXT_SHAPE_ELLIPSE_CENTER_TO   = 0x200;
-static const int EXT_SHAPE_ELLIPSE_CENTER_FROM = 0x400;
-static const int EXT_SHAPE_ELLIPSE_MINOR       = 0x1000;
-static const int EXT_SHAPE_ELLIPSE_COMPLETE    = 0x2000;
+constexpr int EXT_SHAPE_ELLIPSE_CENTER_TO   = 0x200;
+constexpr int EXT_SHAPE_ELLIPSE_CENTER_FROM = 0x400;
+constexpr int EXT_SHAPE_ELLIPSE_MINOR       = 0x1000;
+constexpr int EXT_SHAPE_ELLIPSE_COMPLETE    = 0x2000;
 
 /************************************************************************/
 /*                  OGRCreateFromMultiPatchPart()                       */
@@ -158,10 +161,10 @@ void OGRCreateFromMultiPatchPart( OGRGeometryCollection *poGC,
 
     if( nPartType == SHPP_TRISTRIP )
     {
-        if( poMP != NULL && poLastPoly != NULL )
+        if( poMP != nullptr && poLastPoly != nullptr )
         {
             poMP->addGeometryDirectly( poLastPoly );
-            poLastPoly = NULL;
+            poLastPoly = nullptr;
         }
 
         OGRTriangulatedSurface* poTIN = new OGRTriangulatedSurface();
@@ -190,10 +193,10 @@ void OGRCreateFromMultiPatchPart( OGRGeometryCollection *poGC,
     }
     else if( nPartType == SHPP_TRIFAN )
     {
-        if( poMP != NULL && poLastPoly != NULL )
+        if( poMP != nullptr && poLastPoly != nullptr )
         {
             poMP->addGeometryDirectly( poLastPoly );
-            poLastPoly = NULL;
+            poLastPoly = nullptr;
         }
 
         OGRTriangulatedSurface* poTIN = new OGRTriangulatedSurface();
@@ -223,20 +226,20 @@ void OGRCreateFromMultiPatchPart( OGRGeometryCollection *poGC,
             || nPartType == SHPP_FIRSTRING
             || nPartType == SHPP_RING )
     {
-        if( poMP == NULL )
+        if( poMP == nullptr )
         {
             poMP = new OGRMultiPolygon();
         }
 
-        if( poMP != NULL && poLastPoly != NULL
+        if( poMP != nullptr && poLastPoly != nullptr
             && (nPartType == SHPP_OUTERRING
                 || nPartType == SHPP_FIRSTRING) )
         {
             poMP->addGeometryDirectly( poLastPoly );
-            poLastPoly = NULL;
+            poLastPoly = nullptr;
         }
 
-        if( poLastPoly == NULL )
+        if( poLastPoly == nullptr )
             poLastPoly = new OGRPolygon();
 
         OGRLinearRing *poRing = new OGRLinearRing;
@@ -252,10 +255,10 @@ void OGRCreateFromMultiPatchPart( OGRGeometryCollection *poGC,
     }
     else if( nPartType == SHPP_TRIANGLES )
     {
-        if( poMP != NULL && poLastPoly != NULL )
+        if( poMP != nullptr && poLastPoly != nullptr )
         {
             poMP->addGeometryDirectly( poLastPoly );
-            poLastPoly = NULL;
+            poLastPoly = nullptr;
         }
 
         OGRTriangulatedSurface* poTIN = new OGRTriangulatedSurface();
@@ -394,7 +397,7 @@ OGRGeometry* OGRCreateFromMultiPatch       ( int nParts,
     std::map< std::vector<double>, std::pair<int,int> > oMapEdges;
     bool bTINCandidate = nParts >= 2;
     std::set<int> oSetDuplicated;
-    for( int iPart = 0; iPart < nParts && panPartStart != NULL; iPart++ )
+    for( int iPart = 0; iPart < nParts && panPartStart != nullptr; iPart++ )
     {
         int nPartPoints = 0;
 
@@ -476,7 +479,7 @@ OGRGeometry* OGRCreateFromMultiPatch       ( int nParts,
             break;
         }
     }
-    if( bTINCandidate && panPartStart != NULL )
+    if( bTINCandidate && panPartStart != nullptr )
     {
         std::set<int> oVisitedParts;
         std::set<int> oToBeVisitedParts;
@@ -513,12 +516,7 @@ OGRGeometry* OGRCreateFromMultiPatch       ( int nParts,
                 if( oSetDuplicated.find(iPart) != oSetDuplicated.end() )
                     continue;
 
-                int nPartStart = 0;
-                if( panPartStart != NULL )
-                {
-                    nPartStart = panPartStart[iPart];
-                }
-
+                const int nPartStart = panPartStart[iPart];
                 OGRPoint oPoint1  (padfX[nPartStart],
                                    padfY[nPartStart],
                                    padfZ[nPartStart]);
@@ -541,15 +539,15 @@ OGRGeometry* OGRCreateFromMultiPatch       ( int nParts,
     }
 
     OGRGeometryCollection *poGC = new OGRGeometryCollection();
-    OGRMultiPolygon *poMP = NULL;
-    OGRPolygon *poLastPoly = NULL;
+    OGRMultiPolygon *poMP = nullptr;
+    OGRPolygon *poLastPoly = nullptr;
     for( int iPart = 0; iPart < nParts; iPart++ )
     {
         int nPartPoints = 0;
         int nPartStart = 0;
 
         // Figure out details about this part's vertex list.
-        if( panPartStart == NULL )
+        if( panPartStart == nullptr )
         {
             nPartPoints = nPoints;
         }
@@ -576,12 +574,12 @@ OGRGeometry* OGRCreateFromMultiPatch       ( int nParts,
     }
 
 
-    if( poMP != NULL && poLastPoly != NULL )
+    if( poMP != nullptr && poLastPoly != nullptr )
     {
         poMP->addGeometryDirectly( poLastPoly );
         // poLastPoly = NULL;
     }
-    if( poMP != NULL )
+    if( poMP != nullptr )
         poGC->addGeometryDirectly(poMP);
 
     if (poGC->getNumGeometries() == 1)
@@ -602,7 +600,7 @@ OGRGeometry* OGRCreateFromMultiPatch       ( int nParts,
 /*      Translate OGR geometry to a shapefile binary representation     */
 /************************************************************************/
 
-OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
+OGRErr OGRWriteToShapeBin( const OGRGeometry *poGeom,
                            GByte **ppabyShape,
                            int *pnBytes )
 {
@@ -614,7 +612,7 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
     if( !poGeom || poGeom->IsEmpty() )
     {
         *ppabyShape = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nShpSize));
-        if( *ppabyShape == NULL )
+        if( *ppabyShape == nullptr )
             return OGRERR_FAILURE;
         GUInt32 zero = SHPT_NULL;
         memcpy(*ppabyShape, &zero, nShpSize);
@@ -640,7 +638,7 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
     }
     else if( nOGRType == wkbLineString )
     {
-        OGRLineString *poLine = (OGRLineString*)poGeom;
+        const OGRLineString *poLine = poGeom->toLineString();
         nPoints = poLine->getNumPoints();
         nParts = 1;
         nShpSize += 16 * nCoordDims;  // xy(z)(m) box.
@@ -652,14 +650,11 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
     }
     else if( nOGRType == wkbPolygon )
     {
-        poGeom->closeRings();
-        OGRPolygon *poPoly = (OGRPolygon*)poGeom;
+        std::unique_ptr<OGRPolygon> poPoly(poGeom->toPolygon()->clone());
+        poPoly->closeRings();
         nParts = poPoly->getNumInteriorRings() + 1;
-        for( GUInt32 i = 0; i < nParts; i++ )
+        for( const auto poRing: *poPoly )
         {
-            OGRLinearRing *poRing = i == 0
-                ? poPoly->getExteriorRing()
-                : poPoly->getInteriorRing(i-1);
             nPoints += poRing->getNumPoints();
         }
         nShpSize += 16 * nCoordDims;  // xy(z)(m) box.
@@ -671,10 +666,9 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
     }
     else if( nOGRType == wkbMultiPoint )
     {
-        OGRMultiPoint *poMPoint = (OGRMultiPoint*)poGeom;
-        for( int i = 0; i < poMPoint->getNumGeometries(); i++ )
+        const OGRMultiPoint *poMPoint = poGeom->toMultiPoint();
+        for( const auto poPoint: *poMPoint )
         {
-            OGRPoint *poPoint = (OGRPoint*)(poMPoint->getGeometryRef(i));
             if( poPoint->IsEmpty() )
                 continue;
             nPoints++;
@@ -686,11 +680,9 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
     }
     else if( nOGRType == wkbMultiLineString )
     {
-        OGRMultiLineString *poMLine = (OGRMultiLineString*)poGeom;
-        for( int i = 0; i < poMLine->getNumGeometries(); i++ )
+        const OGRMultiLineString *poMLine = poGeom->toMultiLineString();
+        for( const auto poLine: *poMLine )
         {
-            OGRLineString *poLine =
-                (OGRLineString*)(poMLine->getGeometryRef(i));
             // Skip empties.
             if( poLine->IsEmpty() )
                 continue;
@@ -706,23 +698,19 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
     }
     else if( nOGRType == wkbMultiPolygon )
     {
-        poGeom->closeRings();
-        OGRMultiPolygon *poMPoly = (OGRMultiPolygon*)poGeom;
-        for( int j = 0; j < poMPoly->getNumGeometries(); j++ )
+        std::unique_ptr<OGRMultiPolygon> poMPoly(
+                                    poGeom->toMultiPolygon()->clone());
+        poMPoly->closeRings();
+        for( const auto poPoly: *poMPoly )
         {
-            OGRPolygon *poPoly = (OGRPolygon*)(poMPoly->getGeometryRef(j));
-            int nRings = poPoly->getNumInteriorRings() + 1;
-
             // Skip empties.
             if( poPoly->IsEmpty() )
                 continue;
 
+            const int nRings = poPoly->getNumInteriorRings() + 1;
             nParts += nRings;
-            for( int i = 0; i < nRings; i++ )
+            for( const auto poRing: *poPoly )
             {
-                OGRLinearRing *poRing = i == 0
-                    ? poPoly->getExteriorRing()
-                    : poPoly->getInteriorRing(i-1);
                 nPoints += poRing->getNumPoints();
             }
         }
@@ -830,9 +818,9 @@ id,WKT
 
     // Set up write pointers.
     unsigned char *pabyPtr = *ppabyShape;
-    unsigned char *pabyPtrM = bHasM ? pabyPtr + nShpSize - nShpZSize : NULL;
+    unsigned char *pabyPtrM = bHasM ? pabyPtr + nShpSize - nShpZSize : nullptr;
 
-    unsigned char *pabyPtrZ = NULL;
+    unsigned char *pabyPtrZ = nullptr;
     if( b3d )
     {
         if( bHasM )
@@ -901,7 +889,7 @@ id,WKT
 /* -------------------------------------------------------------------- */
     if( nOGRType == wkbPoint )
     {
-        OGRPoint *poPoint = (OGRPoint*)poGeom;
+        auto poPoint = poGeom->toPoint();
         const double x = poPoint->getX();
         const double y = poPoint->getY();
 
@@ -967,7 +955,7 @@ id,WKT
     }
 
     // Reserve space for the M bounds at the end of the XY buffer.
-    GByte* pabyPtrMBounds = NULL;
+    GByte* pabyPtrMBounds = nullptr;
     double dfMinM = std::numeric_limits<double>::max();
     double dfMaxM = -dfMinM;
     if( bHasM )
@@ -981,7 +969,7 @@ id,WKT
 /* -------------------------------------------------------------------- */
     if( nOGRType == wkbLineString )
     {
-        const OGRLineString *poLine = (OGRLineString*)poGeom;
+        auto poLine = poGeom->toLineString();
 
         // Write in the nparts (1).
         const GUInt32 nPartsLsb = CPL_LSBWORD32( nParts );
@@ -999,7 +987,8 @@ id,WKT
         pabyPtr += 4;
 
         // Write in the point data.
-        poLine->getPoints((OGRRawPoint*)pabyPtr, (double*)pabyPtrZ);
+        poLine->getPoints(reinterpret_cast<OGRRawPoint*>(pabyPtr),
+                          reinterpret_cast<double*>(pabyPtrZ));
         if( bHasM )
         {
             for( GUInt32 k = 0; k < nPoints; k++ )
@@ -1030,7 +1019,7 @@ id,WKT
 /* -------------------------------------------------------------------- */
     else if( nOGRType == wkbPolygon )
     {
-        OGRPolygon *poPoly = (OGRPolygon*)poGeom;
+        auto poPoly = poGeom->toPolygon();
 
         // Write in the part count.
         GUInt32 nPartsLsb = CPL_LSBWORD32( nParts );
@@ -1059,17 +1048,19 @@ id,WKT
         for( GUInt32 i = 0; i < nParts; i++ )
         {
             // Check our Ring and condition it.
-            OGRLinearRing *poRing = NULL;
+            std::unique_ptr<OGRLinearRing> poRing;
             if( i == 0 )
             {
-                poRing = poPoly->getExteriorRing();
+                poRing.reset(poPoly->getExteriorRing()->clone());
+                assert( poRing );
                 // Outer ring must be clockwise.
                 if( !poRing->isClockwise() )
                     poRing->reverseWindingOrder();
             }
             else
             {
-                poRing = poPoly->getInteriorRing(i-1);
+                poRing.reset(poPoly->getInteriorRing(i-1)->clone());
+                assert( poRing );
                 // Inner rings should be anti-clockwise.
                 if( poRing->isClockwise() )
                     poRing->reverseWindingOrder();
@@ -1088,7 +1079,8 @@ id,WKT
             memcpy( pabyPtr, &nPartIndex, 4 );
 
             // Write in the point data.
-            poRing->getPoints((OGRRawPoint*)pabyPoints, (double*)pabyPtrZ);
+            poRing->getPoints(reinterpret_cast<OGRRawPoint*>(pabyPoints),
+                              reinterpret_cast<double*>(pabyPtrZ));
             if( bHasM )
             {
                 for( int k = 0; k < nRingNumPoints; k++ )
@@ -1129,7 +1121,7 @@ id,WKT
 /* -------------------------------------------------------------------- */
     else if( nOGRType == wkbMultiPoint )
     {
-        OGRMultiPoint *poMPoint = (OGRMultiPoint*)poGeom;
+        auto poMPoint = poGeom->toMultiPoint();
 
         // Write in the total point count.
         GUInt32 nPointsLsb = CPL_LSBWORD32( nPoints );
@@ -1143,10 +1135,8 @@ id,WKT
 /*      pabyPtrZ writes the z coordinates                               */
 /* -------------------------------------------------------------------- */
 
-        for( GUInt32 i = 0; i < nPoints; i++ )
+        for( auto&& poPt: poMPoint )
         {
-            const OGRPoint *poPt = (OGRPoint*)(poMPoint->getGeometryRef(i));
-
             // Skip empties.
             if( poPt->IsEmpty() )
                 continue;
@@ -1194,7 +1184,7 @@ id,WKT
 /* -------------------------------------------------------------------- */
     else if( nOGRType == wkbMultiLineString )
     {
-        OGRMultiLineString *poMLine = (OGRMultiLineString*)poGeom;
+        auto poMLine = poGeom->toMultiLineString();
 
         // Write in the part count.
         GUInt32 nPartsLsb = CPL_LSBWORD32( nParts );
@@ -1211,11 +1201,8 @@ id,WKT
 
         int nPointIndexCount = 0;
 
-        for( GUInt32 i = 0; i < nParts; i++ )
+        for( auto&& poLine: poMLine )
         {
-            const OGRLineString *poLine =
-                (OGRLineString*)(poMLine->getGeometryRef(i));
-
             // Skip empties.
             if( poLine->IsEmpty() )
                 continue;
@@ -1227,7 +1214,7 @@ id,WKT
             memcpy( pabyPtr, &nPartIndex, 4 );
 
             // Write in the point data.
-            poLine->getPoints((OGRRawPoint*)pabyPoints, (double*)pabyPtrZ);
+            poLine->getPoints(reinterpret_cast<OGRRawPoint*>(pabyPoints), reinterpret_cast<double*>(pabyPtrZ));
             if( bHasM )
             {
                 for( int k = 0; k < nLineNumPoints; k++ )
@@ -1269,7 +1256,7 @@ id,WKT
 /* -------------------------------------------------------------------- */
     else  // if( nOGRType == wkbMultiPolygon )
     {
-        OGRMultiPolygon *poMPoly = (OGRMultiPolygon*)poGeom;
+        auto poMPoly = poGeom->toMultiPolygon();
 
         // Write in the part count.
         GUInt32 nPartsLsb = CPL_LSBWORD32( nParts );
@@ -1295,10 +1282,8 @@ id,WKT
 
         int nPointIndexCount = 0;
 
-        for( int i = 0; i < poMPoly->getNumGeometries(); i++ )
+        for( auto&& poPoly: poMPoly )
         {
-            OGRPolygon *poPoly = (OGRPolygon*)(poMPoly->getGeometryRef(i));
-
             // Skip empties.
             if( poPoly->IsEmpty() )
                 continue;
@@ -1308,17 +1293,19 @@ id,WKT
             for( int j = 0; j < nRings; j++ )
             {
                 // Check our Ring and condition it.
-                OGRLinearRing *poRing = NULL;
+                std::unique_ptr<OGRLinearRing> poRing;
                 if( j == 0 )
                 {
-                    poRing = poPoly->getExteriorRing();
+                    poRing.reset(poPoly->getExteriorRing()->clone());
+                    assert( poRing != nullptr );
                     // Outer ring must be clockwise.
                     if( !poRing->isClockwise() )
                         poRing->reverseWindingOrder();
                 }
                 else
                 {
-                    poRing = poPoly->getInteriorRing(j-1);
+                    poRing.reset(poPoly->getInteriorRing(j-1)->clone());
+                    assert( poRing != nullptr );
                     // Inner rings should be anti-clockwise.
                     if( poRing->isClockwise() )
                         poRing->reverseWindingOrder();
@@ -1335,7 +1322,7 @@ id,WKT
                 memcpy( pabyPtr, &nPartIndex, 4 );
 
                 // Write in the point data.
-                poRing->getPoints((OGRRawPoint*)pabyPoints, (double*)pabyPtrZ);
+                poRing->getPoints(reinterpret_cast<OGRRawPoint*>(pabyPoints), reinterpret_cast<double*>(pabyPtrZ));
                 if( bHasM )
                 {
                     for( int k = 0; k < nRingNumPoints; k++ )
@@ -1398,7 +1385,7 @@ id,WKT
 /*                         OGRCreateMultiPatch()                        */
 /************************************************************************/
 
-OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
+OGRErr OGRCreateMultiPatch( const OGRGeometry *poGeomConst,
                             int bAllowSHPTTriangle,
                             int& nParts,
                             int*& panPartStart,
@@ -1407,7 +1394,7 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
                             OGRRawPoint*& poPoints,
                             double*& padfZ )
 {
-    const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+    const OGRwkbGeometryType eType = wkbFlatten(poGeomConst->getGeometryType());
     if( eType != wkbPolygon && eType != wkbTriangle &&
         eType != wkbMultiPolygon && eType != wkbMultiSurface &&
         eType != wkbTIN &&
@@ -1416,52 +1403,54 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
         return OGRERR_UNSUPPORTED_OPERATION;
     }
 
+    std::unique_ptr<OGRGeometry> poGeom(poGeomConst->clone());
     poGeom->closeRings();
 
-    OGRMultiPolygon *poMPoly;
-    OGRGeometry* poGeomToDelete = NULL;
+    OGRMultiPolygon *poMPoly = nullptr;
+    std::unique_ptr<OGRGeometry> poGeomToDelete;
     if( eType == wkbMultiPolygon )
-        poMPoly = dynamic_cast<OGRMultiPolygon*>(poGeom);
+        poMPoly = poGeom->toMultiPolygon();
     else
     {
-        poGeomToDelete =
-                OGRGeometryFactory::forceToMultiPolygon(poGeom->clone());
-        poMPoly = dynamic_cast<OGRMultiPolygon*>(poGeomToDelete);
+        poGeomToDelete = std::unique_ptr<OGRGeometry>(
+                OGRGeometryFactory::forceToMultiPolygon(poGeom->clone()));
+        if( poGeomToDelete.get() &&
+            wkbFlatten(poGeomToDelete->getGeometryType()) == wkbMultiPolygon )
+        {
+            poMPoly = poGeomToDelete->toMultiPolygon();
+        }
     }
-    if( poMPoly == NULL )
+    if( poMPoly == nullptr )
     {
-        delete poGeomToDelete;
         return OGRERR_UNSUPPORTED_OPERATION;
     }
 
     nParts = 0;
-    panPartStart = NULL;
-    panPartType = NULL;
+    panPartStart = nullptr;
+    panPartType = nullptr;
     nPoints = 0;
-    poPoints = NULL;
-    padfZ = NULL;
+    poPoints = nullptr;
+    padfZ = nullptr;
     int nBeginLastPart = 0;
-    for( int j = 0; j < poMPoly->getNumGeometries(); j++ )
+    for( const auto poPoly: *poMPoly )
     {
-        OGRPolygon *poPoly = (OGRPolygon*)(poMPoly->getGeometryRef(j));
-        int nRings = poPoly->getNumInteriorRings() + 1;
-
         // Skip empties.
         if( poPoly->IsEmpty() )
             continue;
 
-        OGRLinearRing *poRing = poPoly->getExteriorRing();
+        const int nRings = poPoly->getNumInteriorRings() + 1;
+        const OGRLinearRing *poRing = poPoly->getExteriorRing();
         if( nRings == 1 && poRing->getNumPoints() == 4 )
         {
             int nCorrectedPoints = nPoints;
-            if( nParts > 0 && poPoints != NULL &&
+            if( nParts > 0 && poPoints != nullptr &&
                 panPartType[nParts-1] == SHPP_OUTERRING &&
                 nPoints - panPartStart[nParts-1] == 4 )
             {
                 nCorrectedPoints--;
             }
 
-            if( nParts > 0 && poPoints != NULL &&
+            if( nParts > 0 && poPoints != nullptr &&
                 ((panPartType[nParts-1] == SHPP_TRIANGLES &&
                   nPoints - panPartStart[nParts-1] == 3) ||
                  (panPartType[nParts-1] == SHPP_OUTERRING &&
@@ -1486,7 +1475,7 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
                 padfZ[nPoints] = poRing->getZ(2);
                 nPoints++;
             }
-            else if( nParts > 0 && poPoints != NULL &&
+            else if( nParts > 0 && poPoints != nullptr &&
                 ((panPartType[nParts-1] == SHPP_TRIANGLES &&
                   nPoints - panPartStart[nParts-1] == 3)||
                  (panPartType[nParts-1] == SHPP_OUTERRING &&
@@ -1590,8 +1579,6 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
         nPoints = 3;
     }
 
-    delete poGeomToDelete;
-
     return OGRERR_NONE;
 }
 
@@ -1599,16 +1586,16 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
 /*                   OGRWriteMultiPatchToShapeBin()                     */
 /************************************************************************/
 
-OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
+OGRErr OGRWriteMultiPatchToShapeBin( const OGRGeometry *poGeom,
                                      GByte **ppabyShape,
                                      int *pnBytes )
 {
     int nParts = 0;
-    int* panPartStart = NULL;
-    int* panPartType = NULL;
+    int* panPartStart = nullptr;
+    int* panPartType = nullptr;
     int nPoints = 0;
-    OGRRawPoint* poPoints = NULL;
-    double* padfZ = NULL;
+    OGRRawPoint* poPoints = nullptr;
+    double* padfZ = nullptr;
     OGRErr eErr = OGRCreateMultiPatch( poGeom,
                                        TRUE,
                                        nParts,
@@ -1678,7 +1665,7 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
         pabyPtr += 4;
     }
 
-    if( poPoints != NULL )
+    if( poPoints != nullptr )
         memcpy(pabyPtr, poPoints, 2 * 8 * nPoints);
 
     // Swap box if needed. Shape doubles are always LSB.
@@ -1698,7 +1685,7 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
     }
     pabyPtr += 16;
 
-    if( padfZ != NULL )
+    if( padfZ != nullptr )
         memcpy(pabyPtr, padfZ, 8 * nPoints);
     // Swap box if needed. Shape doubles are always LSB.
     if( OGR_SWAP( wkbNDR ) )
@@ -1734,6 +1721,8 @@ static double GetAngleOnEllipse( double dfPointOnArcX,
     //   dfPointOnArcX-dfCenterX = cosA*M*cosRot + sinA*m*sinRot
     //   dfPointOnArcY-dfCenterY = -cosA*M*sinRot + sinA*m*cosRot
 
+    if( dfSemiMajor == 0.0 || dfSemiMinor == 0.0 )
+        return 0.0;
     const double dfRotationRadians = dfRotationDeg * M_PI / 180.0;
     const double dfCosRot = cos(dfRotationRadians);
     const double dfSinRot = sin(dfRotationRadians);
@@ -1766,7 +1755,7 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                                               /* const */ double* padfM,
                                               int* pnLastCurveIdx )
 {
-    OGRCompoundCurve* poCC = new OGRCompoundCurve();
+    auto poCC = cpl::make_unique<OGRCompoundCurve>();
     int nLastPointIdx = nPartStartIdx;
     bool bHasCircularArcs = false;
     int i = nFirstCurveIdx;  // Used after for.
@@ -1797,8 +1786,8 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
             poLine->setPoints( nStartPointIdx - nLastPointIdx + 1,
                                padfX + nLastPointIdx,
                                padfY + nLastPointIdx,
-                               padfZ != NULL ? padfZ + nLastPointIdx : NULL,
-                               padfM != NULL ? padfM + nLastPointIdx : NULL );
+                               padfZ != nullptr ? padfZ + nLastPointIdx : nullptr,
+                               padfM != nullptr ? padfM + nLastPointIdx : nullptr );
             poCC->addCurveDirectly(poLine);
         }
 
@@ -1806,14 +1795,14 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
             nStartPointIdx+1 < nPartStartIdx + nPartPoints )
         {
             OGRPoint p1( padfX[nStartPointIdx], padfY[nStartPointIdx],
-                         padfZ != NULL ? padfZ[nStartPointIdx] : 0.0,
-                         padfM != NULL ? padfM[nStartPointIdx] : 0.0 );
+                         padfZ != nullptr ? padfZ[nStartPointIdx] : 0.0,
+                         padfM != nullptr ? padfM[nStartPointIdx] : 0.0 );
             OGRPoint p2( pasCurves[i].u.ArcByIntermediatePoint.dfX,
                          pasCurves[i].u.ArcByIntermediatePoint.dfY,
-                         padfZ != NULL ?  padfZ[nStartPointIdx] : 0.0 );
+                         padfZ != nullptr ?  padfZ[nStartPointIdx] : 0.0 );
             OGRPoint p3( padfX[nStartPointIdx+1], padfY[nStartPointIdx+1],
-                         padfZ != NULL ? padfZ[nStartPointIdx+1] : 0.0,
-                         padfM != NULL ? padfM[nStartPointIdx+1] : 0.0 );
+                         padfZ != nullptr ? padfZ[nStartPointIdx+1] : 0.0,
+                         padfM != nullptr ? padfM[nStartPointIdx+1] : 0.0 );
 
             // Some software (like QGIS, see https://hub.qgis.org/issues/15116)
             // do not like 3-point circles, so use a 5 point variant.
@@ -1829,17 +1818,17 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                     OGRPoint pInterm1(
                         dfCenterX - ( p2.getY() - dfCenterY ),
                         dfCenterY + ( p1.getX() - dfCenterX ),
-                        padfZ != NULL ? padfZ[nStartPointIdx] : 0.0 );
+                        padfZ != nullptr ? padfZ[nStartPointIdx] : 0.0 );
                     poCS->addPoint( &pInterm1 );
                     poCS->addPoint( &p2 );
                     OGRPoint pInterm2(
                         dfCenterX + ( p2.getY() - dfCenterY ),
                         dfCenterY - ( p1.getX() - dfCenterX ),
-                        padfZ != NULL ? padfZ[nStartPointIdx] : 0.0 );
+                        padfZ != nullptr ? padfZ[nStartPointIdx] : 0.0 );
                     poCS->addPoint( &pInterm2 );
                     poCS->addPoint( &p3 );
-                    poCS->set3D( padfZ != NULL );
-                    poCS->setMeasured( padfM != NULL );
+                    poCS->set3D( padfZ != nullptr );
+                    poCS->setMeasured( padfM != nullptr );
                     poCC->addCurveDirectly(poCS);
                 }
             }
@@ -1850,9 +1839,13 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                 poCS->addPoint( &p1 );
                 poCS->addPoint( &p2 );
                 poCS->addPoint( &p3 );
-                poCS->set3D( padfZ != NULL );
-                poCS->setMeasured( padfM != NULL );
-                poCC->addCurveDirectly(poCS);
+                poCS->set3D( padfZ != nullptr );
+                poCS->setMeasured( padfM != nullptr );
+                if( poCC->addCurveDirectly(poCS) != OGRERR_NONE )
+                {
+                    delete poCS;
+                    return nullptr;
+                }
             }
         }
 
@@ -1882,31 +1875,29 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
             }
             const double dfMidAngle = (dfAngleStart + dfAngleEnd) / 2;
             OGRPoint p1( padfX[nStartPointIdx], padfY[nStartPointIdx],
-                         padfZ != NULL ? padfZ[nStartPointIdx] : 0.0,
-                         padfM != NULL ? padfM[nStartPointIdx] : 0.0 );
+                         padfZ != nullptr ? padfZ[nStartPointIdx] : 0.0,
+                         padfM != nullptr ? padfM[nStartPointIdx] : 0.0 );
             OGRPoint p2( dfCenterX + dfRadius * cos(dfMidAngle),
                          dfCenterY + dfRadius * sin(dfMidAngle),
-                         padfZ != NULL ?  padfZ[nStartPointIdx] : 0.0 );
+                         padfZ != nullptr ?  padfZ[nStartPointIdx] : 0.0 );
             OGRPoint p3( padfX[nStartPointIdx+1], padfY[nStartPointIdx+1],
-                         padfZ != NULL ? padfZ[nStartPointIdx+1] : 0.0,
-                         padfM != NULL ? padfM[nStartPointIdx+1] : 0.0 );
+                         padfZ != nullptr ? padfZ[nStartPointIdx+1] : 0.0,
+                         padfM != nullptr ? padfM[nStartPointIdx+1] : 0.0 );
 
             bHasCircularArcs = true;
             OGRCircularString* poCS = new OGRCircularString();
             poCS->addPoint( &p1 );
             poCS->addPoint( &p2 );
             poCS->addPoint( &p3 );
-            poCS->set3D( padfZ != NULL );
-            poCS->setMeasured( padfM != NULL );
+            poCS->set3D( padfZ != nullptr );
+            poCS->setMeasured( padfM != nullptr );
             poCC->addCurveDirectly(poCS);
         }
 
         else if( pasCurves[i].eType == CURVE_BEZIER &&
                   nStartPointIdx+1 < nPartStartIdx + nPartPoints )
         {
-            const int nSteps = 100;
             OGRLineString *poLine = new OGRLineString();
-            poLine->setNumPoints(nSteps + 1);
             const double dfX0 = padfX[nStartPointIdx];
             const double dfY0 = padfY[nStartPointIdx];
             const double dfX1 = pasCurves[i].u.Bezier.dfX1;
@@ -1915,9 +1906,34 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
             const double dfY2 = pasCurves[i].u.Bezier.dfY2;
             const double dfX3 = padfX[nStartPointIdx+1];
             const double dfY3 = padfY[nStartPointIdx+1];
+            double dfStartAngle = atan2(dfY1 - dfY0, dfX1 - dfX0);
+            double dfEndAngle = atan2(dfY3 - dfY2, dfX3 - dfX2);
+            if( dfStartAngle + M_PI < dfEndAngle )
+                dfStartAngle += 2 * M_PI;
+            else if( dfEndAngle + M_PI < dfStartAngle )
+                dfEndAngle += 2 * M_PI;
+            // coverity[tainted_data]
+            const double dfStepSizeRad =
+                CPLAtofM(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4")) / 180.0 * M_PI;
+            const double dfLengthTangentStart = (dfX1 - dfX0) * (dfX1 - dfX0) +
+                                                (dfY1 - dfY0) * (dfY1 - dfY0);
+            const double dfLengthTangentEnd  =  (dfX3 - dfX2) * (dfX3 - dfX2) +
+                                                (dfY3 - dfY2) * (dfY3 - dfY2);
+            const double dfLength            =  (dfX3 - dfX0) * (dfX3 - dfX0) +
+                                                (dfY3 - dfY0) * (dfY3 - dfY0);
+            // Heuristics to compute number of steps: we take into account the
+            // angular difference between the start and end tangent. And we
+            // also take into account the relative length of the tangent vs
+            // the length of the straight segment
+            const int nSteps = (dfLength < 1e-9) ? 1 :
+                static_cast<int>(std::min(1000.0, ceil(
+                std::max(2.0, fabs(dfEndAngle - dfStartAngle) / dfStepSizeRad) *
+                std::max(1.0, 5.0 * (dfLengthTangentStart +
+                                     dfLengthTangentEnd) / dfLength) )));
+            poLine->setNumPoints(nSteps + 1);
             poLine->setPoint(0, dfX0, dfY0,
-                             padfZ != NULL ? padfZ[nStartPointIdx] : 0.0,
-                             padfM != NULL ? padfM[nStartPointIdx] : 0.0);
+                             padfZ != nullptr ? padfZ[nStartPointIdx] : 0.0,
+                             padfM != nullptr ? padfM[nStartPointIdx] : 0.0);
             for( int j = 1; j < nSteps; j++ )
             {
                 const double t = static_cast<double>(j) / nSteps;
@@ -1929,11 +1945,15 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                                  3*(1-t)*t*t*dfY2 + t*t*t*dfY3);
             }
             poLine->setPoint(nSteps, dfX3, dfY3,
-                             padfZ != NULL ? padfZ[nStartPointIdx+1] : 0.0,
-                             padfM != NULL ? padfM[nStartPointIdx+1] : 0.0);
-            poLine->set3D( padfZ != NULL );
-            poLine->setMeasured( padfM != NULL );
-            poCC->addCurveDirectly(poLine);
+                             padfZ != nullptr ? padfZ[nStartPointIdx+1] : 0.0,
+                             padfM != nullptr ? padfM[nStartPointIdx+1] : 0.0);
+            poLine->set3D( padfZ != nullptr );
+            poLine->setMeasured( padfM != nullptr );
+            if( poCC->addCurveDirectly(poLine) != OGRERR_NONE )
+            {
+                delete poLine;
+                return nullptr;
+            }
         }
 
         else if( pasCurves[i].eType == CURVE_ELLIPSE_BY_CENTER &&
@@ -1995,31 +2015,31 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                     dfAngleEndForApprox += 360;
                 }
             }
-            OGRLineString* poLine = reinterpret_cast<OGRLineString*>(
+            OGRLineString* poLine =
               OGRGeometryFactory::approximateArcAngles(
                   pasCurves[i].u.EllipseByCenter.dfX,
                   pasCurves[i].u.EllipseByCenter.dfY,
-                  padfZ != NULL ? padfZ[nStartPointIdx] : 0.0,
+                  padfZ != nullptr ? padfZ[nStartPointIdx] : 0.0,
                   pasCurves[i].u.EllipseByCenter.dfSemiMajor,
                   dfSemiMinor,
                   dfRotationDeg,
                   dfAngleStartForApprox,
-                  dfAngleEndForApprox, 0 ) );
+                  dfAngleEndForApprox, 0 )->toLineString();
              if( poLine->getNumPoints() >= 2 )
              {
                 poLine->setPoint(0,
                                  padfX[nStartPointIdx],
                                  padfY[nStartPointIdx],
-                                 padfZ != NULL ? padfZ[nStartPointIdx] : 0.0,
-                                 padfM != NULL ? padfM[nStartPointIdx] : 0.0);
+                                 padfZ != nullptr ? padfZ[nStartPointIdx] : 0.0,
+                                 padfM != nullptr ? padfM[nStartPointIdx] : 0.0);
                 poLine->setPoint(poLine->getNumPoints()-1,
                                  padfX[nStartPointIdx+1],
                                  padfY[nStartPointIdx+1],
-                                 padfZ != NULL ? padfZ[nStartPointIdx+1] : 0.0,
-                                 padfM != NULL ? padfM[nStartPointIdx+1] : 0.0);
+                                 padfZ != nullptr ? padfZ[nStartPointIdx+1] : 0.0,
+                                 padfM != nullptr ? padfM[nStartPointIdx+1] : 0.0);
              }
-             poLine->set3D( padfZ != NULL );
-             poLine->setMeasured( padfM != NULL );
+             poLine->set3D( padfZ != nullptr );
+             poLine->setMeasured( padfM != nullptr );
              poCC->addCurveDirectly(poLine);
         }
 
@@ -2030,8 +2050,8 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
             poLine->setPoints( 2,
                                 padfX + nStartPointIdx,
                                 padfY + nStartPointIdx,
-                                padfZ != NULL ? padfZ + nStartPointIdx : NULL,
-                                padfM != NULL ? padfM + nStartPointIdx : NULL );
+                                padfZ != nullptr ? padfZ + nStartPointIdx : nullptr,
+                                padfM != nullptr ? padfM + nStartPointIdx : nullptr );
             poCC->addCurveDirectly(poLine);
         }
         nLastPointIdx = nStartPointIdx + 1;
@@ -2049,16 +2069,20 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
         poLine->setPoints( nPartStartIdx+nPartPoints-1 - nLastPointIdx + 1,
                             padfX + nLastPointIdx,
                             padfY + nLastPointIdx,
-                            padfZ != NULL ? padfZ + nLastPointIdx : NULL,
-                            padfM != NULL ? padfM + nLastPointIdx : NULL );
-        poCC->addCurveDirectly(poLine);
+                            padfZ != nullptr ? padfZ + nLastPointIdx : nullptr,
+                            padfM != nullptr ? padfM + nLastPointIdx : nullptr );
+        if( poCC->addCurveDirectly(poLine) != OGRERR_NONE )
+        {
+            delete poLine;
+            return nullptr;
+        }
     }
 
     if( !bHasCircularArcs )
         return reinterpret_cast<OGRCurve*>(OGR_G_ForceTo(
-            reinterpret_cast<OGRGeometryH>(poCC), wkbLineString, NULL));
+            reinterpret_cast<OGRGeometryH>(poCC.release()), wkbLineString, nullptr));
     else
-        return poCC;
+        return poCC.release();
 }
 
 /************************************************************************/
@@ -2073,7 +2097,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                               int nBytes )
 
 {
-    *ppoGeom = NULL;
+    *ppoGeom = nullptr;
 
     if( nBytes < 4 )
     {
@@ -2102,7 +2126,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
         {
             GByte* pabyUncompressedBuffer =
                 static_cast<GByte *>(VSI_MALLOC_VERBOSE(nUncompressedSize));
-            if( pabyUncompressedBuffer == NULL )
+            if( pabyUncompressedBuffer == nullptr )
             {
                 return OGRERR_FAILURE;
             }
@@ -2110,7 +2134,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
             size_t nRealUncompressedSize = 0;
             if( CPLZLibInflate( pabyShape + 12, nCompressedSize,
                                 pabyUncompressedBuffer, nUncompressedSize,
-                                &nRealUncompressedSize ) == NULL )
+                                &nRealUncompressedSize ) == nullptr )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "CPLZLibInflate() failed");
@@ -2138,7 +2162,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
     if( nSHPType == SHPT_NULL )
     {
-        *ppoGeom = NULL;
+        *ppoGeom = nullptr;
         return OGRERR_NONE;
     }
 
@@ -2269,7 +2293,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 
         GInt32 *panPartStart =
             static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(nParts, sizeof(GInt32)));
-        if( nParts != 0 && panPartStart == NULL )
+        if( nParts != 0 && panPartStart == nullptr )
         {
             return OGRERR_FAILURE;
         }
@@ -2309,13 +2333,13 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
 /*      If this is a multipatch, we will also have parts types.         */
 /* -------------------------------------------------------------------- */
-        GInt32 *panPartType = NULL;
+        GInt32 *panPartType = nullptr;
 
         if( bIsMultiPatch )
         {
             panPartType = static_cast<GInt32 *>(
                 VSI_MALLOC2_VERBOSE(nParts, sizeof(GInt32)));
-            if( panPartType == NULL )
+            if( panPartType == nullptr )
             {
                 CPLFree(panPartStart);
                 return OGRERR_FAILURE;
@@ -2339,10 +2363,10 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
         double *padfZ =
             static_cast<double *>(VSI_CALLOC_VERBOSE(sizeof(double), nPoints));
         double *padfM = static_cast<double *>(
-            bHasM ? VSI_CALLOC_VERBOSE(sizeof(double), nPoints) : NULL);
+            bHasM ? VSI_CALLOC_VERBOSE(sizeof(double), nPoints) : nullptr);
 
-        if( nPoints != 0 && (padfX == NULL || padfY == NULL || padfZ == NULL ||
-                             (bHasM && padfM == NULL)) )
+        if( nPoints != 0 && (padfX == nullptr || padfY == nullptr || padfZ == nullptr ||
+                             (bHasM && padfM == nullptr)) )
         {
             CPLFree( panPartStart );
             CPLFree( panPartType );
@@ -2382,10 +2406,17 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
         if( bHasM )
         {
+            bool bIsAllNAN = nPoints > 0;
             for( int i = 0; i < nPoints; i++ )
             {
                 memcpy( padfM + i, pabyShape + nOffset + 16 + i*8, 8 );
                 CPL_LSBPTR64( padfM + i );
+                bIsAllNAN &= std::isnan(padfM[i]);
+            }
+            if( bIsAllNAN )
+            {
+                CPLFree(padfM);
+                padfM = nullptr;
             }
 
             nOffset += 16 + 8*nPoints;
@@ -2395,7 +2426,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 /*      If we have curves, collect them now.                            */
 /* -------------------------------------------------------------------- */
         int nCurves = 0;
-        CurveSegment* pasCurves = NULL;
+        CurveSegment* pasCurves = nullptr;
         if( bHasCurves && nOffset + 4 <= nBytes )
         {
             memcpy( &nCurves, pabyShape + nOffset, 4 );
@@ -2411,7 +2442,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
             }
             pasCurves = static_cast<CurveSegment *>(
                 VSI_MALLOC2_VERBOSE(sizeof(CurveSegment), nCurves));
-            if( pasCurves == NULL )
+            if( pasCurves == nullptr )
             {
                 nCurves = 0;
             }
@@ -2644,7 +2675,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                 {
                     *ppoGeom = OGRShapeCreateCompoundCurve(
                       0, nPoints, pasCurves, nCurves, 0,
-                      padfX, padfY, bHasZ ? padfZ : NULL, padfM, NULL);
+                      padfX, padfY, bHasZ ? padfZ : nullptr, padfM, nullptr);
                 }
                 else
                 {
@@ -2673,12 +2704,21 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                             ? nPoints - panPartStart[i]
                             : panPartStart[i+1] - panPartStart[i];
 
-                        poMulti->addGeometryDirectly(
+                        OGRCurve* poCurve =
                             OGRShapeCreateCompoundCurve(
                                 panPartStart[i], nVerticesInThisPart,
                                 pasCurves, nCurves, iCurveIdx,
-                                padfX, padfY, bHasZ ? padfZ : NULL, padfM,
-                                &iCurveIdx));
+                                padfX, padfY, bHasZ ? padfZ : nullptr, padfM,
+                                &iCurveIdx);
+                        if( poCurve == nullptr ||
+                            poMulti->addGeometryDirectly(poCurve) !=
+                                                                OGRERR_NONE )
+                        {
+                            delete poCurve;
+                            delete poMulti;
+                            *ppoGeom = nullptr;
+                            break;
+                        }
                     }
                 }
                 else
@@ -2699,7 +2739,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                             padfX + panPartStart[i],
                             padfY + panPartStart[i],
                             padfZ + panPartStart[i],
-                            padfM != NULL ? padfM + panPartStart[i] : NULL );
+                            padfM != nullptr ? padfM + panPartStart[i] : nullptr );
 
                         poMulti->addGeometryDirectly( poLine );
                     }
@@ -2726,17 +2766,18 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                     OGRCurve* poRing = OGRShapeCreateCompoundCurve(
                         panPartStart[0], nVerticesInThisPart,
                         pasCurves, nCurves, 0,
-                        padfX, padfY, bHasZ ? padfZ : NULL, padfM, NULL);
-                    if( poOGRPoly->addRingDirectly( poRing ) != OGRERR_NONE )
+                        padfX, padfY, bHasZ ? padfZ : nullptr, padfM, nullptr);
+                    if( poRing == nullptr ||
+                        poOGRPoly->addRingDirectly( poRing ) != OGRERR_NONE )
                     {
                         delete poRing;
                         delete poOGRPoly;
-                        *ppoGeom = NULL;
+                        *ppoGeom = nullptr;
                     }
                 }
                 else
                 {
-                    OGRGeometry *poOGR = NULL;
+                    OGRGeometry *poOGR = nullptr;
                     OGRCurvePolygon** tabPolygons =
                         new OGRCurvePolygon*[nParts];
 
@@ -2752,26 +2793,27 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                         OGRCurve* poRing = OGRShapeCreateCompoundCurve(
                             panPartStart[i], nVerticesInThisPart,
                             pasCurves, nCurves, iCurveIdx,
-                            padfX, padfY, bHasZ ? padfZ : NULL, padfM,
+                            padfX, padfY, bHasZ ? padfZ : nullptr, padfM,
                             &iCurveIdx );
-                        if( tabPolygons[i]->addRingDirectly( poRing ) !=
+                        if( poRing ==nullptr ||
+                            tabPolygons[i]->addRingDirectly( poRing ) !=
                             OGRERR_NONE )
                         {
                             delete poRing;
                             for( ; i >= 0; --i )
                                 delete tabPolygons[i];
                             delete[] tabPolygons;
-                            tabPolygons = NULL;
-                            *ppoGeom = NULL;
+                            tabPolygons = nullptr;
+                            *ppoGeom = nullptr;
                             break;
                         }
                     }
 
-                    if( tabPolygons != NULL )
+                    if( tabPolygons != nullptr )
                     {
                         int isValidGeometry = FALSE;
                         const char* papszOptions[] =
-                            { "METHOD=ONLY_CCW", NULL  };
+                            { "METHOD=ONLY_CCW", nullptr  };
                         poOGR = OGRGeometryFactory::organizePolygons(
                             reinterpret_cast<OGRGeometry **>(tabPolygons),
                             nParts,
@@ -2804,18 +2846,18 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                         padfX + panPartStart[0],
                         padfY + panPartStart[0],
                         padfZ + panPartStart[0],
-                        padfM != NULL ? padfM + panPartStart[0] : NULL);
+                        padfM != nullptr ? padfM + panPartStart[0] : nullptr);
 
                     if( poOGRPoly->addRingDirectly( poRing ) != OGRERR_NONE )
                     {
                         delete poRing;
                         delete poOGRPoly;
-                        *ppoGeom = NULL;
+                        *ppoGeom = nullptr;
                     }
                 }
                 else
                 {
-                    OGRGeometry *poOGR = NULL;
+                    OGRGeometry *poOGR = nullptr;
                     OGRPolygon** tabPolygons = new OGRPolygon*[nParts];
 
                     for( int i = 0; i < nParts; i++ )
@@ -2832,7 +2874,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                             padfX + panPartStart[i],
                             padfY + panPartStart[i],
                             padfZ + panPartStart[i],
-                            padfM != NULL ? padfM + panPartStart[i] : NULL );
+                            padfM != nullptr ? padfM + panPartStart[i] : nullptr );
                         if( tabPolygons[i]->addRingDirectly(poRing) !=
                             OGRERR_NONE )
                         {
@@ -2840,17 +2882,21 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                             for( ; i >= 0; --i )
                                 delete tabPolygons[i];
                             delete[] tabPolygons;
-                            tabPolygons = NULL;
-                            *ppoGeom = NULL;
+                            tabPolygons = nullptr;
+                            *ppoGeom = nullptr;
                             break;
                         }
                     }
 
-                    if( tabPolygons != NULL )
+                    if( tabPolygons != nullptr )
                     {
                         int isValidGeometry = FALSE;
+                        // The outer ring is supposed to be clockwise oriented
+                        // If it is not, then use the default/slow method.
                         const char* papszOptions[] =
-                            { "METHOD=ONLY_CCW", NULL };
+                            { !(tabPolygons[0]->getExteriorRing()->isClockwise()) ?
+                                "METHOD=DEFAULT" : "METHOD=ONLY_CCW",
+                              nullptr };
                         poOGR = OGRGeometryFactory::organizePolygons(
                             reinterpret_cast<OGRGeometry **>(tabPolygons),
                             nParts,
@@ -2893,13 +2939,13 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
         CPLFree( padfM );
         CPLFree( pasCurves );
 
-        if( *ppoGeom != NULL )
+        if( *ppoGeom != nullptr )
         {
             if( !bHasZ )
                 (*ppoGeom)->set3D(FALSE);
         }
 
-        return *ppoGeom != NULL ? OGRERR_NONE : OGRERR_FAILURE;
+        return *ppoGeom != nullptr ? OGRERR_NONE : OGRERR_FAILURE;
     }
 
 /* ==================================================================== */

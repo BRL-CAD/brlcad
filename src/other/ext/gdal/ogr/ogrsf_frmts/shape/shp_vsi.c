@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007,  Frank Warmerdam
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,8 +32,9 @@
 #include "cpl_error.h"
 #include "cpl_conv.h"
 #include "cpl_vsi_error.h"
+#include <limits.h>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 typedef struct
 {
@@ -129,7 +130,7 @@ SAOffset VSI_SHP_Read( void *p, SAOffset size, SAOffset nmemb, SAFile file )
 int VSI_SHP_WriteMoreDataOK( SAFile file, SAOffset nExtraBytes )
 {
     OGRSHPDBFFile* pFile = (OGRSHPDBFFile*) file;
-    if( pFile->nCurOffset + nExtraBytes > 0x7FFFFFFF )
+    if( pFile->nCurOffset + nExtraBytes > INT_MAX )
     {
         if( pFile->bEnforce2GBLimit )
         {

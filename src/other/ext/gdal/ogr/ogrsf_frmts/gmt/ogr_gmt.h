@@ -38,9 +38,9 @@
 /*                             OGRGmtLayer                              */
 /************************************************************************/
 
-class OGRGmtLayer : public OGRLayer
+class OGRGmtLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRGmtLayer>
 {
-    OGRSpatialReference *poSRS;
+    OGRSpatialReference *m_poSRS = nullptr;
     OGRFeatureDefn     *poFeatureDefn;
 
     int                 iNextFID;
@@ -52,7 +52,7 @@ class OGRGmtLayer : public OGRLayer
     OGREnvelope         sRegion;
     vsi_l_offset        nRegionOffset;
 
-    VSILFILE           *fp;
+    VSILFILE           *m_fp = nullptr;
 
     bool                ReadLine();
     CPLString           osLine;
@@ -69,11 +69,14 @@ class OGRGmtLayer : public OGRLayer
   public:
     bool                bValidFile;
 
-                        OGRGmtLayer( const char *pszFilename, int bUpdate );
+                        OGRGmtLayer( const char *pszFilename,
+                                     VSILFILE* fp,
+                                     const OGRSpatialReference* poSRS,
+                                     int bUpdate );
                         virtual ~OGRGmtLayer();
 
     void                ResetReading() override;
-    OGRFeature *        GetNextFeature() override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRGmtLayer)
 
     OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
@@ -93,7 +96,7 @@ class OGRGmtLayer : public OGRLayer
 /*                           OGRGmtDataSource                           */
 /************************************************************************/
 
-class OGRGmtDataSource : public OGRDataSource
+class OGRGmtDataSource final: public OGRDataSource
 {
     OGRGmtLayer       **papoLayers;
     int                 nLayers;
@@ -106,7 +109,10 @@ class OGRGmtDataSource : public OGRDataSource
                         OGRGmtDataSource();
                         virtual ~OGRGmtDataSource();
 
-    int                 Open( const char *pszFilename, int bUpdate );
+    int                 Open( const char *pszFilename,
+                              VSILFILE* fp,
+                              const OGRSpatialReference* poSRS,
+                              int bUpdate );
     int                 Create( const char *pszFilename, char **papszOptions );
 
     const char          *GetName() override { return pszName; }
@@ -114,27 +120,9 @@ class OGRGmtDataSource : public OGRDataSource
     OGRLayer            *GetLayer( int ) override;
 
     virtual OGRLayer    *ICreateLayer( const char *,
-                                      OGRSpatialReference * = NULL,
+                                      OGRSpatialReference * = nullptr,
                                       OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL ) override;
-    int                 TestCapability( const char * ) override;
-};
-
-/************************************************************************/
-/*                             OGRGmtDriver                             */
-/************************************************************************/
-
-class OGRGmtDriver : public OGRSFDriver
-{
-  public:
-                virtual ~OGRGmtDriver();
-
-    const char *GetName() override;
-    OGRDataSource *Open( const char *, int ) override;
-
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL ) override;
-
+                                      char ** = nullptr ) override;
     int                 TestCapability( const char * ) override;
 };
 

@@ -34,7 +34,7 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:choice minOccurs="0" maxOccurs="unbounded">
-                    <xs:element name="SRS" type="xs:string"/>
+                    <xs:element name="SRS" type="SRSType"/>
                     <xs:element name="GeoTransform" type="xs:string"/>
                     <xs:element name="GCPList" type="GCPListType"/>
                     <xs:element name="BlockXSize" type="nonNegativeInteger32"/>
@@ -44,13 +44,36 @@
                     <xs:element name="MaskBand" type="MaskBandType"/>
                     <xs:element name="GDALWarpOptions" type="GDALWarpOptionsType"/> <!-- only if subClass="VRTWarpedDataset" -->
                     <xs:element name="PansharpeningOptions" type="PansharpeningOptionsType"/> <!-- only if subClass="VRTPansharpenedDataset" -->
+                    <xs:element name="Group" type="GroupType"/> <!-- only for multidimensional dataset -->
+                    <xs:element name="OverviewList" type="OverviewListType"/>
                 </xs:choice>
             </xs:sequence>
             <xs:attribute name="subClass" type="xs:string"/>
-            <xs:attribute name="rasterXSize" type="nonNegativeInteger32" use="required"/>
-            <xs:attribute name="rasterYSize" type="nonNegativeInteger32" use="required"/>
+            <xs:attribute name="rasterXSize" type="nonNegativeInteger32"/>
+            <xs:attribute name="rasterYSize" type="nonNegativeInteger32"/>
         </xs:complexType>
     </xs:element>
+
+    <xs:complexType name="OverviewListType">
+        <xs:simpleContent>
+            <xs:extension base="integerList">
+                <xs:attribute name="resampling" type="xs:string"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:simpleType name="integerList">
+        <xs:list itemType="xs:integer"/>
+    </xs:simpleType>
+
+    <xs:complexType name="SRSType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="dataAxisToSRSAxisMapping" type="xs:string"/>
+                <xs:attribute name="coordinateEpoch" type="xs:float"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
 
     <xs:simpleType name="nonNegativeInteger32">
         <xs:restriction base="xs:nonNegativeInteger">
@@ -63,6 +86,7 @@
             <xs:element name="GCP" type="GCPType" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
         <xs:attribute name="Projection" type="xs:string"/>
+        <xs:attribute name="dataAxisToSRSAxisMapping" type="xs:string"/>
     </xs:complexType>
 
     <xs:complexType name="GCPType">
@@ -149,6 +173,7 @@
                 <xs:element name="Scale" type="xs:double"/>
                 <xs:element name="CategoryNames" type="CategoryNamesType"/>
                 <xs:element name="ColorTable" type="ColorTableType"/>
+                <xs:element name="GDALRasterAttributeTable" type="GDALRasterAttributeTableType"/>
                 <xs:element name="NoDataValue" type="DoubleOrNanType"/>
                 <xs:element name="NodataValue" type="xs:double"/> <!-- typo: deprecated -->
                 <xs:element name="HideNoDataValue" type="ZeroOrOne"/>
@@ -159,7 +184,7 @@
                 <xs:element name="Histograms" type="HistogramsType"/>
 
                 <!-- for a VRTSourcedRasterBand. Each element may be repeated -->
-                <xs:element name="SimpleSource" type="SimpleSourceType"/> 
+                <xs:element name="SimpleSource" type="SimpleSourceType"/>
                 <xs:element name="ComplexSource" type="ComplexSourceType"/>
                 <xs:element name="AveragedSource" type="SimpleSourceType"/>
                 <xs:element name="KernelFilteredSource" type="KernelFilteredSourceType"/>
@@ -186,10 +211,9 @@
         </xs:sequence>
         <xs:attribute name="dataType" type="DataTypeType"/>
         <xs:attribute name="band" type="xs:unsignedInt"/>
+        <xs:attribute name="blockXSize" type="nonNegativeInteger32"/>
+        <xs:attribute name="blockYSize" type="nonNegativeInteger32"/>
         <xs:attribute name="subClass" type="VRTRasterBandSubClassType"/>
-
-        <xs:attribute name="BlockXSize" type="xs:unsignedInt"/> <!-- ignored -->
-        <xs:attribute name="BlockYSize" type="xs:unsignedInt"/> <!-- ignored -->
     </xs:complexType>
 
     <xs:simpleType name="ZeroOrOne">
@@ -245,6 +269,29 @@
         </xs:sequence>
     </xs:complexType>
 
+    <xs:complexType name="GDALRasterAttributeTableType">
+        <xs:sequence>
+            <xs:element name="FieldDefn" type="FieldDefnType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="Row" type="RowType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="FieldDefnType">
+        <xs:sequence>
+            <xs:element name="Name" type="xs:string"/>
+            <xs:element name="Type" type="xs:unsignedInt"/>
+            <xs:element name="Usage" type="xs:unsignedInt"/>
+        </xs:sequence>
+        <xs:attribute name="index" type="xs:unsignedInt" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="RowType">
+        <xs:sequence>
+            <xs:element name="F" type="xs:anyType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="index" type="xs:unsignedInt" use="required"/>
+    </xs:complexType>
+
     <xs:complexType name="OverviewType">
         <xs:sequence>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
@@ -268,6 +315,8 @@
             <xs:enumeration value="Int16"/>
             <xs:enumeration value="UInt32"/>
             <xs:enumeration value="Int32"/>
+            <xs:enumeration value="UInt64"/>
+            <xs:enumeration value="Int64"/>
             <xs:enumeration value="Float32"/>
             <xs:enumeration value="Float64"/>
             <xs:enumeration value="CInt16"/>
@@ -343,7 +392,8 @@
                 <xs:element name="SrcMax" type="xs:double"/>
                 <xs:element name="DstMin" type="xs:double"/>
                 <xs:element name="DstMax" type="xs:double"/>
-                <xs:element name="NODATA" type="DoubleOrNanType"/>
+                <xs:element name="NODATA" type="DoubleOrNanType"/> <!-- NODATA and UseMaskBand are mutually exclusive -->
+                <xs:element name="UseMaskBand" type="xs:boolean"/> <!-- NODATA and UseMaskBand are mutually exclusive -->
                 <xs:element name="LUT" type="xs:string"/>
             </xs:choice>
         </xs:sequence>
@@ -435,5 +485,124 @@
             <xs:minExclusive value="0.0"/>
         </xs:restriction>
     </xs:simpleType>
+
+    <xs:complexType name="GroupType">
+        <xs:sequence>
+            <xs:element name="Dimension" type="DimensionType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="Attribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="Array" type="ArrayType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="Group" type="GroupType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="ArrayType">
+        <xs:sequence>
+            <xs:element name="DataType" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:sequence>
+                    <xs:choice minOccurs="0" maxOccurs="unbounded">
+                        <xs:element name="Dimension" type="DimensionType"/>
+                        <xs:element name="DimensionRef" type="DimensionRefType"/>
+                    </xs:choice>
+                </xs:sequence>
+            <xs:element name="SRS" type="SRSType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="Unit" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="NoDataValue" type="DoubleOrNanType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="Offset" type="xs:double" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="Scale" type="xs:double" minOccurs="0" maxOccurs="1"/>
+            <xs:choice>
+                <xs:element name="RegularlySpacedValues" type="RegularlySpacedValuesType" minOccurs="0" maxOccurs="1"/>
+                <xs:sequence>
+                    <xs:choice minOccurs="0" maxOccurs="unbounded">
+                        <xs:element name="ConstantValue" type="ConstantValueType"/>
+                        <xs:element name="InlineValues" type="InlineValuesType"/>
+                        <xs:element name="InlineValuesWithValueElement" type="InlineValuesWithValueElementType"/>
+                        <xs:element name="Source" type="SourceType"/>
+                    </xs:choice>
+                </xs:sequence>
+            </xs:choice>
+            <xs:element name="Attribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="RegularlySpacedValuesType">
+        <xs:attribute name="start" type="xs:double" use="required"/>
+        <xs:attribute name="increment" type="xs:double" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="ConstantValueType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="offset" type="xs:string"/>
+                <xs:attribute name="count" type="xs:string"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="InlineValuesType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="offset" type="xs:string"/>
+                <xs:attribute name="count" type="xs:string"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="InlineValuesWithValueElementType">
+        <xs:sequence>
+            <xs:element name="Value" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="offset" type="xs:string"/>
+        <xs:attribute name="count" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="SourceType">
+        <xs:sequence>
+            <xs:element name="SourceFilename" type="SourceFilenameType"/>
+            <xs:choice>
+                <xs:element name="SourceArray" type="xs:string"/>
+                <xs:element name="SourceBand" type="xs:string"/>
+            </xs:choice>
+            <xs:element name="SourceTranspose" type="xs:string" minOccurs="0"/>
+            <xs:element name="SourceView" type="xs:string" minOccurs="0"/>
+            <xs:element name="SourceSlab" type="SourceSlabType" minOccurs="0"/>
+            <xs:element name="DestSlab" type="DestSlabType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="SourceSlabType">
+        <xs:sequence/>
+        <xs:attribute name="offset" type="xs:string"/>
+        <xs:attribute name="count" type="xs:string"/>
+        <xs:attribute name="step" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="DestSlabType">
+        <xs:sequence/>
+        <xs:attribute name="offset" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="AttributeType">
+        <xs:sequence>
+            <xs:element name="DataType" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="Value" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="DimensionType">
+        <xs:sequence/>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="type" type="xs:string"/>
+        <xs:attribute name="direction" type="xs:string"/>
+        <xs:attribute name="size" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="indexingVariable" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="DimensionRefType">
+        <xs:sequence/>
+        <xs:attribute name="ref" type="xs:string" use="required"/>
+    </xs:complexType>
 
 </xs:schema>

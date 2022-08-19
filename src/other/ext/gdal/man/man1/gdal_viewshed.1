@@ -1,0 +1,280 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "GDAL_VIEWSHED" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+gdal_viewshed \- Calculates a viewshed raster from an input raster DEM for a user defined point
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_viewshed [\-b <band>]
+              [\-a_nodata <value>] [\-f <formatname>]
+              [\-oz <observer_height>] [\-tz <target_height>] [\-md <max_distance>]
+              \-ox <observer_x> \-oy <observer_y>
+              [\-vv <visibility>] [\-iv <invisibility>]
+              [\-ov <out_of_range>] [\-cc <curvature_coef>]
+              [[\-co NAME=VALUE] ...]
+              [\-q] [\-om <output mode>]
+              <src_filename> <dst_filename>
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+By default the \fBgdal_viewshed\fP generates a binary visibility raster from one band
+of the input raster elevation model (DEM). The output raster will be of type
+Byte. With the \-mode flag can also return a minimum visible height raster of type Float64.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+The algorithm as implemented currently will only output meaningful results
+if the georeferencing is in a projected coordinate reference system.
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-co <NAME=VALUE>
+Many formats have one or more optional creation options that can be
+used to control particulars about the file created. For instance,
+the GeoTIFF driver supports creation options to control compression,
+and whether the file should be tiled.
+.sp
+The creation options available vary by format driver, and some
+simple formats have no creation options at all. A list of options
+supported for a format can be listed with the
+\fI\%\-\-formats\fP
+command line option but the documentation for the format is the
+definitive source of information on driver creation options.
+See \fI\%Raster drivers\fP format
+specific documentation for legal creation options for each format.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-b <band>
+Select an input band \fBband\fP containing the DEM data. Bands are numbered from 1.
+Only a single band can be used. Only the part of the raster within the specified
+maximum distance around the observer point is processed.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a_nodata <value>
+The value to be set for the cells in the output raster that have no data.
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+Currently, no special processing of input cells at a nodata
+value is done (which may result in erroneous results).
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-ox <value>
+The X position of the observer (in SRS units).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-oy <value>
+The Y position of the observer (in SRS units).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-oz <value>
+The height of the observer above the DEM surface in the height unit of the DEM. Default: 2
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-tz <value>
+The height of the target above the DEM surface in the height unit of the DEM. Default: 0
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-md <value>
+Maximum distance from observer to compute visibiliy.
+It is also used to clamp the extent of the output raster.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-cc <value>
+Coefficient to consider the effect of the curvature and refraction.
+When calculating visibility between two points (i.e. Line Of Sight or Viewshed),
+The magnitude of this effect varies with atmospheric conditions and depends on the wavelength.
+.sp
+Different applications for calculating visibility use different interchangeable notation to describe this phenomena:
+Refraction Coefficient, Curvature Coefficient, and Sphere Diameter Factor.
+gdal_viewshed uses the Curvature Coefficient notation.
+.sp
+.ce
+{CurvCoeff}=1\-{RefractionCoeff}
+.ce 0
+.sp
+Changes in air density curve the light downward causing an observer to see further and the earth to appear less curved,
+as if the sphere (earth) diameter is larger then it actually is.
+The ratio between that imaginary sphere diameter and the actual sphere diameter is given by the formula:
+.sp
+.ce
+{SphereDiameterFactor}=1/{CurvCoeff}=1/(1\-{RefractionCoeff})
+
+
+.ce 0
+.sp
+For visible light, the standard atmospheric refraction coefficient that is generally used is 1/7.
+Thus the default value (since GDAL 3.4) for CurvCoeff that gdal_viewshed uses is 0.85714 (=~ 1\-1/7).
+.sp
+The height of the DEM is corrected according to the following formula:
+.sp
+.ce
+Height_{Corrected}=Height_{DEM}\-{CurvCoeff}\efrac{{TargetDistance}^2}{SphereDiameter}
+.ce 0
+.sp
+Typical coefficient values are given in the table below (use Curvature Coeff value for the cc option)
+.TS
+center;
+|l|l|l|l|.
+_
+T{
+Use Case
+T}	T{
+Refraction Coeff
+T}	T{
+\fBCurvature Coeff\fP
+T}	T{
+Sphere Diameter Factor
+T}
+_
+T{
+No Refraction
+T}	T{
+0
+T}	T{
+1
+T}	T{
+1
+T}
+_
+T{
+Visible Light
+T}	T{
+1/7
+T}	T{
+6/7 (=~0.85714)
+T}	T{
+7/6 (=~1.1666)
+T}
+_
+T{
+Radio Waves
+T}	T{
+0.25 ~ 0.325
+T}	T{
+0.75 ~ 0.675
+T}	T{
+1.33 ~ 1.48
+T}
+_
+T{
+Flat Earth
+T}	T{
+1
+T}	T{
+0
+T}	T{
+inf
+T}
+_
+.TE
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-iv <value>
+Pixel value to set for invisible areas. Default: 0
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-ov <value>
+Pixel value to set for the cells that fall outside of the range specified by
+the observer location and the maximum distance. Default: 0
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-vv <value>
+Pixel value to set for visible areas. Default: 255
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-om <output mode>
+Sets what information the output contains.
+.sp
+Possible values: NORMAL, DEM, GROUND
+.sp
+NORMAL returns a raster of type Byte containing visible locations.
+.sp
+DEM and GROUND will return a raster of type Float64 containing the minimum target
+height for target to be visible from the DEM surface or ground level respectively.
+Flags \-tz, \-iv and \-vv will be ignored.
+.sp
+Default NORMAL
+.UNINDENT
+.SH C API
+.sp
+Functionality of this utility can be done from C with \fI\%GDALViewshedGenerate()\fP\&.
+.SH EXAMPLE
+.sp
+Compute the visibility of an elevation raster data source with defaults
+.INDENT 0.0
+.INDENT 2.5
+[image]
+A computed visibility for two separate \fI\-ox\fP and \fI\-oy\fP points on a DEM..UNINDENT
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_viewshed \-md 500 \-ox \-10147017 \-oy 5108065 source.tif destination.tif
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.IP [Wang2000] 5
+Generating Viewsheds without Using Sightlines. Wang, Jianjun,
+Robinson, Gary J., and White, Kevin. Photogrammetric Engineering and Remote
+Sensing. p81. \fI\%https://www.asprs.org/wp\-content/uploads/pers/2000journal/january/2000_jan_87\-90.pdf\fP
+.SH AUTHOR
+Tamas Szekeres <szekerest@gmail.com>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

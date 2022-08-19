@@ -29,7 +29,9 @@
 #include "ogreditablelayer.h"
 #include "../mem/ogr_mem.h"
 
-CPL_CVSID("$Id$");
+#include <map>
+
+CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 
@@ -54,7 +56,7 @@ OGREditableLayer::OGREditableLayer(
     m_bTakeOwnershipSynchronizer(bTakeOwnershipSynchronizer),
     m_poEditableFeatureDefn(poDecoratedLayer->GetLayerDefn()->Clone()),
     m_nNextFID(0),
-    m_poMemLayer(new OGRMemLayer( "", NULL, wkbNone )),
+    m_poMemLayer(new OGRMemLayer( "", nullptr, wkbNone )),
     m_bStructureModified(false),
     m_bSupportsCreateGeomField(false),
     m_bSupportsCurveGeometries(false)
@@ -77,7 +79,7 @@ OGREditableLayer::OGREditableLayer(
 
 OGREditableLayer::~OGREditableLayer()
 {
-    SyncToDisk();
+    OGREditableLayer::SyncToDisk();
 
     m_poEditableFeatureDefn->Release();
     delete m_poMemLayer;
@@ -122,8 +124,8 @@ void OGREditableLayer::DetectNextFID()
         return;
     m_nNextFID = 0;
     m_poDecoratedLayer->ResetReading();
-    OGRFeature* poFeat = NULL;
-    while( (poFeat = m_poDecoratedLayer->GetNextFeature()) != NULL )
+    OGRFeature* poFeat = nullptr;
+    while( (poFeat = m_poDecoratedLayer->GetNextFeature()) != nullptr )
     {
         if( poFeat->GetFID() > m_nNextFID )
             m_nNextFID = poFeat->GetFID();
@@ -138,7 +140,7 @@ void OGREditableLayer::DetectNextFID()
 
 int OGREditableLayer::GetSrcGeomFieldIndex(int iGeomField)
 {
-    if( m_poDecoratedLayer == NULL ||
+    if( m_poDecoratedLayer == nullptr ||
         iGeomField < 0 ||
         iGeomField >= m_poEditableFeatureDefn->GetGeomFieldCount() )
     {
@@ -170,11 +172,29 @@ OGRFeature* OGREditableLayer::Translate(OGRFeatureDefn* poTargetDefn,
                                         bool bCanStealSrcFeature,
                                         bool bHideDeletedFields)
 {
-    if( poSrcFeature == NULL )
-        return NULL;
+    if( poSrcFeature == nullptr )
+        return nullptr;
     OGRFeature* poRet = new OGRFeature(poTargetDefn);
 
-    int* panMap = (int *) CPLMalloc( sizeof(int) * poSrcFeature->GetFieldCount() );
+    std::map<CPLString, int> oMapTargetFieldNameToIdx;
+    std::map<CPLString, int>* poMap = &oMapTargetFieldNameToIdx;
+    if( poTargetDefn == m_poEditableFeatureDefn &&
+        !m_oMapEditableFDefnFieldNameToIdx.empty() )
+    {
+        poMap = &m_oMapEditableFDefnFieldNameToIdx;
+    }
+    else
+    {
+        for( int iField = 0; iField < poTargetDefn->GetFieldCount(); iField++ )
+        {
+            oMapTargetFieldNameToIdx[
+                poTargetDefn->GetFieldDefn(iField)->GetNameRef()] = iField;
+        }
+        if( poTargetDefn == m_poEditableFeatureDefn )
+            m_oMapEditableFDefnFieldNameToIdx = oMapTargetFieldNameToIdx;
+    }
+
+    int* panMap = static_cast<int *>(CPLMalloc( sizeof(int) * poSrcFeature->GetFieldCount() ));
     for( int iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
     {
         const char* pszFieldName = poSrcFeature->GetFieldDefnRef(iField)->GetNameRef();
@@ -184,7 +204,11 @@ OGRFeature* OGREditableLayer::Translate(OGRFeatureDefn* poTargetDefn,
             panMap[iField] = -1;
         }
         else
-            panMap[iField] = poRet->GetFieldIndex(pszFieldName);
+        {
+            auto oIter = poMap->find(pszFieldName);
+            panMap[iField] =
+                (oIter == poMap->end()) ? -1 : oIter->second;
+        }
     }
     poRet->SetFieldsFrom( poSrcFeature, panMap, TRUE );
     CPLFree(panMap);
@@ -207,7 +231,7 @@ OGRFeature* OGREditableLayer::Translate(OGRFeatureDefn* poTargetDefn,
                          poSrcFeature->GetGeomFieldRef(iSrcGeomFieldIdx) );
             }
             OGRGeometry* poGeom = poRet->GetGeomFieldRef(i);
-            if( poGeom != NULL )
+            if( poGeom != nullptr )
                 poGeom->assignSpatialReference( poGeomField->GetSpatialRef() );
         }
     }
@@ -225,12 +249,12 @@ OGRFeature* OGREditableLayer::Translate(OGRFeatureDefn* poTargetDefn,
 
 OGRFeature *OGREditableLayer::GetNextFeature()
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     while( true )
     {
         OGRFeature* poSrcFeature = m_poDecoratedLayer->GetNextFeature();
         bool bHideDeletedFields = true;
-        if( poSrcFeature != NULL )
+        if( poSrcFeature != nullptr )
         {
             const GIntBig nFID = poSrcFeature->GetFID();
             if( m_oSetDeleted.find(nFID) != m_oSetDeleted.end() )
@@ -256,16 +280,16 @@ OGRFeature *OGREditableLayer::GetNextFeature()
             }
             else
             {
-                return NULL;
+                return nullptr;
             }
         }
         OGRFeature* poRet = Translate(m_poEditableFeatureDefn, poSrcFeature,
                                       true, bHideDeletedFields);
         delete poSrcFeature;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
              || FilterGeometry( poRet->GetGeomFieldRef(m_iGeomFieldFilter) ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poRet ) ) )
         {
             return poRet;
@@ -280,7 +304,7 @@ OGRFeature *OGREditableLayer::GetNextFeature()
 
 OGRErr      OGREditableLayer::SetNextByIndex( GIntBig nIndex )
 {
-    if( m_poDecoratedLayer != NULL &&
+    if( m_poDecoratedLayer != nullptr &&
         m_oSetCreated.empty() &&
         m_oSetDeleted.empty() &&
         m_oSetEdited.empty() )
@@ -297,9 +321,9 @@ OGRErr      OGREditableLayer::SetNextByIndex( GIntBig nIndex )
 
 OGRFeature *OGREditableLayer::GetFeature( GIntBig nFID )
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
 
-    OGRFeature* poSrcFeature = NULL;
+    OGRFeature* poSrcFeature = nullptr;
     bool bHideDeletedFields = true;
     if( m_oSetCreated.find(nFID) != m_oSetCreated.end() ||
         m_oSetEdited.find(nFID) != m_oSetEdited.end() )
@@ -309,7 +333,7 @@ OGRFeature *OGREditableLayer::GetFeature( GIntBig nFID )
     }
     else if( m_oSetDeleted.find(nFID) != m_oSetDeleted.end() )
     {
-        poSrcFeature = NULL;
+        poSrcFeature = nullptr;
     }
     else
     {
@@ -329,6 +353,19 @@ OGRErr      OGREditableLayer::ISetFeature( OGRFeature *poFeature )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
 
+    if( !m_bStructureModified &&
+        m_oSetDeleted.empty() &&
+        m_oSetEdited.empty() &&
+        m_oSetCreated.empty() &&
+        m_poDecoratedLayer->TestCapability(OLCRandomWrite) )
+    {
+        OGRFeature* poTargetFeature = Translate(m_poDecoratedLayer->GetLayerDefn(),
+                                                poFeature, false, false);
+        OGRErr eErr = m_poDecoratedLayer->SetFeature(poTargetFeature);
+        delete poTargetFeature;
+        return eErr;
+    }
+
     OGRFeature* poMemFeature = Translate(m_poMemLayer->GetLayerDefn(),
                                          poFeature, false, false);
     OGRErr eErr = m_poMemLayer->SetFeature(poMemFeature);
@@ -345,8 +382,6 @@ OGRErr      OGREditableLayer::ISetFeature( OGRFeature *poFeature )
     }
     delete poMemFeature;
 
-    ResetReading();
-
     return eErr;
 }
 
@@ -359,11 +394,15 @@ OGRErr      OGREditableLayer::ICreateFeature( OGRFeature *poFeature )
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
 
     if( !m_bStructureModified &&
+        m_oSetDeleted.empty() &&
+        m_oSetCreated.empty() &&
         m_poDecoratedLayer->TestCapability(OLCSequentialWrite) )
     {
         OGRFeature* poTargetFeature = Translate(m_poDecoratedLayer->GetLayerDefn(),
                                                 poFeature, false, false);
         OGRErr eErr = m_poDecoratedLayer->CreateFeature(poTargetFeature);
+        if( poFeature->GetFID() < 0 )
+            poFeature->SetFID(poTargetFeature->GetFID());
         delete poTargetFeature;
         return eErr;
     }
@@ -418,7 +457,7 @@ OGRErr      OGREditableLayer::DeleteFeature( GIntBig nFID )
     else
     {
         OGRFeature* poFeature = m_poDecoratedLayer->GetFeature(nFID);
-        if( poFeature != NULL )
+        if( poFeature != nullptr )
         {
             m_oSetDeleted.insert(nFID);
             eErr = OGRERR_NONE;
@@ -545,7 +584,7 @@ void OGREditableLayer::SetSpatialFilterRect(
 GIntBig OGREditableLayer::GetFeatureCount( int bForce )
 {
     if( !m_poDecoratedLayer ) return 0;
-    if( m_poAttrQuery == NULL && m_poFilterGeom == NULL &&
+    if( m_poAttrQuery == nullptr && m_poFilterGeom == nullptr &&
         m_oSetDeleted.empty() &&
         m_oSetEdited.empty() )
     {
@@ -611,7 +650,8 @@ int         OGREditableLayer::TestCapability( const char * pszCap )
         EQUAL(pszCap, OLCAlterFieldDefn) ||
         EQUAL(pszCap, OLCDeleteFeature) )
     {
-        return TRUE;
+        return m_poDecoratedLayer->TestCapability(OLCCreateField) == TRUE ||
+               m_poDecoratedLayer->TestCapability(OLCSequentialWrite) == TRUE;
     }
     if( EQUAL(pszCap, OLCCreateGeomField) )
         return m_bSupportsCreateGeomField;
@@ -632,8 +672,7 @@ OGRErr      OGREditableLayer::CreateField( OGRFieldDefn *poField,
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
 
-    // workarounds a bug in certain QGIS versions (2.0 for example)
-    SetIgnoredFields(NULL);
+    m_oMapEditableFDefnFieldNameToIdx.clear();
 
     if( !m_bStructureModified &&
         m_poDecoratedLayer->TestCapability(OLCCreateField) )
@@ -667,8 +706,7 @@ OGRErr      OGREditableLayer::DeleteField( int iField )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
 
-    // workarounds a bug in certain QGIS versions (2.0 for example)
-    SetIgnoredFields(NULL);
+    m_oMapEditableFDefnFieldNameToIdx.clear();
 
     CPLString osDeletedField;
     if( iField >= 0 && iField < m_poEditableFeatureDefn->GetFieldCount() )
@@ -693,6 +731,9 @@ OGRErr      OGREditableLayer::DeleteField( int iField )
 OGRErr      OGREditableLayer::ReorderFields( int* panMap )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+
+    m_oMapEditableFDefnFieldNameToIdx.clear();
+
     OGRErr eErr = m_poMemLayer->ReorderFields(panMap);
     if( eErr == OGRERR_NONE )
     {
@@ -711,6 +752,9 @@ OGRErr      OGREditableLayer::AlterFieldDefn( int iField,
                                               int nFlagsIn )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+
+    m_oMapEditableFDefnFieldNameToIdx.clear();
+
     OGRErr eErr = m_poMemLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
     if( eErr == OGRERR_NONE )
     {
@@ -718,8 +762,13 @@ OGRErr      OGREditableLayer::AlterFieldDefn( int iField,
         OGRFieldDefn* poMemFieldDefn = m_poMemLayer->GetLayerDefn()->GetFieldDefn(iField);
         poFieldDefn->SetName(poMemFieldDefn->GetNameRef());
         poFieldDefn->SetType(poMemFieldDefn->GetType());
+        poFieldDefn->SetSubType(poMemFieldDefn->GetSubType());
         poFieldDefn->SetWidth(poMemFieldDefn->GetWidth());
         poFieldDefn->SetPrecision(poMemFieldDefn->GetPrecision());
+        poFieldDefn->SetDefault(poMemFieldDefn->GetDefault());
+        poFieldDefn->SetNullable(poMemFieldDefn->IsNullable());
+        poFieldDefn->SetUnique(poMemFieldDefn->IsUnique());
+        poFieldDefn->SetDomainName(poMemFieldDefn->GetDomainName());
         m_bStructureModified = true;
     }
     return eErr;
@@ -763,7 +812,7 @@ OGRErr      OGREditableLayer::CreateGeomField( OGRGeomFieldDefn *poField,
 
 OGRErr      OGREditableLayer::SyncToDisk()
 {
-    if( !m_poDecoratedLayer || m_poSynchronizer == NULL ) return OGRERR_FAILURE;
+    if( !m_poDecoratedLayer || m_poSynchronizer == nullptr ) return OGRERR_FAILURE;
     OGRErr eErr = m_poDecoratedLayer->SyncToDisk();
     if( eErr == OGRERR_NONE )
     {

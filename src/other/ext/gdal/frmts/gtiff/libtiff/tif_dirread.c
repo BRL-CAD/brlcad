@@ -38,6 +38,7 @@
 #include "tiffiop.h"
 #include <float.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define FAILED_FII    ((uint32_t) -1)
 
@@ -826,6 +827,10 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryDataAndRealloc(
         return TIFFReadDirEntryErrOk;
 }
 
+/* Caution: if raising that value, make sure int32 / uint32 overflows can't occur
+ * elsewhere */
+#define MAX_SIZE_TAG_DATA       2147483647U
+
 static enum TIFFReadDirEntryErr TIFFReadDirEntryArrayWithLimit(
         TIFF* tif, TIFFDirEntry* direntry, uint32_t* count, uint32_t desttypesize,
         void** value, uint64_t maxcount)
@@ -858,9 +863,9 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryArrayWithLimit(
          * in either the current data type or the dest data type.  This also
          * avoids problems with overflow of tmsize_t on 32bit systems.
          */
-	if ((uint64_t)(2147483647 / typesize) < target_count64)
+	if ((uint64_t)(MAX_SIZE_TAG_DATA / typesize) < target_count64)
 		return(TIFFReadDirEntryErrSizesan);
-	if ((uint64_t)(2147483647 / desttypesize) < target_count64)
+	if ((uint64_t)(MAX_SIZE_TAG_DATA / desttypesize) < target_count64)
 		return(TIFFReadDirEntryErrSizesan);
 
 	*count=(uint32_t)target_count64;
@@ -3794,50 +3799,7 @@ TIFFReadDirectory(TIFF* tif)
 		MissingRequired(tif,"ImageLength");
 		goto bad;
 	}
-	/*
-	 * Setup appropriate structures (by strip or by tile)
-	 */
-	if (!TIFFFieldSet(tif, FIELD_TILEDIMENSIONS)) {
-		tif->tif_dir.td_nstrips = TIFFNumberOfStrips(tif);  
-		tif->tif_dir.td_tilewidth = tif->tif_dir.td_imagewidth;
-		tif->tif_dir.td_tilelength = tif->tif_dir.td_rowsperstrip;
-		tif->tif_dir.td_tiledepth = tif->tif_dir.td_imagedepth;
-		tif->tif_flags &= ~TIFF_ISTILED;
-	} else {
-		tif->tif_dir.td_nstrips = TIFFNumberOfTiles(tif);
-		tif->tif_flags |= TIFF_ISTILED;
-	}
-	if (!tif->tif_dir.td_nstrips) {
-		TIFFErrorExt(tif->tif_clientdata, module,
-		    "Cannot handle zero number of %s",
-		    isTiled(tif) ? "tiles" : "strips");
-		goto bad;
-	}
-	tif->tif_dir.td_stripsperimage = tif->tif_dir.td_nstrips;
-	if (tif->tif_dir.td_planarconfig == PLANARCONFIG_SEPARATE)
-		tif->tif_dir.td_stripsperimage /= tif->tif_dir.td_samplesperpixel;
-	if (!TIFFFieldSet(tif, FIELD_STRIPOFFSETS)) {
-#ifdef OJPEG_SUPPORT
-		if ((tif->tif_dir.td_compression==COMPRESSION_OJPEG) &&
-		    (isTiled(tif)==0) &&
-		    (tif->tif_dir.td_nstrips==1)) {
-			/*
-			 * XXX: OJPEG hack.
-			 * If a) compression is OJPEG, b) it's not a tiled TIFF,
-			 * and c) the number of strips is 1,
-			 * then we tolerate the absence of stripoffsets tag,
-			 * because, presumably, all required data is in the
-			 * JpegInterchangeFormat stream.
-			 */
-			TIFFSetFieldBit(tif, FIELD_STRIPOFFSETS);
-		} else
-#endif
-        {
-			MissingRequired(tif,
-				isTiled(tif) ? "TileOffsets" : "StripOffsets");
-			goto bad;
-		}
-	}
+
 	/*
 	 * Second pass: extract other information.
 	 */
@@ -4042,41 +4004,6 @@ TIFFReadDirectory(TIFF* tif)
 			} /* -- if (!dp->tdir_ignore) */
 		} /* -- for-loop -- */
 
-        if( tif->tif_mode == O_RDWR &&
-            tif->tif_dir.td_stripoffset_entry.tdir_tag != 0 &&
-            tif->tif_dir.td_stripoffset_entry.tdir_count == 0 &&
-            tif->tif_dir.td_stripoffset_entry.tdir_type == 0 &&
-            tif->tif_dir.td_stripoffset_entry.tdir_offset.toff_long8 == 0 &&
-            tif->tif_dir.td_stripbytecount_entry.tdir_tag != 0 &&
-            tif->tif_dir.td_stripbytecount_entry.tdir_count == 0 &&
-            tif->tif_dir.td_stripbytecount_entry.tdir_type == 0 &&
-            tif->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long8 == 0 )
-        {
-            /* Directory typically created with TIFFDeferStrileArrayWriting() */
-            TIFFSetupStrips(tif);
-        }
-        else if( !(tif->tif_flags&TIFF_DEFERSTRILELOAD) )
-        {
-            if( tif->tif_dir.td_stripoffset_entry.tdir_tag != 0 )
-            {
-                if (!TIFFFetchStripThing(tif,&(tif->tif_dir.td_stripoffset_entry),
-                                         tif->tif_dir.td_nstrips,
-                                         &tif->tif_dir.td_stripoffset_p))
-                {
-                    goto bad;
-                }
-            }
-            if( tif->tif_dir.td_stripbytecount_entry.tdir_tag != 0 )
-            {
-                if (!TIFFFetchStripThing(tif,&(tif->tif_dir.td_stripbytecount_entry),
-                                         tif->tif_dir.td_nstrips,
-                                         &tif->tif_dir.td_stripbytecount_p))
-                {
-                    goto bad;
-                }
-            }
-        }
-
 	/*
 	 * OJPEG hack:
 	 * - If a) compression is OJPEG, and b) photometric tag is missing,
@@ -4148,6 +4075,88 @@ TIFFReadDirectory(TIFF* tif)
 	}
 
 	/*
+	 * Setup appropriate structures (by strip or by tile)
+	 * We do that only after the above OJPEG hack which alters SamplesPerPixel
+	 * and thus influences the number of strips in the separate planarconfig.
+	 */
+	if (!TIFFFieldSet(tif, FIELD_TILEDIMENSIONS)) {
+		tif->tif_dir.td_nstrips = TIFFNumberOfStrips(tif);  
+		tif->tif_dir.td_tilewidth = tif->tif_dir.td_imagewidth;
+		tif->tif_dir.td_tilelength = tif->tif_dir.td_rowsperstrip;
+		tif->tif_dir.td_tiledepth = tif->tif_dir.td_imagedepth;
+		tif->tif_flags &= ~TIFF_ISTILED;
+	} else {
+		tif->tif_dir.td_nstrips = TIFFNumberOfTiles(tif);
+		tif->tif_flags |= TIFF_ISTILED;
+	}
+	if (!tif->tif_dir.td_nstrips) {
+		TIFFErrorExt(tif->tif_clientdata, module,
+		    "Cannot handle zero number of %s",
+		    isTiled(tif) ? "tiles" : "strips");
+		goto bad;
+	}
+	tif->tif_dir.td_stripsperimage = tif->tif_dir.td_nstrips;
+	if (tif->tif_dir.td_planarconfig == PLANARCONFIG_SEPARATE)
+		tif->tif_dir.td_stripsperimage /= tif->tif_dir.td_samplesperpixel;
+	if (!TIFFFieldSet(tif, FIELD_STRIPOFFSETS)) {
+#ifdef OJPEG_SUPPORT
+		if ((tif->tif_dir.td_compression==COMPRESSION_OJPEG) &&
+		    (isTiled(tif)==0) &&
+		    (tif->tif_dir.td_nstrips==1)) {
+			/*
+			 * XXX: OJPEG hack.
+			 * If a) compression is OJPEG, b) it's not a tiled TIFF,
+			 * and c) the number of strips is 1,
+			 * then we tolerate the absence of stripoffsets tag,
+			 * because, presumably, all required data is in the
+			 * JpegInterchangeFormat stream.
+			 */
+			TIFFSetFieldBit(tif, FIELD_STRIPOFFSETS);
+		} else
+#endif
+        {
+			MissingRequired(tif,
+				isTiled(tif) ? "TileOffsets" : "StripOffsets");
+			goto bad;
+		}
+	}
+
+        if( tif->tif_mode == O_RDWR &&
+            tif->tif_dir.td_stripoffset_entry.tdir_tag != 0 &&
+            tif->tif_dir.td_stripoffset_entry.tdir_count == 0 &&
+            tif->tif_dir.td_stripoffset_entry.tdir_type == 0 &&
+            tif->tif_dir.td_stripoffset_entry.tdir_offset.toff_long8 == 0 &&
+            tif->tif_dir.td_stripbytecount_entry.tdir_tag != 0 &&
+            tif->tif_dir.td_stripbytecount_entry.tdir_count == 0 &&
+            tif->tif_dir.td_stripbytecount_entry.tdir_type == 0 &&
+            tif->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long8 == 0 )
+        {
+            /* Directory typically created with TIFFDeferStrileArrayWriting() */
+            TIFFSetupStrips(tif);
+        }
+        else if( !(tif->tif_flags&TIFF_DEFERSTRILELOAD) )
+        {
+            if( tif->tif_dir.td_stripoffset_entry.tdir_tag != 0 )
+            {
+                if (!TIFFFetchStripThing(tif,&(tif->tif_dir.td_stripoffset_entry),
+                                         tif->tif_dir.td_nstrips,
+                                         &tif->tif_dir.td_stripoffset_p))
+                {
+                    goto bad;
+                }
+            }
+            if( tif->tif_dir.td_stripbytecount_entry.tdir_tag != 0 )
+            {
+                if (!TIFFFetchStripThing(tif,&(tif->tif_dir.td_stripbytecount_entry),
+                                         tif->tif_dir.td_nstrips,
+                                         &tif->tif_dir.td_stripbytecount_p))
+                {
+                    goto bad;
+                }
+            }
+        }
+
+	/*
 	 * Make sure all non-color channels are extrasamples.
 	 * If it's not the case, define them as such.
 	 */
@@ -4173,7 +4182,8 @@ TIFFReadDirectory(TIFF* tif)
                     goto bad;
                 }
 
-                memcpy(new_sampleinfo, tif->tif_dir.td_sampleinfo, old_extrasamples * sizeof(uint16_t));
+                if (old_extrasamples > 0)
+                    memcpy(new_sampleinfo, tif->tif_dir.td_sampleinfo, old_extrasamples * sizeof(uint16_t));
                 _TIFFsetShortArray(&tif->tif_dir.td_sampleinfo, new_sampleinfo, tif->tif_dir.td_extrasamples);
                 _TIFFfree(new_sampleinfo);
         }
@@ -4527,7 +4537,14 @@ TIFFReadCustomDirectory(TIFF* tif, toff_t diroff,
 				switch (dp->tdir_tag) 
 				{
 					case EXIFTAG_SUBJECTDISTANCE:
-						(void)TIFFFetchSubjectDistance(tif, dp);
+                        if(fip->field_name != NULL && strncmp(fip->field_name, "Tag ", 4) != 0 ) {
+                            /* should only be called on a Exif directory */
+                            /* when exifFields[] is active */
+                            (void)TIFFFetchSubjectDistance(tif, dp);
+                        }
+                        else {
+                            (void)TIFFFetchNormalTag(tif, dp, TRUE);
+                        }
 						break;
 					default:
 						(void)TIFFFetchNormalTag(tif, dp, TRUE);
@@ -5050,18 +5067,28 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 				err=TIFFReadDirEntryByteArray(tif,dp,&data);
 				if (err==TIFFReadDirEntryErrOk)
 				{
-					uint32_t mb = 0;
+					size_t mb = 0;
 					int n;
 					if (data != NULL)
 					{
-					    uint8_t* ma = data;
-					    while (mb<(uint32_t)dp->tdir_count)
-					    {
-					            if (*ma==0)
-					                    break;
-					            ma++;
-					            mb++;
-					    }
+						if (dp->tdir_count > 0 && data[dp->tdir_count - 1] == 0)
+						{
+							/* optimization: if data is known to be 0 terminated, we can use strlen() */
+							mb = strlen((const char*)data);
+						}
+						else
+						{
+							/* general case. equivalent to non-portable */
+							/* mb = strnlen((const char*)data, (uint32_t)dp->tdir_count); */
+							uint8_t* ma = data;
+							while (mb<(uint32_t)dp->tdir_count)
+							{
+								if (*ma==0)
+									break;
+								ma++;
+								mb++;
+							}
+						}
 					}
 					if (mb+1<(uint32_t)dp->tdir_count)
 						TIFFWarningExt(tif->tif_clientdata,module,"ASCII value for tag \"%s\" contains null byte in value; value incorrectly truncated during reading due to implementation limitations",fip->field_name);
@@ -5069,17 +5096,19 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 					{
 						uint8_t* o;
 						TIFFWarningExt(tif->tif_clientdata,module,"ASCII value for tag \"%s\" does not end in null byte",fip->field_name);
-						if ((uint32_t)dp->tdir_count + 1 != dp->tdir_count + 1)
-							o=NULL;
-						else
-							o=_TIFFmalloc((uint32_t)dp->tdir_count + 1);
+						/* TIFFReadDirEntryArrayWithLimit() ensures this can't be larger than MAX_SIZE_TAG_DATA */
+						assert((uint32_t)dp->tdir_count + 1 == dp->tdir_count + 1);
+						o=_TIFFmalloc((uint32_t)dp->tdir_count + 1);
 						if (o==NULL)
 						{
 							if (data!=NULL)
 								_TIFFfree(data);
 							return(0);
 						}
-						_TIFFmemcpy(o,data,(uint32_t)dp->tdir_count);
+						if (dp->tdir_count > 0 )
+						{
+							_TIFFmemcpy(o,data,(uint32_t)dp->tdir_count);
+						}
 						o[(uint32_t)dp->tdir_count]=0;
 						if (data!=0)
 							_TIFFfree(data);
@@ -5765,8 +5794,9 @@ TIFFFetchStripThing(TIFF* tif, TIFFDirEntry* dir, uint32_t nstrips, uint64_t** l
 			_TIFFfree(data);
 			return(0);
 		}
-                _TIFFmemcpy(resizeddata,data, (uint32_t)dir->tdir_count * sizeof(uint64_t));
-                _TIFFmemset(resizeddata+(uint32_t)dir->tdir_count, 0, (nstrips - (uint32_t)dir->tdir_count) * sizeof(uint64_t));
+		if( dir->tdir_count )
+			_TIFFmemcpy(resizeddata,data, (uint32_t)dir->tdir_count * sizeof(uint64_t));
+		_TIFFmemset(resizeddata+(uint32_t)dir->tdir_count, 0, (nstrips - (uint32_t)dir->tdir_count) * sizeof(uint64_t));
 		_TIFFfree(data);
 		data=resizeddata;
 	}

@@ -30,50 +30,50 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const TigerFieldInfo rt1_2002_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "TLID",       'R', 'N', OFTInteger,    6,  15,  10,       1,   1,     1 },
-  { "SIDE1",      'R', 'N', OFTInteger,   16,  16,   1,       1,   1,     1 },
-  { "SOURCE",     'L', 'A', OFTString,    17,  17,   1,       1,   1,     1 },
-  { "FEDIRP",     'L', 'A', OFTString,    18,  19,   2,       1,   1,     1 },
-  { "FENAME",     'L', 'A', OFTString,    20,  49,  30,       1,   1,     1 },
-  { "FETYPE",     'L', 'A', OFTString,    50,  53,   4,       1,   1,     1 },
-  { "FEDIRS",     'L', 'A', OFTString,    54,  55,   2,       1,   1,     1 },
-  { "CFCC",       'L', 'A', OFTString,    56,  58,   3,       1,   1,     1 },
-  { "FRADDL",     'R', 'A', OFTString,    59,  69,  11,       1,   1,     1 },
-  { "TOADDL",     'R', 'A', OFTString,    70,  80,  11,       1,   1,     1 },
-  { "FRADDR",     'R', 'A', OFTString,    81,  91,  11,       1,   1,     1 },
-  { "TOADDR",     'R', 'A', OFTString,    92, 102,  11,       1,   1,     1 },
-  { "FRIADDL",    'L', 'A', OFTString,   103, 103,   1,       1,   1,     1 },
-  { "TOIADDL",    'L', 'A', OFTString,   104, 104,   1,       1,   1,     1 },
-  { "FRIADDR",    'L', 'A', OFTString,   105, 105,   1,       1,   1,     1 },
-  { "TOIADDR",    'L', 'A', OFTString,   106, 106,   1,       1,   1,     1 },
-  { "ZIPL",       'L', 'N', OFTInteger,  107, 111,   5,       1,   1,     1 },
-  { "ZIPR",       'L', 'N', OFTInteger,  112, 116,   5,       1,   1,     1 },
-  { "AIANHHFPL",  'L', 'N', OFTInteger,  117, 121,   5,       1,   1,     1 },
-  { "AIANHHFPR",  'L', 'N', OFTInteger,  122, 126,   5,       1,   1,     1 },
-  { "AIHHTLIL",   'L', 'A', OFTString,   127, 127,   1,       1,   1,     1 },
-  { "AIHHTLIR",   'L', 'A', OFTString,   128, 128,   1,       1,   1,     1 },
-  { "CENSUS1",    'L', 'A', OFTString,   129, 129,   1,       1,   1,     1 },
-  { "CENSUS2",    'L', 'A', OFTString,   130, 130,   1,       1,   1,     1 },
-  { "STATEL",     'L', 'N', OFTInteger,  131, 132,   2,       1,   1,     1 },
-  { "STATER",     'L', 'N', OFTInteger,  133, 134,   2,       1,   1,     1 },
-  { "COUNTYL",    'L', 'N', OFTInteger,  135, 137,   3,       1,   1,     1 },
-  { "COUNTYR",    'L', 'N', OFTInteger,  138, 140,   3,       1,   1,     1 },
+  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0},
+  { "TLID",       'R', 'N', OFTInteger,    6,  15,  10,       1,   1},
+  { "SIDE1",      'R', 'N', OFTInteger,   16,  16,   1,       1,   1},
+  { "SOURCE",     'L', 'A', OFTString,    17,  17,   1,       1,   1},
+  { "FEDIRP",     'L', 'A', OFTString,    18,  19,   2,       1,   1},
+  { "FENAME",     'L', 'A', OFTString,    20,  49,  30,       1,   1},
+  { "FETYPE",     'L', 'A', OFTString,    50,  53,   4,       1,   1},
+  { "FEDIRS",     'L', 'A', OFTString,    54,  55,   2,       1,   1},
+  { "CFCC",       'L', 'A', OFTString,    56,  58,   3,       1,   1},
+  { "FRADDL",     'R', 'A', OFTString,    59,  69,  11,       1,   1},
+  { "TOADDL",     'R', 'A', OFTString,    70,  80,  11,       1,   1},
+  { "FRADDR",     'R', 'A', OFTString,    81,  91,  11,       1,   1},
+  { "TOADDR",     'R', 'A', OFTString,    92, 102,  11,       1,   1},
+  { "FRIADDL",    'L', 'A', OFTString,   103, 103,   1,       1,   1},
+  { "TOIADDL",    'L', 'A', OFTString,   104, 104,   1,       1,   1},
+  { "FRIADDR",    'L', 'A', OFTString,   105, 105,   1,       1,   1},
+  { "TOIADDR",    'L', 'A', OFTString,   106, 106,   1,       1,   1},
+  { "ZIPL",       'L', 'N', OFTInteger,  107, 111,   5,       1,   1},
+  { "ZIPR",       'L', 'N', OFTInteger,  112, 116,   5,       1,   1},
+  { "AIANHHFPL",  'L', 'N', OFTInteger,  117, 121,   5,       1,   1},
+  { "AIANHHFPR",  'L', 'N', OFTInteger,  122, 126,   5,       1,   1},
+  { "AIHHTLIL",   'L', 'A', OFTString,   127, 127,   1,       1,   1},
+  { "AIHHTLIR",   'L', 'A', OFTString,   128, 128,   1,       1,   1},
+  { "CENSUS1",    'L', 'A', OFTString,   129, 129,   1,       1,   1},
+  { "CENSUS2",    'L', 'A', OFTString,   130, 130,   1,       1,   1},
+  { "STATEL",     'L', 'N', OFTInteger,  131, 132,   2,       1,   1},
+  { "STATER",     'L', 'N', OFTInteger,  133, 134,   2,       1,   1},
+  { "COUNTYL",    'L', 'N', OFTInteger,  135, 137,   3,       1,   1},
+  { "COUNTYR",    'L', 'N', OFTInteger,  138, 140,   3,       1,   1},
 
-  { "COUSUBL",    'L', 'N', OFTInteger,  141, 145,   5,       1,   1,     1 },
-  { "COUSUBR",    'L', 'N', OFTInteger,  146, 150,   5,       1,   1,     1 },
-  { "SUBMCDL",    'L', 'N', OFTInteger,  151, 155,   5,       1,   1,     1 },
-  { "SUBMCDR",    'L', 'N', OFTInteger,  156, 160,   5,       1,   1,     1 },
-  { "PLACEL",     'L', 'N', OFTInteger,  161, 165,   5,       1,   1,     1 },
-  { "PLACER",     'L', 'N', OFTInteger,  166, 170,   5,       1,   1,     1 },
-  { "TRACTL",     'L', 'N', OFTInteger,  171, 176,   6,       1,   1,     1 },
-  { "TRACTR",     'L', 'N', OFTInteger,  177, 182,   6,       1,   1,     1 },
-  { "BLOCKL",     'L', 'N', OFTInteger,  183, 186,   4,       1,   1,     1 },
-  { "BLOCKR",     'L', 'N', OFTInteger,  187, 190,   4,       1,   1,     1 }
+  { "COUSUBL",    'L', 'N', OFTInteger,  141, 145,   5,       1,   1},
+  { "COUSUBR",    'L', 'N', OFTInteger,  146, 150,   5,       1,   1},
+  { "SUBMCDL",    'L', 'N', OFTInteger,  151, 155,   5,       1,   1},
+  { "SUBMCDR",    'L', 'N', OFTInteger,  156, 160,   5,       1,   1},
+  { "PLACEL",     'L', 'N', OFTInteger,  161, 165,   5,       1,   1},
+  { "PLACER",     'L', 'N', OFTInteger,  166, 170,   5,       1,   1},
+  { "TRACTL",     'L', 'N', OFTInteger,  171, 176,   6,       1,   1},
+  { "TRACTR",     'L', 'N', OFTInteger,  177, 182,   6,       1,   1},
+  { "BLOCKL",     'L', 'N', OFTInteger,  183, 186,   4,       1,   1},
+  { "BLOCKR",     'L', 'N', OFTInteger,  187, 190,   4,       1,   1}
 };
 static const TigerRecordInfo rt1_2002_info =
   {
@@ -83,47 +83,47 @@ static const TigerRecordInfo rt1_2002_info =
   };
 
 static const TigerFieldInfo rt1_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end   len  bDefine bSet bWrite
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "TLID",       'R', 'N', OFTInteger,    6,  15,  10,       1,   1,     1 },
-  { "SIDE1",      'R', 'N', OFTInteger,   16,  16,   1,       1,   1,     1 },
-  { "SOURCE",     'L', 'A', OFTString,    17,  17,   1,       1,   1,     1 },
-  { "FEDIRP",     'L', 'A', OFTString,    18,  19,   2,       1,   1,     1 },
-  { "FENAME",     'L', 'A', OFTString,    20,  49,  30,       1,   1,     1 },
-  { "FETYPE",     'L', 'A', OFTString,    50,  53,   4,       1,   1,     1 },
-  { "FEDIRS",     'L', 'A', OFTString,    54,  55,   2,       1,   1,     1 },
-  { "CFCC",       'L', 'A', OFTString,    56,  58,   3,       1,   1,     1 },
-  { "FRADDL",     'R', 'A', OFTString,    59,  69,  11,       1,   1,     1 },
-  { "TOADDL",     'R', 'A', OFTString,    70,  80,  11,       1,   1,     1 },
-  { "FRADDR",     'R', 'A', OFTString,    81,  91,  11,       1,   1,     1 },
-  { "TOADDR",     'R', 'A', OFTString,    92, 102,  11,       1,   1,     1 },
-  { "FRIADDL",    'L', 'A', OFTInteger,  103, 103,   1,       1,   1,     1 },
-  { "TOIADDL",    'L', 'A', OFTInteger,  104, 104,   1,       1,   1,     1 },
-  { "FRIADDR",    'L', 'A', OFTInteger,  105, 105,   1,       1,   1,     1 },
-  { "TOIADDR",    'L', 'A', OFTInteger,  106, 106,   1,       1,   1,     1 },
-  { "ZIPL",       'L', 'N', OFTInteger,  107, 111,   5,       1,   1,     1 },
-  { "ZIPR",       'L', 'N', OFTInteger,  112, 116,   5,       1,   1,     1 },
-  { "FAIRL",      'L', 'N', OFTInteger,  117, 121,   5,       1,   1,     1 },
-  { "FAIRR",      'L', 'N', OFTInteger,  122, 126,   5,       1,   1,     1 },
-  { "TRUSTL",     'L', 'A', OFTString,   127, 127,   1,       1,   1,     1 },
-  { "TRUSTR",     'L', 'A', OFTString,   128, 128,   1,       1,   1,     1 },
-  { "CENSUS1",    'L', 'A', OFTString,   129, 129,   1,       1,   1,     1 },
-  { "CENSUS2",    'L', 'A', OFTString,   130, 130,   1,       1,   1,     1 },
-  { "STATEL",     'L', 'N', OFTInteger,  131, 132,   2,       1,   1,     1 },
-  { "STATER",     'L', 'N', OFTInteger,  133, 134,   2,       1,   1,     1 },
-  { "COUNTYL",    'L', 'N', OFTInteger,  135, 137,   3,       1,   1,     1 },
-  { "COUNTYR",    'L', 'N', OFTInteger,  138, 140,   3,       1,   1,     1 },
+  // fieldname    fmt  type OFTType      beg  end   len  bDefine bSet
+  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0},
+  { "TLID",       'R', 'N', OFTInteger,    6,  15,  10,       1,   1},
+  { "SIDE1",      'R', 'N', OFTInteger,   16,  16,   1,       1,   1},
+  { "SOURCE",     'L', 'A', OFTString,    17,  17,   1,       1,   1},
+  { "FEDIRP",     'L', 'A', OFTString,    18,  19,   2,       1,   1},
+  { "FENAME",     'L', 'A', OFTString,    20,  49,  30,       1,   1},
+  { "FETYPE",     'L', 'A', OFTString,    50,  53,   4,       1,   1},
+  { "FEDIRS",     'L', 'A', OFTString,    54,  55,   2,       1,   1},
+  { "CFCC",       'L', 'A', OFTString,    56,  58,   3,       1,   1},
+  { "FRADDL",     'R', 'A', OFTString,    59,  69,  11,       1,   1},
+  { "TOADDL",     'R', 'A', OFTString,    70,  80,  11,       1,   1},
+  { "FRADDR",     'R', 'A', OFTString,    81,  91,  11,       1,   1},
+  { "TOADDR",     'R', 'A', OFTString,    92, 102,  11,       1,   1},
+  { "FRIADDL",    'L', 'A', OFTInteger,  103, 103,   1,       1,   1},
+  { "TOIADDL",    'L', 'A', OFTInteger,  104, 104,   1,       1,   1},
+  { "FRIADDR",    'L', 'A', OFTInteger,  105, 105,   1,       1,   1},
+  { "TOIADDR",    'L', 'A', OFTInteger,  106, 106,   1,       1,   1},
+  { "ZIPL",       'L', 'N', OFTInteger,  107, 111,   5,       1,   1},
+  { "ZIPR",       'L', 'N', OFTInteger,  112, 116,   5,       1,   1},
+  { "FAIRL",      'L', 'N', OFTInteger,  117, 121,   5,       1,   1},
+  { "FAIRR",      'L', 'N', OFTInteger,  122, 126,   5,       1,   1},
+  { "TRUSTL",     'L', 'A', OFTString,   127, 127,   1,       1,   1},
+  { "TRUSTR",     'L', 'A', OFTString,   128, 128,   1,       1,   1},
+  { "CENSUS1",    'L', 'A', OFTString,   129, 129,   1,       1,   1},
+  { "CENSUS2",    'L', 'A', OFTString,   130, 130,   1,       1,   1},
+  { "STATEL",     'L', 'N', OFTInteger,  131, 132,   2,       1,   1},
+  { "STATER",     'L', 'N', OFTInteger,  133, 134,   2,       1,   1},
+  { "COUNTYL",    'L', 'N', OFTInteger,  135, 137,   3,       1,   1},
+  { "COUNTYR",    'L', 'N', OFTInteger,  138, 140,   3,       1,   1},
 
-  { "FMCDL",      'L', 'N', OFTInteger,  141, 145,   5,       1,   1,     1 },
-  { "FMCDR",      'L', 'N', OFTInteger,  146, 150,   5,       1,   1,     1 },
-  { "FSMCDL",     'L', 'N', OFTInteger,  151, 155,   5,       1,   1,     1 },
-  { "FSMCDR",     'L', 'N', OFTInteger,  156, 160,   5,       1,   1,     1 },
-  { "FPLL",       'L', 'N', OFTInteger,  161, 165,   5,       1,   1,     1 },
-  { "FPLR",       'L', 'N', OFTInteger,  166, 170,   5,       1,   1,     1 },
-  { "CTBNAL",     'L', 'N', OFTInteger,  171, 176,   6,       1,   1,     1 },
-  { "CTBNAR",     'L', 'N', OFTInteger,  177, 182,   6,       1,   1,     1 },
-  { "BLKL",       'L', 'N', OFTString,   183, 186,   4,       1,   1,     1 },
-  { "BLKR",       'L', 'N', OFTString,   187, 190,   4,       1,   1,     1 }
+  { "FMCDL",      'L', 'N', OFTInteger,  141, 145,   5,       1,   1},
+  { "FMCDR",      'L', 'N', OFTInteger,  146, 150,   5,       1,   1},
+  { "FSMCDL",     'L', 'N', OFTInteger,  151, 155,   5,       1,   1},
+  { "FSMCDR",     'L', 'N', OFTInteger,  156, 160,   5,       1,   1},
+  { "FPLL",       'L', 'N', OFTInteger,  161, 165,   5,       1,   1},
+  { "FPLR",       'L', 'N', OFTInteger,  166, 170,   5,       1,   1},
+  { "CTBNAL",     'L', 'N', OFTInteger,  171, 176,   6,       1,   1},
+  { "CTBNAR",     'L', 'N', OFTInteger,  177, 182,   6,       1,   1},
+  { "BLKL",       'L', 'N', OFTString,   183, 186,   4,       1,   1},
+  { "BLKR",       'L', 'N', OFTString,   187, 190,   4,       1,   1}
 };
 static const TigerRecordInfo rt1_info =
   {
@@ -134,39 +134,39 @@ static const TigerRecordInfo rt1_info =
 
 static const TigerRecordInfo rt2_info =
   {
-    NULL,       // RT2 is handled specially in the code below; the only
+    nullptr,       // RT2 is handled specially in the code below; the only
     0,          // thing from this structure that is used is:
     208         // <--- nRecordLength
   };
 
 static const TigerFieldInfo rt3_2000_Redistricting_fields[] = {
-  // fieldname    fmt  type OFTType       beg  end  len  bDefine bSet bWrite
-  { "TLID",       'R', 'N', OFTInteger,     6,  15,  10,       0,   0,     1 },
-  { "STATE90L",   'L', 'N', OFTInteger,    16,  17,   2,       1,   1,     1 },
-  { "STATE90R",   'L', 'N', OFTInteger,    18,  19,   2,       1,   1,     1 },
-  { "COUN90L",    'L', 'N', OFTInteger,    20,  22,   3,       1,   1,     1 },
-  { "COUN90R",    'L', 'N', OFTInteger,    23,  25,   3,       1,   1,     1 },
-  { "FMCD90L",    'L', 'N', OFTInteger,    26,  30,   5,       1,   1,     1 },
-  { "FMCD90R",    'L', 'N', OFTInteger,    31,  35,   5,       1,   1,     1 },
-  { "FPL90L",     'L', 'N', OFTInteger,    36,  40,   5,       1,   1,     1 },
-  { "FPL90R",     'L', 'N', OFTInteger,    41,  45,   5,       1,   1,     1 },
-  { "CTBNA90L",   'L', 'N', OFTInteger,    46,  51,   6,       1,   1,     1 },
-  { "CTBNA90R",   'L', 'N', OFTInteger,    52,  57,   6,       1,   1,     1 },
-  { "AIR90L",     'L', 'N', OFTInteger,    58,  61,   4,       1,   1,     1 },
-  { "AIR90R",     'L', 'N', OFTInteger,    62,  65,   4,       1,   1,     1 },
-  { "TRUST90L",   'L', 'A', OFTString,     66,  66,   1,       1,   1,     1 },
-  { "TRUST90R",   'L', 'A', OFTString,     67,  67,   1,       1,   1,     1 },
-  { "BLK90L",     'L', 'A', OFTString,     70,  73,   4,       1,   1,     1 },
-  { "BLK90R",     'L', 'A', OFTString,     74,  77,   4,       1,   1,     1 },
-  { "AIRL",       'L', 'N', OFTInteger,    78,  81,   4,       1,   1,     1 },
-  { "AIRR",       'L', 'N', OFTInteger,    82,  85,   4,       1,   1,     1 },
+  // fieldname    fmt  type OFTType       beg  end  len  bDefine bSet
+  { "TLID",       'R', 'N', OFTInteger,     6,  15,  10,       0,   0},
+  { "STATE90L",   'L', 'N', OFTInteger,    16,  17,   2,       1,   1},
+  { "STATE90R",   'L', 'N', OFTInteger,    18,  19,   2,       1,   1},
+  { "COUN90L",    'L', 'N', OFTInteger,    20,  22,   3,       1,   1},
+  { "COUN90R",    'L', 'N', OFTInteger,    23,  25,   3,       1,   1},
+  { "FMCD90L",    'L', 'N', OFTInteger,    26,  30,   5,       1,   1},
+  { "FMCD90R",    'L', 'N', OFTInteger,    31,  35,   5,       1,   1},
+  { "FPL90L",     'L', 'N', OFTInteger,    36,  40,   5,       1,   1},
+  { "FPL90R",     'L', 'N', OFTInteger,    41,  45,   5,       1,   1},
+  { "CTBNA90L",   'L', 'N', OFTInteger,    46,  51,   6,       1,   1},
+  { "CTBNA90R",   'L', 'N', OFTInteger,    52,  57,   6,       1,   1},
+  { "AIR90L",     'L', 'N', OFTInteger,    58,  61,   4,       1,   1},
+  { "AIR90R",     'L', 'N', OFTInteger,    62,  65,   4,       1,   1},
+  { "TRUST90L",   'L', 'A', OFTString,     66,  66,   1,       1,   1},
+  { "TRUST90R",   'L', 'A', OFTString,     67,  67,   1,       1,   1},
+  { "BLK90L",     'L', 'A', OFTString,     70,  73,   4,       1,   1},
+  { "BLK90R",     'L', 'A', OFTString,     74,  77,   4,       1,   1},
+  { "AIRL",       'L', 'N', OFTInteger,    78,  81,   4,       1,   1},
+  { "AIRR",       'L', 'N', OFTInteger,    82,  85,   4,       1,   1},
 
-  { "ANRCL",      'L', 'N', OFTInteger,    86,  90,   5,       1,   1,     1 },
-  { "ANRCR",      'L', 'N', OFTInteger,    91,  95,   5,       1,   1,     1 },
-  { "AITSCEL",    'L', 'N', OFTInteger,    96,  98,   3,       1,   1,     1 },
-  { "AITSCER",    'L', 'N', OFTInteger,    99, 101,   3,       1,   1,     1 },
-  { "AITSL",      'L', 'N', OFTInteger,   102, 106,   5 ,      1,   1,     1 },
-  { "AITSR",      'L', 'N', OFTInteger,   107, 111,   5,       1,   1,     1 }
+  { "ANRCL",      'L', 'N', OFTInteger,    86,  90,   5,       1,   1},
+  { "ANRCR",      'L', 'N', OFTInteger,    91,  95,   5,       1,   1},
+  { "AITSCEL",    'L', 'N', OFTInteger,    96,  98,   3,       1,   1},
+  { "AITSCER",    'L', 'N', OFTInteger,    99, 101,   3,       1,   1},
+  { "AITSL",      'L', 'N', OFTInteger,   102, 106,   5 ,      1,   1},
+  { "AITSR",      'L', 'N', OFTInteger,   107, 111,   5,       1,   1 }
 };
 static const TigerRecordInfo rt3_2000_Redistricting_info  =
   {
@@ -176,29 +176,29 @@ static const TigerRecordInfo rt3_2000_Redistricting_info  =
   };
 
 static const TigerFieldInfo rt3_fields[] = {
-  // fieldname    fmt  type OFTType       beg  end  len  bDefine bSet bWrite
-  { "TLID",       'R', 'N', OFTInteger,     6,  15,  10,       0,   0,     1 },
-  { "STATE90L",   'L', 'N', OFTInteger,    16,  17,   2,       1,   1,     1 },
-  { "STATE90R",   'L', 'N', OFTInteger,    18,  19,   2,       1,   1,     1 },
-  { "COUN90L",    'L', 'N', OFTInteger,    20,  22,   3,       1,   1,     1 },
-  { "COUN90R",    'L', 'N', OFTInteger,    23,  25,   3,       1,   1,     1 },
-  { "FMCD90L",    'L', 'N', OFTInteger,    26,  30,   5,       1,   1,     1 },
-  { "FMCD90R",    'L', 'N', OFTInteger,    31,  35,   5,       1,   1,     1 },
-  { "FPL90L",     'L', 'N', OFTInteger,    36,  40,   5,       1,   1,     1 },
-  { "FPL90R",     'L', 'N', OFTInteger,    41,  45,   5,       1,   1,     1 },
-  { "CTBNA90L",   'L', 'N', OFTInteger,    46,  51,   6,       1,   1,     1 },
-  { "CTBNA90R",   'L', 'N', OFTInteger,    52,  57,   6,       1,   1,     1 },
-  { "AIR90L",     'L', 'N', OFTInteger,    58,  61,   4,       1,   1,     1 },
-  { "AIR90R",     'L', 'N', OFTInteger,    62,  65,   4,       1,   1,     1 },
-  { "TRUST90L",   'L', 'A', OFTInteger,    66,  66,   1,       1,   1,     1 },
-  { "TRUST90R",   'L', 'A', OFTInteger,    67,  67,   1,       1,   1,     1 },
-  { "BLK90L",     'L', 'A', OFTString,     70,  73,   4,       1,   1,     1 },
-  { "BLK90R",     'L', 'A', OFTString,     74,  77,   4,       1,   1,     1 },
-  { "AIRL",       'L', 'N', OFTInteger,    78,  81,   4,       1,   1,     1 },
-  { "AIRR",       'L', 'N', OFTInteger,    82,  85,   4,       1,   1,     1 },
+  // fieldname    fmt  type OFTType       beg  end  len  bDefine bSet
+  { "TLID",       'R', 'N', OFTInteger,     6,  15,  10,       0,   0},
+  { "STATE90L",   'L', 'N', OFTInteger,    16,  17,   2,       1,   1},
+  { "STATE90R",   'L', 'N', OFTInteger,    18,  19,   2,       1,   1},
+  { "COUN90L",    'L', 'N', OFTInteger,    20,  22,   3,       1,   1},
+  { "COUN90R",    'L', 'N', OFTInteger,    23,  25,   3,       1,   1},
+  { "FMCD90L",    'L', 'N', OFTInteger,    26,  30,   5,       1,   1},
+  { "FMCD90R",    'L', 'N', OFTInteger,    31,  35,   5,       1,   1},
+  { "FPL90L",     'L', 'N', OFTInteger,    36,  40,   5,       1,   1},
+  { "FPL90R",     'L', 'N', OFTInteger,    41,  45,   5,       1,   1},
+  { "CTBNA90L",   'L', 'N', OFTInteger,    46,  51,   6,       1,   1},
+  { "CTBNA90R",   'L', 'N', OFTInteger,    52,  57,   6,       1,   1},
+  { "AIR90L",     'L', 'N', OFTInteger,    58,  61,   4,       1,   1},
+  { "AIR90R",     'L', 'N', OFTInteger,    62,  65,   4,       1,   1},
+  { "TRUST90L",   'L', 'A', OFTInteger,    66,  66,   1,       1,   1},
+  { "TRUST90R",   'L', 'A', OFTInteger,    67,  67,   1,       1,   1},
+  { "BLK90L",     'L', 'A', OFTString,     70,  73,   4,       1,   1},
+  { "BLK90R",     'L', 'A', OFTString,     74,  77,   4,       1,   1},
+  { "AIRL",       'L', 'N', OFTInteger,    78,  81,   4,       1,   1},
+  { "AIRR",       'L', 'N', OFTInteger,    82,  85,   4,       1,   1},
 
-  { "VTDL",       'L', 'A', OFTString,    104, 107,   4,       1,   1,     1 },
-  { "VTDR",       'L', 'A', OFTString,    108, 111,   4,       1,   1,     1 }
+  { "VTDL",       'L', 'A', OFTString,    104, 107,   4,       1,   1},
+  { "VTDR",       'L', 'A', OFTString,    108, 111,   4,       1,   1}
 };
 
 static const TigerRecordInfo rt3_info =
@@ -215,13 +215,13 @@ static const TigerRecordInfo rt3_info =
 TigerCompleteChain::TigerCompleteChain(
     OGRTigerDataSource * poDSIn,
     const char * /* pszPrototypeModule */ ) :
-    fpShape(NULL),
-    panShapeRecordId(NULL),
-    fpRT3(NULL),
+    fpShape(nullptr),
+    panShapeRecordId(nullptr),
+    fpRT3(nullptr),
     bUsingRT3(false),
-    psRT1Info(NULL),
-    psRT2Info(NULL),
-    psRT3Info(NULL)
+    psRT1Info(nullptr),
+    psRT2Info(nullptr),
+    psRT3Info(nullptr)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "CompleteChain" );
@@ -271,10 +271,10 @@ TigerCompleteChain::~TigerCompleteChain()
 {
     CPLFree( panShapeRecordId );
 
-    if( fpRT3 != NULL )
+    if( fpRT3 != nullptr )
         VSIFCloseL( fpRT3 );
 
-    if( fpShape != NULL )
+    if( fpShape != nullptr )
         VSIFCloseL( fpShape );
 }
 
@@ -315,10 +315,10 @@ bool TigerCompleteChain::SetModule( const char * pszModuleIn )
 /* -------------------------------------------------------------------- */
     if( bUsingRT3 )
     {
-        if( fpRT3 != NULL )
+        if( fpRT3 != nullptr )
         {
             VSIFCloseL( fpRT3 );
-            fpRT3 = NULL;
+            fpRT3 = nullptr;
         }
 
         if( pszModuleIn )
@@ -335,25 +335,25 @@ bool TigerCompleteChain::SetModule( const char * pszModuleIn )
 /*      Close the shape point file, if open and free the list of        */
 /*      record ids.                                                     */
 /* -------------------------------------------------------------------- */
-    if( fpShape != NULL )
+    if( fpShape != nullptr )
     {
         VSIFCloseL( fpShape );
-        fpShape = NULL;
+        fpShape = nullptr;
     }
 
     CPLFree( panShapeRecordId );
-    panShapeRecordId = NULL;
+    panShapeRecordId = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Try to open the RT2 file corresponding to this RT1 file.        */
 /* -------------------------------------------------------------------- */
-    if( pszModuleIn != NULL )
+    if( pszModuleIn != nullptr )
     {
         char *pszFilename = poDS->BuildFilename( pszModuleIn, "2" );
 
         fpShape = VSIFOpenL( pszFilename, "rb" );
 
-        if( fpShape == NULL )
+        if( fpShape == nullptr )
         {
             if( nRT1RecOffset == 0 )
                 CPLError( CE_Warning, CPLE_OpenFailed,
@@ -383,14 +383,14 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
         CPLError( CE_Failure, CPLE_FileIO,
                   "Request for out-of-range feature %d of %s1",
                   nRecordId, pszModule );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Read the raw record data from the file.                         */
 /* -------------------------------------------------------------------- */
-    if( fpPrimary == NULL )
-        return NULL;
+    if( fpPrimary == nullptr )
+        return nullptr;
 
     if( VSIFSeekL( fpPrimary, (nRecordId+nRT1RecOffset) * nRecordLength,
                   SEEK_SET ) != 0 )
@@ -398,7 +398,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to %d of %s1",
                   nRecordId * nRecordLength, pszModule );
-        return NULL;
+        return nullptr;
     }
 
     // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
@@ -409,7 +409,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
                   "Failed to read %d bytes of record %d of %s1 at offset %d",
                   psRT1Info->nRecordLength, nRecordId, pszModule,
                   (nRecordId+nRT1RecOffset) * nRecordLength );
-        return NULL;
+        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -424,7 +424,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     /*      Read RT3 record, and apply fields.                              */
     /* -------------------------------------------------------------------- */
 
-    if( fpRT3 != NULL )
+    if( fpRT3 != nullptr )
     {
         char    achRT3Rec[OGR_TIGER_RECBUF_LEN];
         int     nRT3RecLen = psRT3Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
@@ -434,7 +434,8 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to seek to %d of %s3",
                       nRecordId * nRT3RecLen, pszModule );
-            return NULL;
+            delete poFeature;
+            return nullptr;
         }
 
         // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
@@ -444,7 +445,8 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to read record %d of %s3",
                       nRecordId, pszModule );
-            return NULL;
+            delete poFeature;
+            return nullptr;
         }
 
         SetFields( psRT3Info, poFeature, achRT3Rec );
@@ -463,7 +465,8 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
                          poLine, 0 ) )
     {
         delete poFeature;
-        return NULL;
+        delete poLine;
+        return nullptr;
     }
 
     poLine->addPoint(atoi(GetField(achRecord, 210, 219)) / 1000000.0,
@@ -578,7 +581,7 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
 {
     CPLAssert( nChainId >= 0 && nChainId < GetFeatureCount() );
 
-    if( fpShape == NULL || panShapeRecordId == NULL )
+    if( fpShape == nullptr || panShapeRecordId == nullptr )
         return -1;
 
 /* -------------------------------------------------------------------- */
@@ -672,135 +675,4 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
     panShapeRecordId[nChainId] = -1;
 
     return -1;
-}
-
-/************************************************************************/
-/*                           SetWriteModule()                           */
-/************************************************************************/
-bool TigerCompleteChain::SetWriteModule( const char *pszFileCode, int nRecLen,
-                                         OGRFeature *poFeature )
-
-{
-    const bool bSuccess =
-        TigerFileBase::SetWriteModule( pszFileCode, nRecLen, poFeature);
-    if( !bSuccess )
-        return bSuccess;
-
-/* -------------------------------------------------------------------- */
-/*      Open the RT3 file                                               */
-/* -------------------------------------------------------------------- */
-    if( bUsingRT3 )
-    {
-        if( fpRT3 != NULL )
-        {
-            VSIFCloseL( fpRT3 );
-            fpRT3 = NULL;
-        }
-
-        if( pszModule )
-        {
-            char *pszFilename = poDS->BuildFilename( pszModule, "3" );
-
-            fpRT3 = VSIFOpenL( pszFilename, "ab" );
-
-            CPLFree( pszFilename );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Close the shape point file, if open and free the list of        */
-/*      record ids.                                                     */
-/* -------------------------------------------------------------------- */
-    if( fpShape != NULL )
-    {
-        VSIFCloseL( fpShape );
-        fpShape = NULL;
-    }
-
-    if( pszModule )
-    {
-        char *pszFilename = poDS->BuildFilename( pszModule, "2" );
-
-        fpShape = VSIFOpenL( pszFilename, "ab" );
-
-        CPLFree( pszFilename );
-    }
-
-    return true;
-}
-
-/************************************************************************/
-/*                           CreateFeature()                            */
-/************************************************************************/
-
-OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
-
-{
-    char        szRecord[OGR_TIGER_RECBUF_LEN];
-    OGRLineString *poLine = (OGRLineString *) poFeature->GetGeometryRef();
-
-    if( poLine == NULL
-        || (poLine->getGeometryType() != wkbLineString
-            && poLine->getGeometryType() != wkbLineString25D) )
-        return OGRERR_FAILURE;
-
-    /* -------------------------------------------------------------------- */
-    /*      Write basic data record ("RT1")                                 */
-    /* -------------------------------------------------------------------- */
-    if( !SetWriteModule( "1", psRT1Info->nRecordLength+2, poFeature ) )
-        return OGRERR_FAILURE;
-    memset( szRecord, ' ', psRT1Info->nRecordLength );
-    WriteFields( psRT1Info, poFeature, szRecord );
-    WritePoint( szRecord, 191, poLine->getX(0), poLine->getY(0) );
-    WritePoint( szRecord, 210,
-                poLine->getX(poLine->getNumPoints()-1),
-                poLine->getY(poLine->getNumPoints()-1) );
-    WriteRecord( szRecord, psRT1Info->nRecordLength, "1" );
-
-    /* -------------------------------------------------------------------- */
-    /*      Write geographic entity codes (RT3)                             */
-    /* -------------------------------------------------------------------- */
-    if( bUsingRT3 )
-    {
-      memset( szRecord, ' ', psRT3Info->nRecordLength );
-      WriteFields( psRT3Info, poFeature, szRecord );
-      WriteRecord( szRecord, psRT3Info->nRecordLength, "3", fpRT3 );
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Write shapes sections (RT2)                                     */
-    /* -------------------------------------------------------------------- */
-    if( poLine->getNumPoints() > 2 )
-    {
-        const int nPoints = poLine->getNumPoints();
-
-        for( int iPoint = 1, nRTSQ = 1; iPoint < nPoints-1; )
-        {
-            char szTemp[5] = {};
-
-            memset( szRecord, ' ', psRT2Info->nRecordLength );
-
-            WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
-
-            CPLsnprintf( szTemp, sizeof(szTemp), "%3d", nRTSQ );
-            strncpy( ((char *)szRecord) + 15, szTemp, 4 );
-
-            for( int i = 0; i < 10; i++ )
-            {
-                if( iPoint < nPoints-1 )
-                    WritePoint( szRecord, 19+19*i,
-                                poLine->getX(iPoint), poLine->getY(iPoint) );
-                else
-                    WritePoint( szRecord, 19+19*i, 0.0, 0.0 );
-
-                iPoint++;
-            }
-
-            WriteRecord( szRecord, psRT2Info->nRecordLength, "2", fpShape );
-
-            nRTSQ++;
-        }
-    }
-
-    return OGRERR_NONE;
 }

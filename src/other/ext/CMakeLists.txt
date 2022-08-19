@@ -308,8 +308,11 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/png.cmake)
 # STEPcode - support for reading and writing STEP files
 include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
 
-# PROJ4 - generic coordinate transformation
-include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
+# SQLITE3 - embeddable database
+include(${CMAKE_CURRENT_SOURCE_DIR}/sqlite3.cmake)
+
+# PROJ - generic coordinate transformation
+include(${CMAKE_CURRENT_SOURCE_DIR}/proj.cmake)
 
 # GDAL -  translator library for raster and vector geospatial data formats
 include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
@@ -391,10 +394,12 @@ if (COMMAND CMAKEFILES)
     perplex.dist
     png.cmake
     png.dist
-    proj-4.dist
-    proj4.cmake
+    proj.dist
+    proj.cmake
     regex.cmake
     regex.dist
+    sqlite3.cmake
+    sqlite3.dist
     stepcode.cmake
     stepcode.dist
     tcl.cmake

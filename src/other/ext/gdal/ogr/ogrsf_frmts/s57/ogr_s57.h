@@ -42,7 +42,7 @@ class OGRS57DataSource;
 /*      Represents all features of a particular S57 object class.       */
 /************************************************************************/
 
-class OGRS57Layer : public OGRLayer
+class OGRS57Layer final: public OGRLayer
 {
     OGRS57DataSource   *poDS;
 
@@ -80,7 +80,7 @@ class OGRS57Layer : public OGRLayer
 /*                          OGRS57DataSource                            */
 /************************************************************************/
 
-class OGRS57DataSource : public OGRDataSource
+class OGRS57DataSource final: public OGRDataSource
 {
     char                *pszName;
 
@@ -101,8 +101,10 @@ class OGRS57DataSource : public OGRDataSource
     bool                bExtentsSet;
     OGREnvelope         oExtents;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRS57DataSource)
+
   public:
-    explicit            OGRS57DataSource(char** papszOpenOptions = NULL);
+    explicit            OGRS57DataSource(char** papszOpenOptions = nullptr);
                         ~OGRS57DataSource();
 
     void                SetOptionList( char ** );
@@ -117,7 +119,7 @@ class OGRS57DataSource : public OGRDataSource
     void                AddLayer( OGRS57Layer * );
     int                 TestCapability( const char * ) override;
 
-    OGRSpatialReference *GetSpatialRef() { return poSpatialRef; }
+    OGRSpatialReference *DSGetSpatialRef() { return poSpatialRef; }
 
     int                 GetModuleCount() { return nModules; }
     S57Reader          *GetModule( int );
@@ -130,7 +132,7 @@ class OGRS57DataSource : public OGRDataSource
 /*                            OGRS57Driver                              */
 /************************************************************************/
 
-class OGRS57Driver : public GDALDriver
+class OGRS57Driver final: public GDALDriver
 {
     static S57ClassRegistrar *poRegistrar;
 

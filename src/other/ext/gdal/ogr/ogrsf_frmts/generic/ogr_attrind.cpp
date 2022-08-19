@@ -29,7 +29,7 @@
 #include "ogr_attrind.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 
@@ -44,8 +44,8 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRLayerAttrIndex::OGRLayerAttrIndex() :
-    poLayer(NULL),
-    pszIndexPath(NULL)
+    poLayer(nullptr),
+    pszIndexPath(nullptr)
 {}
 
 /************************************************************************/
@@ -56,7 +56,7 @@ OGRLayerAttrIndex::~OGRLayerAttrIndex()
 
 {
     CPLFree( pszIndexPath );
-    pszIndexPath = NULL;
+    pszIndexPath = nullptr;
 }
 
 /************************************************************************/

@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2008, Xiuguang Zhou (ESRI)
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+
 #include "gt_citation.h"
 
 #include <cstddef>
@@ -45,7 +46,7 @@
 #include "gt_wkt_srs_priv.h"
 #include "ogr_core.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const char * const apszUnitMap[] = {
     "meters", "1.0",
@@ -89,7 +90,7 @@ static const char * const apszUnitMap[] = {
     "Yard_Sears", "0.9143984146160287",
     "50_Kilometers", "50000.0",
     "150_Kilometers", "150000.0",
-    NULL, NULL
+    nullptr, nullptr
 };
 
 /************************************************************************/
@@ -100,16 +101,16 @@ static const char * const apszUnitMap[] = {
 char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
 {
     if( !psCitation )
-        return NULL;
-    char* ret = NULL;
+        return nullptr;
+    char* ret = nullptr;
     if( STARTS_WITH_CI(psCitation, "IMAGINE GeoTIFF Support") )
     {
         static const char * const keyNames[] = {
-            "NAD = ", "Datum = ", "Ellipsoid = ", "Units = ", NULL };
+            "NAD = ", "Datum = ", "Ellipsoid = ", "Units = ", nullptr };
 
         // This is a handle IMAGING style citation.
         CPLString osName;
-        char* p1 = NULL;
+        char* p1 = nullptr;
 
         char* p = strchr(psCitation, '$');
         if( p && strchr(p, '\n') )
@@ -124,7 +125,7 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
             if( p2 )
                 p1 = std::min(p1, p2);
 
-            for( int i = 0; keyNames[i] != NULL; i++ )
+            for( int i = 0; keyNames[i] != nullptr; i++ )
             {
                 p2 = strstr(p, keyNames[i]);
                 if(p2)
@@ -157,15 +158,15 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
             {
                 // TODO(schwehr): What exactly is this code trying to do?
                 // Added in r15993 and modified in r21844 by warmerdam.
-                char* p2 = NULL;
-                if( (p2 = strstr(psCitation, "Projection Name = ")) != NULL )
+                char* p2 = nullptr;
+                if( (p2 = strstr(psCitation, "Projection Name = ")) != nullptr )
                     p = p2 + strlen("Projection Name = ");
-                if( (p2 = strstr(psCitation, "Projection = ")) != NULL )
+                if( (p2 = strstr(psCitation, "Projection = ")) != nullptr )
                     p = p2 + strlen("Projection = ");
                 if( p1[0] == '\0' || p1[0] == '\n' || p1[0] == ' ' )
                     p1--;
                 p2 = p1 - 1;
-                while( p2 != NULL &&
+                while( p2 != nullptr &&
                        (p2[0] == ' ' || p2[0] == '\0' || p2[0] == '\n') )
                 {
                     p2--;
@@ -183,7 +184,7 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
         }
 
         // All other parameters.
-        for( int i = 0; keyNames[i] != NULL; i++ )
+        for( int i = 0; keyNames[i] != nullptr; i++ )
         {
             p = strstr(psCitation, keyNames[i]);
             if( p )
@@ -196,7 +197,7 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
                 p2 = strchr(p, '\0');
                 if( p2 )
                     p1 = std::min(p1, p2);
-                for( int j = 0; keyNames[j] != NULL; j++ )
+                for( int j = 0; keyNames[j] != nullptr; j++ )
                 {
                     p2 = strstr(p, keyNames[j]);
                     if( p2 )
@@ -212,7 +213,7 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
                 if( p1[0] == '\0' || p1[0] == '\n' || p1[0] == ' ' )
                     p1--;
                 char* p2 = p1 - 1;
-                while( p2 != NULL &&
+                while( p2 != nullptr &&
                        (p2[0] == ' ' || p2[0] == '\0' || p2[0] == '\n') )
                 {
                     p2--;
@@ -243,11 +244,11 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
 char** CitationStringParse(char* psCitation, geokey_t keyID)
 {
     if( !psCitation )
-        return NULL;
+        return nullptr;
 
     char **ret = static_cast<char **>(
         CPLCalloc(sizeof(char*), nCitationNameTypes) );
-    char* pDelimit = NULL;
+    char* pDelimit = nullptr;
     char* pStr = psCitation;
     char name[512] = { '\0' };
     bool nameSet = false;
@@ -255,7 +256,7 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
     bool nameFound = false;
     while( (pStr - psCitation + 1) < nameLen )
     {
-        if( (pDelimit = strstr(pStr, "|")) != NULL )
+        if( (pDelimit = strstr(pStr, "|")) != nullptr )
         {
             strncpy( name, pStr, pDelimit - pStr );
             name[pDelimit-pStr] = '\0';
@@ -268,43 +269,43 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
             pStr += strlen(pStr);
             nameSet = true;
         }
-        if( strstr(name, "PCS Name = ") )
+        if( strstr(name, "PCS Name = ") && ret[CitPcsName] == nullptr )
         {
             ret[CitPcsName] = CPLStrdup(name + strlen("PCS Name = "));
             nameFound = true;
         }
-        if( strstr(name, "PRJ Name = ") )
+        if( strstr(name, "PRJ Name = ") && ret[CitProjectionName] == nullptr )
         {
             ret[CitProjectionName] =
                 CPLStrdup(name + strlen("PRJ Name = "));
             nameFound = true;
         }
-        if( strstr(name, "LUnits = ") )
+        if( strstr(name, "LUnits = ") && ret[CitLUnitsName] == nullptr )
         {
             ret[CitLUnitsName] = CPLStrdup(name + strlen("LUnits = "));
             nameFound = true;
         }
-        if( strstr(name, "GCS Name = ") )
+        if( strstr(name, "GCS Name = ") && ret[CitGcsName] == nullptr )
         {
             ret[CitGcsName] = CPLStrdup(name + strlen("GCS Name = "));
             nameFound = true;
         }
-        if( strstr(name, "Datum = ") )
+        if( strstr(name, "Datum = ") && ret[CitDatumName] == nullptr )
         {
             ret[CitDatumName] = CPLStrdup(name + strlen("Datum = "));
             nameFound = true;
         }
-        if( strstr(name, "Ellipsoid = ") )
+        if( strstr(name, "Ellipsoid = ") && ret[CitEllipsoidName] == nullptr )
         {
             ret[CitEllipsoidName] = CPLStrdup(name + strlen("Ellipsoid = "));
             nameFound = true;
         }
-        if( strstr(name, "Primem = ") )
+        if( strstr(name, "Primem = ") && ret[CitPrimemName] == nullptr )
         {
             ret[CitPrimemName] = CPLStrdup(name + strlen("Primem = "));
             nameFound = true;
         }
-        if( strstr(name, "AUnits = ") )
+        if( strstr(name, "AUnits = ") && ret[CitAUnitsName] == nullptr )
         {
             ret[CitAUnitsName] = CPLStrdup(name + strlen("AUnits = "));
             nameFound = true;
@@ -318,7 +319,7 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
     if( !nameFound )
     {
         CPLFree( ret );
-        ret = NULL;
+        ret = nullptr;
     }
     return ret;
 }
@@ -328,19 +329,18 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
 /*                                                                      */
 /*      Set linear unit Citation string                                 */
 /************************************************************************/
-void SetLinearUnitCitation( GTIF* psGTIF, char* pszLinearUOMName )
+void SetLinearUnitCitation( std::map<geokey_t, std::string>& oMapAsciiKeys,
+                            const char* pszLinearUOMName )
 {
-    char szName[512] = { '\0' };
-    int n = 0;
-    if( GDALGTIFKeyGetASCII( psGTIF, PCSCitationGeoKey, szName,
-                             0, sizeof(szName) ) )
-    {
-        n = static_cast<int>(strlen(szName));
-    }
     CPLString osCitation;
-    if( n > 0 )
+    auto oIter = oMapAsciiKeys.find(PCSCitationGeoKey);
+    if( oIter != oMapAsciiKeys.end() )
     {
-        osCitation = szName;
+        osCitation = oIter->second;
+    }
+    if( !osCitation.empty() )
+    {
+        size_t n = osCitation.size();
         if( osCitation[n-1] != '|' )
             osCitation += "|";
         osCitation += "LUnits = ";
@@ -352,8 +352,7 @@ void SetLinearUnitCitation( GTIF* psGTIF, char* pszLinearUOMName )
         osCitation = "LUnits = ";
         osCitation += pszLinearUOMName;
     }
-    GTIFKeySet( psGTIF, PCSCitationGeoKey, TYPE_ASCII, 0, osCitation.c_str() );
-    return;
+    oMapAsciiKeys[PCSCitationGeoKey] = osCitation;
 }
 
 /************************************************************************/
@@ -361,29 +360,30 @@ void SetLinearUnitCitation( GTIF* psGTIF, char* pszLinearUOMName )
 /*                                                                      */
 /*      Set geogcs Citation string                                      */
 /************************************************************************/
-void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
-                        char* angUnitName, int nDatum, short nSpheroid )
+void SetGeogCSCitation( GTIF * psGTIF,
+                        std::map<geokey_t, std::string>& oMapAsciiKeys,
+                        const OGRSpatialReference *poSRS,
+                        const char* angUnitName, int nDatum, short nSpheroid )
 {
     bool bRewriteGeogCitation = false;
-    char szName[256] = { '\0' };
-    size_t n = 0;
-    if( GDALGTIFKeyGetASCII( psGTIF, GeogCitationGeoKey, szName,
-                             0, sizeof(szName) ) )
+    CPLString osOriginalGeogCitation;
+    auto oIter = oMapAsciiKeys.find(GeogCitationGeoKey);
+    if( oIter != oMapAsciiKeys.end() )
     {
-        n = strlen(szName);
+        osOriginalGeogCitation = oIter->second;
     }
-    if( n == 0 )
+    if( osOriginalGeogCitation.empty() )
         return;
 
     CPLString osCitation;
-    if( !STARTS_WITH_CI(szName, "GCS Name = ") )
+    if( !STARTS_WITH_CI(osOriginalGeogCitation, "GCS Name = ") )
     {
         osCitation = "GCS Name = ";
-        osCitation += szName;
+        osCitation += osOriginalGeogCitation;
     }
     else
     {
-        osCitation = szName;
+        osCitation = osOriginalGeogCitation;
     }
 
     if( nDatum == KvUserDefined )
@@ -414,10 +414,10 @@ void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
         osCitation += primemName;
         bRewriteGeogCitation = true;
 
-        double primemValue = poSRS->GetPrimeMeridian(NULL);
+        double primemValue = poSRS->GetPrimeMeridian(nullptr);
         if( angUnitName && !EQUAL(angUnitName, "Degree") )
         {
-            const double aUnit = poSRS->GetAngularUnits(NULL);
+            const double aUnit = poSRS->GetAngularUnits(nullptr);
             primemValue *= aUnit;
         }
         GTIFKeySet( psGTIF, GeogPrimeMeridianLongGeoKey, TYPE_DOUBLE, 1,
@@ -435,10 +435,9 @@ void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
         osCitation += "|";
 
     if( bRewriteGeogCitation )
-        GTIFKeySet( psGTIF, GeogCitationGeoKey, TYPE_ASCII,
-                    0, osCitation.c_str() );
-
-    return;
+    {
+        oMapAsciiKeys[GeogCitationGeoKey] = osCitation;
+    }
 }
 
 /************************************************************************/
@@ -451,7 +450,7 @@ OGRBoolean SetCitationToSRS( GTIF* hGTIF, char* szCTString, int nCTStringLen,
                              OGRBoolean* linearUnitIsSet)
 {
     OGRBoolean ret = FALSE;
-    char* lUnitName = NULL;
+    const char* lUnitName = nullptr;
 
     poSRS->GetLinearUnits( &lUnitName );
     if( !lUnitName || strlen(lUnitName) == 0 ||
@@ -470,7 +469,7 @@ OGRBoolean SetCitationToSRS( GTIF* hGTIF, char* szCTString, int nCTStringLen,
     char** ctNames = CitationStringParse(szCTString, geoKey);
     if( ctNames )
     {
-        if( poSRS->GetRoot() == NULL)
+        if( poSRS->GetRoot() == nullptr)
             poSRS->SetNode( "PROJCS", "unnamed" );
         if( ctNames[CitPcsName] )
         {
@@ -486,7 +485,7 @@ OGRBoolean SetCitationToSRS( GTIF* hGTIF, char* szCTString, int nCTStringLen,
             int size = static_cast<int>(strlen(ctNames[CitLUnitsName]));
             if( strchr(ctNames[CitLUnitsName], '\0') )
                 size -= 1;
-            for( int i = 0; apszUnitMap[i] != NULL; i += 2 )
+            for( int i = 0; apszUnitMap[i] != nullptr; i += 2 )
             {
                 if( EQUALN(apszUnitMap[i], ctNames[CitLUnitsName], size) )
                 {
@@ -495,8 +494,11 @@ OGRBoolean SetCitationToSRS( GTIF* hGTIF, char* szCTString, int nCTStringLen,
                 }
             }
             if( unitSize == 0.0 )
-                GDALGTIFKeyGetDOUBLE( hGTIF, ProjLinearUnitSizeGeoKey,
-                                      &unitSize, 0, 1 );
+            {
+                CPL_IGNORE_RET_VAL(
+                    GDALGTIFKeyGetDOUBLE( hGTIF, ProjLinearUnitSizeGeoKey,
+                                      &unitSize, 0, 1 ));
+            }
             poSRS->SetLinearUnits( ctNames[CitLUnitsName], unitSize);
             *linearUnitIsSet = TRUE;
         }
@@ -536,11 +538,11 @@ void GetGeogCSFromCitation( char* szGCSName, int nGCSName,
                             char **ppszSpheroidName,
                             char **ppszAngularUnits)
 {
-    *ppszGeogName = NULL;
-    *ppszDatumName = NULL;
-    *ppszPMName = NULL;
-    *ppszSpheroidName = NULL;
-    *ppszAngularUnits = NULL;
+    *ppszGeogName = nullptr;
+    *ppszDatumName = nullptr;
+    *ppszPMName = nullptr;
+    *ppszSpheroidName = nullptr;
+    *ppszAngularUnits = nullptr;
 
     char* imgCTName = ImagineCitationTranslation(szGCSName, geoKey);
     if( imgCTName )
@@ -603,7 +605,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
 
     bool hasUnits = false;
     if( GDALGTIFKeyGetASCII( hGTIF, GTCitationGeoKey, szCTString,
-                             0, sizeof(szCTString) ) )
+                             sizeof(szCTString) ) )
     {
         CPLString osLCCT = szCTString;
 
@@ -632,7 +634,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
             const char* pReturn = strchr( pStr, '\n');
             if( pReturn )
                 osCSName.resize(pReturn - pStr);
-            if( poSRS->ImportFromESRIStatePlaneWKT(0, NULL, NULL, 32767, osCSName)
+            if( poSRS->ImportFromESRIStatePlaneWKT(0, nullptr, nullptr, 32767, osCSName)
                 == OGRERR_NONE )
             {
                 // For some erdas citation keys, the state plane CS name is
@@ -642,7 +644,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
                 {
                     OGR_SRSNode *poUnit = poSRS->GetAttrNode( "PROJCS|UNIT" );
 
-                    if( poUnit != NULL && poUnit->GetChildCount() >= 2 )
+                    if( poUnit != nullptr && poUnit->GetChildCount() >= 2 )
                     {
                         CPLString unitName = poUnit->GetChild(0)->GetValue();
                         unitName.tolower();
@@ -673,8 +675,8 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
     }
     if( !hasUnits )
     {
-        char *pszUnitsName = NULL;
-        GTIFGetUOMLengthInfo( psDefn->UOMLength, &pszUnitsName, NULL );
+        char *pszUnitsName = nullptr;
+        GTIFGetUOMLengthInfo( psDefn->UOMLength, &pszUnitsName, nullptr );
         if( pszUnitsName )
         {
             CPLString osLCCT = pszUnitsName;
@@ -697,8 +699,8 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
 
     // Check PCSCitationGeoKey if it exists.
     szCTString[0] = '\0';
-    if( hGTIF && GDALGTIFKeyGetASCII( hGTIF, PCSCitationGeoKey, szCTString,
-                                      0, sizeof(szCTString)) )
+    if( GDALGTIFKeyGetASCII( hGTIF, PCSCitationGeoKey, szCTString,
+                             sizeof(szCTString)) )
     {
         // For tif created by LEICA(ERDAS), ESRI state plane pe string was
         // used and the state plane zone is given in PCSCitation. Therefore
@@ -707,9 +709,9 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
                           static_cast<int>(strlen(szCTString)),
                           PCSCitationGeoKey, poSRS, pLinearUnitIsSet );
         const char *pcsName = poSRS->GetAttrValue("PROJCS");
-        const char *pStr = NULL;
-        if( (pcsName && (pStr = strstr(pcsName, "State Plane Zone ")) != NULL)
-            || (pStr = strstr(szCTString, "State Plane Zone ")) != NULL )
+        const char *pStr = nullptr;
+        if( (pcsName && (pStr = strstr(pcsName, "State Plane Zone ")) != nullptr)
+            || (pStr = strstr(szCTString, "State Plane Zone ")) != nullptr )
         {
             pStr += strlen("State Plane Zone ");
             int statePlaneZone = abs(atoi(pStr));
@@ -721,12 +723,12 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
                      strstr(szCTString, "NAD = 27") )
                 strcpy(nad, "NAD27");
             if( poSRS->ImportFromESRIStatePlaneWKT(
-                    statePlaneZone, (const char*)nad, (const char*)units,
+                    statePlaneZone, nad, units,
                     psDefn->PCS) == OGRERR_NONE )
                 return TRUE;
         }
         else if( pcsName &&
-                 (/* pStr = */ strstr(pcsName, "UTM Zone ")) != NULL )
+                 (/* pStr = */ strstr(pcsName, "UTM Zone ")) != nullptr )
         {
             CheckUTM( psDefn, szCTString );
         }
@@ -735,7 +737,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
     // Check state plane again to see if a pe string is available.
     if( psDefn->PCS != KvUserDefined )
     {
-        if( poSRS->ImportFromESRIStatePlaneWKT( 0, NULL, (const char*)units,
+        if( poSRS->ImportFromESRIStatePlaneWKT( 0, nullptr, units,
                                                 psDefn->PCS) == OGRERR_NONE )
             return TRUE;
     }
@@ -803,9 +805,9 @@ void CheckUTM( GTIFDefn * psDefn, const char * pszCtString )
             "PSAD56", "20S", "16120",
             "PSAD56", "21S", "16121",
             "PSAD56", "22S", "16122",
-            NULL, NULL, NULL };
+            nullptr, nullptr, nullptr };
 
-        for( int i = 0; apszUtmProjCode[i]!=NULL; i += 3 )
+        for( int i = 0; apszUtmProjCode[i]!=nullptr; i += 3 )
         {
             if( EQUALN(utmName, apszUtmProjCode[i+1],
                        strlen(apszUtmProjCode[i+1])) &&
@@ -815,7 +817,7 @@ void CheckUTM( GTIFDefn * psDefn, const char * pszCtString )
                 {
                     psDefn->ProjCode =
                         static_cast<short>( atoi(apszUtmProjCode[i+2]) );
-                    GTIFGetProjTRFInfo( psDefn->ProjCode, NULL,
+                    GTIFGetProjTRFInfo( psDefn->ProjCode, nullptr,
                                         &(psDefn->Projection),
                                         psDefn->ProjParm );
                     break;

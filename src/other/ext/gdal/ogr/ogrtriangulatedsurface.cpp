@@ -32,7 +32,7 @@
 #include "ogr_p.h"
 #include "ogr_api.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        OGRTriangulatedSurface()                      */
@@ -43,9 +43,7 @@ CPL_CVSID("$Id$");
  *
  */
 
-OGRTriangulatedSurface::OGRTriangulatedSurface()
-
-{ }
+OGRTriangulatedSurface::OGRTriangulatedSurface() = default;
 
 /************************************************************************/
 /*        OGRTriangulatedSurface( const OGRTriangulatedSurface& )       */
@@ -72,9 +70,7 @@ OGRTriangulatedSurface::OGRTriangulatedSurface(
  *
  */
 
-OGRTriangulatedSurface::~OGRTriangulatedSurface()
-
-{ }
+OGRTriangulatedSurface::~OGRTriangulatedSurface() = default;
 
 /************************************************************************/
 /*                 operator=( const OGRTriangulatedSurface&)            */
@@ -100,10 +96,20 @@ OGRTriangulatedSurface& OGRTriangulatedSurface::operator=(
         assignSpatialReference( other.getSpatialReference() );
         for(int i=0;i<other.oMP.nGeomCount;i++)
         {
-            addGeometry( other.oMP.getGeometryRef(i) );
+            OGRTriangulatedSurface::addGeometry( other.oMP.getGeometryRef(i) );
         }
     }
     return *this;
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRTriangulatedSurface *OGRTriangulatedSurface::clone() const
+
+{
+    return new (std::nothrow) OGRTriangulatedSurface(*this);
 }
 
 /************************************************************************/
@@ -188,8 +194,8 @@ OGRErr OGRTriangulatedSurface::addGeometry (const OGRGeometry *poNewGeom)
     {
         OGRErr eErr = OGRERR_FAILURE;
         OGRTriangle *poTriangle = new OGRTriangle(
-                    *(reinterpret_cast<const OGRPolygon *>(poNewGeom)), eErr);
-        if (poTriangle != NULL && eErr == OGRERR_NONE)
+                    *(poNewGeom->toPolygon()), eErr);
+        if (poTriangle != nullptr && eErr == OGRERR_NONE)
         {
             eErr = addGeometryDirectly(poTriangle);
 
@@ -229,13 +235,11 @@ OGRMultiPolygon* OGRTriangulatedSurface::CastToMultiPolygonImpl(
     OGRMultiPolygon *poMultiPolygon = new OGRMultiPolygon();
     poMultiPolygon->assignSpatialReference(poTS->getSpatialReference());
 
-    for (int i = 0; i < poTS->oMP.nGeomCount; i++)
+    for( auto&& poSubGeom: *poTS )
     {
-        OGRTriangle *geom =
-            reinterpret_cast<OGRTriangle *>(poTS->oMP.papoGeoms[i]);
-        poTS->oMP.papoGeoms[i] = NULL;
-        OGRPolygon *poPolygon = OGRSurface::CastToPolygon(geom);
+        OGRPolygon *poPolygon = OGRSurface::CastToPolygon(poSubGeom);
         poMultiPolygon->addGeometryDirectly(poPolygon);
+        poSubGeom = nullptr;
     }
     delete poTS;
 
@@ -263,13 +267,11 @@ OGRPolyhedralSurface* OGRTriangulatedSurface::CastToPolyhedralSurface(
 {
     OGRPolyhedralSurface* poPS = new OGRPolyhedralSurface();
     poPS->assignSpatialReference(poTS->getSpatialReference());
-    for (int i = 0; i < poTS->oMP.nGeomCount; i++)
+    for( auto&& poSubGeom: *poTS )
     {
-        OGRTriangle *geom =
-            reinterpret_cast<OGRTriangle *>(poTS->oMP.papoGeoms[i]);
-        poTS->oMP.papoGeoms[i] = NULL;
-        OGRPolygon *poPolygon = OGRSurface::CastToPolygon(geom);
+        OGRPolygon *poPolygon = OGRSurface::CastToPolygon(poSubGeom);
         poPS->oMP.addGeometryDirectly(poPolygon);
+        poSubGeom = nullptr;
     }
     delete poTS;
     return poPS;

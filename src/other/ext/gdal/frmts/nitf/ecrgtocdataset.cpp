@@ -2,10 +2,10 @@
  *
  * Project:  ECRG TOC read Translator
  * Purpose:  Implementation of ECRGTOCDataset and ECRGTOCSubDataset.
- * Author:   Even Rouault, even.rouault at mines-paris.org
+ * Author:   Even Rouault, even.rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,7 @@
 
 #include "cpl_port.h"
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
@@ -51,7 +52,7 @@
 #include "ogr_srs_api.h"
 #include "vrtdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /** Overview of used classes :
    - ECRGTOCDataset : lists the different subdatasets, listed in the .xml,
@@ -75,7 +76,7 @@ typedef struct
 /* ==================================================================== */
 /************************************************************************/
 
-class ECRGTOCDataset : public GDALPamDataset
+class ECRGTOCDataset final: public GDALPamDataset
 {
   char      **papszSubDatasets;
   double      adfGeoTransform[6];
@@ -85,8 +86,8 @@ class ECRGTOCDataset : public GDALPamDataset
   public:
     ECRGTOCDataset()
     {
-        papszSubDatasets = NULL;
-        papszFileList = NULL;
+        papszSubDatasets = nullptr;
+        papszFileList = nullptr;
         memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
     }
 
@@ -111,9 +112,12 @@ class ECRGTOCDataset : public GDALPamDataset
         return CE_None;
     }
 
-    virtual const char *GetProjectionRef(void) override
+    virtual const char *_GetProjectionRef(void) override
     {
-        return SRS_WKT_WGS84;
+        return SRS_WKT_WGS84_LAT_LONG;
+    }
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
     }
 
     static GDALDataset* Build(  const char* pszTOCFilename,
@@ -133,7 +137,7 @@ class ECRGTOCDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ECRGTOCSubDataset : public VRTDataset
+class ECRGTOCSubDataset final: public VRTDataset
 {
   char**       papszFileList;
 
@@ -148,7 +152,7 @@ class ECRGTOCSubDataset : public VRTDataset
         poDriver = reinterpret_cast<GDALDriver *>(
             GDALGetDriverByName( "ECRGTOC" ) );
 
-        papszFileList = NULL;
+        papszFileList = nullptr;
     }
 
     ~ECRGTOCSubDataset()
@@ -221,7 +225,7 @@ void ECRGTOCDataset::AddSubDataset( const char* pszFilename,
 char **ECRGTOCDataset::GetMetadata( const char *pszDomain )
 
 {
-    if( pszDomain != NULL && EQUAL(pszDomain,"SUBDATASETS") )
+    if( pszDomain != nullptr && EQUAL(pszDomain,"SUBDATASETS") )
         return papszSubDatasets;
 
     return GDALPamDataset::GetMetadata( pszDomain );
@@ -299,12 +303,12 @@ static GIntBig GetFromBase34(const char* pszVal, int nMaxSize)
 
 /* MIL-PRF-32283 - Table II. ECRG zone limits. */
 /* starting with a fake zone 0 for convenience. */
-static const int anZoneUpperLat[] = { 0, 32, 48, 56, 64, 68, 72, 76, 80 };
+constexpr int anZoneUpperLat[] = { 0, 32, 48, 56, 64, 68, 72, 76, 80 };
 
 /* APPENDIX 70, TABLE III of MIL-A-89007 */
-static const int anACst_ADRG[] =
+constexpr int anACst_ADRG[] =
     { 369664, 302592, 245760, 199168, 163328, 137216, 110080, 82432 };
-static const int nBCst_ADRG = 400384;
+constexpr int nBCst_ADRG = 400384;
 
 // TODO: Why are these two functions done this way?
 static int CEIL_ROUND(double a, double b)
@@ -317,7 +321,7 @@ static int NEAR_ROUND(double a, double b)
     return static_cast<int>( floor( ( a / b ) + 0.5 ) * b );
 }
 
-static const int ECRG_PIXELS = 2304;
+constexpr int ECRG_PIXELS = 2304;
 
 static
 int GetExtent(const char* pszFrameName, int nScale, int nZone,
@@ -325,6 +329,9 @@ int GetExtent(const char* pszFrameName, int nScale, int nZone,
               double& dfPixelXSize, double& dfPixelYSize)
 {
     const int nAbsZone = abs(nZone);
+#ifdef DEBUG
+    assert( nAbsZone > 0 && nAbsZone <= 8 );
+#endif
 
 /************************************************************************/
 /*  Compute east-west constant                                          */
@@ -413,11 +420,11 @@ int GetExtent(const char* pszFrameName, int nScale, int nZone,
 /* ==================================================================== */
 /************************************************************************/
 
-class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
+class ECRGTOCProxyRasterDataSet final: public GDALProxyPoolDataset
 {
     /* The following parameters are only for sanity checking */
-    int checkDone;
-    int checkOK;
+    mutable int checkDone;
+    mutable int checkOK;
     double dfMinX;
     double dfMaxY;
     double dfPixelXSize;
@@ -430,7 +437,7 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
                                    double dfMinX, double dfMaxY,
                                    double dfPixelXSize, double dfPixelYSize );
 
-        GDALDataset* RefUnderlyingDataset() override
+        GDALDataset* RefUnderlyingDataset() const override
         {
             GDALDataset* poSourceDS = GDALProxyPoolDataset::RefUnderlyingDataset();
             if (poSourceDS)
@@ -440,18 +447,18 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
                 if (!checkOK)
                 {
                     GDALProxyPoolDataset::UnrefUnderlyingDataset(poSourceDS);
-                    poSourceDS = NULL;
+                    poSourceDS = nullptr;
                 }
             }
             return poSourceDS;
         }
 
-        void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) override
+        void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) const override
         {
             GDALProxyPoolDataset::UnrefUnderlyingDataset(poUnderlyingDataset);
         }
 
-        int SanityCheckOK(GDALDataset* poSourceDS);
+        int SanityCheckOK(GDALDataset* poSourceDS) const;
 };
 
 /************************************************************************/
@@ -467,7 +474,7 @@ ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet(
     // Mark as shared since the VRT will take several references if we are in
     // RGBA mode (4 bands for this dataset).
     GDALProxyPoolDataset(fileNameIn, nXSizeIn, nYSizeIn, GA_ReadOnly,
-                         TRUE, SRS_WKT_WGS84),
+                         TRUE, SRS_WKT_WGS84_LAT_LONG),
     checkDone(FALSE),
     checkOK(FALSE),
     dfMinX(dfMinXIn),
@@ -492,7 +499,7 @@ ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet(
              "For %s, assert '" #x "' failed",                        \
              GetDescription()); checkOK = FALSE; } } while( false )
 
-int ECRGTOCProxyRasterDataSet::SanityCheckOK( GDALDataset* poSourceDS )
+int ECRGTOCProxyRasterDataSet::SanityCheckOK( GDALDataset* poSourceDS ) const
 {
     // int nSrcBlockXSize;
     // int nSrcBlockYSize;
@@ -515,7 +522,7 @@ int ECRGTOCProxyRasterDataSet::SanityCheckOK( GDALDataset* poSourceDS )
     WARN_CHECK_DS(poSourceDS->GetRasterCount() == 3);
     WARN_CHECK_DS(poSourceDS->GetRasterXSize() == nRasterXSize);
     WARN_CHECK_DS(poSourceDS->GetRasterYSize() == nRasterYSize);
-    WARN_CHECK_DS(EQUAL(poSourceDS->GetProjectionRef(), SRS_WKT_WGS84));
+    WARN_CHECK_DS(EQUAL(poSourceDS->GetProjectionRef(), SRS_WKT_WGS84_LAT_LONG));
     // poSourceDS->GetRasterBand(1)->GetBlockSize(&nSrcBlockXSize,
     //                                            &nSrcBlockYSize);
     // GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
@@ -535,7 +542,7 @@ static const char* BuildFullName(const char* pszTOCFilename,
                                  const char* pszFramePath,
                                  const char* pszFrameName)
 {
-    char* pszPath = NULL;
+    char* pszPath = nullptr;
     if (pszFramePath[0] == '.' &&
         (pszFramePath[1] == '/' ||pszFramePath[1] == '\\'))
         pszPath = CPLStrdup(pszFramePath + 2);
@@ -546,12 +553,12 @@ static const char* BuildFullName(const char* pszTOCFilename,
         if (pszPath[i] == '\\')
             pszPath[i] = '/';
     }
-    const char* pszName = CPLFormFilename(pszPath, pszFrameName, NULL);
+    const char* pszName = CPLFormFilename(pszPath, pszFrameName, nullptr);
     CPLFree(pszPath);
-    pszPath = NULL;
+    pszPath = nullptr;
     const char* pszTOCPath = CPLGetDirname(pszTOCFilename);
     const char* pszFirstSlashInName = strchr(pszName, '/');
-    if (pszFirstSlashInName != NULL)
+    if (pszFirstSlashInName != nullptr)
     {
         int nFirstDirLen = static_cast<int>(pszFirstSlashInName - pszName);
         if (static_cast<int>( strlen(pszTOCPath) ) >= nFirstDirLen + 1 &&
@@ -584,8 +591,8 @@ GDALDataset* ECRGTOCSubDataset::Build(  const char* pszProductTitle,
                                         double dfGlobalPixelYSize)
 {
     GDALDriver *poDriver = GetGDALDriverManager()->GetDriverByName("VRT");
-    if( poDriver == NULL )
-        return NULL;
+    if( poDriver == nullptr )
+        return nullptr;
 
     const int nSizeX = static_cast<int>(
         (dfGlobalMaxX - dfGlobalMinX) / dfGlobalPixelXSize + 0.5);
@@ -597,7 +604,7 @@ GDALDataset* ECRGTOCSubDataset::Build(  const char* pszProductTitle,
     /* ------------------------------------ */
     ECRGTOCSubDataset *poVirtualDS = new ECRGTOCSubDataset( nSizeX, nSizeY );
 
-    poVirtualDS->SetProjection(SRS_WKT_WGS84);
+    poVirtualDS->SetProjection(SRS_WKT_WGS84_LAT_LONG);
 
     double adfGeoTransform[6] = {
       dfGlobalMinX,
@@ -611,7 +618,7 @@ GDALDataset* ECRGTOCSubDataset::Build(  const char* pszProductTitle,
 
     for (int i=0;i<3;i++)
     {
-        poVirtualDS->AddBand(GDT_Byte, NULL);
+        poVirtualDS->AddBand(GDT_Byte, nullptr);
         GDALRasterBand *poBand = poVirtualDS->GetRasterBand( i + 1 );
         poBand->SetColorInterpretation((GDALColorInterp)(GCI_RedBand+i));
     }
@@ -703,11 +710,11 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                                    const char* pszOpenInfoFilename)
 {
     CPLXMLNode* psTOC = CPLGetXMLNode(psXML, "=Table_of_Contents");
-    if (psTOC == NULL)
+    if (psTOC == nullptr)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Cannot find Table_of_Contents element");
-        return NULL;
+        return nullptr;
     }
 
     double dfGlobalMinX = 0.0;
@@ -729,16 +736,16 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
     poDS->papszFileList = poDS->GDALDataset::GetFileList();
 
     for(CPLXMLNode* psIter1 = psTOC->psChild;
-                    psIter1 != NULL;
+                    psIter1 != nullptr;
                     psIter1 = psIter1->psNext)
     {
-        if (!(psIter1->eType == CXT_Element && psIter1->pszValue != NULL &&
+        if (!(psIter1->eType == CXT_Element && psIter1->pszValue != nullptr &&
               strcmp(psIter1->pszValue, "product") == 0))
             continue;
 
         const char* pszProductTitle =
-            CPLGetXMLValue(psIter1, "product_title", NULL);
-        if (pszProductTitle == NULL)
+            CPLGetXMLValue(psIter1, "product_title", nullptr);
+        if (pszProductTitle == nullptr)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                         "Cannot find product_title attribute");
@@ -749,15 +756,15 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
             continue;
 
         for(CPLXMLNode* psIter2 = psIter1->psChild;
-                        psIter2 != NULL;
+                        psIter2 != nullptr;
                         psIter2 = psIter2->psNext)
         {
-            if (!(psIter2->eType == CXT_Element && psIter2->pszValue != NULL &&
+            if (!(psIter2->eType == CXT_Element && psIter2->pszValue != nullptr &&
                   strcmp(psIter2->pszValue, "disc") == 0))
                 continue;
 
-            const char* pszDiscId = CPLGetXMLValue(psIter2, "id", NULL);
-            if (pszDiscId == NULL)
+            const char* pszDiscId = CPLGetXMLValue(psIter2, "id", nullptr);
+            if (pszDiscId == nullptr)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                             "Cannot find id attribute");
@@ -768,7 +775,7 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                 continue;
 
             CPLXMLNode* psFrameList = CPLGetXMLNode(psIter2, "frame_list");
-            if (psFrameList == NULL)
+            if (psFrameList == nullptr)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                             "Cannot find frame_list element");
@@ -776,16 +783,16 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
             }
 
             for(CPLXMLNode* psIter3 = psFrameList->psChild;
-                            psIter3 != NULL;
+                            psIter3 != nullptr;
                             psIter3 = psIter3->psNext)
             {
                 if (!(psIter3->eType == CXT_Element &&
-                      psIter3->pszValue != NULL &&
+                      psIter3->pszValue != nullptr &&
                       strcmp(psIter3->pszValue, "scale") == 0))
                     continue;
 
-                const char* pszSize = CPLGetXMLValue(psIter3, "size", NULL);
-                if (pszSize == NULL)
+                const char* pszSize = CPLGetXMLValue(psIter3, "size", nullptr);
+                if (pszSize == nullptr)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                                 "Cannot find size attribute");
@@ -813,11 +820,11 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                     {
                         int nCountScales = 0;
                         for(CPLXMLNode* psIter4 = psFrameList->psChild;
-                                psIter4 != NULL;
+                                psIter4 != nullptr;
                                 psIter4 = psIter4->psNext)
                         {
                             if (!(psIter4->eType == CXT_Element &&
-                                psIter4->pszValue != NULL &&
+                                psIter4->pszValue != nullptr &&
                                 strcmp(psIter4->pszValue, "scale") == 0))
                                 continue;
                             nCountScales ++;
@@ -829,7 +836,7 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                                       "subdatasets syntax since this disk "
                                       "contains several scales" );
                             delete poDS;
-                            return NULL;
+                            return nullptr;
                         }
                     }
                 }
@@ -840,17 +847,17 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                 int nValidFrames = 0;
 
                 for(CPLXMLNode* psIter4 = psIter3->psChild;
-                                psIter4 != NULL;
+                                psIter4 != nullptr;
                                 psIter4 = psIter4->psNext)
                 {
                     if (!(psIter4->eType == CXT_Element &&
-                          psIter4->pszValue != NULL &&
+                          psIter4->pszValue != nullptr &&
                           strcmp(psIter4->pszValue, "frame") == 0))
                         continue;
 
                     const char* pszFrameName =
-                        CPLGetXMLValue(psIter4, "name", NULL);
-                    if (pszFrameName == NULL)
+                        CPLGetXMLValue(psIter4, "name", nullptr);
+                    if (pszFrameName == nullptr)
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Cannot find name element");
@@ -866,8 +873,8 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                     }
 
                     const char* pszFramePath =
-                        CPLGetXMLValue(psIter4, "frame_path", NULL);
-                    if (pszFramePath == NULL)
+                        CPLGetXMLValue(psIter4, "frame_path", nullptr);
+                    if (pszFramePath == nullptr)
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Cannot find frame_path element");
@@ -875,8 +882,8 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                     }
 
                     const char* pszFrameZone =
-                        CPLGetXMLValue(psIter4, "frame_zone", NULL);
-                    if (pszFrameZone == NULL)
+                        CPLGetXMLValue(psIter4, "frame_zone", nullptr);
+                    if (pszFrameZone == nullptr)
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Cannot find frame_zone element");
@@ -972,7 +979,7 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                 {
                     delete poDS;
                     if (nValidFrames == 0)
-                        return NULL;
+                        return nullptr;
                     return ECRGTOCSubDataset::Build(pszProductTitle,
                                                     pszDiscId,
                                                     nScale,
@@ -1000,7 +1007,7 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
     if (!bGlobalExtentValid)
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     if (nSubDatasets == 1)
@@ -1056,14 +1063,14 @@ int ECRGTOCDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char *pabyHeader
         = reinterpret_cast<const char *>( poOpenInfo->pabyHeader );
-    if( pabyHeader == NULL )
+    if( pabyHeader == nullptr )
         return FALSE;
 
-    if ( strstr(pabyHeader, "<Table_of_Contents") != NULL &&
-         strstr(pabyHeader, "<file_header ") != NULL)
+    if ( strstr(pabyHeader, "<Table_of_Contents") != nullptr &&
+         strstr(pabyHeader, "<file_header ") != nullptr)
         return TRUE;
 
-    if ( strstr(pabyHeader, "<!DOCTYPE Table_of_Contents [") != NULL)
+    if ( strstr(pabyHeader, "<!DOCTYPE Table_of_Contents [") != nullptr)
         return TRUE;
 
     return FALSE;
@@ -1077,7 +1084,7 @@ GDALDataset *ECRGTOCDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if( !Identify( poOpenInfo ) )
-        return NULL;
+        return nullptr;
 
     const char *pszFilename = poOpenInfo->pszFilename;
     CPLString osFilename;
@@ -1094,7 +1101,7 @@ GDALDataset *ECRGTOCDataset::Open( GDALOpenInfo * poOpenInfo )
         if( nTokens != 3 && nTokens != 4 && nTokens != 5 )
         {
             CSLDestroy(papszTokens);
-            return NULL;
+            return nullptr;
         }
 
         osProduct = papszTokens[0];
@@ -1131,7 +1138,7 @@ GDALDataset *ECRGTOCDataset::Open( GDALOpenInfo * poOpenInfo )
         else
         {
             CSLDestroy(papszTokens);
-            return NULL;
+            return nullptr;
         }
 
         CSLDestroy(papszTokens);
@@ -1142,9 +1149,9 @@ GDALDataset *ECRGTOCDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Parse the XML file                                              */
 /* -------------------------------------------------------------------- */
     CPLXMLNode* psXML = CPLParseXMLFile(pszFilename);
-    if (psXML == NULL)
+    if (psXML == nullptr)
     {
-        return NULL;
+        return nullptr;
     }
 
     GDALDataset* poDS = Build( pszFilename, psXML, osProduct, osDiscId,
@@ -1157,7 +1164,7 @@ GDALDataset *ECRGTOCDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ECRGTOC driver does not support update mode");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -1170,7 +1177,7 @@ GDALDataset *ECRGTOCDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_ECRGTOC()
 
 {
-    if( GDALGetDriverByName( "ECRGTOC" ) != NULL )
+    if( GDALGetDriverByName( "ECRGTOC" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -1183,7 +1190,7 @@ void GDALRegister_ECRGTOC()
     poDriver->pfnOpen = ECRGTOCDataset::Open;
 
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#ECRGTOC" );
+                               "drivers/raster/ecrgtoc.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );

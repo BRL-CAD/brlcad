@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  ADRG reader
- * Author:   Even Rouault, even.rouault at mines-paris.org
+ * Author:   Even Rouault, even.rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,11 +31,16 @@
 #include "iso8211.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
+#include <limits>
+#include <new>
+
+CPL_CVSID("$Id$")
 
 #define N_ELEMENTS(x)  (sizeof(x)/sizeof(x[0]))
 
-class ADRGDataset : public GDALPamDataset
+#define DIGIT_ZERO '0'
+
+class ADRGDataset final: public GDALPamDataset
 {
     friend class ADRGRasterBand;
 
@@ -67,29 +72,33 @@ class ADRGDataset : public GDALPamDataset
     CPLString    osBaseFileName;
 
     static char** GetGENListFromTHF(const char* pszFileName);
-    static char** GetIMGListFromGEN(const char* pszFileName, int* pnRecordIndex = NULL);
-    static ADRGDataset* OpenDataset(const char* pszGENFileName, const char* pszIMGFileName, DDFRecord* record = NULL);
+    static char** GetIMGListFromGEN(const char* pszFileName, int* pnRecordIndex = nullptr);
+    static ADRGDataset* OpenDataset(const char* pszGENFileName, const char* pszIMGFileName, DDFRecord* record = nullptr);
     static DDFRecord*  FindRecordInGENForIMG(DDFModule& module,
                                              const char* pszGENFileName, const char* pszIMGFileName);
 
   public:
-                 ADRGDataset();
-    virtual     ~ADRGDataset();
+    ADRGDataset();
+    ~ADRGDataset() override;
 
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr GetGeoTransform( double * padfGeoTransform ) override;
-    virtual CPLErr SetGeoTransform( double * padfGeoTransform ) override;
+    const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr GetGeoTransform( double * padfGeoTransform ) override;
+    CPLErr SetGeoTransform( double * padfGeoTransform ) override;
 
-    virtual char      **GetMetadataDomainList() override;
-    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata( const char * pszDomain = "" ) override;
 
-    virtual char      **GetFileList() override;
+    char **GetFileList() override;
 
-    void                AddSubDataset( const char* pszGENFileName, const char* pszIMGFileName );
+    void AddSubDataset( const char* pszGENFileName,
+                        const char* pszIMGFileName );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create(const char* pszFilename, int nXSize, int nYSize,
-                               int nBands, GDALDataType eType, char **papszOptions);
+                               int nBandsIn, GDALDataType eType, char **papszOptions);
 
     static double GetLongitudeFromString(const char* str);
     static double GetLatitudeFromString(const char* str);
@@ -104,21 +113,21 @@ class ADRGDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ADRGRasterBand : public GDALPamRasterBand
+class ADRGRasterBand final: public GDALPamRasterBand
 {
     friend class ADRGDataset;
 
   public:
-                            ADRGRasterBand( ADRGDataset *, int );
+    ADRGRasterBand( ADRGDataset *, int );
 
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual CPLErr          IReadBlock( int, int, void * ) override;
-    virtual CPLErr          IWriteBlock( int, int, void * ) override;
+    GDALColorInterp GetColorInterpretation() override;
+    CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IWriteBlock( int, int, void * ) override;
 
-    virtual double          GetNoDataValue( int *pbSuccess = NULL ) override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
 
-//    virtual int             GetOverviewCount();
-//    virtual GDALRasterBand* GetOverview(int i);
+    // virtual int GetOverviewCount();
+    // virtual GDALRasterBand* GetOverview(int i);
 };
 
 /************************************************************************/
@@ -224,27 +233,27 @@ CPLErr ADRGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     CPLDebug("ADRG", "(%d,%d) -> nBlock = %d", nBlockXOff, nBlockYOff, nBlock);
 
-    int offset;
+    vsi_l_offset offset;
     if( l_poDS->TILEINDEX )
     {
-        if( l_poDS->TILEINDEX[nBlock] == 0 )
+        if( l_poDS->TILEINDEX[nBlock] <= 0 )
         {
             memset(pImage, 0, 128 * 128);
             return CE_None;
         }
-        offset = l_poDS->offsetInIMG + (l_poDS->TILEINDEX[nBlock] - 1) * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
+        offset = l_poDS->offsetInIMG + static_cast<vsi_l_offset>(l_poDS->TILEINDEX[nBlock] - 1) * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
     }
     else
-        offset = l_poDS->offsetInIMG + nBlock * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
+        offset = l_poDS->offsetInIMG + static_cast<vsi_l_offset>(nBlock) * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
 
     if( VSIFSeekL(l_poDS->fdIMG, offset, SEEK_SET) != 0 )
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Cannot seek to offset %d", offset);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot seek to offset " CPL_FRMT_GUIB, offset);
         return CE_Failure;
     }
     if( VSIFReadL(pImage, 1, 128 * 128, l_poDS->fdIMG) != 128 * 128 )
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Cannot read data at offset %d", offset);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot read data at offset " CPL_FRMT_GUIB, offset);
         return CE_Failure;
     }
 
@@ -525,8 +534,8 @@ static int WriteFieldDecl(VSILFILE* fd, char _data_struct_code , char _data_type
 /************************************************************************/
 
 ADRGDataset::ADRGDataset() :
-    fdIMG(NULL),
-    TILEINDEX(NULL),
+    fdIMG(nullptr),
+    TILEINDEX(nullptr),
     offsetInIMG(0),
     NFC(0),
     NFL(0),
@@ -534,11 +543,11 @@ ADRGDataset::ADRGDataset() :
     PSO(0.0),
     ARV(0),
     BRV(0),
-    papszSubDatasets(NULL),
-    poOverviewDS(NULL),
+    papszSubDatasets(nullptr),
+    poOverviewDS(nullptr),
     bCreation(FALSE),
-    fdGEN(NULL),
-    fdTHF(NULL),
+    fdGEN(nullptr),
+    fdTHF(nullptr),
     bGeoTransformValid(0),
     nNextAvailableBlock(0)
 {
@@ -560,7 +569,7 @@ ADRGDataset::~ADRGDataset()
 
     if( bCreation )
     {
-        GDALPamDataset::FlushCache();
+        GDALPamDataset::FlushCache(true);
 
         /* Write header and padding of image */
         VSIFSeekL(fdIMG, 0, SEEK_SET);
@@ -708,7 +717,7 @@ char **ADRGDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "SUBDATASETS", NULL);
+                                   "SUBDATASETS", nullptr);
 }
 
 /************************************************************************/
@@ -718,7 +727,7 @@ char **ADRGDataset::GetMetadataDomainList()
 char **ADRGDataset::GetMetadata( const char *pszDomain )
 
 {
-    if( pszDomain != NULL && EQUAL(pszDomain,"SUBDATASETS") )
+    if( pszDomain != nullptr && EQUAL(pszDomain,"SUBDATASETS") )
         return papszSubDatasets;
 
     return GDALPamDataset::GetMetadata( pszDomain );
@@ -728,7 +737,7 @@ char **ADRGDataset::GetMetadata( const char *pszDomain )
 /*                        GetProjectionRef()                            */
 /************************************************************************/
 
-const char* ADRGDataset::GetProjectionRef()
+const char* ADRGDataset::_GetProjectionRef()
 {
     return osSRS;
 }
@@ -739,7 +748,7 @@ const char* ADRGDataset::GetProjectionRef()
 
 CPLErr ADRGDataset::GetGeoTransform( double * padfGeoTransform)
 {
-    if( papszSubDatasets != NULL )
+    if( papszSubDatasets != nullptr )
         return CE_Failure;
 
     memcpy( padfGeoTransform, adfGeoTransform, sizeof(double)*6 );
@@ -807,7 +816,7 @@ DDFRecord* ADRGDataset::FindRecordInGENForIMG(DDFModule& module,
 {
     /* Finds the GEN file corresponding to the IMG file */
     if( !module.Open(pszGENFileName, TRUE) )
-        return NULL;
+        return nullptr;
 
     CPLString osShortIMGFilename = CPLGetFilename(pszIMGFileName);
 
@@ -818,8 +827,8 @@ DDFRecord* ADRGDataset::FindRecordInGENForIMG(DDFModule& module,
         DDFRecord* record = module.ReadRecord();
         CPLPopErrorHandler();
         CPLErrorReset();
-        if( record == NULL )
-          return NULL;
+        if( record == nullptr )
+          return nullptr;
 
         if( record->GetFieldCount() >= 5 )
         {
@@ -832,7 +841,7 @@ DDFRecord* ADRGDataset::FindRecordInGENForIMG(DDFModule& module,
             }
 
             const char* RTY = record->GetStringSubfield("001", 0, "RTY", 0);
-            if( RTY == NULL )
+            if( RTY == nullptr )
                 continue;
             /* Ignore overviews */
             if( strcmp(RTY, "OVV") == 0 )
@@ -851,7 +860,7 @@ DDFRecord* ADRGDataset::FindRecordInGENForIMG(DDFModule& module,
             }
 
             const char* pszBAD = record->GetStringSubfield("SPR", 0, "BAD", 0);
-            if( pszBAD == NULL || strlen(pszBAD) != 12 )
+            if( pszBAD == nullptr || strlen(pszBAD) != 12 )
                 continue;
             CPLString osBAD = pszBAD;
             {
@@ -888,38 +897,38 @@ ADRGDataset* ADRGDataset::OpenDataset(
     int NFC;
     CPLString osBAD;
     int TIF;
-    int* TILEINDEX = NULL;
+    int* TILEINDEX = nullptr;
 
-    if( record == NULL )
+    if( record == nullptr )
     {
         record = FindRecordInGENForIMG(module, pszGENFileName, pszIMGFileName);
-        if( record == NULL )
-            return NULL;
+        if( record == nullptr )
+            return nullptr;
     }
 
     DDFField* field = record->GetField(1);
-    if( field == NULL )
-        return NULL;
+    if( field == nullptr )
+        return nullptr;
     DDFFieldDefn *fieldDefn = field->GetFieldDefn();
 
     if( !(strcmp(fieldDefn->GetName(), "DSI") == 0 &&
           fieldDefn->GetSubfieldCount() == 2) )
     {
-        return NULL;
+        return nullptr;
     }
 
     const char* pszPTR = record->GetStringSubfield("DSI", 0, "PRT", 0);
-    if( pszPTR == NULL || !EQUAL(pszPTR, "ADRG") )
-       return NULL;
+    if( pszPTR == nullptr || !EQUAL(pszPTR, "ADRG") )
+       return nullptr;
 
     const char* pszNAM = record->GetStringSubfield("DSI", 0, "NAM", 0);
-    if( pszNAM == NULL || strlen(pszNAM) != 8 )
-        return NULL;
+    if( pszNAM == nullptr || strlen(pszNAM) != 8 )
+        return nullptr;
     CPLString osNAM = pszNAM;
 
     field = record->GetField(2);
-    if( field == NULL )
-        return NULL;
+    if( field == nullptr )
+        return nullptr;
     fieldDefn = field->GetFieldDefn();
 
     // TODO: Support on GIN things.  And what is GIN?
@@ -929,11 +938,11 @@ ADRGDataset* ADRGDataset::OpenDataset(
         if( !(strcmp(fieldDefn->GetName(), "GEN") == 0 &&
               fieldDefn->GetSubfieldCount() == 21) )
         {
-            return NULL;
+            return nullptr;
         }
 
         if( record->GetIntSubfield("GEN", 0, "STR", 0) != 3 )
-            return NULL;
+            return nullptr;
 
         SCA = record->GetIntSubfield("GEN", 0, "SCA", 0);
         CPLDebug("ADRG", "SCA=%d", SCA);
@@ -949,16 +958,18 @@ ADRGDataset* ADRGDataset::OpenDataset(
 
         BRV = record->GetIntSubfield("GEN", 0, "BRV", 0);
         CPLDebug("ADRG", "BRV=%d", BRV);
+        if( ARV <= 0 || (ZNA != 9 && ZNA != 18 && BRV <= 0) )
+            return nullptr;
 
         const char* pszLSO = record->GetStringSubfield("GEN", 0, "LSO", 0);
-        if( pszLSO == NULL || strlen(pszLSO) != 11 )
-            return NULL;
+        if( pszLSO == nullptr || strlen(pszLSO) != 11 )
+            return nullptr;
         LSO = GetLongitudeFromString(pszLSO);
         CPLDebug("ADRG", "LSO=%f", LSO);
 
         const char* pszPSO = record->GetStringSubfield("GEN", 0, "PSO", 0);
-        if( pszPSO == NULL || strlen(pszPSO) != 10 )
-            return NULL;
+        if( pszPSO == nullptr || strlen(pszPSO) != 10 )
+            return nullptr;
         PSO = GetLatitudeFromString(pszPSO);
         CPLDebug("ADRG", "PSO=%f", PSO);
     }
@@ -995,14 +1006,14 @@ ADRGDataset* ADRGDataset::OpenDataset(
 #endif
 
     field = record->GetField(3);
-    if( field == NULL )
-        return NULL;
+    if( field == nullptr )
+        return nullptr;
     fieldDefn = field->GetFieldDefn();
 
     if( !(strcmp(fieldDefn->GetName(), "SPR") == 0 &&
           fieldDefn->GetSubfieldCount() == 15))
     {
-        return NULL;
+        return nullptr;
     }
 
     NFL = record->GetIntSubfield("SPR", 0, "NFL", 0);
@@ -1011,32 +1022,33 @@ ADRGDataset* ADRGDataset::OpenDataset(
     NFC = record->GetIntSubfield("SPR", 0, "NFC", 0);
     CPLDebug("ADRG", "NFC=%d", NFC);
 
+    const auto knIntMax = std::numeric_limits<int>::max();
     if( NFL <= 0 || NFC <= 0 ||
-        NFL > INT_MAX / 128 ||
-        NFC > INT_MAX / 128 ||
-        NFL > (INT_MAX - 1) / (NFC * 5) )
+        NFL > knIntMax / 128 ||
+        NFC > knIntMax / 128 ||
+        NFL > (knIntMax - 1) / (NFC * 5) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,"Invalid NFL / NFC values");
-        return NULL;
+        return nullptr;
     }
 
     int PNC = record->GetIntSubfield("SPR", 0, "PNC", 0);
     CPLDebug("ADRG", "PNC=%d", PNC);
     if( PNC != 128 )
     {
-        return NULL;
+        return nullptr;
     }
 
     int PNL = record->GetIntSubfield("SPR", 0, "PNL", 0);
     CPLDebug("ADRG", "PNL=%d", PNL);
     if( PNL != 128 )
     {
-        return NULL;
+        return nullptr;
     }
 
     const char* pszBAD = record->GetStringSubfield("SPR", 0, "BAD", 0);
-    if( pszBAD == NULL || strlen(pszBAD) != 12 )
-        return NULL;
+    if( pszBAD == nullptr || strlen(pszBAD) != 12 )
+        return nullptr;
     osBAD = pszBAD;
     {
         char* c = (char*) strchr(osBAD.c_str(), ' ');
@@ -1049,12 +1061,12 @@ ADRGDataset* ADRGDataset::OpenDataset(
     if( !(strcmp(subfieldDefn->GetName(), "TIF") == 0 &&
           (subfieldDefn->GetFormat())[0] == 'A') )
     {
-        return NULL;
+        return nullptr;
     }
 
     const char* pszTIF = record->GetStringSubfield("SPR", 0, "TIF", 0);
-    if( pszTIF == NULL)
-        return NULL;
+    if( pszTIF == nullptr)
+        return nullptr;
     TIF = pszTIF[0] == 'Y';
     CPLDebug("ADRG", "TIF=%d", TIF);
 
@@ -1062,31 +1074,31 @@ ADRGDataset* ADRGDataset::OpenDataset(
     {
         if( record->GetFieldCount() != 6 )
         {
-            return NULL;
+            return nullptr;
         }
 
         field = record->GetField(5);
-        if( field == NULL )
-            return NULL;
+        if( field == nullptr )
+            return nullptr;
         fieldDefn = field->GetFieldDefn();
 
         if( !(strcmp(fieldDefn->GetName(), "TIM") == 0) )
         {
-            return NULL;
+            return nullptr;
         }
 
         if( field->GetDataSize() != 5 * NFL * NFC + 1 )
         {
-            return NULL;
+            return nullptr;
         }
 
         try
         {
             TILEINDEX = new int [NFL * NFC];
         }
-        catch( const std::bad_alloc& )
+        catch( const std::exception& )
         {
-            return NULL;
+            return nullptr;
         }
         const char* ptr = field->GetData();
         char offset[5+1]={0};
@@ -1100,11 +1112,11 @@ ADRGDataset* ADRGDataset::OpenDataset(
     }
 
     VSILFILE* fdIMG = VSIFOpenL(pszIMGFileName, "rb");
-    if( fdIMG == NULL )
+    if( fdIMG == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s\n", pszIMGFileName);
         delete[] TILEINDEX;
-        return NULL;
+        return nullptr;
     }
 
     /* Skip ISO8211 header of IMG file */
@@ -1115,7 +1127,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
     {
         VSIFCloseL(fdIMG);
         delete[] TILEINDEX;
-        return NULL;
+        return nullptr;
     }
     while (!VSIFEofL(fdIMG))
     {
@@ -1125,7 +1137,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
             {
                 VSIFCloseL(fdIMG);
                 delete[] TILEINDEX;
-                return NULL;
+                return nullptr;
             }
             offsetInIMG += 3;
             if( STARTS_WITH(recordName, "IMG") )
@@ -1136,7 +1148,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
                 {
                     VSIFCloseL(fdIMG);
                     delete[] TILEINDEX;
-                    return NULL;
+                    return nullptr;
                 }
                 while(c ==' ')
                 {
@@ -1145,7 +1157,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
                     {
                         VSIFCloseL(fdIMG);
                         delete[] TILEINDEX;
-                        return NULL;
+                        return nullptr;
                     }
                 }
                 offsetInIMG ++;
@@ -1158,7 +1170,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
         {
             VSIFCloseL(fdIMG);
             delete[] TILEINDEX;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -1166,7 +1178,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
     {
         VSIFCloseL(fdIMG);
         delete[] TILEINDEX;
-        return NULL;
+        return nullptr;
     }
 
     CPLDebug("ADRG", "Img offset data = %d", offsetInIMG);
@@ -1186,7 +1198,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
     poDS->TILEINDEX = TILEINDEX;
     poDS->fdIMG = fdIMG;
     poDS->offsetInIMG = offsetInIMG;
-    poDS->poOverviewDS = NULL;
+    poDS->poOverviewDS = nullptr;
 
     if( ZNA == 9)
     {
@@ -1205,7 +1217,8 @@ ADRGDataset* ADRGDataset::OpenDataset(
                 "PARAMETER[\"latitude_of_center\",90],"
                 "PARAMETER[\"longitude_of_center\",0],"
                 "PARAMETER[\"false_easting\",0],"
-                "PARAMETER[\"false_northing\",0]]";
+                "PARAMETER[\"false_northing\",0],"
+                "UNIT[\"metre\",1]]";
     }
     else if (ZNA == 18)
     {
@@ -1223,7 +1236,8 @@ ADRGDataset* ADRGDataset::OpenDataset(
                 "PARAMETER[\"latitude_of_center\",-90],"
                 "PARAMETER[\"longitude_of_center\",0],"
                 "PARAMETER[\"false_easting\",0],"
-                "PARAMETER[\"false_northing\",0]]";
+                "PARAMETER[\"false_northing\",0],"
+                "UNIT[\"metre\",1]]";
     }
     else
     {
@@ -1233,7 +1247,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
         poDS->adfGeoTransform[3] = PSO;
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = - 360. / BRV;
-        poDS->osSRS = SRS_WKT_WGS84;
+        poDS->osSRS = SRS_WKT_WGS84_LAT_LONG;
     }
 
     // if( isGIN )
@@ -1261,9 +1275,9 @@ ADRGDataset* ADRGDataset::OpenDataset(
 char** ADRGDataset::GetGENListFromTHF(const char* pszFileName)
 {
     DDFModule module;
-    DDFRecord *record = NULL;
+    DDFRecord *record = nullptr;
     int nFilenames = 0;
-    char** papszFileNames = NULL;
+    char** papszFileNames = nullptr;
 
     if( !module.Open(pszFileName, TRUE) )
         return papszFileNames;
@@ -1274,7 +1288,7 @@ char** ADRGDataset::GetGENListFromTHF(const char* pszFileName)
         record = module.ReadRecord();
         CPLPopErrorHandler();
         CPLErrorReset();
-        if( record == NULL )
+        if( record == nullptr )
           break;
 
         if( record->GetFieldCount() >= 2 )
@@ -1288,7 +1302,7 @@ char** ADRGDataset::GetGENListFromTHF(const char* pszFileName)
             }
 
             const char* RTY = record->GetStringSubfield("001", 0, "RTY", 0);
-            if( RTY == NULL || !( strcmp(RTY, "TFN") == 0 ) )
+            if( RTY == nullptr || !( strcmp(RTY, "TFN") == 0 ) )
             {
                 continue;
             }
@@ -1306,7 +1320,7 @@ char** ADRGDataset::GetGENListFromTHF(const char* pszFileName)
                 }
 
                 const char* pszVFF = record->GetStringSubfield("VFF", iVFFFieldInstance++, "VFF", 0);
-                if( pszVFF == NULL )
+                if( pszVFF == nullptr )
                     continue;
                 CPLString osSubFileName(pszVFF);
                 char* c = (char*) strchr(osSubFileName.c_str(), ' ');
@@ -1318,7 +1332,7 @@ char** ADRGDataset::GetGENListFromTHF(const char* pszFileName)
                     CPLString osGENFileName(CPLGetDirname(pszFileName));
                     char** tokens = CSLTokenizeString2( osSubFileName.c_str(), "/\"", 0);
                     char** ptr = tokens;
-                    if( ptr == NULL )
+                    if( ptr == nullptr )
                         continue;
                     while(*ptr)
                     {
@@ -1330,25 +1344,25 @@ char** ADRGDataset::GetGENListFromTHF(const char* pszFileName)
                             {
                                 if( EQUAL(*ptrDir, *ptr) )
                                 {
-                                    osGENFileName = CPLFormFilename(osGENFileName.c_str(), *ptrDir, NULL);
+                                    osGENFileName = CPLFormFilename(osGENFileName.c_str(), *ptrDir, nullptr);
                                     CPLDebug("ADRG", "Building GEN full file name : %s", osGENFileName.c_str());
                                     break;
                                 }
                                 ptrDir ++;
                             }
                         }
-                        if( ptrDir == NULL )
+                        if( ptrDir == nullptr )
                             break;
                         CSLDestroy(papszDirContent);
                         ptr++;
                     }
-                    int isNameValid = *ptr == NULL;
+                    int isNameValid = *ptr == nullptr;
                     CSLDestroy(tokens);
                     if( isNameValid )
                     {
                         papszFileNames = (char**)CPLRealloc(papszFileNames, sizeof(char*) * (nFilenames + 2));
                         papszFileNames[nFilenames] = CPLStrdup(osGENFileName.c_str());
-                        papszFileNames[nFilenames + 1] = NULL;
+                        papszFileNames[nFilenames + 1] = nullptr;
                         nFilenames ++;
                     }
                 }
@@ -1365,9 +1379,9 @@ char** ADRGDataset::GetGENListFromTHF(const char* pszFileName)
 char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
                                       int *pnRecordIndex)
 {
-    DDFRecord *record = NULL;
+    DDFRecord *record = nullptr;
     int nFilenames = 0;
-    char** papszFileNames = NULL;
+    char** papszFileNames = nullptr;
     int nRecordIndex = -1;
 
     if( pnRecordIndex )
@@ -1375,7 +1389,7 @@ char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
 
     DDFModule module;
     if( !module.Open(pszFileName, TRUE) )
-        return NULL;
+        return nullptr;
 
     while (true)
     {
@@ -1385,7 +1399,7 @@ char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
         record = module.ReadRecord();
         CPLPopErrorHandler();
         CPLErrorReset();
-        if( record == NULL )
+        if( record == nullptr )
           break;
 
         if( record->GetFieldCount() >= 5 )
@@ -1399,7 +1413,7 @@ char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
             }
 
             const char* RTY = record->GetStringSubfield("001", 0, "RTY", 0);
-            if( RTY == NULL )
+            if( RTY == nullptr )
                 continue;
             /* Ignore overviews */
             if( strcmp(RTY, "OVV") == 0 )
@@ -1409,8 +1423,16 @@ char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
             if( strcmp(RTY, "GIN") != 0 )
                 continue;
 
+            /* make sure that the GEN file is part of an ADRG dataset, not a SRP dataset, by checking that the GEN field contains a NWO subfield */
+            const char* NWO = record->GetStringSubfield("GEN", 0, "NWO", 0);
+            if( NWO == nullptr )
+            {
+                CSLDestroy(papszFileNames);
+                return nullptr;
+            }
+
             field = record->GetField(3);
-            if( field == NULL )
+            if( field == nullptr )
                 continue;
             fieldDefn = field->GetFieldDefn();
 
@@ -1421,7 +1443,7 @@ char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
             }
 
             const char* pszBAD = record->GetStringSubfield("SPR", 0, "BAD", 0);
-            if( pszBAD == NULL || strlen(pszBAD) != 12 )
+            if( pszBAD == nullptr || strlen(pszBAD) != 12 )
                 continue;
             CPLString osBAD = pszBAD;
             {
@@ -1434,7 +1456,7 @@ char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
             /* Build full IMG file name from BAD value */
             CPLString osGENDir(CPLGetDirname(pszFileName));
 
-            CPLString osFileName = CPLFormFilename(osGENDir.c_str(), osBAD.c_str(), NULL);
+            CPLString osFileName = CPLFormFilename(osGENDir.c_str(), osBAD.c_str(), nullptr);
             VSIStatBufL sStatBuf;
             if( VSIStatL( osFileName, &sStatBuf ) == 0 )
             {
@@ -1443,7 +1465,7 @@ char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
             }
             else
             {
-                char** papszDirContent = NULL;
+                char** papszDirContent = nullptr;
                 if( strcmp(osGENDir.c_str(), "/vsimem") == 0 )
                 {
                     CPLString osTmp = osGENDir + "/";
@@ -1456,7 +1478,7 @@ char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
                 {
                     if( EQUAL(*ptrDir, osBAD.c_str()) )
                     {
-                        osBAD = CPLFormFilename(osGENDir.c_str(), *ptrDir, NULL);
+                        osBAD = CPLFormFilename(osGENDir.c_str(), *ptrDir, nullptr);
                         CPLDebug("ADRG", "Building IMG full file name : %s", osBAD.c_str());
                         break;
                     }
@@ -1470,7 +1492,7 @@ char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
 
             papszFileNames = (char**)CPLRealloc(papszFileNames, sizeof(char*) * (nFilenames + 2));
             papszFileNames[nFilenames] = CPLStrdup(osBAD.c_str());
-            papszFileNames[nFilenames + 1] = NULL;
+            papszFileNames[nFilenames + 1] = nullptr;
             nFilenames ++;
         }
     }
@@ -1503,15 +1525,15 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
         if( poOpenInfo->nHeaderBytes < 500 )
-            return NULL;
+            return nullptr;
 
         CPLString osFileName(poOpenInfo->pszFilename);
         if( EQUAL(CPLGetExtension(osFileName.c_str()), "THF") )
         {
             char** papszFileNames = GetGENListFromTHF(osFileName.c_str());
-            if( papszFileNames == NULL )
-                return NULL;
-            if( papszFileNames[1] == NULL )
+            if( papszFileNames == nullptr )
+                return nullptr;
+            if( papszFileNames[1] == nullptr )
             {
                 osFileName = papszFileNames[0];
                 CSLDestroy(papszFileNames);
@@ -1544,9 +1566,9 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
 
             char** papszFileNames =
                 GetIMGListFromGEN(osFileName.c_str(), &nRecordIndex);
-            if( papszFileNames == NULL )
-                return NULL;
-            if( papszFileNames[1] == NULL )
+            if( papszFileNames == nullptr )
+                return nullptr;
+            if( papszFileNames[1] == nullptr )
             {
                 osIMGFileName = papszFileNames[0];
                 CSLDestroy(papszFileNames);
@@ -1574,11 +1596,11 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLError( CE_Failure, CPLE_NotSupported,
                       "The ADRG driver does not support update access to "
                       "existing datasets." );
-            return NULL;
+            return nullptr;
         }
 
         DDFModule module;
-        DDFRecord* record = NULL;
+        DDFRecord* record = nullptr;
         if( nRecordIndex >= 0 &&
             module.Open(osGENFileName.c_str(), TRUE) )
         {
@@ -1588,7 +1610,7 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
                 record = module.ReadRecord();
                 CPLPopErrorHandler();
                 CPLErrorReset();
-                if( record == NULL )
+                if( record == nullptr )
                   break;
             }
         }
@@ -1616,7 +1638,7 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1626,7 +1648,7 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
 GDALDataset *ADRGDataset::Create( const char* pszFilename,
                                   int nXSize,
                                   int nYSize,
-                                  int nBands,
+                                  int nBandsIn,
                                   GDALDataType eType,
                                   CPL_UNUSED char **papszOptions )
 {
@@ -1637,16 +1659,16 @@ GDALDataset *ADRGDataset::Create( const char* pszFilename,
               "data type (%s), only Byte supported by the format.",
               GDALGetDataTypeName(eType) );
 
-        return NULL;
+        return nullptr;
     }
 
-    if( nBands != 3 )
+    if( nBandsIn != 3 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "ADRG driver doesn't support %d bands. "
                   "Must be 3 (rgb) bands.",
-                  nBands );
-        return NULL;
+                  nBandsIn );
+        return nullptr;
     }
 
     if(nXSize < 1 || nYSize < 1)
@@ -1660,18 +1682,18 @@ GDALDataset *ADRGDataset::Create( const char* pszFilename,
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Invalid filename. Must be ABCDEF01.GEN");
-        return NULL;
+        return nullptr;
     }
 
     CPLString osBaseFileName(CPLGetBasename(pszFilename));
     if( osBaseFileName.size() != 8 ||
-        osBaseFileName[6] != '0' ||
+        osBaseFileName[6] != DIGIT_ZERO ||
         osBaseFileName[7] != '1' )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Invalid filename. "
                   "Must be xxxxxx01.GEN where x is between A and Z" );
-        return NULL;
+        return nullptr;
     }
 
     for(int i=0;i<6;i++)
@@ -1681,39 +1703,39 @@ GDALDataset *ADRGDataset::Create( const char* pszFilename,
             CPLError( CE_Failure, CPLE_NotSupported,
                       "Invalid filename. "
                       "Must be xxxxxx01.GEN where x is between A and Z" );
-            return NULL;
+            return nullptr;
         }
     }
 
     VSILFILE* fdGEN = VSIFOpenL(pszFilename, "wb");
-    if( fdGEN == NULL )
+    if( fdGEN == nullptr )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                 "Cannot create GEN file : %s.\n", pszFilename);
-        return NULL;
+        return nullptr;
     }
 
     CPLString osDirname(CPLGetDirname(pszFilename));
     CPLString osTransh01THF(
-        CPLFormFilename(osDirname.c_str(), "TRANSH01.THF", NULL));
+        CPLFormFilename(osDirname.c_str(), "TRANSH01.THF", nullptr));
     VSILFILE* fdTHF = VSIFOpenL(osTransh01THF.c_str(), "wb");
-    if( fdTHF == NULL )
+    if( fdTHF == nullptr )
     {
         VSIFCloseL(fdGEN);
         CPLError( CE_Failure, CPLE_FileIO,
                 "Cannot create THF file : %s.\n", osTransh01THF.c_str());
-        return NULL;
+        return nullptr;
     }
 
     CPLString osImgFilename = CPLResetExtension(pszFilename, "IMG");
     VSILFILE* fdIMG = VSIFOpenL(osImgFilename.c_str(), "w+b");
-    if( fdIMG == NULL )
+    if( fdIMG == nullptr )
     {
         VSIFCloseL(fdGEN);
         VSIFCloseL(fdTHF);
         CPLError( CE_Failure, CPLE_FileIO,
                 "Cannot create image file : %s.\n", osImgFilename.c_str());
-        return NULL;
+        return nullptr;
     }
 
     ADRGDataset* poDS = new ADRGDataset();
@@ -1735,7 +1757,7 @@ GDALDataset *ADRGDataset::Create( const char* pszFilename,
     poDS->TILEINDEX = new int [poDS->NFC*poDS->NFL];
     memset(poDS->TILEINDEX, 0, sizeof(int)*poDS->NFC*poDS->NFL);
     poDS->offsetInIMG = 2048;
-    poDS->poOverviewDS = NULL;
+    poDS->poOverviewDS = nullptr;
 
     poDS->nBands = 3;
     for( int i = 0; i < poDS->nBands; i++ )
@@ -2086,7 +2108,7 @@ void ADRGDataset::WriteTHFFile()
                                                   "RTY!RID",
                                                   "(A(3),A(2))");
         sizeOfFields[nFields++] += WriteFieldDecl(fd, '1', '6', "TRANSMITTAL_HEADER_FIELD", /* VDR */
-                                                  "MSD!VOO!ADR!NOV!SQN!NOF!URF!EDN!DAT",
+                                                  "MSD!VOO!ADR!NOV!SQN!NOF!URF!END!DAT",
                                                   "(A(1),A(200),A(1),I(1),I(1),I(3),A(16),I(3),A(12))");
         sizeOfFields[nFields++] += WriteFieldDecl(fd, '1', '6', "DATA_SET_DESCRIPTION_FIELD", /* FDR */
                                                   "NAM!STR!PRT!SWO!SWA!NEO!NEA",
@@ -2144,7 +2166,7 @@ void ADRGDataset::WriteTHFFile()
         sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 3); /* NOF */
         // URF - DMA stock number for this CDROM
         sizeOfFields[nFields] += WriteSubFieldStr(fd, "", 16);
-        sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 3); /* EDN */
+        sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 3); /* END */
         sizeOfFields[nFields] +=
             WriteSubFieldStr(fd, "017,19940101", 12); // DAT - Publication date
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
@@ -2345,7 +2367,7 @@ void ADRGDataset::WriteTHFFile()
 void GDALRegister_ADRG()
 
 {
-    if( GDALGetDriverByName( "ADRG" ) != NULL )
+    if( GDALGetDriverByName( "ADRG" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -2355,7 +2377,7 @@ void GDALRegister_ADRG()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "ARC Digitized Raster Graphics" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#ADRG" );
+                               "drivers/raster/adrg.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gen" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte" );

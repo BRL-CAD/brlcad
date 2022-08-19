@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,8 +42,10 @@ class OGRMemDataSource;
 
 class IOGRMemLayerFeatureIterator;
 
-class OGRMemLayer : public OGRLayer
+class CPL_DLL OGRMemLayer CPL_NON_FINAL: public OGRLayer
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRMemLayer)
+
     typedef std::map<GIntBig, OGRFeature*>           FeatureMap;
     typedef std::map<GIntBig, OGRFeature*>::iterator FeatureIterator;
 
@@ -101,6 +103,7 @@ class OGRMemLayer : public OGRLayer
 
     int                 TestCapability( const char * ) override;
 
+    bool                IsUpdatable() const { return m_bUpdatable; }
     void                SetUpdatable( bool bUpdatableIn )
         { m_bUpdatable = bUpdatableIn; }
     void                SetAdvertizeUTF8( bool bAdvertizeUTF8In )
@@ -116,8 +119,10 @@ class OGRMemLayer : public OGRLayer
 /*                           OGRMemDataSource                           */
 /************************************************************************/
 
-class OGRMemDataSource : public OGRDataSource
+class OGRMemDataSource CPL_NON_FINAL: public OGRDataSource
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRMemDataSource)
+
     OGRMemLayer       **papoLayers;
     int                 nLayers;
 
@@ -132,19 +137,29 @@ class OGRMemDataSource : public OGRDataSource
     OGRLayer            *GetLayer( int ) override;
 
     virtual OGRLayer    *ICreateLayer( const char *,
-                                       OGRSpatialReference * = NULL,
+                                       OGRSpatialReference * = nullptr,
                                        OGRwkbGeometryType = wkbUnknown,
-                                       char ** = NULL ) override;
+                                       char ** = nullptr ) override;
     OGRErr              DeleteLayer( int iLayer ) override;
 
     int                 TestCapability( const char * ) override;
+
+    bool                AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                       std::string& failureReason) override;
+
+    bool                DeleteFieldDomain(const std::string& name,
+                                          std::string& failureReason) override;
+
+    bool                UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                          std::string& failureReason) override;
+
 };
 
 /************************************************************************/
 /*                             OGRMemDriver                             */
 /************************************************************************/
 
-class OGRMemDriver : public OGRSFDriver
+class OGRMemDriver final: public OGRSFDriver
 {
   public:
     virtual ~OGRMemDriver();
@@ -153,7 +168,7 @@ class OGRMemDriver : public OGRSFDriver
     OGRDataSource *Open( const char *, int ) override;
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL ) override;
+                                             char ** = nullptr ) override;
 
     int TestCapability( const char * ) override;
 };

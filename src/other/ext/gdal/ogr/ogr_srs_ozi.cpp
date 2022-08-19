@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2009, Andrey Kiselev <dron@ak4719.spb.edu>
- * Copyright (c) 2009-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,7 +41,7 @@
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OSRImportFromOzi()                          */
@@ -71,7 +71,7 @@ OGRErr OSRImportFromOzi( OGRSpatialReferenceH hSRS,
 {
     VALIDATE_POINTER1( hSRS, "OSRImportFromOzi", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->importFromOzi( papszLines );
+    return OGRSpatialReference::FromHandle(hSRS)->importFromOzi( papszLines );
 }
 
 /************************************************************************/
@@ -95,12 +95,12 @@ OGRErr OSRImportFromOzi( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 {
     const char *pszDatum;
-    const char *pszProj = NULL;
-    const char *pszProjParms = NULL;
+    const char *pszProj = nullptr;
+    const char *pszProjParams = nullptr;
 
     Clear();
 
-    const int nLines = CSLCount((char**)papszLines);
+    const int nLines = CSLCount(papszLines);
     if( nLines < 5 )
         return OGRERR_NOT_ENOUGH_DATA;
 
@@ -114,20 +114,20 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
         }
         else if( STARTS_WITH_CI(papszLines[iLine], "Projection Setup") )
         {
-            pszProjParms = papszLines[iLine];
+            pszProjParams = papszLines[iLine];
         }
     }
 
-    if( !(pszDatum && pszProj && pszProjParms) )
+    if( !(pszDatum && pszProj && pszProjParams) )
         return OGRERR_NOT_ENOUGH_DATA;
 
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
     char **papszProj = CSLTokenizeStringComplex( pszProj, ",", TRUE, TRUE );
-    char **papszProjParms = CSLTokenizeStringComplex( pszProjParms, ",",
+    char **papszProjParams = CSLTokenizeStringComplex( pszProjParams, ",",
                                                       TRUE, TRUE );
-    char **papszDatum = NULL;
+    char **papszDatum = nullptr;
 
     if( CSLCount(papszProj) < 2 )
     {
@@ -140,40 +140,40 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     }
     else if( STARTS_WITH_CI(papszProj[1], "Mercator") )
     {
-        if( CSLCount(papszProjParms) < 6 ) goto not_enough_data;
-        double dfScale = CPLAtof(papszProjParms[3]);
+        if( CSLCount(papszProjParams) < 6 ) goto not_enough_data;
+        double dfScale = CPLAtof(papszProjParams[3]);
         // If unset, default to scale = 1.
-        if( papszProjParms[3][0] == 0 ) dfScale = 1;
-        SetMercator( CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
+        if( papszProjParams[3][0] == 0 ) dfScale = 1;
+        SetMercator( CPLAtof(papszProjParams[1]), CPLAtof(papszProjParams[2]),
                      dfScale,
-                     CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
+                     CPLAtof(papszProjParams[4]), CPLAtof(papszProjParams[5]) );
     }
     else if( STARTS_WITH_CI(papszProj[1], "Transverse Mercator") )
     {
-        if( CSLCount(papszProjParms) < 6 ) goto not_enough_data;
-        SetTM( CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
-               CPLAtof(papszProjParms[3]),
-               CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
+        if( CSLCount(papszProjParams) < 6 ) goto not_enough_data;
+        SetTM( CPLAtof(papszProjParams[1]), CPLAtof(papszProjParams[2]),
+               CPLAtof(papszProjParams[3]),
+               CPLAtof(papszProjParams[4]), CPLAtof(papszProjParams[5]) );
     }
     else if( STARTS_WITH_CI(papszProj[1], "Lambert Conformal Conic") )
     {
-        if( CSLCount(papszProjParms) < 8 ) goto not_enough_data;
-        SetLCC( CPLAtof(papszProjParms[6]), CPLAtof(papszProjParms[7]),
-                CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
-                CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
+        if( CSLCount(papszProjParams) < 8 ) goto not_enough_data;
+        SetLCC( CPLAtof(papszProjParams[6]), CPLAtof(papszProjParams[7]),
+                CPLAtof(papszProjParams[1]), CPLAtof(papszProjParams[2]),
+                CPLAtof(papszProjParams[4]), CPLAtof(papszProjParams[5]) );
     }
     else if( STARTS_WITH_CI(papszProj[1], "Sinusoidal") )
     {
-        if( CSLCount(papszProjParms) < 6 ) goto not_enough_data;
-        SetSinusoidal( CPLAtof(papszProjParms[2]),
-                       CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
+        if( CSLCount(papszProjParams) < 6 ) goto not_enough_data;
+        SetSinusoidal( CPLAtof(papszProjParams[2]),
+                       CPLAtof(papszProjParams[4]), CPLAtof(papszProjParams[5]) );
     }
     else if( STARTS_WITH_CI(papszProj[1], "Albers Equal Area") )
     {
-        if( CSLCount(papszProjParms) < 8 ) goto not_enough_data;
-        SetACEA( CPLAtof(papszProjParms[6]), CPLAtof(papszProjParms[7]),
-                 CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
-                 CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
+        if( CSLCount(papszProjParams) < 8 ) goto not_enough_data;
+        SetACEA( CPLAtof(papszProjParams[6]), CPLAtof(papszProjParams[7]),
+                 CPLAtof(papszProjParams[1]), CPLAtof(papszProjParams[2]),
+                 CPLAtof(papszProjParams[4]), CPLAtof(papszProjParams[5]) );
     }
     else if( STARTS_WITH_CI(
                  papszProj[1], "(UTM) Universal Transverse Mercator") &&
@@ -359,7 +359,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     else
     {
         CPLDebug( "OSR_Ozi", "Unsupported projection: \"%s\"", papszProj[1] );
-        SetLocalCS( CPLString().Printf("\"Ozi\" projection \"%s\"",
+        SetLocalCS( CPLString().Printf(R"("Ozi" projection "%s")",
                                        papszProj[1]) );
     }
 
@@ -370,7 +370,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                                      CSLT_ALLOWEMPTYTOKENS
                                      | CSLT_STRIPLEADSPACES
                                      | CSLT_STRIPENDSPACES );
-    if( papszDatum == NULL )
+    if( papszDatum == nullptr )
         goto not_enough_data;
 
     if( !IsLocal() )
@@ -380,7 +380,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 /* -------------------------------------------------------------------- */
         if( CSVScanFileByName( CSVFilename( "ozi_datum.csv" ),
                                "EPSG_DATUM_CODE",
-                               "4326", CC_Integer ) == NULL )
+                               "4326", CC_Integer ) == nullptr )
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Unable to open OZI support file %s.  "
@@ -434,7 +434,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     /* -------------------------------------------------------------------- */
             if( CSVScanFileByName( CSVFilename( "ozi_ellips.csv" ),
                                    "ELLIPSOID_CODE",
-                                   "20", CC_Integer ) == NULL )
+                                   "20", CC_Integer ) == nullptr )
             {
                 CPLError(
                     CE_Failure, CPLE_OpenFailed,
@@ -482,10 +482,8 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     if( IsLocal() || IsProjected() )
         SetLinearUnits( SRS_UL_METER, 1.0 );
 
-    FixupOrdering();
-
     CSLDestroy(papszProj);
-    CSLDestroy(papszProjParms);
+    CSLDestroy(papszProjParams);
     CSLDestroy(papszDatum);
 
     return OGRERR_NONE;
@@ -493,7 +491,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 not_enough_data:
 
     CSLDestroy(papszProj);
-    CSLDestroy(papszProjParms);
+    CSLDestroy(papszProjParams);
     CSLDestroy(papszDatum);
 
     return OGRERR_NOT_ENOUGH_DATA;
@@ -501,7 +499,7 @@ not_enough_data:
 other_error:
 
     CSLDestroy(papszProj);
-    CSLDestroy(papszProjParms);
+    CSLDestroy(papszProjParams);
     CSLDestroy(papszDatum);
 
     return OGRERR_FAILURE;

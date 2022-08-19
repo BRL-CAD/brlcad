@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,7 +45,7 @@
 #include "ogr_geometry.h"
 #include "ogr_geos.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         BlendMaskGenerator()                         */
@@ -99,11 +99,9 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
                           nXOff - (dfBlendDist + 1),
                           nYOff - (dfBlendDist + 1) );
 
-    OGRPolygon *poClipRect = NULL;
-    char *pszWKT = const_cast<char *>(osClipRectWKT.c_str());
-
-    OGRGeometryFactory::createFromWkt( &pszWKT, NULL,
-                                       (OGRGeometry**) (&poClipRect) );
+    OGRPolygon *poClipRect = nullptr;
+    OGRGeometryFactory::createFromWkt( osClipRectWKT.c_str(), nullptr,
+                                       reinterpret_cast<OGRGeometry**>(&poClipRect) );
 
     if( poClipRect )
     {
@@ -289,14 +287,14 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
 
     GDALWarpOptions *psWO = static_cast<GDALWarpOptions *>(pMaskFuncArg);
 
-    if( psWO == NULL || psWO->hCutline == NULL )
+    if( psWO == nullptr || psWO->hCutline == nullptr )
     {
         CPLAssert( false );
         return CE_Failure;
     }
 
     GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
-    if( hMemDriver == NULL )
+    if( hMemDriver == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "GDALWarpCutlineMasker needs MEM driver");
@@ -311,7 +309,8 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
     if( wkbFlatten(OGR_G_GetGeometryType(hPolygon)) != wkbPolygon
         && wkbFlatten(OGR_G_GetGeometryType(hPolygon)) != wkbMultiPolygon )
     {
-        CPLAssert( false );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cutline should be a polygon or a multipolygon");
         return CE_Failure;
     }
 
@@ -348,8 +347,8 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
         static_cast<int>(sizeof(szDataPointer) - strlen(szDataPointer)) );
 
     GDALDatasetH hMemDS = GDALCreate( hMemDriver, "warp_temp",
-                                      nXSize, nYSize, 0, GDT_Byte, NULL );
-    char *apszOptions[] = { szDataPointer, NULL };
+                                      nXSize, nYSize, 0, GDT_Byte, nullptr );
+    char *apszOptions[] = { szDataPointer, nullptr };
     GDALAddBand( hMemDS, GDT_Byte, apszOptions );
 
     double adfGeoTransform[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
@@ -360,7 +359,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
 /* -------------------------------------------------------------------- */
     int nTargetBand = 1;
     double dfBurnValue = 255.0;
-    char **papszRasterizeOptions = NULL;
+    char **papszRasterizeOptions = nullptr;
 
     if( CPLFetchBool( psWO->papszWarpOptions, "CUTLINE_ALL_TOUCHED", false ))
         papszRasterizeOptions =
@@ -373,7 +372,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
                                  1, &hPolygon,
                                  CutlineTransformer, anXYOff,
                                  &dfBurnValue, papszRasterizeOptions,
-                                 NULL, NULL );
+                                 nullptr, nullptr );
 
     CSLDestroy( papszRasterizeOptions );
 
