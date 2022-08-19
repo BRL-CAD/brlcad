@@ -23,6 +23,8 @@
 #  endif
 #endif
 
+#include "pm_config.h"
+#include "pm.h"
 #include "pgm.h"
 
 #ifdef __cplusplus
@@ -78,41 +80,56 @@ typedef struct {
   ((f) == PPM_FORMAT || (f) == RPPM_FORMAT ? PPM_TYPE : PGM_FORMAT_TYPE(f))
 
 
-/* Declarations of routines. */
+static __inline__ pixel
+ppm_whitepixel(pixval maxval) {
 
-void ppm_init(int * argcP, char* argv[]);
+    pixel retval;
+    PPM_ASSIGN(retval, maxval, maxval, maxval);
+
+    return retval;
+}
+
+static __inline__ pixel
+ppm_blackpixel(void) {
+
+    pixel const retval = {0, 0, 0};
+
+    return retval;
+}
+
+void ppm_init(int * const argcP, char ** const argv);
 
 #define ppm_allocarray(cols, rows) \
   ((pixel**) pm_allocarray(cols, rows, sizeof(pixel)))
 
-NETPBM_EXPORT extern pixel *
+pixel *
 ppm_allocrow(unsigned int const cols);
 
 #define ppm_freearray(pixels, rows) pm_freearray((char**) pixels, rows)
 
-#define ppm_freerow(pixelrow) free(pixelrow);
+#define ppm_freerow(pixelrow) pm_freerow(pixelrow);
 
-NETPBM_EXPORT extern pixel**
+pixel**
 ppm_readppm(FILE *   const fileP, 
             int *    const colsP, 
             int *    const rowsP, 
             pixval * const maxvalP);
 
-NETPBM_EXPORT extern void
+void
 ppm_readppminit(FILE *   const fileP, 
                 int *    const colsP, 
                 int *    const rowsP, 
                 pixval * const maxvalP, 
                 int *    const formatP);
 
-NETPBM_EXPORT extern void
+void
 ppm_readppmrow(FILE*  const fileP, 
                pixel* const pixelrow, 
                int    const cols, 
                pixval const maxval, 
                int    const format);
 
-NETPBM_EXPORT extern void
+void
 ppm_writeppm(FILE *  const fileP, 
              pixel** const pixels, 
              int     const cols, 
@@ -120,21 +137,21 @@ ppm_writeppm(FILE *  const fileP,
              pixval  const maxval, 
              int     const forceplain);
 
-NETPBM_EXPORT extern void
+void
 ppm_writeppminit(FILE*  const fileP, 
                  int    const cols, 
                  int    const rows, 
                  pixval const maxval, 
                  int    const forceplain);
 
-NETPBM_EXPORT extern void
-ppm_writeppmrow(FILE *  const fileP, 
-                pixel * const pixelrow, 
-                int     const cols, 
-                pixval  const maxval, 
-                int     const forceplain);
+void
+ppm_writeppmrow(FILE *        const fileP, 
+                const pixel * const pixelrow, 
+                int           const cols, 
+                pixval        const maxval, 
+                int           const forceplain);
 
-NETPBM_EXPORT extern void
+void
 ppm_check(FILE *               const fileP, 
           enum pm_check_type   const check_type, 
           int                  const format, 
@@ -254,6 +271,12 @@ ppm_hsv_from_color(pixel  const color,
                    pixval const maxval);
 
 static __inline__ pixval
+ppm_luminosity(pixel const p) {
+
+    return (pixval)(PPM_LUMIN(p) + 0.5);
+}
+
+static __inline__ pixval
 ppm_colorvalue(pixel const p) {
 /*----------------------------------------------------------------------------
   The color value (V is HSV) as a pixval
@@ -279,22 +302,25 @@ ppm_saturation(pixel const p,
 
 typedef enum {
     /* A color from the set of universally understood colors developed
-       by Brent Berlin and Paul Kay
+       by Brent Berlin and Paul Kay.
+
+       Algorithms in libnetpbm depend on the numerical representations
+       of these values being as follows.
     */
-    BKCOLOR_BLACK = 0,
-    BKCOLOR_GRAY,
-    BKCOLOR_WHITE,
-    BKCOLOR_RED,
+    BKCOLOR_GRAY = 0,
+    BKCOLOR_BROWN,
     BKCOLOR_ORANGE,
+    BKCOLOR_RED,
     BKCOLOR_YELLOW,
     BKCOLOR_GREEN,
     BKCOLOR_BLUE,
     BKCOLOR_VIOLET,
     BKCOLOR_PURPLE,
-    BKCOLOR_BROWN
+    BKCOLOR_WHITE,
+    BKCOLOR_BLACK
 } bk_color;
 
-#define BKCOLOR_COUNT (BKCOLOR_BROWN+1)
+#define BKCOLOR_COUNT (BKCOLOR_BLACK+1)
 
 bk_color
 ppm_bk_color_from_color(pixel  const color,

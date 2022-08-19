@@ -752,3 +752,12 @@ pm_arg0toprogname(const char arg0[]) {
 
     return retval;
 }
+
+
+
+unsigned int
+pm_randseed(void) {
+
+    return time(NULL) ^ getpid();
+
+}
