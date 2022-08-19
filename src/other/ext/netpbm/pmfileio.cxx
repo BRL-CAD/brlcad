@@ -6,6 +6,7 @@
   particular to any Netpbm format.
 **************************************************************************/
 
+#include <cstring>
 #include <string>
 
 #define _SVID_SOURCE
@@ -182,11 +183,11 @@ mkstemp(char *file_template)
     	for (i=start; i>=end; i--) {
     		file_template[i] = replace[(int)(replacelen * ((double)rand() / (double)RAND_MAX))];
     	}
-    IN32
+#ifdef WIN32
     	fd = _open(file_template, O_CREAT | O_EXCL | O_TRUNC | O_RDWR | O_TEMPORARY, S_IRUSR | S_IWUSR);
-    
+#else
     	fd = open(file_template, O_CREAT | O_EXCL | O_TRUNC | O_RDWR | O_TEMPORARY, S_IRUSR | S_IWUSR);
-    
+#endif
     } while ((fd == -1) && (counter++ < 1000));
 
     return fd;

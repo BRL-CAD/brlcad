@@ -108,7 +108,7 @@ pm_longjmp(void) {
 }
 
 
-
+#ifndef _WIN32
 void
 pm_fork(int *         const iAmParentP,
         pid_t *       const childPidP,
@@ -186,7 +186,7 @@ pm_waitpidSimple(pid_t const pid) {
         assert(exitedPid != 0);
     }
 }
-
+#endif
 
 
 void

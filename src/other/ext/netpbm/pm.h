@@ -204,6 +204,7 @@ pm_setjmpbufsave(jmp_buf *  const jmpbufP,
 void
 pm_longjmp(void);
 
+#ifndef _WIN32
 void
 pm_fork(int *         const iAmParentP,
         pid_t *       const childPidP,
@@ -219,6 +220,7 @@ pm_waitpid(pid_t         const pid,
 
 void
 pm_waitpidSimple(pid_t const pid);
+#endif
 
 typedef void pm_usermessagefn(const char * msg);
 
