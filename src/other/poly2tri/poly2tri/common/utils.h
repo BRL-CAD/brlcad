@@ -32,12 +32,23 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <exception>
+#ifdef _WIN32
+// Otherwise #defines like M_PI are undeclared under Visual Studio
+# define _USE_MATH_DEFINES
+#endif
+#include <math.h>
+#include <float.h>
+#include "shapes.h"
+#include "utils.h"
+
 namespace p2t {
 
     struct Point;
-    extern const double PI_3div4;
-    extern const double PI_div2;
-    extern const double EPSILON;
+    const double PI_3div4 = 3 * M_PI / 4;
+    const double PI_div2 = 1.57079632679489661923;
+    const double EPSILON = DBL_MIN;
+
 
     enum Orientation { CW, CCW, COLLINEAR, INVALID_ORIENTATION };
 
@@ -51,8 +62,34 @@ namespace p2t {
      *              =  (x1-x3)*(y2-y3) - (y1-y3)*(x2-x3)
      * </pre>
      */
-    extern Orientation Orient2d(Point *pa, Point *pb, Point *pc);
-    extern bool InScanArea(Point *pa, Point *pb, Point *pc, Point *pd);
+    Orientation Orient2d(Point *pa, Point *pb, Point *pc)
+    {
+	if (!pa || !pb || !pc) return INVALID_ORIENTATION;
+	double detleft = (pa->x - pc->x) * (pb->y - pc->y);
+	double detright = (pa->y - pc->y) * (pb->x - pc->x);
+	double val = detleft - detright;
+	if (val > -EPSILON && val < EPSILON) {
+	    return COLLINEAR;
+	} else if (val > 0) {
+	    return CCW;
+	}
+	return CW;
+    }
+
+    bool InScanArea(Point *pa, Point *pb, Point *pc, Point *pd)
+    {
+	if (!pa || !pb || !pc || !pd) return false;
+	double oadb = (pa->x - pb->x)*(pd->y - pb->y) - (pd->x - pb->x)*(pa->y - pb->y);
+	if (oadb >= -EPSILON) {
+	    return false;
+	}
+
+	double oadc = (pa->x - pc->x)*(pd->y - pc->y) - (pd->x - pc->x)*(pa->y - pc->y);
+	if (oadc <= EPSILON) {
+	    return false;
+	}
+	return true;
+    }
 }
 
 #endif

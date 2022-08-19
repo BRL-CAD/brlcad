@@ -28,69 +28,25 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <exception>
-#ifdef _WIN32
-// Otherwise #defines like M_PI are undeclared under Visual Studio
-# define _USE_MATH_DEFINES
+
+#pragma once
+
+#if defined(_WIN32)
+# define COMPILER_DLLEXPORT __declspec(dllexport)
+# define COMPILER_DLLIMPORT __declspec(dllimport)
+#else
+# define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
+# define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
 #endif
-#include <math.h>
-#include <float.h>
-#include "shapes.h"
-#include "utils.h"
 
-namespace p2t {
-
-    const double PI_3div4 = 3 * M_PI / 4;
-    const double PI_div2 = 1.57079632679489661923;
-    const double EPSILON = DBL_MIN;
-
-    /**
-     * Forumla to calculate signed area<br>
-     * Positive if CCW<br>
-     * Negative if CW<br>
-     * 0 if collinear<br>
-     * <pre>
-     * A[P1,P2,P3]  =  (x1*y2 - y1*x2) + (x2*y3 - y2*x3) + (x3*y1 - y3*x1)
-     *              =  (x1-x3)*(y2-y3) - (y1-y3)*(x2-x3)
-     * </pre>
-     */
-    Orientation Orient2d(Point *pa, Point *pb, Point *pc)
-    {
-	if (!pa || !pb || !pc) return INVALID_ORIENTATION;
-	double detleft = (pa->x - pc->x) * (pb->y - pc->y);
-	double detright = (pa->y - pc->y) * (pb->x - pc->x);
-	double val = detleft - detright;
-	if (val > -EPSILON && val < EPSILON) {
-	    return COLLINEAR;
-	} else if (val > 0) {
-	    return CCW;
-	}
-	return CW;
-    }
-
-    bool InScanArea(Point *pa, Point *pb, Point *pc, Point *pd)
-    {
-	if (!pa || !pb || !pc || !pd) return false;
-	double oadb = (pa->x - pb->x)*(pd->y - pb->y) - (pd->x - pb->x)*(pa->y - pb->y);
-	if (oadb >= -EPSILON) {
-	    return false;
-	}
-
-	double oadc = (pa->x - pc->x)*(pd->y - pc->y) - (pd->x - pc->x)*(pa->y - pc->y);
-	if (oadc <= EPSILON) {
-	    return false;
-	}
-	return true;
-    }
-
-}
-
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
-
+#ifndef P2T_EXPORT
+#  if defined(P2T_DLL_EXPORTS) && defined(P2T_DLL_IMPORTS)
+#    error "Only P2T_DLL_EXPORTS or P2T_DLL_IMPORTS can be defined, not both."
+#  elif defined(P2T_DLL_EXPORTS)
+#    define P2T_EXPORT COMPILER_DLLEXPORT
+#  elif defined(P2T_DLL_IMPORTS)
+#    define P2T_EXPORT COMPILER_DLLIMPORT
+#  else
+#    define P2T_EXPORT
+#  endif
+#endif

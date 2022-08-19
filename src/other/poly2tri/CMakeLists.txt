@@ -92,7 +92,6 @@ install(FILES poly2tri/common/shapes.h DESTINATION ${INCLUDE_DIR}/poly2tri/commo
 
 set(SOURCES
   poly2tri/common/shapes.cc
-  poly2tri/common/utils.cc
   poly2tri/sweep/advancing_front.cc
   poly2tri/sweep/cdt.cc
   poly2tri/sweep/sweep_context.cc
