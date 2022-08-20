@@ -16,8 +16,8 @@ if (BRLCAD_PROJ_BUILD)
 
   set(PROJ_MAJOR_VERSION 9)
   set(PROJ_MINOR_VERSION 0)
-  set(PROJ_API_VERSION 1)
-  set(PROJ_VERSION 25.${PROJ_MAJOR_VERSION}.${PROJ_MINOR_VERSION}.${PROJ_API_VERSION})
+  set(PROJ_API_VERSION 25)
+  set(PROJ_VERSION ${PROJ_API_VERSION}.${PROJ_MAJOR_VERSION}.${PROJ_MINOR_VERSION}.1)
 
   # Our logic needs to know what files we are looking for to incorporate into
   # our build, and unfortunately those names are not only platform specific but
@@ -97,6 +97,7 @@ if (BRLCAD_PROJ_BUILD)
   # Tell the parent build about files and libraries
   ExternalProject_Target(SHARED proj PROJ_BLD ${PROJ_INSTDIR}
     ${PROJ_BASENAME}${PROJ_SUFFIX}
+    SYMLINKS ${PROJ_SYMLINK_1};${PROJ_SYMLINK_2}
     LINK_TARGET ${PROJ_SYMLINK_1}
     RPATH
     )
