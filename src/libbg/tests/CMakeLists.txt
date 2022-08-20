@@ -28,7 +28,8 @@ BRLCAD_ADDEXEC(bg_test "${CMAKE_CURRENT_BINARY_DIR}/bg_test.c" libbg TEST)
 # TODO - convert this into the scheme used by other tests below
 BRLCAD_ADDEXEC(bgtester bgtester.c "libbu;libbn;libbg" TEST)
 
-
+# Temporary testing program
+BRLCAD_ADDEXEC(bgpoly2tri poly2tri.c "libbu;libbn;libbg" TEST)
 
 #  ************ obr.c tests *************
 

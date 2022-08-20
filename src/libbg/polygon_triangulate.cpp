@@ -31,6 +31,10 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <unordered_map>
+#include <unordered_set>
+
+#include "clipper.hpp"
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic push
@@ -55,6 +59,269 @@
 #include "bu/malloc.h"
 #include "bv/plot3.h"
 #include "bg/polygon.h"
+
+// TODO - clipper2 is released now - https://github.com/AngusJohnson/Clipper2
+// Need to look at updating our bundled clipper to that version...
+int
+bg_poly2tri_test(int **faces, int *num_faces, point2d_t **UNUSED(out_pts), int *UNUSED(num_outpts),
+	    const int *poly, const size_t poly_pnts,
+	    const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	    const int *steiner, const size_t steiner_npts,
+	    const point2d_t *pts)
+{
+    // Sanity
+    if (!faces || !num_faces || !poly || !poly_pnts)
+	return BRLCAD_ERROR;
+    if (nholes && (!holes_npts || !holes_array))
+	return BRLCAD_ERROR;
+    if (steiner_npts && !steiner)
+	return BRLCAD_ERROR;
+
+    // The poly2tri algorithm requires:
+    // 1. no repeat points within epsilon
+    // 2. simple polygons only, for both holes and outer boundary
+    // 3. interior holes must not touch other holes, nor touch the outer boundary
+    //
+    // None of these conditions are guaranteed by the input data, so we need to
+    // rework as required.  (Most use cases for this algorithm prefer to
+    // generate a "close" mesh that ignores repeat points and resolves hole
+    // intersections rather than simply failing.)
+    //
+    // If the output points array is supplied, we will need to generate a list
+    // of "active" points that were used to form the successful mesh.  If not,
+    // we are returning indices to the original points, accepting any minor
+    // flaws that may be introduced by using the original point locations to
+    // realize the mesh.
+
+    // 1.  The first order of business is to get a working set of points.  We do not
+    // assume that all points in pts are active, so we interrogate the polygons, holes
+    // and steiner points to figure out which ones we need to worry about.
+    std::unordered_set<int> initial_pnt_indices;
+    for (size_t i = 0; i < poly_pnts; i++)
+	initial_pnt_indices.insert(poly[i]);
+    for (size_t i = 0; i < steiner_npts; i++)
+	initial_pnt_indices.insert(steiner[i]);
+    for (size_t i = 0; i < nholes; i++) {
+	for (size_t j = 0; j < holes_npts[i]; j++)
+	    initial_pnt_indices.insert(holes_array[i][j]);
+    }
+    bu_log("initial pnt cnt: %zd\n", initial_pnt_indices.size());
+
+    // 2.  Now that we know the points, we need to identify the closest points and
+    // determine if any must be merged.  We also need to determine a good integer
+    // approximation to use for clipper when we make sure our hole polygons aren't
+    // going to cause trouble.  "Good" answers for this problem are data dependent,
+    // so we'll try to find an answer without hard coding scale values.  Building
+    // on experience with the POPBuffer LoD work, we'll try integer clamping based
+    // on seed data from the 3D scene:
+    //
+    // a.  Find the bounding box for the active points
+    point_t bbmin, bbmax;
+    VSETALL(bbmin, INFINITY);
+    VSETALL(bbmax, -INFINITY);
+    std::unordered_set<int>::iterator p_it;
+    for (p_it = initial_pnt_indices.begin(); p_it != initial_pnt_indices.end(); p_it++) {
+	V2MINMAX(bbmin, bbmax, pts[*p_it]);
+    }
+    bu_log("bbmin: %f %f, bbmax: %f %f\n", V2ARGS(bbmin), V2ARGS(bbmax));
+
+    // b.  Bin the points into a series of nested unordered maps of sets based
+    // on snapping the x,y coordinates to an integer.  We want to preserve as
+    // much information as we can, so clipper will produce useful new points if
+    // it needs to do intersection calculations on lines.  However, there is a
+    // limit to how far we can "scale" a floating point number into integer
+    // space before we overflow.  We need to respect the overflow as a hard
+    // limit - how far we can push depends on when our current working data set
+    // will experience an overflow.
+
+    // First, define the upper limit of the data type we want to use.  Per the
+    // clipper library's documentation:
+    //
+    // "It's important to note that path coordinates can't use quite the full
+    // 64 bits (63bit signed integers) because the library needs to perform
+    // coordinate addition and subtraction. Consequently coordinates must be 62
+    // bit signed integers (±4.6 *10 ^18)"
+    //
+    // Rather than hard coding the number 62, we express this limit
+    // semantically to make it clearer what it represents:
+    long log2max = log2(std::numeric_limits<int64_t>::max()) - 1;
+
+    // Next, use the largest absolute value we will need to be concerned with
+    // in the current data set to find a bound maximum.  That will tell us how
+    // much we can scale without pushing our coordinates above the limit
+    double bnmax = fabs(bbmin[X]);
+    bnmax = (fabs(bbmin[Y]) > bnmax) ? fabs(bbmin[Y]) : bnmax;
+    bnmax = (fabs(bbmax[X]) > bnmax) ? fabs(bbmax[X]) : bnmax;
+    bnmax = (fabs(bbmax[Y]) > bnmax) ? fabs(bbmax[Y]) : bnmax;
+    // Need to increment by one to be sure we bound all the values we need.
+    long log2boundmax = (long)log2(bnmax) + 1;
+
+    // The difference between the current data max and the ultimate coordinate
+    // size limit tells us how far we can scale for this particular data set.
+    long log2_limit = log2max - log2boundmax;
+    double scale = pow(2, log2_limit);
+    bu_log("log2_limit: %ld\n", log2_limit);
+    bu_log("scale: %f\n", scale);
+
+    // Having established our limits, scale and snap the points
+    std::unordered_map<size_t, size_t> orig_to_snapped;
+    std::vector<std::pair<long,long>> snapped_pts;
+    std::unordered_map<long int, std::unordered_map<long int, std::unordered_set<int>>> bins;
+    for (p_it = initial_pnt_indices.begin(); p_it != initial_pnt_indices.end(); p_it++) {
+	long lx = static_cast<long>(pts[*p_it][X]* scale);
+	long ly = static_cast<long>(pts[*p_it][Y]* scale);
+	snapped_pts.push_back(std::make_pair(lx,ly));
+	orig_to_snapped[*p_it] = snapped_pts.size() - 1;
+	bins[lx][ly].insert(*p_it);
+#if 1
+	double lx_restore = static_cast<double>(lx / scale);
+	double ly_restore = static_cast<double>(ly / scale);
+	bu_log("%d: %f,%f -> %ld, %ld -> %f %f\n", *p_it, pts[*p_it][X], pts[*p_it][Y], lx, ly, lx_restore, ly_restore);
+#endif
+    }
+
+    // c.  Now we need to identify any post-binning collapsed points.
+    std::unordered_map<int, int> collapsed_pts;
+    std::unordered_map<long int, std::unordered_map<long int, std::unordered_set<int>>>::iterator b_it;
+    for (b_it = bins.begin(); b_it != bins.end(); b_it++) {
+	std::unordered_map<long int, std::unordered_set<int>>::iterator bb_it;
+	for (bb_it = b_it->second.begin(); bb_it != b_it->second.end(); bb_it++) {
+	    if (bb_it->second.size() < 2)
+		continue;
+	    // If we have binned points, we need to point them all to a
+	    // single point for the purposes of meshing.  Look for the
+	    // point with the closest value to the average of all the binned
+	    // points, and use that.
+	    std::unordered_set<int>::iterator bp_it;
+	    point2d_t pavg = V2INIT_ZERO;
+	    for (bp_it = bb_it->second.begin(); bp_it != bb_it->second.end(); bp_it++) {
+		pavg[X] += pts[*bp_it][X];
+		pavg[Y] += pts[*bp_it][Y];
+	    }
+	    fastf_t pdistsq = INFINITY;
+	    int closest = 0;
+	    for (bp_it = bb_it->second.begin(); bp_it != bb_it->second.end(); bp_it++) {
+		fastf_t lsq = DIST_PNT2_PNT2_SQ(pavg, pts[*bp_it]);
+		if (lsq < pdistsq) {
+		    closest = *bp_it;
+		    pdistsq = lsq;
+		}
+	    }
+	    for (bp_it = bb_it->second.begin(); bp_it != bb_it->second.end(); bp_it++) {
+		collapsed_pts[*bp_it] = closest;
+	    }
+	}
+    }
+
+    // 3.  Having found suitable integer points, assemble versions of the polygons
+    // using the new indices.  These will be the clipper inputs.  (NOTE:  we can
+    // filter out duplicate points here if we need to, but first we're going to
+    // see if clipper will handle that for us...)
+    ClipperLib::Clipper clipper;
+
+    ClipperLib::Path outer_polygon;
+    outer_polygon.resize(poly_pnts);
+    for (size_t i = 0; i < poly_pnts; i++) {
+	size_t pind = poly[i];
+	if (collapsed_pts.find(pind) != collapsed_pts.end())
+	    pind = collapsed_pts[pind];
+	outer_polygon[i].X = (ClipperLib::long64)(snapped_pts[orig_to_snapped[pind]].first);
+	outer_polygon[i].Y = (ClipperLib::long64)(snapped_pts[orig_to_snapped[pind]].second);
+    }
+    try {
+	clipper.AddPath(outer_polygon, ClipperLib::ptSubject, true);
+    } catch (...) {
+	bu_log("Clipper: failed to add outer polygon\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Add any holes
+    for (size_t hn = 0; hn < nholes; hn++) {
+	size_t hpcnt = holes_npts[hn];
+	const int *harray = holes_array[hn];
+	ClipperLib::Path hole_polygon;
+	hole_polygon.resize(hpcnt);
+	for (size_t i = 0; i < hpcnt; i++) {
+	    size_t pind = harray[i];
+	    if (collapsed_pts.find(pind) != collapsed_pts.end())
+		pind = collapsed_pts[pind];
+	    hole_polygon[i].X = (ClipperLib::long64)(snapped_pts[orig_to_snapped[pind]].first);
+	    hole_polygon[i].Y = (ClipperLib::long64)(snapped_pts[orig_to_snapped[pind]].second);
+	}
+	try {
+	    clipper.AddPath(hole_polygon, ClipperLib::ptClip, true);
+	} catch (...) {
+	    bu_log("Clipper: failed to add hole polygon %zd\n", hn);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    // 4.  Feed the integer-based outer polygon and hole polygons to clipper to
+    // resolve any overlapping hole polygons we may have gotten from odd brep
+    // data.  (This isn't actually guaranteed to result in just one outer
+    // polygon after processing is complete, but that's fine - the output of
+    // this routine is a set of triangles, so if that happens process each
+    // outer polygon and its hole set individually and collect the triangles
+    // into one final set.)  An interesting possibility here is what happens if
+    // clipper is compelled to introduce new vertices to resolve the polygons...
+    // in that case mapping back to the original point set gets extremely iffy.
+    // The only possibility is to try to find the closest "real" point to the
+    // newly introduced point, which stands an excellent chance of not producing
+    // a valid mesh.  May need to error out in that case, with an error code that
+    // indicates the user has to accept a new point set to get a mesh?
+    ClipperLib::PolyTree eval_polys;
+    clipper.Execute(ClipperLib::ctDifference, eval_polys, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
+
+    // Debug - look at what we've got
+    size_t num_contours = eval_polys.Total();
+    bu_log("Clipper evaluated contours: %zd\n", num_contours);
+    ClipperLib::PolyNode *polynode = eval_polys.GetFirst();
+    while (polynode) {
+	ClipperLib::Path &path = polynode->Contour;
+	bu_log("path: %ld pnts, hole: %d\n", path.size(), polynode->IsHole());
+	// The points clipper returns are integer space points, but most will
+	// map back to our original points.  If we do have actual new points,
+	// we need to know - those will need to be translated back to floating
+	// point numbers.  If we have to add new points and we don't have an
+	// output point array we can write to, we've got an error.
+	for (size_t i = 0; i < path.size(); i++) {
+	    int pind = -1;
+	    long xcoord = path[i].X;
+	    long ycoord = path[i].Y;
+	    if (bins.find(xcoord) != bins.end()) {
+		std::unordered_map<long int, std::unordered_set<int>> &yset = bins[xcoord];
+		if (yset.find(ycoord) != yset.end()) {
+		    std::unordered_set<int> &pind_set = yset[ycoord];
+		    if (pind_set.size() == 1) {
+			pind = *pind_set.begin();
+		    } else {
+			std::unordered_set<int>::iterator ps_it;
+			for (ps_it = pind_set.begin(); ps_it != pind_set.end(); ps_it++) {
+			    size_t candidate = *ps_it;
+			    if (collapsed_pts.find(candidate) != collapsed_pts.end())
+				continue;
+			    pind = candidate;
+			    break;
+			}
+		    }
+
+		}
+	    }
+	    if (pind == 1) {
+		bu_log("NEW:\t%lld,%lld\n", path[i].X, path[i].Y);
+	    } else {
+		bu_log("%d:\t%lld,%lld\n", pind, path[i].X, path[i].Y);
+	    }
+	}
+	polynode = polynode->GetNext();
+    }
+
+    // 5.  The output of the above process is fed to the poly2tri algorithm, along
+    // with the snapped steiner points
+
+
+    return 0;
+}
 
 
 static int
