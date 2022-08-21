@@ -29,12 +29,13 @@
 #include "rt/geom.h"
 #include "brep.h"
 
-void MatMultiply(mat_t& res, mat_t a, mat_t b) {
+// Matrix multiply function
+void MatMultiply(double res[4][4], double a[4][4], double b[4][4]) {
     for (int i = 0; i < ELEMENTS_PER_PLANE; i++) {
         for (int j = 0; j < ELEMENTS_PER_PLANE; j++) {
-            res[i * ELEMENTS_PER_PLANE + j] = 0;
+            res[i][j] = 0;
             for (int v = 0; v < ELEMENTS_PER_PLANE; v++) {
-                res[i * ELEMENTS_PER_PLANE + j] += a[i * ELEMENTS_PER_PLANE + v] * b[v * ELEMENTS_PER_PLANE + j];
+                res[i][j] += a[i][v] * b[v][j];
             }
         }
     }
@@ -180,7 +181,6 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     epacurvedsurf->SetCV(8, 2, pt27);
 
     // caculate rigid transformation between local coordinate and world coordinate
-    // reference: https://stackoverflow.com/questions/34391968/how-to-find-the-rotation-matrix-between-two-coordinate-systems
     vect_t origin_Y = { 0,1,0 };
     vect_t origin_Z = { 0,0,1 };
     vect_t origin_X;
@@ -192,27 +192,36 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     VUNITIZE(end_Y);
     VCROSS(end_X, end_Y, end_Z);
 
-    double tran_mat[ELEMENTS_PER_PLANE][ELEMENTS_PER_PLANE] = { 0 };
-    tran_mat[0][0] = VDOT(end_X, origin_X);
-    tran_mat[0][1] = VDOT(end_Y, origin_X);
-    tran_mat[0][2] = VDOT(end_Z, origin_X);
-    tran_mat[1][0] = VDOT(end_X, origin_Y);
-    tran_mat[1][1] = VDOT(end_Y, origin_Y);
-    tran_mat[1][2] = VDOT(end_Z, origin_Y);
-    tran_mat[2][0] = VDOT(end_X, origin_Z);
-    tran_mat[2][1] = VDOT(end_Y, origin_Z);
-    tran_mat[2][2] = VDOT(end_Z, origin_Z);
+    // note: there is a 90 degree rotation in the beginning, so swap +x and +y
+    double origin_mat[ELEMENTS_PER_PLANE][ELEMENTS_PER_PLANE] = {
+        { 0,1,0,0 },
+        { 1,0,0,0 },
+        { 0,0,1,0 },
+        { 0,0,0,1 },
+    };
 
-    tran_mat[0][3] = plane1_origin.x;
-    tran_mat[1][3] = plane1_origin.y;
-    tran_mat[2][3] = plane1_origin.z;
-    tran_mat[3][0] = 0;
-    tran_mat[3][1] = 0;
-    tran_mat[3][2] = 0;
-    tran_mat[3][3] = 1;
+    // reference: https://stackoverflow.com/questions/34391968/how-to-find-the-rotation-matrix-between-two-coordinate-systems
+    double rotate_mat[ELEMENTS_PER_PLANE][ELEMENTS_PER_PLANE] = { 0 };
+    rotate_mat[0][0] = VDOT(end_X, origin_X);
+    rotate_mat[0][1] = VDOT(end_Y, origin_X);
+    rotate_mat[0][2] = VDOT(end_Z, origin_X);
+    rotate_mat[1][0] = VDOT(end_X, origin_Y);
+    rotate_mat[1][1] = VDOT(end_Y, origin_Y);
+    rotate_mat[1][2] = VDOT(end_Z, origin_Y);
+    rotate_mat[2][0] = VDOT(end_X, origin_Z);
+    rotate_mat[2][1] = VDOT(end_Y, origin_Z);
+    rotate_mat[2][2] = VDOT(end_Z, origin_Z);
+    rotate_mat[3][3] = 1;
+    double transform_mat [ELEMENTS_PER_PLANE][ELEMENTS_PER_PLANE] = { 0 };
+    // add origin rotation
+    MatMultiply(transform_mat, rotate_mat, origin_mat);
 
+    // add pan transform
+    transform_mat[0][3] = plane1_origin.x;
+    transform_mat[1][3] = plane1_origin.y;
+    transform_mat[2][3] = plane1_origin.z;
 
-    ON_Xform trans(tran_mat);
+    ON_Xform trans(transform_mat);
     epacurvedsurf->Transform(trans);
 
     (*b)->m_S.Append(epacurvedsurf);
