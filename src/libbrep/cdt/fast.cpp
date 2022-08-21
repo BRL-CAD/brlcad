@@ -1598,7 +1598,19 @@ PerformClosedSurfaceChecks(
     ShiftInnerLoops(s, face, brep_loop_points);
 }
 
-
+// TODO - either rework this so we can pass the BRep generated data to
+// the libbg poly2tri routines, or make another version if we don't
+// want to disturb this logic while working...
+//
+// The simpler sampling done here is what we use for quick visualization
+// (as opposed to the versions that attempt to constrain the mesh to
+// be watertight) so this is a logical first step to test CDT per-face,
+// but we need to create point2d_t arrays and polylines that index into
+// that array rather than going straight to Poly2Tri data types.
+//
+// Probably also worth coming up with a way to write out suitable sets
+// of C definitions for CDT test case incorporation so we can more
+// easily generate regression tests.
 static void
 poly2tri_CDT(struct bu_list *vhead,
 	     const ON_BrepFace &face,
@@ -1625,7 +1637,6 @@ poly2tri_CDT(struct bu_list *vhead,
 		surface_height) / 10.0;
     }
 
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap = new std::map<p2t::Point *, ON_3dPoint *>();
 
     int loop_cnt = face.LoopCount();
     ON_2dPointArray on_loop_points;
@@ -1644,6 +1655,7 @@ poly2tri_CDT(struct bu_list *vhead,
 
     }
     // process through loops building polygons.
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = new std::map<p2t::Point *, ON_3dPoint *>();
     bool outer = true;
     for (int li = 0; li < loop_cnt; li++) {
 	int num_loop_points = brep_loop_points[li].Count();
