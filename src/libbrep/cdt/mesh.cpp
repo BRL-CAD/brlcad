@@ -2486,7 +2486,7 @@ cdt_mesh_t::remove_dangling_tris()
     std::set<size_t>::iterator t_it;
     for (u_it = problem_edges.begin(); u_it != problem_edges.end(); u_it++) {
 	std::set<size_t> ptris = uedges2tris[(*u_it)];
-	for (t_it = uedges2tris[(*u_it)].begin(); t_it != uedges2tris[(*u_it)].end(); t_it++) {
+	for (t_it = ptris.begin(); t_it != ptris.end(); t_it++) {
 	    triangle_t t = tris_vect[*t_it];
 	    std::set<uedge_t> ue = t.uedges();
 	    std::set<uedge_t>::iterator ue_it;

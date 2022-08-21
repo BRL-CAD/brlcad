@@ -63,7 +63,7 @@ main(int argc, const char **argv)
     if (argc > 1 && BU_STR_EQUAL(argv[1], "--plot")) {
 	plot_files = 1;
     }
-
+#if 0
     {
 	size_t num_points = 0;
 	int num_faces = 0;
@@ -133,6 +133,59 @@ main(int argc, const char **argv)
 	    return 1;
 	} else {
 	    _tess_report(faces, num_faces, (const point2d_t *)points, 1, 1);
+	}
+    }
+#endif
+    {
+	int num_faces = 0;
+	int *faces = NULL;
+	int outer[4] = {0, 1, 2, 3};
+	int hole1[4] = {4, 5, 6, 7};
+	int hole2[4] = {8, 9, 10, 11};
+	int hole3[4] = {12, 13, 14, 15};
+	size_t hole_cnt = 3;
+	size_t *hcnts = (size_t *)bu_calloc(3, sizeof(size_t), "hole_cnt_array");
+	hcnts[0] = 4;
+	hcnts[1] = 4;
+	hcnts[2] = 4;
+	int **hole_array = (int **)bu_calloc(3, sizeof(int *), "hole_array");
+	hole_array[0] = hole1;
+	hole_array[1] = hole2;
+	hole_array[2] = hole3;
+
+	point2d_t points[16] = {{0}};
+	V2SET(points[0],   0, 0);
+	V2SET(points[1],   0, 6);
+	V2SET(points[2],  11, 6);
+	V2SET(points[3],  11, 0);
+	V2SET(points[4],   1, 1 );
+	V2SET(points[5],   1, 5);
+	V2SET(points[6],   3, 5);
+	V2SET(points[7],   3, 1);
+	V2SET(points[8],   5, -1);
+	V2SET(points[9],   5, 7);
+	V2SET(points[10],  6, 7);
+	V2SET(points[11],  6, -1);
+	V2SET(points[12],  8, 1);
+	V2SET(points[13],  8, 4);
+	V2SET(points[14], 10, 4);
+	V2SET(points[15], 10, 1);
+
+#if 0
+	size_t num_points = sizeof(points) / sizeof(point2d_t);
+	if (plot_files)
+	    bg_polygon_plot_2d("test_1_polygon.plot3", (const point2d_t *)points, num_points, 255, 0, 0);
+#endif
+
+	point2d_t *opnts = NULL;
+	int noutpnts = 0;
+	ret = bg_poly2tri_test(&faces, &num_faces, &opnts, &noutpnts, (const int *)outer, 4, (const int **)hole_array, (const size_t *)hcnts, hole_cnt, NULL, 0, (const point2d_t *)points);
+	if (ret) {
+	    bu_log("multiple hole splitting failure!\n");
+	    return 1;
+	} else {
+	    bg_trimesh_2d_plot3("poly2tri_new_pnts.plot3", faces, num_faces, (const point2d_t *)opnts, noutpnts);
+	    _tess_report(faces, num_faces, (const point2d_t *)opnts, 1, 1);
 	}
     }
 
