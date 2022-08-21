@@ -69,11 +69,8 @@ struct draw_ctx {
 
     // Matrices above comb instances are critical to geometry placement.  For non-identity
     // matrices, we store them locally so they may be accessed without having to unpack
-    // the comb from disk.  Because these are unique to an instance, they are accessed with
-    // the i_map key, not the i_map value.  The i_mats key is the parent comb, which is
-    // not an i_map key.
-    std::unordered_map<unsigned long long, std::vector<fastf_t>> matrices;
-    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, size_t>> i_mats;
+    // the comb from disk.
+    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, std::vector<fastf_t>>> matrices;
 
     // Similar to matrices, store non-union bool ops for instances
     std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, size_t>> i_bool;
@@ -84,9 +81,7 @@ struct draw_ctx {
     // retrieve solid bboxes and calculate comb bboxes without having to touch
     // the disk beyond the initial per-solid calculations, which may be done
     // once per load and/or dimensional change.
-    // TODO - just store the vector directly in the map, if we can...
-    std::vector<fastf_t> bboxes;
-    std::unordered_map<unsigned long long, size_t> bbox_indices;
+    std::unordered_map<unsigned long long, std::vector<fastf_t>> bboxes;
 
 
     // We also have a number of standard attributes that can impact drawing,
@@ -272,25 +267,20 @@ get_matrix(matp_t m, struct draw_ctx *ctx, unsigned long long p_key, unsigned lo
     if (UNLIKELY(!m || !ctx || p_key == 0 || i_key == 0))
 	return false;
 
-    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, size_t>>::iterator ms_it;
+    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, std::vector<fastf_t>>>::iterator m_it;
     std::unordered_map<unsigned long long, std::vector<fastf_t>>::iterator mv_it;
-    mv_it = ctx->matrices.find(p_key);
-    ms_it = ctx->i_mats.find(p_key);
-    if (ms_it == ctx->i_mats.end() || mv_it == ctx->matrices.end())
+    m_it = ctx->matrices.find(p_key);
+    if (m_it == ctx->matrices.end())
 	return false;
-
-    std::unordered_map<unsigned long long, size_t>::iterator m_it = ms_it->second.find(i_key);
-    if (m_it == ms_it->second.end())
+    mv_it = m_it->second.find(i_key);
+    if (mv_it == m_it->second.end())
 	return false;
 
     // If we got this far, we have an index into the matrices vector.  Assign
     // the result to m
     std::vector<fastf_t> &mv = mv_it->second;
-    size_t ind = m_it->second;
-
-    for (size_t i = 0; i < 16; i++) {
-	m[i] = mv[16*ind + i];
-    }
+    for (size_t i = 0; i < 16; i++)
+	m[i] = mv[i];
 
     return true;
 }
@@ -312,16 +302,16 @@ get_bbox(point_t *bbmin, point_t *bbmax, struct draw_ctx *ctx, matp_t curr_mat, 
 	key = ctx->i_map[hash];
 
     // See if we have a direct bbox lookup available
-    std::unordered_map<unsigned long long, size_t>::iterator b_it;
-    b_it = ctx->bbox_indices.find(key);
-    if (b_it != ctx->bbox_indices.end()) {
+    std::unordered_map<unsigned long long, std::vector<fastf_t>>::iterator b_it;
+    b_it = ctx->bboxes.find(key);
+    if (b_it != ctx->bboxes.end()) {
 	point_t lbmin, lbmax;
-	lbmin[X] = ctx->bboxes[6*b_it->second+0];
-	lbmin[Y] = ctx->bboxes[6*b_it->second+1];
-	lbmin[Z] = ctx->bboxes[6*b_it->second+2];
-	lbmax[X] = ctx->bboxes[6*b_it->second+3];
-	lbmax[Y] = ctx->bboxes[6*b_it->second+4];
-	lbmax[Z] = ctx->bboxes[6*b_it->second+5];
+	lbmin[X] = b_it->second[0];
+	lbmin[Y] = b_it->second[1];
+	lbmin[Z] = b_it->second[2];
+	lbmax[X] = b_it->second[3];
+	lbmax[Y] = b_it->second[4];
+	lbmax[Z] = b_it->second[5];
 
 	if (curr_mat) {
 	    point_t tbmin, tbmax;
@@ -712,10 +702,8 @@ populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
 
     // If we have a non-IDN matrix, store it
     if (c_m) {
-	for (int i = 0; i < 16; i++) {
-	    d->ctx->matrices[d->phash].push_back(c_m[i]);
-	}
-	d->ctx->i_mats[d->phash][chash] = d->ctx->matrices[d->phash].size()/16 - 1;
+	for (int i = 0; i < 16; i++)
+	    d->ctx->matrices[d->phash][chash].push_back(c_m[i]);
     }
 
     // If we have a non-UNION op, store it
@@ -1252,11 +1240,16 @@ collapse(
     }
 
     // If we collapsed all the way to top level objects, make sure to add them
+    // if they are still valid entries.  If a toplevel entry is invalid, there
+    // is no parent comb to refer to it as an "invalid" object and it can no
+    // longer be drawn.
     if (depth_groups.find(1) != depth_groups.end()) {
 	std::unordered_set<unsigned long long> &pckeys = depth_groups.rbegin()->second;
 	for (s_it = pckeys.begin(); s_it != pckeys.end(); s_it++) {
 	    std::vector<unsigned long long> trimmed = input_map[*s_it];
 	    trimmed.resize(1);
+	    if (ctx->d_map.find(trimmed[0]) == ctx->d_map.end())
+		continue;
 	    collapsed.push_back(trimmed);
 	}
     }
@@ -1421,37 +1414,36 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
     // Update the primary data structures 
     for(s_it = g->removed.begin(); s_it != g->removed.end(); s_it++) {
 	bu_log("removed: %llu\n", *s_it);
-	ctx->d_map.erase(*s_it);
 
-	// If we're removing a comb, all of its instances need to go as well
-	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-	pc_it = ctx->p_c.find(*s_it);
-	if (pc_it != ctx->p_c.end()) {
-	    std::unordered_set<unsigned long long>::iterator pcs_it;
-	    for (pcs_it = pc_it->second.begin(); pcs_it != pc_it->second.end(); pcs_it++) {
-		ctx->matrices.erase(*pcs_it);
-	    }
-
-	}
-
-	
-	ctx->p_c.erase(*s_it);
-	ctx->p_v.erase(*s_it);
-
-	// NOTE - not removed from the instance map or invalid entry
-	// map - those structures relate to comb instances, not the
-	// removal of the entry itself.
-
-#if 0
 	// Combs with this key in their child set need to be updated to refer
 	// to it as an invalid entry.
 	std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator pv_it;
-	bool referenced = false;
 	for (pv_it = ctx->p_v.begin(); pv_it != ctx->p_v.end(); pv_it++) {
+	    for (size_t i = 0; i < pv_it->second.size(); i++) {
+		if (ctx->i_map.find(pv_it->second[i]) != ctx->i_map.end()) {
+		    ctx->invalid_entry_map[ctx->i_map[pv_it->second[i]]] = ctx->i_str[ctx->i_map[pv_it->second[i]]];
+		} else {
+		    ctx->invalid_entry_map[pv_it->second[i]] = g->old_names[*s_it];
+		}
+	    }
 	}
-#endif	
+
+	ctx->d_map.erase(*s_it);
+	ctx->bboxes.erase(*s_it);
+	ctx->c_inherit.erase(*s_it);
+	ctx->rgb.erase(*s_it);
+	ctx->region_id.erase(*s_it);
+	ctx->matrices.erase(*s_it);
+	ctx->i_bool.erase(*s_it);
+
+	// We do not clear the instance maps (i_map and i_str) since those containers do not
+	// guarantee uniqueness to one child object.  If we do want to remove entries no longer
+	// used anywhere in the database, we'll have to confirm their invalidity on a global
+	// basis in a garbage-collect operation.  (May or may not be necessary...)
 
 	// Entries with this hash as their key are erased.  
+	ctx->p_c.erase(*s_it);
+	ctx->p_v.erase(*s_it);
     }
 
     for(s_it = g->added.begin(); s_it != g->added.end(); s_it++) {
@@ -1612,12 +1604,10 @@ main(int argc, char *argv[]) {
 			&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol,
 			&m, &rt_uniresource, gedp->ged_gvp);
 		if (bret != -1) {
-		    size_t ind = ctx.bboxes.size() / 6;
 		    for (size_t j = 0; j < 3; j++)
-			ctx.bboxes.push_back(bmin[j]);
+			ctx.bboxes[hash].push_back(bmin[j]);
 		    for (size_t j = 0; j < 3; j++)
-			ctx.bboxes.push_back(bmax[j]);
-		    ctx.bbox_indices[hash] = ind;
+			ctx.bboxes[hash].push_back(bmax[j]);
 		}
 	    }
 
@@ -1702,7 +1692,8 @@ main(int argc, char *argv[]) {
     }
 #endif
 
-    draw_path(gedp, &ctx, "all.g");
+    //draw_path(gedp, &ctx, "all.g");
+    draw_path(gedp, &ctx, "havoc");
 #if 0
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
     for (k_it = ctx.s_keys.begin(); k_it != ctx.s_keys.end(); k_it++) {
@@ -1743,10 +1734,10 @@ main(int argc, char *argv[]) {
     }
 
 
-#if 0
+#if 1
 
-    //erase_path(&ctx, "all.g/havoc/havoc_middle");
-    erase_path(&ctx, "all.g/box.r");
+    erase_path(&ctx, "havoc/havoc_middle");
+    //erase_path(&ctx, "all.g/box.r");
 
     collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
@@ -1755,14 +1746,15 @@ main(int argc, char *argv[]) {
 	bu_log("\n\nCollapsed paths:\n");
 	struct bu_vls path_str = BU_VLS_INIT_ZERO;
 	for (size_t i = 0; i < collapsed.size(); i++) {
-	    print_path(&path_str, collapsed[i], &ctx);
+	    print_path(&path_str, collapsed[i], &ctx, NULL);
 	    bu_log("%s\n", bu_vls_cstr(&path_str));
 	}
 	bu_vls_free(&path_str);
 	bu_log("\n");
     }
 
-    erase_path(&ctx, "all.g");
+    //erase_path(&ctx, "all.g");
+    erase_path(&ctx, "havoc");
 
     collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
@@ -1771,14 +1763,16 @@ main(int argc, char *argv[]) {
 	bu_log("\n\nCollapsed paths:\n");
 	struct bu_vls path_str = BU_VLS_INIT_ZERO;
 	for (size_t i = 0; i < collapsed.size(); i++) {
-	    print_path(&path_str, collapsed[i], &ctx);
+	    print_path(&path_str, collapsed[i], &ctx, NULL);
 	    bu_log("%s\n", bu_vls_cstr(&path_str));
 	}
 	bu_vls_free(&path_str);
 	bu_log("\n");
     }
 
-    draw_path(gedp, &ctx, "all.g/box2.r");
+    //draw_path(gedp, &ctx, "all.g/box2.r");
+    draw_path(gedp, &ctx, "havoc/havoc_middle");
+    draw_path(gedp, &ctx, "rt_r.pyl1_atch/rt_s.ecov1");
 
     collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
@@ -1787,7 +1781,7 @@ main(int argc, char *argv[]) {
 	bu_log("\n\nCollapsed paths:\n");
 	struct bu_vls path_str = BU_VLS_INIT_ZERO;
 	for (size_t i = 0; i < collapsed.size(); i++) {
-	    print_path(&path_str, collapsed[i], &ctx);
+	    print_path(&path_str, collapsed[i], &ctx, NULL);
 	    bu_log("%s\n", bu_vls_cstr(&path_str));
 	}
 	bu_vls_free(&path_str);
@@ -1795,7 +1789,8 @@ main(int argc, char *argv[]) {
     }
 
 
-    draw_path(gedp, &ctx, "box2.r");
+    //draw_path(gedp, &ctx, "box2.r");
+    draw_path(gedp, &ctx, "havoc_tail");
 
     collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
@@ -1804,7 +1799,7 @@ main(int argc, char *argv[]) {
 	bu_log("\n\nCollapsed paths:\n");
 	struct bu_vls path_str = BU_VLS_INIT_ZERO;
 	for (size_t i = 0; i < collapsed.size(); i++) {
-	    print_path(&path_str, collapsed[i], &ctx);
+	    print_path(&path_str, collapsed[i], &ctx, NULL);
 	    bu_log("%s\n", bu_vls_cstr(&path_str));
 	}
 	bu_vls_free(&path_str);
@@ -1849,6 +1844,34 @@ main(int argc, char *argv[]) {
 	bu_vls_free(&path_str);
 	bu_log("\n");
     }
+
+    av[0] = "kill";
+    av[1] = "rt_r.pyl1_atch";
+    ged_exec(gedp, 2, av);
+
+    if (g.changed_flag) {
+	bu_log("changed\n");
+	ctx_update(&ctx, &g);
+	g.added.clear();
+	g.removed.clear();
+	g.changed.clear();
+	g.changed_flag = false;
+    }
+
+    collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
+    bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], &ctx, NULL);
+	    bu_log("%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
+
 
 
     ged_close(gedp);
