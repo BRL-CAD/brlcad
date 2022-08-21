@@ -29,6 +29,16 @@
 #include "rt/geom.h"
 #include "brep.h"
 
+void MatMultiply(mat_t& res, mat_t a, mat_t b) {
+    for (int i = 0; i < ELEMENTS_PER_PLANE; i++) {
+        for (int j = 0; j < ELEMENTS_PER_PLANE; j++) {
+            res[i * ELEMENTS_PER_PLANE + j] = 0;
+            for (int v = 0; v < ELEMENTS_PER_PLANE; v++) {
+                res[i * ELEMENTS_PER_PLANE + j] += a[i * ELEMENTS_PER_PLANE + v] * b[v * ELEMENTS_PER_PLANE + j];
+            }
+        }
+    }
+}
 
 extern "C" void
 rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
@@ -169,32 +179,107 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_4dPoint pt27 = ON_4dPoint(0, r2, 0, 1);
     epacurvedsurf->SetCV(8, 2, pt27);
 
-    vect_t origin = { 0,1,0 };
-    vect_t end;
-    vect_t axis_n;
-    VMOVE(end, eip->epa_Au);
-    VCROSS(axis_n, origin, end);
+    vect_t origin_H = { 0,0,1 };
+    vect_t origin_Au = { 0,1,0 };
+    vect_t end_H;
+    vect_t end_Au;
+    vect_t axis_1;      // axis of the first rotation
+    vect_t axis_2;      // axis of the second rotation
+    VMOVE(end_H, eip->epa_H);
+    VMOVE(end_Au, eip->epa_Au);
+    VUNITIZE(end_H);
+    VUNITIZE(end_Au);
 
-    double cos_a = VDOT(origin, end);
+    VCROSS(axis_1, origin_H, end_H);
+    VUNITIZE(axis_1);
+
+    double cos_a = VDOT(origin_H, end_H);
     double sin_a = sqrt(1 - cos_a);
-    /*fastf_t rot1[9] = { cos_a ,-sin_a*axis_n[2], sin_a * axis_n[1],
-                       sin_a* axis_n[2], cos_a ,-sin_a* axis_n[0],
-                       -sin_a* axis_n[1], sin_a* axis_n[0], cos_a  };*/
-    
-    double tran_matrix[4][4]{
-            {cos_a, -sin_a * axis_n[2], sin_a * axis_n[1], plane1_origin.x},
-            {sin_a * axis_n[2], cos_a, -sin_a * axis_n[0], plane1_origin.y},
-            {-sin_a * axis_n[1], sin_a * axis_n[0], cos_a , plane1_origin.z},
-            {0,0,0,1}
-    };
+    /*fastf_t rot1[9] = { cos_a ,-sin_a*axis_1[2], sin_a * axis_1[1],
+                       sin_a* axis_1[2], cos_a ,-sin_a* axis_1[0],
+                       -sin_a* axis_1[1], sin_a* axis_1[0], cos_a  };*/
 
+    // first rotate matrix: plane normal rotation in 3D
+    /*
+    reference: https://sites.cs.ucsb.edu/~lingqi/teaching/resources/GAMES101_Lecture_04.pdf page 10
+    R(n,a) = cos(a)*I + (1-cos(a))*n*n^t + sin(a)* (0    -nz  ny
+                                                    nz   0    -nx
+                                                    -ny  nx   0   )
+    */
     double cos_a_1 = 1 - cos_a;
+    mat_t r_1_matrix= {
+            cos_a, -sin_a * axis_1[2], sin_a * axis_1[1], 0,
+            sin_a * axis_1[2], cos_a, -sin_a * axis_1[0], 0,
+            -sin_a * axis_1[1], sin_a * axis_1[0], cos_a , 0,
+            0,0,0,1
+    };
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
-            tran_matrix[i][j] += cos_a_1 * axis_n[i] * axis_n[j];
+            r_1_matrix[i * 4 + j] += cos_a_1 * axis_1[i] * axis_1[j];
         }
     }
-    ON_Xform trans(tran_matrix);
+    // first rotation matrix caculated
+
+    // get end_Au after first rotation
+    MAT3X3VEC(end_Au, r_1_matrix, end_Au);
+
+    // second rotation axis
+    VCROSS(axis_2, origin_Au, end_Au);
+    VUNITIZE(axis_2);
+
+    cos_a = VDOT(origin_H, end_H);
+    sin_a = sqrt(1 - cos_a);
+
+    double cos_a_2 = 1 - cos_a;
+    mat_t r_2_matrix = {
+            cos_a, -sin_a * axis_1[2], sin_a * axis_1[1], 0,
+            sin_a * axis_1[2], cos_a, -sin_a * axis_1[0], 0,
+            -sin_a * axis_1[1], sin_a * axis_1[0], cos_a , 0,
+            0,0,0,1
+    };
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            r_2_matrix[i * 4 + j] += cos_a_2 * axis_1[i] * axis_1[j];
+        }
+    }
+    // second rotation matrix caculated
+
+    mat_t trans_matrix; 
+    MatMultiply(trans_matrix, r_1_matrix, r_2_matrix);
+    trans_matrix[ELEMENTS_PER_PLANE - 1] = plane1_origin.x;
+    trans_matrix[ELEMENTS_PER_PLANE * 2 - 1] = plane1_origin.y;
+    trans_matrix[ELEMENTS_PER_PLANE * 3 - 1] = plane1_origin.z;
+    trans_matrix[ELEMENTS_PER_PLANE * 4 - 1] = 1;
+
+    double tran_mat[ELEMENTS_PER_PLANE][ELEMENTS_PER_PLANE] = { 0 };
+    for (int m = 0; m < ELEMENTS_PER_MAT; m++)
+    {
+        int i = m / ELEMENTS_PER_PLANE;
+        int j = m % ELEMENTS_PER_PLANE;
+        tran_mat[i][j] = trans_matrix[m];
+
+    }
+    /*VMOVE(end_Au, eip->epa_Au);
+    double cos_a_1 = 1 - cos_a;
+    double r_1_matrix[3][3]{
+            {cos_a, -sin_a * axis_1[2], sin_a * axis_1[1]},
+            {sin_a * axis_1[2], cos_a, -sin_a * axis_1[0]},
+            {-sin_a * axis_1[1], sin_a * axis_1[0], cos_a}
+    };
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            r_1_matrix[i][j] += cos_a_1 * axis_1[i] * axis_1[j];
+        }
+    }
+
+    double tran_matrix[4][4]{
+            {cos_a, -sin_a * axis_1[2], sin_a * axis_1[1], plane1_origin.x},
+            {sin_a * axis_1[2], cos_a, -sin_a * axis_1[0], plane1_origin.y},
+            {-sin_a * axis_1[1], sin_a * axis_1[0], cos_a , plane1_origin.z},
+            {0,0,0,1}
+    };*/
+
+    ON_Xform trans(tran_mat);
     epacurvedsurf->Transform(trans);
 
     (*b)->m_S.Append(epacurvedsurf);
