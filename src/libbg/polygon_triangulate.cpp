@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <inttypes.h>
 #include "bio.h"
 
 #include <array>
@@ -162,7 +163,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     // size limit tells us how far we can scale for this particular data set.
     int64_t log2_limit = log2max - log2boundmax;
     double scale = pow(2, log2_limit);
-    bu_log("log2_limit: %ld\n", log2_limit);
+    bu_log("log2_limit: %" PRId64 "\n", log2_limit);
     bu_log("scale: %f\n", scale);
 
     // Having established our limits, scale and snap the points
@@ -178,7 +179,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 #if 1
 	double lx_restore = static_cast<double>(lx / scale);
 	double ly_restore = static_cast<double>(ly / scale);
-	bu_log("%d: %f,%f -> %ld, %ld -> %f %f\n", *p_it, pts[*p_it][X], pts[*p_it][Y], lx, ly, lx_restore, ly_restore);
+	bu_log("%d: %f,%f -> %" PRId64 ", %" PRId64 " -> %f %f\n", *p_it, pts[*p_it][X], pts[*p_it][Y], lx, ly, lx_restore, ly_restore);
 #endif
     }
 
@@ -340,9 +341,9 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	    }
 	    if (pind == -1) {
 		new_pnts = true;
-		bu_log("loop %d [NEW]:\t%ld,%ld\n", o_it->first, xc, yc);
+		bu_log("loop %d [NEW]:\t%" PRId64 ",%" PRId64 "\n", o_it->first, xc, yc);
 	    } else {
-		bu_log("loop %d [%d]:\t%ld,%ld\n", o_it->first, pind, xc, yc);
+		bu_log("loop %d [%d]:\t%" PRId64 ",%" PRId64 "\n", o_it->first, pind, xc, yc);
 	    }
 	}
 	if (hole_loops.find(o_it->first) != hole_loops.end()) {
@@ -372,9 +373,9 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 		    }
 		    if (pind == -1) {
 			new_pnts = true;
-			bu_log("\tl%d hole %d [NEW]:\t%ld,%ld\n", o_it->first, h_it->first, xc, yc);
+			bu_log("\tl%d hole %d [NEW]:\t%" PRId64 ",%" PRId64 "\n", o_it->first, h_it->first, xc, yc);
 		    } else {
-			bu_log("\tl%d hold %d [%d]:\t%ld,%ld\n", o_it->first, h_it->first, pind, xc, yc);
+			bu_log("\tl%d hold %d [%d]:\t%" PRId64 ",%" PRId64 "\n", o_it->first, h_it->first, pind, xc, yc);
 		    }
 		}
 	    }
