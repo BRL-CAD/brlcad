@@ -62,7 +62,7 @@ main(int argc, char **argv)
 
     /* parse standard options */
     argc--; argv++;
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    int opt_ret = bu_opt_parse(NULL, argc, (const char**)argv, d);
 
     /* requested help or bad usage */
     if (print_help || (opt_ret == 1 && !output_path) || (opt_ret == 2 && output_path) || opt_ret < 1 || opt_ret > 2) {
