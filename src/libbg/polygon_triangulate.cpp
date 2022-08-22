@@ -315,73 +315,6 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     // along with the snapped steiner points.
     std::map<int, std::vector<std::pair<int64_t,int64_t>>>::iterator o_it;
 
-    // debugging - report the data the way the poly2tri input routines will see it
-    for (o_it = outer_loops.begin(); o_it != outer_loops.end(); o_it++) {
-        for (size_t i = 0; i < o_it->second.size(); i++) {
-	    int64_t xc = o_it->second[i].first;
-	    int64_t yc = o_it->second[i].second;
-	    int pind = -1;
-	    if (bins.find(xc) != bins.end()) {
-		std::unordered_map<int64_t, std::unordered_set<int>> &yset = bins[xc];
-		if (yset.find(yc) != yset.end()) {
-		    std::unordered_set<int> &pind_set = yset[yc];
-		    if (pind_set.size() == 1) {
-			pind = *pind_set.begin();
-		    } else {
-			std::unordered_set<int>::iterator ps_it;
-			for (ps_it = pind_set.begin(); ps_it != pind_set.end(); ps_it++) {
-			    size_t candidate = *ps_it;
-			    if (collapsed_pts.find(candidate) != collapsed_pts.end())
-				continue;
-			    pind = candidate;
-			    break;
-			}
-		    }
-		}
-	    }
-	    if (pind == -1) {
-		new_pnts = true;
-		bu_log("loop %d [NEW]:\t%" PRId64 ",%" PRId64 "\n", o_it->first, xc, yc);
-	    } else {
-		bu_log("loop %d [%d]:\t%" PRId64 ",%" PRId64 "\n", o_it->first, pind, xc, yc);
-	    }
-	}
-	if (hole_loops.find(o_it->first) != hole_loops.end()) {
-	    std::map<int, std::vector<std::pair<int64_t,int64_t>>>::iterator h_it;
-	    for (h_it = hole_loops[o_it->first].begin(); h_it != hole_loops[o_it->first].end(); h_it++) {
-		for (size_t i = 0; i < h_it->second.size(); i++) {
-		    int64_t xc = h_it->second[i].first;
-		    int64_t yc = h_it->second[i].second;
-		    int pind = -1;
-		    if (bins.find(xc) != bins.end()) {
-			std::unordered_map<int64_t, std::unordered_set<int>> &yset = bins[xc];
-			if (yset.find(yc) != yset.end()) {
-			    std::unordered_set<int> &pind_set = yset[yc];
-			    if (pind_set.size() == 1) {
-				pind = *pind_set.begin();
-			    } else {
-				std::unordered_set<int>::iterator ps_it;
-				for (ps_it = pind_set.begin(); ps_it != pind_set.end(); ps_it++) {
-				    size_t candidate = *ps_it;
-				    if (collapsed_pts.find(candidate) != collapsed_pts.end())
-					continue;
-				    pind = candidate;
-				    break;
-				}
-			    }
-			}
-		    }
-		    if (pind == -1) {
-			new_pnts = true;
-			bu_log("\tl%d hole %d [NEW]:\t%" PRId64 ",%" PRId64 "\n", o_it->first, h_it->first, xc, yc);
-		    } else {
-			bu_log("\tl%d hold %d [%d]:\t%" PRId64 ",%" PRId64 "\n", o_it->first, h_it->first, pind, xc, yc);
-		    }
-		}
-	    }
-	}
-    }
-
     std::map<p2t::Point *, long> p2t_to_ind;
     std::vector<p2t::CDT *> cdts;
     for (o_it = outer_loops.begin(); o_it != outer_loops.end(); o_it++) {
@@ -464,7 +397,9 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	for (size_t s = 0; s < steiner_npts; s++) {
 	    int64_t xc = snapped_pts[orig_to_snapped[steiner[s]]].first;
 	    int64_t yc = snapped_pts[orig_to_snapped[steiner[s]]].second;
-	    p2t::Point *p = new p2t::Point(xc, yc);
+	    double xcd = xc / scale;
+	    double ycd = yc / scale;
+	    p2t::Point *p = new p2t::Point(xcd, ycd);
 	    cdt->AddPoint(p);
 
 	    long pind = -1;
@@ -574,7 +509,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 }
 
 
-static int
+int
 bg_poly2tri(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	    const int *poly, const size_t poly_pnts,
 	    const int **holes_array, const size_t *holes_npts, const size_t nholes,
