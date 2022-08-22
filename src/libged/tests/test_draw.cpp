@@ -1473,12 +1473,17 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 #if 0
     // The principle for redrawing will be that anything that was previously
     // fully drawn should stay fully drawn, even if its tree structure has
-    // changed.
-    // Work down from the root of each path looking for the first changed or
-    // removed entry.
-    std::unordered_set<size_t> active_collapsed;
-    for (size_t i = 0; i < collapsed.size(); i++) {
-	std::vector<unsigned long long> &cpath = ctx->s_keys[collapsed[i]];
+    // changed.  We need to remove no-longer-valid paths, but will keep valid
+    // paths to avoid the work of re-generating the scene objects when we
+    // re-expand the collapsed paths using the new tree structure.
+    //
+
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator sk_it;
+    std::unordered_set<unsigned long long> invalid_objects;
+    for (sk_it = ctx->s_keys.begin(); sk_it != ctx->s_keys.end(); sk_it++) {
+	// Work down from the root of each path looking for the first changed or
+	// removed entry.
+	std::vector<unsigned long long> &cpath = sk_it->second;
 	bool parent_changed = false;
 	for (size_t j = 0; j < cpath.size(); j++) {
 	    if (parent_changed) {
@@ -1535,6 +1540,19 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 		active_collapsed.insert(i);
 	}
     }
+
+    std::unordered_set<unsigned long long>::iterator iv_it;
+    for (iv_it = invalid_objects.begin(); iv_it != invalid_objects.end(); iv_it++) {
+	ctx->s_keys.erase(*iv_it);
+	if (ctx->s_map.find(*iv_it) != ctx->s_map.end()) {
+	    // an invalid child entry may be present in s_keys but not have an
+	    // associated scene object.
+	// free scene obj ctx->s_map[*iv_it];
+	}
+    }
+
+    // Expand collapsed paths, creating any missing path objects
+
 #endif
 
     // Added dps present their own challenge, in terms of whether or not to
