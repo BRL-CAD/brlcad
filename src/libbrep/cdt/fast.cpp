@@ -1598,20 +1598,7 @@ PerformClosedSurfaceChecks(
     ShiftInnerLoops(s, face, brep_loop_points);
 }
 
-// TODO - either rework this so we can pass the BRep generated data to
-// the libbg poly2tri routines, or make another version if we don't
-// want to disturb this logic while working...
-//
-// The simpler sampling done here is what we use for quick visualization
-// (as opposed to the versions that attempt to constrain the mesh to
-// be watertight) so this is a logical first step to test CDT per-face,
-// but we need to create point2d_t arrays and polylines that index into
-// that array rather than going straight to Poly2Tri data types.
-//
-// Probably also worth coming up with a way to write out suitable sets
-// of C definitions for CDT test case incorporation so we can more
-// easily generate regression tests.
-static void
+void
 poly2tri_CDT(struct bu_list *vhead,
 	     const ON_BrepFace &face,
 	     const struct bg_tess_tol *ttol,
@@ -1931,6 +1918,213 @@ poly2tri_CDT(struct bu_list *vhead,
     return;
 }
 
+void
+bg_CDT(struct bu_list *vhead,
+	struct bu_list *vlfree,
+	const ON_BrepFace &face,
+	const struct bg_tess_tol *ttol,
+	const struct bn_tol *tol)
+{
+    ON_RTree rt_trims;
+    ON_2dPointArray on_surf_points;
+    const ON_Surface *s = face.SurfaceOf();
+    double surface_width, surface_height;
+    int fi = face.m_face_index;
+    fastf_t max_dist = 0.0;
+
+    if (s->GetSurfaceSize(&surface_width, &surface_height)) {
+	if ((surface_width < tol->dist) || (surface_height < tol->dist))
+	    return;
+	max_dist = sqrt(surface_width * surface_width + surface_height * surface_height) / 10.0;
+    }
+
+    // first simply load loop point samples
+    int loop_cnt = face.LoopCount();
+    ON_SimpleArray<BrepTrimPoint> *brep_loop_points = new ON_SimpleArray<BrepTrimPoint>[loop_cnt];
+    for (int li = 0; li < loop_cnt; li++) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	get_loop_sample_points(&brep_loop_points[li], face, loop, max_dist, ttol, tol);
+    }
+
+    std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
+    if (s->IsClosed(0) || s->IsClosed(1)) {
+	PerformClosedSurfaceChecks(s, face, ttol, tol, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
+    }
+
+    // process through loops building polygons.
+    int pntcnt = 0;
+    std::vector<int> looppnt_cnts;
+    int outer_ind = -1;
+    for (int li = 0; li < loop_cnt; li++) {
+	int num_loop_points = brep_loop_points[li].Count();
+	if (num_loop_points < 2)
+	    continue;
+	if (outer_ind < 0)
+	    outer_ind = li;
+	looppnt_cnts.push_back(num_loop_points);
+	pntcnt += num_loop_points;
+	for (int i = 1; i < brep_loop_points[li].Count(); i++) {
+	    ON_Line *line = new ON_Line((brep_loop_points[li])[i - 1].p2d, (brep_loop_points[li])[i].p2d);
+	    ON_BoundingBox bb = line->BoundingBox();
+	    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+	    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+	    bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
+	    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+	    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+	    bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
+
+	    rt_trims.Insert2d(bb.Min(), bb.Max(), line);
+	}
+    }
+    if (!pntcnt) {
+	delete brep_loop_points;
+	return;
+    }
+
+    // Now that we have our counts, allocate memory
+    int **hole_loops = NULL;
+    size_t *hole_cnts = NULL;
+    point2d_t *polypnts = (point2d_t *)bu_malloc(pntcnt * sizeof(point2d_t), "2dpnts");
+    int *outer_loop = (int *)bu_calloc(looppnt_cnts[0], sizeof(int *), "outer loop pnts");
+    if (looppnt_cnts.size() > 1) {
+	hole_loops = (int **)bu_calloc(looppnt_cnts.size() - 1, sizeof(int *), "hole loops");
+	hole_cnts = (size_t *)bu_calloc(looppnt_cnts.size() - 1, sizeof(size_t *), "hole loops");
+	for (size_t i = 1; i < looppnt_cnts.size(); i++) {
+	    hole_loops[i-1] = (int *)bu_calloc(looppnt_cnts[i], sizeof(int), "hole pnts");
+	    hole_cnts[i-1] = looppnt_cnts[i];
+	}
+    }
+
+    std::map<int, ON_3dPoint *> *pointmap = new std::map<int, ON_3dPoint *>();
+    int hole_loop_ind = 0;
+    int pind = 0;
+    for (int li = 0; li < loop_cnt; li++) {
+	int num_loop_points = brep_loop_points[li].Count();
+	if (num_loop_points < 2)
+	    continue;
+	int *cloop = (li == outer_ind) ? outer_loop : hole_loops[hole_loop_ind];
+	if (li != outer_ind)
+	    hole_loop_ind++;
+	for (int i = 0; i < num_loop_points; i++) {
+	    V2SET(polypnts[pind], (brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
+	    cloop[i] = pind;
+	    // map point to last entry to 3d point
+	    (*pointmap)[pind] = (brep_loop_points[li])[i].p3d;
+	    pind++;
+	}
+    }
+
+    delete [] brep_loop_points;
+
+    if (outer_ind == -1) {
+	std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
+	delete pointmap;
+	return;
+    }
+
+    getSurfacePoints(face, ttol, tol, on_surf_points);
+
+    std::vector<fastf_t> steiner_pnts;
+    for (int i = 0; i < on_surf_points.Count(); i++) {
+	ON_SimpleArray<void*> results;
+	const ON_2dPoint *p = on_surf_points.At(i);
+
+	rt_trims.Search2d((const double *) p, (const double *) p, results);
+
+	if (results.Count() > 0) {
+	    bool on_edge = false;
+	    for (int ri = 0; ri < results.Count(); ri++) {
+		double dist;
+		const ON_Line *l = (const ON_Line *) *results.At(ri);
+		dist = l->MinimumDistanceTo(*p);
+		if (NEAR_ZERO(dist, tol->dist)) {
+		    on_edge = true;
+		    break;
+		}
+	    }
+	    if (!on_edge) {
+		steiner_pnts.push_back(p->x);
+		steiner_pnts.push_back(p->y);
+	    }
+	} else {
+	    steiner_pnts.push_back(p->x);
+	    steiner_pnts.push_back(p->y);
+	}
+    }
+    int steiner_pntcnt = steiner_pnts.size() / 2;
+    int *steiner_indices = NULL;
+    if (steiner_pntcnt) {
+	steiner_indices = (int *)bu_malloc(steiner_pntcnt * sizeof(int), "steiner point indices");
+	polypnts = (point2d_t *)bu_realloc(polypnts, (pntcnt+steiner_pntcnt) * sizeof(point2d_t), "2dpnts");
+	for (size_t i = 0; i < steiner_pnts.size()/2; i++) {
+	    V2SET(polypnts[pntcnt+i], steiner_pnts[2*i+0], steiner_pnts[2*i+1]);
+	    steiner_indices[i] = pntcnt+i;
+	}
+	pntcnt += steiner_pntcnt;
+    }
+
+    // Clean up allocated lines
+    ON_SimpleArray<void*> results;
+    ON_BoundingBox bb = rt_trims.BoundingBox();
+    rt_trims.Search2d((const double *) bb.m_min, (const double *) bb.m_max, results);
+    for (int ri = 0; ri < results.Count(); ri++)
+	delete (const ON_Line *)*results.At(ri);
+    rt_trims.RemoveAll();
+
+    int *faces = NULL;
+    int nfaces = 0;
+    point2d_t *opnts = NULL;
+    int n_opnts = 0;
+
+    int ret = bg_nested_polygon_triangulate(&faces, &nfaces, &opnts, &n_opnts,
+	    outer_loop, looppnt_cnts[0],
+	    (const int **)hole_loops, (const size_t *)hole_cnts, looppnt_cnts.size() - 1,
+	    steiner_indices, steiner_pntcnt,
+	    polypnts, pntcnt, TRI_CONSTRAINED_DELAUNAY);
+
+    if (ret)
+	return;
+
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&fname, "cdt_%d.plot3", fi);
+    bg_trimesh_2d_plot3(bu_vls_cstr(&fname), faces, nfaces, polypnts, pntcnt);
+    bu_vls_free(&fname);
+
+    ON_3dPoint pnt[3] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
+    ON_3dVector norm[3] = {ON_3dVector(), ON_3dVector(), ON_3dVector()};
+    point_t pt[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+    vect_t nv[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+
+    for (int i = 0; i < nfaces; i++) {
+	for (int j = 0; j < 3; j++) {
+	    point2d_t p;
+	    if (opnts == polypnts || n_opnts < 1) {
+		V2MOVE(p, polypnts[faces[i*3+j]]);
+	    } else {
+		V2MOVE(p, opnts[faces[i*3+j]]);
+	    }
+	    if (surface_EvNormal(s, p[X], p[Y], pnt[j], norm[j])) {
+		if (face.m_bRev) {
+		    norm[j] = norm[j] * -1.0;
+		}
+		VMOVE(pt[j], pnt[j]);
+		VMOVE(nv[j], norm[j]);
+	    }
+	}
+	//tri one
+	BV_ADD_VLIST(vlfree, vhead, nv[0], BV_VLIST_TRI_START);
+	BV_ADD_VLIST(vlfree, vhead, nv[0], BV_VLIST_TRI_VERTNORM);
+	BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_TRI_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, nv[1], BV_VLIST_TRI_VERTNORM);
+	BV_ADD_VLIST(vlfree, vhead, pt[1], BV_VLIST_TRI_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, nv[2], BV_VLIST_TRI_VERTNORM);
+	BV_ADD_VLIST(vlfree, vhead, pt[2], BV_VLIST_TRI_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_TRI_END);
+    }
+
+    return;
+}
+
 int
 brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
                       const struct bg_tess_tol *ttol, const struct bn_tol *tol,
@@ -1942,7 +2136,6 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
     if (!vhead) {
 	vhead = bv_vlblock_find(vbp, YELLOW);
     }
-    bool watertight = true;
     ON_wString wstr;
     ON_TextLog tl(wstr);
 
@@ -1983,10 +2176,12 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
         }
     }
 
+    bool watertight = true;
     if (index == -1) {
         for (index = 0; index < brep->m_F.Count(); index++) {
             const ON_BrepFace& face = brep->m_F[index];
             poly2tri_CDT(vhead, face, ttol, tol, vlfree, watertight, plottype, num_points);
+            //bg_CDT(vhead, vlfree, face, ttol, tol);
         }
     } else if (index < brep->m_F.Count()) {
         const ON_BrepFaceArray& faces = brep->m_F;
@@ -1994,6 +2189,7 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
             const ON_BrepFace& face = faces[index];
             face.Dump(tl);
             poly2tri_CDT(vhead, face, ttol, tol, vlfree, watertight, plottype, num_points);
+            //bg_CDT(vhead, vlfree, face, ttol, tol);
         }
     }
 
