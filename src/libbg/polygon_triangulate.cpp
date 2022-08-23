@@ -35,6 +35,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "RTree.h"
 #include "clipper.hpp"
 
 #if defined(__GNUC__) && !defined(__clang__)
@@ -91,6 +92,60 @@ xy_ind_lookup(
     }
 
     return pind;
+}
+
+struct line_steiner_ctx {
+    std::unordered_set<size_t> *steiner_excluded;
+    std::vector<std::pair<double,double>> *lines;
+    point_t tpnt;
+    double distsq_tol;
+};
+
+static bool
+LSteinClbk(size_t data, void *ctx)
+{
+    struct line_steiner_ctx *c = (struct line_steiner_ctx *)ctx;
+    point2d_t P0, P1;
+    vect2d_t dir;
+    V2SET(P0, (*c->lines)[2*data+0].first, (*c->lines)[2*data+0].second);
+    V2SET(P1, (*c->lines)[2*data+1].first, (*c->lines)[2*data+1].second);
+    V2SUB2(dir, P1, P0);
+    double dsq = MAG2SQ(dir);
+    if (!(dsq > 0.0))
+	return true;
+    double d1sq = DIST_PNT2_PNT2_SQ(c->tpnt, P0);
+    double d2sq = DIST_PNT2_PNT2_SQ(c->tpnt, P1);
+    double t;
+    if (d1sq < d2sq) {
+	vect2d_t s;
+	V2SUB2(s, c->tpnt, P0);
+	t = VDOT(s, dir)/dsq;
+    } else if (d2sq > d1sq) {
+	vect2d_t s;
+	V2SUB2(s, c->tpnt, P1);
+	t = 1.0 + VDOT(s, dir)/dsq;
+    } else {
+	vect2d_t s;
+	V2SUB2(s, c->tpnt, P0);
+	t = VDOT(s, dir)/dsq;
+    }
+    if (t < 0 || t > 1)
+	return true;
+    double dirlensq = VDOT(dir, dir);
+    if (!(dirlensq > 0.0))
+	return true;
+    vect2d_t closest;
+    point_t ra, rb;
+    t /= dirlensq;
+    VSCALE(ra, P0, (1.0 - t));
+    VSCALE(rb, P1, t);
+    VADD2(closest, ra, rb);
+    double cdsq = DIST_PNT2_PNT2_SQ(closest, c->tpnt);
+    if (cdsq < c->distsq_tol) {
+	c->steiner_excluded->insert(data);
+	bu_log("excluded\n");
+    }
+    return true;
 }
 
 // TODO - clipper2 is released now - https://github.com/AngusJohnson/Clipper2
@@ -269,6 +324,8 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	    int64_t lx = slx + (int64_t)(bn_rand_half(prand) * delta_space);
 	    int64_t ly = sly + (int64_t)(bn_rand_half(prand) * delta_space);
 	    bu_log("slx -> lx %ld -> %ld, sly -> ly: %ld -> %ld\n", slx, lx, sly, ly);
+	    // We need to preserve the point uniqueness - keep perturbing until we
+	    // produce a point we've not already seen
 	    while (inf_loop_guard < 100000 && ucheck.find(lx) != ucheck.end() && ucheck[lx].find(ly) != ucheck[lx].end()) {
 		lx = static_cast<int64_t>(slx + (bn_rand_half(prand) * delta_space));
 		ly = static_cast<int64_t>(sly + (bn_rand_half(prand) * delta_space));
@@ -382,6 +439,77 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     if (new_pnts && (!out_pts || !num_outpts))
 	return BRLCAD_ERROR;
 
+
+    // 4.  We have (slightly) shifted the points defining the polylines (and
+    // for that matter, the input data doesn't guarantee that the steiner
+    // points weren't on line segments.)  We need to exclude any steiner points
+    // that are on a line segment from consideration.
+    //
+    // First, assemble all the lines from the outer loop and holes
+    std::vector<std::pair<double,double>> lines;
+    for (size_t i = 0; i < poly_pnts; i++) {
+	size_t pind = poly[i];
+	if (collapsed_pts.find(pind) != collapsed_pts.end())
+	    pind = collapsed_pts[pind];
+	int64_t xc = (psnapped_pts[orig_to_snapped[i]].first);
+	int64_t yc = (psnapped_pts[orig_to_snapped[i]].second);
+	double xcd = xc / scale;
+	double ycd = yc / scale;
+	lines.push_back(std::make_pair(xcd, ycd));
+    }
+    for (size_t hn = 0; hn < nholes; hn++) {
+	size_t hpcnt = holes_npts[hn];
+	const int *harray = holes_array[hn];
+	for (size_t i = 0; i < hpcnt; i++) {
+	    size_t pind = harray[i];
+	    if (collapsed_pts.find(pind) != collapsed_pts.end())
+		pind = collapsed_pts[pind];
+	    int64_t xc = psnapped_pts[orig_to_snapped[pind]].first;
+	    int64_t yc = psnapped_pts[orig_to_snapped[pind]].second;
+	    double xcd = xc / scale;
+	    double ycd = yc / scale;
+	    lines.push_back(std::make_pair(xcd, ycd));
+	}
+    }
+
+    // Next, assemble an RTree of the lines so we can quickly identify which
+    // ones we need to check each steiner point against
+    RTree<size_t, double, 2> rtree_2d;
+    for (size_t i = 0; i < lines.size()/2; i++) {
+	double tMin[2], tMax[2];
+	tMin[0] = (lines[2*i+0].first < lines[2*i+1].first) ? lines[2*i+0].first : lines[2*i+1].first;
+	tMin[1] = (lines[2*i+0].second < lines[2*i+1].second) ? lines[2*i+0].second : lines[2*i+1].second;
+	tMax[0] = (lines[2*i+0].first > lines[2*i+1].first) ? lines[2*i+0].first : lines[2*i+1].first;
+	tMax[1] = (lines[2*i+0].second > lines[2*i+1].second) ? lines[2*i+0].second : lines[2*i+1].second;
+	rtree_2d.Insert(tMin, tMax, i);
+    }
+
+    std::unordered_set<size_t> steiner_excluded;
+    struct line_steiner_ctx lctx;
+    lctx.steiner_excluded = &steiner_excluded;
+    lctx.lines = &lines;
+    double deltaX = fabs(bbmax[X] - bbmin[X]);
+    double deltaY = fabs(bbmax[Y] - bbmin[Y]);
+    double delta = (deltaX < deltaY) ? deltaX : deltaY;
+    lctx.distsq_tol = 0.001*delta;
+    for (size_t s = 0; s < steiner_npts; s++) {
+	int64_t xc = psnapped_pts[orig_to_snapped[steiner[s]]].first;
+	int64_t yc = psnapped_pts[orig_to_snapped[steiner[s]]].second;
+	double xcd = xc / scale;
+	double ycd = yc / scale;
+	V2SET(lctx.tpnt, xcd, ycd);
+
+	double fMin[2];
+	double fMax[2];
+	fMin[0] = xcd - 10*SMALL_FASTF;
+	fMin[1] = xcd + 10*SMALL_FASTF;
+	fMax[0] = ycd - 10*SMALL_FASTF;
+	fMax[1] = ycd + 10*SMALL_FASTF;
+
+	rtree_2d.Search(fMin, fMax, LSteinClbk, (void *)&lctx);
+    }
+
+
     // 5.  The output of the above process is fed to the poly2tri algorithm,
     // along with the snapped steiner points.
     std::map<int, std::vector<std::pair<int64_t,int64_t>>>::iterator o_it;
@@ -441,6 +569,8 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	}
 
 	for (size_t s = 0; s < steiner_npts; s++) {
+	    if (steiner_excluded.find(s) != steiner_excluded.end())
+		continue;
 	    int64_t xc = psnapped_pts[orig_to_snapped[steiner[s]]].first;
 	    int64_t yc = psnapped_pts[orig_to_snapped[steiner[s]]].second;
 	    double xcd = xc / scale;
@@ -473,7 +603,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	cdts.push_back(cdt);
     }
 
-    // Unpack the Poly2Tri faces into a C container
+    // 6. Unpack the Poly2Tri faces into a C container
     std::unordered_set<p2t::Point *> p2t_active_pnts;
     std::unordered_map<p2t::Point *, size_t> npt_map;
     size_t total_tris = 0;
