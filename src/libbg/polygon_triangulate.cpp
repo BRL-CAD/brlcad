@@ -462,30 +462,24 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     // points weren't on line segments.)  We need to exclude any steiner points
     // that are on a line segment from consideration.
     //
-    // First, assemble all the lines from the outer loop and holes
+    // First, assemble all the lines from the outer loops and holes
+    std::map<int, std::vector<std::pair<int64_t,int64_t>>>::iterator o_it;
     std::vector<std::pair<double,double>> lines;
-    for (size_t i = 0; i < poly_pnts; i++) {
-	size_t pind = poly[i];
-	if (collapsed_pts.find(pind) != collapsed_pts.end())
-	    pind = collapsed_pts[pind];
-	int64_t xc = (psnapped_pts[orig_to_snapped[i]].first);
-	int64_t yc = (psnapped_pts[orig_to_snapped[i]].second);
-	double xcd = xc / scale;
-	double ycd = yc / scale;
-	lines.push_back(std::make_pair(xcd, ycd));
-    }
-    for (size_t hn = 0; hn < nholes; hn++) {
-	size_t hpcnt = holes_npts[hn];
-	const int *harray = holes_array[hn];
-	for (size_t i = 0; i < hpcnt; i++) {
-	    size_t pind = harray[i];
-	    if (collapsed_pts.find(pind) != collapsed_pts.end())
-		pind = collapsed_pts[pind];
-	    int64_t xc = psnapped_pts[orig_to_snapped[pind]].first;
-	    int64_t yc = psnapped_pts[orig_to_snapped[pind]].second;
-	    double xcd = xc / scale;
-	    double ycd = yc / scale;
+    for (o_it = outer_loops.begin(); o_it != outer_loops.end(); o_it++) {
+	for (size_t i = 0; i < o_it->second.size(); i++) {
+	    double xcd = o_it->second[i].first / scale;
+	    double ycd = o_it->second[i].second / scale;
 	    lines.push_back(std::make_pair(xcd, ycd));
+	}
+	if (hole_loops.find(o_it->first) == hole_loops.end())
+	    continue;
+	std::map<int, std::vector<std::pair<int64_t,int64_t>>>::iterator h_it;
+	for (h_it = hole_loops[o_it->first].begin(); h_it != hole_loops[o_it->first].end(); h_it++) {
+	    for (size_t i = 0; i < h_it->second.size(); i++) {
+		double xcd = h_it->second[i].first / scale;
+		double ycd = h_it->second[i].second / scale;
+		lines.push_back(std::make_pair(xcd, ycd));
+	    }
 	}
     }
 
@@ -523,11 +517,8 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	rtree_2d.Search(fMin, fMax, LSteinClbk, (void *)&lctx);
     }
 
-
     // 5.  The output of the above process is fed to the poly2tri algorithm,
     // along with the snapped steiner points.
-    std::map<int, std::vector<std::pair<int64_t,int64_t>>>::iterator o_it;
-
     std::map<p2t::Point *, long> p2t_to_ind;
     std::vector<p2t::CDT *> cdts;
     for (o_it = outer_loops.begin(); o_it != outer_loops.end(); o_it++) {
