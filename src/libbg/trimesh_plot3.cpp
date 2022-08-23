@@ -286,10 +286,6 @@ bg_trimesh_2d_plot3(const char *fname, const int *faces, size_t num_faces, const
     if (bu_file_exists(fname, NULL))
        return BRLCAD_ERROR;
 
-    FILE *plot_file = fopen (fname, "w");
-    if (!plot_file)
-	return BRLCAD_ERROR;
-
     // Assemble the set of all points
     std::unordered_set<int> pnts;
     for (size_t i = 0; i < num_pnts; i++)
