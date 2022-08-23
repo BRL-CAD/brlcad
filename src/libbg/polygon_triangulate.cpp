@@ -211,7 +211,9 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 		}
 	    }
 	    for (bp_it = bb_it->second.begin(); bp_it != bb_it->second.end(); bp_it++) {
-		collapsed_pts[*bp_it] = closest;
+		// Note - we don't want to loop the closest point to itself
+		if (*bp_it != closest)
+		    collapsed_pts[*bp_it] = closest;
 	    }
 	}
     }
@@ -283,6 +285,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	for (size_t i = 0; i < path.size(); i++) {
 	    int64_t xcoord = path[i].X;
 	    int64_t ycoord = path[i].Y;
+	    bu_log("xcoord, ycoord: %" PRId64 ",%" PRId64 "\n", xcoord, ycoord);
 	    if (!polynode->IsHole()) {
 		outer_loops[outer_loop_cnt-1].push_back(std::make_pair(xcoord, ycoord));
 	    } else {
@@ -323,6 +326,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	for (size_t i = 0; i < o_it->second.size(); i++) {
 	    int64_t xc = o_it->second[i].first;
 	    int64_t yc = o_it->second[i].second;
+	    bu_log("xc, yc: %" PRId64 ",%" PRId64 "\n", xc, yc);
 
 	    double xcd = xc / scale;
 	    double ycd = yc / scale;
@@ -349,8 +353,12 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 		    }
 		}
 	    }
-	    p2t_to_ind[p] = pind;
-
+	    if (pind == -1) {
+		new_pnts = true;
+		bu_log("(O) Wait, what?  Need new point????\n");
+	    } else {
+		p2t_to_ind[p] = pind;
+	    }
 	}
 
 	p2t::CDT *cdt = new p2t::CDT(outer_polyline);
@@ -362,6 +370,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 		for (size_t i = 0; i < h_it->second.size(); i++) {
 		    int64_t xc = h_it->second[i].first;
 		    int64_t yc = h_it->second[i].second;
+		    bu_log("xc, yc: %" PRId64 ",%" PRId64 "\n", xc, yc);
 		    double xcd = xc / scale;
 		    double ycd = yc / scale;
 		    bu_log("%d->h(%d): x,y: %f,%f\n", o_it->first, h_it->first, xcd, ycd);
@@ -387,8 +396,13 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 			    }
 			}
 		    }
+		    if (pind == -1) {
+			new_pnts = true;
+			bu_log("(H) Wait, what?  Need new point????\n");
+		    } else {
+			p2t_to_ind[p] = pind;
+		    }
 		    p2t_to_ind[p] = pind;
-
 		}
 		cdt->AddHole(polyline);
 	    }
@@ -471,7 +485,10 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	ind = 0;
 	for (pa_it = p2t_active_pnts.begin(); pa_it != p2t_active_pnts.end(); pa_it++) {
 	    p2t::Point *p = *pa_it;
-	    V2SET((*out_pts)[ind], p->x, p->y);
+	    bu_log("p2t point %ld: %f %f\n", ind, p->x, p->y);
+	    fastf_t py = p->y - (bbmax[X] - p->x)/(bbmax[X] - bbmin[X]);
+	    V2SET((*out_pts)[ind], p->x, py);
+	    bu_log("p2t point %ld descaled: %f %f\n", ind, p->x, py);
 	    ind++;
 	}
     }
@@ -494,6 +511,12 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	} else {
 	    for (size_t j = 0; j < tris.size(); j++) {
 		p2t::Triangle *t = tris[j];
+		for (size_t k = 0; k < 3; k++) {
+		    p2t::Point *p = t->GetPoint(k);
+		    if (p2t_to_ind[p] == -1) {
+			bu_log("T1 Point map error??: %f, %f\n", p->x, p->y);
+		    }
+		}
 		nfaces[3*total_face_ind] = p2t_to_ind[t->GetPoint(0)];
 		nfaces[3*total_face_ind+1] = p2t_to_ind[t->GetPoint(1)];
 		nfaces[3*total_face_ind+2] = p2t_to_ind[t->GetPoint(2)];
