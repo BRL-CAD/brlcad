@@ -584,7 +584,7 @@ write_comb(rt_wdb &wdb, const std::string &name,
 
 void
 write_layer_comb(rt_wdb &wdb, const std::string &name,
-	   const std::unordered_map<std::string, std::vector<fastf_t*>> &members,
+           const std::vector<std::pair<std::string, std::vector<fastf_t*>>>& members,
 	   const char *shader_name = NULL, const char *shader_options = NULL,
 	   const unsigned char *rgb = NULL)
 {
@@ -666,8 +666,8 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
             int write_ret = write_geometry(wdb, member_name, g);
 
             if (write_ret == 1) {
-                std::unordered_map<std::string, std::vector<fastf_t*>>members;
-                members[member_name].push_back(nullptr);
+                std::vector<std::pair<std::string, std::vector<fastf_t*>>>members;
+                members.push_back(std::make_pair(member_name, std::vector<fastf_t*>(1, nullptr)));
 
                 write_layer_comb(wdb, name, members, own_shader ? shader.first.c_str() : NULL,
 			   own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
@@ -727,7 +727,7 @@ import_idef(rt_wdb &wdb, std::string &name, const ON_InstanceDefinition *idef, c
 	members[std::string(nstr)].push_back(nullptr);
     }
 
-    write_layer_comb(wdb, name, members);
+//     write_layer_comb(wdb, name, members);
     ON_String nsu;
     const char *uuidstr = ON_UuidToString(idef->Id(), nsu);
     int ret1 = db5_update_attribute(name.c_str(), "rhino::type", idef->ClassId()->ClassName(), wdb.dbip);
@@ -827,7 +827,8 @@ get_all_idef_members(const ONX_Model &model)
  */
 void
 unpack_iref(const ONX_Model& model, const ON_InstanceRef* iref, std::pair<int, int> index,
-             std::unordered_map<std::string, std::vector<fastf_t*>>& members)
+             std::vector<std::pair<std::string, std::vector<fastf_t*>>>& members,
+             std::unordered_map<std::string, int>& member_vector_positions)
 {
     const ON_InstanceDefinition* idef = ON_InstanceDefinition::FromModelComponentRef(model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, iref->m_instance_definition_uuid), nullptr);
     if (idef) {
@@ -836,7 +837,7 @@ unpack_iref(const ONX_Model& model, const ON_InstanceRef* iref, std::pair<int, i
             const ON_ModelGeometryComponent internal_gc = model.ModelGeometryComponentFromId(id_list[i]);
             if (const ON_Geometry* internal_g = internal_gc.Geometry(nullptr)) {
                 if (const ON_InstanceRef* nested_iref = ON_InstanceRef::Cast(internal_g)) {
-                    unpack_iref(model, nested_iref, index, members);
+                    unpack_iref(model, nested_iref, index, members, member_vector_positions);
                 } else {
                     ON_String internal_name = internal_gc.Name();
                     if (!internal_name.Array()) {
@@ -855,7 +856,7 @@ unpack_iref(const ONX_Model& model, const ON_InstanceRef* iref, std::pair<int, i
                                 for (std::size_t col = 0; col < 4; ++col)
                                     matrix[4 * row + col] = iref->m_xform[row][col];
 
-                            members[internal_name_stdstr].push_back(matrix);
+                            members[member_vector_positions[internal_name_stdstr]].second.push_back(matrix);
                         }
                     }
                 }
@@ -877,13 +878,13 @@ unpack_iref(const ONX_Model& model, const ON_InstanceRef* iref, std::pair<int, i
 // .g file.
 //
 // TODO - should we also be doing something for the Group type?
-// std::set<std::string>
-std::unordered_map<std::string, std::vector<fastf_t*>>
+std::vector<std::pair<std::string, std::vector<fastf_t*>>>
 get_layer_members(const ON_Layer *layer, const ONX_Model &model, 
                   const std::set<std::string> &UNUSED(model_idef_members), 
                   const std::vector<int>& moved_layers)
 {
-    std::unordered_map<std::string, std::vector<fastf_t*>>members;
+        std::vector<std::pair<std::string, std::vector<fastf_t*>>> members;
+        std::unordered_map<std::string, int> member_vector_positions;   /* keep track of members we've already encountered for irefs */
     {
 	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::Layer);
 	for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
@@ -892,7 +893,9 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 	    if (!cl)
 		continue;
 	    if (cl->ParentLayerId() == layer->ModelObjectId()) {
-                members[clean_name(cl->Name())].push_back(nullptr);
+                std::string cleaned_name = clean_name(cl->Name());
+                members.push_back(std::make_pair(cleaned_name, std::vector<fastf_t*>(1, nullptr)));
+                member_vector_positions[cleaned_name] = members.size();
 	    }
 	}
     }
@@ -911,7 +914,7 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 		continue;
             /* if the layer has refs, add them in accordingly */
 	    if (const ON_InstanceRef* iref = ON_InstanceRef::Cast(mg->Geometry(nullptr))) {
-                unpack_iref(model, iref, std::make_pair(moved_layers[layer->Index()], layer->Index()), members);
+                unpack_iref(model, iref, std::make_pair(moved_layers[layer->Index()], layer->Index()), members, member_vector_positions);
                 continue;
             }
             ON_String ns(attributes->Name());
@@ -922,7 +925,11 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 		gname = uuidstr;
 	    }
 	    if (attributes->m_layer_index == moved_layers[layer->Index()] || attributes->m_layer_index == layer->Index()) {
-                members[std::string(gname)].push_back(nullptr);
+                auto handle = member_vector_positions.find(std::string(gname));
+                if (handle != member_vector_positions.end())
+                    members[handle->second].second.push_back(nullptr);
+                else
+                    members.push_back(std::make_pair(std::string(gname), std::vector<fastf_t*>(1, nullptr)));
 	    }
 	}
     }
