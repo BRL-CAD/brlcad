@@ -193,7 +193,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	for (size_t j = 0; j < holes_npts[i]; j++)
 	    initial_pnt_indices.insert(holes_array[i][j]);
     }
-    bu_log("initial pnt cnt: %zd\n", initial_pnt_indices.size());
+    //bu_log("initial pnt cnt: %zd\n", initial_pnt_indices.size());
 
     // 2.  Now that we know the points, we need to identify the closest points and
     // determine if any must be merged.  We also need to determine a good integer
@@ -211,6 +211,9 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     for (p_it = initial_pnt_indices.begin(); p_it != initial_pnt_indices.end(); p_it++) {
 	V2MINMAX(bbmin, bbmax, pts[*p_it]);
     }
+    double deltaX = fabs(bbmax[X] - bbmin[X]);
+    double deltaY = fabs(bbmax[Y] - bbmin[Y]);
+    double delta = (deltaX < deltaY) ? deltaX : deltaY;
     bu_log("bbmin: %f %f, bbmax: %f %f\n", V2ARGS(bbmin), V2ARGS(bbmax));
 
     // b.  Bin the points into a series of nested unordered maps of sets based
@@ -263,7 +266,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	snapped_pts.push_back(std::make_pair(lx,ly));
 	orig_to_snapped[*p_it] = snapped_pts.size() - 1;
 	ubins[lx][ly].insert(*p_it);
-#if 1
+#if 0
 	double lx_restore = static_cast<double>(lx / scale);
 	double ly_restore = static_cast<double>(ly / scale);
 	bu_log("%d: %f,%f -> %" PRId64 ", %" PRId64 " -> %f %f\n", *p_it, pts[*p_it][X], pts[*p_it][Y], lx, ly, lx_restore, ly_restore);
@@ -314,21 +317,35 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     std::unordered_map<int64_t, std::unordered_set<int64_t>> ucheck;
     float *prand;
     bn_rand_init(prand, 0);
+    bu_log("deltaX: %f deltaY: %f\n", deltaX, deltaY);
+    int64_t dXb = (int64_t)log10((int)deltaX);
+    int64_t dYb = (int64_t)log10((int)deltaY);
+    bu_log("dXb: %ld dYb: %ld\n", dXb, dYb);
+    fastf_t delta_spaceX = pow(10, dXb-11);
+    fastf_t delta_spaceY = pow(10, dYb-11);
+    //delta_spaceX = 100000000;
+    //delta_spaceY = 100000000;
+    bu_log("deltaX(%ld): %f  deltaY(%ld): %f\n", dXb, delta_spaceX, dYb, delta_spaceY);
     for (b_it = ubins.begin(); b_it != ubins.end(); b_it++) {
 	std::unordered_map<int64_t, std::unordered_set<int>>::iterator bb_it;
 	for (bb_it = b_it->second.begin(); bb_it != b_it->second.end(); bb_it++) {
-	    int delta_space = 100;
 	    int inf_loop_guard = 0;
 	    int64_t slx = b_it->first;
 	    int64_t sly = bb_it->first;
-	    int64_t lx = slx + (int64_t)(bn_rand_half(prand) * delta_space);
-	    int64_t ly = sly + (int64_t)(bn_rand_half(prand) * delta_space);
-	    bu_log("slx -> lx %ld -> %ld, sly -> ly: %ld -> %ld\n", slx, lx, sly, ly);
+	    double slxd = slx / scale;
+	    double slyd = sly / scale;
+	    double lxd = slxd + (bn_rand_half(prand) * delta_spaceX * deltaX);
+	    double lyd = slyd + (bn_rand_half(prand) * delta_spaceY * deltaY);
+	    int64_t lx = (int64_t)(lxd * scale);
+	    int64_t ly = (int64_t)(lyd * scale);
+	    //bu_log("slx -> lx %ld -> %ld, sly -> ly: %ld -> %ld\n", slx, lx, sly, ly);
 	    // We need to preserve the point uniqueness - keep perturbing until we
 	    // produce a point we've not already seen
 	    while (inf_loop_guard < 100000 && ucheck.find(lx) != ucheck.end() && ucheck[lx].find(ly) != ucheck[lx].end()) {
-		lx = static_cast<int64_t>(slx + (bn_rand_half(prand) * delta_space));
-		ly = static_cast<int64_t>(sly + (bn_rand_half(prand) * delta_space));
+		lxd = slxd + (bn_rand_half(prand) * delta_spaceX * deltaX);
+		lyd = slyd + (bn_rand_half(prand) * delta_spaceY * deltaY);
+		lx = (int64_t)(lxd * scale);
+		ly = (int64_t)(lxd * scale);
 		bu_log("uniq: lx, ly: %ld,%ld\n", lx, ly);
 		inf_loop_guard++;
 	    }
@@ -415,7 +432,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	for (size_t i = 0; i < path.size(); i++) {
 	    int64_t xcoord = path[i].X;
 	    int64_t ycoord = path[i].Y;
-	    bu_log("xcoord, ycoord: %" PRId64 ",%" PRId64 "\n", xcoord, ycoord);
+	    //bu_log("xcoord, ycoord: %" PRId64 ",%" PRId64 "\n", xcoord, ycoord);
 	    if (!polynode->IsHole()) {
 		outer_loops[outer_loop_cnt-1].push_back(std::make_pair(xcoord, ycoord));
 	    } else {
@@ -488,9 +505,6 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     struct line_steiner_ctx lctx;
     lctx.steiner_excluded = &steiner_excluded;
     lctx.lines = &lines;
-    double deltaX = fabs(bbmax[X] - bbmin[X]);
-    double deltaY = fabs(bbmax[Y] - bbmin[Y]);
-    double delta = (deltaX < deltaY) ? deltaX : deltaY;
     lctx.distsq_tol = 0.001*delta;
     for (size_t s = 0; s < steiner_npts; s++) {
 	int64_t xc = psnapped_pts[orig_to_snapped[steiner[s]]].first;
@@ -522,11 +536,11 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	for (size_t i = 0; i < o_it->second.size(); i++) {
 	    int64_t xc = o_it->second[i].first;
 	    int64_t yc = o_it->second[i].second;
-	    bu_log("xc, yc: %" PRId64 ",%" PRId64 "\n", xc, yc);
+	    //bu_log("xc, yc: %" PRId64 ",%" PRId64 "\n", xc, yc);
 
 	    double xcd = xc / scale;
 	    double ycd = yc / scale;
-	    bu_log("%d: x,y: %f,%f\n", o_it->first, xcd, ycd);
+	    //bu_log("%d: x,y: %f,%f\n", o_it->first, xcd, ycd);
 	    p2t::Point *p = new p2t::Point(xcd, ycd);
 	    outer_polyline.push_back(p);
 
@@ -548,10 +562,10 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 		for (size_t i = 0; i < h_it->second.size(); i++) {
 		    int64_t xc = h_it->second[i].first;
 		    int64_t yc = h_it->second[i].second;
-		    bu_log("xc, yc: %" PRId64 ",%" PRId64 "\n", xc, yc);
+		    //bu_log("xc, yc: %" PRId64 ",%" PRId64 "\n", xc, yc);
 		    double xcd = xc / scale;
 		    double ycd = yc / scale;
-		    bu_log("%d->h(%d): x,y: %f,%f\n", o_it->first, h_it->first, xcd, ycd);
+		    //bu_log("%d->h(%d): x,y: %f,%f\n", o_it->first, h_it->first, xcd, ycd);
 		    p2t::Point *p = new p2t::Point(xcd, ycd);
 		    polyline.push_back(p);
 
