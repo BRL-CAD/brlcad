@@ -58,8 +58,40 @@
 #include "poly2tri/poly2tri.h"
 
 #include "bu/malloc.h"
+#include "bn/rand.h"
 #include "bv/plot3.h"
 #include "bg/polygon.h"
+
+int
+xy_ind_lookup(
+	std::unordered_map<int64_t, std::unordered_map<int64_t, std::unordered_set<int>>> &bins,
+	std::unordered_map<int, int> collapsed_pts,
+	int64_t xc, int64_t yc
+	)
+{
+    long pind = -1;
+
+    if (bins.find(xc) != bins.end()) {
+	std::unordered_map<int64_t, std::unordered_set<int>> &yset = bins[xc];
+	if (yset.find(yc) != yset.end()) {
+	    std::unordered_set<int> &pind_set = yset[yc];
+	    if (pind_set.size() == 1) {
+		pind = *pind_set.begin();
+	    } else {
+		std::unordered_set<int>::iterator ps_it;
+		for (ps_it = pind_set.begin(); ps_it != pind_set.end(); ps_it++) {
+		    size_t candidate = *ps_it;
+		    if (collapsed_pts.find(candidate) != collapsed_pts.end())
+			continue;
+		    pind = candidate;
+		    break;
+		}
+	    }
+	}
+    }
+
+    return pind;
+}
 
 // TODO - clipper2 is released now - https://github.com/AngusJohnson/Clipper2
 // Need to look at updating our bundled clipper to that version...
@@ -169,13 +201,13 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     // Having established our limits, scale and snap the points
     std::unordered_map<size_t, size_t> orig_to_snapped;
     std::vector<std::pair<int64_t,int64_t>> snapped_pts;
-    std::unordered_map<int64_t, std::unordered_map<int64_t, std::unordered_set<int>>> bins;
+    std::unordered_map<int64_t, std::unordered_map<int64_t, std::unordered_set<int>>> ubins;
     for (p_it = initial_pnt_indices.begin(); p_it != initial_pnt_indices.end(); p_it++) {
 	int64_t lx = static_cast<int64_t>(pts[*p_it][X]* scale);
 	int64_t ly = static_cast<int64_t>(pts[*p_it][Y]* scale);
 	snapped_pts.push_back(std::make_pair(lx,ly));
 	orig_to_snapped[*p_it] = snapped_pts.size() - 1;
-	bins[lx][ly].insert(*p_it);
+	ubins[lx][ly].insert(*p_it);
 #if 1
 	double lx_restore = static_cast<double>(lx / scale);
 	double ly_restore = static_cast<double>(ly / scale);
@@ -186,7 +218,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     // c.  Now we need to identify any post-binning collapsed points.
     std::unordered_map<int, int> collapsed_pts;
     std::unordered_map<int64_t, std::unordered_map<int64_t, std::unordered_set<int>>>::iterator b_it;
-    for (b_it = bins.begin(); b_it != bins.end(); b_it++) {
+    for (b_it = ubins.begin(); b_it != ubins.end(); b_it++) {
 	std::unordered_map<int64_t, std::unordered_set<int>>::iterator bb_it;
 	for (bb_it = b_it->second.begin(); bb_it != b_it->second.end(); bb_it++) {
 	    if (bb_it->second.size() < 2)
@@ -218,6 +250,47 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	}
     }
 
+    // d.  Having produce suitably unique points, we now need to perturb them
+    // to avoid colinearity - we don't want clipper removing points added to
+    // straight lines to increase triangle counts, and poly2tri doesn't do well
+    // with truly colinear points.
+    std::unordered_map<int64_t, std::unordered_map<int64_t, std::unordered_set<int>>> pbins;
+    std::vector<std::pair<int64_t,int64_t>> psnapped_pts;
+    std::unordered_map<int64_t, std::unordered_set<int64_t>> ucheck;
+    float *prand;
+    bn_rand_init(prand, 0);
+    for (b_it = ubins.begin(); b_it != ubins.end(); b_it++) {
+	std::unordered_map<int64_t, std::unordered_set<int>>::iterator bb_it;
+	for (bb_it = b_it->second.begin(); bb_it != b_it->second.end(); bb_it++) {
+	    int delta_space = 100;
+	    int inf_loop_guard = 0;
+	    int64_t slx = b_it->first;
+	    int64_t sly = bb_it->first;
+	    int64_t lx = slx + (int64_t)(bn_rand_half(prand) * delta_space);
+	    int64_t ly = sly + (int64_t)(bn_rand_half(prand) * delta_space);
+	    bu_log("slx -> lx %ld -> %ld, sly -> ly: %ld -> %ld\n", slx, lx, sly, ly);
+	    while (inf_loop_guard < 100000 && ucheck.find(lx) != ucheck.end() && ucheck[lx].find(ly) != ucheck[lx].end()) {
+		lx = static_cast<int64_t>(slx + (bn_rand_half(prand) * delta_space));
+		ly = static_cast<int64_t>(sly + (bn_rand_half(prand) * delta_space));
+		bu_log("uniq: lx, ly: %ld,%ld\n", lx, ly);
+		inf_loop_guard++;
+	    }
+	    if (inf_loop_guard >= 100000) {
+		bu_log("ERROR - could not generate unique perturbed point?????\n");
+	    }
+	    ucheck[lx].insert(ly);
+	    psnapped_pts.push_back(std::make_pair(lx,ly));
+	    std::unordered_set<int>::iterator pind_it;
+	    for (pind_it = bb_it->second.begin(); pind_it != bb_it->second.end(); pind_it++) {
+		orig_to_snapped[*pind_it] = psnapped_pts.size() - 1;
+	    }
+	    pbins[lx][ly].insert(bb_it->second.begin(), bb_it->second.end());
+	}
+    }
+
+    ubins.clear();
+
+
     // 3.  Having found suitable integer points, assemble versions of the polygons
     // using the new indices.  These will be the clipper inputs.  (NOTE:  we can
     // filter out duplicate points here if we need to, but first we're going to
@@ -230,8 +303,8 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	size_t pind = poly[i];
 	if (collapsed_pts.find(pind) != collapsed_pts.end())
 	    pind = collapsed_pts[pind];
-	outer_polygon[i].X = (ClipperLib::long64)(snapped_pts[orig_to_snapped[pind]].first);
-	outer_polygon[i].Y = (ClipperLib::long64)(snapped_pts[orig_to_snapped[pind]].second);
+	outer_polygon[i].X = (ClipperLib::long64)(psnapped_pts[orig_to_snapped[pind]].first);
+	outer_polygon[i].Y = (ClipperLib::long64)(psnapped_pts[orig_to_snapped[pind]].second);
     }
     try {
 	clipper.AddPath(outer_polygon, ClipperLib::ptSubject, true);
@@ -250,8 +323,8 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	    size_t pind = harray[i];
 	    if (collapsed_pts.find(pind) != collapsed_pts.end())
 		pind = collapsed_pts[pind];
-	    hole_polygon[i].X = (ClipperLib::long64)(snapped_pts[orig_to_snapped[pind]].first);
-	    hole_polygon[i].Y = (ClipperLib::long64)(snapped_pts[orig_to_snapped[pind]].second);
+	    hole_polygon[i].X = (ClipperLib::long64)(psnapped_pts[orig_to_snapped[pind]].first);
+	    hole_polygon[i].Y = (ClipperLib::long64)(psnapped_pts[orig_to_snapped[pind]].second);
 	}
 	try {
 	    clipper.AddPath(hole_polygon, ClipperLib::ptClip, true);
@@ -291,18 +364,13 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	    } else {
 		hole_loops[outer_loop_cnt-1][hole_loop_cnt-1].push_back(std::make_pair(xcoord, ycoord));
 	    }
-	    // The points clipper returns are integer space points, but most
-	    // will map back to our original points.  If we do have actual new
+	    // The points clipper returns are integer space points. Most will
+	    // map back to our original points.  If we do have actual new
 	    // points, we need to know - those will eventually need to be
 	    // translated back to floating point numbers, which will require
 	    // the ability to create a new output point array.
-	    if (bins.find(xcoord) != bins.end()) {
-		std::unordered_map<int64_t, std::unordered_set<int>> &yset = bins[xcoord];
-		if (yset.find(ycoord) == yset.end())
-		    new_pnts = true;
-	    } else {
+	    if (xy_ind_lookup(pbins, collapsed_pts, xcoord, ycoord) == -1)
 		new_pnts = true;
-	    }
 	}
 	polynode = polynode->GetNext();
     }
@@ -334,25 +402,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	    p2t::Point *p = new p2t::Point(xcd, ycd);
 	    outer_polyline.push_back(p);
 
-	    long pind = -1;
-	    if (bins.find(xc) != bins.end()) {
-		std::unordered_map<int64_t, std::unordered_set<int>> &yset = bins[xc];
-		if (yset.find(yc) != yset.end()) {
-		    std::unordered_set<int> &pind_set = yset[yc];
-		    if (pind_set.size() == 1) {
-			pind = *pind_set.begin();
-		    } else {
-			std::unordered_set<int>::iterator ps_it;
-			for (ps_it = pind_set.begin(); ps_it != pind_set.end(); ps_it++) {
-			    size_t candidate = *ps_it;
-			    if (collapsed_pts.find(candidate) != collapsed_pts.end())
-				continue;
-			    pind = candidate;
-			    break;
-			}
-		    }
-		}
-	    }
+	    long pind = xy_ind_lookup(pbins, collapsed_pts, xc, yc);
 	    if (pind == -1) {
 		new_pnts = true;
 		bu_log("(O) Wait, what?  Need new point????\n");
@@ -377,25 +427,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 		    p2t::Point *p = new p2t::Point(xcd, ycd);
 		    polyline.push_back(p);
 
-		    long pind = -1;
-		    if (bins.find(xc) != bins.end()) {
-			std::unordered_map<int64_t, std::unordered_set<int>> &yset = bins[xc];
-			if (yset.find(yc) != yset.end()) {
-			    std::unordered_set<int> &pind_set = yset[yc];
-			    if (pind_set.size() == 1) {
-				pind = *pind_set.begin();
-			    } else {
-				std::unordered_set<int>::iterator ps_it;
-				for (ps_it = pind_set.begin(); ps_it != pind_set.end(); ps_it++) {
-				    size_t candidate = *ps_it;
-				    if (collapsed_pts.find(candidate) != collapsed_pts.end())
-					continue;
-				    pind = candidate;
-				    break;
-				}
-			    }
-			}
-		    }
+		    long pind = xy_ind_lookup(pbins, collapsed_pts, xc, yc);
 		    if (pind == -1) {
 			new_pnts = true;
 			bu_log("(H) Wait, what?  Need new point????\n");
@@ -409,34 +441,21 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	}
 
 	for (size_t s = 0; s < steiner_npts; s++) {
-	    int64_t xc = snapped_pts[orig_to_snapped[steiner[s]]].first;
-	    int64_t yc = snapped_pts[orig_to_snapped[steiner[s]]].second;
+	    int64_t xc = psnapped_pts[orig_to_snapped[steiner[s]]].first;
+	    int64_t yc = psnapped_pts[orig_to_snapped[steiner[s]]].second;
 	    double xcd = xc / scale;
 	    double ycd = yc / scale;
 	    p2t::Point *p = new p2t::Point(xcd, ycd);
 	    cdt->AddPoint(p);
 
-	    long pind = -1;
-	    if (bins.find(xc) != bins.end()) {
-		std::unordered_map<int64_t, std::unordered_set<int>> &yset = bins[xc];
-		if (yset.find(yc) != yset.end()) {
-		    std::unordered_set<int> &pind_set = yset[yc];
-		    if (pind_set.size() == 1) {
-			pind = *pind_set.begin();
-		    } else {
-			std::unordered_set<int>::iterator ps_it;
-			for (ps_it = pind_set.begin(); ps_it != pind_set.end(); ps_it++) {
-			    size_t candidate = *ps_it;
-			    if (collapsed_pts.find(candidate) != collapsed_pts.end())
-				continue;
-			    pind = candidate;
-			    break;
-			}
-		    }
-		}
+	    long pind = xy_ind_lookup(pbins, collapsed_pts, xc, yc);
+	    if (pind == -1) {
+		new_pnts = true;
+		bu_log("(S) Wait, what?  Need new point????\n");
+	    } else {
+		p2t_to_ind[p] = pind;
 	    }
 	    p2t_to_ind[p] = pind;
-
 	}
 
 	try {
@@ -649,7 +668,7 @@ bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, 
     //if (type == TRI_DELAUNAY && (!out_pts || !num_outpts)) return 1;
 
     if (type == TRI_ANY || type == TRI_CONSTRAINED_DELAUNAY) {
-	int p2t_ret = bg_poly2tri(faces, num_faces, out_pts, num_outpts, poly, poly_pnts, holes_array, holes_npts, nholes, steiner, steiner_npts, pts);
+	int p2t_ret = bg_poly2tri_test(faces, num_faces, out_pts, num_outpts, poly, poly_pnts, holes_array, holes_npts, nholes, steiner, steiner_npts, pts);
 	return p2t_ret;
     }
 
