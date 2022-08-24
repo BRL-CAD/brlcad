@@ -110,7 +110,7 @@ namespace p2t {
 	if (!t) return;
 
 	// Collect interior triangles constrained by edges
-	tcx.MeshClean(*t);
+	tcx.MeshClean(t);
     }
 
     Node* Sweep::PointEvent(SweepContext& tcx, Point *point)

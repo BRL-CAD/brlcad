@@ -215,18 +215,18 @@ namespace p2t {
 	map_.remove(triangle);
     }
 
-    void SweepContext::MeshClean(Triangle& triangle)
+    void SweepContext::MeshClean(Triangle *triangle)
     {
 	meshclean_cnt++;
 	if (meshclean_cnt > 100000) {
 	    throw std::runtime_error("SweepContext MeshClean call stack too deep");
 	}
-	if (!triangle.IsInterior()) {
-	    triangle.IsInterior(true);
-	    triangles_.push_back(&triangle);
+	if (triangle && !triangle->IsInterior()) {
+	    triangle->IsInterior(true);
+	    triangles_.push_back(triangle);
 	    for (int i = 0; i < 3; i++) {
-		if (!triangle.constrained_edge[i])
-		    MeshClean(*triangle.GetNeighbor(i));
+		if (!triangle->constrained_edge[i])
+		    MeshClean(triangle->GetNeighbor(i));
 	    }
 	}
 	meshclean_cnt--;

@@ -93,7 +93,7 @@ namespace p2t {
 
 	    AdvancingFront* front();
 
-	    void MeshClean(Triangle& triangle);
+	    void MeshClean(Triangle *triangle);
 
 	    std::vector<Triangle*>& GetTriangles();
 	    std::list<Triangle*>& GetMap();
