@@ -310,6 +310,10 @@ namespace p2t {
     void Sweep::FillAdvancingFront(SweepContext& tcx, Node& n)
     {
 
+	curr_time = std::chrono::steady_clock::now();
+	if (std::chrono::duration_cast<std::chrono::microseconds>(curr_time - tri_start_time).count() > POLY2TRI_MAXTIME)
+	    throw std::runtime_error("Poly2Tri timeout");
+
 	// Fill right holes
 	Node* node = n.next;
 	Node* leftboundnode = NULL;
