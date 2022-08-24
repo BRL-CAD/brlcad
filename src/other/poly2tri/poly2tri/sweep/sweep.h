@@ -93,7 +93,7 @@ namespace p2t {
 	    void UpdateNodeAngleCircum(Node& n);
 	    /**
 	     * Adds a triangle to the advancing front to fill a hole.
-	     * @param tcx
+	     * @param tcx - sweep context
 	     * @param node - middle node, that is the bottom of the hole
 	     */
 	    void Fill(SweepContext& tcx, Node& node);
