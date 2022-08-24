@@ -197,7 +197,7 @@ namespace p2t {
     bool Sweep::IsEdgeSideOfTriangle(Triangle& triangle, Point& ep, Point& eq)
     {
 	if (&triangle == NULL)
-	    throw std::runtime_error("NULL triangle(??)");
+	    throw std::runtime_error("NULL triangle(?)");
 
 	int index = triangle.EdgeIndex(&ep, &eq);
 
