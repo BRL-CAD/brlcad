@@ -634,14 +634,24 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	}
 	catch (...) {
 	    delete cdt;
+	    cdt = NULL;
 	}
+
+	if (!cdt)
+	    continue;
 
 	// If we didn't get any triangles, we don't need this cdt
 	if (!cdt->GetTriangles().size()) {
 	    delete cdt;
+	} else {
+	    cdts.push_back(cdt);
 	}
+    }
 
-	cdts.push_back(cdt);
+    // If all the CDT attempts failed, we have a problem
+    if (!cdts.size()) {
+	bu_log("Poly2Tri CDT failed!\n");
+	return BRLCAD_ERROR;
     }
 
     // If the loops need new points (??) bug we don't have out_pnts, error out.
