@@ -64,23 +64,27 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     // the hyperboloid in the plane.  See if the following webpage
     // will help:
     // http://www.cs.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/NURBS/RB-conics.html
+
     point_t x_rev_dir, ep1, ep2, ep3, tmppt;
     VREVERSE(x_rev_dir, x_dir);
-
+    
+    // t indicates the distance from the second control points to middle point of curve 
+    // (b + 2c) / b = t / (2c - t) to get t
+    // w1 = b/t
+    // distance from origin to the second control point is: b + t = b + c + c^2 /(b + c)
     VADD2(ep1, p1_origin, x_rev_dir);
     double intercept_calc = (eip->rhc_c)*(eip->rhc_c)/(MAGNITUDE(eip->rhc_B) + eip->rhc_c);
-    double intercept_dist = MAGNITUDE(eip->rhc_B) + eip->rhc_c - intercept_calc;
+    double intercept_dist = MAGNITUDE(eip->rhc_B) + eip->rhc_c + intercept_calc;
     double intercept_length = intercept_dist - MAGNITUDE(eip->rhc_B);
 
     double MX = MAGNITUDE(eip->rhc_B);
-    double MP = MX + intercept_length;
-    double w1 = (MX/MP)/(1-MX/MP);
+    double w1 = MX / intercept_length;
 
     VMOVE(tmppt, eip->rhc_B);
     VUNITIZE(tmppt);
-    VSCALE(tmppt, tmppt, w1 * intercept_dist);
+    VSCALE(tmppt, tmppt, intercept_dist);
     VADD2(ep2, p1_origin, tmppt);
-    VSCALE(ep2, ep2, 1/w1);
+    VSCALE(ep2, ep2, w1);
     VADD2(ep3, p1_origin, x_dir);
     ON_3dPoint onp1 = ON_3dPoint(ep1);
     ON_3dPoint onp2 = ON_3dPoint(ep2);
@@ -92,7 +96,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     cpts.Append(onp3);
     ON_BezierCurve *bcurve = new ON_BezierCurve(cpts);
     bcurve->MakeRational(); 
-    bcurve->SetWeight(1, 1/w1);
+    bcurve->SetWeight(1, w1);
 
     ON_NurbsCurve* hypnurbscurve = ON_NurbsCurve::New();
 
