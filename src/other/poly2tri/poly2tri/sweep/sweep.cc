@@ -46,6 +46,7 @@ namespace p2t {
     // Triangulate simple polygon with holes
     void Sweep::Triangulate(SweepContext& tcx, bool finalize, int num_points)
     {
+	tri_start_time = std::chrono::steady_clock::now();
 	tcx.InitTriangulation();
 	tcx.CreateAdvancingFront(nodes_);
 	// Sweep points; build mesh
@@ -54,6 +55,9 @@ namespace p2t {
 	if (finalize) {
 	    FinalizationPolygon(tcx);
 	}
+
+	curr_time = std::chrono::steady_clock::now();
+	//std::cout << "triangulation time (seconds): " << std::chrono::duration_cast<std::chrono::microseconds>(curr_time - tri_start_time).count() * 1e-6 << "\n";
     }
 
     void Sweep::SweepPoints(SweepContext& tcx, int num_points)

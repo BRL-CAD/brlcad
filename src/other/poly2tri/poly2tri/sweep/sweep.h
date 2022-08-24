@@ -39,6 +39,7 @@
 #ifndef SWEEP_H
 #define SWEEP_H
 
+#include <chrono>
 #include <vector>
 
 namespace p2t {
@@ -249,6 +250,9 @@ namespace p2t {
 	    std::vector<Node*> nodes_;
 
 	    int flip_edge_event_cnt = 0;
+
+	    std::chrono::time_point<std::chrono::steady_clock> tri_start_time;
+	    std::chrono::time_point<std::chrono::steady_clock> curr_time;
     };
 
 }
