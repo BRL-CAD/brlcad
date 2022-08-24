@@ -29,18 +29,6 @@
 #include "rt/geom.h"
 #include "brep.h"
 
-// Matrix multiply function
-void MatMultiply(double res[4][4], double a[4][4], double b[4][4]) {
-    for (int i = 0; i < ELEMENTS_PER_PLANE; i++) {
-        for (int j = 0; j < ELEMENTS_PER_PLANE; j++) {
-            res[i][j] = 0;
-            for (int v = 0; v < ELEMENTS_PER_PLANE; v++) {
-                res[i][j] += a[i][v] * b[v][j];
-            }
-        }
-    }
-}
-
 extern "C" void
 rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
@@ -193,33 +181,28 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     VCROSS(end_X, end_Y, end_Z);
 
     // note: there is a 90 degree rotation in the beginning, so swap +x and +y
-    double origin_mat[ELEMENTS_PER_PLANE][ELEMENTS_PER_PLANE] = {
-        { 0,1,0,0 },
-        { 1,0,0,0 },
-        { 0,0,1,0 },
-        { 0,0,0,1 },
+    mat_t origin_mat = {
+        0,1,0,0,
+        1,0,0,0,
+        0,0,1,0,
+        0,0,0,1,
     };
 
     // reference: https://stackoverflow.com/questions/34391968/how-to-find-the-rotation-matrix-between-two-coordinate-systems
-    double rotate_mat[ELEMENTS_PER_PLANE][ELEMENTS_PER_PLANE] = { 0 };
-    rotate_mat[0][0] = VDOT(end_X, origin_X);
-    rotate_mat[0][1] = VDOT(end_Y, origin_X);
-    rotate_mat[0][2] = VDOT(end_Z, origin_X);
-    rotate_mat[1][0] = VDOT(end_X, origin_Y);
-    rotate_mat[1][1] = VDOT(end_Y, origin_Y);
-    rotate_mat[1][2] = VDOT(end_Z, origin_Y);
-    rotate_mat[2][0] = VDOT(end_X, origin_Z);
-    rotate_mat[2][1] = VDOT(end_Y, origin_Z);
-    rotate_mat[2][2] = VDOT(end_Z, origin_Z);
-    rotate_mat[3][3] = 1;
-    double transform_mat [ELEMENTS_PER_PLANE][ELEMENTS_PER_PLANE] = { 0 };
+    mat_t rotate_mat = {
+        VDOT(end_X, origin_X), VDOT(end_Y, origin_X), VDOT(end_Z, origin_X), 0,
+        VDOT(end_X, origin_Y), VDOT(end_Y, origin_Y), VDOT(end_Z, origin_Y), 0,
+        VDOT(end_X, origin_Z), VDOT(end_Y, origin_Z), VDOT(end_Z, origin_Z), 0,
+        0, 0, 0, 1
+    };
+    mat_t transform_mat = { 0 };
     // add origin rotation
-    MatMultiply(transform_mat, rotate_mat, origin_mat);
+    bn_mat_mul(transform_mat, rotate_mat, origin_mat);
 
     // add pan transform
-    transform_mat[0][3] = plane1_origin.x;
-    transform_mat[1][3] = plane1_origin.y;
-    transform_mat[2][3] = plane1_origin.z;
+    transform_mat[3] = plane1_origin.x;
+    transform_mat[7] = plane1_origin.y;
+    transform_mat[11] = plane1_origin.z;
 
     ON_Xform trans(transform_mat);
     epacurvedsurf->Transform(trans);
