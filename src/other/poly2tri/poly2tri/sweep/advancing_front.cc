@@ -82,7 +82,7 @@ namespace p2t {
 		} else if (point == node->next->point) {
 		    node = node->next;
 		} else {
-		    return NULL;
+		    throw std::runtime_error("LocatePoint");
 		}
 	    }
 	} else if (px < nx) {
@@ -106,6 +106,7 @@ namespace p2t {
     }
 
 }
+
 
 // Local Variables:
 // tab-width: 8

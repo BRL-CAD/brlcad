@@ -49,8 +49,7 @@ namespace p2t {
     const double PI_div2 = 1.57079632679489661923;
     const double EPSILON = DBL_MIN;
 
-
-    enum Orientation { CW, CCW, COLLINEAR, INVALID_ORIENTATION };
+    enum Orientation { CW, CCW, COLLINEAR };
 
     /**
      * Forumla to calculate signed area<br>
@@ -62,11 +61,10 @@ namespace p2t {
      *              =  (x1-x3)*(y2-y3) - (y1-y3)*(x2-x3)
      * </pre>
      */
-    Orientation Orient2d(Point *pa, Point *pb, Point *pc)
+    Orientation Orient2d(Point& pa, Point& pb, Point& pc)
     {
-	if (!pa || !pb || !pc) return INVALID_ORIENTATION;
-	double detleft = (pa->x - pc->x) * (pb->y - pc->y);
-	double detright = (pa->y - pc->y) * (pb->x - pc->x);
+	double detleft = (pa.x - pc.x) * (pb.y - pc.y);
+	double detright = (pa.y - pc.y) * (pb.x - pc.x);
 	double val = detleft - detright;
 	if (val > -EPSILON && val < EPSILON) {
 	    return COLLINEAR;
@@ -76,15 +74,14 @@ namespace p2t {
 	return CW;
     }
 
-    bool InScanArea(Point *pa, Point *pb, Point *pc, Point *pd)
+    bool InScanArea(Point& pa, Point& pb, Point& pc, Point& pd)
     {
-	if (!pa || !pb || !pc || !pd) return false;
-	double oadb = (pa->x - pb->x)*(pd->y - pb->y) - (pd->x - pb->x)*(pa->y - pb->y);
+	double oadb = (pa.x - pb.x)*(pd.y - pb.y) - (pd.x - pb.x)*(pa.y - pb.y);
 	if (oadb >= -EPSILON) {
 	    return false;
 	}
 
-	double oadc = (pa->x - pc->x)*(pd->y - pc->y) - (pd->x - pc->x)*(pa->y - pc->y);
+	double oadc = (pa.x - pc.x)*(pd.y - pc.y) - (pd.x - pc.x)*(pa.y - pc.y);
 	if (oadc <= EPSILON) {
 	    return false;
 	}

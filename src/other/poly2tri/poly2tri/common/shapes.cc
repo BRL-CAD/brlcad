@@ -53,7 +53,7 @@ namespace p2t {
 	else if ((p1 == points_[0] && p2 == points_[1]) || (p1 == points_[1] && p2 == points_[0]))
 	    neighbors_[2] = t;
 	else
-	    return;
+	    throw std::runtime_error("MarkNeighbor");
     }
 
     // Exhaustive search to update neighbor pointers
@@ -117,10 +117,9 @@ namespace p2t {
 	delaunay_edge[0] = delaunay_edge[1] = delaunay_edge[2] = false;
     }
 
-    Point* Triangle::OppositePoint(Triangle& t, Point *p)
+    Point* Triangle::OppositePoint(Triangle& t, Point& p)
     {
-	if (!p) return NULL;
-	Point *cw = t.PointCW(*p);
+	Point *cw = t.PointCW(p);
 	return PointCW(*cw);
     }
 
@@ -148,7 +147,7 @@ namespace p2t {
 	    points_[2] = points_[1];
 	    points_[1] = &npoint;
 	} else {
-	    return;
+	    throw std::runtime_error("Legalize");
 	}
     }
 
@@ -161,7 +160,7 @@ namespace p2t {
 	} else if (p == points_[2]) {
 	    return 2;
 	}
-	return -1;
+	throw std::runtime_error("Index");
     }
 
     int Triangle::EdgeIndex(const Point* p1, const Point* p2)
@@ -220,7 +219,7 @@ namespace p2t {
 	} else if (&point == points_[2]) {
 	    return points_[1];
 	}
-	return NULL;
+        throw std::runtime_error("PointCW");
     }
 
     // The point counter-clockwise to given point
@@ -233,7 +232,7 @@ namespace p2t {
 	} else if (&point == points_[2]) {
 	    return points_[0];
 	}
-	return NULL;
+	throw std::runtime_error("PointCCW");
     }
 
     // The neighbor clockwise to given point
@@ -362,6 +361,7 @@ namespace p2t {
     }
 
 }
+
 
 // Local Variables:
 // tab-width: 8

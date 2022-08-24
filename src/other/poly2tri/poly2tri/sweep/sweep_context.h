@@ -68,7 +68,7 @@ namespace p2t {
 
 	    size_t point_count();
 
-	    Node* LocateNode(Point *point);
+	    Node& LocateNode(Point& point);
 
 	    void RemoveNode(Node* node);
 
@@ -93,7 +93,7 @@ namespace p2t {
 
 	    AdvancingFront* front();
 
-	    void MeshClean(Triangle *triangle);
+	    void MeshClean(Triangle& triangle);
 
 	    std::vector<Triangle*>& GetTriangles();
 	    std::list<Triangle*>& GetMap();
@@ -159,7 +159,6 @@ namespace p2t {
 	    void InitTriangulation();
 	    void InitEdges(std::vector<Point*> &polyline);
 
-	    int meshclean_cnt = 0;
     };
 
     inline AdvancingFront* SweepContext::front()

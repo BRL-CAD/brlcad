@@ -37,6 +37,7 @@
 
 #include <vector>
 #include <cstddef>
+#include <stdexcept>
 #include <cfloat>
 #include <cmath>
 
@@ -143,7 +144,7 @@ namespace p2t {
 		    p = &p2;
 		} else if (EQ(p1.x, p2.x)) {
 		    // Repeat points
-		    return;
+		    throw std::runtime_error("Repeat points");
 		}
 	    }
 
@@ -168,7 +169,7 @@ namespace p2t {
 	    P2T_EXPORT Point* GetPoint(const int& index);
 	    P2T_EXPORT Point* PointCW(Point& point);
 	    P2T_EXPORT Point* PointCCW(Point& point);
-	    P2T_EXPORT Point* OppositePoint(Triangle& t, Point *p);
+	    P2T_EXPORT Point* OppositePoint(Triangle& t, Point& p);
 
 	    P2T_EXPORT Triangle* GetNeighbor(const int& index);
 	    P2T_EXPORT void MarkNeighbor(Point* p1, Point* p2, Triangle* t);

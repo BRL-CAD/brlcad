@@ -167,10 +167,10 @@ namespace p2t {
 	map_.push_back(triangle);
     }
 
-    Node* SweepContext::LocateNode(Point *point)
+    Node& SweepContext::LocateNode(Point& point)
     {
 	// TODO implement search tree
-	return front_->LocateNode(point->x);
+	return *front_->LocateNode(point.x);
     }
 
     void SweepContext::CreateAdvancingFront(std::vector<Node*> &nodes)
@@ -215,21 +215,16 @@ namespace p2t {
 	map_.remove(triangle);
     }
 
-    void SweepContext::MeshClean(Triangle *triangle)
+    void SweepContext::MeshClean(Triangle& triangle)
     {
-	meshclean_cnt++;
-	if (meshclean_cnt > 100000) {
-	    throw std::runtime_error("SweepContext MeshClean call stack too deep");
-	}
-	if (triangle && !triangle->IsInterior()) {
-	    triangle->IsInterior(true);
-	    triangles_.push_back(triangle);
+	if (&triangle != NULL && !triangle.IsInterior()) {
+	    triangle.IsInterior(true);
+	    triangles_.push_back(&triangle);
 	    for (int i = 0; i < 3; i++) {
-		if (!triangle->constrained_edge[i])
-		    MeshClean(triangle->GetNeighbor(i));
+		if (!triangle.constrained_edge[i])
+		    MeshClean(*triangle.GetNeighbor(i));
 	    }
 	}
-	meshclean_cnt--;
     }
 
     SweepContext::~SweepContext()
@@ -259,6 +254,7 @@ namespace p2t {
     }
 
 }
+
 
 // Local Variables:
 // tab-width: 8
