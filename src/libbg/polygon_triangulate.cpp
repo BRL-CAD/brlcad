@@ -321,9 +321,9 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     float *prand;
     bn_rand_init(prand, 0);
     //bu_log("deltaX: %f deltaY: %f\n", deltaX, deltaY);
-    int64_t dXb = (int64_t)log2((int)deltaX);
-    int64_t dYb = (int64_t)log2((int)deltaY);
-    bu_log("log2boundmax: %" PRId64 " dXb: %" PRId64 " dYb: %" PRId64 "\n", log2boundmax, dXb, dYb);
+    int64_t dXb = (int64_t)((deltaX > 2) ? log2((int)deltaX) : 0);
+    int64_t dYb = (int64_t)((deltaY > 2) ? log2((int)deltaY) : 0);
+    //bu_log("log2boundmax: %" PRId64 " dXb: %" PRId64 " dYb: %" PRId64 "\n", log2boundmax, dXb, dYb);
     // How much to perturb the points is a key parameter - too much and we get
     // range problems with Clipper and meshing issues as relative positioning
     // changes, but if we're too small Poly2Tri can crash due to issues like
@@ -331,15 +331,17 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     // space dimensions.
     fastf_t delta_spaceX = pow(2, dXb+log2boundmax+1) * deltaX;
     fastf_t delta_spaceY = pow(2, dYb+log2boundmax+1) * deltaY;
-    bu_log("deltaX(%" PRId64 "): %f  deltaY(%" PRId64 "): %f\n", dXb, delta_spaceX, dYb, delta_spaceY);
+    //bu_log("deltaX(%" PRId64 "): %f  deltaY(%" PRId64 "): %f\n", dXb, delta_spaceX, dYb, delta_spaceY);
     for (b_it = ubins.begin(); b_it != ubins.end(); b_it++) {
 	std::unordered_map<int64_t, std::unordered_set<int>>::iterator bb_it;
 	for (bb_it = b_it->second.begin(); bb_it != b_it->second.end(); bb_it++) {
 	    int inf_loop_guard = 0;
 	    int64_t slx = b_it->first;
 	    int64_t sly = bb_it->first;
+	    //bu_log("slx: %" PRId64 " sly: %" PRId64 " \n", slx, sly);
 	    int64_t lx = (int64_t)(slx + (int64_t)(bn_rand_half(prand) * delta_spaceX));
 	    int64_t ly = (int64_t)(sly + (int64_t)(bn_rand_half(prand) * delta_spaceY));
+	    //bu_log("lx: %" PRId64 " ly: %" PRId64 " \n", lx, ly);
 	    // We need to preserve the point uniqueness - keep perturbing until we
 	    // produce a point we've not already seen
 	    while (inf_loop_guard < 100000 && ucheck.find(lx) != ucheck.end() && ucheck[lx].find(ly) != ucheck[lx].end()) {
