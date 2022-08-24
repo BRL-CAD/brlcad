@@ -30,6 +30,7 @@
  */
 #include "sweep_context.h"
 #include <algorithm>
+#include <stdexcept>
 #include "advancing_front.h"
 
 namespace p2t {
@@ -216,7 +217,11 @@ namespace p2t {
 
     void SweepContext::MeshClean(Triangle& triangle)
     {
-	if (&triangle != NULL && !triangle.IsInterior()) {
+	meshclean_cnt++;
+	if (meshclean_cnt > 100000) {
+	    throw std::runtime_error("SweepContext MeshClean call stack too deep");
+	}
+	if (!triangle.IsInterior()) {
 	    triangle.IsInterior(true);
 	    triangles_.push_back(&triangle);
 	    for (int i = 0; i < 3; i++) {
@@ -224,6 +229,7 @@ namespace p2t {
 		    MeshClean(*triangle.GetNeighbor(i));
 	    }
 	}
+	meshclean_cnt--;
     }
 
     SweepContext::~SweepContext()
