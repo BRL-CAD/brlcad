@@ -215,6 +215,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     double deltaX = fabs(bbmax[X] - bbmin[X]);
     double deltaY = fabs(bbmax[Y] - bbmin[Y]);
     double delta = (deltaX < deltaY) ? deltaX : deltaY;
+    //bu_log("bbmin: %f %f %f  bbmax: %f %f %f\n", V3ARGS(bbmin), V3ARGS(bbmax));
 
     // b.  Bin the points into a series of nested unordered maps of sets based
     // on snapping the x,y coordinates to an integer.  We want to preserve as
@@ -320,9 +321,9 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     std::unordered_map<int64_t, std::unordered_set<int64_t>> ucheck;
     float *prand;
     bn_rand_init(prand, 0);
-    //bu_log("deltaX: %f deltaY: %f\n", deltaX, deltaY);
-    int64_t dXb = (int64_t)((deltaX > 2) ? log2((int)deltaX) : 0);
-    int64_t dYb = (int64_t)((deltaY > 2) ? log2((int)deltaY) : 0);
+    bu_log("deltaX: %f deltaY: %f\n", deltaX, deltaY);
+    int64_t dXb = (int64_t)log2((int)deltaX);
+    int64_t dYb = (int64_t)log2((int)deltaY);
     //bu_log("log2boundmax: %" PRId64 " dXb: %" PRId64 " dYb: %" PRId64 "\n", log2boundmax, dXb, dYb);
     // How much to perturb the points is a key parameter - too much and we get
     // range problems with Clipper and meshing issues as relative positioning
@@ -331,17 +332,17 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     // space dimensions.
     fastf_t delta_spaceX = pow(2, dXb+log2boundmax+1) * deltaX;
     fastf_t delta_spaceY = pow(2, dYb+log2boundmax+1) * deltaY;
-    //bu_log("deltaX(%" PRId64 "): %f  deltaY(%" PRId64 "): %f\n", dXb, delta_spaceX, dYb, delta_spaceY);
+    bu_log("deltaX(%" PRId64 "): %f  deltaY(%" PRId64 "): %f\n", dXb, delta_spaceX, dYb, delta_spaceY);
     for (b_it = ubins.begin(); b_it != ubins.end(); b_it++) {
 	std::unordered_map<int64_t, std::unordered_set<int>>::iterator bb_it;
 	for (bb_it = b_it->second.begin(); bb_it != b_it->second.end(); bb_it++) {
 	    int inf_loop_guard = 0;
 	    int64_t slx = b_it->first;
 	    int64_t sly = bb_it->first;
-	    //bu_log("slx: %" PRId64 " sly: %" PRId64 " \n", slx, sly);
+	    bu_log("slx: %" PRId64 " sly: %" PRId64 " \n", slx, sly);
 	    int64_t lx = (int64_t)(slx + (int64_t)(bn_rand_half(prand) * delta_spaceX));
 	    int64_t ly = (int64_t)(sly + (int64_t)(bn_rand_half(prand) * delta_spaceY));
-	    //bu_log("lx: %" PRId64 " ly: %" PRId64 " \n", lx, ly);
+	    bu_log("lx: %" PRId64 " ly: %" PRId64 " \n", lx, ly);
 	    // We need to preserve the point uniqueness - keep perturbing until we
 	    // produce a point we've not already seen
 	    while (inf_loop_guard < 100000 && ucheck.find(lx) != ucheck.end() && ucheck[lx].find(ly) != ucheck[lx].end()) {
@@ -478,6 +479,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	for (size_t i = 0; i < o_it->second.size(); i++) {
 	    double xcd = o_it->second[i].first / scale;
 	    double ycd = o_it->second[i].second / scale;
+	    bu_log("xcd, ycd: %f %f\n", xcd, ycd);
 	    lines.push_back(std::make_pair(xcd, ycd));
 	}
 	if (hole_loops.find(o_it->first) == hole_loops.end())
