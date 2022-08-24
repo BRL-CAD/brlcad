@@ -166,8 +166,6 @@ namespace p2t {
 
     int Triangle::EdgeIndex(const Point* p1, const Point* p2)
     {
-	if (points_ == nullptr)
-	    throw std::runtime_error("NULL points_ array");
 	if (points_[0] == p1) {
 	    if (points_[1] == p2) {
 		return 2;
