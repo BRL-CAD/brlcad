@@ -1726,9 +1726,21 @@ poly2tri_CDT(struct bu_list *vhead,
     rt_trims.RemoveAll();
 
     if ((plottype < 3)) {
-	cdt->Triangulate(true, num_points);
+	try {
+	    cdt->Triangulate(true, num_points);
+	}
+	catch (...) {
+	    delete cdt;
+	    return;
+	}
     } else {
-	cdt->Triangulate(false, num_points);
+	try {
+	    cdt->Triangulate(false, num_points);
+	}
+	catch (...) {
+	    delete cdt;
+	    return;
+	}
     }
 
     if (plottype < 3) {
