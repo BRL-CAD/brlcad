@@ -57,7 +57,7 @@ namespace p2t {
 	}
 
 	curr_time = std::chrono::steady_clock::now();
-	//std::cout << "triangulation time (seconds): " << std::chrono::duration_cast<std::chrono::microseconds>(curr_time - tri_start_time).count() * 1e-6 << "\n";
+	//std::cout << "triangulation time (microseconds): " << std::chrono::duration_cast<std::chrono::microseconds>(curr_time - tri_start_time).count() << "\n";
     }
 
     void Sweep::SweepPoints(SweepContext& tcx, int num_points)

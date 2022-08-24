@@ -42,7 +42,7 @@
 #include <chrono>
 #include <vector>
 
-#define POLY2TRI_MAXTIME 2e6 // Time limit in microseconds
+#define POLY2TRI_MAXTIME 2e4 // Time limit in microseconds
 
 namespace p2t {
 
