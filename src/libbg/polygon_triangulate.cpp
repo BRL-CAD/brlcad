@@ -318,7 +318,8 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     // with truly colinear points.
     std::unordered_map<int64_t, std::unordered_map<int64_t, std::unordered_set<int>>> pbins;
     std::vector<std::pair<int64_t,int64_t>> psnapped_pts;
-    std::unordered_map<int64_t, std::unordered_set<int64_t>> ucheck;
+    std::unordered_set<int64_t> uxcheck;
+    std::unordered_set<int64_t> uycheck;
     float *prand;
     bn_rand_init(prand, 0);
     bu_log("deltaX: %f deltaY: %f\n", deltaX, deltaY);
@@ -336,25 +337,36 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     for (b_it = ubins.begin(); b_it != ubins.end(); b_it++) {
 	std::unordered_map<int64_t, std::unordered_set<int>>::iterator bb_it;
 	for (bb_it = b_it->second.begin(); bb_it != b_it->second.end(); bb_it++) {
-	    int inf_loop_guard = 0;
 	    int64_t slx = b_it->first;
 	    int64_t sly = bb_it->first;
 	    bu_log("slx: %" PRId64 " sly: %" PRId64 " \n", slx, sly);
+
+	    // Get unique X
+	    int inf_loop_guard = 0;
 	    int64_t lx = (int64_t)(slx + (int64_t)(bn_rand_half(prand) * delta_spaceX));
-	    int64_t ly = (int64_t)(sly + (int64_t)(bn_rand_half(prand) * delta_spaceY));
-	    bu_log("lx: %" PRId64 " ly: %" PRId64 " \n", lx, ly);
-	    // We need to preserve the point uniqueness - keep perturbing until we
-	    // produce a point we've not already seen
-	    while (inf_loop_guard < 100000 && ucheck.find(lx) != ucheck.end() && ucheck[lx].find(ly) != ucheck[lx].end()) {
+	     while (inf_loop_guard < 100000 && uxcheck.find(lx) != uxcheck.end()) {
 		lx = slx + (bn_rand_half(prand) * delta_spaceX);
-		ly = sly + (bn_rand_half(prand) * delta_spaceY);
-		bu_log("uniq: lx, ly: %" PRId64 ",%" PRId64 "\n", lx, ly);
+		bu_log("uniq: lx: %" PRId64 "\n", lx);
 		inf_loop_guard++;
 	    }
 	    if (inf_loop_guard >= 100000) {
 		bu_log("ERROR - could not generate unique perturbed point?????\n");
 	    }
-	    ucheck[lx].insert(ly);
+	    uxcheck.insert(lx);
+
+	    // Get unique Y
+	    inf_loop_guard = 0;
+	    int64_t ly = (int64_t)(sly + (int64_t)(bn_rand_half(prand) * delta_spaceY));
+	     while (inf_loop_guard < 100000 && uycheck.find(ly) != uycheck.end()) {
+		ly = sly + (bn_rand_half(prand) * delta_spaceY);
+		bu_log("uniq: ly: %" PRId64 "\n", ly);
+		inf_loop_guard++;
+	    }
+	    if (inf_loop_guard >= 100000) {
+		bu_log("ERROR - could not generate unique perturbed point?????\n");
+	    }
+	    uycheck.insert(ly);
+	    bu_log("lx: %" PRId64 " ly: %" PRId64 " \n", lx, ly);
 	    psnapped_pts.push_back(std::make_pair(lx,ly));
 	    std::unordered_set<int>::iterator pind_it;
 	    for (pind_it = bb_it->second.begin(); pind_it != bb_it->second.end(); pind_it++) {
@@ -449,8 +461,10 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	}
 	polynode = polynode->GetNext();
     }
-    //size_t num_contours = eval_polys.Total();
-    //bu_log("Clipper evaluated contours: %zd\n", num_contours);
+    size_t num_contours = eval_polys.Total();
+    if (num_contours > 1) {
+	bu_log("Clipper evaluated contours: %zd\n", num_contours);
+    }
 
     // If we get back new points from clipper but we're not supposed to be
     // returning a points array, error out.
@@ -467,7 +481,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     std::map<int, std::vector<std::pair<int64_t,int64_t>>>::iterator o_it;
     std::vector<std::pair<double,double>> lines;
     for (o_it = outer_loops.begin(); o_it != outer_loops.end(); o_it++) {
-#if 0
+#if 1
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fname, "outer_loop_%d.plot3", o_it->first);
 	unsigned char rgb[3] = {255, 0, 0};
@@ -486,6 +500,14 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	    continue;
 	std::map<int, std::vector<std::pair<int64_t,int64_t>>>::iterator h_it;
 	for (h_it = hole_loops[o_it->first].begin(); h_it != hole_loops[o_it->first].end(); h_it++) {
+#if 1
+	    bu_vls_sprintf(&fname, "hole_loop_%d-%d.plot3", o_it->first, h_it->first);
+	    unsigned char hrgb[3] = {0, 255, 0};
+	    struct bu_color hc = BU_COLOR_INIT_ZERO;
+	    bu_color_from_rgb_chars(&hc, hrgb);
+	    polyline_2d_plot3(bu_vls_cstr(&fname), h_it->second, scale, &hc);
+	    bu_vls_free(&fname);
+#endif
 	    for (size_t i = 0; i < h_it->second.size(); i++) {
 		double xcd = h_it->second[i].first / scale;
 		double ycd = h_it->second[i].second / scale;
