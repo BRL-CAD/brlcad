@@ -868,6 +868,12 @@ namespace p2t {
 	Triangle& ot = *t->NeighborAcross(p);
 	Point& op = *ot.OppositePoint(*t, p);
 
+	flip_edge_event_cnt++;
+
+	if (flip_edge_event_cnt > 10000) {
+	    throw std::runtime_error("FLIP edge event call stack too deep");
+	}
+
 	if (&ot == NULL) {
 	    // If we want to integrate the fillEdgeEvent do it here
 	    // With current implementation we should never get here
@@ -899,6 +905,8 @@ namespace p2t {
 	    FlipScanEdgeEvent(tcx, ep, eq, *t, ot, newP);
 	    EdgeEvent(tcx, ep, eq, t, p);
 	}
+
+	flip_edge_event_cnt--;
     }
 
     Triangle& Sweep::NextFlipTriangle(SweepContext& tcx, int o, Triangle& t, Triangle& ot, Point& p, Point& op)
