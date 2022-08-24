@@ -159,6 +159,7 @@ namespace p2t {
 	    void InitTriangulation();
 	    void InitEdges(std::vector<Point*> &polyline);
 
+	    int meshclean_call_cnt = 0;
     };
 
     inline AdvancingFront* SweepContext::front()

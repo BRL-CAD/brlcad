@@ -219,6 +219,11 @@ namespace p2t {
     {
 	if (&triangle == NULL)
 	    throw std::runtime_error("MeshClean - NULL triangl(?)");
+
+	meshclean_call_cnt++;
+	if (meshclean_call_cnt > 20000)
+	   throw std::runtime_error("SweepContext MeshClean call stack too deep");
+
 	if (!triangle.IsInterior()) {
 	    triangle.IsInterior(true);
 	    triangles_.push_back(&triangle);
@@ -227,6 +232,8 @@ namespace p2t {
 		    MeshClean(*triangle.GetNeighbor(i));
 	    }
 	}
+
+	meshclean_call_cnt--;
     }
 
     SweepContext::~SweepContext()
