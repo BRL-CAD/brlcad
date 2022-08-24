@@ -1604,7 +1604,6 @@ poly2tri_CDT(struct bu_list *vhead,
 	     const struct bg_tess_tol *ttol,
 	     const struct bn_tol *tol,
 	     struct bu_list *vlfree,
-	     bool watertight,
 	     int plottype,
 	     int num_points)
 {
@@ -1746,12 +1745,9 @@ poly2tri_CDT(struct bu_list *vhead,
 		for (size_t j = 0; j < 3; j++) {
 		    p = t->GetPoint(j);
 		    if (surface_EvNormal(s, p->x, p->y, pnt[j], norm[j])) {
-			if (watertight) {
-			    std::map<p2t::Point *, ON_3dPoint *>::const_iterator ii =
-				pointmap->find(p);
-			    if (ii != pointmap->end()) {
-				pnt[j] = *((*ii).second);
-			    }
+			std::map<p2t::Point *, ON_3dPoint *>::const_iterator ii = pointmap->find(p);
+			if (ii != pointmap->end()) {
+			    pnt[j] = *((*ii).second);
 			}
 			if (face.m_bRev) {
 			    norm[j] = norm[j] * -1.0;
@@ -1781,12 +1777,10 @@ poly2tri_CDT(struct bu_list *vhead,
 		for (size_t j = 0; j < 3; j++) {
 		    p = t->GetPoint(j);
 		    if (surface_EvNormal(s, p->x, p->y, pnt[j], norm[j])) {
-			if (watertight) {
-			    std::map<p2t::Point *, ON_3dPoint *>::const_iterator ii =
-				pointmap->find(p);
-			    if (ii != pointmap->end()) {
-				pnt[j] = *((*ii).second);
-			    }
+			std::map<p2t::Point *, ON_3dPoint *>::const_iterator ii =
+			    pointmap->find(p);
+			if (ii != pointmap->end()) {
+			    pnt[j] = *((*ii).second);
 			}
 			if (face.m_bRev) {
 			    norm[j] = norm[j] * -1.0;
@@ -1932,6 +1926,8 @@ bg_CDT(struct bu_list *vhead,
     int fi = face.m_face_index;
     fastf_t max_dist = 0.0;
 
+    bu_log("Face: %d\n", face.m_face_index);
+
     if (s->GetSurfaceSize(&surface_width, &surface_height)) {
 	if ((surface_width < tol->dist) || (surface_height < tol->dist))
 	    return;
@@ -1995,7 +1991,7 @@ bg_CDT(struct bu_list *vhead,
 	}
     }
 
-    std::map<int, ON_3dPoint *> *pointmap = new std::map<int, ON_3dPoint *>();
+    std::map<int, ON_3dPoint *> pointmap;
     int hole_loop_ind = 0;
     int pind = 0;
     for (int li = 0; li < loop_cnt; li++) {
@@ -2005,11 +2001,19 @@ bg_CDT(struct bu_list *vhead,
 	int *cloop = (li == outer_ind) ? outer_loop : hole_loops[hole_loop_ind];
 	if (li != outer_ind)
 	    hole_loop_ind++;
+	int p0ind = 0;
 	for (int i = 0; i < num_loop_points; i++) {
-	    V2SET(polypnts[pind], (brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
-	    cloop[i] = pind;
+	    if (i == 0)
+		p0ind = pind;
+	    if (i != num_loop_points - 1) {
+		V2SET(polypnts[pind], (brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
+		cloop[i] = pind;
+	    } else {
+		V2SET(polypnts[pind], (brep_loop_points[li])[0].p2d.x, (brep_loop_points[li])[0].p2d.y);
+		cloop[i] = p0ind;
+	    }
 	    // map point to last entry to 3d point
-	    (*pointmap)[pind] = (brep_loop_points[li])[i].p3d;
+	    pointmap[pind] = (brep_loop_points[li])[i].p3d;
 	    pind++;
 	}
     }
@@ -2018,7 +2022,6 @@ bg_CDT(struct bu_list *vhead,
 
     if (outer_ind == -1) {
 	std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
-	delete pointmap;
 	return;
     }
 
@@ -2079,6 +2082,7 @@ bg_CDT(struct bu_list *vhead,
     int ret = bg_nested_polygon_triangulate(&faces, &nfaces, &opnts, &n_opnts,
 	    outer_loop, looppnt_cnts[0],
 	    (const int **)hole_loops, (const size_t *)hole_cnts, looppnt_cnts.size() - 1,
+	    //NULL, 0,
 	    steiner_indices, steiner_pntcnt,
 	    polypnts, pntcnt, TRI_CONSTRAINED_DELAUNAY);
 
@@ -2104,6 +2108,10 @@ bg_CDT(struct bu_list *vhead,
 		V2MOVE(p, opnts[faces[i*3+j]]);
 	    }
 	    if (surface_EvNormal(s, p[X], p[Y], pnt[j], norm[j])) {
+		std::map<int, ON_3dPoint *>::const_iterator ii = pointmap.find(faces[i*3+j]);
+		if (ii != pointmap.end()) {
+		    pnt[j] = *(ii->second);
+		}
 		if (face.m_bRev) {
 		    norm[j] = norm[j] * -1.0;
 		}
@@ -2132,6 +2140,9 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
                       struct bv_vlblock *vbp, struct bu_list *vlfree,
 		      int index, int plottype, int num_points)
 {
+    if (plottype == INT_MAX || num_points == INT_MAX)
+	return -1;
+
     struct bu_list *vhead = p_vhead;
     if (!vhead) {
 	vhead = bv_vlblock_find(vbp, YELLOW);
@@ -2176,11 +2187,10 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
         }
     }
 
-    bool watertight = true;
     if (index == -1) {
         for (index = 0; index < brep->m_F.Count(); index++) {
             const ON_BrepFace& face = brep->m_F[index];
-            poly2tri_CDT(vhead, face, ttol, tol, vlfree, watertight, plottype, num_points);
+            poly2tri_CDT(vhead, face, ttol, tol, vlfree, plottype, num_points);
             //bg_CDT(vhead, vlfree, face, ttol, tol);
         }
     } else if (index < brep->m_F.Count()) {
@@ -2188,7 +2198,7 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
         if (index < faces.Count()) {
             const ON_BrepFace& face = faces[index];
             face.Dump(tl);
-            poly2tri_CDT(vhead, face, ttol, tol, vlfree, watertight, plottype, num_points);
+            poly2tri_CDT(vhead, face, ttol, tol, vlfree, plottype, num_points);
             //bg_CDT(vhead, vlfree, face, ttol, tol);
         }
     }
