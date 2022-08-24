@@ -323,12 +323,14 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     //bu_log("deltaX: %f deltaY: %f\n", deltaX, deltaY);
     int64_t dXb = (int64_t)log2((int)deltaX);
     int64_t dYb = (int64_t)log2((int)deltaY);
-    //bu_log("dXb: %" PRId64 " dYb: %" PRId64 "\n", dXb, dYb);
-    // TODO - need some intelligent criteria here - too much and we get range problems
-    // (NIST face 4 was rejected by Clipper using the previous commit's approach) but if
-    // we make this too small Poly2Tri will crash.
-    fastf_t delta_spaceX = pow(2, dXb+12);
-    fastf_t delta_spaceY = pow(2, dYb+12);
+    bu_log("log2boundmax: %" PRId64 " dXb: %" PRId64 " dYb: %" PRId64 "\n", log2boundmax, dXb, dYb);
+    // How much to perturb the points is a key parameter - too much and we get
+    // range problems with Clipper and meshing issues as relative positioning
+    // changes, but if we're too small Poly2Tri can crash due to issues like
+    // colinearity.  For the moment, try to base this on the X and Y parametric
+    // space dimensions.
+    fastf_t delta_spaceX = pow(2, dXb+log2boundmax+1) * deltaX;
+    fastf_t delta_spaceY = pow(2, dYb+log2boundmax+1) * deltaY;
     bu_log("deltaX(%" PRId64 "): %f  deltaY(%" PRId64 "): %f\n", dXb, delta_spaceX, dYb, delta_spaceY);
     for (b_it = ubins.begin(); b_it != ubins.end(); b_it++) {
 	std::unordered_map<int64_t, std::unordered_set<int>>::iterator bb_it;
@@ -336,13 +338,13 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	    int inf_loop_guard = 0;
 	    int64_t slx = b_it->first;
 	    int64_t sly = bb_it->first;
-	    int64_t lx = (int64_t)(slx + (int64_t)(bn_rand_half(prand) * delta_spaceX * deltaX));
-	    int64_t ly = (int64_t)(sly + (int64_t)(bn_rand_half(prand) * delta_spaceX * deltaX));
+	    int64_t lx = (int64_t)(slx + (int64_t)(bn_rand_half(prand) * delta_spaceX));
+	    int64_t ly = (int64_t)(sly + (int64_t)(bn_rand_half(prand) * delta_spaceY));
 	    // We need to preserve the point uniqueness - keep perturbing until we
 	    // produce a point we've not already seen
 	    while (inf_loop_guard < 100000 && ucheck.find(lx) != ucheck.end() && ucheck[lx].find(ly) != ucheck[lx].end()) {
-		lx = slx + (bn_rand_half(prand) * delta_spaceX * deltaX);
-		ly = sly + (bn_rand_half(prand) * delta_spaceY * deltaY);
+		lx = slx + (bn_rand_half(prand) * delta_spaceX);
+		ly = sly + (bn_rand_half(prand) * delta_spaceY);
 		bu_log("uniq: lx, ly: %" PRId64 ",%" PRId64 "\n", lx, ly);
 		inf_loop_guard++;
 	    }
