@@ -889,16 +889,23 @@ namespace p2t {
 	if (!ep || !eq || !p) return 1;
 	Triangle& ot = *t->NeighborAcross(*p);
 	Point *op = ot.OppositePoint(*t, p);
+	flip_edge_event_cnt++;
+
+	if (flip_edge_event_cnt > 10000) {
+	    throw std::runtime_error("FLIP edge event call stack too deep");
+	}
 
 	if (&ot == NULL) {
 	    // If we want to integrate the fillEdgeEvent do it here
 	    // With current implementation we should never get here
 	    std::cerr << "[BUG:FIXME] FLIP failed due to missing triangle\n";
+	    flip_edge_event_cnt--;
 	    return 1;
 	}
 
 	if (!op) {
 	    std::cerr << "[BUG:FIXME] FLIP failed due to missing point\n";
+	    flip_edge_event_cnt--;
 	    return 1;
 	}
 
@@ -917,18 +924,23 @@ namespace p2t {
 		} else {
 		    // XXX: I think one of the triangles should be legalized here?
 		}
+		flip_edge_event_cnt--;
 		return 0;
 	    } else {
 		Orientation o = Orient2d(eq, op, ep);
 		t = &NextFlipTriangle(tcx, (int)o, *t, ot, p, op);
-		return FlipEdgeEvent(tcx, ep, eq, t, p);
+		ret = FlipEdgeEvent(tcx, ep, eq, t, p);
+		flip_edge_event_cnt--;
+		return ret;
 	    }
 	} else {
 	    Point *np = NextFlipPoint(ep, eq, ot, op);
 	    ret += FlipScanEdgeEvent(tcx, ep, eq, *t, ot, np);
 	    ret += EdgeEvent(tcx, ep, eq, t, p);
+	    flip_edge_event_cnt--;
 	    return (ret) ? 1 : 0;
 	}
+	flip_edge_event_cnt--;
 	return ret;
     }
 

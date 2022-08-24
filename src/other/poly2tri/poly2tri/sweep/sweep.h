@@ -247,6 +247,7 @@ namespace p2t {
 
 	    std::vector<Node*> nodes_;
 
+	    int flip_edge_event_cnt = 0;
     };
 
 }
