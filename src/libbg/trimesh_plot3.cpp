@@ -24,6 +24,7 @@
 #include <set>
 #include <map>
 #include <unordered_set>
+#include <vector>
 
 #include "bu/bitv.h"
 #include "bu/log.h"
@@ -333,6 +334,39 @@ bg_trimesh_2d_plot3(const char *fname, const int *faces, size_t num_faces, const
     rgb[2] = 0;
     bu_color_from_rgb_chars(&c, rgb);
     tri_normals_2d_plot3(fname, faces, num_faces, p, &c);
+
+    /* Success */
+    return BRLCAD_OK;
+}
+
+int
+polyline_2d_plot3(const char *fname, std::vector<std::pair<int64_t, int64_t>> &xy, fastf_t scale, struct bu_color *c)
+{
+    /* If inputs are insufficient, we can't plot */
+    if (!fname || !xy.size() || scale < 0)
+	return BRLCAD_ERROR;
+
+    FILE *plot_file = fopen (fname, "a");
+    if (!plot_file)
+	return BRLCAD_ERROR;
+
+    // Write color
+    if (c)
+	pl_color_buc(plot_file, c);
+
+    point_t p = VINIT_ZERO;
+    VSET(p, xy[0].first / scale,  xy[0].second / scale, 0);
+    pdv_3move(plot_file, p);
+
+    for (size_t i = 1; i < xy.size() - 1; i++) {
+	VSET(p, xy[i].first / scale,  xy[i].second / scale, 0);
+	pdv_3cont(plot_file, p);
+    }
+    VSET(p, xy[0].first / scale,  xy[0].second / scale, 0);
+    pdv_3cont(plot_file, p);
+
+
+    fclose(plot_file);
 
     /* Success */
     return BRLCAD_OK;

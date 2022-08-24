@@ -63,6 +63,8 @@
 #include "bv/plot3.h"
 #include "bg/polygon.h"
 
+extern int polyline_2d_plot3(const char *fname, std::vector<std::pair<int64_t, int64_t>> &xy, fastf_t scale, struct bu_color *c);
+
 int
 xy_ind_lookup(
 	std::unordered_map<int64_t, std::unordered_map<int64_t, std::unordered_set<int>>> &bins,
@@ -119,27 +121,27 @@ LSteinClbk(size_t data, void *ctx)
     if (d1sq < d2sq) {
 	vect2d_t s;
 	V2SUB2(s, c->tpnt, P0);
-	t = VDOT(s, dir)/dsq;
+	t = V2DOT(s, dir)/dsq;
     } else if (d2sq > d1sq) {
 	vect2d_t s;
 	V2SUB2(s, c->tpnt, P1);
-	t = 1.0 + VDOT(s, dir)/dsq;
+	t = 1.0 + V2DOT(s, dir)/dsq;
     } else {
 	vect2d_t s;
 	V2SUB2(s, c->tpnt, P0);
-	t = VDOT(s, dir)/dsq;
+	t = V2DOT(s, dir)/dsq;
     }
     if (t < 0 || t > 1)
 	return true;
-    double dirlensq = VDOT(dir, dir);
+    double dirlensq = V2DOT(dir, dir);
     if (!(dirlensq > 0.0))
 	return true;
     vect2d_t closest;
     point_t ra, rb;
     t /= dirlensq;
-    VSCALE(ra, P0, (1.0 - t));
-    VSCALE(rb, P1, t);
-    VADD2(closest, ra, rb);
+    V2SCALE(ra, P0, (1.0 - t));
+    V2SCALE(rb, P1, t);
+    V2ADD2(closest, ra, rb);
     double cdsq = DIST_PNT2_PNT2_SQ(closest, c->tpnt);
     if (cdsq < c->distsq_tol) {
 	c->steiner_excluded->insert(data);
@@ -249,6 +251,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     // hold all the values we need.
     int64_t log2boundmax = (int64_t)log2(bnmax) + 1;
 
+
     // The difference between the current data max and the ultimate coordinate
     // size limit tells us how far we can scale for this particular data set.
     int64_t log2_limit = log2max - log2boundmax;
@@ -302,9 +305,11 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	    }
 	    for (bp_it = bb_it->second.begin(); bp_it != bb_it->second.end(); bp_it++) {
 		// Note - we don't want to loop the closest point to itself
-		if (*bp_it != closest)
+		if (*bp_it != closest) {
 		    collapsed_pts[*bp_it] = closest;
+		}
 	    }
+	    bu_log("collapsed: %d\n", closest);
 	}
     }
 
@@ -320,12 +325,10 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     bu_log("deltaX: %f deltaY: %f\n", deltaX, deltaY);
     int64_t dXb = (int64_t)log10((int)deltaX);
     int64_t dYb = (int64_t)log10((int)deltaY);
-    bu_log("dXb: %ld dYb: %ld\n", dXb, dYb);
+    bu_log("dXb: %" PRId64 " dYb: %" PRId64 "\n", dXb, dYb);
     fastf_t delta_spaceX = pow(10, dXb-11);
     fastf_t delta_spaceY = pow(10, dYb-11);
-    //delta_spaceX = 100000000;
-    //delta_spaceY = 100000000;
-    bu_log("deltaX(%ld): %f  deltaY(%ld): %f\n", dXb, delta_spaceX, dYb, delta_spaceY);
+    bu_log("deltaX(%" PRId64 "): %f  deltaY(%" PRId64 "): %f\n", dXb, delta_spaceX, dYb, delta_spaceY);
     for (b_it = ubins.begin(); b_it != ubins.end(); b_it++) {
 	std::unordered_map<int64_t, std::unordered_set<int>>::iterator bb_it;
 	for (bb_it = b_it->second.begin(); bb_it != b_it->second.end(); bb_it++) {
@@ -338,7 +341,6 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	    double lyd = slyd + (bn_rand_half(prand) * delta_spaceY * deltaY);
 	    int64_t lx = (int64_t)(lxd * scale);
 	    int64_t ly = (int64_t)(lyd * scale);
-	    //bu_log("slx -> lx %ld -> %ld, sly -> ly: %ld -> %ld\n", slx, lx, sly, ly);
 	    // We need to preserve the point uniqueness - keep perturbing until we
 	    // produce a point we've not already seen
 	    while (inf_loop_guard < 100000 && ucheck.find(lx) != ucheck.end() && ucheck[lx].find(ly) != ucheck[lx].end()) {
@@ -346,7 +348,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 		lyd = slyd + (bn_rand_half(prand) * delta_spaceY * deltaY);
 		lx = (int64_t)(lxd * scale);
 		ly = (int64_t)(lxd * scale);
-		bu_log("uniq: lx, ly: %ld,%ld\n", lx, ly);
+		bu_log("uniq: lx, ly: %" PRId64 ",%" PRId64 "\n", lx, ly);
 		inf_loop_guard++;
 	    }
 	    if (inf_loop_guard >= 100000) {
@@ -363,7 +365,6 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     }
 
     ubins.clear();
-
 
     // 3.  Having found suitable integer points, assemble versions of the polygons
     // using the new indices.  These will be the clipper inputs.  (NOTE:  we can
@@ -429,10 +430,10 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	} else {
 	    hole_loop_cnt++;
 	}
+	bu_log("%d(%d)\n", outer_loop_cnt, hole_loop_cnt);
 	for (size_t i = 0; i < path.size(); i++) {
 	    int64_t xcoord = path[i].X;
 	    int64_t ycoord = path[i].Y;
-	    //bu_log("xcoord, ycoord: %" PRId64 ",%" PRId64 "\n", xcoord, ycoord);
 	    if (!polynode->IsHole()) {
 		outer_loops[outer_loop_cnt-1].push_back(std::make_pair(xcoord, ycoord));
 	    } else {
@@ -466,6 +467,15 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
     std::map<int, std::vector<std::pair<int64_t,int64_t>>>::iterator o_it;
     std::vector<std::pair<double,double>> lines;
     for (o_it = outer_loops.begin(); o_it != outer_loops.end(); o_it++) {
+#if 0
+	struct bu_vls fname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&fname, "outer_loop_%d.plot3", o_it->first);
+	unsigned char rgb[3] = {255, 0, 0};
+	struct bu_color c = BU_COLOR_INIT_ZERO;
+	bu_color_from_rgb_chars(&c, rgb);
+	polyline_2d_plot3(bu_vls_cstr(&fname), o_it->second, scale, &c);
+	bu_vls_free(&fname);
+#endif
 	for (size_t i = 0; i < o_it->second.size(); i++) {
 	    double xcd = o_it->second[i].first / scale;
 	    double ycd = o_it->second[i].second / scale;
@@ -527,11 +537,9 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	for (size_t i = 0; i < o_it->second.size(); i++) {
 	    int64_t xc = o_it->second[i].first;
 	    int64_t yc = o_it->second[i].second;
-	    //bu_log("xc, yc: %" PRId64 ",%" PRId64 "\n", xc, yc);
 
 	    double xcd = xc / scale;
 	    double ycd = yc / scale;
-	    //bu_log("%d: x,y: %f,%f\n", o_it->first, xcd, ycd);
 	    p2t::Point *p = new p2t::Point(xcd, ycd);
 	    outer_polyline.push_back(p);
 
@@ -539,6 +547,9 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	    if (pind == -1) {
 		new_pnts = true;
 		bu_log("(O) Wait, what?  Need new point????\n");
+		bu_log("xc, yc: %" PRId64 ",%" PRId64 "\n", xc, yc);
+		bu_log("%d: x,y: %f,%f\n", o_it->first, xcd, ycd);
+		pind = xy_ind_lookup(pbins, collapsed_pts, xc, yc);
 	    } else {
 		p2t_to_ind[p] = pind;
 	    }
@@ -639,10 +650,10 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	ind = 0;
 	for (pa_it = p2t_active_pnts.begin(); pa_it != p2t_active_pnts.end(); pa_it++) {
 	    p2t::Point *p = *pa_it;
-	    bu_log("p2t point %ld: %f %f\n", ind, p->x, p->y);
+	    bu_log("p2t point %zd: %f %f\n", ind, p->x, p->y);
 	    fastf_t py = p->y - (bbmax[X] - p->x)/(bbmax[X] - bbmin[X]);
 	    V2SET((*out_pts)[ind], p->x, py);
-	    bu_log("p2t point %ld descaled: %f %f\n", ind, p->x, py);
+	    bu_log("p2t point %zd descaled: %f %f\n", ind, p->x, py);
 	    ind++;
 	}
     }
