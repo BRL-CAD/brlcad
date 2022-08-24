@@ -1973,7 +1973,7 @@ bg_CDT(struct bu_list *vhead,
 	}
     }
     if (!pntcnt) {
-	delete brep_loop_points;
+	delete[] brep_loop_points;
 	return;
     }
 
