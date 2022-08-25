@@ -312,6 +312,13 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 	}
     }
 
+    // TODO - although we want to avoid arbitrarily close but not identical points, we also
+    // need to avoid touching polygon loops - see https://github.com/raptor/clip2tri/blob/master/clip2tri/clip2tri.cpp#L160
+    // and https://github.com/greenm01/poly2tri/issues/90
+    //
+    // Need to add the adjustment from that clip2tri routine *before* we do the Clipper evaluation
+
+
     // d.  Having produce suitably unique points, we now need to perturb them
     // to avoid colinearity - we don't want clipper removing points added to
     // straight lines to increase triangle counts, and poly2tri doesn't do well
