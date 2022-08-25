@@ -45,7 +45,7 @@ db_name="brep_rhc_test.g"
 # distance between two primitives
 grid_size=2
 # how many primitives in each row
-num_per_row=5
+num_per_row=3
 
 # 1: obj name. 2: shift_x 3: shift_y
 # 4 5 6: X, Y, Z, of vector H
@@ -73,11 +73,19 @@ mged -c $db_name opendb $db_name
 shift_x=0
 shift_y=0
 
-case_num=3
+case_num=6
 
+# parameters:
+# 0-2: X, Y, Z, of vector H
+# 3-5: X, Y, Z, of vector B
+# 6: ectangular half-width, r
+# 7: apex-to-asymptotes distance, c
 para_c0=(0 0 1 1 1 0 1 1)
 para_c1=(1 0 0 0 0.5 0.5 0.2 0.1)
 para_c2=(0 0 1 0.5 0.5 0 0.6 0.5)
+para_c3=(0 0 1 -1 1 0 1.4 0.6)
+para_c4=(0 1 0 -1 0 1 0.2 0.2)
+para_c5=(1 0 0 0 -1 1 0.7 1.6)
 
 for(( i=0;i<${case_num};i++)) do
 	element_name=rhc_${i}
