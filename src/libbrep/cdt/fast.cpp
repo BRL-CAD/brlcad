@@ -127,6 +127,7 @@ getEdgePoints(const ON_BrepTrim &trim,
     if (etrim && leval) {
 	BrepTrimPoint *nbtp = new BrepTrimPoint;
 	nbtp->p3d = new ON_3dPoint(mid_3d);
+	nbtp->n3d = NULL;
 	nbtp->p2d = mid_2d;
 	nbtp->normal = mid_norm;
 	nbtp->tangent = mid_tang;
@@ -152,6 +153,7 @@ getEdgePoints(const ON_BrepTrim &trim,
 	    if (param_points.find(seam_t) == param_points.end()) {
 		BrepTrimPoint *nbtp = new BrepTrimPoint;
 		nbtp->p3d = new ON_3dPoint(seam_3d);
+		nbtp->n3d = NULL;
 		nbtp->p2d = seam_2d;
 		// Note - by this point we shouldn't need tangents and normals...
 		nbtp->t = seam_t;
@@ -224,6 +226,7 @@ getEdgePoints(ON_BrepTrim &trim,
 
     BrepTrimPoint *sbtp = new BrepTrimPoint;
     sbtp->p3d = new ON_3dPoint(start_3d);
+    sbtp->n3d = NULL;
     sbtp->p2d = start_2d;
     sbtp->tangent = start_tang;
     sbtp->normal = start_norm;
@@ -232,6 +235,7 @@ getEdgePoints(ON_BrepTrim &trim,
 
     BrepTrimPoint *ebtp = new BrepTrimPoint;
     ebtp->p3d = new ON_3dPoint(end_3d);
+    ebtp->n3d = NULL;
     ebtp->p2d = end_2d;
     ebtp->tangent = end_tang;
     ebtp->normal = end_norm;
@@ -256,6 +260,7 @@ getEdgePoints(ON_BrepTrim &trim,
 
 	BrepTrimPoint *mbtp = new BrepTrimPoint;
 	mbtp->p3d = new ON_3dPoint(mid_3d);
+	mbtp->n3d = NULL;
 	mbtp->p2d = mid_2d;
 	mbtp->tangent = mid_tang;
 	mbtp->normal = mid_norm;
@@ -1053,6 +1058,7 @@ get_loop_sample_points(
 
 	    for (int i = 1; i <= 10; i++) {
 		btp.p3d = p3d;
+		btp.n3d = NULL;
 		btp.p2d = v1.Point();
 		btp.t = trim->Domain().m_t[0] + (i - 1) * delta;
 		btp.p2d = trim->PointAt(btp.t);
@@ -1065,6 +1071,7 @@ get_loop_sample_points(
 
 	    const ON_BrepVertex& v2 = face.Brep()->m_V[trim->m_vi[1]];
 	    btp.p3d = p3d;
+	    btp.n3d = NULL;
 	    btp.p2d = v2.Point();
 	    btp.t = trim->Domain().m_t[1];
 	    btp.p2d = trim->PointAt(btp.t);
@@ -1224,6 +1231,7 @@ CloseOpenLoops(
 
 					btp.t = (*i).first;
 					btp.p3d = (*i).second;
+					btp.n3d = NULL;
 					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
 					brep_loop_points[li].Append(btp);
@@ -1246,6 +1254,7 @@ CloseOpenLoops(
 
 					btp.t = (*i).first;
 					btp.p3d = (*i).second;
+					btp.n3d = NULL;
 					btp.p2d = line2.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
 					brep_loop_points[li].Append(btp);
@@ -1285,6 +1294,7 @@ CloseOpenLoops(
 
 					btp.t = (*i).first;
 					btp.p3d = (*i).second;
+					btp.n3d = NULL;
 					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
 					brep_loop_points[li].Append(btp);
@@ -1305,6 +1315,7 @@ CloseOpenLoops(
 
 					btp.t = (*i).first;
 					btp.p3d = (*i).second;
+					btp.n3d = NULL;
 					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
 					brep_loop_points[li].Append(btp);
@@ -1324,6 +1335,7 @@ CloseOpenLoops(
 
 					btp.t = (*i).first;
 					btp.p3d = (*i).second;
+					btp.n3d = NULL;
 					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
 					brep_loop_points[li].Append(btp);
@@ -1358,6 +1370,7 @@ CloseOpenLoops(
 
 					btp.t = (*i).first;
 					btp.p3d = (*i).second;
+					btp.n3d = NULL;
 					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
 					brep_loop_points[li].Append(btp);
@@ -1378,6 +1391,7 @@ CloseOpenLoops(
 
 					btp.t = (*i).first;
 					btp.p3d = (*i).second;
+					btp.n3d = NULL;
 					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
 					brep_loop_points[li].Append(btp);
@@ -1397,6 +1411,7 @@ CloseOpenLoops(
 
 					btp.t = (*i).first;
 					btp.p3d = (*i).second;
+					btp.n3d = NULL;
 					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
 					brep_loop_points[li].Append(btp);
@@ -2172,7 +2187,7 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 		// Normals are NOT shared with other faces, so we store full
 		// vectors rather than indices to points
 		std::unordered_map<p2t::Point *, BrepTrimPoint *>::const_iterator bt_it = pointmap.find(p);
-		if (bt_it != pointmap.end())
+		if (bt_it != pointmap.end() && bt_it->second->n3d)
 		    norm = *(bt_it->second->n3d);
 		if (face.m_bRev)
 		    norm = norm * -1.0;
@@ -2302,7 +2317,7 @@ brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, in
 	(*pnt_norms)[i][Z] = all_norms[3*i+2];
     }
 
-    return 0;
+    return BRLCAD_OK;
 }
 
 /** @} */

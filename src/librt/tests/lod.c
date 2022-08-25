@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 
     struct bg_mesh_lod_context *c = bg_mesh_lod_context_create(argv[1]);
 
-    unsigned long long key = bg_mesh_lod_cache(c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0.66);
+    unsigned long long key = bg_mesh_lod_cache(c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
     if (!key)
 	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
 

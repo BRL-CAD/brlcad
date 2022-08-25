@@ -102,11 +102,28 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key);
  * This is potentially an expensive operation, particularly if the LoD data set
  * must be generated for the mesh.
  *
+ * If user_key != 0, it will be used instead of the mesh data hash as the db
+ * key to be used for subsequent lookups.  Typically calculated with
+ * bg_mesh_lod_custom_key from user supplied data, if the mesh data is not
+ * the desired source of the key.
+ *
  * Note: to clear pre-existing cached data, run bg_mesh_lod_clear_cache();
  *
  * @return the lookup key calculated from the data */
 BG_EXPORT unsigned long long
-bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, const vect_t *vn, int *f, size_t fcnt, fastf_t fratio);
+bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, const vect_t *vn, int *f, size_t fcnt, unsigned long long user_key, fastf_t fratio);
+
+
+/**
+ * Given a user specified data stream, calculate a cache key from it.  This is
+ * done if the users wishes to use some data other than the mesh information
+ * on which to base a look-up key (for example, mesh data being used to represent
+ * a non-mesh object.
+ */
+BG_EXPORT unsigned long long
+bg_mesh_lod_custom_key(void *data, size_t data_size);
+
+
 
 /**
  * Given a name, see if the context has a key associated with that name.

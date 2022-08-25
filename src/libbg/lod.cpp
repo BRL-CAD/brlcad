@@ -824,7 +824,7 @@ class POPState {
     public:
 
 	// Create cached data (doesn't create a usable container)
-	POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, fastf_t pop_facecnt_threshold_ratio);
+	POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_face_cnt_threshold_ratio);
 
 	// Load cached data (DOES create a usable container)
 	POPState(struct bg_mesh_lod_context *ctx, unsigned long long key);
@@ -1061,7 +1061,7 @@ POPState::tri_process()
     //bu_log("Max LoD POP level: %zd\n", max_pop_threshold_level);
 }
 
-POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, fastf_t pop_facecnt_threshold_ratio)
+POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_facecnt_threshold_ratio)
 {
     // Store the context
     c = ctx;
@@ -1070,14 +1070,18 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcn
     // to just drawing the full mesh
     max_face_ratio = pop_facecnt_threshold_ratio;
 
-    // Hash the data to generate a key
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
-    XXH64_update(&h_state, v, vcnt*sizeof(point_t));
-    XXH64_update(&h_state, faces, 3*fcnt*sizeof(int));
-    XXH64_hash_t hash_val;
-    hash_val = XXH64_digest(&h_state);
-    hash = (unsigned long long)hash_val;
+    // Hash the data to generate a key, if the user didn't supply us with one
+    if (!user_key) {
+	XXH64_state_t h_state;
+	XXH64_reset(&h_state, 0);
+	XXH64_update(&h_state, v, vcnt*sizeof(point_t));
+	XXH64_update(&h_state, faces, 3*fcnt*sizeof(int));
+	XXH64_hash_t hash_val;
+	hash_val = XXH64_digest(&h_state);
+	hash = (unsigned long long)hash_val;
+    } else {
+	hash = user_key;
+    }
 
     // Make sure there's no cache before performing the full initializing from
     // the original data.  In this mode the POPState creation is used to
@@ -1174,8 +1178,13 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
     {
 	const char *b = NULL;
 	size_t bsize = cache_get((void **)&b, CACHE_POP_MAX_LEVEL);
+	if (!bsize) {
+	    cache_done();
+	    return;
+	}
 	if (bsize != sizeof(max_pop_threshold_level)) {
 	    bu_log("Incorrect data size found loading max LoD POP threshold\n");
+	    cache_done();
 	    return;
 	}
 	memcpy(&max_pop_threshold_level, b, sizeof(max_pop_threshold_level));
@@ -1188,6 +1197,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 	size_t bsize = cache_get((void **)&b, CACHE_POP_SWITCH_LEVEL);
 	if (bsize && bsize != sizeof(max_face_ratio)) {
 	    bu_log("Incorrect data size found loading LoD POP switch threshold\n");
+	    cache_done();
 	    return;
 	}
 	if (bsize) {
@@ -1204,6 +1214,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 	size_t bsize = cache_get((void **)&b, CACHE_VERTEX_COUNT);
 	if (bsize != sizeof(level_vcnt)) {
 	    bu_log("Incorrect data size found loading level vertex counts\n");
+	    cache_done();
 	    return;
 	}
 	memcpy(&level_vcnt, b, sizeof(level_vcnt));
@@ -1214,6 +1225,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 	size_t bsize = cache_get((void **)&b, CACHE_TRI_COUNT);
 	if (bsize != sizeof(level_tricnt)) {
 	    bu_log("Incorrect data size found loading level triangle counts\n");
+	    cache_done();
 	    return;
 	}
 	memcpy(&level_tricnt, b, sizeof(level_tricnt));
@@ -1227,6 +1239,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 	size_t bsize = cache_get((void **)&b, CACHE_OBJ_BOUNDS);
 	if (bsize != (sizeof(bbmin) + sizeof(bbmax) + sizeof(minmax))) {
 	    bu_log("Incorrect data size found loading cached bounds data\n");
+	    cache_done();
 	    return;
 	}
 	memcpy(&bbmin, b, sizeof(bbmin));
@@ -1874,14 +1887,14 @@ POPState::plot(const char *root)
 
 
 extern "C" unsigned long long
-bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, double fratio)
+bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, double fratio)
 {
     unsigned long long key = 0;
 
     if (!v || !vcnt || !faces || !fcnt)
 	return 0;
 
-    POPState p(c, v, vcnt, vn, faces, fcnt, fratio);
+    POPState p(c, v, vcnt, vn, faces, fcnt, user_key, fratio);
     if (!p.is_valid)
 	return 0;
 
@@ -1889,6 +1902,20 @@ bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, 
 
     return key;
 }
+
+
+extern "C" unsigned long long
+bg_mesh_lod_custom_key(void *data, size_t data_size)
+{
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    XXH64_update(&h_state, data, data_size);
+    XXH64_hash_t hash_val;
+    hash_val = XXH64_digest(&h_state);
+    unsigned long long hash = (unsigned long long)hash_val;
+    return hash; 
+}
+
 
 extern "C" struct bv_mesh_lod *
 bg_mesh_lod_create(struct bg_mesh_lod_context *c, unsigned long long key)
