@@ -35,6 +35,7 @@
 #include <iostream>
 #include <algorithm>
 #include <set>
+#include <unordered_map>
 #include <utility>
 
 #include "poly2tri/poly2tri.h"
@@ -1924,227 +1925,6 @@ poly2tri_CDT(struct bu_list *vhead,
     return;
 }
 
-void
-bg_CDT(struct bu_list *vhead,
-	struct bu_list *vlfree,
-	const ON_BrepFace &face,
-	const struct bg_tess_tol *ttol,
-	const struct bn_tol *tol)
-{
-    ON_RTree rt_trims;
-    ON_2dPointArray on_surf_points;
-    const ON_Surface *s = face.SurfaceOf();
-    double surface_width, surface_height;
-    int fi = face.m_face_index;
-    fastf_t max_dist = 0.0;
-
-    bu_log("Face: %d\n", face.m_face_index);
-
-    if (s->GetSurfaceSize(&surface_width, &surface_height)) {
-	if ((surface_width < tol->dist) || (surface_height < tol->dist))
-	    return;
-	max_dist = sqrt(surface_width * surface_width + surface_height * surface_height) / 10.0;
-    }
-
-    // first simply load loop point samples
-    int loop_cnt = face.LoopCount();
-    ON_SimpleArray<BrepTrimPoint> *brep_loop_points = new ON_SimpleArray<BrepTrimPoint>[loop_cnt];
-    for (int li = 0; li < loop_cnt; li++) {
-	const ON_BrepLoop *loop = face.Loop(li);
-	get_loop_sample_points(&brep_loop_points[li], face, loop, max_dist, ttol, tol);
-    }
-
-    std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
-    if (s->IsClosed(0) || s->IsClosed(1)) {
-	PerformClosedSurfaceChecks(s, face, ttol, tol, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
-    }
-
-    // process through loops building polygons.
-    int pntcnt = 0;
-    std::vector<int> looppnt_cnts;
-    int outer_ind = -1;
-    for (int li = 0; li < loop_cnt; li++) {
-	int num_loop_points = brep_loop_points[li].Count();
-	if (num_loop_points < 2)
-	    continue;
-	if (outer_ind < 0)
-	    outer_ind = li;
-	looppnt_cnts.push_back(num_loop_points);
-	pntcnt += num_loop_points;
-	for (int i = 1; i < brep_loop_points[li].Count(); i++) {
-	    ON_Line *line = new ON_Line((brep_loop_points[li])[i - 1].p2d, (brep_loop_points[li])[i].p2d);
-	    ON_BoundingBox bb = line->BoundingBox();
-	    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
-	    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
-	    bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
-	    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
-	    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
-	    bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
-
-	    rt_trims.Insert2d(bb.Min(), bb.Max(), line);
-	}
-    }
-    if (!pntcnt) {
-	delete[] brep_loop_points;
-	return;
-    }
-
-    // Now that we have our counts, allocate memory
-    int **hole_loops = NULL;
-    size_t *hole_cnts = NULL;
-    point2d_t *polypnts = (point2d_t *)bu_malloc(pntcnt * sizeof(point2d_t), "2dpnts");
-    int *outer_loop = (int *)bu_calloc(looppnt_cnts[0], sizeof(int *), "outer loop pnts");
-    if (looppnt_cnts.size() > 1) {
-	hole_loops = (int **)bu_calloc(looppnt_cnts.size() - 1, sizeof(int *), "hole loops");
-	hole_cnts = (size_t *)bu_calloc(looppnt_cnts.size() - 1, sizeof(size_t *), "hole loops");
-	for (size_t i = 1; i < looppnt_cnts.size(); i++) {
-	    hole_loops[i-1] = (int *)bu_calloc(looppnt_cnts[i], sizeof(int), "hole pnts");
-	    hole_cnts[i-1] = looppnt_cnts[i];
-	}
-    }
-
-    std::map<int, ON_3dPoint *> pointmap;
-    int hole_loop_ind = 0;
-    int pind = 0;
-    for (int li = 0; li < loop_cnt; li++) {
-	int num_loop_points = brep_loop_points[li].Count();
-	if (num_loop_points < 2)
-	    continue;
-	int *cloop = (li == outer_ind) ? outer_loop : hole_loops[hole_loop_ind];
-	if (li != outer_ind)
-	    hole_loop_ind++;
-	int p0ind = 0;
-	for (int i = 0; i < num_loop_points; i++) {
-	    if (i == 0)
-		p0ind = pind;
-	    if (i != num_loop_points - 1) {
-		V2SET(polypnts[pind], (brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
-		cloop[i] = pind;
-	    } else {
-		V2SET(polypnts[pind], (brep_loop_points[li])[0].p2d.x, (brep_loop_points[li])[0].p2d.y);
-		cloop[i] = p0ind;
-	    }
-	    // map point to last entry to 3d point
-	    pointmap[pind] = (brep_loop_points[li])[i].p3d;
-	    pind++;
-	}
-    }
-
-    delete [] brep_loop_points;
-
-    if (outer_ind == -1) {
-	std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
-	return;
-    }
-
-    getSurfacePoints(face, ttol, tol, on_surf_points);
-
-    std::vector<fastf_t> steiner_pnts;
-    for (int i = 0; i < on_surf_points.Count(); i++) {
-	ON_SimpleArray<void*> results;
-	const ON_2dPoint *p = on_surf_points.At(i);
-
-	rt_trims.Search2d((const double *) p, (const double *) p, results);
-
-	if (results.Count() > 0) {
-	    bool on_edge = false;
-	    for (int ri = 0; ri < results.Count(); ri++) {
-		double dist;
-		const ON_Line *l = (const ON_Line *) *results.At(ri);
-		dist = l->MinimumDistanceTo(*p);
-		if (NEAR_ZERO(dist, tol->dist)) {
-		    on_edge = true;
-		    break;
-		}
-	    }
-	    if (!on_edge) {
-		steiner_pnts.push_back(p->x);
-		steiner_pnts.push_back(p->y);
-	    }
-	} else {
-	    steiner_pnts.push_back(p->x);
-	    steiner_pnts.push_back(p->y);
-	}
-    }
-    int steiner_pntcnt = steiner_pnts.size() / 2;
-    int *steiner_indices = NULL;
-    if (steiner_pntcnt) {
-	steiner_indices = (int *)bu_malloc(steiner_pntcnt * sizeof(int), "steiner point indices");
-	polypnts = (point2d_t *)bu_realloc(polypnts, (pntcnt+steiner_pntcnt) * sizeof(point2d_t), "2dpnts");
-	for (size_t i = 0; i < steiner_pnts.size()/2; i++) {
-	    V2SET(polypnts[pntcnt+i], steiner_pnts[2*i+0], steiner_pnts[2*i+1]);
-	    steiner_indices[i] = pntcnt+i;
-	}
-	pntcnt += steiner_pntcnt;
-    }
-
-    // Clean up allocated lines
-    ON_SimpleArray<void*> results;
-    ON_BoundingBox bb = rt_trims.BoundingBox();
-    rt_trims.Search2d((const double *) bb.m_min, (const double *) bb.m_max, results);
-    for (int ri = 0; ri < results.Count(); ri++)
-	delete (const ON_Line *)*results.At(ri);
-    rt_trims.RemoveAll();
-
-    int *faces = NULL;
-    int nfaces = 0;
-    point2d_t *opnts = NULL;
-    int n_opnts = 0;
-
-    int ret = bg_nested_polygon_triangulate(&faces, &nfaces, &opnts, &n_opnts,
-	    outer_loop, looppnt_cnts[0],
-	    (const int **)hole_loops, (const size_t *)hole_cnts, looppnt_cnts.size() - 1,
-	    //NULL, 0,
-	    steiner_indices, steiner_pntcnt,
-	    polypnts, pntcnt, TRI_CONSTRAINED_DELAUNAY);
-
-    if (ret)
-	return;
-
-    struct bu_vls fname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&fname, "cdt_%d.plot3", fi);
-    bg_trimesh_2d_plot3(bu_vls_cstr(&fname), faces, nfaces, polypnts, pntcnt);
-    bu_vls_free(&fname);
-
-    ON_3dPoint pnt[3] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
-    ON_3dVector norm[3] = {ON_3dVector(), ON_3dVector(), ON_3dVector()};
-    point_t pt[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
-    vect_t nv[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
-
-    for (int i = 0; i < nfaces; i++) {
-	for (int j = 0; j < 3; j++) {
-	    point2d_t p;
-	    if (opnts == polypnts || n_opnts < 1) {
-		V2MOVE(p, polypnts[faces[i*3+j]]);
-	    } else {
-		V2MOVE(p, opnts[faces[i*3+j]]);
-	    }
-	    if (surface_EvNormal(s, p[X], p[Y], pnt[j], norm[j])) {
-		std::map<int, ON_3dPoint *>::const_iterator ii = pointmap.find(faces[i*3+j]);
-		if (ii != pointmap.end()) {
-		    pnt[j] = *(ii->second);
-		}
-		if (face.m_bRev) {
-		    norm[j] = norm[j] * -1.0;
-		}
-		VMOVE(pt[j], pnt[j]);
-		VMOVE(nv[j], norm[j]);
-	    }
-	}
-	//tri one
-	BV_ADD_VLIST(vlfree, vhead, nv[0], BV_VLIST_TRI_START);
-	BV_ADD_VLIST(vlfree, vhead, nv[0], BV_VLIST_TRI_VERTNORM);
-	BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_TRI_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, nv[1], BV_VLIST_TRI_VERTNORM);
-	BV_ADD_VLIST(vlfree, vhead, pt[1], BV_VLIST_TRI_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, nv[2], BV_VLIST_TRI_VERTNORM);
-	BV_ADD_VLIST(vlfree, vhead, pt[2], BV_VLIST_TRI_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_TRI_END);
-    }
-
-    return;
-}
-
 int
 brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
                       const struct bg_tess_tol *ttol, const struct bn_tol *tol,
@@ -2203,7 +1983,6 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
         for (index = 0; index < brep->m_F.Count(); index++) {
             const ON_BrepFace& face = brep->m_F[index];
             poly2tri_CDT(vhead, face, ttol, tol, vlfree, plottype, num_points);
-            //bg_CDT(vhead, vlfree, face, ttol, tol);
         }
     } else if (index < brep->m_F.Count()) {
         const ON_BrepFaceArray& faces = brep->m_F;
@@ -2211,7 +1990,6 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
             const ON_BrepFace& face = faces[index];
             face.Dump(tl);
             poly2tri_CDT(vhead, face, ttol, tol, vlfree, plottype, num_points);
-            //bg_CDT(vhead, vlfree, face, ttol, tol);
         }
     }
 
@@ -2232,6 +2010,292 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 	    delete points;
 	    trim->m_trim_user.p = NULL;
 	}
+    }
+
+    return 0;
+}
+
+void
+bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fastf_t> &pnts,
+	const ON_BrepFace &face,
+	const struct bg_tess_tol *ttol,
+	const struct bn_tol *tol)
+{
+    ON_RTree rt_trims;
+    ON_2dPointArray on_surf_points;
+    const ON_Surface *s = face.SurfaceOf();
+    double surface_width, surface_height;
+    p2t::CDT* cdt = NULL;
+    int fi = face.m_face_index;
+
+    fastf_t max_dist = 0.0;
+    if (s->GetSurfaceSize(&surface_width, &surface_height)) {
+	if ((surface_width < tol->dist) || (surface_height < tol->dist))
+	    return;
+	max_dist = sqrt(surface_width * surface_width + surface_height * surface_height) / 10.0;
+    }
+
+    int loop_cnt = face.LoopCount();
+    ON_2dPointArray on_loop_points;
+    ON_SimpleArray<BrepTrimPoint> *brep_loop_points = new ON_SimpleArray<BrepTrimPoint>[loop_cnt];
+    std::vector<p2t::Point*> polyline;
+
+    // first simply load loop point samples
+    for (int li = 0; li < loop_cnt; li++) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	get_loop_sample_points(&brep_loop_points[li], face, loop, max_dist, ttol, tol);
+    }
+
+    std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
+    if (s->IsClosed(0) || s->IsClosed(1))
+	PerformClosedSurfaceChecks(s, face, ttol, tol, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
+
+    // process through loops building polygons.
+    std::unordered_map<p2t::Point *, size_t> pind_map;
+    bool outer = true;
+    for (int li = 0; li < loop_cnt; li++) {
+	int num_loop_points = brep_loop_points[li].Count();
+	if (num_loop_points <= 2)
+	    continue;
+	for (int i = 1; i < num_loop_points; i++) {
+	    // map point to last entry to 3d point
+	    p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
+	    polyline.push_back(p);
+	    pnts.push_back((brep_loop_points[li])[i].p3d->x);
+	    pnts.push_back((brep_loop_points[li])[i].p3d->y);
+	    pnts.push_back((brep_loop_points[li])[i].p3d->z);
+	    if ((brep_loop_points[li])[i].n3d) {
+		pnt_norms.push_back((brep_loop_points[li])[i].n3d->x);
+		pnt_norms.push_back((brep_loop_points[li])[i].n3d->y);
+		pnt_norms.push_back((brep_loop_points[li])[i].n3d->z);
+	    } else {
+		for (size_t j = 0; j < 3; j++)
+		    pnt_norms.push_back(0.0);
+	    }
+	    pind_map[p] = pnts.size()/3 - 1;
+	}
+	for (int i = 1; i < brep_loop_points[li].Count(); i++) {
+	    // Add the polylines to the tree so we can ensure no points from
+	    // the surface sample end up on them
+	    ON_Line *line = new ON_Line((brep_loop_points[li])[i - 1].p2d, (brep_loop_points[li])[i].p2d);
+	    ON_BoundingBox bb = line->BoundingBox();
+
+	    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+	    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+	    bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
+	    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+	    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+	    bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
+
+	    rt_trims.Insert2d(bb.Min(), bb.Max(), line);
+	}
+	if (outer) {
+	    cdt = new p2t::CDT(polyline);
+	    outer = false;
+	} else {
+	    cdt->AddHole(polyline);
+	}
+	polyline.clear();
+    }
+
+    delete [] brep_loop_points;
+
+    if (outer) {
+	std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
+	return;
+    }
+
+    getSurfacePoints(face, ttol, tol, on_surf_points);
+
+    // Not all surface point samples may end up being used in the triangulation,
+    // so they are not added to the point map at this stage
+    for (int i = 0; i < on_surf_points.Count(); i++) {
+	ON_SimpleArray<void*> results;
+	const ON_2dPoint *p = on_surf_points.At(i);
+
+	rt_trims.Search2d((const double *) p, (const double *) p, results);
+
+	if (results.Count() > 0) {
+	    bool on_edge = false;
+	    for (int ri = 0; ri < results.Count(); ri++) {
+		double dist;
+		const ON_Line *l = (const ON_Line *) *results.At(ri);
+		dist = l->MinimumDistanceTo(*p);
+		if (NEAR_ZERO(dist, tol->dist)) {
+		    on_edge = true;
+		    break;
+		}
+	    }
+	    if (!on_edge)
+		cdt->AddPoint(new p2t::Point(p->x, p->y));
+	} else {
+	    cdt->AddPoint(new p2t::Point(p->x, p->y));
+	}
+    }
+
+    ON_SimpleArray<void*> results;
+    ON_BoundingBox bb = rt_trims.BoundingBox();
+
+    rt_trims.Search2d((const double *) bb.m_min, (const double *) bb.m_max, results);
+
+    if (results.Count() > 0) {
+	for (int ri = 0; ri < results.Count(); ri++) {
+	    const ON_Line *l = (const ON_Line *)*results.At(ri);
+	    delete l;
+	}
+    }
+    rt_trims.RemoveAll();
+
+    try {
+	cdt->Triangulate(true, -1);
+    }
+    catch (...) {
+	delete cdt;
+	return;
+    }
+
+    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+    for (size_t i = 0; i < tris.size(); i++) {
+	p2t::Triangle *t = tris[i];
+	p2t::Point *p = NULL;
+	for (size_t j = 0; j < 3; j++) {
+	    ON_3dPoint pnt;
+	    ON_3dVector norm;
+	    p = t->GetPoint(j);
+	    if (surface_EvNormal(s, p->x, p->y, pnt, norm)) {
+		std::unordered_map<p2t::Point *, size_t>::const_iterator ii = pind_map.find(p);
+		if (!face.m_bRev && ii != pind_map.end()) {
+		    faces.push_back(ii->second);
+		} else {
+		    pnts.push_back(pnt.x);
+		    pnts.push_back(pnt.y);
+		    pnts.push_back(pnt.z);
+		    if (face.m_bRev)
+			norm = norm * -1.0;
+		    pnt_norms.push_back(norm.x);
+		    pnt_norms.push_back(norm.y);
+		    pnt_norms.push_back(norm.z);
+		    pind_map[p] = pnts.size()/3 - 1;
+		    faces.push_back(pind_map[p]);
+		}
+	    }
+	}
+    }
+
+    std::list<std::map<double, ON_3dPoint *> *>::const_iterator bridgeIter = bridgePoints.begin();
+    while (bridgeIter != bridgePoints.end()) {
+	std::map<double, ON_3dPoint *> *map = (*bridgeIter);
+	std::map<double, ON_3dPoint *>::const_iterator mapIter = map->begin();
+	while (mapIter != map->end()) {
+	    const ON_3dPoint *p = (*mapIter++).second;
+	    delete p;
+	}
+	map->clear();
+	delete map;
+	bridgeIter++;
+    }
+    bridgePoints.clear();
+
+    for (int li = 0; li < face.LoopCount(); li++) {
+	const ON_BrepLoop *loop = face.Loop(li);
+
+	for (int lti = 0; lti < loop->TrimCount(); lti++) {
+	    ON_BrepTrim *trim = loop->Trim(lti);
+
+	    if (trim->m_trim_user.p) {
+		std::map<double, ON_3dPoint *> *points = (std::map < double, ON_3dPoint * > *) trim->m_trim_user.p;
+		std::map<double, ON_3dPoint *>::const_iterator i;
+		for (i = points->begin(); i != points->end(); i++) {
+		    const ON_3dPoint *p = (*i).second;
+		    delete p;
+		}
+		points->clear();
+		delete points;
+		trim->m_trim_user.p = NULL;
+	    }
+	}
+    }
+    if (cdt != NULL) {
+	std::vector<p2t::Point*> v = cdt->GetPoints();
+	while (!v.empty()) {
+	    delete v.back();
+	    v.pop_back();
+	}
+	delete cdt;
+    }
+}
+
+
+
+int
+brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, int *pntcnt,
+	const ON_Brep *brep, int index, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+{
+    if (!faces || !face_cnt || !pnt_norms || !pnts || !pntcnt)
+	return BRLCAD_ERROR;
+
+    if (!brep || !ttol || !tol)
+	return BRLCAD_ERROR;
+
+    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
+        ON_BrepFace *face = brep->Face(face_index);
+        const ON_Surface *s = face->SurfaceOf();
+        double surface_width, surface_height;
+        if (s->GetSurfaceSize(&surface_width, &surface_height)) {
+            // reparameterization of the face's surface and transforms the "u"
+            // and "v" coordinates of all the face's parameter space trimming
+            // curves to minimize distortion in the map from parameter space to 3d..
+            face->SetDomain(0, 0.0, surface_width);
+            face->SetDomain(1, 0.0, surface_height);
+        }
+    }
+
+    std::vector<int> all_faces;
+    std::vector<fastf_t> all_norms;
+    std::vector<fastf_t> all_pnts;
+
+    if (index == -1) {
+        for (index = 0; index < brep->m_F.Count(); index++) {
+            const ON_BrepFace& face = brep->m_F[index];
+            bg_CDT(all_faces, all_norms, all_pnts, face, ttol, tol);
+        }
+    } else if (index < brep->m_F.Count()) {
+        const ON_BrepFaceArray& brep_faces = brep->m_F;
+        if (index < brep_faces.Count()) {
+            const ON_BrepFace& face = brep_faces[index];
+            bg_CDT(all_faces, all_norms, all_pnts, face, ttol, tol);
+        }
+    }
+
+    for (int iindex = 0; iindex < brep->m_T.Count(); iindex++) {
+	ON_BrepTrim *trim = brep->Trim(iindex);
+	if (trim->m_trim_user.p != NULL) {
+	    std::map<double, ON_3dPoint *> *points = (std::map<double, ON_3dPoint *> *)trim->m_trim_user.p;
+	    std::map<double, ON_3dPoint *>::const_iterator i;
+	    for (i = points->begin(); i != points->end(); i++) {
+		const ON_3dPoint *p = (*i).second;
+		delete p;
+	    }
+	    points->clear();
+	    delete points;
+	    trim->m_trim_user.p = NULL;
+	}
+    }
+
+    (*face_cnt) = (int)all_faces.size()/3;
+    (*pntcnt) = (int)all_pnts.size()/3;
+    (*faces) = (int *)bu_calloc(all_faces.size(), sizeof(int), "faces");
+    (*pnt_norms) = (vect_t *)bu_calloc(all_pnts.size()/3, sizeof(vect_t), "normals");
+    (*pnts) = (point_t *)bu_calloc(all_pnts.size()/3, sizeof(point_t), "pnts");
+    for(size_t i = 0; i < all_faces.size(); i++)
+	(*faces)[i] = all_faces[i];
+    for(size_t i = 0; i < all_pnts.size()/3; i++) {
+	(*pnts)[i][X] = all_pnts[3*i+0];
+	(*pnts)[i][Y] = all_pnts[3*i+1];
+	(*pnts)[i][Z] = all_pnts[3*i+2];
+	(*pnt_norms)[i][X] = all_norms[3*i+0];
+	(*pnt_norms)[i][Y] = all_norms[3*i+1];
+	(*pnt_norms)[i][Z] = all_norms[3*i+2];
     }
 
     return 0;
