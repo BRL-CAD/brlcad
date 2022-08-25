@@ -346,7 +346,7 @@ static void
 _find_active_objs(std::set<struct bv_scene_obj *> &active, struct bv_scene_obj *s, struct bview *v, point_t obb_c, point_t obb_e1, point_t obb_e2, point_t obb_e3)
 {
     if (BU_PTBL_LEN(&s->children)) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) { 
+	for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	    struct bv_scene_obj *sc = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
 	    _find_active_objs(active, sc, v, obb_c, obb_e1, obb_e2, obb_e3);
 	}
@@ -354,7 +354,7 @@ _find_active_objs(std::set<struct bv_scene_obj *> &active, struct bv_scene_obj *
 	bv_scene_obj_bound(s, v);
 	if (bg_sat_aabb_obb(s->bmin, s->bmax, obb_c, obb_e1, obb_e2, obb_e3))
 	    active.insert(s);
-    } 
+    }
 }
 
 int
@@ -643,7 +643,7 @@ bg_mesh_lod_context_create(const char *name)
     // doing to implement...
     if (mdb_env_set_mapsize(i->lod_env, CACHE_MAX_DB_SIZE))
 	goto lod_context_close_fail;
-    
+
     if (mdb_env_set_mapsize(i->name_env, CACHE_MAX_DB_SIZE))
 	goto lod_context_close_fail;
 
@@ -822,7 +822,7 @@ class POPState {
     public:
 
 	// Create cached data (doesn't create a usable container)
-	POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, int *faces, size_t fcnt);
+	POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt);
 
 	// Load cached data (DOES create a usable container)
 	POPState(struct bg_mesh_lod_context *ctx, unsigned long long key);
@@ -858,6 +858,7 @@ class POPState {
 	// into lod_tri_pnts.
 	std::vector<fastf_t> lod_tri_pnts;
 	std::vector<fastf_t> lod_tri_pnts_snapped;
+	std::vector<fastf_t> lod_tri_pnt_norms;
 
 	// Current level of detail information loaded into nfaces/npnts
 	int curr_level = -1;
@@ -934,6 +935,7 @@ class POPState {
 	// Pointers to original input data
 	size_t vert_cnt = 0;
 	const point_t *verts_array = NULL;
+	const vect_t *vnorms_array = NULL;
 	size_t faces_cnt = 0;
 	int *faces_array = NULL;
 
@@ -1053,7 +1055,7 @@ POPState::tri_process()
     //bu_log("Max LoD POP level: %zd\n", max_pop_threshold_level);
 }
 
-POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, int *faces, size_t fcnt)
+POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt)
 {
     // Store the context
     c = ctx;
@@ -1093,6 +1095,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcn
     // Store source data info
     vert_cnt = vcnt;
     verts_array = v;
+    vnorms_array = vn;
     faces_cnt = fcnt;
     faces_array = faces;
 
@@ -1787,14 +1790,14 @@ POPState::plot(const char *root)
 
 
 extern "C" unsigned long long
-bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, int *faces, size_t fcnt)
+bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt)
 {
     unsigned long long key = 0;
 
     if (!v || !vcnt || !faces || !fcnt)
 	return 0;
 
-    POPState p(c, v, vcnt, faces, fcnt);
+    POPState p(c, v, vcnt, vn, faces, fcnt);
     if (!p.is_valid)
 	return 0;
 

@@ -846,7 +846,7 @@ bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, 
     //if (type == TRI_DELAUNAY && (!out_pts || !num_outpts)) return 1;
 
     if (type == TRI_ANY || type == TRI_CONSTRAINED_DELAUNAY) {
-	int p2t_ret = bg_poly2tri_test(faces, num_faces, out_pts, num_outpts, poly, poly_pnts, holes_array, holes_npts, nholes, steiner, steiner_npts, pts);
+	int p2t_ret = bg_poly2tri(faces, num_faces, out_pts, num_outpts, poly, poly_pnts, holes_array, holes_npts, nholes, steiner, steiner_npts, pts);
 	return p2t_ret;
     }
 

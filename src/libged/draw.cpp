@@ -265,7 +265,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	    return;
 	struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
-	key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+	key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces);
 	bg_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
 	rt_db_free_internal(&dbintern);
     }
@@ -289,7 +289,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	    return;
 	struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
-	key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+	key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces);
 	bg_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
 	rt_db_free_internal(&dbintern);
 

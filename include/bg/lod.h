@@ -106,7 +106,7 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key);
  *
  * @return the lookup key calculated from the data */
 BG_EXPORT unsigned long long
-bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, int *f, size_t fcnt);
+bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, const vect_t *vn, int *f, size_t fcnt);
 
 /**
  * Given a name, see if the context has a key associated with that name.
