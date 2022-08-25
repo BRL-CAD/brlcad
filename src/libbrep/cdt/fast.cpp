@@ -2051,6 +2051,8 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 	PerformClosedSurfaceChecks(s, face, ttol, tol, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
 
     // process through loops building polygons.
+
+    std::unordered_map<p2t::Point *, BrepTrimPoint *> pointmap;
     std::unordered_map<p2t::Point *, size_t> pind_map;
     bool outer = true;
     for (int li = 0; li < loop_cnt; li++) {
@@ -2060,18 +2062,11 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 	for (int i = 1; i < num_loop_points; i++) {
 	    // map point to last entry to 3d point
 	    p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
+	    pointmap[p] = &((brep_loop_points[li])[i]);
 	    polyline.push_back(p);
 	    pnts.push_back((brep_loop_points[li])[i].p3d->x);
 	    pnts.push_back((brep_loop_points[li])[i].p3d->y);
 	    pnts.push_back((brep_loop_points[li])[i].p3d->z);
-	    if ((brep_loop_points[li])[i].n3d) {
-		pnt_norms.push_back((brep_loop_points[li])[i].n3d->x);
-		pnt_norms.push_back((brep_loop_points[li])[i].n3d->y);
-		pnt_norms.push_back((brep_loop_points[li])[i].n3d->z);
-	    } else {
-		for (size_t j = 0; j < 3; j++)
-		    pnt_norms.push_back(0.0);
-	    }
 	    pind_map[p] = pnts.size()/3 - 1;
 	}
 	for (int i = 1; i < brep_loop_points[li].Count(); i++) {
@@ -2097,8 +2092,6 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 	}
 	polyline.clear();
     }
-
-    delete [] brep_loop_points;
 
     if (outer) {
 	std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
@@ -2151,6 +2144,7 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
     }
     catch (...) {
 	delete cdt;
+	delete [] brep_loop_points;
 	return;
     }
 
@@ -2160,27 +2154,36 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 	p2t::Point *p = NULL;
 	for (size_t j = 0; j < 3; j++) {
 	    ON_3dPoint pnt;
-	    ON_3dVector norm;
+	    ON_3dVector norm(0.0, 0.0, 0.0);
 	    p = t->GetPoint(j);
 	    if (surface_EvNormal(s, p->x, p->y, pnt, norm)) {
+		// Vertex points are shared with other faces
 		std::unordered_map<p2t::Point *, size_t>::const_iterator ii = pind_map.find(p);
-		if (!face.m_bRev && ii != pind_map.end()) {
+		if (ii != pind_map.end()) {
 		    faces.push_back(ii->second);
 		} else {
 		    pnts.push_back(pnt.x);
 		    pnts.push_back(pnt.y);
 		    pnts.push_back(pnt.z);
-		    if (face.m_bRev)
-			norm = norm * -1.0;
-		    pnt_norms.push_back(norm.x);
-		    pnt_norms.push_back(norm.y);
-		    pnt_norms.push_back(norm.z);
 		    pind_map[p] = pnts.size()/3 - 1;
 		    faces.push_back(pind_map[p]);
 		}
+
+		// Normals are NOT shared with other faces, so we store full
+		// vectors rather than indices to points
+		std::unordered_map<p2t::Point *, BrepTrimPoint *>::const_iterator bt_it = pointmap.find(p);
+		if (bt_it != pointmap.end())
+		    norm = *(bt_it->second->n3d);
+		if (face.m_bRev)
+		    norm = norm * -1.0;
+		pnt_norms.push_back(norm.x);
+		pnt_norms.push_back(norm.y);
+		pnt_norms.push_back(norm.z);
 	    }
 	}
     }
+
+    delete [] brep_loop_points;
 
     std::list<std::map<double, ON_3dPoint *> *>::const_iterator bridgeIter = bridgePoints.begin();
     while (bridgeIter != bridgePoints.end()) {
@@ -2223,6 +2226,7 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms, std::vector<fas
 	}
 	delete cdt;
     }
+
 }
 
 
