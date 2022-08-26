@@ -2000,11 +2000,18 @@ bg_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
 	l->faces = sp->lod_tris.data();
 	l->points_orig = (const point_t *)sp->lod_tri_pnts.data();
 	l->porig_cnt = (int)sp->lod_tri_pnts.size();
+#if 0
+	// TODO - there's still some error with normals - they seem to work,
+	// but when zooming way out and back in (at least on Windows) we're
+	// getting an access violation with some geometry...
 	if (sp->lod_tri_norms.size() >= sp->lod_tris.size()) {
 	    l->normals = (const vect_t *)sp->lod_tri_norms.data();
 	} else {
 	    l->normals = NULL;
 	}
+#else
+	l->normals = NULL;
+#endif
 	l->points = (const point_t *)sp->lod_tri_pnts_snapped.data();
 	l->pcnt = (int)sp->lod_tri_pnts_snapped.size();
     }
