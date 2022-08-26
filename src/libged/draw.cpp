@@ -412,24 +412,33 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	    RT_BREP_CK_MAGIC(bi);
 
 	    // Unlike a BoT, which has the mesh data already, we need to generate the
-	    // data from the brep
-	    int *faces;
-	    int face_cnt;
-	    vect_t *normals;
-	    point_t *pnts;
-	    int pnt_cnt;
+	    // mesh from the brep
+	    int *faces = NULL;
+	    int face_cnt = 0;
+	    vect_t *normals = NULL;
+	    point_t *pnts = NULL;
+	    int pnt_cnt = 0;
 
 	    ret = brep_cdt_fast(&faces, &face_cnt, &normals, &pnts, &pnt_cnt, bi->brep, -1, ttol, tol);
-	    if (ret != BRLCAD_OK)
+	    if (ret != BRLCAD_OK) {
+		bu_free(faces, "faces");
+		bu_free(normals, "normals");
+		bu_free(pnts, "pnts");
 		return;
+	    }
 
 	    // Because we won't have the internal data to use for a full detail scenario, we set the ratio
 	    // to 1 rather than .66 for breps...
 	    key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)pnts, pnt_cnt, normals, faces, face_cnt, key, 1);
 
-	    bg_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
+	    if (key)
+		bg_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
 
 	    rt_db_free_internal(&dbintern);
+
+	    bu_free(faces, "faces");
+	    bu_free(normals, "normals");
+	    bu_free(pnts, "pnts");
 	}
     }
     if (!key)
