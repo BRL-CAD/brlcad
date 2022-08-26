@@ -860,7 +860,7 @@ class POPState {
 	// into lod_tri_pnts.
 	std::vector<fastf_t> lod_tri_pnts;
 	std::vector<fastf_t> lod_tri_pnts_snapped;
-	std::vector<fastf_t> lod_tri_norms;
+	std::vector<fastf_t> *lod_tri_norms = NULL;
 
 	// Current level of detail information loaded into nfaces/npnts
 	int curr_level = -1;
@@ -1063,6 +1063,8 @@ POPState::tri_process()
 
 POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_facecnt_threshold_ratio)
 {
+    lod_tri_norms = new std::vector<fastf_t>;
+
     // Store the context
     c = ctx;
 
@@ -1158,6 +1160,8 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcn
 
 POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 {
+    lod_tri_norms = new std::vector<fastf_t>;
+
     // Store the context
     c = ctx;
 
@@ -1270,6 +1274,8 @@ POPState::~POPState()
 	(*full_detail_free_clbk)(lod, detail_clbk_data);
 	detail_clbk_data = NULL;
     }
+    if (lod_tri_norms)
+	delete lod_tri_norms;
 }
 
 void
@@ -1330,7 +1336,7 @@ POPState::tri_pop_load(int start_level, int level)
 	    return;
 	}
 	if (bsize) {
-	    lod_tri_norms.insert(lod_tri_norms.end(), &b[0], &b[level_tricnt[i]*3*3]);
+	    lod_tri_norms->insert(lod_tri_norms->end(), &b[0], &b[level_tricnt[i]*3*3]);
 	}
 	cache_done();
     }
@@ -1341,8 +1347,8 @@ POPState::shrink_memory()
 {
     lod_tri_pnts.clear();
     lod_tri_pnts.shrink_to_fit();
-    lod_tri_norms.clear();
-    lod_tri_norms.shrink_to_fit();
+    lod_tri_norms->clear();
+    lod_tri_norms->shrink_to_fit();
     lod_tris.clear();
     lod_tris.shrink_to_fit();
     lod_tri_pnts_snapped.clear();
@@ -1364,8 +1370,8 @@ POPState::tri_pop_trim(int level)
     // not actually shrink memory usage on any given call.)
     lod_tri_pnts.resize(vkeep_cnt*3);
     lod_tri_pnts.shrink_to_fit();
-    lod_tri_norms.resize(fkeep_cnt*3*3);
-    lod_tri_norms.shrink_to_fit();
+    lod_tri_norms->resize(fkeep_cnt*3*3);
+    lod_tri_norms->shrink_to_fit();
     lod_tris.resize(fkeep_cnt*3);
     lod_tris.shrink_to_fit();
 
@@ -1496,8 +1502,8 @@ POPState::set_level(int level)
 	lod_tri_pnts_snapped.shrink_to_fit();
 	lod_tri_pnts.clear();
 	lod_tri_pnts.shrink_to_fit();
-	lod_tri_norms.clear();
-	lod_tri_norms.shrink_to_fit();
+	lod_tri_norms->clear();
+	lod_tri_norms->shrink_to_fit();
 	lod_tris.clear();
 	lod_tris.shrink_to_fit();
 
@@ -2000,12 +2006,12 @@ bg_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
 	l->faces = sp->lod_tris.data();
 	l->points_orig = (const point_t *)sp->lod_tri_pnts.data();
 	l->porig_cnt = (int)sp->lod_tri_pnts.size();
-#if 0
+#if 1
 	// TODO - there's still some error with normals - they seem to work,
 	// but when zooming way out and back in (at least on Windows) we're
 	// getting an access violation with some geometry...
-	if (sp->lod_tri_norms.size() >= sp->lod_tris.size()) {
-	    l->normals = (const vect_t *)sp->lod_tri_norms.data();
+	if (sp->lod_tri_norms->size() >= sp->lod_tris.size()) {
+	    l->normals = (const vect_t *)sp->lod_tri_norms->data();
 	} else {
 	    l->normals = NULL;
 	}
