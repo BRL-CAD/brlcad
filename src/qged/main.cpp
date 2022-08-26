@@ -231,10 +231,15 @@ int main(int argc, char *argv[])
     app.installEventFilter(efilter);
 
     // Use the dark theme from https://github.com/Alexhuszagh/BreezeStyleSheets
+    //
+    // TODO - need to fix a bug with the theme - observing it in qged.  See
+    // https://github.com/Alexhuszagh/BreezeStyleSheets/issues/25
+#if 0
     QFile file(":/dark.qss");
     file.open(QFile::ReadOnly | QFile::Text);
     QTextStream stream(&file);
     app.setStyleSheet(stream.readAll());
+#endif
 
     // The main window defines the primary BRL-CAD interface.
     app.w = new BRLCAD_MainWindow(swrast_mode, quad_mode);
