@@ -1277,7 +1277,7 @@ POPState::tri_pop_load(int start_level, int level)
 {
     struct bu_vls kbuf = BU_VLS_INIT_ZERO;
 
-    // Read in the level vertices (and normals, if present)
+    // Read in the level vertices
     for (int i = start_level+1; i <= level; i++) {
 	if (!level_vcnt[i])
 	    continue;
@@ -1316,21 +1316,23 @@ POPState::tri_pop_load(int start_level, int level)
 	}
 	lod_tris.insert(lod_tris.end(), &b[0], &b[level_tricnt[i]*3]);
 	cache_done();
+    }
 
+    // Read in the vertex normals, if we have them
+    for (int i = start_level+1; i <= level; i++) {
+	if (!level_tricnt[i])
+	    continue;
 	bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERTNORM_LEVEL, i);
-	b = NULL;
-	bsize = cache_get((void **)&b, bu_vls_cstr(&kbuf));
+	fastf_t *b = NULL;
+	size_t bsize = cache_get((void **)&b, bu_vls_cstr(&kbuf));
 	if (bsize > 0 && bsize != level_tricnt[i]*sizeof(vect_t)*3) {
 	    bu_log("Incorrect data size found loading level %d normal data\n", i);
 	    return;
 	}
 	if (bsize) {
 	    lod_tri_norms.insert(lod_tri_norms.end(), &b[0], &b[level_tricnt[i]*3*3]);
-	} else {
-	    lod_tri_norms.clear();
 	}
 	cache_done();
-
     }
 }
 
@@ -1434,8 +1436,6 @@ POPState::get_level(fastf_t vlen)
     return POP_MAXLEVEL - 1;
 }
 
-// NOTE: at some point it may be worth investigating using bu_open_mapped_file
-// and friends for this, depending on what profiling shows in real-world usage.
 void
 POPState::set_level(int level)
 {
@@ -1669,6 +1669,27 @@ POPState::cache_tri()
 	}
     }
 
+    // Write out the triangles in LoD order for each level
+    {
+	for (int i = 0; i <= max_pop_threshold_level; i++) {
+	    std::stringstream s;
+	    if (!level_tris[i].size())
+		continue;
+	    // Write out the mapped triangle indices
+	    std::vector<size_t>::iterator s_it;
+	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
+		int vt[3];
+		vt[0] = (int)tri_ind_map[faces_array[3*(*s_it)+0]];
+		vt[1] = (int)tri_ind_map[faces_array[3*(*s_it)+1]];
+		vt[2] = (int)tri_ind_map[faces_array[3*(*s_it)+2]];
+		s.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
+	    }
+	    bu_vls_sprintf(&kbuf, "%s%d", CACHE_TRI_LEVEL, i);
+	    if (!cache_write(bu_vls_cstr(&kbuf), s))
+		return false;
+	}
+    }
+
     // Write out the vertex normals in LoD order for each level, if we have them
     {
 	if (vnorms_array) {
@@ -1698,26 +1719,6 @@ POPState::cache_tri()
 	}
     }
 
-    // Write out the triangles in LoD order for each level
-    {
-	for (int i = 0; i <= max_pop_threshold_level; i++) {
-	    std::stringstream s;
-	    if (!level_tris[i].size())
-		continue;
-	    // Write out the mapped triangle indices
-	    std::vector<size_t>::iterator s_it;
-	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
-		int vt[3];
-		vt[0] = (int)tri_ind_map[faces_array[3*(*s_it)+0]];
-		vt[1] = (int)tri_ind_map[faces_array[3*(*s_it)+1]];
-		vt[2] = (int)tri_ind_map[faces_array[3*(*s_it)+2]];
-		s.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
-	    }
-	    bu_vls_sprintf(&kbuf, "%s%d", CACHE_TRI_LEVEL, i);
-	    if (!cache_write(bu_vls_cstr(&kbuf), s))
-		return false;
-	}
-    }
 
     return true;
 }
