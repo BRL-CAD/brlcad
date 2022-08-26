@@ -2304,19 +2304,20 @@ brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, in
     (*face_cnt) = (int)all_faces.size()/3;
     (*pntcnt) = (int)all_pnts.size()/3;
     (*faces) = (int *)bu_calloc(all_faces.size(), sizeof(int), "faces");
-    (*pnt_norms) = (vect_t *)bu_calloc(all_pnts.size()/3, sizeof(vect_t), "normals");
+    (*pnt_norms) = (vect_t *)bu_calloc(all_norms.size(), sizeof(fastf_t), "normals");
     (*pnts) = (point_t *)bu_calloc(all_pnts.size()/3, sizeof(point_t), "pnts");
     for(size_t i = 0; i < all_faces.size(); i++)
 	(*faces)[i] = all_faces[i];
-    for(size_t i = 0; i < all_pnts.size()/3; i++) {
-	(*pnts)[i][X] = all_pnts[3*i+0];
-	(*pnts)[i][Y] = all_pnts[3*i+1];
-	(*pnts)[i][Z] = all_pnts[3*i+2];
+    for(size_t i = 0; i < all_norms.size()/3; i++) {
 	(*pnt_norms)[i][X] = all_norms[3*i+0];
 	(*pnt_norms)[i][Y] = all_norms[3*i+1];
 	(*pnt_norms)[i][Z] = all_norms[3*i+2];
     }
-
+    for(size_t i = 0; i < all_pnts.size()/3; i++) {
+	(*pnts)[i][X] = all_pnts[3*i+0];
+	(*pnts)[i][Y] = all_pnts[3*i+1];
+	(*pnts)[i][Z] = all_pnts[3*i+2];
+    }
     return BRLCAD_OK;
 }
 
