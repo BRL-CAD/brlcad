@@ -367,7 +367,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     return;
 }
 
-void
+static void
 brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 {
     if (!s || !v)
@@ -627,14 +627,12 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 	return;
     }
 
-#if 0
     // Adaptive BReps have specialized LoD routines to manage shaded displays, which
     // can involve slow and large mesh generations.
     if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP && s->s_v->gv_s->adaptive_plot_mesh && s->s_os->s_dmode == 1) {
 	brep_adaptive_plot(s, v);
 	return;
     }
-#endif
 
     /**************************************************************************
      * For the remainder of the options we're into more standard wireframe
