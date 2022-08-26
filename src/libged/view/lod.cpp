@@ -175,6 +175,9 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     if (BU_STR_EQUAL(argv[0], "cache")) {
 	if (argc == 1) {
 
+	    if (!gedp || !gedp->dbip)
+		return BRLCAD_ERROR;
+
 	    // Clear any old cache in memory
 	    bg_mesh_lod_clear_cache(gedp->ged_lod, 0);
 
