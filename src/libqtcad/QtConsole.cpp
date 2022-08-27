@@ -647,10 +647,11 @@ void QtConsole::setCompleter(QtConsoleWidgetCompleter* completer)
 void QtConsole::insertCompletion(const QString& completion)
 {
     QTextCursor tc = this->Implementation->textCursor();
+    tc.setPosition(tc.position(), QTextCursor::MoveAnchor);
     QString text = tc.selectedText();
     //const char *txt = text.toLocal8Bit().data();
     //bu_log("txt: %s\n", txt);
-    while (text.at(0) != ' ' && (!split_slash || text.at(0) != '/')) {
+    while (tc.position() > 0 && (!text.length() || (text.at(0) != ' ' && (!split_slash || text.at(0) != '/')))) {
 	tc.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
 	text = tc.selectedText();
 	//txt = text.toLocal8Bit().data();
