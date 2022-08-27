@@ -1433,20 +1433,28 @@ check_elements(struct ged *gedp, struct draw_ctx *ctx, std::vector<std::string> 
 
 // 0 = valid, 1 = invalid, 2 = invalid, remain "drawn"
 int
-check_status(std::unordered_set<unsigned long long> *invalid_objects, std::vector<unsigned long long> &cpath, std::unordered_set<unsigned long long> &changed, struct g_ctx  *g)
+check_status(std::unordered_set<unsigned long long> *invalid_objects, std::vector<unsigned long long> &cpath, std::unordered_set<unsigned long long> &changed, struct g_ctx *g, struct draw_ctx *ctx)
 {
     bool parent_changed = false;
     for (size_t j = 0; j < cpath.size(); j++) {
+	unsigned long long phash = (j > 0) ? cpath[j-1] : 0;
 	unsigned long long hash = cpath[j];
-	if (parent_changed) {
-	    // TODO - need to see if this is still a parent of the new
-	    // comb.  If not we're done, whether or not the parent dp was
-	    // removed from the database.  If it's still in the comb tree,
-	    // proceed with the evaluation.  This step is why the draw
-	    // update has to come AFTER the above primitive update passes,
-	    // so the comb can give us the correct, current answer.
-
-	    /// if parent not still in tree, return 1;
+	if (phash && parent_changed) {
+	    // Need to see if this is still a parent of the new comb. This step
+	    // is why the draw update has to come AFTER the above primitive
+	    // update passes, so the comb can give us the correct, current
+	    // answer.
+	    bool is_parent = false;
+	    if (ctx->p_c.find(phash) != ctx->p_c.end() && ctx->p_c[phash].find(hash) != ctx->p_c[phash].end())
+		is_parent = true;
+	    // If not we're done, whether or not the parent dp was
+	    // removed from the database.
+	    if (!is_parent) {
+		if (invalid_objects)
+		    (*invalid_objects).insert(hash);
+		return 1;
+	    }
+	    // If it's still in the comb tree, proceed with the evaluation.
 	}
 
 	bool is_removed = (g->removed.find(hash) != g->removed.end());
@@ -1640,7 +1648,7 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 	// Work down from the root of each path looking for the first changed or
 	// removed entry.
 	std::vector<unsigned long long> &cpath = sk_it->second;
-	check_status(&invalid_objects, cpath, changed, g);
+	check_status(&invalid_objects, cpath, changed, g, ctx);
     }
 
     std::unordered_set<unsigned long long>::iterator iv_it;
@@ -1660,7 +1668,7 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
     std::unordered_set<size_t> draw_invalid_collapsed;
     for (size_t i = 0; i < collapsed.size(); i++) {
 	std::vector<unsigned long long> &cpath = collapsed[i];
-	int sret = check_status(NULL, cpath, changed, g);
+	int sret = check_status(NULL, cpath, changed, g, ctx);
 	if (sret == 2)
 	    draw_invalid_collapsed.insert(i);
 	if (sret == 0)
