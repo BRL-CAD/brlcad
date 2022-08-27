@@ -115,9 +115,9 @@ struct draw_ctx {
 
 struct g_ctx {
     struct ged *gedp = NULL;
-    std::unordered_set<unsigned long long> added;
+    std::unordered_set<struct directory *> added;
+    std::unordered_set<struct directory *> changed;
     std::unordered_set<unsigned long long> removed;
-    std::unordered_set<unsigned long long> changed;
     std::unordered_map<unsigned long long, std::string> old_names;
     bool need_update_nref = false;
     bool changed_flag = false;
@@ -128,15 +128,11 @@ extern "C" void
 dp_changed_clbk(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
     struct g_ctx *gd = (struct g_ctx *)u_data;
-
-    // When this callback is made, dp is still valid, but in subsequent processing
-    // it will not be.  We need to capture everything we will need from this dp
-    // now, for later use when updating state
     XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
-    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-    unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+    unsigned long long hash = 0;
 
+    // TODO - we can probably get more nuanced about this flag - we may
+    // not need to set it if the dp in question isn't a comb...
     gd->need_update_nref = true;
     gd->changed_flag = true;
 
@@ -151,12 +147,18 @@ dp_changed_clbk(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void 
 
     switch(mode) {
 	case 0:
-	    gd->changed.insert(hash);
+	    gd->changed.insert(dp);
 	    break;
 	case 1:
-	    gd->added.insert(hash);
+	    gd->added.insert(dp);
 	    break;
 	case 2:
+	    // When this callback is made, dp is still valid, but in subsequent
+	    // processing it will not be.  We need to capture everything we
+	    // will need from this dp now, for later use when updating state
+	    XXH64_reset(&h_state, 0);
+	    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	    hash = (unsigned long long)XXH64_digest(&h_state);
 	    gd->removed.insert(hash);
 	    gd->old_names[hash] = std::string(dp->d_namep);
 	    break;
@@ -741,6 +743,83 @@ populate_maps(struct ged *gedp, struct draw_ctx *ctx, struct directory *dp, unsi
 	draw_walk_tree(comb->tree, (void *)&d, 0, populate_leaf);
 	rt_db_free_internal(&in);
     }
+}
+
+static unsigned long long
+update_dp(struct ged *gedp, struct draw_ctx *ctx, struct directory *dp, int reset)
+{
+    if (dp->d_flags & DB_LS_HIDDEN)
+	return 0;
+
+    // Set up to go from hash back to name
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+    unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+    ctx->d_map[hash] = dp;
+
+    // If this isn't a comb, find and record the untransformed
+    // bounding box
+    ctx->bboxes.erase(hash);
+    if (!(dp->d_flags & RT_DIR_COMB)) {
+	point_t bmin, bmax;
+	mat_t m;
+	MAT_IDN(m);
+	int bret = rt_bound_instance(&bmin, &bmax, dp, gedp->dbip,
+		&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol,
+		&m, &rt_uniresource, gedp->ged_gvp);
+	if (bret != -1) {
+	    for (size_t j = 0; j < 3; j++)
+		ctx->bboxes[hash].push_back(bmin[j]);
+	    for (size_t j = 0; j < 3; j++)
+		ctx->bboxes[hash].push_back(bmax[j]);
+	}
+    }
+
+    // Encode hierarchy info if this is a comb
+    if (dp->d_flags & RT_DIR_COMB)
+	populate_maps(gedp, ctx, dp, hash, reset);
+
+    // Check for various drawing related attributes
+    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
+    db5_get_attributes(gedp->dbip, &c_avs, dp);
+
+    // Check for region id.  For drawing purposes this needs to be a number.
+    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
+    int region_id = -1;
+    if (region_id_val) {
+	if (bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id) != -1) {
+	    ctx->region_id[hash] = region_id;
+	} else {
+	    bu_log("%s is not a valid region_id\n", region_id_val);
+	    region_id = -1;
+	}
+    }
+
+    // Check for an inherit flag
+    int color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
+    ctx->c_inherit.erase(hash);
+    if (color_inherit)
+	ctx->c_inherit[hash] = color_inherit;
+
+    // Color (note that the rt_material_head colors and a region_id may
+    // override this, as might a parent comb with color and the inherit
+    // flag both set.
+    ctx->rgb.erase(hash);
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    const char *color_val = bu_avs_get(&c_avs, "color");
+    if (!color_val)
+	color_val = bu_avs_get(&c_avs, "rgb");
+    if (color_val){
+	bu_opt_color(NULL, 1, &color_val, (void *)&c);
+	unsigned int cval = color_int(&c);
+	ctx->rgb[hash] = cval;
+    }
+
+    // Done with attributes
+    bu_avs_free(&c_avs);
+
+    return hash;
 }
 
 static bool
@@ -1367,8 +1446,26 @@ void
 ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 {
     std::unordered_set<unsigned long long>::iterator s_it;
+    std::unordered_set<struct directory *>::iterator g_it;
     if (!ctx)
 	return;
+
+    if (g->need_update_nref) {
+	db_update_nref(g->gedp->dbip, &rt_uniresource);
+	g->need_update_nref = false;
+    }
+
+
+    // dps -> hashes
+    std::unordered_set<unsigned long long> changed;
+    XXH64_state_t h_state;
+    for(g_it = g->changed.begin(); g_it != g->changed.end(); g_it++) {
+	struct directory *dp = *g_it;
+	XXH64_reset(&h_state, 0);
+	XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+	changed.insert(hash);
+    }
 
     // Collect all the paths with either removed or changed dps
     std::vector<unsigned long long> active_paths;
@@ -1385,7 +1482,7 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 		active_paths.push_back(k_it->first);
 		break;
 	    }
-	    if (g->changed.find(hash) != g->changed.end()) {
+	    if (changed.find(hash) != changed.end()) {
 		active_paths.push_back(k_it->first);
 		break;
 	    }
@@ -1439,30 +1536,29 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 	// We do not clear the instance maps (i_map and i_str) since those containers do not
 	// guarantee uniqueness to one child object.  If we do want to remove entries no longer
 	// used anywhere in the database, we'll have to confirm their invalidity on a global
-	// basis in a garbage-collect operation.  (May or may not be necessary...)
+	// basis in a garbage-collect operation.  (TODO - need a better way to manage these...)
 
 	// Entries with this hash as their key are erased.  
 	ctx->p_c.erase(*s_it);
 	ctx->p_v.erase(*s_it);
     }
 
-    for(s_it = g->added.begin(); s_it != g->added.end(); s_it++) {
-	bu_log("added: %llu\n", *s_it);
-	// package up dbi_Head procedure used in main to initialize, apply to
-	// these dps
-	//
-	// need to check if invalid instances are made valid by the addition of
-	// these dps
-	//
-	// NOTE:  if paths ending in invalid dps are present in the drawn set
-	// that are now valid, we need to expand them after the initial dp
-	// processing is complete and replace them with the expansions
+    for(g_it = g->added.begin(); g_it != g->added.end(); g_it++) {
+	struct directory *dp = *g_it;
+	bu_log("added: %s\n", dp->d_namep);
+	unsigned long long hash = update_dp(g->gedp, ctx, dp, 0);
+
+	// If this name was previously the source of an invalid reference,
+	// it is no longer.
+	ctx->invalid_entry_map.erase(hash);
     }
- 
-    for(s_it = g->changed.begin(); s_it != g->changed.end(); s_it++) {
-	bu_log("changed: %llu\n", *s_it);
+
+    for(g_it = g->changed.begin(); g_it != g->changed.end(); g_it++) {
+	struct directory *dp = *g_it;
+	bu_log("changed: %s\n", dp->d_namep);
 	// Properties need to be updated - comb children, colors, matrices,
-	// etc.  Paths with changed items in their array need to be collected,
+	// etc.
+	update_dp(g->gedp, ctx, dp, 1);
 	// collapsed to the minimum fully drawn paths, and considered.  If
 	// the changed pointer is the leaf then it can simply be re-expanded
 	// as it was fully drawn before, but if it is a parent then we need
@@ -1492,7 +1588,7 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 	    }
 
 	    bool is_removed = (g->removed.find(hash) != g->removed.end());
-	    bool is_changed = (g->changed.find(hash) != g->changed.end());
+	    bool is_changed = (changed.find(hash) != changed.end());
 	    if (is_removed) {
 		if (is_removed && !j) {
 		    // Top level removed - everything else is gone
@@ -1560,7 +1656,7 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 	    }
 
 	    bool is_removed = (g->removed.find(hash) != g->removed.end());
-	    bool is_changed = (g->changed.find(hash) != g->changed.end());
+	    bool is_changed = (changed.find(hash) != changed.end());
 	    if (is_removed) {
 		if (is_removed && !j) {
 		    // Top level removed - everything else is gone
@@ -1649,6 +1745,7 @@ main(int argc, char *argv[]) {
     gedp = ged_open("db", argv[1], 1);
 
     struct g_ctx g;
+    g.gedp = gedp;
 
     db_add_changed_clbk(gedp->dbip, &dp_changed_clbk, (void *)&g);
 
@@ -1656,73 +1753,7 @@ main(int argc, char *argv[]) {
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_flags & DB_LS_HIDDEN)
-		continue;
-
-	    // Set up to go from hash back to name
-	    XXH64_state_t h_state;
-	    XXH64_reset(&h_state, 0);
-	    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	    unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
-	    ctx.d_map[hash] = dp;
-
-	    // If this isn't a comb, find and record the untransformed
-	    // bounding box
-	    if (!(dp->d_flags & RT_DIR_COMB)) {
-		point_t bmin, bmax;
-		mat_t m;
-		MAT_IDN(m);
-		int bret = rt_bound_instance(&bmin, &bmax, dp, gedp->dbip,
-			&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol,
-			&m, &rt_uniresource, gedp->ged_gvp);
-		if (bret != -1) {
-		    for (size_t j = 0; j < 3; j++)
-			ctx.bboxes[hash].push_back(bmin[j]);
-		    for (size_t j = 0; j < 3; j++)
-			ctx.bboxes[hash].push_back(bmax[j]);
-		}
-	    }
-
-	    // Encode hierarchy info if this is a comb
-	    if (dp->d_flags & RT_DIR_COMB)
-		populate_maps(gedp, &ctx, dp, hash, 0);
-
-	    // Check for various drawing related attributes
-	    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
-	    db5_get_attributes(gedp->dbip, &c_avs, dp);
-
-	    // Check for region id.  For drawing purposes this needs to be a number.
-	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
-	    int region_id = -1;
-	    if (region_id_val) {
-		if (bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id) != -1) {
-		    ctx.region_id[hash] = region_id;
-		} else {
-		    bu_log("%s is not a valid region_id\n", region_id_val);
-		    region_id = -1;
-		}
-	    }
-
-	    // Check for an inherit flag
-	    int color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
-	    if (color_inherit)
-		ctx.c_inherit[hash] = color_inherit;
-
-	    // Color (note that the rt_material_head colors and a region_id may
-	    // override this, as might a parent comb with color and the inherit
-	    // flag both set.
-	    struct bu_color c = BU_COLOR_INIT_ZERO;
-	    const char *color_val = bu_avs_get(&c_avs, "color");
-	    if (!color_val)
-		color_val = bu_avs_get(&c_avs, "rgb");
-	    if (color_val){
-		bu_opt_color(NULL, 1, &color_val, (void *)&c);
-		unsigned int cval = color_int(&c);
-		ctx.rgb[hash] = cval;
-	    }
-
-	    // Done with attributes
-	    bu_avs_free(&c_avs);
+	    update_dp(gedp, &ctx, dp, 0);
 	}
     }
 
