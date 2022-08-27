@@ -1431,6 +1431,67 @@ check_elements(struct ged *gedp, struct draw_ctx *ctx, std::vector<std::string> 
     return true;
 }
 
+// 0 = valid, 1 = invalid, 2 = invalid, remain "drawn"
+int
+check_status(std::unordered_set<unsigned long long> *invalid_objects, std::vector<unsigned long long> &cpath, std::unordered_set<unsigned long long> &changed, struct g_ctx  *g)
+{
+    bool parent_changed = false;
+    for (size_t j = 0; j < cpath.size(); j++) {
+	unsigned long long hash = cpath[j];
+	if (parent_changed) {
+	    // TODO - need to see if this is still a parent of the new
+	    // comb.  If not we're done, whether or not the parent dp was
+	    // removed from the database.  If it's still in the comb tree,
+	    // proceed with the evaluation.  This step is why the draw
+	    // update has to come AFTER the above primitive update passes,
+	    // so the comb can give us the correct, current answer.
+
+	    /// if parent not still in tree, return 1;
+	}
+
+	bool is_removed = (g->removed.find(hash) != g->removed.end());
+	bool is_changed = (changed.find(hash) != changed.end());
+	if (is_removed) {
+	    if (is_removed && !j) {
+		// Top level removed - everything else is gone
+		if (invalid_objects)
+		    (*invalid_objects).insert(hash);
+		return 1;
+	    }
+
+	    if (is_removed && j != cpath.size()-1) {
+		// If removed is first and not a leaf, erase - if we got here
+		// the parent comb either wasn't changed at all or this
+		// particular instance is still there; either way the state
+		// here is not preservable, since the path is trying to refer
+		// to a tree path which no longer exists in the hierarchy.
+		if (invalid_objects)
+		    (*invalid_objects).insert(hash);
+		return 1;
+	    }
+	    if (is_removed && j == cpath.size()-1) {
+		// If removed is a leaf and the comb instance is intact,
+		// leave "drawn" as invalid path.
+		return 2;
+	    }
+	}
+	if (is_changed) {
+	    if (j == cpath.size()-1) {
+		// Changed, but a leaf - stays drawn
+		return 0;
+	    }
+	    // Not a leaf - check child
+	    parent_changed = true;
+	    continue;
+	}
+
+	// If we got here, reset the parent changed flag
+	parent_changed = false;
+    }
+
+    return 0;
+}
+
 // The most involved task we must perform with these containers, in some ways,
 // is to update them in response to .g database changes...  need to figure out
 // if and how that will be accomplished.
@@ -1579,51 +1640,7 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 	// Work down from the root of each path looking for the first changed or
 	// removed entry.
 	std::vector<unsigned long long> &cpath = sk_it->second;
-	bool parent_changed = false;
-	for (size_t j = 0; j < cpath.size(); j++) {
-	    unsigned long long hash = cpath[j];
-	    if (parent_changed) {
-		// TODO - need to see if this is still a parent of the new
-		// comb.  If not, it's invalid. 
-	    }
-
-	    bool is_removed = (g->removed.find(hash) != g->removed.end());
-	    bool is_changed = (changed.find(hash) != changed.end());
-	    if (is_removed) {
-		if (is_removed && !j) {
-		    // Top level removed - everything else is gone
-		    invalid_objects.insert(hash);
-		    break;
-		}
-
-		if (is_removed && j != cpath.size()-1) {
-		    // If removed is first and not a leaf, erase - if we got here
-		    // the parent comb either wasn't changed at all or this
-		    // particular instance is still there; either way the state
-		    // here is not preservable, since the path is trying to refer
-		    // to a tree path which no longer exists in the hierarchy.
-		    invalid_objects.insert(hash);
-		    break;
-		}
-		if (is_removed && j == cpath.size()-1) {
-		    // If removed is a leaf and the comb instance is intact,
-		    // leave "drawn" as invalid path.
-		    break;
-		}
-	    }
-	    if (is_changed) {
-		if (j == cpath.size()-1) {
-		    // Changed, but a leaf - stays drawn
-		    break;
-		}
-		// Not a leaf - check child
-		parent_changed = true;
-		continue;
-	    }
-
-	    // If we got here, reset the parent changed flag
-	    parent_changed = false;
-	}
+	check_status(&invalid_objects, cpath, changed, g);
     }
 
     std::unordered_set<unsigned long long>::iterator iv_it;
@@ -1643,65 +1660,13 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
     std::unordered_set<size_t> draw_invalid_collapsed;
     for (size_t i = 0; i < collapsed.size(); i++) {
 	std::vector<unsigned long long> &cpath = collapsed[i];
-	bool parent_changed = false;
-	for (size_t j = 0; j < cpath.size(); j++) {
-	    unsigned long long hash = cpath[j];
-	    if (parent_changed) {
-		// TODO - need to see if this is still a parent of the new
-		// comb.  If not we're done, whether or not the parent dp was
-		// removed from the database.  If it's still in the comb tree,
-		// proceed with the evaluation.  This step is why the draw
-		// update has to come AFTER the above primitive update passes,
-		// so the comb can give us the correct, current answer.
-	    }
-
-	    bool is_removed = (g->removed.find(hash) != g->removed.end());
-	    bool is_changed = (changed.find(hash) != changed.end());
-	    if (is_removed) {
-		if (is_removed && !j) {
-		    // Top level removed - everything else is gone
-		    bu_log("skip: %zd\n", i);
-		    break;
-		}
-
-		if (is_removed && j != cpath.size()-1) {
-		    // If removed is first and not a leaf, skip - if we got here
-		    // the parent comb either wasn't changed at all or this
-		    // particular instance is still there; either way the state
-		    // here is not preservable, since the path is trying to refer
-		    // to a tree path which no longer exists in the hierarchy.
-		    break;
-		}
-		if (is_removed && j == cpath.size()-1) {
-		    // If removed is a leaf and the comb instance is intact,
-		    // "draw" as invalid path - i.e. path is added to set, but
-		    // it gets no scene object.  In this case there is no subtree
-		    // state we are trying to preserve, and the referenced instance
-		    // path DOES still exist in the .g file, even though it is
-		    // (at the moment) invalid.
-		    draw_invalid_collapsed.insert(i);
-		    break;
-		}
-	    }
-	    if (is_changed) {
-		if (j == cpath.size()-1) {
-		    // Changed, but a leaf - stays drawn
-		    active_collapsed.insert(i);
-		    break;
-		}
-		// Not a leaf - check child
-		parent_changed = true;
-		continue;
-	    }
-
-	    // If we got here, reset the parent changed flag
-	    parent_changed = false;
-
-	    // If we got all the way through the path, it's a keeper
-	    if (j == cpath.size()-1)
-		active_collapsed.insert(i);
-	}
+	int sret = check_status(NULL, cpath, changed, g);
+	if (sret == 2)
+	    draw_invalid_collapsed.insert(i);
+	if (sret == 0)
+	    active_collapsed.insert(i);
     }
+
     // Expand active collapsed paths to solids, creating any missing path objects
 
 
