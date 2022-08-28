@@ -1603,9 +1603,9 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 	ctx->i_bool.erase(*s_it);
 
 	// We do not clear the instance maps (i_map and i_str) since those containers do not
-	// guarantee uniqueness to one child object.  If we do want to remove entries no longer
-	// used anywhere in the database, we'll have to confirm their invalidity on a global
-	// basis in a garbage-collect operation.  (TODO - need a better way to manage these...)
+	// guarantee uniqueness to one child object.  To remove entries no longer
+	// used anywhere in the database, we have to confirm they are no longer needed on a global
+	// basis in a subsequent garbage-collect operation.
 
 	// Entries with this hash as their key are erased.  
 	ctx->p_c.erase(*s_it);
@@ -1626,13 +1626,25 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 	struct directory *dp = *g_it;
 	bu_log("changed: %s\n", dp->d_namep);
 	// Properties need to be updated - comb children, colors, matrices,
-	// etc.
+	// bounding box for solids, etc.
 	update_dp(g->gedp, ctx, dp, 1);
-	// collapsed to the minimum fully drawn paths, and considered.  If
-	// the changed pointer is the leaf then it can simply be re-expanded
-	// as it was fully drawn before, but if it is a parent then we need
-	// to check and see if the children below the parent are still valid.
-	// If not, those paths are removed from the drawn set
+    }
+
+    // Garbage collect i_map and i_str
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator sk_it;
+    std::unordered_set<unsigned long long> used;
+    for (sk_it = ctx->p_v.begin(); sk_it != ctx->p_v.end(); sk_it++) {
+	used.insert(sk_it->second.begin(), sk_it->second.end());
+    }
+    std::vector<unsigned long long> unused;
+    std::unordered_map<unsigned long long, unsigned long long>::iterator im_it;
+    for (im_it = ctx->i_map.begin(); im_it != ctx->i_map.end(); im_it++) {
+	if (used.find(im_it->first) != used.end())
+	    unused.push_back(im_it->first);
+    }
+    for (size_t i = 0; i < unused.size(); i++) {
+	ctx->i_map.erase(unused[i]);
+	ctx->i_str.erase(unused[i]);
     }
 
     // The principle for redrawing will be that anything that was previously
@@ -1640,9 +1652,7 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
     // changed.  We need to remove no-longer-valid paths, but will keep valid
     // paths to avoid the work of re-generating the scene objects when we
     // re-expand the collapsed paths using the new tree structure.
-    //
 
-    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator sk_it;
     std::unordered_set<unsigned long long> invalid_objects;
     for (sk_it = ctx->s_keys.begin(); sk_it != ctx->s_keys.end(); sk_it++) {
 	// Work down from the root of each path looking for the first changed or
@@ -1692,8 +1702,8 @@ ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
     //
     // 2.  Not part of any path, pre or post removed/changed draw states (i.e.
     // a tops object) - draw
-  
-    // May want to "garbage collect" invalid entires and instances sets...
+
+    // Final step - rebuild drawn_paths to reflect current drawn state
 }
 
 
