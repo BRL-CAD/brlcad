@@ -186,9 +186,9 @@ struct ged_drawable {
 #include <unordered_map>
 #include <unordered_set>
 
-class DbiState;
+class GED_EXPORT DbiState;
 
-class BViewState {
+class GED_EXPORT BViewState {
     public:
 	BViewState(DbiState *);
 
@@ -233,7 +233,7 @@ class BViewState {
 	std::vector<unsigned long long> active_paths;
 };
 
-class DbiState {
+class GED_EXPORT DbiState {
     public:
 	DbiState(struct db_i *);
 
@@ -347,6 +347,7 @@ struct ged {
     struct bu_vls               go_name;
     struct rt_wdb		*ged_wdbp;
     struct db_i                 *dbip;
+    DbiState			*dbi_state;
 
     /*************************************************************/
     /* Information pertaining to views and view objects .        */

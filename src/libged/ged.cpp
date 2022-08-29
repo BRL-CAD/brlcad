@@ -1,4 +1,4 @@
-/*                       G E D . C
+/*                       G E D . C P P
  * BRL-CAD
  *
  * Copyright (c) 2000-2022 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file libged/ged.c
+/** @file libged/ged.cpp
  *
  * A quasi-object-oriented database interface.
  *
@@ -49,7 +49,9 @@
 #include "bv/defines.h"
 
 #include "./ged_private.h"
+extern "C" {
 #include "./qray.h"
+}
 
 #define FREE_BV_SCENE_OBJ(p, fp) { \
     BU_LIST_APPEND(fp, &((p)->l)); \
@@ -354,6 +356,10 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     BU_ALLOC(gedp->ged_gvp, struct bview);
     bv_init(gedp->ged_gvp, &gedp->ged_views);
 
+    db_update_nref(gedp->dbip, &rt_uniresource);
+    gedp->dbi_state = new DbiState(gedp->dbip);
+    gedp->dbi_state->view_states[gedp->ged_gvp] = new BViewState(gedp->dbi_state);
+
     return gedp;
 }
 
@@ -478,12 +484,12 @@ ged_io_handler_cb(struct ged *, ged_io_handler_callback_t *cb, void *, int)
 }
 #endif
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

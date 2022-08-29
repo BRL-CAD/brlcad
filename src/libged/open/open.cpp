@@ -1,4 +1,4 @@
-/*                         O P E N . C
+/*                       O P E N . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2022 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/open.c
+/** @file libged/open.cpp
  *
  * The open command.
  *
@@ -33,7 +33,7 @@
 #include "../ged_private.h"
 
 
-int
+extern "C" int
 ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct db_i *new_dbip;
@@ -52,7 +52,7 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 
     /* set database filename */
     if (argc == 2) {
-	char *av[2];
+	const char *av[2];
 	struct db_i *old_dbip = gedp->dbip;
 	struct mater *old_materp = rt_material_head();
 	struct mater *new_materp;
@@ -90,6 +90,8 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	gedp->ged_wdbp = RT_WDB_NULL;
 	gedp->dbip = NULL;
+	if (gedp->dbi_state)
+	    delete gedp->dbi_state;
 
 	/* Terminate any ged subprocesses */
 	if (gedp != GED_NULL) {
@@ -113,6 +115,14 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	/* New database open, need to initialize reference counts */
 	db_update_nref(gedp->dbip, &rt_uniresource);
 
+	gedp->dbi_state = new DbiState(gedp->dbip);
+	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	if (views) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+		struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+		gedp->dbi_state->view_states[v] = new BViewState(gedp->dbi_state);
+	    }
+	}
 
 	// Test LoD context creation
 	if (gedp->ged_lod)
@@ -126,7 +136,7 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_ERROR;
 }
 
-
+extern "C" {
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 struct ged_cmd_impl reopen_cmd_impl = {"reopen", ged_reopen_core, GED_CMD_DEFAULT};
@@ -145,13 +155,15 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     return &pinfo;
 }
 #endif /* GED_PLUGIN */
+}
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

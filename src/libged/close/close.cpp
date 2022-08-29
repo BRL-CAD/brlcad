@@ -1,4 +1,4 @@
-/*                       C L O S E . C
+/*                     C L O S E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2022 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/close.c
+/** @file libged/close.cpp
  *
  * The close command.
  *
@@ -32,11 +32,9 @@
 #include "../ged_private.h"
 
 
-int
+extern "C" int
 ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 {
-    char *av[2];
-
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
     /* set result while we still have the info */
@@ -44,6 +42,7 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 
     rt_new_material_head(MATER_NULL);
 
+    const char *av[2];
     av[0] = "zap";
     av[1] = (char *)0;
     ged_exec(gedp, 1, (const char **)av);
@@ -56,6 +55,8 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     }
     gedp->ged_wdbp = RT_WDB_NULL;
     gedp->dbip = NULL;
+    if (gedp->dbi_state)
+	delete gedp->dbi_state;
 
     /* Terminate any ged subprocesses */
     if (gedp != GED_NULL) {
@@ -74,7 +75,7 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     return BRLCAD_OK;
 }
 
-
+extern "C" {
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 
@@ -90,13 +91,14 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     return &pinfo;
 }
 #endif /* GED_PLUGIN */
+}
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+
