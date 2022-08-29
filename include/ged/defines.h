@@ -185,11 +185,72 @@ struct ged_drawable {
 // to handle ON_Brep
 #include <unordered_map>
 #include <unordered_set>
+
+class DbiState;
+
+class BViewState {
+    public:
+	BViewState(DbiState *);
+
+	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
+
+	void redraw();
+
+	// Sets defining all drawn solid paths (including invalid paths).  The
+	// s_keys holds the ordered individual keys of each drawn solid path - it
+	// is the latter that allows for the collapse operation to populate
+	// drawn_paths.  s_map uses the same key as s_keys to map instances to
+	// actual scene objects.
+	std::unordered_map<unsigned long long, struct bv_scene_obj *> s_map;
+	std::unordered_map<unsigned long long, std::vector<unsigned long long>> s_keys;
+
+	// Set of hashes of all drawn paths and subpaths, constructed during the collapse
+	// operation from the set of drawn solid paths.  This allows calling codes to
+	// spot check any path to see if it is active, without having to interrogate
+	// other data structures or walk down the tree.
+	std::unordered_set<unsigned long long> drawn_paths;
+
+
+	// Called when the parent Db context is getting ready to update the data
+	// structures - we may need to redraw, so we save any necessary information
+	// ahead of the changes.  Although this is a public function of the BViewState,
+	// it is practically speaking an implementation detail
+	void cache_collapsed();
+
+    private:
+	DbiState *dbis;
+
+	int check_status(std::unordered_set<unsigned long long> *invalid_objects, std::vector<unsigned long long> &cpath);
+
+	void collapse(std::vector<std::vector<unsigned long long>> &collapsed);
+
+
+	std::unordered_set<unsigned long long> all_fully_drawn;
+
+	// The collapsed drawn paths from the previous db state
+	std::vector<std::vector<unsigned long long>> prev_collapsed;
+
+	std::vector<unsigned long long> active_paths;
+};
+
 class DbiState {
     public:
 	DbiState(struct db_i *);
 
+	void update();
+
 	unsigned long long update_dp(struct directory *dp, int reset);
+
+	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
+
+	bool path_color(struct bu_color *c, std::vector<unsigned long long> &elements);
+
+	bool get_matrix(matp_t m, unsigned long long p_key, unsigned long long i_key);
+
+	bool get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned long long hash);
+
+	bool get_path_bbox(point_t *bbmin, point_t *bbmax, std::vector<unsigned long long> &elements);
+
 
 	// These maps are the ".g ground truth" of the comb structures - the set
 	// associated with each has contains all the child hashes from the comb
@@ -244,20 +305,35 @@ class DbiState {
 	// Data to be used by callbacks
 	std::unordered_set<struct directory *> added;
 	std::unordered_set<struct directory *> changed;
+	std::unordered_set<unsigned long long> changed_hashes;
 	std::unordered_set<unsigned long long> removed;
 	std::unordered_map<unsigned long long, std::string> old_names;
 
+	// For associated views (if any), we track their drawn states and update
+	// in response to database changes (as well as draw/erase commands).
+	std::unordered_map<struct bview *, BViewState *> view_states;
+
 	// Database Instance associated with this container
 	struct db_i *dbip;
+
+	bool need_update_nref = true;
+
+    private:
+	unsigned int color_int(struct bu_color *);
+	int int_color(struct bu_color *c, unsigned int);
 };
+
+
 #else
-  /**
-   * @brief Placeholder for dbi_state to allow ged.h to compile when we're
-   * compiling with a C compiler
-   */
-  typedef struct _dbi_state {
-      int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
-  } DbiState;
+
+/* Placeholders to allow ged.h to compile when we're compiling with a C compiler */
+typedef struct _dbi_state {
+    int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
+} DbiState;
+typedef struct _bview_state {
+    int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
+} BViewState;
+
 #endif
 
 __BEGIN_DECLS
