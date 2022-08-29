@@ -141,6 +141,18 @@ extern RT_EXPORT int db_rm_changed_clbk(struct db_i *dbip, dbi_changed_t c, void
 extern RT_EXPORT int db_add_update_nref_clbk(struct db_i *dbip, dbi_update_nref_t c, void *u_data);
 extern RT_EXPORT int db_rm_update_nref_clbk(struct db_i *dbip, dbi_update_nref_t c, void *u_data);
 
+
+/* Experimental */
+struct dbi_state_impl;
+struct dbi_state {
+    struct dbi_state_impl *i;
+};
+extern RT_EXPORT struct dbi_state *
+dbi_state_create(struct db_i *dbip);
+
+extern RT_EXPORT void
+dbi_state_destroy(struct dbi_state *dbis);
+
 __END_DECLS
 
 #endif /* RT_DB_INSTANCE_H */

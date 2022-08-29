@@ -1194,7 +1194,7 @@ collapse(
 	std::vector<std::vector<unsigned long long>> &collapsed,
 	std::unordered_set<unsigned long long> *all_fully_drawn,
 	std::vector<unsigned long long> &active_paths,
-	std::unordered_map<unsigned long long, std::vector<unsigned long long>> input_map,
+	std::unordered_map<unsigned long long, std::vector<unsigned long long>> &input_map,
 	struct draw_ctx *ctx)
 {
     std::unordered_set<unsigned long long>::iterator s_it;
