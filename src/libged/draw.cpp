@@ -53,7 +53,7 @@ static int
 prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
-    struct db_full_path *fp = &d->fp;
+    struct db_full_path *fp = (struct db_full_path *)s->s_path;
     const struct bn_tol *tol = d->tol;
     const struct bg_tess_tol *ttol = d->ttol;
     struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
@@ -132,8 +132,8 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
     }
 
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+    struct db_full_path *fp = (struct db_full_path *)s->s_path;
     struct db_i *dbip = d->dbip;
-    struct db_full_path *fp = &d->fp;
     struct rt_db_internal dbintern;
     RT_DB_INTERNAL_INIT(&dbintern);
     struct rt_db_internal *ip = &dbintern;
@@ -157,11 +157,16 @@ draw_free_data(struct bv_scene_obj *s)
     if (!s)
 	return;
 
+    if (s->s_path) {
+	struct db_full_path *sfp = (struct db_full_path *)s->s_path;
+	db_free_full_path(sfp);
+	BU_PUT(sfp, struct db_full_path);
+    }
+
     /* free drawing info */
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     if (!d)
 	return;
-    db_free_full_path(&d->fp);
     BU_PUT(d, struct draw_update_data_t);
     s->s_i_data = NULL;
 }
@@ -197,6 +202,7 @@ bot_mesh_info_clbk(struct bv_mesh_lod *lod, void *cb_data)
 
     lod->faces = bot->faces;
     lod->fcnt = bot->num_faces;
+    lod->pcnt = bot->num_vertices;
     lod->points = (const point_t *)bot->vertices;
     lod->points_orig = (const point_t *)bot->vertices;
 
@@ -216,6 +222,7 @@ bot_mesh_info_clear_clbk(struct bv_mesh_lod *lod, void *cb_data)
 
     lod->faces = NULL;
     lod->fcnt = 0;
+    lod->pcnt = 0;
     lod->points = NULL;
     lod->points_orig = NULL;
 
@@ -241,7 +248,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     if (!d)
 	return;
     struct db_i *dbip = d->dbip;
-    struct db_full_path *fp = &d->fp;
+    struct db_full_path *fp = (struct db_full_path *)s->s_path;
     struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
 
     // We need the key to look up the LoD data from the cache, and if we don't
@@ -314,11 +321,15 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     vo->draw_data = (void *)lod;
     lod->s = vo;
 
-    // The object bounds are based on the LoD's calculations
-    VMOVE(vo->bmin, lod->bmin);
-    VMOVE(vo->bmax, lod->bmax);
-    VMOVE(s->bmin, lod->bmin);
-    VMOVE(s->bmax, lod->bmax);
+    // The object bounds are based on the LoD's calculations.  Because the LoD
+    // cache stores only one cached data set per object, but full path
+    // instances in the scene can be placed with matrices, we must apply the
+    // s_mat transformation to the "baseline" LoD bbox info to get the correct
+    // box for the instance.
+    MAT4X3PNT(vo->bmin, s->s_mat, lod->bmin);
+    MAT4X3PNT(vo->bmax, s->s_mat, lod->bmax);
+    VMOVE(s->bmin, vo->bmin);
+    VMOVE(s->bmax, vo->bmax);
 
     // Record the necessary information for full detail information recovery.  We
     // don't duplicate the full mesh detail in the on-disk LoD storage, since we
@@ -350,6 +361,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 
     // Make the names unique
     bu_vls_sprintf(&vo->s_name, "%s", bu_vls_cstr(&s->s_name));
+    vo->s_path = NULL;  // I don't think the vo objects will need the db_fullpath...
     bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
 
     return;
@@ -382,8 +394,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	// Make a copy of the draw info for vo.
 	struct draw_update_data_t *ld;
 	BU_GET(ld, struct draw_update_data_t);
-	db_full_path_init(&ld->fp);
-	db_dup_full_path(&ld->fp, &d->fp);
+	ld->fp = (struct db_full_path *)s->s_path;
 	ld->dbip = d->dbip;
 	ld->tol = d->tol;
 	ld->ttol = d->ttol;
@@ -400,6 +411,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 
 	// Make the names unique
 	bu_vls_sprintf(&vo->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_name));
+	vo->s_path = NULL;  // I don't think the vo objects will need the db_fullpath...
 	bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
 
 	return;
@@ -452,7 +464,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 
     /* Mode 3 generates an evaluated wireframe rather than drawing
      * the individual solid wireframes */
-    if (s->s_os.s_dmode == 3) {
+    if (s->s_os->s_dmode == 3) {
 	draw_m3(s);
 	bv_scene_obj_bound(s, v);
 	s->current = 1;
@@ -460,7 +472,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     }
 
     /* Mode 5 draws a point cloud in lieu of wireframes */
-    if (s->s_os.s_dmode == 5) {
+    if (s->s_os->s_dmode == 5) {
 	draw_points(s);
 	bv_scene_obj_bound(s, v);
 	s->current = 1;
@@ -473,7 +485,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
      * special handling of difficult drawing cases.  Look for those as well.
      **************************************************************************/
     struct db_i *dbip = d->dbip;
-    struct db_full_path *fp = &d->fp;
+    struct db_full_path *fp = (struct db_full_path *)s->s_path;
     struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
 
     // Adaptive BoTs have specialized LoD routines to help cope with very large
@@ -512,7 +524,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 
     // For anything other than mode 0, we call specific routines for
     // some of the primitives.
-    if (s->s_os.s_dmode > 0) {
+    if (s->s_os->s_dmode > 0) {
 	switch (ip->idb_minor_type) {
 	    case DB5_MINORTYPE_BRLCAD_BOT:
 		(void)rt_bot_plot_poly(&s->s_vlist, ip, ttol, tol);
@@ -532,20 +544,20 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     }
 
     // Now the more general cases
-    switch (s->s_os.s_dmode) {
+    switch (s->s_os->s_dmode) {
 	case 0:
 	case 1:
 	    // Get wireframe (for mode 1, all the non-wireframes are handled
 	    // by the above BOT/POLY/BREP cases
 	    wireframe_plot(s, v, ip);
-	    s->s_os.s_dmode = 0;
+	    s->s_os->s_dmode = 0;
 	    break;
 	case 2:
 	    // Shade everything except pipe, don't evaluate, fall
 	    // back to wireframe in case of failure
 	    if (prim_tess(s, ip) < 0) {
 		wireframe_plot(s, v, ip);
-		s->s_os.s_dmode = 0;
+		s->s_os->s_dmode = 0;
 	    }
 	    break;
 	case 3:
@@ -558,7 +570,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 	    // un-hidden wireframe in case of failure
 	    if (prim_tess(s, ip) < 0) {
 		wireframe_plot(s, v, ip);
-		s->s_os.s_dmode = 0;
+		s->s_os->s_dmode = 0;
 	    }
 	    break;
 	case 5:
@@ -594,7 +606,7 @@ tree_color(struct directory *dp, struct draw_data_t *dd)
     struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
 
     // Easy answer - if we're overridden, dd color is already set.
-    if (dd->g->s_os.color_override)
+    if (dd->g->s_os->color_override)
 	return;
 
     // Not overridden by settings.  Next question - are we under an inherit?
@@ -775,6 +787,14 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
     dp = DB_FULL_PATH_CUR_DIR(path);
     if (!dp)
 	return;
+
+    // If we're skipping subtractions and we have a subtraction op there's no
+    // point in going further.
+    if (dd->g->s_os->draw_non_subtract_only && dd->bool_op == 4) {
+	return;
+    }
+
+
     if (dp->d_flags & RT_DIR_COMB) {
 
 	struct rt_db_internal in;
@@ -794,12 +814,6 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 
     } else {
 
-	// If we're skipping subtractions there's no
-	// point in going further.
-	if (dd->g->s_os.draw_non_subtract_only && dd->bool_op == 4) {
-	    return;
-	}
-
 	// If we've got a solid, things get interesting.  There are a lot of
 	// potentially relevant options to sort through.  It may be that most
 	// will end up getting handled by the object update callbacks, and the
@@ -807,12 +821,16 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 
 	struct bv_scene_obj *s = bv_obj_get_child(dd->g);
 	db_path_to_vls(&s->s_name, path);
+	BU_GET(s->s_path, struct db_full_path);
+	db_full_path_init((struct db_full_path *)s->s_path);
+	db_dup_full_path((struct db_full_path *)s->s_path, path);
+
 	MAT_COPY(s->s_mat, *curr_mat);
-	bv_obj_settings_sync(&s->s_os, &dd->g->s_os);
+	bv_obj_settings_sync(s->s_os, dd->g->s_os);
 	s->s_type_flags = BV_DBOBJ_BASED;
 	s->current = 0;
 	s->s_changed++;
-	if (!s->s_os.draw_solid_lines_only) {
+	if (!s->s_os->draw_solid_lines_only) {
 	    s->s_soldash = (dd->bool_op == 4) ? 1 : 0;
 	}
 	bu_color_to_rgb_chars(&dd->c, s->s_color);
@@ -824,14 +842,14 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// Stash the information needed for a draw update callback
 	struct draw_update_data_t *ud;
 	BU_GET(ud, struct draw_update_data_t);
-	db_full_path_init(&ud->fp);
-	db_dup_full_path(&ud->fp, path);
+	ud->fp = (struct db_full_path *)s->s_path;
 	ud->dbip = dd->dbip;
 	ud->tol = dd->tol;
 	ud->ttol = dd->ttol;
 	ud->mesh_c = dd->mesh_c;
 	ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view.  dd->res is temporary, so we don't use it here
 	s->s_i_data = (void *)ud;
+	s->s_free_callback = &draw_free_data;
 
 	// Let the object know about its size
 	if (dd->s_size && dd->s_size->find(DB_FULL_PATH_CUR_DIR(path)) != dd->s_size->end()) {

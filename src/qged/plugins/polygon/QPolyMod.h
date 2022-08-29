@@ -28,6 +28,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include "qtcad/QColorRGB.h"
+#include "qtcad/SignalFlags.h"
 #include "QPolySettings.h"
 
 class QPolyMod : public QWidget
@@ -66,8 +67,7 @@ class QPolyMod : public QWidget
 	QPushButton *remove_poly;
 
     signals:
-	void view_updated(struct bview **);
-	void db_updated();
+	void view_updated(unsigned long long);
 
     public slots:
 	void app_mod_names_reset(void *);

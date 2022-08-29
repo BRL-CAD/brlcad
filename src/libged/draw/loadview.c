@@ -90,15 +90,21 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
     int ret;
     int failed = 0;
     FILE *fp;
-    char buffer[512] = {0};
+
+#define BUFFER_SIZE 511
+    char buffer[BUFFER_SIZE+1] = {0};
 
     /* data pulled from script file */
     int perspective=-1;
-#define MAX_DBNAME 2048
-    char name[MAX_DBNAME] = {0};
+
+#define DBNAME_SIZE 2047
+    char name[DBNAME_SIZE+1] = {0};
     char *dbName = name;
-    char objects[10000] = {0};
+
+#define OBJECTS_SIZE 9999
+    char objects[OBJECTS_SIZE+1] = {0};
     char *editArgv[3];
+
     static const char *usage = "filename";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -137,8 +143,8 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
     /* iterate over the contents of the raytrace script */
     /* TODO: change to bu_fgets or bu_vls_fgets */
     while (!feof(fp)) {
-	memset(buffer, 0, 512);
-	ret = fscanf(fp, "%512s", buffer);
+	memset(buffer, 0, sizeof(buffer));
+	ret = fscanf(fp, "%" CPP_XSTR(BUFFER_SIZE) "s", buffer);
 	if (ret != 1) {
 	    bu_log("Failed to read buffer\n");
 	    failed++;
@@ -163,7 +169,7 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 	    /* the next read is the file name, the objects come
 	     * after that
 	     */
-	    ret = fscanf(fp, "%2048s", dbName); /* MAX_DBNAME */
+	    ret = fscanf(fp, "%" CPP_XSTR(DBNAME_SIZE) "s", dbName);
 	    if (ret != 1) {
 		bu_log("Failed to read database name\n");
 		failed++;
@@ -201,7 +207,7 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 	    (void)ged_exec(gedp, 1, &Z_cmd);
 
 	    /* now get the objects listed */
-	    ret = fscanf(fp, "%10000s", objects);
+	    ret = fscanf(fp, "%" CPP_XSTR(OBJECTS_SIZE) "s", objects);
 	    if (ret != 1) {
 		bu_log("Failed to read object names\n");
 		failed++;
@@ -214,7 +220,7 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 		if (bu_strncmp(objects, "'", 1) == 0) {
 		    objects[0]=' ';
 		    memset(objects+strlen(objects)-1, ' ', 1);
-		    sscanf(objects, "%10000s", objects);
+		    sscanf(objects, "%" CPP_XSTR(OBJECTS_SIZE) "s", objects);
 		}
 
 		editArgv[0] = "draw";
@@ -225,7 +231,7 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 		}
 
 		/* bu_log("objects=%s\n", objects);*/
-		ret = fscanf(fp, "%10000s", objects);
+		ret = fscanf(fp, "%" CPP_XSTR(OBJECTS_SIZE) "s", objects);
 		if (ret != 1) {
 		    bu_log("Failed to read object names\n");
 		    failed++;

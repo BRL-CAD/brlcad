@@ -163,6 +163,54 @@ obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct 
     }
 }
 
+// Debugging function to see constructed arb
+void
+obb_arb(vect_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3)
+{
+    // For debugging purposes, construct an arb
+    point_t arb[8];
+    // 1 - c - e1 - e2 - e3
+    VSUB2(arb[0], obb_center, obb_extent1);
+    VSUB2(arb[0], arb[0], obb_extent2);
+    VSUB2(arb[0], arb[0], obb_extent3);
+    // 2 - c - e1 - e2 + e3
+    VSUB2(arb[1], obb_center, obb_extent1);
+    VSUB2(arb[1], arb[1], obb_extent2);
+    VADD2(arb[1], arb[1], obb_extent3);
+    // 3 - c - e1 + e2 + e3
+    VSUB2(arb[2], obb_center, obb_extent1);
+    VADD2(arb[2], arb[2], obb_extent2);
+    VADD2(arb[2], arb[2], obb_extent3);
+    // 4 - c - e1 + e2 - e3
+    VSUB2(arb[3], obb_center, obb_extent1);
+    VADD2(arb[3], arb[3], obb_extent2);
+    VSUB2(arb[3], arb[3], obb_extent3);
+    // 1 - c + e1 - e2 - e3
+    VADD2(arb[4], obb_center, obb_extent1);
+    VSUB2(arb[4], arb[4], obb_extent2);
+    VSUB2(arb[4], arb[4], obb_extent3);
+    // 2 - c + e1 - e2 + e3
+    VADD2(arb[5], obb_center, obb_extent1);
+    VSUB2(arb[5], arb[5], obb_extent2);
+    VADD2(arb[5], arb[5], obb_extent3);
+    // 3 - c + e1 + e2 + e3
+    VADD2(arb[6], obb_center, obb_extent1);
+    VADD2(arb[6], arb[6], obb_extent2);
+    VADD2(arb[6], arb[6], obb_extent3);
+    // 4 - c + e1 + e2 - e3
+    VADD2(arb[7], obb_center, obb_extent1);
+    VADD2(arb[7], arb[7], obb_extent2);
+    VSUB2(arb[7], arb[7], obb_extent3);
+
+    bu_log("center: %f %f %f\n", V3ARGS(obb_center));
+    bu_log("e1: %f %f %f\n", V3ARGS(obb_extent1));
+    bu_log("e2: %f %f %f\n", V3ARGS(obb_extent2));
+    bu_log("e3: %f %f %f\n", V3ARGS(obb_extent3));
+
+    bu_log("in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+	    V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb  [6]), V3ARGS(arb[7]));
+}
+
 static void
 view_obb(struct bview *v,
        	point_t sbbc, fastf_t radius,
@@ -187,48 +235,7 @@ view_obb(struct bview *v,
     VSUB2(v->obb_extent3, ep2, ec);
 
 #if 0
-    // For debugging purposes, construct an arb
-    point_t arb[8];
-    // 1 - c - e1 - e2 - e3
-    VSUB2(arb[0], v->obb_center, v->obb_extent1);
-    VSUB2(arb[0], arb[0], v->obb_extent2);
-    VSUB2(arb[0], arb[0], v->obb_extent3);
-    // 2 - c - e1 - e2 + e3
-    VSUB2(arb[1], v->obb_center, v->obb_extent1);
-    VSUB2(arb[1], arb[1], v->obb_extent2);
-    VADD2(arb[1], arb[1], v->obb_extent3);
-    // 3 - c - e1 + e2 + e3
-    VSUB2(arb[2], v->obb_center, v->obb_extent1);
-    VADD2(arb[2], arb[2], v->obb_extent2);
-    VADD2(arb[2], arb[2], v->obb_extent3);
-    // 4 - c - e1 + e2 - e3
-    VSUB2(arb[3], v->obb_center, v->obb_extent1);
-    VADD2(arb[3], arb[3], v->obb_extent2);
-    VSUB2(arb[3], arb[3], v->obb_extent3);
-    // 1 - c + e1 - e2 - e3
-    VADD2(arb[4], v->obb_center, v->obb_extent1);
-    VSUB2(arb[4], arb[4], v->obb_extent2);
-    VSUB2(arb[4], arb[4], v->obb_extent3);
-    // 2 - c + e1 - e2 + e3
-    VADD2(arb[5], v->obb_center, v->obb_extent1);
-    VSUB2(arb[5], arb[5], v->obb_extent2);
-    VADD2(arb[5], arb[5], v->obb_extent3);
-    // 3 - c + e1 + e2 + e3
-    VADD2(arb[6], v->obb_center, v->obb_extent1);
-    VADD2(arb[6], arb[6], v->obb_extent2);
-    VADD2(arb[6], arb[6], v->obb_extent3);
-    // 4 - c + e1 + e2 - e3
-    VADD2(arb[7], v->obb_center, v->obb_extent1);
-    VADD2(arb[7], arb[7], v->obb_extent2);
-    VSUB2(arb[7], arb[7], v->obb_extent3);
-
-    bu_log("center: %f %f %f\n", V3ARGS(v->obb_center));
-    bu_log("e1: %f %f %f\n", V3ARGS(v->obb_extent1));
-    bu_log("e2: %f %f %f\n", V3ARGS(v->obb_extent2));
-    bu_log("e3: %f %f %f\n", V3ARGS(v->obb_extent3));
-
-    bu_log("in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
-	    V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb  [6]), V3ARGS(arb[7]));
+    obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3);
 #endif
 }
 
@@ -413,6 +420,95 @@ bg_view_objs_select(struct bv_scene_obj ***sset, struct bview *v, int x, int y)
     VSUB2(obb_e2, ep1, ec);
     VSUB2(obb_e3, ep2, ec);
 
+    // Having constructed the box, test the scene objects against it.  Any that intersect,
+    // add them to the set
+    std::set<struct bv_scene_obj *> active;
+    struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	_find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
+    }
+    if (active.size()) {
+	std::set<struct bv_scene_obj *>::iterator a_it;
+	(*sset) = (struct bv_scene_obj **)bu_calloc(active.size(), sizeof(struct bv_scene_obj *), "objs");
+	int i = 0;
+	for (a_it = active.begin(); a_it != active.end(); a_it++) {
+	    (*sset)[i] = *a_it;
+	    i++;
+	}
+    }
+
+    return active.size();
+}
+
+int
+bg_view_objs_rect_select(struct bv_scene_obj ***sset, struct bview *v, int x1, int y1, int x2, int y2)
+{
+    if (!v || !sset || !v->gv_width || !v->gv_height)
+	return 0;
+
+    if (x1 < 0 || y1 < 0 || x1 > v->gv_width || y1 > v->gv_height)
+	return 0;
+
+    if (x2 < 0 || y2 < 0 || x2 > v->gv_width || y2 > v->gv_height)
+	return 0;
+
+    // Get the radius of the scene.
+    point_t sbbc = VINIT_ZERO;
+    fastf_t radius = 1.0;
+    _scene_radius(&sbbc, &radius, v);
+
+    // Using the pixel width and height of the current "window", construct some
+    // view space dimensions related to that window
+    fastf_t fx1 = 0.0, fy1 = 0.0, fx2 = 0.0, fy2 = 0.0, fxc = 0.0, fyc = 0.0;
+    bv_screen_to_view(v, &fx1, &fy1, (int)(0.5*(x1+x2)), y2);
+    bv_screen_to_view(v, &fx2, &fy2, x2, (int)(0.5*(y1+y2)));
+    bv_screen_to_view(v, &fxc, &fyc, (int)(0.5*(x1+x2)), (int)(0.5*(y1+y2)));
+
+    // Get the model space points for the mid points of the top and right edges
+    // of the box.
+    point_t vp1, vp2, vc, ep1, ep2, ec;
+    VSET(vp1, fx1, fy1, 0);
+    VSET(vp2, fx2, fy2, 0);
+    VSET(vc, fxc, fyc, 0);
+    MAT4X3PNT(ep1, v->gv_view2model, vp1);
+    MAT4X3PNT(ep2, v->gv_view2model, vp2);
+    MAT4X3PNT(ec, v->gv_view2model, vc);
+    //bu_log("in sph1.s sph %f %f %f 1\n", V3ARGS(ep1));
+    //bu_log("in sph2.s sph %f %f %f 2\n", V3ARGS(ep2));
+    //bu_log("in sphc.s sph %f %f %f 3\n", V3ARGS(ec));
+
+    // Need the direction vector - i.e., where the camera is looking.  Got this
+    // trick from the libged nirt code...
+    vect_t dir;
+    VMOVEN(dir, v->gv_rotation + 8, 3);
+    VUNITIZE(dir);
+    VSCALE(dir, dir, -1.0);
+
+
+    // Construct the box values needed for the SAT test
+    point_t obb_c, obb_e1, obb_e2, obb_e3;
+
+    // Box center is the closest point to the view center on the plane defined
+    // by the scene's center and the view dir
+    plane_t p;
+    bg_plane_pt_nrml(&p, sbbc, dir);
+    fastf_t pu, pv;
+    bg_plane_closest_pt(&pu, &pv, p, ec);
+    bg_plane_pt_at(&obb_c, p, pu, pv);
+
+
+    // The first extent is just the scene radius in the lookat direction
+    VSCALE(dir, dir, radius);
+    VMOVE(obb_e1, dir);
+
+    // The other two extents we find by subtracting the view center from the edge points
+    VSUB2(obb_e2, ep1, ec);
+    VSUB2(obb_e3, ep2, ec);
+
+#if 0
+    obb_arb(obb_c, obb_e1, obb_e2, obb_e3);
+#endif
 
     // Having constructed the box, test the scene objects against it.  Any that intersect,
     // add them to the set
@@ -864,11 +960,20 @@ POPState::tri_process()
     for (size_t i = 0; i < faces_cnt; i++) {
 	rec triangle[3];
 	// Transform triangle vertices
+	bool bad_face = false;
 	for (size_t j = 0; j < 3; j++) {
-	    triangle[j].x = floor((verts_array[faces_array[3*i+j]][X] - minx) / (maxx - minx) * USHRT_MAX);
-	    triangle[j].y = floor((verts_array[faces_array[3*i+j]][Y] - miny) / (maxy - miny) * USHRT_MAX);
-	    triangle[j].z = floor((verts_array[faces_array[3*i+j]][Z] - minz) / (maxz - minz) * USHRT_MAX);
+	    int f_ind = faces_array[3*i+j];
+	    if ((size_t)f_ind >= vert_cnt || f_ind < 0) {
+		bu_log("bad face %zd - skipping\n", i);
+		bad_face = true;
+		break;
+	    }
+	    triangle[j].x = floor((verts_array[f_ind][X] - minx) / (maxx - minx) * USHRT_MAX);
+	    triangle[j].y = floor((verts_array[f_ind][Y] - miny) / (maxy - miny) * USHRT_MAX);
+	    triangle[j].z = floor((verts_array[f_ind][Z] - minz) / (maxz - minz) * USHRT_MAX);
 	}
+	if (bad_face)
+	    continue;
 
 	// Find the pop up level for this triangle (i.e., when it will first
 	// appear as we step up the zoom levels.)
@@ -1768,7 +1873,9 @@ bg_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
 	l->fcnt = (int)sp->lod_tris.size()/3;
 	l->faces = sp->lod_tris.data();
 	l->points_orig = (const point_t *)sp->lod_tri_pnts.data();
+	l->porig_cnt = (int)sp->lod_tri_pnts.size();
 	l->points = (const point_t *)sp->lod_tri_pnts_snapped.data();
+	l->pcnt = (int)sp->lod_tri_pnts_snapped.size();
     }
     // TODO...
     l->face_normals = NULL;

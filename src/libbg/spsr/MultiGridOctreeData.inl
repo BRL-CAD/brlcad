@@ -1737,7 +1737,7 @@ int Octree< Real >::_SolveSystemGS( PointInfo& pointInfo , int depth , const typ
 		for( int i=_sNodes.nodeCount[depth] ; i<_sNodes.nodeCount[depth+1] ; i++ ) constraints[i] -= metConstraints[i];
 	// Initialize with the previously computed solution
 	for( int i=_sNodes.nodeCount[depth] ; i<_sNodes.nodeCount[depth+1] ; i++ ) X[ i-_sNodes.nodeCount[depth] ] = solution[i];
-	double bNorm=0 , inRNorm=0 , outRNorm=0;
+	double bNorm=0.0 , inRNorm=0.0, outRNorm=0.0;
 	if( depth>=_minDepth )
 	{
 		int frontOffset = ( showResidual || inRNorm2 ) ? 2 : 0;
@@ -1880,7 +1880,7 @@ int Octree< Real >::_SolveSystemCG( PointInfo& pointInfo , int depth , const typ
 	MapReduceVector< Real > mrVector;
 	mrVector.resize( threads , M.rows );
 	bool addDCTerm = (M.rows==res*res*res && !_constrainValues && _boundaryType!=-1);
-	double bNorm , inRNorm , outRNorm;
+	double bNorm=0.0, inRNorm=0.0, outRNorm=0.0;
 	if( showResidual || bNorm2 ) bNorm = B.Norm( 2 );
 	if( showResidual || inRNorm2 ) inRNorm = ( addDCTerm ? ( B - M * X - X.Average() ) : ( B - M * X ) ).Norm( 2 );
 

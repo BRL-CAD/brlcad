@@ -122,7 +122,7 @@ readBatchInput(FILE *fp)
     batchmode = 1;
     while (getCommand(cmdname, cmdbuf, LNBUFSZ, fp)) {
 	Func *cmdfunc;
-	if ((cmdfunc = getTrie(cmdname, cmdtrie)) == NULL) {
+	if ((cmdfunc = getTrie(cmdname, LNBUFSZ, cmdtrie)) == NULL) {
 	    size_t i;
 	    size_t len = strlen(cmdname);
 	    brst_log("ERROR -- command syntax:\n");

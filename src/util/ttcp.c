@@ -19,18 +19,28 @@
  * Mike Muuss and Terry Slattery have released this code to the Public Domain.
  */
 
-#ifndef _POSIX_SOURCE
-#  define _POSIX_SOURCE 1
+/* intentionally does not include common.h or bio.h so it may remain
+ * stand-alone.  however, it does include config so it knows when to
+ * declare functions
+ */
+#include "brlcad_config.h"
+
+#ifndef _POSIX_C_SOURCE
+#  define _POSIX_C_SOURCE 1
 #endif
 #ifndef _DEFAULT_SOURCE
-#  define  _DEFAULT_SOURCE 1
+#  define _DEFAULT_SOURCE 1
+#endif
+#ifndef _XOPEN_SOURCE
+#  define  _XOPEN_SOURCE 1
+#endif
+#ifndef _BSD_SOURCE
+#  define  _BSD_SOURCE 1
 #endif
 #define BSD43
 #define SYSV
 /* #define BSD42 */
 /* #define BSD41a */
-
-/* does not include common.h or bio.h so it may remain stand-alone */
 
 #ifndef _WIN32
 #  include <unistd.h>
@@ -77,6 +87,10 @@
 #  undef DEFINED_USE_GNU
 #endif
 
+#endif
+
+#if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
+extern struct hostent *gethostbyname(const char *);
 #endif
 
 

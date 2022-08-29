@@ -382,11 +382,11 @@ QtCADQuad::get_selected()
 }
 
 void
-QtCADQuad::need_update(void *)
+QtCADQuad::do_view_update(unsigned long long flags)
 {
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
-	    views[i]->need_update(NULL);
+	    views[i]->need_update(flags);
 	}
     }
 }

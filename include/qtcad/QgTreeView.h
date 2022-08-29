@@ -36,7 +36,7 @@
 #include <QTreeView>
 
 #include "qtcad/defines.h"
-#include "qtcad/QgSelectionProxyModel.h"
+#include "qtcad/QgModel.h"
 
 
 class QTCAD_EXPORT QgTreeView : public QTreeView
@@ -44,16 +44,20 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
     Q_OBJECT
 
     public:
-	QgTreeView(QWidget *pparent, QgSelectionProxyModel *treemodel);
+	QgTreeView(QWidget *pparent, QgModel *treemodel);
 	~QgTreeView() {};
 
 	QModelIndex selected();
 
 	void drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const override;
-	QgSelectionProxyModel *m = NULL;
+	QgModel *m = NULL;
 
     protected:
 	void resizeEvent(QResizeEvent *pevent) override;
+	void mousePressEvent(QMouseEvent *e) override;
+
+    signals:
+	void view_changed(unsigned long long);
 
     public slots:
 	void tree_column_size(const QModelIndex &index);
@@ -64,6 +68,8 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
 	void redo_highlights();
 	void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected) override;
 	void do_draw_toggle(const QModelIndex &index);
+	void qgitem_select_sync(QgItem *);
+	void do_view_update(unsigned long long);
 
     private:
 	void header_state();

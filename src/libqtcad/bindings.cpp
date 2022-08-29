@@ -261,6 +261,9 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e, i
     }
 
 #ifdef USE_QT6
+    if (!e->buttons().testFlag(Qt::LeftButton))
+	return 0;
+
     int dx = e->position().x() - x_prev;
     int dy = e->position().y() - y_prev;
 #else

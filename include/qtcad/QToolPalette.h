@@ -19,7 +19,18 @@
  */
 /** @file QToolPalette.h
  *
- * Brief description
+ * Signals/slots in Palettes and Elements
+ *
+ * In order to keep the scope of the various plugins local, we define
+ * a tiered system of signals and slots which are connected to by
+ * various aspects of this system:
+ *
+ * The QToolPalette widget is what is directly added to application
+ * widget hierarchies, and it is that widget's signals and slots which
+ * are connected to the top level view updating signal/slot system as
+ * articulated in SignalFlags.h.  Individual elements (i.e.tools) are
+ * connected to QToolPalette, and the implementation specific "guts"
+ * of the various tools connect to their parent element.
  *
  */
 
@@ -37,6 +48,7 @@
 #include <QSplitter>
 #include "qtcad/defines.h"
 #include "qtcad/QFlowLayout.h"
+#include "qtcad/SignalFlags.h"
 
 class QTCAD_EXPORT QToolPaletteElement;
 
@@ -73,28 +85,25 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	void setControls(QWidget *n_controls);
 
     signals:
-	// PUBLIC:
+	// PUBLIC, for palette:
 	// Signal the application can listen to to see if the Element has
-	// changed anything in the view.  Emitted by signal_view_update slot,
+	// changed anything in the view.  Emitted by element_do_view_update slot,
 	// which is connected to internal widget signals in the controls. This
 	// provide a generic, public "signal interface" for widget internals.
-	void view_changed(struct bview **);
-
-	// Signal the application can listen to to see if the Element has
-	// changed anything in the database.
-	void db_changed();
+	void view_changed(unsigned long long);
 
     public slots:
-	// PUBLIC:
+	// PUBLIC, for palette:
 	// These slots are intended to be connected to parent signals when the
 	// Element is added to a Palette.  They will in turn emit the local
 	// signals below for internal Element use.  These slots are used to
 	// hide any internal signal/slot implementation details from the
 	// application while still allowing changes at the app level to drive
 	// updates in the Element contents.
-	void do_view_sync(struct bview **);
-	void do_db_sync(void *);
-	void do_palette_unhide(void *);
+	void do_view_update(unsigned long long);
+
+
+	void do_element_unhide(void *);
 
      signals:
 	// INTERNAL:
@@ -108,17 +117,13 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	// Note that these signals should NEVER be emitted directly by any of
 	// the Element subcomponents.  Nor should they be connected to by
 	// application code.
-	void app_view_sync(struct bview **);
-	void app_db_sync(void *);
-	void palette_unhide();
+	void element_view_update(unsigned long long);
+
+	void element_unhide();
 
     public slots:
 	// INTERNAL:
-	// The following slots are for connecting to by internal control widget
-	// signals when the widget makes a view change, and handle emission
-	// of the public facing signals.
-	void do_view_changed(struct bview **);
-        void do_db_changed();
+	void element_view_changed(unsigned long long);
 
     public:
 	QToolPaletteButton *button;
@@ -150,12 +155,33 @@ class QTCAD_EXPORT QToolPalette: public QWidget
 	QVBoxLayout *mlayout;
 
    signals:
-	// Emitted when an element is selected.  The app's view needs to have
-	// the correct filter for the current tool (if defined) or at least
-	// remove any old filter from the previous tool.
-	void element_selected(QToolPaletteElement *);
+
+	// PUBLIC, for parent application:
+	// Signal the application can listen to to see if any Element has
+	// changed anything in the view.
+	void view_changed(unsigned long long);
+
+
+	// INTERNAL, for elements:
+	// Emitted when an element is selected.
+	void palette_element_selected(QToolPaletteElement *);
+
+	// INTERNAL, for elements:
+	// Emitted when the palette gets word of an app level view change.
+	// This is used so elements don't have to connect directly to the
+	// parent applications view changed signal (which they can't do without
+	// knowing about the parent applications top level class, or requiring
+	// the application to individually connect directly to each element.)
+	void palette_view_update(unsigned long long);
 
    public slots:
+       // PUBLIC, for parent application:
+       // Trigger any needed updates in any elements in response to an
+       // app level view change. 
+       void do_view_update(unsigned long long);
+
+
+        // INTERNAL
         // TODO - I think we're going to need an activateElement and drawElement
 	// distinction here for editing - we will want the current panel shown
 	// (and highlighted button, if we can figure out how to highlight without
@@ -164,8 +190,9 @@ class QTCAD_EXPORT QToolPalette: public QWidget
 	// we're selecting  instances in the tree, but we don't want to kick in
 	// the event filters and create the edit wireframes until one of the buttons
 	// is actually selected.
-	void displayElement(QToolPaletteElement *);
+	void palette_displayElement(QToolPaletteElement *);
 	void button_layout_resize();
+	void palette_do_view_changed(unsigned long long);
 
     private:
 	int always_selected;

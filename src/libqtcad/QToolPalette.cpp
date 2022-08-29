@@ -91,33 +91,22 @@ QToolPaletteElement::setControls(QWidget *n_control)
 }
 
 void
-QToolPaletteElement::do_view_sync(struct bview **v)
+QToolPaletteElement::element_view_changed(unsigned long long flags)
 {
-    emit app_view_sync(v);
+    emit view_changed(flags);
 }
 
 void
-QToolPaletteElement::do_palette_unhide(void *)
+QToolPaletteElement::do_view_update(unsigned long long flags)
 {
-    emit palette_unhide();
+    // TODO - do any element level updating (button highlighting?)
+    emit element_view_update(flags);
 }
 
 void
-QToolPaletteElement::do_view_changed(struct bview **v)
+QToolPaletteElement::do_element_unhide(void *)
 {
-    emit view_changed(v);
-}
-
-void
-QToolPaletteElement::do_db_changed()
-{
-    emit db_changed();
-}
-
-void
-QToolPaletteElement::do_db_sync(void *d)
-{
-    emit app_db_sync(d);
+    emit element_unhide();
 }
 
 QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
@@ -204,8 +193,21 @@ QToolPalette::setAlwaysSelected(int toggle)
 {
     always_selected = toggle;
     if (always_selected && selected == NULL) {
-	displayElement(*(elements.begin()));
+	palette_displayElement(*(elements.begin()));
     }
+}
+
+void
+QToolPalette::do_view_update(unsigned long long flags)
+{
+    emit palette_view_update(flags);
+}
+
+
+void
+QToolPalette::palette_do_view_changed(unsigned long long flags)
+{
+    emit view_changed(flags);
 }
 
 void
@@ -217,10 +219,16 @@ QToolPalette::addElement(QToolPaletteElement *element)
     element->button->setMaximumHeight(icon_height);
     button_layout->addWidget(element->button);
     elements.insert(element);
-    QObject::connect(element->button, &QToolPaletteButton::element_selected, this, &QToolPalette::displayElement);
+
+    QObject::connect(element->button, &QToolPaletteButton::element_selected, this, &QToolPalette::palette_displayElement);
+
+    QObject::connect(this, &QToolPalette::palette_view_update, element, &QToolPaletteElement::do_view_update);
+    QObject::connect(element, &QToolPaletteElement::view_changed, this, &QToolPalette::palette_do_view_changed);
+
+
     updateGeometry();
     if (!selected && always_selected) {
-	displayElement(element);
+	palette_displayElement(element);
 	selected->button->setStyleSheet("");
     }
 }
@@ -230,7 +238,7 @@ QToolPalette::deleteElement(QToolPaletteElement *element)
 {
     elements.remove(element);
     if (selected == element) {
-	displayElement(*elements.begin());
+	palette_displayElement(*elements.begin());
     }
     button_layout->removeWidget(element->button);
     updateGeometry();
@@ -238,7 +246,7 @@ QToolPalette::deleteElement(QToolPaletteElement *element)
 }
 
 void
-QToolPalette::displayElement(QToolPaletteElement *element)
+QToolPalette::palette_displayElement(QToolPaletteElement *element)
 {
     if (element) {
 	if (element == selected) {
@@ -260,7 +268,7 @@ QToolPalette::displayElement(QToolPaletteElement *element)
 	    control_container->setWidget(element->controls);
 	    element->controls->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	    element->controls->show();
-	    element->do_palette_unhide(NULL);
+	    element->do_element_unhide(NULL);
 	    control_container->verticalScrollBar()->setSliderPosition(element->scroll_pos);
 	    selected = element;
 	    foreach(QToolPaletteElement *el, elements) {
@@ -272,7 +280,7 @@ QToolPalette::displayElement(QToolPaletteElement *element)
 		}
 	    }
 	}
-	emit element_selected(element);
+	emit palette_element_selected(element);
     }
 }
 

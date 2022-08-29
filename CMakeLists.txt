@@ -296,26 +296,6 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}")
 
 std_build_rpath()
 
-
-#---------------------------------------------------------------------
-# We need compiler support for certain C and C++ standards when we
-# build.  Set CMake's flags accordingly for what source code syntax
-# (i.e., -std=xxx flags) and API (i.e., -D_POSIX_C_SOURCE defines) to
-# permit and utilize respectively.  Common profiles:
-#
-#   2011-2016: C11 & C++11 (ignoring C++14, target: 2013)
-#     ISO/IEC 9899:2011 __STDC_VERSION__==201112L
-#     ISO/IEC 14882:2011 __cplusplus==201103L
-#     IEEE 1003.1-2008 -D_POSIX_C_SOURCE=200809L
-#     Open Group Single UNIX Specification, Version 4 (2008+) -D_XOPEN_SOURCE=700
-#   2017-2020: C11 & C++17 (target: 2019)
-#     ISO/IEC 9899:2011 __STDC_VERSION__==201112L
-#     ISO/IEC 14882:2017 __cplusplus==201703L
-#     IEEE 1003.1-2008 -D_POSIX_C_SOURCE=200809L
-#     Open Group Single UNIX Specification, Version 4 (2008+) -D_XOPEN_SOURCE=700
-#
-# Sources: https://sourceforge.net/p/predef/wiki/Standards/
-
 # For certain platforms (in particular Visual C++) we want to keep some pre-defined
 # flags that are commonly used in the build logic.
 if(NOT DEFINED CMAKE_C_FLAGS_DEFAULT)
@@ -327,32 +307,34 @@ if(NOT DEFINED CMAKE_CXX_FLAGS_DEFAULT)
 endif(NOT DEFINED CMAKE_CXX_FLAGS_DEFAULT)
 mark_as_advanced(CMAKE_CXX_FLAGS_DEFAULT)
 
+
 # OpenBSD 6.6 doesn't tolerate these flags when using #include <iostream>,
 # so we have to test
-include(CheckCXXSourceRuns)
-include(CMakePushCheckState)
-function(BRLCAD_API_FLAG AFLAG AFLAGS)
-  set(CHECK_API_FLAG_SRC "
-#include <iostream>
-int main(int ac, char *av[])
-{
-  if (ac > 0 && av)
-    std::cout << \"hello\";
-  return 0;
-}
-")
-    string(TOUPPER "${AFLAG}" UAFLAG)
-    string(REPLACE "-" "_" AFLAGVAR "${UAFLAG}")
-    string(REPLACE "=" "_" AFLAGVAR "${AFLAGVAR}")
-    cmake_push_check_state()
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS} ${AFLAG}")
-    check_cxx_source_runs("${CHECK_API_FLAG_SRC}" WORKING_${AFLAGVAR})
-    cmake_pop_check_state()
-    if(WORKING_${AFLAGVAR})
-      set(${AFLAGS} "${${AFLAGS}} ${AFLAG}" PARENT_SCOPE)
-    endif(WORKING_${AFLAGVAR})
-endfunction(BRLCAD_API_FLAG)
+#---------------------------------------------------------------------
+# We need compiler support for certain C and C++ standards when we
+# build.  Set CMake's flags accordingly for what source code syntax
+# (i.e., -std=xxx flags) and API (i.e., -D_POSIX_C_SOURCE defines) to
+# permit and utilize respectively.  Common profiles:
+#
+#   2011-2016: C11 & C++11 (reliably targets: 2013)
+#     ISO/IEC 9899:2011 __STDC_VERSION__==201112L
+#     ISO/IEC 14882:2011 __cplusplus==201103L
+#     IEEE 1003.1-2008 -D_POSIX_C_SOURCE=200809L
+#     Open Group Single UNIX Specification, Version 4 (2008+) -D_XOPEN_SOURCE=700
+#   2014-2017: C11 & C++14 (reliably targets: 2016)
+#     ISO/IEC 9899:2011 __STDC_VERSION__==201112L
+#     ISO/IEC 14882:2014 __cplusplus==201402L
+#     IEEE 1003.1-2008 -D_POSIX_C_SOURCE=200809L
+#     Open Group Single UNIX Specification, Version 4 (2008+) -D_XOPEN_SOURCE=700
+#   2017-2020: C11 & C++17 (reliably targets: 2019)
+#     ISO/IEC 9899:2011 __STDC_VERSION__==201112L
+#     ISO/IEC 14882:2017 __cplusplus==201703L
+#     IEEE 1003.1-2008 -D_POSIX_C_SOURCE=200809L
+#     Open Group Single UNIX Specification, Version 4 (2008+) -D_XOPEN_SOURCE=700
+#
+# Sources: https://sourceforge.net/p/predef/wiki/Standards/
 
+include(BRLCAD_API_Flag)
 set(API_FLAGS)
 BRLCAD_API_FLAG("-D_POSIX_C_SOURCE=200809L" API_FLAGS)
 BRLCAD_API_FLAG("-D_XOPEN_SOURCE=700" API_FLAGS)
@@ -372,6 +354,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CXX_STANDARD_FLAGS "${CMAKE_CXX_FLAGS_DEFAULT} ${CMAKE_CXX${CMAKE_CXX_STANDARD}_STANDARD_COMPILE_OPTION} ${API_FLAGS}")
 string(STRIP "${CXX_STANDARD_FLAGS}" CXX_STANDARD_FLAGS)
+
 
 #---------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine
@@ -1718,7 +1701,6 @@ BRLCAD_FUNCTION_EXISTS(getcwd)
 BRLCAD_FUNCTION_EXISTS(getegid)
 BRLCAD_FUNCTION_EXISTS(getenv_s)
 BRLCAD_FUNCTION_EXISTS(geteuid)
-# BRLCAD_FUNCTION_EXISTS(gethostbyname)
 BRLCAD_FUNCTION_EXISTS(gethostname)
 BRLCAD_FUNCTION_EXISTS(getloadavg)
 BRLCAD_FUNCTION_EXISTS(getopt_long)
@@ -1902,10 +1884,12 @@ BRLCAD_FUNCTION_EXISTS(tgamma COMPILE_TEST_SRCS tgamma_test REQUIRED_LIBS ${M_LI
 
 # test for gethostbyaddr
 set(gethostbyaddr_test "#include<stdlib.h>\n#include <netdb.h>\nint main() {(void)gethostbyaddr; return 0;}")
+set(GETHOSTBYADDR_REQUIRED_FLAGS "-Werror")
 BRLCAD_FUNCTION_EXISTS(gethostbyaddr DECL_TEST_SRCS gethostbyaddr_test REQUIRED_LIBS ${NL_LIBRARY})
 
 # test for gethostbyname
 set(gethostbyname_test "#include<stdlib.h>\n#include <netdb.h>\nint main() {(void)gethostbyname; return 0;}")
+set(GETHOSTBYNAME_REQUIRED_FLAGS "-Werror")
 BRLCAD_FUNCTION_EXISTS(gethostbyname DECL_TEST_SRCS gethostbyname_test REQUIRED_LIBS ${NL_LIBRARY})
 
 # Check for logb in C++

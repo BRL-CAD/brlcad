@@ -115,8 +115,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
             p->end_clbk(0, p->end_clbk_data);
     }
 
-    if (w->c4)
-	w->c4->need_update(NULL);
+    w->c4->do_view_update(QTCAD_VIEW_REFRESH);
 }
 
 
@@ -267,7 +266,7 @@ int main(int argc, char *argv[])
     // until now in order to have the display related containers from graphical
     // initialization available - the GED structure will need to know about some
     // of them to have drawing commands connect properly to the 3D displays.
-    QgModel *m = (QgModel *)app.mdl->sourceModel();
+    QgModel *m = app.mdl;
     if (argc) {
 	int ac = 2;
 	const char *av[3];
@@ -288,7 +287,7 @@ int main(int argc, char *argv[])
 
     // Send a view_change signal so widgets depending on view information
     // can initialize themselves
-    emit app.view_change(&m->gedp->ged_gvp);
+    emit app.view_update(QTCAD_VIEW_REFRESH);
 
     // Generally speaking if we're going to have trouble initializing, it will
     // be with either the GED plugins or the dm plugins.  Print relevant

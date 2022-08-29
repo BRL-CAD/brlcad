@@ -48,11 +48,7 @@ This copy has been simplified down to the essential sorting comparison of C stri
   the "Alphanum Algorithm". This function is designed to read
   through the l and r strings only one time, for
   maximum performance. It does not allocate memory for
-  substrings. It can either use the C-library functions isdigit()
-  and atoi() to honour your locale settings, when recognizing
-  digit characters when you "#define ALPHANUM_LOCALE=1" or use
-  it's own digit character handling which only works with ASCII
-  digit characters, but provides better performance.
+  substrings.
 
   @param l NULL-terminated C-style string
   @param r NULL-terminated C-style string
@@ -72,8 +68,14 @@ int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
 	    char l_char, r_char;
 	    while((l_char=*l) && (r_char=*r))
 	    {
-		// check if this are digit characters
-		const int l_digit = isdigit(l_char), r_digit=isdigit(r_char);
+		// Check if this are digit characters.  Note that the unsigned
+		// char cast will not handle non-ASCII characters "correctly"
+		// in the sense of producing a local aware decision - we do
+		// this for simplicity given most candidate inputs will be
+		// ASCII, and we don't want to produce some form of sorting
+		// decision the (relatively rare) cases where we hit a
+		// non-ASCII character in the input string.
+		const int l_digit = isdigit((unsigned char)l_char), r_digit=isdigit((unsigned char)r_char);
 		// if both characters are digits, we continue in NUMBER mode
 		if(l_digit && r_digit)
 		{
