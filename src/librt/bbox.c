@@ -426,9 +426,8 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
 	return -1;
 
     int bbret = -1;
-    if (ip->idb_meth->ft_bbox) {
+    if (ip->idb_meth->ft_bbox)
 	bbret = ip->idb_meth->ft_bbox(ip, bmin, bmax, tol);
-    }
 
     if (bbret < 0 && ip->idb_meth->ft_plot) {
 	/* As a fallback for primitives that don't have a bbox function,
@@ -440,11 +439,13 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
 	BU_LIST_INIT(&(vhead));
 	if (ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, v) >= 0) {
 	    if (bv_vlist_bbox(&vhead, bmin, bmax, NULL, NULL)) {
-		BV_FREE_VLIST(&v->gv_objs.gv_vlfree, &vhead);
+		if (v)
+		    BV_FREE_VLIST(&v->gv_objs.gv_vlfree, &vhead);
 		rt_db_free_internal(&dbintern);
 		return -1;
 	    }
-	    BV_FREE_VLIST(&v->gv_objs.gv_vlfree, &vhead);
+	    if (v)
+		BV_FREE_VLIST(&v->gv_objs.gv_vlfree, &vhead);
 	    bbret = 0;
 	}
     }
