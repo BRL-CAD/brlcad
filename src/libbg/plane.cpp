@@ -2567,22 +2567,22 @@ bg_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml)
 // Use SVD algorithm from Soderkvist to fit a plane to vertex points
 // http://www.math.ltu.se/~jove/courses/mam208/svd.pdf
 extern "C" int
-bg_fit_plane(point_t *c, vect_t *n, int npnts, point_t *pnts)
+bg_fit_plane(point_t *c, vect_t *n, size_t npnts, point_t *pnts)
 {
-    if (!c || !n || npnts <= 0 || !pnts) {
+    if (!c || !n || npnts == 0 || !pnts) {
 	return -1;
     }
 
     // 1.  Find the center point
     point_t center = VINIT_ZERO;
-    for (int i = 0; i < npnts; i++) {
+    for (size_t i = 0; i < npnts; i++) {
 	VADD2(center, pnts[i], center);
     }
     VSCALE(center, center, 1.0/(fastf_t)npnts);
 
     // 2.  Transfer the points into Eigen data types
     Eigen::MatrixXd A(3, npnts);
-    for (int i = 0; i < npnts; i++) {
+    for (size_t i = 0; i < npnts; i++) {
 	A(0,i) = pnts[i][X] - center[X];
 	A(1,i) = pnts[i][Y] - center[Y];
 	A(2,i) = pnts[i][Z] - center[Z];

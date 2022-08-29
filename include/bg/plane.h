@@ -1150,7 +1150,7 @@ BG_EXPORT extern int bg_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml);
  *
  * Returns a center point and a normal direction for the plane
  */
-BG_EXPORT extern int bg_fit_plane(point_t *c, vect_t *n, int npnts, point_t *pnts);
+BG_EXPORT extern int bg_fit_plane(point_t *c, vect_t *n, size_t npnts, point_t *pnts);
 
 /**
  * @brief
