@@ -54,7 +54,6 @@ createObjWithPos(){
 	sed $1
 	translate $3 $4 0
 	accept
-	Z
 EOF
 }
 
@@ -78,18 +77,30 @@ objs=("arb8" "ell" "sph" "ehy" "epa"
 	  "bot")
 
 # primitive name: {xpos}_{ypos}_xxx.p
-# primitive name: {xpos}_{ypos}_xxx.b
+# brep name: {xpos}_{ypos}_xxx.b
 for(( i=0;i<${#objs[@]};i++)) do
 	element_type=${objs[i]}
 	element_name=$[$i / $num_per_row]_$[$i % $num_per_row]_${objs[i]}
 	echo $element_name
 	createObjWithPos ${element_name}.p $element_type ${shift_x} ${shift_y}
-	convertBrep ${element_name}.p ${element_name}.b
+	#convertBrep ${element_name}.p ${element_name}.b
 	let shift_x+=$grid_size
 	if [ $shift_x -gt $[ $grid_size * $num_per_row - $grid_size] ]; then
 		shift_x=0
 		let shift_y+=$grid_size
 	fi
+done;
+
+
+for(( i=0;i<${#objs[@]};i++)) do
+	element_name=$[$i / $num_per_row]_$[$i % $num_per_row]_${objs[i]}
+	mged -c $db_name <<EOF
+	draw ${element_name}.p
+	sed ${element_name}.p
+	rot 30 30 30
+	accept
+EOF
+	convertBrep ${element_name}.p ${element_name}.b
 done;
 
 # region primitives and breps respectively
