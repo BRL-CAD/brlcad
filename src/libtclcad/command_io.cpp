@@ -31,16 +31,13 @@
 #include <map>
 
 extern "C" {
-
 #include "tcl.h"
-
 #include "bu/malloc.h"
-#include "tclcad.h"
+}
 
+#include "tclcad.h"
     /* Private headers */
 #include "./tclcad_private.h"
-
-}
 
 struct tclcad_process_channels {
     Tcl_Channel cstdin;

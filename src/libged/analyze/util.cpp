@@ -37,8 +37,8 @@ extern "C" {
 extern "C" {
 #include "bu/malloc.h"
 #include "bu/vls.h"
-#include "./ged_analyze.h"
 }
+#include "./ged_analyze.h"
 #include "../ged_private.h"
 
 void get_dashes(field_t *f, const int ndashes)

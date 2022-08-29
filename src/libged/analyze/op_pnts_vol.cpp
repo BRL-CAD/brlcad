@@ -35,10 +35,10 @@ extern "C" {
 extern "C" {
 #include "rt/geom.h"
 #include "analyze.h"
+}
 #include "../ged_private.h"
 #include "../pnts_util.h"
 #include "./ged_analyze.h"
-}
 
 struct ray_result {
     point_t *p;

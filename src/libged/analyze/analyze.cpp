@@ -36,8 +36,8 @@ extern "C" {
 extern "C" {
 #include "bu/cmd.h"
 #include "bu/opt.h"
-#include "./ged_analyze.h"
 }
+#include "./ged_analyze.h"
 #include "../ged_private.h"
 
 #define DB_SOLID INT_MAX

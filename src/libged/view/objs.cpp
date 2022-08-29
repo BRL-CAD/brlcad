@@ -36,8 +36,8 @@ extern "C" {
 #include "bu/opt.h"
 #include "bu/vls.h"
 #include "bv.h"
-#include "./ged_view.h"
 }
+#include "./ged_view.h"
 #include "../ged_private.h"
 
 int

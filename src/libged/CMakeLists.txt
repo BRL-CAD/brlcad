@@ -28,6 +28,7 @@ set(LIBGED_SOURCES
   exec_mapping.cpp
   ged_init.cpp
   columns.c
+  dbi_state.cpp
   display_list.c
   draw.cpp
   facedef.c

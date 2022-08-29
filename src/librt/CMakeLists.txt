@@ -73,7 +73,6 @@ set(LIBRT_SOURCES
   db_scan.c
   db_tree.cpp
   db_walk.c
-  dbi_state.cpp
   dir.c
   dspline.c
   fortray.c
