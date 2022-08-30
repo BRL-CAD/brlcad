@@ -82,7 +82,6 @@ struct dd_t {
     matp_t m;
     int subtract_skip;
     std::vector<unsigned long long> path_hashes;
-    std::unordered_map<unsigned long long, unsigned long long> *i_count;
 };
 
 static void
@@ -149,13 +148,9 @@ draw_gather_paths(void *d, unsigned long long c_hash, matp_t m, int UNUSED(op))
 
 	    /* Keep going */
 	    std::unordered_set<unsigned long long>::iterator c_it;
-	    std::unordered_map<unsigned long long, unsigned long long> i_count;
-	    std::unordered_map<unsigned long long, unsigned long long> *tmp = dd->i_count;
-	    dd->i_count = &i_count;
 	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++) {
 		draw_walk_tree(*c_it, d, dd->subtract_skip, draw_gather_paths);
 	    }
-	    dd->i_count = tmp;
 	}
     } else {
 	// Solid - scene object time
@@ -185,7 +180,6 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
     /* Validate that the supplied args are current, valid paths in the
      * database.  If so, walk to find the solids. */
     for (size_t i = 0; i < (size_t)argc; ++i) {
-	std::unordered_map<unsigned long long, unsigned long long> i_count;
 	mat_t fm;
 	MAT_IDN(fm);
 	struct dd_t d;
@@ -193,7 +187,6 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	d.m = fm;
 	d.gedp = gedp;
 	d.subtract_skip = vs->draw_non_subtract_only;
-	d.i_count = &i_count;
 	d.path_hashes = gedp->dbi_state->digest_path(argv[i]);
 	if (!d.path_hashes.size()) {
 	    continue;
