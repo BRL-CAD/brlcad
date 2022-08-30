@@ -239,10 +239,6 @@ class GED_EXPORT DbiState {
 
 	void update();
 
-	unsigned long long update_dp(struct directory *dp, int reset);
-
-	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
-
 	bool path_color(struct bu_color *c, std::vector<unsigned long long> &elements);
 
 	bool get_matrix(matp_t m, unsigned long long p_key, unsigned long long i_key);
@@ -319,6 +315,8 @@ class GED_EXPORT DbiState {
 	bool need_update_nref = true;
 
     private:
+	unsigned long long update_dp(struct directory *dp, int reset);
+	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
 	unsigned int color_int(struct bu_color *);
 	int int_color(struct bu_color *c, unsigned int);
 };

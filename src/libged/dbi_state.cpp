@@ -608,6 +608,13 @@ DbiState::update()
     for (v_it = view_states.begin(); v_it != view_states.end(); v_it++) {
 	v_it->second->redraw();
     }
+
+    // Updates done, clear items stored by callbacks
+    added.clear();
+    changed.clear();
+    changed_hashes.clear();
+    removed.clear();
+    old_names.clear();
 }
 
 
