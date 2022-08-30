@@ -121,7 +121,6 @@ if (BRLCAD_GDAL_BUILD)
     -DPROJ_LIBRARY_RELEASE=$<$<BOOL:${PROJ_TARGET}>:${PROJ_LIBRARY}>
     -DPROJ_LIBRARY_DEBUG=$<$<BOOL:${PROJ_TARGET}>:${PROJ_LIBRARY}>
     -DGDAL_BUILD_OPTIONAL_DRIVERS=ON
-    -DGDAL_ENABLE_DRIVER_BAG=OFF                # libhdf5
     -DGDAL_ENABLE_DRIVER_BASISU=OFF             # basis universal
     -DGDAL_ENABLE_DRIVER_DAAS=OFF               # libcurl
     -DGDAL_ENABLE_DRIVER_DDS=OFF                # crunch lib
