@@ -154,11 +154,11 @@ draw_gather_paths(void *d, unsigned long long c_hash, matp_t m, int UNUSED(op))
 	}
     } else {
 	// Solid - scene object time
-	struct bu_vls path_str = BU_VLS_INIT_ZERO;
-	dd->gedp->dbi_state->print_path(&path_str, dd->path_hashes);
-	bu_log("make solid %s\n", bu_vls_cstr(&path_str));
-	bu_vls_free(&path_str);
 	unsigned long long phash = dd->gedp->dbi_state->path_hash(dd->path_hashes, 0);
+	struct bv_scene_obj *sp = bv_obj_get(dd->v, BV_DB_OBJS);
+	dd->gedp->dbi_state->print_path(&sp->s_name, dd->path_hashes);
+	bu_log("make solid %s\n", bu_vls_cstr(&sp->s_name));
+	dd->gedp->dbi_state->view_states[dd->v]->s_map[phash] = sp;
 	dd->gedp->dbi_state->view_states[dd->v]->s_keys[phash] = dd->path_hashes;
     }
 
@@ -205,8 +205,13 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		bad_paths.push_back(k_it->first);
 	}
 	for (size_t j = 0; j < bad_paths.size(); j++) {
+	    std::unordered_map<unsigned long long, struct bv_scene_obj *>::iterator m_it;
+	    m_it = bvs->s_map.find(bad_paths[j]);
+	    if (m_it != bvs->s_map.end()) {
+		bv_obj_put(m_it->second);
+		bvs->s_map.erase(bad_paths[j]);
+	    }
 	    bvs->s_keys.erase(bad_paths[j]);
-	    // TODO - free bvs->s_map obj, then erase from s_map as well
 	}
 
 	// Walk the tree (via the dbi_state so we don't have to hit disk
@@ -348,7 +353,8 @@ ged_draw_view(struct bview *v, int bot_threshold, int no_autoview, int blank_sla
     // Do the actual drawing
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
-	draw_scene(s, v);
+	bu_log("draw %s\n", bu_vls_cstr(&s->s_name));
+	//draw_scene(s, v);
     }
 
     // Make sure what we've drawn is visible, unless we've a reason not to.
@@ -530,8 +536,6 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // we must process it on a per-view basis in case the objects have view
     // specific visualizations (such as in adaptive plotting.)
     ged_update_objs(gedp, cv, &vs, refresh, argc, argv);
-
-    return BRLCAD_OK;
 
     // Drawing can get complicated when we have multiple active views with
     // different settings. The simplest case is when the current or specified
