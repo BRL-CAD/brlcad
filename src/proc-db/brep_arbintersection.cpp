@@ -47,37 +47,17 @@ printusage(void) {
     fprintf(stderr,"Usage: brep_arbintersection (takes no arguments)\n");
 }
 
-void pointShift(ON_3dPoint* point, ON_3dPoint shift) {
-    point->x += shift.x;
-    point->y += shift.y;
-    point->z += shift.z;
+void
+pointShift(point_t* point, ON_3dPoint shift) {
+    (*point)[0] += shift.x;
+    (*point)[1] += shift.y;
+    (*point)[2] += shift.z;
 }
+
 int
-main(int argc, char** argv)
+create_arb8_matrix()
 {
-    ON_TextLog error_log;
-    const char* id_name = "B-Rep Example";
-    const char* geom_name = "cube.s";
-
-    bu_setprogname(argv[0]);
-
-    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
-    	printusage();
-    	return 0;
-    }
-    if (argc > 1) {
-    	printusage();
-	return 1;
-    }
-
-    ON::Begin();
-
-    outfp = wdb_fopen(db_name);
-    mk_id(outfp, id_name);
-
     // caculate vertex positions of arb8s
-    struct ON_3dPoint v_arb_0[125][8];
-    struct ON_3dPoint v_arb_1[125][8];
     struct ON_3dPoint shift(0, 0, 0);   //each test case have a 4*4*4 space
     double shift_space = 4.0;
     for (int i = 0; i < 5; i++) {
@@ -87,38 +67,26 @@ main(int argc, char** argv)
             for (int k = 0; k < 5; k++) {
                 shift.z = k * shift_space;
                 int case_id = i * 25 + j * 5 + k;
-                v_arb_1[case_id][0].x = v_arb_1[case_id][1].x = v_arb_1[case_id][4].x = v_arb_1[case_id][5].x = v_arb_pos[i][0];
-                v_arb_1[case_id][2].x = v_arb_1[case_id][3].x = v_arb_1[case_id][6].x = v_arb_1[case_id][7].x = v_arb_pos[i][1];
-                v_arb_1[case_id][0].y = v_arb_1[case_id][3].y = v_arb_1[case_id][4].y = v_arb_1[case_id][7].y = v_arb_pos[j][0];
-                v_arb_1[case_id][1].y = v_arb_1[case_id][2].y = v_arb_1[case_id][5].y = v_arb_1[case_id][6].y = v_arb_pos[j][1];
-                v_arb_1[case_id][0].z = v_arb_1[case_id][1].z = v_arb_1[case_id][2].z = v_arb_1[case_id][3].z = v_arb_pos[k][0];
-                v_arb_1[case_id][4].z = v_arb_1[case_id][5].z = v_arb_1[case_id][6].z = v_arb_1[case_id][7].z = v_arb_pos[k][1];
-
-                for (int t = 0; t < 8; t++) {
-                    VMOVE(v_arb_0[case_id][t], ps_arb_0[t]);
-                    pointShift(&v_arb_0[case_id][t], shift);
-                    pointShift(&v_arb_1[case_id][t], shift);
-                }
-                    
-            }
-        }
-    }
-
-    for (int i = 0; i < 5; i++) {
-        for (int j = 0; j < 5; j++) {
-            for (int k = 0; k < 5; k++) {
-                int case_id = i * 25 + j * 5 + k;
                 rt_arb_internal* arb_0;
                 rt_arb_internal* arb_1;
                 BU_ALLOC(arb_0, struct rt_arb_internal);
                 BU_ALLOC(arb_1, struct rt_arb_internal);
                 arb_0->magic = RT_ARB_INTERNAL_MAGIC;
                 arb_1->magic = RT_ARB_INTERNAL_MAGIC;
+                arb_1->pt[0][0] = arb_1->pt[1][0] = arb_1->pt[4][0] = arb_1->pt[5][0] = v_arb_pos[i][0];
+                arb_1->pt[2][0] = arb_1->pt[3][0] = arb_1->pt[6][0] = arb_1->pt[7][0] = v_arb_pos[i][1];
+                arb_1->pt[0][1] = arb_1->pt[3][1] = arb_1->pt[4][1] = arb_1->pt[7][1] = v_arb_pos[j][0];
+                arb_1->pt[1][1] = arb_1->pt[2][1] = arb_1->pt[5][1] = arb_1->pt[6][1] = v_arb_pos[j][1];
+                arb_1->pt[0][2] = arb_1->pt[1][2] = arb_1->pt[2][2] = arb_1->pt[3][2] = v_arb_pos[k][0];
+                arb_1->pt[4][2] = arb_1->pt[5][2] = arb_1->pt[6][2] = arb_1->pt[7][2] = v_arb_pos[k][1];
+
                 for (int t = 0; t < 8; t++) {
-                    VMOVE(arb_0->pt[t], v_arb_0[case_id][t]);
-                    VMOVE(arb_1->pt[t], v_arb_1[case_id][t]);
+                    VMOVE(arb_0->pt[t], ps_arb_0[t]);
+                    pointShift(&(arb_0->pt[t]), shift);
+                    pointShift(&(arb_1->pt[t]), shift);
                 }
-                
+
+                // create unions
                 std::string name_0 = "arb_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k) + "_0";
                 std::string name_1 = "arb_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k) + "_1";
                 std::string name_inter = "inter_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k) + ".r";
@@ -154,10 +122,10 @@ main(int argc, char** argv)
                 mk_comb(outfp, name_inter.data(), &inter, 1, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0);
                 mk_comb(outfp, name_sub.data(), &sub, 1, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0);
                 mk_comb(outfp, name_un.data(), &un, 1, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0);
-                }
             }
         }
-    
+    }
+
 
     struct db_i* dbip = db_open(db_name, DB_OPEN_READONLY);
     if (!dbip) {
@@ -186,7 +154,7 @@ main(int argc, char** argv)
                 }
 
                 struct rt_db_internal intern_res;
-                
+
                 std::string brep_name = ("brep.." + std::to_string(i / 25) + "_" + std::to_string(i % 25 / 5) + "_" + std::to_string(i % 5));
                 brep_name.insert(5, 1, str.data()[0]);
 
@@ -200,7 +168,33 @@ main(int argc, char** argv)
             }
         }
     }
-    
+}
+
+int
+main(int argc, char** argv)
+{
+    return 0;
+    ON_TextLog error_log;
+    const char* id_name = "B-Rep Example";
+    const char* geom_name = "cube.s";
+
+    bu_setprogname(argv[0]);
+
+    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
+    	printusage();
+    	return 0;
+    }
+    if (argc > 1) {
+    	printusage();
+	return 1;
+    }
+
+    ON::Begin();
+
+    outfp = wdb_fopen(db_name);
+    mk_id(outfp, id_name);
+    create_arb8_matrix();
+
     ON::End();
 
     return 0;
