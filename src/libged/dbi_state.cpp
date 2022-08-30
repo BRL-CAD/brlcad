@@ -620,9 +620,8 @@ DbiState::update()
 
 DbiState::DbiState(struct db_i *dbi_p)
 {
-    // TODO - either accept an app resource or use a local one
-    res = &rt_uniresource;
-
+    BU_GET(res, struct resource);
+    rt_init_resource(res, 0, NULL);
     dbip = dbi_p;
     if (!dbip)
 	return;
@@ -635,6 +634,11 @@ DbiState::DbiState(struct db_i *dbi_p)
     }
 }
 
+DbiState::~DbiState()
+{
+    rt_clean_resource_basic(NULL, res);
+    BU_PUT(res, struct resource);
+}
 
 BViewState::BViewState(DbiState *s)
 {

@@ -236,6 +236,7 @@ class GED_EXPORT BViewState {
 class GED_EXPORT DbiState {
     public:
 	DbiState(struct db_i *);
+	~DbiState();
 
 	void update();
 
