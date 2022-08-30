@@ -136,7 +136,6 @@ if (BRLCAD_GDAL_BUILD)
     -DGDAL_ENABLE_DRIVER_HDF4=OFF               # libdf
     -DGDAL_ENABLE_DRIVER_HDF5=OFF               # libdf5
     -DGDAL_ENABLE_DRIVER_HEIF=OFF               # libheif
-    -DGDAL_ENABLE_DRIVER_JP2ECW=OFF             # ECW SDK
     -DGDAL_ENABLE_DRIVER_JP2KAK=OFF             # kakadu library
     -DGDAL_ENABLE_DRIVER_JP2LURA=OFF            # lurawave library
     -DGDAL_ENABLE_DRIVER_JP2MRSID=OFF           # MrSID SDK
@@ -163,7 +162,9 @@ if (BRLCAD_GDAL_BUILD)
     -DGDAL_ENABLE_DRIVER_WEBP=OFF               # libwebp
     -DGDAL_ENABLE_DRIVER_WMS=OFF                # libcurl
     -DGDAL_ENABLE_DRIVER_WMTS=OFF               # libcurl
-    -DOGR_BUILD_OPTIONAL_DRIVERS=OFF
+    -DOGR_BUILD_OPTIONAL_DRIVERS=ON
+    -DOGR_ENABLE_DRIVER_
+
     -DBUILD_PYTHON_BINDINGS=OFF
     DEPENDS ${GDAL_DEPS}
     LOG_CONFIGURE ${EXT_BUILD_QUIET}
