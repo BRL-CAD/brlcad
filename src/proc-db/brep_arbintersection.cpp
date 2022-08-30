@@ -126,7 +126,6 @@ create_arb8_matrix()
         }
     }
 
-
     struct db_i* dbip = db_open(db_name, DB_OPEN_READONLY);
     if (!dbip) {
         bu_exit(1, "Unable to open brep_arbintersection.g geometry database file\n");
@@ -171,9 +170,125 @@ create_arb8_matrix()
 }
 
 int
+create_sph_matrix(float sph0_r = 2.0f, float sph1_r = 1.0f)
+{
+    caculate_ell_pos(sph0_r, sph1_r);
+    // caculate vertex positions of arb8s
+    struct ON_3dPoint shift(0, 0, 0);   //each test case have a 4*4*4 space
+    float shift_space = (sph0_r + sph1_r) * 2;
+    std::cout << shift_space << std::endl;
+    for (int i = 0; i < 5; i++) {
+        shift.x = i * shift_space;
+        for (int j = 0; j < 5; j++) {
+            shift.y = j * shift_space;
+            for (int k = 0; k < 5; k++) {
+                shift.z = k * shift_space;
+                int case_id = i * 25 + j * 5 + k;
+                rt_ell_internal* ell_0;
+                rt_ell_internal* ell_1;
+                BU_ALLOC(ell_0, struct rt_ell_internal);
+                BU_ALLOC(ell_1, struct rt_ell_internal);
+
+                ell_0->magic = RT_ELL_INTERNAL_MAGIC;
+                ell_1->magic = RT_ELL_INTERNAL_MAGIC;
+                VSET(ell_0->v, shift[X], shift[Y], shift[Z]);
+                VSET(ell_0->a, sph0_r, 0.0, 0.0);	/* A */
+                VSET(ell_0->b, 0.0, sph0_r, 0.0);	/* B */
+                VSET(ell_0->c, 0.0, 0.0, sph0_r);	/* C */
+
+                VSET(ell_1->v, shift[X] + v_ell_pos[i], shift[Y] + v_ell_pos[j], shift[Z] + v_ell_pos[k]);
+                VSET(ell_1->a, sph1_r, 0.0, 0.0);	/* A */
+                VSET(ell_1->b, 0.0, sph1_r, 0.0);	/* B */
+                VSET(ell_1->c, 0.0, 0.0, sph1_r);	/* C */
+
+                // create unions
+                std::string name_0 = "ell_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k) + "_0";
+                std::string name_1 = "ell_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k) + "_1";
+                std::string name_inter = "inter_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k) + ".r";
+                std::string name_sub = "sub_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k) + ".r";
+                std::string name_un = "un_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k) + ".r";
+                wdb_export(outfp, name_0.data(), (void*)ell_0, ID_ELL, mk_conv2mm);
+                wdb_export(outfp, name_1.data(), (void*)ell_1, ID_ELL, mk_conv2mm);
+
+                // three boolean operations: intersection, subtraction, and union
+                struct bu_list inter;
+                struct bu_list sub;
+                struct bu_list un;
+                BU_LIST_INIT(&inter);
+                BU_LIST_INIT(&sub);
+                BU_LIST_INIT(&un);
+
+                if (mk_addmember(name_0.data(), &inter, NULL, WMOP_UNION) == WMEMBER_NULL)
+                    return -2;
+                if (mk_addmember(name_1.data(), &inter, NULL, WMOP_INTERSECT) == WMEMBER_NULL)
+                    return -2;
+
+                if (mk_addmember(name_0.data(), &sub, NULL, WMOP_UNION) == WMEMBER_NULL)
+                    return -2;
+                if (mk_addmember(name_1.data(), &sub, NULL, WMOP_SUBTRACT) == WMEMBER_NULL)
+                    return -2;
+
+                if (mk_addmember(name_0.data(), &un, NULL, WMOP_UNION) == WMEMBER_NULL)
+                    return -2;
+                if (mk_addmember(name_1.data(), &un, NULL, WMOP_UNION) == WMEMBER_NULL)
+                    return -2;
+
+                unsigned char rgb[] = { 255, 255, 255 };
+                mk_comb(outfp, name_inter.data(), &inter, 1, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0);
+                mk_comb(outfp, name_sub.data(), &sub, 1, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0);
+                mk_comb(outfp, name_un.data(), &un, 1, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0);
+            }
+        }
+    }
+
+    struct db_i* dbip = db_open(db_name, DB_OPEN_READONLY);
+    if (!dbip) {
+        bu_exit(1, "Unable to open brep_arbintersection.g geometry database file\n");
+    }
+    db_dirbuild(dbip);
+    for (int i = 0; i < 125; i++) {
+        ON_Brep* brep = ON_Brep::New();
+        struct rt_db_internal brep_db_internal;
+        std::string names[3] = {
+            std::string("inter_" + std::to_string(i / 25) + "_" + std::to_string(i % 25 / 5) + "_" + std::to_string(i % 5) + ".r").data(),
+            std::string("sub_" + std::to_string(i / 25) + "_" + std::to_string(i % 25 / 5) + "_" + std::to_string(i % 5) + ".r").data(),
+            std::string("un_" + std::to_string(i / 25) + "_" + std::to_string(i % 25 / 5) + "_" + std::to_string(i % 5) + ".r").data()
+        };
+
+        struct directory* dirp;
+
+        for (auto str : names) {
+
+            if ((dirp = db_lookup(dbip, str.data(), 0)) != RT_DIR_NULL) {
+                struct rt_db_internal ip;
+                mat_t mat;
+                MAT_IDN(mat);
+                if (rt_db_get_internal(&ip, dirp, dbip, mat, &rt_uniresource) >= 0) {
+
+                }
+
+                struct rt_db_internal intern_res;
+
+                std::string brep_name = ("brep.." + std::to_string(i / 25) + "_" + std::to_string(i % 25 / 5) + "_" + std::to_string(i % 5));
+                brep_name.insert(5, 1, str.data()[0]);
+
+                int ret = brep_conversion(&ip, &brep_db_internal, dbip);
+                if (!ret && ret != -2) {
+                    brep = ((struct rt_brep_internal*)brep_db_internal.idb_ptr)->brep;
+                    ret = mk_brep(outfp, brep_name.data(), (void*)brep);
+                }
+
+                rt_db_free_internal(&brep_db_internal);
+            }
+        }
+    }
+}
+
+
+
+int
 main(int argc, char** argv)
 {
-    return 0;
     ON_TextLog error_log;
     const char* id_name = "B-Rep Example";
     const char* geom_name = "cube.s";
@@ -193,7 +308,7 @@ main(int argc, char** argv)
 
     outfp = wdb_fopen(db_name);
     mk_id(outfp, id_name);
-    create_arb8_matrix();
+    create_sph_matrix();
 
     ON::End();
 

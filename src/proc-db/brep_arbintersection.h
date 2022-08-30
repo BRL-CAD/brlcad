@@ -46,13 +46,27 @@ struct ON_3dPoint ps_arb_0[8] = {
 	{ 1,  -1,  1 }
 };
 
-double v_arb_pos[5][2] = {
+float v_arb_pos[5][2] = {
 	{1, 2},
 	{0, 2},
 	{-0.5, 0.5},
 	{-2, 0},
 	{-2, -1},
 };
+
+
+float v_ell_pos[5] = {0};
+
+void
+caculate_ell_pos(float r0, float r1)
+{
+	v_ell_pos[0] = -r0 - r1;
+	v_ell_pos[1] = -r0;
+	v_ell_pos[2] = 0;
+	v_ell_pos[3] = -v_ell_pos[1];
+	v_ell_pos[4] = -v_ell_pos[0];
+}
+
 
 static int
 single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i* dbip)
