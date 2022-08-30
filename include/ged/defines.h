@@ -243,11 +243,17 @@ class GED_EXPORT DbiState {
 	bool path_color(struct bu_color *c, std::vector<unsigned long long> &elements);
 
 	bool get_matrix(matp_t m, unsigned long long p_key, unsigned long long i_key);
+	bool get_path_matrix(matp_t m, std::vector<unsigned long long> &elements);
 
 	bool get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned long long hash);
-
 	bool get_path_bbox(point_t *bbmin, point_t *bbmax, std::vector<unsigned long long> &elements);
 
+	//bool is_solid(unsigned long long key);
+	//std::vector<unsigned long long> *comb_children(unsigned long long key);
+
+	std::vector<unsigned long long> digest_path(const char *path);
+
+	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
 
 	// These maps are the ".g ground truth" of the comb structures - the set
 	// associated with each has contains all the child hashes from the comb
@@ -306,8 +312,11 @@ class GED_EXPORT DbiState {
 	std::unordered_set<unsigned long long> removed;
 	std::unordered_map<unsigned long long, std::string> old_names;
 
-	// For associated views (if any), we track their drawn states and update
-	// in response to database changes (as well as draw/erase commands).
+	// The shared view is common to multiple views, so we always update it.
+	// For other associated views (if any), we track their drawn states
+	// separately, but they too need to update in response to database
+	// changes (as well as draw/erase commands).
+	BViewState *shared_vs;
 	std::unordered_map<struct bview *, BViewState *> view_states;
 
 	// Database Instance associated with this container
@@ -318,7 +327,6 @@ class GED_EXPORT DbiState {
     private:
 	void populate_maps(struct directory *dp, unsigned long long phash, int reset);
 	unsigned long long update_dp(struct directory *dp, int reset);
-	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
 	unsigned int color_int(struct bu_color *);
 	int int_color(struct bu_color *c, unsigned int);
 	struct resource *res = NULL;

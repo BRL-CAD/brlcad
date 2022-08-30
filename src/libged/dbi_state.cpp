@@ -194,6 +194,199 @@ DbiState::path_hash(std::vector<unsigned long long> &path, size_t max_len)
     return path_hash(path, max_len);
 }
 
+static void
+fp_path_split(std::vector<std::string> &objs, const char *str)
+{
+    std::string s(str);
+    while (s.length() && s.c_str()[0] == '/')
+	s.erase(0, 1);  //Remove leading slashes
+
+    std::string nstr;
+    bool escaped = false;
+    for (size_t i = 0; i < s.length(); i++) {
+	if (s[i] == '\\') {
+	    if (escaped) {
+		nstr.push_back(s[i]);
+		escaped = false;
+		continue;
+	    }
+	    escaped = true;
+	    continue;
+	}
+	if (s[i] == '/' && !escaped) {
+	    if (nstr.length())
+		objs.push_back(nstr);
+	    nstr.clear();
+	    continue;
+	}
+	nstr.push_back(s[i]);
+	escaped = false;
+    }
+    if (nstr.length())
+	objs.push_back(nstr);
+}
+
+static std::string
+name_deescape(std::string &name)
+{
+    std::string s(name);
+    std::string nstr;
+
+    for (size_t i = 0; i < s.length(); i++) {
+	if (s[i] == '\\') {
+	    if ((i+1) < s.length())
+		nstr.push_back(s[i+1]);
+	    i++;
+	} else {
+	    nstr.push_back(s[i]);
+	}
+    }
+
+    return nstr;
+}
+
+// This is a full (and more expensive) check to ensure
+// a path has no cycles anywhere in it.
+static bool
+path_cyclic(std::vector<unsigned long long> &path)
+{
+    if (path.size() == 1)
+	return false;
+    int i = path.size() - 1;
+    while (i > 0) {
+	int j = i - 1;
+	while (j >= 0) {
+	    if (path[i] == path[j])
+		return true;
+	    j--;
+	}
+	i--;
+    }
+    return false;
+}
+
+static size_t
+path_elements(std::vector<std::string> &elements, const char *path)
+{
+    std::vector<std::string> substrs;
+    fp_path_split(substrs, path);
+    for (size_t i = 0; i < substrs.size(); i++) {
+	std::string cleared = name_deescape(substrs[i]);
+	elements.push_back(cleared);
+    }
+    return elements.size();
+}
+
+std::vector<unsigned long long>
+DbiState::digest_path(const char *path)
+{
+    // If no path, nothing to process
+    if (path)
+	return std::vector<unsigned long long>();
+
+    // Digest the string into individual path elements
+    std::vector<std::string> elements;
+    path_elements(elements, path);
+
+    // Convert the string elements into hash elements
+    std::vector<unsigned long long> phe;
+    struct bu_vls hname = BU_VLS_INIT_ZERO;
+    XXH64_state_t h_state;
+    for (size_t i = 0; i < elements.size(); i++) {
+	XXH64_reset(&h_state, 0);
+	bu_vls_sprintf(&hname, "%s", elements[0].c_str());
+	XXH64_update(&h_state, bu_vls_cstr(&hname), bu_vls_strlen(&hname)*sizeof(char));
+	phe.push_back((unsigned long long)XXH64_digest(&h_state));
+    }
+    bu_vls_free(&hname); 
+
+    // If we're cyclic, path is invalid
+    if (path_cyclic(phe))
+	return std::vector<unsigned long long>();
+
+    // parent/child relationship validate
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    std::unordered_map<unsigned long long, unsigned long long>::iterator i_it;
+    unsigned long long phash = phe[0];
+    for (size_t i = 1; i < phe.size(); i++) {
+	pc_it = p_c.find(phash);
+	// The parent comb structure is stored only under its original name's hash - if
+	// we have a numbered instance from a comb tree as a parent, we may be able to
+	// map it to the correct entry with i_map.  If not, we have an invalid path.
+	if (pc_it == p_c.end()) {
+	    i_it = i_map.find(phash);
+	    if (i_it == i_map.end())
+		return std::vector<unsigned long long>();
+	    phash = i_it->second;
+	    pc_it = p_c.find(phash);
+	    if (pc_it == p_c.end())
+		return std::vector<unsigned long long>();
+	}
+	unsigned long long chash = phe[i];
+	if (pc_it->second.find(chash) == pc_it->second.end()) {
+	    bu_log("Invalid element path: %s\n", elements[i].c_str());
+	    return std::vector<unsigned long long>();
+	}
+	phash = chash;
+    }
+
+    return phe;
+}
+
+#if 0
+bool
+DbiState::is_solid(unsigned long long key)
+{
+    // Fastest way should be to do a dp check
+    std::unordered_map<unsigned long long, struct directory *>::iterator d_it;
+    d_it = d_map.find(key);
+
+    // If we didn't find it, check if this is an instance key
+    if (d_it == d_map.end()) {
+	std::unordered_map<unsigned long long, unsigned long long>::iterator i_it;
+	i_it = i_map.find(key);
+	if (i_it != i_map.end()) {
+	    d_it = d_map.find(i_it->second);
+	    // An invalid entry can't be walked, so treat it as a solid
+	    if (d_it == d_map.end()) {
+		return true;
+	    }
+	} else {
+	    // An invalid entry can't be walked, so treat it as a solid
+	    return true;
+	}
+    }
+
+    if (!(d_it->second->d_flags & RT_DIR_COMB))
+	return true;
+
+    return false;
+}
+
+std::vector<unsigned long long> *
+DbiState::comb_children(unsigned long long key)
+{
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator pv_it;
+    pv_it = p_v.find(key);
+
+    // If we didn't find it, check if this is an instance key
+    if (pv_it == p_v.end()) {
+	std::unordered_map<unsigned long long, unsigned long long>::iterator i_it;
+	i_it = i_map.find(key);
+	if (i_it != i_map.end()) {
+	    pv_it = p_v.find(i_it->second);
+	    if (pv_it == p_v.end()) {
+		return NULL;
+	    }
+	} else {
+	    return NULL;
+	}
+    }
+
+    return &pv_it->second;
+}
+#endif
+
 unsigned int
 DbiState::color_int(struct bu_color *c)
 {
@@ -394,6 +587,34 @@ DbiState::get_matrix(matp_t m, unsigned long long p_key, unsigned long long i_ke
 }
 
 bool
+DbiState::get_path_matrix(matp_t m, std::vector<unsigned long long> &elements)
+{
+    bool have_mat = false;
+    if (UNLIKELY(!m))
+	return have_mat;
+
+    MAT_IDN(m);
+    if (elements.size() < 2)
+	return have_mat;
+
+    unsigned long long phash = elements[0];
+    for (size_t i = 1; i < elements.size(); i++) {
+	unsigned long long chash = elements[i];
+	mat_t nm; 
+	bool got_mat = get_matrix(nm, phash, chash);
+	if (got_mat) {
+	    mat_t cmat;
+	    bn_mat_mul(cmat, m, nm);
+	    MAT_COPY(m, cmat);
+	    have_mat = true;
+	}   
+	phash = chash;
+    }
+
+    return have_mat;
+}
+
+bool
 DbiState::get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned long long hash)
 {
 
@@ -508,6 +729,12 @@ DbiState::get_path_bbox(point_t *bbmin, point_t *bbmax, std::vector<unsigned lon
 void
 DbiState::update()
 {
+    if (!added.size() && !changed.size() && !removed.size()) {
+	changed_hashes.clear();
+	old_names.clear();
+	return;
+    }
+
     std::unordered_set<unsigned long long>::iterator s_it;
     std::unordered_set<struct directory *>::iterator g_it;
 
@@ -518,6 +745,7 @@ DbiState::update()
 
     // dps -> hashes
     XXH64_state_t h_state;
+    changed_hashes.clear();
     for(g_it = changed.begin(); g_it != changed.end(); g_it++) {
 	struct directory *dp = *g_it;
 	XXH64_reset(&h_state, 0);
@@ -528,8 +756,11 @@ DbiState::update()
 
     // For all associated view states, cache their collapsed drawn
     // paths
+    shared_vs->cache_collapsed();
     std::unordered_map<struct bview *, BViewState *>::iterator v_it;
     for (v_it = view_states.begin(); v_it != view_states.end(); v_it++) {
+	if (v_it->second == shared_vs)
+	    continue;
 	v_it->second->cache_collapsed();
     }
 
@@ -605,7 +836,10 @@ DbiState::update()
 
     // For all associated view states, execute any necessary changes to
     // view objects and lists
+    shared_vs->redraw();
     for (v_it = view_states.begin(); v_it != view_states.end(); v_it++) {
+	if (v_it->second == shared_vs)
+	    continue;
 	v_it->second->redraw();
     }
 
@@ -622,6 +856,7 @@ DbiState::DbiState(struct db_i *dbi_p)
 {
     BU_GET(res, struct resource);
     rt_init_resource(res, 0, NULL);
+    shared_vs = new BViewState(this);
     dbip = dbi_p;
     if (!dbip)
 	return;
@@ -636,6 +871,7 @@ DbiState::DbiState(struct db_i *dbi_p)
 
 DbiState::~DbiState()
 {
+    delete shared_vs;
     rt_clean_resource_basic(NULL, res);
     BU_PUT(res, struct resource);
 }
