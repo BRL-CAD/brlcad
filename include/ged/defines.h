@@ -315,10 +315,12 @@ class GED_EXPORT DbiState {
 	bool need_update_nref = true;
 
     private:
+	void populate_maps(struct directory *dp, unsigned long long phash, int reset);
 	unsigned long long update_dp(struct directory *dp, int reset);
 	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
 	unsigned int color_int(struct bu_color *);
 	int int_color(struct bu_color *c, unsigned int);
+	struct resource *res = NULL;
 };
 
 

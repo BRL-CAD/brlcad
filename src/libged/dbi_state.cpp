@@ -146,24 +146,24 @@ populate_walk_tree(union tree *tp, void *d, int subtract_skip,
 }
 
 
-static void
-populate_maps(DbiState *dbis, struct directory *dp, unsigned long long phash, int reset)
+void
+DbiState::populate_maps(struct directory *dp, unsigned long long phash, int reset)
 {
     if (!(dp->d_flags & RT_DIR_COMB))
 	return;
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator pv_it;
-    pc_it = dbis->p_c.find(phash);
-    pv_it = dbis->p_v.find(phash);
-    if (pc_it == dbis->p_c.end() || pv_it != dbis->p_v.end() || reset) {
-	if (reset && pc_it != dbis->p_c.end()) {
+    pc_it = p_c.find(phash);
+    pv_it = p_v.find(phash);
+    if (pc_it == p_c.end() || pv_it != p_v.end() || reset) {
+	if (reset && pc_it != p_c.end()) {
 	    pc_it->second.clear();
 	}
-	if (reset && pv_it != dbis->p_v.end()) {
+	if (reset && pv_it != p_v.end()) {
 	    pv_it->second.clear();
 	}
 	struct rt_db_internal in;
-	if (rt_db_get_internal(&in, dp, dbis->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal(&in, dp, dbip, NULL, res) < 0)
 	    return;
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
 	if (!comb->tree)
@@ -171,7 +171,7 @@ populate_maps(DbiState *dbis, struct directory *dp, unsigned long long phash, in
 
 	std::unordered_map<unsigned long long, unsigned long long> i_count;
 	struct walk_data d;
-	d.dbis = dbis;
+	d.dbis = this;
 	d.phash = phash;
 	populate_walk_tree(comb->tree, (void *)&d, 0, populate_leaf);
 	rt_db_free_internal(&in);
@@ -247,7 +247,7 @@ DbiState::update_dp(struct directory *dp, int reset)
 	mat_t m;
 	MAT_IDN(m);
 	int bret = rt_bound_instance(&bmin, &bmax, dp, dbip,
-		&ttol, &tol, &m, &rt_uniresource, NULL);
+		&ttol, &tol, &m, res, NULL);
 	if (bret != -1) {
 	    for (size_t j = 0; j < 3; j++)
 		bboxes[hash].push_back(bmin[j]);
@@ -258,7 +258,7 @@ DbiState::update_dp(struct directory *dp, int reset)
 
     // Encode hierarchy info if this is a comb
     if (dp->d_flags & RT_DIR_COMB)
-	populate_maps(this, dp, hash, reset);
+	populate_maps(dp, hash, reset);
 
     // Check for various drawing related attributes
     struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
@@ -512,7 +512,7 @@ DbiState::update()
     std::unordered_set<struct directory *>::iterator g_it;
 
     if (need_update_nref) {
-	db_update_nref(dbip, &rt_uniresource);
+	db_update_nref(dbip, res);
 	need_update_nref = false;
     }
 
@@ -620,6 +620,9 @@ DbiState::update()
 
 DbiState::DbiState(struct db_i *dbi_p)
 {
+    // TODO - either accept an app resource or use a local one
+    res = &rt_uniresource;
+
     dbip = dbi_p;
     if (!dbip)
 	return;
