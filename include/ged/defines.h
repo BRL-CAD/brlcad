@@ -248,8 +248,7 @@ class GED_EXPORT DbiState {
 	bool get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned long long hash);
 	bool get_path_bbox(point_t *bbmin, point_t *bbmax, std::vector<unsigned long long> &elements);
 
-	//bool is_solid(unsigned long long key);
-	//std::vector<unsigned long long> *comb_children(unsigned long long key);
+	void print_path(struct bu_vls *opath, std::vector<unsigned long long> &path);
 
 	std::vector<unsigned long long> digest_path(const char *path);
 

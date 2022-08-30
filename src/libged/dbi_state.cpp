@@ -179,19 +179,13 @@ DbiState::populate_maps(struct directory *dp, unsigned long long phash, int rese
 }
 
 unsigned long long
-path_hash(std::vector<unsigned long long> &path, size_t max_len)
+DbiState::path_hash(std::vector<unsigned long long> &path, size_t max_len)
 {
     size_t mlen = (max_len) ? max_len : path.size();
     XXH64_state_t h_state;
     XXH64_reset(&h_state, 0);
     XXH64_update(&h_state, path.data(), mlen * sizeof(unsigned long long));
     return (unsigned long long)XXH64_digest(&h_state);
-}
-
-unsigned long long
-DbiState::path_hash(std::vector<unsigned long long> &path, size_t max_len)
-{
-    return path_hash(path, max_len);
 }
 
 static void
@@ -281,7 +275,7 @@ std::vector<unsigned long long>
 DbiState::digest_path(const char *path)
 {
     // If no path, nothing to process
-    if (path)
+    if (!path)
 	return std::vector<unsigned long long>();
 
     // Digest the string into individual path elements
@@ -294,7 +288,7 @@ DbiState::digest_path(const char *path)
     XXH64_state_t h_state;
     for (size_t i = 0; i < elements.size(); i++) {
 	XXH64_reset(&h_state, 0);
-	bu_vls_sprintf(&hname, "%s", elements[0].c_str());
+	bu_vls_sprintf(&hname, "%s", elements[i].c_str());
 	XXH64_update(&h_state, bu_vls_cstr(&hname), bu_vls_strlen(&hname)*sizeof(char));
 	phe.push_back((unsigned long long)XXH64_digest(&h_state));
     }
@@ -333,59 +327,53 @@ DbiState::digest_path(const char *path)
     return phe;
 }
 
-#if 0
-bool
-DbiState::is_solid(unsigned long long key)
+void
+DbiState::print_path(struct bu_vls *opath, std::vector<unsigned long long> &path)
 {
-    // Fastest way should be to do a dp check
-    std::unordered_map<unsigned long long, struct directory *>::iterator d_it;
-    d_it = d_map.find(key);
+    if (!opath || !path.size())
+	return;
 
-    // If we didn't find it, check if this is an instance key
-    if (d_it == d_map.end()) {
-	std::unordered_map<unsigned long long, unsigned long long>::iterator i_it;
-	i_it = i_map.find(key);
-	if (i_it != i_map.end()) {
-	    d_it = d_map.find(i_it->second);
-	    // An invalid entry can't be walked, so treat it as a solid
-	    if (d_it == d_map.end()) {
-		return true;
-	    }
-	} else {
-	    // An invalid entry can't be walked, so treat it as a solid
-	    return true;
+    bu_vls_trunc(opath, 0);
+    for (size_t i = 0; i < path.size(); i++) {
+
+	// First, see if the hash is an instance string
+	if (i_str.find(path[i]) != i_str.end()) {
+	    bu_vls_printf(opath, "%s", i_str[path[i]].c_str());
+	    if (i < path.size() - 1)
+		bu_vls_printf(opath, "/");
+	    continue;
 	}
+
+	// If we have potentially obsolete names, check those
+	// before trying the dp (which may no longer be invalid)
+	if (old_names.size() && old_names.find(path[i]) != old_names.end()) {
+	    bu_vls_printf(opath, "%s", old_names[path[i]].c_str());
+	    if (i < path.size() - 1)
+		bu_vls_printf(opath, "/");
+	    continue;
+	}
+
+	// If not, try the directory pointer
+	if (d_map.find(path[i]) != d_map.end()) {
+	    bu_vls_printf(opath, "%s", d_map[path[i]]->d_namep);
+	    if (i < path.size() - 1)
+		bu_vls_printf(opath, "/");
+	    continue;
+	}
+
+	// Last option - invalid string
+	if (invalid_entry_map.find(path[i]) != invalid_entry_map.end()) {
+	    bu_vls_printf(opath, "%s", invalid_entry_map[path[i]].c_str());
+	    if (i < path.size() - 1)
+		bu_vls_printf(opath, "/");
+	    continue;
+	}
+
+	bu_vls_printf(opath, "ERROR!!!");
     }
-
-    if (!(d_it->second->d_flags & RT_DIR_COMB))
-	return true;
-
-    return false;
 }
 
-std::vector<unsigned long long> *
-DbiState::comb_children(unsigned long long key)
-{
-    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator pv_it;
-    pv_it = p_v.find(key);
 
-    // If we didn't find it, check if this is an instance key
-    if (pv_it == p_v.end()) {
-	std::unordered_map<unsigned long long, unsigned long long>::iterator i_it;
-	i_it = i_map.find(key);
-	if (i_it != i_map.end()) {
-	    pv_it = p_v.find(i_it->second);
-	    if (pv_it == p_v.end()) {
-		return NULL;
-	    }
-	} else {
-	    return NULL;
-	}
-    }
-
-    return &pv_it->second;
-}
-#endif
 
 unsigned int
 DbiState::color_int(struct bu_color *c)
