@@ -54,9 +54,9 @@ prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     struct db_full_path *fp = (struct db_full_path *)s->s_path;
+    struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
     const struct bn_tol *tol = d->tol;
     const struct bg_tess_tol *ttol = d->ttol;
-    struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
     RT_CK_DB_INTERNAL(ip);
     RT_CK_DIR(dp);
     BN_CK_TOL(tol);
@@ -133,11 +133,12 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
 
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     struct db_full_path *fp = (struct db_full_path *)s->s_path;
+    struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
     struct db_i *dbip = d->dbip;
     struct rt_db_internal dbintern;
     RT_DB_INTERNAL_INIT(&dbintern);
     struct rt_db_internal *ip = &dbintern;
-    int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, s->s_mat, d->res);
+    int ret = rt_db_get_internal(ip, dp, dbip, s->s_mat, d->res);
     if (ret < 0)
 	return 0;
 
@@ -249,7 +250,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	return;
     struct db_i *dbip = d->dbip;
     struct db_full_path *fp = (struct db_full_path *)s->s_path;
-    struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
+    struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
 
     // We need the key to look up the LoD data from the cache, and if we don't
     // already have cache data for this bot we need to generate it.
@@ -339,7 +340,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     struct ged_full_detail_clbk_data *cbd;
     BU_GET(cbd, ged_full_detail_clbk_data);
     cbd->dbip = dbip;
-    cbd->dp = DB_FULL_PATH_CUR_DIR(fp);
+    cbd->dp = dp;
     cbd->res = &rt_uniresource;
     cbd->intern = NULL;
     bg_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
@@ -378,7 +379,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 
     struct db_i *dbip = d->dbip;
     struct db_full_path *fp = (struct db_full_path *)s->s_path;
-    struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
+    struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
     const struct bn_tol *tol = d->tol;
     const struct bg_tess_tol *ttol = d->ttol;
     struct bv_mesh_lod *lod = NULL;
@@ -481,7 +482,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     struct ged_full_detail_clbk_data *cbd;
     BU_GET(cbd, ged_full_detail_clbk_data);
     cbd->dbip = dbip;
-    cbd->dp = DB_FULL_PATH_CUR_DIR(fp);
+    cbd->dp = dp;
     cbd->res = &rt_uniresource;
     cbd->intern = NULL;
     bg_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
@@ -627,7 +628,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
      **************************************************************************/
     struct db_i *dbip = d->dbip;
     struct db_full_path *fp = (struct db_full_path *)s->s_path;
-    struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
+    struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
 
     // Adaptive BoTs have specialized LoD routines to help cope with very large
     // data sets, both for wireframe and shaded mode.
@@ -652,7 +653,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     struct rt_db_internal dbintern;
     RT_DB_INTERNAL_INIT(&dbintern);
     struct rt_db_internal *ip = &dbintern;
-    int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, s->s_mat, d->res);
+    int ret = rt_db_get_internal(ip, dp, dbip, s->s_mat, d->res);
     if (ret < 0)
 	return;
 

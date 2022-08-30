@@ -156,6 +156,17 @@ draw_gather_paths(void *d, unsigned long long c_hash, matp_t m, int UNUSED(op))
 	// Solid - scene object time
 	unsigned long long phash = dd->gedp->dbi_state->path_hash(dd->path_hashes, 0);
 	struct bv_scene_obj *sp = bv_obj_get(dd->v, BV_DB_OBJS);
+
+	struct draw_update_data_t *ud;
+	BU_GET(ud, struct draw_update_data_t);
+	ud->dbip = dd->gedp->dbip;
+	ud->tol = &dd->gedp->ged_wdbp->wdb_tol;
+	ud->ttol = &dd->gedp->ged_wdbp->wdb_ttol;
+	ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view... local_res is temporary, don't use it here
+	ud->mesh_c = dd->gedp->ged_lod;
+	sp->dp = d_it->second;
+	sp->s_i_data = (void *)ud;
+
 	dd->gedp->dbi_state->print_path(&sp->s_name, dd->path_hashes);
 	bu_log("make solid %s\n", bu_vls_cstr(&sp->s_name));
 	dd->gedp->dbi_state->view_states[dd->v]->s_map[phash] = sp;
@@ -354,7 +365,7 @@ ged_draw_view(struct bview *v, int bot_threshold, int no_autoview, int blank_sla
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
 	bu_log("draw %s\n", bu_vls_cstr(&s->s_name));
-	//draw_scene(s, v);
+	draw_scene(s, v);
     }
 
     // Make sure what we've drawn is visible, unless we've a reason not to.

@@ -196,6 +196,7 @@ struct bv_scene_obj  {
     unsigned long long s_type_flags;
     struct bu_vls s_name;       /**< @brief object name (may not be unique, used for activities like path lookup) */
     void *s_path;       	/**< @brief alternative (app specific) encoding of s_name */
+    void *dp;       		/**< @brief app obj data */
     struct bu_vls s_uuid;       /**< @brief object name (unique, may be less immediately clear to user) */
     mat_t s_mat;		/**< @brief mat to use for internal lookup and mesh LoD drawing */
 
