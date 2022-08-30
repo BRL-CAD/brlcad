@@ -137,7 +137,6 @@ if (BRLCAD_GDAL_BUILD)
     -DGDAL_ENABLE_DRIVER_HEIF=OFF               # libheif
     -DGDAL_ENABLE_DRIVER_JP2KAK=OFF             # kakadu library
     -DGDAL_ENABLE_DRIVER_JP2LURA=OFF            # lurawave library
-    -DGDAL_ENABLE_DRIVER_JP2MRSID=OFF           # MrSID SDK
     -DGDAL_ENABLE_DRIVER_JP2OPENJPEG=OFF        # openjpeg >= 2.1
     -DGDAL_ENABLE_DRIVER_JPEGXL=OFF             # libjxl
     -DGDAL_ENABLE_DRIVER_JPIPKAK=OFF            # kakadu library
