@@ -582,22 +582,6 @@ RELATED FUNCTIONS:
 
   /* deCasteljau (from the right) */
   if (alpha1 != 0.0) {
-      //cv0 = CV;
-      //double w = 1/(*(cv0 + 7));
-      //double wei = alpha0 * alpha0 + w * alpha0 * alpha1 * 2 + alpha1 * alpha1;
-      //*cv0 = *cv0 * alpha0 * alpha0 + *(cv0 + 4) * alpha0 * alpha1 * w * 2 + *(cv0 + 8) * alpha1 * alpha1;
-      ////*cv0 /= wei;
-      //cv0++;
-      //*cv0 = *cv0 * alpha0 * alpha0 + *(cv0 + 4) * alpha0 * alpha1 * w * 2 + *(cv0 + 8) * alpha1 * alpha1;
-      ////*cv0 /= wei;
-      //cv0++;
-      //*cv0 = *cv0 * alpha0 * alpha0 + *(cv0 + 4) * alpha0 * alpha1 * w * 2 + *(cv0 + 8) * alpha1 * alpha1;
-      ////*cv0 /= wei;
-      //cv0++;
-      //*cv0 = wei;
-
-
-
     j = order; while (--j) {
       cv0 = CV;
       cv1 = cv0 + cvdim;
