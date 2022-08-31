@@ -51,7 +51,6 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     VCROSS(x_dir, eip->rhc_H, eip->rhc_B);
     VUNITIZE(x_dir);
     VSCALE(x_dir, x_dir, eip->rhc_r);
-    //VSCALE(x_dir, x_dir, -1);
     VMOVE(y_dir, eip->rhc_B);
 
     VMOVE(p1_origin, eip->rhc_V);
