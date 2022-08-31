@@ -143,9 +143,10 @@ init_scene_obj(struct dd_t *dd)
 	sp->s_os->transparency = dd->vs->transparency;
 
     dd->gedp->dbi_state->print_path(&sp->s_name, dd->path_hashes);
+    BViewState *bvs = dd->gedp->dbi_state->get_view_state(dd->v);
     bu_log("make solid %s\n", bu_vls_cstr(&sp->s_name));
-    dd->gedp->dbi_state->view_states[dd->v]->s_map[phash] = sp;
-    dd->gedp->dbi_state->view_states[dd->v]->s_keys[phash] = dd->path_hashes;
+    bvs->s_map[phash] = sp;
+    bvs->s_keys[phash] = dd->path_hashes;
 
     return sp;
 }
@@ -286,7 +287,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	// In drawing modes 3 (bigE) and 5 (points) we are producing an
 	// evaluated shape, rather than iterating to get the solids, so
 	// we work directly with the supplied path
-	BViewState *bvs = gedp->dbi_state->view_states[v];
+	BViewState *bvs = gedp->dbi_state->get_view_state(v);
 	if (vs->s_dmode == 3 || vs->s_dmode == 5) {
 	    unsigned long long phash = gedp->dbi_state->path_hash(d.path_hashes, 0);
 	    std::unordered_map<unsigned long long, struct bv_scene_obj *>::iterator m_it;

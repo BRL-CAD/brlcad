@@ -254,6 +254,8 @@ class GED_EXPORT DbiState {
 
 	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
 
+	BViewState *get_view_state(struct bview *);
+
 	// These maps are the ".g ground truth" of the comb structures - the set
 	// associated with each has contains all the child hashes from the comb
 	// definition in the database for quick lookup, and the vector preserves

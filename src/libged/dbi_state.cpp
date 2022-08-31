@@ -713,6 +713,16 @@ DbiState::get_path_bbox(point_t *bbmin, point_t *bbmax, std::vector<unsigned lon
     return get_bbox(bbmin, bbmax, NULL, elements[elements.size() - 1]);
 }
 
+BViewState *
+DbiState::get_view_state(struct bview *v)
+{
+    if (!v->independent)
+	return shared_vs;
+    if (view_states.find(v) != view_states.end())
+	return view_states[v];
+
+    return shared_vs;
+}
 
 void
 DbiState::update()
@@ -944,7 +954,7 @@ BViewState::check_status(
 unsigned long long
 BViewState::path_hash(std::vector<unsigned long long> &path, size_t max_len)
 {
-    return path_hash(path, max_len);
+    return dbis->path_hash(path, max_len);
 }
 
 void
