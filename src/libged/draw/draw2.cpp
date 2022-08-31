@@ -96,6 +96,12 @@ init_scene_obj(struct dd_t *dd)
 
     std::unordered_map<unsigned long long, struct directory *>::iterator d_it;
     d_it = dd->gedp->dbi_state->d_map.find(dd->path_hashes[dd->path_hashes.size()-1]);
+    if (d_it == dd->gedp->dbi_state->d_map.end()) {
+	std::unordered_map<unsigned long long, unsigned long long>::iterator m_it;
+	m_it = dd->gedp->dbi_state->i_map.find(dd->path_hashes[dd->path_hashes.size()-1]);
+	if (m_it != dd->gedp->dbi_state->i_map.end())
+	    d_it = dd->gedp->dbi_state->d_map.find(m_it->second);
+    }
 
     struct draw_update_data_t *ud;
     BU_GET(ud, struct draw_update_data_t);
@@ -187,8 +193,16 @@ draw_gather_paths(void *d, unsigned long long c_hash, matp_t m, int UNUSED(op))
 
     std::unordered_map<unsigned long long, struct directory *>::iterator d_it;
     d_it = dd->gedp->dbi_state->d_map.find(c_hash);
-    if (d_it == dd->gedp->dbi_state->d_map.end())
-	return;
+    if (d_it == dd->gedp->dbi_state->d_map.end()) {
+	std::unordered_map<unsigned long long, unsigned long long>::iterator m_it;
+	m_it = dd->gedp->dbi_state->i_map.find(c_hash);
+	if (m_it != dd->gedp->dbi_state->i_map.end()) {
+	    d_it = dd->gedp->dbi_state->d_map.find(m_it->second);
+	} else {
+	    bu_log("Could not find dp!\n");
+	    return;
+	}
+    } 
 
     dd->path_hashes.push_back(c_hash);
     mat_t om, nm;

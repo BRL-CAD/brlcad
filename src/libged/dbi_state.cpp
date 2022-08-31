@@ -67,7 +67,7 @@ populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
 	// hash the string labeling the instance and map it to the correct
 	// parent comb so we can associate it with the tree contents
 	struct bu_vls iname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&iname, "%s@%llu", name, i_count[chash]);
+	bu_vls_sprintf(&iname, "%s@%llu", name, i_count[chash] - 1);
 	XXH64_reset(&h_state, 0);
 	XXH64_update(&h_state, bu_vls_cstr(&iname), bu_vls_strlen(&iname)*sizeof(char));
 	unsigned long long ihash = (unsigned long long)XXH64_digest(&h_state);
