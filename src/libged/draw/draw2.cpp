@@ -264,6 +264,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    transparency_set = true;
     }
 
+    BViewState *bvs = gedp->dbi_state->get_view_state(v);
+
     /* Validate that the supplied args are current, valid paths in the
      * database.  If so, walk to find the solids. */
     for (size_t i = 0; i < (size_t)argc; ++i) {
@@ -287,7 +289,6 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	// In drawing modes 3 (bigE) and 5 (points) we are producing an
 	// evaluated shape, rather than iterating to get the solids, so
 	// we work directly with the supplied path
-	BViewState *bvs = gedp->dbi_state->get_view_state(v);
 	if (vs->s_dmode == 3 || vs->s_dmode == 5) {
 	    unsigned long long phash = gedp->dbi_state->path_hash(d.path_hashes, 0);
 	    std::unordered_map<unsigned long long, struct bv_scene_obj *>::iterator m_it;
@@ -330,8 +331,9 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	draw_gather_paths(&d, i_key, NULL, OP_UNION);
     }
 
-    // TODO - update BViewState drawn_paths set with a collapse call, now that
-    // we have accommodated all specified paths
+    // Update BViewState active_paths set with a collapse call, now that we
+    // have accommodated all specified paths incorporated
+    bvs->collapse(NULL);
 
     // Scene objects are created and stored. The next step is to generate
     // wireframes, triangles, etc. for each object based on current settings.

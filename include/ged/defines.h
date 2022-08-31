@@ -217,12 +217,13 @@ class GED_EXPORT BViewState {
 	// it is practically speaking an implementation detail
 	void cache_collapsed();
 
+	void collapse(std::vector<std::vector<unsigned long long>> *collapsed);
+
     private:
 	DbiState *dbis;
 
 	int check_status(std::unordered_set<unsigned long long> *invalid_objects, std::vector<unsigned long long> &cpath);
 
-	void collapse(std::vector<std::vector<unsigned long long>> &collapsed);
 
 
 	std::unordered_set<unsigned long long> all_fully_drawn;

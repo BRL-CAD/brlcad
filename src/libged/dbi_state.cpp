@@ -958,13 +958,14 @@ BViewState::path_hash(std::vector<unsigned long long> &path, size_t max_len)
 }
 
 void
-BViewState::collapse(std::vector<std::vector<unsigned long long>> &collapsed)
+BViewState::collapse(std::vector<std::vector<unsigned long long>> *collapsed)
 {
     std::unordered_set<unsigned long long>::iterator s_it;
     std::map<size_t, std::unordered_set<unsigned long long>> depth_groups;
 
     // Reset containers
-    collapsed.clear();
+    if (collapsed)
+	collapsed->clear();
     all_fully_drawn.clear();
 
     // Group paths of the same depth.  Depth == 1 paths are already
@@ -977,7 +978,8 @@ BViewState::collapse(std::vector<std::vector<unsigned long long>> &collapsed)
 	    if (k_it == s_keys.end())
 		continue;
 	    if (k_it->second.size() == 1) {
-		collapsed.push_back(k_it->second);
+		if (collapsed)
+		    collapsed->push_back(k_it->second);
 		all_fully_drawn.insert(k_it->first);
 	    } else {
 		depth_groups[k_it->second.size()].insert(k_it->first);
@@ -986,7 +988,8 @@ BViewState::collapse(std::vector<std::vector<unsigned long long>> &collapsed)
     } else {
 	for (k_it = s_keys.begin(); k_it != s_keys.end(); k_it++) {
 	    if (k_it->second.size() == 1) {
-		collapsed.push_back(k_it->second);
+		if (collapsed)
+		    collapsed->push_back(k_it->second);
 		all_fully_drawn.insert(k_it->first);
 	    } else {
 		depth_groups[k_it->second.size()].insert(k_it->first);
@@ -1062,7 +1065,8 @@ BViewState::collapse(std::vector<std::vector<unsigned long long>> &collapsed)
 		for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
 		    std::vector<unsigned long long> trimmed = s_keys[*s_it];
 		    trimmed.resize(plen);
-		    collapsed.push_back(trimmed);
+		    if (collapsed)
+			collapsed->push_back(trimmed);
 		    // Hash is calculated on that trimmed path, so this time we
 		    // don't need to specify a depth limit.
 		    all_fully_drawn.insert(path_hash(trimmed, 0));
@@ -1085,7 +1089,8 @@ BViewState::collapse(std::vector<std::vector<unsigned long long>> &collapsed)
 	    trimmed.resize(1);
 	    //if (dbis->d_map.find(trimmed[0]) == dbis->d_map.end())
 	//	continue;
-	    collapsed.push_back(trimmed);
+	    if (collapsed)
+		collapsed->push_back(trimmed);
 	}
     }
 }
@@ -1121,7 +1126,7 @@ BViewState::cache_collapsed()
     // we want the answers for this collapse to be from the prior state, not
     // the current state.
     prev_collapsed.clear();
-    collapse(prev_collapsed);
+    collapse(&prev_collapsed);
 #if 0
     {
 	// DEBUG - print results
