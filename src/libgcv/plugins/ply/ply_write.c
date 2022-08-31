@@ -155,11 +155,11 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	}
 
 	/* open outputfile using specified type */
-        if (!strcmp(pstate->ply_write_options->type, "asc")) {
+        if (!bu_strcmp(pstate->ply_write_options->type, "asc")) {
             ply_fp = ply_create(region_file, PLY_ASCII, NULL, 0, NULL);
-        } else if (!strcmp(pstate->ply_write_options->type, "le")) {
+        } else if (!bu_strcmp(pstate->ply_write_options->type, "le")) {
 	    ply_fp = ply_create(region_file, PLY_LITTLE_ENDIAN, NULL, 0, NULL);
-	} else if (!strcmp(pstate->ply_write_options->type, "be")) {
+	} else if (!bu_strcmp(pstate->ply_write_options->type, "be")) {
 	    ply_fp = ply_create(region_file, PLY_BIG_ENDIAN, NULL, 0, NULL);
 	} else {
 	    ply_fp = ply_create(region_file, PLY_DEFAULT, NULL, 0, NULL);
@@ -651,11 +651,11 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
 
     if (!state.ply_write_options->separate) {
         /* open outputfile using specified type */
-        if (!strcmp(state.ply_write_options->type, "asc")) {
+        if (!bu_strcmp(state.ply_write_options->type, "asc")) {
             ply_fp = ply_create(state.output_file, PLY_ASCII, NULL, 0, NULL);
-        } else if (!strcmp(state.ply_write_options->type, "le")) {
+        } else if (!bu_strcmp(state.ply_write_options->type, "le")) {
 	    ply_fp = ply_create(state.output_file, PLY_LITTLE_ENDIAN, NULL, 0, NULL);
-	} else if (!strcmp(state.ply_write_options->type, "be")) {
+	} else if (!bu_strcmp(state.ply_write_options->type, "be")) {
 	    ply_fp = ply_create(state.output_file, PLY_BIG_ENDIAN, NULL, 0, NULL);
 	} else {
 	    ply_fp = ply_create(state.output_file, PLY_DEFAULT, NULL, 0, NULL);

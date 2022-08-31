@@ -280,7 +280,7 @@ ged_selection_sets_put(struct ged_selection_sets *s, const char *s_name)
     if (!s)
 	return;
     std::map<std::string, struct ged_selection_set *>::iterator s_it;
-    std::string sname = (s_name || !strlen(s_name)) ? std::string("default") : std::string(s_name);
+    std::string sname = (!s_name || !strlen(s_name)) ? std::string("default") : std::string(s_name);
     s_it = s->i->s->find(sname);
     if (s_it == s->i->s->end())
 	return;

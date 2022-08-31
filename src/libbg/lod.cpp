@@ -790,14 +790,17 @@ bg_mesh_lod_key_put(struct bg_mesh_lod_context *c, const char *name, unsigned lo
     unsigned long long hash = (unsigned long long)hash_val;
     bu_vls_sprintf(&keystr, "%llu", hash);
 
-    MDB_val mdb_key, mdb_data;
+    MDB_val mdb_key;
+    MDB_val mdb_data[2];
     mdb_txn_begin(c->i->name_env, NULL, 0, &c->i->name_txn);
     mdb_dbi_open(c->i->name_txn, NULL, 0, &c->i->name_dbi);
     mdb_key.mv_size = bu_vls_strlen(&keystr)*sizeof(char);
     mdb_key.mv_data = (void *)bu_vls_cstr(&keystr);
-    mdb_data.mv_size = sizeof(key);
-    mdb_data.mv_data = (void *)&key;
-    int rc = mdb_put(c->i->name_txn, c->i->name_dbi, &mdb_key, &mdb_data, 0);
+    mdb_data[0].mv_size = sizeof(key);
+    mdb_data[0].mv_data = (void *)&key;
+    mdb_data[1].mv_size = 0;
+    mdb_data[1].mv_data = NULL;
+    int rc = mdb_put(c->i->name_txn, c->i->name_dbi, &mdb_key, mdb_data, 0);
     mdb_txn_commit(c->i->name_txn);
 
     bu_vls_free(&keystr);
@@ -919,7 +922,7 @@ class POPState {
 	size_t cache_get(void **data, const char *component);
 	void cache_done();
 	void cache_del(const char *component);
-	MDB_val mdb_key, mdb_data;
+	MDB_val mdb_key, mdb_data[2];
 
 	// Specific loading and unloading methods
 	void tri_pop_load(int start_level, int level);
@@ -1530,15 +1533,21 @@ POPState::cache_write(const char *component, std::stringstream &s)
 
     // Write out key/value to LMDB database, where the key is the hash
     // and the value is the serialized LoD data
-    //
+    char *keycstr = bu_strdup(keystr.c_str());
+    void *bdata = bu_calloc(buffer.length()+1, sizeof(char), "bdata");
+    memcpy(bdata, buffer.data(), buffer.length()*sizeof(char));
     mdb_txn_begin(c->i->lod_env, NULL, 0, &c->i->lod_txn);
     mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
     mdb_key.mv_size = keystr.length()*sizeof(char);
-    mdb_key.mv_data = (void *)keystr.c_str();
-    mdb_data.mv_size = buffer.length();
-    mdb_data.mv_data = (void *)buffer.c_str();
-    int rc = mdb_put(c->i->lod_txn, c->i->lod_dbi, &mdb_key, &mdb_data, 0);
+    mdb_key.mv_data = (void *)keycstr;
+    mdb_data[0].mv_size = buffer.length()*sizeof(char);
+    mdb_data[0].mv_data = bdata;
+    mdb_data[1].mv_size = 0;
+    mdb_data[1].mv_data = NULL;
+    int rc = mdb_put(c->i->lod_txn, c->i->lod_dbi, &mdb_key, mdb_data, 0);
     mdb_txn_commit(c->i->lod_txn);
+    bu_free(keycstr, "keycstr");
+    bu_free(bdata, "buffer data");
 
     return (!rc) ? true : false;
 }
@@ -1557,19 +1566,21 @@ POPState::cache_get(void **data, const char *component)
     // the default size limit (511)
     //if (keystr.length()*sizeof(char) > mdb_env_get_maxkeysize(c->i->lod_env))
     //	return 0;
-
+    char *keycstr = bu_strdup(keystr.c_str());
     mdb_txn_begin(c->i->lod_env, NULL, 0, &c->i->lod_txn);
     mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
     mdb_key.mv_size = keystr.length()*sizeof(char);
-    mdb_key.mv_data = (void *)keystr.c_str();
-    int rc = mdb_get(c->i->lod_txn, c->i->lod_dbi, &mdb_key, &mdb_data);
+    mdb_key.mv_data = (void *)keycstr;
+    int rc = mdb_get(c->i->lod_txn, c->i->lod_dbi, &mdb_key, &mdb_data[0]);
     if (rc) {
+	bu_free(keycstr, "keycstr");
 	(*data) = NULL;
 	return 0;
     }
-    (*data) = mdb_data.mv_data;
+    bu_free(keycstr, "keycstr");
+    (*data) = mdb_data[0].mv_data;
 
-    return mdb_data.mv_size;
+    return mdb_data[0].mv_size;
 }
 
 void
@@ -2129,7 +2140,7 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 	fkey = *fkeyp;
 	if (fkey == key)
 	    mdb_cursor_del(cursor, 0);
-	while ((rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) == 0) {
+	while (!mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) {
 	    fkeyp = (unsigned long long *)mdb_data.mv_data;
 	    fkey = *fkeyp;
 	    if (fkey == key)
@@ -2159,7 +2170,7 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 	    return;
 	}
 	mdb_cursor_del(cursor, 0);
-	while ((rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) == 0)
+	while (!mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT))
 	    mdb_cursor_del(cursor, 0);
 	mdb_txn_commit(c->i->lod_txn);
 
@@ -2178,10 +2189,9 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 	    return;
 	}
 	mdb_cursor_del(cursor, 0);
-	while ((rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) == 0)
+	while (!mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT))
 	    mdb_cursor_del(cursor, 0);
 	mdb_txn_commit(c->i->name_txn);
-
 
 	return;
     }

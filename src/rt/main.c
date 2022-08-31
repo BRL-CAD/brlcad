@@ -182,8 +182,6 @@ int fb_setup() {
 	    zoom = fb_getheight(fbp)/height;
 	}
 	(void)fb_view(fbp, width/2, height/2, zoom, zoom);
-    } else {
-	zoom = 1;
     }
     bu_semaphore_release(BU_SEM_SYSCALL);
 

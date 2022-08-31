@@ -100,8 +100,6 @@
 #include <QImage>
 #include <QModelIndex>
 
-#include "xxhash.h"
-
 #include "qtcad/defines.h"
 #include "qtcad/gInstance.h"
 
