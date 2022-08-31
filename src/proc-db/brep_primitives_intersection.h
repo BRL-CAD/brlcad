@@ -1,4 +1,4 @@
-/*                           T E A . H
+/*     B R E P _ P R I M I T I V E S _ I N T E R S E C T I O N . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2022 United States Government as represented by
@@ -17,24 +17,26 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file proc-db/brep_arbintersection.h
+/** @file proc-db/brep_primitives_intersection.h
  *
- * Test arb8 intersection cases
+ * Test primitives intersection cases
  * 
  * brep functions are copied from libged
- * for each pair of arb_8 object, the first arb_8 have the same vertex
- * position, the second are combined for 5*5*5 = 125 cases: 1. arb2 is
- * just right to arb1, 2. arb2 is middle right to arb1, 3. arb2 is in the
- * middle of arb1, 4. arb2 is middle left to arb1, 5. arb2 is just
- * left to arb1,
  *
  */
 
-#ifndef PROC_DB_BREP_ARBINTERSECTION_H
-#define PROC_DB_BREP_ARBINTERSECTION_H
+#ifndef PROC_DB_BREP_PRIMITIVES_INTERSECTION_H
+#define PROC_DB_BREP_PRIMITIVES_INTERSECTION_H
 
 /// @brief All the arb_8 intersect cases have the same arb
 
+/*
+* for each pair of arb_8 object, the first arb_8 have the same vertex
+* position, the second are combined for 5 * 5 * 5 = 125 cases: 1. arb2 is
+* just right to arb1, 2. arb2 is middle right to arb1, 3. arb2 is in the
+* middle of arb1, 4. arb2 is middle left to arb1, 5. arb2 is just
+* left to arb1
+*/
 struct ON_3dPoint ps_arb_0[8] = {
 	{ -1,  -1,  -1 },
 	{ -1,  1,  -1 },
@@ -301,7 +303,7 @@ brep_conversion_comb(struct rt_db_internal* old_internal, const char* name, cons
 
 
 
-#endif /* PROC_DB_BREP_ARBINTERSECTION_H */
+#endif /* PROC_DB_BREP_PRIMITIVES_INTERSECTION_H */
 
 /*
  * Local Variables:

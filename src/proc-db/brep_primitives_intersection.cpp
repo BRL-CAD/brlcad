@@ -1,4 +1,4 @@
-/*                 B R E P _ S I M P L E . C P P
+/*   B R E P _ P R I M I T I V E S _ I N T E R S E C T I O N . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2022 United States Government as represented by
@@ -17,11 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file proc-db/brep_arbintersection.cpp
+/** @file proc-db/brep_primitives_intersection.cpp
  *
- *  Creates some brep objects using arb8 interserction
+ *  Creates brep objects using primitives interserction
  * 
- *  All test datas are defined in brep_arbintersection.h
+ *  All test datas are defined in brep_primitives_intersection.h
  */
 
 #include "common.h"
@@ -35,16 +35,16 @@
 #include "bu/app.h"
 #include "wdb.h"
 #include "brep.h"
-#include "brep_arbintersection.h"
+#include "brep_primitives_intersection.h"
 #include "rt/geom.h"
 #include <string>
 
 struct rt_wdb* outfp;
-const char* db_name = "brep_arbintersection.g";
+const char* db_name = "brep_primitives_intersection.g";
 
 static void
 printusage(void) {
-    fprintf(stderr,"Usage: brep_arbintersection (takes no arguments)\n");
+    fprintf(stderr,"Usage: brep_primitives_intersection (takes no arguments)\n");
 }
 
 void
@@ -173,8 +173,8 @@ int
 create_sph_matrix(float sph0_r = 2.0f, float sph1_r = 1.0f)
 {
     caculate_ell_pos(sph0_r, sph1_r);
-    // caculate vertex positions of arb8s
-    struct ON_3dPoint shift(0, 0, 0);   //each test case have a 4*4*4 space
+    // caculate vertex positions of sphs
+    struct ON_3dPoint shift(0, 0, 0);   //each test case have a shift_space*shift_space*shift_space space
     float shift_space = (sph0_r + sph1_r) * 2;
     std::cout << shift_space << std::endl;
     for (int i = 0; i < 5; i++) {
@@ -243,7 +243,7 @@ create_sph_matrix(float sph0_r = 2.0f, float sph1_r = 1.0f)
 
     struct db_i* dbip = db_open(db_name, DB_OPEN_READONLY);
     if (!dbip) {
-        bu_exit(1, "Unable to open brep_arbintersection.g geometry database file\n");
+        bu_exit(1, "Unable to open brep_primitives_intersection.g geometry database file\n");
     }
     db_dirbuild(dbip);
     for (int i = 0; i < 125; i++) {
