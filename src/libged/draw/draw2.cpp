@@ -79,8 +79,11 @@ path_addition_cyclic(std::vector<unsigned long long> &path)
 struct dd_t {
     struct ged *gedp;
     struct bview *v;
+    struct bv_obj_settings *vs;
     matp_t m;
+    int op;
     int subtract_skip;
+    bool transparency_set;
     std::vector<unsigned long long> path_hashes;
 };
 
@@ -102,6 +105,9 @@ draw_walk_tree(unsigned long long chash, void *d, int subtract_skip,
 	}
     }
 
+    if (op == OP_SUBTRACT)
+	dd->op = op;
+
     if (op == OP_SUBTRACT && subtract_skip)
 	return;
 
@@ -114,7 +120,7 @@ draw_walk_tree(unsigned long long chash, void *d, int subtract_skip,
     (*leaf_func)(d, chash, mp, op);
 }
 
-void
+static void
 draw_gather_paths(void *d, unsigned long long c_hash, matp_t m, int UNUSED(op))
 {
     struct dd_t *dd = (struct dd_t *)d;
@@ -167,6 +173,32 @@ draw_gather_paths(void *d, unsigned long long c_hash, matp_t m, int UNUSED(op))
 	sp->dp = d_it->second;
 	sp->s_i_data = (void *)ud;
 
+	// Get color from path, unless we're overridden
+	struct bu_color c;
+	dd->gedp->dbi_state->path_color(&c, dd->path_hashes);
+	bu_color_to_rgb_chars(&c, sp->s_color);
+	if (dd->vs->color_override) {
+	    sp->s_color[0] = dd->vs->color[0];
+	    sp->s_color[1] = dd->vs->color[1];
+	    sp->s_color[2] = dd->vs->color[2];
+	}
+
+	// Tell scene object what the current matrix is
+	MAT_COPY(sp->s_mat, dd->m);
+
+	// If we're drawing a subtraction and we're not overridden, set the
+	// appropriate flag for dashed line drawing
+	if (!dd->vs->draw_solid_lines_only)
+	    sp->s_soldash = (dd->op == OP_SUBTRACT) ? 1 : 0;
+
+	// Set line width, if the user specified a non-default value
+	if (dd->vs->s_line_width)
+	    sp->s_os->s_line_width = dd->vs->s_line_width;
+
+	// Set transparency, if the user set a non-default value
+	if (dd->transparency_set)
+	    sp->s_os->transparency = dd->vs->transparency;
+
 	dd->gedp->dbi_state->print_path(&sp->s_name, dd->path_hashes);
 	bu_log("make solid %s\n", bu_vls_cstr(&sp->s_name));
 	dd->gedp->dbi_state->view_states[dd->v]->s_map[phash] = sp;
@@ -188,6 +220,20 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 {
     //struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
 
+    // It takes a bit of work to determine if transparency is set -
+    // do it once
+    bool transparency_set = false;
+    if (!NEAR_ZERO(vs->transparency, SMALL_FASTF) && !NEAR_EQUAL(vs->transparency, 1, SMALL_FASTF)) {
+	if (vs->transparency < 0) {
+	    vs->transparency = 0;
+	}
+	if (vs->transparency > 1) {
+	    vs->transparency = 1;
+	}
+	if (!NEAR_ZERO(vs->transparency, SMALL_FASTF) && !NEAR_EQUAL(vs->transparency, 1, SMALL_FASTF))
+	    transparency_set = true;
+    }
+
     /* Validate that the supplied args are current, valid paths in the
      * database.  If so, walk to find the solids. */
     for (size_t i = 0; i < (size_t)argc; ++i) {
@@ -195,13 +241,19 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	MAT_IDN(fm);
 	struct dd_t d;
 	d.v = v;
+	d.vs = vs;
 	d.m = fm;
 	d.gedp = gedp;
+	d.transparency_set = transparency_set;
 	d.subtract_skip = vs->draw_non_subtract_only;
 	d.path_hashes = gedp->dbi_state->digest_path(argv[i]);
 	if (!d.path_hashes.size()) {
 	    continue;
 	}
+
+
+	// Get initial matrix from path
+	gedp->dbi_state->get_path_matrix(d.m, d.path_hashes);
 
 	// Clear any solids that are subpaths of the current path - they
 	// will be recreated
@@ -228,11 +280,9 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	// Walk the tree (via the dbi_state so we don't have to hit disk
 	// to unpack comb trees) to create the solids to be added to
 	// represent this path.
-	mat_t m;
-	gedp->dbi_state->get_path_matrix(m, d.path_hashes);
 	unsigned long long i_key = d.path_hashes[d.path_hashes.size() - 1];
 	d.path_hashes.pop_back();
-	draw_gather_paths(&d, i_key, m, OP_UNION);
+	draw_gather_paths(&d, i_key, NULL, OP_UNION);
     }
 
     // TODO - update BViewState drawn_paths set with a collapse call, now that
