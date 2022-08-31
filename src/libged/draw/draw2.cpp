@@ -87,6 +87,63 @@ struct dd_t {
     std::vector<unsigned long long> path_hashes;
 };
 
+static struct bv_scene_obj *
+init_scene_obj(struct dd_t *dd)
+{
+    // Solid - scene object time
+    unsigned long long phash = dd->gedp->dbi_state->path_hash(dd->path_hashes, 0);
+    struct bv_scene_obj *sp = bv_obj_get(dd->v, BV_DB_OBJS);
+
+    std::unordered_map<unsigned long long, struct directory *>::iterator d_it;
+    d_it = dd->gedp->dbi_state->d_map.find(dd->path_hashes[dd->path_hashes.size()-1]);
+
+    struct draw_update_data_t *ud;
+    BU_GET(ud, struct draw_update_data_t);
+    ud->dbip = dd->gedp->dbip;
+    ud->tol = &dd->gedp->ged_wdbp->wdb_tol;
+    ud->ttol = &dd->gedp->ged_wdbp->wdb_ttol;
+    ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view... local_res is temporary, don't use it here
+    ud->mesh_c = dd->gedp->ged_lod;
+    sp->dp = d_it->second;
+    sp->s_i_data = (void *)ud;
+
+    // Get color from path, unless we're overridden
+    struct bu_color c;
+    dd->gedp->dbi_state->path_color(&c, dd->path_hashes);
+    bu_color_to_rgb_chars(&c, sp->s_color);
+    if (dd->vs->color_override) {
+	sp->s_color[0] = dd->vs->color[0];
+	sp->s_color[1] = dd->vs->color[1];
+	sp->s_color[2] = dd->vs->color[2];
+    }
+
+    // Tell scene object what the current matrix is
+    MAT_COPY(sp->s_mat, dd->m);
+
+    // Assign the bounding box
+    dd->gedp->dbi_state->get_path_bbox(&sp->bmin, &sp->bmax, dd->path_hashes);
+
+    // If we're drawing a subtraction and we're not overridden, set the
+    // appropriate flag for dashed line drawing
+    if (!dd->vs->draw_solid_lines_only)
+	sp->s_soldash = (dd->op == OP_SUBTRACT) ? 1 : 0;
+
+    // Set line width, if the user specified a non-default value
+    if (dd->vs->s_line_width)
+	sp->s_os->s_line_width = dd->vs->s_line_width;
+
+    // Set transparency, if the user set a non-default value
+    if (dd->transparency_set)
+	sp->s_os->transparency = dd->vs->transparency;
+
+    dd->gedp->dbi_state->print_path(&sp->s_name, dd->path_hashes);
+    bu_log("make solid %s\n", bu_vls_cstr(&sp->s_name));
+    dd->gedp->dbi_state->view_states[dd->v]->s_map[phash] = sp;
+    dd->gedp->dbi_state->view_states[dd->v]->s_keys[phash] = dd->path_hashes;
+
+    return sp;
+}
+
 static void
 draw_walk_tree(unsigned long long chash, void *d, int subtract_skip,
 	void (*leaf_func)(void *, unsigned long long, matp_t, int)
@@ -160,49 +217,7 @@ draw_gather_paths(void *d, unsigned long long c_hash, matp_t m, int UNUSED(op))
 	}
     } else {
 	// Solid - scene object time
-	unsigned long long phash = dd->gedp->dbi_state->path_hash(dd->path_hashes, 0);
-	struct bv_scene_obj *sp = bv_obj_get(dd->v, BV_DB_OBJS);
-
-	struct draw_update_data_t *ud;
-	BU_GET(ud, struct draw_update_data_t);
-	ud->dbip = dd->gedp->dbip;
-	ud->tol = &dd->gedp->ged_wdbp->wdb_tol;
-	ud->ttol = &dd->gedp->ged_wdbp->wdb_ttol;
-	ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view... local_res is temporary, don't use it here
-	ud->mesh_c = dd->gedp->ged_lod;
-	sp->dp = d_it->second;
-	sp->s_i_data = (void *)ud;
-
-	// Get color from path, unless we're overridden
-	struct bu_color c;
-	dd->gedp->dbi_state->path_color(&c, dd->path_hashes);
-	bu_color_to_rgb_chars(&c, sp->s_color);
-	if (dd->vs->color_override) {
-	    sp->s_color[0] = dd->vs->color[0];
-	    sp->s_color[1] = dd->vs->color[1];
-	    sp->s_color[2] = dd->vs->color[2];
-	}
-
-	// Tell scene object what the current matrix is
-	MAT_COPY(sp->s_mat, dd->m);
-
-	// If we're drawing a subtraction and we're not overridden, set the
-	// appropriate flag for dashed line drawing
-	if (!dd->vs->draw_solid_lines_only)
-	    sp->s_soldash = (dd->op == OP_SUBTRACT) ? 1 : 0;
-
-	// Set line width, if the user specified a non-default value
-	if (dd->vs->s_line_width)
-	    sp->s_os->s_line_width = dd->vs->s_line_width;
-
-	// Set transparency, if the user set a non-default value
-	if (dd->transparency_set)
-	    sp->s_os->transparency = dd->vs->transparency;
-
-	dd->gedp->dbi_state->print_path(&sp->s_name, dd->path_hashes);
-	bu_log("make solid %s\n", bu_vls_cstr(&sp->s_name));
-	dd->gedp->dbi_state->view_states[dd->v]->s_map[phash] = sp;
-	dd->gedp->dbi_state->view_states[dd->v]->s_keys[phash] = dd->path_hashes;
+	init_scene_obj(dd);
     }
 
     /* Done with branch - restore path, put back the old matrix state,
@@ -251,15 +266,30 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    continue;
 	}
 
-
 	// Get initial matrix from path
 	gedp->dbi_state->get_path_matrix(d.m, d.path_hashes);
+
+	// In drawing modes 3 (bigE) and 5 (points) we are producing an
+	// evaluated shape, rather than iterating to get the solids, so
+	// we work directly with the supplied path
+	BViewState *bvs = gedp->dbi_state->view_states[v];
+	if (vs->s_dmode == 3 || vs->s_dmode == 5) {
+	    unsigned long long phash = gedp->dbi_state->path_hash(d.path_hashes, 0);
+	    std::unordered_map<unsigned long long, struct bv_scene_obj *>::iterator m_it;
+	    m_it = bvs->s_map.find(phash);
+	    if (m_it != bvs->s_map.end()) {
+		bv_obj_put(m_it->second);
+		bvs->s_map.erase(phash);
+	    }
+	    bvs->s_keys.erase(phash);
+	    init_scene_obj(&d);
+	    continue;
+	}
 
 	// Clear any solids that are subpaths of the current path - they
 	// will be recreated
 	std::vector<unsigned long long> bad_paths;
 	std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
-	BViewState *bvs = gedp->dbi_state->view_states[v];
 	for (k_it = bvs->s_keys.begin(); k_it != bvs->s_keys.end(); k_it++) {
 	    if (k_it->second.size() < d.path_hashes.size())
 		continue;
@@ -287,103 +317,6 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 
     // TODO - update BViewState drawn_paths set with a collapse call, now that
     // we have accommodated all specified paths
-
-
-#if 0
-    // If we had no args, we're refreshing all drawn objects
-    if (!argc) {
-	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
-	    struct db_full_path *fp = (struct db_full_path *)s->s_path;
-	    fps.insert(fp);
-	}
-    }
-
-
-    // Initial setup is done, we now have the set of paths to walk to create
-    // the children objects.
-    std::map<struct db_full_path *, struct bv_scene_group *>::iterator fpg_it;
-    for (fpg_it = fp_g.begin(); fpg_it != fp_g.end(); fpg_it++) {
-	struct db_full_path *fp = fpg_it->first;
-	struct bv_scene_group *g = fpg_it->second;
-
-	// Seed initial matrix from the path
-	mat_t mat;
-	MAT_IDN(mat);
-	if (db_path_to_mat(dbip, fp, mat, 0, local_res)) {
-	    continue;
-	}
-
-	// Get an initial color from the path, if we're not overridden
-	struct bu_color c;
-	if (!vs->color_override) {
-	    unsigned char dc[3];
-	    dc[0] = 255;
-	    dc[1] = 0;
-	    dc[2] = 0;
-	    bu_color_from_rgb_chars(&c, dc);
-	    db_full_path_color(&c, fp, dbip, local_res);
-	}
-
-	// Prepare tree walking data container
-	struct draw_data_t dd;
-	dd.dbip = gedp->dbip;
-	dd.v = v;
-	dd.tol = &gedp->ged_wdbp->wdb_tol;
-	dd.ttol = &gedp->ged_wdbp->wdb_ttol;
-	dd.mesh_c = gedp->ged_lod;
-	dd.color_inherit = 0;
-	dd.bound_only = 0;
-	dd.res = local_res;
-	dd.bool_op = 2; // Default to union
-	if (vs->color_override) {
-	    bu_color_from_rgb_chars(&dd.c, vs->color);
-	} else {
-	    HSET(dd.c.buc_rgb, c.buc_rgb[0], c.buc_rgb[1], c.buc_rgb[2], c.buc_rgb[3]);
-	}
-	//dd.s_size = &s_size;
-	dd.vs = vs;
-	dd.g = g;
-
-	// In drawing modes 3 (bigE) and 5 (points) we are producing an
-	// evaluated shape, rather than iterating to get the solids
-	if (vs->s_dmode == 3 || vs->s_dmode == 5) {
-	    if (vs->color_override) {
-		VMOVE(g->s_color, vs->color);
-	    } else {
-		bu_color_to_rgb_chars(&c, g->s_color);
-	    }
-	    // TODO - check object against default GED selection set
-	    struct draw_update_data_t *ud;
-	    BU_GET(ud, struct draw_update_data_t);
-	    ud->fp = (struct db_full_path *)g->s_path;
-	    ud->dbip = dd.dbip;
-	    ud->tol = dd.tol;
-	    ud->ttol = dd.ttol;
-	    ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view... local_res is temporary, don't use it here
-	    ud->mesh_c = dd.mesh_c;
-	    g->s_i_data = (void *)ud;
-	    g->s_v = dd.v;
-	    continue;
-	}
-
-	// Walk the tree to build up the set of scene objects that will hold
-	// each instance's wireframe.  These scene objects will be stored as
-	// children of g (which is the "who" level drawn object).
-	draw_gather_paths(fp, &mat, (void *)&dd);
-    }
-    rt_clean_resource_basic(NULL, local_res);
-    BU_PUT(local_res, struct resource);
-
-    // Sort
-    bu_sort(BU_PTBL_BASEADDR(sg), BU_PTBL_LEN(sg), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
-
-    // Clean up
-    for (size_t i = 0; i < fps_free.size(); i++) {
-	db_free_full_path(fps_free[i]);
-	BU_PUT(fps_free[i], struct db_full_path);
-    }
-#endif
 
     // Scene objects are created and stored. The next step is to generate
     // wireframes, triangles, etc. for each object based on current settings.
