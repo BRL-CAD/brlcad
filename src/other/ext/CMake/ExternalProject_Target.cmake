@@ -47,7 +47,7 @@ if(\"\${FTYPE}\" STREQUAL \"EXEC\" OR \"\${FTYPE}\" STREQUAL \"SHARED\")
 endif()
 get_filename_component(DNAME \"\${DEST}\" NAME)
 string(REGEX REPLACE \"\${DNAME}$\" \"\" DDIR \"\${DEST}\")
-file(COPY \"\${SRC}\" DESTINATION \"\${DDIR}\")
+file(COPY \"\${SRC}\" DESTINATION \"\${DDIR}\" FILE_PERMISSIONS OWNER_READ OWNER_WRITE)
 ")
 
 # When staging files in the build directory, we have to be aware of multiple
@@ -120,7 +120,7 @@ function(ExternalProject_ByProducts etarg extproj extroot dir)
     set(ALL_TOUT ${ALL_TOUT} ${TOUT})
 
     if (NOT E_NOINSTALL)
-      install(FILES "${CMAKE_BINARY_ROOT}/${dir}/${bpf}" DESTINATION "${dir}/")
+      install(FILES "${CMAKE_BINARY_ROOT}/${dir}/${bpf}" DESTINATION "${dir}/" PERMISSIONS OWNER_READ OWNER_WRITE)
       if (E_FIXPATH)
 	# Note - proper quoting for install(CODE) is extremely important for CPack, see
 	# https://stackoverflow.com/a/48487133
