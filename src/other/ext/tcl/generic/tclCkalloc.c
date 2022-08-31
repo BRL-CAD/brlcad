@@ -244,7 +244,7 @@ ValidateMemory(
 	if (byte != GUARD_VALUE) {
 	    guard_failed = TRUE;
 	    fflush(stdout);
-	    byte &= 0xff;
+	    byte &= 0xFF;
 	    fprintf(stderr, "low guard byte %d is 0x%x  \t%c\n", (int)idx, byte,
 		    (isprint(UCHAR(byte)) ? byte : ' ')); /* INTL: bytes */
 	}
@@ -252,7 +252,7 @@ ValidateMemory(
     if (guard_failed) {
 	TclDumpMemoryInfo((ClientData) stderr, 0);
 	fprintf(stderr, "low guard failed at %lx, %s %d\n",
-		(long unsigned) memHeaderP->body, file, line);
+		(unsigned long)(size_t)memHeaderP->body, file, line);
 	fflush(stderr);			/* In case name pointer is bad. */
 	fprintf(stderr, "%ld bytes allocated at (%s %d)\n", memHeaderP->length,
 		memHeaderP->file, memHeaderP->line);
@@ -265,7 +265,7 @@ ValidateMemory(
 	if (byte != GUARD_VALUE) {
 	    guard_failed = TRUE;
 	    fflush(stdout);
-	    byte &= 0xff;
+	    byte &= 0xFF;
 	    fprintf(stderr, "hi guard byte %d is 0x%x  \t%c\n", (int)idx, byte,
 		    (isprint(UCHAR(byte)) ? byte : ' ')); /* INTL: bytes */
 	}
@@ -274,7 +274,7 @@ ValidateMemory(
     if (guard_failed) {
 	TclDumpMemoryInfo((ClientData) stderr, 0);
 	fprintf(stderr, "high guard failed at %lx, %s %d\n",
-		(long unsigned) memHeaderP->body, file, line);
+		(unsigned long)(size_t)memHeaderP->body, file, line);
 	fflush(stderr);			/* In case name pointer is bad. */
 	fprintf(stderr, "%ld bytes allocated at (%s %d)\n",
 		memHeaderP->length, memHeaderP->file,
@@ -360,8 +360,8 @@ Tcl_DumpActiveMemory(
     for (memScanP = allocHead; memScanP != NULL; memScanP = memScanP->flink) {
 	address = &memScanP->body[0];
 	fprintf(fileP, "%8lx - %8lx  %7ld @ %s %d %s",
-		(long unsigned) address,
-		(long unsigned) address + memScanP->length - 1,
+		(unsigned long)(size_t)address,
+		(unsigned long)(size_t)address + memScanP->length - 1,
 		memScanP->length, memScanP->file, memScanP->line,
 		(memScanP->tagPtr == NULL) ? "" : memScanP->tagPtr->string);
 	(void) fputc('\n', fileP);
@@ -406,7 +406,7 @@ Tcl_DbCkalloc(
 
     /* Don't let size argument to TclpAlloc overflow */
     if (size <= UINT_MAX - HIGH_GUARD_SIZE -sizeof(struct mem_header)) {
-	result = (struct mem_header *) TclpAlloc((unsigned)size +
+	result = (struct mem_header *) TclpAlloc(size +
 		sizeof(struct mem_header) + HIGH_GUARD_SIZE);
     }
     if (result == NULL) {
@@ -459,7 +459,7 @@ Tcl_DbCkalloc(
 
     if (alloc_tracing) {
 	fprintf(stderr,"ckalloc %lx %u %s %d\n",
-		(long unsigned int) result->body, size, file, line);
+		(unsigned long)(size_t)result->body, size, file, line);
     }
 
     if (break_on_malloc && (total_mallocs >= break_on_malloc)) {
@@ -496,7 +496,7 @@ Tcl_AttemptDbCkalloc(
 
     /* Don't let size argument to TclpAlloc overflow */
     if (size <= UINT_MAX - HIGH_GUARD_SIZE - sizeof(struct mem_header)) {
-	result = (struct mem_header *) TclpAlloc((unsigned)size +
+	result = (struct mem_header *) TclpAlloc(size +
 		sizeof(struct mem_header) + HIGH_GUARD_SIZE);
     }
     if (result == NULL) {
@@ -548,7 +548,7 @@ Tcl_AttemptDbCkalloc(
 
     if (alloc_tracing) {
 	fprintf(stderr,"ckalloc %lx %u %s %d\n",
-		(long unsigned int) result->body, size, file, line);
+		(unsigned long)(size_t)result->body, size, file, line);
     }
 
     if (break_on_malloc && (total_mallocs >= break_on_malloc)) {
@@ -613,7 +613,7 @@ Tcl_DbCkfree(
 
     if (alloc_tracing) {
 	fprintf(stderr, "ckfree %lx %ld %s %d\n",
-		(long unsigned int) memp->body, memp->length, file, line);
+		(unsigned long)(size_t)memp->body, memp->length, file, line);
     }
 
     if (validate_memory) {
@@ -623,7 +623,7 @@ Tcl_DbCkfree(
     Tcl_MutexLock(ckallocMutexPtr);
     ValidateMemory(memp, file, line, TRUE);
     if (init_malloced_bodies) {
-	memset(ptr, GUARD_VALUE, (size_t) memp->length);
+	memset(ptr, GUARD_VALUE, memp->length);
     }
 
     total_frees++;
@@ -693,7 +693,7 @@ Tcl_DbCkrealloc(
 	copySize = memp->length;
     }
     newPtr = Tcl_DbCkalloc(size, file, line);
-    memcpy(newPtr, ptr, (size_t) copySize);
+    memcpy(newPtr, ptr, copySize);
     Tcl_DbCkfree(ptr, file, line);
     return newPtr;
 }
@@ -727,7 +727,7 @@ Tcl_AttemptDbCkrealloc(
     if (newPtr == NULL) {
 	return NULL;
     }
-    memcpy(newPtr, ptr, (size_t) copySize);
+    memcpy(newPtr, ptr, copySize);
     Tcl_DbCkfree(ptr, file, line);
     return newPtr;
 }
@@ -1324,7 +1324,7 @@ TclFinalizeMemorySubsystem(void)
     Tcl_MutexUnlock(ckallocMutexPtr);
 #endif
 
-#if USE_TCLALLOC
+#if defined(USE_TCLALLOC) && USE_TCLALLOC
     TclFinalizeAllocSubsystem();
 #endif
 }

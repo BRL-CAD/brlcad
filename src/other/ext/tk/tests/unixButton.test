@@ -16,7 +16,7 @@ imageInit
 
 # Create entries in the option database to be sure that geometry options
 # like border width have predictable values.
- 
+
 option add *Label.borderWidth 2
 option add *Label.highlightThickness 0
 option add *Label.font {Helvetica -12 bold}
@@ -70,7 +70,7 @@ test unixbutton-1.1 {TkpComputeButtonGeometry procedure} -constraints {
 	        [expr {72 + $bigIndicator}] 52 \
 	        [expr {72 + $bigIndicator}] 52]
 test unixbutton-1.2 {TkpComputeButtonGeometry procedure} -constraints {
-    unix 
+    unix
 } -setup {
     deleteWindows
 } -body {
@@ -91,7 +91,7 @@ test unixbutton-1.2 {TkpComputeButtonGeometry procedure} -constraints {
 	        [expr {27 + $smallIndicator}] 37 \
 	        [expr {27 + $smallIndicator}] 37]
 test unixbutton-1.3 {TkpComputeButtonGeometry procedure} -constraints {
-    unix 
+    unix
 } -setup {
     deleteWindows
 } -body {
@@ -192,7 +192,7 @@ test unixbutton-1.8 {TkpComputeButtonGeometry procedure} -constraints {
     deleteWindows
 } -result {62 30 56 24 58 22 62 22}
 test unixbutton-1.9 {TkpComputeButtonGeometry procedure} -constraints {
-    unix 
+    unix
 } -setup {
     deleteWindows
 } -body {
@@ -200,9 +200,9 @@ test unixbutton-1.9 {TkpComputeButtonGeometry procedure} -constraints {
     list [winfo reqwidth .b2] [winfo reqheight .b2]
 } -cleanup {
     deleteWindows
-} -result [list [expr {17 + $defaultBorder}] [expr {27 + $defaultBorder}]] 
+} -result [list [expr {17 + $defaultBorder}] [expr {27 + $defaultBorder}]]
 test unixbutton-1.10 {TkpComputeButtonGeometry procedure} -constraints {
-    unix 
+    unix
 } -setup {
     deleteWindows
 } -body {
@@ -212,7 +212,7 @@ test unixbutton-1.10 {TkpComputeButtonGeometry procedure} -constraints {
     deleteWindows
 } -result [list [expr {17 + $defaultBorder}] [expr {27 + $defaultBorder}]]
 test unixbutton-1.11 {TkpComputeButtonGeometry procedure} -constraints {
-    unix 
+    unix
 } -setup {
     deleteWindows
 } -body {
@@ -224,7 +224,7 @@ test unixbutton-1.11 {TkpComputeButtonGeometry procedure} -constraints {
 
 
 test unixbutton-2.1 {disabled coloring check, bug 669595} -constraints {
-    unix 
+    unix
 } -setup {
     deleteWindows
     catch {unset value}

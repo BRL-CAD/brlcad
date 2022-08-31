@@ -150,7 +150,7 @@ A GUI event, for example \fB<<PasteSelection>>\fR, can copy the \fBPRIMARY\fR se
 .PP
 On X11, the \fBPRIMARY\fR selection is a system-wide feature of the X server, allowing communication between different processes that are X11 clients.
 .PP
-On Windows, the \fBPRIMARY\fR selection is not provided by the system, but only by Tk, and so it is shared only between windows of a master interpreter and its unsafe slave interpreters.  It is not shared between interpreters in different processes or different threads.  Each master interpreter has a separate \fBPRIMARY\fR selection that is shared only with its unsafe slaves.
+On Windows, the \fBPRIMARY\fR selection is not provided by the system, but only by Tk, and so it is shared only between windows of a parent interpreter and its child interpreters.  It is not shared between interpreters in different processes or different threads.  Each parent interpreter has a separate \fBPRIMARY\fR selection that is shared only with its child interpreters which are not safe interpreters.
 .PP
 .SH SECURITY
 .PP

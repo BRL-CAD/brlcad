@@ -71,7 +71,6 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
     const int *faces = lod->faces;
     const point_t *points = lod->points;
     const point_t *points_orig = lod->points_orig;
-    const int *face_normals = lod->face_normals;
     const vect_t *normals = lod->normals;
     struct bv_scene_obj *s = lod->s;
     int mode = s->s_os->s_dmode;
@@ -259,23 +258,45 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	    VSUB2(ac, points_orig[faces[3*i+0]], points_orig[faces[3*i+2]]);
 	    VCROSS(norm, ab, ac);
 	    VUNITIZE(norm);
-	    glNormal3dv(norm);
 
-	    if (face_normals && normals) {
-		bu_log("todo - per-vertex normals\n");
+	    if (normals) {
+		vect_t vnorm;
+		VMOVE(vnorm, normals[3*i+0]);
+		if (((int)(vnorm[0]*10+vnorm[1]*10+vnorm[2]*10)) != 0) {
+		    glNormal3dv(vnorm);
+		} else {
+		    glNormal3dv(norm);
+		}
+		VMOVE(dpt, points[faces[3*i+0]]);
+		glVertex3dv(dpt);
+
+		VMOVE(vnorm, normals[3*i+1]);
+		if (((int)(vnorm[0]*10+vnorm[1]*10+vnorm[2]*10)) != 0) {
+		    glNormal3dv(vnorm);
+		} else {
+		    glNormal3dv(norm);
+		}
+		VMOVE(dpt, points[faces[3*i+1]]);
+		glVertex3dv(dpt);
+
+		VMOVE(vnorm, normals[3*i+2]);
+		if (((int)(vnorm[0]*10+vnorm[1]*10+vnorm[2]*10)) != 0) {
+		    glNormal3dv(vnorm);
+		} else {
+		    glNormal3dv(norm);
+		}
+		VMOVE(dpt, points[faces[3*i+2]]);
+		glVertex3dv(dpt);
+
+	    } else {
+		glNormal3dv(norm);
+		VMOVE(dpt, points[faces[3*i+0]]);
+		glVertex3dv(dpt);
+		VMOVE(dpt, points[faces[3*i+1]]);
+		glVertex3dv(dpt);
+		VMOVE(dpt, points[faces[3*i+2]]);
+		glVertex3dv(dpt);
 	    }
-	    VMOVE(dpt, points[faces[3*i+0]]);
-	    glVertex3dv(dpt);
-	    if (face_normals && normals) {
-		bu_log("todo - per-vertex normals\n");
-	    }
-	    VMOVE(dpt, points[faces[3*i+1]]);
-	    glVertex3dv(dpt);
-	    if (face_normals && normals) {
-		bu_log("todo - per-vertex normals\n");
-	    }
-	    VMOVE(dpt, points[faces[3*i+2]]);
-	    glVertex3dv(dpt);
 
 	}
 

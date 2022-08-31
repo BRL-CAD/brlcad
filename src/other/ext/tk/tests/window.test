@@ -263,6 +263,38 @@ test window-2.11 {Tk_DestroyWindow, don't reanimate a half-dead window} -constra
     list $error $msg
 } -result {0 YES}
 
+test window-2.12 {Test for ticket [9b6065d1fd] - restore Tcl [update] command} -constraints {
+    unixOrWin
+} -body {
+    set code [loadTkCommand]
+    append code {
+	after 1000 {set forever 1}
+	after 100 {destroy .}
+	after 200 {catch bell msg; puts "ringing the bell -> $msg"}
+	after 250 {update idletasks}
+	after 300 {update}
+	puts "waiting"
+	vwait forever
+	puts "done waiting"
+	catch {bell} msg
+	puts "bell -> $msg"
+	catch update msg
+	puts "update -> $msg"
+    }
+    set script [makeFile $code script]
+    if {[catch {exec [interpreter] $script -geometry 10x10+0+0} msg]} {
+        set error 1
+    } else {
+        set error 0
+    }
+    removeFile script
+    list $error $msg
+} -result {0 {waiting
+ringing the bell -> can't invoke "bell" command: application has been destroyed
+done waiting
+bell -> can't invoke "bell" command: application has been destroyed
+update -> }}
+
 
 test window-3.1 {Tk_MakeWindowExist procedure, stacking order and menubars} -constraints {
     unix testmenubar
@@ -340,6 +372,7 @@ test window-5.1 {Tk_MakeWindowExist procedure, stacking order and menubars} -con
 } -cleanup {
     destroy .t
 } -result {}
+
 
 
 # cleanup

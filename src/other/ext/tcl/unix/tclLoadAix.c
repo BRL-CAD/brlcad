@@ -98,7 +98,7 @@ dlopen(
     const char *path,
     int mode)
 {
-    register ModulePtr mp;
+    ModulePtr mp;
     static void *mainModule;
 
     /*
@@ -134,7 +134,7 @@ dlopen(
 	return NULL;
     }
 
-    mp->name = malloc((unsigned) (strlen(path) + 1));
+    mp->name = malloc(strlen(path) + 1);
     strcpy(mp->name, path);
 
     /*
@@ -191,7 +191,7 @@ dlopen(
      */
 
     if (mode & RTLD_GLOBAL) {
-	register ModulePtr mp1;
+	ModulePtr mp1;
 
 	for (mp1 = mp->next; mp1; mp1 = mp1->next) {
 	    if (loadbind(0, mp1->entry, mp->entry) == -1) {
@@ -243,7 +243,7 @@ static void
 caterr(
     char *s)
 {
-    register char *p = s;
+    char *p = s;
 
     while (*p >= '0' && *p <= '9') {
 	p++;
@@ -282,9 +282,9 @@ dlsym(
     void *handle,
     const char *symbol)
 {
-    register ModulePtr mp = (ModulePtr)handle;
-    register ExportPtr ep;
-    register int i;
+    ModulePtr mp = (ModulePtr)handle;
+    ExportPtr ep;
+    int i;
 
     /*
      * Could speed up the search, but I assume that one assigns the result to
@@ -317,9 +317,9 @@ int
 dlclose(
     void *handle)
 {
-    register ModulePtr mp = (ModulePtr)handle;
+    ModulePtr mp = (ModulePtr)handle;
     int result;
-    register ModulePtr mp1;
+    ModulePtr mp1;
 
     if (--mp->refCnt > 0) {
 	return 0;
@@ -343,8 +343,8 @@ dlclose(
     }
 
     if (mp->exports) {
-	register ExportPtr ep;
-	register int i;
+	ExportPtr ep;
+	int i;
 	for (ep = mp->exports, i = mp->nExports; i; i--, ep++) {
 	    if (ep->name) {
 		free(ep->name);
@@ -541,7 +541,7 @@ readExports(
 	    tmpsym[SYMNMLEN] = '\0';
 	    symname = tmpsym;
 	}
-	ep->name = malloc((unsigned) (strlen(symname) + 1));
+	ep->name = malloc(strlen(symname) + 1);
 	strcpy(ep->name, symname);
 	ep->addr = (void *)((unsigned long)
 		mp->entry + ls->l_value - shdata.s_vaddr);

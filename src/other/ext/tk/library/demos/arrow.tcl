@@ -154,11 +154,11 @@ $c bind box <Enter> "$c itemconfigure current $demo_arrowInfo(activeStyle)"
 $c bind box <Leave> "$c itemconfigure current $demo_arrowInfo(boxStyle)"
 $c bind box <B1-Enter> " "
 $c bind box <B1-Leave> " "
-$c bind box1 <1> {set demo_arrowInfo(motionProc) arrowMove1}
-$c bind box2 <1> {set demo_arrowInfo(motionProc) arrowMove2}
-$c bind box3 <1> {set demo_arrowInfo(motionProc) arrowMove3}
+$c bind box1 <Button-1> {set demo_arrowInfo(motionProc) arrowMove1}
+$c bind box2 <Button-1> {set demo_arrowInfo(motionProc) arrowMove2}
+$c bind box3 <Button-1> {set demo_arrowInfo(motionProc) arrowMove3}
 $c bind box <B1-Motion> "\$demo_arrowInfo(motionProc) $c %x %y"
-bind $c <Any-ButtonRelease-1> "arrowSetup $c"
+bind $c <ButtonRelease-1> "arrowSetup $c"
 
 # arrowMove1 --
 # This procedure is called for each mouse motion event on box1 (the

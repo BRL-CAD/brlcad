@@ -373,8 +373,9 @@ struct bv_mesh_lod {
     int porig_cnt;
     const point_t *points_orig;
 
-    // Optional: per-face-vertex normals
-    const int *face_normals;
+    // Optional: per-face-vertex normals (one normal per triangle vertex - NOT
+    // one normal per vertex.  I.e., a given point from points_orig may have
+    // multiple normals associated with it in different faces.)
     const vect_t *normals;
 
     // Bounding box of the original full-detail data

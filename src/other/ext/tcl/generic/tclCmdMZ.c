@@ -36,31 +36,31 @@ static int		UniCharIsHexDigit(int character);
  */
 
 const char tclDefaultTrimSet[] =
-	"\x09\x0a\x0b\x0c\x0d " /* ASCII */
-	"\xc0\x80" /*     nul (U+0000) */
-	"\xc2\x85" /*     next line (U+0085) */
-	"\xc2\xa0" /*     non-breaking space (U+00a0) */
-	"\xe1\x9a\x80" /* ogham space mark (U+1680) */
-	"\xe1\xa0\x8e" /* mongolian vowel separator (U+180e) */
-	"\xe2\x80\x80" /* en quad (U+2000) */
-	"\xe2\x80\x81" /* em quad (U+2001) */
-	"\xe2\x80\x82" /* en space (U+2002) */
-	"\xe2\x80\x83" /* em space (U+2003) */
-	"\xe2\x80\x84" /* three-per-em space (U+2004) */
-	"\xe2\x80\x85" /* four-per-em space (U+2005) */
-	"\xe2\x80\x86" /* six-per-em space (U+2006) */
-	"\xe2\x80\x87" /* figure space (U+2007) */
-	"\xe2\x80\x88" /* punctuation space (U+2008) */
-	"\xe2\x80\x89" /* thin space (U+2009) */
-	"\xe2\x80\x8a" /* hair space (U+200a) */
-	"\xe2\x80\x8b" /* zero width space (U+200b) */
-	"\xe2\x80\xa8" /* line separator (U+2028) */
-	"\xe2\x80\xa9" /* paragraph separator (U+2029) */
-	"\xe2\x80\xaf" /* narrow no-break space (U+202f) */
-	"\xe2\x81\x9f" /* medium mathematical space (U+205f) */
-	"\xe2\x81\xa0" /* word joiner (U+2060) */
-	"\xe3\x80\x80" /* ideographic space (U+3000) */
-	"\xef\xbb\xbf" /* zero width no-break space (U+feff) */
+	"\x09\x0A\x0B\x0C\x0D " /* ASCII */
+	"\xC0\x80" /*     nul (U+0000) */
+	"\xC2\x85" /*     next line (U+0085) */
+	"\xC2\xA0" /*     non-breaking space (U+00a0) */
+	"\xE1\x9A\x80" /* ogham space mark (U+1680) */
+	"\xE1\xA0\x8E" /* mongolian vowel separator (U+180e) */
+	"\xE2\x80\x80" /* en quad (U+2000) */
+	"\xE2\x80\x81" /* em quad (U+2001) */
+	"\xE2\x80\x82" /* en space (U+2002) */
+	"\xE2\x80\x83" /* em space (U+2003) */
+	"\xE2\x80\x84" /* three-per-em space (U+2004) */
+	"\xE2\x80\x85" /* four-per-em space (U+2005) */
+	"\xE2\x80\x86" /* six-per-em space (U+2006) */
+	"\xE2\x80\x87" /* figure space (U+2007) */
+	"\xE2\x80\x88" /* punctuation space (U+2008) */
+	"\xE2\x80\x89" /* thin space (U+2009) */
+	"\xE2\x80\x8A" /* hair space (U+200a) */
+	"\xE2\x80\x8B" /* zero width space (U+200b) */
+	"\xE2\x80\xA8" /* line separator (U+2028) */
+	"\xE2\x80\xA9" /* paragraph separator (U+2029) */
+	"\xE2\x80\xAF" /* narrow no-break space (U+202f) */
+	"\xE2\x81\x9F" /* medium mathematical space (U+205f) */
+	"\xE2\x81\xA0" /* word joiner (U+2060) */
+	"\xE3\x80\x80" /* ideographic space (U+3000) */
+	"\xEF\xBB\xBF" /* zero width no-break space (U+feff) */
 ;
 
 /*
@@ -357,7 +357,7 @@ Tcl_RegexpObjCmd(
 
 	    objc = info.nsubs + 1;
 	    if (all <= 1) {
-		resultPtr = Tcl_NewObj();
+		TclNewObj(resultPtr);
 	    }
 	}
 	for (i = 0; i < objc; i++) {
@@ -399,7 +399,7 @@ Tcl_RegexpObjCmd(
 			    offset + info.matches[i].start,
 			    offset + info.matches[i].end - 1);
 		} else {
-		    newPtr = Tcl_NewObj();
+		    TclNewObj(newPtr);
 		}
 	    }
 	    if (doinline) {
@@ -1058,7 +1058,7 @@ Tcl_SplitObjCmd(
 
     stringPtr = TclGetStringFromObj(objv[1], &stringLen);
     end = stringPtr + stringLen;
-    listPtr = Tcl_NewObj();
+    TclNewObj(listPtr);
 
     if (stringLen == 0) {
 	/*
@@ -1081,23 +1081,10 @@ Tcl_SplitObjCmd(
 	Tcl_InitHashTable(&charReuseTable, TCL_ONE_WORD_KEYS);
 
 	for ( ; stringPtr < end; stringPtr += len) {
-	    int fullchar;
-	    len = TclUtfToUniChar(stringPtr, &ch);
-	    fullchar = ch;
+	    int ucs4;
 
-#if TCL_UTF_MAX == 4
-	    if ((ch >= 0xD800) && (len < 3)) {
-		len += TclUtfToUniChar(stringPtr + len, &ch);
-		fullchar = (((fullchar & 0x3ff) << 10) | (ch & 0x3ff)) + 0x10000;
-	    }
-#endif
-
-	    /*
-	     * Assume Tcl_UniChar is an integral type...
-	     */
-
-	    hPtr = Tcl_CreateHashEntry(&charReuseTable, INT2PTR(fullchar),
-		    &isNew);
+	    len = TclUtfToUCS4(stringPtr, &ucs4);
+	    hPtr = Tcl_CreateHashEntry(&charReuseTable, INT2PTR(ucs4), &isNew);
 	    if (isNew) {
 		TclNewStringObj(objPtr, stringPtr, len);
 
@@ -1244,7 +1231,7 @@ StringFirstCmd(
      */
 
     if (needleLen > 0 && needleLen <= haystackLen) {
-	register Tcl_UniChar *p, *end;
+	Tcl_UniChar *p, *end;
 
 	end = haystackStr + haystackLen - needleLen + 1;
 	for (p = haystackStr;  p < end;  p++) {
@@ -1414,7 +1401,7 @@ StringIndexCmd(
     }
 
     if ((index >= 0) && (index < length)) {
-	Tcl_UniChar ch = Tcl_GetUniChar(objv[1], index);
+	int ch = TclGetUCS4(objv[1], index);
 
 	/*
 	 * If we have a ByteArray object, we're careful to generate a new
@@ -1422,18 +1409,13 @@ StringIndexCmd(
 	 */
 
 	if (TclIsPureByteArray(objv[1])) {
-	    unsigned char uch = (unsigned char) ch;
+	    unsigned char uch = UCHAR(ch);
 
 	    Tcl_SetObjResult(interp, Tcl_NewByteArrayObj(&uch, 1));
 	} else {
-	    char buf[TCL_UTF_MAX] = "";
+	    char buf[8] = "";
 
-	    length = Tcl_UniCharToUtf(ch, buf);
-#if TCL_UTF_MAX > 3
-	    if ((ch >= 0xD800) && (length < 3)) {
-		length += Tcl_UniCharToUtf(-1, buf + length);
-	    }
-#endif
+	    length = TclUCS4ToUtf(ch, buf);
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(buf, length));
 	}
     }
@@ -1466,7 +1448,6 @@ StringIsCmd(
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
     const char *string1, *end, *stop;
-    Tcl_UniChar ch = 0;
     int (*chcomp)(int) = NULL;	/* The UniChar comparison function. */
     int i, failat = 0, result = 1, strict = 0, index, length1, length2;
     Tcl_Obj *objPtr, *failVarObj = NULL;
@@ -1731,7 +1712,7 @@ StringIsCmd(
 
 	    const char *elemStart, *nextElem;
 	    int lenRemain, elemSize;
-	    register const char *p;
+	    const char *p;
 
 	    string1 = TclGetStringFromObj(objPtr, &length1);
 	    end = string1 + length1;
@@ -1752,7 +1733,7 @@ StringIsCmd(
 		     * if it is the first "element" that has the failure.
 		     */
 
-		    while (TclIsSpaceProc(*p)) {
+		    while (TclIsSpaceProcM(*p)) {
 			p++;
 		    }
 		    TclNewStringObj(tmpStr, string1, p-string1);
@@ -1797,16 +1778,10 @@ StringIsCmd(
 	}
 	end = string1 + length1;
 	for (; string1 < end; string1 += length2, failat++) {
-	    int fullchar;
-	    length2 = TclUtfToUniChar(string1, &ch);
-	    fullchar = ch;
-#if TCL_UTF_MAX == 4
-	    if ((ch >= 0xD800) && (length2 < 3)) {
-	    	length2 += TclUtfToUniChar(string1 + length2, &ch);
-	    	fullchar = (((fullchar & 0x3ff) << 10) | (ch & 0x3ff)) + 0x10000;
-	    }
-#endif
-	    if (!chcomp(fullchar)) {
+	    int ucs4;
+
+	    length2 = TclUtfToUCS4(string1, &ucs4);
+	    if (!chcomp(ucs4)) {
 		result = 0;
 		break;
 	    }
@@ -2060,7 +2035,7 @@ StringMapCmd(
 			(Tcl_UniCharToLower(*ustring1) == u2lc[index/2]))) &&
 			/* Restrict max compare length. */
 			(end-ustring1 >= length2) && ((length2 == 1) ||
-			!strCmpFn(ustring2, ustring1, (unsigned) length2))) {
+			!strCmpFn(ustring2, ustring1, length2))) {
 		    if (p != ustring1) {
 			/*
 			 * Put the skipped chars onto the result first.
@@ -2297,7 +2272,7 @@ StringReptCmd(
      * Include space for the NUL.
      */
 
-    string2 = attemptckalloc((unsigned) length2 + 1);
+    string2 = attemptckalloc(length2 + 1);
     if (string2 == NULL) {
 	/*
 	 * Alloc failed. Note that in this case we try to do an error message
@@ -2313,7 +2288,7 @@ StringReptCmd(
 	return TCL_ERROR;
     }
     for (index = 0; index < count; index++) {
-	memcpy(string2 + (length1 * index), string1, (size_t) length1);
+	memcpy(string2 + (length1 * index), string1, length1);
     }
     string2[length2] = '\0';
 
@@ -2446,7 +2421,7 @@ StringRevCmd(
 	return TCL_ERROR;
     }
 
-    Tcl_SetObjResult(interp, TclStringObjReverse(objv[1]));
+    Tcl_SetObjResult(interp, TclStringReverse(objv[1]));
     return TCL_OK;
 }
 
@@ -2497,12 +2472,22 @@ StringStartCmd(
     cur = 0;
     if (index > 0) {
 	p = Tcl_UtfAtIndex(string, index);
+
+	TclUtfToUniChar(p, &ch);
 	for (cur = index; cur >= 0; cur--) {
-	    TclUtfToUniChar(p, &ch);
+	    int delta = 0;
+	    const char *next;
+
 	    if (!Tcl_UniCharIsWordChar(ch)) {
 		break;
 	    }
-	    p = Tcl_UtfPrev(p, string);
+
+	    next = TclUtfPrev(p, string);
+	    do {
+		next += delta;
+		delta = TclUtfToUniChar(next, &ch);
+	    } while (next + delta < p);
+	    p = next;
 	}
 	if (cur != index) {
 	    cur += 1;
@@ -2770,7 +2755,7 @@ TclStringCmp(
 		s1 = (char *) Tcl_GetUnicode(value1Ptr);
 		s2 = (char *) Tcl_GetUnicode(value2Ptr);
 		if (
-#ifdef WORDS_BIGENDIAN
+#if defined(WORDS_BIGENDIAN) && (TCL_UTF_MAX != 4)
 			1
 #else
 			checkEq
@@ -2865,7 +2850,7 @@ TclStringCmp(
 	 * The comparison function should compare up to the minimum byte
 	 * length only.
 	 */
-	match = memCmpFn(s1, s2, (size_t) length);
+	match = memCmpFn(s1, s2, length);
     }
     if ((match == 0) && (reqlength > length)) {
 	match = s1len - s2len;
@@ -3930,7 +3915,8 @@ TclNRSwitchObjCmd(
 		    rangeObjAry[0] = Tcl_NewLongObj(info.matches[j].start);
 		    rangeObjAry[1] = Tcl_NewLongObj(info.matches[j].end-1);
 		} else {
-		    rangeObjAry[0] = rangeObjAry[1] = Tcl_NewIntObj(-1);
+		    TclNewIntObj(rangeObjAry[1], -1);
+		    rangeObjAry[0] = rangeObjAry[1];
 		}
 
 		/*
@@ -4200,9 +4186,9 @@ Tcl_TimeObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    register Tcl_Obj *objPtr;
+    Tcl_Obj *objPtr;
     Tcl_Obj *objs[4];
-    register int i, result;
+    int i, result;
     int count;
     double totalMicroSec;
 #ifndef TCL_WIDE_CLICKS
@@ -4301,8 +4287,8 @@ Tcl_TimeRateObjCmd(
     static double measureOverhead = 0;
 				/* global measure-overhead */
     double overhead = -1;	/* given measure-overhead */
-    register Tcl_Obj *objPtr;
-    register int result, i;
+    Tcl_Obj *objPtr;
+    int result, i;
     Tcl_Obj *calibrate = NULL, *direct = NULL;
     TclWideMUInt count = 0;	/* Holds repetition count */
     Tcl_WideInt maxms = WIDE_MIN;
@@ -4316,7 +4302,7 @@ Tcl_TimeRateObjCmd(
 				 * zero (i.e., never < 1) */
     unsigned short factor = 50;	/* Factor (4..50) limiting threshold to avoid
 				 * growth of execution time. */
-    register Tcl_WideInt start, middle, stop;
+    Tcl_WideInt start, middle, stop;
 #ifndef TCL_WIDE_CLICKS
     Tcl_Time now;
 #endif /* !TCL_WIDE_CLICKS */
@@ -4872,7 +4858,7 @@ TclNRTryObjCmd(
 	return TCL_ERROR;
     }
     bodyObj = objv[1];
-    handlersObj = Tcl_NewObj();
+    TclNewObj(handlersObj);
     bodyShared = 0;
     haveHandlers = 0;
     for (i=2 ; i<objc ; i++) {
@@ -5265,15 +5251,15 @@ TryPostHandler(
 {
     Tcl_Obj *resultObj, *cmdObj, *options, *handlerKindObj, **objv;
     Tcl_Obj *finallyObj;
-    int finally;
+    int finallyIndex;
 
     objv = data[0];
     options = data[1];
     handlerKindObj = data[2];
-    finally = PTR2INT(data[3]);
+    finallyIndex = PTR2INT(data[3]);
 
     cmdObj = objv[0];
-    finallyObj = finally ? objv[finally] : 0;
+    finallyObj = finallyIndex ? objv[finallyIndex] : 0;
 
     /*
      * Check for limits/rewinding, which override normal trapping behaviour.
@@ -5317,7 +5303,7 @@ TryPostHandler(
 
 	/* The 'finally' script is always the last argument word. */
 	return TclNREvalObjEx(interp, finallyObj, 0, iPtr->cmdFramePtr,
-		finally);
+		finallyIndex);
     }
 
     /*

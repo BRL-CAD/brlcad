@@ -245,7 +245,7 @@ test event-2.2(keypress) {type into entry widget and then delete some text} -set
     set e [entry $t.e]
     pack $e
     tkwait visibility $e
-    # Avoid a hang when macOS puts the mouse pointer on the green button 
+    # Avoid a hang when macOS puts the mouse pointer on the green button
     wm geometry .t +200+100
     _keypress_string $e MELLO
     _keypress $e BackSpace
@@ -359,7 +359,7 @@ test event-3.1(click-drag) {click and drag in a text widget, this tests
 
     # Save the position of the insert cursor
     lappend result [$e index insert]
-    
+
     # Now drag until selend is highlighted, then click up
 
     set current $anchor
@@ -426,7 +426,7 @@ test event-3.1(click-drag) {click and drag in a text widget, this tests
 
     # Save the position of the insert cursor
     lappend result [$e index insert]
-    
+
     # Now drag until selend is highlighted, then click up
 
     set current $anchor
@@ -612,7 +612,7 @@ test event-4.2(double-click-drag) {click down, click up, click down again,
     deleteWindows
 } -result {select 11 7 select 4 { select} {Word select} 2}
 
-test event-5.1(triple-click-drag) {Triple click and drag across lines in a 
+test event-5.1(triple-click-drag) {Triple click and drag across lines in a
         text widget, this should extend the selection to the new line} -setup {
 	deleteWindows
 } -body {
@@ -797,7 +797,7 @@ test event-7.2(double-click) {A double click on a lone character
     set result [list]
     lappend result [$e index insert]
     lappend result [_get_selection $e]
-  
+
     # Clear selection by clicking at 0,0
 
     event generate $e <ButtonPress-1> -x 0 -y 0
@@ -825,7 +825,7 @@ test event-7.2(double-click) {A double click on a lone character
 } -result {4 A 4 A}
 
 test event-8 {event generate with keysyms corresponding to
-              multi-byte virtual keycodes - bug 
+              multi-byte virtual keycodes - bug
               e36963bfe8df9f5e528134707a91b9c0051de723} -constraints nonPortable -setup {
     deleteWindows
     set res [list ]
@@ -859,7 +859,41 @@ test event-8 {event generate with keysyms corresponding to
     deleteWindows
 } -result {OK}
 
+test event-9 {no <Enter> event is generated for the container window when its
+              managed window in which the mouse pointer was inside gets
+              destroyed - bug 9e1312f32c} -setup {
+    set res [list ]
+    set iconified false
+    if {[winfo ismapped .]} {
+        wm iconify .
+        update
+        set iconified true
+    }
+} -body {
+    toplevel .top
+    pack propagate .top 0
+    bind .top <Enter> {lappend res %W}
+    pack [frame .top.f -bg green -width 50 -height 50] -anchor se -side bottom
+    tkwait visibility .top.f
+    after 50
+    update
+    focus -force .top.f
+    event generate .top.f <Motion> -warp 1 -x 25 -y 25  ; # <Enter> sent to .top and .top.f
+    controlPointerWarpTiming
+    update  ; # idletasks not enough
+    destroy .top.f  ; # no <Enter> event sent
+    update
+    set res
+} -cleanup {
+    deleteWindows
+    if {$iconified} {
+        wm deiconify .
+        update
+    }
+} -result {.top .top.f}
+
 # cleanup
+update
 unset -nocomplain keypress_lookup
 rename _init_keypress_lookup {}
 rename _keypress_lookup {}

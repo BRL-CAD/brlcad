@@ -4,7 +4,7 @@
 # the man page conversion.  It converts the man format input to rtf
 # form suitable for use by the Windows help compiler.
 #
-# Copyright (c) 1996 by Sun Microsystems, Inc.
+# Copyright (c) 1996 Sun Microsystems, Inc.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -157,7 +157,7 @@ proc text {string} {
 	    "\t"	{\tab } \
 	    ''		"\\rdblquote " \
 	    ``		"\\ldblquote " \
-	    "\u00b7"	"\\bullet " \
+	    "\xB7"	"\\bullet " \
 	    ] $string]
 
     # Check if this is the beginning of an international character string.
@@ -824,7 +824,7 @@ proc IPmacro {argList} {
 	set indent 5
     }
     if {$text == {\(bu}} {
-	set text "\u00b7"
+	set text "\xB7"
     }
 
     set tab [expr {$indent * 0.1}]i

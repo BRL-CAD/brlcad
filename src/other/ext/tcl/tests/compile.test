@@ -11,8 +11,10 @@
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require tcltest 2
-namespace import -force ::tcltest::*
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
+    namespace import -force ::tcltest::*
+}
 
 ::tcltest::loadTestedCommands
 catch [list package require -exact Tcltest [info patchlevel]]
@@ -122,7 +124,7 @@ test compile-3.4 {TclCompileCatchCmd: bcc'ed [return] is caught} {
     proc foo {} {
 	set fail [catch {
 	    return 1
-	}] ; # {}	
+	}] ; # {}
 	return 2
     }
     foo
@@ -132,8 +134,8 @@ test compile-3.5 {TclCompileCatchCmd: recover from error, [Bug 705406]} {
 	catch {
 	    if {[a]} {
 		if b {}
-	    }   
-	}   
+	    }
+	}
     }
     list [catch foo msg] $msg
 } {0 1}
@@ -201,7 +203,7 @@ test compile-4.1 {TclCompileForCmd: command substituted test expression} {
     set i 0
     set j 0
     # Should be "forever"
-    for {} [expr $i < 3] {} {
+    for {} [expr {$i < 3}] {} {
 	set j [incr i]
 	if {$j > 3} break
     }
@@ -275,7 +277,7 @@ test compile-7.1 {TclCompileWhileCmd: command substituted test expression} {
     set i 0
     set j 0
     # Should be "forever"
-    while [expr $i < 3] {
+    while [expr {$i < 3}] {
 	set j [incr i]
 	if {$j > 3} break
     }
@@ -334,7 +336,7 @@ test compile-11.6 {Tcl_Append*: ensure Tcl_ResetResult is used properly} -body {
     apply {{} { set r [list foobar] ; incr}}
 } -returnCodes error -result {wrong # args: should be "incr varName ?increment?"}
 test compile-11.7 {Tcl_Append*: ensure Tcl_ResetResult is used properly} -body {
-    apply {{} { set r [list foobar] ; expr !a }}
+    apply {{} { set r [list foobar] ; expr [concat !a] }}
 } -returnCodes error -match glob -result *
 test compile-11.8 {Tcl_Append*: ensure Tcl_ResetResult is used properly} -body {
     apply {{} { set r [list foobar] ; expr {!a} }}
@@ -344,13 +346,13 @@ test compile-11.9 {Tcl_Append*: ensure Tcl_ResetResult is used properly} -body {
     list [catch {p} msg] $msg
 } -returnCodes error -result {unmatched open brace in list}
 
-# 
+#
 # Special section for tests of tclLiteral.c
 # The following tests check for incorrect memory handling in
 # TclReleaseLiteral. They are only effective when tcl is compiled with
 # TCL_MEM_DEBUG
 #
-# Special test for leak on interp delete [Bug 467523]. 
+# Special test for leak on interp delete [Bug 467523].
 test compile-12.1 {testing literal leak on interp delete} -setup {
     proc getbytes {} {
 	set lines [split [memory info] "\n"]
@@ -359,10 +361,10 @@ test compile-12.1 {testing literal leak on interp delete} -setup {
 } -constraints memory -body {
     set end [getbytes]
     for {set i 0} {$i < 5} {incr i} {
-	interp create foo 
-	foo eval { 
+	interp create foo
+	foo eval {
 	    namespace eval bar {}
-	} 
+	}
 	interp delete foo
 	set tmp $end
 	set end [getbytes]
@@ -383,7 +385,7 @@ test compile-12.2 {testing error on literal deletion} -constraints {memory exec}
 	}
 	puts 0
     } source.file]
-    exec [interpreter] $sourceFile 
+    exec [interpreter] $sourceFile
 } -cleanup {
     catch {removeFile $sourceFile}
 } -result 0
@@ -508,7 +510,7 @@ test compile-13.3 {TclCompileScript: testing check of max depth by nested script
     ti eval {set result {}}
 } -body {
     # Test different compilation variants (instructions evalStk, invokeStk, etc),
-    # with 500 nested scripts (bodies). It must generate "too many nested compilations" 
+    # with 500 nested scripts (bodies). It must generate "too many nested compilations"
     # error for any variant we're testing here:
     ti eval {foreach cmd {eval "if 1" try catch} {
 	set c [gencode 500 $cmd]
@@ -516,7 +518,7 @@ test compile-13.3 {TclCompileScript: testing check of max depth by nested script
     }}
     #puts $errors
     # all of nested calls exceed the limit, so must end with "too many nested compilations"
-    # (or evaluations, depending on compile method/instruction and "mixed" compile within 
+    # (or evaluations, depending on compile method/instruction and "mixed" compile within
     # evaliation), so no one succeeds, the result must be empty:
     ti eval {set result}
 } -result {}
@@ -537,7 +539,7 @@ test compile-14.1 {testing errors in element name; segfault?} {} {
 test compile-14.2 {testing element name "$"} -body {
     unset -nocomplain a
     set a() 1
-    set a(1) 2 
+    set a(1) 2
     set a($) 3
     list [set a()] [set a(1)] [set a($)] [unset a() a(1); lindex [array names a] 0]
 } -cleanup {unset a} -result [list 1 2 3 {$}]
@@ -562,7 +564,7 @@ test compile-15.5 {proper TCL_RETURN code from [return]} {
 
 for {set noComp 0} {$noComp <= 1} {incr noComp} {
 
-if $noComp {
+if {$noComp} {
     interp alias {} run {} testevalex
     set constraints testevalex
 } else {

@@ -64,7 +64,7 @@ TkMacOSXGetNamedDebugSymbol(
 	for (i = 0; i < n; i++) {
 	    if (module && *module) {
 		/* Find image with given module name */
-		char *name;
+		const char *name;
 		const char *path = _dyld_get_image_name(i);
 
 		if (!path) {

@@ -7,7 +7,7 @@ exec tclsh "$0" ${1+"$@"}
 # This file contains procedures that work in conjunction with the
 # man2tcl program to generate a HTML files from Tcl manual entries.
 #
-# Copyright (c) 1996 by Sun Microsystems, Inc.
+# Copyright (c) 1996 Sun Microsystems, Inc.
 
 
 # sarray -

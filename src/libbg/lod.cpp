@@ -123,10 +123,12 @@ extern "C" {
  *
  * Changing any of these requires incrementing CACHE_CURRENT_FORMAT. */
 #define CACHE_POP_MAX_LEVEL "th"
+#define CACHE_POP_SWITCH_LEVEL "sw"
 #define CACHE_VERTEX_COUNT "vc"
 #define CACHE_TRI_COUNT "tc"
 #define CACHE_OBJ_BOUNDS "bb"
 #define CACHE_VERT_LEVEL "v"
+#define CACHE_VERTNORM_LEVEL "vn"
 #define CACHE_TRI_LEVEL "t"
 
 typedef int (*full_detail_clbk_t)(struct bv_mesh_lod *, void *);
@@ -346,7 +348,7 @@ static void
 _find_active_objs(std::set<struct bv_scene_obj *> &active, struct bv_scene_obj *s, struct bview *v, point_t obb_c, point_t obb_e1, point_t obb_e2, point_t obb_e3)
 {
     if (BU_PTBL_LEN(&s->children)) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) { 
+	for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	    struct bv_scene_obj *sc = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
 	    _find_active_objs(active, sc, v, obb_c, obb_e1, obb_e2, obb_e3);
 	}
@@ -354,7 +356,7 @@ _find_active_objs(std::set<struct bv_scene_obj *> &active, struct bv_scene_obj *
 	bv_scene_obj_bound(s, v);
 	if (bg_sat_aabb_obb(s->bmin, s->bmax, obb_c, obb_e1, obb_e2, obb_e3))
 	    active.insert(s);
-    } 
+    }
 }
 
 int
@@ -643,7 +645,7 @@ bg_mesh_lod_context_create(const char *name)
     // doing to implement...
     if (mdb_env_set_mapsize(i->lod_env, CACHE_MAX_DB_SIZE))
 	goto lod_context_close_fail;
-    
+
     if (mdb_env_set_mapsize(i->name_env, CACHE_MAX_DB_SIZE))
 	goto lod_context_close_fail;
 
@@ -819,7 +821,7 @@ class POPState {
     public:
 
 	// Create cached data (doesn't create a usable container)
-	POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, int *faces, size_t fcnt);
+	POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_face_cnt_threshold_ratio);
 
 	// Load cached data (DOES create a usable container)
 	POPState(struct bg_mesh_lod_context *ctx, unsigned long long key);
@@ -855,6 +857,7 @@ class POPState {
 	// into lod_tri_pnts.
 	std::vector<fastf_t> lod_tri_pnts;
 	std::vector<fastf_t> lod_tri_pnts_snapped;
+	std::vector<fastf_t> lod_tri_norms;
 
 	// Current level of detail information loaded into nfaces/npnts
 	int curr_level = -1;
@@ -891,6 +894,8 @@ class POPState {
 
 	float minx = FLT_MAX, miny = FLT_MAX, minz = FLT_MAX;
 	float maxx = -FLT_MAX, maxy = -FLT_MAX, maxz = -FLT_MAX;
+
+	fastf_t max_face_ratio = 0.66;
 
 	// Clamping of points to various detail levels
 	int to_level(int val, int level);
@@ -931,9 +936,9 @@ class POPState {
 	// Pointers to original input data
 	size_t vert_cnt = 0;
 	const point_t *verts_array = NULL;
+	const vect_t *vnorms_array = NULL;
 	size_t faces_cnt = 0;
 	int *faces_array = NULL;
-
 
 	// Context
 	struct bg_mesh_lod_context *c;
@@ -1030,39 +1035,50 @@ POPState::tri_process()
     // 0.66(?) and drop it lower of the original database is very large (i.e.
     // we need to hold a lot of mesh data).
     size_t trisum = 0;
-    size_t faces_array_cnt2 = (size_t)((fastf_t)faces_cnt * 0.66);
-    for (size_t i = 0; i < level_tris.size(); i++) {
-	trisum += level_tris[i].size();
-	if (trisum > faces_array_cnt2) {
-	    // If we're using two thirds of the triangles, this is our
-	    // threshold level.  If we've got ALL the triangles, back
-	    // down one level.
-	    if (trisum < (size_t)faces_cnt) {
-		max_pop_threshold_level = i;
-	    } else {
-		// It shouldn't happen, but to be sure handle the case where we
-		// get here with i == 0
-		max_pop_threshold_level = (i) ? i - 1 : 0;
+    if (max_face_ratio > 0.99 || max_face_ratio < 0) {
+	max_pop_threshold_level = level_tris.size() - 1;
+    } else {
+	size_t faces_array_cnt2 = (size_t)((fastf_t)faces_cnt * max_face_ratio);
+	for (size_t i = 0; i < level_tris.size(); i++) {
+	    trisum += level_tris[i].size();
+	    if (trisum > faces_array_cnt2) {
+		// If we're using two thirds of the triangles, this is our
+		// threshold level.  If we've got ALL the triangles, back
+		// down one level.
+		if (trisum < (size_t)faces_cnt) {
+		    max_pop_threshold_level = i;
+		} else {
+		    // Handle the case where we get i == 0
+		    max_pop_threshold_level = (i) ? i - 1 : 0;
+		}
+		break;
 	    }
-	    break;
 	}
     }
     //bu_log("Max LoD POP level: %zd\n", max_pop_threshold_level);
 }
 
-POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, int *faces, size_t fcnt)
+POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_facecnt_threshold_ratio)
 {
     // Store the context
     c = ctx;
 
-    // Hash the data to generate a key
-    XXH64_state_t h_state;
-    XXH64_reset(&h_state, 0);
-    XXH64_update(&h_state, v, vcnt*sizeof(point_t));
-    XXH64_update(&h_state, faces, 3*fcnt*sizeof(int));
-    XXH64_hash_t hash_val;
-    hash_val = XXH64_digest(&h_state);
-    hash = (unsigned long long)hash_val;
+    // Caller set parameter telling us when to switch from POP data
+    // to just drawing the full mesh
+    max_face_ratio = pop_facecnt_threshold_ratio;
+
+    // Hash the data to generate a key, if the user didn't supply us with one
+    if (!user_key) {
+	XXH64_state_t h_state;
+	XXH64_reset(&h_state, 0);
+	XXH64_update(&h_state, v, vcnt*sizeof(point_t));
+	XXH64_update(&h_state, faces, 3*fcnt*sizeof(int));
+	XXH64_hash_t hash_val;
+	hash_val = XXH64_digest(&h_state);
+	hash = (unsigned long long)hash_val;
+    } else {
+	hash = user_key;
+    }
 
     // Make sure there's no cache before performing the full initializing from
     // the original data.  In this mode the POPState creation is used to
@@ -1090,6 +1106,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcn
     // Store source data info
     vert_cnt = vcnt;
     verts_array = v;
+    vnorms_array = vn;
     faces_cnt = fcnt;
     faces_array = faces;
 
@@ -1158,11 +1175,33 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
     {
 	const char *b = NULL;
 	size_t bsize = cache_get((void **)&b, CACHE_POP_MAX_LEVEL);
+	if (!bsize) {
+	    cache_done();
+	    return;
+	}
 	if (bsize != sizeof(max_pop_threshold_level)) {
 	    bu_log("Incorrect data size found loading max LoD POP threshold\n");
+	    cache_done();
 	    return;
 	}
 	memcpy(&max_pop_threshold_level, b, sizeof(max_pop_threshold_level));
+	cache_done();
+    }
+
+    // Load the POP level where we switch from POP to full
+    {
+	const char *b = NULL;
+	size_t bsize = cache_get((void **)&b, CACHE_POP_SWITCH_LEVEL);
+	if (bsize && bsize != sizeof(max_face_ratio)) {
+	    bu_log("Incorrect data size found loading LoD POP switch threshold\n");
+	    cache_done();
+	    return;
+	}
+	if (bsize) {
+	    memcpy(&max_face_ratio, b, sizeof(max_face_ratio));
+	} else {
+	    max_face_ratio = 0.66;
+	}
 	cache_done();
     }
 
@@ -1172,6 +1211,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 	size_t bsize = cache_get((void **)&b, CACHE_VERTEX_COUNT);
 	if (bsize != sizeof(level_vcnt)) {
 	    bu_log("Incorrect data size found loading level vertex counts\n");
+	    cache_done();
 	    return;
 	}
 	memcpy(&level_vcnt, b, sizeof(level_vcnt));
@@ -1182,6 +1222,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 	size_t bsize = cache_get((void **)&b, CACHE_TRI_COUNT);
 	if (bsize != sizeof(level_tricnt)) {
 	    bu_log("Incorrect data size found loading level triangle counts\n");
+	    cache_done();
 	    return;
 	}
 	memcpy(&level_tricnt, b, sizeof(level_tricnt));
@@ -1195,6 +1236,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 	size_t bsize = cache_get((void **)&b, CACHE_OBJ_BOUNDS);
 	if (bsize != (sizeof(bbmin) + sizeof(bbmax) + sizeof(minmax))) {
 	    bu_log("Incorrect data size found loading cached bounds data\n");
+	    cache_done();
 	    return;
 	}
 	memcpy(&bbmin, b, sizeof(bbmin));
@@ -1212,7 +1254,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 	cache_done();
     }
 
-    // Read in the zero level vertices and triangles
+    // Read in the zero level vertices, vertex normals (if defined) and triangles
     set_level(0);
 
     // All set - ready for LoD
@@ -1239,7 +1281,7 @@ POPState::tri_pop_load(int start_level, int level)
 	bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERT_LEVEL, i);
 	fastf_t *b = NULL;
 	size_t bsize = cache_get((void **)&b, bu_vls_cstr(&kbuf));
-	if (bsize != level_vcnt[i]*3*sizeof(fastf_t)) {
+	if (bsize != level_vcnt[i]*sizeof(point_t)) {
 	    bu_log("Incorrect data size found loading level %d point data\n", i);
 	    return;
 	}
@@ -1272,6 +1314,23 @@ POPState::tri_pop_load(int start_level, int level)
 	lod_tris.insert(lod_tris.end(), &b[0], &b[level_tricnt[i]*3]);
 	cache_done();
     }
+
+    // Read in the vertex normals, if we have them
+    for (int i = start_level+1; i <= level; i++) {
+	if (!level_tricnt[i])
+	    continue;
+	bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERTNORM_LEVEL, i);
+	fastf_t *b = NULL;
+	size_t bsize = cache_get((void **)&b, bu_vls_cstr(&kbuf));
+	if (bsize > 0 && bsize != level_tricnt[i]*sizeof(vect_t)*3) {
+	    bu_log("Incorrect data size found loading level %d normal data\n", i);
+	    return;
+	}
+	if (bsize) {
+	    lod_tri_norms.insert(lod_tri_norms.end(), &b[0], &b[level_tricnt[i]*3*3]);
+	}
+	cache_done();
+    }
 }
 
 void
@@ -1279,6 +1338,8 @@ POPState::shrink_memory()
 {
     lod_tri_pnts.clear();
     lod_tri_pnts.shrink_to_fit();
+    lod_tri_norms.clear();
+    lod_tri_norms.shrink_to_fit();
     lod_tris.clear();
     lod_tris.shrink_to_fit();
     lod_tri_pnts_snapped.clear();
@@ -1300,6 +1361,8 @@ POPState::tri_pop_trim(int level)
     // not actually shrink memory usage on any given call.)
     lod_tri_pnts.resize(vkeep_cnt*3);
     lod_tri_pnts.shrink_to_fit();
+    lod_tri_norms.resize(fkeep_cnt*3*3);
+    lod_tri_norms.shrink_to_fit();
     lod_tris.resize(fkeep_cnt*3);
     lod_tris.shrink_to_fit();
 
@@ -1370,8 +1433,6 @@ POPState::get_level(fastf_t vlen)
     return POP_MAXLEVEL - 1;
 }
 
-// NOTE: at some point it may be worth investigating using bu_open_mapped_file
-// and friends for this, depending on what profiling shows in real-world usage.
 void
 POPState::set_level(int level)
 {
@@ -1432,6 +1493,8 @@ POPState::set_level(int level)
 	lod_tri_pnts_snapped.shrink_to_fit();
 	lod_tri_pnts.clear();
 	lod_tri_pnts.shrink_to_fit();
+	lod_tri_norms.clear();
+	lod_tri_norms.shrink_to_fit();
 	lod_tris.clear();
 	lod_tris.shrink_to_fit();
 
@@ -1523,7 +1586,15 @@ POPState::cache_tri()
     {
 	std::stringstream s;
 	s.write(reinterpret_cast<const char *>(&max_pop_threshold_level), sizeof(max_pop_threshold_level));
-	if (!cache_write("th", s))
+	if (!cache_write(CACHE_POP_MAX_LEVEL, s))
+	    return false;
+    }
+
+    // Write out the switch level
+    {
+	std::stringstream s;
+	s.write(reinterpret_cast<const char *>(&max_face_ratio), sizeof(max_face_ratio));
+	if (!cache_write(CACHE_POP_SWITCH_LEVEL, s))
 	    return false;
     }
 
@@ -1543,7 +1614,7 @@ POPState::cache_tri()
 	    icnt = level_tri_verts[i].size();
 	    s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
 	}
-	if (!cache_write("vc", s))
+	if (!cache_write(CACHE_VERTEX_COUNT, s))
 	    return false;
     }
 
@@ -1560,7 +1631,7 @@ POPState::cache_tri()
 	    tcnt = level_tris[i].size();
 	    s.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
 	}
-	if (!cache_write("tc", s))
+	if (!cache_write(CACHE_TRI_COUNT, s))
 	    return false;
     }
 
@@ -1581,7 +1652,7 @@ POPState::cache_tri()
 		VMOVE(v, verts_array[*s_it]);
 		s.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
 	    }
-	    bu_vls_sprintf(&kbuf, "v%d", i);
+	    bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERT_LEVEL, i);
 	    if (!cache_write(bu_vls_cstr(&kbuf), s))
 		return false;
 	}
@@ -1602,11 +1673,41 @@ POPState::cache_tri()
 		vt[2] = (int)tri_ind_map[faces_array[3*(*s_it)+2]];
 		s.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
 	    }
-	    bu_vls_sprintf(&kbuf, "t%d", i);
+	    bu_vls_sprintf(&kbuf, "%s%d", CACHE_TRI_LEVEL, i);
 	    if (!cache_write(bu_vls_cstr(&kbuf), s))
 		return false;
 	}
     }
+
+    // Write out the vertex normals in LoD order for each level, if we have them
+    {
+	if (vnorms_array) {
+	    for (int i = 0; i <= max_pop_threshold_level; i++) {
+		std::stringstream s;
+		if (!level_tris[i].size())
+		    continue;
+		// Write out the normals associated with the triangle indices
+		std::vector<size_t>::iterator s_it;
+		for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
+		    vect_t v;
+		    int tind;
+		    tind = 3*(*s_it)+0;
+		    VMOVE(v, vnorms_array[tind]);
+		    s.write(reinterpret_cast<const char *>(&v[0]), sizeof(vect_t));
+		    tind = 3*(*s_it)+1;
+		    VMOVE(v, vnorms_array[tind]);
+		    s.write(reinterpret_cast<const char *>(&v[0]), sizeof(vect_t));
+		    tind = 3*(*s_it)+2;
+		    VMOVE(v, vnorms_array[tind]);
+		    s.write(reinterpret_cast<const char *>(&v[0]), sizeof(vect_t));
+		}
+		bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERTNORM_LEVEL, i);
+		if (!cache_write(bu_vls_cstr(&kbuf), s))
+		    return false;
+	    }
+	}
+    }
+
 
     return true;
 }
@@ -1776,14 +1877,14 @@ POPState::plot(const char *root)
 
 
 extern "C" unsigned long long
-bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, int *faces, size_t fcnt)
+bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, double fratio)
 {
     unsigned long long key = 0;
 
     if (!v || !vcnt || !faces || !fcnt)
 	return 0;
 
-    POPState p(c, v, vcnt, faces, fcnt);
+    POPState p(c, v, vcnt, vn, faces, fcnt, user_key, fratio);
     if (!p.is_valid)
 	return 0;
 
@@ -1791,6 +1892,20 @@ bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, 
 
     return key;
 }
+
+
+extern "C" unsigned long long
+bg_mesh_lod_custom_key(void *data, size_t data_size)
+{
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    XXH64_update(&h_state, data, data_size);
+    XXH64_hash_t hash_val;
+    hash_val = XXH64_digest(&h_state);
+    unsigned long long hash = (unsigned long long)hash_val;
+    return hash; 
+}
+
 
 extern "C" struct bv_mesh_lod *
 bg_mesh_lod_create(struct bg_mesh_lod_context *c, unsigned long long key)
@@ -1874,12 +1989,21 @@ bg_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
 	l->faces = sp->lod_tris.data();
 	l->points_orig = (const point_t *)sp->lod_tri_pnts.data();
 	l->porig_cnt = (int)sp->lod_tri_pnts.size();
+#if 0
+	// TODO - there's still some error with normals - they seem to work,
+	// but when zooming way out and back in (at least on Windows) we're
+	// getting an access violation with some geometry...
+	if (sp->lod_tri_norms.size() >= sp->lod_tris.size()) {
+	    l->normals = (const vect_t *)sp->lod_tri_norms.data();
+	} else {
+	    l->normals = NULL;
+	}
+#else
+	l->normals = NULL;
+#endif
 	l->points = (const point_t *)sp->lod_tri_pnts_snapped.data();
 	l->pcnt = (int)sp->lod_tri_pnts_snapped.size();
     }
-    // TODO...
-    l->face_normals = NULL;
-    l->normals = NULL;
 
     // If the data changed, any Display List we may have previously generated
     // is now obsolete
@@ -1975,10 +2099,12 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 	// specific key (for example, if we're about to edit a BoT but
 	// don't want to redo the whole database's cache.
 	cache_del(c, key, CACHE_POP_MAX_LEVEL);
+	cache_del(c, key, CACHE_POP_SWITCH_LEVEL);
 	cache_del(c, key, CACHE_VERTEX_COUNT);
 	cache_del(c, key, CACHE_TRI_COUNT);
 	cache_del(c, key, CACHE_OBJ_BOUNDS);
 	cache_del(c, key, CACHE_VERT_LEVEL);
+	cache_del(c, key, CACHE_VERTNORM_LEVEL);
 	cache_del(c, key, CACHE_TRI_LEVEL);
 
 	// Iterate over the name/key mapper, removing anything with a value

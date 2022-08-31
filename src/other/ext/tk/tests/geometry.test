@@ -270,7 +270,7 @@ test geometry-4.10 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} -setup {
     wm geometry .t +0+0
     tkwait visibility .t
     update
-    pack [frame .t.f] 
+    pack [frame .t.f]
     button .t.quit -text Quit -command exit
     pack .t.quit -in .t.f
     wm iconify .t

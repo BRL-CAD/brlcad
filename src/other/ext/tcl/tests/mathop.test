@@ -10,7 +10,7 @@
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
+if {"::tcltest" ni [namespace children]} {
     package require tcltest 2.1
     namespace import -force ::tcltest::*
 }
@@ -901,10 +901,10 @@ test mathop-22.2 { bitwise ops on bignums } {
     set exp {}
     foreach d {5 7 2  1 D C  1 F E  0 -D -D  8 -9 -1  -0 -E E} {
         if {[string match "-*" $d]} {
-            set d [format %X [expr 15-0x[string range $d 1 end]]]
-            set val [expr -0x[string repeat $d $dig]-1]
+            set d [format %X [expr {15-"0x[string range $d 1 end]"}]]
+            set val [expr {-"0x[string repeat $d $dig]"-1}]
         } else {
-            set val [expr 0x[string repeat $d $dig]]
+            set val [expr {"0x[string repeat $d $dig]"}]
         }
         lappend exp $val
     }

@@ -4,7 +4,7 @@
 # tests.  Execute it by invoking "source all.tcl" when running tktest
 # in this directory.
 #
-# Copyright (c) 2007 by the Tk developers.
+# Copyright © 2007 by the Tk developers.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -16,5 +16,6 @@ tcltest::configure -testdir [file normalize [file dirname [info script]]]
 tcltest::configure -loadfile \
     [file join [file dirname [tcltest::testsDirectory]] constraints.tcl]
 tcltest::configure -singleproc 1
-tcltest::runAllTests
-
+set ErrorOnFailures [info exists env(ERROR_ON_FAILURES)]
+encoding system utf-8
+if {[tcltest::runAllTests] && $ErrorOnFailures} {exit 1}

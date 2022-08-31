@@ -14,6 +14,8 @@
 
 #include "tkMacOSXPrivate.h"
 #include "tkMacOSXConstants.h"
+#include "tkMacOSXWm.h"
+
 
 /*
  * Forward declarations of procedures defined later in this file:
@@ -24,7 +26,11 @@ static int		DebuggerObjCmd (ClientData dummy, Tcl_Interp *interp,
 					int objc, Tcl_Obj *const objv[]);
 #endif
 static int		PressButtonObjCmd (ClientData dummy, Tcl_Interp *interp,
-					int objc, Tcl_Obj *const objv[]);
+					int objc, Tcl_Obj *const *objv);
+static int		InjectKeyEventObjCmd (ClientData dummy, Tcl_Interp *interp,
+					int objc, Tcl_Obj *const *objv);
+static int		MenuBarHeightObjCmd (ClientData dummy, Tcl_Interp *interp,
+					int objc, Tcl_Obj *const *objv);
 
 
 /*
@@ -56,7 +62,8 @@ TkplatformtestInit(
     Tcl_CreateObjCommand(interp, "debugger", DebuggerObjCmd, NULL, NULL);
 #endif
     Tcl_CreateObjCommand(interp, "pressbutton", PressButtonObjCmd, NULL, NULL);
-
+    Tcl_CreateObjCommand(interp, "injectkeyevent", InjectKeyEventObjCmd, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "menubarheight", MenuBarHeightObjCmd, NULL, NULL);
     return TCL_OK;
 }
 
@@ -93,45 +100,11 @@ DebuggerObjCmd(
 /*
  *----------------------------------------------------------------------
  *
- * TkTestLogDisplay --
+ * MenuBarHeightObjCmd --
  *
- *      The test image display procedure calls this to determine whether it
- *      should write a log message recording that it has being run.  On OSX
- *      10.14 and later, only calls to the display procedure which occur inside
- *      of the drawRect method should be logged, since those are the only ones
- *      which actually draw anything.  On earlier systems the opposite is true.
- *      The calls from within the drawRect method are redundant, since the
- *      first time the display procedure is run it will do the drawing and that
- *      first call will usually not occur inside of drawRect.
- *
- * Results:
- *      On OSX 10.14 and later, returns true if and only if called from
- *      within [NSView drawRect].  On earlier systems returns false if
- *      and only if called from with [NSView drawRect].
- *
- * Side effects:
- *	None
- *
- *----------------------------------------------------------------------
- */
-MODULE_SCOPE Bool
-TkTestLogDisplay(void) {
-    if ([NSApp macMinorVersion] >= 14) {
-	return [NSApp isDrawing];
-    } else {
-	return ![NSApp isDrawing];
-    }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * PressButtonObjCmd --
- *
- *	This Tcl command simulates a button press at a specific screen
- *      location.  It injects NSEvents into the NSApplication event queue,
- *      as opposed to adding events to the Tcl queue as event generate
- *      would do.  One application is for testing the grab command.
+ *	This procedure calls [NSMenu menuBarHeight] and returns the result
+ *      as an integer.  Windows can never be placed to overlap the MenuBar,
+ *      so tests need to be aware of its size.
  *
  * Results:
  *	A standard Tcl result.
@@ -142,15 +115,90 @@ TkTestLogDisplay(void) {
  *----------------------------------------------------------------------
  */
 
-        /* ARGSUSED */
+static int
+MenuBarHeightObjCmd(
+    TCL_UNUSED(void *),		/* Not used. */
+    Tcl_Interp *interp,			/* Not used. */
+    TCL_UNUSED(int),				/* Not used. */
+    TCL_UNUSED(Tcl_Obj *const *))		/* Not used. */
+{
+    static int height = 0;
+    if (height == 0) {
+	height = (int) [[NSApp mainMenu] menuBarHeight];
+    }
+    Tcl_SetObjResult(interp, Tcl_NewIntObj(height));
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkTestLogDisplay --
+ *
+ *      The test image display procedure calls this to determine whether it
+ *      should write a log message recording that it has being run.
+ *
+ * Results:
+ *      Returns true if and only if the NSView of the drawable is the
+ *      current focusView, which on 10.14 and newer systems can only be the
+ *      case when within [NSView drawRect].
+ *
+ * Side effects:
+ *	None
+ *
+ *----------------------------------------------------------------------
+ */
+MODULE_SCOPE Bool
+TkTestLogDisplay(
+    Drawable drawable)
+{
+    MacDrawable *macWin = (MacDrawable *)drawable;
+    NSWindow *win = nil;
+    if (macWin->toplevel && macWin->toplevel->winPtr &&
+	macWin->toplevel->winPtr->wmInfoPtr &&
+	macWin->toplevel->winPtr->wmInfoPtr->window) {
+	win = macWin->toplevel->winPtr->wmInfoPtr->window;
+    } else if (macWin->winPtr && macWin->winPtr->wmInfoPtr &&
+	       macWin->winPtr->wmInfoPtr->window) {
+	win = macWin->winPtr->wmInfoPtr->window;
+    }
+    if (win) {
+	return ([win contentView] == [NSView focusView]);
+    } else {
+	return True;
+    }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * PressButtonObjCmd --
+ *
+ *	This Tcl command simulates a button press at a specific screen
+ *      location.  It injects NSEvents into the NSApplication event queue, as
+ *      opposed to adding events to the Tcl queue as event generate would do.
+ *      One application is for testing the grab command. These events have
+ *      their unused context property set to 1 as a signal indicating that they
+ *      should not be ignored by [NSApp tkProcessMouseEvent].
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
 static int
 PressButtonObjCmd(
-    ClientData clientData,
+    TCL_UNUSED(void *),
     Tcl_Interp *interp,
     int objc,
     Tcl_Obj *const objv[])
 {
-    int x, y, i, value, wNum;
+    int x = 0, y = 0, i, value;
+    NSInteger signal = -1;
     CGPoint pt;
     NSPoint loc;
     NSEvent *motion, *press, *release;
@@ -184,15 +232,20 @@ PressButtonObjCmd(
     pt.x = loc.x = x;
     pt.y = y;
     loc.y = ScreenHeight - y;
-    wNum = 0;
+
+    /*
+     *  We set the window number and the eventNumber to -1 as a signal to
+     *  processMouseEvent.
+     */
+
     CGWarpMouseCursorPosition(pt);
     motion = [NSEvent mouseEventWithType:NSMouseMoved
 	location:loc
 	modifierFlags:0
 	timestamp:GetCurrentEventTime()
-	windowNumber:wNum
+	windowNumber:signal
 	context:nil
-	eventNumber:0
+	eventNumber:signal
 	clickCount:1
 	pressure:0.0];
     [NSApp postEvent:motion atStart:NO];
@@ -200,9 +253,9 @@ PressButtonObjCmd(
 	location:loc
 	modifierFlags:0
 	timestamp:GetCurrentEventTime()
-	windowNumber:wNum
+	windowNumber:signal
 	context:nil
-	eventNumber:1
+	eventNumber:signal
 	clickCount:1
 	pressure:0.0];
     [NSApp postEvent:press atStart:NO];
@@ -210,16 +263,123 @@ PressButtonObjCmd(
 	location:loc
 	modifierFlags:0
 	timestamp:GetCurrentEventTime()
-	windowNumber:wNum
+	windowNumber:signal
 	context:nil
-	eventNumber:2
+	eventNumber:signal
 	clickCount:1
-	pressure:0.0];
+	pressure:-1.0];
     [NSApp postEvent:release atStart:NO];
     return TCL_OK;
 }
 
+static int
+InjectKeyEventObjCmd(
+    TCL_UNUSED(void *),
+    Tcl_Interp *interp,
+    int objc,
+    Tcl_Obj *const objv[])
+{
+    static const char *const optionStrings[] = {
+	"press", "release", "flagschanged", NULL};
+    NSUInteger types[3] = {NSKeyDown, NSKeyUp, NSFlagsChanged};
+    static const char *const argStrings[] = {
+	"-shift", "-control", "-option", "-command", "-function", "-x", "-y", NULL};
+    enum args {KEYEVENT_SHIFT, KEYEVENT_CONTROL, KEYEVENT_OPTION, KEYEVENT_COMMAND,
+	       KEYEVENT_FUNCTION, KEYEVENT_X, KEYEVENT_Y};
+    int i, index, keysym, mods = 0, x = 0, y = 0;
+    NSString *chars = nil, *unmod = nil, *upper, *lower;
+    NSEvent *keyEvent;
+    NSUInteger type;
+    MacKeycode macKC;
 
+    if (objc < 3) {
+    wrongArgs:
+        Tcl_WrongNumArgs(interp, 1, objv, "option keysym ?arg?");
+        return TCL_ERROR;
+    }
+    if (Tcl_GetIndexFromObj(interp, objv[1], optionStrings, "option", 0,
+            &index) != TCL_OK) {
+        return TCL_ERROR;
+    }
+    type = types[index];
+    if (Tcl_GetIntFromObj(interp, objv[2], &keysym) != TCL_OK) {
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			 "keysym must be an integer"));
+	Tcl_SetErrorCode(interp, "TK", "TEST", "INJECT", "KEYSYM", NULL);
+	return TCL_ERROR;
+    }
+    macKC.uint = XKeysymToKeycode(NULL, keysym);
+    for (i = 3; i < objc; i++) {
+	if (Tcl_GetIndexFromObjStruct(interp, objv[i], argStrings,
+                sizeof(char *), "option", TCL_EXACT, &index) != TCL_OK) {
+            return TCL_ERROR;
+        }
+        switch ((enum args) index) {
+	case KEYEVENT_SHIFT:
+	    mods |= NSShiftKeyMask;
+            break;
+	case KEYEVENT_CONTROL:
+	    mods |= NSControlKeyMask;
+            break;
+	case KEYEVENT_OPTION:
+	    mods |= NSAlternateKeyMask;
+            break;
+	case KEYEVENT_COMMAND:
+	    mods |= NSCommandKeyMask;
+            break;
+	case KEYEVENT_FUNCTION:
+	    mods |= NSFunctionKeyMask;
+            break;
+	case KEYEVENT_X:
+	    if (++i >= objc) {
+                goto wrongArgs;
+            }
+	    if (Tcl_GetIntFromObj(interp,objv[i], &x) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    break;
+	case KEYEVENT_Y:
+	    if (++i >= objc) {
+                goto wrongArgs;
+            }
+	    if (Tcl_GetIntFromObj(interp,objv[i], &y) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    break;
+	}
+    }
+    if (type != NSFlagsChanged) {
+	UniChar keychar = macKC.v.keychar;
+	chars = [[NSString alloc] initWithCharacters: &keychar length:1];
+	upper = [chars uppercaseString];
+	lower = [chars lowercaseString];
+	if (![upper isEqual: lower] && [chars isEqual: upper]) {
+	    mods |= NSShiftKeyMask;
+	}
+	if (mods & NSShiftKeyMask) {
+	    chars = upper;
+	    unmod = lower;
+	    macKC.v.o_s |= INDEX_SHIFT;
+	} else {
+	    unmod = chars;
+	}
+	if (macKC.v.o_s & INDEX_OPTION) {
+	    mods |= NSAlternateKeyMask;
+	}
+    }
+    keyEvent = [NSEvent keyEventWithType:type
+	location:NSMakePoint(x, y)
+        modifierFlags:mods
+	timestamp:GetCurrentEventTime()
+	windowNumber:0
+	context:nil
+	characters:chars
+	charactersIgnoringModifiers:unmod
+	isARepeat:NO
+	keyCode:macKC.v.virt];
+    [NSApp postEvent:keyEvent atStart:NO];
+    return TCL_OK;
+}
 /*
  * Local Variables:
  * mode: objc

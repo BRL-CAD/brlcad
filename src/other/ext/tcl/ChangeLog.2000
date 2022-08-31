@@ -1779,7 +1779,7 @@
 	* generic/tclCmdMZ.c: Fixed infinite loop bug with [regexp -all]
 	[Bug: 4981].
 
-	* tests/*.test: Changed all occurances of "namespace import
+	* tests/*.test: Changed all occurrences of "namespace import
 	::tcltest" to "namespace import -force ::tcltest" [Bug: 3948].
 
 2000-04-09  Brent Welch <welch@scriptics.com>

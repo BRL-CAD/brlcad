@@ -9,7 +9,7 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 if {"::tcltest" ni [namespace children]} {
-    package require tcltest 2
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -314,7 +314,7 @@ test compExpr-4.9 {CompileCondExpr procedure, error in "false" clause} {
 } {0 15}
 
 test compExpr-5.1 {CompileMathFuncCall procedure, math function found} {
-    format %.6g [expr atan2(1.0, 2.0)]
+    format %.6g [expr {atan2(1.0, 2.0)}]
 } 0.463648
 test compExpr-5.2 {CompileMathFuncCall procedure, math function not found} -body {
     expr {do_it()}
@@ -325,11 +325,11 @@ test compExpr-5.3 {CompileMathFuncCall: call registered math function} testmathf
 test compExpr-5.4 {CompileMathFuncCall: call registered math function} testmathfunctions {
     expr T2()*3
 } 1035
-test compExpr-5.5 {CompileMathFuncCall procedure, too few arguments} -body {
+test compExpr-5.5 {CompileMathFuncCall procedure, not enough arguments} -body {
     expr {atan2(1.0)}
-} -returnCodes error -match glob -result {too few arguments for math function*}
+} -returnCodes error -match glob -result {not enough arguments for math function*}
 test compExpr-5.6 {CompileMathFuncCall procedure, complex argument} {
-    format %.6g [expr pow(2.1, 27.5-(24.4*(5%2)))]
+    format %.6g [expr {pow(2.1, 27.5-(24.4*(5%2)))}]
 } 9.97424
 test compExpr-5.7 {CompileMathFuncCall procedure, error in argument} -body {
     expr {sinh(2.*)}
@@ -353,9 +353,9 @@ test compExpr-7.1 {Memory Leak} -constraints memory -setup {
 } -body {
     set end [getbytes]
     for {set i 0} {$i < 5} {incr i} {
-	interp create slave
-	slave eval expr 1+2+3+4+5+6+7+8+9+10+11+12+13
-	interp delete slave
+	interp create child
+	child eval expr 1+2+3+4+5+6+7+8+9+10+11+12+13
+	interp delete child
 	set tmp $end
 	set end [getbytes]
     }

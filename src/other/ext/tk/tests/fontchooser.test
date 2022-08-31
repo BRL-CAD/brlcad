@@ -2,13 +2,16 @@
 #
 # Copyright (c) 2008 Pat Thoyts
 
-package require tcltest 2.1
+package require tcltest 2.2
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
 
+testConstraint failsOnUbuntu [expr {![info exists ::env(CI)] || ![string match Linux $::tcl_platform(os)]}]
+testConstraint failsOnUbuntuNoXft [expr {[testConstraint failsOnUbuntu] || (![catch {tk::pkgconfig get fontsystem} fs] && ($fs eq "xft"))}]
+
 # the following helper functions are related to the functions used
 # in winDialog.test where they are used to send messages to the win32
-# dialog (hence the wierdness).
+# dialog (hence the weirdness).
 
 proc start {cmd} {
     set ::tk_dialog {}
@@ -179,7 +182,7 @@ test fontchooser-4.3 {fontchooser -font} -constraints scriptImpl -body {
     expr {$::testfont ne {}}
 } -result {1}
 
-test fontchooser-4.4 {fontchooser -font} -constraints scriptImpl -body {
+test fontchooser-4.4 {fontchooser -font} -constraints {scriptImpl failsOnUbuntuNoXft} -body {
     start {
         tk::fontchooser::Configure -command ApplyFont -font {times 14 bold}
         tk::fontchooser::Show
@@ -189,6 +192,12 @@ test fontchooser-4.4 {fontchooser -font} -constraints scriptImpl -body {
     }
     lrange $::testfont 1 end
 } -result {14 bold}
+
+test fontchooser-5.1 {fontchooser multiple configure} -constraints {scriptImpl} -body {
+    tk fontchooser configure -title TestTitle -command foo
+    tk fontchooser configure -command bar
+    tk fontchooser configure -title
+} -result {TestTitle}
 
 # -------------------------------------------------------------------------
 

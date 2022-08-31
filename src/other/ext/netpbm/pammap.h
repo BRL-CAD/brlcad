@@ -1,11 +1,11 @@
-/******************************************************************************
+/*=============================================================================
                                 pammap.h
-*******************************************************************************
+===============================================================================
 
   Interface header file for hash table and lookup table pam functions
   in libpnm.
 
-******************************************************************************/
+=============================================================================*/
 
 #ifndef PAMMAP_H
 #define PAMMAP_H
@@ -72,10 +72,12 @@ tupletable
 pnm_alloctupletable(const struct pam * const pamP, unsigned int const size);
 
 void
-pnm_freetupletable(struct pam * const pamP, tupletable const tupletable);
+pnm_freetupletable(const struct pam * const pamP,
+                   tupletable         const tupletable);
 
 void
-pnm_freetupletable2(struct pam * const pamP, tupletable2 const tupletable);
+pnm_freetupletable2(const struct pam * const pamP,
+                    tupletable2        const tupletable);
 
 tuplehash
 pnm_createtuplehash(void);
@@ -95,6 +97,14 @@ pnm_computetuplefreqtable2(struct pam *   const pamP,
                            unsigned int   const maxsize,
                            sample         const newMaxval,
                            unsigned int * const sizeP);
+
+tupletable
+pnm_computetuplefreqtable3(struct pam *   const pamP,
+                           tuple **       const tupleArray,
+                           unsigned int   const maxsize,
+                           unsigned int   const newDepth,
+                           sample         const newMaxval,
+                           unsigned int * const countP);
 
 tuplehash
 pnm_computetuplefreqhash(struct pam *   const pamP,

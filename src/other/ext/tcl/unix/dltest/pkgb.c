@@ -54,6 +54,7 @@ Pkgb_SubObjCmd(
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
     int first, second;
+    (void)dummy;
 
     if (objc != 3) {
 	Tcl_WrongNumArgs(interp, 1, objv, "num num");
@@ -94,6 +95,10 @@ Pkgb_UnsafeObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
+    (void)dummy;
+    (void)objc;
+    (void)objv;
+
     return Tcl_EvalEx(interp, "list unsafe command invoked", -1, TCL_EVAL_GLOBAL);
 }
 
@@ -106,6 +111,9 @@ Pkgb_DemoObjCmd(
 {
 #if (TCL_MAJOR_VERSION > 8) || (TCL_MINOR_VERSION > 4)
     Tcl_Obj *first;
+    (void)dummy;
+    (void)objc;
+    (void)objv;
 
     if (Tcl_ListObjIndex(NULL, Tcl_GetEncodingSearchPath(), 0, &first)
 	    == TCL_OK) {
@@ -141,10 +149,10 @@ Pkgb_Init(
 {
     int code;
 
-    if (Tcl_InitStubs(interp, "8.5-", 0) == NULL) {
+    if (Tcl_InitStubs(interp, "8.5", 0) == NULL) {
 	return TCL_ERROR;
     }
-    code = Tcl_PkgProvide(interp, "Pkgb", "2.3");
+    code = Tcl_PkgProvide(interp, "pkgb", "2.3");
     if (code != TCL_OK) {
 	return code;
     }
@@ -178,10 +186,10 @@ Pkgb_SafeInit(
 {
     int code;
 
-    if (Tcl_InitStubs(interp, "8.5-", 0) == NULL) {
+    if (Tcl_InitStubs(interp, "8.5", 0) == NULL) {
 	return TCL_ERROR;
     }
-    code = Tcl_PkgProvide(interp, "Pkgb", "2.3");
+    code = Tcl_PkgProvide(interp, "pkgb", "2.3");
     if (code != TCL_OK) {
 	return code;
     }

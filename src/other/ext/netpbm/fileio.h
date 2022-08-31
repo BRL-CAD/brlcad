@@ -1,5 +1,7 @@
-#ifndef _NETPBM_FILEIO_H_
-#define _NETPBM_FILEIO_H_
+#ifndef FILEIO_H_INCLUDED
+#define FILEIO_H_INCLUDED
+
+#include <stdio.h>
 
 char
 pm_getc(FILE * const file);

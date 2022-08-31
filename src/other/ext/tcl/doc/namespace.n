@@ -303,7 +303,7 @@ used for qualified namespace or variable names.
 Sets or returns the unknown command handler for the current namespace.
 The handler is invoked when a command called from within the namespace
 cannot be found in the current namespace, the namespace's path nor in
-the global namespace. 
+the global namespace.
 The \fIscript\fR argument, if given, should be a well
 formed list representing a command name and optional arguments. When
 the handler is invoked, the full invocation line will be appended to the

@@ -4,8 +4,8 @@
 # strings. This file is primarily needed so Tk text and entry widgets behave
 # properly for different platforms.
 #
-# Copyright (c) 1996 by Sun Microsystems, Inc.
-# Copyright (c) 1998 by Scritpics Corporation.
+# Copyright (c) 1996 Sun Microsystems, Inc.
+# Copyright (c) 1998 Scritpics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -146,7 +146,9 @@ proc tcl_startOfNextWord {str start} {
 proc tcl_startOfPreviousWord {str start} {
     variable ::tcl::WordBreakRE
     set word {-1 -1}
-    regexp -indices -- $WordBreakRE(previous) [string range $str 0 $start-1] \
-	    result word
+    if {$start > 0} {
+	regexp -indices -- $WordBreakRE(previous) [string range $str 0 $start-1] \
+		result word
+    }
     return [lindex $word 0]
 }

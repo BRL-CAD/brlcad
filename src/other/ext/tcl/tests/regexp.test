@@ -12,7 +12,7 @@
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 if {"::tcltest" ni [namespace children]} {
-    package require tcltest 2
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -178,6 +178,17 @@ test regexp-3.7 {getting substrings back from regexp} {
     set foo 1; set f2 1; set f3 1; set f4 1
     list [regexp -indices (a)(b)?(c) xacy foo f2 f3 f4] $foo $f2 $f3 $f4
 } {1 {1 2} {1 1} {-1 -1} {2 2}}
+test regexp-3.8a {-indices by multi-byte utf-8} {
+    regexp -inline -indices {(\w+)-(\w+)} \
+	"gr\u00FC\u00DF-\u043F\u0440\u0438\u0432\u0435\u0442"
+} {{0 10} {0 3} {5 10}}
+test regexp-3.8b {-indices by multi-byte utf-8, from -start position} {
+    list\
+	[regexp -inline -indices -start 3 {(\w+)-(\w+)} \
+	"gr\u00FC\u00DF-\u043F\u0440\u0438\u0432\u0435\u0442"] \
+	[regexp -inline -indices -start 4 {(\w+)-(\w+)} \
+	"gr\u00FC\u00DF-\u043F\u0440\u0438\u0432\u0435\u0442"]
+} {{{3 10} {3 3} {5 10}} {}}
 
 test regexp-4.1 {-nocase option to regexp} {
     regexp -nocase foo abcFOo
@@ -480,7 +491,7 @@ test regexp-11.12 {regsub without final variable name returns value} {
 } {a,bcd,c,ea,bcfd,cf,e}
 
 # This test crashes on the Mac unless you increase the Stack Space to about 1
-# Meg.  This is probably bigger than most users want... 
+# Meg.  This is probably bigger than most users want...
 # 8.2.3 regexp reduced stack space requirements, but this should be
 # tested again
 test regexp-12.1 {Tcl_RegExpExec: large number of subexpressions} {macCrash} {
@@ -742,10 +753,10 @@ test regexp-19.2 {regsub null replacement} {
 
 test regexp-20.1 {regsub shared object shimmering} {
     # Bug #461322
-    set a abcdefghijklmnopqurstuvwxyz 
-    set b $a 
-    set c abcdefghijklmnopqurstuvwxyz0123456789 
-    regsub $a $c $b d 
+    set a abcdefghijklmnopqurstuvwxyz
+    set b $a
+    set c abcdefghijklmnopqurstuvwxyz0123456789
+    regsub $a $c $b d
     list $d [string length $d] [string bytelength $d]
 } [list abcdefghijklmnopqurstuvwxyz0123456789 37 37]
 test regexp-20.2 {regsub shared object shimmering with -about} {

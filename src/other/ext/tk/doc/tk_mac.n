@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH tk::mac n 8.6 Tk "Tk Built-In Commands"
 .so man.macros
 .BS
@@ -48,10 +48,10 @@ the command is absent, no action will be taken.
 .TP
 \fB::tk::mac::DoScriptFile\fR
 .
-The default Apple Event handler for AEDoScriptHandler. This command 
+The default Apple Event handler for AEDoScriptHandler. This command
 executes a Tcl file when an AppleScript sends a
 .QW "do script"
-command to Wish with a file path as a parameter. 
+command to Wish with a file path as a parameter.
 .TP
 \fB::tk::mac::DoScriptText\fR
 .
@@ -131,7 +131,7 @@ If a proc of this name is defined it is the default Apple Event handler for
 kAEPrintDocuments,
 .QW pdoc ,
 the Apple Event sent when your application is asked to print a
-document.  It takes a single absolute file path as an argument. 
+document.  It takes a single absolute file path as an argument.
 .TP
 \fB::tk::mac::Quit\fR
 .
@@ -165,15 +165,15 @@ set).
 .TP
 \fB::tk::mac::PerformService\fR
 .
-Executes a Tcl procedure called from the macOS 
-.QW Services 
+Executes a Tcl procedure called from the macOS
+.QW Services
 menu in the Application menu item. The
 .QW Services
 menu item allows for inter-application communication; data from one
 application, such as selected text, can be sent to another application
 for processing, for example to Safari as a search item for Google, or
 to TextEdit to be appended to a file. An example of the proc is below,
-and should be rewritten in an application script for customization: 
+and should be rewritten in an application script for customization:
 .RS
 .PP
 .CS
@@ -184,7 +184,7 @@ proc ::tk::mac::PerformService {} {
 .CE
 .RE
 Note that the mechanism for retrieving the data is from the clipboard;
-there is no other supported way to obtain the data.  If the Services 
+there is no other supported way to obtain the data.  If the Services
 process is not desired, the NSServices keys can be deleted from
 the application's Info.plist file. The underlying code supporting this
 command also allows the text, entry and ttk::entry widgets to access
@@ -203,7 +203,7 @@ URL, although it can defined as such. Wish includes a stub URL scheme
 of
 .QW foo://
 in the CFBundleURLSchemes key of its Info.plist file; this should be customized for the specific URL
-scheme the developer wants to support. 
+scheme the developer wants to support.
 .TP
 \fB::tk::mac::GetAppPath\fR
 .
@@ -218,11 +218,17 @@ support.
 .TP
 \fB::tk::mac::standardAboutPanel\fR
 .
-Brings the standard Cocoa about panel to the front, with all its information
-filled in from your application bundle files (standard about panel with no
-options specified). See Apple Technote TN2179 and the AppKit documentation for
--[NSApplication orderFrontStandardAboutPanelWithOptions:] for details on the
-Info.plist keys and app bundle files used by the about panel.
+Brings the standard Cocoa about panel to the front with information filled in
+from the application bundle files. The panel displays the application icon and
+the values associated to the info.plist keys named CFBundleName,
+CFBundleShortVersionString, NSAboutPanelOptionVersion and
+NSHumanReadableCopyright.  If a file named \fICredits.html\fR or
+\fICredits.rtf\fR exists in the bundle's Resources directory then its contents
+will be displayed in a scrolling text box at the bottom of the dialog. See the
+documentation for -[NSApplication orderFrontStandardAboutPanelWithOptions:]
+for more details. A hook is also provided for a custom About dialog.  If a Tcl
+proc named tkAboutDialog is defined in the main interpreter then that
+procedure will be called instead of opening the standardAboutPanel.
 .SH "SYSTEM CONFIGURATION"
 .PP
 There are a number of additional global configuration options that control the

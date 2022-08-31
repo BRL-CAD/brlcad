@@ -15,7 +15,12 @@
 
 #include "tclInt.h"
 #include "tommath.h"
+#include <float.h>
 #include <math.h>
+
+#ifdef _WIN32
+#define copysign _copysign
+#endif
 
 /*
  * Define KILL_OCTAL to suppress interpretation of numbers with leading zero
@@ -52,7 +57,7 @@ typedef unsigned int	fpu_control_t __attribute__ ((__mode__ (__HI__)));
 
 #define _FPU_GETCW(cw)	__asm__ __volatile__ ("fnstcw %0" : "=m" (*&cw))
 #define _FPU_SETCW(cw)	__asm__ __volatile__ ("fldcw %0" : : "m" (*&cw))
-#   define FPU_IEEE_ROUNDING	0x027f
+#   define FPU_IEEE_ROUNDING	0x027F
 #   define ADJUST_FPU_CONTROL_WORD
 #define TCL_IEEE_DOUBLE_ROUNDING \
     fpu_control_t roundTo53Bits = FPU_IEEE_ROUNDING;	\
@@ -101,10 +106,10 @@ typedef unsigned int	fpu_control_t __attribute__ ((__mode__ (__HI__)));
  */
 
 #ifdef __hppa
-#   define NAN_START	0x7ff4
+#   define NAN_START	0x7FF4
 #   define NAN_MASK	(((Tcl_WideUInt) 1) << 50)
 #else
-#   define NAN_START	0x7ff8
+#   define NAN_START	0x7FF8
 #   define NAN_MASK	(((Tcl_WideUInt) 1) << 51)
 #endif
 
@@ -126,23 +131,23 @@ typedef unsigned int	fpu_control_t __attribute__ ((__mode__ (__HI__)));
 #define SIGN_BIT 	0x80000000
 				/* Mask for the sign bit in the first word of
 				 * a double. */
-#define EXP_MASK	0x7ff00000
+#define EXP_MASK	0x7FF00000
 				/* Mask for the exponent field in the first
 				 * word of a double. */
 #define EXP_SHIFT	20	/* Shift count to make the exponent an
 				 * integer. */
 #define HIDDEN_BIT	(((Tcl_WideUInt) 0x00100000) << 32)
 				/* Hidden 1 bit for the significand. */
-#define HI_ORDER_SIG_MASK 0x000fffff
+#define HI_ORDER_SIG_MASK 0x000FFFFF
 				/* Mask for the high-order part of the
 				 * significand in the first word of a
 				 * double. */
 #define SIG_MASK	(((Tcl_WideUInt) HI_ORDER_SIG_MASK << 32) \
-			| 0xffffffff)
+			| 0xFFFFFFFF)
 				/* Mask for the 52-bit significand. */
 #define FP_PRECISION	53	/* Number of bits of significand plus the
 				 * hidden bit. */
-#define EXPONENT_BIAS	0x3ff	/* Bias of the exponent 0. */
+#define EXPONENT_BIAS	0x3FF	/* Bias of the exponent 0. */
 
 /*
  * Derived quantities.
@@ -296,10 +301,10 @@ static const Tcl_WideUInt wuipow5[27] = {
 static int		AccumulateDecimalDigit(unsigned, int,
 			    Tcl_WideUInt *, mp_int *, int);
 static double		MakeHighPrecisionDouble(int signum,
-			    mp_int *significand, int nSigDigs, int exponent);
+			    mp_int *significand, int nSigDigs, long exponent);
 static double		MakeLowPrecisionDouble(int signum,
 			    Tcl_WideUInt significand, int nSigDigs,
-			    int exponent);
+			    long exponent);
 #ifdef IEEE_FLOATING_POINT
 static double		MakeNaN(int signum, Tcl_WideUInt tag);
 #endif
@@ -563,7 +568,7 @@ TclParseNumber(
 	     * I, N, and whitespace.
 	     */
 
-	    if (TclIsSpaceProc(c)) {
+	    if (TclIsSpaceProcM(c)) {
 		if (flags & TCL_PARSE_NO_WHITESPACE) {
 		    goto endgame;
 		}
@@ -836,6 +841,7 @@ TclParseNumber(
 	    acceptState = state;
 	    acceptPoint = p;
 	    acceptLen = len;
+	    /* FALLTHRU */
 	case ZERO_B:
 	zerob:
 	    if (c == '0') {
@@ -1089,7 +1095,7 @@ TclParseNumber(
 	    }
 	    /* FALLTHROUGH */
 	case sNANPAREN:
-	    if (TclIsSpaceProc(c)) {
+	    if (TclIsSpaceProcM(c)) {
 		break;
 	    }
 	    if (numSigDigs < 13) {
@@ -1143,7 +1149,7 @@ TclParseNumber(
 	     * Accept trailing whitespace.
 	     */
 
-	    while (len != 0 && TclIsSpaceProc(*p)) {
+	    while (len != 0 && TclIsSpaceProcM(*p)) {
 		p++;
 		len--;
 	    }
@@ -1277,9 +1283,9 @@ TclParseNumber(
 	    }
 	    if (octalSignificandOverflow) {
 		if (signum) {
-		    mp_neg(&octalSignificandBig, &octalSignificandBig);
+		    (void)mp_neg(&octalSignificandBig, &octalSignificandBig);
 		}
-		TclSetBignumIntRep(objPtr, &octalSignificandBig);
+		TclSetBignumInternalRep(objPtr, &octalSignificandBig);
 	    }
 	    break;
 
@@ -1287,7 +1293,7 @@ TclParseNumber(
 	case DECIMAL:
 	    significandOverflow = AccumulateDecimalDigit(0, numTrailZeros-1,
 		    &significandWide, &significandBig, significandOverflow);
-	    if (!significandOverflow && (significandWide > MOST_BITS+signum)){
+	    if (!significandOverflow && (significandWide > MOST_BITS+signum)) {
 		significandOverflow = 1;
 		TclBNInitBignumFromWideUInt(&significandBig, significandWide);
 	    }
@@ -1324,9 +1330,9 @@ TclParseNumber(
 	    }
 	    if (significandOverflow) {
 		if (signum) {
-		    mp_neg(&significandBig, &significandBig);
+		    (void)mp_neg(&significandBig, &significandBig);
 		}
-		TclSetBignumIntRep(objPtr, &significandBig);
+		TclSetBignumInternalRep(objPtr, &significandBig);
 	    }
 	    break;
 
@@ -1343,16 +1349,45 @@ TclParseNumber(
 
 	    objPtr->typePtr = &tclDoubleType;
 	    if (exponentSignum) {
+		/*
+		 * At this point exponent>=0, so the following calculation
+		 * cannot underflow.
+		 */
 		exponent = -exponent;
 	    }
+
+	    /*
+	     * Adjust the exponent for the number of trailing zeros that
+	     * have not been accumulated, and the number of digits after
+	     * the decimal point. Pin any overflow to LONG_MAX/LONG_MIN
+	     * respectively.
+	     */
+
+	    if (exponent >= 0) {
+		if (exponent - numDigitsAfterDp > LONG_MAX - numTrailZeros) {
+		    exponent = LONG_MAX;
+		} else {
+		    exponent = exponent - numDigitsAfterDp + numTrailZeros;
+		}
+	    } else {
+		if (exponent + numTrailZeros < LONG_MIN + numDigitsAfterDp) {
+		    exponent = LONG_MIN;
+		} else {
+		    exponent = exponent + numTrailZeros - numDigitsAfterDp;
+		}
+	    }
+
+	    /*
+	     * The desired number is now significandWide * 10**exponent
+	     * or significandBig * 10**exponent, depending on whether
+	     * the significand has overflowed a wide int.
+	     */
 	    if (!significandOverflow) {
 		objPtr->internalRep.doubleValue = MakeLowPrecisionDouble(
-			signum, significandWide, numSigDigs,
-			numTrailZeros + exponent - numDigitsAfterDp);
+			signum, significandWide, numSigDigs, exponent);
 	    } else {
 		objPtr->internalRep.doubleValue = MakeHighPrecisionDouble(
-			signum, &significandBig, numSigDigs,
-			numTrailZeros + exponent - numDigitsAfterDp);
+			signum, &significandBig, numSigDigs, exponent);
 	    }
 	    break;
 
@@ -1369,7 +1404,7 @@ TclParseNumber(
 #ifdef IEEE_FLOATING_POINT
 	case sNAN:
 	case sNANFINISH:
-	    objPtr->internalRep.doubleValue = MakeNaN(signum,significandWide);
+	    objPtr->internalRep.doubleValue = MakeNaN(signum, significandWide);
 	    objPtr->typePtr = &tclDoubleType;
 	    break;
 #endif
@@ -1536,9 +1571,9 @@ AccumulateDecimalDigit(
 static double
 MakeLowPrecisionDouble(
     int signum,			/* 1 if the number is negative, 0 otherwise */
-    Tcl_WideUInt significand,	/* Significand of the number. */
-    int numSigDigs,		/* Number of digits in the significand. */
-    int exponent)		/* Power of ten. */
+    Tcl_WideUInt significand,	/* Significand of the number */
+    int numSigDigs,		/* Number of digits in the significand */
+    long exponent)		/* Power of ten */
 {
     double retval;		/* Value of the number. */
     mp_int significandBig;	/* Significand expressed as a bignum. */
@@ -1557,6 +1592,9 @@ MakeLowPrecisionDouble(
      * Test for the easy cases.
      */
 
+    if (significand == 0) {
+	return copysign(0.0, -signum);
+    }
     if (numSigDigs <= QUICK_MAX) {
 	if (exponent >= 0) {
 	    if (exponent <= mmaxpow) {
@@ -1649,10 +1687,10 @@ MakeLowPrecisionDouble(
 
 static double
 MakeHighPrecisionDouble(
-    int signum,			/* 1=negative, 0=nonnegative. */
-    mp_int *significand,	/* Exact significand of the number. */
-    int numSigDigs,		/* Number of significant digits. */
-    int exponent)		/* Power of 10 by which to multiply. */
+    int signum,			/* 1=negative, 0=nonnegative */
+    mp_int *significand,	/* Exact significand of the number */
+    int numSigDigs,		/* Number of significant digits */
+    long exponent)		/* Power of 10 by which to multiply */
 {
     double retval;
     int machexp;		/* Machine exponent of a power of 10. */
@@ -1668,15 +1706,18 @@ MakeHighPrecisionDouble(
     TCL_IEEE_DOUBLE_ROUNDING;
 
     /*
-     * Quick checks for over/underflow.
+     * Quick checks for zero, and over/underflow. Be careful to avoid
+     * integer overflow when calculating with 'exponent'.
      */
 
-    if (numSigDigs+exponent-1 > maxDigits) {
+    if (mp_iszero(significand)) {
+	return copysign(0.0, -signum);
+    }
+    if (exponent >= 0 && exponent-1 > maxDigits-numSigDigs) {
 	retval = HUGE_VAL;
 	goto returnValue;
-    }
-    if (numSigDigs+exponent-1 < minDigits) {
-	retval = 0;
+    } else if (exponent < 0 && numSigDigs+exponent < minDigits+1) {
+	retval = 0.0;
 	goto returnValue;
     }
 
@@ -1811,6 +1852,9 @@ RefineApproximation(
 				 * "round to even" functionality */
     double rteSignificand;	/* Significand of the round-to-even result */
     int rteExponent;		/* Exponent of the round-to-even result */
+    int shift;			/* Shift count for converting numerator
+				 * and denominator of corrector to floating
+				 * point */
     Tcl_WideInt rteSigWide;	/* Wide integer version of the significand
 				 * for testing evenness */
     int i;
@@ -1823,13 +1867,22 @@ RefineApproximation(
     if (approxResult == HUGE_VAL) {
 	return approxResult;
     }
+    significand = frexp(approxResult, &binExponent);
 
     /*
-     * Find a common denominator for the decimal and binary fractions. The
-     * common denominator will be 2**M2 + 5**M5.
+     * We are trying to compute a corrector term that, when added to the
+     * approximate result, will yield close to the exact result.
+     * The exact result is exactSignificand * 10**exponent.
+     * The approximate result is significand * 2**binExponent
+     * If exponent<0, we need to multiply the exact value by 10**-exponent
+     * to make it an integer, plus another factor of 2 to decide on rounding.
+     *  Similarly if binExponent<FP_PRECISION, we need
+     * to multiply by 2**FP_PRECISION to make the approximate value an integer.
+     *
+     * Let M = 2**M2 * 5**M5 be the least common multiple of these two
+     * multipliers.
      */
 
-    significand = frexp(approxResult, &binExponent);
     i = mantBits - binExponent;
     if (i < 0) {
 	M2 = 0;
@@ -1846,12 +1899,9 @@ RefineApproximation(
     }
 
     /*
-     * The floating point number is significand*2**binExponent. Compute the
-     * large integer significand*2**(binExponent+M2+1). The 2**-1 bit of the
-     * significand (the most significant) corresponds to the
-     * 2**(binExponent+M2 + 1) bit of 2*M2*v. Allocate enough digits to hold
-     * that quantity, then convert the significand to a large integer, scaled
-     * appropriately. Then multiply by the appropriate power of 5.
+     * Compute twoMv as 2*M*v, where v is the approximate value.
+     * This is done by bit-whacking to calculate 2**(M2+1)*significand,
+     * and then multiplying by 5**M5.
      */
 
     msb = binExponent + M2;	/* 1008 */
@@ -1872,10 +1922,9 @@ RefineApproximation(
     }
 
     /*
-     * Collect the decimal significand as a high precision integer. The least
-     * significant bit corresponds to bit M2+exponent+1 so it will need to be
-     * shifted left by that many bits after being multiplied by
-     * 5**(M5+exponent).
+     * Compute twoMd as 2*M*d, where d is the exact value.
+     * This is done by multiplying by 5**(M5+exponent) and then multiplying
+     * by 2**(M5+exponent+1), which is, of couse, a left shift.
      */
 
     mp_init_copy(&twoMd, exactSignificand);
@@ -1885,16 +1934,22 @@ RefineApproximation(
 	}
     }
     mp_mul_2d(&twoMd, M2+exponent+1, &twoMd);
+
+    /*
+     * Now let twoMd = twoMd - twoMv, the difference between the exact and
+     * approximate values.
+     */
+
     mp_sub(&twoMd, &twoMv, &twoMd);
 
     /*
      * The result, 2Mv-2Md, needs to be divided by 2M to yield a correction
      * term. Because 2M may well overflow a double, we need to scale the
-     * denominator by a factor of 2**binExponent-mantBits.
+     * denominator by a factor of 2**binExponent-mantBits. Place that factor
+     * times 1/2 ULP into twoMd.
      */
 
     scale = binExponent - mantBits - 1;
-
     mp_set(&twoMv, 1);
     for (i=0; i<=8; ++i) {
 	if (M5 & (1 << i)) {
@@ -1908,25 +1963,36 @@ RefineApproximation(
 	mp_div_2d(&twoMv, -multiplier, &twoMv, NULL);
     }
 
+    /*
+     * Will the eventual correction term be less than, equal to, or
+     * greater than 1/2 ULP?
+     */
+
     switch (mp_cmp_mag(&twoMd, &twoMv)) {
     case MP_LT:
 	/*
-	 * If the result is less than unity, the error is less than 1/2 unit in
-	 * the last place, so there's no correction to make.
+	 * If the error is less than 1/2 ULP, there's no correction to make.
 	 */
 	mp_clear(&twoMd);
 	mp_clear(&twoMv);
 	return approxResult;
     case MP_EQ:
 	/*
-	 * If the result is exactly unity, we need to round to even.
+	 * If the error is exactly 1/2 ULP, we need to round to even.
 	 */
 	roundToEven = 1;
 	break;
     case MP_GT:
+	/*
+	 * We need to correct the result if the error exceeds 1/2 ULP.
+	 */
 	break;
     }
 
+    /*
+     * If we're in the 'round to even' case, and the significand is already
+     * even, we're done. Return the approximate result.
+     */
     if (roundToEven) {
 	rteSignificand = frexp(approxResult, &rteExponent);
 	rteSigWide = (Tcl_WideInt) ldexp(rteSignificand, FP_PRECISION);
@@ -1935,6 +2001,16 @@ RefineApproximation(
 	    mp_clear(&twoMv);
 	    return approxResult;
 	}
+    }
+
+    /*
+     * Reduce the numerator and denominator of the corrector term so that
+     * they will fit in the floating point precision.
+     */
+    shift = mp_count_bits(&twoMv) - FP_PRECISION - 1;
+    if (shift > 0) {
+	mp_div_2d(&twoMv, shift, &twoMv, NULL);
+	mp_div_2d(&twoMd, shift, &twoMd, NULL);
     }
 
     /*
@@ -2025,16 +2101,16 @@ NormalizeRightward(
     int rv = 0;
     Tcl_WideUInt w = *wPtr;
 
-    if (!(w & (Tcl_WideUInt) 0xffffffff)) {
+    if (!(w & (Tcl_WideUInt) 0xFFFFFFFF)) {
 	w >>= 32; rv += 32;
     }
-    if (!(w & (Tcl_WideUInt) 0xffff)) {
+    if (!(w & (Tcl_WideUInt) 0xFFFF)) {
 	w >>= 16; rv += 16;
     }
-    if (!(w & (Tcl_WideUInt) 0xff)) {
+    if (!(w & (Tcl_WideUInt) 0xFF)) {
 	w >>= 8; rv += 8;
     }
-    if (!(w & (Tcl_WideUInt) 0xf)) {
+    if (!(w & (Tcl_WideUInt) 0xF)) {
 	w >>= 4; rv += 4;
     }
     if (!(w & 0x3)) {
@@ -2068,21 +2144,21 @@ RequiredPrecision(
     int rv;
     unsigned long wi;
 
-    if (w & ((Tcl_WideUInt) 0xffffffff << 32)) {
+    if (w & ((Tcl_WideUInt) 0xFFFFFFFF << 32)) {
 	wi = (unsigned long) (w >> 32); rv = 32;
     } else {
 	wi = (unsigned long) w; rv = 0;
     }
-    if (wi & 0xffff0000) {
+    if (wi & 0xFFFF0000) {
 	wi >>= 16; rv += 16;
     }
-    if (wi & 0xff00) {
+    if (wi & 0xFF00) {
 	wi >>= 8; rv += 8;
     }
-    if (wi & 0xf0) {
+    if (wi & 0xF0) {
 	wi >>= 4; rv += 4;
     }
-    if (wi & 0xc) {
+    if (wi & 0xC) {
 	wi >>= 2; rv += 2;
     }
     if (wi & 0x2) {
@@ -2527,7 +2603,7 @@ AdjustRange(
 	 * The number must be reduced to bring it into range.
 	 */
 
-	ds = tens[k & 0xf];
+	ds = tens[k & 0xF];
 	j = k >> 4;
 	if (j & BLETCH) {
 	    j &= (BLETCH-1);
@@ -2548,7 +2624,7 @@ AdjustRange(
 	 * The number must be increased to bring it into range.
 	 */
 
-	d *= tens[j1 & 0xf];
+	d *= tens[j1 & 0xF];
 	i = 0;
 	for (j = j1>>4; j; j>>=1) {
 	    if (j & 1) {
@@ -2773,7 +2849,7 @@ QuickConversion(
 	}
 	ilim = ilim1;
 	--k;
-	d *= 10.0;
+	d = d * 10.0;
 	++ieps;
     }
 
@@ -2790,7 +2866,7 @@ QuickConversion(
 
     retval = ckalloc(len + 1);
     if (ilim == 0) {
-	d -= 5.;
+	d = d - 5.;
 	if (d > eps.d) {
 	    *retval = '1';
 	    *decpt = k;
@@ -4392,7 +4468,8 @@ TclInitDoubleConversion(void)
 
     maxpow10_wide = (int)
 	    floor(sizeof(Tcl_WideUInt) * CHAR_BIT * log(2.) / log(10.));
-    pow10_wide = ckalloc((maxpow10_wide + 1) * sizeof(Tcl_WideUInt));
+    pow10_wide = (Tcl_WideUInt *)
+	    ckalloc((maxpow10_wide + 1) * sizeof(Tcl_WideUInt));
     u = 1;
     for (i = 0; i < maxpow10_wide; ++i) {
 	pow10_wide[i] = u;
@@ -4468,9 +4545,9 @@ TclInitDoubleConversion(void)
 #ifdef IEEE_FLOATING_POINT
     bitwhack.dv = 1.000000238418579;
 				/* 3ff0 0000 4000 0000 */
-    if ((bitwhack.iv >> 32) == 0x3ff00000) {
+    if ((bitwhack.iv >> 32) == 0x3FF00000) {
 	n770_fp = 0;
-    } else if ((bitwhack.iv & 0xffffffff) == 0x3ff00000) {
+    } else if ((bitwhack.iv & 0xFFFFFFFF) == 0x3FF00000) {
 	n770_fp = 1;
     } else {
 	Tcl_Panic("unknown floating point word order on this machine");
@@ -4720,7 +4797,7 @@ TclCeil(
 		mp_int d;
 		mp_init(&d);
 		mp_div_2d(a, -shift, &b, &d);
-		exact = d.used == 0;
+		exact = mp_iszero(&d);
 		mp_clear(&d);
 	    } else {
 		mp_copy(a, &b);
@@ -4889,7 +4966,7 @@ Pow10TimesFrExp(
 	 * Multiply by 10**exponent.
 	 */
 
-	retval = frexp(retval * pow10vals[exponent&0xf], &j);
+	retval = frexp(retval * pow10vals[exponent&0xF], &j);
 	expt += j;
 	for (i=4; i<9; ++i) {
 	    if (exponent & (1<<i)) {
@@ -4902,7 +4979,7 @@ Pow10TimesFrExp(
 	 * Divide by 10**-exponent.
 	 */
 
-	retval = frexp(retval / pow10vals[(-exponent) & 0xf], &j);
+	retval = frexp(retval / pow10vals[(-exponent) & 0xF], &j);
 	expt += j;
 	for (i=4; i<9; ++i) {
 	    if ((-exponent) & (1<<i)) {
@@ -5018,7 +5095,7 @@ static Tcl_WideUInt
 Nokia770Twiddle(
     Tcl_WideUInt w)		/* Number to transpose. */
 {
-    return (((w >> 32) & 0xffffffff) | (w << 32));
+    return (((w >> 32) & 0xFFFFFFFF) | (w << 32));
 }
 #endif
 

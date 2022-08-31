@@ -16,7 +16,7 @@
 # DO NOT DELETE THIS LINE
 
 if {{::tcltest} ni [namespace children]} {
-    package require tcltest 2
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -325,7 +325,7 @@ test info-9.2 {info level option} {
 } {1 {t1 146 testString}}
 test info-9.3 {info level option} {
     proc t1 {a b} {
-        t2 [expr $a*2] $b
+        t2 [expr {$a*2}] $b
     }
     proc t2 {x y} {
         list [info level] [info level 1] [info level 2] [info level -1] \
@@ -657,7 +657,7 @@ test info-19.6 {info vars: Bug 1072654} -setup {
 
 set functions {abs acos asin atan atan2 bool ceil cos cosh double entier exp floor fmod hypot int isqrt log log10 max min pow rand round sin sinh sqrt srand tan tanh wide}
 # Check whether the extra testing functions are defined...
-if {!([catch {expr T1()} msg] && ($msg eq {invalid command name "tcl::mathfunc::T1"}))} {
+if {!([catch {expr {T1()}} msg] && ($msg eq {invalid command name "tcl::mathfunc::T1"}))} {
     set functions "T1 T2 T3 $functions"  ;# A lazy way of prepending!
 }
 test info-20.1 {info functions option} {info functions sin} sin
@@ -2099,7 +2099,7 @@ proc foo::bar {} {
     foreach {*}{
 	x y
 	{set res [info frame 0]}
-    } 
+    }
     return $res
 }
 test info-33.13 {{*}, literal, simple, bytecompiled} -body {
@@ -2114,7 +2114,7 @@ proc foo::bar {} {
     if {*}{
 	{[return [info frame 0]]}
 	{}
-    } 
+    }
 }
 test info-33.14 {{*}, literal, simple, bytecompiled} -body {
     reduce [foo::bar]
@@ -2128,7 +2128,7 @@ proc foo::bar {} {
     if 0 {*}{
 	{} else
 	{return [info frame 0]}
-    } 
+    }
 }
 test info-33.15 {{*}, literal, simple, bytecompiled} -body {
     reduce [foo::bar]
@@ -2229,7 +2229,7 @@ namespace eval foo {}
 proc foo::bar {} {
     try {*}{
 	{set res [info frame 0]}
-    } 
+    }
     return $res
 }
 test info-33.23 {{*}, literal, simple, bytecompiled} -body {

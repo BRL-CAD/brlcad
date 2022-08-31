@@ -11,7 +11,7 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 if {"::tcltest" ni [namespace children]} {
-    package require tcltest 2
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -77,7 +77,7 @@ test while-1.9 {TclCompileWhileCmd: simple command body} -body {
     set a {}
     set i 1
     while {$i<6} {
-	if $i==4 break
+	if {$i==4} break
 	set a [concat $a $i]
         incr i
     }
@@ -112,8 +112,8 @@ test while-1.12 {TclCompileWhileCmd: long command body} -body {
     set a {}
     set i 1
     while {$i<6} {
-	if $i==4 break
-	if $i>5 continue
+	if {$i==4} break
+	if {$i>5} continue
 	if {$i>6 && $tcl_platform(machine)=="xxx"} {
 	    catch {set a $a} msg
 	    catch {incr i 5} msg
@@ -155,7 +155,7 @@ test while-1.13 {TclCompileWhileCmd: while command result} -body {
 } -result {}
 test while-1.14 {TclCompileWhileCmd: while command result} -body {
     set i 0
-    set a [while {$i < 5} {if $i==3 break; incr i}]
+    set a [while {$i < 5} {if {$i==3} break; incr i}]
     return $a
 } -cleanup {
     unset a i
@@ -207,9 +207,9 @@ test while-2.4 {continue tests, long command body} -body {
     set a {}
     set i 1
     while {$i<6} {
-	if $i==2 {incr i; continue}
-	if $i==4 break
-	if $i>5 continue
+	if {$i==2} {incr i; continue}
+	if {$i==4} break
+	if {$i>5} continue
 	if {$i>6 && $tcl_platform(machine)=="xxx"} {
 	    catch {set a $a} msg
 	    catch {incr i 5} msg
@@ -277,9 +277,9 @@ test while-3.3 {break tests, long command body} -body {
     set a {}
     set i 1
     while {$i<6} {
-	if $i==2 {incr i; continue}
-	if $i==5 break
-	if $i>5 continue
+	if {$i==2} {incr i; continue}
+	if {$i==5} break
+	if {$i>5} continue
 	if {$i>6 && $tcl_platform(machine)=="xxx"} {
 	    catch {set a $a} msg
 	    catch {incr i 5} msg
@@ -295,7 +295,7 @@ test while-3.3 {break tests, long command body} -body {
 	    catch {incr i 5} msg
 	    catch {incr i -5} msg
 	}
-	if $i==4 break
+	if {$i==4} break
 	if {$i>6 && $tcl_platform(machine)=="xxx"} {
 	    catch {set a $a} msg
 	    catch {incr i 5} msg
@@ -401,7 +401,7 @@ test while-4.10 {while (not compiled): simple command body} -body {
     set i 1
     set z while
     $z {$i<6} {
-	if $i==4 break
+	if {$i==4} break
 	set a [concat $a $i]
         incr i
     }
@@ -439,8 +439,8 @@ test while-4.13 {while (not compiled): long command body} -body {
     set z while
     set i 1
     $z {$i<6} {
-	if $i==4 break
-	if $i>5 continue
+	if {$i==4} break
+	if {$i>5} continue
 	if {$i>6 && $tcl_platform(machine)=="xxx"} {
 	    catch {set a $a} msg
 	    catch {incr i 5} msg
@@ -484,7 +484,7 @@ test while-4.14 {while (not compiled): while command result} -body {
 test while-4.15 {while (not compiled): while command result} -body {
     set i 0
     set z while
-    set a [$z {$i < 5} {if $i==3 break; incr i}]
+    set a [$z {$i < 5} {if {$i==3} break; incr i}]
     return $a
 } -cleanup {
     unset a i z
@@ -538,9 +538,9 @@ test while-5.4 {break tests, long command body with computed command names} -bod
     set i 1
     set z break
     while {$i<6} {
-	if $i==2 {incr i; continue}
-	if $i==5 $z
-	if $i>5 continue
+	if {$i==2} {incr i; continue}
+	if {$i==5} $z
+	if {$i>5} continue
 	if {$i>6 && $tcl_platform(machine)=="xxx"} {
 	    catch {set a $a} msg
 	    catch {incr i 5} msg
@@ -556,7 +556,7 @@ test while-5.4 {break tests, long command body with computed command names} -bod
 	    catch {incr i 5} msg
 	    catch {incr i -5} msg
 	}
-	if $i==4 $z
+	if {$i==4} $z
 	if {$i>6 && $tcl_platform(machine)=="xxx"} {
 	    catch {set a $a} msg
 	    catch {incr i 5} msg
@@ -637,9 +637,9 @@ test while-6.5 {continue tests, long command body with computed command names} -
     set i 1
     set z continue
     while {$i<6} {
-	if $i==2 {incr i; continue}
-	if $i==4 break
-	if $i>5 $z
+	if {$i==2} {incr i; continue}
+	if {$i==4} break
+	if {$i>5} $z
 	if {$i>6 && $tcl_platform(machine)=="xxx"} {
 	    catch {set a $a} msg
 	    catch {incr i 5} msg

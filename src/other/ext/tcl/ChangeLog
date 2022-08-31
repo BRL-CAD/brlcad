@@ -1847,7 +1847,7 @@ a better first place to look now.
 
 	* tools/uniClass.tcl:    [FRQ 3473670]: Various Unicode-related
 	* tools/uniParse.tcl:    speedups/robustness. Enhanced tools to be
-	* generic/tclUniData.c:  able to handle characters > 0xffff. Done in
+	* generic/tclUniData.c:  able to handle characters > 0xFFFF. Done in
 	* generic/tclUtf.c:      all branches in order to simplify merges for
 	* generic/regc_locale.c: new Unicode versions (such as 6.1)
 
@@ -8096,7 +8096,7 @@ a better first place to look now.
 2009-03-25  Jan Nijtmans  <nijtmans@users.sf.net>
 
 	* doc/tclsh.1:		 Bring doc and tools in line with
-	* tools/installData.tcl: http://wiki.tcl.tk/812
+	* tools/installData.tcl: https://wiki.tcl-lang.org/page/exec+magic
 	* tools/str2c
 	* tools/tcltk-man2html.tcl
 

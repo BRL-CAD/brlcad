@@ -25,12 +25,18 @@
 
 #include "common.h"
 
+#include <inttypes.h>
 #include "bio.h"
 
 #include <array>
 #include <map>
 #include <set>
 #include <vector>
+#include <unordered_map>
+#include <unordered_set>
+
+#include "RTree.h"
+#include "clipper.hpp"
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic push
@@ -53,11 +59,677 @@
 #include "poly2tri/poly2tri.h"
 
 #include "bu/malloc.h"
+#include "bn/rand.h"
 #include "bv/plot3.h"
 #include "bg/polygon.h"
 
+extern int polyline_2d_plot3(const char *fname, std::vector<std::pair<int64_t, int64_t>> &xy, fastf_t scale, struct bu_color *c);
 
-static int
+int
+xy_ind_lookup(
+	std::unordered_map<int64_t, std::unordered_map<int64_t, std::unordered_set<int>>> &bins,
+	std::unordered_map<int, int> collapsed_pts,
+	int64_t xc, int64_t yc
+	)
+{
+    long pind = -1;
+
+    if (bins.find(xc) != bins.end()) {
+	std::unordered_map<int64_t, std::unordered_set<int>> &yset = bins[xc];
+	if (yset.find(yc) != yset.end()) {
+	    std::unordered_set<int> &pind_set = yset[yc];
+	    if (pind_set.size() == 1) {
+		pind = *pind_set.begin();
+	    } else {
+		std::unordered_set<int>::iterator ps_it;
+		for (ps_it = pind_set.begin(); ps_it != pind_set.end(); ps_it++) {
+		    size_t candidate = *ps_it;
+		    if (collapsed_pts.find(candidate) != collapsed_pts.end())
+			continue;
+		    pind = candidate;
+		    break;
+		}
+	    }
+	}
+    }
+
+    return pind;
+}
+
+struct line_steiner_ctx {
+    std::unordered_set<size_t> *steiner_excluded;
+    std::vector<std::pair<double,double>> *lines;
+    point_t tpnt;
+    double distsq_tol;
+};
+
+static bool
+LSteinClbk(size_t data, void *ctx)
+{
+    struct line_steiner_ctx *c = (struct line_steiner_ctx *)ctx;
+    point2d_t P0, P1;
+    vect2d_t dir;
+    V2SET(P0, (*c->lines)[2*data+0].first, (*c->lines)[2*data+0].second);
+    V2SET(P1, (*c->lines)[2*data+1].first, (*c->lines)[2*data+1].second);
+    V2SUB2(dir, P1, P0);
+    double dsq = MAG2SQ(dir);
+    if (!(dsq > 0.0))
+	return true;
+    double d1sq = DIST_PNT2_PNT2_SQ(c->tpnt, P0);
+    double d2sq = DIST_PNT2_PNT2_SQ(c->tpnt, P1);
+    double t;
+    if (d1sq < d2sq) {
+	vect2d_t s;
+	V2SUB2(s, c->tpnt, P0);
+	t = V2DOT(s, dir)/dsq;
+    } else if (d2sq > d1sq) {
+	vect2d_t s;
+	V2SUB2(s, c->tpnt, P1);
+	t = 1.0 + V2DOT(s, dir)/dsq;
+    } else {
+	vect2d_t s;
+	V2SUB2(s, c->tpnt, P0);
+	t = V2DOT(s, dir)/dsq;
+    }
+    if (t < 0 || t > 1)
+	return true;
+    double dirlensq = V2DOT(dir, dir);
+    if (!(dirlensq > 0.0))
+	return true;
+    vect2d_t closest;
+    point_t ra, rb;
+    t /= dirlensq;
+    V2SCALE(ra, P0, (1.0 - t));
+    V2SCALE(rb, P1, t);
+    V2ADD2(closest, ra, rb);
+    double cdsq = DIST_PNT2_PNT2_SQ(closest, c->tpnt);
+    if (cdsq < c->distsq_tol) {
+	c->steiner_excluded->insert(data);
+	//bu_log("excluded\n");
+    }
+    return true;
+}
+
+// TODO - clipper2 is released now - https://github.com/AngusJohnson/Clipper2
+// Need to look at updating our bundled clipper to that version...
+int
+bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+	    const int *poly, const size_t poly_pnts,
+	    const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	    const int *steiner, const size_t steiner_npts,
+	    const point2d_t *pts)
+{
+    // Sanity
+    if (!faces || !num_faces || !poly || !poly_pnts)
+	return BRLCAD_ERROR;
+    if (nholes && (!holes_npts || !holes_array))
+	return BRLCAD_ERROR;
+    if (steiner_npts && !steiner)
+	return BRLCAD_ERROR;
+
+    // The poly2tri algorithm requires:
+    // 1. no repeat points within epsilon
+    // 2. simple polygons only, for both holes and outer boundary
+    // 3. interior holes must not touch other holes, nor touch the outer boundary
+    //
+    // None of these conditions are guaranteed by the input data, so we need to
+    // rework as required.  (Most use cases for this algorithm prefer to
+    // generate a "close" mesh that ignores repeat points and resolves hole
+    // intersections rather than simply failing.)
+    //
+    // If the output points array is supplied, we will need to generate a list
+    // of "active" points that were used to form the successful mesh.  If not,
+    // we are returning indices to the original points, accepting any minor
+    // flaws that may be introduced by using the original point locations to
+    // realize the mesh.
+
+    // 1.  The first order of business is to get a working set of points.  We do not
+    // assume that all points in pts are active, so we interrogate the polygons, holes
+    // and steiner points to figure out which ones we need to worry about.
+    std::unordered_set<int> initial_pnt_indices;
+    for (size_t i = 0; i < poly_pnts; i++)
+	initial_pnt_indices.insert(poly[i]);
+    for (size_t i = 0; i < steiner_npts; i++)
+	initial_pnt_indices.insert(steiner[i]);
+    for (size_t i = 0; i < nholes; i++) {
+	for (size_t j = 0; j < holes_npts[i]; j++)
+	    initial_pnt_indices.insert(holes_array[i][j]);
+    }
+
+    // 2.  Now that we know the points, we need to identify the closest points and
+    // determine if any must be merged.  We also need to determine a good integer
+    // approximation to use for clipper when we make sure our hole polygons aren't
+    // going to cause trouble.  "Good" answers for this problem are data dependent,
+    // so we'll try to find an answer without hard coding scale values.  Building
+    // on experience with the POPBuffer LoD work, we'll try integer clamping based
+    // on seed data from the 3D scene:
+    //
+    // a.  Find the bounding box for the active points
+    point_t bbmin, bbmax;
+    VSETALL(bbmin, INFINITY);
+    VSETALL(bbmax, -INFINITY);
+    std::unordered_set<int>::iterator p_it;
+    for (p_it = initial_pnt_indices.begin(); p_it != initial_pnt_indices.end(); p_it++) {
+	V2MINMAX(bbmin, bbmax, pts[*p_it]);
+    }
+    double deltaX = fabs(bbmax[X] - bbmin[X]);
+    double deltaY = fabs(bbmax[Y] - bbmin[Y]);
+    double delta = (deltaX < deltaY) ? deltaX : deltaY;
+    //bu_log("bbmin: %f %f %f  bbmax: %f %f %f\n", V3ARGS(bbmin), V3ARGS(bbmax));
+
+    // b.  Bin the points into a series of nested unordered maps of sets based
+    // on snapping the x,y coordinates to an integer.  We want to preserve as
+    // much information as we can, so clipper will produce useful new points if
+    // it needs to do intersection calculations on lines.  However, there is a
+    // limit to how far we can "scale" a floating point number into integer
+    // space before we overflow, and before that limit is reached we will
+    // create numbers too large to calculate with.  We need to respect these
+    // constraints as hard limits - how far we can push depends on when our
+    // current working data set will experience an overflow.
+
+    // First, define the ultimate upper limit of the data type we want to use.
+    // Per the clipper library's documentation:
+    //
+    // "It's important to note that path coordinates can't use quite the full
+    // 64 bits (63bit signed integers) because the library needs to perform
+    // coordinate addition and subtraction. Consequently coordinates must be 62
+    // bit signed integers (±4.6 *10 ^18)"
+    //
+    // Rather than hard coding the number 62, we express this limit
+    // semantically to make it clearer what it represents:
+    int64_t log2max = log2(std::numeric_limits<int64_t>::max()) - 1;
+
+    // Next, use the largest absolute value we will need to be concerned with
+    // in the current data set to find a bound maximum.  That will tell us how
+    // much we can scale without pushing our coordinates above the limit
+    double bnmax = fabs(bbmin[X]);
+    bnmax = (fabs(bbmin[Y]) > bnmax) ? fabs(bbmin[Y]) : bnmax;
+    bnmax = (fabs(bbmax[X]) > bnmax) ? fabs(bbmax[X]) : bnmax;
+    bnmax = (fabs(bbmax[Y]) > bnmax) ? fabs(bbmax[Y]) : bnmax;
+
+    // Need to increment by one to be sure we are defining a size that will
+    // hold all the values we need.
+    int64_t log2boundmax = (int64_t)log2(bnmax) + 1;
+
+    // The difference between the current data max and the ultimate coordinate
+    // size limit tells us how far we can scale for this particular data set.
+    int64_t log2_limit = log2max - log2boundmax;
+    double scale = pow(2, log2_limit);
+    //bu_log("log2_limit: %" PRId64 "\n", log2_limit);
+    //bu_log("scale: %f\n", scale);
+
+    // Having established our limits, scale and snap the points
+    std::unordered_map<size_t, size_t> orig_to_snapped;
+    std::vector<std::pair<int64_t,int64_t>> snapped_pts;
+    std::unordered_map<int64_t, std::unordered_map<int64_t, std::unordered_set<int>>> ubins;
+    for (p_it = initial_pnt_indices.begin(); p_it != initial_pnt_indices.end(); p_it++) {
+	int64_t lx = static_cast<int64_t>(pts[*p_it][X]* scale);
+	int64_t ly = static_cast<int64_t>(pts[*p_it][Y]* scale);
+	snapped_pts.push_back(std::make_pair(lx,ly));
+	orig_to_snapped[*p_it] = snapped_pts.size() - 1;
+	ubins[lx][ly].insert(*p_it);
+#if 0
+	double lx_restore = static_cast<double>(lx / scale);
+	double ly_restore = static_cast<double>(ly / scale);
+	bu_log("%d: %f,%f -> %" PRId64 ", %" PRId64 " -> %f %f\n", *p_it, pts[*p_it][X], pts[*p_it][Y], lx, ly, lx_restore, ly_restore);
+#endif
+    }
+
+    // c.  Now we need to identify any post-binning collapsed points.
+    std::unordered_map<int, int> collapsed_pts;
+    std::unordered_map<int64_t, std::unordered_map<int64_t, std::unordered_set<int>>>::iterator b_it;
+    for (b_it = ubins.begin(); b_it != ubins.end(); b_it++) {
+	std::unordered_map<int64_t, std::unordered_set<int>>::iterator bb_it;
+	for (bb_it = b_it->second.begin(); bb_it != b_it->second.end(); bb_it++) {
+	    if (bb_it->second.size() < 2)
+		continue;
+	    // If we have binned points, we need to point them all to a
+	    // single point for the purposes of meshing.  Look for the
+	    // point with the closest value to the average of all the binned
+	    // points, and use that.
+	    std::unordered_set<int>::iterator bp_it;
+	    point2d_t pavg = V2INIT_ZERO;
+	    for (bp_it = bb_it->second.begin(); bp_it != bb_it->second.end(); bp_it++) {
+		pavg[X] += pts[*bp_it][X];
+		pavg[Y] += pts[*bp_it][Y];
+	    }
+	    fastf_t pdistsq = INFINITY;
+	    int closest = 0;
+	    for (bp_it = bb_it->second.begin(); bp_it != bb_it->second.end(); bp_it++) {
+		fastf_t lsq = DIST_PNT2_PNT2_SQ(pavg, pts[*bp_it]);
+		if (lsq < pdistsq) {
+		    closest = *bp_it;
+		    pdistsq = lsq;
+		}
+	    }
+	    for (bp_it = bb_it->second.begin(); bp_it != bb_it->second.end(); bp_it++) {
+		// Note - we don't want to loop the closest point to itself
+		if (*bp_it != closest) {
+		    collapsed_pts[*bp_it] = closest;
+		}
+	    }
+	    bu_log("collapsed: %d\n", closest);
+	}
+    }
+
+    // TODO - although we want to avoid arbitrarily close but not identical points, we also
+    // need to avoid touching polygon loops - see https://github.com/raptor/clip2tri/blob/master/clip2tri/clip2tri.cpp#L160
+    // and https://github.com/greenm01/poly2tri/issues/90
+    //
+    // Need to add the adjustment from that clip2tri routine *before* we do the Clipper evaluation
+
+
+    // d.  Having produce suitably unique points, we now need to perturb them
+    // to avoid colinearity - we don't want clipper removing points added to
+    // straight lines to increase triangle counts, and poly2tri doesn't do well
+    // with truly colinear points.
+    std::unordered_map<int64_t, std::unordered_map<int64_t, std::unordered_set<int>>> pbins;
+    std::vector<std::pair<int64_t,int64_t>> psnapped_pts;
+    std::unordered_map<int64_t, std::unordered_set<int64_t>> ucheck;
+    float *prand;
+    bn_rand_init(prand, 0);
+    bu_log("deltaX: %f deltaY: %f\n", deltaX, deltaY);
+    int64_t dXb = (int64_t)log2((int)deltaX);
+    int64_t dYb = (int64_t)log2((int)deltaY);
+    //bu_log("log2boundmax: %" PRId64 " dXb: %" PRId64 " dYb: %" PRId64 "\n", log2boundmax, dXb, dYb);
+    // How much to perturb the points is a key parameter - too much and we get
+    // range problems with Clipper and meshing issues as relative positioning
+    // changes, but if we're too small Poly2Tri can crash due to issues like
+    // colinearity.  For the moment, try to base this on the X and Y parametric
+    // space dimensions.
+    fastf_t delta_spaceX = pow(2, dXb+log2boundmax+1) * deltaX;
+    fastf_t delta_spaceY = pow(2, dYb+log2boundmax+1) * deltaY;
+    bu_log("deltaX(%" PRId64 "): %f  deltaY(%" PRId64 "): %f\n", dXb, delta_spaceX, dYb, delta_spaceY);
+    for (b_it = ubins.begin(); b_it != ubins.end(); b_it++) {
+	std::unordered_map<int64_t, std::unordered_set<int>>::iterator bb_it;
+	for (bb_it = b_it->second.begin(); bb_it != b_it->second.end(); bb_it++) {
+	    int inf_loop_guard = 0;
+	    int64_t slx = b_it->first;
+	    int64_t sly = bb_it->first;
+	    //bu_log("slx: %" PRId64 " sly: %" PRId64 " \n", slx, sly);
+	    int64_t lx = (int64_t)(slx + (int64_t)(bn_rand_half(prand) * delta_spaceX));
+	    int64_t ly = (int64_t)(sly + (int64_t)(bn_rand_half(prand) * delta_spaceY));
+	    //bu_log("lx: %" PRId64 " ly: %" PRId64 " \n", lx, ly);
+	    // We need to preserve the point uniqueness - keep perturbing until we
+	    // produce a point we've not already seen
+	    while (inf_loop_guard < 100000 && ucheck.find(lx) != ucheck.end() && ucheck[lx].find(ly) != ucheck[lx].end()) {
+		lx = slx + (bn_rand_half(prand) * delta_spaceX);
+		ly = sly + (bn_rand_half(prand) * delta_spaceY);
+		bu_log("uniq: lx, ly: %" PRId64 ",%" PRId64 "\n", lx, ly);
+		inf_loop_guard++;
+	    }
+	    ucheck[lx].insert(ly);
+	    //bu_log("lx: %" PRId64 " ly: %" PRId64 " \n", lx, ly);
+	    psnapped_pts.push_back(std::make_pair(lx,ly));
+	    std::unordered_set<int>::iterator pind_it;
+	    for (pind_it = bb_it->second.begin(); pind_it != bb_it->second.end(); pind_it++) {
+		orig_to_snapped[*pind_it] = psnapped_pts.size() - 1;
+	    }
+	    pbins[lx][ly].insert(bb_it->second.begin(), bb_it->second.end());
+	}
+    }
+
+    ubins.clear();
+
+    // 3.  Having found suitable integer points, assemble versions of the polygons
+    // using the new indices.  These will be the clipper inputs.  (NOTE:  we can
+    // filter out duplicate points here if we need to, but first we're going to
+    // see if clipper will handle that for us...)
+    ClipperLib::Clipper clipper;
+
+    ClipperLib::Path outer_polygon;
+    outer_polygon.resize(poly_pnts);
+    for (size_t i = 0; i < poly_pnts; i++) {
+	size_t pind = poly[i];
+	if (collapsed_pts.find(pind) != collapsed_pts.end())
+	    pind = collapsed_pts[pind];
+	outer_polygon[i].X = (ClipperLib::long64)(psnapped_pts[orig_to_snapped[pind]].first);
+	outer_polygon[i].Y = (ClipperLib::long64)(psnapped_pts[orig_to_snapped[pind]].second);
+    }
+    try {
+	clipper.AddPath(outer_polygon, ClipperLib::ptSubject, true);
+    } catch (...) {
+	bu_log("Clipper: failed to add outer polygon\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Add any holes
+    for (size_t hn = 0; hn < nholes; hn++) {
+	size_t hpcnt = holes_npts[hn];
+	const int *harray = holes_array[hn];
+	ClipperLib::Path hole_polygon;
+	hole_polygon.resize(hpcnt);
+	for (size_t i = 0; i < hpcnt; i++) {
+	    size_t pind = harray[i];
+	    if (collapsed_pts.find(pind) != collapsed_pts.end())
+		pind = collapsed_pts[pind];
+	    hole_polygon[i].X = (ClipperLib::long64)(psnapped_pts[orig_to_snapped[pind]].first);
+	    hole_polygon[i].Y = (ClipperLib::long64)(psnapped_pts[orig_to_snapped[pind]].second);
+	}
+	try {
+	    clipper.AddPath(hole_polygon, ClipperLib::ptClip, true);
+	} catch (...) {
+	    bu_log("Clipper: failed to add hole polygon %zd\n", hn);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    // 4.  Feed the integer-based outer polygon and hole polygons to clipper to
+    // resolve any overlapping hole polygons or other problematic loop info.
+    ClipperLib::PolyTree eval_polys;
+    clipper.Execute(ClipperLib::ctDifference, eval_polys, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
+
+    // We're not going to tie the poly2tri algorithm to the Clipper data types,
+    // so recast the data.
+    std::map<int, std::vector<std::pair<int64_t,int64_t>>> outer_loops;
+    std::map<int, std::map<int, std::vector<std::pair<int64_t,int64_t>>>> hole_loops;
+    bool new_pnts = false;
+    int outer_loop_cnt = 0;
+    int hole_loop_cnt = 0;
+    ClipperLib::PolyNode *polynode = eval_polys.GetFirst();
+    while (polynode) {
+	ClipperLib::Path &path = polynode->Contour;
+	if (!polynode->IsHole()) {
+	    hole_loop_cnt = 0;
+	    outer_loop_cnt++;
+	} else {
+	    hole_loop_cnt++;
+	}
+	//bu_log("%d(%d)\n", outer_loop_cnt, hole_loop_cnt);
+	for (size_t i = 0; i < path.size(); i++) {
+	    int64_t xcoord = path[i].X;
+	    int64_t ycoord = path[i].Y;
+	    if (!polynode->IsHole()) {
+		outer_loops[outer_loop_cnt-1].push_back(std::make_pair(xcoord, ycoord));
+	    } else {
+		hole_loops[outer_loop_cnt-1][hole_loop_cnt-1].push_back(std::make_pair(xcoord, ycoord));
+	    }
+	    // The points clipper returns are integer space points. Most will
+	    // map back to our original points.  If we do have actual new
+	    // points, we need to know - those will eventually need to be
+	    // translated back to floating point numbers, which will require
+	    // the ability to create a new output point array.
+	    if (xy_ind_lookup(pbins, collapsed_pts, xcoord, ycoord) == -1)
+		new_pnts = true;
+	}
+	polynode = polynode->GetNext();
+    }
+#if 0
+    size_t num_contours = eval_polys.Total();
+    bu_log("Clipper evaluated contours: %zd\n", num_contours);
+#endif
+
+    // If we get back new points from clipper but we're not supposed to be
+    // returning a points array, error out.
+    if (new_pnts && (!out_pts || !num_outpts))
+	return BRLCAD_ERROR;
+
+
+    // 4.  We have (slightly) shifted the points defining the polylines (and
+    // for that matter, the input data doesn't guarantee that the steiner
+    // points weren't on line segments.)  We need to exclude any steiner points
+    // that are on a line segment from consideration.
+    //
+    // First, assemble all the lines from the outer loops and holes
+    std::map<int, std::vector<std::pair<int64_t,int64_t>>>::iterator o_it;
+    std::vector<std::pair<double,double>> lines;
+    for (o_it = outer_loops.begin(); o_it != outer_loops.end(); o_it++) {
+#if 0
+	struct bu_vls fname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&fname, "outer_loop_%d.plot3", o_it->first);
+	unsigned char rgb[3] = {255, 0, 0};
+	struct bu_color c = BU_COLOR_INIT_ZERO;
+	bu_color_from_rgb_chars(&c, rgb);
+	polyline_2d_plot3(bu_vls_cstr(&fname), o_it->second, scale, &c);
+	bu_vls_free(&fname);
+#endif
+	for (size_t i = 0; i < o_it->second.size(); i++) {
+	    double xcd = o_it->second[i].first / scale;
+	    double ycd = o_it->second[i].second / scale;
+	    //bu_log("xcd, ycd: %f %f\n", xcd, ycd);
+	    lines.push_back(std::make_pair(xcd, ycd));
+	}
+	if (hole_loops.find(o_it->first) == hole_loops.end())
+	    continue;
+	std::map<int, std::vector<std::pair<int64_t,int64_t>>>::iterator h_it;
+	for (h_it = hole_loops[o_it->first].begin(); h_it != hole_loops[o_it->first].end(); h_it++) {
+#if 0
+	    bu_vls_sprintf(&fname, "hole_loop_%d-%d.plot3", o_it->first, h_it->first);
+	    unsigned char hrgb[3] = {0, 255, 0};
+	    struct bu_color hc = BU_COLOR_INIT_ZERO;
+	    bu_color_from_rgb_chars(&hc, hrgb);
+	    polyline_2d_plot3(bu_vls_cstr(&fname), h_it->second, scale, &hc);
+	    bu_vls_free(&fname);
+#endif
+	    for (size_t i = 0; i < h_it->second.size(); i++) {
+		double xcd = h_it->second[i].first / scale;
+		double ycd = h_it->second[i].second / scale;
+		lines.push_back(std::make_pair(xcd, ycd));
+	    }
+	}
+    }
+
+    // Next, assemble an RTree of the lines so we can quickly identify which
+    // ones we need to check each steiner point against
+    RTree<size_t, double, 2> rtree_2d;
+    for (size_t i = 0; i < lines.size()/2; i++) {
+	double tMin[2], tMax[2];
+	tMin[0] = (lines[2*i+0].first < lines[2*i+1].first) ? lines[2*i+0].first : lines[2*i+1].first;
+	tMin[1] = (lines[2*i+0].second < lines[2*i+1].second) ? lines[2*i+0].second : lines[2*i+1].second;
+	tMax[0] = (lines[2*i+0].first > lines[2*i+1].first) ? lines[2*i+0].first : lines[2*i+1].first;
+	tMax[1] = (lines[2*i+0].second > lines[2*i+1].second) ? lines[2*i+0].second : lines[2*i+1].second;
+	rtree_2d.Insert(tMin, tMax, i);
+    }
+
+    // Find steiner points that are too close to polylines and add them
+    // to the excluded set
+    std::unordered_set<size_t> steiner_excluded;
+    struct line_steiner_ctx lctx;
+    lctx.steiner_excluded = &steiner_excluded;
+    lctx.lines = &lines;
+    lctx.distsq_tol = 0.001*delta;
+    for (size_t s = 0; s < steiner_npts; s++) {
+	int64_t xc = psnapped_pts[orig_to_snapped[steiner[s]]].first;
+	int64_t yc = psnapped_pts[orig_to_snapped[steiner[s]]].second;
+	double xcd = xc / scale;
+	double ycd = yc / scale;
+	V2SET(lctx.tpnt, xcd, ycd);
+
+	double fMin[2];
+	double fMax[2];
+	fMin[0] = xcd - 10*SMALL_FASTF;
+	fMin[1] = xcd + 10*SMALL_FASTF;
+	fMax[0] = ycd - 10*SMALL_FASTF;
+	fMax[1] = ycd + 10*SMALL_FASTF;
+
+	rtree_2d.Search(fMin, fMax, LSteinClbk, (void *)&lctx);
+    }
+
+    // 5.  The output of the above process is fed to the poly2tri algorithm,
+    // along with the snapped steiner points.
+    std::map<p2t::Point *, long> p2t_to_ind;
+    std::vector<p2t::CDT *> cdts;
+    for (o_it = outer_loops.begin(); o_it != outer_loops.end(); o_it++) {
+
+	std::vector<p2t::Point*> outer_polyline;
+	for (size_t i = 0; i < o_it->second.size(); i++) {
+	    int64_t xc = o_it->second[i].first;
+	    int64_t yc = o_it->second[i].second;
+
+	    double xcd = xc / scale;
+	    double ycd = yc / scale;
+	    p2t::Point *p = new p2t::Point(xcd, ycd);
+	    outer_polyline.push_back(p);
+
+	    long pind = xy_ind_lookup(pbins, collapsed_pts, xc, yc);
+	    if (pind == -1) {
+		new_pnts = true;
+		bu_log("(O) Wait, what?  Need new point????\n");
+		//bu_log("xc, yc: %" PRId64 ",%" PRId64 "\n", xc, yc);
+		//bu_log("%d: x,y: %f,%f\n", o_it->first, xcd, ycd);
+		pind = xy_ind_lookup(pbins, collapsed_pts, xc, yc);
+	    } else {
+		p2t_to_ind[p] = pind;
+	    }
+	}
+
+	p2t::CDT *cdt = new p2t::CDT(outer_polyline);
+
+	if (hole_loops.find(o_it->first) != hole_loops.end()) {
+	    std::map<int, std::vector<std::pair<int64_t,int64_t>>>::iterator h_it;
+	    for (h_it = hole_loops[o_it->first].begin(); h_it != hole_loops[o_it->first].end(); h_it++) {
+		std::vector<p2t::Point*> polyline;
+		for (size_t i = 0; i < h_it->second.size(); i++) {
+		    int64_t xc = h_it->second[i].first;
+		    int64_t yc = h_it->second[i].second;
+		    //bu_log("xc, yc: %" PRId64 ",%" PRId64 "\n", xc, yc);
+		    double xcd = xc / scale;
+		    double ycd = yc / scale;
+		    //bu_log("%d->h(%d): x,y: %f,%f\n", o_it->first, h_it->first, xcd, ycd);
+		    p2t::Point *p = new p2t::Point(xcd, ycd);
+		    polyline.push_back(p);
+
+		    long pind = xy_ind_lookup(pbins, collapsed_pts, xc, yc);
+		    if (pind == -1) {
+			new_pnts = true;
+			bu_log("(H) Wait, what?  Need new point????\n");
+		    } else {
+			p2t_to_ind[p] = pind;
+		    }
+		    p2t_to_ind[p] = pind;
+		}
+		cdt->AddHole(polyline);
+	    }
+	}
+
+	for (size_t s = 0; s < steiner_npts; s++) {
+	    if (steiner_excluded.find(s) != steiner_excluded.end())
+		continue;
+	    int64_t xc = psnapped_pts[orig_to_snapped[steiner[s]]].first;
+	    int64_t yc = psnapped_pts[orig_to_snapped[steiner[s]]].second;
+	    double xcd = xc / scale;
+	    double ycd = yc / scale;
+	    p2t::Point *p = new p2t::Point(xcd, ycd);
+	    cdt->AddPoint(p);
+
+	    long pind = xy_ind_lookup(pbins, collapsed_pts, xc, yc);
+	    if (pind == -1) {
+		new_pnts = true;
+		bu_log("(S) Wait, what?  Need new point????\n");
+	    } else {
+		p2t_to_ind[p] = pind;
+	    }
+	    p2t_to_ind[p] = pind;
+	}
+
+	try {
+	    cdt->Triangulate(true, -1);
+	}
+	catch (...) {
+	    delete cdt;
+	    cdt = NULL;
+	}
+
+	if (!cdt)
+	    continue;
+
+	// If we didn't get any triangles, we don't need this cdt
+	if (!cdt->GetTriangles().size()) {
+	    delete cdt;
+	} else {
+	    cdts.push_back(cdt);
+	}
+    }
+
+    // If all the CDT attempts failed, we have a problem
+    if (!cdts.size()) {
+	bu_log("Poly2Tri CDT failed!\n");
+	return BRLCAD_ERROR;
+    }
+
+    // If the loops need new points (??) bug we don't have out_pnts, error out.
+    if (new_pnts && (!out_pts || !num_outpts))
+	return BRLCAD_ERROR;
+
+    // 6. Unpack the Poly2Tri faces into a C container
+    std::unordered_set<p2t::Point *> p2t_active_pnts;
+    std::unordered_map<p2t::Point *, size_t> npt_map;
+    size_t total_tris = 0;
+    for (size_t i = 0; i < cdts.size(); i++) {
+	p2t::CDT *cdt = cdts[i];
+	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+	//bu_log("got %zd triangles\n", tris.size());
+	total_tris += tris.size();
+
+	if (!new_pnts)
+	    continue;
+	for (size_t j = 0; j < tris.size(); j++) {
+	    p2t::Triangle *t = tris[j];
+	    for (size_t k = 0; k < 3; k++) {
+		p2t_active_pnts.insert(t->GetPoint(k));
+	    }
+	}
+    }
+    if (new_pnts) {
+	size_t ind = 0;
+	std::unordered_set<p2t::Point *>::iterator pa_it;
+	for (pa_it = p2t_active_pnts.begin(); pa_it != p2t_active_pnts.end(); pa_it++) {
+	    npt_map[*pa_it] = ind;
+	    ind++;
+	}
+	(*num_outpts) = (int) p2t_active_pnts.size();
+	(*out_pts) = (point2d_t *)bu_calloc(*num_outpts, sizeof(point2d_t), "new pnts array");
+	ind = 0;
+	for (pa_it = p2t_active_pnts.begin(); pa_it != p2t_active_pnts.end(); pa_it++) {
+	    p2t::Point *p = *pa_it;
+	    //bu_log("p2t point %zd: %f %f\n", ind, p->x, p->y);
+	    fastf_t py = p->y - (bbmax[X] - p->x)/(bbmax[X] - bbmin[X]);
+	    V2SET((*out_pts)[ind], p->x, py);
+	    //bu_log("p2t point %zd descaled: %f %f\n", ind, p->x, py);
+	    ind++;
+	}
+    }
+    (*num_faces) = (int)total_tris;
+    int *nfaces = (int *)bu_calloc(*num_faces * 3, sizeof(int), "faces array");
+    int total_face_ind = 0;
+    for (size_t i = 0; i < cdts.size(); i++) {
+	p2t::CDT *cdt = cdts[i];
+	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+	//bu_log("got %zd triangles\n", tris.size());
+
+	if (new_pnts) {
+	    for (size_t j = 0; j < tris.size(); j++) {
+		p2t::Triangle *t = tris[j];
+		nfaces[3*total_face_ind] = npt_map[t->GetPoint(0)];
+		nfaces[3*total_face_ind+1] = npt_map[t->GetPoint(1)];
+		nfaces[3*total_face_ind+2] = npt_map[t->GetPoint(2)];
+		total_face_ind++;
+	    }
+	} else {
+	    for (size_t j = 0; j < tris.size(); j++) {
+		p2t::Triangle *t = tris[j];
+		for (size_t k = 0; k < 3; k++) {
+		    p2t::Point *p = t->GetPoint(k);
+		    if (p2t_to_ind[p] == -1) {
+			bu_log("T1 Point map error??: %f, %f\n", p->x, p->y);
+		    }
+		}
+		nfaces[3*total_face_ind] = p2t_to_ind[t->GetPoint(0)];
+		nfaces[3*total_face_ind+1] = p2t_to_ind[t->GetPoint(1)];
+		nfaces[3*total_face_ind+2] = p2t_to_ind[t->GetPoint(2)];
+		total_face_ind++;
+	    }
+	}
+
+	delete cdt;
+    }
+    (*faces) = nfaces;
+
+    return 0;
+}
+
+
+int
 bg_poly2tri(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	    const int *poly, const size_t poly_pnts,
 	    const int **holes_array, const size_t *holes_npts, const size_t nholes,

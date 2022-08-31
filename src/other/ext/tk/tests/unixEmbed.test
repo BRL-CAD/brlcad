@@ -11,12 +11,15 @@ eval tcltest::configure $argv
 tcltest::loadTestedCommands
 namespace import -force tcltest::test
 
+testConstraint failsOnUbuntu [expr {![info exists ::env(CI)] || ![string match Linux $::tcl_platform(os)]}]
+testConstraint failsOnXQuarz [expr {$tcl_platform(os) ne "Darwin" || [tk windowingsystem] ne "x11" }]
+
 namespace eval ::_test_tmp {}
 
 # ------------------------------------------------------------------------------
 #  Proc ::_test_tmp::testInterp
 # ------------------------------------------------------------------------------
-# Command that creates an unsafe child interpreter and tries to load Tk.
+# Command that creates an child interpreter and tries to load Tk.
 # This code is borrowed from safePrimarySelection.test
 # This is necessary for loading Tktest if the tests are done in the build
 # directory without installing Tk.  In that case the usual auto_path loading
@@ -150,21 +153,21 @@ test unixEmbed-1.5a {TkpUseWindow procedure, creating Container records} -constr
     unix testembed
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     frame .f2 -container 1 -width 200 -height 50
     pack .f1 .f2
-    slave alias w winfo id .f1
-    slave eval {
+    child alias w winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t -use [w]
         list [testembed] [expr {[lindex [lindex [testembed all] 0] 0] - [w]}]
     }
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {{{XXX {} {} .t}} 0}
 test unixEmbed-1.6 {TkpUseWindow procedure, creating Container records} -constraints {
@@ -190,23 +193,23 @@ test unixEmbed-1.6a {TkpUseWindow procedure, creating Container records} -constr
     unix testembed
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     frame .f2 -container 1 -width 200 -height 50
     pack .f1 .f2
-    slave alias w1 winfo id .f1
-    slave alias w2 winfo id .f2
-    slave eval {
+    child alias w1 winfo id .f1
+    child alias w2 winfo id .f2
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
         toplevel .t2 -use [w2]
         testembed
     }
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {{XXX {} {} .t2} {XXX {} {} .t1}}
 test unixEmbed-1.7 {TkpUseWindow procedure, container and embedded in same app} -constraints {
@@ -253,21 +256,21 @@ test unixEmbed-2.1a {EmbeddedEventProc procedure} -constraints {
     unix testembed
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
         testembed
     }
     destroy .f1
     update
-    slave eval {
+    child eval {
         testembed
     }
 } -cleanup {
@@ -295,14 +298,14 @@ test unixEmbed-2.2a {EmbeddedEventProc procedure} -constraints {
     unix testembed
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
         testembed
@@ -310,7 +313,7 @@ test unixEmbed-2.2a {EmbeddedEventProc procedure} -constraints {
         testembed
     }
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {}
 test unixEmbed-2.3 {EmbeddedEventProc procedure} -constraints {
@@ -361,22 +364,22 @@ test unixEmbed-3.1 {ContainerEventProc procedure, detect creation} -constraints 
 test unixEmbed-3.1a {ContainerEventProc procedure, detect creation} -constraints {
     unix testembed
 } -setup {
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
+    child alias w1 winfo id .f1
     set x [testembed]
-    slave eval {
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
         wm withdraw .t1
     }
     list $x [testembed]
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {{{XXX .f1 {} {}}} {{XXX .f1 {} {}}}}
 test unixEmbed-3.2 {ContainerEventProc procedure, set size on creation} -constraints {
@@ -418,14 +421,14 @@ test unixEmbed-3.3a {ContainerEventProc procedure, disallow position changes} -c
     unix
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1] -bd 2 -relief raised
         update
@@ -434,7 +437,7 @@ test unixEmbed-3.3a {ContainerEventProc procedure, disallow position changes} -c
         wm geometry .t1
     }
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {200x200+0+0}
 test unixEmbed-3.4 {ContainerEventProc procedure, disallow position changes} -constraints {
@@ -462,14 +465,14 @@ test unixEmbed-3.4a {ContainerEventProc procedure, disallow position changes} -c
     unix
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
         update
@@ -478,7 +481,7 @@ test unixEmbed-3.4a {ContainerEventProc procedure, disallow position changes} -c
         wm geometry .t1
     }
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {300x100+0+0}
 test unixEmbed-3.5 {ContainerEventProc procedure, geometry requests} -constraints {
@@ -506,22 +509,22 @@ test unixEmbed-3.5a {ContainerEventProc procedure, geometry requests} -constrain
     unix
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
         .t1 configure -width 300 -height 80
         update
     }
-    list [winfo width .f1] [winfo height .f1] [slave eval {wm geometry .t1}]
+    list [winfo width .f1] [winfo height .f1] [child eval {wm geometry .t1}]
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {300 80 300x80+0+0}
 test unixEmbed-3.6 {ContainerEventProc procedure, map requests} -constraints {
@@ -551,14 +554,14 @@ test unixEmbed-3.6a {ContainerEventProc procedure, map requests} -constraints {
     unix
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
         set x unmapped
@@ -569,7 +572,7 @@ test unixEmbed-3.6a {ContainerEventProc procedure, map requests} -constraints {
         set x
     }
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {mapped}
 test unixEmbed-3.7 {ContainerEventProc procedure, destroy events} -constraints {
@@ -599,16 +602,16 @@ test unixEmbed-3.7a {ContainerEventProc procedure, destroy events} -constraints 
     unix
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
+    child alias w1 winfo id .f1
     bind .f1 <Destroy> {set x dead}
     set x alive
-    slave eval {
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
         update
@@ -617,7 +620,7 @@ test unixEmbed-3.7a {ContainerEventProc procedure, destroy events} -constraints 
     update
     list $x [winfo exists .f1]
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {dead 0}
 
@@ -648,14 +651,14 @@ test unixEmbed-4.1a {EmbedStructureProc procedure, configure events} -constraint
     unix
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
         update
@@ -664,7 +667,7 @@ test unixEmbed-4.1a {EmbedStructureProc procedure, configure events} -constraint
         winfo geometry .t1
     }
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {180x100+0+0}
 test unixEmbed-4.2 {EmbedStructureProc procedure, destroy events} -constraints {
@@ -691,15 +694,15 @@ test unixEmbed-4.2a {EmbedStructureProc procedure, destroy events} -constraints 
     unix testembed
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
     update
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
     }
@@ -707,7 +710,7 @@ test unixEmbed-4.2a {EmbedStructureProc procedure, destroy events} -constraints 
     destroy .f1
     list $x [testembed]
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result "{{XXX .f1 {} {}}} {}"
 
@@ -737,14 +740,14 @@ test unixEmbed-5.1a {EmbedFocusProc procedure, FocusIn events} -constraints {
     unix
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
         bind .t1 <FocusIn> {lappend x "focus in %W"}
@@ -754,9 +757,9 @@ test unixEmbed-5.1a {EmbedFocusProc procedure, FocusIn events} -constraints {
     }
     focus -force .f1
     update
-    slave eval {set x}
+    child eval {set x}
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {{focus in .t1}}
 test unixEmbed-5.2 {EmbedFocusProc procedure, focusing on dead window} -constraints {
@@ -785,14 +788,14 @@ test unixEmbed-5.2a {EmbedFocusProc procedure, focusing on dead window} -constra
     unix
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
         update
@@ -802,7 +805,7 @@ test unixEmbed-5.2a {EmbedFocusProc procedure, focusing on dead window} -constra
     focus -force .f1
     update
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {}
 test unixEmbed-5.3 {EmbedFocusProc procedure, FocusOut events} -constraints {
@@ -833,14 +836,14 @@ test unixEmbed-5.3a {EmbedFocusProc procedure, FocusOut events} -constraints {
     unix
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
         set x {}
@@ -850,12 +853,12 @@ test unixEmbed-5.3a {EmbedFocusProc procedure, FocusOut events} -constraints {
     }
     focus -force .f1
     update
-    set x [slave eval {update; set x }]
+    set x [child eval {update; set x }]
     focus .
     update
-    list $x [slave eval {update; set x}]
+    list $x [child eval {update; set x}]
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {{{focus in .t1}} {{focus in .t1} {focus out .t1}}}
 
@@ -885,14 +888,14 @@ test unixEmbed-6.1a {EmbedGeometryRequest procedure, window changes size} -const
     unix
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
         update
@@ -903,7 +906,7 @@ test unixEmbed-6.1a {EmbedGeometryRequest procedure, window changes size} -const
         list $x [winfo geom .t1]
     }
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {{configure .t1 300 120} 300x120+0+0}
 test unixEmbed-6.2 {EmbedGeometryRequest procedure, window changes size} -constraints {
@@ -931,15 +934,15 @@ test unixEmbed-6.2a {EmbedGeometryRequest procedure, window changes size} -const
     unix
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     place .f1 -width 200 -height 200
     update
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
         update
@@ -950,7 +953,7 @@ test unixEmbed-6.2a {EmbedGeometryRequest procedure, window changes size} -const
         list $x [winfo geom .t1]
     }
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {{configure .t1 200 200} 200x200+0+0}
 
@@ -988,25 +991,25 @@ test unixEmbed-7.1 {TkpRedirectKeyEvent procedure, forward keystroke} -constrain
 # TkpRedirectKeyEvent is not implemented in win or aqua.  If someone
 # implements it they should change the constraints for this test.
 test unixEmbed-7.1a {TkpRedirectKeyEvent procedure, forward keystroke} -constraints {
-    unix notAqua
+    unix notAqua failsOnXQuarz
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     deleteWindows
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
     }
     focus -force .
     bind . <KeyPress> {lappend x {key %A %E}}
     set x {}
-    set y [slave eval {
+    set y [child eval {
         update
         bind .t1 <KeyPress> {lappend y {key %A}}
         set y {}
@@ -1016,7 +1019,7 @@ test unixEmbed-7.1a {TkpRedirectKeyEvent procedure, forward keystroke} -constrai
     update
     list $x $y
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
     bind . <KeyPress> {}
 } -result {{{key a 1}} {}}
@@ -1054,14 +1057,14 @@ test unixEmbed-7.2a {TkpRedirectKeyEvent procedure, don't forward keystroke widt
     unix
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1]
     }
@@ -1070,7 +1073,7 @@ test unixEmbed-7.2a {TkpRedirectKeyEvent procedure, don't forward keystroke widt
     update
     bind . <KeyPress> {lappend x {key %A}}
     set x {}
-    set y [slave eval {
+    set y [child eval {
         update
         bind .t1 <KeyPress> {lappend y {key %A}}
         set y {}
@@ -1080,13 +1083,13 @@ test unixEmbed-7.2a {TkpRedirectKeyEvent procedure, don't forward keystroke widt
     update
     list $x $y
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
     bind . <KeyPress> {}
 } -result {{} {{key b}}}
 
 test unixEmbed-8.1 {TkpClaimFocus procedure} -constraints {
-    unix notAqua
+    unix notAqua failsOnUbuntu failsOnXQuarz
 } -setup {
 	deleteWindows
 } -body {
@@ -1113,30 +1116,30 @@ test unixEmbed-8.1 {TkpClaimFocus procedure} -constraints {
 } -result {{{} .t1} .f1}
 test unixEmbed-8.1a {TkpClaimFocus procedure} -constraints unix -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     frame .f2 -width 200 -height 50
     pack .f1 .f2
     update
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1] -highlightthickness 2 -bd 2 -relief sunken
     }
     # This should clear focus from the application embedded in .f1
     focus -force .f2
     update
-    list [slave eval {
+    list [child eval {
         set x [list [focus]]
         focus .t1
 	update
         lappend x [focus]
     }] [focus]
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {{{} .t1} .f1}
 test unixEmbed-8.2 {TkpClaimFocus procedure} -constraints unix -setup {
@@ -1188,9 +1191,9 @@ test unixEmbed-9.1 {EmbedWindowDeleted procedure, check parentPtr} -constraints 
 	deleteWindows
 } -result {{{XXX .f4 {} {}} {XXX .f3 {} {}} {XXX .f2 {} {}} {XXX .f1 {} {}}} {{XXX .f4 {} {}} {XXX .f2 {} {}} {XXX .f1 {} {}}} {{XXX .f2 {} {}} {XXX .f1 {} {}}} {{XXX .f2 {} {}}} {}}
 test unixEmbed-9.2 {EmbedWindowDeleted procedure, check embeddedPtr} -constraints {
-	unix testembed notAqua
+    unix testembed notAqua
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
@@ -1211,14 +1214,14 @@ test unixEmbed-9.2a {EmbedWindowDeleted procedure, check embeddedPtr} -constrain
     unix testembed
 } -setup {
     deleteWindows
-    catch {interp delete slave}
-    ::_test_tmp::testInterp slave
-    load {} Tktest slave
+    catch {interp delete child}
+    ::_test_tmp::testInterp child
+    load {} Tktest child
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
-    slave alias w1 winfo id .f1
-    slave eval {
+    child alias w1 winfo id .f1
+    child eval {
         destroy [winfo child .]
         toplevel .t1 -use [w1] -highlightthickness 2 -bd 2 -relief sunken
         set x {}
@@ -1227,48 +1230,48 @@ test unixEmbed-9.2a {EmbedWindowDeleted procedure, check embeddedPtr} -constrain
         lappend x [testembed]
     }
 } -cleanup {
-    interp delete slave
+    interp delete child
     deleteWindows
 } -result {{{XXX {} {} .t1}} {}}
 
 
 test unixEmbed-10.1 {geometry propagation in tkUnixWm.c/UpdateGeometryInfo} -constraints {
-	unix
+    unix failsOnUbuntu failsOnXQuarz
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .f1 -container 1 -width 200 -height 50
-    update
     pack .f1
-    update
+    update idletasks
     toplevel .t1 -use [winfo id .f1] -width 150 -height 80
-    update
+    update idletasks
     wm geometry .t1 +40+50
-    update
+    update idletasks
     wm geometry .t1
 } -cleanup {
 	deleteWindows
 } -result {150x80+0+0}
 test unixEmbed-10.2 {geometry propagation in tkUnixWm.c/UpdateGeometryInfo} -constraints {
-	unix
+    unix failsOnUbuntu failsOnXQuarz
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .f1 -container 1 -width 200 -height 50
     pack .f1
+    update idletasks
     toplevel .t1 -use [winfo id .f1] -width 150 -height 80
-    update
+    update idletasks
     wm geometry .t1 70x300+10+20
-    update
+    update idletasks
     wm geometry .t1
 } -cleanup {
 	deleteWindows
 } -result {70x300+0+0}
 
 test unixEmbed-11.1 {focus -force works for embedded toplevels} -constraints {
-	unix
+    unix
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t
     pack [frame .t.f -container 1 -width 200 -height 200] -fill both
@@ -1282,9 +1285,9 @@ test unixEmbed-11.1 {focus -force works for embedded toplevels} -constraints {
     deleteWindows
 } -result .embed
 test unixEmbed-11.2 {mouse coordinates in embedded toplevels} -constraints {
-	unix pressbutton
+    unix pressbutton
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .main
     set result {}
@@ -1298,6 +1301,7 @@ test unixEmbed-11.2 {mouse coordinates in embedded toplevels} -constraints {
     wm geometry .main 200x400+100+100
     update idletasks
     focus -force .main
+    after 100
     set x [expr {[winfo x .main ] + [winfo x .main.b] + 40}]
     set y [expr {[winfo y .main ] + [winfo y .main.b] + 38}]
     lappend result [winfo containing $x $y]

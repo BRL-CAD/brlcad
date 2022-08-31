@@ -481,7 +481,7 @@ test winMenu-11.3 {TkWinHandleMenuEvent - WM_COMMAND} -constraints {
 "error 1"
     (menu invoke)}} {} {}}
 
-   
+
 # Can't test WM_MENUCHAR
 
 test winMenu-11.4 {TkWinHandleMenuEvent - WM_MEASUREITEM} -constraints {
@@ -788,7 +788,7 @@ test winMenu-22.1 {DrawMenuUnderline} -constraints win -setup {
     .m1 add command -label foo -underline 0
     set tearoff [tk::TearOffMenu .m1 40 40]
     list [update] [destroy .m1]
-} -result {{} {}}  
+} -result {{} {}}
 
 
 test winMenu-23.1 {Don't know how to test MenuKeyBindProc} -constraints {
@@ -1343,7 +1343,7 @@ test winMenu-32.19 {TkpComputeStandardMenuGeometry - three columns} -constraints
     .m1 add command -label four
     .m1 add command -label five -columnbreak 1
     .m1 add command -label six
-    list [update idletasks] [destroy .m1]   
+    list [update idletasks] [destroy .m1]
 } -result {{} {}}
 
 

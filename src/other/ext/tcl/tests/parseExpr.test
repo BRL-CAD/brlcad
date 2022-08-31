@@ -8,8 +8,10 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require tcltest 2
-namespace import ::tcltest::*
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
+    namespace import -force ::tcltest::*
+}
 
 ::tcltest::loadTestedCommands
 catch [list package require -exact Tcltest [info patchlevel]]
@@ -768,11 +770,11 @@ test parseExpr-21.8 {error messages} -body {
     expr {0o8x}
 } -returnCodes error -match glob -result {*invalid octal number*}
 test parseExpr-21.9 {error messages} -body {
-    expr {"} 
+    expr {"}
 } -returnCodes error -result {missing "
 in expression """}
 test parseExpr-21.10 {error messages} -body {
-    expr \{ 
+    expr \{
 } -returnCodes error -result "missing close-brace
 in expression \"\{\""
 test parseExpr-21.11 {error messages} -body {

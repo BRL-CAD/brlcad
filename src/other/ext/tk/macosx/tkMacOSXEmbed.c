@@ -446,7 +446,7 @@ TkMacOSXContainerId(
     for (containerPtr = firstContainerPtr; containerPtr != NULL;
 	    containerPtr = containerPtr->nextPtr) {
 	if (containerPtr->embeddedPtr == winPtr) {
-	    return (MacDrawable *) containerPtr->parent;
+	    return (MacDrawable *)containerPtr->parent;
 	}
     }
     Tcl_Panic("TkMacOSXContainerId couldn't find window");
@@ -739,7 +739,7 @@ EmbeddedEventProc(
     ClientData clientData,	/* Token for container window. */
     XEvent *eventPtr)		/* ResizeRequest event. */
 {
-    TkWindow *winPtr = clientData;
+    TkWindow *winPtr = (TkWindow *)clientData;
 
     if (eventPtr->type == DestroyNotify) {
 	EmbedWindowDeleted(winPtr);
@@ -774,7 +774,7 @@ ContainerEventProc(
     ClientData clientData,	/* Token for container window. */
     XEvent *eventPtr)		/* ResizeRequest event. */
 {
-    TkWindow *winPtr = clientData;
+    TkWindow *winPtr = (TkWindow *)clientData;
     Container *containerPtr;
     Tk_ErrorHandler errHandler;
 
@@ -853,7 +853,7 @@ ContainerEventProc(
 	 * Here we are following unix, by destroying the container.
 	 */
 
-	Tk_DestroyWindow((Tk_Window) winPtr);
+	Tk_DestroyWindow((Tk_Window)winPtr);
     }
     Tk_DeleteErrorHandler(errHandler);
 }
@@ -882,7 +882,7 @@ EmbedStructureProc(
     ClientData clientData,	/* Token for container window. */
     XEvent *eventPtr)		/* ResizeRequest event. */
 {
-    Container *containerPtr = clientData;
+    Container *containerPtr = (Container *)clientData;
     Tk_ErrorHandler errHandler;
 
     if (eventPtr->type == ConfigureNotify) {
@@ -891,7 +891,7 @@ EmbedStructureProc(
          * Send a ConfigureNotify  to the embedded application.
          */
 
-        if (containerPtr->embeddedPtr != None) {
+        if (containerPtr->embeddedPtr != NULL) {
             TkDoConfigureNotify(containerPtr->embeddedPtr);
         }
 	if (containerPtr->embedded != None) {
@@ -902,8 +902,8 @@ EmbedStructureProc(
 
 	    errHandler = Tk_CreateErrorHandler(eventPtr->xfocus.display, -1,
 		    -1, -1, NULL, NULL);
-	    Tk_MoveResizeWindow((Tk_Window) containerPtr->embeddedPtr, 0, 0,
-		    (unsigned) Tk_Width((Tk_Window) containerPtr->parentPtr),
+	    Tk_MoveResizeWindow((Tk_Window)containerPtr->embeddedPtr, 0, 0,
+		    (unsigned) Tk_Width((Tk_Window)containerPtr->parentPtr),
 		    (unsigned) Tk_Height((Tk_Window)containerPtr->parentPtr));
 	    Tk_DeleteErrorHandler(errHandler);
 	}
@@ -936,7 +936,7 @@ EmbedActivateProc(
     ClientData clientData,	/* Token for container window. */
     XEvent *eventPtr)		/* ResizeRequest event. */
 {
-    Container *containerPtr = clientData;
+    Container *containerPtr = (Container *)clientData;
 
     if (containerPtr->embeddedPtr != NULL) {
 	if (eventPtr->type == ActivateNotify) {
@@ -971,7 +971,7 @@ EmbedFocusProc(
     ClientData clientData,	/* Token for container window. */
     XEvent *eventPtr)		/* ResizeRequest event. */
 {
-    Container *containerPtr = clientData;
+    Container *containerPtr = (Container *)clientData;
     Display *display;
     XEvent event;
 
@@ -1048,10 +1048,8 @@ EmbedGeometryRequest(
      * if the window's size didn't change then generate a configure event.
      */
 
-    Tk_GeometryRequest((Tk_Window) winPtr, width, height);
-    while (Tcl_DoOneEvent(TCL_IDLE_EVENTS)) {
-	/* Empty loop body. */
-    }
+    Tk_GeometryRequest((Tk_Window)winPtr, width, height);
+    while (Tcl_DoOneEvent(TCL_IDLE_EVENTS|TCL_TIMER_EVENTS|TCL_DONT_WAIT)) {}
     if ((winPtr->changes.width != width)
 	    || (winPtr->changes.height != height)) {
 	EmbedSendConfigure(containerPtr);
@@ -1118,6 +1116,9 @@ EmbedWindowDeleted(
     prevPtr = NULL;
     containerPtr = firstContainerPtr;
     while (1) {
+	if (containerPtr == NULL) {
+	    return;
+	}
 	if (containerPtr->embeddedPtr == winPtr) {
 	    /*
 	     * We also have to destroy our parent, to clean up the container.

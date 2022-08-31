@@ -4,7 +4,7 @@
 # Many of these tests are visually oriented and cannot be checked
 # programmatically (such as "does an underlined font appear to be
 # underlined?"); these tests attempt to exercise the code in question,
-# but there are no results that can be checked. 
+# but there are no results that can be checked.
 #
 # Copyright (c) 1996-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
@@ -141,7 +141,7 @@ test winfont-5.1 {Tk_MeasureChars procedure: unbounded right margin} -constraint
     update
     set ax [winfo reqwidth .t.l]
     set ay [winfo reqheight .t.l]
-   
+
     .t.l config -wrap 0 -text "000000"
     list [expr {[winfo reqwidth .t.l] eq 6*$ax}] \
         [expr {[winfo reqheight .t.l] eq $ay}]
@@ -160,7 +160,7 @@ test winfont-5.2 {Tk_MeasureChars procedure: static width buffer exceeded} -cons
     update
     set ax [winfo reqwidth .t.l]
     set ay [winfo reqheight .t.l]
-   
+
     .t.l config -wrap 100000 -text "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
     list [expr {[winfo reqwidth .t.l] eq 256*$ax}] \
         [expr {[winfo reqheight .t.l] eq $ay}]
@@ -179,7 +179,7 @@ test winfont-5.3 {Tk_MeasureChars procedure: all chars did fit} -constraints {
     update
     set ax [winfo reqwidth .t.l]
     set ay [winfo reqheight .t.l]
-   
+
     .t.l config -wrap [expr {$ax*10}] -text "00000000"
     list [expr {[winfo reqwidth .t.l] eq 8*$ax}] \
         [expr {[winfo reqheight .t.l] eq $ay}]
@@ -198,7 +198,7 @@ test winfont-5.4 {Tk_MeasureChars procedure: not all chars fit} -constraints {
     update
     set ax [winfo reqwidth .t.l]
     set ay [winfo reqheight .t.l]
-   
+
     .t.l config -wrap [expr {$ax*6}] -text "00000000"
     list [expr {[winfo reqwidth .t.l] eq 6*$ax}] \
         [expr {[winfo reqheight .t.l] eq 2*$ay}]
@@ -234,7 +234,7 @@ test winfont-5.6 {Tk_MeasureChars procedure: at least one char on line} -constra
     update
     set ax [winfo reqwidth .t.l]
     set ay [winfo reqheight .t.l]
-   
+
     .t.l config -text "000000" -wrap 1
     list [expr {[winfo reqwidth .t.l] eq $ax}] \
         [expr {[winfo reqheight .t.l] eq 6*$ay}]
@@ -253,7 +253,7 @@ test winfont-5.7 {Tk_MeasureChars procedure: whole words} -constraints {
     update
     set ax [winfo reqwidth .t.l]
     set ay [winfo reqheight .t.l]
-   
+
     .t.l config -wrap [expr {$ax*8}] -text "000000 0000"
     list [expr {[winfo reqwidth .t.l] eq 6*$ax}] \
         [expr {[winfo reqheight .t.l] eq 2*$ay}]
@@ -272,7 +272,7 @@ test winfont-5.8 {Tk_MeasureChars procedure: already saw space in line} -constra
     update
     set ax [winfo reqwidth .t.l]
     set ay [winfo reqheight .t.l]
-   
+
     .t.l config -wrap [expr {$ax*12}] -text "000000    0000000"
     list [expr {[winfo reqwidth .t.l] eq 7*$ax}] \
         [expr {[winfo reqheight .t.l] eq 2*$ay}]
@@ -291,7 +291,7 @@ test winfont-5.9 {Tk_MeasureChars procedure: internal spaces significant} -const
     update
     set ax [winfo reqwidth .t.l]
     set ay [winfo reqheight .t.l]
-   
+
     .t.l config -wrap [expr {$ax*12}] -text "000  00   00000"
     list [expr {[winfo reqwidth .t.l] eq 7*$ax}] \
         [expr {[winfo reqheight .t.l] eq 2*$ay}]
@@ -310,7 +310,7 @@ test winfont-5.10 {Tk_MeasureChars procedure: make first part of word fit} -cons
     update
     set ax [winfo reqwidth .t.l]
     set ay [winfo reqheight .t.l]
-   
+
     .t.l config -wrap [expr {$ax*12}] -text "0000000000000000"
     list [expr {[winfo reqwidth .t.l] eq 12*$ax}] \
         [expr {[winfo reqheight .t.l] eq 2*$ay}]
@@ -327,7 +327,7 @@ test winfont-5.11 {Tk_MeasureChars procedure: check for kerning} -constraints {
         -text "0" -font systemfixed
     pack .t.l
     update
-   
+
     set font [.t.l cget -font]
     .t.l config -font {{MS Sans Serif} 8} -text "W"
     set width [winfo reqwidth .t.l]

@@ -27,7 +27,7 @@ Line 4
 bOy GIrl .#@? x_yz
 !@#$%
 Line 7"
-  
+
 # The statements below reset the main window; it's needed if the window
 # manager is mwm to make mwm forget about a previous minimum size setting.
 
@@ -182,6 +182,17 @@ test textMark-6.5 {insert and current marks in an empty peer - bug 3487407} -bod
 } -cleanup {
   .t configure -startline {} -endline {}
 } -result {1.0}
+test textMark-6.6 {attempt to move the insert mark beyond peer -endline - bug 34db75c0ac} -body {
+  .t peer create .p -startline 1 -endline 2
+  pack .p
+  update
+  .p mark set insert 1.2
+  focus -force .p
+  event generate .p <<NextLine>>  ; # shall not error out
+  set res [.p index insert]
+} -cleanup {
+  destroy .p
+} -result {1.9}
 
 test textMark-7.1 {MarkFindNext - invalid mark name} -body {
     .t mark next bogus

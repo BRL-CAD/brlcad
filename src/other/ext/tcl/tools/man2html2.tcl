@@ -4,7 +4,7 @@
 # This file defines procedures that are used during the second pass of the man
 # page to html conversion process. It is sourced by man2html.tcl.
 #
-# Copyright (c) 1996 by Sun Microsystems, Inc.
+# Copyright (c) 1996 Sun Microsystems, Inc.
 
 # Global variables used by these scripts:
 #

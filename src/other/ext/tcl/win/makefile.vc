@@ -16,7 +16,7 @@
 # General usage:
 #   nmake [-nologo] -f makefile.vc [TARGET|MACRODEF [TARGET|MACRODEF] [...]]
 #
-# For MACRODEF, see TIP 477 (https://core.tcl-lang.org/tips/doc/trunk/tip/477.md)
+# For MACRODEF, see TIP 477 (https://core.tcl-lang.org/tips/doc/main/tip/477.md)
 # or examine Sections 6-8 in rules.vc.
 #
 # Possible values of TARGET are:
@@ -52,29 +52,32 @@
 # turn on the 64-bit compiler, if your SDK has it.
 #
 # Basic macros and options usable on the commandline (see rules.vc for more info):
-#	OPTS=msvcrt,static,staticpkg,symbols,nothreads,profile,unchecked,time64bit,none
+#	OPTS=msvcrt,nothreads,pdbs,profile,static,staticpkg,symbols,thrdalloc,time64bit,unchecked,utfmax,none
 #		Sets special options for the core.  The default is for none.
 #		Any combination of the above may be used (comma separated).
 #		'none' will over-ride everything to nothing.
 #
-#		msvcrt   = Affects the static option only to switch it from
-#			   using libcmt(d) as the C runtime [by default] to
-#			   msvcrt(d). This is useful for static embedding
-#			   support.
-#		static   = Builds a static library of the core instead of a
-#			   dll.  The shell will be static (and large), as well.
-#		staticpkg= Affects the static option only to switch
-#			   tclshXX.exe to have the dde and reg extension linked
-#			   inside it.
-#		nothreads  = Turns off full multithreading support (default on).
+#		msvcrt    = Affects the static option only to switch it from
+#			    using libcmt(d) as the C runtime [by default] to
+#			    msvcrt(d). This is useful for static embedding
+#			    support.
+#		nothreads = Turns off full multithreading support (default on).
+#		pbds      =  Produce separate debug symbol files.
+#		profile   =  Adds profiling hooks.  Map file is assumed.
+#		static    = Builds a static library of the core instead of a
+#			    dll.  The shell will be static (and large), as well.
+#		staticpkg = Affects the static option only to switch
+#			    tclshXX.exe to have the dde and reg extension linked
+#			    inside it.
+#		symbols   =  Adds symbols for step debugging.
 #		thrdalloc = Use the thread allocator (shared global free pool).
-#		symbols =  Adds symbols for step debugging.
-#		profile =  Adds profiling hooks.  Map file is assumed.
-#		unchecked = Allows a symbols build to not use the debug
-#			   enabled runtime (msvcrt.dll not msvcrtd.dll
-#			   or libcmt.lib not libcmtd.lib).
 #		time64bit = Forces a build using 64-bit time_t for 32-bit build
-#			   (CRT library should support this).
+#			    (CRT library should support this).
+#		unchecked = Allows a symbols build to not use the debug
+#			    enabled runtime (msvcrt.dll not msvcrtd.dll
+#			    or libcmt.lib not libcmtd.lib).
+#		utfmax    = Forces a build allowing 4-byte UTF-8 sequences
+#			    internally.
 #
 #	STATS=compdbg,memdbg,none
 #		Sets optional memory and bytecode compiler debugging code added
@@ -110,10 +113,6 @@
 #
 #	TESTPAT=<file>
 #		Reads the tests requested to be run from this file.
-#
-#	CFG_ENCODING=encoding
-#		name of encoding for configuration information. Defaults
-#		to cp1252
 #
 # Examples:
 #       c:\tcl_src\win\>nmake -f makefile.vc release
@@ -152,6 +151,9 @@ VERSION         = $(TCL_MAJOR_VERSION)$(TCL_MINOR_VERSION)
 !endif
 !if [echo PKG_HTTP_VER = \>> versions.vc] \
    && [nmakehlp -V ..\library\http\pkgIndex.tcl http >> versions.vc]
+!endif
+!if [echo PKG_OPT_VER = \>> versions.vc] \
+   && [nmakehlp -V ..\library\opt\pkgIndex.tcl opt >> versions.vc]
 !endif
 !if [echo PKG_TCLTEST_VER = \>> versions.vc] \
    && [nmakehlp -V ..\library\tcltest\pkgIndex.tcl tcltest >> versions.vc]
@@ -415,7 +417,7 @@ PKGSDIR		= $(ROOT)\pkgs
 # Additional include and C macro definitions for the implicit rules
 # defined in rules.vc
 PRJ_INCLUDES	= -I"$(TOMMATHDIR)"
-PRJ_DEFINES	= /DTCL_TOMMATH /DMP_PREC=4 /Dinline=__inline /DHAVE_ZLIB=1 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DMP_FIXED_CUTOFFS /DMP_NO_STDINT
+PRJ_DEFINES	= /DTCL_TOMMATH /DMP_PREC=4 /Dinline=__inline /DHAVE_ZLIB=1 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DMP_FIXED_CUTOFFS
 
 # Additional Link libraries needed beyond those in rules.vc
 PRJ_LIBS   = netapi32.lib user32.lib userenv.lib ws2_32.lib
@@ -449,8 +451,8 @@ test: test-core test-pkgs
 test-core: setup $(TCLTEST) dlls $(CAT32)
 	set TCL_LIBRARY=$(ROOT:\=/)/library
 	$(DEBUGGER) $(TCLTEST) "$(ROOT:\=/)/tests/all.tcl" $(TESTFLAGS) -loadfile <<
-		package ifneeded dde 1.4.2 [list load "$(TCLDDELIB:\=/)" dde]
-		package ifneeded registry 1.3.4 [list load "$(TCLREGLIB:\=/)" registry]
+		package ifneeded dde 1.4.4 [list load "$(TCLDDELIB:\=/)" Dde]
+		package ifneeded registry 1.3.5 [list load "$(TCLREGLIB:\=/)" Registry]
 <<
 
 runtest: setup $(TCLTEST) dlls $(CAT32)
@@ -872,16 +874,18 @@ install-binaries:
 install-libraries: tclConfig tcl-nmake install-msgs install-tzdata
 	@if not exist "$(SCRIPT_INSTALL_DIR)" \
 		$(MKDIR) "$(SCRIPT_INSTALL_DIR)"
-	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8" \
-		$(MKDIR) "$(SCRIPT_INSTALL_DIR)\..\tcl8"
-	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4" \
-		$(MKDIR) "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4"
-	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4\platform" \
-		$(MKDIR) "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4\platform"
-	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.5" \
-		$(MKDIR) "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.5"
-	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.6" \
-		$(MKDIR) "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.6"
+	@if not exist "$(SCRIPT_INSTALL_DIR)\opt0.4" \
+		$(MKDIR) "$(SCRIPT_INSTALL_DIR)\opt0.4"
+	@if not exist "$(MODULE_INSTALL_DIR)" \
+		$(MKDIR) "$(MODULE_INSTALL_DIR)"
+	@if not exist "$(MODULE_INSTALL_DIR)\8.4" \
+		$(MKDIR) "$(MODULE_INSTALL_DIR)\8.4"
+	@if not exist "$(MODULE_INSTALL_DIR)\8.4\platform" \
+		$(MKDIR) "$(MODULE_INSTALL_DIR)\8.4\platform"
+	@if not exist "$(MODULE_INSTALL_DIR)\8.5" \
+		$(MKDIR) "$(MODULE_INSTALL_DIR)\8.5"
+	@if not exist "$(MODULE_INSTALL_DIR)\8.6" \
+		$(MKDIR) "$(MODULE_INSTALL_DIR)\8.6"
 	@if not exist "$(LIB_INSTALL_DIR)\nmake" \
 		$(MKDIR) "$(LIB_INSTALL_DIR)\nmake"
 	@echo Installing header files
@@ -909,27 +913,27 @@ install-libraries: tclConfig tcl-nmake install-msgs install-tzdata
 	@$(CPY) "$(WIN_DIR)\targets.vc"              "$(LIB_INSTALL_DIR)\nmake\"
 	@$(CPY) "$(WIN_DIR)\nmakehlp.c"            "$(LIB_INSTALL_DIR)\nmake\"
 	@$(CPY) "$(OUT_DIR)\tcl.nmake"            "$(LIB_INSTALL_DIR)\nmake\"
-	@echo Installing library http1.0 directory
+	@echo Installing package http 1.0 (obsolete)
 	@$(CPY) "$(ROOT)\library\http1.0\*.tcl" \
 	    "$(SCRIPT_INSTALL_DIR)\http1.0\"
-	@echo Installing library opt0.4 directory
+	@echo Installing package opt $(PKG_OPT_VER)
 	@$(CPY) "$(ROOT)\library\opt\*.tcl" \
 	    "$(SCRIPT_INSTALL_DIR)\opt0.4\"
 	@echo Installing package http $(PKG_HTTP_VER) as a Tcl Module
 	@$(COPY) "$(ROOT)\library\http\http.tcl" \
-	    "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.6\http-$(PKG_HTTP_VER).tm"
+	    "$(MODULE_INSTALL_DIR)\8.6\http-$(PKG_HTTP_VER).tm"
 	@echo Installing package msgcat $(PKG_MSGCAT_VER) as a Tcl Module
 	@$(COPY) "$(ROOT)\library\msgcat\msgcat.tcl" \
-	    "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.5\msgcat-$(PKG_MSGCAT_VER).tm"
+	    "$(MODULE_INSTALL_DIR)\8.5\msgcat-$(PKG_MSGCAT_VER).tm"
 	@echo Installing package tcltest $(PKG_TCLTEST_VER) as a Tcl Module
 	@$(COPY) "$(ROOT)\library\tcltest\tcltest.tcl" \
-	    "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.5\tcltest-$(PKG_TCLTEST_VER).tm"
+	    "$(MODULE_INSTALL_DIR)\8.5\tcltest-$(PKG_TCLTEST_VER).tm"
 	@echo Installing package platform $(PKG_PLATFORM_VER) as a Tcl Module
 	@$(COPY) "$(ROOT)\library\platform\platform.tcl" \
-	    "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4\platform-$(PKG_PLATFORM_VER).tm"
+	    "$(MODULE_INSTALL_DIR)\8.4\platform-$(PKG_PLATFORM_VER).tm"
 	@echo Installing package platform::shell $(PKG_SHELL_VER) as a Tcl Module
 	@$(COPY) "$(ROOT)\library\platform\shell.tcl" \
-	    "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4\platform\shell-$(PKG_SHELL_VER).tm"
+	    "$(MODULE_INSTALL_DIR)\8.4\platform\shell-$(PKG_SHELL_VER).tm"
 	@echo Installing $(TCLDDELIBNAME)
 !if $(STATIC_BUILD)
 !if !$(TCL_USE_STATIC_PACKAGES)

@@ -137,28 +137,28 @@ test imageBmap-2.2 {ImgBmapCreate procedure} -setup {
 } -result {image1 image1 0 0 #000000 {}}
 
 
-test imageBmap-3.1 {ImgBmapConfigureMaster procedure, memory de-allocation} -body {
+test imageBmap-3.1 {ImgBmapConfigureModel procedure, memory de-allocation} -body {
     image create bitmap i1 -data $data1
     i1 configure -data $data1
 } -cleanup {
 	image delete i1
 } -result {}
-test imageBmap-3.2 {ImgBmapConfigureMaster procedure} -body {
+test imageBmap-3.2 {ImgBmapConfigureModel procedure} -body {
     image create bitmap i1 -data $data1
     list [catch {i1 configure -data bogus} msg] $msg [image width i1] \
 	    [image height i1]
 } -result {1 {format error in bitmap data} 16 16}
-test imageBmap-3.3 {ImgBmapConfigureMaster procedure, memory de-allocation} -body {
+test imageBmap-3.3 {ImgBmapConfigureModel procedure, memory de-allocation} -body {
     image create bitmap i1 -data $data1 -maskdata $data2
     i1 configure -maskdata $data2
 } -cleanup {
 	image delete i1
 } -result {}
-test imageBmap-3.4 {ImgBmapConfigureMaster procedure} -body {
+test imageBmap-3.4 {ImgBmapConfigureModel procedure} -body {
     image create bitmap i1
     i1 configure -maskdata $data2
 } -returnCodes error -result {can't have mask without bitmap}
-test imageBmap-3.5 {ImgBmapConfigureMaster procedure} -body {
+test imageBmap-3.5 {ImgBmapConfigureModel procedure} -body {
     image create bitmap i1 -data $data1 -maskdata {
 	#define foo_width 8
 	#define foo_height 16
@@ -167,7 +167,7 @@ test imageBmap-3.5 {ImgBmapConfigureMaster procedure} -body {
 	   0x81, 0x81, 0xff, 0xff, 0xff, 0xff, 0x81, 0x81};
 	}
 } -returnCodes error -result {bitmap and mask have different sizes}
-test imageBmap-3.6 {ImgBmapConfigureMaster procedure} -body {
+test imageBmap-3.6 {ImgBmapConfigureModel procedure} -body {
     image create bitmap i1 -data $data1 -maskdata {
 	#define foo_width 16
 	#define foo_height 8
@@ -176,7 +176,7 @@ test imageBmap-3.6 {ImgBmapConfigureMaster procedure} -body {
 	   0x81, 0x81, 0xff, 0xff, 0xff, 0xff, 0x81, 0x81};
 	}
 } -returnCodes error -result {bitmap and mask have different sizes}
-test imageBmap-3.7 {ImgBmapConfigureMaster procedure} -setup {
+test imageBmap-3.7 {ImgBmapConfigureModel procedure} -setup {
     destroy .c
     pack [canvas .c]
 } -body {
@@ -503,8 +503,8 @@ test imageBmap-11.2 {ImgBmapDelete procedure} -body {
 test imageBmap-12.1 {ImgBmapCmdDeletedProc procedure} -body {
     image create bitmap i2 -file foo.bm -maskfile foo2.bm
     rename i2 {}
-    list [lsearch -exact [imageNames] i2] [catch {i2 foo} msg] $msg
-} -result {-1 1 {invalid command name "i2"}}
+    list [expr {"i2" in [imageNames]}] [catch {i2 foo} msg] $msg
+} -result {0 1 {invalid command name "i2"}}
 
 removeFile foo.bm
 removeFile foo2.bm

@@ -113,7 +113,7 @@ bind $w.c <Destroy> {
     after cancel $animationCallbacks(pendulum)
     unset animationCallbacks(pendulum)
 }
-bind $w.c <1> {
+bind $w.c <Button-1> {
     after cancel $animationCallbacks(pendulum)
     showPendulum %W at %x %y
 }

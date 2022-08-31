@@ -1,5 +1,6 @@
-package require Tk 8.5
-package require tcltest ; namespace import -force tcltest::*
+package require Tk
+package require tcltest 2.2
+namespace import -force tcltest::*
 loadTestedCommands
 
 proc propagate-geometry {} { update idletasks }
@@ -46,7 +47,7 @@ test panedwindow-1.7 "Make sure empty panedwindow still still doesn't crash" -bo
 
 test panedwindow-1.8 "Re-forget pane" -body {
     .pw forget .pw.f1
-} -returnCodes 1 -result ".pw.f1 is not managed by .pw"
+} -returnCodes error -result ".pw.f1 is not managed by .pw"
 
 test panedwindow-1.end "Cleanup" -body {
     destroy .pw
@@ -110,19 +111,19 @@ test panedwindow-2.end "Cleanup" -body { destroy .pw }
 #
 test panedwindow-3.0 "configure pane" -body {
     ttk::panedwindow .pw
-    .pw add [listbox .pw.lb1] 
-    .pw add [listbox .pw.lb2] 
+    .pw add [listbox .pw.lb1]
+    .pw add [listbox .pw.lb2]
     .pw pane 1 -weight 2
     .pw pane 1 -weight
 } -result 2
 
 test panedwindow-3.1 "configure pane -- errors" -body {
     .pw pane 1 -weight -4
-} -returnCodes 1 -match glob -result "-weight must be nonnegative"
+} -returnCodes error -match glob -result "-weight must be nonnegative"
 
 test panedwindow-3.2 "add pane -- errors" -body {
     .pw add [ttk::label .pw.l] -weight -1
-} -returnCodes 1 -match glob -result "-weight must be nonnegative"
+} -returnCodes error -match glob -result "-weight must be nonnegative"
 
 
 test panedwindow-3.end "cleanup" -body { destroy .pw }
@@ -146,7 +147,7 @@ test panedwindow-4.1 "forget" -body {
 
 test panedwindow-4.2 "forget forgotten" -body {
     .pw forget .pw.l1
-} -returnCodes 1 -result ".pw.l1 is not managed by .pw"
+} -returnCodes error -result ".pw.l1 is not managed by .pw"
 
 # checkorder $winlist --
 #	Ensure that Y coordinates windows in $winlist are strictly increasing.
@@ -253,7 +254,7 @@ test paned-propagation-setup "Setup." -body {
     frame .pw.f2 -width 100 -height 50
 
     list [winfo reqwidth .pw.f1] [winfo reqheight .pw.f1]
-} -result [list 100 50] 
+} -result [list 100 50]
 
 test paned-propagation-1 "Initial request size" -body {
     .pw add .pw.f1
@@ -262,7 +263,7 @@ test paned-propagation-1 "Initial request size" -body {
     list [winfo reqwidth .pw] [winfo reqheight .pw]
 } -result [list 100 105]
 
-test paned-propagation-2 "Slave change before map" -body {
+test paned-propagation-2 "Pane change before map" -body {
     .pw.f1 configure -width 200 -height 100
     propagate-geometry
     list [winfo reqwidth .pw] [winfo reqheight .pw]
@@ -274,13 +275,13 @@ test paned-propagation-3 "Map window" -body {
     list [winfo width .pw] [winfo height .pw] [.pw sashpos 0]
 } -result [list 200 155 100]
 
-test paned-propagation-4 "Slave change after map, off-axis" -body {
+test paned-propagation-4 "Pane change after map, off-axis" -body {
     .pw.f1 configure -width 100 ;# should be granted
     propagate-geometry
     list [winfo reqwidth .pw] [winfo reqheight .pw] [.pw sashpos 0]
 } -result [list 100 155 100]
 
-test paned-propagation-5 "Slave change after map, on-axis" -body {
+test paned-propagation-5 "Pane change after map, on-axis" -body {
     .pw.f1 configure -height 50 ;# should be denied
     propagate-geometry
     list [winfo reqwidth .pw] [winfo reqheight .pw] [.pw sashpos 0]

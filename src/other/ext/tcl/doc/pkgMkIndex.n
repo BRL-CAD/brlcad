@@ -42,7 +42,7 @@ The default pattern is \fB*.tcl\fR and \fB*.[info sharedlibextension]\fR.
 \fBPkg_mkIndex\fR will create a file \fBpkgIndex.tcl\fR in \fIdir\fR
 with package information about all the files given by the \fIpattern\fR
 arguments.
-It does this by loading each file into a slave
+It does this by loading each file into a child
 interpreter and seeing what packages
 and new commands appear (this is why it is essential to have
 \fBpackage provide\fR commands or \fBTcl_PkgProvide\fR calls
@@ -109,7 +109,7 @@ the use of \fIauto_reset\fR, and therefore its use is discouraged.
 .TP 15
 \fB\-load \fIpkgPat\fR
 The index process will pre-load any packages that exist in the
-current interpreter and match \fIpkgPat\fR into the slave interpreter used to
+current interpreter and match \fIpkgPat\fR into the child interpreter used to
 generate the index.  The pattern match uses string match rules, but without
 making case distinctions.
 See \fBCOMPLEX CASES\fR below.

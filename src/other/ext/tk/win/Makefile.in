@@ -129,20 +129,22 @@ TCL_SRC_DIR_NATIVE		= $(shell $(CYGPATH) '$(TCL_SRC_DIR)')
 DLLSUFFIX		= @DLLSUFFIX@
 LIBSUFFIX		= @LIBSUFFIX@
 EXESUFFIX		= @EXESUFFIX@
+VER			= @TK_MAJOR_VERSION@@TK_MINOR_VERSION@
+DOTVER			= @TK_MAJOR_VERSION@.@TK_MINOR_VERSION@
 
 TK_STUB_LIB_FILE	= @TK_STUB_LIB_FILE@
 TK_LIB_FILE		= @TK_LIB_FILE@
 TK_DLL_FILE		= @TK_DLL_FILE@
 TEST_DLL_FILE		= tktest$(VER)${DLLSUFFIX}
-TEST_LIB_FILE		= @LIBPREFIX@tktest$(VER)${LIBSUFFIX}
+TEST_LIB_FILE		= @LIBPREFIX@tktest$(VER)${DLLSUFFIX}.a
 
 SHARED_LIBRARIES 	= $(TK_DLL_FILE) $(TK_STUB_LIB_FILE)
 STATIC_LIBRARIES	= $(TK_LIB_FILE)
 
 WISH			= wish$(VER)${EXESUFFIX}
-TKTEST			= tktest${EXEEXT}
-CAT32			= cat32$(EXEEXT)
-MAN2TCL			= man2tcl$(EXEEXT)
+TKTEST			= tktest${EXESUFFIX}
+CAT32			= cat32${EXESUFFIX}
+MAN2TCL			= man2tcl${EXESUFFIX}
 
 @SET_MAKE@
 
@@ -150,7 +152,7 @@ MAN2TCL			= man2tcl$(EXEEXT)
 # makefile to look into these paths when resolving .c to .obj
 # dependencies.
 
-VPATH = $(GENERIC_DIR):$(TTK_DIR):$(WIN_DIR):$(UNIX_DIR):$(XLIB_DIR):$(RC_DIR)
+VPATH = $(GENERIC_DIR):$(TTK_DIR):$(WIN_DIR):$(XLIB_DIR):$(RC_DIR)
 
 # warning flags
 CFLAGS_WARNING	= @CFLAGS_WARNING@
@@ -168,7 +170,7 @@ LDFLAGS_OPTIMIZE = @LDFLAGS_OPTIMIZE@
 #CFLAGS		= $(CFLAGS_DEBUG)
 #CFLAGS		= $(CFLAGS_OPTIMIZE)
 #CFLAGS		= $(CFLAGS_DEBUG) $(CFLAGS_OPTIMIZE)
-CFLAGS		= @CFLAGS@ @CFLAGS_DEFAULT@ -DUNICODE -D_UNICODE -D_ATL_XP_TARGETING
+CFLAGS		= @CFLAGS@ @CFLAGS_DEFAULT@ -D_ATL_XP_TARGETING=1 -D__USE_MINGW_ANSI_STDIO=0
 
 # Special compiler flags to use when building man2tcl on Windows.
 MAN2TCLFLAGS	= @MAN2TCLFLAGS@
@@ -179,20 +181,17 @@ CC		= @CC@
 RC		= @RC@
 RES		= @RES@
 TK_RES		= @TK_RES@
-AC_FLAGS	= @EXTRA_CFLAGS@ @DEFS@ @TCL_DEFS@
+AC_FLAGS	= @EXTRA_CFLAGS@ @DEFS@
 CPPFLAGS	= @CPPFLAGS@
 LDFLAGS		= @LDFLAGS@ @LDFLAGS_DEFAULT@
 LDFLAGS_CONSOLE	= @LDFLAGS_CONSOLE@
 LDFLAGS_WINDOW	= @LDFLAGS_WINDOW@
-EXEEXT		= @EXEEXT@
 OBJEXT		= @OBJEXT@
 STLIB_LD	= @STLIB_LD@
 SHLIB_LD	= @SHLIB_LD@
 SHLIB_LD_LIBS	= @SHLIB_LD_LIBS@
 SHLIB_CFLAGS	= @SHLIB_CFLAGS@
 SHLIB_SUFFIX	= @SHLIB_SUFFIX@
-VER		= @TK_MAJOR_VERSION@@TK_MINOR_VERSION@
-DOTVER		= @TK_MAJOR_VERSION@.@TK_MINOR_VERSION@
 LIBS		= $(TCL_STUB_LIB_FILE) @LIBS@ @LIBS_GUI@
 RMDIR		= rm -rf
 MKDIR		= mkdir -p
@@ -485,12 +484,12 @@ install-binaries: binaries
 	@echo "Creating package index $(PKG_INDEX)";
 	@$(RM) $(PKG_INDEX);
 	@(\
-	echo "if {[catch {package present Tcl 8.6.0}]} return";\
+	echo "if {![package vsatisfies [package provide Tcl] 8.6.0]} return";\
 	echo "if {(\$$::tcl_platform(platform) eq \"unix\") && ([info exists ::env(DISPLAY)]";\
 	echo "	|| ([info exists ::argv] && (\"-display\" in \$$::argv)))} {";\
-	echo "    package ifneeded Tk $(VERSION)$(PATCH_LEVEL) [list load [file normalize [file join \$$dir .. .. bin libtk$(VERSION).dll]] Tk]";\
+	echo "    package ifneeded Tk $(VERSION)$(PATCH_LEVEL) [list load [file normalize [file join \$$dir .. .. bin libtk$(VERSION).dll]]]";\
 	echo "} else {";\
-	echo "    package ifneeded Tk $(VERSION)$(PATCH_LEVEL) [list load [file normalize [file join \$$dir .. .. bin $(TK_DLL_FILE)]] Tk]";\
+	echo "    package ifneeded Tk $(VERSION)$(PATCH_LEVEL) [list load [file normalize [file join \$$dir .. .. bin $(TK_DLL_FILE)]]]";\
 	echo "}";\
 	) > $(PKG_INDEX);
 	@for i in tkConfig.sh $(TK_LIB_FILE) $(TK_STUB_LIB_FILE); \
@@ -630,7 +629,7 @@ ${TEST_DLL_FILE}: ${TKTEST_OBJS} ${TK_STUB_LIB_FILE}
 $(TCL_SRC_DIR)/win/cat.c:
 
 cat32.${OBJEXT}: $(TCL_SRC_DIR)/win/cat.c
-	$(CC) -c $(CC_SWITCHES) "$(TCL_SRC_DIR)/win/cat.c" $(CC_OBJNAME)
+	$(CC) -c $(CC_SWITCHES) -DUNICODE -D_UNICODE "$(TCL_SRC_DIR)/win/cat.c" $(CC_OBJNAME)
 
 $(CAT32): cat32.${OBJEXT}
 	$(CC) $(CFLAGS) cat32.$(OBJEXT) $(CC_EXENAME) $(LIBS) $(LDFLAGS_CONSOLE)
@@ -656,10 +655,10 @@ ${TK_LIB_FILE}: ${TK_OBJS}
 # Special case object file targets
 
 winMain.$(OBJEXT): winMain.c
-	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
+	$(CC) -c $(CC_SWITCHES) -DUNICODE=1 -D_UNICODE=1 @DEPARG@ $(CC_OBJNAME)
 
 testMain.$(OBJEXT): winMain.c
-	$(CC) -c $(CC_SWITCHES) @DEPARG@ -DTK_TEST $(CC_OBJNAME)
+	$(CC) -c $(CC_SWITCHES) -DTK_TEST -DUNICODE=1 -D_UNICODE=1 @DEPARG@ $(CC_OBJNAME)
 
 tkTest.$(OBJEXT): tkTest.c
 	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
@@ -673,12 +672,25 @@ tkWinTest.$(OBJEXT): tkWinTest.c
 tkSquare.$(OBJEXT): tkSquare.c
 	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
 
+tkStubLib.$(OBJEXT): tkStubLib.c
+	$(CC) -c $(CC_SWITCHES) @CFLAGS_NOLTO@ @DEPARG@ $(CC_OBJNAME)
+
+ttkStubLib.$(OBJEXT): ${TTK_DIR}/ttkStubLib.c
+	$(CC) -c $(CC_SWITCHES) @CFLAGS_NOLTO@ @DEPARG@ $(CC_OBJNAME)
+
 tkMain2.$(OBJEXT): tkMain.c
-	$(CC) -c $(CC_SWITCHES) -DBUILD_tk -DTK_ASCII_MAIN @DEPARG@ $(CC_OBJNAME)
+	$(CC) -c $(CC_SWITCHES) -DBUILD_tk -DUNICODE=1 -D_UNICODE=1 @DEPARG@ $(CC_OBJNAME)
+
+tkUnixMenubu.$(OBJEXT): ${UNIX_DIR}/tkUnixMenubu.c
+	$(CC) -c $(CC_SWITCHES) -DBUILD_tk -DBUILD_ttk @DEPARG@ $(CC_OBJNAME)
+
+tkUnixScale.$(OBJEXT): ${UNIX_DIR}/tkUnixScale.c
+	$(CC) -c $(CC_SWITCHES) -DBUILD_tk -DBUILD_ttk @DEPARG@ $(CC_OBJNAME)
 
 # Extra dependency info
 tkConsole.$(OBJEXT): configure Makefile
 tkMain.$(OBJEXT): configure Makefile
+tkMain2.$(OBJEXT): configure Makefile
 tkWindow.$(OBJEXT): configure Makefile
 
 # Add the object extension to the implicit rules.  By default .obj is not
@@ -699,12 +711,13 @@ tkWindow.$(OBJEXT): configure Makefile
 depend:
 
 cleanhelp:
-	$(RM) *.hlp *.cnt *.hpj *.GID *.rtf man2tcl${EXEEXT}
+	$(RM) *.hlp *.cnt *.hpj *.GID *.rtf man2tcl.exe
 
 clean: cleanhelp
 	$(RM) *.lib *.a *.exp *.dll *.res *.${OBJEXT} *~ \#* TAGS a.out
 	$(RM) $(WISH) $(TKTEST) $(CAT32)
-	$(RM) *.pch *.ilk *.pdb
+	$(RM) *.pch *.ilk *.pdb *.zip
+	$(RMDIR) *.vfs
 
 distclean: clean
 	$(RM) Makefile config.status config.cache config.log tkConfig.sh \

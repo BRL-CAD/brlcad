@@ -14,6 +14,7 @@ namespace import ::tcltest::*
 tcltest::configure {*}$argv
 tcltest::loadTestedCommands
 
+testConstraint failsOnXQuarz [expr {$tcl_platform(os) ne "Darwin" || [tk windowingsystem] ne "x11" }]
 
 test winWm-1.1 {TkWmMapWindow} -constraints win -setup {
     destroy .t
@@ -278,12 +279,11 @@ test winWm-6.2 {wm attributes} -constraints win -setup {
 test winWm-6.3 {wm attributes} -constraints win -setup {
     destroy .t
 } -body {
-    # This isn't quite the correct error message yet, but it works.
     toplevel .t
     wm attributes .t -foo
 } -cleanup {
     destroy .t
-} -returnCodes error -result {wrong # args: should be "wm attributes window ?-alpha ?double?? ?-transparentcolor ?color?? ?-disabled ?bool?? ?-fullscreen ?bool?? ?-toolwindow ?bool?? ?-topmost ?bool??"}
+} -returnCodes error -result {bad attribute "-foo": must be -alpha, -transparentcolor, -disabled, -fullscreen, -toolwindow, or -topmost}
 
 test winWm-6.4 {wm attributes -alpha} -constraints win -setup {
     destroy .t
@@ -474,7 +474,7 @@ test winWm-9.0 "Bug #2799589 - delayed activation of destroyed window" -constrai
     global winwm90done
     set winwm90done wait
     toplevel .t
-} -body {    
+} -body {
     pack [button .t.b -text "Show" -command {winwm90proc1 .tx}]
     bind .t.b <Map> {bind %W <Map> {}; after idle {winwm90click %W}}
     after 5000 {set winwm90done timeout}
@@ -485,7 +485,7 @@ test winWm-9.0 "Bug #2799589 - delayed activation of destroyed window" -constrai
         rename winwm90$cmd {}
     }
     destroy .tx .t .sd
-} -result {ok} 
+} -result ok
 
 test winWm-9.1 "delayed activation of grabbed destroyed window" -constraints win -setup {
     proc winwm91click {w} {
@@ -519,7 +519,7 @@ test winWm-9.1 "delayed activation of grabbed destroyed window" -constraints win
     global winwm91done
     set winwm91done wait
     toplevel .t
-} -body {    
+} -body {
     pack [button .t.b -text "Show" -command {winwm91proc1 .tx}]
     bind .t.b <Map> {bind %W <Map> {}; after idle {winwm91click %W}}
     after 5000 {set winwm91done timeout}
@@ -530,9 +530,9 @@ test winWm-9.1 "delayed activation of grabbed destroyed window" -constraints win
         rename winwm91$cmd {}
     }
     destroy .tx .t .sd
-} -result {ok}
+} -result ok
 
-test winWm-9.2 "check wm forget for unmapped parent (#3205464,#2967911)" -setup {
+test winWm-9.2 "check wm forget for unmapped parent (#3205464,#2967911)" -constraints {failsOnUbuntu failsOnXQuarz} -setup {
     destroy .t
     toplevel .t
     set winwm92 {}
@@ -541,15 +541,15 @@ test winWm-9.2 "check wm forget for unmapped parent (#3205464,#2967911)" -setup 
 } -body {
     pack .t.f.x
     pack .t.f
-    lappend aid [after 2000 {set ::winwm92 timeout}] [after 100 {
+    lappend aid [after 5000 {set ::winwm92 timeout}] [after 500 {
         wm manage .t.f
         wm iconify .t
-        lappend aid [after 100 {
+        lappend aid [after 500 {
             wm forget .t.f
             wm deiconify .t
-            lappend aid [after 100 {
+            lappend aid [after 500 {
                 pack .t.f
-                lappend aid [after 100 {
+                lappend aid [after 500 {
 		    set ::winwm92 [expr {
 			    [winfo rooty .t.f.x] == 0 ? "failed" : "ok"}]}]
             }]

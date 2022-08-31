@@ -7,7 +7,7 @@ includedir=@includedir@
 
 Name: Tool Command Language
 Description: Tcl is a powerful, easy-to-learn dynamic programming language, suitable for a wide range of uses.
-URL: http://www.tcl.tk/
+URL: https://www.tcl-tk.org/
 Version: @TCL_VERSION@@TCL_PATCH_LEVEL@
 Requires.private: zlib >= 1.2.3
 Libs: -L${libdir} @TCL_LIB_FLAG@ @TCL_STUB_LIB_FLAG@

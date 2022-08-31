@@ -6,7 +6,7 @@
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
 
-package require tcltest 2.1
+package require tcltest 2.2
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
 
@@ -167,7 +167,7 @@ foreach mode $modes {
     catch {tk_getOpenFile -foo 1} msg
     regsub -all ,      $msg "" options
     regsub \"-foo\" $options "" options
-    
+
     foreach option $options {
         if {[string index $option 0] eq "-"} {
 	    test filebox-1.2-$mode$option "tk_getOpenFile command" -body {

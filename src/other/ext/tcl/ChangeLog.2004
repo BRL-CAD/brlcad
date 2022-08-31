@@ -345,7 +345,7 @@
 	* library/clock.tcl: Corrected the regular expressions that match a
 	time zone to allow for time zones specified as +HH or -HH.
 	* tests/clock.test: Added regression test case for the above issue.
-	Thanks to Rolf Ade for reporting this issue [http://wiki.tcl.tk/13094]
+	Thanks to Rolf Ade for reporting this issue [https://wiki.tcl-lang.org/page/Parsing+ISO8601+dates+and+times]
 	* win/tclWinDde.c (Tcl_DdeObjCmd): Corrected a typo that caused a
 	compilation failure on VC++.
 
@@ -2302,7 +2302,7 @@
 	934511].
 
 	* doc/CrtCommand.3: Added note that the arguments given to the command
-	proc of a Tcl_CreateCommand are in utf8 since Tcl 8.1. Closing [Patch
+	proc of a Tcl_CreateCommand are in utf-8 since Tcl 8.1. Closing [Patch
 	414778].
 
 	* doc/ChnlStack.3: Removed the declaration that the interp argument to
@@ -2873,7 +2873,7 @@
 2004-06-02  Jeff Hobbs	<jeffh@ActiveState.com>
 
 	* win/tclWinFile.c (TclpFindExecutable): when using GetModuleFileNameA
-	(Win9x), convert from CP_ACP to WCHAR then convert back to utf8.
+	(Win9x), convert from CP_ACP to WCHAR then convert back to utf-8.
 	Adjunct to 2004-04-07 fix.
 
 2004-06-02  David Gravereaux <davygrvy@pobox.com>

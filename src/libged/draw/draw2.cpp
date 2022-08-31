@@ -45,62 +45,6 @@
 #include "../alphanum.h"
 #include "../ged_private.h"
 
-
-static int
-_fp_bbox(fastf_t *s_size, point_t *bmin, point_t *bmax,
-	 struct db_full_path *fp,
-	 struct db_i *dbip,
-	 const struct bg_tess_tol *ttol,
-	 const struct bn_tol *tol,
-	 mat_t *s_mat,
-	 struct resource *res,
-	 struct bview *v
-	)
-{
-    VSET(*bmin, INFINITY, INFINITY, INFINITY);
-    VSET(*bmax, -INFINITY, -INFINITY, -INFINITY);
-    *s_size = 1;
-
-    struct rt_db_internal dbintern;
-    RT_DB_INTERNAL_INIT(&dbintern);
-    struct rt_db_internal *ip = &dbintern;
-    int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, *s_mat, res);
-    if (ret < 0)
-	return -1;
-
-    int bbret = -1;
-    if (ip->idb_meth->ft_bbox) {
-	bbret = ip->idb_meth->ft_bbox(ip, bmin, bmax, tol);
-    }
-    if (bbret < 0 && ip->idb_meth->ft_plot) {
-	/* As a fallback for primitives that don't have a bbox function,
-	 * (there are still some as of 2021) use the old bounding method of
-	 * calculating the default (non-adaptive) plot for the primitive
-	 * and using the extent of the plotted segments as the bounds.
-	 */
-	struct bu_list vhead;
-	BU_LIST_INIT(&(vhead));
-	if (ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, v) >= 0) {
-	    if (bv_vlist_bbox(&vhead, bmin, bmax, NULL, NULL)) {
-		BV_FREE_VLIST(&v->gv_objs.gv_vlfree, &vhead);
-		rt_db_free_internal(&dbintern);
-		return -1;
-	    }
-	    BV_FREE_VLIST(&v->gv_objs.gv_vlfree, &vhead);
-	    bbret = 0;
-	}
-    }
-    if (bbret >= 0) {
-	// Got bounding box, use it to update sizing
-	*s_size = (*bmax)[X] - (*bmin)[X];
-	V_MAX(*s_size, (*bmax)[Y] - (*bmin)[Y]);
-	V_MAX(*s_size, (*bmax)[Z] - (*bmin)[Z]);
-    }
-
-    rt_db_free_internal(&dbintern);
-    return bbret;
-}
-
 /**
  * This walker builds up scene size and bounding information.
  */
@@ -142,9 +86,14 @@ _bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// Try for a bounding box, if the method is available.  Otherwise try the
 	// bounding the default plot.
 	point_t bmin, bmax;
-	fastf_t s_size;
-	int bbret = _fp_bbox(&s_size, &bmin, &bmax, path, dd->dbip, dd->ttol, dd->tol, curr_mat, dd->res, dd->v);
+	int bbret = rt_bound_instance(&bmin, &bmax, DB_FULL_PATH_CUR_DIR(path), dd->dbip, dd->ttol, dd->tol, curr_mat, dd->res, dd->v);
 	if (bbret >= 0) {
+
+	    // Got bounding box, use it to update sizing
+	    fastf_t s_size = bmax[X] - bmin[X];
+	    V_MAX(s_size, bmax[Y] - bmin[Y]);
+	    V_MAX(s_size, bmax[Z] - bmin[Z]);
+
 	    // Got bounding box, use it to update sizing
 	    (*dd->s_size)[dp] = s_size;
 	    VMINMAX(dd->min, dd->max, bmin);
@@ -448,8 +397,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    // TODO - check object against default GED selection set
 	    struct draw_update_data_t *ud;
 	    BU_GET(ud, struct draw_update_data_t);
-	    db_full_path_init(&ud->fp);
-	    db_dup_full_path(&ud->fp, fp);
+	    ud->fp = (struct db_full_path *)g->s_path;
 	    ud->dbip = dd.dbip;
 	    ud->tol = dd.tol;
 	    ud->ttol = dd.ttol;
@@ -500,36 +448,8 @@ ged_draw_view(struct bview *v, int bot_threshold, int no_autoview, int blank_sla
     // Do an initial autoview so adaptive routines will have approximately
     // the right starting point
     if (blank_slate && !no_autoview) {
-	point_t center, radial;
-	point_t bmin, bmax;
-	VSETALL(bmin, INFINITY);
-	VSETALL(bmax, -INFINITY);
-	if (BU_PTBL_LEN(sg)) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
-		VMINMAX(bmin, bmax, s->bmin);
-		VMINMAX(bmin, bmax, s->bmax);
-	    }
-	} else {
-	    VSETALL(bmin, -1000);
-	    VSETALL(bmax, 1000);
-	}
-	VADD2SCALE(center, bmax, bmin, 0.5);
-	VSUB2(radial, bmax, center);
-	vect_t sqrt_small;
-	VSETALL(sqrt_small, SQRT_SMALL_FASTF);
-	VMAX(radial, sqrt_small);
-	if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
-	    VSETALL(radial, 1.0);
-	MAT_IDN(v->gv_center);
-	MAT_DELTAS_VEC_NEG(v->gv_center, center);
-	v->gv_scale = radial[X];
-	V_MAX(v->gv_scale, radial[Y]);
-	V_MAX(v->gv_scale, radial[Z]);
-	v->gv_isize = 1.0 / v->gv_size;
-	bv_update(v);
+	bv_autoview(v, BV_AUTOVIEW_SCALE_DEFAULT, 0);
     }
-
 
     // Do the actual drawing
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {

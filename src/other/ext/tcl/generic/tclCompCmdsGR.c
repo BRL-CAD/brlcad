@@ -91,9 +91,9 @@ TclCompileGlobalCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     Tcl_Token *varTokenPtr;
     int localIndex, numWords, i;
-    DefineLineInformation;	/* TIP #280 */
 
     /* TODO: Consider support for compiling expanded args. */
     numWords = parsePtr->numWords;
@@ -170,6 +170,7 @@ TclCompileIfCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     JumpFixupArray jumpFalseFixupArray;
 				/* Used to fix the ifFalse jump after each
 				 * test when its target PC is determined. */
@@ -185,7 +186,6 @@ TclCompileIfCmd(
 				 * "if 0 {..}" */
     int boolVal;		/* Value of static condition. */
     int compileScripts = 1;
-    DefineLineInformation;	/* TIP #280 */
 
     /*
      * Only compile the "if" command if all arguments are simple words, in
@@ -473,9 +473,9 @@ TclCompileIncrCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     Tcl_Token *varTokenPtr, *incrTokenPtr;
     int isScalar, localIndex, haveImmValue, immValue;
-    DefineLineInformation;	/* TIP #280 */
 
     if ((parsePtr->numWords != 2) && (parsePtr->numWords != 3)) {
 	return TCL_ERROR;
@@ -670,9 +670,9 @@ TclCompileInfoExistsCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     Tcl_Token *tokenPtr;
     int isScalar, localIndex;
-    DefineLineInformation;	/* TIP #280 */
 
     if (parsePtr->numWords != 2) {
 	return TCL_ERROR;
@@ -848,9 +848,9 @@ TclCompileLappendCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     Tcl_Token *varTokenPtr, *valueTokenPtr;
     int isScalar, localIndex, numWords, i;
-    DefineLineInformation;	/* TIP #280 */
 
     /* TODO: Consider support for compiling expanded args. */
     numWords = parsePtr->numWords;
@@ -881,7 +881,7 @@ TclCompileLappendCmd(
      */
 
     if (numWords > 2) {
-	Tcl_Token *valueTokenPtr = TokenAfter(varTokenPtr);
+	valueTokenPtr = TokenAfter(varTokenPtr);
 
 	CompileWord(envPtr, valueTokenPtr, interp, 2);
     }
@@ -964,9 +964,9 @@ TclCompileLassignCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     Tcl_Token *tokenPtr;
     int isScalar, localIndex, numWords, idx;
-    DefineLineInformation;	/* TIP #280 */
 
     numWords = parsePtr->numWords;
 
@@ -1068,12 +1068,12 @@ TclCompileLindexCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     Tcl_Token *idxTokenPtr, *valTokenPtr;
     int i, idx, numWords = parsePtr->numWords;
-    DefineLineInformation;	/* TIP #280 */
 
     /*
-     * Quit if too few args.
+     * Quit if not enough args.
      */
 
     /* TODO: Consider support for compiling expanded args. */
@@ -1273,8 +1273,8 @@ TclCompileLlengthCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
-    Tcl_Token *varTokenPtr;
     DefineLineInformation;	/* TIP #280 */
+    Tcl_Token *varTokenPtr;
 
     if (parsePtr->numWords != 2) {
 	return TCL_ERROR;
@@ -1306,8 +1306,8 @@ TclCompileLrangeCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds the resulting instructions. */
 {
-    Tcl_Token *tokenPtr, *listTokenPtr;
     DefineLineInformation;	/* TIP #280 */
+    Tcl_Token *tokenPtr, *listTokenPtr;
     int idx1, idx2;
 
     if (parsePtr->numWords != 4) {
@@ -1367,8 +1367,8 @@ TclCompileLinsertCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds the resulting instructions. */
 {
-    Tcl_Token *tokenPtr, *listTokenPtr;
     DefineLineInformation;	/* TIP #280 */
+    Tcl_Token *tokenPtr, *listTokenPtr;
     int idx, i;
 
     if (parsePtr->numWords < 3) {
@@ -1470,8 +1470,8 @@ TclCompileLreplaceCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds the resulting instructions. */
 {
-    Tcl_Token *tokenPtr, *listTokenPtr;
     DefineLineInformation;	/* TIP #280 */
+    Tcl_Token *tokenPtr, *listTokenPtr;
     int idx1, idx2, i;
     int emptyPrefix=1, suffixStart = 0;
 
@@ -1634,6 +1634,7 @@ TclCompileLsetCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds the resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     int tempDepth;		/* Depth used for emitting one part of the
 				 * code burst. */
     Tcl_Token *varTokenPtr;	/* Pointer to the Tcl_Token representing the
@@ -1641,7 +1642,6 @@ TclCompileLsetCmd(
     int localIndex;		/* Index of var in local var table. */
     int isScalar;		/* Flag == 1 if scalar, 0 if array. */
     int i;
-    DefineLineInformation;	/* TIP #280 */
 
     /*
      * Check argument count.
@@ -1806,8 +1806,8 @@ TclCompileNamespaceCodeCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
-    Tcl_Token *tokenPtr;
     DefineLineInformation;	/* TIP #280 */
+    Tcl_Token *tokenPtr;
 
     if (parsePtr->numWords != 2) {
 	return TCL_ERROR;
@@ -1856,8 +1856,8 @@ TclCompileNamespaceOriginCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
-    Tcl_Token *tokenPtr;
     DefineLineInformation;	/* TIP #280 */
+    Tcl_Token *tokenPtr;
 
     if (parsePtr->numWords != 2) {
 	return TCL_ERROR;
@@ -1878,8 +1878,8 @@ TclCompileNamespaceQualifiersCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
-    Tcl_Token *tokenPtr = TokenAfter(parsePtr->tokenPtr);
     DefineLineInformation;	/* TIP #280 */
+    Tcl_Token *tokenPtr = TokenAfter(parsePtr->tokenPtr);
     int off;
 
     if (parsePtr->numWords != 2) {
@@ -1914,8 +1914,8 @@ TclCompileNamespaceTailCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
-    Tcl_Token *tokenPtr = TokenAfter(parsePtr->tokenPtr);
     DefineLineInformation;	/* TIP #280 */
+    Tcl_Token *tokenPtr = TokenAfter(parsePtr->tokenPtr);
     JumpFixup jumpFixup;
 
     if (parsePtr->numWords != 2) {
@@ -1951,9 +1951,9 @@ TclCompileNamespaceUpvarCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     Tcl_Token *tokenPtr, *otherTokenPtr, *localTokenPtr;
     int localIndex, numWords, i;
-    DefineLineInformation;	/* TIP #280 */
 
     if (envPtr->procPtr == NULL) {
 	return TCL_ERROR;
@@ -2076,11 +2076,11 @@ TclCompileRegexpCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds the resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     Tcl_Token *varTokenPtr;	/* Pointer to the Tcl_Token representing the
 				 * parse of the RE or string. */
     int i, len, nocase, exact, sawLast, simple;
     const char *str;
-    DefineLineInformation;	/* TIP #280 */
 
     /*
      * We are only interested in compiling simple regexp cases. Currently
@@ -2119,7 +2119,7 @@ TclCompileRegexpCmd(
 	    sawLast++;
 	    i++;
 	    break;
-	} else if ((len > 1) && (strncmp(str,"-nocase",(unsigned)len) == 0)) {
+	} else if ((len > 1) && (strncmp(str, "-nocase", len) == 0)) {
 	    nocase = 1;
 	} else {
 	    /*
@@ -2416,6 +2416,7 @@ TclCompileReturnCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     /*
      * General syntax: [return ?-option value ...? ?result?]
      * An even number of words means an explicit result argument is present.
@@ -2426,7 +2427,6 @@ TclCompileReturnCmd(
     int numOptionWords = numWords - 1 - explicitResult;
     Tcl_Obj *returnOpts, **objv;
     Tcl_Token *wordTokenPtr = TokenAfter(parsePtr->tokenPtr);
-    DefineLineInformation;	/* TIP #280 */
 
     /*
      * Check for special case which can always be compiled:
@@ -2668,9 +2668,9 @@ TclCompileUpvarCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     Tcl_Token *tokenPtr, *otherTokenPtr, *localTokenPtr;
     int localIndex, numWords, i;
-    DefineLineInformation;	/* TIP #280 */
     Tcl_Obj *objPtr;
 
     if (envPtr->procPtr == NULL) {
@@ -2775,9 +2775,9 @@ TclCompileVariableCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     Tcl_Token *varTokenPtr, *valueTokenPtr;
     int localIndex, numWords, i;
-    DefineLineInformation;	/* TIP #280 */
 
     numWords = parsePtr->numWords;
     if (numWords < 2) {

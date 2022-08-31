@@ -107,6 +107,10 @@ value is specified for \fB\-fieldbackground\fP. Otherwise it is ignored.
 .br
 \fB\-foreground\fP \fIcolor\fP
 .br
+\fB\-insertcolor\fP \fIcolor\fP
+.br
+\fB\-insertwidth\fP \fIamount\fP
+.br
 \fB\-lightcolor\fP \fIcolor\fP
 .br
 \fB\-padding\fP \fIpadding\fP

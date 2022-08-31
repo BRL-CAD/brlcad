@@ -174,7 +174,7 @@ test canvImg-4.2 {ConfigureImage procedure} -constraints testImageType -setup {
     while {"timed out" ni $y && [lindex $y end 1] ne "display"} {
         vwait y
     }
-    after cancel timer
+    after cancel $timer
     list $x $y [.c bbox i1]
 } -cleanup {
     .c delete all
@@ -322,7 +322,7 @@ test canvImg-6.9 {ComputeImageBbox procedure} -constraints testImageType -setup 
     imageCleanup
 } -result {5 15 35 30}
 test canvImg-6.10 {ComputeImageBbox procedure} -constraints {
-    testImageType 
+    testImageType
 } -setup {
     image create test foo
     .c delete all
@@ -335,7 +335,7 @@ test canvImg-6.10 {ComputeImageBbox procedure} -constraints {
     image delete foo
 } -result {20 15 50 30}
 test canvImg-6.11 {ComputeImageBbox procedure} -constraints {
-    testImageType 
+    testImageType
 } -setup {
     image create test foo
     .c delete all
@@ -348,7 +348,7 @@ test canvImg-6.11 {ComputeImageBbox procedure} -constraints {
     image delete foo
 } -result {20 23 50 38}
 test canvImg-6.12 {ComputeImageBbox procedure} -constraints {
-	testImageType 
+	testImageType
 } -setup {
     image create test foo
     .c delete all
@@ -727,12 +727,6 @@ test canvImg-9.1 {DisplayImage procedure} -constraints testImageType -setup {
 	image delete foo
 } -result {75 150 105 165}
 
-if {[tk windowingsystem] == "aqua" && $tcl_platform(osVersion) > 18} {
-    # Aqua >= 10.14 will redraw the entire image.
-    set result_10_1 {{foo display 0 0 30 15}}
-} else {
-    set result_10_1 {{foo display 2 4 6 8}} 
-}
 test canvImg-10.1 {TranslateImage procedure} -constraints testImageType -setup {
     .c delete all
     update
@@ -745,12 +739,11 @@ test canvImg-10.1 {TranslateImage procedure} -constraints testImageType -setup {
     foo changed 2 4 6 8 30 15
     vwait x
     after cancel $timer
-    update
     return $x
 } -cleanup {
     .c delete all
     image delete foo
-} -result $result_10_1
+} -result {{foo display 2 4 6 8}}
 
 test canvImg-11.1 {TranslateImage procedure} -constraints testImageType -setup {
     .c delete all
@@ -762,7 +755,7 @@ test canvImg-11.1 {TranslateImage procedure} -constraints testImageType -setup {
     set x {}
     set timer [after 500 {lappend x "timed out"}]
     foo changed 2 4 6 8 40 50
-        vwait x
+    vwait x
     after cancel $timer
     update
     return $x
@@ -771,7 +764,7 @@ test canvImg-11.1 {TranslateImage procedure} -constraints testImageType -setup {
     image delete foo
 } -result {{foo display 0 0 40 50}}
 test canvImg-11.2 {ImageChangedProc procedure} -constraints {
-	testImageType 
+	testImageType
 } -setup {
     .c delete all
 } -body {
@@ -785,17 +778,12 @@ test canvImg-11.2 {ImageChangedProc procedure} -constraints {
 	.c delete all
 	image delete foo
 } -result {30 75 70 125}
-if {[tk windowingsystem] == "aqua" && $tcl_platform(osVersion) > 18} {
-    # Aqua >= 10.14 will redraw the entire image.
-    set result_11_3 {{foo2 display 0 0 80 60}}
-} else {
-    set result_11_3 {{foo2 display 0 0 20 40}} 
-}
+
 test canvImg-11.3 {ImageChangedProc procedure} -constraints {
-	testImageType 
+	testImageType
 } -setup {
     .c delete all
-    update
+    update idletasks
 } -body {
     image create test foo -variable x
     image create test foo2 -variable z
@@ -803,17 +791,16 @@ test canvImg-11.3 {ImageChangedProc procedure} -constraints {
     foo2 changed 0 0 0 0 80 60
     .c create image 50 100 -image foo -tags image -anchor nw
     .c create image 70 110 -image foo2 -anchor nw
-    update
     set z {}
     set timer [after 500 {lappend z "timed out"}]
-    image create test foo -variable x
-    vwait x
+    image delete foo
+    vwait z
     after cancel $timer
     return $z
 } -cleanup {
     .c delete all
-    image delete foo foo2
-} -result $result_11_3
+    image delete foo2
+} -result {{foo2 display 0 0 80 60}}
 
 # cleanup
 imageFinish
