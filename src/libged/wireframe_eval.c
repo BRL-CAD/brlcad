@@ -1800,7 +1800,7 @@ draw_m3(struct bv_scene_obj *s)
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
 
     dgcdp.dbip = d->dbip;
-    dgcdp.fp = (struct db_full_path *)s->s_path;
+    //dgcdp.fp = (struct db_full_path *)s->s_path;
     dgcdp.tol = d->tol;
     dgcdp.ttol = d->ttol;
     dgcdp.vlfree = s->vlfree;
@@ -1820,9 +1820,10 @@ draw_m3(struct bv_scene_obj *s)
     dgcdp.ap->a_rt_i = dgcdp.rtip;
     dgcdp.nvectors = 0;
 
-    struct bu_vls ppath = BU_VLS_INIT_ZERO;
-    db_path_to_vls(&ppath, dgcdp.fp);
-    const char *path = bu_vls_cstr(&ppath);
+    //struct bu_vls ppath = BU_VLS_INIT_ZERO;
+    //db_path_to_vls(&ppath, dgcdp.fp);
+    //const char *path = bu_vls_cstr(&ppath);
+    const char *path = bu_vls_cstr(&s->s_name);
 
     if (rt_gettrees(dgcdp.rtip, 1, (const char **)&path, 1)) {
 	bu_ptbl_free(&dgcdp.leaf_list);

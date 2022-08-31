@@ -123,6 +123,9 @@ init_scene_obj(struct dd_t *dd)
 	sp->s_color[2] = dd->vs->color[2];
     }
 
+    // Set drawing mode
+    sp->s_os->s_dmode = dd->vs->s_dmode;
+
     // Tell scene object what the current matrix is
     MAT_COPY(sp->s_mat, dd->m);
 
