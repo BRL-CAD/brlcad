@@ -30,7 +30,7 @@ set(rt_headers
   mater.h
   misc.h
   mem.h
-  nmg.h
+  nmg_conv.h
   nongeom.h
   op.h
   overlap.h

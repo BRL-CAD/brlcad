@@ -44,6 +44,7 @@
 #include "rt/wdb.h"
 #include "rt/search.h"
 #include "rt/global.h"
+#include "rt/resource.h"
 #include "gcv/api.h"
 
 struct gcv_context_internal {

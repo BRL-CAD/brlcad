@@ -33,6 +33,8 @@
 #include "rt/global.h"
 #include "rt/primitives/bot.h"
 #include "rt/functab.h"
+#include "rt/nmg_conv.h"
+
 
 HIDDEN union tree *
 _gcv_facetize_region_end(struct db_tree_state *tree_state,

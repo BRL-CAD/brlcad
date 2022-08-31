@@ -1,4 +1,4 @@
-/*                          N M G . H
+/*                     N M G _ C O N V . H
  * BRL-CAD
  *
  * Copyright (c) 1993-2022 United States Government as represented by
@@ -17,10 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/nmg.h */
+/** @file rt/nmg_conv.h */
 
-#ifndef RT_NMG_H
-#define RT_NMG_H
+#ifndef RT_NMG_CONV_H
+#define RT_NMG_CONV_H
 
 #include "common.h"
 #include "vmath.h"
@@ -212,7 +212,7 @@ RT_EXPORT extern void nmg_stash_model_to_file(const char *filename,
 
 __END_DECLS
 
-#endif /* RT_NMG_H */
+#endif /* RT_NMG__CONV_H */
 
 /*
  * Local Variables:
