@@ -105,7 +105,7 @@ proc DoDisplay {w} {
     $w.c yview moveto .05
     pack $w.c -in $w.screen -side top -fill both -expand 1
 
-    bind $w.c <3> [list $w.pause invoke]
+    bind $w.c <Button-3> [list $w.pause invoke]
     bind $w.c <Destroy> {
 	after cancel $animationCallbacks(goldberg)
 	unset animationCallbacks(goldberg)
@@ -162,7 +162,7 @@ proc DoCtrlFrame {w} {
     grid $w.speed -in $w.ctrl -row 99 -sticky ew -pady {0 5}
     pack $w.speed.scale -fill both -expand 1
     grid $w.about -in $w.ctrl -row 100 -sticky ew
-    bind $w.reset <3> {set S(mode) -1}		;# Debugging
+    bind $w.reset <Button-3> {set S(mode) -1}		;# Debugging
 
     ## See Code / Dismiss buttons hack!
     set btns [addSeeDismiss $w.ctrl.buttons $w]
@@ -342,7 +342,7 @@ proc Draw0 {w} {
     set xy {719 119 763 119}
     $w.c create line $xy -tag I0 -fill $color -width 5 -arrow last \
 	    -arrowshape {18 18 5}
-    $w.c bind I0 <1> Start
+    $w.c bind I0 <Button-1> Start
 }
 proc Move0 {w {step {}}} {
     set step [GetStep 0 $step]
@@ -372,7 +372,7 @@ proc Draw1 {w} {
 
     set xy [box 812 122 9]
     $w.c create oval $xy -tag I1 -fill $color2 -outline {}
-    $w.c bind I1 <1> Start
+    $w.c bind I1 <Button-1> Start
 }
 proc Move1 {w {step {}}} {
     set step [GetStep 1 $step]
@@ -1620,7 +1620,7 @@ proc Move26 {w {step {}}} {
 	$w.c delete I24 I26
 	$w.c create text 430 755 -anchor s -tag I26 \
 		-text "click to continue" -font {{Times Roman} 24 bold}
-	bind $w.c <1> [list Reset $w]
+	bind $w.c <Button-1> [list Reset $w]
 	return 4
     }
 
@@ -1675,7 +1675,7 @@ proc RotateC {x y Ox Oy beta} {
 proc Reset {w} {
     global S
     DrawAll $w
-    bind $w.c <1> {}
+    bind $w.c <Button-1> {}
     set S(mode) $::MSTART
     set S(active) 0
 }

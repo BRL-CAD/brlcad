@@ -1,7 +1,6 @@
 set(other_licenses
   Eigen.txt
   assimp.txt
-  bson.txt
   gct.txt
   gdal.txt
   itcl3.txt

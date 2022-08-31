@@ -5,9 +5,9 @@
 #	This file is used to generate the tclDecls.h, tclPlatDecls.h
 #	and tclStubInit.c files.
 #
-# Copyright (c) 1998-1999 by Scriptics Corporation.
-# Copyright (c) 2001, 2002 by Kevin B. Kenny.  All rights reserved.
-# Copyright (c) 2007 Daniel A. Steffen <das@users.sourceforge.net>
+# Copyright © 1998-1999 Scriptics Corporation.
+# Copyright © 2001, 2002 Kevin B. Kenny.  All rights reserved.
+# Copyright © 2007 Daniel A. Steffen <das@users.sourceforge.net>
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -316,12 +316,12 @@ declare 85 {
 	    int flags)
 }
 declare 86 {
-    int Tcl_CreateAlias(Tcl_Interp *slave, const char *slaveCmd,
+    int Tcl_CreateAlias(Tcl_Interp *childInterp, const char *childCmd,
 	    Tcl_Interp *target, const char *targetCmd, int argc,
 	    CONST84 char *const *argv)
 }
 declare 87 {
-    int Tcl_CreateAliasObj(Tcl_Interp *slave, const char *slaveCmd,
+    int Tcl_CreateAliasObj(Tcl_Interp *childInterp, const char *childCmd,
 	    Tcl_Interp *target, const char *targetCmd, int objc,
 	    Tcl_Obj *const objv[])
 }
@@ -364,7 +364,7 @@ declare 96 {
 	    Tcl_CmdDeleteProc *deleteProc)
 }
 declare 97 {
-    Tcl_Interp *Tcl_CreateSlave(Tcl_Interp *interp, const char *slaveName,
+    Tcl_Interp *Tcl_CreateSlave(Tcl_Interp *interp, const char *name,
 	    int isSafe)
 }
 declare 98 {
@@ -527,12 +527,12 @@ declare 147 {
     void Tcl_FreeResult(Tcl_Interp *interp)
 }
 declare 148 {
-    int Tcl_GetAlias(Tcl_Interp *interp, const char *slaveCmd,
+    int Tcl_GetAlias(Tcl_Interp *interp, const char *childCmd,
 	    Tcl_Interp **targetInterpPtr, CONST84 char **targetCmdPtr,
 	    int *argcPtr, CONST84 char ***argvPtr)
 }
 declare 149 {
-    int Tcl_GetAliasObj(Tcl_Interp *interp, const char *slaveCmd,
+    int Tcl_GetAliasObj(Tcl_Interp *interp, const char *childCmd,
 	    Tcl_Interp **targetInterpPtr, CONST84 char **targetCmdPtr,
 	    int *objcPtr, Tcl_Obj ***objv)
 }
@@ -582,7 +582,7 @@ declare 162 {
     CONST84_RETURN char *Tcl_GetHostName(void)
 }
 declare 163 {
-    int Tcl_GetInterpPath(Tcl_Interp *askInterp, Tcl_Interp *slaveInterp)
+    int Tcl_GetInterpPath(Tcl_Interp *interp, Tcl_Interp *childInterp)
 }
 declare 164 {
     Tcl_Interp *Tcl_GetMaster(Tcl_Interp *interp)
@@ -595,7 +595,7 @@ declare 166 {
 }
 
 # Tcl_GetOpenFile is only available on unix, but it is a part of the old
-# generic interface, so we inlcude it here for compatibility reasons.
+# generic interface, so we include it here for compatibility reasons.
 
 declare 167 unix {
     int Tcl_GetOpenFile(Tcl_Interp *interp, const char *chanID, int forWriting,
@@ -616,7 +616,7 @@ declare 171 {
     int Tcl_GetServiceMode(void)
 }
 declare 172 {
-    Tcl_Interp *Tcl_GetSlave(Tcl_Interp *interp, const char *slaveName)
+    Tcl_Interp *Tcl_GetSlave(Tcl_Interp *interp, const char *name)
 }
 declare 173 {
     Tcl_Channel Tcl_GetStdChannel(int type)
@@ -861,7 +861,7 @@ declare 243 {
     void Tcl_SplitPath(const char *path, int *argcPtr, CONST84 char ***argvPtr)
 }
 declare 244 {
-    void Tcl_StaticPackage(Tcl_Interp *interp, const char *pkgName,
+    void Tcl_StaticPackage(Tcl_Interp *interp, const char *prefix,
 	    Tcl_PackageInitProc *initProc, Tcl_PackageInitProc *safeInitProc)
 }
 declare 245 {
@@ -2223,7 +2223,7 @@ declare 606 {
 
 # TIP#307 (move results between interpreters) dkf
 declare 607 {
-    void Tcl_TransferResult(Tcl_Interp *sourceInterp, int result,
+    void Tcl_TransferResult(Tcl_Interp *sourceInterp, int code,
 	    Tcl_Interp *targetInterp)
 }
 
@@ -2323,11 +2323,11 @@ declare 630 {
 	    Tcl_Obj *compressionDictionaryObj)
 }
 
-declare 648 {
+# ----- BASELINE -- FOR -- 8.6.0 ----- #
+
+declare 660 {
     void TclUnusedStubEntry(void)
 }
-
-# ----- BASELINE -- FOR -- 8.6.0 ----- #
 
 ##############################################################################
 
@@ -2365,6 +2365,9 @@ declare 1 macosx {
 	    const char *bundleName, const char *bundleVersion,
 	    int hasResourceFile, int maxPathLen, char *libraryPath)
 }
+declare 2 macosx {
+    void TclUnusedStubEntry(void)
+}
 
 ##############################################################################
 
@@ -2392,6 +2395,7 @@ export {
 export {
     void Tcl_GetMemoryInfo(Tcl_DString *dsPtr)
 }
+
 
 # Local Variables:
 # mode: tcl

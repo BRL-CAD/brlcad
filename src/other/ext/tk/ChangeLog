@@ -3203,7 +3203,7 @@ a better first place to look now.
 2009-03-25  Jan Nijtmans  <nijtmans@users.sf.net>
 
 	* doc/wish.1:		Bring doc and demos in line with
-	* library/demos/hello:	http://wiki.tcl.tk/812
+	* library/demos/hello:	https://wiki.tcl-lang.org/page/exec+magic
 	* library/demos/rmt
 	* library/demos/square
 	* library/demos/tcolor

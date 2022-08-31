@@ -24,7 +24,7 @@
 #include "tclInt.h"
 #if !defined(TCL_THREADS) || !defined(USE_THREAD_ALLOC)
 
-#if USE_TCLALLOC
+#if defined(USE_TCLALLOC) && USE_TCLALLOC
 
 /*
  * We should really make use of AC_CHECK_TYPE(caddr_t) here, but it can wait
@@ -68,7 +68,7 @@ union overhead {
 };
 
 
-#define MAGIC		0xef	/* magic # on accounting info */
+#define MAGIC		0xEF	/* magic # on accounting info */
 #define RMAGIC		0x5555	/* magic # on range info */
 
 #ifndef NDEBUG
@@ -253,9 +253,9 @@ char *
 TclpAlloc(
     unsigned int numBytes)	/* Number of bytes to allocate. */
 {
-    register union overhead *overPtr;
-    register long bucket;
-    register unsigned amount;
+    union overhead *overPtr;
+    long bucket;
+    unsigned amount;
     struct block *bigBlockPtr = NULL;
 
     if (!allocInit) {
@@ -274,7 +274,7 @@ TclpAlloc(
 
     if (numBytes >= MAXMALLOC - OVERHEAD) {
 	if (numBytes <= UINT_MAX - OVERHEAD -sizeof(struct block)) {
-	    bigBlockPtr = (struct block *) TclpSysAlloc((unsigned)
+	    bigBlockPtr = (struct block *) TclpSysAlloc(
 		    (sizeof(struct block) + OVERHEAD + numBytes), 0);
 	}
 	if (bigBlockPtr == NULL) {
@@ -288,7 +288,7 @@ TclpAlloc(
 
 	overPtr = (union overhead *) (bigBlockPtr + 1);
 	overPtr->overMagic0 = overPtr->overMagic1 = MAGIC;
-	overPtr->bucketIndex = 0xff;
+	overPtr->bucketIndex = 0xFF;
 #ifdef MSTATS
 	numMallocs[NBUCKETS]++;
 #endif
@@ -345,7 +345,7 @@ TclpAlloc(
 
     nextf[bucket] = overPtr->next;
     overPtr->overMagic0 = overPtr->overMagic1 = MAGIC;
-    overPtr->bucketIndex = (unsigned char) bucket;
+    overPtr->bucketIndex = UCHAR(bucket);
 
 #ifdef MSTATS
     numMallocs[bucket]++;
@@ -387,8 +387,8 @@ static void
 MoreCore(
     int bucket)			/* What bucket to allocat to. */
 {
-    register union overhead *overPtr;
-    register long size;		/* size of desired block */
+    union overhead *overPtr;
+    long size;		/* size of desired block */
     long amount;		/* amount to allocate */
     int numBlocks;		/* how many blocks we get */
     struct block *blockPtr;
@@ -405,7 +405,7 @@ MoreCore(
     numBlocks = amount / size;
     ASSERT(numBlocks*size == amount);
 
-    blockPtr = (struct block *) TclpSysAlloc((unsigned)
+    blockPtr = (struct block *) TclpSysAlloc(
 	    (sizeof(struct block) + amount), 1);
     /* no more room! */
     if (blockPtr == NULL) {
@@ -448,8 +448,8 @@ void
 TclpFree(
     char *oldPtr)		/* Pointer to memory to free. */
 {
-    register long size;
-    register union overhead *overPtr;
+    long size;
+    union overhead *overPtr;
     struct block *bigBlockPtr;
 
     if (oldPtr == NULL) {
@@ -469,7 +469,7 @@ TclpFree(
     RANGE_ASSERT(overPtr->rangeCheckMagic == RMAGIC);
     RANGE_ASSERT(BLOCK_END(overPtr) == RMAGIC);
     size = overPtr->bucketIndex;
-    if (size == 0xff) {
+    if (size == 0xFF) {
 #ifdef MSTATS
 	numMallocs[NBUCKETS]--;
 #endif
@@ -543,7 +543,7 @@ TclpRealloc(
      * If the block isn't in a bin, just realloc it.
      */
 
-    if (i == 0xff) {
+    if (i == 0xFF) {
 	struct block *prevPtr, *nextPtr;
 	bigBlockPtr = (struct block *) overPtr - 1;
 	prevPtr = bigBlockPtr->prevPtr;
@@ -604,7 +604,7 @@ TclpRealloc(
 	if (maxSize < numBytes) {
 	    numBytes = maxSize;
 	}
-	memcpy(newPtr, oldPtr, (size_t) numBytes);
+	memcpy(newPtr, oldPtr, numBytes);
 	TclpFree(oldPtr);
 	return newPtr;
     }
@@ -645,8 +645,8 @@ void
 mstats(
     char *s)			/* Where to write info. */
 {
-    register int i, j;
-    register union overhead *overPtr;
+    int i, j;
+    union overhead *overPtr;
     int totalFree = 0, totalUsed = 0;
 
     Tcl_MutexLock(allocMutexPtr);

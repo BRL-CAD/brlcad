@@ -59,14 +59,6 @@ set README [makeFile {
 set teapotPhotoFile [file join [file dirname [info script]] teapot.ppm]
 testConstraint hasTeapotPhoto [file exists $teapotPhotoFile]
 
-proc base64ok {} {
-    expr {
-        ![catch {package require base64}]
-    }
-}
-
-testConstraint base64PackageNeeded [base64ok]
-
 test imgPhoto-1.1 {options for photo images} -body {
     image create photo photo1 -width 79 -height 83
     list [photo1 cget -width] [photo1 cget -height] \
@@ -139,7 +131,7 @@ test imgPhoto-2.2 {ImgPhotoCreate procedure} -setup {
 #     set msg
 # } {couldn't open "bogus.img": no such file or directory}
 
-test imgPhoto-3.1 {ImgPhotoConfigureMaster procedure} -constraints {
+test imgPhoto-3.1 {ImgPhotoConfigureModel procedure} -constraints {
     hasTeapotPhoto
 } -body {
     image create photo photo1 -file $teapotPhotoFile
@@ -147,7 +139,7 @@ test imgPhoto-3.1 {ImgPhotoConfigureMaster procedure} -constraints {
 } -cleanup {
     image delete photo1
 } -result {}
-test imgPhoto-3.2 {ImgPhotoConfigureMaster procedure} -constraints {
+test imgPhoto-3.2 {ImgPhotoConfigureModel procedure} -constraints {
     hasTeapotPhoto
 } -body {
     image create photo photo1 -file $teapotPhotoFile
@@ -156,7 +148,7 @@ test imgPhoto-3.2 {ImgPhotoConfigureMaster procedure} -constraints {
 } -cleanup {
     image delete photo1
 } -result {1 {couldn't open "bogus": no such file or directory} 256 256}
-test imgPhoto-3.3 {ImgPhotoConfigureMaster procedure} -constraints {
+test imgPhoto-3.3 {ImgPhotoConfigureModel procedure} -constraints {
     hasTeapotPhoto
 } -setup {
     destroy .c
@@ -821,7 +813,7 @@ test imgPhoto-4.75 {<photo> read command: filename starting with '-'} -constrain
     file delete ./-teapotPhotoFile
 } -result {}
 test imgPhoto-4.76 {ImgPhotoCmd procedure: copy to same image} -constraints {
-    hasTeapotPhoto 
+    hasTeapotPhoto
 } -setup {
     imageCleanup
     image create photo photo1 -file $teapotPhotoFile
@@ -960,8 +952,8 @@ test imgPhoto-9.1 {ImgPhotoCmdDeletedProc procedure} -constraints {
 } -body {
     image create photo photo2 -file $teapotPhotoFile
     rename photo2 {}
-    list [lsearch -exact [imageNames] photo2] [catch {photo2 foo} msg] $msg
-} -result {-1 1 {invalid command name "photo2"}}
+    list [expr {"photo2" in [imageNames]}] [catch {photo2 foo} msg] $msg
+} -result {0 1 {invalid command name "photo2"}}
 
 test imgPhoto-10.1 {Tk_ImgPhotoPutBlock procedure} -setup {
     imageCleanup
@@ -1306,11 +1298,8 @@ test imgPhoto-17.3 {photo write: format guessing from filename} -setup {
 # Reject corrupted or truncated image [Bug b601ce3ab1].
 # WARNING - tests 18.1-18.9 will cause a segfault on 8.5.19 and lower,
 #           and on 8.6.6 and lower.
-test imgPhoto-18.1 {Reject corrupted GIF (binary string)} -constraints {
-    base64PackageNeeded
-} -setup {
-    package require base64
-    set data [base64::decode {
+test imgPhoto-18.1 {Reject corrupted GIF (binary string)} -setup {
+    set data [binary decode base64 {
 	R0lGODlhAAQABP8zM/8z/zP/MzP/////M////yH5CiwheLrcLTBCd6Tv2qW16tdK4jhV
 	5qpraXIvM1JlNyAgOw==
     }]
@@ -1336,11 +1325,8 @@ test imgPhoto-18.3 {Reject corrupted GIF (file)} -setup {
 } -cleanup {
     catch {image delete gif1}
 } -returnCodes error -result {error reading color map|not enough free memory for image buffer} -match regexp
-test imgPhoto-18.4 {Reject truncated GIF (binary string)} -constraints {
-    base64PackageNeeded
-} -setup {
-    package require base64
-    set data [base64::decode {
+test imgPhoto-18.4 {Reject truncated GIF (binary string)} -setup {
+    set data [binary decode base64 {
 	R0lGODlhEAAQAMIHAAAAADMz//8zM/8z/zP/MzP///8=
     }]
 } -body {
@@ -1365,14 +1351,13 @@ test imgPhoto-18.6 {Reject truncated GIF (file)} -setup {
     catch {image delete gif1}
 } -returnCodes error -result {error reading color map}
 test imgPhoto-18.7 {Reject corrupted GIF (> 4Gb) (binary string)} -constraints {
-    base64PackageNeeded nonPortable
+    nonPortable
 } -setup {
     # About the non portability constraint of this test: see ticket [cc42cc18a5]
     # If there is insufficient memory, the error message
     # {not enough free memory for image buffer} should be returned.
     # Instead, some systems (e.g. FreeBSD 11.1) terminate the test interpreter.
-    package require base64
-    set data [base64::decode {
+    set data [binary decode base64 {
 	R0lGODlhwmYz//8zM/8z/zP/MzP/////M////yH5Ciwhe
 	LrcLTBCd6Tv2qW16tdK4jhV5qpraXIvM1JlNyAgOw==
     }]
@@ -1410,14 +1395,11 @@ test imgPhoto-18.9 {Reject corrupted GIF (> 4Gb) (file)} -constraints {
 } -cleanup {
     catch {image delete gif1}
 } -returnCodes error -result {error reading color map|not enough free memory for image buffer} -match regexp
-test imgPhoto-18.10 {Valid GIF (binary string)} -constraints {
-    base64PackageNeeded
-} -setup {
+test imgPhoto-18.10 {Valid GIF (binary string)} -setup {
     # Test the binary string reader with a valid GIF.
     # This is not tested elsewhere.
     # Tests 18.11, 18.12, with matching data, are included for completeness.
-    package require base64
-    set data [base64::decode {
+    set data [binary decode base64 {
 	R0lGODlhEAAQAMIHAAAAADMz//8zM/8z/zP/MzP/////M////yH5BAEKAAcALAAA
 	AAAQABAAAAMheLrcLTBCd6QV79qlterXB0riOFXmmapraXIvM1IdZTcJADs=
     }]

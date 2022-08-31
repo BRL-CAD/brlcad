@@ -1,7 +1,7 @@
 # CMakeLists.txt
 
-# Copyright (C) 2018 Cosmin Truta
-# Copyright (C) 2007,2009-2018 Glenn Randers-Pehrson
+# Copyright (c) 2018-2020 Cosmin Truta
+# Copyright (c) 2007,2009-2018 Glenn Randers-Pehrson
 # Written by Christian Ehrlicher, 2007
 # Revised by Roger Lowman, 2009-2010
 # Revised by Clifford Yapp, 2011-2012,2017
@@ -11,8 +11,11 @@
 # Revised by Vadim Barkov, 2017
 # Revised by Vicky Pfau, 2018
 # Revised by Cameron Cawley, 2018
-# Revised by Cosmin Truta, 2018
 # Revised by Kyle Bentley, 2018
+# Revised by David Callu, 2020
+# Revised by Steve Robinson, 2020
+# Revised by Simon Hausmann, 2020
+# Revised by Alex Gaynor, 2020
 
 # This code is released under the libpng license.
 # For conditions of distribution and use, see the disclaimer
@@ -63,7 +66,7 @@ find_library(M_LIBRARY m)
 # COMMAND LINE OPTIONS
 option(PNG_SHARED "Build shared lib" ON)
 option(PNG_STATIC "Build static lib" ${BUILD_STATIC_LIBS})
-option(PNG_TESTS  "Build libpng tests" ON)
+option(PNG_TESTS "Build libpng tests" ON)
 
 # Many more configuration options could be added here
 option(PNG_FRAMEWORK "Build OS X framework" OFF)
@@ -103,10 +106,10 @@ int main(void) {return 0;}
 " HAVE_LD_VERSION_SCRIPT)
   if(NOT HAVE_LD_VERSION_SCRIPT)
     set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_SAVE} "-Wl,-M -Wl,${CMAKE_CURRENT_BINARY_DIR}/conftest.map")
-  check_c_source_compiles("void sym(void) {}
-void sym2(void) {}
-int main(void) {return 0;}
-" HAVE_SOLARIS_LD_VERSION_SCRIPT)
+    check_c_source_compiles("void sym(void) {}
+    void sym2(void) {}
+    int main(void) {return 0;}
+    " HAVE_SOLARIS_LD_VERSION_SCRIPT)
   endif()
   set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_SAVE})
   file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/conftest.map")
@@ -118,9 +121,9 @@ function(symbol_prefix)
   set(SYMBOL_PREFIX)
 
   execute_process(COMMAND "${CMAKE_C_COMPILER}" "-E" "-"
-                  INPUT_FILE /dev/null
-                  OUTPUT_VARIABLE OUT
-                  RESULT_VARIABLE STATUS)
+    INPUT_FILE /dev/null
+    OUTPUT_VARIABLE OUT
+    RESULT_VARIABLE STATUS)
 
   if(CPP_FAIL)
     message(WARNING "Failed to run the C preprocessor")
@@ -133,7 +136,7 @@ function(symbol_prefix)
       string(REGEX REPLACE "^PREFIX=(.*\)" "\\1" prefix "${line}")
       string(REGEX MATCH "__USER_LABEL_PREFIX__" found_match "${prefix}")
       if(found_match)
-        string(REGEX REPLACE "(.*)__USER_LABEL_PREFIX__(.*)" "\\1\\2" prefix "${prefix}")
+	string(REGEX REPLACE "(.*)__USER_LABEL_PREFIX__(.*)" "\\1\\2" prefix "${prefix}")
       endif()
       set(SYMBOL_PREFIX "${prefix}")
     endif()
@@ -152,7 +155,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 if(NOT AWK OR MSVC)
   # No awk available to generate sources; use pre-built pnglibconf.h
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/pnglibconf.h.prebuilt
-                 ${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h)
+    ${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h)
   add_custom_target(genfiles) # Dummy
 else()
   include(CMakeParseArguments)
@@ -220,134 +223,152 @@ else()
     endif()
 
     add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${_GSO_OUTPUT}"
-                       COMMAND "${CMAKE_COMMAND}"
-                               "-DOUTPUT=${_GSO_OUTPUT}"
-                               -P "${CMAKE_CURRENT_BINARY_DIR}/scripts/gensrc.cmake"
-                       DEPENDS ${_GSO_DEPENDS}
-                       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+      COMMAND "${CMAKE_COMMAND}"
+      "-DOUTPUT=${_GSO_OUTPUT}"
+      -P "${CMAKE_CURRENT_BINARY_DIR}/scripts/gensrc.cmake"
+      DEPENDS ${_GSO_DEPENDS}
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
   endfunction()
 
   # Copy file
-  function(generate_copy source destination)
-    add_custom_command(OUTPUT "${destination}"
-                       COMMAND "${CMAKE_COMMAND}" -E remove "${destination}"
-                       COMMAND "${CMAKE_COMMAND}" -E copy "${source}"
-                                                          "${destination}"
-                       DEPENDS "${source}")
+  # generate_copy(INPUT inputfile OUTPUT outputfile [DEPENDS dep1 [dep2...]])
+  function(generate_copy)
+    set(options)
+    set(oneValueArgs INPUT OUTPUT)
+    set(multiValueArgs DEPENDS)
+    cmake_parse_arguments(_GSO "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    add_custom_command(OUTPUT "${_GSO_OUTPUT}"
+      COMMAND "${CMAKE_COMMAND}"
+      -E remove "${_GSO_OUTPUT}"
+      COMMAND "${CMAKE_COMMAND}"
+      -E copy "${_GSO_INPUT}" "${_GSO_OUTPUT}"
+      DEPENDS "${source}" ${_GSO_DEPENDS})
   endfunction()
 
   # Generate scripts/pnglibconf.h
   generate_source(OUTPUT "scripts/pnglibconf.c"
-                  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/pnglibconf.dfa"
-                          "${CMAKE_CURRENT_BINARY_DIR}/scripts/options.awk"
-                          "${CMAKE_CURRENT_SOURCE_DIR}/pngconf.h")
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/pnglibconf.dfa"
+    "${CMAKE_CURRENT_BINARY_DIR}/scripts/options.awk"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pngconf.h")
+  add_custom_target(scripts_pnglibconf_c DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/scripts/pnglibconf.c")
 
   # Generate pnglibconf.c
   generate_source(OUTPUT "pnglibconf.c"
-                  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/pnglibconf.dfa"
-                          "${CMAKE_CURRENT_BINARY_DIR}/scripts/options.awk"
-                          "${CMAKE_CURRENT_SOURCE_DIR}/pngconf.h")
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/pnglibconf.dfa"
+    "${CMAKE_CURRENT_BINARY_DIR}/scripts/options.awk"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pngconf.h")
+  add_custom_target(pnglibconf_c DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.c")
 
   if(PNG_PREFIX)
     set(PNGLIBCONF_H_EXTRA_DEPENDS
-        "${CMAKE_CURRENT_BINARY_DIR}/scripts/prefix.out"
-        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/macro.lst")
+      scripts_prefix_out)
     set(PNGPREFIX_H_EXTRA_DEPENDS
-        "${CMAKE_CURRENT_BINARY_DIR}/scripts/intprefix.out")
+      scripts_intprefix_out)
   endif()
 
   generate_out(INPUT "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.c"
-               OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.out")
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.out"
+    DEPENDS pnglibconf_c)
+  add_custom_target(pnglibconf_out DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.out")
 
   # Generate pnglibconf.h
   generate_source(OUTPUT "pnglibconf.h"
-                  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.out"
-                          ${PNGLIBCONF_H_EXTRA_DEPENDS})
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.out" pnglibconf_out
+    ${PNGLIBCONF_H_EXTRA_DEPENDS})
+  add_custom_target(pnglibconf_h DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h")
 
   generate_out(INPUT "${CMAKE_CURRENT_SOURCE_DIR}/scripts/intprefix.c"
-               OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/intprefix.out"
-               DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h")
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/intprefix.out"
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h" pnglibconf_h)
+  add_custom_target(scripts_intprefix_out DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/scripts/intprefix.out")
 
   generate_out(INPUT "${CMAKE_CURRENT_SOURCE_DIR}/scripts/prefix.c"
-               OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/prefix.out"
-               DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/png.h"
-                       "${CMAKE_CURRENT_SOURCE_DIR}/pngconf.h"
-                       "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.out")
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/prefix.out"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/png.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pngconf.h"
+    "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.out" pnglibconf_out)
+  add_custom_target(scripts_prefix_out DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/scripts/prefix.out")
 
   # Generate pngprefix.h
   generate_source(OUTPUT "pngprefix.h"
-                  DEPENDS ${PNGPREFIX_H_EXTRA_DEPENDS})
+    DEPENDS ${PNGPREFIX_H_EXTRA_DEPENDS})
+  add_custom_target(pngprefix_h DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pngprefix.h")
 
   generate_out(INPUT "${CMAKE_CURRENT_SOURCE_DIR}/scripts/sym.c"
-               OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/sym.out"
-               DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h")
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/sym.out"
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h" pnglibconf_h)
+  add_custom_target(scripts_sym_out DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/scripts/sym.out")
 
   generate_out(INPUT "${CMAKE_CURRENT_SOURCE_DIR}/scripts/symbols.c"
-               OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.out"
-               DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/png.h"
-                       "${CMAKE_CURRENT_SOURCE_DIR}/pngconf.h"
-                       "${CMAKE_CURRENT_SOURCE_DIR}/scripts/pnglibconf.h.prebuilt")
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.out"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/png.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pngconf.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/pnglibconf.h.prebuilt")
+  add_custom_target(scripts_symbols_out DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.out")
 
   generate_out(INPUT "${CMAKE_CURRENT_SOURCE_DIR}/scripts/vers.c"
-               OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/vers.out"
-               DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/png.h"
-                       "${CMAKE_CURRENT_SOURCE_DIR}/pngconf.h"
-                       "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h")
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/vers.out"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/png.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pngconf.h"
+    "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h" pnglibconf_h)
+  add_custom_target(scripts_vers_out DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/scripts/vers.out")
 
   generate_chk(INPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.out"
-               OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.chk"
-               DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/scripts/checksym.awk"
-                       "${CMAKE_CURRENT_SOURCE_DIR}/scripts/symbols.def")
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.chk"
+    DEPENDS scripts_symbols_out
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/checksym.awk"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/symbols.def")
 
-  add_custom_target(symbol-check DEPENDS
-                    "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.chk")
+  add_custom_target(symbol-check
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.chk")
 
-  generate_copy("${CMAKE_CURRENT_BINARY_DIR}/scripts/sym.out"
-                "${CMAKE_CURRENT_BINARY_DIR}/libpng.sym")
-  generate_copy("${CMAKE_CURRENT_BINARY_DIR}/scripts/vers.out"
-                "${CMAKE_CURRENT_BINARY_DIR}/libpng.vers")
+  generate_copy(INPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/sym.out"
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/libpng.sym"
+    DEPENDS scripts_sym_out)
+  generate_copy(INPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/vers.out"
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/libpng.vers"
+    DEPENDS scripts_vers_out)
 
-  add_custom_target(genvers DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/libpng.vers")
-  add_custom_target(gensym DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/libpng.sym")
+  add_custom_target(genvers
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/libpng.vers")
+  add_custom_target(gensym
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/libpng.sym")
 
   add_custom_target("genprebuilt"
-                    COMMAND "${CMAKE_COMMAND}"
-                            "-DOUTPUT=scripts/pnglibconf.h.prebuilt"
-                            -P "${CMAKE_CURRENT_BINARY_DIR}/scripts/gensrc.cmake"
-                    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+    COMMAND "${CMAKE_COMMAND}"
+    "-DOUTPUT=scripts/pnglibconf.h.prebuilt"
+    -P "${CMAKE_CURRENT_BINARY_DIR}/scripts/gensrc.cmake"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
-  # A single target handles generation of all generated files.  If
-  # they are depended upon separately by multiple targets, this
-  # confuses parallel make (it would require a separate top-level
-  # target for each file to track the dependencies properly).
-  add_custom_target(genfiles DEPENDS
-    "${CMAKE_CURRENT_BINARY_DIR}/libpng.sym"
-    "${CMAKE_CURRENT_BINARY_DIR}/libpng.vers"
-    "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.c"
-    "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.out"
-    "${CMAKE_CURRENT_BINARY_DIR}/pngprefix.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/scripts/intprefix.out"
-    "${CMAKE_CURRENT_BINARY_DIR}/scripts/pnglibconf.c"
-    "${CMAKE_CURRENT_BINARY_DIR}/scripts/prefix.out"
-    "${CMAKE_CURRENT_BINARY_DIR}/scripts/sym.out"
-    "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.chk"
-    "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.out"
-    "${CMAKE_CURRENT_BINARY_DIR}/scripts/vers.out")
+  # A single target handles generation of all generated files.
+  add_custom_target(genfiles
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/libpng.sym" gensym
+    "${CMAKE_CURRENT_BINARY_DIR}/libpng.vers" genvers
+    "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.c" pnglibconf_c
+    "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h" pnglibconf_h
+    "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.out" pnglibconf_out
+    "${CMAKE_CURRENT_BINARY_DIR}/pngprefix.h" pngprefix_h
+    "${CMAKE_CURRENT_BINARY_DIR}/scripts/intprefix.out" scripts_intprefix_out
+    "${CMAKE_CURRENT_BINARY_DIR}/scripts/pnglibconf.c" scripts_pnglibconf_c
+    "${CMAKE_CURRENT_BINARY_DIR}/scripts/prefix.out" scripts_prefix_out
+    "${CMAKE_CURRENT_BINARY_DIR}/scripts/sym.out" scripts_sym_out
+    "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.chk" symbol-check
+    "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.out" scripts_symbols_out
+    "${CMAKE_CURRENT_BINARY_DIR}/scripts/vers.out" scripts_vers_out)
 endif(NOT AWK OR MSVC)
 
-# OUR SOURCES
+# List the source code files.
 set(libpng_public_hdrs
   png.h
   pngconf.h
   "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h"
-)
+  )
 set(libpng_private_hdrs
   pngpriv.h
   pngdebug.h
   pnginfo.h
   pngstruct.h
-)
+  )
 if(AWK AND NOT MSVC)
   list(APPEND libpng_private_hdrs "${CMAKE_CURRENT_BINARY_DIR}/pngprefix.h")
 endif()
@@ -369,7 +390,7 @@ set(libpng_sources
   pngwrite.c
   pngwtran.c
   pngwutil.c
-)
+  )
 
 if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
@@ -397,10 +418,10 @@ if(PNG_SHARED)
   if(UNIX AND AWK)
     if(HAVE_LD_VERSION_SCRIPT)
       set_target_properties(png PROPERTIES LINK_FLAGS
-        "-Wl,--version-script='${CMAKE_CURRENT_BINARY_DIR}/libpng.vers'")
+	"-Wl,--version-script='${CMAKE_CURRENT_BINARY_DIR}/libpng.vers'")
     elseif(HAVE_SOLARIS_LD_VERSION_SCRIPT)
       set_target_properties(png PROPERTIES LINK_FLAGS
-        "-Wl,-M -Wl,'${CMAKE_CURRENT_BINARY_DIR}/libpng.vers'")
+	"-Wl,-M -Wl,'${CMAKE_CURRENT_BINARY_DIR}/libpng.vers'")
     endif()
   endif()
 endif()
@@ -411,7 +432,7 @@ if(PNG_STATIC)
   add_library(png_static STATIC ${libpng_sources})
   add_dependencies(png_static genfiles)
   # MSVC doesn't use a different file extension for shared vs. static
-  # libs.  We are able to change OUTPUT_NAME to remove the _static
+  # libs. We are able to change OUTPUT_NAME to remove the _static
   # for all other platforms.
   if(NOT MSVC)
     set_target_properties(png_static PROPERTIES
@@ -474,12 +495,12 @@ function(png_add_test)
   set(TEST_FILES "${_PAT_FILES}")
 
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/scripts/test.cmake.in"
-                 "${CMAKE_CURRENT_BINARY_DIR}/tests/${_PAT_NAME}.cmake" @ONLY)
+    "${CMAKE_CURRENT_BINARY_DIR}/tests/${_PAT_NAME}.cmake" @ONLY)
   add_test(NAME "${_PAT_NAME}"
-           COMMAND "${CMAKE_COMMAND}"
-           "-DLIBPNG=$<TARGET_FILE:png>"
-           "-DTEST_COMMAND=$<TARGET_FILE:${_PAT_COMMAND}>"
-           -P "${CMAKE_CURRENT_BINARY_DIR}/tests/${_PAT_NAME}.cmake")
+    COMMAND "${CMAKE_COMMAND}"
+    "-DLIBPNG=$<TARGET_FILE:png>"
+    "-DTEST_COMMAND=$<TARGET_FILE:${_PAT_COMMAND}>"
+    -P "${CMAKE_CURRENT_BINARY_DIR}/tests/${_PAT_NAME}.cmake")
 endfunction()
 
 # Set a variable with CMake code which:
@@ -504,12 +525,12 @@ function(create_symlink DEST_FILE)
     # we can go ahead and symlink/copy at configure time.
     if(CMAKE_HOST_WIN32 AND NOT CYGWIN)
       execute_process(
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${S_FILE} ${DEST_FILE}
-        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+	COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${S_FILE} ${DEST_FILE}
+	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
     else()
       execute_process(
-        COMMAND ${CMAKE_COMMAND} -E create_symlink ${S_FILE} ${DEST_FILE}
-        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+	COMMAND ${CMAKE_COMMAND} -E create_symlink ${S_FILE} ${DEST_FILE}
+	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
     endif()
   endif()
 
@@ -519,10 +540,10 @@ function(create_symlink DEST_FILE)
     # signature of add_custom_command.
     if(CMAKE_HOST_WIN32 AND NOT CYGWIN)
       add_custom_command(TARGET ${S_TARGET} POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different $<TARGET_LINKER_FILE_NAME:${S_TARGET}> $<TARGET_LINKER_FILE_DIR:${S_TARGET}>/${DEST_FILE})
+	COMMAND "${CMAKE_COMMAND}" -E copy_if_different $<TARGET_LINKER_FILE_NAME:${S_TARGET}> $<TARGET_LINKER_FILE_DIR:${S_TARGET}>/${DEST_FILE})
     else()
       add_custom_command(TARGET ${S_TARGET} POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E create_symlink $<TARGET_LINKER_FILE_NAME:${S_TARGET}> $<TARGET_LINKER_FILE_DIR:${S_TARGET}>/${DEST_FILE})
+	COMMAND "${CMAKE_COMMAND}" -E create_symlink $<TARGET_LINKER_FILE_NAME:${S_TARGET}> $<TARGET_LINKER_FILE_DIR:${S_TARGET}>/${DEST_FILE})
     endif()
   endif()
 
@@ -530,11 +551,11 @@ endfunction()
 
 # Create source generation scripts.
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/genchk.cmake.in
-               ${CMAKE_CURRENT_BINARY_DIR}/scripts/genchk.cmake @ONLY)
+  ${CMAKE_CURRENT_BINARY_DIR}/scripts/genchk.cmake @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/genout.cmake.in
-               ${CMAKE_CURRENT_BINARY_DIR}/scripts/genout.cmake @ONLY)
+  ${CMAKE_CURRENT_BINARY_DIR}/scripts/genout.cmake @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/gensrc.cmake.in
-               ${CMAKE_CURRENT_BINARY_DIR}/scripts/gensrc.cmake @ONLY)
+  ${CMAKE_CURRENT_BINARY_DIR}/scripts/gensrc.cmake @ONLY)
 
 # libpng is a library so default to 'lib'
 if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
@@ -577,24 +598,24 @@ endif()
 # INSTALL
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
   install(TARGETS ${PNG_LIB_TARGETS}
-          EXPORT libpng
-          RUNTIME DESTINATION bin
-          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-          FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    EXPORT libpng
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
   if(PNG_SHARED AND NOT OPENBSD)
     # Create a symlink for libpng.dll.a => libpng16.dll.a on Cygwin
     if(CYGWIN OR MINGW)
       create_symlink(libpng${CMAKE_IMPORT_LIBRARY_SUFFIX} TARGET png)
       install(FILES $<TARGET_LINKER_FILE_DIR:png>/libpng${CMAKE_IMPORT_LIBRARY_SUFFIX}
-              DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif()
 
     if(NOT WIN32)
       create_symlink(libpng${CMAKE_SHARED_LIBRARY_SUFFIX} TARGET png)
       install(FILES $<TARGET_LINKER_FILE_DIR:png>/libpng${CMAKE_SHARED_LIBRARY_SUFFIX}
-              DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif()
   endif()
 
@@ -602,7 +623,7 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
     if(NOT WIN32 OR CYGWIN OR MINGW)
       create_symlink(libpng${CMAKE_STATIC_LIBRARY_SUFFIX} TARGET png_static)
       install(FILES $<TARGET_LINKER_FILE_DIR:png_static>/libpng${CMAKE_STATIC_LIBRARY_SUFFIX}
-              DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif()
   endif()
 endif()
@@ -620,7 +641,7 @@ endif()
 
 if(NOT SKIP_INSTALL_PROGRAMS AND NOT SKIP_INSTALL_ALL)
   install(TARGETS ${PNG_BIN_TARGETS}
-          RUNTIME DESTINATION bin)
+    RUNTIME DESTINATION bin)
 endif()
 
 if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL)
@@ -633,13 +654,13 @@ if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL)
   # Install pkg-config files
   if(NOT CMAKE_HOST_WIN32 OR CYGWIN OR MINGW)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libpng.pc
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
     install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/libpng-config
-            DESTINATION bin)
+      DESTINATION bin)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PNGLIB_NAME}.pc
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
     install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${PNGLIB_NAME}-config
-            DESTINATION bin)
+      DESTINATION bin)
   endif()
 endif()
 

@@ -4,14 +4,9 @@
  * Core widget utilities.
  */
 
-#include <string.h>
 #include "tkInt.h"
 #include "ttkTheme.h"
 #include "ttkWidget.h"
-
-#ifdef MAC_OSX_TK
-#define TK_NO_DOUBLE_BUFFERING 1
-#endif
 
 /*------------------------------------------------------------------------
  * +++ Internal helper routines.
@@ -263,7 +258,7 @@ static const unsigned CoreEventMask
 
 static void CoreEventProc(ClientData clientData, XEvent *eventPtr)
 {
-    WidgetCore *corePtr = clientData;
+    WidgetCore *corePtr = (WidgetCore *)clientData;
 
     switch (eventPtr->type)
     {
@@ -310,12 +305,15 @@ static void CoreEventProc(ClientData clientData, XEvent *eventPtr)
 	    corePtr->state |= TTK_STATE_HOVER;
 	    TtkRedisplayWidget(corePtr);
 	    break;
-	case VirtualEvent:
-	    if (!strcmp("ThemeChanged", ((XVirtualEvent *)(eventPtr))->name)) {
+	case VirtualEvent: {
+	    const char *name = ((XVirtualEvent *)eventPtr)->name;
+	    if ((name != NULL) && !strcmp("ThemeChanged", name)) {
 		(void)UpdateLayout(corePtr->interp, corePtr);
 		SizeChanged(corePtr);
 		TtkRedisplayWidget(corePtr);
 	    }
+	    break;
+	}
 	default:
 	    /* can't happen... */
 	    break;

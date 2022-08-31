@@ -17,23 +17,23 @@
 #include "fileio.h"
 
 char
-pm_getc(FILE * const file) {
+pm_getc(FILE * const fileP) {
     int ich;
     char ch;
 
-    ich = getc(file);
+    ich = getc(fileP);
     if (ich == EOF)
         pm_error("EOF / read error reading a byte");
     ch = (char) ich;
     
     if (ch == '#') {
         do {
-	    ich = getc(file);
-	    if (ich == EOF)
-            pm_error("EOF / read error reading a byte");
-	    ch = (char) ich;
-	    } while (ch != '\n' && ch != '\r');
-	}
+            ich = getc(fileP);
+            if (ich == EOF)
+                pm_error("EOF / read error reading a byte");
+            ch = (char) ich;
+        } while (ch != '\n' && ch != '\r');
+    }
     return ch;
 }
 
@@ -76,7 +76,7 @@ pm_getuint(FILE * const ifP) {
 
     do {
         ch = pm_getc(ifP);
-	} while (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r');
+    } while (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r');
 
     if (ch < '0' || ch > '9')
         pm_error("junk in file where an unsigned integer should be");
@@ -85,10 +85,18 @@ pm_getuint(FILE * const ifP) {
     do {
         unsigned int const digitVal = ch - '0';
 
-        if (i > INT_MAX/10 - digitVal)
+        if (i > INT_MAX/10)
             pm_error("ASCII decimal integer in file is "
                      "too large to be processed.  ");
-        i = i * 10 + digitVal;
+        
+        i *= 10;
+
+        if (i > INT_MAX - digitVal)
+            pm_error("ASCII decimal integer in file is "
+                     "too large to be processed.  ");
+
+        i += digitVal;
+
         ch = pm_getc(ifP);
     } while (ch >= '0' && ch <= '9');
 
@@ -165,6 +173,3 @@ pm_putraw(FILE *       const file,
             pm_error("Error writing %d byte sample to file.", bytes);
     }
 }
-
-
-

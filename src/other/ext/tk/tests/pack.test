@@ -11,6 +11,8 @@ eval tcltest::configure $argv
 tcltest::loadTestedCommands
 namespace import -force tcltest::test
 
+testConstraint failsOnUbuntu [expr {![info exists ::env(CI)] || ![string match Linux $::tcl_platform(os)]}]
+testConstraint failsOnXQuarz [expr {$tcl_platform(os) ne "Darwin" || [tk windowingsystem] ne "x11" }]
 
 # Create some test windows.
 
@@ -878,28 +880,28 @@ test pack-9.1 {window ordering} -setup {
 } -body {
     pack .pack.a .pack.b .pack.c .pack.d -side top
     pack .pack.a -after .pack.b
-    pack slaves .pack
+    pack content .pack
 } -result {.pack.b .pack.a .pack.c .pack.d}
 test pack-9.2 {window ordering} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
     pack .pack.a .pack.b .pack.c .pack.d -side top
     pack .pack.a -after .pack.a
-    pack slaves .pack
+    pack content .pack
 } -result {.pack.a .pack.b .pack.c .pack.d}
 test pack-9.3 {window ordering} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
     pack .pack.a .pack.b .pack.c .pack.d -side top
     pack .pack.a -before .pack.d
-    pack slaves .pack
+    pack content .pack
 } -result {.pack.b .pack.c .pack.a .pack.d}
 test pack-9.4 {window ordering} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
     pack .pack.a .pack.b .pack.c .pack.d -side top
     pack .pack.d -before .pack.a
-    pack slaves .pack
+    pack content .pack
 } -result {.pack.d .pack.a .pack.b .pack.c}
 test pack-9.5 {window ordering} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
@@ -907,42 +909,42 @@ test pack-9.5 {window ordering} -setup {
     pack .pack.a .pack.b .pack.c .pack.d -side top
     pack propagate .pack.c 0
     pack .pack.a -in .pack.c
-    list [pack slaves .pack] [pack slaves .pack.c]
+    list [pack content .pack] [pack content .pack.c]
 } -result {{.pack.b .pack.c .pack.d} .pack.a}
 test pack-9.6 {window ordering} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
     pack .pack.a .pack.b .pack.c .pack.d -side top
     pack .pack.a -in .pack
-    pack slaves .pack
+    pack content .pack
 } -result {.pack.b .pack.c .pack.d .pack.a}
 test pack-9.7 {window ordering} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
     pack .pack.a .pack.b .pack.c .pack.d -side top
     pack .pack.a -padx 0
-    pack slaves .pack
+    pack content .pack
 } -result {.pack.a .pack.b .pack.c .pack.d}
 test pack-9.8 {window ordering} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
     pack .pack.a .pack.b .pack.c
     pack .pack.d
-    pack slaves .pack
+    pack content .pack
 } -result {.pack.a .pack.b .pack.c .pack.d}
 test pack-9.9 {window ordering} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
     pack .pack.a .pack.b .pack.c .pack.d
     pack .pack.b .pack.d .pack.c -before .pack.a
-    pack slaves .pack
+    pack content .pack
 } -result {.pack.b .pack.d .pack.c .pack.a}
 test pack-9.10 {window ordering} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
     pack .pack.a .pack.b .pack.c .pack.d
     pack .pack.a .pack.c .pack.d .pack.b -after .pack.a
-    pack slaves .pack
+    pack content .pack
 } -result {.pack.a .pack.c .pack.d .pack.b}
 
 
@@ -963,14 +965,14 @@ test pack-10.2 {retaining/clearing configuration state} -setup {
     pack .pack.a -pady 14
     pack info .pack.a
 } -result {-in .pack -anchor n -expand 1 -fill both -ipadx 3 -ipady 4 -padx 1 -pady 14 -side bottom}
-test pack-10.3 {bad -in window does not change master} -setup {
+test pack-10.3 {bad -in window does not change container window} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
     set result [list [winfo manager .pack.a]]
     catch {pack .pack.a -in .pack.a}
     lappend result [winfo manager .pack.a]
 } -result {{} {}}
-test pack-10.4 {bad -in window does not change master} -setup {
+test pack-10.4 {bad -in window does not change container window} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
     winfo manager .pack.a
@@ -1147,7 +1149,7 @@ test pack-12.4 {command options and errors} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
     pack configure .pack.b .pack.c
-    pack slaves .pack
+    pack content .pack
 } -result {.pack.b .pack.c}
 test pack-12.5 {command options and errors} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
@@ -1311,7 +1313,7 @@ test pack-12.36 {command options and errors} -setup {
 } -body {
     pack .pack.a .pack.b .pack.c .pack.d
     pack forget .pack.a .pack.d
-    pack slaves .pack
+    pack content .pack
 } -result {.pack.b .pack.c}
 test pack-12.37 {command options and errors} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
@@ -1352,28 +1354,28 @@ test pack-12.41 {command options and errors} -setup {
 test pack-12.42 {command options and errors} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
-    pack slaves
+    pack content
 } -returnCodes error -result {wrong # args: should be "pack option arg ?arg ...?"}
 test pack-12.43 {command options and errors} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
-    pack slaves a b
-} -returnCodes error -result {wrong # args: should be "pack slaves window"}
+    pack content a b
+} -returnCodes error -result {wrong # args: should be "pack content window"}
 test pack-12.44 {command options and errors} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
-    pack slaves .x
+    pack content .x
 } -returnCodes error -result {bad window path name ".x"}
 test pack-12.45 {command options and errors} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
-    pack slaves .pack.a
+    pack content .pack.a
 } -returnCodes ok -result {}
 test pack-12.46 {command options and errors} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
     pack lousy .pack
-} -returnCodes error -result {bad option "lousy": must be configure, forget, info, propagate, or slaves}
+} -returnCodes error -result {bad option "lousy": must be configure, content, forget, info, propagate, or slaves}
 
 
 test pack-13.1 {window deletion} -setup {
@@ -1385,7 +1387,7 @@ test pack-13.1 {window deletion} -setup {
     update
     destroy .pack.d
     update
-    set result [list [pack slaves .pack] [winfo geometry .pack.a] \
+    set result [list [pack content .pack] [winfo geometry .pack.a] \
         [winfo geometry .pack.b] [winfo geometry .pack.c]]
 } -result {{.pack.right .pack.bottom .pack.a .pack.b .pack.c} 20x40+30+0 50x30+15+40 80x80+0+70}
 
@@ -1528,7 +1530,7 @@ test pack-16.1 {geometry manager name} -setup {
 } -result {{} pack {}}
 
 
-test pack-17.1 {PackLostSlaveProc procedure} -setup {
+test pack-17.1 {PackLostContentProc procedure} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
     pack .pack.a
@@ -1537,7 +1539,7 @@ test pack-17.1 {PackLostSlaveProc procedure} -setup {
     update
     list [winfo manager .pack.a] [winfo geometry .pack.a]
 } -result {place 20x40+40+10}
-test pack-17.2 {PackLostSlaveProc procedure} -setup {
+test pack-17.2 {PackLostContentProc procedure} -setup {
     pack forget .pack.a .pack.b .pack.c .pack.d
 } -body {
     pack .pack.a
@@ -1549,9 +1551,17 @@ test pack-17.2 {PackLostSlaveProc procedure} -setup {
     pack info .pack.a
 } -returnCodes error -result {window ".pack.a" isn't packed}
 
+if {[tk windowingsystem] ne "aqua"} {
+    proc packUpdate {} {
+	update
+    }
+} else {
+    proc packUpdate {} {
+    }
+}
 
-test pack-18.1 {unmap slaves when master unmapped} -constraints {
-    tempNotPc
+test pack-18.1 {unmap content when container unmapped} -constraints {
+    tempNotPc failsOnUbuntu failsOnXQuarz
 } -setup {
     eval destroy [winfo child .pack]
 } -body {
@@ -1569,20 +1579,20 @@ test pack-18.1 {unmap slaves when master unmapped} -constraints {
     eval destroy [winfo child .pack]
     frame .pack.a -width 100 -height 50 -relief raised -bd 2
     pack .pack.a
-    update
+    update idletasks
     set result [winfo ismapped .pack.a]
     wm iconify .pack
-    update
     lappend result [winfo ismapped .pack.a]
     .pack.a configure -width 200 -height 75
-    update
+    update idletasks
     lappend result [winfo width .pack.a ] [winfo height .pack.a] \
     [winfo ismapped .pack.a]
     wm deiconify .pack
-    update
+    packUpdate
     lappend result [winfo ismapped .pack.a]
 } -result {1 0 200 75 0 1}
-test pack-18.2 {unmap slaves when master unmapped} -setup {
+
+test pack-18.2 {unmap content when container unmapped} -constraints {failsOnUbuntu failsOnXQuarz} -setup {
     eval destroy [winfo child .pack]
 } -body {
 
@@ -1595,23 +1605,22 @@ test pack-18.2 {unmap slaves when master unmapped} -setup {
     frame .pack.b -width 70 -height 30 -relief sunken -bd 2
     pack .pack.a
     pack .pack.b -in .pack.a
-    update
+    update idletasks
     set result [winfo ismapped .pack.b]
     wm iconify .pack
-    update
     lappend result [winfo ismapped .pack.b]
     .pack.b configure -width 100 -height 30
-    update
+    update idletasks
     lappend result [winfo width .pack.b ] [winfo height .pack.b] \
     [winfo ismapped .pack.b]
     wm deiconify .pack
-    update
+    packUpdate
     lappend result [winfo ismapped .pack.b]
 } -result {1 0 100 30 0 1}
 
 
 test pack-19.1 {test respect for internalborder} -setup {
-    catch {eval pack forget [pack slaves .pack]}
+    catch {eval pack forget [pack content .pack]}
     destroy .pack.l .pack.lf
 } -body {
     wm geometry .pack 200x200
@@ -1629,7 +1638,7 @@ test pack-19.1 {test respect for internalborder} -setup {
     destroy .pack.l .pack.lf
 } -result {196x188+2+10 177x186+5+7}
 test pack-19.2 {test support for minreqsize} -setup {
-    catch {eval pack forget [pack slaves .pack]}
+    catch {eval pack forget [pack content .pack]}
     destroy .pack.l .pack.lf
 } -body {
     wm geometry .pack {}

@@ -5,8 +5,8 @@ LICENSE
 README.md
 poly2tri/common/shapes.cc
 poly2tri/common/shapes.h
-poly2tri/common/utils.cc
 poly2tri/common/utils.h
+poly2tri/common/dll_symbol.h
 poly2tri/poly2tri.h
 poly2tri/sweep/advancing_front.cc
 poly2tri/sweep/advancing_front.h

@@ -32,7 +32,7 @@ listbox $w.frame.list -yscroll "$w.frame.scroll set" \
 	-width 20 -height 16 -setgrid 1
 pack $w.frame.list $w.frame.scroll -side left -fill y -expand 1
 
-bind $w.frame.list <Double-1> {
+bind $w.frame.list <Double-Button-1> {
     tk_setPalette [selection get]
 }
 $w.frame.list insert 0 gray60 gray70 gray80 gray85 gray90 gray95 \

@@ -36,10 +36,10 @@ ppm_computecolorhist2(FILE * const ifp,
                       const int maxcolors, int * const colorsP );
 
 void
-ppm_addtocolorhist( colorhist_vector chv, 
-                    int * const colorsP, const int maxcolors, 
-                    const pixel * const colorP, 
-                    const int value, const int position );
+ppm_addtocolorhist(colorhist_vector chv, 
+                   int * const colorsP, const int maxcolors, 
+                   const pixel * const colorP, 
+                   const int value, const int position );
 
 void
 ppm_freecolorhist(colorhist_vector const chv);
@@ -89,13 +89,39 @@ void
 ppm_freecolorhash(colorhash_table const cht);
 
 
-colorhash_table ppm_colorrowtocolorhash ARGS((pixel *colorrow, int ncolors));
-pixel * ppm_computecolorrow ARGS((pixel **pixels, int cols, int rows, int maxcolors, int *ncolorsP));
-pixel * ppm_mapfiletocolorrow ARGS((FILE *file, int maxcolors, int *ncolorsP, pixval *maxvalP));
-void    ppm_colorrowtomapfile ARGS((FILE *ofp, pixel *colormap, int ncolors, pixval maxval));
-void    ppm_sortcolorrow (pixel * const colorrow, const int ncolors, 
-                          int (*cmpfunc)(pixel *, pixel *) );
-int     ppm_addtocolorrow ARGS((pixel *colorrow, int *ncolorsP, int maxcolors, pixel *pixelP));
+colorhash_table
+ppm_colorrowtocolorhash(pixel * const colorrow,
+                        int     const ncolors);
+
+pixel *
+ppm_computecolorrow(pixel ** const pixels,
+                    int      const cols,
+                    int      const rows,
+                    int      const maxcolors,
+                    int *    const ncolorsP);
+
+pixel *
+ppm_mapfiletocolorrow(FILE *   const fileP,
+                      int      const maxcolors,
+                      int *    const ncolorsP,
+                      pixval * const maxvalP);
+
+void
+ppm_colorrowtomapfile(FILE *  const ofP,
+                      pixel * const colormap,
+                      int     const ncolors,
+                      pixval  const maxval);
+
+void
+ppm_sortcolorrow(pixel * const colorrow,
+                 int     const ncolors, 
+                 int (*cmpfunc)(pixel *, pixel *));
+
+int
+ppm_addtocolorrow(pixel * const colorrow,
+                  int *   const ncolorsP,
+                  int     const maxcolors,
+                  pixel * const pixelP);
 
 int
 ppm_findclosestcolor(const pixel * const colormap, 

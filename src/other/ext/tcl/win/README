@@ -9,7 +9,7 @@ that are specific to Microsoft Windows.
 
 The information in this file is maintained on the web at:
 
-	http://www.tcl.tk/doc/howto/compile.html#win
+	https://www.tcl-lang.org/doc/howto/compile.html#win
 
 2. Compiling Tcl
 ----------------
@@ -29,7 +29,7 @@ In order to compile Tcl for Windows, you need the following:
 
 	or
 
-	Cygwin + MinGW-w64 [http://cygwin.com/install.html]
+	Cygwin + MinGW-w64 [https://cygwin.com/install.html]
 	    (win32 or win64)
 
 	or
@@ -41,11 +41,6 @@ In order to compile Tcl for Windows, you need the following:
 
 	Msys + MinGW-w64 [http://mingw-w64.sourceforge.net/]
 	    (win32 or win64)
-
-	or
-
-	Msys + MinGW [http://www.mingw.org/download.shtml]
-	    (win32 only)
 
 
 In practice, this release is built with Visual C++ 6.0 and the TEA

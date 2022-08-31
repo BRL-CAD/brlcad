@@ -2,9 +2,13 @@
 # Tile package: entry widget tests
 #
 
-package require Tk 8.5
-package require tcltest ; namespace import -force tcltest::*
+package require Tk
+package require tcltest 2.2
+namespace import -force tcltest::*
 loadTestedCommands
+
+testConstraint failsOnUbuntu [expr {![info exists ::env(CI)] || ![string match Linux $::tcl_platform(os)]}]
+testConstraint failsOnXQuarz [expr {$tcl_platform(os) ne "Darwin" || [tk windowingsystem] ne "x11" }]
 
 variable scrollInfo
 proc scroll args {
@@ -74,6 +78,18 @@ test entry-2.1 "Create entry before scrollbar" -body {
     	-expand false -fill x
 }  -cleanup {destroy .te .tsb}
 
+test entry-2.1.1 "Create entry before scrollbar - scrollbar catches up" -constraints {failsOnUbuntu failsOnXQuarz} -body {
+    pack [ttk::entry .te -xscrollcommand [list .tsb set]] \
+	-expand true -fill both
+    .te insert end [string repeat "abc" 50]
+    catch {update} ; # error triggers because the -xscrollcommand callback
+                     # errors out: invalid command name ".tsb"
+    pack [ttk::scrollbar .tsb -orient horizontal -command [list .te xview]] \
+    	-expand false -fill x
+    update ; # no error
+    lappend res [expr [lindex [.tsb get] 1] < 1] ; # scrollbar did update
+} -result 1 -cleanup {destroy .te .tsb}
+
 test entry-2.2 "Initial scroll position" -body {
     ttk::entry .e -font fixed -width 5 -xscrollcommand scroll
     .e insert end "0123456789"
@@ -116,28 +132,28 @@ test entry-3.3 "xview" -body {
     .e insert end abcdefghijklmnopqrstuvwxyz
     .e xview end
     set result [.e index @0]
-} -result {7}
+} -result 7
 
 test entry-3.4 "xview" -body {
     .e delete 0 end;
     .e insert end abcdefghijklmnopqrstuvwxyz
     .e xview moveto 1.0
     set result [.e index @0]
-} -result {7}
+} -result 7
 
 test entry-3.5 "xview" -body {
     .e delete 0 end;
     .e insert end abcdefghijklmnopqrstuvwxyz
     .e xview scroll 5 units
     set result [.e index @0]
-} -result {5}
+} -result 5
 
 test entry-3.6 "xview" -body {
     .e delete 0 end;
     .e insert end [string repeat abcdefghijklmnopqrstuvwxyz 5]
     .e xview scroll 2 pages
     set result [.e index @0]
-} -result {40}
+} -result 40
 
 test entry-3.last "Series 3 cleanup" -body {
     destroy .e
@@ -309,6 +325,18 @@ test entry-9.1 "Index range invariants" -setup {
     set result
 } -result [list 1 3  2 3  3 3  3 3  3 3] -cleanup {
     unset V
+    destroy .e
+}
+
+test entry-10.1 {Bug [2830360fff] - Don't loose invalid at focus events} -setup {
+    pack [ttk::entry .e]
+    update
+} -body {
+    .e state invalid
+    set res [.e state]
+    event generate .e <FocusOut>
+    lappend res [.e state]
+} -result {invalid invalid} -cleanup {
     destroy .e
 }
 

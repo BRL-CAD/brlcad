@@ -1,6 +1,6 @@
 '\"
 '\" Copyright (c) 1995-1997 Sun Microsystems, Inc.
-'\" Copyright (c) 1998-2000 by Ajuba Solutions.
+'\" Copyright (c) 1998-2000 Ajuba Solutions.
 '\" Copyright (c) 2004 ActiveState Corporation.
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
@@ -13,7 +13,7 @@
 .SH NAME
 http \- Client-side implementation of the HTTP/1.1 protocol
 .SH SYNOPSIS
-\fBpackage require http ?2.8?\fR
+\fBpackage require http ?2.9?\fR
 .\" See Also -useragent option documentation in body!
 .sp
 \fB::http::config ?\fI\-option value\fR ...?
@@ -78,6 +78,9 @@ when the transaction completes.  For this to work, the Tcl event loop
 must be active.  In Tk applications this is always true.  For pure-Tcl
 applications, the caller can use \fB::http::wait\fR after calling
 \fB::http::geturl\fR to start the event loop.
+.PP
+\fBNote:\fR The event queue is even used without the \fB-command\fR option.
+As a side effect, arbitrary commands may be processed while \fBhttp::geturl\fR is running.
 .SH COMMANDS
 .TP
 \fB::http::config\fR ?\fIoptions\fR?
@@ -161,7 +164,7 @@ throwing an error processing non-latin-1 characters.
 The value of the User-Agent header in the HTTP request.  In an unsafe
 interpreter, the default value depends upon the operating system, and
 the version numbers of \fBhttp\fR and \fBTcl\fR, and is (for example)
-.QW "\fBMozilla/5.0 (Windows; U; Windows NT 10.0) http/2.8.12 Tcl/8.6.8\fR" .
+.QW "\fBMozilla/5.0 (Windows; U; Windows NT 10.0) http/2.9.0 Tcl/8.6.9\fR" .
 A safe interpreter cannot determine its operating system, and so the default
 in a safe interpreter is to use a Windows 10 value with the current version
 numbers of \fBhttp\fR and \fBTcl\fR.
@@ -250,6 +253,10 @@ proc httpHandlerCallback {socket token} {
     return $nbytes
 }
 .CE
+.PP
+The \fBhttp::geturl\fR code for the \fB-handler\fR option is not compatible with either compression or chunked transfer-encoding.  If \fB-handler\fR is specified, then to work around these issues \fBhttp::geturl\fR will reduce the HTTP protocol to 1.0, and override the \fB-zip\fR option (i.e. it will not send the header "\fBAccept-Encoding: gzip,deflate,compress\fR").
+.PP
+If options \fB-handler\fR and \fB-channel\fR are used together, the handler is responsible for copying the data from the HTTP socket to the specified channel.  The name of the channel is available to the handler as element \fB-channel\fR of the token array.
 .RE
 .TP
 \fB\-headers\fR \fIkeyvaluelist\fR
@@ -312,9 +319,11 @@ otherwise complain about HTTP/1.1.
 \fB\-query\fR \fIquery\fR
 .
 This flag causes \fB::http::geturl\fR to do a POST request that passes the
-\fIquery\fR to the server. The \fIquery\fR must be an x-url-encoding
-formatted query.  The \fB::http::formatQuery\fR procedure can be used to
-do the formatting.
+\fIquery\fR as payload verbatim to the server.
+The content format (and encoding) of \fIquery\fR is announced by the header
+field \fBcontent-type\fR set by the option \fB-type\fR.
+\fIquery\fR is an x-url-encoding formatted query, if used for html forms.
+The \fB::http::formatQuery\fR procedure can be used to do the formatting.
 .TP
 \fB\-queryblocksize\fR \fIsize\fR
 .
@@ -538,6 +547,14 @@ is raised, but the status of the transaction will be \fBeof\fR.
 .
 The error message will also be stored in the \fBerror\fR status
 array element, accessible via \fB::http::error\fR.
+.TP
+\fBtimeout\fR
+.
+A timeout occurred before the transaction could complete
+.TP
+\fBreset\fR
+.
+user-reset
 .PP
 Another error possibility is that \fB::http::geturl\fR is unable to
 write all the post query data to the server before the server
@@ -653,10 +670,9 @@ the post query data to the server.
 .TP
 \fBstatus\fR
 .
-Either \fBok\fR, for successful completion, \fBreset\fR for
-user-reset, \fBtimeout\fR if a timeout occurred before the transaction
-could complete, or \fBerror\fR for an error condition.  During the
-transaction this value is the empty string.
+See description in the chapter \fBERRORS\fR above for a
+list and description of \fBstatus\fR.
+During the transaction this value is the empty string.
 .TP
 \fBtotalsize\fR
 .

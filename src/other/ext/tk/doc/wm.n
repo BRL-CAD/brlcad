@@ -120,7 +120,7 @@ color with some alpha, e.g.
 .PP
 On X11, the following attributes may be set. These are not supported by all
 window managers, and will have no effect under older WMs.
-.\" See http://www.freedesktop.org/Standards/wm-spec
+.\" See https://www.freedesktop.org/wiki/Specifications/wm-spec/
 .TP
 \fB\-type\fR
 .VS 8.6
@@ -494,7 +494,7 @@ other contexts. At the
 script level the command will accept only the first image passed in the
 parameters as support for multiple sizes/resolutions on macOS is outside Tk's
 scope. Developers should use the largest icon they can support
-(preferably 512 pixels) to ensure smooth rendering on the Mac. 
+(preferably 512 pixels) to ensure smooth rendering on the Mac.
 .RE
 .TP
 \fBwm iconposition \fIwindow\fR ?\fIx y\fR?
@@ -708,18 +708,18 @@ case the command returns an empty string.  If \fIstring\fR is not
 specified then the command returns the current title for the
 \fIwindow\fR.  The title for a window defaults to its name.
 .TP
-\fBwm transient \fIwindow\fR ?\fImaster\fR?
+\fBwm transient \fIwindow\fR ?\fIcontainer\fR?
 .
-If \fImaster\fR is specified, then the window manager is informed that
+If \fIcontainer\fR is specified, then the window manager is informed that
 \fIwindow\fR is a transient window (e.g. pull-down menu) working on
-behalf of \fImaster\fR (where \fImaster\fR is the path name for a
-top-level window).  If \fImaster\fR is specified as an empty string
+behalf of \fIcontainer\fR (where \fIcontainer\fR is the path name for a
+top-level window).  If \fIcontainer\fR is specified as an empty string
 then \fIwindow\fR is marked as not being a transient window any more.
 Otherwise the command returns the path name of \fIwindow\fR's current
-master, or an empty string if \fIwindow\fR is not currently a
+container, or an empty string if \fIwindow\fR is not currently a
 transient window.  A transient window will mirror state changes in the
-master and inherit the state of the master when initially mapped. The
-directed graph with an edge from each transient to its master must be
+container and inherit the state of the container when initially mapped. The
+directed graph with an edge from each transient to its container must be
 acyclic.  In particular, it is an error to attempt to make a window a
 transient of itself.  The window manager may also decorate a transient
 window differently, removing some features normally present (e.g.,

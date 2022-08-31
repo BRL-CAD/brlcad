@@ -17,7 +17,7 @@ needs to conform to the following conventions.
   "configure".  When the program "configure" is run, it should generate
   a file "Makefile" in the current working directory.  The "configure"
   program should be able to accept as command line arguments all the
-  arguments that can be passed to the master unix/configure program.  It
+  arguments that can be passed to the top unix/configure program.  It
   should also accept the --with-tcl= and --with-tclinclude= options in
   the conventional way.
 

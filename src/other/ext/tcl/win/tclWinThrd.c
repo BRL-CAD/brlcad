@@ -24,18 +24,18 @@ _CRTIMP unsigned int __cdecl _controlfp (unsigned int unNew, unsigned int unMask
 #endif
 
 /*
- * This is the master lock used to serialize access to other serialization
+ * This is the global lock used to serialize access to other serialization
  * data structures.
  */
 
-static CRITICAL_SECTION masterLock;
+static CRITICAL_SECTION globalLock;
 static int init = 0;
-#define MASTER_LOCK TclpMasterLock()
-#define MASTER_UNLOCK TclpMasterUnlock()
+#define GLOBAL_LOCK TclpGlobalLock()
+#define GLOBAL_UNLOCK TclpGlobalUnlock()
 
 
 /*
- * This is the master lock used to serialize initialization and finalization
+ * This is the global lock used to serialize initialization and finalization
  * of Tcl as a whole.
  */
 
@@ -43,7 +43,7 @@ static CRITICAL_SECTION initLock;
 
 /*
  * allocLock is used by Tcl's version of malloc for synchronization. For
- * obvious reasons, cannot use any dyamically allocated storage.
+ * obvious reasons, cannot use any dynamically allocated storage.
  */
 
 #ifdef TCL_THREADS
@@ -368,7 +368,7 @@ TclpInitLock(void)
 	init = 1;
 	InitializeCriticalSection(&joinLock);
 	InitializeCriticalSection(&initLock);
-	InitializeCriticalSection(&masterLock);
+	InitializeCriticalSection(&globalLock);
     }
     EnterCriticalSection(&initLock);
 }
@@ -399,7 +399,7 @@ TclpInitUnlock(void)
 /*
  *----------------------------------------------------------------------
  *
- * TclpMasterLock
+ * TclpGlobalLock
  *
  *	This procedure is used to grab a lock that serializes creation of
  *	mutexes, condition variables, and thread local storage keys.
@@ -411,13 +411,13 @@ TclpInitUnlock(void)
  *	None.
  *
  * Side effects:
- *	Acquire the master mutex.
+ *	Acquire the global mutex.
  *
  *----------------------------------------------------------------------
  */
 
 void
-TclpMasterLock(void)
+TclpGlobalLock(void)
 {
     if (!init) {
 	/*
@@ -430,15 +430,15 @@ TclpMasterLock(void)
 	init = 1;
 	InitializeCriticalSection(&joinLock);
 	InitializeCriticalSection(&initLock);
-	InitializeCriticalSection(&masterLock);
+	InitializeCriticalSection(&globalLock);
     }
-    EnterCriticalSection(&masterLock);
+    EnterCriticalSection(&globalLock);
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * TclpMasterUnlock
+ * TclpGlobalUnlock
  *
  *	This procedure is used to release a lock that serializes creation and
  *	deletion of synchronization objects.
@@ -447,15 +447,15 @@ TclpMasterLock(void)
  *	None.
  *
  * Side effects:
- *	Release the master mutex.
+ *	Release the global mutex.
  *
  *----------------------------------------------------------------------
  */
 
 void
-TclpMasterUnlock(void)
+TclpGlobalUnlock(void)
 {
-    LeaveCriticalSection(&masterLock);
+    LeaveCriticalSection(&globalLock);
 }
 
 /*
@@ -464,7 +464,7 @@ TclpMasterUnlock(void)
  * Tcl_GetAllocMutex
  *
  *	This procedure returns a pointer to a statically initialized mutex for
- *	use by the memory allocator. The alloctor must use this lock, because
+ *	use by the memory allocator. The allocator must use this lock, because
  *	all other locks are allocated...
  *
  * Results:
@@ -512,14 +512,14 @@ Tcl_GetAllocMutex(void)
 void
 TclFinalizeLock(void)
 {
-    MASTER_LOCK;
+    GLOBAL_LOCK;
     DeleteCriticalSection(&joinLock);
 
     /*
      * Destroy the critical section that we are holding!
      */
 
-    DeleteCriticalSection(&masterLock);
+    DeleteCriticalSection(&globalLock);
     init = 0;
 
 #ifdef TCL_THREADS
@@ -567,10 +567,10 @@ Tcl_MutexLock(
     CRITICAL_SECTION *csPtr;
 
     if (*mutexPtr == NULL) {
-	MASTER_LOCK;
+	GLOBAL_LOCK;
 
 	/*
-	 * Double inside master lock check to avoid a race.
+	 * Double inside global lock check to avoid a race.
 	 */
 
 	if (*mutexPtr == NULL) {
@@ -579,7 +579,7 @@ Tcl_MutexLock(
 	    *mutexPtr = (Tcl_Mutex)csPtr;
 	    TclRememberMutex(mutexPtr);
 	}
-	MASTER_UNLOCK;
+	GLOBAL_UNLOCK;
     }
     csPtr = *((CRITICAL_SECTION **)mutexPtr);
     EnterCriticalSection(csPtr);
@@ -681,7 +681,7 @@ Tcl_ConditionWait(
      */
 
     if (tsdPtr->flags == WIN_THREAD_UNINIT) {
-	MASTER_LOCK;
+	GLOBAL_LOCK;
 
 	/*
 	 * Create the per-thread event and queue pointers.
@@ -695,14 +695,14 @@ Tcl_ConditionWait(
 	    tsdPtr->flags = WIN_THREAD_RUNNING;
 	    doExit = 1;
 	}
-	MASTER_UNLOCK;
+	GLOBAL_UNLOCK;
 
 	if (doExit) {
 	    /*
 	     * Create a per-thread exit handler to clean up the condEvent. We
-	     * must be careful to do this outside the Master Lock because
+	     * must be careful to do this outside the Global Lock because
 	     * Tcl_CreateThreadExitHandler uses its own ThreadSpecificData,
-	     * and initializing that may drop back into the Master Lock.
+	     * and initializing that may drop back into the Global Lock.
 	     */
 
 	    Tcl_CreateThreadExitHandler(FinalizeConditionEvent, tsdPtr);
@@ -710,7 +710,7 @@ Tcl_ConditionWait(
     }
 
     if (*condPtr == NULL) {
-	MASTER_LOCK;
+	GLOBAL_LOCK;
 
 	/*
 	 * Initialize the per-condition queue pointers and Mutex.
@@ -724,7 +724,7 @@ Tcl_ConditionWait(
 	    *condPtr = (Tcl_Condition) winCondPtr;
 	    TclRememberCondition(condPtr);
 	}
-	MASTER_UNLOCK;
+	GLOBAL_UNLOCK;
     }
     csPtr = *((CRITICAL_SECTION **)mutexPtr);
     winCondPtr = *((WinCondition **)condPtr);
@@ -902,7 +902,7 @@ FinalizeConditionEvent(
  *	This procedure is invoked to clean up a condition variable. This is
  *	only safe to call at the end of time.
  *
- *	This assumes the Master Lock is held.
+ *	This assumes the Global Lock is held.
  *
  * Results:
  *	None.
@@ -1073,19 +1073,19 @@ TclpThreadDeleteKey(
 }
 
 void
-TclpThreadSetMasterTSD(
+TclpThreadSetGlobalTSD(
     void *tsdKeyPtr,
     void *ptr)
 {
     DWORD *key = tsdKeyPtr;
 
     if (!TlsSetValue(*key, ptr)) {
-	Tcl_Panic("unable to set master TSD value");
+	Tcl_Panic("unable to set global TSD value");
     }
 }
 
 void *
-TclpThreadGetMasterTSD(
+TclpThreadGetGlobalTSD(
     void *tsdKeyPtr)
 {
     DWORD *key = tsdKeyPtr;

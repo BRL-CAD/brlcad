@@ -341,13 +341,13 @@ compile(
     re->re_info = 0;		/* bits get set during parse */
     re->re_csize = sizeof(chr);
     re->re_guts = NULL;
-    re->re_fns = VS(&functions);
+    re->re_fns = (char *)&functions;
 
     /*
      * More complex setup, malloced things.
      */
 
-    re->re_guts = VS(MALLOC(sizeof(struct guts)));
+    re->re_guts = (char *)(MALLOC(sizeof(struct guts)));
     if (re->re_guts == NULL) {
 	return freev(v, REG_ESPACE);
     }
@@ -512,7 +512,7 @@ freev(
     struct vars *v,
     int err)
 {
-    register int ret;
+    int ret;
 
     if (v->re != NULL) {
 	rfree(v->re);

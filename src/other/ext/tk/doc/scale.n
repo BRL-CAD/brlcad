@@ -78,7 +78,7 @@ specified by the \fB\-activebackground\fR option.
 .OP \-tickinterval tickInterval TickInterval
 Must be a real value.
 Determines the spacing between numerical
-tick marks displayed below or to the left of the slider. The values will all be displayed with the same number of decimal places, which will be enough to ensure they are all accurate to within 20% of a tick interval. 
+tick marks displayed below or to the left of the slider. The values will all be displayed with the same number of decimal places, which will be enough to ensure they are all accurate to within 20% of a tick interval.
 If 0, no tick marks will be displayed.
 .OP \-to to To
 Specifies a real value corresponding

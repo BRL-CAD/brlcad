@@ -12,7 +12,7 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 if {"::tcltest" ni [namespace children]} {
-    package require tcltest 2
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -149,14 +149,14 @@ test lsearch-5.2 {binary search} {
     }
     set res
 } $decreasingIntegers
-test lsearch-5.3 {binary search finds leftmost occurances} {
+test lsearch-5.3 {binary search finds leftmost occurrences} {
     set res {}
     for {set i 0} {$i < 10} {incr i} {
 	lappend res [lsearch -integer -sorted $repeatingIncreasingIntegers $i]
     }
     set res
 } [list 0 5 10 15 20 25 30 35 40 45]
-test lsearch-5.4 {binary search -decreasing finds leftmost occurances} {
+test lsearch-5.4 {binary search -decreasing finds leftmost occurrences} {
     set res {}
     for {set i 9} {$i >= 0} {incr i -1} {
 	lappend res [lsearch -sorted -integer -decreasing \
@@ -384,7 +384,7 @@ test lsearch-14.8 {combinations: -start, -inline and -not} {
 } {c4}
 
 test lsearch-15.1 {make sure no shimmering occurs} {
-    set x [expr int(sin(0))]
+    set x [expr {int(sin(0))}]
     lsearch -start $x $x $x
 } 0
 
@@ -404,16 +404,16 @@ test lsearch-17.2 {lsearch -index option, basic functionality} {
     lsearch -index 1 -exact {{a c} {a b} {a a}} a
 } 2
 test lsearch-17.3 {lsearch -index option, basic functionality} {
-    lsearch -index 1 -glob {{ab cb} {ab bb} {ab ab}} b* 
+    lsearch -index 1 -glob {{ab cb} {ab bb} {ab ab}} b*
 } 1
 test lsearch-17.4 {lsearch -index option, basic functionality} {
     lsearch -index 1 -regexp {{ab cb} {ab bb} {ab ab}} {[cb]b}
-} 0 
+} 0
 test lsearch-17.5 {lsearch -index option, basic functionality} {
     lsearch -all -index 0 -exact {{a c} {a b} {d a}} a
 } {0 1}
 test lsearch-17.6 {lsearch -index option, basic functionality} {
-    lsearch -all -index 1 -glob {{ab cb} {ab bb} {db bx}} b* 
+    lsearch -all -index 1 -glob {{ab cb} {ab bb} {db bx}} b*
 } {1 2}
 test lsearch-17.7 {lsearch -index option, basic functionality} {
     lsearch -all -index 1 -regexp {{ab cb} {ab bb} {ab ab}} {[cb]b}
@@ -454,11 +454,11 @@ test lsearch-18.2 {lsearch -index option, list as index basic functionality} {
     lsearch -index {2 0} -exact {{{x x} {x b} {a d}} {{a c} {a b} {a a}}} a
 } 0
 test lsearch-18.3 {lsearch -index option, list as index basic functionality} {
-    lsearch -index {1 1} -glob {{{ab cb} {ab bb} {ab ab}} {{ab cb} {ab bb} {ab ab}}} b* 
+    lsearch -index {1 1} -glob {{{ab cb} {ab bb} {ab ab}} {{ab cb} {ab bb} {ab ab}}} b*
 } 0
 test lsearch-18.4 {lsearch -index option, list as index basic functionality} {
     lsearch -index {0 1} -regexp {{{ab cb} {ab bb} {ab ab}} {{ab cb} {ab bb} {ab ab}}} {[cb]b}
-} 0 
+} 0
 test lsearch-18.5 {lsearch -index option, list as index basic functionality} {
     lsearch -all -index {0 0} -exact {{{a c} {a b} {d a}} {{a c} {a b} {d a}}} a
 } {0 1}
@@ -470,11 +470,11 @@ test lsearch-19.2 {lsearch -subindices option} {
     lsearch -subindices -index {2 0} -exact {{{x x} {x b} {a d}} {{a c} {a b} {a a}}} a
 } {0 2 0}
 test lsearch-19.3 {lsearch -subindices option} {
-    lsearch -subindices -index {1 1} -glob {{{ab cb} {ab bb} {ab ab}} {{ab cb} {ab bb} {ab ab}}} b* 
+    lsearch -subindices -index {1 1} -glob {{{ab cb} {ab bb} {ab ab}} {{ab cb} {ab bb} {ab ab}}} b*
 } {0 1 1}
 test lsearch-19.4 {lsearch -subindices option} {
     lsearch -subindices -index {0 1} -regexp {{{ab cb} {ab bb} {ab ab}} {{ab cb} {ab bb} {ab ab}}} {[cb]b}
-} {0 0 1} 
+} {0 0 1}
 test lsearch-19.5 {lsearch -subindices option} {
     lsearch -subindices -all -index {0 0} -exact {{{a c} {a b} {d a}} {{a c} {a b} {d a}}} a
 } {{0 0 0} {1 0 0}}

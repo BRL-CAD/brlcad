@@ -157,7 +157,7 @@ test tk-6.5 {tk inactive} -body {
     update
     after 100
     set i [tk inactive]
-    expr {$i == -1 || ( $i > 90 && $i < 200 )}
+    expr {$i < 0 || ( $i > 90 && $i < 300 )}
 } -result 1
 
 test tk-7.1 {tk inactive in a safe interpreter} -body {

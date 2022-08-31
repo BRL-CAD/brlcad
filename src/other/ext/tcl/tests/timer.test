@@ -13,8 +13,8 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -568,15 +568,15 @@ test timer-9.1 {AfterCleanupProc procedure} -setup {
 } -result {before after2 after4}
 
 test timer-10.1 {Bug 1016167: [after] overwrites imports} -setup {
-    interp create slave
-    slave eval namespace export after
-    slave eval namespace eval foo namespace import ::after
+    interp create child
+    child eval namespace export after
+    child eval namespace eval foo namespace import ::after
 } -body {
-    slave eval foo::after 1
-    slave eval namespace origin foo::after
+    child eval foo::after 1
+    child eval namespace origin foo::after
 } -cleanup {
     # Bug will cause crash here; would cause failure otherwise
-    interp delete slave
+    interp delete child
 } -result ::after
 
 test timer-11.1 {Bug 1350291: [after] overflowing 32-bit field} -body {

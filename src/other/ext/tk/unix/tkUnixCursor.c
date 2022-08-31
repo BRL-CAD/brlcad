@@ -245,7 +245,7 @@ TkGetCursorByName(
     if ((argv[0][0] != '@') && !inTkTable) {
 	XColor fg, bg;
 	unsigned int maskIndex;
-	register const struct CursorName *namePtr;
+	const struct CursorName *namePtr;
 	TkDisplay *dispPtr;
 
 	/*

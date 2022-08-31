@@ -402,7 +402,7 @@ EXTERN void		Tk_HandleEvent(XEvent *eventPtr);
 /* 116 */
 EXTERN Tk_Window	Tk_IdToWindow(Display *display, Window window);
 /* 117 */
-EXTERN void		Tk_ImageChanged(Tk_ImageMaster master, int x, int y,
+EXTERN void		Tk_ImageChanged(Tk_ImageMaster model, int x, int y,
 				int width, int height, int imageWidth,
 				int imageHeight);
 /* 118 */
@@ -413,8 +413,8 @@ EXTERN Atom		Tk_InternAtom(Tk_Window tkwin, const char *name);
 EXTERN int		Tk_IntersectTextLayout(Tk_TextLayout layout, int x,
 				int y, int width, int height);
 /* 121 */
-EXTERN void		Tk_MaintainGeometry(Tk_Window slave,
-				Tk_Window master, int x, int y, int width,
+EXTERN void		Tk_MaintainGeometry(Tk_Window window,
+				Tk_Window container, int x, int y, int width,
 				int height);
 /* 122 */
 EXTERN Tk_Window	Tk_MainWindow(Tcl_Interp *interp);
@@ -453,7 +453,7 @@ EXTERN CONST84_RETURN char * Tk_NameOfCursor(Display *display,
 /* 136 */
 EXTERN CONST84_RETURN char * Tk_NameOfFont(Tk_Font font);
 /* 137 */
-EXTERN CONST84_RETURN char * Tk_NameOfImage(Tk_ImageMaster imageMaster);
+EXTERN CONST84_RETURN char * Tk_NameOfImage(Tk_ImageMaster model);
 /* 138 */
 EXTERN CONST84_RETURN char * Tk_NameOfJoinStyle(int join);
 /* 139 */
@@ -582,8 +582,8 @@ EXTERN void		Tk_UnderlineTextLayout(Display *display,
 /* 180 */
 EXTERN void		Tk_Ungrab(Tk_Window tkwin);
 /* 181 */
-EXTERN void		Tk_UnmaintainGeometry(Tk_Window slave,
-				Tk_Window master);
+EXTERN void		Tk_UnmaintainGeometry(Tk_Window window,
+				Tk_Window container);
 /* 182 */
 EXTERN void		Tk_UnmapWindow(Tk_Window tkwin);
 /* 183 */
@@ -864,6 +864,14 @@ EXTERN void		Tk_CreateOldImageType(const Tk_ImageType *typePtr);
 /* 273 */
 EXTERN void		Tk_CreateOldPhotoImageFormat(
 				const Tk_PhotoImageFormat *formatPtr);
+/* Slot 274 is reserved */
+/* Slot 275 is reserved */
+/* Slot 276 is reserved */
+/* Slot 277 is reserved */
+/* Slot 278 is reserved */
+/* Slot 279 is reserved */
+/* 280 */
+EXTERN void		TkUnusedStubEntry(void);
 
 typedef struct {
     const struct TkPlatStubs *tkPlatStubs;
@@ -993,11 +1001,11 @@ typedef struct TkStubs {
     int (*tk_Grab) (Tcl_Interp *interp, Tk_Window tkwin, int grabGlobal); /* 114 */
     void (*tk_HandleEvent) (XEvent *eventPtr); /* 115 */
     Tk_Window (*tk_IdToWindow) (Display *display, Window window); /* 116 */
-    void (*tk_ImageChanged) (Tk_ImageMaster master, int x, int y, int width, int height, int imageWidth, int imageHeight); /* 117 */
+    void (*tk_ImageChanged) (Tk_ImageMaster model, int x, int y, int width, int height, int imageWidth, int imageHeight); /* 117 */
     int (*tk_Init) (Tcl_Interp *interp); /* 118 */
     Atom (*tk_InternAtom) (Tk_Window tkwin, const char *name); /* 119 */
     int (*tk_IntersectTextLayout) (Tk_TextLayout layout, int x, int y, int width, int height); /* 120 */
-    void (*tk_MaintainGeometry) (Tk_Window slave, Tk_Window master, int x, int y, int width, int height); /* 121 */
+    void (*tk_MaintainGeometry) (Tk_Window window, Tk_Window container, int x, int y, int width, int height); /* 121 */
     Tk_Window (*tk_MainWindow) (Tcl_Interp *interp); /* 122 */
     void (*tk_MakeWindowExist) (Tk_Window tkwin); /* 123 */
     void (*tk_ManageGeometry) (Tk_Window tkwin, const Tk_GeomMgr *mgrPtr, ClientData clientData); /* 124 */
@@ -1013,7 +1021,7 @@ typedef struct TkStubs {
     CONST84_RETURN char * (*tk_NameOfColor) (XColor *colorPtr); /* 134 */
     CONST84_RETURN char * (*tk_NameOfCursor) (Display *display, Tk_Cursor cursor); /* 135 */
     CONST84_RETURN char * (*tk_NameOfFont) (Tk_Font font); /* 136 */
-    CONST84_RETURN char * (*tk_NameOfImage) (Tk_ImageMaster imageMaster); /* 137 */
+    CONST84_RETURN char * (*tk_NameOfImage) (Tk_ImageMaster model); /* 137 */
     CONST84_RETURN char * (*tk_NameOfJoinStyle) (int join); /* 138 */
     CONST84_RETURN char * (*tk_NameOfJustify) (Tk_Justify justify); /* 139 */
     CONST84_RETURN char * (*tk_NameOfRelief) (int relief); /* 140 */
@@ -1057,7 +1065,7 @@ typedef struct TkStubs {
     void (*tk_UnderlineChars) (Display *display, Drawable drawable, GC gc, Tk_Font tkfont, const char *source, int x, int y, int firstByte, int lastByte); /* 178 */
     void (*tk_UnderlineTextLayout) (Display *display, Drawable drawable, GC gc, Tk_TextLayout layout, int x, int y, int underline); /* 179 */
     void (*tk_Ungrab) (Tk_Window tkwin); /* 180 */
-    void (*tk_UnmaintainGeometry) (Tk_Window slave, Tk_Window master); /* 181 */
+    void (*tk_UnmaintainGeometry) (Tk_Window window, Tk_Window container); /* 181 */
     void (*tk_UnmapWindow) (Tk_Window tkwin); /* 182 */
     void (*tk_UnsetGrid) (Tk_Window tkwin); /* 183 */
     void (*tk_UpdatePointer) (Tk_Window tkwin, int x, int y, int state); /* 184 */
@@ -1150,6 +1158,13 @@ typedef struct TkStubs {
     Tcl_Interp * (*tk_Interp) (Tk_Window tkwin); /* 271 */
     void (*tk_CreateOldImageType) (const Tk_ImageType *typePtr); /* 272 */
     void (*tk_CreateOldPhotoImageFormat) (const Tk_PhotoImageFormat *formatPtr); /* 273 */
+    void (*reserved274)(void);
+    void (*reserved275)(void);
+    void (*reserved276)(void);
+    void (*reserved277)(void);
+    void (*reserved278)(void);
+    void (*reserved279)(void);
+    void (*tkUnusedStubEntry) (void); /* 280 */
 } TkStubs;
 
 extern const TkStubs *tkStubsPtr;
@@ -1710,6 +1725,14 @@ extern const TkStubs *tkStubsPtr;
 	(tkStubsPtr->tk_CreateOldImageType) /* 272 */
 #define Tk_CreateOldPhotoImageFormat \
 	(tkStubsPtr->tk_CreateOldPhotoImageFormat) /* 273 */
+/* Slot 274 is reserved */
+/* Slot 275 is reserved */
+/* Slot 276 is reserved */
+/* Slot 277 is reserved */
+/* Slot 278 is reserved */
+/* Slot 279 is reserved */
+#define TkUnusedStubEntry \
+	(tkStubsPtr->tkUnusedStubEntry) /* 280 */
 
 #endif /* defined(USE_TK_STUBS) */
 
@@ -1720,6 +1743,7 @@ extern const TkStubs *tkStubsPtr;
 #undef Tk_Init
 #undef Tk_SafeInit
 #undef Tk_CreateConsoleWindow
+#define Tk_GetImageModelData Tk_GetImageMasterData
 
 #if defined(_WIN32) && defined(UNICODE)
 #   define Tk_MainEx Tk_MainExW
@@ -1729,5 +1753,7 @@ extern const TkStubs *tkStubsPtr;
 
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLIMPORT
+
+#undef TkUnusedStubEntry
 
 #endif /* _TKDECLS */

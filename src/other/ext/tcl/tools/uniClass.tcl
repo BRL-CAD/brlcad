@@ -16,33 +16,33 @@ proc emitRange {first last} {
     global ranges numranges chars numchars extchars extranges
 
     if {$first < ($last-1)} {
-	if {!$extranges && ($first) > 0xffff} {
+	if {!$extranges && ($first) > 0xFFFF} {
 	    set extranges 1
 	    set numranges 0
 	    set ranges [string trimright $ranges " \n\r\t,"]
 	    append ranges "\n#if CHRBITS > 16\n    ,"
 	}
-	append ranges [format "{0x%x, 0x%x}, " \
+	append ranges [format "{0x%X, 0x%X}, " \
 		$first $last]
 	if {[incr numranges] % 4 == 0} {
 	    set ranges [string trimright $ranges]
 	    append ranges "\n    "
 	}
     } else {
-	if {!$extchars && ($first) > 0xffff} {
+	if {!$extchars && ($first) > 0xFFFF} {
 	    set extchars 1
 	    set numchars 0
 	    set chars [string trimright $chars " \n\r\t,"]
 	    append chars "\n#if CHRBITS > 16\n    ,"
 	}
-	append chars [format "0x%x, " $first]
+	append chars [format "0x%X, " $first]
 	incr numchars
 	if {$numchars % 9 == 0} {
 	    set chars [string trimright $chars]
 	    append chars "\n    "
 	}
 	if {$first != $last} {
-	    append chars [format "0x%x, " $last]
+	    append chars [format "0x%X, " $last]
 	    incr numchars
 	    if {$numchars % 9 == 0} {
 		append chars "\n    "
@@ -63,11 +63,11 @@ proc genTable {type} {
     set extchars 0
     set extranges 0
 
-    for {set i 0} {$i <= 0x10ffff} {incr i} {
-    if {$i == 0xd800} {
-	# Skip surrogates
-	set i 0xe000
-    }
+    for {set i 0} {$i <= 0x10FFFF} {incr i} {
+	if {$i == 0xD800} {
+	    # Skip surrogates
+	    set i 0xE000
+	}
 	if {[string is $type [format %c $i]]} {
 	    if {$i == ($last + 1)} {
 		set last $i

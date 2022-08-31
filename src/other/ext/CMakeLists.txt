@@ -200,6 +200,7 @@ set(PATCHELF_FILES
   patchelf/COPYING
   patchelf/patchelf.cc
   patchelf/elf.h
+  patchelf/UPGRADE_NOTE.txt
   )
 CMAKEFILES(${PATCHELF_FILES})
 
@@ -307,10 +308,6 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/png.cmake)
 # STEPcode - support for reading and writing STEP files
 include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
 
-## libbson - for binary attributes, always use this local version
-#include(${CMAKE_CURRENT_SOURCE_DIR}/bson.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/bson.dist)
-
 # PROJ4 - generic coordinate transformation
 include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
 
@@ -358,7 +355,6 @@ if (COMMAND CMAKEFILES)
     CMakeLists.txt
     CMake/ExternalProject_Target.cmake
     CMake/FindASSIMP.cmake
-    CMake/FindBSON.cmake
     CMake/FindITCL.cmake
     CMake/FindLEMON.cmake
     CMake/FindNETPBM.cmake
@@ -381,8 +377,6 @@ if (COMMAND CMAKEFILES)
     Eigen.dist
     assimp.cmake
     assimp.dist
-    bson.cmake
-    bson.dist
     gdal.cmake
     gdal.dist
     itcl.cmake

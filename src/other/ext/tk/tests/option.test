@@ -285,7 +285,7 @@ test option-12.6 {stack pushing/popping} -body {
 
 # Test the major priority levels (widgetDefault, etc.)
 
-# Configurations for tests 13.* 
+# Configurations for tests 13.*
 option clear
 option add $appName.op1.a 100 100
 option add $appName.op1.A interactive interactive

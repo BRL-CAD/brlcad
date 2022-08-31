@@ -8,10 +8,12 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require tcltest 2
-namespace import -force ::tcltest::*
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
+    namespace import -force ::tcltest::*
+}
 
-package require http 2.8
+package require http 2.9
 
 set sourcedir [file normalize [file dirname [info script]]]
 source [file join $sourcedir httpTest.tcl]

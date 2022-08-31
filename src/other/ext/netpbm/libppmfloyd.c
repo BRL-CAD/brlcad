@@ -22,9 +22,9 @@ do Floyd-Steinberg.
 ** implied warranty.
 */
 
+#include "mallocvar.h"
 #include "ppm.h"
 #include "ppmfloyd.h"
-#include "mallocvar.h"
 
 
 
@@ -85,35 +85,36 @@ allocateFi(int const cols) {
 
 
 ppm_fs_info *
-ppm_fs_init(int cols, pixval maxval, int flags) {
+ppm_fs_init(unsigned int const cols,
+            pixval       const maxval,
+            unsigned int const flags) {
 
-    ppm_fs_info *fi;
+    ppm_fs_info * fiP;
     
-    fi = allocateFi(cols);
+    fiP = allocateFi(cols);
 
-    fi->lefttoright = 1;
-    fi->cols = cols;
-    fi->maxval = maxval;
-    fi->flags = flags;
-    
-    if( flags & FS_RANDOMINIT ) {
+    fiP->lefttoright = 1;
+    fiP->cols        = cols;
+    fiP->maxval      = maxval;
+    fiP->flags       = flags;
+
+    if (flags & FS_RANDOMINIT) {
         unsigned int i;
-        srand((int)(time(0) ^ getpid()));
-        for( i = 0; i < cols +2; i++ ) {
+        srand(pm_randseed());
+        for (i = 0; i < cols +2; ++i) {
             /* random errors in [-1..+1] */
-            fi->thisrederr[i]   = rand() % 32 - 16;
-            fi->thisgreenerr[i] = rand() % 32 - 16;
-            fi->thisblueerr[i]  = rand() % 32 - 16;
+            fiP->thisrederr[i]   = rand() % 32 - 16;
+            fiP->thisgreenerr[i] = rand() % 32 - 16;
+            fiP->thisblueerr[i]  = rand() % 32 - 16;
         }
-    }
-    else {
+    } else {
         unsigned int i;
 
-        for( i = 0; i < cols + 2; i++ )
-            fi->thisrederr[i] = fi->thisgreenerr[i] = 
-                fi->thisblueerr[i] = 0;
+        for (i = 0; i < cols + 2; ++i)
+            fiP->thisrederr[i] = fiP->thisgreenerr[i] = 
+                fiP->thisblueerr[i] = 0;
     }
-    return fi;
+    return fiP;
 }
 
 

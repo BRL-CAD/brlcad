@@ -12,7 +12,7 @@ exec tclsh "$0" ${1+"$@"}
 #
 #----------------------------------------------------------------------
 #
-# Copyright (c) 2004 by Kevin B. Kenny.  All rights reserved.
+# Copyright (c) 2004 Kevin B. Kenny.  All rights reserved.
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #----------------------------------------------------------------------
@@ -32,7 +32,7 @@ proc copyDir {d1 d2} {
 	} elseif {[file isfile $f]} {
 	    file copy -force $f [file join $d2 $ftail]
 	    if {$::tcl_platform(platform) eq {unix}} {
-		file attributes [file join $d2 $ftail] -permissions 0644
+		file attributes [file join $d2 $ftail] -permissions 0o644
 	    } else {
 		file attributes [file join $d2 $ftail] -readonly 1
 	    }
@@ -40,7 +40,7 @@ proc copyDir {d1 d2} {
     }
 
     if {$::tcl_platform(platform) eq {unix}} {
-	file attributes $d2 -permissions 0755
+	file attributes $d2 -permissions 0o755
     } else {
 	file attributes $d2 -readonly 1
     }

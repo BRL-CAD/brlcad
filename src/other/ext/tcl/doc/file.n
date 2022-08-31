@@ -38,28 +38,31 @@ generated.  On Windows, FAT file systems do not support access time.
 .TP
 \fBfile attributes \fIname\fR ?\fIoption value option value...\fR?
 .
-This subcommand returns or sets platform specific values associated
-with a file. The first form returns a list of the platform specific
-flags and their values. The second form returns the value for the
-specific option. The third form sets one or more of the values. The
-values are as follows:
+This subcommand returns or sets platform-specific values associated
+with a file. The first form returns a list of the platform-specific
+options and their values. The second form returns the value for the
+given option. The third form sets one or more of the values. The values
+are as follows:
 .RS
 .PP
-On Unix, \fB\-group\fR gets or sets the group name for the file. A group id
-can be given to the command, but it returns a group name. \fB\-owner\fR gets
-or sets the user name of the owner of the file. The command returns the
-owner name, but the numerical id can be passed when setting the
-owner. \fB\-permissions\fR sets or retrieves the octal code that chmod(1)
-uses.  This command does also has limited support for setting using the
-symbolic attributes for chmod(1), of the form [ugo]?[[+\-=][rwxst],[...]],
-where multiple symbolic attributes can be separated by commas (example:
-\fBu+s,go\-rw\fR add sticky bit for user, remove read and write
-permissions for group and other).  A simplified \fBls\fR style string,
-of the form rwxrwxrwx (must be 9 characters), is also supported
-(example: \fBrwxr\-xr\-t\fR is equivalent to 01755).
-On versions of Unix supporting file flags, \fB\-readonly\fR gives the
-value or sets or clears the readonly attribute of the file,
-i.e. the user immutable flag \fBuchg\fR to chflags(1).
+On Unix, \fB\-group\fR gets or sets the group name for the file. A
+group id can be given to the command, but it returns a group name.
+\fB\-owner\fR gets or sets the user name of the owner of the file. The
+command returns the owner name, but the numerical id can be passed when
+setting the owner. \fB\-permissions\fR retrieves or sets a file's
+access permissions, using octal notation by default. This option also
+provides limited support for setting permissions using the symbolic
+notation accepted by the \fBchmod\fR command, following the form
+[\fBugo\fR]?[[\fB+-=\fR][\fBrwxst\fR]\fB,\fR[...]]. Multiple permission
+specifications may be given, separated by commas. E.g., \fBu+s,go-rw\fR
+would set the setuid bit for a file's owner as well as remove read and
+write permission for the file's group and other users. An
+\fBls\fR-style string of the form \fBrwxrwxrwx\fR is also accepted but
+must always be 9 characters long. E.g., \fBrwxr-xr-t\fR is equivalent
+to \fB01755\fR. On versions of Unix supporting file flags,
+\fB-readonly\fR returns the value of, or sets, or clears the readonly
+attribute of a file, i.e., the user immutable flag (\fBuchg\fR) to the
+\fBchflags\fR command.
 .PP
 On Windows, \fB\-archive\fR gives the value or sets or clears the
 archive attribute of the file. \fB\-hidden\fR gives the value or sets

@@ -31,11 +31,11 @@ macro to the name of the project makefile.
 # We extract version numbers using the nmakehlp program. For now use
 # the local copy of nmakehlp. Once we locate Tcl, we will use that
 # one if it is newer.
-!if [$(CC) -nologo "nmakehlp.c" -link -subsystem:console > nul]
+!if [$(CC) -nologo -DNDEBUG "nmakehlp.c" -link -subsystem:console > nul]
 !endif
 
 # First locate the Tcl directory that we are working with.
-!ifdef TCLDIR
+!if "$(TCLDIR)" != ""
 
 _RULESDIR = $(TCLDIR:/=\)
 

@@ -45,7 +45,7 @@ strtol(
 				 * hex, "0" means octal, anything else means
 				 * decimal. */
 {
-    register const char *p;
+    const char *p;
     long result;
 
     /*

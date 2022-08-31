@@ -39,6 +39,7 @@ extern "C" {
 
 #include <stdio.h>
 #include <bu.h>
+#include <bg/lod.h>
 #include <ged.h>
 
 struct draw_ctx {
@@ -68,11 +69,8 @@ struct draw_ctx {
 
     // Matrices above comb instances are critical to geometry placement.  For non-identity
     // matrices, we store them locally so they may be accessed without having to unpack
-    // the comb from disk.  Because these are unique to an instance, they are accessed with
-    // the i_map key, not the i_map value.  The i_mats key is the parent comb, which is
-    // not an i_map key.
-    std::unordered_map<unsigned long long, std::vector<fastf_t>> matrices;
-    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, size_t>> i_mats;
+    // the comb from disk.
+    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, std::vector<fastf_t>>> matrices;
 
     // Similar to matrices, store non-union bool ops for instances
     std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, size_t>> i_bool;
@@ -83,8 +81,7 @@ struct draw_ctx {
     // retrieve solid bboxes and calculate comb bboxes without having to touch
     // the disk beyond the initial per-solid calculations, which may be done
     // once per load and/or dimensional change.
-    std::vector<fastf_t> bboxes;
-    std::unordered_map<unsigned long long, size_t> bbox_indices;
+    std::unordered_map<unsigned long long, std::vector<fastf_t>> bboxes;
 
 
     // We also have a number of standard attributes that can impact drawing,
@@ -115,6 +112,62 @@ struct draw_ctx {
     // other data structures or walk down the tree.
     std::unordered_set<unsigned long long> drawn_paths;
 };
+
+struct g_ctx {
+    struct ged *gedp = NULL;
+    std::unordered_set<struct directory *> added;
+    std::unordered_set<struct directory *> changed;
+    std::unordered_set<unsigned long long> removed;
+    std::unordered_map<unsigned long long, std::string> old_names;
+    bool need_update_nref = false;
+    bool changed_flag = false;
+};
+
+
+extern "C" void
+dp_changed_clbk(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
+{
+    struct g_ctx *gd = (struct g_ctx *)u_data;
+    XXH64_state_t h_state;
+    unsigned long long hash = 0;
+
+    // TODO - we can probably get more nuanced about this flag - we may
+    // not need to set it if the dp in question isn't a comb...
+    gd->need_update_nref = true;
+    gd->changed_flag = true;
+
+    // Need to invalidate any LoD caches associated with this dp
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && gd->gedp) {
+	unsigned long long key = bg_mesh_lod_key_get(gd->gedp->ged_lod, dp->d_namep);
+	if (key) {
+	    bg_mesh_lod_clear_cache(gd->gedp->ged_lod, key);
+	    bg_mesh_lod_key_put(gd->gedp->ged_lod, dp->d_namep, 0);
+	}
+    }
+
+    switch(mode) {
+	case 0:
+	    gd->changed.insert(dp);
+	    break;
+	case 1:
+	    gd->added.insert(dp);
+	    break;
+	case 2:
+	    // When this callback is made, dp is still valid, but in subsequent
+	    // processing it will not be.  We need to capture everything we
+	    // will need from this dp now, for later use when updating state
+	    XXH64_reset(&h_state, 0);
+	    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	    hash = (unsigned long long)XXH64_digest(&h_state);
+	    gd->removed.insert(hash);
+	    gd->old_names[hash] = std::string(dp->d_namep);
+	    break;
+	default:
+	    bu_log("changed callback mode error: %d\n", mode);
+    }
+}
+
+
 
 unsigned int
 color_int(struct bu_color *c)
@@ -216,25 +269,20 @@ get_matrix(matp_t m, struct draw_ctx *ctx, unsigned long long p_key, unsigned lo
     if (UNLIKELY(!m || !ctx || p_key == 0 || i_key == 0))
 	return false;
 
-    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, size_t>>::iterator ms_it;
+    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, std::vector<fastf_t>>>::iterator m_it;
     std::unordered_map<unsigned long long, std::vector<fastf_t>>::iterator mv_it;
-    mv_it = ctx->matrices.find(p_key);
-    ms_it = ctx->i_mats.find(p_key);
-    if (ms_it == ctx->i_mats.end() || mv_it == ctx->matrices.end())
+    m_it = ctx->matrices.find(p_key);
+    if (m_it == ctx->matrices.end())
 	return false;
-
-    std::unordered_map<unsigned long long, size_t>::iterator m_it = ms_it->second.find(i_key);
-    if (m_it == ms_it->second.end())
+    mv_it = m_it->second.find(i_key);
+    if (mv_it == m_it->second.end())
 	return false;
 
     // If we got this far, we have an index into the matrices vector.  Assign
     // the result to m
     std::vector<fastf_t> &mv = mv_it->second;
-    size_t ind = m_it->second;
-
-    for (size_t i = 0; i < 16; i++) {
-	m[i] = mv[16*ind + i];
-    }
+    for (size_t i = 0; i < 16; i++)
+	m[i] = mv[i];
 
     return true;
 }
@@ -256,16 +304,16 @@ get_bbox(point_t *bbmin, point_t *bbmax, struct draw_ctx *ctx, matp_t curr_mat, 
 	key = ctx->i_map[hash];
 
     // See if we have a direct bbox lookup available
-    std::unordered_map<unsigned long long, size_t>::iterator b_it;
-    b_it = ctx->bbox_indices.find(key);
-    if (b_it != ctx->bbox_indices.end()) {
+    std::unordered_map<unsigned long long, std::vector<fastf_t>>::iterator b_it;
+    b_it = ctx->bboxes.find(key);
+    if (b_it != ctx->bboxes.end()) {
 	point_t lbmin, lbmax;
-	lbmin[X] = ctx->bboxes[6*b_it->second+0];
-	lbmin[Y] = ctx->bboxes[6*b_it->second+1];
-	lbmin[Z] = ctx->bboxes[6*b_it->second+2];
-	lbmax[X] = ctx->bboxes[6*b_it->second+3];
-	lbmax[Y] = ctx->bboxes[6*b_it->second+4];
-	lbmax[Z] = ctx->bboxes[6*b_it->second+5];
+	lbmin[X] = b_it->second[0];
+	lbmin[Y] = b_it->second[1];
+	lbmin[Z] = b_it->second[2];
+	lbmax[X] = b_it->second[3];
+	lbmax[Y] = b_it->second[4];
+	lbmax[Z] = b_it->second[5];
 
 	if (curr_mat) {
 	    point_t tbmin, tbmax;
@@ -351,7 +399,7 @@ get_path_bbox(point_t *bbmin, point_t *bbmax, struct draw_ctx *ctx, std::vector<
 }
 
 void
-print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, struct draw_ctx *ctx)
+print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, struct draw_ctx *ctx, std::unordered_map<unsigned long long, std::string> *old_names)
 {
     if (!opath || !path.size() || !ctx)
 	return;
@@ -360,6 +408,14 @@ print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, struct d
 	// First, see if the hash is an instance string
 	if (ctx->i_str.find(path[i]) != ctx->i_str.end()) {
 	    bu_vls_printf(opath, "%s", ctx->i_str[path[i]].c_str());
+	    if (i < path.size() - 1)
+		bu_vls_printf(opath, "/");
+	    continue;
+	}
+	// If we have potentially obsolete names, check those
+	// before trying the dp (which may no longer be invalid)
+	if (old_names && old_names->find(path[i]) != old_names->end()) {
+	    bu_vls_printf(opath, "%s", (*old_names)[path[i]].c_str());
 	    if (i < path.size() - 1)
 		bu_vls_printf(opath, "/");
 	    continue;
@@ -648,10 +704,8 @@ populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
 
     // If we have a non-IDN matrix, store it
     if (c_m) {
-	for (int i = 0; i < 16; i++) {
-	    d->ctx->matrices[d->phash].push_back(c_m[i]);
-	}
-	d->ctx->i_mats[d->phash][chash] = d->ctx->matrices[d->phash].size()/16 - 1;
+	for (int i = 0; i < 16; i++)
+	    d->ctx->matrices[d->phash][chash].push_back(c_m[i]);
     }
 
     // If we have a non-UNION op, store it
@@ -689,6 +743,83 @@ populate_maps(struct ged *gedp, struct draw_ctx *ctx, struct directory *dp, unsi
 	draw_walk_tree(comb->tree, (void *)&d, 0, populate_leaf);
 	rt_db_free_internal(&in);
     }
+}
+
+static unsigned long long
+update_dp(struct ged *gedp, struct draw_ctx *ctx, struct directory *dp, int reset)
+{
+    if (dp->d_flags & DB_LS_HIDDEN)
+	return 0;
+
+    // Set up to go from hash back to name
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+    unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+    ctx->d_map[hash] = dp;
+
+    // If this isn't a comb, find and record the untransformed
+    // bounding box
+    ctx->bboxes.erase(hash);
+    if (!(dp->d_flags & RT_DIR_COMB)) {
+	point_t bmin, bmax;
+	mat_t m;
+	MAT_IDN(m);
+	int bret = rt_bound_instance(&bmin, &bmax, dp, gedp->dbip,
+		&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol,
+		&m, &rt_uniresource, gedp->ged_gvp);
+	if (bret != -1) {
+	    for (size_t j = 0; j < 3; j++)
+		ctx->bboxes[hash].push_back(bmin[j]);
+	    for (size_t j = 0; j < 3; j++)
+		ctx->bboxes[hash].push_back(bmax[j]);
+	}
+    }
+
+    // Encode hierarchy info if this is a comb
+    if (dp->d_flags & RT_DIR_COMB)
+	populate_maps(gedp, ctx, dp, hash, reset);
+
+    // Check for various drawing related attributes
+    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
+    db5_get_attributes(gedp->dbip, &c_avs, dp);
+
+    // Check for region id.  For drawing purposes this needs to be a number.
+    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
+    int region_id = -1;
+    if (region_id_val) {
+	if (bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id) != -1) {
+	    ctx->region_id[hash] = region_id;
+	} else {
+	    bu_log("%s is not a valid region_id\n", region_id_val);
+	    region_id = -1;
+	}
+    }
+
+    // Check for an inherit flag
+    int color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
+    ctx->c_inherit.erase(hash);
+    if (color_inherit)
+	ctx->c_inherit[hash] = color_inherit;
+
+    // Color (note that the rt_material_head colors and a region_id may
+    // override this, as might a parent comb with color and the inherit
+    // flag both set.
+    ctx->rgb.erase(hash);
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    const char *color_val = bu_avs_get(&c_avs, "color");
+    if (!color_val)
+	color_val = bu_avs_get(&c_avs, "rgb");
+    if (color_val){
+	bu_opt_color(NULL, 1, &color_val, (void *)&c);
+	unsigned int cval = color_int(&c);
+	ctx->rgb[hash] = cval;
+    }
+
+    // Done with attributes
+    bu_avs_free(&c_avs);
+
+    return hash;
 }
 
 static bool
@@ -927,12 +1058,12 @@ draw_gather_paths(void *d, const char *name, matp_t m, int UNUSED(op))
     } else {
 	dd->path_hashes.push_back(chash);
     }
-
+#if 0
     struct bu_vls path_str = BU_VLS_INIT_ZERO;
     print_path(&path_str, dd->path_hashes, dd->ctx);
     bu_log("%s\n", bu_vls_cstr(&path_str));
     bu_vls_free(&path_str);
-
+#endif
     mat_t om, nm;
     /* Update current matrix state to reflect the new branch of
      * the tree. Either we have a local matrix, or we have an
@@ -966,7 +1097,7 @@ draw_gather_paths(void *d, const char *name, matp_t m, int UNUSED(op))
 	}
     } else {
 	// Solid - scene object time
-	bu_log("make solid\n");
+	//bu_log("make solid\n");
 	unsigned long long phash = path_hash(dd->path_hashes, 0);
 	dd->ctx->s_keys[phash] = dd->path_hashes;
     }
@@ -978,7 +1109,7 @@ draw_gather_paths(void *d, const char *name, matp_t m, int UNUSED(op))
 }
 
 static void
-draw(struct ged *gedp, struct draw_ctx *ctx, const char *path)
+draw_path(struct ged *gedp, struct draw_ctx *ctx, const char *path)
 {
     mat_t m;
     MAT_IDN(m);
@@ -1009,6 +1140,12 @@ draw(struct ged *gedp, struct draw_ctx *ctx, const char *path)
 	return;
     }
 
+    // If we have a non-toplevel to draw, we need to "seed" path hashes
+    // with all but the last hash from elements so the correct paths
+    // are recorded
+    d.path_hashes = elements;
+    d.path_hashes.pop_back();
+
     point_t bbmin, bbmax;
     VSETALL(bbmin, INFINITY);
     VSETALL(bbmax, -INFINITY);
@@ -1019,8 +1156,8 @@ draw(struct ged *gedp, struct draw_ctx *ctx, const char *path)
 }
 
 
-static void
-erase(struct draw_ctx *ctx, const char *path)
+void
+erase_path(struct draw_ctx *ctx, const char *path)
 {
     std::vector<std::string> pe;
     path_elements(pe, path);
@@ -1053,23 +1190,47 @@ erase(struct draw_ctx *ctx, const char *path)
 }
 
 static void
-collapse(struct draw_ctx *ctx)
+collapse(
+	std::vector<std::vector<unsigned long long>> &collapsed,
+	std::unordered_set<unsigned long long> *all_fully_drawn,
+	std::vector<unsigned long long> &active_paths,
+	std::unordered_map<unsigned long long, std::vector<unsigned long long>> input_map,
+	struct draw_ctx *ctx)
 {
     std::unordered_set<unsigned long long>::iterator s_it;
     std::map<size_t, std::unordered_set<unsigned long long>> depth_groups;
 
-    std::vector<std::vector<unsigned long long>> drawn_paths;
-    ctx->drawn_paths.clear();
+    // Reset containers
+    collapsed.clear();
+    if (all_fully_drawn)
+	all_fully_drawn->clear();
 
     // Group paths of the same depth.  Depth == 1 paths are already
-    // top level objects and need no further processing
+    // top level objects and need no further processing.  If active_paths
+    // is empty, the active set is all paths in input_map
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
-    for (k_it = ctx->s_keys.begin(); k_it != ctx->s_keys.end(); k_it++) {
-	if (k_it->second.size() == 1) {
-	    drawn_paths.push_back(k_it->second);
-	    ctx->drawn_paths.insert(k_it->first);
-	} else {
-	    depth_groups[k_it->second.size()].insert(k_it->first);
+    if (active_paths.size()) {
+	for (size_t i = 0; i != active_paths.size(); i++) {
+	    k_it = input_map.find(active_paths[i]);
+	    if (k_it == input_map.end())
+		continue;
+	    if (k_it->second.size() == 1) {
+		collapsed.push_back(k_it->second);
+		if (all_fully_drawn)
+		    all_fully_drawn->insert(k_it->first);
+	    } else {
+		depth_groups[k_it->second.size()].insert(k_it->first);
+	    }
+	}
+    } else {
+	for (k_it = input_map.begin(); k_it != input_map.end(); k_it++) {
+	    if (k_it->second.size() == 1) {
+		collapsed.push_back(k_it->second);
+		if (all_fully_drawn)
+		    all_fully_drawn->insert(k_it->first);
+	    } else {
+		depth_groups[k_it->second.size()].insert(k_it->first);
+	    }
 	}
     }
     bu_log("depth groups: %zd\n", depth_groups.size());
@@ -1084,9 +1245,12 @@ collapse(struct draw_ctx *ctx)
 	std::unordered_set<unsigned long long> &pckeys = depth_groups.rbegin()->second;
 	bu_log("depth_groups(%zd) key count: %zd\n", plen, pckeys.size());
 
+	// For a given depth, group the paths by parent comb.  This results
+	// in path sub-groups which will define for us how "fully drawn"
+	// that particular parent comb is.
 	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> grouped_pckeys;
 	for (s_it = pckeys.begin(); s_it != pckeys.end(); s_it++) {
-	    std::vector<unsigned long long> &pc_path = ctx->s_keys[*s_it];
+	    std::vector<unsigned long long> &pc_path = input_map[*s_it];
 	    grouped_pckeys[pc_path[plen-2]].insert(*s_it);
 	}
 
@@ -1097,43 +1261,55 @@ collapse(struct draw_ctx *ctx)
 	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pg_it;
 	for (pg_it = grouped_pckeys.begin(); pg_it != grouped_pckeys.end(); pg_it++) {
 
-	    // Because we store keys to full paths, we construct the set of the children
-	    // needed at this specific depth from the full paths for comparison purposes
+	    // As above, use the full path from the input_map, but this time
+	    // we're collecting the children.  This is the set we need to compare
+	    // against the .g ground truth to determine fully or partially drawn.
 	    std::unordered_set<unsigned long long> g_children;
 	    std::unordered_set<unsigned long long> &g_pckeys = pg_it->second;
 	    for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
-		std::vector<unsigned long long> &pc_path = ctx->s_keys[*s_it];
+		std::vector<unsigned long long> &pc_path = input_map[*s_it];
 		g_children.insert(pc_path[plen-1]);
 	    }
 
-	    // Do the check against the .g comb children info
-	    bool fully_drawn = true;
+	    // Do the check against the .g comb children info - the "ground truth"
+	    // that defines what must be present for a fully drawn comb
+	    bool is_fully_drawn = true;
 	    std::unordered_set<unsigned long long> &ground_truth = ctx->p_c[pg_it->first];
 	    for (s_it = ground_truth.begin(); s_it != ground_truth.end(); s_it++) {
 		if (g_children.find(*s_it) == g_children.end()) {
-		    fully_drawn = false;
+		    is_fully_drawn = false;
 		    break;
 		}
 	    }
 
-	    if (fully_drawn) {
-		// If fully drawn, depth_groups[plen-1] gets the first path in g_pckeys.  The path is longer
-		// than that depth, but contains all the necessary information and using that approach avoids
+	    if (is_fully_drawn) {
+		// If fully drawn, depth_groups[plen-1] gets the first path in
+		// g_pckeys.  The path is longer than that depth, but contains
+		// all the necessary information and using that approach avoids
 		// the need to duplicate paths.
 		depth_groups[plen - 1].insert(*g_pckeys.begin());
-		for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
-		    std::vector<unsigned long long> &pc_path = ctx->s_keys[*s_it];
-		    ctx->drawn_paths.insert(path_hash(pc_path, plen));
+		if (all_fully_drawn) {
+		    for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
+			std::vector<unsigned long long> &pc_path = input_map[*s_it];
+			// Hash only to the current path length (we may have deeper
+			// promoted paths being used at this level)
+			all_fully_drawn->insert(path_hash(pc_path, plen));
+		    }
 		}
 	    } else {
 		// No further collapsing - add to final.  We must make trimmed
-		// versions of the paths in case this depth holds promoted paths
-		// from deeper levels.
+		// versions of the paths in case this depth holds promoted
+		// paths from deeper levels, since we are duplicating the full
+		// path contents.
 		for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
-		    std::vector<unsigned long long> trimmed = ctx->s_keys[*s_it];
+		    std::vector<unsigned long long> trimmed = input_map[*s_it];
 		    trimmed.resize(plen);
-		    drawn_paths.push_back(trimmed);
-		    ctx->drawn_paths.insert(path_hash(trimmed, 0));
+		    collapsed.push_back(trimmed);
+		    if (all_fully_drawn) {
+			// Hash is calculated on that trimmed path, so this time we
+			// don't need to specify a depth limit.
+			all_fully_drawn->insert(path_hash(trimmed, 0));
+		    }
 		}
 	    }
 	}
@@ -1143,25 +1319,22 @@ collapse(struct draw_ctx *ctx)
     }
 
     // If we collapsed all the way to top level objects, make sure to add them
+    // if they are still valid entries.  If a toplevel entry is invalid, there
+    // is no parent comb to refer to it as an "invalid" object and it can no
+    // longer be drawn.
     if (depth_groups.find(1) != depth_groups.end()) {
 	std::unordered_set<unsigned long long> &pckeys = depth_groups.rbegin()->second;
 	for (s_it = pckeys.begin(); s_it != pckeys.end(); s_it++) {
-	    std::vector<unsigned long long> trimmed = ctx->s_keys[*s_it];
+	    std::vector<unsigned long long> trimmed = input_map[*s_it];
 	    trimmed.resize(1);
-	    drawn_paths.push_back(trimmed);
+	    //if (ctx->d_map.find(trimmed[0]) == ctx->d_map.end())
+	//	continue;
+	    collapsed.push_back(trimmed);
 	}
     }
-
-    // DEBUG - print results
-    struct bu_vls path_str = BU_VLS_INIT_ZERO;
-    for (size_t i = 0; i < drawn_paths.size(); i++) {
-	print_path(&path_str, drawn_paths[i], ctx);
-	bu_log("%s\n", bu_vls_cstr(&path_str));
-    }
-    bu_vls_free(&path_str);
 }
 
-static void
+void
 split_test(const char *path)
 {
     std::vector<std::string> substrs;
@@ -1173,7 +1346,7 @@ split_test(const char *path)
 }
 
 
-static bool
+bool
 check_elements(struct ged *gedp, struct draw_ctx *ctx, std::vector<std::string> &elements)
 {
     if (!gedp || !elements.size())
@@ -1258,6 +1431,75 @@ check_elements(struct ged *gedp, struct draw_ctx *ctx, std::vector<std::string> 
     return true;
 }
 
+// 0 = valid, 1 = invalid, 2 = invalid, remain "drawn"
+int
+check_status(std::unordered_set<unsigned long long> *invalid_objects, std::vector<unsigned long long> &cpath, std::unordered_set<unsigned long long> &changed, struct g_ctx *g, struct draw_ctx *ctx)
+{
+    bool parent_changed = false;
+    for (size_t j = 0; j < cpath.size(); j++) {
+	unsigned long long phash = (j > 0) ? cpath[j-1] : 0;
+	unsigned long long hash = cpath[j];
+	if (phash && parent_changed) {
+	    // Need to see if this is still a parent of the new comb. This step
+	    // is why the draw update has to come AFTER the above primitive
+	    // update passes, so the comb can give us the correct, current
+	    // answer.
+	    bool is_parent = false;
+	    if (ctx->p_c.find(phash) != ctx->p_c.end() && ctx->p_c[phash].find(hash) != ctx->p_c[phash].end())
+		is_parent = true;
+	    // If not we're done, whether or not the parent dp was
+	    // removed from the database.
+	    if (!is_parent) {
+		if (invalid_objects)
+		    (*invalid_objects).insert(hash);
+		return 1;
+	    }
+	    // If it's still in the comb tree, proceed with the evaluation.
+	}
+
+	bool is_removed = (g->removed.find(hash) != g->removed.end());
+	bool is_changed = (changed.find(hash) != changed.end());
+	if (is_removed) {
+	    if (is_removed && !j) {
+		// Top level removed - everything else is gone
+		if (invalid_objects)
+		    (*invalid_objects).insert(hash);
+		return 1;
+	    }
+
+	    if (is_removed && j != cpath.size()-1) {
+		// If removed is first and not a leaf, erase - if we got here
+		// the parent comb either wasn't changed at all or this
+		// particular instance is still there; either way the state
+		// here is not preservable, since the path is trying to refer
+		// to a tree path which no longer exists in the hierarchy.
+		if (invalid_objects)
+		    (*invalid_objects).insert(hash);
+		return 1;
+	    }
+	    if (is_removed && j == cpath.size()-1) {
+		// If removed is a leaf and the comb instance is intact,
+		// leave "drawn" as invalid path.
+		return 2;
+	    }
+	}
+	if (is_changed) {
+	    if (j == cpath.size()-1) {
+		// Changed, but a leaf - stays drawn
+		return 0;
+	    }
+	    // Not a leaf - check child
+	    parent_changed = true;
+	    continue;
+	}
+
+	// If we got here, reset the parent changed flag
+	parent_changed = false;
+    }
+
+    return 0;
+}
+
 // The most involved task we must perform with these containers, in some ways,
 // is to update them in response to .g database changes...  need to figure out
 // if and how that will be accomplished.
@@ -1270,180 +1512,237 @@ check_elements(struct ged *gedp, struct draw_ctx *ctx, std::vector<std::string> 
 // validity or invalidity of some stages may depend on others.  Worst case
 // we need to fully process for each removed and changed pointer...
 void
-ctx_update(struct draw_ctx *ctx,
-	std::vector<struct directory *> &added,
-	std::vector<struct directory *> &removed,
-	std::vector<struct directory *> &changed
-	)
+ctx_update(struct draw_ctx *ctx, struct g_ctx *g)
 {
+    std::unordered_set<unsigned long long>::iterator s_it;
+    std::unordered_set<struct directory *>::iterator g_it;
     if (!ctx)
 	return;
 
-    // May need to save the "old" states for changed dps so we can evaluate
-    // if prior states were fully drawn for collapse/re-expand purposes, or maybe
-    // pre-evaluate that?
-    //
-    // collect all the paths with either removed or changed dps, then collapse
-    // until the leaf is a changed dp or not fully drawn.  The principle for
-    // redrawing will be that anything that was previously fully drawn should
-    // stay fully drawn, if its definition is still valid.  Once we have reduced
-    // the set to the originally fully drawn paths, work down from
-    // the root of each path looking for the first changed or removed entry.
-    //
-    // If changed is first and is not a leaf, we need to validate the next
-    // entry of the path against the new comb definition to see if it is still
-    // a valid child entry.
-    //
-    // If it is not a child of the comb any longer, erase the path.
-    //
-    // If it is still a child of the comb:
-    //    If the child is not being removed, reset and continue to next changed/removed using the same criteria.
-    //    If the child is being removed, evaluate according to remove criteria.
-    //
-    // If removed is first and not a leaf, erase - the parent comb wasn't changed,
-    // so the state here is not preservable.
-    // If removed is first is a leaf draw as invalid path - the parent comb
-    // wasn't changed
-    
-    for(size_t i = 0; i < added.size(); i++) {
-	bu_log("added: %s\n", added[i]->d_namep);
-	// package up dbi_Head procedure used in main to initialize, apply to
-	// these dps
-	//
-	// need to check if invalid instances are made valid by the addition of
-	// these dps
-	//
-	// NOTE:  if paths ending in invalid dps are present in the drawn set
-	// that are now valid, we need to expand them after the initial dp
-	// processing is complete and replace them with the expansions
+    if (g->need_update_nref) {
+	db_update_nref(g->gedp->dbip, &rt_uniresource);
+	g->need_update_nref = false;
     }
 
-    for(size_t i = 0; i < removed.size(); i++) {
-	bu_log("removed: %s\n", removed[i]->d_namep);
-	// Entries with this hash as their key are erased.  Combs with this
-	// key in their child set need to be updated to refer to it as an invalid
-	// entry.
-	//
-	// Any comb paths with this key in them need to be collected into a
-	// set, truncated back to the now-invalid key, and consolidated into
-	// a unique set of invalid paths to re-add to the "drawn" set so we
-	// don't lose track of their "actively drawn" status
+
+    // dps -> hashes
+    std::unordered_set<unsigned long long> changed;
+    XXH64_state_t h_state;
+    for(g_it = g->changed.begin(); g_it != g->changed.end(); g_it++) {
+	struct directory *dp = *g_it;
+	XXH64_reset(&h_state, 0);
+	XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+	changed.insert(hash);
     }
 
-    for(size_t i = 0; i < changed.size(); i++) {
-	bu_log("changed: %s\n", changed[i]->d_namep);
+    // Collect all the paths with either removed or changed dps
+    std::vector<unsigned long long> active_paths;
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
+    for (k_it = ctx->s_keys.begin(); k_it != ctx->s_keys.end(); k_it++) {
+	for (size_t i = 0; i < k_it->second.size(); i++) {
+	    unsigned long long hash = k_it->second[i];
+	    // If this is an instance, we need to map it to its canonical
+	    // comb hash for the check
+	    if (ctx->i_map.find(hash) != ctx->i_map.end()) { 
+		hash = ctx->i_map[hash];
+	    }
+	    if (g->removed.find(hash) != g->removed.end()) {
+		active_paths.push_back(k_it->first);
+		break;
+	    }
+	    if (changed.find(hash) != changed.end()) {
+		active_paths.push_back(k_it->first);
+		break;
+	    }
+	}
+    }
+    bu_log("active_paths: %zd\n", active_paths.size());
+
+    // Collapse until the leaf is a changed dp or not fully drawn.  We must do
+    // this before the comb p_c relationships are updated in the context, since
+    // we want the answers for this collapse to be from the prior state, not
+    // the current state.
+    std::vector<std::vector<unsigned long long>> collapsed;
+    collapse(collapsed, NULL, active_paths, ctx->s_keys, ctx);
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed altered paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], ctx, &g->old_names);
+	    bu_log("\t%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
+
+    // Update the primary data structures 
+    for(s_it = g->removed.begin(); s_it != g->removed.end(); s_it++) {
+	bu_log("removed: %llu\n", *s_it);
+
+	// Combs with this key in their child set need to be updated to refer
+	// to it as an invalid entry.
+	std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator pv_it;
+	for (pv_it = ctx->p_v.begin(); pv_it != ctx->p_v.end(); pv_it++) {
+	    for (size_t i = 0; i < pv_it->second.size(); i++) {
+		if (ctx->i_map.find(pv_it->second[i]) != ctx->i_map.end()) {
+		    ctx->invalid_entry_map[ctx->i_map[pv_it->second[i]]] = ctx->i_str[ctx->i_map[pv_it->second[i]]];
+		} else {
+		    ctx->invalid_entry_map[pv_it->second[i]] = g->old_names[*s_it];
+		}
+	    }
+	}
+
+	ctx->d_map.erase(*s_it);
+	ctx->bboxes.erase(*s_it);
+	ctx->c_inherit.erase(*s_it);
+	ctx->rgb.erase(*s_it);
+	ctx->region_id.erase(*s_it);
+	ctx->matrices.erase(*s_it);
+	ctx->i_bool.erase(*s_it);
+
+	// We do not clear the instance maps (i_map and i_str) since those containers do not
+	// guarantee uniqueness to one child object.  To remove entries no longer
+	// used anywhere in the database, we have to confirm they are no longer needed on a global
+	// basis in a subsequent garbage-collect operation.
+
+	// Entries with this hash as their key are erased.  
+	ctx->p_c.erase(*s_it);
+	ctx->p_v.erase(*s_it);
+    }
+
+    for(g_it = g->added.begin(); g_it != g->added.end(); g_it++) {
+	struct directory *dp = *g_it;
+	bu_log("added: %s\n", dp->d_namep);
+	unsigned long long hash = update_dp(g->gedp, ctx, dp, 0);
+
+	// If this name was previously the source of an invalid reference,
+	// it is no longer.
+	ctx->invalid_entry_map.erase(hash);
+    }
+
+    for(g_it = g->changed.begin(); g_it != g->changed.end(); g_it++) {
+	struct directory *dp = *g_it;
+	bu_log("changed: %s\n", dp->d_namep);
 	// Properties need to be updated - comb children, colors, matrices,
-	// etc.  Paths with changed items in their array need to be collected,
-	// collapsed to the minimum fully drawn paths, and considered.  If
-	// the changed pointer is the leaf then it can simply be re-expanded
-	// as it was fully drawn before, but if it is a parent then we need
-	// to check and see if the children below the parent are still valid.
-	// If not, those paths are removed from the drawn set
+	// bounding box for solids, etc.
+	update_dp(g->gedp, ctx, dp, 1);
     }
 
-    // May want to "garbage collect" invalid entires and instances sets...
+    // Garbage collect i_map and i_str
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator sk_it;
+    std::unordered_set<unsigned long long> used;
+    for (sk_it = ctx->p_v.begin(); sk_it != ctx->p_v.end(); sk_it++) {
+	used.insert(sk_it->second.begin(), sk_it->second.end());
+    }
+    std::vector<unsigned long long> unused;
+    std::unordered_map<unsigned long long, unsigned long long>::iterator im_it;
+    for (im_it = ctx->i_map.begin(); im_it != ctx->i_map.end(); im_it++) {
+	if (used.find(im_it->first) != used.end())
+	    unused.push_back(im_it->first);
+    }
+    for (size_t i = 0; i < unused.size(); i++) {
+	ctx->i_map.erase(unused[i]);
+	ctx->i_str.erase(unused[i]);
+    }
+
+    // The principle for redrawing will be that anything that was previously
+    // fully drawn should stay fully drawn, even if its tree structure has
+    // changed.  We need to remove no-longer-valid paths, but will keep valid
+    // paths to avoid the work of re-generating the scene objects when we
+    // re-expand the collapsed paths using the new tree structure.
+
+    std::unordered_set<unsigned long long> invalid_objects;
+    for (sk_it = ctx->s_keys.begin(); sk_it != ctx->s_keys.end(); sk_it++) {
+	// Work down from the root of each path looking for the first changed or
+	// removed entry.
+	std::vector<unsigned long long> &cpath = sk_it->second;
+	check_status(&invalid_objects, cpath, changed, g, ctx);
+    }
+
+    std::unordered_set<unsigned long long>::iterator iv_it;
+    for (iv_it = invalid_objects.begin(); iv_it != invalid_objects.end(); iv_it++) {
+	ctx->s_keys.erase(*iv_it);
+	bu_log("erase: %llu\n", *iv_it);
+	if (ctx->s_map.find(*iv_it) != ctx->s_map.end()) {
+	    // an invalid child entry may be present in s_keys but not have an
+	    // associated scene object.
+	// free scene obj ctx->s_map[*iv_it];
+	}
+    }
+
+    // Also need to evaluate collapsed paths according to the same criteria, before
+    // we re-expand them
+    std::unordered_set<size_t> active_collapsed;
+    std::unordered_set<size_t> draw_invalid_collapsed;
+    for (size_t i = 0; i < collapsed.size(); i++) {
+	std::vector<unsigned long long> &cpath = collapsed[i];
+	int sret = check_status(NULL, cpath, changed, g, ctx);
+	if (sret == 2)
+	    draw_invalid_collapsed.insert(i);
+	if (sret == 0)
+	    active_collapsed.insert(i);
+    }
+
+    // Expand active collapsed paths to solids, creating any missing path objects
+
+
+    // Added dps present their own challenge, in terms of whether or not to
+    // automatically draw them.  (I think this decision comes after the existing
+    // draw paths' removed/changed processing and the main .g reflecting maps are
+    // updated.)  The cases:
+    //
+    // 1.  Already part of a drawn invalid path - draw and expand, as path was
+    // drawn but is no longer invalid
+    //
+    // 2.  Already part of a non-drawn invalid path - do not draw (? - could see
+    // a case for either behavior here, if the user wants to see the instances
+    // of the newly enabled part... this may have to be a user option)
+    //
+    // 2.  Not part of any path, pre or post removed/changed draw states (i.e.
+    // a tops object) - draw
+
+    // Final step - rebuild drawn_paths to reflect current drawn state
 }
 
 
 
 int
-main(int ac, char *av[]) {
+main(int argc, char *argv[]) {
     struct ged *gedp;
 
-    bu_setprogname(av[0]);
+    bu_setprogname(argv[0]);
 
-    if (ac != 2) {
-	printf("Usage: %s file.g\n", av[0]);
+    if (argc != 2) {
+	printf("Usage: %s file.g\n", argv[0]);
 	return 1;
     }
-    if (!bu_file_exists(av[1], NULL)) {
-	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
+    if (!bu_file_exists(argv[1], NULL)) {
+	printf("ERROR: [%s] does not exist, expecting .g file\n", argv[1]);
 	return 2;
     }
 
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
 
-    gedp = ged_open("db", av[1], 1);
+    gedp = ged_open("db", argv[1], 1);
+
+    struct g_ctx g;
+    g.gedp = gedp;
+
+    db_add_changed_clbk(gedp->dbip, &dp_changed_clbk, (void *)&g);
 
     struct draw_ctx ctx;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_flags & DB_LS_HIDDEN)
-		continue;
-
-	    // Set up to go from hash back to name
-	    XXH64_state_t h_state;
-	    XXH64_reset(&h_state, 0);
-	    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	    unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
-	    ctx.d_map[hash] = dp;
-
-	    // If this isn't a comb, find and record the untransformed
-	    // bounding box
-	    if (!(dp->d_flags & RT_DIR_COMB)) {
-		point_t bmin, bmax;
-		mat_t m;
-		MAT_IDN(m);
-		int bret = rt_bound_instance(&bmin, &bmax, dp, gedp->dbip,
-			&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol,
-			&m, &rt_uniresource, gedp->ged_gvp);
-		if (bret != -1) {
-		    size_t ind = ctx.bboxes.size() / 6;
-		    for (size_t j = 0; j < 3; j++)
-			ctx.bboxes.push_back(bmin[j]);
-		    for (size_t j = 0; j < 3; j++)
-			ctx.bboxes.push_back(bmax[j]);
-		    ctx.bbox_indices[hash] = ind;
-		}
-	    }
-
-	    // Encode hierarchy info if this is a comb
-	    if (dp->d_flags & RT_DIR_COMB)
-		populate_maps(gedp, &ctx, dp, hash, 0);
-
-	    // Check for various drawing related attributes
-	    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
-	    db5_get_attributes(gedp->dbip, &c_avs, dp);
-
-	    // Check for region id.  For drawing purposes this needs to be a number.
-	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
-	    int region_id = -1;
-	    if (region_id_val) {
-		if (bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id) != -1) {
-		    ctx.region_id[hash] = region_id;
-		} else {
-		    bu_log("%s is not a valid region_id\n", region_id_val);
-		    region_id = -1;
-		}
-	    }
-
-	    // Check for an inherit flag
-	    int color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
-	    if (color_inherit)
-		ctx.c_inherit[hash] = color_inherit;
-
-	    // Color (note that the rt_material_head colors and a region_id may
-	    // override this, as might a parent comb with color and the inherit
-	    // flag both set.
-	    struct bu_color c = BU_COLOR_INIT_ZERO;
-	    const char *color_val = bu_avs_get(&c_avs, "color");
-	    if (!color_val)
-		color_val = bu_avs_get(&c_avs, "rgb");
-	    if (color_val){
-		bu_opt_color(NULL, 1, &color_val, (void *)&c);
-		unsigned int cval = color_int(&c);
-		ctx.rgb[hash] = cval;
-	    }
-
-	    // Done with attributes
-	    bu_avs_free(&c_avs);
+	    update_dp(gedp, &ctx, dp, 0);
 	}
     }
 
     //print_ctx_unordered(&ctx);
-    print_ctx_ordered(&ctx);
-
+    //print_ctx_ordered(&ctx);
+#if 0
     split_test("all.g/cone.r/cone.s");
     split_test("all.g/cone.r/cone.s/");
     split_test("all.g/cone.r/cone.s//");
@@ -1477,10 +1776,11 @@ main(int ac, char *av[]) {
 	path_elements(pe, "cone2.r\\//cone.s");
 	check_elements(gedp, &ctx, pe);
     }
+#endif
 
-    draw(gedp, &ctx, "all.g");
-
-
+    //draw_path(gedp, &ctx, "all.g");
+    draw_path(gedp, &ctx, "havoc");
+#if 0
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
     for (k_it = ctx.s_keys.begin(); k_it != ctx.s_keys.end(); k_it++) {
 	struct bu_color c = BU_COLOR_INIT_ZERO;
@@ -1492,24 +1792,173 @@ main(int ac, char *av[]) {
 	     bu_log("%llu: no color\n", k_it->first);
 	}
     }
+#endif
 
-    collapse(&ctx);
+    if (g.changed_flag) {
+	bu_log("changed\n");
+	ctx_update(&ctx, &g);
+	g.added.clear();
+	g.removed.clear();
+	g.changed.clear();
+	g.changed_flag = false;
+    }
+
+    std::vector<unsigned long long> active_paths;
+    std::vector<std::vector<unsigned long long>> collapsed;
+    collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], &ctx, NULL);
+	    bu_log("%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
 
-    //erase(&ctx, "all.g/havoc/havoc_middle");
-    erase(&ctx, "all.g/box.r");
 
-    collapse(&ctx);
+#if 1
+
+    erase_path(&ctx, "havoc/havoc_middle");
+    //erase_path(&ctx, "all.g/box.r");
+
+    collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], &ctx, NULL);
+	    bu_log("%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
 
-    erase(&ctx, "all.g");
+    //erase_path(&ctx, "all.g");
+    erase_path(&ctx, "havoc");
 
-    collapse(&ctx);
+    collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
     bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], &ctx, NULL);
+	    bu_log("%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
 
-    draw(gedp, &ctx, "all.g/box2.r");
+    //draw_path(gedp, &ctx, "all.g/box2.r");
+    draw_path(gedp, &ctx, "havoc/havoc_middle");
+    draw_path(gedp, &ctx, "rt_r.pyl1_atch/rt_s.ecov1");
 
-    draw(gedp, &ctx, "box2.r");
+    collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
+    bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], &ctx, NULL);
+	    bu_log("%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
+
+
+    //draw_path(gedp, &ctx, "box2.r");
+    draw_path(gedp, &ctx, "havoc_tail");
+
+    collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
+    bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], &ctx, NULL);
+	    bu_log("%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
+#endif
+
+    const char *av[5] = {NULL};
+    av[0] = "kill";
+    av[1] = "rt_s.ecov1";
+    ged_exec(gedp, 2, av);
+
+    av[0] = "rm";
+    av[1] = "havoc_middle";
+    av[2] = "mid_body";
+    ged_exec(gedp, 3, av);
+
+    av[0] = "rm";
+    av[1] = "havoc_middle";
+    av[2] = "apu_cover";
+    ged_exec(gedp, 3, av);
+
+    if (g.changed_flag) {
+	bu_log("changed\n");
+	ctx_update(&ctx, &g);
+	g.added.clear();
+	g.removed.clear();
+	g.changed.clear();
+	g.changed_flag = false;
+    }
+
+    collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
+    bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], &ctx, NULL);
+	    bu_log("%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
+
+    av[0] = "kill";
+    av[1] = "rt_r.pyl1_atch";
+    ged_exec(gedp, 2, av);
+
+    if (g.changed_flag) {
+	bu_log("changed\n");
+	ctx_update(&ctx, &g);
+	g.added.clear();
+	g.removed.clear();
+	g.changed.clear();
+	g.changed_flag = false;
+    }
+
+    collapse(collapsed, &ctx.drawn_paths, active_paths, ctx.s_keys, &ctx);
+    bu_log("drawn path cnt: %zd\n", ctx.drawn_paths.size());
+    {
+	// DEBUG - print results
+	bu_log("\n\nCollapsed paths:\n");
+	struct bu_vls path_str = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < collapsed.size(); i++) {
+	    print_path(&path_str, collapsed[i], &ctx, NULL);
+	    bu_log("%s\n", bu_vls_cstr(&path_str));
+	}
+	bu_vls_free(&path_str);
+	bu_log("\n");
+    }
+
+
 
     ged_close(gedp);
 

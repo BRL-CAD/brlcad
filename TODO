@@ -139,6 +139,15 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Attempt to update to use latest upstream poly2tri resulted in incorrect
+  shading when trying to view the NIST2 example - many faces didn't
+  facetize.  We've had occasional robustness problems with brep triangulation
+  for a long while - need to investigate approaches to this algorithm that
+  might help:
+
+  https://github.com/ChengCat/fast-poly2tri
+  https://github.com/raptor/clip2tri
+
 * add basic bot validation so we can have a means to sanity check
   that vertex, edge, and other indices are valid.
 

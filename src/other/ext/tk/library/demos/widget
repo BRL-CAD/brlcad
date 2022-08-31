@@ -83,12 +83,20 @@ image create photo ::img::print -format GIF -data {
 
 # Note that this is run through the message catalog! This is because this is
 # actually an image of a word.
-image create photo ::img::new -format GIF -data [mc {
-    R0lGODlhHgAOALMPALMAANyIiOu7u8dEROaqqvru7sxVVeGZmbgREfXd3b0iItZ3
-    d8IzM9FmZvDMzP///yH5BAEAAA8ALAAAAAAeAA4AAASa8MlJq7046827WVOCHEkw
-    nANhUgJlEBIABJIwL3K+4IcUALCHjfbItYZDSgJgkBiYPmBMAUAkkLPKs/BAyLgM
-    wAQwOAAY2ByCaw4QAFQSoDEePJ6DmU1xInYZTw5nOEFFdgVUelkVDTIMd3AKFGQ1
-    MgI2AwEmQW8APZ0gdRONAks5nhIFVVxdAAkUAS2pAVwFl7ITB4UqHb0XEQA7
+image create photo ::img::new -format PNG -data [mc {
+    iVBORw0KGgoAAAANSUhEUgAAAB4AAAAOCAYAAAA45qw5AAACMElEQVR4AeVTAwxd
+    QRCc2tZHGtQ2w9q2bdsOa9u2bUW1bdt2Z372JZe6DapJLqtb3h7+T8yKi5j4CsYD
+    EUQXxETclT7kWOlH2VV+tFkdQHPSwksSISF+BauCqL0qgOcMWgGfgEkaMsHxqUBk
+    3plE/sOnh/qDPAPJH/CKFBivGHWzFwBRnHhlqbu1Mh6CoFNnC/JshQ9p4YC2lrKt
+    DCAV+THiVejyhMjAbrNSrroiEfKR9g7ZfCgOog8QfnUQV62wAk68ndQ9ZbyoWO1H
+    Y6eDY1LCQL6a9ApOp9Hi1T0+gQq2JKMlky/oTKQliKWxEZvyG575kpW4pl1aZnQK
+    CLOVt45Lkp8uXp2SL8KO6uitNTZLdpK6s+I/eZbhpmsmWeOGOVQNKYLITzpKPAO3
+    tY7LSNZ7ccSLxX9y3uuOxRkg3dKESMoCHvL+GRVCutXsB3guLgDCeXOv4iWWkvwG
+    BaS+PmlpK6SI9ApI2oC2UtrwZQEkhkH+NtolVlQXJl1I+QltuU3XEc721bIRFpa8
+    IA5iqTo6vNNWmkNBLQbPeXwF2g17Q94nTQAfY3YzeY+WSu8MDzQ2kpELUhSGJUHE
+    0zeR3rY1L+Xl5G/re+jbiK6KhThwwInsts1fbMUUcpZszKeVtggZEiGdZDe5AtHh
+    7vL4CGiRvvKPS8FAvq9Nr4ZkFadR2y6kggu1z4vlyIbBp6BugQ8JLEg4bTkD9eMZ
+    QZ8hpJ3VvTtuvbWrY/ElvP/9R+Aj3603+iE3fkEAAAAASUVORK5CYII=
 }]
 
 #----------------------------------------------------------------
@@ -186,6 +194,10 @@ if {[winfo depth .] == 1} {
 	-foreground blue -underline 1
     .t tag configure visited -lmargin1 1c -lmargin2 1c \
 	-foreground #303080 -underline 1
+    if {[tk windowingsystem] eq "aqua"} {
+	.t tag configure demo -foreground systemLinkColor
+	.t tag configure visited -foreground purple
+    }
     .t tag configure hot -foreground red -underline 1
 }
 .t tag bind demo <ButtonRelease-1> {
@@ -504,7 +516,7 @@ proc invoke index {
     .t configure -cursor [::ttk::cursor busy]
     update
     set demo [string range [lindex $tags $i] 5 end]
-    uplevel 1 [list source [file join $tk_demoDirectory $demo.tcl]]
+    uplevel 1 [list source -encoding utf-8 [file join $tk_demoDirectory $demo.tcl]]
     update
     .t configure -cursor $cursor
 
@@ -612,6 +624,7 @@ proc showCode w {
     wm title $top [mc "Demo code: %s" [file join $tk_demoDirectory $file]]
     wm iconname $top $file
     set id [open [file join $tk_demoDirectory $file]]
+    fconfigure $id -encoding utf-8 -eofchar "\032 {}"
     $top.f.text delete 1.0 end
     $top.f.text insert 1.0 [read $id]
     $top.f.text mark set insert 1.0
@@ -710,10 +723,10 @@ proc PrintTextWin32 {filename} {
 proc tkAboutDialog {} {
     tk_messageBox -icon info -type ok -title [mc "About Widget Demo"] \
 	    -message [mc "Tk widget demonstration application"] -detail \
-"[mc "Copyright \u00a9 %s" {1996-1997 Sun Microsystems, Inc.}]
-[mc "Copyright \u00a9 %s" {1997-2000 Ajuba Solutions, Inc.}]
-[mc "Copyright \u00a9 %s" {2001-2009 Donal K. Fellows}]
-[mc "Copyright \u00a9 %s" {2002-2007 Daniel A. Steffen}]"
+"[mc "Copyright \xA9 %s" {1996-1997 Sun Microsystems, Inc.}]
+[mc "Copyright \xA9 %s" {1997-2000 Ajuba Solutions, Inc.}]
+[mc "Copyright \xA9 %s" {2001-2009 Donal K. Fellows}]
+[mc "Copyright \xA9 %s" {2002-2007 Daniel A. Steffen}]"
 }
 
 # Local Variables:

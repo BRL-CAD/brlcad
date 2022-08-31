@@ -118,6 +118,7 @@ struct TcpState {
  * Static routines for this file:
  */
 
+static void		TcpAsyncCallback(ClientData clientData, int mask);
 static int		TcpConnect(Tcl_Interp *interp, TcpState *state);
 static void		TcpAccept(ClientData data, int mask);
 static int		TcpBlockModeProc(ClientData data, int mode);
@@ -134,6 +135,7 @@ static int		TcpInputProc(ClientData instanceData, char *buf,
 			    int toRead, int *errorCode);
 static int		TcpOutputProc(ClientData instanceData,
 			    const char *buf, int toWrite, int *errorCode);
+static void		TcpThreadActionProc(ClientData instanceData, int action);
 static void		TcpWatchProc(ClientData instanceData, int mask);
 static int		WaitForConnect(TcpState *statePtr, int *errorCodePtr);
 static void		WrapNotify(ClientData clientData, int mask);
@@ -159,7 +161,7 @@ static const Tcl_ChannelType tcpChannelType = {
     NULL,			/* flush proc. */
     NULL,			/* handler proc. */
     NULL,			/* wide seek proc. */
-    NULL,			/* thread action proc. */
+    TcpThreadActionProc,	/* thread action proc. */
     NULL			/* truncate proc. */
 };
 
@@ -228,9 +230,9 @@ InitializeHostName(
 	    char *dot = strchr(u.nodename, '.');
 
 	    if (dot != NULL) {
-		char *node = ckalloc(dot - u.nodename + 1);
+		char *node = (char *)ckalloc(dot - u.nodename + 1);
 
-		memcpy(node, u.nodename, (size_t) (dot - u.nodename));
+		memcpy(node, u.nodename, dot - u.nodename);
 		node[dot - u.nodename] = '\0';
 		hp = TclpGetHostByName(node);
 		ckfree(node);
@@ -275,7 +277,7 @@ InitializeHostName(
     *encodingPtr = Tcl_GetEncoding(NULL, NULL);
     *lengthPtr = strlen(native);
     *valuePtr = ckalloc(*lengthPtr + 1);
-    memcpy(*valuePtr, native, (size_t)(*lengthPtr) + 1);
+    memcpy(*valuePtr, native, *lengthPtr + 1);
 }
 
 /*
@@ -320,8 +322,10 @@ Tcl_GetHostName(void)
 
 int
 TclpHasSockets(
-    Tcl_Interp *interp)		/* Not used. */
+    Tcl_Interp *dummy)		/* Not used. */
 {
+    (void)dummy;
+
     return TCL_OK;
 }
 
@@ -364,7 +368,6 @@ TclpFinalizeSockets(void)
  * ----------------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 static int
 TcpBlockModeProc(
     ClientData instanceData,	/* Socket state. */
@@ -372,7 +375,7 @@ TcpBlockModeProc(
 				 * TCL_MODE_BLOCKING or
 				 * TCL_MODE_NONBLOCKING. */
 {
-    TcpState *statePtr = instanceData;
+    TcpState *statePtr = (TcpState *)instanceData;
 
     if (mode == TCL_MODE_BLOCKING) {
 	CLEAR_BITS(statePtr->flags, TCP_NONBLOCKING);
@@ -496,7 +499,6 @@ WaitForConnect(
  *----------------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 static int
 TcpInputProc(
     ClientData instanceData,	/* Socket state. */
@@ -505,7 +507,7 @@ TcpInputProc(
 				 * buffer? */
     int *errorCodePtr)		/* Where to store error code. */
 {
-    TcpState *statePtr = instanceData;
+    TcpState *statePtr = (TcpState *)instanceData;
     int bytesRead;
 
     *errorCodePtr = 0;
@@ -555,7 +557,7 @@ TcpOutputProc(
     int toWrite,		/* How many bytes to write? */
     int *errorCodePtr)		/* Where to store error code. */
 {
-    TcpState *statePtr = instanceData;
+    TcpState *statePtr = (TcpState *)instanceData;
     int written;
 
     *errorCodePtr = 0;
@@ -589,15 +591,15 @@ TcpOutputProc(
  *----------------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 static int
 TcpCloseProc(
     ClientData instanceData,	/* The socket to close. */
-    Tcl_Interp *interp)		/* For error reporting - unused. */
+    Tcl_Interp *dummy)		/* For error reporting - unused. */
 {
-    TcpState *statePtr = instanceData;
+    TcpState *statePtr = (TcpState *)instanceData;
     int errorCode = 0;
     TcpFdList *fds;
+    (void)dummy;
 
     /*
      * Delete a file handler that may be active for this socket if this is a
@@ -654,36 +656,27 @@ TcpCloseProc(
 static int
 TcpClose2Proc(
     ClientData instanceData,	/* The socket to close. */
-    Tcl_Interp *interp,		/* For error reporting. */
+    Tcl_Interp *dummy,		/* For error reporting. */
     int flags)			/* Flags that indicate which side to close. */
 {
-    TcpState *statePtr = instanceData;
-    int errorCode = 0;
-    int sd;
+    TcpState *statePtr = (TcpState *)instanceData;
+    int readError = 0;
+    int writeError = 0;
+    (void)dummy;
 
     /*
      * Shutdown the OS socket handle.
      */
-
-    switch(flags) {
-    case TCL_CLOSE_READ:
-        sd = SHUT_RD;
-        break;
-    case TCL_CLOSE_WRITE:
-        sd = SHUT_WR;
-        break;
-    default:
-        if (interp) {
-            Tcl_SetObjResult(interp, Tcl_NewStringObj(
-                    "socket close2proc called bidirectionally", -1));
-        }
-        return TCL_ERROR;
+    if ((flags & (TCL_CLOSE_READ|TCL_CLOSE_WRITE)) == 0) {
+	return TcpCloseProc(instanceData, NULL);
     }
-    if (shutdown(statePtr->fds.fd,sd) < 0) {
-	errorCode = errno;
+    if ((flags & TCL_CLOSE_READ) && (shutdown(statePtr->fds.fd, SHUT_RD) < 0)) {
+	readError = errno;
     }
-
-    return errorCode;
+    if ((flags & TCL_CLOSE_WRITE) && (shutdown(statePtr->fds.fd, SHUT_WR) < 0)) {
+	writeError = errno;
+    }
+    return (readError != 0) ? readError : writeError;
 }
 
 /*
@@ -822,7 +815,7 @@ TcpGetOptionProc(
     Tcl_DString *dsPtr)		/* Where to store the computed value;
 				 * initialized by caller. */
 {
-    TcpState *statePtr = instanceData;
+    TcpState *statePtr = (TcpState *)instanceData;
     size_t len = 0;
 
     WaitForConnect(statePtr, NULL);
@@ -964,6 +957,51 @@ TcpGetOptionProc(
 /*
  * ----------------------------------------------------------------------
  *
+ * TcpThreadActionProc --
+ *
+ *	Handles detach/attach for asynchronously connecting socket.
+ *
+ *	Reassigning the file handler associated with thread-related channel
+ *	notification, responsible for callbacks (signaling that asynchronous
+ *	connection attempt has succeeded or failed).
+ *
+ * Results:
+ *	None.
+ *
+ * ----------------------------------------------------------------------
+ */
+
+static void
+TcpThreadActionProc(
+    ClientData instanceData,
+    int action)
+{
+    TcpState *statePtr = (TcpState *)instanceData;
+
+    if (GOT_BITS(statePtr->flags, TCP_ASYNC_CONNECT)) {
+	/*
+	 * Async-connecting socket must get reassigned handler if it have been
+	 * transferred to another thread. Remove the handler if the socket is
+	 * not managed by this thread anymore and create new handler (TSD related)
+	 * so the callback will run in the correct thread, bug [f583715154].
+	 */
+	switch (action) {
+	  case TCL_CHANNEL_THREAD_REMOVE:
+	    CLEAR_BITS(statePtr->flags, TCP_ASYNC_PENDING);
+	    Tcl_DeleteFileHandler(statePtr->fds.fd);
+	  break;
+	  case TCL_CHANNEL_THREAD_INSERT:
+	    Tcl_CreateFileHandler(statePtr->fds.fd,
+		TCL_WRITABLE | TCL_EXCEPTION, TcpAsyncCallback, statePtr);
+	    SET_BITS(statePtr->flags, TCP_ASYNC_PENDING);
+	  break;
+	}
+    }
+}
+
+/*
+ * ----------------------------------------------------------------------
+ *
  * TcpWatchProc --
  *
  *	Initialize the notifier to watch the fd from this channel.
@@ -1014,7 +1052,7 @@ TcpWatchProc(
 				 * TCL_READABLE, TCL_WRITABLE and
 				 * TCL_EXCEPTION. */
 {
-    TcpState *statePtr = instanceData;
+    TcpState *statePtr = (TcpState *)instanceData;
 
     if (statePtr->acceptProc != NULL) {
         /*
@@ -1080,14 +1118,14 @@ TcpWatchProc(
  * ----------------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 static int
 TcpGetHandleProc(
     ClientData instanceData,	/* The socket state. */
     int direction,		/* Not used. */
     ClientData *handlePtr)	/* Where to store the handle. */
 {
-    TcpState *statePtr = instanceData;
+    TcpState *statePtr = (TcpState *)instanceData;
+    (void)direction;
 
     *handlePtr = INT2PTR(statePtr->fds.fd);
     return TCL_OK;
@@ -1112,7 +1150,9 @@ TcpAsyncCallback(
 				 * TCL_READABLE, TCL_WRITABLE and
 				 * TCL_EXCEPTION. */
 {
-    TcpConnect(NULL, clientData);
+    (void)mask;
+
+    TcpConnect(NULL, (TcpState *)clientData);
 }
 
 /*
@@ -1371,7 +1411,7 @@ Tcl_OpenTcpClient(
      * Allocate a new TcpState for this socket.
      */
 
-    statePtr = ckalloc(sizeof(TcpState));
+    statePtr = (TcpState *)ckalloc(sizeof(TcpState));
     memset(statePtr, 0, sizeof(TcpState));
     statePtr->flags = async ? TCP_ASYNC_CONNECT : 0;
     statePtr->cachedBlocking = TCL_MODE_BLOCKING;
@@ -1450,7 +1490,7 @@ TclpMakeTcpClientChannelMode(
     TcpState *statePtr;
     char channelName[SOCK_CHAN_LENGTH];
 
-    statePtr = ckalloc(sizeof(TcpState));
+    statePtr = (TcpState *)ckalloc(sizeof(TcpState));
     memset(statePtr, 0, sizeof(TcpState));
     statePtr->fds.fd = PTR2INT(sock);
     statePtr->flags = 0;
@@ -1610,14 +1650,14 @@ Tcl_OpenTcpServer(
              * Allocate a new TcpState for this socket.
              */
 
-            statePtr = ckalloc(sizeof(TcpState));
+            statePtr = (TcpState *)ckalloc(sizeof(TcpState));
             memset(statePtr, 0, sizeof(TcpState));
             statePtr->acceptProc = acceptProc;
             statePtr->acceptProcData = acceptProcData;
             sprintf(channelName, SOCK_TEMPLATE, (long) statePtr);
             newfds = &statePtr->fds;
         } else {
-            newfds = ckalloc(sizeof(TcpFdList));
+            newfds = (TcpFdList *)ckalloc(sizeof(TcpFdList));
             memset(newfds, (int) 0, sizeof(TcpFdList));
             fds->next = newfds;
         }
@@ -1675,19 +1715,19 @@ Tcl_OpenTcpServer(
  *----------------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 static void
 TcpAccept(
     ClientData data,		/* Callback token. */
     int mask)			/* Not used. */
 {
-    TcpFdList *fds = data;	/* Client data of server socket. */
+    TcpFdList *fds = (TcpFdList *)data;	/* Client data of server socket. */
     int newsock;		/* The new client socket */
     TcpState *newSockState;	/* State for new socket. */
     address addr;		/* The remote address */
     socklen_t len;		/* For accept interface */
     char channelName[SOCK_CHAN_LENGTH];
     char host[NI_MAXHOST], port[NI_MAXSERV];
+    (void)mask;
 
     len = sizeof(addr);
     newsock = accept(fds->fd, &addr.sa, &len);
@@ -1702,7 +1742,7 @@ TcpAccept(
 
     (void) fcntl(newsock, F_SETFD, FD_CLOEXEC);
 
-    newSockState = ckalloc(sizeof(TcpState));
+    newSockState = (TcpState *)ckalloc(sizeof(TcpState));
     memset(newSockState, 0, sizeof(TcpState));
     newSockState->flags = 0;
     newSockState->fds.fd = newsock;

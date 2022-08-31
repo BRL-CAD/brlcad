@@ -1,6 +1,6 @@
 #! /usr/bin/env tclsh
 
-package require tcltest 2.2
+package require tcltest 2.5
 namespace import ::tcltest::*
 
 testConstraint exec          [llength [info commands exec]]

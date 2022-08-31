@@ -14,8 +14,8 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -25,7 +25,7 @@ catch {rename foo ""}
 proc tproc {} {return a; return b}
 test proc-old-1.1 {simple procedure call and return} {tproc} a
 proc tproc x {
-    set x [expr $x+1]
+    set x [expr {$x + 1}]
     return $x
 }
 test proc-old-1.2 {simple procedure call and return} {tproc 2} 3
@@ -49,7 +49,7 @@ test proc-old-1.6 {simple procedure call and return (shared proc body string)} {
 
 test proc-old-2.1 {local and global variables} {
     proc tproc x {
-	set x [expr $x+1]
+	set x [expr {$x + 1}]
 	return $x
     }
     set x 42
@@ -57,7 +57,7 @@ test proc-old-2.1 {local and global variables} {
 } {7 42}
 test proc-old-2.2 {local and global variables} {
     proc tproc x {
-	set y [expr $x+1]
+	set y [expr {$x + 1}]
 	return $y
     }
     set y 18
@@ -66,7 +66,7 @@ test proc-old-2.2 {local and global variables} {
 test proc-old-2.3 {local and global variables} {
     proc tproc x {
 	global y
-	set y [expr $x+1]
+	set y [expr {$x + 1}]
 	return $y
     }
     set y 189
@@ -75,7 +75,7 @@ test proc-old-2.3 {local and global variables} {
 test proc-old-2.4 {local and global variables} {
     proc tproc x {
 	global y
-	return [expr $x+$y]
+	return [expr {$x + $y}]
     }
     set y 189
     list [tproc 6] $y
@@ -504,7 +504,7 @@ test proc-old-10.1 {ByteCode epoch change during recursive proc execution} {
         set y 20
         rename expr expr.old
         rename expr.old expr
-        if $x then {t1 0} ;# recursive call after foo's code is invalidated
+        if {$x} then {t1 0} ;# recursive call after foo's code is invalidated
         return 20
     }
     t1 1

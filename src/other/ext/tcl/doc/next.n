@@ -138,7 +138,7 @@ before chaining from subclass, args = x 1 2 3 y
 in the superclass, args = a x 1 2 3 y b
 in the superclass, args = pureSynthesis
 after chaining from subclass
-before chaining from subclass, args = 
+before chaining from subclass, args =
 in the superclass, args = a b
 in the superclass, args = pureSynthesis
 after chaining from subclass

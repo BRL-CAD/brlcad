@@ -472,7 +472,7 @@ declare 116 {
     Tk_Window Tk_IdToWindow(Display *display, Window window)
 }
 declare 117 {
-    void Tk_ImageChanged(Tk_ImageMaster master, int x, int y,
+    void Tk_ImageChanged(Tk_ImageMaster model, int x, int y,
 	    int width, int height, int imageWidth, int imageHeight)
 }
 declare 118 {
@@ -486,8 +486,8 @@ declare 120 {
 	    int width, int height)
 }
 declare 121 {
-    void Tk_MaintainGeometry(Tk_Window slave,
-	    Tk_Window master, int x, int y, int width, int height)
+    void Tk_MaintainGeometry(Tk_Window window,
+	    Tk_Window container, int x, int y, int width, int height)
 }
 declare 122 {
     Tk_Window Tk_MainWindow(Tcl_Interp *interp)
@@ -539,7 +539,7 @@ declare 136 {
     CONST84_RETURN char *Tk_NameOfFont(Tk_Font font)
 }
 declare 137 {
-    CONST84_RETURN char *Tk_NameOfImage(Tk_ImageMaster imageMaster)
+    CONST84_RETURN char *Tk_NameOfImage(Tk_ImageMaster model)
 }
 declare 138 {
     CONST84_RETURN char *Tk_NameOfJoinStyle(int join)
@@ -692,7 +692,7 @@ declare 180 {
     void Tk_Ungrab(Tk_Window tkwin)
 }
 declare 181 {
-    void Tk_UnmaintainGeometry(Tk_Window slave, Tk_Window master)
+    void Tk_UnmaintainGeometry(Tk_Window window, Tk_Window container)
 }
 declare 182 {
     void Tk_UnmapWindow(Tk_Window tkwin)
@@ -1068,6 +1068,9 @@ declare 272 {
 declare 273 {
     void Tk_CreateOldPhotoImageFormat(const Tk_PhotoImageFormat *formatPtr)
 }
+declare 280 {
+    void TkUnusedStubEntry(void)
+}
 
 # Define the platform specific public Tk interface.  These functions are
 # only available on the designated platform.
@@ -1138,6 +1141,20 @@ declare 9 aqua {
 }
 declare 10 aqua {
     int Tk_MacOSXIsAppInFront(void)
+}
+declare 11 aqua {
+    Tk_Window Tk_MacOSXGetTkWindow(void *w)
+}
+declare 12 aqua {
+    void *Tk_MacOSXGetCGContextForDrawable(Drawable drawable)
+}
+# Replaces TkMacOSXDrawable
+declare 13 aqua {
+    void *Tk_MacOSXGetNSWindowForDrawable(Drawable drawable)
+}
+declare 16 aqua {
+    void TkGenWMConfigureEvent_(Tk_Window tkwin, int x, int y, int width,
+	    int height, int flags)
 }
 
 ##############################################################################

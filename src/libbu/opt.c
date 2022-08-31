@@ -551,12 +551,12 @@ opt_is_flag(const char *opt, const struct bu_opt_desc *ds, const char *arg)
      */
     if (desc && desc->arg_process) {
 	if (arg) {
-	    arg_offset = (*desc->arg_process)(NULL, 1, &arg, NULL);
+	    arg_offset = (*desc->arg_process)(NULL, 1, &arg, desc->set_var);
 	    if (!arg_offset) {
 		return 1;
 	    }
 	} else {
-	    arg_offset = (*desc->arg_process)(NULL, 0, NULL, NULL);
+	    arg_offset = (*desc->arg_process)(NULL, 0, NULL, desc->set_var);
 	    if (!arg_offset) {
 		return 1;
 	    }

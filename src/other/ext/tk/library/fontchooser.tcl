@@ -14,11 +14,11 @@ namespace eval ::tk::fontchooser {
     set S(W) .__tk__fontchooser
     set S(fonts) [lsort -dictionary [font families]]
     set S(styles) [list \
-                       [::msgcat::mc "Regular"] \
-                       [::msgcat::mc "Italic"] \
-                       [::msgcat::mc "Bold"] \
-                       [::msgcat::mc "Bold Italic"] \
-                      ]
+	[::msgcat::mc "Regular"] \
+	[::msgcat::mc "Italic"] \
+	[::msgcat::mc "Bold"] \
+	[::msgcat::mc "Bold Italic"] \
+    ]
 
     set S(sizes) {8 9 10 11 12 14 16 18 20 22 24 26 28 36 48 72}
     set S(strike) 0
@@ -36,9 +36,9 @@ proc ::tk::fontchooser::Setup {} {
 
     # Canonical versions of font families, styles, etc. for easier searching
     set S(fonts,lcase) {}
-    foreach font $S(fonts) { lappend S(fonts,lcase) [string tolower $font]}
+    foreach font $S(fonts) {lappend S(fonts,lcase) [string tolower $font]}
     set S(styles,lcase) {}
-    foreach style $S(styles) { lappend S(styles,lcase) [string tolower $style]}
+    foreach style $S(styles) {lappend S(styles,lcase) [string tolower $style]}
     set S(sizes,lcase) $S(sizes)
 
     ::ttk::style layout FontchooserFrame {
@@ -111,7 +111,7 @@ proc ::tk::fontchooser::Configure {args} {
 
     set cache [dict create -parent $S(-parent) -title $S(-title) \
                    -font $S(-font) -command $S(-command)]
-    set r [tclParseConfigSpec [namespace which -variable S] $specs "" $args]
+    set r [tclParseConfigSpec [namespace which -variable S] $specs DONTSETDEFAULTS $args]
     if {![winfo exists $S(-parent)]} {
 	set code [list TK LOOKUP WINDOW $S(-parent)]
         set err "bad window path name \"$S(-parent)\""
@@ -121,7 +121,7 @@ proc ::tk::fontchooser::Configure {args} {
     if {[string trim $S(-title)] eq ""} {
         set S(-title) [::msgcat::mc "Font"]
     }
-    if {[winfo exists $S(W)] && [lsearch $args -font] != -1} {
+    if {[winfo exists $S(W)] && ("-font" in $args)} {
 	Init $S(-font)
 	event generate $S(-parent) <<TkFontchooserFontChanged>>
     }
@@ -145,10 +145,13 @@ proc ::tk::fontchooser::Create {} {
         wm title $S(W) $S(-title)
         wm transient $S(W) [winfo toplevel $S(-parent)]
 
+        set scaling [tk scaling]
+        set sizeWidth [expr {int([string length [::msgcat::mc "&Size:"]] * $scaling)}]
+
         set outer [::ttk::frame $S(W).outer -padding {10 10}]
         ::tk::AmpWidget ::ttk::label $S(W).font -text [::msgcat::mc "&Font:"]
         ::tk::AmpWidget ::ttk::label $S(W).style -text [::msgcat::mc "Font st&yle:"]
-        ::tk::AmpWidget ::ttk::label $S(W).size -text [::msgcat::mc "&Size:"]
+        ::tk::AmpWidget ::ttk::label $S(W).size -text [::msgcat::mc "&Size:"] -width $sizeWidth
         ttk::entry $S(W).efont -width 18 \
             -textvariable [namespace which -variable S](font)
         ttk::entry $S(W).estyle -width 10 \
@@ -199,7 +202,7 @@ proc ::tk::fontchooser::Create {} {
         set minsize(sizes) \
             [expr {[font measure TkDefaultFont "-99"] + $scroll_width}]
         set min [expr {$minsize(gap) * 4}]
-        foreach {what width} [array get minsize] { incr min $width }
+        foreach {what width} [array get minsize] {incr min $width}
         wm minsize $S(W) $min 260
 
         bind $S(W) <Return> [namespace code [list Done 1]]
@@ -244,6 +247,7 @@ proc ::tk::fontchooser::Create {} {
         grid $S(W).lfonts x $S(W).lstyles x $S(W).lsizes x ^     -in $outer -sticky news
         grid $WE          x $WS           - -            x ^     -in $outer -sticky news -pady {15 30}
         grid configure $bbox -sticky n
+        grid rowconfigure $outer 2 -weight 1
         grid columnconfigure $outer {1 3 5} -minsize $minsize(gap)
         grid columnconfigure $outer {0 2 4} -weight 1
         grid columnconfigure $outer 0 -minsize $minsize(fonts)
@@ -277,7 +281,7 @@ proc ::tk::fontchooser::Create {} {
 # Arguments:
 #       ok              true if user pressed OK
 #
-proc ::tk::::fontchooser::Done {ok} {
+proc ::tk::fontchooser::Done {ok} {
     variable S
 
     if {! $ok} {
@@ -327,13 +331,13 @@ proc ::tk::fontchooser::Init {{defaultFont ""}} {
         set S(size) $F(-size)
         set S(strike) $F(-overstrike)
         set S(under) $F(-underline)
-        set S(style) "Regular"
+        set S(style) [::msgcat::mc "Regular"]
         if {$F(-weight) eq "bold" && $F(-slant) eq "italic"} {
-            set S(style) "Bold Italic"
+            set S(style) [::msgcat::mc "Bold Italic"]
         } elseif {$F(-weight) eq "bold"} {
-            set S(style) "Bold"
+            set S(style) [::msgcat::mc "Bold"]
         } elseif {$F(-slant) eq "italic"} {
-            set S(style) "Italic"
+            set S(style) [::msgcat::mc "Italic"]
         }
 
         set S(first) 0
@@ -381,7 +385,7 @@ proc ::tk::fontchooser::Tracer {var1 var2 op} {
         $S(W).l${var}s selection clear 0 end
         set n [lsearch -exact $S(${var}s,lcase) $value]
         $S(W).l${var}s selection set $n
-        if {$n != -1} {
+        if {$n >= 0} {
             set S($var) [lindex $S(${var}s) $n]
             $S(W).e$var icursor end
             $S(W).e$var selection clear
@@ -396,7 +400,7 @@ proc ::tk::fontchooser::Tracer {var1 var2 op} {
         }
         $S(W).l${var}s see $n
     }
-    if {!$bad} { Update }
+    if {!$bad} {Update}
     $S(W).ok configure -state $nstate
 }
 
@@ -408,11 +412,11 @@ proc ::tk::fontchooser::Update {} {
     variable S
 
     set S(result) [list $S(font) $S(size)]
-    if {$S(style) eq "Bold"} { lappend S(result) bold }
-    if {$S(style) eq "Italic"} { lappend S(result) italic }
-    if {$S(style) eq "Bold Italic"} { lappend S(result) bold italic}
-    if {$S(strike)} { lappend S(result) overstrike}
-    if {$S(under)} { lappend S(result) underline}
+    if {$S(style) eq [::msgcat::mc "Bold"]} {lappend S(result) bold}
+    if {$S(style) eq [::msgcat::mc "Italic"]} {lappend S(result) italic}
+    if {$S(style) eq [::msgcat::mc "Bold Italic"]} {lappend S(result) bold italic}
+    if {$S(strike)} {lappend S(result) overstrike}
+    if {$S(under)} {lappend S(result) underline}
 
     $S(sample) configure -font $S(result)
 }

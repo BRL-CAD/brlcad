@@ -12,11 +12,11 @@
 # Note that after running these tests, entries will be left behind in the
 # message catalogs for locales foo, foo_BAR, and foo_BAR_baz.
 
-package require Tcl 8.5-
-if {[catch {package require tcltest 2}]} {
-    puts stderr "Skipping tests in [info script].  tcltest 2 required."
-    return
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
+    namespace import -force ::tcltest::*
 }
+
 if {[catch {package require msgcat 1.6}]} {
     puts stderr "Skipping tests in [info script].  No msgcat 1.6 found to test."
     return

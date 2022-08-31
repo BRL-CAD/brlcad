@@ -45,13 +45,13 @@ namespace eval ttk::combobox {
 
 ttk::copyBindings TEntry TCombobox
 
-bind TCombobox <KeyPress-Down> 		{ ttk::combobox::Post %W }
-bind TCombobox <KeyPress-Escape> 	{ ttk::combobox::Unpost %W }
+bind TCombobox <Down> 			{ ttk::combobox::Post %W }
+bind TCombobox <Escape> 		{ ttk::combobox::Unpost %W }
 
-bind TCombobox <ButtonPress-1> 		{ ttk::combobox::Press "" %W %x %y }
-bind TCombobox <Shift-ButtonPress-1>	{ ttk::combobox::Press "s" %W %x %y }
-bind TCombobox <Double-ButtonPress-1> 	{ ttk::combobox::Press "2" %W %x %y }
-bind TCombobox <Triple-ButtonPress-1> 	{ ttk::combobox::Press "3" %W %x %y }
+bind TCombobox <Button-1> 		{ ttk::combobox::Press "" %W %x %y }
+bind TCombobox <Shift-Button-1>		{ ttk::combobox::Press "s" %W %x %y }
+bind TCombobox <Double-Button-1> 	{ ttk::combobox::Press "2" %W %x %y }
+bind TCombobox <Triple-Button-1> 	{ ttk::combobox::Press "3" %W %x %y }
 bind TCombobox <B1-Motion>		{ ttk::combobox::Drag %W %x }
 bind TCombobox <Motion>			{ ttk::combobox::Motion %W %x %y }
 
@@ -62,9 +62,9 @@ bind TCombobox <<TraverseIn>> 		{ ttk::combobox::TraverseIn %W }
 ### Combobox listbox bindings.
 #
 bind ComboboxListbox <ButtonRelease-1>	{ ttk::combobox::LBSelected %W }
-bind ComboboxListbox <KeyPress-Return>	{ ttk::combobox::LBSelected %W }
-bind ComboboxListbox <KeyPress-Escape>  { ttk::combobox::LBCancel %W }
-bind ComboboxListbox <KeyPress-Tab>	{ ttk::combobox::LBTab %W next }
+bind ComboboxListbox <Return>		{ ttk::combobox::LBSelected %W }
+bind ComboboxListbox <Escape>		{ ttk::combobox::LBCancel %W }
+bind ComboboxListbox <Tab>		{ ttk::combobox::LBTab %W next }
 bind ComboboxListbox <<PrevWindow>>	{ ttk::combobox::LBTab %W prev }
 bind ComboboxListbox <Destroy>		{ ttk::combobox::LBCleanup %W }
 bind ComboboxListbox <Motion>		{ ttk::combobox::LBHover %W %x %y }
@@ -82,7 +82,7 @@ switch -- [tk windowingsystem] {
 #
 bind ComboboxPopdown	<Map>		{ ttk::combobox::MapPopdown %W }
 bind ComboboxPopdown	<Unmap>		{ ttk::combobox::UnmapPopdown %W }
-bind ComboboxPopdown	<ButtonPress> \
+bind ComboboxPopdown	<Button> \
 			{ ttk::combobox::Unpost [winfo parent %W] }
 
 ### Option database settings.
@@ -106,7 +106,7 @@ switch -- [tk windowingsystem] {
 ### Binding procedures.
 #
 
-## Press $mode $x $y -- ButtonPress binding for comboboxes.
+## Press $mode $x $y -- Button binding for comboboxes.
 #	Either post/unpost the listbox, or perform Entry widget binding,
 #	depending on widget state and location of button press.
 #
@@ -135,7 +135,7 @@ proc ttk::combobox::Press {mode w x y} {
 }
 
 ## Drag -- B1-Motion binding for comboboxes.
-#	If the initial ButtonPress event was handled by Entry binding,
+#	If the initial Button event was handled by Entry binding,
 #	perform Entry widget drag binding; otherwise nothing.
 #
 proc ttk::combobox::Drag {w x}  {
@@ -149,12 +149,14 @@ proc ttk::combobox::Drag {w x}  {
 #	Set cursor.
 #
 proc ttk::combobox::Motion {w x y} {
+    variable State
+    ttk::saveCursor $w State(userConfCursor) [ttk::cursor text]
     if {   [$w identify $x $y] eq "textarea"
         && [$w instate {!readonly !disabled}]
     } {
 	ttk::setCursor $w text
     } else {
-	ttk::setCursor $w ""
+	ttk::setCursor $w $State(userConfCursor)
     }
 }
 
@@ -355,6 +357,9 @@ proc ttk::combobox::PlacePopdown {cb popdown} {
     set w [winfo width $cb]
     set h [winfo height $cb]
     set style [$cb cget -style]
+    if { $style eq {} } {
+      set style TCombobox
+    }
     set postoffset [ttk::style lookup $style -postoffset {} {0 0 0 0}]
     foreach var {x y w h} delta $postoffset {
     	incr $var $delta

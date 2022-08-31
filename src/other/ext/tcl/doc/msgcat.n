@@ -143,7 +143,7 @@ cannot be set independently.  For example, if the
 current locale is en_US_funky, then \fB::msgcat::mcpreferences\fR
 returns \fB{en_us_funky en_us en {}}\fR.
 .TP
-\fB::msgcat:mcloadedlocales subcommand\fR ?\fIlocale\fR?
+\fB::msgcat::mcloadedlocales subcommand\fR ?\fIlocale\fR?
 .
 This group of commands manage the list of loaded locales for packages not setting a package locale.
 .PP
@@ -584,7 +584,7 @@ To register to a callback, use:
 namespace eval gui {
     msgcat::mcpackageconfig changecmd updateGUI
 
-    proc updateGui args {
+    proc updateGUI args {
         puts "New locale is '[lindex $args 0]'."
     }
 }
@@ -618,7 +618,7 @@ msgcat::mcpackageconfig unknowncmd ""
 .CE
 As an example, the user requires the week day in a certain locale as follows:
 .CS
-clock format clock seconds -format %A -locale fr
+clock format [clock seconds] -format %A -locale fr
 .CE
 \fBclock\fR sets the package locale to \fBfr\fR and looks for the day name as follows:
 .CS

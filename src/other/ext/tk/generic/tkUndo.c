@@ -94,7 +94,7 @@ TkUndoInsertSeparator(
     TkUndoAtom *separator;
 
     if (*stack!=NULL && (*stack)->type!=TK_UNDO_SEPARATOR) {
-	separator = ckalloc(sizeof(TkUndoAtom));
+	separator = (TkUndoAtom *)ckalloc(sizeof(TkUndoAtom));
 	separator->type = TK_UNDO_SEPARATOR;
 	TkUndoPushStack(stack,separator);
 	return 1;
@@ -181,7 +181,7 @@ TkUndoPushAction(
 {
     TkUndoAtom *atom;
 
-    atom = ckalloc(sizeof(TkUndoAtom));
+    atom = (TkUndoAtom *)ckalloc(sizeof(TkUndoAtom));
     atom->type = TK_UNDO_ACTION;
     atom->apply = apply;
     atom->revert = revert;
@@ -237,7 +237,7 @@ TkUndoMakeCmdSubAtom(
 	Tcl_Panic("NULL command and actionScript in TkUndoMakeCmdSubAtom");
     }
 
-    atom = ckalloc(sizeof(TkUndoSubAtom));
+    atom = (TkUndoSubAtom *)ckalloc(sizeof(TkUndoSubAtom));
     atom->command = command;
     atom->funcPtr = NULL;
     atom->clientData = NULL;
@@ -299,7 +299,7 @@ TkUndoMakeSubAtom(
 	Tcl_Panic("NULL funcPtr in TkUndoMakeSubAtom");
     }
 
-    atom = ckalloc(sizeof(TkUndoSubAtom));
+    atom = (TkUndoSubAtom *)ckalloc(sizeof(TkUndoSubAtom));
     atom->command = NULL;
     atom->funcPtr = funcPtr;
     atom->clientData = clientData;
@@ -341,7 +341,7 @@ TkUndoInitStack(
 {
     TkUndoRedoStack *stack;	/* An Undo/Redo stack */
 
-    stack = ckalloc(sizeof(TkUndoRedoStack));
+    stack = (TkUndoRedoStack *)ckalloc(sizeof(TkUndoRedoStack));
     stack->undoStack = NULL;
     stack->redoStack = NULL;
     stack->interp = interp;

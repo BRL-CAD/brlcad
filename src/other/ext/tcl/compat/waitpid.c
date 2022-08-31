@@ -70,7 +70,7 @@ waitpid(
     int options)		/* OR'ed combination of WNOHANG and
 				 * WUNTRACED. */
 {
-    register WaitInfo *waitPtr, *prevPtr;
+    WaitInfo *waitPtr, *prevPtr;
     pid_t result;
     WAIT_STATUS_TYPE status;
 

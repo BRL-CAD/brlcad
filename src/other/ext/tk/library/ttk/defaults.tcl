@@ -43,7 +43,7 @@ namespace eval ttk::theme::default {
 	ttk::style configure TButton \
 	    -anchor center -padding "3 3" -width -9 \
 	    -relief raised -shiftrelief 1
-	ttk::style map TButton -relief [list {!disabled pressed} sunken] 
+	ttk::style map TButton -relief [list {!disabled pressed} sunken]
 
 	ttk::style configure TCheckbutton \
 	    -indicatorcolor "#ffffff" -indicatorrelief sunken -padding 1

@@ -1,9 +1,9 @@
 '\"
 '\" Copyright (c) 1998-2000 by Scriptics Corporation.
 '\" All rights reserved.
-'\" 
+'\"
 '\" Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
-'\" 
+'\"
 .TH cursors n 8.3 Tk "Tk Built-In Commands"
 .so man.macros
 .BS

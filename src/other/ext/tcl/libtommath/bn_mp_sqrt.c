@@ -4,6 +4,7 @@
 /* SPDX-License-Identifier: Unlicense */
 
 #ifndef NO_FLOATING_POINT
+#include <float.h>
 #include <math.h>
 #if (MP_DIGIT_BIT != 28) || (FLT_RADIX != 2) || (DBL_MANT_DIG != 53) || (DBL_MAX_EXP != 1024)
 #define NO_FLOATING_POINT

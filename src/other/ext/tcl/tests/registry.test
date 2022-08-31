@@ -10,8 +10,8 @@
 # Copyright (c) 1997 by Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -19,7 +19,7 @@ testConstraint reg 0
 if {[testConstraint win]} {
     if {![catch {
 	    ::tcltest::loadTestedCommands
-	    set ::regver [package require registry 1.3.4]
+	    set ::regver [package require registry 1.3.5]
 	}]} {
 	testConstraint reg 1
     }
@@ -33,7 +33,7 @@ testConstraint english [expr {
 
 test registry-1.0 {check if we are testing the right dll} {win reg} {
     set ::regver
-} {1.3.4}
+} {1.3.5}
 test registry-1.1 {argument parsing for registry command} {win reg} {
     list [catch {registry} msg] $msg
 } {1 {wrong # args: should be "registry ?-32bit|-64bit? option ?arg ...?"}}

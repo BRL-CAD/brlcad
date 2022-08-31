@@ -626,7 +626,7 @@ ReadData(
 	int blockSz = PNG_MIN(destSz, PNG_BLOCK_SZ);
 
 	blockSz = Tcl_Read(pngPtr->channel, (char *)destPtr, blockSz);
-	if (blockSz < 0) {
+	if (blockSz == -1) {
 	    /* TODO: failure info... */
 	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 		    "channel read failed: %s", Tcl_PosixError(interp)));
@@ -1708,9 +1708,9 @@ UnfilterLine(
     PNGImage *pngPtr)
 {
     unsigned char *thisLine =
-	    Tcl_GetByteArrayFromObj(pngPtr->thisLineObj, NULL);
+	    Tcl_GetByteArrayFromObj(pngPtr->thisLineObj, (int *)NULL);
     unsigned char *lastLine =
-	    Tcl_GetByteArrayFromObj(pngPtr->lastLineObj, NULL);
+	    Tcl_GetByteArrayFromObj(pngPtr->lastLineObj, (int *)NULL);
 
 #define	PNG_FILTER_NONE		0
 #define	PNG_FILTER_SUB		1
@@ -1840,7 +1840,7 @@ DecodeLine(
     int colStep = 1;		/* Column increment each pass */
     int pixStep = 0;		/* extra pixelPtr increment each pass */
     unsigned char lastPixel[6];
-    unsigned char *p = Tcl_GetByteArrayFromObj(pngPtr->thisLineObj, NULL);
+    unsigned char *p = Tcl_GetByteArrayFromObj(pngPtr->thisLineObj, (int *)NULL);
 
     p++;
     if (UnfilterLine(interp, pngPtr) == TCL_ERROR) {
@@ -2237,14 +2237,14 @@ ApplyAlpha(
     PNGImage *pngPtr)
 {
     if (pngPtr->alpha != 1.0) {
-	register unsigned char *p = pngPtr->block.pixelPtr;
+	unsigned char *p = pngPtr->block.pixelPtr;
 	unsigned char *endPtr = p + pngPtr->blockLen;
 	int offset = pngPtr->block.offset[3];
 
 	p += offset;
 
 	if (16 == pngPtr->bitDepth) {
-	    register unsigned int channel;
+	    unsigned int channel;
 
 	    while (p < endPtr) {
 		channel = (unsigned int)
@@ -2884,7 +2884,7 @@ WriteData(
 	}
 
 	memcpy(destPtr+objSz, srcPtr, srcSz);
-    } else if (Tcl_Write(pngPtr->channel, (const char *) srcPtr, srcSz) < 0) {
+    } else if (Tcl_Write(pngPtr->channel, (const char *) srcPtr, srcSz) == -1) {
 	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 		"write to channel failed: %s", Tcl_PosixError(interp)));
 	return TCL_ERROR;

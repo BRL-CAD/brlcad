@@ -237,7 +237,7 @@ proc pkg_mkIndex {args} {
 	$c eval [list set ::tcl::file $file]
 	$c eval [list set ::tcl::direct $direct]
 
-	# Download needed procedures into the slave because we've just deleted
+	# Download needed procedures into the child because we've just deleted
 	# the unknown procedure.  This doesn't handle procedures with default
 	# arguments.
 
@@ -479,9 +479,12 @@ proc tclPkgUnknown {name args} {
 	}
 	set tclSeenPath($dir) 1
 
-	# we can't use glob in safe interps, so enclose the following in a
-	# catch statement, where we get the pkgIndex files out of the
-	# subdirectories
+	# Get the pkgIndex.tcl files in subdirectories of auto_path directories.
+	# - Safe Base interpreters have a restricted "glob" command that
+	#   works in this case.
+	# - The "catch" was essential when there was no safe glob and every
+	#   call in a safe interp failed; it is retained only for corner
+	#   cases in which the eventual call to glob returns an error.
 	catch {
 	    foreach file [glob -directory $dir -join -nocomplain \
 		    * pkgIndex.tcl] {
@@ -585,6 +588,7 @@ proc tcl::MacOSXPkgUnknown {original name args} {
 	set tclSeenPath($dir) 1
 
 	# get the pkgIndex files out of the subdirectories
+	# Safe interpreters do not use tcl::MacOSXPkgUnknown - see init.tcl.
 	foreach file [glob -directory $dir -join -nocomplain \
 		* Resources Scripts pkgIndex.tcl] {
 	    set dir [file dirname $file]

@@ -16,7 +16,7 @@
 #   include <X11/extensions/scrnsaver.h>
 #   ifdef __APPLE__
 /* Support for weak-linked libXss. */
-#	define HaveXSSLibrary()	(XScreenSaverQueryInfo != NULL)
+#	define HaveXSSLibrary()	(&XScreenSaverQueryInfo != NULL)
 #   else
 /* Other platforms always link libXss. */
 #	define HaveXSSLibrary()	(1)
@@ -199,8 +199,12 @@ TkpBuildRegionFromAlphaData(
 
 long
 Tk_GetUserInactiveTime(
-    Display *dpy)		/* The display for which to query the inactive
+ #ifdef HAVE_XSS
+   Display *dpy)		/* The display for which to query the inactive
 				 * time. */
+#else
+  TCL_UNUSED(Display *))
+#endif /* HAVE_XSS */
 {
     long inactiveTime = -1;
 #ifdef HAVE_XSS

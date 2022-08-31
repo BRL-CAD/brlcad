@@ -277,7 +277,7 @@ typedef struct Class {
  */
 
 typedef struct ThreadLocalData {
-    int nsCount;		/* Master epoch counter is used for keeping
+    int nsCount;		/* Epoch counter is used for keeping
 				 * the values used in Tcl_Obj internal
 				 * representations sane. Must be thread-local
 				 * because Tcl_Objs can cross interpreter
@@ -289,7 +289,7 @@ typedef struct Foundation {
     Tcl_Interp *interp;
     Class *objectCls;		/* The root of the object system. */
     Class *classCls;		/* The class of all classes. */
-    Tcl_Namespace *ooNs;	/* Master ::oo namespace. */
+    Tcl_Namespace *ooNs;	/* ::oo namespace. */
     Tcl_Namespace *defineNs;	/* Namespace containing special commands for
 				 * manipulating objects and classes. The
 				 * "oo::define" command acts as a special kind

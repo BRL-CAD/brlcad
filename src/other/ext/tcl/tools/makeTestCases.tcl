@@ -592,7 +592,7 @@ proc testcases5 { f2 } {
 	foreach { t offset isdst tzname } $row break
 	if { $t > -4000000000000 } {
 	    set conds [list detroit]
-	    if { $t > wide(0x7fffffff) } {
+	    if { $t > wide(0x7FFFFFFF) } {
 		set conds [list detroit y2038]
 	    }
 	    incr t -1

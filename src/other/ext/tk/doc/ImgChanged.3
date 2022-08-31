@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tk_ImageChanged 3 4.0 Tk "Tk Library Procedures"
 .so man.macros
 .BS
@@ -14,10 +14,10 @@ Tk_ImageChanged \- notify widgets that image needs to be redrawn
 .nf
 \fB#include <tk.h>\fR
 .sp
-\fBTk_ImageChanged\fR(\fIimageMaster, x, y, width, height, imageWidth, imageHeight\fR)
+\fBTk_ImageChanged\fR(\fImodel, x, y, width, height, imageWidth, imageHeight\fR)
 .SH ARGUMENTS
 .AS Tk_ImageMaster imageHeight
-.AP Tk_ImageMaster imageMaster in
+.AP Tk_ImageMaster model in
 Token for image, which was passed to image's \fIcreateProc\fR when
 the image was created.
 .AP int x in
@@ -42,11 +42,15 @@ whenever anything happens that requires the image to be redrawn.
 As a result of calling \fBTk_ImageChanged\fR, any widgets using
 the image are notified so that they can redisplay themselves
 appropriately.
-The \fIimageMaster\fR argument identifies the image, and
+The \fImodel\fR argument identifies the image, and
 \fIx\fR, \fIy\fR, \fIwidth\fR, and \fIheight\fR
 specify a rectangular region within the image that needs to
 be redrawn.
 \fIimageWidth\fR and \fIimageHeight\fR specify the image's (new) size.
+.PP
+.VS "TIP 581"
+\fITk_ImageModel\fR is synonym for \fITk_ImageMaster\fR
+.VE "TIP 581"
 .PP
 An image manager should call \fBTk_ImageChanged\fR during
 its \fIcreateProc\fR to specify the image's initial size and to

@@ -44,7 +44,7 @@ static BuiltInIcon builtInIcons[] = {
     {"stop",		kAlertStopIcon},
     {"note",		kAlertNoteIcon},
     {"caution",		kAlertCautionIcon},
-    {NULL}
+    {NULL,			0}
 };
 
 #define builtInIconSize 32
@@ -100,7 +100,7 @@ TkpDefineNativeBitmaps(void)
 	name = Tk_GetUid(builtInPtr->name);
 	predefHashPtr = Tcl_CreateHashEntry(tablePtr, name, &isNew);
 	if (isNew) {
-	    TkPredefBitmap *predefPtr = ckalloc(sizeof(TkPredefBitmap));
+	    TkPredefBitmap *predefPtr = (TkPredefBitmap *)ckalloc(sizeof(TkPredefBitmap));
 
 	    predefPtr->source = UINT2PTR(builtInPtr->iconType);
 	    predefPtr->width = builtInIconSize;
@@ -136,15 +136,13 @@ PixmapFromImage(
     Pixmap pixmap;
 
     pixmap = Tk_GetPixmap(display, None, size.width, size.height, 0);
-    if (TkMacOSXSetupDrawingContext(pixmap, NULL, 1, &dc)) {
+    if (TkMacOSXSetupDrawingContext(pixmap, NULL, &dc)) {
 	if (dc.context) {
 	    CGAffineTransform t = { .a = 1, .b = 0, .c = 0, .d = -1,
 				    .tx = 0, .ty = size.height};
 	    CGContextConcatCTM(dc.context, t);
 	    [NSGraphicsContext saveGraphicsState];
-	    [NSGraphicsContext setCurrentContext:[NSGraphicsContext
-		graphicsContextWithGraphicsPort:dc.context
-		flipped:NO]];
+	    [NSGraphicsContext setCurrentContext:GET_NSCONTEXT(dc.context, NO)];
 	    [image drawAtPoint:NSZeroPoint fromRect:NSZeroRect
 		operation:NSCompositeCopy fraction:1.0];
 	    [NSGraphicsContext restoreGraphicsState];
@@ -180,7 +178,7 @@ TkpCreateNativeBitmap(
     NSImage *iconImage = [[NSWorkspace sharedWorkspace]
 			     iconForFileType: iconUTI];
     CGSize size = CGSizeMake(builtInIconSize, builtInIconSize);
-    Pixmap pixmap = PixmapFromImage(display, iconImage, NSSizeToCGSize(size));
+    Pixmap pixmap = PixmapFromImage(display, iconImage, size);
     return pixmap;
 }
 
@@ -259,7 +257,7 @@ TkpGetNativeAppBitmap(
     if (iconBitmapTable.buckets &&
 	    (hPtr = Tcl_FindHashEntry(&iconBitmapTable, name))) {
 	OSType type;
-	IconBitmap *iconBitmap = Tcl_GetHashValue(hPtr);
+	IconBitmap *iconBitmap = (IconBitmap *)Tcl_GetHashValue(hPtr);
 	name = NULL;
 	size = NSMakeSize(iconBitmap->width, iconBitmap->height);
 	switch (iconBitmap->kind) {
@@ -317,7 +315,6 @@ TkpGetNativeAppBitmap(
 	OSType iconType;
 	if (OSTypeFromString(name, &iconType) == TCL_OK) {
 	    NSString *iconUTI = OSTYPE_TO_UTI(iconType);
-	    printf("Found image for UTI %s\n", iconUTI.UTF8String);
 	    NSImage *iconImage = [[NSWorkspace sharedWorkspace]
 				     iconForFileType: iconUTI];
 	    pixmap = PixmapFromImage(display, iconImage, NSSizeToCGSize(size));
@@ -344,7 +341,7 @@ TkpGetNativeAppBitmap(
 
 int
 TkMacOSXIconBitmapObjCmd(
-    ClientData clientData,	/* Unused. */
+    TCL_UNUSED(void *),
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])	/* Argument objects. */
@@ -399,17 +396,17 @@ TkMacOSXIconBitmapObjCmd(
 	}
     }
 #endif
-    ib.value = ckalloc(len + 1);
+    ib.value = (char *)ckalloc(len + 1);
     strcpy(ib.value, value);
     if (!iconBitmapTable.buckets) {
 	Tcl_InitHashTable(&iconBitmapTable, TCL_STRING_KEYS);
     }
     hPtr = Tcl_CreateHashEntry(&iconBitmapTable, name, &isNew);
     if (!isNew) {
-	iconBitmap = Tcl_GetHashValue(hPtr);
+	iconBitmap = (IconBitmap *)Tcl_GetHashValue(hPtr);
 	ckfree(iconBitmap->value);
     } else {
-	iconBitmap = ckalloc(sizeof(IconBitmap));
+	iconBitmap = (IconBitmap *)ckalloc(sizeof(IconBitmap));
 	Tcl_SetHashValue(hPtr, iconBitmap);
     }
     *iconBitmap = ib;

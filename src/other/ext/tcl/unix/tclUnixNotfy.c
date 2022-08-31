@@ -32,7 +32,7 @@ typedef struct FileHandler {
 				 * for this file. */
     Tcl_FileProc *proc;		/* Function to call, in the style of
 				 * Tcl_CreateFileHandler. */
-    ClientData clientData;	/* Argument to pass to proc. */
+    void *clientData;	/* Argument to pass to proc. */
     struct FileHandler *nextPtr;/* Next in list of all files we care about. */
 } FileHandler;
 
@@ -94,16 +94,17 @@ typedef struct ThreadSpecificData {
 				 * notifierMutex lock before accessing these
 				 * fields. */
 #ifdef __CYGWIN__
-    void *event;     /* Any other thread alerts a notifier
-	 * that an event is ready to be processed
-	 * by sending this event. */
+    void *event;		/* Any other thread alerts a notifier that an
+				 * event is ready to be processed by sending
+				 * this event. */
     void *hwnd;			/* Messaging window. */
 #else /* !__CYGWIN__ */
     pthread_cond_t waitCV;	/* Any other thread alerts a notifier that an
 				 * event is ready to be processed by signaling
 				 * this condition variable. */
 #endif /* __CYGWIN__ */
-    int waitCVinitialized;	/* Variable to flag initialization of the structure */
+    int waitCVinitialized;	/* Variable to flag initialization of the
+				 * structure. */
     int eventReady;		/* True if an event is ready to be processed.
 				 * Used as condition flag together with waitCV
 				 * above. */
@@ -171,12 +172,14 @@ static int notifierThreadRunning = 0;
 static pthread_cond_t notifierCV = PTHREAD_COND_INITIALIZER;
 
 /*
- * The pollState bits
- *	POLL_WANT is set by each thread before it waits on its condition
- *		variable. It is checked by the notifier before it does select.
- *	POLL_DONE is set by the notifier if it goes into select after seeing
- *		POLL_WANT. The idea is to ensure it tries a select with the
- *		same bits the initial thread had set.
+ * The pollState bits:
+ *
+ * POLL_WANT is set by each thread before it waits on its condition variable.
+ *	It is checked by the notifier before it does select.
+ *
+ * POLL_DONE is set by the notifier if it goes into select after seeing
+ *	POLL_WANT. The idea is to ensure it tries a select with the same bits
+ *	the initial thread had set.
  */
 
 #define POLL_WANT	0x1
@@ -187,7 +190,6 @@ static pthread_cond_t notifierCV = PTHREAD_COND_INITIALIZER;
  */
 
 static Tcl_ThreadId notifierThread;
-
 #endif /* TCL_THREADS */
 
 /*
@@ -195,9 +197,9 @@ static Tcl_ThreadId notifierThread;
  */
 
 #ifdef TCL_THREADS
-static void	NotifierThreadProc(ClientData clientData);
+static void	NotifierThreadProc(void *clientData);
 #if defined(HAVE_PTHREAD_ATFORK)
-static int	atForkInit = AT_FORK_INIT_VALUE;
+static int atForkInit = AT_FORK_INIT_VALUE;
 static void	AtForkPrepare(void);
 static void	AtForkParent(void);
 static void	AtForkChild(void);
@@ -211,13 +213,14 @@ static int	FileHandlerEventProc(Tcl_Event *evPtr, int flags);
 
 #if defined(TCL_THREADS) && defined(__CYGWIN__)
 typedef struct {
-    void *hwnd;
-    unsigned int *message;
-    int wParam;
-    int lParam;
-    int time;
-    int x;
+    void *hwnd;			/* Messaging window. */
+    unsigned int *message;	/* Message payload. */
+    size_t wParam;			/* Event-specific "word" parameter. */
+    size_t lParam;			/* Event-specific "long" parameter. */
+    int time;			/* Event timestamp. */
+    int x;			/* Event location (where meaningful). */
     int y;
+    int lPrivate;
 } MSG;
 
 typedef struct {
@@ -229,7 +232,7 @@ typedef struct {
     void *hIcon;
     void *hCursor;
     void *hbrBackground;
-    void *lpszMenuName;
+    const void *lpszMenuName;
     const void *lpszClassName;
 } WNDCLASSW;
 
@@ -237,13 +240,13 @@ extern void __stdcall	CloseHandle(void *);
 extern void *__stdcall	CreateEventW(void *, unsigned char, unsigned char,
 			    void *);
 extern void * __stdcall	CreateWindowExW(void *, const void *, const void *,
-			    DWORD, int, int, int, int, void *, void *, void *, void *);
-extern DWORD __stdcall	DefWindowProcW(void *, int, void *, void *);
+			    unsigned int, int, int, int, int, void *, void *, void *, void *);
+extern unsigned int __stdcall	DefWindowProcW(void *, int, void *, void *);
 extern unsigned char __stdcall	DestroyWindow(void *);
 extern int __stdcall	DispatchMessageW(const MSG *);
 extern unsigned char __stdcall	GetMessageW(MSG *, void *, int, int);
-extern void __stdcall	MsgWaitForMultipleObjects(DWORD, void *,
-			    unsigned char, DWORD, DWORD);
+extern void __stdcall	MsgWaitForMultipleObjects(unsigned int, void *,
+			    unsigned char, unsigned int, unsigned int);
 extern unsigned char __stdcall	PeekMessageW(MSG *, void *, int, int, int);
 extern unsigned char __stdcall	PostMessageW(void *, unsigned int, void *,
 				    void *);
@@ -256,8 +259,8 @@ extern unsigned char __stdcall	TranslateMessage(const MSG *);
  * Threaded-cygwin specific constants and functions in this file:
  */
 
-static const WCHAR NotfyClassName[] = L"TclNotifier";
-static DWORD __stdcall	NotifierProc(void *hwnd, unsigned int message,
+static const wchar_t *NotfyClassName = L"TclNotifier";
+static unsigned int __stdcall	NotifierProc(void *hwnd, unsigned int message,
 			    void *wParam, void *lParam);
 #endif /* TCL_THREADS && __CYGWIN__ */
 
@@ -321,7 +324,7 @@ StartNotifierThread(const char *proc)
  *----------------------------------------------------------------------
  */
 
-ClientData
+void *
 Tcl_InitNotifier(void)
 {
     if (tclNotifierHooks.initNotifierProc) {
@@ -337,23 +340,23 @@ Tcl_InitNotifier(void)
 	 */
 	if (tsdPtr->waitCVinitialized == 0) {
 #ifdef __CYGWIN__
-	    WNDCLASSW class;
+	    WNDCLASSW clazz;
 
-	    class.style = 0;
-	    class.cbClsExtra = 0;
-	    class.cbWndExtra = 0;
-	    class.hInstance = TclWinGetTclInstance();
-	    class.hbrBackground = NULL;
-	    class.lpszMenuName = NULL;
-	    class.lpszClassName = NotfyClassName;
-	    class.lpfnWndProc = NotifierProc;
-	    class.hIcon = NULL;
-	    class.hCursor = NULL;
+	    clazz.style = 0;
+	    clazz.cbClsExtra = 0;
+	    clazz.cbWndExtra = 0;
+	    clazz.hInstance = TclWinGetTclInstance();
+	    clazz.hbrBackground = NULL;
+	    clazz.lpszMenuName = NULL;
+	    clazz.lpszClassName = NotfyClassName;
+	    clazz.lpfnWndProc = (void *)NotifierProc;
+	    clazz.hIcon = NULL;
+	    clazz.hCursor = NULL;
 
-	    RegisterClassW(&class);
-	    tsdPtr->hwnd = CreateWindowExW(NULL, class.lpszClassName,
-		    class.lpszClassName, 0, 0, 0, 0, 0, NULL, NULL,
-		    TclWinGetTclInstance(), NULL);
+	    RegisterClassW(&clazz);
+	    tsdPtr->hwnd = CreateWindowExW(NULL, clazz.lpszClassName,
+		    clazz.lpszClassName, 0, 0, 0, 0, 0, NULL, NULL,
+		    clazz.hInstance, NULL);
 	    tsdPtr->event = CreateEventW(NULL, 1 /* manual */,
 		    0 /* !signaled */, NULL);
 #else
@@ -380,7 +383,6 @@ Tcl_InitNotifier(void)
 #endif /* HAVE_PTHREAD_ATFORK */
 
 	notifierCount++;
-
 	pthread_mutex_unlock(&notifierInitMutex);
 
 #endif /* TCL_THREADS */
@@ -408,7 +410,7 @@ Tcl_InitNotifier(void)
 
 void
 Tcl_FinalizeNotifier(
-    ClientData clientData)		/* Not used. */
+    void *clientData)
 {
     if (tclNotifierHooks.finalizeNotifierProc) {
 	tclNotifierHooks.finalizeNotifierProc(clientData);
@@ -425,28 +427,25 @@ Tcl_FinalizeNotifier(
 	 * pipe and wait for the background thread to terminate.
 	 */
 
-	if (notifierCount == 0) {
+	if (notifierCount == 0 && triggerPipe != -1) {
+	    if (write(triggerPipe, "q", 1) != 1) {
+		Tcl_Panic("Tcl_FinalizeNotifier: %s",
+			"unable to write 'q' to triggerPipe");
+	    }
+	    close(triggerPipe);
+	    pthread_mutex_lock(&notifierMutex);
+	    while(triggerPipe != -1) {
+		pthread_cond_wait(&notifierCV, &notifierMutex);
+	    }
+	    pthread_mutex_unlock(&notifierMutex);
+	    if (notifierThreadRunning) {
+		int result = pthread_join((pthread_t) notifierThread, NULL);
 
-	    if (triggerPipe != -1) {
-		if (write(triggerPipe, "q", 1) != 1) {
+		if (result) {
 		    Tcl_Panic("Tcl_FinalizeNotifier: %s",
-			    "unable to write q to triggerPipe");
+			    "unable to join notifier thread");
 		}
-		close(triggerPipe);
-		pthread_mutex_lock(&notifierMutex);
-		while(triggerPipe != -1) {
-		    pthread_cond_wait(&notifierCV, &notifierMutex);
-		}
-		pthread_mutex_unlock(&notifierMutex);
-		if (notifierThreadRunning) {
-		    int result = pthread_join((pthread_t) notifierThread, NULL);
-
-		    if (result) {
-			Tcl_Panic("Tcl_FinalizeNotifier: unable to join notifier "
-				"thread");
-		    }
-		    notifierThreadRunning = 0;
-		}
+		notifierThreadRunning = 0;
 	    }
 	}
 
@@ -488,14 +487,14 @@ Tcl_FinalizeNotifier(
 
 void
 Tcl_AlertNotifier(
-    ClientData clientData)
+    void *clientData)
 {
     if (tclNotifierHooks.alertNotifierProc) {
 	tclNotifierHooks.alertNotifierProc(clientData);
 	return;
     } else {
 #ifdef TCL_THREADS
-	ThreadSpecificData *tsdPtr = clientData;
+	ThreadSpecificData *tsdPtr = (ThreadSpecificData *)clientData;
 
 	pthread_mutex_lock(&notifierMutex);
 	tsdPtr->eventReady = 1;
@@ -600,7 +599,7 @@ Tcl_CreateFileHandler(
 				 * called. */
     Tcl_FileProc *proc,		/* Function to call for each selected
 				 * event. */
-    ClientData clientData)	/* Arbitrary data to pass to proc. */
+    void *clientData)	/* Arbitrary data to pass to proc. */
 {
     if (tclNotifierHooks.createFileHandlerProc) {
 	tclNotifierHooks.createFileHandlerProc(fd, mask, proc, clientData);
@@ -616,7 +615,7 @@ Tcl_CreateFileHandler(
 	    }
 	}
 	if (filePtr == NULL) {
-	    filePtr = ckalloc(sizeof(FileHandler));
+	    filePtr = (FileHandler *)ckalloc(sizeof(FileHandler));
 	    filePtr->fd = fd;
 	    filePtr->readyMask = 0;
 	    filePtr->nextPtr = tsdPtr->firstFileHandlerPtr;
@@ -815,7 +814,7 @@ FileHandlerEventProc(
 
 #if defined(TCL_THREADS) && defined(__CYGWIN__)
 
-static DWORD __stdcall
+static unsigned int __stdcall
 NotifierProc(
     void *hwnd,
     unsigned int message,
@@ -866,12 +865,13 @@ Tcl_WaitForEvent(
 	FileHandler *filePtr;
 	int mask;
 	Tcl_Time vTime;
+	ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 #ifdef TCL_THREADS
 	int waitForFiles;
 #   ifdef __CYGWIN__
 	MSG msg;
 #   endif /* __CYGWIN__ */
-#else
+#else /* !TCL_THREADS */
 	/*
 	 * Impl. notes: timeout & timeoutPtr are used if, and only if threads
 	 * are not enabled. They are the arguments for the regular select()
@@ -881,7 +881,6 @@ Tcl_WaitForEvent(
 	struct timeval timeout, *timeoutPtr;
 	int numFound;
 #endif /* TCL_THREADS */
-	ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
 	/*
 	 * Set up the timeout structure. Note that if there are no events to
@@ -986,7 +985,7 @@ Tcl_WaitForEvent(
 	if (!tsdPtr->eventReady) {
 #ifdef __CYGWIN__
 	    if (!PeekMessageW(&msg, NULL, 0, 0, 0)) {
-		DWORD timeout;
+		unsigned int timeout;
 
 		if (timePtr) {
 		    timeout = timePtr->sec * 1000 + timePtr->usec / 1000;
@@ -997,18 +996,19 @@ Tcl_WaitForEvent(
 		MsgWaitForMultipleObjects(1, &tsdPtr->event, 0, timeout, 1279);
 		pthread_mutex_lock(&notifierMutex);
 	    }
-#else
+#else /* !__CYGWIN__ */
 	    if (timePtr != NULL) {
-	       Tcl_Time now;
-	       struct timespec ptime;
+		Tcl_Time now;
+		struct timespec ptime;
 
-	       Tcl_GetTime(&now);
-	       ptime.tv_sec = timePtr->sec + now.sec + (timePtr->usec + now.usec) / 1000000;
-	       ptime.tv_nsec = 1000 * ((timePtr->usec + now.usec) % 1000000);
+		Tcl_GetTime(&now);
+		ptime.tv_sec = timePtr->sec + now.sec +
+			(timePtr->usec + now.usec) / 1000000;
+		ptime.tv_nsec = 1000 * ((timePtr->usec + now.usec) % 1000000);
 
-	       pthread_cond_timedwait(&tsdPtr->waitCV, &notifierMutex, &ptime);
+		pthread_cond_timedwait(&tsdPtr->waitCV, &notifierMutex, &ptime);
 	    } else {
-	       pthread_cond_wait(&tsdPtr->waitCV, &notifierMutex);
+		pthread_cond_wait(&tsdPtr->waitCV, &notifierMutex);
 	    }
 #endif /* __CYGWIN__ */
 	}
@@ -1020,12 +1020,12 @@ Tcl_WaitForEvent(
 	     * Retrieve and dispatch the message.
 	     */
 
-	    DWORD result = GetMessageW(&msg, NULL, 0, 0);
+	    unsigned int result = GetMessageW(&msg, NULL, 0, 0);
 
 	    if (result == 0) {
 		PostQuitMessage(msg.wParam);
 		/* What to do here? */
-	    } else if (result != (DWORD) -1) {
+	    } else if (result != (unsigned int) -1) {
 		TranslateMessage(&msg);
 		DispatchMessageW(&msg);
 	    }
@@ -1056,8 +1056,7 @@ Tcl_WaitForEvent(
 			"unable to write to triggerPipe");
 	    }
 	}
-
-#else
+#else /* !TCL_THREADS */
 	tsdPtr->readyMasks = tsdPtr->checkMasks;
 	numFound = select(tsdPtr->numFdBits, &tsdPtr->readyMasks.readable,
 		&tsdPtr->readyMasks.writable, &tsdPtr->readyMasks.exception,
@@ -1103,7 +1102,7 @@ Tcl_WaitForEvent(
 
 	    if (filePtr->readyMask == 0) {
 		FileHandlerEvent *fileEvPtr =
-			ckalloc(sizeof(FileHandlerEvent));
+			(FileHandlerEvent *)ckalloc(sizeof(FileHandlerEvent));
 
 		fileEvPtr->header.proc = FileHandlerEventProc;
 		fileEvPtr->fd = filePtr->fd;
@@ -1145,17 +1144,19 @@ Tcl_WaitForEvent(
 
 static void
 NotifierThreadProc(
-    ClientData clientData)	/* Not used. */
+    void *dummy)	/* Not used. */
 {
     ThreadSpecificData *tsdPtr;
     fd_set readableMask;
     fd_set writableMask;
     fd_set exceptionMask;
-    int fds[2];
-    int i, numFdBits = 0, receivePipe;
+    int i;
+    int fds[2], receivePipe;
     long found;
-    struct timeval poll = {0., 0.}, *timePtr;
+    struct timeval poll = {0, 0}, *timePtr;
     char buf[2];
+    int numFdBits = 0;
+    (void)dummy;
 
     if (pipe(fds) != 0) {
 	Tcl_Panic("NotifierThreadProc: %s", "could not create trigger pipe");
@@ -1204,7 +1205,7 @@ NotifierThreadProc(
 	FD_ZERO(&exceptionMask);
 
 	/*
-	 * Compute the logical OR of the select masks from all the waiting
+	 * Compute the logical OR of the masks from all the waiting
 	 * notifiers.
 	 */
 

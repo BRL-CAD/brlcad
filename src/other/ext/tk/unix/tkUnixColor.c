@@ -136,17 +136,17 @@ TkpGetColor(
     if (*name != '#') {
 	XColor screen;
 
-	if (((*name - 'A') & 0xdf) < sizeof(tkWebColors)/sizeof(tkWebColors[0])) {
-	    if (!((name[0] - 'G') & 0xdf) && !((name[1] - 'R') & 0xdf)
-		    && !((name[2] - 'A') & 0xdb) && !((name[3] - 'Y') & 0xdf)
+	if (((*name - 'A') & 0xDF) < sizeof(tkWebColors)/sizeof(tkWebColors[0])) {
+	    if (!((name[0] - 'G') & 0xDF) && !((name[1] - 'R') & 0xDF)
+		    && !((name[2] - 'A') & 0xDB) && !((name[3] - 'Y') & 0xDF)
 		    && !name[4]) {
 		name = "#808080808080";
 		goto gotWebColor;
 	    } else {
-		const char *p = tkWebColors[((*name - 'A') & 0x1f)];
+		const char *p = tkWebColors[((*name - 'A') & 0x1F)];
 		if (p) {
 		    const char *q = name;
-		    while (!((*p - *(++q)) & 0xdf)) {
+		    while (!((*p - *(++q)) & 0xDF)) {
 			if (!*p++) {
 			    name = p;
 			    goto gotWebColor;

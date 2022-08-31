@@ -609,7 +609,7 @@ TclpOpenFile(
 	DWORD err;
 
 	err = GetLastError();
-	if ((err & 0xffffL) == ERROR_OPEN_FAILED) {
+	if ((err & 0xFFFFL) == ERROR_OPEN_FAILED) {
 	    err = (mode & O_CREAT) ? ERROR_FILE_EXISTS : ERROR_FILE_NOT_FOUND;
 	}
 	TclWinConvertError(err);
@@ -1322,7 +1322,7 @@ ApplicationType(
 	 */
 
 	attr = GetFileAttributesW(nativeFullPath);
-	if ((attr == 0xffffffff) || (attr & FILE_ATTRIBUTE_DIRECTORY)) {
+	if ((attr == 0xFFFFFFFF) || (attr & FILE_ATTRIBUTE_DIRECTORY)) {
 	    continue;
 	}
 	strcpy(fullName, Tcl_WinTCharToUtf((TCHAR *)nativeFullPath, -1, &ds));
@@ -1834,7 +1834,7 @@ TclpCreateCommandChannel(
      * unique, in case channels share handles (stdin/stdout).
      */
 
-    sprintf(channelName, "file%" TCL_I_MODIFIER "x", (size_t) infoPtr);
+    sprintf(channelName, "file%" TCL_Z_MODIFIER "x", (size_t) infoPtr);
     infoPtr->channel = Tcl_CreateChannel(&pipeChannelType, channelName,
 	    infoPtr, infoPtr->validMask);
 
@@ -2317,7 +2317,7 @@ PipeOutputProc(
 	    infoPtr->writeBufLen = toWrite;
 	    infoPtr->writeBuf = ckalloc(toWrite);
 	}
-	memcpy(infoPtr->writeBuf, buf, (size_t) toWrite);
+	memcpy(infoPtr->writeBuf, buf, toWrite);
 	infoPtr->toWrite = toWrite;
 	ResetEvent(infoPtr->writable);
 	TclPipeThreadSignal(&infoPtr->writeTI);
@@ -2752,7 +2752,6 @@ TclWinAddProcess(
  *----------------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 int
 Tcl_PidObjCmd(
     ClientData dummy,		/* Not used. */
@@ -2784,7 +2783,7 @@ Tcl_PidObjCmd(
 	}
 
 	pipePtr = (PipeInfo *) Tcl_GetChannelInstanceData(chan);
-	resultPtr = Tcl_NewObj();
+	TclNewObj(resultPtr);
 	for (i = 0; i < pipePtr->numPids; i++) {
 	    Tcl_ListObjAppendElement(/*interp*/ NULL, resultPtr,
 		    Tcl_NewWideIntObj((unsigned)
@@ -3232,7 +3231,7 @@ TclpOpenTemporaryFile(
 	Tcl_DStringFree(&buf);
     } else {
 	const WCHAR *baseStr = L"TCL";
-	int length = 3 * sizeof(WCHAR);
+	length = 3 * sizeof(WCHAR);
 
 	memcpy(namePtr, baseStr, length);
 	namePtr += length;

@@ -80,7 +80,7 @@ Tk_InitStubs(
     ClientData clientData = NULL;
     const char *actualVersion = tclStubsPtr->tcl_PkgRequireEx(interp,
 	    packageName, version, 0, &clientData);
-    const TkStubs *stubsPtr = clientData;
+    const TkStubs *stubsPtr = (const TkStubs *)clientData;
 
     if (actualVersion == NULL) {
 	return NULL;

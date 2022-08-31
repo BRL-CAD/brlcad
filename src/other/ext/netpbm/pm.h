@@ -15,18 +15,13 @@
 
 #include "pm_config.h"
 
-
-
 #include <sys/types.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <errno.h>
 #include <setjmp.h>
 #include <sys/stat.h>
-
-#ifdef VMS
-#include <perror.h>
-#endif
+#include <fcntl.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -101,6 +96,26 @@ extern "C" {
 #define PURE_FN_ATTR
 #endif
 
+
+/* S_IRUSR is POSIX, defined in <sys/stat.h> Some old BSD systems and Windows
+   systems have S_IREAD instead.  Most Unix today (2011) has both.  In 2011,
+   Android has S_IRUSR and not S_IREAD.
+
+   Some Windows has _S_IREAD.
+
+   We're ignoring S_IREAD now to see if anyone misses it.  If there are still
+   users that need it, we can handle it here.
+*/
+#if MSVCRT
+  #define PM_S_IWUSR _S_IWRITE
+  #define PM_S_IRUSR _S_IREAD
+#else
+  #define PM_S_IWUSR S_IWUSR
+  #define PM_S_IRUSR S_IRUSR
+#endif
+
+
+
 typedef struct {
     /* Coordinates of a pixel within an image.  Row 0 is the top row.
        Column 0 is the left column.
@@ -113,22 +128,33 @@ extern int pm_plain_output;
     /* Output functions are to produce plain (as opposed to raw) format
        regardless of their 'plainformat' arguments.
     */
+extern const char * pm_progname;
 
 void 
 pm_init(const char * const progname, unsigned int const flags);
 
 void 
-pm_proginit(int* const argcP, char* argv[]);
+pm_proginit(int * const argcP, const char * argv[]);
 
 void
 pm_setMessage(int const newState, int * const oldStateP);
 
+int
+pm_getMessage(void);
+
 FILE * 
 pm_tmpfile(void);
+
+int
+pm_tmpfile_fd(void);
 
 void
 pm_make_tmpfile(FILE **       const filePP,
                 const char ** const filenameP);
+
+void
+pm_make_tmpfile_fd(int *         const fdP,
+                   const char ** const filenameP);
 
 void
 pm_nextimage(FILE * const file, int * const eofP);
@@ -146,12 +172,14 @@ NETPBM_EXPORT extern void
 pm_freearray (char** const its, int const rows);
 
 NETPBM_EXPORT extern void 
-pm_freerow(char* const itrow);
+pm_freerow(void * const row);
 
 
 /* Obsolete -- use shhopt instead */
 int 
-pm_keymatch (char* const str, const char* const keyword, int const minchars);
+pm_keymatch(const char * const str,
+            const char * const keyword,
+            int          const minchars);
 
 
 int PURE_FN_ATTR
@@ -176,15 +204,45 @@ pm_setjmpbufsave(jmp_buf *  const jmpbufP,
 void
 pm_longjmp(void);
 
+#ifndef _WIN32
+void
+pm_fork(int *         const iAmParentP,
+        pid_t *       const childPidP,
+        const char ** const errorP);
+
+void
+pm_waitpid(pid_t         const pid,
+           int *         const statusP,
+           int           const options,
+           pid_t *       const exitedPidP,
+           const char ** const errorP);
+
+
+void
+pm_waitpidSimple(pid_t const pid);
+#endif
+
+typedef void pm_usermessagefn(const char * msg);
+
+void
+pm_setusermessagefn(pm_usermessagefn * fn);
+
+typedef void pm_usererrormsgfn(const char * msg);
+
+void
+pm_setusererrormsgfn(pm_usererrormsgfn * fn);
+
 void PM_GNU_PRINTF_ATTR(1,2)
 pm_message (const char format[], ...);     
 
 void PM_GNU_PRINTF_ATTR(1,2)
+pm_errormsg(const char format[], ...);
+
+void PM_GNU_PRINTF_ATTR(1,2)
 pm_error (const char reason[], ...);       
 
-/* Obsolete - use helpful error message instead */
-void
-pm_perror (const char reason[]);           
+int
+pm_have_float_format(void);
 
 /* Obsolete - use shhopt and user's manual instead */
 void 
@@ -261,6 +319,16 @@ pm_readbiglongu(FILE *          const ifP,
 }
 
 int
+pm_readbiglong2(FILE * const ifP, 
+                int32_t * const lP);
+
+static __inline__ int
+pm_readbiglongu2(FILE *     const ifP,
+                 uint32_t * const lP) {
+    return pm_readbiglong2(ifP, (int32_t *) lP);
+}
+
+int
 pm_writebiglong(FILE * const ofP,
                 long   const l);
 
@@ -298,6 +366,16 @@ static __inline__ int
 pm_readlittlelongu(FILE *          const ifP,
                    unsigned long * const lP) {
     return pm_readlittlelong(ifP, (long *) lP);
+}
+
+int
+pm_readlittlelong2(FILE *    const ifP,
+                   int32_t * const lP);
+
+static __inline__ int
+pm_readlittlelong2u(FILE *     const ifP,
+                    uint32_t * const lP) {
+    return pm_readlittlelong2(ifP, (int32_t *) lP);
 }
 
 int
@@ -357,8 +435,16 @@ pm_check(FILE *               const file,
          pm_filepos           const need_raster_size,
          enum pm_check_code * const retval_p);
 
+void
+pm_drain(FILE *         const fileP,
+         unsigned int   const limit,
+         unsigned int * const bytesReadP);
+
 char *
 pm_arg0toprogname(const char arg0[]);
+
+unsigned int
+pm_randseed(void);
 
 #ifdef __cplusplus
 }

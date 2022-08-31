@@ -9,15 +9,15 @@ namespace eval ttk::scale {
     }
 }
 
-bind TScale <ButtonPress-1>   { ttk::scale::Press %W %x %y }
+bind TScale <Button-1>        { ttk::scale::Press %W %x %y }
 bind TScale <B1-Motion>       { ttk::scale::Drag %W %x %y }
 bind TScale <ButtonRelease-1> { ttk::scale::Release %W %x %y }
 
-bind TScale <ButtonPress-2>   { ttk::scale::Jump %W %x %y }
+bind TScale <Button-2>        { ttk::scale::Jump %W %x %y }
 bind TScale <B2-Motion>       { ttk::scale::Drag %W %x %y }
 bind TScale <ButtonRelease-2> { ttk::scale::Release %W %x %y }
 
-bind TScale <ButtonPress-3>   { ttk::scale::Jump %W %x %y }
+bind TScale <Button-3>        { ttk::scale::Jump %W %x %y }
 bind TScale <B3-Motion>       { ttk::scale::Drag %W %x %y }
 bind TScale <ButtonRelease-3> { ttk::scale::Release %W %x %y }
 
@@ -52,7 +52,7 @@ proc ttk::scale::Press {w x y} {
     }
 }
 
-# scale::Jump -- ButtonPress-2/3 binding for scale acts like
+# scale::Jump -- Button-2/3 binding for scale acts like
 #	Press except that clicking in the trough jumps to the
 #	clicked position.
 proc ttk::scale::Jump {w x y} {
