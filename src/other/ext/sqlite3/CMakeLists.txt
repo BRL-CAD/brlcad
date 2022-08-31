@@ -72,6 +72,7 @@ endif (HAVE_M_LIBRARY)
 
 # https://www.sqlite.org/howtocompile.html
 add_definitions(-DSQLITE_OMIT_LOAD_EXTENSION)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 add_library(libsqlite3 SHARED sqlite3.c)
 set_target_properties(libsqlite3 PROPERTIES PREFIX "")
