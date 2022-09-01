@@ -29,6 +29,7 @@
 
 #include "bu/parallel.h"
 #include "rt/rt_instance.h"
+#include "rt/nmg_conv.h"
 #include "gcv.h"
 
 
