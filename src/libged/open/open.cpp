@@ -115,7 +115,7 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	/* New database open, need to initialize reference counts */
 	db_update_nref(gedp->dbip, &rt_uniresource);
 
-	gedp->dbi_state = new DbiState(gedp->dbip);
+	gedp->dbi_state = new DbiState(gedp);
 	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
 	if (views) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {

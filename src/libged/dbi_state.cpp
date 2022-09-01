@@ -39,6 +39,8 @@ extern "C" {
 #include "bu/opt.h"
 #include "raytrace.h"
 #include "ged/defines.h"
+#include "ged/view/state.h"
+#include "./ged_private.h"
 
 struct walk_data {
     DbiState *dbis;
@@ -258,6 +260,24 @@ path_cyclic(std::vector<unsigned long long> &path)
     }
     return false;
 }
+
+// This version of the cyclic check assumes the path entries other than the
+// last one are OK, and checks only against that last entry.
+static bool
+path_addition_cyclic(std::vector<unsigned long long> &path)
+{
+    if (path.size() == 1)
+	return false;
+    int new_entry = path.size() - 1;
+    int i = new_entry - 1;
+    while (i >= 0) {
+	if (path[new_entry] == path[i])
+	    return true;
+	i--;
+    }
+    return false;
+}
+
 
 static size_t
 path_elements(std::vector<std::string> &elements, const char *path)
@@ -551,6 +571,33 @@ DbiState::path_color(struct bu_color *c, std::vector<unsigned long long> &elemen
 }
 
 bool
+DbiState::path_is_subtraction(std::vector<unsigned long long> &elements)
+{
+    if (elements.size() < 2)
+	return false;
+
+    unsigned long long phash = elements[0];
+    for (size_t i = 1; i < elements.size(); i++) {
+	unsigned long long chash = elements[i];
+	std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, size_t>>::iterator i_it;
+	i_it = i_bool.find(phash);
+	if (i_it == i_bool.end())
+	    return false;
+	std::unordered_map<unsigned long long, size_t>::iterator ib_it;
+	ib_it = i_it->second.find(chash);
+	if (ib_it == i_it->second.end())
+	    return false;
+
+	if (ib_it->second == OP_SUBTRACT)
+	    return true;
+
+	phash = chash;
+    }
+
+    return false;
+}
+
+bool
 DbiState::get_matrix(matp_t m, unsigned long long p_key, unsigned long long i_key)
 {
     if (UNLIKELY(!m || p_key == 0 || i_key == 0))
@@ -724,14 +771,19 @@ DbiState::get_view_state(struct bview *v)
     return shared_vs;
 }
 
-void
+unsigned long long
 DbiState::update()
 {
+    unsigned long long ret = 0;
+
     if (!added.size() && !changed.size() && !removed.size()) {
 	changed_hashes.clear();
 	old_names.clear();
-	return;
+	return ret;
     }
+
+    // If we got this far, SOMETHING changed
+    ret |= GED_DBISTATE_DB_CHANGE;
 
     std::unordered_set<unsigned long long>::iterator s_it;
     std::unordered_set<struct directory *>::iterator g_it;
@@ -792,7 +844,7 @@ DbiState::update()
 	// used anywhere in the database, we have to confirm they are no longer needed on a global
 	// basis in a subsequent garbage-collect operation.
 
-	// Entries with this hash as their key are erased.  
+	// Entries with this hash as their key are erased.
 	p_c.erase(*s_it);
 	p_v.erase(*s_it);
     }
@@ -838,7 +890,7 @@ DbiState::update()
     for (v_it = view_states.begin(); v_it != view_states.end(); v_it++) {
 	if (v_it->second == shared_vs)
 	    continue;
-	v_it->second->redraw();
+	ret |= v_it->second->redraw();
     }
 
     // Updates done, clear items stored by callbacks
@@ -847,15 +899,20 @@ DbiState::update()
     changed_hashes.clear();
     removed.clear();
     old_names.clear();
+
+    return ret;
 }
 
 
-DbiState::DbiState(struct db_i *dbi_p)
+DbiState::DbiState(struct ged *ged_p)
 {
     BU_GET(res, struct resource);
     rt_init_resource(res, 0, NULL);
     shared_vs = new BViewState(this);
-    dbip = dbi_p;
+    gedp = ged_p;
+    if (!gedp)
+	return;
+    dbip = gedp->dbip;
     if (!dbip)
 	return;
 
@@ -883,6 +940,8 @@ BViewState::BViewState(DbiState *s)
 int
 BViewState::check_status(
 	std::unordered_set<unsigned long long> *invalid_objects,
+	std::unordered_set<unsigned long long> *changed_paths,
+	unsigned long long path_hash,
        	std::vector<unsigned long long> &cpath
 	)
 {
@@ -903,6 +962,8 @@ BViewState::check_status(
 	    if (!is_parent) {
 		if (invalid_objects)
 		    (*invalid_objects).insert(hash);
+		if (changed_paths)
+		    (*changed_paths).erase(path_hash);
 		return 1;
 	    }
 	    // If it's still in the comb tree, proceed with the evaluation.
@@ -915,6 +976,8 @@ BViewState::check_status(
 		// Top level removed - everything else is gone
 		if (invalid_objects)
 		    (*invalid_objects).insert(hash);
+		if (changed_paths)
+		    (*changed_paths).erase(path_hash);
 		return 1;
 	    }
 
@@ -924,23 +987,31 @@ BViewState::check_status(
 		// particular instance is still there; either way the state
 		// here is not preservable, since the path is trying to refer
 		// to a tree path which no longer exists in the hierarchy.
-		if (invalid_objects)
+		if (invalid_objects) 
 		    (*invalid_objects).insert(hash);
+		if (changed_paths)
+		    (*changed_paths).erase(path_hash);
 		return 1;
 	    }
 	    if (is_removed && j == cpath.size()-1) {
 		// If removed is a leaf and the comb instance is intact,
 		// leave "drawn" as invalid path.
+		if (changed_paths)
+		    (*changed_paths).insert(path_hash);
 		return 2;
 	    }
 	}
 	if (is_changed) {
 	    if (j == cpath.size()-1) {
 		// Changed, but a leaf - stays drawn
+		if (changed_paths)
+		    (*changed_paths).insert(path_hash);
 		return 0;
 	    }
 	    // Not a leaf - check child
 	    parent_changed = true;
+	    if (changed_paths)
+		(*changed_paths).erase(path_hash);
 	    continue;
 	}
 
@@ -1142,9 +1213,179 @@ BViewState::cache_collapsed()
 #endif
 }
 
-void
-BViewState::redraw()
+struct bv_scene_obj *
+BViewState::scene_obj(
+	struct bv_obj_settings *vs,
+	matp_t m,
+       	std::vector<unsigned long long> &path_hashes
+	)
 {
+    // Solid - scene object time
+    unsigned long long phash = dbis->path_hash(path_hashes, 0);
+    struct bv_scene_obj *sp = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
+
+    std::unordered_map<unsigned long long, struct directory *>::iterator d_it;
+    d_it = dbis->d_map.find(path_hashes[path_hashes.size()-1]);
+    if (d_it == dbis->d_map.end()) {
+	std::unordered_map<unsigned long long, unsigned long long>::iterator m_it;
+	m_it = dbis->i_map.find(path_hashes[path_hashes.size()-1]);
+	if (m_it != dbis->i_map.end())
+	    d_it = dbis->d_map.find(m_it->second);
+    }
+
+    struct draw_update_data_t *ud;
+    BU_GET(ud, struct draw_update_data_t);
+    ud->dbip = dbis->gedp->dbip;
+    ud->tol = &dbis->gedp->ged_wdbp->wdb_tol;
+    ud->ttol = &dbis->gedp->ged_wdbp->wdb_ttol;
+    ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view... local_res is temporary, don't use it here
+    ud->mesh_c = dbis->gedp->ged_lod;
+    sp->dp = d_it->second;
+    sp->s_i_data = (void *)ud;
+
+    // Get color from path, unless we're overridden
+    struct bu_color c;
+    dbis->path_color(&c, path_hashes);
+    bu_color_to_rgb_chars(&c, sp->s_color);
+    if (vs && vs->color_override) {
+	sp->s_color[0] = vs->color[0];
+	sp->s_color[1] = vs->color[1];
+	sp->s_color[2] = vs->color[2];
+    }
+
+    // Set drawing mode
+    if (vs)
+	sp->s_os->s_dmode = vs->s_dmode;
+
+    // Tell scene object what the current matrix is
+    if (m) {
+	MAT_COPY(sp->s_mat, m);
+    } else {
+	dbis->get_path_matrix(sp->s_mat, path_hashes);
+    }
+
+    // Assign the bounding box
+    dbis->get_path_bbox(&sp->bmin, &sp->bmax, path_hashes);
+
+    // If we're drawing a subtraction and we're not overridden, set the
+    // appropriate flag for dashed line drawing
+    if (vs && !vs->draw_solid_lines_only) {
+	bool is_subtract = dbis->path_is_subtraction(path_hashes);
+	sp->s_soldash = (is_subtract) ? 1 : 0;
+    }
+
+    // Set line width, if the user specified a non-default value
+    if (vs && vs->s_line_width)
+	sp->s_os->s_line_width = vs->s_line_width;
+
+    // Set transparency
+    if (vs)
+	sp->s_os->transparency = vs->transparency;
+
+    dbis->print_path(&sp->s_name, path_hashes);
+    bu_log("make solid %s\n", bu_vls_cstr(&sp->s_name));
+    s_map[phash] = sp;
+    s_keys[phash] = path_hashes;
+
+    return sp;
+}
+
+
+void
+BViewState::walk_tree(unsigned long long chash,
+	struct bv_obj_settings *vs,
+       	std::vector<unsigned long long> &path_hashes
+	)
+{
+    size_t op = OP_UNION;
+    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, size_t>>::iterator b_it;
+    b_it = dbis->i_bool.find(path_hashes[path_hashes.size() - 1]);
+    if (b_it != dbis->i_bool.end()) {
+	std::unordered_map<unsigned long long, size_t>::iterator bb_it;
+	bb_it = b_it->second.find(chash);
+	if (bb_it != b_it->second.end()) {
+	    op = bb_it->second;
+	}
+    }
+
+    if (op == OP_SUBTRACT && vs && vs->draw_solid_lines_only)
+	return;
+
+    matp_t mp = NULL;
+    mat_t m;
+    unsigned long long phash = path_hashes[path_hashes.size() - 1];
+    if (dbis->get_matrix(m, phash, chash))
+	mp = m;
+
+    gather_paths(chash, vs, mp, path_hashes);
+}
+
+void
+BViewState::gather_paths(
+	unsigned long long c_hash,
+	struct bv_obj_settings *vs,
+       	matp_t m,
+	std::vector<unsigned long long> &path_hashes
+	)
+{
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    pc_it = dbis->p_c.find(c_hash);
+
+    std::unordered_map<unsigned long long, struct directory *>::iterator d_it;
+    d_it = dbis->d_map.find(c_hash);
+    if (d_it == dbis->d_map.end()) {
+	std::unordered_map<unsigned long long, unsigned long long>::iterator m_it;
+	m_it = dbis->i_map.find(c_hash);
+	if (m_it != dbis->i_map.end()) {
+	    d_it = dbis->d_map.find(m_it->second);
+	} else {
+	    bu_log("Could not find dp!\n");
+	    return;
+	}
+    }
+
+    path_hashes.push_back(c_hash);
+    mat_t om, nm;
+    /* Update current matrix state to reflect the new branch of
+     * the tree. Either we have a local matrix, or we have an
+     * implicit IDN matrix. */
+    MAT_COPY(om, m);
+    if (m) {
+	MAT_COPY(nm, m);
+    } else {
+	MAT_IDN(nm);
+    }
+    bn_mat_mul(m, om, nm);
+
+    if (pc_it != dbis->p_c.end()) {
+	// Two things may prevent further processing of a comb - a hidden dp, or
+	// a cyclic path.
+	struct directory *dp = d_it->second;
+	if (!(dp->d_flags & RT_DIR_HIDDEN) && !path_addition_cyclic(path_hashes)) {
+
+	    /* Keep going */
+	    std::unordered_set<unsigned long long>::iterator c_it;
+	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++) {
+		walk_tree(*c_it, vs, path_hashes);
+	    }
+	}
+    } else {
+	// Solid - scene object time
+	scene_obj(vs, m, path_hashes);
+    }
+    /* Done with branch - restore path, put back the old matrix state,
+     * and restore previous color settings */
+    path_hashes.pop_back();
+    MAT_COPY(m, om);
+}
+
+unsigned long long
+BViewState::redraw(struct bv_obj_settings *vs)
+{
+    // We (well, callers) need to be able to tell if the redraw pass actually
+    // changed anything.
+    unsigned long long ret = 0;
+
     // The principle for redrawing will be that anything that was previously
     // fully drawn should stay fully drawn, even if its tree structure has
     // changed.  We need to remove no-longer-valid paths, but will keep valid
@@ -1152,32 +1393,76 @@ BViewState::redraw()
     // re-expand the collapsed paths using the new tree structure.
 
     std::unordered_set<unsigned long long> invalid_objects;
+    std::unordered_set<unsigned long long> changed_paths;
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator sk_it;
     for (sk_it = s_keys.begin(); sk_it != s_keys.end(); sk_it++) {
 	// Work down from the root of each path looking for the first changed or
 	// removed entry.
 	std::vector<unsigned long long> &cpath = sk_it->second;
-	check_status(&invalid_objects, cpath);
+	check_status(&invalid_objects, &changed_paths, sk_it->first, cpath);
     }
 
+    // Invalid path objects we remove completely
     std::unordered_set<unsigned long long>::iterator iv_it;
     for (iv_it = invalid_objects.begin(); iv_it != invalid_objects.end(); iv_it++) {
 	s_keys.erase(*iv_it);
+	ret = GED_DBISTATE_VIEW_CHANGE;
 	bu_log("erase: %llu\n", *iv_it);
 	if (s_map.find(*iv_it) != s_map.end()) {
-	    // an invalid child entry may be present in s_keys but not have an
-	    // associated scene object.
-	// free scene obj s_map[*iv_it];
+	    bv_obj_put(s_map[*iv_it]);
+	    s_map.erase(*iv_it);
 	}
     }
 
-    // Also need to evaluate collapsed paths according to the same criteria, before
-    // we re-expand them
+    // Changed paths we reset based on current db info - color, matrix,
+    // and regenerating the geometry if the entry isn't invalid
+    for (iv_it = changed_paths.begin(); iv_it != changed_paths.end(); iv_it++) {
+	std::vector<unsigned long long> &cp = s_keys[*iv_it];
+	struct bv_scene_obj *s = NULL;
+	if (s_map.find(*iv_it) != s_map.end()) {
+	    ret = GED_DBISTATE_VIEW_CHANGE;
+	    s = s_map[*iv_it];
+	}
+	if (dbis->invalid_entry_map.find(cp[cp.size() - 1]) != dbis->invalid_entry_map.end()) {
+	    if (s) {
+		// Invalid - remove any scene object geometry
+		ret = GED_DBISTATE_VIEW_CHANGE;
+		bv_obj_reset(s);
+		s->s_v = dbis->gedp->ged_gvp;
+	    } else {
+		s = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
+		// print path name, set view - otherwise empty
+		dbis->print_path(&s->s_name, cp);
+		s->s_v = dbis->gedp->ged_gvp;
+		s_map[*iv_it] = s;
+	    }
+	    continue;
+	}
+	if (!s) {
+	    s = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
+	} else {
+	    bv_obj_reset(s);
+	}
+	// Update color
+	struct bu_color c;
+	dbis->path_color(&c, cp);
+	bu_color_to_rgb_chars(&c, s->s_color);
+
+	// Update matrix
+	dbis->get_path_matrix(s->s_mat, cp);
+
+	// Update geometry
+	draw_scene(s, dbis->gedp->ged_gvp);
+    }
+
+    // Also need to evaluate collapsed paths according to the same validity
+    // criteria, before we re-expand them
     std::unordered_set<size_t> active_collapsed;
     std::unordered_set<size_t> draw_invalid_collapsed;
     for (size_t i = 0; i < prev_collapsed.size(); i++) {
 	std::vector<unsigned long long> &cpath = prev_collapsed[i];
-	int sret = check_status(NULL, cpath);
+	int sret = check_status(NULL, NULL, 0, cpath);
+	check_status(NULL, NULL, sk_it->first, cpath);
 	if (sret == 2)
 	    draw_invalid_collapsed.insert(i);
 	if (sret == 0)
@@ -1185,6 +1470,24 @@ BViewState::redraw()
     }
 
     // Expand active collapsed paths to solids, creating any missing path objects
+    // and re-drawing any solids reported as changed.
+    std::unordered_set<size_t>::iterator sz_it;
+    for (sz_it = active_collapsed.begin(); sz_it != active_collapsed.end(); sz_it++) {
+	std::vector<unsigned long long> cpath = prev_collapsed[*sz_it];
+	mat_t m;
+	dbis->get_path_matrix(m, cpath);
+	unsigned long long ihash = cpath[cpath.size() - 1];
+	cpath.pop_back();
+	gather_paths(ihash, vs, m, cpath);
+    }
+    for (sz_it = draw_invalid_collapsed.begin(); sz_it != draw_invalid_collapsed.end(); sz_it++) {
+	std::vector<unsigned long long> cpath = prev_collapsed[*sz_it];
+	struct bv_scene_obj *s = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
+	// print path name, set view - otherwise empty
+	dbis->print_path(&s->s_name, cpath);
+	s->s_v = dbis->gedp->ged_gvp;
+	s_map[*iv_it] = s;
+    }
 
 
     // Added dps present their own challenge, in terms of whether or not to
@@ -1204,6 +1507,7 @@ BViewState::redraw()
 
     // Final step - rebuild drawn_paths to reflect current drawn state
 
+    return ret;
 }
 
 /** @} */

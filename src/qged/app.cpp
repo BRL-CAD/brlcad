@@ -241,97 +241,14 @@ CADApp::closedb()
 }
 
 
-extern "C" void
-qged_db_changed(struct db_i *UNUSED(dbip), struct directory *dp, int ctype, void *ctx)
-{
-    std::unordered_set<struct directory *> *changed = (std::unordered_set<struct directory *> *)ctx;
-    if (ctype == 0)
-	changed->insert(dp);
-}
-
-
 int
-qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *changed)
+qged_view_update(struct ged *gedp)
 {
     int view_flags = 0;
-    struct db_i *dbip = gedp->dbip;
-    struct bview *v = gedp->ged_gvp;
-    struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
-    std::set<struct bv_scene_group *> regen;
-    std::set<struct bv_scene_group *> erase;
-    std::set<struct bv_scene_group *>::iterator r_it;
-    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	// When checking a scene group, there are two things to confirm:
-	// 1.  All dp pointers in all paths are valid
-	// 2.  No dps in path have changed.
-	// If either of these things is not true, the group must be
-	// regenerated.
-	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	int invalid = 0;
-	int do_erase = 0;
-	for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
-	    struct draw_update_data_t *ud = (struct draw_update_data_t *)s->s_i_data;
 
-	    // First, check the root - if it is no longer present, we're
-	    // erasing rather than redrawing.
-	    struct directory *dp = db_lookup(dbip, ud->fp->fp_names[0]->d_namep, LOOKUP_QUIET);
-	    if (dp == RT_DIR_NULL) {
-		do_erase = 1;
-	    } else {
-		// Root OK, check the path
-		for (size_t fp_i = 0; fp_i < ud->fp->fp_len; fp_i++) {
-		    dp = db_lookup(dbip, ud->fp->fp_names[fp_i]->d_namep, LOOKUP_QUIET);
-		    if (dp == RT_DIR_NULL || dp != ud->fp->fp_names[fp_i]) {
-			do_erase = 1;
-			break;
-		    }
-		    if (changed->find(dp) != changed->end()) {
-			invalid = 1;
-			// The path isn't valid - update the parent name to match it's
-			// current s_path so the redraw succeeds
-			bu_vls_trunc(&cg->s_name, 0);
-			db_path_to_vls(&cg->s_name, (struct db_full_path *)cg->s_path);
-			break;
-		    }
-		}
-	    }
-	    if (do_erase) {
-		erase.insert(cg);
-		break;
-	    }
-	    if (invalid) {
-		regen.insert(cg);
-		break;
-	    }
-	}
-    }
-
-    for (r_it = erase.begin(); r_it != erase.end(); r_it++) {
-	struct bv_scene_group *cg = *r_it;
-	struct bu_vls opath = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->s_name));
-	const char *av[3];
-	av[0] = "erase";
-	av[1] = bu_vls_cstr(&opath);
-	av[2] = NULL;
-	ged_exec(gedp, 2, av);
-	bu_vls_free(&opath);
+    unsigned long long updated = gedp->dbi_state->update();
+    if (updated & GED_DBISTATE_VIEW_CHANGE)
 	view_flags |= QTCAD_VIEW_DRAWN;
-    }
-    for (r_it = regen.begin(); r_it != regen.end(); r_it++) {
-	struct bv_scene_group *cg = *r_it;
-	struct bu_vls opath = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->s_name));
-	const char *av[4];
-	av[0] = "draw";
-	av[1] = "-R";
-	av[2] = bu_vls_cstr(&opath);
-	av[3] = NULL;
-	ged_exec(gedp, 3, av);
-	bu_vls_free(&opath);
-	view_flags |= QTCAD_VIEW_DRAWN;
-    }
 
     return view_flags;
 }
@@ -410,7 +327,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     if (!(ret & BRLCAD_MORE)) {
 
 	// Handle any necessary redrawing.
-	view_flags = qged_view_update(gedp, &mdl->changed_dp);
+	view_flags = qged_view_update(gedp);
 
 	/* Check if the ged_exec call changed either the display manager or
 	 * the view settings - in either case we'll need to redraw */

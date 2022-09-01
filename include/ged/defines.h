@@ -194,7 +194,14 @@ class GED_EXPORT BViewState {
 
 	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
 
-	void redraw();
+	void gather_paths(
+		unsigned long long c_hash,
+		struct bv_obj_settings *vs,
+		matp_t m,
+		std::vector<unsigned long long> &path_hashes
+		);
+
+	unsigned long long redraw();
 
 	// Sets defining all drawn solid paths (including invalid paths).  The
 	// s_keys holds the ordered individual keys of each drawn solid path - it
@@ -222,9 +229,25 @@ class GED_EXPORT BViewState {
     private:
 	DbiState *dbis;
 
-	int check_status(std::unordered_set<unsigned long long> *invalid_objects, std::vector<unsigned long long> &cpath);
+	int check_status(
+		std::unordered_set<unsigned long long> *invalid_objects,
+		std::unordered_set<unsigned long long> *changed_paths,
+		unsigned long long path_hash,
+		std::vector<unsigned long long> &cpath
+		);
 
+	void walk_tree(
+		unsigned long long chash,
+		struct bv_obj_settings *vs,
+		std::vector<unsigned long long> &path_hashes
+		);
 
+	struct bv_scene_obj *
+	    scene_obj(
+		    struct bv_obj_settings *vs,
+		    matp_t m,
+		    std::vector<unsigned long long> &path_hashes
+		    );
 
 	std::unordered_set<unsigned long long> all_fully_drawn;
 
@@ -234,14 +257,19 @@ class GED_EXPORT BViewState {
 	std::vector<unsigned long long> active_paths;
 };
 
+#define GED_DBISTATE_DB_CHANGE   0x01
+#define GED_DBISTATE_VIEW_CHANGE 0x02
+
 class GED_EXPORT DbiState {
     public:
-	DbiState(struct db_i *);
+	DbiState(struct ged *);
 	~DbiState();
 
-	void update();
+	unsigned long long update();
 
 	bool path_color(struct bu_color *c, std::vector<unsigned long long> &elements);
+
+	bool path_is_subtraction(std::vector<unsigned long long> &elements);
 
 	bool get_matrix(matp_t m, unsigned long long p_key, unsigned long long i_key);
 	bool get_path_matrix(matp_t m, std::vector<unsigned long long> &elements);
@@ -322,6 +350,7 @@ class GED_EXPORT DbiState {
 	std::unordered_map<struct bview *, BViewState *> view_states;
 
 	// Database Instance associated with this container
+	struct ged *gedp;
 	struct db_i *dbip;
 
 	bool need_update_nref = true;

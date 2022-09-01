@@ -357,7 +357,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     bv_init(gedp->ged_gvp, &gedp->ged_views);
 
     db_update_nref(gedp->dbip, &rt_uniresource);
-    gedp->dbi_state = new DbiState(gedp->dbip);
+    gedp->dbi_state = new DbiState(gedp);
     gedp->dbi_state->view_states[gedp->ged_gvp] = new BViewState(gedp->dbi_state);
 
     return gedp;
