@@ -32,6 +32,14 @@ endif(NOT DEFINED EXTPROJ_VERBOSE)
 # We can't always rely on rpath being present from 3rd party OSX builds, but we do need
 # it for CMake and there is a Mac tool that can add it for us - as part of the copy
 # process, check if if is set and if not, set it.
+#
+# Permissions are a bit thorny here - this file(COPY) signature will not preserve
+# ANY of the original file permissions, losing executable flags and any specific
+# permission profiles the parent build might have assigned.  On the other hand,
+# if the build install something read-only, we get permissions errors when trying
+# to rebuild.  What we really need is to just make sure the read-only flag isn't
+# set on files, but I don't currently (09/2022) know of a way to do this portably
+# with CMake...
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeFiles/cp.cmake" "
 if(\"\${FTYPE}\" STREQUAL \"EXEC\" OR \"\${FTYPE}\" STREQUAL \"SHARED\")
   if(APPLE)
@@ -47,7 +55,11 @@ if(\"\${FTYPE}\" STREQUAL \"EXEC\" OR \"\${FTYPE}\" STREQUAL \"SHARED\")
 endif()
 get_filename_component(DNAME \"\${DEST}\" NAME)
 string(REGEX REPLACE \"\${DNAME}$\" \"\" DDIR \"\${DEST}\")
-file(COPY \"\${SRC}\" DESTINATION \"\${DDIR}\" FILE_PERMISSIONS OWNER_READ OWNER_WRITE)
+if(\"\${FTYPE}\" STREQUAL \"EXEC\")
+  file(COPY \"\${SRC}\" DESTINATION \"\${DDIR}\" FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+else(\"\${FTYPE}\" STREQUAL \"EXEC\")
+  file(COPY \"\${SRC}\" DESTINATION \"\${DDIR}\" FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ)
+endif(\"\${FTYPE}\" STREQUAL \"EXEC\")
 ")
 
 # When staging files in the build directory, we have to be aware of multiple
@@ -120,7 +132,9 @@ function(ExternalProject_ByProducts etarg extproj extroot dir)
     set(ALL_TOUT ${ALL_TOUT} ${TOUT})
 
     if (NOT E_NOINSTALL)
-      install(FILES "${CMAKE_BINARY_ROOT}/${dir}/${bpf}" DESTINATION "${dir}/" PERMISSIONS OWNER_READ OWNER_WRITE)
+      # TODO - do we have executable byproducts?  If so we probably need to add a flag to ExternalProject_ByProducts
+      # and conditionalize this install - the PERMISSIONS setting here will not preserve pre-existing file modes...
+      install(FILES "${CMAKE_BINARY_ROOT}/${dir}/${bpf}" DESTINATION "${dir}/" PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ)
       if (E_FIXPATH)
 	# Note - proper quoting for install(CODE) is extremely important for CPack, see
 	# https://stackoverflow.com/a/48487133
