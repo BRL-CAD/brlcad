@@ -244,107 +244,6 @@ draw_gather_paths(void *d, unsigned long long c_hash, matp_t m, int UNUSED(op))
     MAT_COPY(dd->m, om);
 }
 
-
-/* This function digests the paths into scene object sets.  It does NOT trigger
- * the routines that will actually produce the scene geometry and add it to the
- * scene objects - it only prepares the inputs to be used for that process. */
-static int
-ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int UNUSED(refresh), int argc, const char *argv[])
-{
-    //struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
-
-    // It takes a bit of work to determine if transparency is set -
-    // do it once
-    bool transparency_set = false;
-    if (!NEAR_ZERO(vs->transparency, SMALL_FASTF) && !NEAR_EQUAL(vs->transparency, 1, SMALL_FASTF)) {
-	if (vs->transparency < 0) {
-	    vs->transparency = 0;
-	}
-	if (vs->transparency > 1) {
-	    vs->transparency = 1;
-	}
-	if (!NEAR_ZERO(vs->transparency, SMALL_FASTF) && !NEAR_EQUAL(vs->transparency, 1, SMALL_FASTF))
-	    transparency_set = true;
-    }
-
-    BViewState *bvs = gedp->dbi_state->get_view_state(v);
-
-    /* Validate that the supplied args are current, valid paths in the
-     * database.  If so, walk to find the solids. */
-    for (size_t i = 0; i < (size_t)argc; ++i) {
-	mat_t fm;
-	MAT_IDN(fm);
-	struct dd_t d;
-	d.v = v;
-	d.vs = vs;
-	d.m = fm;
-	d.gedp = gedp;
-	d.transparency_set = transparency_set;
-	d.subtract_skip = vs->draw_non_subtract_only;
-	d.path_hashes = gedp->dbi_state->digest_path(argv[i]);
-	if (!d.path_hashes.size()) {
-	    continue;
-	}
-
-	// Get initial matrix from path
-	gedp->dbi_state->get_path_matrix(d.m, d.path_hashes);
-
-	// In drawing modes 3 (bigE) and 5 (points) we are producing an
-	// evaluated shape, rather than iterating to get the solids, so
-	// we work directly with the supplied path
-	if (vs->s_dmode == 3 || vs->s_dmode == 5) {
-	    unsigned long long phash = gedp->dbi_state->path_hash(d.path_hashes, 0);
-	    std::unordered_map<unsigned long long, struct bv_scene_obj *>::iterator m_it;
-	    m_it = bvs->s_map.find(phash);
-	    if (m_it != bvs->s_map.end()) {
-		bv_obj_put(m_it->second);
-		bvs->s_map.erase(phash);
-	    }
-	    bvs->s_keys.erase(phash);
-	    init_scene_obj(&d);
-	    continue;
-	}
-
-	// Clear any solids that are subpaths of the current path - they
-	// will be recreated
-	std::vector<unsigned long long> bad_paths;
-	std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
-	for (k_it = bvs->s_keys.begin(); k_it != bvs->s_keys.end(); k_it++) {
-	    if (k_it->second.size() < d.path_hashes.size())
-		continue;
-	    bool match = std::equal(d.path_hashes.begin(), d.path_hashes.end(), k_it->second.begin());
-	    if (match)
-		bad_paths.push_back(k_it->first);
-	}
-	for (size_t j = 0; j < bad_paths.size(); j++) {
-	    std::unordered_map<unsigned long long, struct bv_scene_obj *>::iterator m_it;
-	    m_it = bvs->s_map.find(bad_paths[j]);
-	    if (m_it != bvs->s_map.end()) {
-		bv_obj_put(m_it->second);
-		bvs->s_map.erase(bad_paths[j]);
-	    }
-	    bvs->s_keys.erase(bad_paths[j]);
-	}
-
-	// Walk the tree (via the dbi_state so we don't have to hit disk
-	// to unpack comb trees) to create the solids to be added to
-	// represent this path.
-	unsigned long long i_key = d.path_hashes[d.path_hashes.size() - 1];
-	d.path_hashes.pop_back();
-	draw_gather_paths(&d, i_key, NULL, OP_UNION);
-    }
-
-    // Update BViewState active_paths set with a collapse call, now that we
-    // have accommodated all specified paths incorporated
-    bvs->collapse(NULL);
-
-    // Scene objects are created and stored. The next step is to generate
-    // wireframes, triangles, etc. for each object based on current settings.
-    // It is then the job of the dm to display the scene objects supplied by
-    // the view.
-    return BRLCAD_OK;
-}
-
 static int
 ged_draw_view(struct bview *v, int bot_threshold, int no_autoview, int blank_slate)
 {
@@ -544,17 +443,16 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	blank_slate = 1;
     }
 
-    // For the non-adaptive views, the object list is shared.  We process the
-    // current list once to update the object set, but this step does not also
-    // update the geometries of the objects.  Once we have the scene obj set,
-    // we must process it on a per-view basis in case the objects have view
-    // specific visualizations (such as in adaptive plotting.)
-    ged_update_objs(gedp, cv, &vs, refresh, argc, argv);
-
     // Drawing can get complicated when we have multiple active views with
     // different settings. The simplest case is when the current or specified
     // view is an independent view - we just update it and return.
     if (cv->independent) {
+	BViewState *bvs = gedp->dbi_state->get_view_state(cv);
+	std::unordered_set<struct bview *> vset;
+	vset.insert(cv);
+	for (size_t i = 0; i < (size_t)argc; ++i)
+	    bvs->add_path(argv[i]);
+	bvs->redraw(&vs, vset);
 	return ged_draw_view(cv, bot_threshold, no_autoview, blank_slate);
     }
 
@@ -562,15 +460,23 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // time the work will be done in the first pass (when objects do not have
     // view specific geometry to generate) but this is not true when adaptive
     // plotting is enabled.
+    std::unordered_map<BViewState *, std::unordered_set<struct bview *>> vmap;
     struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
     for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	if (v->independent) {
-	    // Independent views are handled individually by the above case -
-	    // this logic doesn't reference them.
+	if (v->independent)
 	    continue;
-	}
-	ged_draw_view(v, bot_threshold, no_autoview, blank_slate);
+	BViewState *bvs = gedp->dbi_state->get_view_state(cv);
+	if (!bvs)
+	    continue;
+	vmap[bvs].insert(v);
+    }
+    std::unordered_map<BViewState *, std::unordered_set<struct bview *>>::iterator bv_it;
+    for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
+	for (size_t i = 0; i < (size_t)argc; ++i)
+	    bv_it->first->add_path(argv[i]);
+	bv_it->first->redraw(&vs, bv_it->second);
+	//ged_draw_view(v, bot_threshold, no_autoview, blank_slate);
     }
 
     return BRLCAD_OK;

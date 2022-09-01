@@ -886,11 +886,18 @@ DbiState::update()
 
     // For all associated view states, execute any necessary changes to
     // view objects and lists
-    shared_vs->redraw();
-    for (v_it = view_states.begin(); v_it != view_states.end(); v_it++) {
-	if (v_it->second == shared_vs)
+    std::unordered_map<BViewState *, std::unordered_set<struct bview *>> vmap;
+    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	BViewState *bvs = gedp->dbi_state->get_view_state(v);
+	if (!bvs)
 	    continue;
-	ret |= v_it->second->redraw();
+	vmap[bvs].insert(v);
+    }
+    std::unordered_map<BViewState *, std::unordered_set<struct bview *>>::iterator bv_it;
+    for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
+	bv_it->first->redraw(NULL, bv_it->second);
     }
 
     // Updates done, clear items stored by callbacks
@@ -945,6 +952,11 @@ BViewState::check_status(
        	std::vector<unsigned long long> &cpath
 	)
 {
+    // If nothing was removed or changed, there's nothing to tell us anything
+    // is invalid - just return
+    if (dbis->removed.size() && !dbis->changed_hashes.size())
+	return 0;
+
     bool parent_changed = false;
     for (size_t j = 0; j < cpath.size(); j++) {
 	unsigned long long phash = (j > 0) ? cpath[j-1] : 0;
@@ -1020,6 +1032,19 @@ BViewState::check_status(
     }
 
     return 0;
+}
+
+void
+BViewState::add_path(const char *path)
+{
+    if (!path)
+	return;
+
+    std::vector<unsigned long long> path_hashes = dbis->digest_path(path);
+    if (!path_hashes.size())
+	return;
+
+    staged.push_back(path_hashes);
 }
 
 unsigned long long
@@ -1217,7 +1242,8 @@ struct bv_scene_obj *
 BViewState::scene_obj(
 	struct bv_obj_settings *vs,
 	matp_t m,
-       	std::vector<unsigned long long> &path_hashes
+       	std::vector<unsigned long long> &path_hashes,
+	std::unordered_set<struct bview *> &views
 	)
 {
     // Solid - scene object time
@@ -1287,6 +1313,22 @@ BViewState::scene_obj(
     s_map[phash] = sp;
     s_keys[phash] = path_hashes;
 
+    // Update geometry.  draw_scene will avoid repeat creation of geometry
+    // when s is not adaptive, but if s IS adaptive we need unique geometry
+    // for each view even though the BViewState is shared - camera settings,
+    // which are unique to each bview, may differ and adaptive geometry must
+    // reflect that.
+    //
+    // Note that this is the ONLY situation where we must care about each
+    // view individually for shared state - the above uses of the first view
+    // work for the "top level" object used for adaptive cases, since shared
+    // views will be using a shared object pool for anything other than their
+    // view specific geometry sub-objects.
+    std::unordered_set<struct bview *>::iterator v_it;
+    for (v_it == views.begin(); v_it != views.end(); v_it++) {
+	draw_scene(sp, *v_it);
+    }
+
     return sp;
 }
 
@@ -1294,7 +1336,8 @@ BViewState::scene_obj(
 void
 BViewState::walk_tree(unsigned long long chash,
 	struct bv_obj_settings *vs,
-       	std::vector<unsigned long long> &path_hashes
+       	std::vector<unsigned long long> &path_hashes,
+	std::unordered_set<struct bview *> &views
 	)
 {
     size_t op = OP_UNION;
@@ -1317,7 +1360,7 @@ BViewState::walk_tree(unsigned long long chash,
     if (dbis->get_matrix(m, phash, chash))
 	mp = m;
 
-    gather_paths(chash, vs, mp, path_hashes);
+    gather_paths(chash, vs, mp, path_hashes, views);
 }
 
 void
@@ -1325,7 +1368,8 @@ BViewState::gather_paths(
 	unsigned long long c_hash,
 	struct bv_obj_settings *vs,
        	matp_t m,
-	std::vector<unsigned long long> &path_hashes
+	std::vector<unsigned long long> &path_hashes,
+	std::unordered_set<struct bview *> &views
 	)
 {
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
@@ -1366,12 +1410,12 @@ BViewState::gather_paths(
 	    /* Keep going */
 	    std::unordered_set<unsigned long long>::iterator c_it;
 	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++) {
-		walk_tree(*c_it, vs, path_hashes);
+		walk_tree(*c_it, vs, path_hashes, views);
 	    }
 	}
     } else {
 	// Solid - scene object time
-	scene_obj(vs, m, path_hashes);
+	scene_obj(vs, m, path_hashes, views);
     }
     /* Done with branch - restore path, put back the old matrix state,
      * and restore previous color settings */
@@ -1380,11 +1424,16 @@ BViewState::gather_paths(
 }
 
 unsigned long long
-BViewState::redraw(struct bv_obj_settings *vs)
+BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views)
 {
     // We (well, callers) need to be able to tell if the redraw pass actually
     // changed anything.
     unsigned long long ret = 0;
+
+    if (!views.size())
+	return 0;
+
+    struct bview *v = *views.begin();
 
     // The principle for redrawing will be that anything that was previously
     // fully drawn should stay fully drawn, even if its tree structure has
@@ -1428,18 +1477,18 @@ BViewState::redraw(struct bv_obj_settings *vs)
 		// Invalid - remove any scene object geometry
 		ret = GED_DBISTATE_VIEW_CHANGE;
 		bv_obj_reset(s);
-		s->s_v = dbis->gedp->ged_gvp;
+		s->s_v = v;
 	    } else {
-		s = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
+		s = bv_obj_get(v, BV_DB_OBJS);
 		// print path name, set view - otherwise empty
 		dbis->print_path(&s->s_name, cp);
-		s->s_v = dbis->gedp->ged_gvp;
+		s->s_v = v;
 		s_map[*iv_it] = s;
 	    }
 	    continue;
 	}
 	if (!s) {
-	    s = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
+	    s = bv_obj_get(v, BV_DB_OBJS);
 	} else {
 	    bv_obj_reset(s);
 	}
@@ -1451,8 +1500,21 @@ BViewState::redraw(struct bv_obj_settings *vs)
 	// Update matrix
 	dbis->get_path_matrix(s->s_mat, cp);
 
-	// Update geometry
-	draw_scene(s, dbis->gedp->ged_gvp);
+	// Update geometry.  draw_scene will avoid repeat creation of geometry
+	// when s is not adaptive, but if s IS adaptive we need unique geometry
+	// for each view even though the BViewState is shared - camera settings,
+	// which are unique to each bview, may differ and adaptive geometry must
+	// reflect that.
+	//
+	// Note that this is the ONLY situation where we must care about each
+	// view individually for shared state - the above uses of the first view
+	// work for the "top level" object used for adaptive cases, since shared
+	// views will be using a shared object pool for anything other than their
+	// view specific geometry sub-objects.
+	std::unordered_set<struct bview *>::iterator v_it;
+	for (v_it == views.begin(); v_it != views.end(); v_it++) {
+	    draw_scene(s, *v_it);
+	}
     }
 
     // Also need to evaluate collapsed paths according to the same validity
@@ -1476,9 +1538,21 @@ BViewState::redraw(struct bv_obj_settings *vs)
 	std::vector<unsigned long long> cpath = prev_collapsed[*sz_it];
 	mat_t m;
 	dbis->get_path_matrix(m, cpath);
+	if (vs && (vs->s_dmode == 3 || vs->s_dmode == 5)) {
+	    unsigned long long phash = dbis->path_hash(cpath, 0);
+	    dbis->get_path_matrix(m, cpath);
+	    std::unordered_map<unsigned long long, struct bv_scene_obj *>::iterator m_it;
+	    m_it = s_map.find(phash);
+	    if (m_it != s_map.end()) {
+		bv_obj_put(m_it->second);
+		s_map.erase(phash);
+	    }
+	    scene_obj(vs, m, cpath, views);
+	    continue;
+	}
 	unsigned long long ihash = cpath[cpath.size() - 1];
 	cpath.pop_back();
-	gather_paths(ihash, vs, m, cpath);
+	gather_paths(ihash, vs, m, cpath, views);
     }
     for (sz_it = draw_invalid_collapsed.begin(); sz_it != draw_invalid_collapsed.end(); sz_it++) {
 	std::vector<unsigned long long> cpath = prev_collapsed[*sz_it];
@@ -1489,8 +1563,34 @@ BViewState::redraw(struct bv_obj_settings *vs)
 	s_map[*iv_it] = s;
     }
 
+    // Expand any staged paths
+    for (size_t i = 0; i < staged.size(); i++) {
+	std::vector<unsigned long long> cpath = staged[i];
+	mat_t m;
+	dbis->get_path_matrix(m, cpath);
+	if (vs && (vs->s_dmode == 3 || vs->s_dmode == 5)) {
+	    unsigned long long phash = dbis->path_hash(cpath, 0);
+	    dbis->get_path_matrix(m, cpath);
+	    std::unordered_map<unsigned long long, struct bv_scene_obj *>::iterator m_it;
+	    m_it = s_map.find(phash);
+	    if (m_it != s_map.end()) {
+		bv_obj_put(m_it->second);
+		s_map.erase(phash);
+	    }
+	    scene_obj(vs, m, cpath, views);
+	    continue;
+	}
+	unsigned long long ihash = cpath[cpath.size() - 1];
+	cpath.pop_back();
+	gather_paths(ihash, vs, m, cpath, views);
+    }
+    // Staged paths are now added - clear the queue
+    staged.clear();
 
-    // Added dps present their own challenge, in terms of whether or not to
+    return ret;
+}
+
+// Added dps present their own challenge, in terms of whether or not to
     // automatically draw them.  (I think this decision comes after the existing
     // draw paths' removed/changed processing and the main .g reflecting maps are
     // updated.)  The cases:
@@ -1505,10 +1605,7 @@ BViewState::redraw(struct bv_obj_settings *vs)
     // 2.  Not part of any path, pre or post removed/changed draw states (i.e.
     // a tops object) - draw
 
-    // Final step - rebuild drawn_paths to reflect current drawn state
 
-    return ret;
-}
 
 /** @} */
 // Local Variables:

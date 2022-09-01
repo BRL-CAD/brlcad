@@ -192,16 +192,25 @@ class GED_EXPORT BViewState {
     public:
 	BViewState(DbiState *);
 
+	// Adds path to the BViewState container, but doesn't trigger a re-draw - that
+	// should be done once all paths to be added in a given draw cycle are added.
+	void add_path(const char *path);
+
 	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
 
 	void gather_paths(
 		unsigned long long c_hash,
 		struct bv_obj_settings *vs,
 		matp_t m,
-		std::vector<unsigned long long> &path_hashes
+		std::vector<unsigned long long> &path_hashes,
+		std::unordered_set<struct bview *> &views
 		);
 
-	unsigned long long redraw();
+	// A View State redraw can impact multiple views with a shared state - most of
+	// the elements will be the same, but adaptive plotting will be view specific even
+	// with otherwise common objects - we must update accordingly.  For independent
+	// views the views set will hold only one view.
+	unsigned long long redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views);
 
 	// Sets defining all drawn solid paths (including invalid paths).  The
 	// s_keys holds the ordered individual keys of each drawn solid path - it
@@ -239,20 +248,24 @@ class GED_EXPORT BViewState {
 	void walk_tree(
 		unsigned long long chash,
 		struct bv_obj_settings *vs,
-		std::vector<unsigned long long> &path_hashes
+		std::vector<unsigned long long> &path_hashes,
+		std::unordered_set<struct bview *> &views
 		);
 
 	struct bv_scene_obj *
 	    scene_obj(
 		    struct bv_obj_settings *vs,
 		    matp_t m,
-		    std::vector<unsigned long long> &path_hashes
+		    std::vector<unsigned long long> &path_hashes,
+		    std::unordered_set<struct bview *> &views
 		    );
 
 	std::unordered_set<unsigned long long> all_fully_drawn;
 
 	// The collapsed drawn paths from the previous db state
 	std::vector<std::vector<unsigned long long>> prev_collapsed;
+
+	std::vector<std::vector<unsigned long long>> staged;
 
 	std::vector<unsigned long long> active_paths;
 };
