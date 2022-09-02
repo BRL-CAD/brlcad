@@ -37,6 +37,7 @@ extern "C" {
 #include "vmath.h"
 #include "bu/color.h"
 #include "bu/opt.h"
+#include "bg/lod.h"
 #include "raytrace.h"
 #include "ged/defines.h"
 #include "ged/view/state.h"
@@ -897,7 +898,7 @@ DbiState::update()
     }
     std::unordered_map<BViewState *, std::unordered_set<struct bview *>>::iterator bv_it;
     for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
-	bv_it->first->redraw(NULL, bv_it->second);
+	bv_it->first->redraw(NULL, bv_it->second, 1);
     }
 
     // Updates done, clear items stored by callbacks
@@ -1233,25 +1234,43 @@ BViewState::cache_collapsed()
 
 struct bv_scene_obj *
 BViewState::scene_obj(
+	std::unordered_set<struct bv_scene_obj *> &objs,
 	struct bv_obj_settings *vs,
 	matp_t m,
        	std::vector<unsigned long long> &path_hashes,
-	std::unordered_set<struct bview *> &views
+	std::unordered_set<struct bview *> &UNUSED(views)
 	)
 {
     // Solid - scene object time
     unsigned long long phash = dbis->path_hash(path_hashes, 0);
-    struct bv_scene_obj *sp = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
+    struct bv_scene_obj *sp = NULL;
+    if (s_map.find(phash) != s_map.end()) {
+	if (s_map[phash].find(vs->s_dmode) != s_map[phash].end()) {
+	    sp = s_map[phash][vs->s_dmode];
+	    // Geometry is suspect - clear to prepare for regeneration
+	    bv_obj_reset(sp);
+	}
+    }
+    if (!sp)
+	sp = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
 
+    // Find the leaf directory pointer
+    struct directory *dp = RT_DIR_NULL;
     std::unordered_map<unsigned long long, struct directory *>::iterator d_it;
     d_it = dbis->d_map.find(path_hashes[path_hashes.size()-1]);
     if (d_it == dbis->d_map.end()) {
+	// Lookup failed - try the instance map
 	std::unordered_map<unsigned long long, unsigned long long>::iterator m_it;
 	m_it = dbis->i_map.find(path_hashes[path_hashes.size()-1]);
-	if (m_it != dbis->i_map.end())
+	if (m_it != dbis->i_map.end()) {
 	    d_it = dbis->d_map.find(m_it->second);
+	    dp = d_it->second;
+	}
+    } else {
+	dp = d_it->second;
     }
 
+    // Prepare draw data
     struct draw_update_data_t *ud;
     BU_GET(ud, struct draw_update_data_t);
     ud->dbip = dbis->gedp->dbip;
@@ -1259,7 +1278,7 @@ BViewState::scene_obj(
     ud->ttol = &dbis->gedp->ged_wdbp->wdb_ttol;
     ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view... local_res is temporary, don't use it here
     ud->mesh_c = dbis->gedp->ged_lod;
-    sp->dp = d_it->second;
+    sp->dp = dp;
     sp->s_i_data = (void *)ud;
 
     // Get color from path, unless we're overridden
@@ -1267,14 +1286,14 @@ BViewState::scene_obj(
     dbis->path_color(&c, path_hashes);
     bu_color_to_rgb_chars(&c, sp->s_color);
     if (vs && vs->color_override) {
+	// TODO - shouldn't be using s_color for the override...
 	sp->s_color[0] = vs->color[0];
 	sp->s_color[1] = vs->color[1];
 	sp->s_color[2] = vs->color[2];
     }
 
     // Set drawing mode
-    if (vs)
-	sp->s_os->s_dmode = vs->s_dmode;
+    sp->s_os->s_dmode = vs->s_dmode;
 
     // Tell scene object what the current matrix is
     if (m) {
@@ -1283,7 +1302,8 @@ BViewState::scene_obj(
 	dbis->get_path_matrix(sp->s_mat, path_hashes);
     }
 
-    // Assign the bounding box
+    // Assign the bounding box (needed for pre-adaptive-plot
+    // autoview)
     dbis->get_path_bbox(&sp->bmin, &sp->bmax, path_hashes);
 
     // If we're drawing a subtraction and we're not overridden, set the
@@ -1294,41 +1314,30 @@ BViewState::scene_obj(
     }
 
     // Set line width, if the user specified a non-default value
-    if (vs && vs->s_line_width)
+    if (vs->s_line_width)
 	sp->s_os->s_line_width = vs->s_line_width;
 
     // Set transparency
-    if (vs)
-	sp->s_os->transparency = vs->transparency;
+    sp->s_os->transparency = vs->transparency;
 
     dbis->print_path(&sp->s_name, path_hashes);
     bu_log("make solid %s\n", bu_vls_cstr(&sp->s_name));
     s_map[sp->s_os->s_dmode][phash] = sp;
     s_keys[phash] = path_hashes;
 
-    // Update geometry.  draw_scene will avoid repeat creation of geometry
-    // when s is not adaptive, but if s IS adaptive we need unique geometry
-    // for each view even though the BViewState is shared - camera settings,
-    // which are unique to each bview, may differ and adaptive geometry must
-    // reflect that.
-    //
-    // Note that this is the ONLY situation where we must care about each
-    // view individually for shared state - the above uses of the first view
-    // work for the "top level" object used for adaptive cases, since shared
-    // views will be using a shared object pool for anything other than their
-    // view specific geometry sub-objects.
-    std::unordered_set<struct bview *>::iterator v_it;
-    for (v_it == views.begin(); v_it != views.end(); v_it++) {
-	draw_scene(sp, *v_it);
-    }
+    // Final geometry generation is deferred
+    objs.insert(sp);
 
     return sp;
 }
 
 
 void
-BViewState::walk_tree(unsigned long long chash,
+BViewState::walk_tree(
+	std::unordered_set<struct bv_scene_obj *> &objs,
+	unsigned long long chash,
 	struct bv_obj_settings *vs,
+	matp_t m,
        	std::vector<unsigned long long> &path_hashes,
 	std::unordered_set<struct bview *> &views,
 	unsigned long long *ret
@@ -1348,13 +1357,11 @@ BViewState::walk_tree(unsigned long long chash,
     if (op == OP_SUBTRACT && vs && vs->draw_solid_lines_only)
 	return;
 
-    matp_t mp = NULL;
-    mat_t m;
+    mat_t lm;
     unsigned long long phash = path_hashes[path_hashes.size() - 1];
-    if (dbis->get_matrix(m, phash, chash))
-	mp = m;
+    dbis->get_matrix(lm, phash, chash);
 
-    gather_paths(chash, vs, mp, path_hashes, views, ret);
+    gather_paths(objs, chash, vs, m, lm, path_hashes, views, ret);
 }
 
 // Note - by the time we are using gather_paths, any existing objects
@@ -1362,9 +1369,11 @@ BViewState::walk_tree(unsigned long long chash,
 // missing objects.
 void
 BViewState::gather_paths(
+	std::unordered_set<struct bv_scene_obj *> &objs,
 	unsigned long long c_hash,
 	struct bv_obj_settings *vs,
-       	matp_t m,
+	matp_t m,
+       	matp_t lm,
 	std::vector<unsigned long long> &path_hashes,
 	std::unordered_set<struct bview *> &views,
 	unsigned long long *ret
@@ -1392,8 +1401,8 @@ BViewState::gather_paths(
      * the tree. Either we have a local matrix, or we have an
      * implicit IDN matrix. */
     MAT_COPY(om, m);
-    if (m) {
-	MAT_COPY(nm, m);
+    if (lm) {
+	MAT_COPY(nm, lm);
     } else {
 	MAT_IDN(nm);
     }
@@ -1408,14 +1417,14 @@ BViewState::gather_paths(
 	    /* Keep going */
 	    std::unordered_set<unsigned long long>::iterator c_it;
 	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++) {
-		walk_tree(*c_it, vs, path_hashes, views, ret);
+		walk_tree(objs, *c_it, vs, m, path_hashes, views, ret);
 	    }
 	}
     } else {
 	// Solid - scene object time
 	unsigned long long phash = dbis->path_hash(path_hashes, 0);
 	if (s_map.find(phash) != s_map.end()) {
-	    scene_obj(vs, m, path_hashes, views);
+	    scene_obj(objs, vs, m, path_hashes, views);
 	    if (ret)
 		(*ret) |= GED_DBISTATE_VIEW_CHANGE;
 	}
@@ -1426,8 +1435,34 @@ BViewState::gather_paths(
     MAT_COPY(m, om);
 }
 
+bool
+BViewState::subsumed(struct bv_obj_settings *vs, std::vector<unsigned long long> &path)
+{
+    std::unordered_map<int, std::vector<std::vector<unsigned long long>>>::iterator p_it;
+    p_it = prev_collapsed.find(vs->s_dmode);
+    if (p_it == prev_collapsed.end())
+	return false;
+
+    for (size_t i = 0; i < p_it->second.size(); i++) {
+	std::vector<unsigned long long> &ppath = p_it->second[i];
+	if (ppath.size() > path.size())
+	    continue;
+	bool match = true;
+	for (size_t j = 0; j < ppath.size(); j++) {
+	    if (path[j] != ppath[j]) {
+		match = false;
+		break;
+	    }
+	}
+	if (match)
+	    return true;
+    }
+
+    return false;
+}
+
 unsigned long long
-BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views)
+BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views, int no_autoview)
 {
     // We (well, callers) need to be able to tell if the redraw pass actually
     // changed anything.
@@ -1436,20 +1471,32 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     if (!views.size())
 	return 0;
 
-    // For most operations, we need either the current view (for independent
-    // views) or a single instance of any representative view (for shared state
-    // views).
+    // Make sure the views know how to update the oriented bounding box
+    std::unordered_set<struct bview *>::iterator v_it;
+    for (v_it == views.begin(); v_it != views.end(); v_it++) {
+	struct bview *v = *v_it;
+	v->gv_bounds_update = &bg_view_bounds;
+    }
+
+    // For most operations on objects, we need only the current view (for
+    // independent views) or a single instance of any representative view (for
+    // shared state views).
     struct bview *v = *views.begin();
 
     // The principle for redrawing will be that anything that was previously
     // fully drawn should stay fully drawn, even if its tree structure has
     // changed.
+    //
+    // In order to accommodate autoview requirements, final geometry
+    // drawing has to be delayed until after the initial scene objects are
+    // created.  Make a set to track which objects we need to draw in the
+    // finalization stage.
+    std::unordered_set<struct bv_scene_obj *> objs;
 
 
-
-    // First order of business is to go through the drawn solids and remove
-    // no-longer-valid paths. Keep still-valid paths to avoid the work of
-    // re-generating the scene objects.
+    // First order of business is to go through already drawn solids, if any,
+    // and remove no-longer-valid paths. Keep still-valid paths to avoid the
+    // work of re-generating the scene objects.
     std::unordered_set<unsigned long long> invalid_objects;
     std::unordered_set<unsigned long long> changed_paths;
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator sk_it;
@@ -1475,8 +1522,6 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    s_map.erase(*iv_it);
 	}
     }
-
-
 
     // Objects may be "drawn" in different ways - wireframes, shaded, evaluated.
     // How they must be redrawn in the event of a database change is mode dependent,
@@ -1544,28 +1589,14 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    // Update matrix
 	    dbis->get_path_matrix(s->s_mat, cp);
 
-	    // Update geometry.  draw_scene will avoid repeat creation of geometry
-	    // when s is not adaptive, but if s IS adaptive we need unique geometry
-	    // for each view even though the BViewState is shared - camera
-	    // settings, which are unique to each bview, may differ and adaptive
-	    // geometry must reflect that.
-	    //
-	    // Note that per-view geometry generation is the ONLY situation where
-	    // we must care about each view individually for the shared state
-	    // situation - the above uses of the first view work for both adaptive
-	    // and non-adaptive cases, since shared views will be using a shared
-	    // object pool for anything OTHER than their view specific geometry
-	    // sub-objects.
-	    std::unordered_set<struct bview *>::iterator v_it;
-	    for (v_it == views.begin(); v_it != views.end(); v_it++) {
-		draw_scene(s, *v_it);
-	    }
+	    // Geometry update is deferred
+	    objs.insert(s);
 
 	    ret = GED_DBISTATE_VIEW_CHANGE;
 	}
     }
 
-    // Also need to evaluate collapsed paths according to the same validity
+    // Also need to evaluate prior collapsed paths according to the same validity
     // criteria, before we re-expand them
     std::unordered_map<int, std::vector<std::vector<unsigned long long>>>::iterator ms_it;
     for (ms_it = prev_collapsed.begin(); ms_it != prev_collapsed.end(); ms_it++) {
@@ -1586,9 +1617,14 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    std::vector<unsigned long long> cpath = ms_it->second[*sz_it];
 	    mat_t m;
 	    dbis->get_path_matrix(m, cpath);
+	    if ((vs->s_dmode == 3 || vs->s_dmode == 5)) {
+		dbis->get_path_matrix(m, cpath);
+		scene_obj(objs, vs, m, cpath, views);
+		continue;
+	    }
 	    unsigned long long ihash = cpath[cpath.size() - 1];
 	    cpath.pop_back();
-	    gather_paths(ihash, vs, m, cpath, views, &ret);
+	    gather_paths(objs, ihash, vs, m, NULL, cpath, views, &ret);
 	}
 	for (sz_it = draw_invalid_collapsed.begin(); sz_it != draw_invalid_collapsed.end(); sz_it++) {
 	    std::vector<unsigned long long> cpath = ms_it->second[*sz_it];
@@ -1597,39 +1633,67 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    dbis->print_path(&s->s_name, cpath);
 	    s->s_v = dbis->gedp->ged_gvp;
 	    s_map[ms_it->first][*iv_it] = s;
+
+	    // NOTE: Because there is no geometry to update, these scene objs
+	    // are not added to objs
 	}
     }
 
-    // Expand any staged paths.  TODO - for evaluated shapes this has
-    // different implications...
+    // Expand (or queue, depending on settings) any staged paths.
     if (vs) {
 	for (size_t i = 0; i < staged.size(); i++) {
 	    std::vector<unsigned long long> cpath = staged[i];
+	    unsigned long long phash = dbis->path_hash(cpath, 0);
+	    if (check_status(NULL, NULL, phash, cpath, false))
+	       continue;	
 	    mat_t m;
 	    dbis->get_path_matrix(m, cpath);
 	    if ((vs->s_dmode == 3 || vs->s_dmode == 5)) {
-		unsigned long long phash = dbis->path_hash(cpath, 0);
 		dbis->get_path_matrix(m, cpath);
-		std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator sm_it;
-		sm_it = s_map.find(phash);
-		if (sm_it != s_map.end()) {
-		    std::unordered_map<int, struct bv_scene_obj *>::iterator se_it;
-		    se_it = sm_it->second.find(vs->s_dmode);
-		    if (se_it != sm_it->second.end())
-			bv_obj_put(se_it->second);
-		    sm_it->second.erase(phash);
-		} 
-
-		scene_obj(vs, m, cpath, views);
+		scene_obj(objs, vs, m, cpath, views);
 		continue;
 	    }
 	    unsigned long long ihash = cpath[cpath.size() - 1];
 	    cpath.pop_back();
-	    gather_paths(ihash, vs, m, cpath, views, &ret);
+	    gather_paths(objs, ihash, vs, m, NULL, cpath, views, &ret);
 	}
     }
     // Staged paths are now added (as long as settings were supplied) - clear the queue
     staged.clear();
+
+    // Do a preliminary autoview, unless suppressed, so any adaptive plotting
+    // routines have a rough idea of the correct dimensions to use
+    if (!no_autoview) {
+	for (v_it == views.begin(); v_it != views.end(); v_it++) {
+	    bv_autoview(*v_it, BV_AUTOVIEW_SCALE_DEFAULT, 0);
+	}
+    }
+
+    // Update geometry.  draw_scene will avoid repeat creation of geometry
+    // when s is not adaptive, but if s IS adaptive we need unique geometry
+    // for each view even though the BViewState is shared - camera settings,
+    // which are unique to each bview, may differ and adaptive geometry must
+    // reflect that.
+    //
+    // Note that this is the ONLY situation where we must care about each
+    // view individually for shared state - the above uses of the first view
+    // work for the "top level" object used for adaptive cases, since shared
+    // views will be using a shared object pool for anything other than their
+    // view specific geometry sub-objects.
+    for (v_it == views.begin(); v_it != views.end(); v_it++) {
+	std::unordered_set<struct bv_scene_obj *>::iterator o_it;
+	for (o_it = objs.begin(); o_it != objs.end(); o_it++) {
+	    draw_scene(*o_it, *v_it);
+	}
+    }
+
+    // Now that we have the finalized geometry, do a finishing autoview,
+    // unless suppressed
+    if (!no_autoview) {
+	for (v_it == views.begin(); v_it != views.end(); v_it++) {
+	    bv_autoview(*v_it, BV_AUTOVIEW_SCALE_DEFAULT, 0);
+	}
+    }
 
     return ret;
 }

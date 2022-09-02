@@ -180,13 +180,12 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
 
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
-    int refresh = 0;
-    struct bu_opt_desc d[18];
+    struct bu_opt_desc d[17];
     BU_OPT(d[0],  "h", "help",          "",                 NULL, &print_help,         "Print help and exit");
     BU_OPT(d[1],  "?", "",              "",                 NULL, &print_help,         "");
     BU_OPT(d[2],  "m", "mode",         "#",          &bu_opt_int, &drawing_modes[0],  "0=wireframe;1=shaded bots;2=shaded;3=evaluated");
     BU_OPT(d[3],   "", "wireframe",     "",                 NULL, &drawing_modes[1],  "Draw using only wireframes (mode = 0)");
-    BU_OPT(d[4],   "", "shaded",        "",                 NULL, &drawing_modes[2],  "Shade bots and polysolids (mode = 1)");
+    BU_OPT(d[4],   "", "shaded",        "",                 NULL, &drawing_modes[2],  "Shade bots, breps and polysolids (mode = 1)");
     BU_OPT(d[5],   "", "shaded-all",    "",                 NULL, &drawing_modes[3],  "Shade all solids, not evaluated (mode = 2)");
     BU_OPT(d[6],  "E", "evaluate",      "",                 NULL, &drawing_modes[4],  "Wireframe with evaluate booleans (mode = 3)");
     BU_OPT(d[7],   "", "hidden-line",   "",                 NULL, &drawing_modes[5],  "Hidden line wireframes");
@@ -198,8 +197,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[13], "C", "color",         "r/g/b", &draw_opt_color, &vs,                "Override object colors");
     BU_OPT(d[14],  "", "line-width",   "#",          &bu_opt_int, &vs.s_line_width,   "Override default line width");
     BU_OPT(d[15], "R", "no-autoview",   "",                 NULL, &no_autoview,       "Do not calculate automatic view, even if initial scene is empty.");
-    BU_OPT(d[16], "",  "refresh",       "",                 NULL, &refresh,       "Try to keep properties of existing drawn objects when updating.");
-    BU_OPT_NULL(d[17]);
+    BU_OPT_NULL(d[16]);
 
     /* If no args, must be wanting help */
     if (!argc) {
@@ -267,7 +265,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	vset.insert(cv);
 	for (size_t i = 0; i < (size_t)argc; ++i)
 	    bvs->add_path(argv[i]);
-	bvs->redraw(&vs, vset);
+	bvs->redraw(&vs, vset, !(blank_slate && !no_autoview));
 	return ged_draw_view(cv, bot_threshold, no_autoview, blank_slate);
     }
 
@@ -290,7 +288,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
 	for (size_t i = 0; i < (size_t)argc; ++i)
 	    bv_it->first->add_path(argv[i]);
-	bv_it->first->redraw(&vs, bv_it->second);
+	bv_it->first->redraw(&vs, bv_it->second, !(blank_slate && !no_autoview));
 	//ged_draw_view(v, bot_threshold, no_autoview, blank_slate);
     }
 

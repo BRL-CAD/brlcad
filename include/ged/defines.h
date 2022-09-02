@@ -202,7 +202,7 @@ class GED_EXPORT BViewState {
 	// the elements will be the same, but adaptive plotting will be view specific even
 	// with otherwise common objects - we must update accordingly.  For independent
 	// views the views set will hold only one view.
-	unsigned long long redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views);
+	unsigned long long redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views, int no_autoview);
 
 	// Sets defining all drawn solid paths (including invalid paths).  The
 	// s_keys holds the ordered individual keys of each drawn solid path - it
@@ -242,15 +242,8 @@ class GED_EXPORT BViewState {
 		);
 
 	void walk_tree(
+		std::unordered_set<struct bv_scene_obj *> &objs,
 		unsigned long long chash,
-		struct bv_obj_settings *vs,
-		std::vector<unsigned long long> &path_hashes,
-		std::unordered_set<struct bview *> &views,
-		unsigned long long *ret
-		);
-
-	void gather_paths(
-		unsigned long long c_hash,
 		struct bv_obj_settings *vs,
 		matp_t m,
 		std::vector<unsigned long long> &path_hashes,
@@ -258,13 +251,27 @@ class GED_EXPORT BViewState {
 		unsigned long long *ret
 		);
 
-	struct bv_scene_obj *
-	    scene_obj(
-		    struct bv_obj_settings *vs,
-		    matp_t m,
-		    std::vector<unsigned long long> &path_hashes,
-		    std::unordered_set<struct bview *> &views
-		    );
+	void gather_paths(
+		std::unordered_set<struct bv_scene_obj *> &objs,
+		unsigned long long c_hash,
+		struct bv_obj_settings *vs,
+		matp_t m,
+		matp_t lm,
+		std::vector<unsigned long long> &path_hashes,
+		std::unordered_set<struct bview *> &views,
+		unsigned long long *ret
+		);
+
+	struct bv_scene_obj * scene_obj(
+		std::unordered_set<struct bv_scene_obj *> &objs,
+		struct bv_obj_settings *vs,
+		matp_t m,
+		std::vector<unsigned long long> &path_hashes,
+		std::unordered_set<struct bview *> &views
+		);
+
+	// Check if the prev_collapsed paths contain this path or a superset of this path
+	bool subsumed(struct bv_obj_settings *vs, std::vector<unsigned long long> &path);
 
 	std::unordered_set<unsigned long long> all_fully_drawn;
 
