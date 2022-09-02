@@ -53,6 +53,11 @@ if (BRLCAD_SQLITE3_BUILD)
 
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/SQLITE3_BLD-prefix")
 
+  # Need to adjust for naming conventions with Visual Studio
+  if (MSVC)
+    set(SQLITE3_BASENAME libsqlite3)
+  endif (MSVC)
+
   # Tell the parent build about files and libraries
   ExternalProject_Target(SHARED sqlite3 SQLITE3_BLD ${SQLITE3_INSTDIR}
     ${SQLITE3_BASENAME}${SQLITE3_SUFFIX}
