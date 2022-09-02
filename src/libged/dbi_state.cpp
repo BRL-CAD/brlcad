@@ -1422,12 +1422,9 @@ BViewState::gather_paths(
 	}
     } else {
 	// Solid - scene object time
-	unsigned long long phash = dbis->path_hash(path_hashes, 0);
-	if (s_map.find(phash) != s_map.end()) {
-	    scene_obj(objs, vs, m, path_hashes, views);
-	    if (ret)
-		(*ret) |= GED_DBISTATE_VIEW_CHANGE;
-	}
+	scene_obj(objs, vs, m, path_hashes, views);
+	if (ret)
+	    (*ret) |= GED_DBISTATE_VIEW_CHANGE;
     }
     /* Done with branch - restore path, put back the old matrix state,
      * and restore previous color settings */
@@ -1664,7 +1661,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     // Do a preliminary autoview, unless suppressed, so any adaptive plotting
     // routines have a rough idea of the correct dimensions to use
     if (!no_autoview) {
-	for (v_it == views.begin(); v_it != views.end(); v_it++) {
+	for (v_it = views.begin(); v_it != views.end(); v_it++) {
 	    bv_autoview(*v_it, BV_AUTOVIEW_SCALE_DEFAULT, 0);
 	}
     }
@@ -1680,7 +1677,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     // work for the "top level" object used for adaptive cases, since shared
     // views will be using a shared object pool for anything other than their
     // view specific geometry sub-objects.
-    for (v_it == views.begin(); v_it != views.end(); v_it++) {
+    for (v_it = views.begin(); v_it != views.end(); v_it++) {
 	std::unordered_set<struct bv_scene_obj *>::iterator o_it;
 	for (o_it = objs.begin(); o_it != objs.end(); o_it++) {
 	    draw_scene(*o_it, *v_it);
@@ -1690,7 +1687,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     // Now that we have the finalized geometry, do a finishing autoview,
     // unless suppressed
     if (!no_autoview) {
-	for (v_it == views.begin(); v_it != views.end(); v_it++) {
+	for (v_it = views.begin(); v_it != views.end(); v_it++) {
 	    bv_autoview(*v_it, BV_AUTOVIEW_SCALE_DEFAULT, 0);
 	}
     }
