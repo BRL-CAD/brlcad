@@ -636,7 +636,8 @@ DbiState::get_path_matrix(matp_t m, std::vector<unsigned long long> &elements)
     unsigned long long phash = elements[0];
     for (size_t i = 1; i < elements.size(); i++) {
 	unsigned long long chash = elements[i];
-	mat_t nm; 
+	mat_t nm;
+	MAT_IDN(nm);
 	bool got_mat = get_matrix(nm, phash, chash);
 	if (got_mat) {
 	    mat_t cmat;
@@ -703,6 +704,7 @@ DbiState::get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned lon
 	    // See if we have a matrix for this case - if so, we need to
 	    // incorporate it
 	    mat_t nm;
+	    MAT_IDN(nm);
 	    bool have_mat = get_matrix(nm, key, child_hash);
 	    if (have_mat) {
 		// Construct new "current" matrix
@@ -746,6 +748,7 @@ DbiState::get_path_bbox(point_t *bbmin, point_t *bbmax, std::vector<unsigned lon
     MAT_IDN(start_mat);
     for (size_t i = 0; i < elements.size() - 1; i++) {
 	mat_t nm;
+	MAT_IDN(nm);
 	bool got_mat = get_matrix(nm, elements[i], elements[i+1]);
 	if (got_mat) {
 	    mat_t cmat;
@@ -1358,6 +1361,7 @@ BViewState::walk_tree(
 	return;
 
     mat_t lm;
+    MAT_IDN(lm);
     unsigned long long phash = path_hashes[path_hashes.size() - 1];
     dbis->get_matrix(lm, phash, chash);
 
@@ -1613,6 +1617,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	for (sz_it = active_collapsed.begin(); sz_it != active_collapsed.end(); sz_it++) {
 	    std::vector<unsigned long long> cpath = ms_it->second[*sz_it];
 	    mat_t m;
+	    MAT_IDN(m);
 	    dbis->get_path_matrix(m, cpath);
 	    if ((vs->s_dmode == 3 || vs->s_dmode == 5)) {
 		dbis->get_path_matrix(m, cpath);
@@ -1644,6 +1649,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    if (check_status(NULL, NULL, phash, cpath, false))
 	       continue;	
 	    mat_t m;
+	    MAT_IDN(m);
 	    dbis->get_path_matrix(m, cpath);
 	    if ((vs->s_dmode == 3 || vs->s_dmode == 5)) {
 		dbis->get_path_matrix(m, cpath);
