@@ -103,8 +103,9 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	int flags = 0;
 	if (clear_solid_objs) {
 	    flags |= BV_DB_OBJS;
-	    if (gedp->dbi_state && gedp->dbi_state->view_states.find(v) != gedp->dbi_state->view_states.end()) {
-		gedp->dbi_state->view_states[v]->clear();
+	    if (gedp->dbi_state) {
+		BViewState *bvs = gedp->dbi_state->get_view_state(v);
+		bvs->clear();
 	    }
 	}
 	if (clear_view_objs)
