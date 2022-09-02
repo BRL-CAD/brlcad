@@ -198,14 +198,6 @@ class GED_EXPORT BViewState {
 
 	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
 
-	void gather_paths(
-		unsigned long long c_hash,
-		struct bv_obj_settings *vs,
-		matp_t m,
-		std::vector<unsigned long long> &path_hashes,
-		std::unordered_set<struct bview *> &views
-		);
-
 	// A View State redraw can impact multiple views with a shared state - most of
 	// the elements will be the same, but adaptive plotting will be view specific even
 	// with otherwise common objects - we must update accordingly.  For independent
@@ -216,8 +208,11 @@ class GED_EXPORT BViewState {
 	// s_keys holds the ordered individual keys of each drawn solid path - it
 	// is the latter that allows for the collapse operation to populate
 	// drawn_paths.  s_map uses the same key as s_keys to map instances to
-	// actual scene objects.
-	std::unordered_map<unsigned long long, struct bv_scene_obj *> s_map;
+	// actual scene objects.  Because objects may be represented by more than
+	// one type of scene object (shaded, wireframe, evaluated, etc.) the mapping of
+	// key to scene object is not unique - we must also take scene object type
+	// into account.
+	std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>> s_map;
 	std::unordered_map<unsigned long long, std::vector<unsigned long long>> s_keys;
 
 	// Set of hashes of all drawn paths and subpaths, constructed during the collapse
@@ -233,7 +228,7 @@ class GED_EXPORT BViewState {
 	// it is practically speaking an implementation detail
 	void cache_collapsed();
 
-	void collapse(std::vector<std::vector<unsigned long long>> *collapsed);
+	void collapse(std::unordered_map<int, std::vector<std::vector<unsigned long long>>> *collapsed, std::unordered_map<int, std::unordered_set<unsigned long long>> &mode_map);
 
     private:
 	DbiState *dbis;
@@ -242,14 +237,25 @@ class GED_EXPORT BViewState {
 		std::unordered_set<unsigned long long> *invalid_objects,
 		std::unordered_set<unsigned long long> *changed_paths,
 		unsigned long long path_hash,
-		std::vector<unsigned long long> &cpath
+		std::vector<unsigned long long> &cpath,
+		bool leaf_expand
 		);
 
 	void walk_tree(
 		unsigned long long chash,
 		struct bv_obj_settings *vs,
 		std::vector<unsigned long long> &path_hashes,
-		std::unordered_set<struct bview *> &views
+		std::unordered_set<struct bview *> &views,
+		unsigned long long *ret
+		);
+
+	void gather_paths(
+		unsigned long long c_hash,
+		struct bv_obj_settings *vs,
+		matp_t m,
+		std::vector<unsigned long long> &path_hashes,
+		std::unordered_set<struct bview *> &views,
+		unsigned long long *ret
 		);
 
 	struct bv_scene_obj *
@@ -262,8 +268,9 @@ class GED_EXPORT BViewState {
 
 	std::unordered_set<unsigned long long> all_fully_drawn;
 
-	// The collapsed drawn paths from the previous db state
-	std::vector<std::vector<unsigned long long>> prev_collapsed;
+	// The collapsed drawn paths from the previous db state, organized
+	// by drawn mode
+	std::unordered_map<int, std::vector<std::vector<unsigned long long>>> prev_collapsed;
 
 	std::vector<std::vector<unsigned long long>> staged;
 
