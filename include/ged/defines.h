@@ -192,6 +192,8 @@ class GED_EXPORT BViewState {
     public:
 	BViewState(DbiState *);
 
+	void clear();
+
 	// Adds path to the BViewState container, but doesn't trigger a re-draw - that
 	// should be done once all paths to be added in a given draw cycle are added.
 	void add_path(const char *path);

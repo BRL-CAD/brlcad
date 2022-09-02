@@ -251,6 +251,8 @@ ged_init(struct ged *gedp)
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
 
+    gedp->dbi_state = NULL;
+
     gedp->ged_ctx = NULL;
     gedp->ged_interp = NULL;
 }
@@ -358,8 +360,6 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 
     db_update_nref(gedp->dbip, &rt_uniresource);
     gedp->dbi_state = new DbiState(gedp);
-    gedp->dbi_state->view_states[gedp->ged_gvp] = new BViewState(gedp->dbi_state);
-
     return gedp;
 }
 

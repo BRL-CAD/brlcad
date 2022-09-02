@@ -116,13 +116,6 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	db_update_nref(gedp->dbip, &rt_uniresource);
 
 	gedp->dbi_state = new DbiState(gedp);
-	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-	if (views) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-		struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-		gedp->dbi_state->view_states[v] = new BViewState(gedp->dbi_state);
-	    }
-	}
 
 	// Test LoD context creation
 	if (gedp->ged_lod)

@@ -772,7 +772,9 @@ DbiState::get_view_state(struct bview *v)
     if (view_states.find(v) != view_states.end())
 	return view_states[v];
 
-    return shared_vs;
+    BViewState *nv = new BViewState(this);
+    view_states[v] = nv;
+    return nv;
 }
 
 unsigned long long
@@ -1245,17 +1247,22 @@ BViewState::scene_obj(
 	)
 {
     // Solid - scene object time
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    dbis->print_path(&sname, path_hashes);
     unsigned long long phash = dbis->path_hash(path_hashes, 0);
+    bu_log("%lld: %s\n", phash, bu_vls_cstr(&sname));
+    bu_vls_free(&sname);
     struct bv_scene_obj *sp = NULL;
     if (s_map.find(phash) != s_map.end()) {
 	if (s_map[phash].find(vs->s_dmode) != s_map[phash].end()) {
 	    sp = s_map[phash][vs->s_dmode];
 	    // Geometry is suspect - clear to prepare for regeneration
-	    bv_obj_reset(sp);
+	    bu_log("Clear: %s\n", bu_vls_cstr(&sp->s_name));
+	    bv_obj_put(sp);
+	    s_map[phash].erase(vs->s_dmode);
 	}
     }
-    if (!sp)
-	sp = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
+    sp = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
 
     // Find the leaf directory pointer
     struct directory *dp = RT_DIR_NULL;
@@ -1325,7 +1332,7 @@ BViewState::scene_obj(
 
     dbis->print_path(&sp->s_name, path_hashes);
     bu_log("make solid %s\n", bu_vls_cstr(&sp->s_name));
-    s_map[sp->s_os->s_dmode][phash] = sp;
+    s_map[phash][sp->s_os->s_dmode] = sp;
     s_keys[phash] = path_hashes;
 
     // Final geometry generation is deferred
@@ -1434,6 +1441,18 @@ BViewState::gather_paths(
      * and restore previous color settings */
     path_hashes.pop_back();
     MAT_COPY(m, om);
+}
+
+void
+BViewState::clear()
+{
+    s_map.clear();
+    s_keys.clear();
+    staged.clear();
+    drawn_paths.clear();
+    all_fully_drawn.clear();
+    prev_collapsed.clear();
+    active_paths.clear();
 }
 
 bool
