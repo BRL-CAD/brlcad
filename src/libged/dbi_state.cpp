@@ -1096,6 +1096,8 @@ BViewState::erase(int mode, int argc, const char **argv)
 			bv_obj_put(s_it->second);
 		    }
 		    s_map.erase(phash);
+		    skeys_erase.push_back(phash);	
+		    drawn_paths.erase(phash);
 		    continue;
 		}
 
