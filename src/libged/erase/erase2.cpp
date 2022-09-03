@@ -65,9 +65,11 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
      * if a specific view has in fact been specified.  We do a preliminary
      * option check to figure this out */
     struct bu_vls cvls = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc vd[2];
+    struct bu_opt_desc vd[3];
+    int mode = -1;
     BU_OPT(vd[0],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to draw on");
-    BU_OPT_NULL(vd[1]);
+    BU_OPT(vd[1],  "m", "mode",    "#",         &bu_opt_int, &mode,   "erase objects drawn in the specified drawing mode");
+    BU_OPT_NULL(vd[2]);
     int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
     argc = opt_ret;
     if (bu_vls_strlen(&cvls)) {
@@ -106,7 +108,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
 
     BViewState *bvs = gedp->dbi_state->get_view_state(v);
-    bvs->erase(-1, argc, argv);
+    bvs->erase(mode, argc, argv);
 
     return BRLCAD_OK;
 }

@@ -1085,8 +1085,6 @@ BViewState::erase(int mode, int argc, const char **argv)
 	    if (std::equal(path_hashes.begin(), path_hashes.end(), chashes.begin())) {
 
 		unsigned long long phash = dbis->path_hash(chashes, 0);
-		skeys_erase.push_back(phash);	
-		drawn_paths.erase(phash);
 
 		sm_it = s_map.find(phash);
 		if (sm_it == s_map.end())
@@ -1107,6 +1105,13 @@ BViewState::erase(int mode, int argc, const char **argv)
 
 		bv_obj_put(s_it->second);
 		sm_it->second.erase(s_it);
+
+		// IFF we have removed all of the drawn elements for this path,
+		// clear it from the active sets
+		if (!sm_it->second.size()) {
+		    skeys_erase.push_back(phash);	
+		    drawn_paths.erase(phash);
+		}
 	    }
 	}
 
@@ -1306,17 +1311,12 @@ BViewState::scene_obj(
 	)
 {
     // Solid - scene object time
-    struct bu_vls sname = BU_VLS_INIT_ZERO;
-    dbis->print_path(&sname, path_hashes);
     unsigned long long phash = dbis->path_hash(path_hashes, 0);
-    bu_log("%lld: %s\n", phash, bu_vls_cstr(&sname));
-    bu_vls_free(&sname);
     struct bv_scene_obj *sp = NULL;
     if (s_map.find(phash) != s_map.end()) {
 	if (s_map[phash].find(vs->s_dmode) != s_map[phash].end()) {
 	    sp = s_map[phash][vs->s_dmode];
 	    // Geometry is suspect - clear to prepare for regeneration
-	    bu_log("Clear: %s\n", bu_vls_cstr(&sp->s_name));
 	    bv_obj_put(sp);
 	    s_map[phash].erase(vs->s_dmode);
 	}
