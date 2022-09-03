@@ -1100,7 +1100,7 @@ BViewState::erase(int mode, int argc, const char **argv)
 			bv_obj_put(s_it->second);
 		    }
 		    s_map.erase(phash);
-		    skeys_erase.push_back(phash);	
+		    skeys_erase.push_back(phash);
 		    drawn_paths.erase(phash);
 		    continue;
 		}
@@ -1115,7 +1115,7 @@ BViewState::erase(int mode, int argc, const char **argv)
 		// IFF we have removed all of the drawn elements for this path,
 		// clear it from the active sets
 		if (!sm_it->second.size()) {
-		    skeys_erase.push_back(phash);	
+		    skeys_erase.push_back(phash);
 		    drawn_paths.erase(phash);
 		}
 	    }
@@ -1126,8 +1126,8 @@ BViewState::erase(int mode, int argc, const char **argv)
 	}
 
     }
-   
-    // Update info on fully drawn paths 
+
+    // Update info on fully drawn paths
     cache_collapsed();
 }
 
@@ -1888,6 +1888,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     // Now that all path manipulations are finalized, update the
     // sets of drawn paths
     cache_collapsed();
+
     return ret;
 }
 
