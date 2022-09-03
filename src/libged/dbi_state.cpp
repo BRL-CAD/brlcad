@@ -29,10 +29,14 @@
 
 #include "common.h"
 
+#include <algorithm>
+
 extern "C" {
 #define XXH_STATIC_LINKING_ONLY
 #include "xxhash.h"
 }
+
+#include "./alphanum.h"
 
 #include "vmath.h"
 #include "bu/color.h"
@@ -1134,10 +1138,13 @@ BViewState::path_hash(std::vector<unsigned long long> &path, size_t max_len)
 }
 
 void
-BViewState::collapse(std::unordered_map<int, std::vector<std::vector<unsigned long long>>> *collapsed, std::unordered_map<int, std::unordered_set<unsigned long long>> &mode_map)
+BViewState::collapse(
+	std::vector<std::vector<unsigned long long>> *a_collapsed,
+	std::unordered_map<int, std::vector<std::vector<unsigned long long>>> *collapsed,
+       	std::unordered_map<int, std::unordered_set<unsigned long long>> &mode_map)
 {
     std::unordered_set<unsigned long long>::iterator s_it;
-    std::map<size_t, std::unordered_set<unsigned long long>> depth_groups;
+    std::map<size_t, std::unordered_set<unsigned long long>> all_depth_groups;
 
     // Reset containers
     if (collapsed)
@@ -1150,6 +1157,7 @@ BViewState::collapse(std::unordered_map<int, std::vector<std::vector<unsigned lo
     std::unordered_map<int, std::unordered_set<unsigned long long>>::iterator mm_it;
     for (mm_it = mode_map.begin(); mm_it != mode_map.end(); mm_it++) {
 
+	std::map<size_t, std::unordered_set<unsigned long long>> depth_groups;
 	std::unordered_set<unsigned long long> &mode_keys = mm_it->second;;
 	std::unordered_set<unsigned long long>::iterator ms_it;
 
@@ -1165,18 +1173,21 @@ BViewState::collapse(std::unordered_map<int, std::vector<std::vector<unsigned lo
 	    } else {
 		depth_groups[k_it->second.size()].insert(k_it->first);
 	    }
+	    // Consolidating across paths, we need to get a set of unique
+	    // keys to avoid repeat paths in outputs
+	    all_depth_groups[k_it->second.size()].insert(k_it->first);
 	}
 	bu_log("mode %d depth groups: %zd\n", mm_it->first, depth_groups.size());
 
-
-	// Whittle down the depth groups until we find not-fully-drawn parents - when
-	// we find that, the children constitute non-collapsible paths
+	// Whittle down the mode depth groups until we find not-fully-drawn
+	// parents - when we find that, the children constitute non-collapsible
+	// paths based on what's drawn in this mode
 	while (depth_groups.size()) {
 	    size_t plen = depth_groups.rbegin()->first;
 	    if (plen == 1)
 		break;
 	    std::unordered_set<unsigned long long> &pckeys = depth_groups.rbegin()->second;
-	    bu_log("depth_groups(%zd) key count: %zd\n", plen, pckeys.size());
+	    bu_log("mode %d depth_groups(%zd) key count: %zd\n", mm_it->first, plen, pckeys.size());
 
 	    // For a given depth, group the paths by parent comb.  This results
 	    // in path sub-groups which will define for us how "fully drawn"
@@ -1221,12 +1232,6 @@ BViewState::collapse(std::unordered_map<int, std::vector<std::vector<unsigned lo
 		    // all the necessary information and using that approach avoids
 		    // the need to duplicate paths.
 		    depth_groups[plen - 1].insert(*g_pckeys.begin());
-		    for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
-			std::vector<unsigned long long> &pc_path = s_keys[*s_it];
-			// Hash only to the current path length (we may have deeper
-			// promoted paths being used at this level)
-			all_fully_drawn.insert(path_hash(pc_path, plen));
-		    }
 		} else {
 		    // No further collapsing - add to final.  We must make trimmed
 		    // versions of the paths in case this depth holds promoted
@@ -1237,9 +1242,6 @@ BViewState::collapse(std::unordered_map<int, std::vector<std::vector<unsigned lo
 			trimmed.resize(plen);
 			if (collapsed)
 			    (*collapsed)[mm_it->first].push_back(trimmed);
-			// Hash is calculated on that trimmed path, so this time we
-			// don't need to specify a depth limit.
-			all_fully_drawn.insert(path_hash(trimmed, 0));
 		    }
 		}
 	    }
@@ -1260,6 +1262,100 @@ BViewState::collapse(std::unordered_map<int, std::vector<std::vector<unsigned lo
 		if (collapsed)
 		    (*collapsed)[mm_it->first].push_back(trimmed);
 	    }
+	}
+    }
+
+
+    // Having processed all the modes, we now do the same thing without regards to
+    // drawing mode, to provide "who" with a mode-agnostic list of drawn paths.
+    while (all_depth_groups.size()) {
+	size_t plen = all_depth_groups.rbegin()->first;
+	if (plen == 1)
+	    break;
+	std::unordered_set<unsigned long long> &pckeys = all_depth_groups.rbegin()->second;
+	bu_log("all_depth_groups(%zd) key count: %zd\n", plen, pckeys.size());
+
+	// For a given depth, group the paths by parent comb.  This results
+	// in path sub-groups which will define for us how "fully drawn"
+	// that particular parent comb is.
+	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> grouped_pckeys;
+	for (s_it = pckeys.begin(); s_it != pckeys.end(); s_it++) {
+	    std::vector<unsigned long long> &pc_path = s_keys[*s_it];
+	    grouped_pckeys[pc_path[plen-2]].insert(*s_it);
+	}
+
+	// For each parent/child grouping, compare it against the .g ground
+	// truth set.  If they match, fully drawn and we promote the path to
+	// the parent depth.  If not, the paths do not collapse further and are
+	// added to drawn paths.
+	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pg_it;
+	for (pg_it = grouped_pckeys.begin(); pg_it != grouped_pckeys.end(); pg_it++) {
+
+	    // As above, use the full path from the s_keys, but this time
+	    // we're collecting the children.  This is the set we need to compare
+	    // against the .g ground truth to determine fully or partially drawn.
+	    std::unordered_set<unsigned long long> g_children;
+	    std::unordered_set<unsigned long long> &g_pckeys = pg_it->second;
+	    for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
+		std::vector<unsigned long long> &pc_path = s_keys[*s_it];
+		g_children.insert(pc_path[plen-1]);
+	    }
+
+	    // Do the check against the .g comb children info - the "ground truth"
+	    // that defines what must be present for a fully drawn comb
+	    bool is_fully_drawn = true;
+	    std::unordered_set<unsigned long long> &ground_truth = dbis->p_c[pg_it->first];
+	    for (s_it = ground_truth.begin(); s_it != ground_truth.end(); s_it++) {
+		if (g_children.find(*s_it) == g_children.end()) {
+		    is_fully_drawn = false;
+		    break;
+		}
+	    }
+
+	    if (is_fully_drawn) {
+		// If fully drawn, all_depth_groups[plen-1] gets the first path in
+		// g_pckeys.  The path is longer than that depth, but contains
+		// all the necessary information and using that approach avoids
+		// the need to duplicate paths.
+		all_depth_groups[plen - 1].insert(*g_pckeys.begin());
+		for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
+		    std::vector<unsigned long long> &pc_path = s_keys[*s_it];
+		    // Hash only to the current path length (we may have deeper
+		    // promoted paths being used at this level)
+		    all_fully_drawn.insert(path_hash(pc_path, plen));
+		}
+	    } else {
+		// No further collapsing - add to final.  We must make trimmed
+		// versions of the paths in case this depth holds promoted
+		// paths from deeper levels, since we are duplicating the full
+		// path contents.
+		for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
+		    std::vector<unsigned long long> trimmed = s_keys[*s_it];
+		    trimmed.resize(plen);
+		    if (a_collapsed)
+			a_collapsed->push_back(trimmed);
+		    // Hash is calculated on that trimmed path, so this time we
+		    // don't need to specify a depth limit.
+		    all_fully_drawn.insert(path_hash(trimmed, 0));
+		}
+	    }
+	}
+
+	// Done with this depth
+	all_depth_groups.erase(plen);
+    }
+
+    // If we collapsed all the way to top level objects, make sure to add them
+    // if they are still valid entries.  If a toplevel entry is invalid, there
+    // is no parent comb to refer to it as an "invalid" object and it can no
+    // longer be drawn.
+    if (all_depth_groups.find(1) != all_depth_groups.end()) {
+	std::unordered_set<unsigned long long> &pckeys = all_depth_groups.rbegin()->second;
+	for (s_it = pckeys.begin(); s_it != pckeys.end(); s_it++) {
+	    std::vector<unsigned long long> trimmed = s_keys[*s_it];
+	    trimmed.resize(1);
+	    if (a_collapsed)
+		a_collapsed->push_back(trimmed);
 	}
     }
 }
@@ -1285,16 +1381,17 @@ BViewState::cache_collapsed()
     // drawn.  We must do this before the comb p_c relationships are updated in
     // the context, since we want the answers for this collapse to be from the
     // prior state, not the current state.
-    prev_collapsed.clear();
-    collapse(&prev_collapsed, mode_map);
+    all_collapsed.clear();
+    mode_collapsed.clear();
+    collapse(&all_collapsed, &mode_collapsed, mode_map);
 
 #if 0
     {
 	// DEBUG - print results
 	bu_log("\n\nCollapsed altered paths:\n");
 	struct bu_vls path_str = BU_VLS_INIT_ZERO;
-	for (size_t i = 0; i < prev_collapsed.size(); i++) {
-	    print_path(&path_str, prev_collapsed[i], ctx, &old_names);
+	for (size_t i = 0; i < all_collapsed.size(); i++) {
+	    print_path(&path_str, all_collapsed[i], ctx, &old_names);
 	    bu_log("\t%s\n", bu_vls_cstr(&path_str));
 	}
 	bu_vls_free(&path_str);
@@ -1306,6 +1403,7 @@ BViewState::cache_collapsed()
 struct bv_scene_obj *
 BViewState::scene_obj(
 	std::unordered_set<struct bv_scene_obj *> &objs,
+	int curr_mode,
 	struct bv_obj_settings *vs,
 	matp_t m,
        	std::vector<unsigned long long> &path_hashes,
@@ -1316,11 +1414,11 @@ BViewState::scene_obj(
     unsigned long long phash = dbis->path_hash(path_hashes, 0);
     struct bv_scene_obj *sp = NULL;
     if (s_map.find(phash) != s_map.end()) {
-	if (s_map[phash].find(vs->s_dmode) != s_map[phash].end()) {
-	    sp = s_map[phash][vs->s_dmode];
+	if (s_map[phash].find(curr_mode) != s_map[phash].end()) {
+	    sp = s_map[phash][curr_mode];
 	    // Geometry is suspect - clear to prepare for regeneration
 	    bv_obj_put(sp);
-	    s_map[phash].erase(vs->s_dmode);
+	    s_map[phash].erase(curr_mode);
 	}
     }
     sp = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
@@ -1364,7 +1462,7 @@ BViewState::scene_obj(
     }
 
     // Set drawing mode
-    sp->s_os->s_dmode = vs->s_dmode;
+    sp->s_os->s_dmode = curr_mode;
 
     // Tell scene object what the current matrix is
     if (m) {
@@ -1407,6 +1505,7 @@ void
 BViewState::walk_tree(
 	std::unordered_set<struct bv_scene_obj *> &objs,
 	unsigned long long chash,
+	int curr_mode,
 	struct bv_obj_settings *vs,
 	matp_t m,
        	std::vector<unsigned long long> &path_hashes,
@@ -1433,7 +1532,7 @@ BViewState::walk_tree(
     unsigned long long phash = path_hashes[path_hashes.size() - 1];
     dbis->get_matrix(lm, phash, chash);
 
-    gather_paths(objs, chash, vs, m, lm, path_hashes, views, ret);
+    gather_paths(objs, chash, curr_mode, vs, m, lm, path_hashes, views, ret);
 }
 
 // Note - by the time we are using gather_paths, any existing objects
@@ -1443,6 +1542,7 @@ void
 BViewState::gather_paths(
 	std::unordered_set<struct bv_scene_obj *> &objs,
 	unsigned long long c_hash,
+	int curr_mode,
 	struct bv_obj_settings *vs,
 	matp_t m,
        	matp_t lm,
@@ -1489,12 +1589,12 @@ BViewState::gather_paths(
 	    /* Keep going */
 	    std::unordered_set<unsigned long long>::iterator c_it;
 	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++) {
-		walk_tree(objs, *c_it, vs, m, path_hashes, views, ret);
+		walk_tree(objs, *c_it, curr_mode, vs, m, path_hashes, views, ret);
 	    }
 	}
     } else {
 	// Solid - scene object time
-	scene_obj(objs, vs, m, path_hashes, views);
+	scene_obj(objs, curr_mode, vs, m, path_hashes, views);
 	if (ret)
 	    (*ret) |= GED_DBISTATE_VIEW_CHANGE;
     }
@@ -1512,7 +1612,8 @@ BViewState::clear()
     staged.clear();
     drawn_paths.clear();
     all_fully_drawn.clear();
-    prev_collapsed.clear();
+    mode_collapsed.clear();
+    all_collapsed.clear();
     active_paths.clear();
 }
 
@@ -1520,8 +1621,8 @@ bool
 BViewState::subsumed(struct bv_obj_settings *vs, std::vector<unsigned long long> &path)
 {
     std::unordered_map<int, std::vector<std::vector<unsigned long long>>>::iterator p_it;
-    p_it = prev_collapsed.find(vs->s_dmode);
-    if (p_it == prev_collapsed.end())
+    p_it = mode_collapsed.find(vs->s_dmode);
+    if (p_it == mode_collapsed.end())
 	return false;
 
     for (size_t i = 0; i < p_it->second.size(); i++) {
@@ -1540,6 +1641,29 @@ BViewState::subsumed(struct bv_obj_settings *vs, std::vector<unsigned long long>
     }
 
     return false;
+}
+
+// alphanum sort
+bool alphanum_cmp(const std::string &a, const std::string &b)
+{
+    return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
+}
+
+std::vector<std::string>
+BViewState::list_drawn_paths(int mode, bool list_collapsed)
+{
+    std::vector<std::string> ret;
+    if (mode == -1 && list_collapsed) {
+	struct bu_vls vpath = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < all_collapsed.size(); i++) {
+	    dbis->print_path(&vpath, all_collapsed[i]);
+	    ret.push_back(std::string(bu_vls_cstr(&vpath)));
+	}
+    }
+
+    std::sort(ret.begin(), ret.end(), &alphanum_cmp);
+
+    return ret;
 }
 
 unsigned long long
@@ -1680,7 +1804,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     // Also need to evaluate prior collapsed paths according to the same validity
     // criteria, before we re-expand them
     std::unordered_map<int, std::vector<std::vector<unsigned long long>>>::iterator ms_it;
-    for (ms_it = prev_collapsed.begin(); ms_it != prev_collapsed.end(); ms_it++) {
+    for (ms_it = mode_collapsed.begin(); ms_it != mode_collapsed.end(); ms_it++) {
 	std::unordered_set<size_t> active_collapsed;
 	std::unordered_set<size_t> draw_invalid_collapsed;
 	for (size_t i = 0; i < ms_it->second.size(); i++) {
@@ -1701,12 +1825,12 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    dbis->get_path_matrix(m, cpath);
 	    if ((vs->s_dmode == 3 || vs->s_dmode == 5)) {
 		dbis->get_path_matrix(m, cpath);
-		scene_obj(objs, vs, m, cpath, views);
+		scene_obj(objs, ms_it->first, vs, m, cpath, views);
 		continue;
 	    }
 	    unsigned long long ihash = cpath[cpath.size() - 1];
 	    cpath.pop_back();
-	    gather_paths(objs, ihash, vs, m, NULL, cpath, views, &ret);
+	    gather_paths(objs, ihash, ms_it->first, vs, m, NULL, cpath, views, &ret);
 	}
 	for (sz_it = draw_invalid_collapsed.begin(); sz_it != draw_invalid_collapsed.end(); sz_it++) {
 	    std::vector<unsigned long long> cpath = ms_it->second[*sz_it];
@@ -1727,18 +1851,18 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    std::vector<unsigned long long> cpath = staged[i];
 	    unsigned long long phash = dbis->path_hash(cpath, 0);
 	    if (check_status(NULL, NULL, phash, cpath, false))
-	       continue;	
+	       continue;
 	    mat_t m;
 	    MAT_IDN(m);
 	    dbis->get_path_matrix(m, cpath);
 	    if ((vs->s_dmode == 3 || vs->s_dmode == 5)) {
 		dbis->get_path_matrix(m, cpath);
-		scene_obj(objs, vs, m, cpath, views);
+		scene_obj(objs, vs->s_dmode, vs, m, cpath, views);
 		continue;
 	    }
 	    unsigned long long ihash = cpath[cpath.size() - 1];
 	    cpath.pop_back();
-	    gather_paths(objs, ihash, vs, m, NULL, cpath, views, &ret);
+	    gather_paths(objs, ihash, vs->s_dmode, vs, m, NULL, cpath, views, &ret);
 	}
     }
     // Staged paths are now added (as long as settings were supplied) - clear the queue
@@ -1778,24 +1902,26 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	}
     }
 
+    // Now that all path manipulations are finalized, update the
+    // sets of drawn paths
+    cache_collapsed();
     return ret;
 }
 
 // Added dps present their own challenge, in terms of whether or not to
-    // automatically draw them.  (I think this decision comes after the existing
-    // draw paths' removed/changed processing and the main .g reflecting maps are
-    // updated.)  The cases:
-    //
-    // 1.  Already part of a drawn invalid path - draw and expand, as path was
-    // drawn but is no longer invalid
-    //
-    // 2.  Already part of a non-drawn invalid path - do not draw (? - could see
-    // a case for either behavior here, if the user wants to see the instances
-    // of the newly enabled part... this may have to be a user option)
-    //
-    // 2.  Not part of any path, pre or post removed/changed draw states (i.e.
-    // a tops object) - draw
-
+// automatically draw them.  (I think this decision comes after the existing
+// draw paths' removed/changed processing and the main .g reflecting maps are
+// updated.)  The cases:
+//
+// 1.  Already part of a drawn invalid path - draw and expand, as path was
+// drawn but is no longer invalid
+//
+// 2.  Already part of a non-drawn invalid path - do not draw (? - could see
+// a case for either behavior here, if the user wants to see the instances
+// of the newly enabled part... this may have to be a user option)
+//
+// 2.  Not part of any path, pre or post removed/changed draw states (i.e.
+// a tops object) - draw
 
 
 /** @} */

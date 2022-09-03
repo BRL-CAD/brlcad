@@ -206,6 +206,13 @@ class GED_EXPORT BViewState {
 	// specific to that path, only precise path matches are removed
 	void erase(int mode, int argc, const char **argv);
 
+	// Return a sorted vector of strings encoding the drawn paths in the
+	// view.  If mode == -1 list all paths, otherwise list those specific
+	// to the mode.  If list_collapsed is true, return the minimal path set
+	// that captures what is drawn - otherwise, return the direct list of
+	// scene objects
+	std::vector<std::string> list_drawn_paths(int mode, bool list_collapsed);
+
 	// Clear all drawn objects (TODO - should allow mode specification here)
 	void clear();
 
@@ -241,8 +248,6 @@ class GED_EXPORT BViewState {
 	// it is practically speaking an implementation detail
 	void cache_collapsed();
 
-	void collapse(std::unordered_map<int, std::vector<std::vector<unsigned long long>>> *collapsed, std::unordered_map<int, std::unordered_set<unsigned long long>> &mode_map);
-
     private:
 	DbiState *dbis;
 
@@ -257,6 +262,7 @@ class GED_EXPORT BViewState {
 	void walk_tree(
 		std::unordered_set<struct bv_scene_obj *> &objs,
 		unsigned long long chash,
+		int curr_mode,
 		struct bv_obj_settings *vs,
 		matp_t m,
 		std::vector<unsigned long long> &path_hashes,
@@ -267,6 +273,7 @@ class GED_EXPORT BViewState {
 	void gather_paths(
 		std::unordered_set<struct bv_scene_obj *> &objs,
 		unsigned long long c_hash,
+		int curr_mode,
 		struct bv_obj_settings *vs,
 		matp_t m,
 		matp_t lm,
@@ -277,6 +284,7 @@ class GED_EXPORT BViewState {
 
 	struct bv_scene_obj * scene_obj(
 		std::unordered_set<struct bv_scene_obj *> &objs,
+		int curr_mode,
 		struct bv_obj_settings *vs,
 		matp_t m,
 		std::vector<unsigned long long> &path_hashes,
@@ -290,7 +298,9 @@ class GED_EXPORT BViewState {
 
 	// The collapsed drawn paths from the previous db state, organized
 	// by drawn mode
-	std::unordered_map<int, std::vector<std::vector<unsigned long long>>> prev_collapsed;
+	void collapse(std::vector<std::vector<unsigned long long>> *a_collapsed, std::unordered_map<int, std::vector<std::vector<unsigned long long>>> *collapsed, std::unordered_map<int, std::unordered_set<unsigned long long>> &mode_map);
+	std::unordered_map<int, std::vector<std::vector<unsigned long long>>> mode_collapsed;
+	std::vector<std::vector<unsigned long long>> all_collapsed;
 
 	std::vector<std::vector<unsigned long long>> staged;
 
