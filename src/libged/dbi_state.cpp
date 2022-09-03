@@ -1111,6 +1111,7 @@ BViewState::erase(int mode, int argc, const char **argv)
 
 		bv_obj_put(s_it->second);
 		sm_it->second.erase(s_it);
+		s_map[phash].erase(mode);
 
 		// IFF we have removed all of the drawn elements for this path,
 		// clear it from the active sets
