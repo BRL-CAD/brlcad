@@ -1415,10 +1415,8 @@ BViewState::scene_obj(
     struct bv_scene_obj *sp = NULL;
     if (s_map.find(phash) != s_map.end()) {
 	if (s_map[phash].find(curr_mode) != s_map[phash].end()) {
-	    sp = s_map[phash][curr_mode];
-	    // Geometry is suspect - clear to prepare for regeneration
-	    bv_obj_put(sp);
-	    s_map[phash].erase(curr_mode);
+	    // Already have scene object
+	    return NULL;
 	}
     }
     sp = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
@@ -1594,8 +1592,8 @@ BViewState::gather_paths(
 	}
     } else {
 	// Solid - scene object time
-	scene_obj(objs, curr_mode, vs, m, path_hashes, views);
-	if (ret)
+	struct bv_scene_obj *nobj = scene_obj(objs, curr_mode, vs, m, path_hashes, views);
+	if (nobj && ret)
 	    (*ret) |= GED_DBISTATE_VIEW_CHANGE;
     }
     /* Done with branch - restore path, put back the old matrix state,
@@ -1745,10 +1743,10 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     }
 
 
-    // Changed paths we reset based on current db info - color, matrix, and
-    // regenerating the geometry if the entry isn't invalid.  This is the step
-    // that ensures any surviving solid objects in the drawing state are
-    // current for subsequent operations (and thus valid to reuse)
+    // Changed paths we redo based on current db info - color, matrix, and
+    // geometry if the entry isn't invalid.  This is the step that ensures any
+    // surviving solid objects in the drawing state are current for subsequent
+    // operations (and thus valid to reuse)
     std::unordered_map<int, std::unordered_set<unsigned long long>>::iterator mm_it;
     for (mm_it = mode_map.begin(); mm_it != mode_map.end(); mm_it++) {
 	for (iv_it = changed_paths.begin(); iv_it != changed_paths.end(); iv_it++) {
@@ -1777,32 +1775,17 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 		}
 		continue;
 	    }
-	    if (!s) {
-		s = bv_obj_get(v, BV_DB_OBJS);
-	    } else {
-		bv_obj_reset(s);
+	    if (s) {
+		// Geometry is suspect - clear to prepare for regeneration
+		bv_obj_put(s);
+		s_map[*iv_it].erase(mm_it->first);
+		ret = GED_DBISTATE_VIEW_CHANGE;
 	    }
-
-	    // Update color (TODO - override color isn't being handled quite right
-	    // at the moment - it should be OK to set this and still have a -C from
-	    // the old object override, but at the moment that's not what's
-	    // happening - we're having to set s_color to execute -C...
-	    struct bu_color c;
-	    dbis->path_color(&c, cp);
-	    bu_color_to_rgb_chars(&c, s->s_color);
-
-	    // Update matrix
-	    dbis->get_path_matrix(s->s_mat, cp);
-
-	    // Geometry update is deferred
-	    objs.insert(s);
-
-	    ret = GED_DBISTATE_VIEW_CHANGE;
 	}
     }
 
-    // Also need to evaluate prior collapsed paths according to the same validity
-    // criteria, before we re-expand them
+    // Evaluate prior collapsed paths according to the same validity criteria,
+    // then re-expand them
     std::unordered_map<int, std::vector<std::vector<unsigned long long>>>::iterator ms_it;
     for (ms_it = mode_collapsed.begin(); ms_it != mode_collapsed.end(); ms_it++) {
 	std::unordered_set<size_t> active_collapsed;
