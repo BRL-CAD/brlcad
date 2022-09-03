@@ -192,19 +192,30 @@ class GED_EXPORT BViewState {
     public:
 	BViewState(DbiState *);
 
-	void clear();
 
 	// Adds path to the BViewState container, but doesn't trigger a re-draw - that
 	// should be done once all paths to be added in a given draw cycle are added.
+	// The actual drawing (and mode specifications) are done with redraw and a
+	// supplied bv_obj_settings structure.
 	void add_path(const char *path);
 
-	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
+	// Erases paths from the view for the given mode.  If mode < 0, all
+	// matching paths are erased.  For modes that are un-evaluated, all
+	// paths that are subsets of the specified path are removed.  For
+	// evaluated modes like 3 (bigE) that generate an evaluated visual
+	// specific to that path, only precise path matches are removed
+	void erase(int mode, int argc, const char **argv);
+
+	// Clear all drawn objects (TODO - should allow mode specification here)
+	void clear();
 
 	// A View State redraw can impact multiple views with a shared state - most of
 	// the elements will be the same, but adaptive plotting will be view specific even
-	// with otherwise common objects - we must update accordingly.  For independent
-	// views the views set will hold only one view.
+	// with otherwise common objects - we must update accordingly.
 	unsigned long long redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views, int no_autoview);
+
+	// Allow callers to calculate the drawing hash of a path
+	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
 
 	// Sets defining all drawn solid paths (including invalid paths).  The
 	// s_keys holds the ordered individual keys of each drawn solid path - it

@@ -1061,6 +1061,65 @@ BViewState::add_path(const char *path)
     staged.push_back(path_hashes);
 }
 
+void
+BViewState::erase(int mode, int argc, const char **argv)
+{
+    if (!argc || !argv)
+	return;
+
+    std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator sm_it;
+    for (int i = 0; i < argc; i++) {
+	std::vector<unsigned long long> path_hashes = dbis->digest_path(argv[i]);
+	if (!path_hashes.size())
+	    continue;
+
+	std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
+
+	std::vector<unsigned long long> skeys_erase;
+
+	for (k_it = s_keys.begin(); k_it != s_keys.end(); k_it++) {
+	    std::vector<unsigned long long> &chashes = k_it->second;
+	    if (chashes.size() < path_hashes.size())
+		continue;
+
+	    if (std::equal(path_hashes.begin(), path_hashes.end(), chashes.begin())) {
+
+		unsigned long long phash = dbis->path_hash(chashes, 0);
+		skeys_erase.push_back(phash);	
+		drawn_paths.erase(phash);
+
+		sm_it = s_map.find(phash);
+		if (sm_it == s_map.end())
+		    continue;
+
+		std::unordered_map<int, struct bv_scene_obj *>::iterator s_it;
+		if (mode < 0) {
+		    for (s_it = sm_it->second.begin(); s_it != sm_it->second.end(); s_it++) {
+			bv_obj_put(s_it->second);
+		    }
+		    s_map.erase(phash);
+		    continue;
+		}
+
+		s_it = sm_it->second.find(mode);
+		if (s_it == sm_it->second.end())
+		    continue;
+
+		bv_obj_put(s_it->second);
+		sm_it->second.erase(s_it);
+	    }
+	}
+
+	for (size_t k = 0; k < skeys_erase.size(); k++) {
+	    s_keys.erase(skeys_erase[k]);
+	}
+
+    }
+   
+    // Update info on fully drawn paths 
+    cache_collapsed();
+}
+
 unsigned long long
 BViewState::path_hash(std::vector<unsigned long long> &path, size_t max_len)
 {
