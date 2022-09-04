@@ -1651,11 +1651,22 @@ bool alphanum_cmp(const std::string &a, const std::string &b)
 std::vector<std::string>
 BViewState::list_drawn_paths(int mode, bool list_collapsed)
 {
+    std::unordered_map<int, std::vector<std::vector<unsigned long long>>>::iterator m_it;
     std::vector<std::string> ret;
     if (mode == -1 && list_collapsed) {
 	struct bu_vls vpath = BU_VLS_INIT_ZERO;
 	for (size_t i = 0; i < all_collapsed.size(); i++) {
 	    dbis->print_path(&vpath, all_collapsed[i]);
+	    ret.push_back(std::string(bu_vls_cstr(&vpath)));
+	}
+    }
+    if (mode != -1 && list_collapsed) {
+	m_it = mode_collapsed.find(mode);
+	if (m_it == mode_collapsed.end())
+	    return ret;
+    	struct bu_vls vpath = BU_VLS_INIT_ZERO;
+	for (size_t i = 0; i < m_it->second.size(); i++) {
+	    dbis->print_path(&vpath, m_it->second[i]);
 	    ret.push_back(std::string(bu_vls_cstr(&vpath)));
 	}
     }

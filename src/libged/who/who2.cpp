@@ -50,13 +50,33 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc > 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
+    struct bu_vls cvls = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc vd[3];
+    int mode = -1;
+    BU_OPT(vd[0],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to work with");
+    BU_OPT(vd[1],  "m", "mode",    "#",         &bu_opt_int, &mode,   "only report paths drawn in the specified drawing mode");
+    BU_OPT_NULL(vd[2]);
+    int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
+    argc = opt_ret;
+    struct bview *v = gedp->ged_gvp;
+    if (bu_vls_strlen(&cvls)) {
+	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
+	if (!v) {
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
+	    bu_vls_free(&cvls);
+	    return BRLCAD_ERROR;
+	}
+    }
+    bu_vls_free(&cvls);
+
+    /* Check that we have a view */
+    if (!v) {
+	bu_vls_printf(gedp->ged_result_str, "No view specified and no current view defined in GED, nothing to generate a list of paths from");
 	return BRLCAD_ERROR;
     }
 
-    BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
-    std::vector<std::string> paths = bvs->list_drawn_paths(-1, true);
+    BViewState *bvs = gedp->dbi_state->get_view_state(v);
+    std::vector<std::string> paths = bvs->list_drawn_paths(mode, true);
     for (size_t i = 0; i < paths.size(); i++) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", paths[i].c_str());
     }
