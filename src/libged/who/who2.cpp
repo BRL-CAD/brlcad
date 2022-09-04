@@ -50,12 +50,14 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    int expand = 0;
     struct bu_vls cvls = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc vd[3];
+    struct bu_opt_desc vd[4];
     int mode = -1;
     BU_OPT(vd[0],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to work with");
     BU_OPT(vd[1],  "m", "mode",    "#",         &bu_opt_int, &mode,   "only report paths drawn in the specified drawing mode");
-    BU_OPT_NULL(vd[2]);
+    BU_OPT(vd[2],  "E", "expand",  "",          NULL,        &expand, "report individual drawn objects");
+    BU_OPT_NULL(vd[3]);
     int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
     argc = opt_ret;
     struct bview *v = gedp->ged_gvp;
@@ -76,7 +78,7 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     BViewState *bvs = gedp->dbi_state->get_view_state(v);
-    std::vector<std::string> paths = bvs->list_drawn_paths(mode, true);
+    std::vector<std::string> paths = bvs->list_drawn_paths(mode, (bool)!expand);
     for (size_t i = 0; i < paths.size(); i++) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", paths[i].c_str());
     }

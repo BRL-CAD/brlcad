@@ -1670,6 +1670,24 @@ BViewState::list_drawn_paths(int mode, bool list_collapsed)
 	    ret.push_back(std::string(bu_vls_cstr(&vpath)));
 	}
     }
+    if (mode == -1 && !list_collapsed) {
+	struct bu_vls vpath = BU_VLS_INIT_ZERO;
+	std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
+	for (k_it = s_keys.begin(); k_it != s_keys.end(); k_it++) {
+	    dbis->print_path(&vpath, k_it->second);
+	    ret.push_back(std::string(bu_vls_cstr(&vpath)));
+	}
+    }
+    if (mode != -1 && !list_collapsed) {
+	struct bu_vls vpath = BU_VLS_INIT_ZERO;
+	std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator sm_it;
+	for (sm_it = s_map.begin(); sm_it != s_map.end(); sm_it++) {
+	    if (sm_it->second.find(mode) == sm_it->second.end())
+		continue;
+	    dbis->print_path(&vpath, s_keys[sm_it->first]);
+	    ret.push_back(std::string(bu_vls_cstr(&vpath)));
+	}
+    }
 
     std::sort(ret.begin(), ret.end(), &alphanum_cmp);
 
