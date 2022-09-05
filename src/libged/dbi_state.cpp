@@ -888,6 +888,11 @@ DbiState::update()
 	changed_hashes.insert(hash);
     }
 
+#if 0
+    // TODO - I think this is unnecessary?  The redraw method updates this
+    // at the end of each call, so we should either be empty or current
+    // already at this point...
+    //
     // For all associated view states, cache their collapsed drawn
     // paths
     shared_vs->cache_collapsed();
@@ -897,6 +902,7 @@ DbiState::update()
 	    continue;
 	v_it->second->cache_collapsed();
     }
+#endif
 
     // Update the primary data structures 
     for(s_it = removed.begin(); s_it != removed.end(); s_it++) {
@@ -2013,6 +2019,11 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 // 2.  Not part of any path, pre or post removed/changed draw states (i.e.
 // a tops object) - draw
 
+
+
+
+/* Handle selection status for various instances in the database */
+
 BSelectState::BSelectState(DbiState *s)
 {
     dbis = s;
@@ -2024,14 +2035,66 @@ BSelectState::select_path(const char *path)
     if (!path)
 	return false;
 
-    return true;
+    std::vector<unsigned long long> path_hashes = dbis->digest_path(path);
+    if (!path_hashes.size())
+	return false;
+
+    return select_hpath(path_hashes);
 }
 
 bool
-BSelectState::select_hpath(unsigned long long hpath)
+BSelectState::select_hpath(std::vector<unsigned long long> &hpath)
 {
-    if (!hpath)
+    if (!hpath.size())
 	return false;
+
+    // If we're already selected, nothing to do
+    unsigned long long shash = dbis->path_hash(hpath, 0);
+    if (selected.find(shash) != selected.end())
+	return true;
+
+    // Validate that the specified path is current in the database.
+    for (size_t i = 1; i < hpath.size(); i++) {
+	unsigned long long phash = hpath[i-1];
+	unsigned long long chash = hpath[i];
+	if (dbis->p_c.find(phash) == dbis->p_c.end())
+	    return false;
+	if (dbis->p_c[phash].find(chash) == dbis->p_c[phash].end())
+	    return false;
+    }
+
+    // If we're going to select this path, we need to clear out conflicting
+    // paths.  We deliberately don't allow selection of multiple levels of
+    // a single path, to avoid unexpected and unintuitive behaviors.  This
+    // means we have to clear any selection that is either a superset of this
+    // path or a child of it.
+    std::vector<unsigned long long> to_clear;
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
+    for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
+	std::vector<unsigned long long> &cpath = s_it->second;
+	if (cpath.size() < hpath.size()) {
+	    if (std::equal(cpath.begin(), cpath.end(), hpath.begin()))
+		to_clear.push_back(s_it->first);
+	} else {
+	    if (std::equal(hpath.begin(), hpath.end(), cpath.begin()))
+		to_clear.push_back(s_it->first);
+	}
+    }
+
+    // Perform deselection on the paths to be cleared.
+    for (size_t i = 0; i < to_clear.size(); i++) {
+	deselect_hpath(selected[to_clear[i]]);
+    }
+
+
+    // Add to selected set
+    selected[shash] = hpath;
+
+    // Activate the solids from the newly selected path.
+    std::vector<unsigned long long> seed_hashes = hpath;
+    unsigned long long wshash = seed_hashes[seed_hashes.size() - 1];
+    seed_hashes.pop_back();
+    add_solids(wshash, seed_hashes);
 
     return true;
 }
@@ -2042,14 +2105,29 @@ BSelectState::deselect_path(const char *path)
     if (!path)
 	return false;
 
-    return true;
+    std::vector<unsigned long long> path_hashes = dbis->digest_path(path);
+    if (!path_hashes.size())
+	return false;
+
+    return deselect_hpath(path_hashes);
 }
 
 bool
-BSelectState::deselect_hpath(unsigned long long hpath)
+BSelectState::deselect_hpath(std::vector<unsigned long long> &hpath)
 {
-    if (!hpath)
+    if (!hpath.size())
 	return false;
+
+    unsigned long long phash = dbis->path_hash(hpath, 0);
+
+    // Clear any active solid children of the selected path
+    std::vector<unsigned long long> seed_hashes = selected[phash];
+    unsigned long long eshash = seed_hashes[seed_hashes.size() - 1];
+    seed_hashes.pop_back();
+    clear_solids(eshash, seed_hashes);
+
+    // Finally, clear the selection itself
+    selected.erase(phash);
 
     return true;
 }
@@ -2060,21 +2138,117 @@ BSelectState::is_selected(unsigned long long hpath)
     if (!hpath)
 	return false;
 
-    return true;
-}
-
-bool
-BSelectState::is_active(unsigned long long hpath)
-{
-    if (!hpath)
+    if (selected.find(hpath) == selected.end())
 	return false;
 
     return true;
 }
 
+bool
+BSelectState::is_active(unsigned long long phash)
+{
+    if (!phash)
+	return false;
 
+    if (active_solids.find(phash) == active_solids.end())
+	return false;
 
+    return true;
+}
 
+void
+BSelectState::add_solids(
+	unsigned long long c_hash,
+	std::vector<unsigned long long> &path_hashes
+	)
+{
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    pc_it = dbis->p_c.find(c_hash);
+
+    path_hashes.push_back(c_hash);
+    unsigned long long phash = dbis->path_hash(path_hashes, 0);
+    active_solids.insert(phash);
+
+    if (!path_addition_cyclic(path_hashes)) {
+	/* Not cyclic - keep going */
+	if (pc_it != dbis->p_c.end()) {
+	    std::unordered_set<unsigned long long>::iterator c_it;
+	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
+		add_solids(*c_it, path_hashes);
+	}
+    }
+
+    /* Done with branch - restore path */
+    path_hashes.pop_back();
+}
+
+void
+BSelectState::clear_solids(
+	unsigned long long c_hash,
+	std::vector<unsigned long long> &path_hashes
+	)
+{
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    pc_it = dbis->p_c.find(c_hash);
+
+    path_hashes.push_back(c_hash);
+
+    unsigned long long phash = dbis->path_hash(path_hashes, 0);
+    active_solids.erase(phash);
+
+    if (!path_addition_cyclic(path_hashes)) {
+	/* Not cyclic - keep going */
+	if (pc_it != dbis->p_c.end()) {
+	    std::unordered_set<unsigned long long>::iterator c_it;
+	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
+		clear_solids(*c_it, path_hashes);
+	}
+    }
+
+    /* Done with branch - restore path */
+    path_hashes.pop_back();
+}
+
+void
+BSelectState::refresh()
+{
+    // If the database may have changed, we need to revalidate selected
+    // paths are still current, and regenerate the active_solids set.
+    active_solids.clear();
+
+    // Unlike drawing, nothing fancy here - if a selected path is invalid,
+    // it's gone.
+    std::vector<unsigned long long> to_clear;
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
+    for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
+	std::vector<unsigned long long> &cpath = s_it->second;
+	for (size_t i = 1; i < cpath.size(); i++) {
+	    unsigned long long phash = cpath[i-1];
+	    unsigned long long chash = cpath[i];
+	    if (dbis->p_c.find(phash) == dbis->p_c.end()) {
+		to_clear.push_back(s_it->first);
+		continue;
+	    }
+	    if (dbis->p_c[phash].find(chash) == dbis->p_c[phash].end()) {
+		to_clear.push_back(s_it->first);
+		continue;
+	    }
+	}
+    }
+
+    // Erase invalid paths
+    for (size_t i = 0; i < to_clear.size(); i++) {
+	selected.erase(to_clear[i]);
+    }
+
+    // For all surviving selections, generate solids
+    for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
+	std::vector<unsigned long long> seed_hashes = s_it->second;
+	unsigned long long shash = seed_hashes[seed_hashes.size() - 1];
+	seed_hashes.pop_back();
+	add_solids(shash, seed_hashes);
+    }
+}
 
 /** @} */
 // Local Variables:

@@ -188,27 +188,38 @@ struct ged_drawable {
 
 class GED_EXPORT DbiState;
 
-// If we need expansion of path hashes into vectors of individual hashes, we
-// get that from the DbiState - don't store them directly
 class GED_EXPORT BSelectState {
     public:
 	BSelectState(DbiState *);
 
 	bool select_path(const char *path);
-	bool select_hpath(unsigned long long);
+	bool select_hpath(std::vector<unsigned long long> &hpath);
 
 	bool deselect_path(const char *path);
-	bool deselect_hpath(unsigned long long);
+	bool deselect_hpath(std::vector<unsigned long long> &hpath);
 
 	void clear();
 
 	bool is_selected(unsigned long long);
 	bool is_active(unsigned long long);
 
+	void refresh();
+
+	std::unordered_map<unsigned long long, std::vector<unsigned long long>> selected;
+	std::unordered_set<unsigned long long> active_solids;
+
     private:
 	DbiState *dbis;
-	std::unordered_set<unsigned long long> selected;
-	std::unordered_set<unsigned long long> active_solids;
+
+	void add_solids(
+		unsigned long long c_hash,
+		std::vector<unsigned long long> &path_hashes
+		);
+
+	void clear_solids(
+		unsigned long long c_hash,
+		std::vector<unsigned long long> &path_hashes
+		);
 };
 
 
