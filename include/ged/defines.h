@@ -203,6 +203,9 @@ class GED_EXPORT BSelectState {
 	bool is_selected(unsigned long long);
 	bool is_active(unsigned long long);
 
+	void expand();
+	void collapse();
+
 	void refresh();
 
 	std::unordered_map<unsigned long long, std::vector<unsigned long long>> selected;
@@ -219,6 +222,16 @@ class GED_EXPORT BSelectState {
 	void clear_solids(
 		unsigned long long c_hash,
 		std::vector<unsigned long long> &path_hashes
+		);
+
+	void expand_paths(
+		std::vector<std::vector<unsigned long long>> &out_paths,
+		unsigned long long c_hash,
+		std::vector<unsigned long long> &path_hashes
+		);
+
+	void collapse_paths(
+		std::vector<std::vector<unsigned long long>> &out_paths
 		);
 };
 

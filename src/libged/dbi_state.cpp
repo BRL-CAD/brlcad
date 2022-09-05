@@ -2210,6 +2210,177 @@ BSelectState::clear_solids(
 }
 
 void
+BSelectState::expand_paths(
+	std::vector<std::vector<unsigned long long>> &out_paths,
+	unsigned long long c_hash,
+	std::vector<unsigned long long> &path_hashes
+	)
+{
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    pc_it = dbis->p_c.find(c_hash);
+
+    path_hashes.push_back(c_hash);
+
+    if (!path_addition_cyclic(path_hashes)) {
+	/* Not cyclic - keep going */
+	if (pc_it != dbis->p_c.end()) {
+	    std::unordered_set<unsigned long long>::iterator c_it;
+	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
+		expand_paths(out_paths, *c_it, path_hashes);
+	} else {
+	    out_paths.push_back(path_hashes);
+	}
+    } else {
+	out_paths.push_back(path_hashes);
+    }
+
+    /* Done with branch - restore path */
+    path_hashes.pop_back();
+}
+
+void
+BSelectState::expand()
+{
+    // Given the current selection set, expand all the paths to
+    // their leaf solids and report those paths
+    std::vector<std::vector<unsigned long long>> out_paths;
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
+    for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
+	std::vector<unsigned long long> seed_hashes = s_it->second;
+	unsigned long long shash = seed_hashes[seed_hashes.size() - 1];
+	seed_hashes.pop_back();
+	expand_paths(out_paths, shash, seed_hashes);
+    }
+
+    // Clear selected and active solids.  Since we are expanding to leaf
+    // nodes, active solids will now be just the hashed selected paths
+    selected.clear();
+
+    for (size_t i = 0; i < out_paths.size(); i++) {
+	unsigned long long phash = dbis->path_hash(out_paths[i], 0);
+	selected[phash] = out_paths[i];
+	active_solids.insert(phash);
+    }
+}
+
+void
+BSelectState::collapse()
+{
+    std::vector<std::vector<unsigned long long>> collapsed;
+    std::map<size_t, std::unordered_set<unsigned long long>> depth_groups;
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
+    std::unordered_set<unsigned long long>::iterator u_it;
+
+    // Group paths of the same depth.  Depth == 1 paths are already
+    // top level objects and need no further processing.
+    for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
+	if (s_it->second.size() == 1) {
+	    collapsed.push_back(s_it->second);
+	} else {
+	    depth_groups[s_it->second.size()].insert(s_it->first);
+	}
+    }
+
+    // Whittle down the mode depth groups until we find not-fully-drawn
+    // parents - when we find that, the children constitute non-collapsible
+    // paths based on what's drawn in this mode
+    while (depth_groups.size()) {
+	size_t plen = depth_groups.rbegin()->first;
+	if (plen == 1)
+	    break;
+	std::unordered_set<unsigned long long> &pckeys = depth_groups.rbegin()->second;
+
+	// For a given depth, group the paths by parent comb.  This results
+	// in path sub-groups which will define for us how "fully drawn"
+	// that particular parent comb is.
+	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> grouped_pckeys;
+	for (u_it = pckeys.begin(); u_it != pckeys.end(); u_it++) {
+	    std::vector<unsigned long long> &pc_path = selected[*u_it];
+	    grouped_pckeys[pc_path[plen-2]].insert(*u_it);
+	}
+
+	// For each parent/child grouping, compare it against the .g ground
+	// truth set.  If they match, fully drawn and we promote the path to
+	// the parent depth.  If not, the paths do not collapse further and are
+	// added to drawn paths.
+	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pg_it;
+	for (pg_it = grouped_pckeys.begin(); pg_it != grouped_pckeys.end(); pg_it++) {
+
+	    // As above, use the full path from selected, but this time
+	    // we're collecting the children.  This is the set we need to compare
+	    // against the .g ground truth to determine fully or partially drawn.
+	    std::unordered_set<unsigned long long> g_children;
+	    std::unordered_set<unsigned long long> &g_pckeys = pg_it->second;
+	    for (u_it = g_pckeys.begin(); u_it != g_pckeys.end(); u_it++) {
+		std::vector<unsigned long long> &pc_path = selected[*u_it];
+		g_children.insert(pc_path[plen-1]);
+	    }
+
+	    // Do the check against the .g comb children info - the "ground truth"
+	    // that defines what must be present for a fully drawn comb
+	    bool is_fully_selected = true;
+	    std::unordered_set<unsigned long long> &ground_truth = dbis->p_c[pg_it->first];
+	    for (u_it = ground_truth.begin(); u_it != ground_truth.end(); u_it++) {
+		if (g_children.find(*u_it) == g_children.end()) {
+		    is_fully_selected = false;
+		    break;
+		}
+	    }
+
+	    if (is_fully_selected) {
+		// If fully selected, depth_groups[plen-1] gets the first path in
+		// g_pckeys.  The path is longer than that depth, but contains
+		// all the necessary information and using that approach avoids
+		// the need to duplicate paths.
+		depth_groups[plen - 1].insert(*g_pckeys.begin());
+	    } else {
+		// No further collapsing - add to final.  We must make trimmed
+		// versions of the paths in case this depth holds promoted
+		// paths from deeper levels, since we are duplicating the full
+		// path contents.
+		for (u_it = g_pckeys.begin(); u_it != g_pckeys.end(); u_it++) {
+		    std::vector<unsigned long long> trimmed = selected[*u_it];
+		    trimmed.resize(plen);
+		    collapsed.push_back(trimmed);
+		}
+	    }
+	}
+
+	// Done with this depth
+	depth_groups.erase(plen);
+    }
+
+    // If we collapsed all the way to top level objects, make sure to add them
+    // if they are still valid entries.  If a toplevel entry is invalid, there
+    // is no parent comb to refer to it as an "invalid" object and it can no
+    // longer be drawn.
+    if (depth_groups.find(1) != depth_groups.end()) {
+	std::unordered_set<unsigned long long> &pckeys = depth_groups.rbegin()->second;
+	for (u_it = pckeys.begin(); u_it != pckeys.end(); u_it++) {
+	    std::vector<unsigned long long> trimmed = selected[*u_it];
+	    trimmed.resize(1);
+	    collapsed.push_back(trimmed);
+	}
+    }
+
+    // With the collapsed set ready, we may now generate new selected sets and
+    // active solids (we need the latter, since active paths keeps track of all
+    // paths which might be considered selected and parents of solids may now
+    // be in that set where they wouldn't be in (say) a fully expanded
+    // selection set.
+    selected.clear();
+
+    for (size_t i = 0; i < collapsed.size(); i++) {
+	unsigned long long phash = dbis->path_hash(collapsed[i], 0);
+	selected[phash] = collapsed[i];
+	std::vector<unsigned long long> seed_hashes = collapsed[i];
+	unsigned long long shash = seed_hashes[seed_hashes.size() - 1];
+	seed_hashes.pop_back();
+	add_solids(shash, seed_hashes);
+    }
+}
+
+void
 BSelectState::refresh()
 {
     // If the database may have changed, we need to revalidate selected
