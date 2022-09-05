@@ -41,6 +41,7 @@ extern "C" {
 #include "vmath.h"
 #include "bu/color.h"
 #include "bu/opt.h"
+#include "bu/sort.h"
 #include "bg/lod.h"
 #include "raytrace.h"
 #include "ged/defines.h"
@@ -648,7 +649,7 @@ DbiState::get_path_matrix(matp_t m, std::vector<unsigned long long> &elements)
 	    bn_mat_mul(cmat, m, nm);
 	    MAT_COPY(m, cmat);
 	    have_mat = true;
-	}   
+	}
 	phash = chash;
     }
 
@@ -779,6 +780,79 @@ DbiState::get_view_state(struct bview *v)
     BViewState *nv = new BViewState(this);
     view_states[v] = nv;
     return nv;
+}
+
+void
+DbiState::gather_cyclic(
+	std::unordered_set<unsigned long long> &cyclic,
+	unsigned long long c_hash,
+	std::vector<unsigned long long> &path_hashes
+	)
+{
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    pc_it = p_c.find(c_hash);
+
+    path_hashes.push_back(c_hash);
+
+    if (!path_addition_cyclic(path_hashes)) {
+	/* Not cyclic - keep going */
+	if (pc_it != p_c.end()) {
+	    std::unordered_set<unsigned long long>::iterator c_it;
+	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
+		gather_cyclic(cyclic, *c_it, path_hashes);
+	}
+    } else {
+	cyclic.insert(c_hash);
+    }
+
+    /* Done with branch - restore path */
+    path_hashes.pop_back();
+}
+
+static int
+alphanum_sort(const void *a, const void *b, void *UNUSED(data)) {
+    struct directory *ga = *(struct directory **)a;
+    struct directory *gb = *(struct directory **)b;
+    return alphanum_impl(ga->d_namep, gb->d_namep, NULL);
+}
+
+std::vector<unsigned long long>
+DbiState::tops(bool show_cyclic)
+{
+    std::vector<unsigned long long> ret;
+    // First, get the standard tops results
+    struct directory **all_paths;
+    int tops_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
+    bu_sort(all_paths, tops_cnt, sizeof(struct directory *), alphanum_sort, NULL);
+
+    XXH64_state_t h_state;
+    for (int i = 0; i < tops_cnt; i++) {
+	XXH64_reset(&h_state, 0);
+	XXH64_update(&h_state, all_paths[i]->d_namep, strlen(all_paths[i]->d_namep)*sizeof(char));
+	unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+	ret.push_back(hash);
+    }
+    bu_free(all_paths, "free db_ls output");
+
+    if (!show_cyclic)
+	return ret;
+
+    // If we also want cyclic paths, use DbiState to try and speed things up.
+    // db_ls has that capability, but it has to unpack all the combs walking
+    // the tree to find the answer and that results in a slow check for large
+    // databases.
+    std::unordered_set<unsigned long long> cyclic_paths;
+    std::vector<unsigned long long> path_hashes;
+    for (size_t i = 0; i < ret.size(); i++) {
+	path_hashes.clear();
+	gather_cyclic(cyclic_paths, ret[i], path_hashes);
+    }
+    std::unordered_set<unsigned long long>::iterator c_it;
+    for (c_it = cyclic_paths.begin(); c_it != cyclic_paths.end(); c_it++) {
+	ret.push_back(*c_it);
+    }
+
+    return ret;
 }
 
 unsigned long long
@@ -926,6 +1000,7 @@ DbiState::DbiState(struct ged *ged_p)
     BU_GET(res, struct resource);
     rt_init_resource(res, 0, NULL);
     shared_vs = new BViewState(this);
+    selected = new BSelectState(this);
     gedp = ged_p;
     if (!gedp)
 	return;
@@ -943,6 +1018,7 @@ DbiState::DbiState(struct ged *ged_p)
 
 DbiState::~DbiState()
 {
+    delete selected;
     delete shared_vs;
     rt_clean_resource_basic(NULL, res);
     BU_PUT(res, struct resource);
@@ -1936,6 +2012,68 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 //
 // 2.  Not part of any path, pre or post removed/changed draw states (i.e.
 // a tops object) - draw
+
+BSelectState::BSelectState(DbiState *s)
+{
+    dbis = s;
+}
+
+bool
+BSelectState::select_path(const char *path)
+{
+    if (!path)
+	return false;
+
+    return true;
+}
+
+bool
+BSelectState::select_hpath(unsigned long long hpath)
+{
+    if (!hpath)
+	return false;
+
+    return true;
+}
+
+bool
+BSelectState::deselect_path(const char *path)
+{
+    if (!path)
+	return false;
+
+    return true;
+}
+
+bool
+BSelectState::deselect_hpath(unsigned long long hpath)
+{
+    if (!hpath)
+	return false;
+
+    return true;
+}
+
+bool
+BSelectState::is_selected(unsigned long long hpath)
+{
+    if (!hpath)
+	return false;
+
+    return true;
+}
+
+bool
+BSelectState::is_active(unsigned long long hpath)
+{
+    if (!hpath)
+	return false;
+
+    return true;
+}
+
+
+
 
 
 /** @} */

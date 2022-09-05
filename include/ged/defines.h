@@ -188,6 +188,30 @@ struct ged_drawable {
 
 class GED_EXPORT DbiState;
 
+// If we need expansion of path hashes into vectors of individual hashes, we
+// get that from the DbiState - don't store them directly
+class GED_EXPORT BSelectState {
+    public:
+	BSelectState(DbiState *);
+
+	bool select_path(const char *path);
+	bool select_hpath(unsigned long long);
+
+	bool deselect_path(const char *path);
+	bool deselect_hpath(unsigned long long);
+
+	void clear();
+
+	bool is_selected(unsigned long long);
+	bool is_active(unsigned long long);
+
+    private:
+	DbiState *dbis;
+	std::unordered_set<unsigned long long> selected;
+	std::unordered_set<unsigned long long> active_solids;
+};
+
+
 class GED_EXPORT BViewState {
     public:
 	BViewState(DbiState *);
@@ -317,6 +341,8 @@ class GED_EXPORT DbiState {
 
 	unsigned long long update();
 
+	std::vector<unsigned long long> tops(bool show_cyclic);
+
 	bool path_color(struct bu_color *c, std::vector<unsigned long long> &elements);
 
 	bool path_is_subtraction(std::vector<unsigned long long> &elements);
@@ -334,6 +360,9 @@ class GED_EXPORT DbiState {
 	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
 
 	BViewState *get_view_state(struct bview *);
+
+	// Unlike view states, there is one common selected state per Db instance
+	BSelectState *selected;
 
 	// These maps are the ".g ground truth" of the comb structures - the set
 	// associated with each has contains all the child hashes from the comb
@@ -406,6 +435,12 @@ class GED_EXPORT DbiState {
 	bool need_update_nref = true;
 
     private:
+	void gather_cyclic(
+		std::unordered_set<unsigned long long> &cyclic,
+		unsigned long long c_hash,
+		std::vector<unsigned long long> &path_hashes
+		);
+
 	void populate_maps(struct directory *dp, unsigned long long phash, int reset);
 	unsigned long long update_dp(struct directory *dp, int reset);
 	unsigned int color_int(struct bu_color *);
