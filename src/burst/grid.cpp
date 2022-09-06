@@ -1108,7 +1108,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
        cases involving adjacency of partitions both real (explicit)
        and imagined (implicit).
     */
-    for (pp = pt_headp->pt_forw; pp != pt_headp; pp = pp->pt_forw) {
+    for (pp = pt_headp->pt_forw; pp && pp != pt_headp; pp = pp->pt_forw) {
 	int	voidflag = 0;
 	struct partition *np = pp->pt_forw;
 	struct partition *cp;
@@ -2206,7 +2206,7 @@ execute_run(struct burst_state *s)
     if (!gottree) {
 	char *objline = bu_strdup(bu_vls_cstr(&s->objects));
 	char **av = (char **)bu_calloc(strlen(objline) + 1, sizeof(char *), "argv array");
-	int ac = bu_argv_from_string(av, strlen(objline), objline);
+	int ac = (int)bu_argv_from_string(av, strlen(objline), objline);
 
 	rt_prep_timer();
 	for (int i = 0; i < ac; i++) {
