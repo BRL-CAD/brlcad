@@ -384,6 +384,7 @@ class GED_EXPORT DbiState {
 	bool path_color(struct bu_color *c, std::vector<unsigned long long> &elements);
 
 	bool path_is_subtraction(std::vector<unsigned long long> &elements);
+	db_op_t bool_op(unsigned long long, unsigned long long);
 
 	bool get_matrix(matp_t m, unsigned long long p_key, unsigned long long i_key);
 	bool get_path_matrix(matp_t m, std::vector<unsigned long long> &elements);

@@ -127,7 +127,7 @@ populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
 }
 
 static void
-populate_walk_tree(union tree *tp, void *d, int subtract_skip,
+populate_walk_tree(union tree *tp, void *d, int subtract_skip, int p_op,
 	void (*leaf_func)(void *, const char *, matp_t, int)
 	)
 {
@@ -135,6 +135,17 @@ populate_walk_tree(union tree *tp, void *d, int subtract_skip,
 	return;
 
     RT_CK_TREE(tp);
+
+    int op = p_op;
+    switch (tp->tr_op) {
+	case OP_SUBTRACT:
+	    op = OP_SUBTRACT;
+	    break;
+	case OP_INTERSECT:
+	    op = OP_INTERSECT;
+	    break;
+    };
+
 
     switch (tp->tr_op) {
 	case OP_SUBTRACT:
@@ -144,15 +155,15 @@ populate_walk_tree(union tree *tp, void *d, int subtract_skip,
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_XOR:
-	    populate_walk_tree(tp->tr_b.tb_right, d, subtract_skip, leaf_func);
+	    populate_walk_tree(tp->tr_b.tb_right, d, subtract_skip, op, leaf_func);
 	    /* fall through */
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-	    populate_walk_tree(tp->tr_b.tb_left, d, subtract_skip, leaf_func);
+	    populate_walk_tree(tp->tr_b.tb_left, d, subtract_skip, OP_UNION, leaf_func);
 	    break;
 	case OP_DB_LEAF:
-	    (*leaf_func)(d, tp->tr_l.tl_name, tp->tr_l.tl_mat, tp->tr_op);
+	    (*leaf_func)(d, tp->tr_l.tl_name, tp->tr_l.tl_mat, op);
 	    break;
 	default:
 	    bu_log("unrecognized operator %d\n", tp->tr_op);
@@ -188,7 +199,7 @@ DbiState::populate_maps(struct directory *dp, unsigned long long phash, int rese
 	struct walk_data d;
 	d.dbis = this;
 	d.phash = phash;
-	populate_walk_tree(comb->tree, (void *)&d, 0, populate_leaf);
+	populate_walk_tree(comb->tree, (void *)&d, 0, OP_UNION, populate_leaf);
 	rt_db_free_internal(&in);
     }
 }
@@ -610,6 +621,22 @@ DbiState::path_is_subtraction(std::vector<unsigned long long> &elements)
     }
 
     return false;
+}
+
+db_op_t
+DbiState::bool_op(unsigned long long phash, unsigned long long chash)
+{
+    if (!phash)
+	return DB_OP_UNION;
+    size_t op = i_bool[phash][chash];
+    bu_log("op: %zd\n", op);
+    if (op == OP_SUBTRACT) {
+	bu_log("subtract\n");
+	return DB_OP_SUBTRACT;
+    }
+    if (op == OP_INTERSECT)
+	return DB_OP_INTERSECT;
+    return DB_OP_UNION;
 }
 
 bool

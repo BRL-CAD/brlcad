@@ -111,20 +111,23 @@ QgItem::QgItem(unsigned long long hash, QgModel *ictx)
     parentItem = NULL;
     if (!ctx)
 	return;
-    if (ctx->p_c.find(ihash) != ctx->p_c.end()) {
-	c_count = ctx->p_c[ihash].size();
-	// TODO - these copies may be moot - the child relationship needs
-	// the instance, so we may have to just ensure instances aren't
-	// removed until after the QgItems are updated.  If that's the case,
-	// there's no point in these copies.
-	ctx->print_hash(&name, ihash);
-	struct directory *cdp = NULL;
-	if (ctx->d_map.find(ihash) != ctx->d_map.end())
-	    cdp = ctx->d_map[ihash];
-	icon = QgIcon(cdp, ictx->gedp->dbip);
-	op = DB_OP_UNION; // TODO
-	dp = cdp;
+
+    // Get the child count from the .g info
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    pc_it = ctx->p_c.find(ihash);
+    if (pc_it != ctx->p_c.end()) {
+	c_count = pc_it->second.size();
+    } else {
+	c_count = 0;
     }
+
+    // Local item information
+    ctx->print_hash(&name, ihash);
+    struct directory *cdp = NULL;
+    if (ctx->d_map.find(ihash) != ctx->d_map.end())
+	cdp = ctx->d_map[ihash];
+    icon = QgIcon(cdp, ictx->gedp->dbip);
+    dp = cdp;
 }
 
 QgItem::~QgItem()
@@ -388,6 +391,7 @@ QgModel::item_rebuild(QgItem *item)
 	    // make a new one
 	    QgItem *nitem = new QgItem(*nh_it, this);
 	    nitem->parentItem = item;
+	    nitem->op = gedp->dbi_state->bool_op(item->ihash, *nh_it);
 	    nc.push_back(nitem);
 	    items->insert(nitem);
 	}
@@ -512,6 +516,7 @@ QgModel::g_update(struct db_i *n_dbip)
 	    } else {
 		QgItem *nitem = new QgItem(tops[i], this);
 		nitem->parentItem = rootItem;
+		nitem->op = gedp->dbi_state->bool_op(0, tops[i]);
 		ntops_items.push_back(nitem);
 		items->insert(nitem);
 	    }
@@ -581,7 +586,6 @@ QgModel::canFetchMore(const QModelIndex &idx) const
     if (!idx.isValid())
 	return false;
 
-bu_log("canfetchMore\n");
     QgItem *item = static_cast<QgItem*>(idx.internalPointer());
     if (item == rootItem)
        	return false;
@@ -600,13 +604,12 @@ QgModel::fetchMore(const QModelIndex &idx)
 {
     if (!idx.isValid())
 	return;
-bu_log("fetchMore\n");
+
     QgItem *item = static_cast<QgItem*>(idx.internalPointer());
 
     if (UNLIKELY(item == rootItem)) {
 	return;
     }
-
 
     // If we're already populated, don't need to do it again
     if (item->children.size())
@@ -624,6 +627,7 @@ bu_log("fetchMore\n");
     for (nh_it = nh.rbegin(); nh_it != nh.rend(); nh_it++) {
 	QgItem *nitem = new QgItem(*nh_it, this);
 	nitem->parentItem = item;
+	nitem->op = gedp->dbi_state->bool_op(item->ihash, *nh_it);
 	nc.push_back(nitem);
 	items->insert(nitem);
     }
