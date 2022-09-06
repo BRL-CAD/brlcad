@@ -263,6 +263,9 @@ class GED_EXPORT BViewState {
 	// scene objects
 	std::vector<std::string> list_drawn_paths(int mode, bool list_collapsed);
 
+	// Report if a path hash is drawn - 0 == not drawn, 1 == fully drawn, 2 == partially drawn
+	int is_hdrawn(std::vector<unsigned long long> &phashes);
+
 	// Clear all drawn objects (TODO - should allow mode specification here)
 	void clear();
 
@@ -284,13 +287,6 @@ class GED_EXPORT BViewState {
 	// into account.
 	std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>> s_map;
 	std::unordered_map<unsigned long long, std::vector<unsigned long long>> s_keys;
-
-	// Set of hashes of all drawn paths and subpaths, constructed during the collapse
-	// operation from the set of drawn solid paths.  This allows calling codes to
-	// spot check any path to see if it is active, without having to interrogate
-	// other data structures or walk down the tree.
-	std::unordered_set<unsigned long long> drawn_paths;
-
 
 	// Called when the parent Db context is getting ready to update the data
 	// structures - we may need to redraw, so we save any necessary information
@@ -341,6 +337,13 @@ class GED_EXPORT BViewState {
 		std::unordered_set<struct bview *> &views
 		);
 
+	// Partially drawn check
+	void partial_check_drawn(
+		int *ret,
+		unsigned long long c_hash,
+		std::vector<unsigned long long> &path_hashes
+		);
+
 	// Check if the prev_collapsed paths contain this path or a superset of this path
 	bool subsumed(struct bv_obj_settings *vs, std::vector<unsigned long long> &path);
 
@@ -355,6 +358,12 @@ class GED_EXPORT BViewState {
 	std::vector<std::vector<unsigned long long>> staged;
 
 	std::vector<unsigned long long> active_paths;
+
+	// Set of hashes of all drawn paths and subpaths, constructed during the collapse
+	// operation from the set of drawn solid paths.  This allows calling codes to
+	// spot check any path to see if it is active, without having to interrogate
+	// other data structures or walk down the tree.
+	std::unordered_set<unsigned long long> drawn_paths;
 };
 
 #define GED_DBISTATE_DB_CHANGE   0x01

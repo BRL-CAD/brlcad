@@ -1846,6 +1846,60 @@ BViewState::list_drawn_paths(int mode, bool list_collapsed)
     return ret;
 }
 
+void
+BViewState::partial_check_drawn(
+	int *ret,
+	unsigned long long c_hash,
+	std::vector<unsigned long long> &path_hashes
+	)
+{
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    pc_it = dbis->p_c.find(c_hash);
+
+    path_hashes.push_back(c_hash);
+
+    // As soon as we find a drawn path, we're done
+    unsigned long long phash = dbis->path_hash(path_hashes, 0);
+    if (drawn_paths.find(phash) != drawn_paths.end()) {
+	(*ret) = 1;
+	return;
+    }
+
+    if (!path_addition_cyclic(path_hashes)) {
+	/* Not cyclic - keep going */
+	if (pc_it != dbis->p_c.end()) {
+	    std::unordered_set<unsigned long long>::iterator c_it;
+	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
+		partial_check_drawn(ret, *c_it, path_hashes);
+	}
+    }
+
+    /* Done with branch - restore path */
+    path_hashes.pop_back();
+}
+
+
+
+int
+BViewState::is_hdrawn(std::vector<unsigned long long> &phashes)
+{
+    unsigned long long phash = dbis->path_hash(phashes, 0);
+    if (drawn_paths.find(phash) != drawn_paths.end())
+	return 1;
+
+    // This path isn't drawn - are any of its children drawn?
+    // If so, we are partially drawn
+    int partial = 0;
+    std::vector<unsigned long long> seed_hashes = phashes;
+    unsigned long long shash = seed_hashes[seed_hashes.size() - 1];
+    seed_hashes.pop_back();
+    partial_check_drawn(&partial, shash, seed_hashes);
+    if (partial)
+	return 2;
+
+    return 0;
+}
+
 unsigned long long
 BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views, int no_autoview)
 {
