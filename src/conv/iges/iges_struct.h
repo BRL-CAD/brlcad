@@ -214,7 +214,7 @@ struct iges_edge_list
 
 extern char *iges_type(int type_no);
 extern char *Make_unique_brl_name(char *name);
-extern int Add_loop_to_face(struct shell *s, struct faceuse *fu, int entityno, int face_orient);
+extern int Add_loop_to_face(struct shell *s, struct faceuse *fu, size_t entityno, int face_orient);
 extern int Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno);
 extern int arb_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
 extern int ell_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
@@ -227,17 +227,17 @@ extern int tor_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE
 extern int write_shell_face_loop(struct nmgregion *r, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
 extern struct edge_g_cnurb *Get_cnurb(int entity_no);
 extern struct edge_g_cnurb *Get_cnurb_curve(int curve_de, int *linear);
-extern struct faceuse *Add_face_to_shell(struct shell *s, int entityno, int face_orient);
+extern struct faceuse *Add_face_to_shell(struct shell *s, size_t entityno, int face_orient);
 extern struct faceuse *Make_nurb_face(struct shell *s, int surf_entityno);
-extern struct faceuse *Make_planar_face(struct shell *s, int entityno, int face_orient);
+extern struct faceuse *Make_planar_face(struct shell *s, size_t entityno, int face_orient);
 extern struct iges_edge_list *Get_edge_list(struct iges_edge_use *edge);
 extern struct iges_edge_list *Read_edge_list(struct iges_edge_use *edge);
 extern struct iges_vertex *Get_iges_vertex(struct vertex *v);
 extern struct iges_vertex_list *Get_vertex_list(int vert_de);
 extern struct iges_vertex_list *Read_vertex_list(int vert_de);
 extern struct loopuse *Make_loop(int entity_no, int orientation, int on_surf_de, struct face_g_snurb *surf, struct faceuse *fu);
-extern struct shell *Add_inner_shell(struct nmgregion *r, int entityno);
-extern struct shell *Get_outer_shell(struct nmgregion *r, int entityno);
+extern struct shell *Add_inner_shell(struct nmgregion *r, size_t entityno);
+extern struct shell *Get_outer_shell(struct nmgregion *r, size_t entityno);
 extern struct face_g_snurb *Get_nurb_surf(int entity_no, struct model *m);
 extern struct vertex **Get_vertex(struct iges_edge_use *edge);
 extern union tree *do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree);
@@ -291,7 +291,7 @@ extern void Assign_cnurb_to_eu(struct edgeuse *eu, struct edge_g_cnurb *crv);
 extern int Put_vertex(struct vertex *v, struct iges_edge_use *edge);
 extern int Getcurve(int curve, struct ptlist **curv_pts);
 extern void Orient_loops(struct nmgregion *r);
-extern int spline(int entityno, struct face_g_snurb **b_patch);
+extern int spline(size_t entityno, struct face_g_snurb **b_patch);
 extern void Freeknots();
 
 /* temp defs while working on replacing local function Matmult with libbn functions */
@@ -302,19 +302,19 @@ extern void Freeknots();
 extern void Matmult(mat_t a, mat_t b, mat_t c);
 #endif
 
-extern int Extrudcon(int entityno, int curve, vect_t evect);
-extern int Extrudcirc(int entityno, int curve, vect_t evect);
-extern void Read_att(int att_de, struct brlcad_att *att);
-extern int block(int entityno);
-extern int wedge(int entityno);
-extern int cyl(int entityno);
-extern int cone(int entityno);
-extern int sphere(int entityno);
-extern int torus(int entityno);
-extern int revolve(int entityno);
-extern int extrude(int entityno);
-extern int ell(int entityno);
-extern int brep(int entityno);
+extern int Extrudcon(size_t entityno, int curve, vect_t evect);
+extern int Extrudcirc(size_t entityno, int curve, vect_t evect);
+extern void Read_att(size_t att_de, struct brlcad_att *att);
+extern int block(size_t entityno);
+extern int wedge(size_t entityno);
+extern int cyl(size_t entityno);
+extern int cone(size_t entityno);
+extern int sphere(size_t entityno);
+extern int torus(size_t entityno);
+extern int revolve(size_t entityno);
+extern int extrude(size_t entityno);
+extern int ell(size_t entityno);
+extern int brep(size_t entityno);
 extern void Readtime(char *id);
 extern void Readcols(char *id, int cols);
 extern void Readmatrix(int xform, mat_t rot);

@@ -895,7 +895,7 @@ Assign_surface_to_fu(struct faceuse *fu, struct face_g_snurb *srf)
 
 
 struct faceuse *
-trim_surf(int entityno, struct shell *s)
+trim_surf(size_t entityno, struct shell *s)
 {
     struct model *m;
     struct face_g_snurb *srf;

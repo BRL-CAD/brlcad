@@ -185,8 +185,8 @@ Skip_field()
 }
 
 
-void
-Get_name(int entityno, int skip)
+static void
+Get_name(size_t entityno, int skip)
 {
     int sol_num;
     int i, j, k;
@@ -249,7 +249,7 @@ Get_name(int entityno, int skip)
 
 
 void
-Get_drawing_name(int entityno)
+Get_drawing_name(size_t entityno)
 {
     int entity_type;
     int no_of_views;
@@ -324,7 +324,7 @@ Get_drawing_name(int entityno)
 
 
 void
-Get_csg_name(int entityno)
+Get_csg_name(size_t entityno)
 {
     int sol_num;
     int i, j, k;
@@ -398,7 +398,7 @@ Get_csg_name(int entityno)
 
 
 void
-Get_brep_name(int entityno)
+Get_brep_name(size_t entityno)
 {
     int sol_num;
     int i, j, k;

@@ -795,7 +795,7 @@ nmgregion_to_iges(char *name,
 	    tmp_name = NULL;
 	    tmp_dependent = 1;
 
-	    for (j = BU_PTBL_LEN(shells[i])-1; j >= 0; j--) {
+	    for (j = (int)BU_PTBL_LEN(shells[i])-1; j >= 0; j--) {
 		s = (struct shell *)BU_PTBL_GET(shells[i], j);
 		nmg_mv_shell_to_region(s, new_r);
 	    }
@@ -1587,7 +1587,7 @@ write_shell_face_loop(char *name,
 	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		NMG_CK_LOOPUSE(lu);
 		if (lu->orientation == OT_SAME)
-		    exterior_loop = loop_count;
+		    exterior_loop = (long)loop_count;
 		loop_count++;
 	    }
 	    loop_list = (int *)bu_calloc(loop_count, sizeof(int), "loop_list");
@@ -2781,7 +2781,7 @@ has_non_union_ops(union tree *tp)
 void
 igs_tree(struct bu_vls *str,
 	 union tree *tp,
-	 int length,
+	 size_t length,
 	 int *de_pointers)
 {
     RT_CK_TREE(tp);
@@ -2817,7 +2817,7 @@ igs_tree(struct bu_vls *str,
 void
 write_igs_tree(struct bu_vls *str,
 	       struct rt_comb_internal *comb,
-	       int length,
+	       size_t length,
 	       int *de_pointers)
 {
     BU_CK_VLS(str);

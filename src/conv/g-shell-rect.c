@@ -993,7 +993,7 @@ shrink_wrap(struct shell *s)
 	if (cur_dir == 3)
 	    cur_dir = 0;
 	bu_log("Shooting refining rays in %c-direction...\n", dir_ch[cur_dir]);
-	ap.a_user = cur_dir;
+	ap.a_user = (int)cur_dir;
 	switch (cur_dir) {
 	    case X:
 		for (i = 0; i < cell_count[Y]; i++) {
