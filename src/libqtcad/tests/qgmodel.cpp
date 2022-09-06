@@ -26,6 +26,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
+#include <QAbstractItemModelTester>
 
 #include "bu/app.h"
 #include "bu/log.h"
@@ -118,6 +119,8 @@ int main(int argc, char *argv[])
 
     QgModel sm(NULL, argv[0]);
     QgModel *s = &sm;
+
+    QAbstractItemModelTester *tester = new QAbstractItemModelTester((QAbstractItemModel *)s);
 
 
     // 2.  Implement "open" and "close" routines for the items that will exercise
@@ -233,6 +236,7 @@ int main(int argc, char *argv[])
     open_tops(s, -1);
     print_tops(s);
 
+    delete tester;
 
     // TODO - so the rough progression of steps here is:
     //
