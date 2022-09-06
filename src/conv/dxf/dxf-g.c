@@ -675,7 +675,7 @@ add_polyline_vertex(fastf_t x, fastf_t y, fastf_t z)
 	polyline_vertex_max = POLYLINE_VERTEX_BLOCK;
     } else if (polyline_vertex_count >= polyline_vertex_max) {
 	polyline_vertex_max += POLYLINE_VERTEX_BLOCK;
-	polyline_verts = (fastf_t *)bu_realloc(polyline_verts, polyline_vertex_max * 3 * sizeof(fastf_t), "polyline_verts");
+	polyline_verts = (fastf_t *)bu_realloc(polyline_verts, sizeof(fastf_t) * 3 * polyline_vertex_max, "polyline_verts");
     }
 
     VSET(&polyline_verts[polyline_vertex_count*3], x, y, z);
@@ -1902,7 +1902,7 @@ drawString(char *theText, point_t firstAlignmentPoint, point_t secondAlignmentPo
 
     BU_LIST_INIT(&vhead);
 
-    copyOfText = (char *)bu_calloc((unsigned int)strlen(theText)+1, 1, "copyOfText");
+    copyOfText = (char *)bu_calloc(strlen(theText)+1, 1, "copyOfText");
     c = theText;
     cp = copyOfText;
     (void)convertSecretCodes(c, cp, &maxLineLen);
@@ -1986,7 +1986,7 @@ drawMtext(char *text, int attachPoint, int UNUSED(drawingDirection), double text
     double scale = 1.0;
     double xdel = 0.0, ydel = 0.0;
     double radians = rotationAngle * DEG2RAD;
-    char *copyOfText = (char *)bu_calloc((unsigned int)strlen(text)+1, 1, "copyOfText");
+    char *copyOfText = (char *)bu_calloc(strlen(text)+1, 1, "copyOfText");
 
     BU_LIST_INIT(&vhead);
 
@@ -2736,10 +2736,8 @@ process_spline_entities_code(int code)
 	case 73:
 	    numCtlPts = atoi(line);
 	    if (numCtlPts > 0) {
-		ctlPts = (fastf_t *)bu_malloc(numCtlPts*3*sizeof(fastf_t),
-					      "spline control points");
-		weights = (fastf_t *)bu_malloc(numCtlPts*sizeof(fastf_t),
-					       "spline weights");
+		ctlPts = (fastf_t *)bu_malloc(sizeof(fastf_t) * 3 * numCtlPts, "spline control points");
+		weights = (fastf_t *)bu_malloc(sizeof(fastf_t) * numCtlPts, "spline weights");
 	    }
 	    for (i = 0; i < numCtlPts; i++) {
 		weights[i] = 1.0;
@@ -2748,8 +2746,7 @@ process_spline_entities_code(int code)
 	case 74:
 	    numFitPts = atoi(line);
 	    if (numFitPts > 0) {
-		fitPts = (fastf_t *)bu_malloc(numFitPts*3*sizeof(fastf_t),
-					      "fit control points");
+		fitPts = (fastf_t *)bu_malloc(sizeof(fastf_t) * 3 * numFitPts, "fit control points");
 	    }
 	    break;
 	case 42:
@@ -2844,7 +2841,7 @@ process_spline_entities_code(int code)
 	    paramDelta = (stopParam - startParam) / (double)splineSegs;
 	    nmg_nurb_c_eval(crv, startParam, pt);
 	    for (i = 0; i < splineSegs; i++) {
-		fastf_t param = startParam + paramDelta * (i+1);
+		fastf_t param = startParam + paramDelta * ((fastf_t)i+1);
 		eu = nmg_me(v1, v2, layers[curr_layer]->s);
 		v1 = eu->vu_p->v_p;
 		if (i == 0) {
@@ -3050,9 +3047,9 @@ nmg_wire_edges_to_sketch(struct model *m)
 		BU_ALLOC(lseg, struct line_seg);
 		lseg->magic = CURVE_LSEG_MAGIC;
 		v = eu->vu_p->v_p;
-		lseg->start = bg_vert_tree_add(tree, V3ARGS(v->vg_p->coord), tol_sq);
+		lseg->start = (int)bg_vert_tree_add(tree, V3ARGS(v->vg_p->coord), tol_sq);
 		v = eu->eumate_p->vu_p->v_p;
-		lseg->end = bg_vert_tree_add(tree, V3ARGS(v->vg_p->coord), tol_sq);
+		lseg->end = (int)bg_vert_tree_add(tree, V3ARGS(v->vg_p->coord), tol_sq);
 		if (verbose) {
 		    bu_log("making sketch line seg from #%d (%g %g %g) to #%d (%g %g %g)\n",
 			   lseg->start, V3ARGS(&tree->the_array[lseg->start]),
@@ -3210,7 +3207,7 @@ main(int argc, char *argv[])
     else
 	name_len = ptr2 - ptr1;
 
-    base_name = (char *)bu_calloc((unsigned int)name_len + 1, 1, "base_name");
+    base_name = (char *)bu_calloc(name_len + 1, 1, "base_name");
     bu_strlcpy(base_name , ptr1 , name_len+1);
 
     mk_id(out_fp, base_name);
