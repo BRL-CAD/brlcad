@@ -40,6 +40,7 @@ extern "C" {
 
 #include "vmath.h"
 #include "bu/color.h"
+#include "bu/path.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
 #include "bg/lod.h"
@@ -47,6 +48,12 @@ extern "C" {
 #include "ged/defines.h"
 #include "ged/view/state.h"
 #include "./ged_private.h"
+
+// alphanum sort
+bool alphanum_cmp(const std::string &a, const std::string &b)
+{
+    return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
+}
 
 struct walk_data {
     DbiState *dbis;
@@ -782,6 +789,71 @@ DbiState::get_view_state(struct bview *v)
     return nv;
 }
 
+std::vector<BSelectState *>
+DbiState::get_selected_states(const char *sname)
+{
+    std::vector<BSelectState *> ret;
+    std::unordered_map<std::string, BSelectState *>::iterator ss_it;
+    
+    if (!sname || BU_STR_EQUIV(sname, "default")) {
+	ret.push_back(default_selected);
+	return ret;
+    }
+
+    std::string sn(sname);
+    if (sn.find('*') != std::string::npos) {
+	for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
+	    if (bu_path_match(sname, ss_it->first.c_str(), 0)) {
+		ret.push_back(ss_it->second);
+	    }
+	}
+	return ret;
+    }
+
+    for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
+	if (BU_STR_EQUIV(sname, ss_it->first.c_str())) {
+	    ret.push_back(ss_it->second);
+	}
+    }
+    if (ret.size())
+	return ret;
+
+    BSelectState *ns = new BSelectState(this);
+    selected_sets[sn] = ns;
+    ret.push_back(ns);
+    return ret;
+}
+
+void
+DbiState::put_selected_state(const char *sname)
+{
+    if (!sname || BU_STR_EQUIV(sname, "default")) {
+	default_selected->clear();
+	return;
+    }
+
+    std::unordered_map<std::string, BSelectState *>::iterator ss_it;
+    for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
+	if (BU_STR_EQUIV(sname, ss_it->first.c_str())) {
+	    delete ss_it->second;
+	    selected_sets.erase(ss_it);
+	    return;
+	}
+    }
+}
+
+std::vector<std::string>
+DbiState::list_selection_sets()
+{
+    std::vector<std::string> ret;
+    std::unordered_map<std::string, BSelectState *>::iterator ss_it;
+    for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
+	ret.push_back(ss_it->first);
+    }
+    std::sort(ret.begin(), ret.end(), &alphanum_cmp);
+    return ret;
+}
+
 void
 DbiState::gather_cyclic(
 	std::unordered_set<unsigned long long> &cyclic,
@@ -1006,7 +1078,8 @@ DbiState::DbiState(struct ged *ged_p)
     BU_GET(res, struct resource);
     rt_init_resource(res, 0, NULL);
     shared_vs = new BViewState(this);
-    selected = new BSelectState(this);
+    default_selected = new BSelectState(this);
+    selected_sets[std::string("default")] = default_selected;
     gedp = ged_p;
     if (!gedp)
 	return;
@@ -1024,7 +1097,10 @@ DbiState::DbiState(struct ged *ged_p)
 
 DbiState::~DbiState()
 {
-    delete selected;
+    std::unordered_map<std::string, BSelectState *>::iterator ss_it;
+    for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
+	delete ss_it->second;
+    }
     delete shared_vs;
     rt_clean_resource_basic(NULL, res);
     BU_PUT(res, struct resource);
@@ -1724,12 +1800,6 @@ BViewState::subsumed(struct bv_obj_settings *vs, std::vector<unsigned long long>
     return false;
 }
 
-// alphanum sort
-bool alphanum_cmp(const std::string &a, const std::string &b)
-{
-    return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
-}
-
 std::vector<std::string>
 BViewState::list_drawn_paths(int mode, bool list_collapsed)
 {
@@ -2090,11 +2160,11 @@ BSelectState::select_hpath(std::vector<unsigned long long> &hpath)
     // Add to selected set
     selected[shash] = hpath;
 
-    // Activate the solids from the newly selected path.
+    // Activate the paths from the newly selected path.
     std::vector<unsigned long long> seed_hashes = hpath;
     unsigned long long wshash = seed_hashes[seed_hashes.size() - 1];
     seed_hashes.pop_back();
-    add_solids(wshash, seed_hashes);
+    add_paths(wshash, seed_hashes);
 
     return true;
 }
@@ -2120,11 +2190,11 @@ BSelectState::deselect_hpath(std::vector<unsigned long long> &hpath)
 
     unsigned long long phash = dbis->path_hash(hpath, 0);
 
-    // Clear any active solid children of the selected path
+    // Clear any active children of the selected path
     std::vector<unsigned long long> seed_hashes = selected[phash];
     unsigned long long eshash = seed_hashes[seed_hashes.size() - 1];
     seed_hashes.pop_back();
-    clear_solids(eshash, seed_hashes);
+    clear_paths(eshash, seed_hashes);
 
     // Finally, clear the selection itself
     selected.erase(phash);
@@ -2150,14 +2220,36 @@ BSelectState::is_active(unsigned long long phash)
     if (!phash)
 	return false;
 
-    if (active_solids.find(phash) == active_solids.end())
+    if (active_paths.find(phash) == active_paths.end())
 	return false;
 
     return true;
 }
 
 void
-BSelectState::add_solids(
+BSelectState::clear()
+{
+    selected.clear();
+    active_paths.clear();
+}
+
+std::vector<std::string>
+BSelectState::list_selected_paths()
+{
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
+    std::vector<std::string> ret;
+    struct bu_vls vpath = BU_VLS_INIT_ZERO;
+    for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
+	dbis->print_path(&vpath, s_it->second);
+	ret.push_back(std::string(bu_vls_cstr(&vpath)));
+    }
+    bu_vls_free(&vpath);
+    std::sort(ret.begin(), ret.end(), &alphanum_cmp);
+    return ret;
+}
+
+void
+BSelectState::add_paths(
 	unsigned long long c_hash,
 	std::vector<unsigned long long> &path_hashes
 	)
@@ -2167,14 +2259,14 @@ BSelectState::add_solids(
 
     path_hashes.push_back(c_hash);
     unsigned long long phash = dbis->path_hash(path_hashes, 0);
-    active_solids.insert(phash);
+    active_paths.insert(phash);
 
     if (!path_addition_cyclic(path_hashes)) {
 	/* Not cyclic - keep going */
 	if (pc_it != dbis->p_c.end()) {
 	    std::unordered_set<unsigned long long>::iterator c_it;
 	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
-		add_solids(*c_it, path_hashes);
+		add_paths(*c_it, path_hashes);
 	}
     }
 
@@ -2183,7 +2275,7 @@ BSelectState::add_solids(
 }
 
 void
-BSelectState::clear_solids(
+BSelectState::clear_paths(
 	unsigned long long c_hash,
 	std::vector<unsigned long long> &path_hashes
 	)
@@ -2194,14 +2286,14 @@ BSelectState::clear_solids(
     path_hashes.push_back(c_hash);
 
     unsigned long long phash = dbis->path_hash(path_hashes, 0);
-    active_solids.erase(phash);
+    active_paths.erase(phash);
 
     if (!path_addition_cyclic(path_hashes)) {
 	/* Not cyclic - keep going */
 	if (pc_it != dbis->p_c.end()) {
 	    std::unordered_set<unsigned long long>::iterator c_it;
 	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
-		clear_solids(*c_it, path_hashes);
+		clear_paths(*c_it, path_hashes);
 	}
     }
 
@@ -2259,7 +2351,7 @@ BSelectState::expand()
     for (size_t i = 0; i < out_paths.size(); i++) {
 	unsigned long long phash = dbis->path_hash(out_paths[i], 0);
 	selected[phash] = out_paths[i];
-	active_solids.insert(phash);
+	active_paths.insert(phash);
     }
 }
 
@@ -2376,7 +2468,7 @@ BSelectState::collapse()
 	std::vector<unsigned long long> seed_hashes = collapsed[i];
 	unsigned long long shash = seed_hashes[seed_hashes.size() - 1];
 	seed_hashes.pop_back();
-	add_solids(shash, seed_hashes);
+	add_paths(shash, seed_hashes);
     }
 }
 
@@ -2384,8 +2476,8 @@ void
 BSelectState::refresh()
 {
     // If the database may have changed, we need to revalidate selected
-    // paths are still current, and regenerate the active_solids set.
-    active_solids.clear();
+    // paths are still current, and regenerate the active_paths set.
+    active_paths.clear();
 
     // Unlike drawing, nothing fancy here - if a selected path is invalid,
     // it's gone.
@@ -2412,12 +2504,12 @@ BSelectState::refresh()
 	selected.erase(to_clear[i]);
     }
 
-    // For all surviving selections, generate solids
+    // For all surviving selections, generate paths 
     for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
 	std::vector<unsigned long long> seed_hashes = s_it->second;
 	unsigned long long shash = seed_hashes[seed_hashes.size() - 1];
 	seed_hashes.pop_back();
-	add_solids(shash, seed_hashes);
+	add_paths(shash, seed_hashes);
     }
 }
 

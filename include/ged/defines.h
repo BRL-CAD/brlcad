@@ -203,23 +203,25 @@ class GED_EXPORT BSelectState {
 	bool is_selected(unsigned long long);
 	bool is_active(unsigned long long);
 
+	std::vector<std::string> list_selected_paths();
+
 	void expand();
 	void collapse();
 
 	void refresh();
 
 	std::unordered_map<unsigned long long, std::vector<unsigned long long>> selected;
-	std::unordered_set<unsigned long long> active_solids;
+	std::unordered_set<unsigned long long> active_paths;
 
     private:
 	DbiState *dbis;
 
-	void add_solids(
+	void add_paths(
 		unsigned long long c_hash,
 		std::vector<unsigned long long> &path_hashes
 		);
 
-	void clear_solids(
+	void clear_paths(
 		unsigned long long c_hash,
 		std::vector<unsigned long long> &path_hashes
 		);
@@ -385,8 +387,9 @@ class GED_EXPORT DbiState {
 
 	BViewState *get_view_state(struct bview *);
 
-	// Unlike view states, there is one common selected state per Db instance
-	BSelectState *selected;
+	std::vector<BSelectState *> get_selected_states(const char *sname);
+	void put_selected_state(const char *sname);
+	std::vector<std::string> list_selection_sets();
 
 	// These maps are the ".g ground truth" of the comb structures - the set
 	// associated with each has contains all the child hashes from the comb
@@ -452,6 +455,11 @@ class GED_EXPORT DbiState {
 	BViewState *shared_vs;
 	std::unordered_map<struct bview *, BViewState *> view_states;
 
+	// We have a "default" selection state that is always available,
+	// and applications may define other named selection states.
+	BSelectState *default_selected;
+	std::unordered_map<std::string, BSelectState *> selected_sets;
+
 	// Database Instance associated with this container
 	struct ged *gedp;
 	struct db_i *dbip;
@@ -482,6 +490,9 @@ typedef struct _dbi_state {
 typedef struct _bview_state {
     int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
 } BViewState;
+typedef struct _bselect_state {
+    int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
+} BSelectState;
 
 #endif
 

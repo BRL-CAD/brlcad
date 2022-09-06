@@ -53,7 +53,7 @@ main(int ac, char *av[]) {
     s_av[0] = "select";
     s_av[1] = "list";
     ged_exec(dbp, 2, s_av);
-    printf("sets: %s\n", bu_vls_addr(dbp->ged_result_str));
+    printf("sets:\n%s\n", bu_vls_addr(dbp->ged_result_str));
 
     s_av[0] = "select";
     s_av[1] = "add";
@@ -74,17 +74,18 @@ main(int ac, char *av[]) {
     s_av[1] = "list";
     s_av[2] = "default";
     ged_exec(dbp, 3, s_av);
-    printf("init: %s\n", bu_vls_addr(dbp->ged_result_str));
+    printf("init:\n%s\n", bu_vls_addr(dbp->ged_result_str));
 
 
     s_av[1] = "expand";
     s_av[2] = "default";
     ged_exec(dbp, 3, s_av);
+    printf("expand:\n%s\n", bu_vls_addr(dbp->ged_result_str));
 
     s_av[1] = "list";
     s_av[2] = "default";
     ged_exec(dbp, 3, s_av);
-    printf("expand: %s\n", bu_vls_addr(dbp->ged_result_str));
+    printf("list post expand:\n%s\n", bu_vls_addr(dbp->ged_result_str));
 
     s_av[1] = "clear";
     s_av[2] = "default";
@@ -93,7 +94,7 @@ main(int ac, char *av[]) {
     s_av[1] = "list";
     s_av[2] = "default";
     ged_exec(dbp, 3, s_av);
-    printf("clear: %s\n", bu_vls_addr(dbp->ged_result_str));
+    printf("clear:\n%s\n", bu_vls_addr(dbp->ged_result_str));
 
 
     s_av[1] = "add";
@@ -113,17 +114,58 @@ main(int ac, char *av[]) {
     s_av[1] = "list";
     s_av[2] = "default";
     ged_exec(dbp, 3, s_av);
-    printf("re-init: %s\n", bu_vls_addr(dbp->ged_result_str));
+    printf("re-init:\n%s\n", bu_vls_addr(dbp->ged_result_str));
 
     s_av[1] = "collapse";
     s_av[2] = "default";
     ged_exec(dbp, 3, s_av);
-    printf("%s\n", bu_vls_addr(dbp->ged_result_str));
+    printf("collapse:\n%s\n", bu_vls_addr(dbp->ged_result_str));
+
+    s_av[1] = "expand";
+    s_av[2] = "default";
+    ged_exec(dbp, 3, s_av);
+    printf("expand:\n%s\n", bu_vls_addr(dbp->ged_result_str));
+
+    s_av[1] = "collapse";
+    s_av[2] = "default";
+    ged_exec(dbp, 3, s_av);
+    printf("collapse after expand:\n%s\n", bu_vls_addr(dbp->ged_result_str));
+
+    s_av[1] = "clear";
+    s_av[2] = "default";
+    ged_exec(dbp, 3, s_av);
+
+    s_av[1] = "add";
+    s_av[2] = "all.g/platform.r";
+    ged_exec(dbp, 3, s_av);
+    s_av[2] = "all.g/box.r/box.s";
+    ged_exec(dbp, 3, s_av);
+    s_av[2] = "all.g/ellipse.r";
+    ged_exec(dbp, 3, s_av);
+    s_av[2] = "all.g/tor.r";
+    ged_exec(dbp, 3, s_av);
+    s_av[2] = "all.g/light.r";
+    ged_exec(dbp, 3, s_av);
 
     s_av[1] = "list";
     s_av[2] = "default";
     ged_exec(dbp, 3, s_av);
-    printf("collapse: %s\n", bu_vls_addr(dbp->ged_result_str));
+    printf("partial-init:\n%s\n", bu_vls_addr(dbp->ged_result_str));
+
+    s_av[1] = "collapse";
+    s_av[2] = "default";
+    ged_exec(dbp, 3, s_av);
+    printf("collapse after partial init:\n%s\n", bu_vls_addr(dbp->ged_result_str));
+
+    s_av[1] = "expand";
+    s_av[2] = "default";
+    ged_exec(dbp, 3, s_av);
+    printf("expand after partial init collapse:\n%s\n", bu_vls_addr(dbp->ged_result_str));
+
+    s_av[1] = "collapse";
+    s_av[2] = "default";
+    ged_exec(dbp, 3, s_av);
+    printf("collapse after expand:\n%s\n", bu_vls_addr(dbp->ged_result_str));
 
     ged_close(dbp);
 

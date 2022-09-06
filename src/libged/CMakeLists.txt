@@ -47,7 +47,6 @@ set(LIBGED_SOURCES
   rotate_extrude.c
   rotate_hyp.c
   rotate_tgc.c
-  select.cpp
   tab_complete.cpp
   trace.c
   track.c
