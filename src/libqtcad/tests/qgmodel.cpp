@@ -77,13 +77,20 @@ print_children(QgItem *itm, QgModel *s, int depth)
     if (!itm || !itm->ihash)
 	return;
 
+
     for (int i = 0; i < depth; i++) {
 	std::cout << "  ";
     }
     if (depth)
 	std::cout << "* ";
 
-    //std::cout << inst->dp_name << "\n";
+    struct bu_vls path_str = BU_VLS_INIT_ZERO;
+    std::vector<unsigned long long> path_hashes = itm->path_items();
+    std::vector<unsigned long long> pc;
+    pc.push_back(path_hashes[path_hashes.size()-1]);
+    itm->ctx->print_path(&path_str, pc);
+    std::cout << bu_vls_cstr(&path_str) << "\n";
+    bu_vls_free(&path_str);
 
     for (size_t j = 0; j < itm->children.size(); j++) {
 	QgItem *c = itm->child(j);
@@ -179,6 +186,7 @@ int main(int argc, char *argv[])
     av[2] = "ellipse.r";
     av[3] = NULL;
     ged_exec(g, ac, (const char **)av);
+    s->g_update(g->dbip);
 
     std::cout << "\nRemoved ellipse.r from all.g:\n";
     print_tops(s);
@@ -188,6 +196,7 @@ int main(int argc, char *argv[])
     av[2] = "ellipse.r";
     av[3] = NULL;
     ged_exec(g, ac, (const char **)av);
+    s->g_update(g->dbip);
 
     std::cout << "\nAdded ellipse.r back to the end of all.g, no call to open:\n";
     print_tops(s);
@@ -202,6 +211,8 @@ int main(int argc, char *argv[])
     av[2] = "tor";
     av[3] = NULL;
     ged_exec(g, ac, (const char **)av);
+    s->g_update(g->dbip);
+
     std::cout << "\ntops tree after removing tor from tor.r:\n";
     print_tops(s);
 
@@ -210,6 +221,7 @@ int main(int argc, char *argv[])
     av[2] = "all.g";
     av[3] = NULL;
     ged_exec(g, ac, (const char **)av);
+    s->g_update(g->dbip);
     std::cout << "\ntops tree after deleting all.g:\n";
     print_tops(s);
 
@@ -229,6 +241,7 @@ int main(int argc, char *argv[])
 	i++;
 	obj = objs[i];
     }
+    s->g_update(g->dbip);
     std::cout << "\ntops tree after deleting everything:\n";
     print_tops(s);
 
