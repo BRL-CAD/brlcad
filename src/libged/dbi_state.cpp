@@ -360,6 +360,41 @@ DbiState::digest_path(const char *path)
     return phe;
 }
 
+bool
+DbiState::print_hash(struct bu_vls *opath, unsigned long long phash)
+{
+    if (!phash)
+	return false;
+
+    // First, see if the hash is an instance string
+    if (i_str.find(phash) != i_str.end()) {
+	bu_vls_printf(opath, "%s", i_str[phash].c_str());
+	return true;
+    }
+
+    // If we have potentially obsolete names, check those
+    // before trying the dp (which may no longer be invalid)
+    if (old_names.size() && old_names.find(phash) != old_names.end()) {
+	bu_vls_printf(opath, "%s", old_names[phash].c_str());
+	return true;
+    }
+
+    // If not, try the directory pointer
+    if (d_map.find(phash) != d_map.end()) {
+	bu_vls_printf(opath, "%s", d_map[phash]->d_namep);
+	return true;
+    }
+
+    // Last option - invalid string
+    if (invalid_entry_map.find(phash) != invalid_entry_map.end()) {
+	bu_vls_printf(opath, "%s", invalid_entry_map[phash].c_str());
+	return true;
+    }
+
+    bu_vls_printf(opath, "\nERROR!!!\n");
+    return false;
+}
+
 void
 DbiState::print_path(struct bu_vls *opath, std::vector<unsigned long long> &path)
 {
@@ -368,45 +403,12 @@ DbiState::print_path(struct bu_vls *opath, std::vector<unsigned long long> &path
 
     bu_vls_trunc(opath, 0);
     for (size_t i = 0; i < path.size(); i++) {
-
-	// First, see if the hash is an instance string
-	if (i_str.find(path[i]) != i_str.end()) {
-	    bu_vls_printf(opath, "%s", i_str[path[i]].c_str());
-	    if (i < path.size() - 1)
-		bu_vls_printf(opath, "/");
+	if (!print_hash(opath, path[i]))
 	    continue;
-	}
-
-	// If we have potentially obsolete names, check those
-	// before trying the dp (which may no longer be invalid)
-	if (old_names.size() && old_names.find(path[i]) != old_names.end()) {
-	    bu_vls_printf(opath, "%s", old_names[path[i]].c_str());
-	    if (i < path.size() - 1)
-		bu_vls_printf(opath, "/");
-	    continue;
-	}
-
-	// If not, try the directory pointer
-	if (d_map.find(path[i]) != d_map.end()) {
-	    bu_vls_printf(opath, "%s", d_map[path[i]]->d_namep);
-	    if (i < path.size() - 1)
-		bu_vls_printf(opath, "/");
-	    continue;
-	}
-
-	// Last option - invalid string
-	if (invalid_entry_map.find(path[i]) != invalid_entry_map.end()) {
-	    bu_vls_printf(opath, "%s", invalid_entry_map[path[i]].c_str());
-	    if (i < path.size() - 1)
-		bu_vls_printf(opath, "/");
-	    continue;
-	}
-
-	bu_vls_printf(opath, "ERROR!!!");
+	if (i < path.size() - 1)
+	    bu_vls_printf(opath, "/");
     }
 }
-
-
 
 unsigned int
 DbiState::color_int(struct bu_color *c)
