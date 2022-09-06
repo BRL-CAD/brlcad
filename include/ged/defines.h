@@ -248,6 +248,7 @@ class GED_EXPORT BViewState {
 	// The actual drawing (and mode specifications) are done with redraw and a
 	// supplied bv_obj_settings structure.
 	void add_path(const char *path);
+	void add_hpath(std::vector<unsigned long long> &path_hashes);
 
 	// Erases paths from the view for the given mode.  If mode < 0, all
 	// matching paths are erased.  For modes that are un-evaluated, all
@@ -255,6 +256,7 @@ class GED_EXPORT BViewState {
 	// evaluated modes like 3 (bigE) that generate an evaluated visual
 	// specific to that path, only precise path matches are removed
 	void erase(int mode, int argc, const char **argv);
+	void erase_hpath(int mode, std::vector<unsigned long long> &path_hashes, bool cache_collapse = true);
 
 	// Return a sorted vector of strings encoding the drawn paths in the
 	// view.  If mode == -1 list all paths, otherwise list those specific
@@ -264,7 +266,7 @@ class GED_EXPORT BViewState {
 	std::vector<std::string> list_drawn_paths(int mode, bool list_collapsed);
 
 	// Report if a path hash is drawn - 0 == not drawn, 1 == fully drawn, 2 == partially drawn
-	int is_hdrawn(std::vector<unsigned long long> &phashes);
+	int is_hdrawn(int mode, unsigned long long phash);
 
 	// Clear all drawn objects (TODO - should allow mode specification here)
 	void clear();
@@ -337,33 +339,34 @@ class GED_EXPORT BViewState {
 		std::unordered_set<struct bview *> &views
 		);
 
-	// Partially drawn check
-	void partial_check_drawn(
-		int *ret,
-		unsigned long long c_hash,
-		std::vector<unsigned long long> &path_hashes
-		);
-
 	// Check if the prev_collapsed paths contain this path or a superset of this path
 	bool subsumed(struct bv_obj_settings *vs, std::vector<unsigned long long> &path);
 
-	std::unordered_set<unsigned long long> all_fully_drawn;
+	// Paths supplied by commands to be incorporated into the drawn state by redraw method
+	std::vector<std::vector<unsigned long long>> staged;
 
 	// The collapsed drawn paths from the previous db state, organized
 	// by drawn mode
-	void collapse(std::vector<std::vector<unsigned long long>> *a_collapsed, std::unordered_map<int, std::vector<std::vector<unsigned long long>>> *collapsed, std::unordered_map<int, std::unordered_set<unsigned long long>> &mode_map);
+	void depth_group_collapse(
+		std::vector<std::vector<unsigned long long>> &collapsed,
+		std::unordered_set<unsigned long long> &d_paths,
+		std::unordered_set<unsigned long long> &p_d_paths,
+	       	std::map<size_t, std::unordered_set<unsigned long long>> &depth_groups
+		);
 	std::unordered_map<int, std::vector<std::vector<unsigned long long>>> mode_collapsed;
 	std::vector<std::vector<unsigned long long>> all_collapsed;
-
-	std::vector<std::vector<unsigned long long>> staged;
-
-	std::vector<unsigned long long> active_paths;
 
 	// Set of hashes of all drawn paths and subpaths, constructed during the collapse
 	// operation from the set of drawn solid paths.  This allows calling codes to
 	// spot check any path to see if it is active, without having to interrogate
 	// other data structures or walk down the tree.
-	std::unordered_set<unsigned long long> drawn_paths;
+	std::unordered_map<int, std::unordered_set<unsigned long long>> drawn_paths;
+	std::unordered_set<unsigned long long> all_drawn_paths;
+
+	// Set of partially drawn paths, constructed during the collapse operation.
+	// This holds the paths that should return 2 for is_hdrawn
+	std::unordered_map<int, std::unordered_set<unsigned long long>> partially_drawn_paths;
+	std::unordered_set<unsigned long long> all_partially_drawn_paths;
 };
 
 #define GED_DBISTATE_DB_CHANGE   0x01
