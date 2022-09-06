@@ -78,11 +78,13 @@ struct QgItem_cmp {
 
 	struct directory *inst1 = NULL;
 	struct directory *inst2 = NULL;
-	if (i1->ctx->d_map.find(i1->ihash) != i1->ctx->d_map.end()) {
-	    inst1 = i1->ctx->d_map[i1->ihash];
+	DbiState *ctx1 = i1->mdl->gedp->dbi_state;
+	DbiState *ctx2 = i2->mdl->gedp->dbi_state;
+	if (ctx1->d_map.find(i1->ihash) != ctx1->d_map.end()) {
+	    inst1 = ctx1->d_map[i1->ihash];
 	}
-	if (i2->ctx->d_map.find(i2->ihash) != i2->ctx->d_map.end()) {
-	    inst2 = i2->ctx->d_map[i2->ihash];
+	if (ctx2->d_map.find(i2->ihash) != ctx2->d_map.end()) {
+	    inst2 = ctx2->d_map[i2->ihash];
 	}
 
 	if (!inst1 && !inst2)
@@ -104,23 +106,24 @@ struct QgItem_cmp {
 QgItem::QgItem(unsigned long long hash, QgModel *ictx)
 {
     mdl = ictx;
-    ctx = ictx->gedp->dbi_state;
+    DbiState *ctx = mdl->gedp->dbi_state;
     ihash = hash;
     parentItem = NULL;
     if (!ctx)
 	return;
     if (ctx->p_c.find(ihash) != ctx->p_c.end()) {
 	c_count = ctx->p_c[ihash].size();
-#if 0
 	// TODO - these copies may be moot - the child relationship needs
 	// the instance, so we may have to just ensure instances aren't
 	// removed until after the QgItems are updated.  If that's the case,
 	// there's no point in these copies.
-	bu_vls_sprintf(&name, "%s", g->dp_name.c_str());
-	icon = QgIcon(g->dp, g->dbip);
-	op = g->op;
-	dp = g->dp;
-#endif
+	ctx->print_hash(&name, ihash);
+	struct directory *cdp = NULL;
+	if (ctx->d_map.find(ihash) != ctx->d_map.end())
+	    cdp = ctx->d_map[ihash];
+	icon = QgIcon(cdp, ictx->gedp->dbip);
+	op = DB_OP_UNION; // TODO
+	dp = cdp;
     }
 }
 
@@ -164,7 +167,7 @@ QgItem::child(int n)
 int
 QgItem::childCount() const
 {
-    if (!ctx)
+    if (!mdl)
 	return 0;
 
     if (this == mdl->root())
@@ -301,7 +304,6 @@ QgModel::QgModel(QObject *p, const char *npath)
     // Set up the root item
     rootItem = new QgItem(0, this);
     rootItem->mdl = this;
-    rootItem->ctx = gedp->dbi_state;
 
     items = new std::unordered_set<QgItem *>;
     items->clear();
@@ -579,6 +581,7 @@ QgModel::canFetchMore(const QModelIndex &idx) const
     if (!idx.isValid())
 	return false;
 
+bu_log("canfetchMore\n");
     QgItem *item = static_cast<QgItem*>(idx.internalPointer());
     if (item == rootItem)
        	return false;
@@ -597,7 +600,7 @@ QgModel::fetchMore(const QModelIndex &idx)
 {
     if (!idx.isValid())
 	return;
-
+bu_log("fetchMore\n");
     QgItem *item = static_cast<QgItem*>(idx.internalPointer());
 
     if (UNLIKELY(item == rootItem)) {
@@ -717,10 +720,10 @@ QgModel::data(const QModelIndex &index, int role) const
 	return QVariant(qi->op);
     if (role == DirectoryInternalRole)
 	return QVariant::fromValue((void *)(qi->dp));
-    //if (role == DrawnDisplayRole)
-	//return QVariant(qi->draw_state);
-    //if (role == SelectDisplayRole)
-	//return QVariant(qi->select_state);
+    if (role == DrawnDisplayRole)
+	return QVariant(qi->draw_state);
+    if (role == SelectDisplayRole)
+	return QVariant(qi->select_state);
 
     if (role == TypeIconDisplayRole)
 	return QVariant(qi->icon);

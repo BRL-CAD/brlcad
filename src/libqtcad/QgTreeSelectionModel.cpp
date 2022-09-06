@@ -297,11 +297,8 @@ QgTreeSelectionModel::ged_drawn_sync(QgItem *start, struct ged *gedp)
 // drawn solids in response to tree selections, in which case this method name
 // should be generalized...
 void
-QgTreeSelectionModel::update_selected_node_relationships(const QModelIndex &UNUSED(idx))
+QgTreeSelectionModel::update_selected_node_relationships(const QModelIndex &idx)
 {
-#if 0
-    std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
-
     // Clear all highlighting state
     QgModel *m = treeview->m;
     if (!m)
@@ -325,9 +322,16 @@ QgTreeSelectionModel::update_selected_node_relationships(const QModelIndex &UNUS
 	emit m->layoutChanged();
 	return;
     }
+}
 
-    std::unordered_set<gInstance *> processed;
-    processed.insert(sg);
+#if 0
+    std::vector<unsigned long long> parent_child;
+    unsigned long long phash = (snode->parent) ? snode->parent->ihash : 0;
+    unsigned long long chash = snode->ihash;
+    unsigned long long ihash = m->gedp->dbi_state->path_hash(parent_child);
+
+    std::unordered_set<unsigned long long> processed;
+    processed.insert(ihash);
 
     std::queue<gInstance *> to_flag;
     // If we're in QgInstanceEditMode, we key off of the exact gInstance
@@ -341,6 +345,7 @@ QgTreeSelectionModel::update_selected_node_relationships(const QModelIndex &UNUS
 
 	// For gInstances where the child dp == the parent (i.e. the comb
 	// directly containing the instance), set to 2
+	std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
 	for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
 	    gInstance *cd = g_it->second;
 	    if (cd->dp == sg->parent && processed.find(cd) == processed.end()) {
@@ -419,9 +424,8 @@ QgTreeSelectionModel::update_selected_node_relationships(const QModelIndex &UNUS
 	emit m->layoutChanged();
 	return;
     }
-#endif
 }
-
+#endif
 
 // Local Variables:
 // tab-width: 8

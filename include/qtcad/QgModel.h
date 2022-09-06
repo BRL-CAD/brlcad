@@ -125,7 +125,6 @@ class QTCAD_EXPORT QgItem
 	 */
 	unsigned long long ihash = 0;
 	QgModel *mdl = NULL;
-	DbiState *ctx = NULL;
 
 	QgItem *parentItem = NULL;
 	std::vector<unsigned long long> path_items();
