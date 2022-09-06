@@ -46,8 +46,6 @@ open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
     itm->open();
     for (int j = 0; j < itm->childCount(); j++) {
 	QgItem *c = itm->child(j);
-	if (s->instances->find(c->ihash) == s->instances->end())
-	    continue;
 	open_children(c, s, depth+1, max_depth);
     }
 }

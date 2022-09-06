@@ -45,8 +45,6 @@ open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
 
     for (size_t j = 0; j < itm->children.size(); j++) {
 	QgItem *c = itm->child(j);
-	if (s->instances->find(c->ihash) == s->instances->end())
-	    continue;
 	open_children(c, s, depth+1, max_depth);
     }
 }
@@ -78,25 +76,16 @@ print_children(QgItem *itm, QgModel *s, int depth)
     if (!itm || !itm->ihash)
 	return;
 
-    gInstance *inst;
-    if (depth == 0) {
-	inst = (*s->tops_instances)[itm->ihash];
-    } else {
-	inst = (*s->instances)[itm->ihash];
-    }
-
     for (int i = 0; i < depth; i++) {
 	std::cout << "  ";
     }
     if (depth)
 	std::cout << "* ";
 
-    std::cout << inst->dp_name << "\n";
+    //std::cout << inst->dp_name << "\n";
 
     for (size_t j = 0; j < itm->children.size(); j++) {
 	QgItem *c = itm->child(j);
-	if (s->instances->find(c->ihash) == s->instances->end())
-	    continue;
 
 	if (!itm->open_itm) {
 	    continue;
@@ -130,8 +119,6 @@ int main(int argc, char *argv[])
     QgModel sm(NULL, argv[0]);
     QgModel *s = &sm;
 
-    bu_log("Hierarchy instance cnt: %zd\n", s->instances->size());
-    bu_log("Top instance cnt: %zd\n", s->tops_instances->size());
 
     // 2.  Implement "open" and "close" routines for the items that will exercise
     // the logic to identify, populate, and clear items based on child info.
@@ -262,7 +249,7 @@ int main(int argc, char *argv[])
     // structure to verify.
     //
 
-    return (*s->instances).size();
+    return -1;
 }
 
 /*

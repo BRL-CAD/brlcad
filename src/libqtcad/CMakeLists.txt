@@ -40,7 +40,6 @@ add_subdirectory(images)
 
 set(qtcad_srcs
   bindings.cpp
-  gInstance.cpp
   QAccordion.cpp
   QColorRGB.cpp
   QFlowLayout.cpp

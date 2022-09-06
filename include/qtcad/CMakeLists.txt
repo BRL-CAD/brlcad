@@ -20,7 +20,6 @@ set(qtcad_headers
   QtSW.h
   SignalFlags.h
   defines.h
-  gInstance.h
   )
 BRLCAD_MANAGE_FILES(qtcad_headers ${INCLUDE_DIR}/brlcad/qtcad)
 

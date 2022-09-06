@@ -182,7 +182,7 @@ CADViewSelecter::disable_useall_opt(bool)
 }
 
 void
-CADViewSelecter::do_view_update(unsigned long long flags)
+CADViewSelecter::do_view_update(unsigned long long UNUSED(flags))
 {
     QgModel *m = ((CADApp *)qApp)->mdl;
     if (!m)
@@ -191,9 +191,9 @@ CADViewSelecter::do_view_update(unsigned long long flags)
     if (!gedp)
 	return;
 
+#if 0
     unsigned long long mhash = ged_selection_hash_sets(gedp->ged_selection_sets);
     if ((flags & QTCAD_VIEW_SELECT) || mhash != omhash) {
-#if 0
 	current_group->clear();
 	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
 	size_t sscnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "*");
@@ -202,7 +202,6 @@ CADViewSelecter::do_view_update(unsigned long long flags)
 	    current_group->addItem(QString(bu_vls_cstr(&s->name)));
 	}
 	bu_ptbl_free(&ssets);
-#endif
     }
 
     unsigned long long chash = ged_selection_hash_set(gedp->ged_cset);
@@ -216,6 +215,7 @@ CADViewSelecter::do_view_update(unsigned long long flags)
 	}
 	bu_free(spaths, "spaths");
     }
+#endif
 }
 
 
@@ -287,7 +287,7 @@ CADViewSelecter::process_obj_bbox(int mode)
 	    bu_free(av, "av");
 	    return true;
 	}
-
+#if 0
 	struct ged_selection_set *gs = gedp->ged_cset;
 	if (!gs)
 	    return false;
@@ -310,6 +310,7 @@ CADViewSelecter::process_obj_bbox(int mode)
 	    }
 	}
 	bu_vls_free(&dpath);
+#endif
 	return true;
     }
 
@@ -352,7 +353,7 @@ CADViewSelecter::process_obj_bbox(int mode)
 	    bu_free(av, "av");
 	    return true;
 	}
-
+#if 0
 	struct ged_selection_set *gs = gedp->ged_cset;
 	if (!gs)
 	    return false;
@@ -374,6 +375,7 @@ CADViewSelecter::process_obj_bbox(int mode)
 	}
 
 	bu_vls_free(&dpath);
+#endif
 	return true;
 
     } else {
@@ -472,7 +474,7 @@ CADViewSelecter::process_obj_ray(int mode)
 		bu_argv_free(rc.active.size()+1, (char **)av);
 		return true;
 	    }
-
+#if 0
 	    struct ged_selection_set *gs = gedp->ged_cset;
 	    if (!gs)
 		return false;
@@ -492,6 +494,7 @@ CADViewSelecter::process_obj_ray(int mode)
 		}
 	    }
 	    bu_vls_free(&dpath);
+#endif
 	    return true;
 	} else {
 	    return false;
@@ -506,7 +509,7 @@ CADViewSelecter::process_obj_ray(int mode)
 		bu_free((void *)av[1], "ncpy");
 		return true;
 	    }
-
+#if 0
 	    struct ged_selection_set *gs = gedp->ged_cset;
 	    if (!gs)
 		return false;
@@ -524,6 +527,7 @@ CADViewSelecter::process_obj_ray(int mode)
 		ged_selection_remove(gs, bu_vls_cstr(&dpath));
 	    }
 	    bu_vls_free(&dpath);
+#endif
 	    return true;
 	} else {
 	    return false;
@@ -576,7 +580,7 @@ CADViewSelecter::do_draw_selections()
     struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return;
-
+#if 0
     char **spaths = NULL;
     int pscnt = ged_selection_set_list(&spaths, gedp->ged_cset);
     const char **av = (const char **)bu_calloc(pscnt+2, sizeof(char *), "av");
@@ -587,7 +591,7 @@ CADViewSelecter::do_draw_selections()
     ged_exec(gedp, pscnt+1, av);
     bu_free(spaths, "spaths");
     bu_free(av, "av");
-
+#endif
     emit view_changed(QTCAD_VIEW_DRAWN|QTCAD_VIEW_SELECT);
 }
 
@@ -600,7 +604,7 @@ CADViewSelecter::do_erase_selections()
     struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return;
-
+#if 0
     char **spaths = NULL;
     int pscnt = ged_selection_set_list(&spaths, gedp->ged_cset);
     const char **av = (const char **)bu_calloc(pscnt+2, sizeof(char *), "av");
@@ -611,7 +615,7 @@ CADViewSelecter::do_erase_selections()
     ged_exec(gedp, pscnt+1, av);
     bu_free(spaths, "spaths");
     bu_free(av, "av");
-
+#endif
     emit view_changed(QTCAD_VIEW_DRAWN|QTCAD_VIEW_SELECT);
 }
 

@@ -58,12 +58,16 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 {
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
-    struct ged_selection_set *gs = gedp->ged_cset;
 
-    if (flags & QItemSelectionModel::Clear) {
-	if (gs)
-	    ged_selection_set_clear(gs);
-    }
+    std::vector<BSelectState *> ssv = gedp->dbi_state->get_selected_states(NULL);
+
+    if (ssv.size() != 1)
+	return;
+
+    BSelectState *ss = ssv[0];
+
+    if (flags & QItemSelectionModel::Clear)
+	ss->clear();
 
 #if 0
     QModelIndexList dl = selection.indexes();
@@ -79,13 +83,9 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 
 	// If we are selecting an already selected node, clear it
 	if (flags & QItemSelectionModel::Select && snode->select_state) {
-	    snode->select_state = 0;
-	    struct bu_vls tpath = BU_VLS_INIT_ZERO;
-	    QString nstr = snode->toString();
-	    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-	    ged_selection_remove(gs, bu_vls_cstr(&tpath));
-	    bu_vls_free(&tpath);
-
+	    std::vector<unsigned long long> path_hashes = snode->path_items();
+	    ss->deselect_hpath(path_hashes);
+	    snode->select_state = false;
 	    // This toggle is a local operation
 	    continue;
 	}
@@ -93,67 +93,15 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 	// If a node is being selected, all of its parents and children
 	// will be de-selected
 	if (!(flags & QItemSelectionModel::Deselect)) {
-
-	    // Find the parents
-	    QgItem *pnode = snode->parent();
-	    while (pnode) {
-		QString nstr = pnode->toString();
-		if (nstr == QString())
-		    break;
-		std::cout << "Parent: " << nstr.toLocal8Bit().data() << "\n";
-		if (pnode->select_state && gs) {
-		    struct bu_vls tpath = BU_VLS_INIT_ZERO;
-		    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-		    ged_selection_remove(gs, bu_vls_cstr(&tpath));
-		    bu_vls_free(&tpath);
-		}
-		pnode->select_state = 0;
-		pnode = pnode->parent();
-	    }
-
-	    std::queue<QgItem *> get_children;
-	    if (snode->children.size())
-		get_children.push(snode);
-
-	    while (!get_children.empty()) {
-		QgItem *cnode = get_children.front();
-		get_children.pop();
-		cnode->select_state = 0;
-		for (size_t j = 0; j < cnode->children.size(); j++) {
-		    QgItem *ccnode = cnode->children[j];
-		    get_children.push(ccnode);
-		}
-	    }
-
-
-	    // This node is selected
-	    snode->select_state = 1;
-
-	    if (gs) {
-		struct bu_vls tpath = BU_VLS_INIT_ZERO;
-		QString nstr = snode->toString();
-		bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-		std::cout << "ged insert: " << bu_vls_cstr(&tpath) << "\n";
-		ged_selection_insert(gs, bu_vls_cstr(&tpath));
-		bu_vls_free(&tpath);
-	    }
-
-
+	    std::vector<unsigned long long> path_hashes = snode->path_items();
+	    ss->select_hpath(path_hashes);
+	    snode->select_state = true;
 	} else {
-
-	    snode->select_state = 0;
-
-	    QString nstr = snode->toString();
-	    if (gs && nstr != QString()) {
-		struct bu_vls tpath = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-		std::cout << "ged remove: " << bu_vls_cstr(&tpath) << "\n";
-		ged_selection_remove(gs, bu_vls_cstr(&tpath));
-		bu_vls_free(&tpath);
-	    }
+	    std::vector<unsigned long long> path_hashes = snode->path_items();
+	    ss->deselect_hpath(path_hashes);
+	    snode->select_state = false;
 	}
     }
-
 
     emit treeview->view_changed(QTCAD_VIEW_SELECT);
     emit treeview->m->layoutChanged();
@@ -164,12 +112,20 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 {
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
-    struct ged_selection_set *gs = gedp->ged_cset;
+
+    std::vector<BSelectState *> ssv = gedp->dbi_state->get_selected_states(NULL);
+
+    if (ssv.size() != 1)
+	return;
+
+    BSelectState *ss = ssv[0];
+
+    if (flags & QItemSelectionModel::Clear)
+	ss->clear();
 
     QgItem *snode = static_cast<QgItem *>(index.internalPointer());
     if (!snode) {
-	if (gs)
-	    ged_selection_set_clear(gs);
+	ss->clear();
 	return;
     }
 
@@ -177,12 +133,9 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 
 	// If we are selecting an already selected node, clear it
 	if (flags & QItemSelectionModel::Select && snode->select_state) {
-	    snode->select_state = 0;
-	    struct bu_vls tpath = BU_VLS_INIT_ZERO;
-	    QString nstr = snode->toString();
-	    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-	    ged_selection_remove(gs, bu_vls_cstr(&tpath));
-	    bu_vls_free(&tpath);
+	    std::vector<unsigned long long> path_hashes = snode->path_items();
+	    ss->deselect_hpath(path_hashes);
+	    snode->select_state = false;
 
 	    // This toggle is a local operation
 	    emit treeview->view_changed(QTCAD_VIEW_SELECT);
@@ -190,60 +143,16 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 	    return;
 	}
 
-	// Find the parents
-	QgItem *pnode = snode->parent();
-	while (pnode) {
-	    QString nstr = pnode->toString();
-	    if (nstr == QString())
-		break;
-	    std::cout << "IParent: " << nstr.toLocal8Bit().data() << "\n";
-	    if (pnode->select_state && gs) {
-		struct bu_vls tpath = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-		ged_selection_remove(gs, bu_vls_cstr(&tpath));
-		bu_vls_free(&tpath);
-	    }
-	    pnode->select_state = 0;
-	    pnode = pnode->parent();
-	}
-
-	std::queue<QgItem *> get_children;
-	if (snode->children.size())
-	    get_children.push(snode);
-
-	while (!get_children.empty()) {
-	    QgItem *cnode = get_children.front();
-	    get_children.pop();
-	    cnode->select_state = 0;
-	    for (size_t j = 0; j < cnode->children.size(); j++) {
-		QgItem *ccnode = cnode->children[j];
-		get_children.push(ccnode);
-	    }
-	}
-
-	// This node is selected
-	snode->select_state = 1;
-
-	if (gs) {
-	    struct bu_vls tpath = BU_VLS_INIT_ZERO;
-	    QString nstr = snode->toString();
-	    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-	    std::cout << "ged insert: " << bu_vls_cstr(&tpath) << "\n";
-	    ged_selection_insert(gs, bu_vls_cstr(&tpath));
-	    bu_vls_free(&tpath);
-	}
+	std::vector<unsigned long long> path_hashes = snode->path_items();
+	ss->select_hpath(path_hashes);
+	snode->select_state = true;
 
     } else {
-	snode->select_state = 0;
 
-	QString nstr = snode->toString();
-	if (gs && nstr != QString()) {
-	    struct bu_vls tpath = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&tpath, "%s", nstr.toLocal8Bit().data());
-	    std::cout << "ged remove: " << bu_vls_cstr(&tpath) << "\n";
-	    ged_selection_remove(gs, bu_vls_cstr(&tpath));
-	    bu_vls_free(&tpath);
-	}
+	std::vector<unsigned long long> path_hashes = snode->path_items();
+	ss->deselect_hpath(path_hashes);
+	snode->select_state = false;
+
     }
 
     emit treeview->view_changed(QTCAD_VIEW_SELECT);
@@ -260,13 +169,21 @@ QgTreeSelectionModel::mode_change(int i)
 }
 
 void
-QgTreeSelectionModel::ged_selection_sync(QgItem *start, struct ged_selection_set *gs)
+QgTreeSelectionModel::ged_selection_sync(QgItem *start, const char *sset)
 {
-    if (!gs)
+    if (!sset)
 	return;
     bu_log("ged_selection_sync\n");
 
     QgModel *m = treeview->m;
+    struct ged *gedp = m->gedp;
+    std::vector<BSelectState *> ssv = gedp->dbi_state->get_selected_states(sset);
+
+    if (ssv.size() != 1)
+	return;
+
+    BSelectState *ss = ssv[0];
+
     std::queue<QgItem *> to_check;
     if (start && start != m->root()) {
 	to_check.push(start);
@@ -276,66 +193,20 @@ QgTreeSelectionModel::ged_selection_sync(QgItem *start, struct ged_selection_set
 	    to_check.push(m->root()->children[i]);
 	}
     }
-    struct bu_vls pstr = BU_VLS_INIT_ZERO;
     while (!to_check.empty()) {
 	QgItem *cnode = to_check.front();
 	to_check.pop();
 	for (size_t i = 0; i < cnode->children.size(); i++) {
 	    to_check.push(cnode->children[i]);
 	}
-	QString qstr = cnode->toString();
-	bu_vls_sprintf(&pstr, "%s", qstr.toLocal8Bit().data());
-	if (ged_selection_find(gs, bu_vls_cstr(&pstr))) {
+	std::vector<unsigned long long> path_hashes = cnode->path_items();
+	unsigned long long phash = gedp->dbi_state->path_hash(path_hashes, 0);
+	if (ss->is_selected(phash)) {
 	    cnode->select_state = 1;
 	} else {
 	    cnode->select_state = 0;
 	}
     }
-}
-
-static void
-_fp_path_split(std::vector<std::string> &objs, const char *str)
-{
-    std::string s(str);
-    size_t pos = 0;
-    if (s.c_str()[0] == '/')
-	s.erase(0, 1);  //Remove leading slash
-    while ((pos = s.find_first_of("/", 0)) != std::string::npos) {
-	std::string ss = s.substr(0, pos);
-	objs.push_back(ss);
-	s.erase(0, pos + 1);
-    }
-    objs.push_back(s);
-}
-
-static bool
-_path_top_match(std::vector<std::string> &top, std::vector<std::string> &candidate)
-{
-    for (size_t i = 0; i < top.size(); i++) {
-	if (i == candidate.size())
-	    return false;
-	if (top[i] != candidate[i])
-	    return false;
-    }
-    return true;
-}
-
-/* There are three possible determinations - 0, which is not drawn, 1, which is
- * fully drawn, and 2 which is partially drawn */
-static int
-_get_draw_state(std::vector<std::vector<std::string>> &view_objs, std::vector<std::string> &candidate)
-{
-    for (size_t i = 0; i < view_objs.size(); i++) {
-	// If view_objs is a top path for candidate, it is fully drawn
-	if (_path_top_match(view_objs[i], candidate))
-	    return 1;
-	// If we don't have a match, see if the candidate is a top path of a
-	// view_obj.  If so, candidate is partially drawn
-	if (_path_top_match(candidate, view_objs[i]))
-	    return 2;
-    }
-
-    return 0;
 }
 
 void
@@ -346,18 +217,9 @@ QgTreeSelectionModel::ged_drawn_sync(QgItem *start, struct ged *gedp)
 
     bu_log("ged_drawn_sync\n");
 
-    // Query from GED to get the drawn view objects (i.e. the "who" list).
-    // This will tell us what the current drawn state is.
-    std::vector<std::vector<std::string>> view_objs;
-    struct bu_ptbl *sg = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
-    if (!sg)
+    BViewState *vs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
+    if (vs)
 	return;
-    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	std::vector<std::string> cg_p;
-	_fp_path_split(cg_p, bu_vls_cstr(&cg->s_name));
-	view_objs.push_back(cg_p);
-    }
 
     QgModel *m = treeview->m;
     std::queue<QgItem *> to_check;
@@ -373,15 +235,12 @@ QgTreeSelectionModel::ged_drawn_sync(QgItem *start, struct ged *gedp)
     // parent drawn determinations, to make sure all the flags are consistent
     // with the current state.  We don't have to do path tests if the parent
     // state is decisive, but we do need to track and set the flags.
-    struct bu_vls pstr = BU_VLS_INIT_ZERO;
     while (!to_check.empty()) {
 	QgItem *cnode = to_check.front();
 	to_check.pop();
-	QString qstr = cnode->toString();
-	bu_vls_sprintf(&pstr, "%s", qstr.toLocal8Bit().data());
-	std::vector<std::string> cg_p;
-	_fp_path_split(cg_p, bu_vls_cstr(&pstr));
-	cnode->draw_state = _get_draw_state(view_objs, cg_p);
+	std::vector<unsigned long long> path_hashes = cnode->path_items();
+	unsigned long long phash = gedp->dbi_state->path_hash(path_hashes, 0);
+	cnode->draw_state = vs->is_hdrawn(-1, phash);
 	if (cnode->draw_state == 0) {
 	    // Not drawn - none of the children are drawn either, zero
 	    // all of them out.
@@ -438,18 +297,15 @@ QgTreeSelectionModel::ged_drawn_sync(QgItem *start, struct ged *gedp)
 // drawn solids in response to tree selections, in which case this method name
 // should be generalized...
 void
-QgTreeSelectionModel::update_selected_node_relationships(const QModelIndex &idx)
+QgTreeSelectionModel::update_selected_node_relationships(const QModelIndex &UNUSED(idx))
 {
+#if 0
     std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
 
     // Clear all highlighting state
     QgModel *m = treeview->m;
-    if (!m || !m->instances)
+    if (!m)
 	return;
-
-    for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
-	g_it->second->active_flag = 0;
-    }
 
     if (!idx.isValid() || interaction_mode == QgViewMode) {
 	// For the case of a selection change, emit a layout change signal so
@@ -469,8 +325,6 @@ QgTreeSelectionModel::update_selected_node_relationships(const QModelIndex &idx)
 	emit m->layoutChanged();
 	return;
     }
-
-    gInstance *sg = snode->instance();
 
     std::unordered_set<gInstance *> processed;
     processed.insert(sg);
@@ -565,7 +419,7 @@ QgTreeSelectionModel::update_selected_node_relationships(const QModelIndex &idx)
 	emit m->layoutChanged();
 	return;
     }
-
+#endif
 }
 
 

@@ -129,15 +129,15 @@ CADApp::do_view_update(unsigned long long flags)
 	}
 
 	std::set<std::string> selected_solids;
-	struct ged_selection_set *tmp_set = ged_selection_set_create(NULL, mdl->gedp);
-	ged_selection_set_expand(tmp_set, mdl->gedp->ged_cset);
-	char **spaths = NULL;
-	int ocnt = ged_selection_set_list(&spaths, tmp_set);
-	for (int i = 0; i < ocnt; i++) {
-	    selected_solids.insert(std::string(spaths[i]));
-	}
-	bu_free(spaths, "spaths");
-	ged_selection_set_destroy(tmp_set);
+	//struct ged_selection_set *tmp_set = ged_selection_set_create(NULL, mdl->gedp);
+	//ged_selection_set_expand(tmp_set, mdl->gedp->ged_cset);
+	//char **spaths = NULL;
+	//int ocnt = ged_selection_set_list(&spaths, tmp_set);
+	//for (int i = 0; i < ocnt; i++) {
+	 //   selected_solids.insert(std::string(spaths[i]));
+	//}
+	//bu_free(spaths, "spaths");
+	//ged_selection_set_destroy(tmp_set);
 
 	for (s_it = selected_solids.begin(); s_it != selected_solids.end(); s_it++) {
 	    std::cout << "selected: " << *s_it << "\n";
@@ -293,7 +293,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// stash the view state(s) for later comparison and make
 	// sure our unit conversions are right
 	w->c4->stash_hashes();
-	select_hash = ged_selection_hash_sets(gedp->ged_selection_sets);
+	//select_hash = ged_selection_hash_sets(gedp->ged_selection_sets);
 
 	// If we need command-specific subprocess awareness for
 	// a command, set it up
@@ -336,9 +336,9 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	if (w->c4->diff_hashes())
 	    view_flags |= QTCAD_VIEW_DRAWN;
 
-	unsigned long long cs_hash = ged_selection_hash_sets(gedp->ged_selection_sets);
-	if (cs_hash != select_hash)
-	    view_flags |= QTCAD_VIEW_SELECT;
+	//unsigned long long cs_hash = ged_selection_hash_sets(gedp->ged_selection_sets);
+	//if (cs_hash != select_hash)
+	 //   view_flags |= QTCAD_VIEW_SELECT;
     }
 
     if (ret & BRLCAD_MORE) {

@@ -302,27 +302,20 @@ QgTreeView::do_draw_toggle(const QModelIndex &index)
     if (!v)
 	return;
 
-    struct db_full_path *clicked_path = cnode->fp();
+    BViewState *sv =  m->gedp->dbi_state->get_view_state(v);
+    if (!sv)
+	return;
 
-    bool do_draw = true;
-    struct bu_ptbl *sg = bv_view_objs(m->gedp->ged_gvp, BV_DB_OBJS);
-    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	if (db_full_path_match_top((struct db_full_path *)cg->s_path, clicked_path)) {
-	    do_draw = false;
-	    break;
-	}
-    }
-    db_free_full_path(clicked_path);
-    BU_PUT(clicked_path, struct db_full_path);
-
-    QString cnode_path = cnode->toString();
-    if (do_draw) {
-	m->draw(cnode_path);
+    std::vector<unsigned long long> path_hashes = cnode->path_items();
+    unsigned long long phash = m->gedp->dbi_state->path_hash(path_hashes, 0);
+    if (!sv->is_hdrawn(-1, phash)) {
+	sv->add_hpath(path_hashes);
+	std::unordered_set<struct bview *> views;
+	views.insert(v);
+	sv->redraw(NULL, views, 1);
     } else {
-	m->erase(cnode_path);
+	sv->erase_hpath(-1, path_hashes, true);
     }
-
 }
 
 void
@@ -357,6 +350,7 @@ QgTreeView::redo_highlights()
     selm->update_selected_node_relationships(selected_idx);
 }
 
+#if 0
 void QgTreeView::expand_path(QString path)
 {
     int i = 0;
@@ -395,24 +389,15 @@ void QgTreeView::expand_link(const QUrl &link)
 {
     expand_path(link.path());
 }
+#endif
 
 
 void QgTreeView::qgitem_select_sync(QgItem *itm)
 {
     struct ged *gedp = m->gedp;
-    struct ged_selection_set *gs = NULL;
-    if (gedp->ged_selection_sets) {
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
-	if (scnt == 1)
-	    gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
-	bu_ptbl_free(&ssets);
-    }
-    if (!gs)
-	return;
 
     QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
-    selm->ged_selection_sync(itm, gs);
+    selm->ged_selection_sync(itm, NULL);
     selm->ged_drawn_sync(itm, gedp);
 }
 
@@ -421,8 +406,8 @@ void QgTreeView::do_view_update(unsigned long long flags)
     struct ged *gedp = m->gedp;
     QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
 
-    if (flags & QTCAD_VIEW_SELECT && gedp->ged_cset)
-	selm->ged_selection_sync(NULL, gedp->ged_cset);
+    if (flags & QTCAD_VIEW_SELECT)
+	selm->ged_selection_sync(NULL, NULL);
 
     if (flags & QTCAD_VIEW_DRAWN)
 	selm->ged_drawn_sync(NULL, gedp);
