@@ -938,7 +938,7 @@ fb_setup() {
     else {
 	zoom = 1;
     }
-    (void)fb_view(fbp, width / 2, height / 2, (int)zoom, (int)zoom);
+    (void)fb_view(fbp, (int)(width / 2), (int)(height / 2), (int)zoom, (int)zoom);
     bu_semaphore_release(BU_SEM_SYSCALL);
     return 0;
 }
