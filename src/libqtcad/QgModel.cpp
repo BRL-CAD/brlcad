@@ -207,7 +207,8 @@ QgItem::path_items()
     path_items.push_back(this->ihash);
     while (citem->parent()) {
 	citem = citem->parent();
-	path_items.push_back(citem->ihash);
+	if (citem->ihash)
+	    path_items.push_back(citem->ihash);
     }
     std::reverse(path_items.begin(), path_items.end());
     return path_items;

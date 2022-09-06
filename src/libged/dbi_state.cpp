@@ -893,9 +893,11 @@ DbiState::tops(bool show_cyclic)
 {
     std::vector<unsigned long long> ret;
     // First, get the standard tops results
-    struct directory **all_paths;
+    struct directory **all_paths = NULL;
+    db_update_nref(gedp->dbip, &rt_uniresource);
     int tops_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
-    bu_sort(all_paths, tops_cnt, sizeof(struct directory *), alphanum_sort, NULL);
+    if (all_paths)
+	bu_sort(all_paths, tops_cnt, sizeof(struct directory *), alphanum_sort, NULL);
 
     XXH64_state_t h_state;
     for (int i = 0; i < tops_cnt; i++) {
