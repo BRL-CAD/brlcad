@@ -781,7 +781,7 @@ process_entities_polyline_vertex_code(int code)
 		}
 		VSET(tmp_pt1, x, y, z);
 		MAT4X3PNT(tmp_pt2, curr_state->xform, tmp_pt1);
-		polyline_vert_indices[polyline_vert_indices_count++] = bg_vert_tree_add(layers[curr_layer]->vert_tree, tmp_pt2[X], tmp_pt2[Y], tmp_pt2[Z], tol_sq);
+		polyline_vert_indices[polyline_vert_indices_count++] = (int)bg_vert_tree_add(layers[curr_layer]->vert_tree, tmp_pt2[X], tmp_pt2[Y], tmp_pt2[Z], tol_sq);
 		if (verbose) {
 		    bu_log("Added 3D mesh vertex (%g %g %g) index = %d, number = %d\n",
 			   x, y, z, polyline_vert_indices[polyline_vert_indices_count-1],
@@ -1466,7 +1466,10 @@ process_line_entities_code(int code)
 	case 21:
 	case 31:
 	    vert_no = code % 10;
-	    coord = code / 10 - 1;
+	    coord = (code / 10) - 1;
+	    if (vert_no != 0 && vert_no != 1) {
+		break;
+	    }
 	    line_pt[vert_no][coord] = atof(line) * units_conv[units] * scale_factor;
 	    if (verbose) {
 		bu_log("LINE vertex #%d coord #%d = %g\n", vert_no, coord, line_pt[vert_no][coord]);
@@ -2937,9 +2940,9 @@ process_3dface_entities_code(int code)
 		point_t tmp_pt1;
 		MAT4X3PNT(tmp_pt1, curr_state->xform, pts[vert_no]);
 		VMOVE(pts[vert_no], tmp_pt1);
-		face[vert_no] = bg_vert_tree_add(layers[curr_layer]->vert_tree,
-						 V3ARGS(pts[vert_no]),
-						 tol_sq);
+		face[vert_no] = (int)bg_vert_tree_add(layers[curr_layer]->vert_tree,
+						      V3ARGS(pts[vert_no]),
+						      tol_sq);
 	    }
 	    add_triangle(face[0], face[1], face[2], curr_layer);
 	    add_triangle(face[2], face[3], face[0], curr_layer);

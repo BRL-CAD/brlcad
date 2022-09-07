@@ -65,8 +65,8 @@ char NAME[NAME_LEN+1] = {0};
 
 FILE *ifp = NULL;
 struct rt_wdb *ofp = NULL;
-static int ars_ncurves = 0;
-static int ars_ptspercurve = 0;
+static size_t ars_ncurves = 0;
+static size_t ars_ptspercurve = 0;
 static int ars_curve = 0;
 static int ars_pt = 0;
 static char *ars_name = NULL;
@@ -461,7 +461,7 @@ nmgbld(void)
 
     /* Allocate storage for external v5 form of the body */
     BU_EXTERNAL_INIT(&ext);
-    ext.ext_nbytes = SIZEOF_NETWORK_LONG + 26*SIZEOF_NETWORK_LONG + 128 * granules;
+    ext.ext_nbytes = SIZEOF_NETWORK_LONG + 26 * SIZEOF_NETWORK_LONG + (size_t)128 * granules;
     ext.ext_buf = (uint8_t *)bu_malloc(ext.ext_nbytes, "nmg ext_buf");
     *(uint32_t *)ext.ext_buf = htonl(version);
     BU_ASSERT(version == 1);	/* DISK_MODEL_VERSION */
@@ -474,7 +474,7 @@ nmgbld(void)
     cp = strtok(buf, " ");
     for (j=0; j<26; j++) {
 	struct_count[j] = atol(cp);
-	*(uint32_t *)(ext.ext_buf + SIZEOF_NETWORK_LONG*(j+1)) = htonl(struct_count[j]);
+	*(uint32_t *)(ext.ext_buf + SIZEOF_NETWORK_LONG*((size_t)j+1)) = htonl(struct_count[j]);
 	cp = strtok((char *)NULL, " ");
     }
 
@@ -489,7 +489,7 @@ nmgbld(void)
 	    bu_exit(-1, "Unexpected EOF while reading NMG %s data, hex line %d\n", name, j);
 
 	for (k=0; k<32; k++) {
-	    sscanf(&buf[k*2], "%2x", &cp_i);
+	    bu_sscanf(&buf[k*2], "%2x", &cp_i);
 	    *cp++ = cp_i;
 	}
     }
@@ -886,9 +886,9 @@ arsabld(void)
     while (*(++cp) != ' ');
     *cp++ = '\0';
     ars_name = bu_strdup(np);
-    ars_ncurves = (short)atoi(cp);
+    ars_ncurves = (size_t)atoi(cp);
     cp = nxt_spc(cp);
-    ars_ptspercurve = (short)atoi(cp);
+    ars_ptspercurve = (size_t)atoi(cp);
 
     ars_curves = (fastf_t **)bu_calloc((ars_ncurves+1), sizeof(fastf_t *), "ars_curves");
     for (i=0; i<ars_ncurves; i++) {
@@ -1209,22 +1209,23 @@ botbld(void)
     char my_name[NAME_LEN+1] = {0};
     char type;
     int mode, orientation, error_mode;
-    unsigned long int num_vertices, num_faces;
-    unsigned long int i, j;
+    size_t num_vertices, num_faces;
+    size_t i, j;
     double a[3];
     fastf_t *vertices;
     fastf_t *thick=NULL;
     int *faces;
     struct bu_bitv *facemode=NULL;
 
-    sscanf(buf, "%c %" CPP_XSTR(NAME_LEN) "s %d %d %d %lu %lu", &type, my_name, &mode, &orientation,
+    bu_sscanf(buf, "%c %" CPP_XSTR(NAME_LEN) "s %d %d %d %zu %zu",
+	   &type, my_name, &mode, &orientation,
 	   &error_mode, &num_vertices, &num_faces);
 
     /* get vertices */
     vertices = (fastf_t *)bu_calloc(num_vertices * 3, sizeof(fastf_t), "botbld: vertices");
     for (i=0; i<num_vertices; i++) {
 	bu_fgets(buf, BUFSIZE, ifp);
-	sscanf(buf, "%lu: %le %le %le", &j, &a[0], &a[1], &a[2]);
+	bu_sscanf(buf, "%zu: %le %le %le", &j, &a[0], &a[1], &a[2]);
 	if (i != j) {
 	    bu_log("Vertices out of order in solid %s (expecting %lu, found %lu)\n",
 		   my_name, i, j);
@@ -1244,12 +1245,12 @@ botbld(void)
     for (i=0; i<num_faces; i++) {
 	bu_fgets(buf, BUFSIZE, ifp);
 	if (mode == RT_BOT_PLATE)
-	    sscanf(buf, "%lu: %d %d %d %le", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2], &a[0]);
+	    bu_sscanf(buf, "%zu: %d %d %d %le", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2], &a[0]);
 	else
-	    sscanf(buf, "%lu: %d %d %d", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2]);
+	    bu_sscanf(buf, "%zu: %d %d %d", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2]);
 
 	if (i != j) {
-	    bu_log("Faces out of order in solid %s (expecting %lu, found %lu)\n",
+	    bu_log("Faces out of order in solid %s (expecting %zu, found %zu)\n",
 		   my_name, i, j);
 	    bu_free((char *)vertices, "botbld: vertices");
 	    bu_free((char *)faces, "botbld: faces");
@@ -1271,8 +1272,7 @@ botbld(void)
 	facemode = bu_hex_to_bitv(&buf[1]);
     }
 
-    mk_bot(ofp, my_name, mode, orientation, 0, num_vertices, num_faces,
-	   vertices, faces, thick, facemode);
+    mk_bot(ofp, my_name, mode, orientation, 0, num_vertices, num_faces, vertices, faces, thick, facemode);
 
     bu_free((char *)vertices, "botbld: vertices");
     bu_free((char *)faces, "botbld: faces");
@@ -1320,7 +1320,7 @@ pipebld(void)
 
 	BU_ALLOC(sp, struct wdb_pipe_pnt);
 
-	sscanf(buf, "%le %le %le %le %le %le",
+	bu_sscanf(buf, "%le %le %le %le %le %le",
 	       &id, &od,
 	       &bendradius, &x, &y, &z);
 
@@ -1362,15 +1362,15 @@ particlebld(void)
      * particles fit into one granule.
      */
 
-    sscanf(buf, "%c %" CPP_XSTR(NAME_LEN) "s %le %le %le %le %le %le %le %le",
-	   &ident, name,
-	   &scanvertex[0],
-	   &scanvertex[1],
-	   &scanvertex[2],
-	   &scanheight[0],
-	   &scanheight[1],
-	   &scanheight[2],
-	   &vrad, &hrad);
+    bu_sscanf(buf, "%c %" CPP_XSTR(NAME_LEN) "s %le %le %le %le %le %le %le %le",
+	      &ident, name,
+	      &scanvertex[0],
+	      &scanvertex[1],
+	      &scanvertex[2],
+	      &scanheight[0],
+	      &scanheight[1],
+	      &scanheight[2],
+	      &vrad, &hrad);
     /* convert double to fastf_t */
     VMOVE(vertex, scanvertex);
     VMOVE(height, scanheight);
@@ -1424,8 +1424,8 @@ arbnbld(void)
 	double scan[4];
 
 	bu_fgets(buf, BUFSIZE, ifp);
-	sscanf(buf, "%" CPP_XSTR(TYPE_LEN) "s %le %le %le %le", type,
-	       &scan[0], &scan[1], &scan[2], &scan[3]);
+	bu_sscanf(buf, "%" CPP_XSTR(TYPE_LEN) "s %le %le %le %le", type,
+		  &scan[0], &scan[1], &scan[2], &scan[3]);
 	/* convert double to fastf_t */
 	HMOVE(eqn[i], scan);
     }
@@ -1495,7 +1495,7 @@ gettclblock(struct bu_vls *line, FILE *fp)
 	while ((ret >= 0) && ((bu_vls_strlen(line) < SIZE) || (escapedcr) || (bcnt != 0))) {
 	    linecnt++;
 	    if (escapedcr) {
-		bu_vls_trunc(line, bu_vls_strlen(line)-1);
+		bu_vls_trunc(line, (int)bu_vls_strlen(line)-1);
 	    }
 	    if ((ret=bu_vls_gets(&tmp, fp)) > 0) {
 		escapedcr = endswith(bu_vls_addr(&tmp), '\\');
