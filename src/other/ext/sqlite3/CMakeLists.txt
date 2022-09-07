@@ -71,7 +71,7 @@ if (HAVE_M_LIBRARY)
 endif (HAVE_M_LIBRARY)
 
 # https://www.sqlite.org/howtocompile.html
-add_definitions(-DSQLITE_OMIT_LOAD_EXTENSION)
+add_definitions(-DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_ENABLE_RTREE=1)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 add_library(libsqlite3 SHARED sqlite3.c)
