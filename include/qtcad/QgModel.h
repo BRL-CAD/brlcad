@@ -128,6 +128,7 @@ class QTCAD_EXPORT QgItem
 
 	QgItem *parentItem = NULL;
 	std::vector<unsigned long long> path_items();
+	unsigned long long path_hash();
 
 	/* Flag to determine if this QgItem should be viewed as opened or closed -
 	 * in order to preserve subtree state, we don't want to obliterate the
@@ -163,8 +164,8 @@ class QTCAD_EXPORT QgItem
 	db_op_t op = DB_OP_UNION;
 	struct directory *dp = NULL;
 	QImage icon;
-	int draw_state = 0;
-	bool select_state = false;
+	//int draw_state = 0;
+	//bool select_state = false;
 };
 
 /* The primary expression in a Qt context of a .g database and its contents.

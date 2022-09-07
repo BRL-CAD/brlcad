@@ -392,26 +392,13 @@ void QgTreeView::expand_link(const QUrl &link)
 #endif
 
 
-void QgTreeView::qgitem_select_sync(QgItem *itm)
+void QgTreeView::qgitem_select_sync(QgItem *)
 {
-    struct ged *gedp = m->gedp;
-
-    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
-    selm->ged_selection_sync(itm, NULL);
-    selm->ged_drawn_sync(itm, gedp);
+    emit m->layoutChanged();
 }
 
-void QgTreeView::do_view_update(unsigned long long flags)
+void QgTreeView::do_view_update(unsigned long long UNUSED(flags))
 {
-    struct ged *gedp = m->gedp;
-    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
-
-    if (flags & QTCAD_VIEW_SELECT)
-	selm->ged_selection_sync(NULL, NULL);
-
-    if (flags & QTCAD_VIEW_DRAWN)
-	selm->ged_drawn_sync(NULL, gedp);
-
     // TODO - can the mode logic be triggered from here as well?
 
     emit m->layoutChanged();

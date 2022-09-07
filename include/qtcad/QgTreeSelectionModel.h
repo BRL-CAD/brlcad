@@ -57,15 +57,6 @@ class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel
 	void mode_change(int i);
 	void update_selected_node_relationships(const QModelIndex & index);
 
-	// If we only need to check part of the tree (i.e. when opening a comb)
-	// we can supply a non-null start QgItem
-	void ged_selection_sync(QgItem *start, const char *sset);
-
-	// Sync GED drawn object information to QgItems, so the tree view can
-	// display the drawn state.  If we only need to check part of the tree
-	// (i.e. when opening a comb) we can supply a non-null start QgItem
-	void ged_drawn_sync(QgItem *start, struct ged *gedp);
-
     public:
 	// There are a number of relationships which can be used for related
 	// node highlighting - this allows a client application to select one.

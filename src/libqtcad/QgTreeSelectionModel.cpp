@@ -36,20 +36,10 @@ void
 QgTreeSelectionModel::clear_all()
 {
     QgModel *m = treeview->m;
-    QgItem *snode = m->root();
-    std::queue<QgItem *> get_children;
-    if (snode->children.size())
-	get_children.push(snode);
 
-    while (!get_children.empty()) {
-	QgItem *cnode = get_children.front();
-	get_children.pop();
-	cnode->select_state = 0;
-	for (size_t j = 0; j < cnode->children.size(); j++) {
-	    QgItem *ccnode = cnode->children[j];
-	    get_children.push(ccnode);
-	}
-    }
+    std::vector<BSelectState *> sv = m->gedp->dbi_state->get_selected_states(NULL);
+    BSelectState *ss = sv[0];
+    ss->clear();
 }
 
 
@@ -82,24 +72,11 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 #endif
 
 	// If we are selecting an already selected node, clear it
-	if (flags & QItemSelectionModel::Select && snode->select_state) {
+	if (flags & QItemSelectionModel::Select && ss->is_selected(snode->path_hash())) {
 	    std::vector<unsigned long long> path_hashes = snode->path_items();
 	    ss->deselect_hpath(path_hashes);
-	    snode->select_state = false;
 	    // This toggle is a local operation
 	    continue;
-	}
-
-	// If a node is being selected, all of its parents and children
-	// will be de-selected
-	if (!(flags & QItemSelectionModel::Deselect)) {
-	    std::vector<unsigned long long> path_hashes = snode->path_items();
-	    ss->select_hpath(path_hashes);
-	    snode->select_state = true;
-	} else {
-	    std::vector<unsigned long long> path_hashes = snode->path_items();
-	    ss->deselect_hpath(path_hashes);
-	    snode->select_state = false;
 	}
     }
 
@@ -132,12 +109,9 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
     if (!(flags & QItemSelectionModel::Deselect)) {
 
 	// If we are selecting an already selected node, clear it
-	if (flags & QItemSelectionModel::Select && snode->select_state) {
+	if (flags & QItemSelectionModel::Select && ss->is_selected(snode->path_hash())) {
 	    std::vector<unsigned long long> path_hashes = snode->path_items();
 	    ss->deselect_hpath(path_hashes);
-	    snode->select_state = false;
-
-	    // This toggle is a local operation
 	    emit treeview->view_changed(QTCAD_VIEW_SELECT);
 	    emit treeview->m->layoutChanged();
 	    return;
@@ -145,13 +119,11 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 
 	std::vector<unsigned long long> path_hashes = snode->path_items();
 	ss->select_hpath(path_hashes);
-	snode->select_state = true;
 
     } else {
 
 	std::vector<unsigned long long> path_hashes = snode->path_items();
 	ss->deselect_hpath(path_hashes);
-	snode->select_state = false;
 
     }
 
@@ -165,122 +137,6 @@ QgTreeSelectionModel::mode_change(int i)
     if (i != interaction_mode && treeview) {
 	interaction_mode = i;
 	update_selected_node_relationships(treeview->selected());
-    }
-}
-
-void
-QgTreeSelectionModel::ged_selection_sync(QgItem *start, const char *sset)
-{
-    if (!sset)
-	return;
-    bu_log("ged_selection_sync\n");
-
-    QgModel *m = treeview->m;
-    struct ged *gedp = m->gedp;
-    std::vector<BSelectState *> ssv = gedp->dbi_state->get_selected_states(sset);
-
-    if (ssv.size() != 1)
-	return;
-
-    BSelectState *ss = ssv[0];
-
-    std::queue<QgItem *> to_check;
-    if (start && start != m->root()) {
-	to_check.push(start);
-    } else {
-	clear_all();
-	for (size_t i = 0; i < m->root()->children.size(); i++) {
-	    to_check.push(m->root()->children[i]);
-	}
-    }
-    while (!to_check.empty()) {
-	QgItem *cnode = to_check.front();
-	to_check.pop();
-	for (size_t i = 0; i < cnode->children.size(); i++) {
-	    to_check.push(cnode->children[i]);
-	}
-	std::vector<unsigned long long> path_hashes = cnode->path_items();
-	unsigned long long phash = gedp->dbi_state->path_hash(path_hashes, 0);
-	if (ss->is_selected(phash)) {
-	    cnode->select_state = 1;
-	} else {
-	    cnode->select_state = 0;
-	}
-    }
-}
-
-void
-QgTreeSelectionModel::ged_drawn_sync(QgItem *start, struct ged *gedp)
-{
-    if (!gedp)
-	return;
-
-    bu_log("ged_drawn_sync\n");
-
-    BViewState *vs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
-    if (vs)
-	return;
-
-    QgModel *m = treeview->m;
-    std::queue<QgItem *> to_check;
-    if (start && start != m->root()) {
-	to_check.push(start);
-    } else {
-	for (size_t i = 0; i < m->root()->children.size(); i++) {
-	    to_check.push(m->root()->children[i]);
-	}
-    }
-
-    // Note that we always have to visit all the QgItem children, regardless of
-    // parent drawn determinations, to make sure all the flags are consistent
-    // with the current state.  We don't have to do path tests if the parent
-    // state is decisive, but we do need to track and set the flags.
-    while (!to_check.empty()) {
-	QgItem *cnode = to_check.front();
-	to_check.pop();
-	std::vector<unsigned long long> path_hashes = cnode->path_items();
-	unsigned long long phash = gedp->dbi_state->path_hash(path_hashes, 0);
-	cnode->draw_state = vs->is_hdrawn(-1, phash);
-	if (cnode->draw_state == 0) {
-	    // Not drawn - none of the children are drawn either, zero
-	    // all of them out.
-	    std::queue<QgItem *> to_clear;
-	    for (size_t i = 0; i < cnode->children.size(); i++) {
-		to_clear.push(cnode->children[i]);
-	    }
-	    while (!to_clear.empty()) {
-		QgItem *nnode = to_clear.front();
-		to_clear.pop();
-		nnode->draw_state = 0;
-		for (size_t i = 0; i < nnode->children.size(); i++) {
-		    to_clear.push(nnode->children[i]);
-		}
-	    }
-	    continue;
-	}
-	if (cnode->draw_state == 1) {
-	    // Fully drawn - all of the children are drawn, set
-	    // all of them.
-	    std::queue<QgItem *> to_set;
-	    for (size_t i = 0; i < cnode->children.size(); i++) {
-		to_set.push(cnode->children[i]);
-	    }
-	    while (!to_set.empty()) {
-		QgItem *nnode = to_set.front();
-		to_set.pop();
-		nnode->draw_state = 1;
-		for (size_t i = 0; i < nnode->children.size(); i++) {
-		    to_set.push(nnode->children[i]);
-		}
-	    }
-	    continue;
-	}
-
-	// Partially drawn.  cnode draw state is set to 2 - we need to look
-	// more closely at the children
-	for (size_t i = 0; i < cnode->children.size(); i++) {
-	    to_check.push(cnode->children[i]);
-	}
     }
 }
 

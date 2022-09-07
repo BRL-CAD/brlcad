@@ -205,16 +205,24 @@ QgItem::childNumber() const
 std::vector<unsigned long long>
 QgItem::path_items()
 {
-    std::vector<unsigned long long> path_items;
+    std::vector<unsigned long long> pitems;
     QgItem *citem = this;
-    path_items.push_back(this->ihash);
+    pitems.push_back(this->ihash);
     while (citem->parent()) {
 	citem = citem->parent();
 	if (citem->ihash)
-	    path_items.push_back(citem->ihash);
+	    pitems.push_back(citem->ihash);
     }
-    std::reverse(path_items.begin(), path_items.end());
-    return path_items;
+    std::reverse(pitems.begin(), pitems.end());
+    return pitems;
+}
+
+unsigned long long
+QgItem::path_hash()
+{
+    std::vector<unsigned long long> pitems = path_items();
+    unsigned long long phash = mdl->gedp->dbi_state->path_hash(pitems, 0);
+    return phash;
 }
 
 extern "C" void
@@ -721,10 +729,15 @@ QgModel::data(const QModelIndex &index, int role) const
 	return QVariant(qi->op);
     if (role == DirectoryInternalRole)
 	return QVariant::fromValue((void *)(qi->dp));
-    if (role == DrawnDisplayRole)
-	return QVariant(qi->draw_state);
-    if (role == SelectDisplayRole)
-	return QVariant(qi->select_state);
+    if (role == DrawnDisplayRole) {
+	BViewState *vs = qi->mdl->gedp->dbi_state->get_view_state(gedp->ged_gvp);
+	return QVariant(vs->is_hdrawn(-1, qi->path_hash()));
+    }
+    if (role == SelectDisplayRole) {
+	std::vector<BSelectState *> sv = qi->mdl->gedp->dbi_state->get_selected_states(NULL);
+	BSelectState *ss = sv[0];
+	return QVariant(ss->is_selected(qi->path_hash()));
+    }
 
     if (role == TypeIconDisplayRole)
 	return QVariant(qi->icon);
