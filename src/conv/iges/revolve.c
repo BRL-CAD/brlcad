@@ -51,7 +51,7 @@ struct trclist
 
 
 int
-revolve(int entityno)
+revolve(size_t entityno)
 {
     struct wmember head;			/* For region */
     int sol_num;		/* IGES solid type number */

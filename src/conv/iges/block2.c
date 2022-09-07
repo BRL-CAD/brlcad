@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 int
-block(int entityno)
+block(size_t entityno)
 {
 
     fastf_t xscale = 0.0;

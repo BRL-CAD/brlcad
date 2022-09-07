@@ -23,7 +23,7 @@
 
 
 int
-extrude(int entityno)
+extrude(size_t entityno)
 {
 
     fastf_t length = 0.0;		/* extrusion length */

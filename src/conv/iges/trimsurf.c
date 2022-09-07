@@ -49,7 +49,7 @@ struct snurb_hit
 
 
 struct face_g_snurb *
-Get_nurb_surf(int entityno, struct model *m)
+Get_nurb_surf(size_t entityno, struct model *m)
 {
     struct face_g_snurb *srf;
     point_t pt;
@@ -204,7 +204,7 @@ Assign_cnurb_to_eu(struct edgeuse *eu, struct edge_g_cnurb *crv)
 
     ncoords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
 
-    ctl_points = (fastf_t *)bu_calloc(ncoords*crv->c_size, sizeof(fastf_t),
+    ctl_points = (fastf_t *)bu_calloc((size_t)ncoords*crv->c_size, sizeof(fastf_t),
 				      "Assign_cnurb_to_eu: ctl_points");
 
     for (i = 0; i < crv->c_size; i++) {
@@ -223,7 +223,7 @@ Assign_cnurb_to_eu(struct edgeuse *eu, struct edge_g_cnurb *crv)
 
 
 struct edge_g_cnurb *
-Get_cnurb(int entity_no)
+Get_cnurb(size_t entity_no)
 {
     struct edge_g_cnurb *crv;
     double a = 0.0;
@@ -713,7 +713,7 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 
 
 struct loopuse *
-Make_loop(int entity_no, int orientation, int on_surf_de, struct face_g_snurb *srf, struct faceuse *fu)
+Make_loop(size_t entity_no, int orientation, int on_surf_de, struct face_g_snurb *srf, struct faceuse *fu)
 {
     struct loopuse *lu;
     int entity_type = 0;
@@ -1217,8 +1217,8 @@ Find_uv_in_fu(fastf_t *u_in, fastf_t *v_in, struct faceuse *fu)
 
     /* no luck, try a few points along the diagonals of the UV plane */
     for (i = 0; i < 10; i++) {
-	u = umin + (umax - umin)*(double)(i + 1)/11.0;
-	v = vmin + (vmax - vmin)*(double)(i + 1)/11.0;
+	u = umin + (umax - umin)*((double)i + 1.0)/11.0;
+	v = vmin + (vmax - vmin)*((double)i + 1.0)/11.0;
 
 	if (uv_in_fu(u, v, fu)) {
 	    *u_in = u;
@@ -1229,8 +1229,8 @@ Find_uv_in_fu(fastf_t *u_in, fastf_t *v_in, struct faceuse *fu)
 
     /* try other diagonal */
     for (i = 0; i < 10; i++) {
-	u = umin + (umax - umin)*(double)(i + 1)/11.0;
-	v = vmax - (vmax - vmin)*(double)(i + 1)/11.0;
+	u = umin + (umax - umin)*((double)i + 1)/11.0;
+	v = vmax - (vmax - vmin)*((double)i + 1)/11.0;
 
 	if (uv_in_fu(u, v, fu)) {
 	    *u_in = u;

@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 struct shell *
-Get_outer_shell(struct nmgregion *r, int entityno)
+Get_outer_shell(struct nmgregion *r, size_t entityno)
 {
 
     int sol_num;		/* IGES solid type number */

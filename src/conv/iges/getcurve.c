@@ -33,7 +33,7 @@ mat_t idn = MAT_INIT_IDN;
 
 
 int
-Getcurve(int curve, struct ptlist **curv_pts)
+Getcurve(size_t curve, struct ptlist **curv_pts)
 {
     int type;
     int npts = 0;

@@ -533,7 +533,7 @@ Get_views_visible(size_t entno)
     Readint(&no_of_views, "");
     Readint(&no_of_entities, "");
     BU_ALLOC(vv, struct views_visible);
-    vv->de = entno * 2 + 1;
+    vv->de = (int)entno * 2 + 1;
     vv->no_of_views = no_of_views;
     vv->view_de = (int *)bu_calloc(vv->no_of_views, sizeof(int), "Get_views_visible: vv->view_de");
     for (i = 0; i < vv->no_of_views; i++) {
@@ -567,7 +567,7 @@ Do_view(struct model *m, struct bu_ptbl *view_vis_list, size_t entno,
     mat_t *xform;
     size_t i, j;
 
-    view_de = entno * 2 + 1;
+    view_de = (int)entno * 2 + 1;
 
     Readrec(dir[entno]->param);
     Readint(&entity_type, "");

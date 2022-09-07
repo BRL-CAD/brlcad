@@ -25,7 +25,7 @@
 #include "./iges_extern.h"
 
 struct faceuse *
-Make_planar_face(struct shell *s, int entityno, int face_orient)
+Make_planar_face(struct shell *s, size_t entityno, int face_orient)
 {
 
     int sol_num = 0;		/* IGES solid type number */
