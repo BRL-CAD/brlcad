@@ -415,6 +415,7 @@ class GED_EXPORT DbiState {
 
 	// Translate individual object hashes to their directory names.  This map must
 	// be updated any time a database object changes to remain valid.
+	struct directory *get_hdp(unsigned long long);
 	std::unordered_map<unsigned long long, struct directory *> d_map;
 
 	// For invalid comb entry strings, we can't point to a directory pointer.  This

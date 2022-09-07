@@ -123,11 +123,8 @@ QgItem::QgItem(unsigned long long hash, QgModel *ictx)
 
     // Local item information
     ctx->print_hash(&name, ihash);
-    struct directory *cdp = NULL;
-    if (ctx->d_map.find(ihash) != ctx->d_map.end())
-	cdp = ctx->d_map[ihash];
-    icon = QgIcon(cdp, ictx->gedp->dbip);
-    dp = cdp;
+    dp = ctx->get_hdp(ihash);
+    icon = QgIcon(dp, ictx->gedp->dbip);
 }
 
 QgItem::~QgItem()

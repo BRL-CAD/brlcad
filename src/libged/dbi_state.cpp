@@ -629,14 +629,37 @@ DbiState::bool_op(unsigned long long phash, unsigned long long chash)
     if (!phash)
 	return DB_OP_UNION;
     size_t op = i_bool[phash][chash];
-    bu_log("op: %zd\n", op);
     if (op == OP_SUBTRACT) {
-	bu_log("subtract\n");
 	return DB_OP_SUBTRACT;
     }
     if (op == OP_INTERSECT)
 	return DB_OP_INTERSECT;
     return DB_OP_UNION;
+}
+
+struct directory *
+DbiState::get_hdp(unsigned long long phash)
+{
+    if (!phash)
+	return NULL;
+
+    std::unordered_map<unsigned long long, struct directory *>::iterator d_it;
+    d_it = d_map.find(phash);
+    if (d_it != d_map.end()) {
+	return d_it->second;
+    }
+
+    std::unordered_map<unsigned long long, unsigned long long>::iterator i_it;
+    i_it = i_map.find(phash);
+
+    if (i_it != i_map.end()) {
+	d_it = d_map.find(i_it->second);
+	if (d_it != d_map.end()) {
+	    return d_it->second;
+	}
+    }
+
+    return NULL;
 }
 
 bool
