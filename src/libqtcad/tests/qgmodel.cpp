@@ -125,7 +125,8 @@ int main(int argc, char *argv[])
     QgModel sm(NULL, argv[0]);
     QgModel *s = &sm;
 
-    QAbstractItemModelTester *tester = new QAbstractItemModelTester((QAbstractItemModel *)s);
+    //QAbstractItemModelTester *tester = new QAbstractItemModelTester((QAbstractItemModel *)s, QAbstractItemModelTester::FailureReportingMode::Fatal);
+    QAbstractItemModelTester *tester = new QAbstractItemModelTester((QAbstractItemModel *)s, QAbstractItemModelTester::FailureReportingMode::Warning);
 
 
     // 2.  Implement "open" and "close" routines for the items that will exercise
