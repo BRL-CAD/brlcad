@@ -2823,7 +2823,7 @@ write_igs_tree(struct bu_vls *str,
     BU_CK_VLS(str);
     RT_CK_COMB(comb);
 
-    bu_vls_printf(str, "180,%d", 2*length-1);
+    bu_vls_printf(str, "180,%zd", 2*length-1);
 
     de_pointer_number = 0;
     igs_tree(str, comb->tree, length, de_pointers);

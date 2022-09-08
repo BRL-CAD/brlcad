@@ -429,7 +429,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 		if (ZERO(B) && ZERO(D) && ZERO(E))
 		    type = 1;
 		else
-		    bu_log("Entity #%d is an incorrectly formatted ellipse\n", curve);
+		    bu_log("Entity #%zd is an incorrectly formatted ellipse\n", curve);
 	    }
 
 	    /* make coeff of X**2 equal to 1.0 */
@@ -455,7 +455,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 		I = A+C;
 		if (ZERO(del)) {
 		    /* not a conic */
-		    bu_log("Entity #%d, claims to be conic arc, but isn't\n", curve);
+		    bu_log("Entity #%zd, claims to be conic arc, but isn't\n", curve);
 		    break;
 		} else if (a > 0.0 && del*I < 0.0)
 		    type = 1; /* ellipse */
@@ -465,7 +465,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 		    type = 3; /* parabola */
 		else {
 		    /* imaginary ellipse */
-		    bu_log("Entity #%d is an imaginary ellipse!!\n", curve);
+		    bu_log("Entity #%zd is an imaginary ellipse!!\n", curve);
 		    break;
 		}
 	    }
@@ -494,7 +494,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 		    /* p is the distance from vertex to directrix */
 		    p = (-E*sin(theta) - D*cos(theta))/4.0;
 		    if (fabs(p) < TOL) {
-			bu_log("Cannot plot entity %d, p=%g\n", curve, p);
+			bu_log("Cannot plot entity %zd, p=%g\n", curve, p);
 			break;
 		    }
 
@@ -508,7 +508,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 		    b = ((v1[0]-v2[0])*cos(theta) + (v1[1]-v2[1])*sin(theta))/a;
 		    c = ((v1[1]-v2[1])*cos(theta) - (v1[0]-v2[0])*sin(theta));
 		    if (fabs(c) < TOL*TOL) {
-			bu_log("Cannot plot entity %d\n", curve);
+			bu_log("Cannot plot entity %zd\n", curve);
 			break;
 		    }
 		    b = b/c;

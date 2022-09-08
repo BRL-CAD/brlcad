@@ -38,7 +38,8 @@ Evalxform()
 {
 
     size_t i;
-    size_t j, xform;
+    size_t j;
+    long xform;
     struct list *ptr, *ptr1, *ptr_root;
     mat_t rot;
 

@@ -67,8 +67,8 @@ FILE *ifp = NULL;
 struct rt_wdb *ofp = NULL;
 static size_t ars_ncurves = 0;
 static size_t ars_ptspercurve = 0;
-static int ars_curve = 0;
-static int ars_pt = 0;
+static size_t ars_curve = 0;
+static size_t ars_pt = 0;
 static char *ars_name = NULL;
 static fastf_t **ars_curves = NULL;
 static char *slave_name = "safe_interp";
@@ -874,7 +874,6 @@ arsabld(void)
 {
     char *cp;
     char *np;
-    int i;
 
     if (ars_name)
 	bu_free((char *)ars_name, "ars_name");
@@ -891,7 +890,7 @@ arsabld(void)
     ars_ptspercurve = (size_t)atoi(cp);
 
     ars_curves = (fastf_t **)bu_calloc((ars_ncurves+1), sizeof(fastf_t *), "ars_curves");
-    for (i=0; i<ars_ncurves; i++) {
+    for (size_t i=0; i<ars_ncurves; i++) {
 	ars_curves[i] = (fastf_t *)bu_calloc(ars_ptspercurve + 1,
 					     sizeof(fastf_t) * ELEMENTS_PER_VECT, "ars_curve");
     }
