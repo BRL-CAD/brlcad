@@ -13,14 +13,18 @@ THIRD_PARTY(libz ZLIB zlib
 
 if (BRLCAD_ZLIB_BUILD)
 
-  set(ZLIB_VERSION 1.2.12)
+  set(ZLIB_MAJOR_VERSION 1)
+  set(ZLIB_MINOR_VERSION 2)
+  set(ZLIB_PATCH_VERSION 12)
+  
+  set(ZLIB_VERSION ${ZLIB_MAJOR_VERSION}.${ZLIB_MINOR_VERSION}.${ZLIB_PATCH_VERSION})
 
   set(Z_PREFIX_STR "brl_")
   add_definitions(-DZ_PREFIX)
   add_definitions(-DZ_PREFIX_STR=${Z_PREFIX_STR})
   set(Z_PREFIX_STR "${Z_PREFIX_STR}" CACHE STRING "prefix for zlib functions" FORCE)
 
-  set_lib_vars(ZLIB z_brl "1" "2" "12")
+  set_lib_vars(ZLIB z_brl ${ZLIB_MAJOR_VERSION} ${ZLIB_MINOR_VERSION} ${ZLIB_PATCH_VERSION})
 
   set(ZLIB_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/zlib)
 
