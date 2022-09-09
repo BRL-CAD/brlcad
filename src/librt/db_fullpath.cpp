@@ -849,7 +849,7 @@ db_path_to_mat(
 	struct resource *resp)
 {
     if (!pathp || !dbip || depth < 0 || !resp)
-	return -1;
+	return 0;
 
     mat_t all_m = MAT_INIT_IDN;
     mat_t mtmp = MAT_INIT_IDN;
@@ -860,15 +860,15 @@ db_path_to_mat(
 	struct directory *cdp = pathp->fp_names[i-1];
 	struct directory *dp = pathp->fp_names[i];
 	if (!cdp || !dp)
-	    return -1;
+	    return 0;
 	if (!_comb_instance_matrix(cur_m, dbip, cdp, dp, resp, pathp->fp_cinst[i]))
-	    return -1;
+	    return 0;
 	bn_mat_mul(mtmp, all_m, cur_m);
 	MAT_COPY(all_m, mtmp);
     }
 
     MAT_COPY(mat, all_m);
-    return 0;
+    return 1;
 }
 
 /* If an instance other than the default was specified, we need
