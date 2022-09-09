@@ -459,8 +459,10 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_BOT_CK_MAGIC(bot_ip);
 
     rt_bot_mintie = RT_DEFAULT_MINTIE;
-    if (getenv("LIBRT_BOT_MINTIE")) {
-	rt_bot_mintie = atoi(getenv("LIBRT_BOT_MINTIE"));
+    char *bmintie = bu_strdup(getenv("LIBRT_BOT_MINTIE"));
+    if (bmintie) {
+	rt_bot_mintie = atoi(bmintie);
+	bu_free(bmintie, "LIBRT_BOT_MINTIE copy");
     }
 
     if (rt_bot_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
