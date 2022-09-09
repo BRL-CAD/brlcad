@@ -13,7 +13,7 @@ THIRD_PARTY(libz ZLIB zlib
 
 if (BRLCAD_ZLIB_BUILD)
 
-  set(ZLIB_VERSION 1.2.11)
+  set(ZLIB_VERSION 1.2.12)
 
   set(Z_PREFIX_STR "brl_")
   add_definitions(-DZ_PREFIX)
