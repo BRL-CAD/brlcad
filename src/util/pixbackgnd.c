@@ -250,11 +250,11 @@ flood(unsigned char *horiz_buf, unsigned char *vert_buf, unsigned char *vp, int 
 int
 main(int argc, char **argv)
 {
-    int i;
-    int line;
-    unsigned char *horiz_buf;
-    unsigned char *vert_buf;
-    unsigned char *vp;
+    int i = 0;
+    int line = 0;
+    unsigned char *horiz_buf = NULL;
+    unsigned char *vert_buf = NULL;
+    unsigned char *vp = NULL;
 
     bu_setprogname(argv[0]);
 
@@ -263,8 +263,10 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    horiz_buf = (unsigned char *)malloc(file_width * 3);
-    vert_buf = (unsigned char *)malloc(file_height * 3);
+    double *dhbuf = bu_calloc(file_width, sizeof(double)*3, "horiz_buf");
+    horiz_buf = (unsigned char *)dhbuf;
+    double *dvbuf = bu_calloc(file_height, sizeof(double)*3, "vert_buf");
+    vert_buf = (unsigned char *)dvbuf;
 
     /*
      * First stage -- prepare the vert_buf with one pixel
