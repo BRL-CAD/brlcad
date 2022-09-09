@@ -263,9 +263,9 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    double *dhbuf = bu_calloc(file_width, sizeof(double)*3, "horiz_buf");
+    double *dhbuf = (double *)bu_calloc(file_width, sizeof(double)*3, "horiz_buf");
     horiz_buf = (unsigned char *)dhbuf;
-    double *dvbuf = bu_calloc(file_height, sizeof(double)*3, "vert_buf");
+    double *dvbuf = (double *)bu_calloc(file_height, sizeof(double)*3, "vert_buf");
     vert_buf = (unsigned char *)dvbuf;
 
     /*
