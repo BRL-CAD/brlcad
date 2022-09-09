@@ -744,8 +744,12 @@ main(int ac, char *av[])
     /* approximate maximum time in seconds that a given test is allowed to take */
     set_if_unset(echo, verbose_echo, "MAXTIME", "300");
     {
-	MAXTIME = strtol(getenv("MAXTIME"), NULL, 0);
-	TIMEFRAME = strtol(getenv("TIMEFRAME"), NULL, 0);
+	char *mtimestr = bu_strdup(getenv("MAXTIME"));
+	MAXTIME = (mtimestr) ? strtol(mtimestr, NULL, 0) : 300;
+	bu_free(mtimestr, "MAXTIME string");
+	char *timeframestr = bu_strdup(getenv("TIMEFRAME"));
+	TIMEFRAME = (timeframestr) ? strtol(timeframestr, NULL, 0) : 32;
+	bu_free(timeframestr, "TIMEFRAME string");
 	if (MAXTIME < TIMEFRAME) {
 	    bu_exit(1, "ERROR: MAXTIME must be greater or equal to TIMEFRAME\n");
 	}
