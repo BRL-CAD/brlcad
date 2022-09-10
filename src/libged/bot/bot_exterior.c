@@ -61,7 +61,7 @@ exterior_hit(struct application *app, struct partition *PartHeadp, struct seg *U
     if (first_pp->pt_inhit->hit_surfno == app->a_user) {
 	return 1;
     }
-    if (last_pp->pt_outhit->hit_surfno == app->a_user) {
+    if (last_pp && last_pp->pt_outhit->hit_surfno == app->a_user) {
 	return 1;
     }
 
