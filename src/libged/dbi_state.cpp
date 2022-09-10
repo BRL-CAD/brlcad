@@ -2239,9 +2239,11 @@ BSelectState::deselect_hpath(std::vector<unsigned long long> &hpath)
 
     // Clear any active children of the selected path
     std::vector<unsigned long long> seed_hashes = selected[phash];
-    unsigned long long eshash = seed_hashes[seed_hashes.size() - 1];
-    seed_hashes.pop_back();
-    clear_paths(eshash, seed_hashes);
+    while(seed_hashes.size()) {
+	unsigned long long eshash = seed_hashes[seed_hashes.size() - 1];
+	seed_hashes.pop_back();
+	clear_paths(eshash, seed_hashes);
+    }
 
     // Finally, clear the selection itself
     selected.erase(phash);

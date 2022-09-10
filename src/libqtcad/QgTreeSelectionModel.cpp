@@ -56,9 +56,6 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 
     BSelectState *ss = ssv[0];
 
-    if (flags & QItemSelectionModel::Clear)
-	ss->clear();
-
 #if 0
     QModelIndexList dl = selection.indexes();
     for (long int i = 0; i < dl.size(); i++) {
@@ -77,6 +74,12 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 	    ss->deselect_hpath(path_hashes);
 	    // This toggle is a local operation
 	    continue;
+	} else {
+	    if (flags & QItemSelectionModel::Clear)
+		ss->clear();
+
+	    std::vector<unsigned long long> path_hashes = snode->path_items();
+	    ss->select_hpath(path_hashes);
 	}
     }
 
