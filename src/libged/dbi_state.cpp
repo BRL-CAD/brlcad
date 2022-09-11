@@ -55,6 +55,17 @@ bool alphanum_cmp(const std::string &a, const std::string &b)
     return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
 }
 
+
+static void
+_ill_toggle(struct bv_scene_obj *s, char ill_state)
+{
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	_ill_toggle(s_c, ill_state);
+    }
+    s->s_iflag = ill_state;
+}
+
 struct walk_data {
     DbiState *dbis;
     std::unordered_map<unsigned long long, unsigned long long> i_count;
@@ -336,7 +347,7 @@ DbiState::digest_path(const char *path)
 	XXH64_update(&h_state, bu_vls_cstr(&hname), bu_vls_strlen(&hname)*sizeof(char));
 	phe.push_back((unsigned long long)XXH64_digest(&h_state));
     }
-    bu_vls_free(&hname); 
+    bu_vls_free(&hname);
 
     // If we're cyclic, path is invalid
     if (path_cyclic(phe))
@@ -874,6 +885,23 @@ DbiState::get_selected_states(const char *sname)
     selected_sets[sn] = ns;
     ret.push_back(ns);
     return ret;
+}
+
+BSelectState *
+DbiState::find_selected_state(const char *sname)
+{
+    if (!sname || BU_STR_EQUIV(sname, "default")) {
+	return default_selected;
+    }
+
+    std::unordered_map<std::string, BSelectState *>::iterator ss_it;
+    for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
+	if (BU_STR_EQUIV(sname, ss_it->first.c_str())) {
+	    return ss_it->second;
+	}
+    }
+    
+    return NULL;
 }
 
 void
@@ -1893,6 +1921,7 @@ BViewState::is_hdrawn(int mode, unsigned long long phash)
     return 0;
 }
 
+
 unsigned long long
 BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views, int no_autoview)
 {
@@ -2103,6 +2132,23 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	std::unordered_set<struct bv_scene_obj *>::iterator o_it;
 	for (o_it = objs.begin(); o_it != objs.end(); o_it++) {
 	    draw_scene(*o_it, *v_it);
+	}
+    }
+
+
+    // We need to check if any drawn solids are selected.  If so, we need
+    // to illuminate them
+    char ill_state = DOWN;
+    BSelectState *ss = dbis->find_selected_state("default");
+    std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator so_it;
+    std::unordered_map<int, struct bv_scene_obj *>::iterator m_it;
+    for (so_it = s_map.begin(); so_it != s_map.end(); so_it++) {
+	if (ss)
+	    ill_state = ss->is_active(so_it->first) ? UP : DOWN;
+	bu_log("ill_state: %s\n", (ill_state == UP) ? "up" : "down");
+	for (m_it = so_it->second.begin(); m_it != so_it->second.end(); m_it++) {
+	    struct bv_scene_obj *so = m_it->second;
+	    _ill_toggle(so, ill_state);
 	}
     }
 

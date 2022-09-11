@@ -402,6 +402,8 @@ class GED_EXPORT DbiState {
 	BViewState *get_view_state(struct bview *);
 
 	std::vector<BSelectState *> get_selected_states(const char *sname);
+	BSelectState * find_selected_state(const char *sname);
+
 	void put_selected_state(const char *sname);
 	std::vector<std::string> list_selection_sets();
 
