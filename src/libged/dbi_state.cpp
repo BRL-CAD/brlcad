@@ -1905,7 +1905,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 
     // Make sure the views know how to update the oriented bounding box
     std::unordered_set<struct bview *>::iterator v_it;
-    for (v_it == views.begin(); v_it != views.end(); v_it++) {
+    for (v_it = views.begin(); v_it != views.end(); v_it++) {
 	struct bview *v = *v_it;
 	v->gv_bounds_update = &bg_view_bounds;
     }
