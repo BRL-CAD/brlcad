@@ -204,6 +204,7 @@ _select_cmd_clear(void *bs, int argc, const char **argv)
 
     for (size_t i = 0; i < ss.size(); i++) {
 	ss[i]->clear();
+	ss[i]->draw_sync();
     }
 
     return BRLCAD_OK;
@@ -254,6 +255,7 @@ _select_cmd_add(void *bs, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
     }
+    ss[0]->draw_sync();
     bu_vls_free(&dpath);
 
     return BRLCAD_OK;
@@ -300,9 +302,11 @@ _select_cmd_rm(void *bs, int argc, const char **argv)
 	if (!ss[0]->deselect_path(bu_vls_cstr(&dpath))) {
 	    bu_vls_printf(gedp->ged_result_str, "Selection set %s: unable to remove path: %s", (sname) ? sname : "default", argv[i]);
 	    bu_vls_free(&dpath);
+	    ss[0]->draw_sync();
 	    return BRLCAD_ERROR;
 	}
     }
+    ss[0]->draw_sync();
     bu_vls_free(&dpath);
 
     return BRLCAD_OK;
@@ -340,6 +344,7 @@ _select_cmd_collapse(void *bs, int argc, const char **argv)
 
     for (size_t i = 0; i < ss.size(); i++) {
 	ss[i]->collapse();
+	ss[i]->draw_sync();
     }
 
     // TODO - for now, printing results - maybe tie this to a verbose option at some point... 
@@ -387,6 +392,7 @@ _select_cmd_expand(void *bs, int argc, const char **argv)
 
     for (size_t i = 0; i < ss.size(); i++) {
 	ss[i]->expand();
+	ss[i]->draw_sync();
     }
 
     // TODO - for now, printing results - maybe tie this to a verbose option at some point...

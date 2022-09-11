@@ -2138,19 +2138,9 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 
     // We need to check if any drawn solids are selected.  If so, we need
     // to illuminate them
-    char ill_state = DOWN;
     BSelectState *ss = dbis->find_selected_state("default");
-    std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator so_it;
-    std::unordered_map<int, struct bv_scene_obj *>::iterator m_it;
-    for (so_it = s_map.begin(); so_it != s_map.end(); so_it++) {
-	if (ss)
-	    ill_state = ss->is_active(so_it->first) ? UP : DOWN;
-	bu_log("ill_state: %s\n", (ill_state == UP) ? "up" : "down");
-	for (m_it = so_it->second.begin(); m_it != so_it->second.end(); m_it++) {
-	    struct bv_scene_obj *so = m_it->second;
-	    _ill_toggle(so, ill_state);
-	}
-    }
+    if (ss)
+	ss->draw_sync();
 
     // Now that we have the finalized geometry, do a finishing autoview,
     // unless suppressed
@@ -2248,7 +2238,6 @@ BSelectState::select_hpath(std::vector<unsigned long long> &hpath)
     for (size_t i = 0; i < to_clear.size(); i++) {
 	deselect_hpath(selected[to_clear[i]]);
     }
-
 
     // Add to selected set
     selected[shash] = hpath;
@@ -2605,6 +2594,23 @@ BSelectState::refresh()
 	unsigned long long shash = seed_hashes[seed_hashes.size() - 1];
 	seed_hashes.pop_back();
 	add_paths(shash, seed_hashes);
+    }
+}
+
+void
+BSelectState::draw_sync()
+{
+    BViewState *vs = dbis->get_view_state(dbis->gedp->ged_gvp);
+    std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator so_it;
+    std::unordered_map<int, struct bv_scene_obj *>::iterator m_it;
+    char ill_state = DOWN;
+    for (so_it = vs->s_map.begin(); so_it != vs->s_map.end(); so_it++) {
+	ill_state = is_active(so_it->first) ? UP : DOWN;
+	bu_log("select ill_state: %s\n", (ill_state == UP) ? "up" : "down");
+	for (m_it = so_it->second.begin(); m_it != so_it->second.end(); m_it++) {
+	    struct bv_scene_obj *so = m_it->second;
+	    _ill_toggle(so, ill_state);
+	}
     }
 }
 

@@ -83,6 +83,8 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 	}
     }
 
+    ss->draw_sync();
+
     emit treeview->view_changed(QTCAD_VIEW_SELECT);
     emit treeview->m->layoutChanged();
 }
@@ -106,6 +108,7 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
     QgItem *snode = static_cast<QgItem *>(index.internalPointer());
     if (!snode) {
 	ss->clear();
+	ss->draw_sync();
 	return;
     }
 
@@ -115,6 +118,7 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 	if (flags & QItemSelectionModel::Select && ss->is_selected(snode->path_hash())) {
 	    std::vector<unsigned long long> path_hashes = snode->path_items();
 	    ss->deselect_hpath(path_hashes);
+	    ss->draw_sync();
 	    emit treeview->view_changed(QTCAD_VIEW_SELECT);
 	    emit treeview->m->layoutChanged();
 	    return;
@@ -129,6 +133,7 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 	ss->deselect_hpath(path_hashes);
 
     }
+    ss->draw_sync();
 
     emit treeview->view_changed(QTCAD_VIEW_SELECT);
     emit treeview->m->layoutChanged();
