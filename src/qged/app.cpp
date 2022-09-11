@@ -211,23 +211,24 @@ CADApp::open_file()
 	    file_filters,
 	    NULL,
 	    QFileDialog::DontUseNativeDialog);
-    if (!fileName.isEmpty()) {
-	int ac = 2;
-	const char *av[3];
-	av[0] = "open";
-	av[1] = bu_strdup(fileName.toLocal8Bit().data());
-	av[2] = NULL;
-	int ret = mdl->run_cmd(mdl->gedp->ged_result_str, ac, (const char **)av);
-	bu_free((void *)av[1], "filename cpy");
-	if (w) {
-	    if (ret) {
-		w->statusBar()->showMessage("open failed");
-	    } else {
-		w->statusBar()->showMessage(fileName);
-	    }
-	}
-    }
+    if (fileName.isEmpty())
+	return;
 
+    int ac = 2;
+    const char *av[3];
+    av[0] = "open";
+    av[1] = bu_strdup(fileName.toLocal8Bit().data());
+    av[2] = NULL;
+    int ret = mdl->run_cmd(mdl->gedp->ged_result_str, ac, (const char **)av);
+    bu_free((void *)av[1], "filename cpy");
+    if (!w)
+	return;
+
+    if (ret) {
+	w->statusBar()->showMessage("open failed");
+    } else {
+	w->statusBar()->showMessage(fileName);
+    }
     // Let the shell's completer know what the current gedp is (if any)
     w->cshellcomp->gedp = mdl->gedp;
 }

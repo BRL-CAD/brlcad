@@ -976,17 +976,18 @@ DbiState::tops(bool show_cyclic)
     struct directory **all_paths = NULL;
     db_update_nref(gedp->dbip, &rt_uniresource);
     int tops_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
-    if (all_paths)
+    if (all_paths) {
 	bu_sort(all_paths, tops_cnt, sizeof(struct directory *), alphanum_sort, NULL);
 
-    XXH64_state_t h_state;
-    for (int i = 0; i < tops_cnt; i++) {
-	XXH64_reset(&h_state, 0);
-	XXH64_update(&h_state, all_paths[i]->d_namep, strlen(all_paths[i]->d_namep)*sizeof(char));
-	unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
-	ret.push_back(hash);
+	XXH64_state_t h_state;
+	for (int i = 0; i < tops_cnt; i++) {
+	    XXH64_reset(&h_state, 0);
+	    XXH64_update(&h_state, all_paths[i]->d_namep, strlen(all_paths[i]->d_namep)*sizeof(char));
+	    unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+	    ret.push_back(hash);
+	}
+	bu_free(all_paths, "free db_ls output");
     }
-    bu_free(all_paths, "free db_ls output");
 
     if (!show_cyclic)
 	return ret;

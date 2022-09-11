@@ -296,7 +296,7 @@ QPolyMod::toplevel_config(bool)
 		    draw_change = true;
 		    ip->curr_point_i = -1;
 		    ip->curr_contour_i = 0;
-		    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
+		    bv_update_polygon(s, s->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
 		}
 	    }
 	}
