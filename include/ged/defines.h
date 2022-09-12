@@ -564,10 +564,8 @@ struct ged {
 
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
 
-    /* Selection data */
-    struct ged_selection_sets	*ged_selection_sets;
-    struct ged_selection_set    *ged_cset;
-
+    /* Old selection data containers used by joint and brep*/
+    struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
 
     /* FIXME -- this ugly hack needs to die.  the result string should
      * be stored before the call.
