@@ -848,7 +848,7 @@ QgModel::draw_action()
     if (!cnode)
 	return BRLCAD_ERROR;
     std::vector<unsigned long long> path_hashes = cnode->path_items();
-    struct bu_vls path_str;
+    struct bu_vls path_str = BU_VLS_INIT_ZERO;
     gedp->dbi_state->print_path(&path_str, path_hashes);
     int ret = draw(bu_vls_cstr(&path_str));
     bu_vls_free(&path_str);
@@ -865,8 +865,6 @@ QgModel::draw(const char *inst_path)
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     int ret = ged_exec(gedp, 2, argv);
 
-    bu_free((void *)inst_path, "inst_path");
-
     emit view_change(QTCAD_VIEW_DRAWN);
     return ret;
 }
@@ -881,7 +879,7 @@ QgModel::erase_action()
     if (!cnode)
 	return BRLCAD_ERROR;
     std::vector<unsigned long long> path_hashes = cnode->path_items();
-    struct bu_vls path_str;
+    struct bu_vls path_str = BU_VLS_INIT_ZERO;
     gedp->dbi_state->print_path(&path_str, path_hashes);
     int ret = erase(bu_vls_cstr(&path_str));
     bu_vls_free(&path_str);
@@ -897,8 +895,6 @@ QgModel::erase(const char *inst_path)
 
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     int ret = ged_exec(gedp, 2, argv);
-
-    bu_free((void *)inst_path, "inst_path");
 
     emit view_change(QTCAD_VIEW_DRAWN);
     return ret;
