@@ -341,8 +341,15 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    view_flags |= QTCAD_VIEW_DRAWN;
 
 	unsigned long long cs_hash = (ss) ? ss->state_hash() : 0;
-	if (cs_hash != select_hash)
+	if (cs_hash != select_hash) {
 	    view_flags |= QTCAD_VIEW_SELECT;
+	    view_flags |= QTCAD_VIEW_DRAWN;
+	    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+		struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+		ss->draw_sync(v);
+	    }
+	}
     }
 
     if (ret & BRLCAD_MORE) {
