@@ -2140,8 +2140,11 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     // We need to check if any drawn solids are selected.  If so, we need
     // to illuminate them
     BSelectState *ss = dbis->find_selected_state("default");
-    if (ss)
-	ss->draw_sync();
+    if (ss) {
+	for (v_it = views.begin(); v_it != views.end(); v_it++) {
+	    ss->draw_sync(*v_it);
+	}
+    }
 
     // Now that we have the finalized geometry, do a finishing autoview,
     // unless suppressed
@@ -2599,9 +2602,9 @@ BSelectState::refresh()
 }
 
 void
-BSelectState::draw_sync()
+BSelectState::draw_sync(struct bview *v)
 {
-    BViewState *vs = dbis->get_view_state(dbis->gedp->ged_gvp);
+    BViewState *vs = dbis->get_view_state(v);
     std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator so_it;
     std::unordered_map<int, struct bv_scene_obj *>::iterator m_it;
     char ill_state = DOWN;
@@ -2613,6 +2616,18 @@ BSelectState::draw_sync()
 	    _ill_toggle(so, ill_state);
 	}
     }
+}
+
+unsigned long long
+BSelectState::state_hash()
+{
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
+	XXH64_update(&h_state, &s_it->first, sizeof(unsigned long long));
+    }
+    return (unsigned long long)XXH64_digest(&h_state);
 }
 
 /** @} */

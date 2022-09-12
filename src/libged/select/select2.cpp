@@ -204,7 +204,14 @@ _select_cmd_clear(void *bs, int argc, const char **argv)
 
     for (size_t i = 0; i < ss.size(); i++) {
 	ss[i]->clear();
-	ss[i]->draw_sync();
+    }
+
+    if (BU_STR_EQUIV(sname, "default")) {
+	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	    struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	    ss[0]->draw_sync(v);
+	}
     }
 
     return BRLCAD_OK;
@@ -255,7 +262,15 @@ _select_cmd_add(void *bs, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
     }
-    ss[0]->draw_sync();
+
+    if (BU_STR_EQUIV(sname, "default")) {
+	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	    struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	    ss[0]->draw_sync(v);
+	}
+    }
+
     bu_vls_free(&dpath);
 
     return BRLCAD_OK;
@@ -302,11 +317,27 @@ _select_cmd_rm(void *bs, int argc, const char **argv)
 	if (!ss[0]->deselect_path(bu_vls_cstr(&dpath))) {
 	    bu_vls_printf(gedp->ged_result_str, "Selection set %s: unable to remove path: %s", (sname) ? sname : "default", argv[i]);
 	    bu_vls_free(&dpath);
-	    ss[0]->draw_sync();
+
+	    if (BU_STR_EQUIV(sname, "default")) {
+		struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+		for (size_t j = 0; j < BU_PTBL_LEN(views); j++) {
+		    struct bview *v = (struct bview *)BU_PTBL_GET(views, j);
+		    ss[0]->draw_sync(v);
+		}
+	    }
+
 	    return BRLCAD_ERROR;
 	}
     }
-    ss[0]->draw_sync();
+
+    if (BU_STR_EQUIV(sname, "default")) {
+	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	    struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	    ss[0]->draw_sync(v);
+	}
+    }
+
     bu_vls_free(&dpath);
 
     return BRLCAD_OK;
@@ -344,8 +375,16 @@ _select_cmd_collapse(void *bs, int argc, const char **argv)
 
     for (size_t i = 0; i < ss.size(); i++) {
 	ss[i]->collapse();
-	ss[i]->draw_sync();
     }
+
+    if (BU_STR_EQUIV(sname, "default")) {
+	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	    struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	    ss[0]->draw_sync(v);
+	}
+    }
+
 
     // TODO - for now, printing results - maybe tie this to a verbose option at some point... 
     for (size_t i = 0; i < ss.size(); i++) {
@@ -392,7 +431,14 @@ _select_cmd_expand(void *bs, int argc, const char **argv)
 
     for (size_t i = 0; i < ss.size(); i++) {
 	ss[i]->expand();
-	ss[i]->draw_sync();
+    }
+
+    if (BU_STR_EQUIV(sname, "default")) {
+	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	    struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	    ss[0]->draw_sync(v);
+	}
     }
 
     // TODO - for now, printing results - maybe tie this to a verbose option at some point...

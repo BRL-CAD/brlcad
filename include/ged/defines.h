@@ -209,7 +209,9 @@ class GED_EXPORT BSelectState {
 	void collapse();
 
 	void refresh();
-	void draw_sync();
+	void draw_sync(struct bview *);
+
+	unsigned long long state_hash();
 
 	std::unordered_map<unsigned long long, std::vector<unsigned long long>> selected;
 	std::unordered_set<unsigned long long> active_paths;

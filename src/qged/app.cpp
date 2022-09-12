@@ -279,6 +279,9 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     struct ged *gedp = mdl->gedp;
 
+    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+    select_hash = (ss) ? ss->state_hash() : 0;
+
     /* Set the local unit conversions */
     if (gedp->dbip) {
 	for (int i = 1; i < 5; i++) {
@@ -337,9 +340,9 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	if (w->c4->diff_hashes())
 	    view_flags |= QTCAD_VIEW_DRAWN;
 
-	//unsigned long long cs_hash = ged_selection_hash_sets(gedp->ged_selection_sets);
-	//if (cs_hash != select_hash)
-	 //   view_flags |= QTCAD_VIEW_SELECT;
+	unsigned long long cs_hash = (ss) ? ss->state_hash() : 0;
+	if (cs_hash != select_hash)
+	    view_flags |= QTCAD_VIEW_SELECT;
     }
 
     if (ret & BRLCAD_MORE) {

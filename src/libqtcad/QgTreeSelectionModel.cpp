@@ -83,7 +83,11 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 	}
     }
 
-    ss->draw_sync();
+    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	ss->draw_sync(v);
+    }
 
     emit treeview->view_changed(QTCAD_VIEW_SELECT);
     emit treeview->m->layoutChanged();
@@ -108,7 +112,11 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
     QgItem *snode = static_cast<QgItem *>(index.internalPointer());
     if (!snode) {
 	ss->clear();
-	ss->draw_sync();
+	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	    struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	    ss->draw_sync(v);
+	}
 	return;
     }
 
@@ -118,7 +126,11 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 	if (flags & QItemSelectionModel::Select && ss->is_selected(snode->path_hash())) {
 	    std::vector<unsigned long long> path_hashes = snode->path_items();
 	    ss->deselect_hpath(path_hashes);
-	    ss->draw_sync();
+	    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+		struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+		ss->draw_sync(v);
+	    }
 	    emit treeview->view_changed(QTCAD_VIEW_SELECT);
 	    emit treeview->m->layoutChanged();
 	    return;
@@ -133,7 +145,12 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 	ss->deselect_hpath(path_hashes);
 
     }
-    ss->draw_sync();
+
+    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	ss->draw_sync(v);
+    }
 
     emit treeview->view_changed(QTCAD_VIEW_SELECT);
     emit treeview->m->layoutChanged();
