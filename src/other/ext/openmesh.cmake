@@ -1,0 +1,100 @@
+set(openmesh_DESCRIPTION "
+Option for enabling and disabling compilation of the OpenMesh 
+Library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+THIRD_PARTY(openmesh OPENMESH openmesh
+  openmesh_DESCRIPTION
+  REQUIRED_VARS "BRLCAD_ENABLE_OPENMESH;BRLCAD_LEVEL2"
+  ALIASES ENABLE_OPENMESH
+  RESET_VARS OPENMESH_LIBRARY OPENMESH_LIBRARIES OPENMESH_INCLUDE_DIR OPENMESH_INCLUDE_DIRS 
+  )
+
+if (BRLCAD_OPENMESH_BUILD)
+
+  #set_lib_vars(OPENMESH OpenMeshCore "9" "0" "0")
+  if (MSVC)
+    set(OPENMESH_BASENAME OpenMeshCore)
+    set(OPENMESH_STATICNAME OpenMeshCore-static)
+    set(OPENMESH_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+  elseif (OPENBSD)
+    set(OPENMESH_BASENAME libOpenMeshCore)
+    set(OPENMESH_STATICNAME libOpenMeshCore)
+    set(OPENMESH_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.1.0)
+  else (MSVC)
+    set(OPENMESH_BASENAME libOpenMeshCore)
+    set(OPENMESH_STATICNAME libOpenMeshCore)
+    set(OPENMESH_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.9.0)
+    set(OPENMESH_SYMLINK_1 ${OPENMESH_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
+  endif (MSVC)
+
+  set(OPENMESH_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/openmesh)
+
+  message("OPENMESH_INSTDIR: ${OPENMESH_INSTDIR}")
+
+  ExternalProject_Add(OPENMESH_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/openmesh"
+    BUILD_ALWAYS ${EXT_BUILD_ALWAYS} ${LOG_OPTS}
+    CMAKE_ARGS
+    $<$<NOT:$<BOOL:${CMAKE_CONFIGURATION_TYPES}>>:-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}>
+    -DBIN_DIR=${BIN_DIR}
+    -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+    -DCMAKE_INSTALL_PREFIX=${OPENMESH_INSTDIR}
+    -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH}
+    -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=${CMAKE_INSTALL_RPATH_USE_LINK_PATH}
+    -DCMAKE_SKIP_BUILD_RPATH=${CMAKE_SKIP_BUILD_RPATH}
+    -DLIB_DIR=${LIB_DIR}
+    -DBUILD_APPS=OFF
+    LOG_CONFIGURE ${EXT_BUILD_QUIET}
+    LOG_BUILD ${EXT_BUILD_QUIET}
+    LOG_INSTALL ${EXT_BUILD_QUIET}
+    LOG_OUTPUT_ON_FAILURE ${EXT_BUILD_QUIET}
+    )
+
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/OPENMESH_BLD-prefix")
+
+  # Tell the parent build about files and libraries
+  ExternalProject_Target(SHARED openmesh OPENMESH_BLD ${OPENMESH_INSTDIR}
+    ${OPENMESH_BASENAME}${OPENMESH_SUFFIX}
+    SYMLINKS ${OPENMESH_SYMLINK_1};${OPENMESH_SYMLINK_2}
+    LINK_TARGET ${OPENMESH_SYMLINK_1}
+    RPATH
+    )
+
+  ExternalProject_ByProducts(openmesh OPENMESH_BLD ${OPENMESH_INSTDIR} ${INCLUDE_DIR}/openmesh
+    NOINSTALL
+    )
+  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openmesh CACHE STRING "Bundled system include dirs" FORCE)
+
+  set(OPENMESH_LIBRARY openmesh CACHE STRING "Building bundled openmesh" FORCE)
+  set(OPENMESH_LIBRARIES openmesh CACHE STRING "Building bundled openmesh" FORCE)
+
+  set(OPENMESH_INCLUDE_DIR
+    "${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/openmesh"
+    "${BRLCAD_SOURCE_DIR}/src/other/ext/openmesh"
+    CACHE STRING "Directories containing OPENMESH headers." FORCE)
+  set(OPENMESH_INCLUDE_DIRS "${OPENMESH_INCLUDE_DIR}" CACHE STRING "Directories containing OPENMESH headers." FORCE)
+
+  SetTargetFolder(OPENMESH_BLD "Third Party Libraries")
+  SetTargetFolder(openmesh "Third Party Libraries")
+
+else (BRLCAD_OPENMESH_BUILD)
+
+  set(OPENMESH_LIBRARIES ${OPENMESH_LIBRARY} CACHE STRING "openmesh" FORCE)
+  set(OPENMESH_INCLUDE_DIRS "${OPENMESH_INCLUDE_DIR}" CACHE STRING "Directories containing OPENMESH headers." FORCE)
+
+endif (BRLCAD_OPENMESH_BUILD)
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/openmesh.dist")
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

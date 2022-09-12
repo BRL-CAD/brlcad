@@ -130,6 +130,10 @@ do
                                   shift;;
      --disable-gdal)                options="$options -DBRLCAD_GDAL=SYSTEM";
                                   shift;;
+     --enable-openmesh)                options="$options -DBRLCAD_OPENMESH=BUNDLED";
+                                  shift;;
+     --disable-openmesh)                options="$options -DBRLCAD_OPENMESH=SYSTEM";
+                                  shift;;
      --enable-tcl)                options="$options -DBRLCAD_TCL=BUNDLED";
                                   shift;;
      --disable-tcl)                options="$options -DBRLCAD_TCL=SYSTEM";

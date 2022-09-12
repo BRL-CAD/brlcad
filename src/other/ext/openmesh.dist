@@ -1,0 +1,8 @@
+set(openmesh_ignore_files
+)
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(openmesh_ignore_files openmesh)
+endif (COMMAND CMAKEFILES_IN_DIR)
+
+
+
