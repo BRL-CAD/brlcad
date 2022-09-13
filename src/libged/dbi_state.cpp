@@ -923,7 +923,7 @@ DbiState::find_selected_state(const char *sname)
 	    return ss_it->second;
 	}
     }
-    
+
     return NULL;
 }
 

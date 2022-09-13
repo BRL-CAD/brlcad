@@ -24,6 +24,8 @@
 #include "common.h"
 #include <QMouseEvent>
 #include <QVBoxLayout>
+#include <string>
+#include <set>
 #include "../../../app.h"
 
 #include "bu/opt.h"
@@ -182,13 +184,17 @@ CADViewSelecter::disable_useall_opt(bool)
 }
 
 void
-CADViewSelecter::do_view_update(unsigned long long UNUSED(flags))
+CADViewSelecter::do_view_update(unsigned long long flags)
 {
     QgModel *m = ((CADApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
-    if (!gedp)
+    if (!gedp || !gedp->dbi_state)
+	return;
+
+    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+    if (!ss)
 	return;
 
 #if 0
@@ -203,19 +209,24 @@ CADViewSelecter::do_view_update(unsigned long long UNUSED(flags))
 	}
 	bu_ptbl_free(&ssets);
     }
+#endif
 
-    unsigned long long chash = ged_selection_hash_set(gedp->ged_cset);
+    unsigned long long chash = ss->state_hash();
     if ((flags & QTCAD_VIEW_SELECT) || chash != ohash) {
 	group_contents->clear();
 	ohash = chash;
-	char **spaths = NULL;
-	int pscnt = ged_selection_set_list(&spaths, gedp->ged_cset);
-	for (int i = 0; i < pscnt; i++) {
-	    group_contents->addItem(QString(spaths[i]));
+
+	std::set<std::string> ordered_paths;
+	std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
+	for (s_it = ss->selected.begin(); s_it != ss->selected.end(); s_it++) {
+	    std::string spath = std::string(gedp->dbi_state->pathstr(s_it->second));
+	    ordered_paths.insert(spath);
 	}
-	bu_free(spaths, "spaths");
+	std::set<std::string>::iterator o_it;
+	for (o_it = ordered_paths.begin(); o_it != ordered_paths.end(); o_it++) {
+	    group_contents->addItem(QString(o_it->c_str()));
+	}
     }
-#endif
 }
 
 
