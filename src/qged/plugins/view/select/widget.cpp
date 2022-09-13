@@ -814,7 +814,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    if (!use_ray_test_ckbx->isChecked()) {
 		bool ret = add_obj_bbox();
 		if (ret)
-		    emit view_changed(QTCAD_VIEW_SELECT);
+		    emit view_changed(QTCAD_VIEW_SELECT|QTCAD_VIEW_DRAWN);
 		bu_free(sset, "sset");
 		return true;
 	    }
@@ -822,7 +822,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    if (use_pnt_select_button->isChecked() && use_ray_test_ckbx->isChecked()) {
 		bool ret = add_obj_ray();
 		if (ret)
-		    emit view_changed(QTCAD_VIEW_SELECT);
+		    emit view_changed(QTCAD_VIEW_SELECT|QTCAD_VIEW_DRAWN);
 		bu_free(sset, "sset");
 		return ret;
 	    }
@@ -836,7 +836,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    if (!use_ray_test_ckbx->isChecked()) {
 		bool ret = rm_obj_bbox();
 		if (ret)
-		    emit view_changed(QTCAD_VIEW_SELECT);
+		    emit view_changed(QTCAD_VIEW_SELECT|QTCAD_VIEW_DRAWN);
 		bu_free(sset, "sset");
 		return true;
 	    }
@@ -844,7 +844,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    if (use_pnt_select_button->isChecked() && use_ray_test_ckbx->isChecked()) {
 		bool ret = rm_obj_ray();
 		if (ret)
-		    emit view_changed(QTCAD_VIEW_SELECT);
+		    emit view_changed(QTCAD_VIEW_SELECT|QTCAD_VIEW_DRAWN);
 		bu_free(sset, "sset");
 		return ret;
 	    }

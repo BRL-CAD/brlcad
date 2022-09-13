@@ -286,6 +286,9 @@ class GED_EXPORT BViewState {
 	// scene objects
 	std::vector<std::string> list_drawn_paths(int mode, bool list_collapsed);
 
+	// Get a count of the drawn paths
+	size_t count_drawn_paths(int mode, bool list_collapsed);
+
 	// Report if a path hash is drawn - 0 == not drawn, 1 == fully drawn, 2 == partially drawn
 	int is_hdrawn(int mode, unsigned long long phash);
 

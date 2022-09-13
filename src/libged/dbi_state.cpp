@@ -1946,6 +1946,34 @@ BViewState::list_drawn_paths(int mode, bool list_collapsed)
     return ret;
 }
 
+size_t
+BViewState::count_drawn_paths(int mode, bool list_collapsed)
+{
+    std::unordered_map<int, std::vector<std::vector<unsigned long long>>>::iterator m_it;
+    std::vector<std::string> ret;
+    if (mode == -1 && list_collapsed)
+	return all_collapsed.size();
+
+    if (mode != -1 && list_collapsed) {
+	m_it = mode_collapsed.find(mode);
+	if (m_it == mode_collapsed.end())
+	    return m_it->second.size();
+	return 0;
+    }
+
+    if (mode == -1 && !list_collapsed)
+	return s_keys.size();
+
+    if (mode != -1 && !list_collapsed) {
+	std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator sm_it;
+	sm_it = s_map.find(mode);
+	if (sm_it != s_map.end())
+	    return sm_it->second.size();
+	return 0;
+    }
+
+    return 0;
+}
 
 int
 BViewState::is_hdrawn(int mode, unsigned long long phash)

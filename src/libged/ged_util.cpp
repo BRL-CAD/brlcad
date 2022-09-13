@@ -998,10 +998,12 @@ ged_who_argc(struct ged *gedp)
 {
     const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
     if (BU_STR_EQUAL(cmd2, "1")) {
-	if (!gedp || !gedp->ged_gvp)
+	if (!gedp || !gedp->ged_gvp || !gedp->dbi_state)
 	    return 0;
-	struct bu_ptbl *sg = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
-	return BU_PTBL_LEN(sg);
+	BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
+	if (bvs)
+	    return bvs->count_drawn_paths(-1, true);
+	return 0;
     }
 
     struct display_list *gdlp = NULL;
@@ -1032,19 +1034,22 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
     char **vp = start;
     const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
     if (BU_STR_EQUAL(cmd2, "1")) {
-	if (!gedp || !gedp->ged_gvp)
+	if (!gedp || !gedp->ged_gvp || !gedp->dbi_state)
 	    return 0;
-	struct bu_ptbl *sg = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
-	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	    if ((vp != NULL) && ((const char **)vp < end)) {
-		*vp++ = bu_strdup(bu_vls_cstr(&g->s_name));
-	    } else {
-		bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", bu_vls_cstr(&g->s_name));
-		break;
+	BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
+	if (bvs) {
+	    std::vector<std::string> drawn_paths = bvs->list_drawn_paths(-1, true);
+	    for (size_t i = 0; i < drawn_paths.size(); i++) {
+		if ((vp != NULL) && ((const char **)vp < end)) {
+		    *vp++ = bu_strdup(drawn_paths[i].c_str());
+		} else {
+		    bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", drawn_paths[i].c_str());
+		    break;
+		}
 	    }
+	} else {
+	    return 0;
 	}
-	return (int)BU_PTBL_LEN(sg);
     }
 
     struct display_list *gdlp;
@@ -1203,8 +1208,8 @@ _ged_editit(const char *editstring, const char *filename)
     const char *file = (const char *)filename;
 
 #if defined(SIGINT) && defined(SIGQUIT)
-    void (*s2)();
-    void (*s3)();
+    void (*s2)(int);
+    void (*s3)(int);
 #endif
 
     if (!file) {
@@ -1641,10 +1646,12 @@ _ged_rt_write(struct ged *gedp,
 	if (!argc) {
 	    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
 	    if (BU_STR_EQUAL(cmd2, "1")) {
-		struct bu_ptbl *sg = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
-		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-		    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		    fprintf(fp, "draw %s;\n", bu_vls_cstr(&g->s_name));
+		BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
+		if (bvs) {
+		    std::vector<std::string> drawn_paths = bvs->list_drawn_paths(-1, true);
+		    for (size_t i = 0; i < drawn_paths.size(); i++) {
+			fprintf(fp, "draw %s;\n", drawn_paths[i].c_str());
+		    }
 		}
 	    } else {
 		struct display_list *gdlp;
@@ -1722,6 +1729,7 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     }
     return BRLCAD_OK;
 }
+
 
 struct rt_object_selections *
 ged_get_object_selections(struct ged *gedp, const char *object_name)

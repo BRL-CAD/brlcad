@@ -33,7 +33,7 @@ set(LIBGED_SOURCES
   draw.cpp
   facedef.c
   ged.cpp
-  ged_util.c
+  ged_util.cpp
   get_obj_bounds.c
   get_solid_kp.c
   inside.c
