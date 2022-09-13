@@ -634,7 +634,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 
     // Adaptive BoTs have specialized LoD routines to help cope with very large
     // data sets, both for wireframe and shaded mode.
-    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && s->s_v->gv_s->adaptive_plot_mesh) {
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && s->s_v->gv_s->adaptive_plot_mesh && s->s_os->s_dmode == 1) {
 	bot_adaptive_plot(s, v);
 	return;
     }
