@@ -11,6 +11,7 @@ set(other_licenses
   linenoise.txt
   lmdb.txt
   netpbm.txt
+  openmesh.txt
   openNURBS.txt
   png.txt
   poly2tri.txt
