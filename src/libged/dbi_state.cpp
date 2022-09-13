@@ -2566,13 +2566,16 @@ BSelectState::collapse()
 	    break;
 	std::unordered_set<unsigned long long> &pckeys = depth_groups.rbegin()->second;
 
-	// For a given depth, group the paths by parent comb.  This results
+	// For a given depth, group the paths by parent path.  This results
 	// in path sub-groups which will define for us how "fully drawn"
-	// that particular parent comb is.
+	// that particular parent comb instance is.
 	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> grouped_pckeys;
+	std::unordered_map<unsigned long long, unsigned long long> pcomb;
 	for (u_it = pckeys.begin(); u_it != pckeys.end(); u_it++) {
 	    std::vector<unsigned long long> &pc_path = selected[*u_it];
-	    grouped_pckeys[pc_path[plen-2]].insert(*u_it);
+	    unsigned long long ppathhash = dbis->path_hash(pc_path, plen - 1);
+	    grouped_pckeys[ppathhash].insert(*u_it);
+	    pcomb[ppathhash] = pc_path[plen-2];
 	}
 
 	// For each parent/child grouping, compare it against the .g ground
@@ -2595,7 +2598,7 @@ BSelectState::collapse()
 	    // Do the check against the .g comb children info - the "ground truth"
 	    // that defines what must be present for a fully drawn comb
 	    bool is_fully_selected = true;
-	    std::unordered_set<unsigned long long> &ground_truth = dbis->p_c[pg_it->first];
+	    std::unordered_set<unsigned long long> &ground_truth = dbis->p_c[pcomb[pg_it->first]];
 	    for (u_it = ground_truth.begin(); u_it != ground_truth.end(); u_it++) {
 		if (g_children.find(*u_it) == g_children.end()) {
 		    is_fully_selected = false;
