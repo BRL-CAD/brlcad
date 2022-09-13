@@ -73,6 +73,7 @@ process_file(env_outputs &env_t)
     std::regex o_regex(".*[\\/]other[\\/].*");
     std::regex sp_regex(".*[\\/]other[\\/]([A-Za-z0-9_-]+).*");
     std::regex lp_regex(".*[\\/]lib([A-Za-z0-9_-]+)[\\/].*");
+    std::regex inc_regex(".*[\\/]include[\\/].*");
     std::regex ep_regex(".*[\\/]src[\\/]([A-Za-z0-9_-]+)[\\/].*");
     std::regex bench_regex(".*[\\/](bench)[\\/].*");
     std::regex bullet_regex(".*[\\/](bullet)[\\/].*");
@@ -128,6 +129,18 @@ process_file(env_outputs &env_t)
 		}
 		env.blib_vars.insert(std::make_pair(std::string(lp_match[1]), std::string(envvar[1])));
 		env.c_vars[std::string(lp_match[1])].insert(std::string(envvar[1]));
+		continue;
+	    }
+	}
+
+	{
+	    std::smatch inc_match;
+	    if (std::regex_search(env.f, inc_match, inc_regex)) {
+		if (env.verbose) {
+		    std::cout << "include" << inc_match[1] << ": " << envvar[1] << "\n";
+		}
+		env.blib_vars.insert(std::make_pair(std::string(inc_match[1]), std::string(envvar[1])));
+		env.c_vars[std::string(inc_match[1])].insert(std::string(envvar[1]));
 		continue;
 	    }
 	}
