@@ -18,9 +18,12 @@ if (BRLCAD_OPENMESH_BUILD)
   set(OM_PATCH_VERSION 0)
 
   if (MSVC)
-    set(OPENMESH_BASENAME OpenMeshCore)
-    set(OPENMESH_STATICNAME OpenMeshCore-static)
-    set(OPENMESH_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+    if ("${CMAKE_BUILD_TYPE}" MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
+      set(OPENMESH_DEBUG_POSTFIX "d")
+    endif("${CMAKE_BUILD_TYPE}" MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
+    set(OPENMESH_BASENAME OpenMesh)
+    set(OPENMESH_STATICNAME OpenMesh-static)
+    set(OPENMESH_SUFFIX ${OPENMESH_DEBUG_POSTFIX}${CMAKE_SHARED_LIBRARY_SUFFIX})
   elseif (OPENBSD)
     set(OPENMESH_BASENAME libOpenMeshCore)
     set(OPENMESH_STATICNAME libOpenMeshCore)
@@ -48,6 +51,7 @@ if (BRLCAD_OPENMESH_BUILD)
     -DCMAKE_SKIP_BUILD_RPATH=${CMAKE_SKIP_BUILD_RPATH}
     -DLIB_DIR=${LIB_DIR}
     -DBUILD_APPS=OFF
+    -DOPENMESH_BUILD_SHARED=ON
     LOG_CONFIGURE ${EXT_BUILD_QUIET}
     LOG_BUILD ${EXT_BUILD_QUIET}
     LOG_INSTALL ${EXT_BUILD_QUIET}
@@ -298,6 +302,18 @@ if (BRLCAD_OPENMESH_BUILD)
 
   SetTargetFolder(OPENMESH_BLD "Third Party Libraries")
   SetTargetFolder(openmesh "Third Party Libraries")
+
+  # OpenMesh generates windows dll's in the root directory unlike most other builds which
+  # stuff them in bin/
+  # copy them over so our ext build logic can find them
+  if(MSVC)
+    foreach(OMLIB ${OPENMESH_LIBS})
+    add_custom_command(TARGET OPENMESH_BLD POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${OPENMESH_INSTDIR}/${OPENMESH_BASENAME}${OMLIB}${OPENMESH_SUFFIX}
+      ${OPENMESH_INSTDIR}/bin/${OPENMESH_BASENAME}${OMLIB}${OPENMESH_SUFFIX})
+    endforeach(OMLIB ${OPENMESH_LIBS})
+  endif(MSVC)
 
 else (BRLCAD_OPENMESH_BUILD)
 
