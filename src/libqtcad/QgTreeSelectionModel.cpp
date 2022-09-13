@@ -83,13 +83,11 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 	}
     }
 
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	ss->draw_sync(v);
-    }
+    unsigned long long sflags = QTCAD_VIEW_SELECT;
+    if (ss->draw_sync())
+	sflags |= QTCAD_VIEW_REFRESH;
 
-    emit treeview->view_changed(QTCAD_VIEW_SELECT);
+    emit treeview->view_changed(sflags);
     emit treeview->m->layoutChanged();
 }
 
@@ -112,11 +110,13 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
     QgItem *snode = static_cast<QgItem *>(index.internalPointer());
     if (!snode) {
 	ss->clear();
-	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	    struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	    ss->draw_sync(v);
-	}
+
+	unsigned long long sflags = QTCAD_VIEW_SELECT;
+	if (ss->draw_sync())
+	    sflags |= QTCAD_VIEW_REFRESH;
+
+	emit treeview->view_changed(sflags);
+	emit treeview->m->layoutChanged();
 	return;
     }
 
@@ -126,12 +126,10 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 	if (flags & QItemSelectionModel::Select && ss->is_selected(snode->path_hash())) {
 	    std::vector<unsigned long long> path_hashes = snode->path_items();
 	    ss->deselect_hpath(path_hashes);
-	    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-	    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-		struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-		ss->draw_sync(v);
-	    }
-	    emit treeview->view_changed(QTCAD_VIEW_SELECT);
+	    unsigned long long sflags = QTCAD_VIEW_SELECT;
+	    if (ss->draw_sync())
+		sflags |= QTCAD_VIEW_REFRESH;
+	    emit treeview->view_changed(sflags);
 	    emit treeview->m->layoutChanged();
 	    return;
 	}
@@ -146,13 +144,10 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 
     }
 
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	ss->draw_sync(v);
-    }
-
-    emit treeview->view_changed(QTCAD_VIEW_SELECT);
+    unsigned long long sflags = QTCAD_VIEW_SELECT;
+    if (ss->draw_sync())
+	sflags |= QTCAD_VIEW_REFRESH;
+    emit treeview->view_changed(sflags);
     emit treeview->m->layoutChanged();
 }
 

@@ -55,15 +55,21 @@ bool alphanum_cmp(const std::string &a, const std::string &b)
     return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
 }
 
-
-static void
+static bool
 _ill_toggle(struct bv_scene_obj *s, char ill_state)
 {
+    bool changed = false;
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-	_ill_toggle(s_c, ill_state);
+	bool cchanged = _ill_toggle(s_c, ill_state);
+	if (cchanged)
+	    changed = true;
     }
-    s->s_iflag = ill_state;
+    if (ill_state != s->s_iflag) {
+	changed = true;
+	s->s_iflag = ill_state;
+    }
+    return changed;
 }
 
 struct walk_data {
@@ -1701,7 +1707,6 @@ BViewState::scene_obj(
     sp->s_os->transparency = vs->transparency;
 
     dbis->print_path(&sp->s_name, path_hashes);
-    bu_log("make solid %s\n", bu_vls_cstr(&sp->s_name));
     s_map[phash][sp->s_os->s_dmode] = sp;
     s_keys[phash] = path_hashes;
 
@@ -2136,15 +2141,12 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	}
     }
 
-
     // We need to check if any drawn solids are selected.  If so, we need
-    // to illuminate them
-    BSelectState *ss = dbis->find_selected_state("default");
-    if (ss) {
-	for (v_it = views.begin(); v_it != views.end(); v_it++) {
-	    ss->draw_sync(*v_it);
-	}
-    }
+    // to illuminate them.  This is what ensures that newly drawn solids
+    // respect a previously selected set from the command line
+    BSelectState *ss = dbis->find_selected_state(NULL);
+    if (ss && ss->draw_sync())
+	ret = GED_DBISTATE_VIEW_CHANGE;
 
     // Now that we have the finalized geometry, do a finishing autoview,
     // unless suppressed
@@ -2601,21 +2603,36 @@ BSelectState::refresh()
     }
 }
 
-void
-BSelectState::draw_sync(struct bview *v)
+bool
+BSelectState::draw_sync()
 {
-    BViewState *vs = dbis->get_view_state(v);
+    bool changed = false;
+    std::unordered_set<BViewState *> vstates;
+
+    struct bu_ptbl *views = bv_set_views(&dbis->gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	BViewState *vs = dbis->get_view_state(v);
+	vstates.insert(vs);
+    }
+
     std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator so_it;
     std::unordered_map<int, struct bv_scene_obj *>::iterator m_it;
-    char ill_state = DOWN;
-    for (so_it = vs->s_map.begin(); so_it != vs->s_map.end(); so_it++) {
-	ill_state = is_active(so_it->first) ? UP : DOWN;
-	bu_log("select ill_state: %s\n", (ill_state == UP) ? "up" : "down");
-	for (m_it = so_it->second.begin(); m_it != so_it->second.end(); m_it++) {
-	    struct bv_scene_obj *so = m_it->second;
-	    _ill_toggle(so, ill_state);
+    std::unordered_set<BViewState *>::iterator vs_it;
+    for (vs_it = vstates.begin(); vs_it != vstates.end(); vs_it++) {
+	for (so_it = (*vs_it)->s_map.begin(); so_it != (*vs_it)->s_map.end(); so_it++) {
+	    char ill_state = is_active(so_it->first) ? UP : DOWN;
+	    bu_log("select ill_state: %s\n", (ill_state == UP) ? "up" : "down");
+	    for (m_it = so_it->second.begin(); m_it != so_it->second.end(); m_it++) {
+		struct bv_scene_obj *so = m_it->second;
+		bool ill_changed = _ill_toggle(so, ill_state);
+		if (ill_changed)
+		    changed = true;
+	    }
 	}
     }
+
+    return changed;
 }
 
 unsigned long long

@@ -209,7 +209,7 @@ class GED_EXPORT BSelectState {
 	void collapse();
 
 	void refresh();
-	void draw_sync(struct bview *);
+	bool draw_sync();
 
 	unsigned long long state_hash();
 
