@@ -192,10 +192,10 @@ class GED_EXPORT BSelectState {
     public:
 	BSelectState(DbiState *);
 
-	bool select_path(const char *path);
+	bool select_path(const char *path, bool update);
 	bool select_hpath(std::vector<unsigned long long> &hpath);
 
-	bool deselect_path(const char *path);
+	bool deselect_path(const char *path, bool update);
 	bool deselect_hpath(std::vector<unsigned long long> &hpath);
 
 	void clear();

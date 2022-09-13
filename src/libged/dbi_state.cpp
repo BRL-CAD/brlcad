@@ -2230,7 +2230,7 @@ BSelectState::BSelectState(DbiState *s)
 }
 
 bool
-BSelectState::select_path(const char *path)
+BSelectState::select_path(const char *path, bool update)
 {
     if (!path)
 	return false;
@@ -2240,7 +2240,8 @@ BSelectState::select_path(const char *path)
 	return false;
 
     bool ret = select_hpath(path_hashes);
-    characterize();
+    if (update)
+	characterize();
     return ret;
 }
 
@@ -2300,7 +2301,7 @@ BSelectState::select_hpath(std::vector<unsigned long long> &hpath)
 }
 
 bool
-BSelectState::deselect_path(const char *path)
+BSelectState::deselect_path(const char *path, bool update)
 {
     if (!path)
 	return false;
@@ -2310,7 +2311,8 @@ BSelectState::deselect_path(const char *path)
 	return false;
 
     bool ret = deselect_hpath(path_hashes);
-    characterize();
+    if (update)
+	characterize();
     return ret;
 }
 

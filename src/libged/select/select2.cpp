@@ -248,12 +248,14 @@ _select_cmd_add(void *bs, int argc, const char **argv)
 	bu_vls_sprintf(&dpath, "%s", argv[i]);
 	if (bu_vls_cstr(&dpath)[0] != '/')
 	    bu_vls_prepend(&dpath, "/");
-	if (!ss[0]->select_path(bu_vls_cstr(&dpath))) {
+	if (!ss[0]->select_path(bu_vls_cstr(&dpath), false)) {
 	    bu_vls_printf(gedp->ged_result_str, "Selection set %s: unable to add path: %s", (sname) ? sname : "default", argv[i]);
 	    bu_vls_free(&dpath);
 	    return BRLCAD_ERROR;
 	}
     }
+
+    ss[0]->characterize();
 
     bu_vls_free(&dpath);
 
@@ -298,13 +300,15 @@ _select_cmd_rm(void *bs, int argc, const char **argv)
 	bu_vls_sprintf(&dpath, "%s", argv[i]);
 	if (bu_vls_cstr(&dpath)[0] != '/')
 	    bu_vls_prepend(&dpath, "/");
-	if (!ss[0]->deselect_path(bu_vls_cstr(&dpath))) {
+	if (!ss[0]->deselect_path(bu_vls_cstr(&dpath), false)) {
 	    bu_vls_printf(gedp->ged_result_str, "Selection set %s: unable to remove path: %s", (sname) ? sname : "default", argv[i]);
 	    bu_vls_free(&dpath);
 	    return BRLCAD_ERROR;
 	}
     }
     bu_vls_free(&dpath);
+
+    ss[0]->characterize();
 
     return BRLCAD_OK;
 }

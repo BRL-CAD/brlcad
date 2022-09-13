@@ -197,20 +197,6 @@ CADViewSelecter::do_view_update(unsigned long long flags)
     if (!ss)
 	return;
 
-#if 0
-    unsigned long long mhash = ged_selection_hash_sets(gedp->ged_selection_sets);
-    if ((flags & QTCAD_VIEW_SELECT) || mhash != omhash) {
-	current_group->clear();
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t sscnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "*");
-	for (size_t i = 0; i < sscnt; i++) {
-	    struct ged_selection_set *s = (struct ged_selection_set *)BU_PTBL_GET  (&ssets, i);
-	    current_group->addItem(QString(bu_vls_cstr(&s->name)));
-	}
-	bu_ptbl_free(&ssets);
-    }
-#endif
-
     unsigned long long chash = ss->state_hash();
     if ((flags & QTCAD_VIEW_SELECT) || chash != ohash) {
 	group_contents->clear();
@@ -298,30 +284,37 @@ CADViewSelecter::process_obj_bbox(int mode)
 	    bu_free(av, "av");
 	    return true;
 	}
-#if 0
-	struct ged_selection_set *gs = gedp->ged_cset;
-	if (!gs)
+
+	BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+	if (!ss)
 	    return false;
+
 	struct bu_vls dpath = BU_VLS_INIT_ZERO;
 	for (int i = 0; i < scnt; i++) {
 	    struct bv_scene_obj *s = sset[i];
 	    bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s->s_name));
 	    if (bu_vls_cstr(&dpath)[0] != '/')
 		bu_vls_prepend(&dpath, "/");
+
 	    if (mode == 1) {
 		// add_obj_bbox
-		if (!ged_selection_insert(gs, bu_vls_cstr(&dpath))) {
+		if (!ss->select_path(bu_vls_cstr(&dpath), false)) {
 		    bu_vls_free(&dpath);
 		    return false;
 		}
 	    }
 	    if (mode == 2) {
 		// rm_obj_bbox
-		ged_selection_remove(gs, bu_vls_cstr(&dpath));
+		if (!ss->deselect_path(bu_vls_cstr(&dpath), false)) {
+		    bu_vls_free(&dpath);
+		    return false;
+		}
 	    }
 	}
 	bu_vls_free(&dpath);
-#endif
+
+	ss->characterize();
+
 	return true;
     }
 
@@ -364,9 +357,9 @@ CADViewSelecter::process_obj_bbox(int mode)
 	    bu_free(av, "av");
 	    return true;
 	}
-#if 0
-	struct ged_selection_set *gs = gedp->ged_cset;
-	if (!gs)
+
+	BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+	if (!ss)
 	    return false;
 
 	struct bu_vls dpath = BU_VLS_INIT_ZERO;
@@ -375,18 +368,24 @@ CADViewSelecter::process_obj_bbox(int mode)
 	    bu_vls_prepend(&dpath, "/");
 
 	if (mode == 1) {
-	    if (!ged_selection_insert(gs, bu_vls_cstr(&dpath))) {
+	    // add_obj_bbox
+	    if (!ss->select_path(bu_vls_cstr(&dpath), false)) {
+		bu_vls_free(&dpath);
+		return false;
+	    }
+	}
+	if (mode == 2) {
+	    // rm_obj_bbox
+	    if (!ss->deselect_path(bu_vls_cstr(&dpath), false)) {
 		bu_vls_free(&dpath);
 		return false;
 	    }
 	}
 
-	if (mode == 2) {
-	    ged_selection_remove(gs, bu_vls_cstr(&dpath));
-	}
-
 	bu_vls_free(&dpath);
-#endif
+
+	ss->characterize();
+
 	return true;
 
     } else {
@@ -485,30 +484,37 @@ CADViewSelecter::process_obj_ray(int mode)
 		bu_argv_free(rc.active.size()+1, (char **)av);
 		return true;
 	    }
-#if 0
-	    struct ged_selection_set *gs = gedp->ged_cset;
-	    if (!gs)
+	    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+	    if (!ss)
 		return false;
+
 	    struct bu_vls dpath = BU_VLS_INIT_ZERO;
 	    for (a_it = rc.active.begin(); a_it != rc.active.end(); a_it++) {
 		bu_vls_sprintf(&dpath, "%s",  a_it->c_str());
 		if (bu_vls_cstr(&dpath)[0] != '/')
 		    bu_vls_prepend(&dpath, "/");
+
 		if (mode == 1) {
-		    if (!ged_selection_insert(gs, bu_vls_cstr(&dpath))) {
+		    if (!ss->select_path(bu_vls_cstr(&dpath), false)) {
 			bu_vls_free(&dpath);
 			return false;
 		    }
 		}
 		if (mode == 2) {
-		    ged_selection_remove(gs, bu_vls_cstr(&dpath));
+		    if (!ss->deselect_path(bu_vls_cstr(&dpath), false)) {
+			bu_vls_free(&dpath);
+			return false;
+		    }
 		}
 	    }
 	    bu_vls_free(&dpath);
-#endif
+
 	    return true;
+
 	} else {
+
 	    return false;
+
 	}
     } else {
 	if (rc.cdist < INFINITY) {
@@ -520,28 +526,37 @@ CADViewSelecter::process_obj_ray(int mode)
 		bu_free((void *)av[1], "ncpy");
 		return true;
 	    }
-#if 0
-	    struct ged_selection_set *gs = gedp->ged_cset;
-	    if (!gs)
+
+	    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+	    if (!ss)
 		return false;
+
 	    struct bu_vls dpath = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&dpath, "%s",  rc.closest.c_str());
 	    if (bu_vls_cstr(&dpath)[0] != '/')
 		bu_vls_prepend(&dpath, "/");
+
 	    if (mode == 1) {
-		if (!ged_selection_insert(gs, bu_vls_cstr(&dpath))) {
+		if (!ss->select_path(bu_vls_cstr(&dpath), false)) {
 		    bu_vls_free(&dpath);
 		    return false;
 		}
 	    }
 	    if (mode == 2) {
-		ged_selection_remove(gs, bu_vls_cstr(&dpath));
+		if (!ss->deselect_path(bu_vls_cstr(&dpath), false)) {
+		    bu_vls_free(&dpath);
+		    return false;
+		}
 	    }
+	    
 	    bu_vls_free(&dpath);
-#endif
+
 	    return true;
+
 	} else {
+
 	    return false;
+
 	}
     }
 }
@@ -591,18 +606,26 @@ CADViewSelecter::do_draw_selections()
     struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return;
-#if 0
-    char **spaths = NULL;
-    int pscnt = ged_selection_set_list(&spaths, gedp->ged_cset);
-    const char **av = (const char **)bu_calloc(pscnt+2, sizeof(char *), "av");
-    av[0] = "draw";
-    for (int i = 0; i < pscnt; i++) {
-	av[i+1] = spaths[i];
+
+    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+    if (!ss || !ss->selected.size())
+	return;
+
+    const char **av = (const char **)bu_calloc(ss->selected.size()+2, sizeof(char *), "av");
+    av[0] = bu_strdup("draw");
+
+    int i = 0;
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
+    for (s_it = ss->selected.begin(); s_it != ss->selected.end(); s_it++) {
+	av[i+1] = bu_strdup(gedp->dbi_state->pathstr(s_it->second));
     }
-    ged_exec(gedp, pscnt+1, av);
-    bu_free(spaths, "spaths");
+    
+    ged_exec(gedp, (int)(ss->selected.size()+1), av);
+    for (size_t j = 0; j < ss->selected.size()+1; j++) {
+	bu_free((void *)av[j], "path");
+    }
     bu_free(av, "av");
-#endif
+
     emit view_changed(QTCAD_VIEW_DRAWN|QTCAD_VIEW_SELECT);
 }
 
@@ -615,18 +638,26 @@ CADViewSelecter::do_erase_selections()
     struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return;
-#if 0
-    char **spaths = NULL;
-    int pscnt = ged_selection_set_list(&spaths, gedp->ged_cset);
-    const char **av = (const char **)bu_calloc(pscnt+2, sizeof(char *), "av");
-    av[0] = "erase";
-    for (int i = 0; i < pscnt; i++) {
-	av[i+1] = spaths[i];
+
+    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+    if (!ss || !ss->selected.size())
+	return;
+
+    const char **av = (const char **)bu_calloc(ss->selected.size()+2, sizeof(char *), "av");
+    av[0] = bu_strdup("erase");
+
+    int i = 0;
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
+    for (s_it = ss->selected.begin(); s_it != ss->selected.end(); s_it++) {
+	av[i+1] = bu_strdup(gedp->dbi_state->pathstr(s_it->second));
     }
-    ged_exec(gedp, pscnt+1, av);
-    bu_free(spaths, "spaths");
+    
+    ged_exec(gedp, (int)(ss->selected.size()+1), av);
+    for (size_t j = 0; j < ss->selected.size()+1; j++) {
+	bu_free((void *)av[j], "path");
+    }
     bu_free(av, "av");
-#endif
+
     emit view_changed(QTCAD_VIEW_DRAWN|QTCAD_VIEW_SELECT);
 }
 
