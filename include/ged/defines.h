@@ -202,6 +202,10 @@ class GED_EXPORT BSelectState {
 
 	bool is_selected(unsigned long long);
 	bool is_active(unsigned long long);
+	bool is_active_parent(unsigned long long);
+	bool is_parent_obj(unsigned long long);
+	bool is_immediate_parent_obj(unsigned long long);
+	bool is_grand_parent_obj(unsigned long long);
 
 	std::vector<std::string> list_selected_paths();
 
@@ -214,7 +218,20 @@ class GED_EXPORT BSelectState {
 	unsigned long long state_hash();
 
 	std::unordered_map<unsigned long long, std::vector<unsigned long long>> selected;
-	std::unordered_set<unsigned long long> active_paths;
+	std::unordered_set<unsigned long long> active_paths; // Solid paths to illuminate
+	std::unordered_set<unsigned long long> active_parents; // Paths above selection
+	// To support highlighting closed paths that have selected primitives
+	// below them, we need more information.  This is different than
+	// highlighting only the paths related to the specific selected full
+	// path - in this situation, the application wants to know about all
+	// paths that are above the leaf *object* that is selected, in whatever
+	// portion of the database.  Immediate parents are combs whose
+	// immediate child is the selected leaf; grand parents are higher level
+	// combs above immediate parents
+	std::unordered_set<unsigned long long> immediate_parents;
+	std::unordered_set<unsigned long long> grand_parents;
+
+	void characterize();
 
     private:
 	DbiState *dbis;
@@ -238,6 +255,7 @@ class GED_EXPORT BSelectState {
 	void collapse_paths(
 		std::vector<std::vector<unsigned long long>> &out_paths
 		);
+
 };
 
 

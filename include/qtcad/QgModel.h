@@ -224,6 +224,13 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// update the model, or upon startup.
 	void g_update(struct db_i *n_dbip);
 
+	// This is a bit of a cheat in that an interaction mode isn't really
+	// part of the .g state, but we want the tree highlighting logic to
+	// reflect such a state and to have that logic reusable at the library
+	// level it needs to be available in a container readily accessible at
+	// that level.
+	int interaction_mode = 0;
+
 	// Qt Model interface
 
 	// Get the root QgItem

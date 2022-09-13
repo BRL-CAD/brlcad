@@ -51,7 +51,7 @@ void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
     }
 
     aflag = index.data(QgModel::HighlightDisplayRole).toInt();
-    if (!cadtreeview->isExpanded(index) && aflag == 1) {
+    if (aflag == 1) {
 	painter->fillRect(option.rect, QBrush(QColor(220, 200, 30)));
 	goto text_string;
     }
@@ -164,7 +164,7 @@ QgTreeView::QgTreeView(QWidget *pparent, QgModel *treemodel) : QTreeView(pparent
     header()->setStretchLastSection(true);
     QObject::connect(this, &QgTreeView::expanded, this, &QgTreeView::tree_column_size);
     QObject::connect(this, &QgTreeView::collapsed, this, &QgTreeView::tree_column_size);
-    QObject::connect(this, &QgTreeView::clicked, sm, &QgTreeSelectionModel::update_selected_node_relationships);
+    //QObject::connect(this, &QgTreeView::clicked, sm, &QgTreeSelectionModel::update_selected_node_relationships);
     QObject::connect(this, &QgTreeView::customContextMenuRequested, (QgTreeView *)this, &QgTreeView::context_menu);
     QObject::connect(this, &QgTreeView::doubleClicked, (QgTreeView *)this, &QgTreeView::do_draw_toggle);
 }
@@ -346,8 +346,8 @@ QgTreeView::redo_highlights()
 	}
     }
 
-    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
-    selm->update_selected_node_relationships(selected_idx);
+    //QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
+    //selm->update_selected_node_relationships(selected_idx);
 }
 
 #if 0

@@ -75,8 +75,6 @@ class CADApp : public QApplication
 	QgModel *mdl = NULL;
 	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
 
-	//int prev_interaction_mode = 0;
-
     signals:
 	void view_update(unsigned long long);
 

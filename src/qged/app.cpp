@@ -182,9 +182,8 @@ CADApp::tree_update()
     CADPalette *v = NULL;
     CADPalette *vc = w->vc;
     CADPalette *oc = w->oc;
-    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)treeview->selectionModel();
 
-    switch (selm->interaction_mode) {
+    switch (mdl->interaction_mode) {
 	case 0:
 	    v = vc;
 	    break;

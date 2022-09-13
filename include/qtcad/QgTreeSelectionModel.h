@@ -54,14 +54,8 @@ class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel
     public slots:
 	void select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags) override;
         void select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags) override;
-	void mode_change(int i);
-	void update_selected_node_relationships(const QModelIndex & index);
 
     public:
-	// There are a number of relationships which can be used for related
-	// node highlighting - this allows a client application to select one.
-	int interaction_mode = 0;
-
 	QgTreeView *treeview;
 };
 

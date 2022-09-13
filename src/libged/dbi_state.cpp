@@ -2198,7 +2198,9 @@ BSelectState::select_path(const char *path)
     if (!path_hashes.size())
 	return false;
 
-    return select_hpath(path_hashes);
+    bool ret = select_hpath(path_hashes);
+    characterize();
+    return ret;
 }
 
 bool
@@ -2248,11 +2250,10 @@ BSelectState::select_hpath(std::vector<unsigned long long> &hpath)
     // Add to selected set
     selected[shash] = hpath;
 
-    // Activate the paths from the newly selected path.
-    std::vector<unsigned long long> seed_hashes = hpath;
-    unsigned long long wshash = seed_hashes[seed_hashes.size() - 1];
-    seed_hashes.pop_back();
-    add_paths(wshash, seed_hashes);
+    // Note - with this lower level function, it is the caller's responsibility
+    // to call characterize to populate the path relationships - we deliberately
+    // do not do it here, so an application can do the work once per cycle
+    // rather than being forced to do it per path.
 
     return true;
 }
@@ -2267,7 +2268,9 @@ BSelectState::deselect_path(const char *path)
     if (!path_hashes.size())
 	return false;
 
-    return deselect_hpath(path_hashes);
+    bool ret = deselect_hpath(path_hashes);
+    characterize();
+    return ret;
 }
 
 bool
@@ -2288,6 +2291,11 @@ BSelectState::deselect_hpath(std::vector<unsigned long long> &hpath)
 
     // Finally, clear the selection itself
     selected.erase(phash);
+
+    // Note - with this lower level function, it is the caller's responsibility
+    // to call characterize to populate the path relationships - we deliberately
+    // do not do it here, so an application can do the work once per cycle
+    // rather than being forced to do it per path.
 
     return true;
 }
@@ -2311,6 +2319,52 @@ BSelectState::is_active(unsigned long long phash)
 	return false;
 
     if (active_paths.find(phash) == active_paths.end())
+	return false;
+
+    return true;
+}
+
+bool
+BSelectState::is_active_parent(unsigned long long phash)
+{
+    if (!phash)
+	return false;
+
+    if (active_parents.find(phash) == active_parents.end())
+	return false;
+
+    return true;
+}
+
+bool
+BSelectState::is_parent_obj(unsigned long long hash)
+{
+    if (is_immediate_parent_obj(hash) || is_grand_parent_obj(hash))
+	return true;
+
+    return false;
+}
+
+bool
+BSelectState::is_immediate_parent_obj(unsigned long long hash)
+{
+    if (!hash)
+	return false;
+
+    if (immediate_parents.find(hash) == immediate_parents.end())
+	return false;
+
+    return true;
+}
+
+bool
+BSelectState::is_grand_parent_obj(unsigned long long hash)
+{
+
+    if (!hash)
+	return false;
+
+    if (grand_parents.find(hash) == grand_parents.end())
 	return false;
 
     return true;
@@ -2434,15 +2488,14 @@ BSelectState::expand()
 	expand_paths(out_paths, shash, seed_hashes);
     }
 
-    // Clear selected and active solids.  Since we are expanding to leaf
-    // nodes, active solids will now be just the hashed selected paths
+    // Update selected.
     selected.clear();
-
     for (size_t i = 0; i < out_paths.size(); i++) {
 	unsigned long long phash = dbis->path_hash(out_paths[i], 0);
 	selected[phash] = out_paths[i];
-	active_paths.insert(phash);
     }
+
+    characterize();
 }
 
 void
@@ -2545,20 +2598,72 @@ BSelectState::collapse()
 	}
     }
 
-    // With the collapsed set ready, we may now generate new selected sets and
-    // active solids (we need the latter, since active paths keeps track of all
-    // paths which might be considered selected and parents of solids may now
-    // be in that set where they wouldn't be in (say) a fully expanded
-    // selection set.
     selected.clear();
-
     for (size_t i = 0; i < collapsed.size(); i++) {
 	unsigned long long phash = dbis->path_hash(collapsed[i], 0);
 	selected[phash] = collapsed[i];
-	std::vector<unsigned long long> seed_hashes = collapsed[i];
+    }
+
+    characterize();
+}
+
+void
+BSelectState::characterize()
+{
+    active_parents.clear();
+    immediate_parents.clear();
+    grand_parents.clear();
+
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
+    for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
+	std::vector<unsigned long long> seed_hashes = s_it->second;
 	unsigned long long shash = seed_hashes[seed_hashes.size() - 1];
 	seed_hashes.pop_back();
 	add_paths(shash, seed_hashes);
+
+	// Stash the parent paths above this specific selection
+	std::vector<unsigned long long> pitems = s_it->second;
+	size_t c = s_it->second.size() - 1;
+	while (c > 0) {
+	    pitems.pop_back();
+	    unsigned long long pphash = dbis->path_hash(s_it->second, c);
+	    active_parents.insert(pphash);
+	    c--;
+	}
+    }
+
+    // Now, characterizing related objects
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
+	if (s_it->second.size() == 1)
+	    continue;
+	for (pc_it = dbis->p_c.begin(); pc_it != dbis->p_c.end(); pc_it++) {
+	    if (pc_it->second.find(s_it->second[s_it->second.size() - 1]) != pc_it->second.end()) {
+		struct bu_vls pstr = BU_VLS_INIT_ZERO;
+		std::vector<unsigned long long> pitems;
+		pitems.push_back(pc_it->first);
+		dbis->print_path(&pstr, pitems);
+		immediate_parents.insert(pc_it->first);
+	    }
+	}
+    }
+
+    std::queue<unsigned long long> gqueue;
+    std::unordered_set<unsigned long long>::iterator i_it;
+    for (i_it = immediate_parents.begin(); i_it != immediate_parents.end(); i_it++) {
+	gqueue.push(*i_it);
+    }
+    while (!gqueue.empty()) {
+	unsigned long long obj = gqueue.front();
+	gqueue.pop();
+	for (pc_it = dbis->p_c.begin(); pc_it != dbis->p_c.end(); pc_it++) {
+	    if (pc_it->second.find(obj) != pc_it->second.end()) {
+		if (grand_parents.find(pc_it->first) == grand_parents.end()) {
+		    grand_parents.insert(pc_it->first);
+		    gqueue.push(pc_it->first);
+		}
+	    }
+	}
     }
 }
 
@@ -2594,7 +2699,7 @@ BSelectState::refresh()
 	selected.erase(to_clear[i]);
     }
 
-    // For all surviving selections, generate paths 
+    // For all surviving selections, generate paths
     for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
 	std::vector<unsigned long long> seed_hashes = s_it->second;
 	unsigned long long shash = seed_hashes[seed_hashes.size() - 1];

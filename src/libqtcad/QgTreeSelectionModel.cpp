@@ -40,8 +40,8 @@ QgTreeSelectionModel::clear_all()
     std::vector<BSelectState *> sv = m->gedp->dbi_state->get_selected_states(NULL);
     BSelectState *ss = sv[0];
     ss->clear();
+    ss->characterize();
 }
-
 
 void
 QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags)
@@ -83,6 +83,9 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 	}
     }
 
+    // Done manipulating paths - update metadata
+    ss->characterize();
+
     unsigned long long sflags = QTCAD_VIEW_SELECT;
     if (ss->draw_sync())
 	sflags |= QTCAD_VIEW_REFRESH;
@@ -111,6 +114,9 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
     if (!snode) {
 	ss->clear();
 
+	// Done manipulating paths - update metadata
+	ss->characterize();
+
 	unsigned long long sflags = QTCAD_VIEW_SELECT;
 	if (ss->draw_sync())
 	    sflags |= QTCAD_VIEW_REFRESH;
@@ -126,6 +132,8 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 	if (flags & QItemSelectionModel::Select && ss->is_selected(snode->path_hash())) {
 	    std::vector<unsigned long long> path_hashes = snode->path_items();
 	    ss->deselect_hpath(path_hashes);
+	    // Done manipulating paths - update metadata
+	    ss->characterize();
 	    unsigned long long sflags = QTCAD_VIEW_SELECT;
 	    if (ss->draw_sync())
 		sflags |= QTCAD_VIEW_REFRESH;
@@ -144,164 +152,16 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 
     }
 
+    // Done manipulating paths - update metadata
+    ss->characterize();
+
     unsigned long long sflags = QTCAD_VIEW_SELECT;
     if (ss->draw_sync())
 	sflags |= QTCAD_VIEW_REFRESH;
+
     emit treeview->view_changed(sflags);
     emit treeview->m->layoutChanged();
 }
-
-void
-QgTreeSelectionModel::mode_change(int i)
-{
-    if (i != interaction_mode && treeview) {
-	interaction_mode = i;
-	update_selected_node_relationships(treeview->selected());
-    }
-}
-
-// These functions tell the related-object highlighting logic what the current
-// status is.  We need to do this whenever the selected object is changed -
-// highlighted items may change anywhere (or everywhere) in the tree view with
-// any operation, so we have to check everything.
-//
-// Note that we're setting flags here, not deciding whether to highlight a
-// particular QgItem.  That decision will be made later, and is a combination
-// of active_flag status and the open status of the QgItem.
-//
-// TODO - this may be the correct place to also illuminate or de-illuminate the
-// drawn solids in response to tree selections, in which case this method name
-// should be generalized...
-void
-QgTreeSelectionModel::update_selected_node_relationships(const QModelIndex &idx)
-{
-    // Clear all highlighting state
-    QgModel *m = treeview->m;
-    if (!m)
-	return;
-
-    if (!idx.isValid() || interaction_mode == QgViewMode) {
-	// For the case of a selection change, emit a layout change signal so
-	// the drawBranches call updates the portions of the row colors not
-	// handled by the itemDelegate painting.  For expand and close
-	// operations on items this is already handled by Qt, but layout
-	// updating is not a normal part of the selection process in most tree
-	// views so for the customized selection drawing we do we need to call
-	// it manually.
-	emit m->layoutChanged();
-	return;
-    }
-
-    QgItem *snode = static_cast<QgItem *>(idx.internalPointer());
-
-    if (!snode) {
-	emit m->layoutChanged();
-	return;
-    }
-}
-
-#if 0
-    std::vector<unsigned long long> parent_child;
-    unsigned long long phash = (snode->parent) ? snode->parent->ihash : 0;
-    unsigned long long chash = snode->ihash;
-    unsigned long long ihash = m->gedp->dbi_state->path_hash(parent_child);
-
-    std::unordered_set<unsigned long long> processed;
-    processed.insert(ihash);
-
-    std::queue<gInstance *> to_flag;
-    // If we're in QgInstanceEditMode, we key off of the exact gInstance
-    // pointer that corresponds to this instance.  Since that instance is
-    // unique, we only need to flag parent instances (and all the parents of
-    // those parents) so the parent QgItems know to highlight themselves if
-    // their children are closed.
-    if (interaction_mode == QgInstanceEditMode) {
-
-	sg->active_flag = 3;
-
-	// For gInstances where the child dp == the parent (i.e. the comb
-	// directly containing the instance), set to 2
-	std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
-	for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
-	    gInstance *cd = g_it->second;
-	    if (cd->dp == sg->parent && processed.find(cd) == processed.end()) {
-		cd->active_flag = 2;
-		to_flag.push(cd);
-		processed.insert(cd);
-	    }
-	}
-	// For gInstances above the active instance, set to 1
-	while (!to_flag.empty()) {
-	    gInstance *curr = to_flag.front();
-	    to_flag.pop();
-	    if (!curr->parent)
-		continue;
-	    for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
-		gInstance *cd = g_it->second;
-		if (cd->dp == curr->parent && processed.find(cd) == processed.end()) {
-		    cd->active_flag = 1;
-		    to_flag.push(cd);
-		    processed.insert(cd);
-		}
-	    }
-	}
-	// For the case of a selection change, emit a layout change signal so
-	// the drawBranches call updates the portions of the row colors not
-	// handled by the itemDelegate painting.  For expand and close
-	// operations on items this is already handled by Qt, but layout
-	// updating is not a normal part of the selectio  n process in most
-	// tree views so for the customized selection drawing we do we need to
-	// call it manually.
-	emit m->layoutChanged();
-	return;
-    }
-
-    // If we're in QgPrimitiveEditMode, we have slightly different work to do -
-    // we need to check the gInstances to see if anybody else is using the same
-    // dp as sg - if so, they are also directly being altered in this mode
-    // since their underlying primitive may change.  We then need to flag all
-    // the parent instances of all the activated gInstances (and all their
-    // parents) so the tree will know which combs to highlight to indicate
-    // there is a relevant object in the subtree.
-    if (interaction_mode == QgPrimitiveEditMode) {
-	for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
-	    gInstance *cg = g_it->second;
-	    if (cg->dp == sg->dp) {
-		cg->active_flag = 2;
-		to_flag.push(cg);
-		processed.insert(cg);
-	    }
-	}
-	// Iterate over parents and parents of parents of any gInstance with
-	// active_flag set until all parents have been assigned an active_flag
-	// of at least 1 (or two, if they are one of the exact matches from the
-	// previous step.)
-	while (!to_flag.empty()) {
-	    gInstance *curr = to_flag.front();
-	    to_flag.pop();
-	    if (!curr->parent)
-		continue;
-	    for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
-		gInstance *cd = g_it->second;
-		if (curr->parent == cd->dp && processed.find(cd) == processed.end()) {
-		    cd->active_flag = 1;
-		    to_flag.push(cd);
-		    processed.insert(cd);
-		}
-	    }
-	}
-	// For the case of a selection change, emit a layout change signal so
-	// the drawBranches call updates the portions of the row colors not
-	// handled by the itemDelegate painting.  For expand and close
-	// operations on items this is already handled by Qt, but layout
-	// updating is not a normal part of the selectio  n process in most
-	// tree views so for the customized selection drawing we do we need to
-	// call it manually.
-	emit m->layoutChanged();
-	return;
-    }
-}
-#endif
 
 // Local Variables:
 // tab-width: 8

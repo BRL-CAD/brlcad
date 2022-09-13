@@ -403,9 +403,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // panels for the two modes.  That's looking like it may be overkill, so
     // the interaction mode of oc may need to change for the specific comb case
     // of editing an instance in the comb tree.
-    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)treeview->selectionModel();
-    connect(vc, &CADPalette::interaction_mode, selm, &QgTreeSelectionModel::mode_change);
-    connect(oc, &CADPalette::interaction_mode, selm, &QgTreeSelectionModel::mode_change);
+    //QgTreeSelectionModel *selm = (QgTreeSelectionModel *)treeview->selectionModel();
+    //connect(vc, &CADPalette::interaction_mode, selm, &QgTreeSelectionModel::mode_change);
+    //connect(oc, &CADPalette::interaction_mode, selm, &QgTreeSelectionModel::mode_change);
 
 
     // Dialogues for attribute viewing (and eventually manipulation)

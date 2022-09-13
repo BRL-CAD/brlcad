@@ -734,15 +734,37 @@ QgModel::data(const QModelIndex &index, int role) const
 	return QVariant(vs->is_hdrawn(-1, qi->path_hash()));
     }
     if (role == SelectDisplayRole) {
-	std::vector<BSelectState *> sv = qi->mdl->gedp->dbi_state->get_selected_states(NULL);
-	BSelectState *ss = sv[0];
-	return QVariant(ss->is_selected(qi->path_hash()));
+	BSelectState *ss = qi->mdl->gedp->dbi_state->find_selected_state(NULL);
+	if (ss)
+	    return QVariant(ss->is_selected(qi->path_hash()));
     }
 
     if (role == TypeIconDisplayRole)
 	return QVariant(qi->icon);
-    //if (role == HighlightDisplayRole)
-	//return qi->instance()->active_flag;
+
+    if (role == HighlightDisplayRole) {
+	BSelectState *ss = qi->mdl->gedp->dbi_state->find_selected_state(NULL);
+	if (!ss)
+	    return QVariant();
+	switch (qi->mdl->interaction_mode) {
+	    case 0:
+		if (qi->open_itm == false && ss->is_active_parent(qi->path_hash()))
+		    return QVariant(1);
+		return QVariant(0);
+	    case 1:
+		if (ss->is_parent_obj(qi->ihash))
+		    return QVariant(2);
+		return QVariant(0);
+	    case 2:
+		if (ss->is_immediate_parent_obj(qi->ihash))
+		    return QVariant(3);
+		if (ss->is_grand_parent_obj(qi->ihash))
+		    return QVariant(2);
+		return QVariant(0);
+	    default:
+		return QVariant(0);
+	}
+    }
 
     return QVariant();
 }
