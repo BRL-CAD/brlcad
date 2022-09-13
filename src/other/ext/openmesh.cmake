@@ -24,10 +24,10 @@ if (BRLCAD_OPENMESH_BUILD)
     set(OPENMESH_STATICNAME libOpenMeshCore)
     set(OPENMESH_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.1.0)
   else (MSVC)
-    set(OPENMESH_BASENAME libOpenMeshCore)
-    set(OPENMESH_STATICNAME libOpenMeshCore)
+    set(OPENMESH_BASENAME libOpenMesh)
+    set(OPENMESH_STATICNAME libOpenMesh)
     set(OPENMESH_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.9.0)
-    set(OPENMESH_SYMLINK_1 ${OPENMESH_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
+#     set(OPENMESH_SYMLINK_1 ${OPENMESH_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
   endif (MSVC)
 
   set(OPENMESH_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/openmesh)
@@ -58,26 +58,263 @@ if (BRLCAD_OPENMESH_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/OPENMESH_BLD-prefix")
 
   # Tell the parent build about files and libraries
-  ExternalProject_Target(SHARED openmesh OPENMESH_BLD ${OPENMESH_INSTDIR}
-    ${OPENMESH_BASENAME}${OPENMESH_SUFFIX}
-    SYMLINKS ${OPENMESH_SYMLINK_1};${OPENMESH_SYMLINK_2}
-    LINK_TARGET ${OPENMESH_SYMLINK_1}
+  set(OPENMESH_LIBS Core Tools)
+#   message("-----_Target-----")
+  foreach(OMLIB ${OPENMESH_LIBS})
+#     message("-----OPENMESH_FOREACH-----")
+#     message("${OMLIB} | ${OPENMESH_BASENAME}${OMLIB}${OPENMESH_SUFFIX} | SYMLINKS ${OPENMESH_BASENAME}${OMLIB}${CMAKE_SHARED_LIBRARY_SUFFIX} | LINK_TARGET ${OPENMESH_BASENAME}${OMLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    ExternalProject_Target(SHARED ${OMLIB} OPENMESH_BLD ${OPENMESH_INSTDIR}
+    ${OPENMESH_BASENAME}${OMLIB}${OPENMESH_SUFFIX}
+    SYMLINKS ${OPENMESH_BASENAME}${OMLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    LINK_TARGET ${OPENMESH_BASENAME}${OMLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}
     RPATH
     )
+  endforeach(OMLIB ${OPENMESH_LIBS})
 
-  ExternalProject_ByProducts(openmesh OPENMESH_BLD ${OPENMESH_INSTDIR} ${INCLUDE_DIR}/openmesh
+  # TODO: add ByProducts
+  set(OPENMESH_HDRS
     NOINSTALL
+    Core/Geometry/Config.hh
+    Core/Geometry/LoopSchemeMaskT.hh
+    Core/Geometry/NormalConeT.hh
+    Core/Geometry/Plane3d.hh
+    Core/Geometry/Vector11T.hh
+    Core/Geometry/VectorT_inc.hh
+    Core/Geometry/EigenVectorT.hh
+    Core/Geometry/MathDefs.hh
+    Core/Geometry/NormalConeT_impl.hh
+    Core/Geometry/QuadricT.hh
+    Core/Geometry/VectorT.hh
+    Core/IO/BinaryHelper.hh
+    Core/IO/exporter/BaseExporter.hh
+    Core/IO/exporter/ExporterT.hh
+    Core/IO/importer/BaseImporter.hh
+    Core/IO/importer/ImporterT.hh
+    Core/IO/IOInstances.hh
+    Core/IO/IOManager.hh
+    Core/IO/MeshIO.hh
+    Core/IO/OFFFormat.hh
+    Core/IO/OMFormat.hh
+    Core/IO/OMFormatT_impl.hh
+    Core/IO/Options.hh
+    Core/IO/reader/BaseReader.hh
+    Core/IO/reader/OBJReader.hh
+    Core/IO/reader/OFFReader.hh
+    Core/IO/reader/OMReader.hh
+    Core/IO/reader/PLYReader.hh
+    Core/IO/reader/STLReader.hh
+    Core/IO/SR_binary.hh
+    Core/IO/SR_binary_spec.hh
+    Core/IO/SR_binary_vector_of_bool.inl
+    Core/IO/SR_rbo.hh
+    Core/IO/SR_store.hh
+    Core/IO/SR_types.hh
+    Core/IO/StoreRestore.hh
+    Core/IO/writer/BaseWriter.hh
+    Core/IO/writer/OBJWriter.hh
+    Core/IO/writer/OFFWriter.hh
+    Core/IO/writer/OMWriter.hh
+    Core/IO/writer/PLYWriter.hh
+    Core/IO/writer/STLWriter.hh
+    Core/IO/writer/VTKWriter.hh
+    Core/Mesh/ArrayItems.hh
+    Core/Mesh/ArrayKernel.hh
+    Core/Mesh/ArrayKernelT_impl.hh
+    Core/Mesh/AttribKernelT.hh
+    Core/Mesh/Attributes.hh
+    Core/Mesh/BaseKernel.hh
+    Core/Mesh/BaseMesh.hh
+    Core/Mesh/Casts.hh
+    Core/Mesh/CirculatorsT.hh
+    Core/Mesh/DefaultPolyMesh.hh
+    Core/Mesh/DefaultTriMesh.hh
+    Core/Mesh/FinalMeshItemsT.hh
+    Core/Mesh/gen/circulators_header.hh
+    Core/Mesh/gen/circulators_template.hh
+    Core/Mesh/gen/footer.hh
+    Core/Mesh/gen/iterators_header.hh
+    Core/Mesh/gen/iterators_template.hh
+    Core/Mesh/Handles.hh
+    Core/Mesh/IteratorsT.hh
+    Core/Mesh/PolyConnectivity.hh
+    Core/Mesh/PolyConnectivity_inline_impl.hh
+    Core/Mesh/PolyMesh_ArrayKernelT.hh
+    Core/Mesh/PolyMeshT.hh
+    Core/Mesh/PolyMeshT_impl.hh
+    Core/Mesh/SmartHandles.hh
+    Core/Mesh/SmartRange.hh
+    Core/Mesh/Status.hh
+    Core/Mesh/Tags.hh
+    Core/Mesh/Traits.hh
+    Core/Mesh/TriConnectivity.hh
+    Core/Mesh/TriMesh_ArrayKernelT.hh
+    Core/Mesh/TriMeshT.hh
+    Core/Mesh/TriMeshT_impl.hh
+    Core/System/compiler.hh
+    Core/System/config.h
+    Core/System/config.hh
+    Core/System/mostream.hh
+    Core/System/omstream.hh
+    Core/System/OpenMeshDLLMacros.hh
+    Core/Utils/AutoPropertyHandleT.hh
+    Core/Utils/BaseProperty.hh
+    Core/Utils/color_cast.hh
+    Core/Utils/Endian.hh
+    Core/Utils/GenProg.hh
+    Core/Utils/HandleToPropHandle.hh
+    Core/Utils/Noncopyable.hh
+    Core/Utils/Predicates.hh
+    Core/Utils/PropertyContainer.hh
+    Core/Utils/PropertyCreator.hh
+    Core/Utils/Property.hh
+    Core/Utils/PropertyManager.hh
+    Core/Utils/RandomNumberGenerator.hh
+    Core/Utils/SingletonT.hh
+    Core/Utils/SingletonT_impl.hh
+    Core/Utils/typename.hh
+    Core/Utils/vector_cast.hh
+    Core/Utils/vector_traits.hh
+    Tools/Decimater/BaseDecimaterT.hh
+    Tools/Decimater/BaseDecimaterT_impl.hh
+    Tools/Decimater/CollapseInfoT.hh
+    Tools/Decimater/DecimaterT.hh
+    Tools/Decimater/DecimaterT_impl.hh
+    Tools/Decimater/McDecimaterT.hh
+    Tools/Decimater/McDecimaterT_impl.hh
+    Tools/Decimater/MixedDecimaterT.hh
+    Tools/Decimater/MixedDecimaterT_impl.hh
+    Tools/Decimater/ModAspectRatioT.hh
+    Tools/Decimater/ModAspectRatioT_impl.hh
+    Tools/Decimater/ModBaseT.hh
+    Tools/Decimater/ModEdgeLengthT.hh
+    Tools/Decimater/ModEdgeLengthT_impl.hh
+    Tools/Decimater/ModHausdorffT.hh
+    Tools/Decimater/ModHausdorffT_impl.hh
+    Tools/Decimater/ModIndependentSetsT.hh
+    Tools/Decimater/ModNormalDeviationT.hh
+    Tools/Decimater/ModNormalFlippingT.hh
+    Tools/Decimater/ModProgMeshT.hh
+    Tools/Decimater/ModProgMeshT_impl.hh
+    Tools/Decimater/ModQuadricT.hh
+    Tools/Decimater/ModQuadricT_impl.hh
+    Tools/Decimater/ModRoundnessT.hh
+    Tools/Decimater/Observer.hh
+    Tools/Dualizer/meshDualT.hh
+    Tools/Kernel_OSG/ArrayKernelT.hh
+    Tools/Kernel_OSG/AttribKernelT.hh
+    Tools/Kernel_OSG/bindT.hh
+    Tools/Kernel_OSG/color_cast.hh
+    Tools/Kernel_OSG/PropertyKernel.hh
+    Tools/Kernel_OSG/PropertyT.hh
+    Tools/Kernel_OSG/Traits.hh
+    Tools/Kernel_OSG/TriMesh_OSGArrayKernelT.hh
+    Tools/Kernel_OSG/VectorAdapter.hh
+    Tools/SmartTagger/SmartTaggerT.hh
+    Tools/SmartTagger/SmartTaggerT_impl.hh
+    Tools/Smoother/JacobiLaplaceSmootherT.hh
+    Tools/Smoother/JacobiLaplaceSmootherT_impl.hh
+    Tools/Smoother/LaplaceSmootherT.hh
+    Tools/Smoother/LaplaceSmootherT_impl.hh
+    Tools/Smoother/SmootherT.hh
+    Tools/Smoother/SmootherT_impl.hh
+    Tools/Smoother/smooth_mesh.hh
+    Tools/Subdivider/Adaptive/Composite/CompositeT.hh
+    Tools/Subdivider/Adaptive/Composite/CompositeT_impl.hh
+    Tools/Subdivider/Adaptive/Composite/CompositeTraits.hh
+    Tools/Subdivider/Adaptive/Composite/RuleInterfaceT.hh
+    Tools/Subdivider/Adaptive/Composite/RulesT.hh
+    Tools/Subdivider/Adaptive/Composite/RulesT_impl.hh
+    Tools/Subdivider/Adaptive/Composite/Traits.hh
+    Tools/Subdivider/Uniform/CatmullClarkT.hh
+    Tools/Subdivider/Uniform/CatmullClarkT_impl.hh
+    Tools/Subdivider/Uniform/Composite/CompositeT.hh
+    Tools/Subdivider/Uniform/Composite/CompositeT_impl.hh
+    Tools/Subdivider/Uniform/Composite/CompositeTraits.hh
+    Tools/Subdivider/Uniform/CompositeLoopT.hh
+    Tools/Subdivider/Uniform/CompositeSqrt3T.hh
+    Tools/Subdivider/Uniform/LongestEdgeT.hh
+    Tools/Subdivider/Uniform/LoopT.hh
+    Tools/Subdivider/Uniform/MidpointT.hh
+    Tools/Subdivider/Uniform/ModifiedButterFlyT.hh
+    Tools/Subdivider/Uniform/Sqrt3InterpolatingSubdividerLabsikGreinerT.hh
+    Tools/Subdivider/Uniform/Sqrt3T.hh
+    Tools/Subdivider/Uniform/SubdividerT.hh
+    Tools/Utils/Config.hh
+    Tools/Utils/conio.hh
+    Tools/Utils/getopt.h
+    Tools/Utils/GLConstAsString.hh
+    Tools/Utils/Gnuplot.hh
+    Tools/Utils/HeapT.hh
+    Tools/Utils/MeshCheckerT.hh
+    Tools/Utils/MeshCheckerT_impl.hh
+    Tools/Utils/NumLimitsT.hh
+    Tools/Utils/StripifierT.hh
+    Tools/Utils/StripifierT_impl.hh
+    Tools/Utils/TestingFramework.hh
+    Tools/Utils/Timer.hh
+    Tools/VDPM/MeshTraits.hh
+    Tools/VDPM/StreamingDef.hh
+    Tools/VDPM/VFront.hh
+    Tools/VDPM/VHierarchy.hh
+    Tools/VDPM/VHierarchyNode.hh
+    Tools/VDPM/VHierarchyNodeIndex.hh
+    Tools/VDPM/VHierarchyWindow.hh
+    Tools/VDPM/ViewingParameters.hh
+  )
+
+#   ExternalProject_Target(SHARED Core OPENMESH_BLD ${OPENMESH_INSTDIR}
+#     ${OPENMESH_BASENAME}Core${OPENMESH_SUFFIX}
+#     SYMLINKS ${OPENMESH_BASENAME}Core${OPENMESH_SUFFIX}
+#     LINK_TARGET ${OPENMESH_BASENAME}Core${OPENMESH_SUFFIX}
+#     RPATH
+#     )
+  
+
+  ExternalProject_ByProducts(openmesh OPENMESH_BLD ${OPENMESH_INSTDIR} ${INCLUDE_DIR}/OpenMesh
+    ${OPENMESH_HDRS}
     )
   set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openmesh CACHE STRING "Bundled system include dirs" FORCE)
 
-  set(OPENMESH_LIBRARY openmesh CACHE STRING "Building bundled openmesh" FORCE)
-  set(OPENMESH_LIBRARIES openmesh CACHE STRING "Building bundled openmesh" FORCE)
+  set(OPENMESH_CORE_GEOMETRY_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Core/Geometry CACHE STRING "Building bundled OpenMesh" FORCE)
+  set(OPENMESH_CORE_IO_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Core/IO CACHE STRING "Building bundled OpenMesh" FORCE)
+  set(OPENMESH_CORE_MESH_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Core/Mesh CACHE STRING "Building bundled OpenMesh" FORCE)
+  set(OPENMESH_CORE_SYSTEM_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Core/System CACHE STRING "Building bundled OpenMesh" FORCE)
+  set(OPENMESH_CORE_UTILS_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Core/Utils CACHE STRING "Building bundled OpenMesh" FORCE)
+  set(OPENMESH_TOOLS_DECIMATER_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/Decimater CACHE STRING "Building bundled OpenMesh" FORCE)
+  set(OPENMESH_TOOLS_DUALIZER_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/Dualizer CACHE STRING "Building bundled OpenMesh" FORCE)
+  set(OPENMESH_TOOLS_KERNERL_OSG_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/Kernel_OSG CACHE STRING "Building bundled OpenMesh" FORCE)
+  set(OPENMESH_TOOLS_SMARTTAGGER_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/SmartTagger CACHE STRING "Building bundled OpenMesh" FORCE)
+  set(OPENMESH_TOOLS_SMOOTHER_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/Smoother CACHE STRING "Building bundled OpenMesh" FORCE)
+  set(OPENMESH_TOOLS_SUBDIVIDER_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/Subdivider CACHE STRING "Building bundled OpenMesh" FORCE)
+  set(OPENMESH_TOOLS_UTILS_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/Utils CACHE STRING "Building bundled OpenMesh" FORCE)
+  set(OPENMESH_TOOLS_VDPM_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/VDPM CACHE STRING "Building bundled OpenMesh" FORCE)
+  
 
-  set(OPENMESH_INCLUDE_DIR
-    "${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/openmesh"
-    "${BRLCAD_SOURCE_DIR}/src/other/ext/openmesh"
+#   set(OPENMESH_CORE_LIBRARY Core CACHE STRING "Building bundled OPENMESH" FORCE)
+
+  set(OPENMESH_INCLUDE_DIRS
+    ${OPENMESH_CORE_GEOMETRY_DIR}
+    ${OPENMESH_CORE_IO_DIR}
+    ${OPENMESH_CORE_MESH_DIR}
+    ${OPENMESH_CORE_SYSTEM_DIR}
+    ${OPENMESH_CORE_UTILS_DIR}
+    ${OPENMESH_TOOLS_DECIMATER_DIR}
+    ${OPENMESH_TOOLS_DUALIZER_DIR}
+    ${OPENMESH_TOOLS_KERNERL_OSG_DIR}
+    ${OPENMESH_TOOLS_SMARTTAGGER_DIR}
+    ${OPENMESH_TOOLS_SMOOTHER_DIR}
+    ${OPENMESH_TOOLS_SUBDIVIDER_DIR}
+    ${OPENMESH_TOOLS_UTILS_DIR}
+    ${OPENMESH_TOOLS_VDPM_DIR}
     CACHE STRING "Directories containing OPENMESH headers." FORCE)
-  set(OPENMESH_INCLUDE_DIRS "${OPENMESH_INCLUDE_DIR}" CACHE STRING "Directories containing OPENMESH headers." FORCE)
+
+  set(OPENMESH_LIBRARIES
+    ${OPENMESH_LIBS}
+#     ${OPENMESH_CORE_LIBRARY}
+    CACHE STRING "OPENMESH libraries." FORCE)
+
+#   set(OPENMESH_LIBRARY openmesh_core CACHE STRING "Building bundled openmesh" FORCE)
+#   set(OPENMESH_LIBRARIES openmesh CACHE STRING "Building bundled openmesh" FORCE)
 
   SetTargetFolder(OPENMESH_BLD "Third Party Libraries")
   SetTargetFolder(openmesh "Third Party Libraries")
