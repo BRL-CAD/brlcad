@@ -314,6 +314,7 @@ CADViewSelecter::process_obj_bbox(int mode)
 	bu_vls_free(&dpath);
 
 	ss->characterize();
+	ss->draw_sync();
 
 	return true;
     }
@@ -385,6 +386,7 @@ CADViewSelecter::process_obj_bbox(int mode)
 	bu_vls_free(&dpath);
 
 	ss->characterize();
+	ss->draw_sync();
 
 	return true;
 
