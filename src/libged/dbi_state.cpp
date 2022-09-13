@@ -1450,14 +1450,20 @@ BViewState::depth_group_collapse(
 	std::unordered_set<unsigned long long> &pckeys = depth_groups.rbegin()->second;
 	bu_log("depth_groups(%zd) key count: %zd\n", plen, pckeys.size());
 
-	// For a given depth, group the paths by parent comb.  This results
+	// For a given depth, group the paths by parent path.  This results
 	// in path sub-groups which will define for us how "fully drawn"
-	// that particular parent comb is.
+	// that particular parent comb instance is.
 	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> grouped_pckeys;
+	std::unordered_map<unsigned long long, unsigned long long> pcomb;
 	std::unordered_set<unsigned long long>::iterator s_it;
 	for (s_it = pckeys.begin(); s_it != pckeys.end(); s_it++) {
 	    std::vector<unsigned long long> &pc_path = s_keys[*s_it];
-	    grouped_pckeys[pc_path[plen-2]].insert(*s_it);
+	    unsigned long long ppathhash = dbis->path_hash(pc_path, plen - 1);
+	    grouped_pckeys[ppathhash].insert(*s_it);
+	    pcomb[ppathhash] = pc_path[plen-2];
+	    std::vector<unsigned long long> pc_path2 = s_keys[*s_it];
+	    pc_path2.pop_back();
+	    bu_log("group %llu (%zd, %zd): %s\n", ppathhash, plen - 1, pc_path.size(), dbis->pathstr(pc_path));
 	}
 
 	// For each parent/child grouping, compare it against the .g ground
@@ -1467,6 +1473,11 @@ BViewState::depth_group_collapse(
 	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pg_it;
 	for (pg_it = grouped_pckeys.begin(); pg_it != grouped_pckeys.end(); pg_it++) {
 
+	    unsigned long long cpkey = *pg_it->second.begin();
+	    std::vector<unsigned long long> check_path = s_keys[cpkey];
+	    check_path.pop_back();
+	    bu_log("check: %s\n", dbis->pathstr(check_path));
+
 	    // As above, use the full path from the s_keys, but this time
 	    // we're collecting the children.  This is the set we need to compare
 	    // against the .g ground truth to determine fully or partially drawn.
@@ -1475,18 +1486,24 @@ BViewState::depth_group_collapse(
 	    for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
 		std::vector<unsigned long long> &pc_path = s_keys[*s_it];
 		g_children.insert(pc_path[plen-1]);
+		bu_log("g_children insert: %s\n", dbis->hashstr(pc_path[plen-1]));
 	    }
 
 	    // Do the check against the .g comb children info - the "ground truth"
 	    // that defines what must be present for a fully drawn comb
 	    bool is_fully_drawn = true;
-	    std::unordered_set<unsigned long long> &ground_truth = dbis->p_c[pg_it->first];
+	    std::unordered_set<unsigned long long> &ground_truth = dbis->p_c[pcomb[pg_it->first]];
+	    for (s_it = ground_truth.begin(); s_it != ground_truth.end(); s_it++) {
+		bu_log("ground truth child: %s\n", dbis->hashstr(*s_it));
+	    }
 	    for (s_it = ground_truth.begin(); s_it != ground_truth.end(); s_it++) {
 		if (g_children.find(*s_it) == g_children.end()) {
+		    bu_log("child not found: %s\n", dbis->hashstr(*s_it));
 		    is_fully_drawn = false;
 		    break;
 		}
 	    }
+	    bu_log("fully drawn: %d\n", is_fully_drawn);
 
 	    // All the sub-paths in this grouping are fully drawn, whether
 	    // or not they define a fully drawn parent, so stash their
@@ -1567,11 +1584,9 @@ BViewState::cache_collapsed()
     // prior state, not the current state.
 
     // Reset containers
-    drawn_paths.clear();
-    all_drawn_paths.clear();
-    partially_drawn_paths.clear();
-    all_collapsed.clear();
     mode_collapsed.clear();
+    drawn_paths.clear();
+    partially_drawn_paths.clear();
 
     // Each mode is initially processed separately, so we maintain
     // awareness of the drawing state in various modes
@@ -1603,6 +1618,7 @@ BViewState::cache_collapsed()
 
     // Having processed all the modes, we now do the same thing without regards to
     // drawing mode, to provide "who" with a mode-agnostic list of drawn paths.
+    all_collapsed.clear();
     std::map<size_t, std::unordered_set<unsigned long long>> all_depth_groups;
     for (mm_it = mode_map.begin(); mm_it != mode_map.end(); mm_it++) {
 	// Group paths of the same depth.  Depth == 1 paths are already
@@ -1618,11 +1634,14 @@ BViewState::cache_collapsed()
 		all_drawn_paths.insert(dhash);
 	    } else {
 		// Populate mode-agnostic container
+		bu_log("add %llu (%zd): %s\n", k_it->first, k_it->second.size(), dbis->pathstr(k_it->second));
 		all_depth_groups[k_it->second.size()].insert(k_it->first);
 	    }
 	}
     }
 
+    all_drawn_paths.clear();
+    all_partially_drawn_paths.clear();
     depth_group_collapse(all_collapsed, all_drawn_paths, all_partially_drawn_paths, all_depth_groups);
 
 #if 0
@@ -1805,7 +1824,6 @@ BViewState::gather_paths(
     }
 
     path_hashes.push_back(c_hash);
-    bu_log("gather_paths: %s\n", dbis->pathstr(path_hashes));
 
     mat_t om, nm;
     /* Update current matrix state to reflect the new branch of
