@@ -26,6 +26,7 @@ set(BOT_SRCS
   check.cpp
   extrude.cpp
   remesh.cpp
+  openmesh_tools.cpp
   ../../libbu/fort.c
   )
 

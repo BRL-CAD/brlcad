@@ -702,6 +702,7 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "check",      _bot_cmd_check},
     { "chull",      _bot_cmd_chull},
     { "isect",      _bot_cmd_isect},
+    { "openmesh",   _bot_cmd_om},
     { "remesh",     _bot_cmd_remesh},
     { "set",        _bot_cmd_set},
     { "split",      _bot_cmd_split},
