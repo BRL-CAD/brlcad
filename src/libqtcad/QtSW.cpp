@@ -72,6 +72,7 @@ QtSW::~QtSW()
 
 void QtSW::need_update()
 {
+    QTCAD_SLOT("QtSW::need_update", 1);
     dm_set_dirty(dmp, 1);
     update();
 }
@@ -420,6 +421,7 @@ QtSW::disableDefaultMouseBindings()
 void
 QtSW::set_lmouse_move_default(int mm)
 {
+    QTCAD_SLOT("QtSW::set_lmouse_move_default", 1);
     lmouse_mode = mm;
 }
 

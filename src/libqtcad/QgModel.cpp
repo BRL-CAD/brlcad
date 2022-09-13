@@ -863,6 +863,7 @@ QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 int
 QgModel::draw_action()
 {
+    QTCAD_SLOT("QgModel::draw_action", 1);
     // https://stackoverflow.com/a/28647342/2037687
     QAction *a = qobject_cast<QAction *>(sender());
     QVariant v = a->data();
@@ -880,6 +881,7 @@ QgModel::draw_action()
 int
 QgModel::draw(const char *inst_path)
 {
+    QTCAD_SLOT("QgModel::draw", 1);
     const char *argv[2];
     argv[0] = "draw";
     argv[1] = inst_path;
@@ -894,6 +896,7 @@ QgModel::draw(const char *inst_path)
 int
 QgModel::erase_action()
 {
+    QTCAD_SLOT("QgModel::erase_action", 1);
     // https://stackoverflow.com/a/28647342/2037687
     QAction *a = qobject_cast<QAction *>(sender());
     QVariant v = a->data();
@@ -911,6 +914,7 @@ QgModel::erase_action()
 int
 QgModel::erase(const char *inst_path)
 {
+    QTCAD_SLOT("QgModel::erase", 1);
     const char *argv[2];
     argv[0] = "erase";
     argv[1] = inst_path;
@@ -925,6 +929,7 @@ QgModel::erase(const char *inst_path)
 void
 QgModel::toggle_hierarchy()
 {
+    QTCAD_SLOT("QgModel::toggle_hierarchy", 1);
     if (!gedp || !gedp->dbip)
 	return;
 
@@ -936,6 +941,7 @@ QgModel::toggle_hierarchy()
 void
 QgModel::item_collapsed(const QModelIndex &index)
 {
+    QTCAD_SLOT("QgModel::item_collapsed", 1);
     QgItem *itm = getItem(index);
     itm->open_itm = false;
 }
@@ -943,6 +949,7 @@ QgModel::item_collapsed(const QModelIndex &index)
 void
 QgModel::item_expanded(const QModelIndex &index)
 {
+    QTCAD_SLOT("QgModel::item_expanded", 1);
     QgItem *itm = getItem(index);
     itm->open_itm = true;
 }

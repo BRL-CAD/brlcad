@@ -36,6 +36,8 @@ QgDockWidget::QgDockWidget(const QString &title, QWidget *parent)
 void
 QgDockWidget::toWindow(bool floating)
 {
+    QTCAD_SLOT("QgDockWidget::toWindow", 1);
+
     if (floating) {
 	setWindowFlags(
 		Qt::CustomizeWindowHint |

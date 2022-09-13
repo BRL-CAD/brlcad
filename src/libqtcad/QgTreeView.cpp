@@ -231,11 +231,13 @@ void QgTreeView::mousePressEvent(QMouseEvent *e)
 
 void QgTreeView::tree_column_size(const QModelIndex &)
 {
+    QTCAD_SLOT("QgTreeView::tree_column_size", 1);
     header_state();
 }
 
 void QgTreeView::context_menu(const QPoint &point)
 {
+    QTCAD_SLOT("QgTreeView::context_menu", 1);
     QModelIndex index = indexAt(point);
     QgItem *cnode = static_cast<QgItem *>(index.internalPointer());
 
@@ -272,6 +274,7 @@ void QgTreeView::context_menu(const QPoint &point)
 
 void QgTreeView::selectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
 {
+    QTCAD_SLOT("QgTreeView::selectionChanged", 1);
     if (selected.indexes().size()) {
 	// Stash a valid selection for potential post-model rebuild restoration.
 	QModelIndex nindex = selected.indexes().first();
@@ -293,6 +296,7 @@ QModelIndex QgTreeView::selected()
 void
 QgTreeView::do_draw_toggle(const QModelIndex &index)
 {
+    QTCAD_SLOT("QgTreeView::do_draw_toggle", 1);
     QgItem *cnode = static_cast<QgItem *>(index.internalPointer());
 
     if (!m->gedp)
@@ -321,6 +325,7 @@ QgTreeView::do_draw_toggle(const QModelIndex &index)
 void
 QgTreeView::redo_expansions(void *)
 {
+    QTCAD_SLOT("QgTreeView::redo_expansions", 1);
     std::unordered_set<QgItem *>::iterator i_it;
     for (i_it = m->items->begin(); i_it != m->items->end(); i_it++) {
 	QgItem *itm = *i_it;
@@ -331,9 +336,12 @@ QgTreeView::redo_expansions(void *)
     }
 }
 
+
+// TODO - probably no longer needed?
 void
 QgTreeView::redo_highlights()
 {
+    QTCAD_SLOT("QgTreeView::redo_highlights", 1);
     // Restore the previous selection, if we have no replacement and its still valid
     QModelIndex selected_idx = selected();
     if (!selected_idx.isValid()) {
@@ -394,11 +402,13 @@ void QgTreeView::expand_link(const QUrl &link)
 
 void QgTreeView::qgitem_select_sync(QgItem *)
 {
+    QTCAD_SLOT("QgTreeView::qgitem_select_sync", 1);
     emit m->layoutChanged();
 }
 
 void QgTreeView::do_view_update(unsigned long long UNUSED(flags))
 {
+    QTCAD_SLOT("QgTreeView::do_view_update", 1);
     // TODO - can the mode logic be triggered from here as well?
 
     emit m->layoutChanged();

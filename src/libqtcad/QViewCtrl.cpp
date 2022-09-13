@@ -64,24 +64,28 @@ QViewCtrl::~QViewCtrl()
 void
 QViewCtrl::sca_mode()
 {
+    QTCAD_SLOT("QViewCtrl::sca_mode", 1);
     emit lmouse_mode(BV_SCALE);
 }
 
 void
 QViewCtrl::rot_mode()
 {
+    QTCAD_SLOT("QViewCtrl::rot_mode", 1);
     emit lmouse_mode(BV_ROT);
 }
 
 void
 QViewCtrl::tra_mode()
 {
+    QTCAD_SLOT("QViewCtrl::tra_mode", 1);
     emit lmouse_mode(BV_TRANS);
 }
 
 void
 QViewCtrl::center_mode()
 {
+    QTCAD_SLOT("QViewCtrl::center_mode", 1);
     emit lmouse_mode(BV_CENTER);
 }
 
@@ -89,6 +93,7 @@ QViewCtrl::center_mode()
 void
 QViewCtrl::fbclear_cmd()
 {
+    QTCAD_SLOT("QViewCtrl::fbclear_cmd", 1);
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     const char *av[2] = {NULL};
     av[0] = "fbclear";
@@ -99,6 +104,7 @@ QViewCtrl::fbclear_cmd()
 void
 QViewCtrl::fb_mode_cmd()
 {
+    QTCAD_SLOT("QViewCtrl::fb_mode_cmd", 1);
     if (!gedp->ged_gvp)
 	return;
     struct bview *v = gedp->ged_gvp;
@@ -121,6 +127,7 @@ QViewCtrl::fb_mode_cmd()
 void
 QViewCtrl::do_view_update(unsigned long long flags)
 {
+    QTCAD_SLOT("QViewCtrl::do_view_update", 1);
     if (!gedp->ged_gvp || !flags)
 	return;
     struct bview *v = gedp->ged_gvp;
@@ -154,6 +161,7 @@ void rt_cmd_done(int pid, void *ctx)
 void
 QViewCtrl::raytrace_cmd()
 {
+    QTCAD_SLOT("QViewCtrl::raytrace_cmd", 1);
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     const char *av[4] = {NULL};
     struct bu_vls pid_str = BU_VLS_INIT_ZERO;
@@ -187,6 +195,7 @@ cmd_cleanup:
 void
 QViewCtrl::raytrace_start(int rpid)
 {
+    QTCAD_SLOT("QViewCtrl::raytrace_start", 1);
     raytrace->setIcon(QIcon(QPixmap(":images/view/raytrace_abort.png")));
     raytrace_running = true;
     pid = rpid;
@@ -195,6 +204,7 @@ QViewCtrl::raytrace_start(int rpid)
 void
 QViewCtrl::raytrace_done(int)
 {
+    QTCAD_SLOT("QViewCtrl::raytrace_done", 1);
     raytrace->setIcon(QIcon(QPixmap(":images/view/raytrace.png")));
     raytrace_running = false;
     pid = -1;

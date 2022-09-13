@@ -95,6 +95,7 @@ CADApp::initialize()
 void
 CADApp::do_quad_view_change(QtCADView *cv)
 {
+    QTCAD_SLOT("CADApp::do_quad_view_change", 1);
     mdl->gedp->ged_gvp = cv->view();
     emit view_update(QTCAD_VIEW_REFRESH);
 }
@@ -102,12 +103,14 @@ CADApp::do_quad_view_change(QtCADView *cv)
 void
 CADApp::do_view_changed(unsigned long long flags)
 {
+    QTCAD_SLOT("CADApp::do_view_changed", 1);
     emit view_update(flags);
 }
 
 void
 CADApp::do_view_update(unsigned long long flags)
 {
+    QTCAD_SLOT("CADApp::do_view_update", 1);
     if (flags & QTCAD_VIEW_SELECT) {
 	bu_log("\n\napp select update\n\n");
 	// Get the paths of all drawn solid objects and the
@@ -177,6 +180,7 @@ CADApp::do_view_update(unsigned long long flags)
 void
 CADApp::tree_update()
 {
+    QTCAD_SLOT("CADApp::tree_update", 1);
     if (!w)
 	return;
     CADPalette *v = NULL;
@@ -203,6 +207,7 @@ CADApp::tree_update()
 void
 CADApp::open_file()
 {
+    QTCAD_SLOT("CADApp::open_file", 1);
     const char *file_filters = "BRL-CAD (*.g *.asc);;Rhino (*.3dm);;STEP (*.stp *.step);;All Files (*)";
     QString fileName = QFileDialog::getOpenFileName((QWidget *)this->w,
 	    "Open Geometry File",
@@ -246,6 +251,9 @@ qged_view_update(struct ged *gedp)
 {
     int view_flags = 0;
 
+    if (!gedp->dbi_state)
+	return view_flags;
+
     unsigned long long updated = gedp->dbi_state->update();
     if (updated & GED_DBISTATE_VIEW_CHANGE)
 	view_flags |= QTCAD_VIEW_DRAWN;
@@ -278,7 +286,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     struct ged *gedp = mdl->gedp;
 
-    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+    BSelectState *ss = (gedp->dbi_state) ? gedp->dbi_state->find_selected_state(NULL) : NULL;
     select_hash = (ss) ? ss->state_hash() : 0;
 
     /* Set the local unit conversions */
@@ -387,6 +395,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 void
 CADApp::run_qcmd(const QString &command)
 {
+    QTCAD_SLOT("CADApp::run_qcmd", 1);
     if (!w)
 	return;
 
@@ -462,6 +471,7 @@ CADApp::run_qcmd(const QString &command)
 void
 CADApp::element_selected(QToolPaletteElement *el)
 {
+    QTCAD_SLOT("CADApp::element_selected", 1);
     if (!el->controls->isVisible()) {
 	// Apparently this can happen when we have docked widgets
 	// closed and we click on the border between the view and
@@ -515,6 +525,7 @@ CADApp::exec_console_app_in_window(QString command, QStringList options, QString
 void
 CADApp::readSettings()
 {
+    QTCAD_SLOT("CADApp::readSettings", 1);
     QSettings settings("BRL-CAD", "QGED");
 
     settings.beginGroup("BRLCAD_MainWindow");
@@ -526,6 +537,7 @@ CADApp::readSettings()
 void
 CADApp::write_settings()
 {
+    QTCAD_SLOT("CADApp::write_settings", 1);
     QSettings settings("BRL-CAD", "QGED");
 
     if (w) {
@@ -538,12 +550,14 @@ CADApp::write_settings()
 void
 CADApp::switch_to_single_view()
 {
+    QTCAD_SLOT("CADApp::switch_to_single_view", 1);
     w->c4->changeToSingleFrame();
 }
 
 void
 CADApp::switch_to_quad_view()
 {
+    QTCAD_SLOT("CADApp::switch_to_quad_view", 1);
     w->c4->changeToQuadFrame();
 }
 

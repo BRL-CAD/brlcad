@@ -174,6 +174,7 @@ void QtGL::resizeGL(int, int)
 
 void QtGL::need_update()
 {
+    QTCAD_SLOT("QtGL::need_update", 1);
     if (!dmp)
 	return;
     dm_set_dirty(dmp, 1);
@@ -400,6 +401,7 @@ QtGL::disableDefaultMouseBindings()
 void
 QtGL::set_lmouse_move_default(int mm)
 {
+    QTCAD_SLOT("QtGL::set_lmouse_move_default", 1);
     lmouse_mode = mm;
 }
 

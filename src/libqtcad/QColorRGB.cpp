@@ -73,6 +73,8 @@ QColorRGB::~QColorRGB()
 void
 QColorRGB::set_color_from_button()
 {
+    QTCAD_SLOT("QColorRGB::set_color_from_button", 1);
+
     QColor nc = QColorDialog::getColor(qc);
     if (nc.isValid() && nc != qc) {
 	qc = nc;
@@ -94,6 +96,8 @@ QColorRGB::set_color_from_button()
 void
 QColorRGB::set_color_from_text()
 {
+    QTCAD_SLOT("QColorRGB::set_color_from_text", 1);
+
     QString colstr = rgbtext->text();
     if (!colstr.length())
 	return;

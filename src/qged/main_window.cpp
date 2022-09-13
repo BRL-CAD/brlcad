@@ -472,6 +472,7 @@ BRLCAD_MainWindow::fallback3D()
 void
 BRLCAD_MainWindow::do_dm_init()
 {
+    QTCAD_SLOT("BRLCAD_MainWindow::do_dm_init", 1);
     CADApp *ap = (CADApp *)qApp;
     QgModel *m = ap->mdl;
     struct ged *gedp = m->gedp;

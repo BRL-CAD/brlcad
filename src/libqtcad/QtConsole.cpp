@@ -601,6 +601,7 @@ void QtConsole::listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_
 }
 void QtConsole::detach(struct ged_subprocess *p, int t)
 {
+    QTCAD_SLOT("QtConsole::detach", 1);
     std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *>::iterator l_it, si_it, so_it, e_it;
     l_it = listeners.find(std::make_pair(p,t));
 
@@ -646,6 +647,7 @@ void QtConsole::setCompleter(QtConsoleWidgetCompleter* completer)
 //-----------------------------------------------------------------------------
 void QtConsole::insertCompletion(const QString& completion)
 {
+    QTCAD_SLOT("QtConsole::insertCompletion", 1);
     QTextCursor tc = this->Implementation->textCursor();
     tc.setPosition(tc.position(), QTextCursor::MoveAnchor);
     QString text = tc.selectedText();
@@ -672,6 +674,7 @@ void QtConsole::insertCompletion(const QString& completion)
 //-----------------------------------------------------------------------------
 void QtConsole::printString(const QString& Text)
 {
+    QTCAD_SLOT("QtConsole::printString", 1);
     QTextCursor text_cursor = this->Implementation->textCursor();
     text_cursor.setPosition(this->Implementation->documentEnd());
     this->Implementation->setTextCursor(text_cursor);
@@ -699,6 +702,7 @@ void QtConsole::printString(const QString& Text)
 // and if this becomes the production solution we can/should revisit it later.
 void QtConsole::printStringBeforePrompt(const QString& Text)
 {
+    QTCAD_SLOT("QtConsole::printStringBeforePrompt", 1);
     logbuf.append(Text);
     int64_t ctime = bu_gettime();
     double elapsed = ((double)ctime - (double)log_timestamp)/1000000.0;
@@ -768,6 +772,7 @@ void QtConsole::printStringBeforePrompt(const QString& Text)
 //-----------------------------------------------------------------------------
 void QtConsole::printCommand(const QString& cmd)
 {
+    QTCAD_SLOT("QtConsole::printCommand", 1);
     this->Implementation->textCursor().insertText(cmd);
     this->Implementation->updateCommandBuffer();
 }
@@ -775,6 +780,7 @@ void QtConsole::printCommand(const QString& cmd)
 //-----------------------------------------------------------------------------
 void QtConsole::prompt(const QString& text)
 {
+    QTCAD_SLOT("QtConsole::prompt", 1);
     QTextCursor text_cursor = this->Implementation->textCursor();
 
     // if the cursor is currently on a clean line, do nothing, otherwise we move
@@ -798,6 +804,7 @@ void QtConsole::prompt(const QString& text)
 //-----------------------------------------------------------------------------
 void QtConsole::clear()
 {
+    QTCAD_SLOT("QtConsole::clear", 1);
     this->Implementation->clear();
 
     // For some reason the QCompleter tries to set the focus policy to

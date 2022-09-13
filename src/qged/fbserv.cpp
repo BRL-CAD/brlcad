@@ -44,6 +44,7 @@
 void
 QFBSocket::client_handler()
 {
+    QTCAD_SLOT("QFBSocket::client_handler", 1);
     bu_log("client_handler\n");
 
     // Get the current libpkg connection
@@ -105,7 +106,6 @@ QFBSocket::client_handler()
 
 QFBServer::QFBServer(struct fbserv_obj *fp)
 {
-    bu_log("create QFBServer\n");
     fbsp = fp;
 }
 
@@ -116,6 +116,7 @@ QFBServer::~QFBServer()
 void
 QFBServer::on_Connect()
 {
+    QTCAD_SLOT("QFBServer::on_Connect", 1);
     // Have a new connection pending, accept it.
     QTcpSocket *tcps = nextPendingConnection();
 

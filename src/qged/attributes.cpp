@@ -181,6 +181,7 @@ int CADAttributesModel::update(struct db_i *new_dbip, struct directory *new_dp)
 void
 CADAttributesModel::refresh(const QModelIndex &idx)
 {
+    QTCAD_SLOT("CADAttributesModel::refresh", 1);
     QgModel *m = ((CADApp *)qApp)->mdl;
     if (!m)
 	return;

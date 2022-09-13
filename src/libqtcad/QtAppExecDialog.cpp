@@ -54,6 +54,7 @@ QtAppExecDialog::QtAppExecDialog(QWidget *pparent, QString executable, QStringLi
 
 void QtAppExecDialog::read_stdout()
 {
+    QTCAD_SLOT("QtAppExecDialog::read_stdout", 1);
     QString std_output = proc->readAllStandardOutput();
     console->printString(std_output);
     if (logfile) {
@@ -65,6 +66,7 @@ void QtAppExecDialog::read_stdout()
 
 void QtAppExecDialog::read_stderr()
 {
+    QTCAD_SLOT("QtAppExecDialog::read_stderr", 1);
     QString err_output = proc->readAllStandardError();
     console->printString(err_output);
     if (logfile) {
@@ -76,6 +78,7 @@ void QtAppExecDialog::read_stderr()
 
 void QtAppExecDialog::process_abort()
 {
+    QTCAD_SLOT("QtAppExecDialog::process_abort", 1);
     proc->kill();
     console->printString("\nAborted!\n");
     if (logfile) {
@@ -88,6 +91,7 @@ void QtAppExecDialog::process_abort()
 
 void QtAppExecDialog::process_done(int , QProcess::ExitStatus)
 {
+    QTCAD_SLOT("QtAppExecDialog::process_done", 1);
     if (logfile) logfile->close();
     buttonBox->clear();
     buttonBox->addButton(QDialogButtonBox::Ok);

@@ -40,6 +40,7 @@ QToolPaletteButton::QToolPaletteButton(QWidget *bparent, QIcon *iicon, QToolPale
 void
 QToolPaletteButton::select_element()
 {
+   QTCAD_SLOT("QToolPaletteButton::select_element", 1);
    emit element_selected(element);
 }
 
@@ -93,12 +94,14 @@ QToolPaletteElement::setControls(QWidget *n_control)
 void
 QToolPaletteElement::element_view_changed(unsigned long long flags)
 {
+    QTCAD_SLOT("QToolPaletteElement::element_view_changed", 1);
     emit view_changed(flags);
 }
 
 void
 QToolPaletteElement::do_view_update(unsigned long long flags)
 {
+    QTCAD_SLOT("QToolPaletteElement::do_view_update", 1);
     // TODO - do any element level updating (button highlighting?)
     emit element_view_update(flags);
 }
@@ -106,6 +109,7 @@ QToolPaletteElement::do_view_update(unsigned long long flags)
 void
 QToolPaletteElement::do_element_unhide(void *)
 {
+    QTCAD_SLOT("QToolPaletteElement::do_element_unhide", 1);
     emit element_unhide();
 }
 
@@ -147,6 +151,7 @@ QToolPalette::~QToolPalette()
 void
 QToolPalette::button_layout_resize()
 {
+    QTCAD_SLOT("QToolPalette::button_layout_resize", 1);
     div_t layout_dim = div(button_container->size().width()-1, icon_width);
     div_t layout_grid = div((int)elements.count(), (int)layout_dim.quot);
     if (layout_grid.rem > 0) {
@@ -200,6 +205,7 @@ QToolPalette::setAlwaysSelected(int toggle)
 void
 QToolPalette::do_view_update(unsigned long long flags)
 {
+    QTCAD_SLOT("QToolPalette::do_element_unhide", 1);
     emit palette_view_update(flags);
 }
 
@@ -207,6 +213,7 @@ QToolPalette::do_view_update(unsigned long long flags)
 void
 QToolPalette::palette_do_view_changed(unsigned long long flags)
 {
+    QTCAD_SLOT("QToolPalette::palette_do_view_changed", 1);
     emit view_changed(flags);
 }
 
@@ -248,6 +255,7 @@ QToolPalette::deleteElement(QToolPaletteElement *element)
 void
 QToolPalette::palette_displayElement(QToolPaletteElement *element)
 {
+    QTCAD_SLOT("QToolPalette::palette_displayElement", 1);
     if (element) {
 	if (element == selected) {
 	    if (!always_selected) {

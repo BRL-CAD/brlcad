@@ -52,6 +52,7 @@ CADPalette::addTool(QToolPaletteElement *e)
 void
 CADPalette::makeCurrent(QWidget *w)
 {
+    QTCAD_SLOT("CADPalette::makeCurrent", 1);
     if (w == this) {
 	if (this->tpalette->selected)
 	    this->tpalette->palette_displayElement(this->tpalette->selected);
@@ -65,6 +66,7 @@ CADPalette::makeCurrent(QWidget *w)
 void
 CADPalette::reflow()
 {
+    QTCAD_SLOT("CADPalette::reflow", 1);
     tpalette->button_layout_resize();
 }
 

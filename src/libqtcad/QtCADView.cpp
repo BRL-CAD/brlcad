@@ -158,12 +158,14 @@ QtCADView::select(int quad)
 void
 QtCADView::do_view_changed()
 {
+    QTCAD_SLOT("QtCADView::do_view_changed", 1);
     emit changed();
 }
 
 void
 QtCADView::need_update(unsigned long long)
 {
+    QTCAD_SLOT("QtCADView::need_update", 1);
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
 	canvas_gl->need_update();
@@ -511,6 +513,7 @@ QtCADView::disableDefaultMouseBindings()
 void
 QtCADView::set_lmouse_move_default(int mm)
 {
+    QTCAD_SLOT("QtCADView::set_lmouse_move_default", 1);
 
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
@@ -528,6 +531,7 @@ QtCADView::set_lmouse_move_default(int mm)
 void
 QtCADView::do_init_done()
 {
+    QTCAD_SLOT("QtCADView::do_init_done", 1);
     emit init_done();
 }
 

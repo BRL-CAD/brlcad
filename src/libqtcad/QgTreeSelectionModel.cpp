@@ -46,6 +46,7 @@ QgTreeSelectionModel::clear_all()
 void
 QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags)
 {
+    QTCAD_SLOT("QgTreeSelectionModel::select QItemSelection", 1);
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
 
@@ -97,6 +98,7 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 void
 QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags)
 {
+    QTCAD_SLOT("QgTreeSelectionModel::select QModelIndex", 1);
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
 

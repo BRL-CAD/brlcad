@@ -50,6 +50,25 @@
  * it is found use this */
 #define CADTREE_RECURSION_LIMIT 10000
 
+// Uncomment to allow the env command to enable printouts
+// reporting on when libqtcad slots are being called
+#include "bu/log.h"
+#include "bu/str.h"
+#define QTCAD_SUPPORT_ENV_SLOT_REPORTING 1
+#ifdef QTCAD_SUPPORT_ENV_SLOT_REPORTING
+#  define QTCAD_SLOT(slot_name, level) {\
+    const char *qrsig = getenv("QTCAD_REPORT_SLOTS");\
+    if (qrsig) {\
+	int qlev = atoi(qrsig);\
+	if (qlev == level) {\
+	    bu_log("%s\n", slot_name); \
+	} \
+    }\
+}
+#else
+#  define QTCAD_SLOT(slot_name, level)
+#endif
+
 #endif  /* QTCAD_DEFINES_H */
 
 /*

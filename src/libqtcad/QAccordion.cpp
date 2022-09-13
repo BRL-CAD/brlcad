@@ -55,6 +55,7 @@ QAccordionObject::~QAccordionObject()
 void
 QAccordionObject::toggleVisibility()
 {
+    QTCAD_SLOT("QAccordionObject::toggleVisibility", 1);
     emit select(this);
 }
 

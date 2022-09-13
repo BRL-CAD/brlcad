@@ -220,6 +220,7 @@ QtCADQuad::changeToQuadFrame()
 void
 QtCADQuad::do_view_changed()
 {
+    QTCAD_SLOT("QtCADQuad::do_view_changed", 1);
     emit changed(currentView);
 }
 
@@ -384,6 +385,7 @@ QtCADQuad::get_selected()
 void
 QtCADQuad::do_view_update(unsigned long long flags)
 {
+    QTCAD_SLOT("QtCADQuad::do_view_update", 1);
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
 	    views[i]->need_update(flags);
@@ -459,6 +461,7 @@ QtCADQuad::disableDefaultMouseBindings()
 void
 QtCADQuad::set_lmouse_move_default(int mm)
 {
+    QTCAD_SLOT("QtCADQuad::set_lmouse_move_default", 1);
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
 	    views[i]->set_lmouse_move_default(mm);
@@ -469,6 +472,7 @@ QtCADQuad::set_lmouse_move_default(int mm)
 void
 QtCADQuad::do_init_done()
 {
+    QTCAD_SLOT("QtCADQuad::do_init_done", 1);
     if (!init_done_flag) {
 	init_done_flag = true;
 	emit init_done();
