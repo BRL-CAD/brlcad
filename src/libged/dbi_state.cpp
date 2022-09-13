@@ -438,6 +438,23 @@ DbiState::print_path(struct bu_vls *opath, std::vector<unsigned long long> &path
     }
 }
 
+const char *
+DbiState::pathstr(std::vector<unsigned long long> &path)
+{
+    bu_vls_trunc(&path_string, 0);
+    print_path(&path_string, path);
+    return bu_vls_cstr(&path_string);
+}
+
+
+const char *
+DbiState::hashstr(unsigned long long hash)
+{
+    bu_vls_trunc(&hash_string, 0);
+    print_hash(&hash_string, hash);
+    return bu_vls_cstr(&hash_string);
+}
+
 unsigned int
 DbiState::color_int(struct bu_color *c)
 {
@@ -1164,6 +1181,8 @@ DbiState::update()
 
 DbiState::DbiState(struct ged *ged_p)
 {
+    bu_vls_init(&path_string);
+    bu_vls_init(&hash_string);
     BU_GET(res, struct resource);
     rt_init_resource(res, 0, NULL);
     shared_vs = new BViewState(this);
@@ -1186,6 +1205,8 @@ DbiState::DbiState(struct ged *ged_p)
 
 DbiState::~DbiState()
 {
+    bu_vls_free(&path_string);
+    bu_vls_free(&hash_string);
     std::unordered_map<std::string, BSelectState *>::iterator ss_it;
     for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
 	delete ss_it->second;
@@ -1784,6 +1805,8 @@ BViewState::gather_paths(
     }
 
     path_hashes.push_back(c_hash);
+    bu_log("gather_paths: %s\n", dbis->pathstr(path_hashes));
+
     mat_t om, nm;
     /* Update current matrix state to reflect the new branch of
      * the tree. Either we have a local matrix, or we have an
@@ -2727,7 +2750,7 @@ BSelectState::draw_sync()
     for (vs_it = vstates.begin(); vs_it != vstates.end(); vs_it++) {
 	for (so_it = (*vs_it)->s_map.begin(); so_it != (*vs_it)->s_map.end(); so_it++) {
 	    char ill_state = is_active(so_it->first) ? UP : DOWN;
-	    bu_log("select ill_state: %s\n", (ill_state == UP) ? "up" : "down");
+	    //bu_log("select ill_state: %s\n", (ill_state == UP) ? "up" : "down");
 	    for (m_it = so_it->second.begin(); m_it != so_it->second.end(); m_it++) {
 		struct bv_scene_obj *so = m_it->second;
 		bool ill_changed = _ill_toggle(so, ill_state);

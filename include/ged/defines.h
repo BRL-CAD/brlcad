@@ -416,6 +416,9 @@ class GED_EXPORT DbiState {
 	bool print_hash(struct bu_vls *opath, unsigned long long phash);
 	void print_path(struct bu_vls *opath, std::vector<unsigned long long> &path);
 
+	const char *pathstr(std::vector<unsigned long long> &path);
+	const char *hashstr(unsigned long long);
+
 	std::vector<unsigned long long> digest_path(const char *path);
 
 	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
@@ -516,6 +519,8 @@ class GED_EXPORT DbiState {
 	unsigned int color_int(struct bu_color *);
 	int int_color(struct bu_color *c, unsigned int);
 	struct resource *res = NULL;
+	struct bu_vls hash_string;
+	struct bu_vls path_string;
 };
 
 
