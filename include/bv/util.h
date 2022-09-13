@@ -185,6 +185,12 @@ bv_obj_for_view(struct bv_scene_obj *s, struct bview *v);
 BV_EXPORT void
 bv_set_view_obj(struct bv_scene_obj *s, struct bview *v, struct bv_scene_obj *vobj);
 
+/* Set the illumination state on the object and its children to ill_state.
+ * Returns 0 if no states were changed, and 1 if one or more states were
+ * updated. */
+BV_EXPORT int
+bv_illum_obj(struct bv_scene_obj *s, char ill_state);
+
 /* For the given view, return a pointer to the bu_ptbl holding active scene
  * objects with the specified type.  Note that view-specific db objects are not
  * part of these sets - they should be retrieved from the scene objects in this

@@ -1248,6 +1248,29 @@ bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj *src)
     dest->point_scale = src->point_scale;
 }
 
+int
+bv_illum_obj(struct bv_scene_obj *s, char ill_state)
+{
+    bool changed = 0;
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	int cchanged = bv_illum_obj(s_c, ill_state);
+	if (cchanged)
+	    changed = 1;
+    }
+    if (ill_state != s->s_iflag) {
+	changed = 1;
+	s->s_iflag = ill_state;
+    }
+    std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
+    for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {
+	int cchanged = bv_illum_obj(vo_it->second, ill_state);
+	if (cchanged)
+	    changed = 1;
+    }
+
+    return changed;
+}
 
 // Local Variables:
 // tab-width: 8

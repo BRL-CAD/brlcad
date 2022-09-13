@@ -55,23 +55,6 @@ bool alphanum_cmp(const std::string &a, const std::string &b)
     return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
 }
 
-static bool
-_ill_toggle(struct bv_scene_obj *s, char ill_state)
-{
-    bool changed = false;
-    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-	bool cchanged = _ill_toggle(s_c, ill_state);
-	if (cchanged)
-	    changed = true;
-    }
-    if (ill_state != s->s_iflag) {
-	changed = true;
-	s->s_iflag = ill_state;
-    }
-    return changed;
-}
-
 struct walk_data {
     DbiState *dbis;
     std::unordered_map<unsigned long long, unsigned long long> i_count;
@@ -1461,9 +1444,6 @@ BViewState::depth_group_collapse(
 	    unsigned long long ppathhash = dbis->path_hash(pc_path, plen - 1);
 	    grouped_pckeys[ppathhash].insert(*s_it);
 	    pcomb[ppathhash] = pc_path[plen-2];
-	    std::vector<unsigned long long> pc_path2 = s_keys[*s_it];
-	    pc_path2.pop_back();
-	    bu_log("group %llu (%zd, %zd): %s\n", ppathhash, plen - 1, pc_path.size(), dbis->pathstr(pc_path));
 	}
 
 	// For each parent/child grouping, compare it against the .g ground
@@ -1476,7 +1456,6 @@ BViewState::depth_group_collapse(
 	    unsigned long long cpkey = *pg_it->second.begin();
 	    std::vector<unsigned long long> check_path = s_keys[cpkey];
 	    check_path.pop_back();
-	    bu_log("check: %s\n", dbis->pathstr(check_path));
 
 	    // As above, use the full path from the s_keys, but this time
 	    // we're collecting the children.  This is the set we need to compare
@@ -1486,7 +1465,6 @@ BViewState::depth_group_collapse(
 	    for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
 		std::vector<unsigned long long> &pc_path = s_keys[*s_it];
 		g_children.insert(pc_path[plen-1]);
-		bu_log("g_children insert: %s\n", dbis->hashstr(pc_path[plen-1]));
 	    }
 
 	    // Do the check against the .g comb children info - the "ground truth"
@@ -1494,16 +1472,13 @@ BViewState::depth_group_collapse(
 	    bool is_fully_drawn = true;
 	    std::unordered_set<unsigned long long> &ground_truth = dbis->p_c[pcomb[pg_it->first]];
 	    for (s_it = ground_truth.begin(); s_it != ground_truth.end(); s_it++) {
-		bu_log("ground truth child: %s\n", dbis->hashstr(*s_it));
 	    }
 	    for (s_it = ground_truth.begin(); s_it != ground_truth.end(); s_it++) {
 		if (g_children.find(*s_it) == g_children.end()) {
-		    bu_log("child not found: %s\n", dbis->hashstr(*s_it));
 		    is_fully_drawn = false;
 		    break;
 		}
 	    }
-	    bu_log("fully drawn: %d\n", is_fully_drawn);
 
 	    // All the sub-paths in this grouping are fully drawn, whether
 	    // or not they define a fully drawn parent, so stash their
@@ -2804,7 +2779,7 @@ BSelectState::draw_sync()
 	    //bu_log("select ill_state: %s\n", (ill_state == UP) ? "up" : "down");
 	    for (m_it = so_it->second.begin(); m_it != so_it->second.end(); m_it++) {
 		struct bv_scene_obj *so = m_it->second;
-		bool ill_changed = _ill_toggle(so, ill_state);
+		int ill_changed = bv_illum_obj(so, ill_state);
 		if (ill_changed)
 		    changed = true;
 	    }

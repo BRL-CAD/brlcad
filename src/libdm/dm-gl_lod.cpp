@@ -136,13 +136,17 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
     // Wireframe
     if (mode == 0) {
 
-	if (mvars->lighting_on) {
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-	    if (mvars->transparency_on)
-		glDisable(GL_BLEND);
+	if (s->s_iflag == UP) {
+	    dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
+	} else {
+	    if (mvars->lighting_on) {
+		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+		if (mvars->transparency_on)
+		    glDisable(GL_BLEND);
+	    }
 	}
 
 	// Draw all the triangles in faces array
@@ -207,28 +211,34 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	glGetIntegerv(GL_LIGHT_MODEL_TWO_SIDE, &two_sided);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-	if (mvars->lighting_on) {
+	if (s->s_iflag == UP) {
+	    dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
+	} else {
+
+	    if (mvars->lighting_on) {
 
 
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mvars->i.ambientColor);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mvars->i.specularColor);
-	    glMaterialfv(GL_FRONT, GL_DIFFUSE, mvars->i.diffuseColor);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mvars->i.ambientColor);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mvars->i.specularColor);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, mvars->i.diffuseColor);
 
-	    switch (mvars->lighting_on) {
-		case 1:
-		    break;
-		case 2:
-		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.diffuseColor);
-		    break;
-		case 3:
-		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorDark);
-		    break;
-		default:
-		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorLight);
-		    break;
+		switch (mvars->lighting_on) {
+		    case 1:
+			break;
+		    case 2:
+			glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.diffuseColor);
+			break;
+		    case 3:
+			glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorDark);
+			break;
+		    default:
+			glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorLight);
+			break;
+		}
 	    }
-
+	}
+	if (mvars->lighting_on) {
 	    if (mvars->transparency_on) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
