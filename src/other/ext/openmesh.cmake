@@ -13,8 +13,10 @@ THIRD_PARTY(openmesh OPENMESH openmesh
   )
 
 if (BRLCAD_OPENMESH_BUILD)
+  set(OM_MAJOR_VERION 9)
+  set(OM_MINOR_VERSION 0)
+  set(OM_PATCH_VERSION 0)
 
-  #set_lib_vars(OPENMESH OpenMeshCore "9" "0" "0")
   if (MSVC)
     set(OPENMESH_BASENAME OpenMeshCore)
     set(OPENMESH_STATICNAME OpenMeshCore-static)
@@ -26,13 +28,10 @@ if (BRLCAD_OPENMESH_BUILD)
   else (MSVC)
     set(OPENMESH_BASENAME libOpenMesh)
     set(OPENMESH_STATICNAME libOpenMesh)
-    set(OPENMESH_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.9.0)
-#     set(OPENMESH_SYMLINK_1 ${OPENMESH_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(OPENMESH_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.${OM_MAJOR_VERION}.${OM_MINOR_VERSION})
   endif (MSVC)
 
   set(OPENMESH_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/openmesh)
-
-  message("OPENMESH_INSTDIR: ${OPENMESH_INSTDIR}")
 
   ExternalProject_Add(OPENMESH_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/openmesh"
@@ -59,10 +58,7 @@ if (BRLCAD_OPENMESH_BUILD)
 
   # Tell the parent build about files and libraries
   set(OPENMESH_LIBS Core Tools)
-#   message("-----_Target-----")
   foreach(OMLIB ${OPENMESH_LIBS})
-#     message("-----OPENMESH_FOREACH-----")
-#     message("${OMLIB} | ${OPENMESH_BASENAME}${OMLIB}${OPENMESH_SUFFIX} | SYMLINKS ${OPENMESH_BASENAME}${OMLIB}${CMAKE_SHARED_LIBRARY_SUFFIX} | LINK_TARGET ${OPENMESH_BASENAME}${OMLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}")
     ExternalProject_Target(SHARED ${OMLIB} OPENMESH_BLD ${OPENMESH_INSTDIR}
     ${OPENMESH_BASENAME}${OMLIB}${OPENMESH_SUFFIX}
     SYMLINKS ${OPENMESH_BASENAME}${OMLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}
@@ -71,7 +67,6 @@ if (BRLCAD_OPENMESH_BUILD)
     )
   endforeach(OMLIB ${OPENMESH_LIBS})
 
-  # TODO: add ByProducts
   set(OPENMESH_HDRS
     NOINSTALL
     Core/Geometry/Config.hh
@@ -262,14 +257,6 @@ if (BRLCAD_OPENMESH_BUILD)
     Tools/VDPM/ViewingParameters.hh
   )
 
-#   ExternalProject_Target(SHARED Core OPENMESH_BLD ${OPENMESH_INSTDIR}
-#     ${OPENMESH_BASENAME}Core${OPENMESH_SUFFIX}
-#     SYMLINKS ${OPENMESH_BASENAME}Core${OPENMESH_SUFFIX}
-#     LINK_TARGET ${OPENMESH_BASENAME}Core${OPENMESH_SUFFIX}
-#     RPATH
-#     )
-  
-
   ExternalProject_ByProducts(openmesh OPENMESH_BLD ${OPENMESH_INSTDIR} ${INCLUDE_DIR}/OpenMesh
     ${OPENMESH_HDRS}
     )
@@ -289,9 +276,6 @@ if (BRLCAD_OPENMESH_BUILD)
   set(OPENMESH_TOOLS_UTILS_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/Utils CACHE STRING "Building bundled OpenMesh" FORCE)
   set(OPENMESH_TOOLS_VDPM_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/VDPM CACHE STRING "Building bundled OpenMesh" FORCE)
   
-
-#   set(OPENMESH_CORE_LIBRARY Core CACHE STRING "Building bundled OPENMESH" FORCE)
-
   set(OPENMESH_INCLUDE_DIRS
     ${OPENMESH_CORE_GEOMETRY_DIR}
     ${OPENMESH_CORE_IO_DIR}
@@ -310,11 +294,7 @@ if (BRLCAD_OPENMESH_BUILD)
 
   set(OPENMESH_LIBRARIES
     ${OPENMESH_LIBS}
-#     ${OPENMESH_CORE_LIBRARY}
     CACHE STRING "OPENMESH libraries." FORCE)
-
-#   set(OPENMESH_LIBRARY openmesh_core CACHE STRING "Building bundled openmesh" FORCE)
-#   set(OPENMESH_LIBRARIES openmesh CACHE STRING "Building bundled openmesh" FORCE)
 
   SetTargetFolder(OPENMESH_BLD "Third Party Libraries")
   SetTargetFolder(openmesh "Third Party Libraries")
