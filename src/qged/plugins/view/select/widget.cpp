@@ -511,6 +511,9 @@ CADViewSelecter::process_obj_ray(int mode)
 	    }
 	    bu_vls_free(&dpath);
 
+	    ss->characterize();
+	    ss->draw_sync();
+
 	    return true;
 
 	} else {
@@ -550,8 +553,11 @@ CADViewSelecter::process_obj_ray(int mode)
 		    return false;
 		}
 	    }
-	    
+
 	    bu_vls_free(&dpath);
+
+	    ss->characterize();
+	    ss->draw_sync();
 
 	    return true;
 
@@ -699,6 +705,16 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	return false;
     }
 
+    // If certain kinds of mouse events take place, we know we are manipulating the
+    // view to achieve something other than erasure.  Flag accordingly, so we don't
+    // fire off the select event at the end of whatever we're doing instead.
+    if (e->type() == QEvent::MouseMove && !use_rect_select_button->isChecked()) {
+	// TODO - may want to tolerate a few pixels of movement if we're enabled...
+	// hard to hold the mouse completely steady while pressing...
+	enabled = false;
+	return false;
+    }
+
     if (e->type() == QEvent::MouseButtonPress) {
 	if (use_rect_select_button->isChecked()) {
 #ifdef USE_QT6
@@ -708,23 +724,21 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    px = m_e->x();
 	    py = m_e->y();
 #endif
-	    gedp->ged_gvp->gv_s->gv_rect.line_width = 1;
-	    gedp->ged_gvp->gv_s->gv_rect.pos[0] = px;
-	    gedp->ged_gvp->gv_s->gv_rect.pos[1] = dm_get_height((struct dm *)gedp->ged_gvp->dmp) - py;
-	    gedp->ged_gvp->gv_s->gv_rect.cdim[0] = dm_get_width((struct dm *)gedp->ged_gvp->dmp);
-	    gedp->ged_gvp->gv_s->gv_rect.cdim[1] = dm_get_height((struct dm *)gedp->ged_gvp->dmp);
-	    gedp->ged_gvp->gv_s->gv_rect.aspect = (fastf_t)gedp->ged_gvp->gv_s->gv_rect.cdim[X] / gedp->ged_gvp->gv_s->gv_rect.cdim[Y];
+	    struct bv_interactive_rect_state *grsp = &gedp->ged_gvp->gv_s->gv_rect;
+	    grsp->line_width = 1;
+	    grsp->dim[0] = 0;
+	    grsp->dim[1] = 0;
+	    grsp->x = px;
+	    grsp->y = dm_get_height((struct dm *)gedp->ged_gvp->dmp) - py;
+	    grsp->pos[0] = grsp->x;
+	    grsp->pos[1] = grsp->y;
+	    grsp->cdim[0] = dm_get_width((struct dm *)gedp->ged_gvp->dmp);
+	    grsp->cdim[1] = dm_get_height((struct dm *)gedp->ged_gvp->dmp);
+	    grsp->aspect = (fastf_t)gedp->ged_gvp->gv_s->gv_rect.cdim[X] / gedp->ged_gvp->gv_s->gv_rect.cdim[Y];
 	    emit view_changed(QTCAD_VIEW_DRAWN);
 	}
+	enabled = true;
 	return true;
-    }
-
-    // If certain kinds of mouse events take place, we know we are manipulating the
-    // view to achieve something other than erasure.  Flag accordingly, so we don't
-    // fire off the select event at the end of whatever we're doing instead.
-    if (e->type() == QEvent::MouseMove && !use_rect_select_button->isChecked()) {
-	enabled = false;
-	return false;
     }
 
     if (e->type() == QEvent::MouseMove && enabled && use_rect_select_button->isChecked()) {
@@ -735,11 +749,10 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	vx = m_e->x();
 	vy = m_e->y();
 #endif
-	gedp->ged_gvp->gv_s->gv_rect.draw = 1;
-	gedp->ged_gvp->gv_s->gv_rect.dim[0] = vx - px;
-	gedp->ged_gvp->gv_s->gv_rect.dim[1] = (dm_get_height((struct dm *)gedp->ged_gvp->dmp) - vy) - gedp->ged_gvp->gv_s->gv_rect.pos[1];
-
 	struct bv_interactive_rect_state *grsp = &gedp->ged_gvp->gv_s->gv_rect;
+	grsp->draw = 1;
+	grsp->dim[0] = vx - px;
+	grsp->dim[1] = (dm_get_height((struct dm *)gedp->ged_gvp->dmp) - vy) - gedp->ged_gvp->gv_s->gv_rect.pos[1];
 	grsp->x = (grsp->pos[X] / (fastf_t)grsp->cdim[X] - 0.5) * 2.0;
 	grsp->y = ((0.5 - (grsp->cdim[Y] - grsp->pos[Y]) / (fastf_t)grsp->cdim[Y]) / grsp->aspect * 2.0);
 	grsp->width = grsp->dim[X] * 2.0 / (fastf_t)grsp->cdim[X];
@@ -794,7 +807,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    return false;
 
 	if (erase_from_scene_button->isChecked()) {
-	    if (!use_ray_test_ckbx->isChecked()) {
+	    if (!use_ray_test_ckbx->isChecked() || use_rect_select_button->isChecked()) {
 		bool ret = erase_obj_bbox();
 		if (ret)
 		    emit view_changed(QTCAD_VIEW_DRAWN);
@@ -815,7 +828,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	}
 
 	if (add_to_group_button->isChecked()) {
-	    if (!use_ray_test_ckbx->isChecked()) {
+	    if (!use_ray_test_ckbx->isChecked() || use_rect_select_button->isChecked()) {
 		bool ret = add_obj_bbox();
 		if (ret)
 		    emit view_changed(QTCAD_VIEW_SELECT|QTCAD_VIEW_DRAWN);
@@ -837,7 +850,7 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 
 
 	if (rm_from_group_button->isChecked()) {
-	    if (!use_ray_test_ckbx->isChecked()) {
+	    if (!use_ray_test_ckbx->isChecked() || use_rect_select_button->isChecked()) {
 		bool ret = rm_obj_bbox();
 		if (ret)
 		    emit view_changed(QTCAD_VIEW_SELECT|QTCAD_VIEW_DRAWN);
