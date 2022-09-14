@@ -278,7 +278,6 @@ CADViewSelecter::process_obj_bbox(int mode)
 	    for (int i = 0; i < scnt; i++) {
 		struct bv_scene_obj *s = sset[i];
 		av[i+1] = bu_vls_cstr(&s->s_name);
-		bu_log("%s\n", av[i+1]);
 	    }
 	    ged_exec(gedp, scnt+1, av);
 	    bu_free(av, "av");

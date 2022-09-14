@@ -2090,7 +2090,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    mat_t m;
 	    MAT_IDN(m);
 	    dbis->get_path_matrix(m, cpath);
-	    if ((vs->s_dmode == 3 || vs->s_dmode == 5)) {
+	    if (vs && (vs->s_dmode == 3 || vs->s_dmode == 5)) {
 		dbis->get_path_matrix(m, cpath);
 		scene_obj(objs, ms_it->first, vs, m, cpath, views);
 		continue;
