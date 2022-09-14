@@ -620,8 +620,9 @@ CADViewSelecter::do_draw_selections()
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
     for (s_it = ss->selected.begin(); s_it != ss->selected.end(); s_it++) {
 	av[i+1] = bu_strdup(gedp->dbi_state->pathstr(s_it->second));
+	i++;
     }
-    
+
     ged_exec(gedp, (int)(ss->selected.size()+1), av);
     for (size_t j = 0; j < ss->selected.size()+1; j++) {
 	bu_free((void *)av[j], "path");
@@ -652,8 +653,9 @@ CADViewSelecter::do_erase_selections()
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
     for (s_it = ss->selected.begin(); s_it != ss->selected.end(); s_it++) {
 	av[i+1] = bu_strdup(gedp->dbi_state->pathstr(s_it->second));
+	i++;
     }
-    
+
     ged_exec(gedp, (int)(ss->selected.size()+1), av);
     for (size_t j = 0; j < ss->selected.size()+1; j++) {
 	bu_free((void *)av[j], "path");
