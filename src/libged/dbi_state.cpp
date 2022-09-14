@@ -1200,7 +1200,7 @@ BViewState::BViewState(DbiState *s)
 // 0 = valid, 1 = invalid, 2 = invalid, remain "drawn"
 int
 BViewState::check_status(
-	std::unordered_set<unsigned long long> *invalid_objects,
+	std::unordered_set<unsigned long long> *invalid_paths,
 	std::unordered_set<unsigned long long> *changed_paths,
 	unsigned long long path_hash,
        	std::vector<unsigned long long> &cpath,
@@ -1227,8 +1227,8 @@ BViewState::check_status(
 	    // If not we're done, whether or not the parent dp was
 	    // removed from the database.
 	    if (!is_parent) {
-		if (invalid_objects)
-		    (*invalid_objects).insert(hash);
+		if (invalid_paths)
+		    (*invalid_paths).insert(path_hash);
 		if (changed_paths)
 		    (*changed_paths).erase(path_hash);
 		return 1;
@@ -1241,8 +1241,8 @@ BViewState::check_status(
 	if (is_removed) {
 	    if (is_removed && !j) {
 		// Top level removed - everything else is gone
-		if (invalid_objects)
-		    (*invalid_objects).insert(hash);
+		if (invalid_paths)
+		    (*invalid_paths).insert(path_hash);
 		if (changed_paths)
 		    (*changed_paths).erase(path_hash);
 		return 1;
@@ -1254,8 +1254,8 @@ BViewState::check_status(
 		// particular instance is still there; either way the state
 		// here is not preservable, since the path is trying to refer
 		// to a tree path which no longer exists in the hierarchy.
-		if (invalid_objects)
-		    (*invalid_objects).insert(hash);
+		if (invalid_paths)
+		    (*invalid_paths).insert(path_hash);
 		if (changed_paths)
 		    (*changed_paths).erase(path_hash);
 		return 1;
@@ -1691,11 +1691,12 @@ BViewState::scene_obj(
     }
 
     // Set line width, if the user specified a non-default value
-    if (vs->s_line_width)
+    if (vs && vs->s_line_width)
 	sp->s_os->s_line_width = vs->s_line_width;
 
     // Set transparency
-    sp->s_os->transparency = vs->transparency;
+    if (vs)
+	sp->s_os->transparency = vs->transparency;
 
     dbis->print_path(&sp->s_name, path_hashes);
     s_map[phash][sp->s_os->s_dmode] = sp;
@@ -1703,6 +1704,8 @@ BViewState::scene_obj(
 
     // Final geometry generation is deferred
     objs.insert(sp);
+
+    bu_log("scene_obj: %s\n", dbis->pathstr(path_hashes));
 
     return sp;
 }
@@ -1984,30 +1987,24 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     // First order of business is to go through already drawn solids, if any,
     // and remove no-longer-valid paths. Keep still-valid paths to avoid the
     // work of re-generating the scene objects.
-    std::unordered_set<unsigned long long> invalid_objects;
+    std::unordered_set<unsigned long long> invalid_paths;
     std::unordered_set<unsigned long long> changed_paths;
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator sk_it;
     for (sk_it = s_keys.begin(); sk_it != s_keys.end(); sk_it++) {
 	// Work down from the root of each path looking for the first changed or
 	// removed entry.
 	std::vector<unsigned long long> &cpath = sk_it->second;
-	check_status(&invalid_objects, &changed_paths, sk_it->first, cpath, true);
+	check_status(&invalid_paths, &changed_paths, sk_it->first, cpath, true);
     }
 
     // Invalid path objects we remove completely
     std::unordered_set<unsigned long long>::iterator iv_it;
-    for (iv_it = invalid_objects.begin(); iv_it != invalid_objects.end(); iv_it++) {
-	s_keys.erase(*iv_it);
-	ret = GED_DBISTATE_VIEW_CHANGE;
+    for (iv_it = invalid_paths.begin(); iv_it != invalid_paths.end(); iv_it++) {
+	std::vector<unsigned long long> &phashes = s_keys[*iv_it];
+	if (!phashes.size())
+	    continue;
+	erase_hpath(-1, phashes, false);
 	bu_log("erase: %llu\n", *iv_it);
-	std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator sm_it;
-	sm_it = s_map.find(*iv_it);
-	if (sm_it != s_map.end()) {
-	    std::unordered_map<int, struct bv_scene_obj *>::iterator se_it;
-	    for (se_it = sm_it->second.begin(); se_it != sm_it->second.end(); se_it++)
-		bv_obj_put(se_it->second);
-	    s_map.erase(*iv_it);
-	}
     }
 
     // Objects may be "drawn" in different ways - wireframes, shaded, evaluated.
