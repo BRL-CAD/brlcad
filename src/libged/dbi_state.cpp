@@ -518,6 +518,15 @@ DbiState::update_dp(struct directory *dp, int reset)
 	    bu_log("%s is not a valid region_id\n", region_id_val);
 	    attr_region_id = -1;
 	}
+    } else {
+	// If a region flag is set but a region_id is not, there is an implicit
+	// assumption that the region_id is to be regarded as 0.  Not sure this
+	// will always be true, but right now region table based coloring works
+	// that way in existing BRL-CAD code (see the example m35.g model's
+	// all.g/component/power.train/r75 for an instance of this)
+	const char *region_flag = bu_avs_get(&c_avs, "region");
+	if (region_flag && (BU_STR_EQUAL(region_flag, "R") || BU_STR_EQUAL(region_flag, "1")))
+	    region_id[hash] = 0;
     }
 
     // Check for an inherit flag
