@@ -863,7 +863,7 @@ DbiState::get_selected_states(const char *sname)
 {
     std::vector<BSelectState *> ret;
     std::unordered_map<std::string, BSelectState *>::iterator ss_it;
-    
+
     if (!sname || BU_STR_EQUIV(sname, "default")) {
 	ret.push_back(default_selected);
 	return ret;
@@ -1049,23 +1049,7 @@ DbiState::update()
 	changed_hashes.insert(hash);
     }
 
-#if 0
-    // TODO - I think this is unnecessary?  The redraw method updates this
-    // at the end of each call, so we should either be empty or current
-    // already at this point...
-    //
-    // For all associated view states, cache their collapsed drawn
-    // paths
-    shared_vs->cache_collapsed();
-    std::unordered_map<struct bview *, BViewState *>::iterator v_it;
-    for (v_it = view_states.begin(); v_it != view_states.end(); v_it++) {
-	if (v_it->second == shared_vs)
-	    continue;
-	v_it->second->cache_collapsed();
-    }
-#endif
-
-    // Update the primary data structures 
+    // Update the primary data structures
     for(s_it = removed.begin(); s_it != removed.end(); s_it++) {
 	bu_log("removed: %llu\n", *s_it);
 
@@ -1261,7 +1245,7 @@ BViewState::check_status(
 		// particular instance is still there; either way the state
 		// here is not preservable, since the path is trying to refer
 		// to a tree path which no longer exists in the hierarchy.
-		if (invalid_objects) 
+		if (invalid_objects)
 		    (*invalid_objects).insert(hash);
 		if (changed_paths)
 		    (*changed_paths).erase(path_hash);
@@ -1431,7 +1415,6 @@ BViewState::depth_group_collapse(
 	if (plen == 1)
 	    break;
 	std::unordered_set<unsigned long long> &pckeys = depth_groups.rbegin()->second;
-	bu_log("depth_groups(%zd) key count: %zd\n", plen, pckeys.size());
 
 	// For a given depth, group the paths by parent path.  This results
 	// in path sub-groups which will define for us how "fully drawn"
@@ -1585,7 +1568,6 @@ BViewState::cache_collapsed()
 		depth_groups[k_it->second.size()].insert(k_it->first);
 	    }
 	}
-	bu_log("mode %d depth groups: %zd\n", mm_it->first, depth_groups.size());
 
 	depth_group_collapse(mode_collapsed[mm_it->first], drawn_paths[mm_it->first], partially_drawn_paths[mm_it->first], depth_groups);
     }
@@ -1609,7 +1591,6 @@ BViewState::cache_collapsed()
 		all_drawn_paths.insert(dhash);
 	    } else {
 		// Populate mode-agnostic container
-		bu_log("add %llu (%zd): %s\n", k_it->first, k_it->second.size(), dbis->pathstr(k_it->second));
 		all_depth_groups[k_it->second.size()].insert(k_it->first);
 	    }
 	}
@@ -1618,20 +1599,6 @@ BViewState::cache_collapsed()
     all_drawn_paths.clear();
     all_partially_drawn_paths.clear();
     depth_group_collapse(all_collapsed, all_drawn_paths, all_partially_drawn_paths, all_depth_groups);
-
-#if 0
-    {
-	// DEBUG - print results
-	bu_log("\n\nCollapsed altered paths:\n");
-	struct bu_vls path_str = BU_VLS_INIT_ZERO;
-	for (size_t i = 0; i < all_collapsed.size(); i++) {
-	    print_path(&path_str, all_collapsed[i], ctx, &old_names);
-	    bu_log("\t%s\n", bu_vls_cstr(&path_str));
-	}
-	bu_vls_free(&path_str);
-	bu_log("\n");
-    }
-#endif
 }
 
 struct bv_scene_obj *
