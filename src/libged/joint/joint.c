@@ -137,7 +137,7 @@ findjoint(struct ged *gedp, const struct db_full_path *pathp)
 }
 
 
-HIDDEN union tree *
+static union tree *
 mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
 {
     struct ged *gedp = (struct ged *)client_data;
@@ -193,7 +193,7 @@ mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, s
 }
 
 
-HIDDEN union tree *
+static union tree *
 mesh_end_region (struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, void *UNUSED(client_data))
 {
     return curtree;
@@ -337,7 +337,7 @@ joint_debug(struct ged *gedp,
 /**
  * Common code for help commands
  */
-HIDDEN int
+static int
 helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
 {
     struct funtab *ftp;

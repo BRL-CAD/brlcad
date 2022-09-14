@@ -102,7 +102,7 @@ bg_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n)
 
 
 /* bu_sort functions for points */
-HIDDEN int
+static int
 pnt_compare_2d(const void *pnt1, const void *pnt2, void *UNUSED(arg))
 {
     point2d_t *p1 = (point2d_t *)pnt1;

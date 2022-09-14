@@ -40,7 +40,7 @@ namespace
 {
 
 
-HIDDEN bool
+static bool
 bullet_dimensions_valid(const btVector3 &extents)
 {
     const std::pair<btScalar, btScalar> bullet_limits(0.05, 10.0);

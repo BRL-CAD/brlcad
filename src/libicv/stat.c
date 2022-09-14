@@ -27,7 +27,7 @@
 #include "bu/malloc.h"
 #include "icv.h"
 
-HIDDEN size_t **
+static size_t **
 icv_init_bins(icv_image_t* img, size_t n_bins)
 {
     size_t c;

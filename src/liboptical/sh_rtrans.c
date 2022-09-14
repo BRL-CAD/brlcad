@@ -62,10 +62,10 @@ struct bu_structparse rtrans_parse[] = {
 };
 
 
-HIDDEN int rtrans_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int rtrans_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void rtrans_print(register struct region *rp, void *dp);
-HIDDEN void rtrans_free(void *cp);
+static int rtrans_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int rtrans_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void rtrans_print(register struct region *rp, void *dp);
+static void rtrans_free(void *cp);
 
 struct mfuncs rtrans_mfuncs[] = {
     {MF_MAGIC,	"rtrans",	0,		0,	0,     rtrans_setup,	rtrans_render,	rtrans_print,	rtrans_free },
@@ -78,7 +78,7 @@ struct mfuncs rtrans_mfuncs[] = {
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
-HIDDEN int
+static int
 rtrans_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
@@ -108,14 +108,14 @@ rtrans_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
 }
 
 
-HIDDEN void
+static void
 rtrans_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, rtrans_parse, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 rtrans_free(void *cp)
 {
     BU_PUT(cp, struct rtrans_specific);

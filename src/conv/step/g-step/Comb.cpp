@@ -104,7 +104,7 @@ Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape, STEPe
     delete cpd;
 }
 
-HIDDEN union tree *
+static union tree *
 _db_tree_get_child(union tree *tp) {
     union tree *ret;
 

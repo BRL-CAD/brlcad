@@ -29,7 +29,7 @@
 #include "bg.h"
 #include "bv/plot3.h"
 
-HIDDEN
+static
 void plot_obr(int test_num, const point_t *pnt_array, int pnt_cnt)
 {
     int i = 0;

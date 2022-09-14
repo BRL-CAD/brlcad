@@ -44,7 +44,7 @@
  * Count the number of times a Bezier control polygon
  * crosses the ray. This number is >= the number of roots.
  */
-HIDDEN int
+static int
 crossing_count(
     point2d_t *V,		/* 2D Control pts of Bezier curve */
     int degree,                 /* Degree of Bezier curve */
@@ -74,7 +74,7 @@ crossing_count(
  * Check if the control polygon of a Bezier curve is flat enough for
  * recursive subdivision to bottom out.
  */
-HIDDEN int
+static int
 control_polygon_flat_enough(
     point2d_t *V,		/* Control points */
     int degree,			/* Degree of polynomial */
@@ -259,7 +259,7 @@ bezier(
  *
  * intercept - contains calculated intercept
  */
-HIDDEN int
+static int
 compute_x_intercept(
     point2d_t *V,               /* Control points */
     int degree,                 /* Degree of curve */

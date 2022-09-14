@@ -221,15 +221,15 @@ struct human_data_t
 };
 #define HUMAN_DATA_INIT_ZERO {0.0, 0, male, generic, HEAD_INFO_INIT, TORSO_INFO_INIT, ARM_INFO_INIT, LEG_INFO_INIT, JOINT_INFO_INIT, 0, 0, 0, 0}
 
-HIDDEN void Auto(struct human_data_t *dude);
-HIDDEN void RandAuto(struct human_data_t *dude);
+static void Auto(struct human_data_t *dude);
+static void RandAuto(struct human_data_t *dude);
 
 /**
  * This function takes in a vector, then applies a new direction to it
  * using x, y, and z degrees, and exports it to resultVect, and
  * returns the distance of the vector.
  */
-HIDDEN fastf_t
+static fastf_t
 setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t *outMatrix, fastf_t x, fastf_t y, fastf_t z)
 {
     vect_t outVect;
@@ -265,7 +265,7 @@ setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t *outMatrix, fastf_t x
  * don't want to rotate in the correct manner, and insist upon rotating
  * around an incorrect vertex.
  */
-HIDDEN void
+static void
 boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *lengthVector, fastf_t partWidth, fastf_t *rotMatrix)
 {
     /* Make the arb8/rpp that will bound the part as it were straight up and down,
@@ -336,7 +336,7 @@ boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *lengt
  * Create a bounding rectangle around the individual part, and this
  * one has 2 separate values for depth and width
  */
-HIDDEN void
+static void
 boundingRectangle(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *lengthVector, fastf_t partWidth, fastf_t partDepth, fastf_t *UNUSED(rotMatrix))
 {
     /* Make the arb8/rpp that will bound the part as it were straight
@@ -377,7 +377,7 @@ boundingRectangle(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t 
 /*					  */
 /******************************************/
 
-HIDDEN fastf_t
+static fastf_t
 makeHead(struct rt_wdb (*file), char *name, struct human_data_t *dude, fastf_t *direction, int showBoxes)
 {
     fastf_t head = dude->head.headSize / 2;
@@ -398,7 +398,7 @@ makeHead(struct rt_wdb (*file), char *name, struct human_data_t *dude, fastf_t *
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeNeck(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf_t *direction, int showBoxes)
 {
     vect_t startVector;
@@ -414,7 +414,7 @@ makeNeck(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf_t *di
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeUpperTorso(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf_t *direction, int showBoxes)
 {
     vect_t startVector;
@@ -449,7 +449,7 @@ makeUpperTorso(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeLowerTorso(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf_t *direction, int showBoxes)
 {
     vect_t startVector, leftVector, rightVector;
@@ -481,7 +481,7 @@ makeLowerTorso(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeShoulderJoint(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude, int showBoxes)
 {
     vect_t startVector, lengthVector;
@@ -512,14 +512,14 @@ makeShoulderJoint(struct rt_wdb *file, int isLeft, char *name, struct human_data
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeShoulder(struct rt_wdb *UNUSED(file), fastf_t UNUSED(isLeft), char *UNUSED(partName), struct human_data_t *UNUSED(dude), int UNUSED(showBoxes))
 {
     return 1;
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeUpperArm(struct rt_wdb *file, int isLeft, char *partName, struct human_data_t *dude, int showBoxes)
 {
     vect_t startVector;
@@ -556,7 +556,7 @@ makeUpperArm(struct rt_wdb *file, int isLeft, char *partName, struct human_data_
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeElbow(struct rt_wdb *file, int UNUSED(isLeft), char *name, struct human_data_t *dude)
 {
     vect_t a, b, c;
@@ -572,7 +572,7 @@ makeElbow(struct rt_wdb *file, int UNUSED(isLeft), char *name, struct human_data
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeLowerArm(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude, int showBoxes)
 {
     vect_t startVector;
@@ -610,7 +610,7 @@ makeLowerArm(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *d
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeWrist(struct rt_wdb *file, int UNUSED(isLeft), char *name, struct human_data_t *dude)
 {
     mk_sph(file, name, dude->joints.wristJoint, dude->arms.wristWidth);
@@ -618,7 +618,7 @@ makeWrist(struct rt_wdb *file, int UNUSED(isLeft), char *name, struct human_data
 }
 
 
-HIDDEN void
+static void
 makeHand(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude, int showBoxes)
 {
     mat_t rotMatrix;
@@ -638,7 +638,7 @@ makeHand(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude,
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeThighJoint(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude)
 {
     if (isLeft)
@@ -650,7 +650,7 @@ makeThighJoint(struct rt_wdb *file, int isLeft, char *name, struct human_data_t 
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeThigh(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude, int showBoxes)
 {
     vect_t startVector;
@@ -676,7 +676,7 @@ makeThigh(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeKnee(struct rt_wdb *file, int UNUSED(isLeft), char *name, struct human_data_t *dude)
 {
     mk_sph(file, name, dude->joints.kneeJoint, dude->legs.kneeWidth);
@@ -684,7 +684,7 @@ makeKnee(struct rt_wdb *file, int UNUSED(isLeft), char *name, struct human_data_
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeCalf(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude, int showBoxes)
 {
     vect_t startVector;
@@ -715,7 +715,7 @@ makeCalf(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude,
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeAnkle(struct rt_wdb *file, int UNUSED(isLeftr), char *name, struct human_data_t *dude)
 {
     mk_sph(file, name, dude->joints.ankleJoint, dude->legs.ankleWidth);
@@ -723,7 +723,7 @@ makeAnkle(struct rt_wdb *file, int UNUSED(isLeftr), char *name, struct human_dat
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 makeFoot(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude, int showBoxes)
 {
     vect_t startVector, boxVector;
@@ -751,7 +751,7 @@ makeFoot(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude,
 /**
  * Make profile makes the head and neck of the body
  */
-HIDDEN void
+static void
 makeProfile(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_t *direction, int showBoxes)
 {
     char headName[MAXLENGTH] = "Head.s";
@@ -767,7 +767,7 @@ makeProfile(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fast
 /*
  * Create all the torso parts, and set joint locations for each arm, and each leg.
  */
-HIDDEN void
+static void
 makeTorso(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_t *direction, int showBoxes)
 {
     char upperTorsoName[MAXLENGTH] = "UpperTorso.s";
@@ -792,7 +792,7 @@ makeTorso(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_
 /**
  * Make the 3 components of the arm:the upper arm, the lower arm, and the hand.
  */
-HIDDEN void
+static void
 makeArm(struct rt_wdb (*file), char *suffix, int isLeft, struct human_data_t *dude, int showBoxes)
 {
     char shoulderJointName[MAXLENGTH];
@@ -838,7 +838,7 @@ makeArm(struct rt_wdb (*file), char *suffix, int isLeft, struct human_data_t *du
 /**
  * Create the leg to be length 'legLength' by making a thigh, calf, and foot to meet requirements.
  */
-HIDDEN void
+static void
 makeLeg(struct rt_wdb (*file), char *suffix, int isLeft, struct human_data_t *dude, int showBoxes)
 {
     char thighJointName[MAXLENGTH];
@@ -884,7 +884,7 @@ makeLeg(struct rt_wdb (*file), char *suffix, int isLeft, struct human_data_t *du
  * torso, arms, hands, legs, feet.  And dude, a very technical term,
  * is the human_data in a shorter, more readable name
  */
-HIDDEN void
+static void
 makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_t *location, int showBoxes)
 {
     vect_t direction;
@@ -929,7 +929,7 @@ makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_t
  * number of persons entered using -N if N is large (>= 20) Parts
  * start disappearing, oddly enough.
  */
-HIDDEN void
+static void
 makeArmy(struct rt_wdb (*file), struct human_data_t *dude, int number, int showBoxes)
 {
     point_t locations;
@@ -957,7 +957,7 @@ makeArmy(struct rt_wdb (*file), struct human_data_t *dude, int number, int showB
 
 
 /* User inputs X, Y, Z coordinates for use in manual positioning */
-HIDDEN void
+static void
 grabCoordinates(fastf_t *positions)
 {
     int ret;
@@ -990,7 +990,7 @@ grabCoordinates(fastf_t *positions)
  * User manual poses the human model by inputting absolute angles for
  * limb positions.
  */
-HIDDEN void
+static void
 manualPosition(struct human_data_t *dude)
 {
     vect_t positions;
@@ -1045,7 +1045,7 @@ manualPosition(struct human_data_t *dude)
 
 
 /* position limbs to fit stance input in command line (or just default to standing) */
-HIDDEN void
+static void
 setStance(fastf_t stance, struct human_data_t *dude)
 {
     vect_t downVect, forwardVect, rightVect, leftVect; /* generic vectors for holding temp values */
@@ -1232,7 +1232,7 @@ setStance(fastf_t stance, struct human_data_t *dude)
 /**
  * Auto Set all data for all parts, in inches
  */
-HIDDEN void
+static void
 Auto(struct human_data_t *dude)
 {
     bu_log("Auto Setting\n");
@@ -1271,7 +1271,7 @@ Auto(struct human_data_t *dude)
 /**
  * Random height generator
  */
-HIDDEN void
+static void
 RandAuto(struct human_data_t *dude)
 {
     fastf_t val = 0;
@@ -1283,7 +1283,7 @@ RandAuto(struct human_data_t *dude)
 /**
  * Manually Set all data for all parts, in inches
  */
-HIDDEN void
+static void
 Manual(struct human_data_t *dude)
 {
     int ret;
@@ -1510,7 +1510,7 @@ Manual(struct human_data_t *dude)
 /**
  * Help message printed when -h/-? option is supplied
  */
-HIDDEN void
+static void
 show_help(const char *name, const char *optstr)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -1552,7 +1552,7 @@ show_help(const char *name, const char *optstr)
 /**
  * User inputs the XYZ coordinates of the center point of the human model.
  */
-HIDDEN void
+static void
 getLocation(fastf_t *location)
 {
     int ret;
@@ -1579,7 +1579,7 @@ getLocation(fastf_t *location)
 
 
 /* Process command line arguments, all 43 of them */
-HIDDEN int
+static int
 read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, int *stance, int *troops, int *showBoxes)
 {
     int c;
@@ -1876,7 +1876,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
  * /loves/ millimeters for analytical purposes.  Hard Coded to dump
  * out everything related to boundingboxes.
  */
-HIDDEN void
+static void
 text(struct human_data_t *dude)
 {
     fastf_t x = 0, y = 0, z = 0;
@@ -2002,7 +2002,7 @@ text(struct human_data_t *dude)
  * Verbose.txt Includes all measurements: sans angles, joint
  * information
  */
-HIDDEN void
+static void
 verbose(struct human_data_t *dude)
 {
     FILE *dump;
@@ -2049,7 +2049,7 @@ verbose(struct human_data_t *dude)
  * This function reads in a file with bounding box information and
  * inputs into the program, instead of manual mode or auto mode.
  */
-HIDDEN void
+static void
 getText(struct human_data_t *UNUSED(dude))
 {
     char buffer[80];
@@ -2077,7 +2077,7 @@ getText(struct human_data_t *UNUSED(dude))
 }
 
 
-HIDDEN void
+static void
 verbIn(struct human_data_t *dude)
 {
     char buffer[80];
