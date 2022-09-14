@@ -1764,6 +1764,7 @@ BViewState::gather_paths(
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
     pc_it = dbis->p_c.find(c_hash);
 
+    struct directory *dp = NULL;
     std::unordered_map<unsigned long long, struct directory *>::iterator d_it;
     d_it = dbis->d_map.find(c_hash);
     if (d_it == dbis->d_map.end()) {
@@ -1771,10 +1772,12 @@ BViewState::gather_paths(
 	m_it = dbis->i_map.find(c_hash);
 	if (m_it != dbis->i_map.end()) {
 	    d_it = dbis->d_map.find(m_it->second);
+	    dp = d_it->second;
 	} else {
 	    bu_log("Could not find dp!\n");
-	    return;
 	}
+    } else {
+	dp = d_it->second;
     }
 
     path_hashes.push_back(c_hash);
@@ -1794,14 +1797,15 @@ BViewState::gather_paths(
     if (pc_it != dbis->p_c.end()) {
 	// Two things may prevent further processing of a comb - a hidden dp, or
 	// a cyclic path.
-	struct directory *dp = d_it->second;
-	if (!(dp->d_flags & RT_DIR_HIDDEN) && !path_addition_cyclic(path_hashes)) {
-
+	if (dp && !(dp->d_flags & RT_DIR_HIDDEN) && pc_it->second.size() && !path_addition_cyclic(path_hashes)) {
 	    /* Keep going */
 	    std::unordered_set<unsigned long long>::iterator c_it;
 	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++) {
 		walk_tree(objs, *c_it, curr_mode, vs, m, path_hashes, views, ret);
 	    }
+	} else {
+	    // Comb without children - (empty) scene object time
+	    scene_obj(objs, curr_mode, vs, m, path_hashes, views);
 	}
     } else {
 	// Solid - scene object time
@@ -2004,7 +2008,6 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	if (!phashes.size())
 	    continue;
 	erase_hpath(-1, phashes, false);
-	bu_log("erase: %llu\n", *iv_it);
     }
 
     // Objects may be "drawn" in different ways - wireframes, shaded, evaluated.
@@ -2022,7 +2025,6 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    mode_map[sm_it->first].insert(sk_it->first);
 	}
     }
-
 
     // Changed paths we redo based on current db info - color, matrix, and
     // geometry if the entry isn't invalid.  This is the step that ensures any
@@ -2106,6 +2108,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 
 	    // NOTE: Because there is no geometry to update, these scene objs
 	    // are not added to objs
+	    bu_log("invalid expand\n");
 	}
     }
 
@@ -2162,9 +2165,14 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     // to illuminate them.  This is what ensures that newly drawn solids
     // respect a previously selected set from the command line
     BSelectState *ss = dbis->find_selected_state(NULL);
-    if (ss && ss->draw_sync())
+    if (ss) {
+	if (invalid_paths.size() || changed_paths.size()) {
+	    ss->refresh();
+	    ss->collapse();
+	}
+	ss->draw_sync();
 	ret = GED_DBISTATE_VIEW_CHANGE;
-
+    }
     // Now that we have the finalized geometry, do a finishing autoview,
     // unless suppressed
     if (!no_autoview) {
