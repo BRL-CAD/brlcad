@@ -634,13 +634,15 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 
     // Adaptive BoTs have specialized LoD routines to help cope with very large
     // data sets, both for wireframe and shaded mode.
-    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && s->s_v->gv_s->adaptive_plot_mesh && s->s_os->s_dmode == 1) {
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && s->s_v->gv_s->adaptive_plot_mesh &&
+       (s->s_os->s_dmode == 0 || s->s_os->s_dmode == 1)) {
 	bot_adaptive_plot(s, v);
 	return;
     }
 
     // Adaptive BReps have specialized LoD routines to manage shaded displays, which
-    // can involve slow and large mesh generations.
+    // can involve slow and large mesh generations.  BRep wireframes are based on the
+    // NURBS data, so this is used only for shaded mode
     if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP && s->s_v->gv_s->adaptive_plot_mesh && s->s_os->s_dmode == 1) {
 	brep_adaptive_plot(s, v);
 	return;
