@@ -178,7 +178,7 @@ qt_destroy(struct qtglinfo *qi)
 }
 
 
-HIDDEN int
+static int
 qtgl_getmem(struct fb *ifp)
 {
     int pixsize;
@@ -313,7 +313,7 @@ qtgl_configureWindow(struct fb *ifp, int width, int height)
 }
 
 
-HIDDEN void
+static void
 qtgl_do_event(struct fb *ifp)
 {
     QTGL(ifp)->mw->update();
@@ -415,7 +415,7 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     return qtgl_open_existing(ifp, width, height, &fbps);
 }
 
-HIDDEN struct fb_platform_specific *
+static struct fb_platform_specific *
 qtgl_get_fbps(uint32_t magic)
 {
     struct fb_platform_specific *fb_ps = NULL;
@@ -426,7 +426,7 @@ qtgl_get_fbps(uint32_t magic)
 }
 
 
-HIDDEN void
+static void
 qtgl_put_fbps(struct fb_platform_specific *fbps)
 {
     BU_CKMAG(fbps, FB_QTGL_MAGIC, "qtgl framebuffer");
@@ -435,7 +435,7 @@ qtgl_put_fbps(struct fb_platform_specific *fbps)
 }
 
 
-HIDDEN int
+static int
 qtgl_flush(struct fb *UNUSED(ifp))
 {
     glFlush();
@@ -443,7 +443,7 @@ qtgl_flush(struct fb *UNUSED(ifp))
 }
 
 
-HIDDEN int
+static int
 fb_qtgl_close(struct fb *ifp)
 {
     struct qtglinfo *qi = QTGL(ifp);
@@ -466,7 +466,7 @@ qtgl_close_existing(struct fb *UNUSED(ifp))
 /*
  * Handle any pending input events
  */
-HIDDEN int
+static int
 qtgl_poll(struct fb *ifp)
 {
     qtgl_do_event(ifp);
@@ -480,7 +480,7 @@ qtgl_poll(struct fb *ifp)
 /*
  * Free memory resources and close.
  */
-HIDDEN int
+static int
 qtgl_free(struct fb *ifp)
 {
     if (FB_DEBUG)
@@ -504,7 +504,7 @@ qtgl_free(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 qtgl_clear(struct fb *ifp, unsigned char *pp)
 {
     struct fb_pixel bg;
@@ -755,7 +755,7 @@ qtgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
  * internal form, and then arrange to have them sent to the screen
  * separately.
  */
-HIDDEN int
+static int
 qtgl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     int x;
@@ -796,7 +796,7 @@ qtgl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const 
  * internal form, and then arrange to have them sent to the screen
  * separately.
  */
-HIDDEN int
+static int
 qtgl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     int x;
@@ -832,7 +832,7 @@ qtgl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, cons
 }
 
 
-HIDDEN int
+static int
 qtgl_rmap(struct fb *UNUSED(ifp), ColorMap *UNUSED(cmp))
 {
     if (FB_DEBUG)
@@ -849,7 +849,7 @@ qtgl_rmap(struct fb *UNUSED(ifp), ColorMap *UNUSED(cmp))
 }
 
 
-HIDDEN int
+static int
 qtgl_wmap(struct fb *UNUSED(ifp), const ColorMap *UNUSED(cmp))
 {
     if (FB_DEBUG)
@@ -859,7 +859,7 @@ qtgl_wmap(struct fb *UNUSED(ifp), const ColorMap *UNUSED(cmp))
 }
 
 
-HIDDEN int
+static int
 qtgl_help(struct fb *ifp)
 {
     fb_log("Description: %s\n", ifp->i->if_type);
@@ -876,7 +876,7 @@ qtgl_help(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 qtgl_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     FB_CK_FB(ifp->i);
@@ -888,7 +888,7 @@ qtgl_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbi
 }
 
 
-HIDDEN int
+static int
 qtgl_cursor(struct fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
 

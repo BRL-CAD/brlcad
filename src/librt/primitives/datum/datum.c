@@ -277,7 +277,7 @@ rt_datum_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 }
 
 
-HIDDEN unsigned char *
+static unsigned char *
 datum_pack_double(unsigned char *buf, unsigned char *data, size_t count)
 {
     bu_cv_htond(buf, data, count);
@@ -285,7 +285,7 @@ datum_pack_double(unsigned char *buf, unsigned char *data, size_t count)
     return buf;
 }
 
-HIDDEN unsigned char *
+static unsigned char *
 datum_unpack_double(unsigned char *buf, unsigned char *data, size_t count)
 {
     bu_cv_ntohd(data, buf, count);

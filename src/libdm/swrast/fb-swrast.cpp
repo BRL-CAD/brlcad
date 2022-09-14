@@ -165,7 +165,7 @@ qt_destroy(struct swrastinfo *qi)
 #endif
 
 
-HIDDEN int
+static int
 swrast_getmem(struct fb *ifp)
 {
     int pixsize;
@@ -300,7 +300,7 @@ swrast_configureWindow(struct fb *ifp, int width, int height)
 }
 
 
-HIDDEN void
+static void
 #ifdef SWRAST_QT
 swrast_do_event(struct fb *ifp)
 #else
@@ -414,7 +414,7 @@ fb_swrast_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 #endif
 }
 
-HIDDEN struct fb_platform_specific *
+static struct fb_platform_specific *
 swrast_get_fbps(uint32_t magic)
 {
     struct fb_platform_specific *fb_ps = NULL;
@@ -425,7 +425,7 @@ swrast_get_fbps(uint32_t magic)
 }
 
 
-HIDDEN void
+static void
 swrast_put_fbps(struct fb_platform_specific *fbps)
 {
     BU_CKMAG(fbps, FB_SWFB_MAGIC, "swrast framebuffer");
@@ -434,7 +434,7 @@ swrast_put_fbps(struct fb_platform_specific *fbps)
 }
 
 
-HIDDEN int
+static int
 swrast_flush(struct fb *UNUSED(ifp))
 {
     glFlush();
@@ -442,7 +442,7 @@ swrast_flush(struct fb *UNUSED(ifp))
 }
 
 
-HIDDEN int
+static int
 #ifdef SWRAST_QT
 fb_swrast_close(struct fb *ifp)
 #else
@@ -473,7 +473,7 @@ swrast_close_existing(struct fb *ifp)
 /*
  * Handle any pending input events
  */
-HIDDEN int
+static int
 swrast_poll(struct fb *ifp)
 {
     swrast_do_event(ifp);
@@ -487,7 +487,7 @@ swrast_poll(struct fb *ifp)
 /*
  * Free memory resources and close.
  */
-HIDDEN int
+static int
 swrast_free(struct fb *ifp)
 {
     if (FB_DEBUG)
@@ -511,7 +511,7 @@ swrast_free(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 swrast_clear(struct fb *ifp, unsigned char *pp)
 {
     struct fb_pixel bg;
@@ -762,7 +762,7 @@ swrast_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp
  * internal form, and then arrange to have them sent to the screen
  * separately.
  */
-HIDDEN int
+static int
 swrast_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     int x;
@@ -804,7 +804,7 @@ swrast_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, cons
  * internal form, and then arrange to have them sent to the screen
  * separately.
  */
-HIDDEN int
+static int
 swrast_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     int x;
@@ -841,7 +841,7 @@ swrast_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, co
 }
 
 
-HIDDEN int
+static int
 swrast_rmap(struct fb *UNUSED(ifp), ColorMap *UNUSED(cmp))
 {
     if (FB_DEBUG)
@@ -858,7 +858,7 @@ swrast_rmap(struct fb *UNUSED(ifp), ColorMap *UNUSED(cmp))
 }
 
 
-HIDDEN int
+static int
 swrast_wmap(struct fb *UNUSED(ifp), const ColorMap *UNUSED(cmp))
 {
     if (FB_DEBUG)
@@ -868,7 +868,7 @@ swrast_wmap(struct fb *UNUSED(ifp), const ColorMap *UNUSED(cmp))
 }
 
 
-HIDDEN int
+static int
 swrast_help(struct fb *ifp)
 {
     fb_log("Description: %s\n", ifp->i->if_type);
@@ -885,7 +885,7 @@ swrast_help(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 swrast_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     FB_CK_FB(ifp->i);
@@ -897,7 +897,7 @@ swrast_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(x
 }
 
 
-HIDDEN int
+static int
 swrast_cursor(struct fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
 

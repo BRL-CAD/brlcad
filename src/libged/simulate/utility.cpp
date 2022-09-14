@@ -40,7 +40,7 @@ namespace
 {
 
 
-HIDDEN void
+static void
 set_region(db_i &db, directory &dir, const bool is_region)
 {
     RT_CK_DBI(&db);

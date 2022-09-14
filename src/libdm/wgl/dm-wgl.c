@@ -59,15 +59,15 @@
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
 static int wgl_actively_drawing;
-HIDDEN int wgl_choose_visual();
+static int wgl_choose_visual();
 
 /* Display Manager package interface */
 #define IRBOUND	4095.9	/* Max magnification in Rot matrix */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-HIDDEN int	wgl_close();
-HIDDEN int	wgl_drawString2D();
-HIDDEN int	wgl_configureWin_guts();
+static int	wgl_close();
+static int	wgl_drawString2D();
+static int	wgl_configureWin_guts();
 
 static void
 WGLEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
@@ -250,7 +250,7 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 /*
  *  Gracefully release the display.
  */
-HIDDEN int
+static int
 wgl_close(struct dm *dmp)
 {
     struct dm_wglvars *pubvars = (struct dm_wglvars *)dmp->i->dm_vars.pub_vars;
@@ -292,7 +292,7 @@ wgl_viable(const char *UNUSED(dpy_string))
  * Output a string.
  * The starting position of the beam is as specified.
  */
-HIDDEN int
+static int
 wgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     struct wgl_vars *privars = (struct wgl_vars *)dmp->i->dm_vars.priv_vars;
@@ -315,7 +315,7 @@ wgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size
 /* currently, get a double buffered rgba visual that works with Tk and
  * OpenGL
  */
-HIDDEN int
+static int
 wgl_choose_visual(struct dm *dmp,
 		  Tk_Window tkwin)
 {
@@ -375,7 +375,7 @@ wgl_choose_visual(struct dm *dmp,
  *
  * also change font size if necessary
  */
-HIDDEN int
+static int
 wgl_configureWin_guts(struct dm *dmp,
 		      int force)
 {
@@ -700,7 +700,7 @@ wgl_configureWin_guts(struct dm *dmp,
 }
 
 
-HIDDEN int
+static int
 wgl_makeCurrent(struct dm *dmp)
 {
     struct dm_wglvars *pubvars = (struct dm_wglvars *)dmp->i->dm_vars.pub_vars;
@@ -716,7 +716,7 @@ wgl_makeCurrent(struct dm *dmp)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 wgl_SwapBuffers(struct dm *dmp)
 {
     struct dm_wglvars *pubvars = (struct dm_wglvars *)dmp->i->dm_vars.pub_vars;
@@ -728,7 +728,7 @@ wgl_SwapBuffers(struct dm *dmp)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 wgl_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
 {
     XEvent *eventPtr= (XEvent *)veventPtr;
@@ -748,7 +748,7 @@ wgl_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
 }
 
 
-HIDDEN int
+static int
 wgl_configureWin(struct dm *dmp, int force)
 {
     struct dm_wglvars *pubvars = (struct dm_wglvars *)dmp->i->dm_vars.pub_vars;

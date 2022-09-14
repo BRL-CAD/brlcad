@@ -35,7 +35,7 @@
 
 #include "../ged_private.h"
 
-HIDDEN int
+static int
 move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new_name)
 {
     int i;
@@ -233,7 +233,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 }
 
 
-HIDDEN int
+static int
 move_all_file(struct ged *gedp, int nflag, const char *file)
 {
     FILE *fp = NULL;

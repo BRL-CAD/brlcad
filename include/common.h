@@ -116,20 +116,6 @@ extern int snprintf(char *str, size_t size, const char *format, ...);
 #  endif
 #endif
 
-/**
- * Functions local to one file IN A LIBRARY should be declared HIDDEN.
- * Disabling the static classifier is sometimes helpful for debugging.
- * It can help prevent some compilers from inlining functions that one
- * might want to set a breakpoint on.  Do not use on variables.
- */
-#if !defined(HIDDEN)
-#  if defined(NDEBUG)
-#    define HIDDEN	static
-#  else
-#    define HIDDEN	/***/
-#  endif
-#endif
-
 /* ANSI c89 does not allow the 'inline' keyword, check if GNU inline
  * rules are in effect.
  *

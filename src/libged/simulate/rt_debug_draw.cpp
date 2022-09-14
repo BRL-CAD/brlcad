@@ -44,7 +44,7 @@ namespace
 {
 
 
-HIDDEN std::string
+static std::string
 make_name(const db_i &db, const std::string &base)
 {
     RT_CK_DBI(&db);
@@ -66,7 +66,7 @@ make_name(const db_i &db, const std::string &base)
 }
 
 
-HIDDEN void
+static void
 apply_color(db_i &db, const std::string &name, const btVector3 &color)
 {
     RT_CK_DBI(&db);

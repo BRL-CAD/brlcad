@@ -74,14 +74,14 @@ struct bu_structparse cook_parse[] = {
 };
 
 
-HIDDEN int cook_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int cmirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int cglass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int cook_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void cook_print(register struct region *rp, void *dp);
-HIDDEN void cook_free(void *cp);
-HIDDEN double fresnel(double c, double n);
-HIDDEN double beckmann(double a, double m2);
+static int cook_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int cmirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int cglass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int cook_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void cook_print(register struct region *rp, void *dp);
+static void cook_free(void *cp);
+static double fresnel(double c, double n);
+static double beckmann(double a, double m2);
 
 struct mfuncs cook_mfuncs[] = {
     {MF_MAGIC,	"cook",		0,		MFI_NORMAL|MFI_LIGHT,	0,
@@ -107,7 +107,7 @@ struct mfuncs cook_mfuncs[] = {
  * object where we compute an "effective" set of n's and work from
  * there.
  */
-HIDDEN int
+static int
 cook_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct cook_specific *pp;
@@ -148,7 +148,7 @@ cook_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
 }
 
 
-HIDDEN int
+static int
 cmirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
@@ -186,7 +186,7 @@ cmirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, co
 }
 
 
-HIDDEN int
+static int
 cglass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
@@ -224,14 +224,14 @@ cglass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
 }
 
 
-HIDDEN void
+static void
 cook_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, cook_parse, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 cook_free(void *cp)
 {
     BU_PUT(cp, struct cook_specific);
@@ -249,7 +249,7 @@ cook_free(void *cp)
  * rd = normal reflectance = F(0)/Pi if rough (Lambertian)
  * This is "a good approx for theta < ~70 degrees."
  */
-HIDDEN int
+static int
 cook_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct light_specific *lp;
@@ -355,7 +355,7 @@ cook_render(register struct application *ap, const struct partition *pp, struct 
 }
 
 
-HIDDEN double
+static double
 fresnel(double c, double n)
 /* cos(theta) = V dot H */
 /* index of refraction */
@@ -405,7 +405,7 @@ double tan2(double a)
  *
  * Here we are leaving it normalized 0 to 1 by not dividing by m^2.
  */
-HIDDEN double
+static double
 beckmann(double a, double m2)
 /* angle between N and H */
 /* rms slope squared (m^2) */

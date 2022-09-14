@@ -23,7 +23,7 @@
 #include "bv/util.h"
 #include "ged.h"
 
-HIDDEN int
+static int
 zoom(struct ged *gedp, double sf)
 {
     gedp->ged_gvp->gv_scale /= sf;

@@ -48,7 +48,7 @@ struct MultiOverlapHandlerArgs {
 };
 
 
-HIDDEN void
+static void
 multioverlap_handler(application * const app, partition * const partition1,
 		     bu_ptbl * const region_table, partition * const partition_list)
 {

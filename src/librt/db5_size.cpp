@@ -67,7 +67,7 @@ struct db5_sizecalc {
 };
 #define DB5SIZE(_dp) ((struct db5_sizecalc *)_dp->u_data)
 
-HIDDEN int
+static int
 db_get_external_reuse(struct bu_external *ep, const struct directory *dp, const struct db_i *dbip)
 {
     ep->ext_nbytes = dp->d_len;
@@ -87,7 +87,7 @@ db_get_external_reuse(struct bu_external *ep, const struct directory *dp, const 
 
 // TODO - figure out what to do about submodel...
 #define DB5COMB_TOKEN_LEAF 1
-HIDDEN int
+static int
 _db5_children(
 	const struct directory *dp,
 	const struct db_i *dbip,
@@ -244,7 +244,7 @@ _db5_children(
 }
 
 
-HIDDEN long
+static long
 _db5_get_attributes_size(struct bu_external *ext, const struct db_i *dbip, const struct directory *dp)
 {
     struct db5_raw_internal raw;

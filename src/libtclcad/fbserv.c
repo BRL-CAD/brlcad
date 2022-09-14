@@ -42,7 +42,7 @@
 /*
  * Communication error.  An error occurred on the PKG link.
  */
-HIDDEN void
+static void
 comm_error(const char *str)
 {
     bu_log("%s", str);

@@ -614,7 +614,7 @@ struct goodies {
  * This routine must be prepared to run in parallel.
  * This routine should be generally exported for other uses.
  */
-HIDDEN union tree *
+static union tree *
 rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     union tree *curtree = NULL;
