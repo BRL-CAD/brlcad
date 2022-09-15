@@ -1,4 +1,4 @@
-/*                  O P E N M E S H _ T O O L S . C P P
+/*                B O T _ S U B D I V I D E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2019-2022 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
- /** @file libged/bot/openmesh_tools.cpp
+ /** @file libged/bot/bot_subdivide.cpp
   *
-  * Bot subcommands using openmesh tools and features
+  * Subdivide a BoT using OpenMesh
   * based on remesh.cpp
   *
   */
@@ -61,7 +61,7 @@
 #ifdef BUILD_OPENMESH_TOOLS
 
 static bool
-bot_om(struct ged* gedp, struct rt_bot_internal* bot)
+bot_subd(struct ged* gedp, struct rt_bot_internal* bot, int alg)
 {
     if (!gedp || !bot)
 	return false;
@@ -72,7 +72,7 @@ bot_om(struct ged* gedp, struct rt_bot_internal* bot)
 #else /* BUILD_OPENMESH_TOOLS */
 
 static bool
-bot_om(struct ged* gedp, struct rt_bot_internal* UNUSED(bot))
+bot_subd(struct ged* gedp, struct rt_bot_internal* UNUSED(bot), int UNUSED(alg))
 {
     bu_vls_printf(gedp->ged_result_str,
 	"WARNING: BoT OpenMesh subcommands are unavailable.\n"
@@ -85,28 +85,39 @@ bot_om(struct ged* gedp, struct rt_bot_internal* UNUSED(bot))
 
 
 extern "C" int
-_bot_cmd_om(void* bs, int argc, const char** argv)
+_bot_cmd_subd(void* bs, int argc, const char** argv)
 {
-    const char* usage_string = "bot [options] openmesh [subcommand]? <objname> <output_bot>";
-    const char* purpose_string = "Do <something> to the BoT using the OpenMesh library and output to <output_bot>";
+    const char* usage_string = "bot [options] subd [algorithm] <objname> [output_name]";
+    const char* purpose_string = "Subdivide the BoT; default algorithm is CatmullClark";
+    const char* input_bot_name = NULL;
+    const char* output_bot_name = NULL;
+    struct directory* dp_input;
+    struct directory* dp_output;
+    struct rt_bot_internal* input_bot;
+
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
 
     struct _ged_bot_info* gb = (struct _ged_bot_info*)bs;
+    struct ged* gedp = gb->gedp;
 
+    /* check for incorrect invocation
+     * in the form "subd [algorithm] input_bot_name [output_bot_name]"
+     */
+    if (argc < 2 || argc > 4) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n%s", usage_string, purpose_string);
+	return BRLCAD_HELP;
+    }
+
+    /* strip argv[0] "subd" and continue */
     argc--; argv++;
+
+    /* TODO: add a way to accomodate a user specifying a subdivison algorithm */
 
     if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
     }
-
-    struct ged* gedp = gb->gedp;
-    const char* input_bot_name = gb->dp->d_namep;
-    const char* output_bot_name;
-    struct directory* dp_input;
-    struct directory* dp_output;
-    struct rt_bot_internal* input_bot;
 
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
@@ -114,12 +125,6 @@ _bot_cmd_om(void* bs, int argc, const char** argv)
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s\n%s", usage_string, purpose_string);
-	return BRLCAD_HELP;
-    }
 
     /* check that we are using a version 5 database */
     if (db_version(gedp->dbip) < 5) {
@@ -130,12 +135,7 @@ _bot_cmd_om(void* bs, int argc, const char** argv)
 	return BRLCAD_ERROR;
     }
 
-    if (argc > 3) {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: unexpected arguments encountered\n");
-	bu_vls_printf(gedp->ged_result_str, "%s\n%s", usage_string, purpose_string);
-	return BRLCAD_ERROR;
-    }
-
+    input_bot_name = gb->dp->d_namep;
     output_bot_name = input_bot_name;
     if (argc > 1)
 	output_bot_name = (char*)argv[1];
@@ -156,7 +156,7 @@ _bot_cmd_om(void* bs, int argc, const char** argv)
 
     /* TODO: stash a backup if overwriting the original */
 
-    bool ok = bot_om(gedp, input_bot);
+    bool ok = bot_subd(gedp, input_bot, 0);
     if (!ok) {
 	return BRLCAD_ERROR;
     }
@@ -170,6 +170,7 @@ _bot_cmd_om(void* bs, int argc, const char** argv)
 	GED_DB_DIRADD(gedp, dp_output, output_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void*)&gb->intern->idb_type, BRLCAD_ERROR);
     }
 
+    /* TODO: FIXME - breaks if input_name == output_name */
     GED_DB_PUT_INTERNAL(gedp, dp_output, gb->intern, gedp->ged_wdbp->wdb_resp, BRLCAD_ERROR);
 
     return BRLCAD_OK;

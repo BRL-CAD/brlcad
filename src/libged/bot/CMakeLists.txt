@@ -55,13 +55,13 @@ set(BOT_SRCS
   bot_merge.c
   bot_smooth.c
   bot_split.c
+  bot_subdivide.cpp
   bot_sync.c
   bot_vertex_fuse.c
   edbot.c
   check.cpp
   extrude.cpp
   remesh.cpp
-  openmesh_tools.cpp
   ../../libbu/fort.c
   )
 
