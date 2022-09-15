@@ -8,14 +8,39 @@ set(BOT_INCLUDE_DIRS
 
 set(BOT_LOCAL_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/src/libbu # for fort.h
-  ${OPENMESH_INCLUDE_DIRS}
   )
 
+set(BOT_LIBS libged libbg libbu)
+
+if (BRLCAD_ENABLE_OPENMESH)
+  set(BOT_LOCAL_INCLUDE_DIRS ${BOT_LOCAL_INCLUDE_DIRS} ${OPENMESH_INCLUDE_DIRS})
+  set(BOT_LIBS ${BOT_LIBS} ${OPENMESH_LIBRARIES})
+  add_compile_definitions(BUILD_OPENMESH_TOOLS)
+  if (MSVC)
+    add_compile_definitions(_USE_MATH_DEFINES)
+  endif (MSVC)
+endif (BRLCAD_ENABLE_OPENMESH)
+
+if (BRLCAD_ENABLE_OPENVDB)
+  set(BOT_LOCAL_INCLUDE_DIRS
+    ${BOT_LOCAL_INCLUDE_DIRS}
+    ${OpenVDB_INCLUDE_DIRS}
+    ${Tbb_INCLUDE_DIRS}
+    ${IlmBase_INCLUDE_DIRS}
+    )
+  set(BOT_LIBS
+    ${BOT_LIBS}
+    ${OpenVDB_LIBRARIES}
+    ${IlmBase_LIBRARIES}
+    ${Tbb_LIBRARIES}
+    )
+  # disable warnings due to unquellable issues in Boost and IlmBase/half headers
+  set_property(SOURCE remesh.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
+endif (BRLCAD_ENABLE_OPENVDB)
+
+# We want to include 3rd party libraries with -isystem - use
+# BRLCAD_LIB_INCLUDE_DIRS for that purpose
 BRLCAD_LIB_INCLUDE_DIRS(bot BOT_INCLUDE_DIRS BOT_LOCAL_INCLUDE_DIRS)
-add_compile_definitions(BUILD_OPENMESH_TOOLS)
-if(MSVC)
-  add_compile_definitions(_USE_MATH_DEFINES)
-endif(MSVC)
 
 set(BOT_SRCS
   bot_condense.c
@@ -42,7 +67,7 @@ set(BOT_SRCS
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-bot SHARED ${BOT_SRCS})
-target_link_libraries(ged-bot libged libbg libbu ${OPENMESH_LIBRARIES})
+target_link_libraries(ged-bot ${BOT_LIBS})
 set_property(TARGET ged-bot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-bot ${BOT_SRCS})
 PLUGIN_SETUP(ged-bot ged)

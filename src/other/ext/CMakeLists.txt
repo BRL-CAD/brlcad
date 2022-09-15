@@ -402,6 +402,7 @@ if (COMMAND CMAKEFILES)
     CMake/FindLEMON.cmake
     CMake/FindNETPBM.cmake
     CMake/FindOPENNURBS.cmake
+    CMake/FindOpenMesh.cmake
     CMake/FindPERPLEX.cmake
     CMake/FindPOLY2TRI.cmake
     CMake/FindPROJ4.cmake
