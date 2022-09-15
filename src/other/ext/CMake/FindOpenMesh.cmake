@@ -5,7 +5,12 @@
 # OPENMESH_FOUND           - system has OPENMESH
 # OPENMESH_INCLUDE_DIRS    - the OPENMESH include directories
 # OPENMESH_LIBRARIES       - Link these to use OPENMESH
-# OPENMESH_LIBRARY_DIR     - directory where the libraries are included
+###
+# - helpful cmake flags when building
+#
+#  OPENMESH_ROOT          - path to OpenMesh root if it is built outside of the usual location
+#
+#=============================================================================
 #
 # Copyright 2015 Computer Graphics Group, RWTH Aachen University
 # Authors: Jan Möbius <moebius@cs.rwth-aachen.de>
@@ -56,6 +61,7 @@
 #if already found via finder or simulated finder in openmesh CMakeLists.txt, skip the search
 IF (NOT OPENMESH_FOUND)
   SET (SEARCH_PATHS
+    "${OPENMESH_ROOT}"
     /usr/local/
     /usr/
     "${CMAKE_SOURCE_DIR}/OpenMesh/src/OpenMesh"
@@ -133,22 +139,14 @@ IF (NOT OPENMESH_FOUND)
   select_library_configurations( OPENMESH_TOOLS )
   select_library_configurations( OPENMESH_CORE )
 
-  set(OPENMESH_LIBRARIES ${OPENMESH_CORE_LIBRARY} ${OPENMESH_TOOLS_LIBRARY} )
-  set(OPENMESH_INCLUDE_DIRS ${OPENMESH_INCLUDE_DIR} )
+  set(OPENMESH_LIBRARIES ${OPENMESH_CORE_LIBRARY} ${OPENMESH_TOOLS_LIBRARY} CACHE STRING "OpenMesh Core and Tools libraries" FORCE)
+  set(OPENMESH_INCLUDE_DIRS ${OPENMESH_INCLUDE_DIR} CACHE STRING "OpenMesh include directory" FORCE)
 
 #checks, if OPENMESH was found and sets OPENMESH_FOUND if so
   include(FindPackageHandleStandardArgs)
   find_package_handle_standard_args(OpenMesh  DEFAULT_MSG
                                     OPENMESH_CORE_LIBRARY OPENMESH_TOOLS_LIBRARY OPENMESH_INCLUDE_DIR)
- 
-#sets the library dir 
-  if ( OPENMESH_CORE_LIBRARY_RELEASE )
-    get_filename_component(_OPENMESH_LIBRARY_DIR ${OPENMESH_CORE_LIBRARY_RELEASE} PATH)
-  else( OPENMESH_CORE_LIBRARY_RELEASE )
-    get_filename_component(_OPENMESH_LIBRARY_DIR ${OPENMESH_CORE_LIBRARY_DEBUG} PATH)
-  endif( OPENMESH_CORE_LIBRARY_RELEASE )
-  set (OPENMESH_LIBRARY_DIR "${_OPENMESH_LIBRARY_DIR}" CACHE PATH "The directory where the OpenMesh libraries can be found.")
   
  
-  mark_as_advanced(OPENMESH_INCLUDE_DIR OPENMESH_CORE_LIBRARY_RELEASE OPENMESH_CORE_LIBRARY_DEBUG OPENMESH_TOOLS_LIBRARY_RELEASE OPENMESH_TOOLS_LIBRARY_DEBUG OPENMESH_LIBRARY_DIR)
+  mark_as_advanced(OPENMESH_INCLUDE_DIR OPENMESH_CORE_LIBRARY_RELEASE OPENMESH_CORE_LIBRARY_DEBUG OPENMESH_TOOLS_LIBRARY_RELEASE OPENMESH_TOOLS_LIBRARY_DEBUG)
 endif()
