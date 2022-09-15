@@ -78,7 +78,7 @@ struct conversion_state
 };
 
 
-HIDDEN struct bu_hash_entry *
+static struct bu_hash_entry *
 write_verts(p_ply fp, struct bu_hash_tbl *t, struct conversion_state* pstate)
 {
     struct bu_hash_entry *v_entry = bu_hash_next(t, NULL);
@@ -107,7 +107,7 @@ write_verts(p_ply fp, struct bu_hash_tbl *t, struct conversion_state* pstate)
 /* routine to output the faceted NMG representation of a BRL-CAD
  * region
  */
-HIDDEN void
+static void
 nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), struct db_tree_state *tsp, struct conversion_state* pstate)
 {
     struct model *m;
@@ -366,7 +366,7 @@ free_nmg:
 }
 
 
-HIDDEN void
+static void
 process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, struct conversion_state* pstate)
 {
     if (!BU_SETJUMP) {
@@ -399,7 +399,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 }
 
 
-HIDDEN union tree *
+static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
     static union tree *ret_tree = TREE_NULL;
@@ -444,7 +444,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
  *
  * This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *
+static union tree *
 do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct conversion_state* pstate = (struct conversion_state*)client_data;
@@ -542,7 +542,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 }
 
 
-HIDDEN int
+static int
 count_regions(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), void* client_data)
 {
     struct conversion_state * const pstate = (struct conversion_state *)client_data;
@@ -552,7 +552,7 @@ count_regions(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUS
 
 
 /* taken from g-tankill.c */
-HIDDEN union tree *
+static union tree *
 region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *UNUSED(curtree), void *UNUSED(client_data))
 {
     bu_exit(1, "ERROR; region stub called, this shouldn't happen.\n");
@@ -561,14 +561,14 @@ region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED
 
 
 /* taken from g-tankill.c */
-HIDDEN union tree *
+static union tree *
 leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), struct rt_db_internal *UNUSED(ip), void *UNUSED(client_data))
 {
     bu_exit(1, "ERROR: leaf stub called, this shouldn't happen.\n");
     return (union tree *)NULL; /* just to keep the compilers happy */
 }
 
-HIDDEN void
+static void
 ply_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
 {
     struct ply_write_options *options_data;
@@ -602,13 +602,13 @@ ply_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_dat
     BU_OPT_NULL((*options_desc)[10]);
 }
 
-HIDDEN void
+static void
 ply_write_free_opts(void *options_data)
 {
     bu_free(options_data, "options_data");
 }
 
-HIDDEN int
+static int
 ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, const void* options_data, const char* dest_path)
 {
     struct conversion_state state;

@@ -53,7 +53,7 @@ struct rayio_container {
 };
 
 
-HIDDEN int
+static int
 rayio_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     struct partition *part;
@@ -74,7 +74,7 @@ rayio_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSE
 }
 
 
-HIDDEN int
+static int
 rayio_overlap(struct application *ap,
 		struct partition *UNUSED(pp),
 		struct region *UNUSED(reg1),
@@ -87,7 +87,7 @@ rayio_overlap(struct application *ap,
 }
 
 
-HIDDEN int
+static int
 rayio_miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);
@@ -96,7 +96,7 @@ rayio_miss(struct application *ap)
 }
 
 
-HIDDEN void
+static void
 rayio_gen_worker(int cpu, void *ptr)
 {
     struct application ap;

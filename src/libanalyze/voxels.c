@@ -34,7 +34,7 @@
 /**
  * Function to get the corresponding region entry to a region name.
  */
-HIDDEN struct voxelRegion *
+static struct voxelRegion *
 getRegionByName(struct voxelRegion *head, const char *regionName) {
     struct voxelRegion *ret = NULL;
 

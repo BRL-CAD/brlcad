@@ -229,7 +229,7 @@ vls_line_dpp(struct ged *gedp,
     }
 }
 
-HIDDEN void
+static void
 _ged_ls_show_help(struct ged *gedp, struct bu_opt_desc *d)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -364,7 +364,7 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
     int attr_flag = 0; /* arguments are attribute name/value pairs */
     struct bu_opt_desc d[13];
     BU_OPT(d[0],  "h", "help",           "",  NULL, &print_help,   "Print help and exit");
-    BU_OPT(d[1],  "a", "all",            "",  NULL, &(ls.aflag),   "Do not ignore HIDDEN objects.");
+    BU_OPT(d[1],  "a", "all",            "",  NULL, &(ls.aflag),   "Do not ignore static objects.");
     BU_OPT(d[2],  "c", "combs",          "",  NULL, &(ls.cflag),   "List combinations");
     BU_OPT(d[3],  "r", "regions",        "",  NULL, &(ls.rflag),   "List regions");
     BU_OPT(d[4],  "p", "primitives",     "",  NULL, &(ls.sflag),   "List primitives");

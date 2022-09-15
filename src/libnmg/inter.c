@@ -80,7 +80,7 @@ struct ee_2d_state {
 };
 
 
-HIDDEN int nmg_isect_edge2p_face2p(struct nmg_inter_struct *is,
+static int nmg_isect_edge2p_face2p(struct nmg_inter_struct *is,
 				   struct edgeuse *eu, struct faceuse *fu,
 				   struct faceuse *eu_fu, struct bu_list *vlfree);
 
@@ -387,7 +387,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
  *
  * 'assoc_use' is either a pointer to a faceuse, or an edgeuse.
  */
-HIDDEN void
+static void
 nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, const uint32_t *assoc_use)
 /* a 3-tuple */
 
@@ -748,7 +748,7 @@ nmg_isect_vert2p_face2p(struct nmg_inter_struct *is, struct vertexuse *vu1, stru
  * XXX as a flag, so that nmg_find_v_in_face() wouldn't have to be called
  * XXX to re-determine what was just done.
  */
-HIDDEN void
+static void
 nmg_isect_3vertex_3face(struct nmg_inter_struct *is, struct vertexuse *vu, struct faceuse *fu)
 {
     struct vertexuse *vup;
@@ -802,7 +802,7 @@ nmg_isect_3vertex_3face(struct nmg_inter_struct *is, struct vertexuse *vu, struc
  * vu2_final is the returned value, and is in fu2.
  *
  */
-HIDDEN struct vertexuse *
+static struct vertexuse *
 nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_inter_struct *is, struct edgeuse *eu1, struct bu_list *vlfree)
 
 /* The face that eu intersects */
@@ -1640,7 +1640,7 @@ out:
  * 0 If everything went well
  * 1 If vu[] list along the intersection line needs to be re-done.
  */
-HIDDEN int
+static int
 nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct faceuse *fu2, struct bu_list *vlfree)
 {
     struct vertexuse *vu1_final = (struct vertexuse *)NULL;
@@ -1938,7 +1938,7 @@ out:
  * 0 everything is ok
  * >0 vu[] list along intersection line needs to be re-done.
  */
-HIDDEN int
+static int
 nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, struct faceuse *fu, struct bu_list *vlfree)
 {
     struct edgeuse *eu;
@@ -2196,7 +2196,7 @@ nmg_isect_construct_nice_ray(struct nmg_inter_struct *is, struct faceuse *fu2)
  * 0 Topology is completely shared (or no sharing).  l1/l2 valid.
  * >0 Caller needs to invalidate his l1/l2 list.
  */
-HIDDEN int
+static int
 nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct faceuse *fu2, struct faceuse *fu1, struct bu_list *vlfree)
 
 /* edge to be intersected w/fu2 */
@@ -2420,7 +2420,7 @@ nmg_enlist_one_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, fastf
 }
 
 
-HIDDEN void
+static void
 nmg_coplanar_face_vertex_fuse(struct faceuse *fu1, struct faceuse *fu2, struct bu_list *vlfree, struct bn_tol *tol)
 {
     struct bu_ptbl verts;
@@ -2465,7 +2465,7 @@ nmg_coplanar_face_vertex_fuse(struct faceuse *fu1, struct faceuse *fu2, struct b
 }
 
 
-HIDDEN void
+static void
 nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2, struct bu_list *vlfree)
 {
     struct model *m;
@@ -5001,7 +5001,7 @@ rt_line_on_plane(const point_t pt, const vect_t dir, const plane_t plane, const 
  *
  * This is the HEART of the intersection code.
  */
-HIDDEN void
+static void
 nmg_isect_two_face3p(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2, struct bu_list *vlfree)
 {
     struct bu_ptbl vert_list1, vert_list2;
@@ -5850,7 +5850,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
  * 0 = inconclusive
  *
  */
-HIDDEN int
+static int
 nmg_no_isect_fu_pl(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *tol)
 {
     register fastf_t dist;
@@ -6059,7 +6059,7 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, struct bu_
  *
  * Called from nmg_isect_edge3p_shell()
  */
-HIDDEN void
+static void
 nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct edgeuse *eu2)
 {
     struct vertexuse *vu1a;
@@ -6193,7 +6193,7 @@ nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 /**
  * Intersect a lone vertex from s1 with a single edge from s2.
  */
-HIDDEN void
+static void
 nmg_isect_vertex3_edge3p(struct nmg_inter_struct *is, struct vertexuse *vu1, struct edgeuse *eu2)
 {
     fastf_t dist;
@@ -6260,7 +6260,7 @@ nmg_isect_vertex3_edge3p(struct nmg_inter_struct *is, struct vertexuse *vu1, str
  *
  * Called by nmg_crackshells().
  */
-HIDDEN void
+static void
 nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct shell *s2, struct bu_list *vlfree)
 {
     struct faceuse *fu2;

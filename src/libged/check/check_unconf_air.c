@@ -33,7 +33,7 @@ struct unconf_air_context {
     double tolerance;
 };
 
-HIDDEN void
+static void
 unconf_air(const struct xray *ray,
 	   const struct partition *ipart,
 	   const struct partition *opart,

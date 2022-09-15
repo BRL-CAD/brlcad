@@ -84,14 +84,14 @@ struct bu_structparse osl_print_tab[] = {
 
 extern "C" {
 
-    HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
+    static int osl_setup(register struct region *rp, struct bu_vls *matparm,
 			 void **dpp, const struct mfuncs *mfp,
 			 struct rt_i *rtip);
 
-    HIDDEN int osl_render(struct application *ap, const struct partition *pp,
+    static int osl_render(struct application *ap, const struct partition *pp,
 			  struct shadework *swp, void *dp);
-    HIDDEN void osl_print(register struct region *rp, void *dp);
-    HIDDEN void osl_free(void *cp);
+    static void osl_print(register struct region *rp, void *dp);
+    static void osl_free(void *cp);
 
 }
 
@@ -367,7 +367,7 @@ osl_parse(const struct bu_vls *in_vls, ShaderGroupInfo &group_info)
 
 extern "C" {
 
-HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
+static int osl_setup(register struct region *rp, struct bu_vls *matparm,
 		     void **dpp, const struct mfuncs *mfp,
 		     struct rt_i *rtip)
 {
@@ -416,13 +416,13 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
     return 1;
 }
 
-HIDDEN void osl_print(register struct region *rp, void *dp)
+static void osl_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, osl_print_tab, (char *)dp);
 }
 
 
-HIDDEN void osl_free(void *cp)
+static void osl_free(void *cp)
 {
     register struct osl_specific *osl_sp =
 	(struct osl_specific *)cp;
@@ -503,7 +503,7 @@ osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct s
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.
  */
-HIDDEN int osl_render(struct application *ap, const struct partition *pp,
+static int osl_render(struct application *ap, const struct partition *pp,
 		      struct shadework *swp, void *dp)
 /* defined in ../h/shadework.h */
 /* ptr to the shader-specific struct */

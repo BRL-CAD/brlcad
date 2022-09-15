@@ -33,7 +33,7 @@
  * dynamically allocated.  returns the number of files found in an
  * argv array that the caller must free via bu_argv_free().
  */
-HIDDEN size_t
+static size_t
 help_files(const char *dir, char ***files)
 {
     char **dirs;
@@ -96,7 +96,7 @@ help_files(const char *dir, char ***files)
 }
 
 
-HIDDEN size_t
+static size_t
 help_tokenize(size_t count, const char **files)
 {
     size_t bytes = 0;

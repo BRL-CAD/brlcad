@@ -89,6 +89,10 @@ db_add_node_to_full_path(struct db_full_path *pp, struct directory *dp)
 	    (char *)pp->fp_cinst,
 	    pp->fp_maxlen * sizeof(int),
 	    "enlarged db_full_path cinst array");
+	// realloc does NOT initialize new memory, and
+	// we rely on unset fp_cinst values being zero
+	for (size_t i = pp->fp_len; i < pp->fp_maxlen; i++)
+	    pp->fp_cinst[i] = 0;
     }
     pp->fp_names[pp->fp_len++] = dp;
 }
@@ -116,8 +120,8 @@ db_dup_full_path(struct db_full_path *newp, const struct db_full_path *oldp)
 	newp->fp_maxlen * sizeof(int),
 	"db_full_path bool array (duplicate)");
     memcpy((char *)newp->fp_bool, (char *)oldp->fp_bool, newp->fp_len * sizeof(int));
-    newp->fp_cinst = (int *)bu_malloc(
-	newp->fp_maxlen * sizeof(int),
+    newp->fp_cinst = (int *)bu_calloc(
+	newp->fp_maxlen, sizeof(int),
 	"db_full_path cinst array (duplicate)");
     memcpy((char *)newp->fp_cinst, (char *)oldp->fp_cinst, newp->fp_len * sizeof(int));
 }
@@ -139,8 +143,8 @@ db_extend_full_path(struct db_full_path *pathp, size_t incr)
 	pathp->fp_bool = (int *)bu_malloc(
 	    pathp->fp_maxlen * sizeof(int),
 	    "empty fp_bool bool extension");
-	pathp->fp_cinst = (int *)bu_malloc(
-	    pathp->fp_maxlen * sizeof(int),
+	pathp->fp_cinst = (int *)bu_calloc(
+	    pathp->fp_maxlen, sizeof(int),
 	    "empty fp_cinst cinst extension");
 	return;
     }
@@ -160,6 +164,10 @@ db_extend_full_path(struct db_full_path *pathp, size_t incr)
 		(char *)pathp->fp_cinst,
 		pathp->fp_maxlen * sizeof(int),
 		"fp_names cinst extension");
+	// realloc does NOT initialize new memory, and
+	// we rely on unset fp_cinst values being zero
+	for (size_t i = pathp->fp_len; i < pathp->fp_maxlen; i++)
+	    pathp->fp_cinst[i] = 0;
     }
 }
 
@@ -210,8 +218,8 @@ db_dup_path_tail(struct db_full_path *newp, const struct db_full_path *oldp, b_o
 	newp->fp_maxlen * sizeof(int),
 	"db_full_path bool array (duplicate)");
     memcpy((char *)newp->fp_bool, (char *)&oldp->fp_bool[start], newp->fp_len * sizeof(int));
-    newp->fp_cinst = (int *)bu_malloc(
-	newp->fp_maxlen * sizeof(int),
+    newp->fp_cinst = (int *)bu_calloc(
+	newp->fp_maxlen, sizeof(int),
 	"db_full_path cinst array (duplicate)");
     memcpy((char *)newp->fp_cinst, (char *)&oldp->fp_cinst[start], newp->fp_len * sizeof(int));
 }

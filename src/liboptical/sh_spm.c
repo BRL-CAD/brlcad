@@ -53,10 +53,10 @@ struct bu_structparse spm_parse[] = {
 };
 
 
-HIDDEN int spm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int spm_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void spm_print(register struct region *rp, void *dp);
-HIDDEN void spm_mfree(void *cp);
+static int spm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int spm_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void spm_print(register struct region *rp, void *dp);
+static void spm_mfree(void *cp);
 
 struct mfuncs spm_mfuncs[] = {
     {MF_MAGIC,	"spm",		0,		MFI_UV,		0,     spm_setup,	spm_render,	spm_print,	spm_mfree },
@@ -68,7 +68,7 @@ struct mfuncs spm_mfuncs[] = {
  * Given a u, v coordinate within the texture (0 <= u, v <= 1.0),
  * return a pointer to the relevant pixel.
  */
-HIDDEN int
+static int
 spm_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, void *dp)
 {
     register struct spm_specific *spp =
@@ -89,7 +89,7 @@ spm_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), s
 }
 
 
-HIDDEN void
+static void
 spm_mfree(void *cp)
 {
     struct spm_specific *spm;
@@ -108,7 +108,7 @@ spm_mfree(void *cp)
  * <0 failed
  * >0 success
  */
-HIDDEN int
+static int
 spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
@@ -140,7 +140,7 @@ fail:
 }
 
 
-HIDDEN void
+static void
 spm_print(register struct region *rp, void *dp)
 {
     struct spm_specific *spm;

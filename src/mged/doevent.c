@@ -61,11 +61,11 @@ extern void rect_image2view();
 extern void rb_set_dirty_flag();
 
 #ifdef HAVE_X11_TYPES
-HIDDEN void motion_event_handler();
+static void motion_event_handler();
 #endif
 
 #ifdef IR_KNOBS
-HIDDEN void dials_event_handler();
+static void dials_event_handler();
 #endif
 
 #ifdef IR_KNOBS
@@ -73,7 +73,7 @@ HIDDEN void dials_event_handler();
 #endif
 
 #ifdef IR_BUTTONS
-HIDDEN void buttons_event_handler();
+static void buttons_event_handler();
 /*
  * Map SGI Button numbers to MGED button functions.
  * The layout of this table is suggestive of the actual button box layout.
@@ -214,7 +214,7 @@ doEvent(ClientData UNUSED(clientData), void *UNUSED(eventPtr)) {
 
 
 #if defined(IR_BUTTONS) || defined(IR_KNOBS)
-HIDDEN void
+static void
 set_knob_offset()
 {
     int i;
@@ -225,7 +225,7 @@ set_knob_offset()
 #endif
 
 #if defined(IR_BUTTONS) || defined(IR_KNOBS)
-HIDDEN void
+static void
 common_dbtext(char *str)
 {
     bu_log("common_dbtext: You pressed Help key and '%s'\n", str);
@@ -234,7 +234,7 @@ common_dbtext(char *str)
 
 
 #ifdef HAVE_X11_TYPES
-HIDDEN void
+static void
 motion_event_handler(XMotionEvent *xmotion)
 {
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
@@ -758,7 +758,7 @@ motion_event_handler(XMotionEvent *xmotion)
 
 
 #ifdef IR_KNOBS
-HIDDEN void
+static void
 dials_event_handler(XDeviceMotionEvent *dmep)
 {
     static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -1425,7 +1425,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 #endif
 
 #ifdef IR_BUTTONS
-HIDDEN void
+static void
 buttons_event_handler(XDeviceButtonEvent *dbep, int press)
 {
     if (press) {

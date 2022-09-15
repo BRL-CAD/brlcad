@@ -1155,7 +1155,7 @@ db_comb_mvall(struct directory *dp, struct db_i *dbip, const char *old_name, con
     return 1;
 }
 
-HIDDEN void
+static void
 _db_comb_find_invalid(int *inv_cnt, struct db_i *dbip, union tree *tp)
 {
     if (!tp) return;
@@ -1187,7 +1187,7 @@ _db_comb_find_invalid(int *inv_cnt, struct db_i *dbip, union tree *tp)
 }
 
 
-HIDDEN void
+static void
 _db_comb_get_children(struct directory **children, int *curr_ind, int curr_bool, struct db_i *dbip, union tree *tp, int *bool_ops, matp_t *mats)
 {
    struct directory *dp;

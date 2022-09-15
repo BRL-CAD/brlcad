@@ -1,4 +1,4 @@
-/*                      B N _ C H U L L . C
+/*                      B G _ C H U L L . C
  * BRL-CAD
  *
  * Copyright (c) 2013-2022 United States Government as represented by
@@ -29,7 +29,7 @@
 #include "bg.h"
 #include "bv/plot3.h"
 
-HIDDEN
+static
 void plot_chull(int test_num, const point_t *pnt_array, int pnt_cnt)
 {
     int i = 0;
@@ -51,7 +51,7 @@ void plot_chull(int test_num, const point_t *pnt_array, int pnt_cnt)
     bu_vls_free(&name);
 }
 
-HIDDEN
+static
 void plot2d_chull(int test_num, const point2d_t *pnt_array, int pnt_cnt)
 {
     int i = 0;
@@ -77,7 +77,7 @@ void plot2d_chull(int test_num, const point2d_t *pnt_array, int pnt_cnt)
     bu_vls_free(&name);
 }
 
-HIDDEN
+static
 void plot_chull2(int test_num, int *hull, int pnt_cnt, const point_t *pnt_array)
 {
     int i = 0;
@@ -99,7 +99,7 @@ void plot_chull2(int test_num, int *hull, int pnt_cnt, const point_t *pnt_array)
     bu_vls_free(&name);
 }
 
-HIDDEN
+static
 void plot2d_chull2(int test_num, int *hull, int pnt_cnt, const point2d_t *pnt_array)
 {
     int i = 0;

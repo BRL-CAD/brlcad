@@ -328,7 +328,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 }
 
 
-HIDDEN void
+static void
 eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
 			      struct db_full_path *subpath,
 			      const int skip_first)

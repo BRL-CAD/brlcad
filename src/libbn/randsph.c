@@ -35,7 +35,7 @@
 #include "bn/randmt.h"
 #include "bn/sobol.h"
 
-HIDDEN void
+static void
 _bn_unit_sph_sample(point_t pnt)
 {
     fastf_t px = 0.0;
@@ -84,7 +84,7 @@ _bn_unit_sph_sample(point_t pnt)
 }
 
 /* TODO - investigate http://www.dtic.mil/docs/citations/ADA510216 */
-HIDDEN void
+static void
 _bn_unit_sph_sample_sobol(point_t pnt, struct bn_soboldata *s)
 {
     double *p;

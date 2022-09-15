@@ -630,7 +630,7 @@ rt_joint_find_selections(
     return selection_set;
 }
 
-HIDDEN void
+static void
 db_path_to_inverse_mat(struct db_i *dbip, const struct db_full_path *fpath, mat_t inverse_mat)
 {
     size_t i;

@@ -337,7 +337,7 @@ db5_diradd(struct db_i *dbip,
  * to the directory.  If client_data is 1, it entry will be added as
  * in-mem database object.
  */
-HIDDEN void
+static void
 db5_diradd_handler(
     struct db_i *dbip,
     const struct db5_raw_internal *rip,
@@ -366,7 +366,7 @@ db5_diradd_handler(
     return;
 }
 
-HIDDEN int
+static int
 db_diradd4(struct db_i *dbi, const char *s, b_off_t o,  size_t st,  int i,  void *v)
 {
     if (!db_diradd(dbi, s, o, st, i, v)) return 0;

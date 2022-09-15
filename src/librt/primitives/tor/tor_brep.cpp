@@ -47,7 +47,7 @@
 #include "opennurbs_torus.h"
 
 
-HIDDEN ON_RevSurface*
+static ON_RevSurface*
 Torus_RevSurfaceForm(const ON_Torus& torus )
 {
     ON_Circle circle = torus.MinorCircleRadians(0.0);

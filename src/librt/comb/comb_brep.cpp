@@ -60,7 +60,7 @@ single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db
     return 0;
 }
 
-HIDDEN int
+static int
 conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 {
     ON_Brep *left = NULL, *right = NULL, *old = NULL;
