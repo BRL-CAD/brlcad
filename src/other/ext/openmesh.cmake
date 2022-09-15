@@ -264,7 +264,7 @@ if (BRLCAD_OPENMESH_BUILD)
   ExternalProject_ByProducts(openmesh OPENMESH_BLD ${OPENMESH_INSTDIR} ${INCLUDE_DIR}/OpenMesh
     ${OPENMESH_HDRS}
     )
-  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openmesh CACHE STRING "Bundled system include dirs" FORCE)
+  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} OpenMesh CACHE STRING "Bundled system include dirs" FORCE)
 
   set(OPENMESH_CORE_GEOMETRY_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Core/Geometry CACHE STRING "Building bundled OpenMesh" FORCE)
   set(OPENMESH_CORE_IO_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Core/IO CACHE STRING "Building bundled OpenMesh" FORCE)

@@ -27,8 +27,23 @@
 #include "common.h"
 
 #ifdef BUILD_OPENMESH_TOOLS
-#  include <OpenMesh/Core/Mesh/PolyMeshT.hh>
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif defined(__clang__)
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+#include <OpenMesh/Core/Mesh/PolyMeshT.hh>
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif defined(__clang__)
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
+
 #endif /* BUILD_OPENMESH_TOOLS */
+
 
 #include "vmath.h"
 #include "bu/str.h"
@@ -48,7 +63,10 @@
 static bool
 bot_om(struct ged* gedp, struct rt_bot_internal* bot)
 {
+    if (!gedp || !bot)
+	return false;
     bu_vls_printf(gedp->ged_result_str, "command recognized\n");
+    return true;
 }
 
 #else /* BUILD_OPENMESH_TOOLS */
@@ -64,8 +82,6 @@ bot_om(struct ged* gedp, struct rt_bot_internal* UNUSED(bot))
 }
 
 #endif /* BUILD_OPENMESH_TOOLS */
-
-
 
 
 extern "C" int
