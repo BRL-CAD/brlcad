@@ -1705,8 +1705,6 @@ BViewState::scene_obj(
     // Final geometry generation is deferred
     objs.insert(sp);
 
-    bu_log("scene_obj: %s\n", dbis->pathstr(path_hashes));
-
     return sp;
 }
 
