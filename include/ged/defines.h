@@ -197,6 +197,7 @@ class GED_EXPORT BSelectState {
 
 	bool deselect_path(const char *path, bool update);
 	bool deselect_hpath(std::vector<unsigned long long> &hpath);
+	bool deselect_hash(unsigned long long hash);
 
 	void clear();
 
@@ -417,9 +418,9 @@ class GED_EXPORT DbiState {
 	bool get_path_bbox(point_t *bbmin, point_t *bbmax, std::vector<unsigned long long> &elements);
 
 	bool print_hash(struct bu_vls *opath, unsigned long long phash);
-	void print_path(struct bu_vls *opath, std::vector<unsigned long long> &path);
+	void print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, size_t pmax = 0);
 
-	const char *pathstr(std::vector<unsigned long long> &path);
+	const char *pathstr(std::vector<unsigned long long> &path, size_t pmax = 0);
 	const char *hashstr(unsigned long long);
 
 	std::vector<unsigned long long> digest_path(const char *path);

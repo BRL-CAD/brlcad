@@ -407,25 +407,27 @@ DbiState::print_hash(struct bu_vls *opath, unsigned long long phash)
 }
 
 void
-DbiState::print_path(struct bu_vls *opath, std::vector<unsigned long long> &path)
+DbiState::print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, size_t pmax)
 {
     if (!opath || !path.size())
 	return;
 
     bu_vls_trunc(opath, 0);
     for (size_t i = 0; i < path.size(); i++) {
+	if (pmax && i == pmax)
+	    break;
 	if (!print_hash(opath, path[i]))
 	    continue;
-	if (i < path.size() - 1)
+	if (i < path.size() - 1 && (!pmax || i < pmax - 1))
 	    bu_vls_printf(opath, "/");
     }
 }
 
 const char *
-DbiState::pathstr(std::vector<unsigned long long> &path)
+DbiState::pathstr(std::vector<unsigned long long> &path, size_t pmax)
 {
     bu_vls_trunc(&path_string, 0);
-    print_path(&path_string, path);
+    print_path(&path_string, path, pmax);
     return bu_vls_cstr(&path_string);
 }
 
@@ -2306,6 +2308,15 @@ BSelectState::deselect_hpath(std::vector<unsigned long long> &hpath)
 
     unsigned long long phash = dbis->path_hash(hpath, 0);
 
+    return deselect_hash(phash);
+}
+
+bool
+BSelectState::deselect_hash(unsigned long long phash)
+{
+    if (!phash)
+	return false;
+
     // Clear any active children of the selected path
     std::vector<unsigned long long> seed_hashes = selected[phash];
     while(seed_hashes.size()) {
@@ -2638,6 +2649,7 @@ BSelectState::collapse()
 void
 BSelectState::characterize()
 {
+    //bu_log("BSelectState::characterize\n");
     active_parents.clear();
     immediate_parents.clear();
     grand_parents.clear();
@@ -2660,37 +2672,53 @@ BSelectState::characterize()
 	}
     }
 
-    // Now, characterizing related objects
+    // Now, characterizing related objects.  This is not just the immediate
+    // path parents - anything above the selected object is impacted.
+
+    // Because we don't want to keep iterating over p_c, make a reverse map of children
+    // to parents
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> reverse_map;
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
-	if (s_it->second.size() == 1)
-	    continue;
-	for (pc_it = dbis->p_c.begin(); pc_it != dbis->p_c.end(); pc_it++) {
-	    if (pc_it->second.find(s_it->second[s_it->second.size() - 1]) != pc_it->second.end()) {
-		struct bu_vls pstr = BU_VLS_INIT_ZERO;
-		std::vector<unsigned long long> pitems;
-		pitems.push_back(pc_it->first);
-		dbis->print_path(&pstr, pitems);
-		immediate_parents.insert(pc_it->first);
-	    }
+    for (pc_it = dbis->p_c.begin(); pc_it != dbis->p_c.end(); pc_it++) {
+	std::unordered_set<unsigned long long>::iterator sc_it;
+	for (sc_it = pc_it->second.begin(); sc_it != pc_it->second.end(); sc_it++) {
+	    reverse_map[*sc_it].insert(pc_it->first);
 	}
     }
 
+    // Find the leaf children - they're the seeds
+    std::unordered_set<unsigned long long> active_children;
+    for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
+	active_children.insert(s_it->second[s_it->second.size()-1]);
+    }
+
+    // Find the immediate parents - they can be highlighted differently
+    std::unordered_set<unsigned long long>::iterator c_it, p_it;
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator r_it;
+    for (c_it = active_children.begin(); c_it != active_children.end(); c_it++) {
+	r_it = reverse_map.find(*c_it);
+	if (r_it == reverse_map.end())
+	    continue;
+	for (p_it = r_it->second.begin(); p_it != r_it->second.end(); p_it++)
+	    immediate_parents.insert(*p_it);
+    }
+
+    // Work our way up from the immediate parents - we want the higher levels to
+    // be known as active so they may indicate that active selections can be found
+    // below
     std::queue<unsigned long long> gqueue;
-    std::unordered_set<unsigned long long>::iterator i_it;
-    for (i_it = immediate_parents.begin(); i_it != immediate_parents.end(); i_it++) {
-	gqueue.push(*i_it);
+    for (p_it = immediate_parents.begin(); p_it != immediate_parents.end(); p_it++) {
+	gqueue.push(*p_it);
     }
     while (!gqueue.empty()) {
 	unsigned long long obj = gqueue.front();
 	gqueue.pop();
-	for (pc_it = dbis->p_c.begin(); pc_it != dbis->p_c.end(); pc_it++) {
-	    if (pc_it->second.find(obj) != pc_it->second.end()) {
-		if (grand_parents.find(pc_it->first) == grand_parents.end()) {
-		    grand_parents.insert(pc_it->first);
-		    gqueue.push(pc_it->first);
-		}
-	    }
+	r_it = reverse_map.find(obj);
+	if (r_it == reverse_map.end())
+	    continue;
+	for (p_it = r_it->second.begin(); p_it != r_it->second.end(); p_it++) {
+	    gqueue.push(*p_it);
+	    grand_parents.insert(*p_it);
 	}
     }
 }

@@ -631,6 +631,8 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     if (fp && fp->fp_len <= 0)
 	return;
     struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
+    if (!dp)
+	return;
 
     // Adaptive BoTs have specialized LoD routines to help cope with very large
     // data sets, both for wireframe and shaded mode.
