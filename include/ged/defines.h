@@ -257,6 +257,7 @@ class GED_EXPORT BSelectState {
 		std::vector<std::vector<unsigned long long>> &out_paths
 		);
 
+	void clear_paths(std::vector<unsigned long long> &path_hashes, unsigned long long c_hash);
 };
 
 

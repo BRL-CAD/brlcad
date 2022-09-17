@@ -1764,22 +1764,7 @@ BViewState::gather_paths(
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
     pc_it = dbis->p_c.find(c_hash);
 
-    struct directory *dp = NULL;
-    std::unordered_map<unsigned long long, struct directory *>::iterator d_it;
-    d_it = dbis->d_map.find(c_hash);
-    if (d_it == dbis->d_map.end()) {
-	std::unordered_map<unsigned long long, unsigned long long>::iterator m_it;
-	m_it = dbis->i_map.find(c_hash);
-	if (m_it != dbis->i_map.end()) {
-	    d_it = dbis->d_map.find(m_it->second);
-	    dp = d_it->second;
-	} else {
-	    bu_log("Could not find dp!\n");
-	}
-    } else {
-	dp = d_it->second;
-    }
-
+    struct directory *dp = dbis->get_hdp(c_hash);
     path_hashes.push_back(c_hash);
 
     mat_t om, nm;
@@ -2255,30 +2240,22 @@ BSelectState::select_hpath(std::vector<unsigned long long> &hpath)
     // a single path, to avoid unexpected and unintuitive behaviors.  This
     // means we have to clear any selection that is either a superset of this
     // path or a child of it.
-    //
-    // TODO - this doesn't scale if we have extremely large selection counts
-    // and we are selecting (or trying to select) very large numbers of paths,
-    // which can happen with graphical selection on large models.  What probably
-    // needs to happen is we need to just clear all of the possible problematic
-    // paths associated with hpath - that will involve clearing the paths above
-    // hpath and a tree walk clearing the paths below, but that way we won't be
-    // checking every path in the selection set each time the way the below
-    // code does
-    std::vector<unsigned long long> to_clear;
-    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
-    for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
-	std::vector<unsigned long long> &cpath = s_it->second;
-	if (cpath.size() < hpath.size()) {
-	    if (std::equal(cpath.begin(), cpath.end(), hpath.begin()))
-		to_clear.push_back(s_it->first);
-	} else {
-	    if (std::equal(hpath.begin(), hpath.end(), cpath.begin()))
-		to_clear.push_back(s_it->first);
-	}
+    std::vector<unsigned long long> pitems = hpath;
+    pitems.pop_back();
+    while (pitems.size()) {
+	unsigned long long phash = dbis->path_hash(pitems, 0);
+	selected.erase(phash);
+	active_paths.erase(phash);
+	pitems.pop_back();
     }
-    // Perform deselection on the paths to be cleared.
-    for (size_t i = 0; i < to_clear.size(); i++) {
-	deselect_hpath(selected[to_clear[i]]);
+    // Clear any active children of the selected path
+    pitems = hpath;
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    pc_it = dbis->p_c.find(pitems[pitems.size() -1]);
+    if (pc_it != dbis->p_c.end()) {
+	std::unordered_set<unsigned long long>::iterator c_it;
+	for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
+	    clear_paths(*c_it, pitems);
     }
 
     // Add to selected set
@@ -2315,7 +2292,6 @@ BSelectState::deselect_hpath(std::vector<unsigned long long> &hpath)
 	return false;
 
     unsigned long long phash = dbis->path_hash(hpath, 0);
-
     return deselect_hash(phash);
 }
 
@@ -2325,16 +2301,9 @@ BSelectState::deselect_hash(unsigned long long phash)
     if (!phash)
 	return false;
 
-    // Clear any active children of the selected path
-    std::vector<unsigned long long> seed_hashes = selected[phash];
-    while(seed_hashes.size()) {
-	unsigned long long eshash = seed_hashes[seed_hashes.size() - 1];
-	seed_hashes.pop_back();
-	clear_paths(eshash, seed_hashes);
-    }
-
-    // Finally, clear the selection itself
+    // Clear the selection itself
     selected.erase(phash);
+    active_paths.erase(phash);
 
     // Note - with this lower level function, it is the caller's responsibility
     // to call characterize to populate the path relationships - we deliberately
@@ -2470,10 +2439,10 @@ BSelectState::clear_paths(
 {
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
     pc_it = dbis->p_c.find(c_hash);
-
     path_hashes.push_back(c_hash);
 
     unsigned long long phash = dbis->path_hash(path_hashes, 0);
+    selected.erase(phash);
     active_paths.erase(phash);
 
     if (!path_addition_cyclic(path_hashes)) {
