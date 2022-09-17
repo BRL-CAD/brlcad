@@ -2255,6 +2255,15 @@ BSelectState::select_hpath(std::vector<unsigned long long> &hpath)
     // a single path, to avoid unexpected and unintuitive behaviors.  This
     // means we have to clear any selection that is either a superset of this
     // path or a child of it.
+    //
+    // TODO - this doesn't scale if we have extremely large selection counts
+    // and we are selecting (or trying to select) very large numbers of paths,
+    // which can happen with graphical selection on large models.  What probably
+    // needs to happen is we need to just clear all of the possible problematic
+    // paths associated with hpath - that will involve clearing the paths above
+    // hpath and a tree walk clearing the paths below, but that way we won't be
+    // checking every path in the selection set each time the way the below
+    // code does
     std::vector<unsigned long long> to_clear;
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
     for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
@@ -2267,7 +2276,6 @@ BSelectState::select_hpath(std::vector<unsigned long long> &hpath)
 		to_clear.push_back(s_it->first);
 	}
     }
-
     // Perform deselection on the paths to be cleared.
     for (size_t i = 0; i < to_clear.size(); i++) {
 	deselect_hpath(selected[to_clear[i]]);
