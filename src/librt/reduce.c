@@ -32,7 +32,7 @@
 #include "rt/db5.h"
 
 
-HIDDEN fastf_t
+static fastf_t
 _determine_bot_min_edge_length(const struct rt_bot_internal *bot,
 			       fastf_t reduction_level)
 {
@@ -66,7 +66,7 @@ _determine_bot_min_edge_length(const struct rt_bot_internal *bot,
 }
 
 
-HIDDEN void
+static void
 _rt_reduce_bot(struct rt_db_internal *dest,
 	       const struct rt_bot_internal *bot, fastf_t reduction_level, unsigned flags)
 {

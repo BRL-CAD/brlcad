@@ -218,7 +218,7 @@ convert_from_gltf(struct conversion_state *state, tinygltf::Model &model)
 	}
 }
 
-HIDDEN int
+static int
 gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *source_path)
 {
 
@@ -280,7 +280,7 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
 }
 
 
-HIDDEN int
+static int
 gltf_can_read(const char *UNUSED(data))
 {
 	/* FIXME */

@@ -294,7 +294,7 @@ ged_polygons_overlap(struct ged *gedp, struct bg_polygon *polyA, struct bg_polyg
     return bg_polygons_overlap(polyA, polyB, gedp->ged_gvp->gv_model2view, &gedp->ged_wdbp->wdb_tol, gedp->ged_gvp->gv_scale);
 }
 
-HIDDEN int
+static int
 sort_by_X(const void *p1, const void *p2, void *UNUSED(arg))
 {
     point2d_t *pt1 = (point2d_t *)p1;

@@ -84,14 +84,14 @@ extern fastf_t turb_table[20][20][20];
  * Sundry routine declarations
  */
 
-HIDDEN int wood_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int wood_render(struct application *ap, const struct partition *partp, struct shadework *swp, void *dp);
-HIDDEN void wood_print(register struct region *rp, void *dp);
-HIDDEN void wood_free(void *cp);
+static int wood_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int wood_render(struct application *ap, const struct partition *partp, struct shadework *swp, void *dp);
+static void wood_print(register struct region *rp, void *dp);
+static void wood_free(void *cp);
 
 /* local sp_hook functions */
-HIDDEN void wood_V_set(const struct bu_structparse *, const char *, void *, const char *, void *);
-HIDDEN void wood_D_set(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void wood_V_set(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void wood_D_set(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /*
  * functions block for the shader
@@ -138,7 +138,7 @@ struct wood_specific {
 };
 
 
-HIDDEN void wood_setup_2(struct wood_specific *);
+static void wood_setup_2(struct wood_specific *);
 
 /*
  * Flags and useful offset declarations
@@ -211,7 +211,7 @@ struct bu_structparse wood_parse[] = {
  * to set flag bits, indicating the presence of actual parsed values.
  */
 
-HIDDEN void
+static void
 wood_V_set(const struct bu_structparse *UNUSED(sdp),
 	   const char *UNUSED(name),
 	   void *base,
@@ -225,7 +225,7 @@ wood_V_set(const struct bu_structparse *UNUSED(sdp),
 }
 
 
-HIDDEN void
+static void
 wood_D_set(const struct bu_structparse *UNUSED(sdp),
 	   const char *UNUSED(name),
 	   void *base,
@@ -239,7 +239,7 @@ wood_D_set(const struct bu_structparse *UNUSED(sdp),
 }
 
 
-HIDDEN int
+static int
 wood_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 /* New since 4.4 release */
 {
@@ -407,7 +407,7 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
 /*
  * Phase 2 setup routine
  */
-HIDDEN void
+static void
 wood_setup_2(struct wood_specific *wd)
 {
     mat_t xlate;
@@ -454,7 +454,7 @@ wood_setup_2(struct wood_specific *wd)
 }
 
 
-HIDDEN void
+static void
 wood_print(register struct region *rp, void *UNUSED(dp))
 {
     bu_struct_print(rp->reg_name, wood_parse, (char *)rp->reg_udata);
@@ -466,7 +466,7 @@ wood_print(register struct region *rp, void *UNUSED(dp))
  * of a frame, as well as clean up any references to objects on
  * the Wood_Chain list.
  */
-HIDDEN void
+static void
 wood_free(void *cp)
 {
     register struct wood_specific *wd =
@@ -501,7 +501,7 @@ wood_free(void *cp)
  * dealing with noise and turbulence.
  */
 
-HIDDEN double
+static double
 wood_noise(double x, double y, double z, struct wood_specific *wd)
 {
     int xi, yi, zi;
@@ -534,7 +534,7 @@ wood_noise(double x, double y, double z, struct wood_specific *wd)
 }
 
 
-HIDDEN double
+static double
 wood_turb(double x, double y, double z, struct wood_specific *wd)
 {
     register struct resource *resp = &rt_uniresource;
@@ -570,7 +570,7 @@ wood_turb(double x, double y, double z, struct wood_specific *wd)
  * which is then used to compute the distance from the ring center.  This
  * distance is then multiplied by a velocity coefficient that is signed.
  */
-HIDDEN int
+static int
 wood_render(struct application *UNUSED(ap), const struct partition *UNUSED(partp), struct shadework *swp, void *dp)
 {
     register struct wood_specific *wd =

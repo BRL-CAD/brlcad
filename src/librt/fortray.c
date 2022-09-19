@@ -39,7 +39,7 @@
 static struct partition fr_global_head;
 
 
-HIDDEN int
+static int
 fr_hit(struct application *ap, struct partition *headp, struct seg *segp)
 {
     RT_CK_AP(ap);
@@ -59,7 +59,7 @@ fr_hit(struct application *ap, struct partition *headp, struct seg *segp)
 }
 
 
-HIDDEN int
+static int
 fr_miss(struct application *ap)
 {
     RT_CK_AP(ap);

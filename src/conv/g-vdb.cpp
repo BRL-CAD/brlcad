@@ -39,7 +39,7 @@ struct voxelizeData
 /**
  * Function to print values to File
  */
-HIDDEN void
+static void
 printToFile(void *callBackData, int x, int y, int z, const char *a, fastf_t fill) {
     struct voxelizeData *dataValues = (struct voxelizeData *)callBackData;
 

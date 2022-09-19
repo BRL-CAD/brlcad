@@ -52,7 +52,7 @@ struct osg_stuff {
     int prev_pflag;
 };
 
-HIDDEN void
+static void
 _osgLoadHiddenSolid(osg::Geode *geode, struct bv_scene_obj *sp)
 {
     register struct bv_vlist *vp = (struct bv_vlist *)&sp->s_vlist;
@@ -60,7 +60,7 @@ _osgLoadHiddenSolid(osg::Geode *geode, struct bv_scene_obj *sp)
 }
 
 
-HIDDEN void
+static void
 _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices, osg::Vec3dArray *normals, struct bv_scene_obj *sp)
 {
     struct bv_vlist *tvp;

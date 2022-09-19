@@ -48,7 +48,7 @@ namespace
 static const bool use_persistent_contacts = false;
 
 
-HIDDEN btVector3
+static btVector3
 get_normal_world_on_b(const btRigidBody &body_a, const btRigidBody &body_b)
 {
     // calculate the normal of the contact points as the resultant of the velocities -A and B
@@ -79,7 +79,7 @@ get_normal_world_on_b(const btRigidBody &body_a, const btRigidBody &body_b)
 }
 
 
-HIDDEN std::pair<btVector3, btVector3>
+static std::pair<btVector3, btVector3>
 get_aabb_overlap(const btRigidBody &body_a, const btRigidBody &body_b)
 {
     std::pair<btVector3, btVector3> result(btVector3(0.0, 0.0, 0.0), btVector3(0.0,
@@ -109,7 +109,7 @@ free_xrays(xrays * const rays)
 }
 
 
-HIDDEN xrays *
+static xrays *
 generate_ray_grid(const btVector3 &center, const btScalar radius,
 		  const btVector3 &normal, const unsigned grid_radius)
 {
@@ -150,7 +150,7 @@ generate_ray_grid(const btVector3 &center, const btScalar radius,
 }
 
 
-HIDDEN xrays *
+static xrays *
 get_rays(const btRigidBody &body_a, const btRigidBody &body_b,
 	 const unsigned grid_radius)
 {
@@ -176,7 +176,7 @@ get_rays(const btRigidBody &body_a, const btRigidBody &body_b,
 }
 
 
-HIDDEN void
+static void
 calculate_contact_points(btManifoldResult &result,
 			 const btCollisionObjectWrapper &body_a_wrap,
 			 const btCollisionObjectWrapper &body_b_wrap,

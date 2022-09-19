@@ -157,7 +157,7 @@ bu_file_size(const char *path)
 
 
 #ifdef HAVE_GETFULLPATHNAME
-HIDDEN int
+static int
 file_compare_info(HANDLE handle1, HANDLE handle2)
 {
     BOOL got1 = FALSE, got2 = FALSE;
@@ -266,7 +266,7 @@ bu_file_same(const char *fn1, const char *fn2)
  * the current user has the ability permission-wise to access the
  * specified file.
  */
-HIDDEN int
+static int
 file_access(const char *path, int access_level)
 {
     struct stat sb;

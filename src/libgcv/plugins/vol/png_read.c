@@ -78,7 +78,7 @@ static int png_read(struct gcv_context *context, const struct gcv_opts *UNUSED(g
 }
 
 
-HIDDEN int png_can_read(const char * data)
+static int png_can_read(const char * data)
 {
     bu_log("VOL_PLUGIN: entered png_can_read, data=%p\n", (void *)data);
 

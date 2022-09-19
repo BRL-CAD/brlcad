@@ -48,7 +48,7 @@ enum etypes {
  * Given the azimuth, elevation and twist angles, calculate the
  * rotation part of a 4x4 matrix.
  */
-HIDDEN void
+static void
 combmem_mat_aet(matp_t matp, fastf_t az, fastf_t el, fastf_t tw)
 {
     fastf_t cos_az, sin_az;
@@ -89,7 +89,7 @@ combmem_mat_aet(matp_t matp, fastf_t az, fastf_t el, fastf_t tw)
 /**
  * Disassemble the given rotation matrix into az, el, tw.
  */
-HIDDEN void
+static void
 combmem_disassemble_rmat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw)
 {
     fastf_t cos_az, sin_az;
@@ -141,7 +141,7 @@ combmem_disassemble_rmat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw)
 /**
  * Disassemble the given matrix into az, el, tw, tx, ty, tz, sa, sx, sy and sz.
  */
-HIDDEN int
+static int
 combmem_disassemble_mat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw, fastf_t *tx, fastf_t *ty, fastf_t *tz, fastf_t *sa, fastf_t *sx, fastf_t *sy, fastf_t *sz)
 {
     mat_t m;
@@ -204,7 +204,7 @@ combmem_disassemble_mat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw, fast
 /**
  * Assemble the given aetvec, tvec and svec into a 4x4 matrix using key_pt for rotations and scale.
  */
-HIDDEN void
+static void
 combmem_assemble_mat(matp_t matp, vect_t aetvec, vect_t tvec, hvect_t svec, point_t key_pt, int sflag)
 {
     mat_t mat_aet_about_pt;
@@ -267,7 +267,7 @@ combmem_assemble_mat(matp_t matp, vect_t aetvec, vect_t tvec, hvect_t svec, poin
 }
 
 
-HIDDEN void
+static void
 combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum etypes etype)
 {
     fastf_t az, el, tw;
@@ -367,7 +367,7 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
     }
 
 
-HIDDEN int
+static int
 combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 {
     struct directory *dp;
@@ -518,7 +518,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     }
 
 
-HIDDEN int
+static int
 combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 {
     struct rt_db_internal old_intern;
@@ -620,7 +620,7 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 }
 
 
-HIDDEN int
+static int
 combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 {
     struct rt_db_internal old_intern;
@@ -714,7 +714,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 }
 
 
-HIDDEN int
+static int
 combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 {
     struct rt_db_internal old_intern;
@@ -793,7 +793,7 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 }
 
 
-HIDDEN int
+static int
 combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 {
     struct rt_db_internal old_intern;
@@ -855,7 +855,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 }
 
 
-HIDDEN int
+static int
 combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 {
     struct rt_db_internal old_intern;
@@ -939,7 +939,7 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 }
 
 
-HIDDEN int
+static int
 combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;

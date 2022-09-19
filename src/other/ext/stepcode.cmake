@@ -19,8 +19,6 @@ if(BRLCAD_SC_BUILD)
   set(SC_PATCH_VERSION 1)
   set(SC_VERSION ${SC_MAJOR_VERSION}.${SC_MINOR_VERSION}.${SC_PATCH_VERSION})
 
-  set_lib_vars(REGEX regex_brl "1" "0" "4")
-
   if (MSVC)
     set(SC_PREFIX "")
     set(SC_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})

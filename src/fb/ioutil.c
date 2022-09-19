@@ -36,7 +36,7 @@
 #include "dm.h"
 
 
-HIDDEN void
+static void
 VMessage(const char *format, va_list ap)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;

@@ -48,14 +48,14 @@ struct light_specific LightHead;
 
 /* local sp_hook functions */
 /* for light_print_tab and light_parse callbacks */
-HIDDEN void aim_set(const struct bu_structparse *, const char *, void *, const char *, void *);
-HIDDEN void light_cvt_visible(const struct bu_structparse *, const char *, void *, const char *, void *);
-HIDDEN void light_pt_set(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void aim_set(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void light_cvt_visible(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void light_pt_set(const struct bu_structparse *, const char *, void *, const char *, void *);
 
-HIDDEN int light_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int light_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void light_print(register struct region *rp, void *dp);
-HIDDEN void light_free(void *cp);
+static int light_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int light_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void light_print(register struct region *rp, void *dp);
+static void light_free(void *cp);
 
 
 /** callback registration table for this shader in optical_shader_init() */
@@ -138,7 +138,7 @@ struct light_obs_stuff {
  * This routine is called by bu_struct_parse() if the "aim" qualifier
  * is encountered, and causes lt_exaim to be set.
  */
-HIDDEN void
+static void
 aim_set(const struct bu_structparse *UNUSED(sdp),
 	const char *UNUSED(name),
 	void *base,
@@ -158,7 +158,7 @@ aim_set(const struct bu_structparse *UNUSED(sdp),
  *
  * Convert "visible" flag to "invisible" variable
  */
-HIDDEN void
+static void
 light_cvt_visible(const struct bu_structparse *sdp,
 		  const char *name,
 		  void *base,
@@ -189,7 +189,7 @@ light_cvt_visible(const struct bu_structparse *sdp,
  * ensure that there are sufficient light samples, allocate more if
  * necessary in batches.
  */
-HIDDEN void
+static void
 light_pt_allocate(register struct light_specific *lsp)
 {
     /* make sure we have enough room, allocate in batches of
@@ -213,7 +213,7 @@ light_pt_allocate(register struct light_specific *lsp)
  * create a set of light point samples for specified pt/pn arguments
  * (for points and points with normals respectively)
  */
-HIDDEN void
+static void
 light_pt_set(const struct bu_structparse *sdp,
 	     const char *name,
 	     void *base,
@@ -253,7 +253,7 @@ light_pt_set(const struct bu_structparse *sdp,
  * viewer is within the beam, and a cos/2 term when the beam points
  * away.
  */
-HIDDEN int
+static int
 light_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct light_specific *lsp = (struct light_specific *)dp;
@@ -538,7 +538,7 @@ light_gen_sample_pts(struct application *upap,
 }
 
 
-HIDDEN void
+static void
 light_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, light_print_tab, (char *)dp);
@@ -567,7 +567,7 @@ light_free(void *cp)
 /**
  * Called once for each light-emitting region.
  */
-HIDDEN int
+static int
 light_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct light_specific *lsp;

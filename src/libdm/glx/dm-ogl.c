@@ -99,19 +99,19 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-HIDDEN XVisualInfo *ogl_choose_visual(struct dm *dmp, Tk_Window tkwin);
+static XVisualInfo *ogl_choose_visual(struct dm *dmp, Tk_Window tkwin);
 
 /* Display Manager package interface */
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
 struct dm *ogl_open(void *ctx, void *vinterp, int argc, const char **argv);
-HIDDEN int ogl_close(struct dm *dmp);
-HIDDEN int ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
-HIDDEN int ogl_configureWin_guts(struct dm *dmp, int force);
-HIDDEN int ogl_configureWin(struct dm *dmp, int force);
-HIDDEN int ogl_makeCurrent(struct dm *dmp);
-HIDDEN int ogl_SwapBuffers(struct dm *dmp);
+static int ogl_close(struct dm *dmp);
+static int ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+static int ogl_configureWin_guts(struct dm *dmp, int force);
+static int ogl_configureWin(struct dm *dmp, int force);
+static int ogl_makeCurrent(struct dm *dmp);
+static int ogl_SwapBuffers(struct dm *dmp);
 
 /*
  * Either initially, or on resize/reshape of the window,
@@ -120,7 +120,7 @@ HIDDEN int ogl_SwapBuffers(struct dm *dmp);
  *
  * also change font size if necessary
  */
-HIDDEN int
+static int
 ogl_configureWin_guts(struct dm *dmp, int force)
 {
     XWindowAttributes xwa;
@@ -257,7 +257,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 ogl_makeCurrent(struct dm *dmp)
 {
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
@@ -276,7 +276,7 @@ ogl_makeCurrent(struct dm *dmp)
 }
 
 
-HIDDEN int
+static int
 ogl_SwapBuffers(struct dm *dmp)
 {
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
@@ -288,7 +288,7 @@ ogl_SwapBuffers(struct dm *dmp)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 ogl_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
 {
     XEvent *eventPtr= (XEvent *)veventPtr;
@@ -302,7 +302,7 @@ ogl_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
     return TCL_OK;
 }
 
-HIDDEN int
+static int
 ogl_configureWin(struct dm *dmp, int force)
 {
     gl_debug_print(dmp, "ogl_configureWin", dmp->i->dm_debugLevel);
@@ -318,7 +318,7 @@ ogl_configureWin(struct dm *dmp, int force)
  * currently, get a double buffered rgba visual that works with Tk and
  * OpenGL
  */
-HIDDEN XVisualInfo *
+static XVisualInfo *
 ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 {
     gl_debug_print(dmp, "ogl_choose_visual", dmp->i->dm_debugLevel);
@@ -471,7 +471,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 /*
  * Gracefully release the display.
  */
-HIDDEN int
+static int
 ogl_close(struct dm *dmp)
 {
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
@@ -1060,7 +1060,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
  * Output a string.
  * The starting position of the beam is as specified.
  */
-HIDDEN int
+static int
 ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     struct pogl_vars *privars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;

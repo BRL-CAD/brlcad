@@ -44,7 +44,7 @@ struct keep_node_data {
  * Supports for the 'keep' method.
  * Write each node encountered exactly once.
  */
-HIDDEN void
+static void
 node_write(struct db_i *dbip, struct directory *dp, void *ptr)
 {
     struct keep_node_data *kndp = (struct keep_node_data *)ptr;

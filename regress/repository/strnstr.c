@@ -160,6 +160,9 @@ twoway_strstr(const unsigned char *h, const unsigned char *n, size_t hlen)
 	    }
 	}
 
+	/* Re-validate hcnt, since we may have incremented it above */
+	if (hcnt >= hlen) return 0;
+
 	/* Check last byte first; advance by shift on mismatch */
 	if (BITOP(byteset, h[l-1], &)) {
 	    k = l-shift[h[l-1]];

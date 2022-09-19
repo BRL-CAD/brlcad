@@ -96,7 +96,7 @@ struct allocated_colors {
 };
 
 
-HIDDEN void
+static void
 get_color(Display *dpy, Colormap cmap, XColor *color)
 {
     Status st;
@@ -151,7 +151,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 }
 
 
-HIDDEN int
+static int
 X_reshape(struct dm *dmp, int width, int height)
 {
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
@@ -166,7 +166,7 @@ X_reshape(struct dm *dmp, int width, int height)
     return 0;
 }
 
-HIDDEN int
+static int
 X_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
 {
     XEvent *eventPtr= (XEvent *)veventPtr;
@@ -179,7 +179,7 @@ X_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
     return TCL_OK;
 }
 
-HIDDEN int
+static int
 X_configureWin_guts(struct dm *dmp, int force)
 {
     XWindowAttributes xwa;
@@ -301,7 +301,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 }
 
 
-HIDDEN XVisualInfo *
+static XVisualInfo *
 X_choose_visual(struct dm *dmp)
 {
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
@@ -397,7 +397,7 @@ X_choose_visual(struct dm *dmp)
 /*
  * Gracefully release the display.
  */
-HIDDEN int
+static int
 X_close(struct dm *dmp)
 {
     struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
@@ -806,7 +806,7 @@ Skip_dials:
 }
 
 
-HIDDEN int
+static int
 X_drawBegin(struct dm *dmp)
 {
     XGCValues gcv;
@@ -837,7 +837,7 @@ X_drawBegin(struct dm *dmp)
 }
 
 
-HIDDEN int
+static int
 X_drawEnd(struct dm *dmp)
 {
     struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
@@ -864,7 +864,7 @@ X_drawEnd(struct dm *dmp)
  * Load a new Model matrix.  This will be followed by many
  * calls to X_draw().
  */
-HIDDEN int
+static int
 X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
@@ -887,7 +887,7 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 }
 
 
-HIDDEN int
+static int
 X_drawVList(struct dm *dmp, struct bv_vlist *vp)
 {
     static vect_t spnt, lpnt, pnt;
@@ -1199,7 +1199,7 @@ X_drawVList(struct dm *dmp, struct bv_vlist *vp)
 }
 
 
-HIDDEN int
+static int
 X_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data)
 {
     struct bv_vlist *vp;
@@ -1219,7 +1219,7 @@ X_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **dat
 }
 
 
-HIDDEN int
+static int
 X_hud_begin(struct dm *dmp)
 {
     if (dmp->i->dm_debugLevel)
@@ -1228,7 +1228,7 @@ X_hud_begin(struct dm *dmp)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 X_hud_end(struct dm *dmp)
 {
     if (dmp->i->dm_debugLevel)
@@ -1243,7 +1243,7 @@ X_hud_end(struct dm *dmp)
  * Output a string into the displaylist.  The starting position of the
  * beam is as specified.
  */
-HIDDEN int
+static int
 X_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
@@ -1274,7 +1274,7 @@ X_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, 
 }
 
 
-HIDDEN int
+static int
 X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 {
     int sx1, sy1, sx2, sy2;
@@ -1303,14 +1303,14 @@ X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 }
 
 
-HIDDEN int
+static int
 X_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
     return draw_Line3D(dmp, pt1, pt2);
 }
 
 
-HIDDEN int
+static int
 X_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
@@ -1320,7 +1320,7 @@ X_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 }
 
 
-HIDDEN int
+static int
 X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     int sx, sy;
@@ -1344,7 +1344,7 @@ X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 }
 
 
-HIDDEN int
+static int
 X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     XGCValues gcv;
@@ -1386,7 +1386,7 @@ X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, 
 }
 
 
-HIDDEN int
+static int
 X_setBGColor(struct dm *dmp,
 	unsigned char r, unsigned char g, unsigned char b,
 	unsigned char UNUSED(r2), unsigned char UNUSED(g2), unsigned char UNUSED(b2)
@@ -1424,7 +1424,7 @@ X_setBGColor(struct dm *dmp,
 }
 
 
-HIDDEN int
+static int
 X_setLineAttr(struct dm *dmp, int width, int style)
 {
     int linestyle;
@@ -1453,7 +1453,7 @@ X_setLineAttr(struct dm *dmp, int width, int style)
 }
 
 
-HIDDEN int
+static int
 X_debug(struct dm *dmp, int lvl)
 {
     dmp->i->dm_debugLevel = lvl;
@@ -1462,7 +1462,7 @@ X_debug(struct dm *dmp, int lvl)
 }
 
 
-HIDDEN int
+static int
 X_logfile(struct dm *dmp, const char *filename)
 {
     bu_vls_sprintf(&dmp->i->dm_log, "%s", filename);
@@ -1471,7 +1471,7 @@ X_logfile(struct dm *dmp, const char *filename)
 }
 
 
-HIDDEN int
+static int
 X_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     if (dmp->i->dm_debugLevel)
@@ -1559,7 +1559,7 @@ X_getBoundFlag(struct dm *dmp)
     return mvars->boundFlag;
 }
 
-HIDDEN int
+static int
 X_configureWin(struct dm *dmp, int force)
 {
     /* don't force */
@@ -1567,7 +1567,7 @@ X_configureWin(struct dm *dmp, int force)
 }
 
 
-HIDDEN int
+static int
 X_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha)
 {
     XImage *ximage_p;

@@ -89,6 +89,10 @@ db_add_node_to_full_path(struct db_full_path *pp, struct directory *dp)
 	    (char *)pp->fp_cinst,
 	    pp->fp_maxlen * sizeof(int),
 	    "enlarged db_full_path cinst array");
+	// realloc does NOT initialize new memory, and
+	// we rely on unset fp_cinst values being zero
+	for (size_t i = pp->fp_len; i < pp->fp_maxlen; i++)
+	    pp->fp_cinst[i] = 0;
     }
     pp->fp_names[pp->fp_len++] = dp;
 }
@@ -116,8 +120,8 @@ db_dup_full_path(struct db_full_path *newp, const struct db_full_path *oldp)
 	newp->fp_maxlen * sizeof(int),
 	"db_full_path bool array (duplicate)");
     memcpy((char *)newp->fp_bool, (char *)oldp->fp_bool, newp->fp_len * sizeof(int));
-    newp->fp_cinst = (int *)bu_malloc(
-	newp->fp_maxlen * sizeof(int),
+    newp->fp_cinst = (int *)bu_calloc(
+	newp->fp_maxlen, sizeof(int),
 	"db_full_path cinst array (duplicate)");
     memcpy((char *)newp->fp_cinst, (char *)oldp->fp_cinst, newp->fp_len * sizeof(int));
 }
@@ -139,8 +143,8 @@ db_extend_full_path(struct db_full_path *pathp, size_t incr)
 	pathp->fp_bool = (int *)bu_malloc(
 	    pathp->fp_maxlen * sizeof(int),
 	    "empty fp_bool bool extension");
-	pathp->fp_cinst = (int *)bu_malloc(
-	    pathp->fp_maxlen * sizeof(int),
+	pathp->fp_cinst = (int *)bu_calloc(
+	    pathp->fp_maxlen, sizeof(int),
 	    "empty fp_cinst cinst extension");
 	return;
     }
@@ -160,6 +164,10 @@ db_extend_full_path(struct db_full_path *pathp, size_t incr)
 		(char *)pathp->fp_cinst,
 		pathp->fp_maxlen * sizeof(int),
 		"fp_names cinst extension");
+	// realloc does NOT initialize new memory, and
+	// we rely on unset fp_cinst values being zero
+	for (size_t i = pathp->fp_len; i < pathp->fp_maxlen; i++)
+	    pathp->fp_cinst[i] = 0;
     }
 }
 
@@ -210,8 +218,8 @@ db_dup_path_tail(struct db_full_path *newp, const struct db_full_path *oldp, b_o
 	newp->fp_maxlen * sizeof(int),
 	"db_full_path bool array (duplicate)");
     memcpy((char *)newp->fp_bool, (char *)&oldp->fp_bool[start], newp->fp_len * sizeof(int));
-    newp->fp_cinst = (int *)bu_malloc(
-	newp->fp_maxlen * sizeof(int),
+    newp->fp_cinst = (int *)bu_calloc(
+	newp->fp_maxlen, sizeof(int),
 	"db_full_path cinst array (duplicate)");
     memcpy((char *)newp->fp_cinst, (char *)&oldp->fp_cinst[start], newp->fp_len * sizeof(int));
 }
@@ -849,7 +857,7 @@ db_path_to_mat(
 	struct resource *resp)
 {
     if (!pathp || !dbip || depth < 0 || !resp)
-	return -1;
+	return 0;
 
     mat_t all_m = MAT_INIT_IDN;
     mat_t mtmp = MAT_INIT_IDN;
@@ -860,15 +868,15 @@ db_path_to_mat(
 	struct directory *cdp = pathp->fp_names[i-1];
 	struct directory *dp = pathp->fp_names[i];
 	if (!cdp || !dp)
-	    return -1;
+	    return 0;
 	if (!_comb_instance_matrix(cur_m, dbip, cdp, dp, resp, pathp->fp_cinst[i]))
-	    return -1;
+	    return 0;
 	bn_mat_mul(mtmp, all_m, cur_m);
 	MAT_COPY(all_m, mtmp);
     }
 
     MAT_COPY(mat, all_m);
-    return 0;
+    return 1;
 }
 
 /* If an instance other than the default was specified, we need

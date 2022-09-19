@@ -36,7 +36,7 @@
 #include "../ged_private.h"
 
 
-HIDDEN void
+static void
 grid_vsnap(struct ged *gedp)
 {
     point_t view_pt;
@@ -51,7 +51,7 @@ grid_vsnap(struct ged *gedp)
 }
 
 
-HIDDEN void
+static void
 grid_vls_print(struct ged *gedp)
 {
     bu_vls_printf(gedp->ged_result_str, "anchor = %g %g %g\n",
@@ -71,7 +71,7 @@ grid_vls_print(struct ged *gedp)
 }
 
 
-HIDDEN void
+static void
 grid_usage(struct ged *gedp, const char *argv0)
 {
     bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", argv0);
