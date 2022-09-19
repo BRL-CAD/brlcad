@@ -197,7 +197,6 @@ class GED_EXPORT BSelectState {
 
 	bool deselect_path(const char *path, bool update);
 	bool deselect_hpath(std::vector<unsigned long long> &hpath);
-	bool deselect_hash(unsigned long long hash);
 
 	void clear();
 
@@ -279,7 +278,7 @@ class GED_EXPORT BViewState {
 	// evaluated modes like 3 (bigE) that generate an evaluated visual
 	// specific to that path, only precise path matches are removed
 	void erase(int mode, int argc, const char **argv);
-	void erase_hpath(int mode, std::vector<unsigned long long> &path_hashes, bool cache_collapse = true);
+	void erase_hpath(int mode, unsigned long long c_hash, std::vector<unsigned long long> &path_hashes, bool cache_collapse = true);
 
 	// Return a sorted vector of strings encoding the drawn paths in the
 	// view.  If mode == -1 list all paths, otherwise list those specific
@@ -367,6 +366,8 @@ class GED_EXPORT BViewState {
 
 	// Check if the prev_collapsed paths contain this path or a superset of this path
 	bool subsumed(struct bv_obj_settings *vs, std::vector<unsigned long long> &path);
+
+	int leaf_check(unsigned long long chash, std::vector<unsigned long long> &path_hashes);
 
 	// Paths supplied by commands to be incorporated into the drawn state by redraw method
 	std::vector<std::vector<unsigned long long>> staged;

@@ -1199,6 +1199,40 @@ BViewState::BViewState(DbiState *s)
     dbis = s;
 }
 
+int
+BViewState::leaf_check(
+	unsigned long long c_hash,
+	std::vector<unsigned long long> &path_hashes
+	)
+{
+    if (!c_hash)
+	return 0;
+
+    bool is_removed = (dbis->removed.find(c_hash) != dbis->removed.end());
+    if (is_removed)
+	return 1;
+
+    bool is_changed = (dbis->changed_hashes.find(c_hash) != dbis->changed_hashes.end());
+    if (is_changed)
+	return 1;
+
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    pc_it = dbis->p_c.find(c_hash);
+    path_hashes.push_back(c_hash);
+
+    if (!path_addition_cyclic(path_hashes)) {
+	/* Not cyclic - keep going */
+	if (pc_it != dbis->p_c.end()) {
+	    std::unordered_set<unsigned long long>::iterator c_it;
+	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
+		if (leaf_check(*c_it, path_hashes))
+		    return 1;
+	}
+    }
+
+    return 0;
+}
+
 // 0 = valid, 1 = invalid, 2 = invalid, remain "drawn"
 int
 BViewState::check_status(
@@ -1292,8 +1326,12 @@ BViewState::check_status(
     // leaf of the path is a comb.  If it is, the presumption is that this path
     // is part of the active set because it is an evaluated solid, and we will
     // have to check its tree to see if anything below it changed.
-    if (leaf_expand)
-	bu_log("TODO - leaf expand\n");
+    if (leaf_expand) {
+	std::vector<unsigned long long> pitems = cpath;
+	unsigned long long lhash = pitems[pitems.size() - 1];
+	pitems.pop_back();
+	return leaf_check(lhash, pitems);
+    }
 
     return 0;
 }
@@ -1327,77 +1365,70 @@ BViewState::erase(int mode, int argc, const char **argv)
 	std::vector<unsigned long long> path_hashes = dbis->digest_path(argv[i]);
 	if (!path_hashes.size())
 	    continue;
-
-	erase_hpath(mode, path_hashes, false);
+	unsigned long long c_hash = path_hashes[path_hashes.size() - 1];
+	path_hashes.pop_back();
+	erase_hpath(mode, c_hash, path_hashes, false);
     }
 
-    // Update info on fully drawn paths
+    // Update info AFTER all paths are fully drawn
     cache_collapsed();
 }
 
 void
-BViewState::erase_hpath(int mode, std::vector<unsigned long long> &path_hashes, bool cache_collapse)
+BViewState::erase_hpath(int mode, unsigned long long c_hash, std::vector<unsigned long long> &path_hashes, bool cache_collapse)
 {
-    if (!path_hashes.size())
+    std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator sm_it;
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    std::unordered_map<int, std::unordered_set<unsigned long long>>::iterator m_it;
+    pc_it = dbis->p_c.find(c_hash);
+
+    path_hashes.push_back(c_hash);
+
+    /* Cyclic - wasn't anything to draw */
+    if (path_addition_cyclic(path_hashes))
 	return;
 
-    std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator sm_it;
-    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
-
-    std::vector<unsigned long long> skeys_erase;
-
-    for (k_it = s_keys.begin(); k_it != s_keys.end(); k_it++) {
-	std::vector<unsigned long long> &chashes = k_it->second;
-	if (chashes.size() < path_hashes.size())
-	    continue;
-
-	if (std::equal(path_hashes.begin(), path_hashes.end(), chashes.begin())) {
-
-	    unsigned long long phash = dbis->path_hash(chashes, 0);
-
-	    sm_it = s_map.find(phash);
-	    if (sm_it == s_map.end())
-		continue;
-
+    /* For some modes it's possible for combs to have evaluated objects, so
+     * check regardless of whether c_hash is a solid */
+    if (mode == 3 || mode == 5 || pc_it == dbis->p_c.end()) {
+	unsigned long long phash = dbis->path_hash(path_hashes, 0);
+	sm_it = s_map.find(phash);
+	if (sm_it != s_map.end()) {
 	    std::unordered_map<int, struct bv_scene_obj *>::iterator s_it;
 	    if (mode < 0) {
-		for (s_it = sm_it->second.begin(); s_it != sm_it->second.end(); s_it++) {
+		for (s_it = sm_it->second.begin(); s_it != sm_it->second.end(); s_it++)
 		    bv_obj_put(s_it->second);
-		}
+		for (m_it = drawn_paths.begin(); m_it != drawn_paths.end(); m_it++)
+		    m_it->second.erase(phash);
 		s_map.erase(phash);
-		skeys_erase.push_back(phash);
-		if (mode == -1){
-		    std::unordered_map<int, std::unordered_set<unsigned long long>>::iterator m_it;
-		    for (m_it = drawn_paths.begin(); m_it != drawn_paths.end(); m_it++) {
-			m_it->second.erase(phash);
-		    }
-		} else {
+	    } else {
+		s_it = sm_it->second.find(mode);
+		if (s_it != sm_it->second.end()) {
+		    bv_obj_put(s_it->second);
+		    sm_it->second.erase(s_it);
 		    drawn_paths[mode].erase(phash);
+		    s_map[phash].erase(mode);
 		}
-		all_drawn_paths.erase(phash);
-		continue;
 	    }
-
-	    s_it = sm_it->second.find(mode);
-	    if (s_it == sm_it->second.end())
-		continue;
-
-	    bv_obj_put(s_it->second);
-	    sm_it->second.erase(s_it);
-	    s_map[phash].erase(mode);
 
 	    // IFF we have removed all of the drawn elements for this path,
 	    // clear it from the active sets
 	    if (!sm_it->second.size()) {
-		skeys_erase.push_back(phash);
-		drawn_paths.erase(phash);
+		s_keys.erase(phash);
+		all_drawn_paths.erase(phash);
 	    }
 	}
     }
 
-    for (size_t k = 0; k < skeys_erase.size(); k++) {
-	s_keys.erase(skeys_erase[k]);
+    /* If we do have a comb, keep going */
+    if (pc_it != dbis->p_c.end()) {
+	std::unordered_set<unsigned long long>::iterator c_it;
+	for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
+	    erase_hpath(mode, *c_it, path_hashes, false);
     }
+
+    /* Done with branch - restore path */
+    path_hashes.pop_back();
 
     // Update info on drawn paths
     if (cache_collapse)
@@ -1992,7 +2023,9 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	std::vector<unsigned long long> &phashes = s_keys[*iv_it];
 	if (!phashes.size())
 	    continue;
-	erase_hpath(-1, phashes, false);
+	unsigned long long c_hash = phashes[phashes.size() - 1];
+	phashes.pop_back();
+	erase_hpath(-1, c_hash, phashes, false);
     }
 
     // Objects may be "drawn" in different ways - wireframes, shaded, evaluated.
@@ -2291,26 +2324,27 @@ BSelectState::deselect_hpath(std::vector<unsigned long long> &hpath)
     if (!hpath.size())
 	return false;
 
-    unsigned long long phash = dbis->path_hash(hpath, 0);
-    return deselect_hash(phash);
-}
-
-bool
-BSelectState::deselect_hash(unsigned long long phash)
-{
-    if (!phash)
-	return false;
+    // For higher level paths, need to clear the illuminated solids
+    // below this path (if any)
+    std::vector<unsigned long long> pitems = hpath;
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    pc_it = dbis->p_c.find(pitems[pitems.size() -1]);
+    if (pc_it != dbis->p_c.end()) {
+	std::unordered_set<unsigned long long>::iterator c_it;
+	for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
+	    clear_paths(*c_it, pitems);
+    }
 
     // Clear the selection itself
+    unsigned long long phash = dbis->path_hash(hpath, 0);
     selected.erase(phash);
     active_paths.erase(phash);
+    return true;
 
     // Note - with this lower level function, it is the caller's responsibility
     // to call characterize to populate the path relationships - we deliberately
     // do not do it here, so an application can do the work once per cycle
     // rather than being forced to do it per path.
-
-    return true;
 }
 
 bool

@@ -318,7 +318,9 @@ QgTreeView::do_draw_toggle(const QModelIndex &index)
 	views.insert(v);
 	sv->redraw(NULL, views, 1);
     } else {
-	sv->erase_hpath(-1, path_hashes, true);
+	unsigned long long c_hash = path_hashes[path_hashes.size() - 1];
+	path_hashes.pop_back();
+	sv->erase_hpath(-1, c_hash, path_hashes, true);
     }
 }
 
