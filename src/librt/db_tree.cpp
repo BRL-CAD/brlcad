@@ -1926,8 +1926,11 @@ _db_walk_subtree(
 		ctsp->cts_s.ts_sofar |= TS_SOFAR_REGION;
 	    else
 		ctsp->cts_s.ts_sofar &= ~TS_SOFAR_REGION;
-
-	    curtree = db_recurse2(&ctsp->cts_s, &ctsp->cts_p, region_start_statepp, client_data, cmap);
+	    if (UNLIKELY(ctsp->cts_s.ts_dbip->dbi_use_comb_instance_ids)) {
+		curtree = db_recurse2(&ctsp->cts_s, &ctsp->cts_p, region_start_statepp, client_data, cmap);
+	    } else {
+		curtree = db_recurse(&ctsp->cts_s, &ctsp->cts_p, region_start_statepp, client_data);
+	    }
 	    if (curtree == TREE_NULL) {
 		char *str;
 		str = db_path_to_string(&(ctsp->cts_p));
@@ -2021,8 +2024,15 @@ _db_walk_dispatcher(int cpu, void *arg)
 
 	/* Walk the full subtree now */
 	region_start_statep = (struct combined_tree_state *)0;
-	std::unordered_map<std::string, int> c_inst_map;
-	_db_walk_subtree(curtree, &region_start_statep, wps->reg_leaf_func, wps->client_data, resp, (void *)&c_inst_map);
+
+	struct db_i *dbip = curtree->tr_c.tc_ctsp->cts_s.ts_dbip;
+	RT_CK_DBI(dbip);
+	if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	    std::unordered_map<std::string, int> c_inst_map;
+	    _db_walk_subtree(curtree, &region_start_statep, wps->reg_leaf_func, wps->client_data, resp, (void *)&c_inst_map);
+	} else {
+	    _db_walk_subtree(curtree, &region_start_statep, wps->reg_leaf_func, wps->client_data, resp, NULL);
+	}
 
 	/* curtree->tr_op may be OP_NOP here.
 	 * It is up to db_reg_end_func() to deal with this,
@@ -2130,8 +2140,12 @@ db_walk_tree(struct db_i *dbip,
 	ts.ts_leaf_func = _db_gettree_leaf;
 
 	region_start_statep = (struct combined_tree_state *)0;
-	std::unordered_map<std::string, int> c_inst_map;
-	curtree = db_recurse2(&ts, &path, &region_start_statep, client_data, (void *)&c_inst_map);
+	if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	    std::unordered_map<std::string, int> c_inst_map;
+	    curtree = db_recurse2(&ts, &path, &region_start_statep, client_data, (void *)&c_inst_map);
+	} else {
+	    curtree = db_recurse(&ts, &path, &region_start_statep, client_data);
+	}
 	if (region_start_statep)
 	    db_free_combined_tree_state(region_start_statep);
 	db_free_full_path(&path);
@@ -2991,8 +3005,8 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
     if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 	bu_log("db_recurse() pathp='%s', tsp=%p, *statepp=%p, tsp->ts_sofar=%d\n",
-	       sofar, (void *)tsp,
-	       (void *)*region_start_statepp, tsp->ts_sofar);
+		sofar, (void *)tsp,
+		(void *)*region_start_statepp, tsp->ts_sofar);
 	bu_free(sofar, "path string");
 	if (bn_mat_ck("db_recurse() tsp->ts_mat at start", tsp->ts_mat) < 0) {
 	    bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n",  dp->d_namep);

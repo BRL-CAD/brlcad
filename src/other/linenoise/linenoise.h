@@ -77,6 +77,11 @@ void linenoiseSetFreeHintsCallback(linenoiseFreeHintsCallback *callback);
 char *linenoise(const char *prompt);
 
 /**
+ * Like linenoise() but starts with an initial buffer.
+ */
+char *linenoiseWithInitial(const char *prompt, const char *initial);
+
+/**
  * Clear the screen.
  */
 void linenoiseClearScreen(void);
