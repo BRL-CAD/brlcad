@@ -1327,6 +1327,21 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   in BRL-CAD (libraries are BSD licensed:
   http://ngplant.sourceforge.net)
 
+* Literally days after I completed my initial extraction of the
+  OSMesa code for a software rendering fallback, a project for a compact C99
+  implementation of OpenGL 3.x first released some public code:
+  https://github.com/rswinkle/PortableGL  The project shows current
+  activity, and it appears based on some code used there that TinyGL itself
+  has also gotten some fixes from the original author.  Based on experiments
+  with the other "cleaned up" fork, TinyGL on its own doesn't have enough of
+  OpenGL to support all of BRL-CAD's currently used features, but it would be
+  interesting to know if PortableGL could be a viable alternative to
+  libosmesa.  Given the latter works and has been cleaned up quite a lot the
+  question is not urgent, but if PortableGL is actively maintained, gives us
+  a similar capability with a newer standard and similar independence from
+  any third party dependencies, it is of interest.  First question is how
+  much of our existing OpenGL would need to be updated to target 3.x...
+
 
 OVERLAP TOOLS
 -------------
