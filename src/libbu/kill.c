@@ -39,7 +39,7 @@ extern int kill(pid_t, int);
 
 #ifdef HAVE_KILL
 
-HIDDEN int
+static int
 _bu_terminate(int process)
 {
     int successful = 0;
@@ -54,7 +54,7 @@ _bu_terminate(int process)
 
 #else /* !HAVE_KILL */
 
-HIDDEN int
+static int
 _bu_terminate(int process)
 {
     int successful = 0;

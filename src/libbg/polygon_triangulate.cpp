@@ -567,7 +567,7 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 		bu_log("(O) Wait, what?  Need new point????\n");
 		//bu_log("xc, yc: %" PRId64 ",%" PRId64 "\n", xc, yc);
 		//bu_log("%d: x,y: %f,%f\n", o_it->first, xcd, ycd);
-		pind = xy_ind_lookup(pbins, collapsed_pts, xc, yc);
+		//pind = xy_ind_lookup(pbins, collapsed_pts, xc, yc);
 	    } else {
 		p2t_to_ind[p] = pind;
 	    }

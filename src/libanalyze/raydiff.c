@@ -117,7 +117,7 @@ diff_flag(void *container)
     return &(d->valid);
 }
 
-HIDDEN int
+static int
 raydiff_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     point_t in_pt, out_pt;
@@ -151,7 +151,7 @@ raydiff_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNU
 }
 
 
-HIDDEN int
+static int
 raydiff_overlap(struct application *ap,
 		struct partition *pp,
 		struct region *UNUSED(reg1),
@@ -177,7 +177,7 @@ raydiff_overlap(struct application *ap,
 }
 
 
-HIDDEN int
+static int
 raydiff_miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);

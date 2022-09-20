@@ -1,4 +1,4 @@
-This repository Mesa and glu libraries.  Check each source code file
+This repository contains Mesa and glu libraries.  Check each source code file
 for specific terms.  The default Mesa license is:
 
 Mesa 3-D graphics library

@@ -47,7 +47,7 @@ struct voxelizeData
     struct wmember content;
 };
 
-HIDDEN void
+static void
 create_boxes(void *callBackData, int x, int y, int z, const char *a, fastf_t fill)
 {
     if (a != NULL) {

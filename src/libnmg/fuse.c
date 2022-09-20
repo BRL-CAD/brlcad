@@ -53,7 +53,7 @@ struct pt_list
 };
 
 
-HIDDEN void nmg_split_trim(const struct edge_g_cnurb *cnrb,
+static void nmg_split_trim(const struct edge_g_cnurb *cnrb,
 			   const struct face_g_snurb *snrb,
 			   fastf_t t,
 			   struct pt_list *pt0, struct pt_list *pt1,
@@ -620,7 +620,7 @@ nmg_eval_trim_curve(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *
 }
 
 
-HIDDEN void
+static void
 nmg_split_trim(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *snrb, fastf_t t, struct pt_list *pt0, struct pt_list *pt1, const struct bn_tol *tol)
 {
     struct pt_list *pt_new;
@@ -691,7 +691,7 @@ nmg_eval_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g_snurb 
 }
 
 
-HIDDEN void
+static void
 nmg_split_linear_trim(const struct face_g_snurb *snrb, const fastf_t *uvw1, const fastf_t *uvw2, struct pt_list *pt0, struct pt_list *pt1, const struct bn_tol *tol)
 {
     struct pt_list *pt_new;
@@ -1158,7 +1158,7 @@ nmg_edge_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_t
 
 
 /* compare function for bu_sort within function nmg_edge_g_fuse */
-HIDDEN int
+static int
 e_rr_xyp_comp(const void *p1, const void *p2, void *arg)
 {
     fastf_t i, j;

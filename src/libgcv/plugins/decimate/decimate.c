@@ -29,7 +29,7 @@
 #include "gcv/api.h"
 
 
-HIDDEN int
+static int
 decimate_filter(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	const void *UNUSED(options_data), const char *UNUSED(target))
 {

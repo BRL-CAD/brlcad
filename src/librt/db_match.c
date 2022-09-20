@@ -36,7 +36,7 @@
 #include "raytrace.h"
 #include "librt_private.h"
 
-HIDDEN void
+static void
 db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, void *pdp, void *UNUSED(dummy2), void *UNUSED(dummy3), void *UNUSED(dummy4))
 {
     struct directory *dp = RT_DIR_NULL;

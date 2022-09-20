@@ -40,7 +40,7 @@
 #define CLIP_DISTANCE 100000000.0
 
 
-HIDDEN int
+static int
 code(fastf_t x, fastf_t y)
 {
     int cval;

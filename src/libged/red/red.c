@@ -210,7 +210,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 }
 
 
-HIDDEN int
+static int
 build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 {
     struct rt_comb_internal *comb = NULL;
@@ -571,7 +571,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 }
 
 
-HIDDEN int
+static int
 write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 {
     /* Writes the file for later editing */

@@ -57,7 +57,7 @@ void db5_attr_registry_init(struct db5_registry *registry)
     registry->internal = (void *)new attr_regmap_t;
 }
 
-HIDDEN
+static
 void db5_attr_ctype_free(struct db5_attr_ctype *attr)
 {
     bu_free((void *)attr->name, "free attr name");

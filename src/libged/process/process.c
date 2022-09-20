@@ -32,7 +32,7 @@
 #include "../ged_private.h"
 
 
-HIDDEN void
+static void
 _process_show_help(struct ged *gedp)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -48,7 +48,7 @@ _process_show_help(struct ged *gedp)
 }
 
 
-HIDDEN int
+static int
 _ged_process_list(struct ged *gedp)
 {
     struct bu_vls pid_str = BU_VLS_INIT_ZERO;
@@ -97,7 +97,7 @@ _ged_process_list(struct ged *gedp)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 _ged_process_pabort(struct ged *gedp, int argc, const char **argv)
 {
     struct ged_subprocess *rrp;
@@ -127,7 +127,7 @@ _ged_process_pabort(struct ged *gedp, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 _ged_process_gabort(struct ged *gedp, int argc, const char **argv)
 {
     struct ged_subprocess *rrp;

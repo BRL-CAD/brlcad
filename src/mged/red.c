@@ -45,7 +45,7 @@ static char *red_tmpcomb_init = "red_tmp.aXXXXXX";
 static char delims[] = " \t/";	/* allowable delimiters */
 
 
-HIDDEN char *
+static char *
 find_keyword(int i, char *line, char *word)
 {
     char *ptr1;
@@ -83,7 +83,7 @@ struct line_list{
 
 struct line_list HeadLines;
 
-HIDDEN int
+static int
 count_nodes(char *line)
 {
     char *ptr;
@@ -147,7 +147,7 @@ count_nodes(char *line)
 }
 
 
-HIDDEN int
+static int
 make_tree(struct rt_comb_internal *comb, struct directory *dp, size_t node_count, char *old_name, char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
 {
     struct rt_db_internal intern;

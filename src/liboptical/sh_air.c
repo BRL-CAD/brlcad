@@ -69,13 +69,13 @@ struct bu_structparse air_parse[] = {
 };
 
 
-HIDDEN int air_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int airtest_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN int air_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN int emist_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN int tmist_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void air_print(register struct region *rp, void *dp);
-HIDDEN void air_free(void *cp);
+static int air_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int airtest_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static int air_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static int emist_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static int tmist_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void air_print(register struct region *rp, void *dp);
+static void air_free(void *cp);
 
 struct mfuncs air_mfuncs[] = {
     {MF_MAGIC,	"airtest",	0,		MFI_HIT, MFF_PROC,
@@ -119,7 +119,7 @@ dpm_hook(const struct bu_structparse *UNUSED(sdp),
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
-HIDDEN int
+static int
 air_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 /* pointer to reg_udata in *rp */
 /* New since 4.4 release */
@@ -154,14 +154,14 @@ air_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
 }
 
 
-HIDDEN void
+static void
 air_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, air_parse, (const char *)dp);
 }
 
 
-HIDDEN void
+static void
 air_free(void *cp)
 {
     if (optical_debug&OPTICAL_DEBUG_SHADE)

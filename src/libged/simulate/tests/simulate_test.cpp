@@ -36,7 +36,7 @@ namespace
 {
 
 
-HIDDEN bool
+static bool
 matrix_equal(const db_i &db, const std::string &path,
 const fastf_t * const other_matrix)
 {
@@ -68,7 +68,7 @@ return bn_mat_is_equal(matrix, other_matrix, &tol);
 }
 
 
-HIDDEN bool
+static bool
 test_basic()
 {
 ged ged_instance;
@@ -166,7 +166,7 @@ expected_falling_matrix);
 }
 
 
-HIDDEN bool
+static bool
 test_matrices()
 {
 ged ged_instance;
@@ -247,7 +247,7 @@ return matrix_equal(*ged_instance.ged_wdbp->dbip,
 }
 
 
-HIDDEN bool
+static bool
 test_tutorial()
 {
 ged ged_instance;
@@ -331,7 +331,7 @@ expected_cube_matrix);
 }
 
 
-HIDDEN bool
+static bool
 simulate_test()
 {
 return test_basic() && test_matrices() && test_tutorial();

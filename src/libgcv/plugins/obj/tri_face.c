@@ -34,7 +34,7 @@ static const int VERTICES_PER_FACE = 3;
 
 /* nmg access routines */
 
-HIDDEN struct shell*
+static struct shell*
 get_first_shell(struct model *model)
 {
     struct nmgregion *region;
@@ -47,7 +47,7 @@ get_first_shell(struct model *model)
 }
 
 
-HIDDEN struct model*
+static struct model*
 get_faceuse_model(struct faceuse *fu)
 {
     return fu->s_p->r_p->m_p;
@@ -56,7 +56,7 @@ get_faceuse_model(struct faceuse *fu)
 
 /* nmg construction routines */
 
-HIDDEN struct vertex_g*
+static struct vertex_g*
 make_nmg_vertex_g(struct model *model, double x, double y, double z, long index)
 {
     struct vertex_g *vg;
@@ -71,7 +71,7 @@ make_nmg_vertex_g(struct model *model, double x, double y, double z, long index)
 }
 
 
-HIDDEN struct vertex*
+static struct vertex*
 make_nmg_vertex(struct model *model, double x, double y, double z, long index)
 {
     struct vertex *v;
@@ -87,7 +87,7 @@ make_nmg_vertex(struct model *model, double x, double y, double z, long index)
 }
 
 
-HIDDEN void
+static void
 attach_face_g_plane(struct model *model, struct face *f)
 {
     struct face_g_plane *plane;
@@ -106,7 +106,7 @@ attach_face_g_plane(struct model *model, struct face *f)
 /* builds an nmg model containing a single faceuse which represents the face
  * specified in points[]
  */
-HIDDEN struct model*
+static struct model*
 make_model_from_face(const double points[], size_t numPoints)
 {
     size_t i;
@@ -174,7 +174,7 @@ make_faceuse_from_face(const double points[], size_t numPoints)
  * If match is found, returns the point number (starting at 0) of the match.
  * Otherwise returns -1.
  */
-HIDDEN int
+static int
 getPointReference(
     const double point[],
     const double points[],

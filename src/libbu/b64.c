@@ -37,7 +37,7 @@ typedef struct {
 
 const int CHARS_PER_LINE = 72;
 
-HIDDEN
+static
 void bu_b64_init_encodestate(bu_b64_encodestate* state_in)
 {
     state_in->step = step_A;
@@ -45,7 +45,7 @@ void bu_b64_init_encodestate(bu_b64_encodestate* state_in)
     state_in->stepcount = 0;
 }
 
-HIDDEN
+static
 signed char bu_b64_encode_value(signed char value_in)
 {
     static const signed char* encoding = (const signed char *)"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -53,7 +53,7 @@ signed char bu_b64_encode_value(signed char value_in)
     return encoding[(int)value_in];
 }
 
-HIDDEN
+static
 int bu_b64_encode_block_internal(const signed char* plaintext_in, size_t length_in, signed char* code_out, bu_b64_encodestate* state_in)
 {
     const signed char* plainchar = plaintext_in;
@@ -111,7 +111,7 @@ int bu_b64_encode_block_internal(const signed char* plaintext_in, size_t length_
     return codechar - code_out;
 }
 
-HIDDEN
+static
 int bu_b64_encode_blockend(signed char* code_out, bu_b64_encodestate* state_in)
 {
     signed char* codechar = code_out;
@@ -134,7 +134,7 @@ int bu_b64_encode_blockend(signed char* code_out, bu_b64_encodestate* state_in)
     return codechar - code_out;
 }
 
-HIDDEN
+static
 int bu_b64_decode_value(signed char value_in)
 {
     static const signed char decoding[] = {62,-1,-1,-1,63,52,53,54,55,56,57,58,59,60,61,-1,-1,-1,-2,-1,-1,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,-1,-1,-1,-1,-1,-1,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51};
@@ -144,14 +144,14 @@ int bu_b64_decode_value(signed char value_in)
     return decoding[(int)value_in];
 }
 
-HIDDEN
+static
 void bu_b64_init_decodestate(bu_b64_decodestate* state_in)
 {
     state_in->step = step_a;
     state_in->plainchar = 0;
 }
 
-HIDDEN
+static
 int bu_b64_decode_block_internal(const signed char* code_in, const size_t length_in, signed char* plaintext_out, bu_b64_decodestate* state_in)
 {
     const signed char* codechar = code_in;

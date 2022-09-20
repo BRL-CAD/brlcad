@@ -104,7 +104,7 @@ bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
 /**
  * Allows caller control over zero-suppression feature.
  */
-HIDDEN void
+static void
 hist_pr_suppress(register const struct bu_hist *histp, const char *title, int zero_suppress)
 {
     size_t maxcount;

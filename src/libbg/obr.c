@@ -68,7 +68,7 @@
 #define F_TOP 2
 #define F_LEFT 3
 
-HIDDEN int
+static int
 pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_center, point2d_t *p1, point2d_t *p2)
 {
     int i = 0;
@@ -169,7 +169,7 @@ struct obr_vals {
 /* The oriented bounding rectangle must be calculated from the points and 2D vectors provided by
  * the rotating calipers, and the smallest resultant area tracked.  Those functions are handled
  * by this routine.*/
-HIDDEN void
+static void
 UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d_t bottom_pnt,
 	  point2d_t top_pnt, vect2d_t u)
 {
@@ -204,7 +204,7 @@ UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d
 /* Three consecutive collinear points will cause a problem (as per a comment in the original code)
  * Consequently, we're going to have to build the convex hull for all non-trivial inputs in order to
  * make sure we don't get collinear points from the NMG inputs.*/
-HIDDEN int
+static int
 bg_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 {
     int i = 0;

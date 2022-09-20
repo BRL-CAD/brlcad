@@ -45,10 +45,10 @@ static struct directory **path = NULL;
 static size_t path_capacity = 0;
 
 
-HIDDEN int wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathpos);
+static int wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathpos);
 
 
-HIDDEN void
+static void
 wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *user_ptr3, void *UNUSED(user_ptr4))
 {
     FILE *fp;
@@ -73,7 +73,7 @@ wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union
 }
 
 
-HIDDEN int
+static int
 wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathpos)
 {
     size_t i;

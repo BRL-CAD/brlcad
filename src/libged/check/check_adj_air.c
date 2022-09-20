@@ -35,7 +35,7 @@ struct adj_air_context {
 };
 
 
-HIDDEN void
+static void
 adj_air(const struct xray* ray, const struct partition *pp, point_t pt, void* callback_data)
 {
     struct adj_air_context *context = (struct adj_air_context*) callback_data;

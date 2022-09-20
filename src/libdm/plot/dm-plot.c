@@ -211,7 +211,7 @@ plot_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
 /**
  * Gracefully release the display.
  */
-HIDDEN int
+static int
 plot_close(struct dm *dmp)
 {
     if (!dmp)
@@ -245,7 +245,7 @@ plot_viable(const char *UNUSED(dpy_string))
 /**
  * There are global variables which are parameters to this routine.
  */
-HIDDEN int
+static int
 plot_drawBegin(struct dm *dmp)
 {
     if (!dmp)
@@ -257,7 +257,7 @@ plot_drawBegin(struct dm *dmp)
 }
 
 
-HIDDEN int
+static int
 plot_drawEnd(struct dm *dmp)
 {
     if (!dmp)
@@ -277,7 +277,7 @@ plot_drawEnd(struct dm *dmp)
  * Load a new transformation matrix.  This will be followed by
  * many calls to plot_draw().
  */
-HIDDEN int
+static int
 plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
     Tcl_Obj *obj;
@@ -322,7 +322,7 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  *
  * Returns 0 if object could be drawn, !0 if object was omitted.
  */
-HIDDEN int
+static int
 plot_drawVList(struct dm *dmp, struct bv_vlist *vp)
 {
     static vect_t last;
@@ -479,7 +479,7 @@ plot_drawVList(struct dm *dmp, struct bv_vlist *vp)
 }
 
 
-HIDDEN int
+static int
 plot_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data)
 {
     struct bv_vlist *vp;
@@ -499,7 +499,7 @@ plot_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **
 }
 
 
-HIDDEN int
+static int
 plot_hud_begin(struct dm *dmp)
 {
     if (!dmp)
@@ -508,7 +508,7 @@ plot_hud_begin(struct dm *dmp)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 plot_hud_end(struct dm *dmp)
 {
     if (!dmp)
@@ -522,7 +522,7 @@ plot_hud_end(struct dm *dmp)
  * Output a string into the displaylist.
  * The starting position of the beam is as specified.
  */
-HIDDEN int
+static int
 plot_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
 {
     int sx, sy;
@@ -542,7 +542,7 @@ plot_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int siz
 }
 
 
-HIDDEN int
+static int
 plot_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
 {
     int sx1, sy1;
@@ -561,14 +561,14 @@ plot_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fas
 }
 
 
-HIDDEN int
+static int
 plot_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
     return draw_Line3D(dmp, pt1, pt2);
 }
 
 
-HIDDEN int
+static int
 plot_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
@@ -578,14 +578,14 @@ plot_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag)
 }
 
 
-HIDDEN int
+static int
 plot_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     return plot_drawLine2D(dmp, x, y, x, y);
 }
 
 
-HIDDEN int
+static int
 plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     if (!dmp) {
@@ -597,7 +597,7 @@ plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
     pl_color(privars->up_fp, (int)r, (int)g, (int)b);
     return BRLCAD_OK;
 }
-HIDDEN int
+static int
 plot_setBGColor(struct dm *dmp,
 	unsigned char r1, unsigned char g1, unsigned char b1,
 	unsigned char r2, unsigned char g2, unsigned char b2
@@ -612,7 +612,7 @@ plot_setBGColor(struct dm *dmp,
 }
 
 
-HIDDEN int
+static int
 plot_setLineAttr(struct dm *dmp, int width, int style)
 {
     dmp->i->dm_lineWidth = width;
@@ -629,7 +629,7 @@ plot_setLineAttr(struct dm *dmp, int width, int style)
 }
 
 
-HIDDEN int
+static int
 plot_debug(struct dm *dmp, int lvl)
 {
     Tcl_Obj *obj;
@@ -648,7 +648,7 @@ plot_debug(struct dm *dmp, int lvl)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 plot_logfile(struct dm *dmp, const char *filename)
 {
     Tcl_Obj *obj;
@@ -669,7 +669,7 @@ plot_logfile(struct dm *dmp, const char *filename)
 
 
 
-HIDDEN int
+static int
 plot_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     struct plot_mvars *m_vars = (struct plot_mvars *)dmp->i->m_vars;

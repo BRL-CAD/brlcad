@@ -1403,7 +1403,7 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 }
 
 
-HIDDEN BBNode*
+static BBNode*
 initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
 {
     ON_BoundingBox bb = ON_BoundingBox::EmptyBoundingBox;

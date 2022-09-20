@@ -83,7 +83,7 @@ struct dplot_info {
     info.mode = DPLOT_INITIAL; \
     return BRLCAD_ERROR;
 
-HIDDEN int
+static int
 dplot_overlay(
 	struct ged *gedp,
 	const char *prefix,
@@ -110,7 +110,7 @@ dplot_overlay(
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 dplot_erase_overlay(
 	struct dplot_info *info,
 	const char *name)
@@ -134,7 +134,7 @@ dplot_erase_overlay(
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 dplot_ssx(
 	struct dplot_info *info)
 {
@@ -211,7 +211,7 @@ dplot_print_event_legend(struct dplot_info *info)
     bu_vls_printf(info->gedp->ged_result_str, "green  = overlap\n");
 }
 
-HIDDEN int
+static int
 dplot_ssx_events(
 	struct dplot_info *info)
 {
@@ -253,7 +253,7 @@ dplot_ssx_events(
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 dplot_isocsx(
 	struct dplot_info *info)
 {
@@ -309,7 +309,7 @@ dplot_isocsx(
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 dplot_isocsx_events(struct dplot_info *info)
 {
     int ret;
@@ -352,7 +352,7 @@ dplot_isocsx_events(struct dplot_info *info)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 dplot_face_curves(struct dplot_info *info)
 {
     int f1_curves, f2_curves;
@@ -402,7 +402,7 @@ dplot_face_curves(struct dplot_info *info)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 dplot_split_faces(
 	struct dplot_info *info)
 {
@@ -482,7 +482,7 @@ dplot_split_faces(
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 dplot_linked_curves(
 	struct dplot_info *info)
 {
@@ -505,17 +505,17 @@ dplot_linked_curves(
     return BRLCAD_OK;
 }
 
-HIDDEN void *
+static void *
 dplot_malloc(size_t s) {
     return bu_malloc(s, "dplot_malloc");
 }
 
-HIDDEN void
+static void
 dplot_free(void *p) {
     bu_free(p, "dplot_free");
 }
 
-HIDDEN void
+static void
 dplot_load_file_data(struct dplot_info *info)
 {
     int i, j;

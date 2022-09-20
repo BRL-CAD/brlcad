@@ -33,7 +33,7 @@
 #include "../ged_private.h"
 
 
-HIDDEN void
+static void
 find_ref(struct db_i *dbip,
 	 struct rt_comb_internal *comb,
 	 union tree *comb_leaf,

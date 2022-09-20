@@ -219,7 +219,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	// is a problem.
 	mat_t mat;
 	MAT_IDN(mat);
-	if (db_path_to_mat(dbip, fp, mat, 0, local_res)) {
+	if (!db_path_to_mat(dbip, fp, mat, 0, local_res)) {
 	    continue;
 	}
 
@@ -351,7 +351,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	// Seed initial matrix from the path
 	mat_t mat;
 	MAT_IDN(mat);
-	if (db_path_to_mat(dbip, fp, mat, 0, local_res)) {
+	if (!db_path_to_mat(dbip, fp, mat, 0, local_res)) {
 	    continue;
 	}
 

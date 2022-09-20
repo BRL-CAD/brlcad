@@ -38,7 +38,7 @@
 #include "bu/vls.h"
 
 
-HIDDEN void
+static void
 wrap_help(struct bu_vls *help, size_t indent, size_t offset, size_t len)
 {
     size_t i = 0;
@@ -72,7 +72,7 @@ wrap_help(struct bu_vls *help, size_t indent, size_t offset, size_t len)
 }
 
 
-HIDDEN int
+static int
 opt_desc_is_null(const struct bu_opt_desc *ds)
 {
     int non_null = 0;
@@ -96,7 +96,7 @@ opt_desc_is_null(const struct bu_opt_desc *ds)
 }
 
 
-HIDDEN int
+static int
 opt_is_filtered(const struct bu_opt_desc *d, size_t f_ac, char **f_av, int accept)
 {
     size_t i = 0;
@@ -118,7 +118,7 @@ opt_is_filtered(const struct bu_opt_desc *d, size_t f_ac, char **f_av, int accep
 }
 
 
-HIDDEN char *
+static char *
 opt_describe_internal_ascii(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     size_t i = 0;
@@ -293,7 +293,7 @@ opt_describe_internal_ascii(const struct bu_opt_desc *ds, struct bu_opt_desc_opt
 #define OPT_OPTIONAL 0x4
 #define OPT_REPEAT   0x10
 
-HIDDEN int
+static int
 docbook_get_opt_type(const struct bu_opt_desc *d, struct bu_opt_desc_opts *settings)
 {
     const struct bu_opt_desc *curr = NULL;
@@ -355,7 +355,7 @@ docbook_get_opt_type(const struct bu_opt_desc *d, struct bu_opt_desc_opts *setti
 }
 
 
-HIDDEN void
+static void
 docbook_print_short_opt(struct bu_vls *desc, const struct bu_opt_desc *d, int opt_type, size_t offset)
 {
     if (!desc || !d)
@@ -381,7 +381,7 @@ docbook_print_short_opt(struct bu_vls *desc, const struct bu_opt_desc *d, int op
 }
 
 
-HIDDEN void
+static void
 docbook_print_long_opt(struct bu_vls *desc, const struct bu_opt_desc *d, int opt_type, size_t offset)
 {
     if (!desc || !d)
@@ -407,7 +407,7 @@ docbook_print_long_opt(struct bu_vls *desc, const struct bu_opt_desc *d, int opt
 }
 
 
-HIDDEN char *
+static char *
 opt_describe_internal_docbook(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     int opt_cnt;
@@ -527,7 +527,7 @@ bu_opt_describe(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 }
 
 
-HIDDEN int
+static int
 opt_is_flag(const char *opt, const struct bu_opt_desc *ds, const char *arg)
 {
     int arg_offset = -1;
@@ -567,7 +567,7 @@ opt_is_flag(const char *opt, const struct bu_opt_desc *ds, const char *arg)
 }
 
 
-HIDDEN int
+static int
 opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate, const struct bu_opt_desc *ds)
 {
     size_t offset = 1;
@@ -677,7 +677,7 @@ opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate
  * 2.  Must not be ONLY the '-' char
  * 3.  Must not have white space characters present in the string.
  */
-HIDDEN int
+static int
 can_be_opt(const char *opt)
 {
     size_t i = 0;

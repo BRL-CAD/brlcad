@@ -55,7 +55,7 @@
 #include "bu/file.h"
 #include "bu/exit.h"
 
-HIDDEN int
+static int
 _bu_tcl_utf_to_ushort(
     register const char *src,   /* The UTF-8 string. */
     register unsigned short *chPtr)/* Filled with the unsigned short represented by
@@ -118,7 +118,7 @@ _bu_tcl_utf_to_ushort(
     return 1;
 }
 
-HIDDEN int
+static int
 _bu_tcl_ushort_to_utf(
     int ch,                     /* The unsigned short to be stored in the
 				 * buffer. */
@@ -151,7 +151,7 @@ _bu_tcl_ushort_to_utf(
     goto three;
 }
 
-HIDDEN int
+static int
 _bu_tcl_parse_hex(
     const char *src,            /* First character to parse. */
     int numBytes,               /* Max number of byes to scan */
@@ -185,7 +185,7 @@ _bu_tcl_parse_hex(
     return (p - src);
 }
 
-HIDDEN int
+static int
 _bu_tcl_parse_backslash(
     const char *src,            /* Points to the backslash character of a a
 				 * backslash sequence. */
@@ -352,7 +352,7 @@ done:
 }
 
 
-HIDDEN int
+static int
 _bu_tcl_find_element(
     const char *list,           /* Points to the first byte of a string
 				 * containing a Tcl list with zero or more
@@ -522,7 +522,7 @@ done:
 }
 
 
-HIDDEN int
+static int
 _bu_tcl_copy_collapse(
     int count,                  /* Number of characters to copy from src. */
     const char *src,            /* Copy from here... */

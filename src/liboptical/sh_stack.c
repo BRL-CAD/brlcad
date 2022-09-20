@@ -34,11 +34,11 @@
 #include "optical.h"
 
 
-HIDDEN int sh_stk_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mf_p, struct rt_i *rtip);
-HIDDEN int sh_stk_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void sh_stk_print(register struct region *rp, void *dp);
-HIDDEN void sh_stk_free(void *cp);
-HIDDEN int ext_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mf_p, struct rt_i *rtip);
+static int sh_stk_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mf_p, struct rt_i *rtip);
+static int sh_stk_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void sh_stk_print(register struct region *rp, void *dp);
+static void sh_stk_free(void *cp);
+static int ext_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mf_p, struct rt_i *rtip);
 
 struct mfuncs stk_mfuncs[] = {
     {MF_MAGIC,	"stack",	0,		0,	0,     sh_stk_setup,	sh_stk_render,	sh_stk_print,	sh_stk_free},
@@ -62,7 +62,7 @@ struct bu_structparse stk_parse[] = {
 /*
  * Returns 0 on failure, 1 on success.
  */
-HIDDEN int
+static int
 ext_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mf_p, struct rt_i *rtip)
 
 /* parameter string */
@@ -104,7 +104,7 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
 }
 
 
-HIDDEN int
+static int
 sh_stk_dosetup(char *cp, struct region *rp, void **dpp, struct mfuncs **mpp, struct rt_i *rtip)
 
 
@@ -194,7 +194,7 @@ out:
 /*
  * Returns 0 on failure, 1 on success.
  */
-HIDDEN int
+static int
 sh_stk_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mf_p), struct rt_i *rtip)
 
 /* parameter string */
@@ -271,7 +271,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
  * 0 stack processing aborted
  * 1 stack processed to completion
  */
-HIDDEN int
+static int
 sh_stk_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct stk_specific *sp =
@@ -306,7 +306,7 @@ sh_stk_render(struct application *ap, const struct partition *pp, struct shadewo
 }
 
 
-HIDDEN void
+static void
 sh_stk_print(register struct region *rp, void *dp)
 {
     register struct stk_specific *sp =
@@ -333,7 +333,7 @@ sh_stk_print(register struct region *rp, void *dp)
 }
 
 
-HIDDEN void
+static void
 sh_stk_free(void *cp)
 {
     register struct stk_specific *sp =

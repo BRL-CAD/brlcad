@@ -938,7 +938,7 @@ rt_part_free(register struct soltab *stp)
  * 0 8 12 10 4
  * 2 9 12 11 6
  */
-HIDDEN void
+static void
 rt_part_hemisphere(register point_t (*ov), register fastf_t *v, fastf_t *a, fastf_t *b, fastf_t *h)
 {
     /* M_SQRT1_2 is cos45 */

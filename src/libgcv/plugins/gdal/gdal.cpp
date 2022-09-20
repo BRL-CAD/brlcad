@@ -81,7 +81,7 @@ struct conversion_state {
     GDALDatasetH hDataset;
 };
 
-HIDDEN void
+static void
 gdal_state_init(struct conversion_state *gs)
 {
     if(!gs) return;
@@ -93,7 +93,7 @@ gdal_state_init(struct conversion_state *gs)
     gs->hDataset = NULL;
 }
 
-HIDDEN int
+static int
 get_dataset_info(GDALDatasetH hDataset)
 {
     char *gdal_info = GDALInfo(hDataset, NULL);
@@ -103,7 +103,7 @@ get_dataset_info(GDALDatasetH hDataset)
     return 0;
 }
 
-HIDDEN int
+static int
 gdal_can_read(const char *data)
 {
     GDALDatasetH hDataset;
@@ -125,7 +125,7 @@ gdal_can_read(const char *data)
     return 1;
 }
 
-HIDDEN void
+static void
 gdal_elev_minmax(GDALDatasetH ds)
 {
     int bmin, bmax = 0;
@@ -141,7 +141,7 @@ gdal_elev_minmax(GDALDatasetH ds)
 /* Get the UTM zone of the GDAL dataset - see
  * https://gis.stackexchange.com/questions/241696/how-to-convert-from-lat-lon-to-utm-with-gdaltransform
  * and the linked posts in the answers for more info. */
-HIDDEN int
+static int
 gdal_utm_zone(struct conversion_state *state)
 {
     int zone = INT_MAX;
@@ -158,7 +158,7 @@ gdal_utm_zone(struct conversion_state *state)
 /* Get corresponding EPSG number of the UTM zone - see
  * https://gis.stackexchange.com/questions/241696/how-to-convert-from-lat-lon-to-utm-with-gdaltransform
  * and the linked posts in the answers for more info. */
-HIDDEN int
+static int
 gdal_utm_epsg(struct conversion_state *state, int zone)
 {
     int epsg = INT_MAX;
@@ -170,7 +170,7 @@ gdal_utm_epsg(struct conversion_state *state, int zone)
     return epsg;
 }
 
-HIDDEN int
+static int
 gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	const void *options_data, const char *source_path)
 {
@@ -401,7 +401,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     return 1;
 }
 
-HIDDEN void
+static void
 gdal_read_create_opts(struct bu_opt_desc **odesc, void **dest_options_data)
 {
     struct gdal_read_options *odata;
@@ -420,7 +420,7 @@ gdal_read_create_opts(struct bu_opt_desc **odesc, void **dest_options_data)
     BU_OPT_NULL((*odesc)[3]);
 }
 
-HIDDEN void
+static void
 gdal_read_free_opts(void *options_data)
 {
     bu_free(options_data, "options_data");
