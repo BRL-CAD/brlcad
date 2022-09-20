@@ -1,5 +1,6 @@
-This repository contains Mesa and glu libraries.  Check each source code file
-for specific terms.  The default Mesa license is:
+This repository contains Mesa libraries.  The examples directory, if present,
+contains additional 3rd party codes.  Check each source code file for specific
+terms.  The default Mesa license is:
 
 Mesa 3-D graphics library
 Version:  7.0
