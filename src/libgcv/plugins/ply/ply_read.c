@@ -58,7 +58,7 @@ struct conversion_state
  *
  * helper function which prints properties and instances to console when converting
  */
-HIDDEN void
+static void
 log_elements(p_ply ply_fp)
 {
     p_ply_property prop;
@@ -88,7 +88,7 @@ log_elements(p_ply ply_fp)
     }
 }
 
-HIDDEN int
+static int
 vertex_cb(p_ply_argument argument)
 {
     static int cur_vertex = -1;
@@ -110,7 +110,7 @@ vertex_cb(p_ply_argument argument)
     return 1;
 }
 
-HIDDEN int
+static int
 color_cb(p_ply_argument argument)
 {
     int *rgb;
@@ -134,7 +134,7 @@ color_cb(p_ply_argument argument)
     return 1;
 }
 
-HIDDEN int
+static int
 face_cb(p_ply_argument argument)
 {
     static int cur_face = -1;
@@ -180,7 +180,7 @@ face_cb(p_ply_argument argument)
     return 1;
 }
 
-HIDDEN void
+static void
 convert_input(struct conversion_state* pstate)
 {
     p_ply ply_fp;
@@ -302,7 +302,7 @@ free_mem:
     bu_vls_free(&region_name);
 }
 
-HIDDEN int
+static int
 ply_can_read(const char* data)
 {
     // TODO - currently the 'can_read' is not being used by gcv
@@ -310,7 +310,7 @@ ply_can_read(const char* data)
     return 1;
 }
 
-HIDDEN void
+static void
 ply_read_create_opts(struct bu_opt_desc** options_desc, void** dest_options_data)
 {
     struct ply_read_options *options_data;
@@ -329,13 +329,13 @@ ply_read_create_opts(struct bu_opt_desc** options_desc, void** dest_options_data
     BU_OPT_NULL((*options_desc)[3]);
 }
 
-HIDDEN void
+static void
 ply_read_free_opts(void* options_data)
 {
     bu_free(options_data, "options_data");
 }
 
-HIDDEN int
+static int
 ply_read_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, const void* options_data, const char* source_path)
 {
     struct conversion_state state;

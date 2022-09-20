@@ -1542,7 +1542,7 @@ cpolygon_t::update_uncontained()
 
 
 extern "C" {
-    HIDDEN int
+    static int
     ctriangle_cmp(const void *p1, const void *p2, void *UNUSED(arg))
     {
 	struct ctriangle_t *t1 = *(struct ctriangle_t **)p1;

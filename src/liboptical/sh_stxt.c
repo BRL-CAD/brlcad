@@ -37,15 +37,15 @@
 #include "optical.h"
 
 
-HIDDEN int stxt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int brick_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN int mbound_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN int rbound_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void stxt_print(register struct region *rp, void *dp);
-HIDDEN void stxt_free(void *cp);
+static int stxt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int brick_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static int mbound_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static int rbound_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void stxt_print(register struct region *rp, void *dp);
+static void stxt_free(void *cp);
 
 /* local sp_hook function */
-HIDDEN void stxt_transp_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void stxt_transp_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 #define STX_NAME_LEN 128
 struct stxt_specific {
@@ -88,7 +88,7 @@ struct mfuncs stxt_mfuncs[] = {
 /*
  * Hooked function, called by bu_structparse.
  */
-HIDDEN void
+static void
 stxt_transp_hook(const struct bu_structparse *ptab,
 		 const char *name,
 		 void *cp,
@@ -111,7 +111,7 @@ stxt_transp_hook(const struct bu_structparse *ptab,
  * Load the texture into memory.
  * Returns 0 on failure, 1 on success.
  */
-HIDDEN int
+static int
 stxt_read(register struct stxt_specific *stp)
 {
     char *linebuf;
@@ -158,7 +158,7 @@ stxt_read(register struct stxt_specific *stp)
 }
 
 
-HIDDEN int
+static int
 stxt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 /* New since 4.4 release */
 {
@@ -197,7 +197,7 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
 }
 
 
-HIDDEN void
+static void
 stxt_free(void *cp)
 {
     register struct stxt_specific *stp =
@@ -211,14 +211,14 @@ stxt_free(void *cp)
 }
 
 
-HIDDEN void
+static void
 stxt_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, stxt_parse, (char *)dp);
 }
 
 
-HIDDEN int
+static int
 brick_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, void *dp)
 {
     register struct stxt_specific *stp =
@@ -311,7 +311,7 @@ brick_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp),
 /*
  * Use region RPP to bound solid texture (rbound).
  */
-HIDDEN int
+static int
 rbound_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, void *dp)
 {
     register struct stxt_specific *stp =
@@ -380,7 +380,7 @@ rbound_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp)
 /*
  * Use model RPP as solid texture bounds.  (mbound).
  */
-HIDDEN int
+static int
 mbound_render(struct application *ap, const struct partition *UNUSED(pp), struct shadework *swp, void *dp)
 {
     register struct stxt_specific *stp =

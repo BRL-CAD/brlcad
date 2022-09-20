@@ -36,7 +36,7 @@
 #include "rt/nmg_conv.h"
 
 
-HIDDEN union tree *
+static union tree *
 _gcv_facetize_region_end(struct db_tree_state *tree_state,
 			 const struct db_full_path *path, union tree *current_tree, void *client_data)
 {
@@ -72,7 +72,7 @@ _gcv_facetize_region_end(struct db_tree_state *tree_state,
 }
 
 
-HIDDEN struct rt_bot_internal *
+static struct rt_bot_internal *
 _gcv_facetize_cleanup(struct model *nmg_model, union tree *facetize_tree)
 {
     if (nmg_model) {
@@ -89,7 +89,7 @@ _gcv_facetize_cleanup(struct model *nmg_model, union tree *facetize_tree)
 }
 
 
-HIDDEN void
+static void
 _gcv_facetize_free_bot(struct rt_bot_internal *bot)
 {
     /* fill in an rt_db_internal so we can free it */
@@ -107,7 +107,7 @@ _gcv_facetize_free_bot(struct rt_bot_internal *bot)
 }
 
 
-HIDDEN void
+static void
 _gcv_optimize_model(struct model *nmg_model)
 {
     struct nmgregion *current_region;

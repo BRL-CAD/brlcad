@@ -67,7 +67,7 @@ typedef struct assimp_write_state {
     }
 } assimp_write_state_t;
 
-HIDDEN char* 
+static char* 
 strip_at_char(char* str, char token)
 {
     char* ret = strrchr(str, token);
@@ -77,7 +77,7 @@ strip_at_char(char* str, char token)
     return NULL;
 }
 
-HIDDEN void
+static void
 nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state* tsp, void *client_data)
 {
     assimp_write_state_t* const pstate = (assimp_write_state_t*)client_data;
@@ -319,7 +319,7 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
     pstate->meshes.push_back(curr_mesh);
 }
 
-HIDDEN void
+static void
 assimp_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
 {
     assimp_write_options_t* options_data;
@@ -337,13 +337,13 @@ assimp_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_
 }
 
 
-HIDDEN void
+static void
 assimp_write_free_opts(void *options_data)
 {
     bu_free(options_data, "options_data");
 }
 
-HIDDEN int
+static int
 assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *dest_path)
 {
     assimp_write_state_t state;

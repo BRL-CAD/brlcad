@@ -92,7 +92,7 @@ struct identt {
 };
 
 
-HIDDEN int
+static int
 tables_check(char *a, char *b)
 {
 
@@ -108,7 +108,7 @@ tables_check(char *a, char *b)
 }
 
 
-HIDDEN size_t
+static size_t
 tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
 {
     b_off_t i;
@@ -185,7 +185,7 @@ sort_table_objs(const void *a, const void *b, void *UNUSED(arg))
 }
 
 
-HIDDEN void
+static void
 tables_objs_print(struct bu_vls *tabvls, struct bu_ptbl *tabptr, int type)
 {
     size_t i, j;
@@ -210,7 +210,7 @@ tables_objs_print(struct bu_vls *tabvls, struct bu_ptbl *tabptr, int type)
 }
 
 
-HIDDEN void
+static void
 tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struct bu_ptbl *cur_path, const fastf_t *old_mat, int flag, size_t *numreg, size_t *numsol)
 {
     struct rt_db_internal intern;
@@ -428,7 +428,7 @@ out:
 }
 
 
-HIDDEN void
+static void
 tables_header(struct bu_vls *tabvls, int argc, const char **argv, struct ged *gedp, char *timep)
 {
     int i;

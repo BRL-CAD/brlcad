@@ -35,7 +35,7 @@ struct gap_context {
 };
 
 
-HIDDEN void
+static void
 gaps(const struct xray* ray, const struct partition *pp, double gap_dist, point_t pt, void* callback_data)
 {
     struct gap_context *context = (struct gap_context*) callback_data;

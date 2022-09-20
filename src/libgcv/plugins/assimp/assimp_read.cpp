@@ -88,7 +88,7 @@ typedef struct assimp_read_state {
     ~assimp_read_state() {}
 } assimp_read_state_t;
 
-HIDDEN void
+static void
 aimatrix_to_arr16(aiMatrix4x4 aimat, fastf_t* ret)
 {
     ret[0 ] = aimat.a1;
@@ -123,7 +123,7 @@ std::unordered_set<std::string>brlcad_shaders { "bump", "bwtexture", "camo", "ch
  * returns 1 if shader properties are found and set in ret
  * returns 0 otherwise
  */
-HIDDEN int
+static int
 check_brlcad_shader(std::string in_name, shader_properties_t* ret)
 {
     std::string name, args = "";
@@ -152,7 +152,7 @@ check_brlcad_shader(std::string in_name, shader_properties_t* ret)
     return 0;
 }
 
-HIDDEN shader_properties_t*
+static shader_properties_t*
 generate_shader(assimp_read_state_t* pstate, unsigned int mesh_idx)
 {
     shader_properties_t* ret = new shader_properties_t();
@@ -235,7 +235,7 @@ generate_shader(assimp_read_state_t* pstate, unsigned int mesh_idx)
     return ret;
 }
 
-HIDDEN std::string
+static std::string
 generate_unique_name(const char* curr_name, unsigned int def_idx, bool is_mesh)
 {
     static std::unordered_map<std::string, int>used_names; /* used names in db */
@@ -276,7 +276,7 @@ generate_unique_name(const char* curr_name, unsigned int def_idx, bool is_mesh)
     return name;
 }
 
-HIDDEN void
+static void
 generate_geometry(assimp_read_state_t* pstate, wmember &region, unsigned int mesh_idx)
 {
     aiMesh* mesh = pstate->scene->mMeshes[mesh_idx];
@@ -323,7 +323,7 @@ generate_geometry(assimp_read_state_t* pstate, wmember &region, unsigned int mes
     delete[] vertices;
 }
 
-HIDDEN void
+static void
 handle_node(assimp_read_state_t* pstate, aiNode* curr, struct wmember &regions)
 {
     shader_properties_t shader_prop;
@@ -387,7 +387,7 @@ handle_node(assimp_read_state_t* pstate, aiNode* curr, struct wmember &regions)
     }
 }
 
-HIDDEN int
+static int
 convert_input(assimp_read_state_t* pstate)
 {
     /* we are taking one of the postprocessing presets to have
@@ -425,7 +425,7 @@ convert_input(assimp_read_state_t* pstate)
     return 1;
 }
 
-HIDDEN void
+static void
 assimp_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
 {
     assimp_read_options_t* options_data;
@@ -448,13 +448,13 @@ assimp_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_d
     BU_OPT_NULL((*options_desc)[5]);
 }
 
-HIDDEN void
+static void
 assimp_read_free_opts(void *options_data)
 {
     bu_free(options_data, "options_data");
 }
 
-HIDDEN int
+static int
 assimp_read(struct gcv_context *context, const struct gcv_opts* gcv_options, const void *options_data, const char *source_path)
 {
     assimp_read_state_t state;
@@ -487,7 +487,7 @@ assimp_read(struct gcv_context *context, const struct gcv_opts* gcv_options, con
 }
 
 
-HIDDEN int
+static int
 assimp_can_read(const char* data)
 {
     /* TODO FIXME - currently 'can_read' is unused by gcv */

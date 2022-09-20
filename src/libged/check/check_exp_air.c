@@ -32,7 +32,7 @@ struct exp_air_context {
     int expAir_color[3];
 };
 
-HIDDEN void
+static void
 exposed_air(const struct partition *pp,
 	    point_t last_out_point,
 	    point_t pt,

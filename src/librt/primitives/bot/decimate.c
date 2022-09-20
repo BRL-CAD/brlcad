@@ -50,7 +50,7 @@
 #define MAX_AFFECTED_FACES 128
 
 
-HIDDEN void
+static void
 delete_edge(int v1, int v2, struct bot_edge **edges)
 {
     struct bot_edge *edg, *prev=NULL;
@@ -105,7 +105,7 @@ delete_edge(int v1, int v2, struct bot_edge **edges)
  * are eliminated.  Faces that used v1 will have that reference
  * changed to v2.
  */
-HIDDEN int
+static int
 decimate_edge(int v1, int v2, struct bot_edge **edges, size_t num_edges, int *faces, size_t num_faces, int face_del1, int face_del2)
 {
     size_t i;
@@ -309,7 +309,7 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, size_t num_edges, int *fa
  * returns 1 if edge can be eliminated without breaking constraints, 0
  * otherwise.
  */
-HIDDEN int
+static int
 edge_can_be_decimated(struct rt_bot_internal *bot,
 		      int *faces,
 		      struct bot_edge **edges,

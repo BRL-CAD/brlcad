@@ -1,38 +1,111 @@
-BRL-CAD bundles and maintains a number of external libraries and tools
-critical to its functionality.
+BRL-CAD bundles and maintains a number of external libraries and tools critical
+to its functionality.  Although we try to use these libraries in their
+"vanilla" form (i.e. without altering them) in order to simplify staying
+current with upstream work, there are sometimes situations where this is not
+possible.  In those cases, we maintain a local copy of the code directly as a
+top level directory in src/other.  When (at least in principle) our preference
+is to use a vanilla upstream library, we place that dependency in
+src/other/ext.
 
-1.  Installed libraries
+The actual state of src/other doesn't always perfectly reflect this ideal -
+zlib, for example, is located in src/other/ext but we modify it to allow us to
+compile our local code against it without introducing conflicts with uses of a
+system zlib that may be indirectly triggered by other system libraries we rely
+on.  But as a rule, if we can push mods to src/other/ext dependencies back
+upstream successfully and use a vanilla released version that gives us what we
+need, that is the desired course of action.
 
-clipper		http://www.angusj.com/delphi/clipper.php	Boolean clipping - intersection, union, difference & 
-								exclusive-or - on 2D polygons.  Used by Archer GUI.
-libpng		http://www.libpng.org/pub/png/libpng.html	Portable Network Graphics library, used extensively.
-libregex	http://www.arglist.com/regex			Regular expression library.  It might be interesting to try something
-								like re2  PCRE here - this libregex isn't really maintained and
-	                                                        has a nasty habit of colliding with Tcl's regex and/or system regex
-								functionality.  Used by the red command, as well as search in librt and
-                	                                        src/conv/proe-g.c
-libutahrle							Utah run length encoded format - used by image processing tools, (?)
-libvds		http://vdslib.virginia.edu			View dependent simplification.  Used for MGED/Archer level of detail control
-libz		http://zlib.net/				zlib data compression library. Used widely - png and openNURBS 
-								requirement, etc.
-openNURBS	http://www.opennurbs.org			Non-Uniform Rational B-Splines support in libbrep, librt
-poly2tri	fork of git://github.com/jhasse/poly2tri.git,	poly2tri is a constrained Delaunay triangulation library, and is
-		which was in turn based on 			used during NURBS tessellation.
-		http://code.google.com/p/poly2tri/
-stepcode	http://stepcode.org				Derived from NIST STEP Class Libraries, with many modifications from
-								BRL-CAD and other parts, this library supports STEP geometry conversion
-tcl		http://www.tcl.tk/				Tool Command Language (TCL) - foundation of MGED's command language
-tk		http://www.tcl.tk/				Graphical toolkit for Tk - currently used for most graphical BRL-CAD programs.
-
-
-TODO - freetype, gct, libnetpbm, lz4, openscenegraph, PoissonRecon, rply, tinycthread
+The top level src/other libraries, on the other hand, generally represent
+situations where we either have taken over maintenance of projects where there
+is no longer an active upstream, or we need changes they are not inclined to
+accept. These codes are not part of BRL-CAD proper and we don't apply coding
+standards like using libbu substitutes for common functions that are enforced
+in our primary code base.  (This is in contrast to 3rd party code that is
+actually embedded within our primary libraries, which DOES compile using our
+standard scheme.)  However, as we are having to maintain them ourselves, we
+also don't want do the extra work needed to maintain the looser coupling with
+our main build system needed for the ext libraries; even if a system version of
+the library should be found, we can't use it. For those libraries that do have
+active upstreams we still want to try and stay current, when possible, but not
+at the expense of the functionality we need.  The specifics of each toplevel
+src/other directory are:
 
 
-2.  Tcl/Tk packages
-								The plan is to switch to using the full browser and its capabilities (like searching.)
-incrTcl		http://incrtcl.sourceforge.net/			Object oriented extension for Tcl/Tk - all Archer GUI work uses these extensions
-iwidgets	http://incrtcl.sourceforge.net/iwidgets		Part of the incrTcl project, used by Archer
-tkhtml		fork of http://tkhtml.tcl.tk/tkhtml.html 	Used by MGED and Archer help systems.
-tkpng		http://www.muonics.com/FreeStuff/TkPNG/ 	PNG photo image support for Tk - used by Archer
-tktable		http://tktable.sourceforge.net/			High performing table widget for Tcl/Tk, used by Archer
+* libosmesa	https://github.com/starseeker/osmesa
+
+Subset of Mesa 7.0.4 that provides off-screen software rasterizing and
+rendering for OpenGL 2.1.  This is the last version of Mesa to not require more
+extensive external dependencies, and as the code was written circa 2008 it
+needed various clean-ups.  Upstream Mesa has removed this implementation
+altogether, but we have extracted just the pieces necessary for OpenGL v2
+rendering and use it as both an offscreen scene rendering option and a fallback
+of last resort if system OpenGL capabilities aren't working.  It is a fully
+self- contained C library, with no external dependencies, which makes it
+relatively straightforward to keep working indefinitely.  We are not interested
+in expanding its capabilities, as it has what is needed to support BRL-CAD's
+basic visualizations as-is, so once working there should be little need to
+change this code beyond periodic modernization for newer compilers/standards.
+More modern/ elaborate visualizations should use newer libraries and standards
+- this is intended strictly for testing/fallback/last-resort cases.
+
+
+* libutahrle	https://www.cs.utah.edu/gdc/projects/urt
+
+Utah run length encoded format - used by image processing tools.  This is a
+relatively obscure image format, and as far as we know there is no active
+upstream for this library.  We have stripped down the original toolkit to just
+the library used by BRL-CAD tools.  Like libosmesa, this code is not coupled to
+any external dependencies and is relatively straightforward to maintain
+indefinitely, given periodic modernizations.
+
+
+* linenoise	https://github.com/msteveb/linenoise
+
+Line editing support library - commonly used as an alternative to the GNU
+readline library.  The copy we use is a fork of the original with support for
+Windows, among other improvements.  We compile this directly into a number of
+our programs, so we need to clear some warnings which aren't necessarily of
+interest to upstream. Hence, we maintain this copy.
+
+
+* lmdb		https://github.com/LMDB/lmdb
+Lightning Memory-Mapped Database - fast key/value store from the OpenLDAP
+project.  Doesn't have a Windows build system, so we provide one, along with
+DLL import/export logic.
+
+
+* openNURBS	https://github.com/mcneel/opennurbs
+
+Non-Uniform Rational B-Splines library, primarily focused on reading and
+writing Rhino's 3DM file format but also provides a number of useful data
+structures and algorithms for working with NURBS data types.  Foundation on
+which NURBS support is built in libbrep and librt.  The vanilla openNURBS
+implementation doesn't always compile on our targeted compilers/platforms and
+requires some small changes - we have tried upstreaming in the past without
+much success, so we maintain our own copy to ensure we have the capability we
+need.  In principle we would like to stay current with upstream, but that must
+be done cautiously with this library because of how central it is to core
+raytracing functionality.
+
+
+* poly2tri	https://github.com/jhasse/poly2tri.git
+
+poly2tri is a constrained Delaunay triangulation library, primarily used during
+NURBS tessellation.  We have made various changes to this code over the years
+to try and improve its robustness to our use case, and current upstream code
+does not work as well as this version for us.  Like openNURBS, we maintain this
+copy to ensure the behavior we need, although again (ideally) we would like to
+stay current with upstream if critical functionality isn't jeopardized.
+
+
+* tkhtml	http://tkhtml.tcl.tk/tkhtml.html
+
+Tcl/Tk widget used for HTML rendering of man pages in MGED and Archer.  No
+active upstream, requires a cross platform build system.
+
+
+* tktable	https://sourceforge.net/projects/tktable
+
+Tcl/Tk table widget used in Archer.  Little to no upstream activity.  Requires
+a cross platform build system.
 

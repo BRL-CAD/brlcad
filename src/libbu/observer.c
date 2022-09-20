@@ -29,7 +29,7 @@
 
 #define NUM_INITIAL_OBSERVERS 8
 
-HIDDEN void
+static void
 bu_observer_list_init(struct bu_observer_list *all_observers)
 {
     if (all_observers->capacity == 0) {
@@ -48,7 +48,7 @@ bu_observer_list_init(struct bu_observer_list *all_observers)
  * attach observer [cmd]
  *
  */
-HIDDEN int
+static int
 observer_attach(void *clientData, int argc, const char **argv)
 {
     struct bu_observer_list *observers = (struct bu_observer_list *)clientData;
@@ -99,7 +99,7 @@ observer_attach(void *clientData, int argc, const char **argv)
  * detach observer
  *
  */
-HIDDEN int
+static int
 observer_detach(void *clientData, int argc, const char **argv)
 {
     struct bu_observer_list *observers = (struct bu_observer_list *)clientData;
@@ -137,7 +137,7 @@ observer_detach(void *clientData, int argc, const char **argv)
  * show
  *
  */
-HIDDEN int
+static int
 observer_show(void *clientData, int argc, const char **UNUSED(argv))
 {
     struct bu_observer_list *observers = (struct bu_observer_list *)clientData;

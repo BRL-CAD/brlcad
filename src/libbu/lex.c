@@ -33,7 +33,7 @@
 static int bu_lex_reading_comment = 0;
 
 
-HIDDEN char *
+static char *
 lex_getone(int *used, struct bu_vls *rtstr)
 {
     register char *cp;

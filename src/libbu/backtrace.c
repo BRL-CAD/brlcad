@@ -100,7 +100,7 @@ static int have_gdb = 0, have_lldb = 0;
 
 
 /* SIGINT+SIGCHLD handler for backtrace() */
-HIDDEN void
+static void
 backtrace_interrupt(int UNUSED(signum))
 {
     backtrace_done = 1;
@@ -110,7 +110,7 @@ backtrace_interrupt(int UNUSED(signum))
 /* actual guts to bu_backtrace() used to invoke debugger and parse out
  * backtrace from the output.
  */
-HIDDEN void
+static void
 backtrace(int processid, char args[][MAXPATHLEN], int fd)
 {
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {

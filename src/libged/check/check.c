@@ -35,7 +35,7 @@
 #define MAX_WIDTH (32*1024)
 
 
-HIDDEN void
+static void
 check_show_help(struct ged *gedp)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -93,7 +93,7 @@ check_show_help(struct ged *gedp)
  * 1 Failure
  * 0 Success
  */
-HIDDEN int
+static int
 read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 {
     double a;
@@ -132,7 +132,7 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 }
 
 
-HIDDEN int
+static int
 parse_check_args(int ac, char *av[], struct check_parameters* options, struct current_state *state)
 {
     int c;

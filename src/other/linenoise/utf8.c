@@ -31,7 +31,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#ifndef UTF8_UTIL_H
 #include "utf8.h"
+#endif
 
 #ifdef USE_UTF8
 int utf8_fromunicode(char *p, unsigned uc)

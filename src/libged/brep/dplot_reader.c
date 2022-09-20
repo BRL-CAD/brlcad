@@ -28,12 +28,12 @@
 #include "dplot_reader.h"
 #include "bu.h"
 
-HIDDEN void *
+static void *
 dplot_malloc(size_t s) {
     return bu_malloc(s, "dplot_malloc");
 }
 
-HIDDEN void
+static void
 dplot_free(void *p) {
     bu_free(p, "dplot_free");
 }

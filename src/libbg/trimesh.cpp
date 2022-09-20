@@ -48,7 +48,7 @@ _trimesh_set_edge(struct bg_trimesh_halfedge *edge, int va, int vb)
     }
 }
 
-HIDDEN int
+static int
 _bg_trimesh_halfedge_compare(const void *pleft, const void *pright, void *UNUSED(context))
 {
     const struct bg_trimesh_halfedge * const left = (struct bg_trimesh_halfedge *)pleft;
@@ -158,13 +158,13 @@ bg_trimesh_degenerate_faces(int num_faces, int *fpoints, bg_face_error_func_t de
  */
 typedef int (*bg_edge_filter_func_t)(int *edge_skip, int num_edges, struct bg_trimesh_halfedge *edge_list, int cur_idx);
 
-HIDDEN int
+static int
 edge_filter_all(int *UNUSED(edge_skip), int UNUSED(num_edges), struct bg_trimesh_halfedge *UNUSED(edge_list), int UNUSED(cur_idx))
 {
     return 1;
 }
 
-HIDDEN int
+static int
 edge_copies(int num_edges, struct bg_trimesh_halfedge *edge_list, int cur_idx)
 {
     int nxt_idx = cur_idx + 1;
@@ -174,7 +174,7 @@ edge_copies(int num_edges, struct bg_trimesh_halfedge *edge_list, int cur_idx)
     return nxt_idx - cur_idx;
 }
 
-HIDDEN int
+static int
 edge_unmatched(int *edge_skip, int num_edges, struct bg_trimesh_halfedge *edge_list, int cur_idx)
 {
     if (edge_copies(num_edges, edge_list, cur_idx) == 1) {
@@ -184,7 +184,7 @@ edge_unmatched(int *edge_skip, int num_edges, struct bg_trimesh_halfedge *edge_l
     return 0;
 }
 
-HIDDEN int
+static int
 edge_overmatched(int *edge_skip, int num_edges, struct bg_trimesh_halfedge *edge_list, int cur_idx)
 {
     int copies = edge_copies(num_edges, edge_list, cur_idx);
@@ -193,7 +193,7 @@ edge_overmatched(int *edge_skip, int num_edges, struct bg_trimesh_halfedge *edge
     return copies > 2;
 }
 
-HIDDEN int
+static int
 edge_misoriented(int *edge_skip, int num_edges, struct bg_trimesh_halfedge *edge_list, int cur_idx)
 {
     int copies = edge_copies(num_edges, edge_list, cur_idx);
@@ -202,7 +202,7 @@ edge_misoriented(int *edge_skip, int num_edges, struct bg_trimesh_halfedge *edge
     return (copies != 2 || edge_list[cur_idx].flipped == edge_list[cur_idx + 1].flipped);
 }
 
-HIDDEN int
+static int
 trimesh_count_error_edges(
     int num_edges,
     struct bg_trimesh_halfedge *edge_list,
@@ -438,7 +438,7 @@ bg_trimesh_oriented(int vcnt, int fcnt, fastf_t *v, int *f)
     return 1;
 }
 
-HIDDEN struct bg_trimesh_edges *
+static struct bg_trimesh_edges *
 get_unmatched_edges(int num_faces, int *faces)
 {
     int count;
@@ -469,7 +469,7 @@ struct edge_list {
     int used;
 };
 
-HIDDEN struct bu_list *
+static struct bu_list *
 edges_to_list(struct bg_trimesh_edges *edges) {
     int i;
     struct bu_list *headp;
@@ -488,7 +488,7 @@ edges_to_list(struct bg_trimesh_edges *edges) {
     return headp;
 }
 
-HIDDEN struct bg_trimesh_edges *
+static struct bg_trimesh_edges *
 list_to_edges(struct bu_list *edge_list)
 {
     int i, num_edges = bu_list_len(edge_list);
@@ -511,7 +511,7 @@ list_to_edges(struct bu_list *edge_list)
     return edges;
 }
 
-HIDDEN struct edge_list *
+static struct edge_list *
 first_unused_edge_with_endpoint(struct bu_list *headp, int idx)
 {
     struct edge_list *item;
@@ -526,7 +526,7 @@ first_unused_edge_with_endpoint(struct bu_list *headp, int idx)
 }
 
 #if 0
-HIDDEN int
+static int
 list_has_endpoints(struct bu_list *headp, int endpoints[2])
 {
     int i, j;
@@ -545,7 +545,7 @@ list_has_endpoints(struct bu_list *headp, int endpoints[2])
 }
 #endif
 
-HIDDEN void
+static void
 flip_edge(int edge[2])
 {
     int tmp = edge[0];
@@ -553,13 +553,13 @@ flip_edge(int edge[2])
     edge[1] = tmp;
 }
 
-HIDDEN void
+static void
 start_edge_from_endpoint(int edge[2], int endpoint)
 {
     if (edge[0] != endpoint) flip_edge(edge);
 }
 
-HIDDEN struct edge_list *
+static struct edge_list *
 dup_edge_item(struct edge_list *item)
 {
     struct edge_list *new_item;
@@ -570,7 +570,7 @@ dup_edge_item(struct edge_list *item)
     return new_item;
 }
 
-HIDDEN struct bu_list *
+static struct bu_list *
 get_edges_starting_from_endpoint(struct bu_list *search_list, int startpt)
 {
     struct bu_list *edges;
@@ -595,7 +595,7 @@ get_edges_starting_from_endpoint(struct bu_list *search_list, int startpt)
     return edges;
 }
 
-HIDDEN struct edge_list *
+static struct edge_list *
 get_parent_edge(struct bu_list *parent_options, struct edge_list *child)
 {
     struct edge_list *item;
@@ -612,7 +612,7 @@ get_parent_edge(struct bu_list *parent_options, struct edge_list *child)
     return NULL;
 }
 
-HIDDEN struct bu_list *
+static struct bu_list *
 get_chain_ending_at_edge(struct bu_list *edge_options[], int num_parents, struct edge_list *end)
 {
     int i;
@@ -638,13 +638,13 @@ get_chain_ending_at_edge(struct bu_list *edge_options[], int num_parents, struct
     return chain;
 }
 
-HIDDEN struct bg_trimesh_edges *
+static struct bg_trimesh_edges *
 get_edges_ending_at_edge(struct bu_list *edge_options[], int num_parents, struct edge_list *end)
 {
     return list_to_edges(get_chain_ending_at_edge(edge_options, num_parents, end));
 }
 
-HIDDEN struct edge_list *
+static struct edge_list *
 get_edge_ending_at_endpoint(struct bu_list *edge_list, int endpoint)
 {
     struct edge_list *item;
@@ -656,7 +656,7 @@ get_edge_ending_at_endpoint(struct bu_list *edge_list, int endpoint)
     return NULL;
 }
 
-HIDDEN struct bu_list *
+static struct bu_list *
 get_edges_that_follow_edges(struct bu_list *search_list, struct bu_list *UNUSED(start_edges))
 {
     struct edge_list *item;
@@ -676,7 +676,7 @@ get_edges_that_follow_edges(struct bu_list *search_list, struct bu_list *UNUSED(
     return next_edges;
 }
 
-HIDDEN struct bg_trimesh_edges *
+static struct bg_trimesh_edges *
 find_chain_with_endpoints(int endpoints[2], struct bg_trimesh_edges *edge_set, int max_chain_edges)
 {
     int i;
@@ -707,7 +707,7 @@ find_chain_with_endpoints(int endpoints[2], struct bg_trimesh_edges *edge_set, i
     return chain_edges;
 }
 
-HIDDEN double
+static double
 distance_point_to_edge(int UNUSED(num_vertices), fastf_t *vertices, int point, int edge[2])
 {
     int rc;
@@ -731,7 +731,7 @@ distance_point_to_edge(int UNUSED(num_vertices), fastf_t *vertices, int point, i
     return rc ? dist : 0.0;
 }
 
-HIDDEN double
+static double
 max_distance_chain_to_edge(int num_vertices, fastf_t *vertices, struct bg_trimesh_edges *chain, int edge[2])
 {
     int i;

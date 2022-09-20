@@ -41,7 +41,7 @@ namespace
 {
 
 
-HIDDEN void
+static void
 bt_transform_to_matrix(const btTransform &transform, fastf_t * const matrix)
 {
     if (!matrix)
@@ -55,7 +55,7 @@ bt_transform_to_matrix(const btTransform &transform, fastf_t * const matrix)
 }
 
 
-HIDDEN void
+static void
 path_to_matrix(db_i &db, const db_full_path &path, fastf_t * const result)
 {
     RT_CK_DBI(&db);
@@ -76,7 +76,7 @@ path_to_matrix(db_i &db, const db_full_path &path, fastf_t * const result)
 }
 
 
-HIDDEN void
+static void
 check_region_path(const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
@@ -96,7 +96,7 @@ check_region_path(const db_full_path &path)
 }
 
 
-HIDDEN void
+static void
 apply_tree_matrix(db_i &db, const db_full_path &path,
 		  const fastf_t * const matrix)
 {

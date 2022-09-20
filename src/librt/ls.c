@@ -46,7 +46,7 @@ dp_eval_flags(struct directory *dp, const struct db_i *dbip, int flags)
      * hidden flag is set */
     if (!(flags & DB_LS_HIDDEN) && (dp->d_flags & RT_DIR_HIDDEN)) return 0;
 
-    /* If no flags other than HIDDEN are set, match everything */
+    /* If no flags other than static are set, match everything */
     if (!(flags & ~DB_LS_HIDDEN))
 	return 1;
 
