@@ -38,7 +38,6 @@ set(man1_EN
   cv.xml
   db.xml
   dbclean.xml
-  dbcp.xml
   dbupgrade.xml
   decimate.xml
   dpix-pix.xml
