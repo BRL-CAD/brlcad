@@ -770,11 +770,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
       (term-line-mode)
       (switch-to-buffer termbuf))) 
 
-* fix the redblack tree callback function signatures.  they're
-  declared and handled as taking (void) but they actually take a
-  pointer and an int.  need to create a proper void* data parameter or
-  change the interface to not require so much cast spagettery.
-
 * decouple libwdb from librt, particularly the headers and relevant
   structures that cross over to both such as the rtgeom.h types.
 
@@ -862,15 +857,14 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * fix 64b detection across platforms. Fix rhel 32/64 confusion
 
-* test/fix patch-g on windows.  the input file read loops assume
-  unix-style files resulting in parser errors.
-
 * merge conv-vg2g into dbupgrade
 
 * add option to rtedge to also show back-facing hidden edges
 
 * add option to push/xpush to stop at the region level, to stop before
-  primitives, to stop after N levels, to stop before N levels.
+  primitives, to stop after N levels, to stop before N levels. (This
+  is at least partially accomplished in npush work - need to hammer
+  out any remaining issues with depth stoppage limits...)
 
 * make rt_dirbuild()+rt_dirbuild() work without vomiting error
   messages about duplicate geometry.  should be able to open the same
@@ -889,11 +883,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
   shouldn't need to search.  we were told where the database was.
 
-* check libbu implementation of red-black trees (see note in bu.h
-  referencing an error in the Cormen book used as a basis)
+* replace use of libbu red-black trees with C++ containers (current
+  remaining uses appear to be pixcount and glint)
 
-* make libfb parallel-safe.  use bu memory management.  remove
-  semaphore locks in src/rt/main.c and elsewhere.
+* make libdm framebuffer parallel-safe.  use bu memory management.
+  remove semaphore locks in src/rt/main.c and elsewhere.
 
 * eliminate the need for bu_semaphore_init().  allocate up to the
   index requested on demand (so we can retain O(1) lookups) and
@@ -974,9 +968,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   refresh the new memory and zap the framebuffer.
 
 * make the right-hand path to oed optional
-
-* deprecate dbcp and merge functionality (and improved
-  double-buffering) with the buffer tool.
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
@@ -1143,8 +1134,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * hook bombardier in for crash reporting
 
-* modify the new tree traversal code to be generic
-
 * add high dynamic range image support to the framebuffers
 
 * add alpha channel support to the framebuffers
@@ -1158,9 +1147,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * bezier extrusions need to be optimized, really should not be
   performing dynamic memory allocation in the root solver
 
-* better/consistent argument processing supporting both long and short
-  option names, perhaps using argtable
-
 * Implement an optical shader for the new "pixelated" military
   camouflage style
 
@@ -1171,19 +1157,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   creating multiple objects for the individual objects in the dxf file
   (instead of one conglomerate BoT)
 
-* Generate plain .zip files for Windows binary releases
-
-* fix the variety of ami.tcl and ampi.tcl tclscript warnings/errors
-
-* run indent.sh on directories (one at a time, validating results)
-
-* configure support to enable/disable framebuffers, display
-  managers, geometry converters, and image converters.  consider
-  apache's module management as an example.
-
 * review and merge in the rest of the GSI modifications
-
-* display the current mode in mged graphics window
 
 * Optional compile-time support for using GMP or CLN for arbitrary
   exact precision arithmetic computation support
@@ -1214,8 +1188,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
        perl -pi -e 's/\\\\\n//g'| grep -E "PROGRAMS ?=" | \
        sed 's/.*=//g'` ; do echo $cmd ; done | sort | uniq ) ; \
        do echo command: $cmd2 ; done
-
-* add geometry example of building 238
 
 * Mac OS X SGI dial knobs support
   - Note that we might do better here to focus on the 3Dconnexion
@@ -1269,16 +1241,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   permuted vertex lists
 
 * add support for filesystem-based geometry collections
-
-* design plugin system to allow domain specific tools (say, for
-  example, a tool to create propeller parts) to identify themselves
-  and their features to BRL-CAD, and to allow BRL-CAD to incorporate
-  those features as an integrated part of interaction environments.
-
-* see if it is possible to use tec/ehy primitives to create a proc-db
-  for airfoil/wing shapes.  Interesting possibilities with boolean
-  combinations of these primitives, provided their continuity at the
-  ends ensures continuity all along "seams" - something to consider.
 
 * libbu's bu_opt is our option handling API that supports more
   features than getopt - remaining features we need:
