@@ -1325,7 +1325,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * investigate the libngpcore and libngput libraries from the ngPlant
   project as a possible means of procedurally generating plant models
   in BRL-CAD (libraries are BSD licensed:
-  http://ngplant.sourceforge.net)
+  https://github.com/stager13/ngplant)
 
 * Literally days after I completed my initial extraction of the
   OSMesa code for a software rendering fallback, a project for a compact C99
