@@ -1199,6 +1199,7 @@ BViewState::BViewState(DbiState *s)
     dbis = s;
 }
 
+// 0 = valid, 3 = need re-eval
 int
 BViewState::leaf_check(
 	unsigned long long c_hash,
@@ -1210,11 +1211,11 @@ BViewState::leaf_check(
 
     bool is_removed = (dbis->removed.find(c_hash) != dbis->removed.end());
     if (is_removed)
-	return 1;
+	return 3;
 
     bool is_changed = (dbis->changed_hashes.find(c_hash) != dbis->changed_hashes.end());
     if (is_changed)
-	return 1;
+	return 3;
 
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
     pc_it = dbis->p_c.find(c_hash);
@@ -1226,14 +1227,14 @@ BViewState::leaf_check(
 	    std::unordered_set<unsigned long long>::iterator c_it;
 	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
 		if (leaf_check(*c_it, path_hashes))
-		    return 1;
+		    return 3;
 	}
     }
 
     return 0;
 }
 
-// 0 = valid, 1 = invalid, 2 = invalid, remain "drawn"
+// 0 = valid, 1 = invalid, 2 = invalid, remain "drawn", 3 == need re-eval
 int
 BViewState::check_status(
 	std::unordered_set<unsigned long long> *invalid_paths,
@@ -1330,7 +1331,10 @@ BViewState::check_status(
 	std::vector<unsigned long long> pitems = cpath;
 	unsigned long long lhash = pitems[pitems.size() - 1];
 	pitems.pop_back();
-	return leaf_check(lhash, pitems);
+	int ret = leaf_check(lhash, pitems);
+	if (ret == 3 && changed_paths) {
+	    (*changed_paths).insert(path_hash);
+	}
     }
 
     return 0;
