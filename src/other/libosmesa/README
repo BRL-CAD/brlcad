@@ -11,7 +11,7 @@ application's ability to produce scene rasterizations as images even when the
 primary graphics stack of the machine is unavailable.
 
 The examples directory may simply be removed if a project bundling the
-libosmesa sources doesn't with to include it - the build system will adapt
+libosmesa sources doesn't wish to include it - the build system will adapt
 appropriately.
 
 Changes are (or at least are intended to be) relatively minor and include
