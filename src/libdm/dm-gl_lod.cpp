@@ -92,6 +92,23 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
     if (s->s_dlist_stale) {
 	glDeleteLists(s->s_dlist, 1);
 	s->s_dlist = 0;
+
+	if (!pcnt || !fcnt) {
+	    // If we've had a memshrink, the loaded data isn't
+	    // going to be correct to generate new draw info.
+	    // First, find out the current level:
+	    int curr_level = bg_mesh_lod_level(s, -1, 0);
+
+	    // Trigger a load operation to restore it
+	    bg_mesh_lod_level(s, curr_level, 1);
+
+	    fcnt = lod->fcnt;
+	    pcnt = lod->pcnt;
+	    faces = lod->faces;
+	    points = lod->points;
+	    points_orig = lod->points_orig;
+	    normals = lod->normals;
+	}
     }
 
     // If we have a dlist in the correct mode, use it
