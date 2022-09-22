@@ -115,12 +115,15 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	/* New database open, need to initialize reference counts */
 	db_update_nref(gedp->dbip, &rt_uniresource);
 
-	gedp->dbi_state = new DbiState(gedp);
 
-	// Test LoD context creation
+	// LoD context creation (DbiState initialization can use info
+	// stored here, so do this first)
 	if (gedp->ged_lod)
 	    bg_mesh_lod_context_destroy(gedp->ged_lod);
 	gedp->ged_lod = bg_mesh_lod_context_create(argv[1]);
+
+	// Set up the DbiState container for fast structure access
+	gedp->dbi_state = new DbiState(gedp);
 
 	return BRLCAD_OK;
     }

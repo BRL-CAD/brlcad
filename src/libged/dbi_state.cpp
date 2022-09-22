@@ -487,18 +487,38 @@ DbiState::update_dp(struct directory *dp, int reset)
     // bounding box
     bboxes.erase(hash);
     if (!(dp->d_flags & RT_DIR_COMB)) {
-	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
-	struct bn_tol tol = BG_TOL_INIT;
+
+	// This calculation can be expensive.  If we've already
+	// got it stashed as part of LoD processing, use that
+	// version.
 	point_t bmin, bmax;
-	mat_t m;
-	MAT_IDN(m);
-	int bret = rt_bound_instance(&bmin, &bmax, dp, dbip,
-		&ttol, &tol, &m, res, NULL);
-	if (bret != -1) {
-	    for (size_t j = 0; j < 3; j++)
-		bboxes[hash].push_back(bmin[j]);
-	    for (size_t j = 0; j < 3; j++)
-		bboxes[hash].push_back(bmax[j]);
+	bool have_bbox = false;
+	if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && gedp->ged_lod) {
+	    unsigned long long key = bg_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
+	    if (key) {
+		struct bv_mesh_lod *lod = bg_mesh_lod_create(gedp->ged_lod, key);
+		if (lod) {
+		    VMOVE(bmin, lod->bmin);
+		    VMOVE(bmax, lod->bmax);
+		    have_bbox = true;
+		}
+	    }
+	}
+
+	// No LoD - ask librt
+	if (!have_bbox) {
+	    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
+	    struct bn_tol tol = BG_TOL_INIT;
+	    mat_t m;
+	    MAT_IDN(m);
+	    int bret = rt_bound_instance(&bmin, &bmax, dp, dbip,
+		    &ttol, &tol, &m, res, NULL);
+	    if (bret != -1) {
+		for (size_t j = 0; j < 3; j++)
+		    bboxes[hash].push_back(bmin[j]);
+		for (size_t j = 0; j < 3; j++)
+		    bboxes[hash].push_back(bmax[j]);
+	    }
 	}
     }
 
