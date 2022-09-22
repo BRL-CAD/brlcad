@@ -251,7 +251,9 @@ int main(int argc, char *argv[])
     open_tops(s, -1);
     print_tops(s);
 
+#ifdef USE_QT6
     delete tester;
+#endif
 
     // TODO - so the rough progression of steps here is:
     //
