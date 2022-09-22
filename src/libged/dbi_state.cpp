@@ -1420,7 +1420,7 @@ BViewState::erase_hpath(int mode, unsigned long long c_hash, std::vector<unsigne
 
 	    // IFF we have removed all of the drawn elements for this path,
 	    // clear it from the active sets
-	    if (sm_it == s_map.end || !sm_it->second.size()) {
+	    if (sm_it == s_map.end() || !sm_it->second.size()) {
 		s_keys.erase(phash);
 		all_drawn_paths.erase(phash);
 	    }
