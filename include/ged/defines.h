@@ -430,6 +430,8 @@ class GED_EXPORT DbiState {
 
 	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
 
+	void clear_cache(struct directory *dp);
+
 	BViewState *get_view_state(struct bview *);
 
 	std::vector<BSelectState *> get_selected_states(const char *sname);

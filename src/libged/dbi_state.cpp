@@ -243,6 +243,9 @@ dbi_cache_close(struct ged_draw_cache *c)
 static void
 cache_write(struct ged_draw_cache *c, unsigned long long hash, const char *component, std::stringstream &s)
 {
+    if (!c || hash == 0 || !component)
+	return;
+
     // Prepare inputs for writing
     MDB_val mdb_key;
     MDB_val mdb_data[2];
@@ -276,6 +279,9 @@ cache_write(struct ged_draw_cache *c, unsigned long long hash, const char *compo
 static size_t
 cache_get(struct ged_draw_cache *c, void **data, unsigned long long hash, const char *component)
 {
+    if (!c || !data || hash == 0 || !component)
+	return 0;
+
     // Construct lookup key
     MDB_val mdb_key;
     MDB_val mdb_data[2];
@@ -302,7 +308,25 @@ cache_get(struct ged_draw_cache *c, void **data, unsigned long long hash, const 
     return mdb_data[0].mv_size;
 }
 
-void
+static void
+cache_del(struct ged_draw_cache *c, unsigned long long hash, const char *component)
+{
+    if (!c || hash == 0 || !component)
+	return;
+
+    // Construct lookup key
+    MDB_val mdb_key;
+    std::string keystr = std::to_string(hash) + std::string(":") + std::string(component);
+
+    mdb_txn_begin(c->env, NULL, 0, &c->txn);
+    mdb_dbi_open(c->txn, NULL, 0, &c->dbi);
+    mdb_key.mv_size = keystr.length()*sizeof(char);
+    mdb_key.mv_data = (void *)keystr.c_str();
+    mdb_del(c->txn, c->dbi, &mdb_key, NULL);
+    mdb_txn_commit(c->txn);
+}
+
+static void
 cache_done(struct ged_draw_cache *c)
 {
     if (!c)
@@ -732,6 +756,29 @@ DbiState::int_color(struct bu_color *c, unsigned int cval)
     return bu_color_from_rgb_chars(c, lrgb);
 }
 
+void
+DbiState::clear_cache(struct directory *dp)
+{
+    if (!dp || !dcache)
+	return;
+
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+    unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
+
+    cache_del(dcache, hash, CACHE_OBJ_BOUNDS);
+    cache_del(dcache, hash, CACHE_REGION_ID);
+    cache_del(dcache, hash, CACHE_REGION_FLAG);
+    cache_del(dcache, hash, CACHE_INHERIT_FLAG);
+    cache_del(dcache, hash, CACHE_COLOR);
+
+    bboxes.erase(hash);
+    region_id.erase(hash);
+    c_inherit.erase(hash);
+    rgb.erase(hash);
+}
+
 unsigned long long
 DbiState::update_dp(struct directory *dp, int reset)
 {
@@ -933,9 +980,9 @@ DbiState::update_dp(struct directory *dp, int reset)
 	if (!color_val)
 	    color_val = bu_avs_get(&c_avs, "rgb");
 	if (color_val){
-	    bu_log("have color\n");
 	    bu_opt_color(NULL, 1, &color_val, (void *)&c);
 	    cval = color_int(&c);
+	    bu_log("have color: %u\n", cval);
 	}
 
 	std::stringstream s;
@@ -1722,6 +1769,7 @@ BViewState::check_status(
 	    }
 	}
 	if (is_changed) {
+	    bu_log("changed\n");
 	    if (j == cpath.size()-1) {
 		// Changed, but a leaf - stays drawn
 		if (changed_paths)
@@ -1731,7 +1779,7 @@ BViewState::check_status(
 	    // Not a leaf - check child
 	    parent_changed = true;
 	    if (changed_paths)
-		(*changed_paths).erase(path_hash);
+		(*changed_paths).insert(path_hash);
 	    continue;
 	}
 

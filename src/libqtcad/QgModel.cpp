@@ -257,6 +257,9 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
     mdl->need_update_nref = true;
     mdl->changed_db_flag = 1;
 
+    // Clear cached GED drawing data and update
+    ctx->clear_cache(dp);
+
     // Need to invalidate any LoD caches associated with this dp
     if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp) {
 	unsigned long long key = bg_mesh_lod_key_get(ctx->gedp->ged_lod, dp->d_namep);
@@ -443,6 +446,7 @@ QgModel::g_update(struct db_i *n_dbip)
 	items->clear();
 	tops_items.clear();
 	emit mdl_changed_db((void *)gedp);
+	emit view_change(QTCAD_VIEW_DRAWN);
 	emit layoutChanged();
 	changed_db_flag = 0;
 	endResetModel();
