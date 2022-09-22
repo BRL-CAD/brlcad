@@ -1261,7 +1261,7 @@ bv_illum_obj(struct bv_scene_obj *s, char ill_state)
     if (ill_state != s->s_iflag) {
 	changed = 1;
 	s->s_iflag = ill_state;
-	bv_obj_stale(s);
+	//bv_obj_stale(s);
     }
     std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
     for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {

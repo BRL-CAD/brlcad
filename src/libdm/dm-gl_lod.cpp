@@ -111,6 +111,68 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	}
     }
 
+    // We don't want color to be part of the dlist, to allow the app
+    // to change it without regeneration - hence, we need to do it
+    // up front
+    if (mode == 0) {
+	if (s->s_iflag == UP) {
+	    if (mvars->lighting_on) {
+		float wireColor[4];
+		wireColor[0] = 1.0;
+		wireColor[1] = 1.0;
+		wireColor[2] = 1.0;
+		wireColor[3] = s->s_os->transparency;
+		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+		if (mvars->transparency_on)
+		    glDisable(GL_BLEND);
+	    } else {
+		dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
+	    }
+	} else {
+	    if (mvars->lighting_on) {
+		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+		if (mvars->transparency_on)
+		    glDisable(GL_BLEND);
+	    }
+	}
+    } else {
+	if (s->s_iflag == UP) {
+	    dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
+	} else {
+	    if (mvars->lighting_on) {
+		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mvars->i.ambientColor);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mvars->i.specularColor);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, mvars->i.diffuseColor);
+		switch (mvars->lighting_on) {
+		    case 1:
+			break;
+		    case 2:
+			glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.diffuseColor);
+			break;
+		    case 3:
+			glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorDark);
+			break;
+		    default:
+			glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorLight);
+			break;
+		}
+	    }
+	}
+	if (mvars->lighting_on) {
+	    if (mvars->transparency_on) {
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	    }
+	}
+    }
+
     // If we have a dlist in the correct mode, use it
     if (s->s_dlist) {
 	if (mode == s->s_dlist_mode) {
@@ -152,20 +214,6 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 
     // Wireframe
     if (mode == 0) {
-
-	if (s->s_iflag == UP) {
-	    dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
-	} else {
-	    if (mvars->lighting_on) {
-		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-		if (mvars->transparency_on)
-		    glDisable(GL_BLEND);
-	    }
-	}
-
 	// Draw all the triangles in faces array
 	for (int i = 0; i < fcnt; i++) {
 
@@ -192,9 +240,6 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	    glVertex3dv(dpt);
 	    glEnd();
 	}
-	if (mvars->lighting_on && mvars->transparency_on)
-	    glDisable(GL_BLEND);
-
 	if (gen_dlist) {
 	    glEndList();
 	    s->s_dlist_stale = 0;
@@ -227,40 +272,6 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	GLint two_sided;
 	glGetIntegerv(GL_LIGHT_MODEL_TWO_SIDE, &two_sided);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-
-	if (s->s_iflag == UP) {
-	    dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
-	} else {
-
-	    if (mvars->lighting_on) {
-
-
-		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mvars->i.ambientColor);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mvars->i.specularColor);
-		glMaterialfv(GL_FRONT, GL_DIFFUSE, mvars->i.diffuseColor);
-
-		switch (mvars->lighting_on) {
-		    case 1:
-			break;
-		    case 2:
-			glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.diffuseColor);
-			break;
-		    case 3:
-			glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorDark);
-			break;
-		    default:
-			glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorLight);
-			break;
-		}
-	    }
-	}
-	if (mvars->lighting_on) {
-	    if (mvars->transparency_on) {
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	    }
-	}
 
 	glBegin(GL_TRIANGLES);
 
@@ -329,12 +340,6 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 
 	glEnd();
 
-	if (mvars->lighting_on && mvars->transparency_on)
-	    glDisable(GL_BLEND);
-
-	// Put the lighting model back where it was prior to this operation
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, two_sided);
-
 	if (gen_dlist) {
 	    glEndList();
 	    s->s_dlist_stale = 0;
@@ -352,7 +357,14 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	    dm_loadmatrix(dmp, save_mat, 0);
 	}
 
+	if (mvars->lighting_on && mvars->transparency_on)
+	    glDisable(GL_BLEND);
+
+	// Put the lighting model back where it was prior to this operation
+	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, two_sided);
+
 	glLineWidth(originalLineWidth);
+
 	return BRLCAD_OK;
     }
 
