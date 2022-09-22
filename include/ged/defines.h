@@ -181,8 +181,7 @@ struct ged_drawable {
 /* Experimental */
 // We want this to be visible to C++ APIs like libqtcad, so they can reflect
 // the state of the .g hierarchy in their own structures without us or them
-// having to make copies of the data.  This is similar to what we need to do
-// to handle ON_Brep
+// having to make copies of the data.  Pattern this on how we handle ON_Brep
 #include <unordered_map>
 #include <unordered_set>
 
@@ -399,6 +398,8 @@ class GED_EXPORT BViewState {
 #define GED_DBISTATE_DB_CHANGE   0x01
 #define GED_DBISTATE_VIEW_CHANGE 0x02
 
+struct ged_draw_cache;
+
 class GED_EXPORT DbiState {
     public:
 	DbiState(struct ged *);
@@ -525,6 +526,7 @@ class GED_EXPORT DbiState {
 	unsigned int color_int(struct bu_color *);
 	int int_color(struct bu_color *c, unsigned int);
 	struct resource *res = NULL;
+	struct ged_draw_cache *dcache = NULL;
 	struct bu_vls hash_string = BU_VLS_INIT_ZERO;
 	struct bu_vls path_string = BU_VLS_INIT_ZERO;
 };

@@ -30,15 +30,21 @@
 #include "common.h"
 
 #include <algorithm>
+#include <thread>
+#include <fstream>
+#include <sstream>
 
 extern "C" {
 #define XXH_STATIC_LINKING_ONLY
 #include "xxhash.h"
+
+#include "lmdb.h"
 }
 
 #include "./alphanum.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/path.h"
 #include "bu/opt.h"
@@ -48,6 +54,191 @@ extern "C" {
 #include "ged/defines.h"
 #include "ged/view/state.h"
 #include "./ged_private.h"
+
+// Subdirectory in BRL-CAD cache to Dbi state data
+#define DBI_CACHEDIR ".Dbi"
+
+// Maximum database size.
+#define CACHE_MAX_DB_SIZE 4294967296
+
+// Define what format of the cache is current - if it doesn't match, we need
+// to wipe and redo.
+#define CACHE_CURRENT_FORMAT 1
+
+/* There are various individual pieces of data in the cache associated with
+ * each object key.  For lookup they use short suffix strings to distinguish
+ * them - we define those strings here to have consistent definitions for use
+ * in multiple functions.
+ *
+ * Changing any of these requires incrementing CACHE_CURRENT_FORMAT. */
+#define CACHE_OBJ_BOUNDS "bb"
+#define CACHE_REGION_ID "rid"
+#define CACHE_REGION_FLAG "rf"
+#define CACHE_INHERIT_FLAG "if"
+#define CACHE_COLOR "c"
+
+static void
+dbi_dir(char *dir)
+{
+#ifdef HAVE_WINDOWS_H
+    CreateDirectory(dir, NULL);
+#else
+    /* mode: 775 */
+    mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+#endif
+}
+
+struct ged_draw_cache {
+    MDB_env *env;
+    MDB_txn *txn;
+    MDB_dbi dbi;
+    struct bu_vls *fname;
+};
+
+static void
+dbi_dirclear(const char *d)
+{
+    if (bu_file_directory(d)) {
+	char **filenames;
+	size_t nfiles = bu_file_list(d, "*", &filenames);
+	for (size_t i = 0; i < nfiles; i++) {
+	    if (BU_STR_EQUAL(filenames[i], "."))
+		continue;
+	    if (BU_STR_EQUAL(filenames[i], ".."))
+		continue;
+	    char cdir[MAXPATHLEN] = {0};
+	    bu_dir(cdir, MAXPATHLEN, d, filenames[i], NULL);
+	    dbi_dirclear((const char *)cdir);
+	}
+	bu_argv_free(nfiles, filenames);
+    }
+    bu_file_delete(d);
+}
+
+void
+dbi_cache_clear(struct ged_draw_cache *c)
+{
+    if (!c)
+	return;
+    char dir[MAXPATHLEN];
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, DBI_CACHEDIR, bu_vls_cstr(c->fname));
+    dbi_dirclear((const char *)dir);
+}
+
+struct ged_draw_cache *
+dbi_cache_open(const char *name)
+{
+    // Hash the input filename to generate a key for uniqueness
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&fname, "%s", bu_path_normalize(name));
+
+    XXH64_update(&h_state, bu_vls_cstr(&fname), bu_vls_strlen(&fname)*sizeof(char));
+    XXH64_hash_t hash_val;
+    hash_val = XXH64_digest(&h_state);
+    unsigned long long hash = (unsigned long long)hash_val;
+    bu_path_component(&fname, bu_path_normalize(name), BU_PATH_BASENAME_EXTLESS);
+    bu_vls_printf(&fname, "_%llu", hash);
+
+    // Set up the container
+    struct ged_draw_cache *c;
+    BU_GET(c, struct ged_draw_cache);
+    BU_GET(c->fname, struct bu_vls);
+    bu_vls_init(c->fname);
+    bu_vls_sprintf(c->fname, "%s", bu_vls_cstr(&fname));
+
+    // Base maximum readers on an estimate of how many threads
+    // we might want to fire off
+    size_t mreaders = std::thread::hardware_concurrency();
+    if (!mreaders)
+	mreaders = 1;
+    int ncpus = bu_avail_cpus();
+    if (ncpus > 0 && (size_t)ncpus > mreaders)
+	mreaders = (size_t)ncpus + 2;
+
+    // Set up LMDB environments
+    if (mdb_env_create(&c->env))
+	goto ged_context_fail;
+    if (mdb_env_set_maxreaders(c->env, mreaders))
+	goto ged_context_close_fail;
+    if (mdb_env_set_mapsize(c->env, CACHE_MAX_DB_SIZE))
+	goto ged_context_close_fail;
+
+    // Ensure the necessary top level dirs are present
+    char dir[MAXPATHLEN];
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, NULL);
+    if (!bu_file_exists(dir, NULL))
+	dbi_dir(dir);
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, DBI_CACHEDIR, NULL);
+    if (!bu_file_exists(dir, NULL)) {
+	dbi_dir(dir);
+    }
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, DBI_CACHEDIR, "format", NULL);
+    if (!bu_file_exists(dir, NULL)) {
+	// Note a format, so we can detect if what's there isn't compatible
+	// with what this logic expects (in anticipation of future changes
+	// to the on-disk format).
+	FILE *fp = fopen(dir, "w");
+	if (!fp)
+	    goto ged_context_close_fail;
+	fprintf(fp, "%d\n", CACHE_CURRENT_FORMAT);
+	fclose(fp);
+    } else {
+	std::ifstream format_file(dir);
+	size_t disk_format_version = 0;
+	format_file >> disk_format_version;
+	format_file.close();
+	if (disk_format_version != CACHE_CURRENT_FORMAT) {
+	    bu_log("Old GED drawing info cache (%zd) found - clearing\n", disk_format_version);
+	    dbi_cache_clear(c);
+	    mdb_env_close(c->env);
+	    bu_vls_free(&fname);
+	    bu_vls_free(c->fname);
+	    BU_PUT(c->fname, struct bu_vls);
+	    BU_PUT(c, struct ged_draw_cache);
+	    return dbi_cache_open(name);
+	}
+	FILE *fp = fopen(dir, "w");
+	if (!fp)
+	    goto ged_context_close_fail;
+	fprintf(fp, "%d\n", CACHE_CURRENT_FORMAT);
+	fclose(fp);
+    }
+
+      // Create the specific LMDB cache dir, if not already present
+      bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, DBI_CACHEDIR, bu_vls_cstr(&fname), NULL);
+      if (!bu_file_exists(dir, NULL))
+          dbi_dir(dir);
+
+      // Need to call mdb_env_sync() at appropriate points.
+      if (mdb_env_open(c->env, dir, MDB_NOSYNC, 0664))
+	  goto ged_context_close_fail;
+
+      // Success - return the context
+      return c;
+
+      // If something went wrong, clean up and return NULL
+  ged_context_close_fail:
+      mdb_env_close(c->env);
+  ged_context_fail:
+      bu_vls_free(&fname);
+      bu_vls_free(c->fname);
+      BU_PUT(c->fname, struct bu_vls);
+      BU_PUT(c, struct ged_draw_cache);
+      return NULL;
+}
+
+void
+dbi_cache_close(struct ged_draw_cache *c)
+{
+    if (!c)
+	return;
+    mdb_env_close(c->env);
+    bu_vls_free(c->fname);
+    BU_PUT(c->fname, struct bu_vls);
+    BU_PUT(c, struct ged_draw_cache);
+}
 
 // alphanum sort
 bool alphanum_cmp(const std::string &a, const std::string &b)
@@ -1193,6 +1384,9 @@ DbiState::DbiState(struct ged *ged_p)
     if (!dbip)
 	return;
 
+    // Set up cache
+    dcache = dbi_cache_open(dbip->dbi_filename);
+
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
@@ -1212,6 +1406,9 @@ DbiState::~DbiState()
     delete shared_vs;
     rt_clean_resource_basic(NULL, res);
     BU_PUT(res, struct resource);
+
+    if (dcache)
+	dbi_cache_close(dcache);
 }
 
 BViewState::BViewState(DbiState *s)
