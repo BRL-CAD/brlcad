@@ -240,6 +240,77 @@ dbi_cache_close(struct ged_draw_cache *c)
     BU_PUT(c, struct ged_draw_cache);
 }
 
+static void
+cache_write(struct ged_draw_cache *c, unsigned long long hash, const char *component, std::stringstream &s)
+{
+    // Prepare inputs for writing
+    MDB_val mdb_key;
+    MDB_val mdb_data[2];
+    std::string keystr = std::to_string(hash) + std::string(":") + std::string(component);
+    std::string buffer = s.str();
+
+    // As implemented this shouldn't be necessary, since all our keys are below
+    // the default size limit (511)
+    //if (keystr.length()*sizeof(char) > mdb_env_get_maxkeysize(c->i->lod_env))
+    //  return false;
+
+    // Write out key/value to LMDB database, where the key is the hash
+    // and the value is the serialized LoD data
+    char *keycstr = bu_strdup(keystr.c_str());
+    void *bdata = bu_calloc(buffer.length()+1, sizeof(char), "bdata");
+    memcpy(bdata, buffer.data(), buffer.length()*sizeof(char));
+    mdb_txn_begin(c->env, NULL, 0, &c->txn);
+    mdb_dbi_open(c->txn, NULL, 0, &c->dbi);
+    mdb_key.mv_size = keystr.length()*sizeof(char);
+    mdb_key.mv_data = (void *)keycstr;
+    mdb_data[0].mv_size = buffer.length()*sizeof(char);
+    mdb_data[0].mv_data = bdata;
+    mdb_data[1].mv_size = 0;
+    mdb_data[1].mv_data = NULL;
+    mdb_put(c->txn, c->dbi, &mdb_key, mdb_data, 0);
+    mdb_txn_commit(c->txn);
+    bu_free(keycstr, "keycstr");
+    bu_free(bdata, "buffer data");
+}
+
+static size_t
+cache_get(struct ged_draw_cache *c, void **data, unsigned long long hash, const char *component)
+{
+    // Construct lookup key
+    MDB_val mdb_key;
+    MDB_val mdb_data[2];
+    std::string keystr = std::to_string(hash) + std::string(":") + std::string(component);
+
+    // As implemented this shouldn't be necessary, since all our keys are below
+    // the default size limit (511)
+    //if (keystr.length()*sizeof(char) > mdb_env_get_maxkeysize(c->env))
+    //  return 0;
+    char *keycstr = bu_strdup(keystr.c_str());
+    mdb_txn_begin(c->env, NULL, 0, &c->txn);
+    mdb_dbi_open(c->txn, NULL, 0, &c->dbi);
+    mdb_key.mv_size = keystr.length()*sizeof(char);
+    mdb_key.mv_data = (void *)keycstr;
+    int rc = mdb_get(c->txn, c->dbi, &mdb_key, &mdb_data[0]);
+    if (rc) {
+	bu_free(keycstr, "keycstr");
+	(*data) = NULL;
+	return 0;
+    }
+    bu_free(keycstr, "keycstr");
+    (*data) = mdb_data[0].mv_data;
+
+    return mdb_data[0].mv_size;
+}
+
+void
+cache_done(struct ged_draw_cache *c)
+{
+    if (!c)
+	return;
+    mdb_txn_commit(c->txn);
+}
+
+
 // alphanum sort
 bool alphanum_cmp(const std::string &a, const std::string &b)
 {
@@ -679,19 +750,44 @@ DbiState::update_dp(struct directory *dp, int reset)
     bboxes.erase(hash);
     if (!(dp->d_flags & RT_DIR_COMB)) {
 
+	point_t bmin, bmax;
+	bool have_bbox = false;
+
+	// First, check the dcache
+	const char *b = NULL;
+	size_t bsize = cache_get(dcache, (void **)&b, hash, CACHE_OBJ_BOUNDS);
+	if (bsize) {
+	    if (bsize != (sizeof(bmin) + sizeof(bmax))) {
+		bu_log("Incorrect data size found loading cached bounds data\n");
+	    } else {
+		memcpy(&bmin, b, sizeof(bmin));
+		b += sizeof(bmin);
+		memcpy(&bmax, b, sizeof(bmax));
+		//bu_log("cached: bmin: %f %f %f bbmax: %f %f %f\n", V3ARGS(bmin), V3ARGS(bmax));
+		have_bbox = true;
+	    }
+	}
+	cache_done(dcache);
+
+
 	// This calculation can be expensive.  If we've already
 	// got it stashed as part of LoD processing, use that
 	// version.
-	point_t bmin, bmax;
-	bool have_bbox = false;
-	if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && gedp->ged_lod) {
-	    unsigned long long key = bg_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
-	    if (key) {
-		struct bv_mesh_lod *lod = bg_mesh_lod_create(gedp->ged_lod, key);
-		if (lod) {
-		    VMOVE(bmin, lod->bmin);
-		    VMOVE(bmax, lod->bmax);
-		    have_bbox = true;
+	if (!have_bbox) {
+	    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && gedp->ged_lod) {
+		unsigned long long key = bg_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
+		if (key) {
+		    struct bv_mesh_lod *lod = bg_mesh_lod_create(gedp->ged_lod, key);
+		    if (lod) {
+			VMOVE(bmin, lod->bmin);
+			VMOVE(bmax, lod->bmax);
+			have_bbox = true;
+
+			std::stringstream s;
+			s.write(reinterpret_cast<const char *>(&bmin), sizeof(bmin));
+			s.write(reinterpret_cast<const char *>(&bmax), sizeof(bmax));
+			cache_write(dcache, hash, CACHE_OBJ_BOUNDS, s);
+		    }
 		}
 	    }
 	}
@@ -705,11 +801,20 @@ DbiState::update_dp(struct directory *dp, int reset)
 	    int bret = rt_bound_instance(&bmin, &bmax, dp, dbip,
 		    &ttol, &tol, &m, res, NULL);
 	    if (bret != -1) {
-		for (size_t j = 0; j < 3; j++)
-		    bboxes[hash].push_back(bmin[j]);
-		for (size_t j = 0; j < 3; j++)
-		    bboxes[hash].push_back(bmax[j]);
+		have_bbox = true;
+
+		std::stringstream s;
+		s.write(reinterpret_cast<const char *>(&bmin), sizeof(bmin));
+		s.write(reinterpret_cast<const char *>(&bmax), sizeof(bmax));
+		cache_write(dcache, hash, CACHE_OBJ_BOUNDS, s);
 	    }
+	}
+
+	if (have_bbox) {
+	    for (size_t j = 0; j < 3; j++)
+		bboxes[hash].push_back(bmin[j]);
+	    for (size_t j = 0; j < 3; j++)
+		bboxes[hash].push_back(bmax[j]);
 	}
     }
 
@@ -717,54 +822,148 @@ DbiState::update_dp(struct directory *dp, int reset)
     if (dp->d_flags & RT_DIR_COMB)
 	populate_maps(dp, hash, reset);
 
-    // Check for various drawing related attributes
-    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
-    db5_get_attributes(dbip, &c_avs, dp);
 
-    // Check for region id.  For drawing purposes this needs to be a number.
-    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
+    // Check for various drawing related attributes
+    // Ideally, if we have enough info, we'd like to avoid loading
+    // the avs.  See if we can get away with it using dcache
+    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
+    bool loaded_avs = false;
+    region_id.erase(hash);
+    c_inherit.erase(hash);
+    rgb.erase(hash);
+
+    // First, check the dcache for all remaining needed values
+    const char *b = NULL;
+    size_t bsize = 0;
+
+    bool need_region_id_avs = true;
+    bool need_region_flag_avs = true;
+    bool need_color_inherit_avs = true;
+    bool need_cval_avs = true;
+
+    int region_flag = 0;
     int attr_region_id = -1;
-    if (region_id_val) {
-	if (bu_opt_int(NULL, 1, &region_id_val, (void *)&attr_region_id) != -1) {
-	    region_id[hash] = attr_region_id;
-	} else {
-	    bu_log("%s is not a valid region_id\n", region_id_val);
-	    attr_region_id = -1;
+    int color_inherit = 0;
+    unsigned int cval = INT_MAX;
+
+    bsize = cache_get(dcache, (void **)&b, hash, CACHE_REGION_ID);
+    if (bsize == sizeof(attr_region_id)) {
+	memcpy(&attr_region_id, b, sizeof(attr_region_id));
+	need_region_id_avs = false;
+    }
+    cache_done(dcache);
+
+    bsize = cache_get(dcache, (void **)&b, hash, CACHE_REGION_FLAG);
+    if (bsize == sizeof(region_flag)) {
+	memcpy(&region_flag, b, sizeof(region_flag));
+	need_region_flag_avs = false;
+    }
+    cache_done(dcache);
+
+    bsize = cache_get(dcache, (void **)&b, hash, CACHE_INHERIT_FLAG);
+    if (bsize == sizeof(color_inherit)) {
+	memcpy(&color_inherit, b, sizeof(color_inherit));
+	need_color_inherit_avs = false;
+    }
+    cache_done(dcache);
+
+    bsize = cache_get(dcache, (void **)&b, hash, CACHE_COLOR);
+    if (bsize == sizeof(cval)) {
+	memcpy(&cval, b, sizeof(cval));
+	need_cval_avs = false;
+    }
+    cache_done(dcache);
+
+
+    if (need_region_flag_avs) {
+	if (!loaded_avs) {
+	    db5_get_attributes(dbip, &c_avs, dp);
+	    loaded_avs = true;
 	}
-    } else {
-	// If a region flag is set but a region_id is not, there is an implicit
-	// assumption that the region_id is to be regarded as 0.  Not sure this
-	// will always be true, but right now region table based coloring works
-	// that way in existing BRL-CAD code (see the example m35.g model's
-	// all.g/component/power.train/r75 for an instance of this)
-	const char *region_flag = bu_avs_get(&c_avs, "region");
-	if (region_flag && (BU_STR_EQUAL(region_flag, "R") || BU_STR_EQUAL(region_flag, "1")))
-	    region_id[hash] = 0;
+	// Check for region flag.
+	const char *region_flag_str = bu_avs_get(&c_avs, "region");
+	if (region_flag_str && (BU_STR_EQUAL(region_flag_str, "R") || BU_STR_EQUAL(region_flag_str, "1"))) {
+	    region_flag = 1;
+	}
+
+	std::stringstream s;
+	s.write(reinterpret_cast<const char *>(&region_flag), sizeof(region_flag));
+	cache_write(dcache, hash, CACHE_REGION_FLAG, s);
     }
 
-    // Check for an inherit flag
-    int color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
-    c_inherit.erase(hash);
+
+    if (need_region_id_avs) {
+	if (!loaded_avs) {
+	    db5_get_attributes(dbip, &c_avs, dp);
+	    loaded_avs = true;
+	}
+	// Check for region id.  For drawing purposes this needs to be a number.
+	const char *region_id_val = bu_avs_get(&c_avs, "region_id");
+	if (region_id_val)
+	    bu_opt_int(NULL, 1, &region_id_val, (void *)&attr_region_id);
+
+	std::stringstream s;
+	s.write(reinterpret_cast<const char *>(&attr_region_id), sizeof(attr_region_id));
+	cache_write(dcache, hash, CACHE_REGION_ID, s);
+    }
+
+    if (need_color_inherit_avs) {
+	if (!loaded_avs) {
+	    db5_get_attributes(dbip, &c_avs, dp);
+	    loaded_avs = true;
+	}
+	color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
+
+	std::stringstream s;
+	s.write(reinterpret_cast<const char *>(&color_inherit), sizeof(color_inherit));
+	cache_write(dcache, hash, CACHE_INHERIT_FLAG, s);
+    }
+
+    if (need_cval_avs) {
+	if (!loaded_avs) {
+	    db5_get_attributes(dbip, &c_avs, dp);
+	    loaded_avs = true;
+	}
+	// Color (note that the rt_material_head colors and a region_id may
+	// override this, as might a parent comb with color and the inherit
+	// flag both set.
+	rgb.erase(hash);
+	struct bu_color c = BU_COLOR_INIT_ZERO;
+	const char *color_val = bu_avs_get(&c_avs, "color");
+	if (!color_val)
+	    color_val = bu_avs_get(&c_avs, "rgb");
+	if (color_val){
+	    bu_log("have color\n");
+	    bu_opt_color(NULL, 1, &color_val, (void *)&c);
+	    cval = color_int(&c);
+	}
+
+	std::stringstream s;
+	s.write(reinterpret_cast<const char *>(&cval), sizeof(cval));
+	cache_write(dcache, hash, CACHE_COLOR, s);
+    }
+
+    // If a region flag is set but a region_id is not, there is an implicit
+    // assumption that the region_id is to be regarded as 0.  Not sure this
+    // will always be true, but right now region table based coloring works
+    // that way in existing BRL-CAD code (see the example m35.g model's
+    // all.g/component/power.train/r75 for an instance of this)
+    if (region_flag && attr_region_id == -1)
+	attr_region_id = 0;
+
+
+    if (attr_region_id != -1)
+	region_id[hash] = attr_region_id;
     if (color_inherit)
 	c_inherit[hash] = color_inherit;
-
-    // Color (note that the rt_material_head colors and a region_id may
-    // override this, as might a parent comb with color and the inherit
-    // flag both set.
-    rgb.erase(hash);
-    struct bu_color c = BU_COLOR_INIT_ZERO;
-    const char *color_val = bu_avs_get(&c_avs, "color");
-    if (!color_val)
-	color_val = bu_avs_get(&c_avs, "rgb");
-    if (color_val){
-	bu_opt_color(NULL, 1, &color_val, (void *)&c);
-	unsigned int cval = color_int(&c);
+    if (cval != INT_MAX)
 	rgb[hash] = cval;
-    }
 
     // Done with attributes
-    bu_avs_free(&c_avs);
-
+    if (loaded_avs) {
+	bu_log("Had to load avs\n");
+	bu_avs_free(&c_avs);
+    }
     return hash;
 }
 
