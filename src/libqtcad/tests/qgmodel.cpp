@@ -26,7 +26,9 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
-#include <QAbstractItemModelTester>
+#ifdef USE_QT6
+#  include <QAbstractItemModelTester>
+#endif
 
 #include "bu/app.h"
 #include "bu/log.h"
@@ -125,9 +127,10 @@ int main(int argc, char *argv[])
     QgModel sm(NULL, argv[0]);
     QgModel *s = &sm;
 
+#ifdef USE_QT6
     //QAbstractItemModelTester *tester = new QAbstractItemModelTester((QAbstractItemModel *)s, QAbstractItemModelTester::FailureReportingMode::Fatal);
     QAbstractItemModelTester *tester = new QAbstractItemModelTester((QAbstractItemModel *)s, QAbstractItemModelTester::FailureReportingMode::Warning);
-
+#endif
 
     // 2.  Implement "open" and "close" routines for the items that will exercise
     // the logic to identify, populate, and clear items based on child info.

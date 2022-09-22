@@ -499,7 +499,7 @@ class GED_EXPORT DbiState {
 	// For other associated views (if any), we track their drawn states
 	// separately, but they too need to update in response to database
 	// changes (as well as draw/erase commands).
-	BViewState *shared_vs;
+	BViewState *shared_vs = NULL;
 	std::unordered_map<struct bview *, BViewState *> view_states;
 
 	// We have a "default" selection state that is always available,
@@ -508,8 +508,8 @@ class GED_EXPORT DbiState {
 	std::unordered_map<std::string, BSelectState *> selected_sets;
 
 	// Database Instance associated with this container
-	struct ged *gedp;
-	struct db_i *dbip;
+	struct ged *gedp = NULL;
+	struct db_i *dbip = NULL;
 
 	bool need_update_nref = true;
 
@@ -525,8 +525,8 @@ class GED_EXPORT DbiState {
 	unsigned int color_int(struct bu_color *);
 	int int_color(struct bu_color *c, unsigned int);
 	struct resource *res = NULL;
-	struct bu_vls hash_string;
-	struct bu_vls path_string;
+	struct bu_vls hash_string = BU_VLS_INIT_ZERO;
+	struct bu_vls path_string = BU_VLS_INIT_ZERO;
 };
 
 

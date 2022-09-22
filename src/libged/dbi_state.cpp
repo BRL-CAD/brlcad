@@ -56,7 +56,7 @@ bool alphanum_cmp(const std::string &a, const std::string &b)
 }
 
 struct walk_data {
-    DbiState *dbis;
+    DbiState *dbis = NULL;
     std::unordered_map<unsigned long long, unsigned long long> i_count;
     mat_t *curr_mat = NULL;
     unsigned long long phash = 0;
