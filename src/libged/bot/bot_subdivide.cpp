@@ -35,7 +35,12 @@
 #  pragma clang diagnostic push /* start new diagnostic pragma */
 #  pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
-#include <OpenMesh/Core/Mesh/PolyMeshT.hh>
+#include <OpenMesh/Tools/Subdivider/Uniform/SubdividerT.hh>
+//#include <OpenMesh/Tools/Subdivider/Uniform/CatmullClarkT.hh>
+#include <OpenMesh/Tools/Subdivider/Uniform/LoopT.hh>
+#include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
+#include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+#include <vector>
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic pop /* end ignoring warnings */
 #elif defined(__clang__)
@@ -60,12 +65,86 @@
 
 #ifdef BUILD_OPENMESH_TOOLS
 
+typedef OpenMesh::TriMesh_ArrayKernelT<>  MyMesh;
+//typedef OpenMesh::PolyMesh_ArrayKernelT<> MyMesh;   // needed for catmullclark?
+
 static bool
 bot_subd(struct ged* gedp, struct rt_bot_internal* bot, int alg)
 {
     if (!gedp || !bot)
 	return false;
-    bu_vls_printf(gedp->ged_result_str, "command recognized\n");
+
+    /* convert bot to OpenMesh 'mesh' */
+    MyMesh mesh;
+    /* generate vertices */
+    const size_t num_v = bot->num_vertices;
+    std::vector<MyMesh::VertexHandle> vhandle(num_v);
+    for (size_t i = 0; i < num_v; i++) {
+	//bu_vls_printf(gedp->ged_result_str, "vert[%d]: (%d, %d, %d)\n", i, bot->vertices[3 * i], bot->vertices[3 * i + 1], bot->vertices[3 * i + 2]);
+	vhandle[i] = mesh.add_vertex(MyMesh::Point(bot->vertices[3 * i], bot->vertices[3 * i + 1], bot->vertices[3 * i + 2]));
+    }
+    /* generate faces */
+    const size_t num_f = bot->num_faces;
+    std::vector<MyMesh::VertexHandle> face_vhandles(3);
+    for (size_t i = 0; i < num_f; i++) {
+	//bu_vls_printf(gedp->ged_result_str, "face[%d]: (%d, %d, %d)\n", i, bot->faces[3 * i], bot->faces[3 * i + 1], bot->faces[3 * i + 2]);
+	std::vector<MyMesh::VertexHandle> face_vhandles(3);
+	face_vhandles[0] = vhandle[bot->faces[3 * i    ]];
+	face_vhandles[1] = vhandle[bot->faces[3 * i + 1]];
+	face_vhandles[2] = vhandle[bot->faces[3 * i + 2]];
+	mesh.add_face(face_vhandles);
+    }
+
+    /* initialize subdivider */
+    switch (alg) {
+    case 1:
+    {
+	OpenMesh::Subdivider::Uniform::LoopT<MyMesh> divider;
+	divider.attach(mesh);
+	divider(2); // TODO: have option to set division step depth
+	divider.detach();
+	break;
+    }
+    case 0:
+    default:
+	//OpenMesh::Subdivider::Uniform::CatmullClarkT<MyMesh> catmull;
+	//catmull.attach(mesh);
+	//catmull(2); // TODO: have option to set division step depth
+	//catmull.detach();
+	break;
+    }
+
+    //OpenMesh::Subdivider::Uniform::CatmullClarkT<PolyMesh> catmull;
+    //catmull.attach(mesh);
+    //catmull(2);	// TODO: have option to set division step depth?
+    //catmull.detach();
+
+    /* convert mesh back to bot */
+    bot->num_vertices = mesh.n_vertices();
+    bot->vertices = (fastf_t*)bu_malloc(bot->num_vertices * ELEMENTS_PER_POINT * sizeof(fastf_t), "vertices");
+    bot->num_faces = mesh.n_faces();
+    bot->faces = (int*)bu_malloc(bot->num_faces * 3 * sizeof(int), "triangles");
+    size_t i = 0;
+    // use an edge iterator to iterate over all the edges
+    for (MyMesh::EdgeIter eit = mesh.edges_begin(); eit != mesh.edges_end(); ++eit) {
+	// check for boundary.  (one halfedge won't be valid if boundary)
+	// note: you have to dereference the edge iterator
+	if (!mesh.is_boundary(*eit)) {
+	    MyMesh::VertexHandle vh = mesh.to_vertex_handle(mesh.halfedge_handle(*eit, 0));
+	    MyMesh::Point p = mesh.point(vh);
+	    bot->vertices[3 * i    ] = p[0];
+	    bot->vertices[3 * i + 1] = p[1];
+	    bot->vertices[3 * i + 2] = p[2];
+
+	    /*MyMesh::FaceHandle fh = mesh.face_handle(mesh.halfedge_handle(*eit, 0));
+	    MyMesh::Face f = mesh.face(fh);
+
+	    MyMesh::Normal face1Norm = mesh.normal(fh);*/
+	    
+	    i++;
+	}   // else is boundary. One of the half edges won't be valid
+    }
+
     return true;
 }
 
