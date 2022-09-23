@@ -933,6 +933,8 @@ bv_obj_get_child(struct bv_scene_obj *sp)
 
     s->s_v = sp->s_v;
 
+    s->dp = sp->dp;
+
     s->s_i_data = NULL;
     s->s_update_callback = NULL;
     s->s_free_callback = NULL;
