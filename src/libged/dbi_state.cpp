@@ -2129,7 +2129,22 @@ BViewState::scene_obj(
     struct bv_scene_obj *sp = NULL;
     if (s_map.find(phash) != s_map.end()) {
 	if (s_map[phash].find(curr_mode) != s_map[phash].end()) {
-	    // Already have scene object
+	    // Already have scene object - check it against vs
+	    // settings to see if we need to update
+	    if (vs && vs->s_dmode == curr_mode) {
+		sp = s_map[phash][curr_mode];
+		if (sp->s_soldash && vs->draw_non_subtract_only) {
+		    if (sp->s_flag != DOWN) {
+			sp->s_flag = DOWN;
+		    }
+		} else {
+		    if (sp->s_flag != UP) {
+			sp->s_flag = UP;
+		    }
+		}
+		if (bv_obj_settings_sync(sp->s_os, vs))
+		    objs.insert(sp);
+	    }
 	    return NULL;
 	}
     }

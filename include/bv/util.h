@@ -56,8 +56,10 @@ BV_EXPORT extern void bv_autoview(struct bview *v, fastf_t scale, int all_view_o
 /* Copy the size and camera info (deliberately not a full copy of all view state) */
 BV_EXPORT extern void bv_sync(struct bview *dest, struct bview *src);
 
-/* Copy settings (potentially) common to the view and scene objects */
-BV_EXPORT extern void bv_obj_settings_sync(struct bv_obj_settings *dest, struct bv_obj_settings *src);
+/* Copy settings (potentially) common to the view and scene objects.
+ * Return 0 if no changes were made to dest.  If dest did have one
+ * or more settings updated from src, return 1. */
+BV_EXPORT extern int bv_obj_settings_sync(struct bv_obj_settings *dest, struct bv_obj_settings *src);
 
 /* Sync values within the bv, perform callbacks if any are defined */
 BV_EXPORT extern void bv_update(struct bview *gvp);

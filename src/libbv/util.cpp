@@ -491,18 +491,51 @@ bv_update(struct bview *gvp)
     }
 }
 
-void
+int
 bv_obj_settings_sync(struct bv_obj_settings *dest, struct bv_obj_settings *src)
 {
-    dest->s_line_width = src->s_line_width;
-    dest->s_arrow_tip_length = src->s_arrow_tip_length;
-    dest->s_arrow_tip_width = src->s_arrow_tip_width;
-    dest->transparency = src->transparency;
-    dest->s_dmode = src->s_dmode;
-    dest->color_override = src->color_override;
-    VMOVE(dest->color, src->color);
-    dest->draw_solid_lines_only = src->draw_solid_lines_only;
-    dest->draw_non_subtract_only = src->draw_non_subtract_only;
+    int ret = 0;
+    if (!dest || !src)
+	return ret;
+
+    if (dest->s_line_width != src->s_line_width) {
+	dest->s_line_width = src->s_line_width;
+	ret = 1;
+    }
+    if (!NEAR_EQUAL(dest->s_arrow_tip_length, src->s_arrow_tip_length, SMALL_FASTF)) {
+	dest->s_arrow_tip_length = src->s_arrow_tip_length;
+	ret = 1;
+    }
+    if (!NEAR_EQUAL(dest->s_arrow_tip_width, src->s_arrow_tip_width, SMALL_FASTF)) {
+	dest->s_arrow_tip_width = src->s_arrow_tip_width;
+	ret = 1;
+    }
+    if (!NEAR_EQUAL(dest->transparency, src->transparency, SMALL_FASTF)) {
+	dest->transparency = src->transparency;
+	ret = 1;
+    }
+    if (dest->s_dmode != src->s_dmode) {
+	dest->s_dmode = src->s_dmode;
+	ret = 1;
+    }
+    if (dest->color_override != src->color_override) {
+	dest->color_override = src->color_override;
+	ret = 1;
+    }
+    if (!VNEAR_EQUAL(dest->color, src->color, SMALL_FASTF)) {
+	VMOVE(dest->color, src->color);
+	ret = 1;
+    }
+    if (dest->draw_solid_lines_only != src->draw_solid_lines_only) {
+	dest->draw_solid_lines_only = src->draw_solid_lines_only;
+	ret = 1;
+    }
+    if (dest->draw_non_subtract_only != src->draw_non_subtract_only) {
+	dest->draw_non_subtract_only = src->draw_non_subtract_only;
+	ret = 1;
+    }
+
+    return ret;
 }
 
 int
