@@ -2121,7 +2121,7 @@ BViewState::scene_obj(
 	struct bv_obj_settings *vs,
 	matp_t m,
        	std::vector<unsigned long long> &path_hashes,
-	std::unordered_set<struct bview *> &UNUSED(views)
+	std::unordered_set<struct bview *> &views
 	)
 {
     // Solid - scene object time
@@ -2131,8 +2131,8 @@ BViewState::scene_obj(
 	if (s_map[phash].find(curr_mode) != s_map[phash].end()) {
 	    // Already have scene object - check it against vs
 	    // settings to see if we need to update
+	    sp = s_map[phash][curr_mode];
 	    if (vs && vs->s_dmode == curr_mode) {
-		sp = s_map[phash][curr_mode];
 		if (sp->s_soldash && vs->draw_non_subtract_only) {
 		    if (sp->s_flag != DOWN) {
 			sp->s_flag = DOWN;
@@ -2145,6 +2145,19 @@ BViewState::scene_obj(
 		if (bv_obj_settings_sync(sp->s_os, vs))
 		    objs.insert(sp);
 	    }
+
+	    std::unordered_set<struct bview *>::iterator v_it;
+	    bool using_adaptive = false;
+	    int have_adaptive = bv_obj_have_view_objs(sp);
+	    for (v_it = views.begin(); v_it != views.end(); v_it++) {
+		if ((*v_it)->gv_s->adaptive_plot_mesh || (*v_it)->gv_s->adaptive_plot_csg)
+		    using_adaptive = true;
+	    }
+	    if (!using_adaptive && bv_clear_view_objs(sp))
+		objs.insert(sp);
+	    if (using_adaptive && !have_adaptive)
+		objs.insert(sp);
+
 	    return NULL;
 	}
     }

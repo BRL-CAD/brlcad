@@ -583,8 +583,13 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 	return;
 
     // If we're not adaptive, trigger the view insensitive drawing routines
-    if (v && !v->gv_s->adaptive_plot_csg && !v->gv_s->adaptive_plot_mesh)
+    if (v && !v->gv_s->adaptive_plot_csg && !v->gv_s->adaptive_plot_mesh) {
+
+    	// If we're coming in with old info, clear it
+	bv_clear_view_objs(s);
+
 	return draw_scene(s, NULL);
+    }
 
     // If we have a scene object without drawing data, it is most likely
     // a container holding other objects we do need to draw.  Iterate over

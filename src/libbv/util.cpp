@@ -1135,6 +1135,34 @@ bv_set_view_obj(struct bv_scene_obj *s, struct bview *v, struct bv_scene_obj *sv
     sv->s_os = s->s_os;
 }
 
+int
+bv_obj_have_view_objs(struct bv_scene_obj *s)
+{
+    if (!s || !s->i)
+	return 0;
+    return (s->i->vobjs.size()) ? 1 : 0;
+}
+
+int
+bv_clear_view_objs(struct bv_scene_obj *s)
+{
+    int ret = 0;
+    if (!s || !s->i)
+	return ret;
+
+    std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
+    for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {
+	struct bv_scene_obj *vobj = vo_it->second;
+	if (vobj != s) {
+	    bv_obj_put(vobj);
+	    ret = 1;
+	}
+    }
+    s->i->vobjs.clear();
+
+    return ret;
+}
+
 struct bv_scene_obj *
 bv_find_child(struct bv_scene_obj *s, const char *vname)
 {
