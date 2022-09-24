@@ -856,6 +856,8 @@ bv_obj_create(struct bview *v, int type)
     s->s_free_callback = NULL;
 
     s->adaptive_wireframe = 0;
+    s->csg_obj = 0;
+    s->mesh_obj = 0;
     s->view_scale = 0.0;
 
     s->s_flag = UP;
@@ -1013,6 +1015,8 @@ bv_obj_reset(struct bv_scene_obj *s)
     s->s_csize = 0;
     VSETALL(s->s_center, 0);
     s->adaptive_wireframe = 0;
+    s->csg_obj = 0;
+    s->mesh_obj = 0;
     s->view_scale = 0;
     s->bot_threshold = 0;
     s->curve_scale = 0;
@@ -1138,29 +1142,49 @@ bv_set_view_obj(struct bv_scene_obj *s, struct bview *v, struct bv_scene_obj *sv
 }
 
 int
-bv_obj_have_view_objs(struct bv_scene_obj *s)
+bv_obj_have_view_obj(struct bv_scene_obj *s, struct bview *v)
 {
     if (!s || !s->i)
 	return 0;
-    return (s->i->vobjs.size()) ? 1 : 0;
+
+    if (!v)
+	return (s->i->vobjs.size()) ? 1 : 0;
+
+    std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
+    vo_it = s->i->vobjs.find(v);
+    return (vo_it != s->i->vobjs.end()) ? 1 : 0;
 }
 
 int
-bv_clear_view_objs(struct bv_scene_obj *s)
+bv_clear_view_obj(struct bv_scene_obj *s, struct bview *v)
 {
     int ret = 0;
     if (!s || !s->i)
 	return ret;
 
-    std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
-    for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {
+    if (v) {
+	std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
+	vo_it = s->i->vobjs.find(v);
+	if (vo_it == s->i->vobjs.end())
+	    return ret;
+
 	struct bv_scene_obj *vobj = vo_it->second;
 	if (vobj != s) {
 	    bv_obj_put(vobj);
 	    ret = 1;
 	}
+	s->i->vobjs.erase(v);
+    } else {
+    	std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
+	for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {
+	    struct bv_scene_obj *vobj = vo_it->second;
+	    if (vobj != s) {
+		bv_obj_put(vobj);
+		ret = 1;
+	    }
+	}
+	s->i->vobjs.clear();
     }
-    s->i->vobjs.clear();
 
     return ret;
 }

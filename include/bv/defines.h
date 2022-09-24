@@ -252,6 +252,8 @@ struct bv_scene_obj  {
      * settings.  These values SHOULD NOT be directly manipulated by any user
      * facing commands (such as view obj). */
     int     adaptive_wireframe;
+    int     csg_obj;
+    int     mesh_obj;
     fastf_t view_scale;
     size_t  bot_threshold;
     fastf_t curve_scale;

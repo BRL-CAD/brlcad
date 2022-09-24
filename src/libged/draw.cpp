@@ -89,6 +89,8 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
     if (!s || !v)
 	return 0;
 
+    s->csg_obj = 1;
+
     bool rework = false;
     // Check bot threshold
     //if (s->bot_threshold != s->s_v->gv_s->bot_threshold)
@@ -245,6 +247,10 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 {
     if (!s || !v)
 	return;
+
+    s->csg_obj = 0;
+    s->mesh_obj = 1;
+
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     if (!d)
 	return;
@@ -517,6 +523,8 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     const struct bn_tol *tol = d->tol;
     const struct bg_tess_tol *ttol = d->ttol;
+    s->csg_obj = 1;
+    s->mesh_obj = 0;
 
     // Standard (view independent) wireframe
     if (!v || !v->gv_s->adaptive_plot_csg) {
@@ -587,7 +595,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     if (v && !v->gv_s->adaptive_plot_csg && !v->gv_s->adaptive_plot_mesh) {
 
     	// If we're coming in with old info, clear it
-	bv_clear_view_objs(s);
+	bv_clear_view_obj(s, NULL);
 
 	return draw_scene(s, NULL);
     }

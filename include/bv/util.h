@@ -189,11 +189,11 @@ bv_set_view_obj(struct bv_scene_obj *s, struct bview *v, struct bv_scene_obj *vo
 
 /* Check for the presence of view-specific objects */
 BV_EXPORT int
-bv_obj_have_view_objs(struct bv_scene_obj *s);
+bv_obj_have_view_obj(struct bv_scene_obj *s, struct bview *v);
 
 /* Clear view-specific objects */
 BV_EXPORT int
-bv_clear_view_objs(struct bv_scene_obj *s);
+bv_clear_view_obj(struct bv_scene_obj *s, struct bview *v);
 
 /* Set the illumination state on the object and its children to ill_state.
  * Returns 0 if no states were changed, and 1 if one or more states were
