@@ -231,6 +231,7 @@ struct bv_scene_obj  {
     int s_displayobj;		/**< @brief  Vector list contains vertices in display context flag */
     point_t bmin;
     point_t bmax;
+    int have_bbox;
 
     /* Display properties */
     char s_flag;		/**< @brief  UP = object visible, DOWN = obj invis */

@@ -163,7 +163,7 @@ _bound_objs(int *is_empty, int *have_geom_objs, vect_t min, vect_t max, struct b
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
 	_bound_objs(is_empty, have_geom_objs, min, max, &g->children, v);
-	if (bv_scene_obj_bound(g, v)) {
+	if (g->have_bbox || bv_scene_obj_bound(g, v)) {
 	    (*is_empty) = 0;
 	    (*have_geom_objs) = 1;
 	    minus[X] = g->s_center[X] - g->s_size;
@@ -851,6 +851,13 @@ bv_obj_create(struct bview *v, int type)
     s->s_size = 0;
     s->s_v = v;
 
+    VSETALL(s->bmin, INFINITY);
+    VSETALL(s->bmax, -INFINITY);
+    s->have_bbox = 0;
+    s->s_size = 0;
+    s->s_csize = 0;
+    VSETALL(s->s_center, 0);
+
     s->s_i_data = NULL;
     s->s_update_callback = NULL;
     s->s_free_callback = NULL;
@@ -859,6 +866,11 @@ bv_obj_create(struct bview *v, int type)
     s->csg_obj = 0;
     s->mesh_obj = 0;
     s->view_scale = 0.0;
+    s->bot_threshold = 0;
+    s->curve_scale = 0;
+    s->point_scale = 0;
+
+    s->draw_data = NULL;
 
     s->s_flag = UP;
     s->s_iflag = DOWN;
@@ -1011,6 +1023,7 @@ bv_obj_reset(struct bv_scene_obj *s)
     s->current = 0;
     VSETALL(s->bmin, INFINITY);
     VSETALL(s->bmax, -INFINITY);
+    s->have_bbox = 0;
     s->s_size = 0;
     s->s_csize = 0;
     VSETALL(s->s_center, 0);
