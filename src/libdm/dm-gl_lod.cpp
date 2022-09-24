@@ -116,53 +116,37 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
     // up front
     if (mode == 0) {
 	if (s->s_iflag == UP) {
-	    if (mvars->lighting_on) {
-		float wireColor[4];
-		wireColor[0] = 1.0;
-		wireColor[1] = 1.0;
-		wireColor[2] = 1.0;
-		wireColor[3] = s->s_os->transparency;
-		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-		if (mvars->transparency_on)
-		    glDisable(GL_BLEND);
-	    } else {
-		dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
-	    }
-	} else {
-	    if (mvars->lighting_on) {
-		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-		if (mvars->transparency_on)
-		    glDisable(GL_BLEND);
-	    }
+	    dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
+	}
+	if (mvars->lighting_on) {
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+	    if (mvars->transparency_on)
+		glDisable(GL_BLEND);
 	}
     } else {
 	if (s->s_iflag == UP) {
 	    dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
-	} else {
-	    if (mvars->lighting_on) {
-		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mvars->i.ambientColor);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mvars->i.specularColor);
-		glMaterialfv(GL_FRONT, GL_DIFFUSE, mvars->i.diffuseColor);
-		switch (mvars->lighting_on) {
-		    case 1:
-			break;
-		    case 2:
-			glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.diffuseColor);
-			break;
-		    case 3:
-			glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorDark);
-			break;
-		    default:
-			glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorLight);
-			break;
-		}
+	}
+	if (mvars->lighting_on) {
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mvars->i.ambientColor);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mvars->i.specularColor);
+	    glMaterialfv(GL_FRONT, GL_DIFFUSE, mvars->i.diffuseColor);
+	    switch (mvars->lighting_on) {
+		case 1:
+		    break;
+		case 2:
+		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.diffuseColor);
+		    break;
+		case 3:
+		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorDark);
+		    break;
+		default:
+		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorLight);
+		    break;
 	    }
 	}
 	if (mvars->lighting_on) {
