@@ -27,7 +27,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
-#ifdef USE_QT6
+#ifdef USE_QTTEST
 #  include <QAbstractItemModelTester>
 #endif
 
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
     QgModel sm(NULL, argv[0]);
     QgModel *s = &sm;
 
-#ifdef USE_QT6
+#ifdef USE_QTTEST
     //QAbstractItemModelTester *tester = new QAbstractItemModelTester((QAbstractItemModel *)s, QAbstractItemModelTester::FailureReportingMode::Fatal);
     QAbstractItemModelTester *tester = new QAbstractItemModelTester((QAbstractItemModel *)s, QAbstractItemModelTester::FailureReportingMode::Warning);
 #endif
@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
     open_tops(s, -1);
     print_tops(s);
 
-#ifdef USE_QT6
+#ifdef USE_QTTEST
     delete tester;
 #endif
 
