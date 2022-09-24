@@ -532,6 +532,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
     // If we're adaptive, call the primitive's adaptive plotting, if any.
     if (ip->idb_meth->ft_adaptive_plot) {
 	struct bv_scene_obj *vo = bv_obj_get_child(s);
+	bv_set_view_obj(s, v, vo);
 
 	// Make a copy of the draw info for vo.
 	struct draw_update_data_t *ld;
