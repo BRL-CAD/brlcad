@@ -352,7 +352,14 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     bv_init(gedp->ged_gvp, &gedp->ged_views);
 
     db_update_nref(gedp->dbip, &rt_uniresource);
-    gedp->dbi_state = new DbiState(gedp);
+
+    const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
+    if (use_dbi_state) {
+	gedp->dbi_state = new DbiState(gedp);
+    } else {
+	gedp->dbi_state = NULL;
+    }
+
     return gedp;
 }
 

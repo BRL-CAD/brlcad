@@ -148,8 +148,17 @@ int main(int argc, char *argv[])
     /* Done with command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
 
+    // NOTE - these env variables should ultimately be temporary - we are using
+    // them to enable behavior in LIBRT/LIBGED we don't yet want on by default
+    // in all applications
+
     /* Let LIBRT know to process comb instance specifiers in paths */
     bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
+    /* Let LIBGED know to initialize its instance state container */
+    bu_setenv("LIBGED_DBI_STATE", "1", 1);
+    /* Let LIBGED know to use new command forms */
+    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
+
 
     /* Handle top level application options */
     struct bu_opt_desc d[6];

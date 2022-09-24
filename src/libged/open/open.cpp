@@ -90,8 +90,12 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	gedp->ged_wdbp = RT_WDB_NULL;
 	gedp->dbip = NULL;
-	if (gedp->dbi_state)
-	    delete gedp->dbi_state;
+	const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
+	if (use_dbi_state) {
+	    if (gedp->dbi_state)
+		delete gedp->dbi_state;
+	}
+	gedp->dbi_state = NULL;
 
 	/* Terminate any ged subprocesses */
 	if (gedp != GED_NULL) {
@@ -123,7 +127,8 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	gedp->ged_lod = bg_mesh_lod_context_create(argv[1]);
 
 	// Set up the DbiState container for fast structure access
-	gedp->dbi_state = new DbiState(gedp);
+	if (use_dbi_state)
+	    gedp->dbi_state = new DbiState(gedp);
 
 	return BRLCAD_OK;
     }
