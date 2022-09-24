@@ -46,56 +46,7 @@ extern "C" {
 }
 
 #include "ged/view/state.h"
-#define ALPHANUM_IMPL
-#include "../alphanum.h"
 #include "../ged_private.h"
-
-#if 0
-static int
-alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
-    struct bv_scene_group *ga = *(struct bv_scene_group **)a;
-    struct bv_scene_group *gb = *(struct bv_scene_group **)b;
-    return alphanum_impl(bu_vls_cstr(&ga->s_name), bu_vls_cstr(&gb->s_name), NULL);
-}
-#endif
-
-static int
-ged_draw_view(struct bview *v, int bot_threshold, int no_autoview, int blank_slate)
-{
-    struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
-
-    /* Bot threshold is managed as a per-view setting internally. */
-    if (bot_threshold >= 0) {
-	v->gv_s->bot_threshold = bot_threshold;
-    }
-
-    // Make sure the view knows how to update the obb
-    v->gv_bounds_update = &bg_view_bounds;
-
-    // Do an initial autoview so adaptive routines will have approximately
-    // the right starting point
-    if (blank_slate && !no_autoview) {
-	bv_autoview(v, BV_AUTOVIEW_SCALE_DEFAULT, 0);
-    }
-
-    // Do the actual drawing
-    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
-	bu_log("draw %s\n", bu_vls_cstr(&s->s_name));
-	draw_scene(s, v);
-    }
-
-    // Make sure what we've drawn is visible, unless we've a reason not to.
-    if (blank_slate && !no_autoview) {
-	bv_autoview(v, BV_AUTOVIEW_SCALE_DEFAULT, 0);
-    }
-
-    // Scene objects are created and stored. The application may now call each
-    // object's update callback to generate wireframes, triangles, etc. for
-    // that object based on current settings.  It is then the job of the dm to
-    // display the scene objects supplied by the view.
-    return BRLCAD_OK;
-}
 
 static int
 draw_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *data)
@@ -261,12 +212,12 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // view is an independent view - we just update it and return.
     if (cv->independent) {
 	BViewState *bvs = gedp->dbi_state->get_view_state(cv);
-	std::unordered_set<struct bview *> vset;
-	vset.insert(cv);
 	for (size_t i = 0; i < (size_t)argc; ++i)
 	    bvs->add_path(argv[i]);
+	std::unordered_set<struct bview *> vset;
+	vset.insert(cv);
 	bvs->redraw(&vs, vset, !(blank_slate && !no_autoview));
-	return ged_draw_view(cv, bot_threshold, no_autoview, blank_slate);
+	return BRLCAD_OK;
     }
 
     // If we have multiple views, we have to handle each view.  Most of the
@@ -289,7 +240,6 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	for (size_t i = 0; i < (size_t)argc; ++i)
 	    bv_it->first->add_path(argv[i]);
 	bv_it->first->redraw(&vs, bv_it->second, !(blank_slate && !no_autoview));
-	//ged_draw_view(v, bot_threshold, no_autoview, blank_slate);
     }
 
     return BRLCAD_OK;
