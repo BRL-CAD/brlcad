@@ -2215,6 +2215,11 @@ BViewState::scene_obj(
     // autoview)
     dbis->get_path_bbox(&sp->bmin, &sp->bmax, path_hashes);
 
+    // Adaptive also needs s_size to be set
+    sp->s_size = sp->bmax[X] - sp->bmin[X];
+    V_MAX(sp->s_size, sp->bmax[Y] - sp->bmin[Y]);
+    V_MAX(sp->s_size, sp->bmax[Z] - sp->bmin[Z]);
+
     // If we're drawing a subtraction and we're not overridden, set the
     // appropriate flag for dashed line drawing
     if (vs && !vs->draw_solid_lines_only) {
