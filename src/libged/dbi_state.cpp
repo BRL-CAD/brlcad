@@ -2157,13 +2157,12 @@ BViewState::scene_obj(
 			sp->curve_scale = -1; // Make sure a rework is triggered
 			objs.insert(sp);
 		    }
-		    if (!(*v_it)->gv_s->adaptive_plot_csg && have_adaptive && !bv_clear_view_obj(sp, *v_it)) {
+		    if (!(*v_it)->gv_s->adaptive_plot_csg && have_adaptive && bv_clear_view_obj(sp, *v_it)) {
 			bv_obj_stale(sp);
 			objs.insert(sp);
 		    }
 		}
 	    }
-#if 0
 	    if (sp->mesh_obj) {
 		for (v_it = views.begin(); v_it != views.end(); v_it++) {
 		    int have_adaptive = bv_obj_have_view_obj(sp, *v_it);
@@ -2171,13 +2170,12 @@ BViewState::scene_obj(
 			bv_obj_stale(sp);
 			objs.insert(sp);
 		    }
-		    if (!(*v_it)->gv_s->adaptive_plot_mesh && have_adaptive && !bv_clear_view_obj(sp, *v_it)) {
+		    if (!(*v_it)->gv_s->adaptive_plot_mesh && have_adaptive && bv_clear_view_obj(sp, *v_it)) {
 			bv_obj_stale(sp);
 			objs.insert(sp);
 		    }
 		}
 	    }
-#endif
 
 	    return NULL;
 	}
