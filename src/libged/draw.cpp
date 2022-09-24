@@ -138,7 +138,7 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
     struct rt_db_internal dbintern;
     RT_DB_INTERNAL_INIT(&dbintern);
     struct rt_db_internal *ip = &dbintern;
-    int ret = rt_db_get_internal(ip, dp, dbip, s->s_mat, d->res);
+    int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
     if (ret < 0)
 	return 0;
 
