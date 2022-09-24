@@ -333,7 +333,7 @@ set mged_help_data(tor-rcc)     {{torname newname}     {create an rcc from a tor
 set mged_help_data(tra)		$helplib_data(vo_tra)
 set mged_help_data(track)	{{<parameters>}	{adds tracks to database}}
 set mged_help_data(translate)	{{x y z}	{trans object to x,y, z}}
-set mged_help_data(tree)	{{[-c] [-i n] [-d n] [-o outfile] object(s)}	{print out a tree of all members of an object, or all members to depth n if -d option is supplied}}
+set mged_help_data(tree)	{{[-a] [-c] [-d n] [-i n] [-o outfile] [object(s)]} {print hierarchical tree of all displayed or specified objects}}
 set mged_help_data(unhide)	$helplib_data(wdb_unhide)
 set mged_help_data(units)	$helplib_data(wdb_units)
 set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}
