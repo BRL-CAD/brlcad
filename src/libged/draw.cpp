@@ -82,6 +82,28 @@ prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
     return 0;
 }
 
+static void
+draw_free_data(struct bv_scene_obj *s)
+{
+    /* Validate */
+    if (!s)
+	return;
+
+    if (s->s_path) {
+	struct db_full_path *sfp = (struct db_full_path *)s->s_path;
+	db_free_full_path(sfp);
+	BU_PUT(sfp, struct db_full_path);
+    }
+
+    /* free drawing info */
+    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+    if (!d)
+	return;
+    BU_PUT(d, struct draw_update_data_t);
+    s->s_i_data = NULL;
+}
+
+
 static int
 csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
 {
@@ -89,20 +111,53 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
     if (!s || !v)
 	return 0;
 
+    if (!v->gv_s->adaptive_plot_csg)
+	return 0;
+
     s->csg_obj = 1;
 
     bool rework = false;
-    // Check bot threshold
-    //if (s->bot_threshold != s->s_v->gv_s->bot_threshold)
-    //	rework = true;
+
+    struct bv_scene_obj *vo = bv_obj_for_view(s, v);
+    if (!vo) {
+    	vo = bv_obj_get_child(s);
+	bv_set_view_obj(s, v, vo);
+
+	// Make a copy of the draw info for vo.
+	struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+	struct draw_update_data_t *ld;
+	BU_GET(ld, struct draw_update_data_t);
+	ld->fp = (struct db_full_path *)s->s_path;
+	ld->dbip = d->dbip;
+	ld->tol = d->tol;
+	ld->ttol = d->ttol;
+	ld->mesh_c = d->mesh_c;
+	ld->res = d->res;
+	vo->s_i_data= (void *)ld;
+
+	vo->s_update_callback = &csg_wireframe_update;
+	vo->s_free_callback = &draw_free_data;
+
+	// Most of the view properties (color, size, etc.) are inherited from
+	// the parent
+	bv_obj_sync(vo, s);
+
+	// Make the names unique
+	bu_vls_sprintf(&vo->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_name));
+	vo->s_path = NULL;  // I don't think the vo objects will need the db_fullpath...
+	bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
+
+	rework = true;
+    }
+
 
     // If the object is not visible in the scene, don't change the data.  This
     // check is useful in orthographic camera mode, where we zoom in on a
     // narrow subset of the model and far away objects are still rendered in
     // full detail.  If we have a perspective matrix active don't make this
     // check, since far away objects outside the view obb will be visible.
-    //bu_log("min: %f %f %f max: %f %f %f\n", V3ARGS(s->bmin), V3ARGS(s->bmax));
-    if (!(v->gv_perspective > SMALL_FASTF) && !bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3))
+    //bu_log("min: %f %f %f max: %f %f %f\n", V3ARGS(vo->bmin), V3ARGS(vo->bmax));
+    if (!(v->gv_perspective > SMALL_FASTF) && !bg_sat_aabb_obb(vo->bmin, vo->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3))
 	return 0;
 
     // Check point scale
@@ -127,15 +182,15 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
 
     // Clear out existing vlists
     struct bu_list *p;
-    while (BU_LIST_WHILE(p, bu_list, &s->s_vlist)) {
+    while (BU_LIST_WHILE(p, bu_list, &vo->s_vlist)) {
 	BU_LIST_DEQUEUE(p);
 	struct bv_vlist *pv = (struct bv_vlist *)p;
 	BU_FREE(pv, struct bv_vlist);
     }
 
-    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
-    struct db_full_path *fp = (struct db_full_path *)s->s_path;
-    struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
+    struct draw_update_data_t *d = (struct draw_update_data_t *)vo->s_i_data;
+    struct db_full_path *fp = (struct db_full_path *)vo->s_path;
+    struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)vo->dp;
     struct db_i *dbip = d->dbip;
     struct rt_db_internal dbintern;
     RT_DB_INTERNAL_INIT(&dbintern);
@@ -145,33 +200,12 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
 	return 0;
 
     if (ip->idb_meth->ft_adaptive_plot) {
-	ip->idb_meth->ft_adaptive_plot(&s->s_vlist, ip, d->tol, v, s->s_size);
-	s->s_type_flags |= BV_CSG_LOD;
-	s->s_dlist_stale = 1;
+	ip->idb_meth->ft_adaptive_plot(&vo->s_vlist, ip, d->tol, v, vo->s_size);
+	vo->s_type_flags |= BV_CSG_LOD;
+	bv_obj_stale(s);// TODO - is this right?
     }
 
     return 1;
-}
-
-static void
-draw_free_data(struct bv_scene_obj *s)
-{
-    /* Validate */
-    if (!s)
-	return;
-
-    if (s->s_path) {
-	struct db_full_path *sfp = (struct db_full_path *)s->s_path;
-	db_free_full_path(sfp);
-	BU_PUT(sfp, struct db_full_path);
-    }
-
-    /* free drawing info */
-    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
-    if (!d)
-	return;
-    BU_PUT(d, struct draw_update_data_t);
-    s->s_i_data = NULL;
 }
 
 struct ged_full_detail_clbk_data {

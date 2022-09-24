@@ -549,49 +549,60 @@ dm_draw_labels(struct dm *dmp, struct bv_data_label_state *gdlsp, matp_t m2vmat)
 static void
 draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 {
-    if (s->s_flag == DOWN)
+    if (!s || !v || s->s_flag == DOWN)
 	return;
+
+    struct bv_scene_obj *vo = bv_obj_for_view(s, v);
+    if (!vo)
+	return;
+
+    bu_log("draw_scene_obj\n");
 
     // If this is a database object, it may have a view dependent
     // update to do.
-    if (s->s_update_callback)
-	(*s->s_update_callback)(s, v, 0);
+    if (vo->s_update_callback)
+	(*vo->s_update_callback)(s, v, 0);
 
     // Draw children. TODO - drawing children first may not
     // always be the desired behavior - might need interior and exterior
     // children tables to provide some control
-    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-	struct bv_scene_obj *sv = bv_obj_for_view(s_c, s->s_v);
+    for (size_t i = 0; i < BU_PTBL_LEN(&vo->children); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&vo->children, i);
+	// TODO - this is wrong, but we will need some kind of filter to manage
+	// not drawing children that are view specific and not current to the
+	// specified view...
+	struct bv_scene_obj *sv = bv_obj_for_view(s_c, v);
+	if (sv->s_v != v)
+	    continue;
 	draw_scene_obj(dmp, sv, v);
     }
 
     // Assign color attributes
-    if (s->s_iflag == UP) {
-	dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
+    if (vo->s_iflag == UP) {
+	dm_set_fg(dmp, 255, 255, 255, 0, vo->s_os->transparency);
     } else {
-	if (s->s_os->color_override) {
-	    dm_set_fg(dmp, s->s_os->color[0], s->s_os->color[1], s->s_os->color[2], 0, s->s_os->transparency);
+	if (vo->s_os->color_override) {
+	    dm_set_fg(dmp, vo->s_os->color[0], vo->s_os->color[1], vo->s_os->color[2], 0, vo->s_os->transparency);
 	} else {
-	    dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os->transparency);
+	    dm_set_fg(dmp, vo->s_color[0], vo->s_color[1], vo->s_color[2], 0, vo->s_os->transparency);
 	}
     }
-    dm_set_line_attr(dmp, s->s_os->s_line_width, s->s_soldash);
+    dm_set_line_attr(dmp, vo->s_os->s_line_width, vo->s_soldash);
 
 
     // Primary object drawing
-    dm_draw_obj(dmp, s);
+    dm_draw_obj(dmp, vo);
 
     if (!(s->s_type_flags & BV_MESH_LOD)) {
-	dm_add_arrows(dmp, s);
+	dm_add_arrows(dmp, vo);
     }
 
     if (s->s_type_flags & BV_AXES) {
-	dm_draw_scene_axes(dmp, s);
+	dm_draw_scene_axes(dmp, vo);
     }
 
     if (s->s_type_flags & BV_LABELS) {
-	dm_draw_label(dmp, s);
+	dm_draw_label(dmp, vo);
     }
 
 }
