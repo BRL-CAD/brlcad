@@ -49,13 +49,8 @@ draw_points(struct bv_scene_obj *s)
     if (!d)
 	return BRLCAD_OK; /* nothing to do is fine */
 
-#if 0
     struct db_full_path *fp = (struct db_full_path *)s->s_path;
-    if (!fp)
-	return BRLCAD_OK; /* nothing to do is fine */
-    struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
-#endif
-    struct directory *dp = (struct directory *)s->dp;
+    struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
     if (!dp)
 	return BRLCAD_OK; /* nothing to do is fine */
 
