@@ -110,16 +110,18 @@ CADApp::do_view_changed(unsigned long long flags)
 	// view objects and lists
 	std::unordered_map<BViewState *, std::unordered_set<struct bview *>> vmap;
 	struct bu_ptbl *views = bv_set_views(&mdl->gedp->ged_views);
-	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	    struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	    BViewState *bvs = mdl->gedp->dbi_state->get_view_state(v);
-	    if (!bvs)
-		continue;
-	    vmap[bvs].insert(v);
-	}
-	std::unordered_map<BViewState *, std::unordered_set<struct bview *>>::iterator bv_it;
-	for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
-	    bv_it->first->redraw(NULL, bv_it->second, 1);
+	if (mdl->gedp->dbi_state) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+		struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+		BViewState *bvs = mdl->gedp->dbi_state->get_view_state(v);
+		if (!bvs)
+		    continue;
+		vmap[bvs].insert(v);
+	    }
+	    std::unordered_map<BViewState *, std::unordered_set<struct bview *>>::iterator bv_it;
+	    for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
+		bv_it->first->redraw(NULL, bv_it->second, 1);
+	    }
 	}
     }
 
