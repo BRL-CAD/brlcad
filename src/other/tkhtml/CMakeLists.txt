@@ -1,3 +1,9 @@
+# Minimum required version of CMake
+cmake_minimum_required(VERSION 3.18)
+
+# set CMake project name
+project(TKHTML)
+
 if (TK_SYSTEM_GRAPHICS MATCHES "x11")
   find_package(X11)
 endif (TK_SYSTEM_GRAPHICS MATCHES "x11")

@@ -37,7 +37,7 @@
 ###
 project(REGEX)
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.18)
 
 # install(CODE) uses generator expressions - requires 3.14 or newer.
 # We want it to be on, but until we can bump our minimum requirement
