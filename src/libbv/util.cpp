@@ -787,7 +787,6 @@ bv_obj_create(struct bview *v, int type)
 	return NULL;
 
     struct bv_scene_obj *s = NULL;
-    struct bu_ptbl *otbl = NULL;
 
     // What we get and from where is based on the requested obj type and the
     // view type.  If the caller is not asking for a local object, we will try
@@ -797,25 +796,38 @@ bv_obj_create(struct bview *v, int type)
     // regardless of whether or not a shared repository is available.
     struct bv_scene_obj *free_scene_obj = NULL;
     struct bu_list *vlfree = NULL;
-    if (type & BV_LOCAL_OBJS || v->independent || !v->vset)  {
+    if (type & BV_LOCAL_OBJS || type & BV_CHILD_OBJS || v->independent || !v->vset)  {
 	free_scene_obj = v->gv_objs.free_scene_obj;
-	if (type & BV_DB_OBJS) {
-	    otbl = v->gv_objs.db_objs;
-	} else {
-	    otbl = v->gv_objs.view_objs;
-	}
 	vlfree = &v->gv_objs.gv_vlfree;
     } else {
 	free_scene_obj = v->vset->i->free_scene_obj;
+	vlfree = &v->vset->i->vlfree;
+    }
+    if (!free_scene_obj)
+	return NULL;
+
+    // The table has an additional complication - we don't want child objects
+    // to be stored in it, because they are part of the scene only by virtue
+    // of their parent object
+    struct bu_ptbl *otbl = NULL;
+    if (type & BV_LOCAL_OBJS || type & BV_CHILD_OBJS || v->independent || !v->vset)  {
+	if (!(type & BV_CHILD_OBJS)) {
+	    if (type & BV_DB_OBJS) {
+		otbl = v->gv_objs.db_objs;
+	    } else {
+		otbl = v->gv_objs.view_objs;
+	    }
+	}
+    } else {
 	if (type & BV_DB_OBJS) {
 	    otbl = &v->vset->i->shared_db_objs;
 	} else {
 	    otbl = &v->vset->i->shared_view_objs;
 	}
-	vlfree = &v->vset->i->vlfree;
     }
     if (!free_scene_obj)
 	return NULL;
+
 
     // We know where we're going to get the object from - get it
     if (BU_LIST_IS_EMPTY(&free_scene_obj->l)) {
@@ -825,15 +837,16 @@ bv_obj_create(struct bview *v, int type)
 	s = BU_LIST_NEXT(bv_scene_obj, &free_scene_obj->l);
 	BU_LIST_DEQUEUE(&((s)->l));
     }
-    BU_LIST_INIT( &((s)->s_vlist) );
 
-    // Do the initializations
+    // Zero out callback pointers
     s->s_type_flags = 0;
-    BU_LIST_INIT(&(s->s_vlist));
-    BU_VLS_INIT(&s->s_name);
-    bu_vls_trunc(&s->s_name, 0);
-    s->s_path = NULL;
-    BU_VLS_INIT(&s->s_uuid);
+    s->s_free_callback = NULL;
+    s->s_dlist_free_callback = NULL;
+
+    // Use reset to do most of the initialization
+    bv_obj_reset(s);
+
+    // set uuid based on type
     if (type & BV_LOCAL_OBJS) {
 	if (type & BV_DB_OBJS) {
 	    bu_vls_sprintf(&s->s_uuid, "sl:%zd", BU_PTBL_LEN(otbl));
@@ -847,50 +860,14 @@ bv_obj_create(struct bview *v, int type)
 	    bu_vls_sprintf(&s->s_uuid, "v:%zd", BU_PTBL_LEN(otbl));
 	}
     }
-    MAT_IDN(s->s_mat);
-    s->s_size = 0;
+
+    // Set view
     s->s_v = v;
 
-    VSETALL(s->bmin, INFINITY);
-    VSETALL(s->bmax, -INFINITY);
-    s->have_bbox = 0;
-    s->s_size = 0;
-    s->s_csize = 0;
-    VSETALL(s->s_center, 0);
-
-    s->s_i_data = NULL;
-    s->s_update_callback = NULL;
-    s->s_free_callback = NULL;
-
-    s->adaptive_wireframe = 0;
-    s->csg_obj = 0;
-    s->mesh_obj = 0;
-    s->view_scale = 0.0;
-    s->bot_threshold = 0;
-    s->curve_scale = 0;
-    s->point_scale = 0;
-
-    s->draw_data = NULL;
-
-    s->s_flag = UP;
-    s->s_iflag = DOWN;
-    VSET(s->s_color, 255, 0, 0);
-    s->s_soldash = 0;
-    s->s_arrow = 0;
-
-    struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
-    bv_obj_settings_sync(&s->s_local_os, &defaults);
-    s->s_os = &s->s_local_os;
-
-    if (!BU_PTBL_IS_INITIALIZED(&s->children)) {
-	BU_PTBL_INIT(&s->children);
-    }
-    bu_ptbl_reset(&s->children);
-
+    // Set this object's containers
     s->free_scene_obj = free_scene_obj;
     s->vlfree = vlfree;
     s->otbl = otbl;
-    s->current = 0;
 
     return s;
 }
@@ -905,7 +882,8 @@ bv_obj_get(struct bview *v, int type)
     if (!s)
 	return NULL;
 
-    bu_ptbl_ins(s->otbl, (long *)s);
+    if (s->otbl)
+	bu_ptbl_ins(s->otbl, (long *)s);
 
     return s;
 }
@@ -989,23 +967,26 @@ bv_obj_reset(struct bv_scene_obj *s)
 	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
 	    bv_obj_put(s_c);
 	}
-	bu_ptbl_reset(&s->children);
+    } else {
+	BU_PTBL_INIT(&s->children);
     }
+    bu_ptbl_reset(&s->children);
 
-    if (s->i) {
+    if (s->i)
 	s->i->vobjs.clear();
-    }
 
     // If we have a callback for the internal data, use it
     if (s->s_free_callback)
 	(*s->s_free_callback)(s);
+    s->s_free_callback = NULL;
 
     // If we have a callback for the display list data, use it
     if (s->s_dlist_free_callback)
 	(*s->s_dlist_free_callback)(s);
+    s->s_dlist_free_callback = NULL;
 
     // If we have a label, do the label freeing steps
-    // TODO - properly speaking this should be using the free callback rather
+    // TODO - this should be using the free callback rather
     // than special casing...
     if (s->s_type_flags & BV_LABELS) {
 	struct bv_label *la = (struct bv_label *)s->s_i_data;
@@ -1019,23 +1000,44 @@ bv_obj_reset(struct bv_scene_obj *s)
     }
     BU_LIST_INIT(&(s->s_vlist));
 
-    s->s_v = NULL;
-    s->current = 0;
-    VSETALL(s->bmin, INFINITY);
+    if (!BU_VLS_IS_INITIALIZED(&s->s_name))
+	BU_VLS_INIT(&s->s_name);
+    bu_vls_trunc(&s->s_name, 0);
+
+    if (!BU_VLS_IS_INITIALIZED(&s->s_uuid))
+	BU_VLS_INIT(&s->s_uuid);
+    bu_vls_trunc(&s->s_uuid, 0);
+
+    struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
+    bv_obj_settings_sync(&s->s_local_os, &defaults);
+    s->s_os = &s->s_local_os;
+
+    MAT_IDN(s->s_mat);
+    VSET(s->s_color, 255, 0, 0);
     VSETALL(s->bmax, -INFINITY);
-    s->have_bbox = 0;
-    s->s_size = 0;
-    s->s_csize = 0;
+    VSETALL(s->bmin, INFINITY);
     VSETALL(s->s_center, 0);
     s->adaptive_wireframe = 0;
-    s->csg_obj = 0;
-    s->mesh_obj = 0;
-    s->view_scale = 0;
     s->bot_threshold = 0;
+    s->csg_obj = 0;
+    s->current = 0;
     s->curve_scale = 0;
-    s->point_scale = 0;
-
+    s->dp = NULL;
     s->draw_data = NULL;
+    s->have_bbox = 0;
+    s->mesh_obj = 0;
+    s->point_scale = 0;
+    s->s_arrow = 0;
+    s->s_csize = 0;
+    s->s_flag = UP;
+    s->s_i_data = NULL;
+    s->s_iflag = DOWN;
+    s->s_path = NULL;
+    s->s_size = 0;
+    s->s_soldash = 0;
+    s->s_update_callback = NULL;
+    s->s_v = NULL;
+    s->view_scale = 0;
 }
 
 #define FREE_BV_SCENE_OBJ(p, fp) { \

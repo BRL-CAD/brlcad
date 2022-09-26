@@ -183,6 +183,7 @@ struct bview;
 #define BV_DB_OBJS 0x01
 #define BV_VIEW_OBJS 0x02
 #define BV_LOCAL_OBJS 0x04
+#define BV_CHILD_OBJS 0x08
 
 struct bv_scene_obj_internal;
 
