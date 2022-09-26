@@ -60,6 +60,7 @@ set(BOT_SRCS
   bot_vertex_fuse.c
   edbot.c
   check.cpp
+  decimate.cpp
   extrude.cpp
   remesh.cpp
   ../../libbu/fort.c
