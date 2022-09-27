@@ -909,49 +909,17 @@ bv_obj_get_child(struct bv_scene_obj *sp)
 	    BU_LIST_DEQUEUE(&((s)->l));
 	}
     }
-    BU_LIST_INIT( &((s)->s_vlist) );
 
-    // Do the initializations
-    s->s_type_flags = 0;
-    BU_LIST_INIT(&(s->s_vlist));
-    if (!BU_VLS_IS_INITIALIZED(&s->s_name))
-	BU_VLS_INIT(&s->s_name);
-    bu_vls_trunc(&s->s_name, 0);
-    s->s_path = NULL;
-    if (!BU_VLS_IS_INITIALIZED(&s->s_uuid))
-	BU_VLS_INIT(&s->s_uuid);
+    // Use reset to do most of the initialization
+    bv_obj_reset(s);
+
+
     bu_vls_sprintf(&s->s_uuid, "child:%s:%zd", bu_vls_cstr(&sp->s_uuid), BU_PTBL_LEN(&sp->children));
-    MAT_IDN(s->s_mat);
 
     s->s_v = sp->s_v;
-
     s->dp = sp->dp;
-
-    s->s_i_data = NULL;
-    s->s_update_callback = NULL;
-    s->s_free_callback = NULL;
-
-    s->adaptive_wireframe = 0;
-    s->view_scale = 0.0;
-
-    s->s_flag = UP;
-    s->s_iflag = DOWN;
-    VSET(s->s_color, 255, 0, 0);
-    s->s_soldash = 0;
-    s->s_arrow = 0;
-
-    struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
-    bv_obj_settings_sync(&s->s_local_os, &defaults);
-    s->s_os = &s->s_local_os;
-
-    if (!BU_PTBL_IS_INITIALIZED(&s->children)) {
-	BU_PTBL_INIT(&s->children);
-    }
-    bu_ptbl_reset(&s->children);
-
     s->free_scene_obj = sp->free_scene_obj;
     s->vlfree = sp->vlfree;
-    s->otbl = &sp->children;
 
     bu_ptbl_ins(&sp->children, (long *)s);
 
