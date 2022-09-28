@@ -13,10 +13,11 @@ changes made.  See document footer for additional details.
 --- 2022-XX-XX  Release 7.34.X                                     ---
 ----------------------------------------------------------------------
 
+* added aircode reporting support to the lc command - Sean Morrison
 * updated Tcl/Tk to version 8.6.12 - Cliff Yapp
 * updated netpbm to version 10.73.40 - Cliff Yapp
 * updated zlib to version 1.2.12 - Cliff Yapp
-* fixed mged -c unknown variable windows on keypresses- Sean Morrison
+* fixed mged -c 'unknown variable' warning dialogs - Sean Morrison
 * improved mged & archer html command help formatting - Sean Morrison
 * fixed archer empty string ("") loading behavior - Cliff Yapp
 * rt* tools' -P option accepts negative #core counts - Sean Morrison

@@ -44,6 +44,7 @@ struct region_record
     const char *region_id;
     const char *material_id;
     const char *los;
+    const char *aircode;
     const char *obj_name;
     const char *obj_parent;
 };
@@ -60,10 +61,15 @@ cmp_regions(const void *a, const void *b, void *UNUSED(arg))
     int cmp;
 
     cmp = bu_strcmp(r1->region_id, r2->region_id);
-    if (cmp) { return cmp; }
+    if (cmp)
+	return cmp;
     cmp = bu_strcmp(r1->material_id, r2->material_id);
-    if (cmp) { return cmp; }
+    if (cmp)
+	return cmp;
     cmp = bu_strcmp(r1->los, r2->los);
+    if (cmp)
+	return cmp;
+    cmp = bu_strcmp(r1->aircode, r2->aircode);
     return cmp;
 }
 
@@ -91,15 +97,19 @@ sort_regions(const void *a, const void *b, void *arg)
 	case 3:
 	    temp1=atoi(r1->los);
 	    temp2=atoi(r2->los);
+	    goto continue_run;
+	case 4:
+	    temp1=atoi(r1->aircode);
+	    temp2=atoi(r2->aircode);
 continue_run:
 	    if ( temp1 > temp2 )
 		return 1;
 	    if ( temp1 == temp2 )
 		return 0;
 	    return -1;
-	case 4:
-	    return bu_strcmp(r1->obj_name, r2->obj_name);
 	case 5:
+	    return bu_strcmp(r1->obj_name, r2->obj_name);
+	case 6:
 	    return bu_strcmp(r1->obj_parent, r2->obj_parent);
     }
     /* This should never be executed */
@@ -174,6 +184,7 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
     size_t region_id_len_max = 2;
     size_t material_id_len_max = 3;
     size_t los_len_max = 3;
+    size_t aircode_len_max = 3;
     size_t obj_len_max = 6;
 
     /* For the output at the end */
@@ -335,6 +346,8 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 	V_MAX(material_id_len_max, strlen(regions[j].material_id));
 	regions[j].los = get_attr(&avs, "los");
 	V_MAX(los_len_max, strlen(regions[j].los));
+	regions[j].aircode = get_attr(&avs, "aircode");
+	V_MAX(aircode_len_max, strlen(regions[j].aircode));
 	regions[j].obj_name = dp_curr_dir->d_namep;
 	V_MAX(obj_len_max, strlen(regions[j].obj_name));
 
@@ -367,8 +380,12 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 		    im = jm;
 		    continue;
 		}
-		if (bu_strcmp(regions[im].material_id, regions[jm].material_id)) mismatch++;
-		if (bu_strcmp(regions[im].los, regions[jm].los)) mismatch++;
+		if (bu_strcmp(regions[im].material_id, regions[jm].material_id))
+		    mismatch++;
+		if (bu_strcmp(regions[im].los, regions[jm].los))
+		    mismatch++;
+		if (bu_strcmp(regions[im].aircode, regions[jm].aircode))
+		    mismatch++;
 		jm++;
 	    }
 	}
@@ -394,7 +411,8 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 			ssd += BU_STR_EQUAL(regions[im].obj_parent, regions[jm].obj_parent);
 			ssd += BU_STR_EQUAL(regions[im].material_id, regions[jm].material_id);
 			ssd += BU_STR_EQUAL(regions[im].los, regions[jm].los);
-			if (ssd != 3) {
+			ssd += BU_STR_EQUAL(regions[im].aircode, regions[jm].aircode);
+			if (ssd != 4) {
 			    /* Found match, skip criteria not satisfied - set ignore flags */
 			    regions[im].ignore = 0;
 			    regions[jm].ignore = 0;
@@ -440,10 +458,11 @@ print_results:
     }
 
     bu_vls_printf(output, "List length: %zu\n", BU_PTBL_LEN(&results2) - ignored_cnt);
-    bu_vls_printf(output, "%-*s %-*s %-*s %-*s %s\n",
+    bu_vls_printf(output, "%-*s %-*s %-*s %-*s %-*s %s\n",
 		  (int)region_id_len_max + 1, "ID",
 		  (int)material_id_len_max + 1, "MAT",
 		  (int)los_len_max, "LOS",
+		  (int)aircode_len_max, "AIR",
 		  (int)obj_len_max,  "REGION",
 		  "PARENT");
     end = BU_PTBL_LEN(&results2);
@@ -454,10 +473,11 @@ print_results:
     }
     for (i = start; i != end; i += incr) {
 	if (regions[i].ignore) { continue; }
-	bu_vls_printf(output, "%-*s %-*s %-*s %-*s %s\n",
+	bu_vls_printf(output, "%-*s %-*s %-*s %-*s %-*s %s\n",
 		      (int)region_id_len_max + 1, regions[i].region_id,
 		      (int)material_id_len_max + 1, regions[i].material_id,
 		      (int)los_len_max, regions[i].los,
+		      (int)aircode_len_max, regions[i].aircode,
 		      (int)obj_len_max, regions[i].obj_name,
 		      regions[i].obj_parent);
     }
