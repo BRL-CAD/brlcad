@@ -165,6 +165,7 @@ QtCADView::do_view_changed()
 void
 QtCADView::need_update(unsigned long long)
 {
+    BV_DRAW("QtCADView::need_update", 1);
     QTCAD_SLOT("QtCADView::need_update", 1);
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {

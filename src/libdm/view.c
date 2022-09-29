@@ -549,6 +549,7 @@ dm_draw_labels(struct dm *dmp, struct bv_data_label_state *gdlsp, matp_t m2vmat)
 static void
 draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 {
+    BV_DRAW("libdm:draw_scene_obj called", 1);
     if (!s || !v || s->s_flag == DOWN)
 	return;
 
@@ -556,7 +557,7 @@ draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
     if (!vo)
 	return;
 
-    bu_log("draw_scene_obj\n");
+    BV_DRAW("libdm:draw_scene_obj drawing", 1);
 
     // If this is a database object, it may have a view dependent
     // update to do.
@@ -610,6 +611,7 @@ draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 void
 dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, double base2local, double local2base)
 {
+    BV_DRAW("libdm:dm_draw_viewobjs", 2);
     struct dm *dmp = (struct dm *)v->dmp;
     int width = dm_get_width(dmp);
     fastf_t sf = (fastf_t)(v->gv_size) / (fastf_t)width;
@@ -705,6 +707,7 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 void
 dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_draw_custom)(struct bview *, double, double, void *), void *u_data)
 {
+    BV_DRAW("libdm:dm_draw_objs", 1);
     if (dm_draw_custom) {
 	(*dm_draw_custom)(v, base2local, local2base, u_data);
 	return;

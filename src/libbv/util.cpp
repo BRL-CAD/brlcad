@@ -875,6 +875,7 @@ bv_obj_create(struct bview *v, int type)
 struct bv_scene_obj *
 bv_obj_get(struct bview *v, int type)
 {
+    BV_DRAW("bv_obj_get_child", 1);
     if (!v)
 	return NULL;
 
@@ -891,6 +892,7 @@ bv_obj_get(struct bview *v, int type)
 struct bv_scene_obj *
 bv_obj_get_child(struct bv_scene_obj *sp)
 {
+    BV_DRAW("bv_obj_get_child", 1);
     if (!sp)
 	return NULL;
 
