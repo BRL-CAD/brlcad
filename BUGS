@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* garbage_collect -c wipes out custom attributes on _GLOBAL
+  > attr set _GLOBAL foo bar
+  > garbage_collect -c
+
 * Visual error when drawing using -S -m1 of a region with the same solid
   subtracted and then unioned.
 
