@@ -164,6 +164,7 @@ set(man1_EN
   rt.xml
   rtarea.xml
   rtcheck.xml
+  rtdepth.xml
   rtedge.xml
   rtexample.xml
   rtg3.xml
