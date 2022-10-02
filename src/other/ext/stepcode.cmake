@@ -15,7 +15,7 @@ THIRD_PARTY(stepcode SC stepcode sc_DESCRIPTION
 if(BRLCAD_SC_BUILD)
 
   set(SC_MAJOR_VERSION 0)
-  set(SC_MINOR_VERSION 9)
+  set(SC_MINOR_VERSION 8)
   set(SC_PATCH_VERSION 1)
   set(SC_VERSION ${SC_MAJOR_VERSION}.${SC_MINOR_VERSION}.${SC_PATCH_VERSION})
 
@@ -73,9 +73,6 @@ if(BRLCAD_SC_BUILD)
 
   # Tell the parent build about files and libraries
   set(STEPCODE_LIBS express stepcore stepeditor stepdai steputils)
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/src/base)
-    set(STEPCODE_LIBS ${STEPCODE_LIBS} base)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/src/base)
   foreach(SCLIB ${STEPCODE_LIBS})
     set_lib_vars(SC ${SCLIB} "${SC_MAJOR_VERSION}" "${SC_MINOR_VERSION}" "${SC_PATCH_VERSION}")
     ExternalProject_Target(SHARED ${SCLIB} STEPCODE_BLD ${STEPCODE_INSTDIR}
@@ -226,35 +223,10 @@ if(BRLCAD_SC_BUILD)
     ordered_attrs.h
     sc_export.h
     )
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/src/base)
-    set(STEPCODE_HDRS
-      ${STEPCODE_HDRS}
-      base/judy.h
-      base/judyL2Array.h
-      base/judyLArray.h
-      base/judyS2Array.h
-      base/judySArray.h
-      base/path2str.h
-      base/sc_benchmark.h
-      base/sc_getopt.h
-      base/sc_memmgr.h
-      base/sc_mkdir.h
-      base/sc_trace_fprintf.h
-      )
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/src/base)
 
-  # To allow main to be used with upstream stepcode for testing, support some variability
-  # what we look for in the header set.  (This will get more extensive in the future and
-  # will need to become more sophisticated, but for now just check the current files)
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/include/sc_cf.h.in)
-    set(STEPCODE_HDRS ${STEPCODE_HDRS} sc_cf.h)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/include/sc_cf.h.in)
   if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/include/config.h.in)
     set(STEPCODE_HDRS ${STEPCODE_HDRS} config.h)
   endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/include/config.h.in)
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/include/sc_stdbool.h)
-    set(STEPCODE_HDRS ${STEPCODE_HDRS} sc_stdbool.h)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/include/sc_stdbool.h)
 
   ExternalProject_ByProducts(stepcore STEPCODE_BLD ${STEPCODE_INSTDIR} ${INCLUDE_DIR}/stepcode
     ${STEPCODE_HDRS}
@@ -262,9 +234,6 @@ if(BRLCAD_SC_BUILD)
 
   set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} stepcode  CACHE STRING "Bundled system include dirs" FORCE)
 
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/src/base)
-    set(STEPCODE_BASE_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/base CACHE STRING "Building bundled STEPCODE" FORCE)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/src/base)
   set(STEPCODE_DAI_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/cldai CACHE STRING "Building bundled STEPCODE" FORCE)
   set(STEPCODE_EDITOR_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/cleditor CACHE STRING "Building bundled STEPCODE" FORCE)
   set(STEPCODE_STEPCORE_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/clstepcore CACHE STRING "Building bundled STEPCODE" FORCE)
@@ -273,9 +242,6 @@ if(BRLCAD_SC_BUILD)
   set(STEPCODE_EXPRESS_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode/express CACHE STRING "Building bundled STEPCODE" FORCE)
   set(STEPCODE_INCLUDE_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/stepcode CACHE STRING "Building bundled STEPCODE" FORCE)
 
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/src/base)
-    set(STEPCODE_BASE_LIBRARY base CACHE STRING "Building bundled STEPCODE" FORCE)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stepcode/src/base)
   set(STEPCODE_EXPRESS_LIBRARY express CACHE STRING "Building bundled STEPCODE" FORCE)
   set(STEPCODE_EXPPP_LIBRARY exppp CACHE STRING "Building bundled STEPCODE" FORCE)
   set(STEPCODE_CORE_LIBRARY stepcore CACHE STRING "Building bundled STEPCODE" FORCE)
@@ -289,7 +255,6 @@ if(BRLCAD_SC_BUILD)
   set(STEPCODE_INCLUDE_DIRS
     ${STEPCODE_DIR}
     ${STEPCODE_INCLUDE_DIR}
-    ${STEPCODE_BASE_DIR}
     ${STEPCODE_STEPCORE_DIR}
     ${STEPCODE_EDITOR_DIR}
     ${STEPCODE_UTILS_DIR}
@@ -297,7 +262,6 @@ if(BRLCAD_SC_BUILD)
     CACHE STRING "Directories containing STEPCODE headers." FORCE)
 
   set(STEPCODE_LIBRARIES
-    ${STEPCODE_BASE_LIBRARY}
     ${STEPCODE_EXPRESS_LIBRARY}
     ${STEPCODE_EXPPP_LIBRARY}
     ${STEPCODE_CORE_LIBRARY}

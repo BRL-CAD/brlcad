@@ -1,0 +1,31 @@
+#ifndef SCL_CF_H
+#define SCL_CF_H
+
+/**** Define statements for CMake ****/
+#cmakedefine SC_VERSION "@SC_VERSION@"
+#cmakedefine HAVE_NDIR_H 1
+#cmakedefine HAVE_STDINT_H 1
+#cmakedefine HAVE_SYS_STAT_H 1
+#cmakedefine HAVE_SYS_PARAM_H 1
+#cmakedefine HAVE_SYSENT_H 1
+#cmakedefine HAVE_UNISTD_H 1
+#cmakedefine HAVE_DIRENT_H 1
+#cmakedefine HAVE_STDBOOL_H 1
+#cmakedefine HAVE_PROCESS_H 1
+#cmakedefine HAVE_IO_H 1
+
+#cmakedefine SC_TRACE_FPRINTF 1
+
+#cmakedefine HAVE_ABS 1
+#cmakedefine HAVE_MEMCPY 1
+#cmakedefine HAVE_MEMMOVE 1
+#cmakedefine HAVE_GETOPT 1
+#cmakedefine HAVE_VSNPRINTF 1
+
+#cmakedefine HAVE_SSIZE_T 1
+
+#cmakedefine HAVE_STD_THREAD 1
+#cmakedefine HAVE_STD_CHRONO 1
+#cmakedefine HAVE_NULLPTR 1
+
+#endif /* SCL_CF_H */

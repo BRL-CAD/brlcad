@@ -4,7 +4,7 @@
 
 #include "complexSupport.h"
 
-void use_ref(Schema, Express, FILES *);
+void use_ref( Schema, Express, FILES * );
 
 /******************************************************************
  **  SCHEMA SECTION                      **/
@@ -22,75 +22,76 @@ void use_ref(Schema, Express, FILES *);
  ** organization of the schemas in the input Express
  ******************************************************************/
 
-void SCOPEPrint(Scope scope, FILES *files, Schema schema)
-{
-    Linked_List list = SCOPEget_entities_superclass_order(scope);
-    Linked_List function_list = SCOPEget_functions(scope);
-    Linked_List rule_list = SCOPEget_rules(scope);
+void SCOPEPrint( Scope scope, FILES * files, Schema schema ) {
+    Linked_List list = SCOPEget_entities_superclass_order( scope );
+    Linked_List function_list = SCOPEget_functions( scope );
+    Linked_List rule_list = SCOPEget_rules( scope );
     DictionaryEntry de;
     Type i;
     int redefs = 0;// index = 0;
+    int skipped;
 
-    /* Defined Types based on SIMPLE types */
-    SCOPEdo_types(scope, t, de)
-    if((t->search_id == CANPROCESS)
-            && !(TYPEis_enumeration(t) || TYPEis_select(t) || TYPEis_aggregate(t))
-            && (TYPEget_ancestor(t) == NULL)) {
-        TYPEprint_descriptions(t, files, schema);
-        t->search_id = PROCESSED;
-    }
-    SCOPEod
+    while( 1 ) {
+        skipped = 0;
 
-    /* Defined Types with defined ancestor head
-     * TODO: recursive approach
-     */
-    SCOPEdo_types(scope, t, de)
-    if((t->search_id == CANPROCESS)
-            && !(TYPEis_enumeration(t) || TYPEis_select(t) || TYPEis_aggregate(t))
-            && ((i = TYPEget_head(t)) != NULL)) {
-        if(i->search_id == PROCESSED) {
-            TYPEprint_descriptions(t, files, schema);
+        SCOPEdo_types( scope, t, de )
+        if( TYPEis_enumeration( t ) || TYPEis_select( t ) || TYPEis_aggregate( t ) ) {
+            continue;
+        }
+
+        i = TYPEget_head( t );
+        if( ( !i || i->search_id == PROCESSED )
+                && t->search_id == CANPROCESS ) {
+            TYPEprint_descriptions( t, files, schema );
             t->search_id = PROCESSED;
+        } else if( t->search_id == CANPROCESS ) {
+            skipped++;
+        }
+
+        SCOPEod
+
+        if( !skipped ) {
+            break;
         }
     }
-    SCOPEod
 
     /* fill in the values for the type descriptors */
     /* and print the enumerations */
     //fprintf( files -> inc, "\n/*\t**************  TYPES  \t*/\n" );
     //fprintf( files -> lib, "\n/*\t**************  TYPES  \t*/\n" );
-    SCOPEdo_types(scope, t, de)
+    SCOPEdo_types( scope, t, de )
     // First check for one exception:  Say enumeration type B is defined
     // to be a rename of enum A.  If A is in this schema but has not been
     // processed yet, we must wait till it's processed first.  The reason
     // is because B will basically be defined with a couple of typedefs to
     // the classes which represent A.  (To simplify, we wait even if A is
     // in another schema, so long as it's been processed.)
-    if((t->search_id == CANPROCESS)
-            && (TYPEis_enumeration(t))
-            && ((i = TYPEget_ancestor(t)) != NULL)
-            && (i->search_id >= CANPROCESS)) {
+    if( ( t->search_id == CANPROCESS )
+            && ( TYPEis_enumeration( t ) )
+            && ( ( i = TYPEget_ancestor( t ) ) != NULL )
+            && ( i->search_id >= CANPROCESS ) ) {
         redefs = 1;
     }
     SCOPEod
 
-    SCOPEdo_types(scope, t, de)
+    SCOPEdo_types( scope, t, de )
+    if( TYPEis_select( t ) || TYPEis_aggregate( t ) ) {
+        continue;
+    }
+
     // Do the non-redefined enumerations:
-    if((t->search_id == CANPROCESS)
-            && !(TYPEis_enumeration(t) && TYPEget_head(t))) {
-        TYPEprint_descriptions(t, files, schema);
-        if(!TYPEis_select(t)) {
-            // Selects have a lot more processing and are done below.
-            t->search_id = PROCESSED;
-        }
+    if( ( t->search_id == CANPROCESS )
+            && !( TYPEis_enumeration( t ) && TYPEget_head( t ) ) ) {
+        TYPEprint_descriptions( t, files, schema );
+        t->search_id = PROCESSED;
     }
     SCOPEod;
 
     // process redifined enumerations
-    if(redefs) {
-        SCOPEdo_types(scope, t, de)
-        if(t->search_id == CANPROCESS && TYPEis_enumeration(t)) {
-            TYPEprint_descriptions(t, files, schema);
+    if( redefs ) {
+        SCOPEdo_types( scope, t, de )
+        if( t->search_id == CANPROCESS && TYPEis_enumeration( t ) ) {
+            TYPEprint_descriptions( t, files, schema );
             t->search_id = PROCESSED;
         }
         SCOPEod;
@@ -101,36 +102,46 @@ void SCOPEPrint(Scope scope, FILES *files, Schema schema)
     // Note - say we have sel B, rename of sel A (as above by enum's).  Here
     // we don't have to worry about printing B before A.  This is checked in
     // TYPEselect_print().
-    SCOPEdo_types(scope, t, de)
-    if(t->search_id == CANPROCESS) {
+    SCOPEdo_types( scope, t, de )
+    if( t->search_id == CANPROCESS  && TYPEis_select( t ) ) {
         // Only selects haven't been processed yet and may still be set to
         // CANPROCESS.
         //FIXME this function is not implemented!
 //         TYPEselect_print( t, files, schema );
+        // TODO: due to conditional error we were previously executing this above without realising
+        TYPEprint_descriptions( t, files, schema );
         t->search_id = PROCESSED;
     }
     SCOPEod;
 
     // process each entity. This must be done *before* typedefs are defined
-    LISTdo(list, e, Entity);
-    if(e->search_id == CANPROCESS) {
-        ENTITYPrint(e, files);
+    LISTdo( list, e, Entity );
+    if( e->search_id == CANPROCESS ) {
+        ENTITYPrint( e, files );
         e->search_id = PROCESSED;
     }
     LISTod;
-    LISTfree(list);
+    LISTfree( list );
 
     // process each function. This must be done *before* typedefs are defined
-    LISTdo(function_list, f, Function);
-    FUNCPrint(f, files);
+    LISTdo( function_list, f, Function );
+    FUNCPrint( f, files );
     LISTod;
-    LISTfree(function_list);
+    LISTfree( function_list );
 
     // process each rule. This must be done *before* typedefs are defined
-    LISTdo(rule_list, r, Rule);
-    RULEPrint(r, files);
+    LISTdo( rule_list, r, Rule );
+    RULEPrint( r, files );
     LISTod;
-    LISTfree(rule_list);
+    LISTfree( rule_list );
+
+    // TODO: check dependencies
+    SCOPEdo_types( scope, t, de )
+    if( t->search_id == CANPROCESS && TYPEis_aggregate( t ) ) {
+        TYPEprint_descriptions( t, files, schema );
+        t->search_id = PROCESSED;
+    }
+    SCOPEod
 
 }
 
@@ -151,60 +162,60 @@ void SCOPEPrint(Scope scope, FILES *files, Schema schema)
  ** Status:
  ******************************************************************/
 
-void SCHEMAprint(Schema schema, FILES *files, int suffix)
-{
+void SCHEMAprint( Schema schema, FILES * files, int suffix ) {
     int ocnt = 0;
-    char schnm[MAX_LEN], sufnm[MAX_LEN], fnm[MAX_LEN], *np;
+    char schnm[MAX_LEN+1], sufnm[MAX_LEN+1], fnm[MAX_LEN+1], *np;
     /* sufnm = schema name + suffix */
-    FILE *libfile;
+    FILE * libfile;
     /**********  create files based on name of schema   ***********/
     /*  return if failure           */
     /*  1.  header file             */
-    sprintf(schnm, "%s", SCHEMAget_name(schema));
-    if(suffix == 0) {
-        sprintf(sufnm, "%s", schnm);
+    sprintf( schnm, "%s", SCHEMAget_name( schema ) );
+    if( suffix == 0 ) {
+        sprintf( sufnm, "%s", schnm );
     } else {
-        ocnt = snprintf(sufnm, MAX_LEN, "%s_%d", schnm, suffix);
-        if(ocnt > MAX_LEN) {
+        ocnt = snprintf( sufnm, MAX_LEN, "%s_%d", schnm, suffix );
+        if( ocnt > MAX_LEN ) {
             std::cerr << "Warning - classes_wrapper_python.cc - sufnm not large enough to hold string\n";
         }
     }
-    ocnt = snprintf(fnm, MAX_LEN, "%s.h", sufnm);
-    if(ocnt > MAX_LEN) {
+    ocnt = snprintf( fnm, MAX_LEN, "%s.h", sufnm );
+    if( ocnt > MAX_LEN ) {
         std::cerr << "Warning - classes_wrapper_python.cc - fnm not large enough to hold string\n";
     }
 
-    np = fnm + strlen(fnm) - 1;   /*  point to end of constant part of string  */
+    np = fnm + strlen( fnm ) - 1; /*  point to end of constant part of string  */
 
     /*  2.  class source file            */
-    sprintf(np, "py");
-    if(!(libfile = (files -> lib) = FILEcreate(fnm))) {
+    sprintf( np, "py" );
+    if( !( libfile = ( files -> lib ) = FILEcreate( fnm ) ) ) {
         return;
     }
-    fprintf(libfile, "import sys\n");
-    fprintf(libfile, "\n");
-    fprintf(libfile, "from SCL.SCLBase import *\n");
-    fprintf(libfile, "from SCL.SimpleDataTypes import *\n");
-    fprintf(libfile, "from SCL.ConstructedDataTypes import *\n");
-    fprintf(libfile, "from SCL.AggregationDataTypes import *\n");
-    fprintf(libfile, "from SCL.TypeChecker import check_type\n");
-    fprintf(libfile, "from SCL.Builtin import *\n");
-    fprintf(libfile, "from SCL.Rules import *\n");
+    fprintf( libfile, "import sys\n" );
+    fprintf( libfile, "\n" );
+    fprintf( libfile, "from SCL import SCLBase\n" );
+    fprintf( libfile, "from SCL.SCLBase import *\n" );
+    fprintf( libfile, "from SCL.SimpleDataTypes import *\n" );
+    fprintf( libfile, "from SCL.ConstructedDataTypes import *\n" );
+    fprintf( libfile, "from SCL.AggregationDataTypes import *\n" );
+    fprintf( libfile, "from SCL.TypeChecker import check_type\n" );
+    fprintf( libfile, "from SCL.Builtin import *\n" );
+    fprintf( libfile, "from SCL.Rules import *\n" );
 
     /********* export schema name *******/
-    fprintf(libfile, "\nschema_name = '%s'\n\n", SCHEMAget_name(schema));
+    fprintf( libfile, "\nschema_name = '%s'\n\n", SCHEMAget_name( schema ) );
 
     /******** export schema scope *******/
-    fprintf(libfile, "schema_scope = sys.modules[__name__]\n\n");
+    fprintf( libfile, "schema_scope = sys.modules[__name__]\n\n" );
 
 
     /**********  do the schemas ***********/
 
     /* really, create calls for entity constructors */
-    SCOPEPrint(schema, files, schema);
+    SCOPEPrint( schema, files, schema );
 
     /**********  close the files    ***********/
-    FILEclose(libfile);
+    FILEclose( libfile );
     //FILEclose( incfile );
     //if( schema->search_id == PROCESSED ) {
     //    fprintf( initfile, "\n}\n" );
@@ -228,37 +239,36 @@ void SCHEMAprint(Schema schema, FILES *files, int suffix)
  ** Status:  24-Feb-1992 new -kcm
  ******************************************************************/
 void
-getMCPrint(Express express, FILE *schema_h, FILE *schema_cc)
-{
+getMCPrint( Express express, FILE * schema_h, FILE * schema_cc ) {
     DictionaryEntry de;
     Schema schema;
 
-    fprintf(schema_h,
-            "\nSCLP23(Model_contents_ptr) GetModelContents(char *schemaName);\n");
-    fprintf(schema_cc, "%s%s%s%s",
-            "// Generate a function to be called by Model to help it\n",
-            "// create the necessary Model_contents without the\n",
-            "// dictionary (Registry) handle since it doesn't have a\n",
-            "// predetermined way to access to the handle.\n");
-    fprintf(schema_cc,
-            "\nSCLP23(Model_contents_ptr) GetModelContents(char *schemaName)\n{\n");
-    DICTdo_type_init(express->symbol_table, &de, OBJ_SCHEMA);
-    schema = (Scope)DICTdo(&de);
-    fprintf(schema_cc,
-            "    if(!strcmp(schemaName, \"%s\"))\n",
-            SCHEMAget_name(schema));
-    fprintf(schema_cc,
-            "        return (SCLP23(Model_contents_ptr)) new SdaiModel_contents_%s; \n",
-            SCHEMAget_name(schema));
-    while((schema = (Scope)DICTdo(&de)) != 0) {
-        fprintf(schema_cc,
-                "    else if(!strcmp(schemaName, \"%s\"))\n",
-                SCHEMAget_name(schema));
-        fprintf(schema_cc,
-                "        return (SCLP23(Model_contents_ptr)) new SdaiModel_contents_%s; \n",
-                SCHEMAget_name(schema));
+    fprintf( schema_h,
+             "\nSCLP23(Model_contents_ptr) GetModelContents(char *schemaName);\n" );
+    fprintf( schema_cc, "%s%s%s%s",
+             "// Generate a function to be called by Model to help it\n",
+             "// create the necessary Model_contents without the\n",
+             "// dictionary (Registry) handle since it doesn't have a\n",
+             "// predetermined way to access to the handle.\n" );
+    fprintf( schema_cc,
+             "\nSCLP23(Model_contents_ptr) GetModelContents(char *schemaName)\n{\n" );
+    DICTdo_type_init( express->symbol_table, &de, OBJ_SCHEMA );
+    schema = ( Scope )DICTdo( &de );
+    fprintf( schema_cc,
+             "    if(!strcmp(schemaName, \"%s\"))\n",
+             SCHEMAget_name( schema ) );
+    fprintf( schema_cc,
+             "        return (SCLP23(Model_contents_ptr)) new SdaiModel_contents_%s; \n",
+             SCHEMAget_name( schema ) );
+    while( ( schema = ( Scope )DICTdo( &de ) ) != 0 ) {
+        fprintf( schema_cc,
+                 "    else if(!strcmp(schemaName, \"%s\"))\n",
+                 SCHEMAget_name( schema ) );
+        fprintf( schema_cc,
+                 "        return (SCLP23(Model_contents_ptr)) new SdaiModel_contents_%s; \n",
+                 SCHEMAget_name( schema ) );
     }
-    fprintf(schema_cc, "}\n");
+    fprintf( schema_cc, "}\n" );
 }
 
 /******************************************************************
@@ -274,11 +284,10 @@ getMCPrint(Express express, FILE *schema_h, FILE *schema_cc)
  ** Status:  24-Feb-1992 new -kcm
  ******************************************************************/
 void
-EXPRESSPrint(Express express, FILES *files)
-{
-    char fnm [MAX_LEN];
-    const char   *schnm;  /* schnm is really "express name" */
-    FILE *libfile;
+EXPRESSPrint( Express express, FILES * files ) {
+    char fnm [MAX_LEN+1];
+    const char  * schnm;  /* schnm is really "express name" */
+    FILE * libfile;
     /* new */
     Schema schema;
     DictionaryEntry de;
@@ -287,23 +296,23 @@ EXPRESSPrint(Express express, FILES *files)
     /**********  create files based on name of schema   ***********/
     /*  return if failure           */
     /*  1.  header file             */
-    sprintf(fnm, "%s.h", schnm = ClassName(EXPRESSget_basename(express)));
+    sprintf( fnm, "%s.h", schnm = ClassName( EXPRESSget_basename( express ) ) );
 
     /*  2.  class source file            */
     //sprintf( np, "cc" );
-    if(!(libfile = (files -> lib) = FILEcreate(fnm))) {
+    if( !( libfile = ( files -> lib ) = FILEcreate( fnm ) ) ) {
         return;
     }
 
     /**********  do all schemas ***********/
-    DICTdo_init(express->symbol_table, &de);
-    while(0 != (schema = (Scope)DICTdo(&de))) {
-        SCOPEPrint(schema, files, schema);
+    DICTdo_init( express->symbol_table, &de );
+    while( 0 != ( schema = ( Scope )DICTdo( &de ) ) ) {
+        SCOPEPrint( schema, files, schema );
     }
 
 
     /**********  close the files    ***********/
-    FILEclose(libfile);
+    FILEclose( libfile );
     //FILEclose( incfile );
     //fprintf( initfile, "\n}\n" );
     //FILEclose( initfile );
@@ -323,10 +332,9 @@ EXPRESSPrint(Express express, FILES *files)
  ******************************************************************/
 
 void
-print_schemas_combined(Express express, FILES *files)
-{
+print_schemas_combined( Express express, FILES * files ) {
 
-    EXPRESSPrint(express, files);
+    EXPRESSPrint( express, files );
 }
 
 /*
@@ -341,18 +349,17 @@ print_schemas_combined(Express express, FILES *files)
 */
 
 void
-print_file(Express express)
-{
-    extern void RESOLUTIONsucceed(void);
+print_file( Express express ) {
+    extern void RESOLUTIONsucceed( void );
     int separate_schemas = 1;
 
     File_holder files;
 
     resolution_success();
 
-    if(separate_schemas) {
-        print_schemas_separate(express, &files);
+    if( separate_schemas ) {
+        print_schemas_separate( express, &files );
     } else {
-        print_schemas_combined(express, &files);
+        print_schemas_combined( express, &files );
     }
 }
