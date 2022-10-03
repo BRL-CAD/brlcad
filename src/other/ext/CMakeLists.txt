@@ -418,6 +418,7 @@ if (COMMAND CMAKEFILES)
     itk3.dist
     iwidgets.cmake
     iwidgets.dist
+    linenoise.dist
     netpbm.cmake
     netpbm.dist
     perplex.cmake
