@@ -35,38 +35,40 @@ behavior of some common functions.)
 
 Because viable system versions of these libraries aren't going to exist, we
 build them directly with add_subdirectory (and, when necessary, create CMake
-builds for them to make this viable.)  The ext build approach has overhead in
-the form of rather sophisticated custom logic that allows us to decouple them
-from our main build, and if we aren't faced with the need to detect and use
-system versions of dependencies can simplify the logic considerably.
+builds for them to make this viable.)  If we aren't faced with the need to
+detect and use system versions of dependencies a basic add_subdirectory
+approach simplifies the build logic considerably. (The ext build techniques
+have overhead in the form of rather sophisticated custom logic that allows us
+to tie their build systems into our main build - we only want to pay that cost
+when necessary to preserve the independence of upstream build logic.)
 
-In those cases where the src/other code has an active upstreams we do ideally
-want to try and stay as current as possible, but not at the expense of the
+In those cases where the src/other code has an active upstream we do want to
+try and stay as current as possible, but not at the expense of compromising the
 functionality we need.
 
-The specifics of each currently present toplevel src/other directory are as
-follows:
+The specifics of each code currently present as a toplevel src/other directory
+are as follows:
 
 
 * libosmesa	https://github.com/starseeker/osmesa
 
 This library is a subset of Mesa 7.0.4 that provides off-screen software
 rasterizing and rendering per the OpenGL 2.1 standard.  This is the last
-version of Mesa to not require more extensive external dependencies. As the
-code was written circa 2008 it needed various clean-ups, and is obviously not
-active upstream - although the Mesa project in general is quite active (as of
-2022) it has removed this particular implementation altogether in favor of more
-modern and performant code (which is also more complicated and dependency
-heavy).  We have extracted just the pieces necessary for OpenGL v2 rendering in
-order to use it for both an offscreen scene rendering option and a fallback of
-last resort if system OpenGL capabilities aren't working.  It is a fully self-
+version of Mesa to not require extensive external dependencies. As the code was
+written circa 2008 it needed various clean-ups, and is obviously not active
+upstream - although the Mesa project in general is quite active (as of 2022) it
+has removed this particular implementation altogether in favor of more modern
+and performant code (which is also more complicated and dependency heavy).  We
+have extracted just the pieces necessary for OpenGL v2 rendering in order to
+use it for both an offscreen scene rendering option and a fallback of last
+resort if system OpenGL capabilities aren't working.  It is a fully self-
 contained C library, with no external dependencies, which makes it relatively
 straightforward to keep working indefinitely.  We are not interested in
 expanding its capabilities - it has what is needed to support BRL-CAD's basic
 visualization features - so once working there should be little need to change
 this code. (Modulo periodic modernization for newer compilers/standards.)  Note
 that BRL-CAD's visualization capabilities in general should NOT remain tied to
-this level - more modern/elaborate visualizations should use newer libraries
+OpenGL 2.1 - more modern/elaborate visualizations should use newer libraries
 and standards.  This is intended strictly for offscreen/testing/fallback/
 last-resort cases.
 
@@ -82,11 +84,13 @@ indefinitely, given periodic modernizations.
 
 
 * lmdb		https://github.com/LMDB/lmdb
+
 Lightning Memory-Mapped Database - fast key/value store from the OpenLDAP
 project.  Doesn't have a Windows build system, so we provide one, along with
 DLL import/export logic.  Upstream appears to manage lmdb as part of OpenLDAP,
 so there's no particular expectation that our additions would be of interest.
-Otherwise, we want to keep this one current with upstream changes.
+Otherwise, we want to keep this one current with upstream changes.  Used to
+support Level-of-Detail data management code.
 
 
 * openNURBS	https://github.com/mcneel/opennurbs
@@ -107,8 +111,7 @@ to core raytracing functionality.
 
 poly2tri is a constrained Delaunay triangulation library, primarily used during
 NURBS tessellation.  We have made various changes to this code over the years
-to try and improve its robustness to our use cases (the most major of which is
-NURBS tessellation.)
+to try and improve its robustness for our use case.
 
 
 * tkhtml	http://tkhtml.tcl.tk/tkhtml.html
