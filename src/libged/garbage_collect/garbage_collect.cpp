@@ -309,7 +309,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     // *Gulp* - here we go.  Swap the new file in for the old
     bu_file_delete(bu_vls_cstr(&fpath));
     if (std::rename(bu_vls_cstr(&working_file), bu_vls_cstr(&fpath))) {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: %s cannot be renamed to %s!\nSomething is very wrong, aborting - user needs to manually restore %s to its original name/location.\n", bu_vls_cstr(&bkup_file), bu_vls_cstr(&fpath), bu_vls_cstr(&bkup_file));
+	bu_vls_printf(gedp->ged_result_str, "ERROR: %s cannot be renamed to %s!\nSomething is very wrong, aborting - user needs to manually restore %s to its original name/location.\n", bu_vls_cstr(&working_file), bu_vls_cstr(&fpath), bu_vls_cstr(&bkup_file));
 	ret = BRLCAD_ERROR;
 	goto gc_cleanup;
     }
@@ -319,7 +319,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     av[1] = bu_vls_cstr(&fpath);
     av[2] = NULL;
     if (ged_exec(gedp, 2, (const char **)av) != BRLCAD_OK) {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: %s was not opened successfully!  Something is very wrong!\n", bu_vls_cstr(&working_file));
+	bu_vls_printf(gedp->ged_result_str, "ERROR: %s was not opened successfully!\nSomething is very wrong, aborting - user needs to manually restore %s to its original name/location.\n", bu_vls_cstr(&fpath), bu_vls_cstr(&bkup_file));
 	ret = BRLCAD_ERROR;
 	goto gc_cleanup;
     }
