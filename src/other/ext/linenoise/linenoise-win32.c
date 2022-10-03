@@ -13,10 +13,12 @@ static void outputNewline(struct current *current);
 
 static void refreshStart(struct current *current)
 {
+    (void)current;
 }
 
 static void refreshEnd(struct current *current)
 {
+    (void)current;
 }
 
 static void refreshStartChars(struct current *current)
