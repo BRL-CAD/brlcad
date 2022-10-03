@@ -37,6 +37,10 @@
 #ifndef __LINENOISE_H
 #define __LINENOISE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef NO_COMPLETION
 typedef struct linenoiseCompletions {
   size_t len;
@@ -137,5 +141,9 @@ int linenoiseColumns(void);
  * Enable or disable multiline mode (disabled by default)
  */
 void linenoiseSetMultiLine(int enableml);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LINENOISE_H */

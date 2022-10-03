@@ -369,12 +369,16 @@ if (COMMAND CONFIG_H_APPEND)
 endif (COMMAND CONFIG_H_APPEND)
 
 
-# The above libraries are all compilation targets with libraries, and
-# so have build outputs that must be distributed with BRL-CAD.  The
-# following are header-only libraries, and as such may remain in place
-# and are needed only for building.
+# The above libraries are all compilation targets with libraries, and so have
+# build outputs that must be distributed with BRL-CAD.  The following are
+# either header-only libraries or built directly into executables, and as such
+# may remain in place - they are needed only for building.
 include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
 CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
+
+# linenoise is used by applications directly
+include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
+CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
 
 
 std_build_rpath()

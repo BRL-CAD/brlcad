@@ -1,4 +1,4 @@
-set(LDIR "${BRLCAD_SOURCE_DIR}/src/other/linenoise")
+set(LDIR "${BRLCAD_SOURCE_DIR}/src/other/ext/linenoise")
 
 set(GTOOLS_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
@@ -22,6 +22,7 @@ set(GSH_SRCS
   gsh.cpp
   ${LDIR}/utf8.c
   ${LDIR}/linenoise.c
+  ${LDIR}/stringbuf.c
   )
 BRLCAD_ADDEXEC(gsh "${GSH_SRCS}"  "libged;libdm;libbu")
 add_dependencies(gsh dm_plugins)
@@ -32,6 +33,7 @@ set(GANALYZE_SRCS
   ganalyze.cpp
   ${LDIR}/utf8.c
   ${LDIR}/linenoise.c
+  ${LDIR}/stringbuf.c
   )
 BRLCAD_ADDEXEC(ganalyze "${GANALYZE_SRCS}" "libanalyze;librt;libbu;libpkg" NO_INSTALL)
 
