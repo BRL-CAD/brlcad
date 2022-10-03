@@ -3,7 +3,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
 
 include_directories(
   ${SC_SOURCE_DIR}/src/cldai ${SC_SOURCE_DIR}/src/cleditor
-  ${SC_SOURCE_DIR}/src/clutils ${SC_SOURCE_DIR}/src/base
   ${SC_SOURCE_DIR}/src/clstepcore
 )
 
@@ -21,10 +20,10 @@ function(add_stepcore_test name libs)
   set_tests_properties(test_${name} PROPERTIES LABELS cpp_unit_stepcore DEPENDS build_cpp_${name})
 endfunction(add_stepcore_test name libs)
 
-add_stepcore_test("SupertypesIterator" "stepcore;steputils;stepeditor;stepdai;base") #all these libs are necessary?
-add_stepcore_test("operators_STEPattribute" "stepcore;steputils;stepeditor;stepdai;base")
-add_stepcore_test("operators_SDAI_Select" "stepcore;steputils;stepeditor;stepdai;base")
-add_stepcore_test("null_attr" "stepcore;steputils;stepeditor;stepdai;base")
+add_stepcore_test("SupertypesIterator" "stepcore;steputils;stepeditor;stepdai") #all these libs are necessary?
+add_stepcore_test("operators_STEPattribute" "stepcore;steputils;stepeditor;stepdai")
+add_stepcore_test("operators_SDAI_Select" "stepcore;steputils;stepeditor;stepdai")
+add_stepcore_test("null_attr" "stepcore;steputils;stepeditor;stepdai")
 
 # Local Variables:
 # tab-width: 8

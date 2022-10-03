@@ -43,12 +43,15 @@
 #include "express/schema.h"
 
 struct freelist_head ALG_fl;
+struct freelist_head FUNC_fl;
+struct freelist_head RULE_fl;
+struct freelist_head PROC_fl;
+struct freelist_head WHERE_fl;
 
-Scope ALGcreate(char type)
-{
-    Scope s = SCOPEcreate(type);
+Scope ALGcreate( char type ) {
+    Scope s = SCOPEcreate( type );
 
-    switch(type) {
+    switch( type ) {
         case OBJ_PROCEDURE:
             s->u.proc = PROC_new();
             break;
@@ -70,13 +73,11 @@ Scope ALGcreate(char type)
 */
 
 /** Initialize the Algorithm module. */
-void ALGinitialize(void)
-{
+void ALGinitialize( void ) {
 }
 
-void ALGput_full_text(Scope s, int start, int end)
-{
-    switch(s->type) {
+void ALGput_full_text( Scope s, int start, int end ) {
+    switch( s->type ) {
         case OBJ_FUNCTION:
             s->u.func->text.filename = s->symbol.filename;
             s->u.func->text.start = start;

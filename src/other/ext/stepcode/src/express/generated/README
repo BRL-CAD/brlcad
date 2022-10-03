@@ -6,11 +6,3 @@ lexing and parsing logic.
 DO NOT EDIT THESE FILES.  They are machine generated and should not be modified
 directly - bugs in these files need to be fixed in either the
 Perplex/RE2C/Lemon input files or the tools themselves.
-
-If changes need to be made, the correct approach is:
-
-1.  install Perplex, RE2C, and Lemon
-2.  make any necessary fixes to the input files and/or the generator tools.
-3.  run the build, and copy the new generated expscan and expparse c and h
-    files to this directory.
-

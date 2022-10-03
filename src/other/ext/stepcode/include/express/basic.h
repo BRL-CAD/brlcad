@@ -71,7 +71,7 @@
  *
  */
 
-#include <sc_cf.h>
+#include "config.h"
 #include <sc_export.h>
 #include <stdio.h>
 
@@ -82,7 +82,7 @@
 #ifdef HAVE_STDBOOL_H
 # include <stdbool.h>
 #else
-# include <sc_stdbool.h>
+# include <stdbool.h>
 #endif
 
 #if defined(_MSC_VER) && (_MSC_VER < 1900) && !defined(__cplusplus)
@@ -93,8 +93,11 @@
 /* function pointer types */
 /**************************/
 
-typedef void (*voidFuncptr)();
-typedef int (*intFuncptr)();
+typedef void ( *voidFuncptr )();
+typedef int ( *intFuncptr )();
+
+/* Option index - can we get rid of this? */
+extern SC_EXPRESS_EXPORT int sc_optind;
 
 #endif    /* BASIC_H */
 

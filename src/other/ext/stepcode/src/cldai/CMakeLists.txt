@@ -29,12 +29,11 @@ SET(SC_CLDAI_HDRS
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${SC_SOURCE_DIR}/src/base
   ${SC_SOURCE_DIR}/src/clstepcore
   ${SC_SOURCE_DIR}/src/clutils
   )
 
-set(_libdeps steputils base)
+set(_libdeps steputils)
 
 if(BUILD_SHARED_LIBS)
   SC_ADDLIB(stepdai SHARED SOURCES ${LIBSTEPDAI_SRCS} LINK_LIBRARIES ${_libdeps})
