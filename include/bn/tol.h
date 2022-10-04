@@ -100,6 +100,11 @@ struct bn_tol {
 #define BN_TOL_INIT_ZERO { BN_TOL_MAGIC, 0.0, 0.0, 0.0, 1.0 }
 
 /**
+ * commonly used default initialization of a bn_tol struct.
+ */
+#define BN_TOL_INIT_TOL {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 }
+
+/**
  * returns truthfully whether a bn_tol struct has been initialized.
  */
 #define BN_TOL_IS_INITIALIZED(_p) (((struct bn_tol *)(_p) != (struct bn_tol *)0) && LIKELY((_p)->magic == BN_TOL_MAGIC))

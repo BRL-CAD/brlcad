@@ -569,7 +569,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 	    // Verify that the resulting csg tree and the original B-Rep pass a difference test.
 	    if (verify) {
 		ON_BoundingBox bbox;
-		struct bn_tol tol = BG_TOL_INIT;
+		struct bn_tol tol = BN_TOL_INIT_TOL;
 		brep->GetBoundingBox(bbox);
 		tol.dist = (bbox.Diagonal().Length() / 100.0);
 		bu_vls_printf(log, "Analyzing %s csg conversion, tol %f...\n", dp->d_namep, tol.dist);

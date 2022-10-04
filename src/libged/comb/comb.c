@@ -483,7 +483,7 @@ comb_decimate(struct ged *gedp, struct directory *dp)
     }
 
     for (i = 0; i < BU_PTBL_LEN(bot_dps); i++) {
-	struct bn_tol btol = BG_TOL_INIT;
+	struct bn_tol btol = BN_TOL_INIT_TOL;
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
 	int not_solid = 0;
