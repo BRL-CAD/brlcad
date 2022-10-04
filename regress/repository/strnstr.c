@@ -50,8 +50,10 @@ twobyte_strstr(const unsigned char *h, const unsigned char *n, size_t hlen)
 	    break;
 	if (hw == nw)
 	    break;
-	hw = hw<<8 | *++h;
 	hpos++;
+	if (hpos >= hlen)
+	    break;
+	hw = hw<<8 | *++h;
     }
 
     return (hpos < hlen && *h) ? (char *)h-1 : 0;
@@ -72,8 +74,10 @@ threebyte_strstr(const unsigned char *h, const unsigned char *n, size_t hlen)
 	    break;
 	if (hw == nw)
 	    break;
-	hw = (hw|*++h)<<8;
 	hpos++;
+	if (hpos >= hlen)
+	    break;
+	hw = (hw|*++h)<<8;
     }
 
     return (hpos < hlen && *h) ? (char *)h-2 : 0;
@@ -94,8 +98,10 @@ fourbyte_strstr(const unsigned char *h, const unsigned char *n, size_t hlen)
 	    break;
 	if (hw == nw)
 	    break;
-	hw = hw<<8 | *++h;
 	hpos++;
+	if (hpos >= hlen)
+	    break;
+	hw = hw<<8 | *++h;
     }
 
     return (hpos < hlen && *h) ? (char *)h-3 : 0;
