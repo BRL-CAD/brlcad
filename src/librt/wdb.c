@@ -304,16 +304,8 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
     wdbp->dbip->dbi_wdbp = wdbp;
 
     /* Provide the same default tolerance that librt/prep.c does */
-    wdbp->wdb_tol.magic = BN_TOL_MAGIC;
-    wdbp->wdb_tol.dist = 0.0005;
-    wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
-    wdbp->wdb_tol.perp = 1e-6;
-    wdbp->wdb_tol.para = 1 - wdbp->wdb_tol.perp;
-
-    wdbp->wdb_ttol.magic = BG_TESS_TOL_MAGIC;
-    wdbp->wdb_ttol.abs = 0.0;
-    wdbp->wdb_ttol.rel = 0.01;
-    wdbp->wdb_ttol.norm = 0;
+    BN_TOL_INIT_SET_TOL(&wdbp->wdb_tol);
+    BG_TESS_TOL_INIT_SET_TOL(&wdbp->wdb_ttol);
 
     bu_vls_init(&wdbp->wdb_name);
     bu_vls_init(&wdbp->wdb_prestr);

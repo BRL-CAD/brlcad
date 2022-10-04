@@ -103,6 +103,13 @@ struct bn_tol {
  * commonly used default initialization of a bn_tol struct.
  */
 #define BN_TOL_INIT_TOL {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 }
+#define BN_TOL_INIT_SET_TOL(_p) { \
+	(_p)->magic = BN_TOL_MAGIC; \
+	(_p)->dist = BN_TOL_DIST; \
+	(_p)->dist_sq = BN_TOL_DIST * BN_TOL_DIST; \
+	(_p)->perp = 1.0e-6; \
+	(_p)->para = 1.0 - 1.0e-6; \
+    }
 
 /**
  * returns truthfully whether a bn_tol struct has been initialized.
