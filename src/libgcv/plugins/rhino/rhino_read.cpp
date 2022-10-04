@@ -259,7 +259,7 @@ clean_name(const ON_wString chk_name, const std::string default_name = "Default"
 }
 
 /* loop to check for non-unique names. Updates are reflected in the model */
-HIDDEN std::vector<int>
+static std::vector<int>
 chk_names(ONX_Model& model, const char* default_name)
 {
     std::unordered_map <std::string, int> used_names;			/* used names, times used */
@@ -325,7 +325,7 @@ chk_names(ONX_Model& model, const char* default_name)
 }
 
 /* loads model and then checks and updates names to be unique */
-HIDDEN std::vector<int>
+static std::vector<int>
 load_model(const char* default_name, const std::string& path, ONX_Model& model)
 {
     if (!model.Read(path.c_str()))
