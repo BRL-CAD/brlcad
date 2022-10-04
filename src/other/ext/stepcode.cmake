@@ -14,9 +14,19 @@ THIRD_PARTY(stepcode SC stepcode sc_DESCRIPTION
 
 if(BRLCAD_SC_BUILD)
 
-  set(SC_MAJOR_VERSION 0)
-  set(SC_MINOR_VERSION 8)
-  set(SC_PATCH_VERSION 1)
+  file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/stepcode/CMakeLists.txt" SC_LINES)
+  foreach(SC ${SC_LINES})
+    if ("${SC}" MATCHES "^set[(]SC_VERSION_MAJOR")
+      string(REGEX MATCH [0-9]+ SC_MAJOR_VERSION "${SC}")
+    endif ("${SC}" MATCHES "^set[(]SC_VERSION_MAJOR")
+    if ("${SC}" MATCHES "^set[(]SC_VERSION_MINOR")
+      string(REGEX MATCH [0-9]+ SC_MINOR_VERSION "${SC}")
+    endif ("${SC}" MATCHES "^set[(]SC_VERSION_MINOR")
+    if ("${SC}" MATCHES "^set[(]SC_VERSION_PATCH")
+      string(REGEX MATCH [0-9]+ SC_PATCH_VERSION "${SC}")
+    endif ("${SC}" MATCHES "^set[(]SC_VERSION_PATCH")
+  endforeach(SC ${SC_LINES})
+
   set(SC_VERSION ${SC_MAJOR_VERSION}.${SC_MINOR_VERSION}.${SC_PATCH_VERSION})
 
   if (MSVC)
