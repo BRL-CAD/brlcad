@@ -533,7 +533,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 
     _ged_facetize_log_nmg(o);
 
-    db_init_db_tree_state(&init_state, gedp->dbip, gedp->ged_wdbp->wdb_resp);
+    db_init_db_tree_state(&init_state, gedp->dbip, gedp->ged_wdbp->dbip->db_resp);
 
     /* Establish tolerances */
     init_state.ts_ttol = &gedp->ged_wdbp->dbip->db_ttol;

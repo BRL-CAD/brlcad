@@ -386,7 +386,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_db_put_internal(dp, wdbp->dbip, &new_intern, wdbp->wdb_resp) < 0) {
+    if (rt_db_put_internal(dp, wdbp->dbip, &new_intern, wdbp->dbip->db_resp) < 0) {
 	rt_db_free_internal(&new_intern);
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database write error, aborting.\n", (char *)NULL);
 

@@ -1527,7 +1527,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	struct rt_db_internal *in = u_it->second;
 	if (!s.dry_run) {
-	    if (rt_db_put_internal(dp, s.wdbp->dbip, in, s.wdbp->wdb_resp) < 0) {
+	    if (rt_db_put_internal(dp, s.wdbp->dbip, in, s.wdbp->dbip->db_resp) < 0) {
 		bu_log("Unable to store %s to the database", dp->d_namep);
 	    }
 	}
@@ -1541,7 +1541,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	struct rt_db_internal *in = u_it->second;
 	if (!s.dry_run) {
-	    if (rt_db_put_internal(dp, s.wdbp->dbip, in, s.wdbp->wdb_resp) < 0) {
+	    if (rt_db_put_internal(dp, s.wdbp->dbip, in, s.wdbp->dbip->db_resp) < 0) {
 		bu_log("Unable to store %s to the database", dp->d_namep);
 	    }
 	} else {

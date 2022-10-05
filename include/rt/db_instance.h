@@ -116,6 +116,7 @@ struct db_i {
 
     struct bg_tess_tol  db_ttol;
     struct bn_tol       db_tol;
+    struct resource*    db_resp;
 
     /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
 

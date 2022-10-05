@@ -320,9 +320,6 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
     wdbp->wdb_air_default = 0;
     wdbp->wdb_mat_default = 1;
     wdbp->wdb_los_default = 100;
-
-    /* resource structure */
-    wdbp->wdb_resp = &rt_uniresource;
 }
 
 

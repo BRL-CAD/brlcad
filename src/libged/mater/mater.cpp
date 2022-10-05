@@ -1161,7 +1161,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     struct bu_external bin_ext;
     int ret = -1;
     if (intern.idb_meth->ft_export5) {
-	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, gedp->dbip, gedp->ged_wdbp->wdb_resp);
+	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, gedp->dbip, gedp->ged_wdbp->dbip->db_resp);
     }
     if (ret != 0) {
 	bu_vls_printf(gedp->ged_result_str, "Error while attempting to export %s\n", GED_DB_DENSITY_OBJECT);

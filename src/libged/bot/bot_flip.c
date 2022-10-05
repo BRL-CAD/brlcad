@@ -79,7 +79,7 @@ ged_bot_flip_core(struct ged *gedp, int argc, const char *argv[])
 		bot = (struct rt_bot_internal *)intern.idb_ptr;
 		rt_bot_flip(bot);
 
-		GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->ged_wdbp->wdb_resp, BRLCAD_ERROR);
+		GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->ged_wdbp->dbip->db_resp, BRLCAD_ERROR);
 	    }
 	}
 	bu_free(obj, "free obj");

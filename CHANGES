@@ -1679,3 +1679,4 @@ s/bu_which\(/bu_whence\(/g
 s/rt_gettree_muves\(/rt_gettrees_and_attrs\(/g
 s/->wdb_tol/->dbip->db_tol/g
 s/->wdb_ttol/->dbip->db_ttol/g
+s/->wdb_resp/->dbip->db_resp/g
