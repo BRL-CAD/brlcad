@@ -1024,18 +1024,11 @@ cmdline(struct bu_vls *vp, int record)
     if (glob_compat_mode) {
 	const char **av;
 	struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
-	struct rt_wdb *tmpwdbp;
 	if (GEDP == GED_NULL)
 	    return CMD_BAD;
 
 	/* Cache the state bits we might change in GEDP */
-	tmpwdbp = GEDP->ged_wdbp;
 	bu_vls_sprintf(&tmpstr, "%s", bu_vls_addr(GEDP->ged_result_str));
-
-	/* Make sure wdbp and GEDP->ged_wdbp agree - if we're
-	 * in non-GUI mode GEDP may not be properly initialized */
-	if (WDBP != GEDP->ged_wdbp)
-	    GEDP->ged_wdbp = WDBP;
 
 	/* Run ged_glob */
 	av = (const char **)bu_malloc(sizeof(char *)*3, "ged_glob argv");
@@ -1053,7 +1046,6 @@ cmdline(struct bu_vls *vp, int record)
 
 	/* put GEDP back where it was */
 	bu_vls_sprintf(GEDP->ged_result_str, "%s", bu_vls_addr(&tmpstr));
-	GEDP->ged_wdbp = tmpwdbp;
 
 	/* cleanup */
 	bu_vls_free(&tmpstr);
