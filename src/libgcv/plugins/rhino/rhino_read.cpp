@@ -1131,9 +1131,14 @@ polish_output(const gcv_opts& gcv_options, db_i& db)
 		    if (!bu_strcmp(bu_avs_get(&avs, "rhino::type"), "ON_Layer")
 			|| (bu_path_match(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
 			    && bu_path_match("IDef*", (*entry)->fp_names[i]->d_namep, 0))) {
-			const std::string prefix = (*entry)->fp_names[i]->d_namep;
+			std::string entry_name = (*entry)->fp_names[i]->d_namep;
 			std::string suffix = ".s";
 			std::size_t num = 1;
+
+			/* check for (and remove) trailing .r from parent layer */
+			if (entry_name[entry_name.size() - 1] == 'r' && entry_name[entry_name.size() - 2] == '.')
+			    entry_name = entry_name.substr(0, entry_name.size() - 2);
+			const std::string prefix = entry_name;
 
 			while ((prefix + suffix) != DB_FULL_PATH_CUR_DIR(*entry)->d_namep
 			    && db_lookup(&db, (prefix + suffix).c_str(), false))
