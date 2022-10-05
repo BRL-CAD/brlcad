@@ -47,7 +47,7 @@ check_walk_subtree(int *diff, struct bu_vls *msgs, struct db_i *dbip, struct db_
     int idn1, idn2;
     struct directory *dp1, *dp2;
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
-    struct bn_tol *tol = &wdbp->wdb_tol;
+    struct bn_tol *tol = &wdbp->dbip->db_tol;
 
     if (!diff)
        	return;
@@ -178,7 +178,7 @@ check_walk(int *diff,
 
     /* If we have two solids, use db_diff_dp */
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
-    struct bn_tol *tol = &wdbp->wdb_tol;
+    struct bn_tol *tol = &wdbp->dbip->db_tol;
     int dr = db_diff_dp(dbip, dbip, dp1, dp2, tol, DB_COMPARE_ALL, NULL);
     if (dr != DIFF_UNCHANGED) {
 	char *p1s = db_path_to_string(p1);

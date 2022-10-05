@@ -80,7 +80,7 @@ ged_get_type_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "superell");
 	    break;
 	case DB5_MINORTYPE_BRLCAD_ARB8:
-	    type = rt_arb_std_type(&intern, &gedp->ged_wdbp->wdb_tol);
+	    type = rt_arb_std_type(&intern, &gedp->ged_wdbp->dbip->db_tol);
 
 	    switch (type) {
 		case 4:

@@ -231,7 +231,7 @@ _brep_cmd_bot(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gb->gedp->ged_wdbp->wdb_ttol;
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gb->gedp->ged_wdbp->dbip->db_ttol;
     struct rt_brep_internal *bi = (struct rt_brep_internal*)gb->intern.idb_ptr;
     struct bu_vls bname_bot = BU_VLS_INIT_ZERO;
 
@@ -322,7 +322,7 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 
     double ovlp_max_smallest = DBL_MAX;
 
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gedp->ged_wdbp->wdb_ttol;
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gedp->ged_wdbp->dbip->db_ttol;
     struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
     cdttol.abs = ttol->abs;
     cdttol.rel = ttol->rel;

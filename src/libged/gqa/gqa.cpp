@@ -2499,7 +2499,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
      *
      * FIXME: should probably be based on the model size.
      */
-    gridSpacingLimit = 10.0 * gedp->ged_wdbp->wdb_tol.dist;
+    gridSpacingLimit = 10.0 * gedp->ged_wdbp->dbip->db_tol.dist;
 
     makeOverlapAssemblies = 0;
     require_num_hits = 1;

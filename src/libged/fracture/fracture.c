@@ -60,7 +60,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 
     /* make sure the geometry/bounding boxes are up to date */
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
-	nmg_region_a(r, &gedp->ged_wdbp->wdb_tol);
+	nmg_region_a(r, &gedp->ged_wdbp->dbip->db_tol);
 
 
     /* Export NMG as a new solid */

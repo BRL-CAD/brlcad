@@ -198,7 +198,7 @@ edarb_facedef(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    type = rt_arb_std_type(&intern, &gedp->ged_wdbp->wdb_tol);
+    type = rt_arb_std_type(&intern, &gedp->ged_wdbp->dbip->db_tol);
     if (type != 8 && type != 6 && type != 4) {
 	bu_vls_printf(gedp->ged_result_str, "ARB%d: extrusion of faces not allowed\n", type);
 	rt_db_free_internal(&intern);
@@ -209,7 +209,7 @@ edarb_facedef(void *data, int argc, const char *argv[])
     RT_ARB_CK_MAGIC(arb);
 
     /* find new planes to account for any editing */
-    if (rt_arb_calc_planes(&error_msg, arb, type, planes, &gedp->ged_wdbp->wdb_tol)) {
+    if (rt_arb_calc_planes(&error_msg, arb, type, planes, &gedp->ged_wdbp->dbip->db_tol)) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&error_msg));
 	bu_vls_free(&error_msg);
 	rt_db_free_internal(&intern);
@@ -316,7 +316,7 @@ Enter form of new face definition: ");
 		rt_db_free_internal(&intern);
 		return BRLCAD_MORE;
 	    }
-	    if (get_3pts(gedp, planes[plane], &argv[5], &gedp->ged_wdbp->wdb_tol)) {
+	    if (get_3pts(gedp, planes[plane], &argv[5], &gedp->ged_wdbp->dbip->db_tol)) {
 		return BRLCAD_ERROR;
 	    }
 	    break;
@@ -364,7 +364,7 @@ Enter form of new face definition: ");
     }
 
     /* find all vertices from the plane equations */
-    if (rt_arb_calc_points(arb, type, (const plane_t *)planes, &gedp->ged_wdbp->wdb_tol) < 0) {
+    if (rt_arb_calc_points(arb, type, (const plane_t *)planes, &gedp->ged_wdbp->dbip->db_tol) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "facedef:  unable to find points\n");
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;

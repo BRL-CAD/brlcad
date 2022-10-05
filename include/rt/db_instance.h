@@ -34,10 +34,12 @@
 #include "bu/file.h"
 #include "bu/mapped_file.h"
 #include "bu/ptbl.h"
+#include "bn/tol.h"
 #include "rt/mem.h"
 #include "rt/op.h"
 #include "rt/directory.h"
 #include "rt/anim.h"
+#include "rt/tol.h"
 
 __BEGIN_DECLS
 
@@ -111,6 +113,9 @@ struct db_i {
     double dbi_base2local;              /**< @brief unit conversion factors */
     char * dbi_title;                   /**< @brief title from IDENT rec */
     char ** dbi_filepath;               /**< @brief search path for aux file opens (convenience var) */
+
+    struct bg_tess_tol  db_ttol;
+    struct bn_tol       db_tol;
 
     /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
 

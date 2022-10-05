@@ -307,17 +307,13 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
     wdbp->wdb_type = mode;
     wdbp->dbip = dbip;
 
-    /* Provide the same default tolerance that librt/prep.c does */
-    BN_TOL_INIT_SET_TOL(&wdbp->wdb_tol);
-    BG_TESS_TOL_INIT_SET_TOL(&wdbp->wdb_ttol);
-
     bu_vls_init(&wdbp->wdb_name);
     bu_vls_init(&wdbp->wdb_prestr);
 
     /* initialize tree state */
     wdbp->wdb_initial_tree_state = rt_initial_tree_state;  /* struct copy */
-    wdbp->wdb_initial_tree_state.ts_ttol = &wdbp->wdb_ttol;
-    wdbp->wdb_initial_tree_state.ts_tol = &wdbp->wdb_tol;
+    wdbp->wdb_initial_tree_state.ts_ttol = &dbip->db_ttol;
+    wdbp->wdb_initial_tree_state.ts_tol = &dbip->db_tol;
 
     /* default region ident codes */
     wdbp->wdb_item_default = 1000;

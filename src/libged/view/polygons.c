@@ -588,7 +588,7 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
     struct bv_polygon *polyA = (struct bv_polygon *)s->s_i_data;
     struct bv_polygon *polyB = (struct bv_polygon *)s2->s_i_data;
 
-    int ovlp = bg_polygons_overlap(&polyA->polygon, &polyB->polygon, polyA->v.gv_model2view, &gedp->ged_wdbp->wdb_tol, polyA->v.gv_scale);
+    int ovlp = bg_polygons_overlap(&polyA->polygon, &polyB->polygon, polyA->v.gv_model2view, &gedp->ged_wdbp->dbip->db_tol, polyA->v.gv_scale);
 
     bu_vls_printf(gedp->ged_result_str, "%d", ovlp);
 

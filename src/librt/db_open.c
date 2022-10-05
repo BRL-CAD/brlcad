@@ -266,6 +266,10 @@ db_open(const char *name, const char *mode)
 	bu_log("db_open(%s) dbip=%p version=%d\n", dbip->dbi_filename, (void *)dbip, dbip->dbi_version);
     }
 
+    /* Initialize tolerances */
+    BN_TOL_INIT_SET_TOL(&dbip->db_tol);
+    BG_TESS_TOL_INIT_SET_TOL(&dbip->db_ttol);
+
     /* Set up the four possible wdb containers. */
     if (rt_uniresource.re_magic != RESOURCE_MAGIC)
 	rt_init_resource(&rt_uniresource, 0, NULL);

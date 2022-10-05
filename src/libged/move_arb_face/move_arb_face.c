@@ -158,9 +158,9 @@ ged_move_arb_face_core(struct ged *gedp, int argc, const char *argv[])
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    arb_type = rt_arb_std_type(&intern, &gedp->ged_wdbp->wdb_tol);
+    arb_type = rt_arb_std_type(&intern, &gedp->ged_wdbp->dbip->db_tol);
 
-    if (rt_arb_calc_planes(gedp->ged_result_str, arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol)) {
+    if (rt_arb_calc_planes(gedp->ged_result_str, arb, arb_type, planes, &gedp->ged_wdbp->dbip->db_tol)) {
 	rt_db_free_internal(&intern);
 
 	return BRLCAD_ERROR;
@@ -213,14 +213,14 @@ if (face_idx > max_idx) { \
     planes[face][3] = VDOT(&planes[face][0], pt);
 
     /* calculate new points for the arb */
-    save_tol_dist = gedp->ged_wdbp->wdb_tol.dist;
-    gedp->ged_wdbp->wdb_tol.dist = gedp->ged_wdbp->wdb_tol.dist * 2;
-    if (rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &gedp->ged_wdbp->wdb_tol) < 0) {
-	gedp->ged_wdbp->wdb_tol.dist = save_tol_dist;
+    save_tol_dist = gedp->ged_wdbp->dbip->db_tol.dist;
+    gedp->ged_wdbp->dbip->db_tol.dist = gedp->ged_wdbp->dbip->db_tol.dist * 2;
+    if (rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &gedp->ged_wdbp->dbip->db_tol) < 0) {
+	gedp->ged_wdbp->dbip->db_tol.dist = save_tol_dist;
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
-    gedp->ged_wdbp->wdb_tol.dist = save_tol_dist;
+    gedp->ged_wdbp->dbip->db_tol.dist = save_tol_dist;
 
     {
 	int i;

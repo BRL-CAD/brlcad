@@ -49,31 +49,31 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Current tolerance settings are:\n");
 	bu_vls_printf(gedp->ged_result_str, "Tessellation tolerances:\n");
 
-	if (gedp->ged_wdbp->wdb_ttol.abs > 0.0) {
-	    bu_vls_printf(gedp->ged_result_str, "\tabs %g mm\n", gedp->ged_wdbp->wdb_ttol.abs);
+	if (gedp->ged_wdbp->dbip->db_ttol.abs > 0.0) {
+	    bu_vls_printf(gedp->ged_result_str, "\tabs %g mm\n", gedp->ged_wdbp->dbip->db_ttol.abs);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "\tabs None\n");
 	}
 
-	if (gedp->ged_wdbp->wdb_ttol.rel > 0.0) {
+	if (gedp->ged_wdbp->dbip->db_ttol.rel > 0.0) {
 	    bu_vls_printf(gedp->ged_result_str, "\trel %g (%g%%)\n",
-			  gedp->ged_wdbp->wdb_ttol.rel, gedp->ged_wdbp->wdb_ttol.rel * 100.0);
+			  gedp->ged_wdbp->dbip->db_ttol.rel, gedp->ged_wdbp->dbip->db_ttol.rel * 100.0);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "\trel None\n");
 	}
 
-	if (gedp->ged_wdbp->wdb_ttol.norm > 0.0) {
+	if (gedp->ged_wdbp->dbip->db_ttol.norm > 0.0) {
 	    int deg, min;
 	    double sec;
 
-	    sec = gedp->ged_wdbp->wdb_ttol.norm * RAD2DEG;
+	    sec = gedp->ged_wdbp->dbip->db_ttol.norm * RAD2DEG;
 	    deg = (int)(sec);
 	    sec = (sec - (double)deg) * 60;
 	    min = (int)(sec);
 	    sec = (sec - (double)min) * 60;
 
 	    bu_vls_printf(gedp->ged_result_str, "\tnorm %g degrees (%d deg %d min %g sec)\n",
-			  gedp->ged_wdbp->wdb_ttol.norm * RAD2DEG, deg, min, sec);
+			  gedp->ged_wdbp->dbip->db_ttol.norm * RAD2DEG, deg, min, sec);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "\tnorm None\n");
 	}
@@ -81,42 +81,42 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Calculational tolerances:\n");
 	bu_vls_printf(gedp->ged_result_str,
 		      "\tdistance = %g mm\n\tperpendicularity = %g (cosine of %g degrees)\n",
-		      gedp->ged_wdbp->wdb_tol.dist, gedp->ged_wdbp->wdb_tol.perp,
-		      acos(gedp->ged_wdbp->wdb_tol.perp)*RAD2DEG);
+		      gedp->ged_wdbp->dbip->db_tol.dist, gedp->ged_wdbp->dbip->db_tol.perp,
+		      acos(gedp->ged_wdbp->dbip->db_tol.perp)*RAD2DEG);
 
 	bu_vls_printf(gedp->ged_result_str, "BRep specific tessellation tolerances:\n");
-	if (gedp->ged_wdbp->wdb_ttol.absmax > 0.0) {
-	    bu_vls_printf(gedp->ged_result_str, "\tabsmax %g\n", gedp->ged_wdbp->wdb_ttol.absmax);
+	if (gedp->ged_wdbp->dbip->db_ttol.absmax > 0.0) {
+	    bu_vls_printf(gedp->ged_result_str, "\tabsmax %g\n", gedp->ged_wdbp->dbip->db_ttol.absmax);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "\tabsmax None\n");
 	}
 
-	if (gedp->ged_wdbp->wdb_ttol.absmin > 0.0) {
-	    bu_vls_printf(gedp->ged_result_str, "\tabsmin %g\n", gedp->ged_wdbp->wdb_ttol.absmin);
+	if (gedp->ged_wdbp->dbip->db_ttol.absmin > 0.0) {
+	    bu_vls_printf(gedp->ged_result_str, "\tabsmin %g\n", gedp->ged_wdbp->dbip->db_ttol.absmin);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "\tabsmin None\n");
 	}
 
-	if (gedp->ged_wdbp->wdb_ttol.relmax > 0.0) {
-	    bu_vls_printf(gedp->ged_result_str, "\trelmax %g\n", gedp->ged_wdbp->wdb_ttol.relmax);
+	if (gedp->ged_wdbp->dbip->db_ttol.relmax > 0.0) {
+	    bu_vls_printf(gedp->ged_result_str, "\trelmax %g\n", gedp->ged_wdbp->dbip->db_ttol.relmax);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "\trelmax None\n");
 	}
 
-	if (gedp->ged_wdbp->wdb_ttol.relmin > 0.0) {
-	    bu_vls_printf(gedp->ged_result_str, "\trelmin %g\n", gedp->ged_wdbp->wdb_ttol.relmin);
+	if (gedp->ged_wdbp->dbip->db_ttol.relmin > 0.0) {
+	    bu_vls_printf(gedp->ged_result_str, "\trelmin %g\n", gedp->ged_wdbp->dbip->db_ttol.relmin);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "\trelmin None\n");
 	}
 
-	if (gedp->ged_wdbp->wdb_ttol.rel_lmax > 0.0) {
-	    bu_vls_printf(gedp->ged_result_str, "\tlmax %g\n", gedp->ged_wdbp->wdb_ttol.rel_lmax);
+	if (gedp->ged_wdbp->dbip->db_ttol.rel_lmax > 0.0) {
+	    bu_vls_printf(gedp->ged_result_str, "\tlmax %g\n", gedp->ged_wdbp->dbip->db_ttol.rel_lmax);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "\tlmax None\n");
 	}
 
-	if (gedp->ged_wdbp->wdb_ttol.rel_lmin > 0.0) {
-	    bu_vls_printf(gedp->ged_result_str, "\tlmin %g\n", gedp->ged_wdbp->wdb_ttol.rel_lmin);
+	if (gedp->ged_wdbp->dbip->db_ttol.rel_lmin > 0.0) {
+	    bu_vls_printf(gedp->ged_result_str, "\tlmin %g\n", gedp->ged_wdbp->dbip->db_ttol.rel_lmin);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "\tlmin None\n");
 	}
@@ -129,8 +129,8 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 2) {
 
 	if (BU_STR_EQUAL(argv[1], "abs")) {
-	    if (gedp->ged_wdbp->wdb_ttol.abs > 0.0)
-		bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_wdbp->wdb_ttol.abs);
+	    if (gedp->ged_wdbp->dbip->db_ttol.abs > 0.0)
+		bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_wdbp->dbip->db_ttol.abs);
 	    else {
 		bu_vls_printf(gedp->ged_result_str, "None");
 	    }
@@ -138,8 +138,8 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (BU_STR_EQUAL(argv[1], "rel")) {
-	    if (gedp->ged_wdbp->wdb_ttol.rel > 0.0) {
-		bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_wdbp->wdb_ttol.rel);
+	    if (gedp->ged_wdbp->dbip->db_ttol.rel > 0.0) {
+		bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_wdbp->dbip->db_ttol.rel);
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "None");
 	    }
@@ -147,8 +147,8 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (BU_STR_EQUAL(argv[1], "norm")) {
-	    if (gedp->ged_wdbp->wdb_ttol.norm > 0.0) {
-		bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_wdbp->wdb_ttol.norm);
+	    if (gedp->ged_wdbp->dbip->db_ttol.norm > 0.0) {
+		bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_wdbp->dbip->db_ttol.norm);
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "None");
 	    }
@@ -156,8 +156,8 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (BU_STR_EQUAL(argv[1], "absmax")) {
-	    if (gedp->ged_wdbp->wdb_ttol.absmax > 0.0) {
-		bu_vls_printf(gedp->ged_result_str, "\tabsmax %g\n", gedp->ged_wdbp->wdb_ttol.absmax);
+	    if (gedp->ged_wdbp->dbip->db_ttol.absmax > 0.0) {
+		bu_vls_printf(gedp->ged_result_str, "\tabsmax %g\n", gedp->ged_wdbp->dbip->db_ttol.absmax);
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "\tabsmax None\n");
 	    }
@@ -165,8 +165,8 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (BU_STR_EQUAL(argv[1], "absmin")) {
-	    if (gedp->ged_wdbp->wdb_ttol.absmin > 0.0) {
-		bu_vls_printf(gedp->ged_result_str, "\tabsmin %g\n", gedp->ged_wdbp->wdb_ttol.absmin);
+	    if (gedp->ged_wdbp->dbip->db_ttol.absmin > 0.0) {
+		bu_vls_printf(gedp->ged_result_str, "\tabsmin %g\n", gedp->ged_wdbp->dbip->db_ttol.absmin);
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "\tabsmin None\n");
 	    }
@@ -175,8 +175,8 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 
 
 	if (BU_STR_EQUAL(argv[1], "relmax")) {
-	    if (gedp->ged_wdbp->wdb_ttol.relmax > 0.0) {
-		bu_vls_printf(gedp->ged_result_str, "\trelmax %g\n", gedp->ged_wdbp->wdb_ttol.relmax);
+	    if (gedp->ged_wdbp->dbip->db_ttol.relmax > 0.0) {
+		bu_vls_printf(gedp->ged_result_str, "\trelmax %g\n", gedp->ged_wdbp->dbip->db_ttol.relmax);
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "\trelmax None\n");
 	    }
@@ -185,8 +185,8 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 
 
 	if (BU_STR_EQUAL(argv[1], "relmin")) {
-	    if (gedp->ged_wdbp->wdb_ttol.relmin > 0.0) {
-		bu_vls_printf(gedp->ged_result_str, "\trelmin %g\n", gedp->ged_wdbp->wdb_ttol.relmin);
+	    if (gedp->ged_wdbp->dbip->db_ttol.relmin > 0.0) {
+		bu_vls_printf(gedp->ged_result_str, "\trelmin %g\n", gedp->ged_wdbp->dbip->db_ttol.relmin);
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "\trelmin None\n");
 	    }
@@ -195,8 +195,8 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 
 
 	if (BU_STR_EQUAL(argv[1], "lmax")) {
-	    if (gedp->ged_wdbp->wdb_ttol.rel_lmax > 0.0) {
-		bu_vls_printf(gedp->ged_result_str, "\tlmax %g\n", gedp->ged_wdbp->wdb_ttol.rel_lmax);
+	    if (gedp->ged_wdbp->dbip->db_ttol.rel_lmax > 0.0) {
+		bu_vls_printf(gedp->ged_result_str, "\tlmax %g\n", gedp->ged_wdbp->dbip->db_ttol.rel_lmax);
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "\tlmax None\n");
 	    }
@@ -205,8 +205,8 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 
 
 	if (BU_STR_EQUAL(argv[1], "lmin")) {
-	    if (gedp->ged_wdbp->wdb_ttol.rel_lmin > 0.0) {
-		bu_vls_printf(gedp->ged_result_str, "\tlmin %g\n", gedp->ged_wdbp->wdb_ttol.rel_lmin);
+	    if (gedp->ged_wdbp->dbip->db_ttol.rel_lmin > 0.0) {
+		bu_vls_printf(gedp->ged_result_str, "\tlmin %g\n", gedp->ged_wdbp->dbip->db_ttol.rel_lmin);
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "\tlmin None\n");
 	    }
@@ -214,12 +214,12 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (BU_STR_EQUAL(argv[1], "dist")) {
-	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_wdbp->wdb_tol.dist);
+	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_wdbp->dbip->db_tol.dist);
 	    return BRLCAD_OK;
 	}
 
 	if (BU_STR_EQUAL(argv[1], "perp")) {
-	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_wdbp->wdb_tol.perp);
+	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_wdbp->dbip->db_tol.perp);
 	    return BRLCAD_OK;
 	}
 
@@ -255,11 +255,11 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (BU_STR_EQUAL(argv[0], "abs")) {
 	    /* Absolute tol */
-	    if (f < gedp->ged_wdbp->wdb_tol.dist) {
+	    if (f < gedp->ged_wdbp->dbip->db_tol.dist) {
 		bu_vls_printf(gedp->ged_result_str,
-			"absolute tolerance cannot be less than distance tolerance, clamped to %f\n", gedp->ged_wdbp->wdb_tol.dist);
+			"absolute tolerance cannot be less than distance tolerance, clamped to %f\n", gedp->ged_wdbp->dbip->db_tol.dist);
 	    }
-	    gedp->ged_wdbp->wdb_ttol.abs = f;
+	    gedp->ged_wdbp->dbip->db_ttol.abs = f;
 	    valid_tol = 1;
 	}
 	if (BU_STR_EQUAL(argv[0], "rel")) {
@@ -269,7 +269,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 		return BRLCAD_ERROR;
 	    }
 	    /* Note that a value of 0.0 will disable relative tolerance */
-	    gedp->ged_wdbp->wdb_ttol.rel = f;
+	    gedp->ged_wdbp->dbip->db_ttol.rel = f;
 	    valid_tol = 1;
 	}
 	if (BU_STR_EQUAL(argv[0], "norm")) {
@@ -280,28 +280,28 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 		return BRLCAD_ERROR;
 	    }
 	    /* Note that a value of 0.0 or 360.0 will disable this tol */
-	    gedp->ged_wdbp->wdb_ttol.norm = f * DEG2RAD;
+	    gedp->ged_wdbp->dbip->db_ttol.norm = f * DEG2RAD;
 	    valid_tol = 1;
 	}
 
 
 	if (BU_STR_EQUAL(argv[0], "absmax")) {
 	    /* Absolute tol */
-	    if (f < gedp->ged_wdbp->wdb_tol.dist) {
+	    if (f < gedp->ged_wdbp->dbip->db_tol.dist) {
 		bu_vls_printf(gedp->ged_result_str,
-			"absolute tolerance cannot be less than distance tolerance, clamped to %f\n", gedp->ged_wdbp->wdb_tol.dist);
+			"absolute tolerance cannot be less than distance tolerance, clamped to %f\n", gedp->ged_wdbp->dbip->db_tol.dist);
 	    }
-	    gedp->ged_wdbp->wdb_ttol.absmax = f;
+	    gedp->ged_wdbp->dbip->db_ttol.absmax = f;
 	    valid_tol = 1;
 	}
 
 	if (BU_STR_EQUAL(argv[0], "absmin")) {
 	    /* Absolute tol */
-	    if (f < gedp->ged_wdbp->wdb_tol.dist) {
+	    if (f < gedp->ged_wdbp->dbip->db_tol.dist) {
 		bu_vls_printf(gedp->ged_result_str,
-			"absolute tolerance cannot be less than distance tolerance, clamped to %f\n", gedp->ged_wdbp->wdb_tol.dist);
+			"absolute tolerance cannot be less than distance tolerance, clamped to %f\n", gedp->ged_wdbp->dbip->db_tol.dist);
 	    }
-	    gedp->ged_wdbp->wdb_ttol.absmin = f;
+	    gedp->ged_wdbp->dbip->db_ttol.absmin = f;
 	    valid_tol = 1;
 	}
 
@@ -312,7 +312,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 		return BRLCAD_ERROR;
 	    }
 	    /* Note that a value of 0.0 will disable relative tolerance */
-	    gedp->ged_wdbp->wdb_ttol.relmax = f;
+	    gedp->ged_wdbp->dbip->db_ttol.relmax = f;
 	    valid_tol = 1;
 	}
 
@@ -323,7 +323,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 		return BRLCAD_ERROR;
 	    }
 	    /* Note that a value of 0.0 will disable relative tolerance */
-	    gedp->ged_wdbp->wdb_ttol.relmin = f;
+	    gedp->ged_wdbp->dbip->db_ttol.relmin = f;
 	    valid_tol = 1;
 	}
 
@@ -334,7 +334,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 		return BRLCAD_ERROR;
 	    }
 	    /* Note that a value of 0.0 will disable relative tolerance */
-	    gedp->ged_wdbp->wdb_ttol.rel_lmax = f;
+	    gedp->ged_wdbp->dbip->db_ttol.rel_lmax = f;
 	    valid_tol = 1;
 	}
 
@@ -345,14 +345,14 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 		return BRLCAD_ERROR;
 	    }
 	    /* Note that a value of 0.0 will disable relative tolerance */
-	    gedp->ged_wdbp->wdb_ttol.rel_lmin = f;
+	    gedp->ged_wdbp->dbip->db_ttol.rel_lmin = f;
 	    valid_tol = 1;
 	}
 
 	if (BU_STR_EQUAL(argv[0], "dist")) {
 	    /* Calculational distance tolerance */
-	    gedp->ged_wdbp->wdb_tol.dist = f;
-	    gedp->ged_wdbp->wdb_tol.dist_sq = gedp->ged_wdbp->wdb_tol.dist * gedp->ged_wdbp->wdb_tol.dist;
+	    gedp->ged_wdbp->dbip->db_tol.dist = f;
+	    gedp->ged_wdbp->dbip->db_tol.dist_sq = gedp->ged_wdbp->dbip->db_tol.dist * gedp->ged_wdbp->dbip->db_tol.dist;
 	    valid_tol = 1;
 	}
 	if (BU_STR_EQUAL(argv[0], "perp")) {
@@ -362,8 +362,8 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 			"Calculational perpendicular tolerance must be from 0 to 1\n");
 		return BRLCAD_ERROR;
 	    }
-	    gedp->ged_wdbp->wdb_tol.perp = f;
-	    gedp->ged_wdbp->wdb_tol.para = 1.0 - f;
+	    gedp->ged_wdbp->dbip->db_tol.perp = f;
+	    gedp->ged_wdbp->dbip->db_tol.para = 1.0 - f;
 	    valid_tol = 1;
 	}
 

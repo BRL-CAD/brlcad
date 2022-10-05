@@ -319,7 +319,7 @@ _ged_cm_lookat_pt(const int argc, const char **argv)
     {
 	vect_t neg_Z_axis = VINIT_ZERO;
 	neg_Z_axis[Z] = -1.0;
-	bn_mat_fromto(_ged_viewrot, dir, neg_Z_axis, &_ged_current_gedp->ged_wdbp->wdb_tol);
+	bn_mat_fromto(_ged_viewrot, dir, neg_Z_axis, &_ged_current_gedp->ged_wdbp->dbip->db_tol);
     }
 
     /* Final processing is deferred until view 'end', but eye_pt

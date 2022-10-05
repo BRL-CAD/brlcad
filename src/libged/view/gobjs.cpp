@@ -151,8 +151,8 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     struct draw_data_t dd;
     dd.dbip = gedp->dbip;
     dd.v = v;
-    dd.tol = &gedp->ged_wdbp->wdb_tol;
-    dd.ttol = &gedp->ged_wdbp->wdb_ttol;
+    dd.tol = &gedp->ged_wdbp->dbip->db_tol;
+    dd.ttol = &gedp->ged_wdbp->dbip->db_ttol;
     dd.mesh_c = gedp->ged_lod;
     dd.color_inherit = 0;
     dd.bound_only = 0;
