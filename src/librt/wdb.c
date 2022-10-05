@@ -69,6 +69,14 @@ wdb_dbopen(struct db_i *dbip, int mode)
 	rt_init_resource(&rt_uniresource, 0, NULL);
 
     switch(mode) {
+	case RT_WDB_TYPE_DB_DEFAULT:
+	    if (!dbip->dbi_wdbp)
+		return dbip->dbi_wdbp_inmem;
+	    return dbip->dbi_wdbp;
+	case RT_WDB_TYPE_DB_DEFAULT_APPEND_ONLY:
+	    if (!dbip->dbi_wdbp_a)
+		return dbip->dbi_wdbp_inmem_a;
+	    return dbip->dbi_wdbp_a;
 	case RT_WDB_TYPE_DB_DISK:
 	    return dbip->dbi_wdbp;
 	case RT_WDB_TYPE_DB_DISK_APPEND_ONLY:

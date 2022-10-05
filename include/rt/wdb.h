@@ -40,7 +40,15 @@ __BEGIN_DECLS
 
 struct resource;  /* forward declaration */
 
-/* struct rt_wdb database types (for wdb_type struct entry) */
+/* struct rt_wdb database types (for wdb_type struct entry).
+ * The "default" types will return the wdbp associated with
+ * the dbip - i.e., if the dbip is an inmem it will return
+ * the INMEM types, and if associated with a file it will
+ * return the DISK types.  This is for calling code that
+ * just needs a wdbp and isn't concerned with the details
+ * of how objects are being written. */
+#define RT_WDB_TYPE_DB_DEFAULT                  0
+#define RT_WDB_TYPE_DB_DEFAULT_APPEND_ONLY      1
 #define RT_WDB_TYPE_DB_DISK                     2
 #define RT_WDB_TYPE_DB_DISK_APPEND_ONLY         3
 #define RT_WDB_TYPE_DB_INMEM                    4
