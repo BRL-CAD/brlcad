@@ -239,7 +239,7 @@ struct push_state {
     const struct bn_tol *tol = NULL;
 
     /* Database information */
-    struct rt_wdb *wdbp = RT_WDB_NULL;
+    struct db_i *dbip = NULL;
 
     /* Containers for finalized database objects, used to assemble and
      * store them prior to the database writing step. */
@@ -464,7 +464,7 @@ push_walk_subtree(
     if (!tp)
 	return;
 
-    RT_CHECK_DBI(s->wdbp->dbip);
+    RT_CHECK_DBI(s->dbip);
     RT_CK_TREE(tp);
 
     switch (tp->tr_op) {
@@ -473,7 +473,7 @@ push_walk_subtree(
 
 	    // Don't consider the leaf it if doesn't exist (TODO - is this always
 	    // what we want to do when pushing?)
-	    if ((dp=db_lookup(s->wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+	    if ((dp=db_lookup(s->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
 
 	    /* Update current matrix state to reflect the new branch of
@@ -662,7 +662,7 @@ push_walk(struct db_full_path *dfp,
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal5(&in, dp, s->wdbp->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal5(&in, dp, s->dbip, NULL, &rt_uniresource) < 0)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -711,7 +711,7 @@ tree_update_walk_subtree(
 
 	    // Don't consider the leaf it if doesn't exist (TODO - is this always
 	    // what we want to do when pushing?)
-	    if ((dp=db_lookup(s->wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+	    if ((dp=db_lookup(s->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
 
 	    /* Update current matrix state to reflect the new branch of
@@ -918,7 +918,7 @@ tree_update_walk(
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 	bool tree_altered = false;
-	if (rt_db_get_internal5(&intern, dpi.dp, s->wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal5(&intern, dpi.dp, s->dbip, NULL, &rt_uniresource) < 0) {
 	    return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -927,7 +927,7 @@ tree_update_walk(
 	struct rt_db_internal *in;
 	struct rt_comb_internal *wcomb;
 	BU_GET(in, struct rt_db_internal);
-	if (rt_db_get_internal5(in, dpi.dp, s->wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal5(in, dpi.dp, s->dbip, NULL, &rt_uniresource) < 0) {
 	    BU_PUT(in, struct rt_db_internal);
 	    return;
 	}
@@ -959,7 +959,7 @@ tree_update_walk(
 	if (dpi.iname.length()) {
 
 	    // New name, new dp
-	    dp = db_lookup(s->wdbp->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
+	    dp = db_lookup(s->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
 
 	    if (dp != RT_DIR_NULL) {
 		// If we've already created the dp, we don't need to do so
@@ -975,7 +975,7 @@ tree_update_walk(
 	    // but don't (yet) alter the database by writing the internal
 	    // contents. That will be done with all other file changes at the
 	    // end of processing.
-	    dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
+	    dp = db_diradd(s->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
 	    if (dp == RT_DIR_NULL) {
 		bu_log("Unable to add %s to the database directory", dpi.iname.c_str());
 		rt_db_free_internal(in);
@@ -1047,7 +1047,7 @@ tree_update_walk(
 		bn_mat_print_vls(dpi.dp->d_namep, dpi.mat, s->msgs);
 		bn_mat_print_vls("curr_mat", *curr_mat, s->msgs);
 	    }
-	    if (rt_db_get_internal(in, dpi.dp, s->wdbp->dbip, dpi.mat, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(in, dpi.dp, s->dbip, dpi.mat, &rt_uniresource) < 0) {
 		if (s->msgs)
 		    bu_vls_printf(s->msgs, "Read error fetching '%s'\n", dpi.dp->d_namep);
 		BU_PUT(in, struct rt_db_internal);
@@ -1056,7 +1056,7 @@ tree_update_walk(
 	    }
 	} else {
 	    // If there is a non-IDN matrix, this is where we apply it
-	    if (rt_db_get_internal(in, dpi.dp, s->wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(in, dpi.dp, s->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 		if (s->msgs)
 		    bu_vls_printf(s->msgs, "Read error fetching '%s'\n", dpi.dp->d_namep);
 		BU_PUT(in, struct rt_db_internal);
@@ -1068,14 +1068,14 @@ tree_update_walk(
 
 	if (dpi.iname.length()) {
 	    // If we have an iname, we need a new directory pointer.
-	    dp = db_lookup(s->wdbp->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
+	    dp = db_lookup(s->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
 	    if (dp != RT_DIR_NULL) {
 		// If we've already created this, we're done
 		rt_db_free_internal(in);
 		BU_PUT(in, struct rt_db_internal);
 		return;
 	    }
-	    dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
+	    dp = db_diradd(s->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
 	    if (dp == RT_DIR_NULL) {
 		if (s->msgs)
 		    bu_vls_printf(s->msgs, "Unable to add %s to the database directory\n", dpi.iname.c_str());
@@ -1176,7 +1176,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     s.stop_at_regions = (to_regions) ? true : false;
     s.stop_at_shapes = (to_solids) ? true : false;
     s.dry_run = (dry_run) ? true : false;
-    s.wdbp = gedp->ged_wdbp;
+    s.dbip = gedp->dbip;
     s.msgs = gedp->ged_result_str;
     for (int i = 0; i < argc; i++) {
 	s.target_objs.insert(std::string(argv[i]));
@@ -1527,7 +1527,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	struct rt_db_internal *in = u_it->second;
 	if (!s.dry_run) {
-	    if (rt_db_put_internal(dp, s.wdbp->dbip, in, s.wdbp->dbip->db_resp) < 0) {
+	    if (rt_db_put_internal(dp, s.dbip, in, s.dbip->db_resp) < 0) {
 		bu_log("Unable to store %s to the database", dp->d_namep);
 	    }
 	}
@@ -1541,7 +1541,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	struct rt_db_internal *in = u_it->second;
 	if (!s.dry_run) {
-	    if (rt_db_put_internal(dp, s.wdbp->dbip, in, s.wdbp->dbip->db_resp) < 0) {
+	    if (rt_db_put_internal(dp, s.dbip, in, s.dbip->db_resp) < 0) {
 		bu_log("Unable to store %s to the database", dp->d_namep);
 	    }
 	} else {

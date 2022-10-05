@@ -116,12 +116,6 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 
     cmdname = argv[0];
 
-    /* Establish tolerances */
-    gedp->ged_wdbp->wdb_initial_tree_state.ts_ttol = &gedp->dbip->db_ttol;
-    gedp->ged_wdbp->wdb_initial_tree_state.ts_tol = &gedp->dbip->db_tol;
-
-    gedp->dbip->db_ttol.magic = BG_TESS_TOL_MAGIC;
-
     /* Initial values for options, must be reset each time */
     ncpu = 1;
     triangulate = 0;
@@ -163,7 +157,8 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 
     bev_facetize_tree = (union tree *)0;
     bev_nmg_model = nmg_mm();
-    gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &bev_nmg_model;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    wdbp->wdb_initial_tree_state.ts_m = &bev_nmg_model;
 
     opstr = NULL;
     tmp_tree = (union tree *)NULL;
@@ -171,7 +166,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
     while (argc) {
 	i = db_walk_tree(gedp->dbip, 1, (const char **)argv,
 			 ncpu,
-			 &gedp->ged_wdbp->wdb_initial_tree_state,
+			 &wdbp->wdb_initial_tree_state,
 			 0,			/* take all regions */
 			 bev_facetize_region_end,
 			 nmg_booltree_leaf_tess,

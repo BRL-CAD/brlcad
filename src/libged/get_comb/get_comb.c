@@ -177,12 +177,14 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
     } else {
+	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	bu_vls_printf(gedp->ged_result_str, "%s {} {} No {} Yes %d %d %d %d",
 		      argv[1],
-		      gedp->ged_wdbp->wdb_item_default,
-		      gedp->ged_wdbp->wdb_air_default,
-		      gedp->ged_wdbp->wdb_mat_default,
-		      gedp->ged_wdbp->wdb_los_default);
+		      wdbp->wdb_item_default,
+		      wdbp->wdb_air_default,
+		      wdbp->wdb_mat_default,
+		      wdbp->wdb_los_default);
+	wdb_close(wdbp);
     }
 
     return BRLCAD_OK;

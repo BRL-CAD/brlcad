@@ -147,6 +147,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     // applied depends on the incoming ray direction.  Here, that is
     // interpreted as both directions of ARB6 extrusion getting the full length
     // from the surface.
+    struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
     for (size_t i = 0; i < bot->num_faces; i++) {
 	point_t pnts[6];
@@ -189,12 +190,13 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 
 	// For arb6 creation we need to move a couple points the array.
 
-	mk_arb6(gb->gedp->ged_wdbp, bu_vls_cstr(&prim_name), pnts_array);
+	mk_arb6(wdbp, bu_vls_cstr(&prim_name), pnts_array);
 	(void)mk_addmember(bu_vls_cstr(&prim_name), &(wcomb.l), NULL, DB_OP_UNION);
     }
 
     // Write the comb
-    mk_lcomb(gb->gedp->ged_wdbp, bu_vls_addr(&comb_name), &wcomb, 1, NULL, NULL, NULL, 0);
+    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 1, NULL, NULL, NULL, 0);
+    wdb_close(wdbp);
 
     bu_vls_free(&comb_name);
     bu_vls_free(&prim_name);

@@ -75,12 +75,12 @@ ged ged_instance;
 const simulate::AutoPtr<ged, ged_free> autofree_ged_instance(&ged_instance);
 ged_init(&ged_instance);
 ged_instance.dbip = db_create_inmem()
-ged_instance.ged_wdbp = wdb_dbopen(ged_instance.dbip, RT_WDB_TYPE_DB_INMEM);
+struct rt_wdb *wdbp = wdb_dbopen(ged_instance.dbip, RT_WDB_TYPE_DB_INMEM);
 
 {
 const point_t center = {10.0e3, -3.0e3, 7.0e3};
 
-if (mk_sph(ged_instance.ged_wdbp, "sphere.s", center, 1.0e3))
+if (mk_sph(wdbp, "sphere.s", center, 1.0e3))
 bu_bomb("mk_sph() failed");
 }
 
@@ -88,7 +88,7 @@ bu_bomb("mk_sph() failed");
 const point_t min = { -1.0e3, -4.0e3, -3.0e3};
 const point_t max = {6.0e3, 3.0e3, 5.0e3};
 
-if (mk_rpp(ged_instance.ged_wdbp, "base.s", min, max))
+if (mk_rpp(wdbp, "base.s", min, max))
 bu_bomb("mk_rcc() failed");
 
 if (db5_update_attribute("base.s", "simulate::mass", "0.0", ged_instance.dbip))
@@ -122,7 +122,7 @@ BU_LIST_INIT(&members.l);
 mk_addmember("sphere.s", &members.l, sphere1_matrix, WMOP_UNION);
 mk_addmember("sphere.s", &members.l, sphere2_matrix, WMOP_UNION);
 
-if (mk_comb(ged_instance.ged_wdbp, "falling.c", &members.l, false, NULL, NULL,
+if (mk_comb(wdbp, "falling.c", &members.l, false, NULL, NULL,
 NULL, 0, 0, 0, 0, false, false, false))
 bu_bomb("mk_comb() failed");
 
@@ -134,7 +134,7 @@ BU_LIST_INIT(&members.l);
 mk_addmember("base.s", &members.l, base_matrix, WMOP_UNION);
 mk_addmember("falling.c", &members.l, NULL, WMOP_UNION);
 
-if (mk_comb(ged_instance.ged_wdbp, "scene.c", &members.l, false, NULL, NULL,
+if (mk_comb(wdbp, "scene.c", &members.l, false, NULL, NULL,
 NULL, 0, 0, 0, 0, false, false, false))
 bu_bomb("mk_comb() failed");
 
@@ -171,24 +171,23 @@ ged ged_instance;
 const simulate::AutoPtr<ged, ged_free> autofree_ged_instance(&ged_instance);
 ged_init(&ged_instance);
 ged_instance.dbip = db_create_inmem();
-ged_instance.ged_wdbp = wdb_dbopen(ged_instance.dbip, RT_WDB_TYPE_DB_INMEM);
+struct rt_wdb *wdbp = wdb_dbopen(ged_instance.dbip, RT_WDB_TYPE_DB_INMEM);
 
 {
 const point_t center = {0.0e3, 0.0e3, 10.0e3};
 
-if (mk_sph(ged_instance.ged_wdbp, "falling.s", center, 1.0e3))
+if (mk_sph(wdbp, "falling.s", center, 1.0e3))
 bu_bomb("mk_sph() failed");
 }
 
 {
 const point_t center = {0.0e3, 0.0e3, 0.0e3};
 
-if (mk_sph(ged_instance.ged_wdbp, "ground.s", center, 5.0e3))
+if (mk_sph(wdbp, "ground.s", center, 5.0e3))
 bu_bomb("mk_sph() failed");
 }
 
-if (db5_update_attribute("ground.s", "simulate::mass", "0.0",
-ged_instance.ged_wdbp->dbip))
+if (db5_update_attribute("ground.s", "simulate::mass", "0.0", ged_instance.dbip))
 bu_bomb("db5_update_attribute() failed");
 
 {
@@ -196,18 +195,18 @@ wmember members;
 BU_LIST_INIT(&members.l);
 mk_addmember("falling.s", &members.l, NULL, WMOP_UNION);
 
-if (mk_comb(ged_instance.ged_wdbp, "falling_solid.c", &members.l, false, NULL,
+if (mk_comb(wdbp, "falling_solid.c", &members.l, false, NULL,
 NULL, NULL, 0, 0, 0, 0, false, false, false))
 bu_bomb("mk_comb() failed");
 
 if (db5_update_attribute("falling_solid.c", "simulate::type", "region",
-ged_instance.ged_wdbp->dbip))
+ged_instance.dbip))
 bu_bomb("db5_update_attribute() failed");
 
 BU_LIST_INIT(&members.l);
 mk_addmember("falling_solid.c", &members.l, NULL, WMOP_UNION);
 
-if (mk_comb(ged_instance.ged_wdbp, "falling.c", &members.l, false, NULL, NULL,
+if (mk_comb(wdbp, "falling.c", &members.l, false, NULL, NULL,
 NULL, 0, 0, 0, 0, false, false, false))
 bu_bomb("mk_comb() failed");
 
@@ -222,7 +221,7 @@ BU_LIST_INIT(&members.l);
 mk_addmember("falling.c", &members.l, falling_matrix, WMOP_UNION);
 mk_addmember("ground.s", &members.l, NULL, WMOP_UNION);
 
-if (mk_comb(ged_instance.ged_wdbp, "scene.c", &members.l, false, NULL, NULL,
+if (mk_comb(wdbp, "scene.c", &members.l, false, NULL, NULL,
 NULL, 0, 0, 0, 0, false, false, false))
 bu_bomb("mk_comb() failed");
 }
@@ -239,7 +238,7 @@ const mat_t expected_falling_matrix = {
 0.0, 0.0, 0.0, 1.0
 };
 
-return matrix_equal(*ged_instance.ged_wdbp->dbip,
+return matrix_equal(*ged_instance.dbip,
 "/scene.c/falling.c/falling_solid.c", expected_falling_matrix);
 }
 
@@ -251,17 +250,17 @@ ged ged_instance;
 const simulate::AutoPtr<ged, ged_free> autofree_ged_instance(&ged_instance);
 ged_init(&ged_instance);
 ged_instance.dbip = db_create_inmem();
-ged_instance.ged_wdbp = wdb_dbopen(ged_instance.dbip, RT_WDB_TYPE_DB_INMEM);
+struct rt_wdb *wdbp = wdb_dbopen(ged_instance.dbip, RT_WDB_TYPE_DB_INMEM);
 
 {
 const point_t cube_min = { -1.0e3, -1.0e3, -1.0e3}, cube_max = {1.0e3, 1.0e3, 1.0e3};
 
-if (mk_rpp(ged_instance.ged_wdbp, "cube.s", cube_min, cube_max))
+if (mk_rpp(wdbp, "cube.s", cube_min, cube_max))
 bu_bomb("mk_rpp failed");
 
 const point_t ground_min = { -15.0e3, -15.0e3, -1.0e3}, ground_max = {15.0e3, 15.0e3, 1.0e3};
 
-if (mk_rpp(ged_instance.ged_wdbp, "ground.s", ground_min, ground_max))
+if (mk_rpp(wdbp, "ground.s", ground_min, ground_max))
 bu_bomb("mk_rpp failed");
 }
 
@@ -273,28 +272,28 @@ wmember members;
 BU_LIST_INIT(&members.l);
 mk_addmember("cube.s", &members.l, cube_matrix, WMOP_UNION);
 
-if (mk_comb(ged_instance.ged_wdbp, "cube.r", &members.l, true, NULL, NULL, NULL,
+if (mk_comb(wdbp, "cube.r", &members.l, true, NULL, NULL, NULL,
 0, 0, 0, 0, false, false, false))
 bu_bomb("mk_comb() failed");
 }
 
 if (db5_update_attribute("cube.r", "simulate::angular_velocity",
-"<2.0, -1.0, 3.0>", ged_instance.ged_wdbp->dbip))
+"<2.0, -1.0, 3.0>", ged_instance.dbip))
 bu_bomb("db5_update_attribute() failed");
 
 if (db5_update_attribute("cube.r", "simulate::type", "region",
-ged_instance.ged_wdbp->dbip))
+ged_instance.dbip))
 bu_bomb("db5_update_attribute() failed");
 
-if (mk_comb1(ged_instance.ged_wdbp, "ground.r", "ground.s", true))
+if (mk_comb1(wdbp, "ground.r", "ground.s", true))
 bu_bomb("mk_comb1() failed");
 
 if (db5_update_attribute("ground.r", "simulate::type", "region",
-ged_instance.ged_wdbp->dbip))
+ged_instance.dbip))
 bu_bomb("db5_update_attribute() failed");
 
 if (db5_update_attribute("ground.r", "simulate::mass", "0.0",
-ged_instance.ged_wdbp->dbip))
+ged_instance.dbip))
 bu_bomb("db5_update_attribute() failed");
 
 {
@@ -303,7 +302,7 @@ BU_LIST_INIT(&members.l);
 mk_addmember("cube.r", &members.l, NULL, WMOP_UNION);
 mk_addmember("ground.r", &members.l, NULL, WMOP_UNION);
 
-if (mk_comb(ged_instance.ged_wdbp, "scene.c", &members.l, false, NULL, NULL,
+if (mk_comb(wdbp, "scene.c", &members.l, false, NULL, NULL,
 NULL, 0, 0, 0, 0, false, false, false))
 bu_bomb("mk_comb() failed");
 }
@@ -321,7 +320,7 @@ const mat_t expected_cube_matrix = {
 0.0, 0.0, 0.0, 1.0
 };
 
-return matrix_equal(*ged_instance.ged_wdbp->dbip, "/scene.c/cube.r",
+return matrix_equal(*ged_instance.dbip, "/scene.c/cube.r",
 expected_cube_matrix);
 }
 }

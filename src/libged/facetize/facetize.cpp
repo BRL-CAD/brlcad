@@ -2764,6 +2764,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     bu_free(s_a, "array of states");
 
     // Make final meshes
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     for (size_t i = 0; i < ss_cdt.size(); i++) {
 	int fcnt, fncnt, ncnt, vcnt;
 	int *faces = NULL;
@@ -2790,7 +2791,8 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	bot->normals = normals;
 	bot->face_normals = face_normals;
 
-	if (wdb_export(gedp->ged_wdbp, bu_avs_get(opts->s_map, ON_Brep_CDT_ObjName(ss_cdt[i])), (void *)bot, ID_BOT, 1.0)) {
+	if (wdb_export(wdbp, bu_avs_get(opts->s_map, ON_Brep_CDT_ObjName(ss_cdt[i])), (void *)bot, ID_BOT, 1.0)) {
+	    wdb_close(wdbp);
 	    bu_vls_printf(gedp->ged_result_str, "Error exporting object %s.", bu_avs_get(opts->s_map, ON_Brep_CDT_ObjName(ss_cdt[i])));
 	    for (size_t j = 0; j < ss_cdt.size(); j++) {
 		ON_Brep_CDT_Destroy(ss_cdt[j]);
@@ -2798,6 +2800,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	    return BRLCAD_ERROR;
 	}
     }
+    wdb_close(wdbp);
 
     /* Done changing stuff - update nref. */
     db_update_nref(gedp->dbip, &rt_uniresource);
