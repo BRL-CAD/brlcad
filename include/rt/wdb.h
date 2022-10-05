@@ -100,6 +100,8 @@ RT_EXPORT extern struct rt_wdb *wdb_fopen(const char *filename);
  * directory is built along the way, allowing retrievals and object
  * replacements as needed.
  *
+ * The rt_wdb type returned is RT_WDB_TYPE_DB_DISK.
+ *
  * Users can change the database title by calling: ???
  */
 RT_EXPORT extern struct rt_wdb *wdb_fopen_v(const char *filename,
@@ -107,8 +109,12 @@ RT_EXPORT extern struct rt_wdb *wdb_fopen_v(const char *filename,
 
 
 /**
- * Create a libwdb output stream destined for an existing BRL-CAD
- * database, already opened via a db_open() call.
+ * Create a libwdb output stream destined for an existing BRL-CAD database,
+ * already opened via a db_open() call.
+ *
+ * Note: there can be only one rt_wdb container of each type per dbip - if an
+ * rt_wdb of the specified type is already associated with the database, the
+ * pre-existing stream will be returned.
  *
  * RT_WDB_TYPE_DB_DISK Add to on-disk database
  * RT_WDB_TYPE_DB_DISK_APPEND_ONLY Add to on-disk database, don't clobber existing names, use prefix

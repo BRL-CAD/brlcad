@@ -74,9 +74,8 @@ test_basic()
 ged ged_instance;
 const simulate::AutoPtr<ged, ged_free> autofree_ged_instance(&ged_instance);
 ged_init(&ged_instance);
-ged_instance.ged_wdbp = db_create_inmem()->dbi_wdbp;
-ged_instance.dbip = ged_instance.ged_wdbp->dbip;
-ged_instance.dbip->dbi_wdbp = ged_instance.ged_wdbp;
+ged_instance.dbip = db_create_inmem()
+ged_instance.ged_wdbp = wdb_dbopen(ged_instance.dbip, RT_WDB_TYPE_DB_INMEM);
 
 {
 const point_t center = {10.0e3, -3.0e3, 7.0e3};
@@ -92,8 +91,7 @@ const point_t max = {6.0e3, 3.0e3, 5.0e3};
 if (mk_rpp(ged_instance.ged_wdbp, "base.s", min, max))
 bu_bomb("mk_rcc() failed");
 
-if (db5_update_attribute("base.s", "simulate::mass", "0.0",
-ged_instance.ged_wdbp->dbip))
+if (db5_update_attribute("base.s", "simulate::mass", "0.0", ged_instance.dbip))
 bu_bomb("db5_update_attribute() failed");
 }
 
@@ -129,7 +127,7 @@ NULL, 0, 0, 0, 0, false, false, false))
 bu_bomb("mk_comb() failed");
 
 if (db5_update_attribute("falling.c", "simulate::type", "region",
-ged_instance.ged_wdbp->dbip))
+ged_instance.dbip))
 bu_bomb("db5_update_attribute() failed");
 
 BU_LIST_INIT(&members.l);
@@ -141,7 +139,7 @@ NULL, 0, 0, 0, 0, false, false, false))
 bu_bomb("mk_comb() failed");
 
 if (db5_update_attribute("scene.c", "simulate::gravity", "<0.0, 0.0, -9.8>",
-ged_instance.ged_wdbp->dbip))
+ged_instance.dbip))
 bu_bomb("db5_update_attribute() failed");
 }
 
@@ -158,9 +156,9 @@ const mat_t expected_falling_matrix = {
 0.0, 0.0, 0.0, 1.0
 };
 
-return matrix_equal(*ged_instance.ged_wdbp->dbip, "/scene.c/base.s",
+return matrix_equal(*ged_instance.dbip, "/scene.c/base.s",
 base_matrix)
-&& matrix_equal(*ged_instance.ged_wdbp->dbip, "/scene.c/falling.c",
+&& matrix_equal(*ged_instance.dbip, "/scene.c/falling.c",
 expected_falling_matrix);
 }
 }
@@ -172,9 +170,8 @@ test_matrices()
 ged ged_instance;
 const simulate::AutoPtr<ged, ged_free> autofree_ged_instance(&ged_instance);
 ged_init(&ged_instance);
-ged_instance.ged_wdbp = db_create_inmem()->dbi_wdbp;
-ged_instance.dbip = ged_instance.ged_wdbp->dbip;
-ged_instance.dbip->dbi_wdbp = ged_instance.ged_wdbp;
+ged_instance.dbip = db_create_inmem();
+ged_instance.ged_wdbp = wdb_dbopen(ged_instance.dbip, RT_WDB_TYPE_DB_INMEM);
 
 {
 const point_t center = {0.0e3, 0.0e3, 10.0e3};
@@ -253,9 +250,8 @@ test_tutorial()
 ged ged_instance;
 const simulate::AutoPtr<ged, ged_free> autofree_ged_instance(&ged_instance);
 ged_init(&ged_instance);
-ged_instance.ged_wdbp = db_create_inmem()->dbi_wdbp;
-ged_instance.dbip = ged_instance.ged_wdbp->dbip;
-ged_instance.dbip->dbi_wdbp = ged_instance.ged_wdbp;
+ged_instance.dbip = db_create_inmem();
+ged_instance.ged_wdbp = wdb_dbopen(ged_instance.dbip, RT_WDB_TYPE_DB_INMEM);
 
 {
 const point_t cube_min = { -1.0e3, -1.0e3, -1.0e3}, cube_max = {1.0e3, 1.0e3, 1.0e3};

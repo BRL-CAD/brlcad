@@ -266,6 +266,22 @@ db_open(const char *name, const char *mode)
 	bu_log("db_open(%s) dbip=%p version=%d\n", dbip->dbi_filename, (void *)dbip, dbip->dbi_version);
     }
 
+    /* Set up the four possible wdb containers. */
+    if (rt_uniresource.re_magic != RESOURCE_MAGIC)
+	rt_init_resource(&rt_uniresource, 0, NULL);
+
+    BU_ALLOC(dbip->dbi_wdbp, struct rt_wdb);
+    wdb_init(dbip->dbi_wdbp, dbip, RT_WDB_TYPE_DB_DISK);
+
+    BU_ALLOC(dbip->dbi_wdbp_a, struct rt_wdb);
+    wdb_init(dbip->dbi_wdbp_a, dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
+
+    BU_ALLOC(dbip->dbi_wdbp_inmem, struct rt_wdb);
+    wdb_init(dbip->dbi_wdbp_inmem, dbip, RT_WDB_TYPE_DB_INMEM);
+
+    BU_ALLOC(dbip->dbi_wdbp_inmem_a, struct rt_wdb);
+    wdb_init(dbip->dbi_wdbp_inmem_a, dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
+
     return dbip;
 }
 
@@ -353,6 +369,55 @@ db_close(register struct db_i *dbip)
 	return;
     }
     bu_semaphore_release(sem_uses);
+
+    /* Free wdbp containers */
+    if (dbip->dbi_wdbp) {
+	BU_LIST_DEQUEUE(&dbip->dbi_wdbp->l);
+	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp->l, 0);
+	bu_vls_free(&dbip->dbi_wdbp->wdb_name);
+	bu_vls_free(&dbip->dbi_wdbp->wdb_prestr);
+	dbip->dbi_wdbp->wdb_type = 0;
+	dbip->dbi_wdbp->wdb_resp = NULL;
+	dbip->dbi_wdbp->wdb_interp = NULL;
+	bu_free((void *)dbip->dbi_wdbp, "struct rt_wdb");
+	dbip->dbi_wdbp = NULL;
+    }
+
+    if (dbip->dbi_wdbp_a) {
+	BU_LIST_DEQUEUE(&dbip->dbi_wdbp_a->l);
+	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp_a->l, 0);
+	bu_vls_free(&dbip->dbi_wdbp_a->wdb_name);
+	bu_vls_free(&dbip->dbi_wdbp_a->wdb_prestr);
+	dbip->dbi_wdbp_a->wdb_type = 0;
+	dbip->dbi_wdbp_a->wdb_resp = NULL;
+	dbip->dbi_wdbp_a->wdb_interp = NULL;
+	bu_free((void *)dbip->dbi_wdbp_a, "struct rt_wdb");
+	dbip->dbi_wdbp_a = NULL;
+    }
+
+    if (dbip->dbi_wdbp_inmem) {
+	BU_LIST_DEQUEUE(&dbip->dbi_wdbp_inmem->l);
+	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp_inmem->l, 0);
+	bu_vls_free(&dbip->dbi_wdbp_inmem->wdb_name);
+	bu_vls_free(&dbip->dbi_wdbp_inmem->wdb_prestr);
+	dbip->dbi_wdbp_inmem->wdb_type = 0;
+	dbip->dbi_wdbp_inmem->wdb_resp = NULL;
+	dbip->dbi_wdbp_inmem->wdb_interp = NULL;
+	bu_free((void *)dbip->dbi_wdbp_inmem, "struct rt_wdb");
+	dbip->dbi_wdbp_inmem = NULL;
+    }
+
+    if (dbip->dbi_wdbp_inmem_a) {
+	BU_LIST_DEQUEUE(&dbip->dbi_wdbp_inmem_a->l);
+	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp_inmem_a->l, 0);
+	bu_vls_free(&dbip->dbi_wdbp_inmem_a->wdb_name);
+	bu_vls_free(&dbip->dbi_wdbp_inmem_a->wdb_prestr);
+	dbip->dbi_wdbp_inmem_a->wdb_type = 0;
+	dbip->dbi_wdbp_inmem_a->wdb_resp = NULL;
+	dbip->dbi_wdbp_inmem_a->wdb_interp = NULL;
+	bu_free((void *)dbip->dbi_wdbp_inmem_a, "struct rt_wdb");
+	dbip->dbi_wdbp_inmem_a = NULL;
+    }
 
     /* ready to free the database -- use count is now zero */
 
@@ -443,10 +508,16 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 	return -1;
     }
 
+    //struct directory *out_global = db_lookup(wdbp->dbip, "_GLOBAL", LOOKUP_QUIET);
+
     /* Output all directory entries */
     for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    RT_CK_DIR(dp);
+	    //if (out_global && BU_STR_EQUAL(dp->d_namep, "_GLOBAL")) {
+		//bu_log("db_dump() - in append-only mode, and target db already has a _GLOBAL object");
+		//continue;
+	    //}
 	    /* XXX Need to go to internal form, if database versions don't match */
 	    if (db_get_external(&ext, dp, dbip) < 0) {
 		bu_log("db_dump() read failed on %s, skipping\n", dp->d_namep);

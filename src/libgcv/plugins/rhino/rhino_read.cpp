@@ -891,6 +891,8 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 		      "-type shape -not -below -type region", 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
+    struct rt_wdb *wdbp = wdb_dbopen(&db, RT_WDB_TYPE_DB_DISK);
+
     if (BU_PTBL_LEN(&found)) {
 	db_full_path **entry;
 
@@ -925,7 +927,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 
 	    std::vector<std::string> members_vec;
 	    members_vec.push_back(DB_FULL_PATH_CUR_DIR(*entry)->d_namep);
-	    write_comb(*db.dbi_wdbp, region_name, members_vec);
+	    write_comb(*wdbp, region_name, members_vec);
 
 	    comb_to_region(db, region_name);
 
@@ -976,18 +978,23 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	root_name = bu_vls_addr(&temp);
     }
 
+    struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+
     try {
 	ONX_Model model;
 	load_model(*gcv_options, source_path, model, root_name);
-	import_model_layers(*context->dbip->dbi_wdbp, model, root_name);
-	import_model_idefs(*context->dbip->dbi_wdbp, model);
-	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
+	import_model_layers(*wdbp, model, root_name);
+	import_model_idefs(*wdbp, model);
+	import_model_objects(*gcv_options, *wdbp, model);
     } catch (const InvalidRhinoModelError &exception) {
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
+	wdb_close(wdbp);
 	return 0;
     }
 
     polish_output(*gcv_options, *context->dbip);
+
+    wdb_close(wdbp);
 
     return 1;
 }

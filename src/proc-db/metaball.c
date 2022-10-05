@@ -165,8 +165,9 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
     bu_log("Joining balls together and creating [%s] object\n", name);
 
     /* write out new "mega metaball" out to disk */
-    dbip->dbi_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-    wdb_export(dbip->dbi_wdbp, name, newmp, ID_METABALL, 1.0);
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    wdb_export(wdbp, name, newmp, ID_METABALL, 1.0);
+    wdb_close(wdbp);
 }
 
 
