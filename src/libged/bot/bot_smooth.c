@@ -99,7 +99,7 @@ ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
 	dp_new = dp_old;
     }
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp_old, NULL, gedp->ged_wdbp->dbip->db_resp, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp_old, NULL, gedp->dbip->db_resp, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a BOT primitive\n", old_bot_name);
@@ -120,7 +120,7 @@ ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
 	GED_DB_DIRADD(gedp, dp_new, new_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, BRLCAD_ERROR);
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp_new, &intern, gedp->ged_wdbp->dbip->db_resp, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp_new, &intern, gedp->dbip->db_resp, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
 
     return BRLCAD_OK;

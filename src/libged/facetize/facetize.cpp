@@ -533,11 +533,11 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 
     _ged_facetize_log_nmg(o);
 
-    db_init_db_tree_state(&init_state, gedp->dbip, gedp->ged_wdbp->dbip->db_resp);
+    db_init_db_tree_state(&init_state, gedp->dbip, gedp->dbip->db_resp);
 
     /* Establish tolerances */
-    init_state.ts_ttol = &gedp->ged_wdbp->dbip->db_ttol;
-    init_state.ts_tol = &gedp->ged_wdbp->dbip->db_tol;
+    init_state.ts_ttol = &gedp->dbip->db_ttol;
+    init_state.ts_tol = &gedp->dbip->db_tol;
 
     facetize_tree = (union tree *)0;
     nmg_model = nmg_mm();
@@ -571,7 +571,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     if (facetize_tree) {
 	if (!BU_SETJUMP) {
 	    /* try */
-	    failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->dbip->db_tol, &rt_uniresource);
+	    failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &gedp->dbip->db_tol, &rt_uniresource);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
@@ -603,7 +603,7 @@ _try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct _ged_face
 
     if (!BU_SETJUMP) {
 	/* try */
-	nmg_triangulate_model(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->dbip->db_tol);
+	nmg_triangulate_model(nmg_model, &RTG.rtg_vlfree, &gedp->dbip->db_tol);
     } else {
 	/* catch */
 	BU_UNSETJUMP;
@@ -622,7 +622,7 @@ _try_nmg_to_bot(struct ged *gedp, struct model *nmg_model, struct _ged_facetize_
     _ged_facetize_log_nmg(o);
     if (!BU_SETJUMP) {
 	/* try */
-	bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->dbip->db_tol);
+	bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, &RTG.rtg_vlfree, &gedp->dbip->db_tol);
     } else {
 	/* catch */
 	BU_UNSETJUMP;
@@ -1500,7 +1500,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
     struct db_i *dbip = gedp->dbip;
     struct bu_vls oname = BU_VLS_INIT_ZERO;
     int flags = opts->method_flags;
-    struct bg_tess_tol *tol = &(gedp->ged_wdbp->dbip->db_ttol);
+    struct bg_tess_tol *tol = &(gedp->dbip->db_ttol);
 
     RT_CHECK_DBI(dbip);
 
@@ -1738,7 +1738,7 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
     attrav[2] = rcname;
 
     if (method == FACETIZE_NMGBOOL) {
-	struct bg_tess_tol *tol = &(gedp->ged_wdbp->dbip->db_ttol);
+	struct bg_tess_tol *tol = &(gedp->dbip->db_ttol);
 	attrav[3] = _ged_facetize_attr(method);
 	attrav[4] = "1";
 	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
@@ -1933,7 +1933,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
     bu_vls_sprintf(opts->froot, "%s", argv[0]);
 
     /* Used the libged tolerances */
-    opts->tol = &(gedp->ged_wdbp->dbip->db_ttol);
+    opts->tol = &(gedp->dbip->db_ttol);
 
     dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
     newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
@@ -2221,7 +2221,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     const char *active_regions = "( -type r ! -below -type r ) -or ( ! -below -type r ! -type comb )";
 
     /* Used the libged tolerances */
-    opts->tol = &(gedp->ged_wdbp->dbip->db_ttol);
+    opts->tol = &(gedp->dbip->db_ttol);
 
     if (!argc) return BRLCAD_ERROR;
 
@@ -2558,7 +2558,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     struct ON_Brep_CDT_State **s_a = NULL;
 
     /* Used the libged tolerances */
-    opts->tol = &(gedp->ged_wdbp->dbip->db_ttol);
+    opts->tol = &(gedp->dbip->db_ttol);
     struct bg_tess_tol cdttol;
     cdttol.abs = opts->tol->abs;
     cdttol.rel = opts->tol->rel;

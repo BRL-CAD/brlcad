@@ -117,10 +117,10 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
     cmdname = argv[0];
 
     /* Establish tolerances */
-    gedp->ged_wdbp->wdb_initial_tree_state.ts_ttol = &gedp->ged_wdbp->dbip->db_ttol;
-    gedp->ged_wdbp->wdb_initial_tree_state.ts_tol = &gedp->ged_wdbp->dbip->db_tol;
+    gedp->ged_wdbp->wdb_initial_tree_state.ts_ttol = &gedp->dbip->db_ttol;
+    gedp->ged_wdbp->wdb_initial_tree_state.ts_tol = &gedp->dbip->db_tol;
 
-    gedp->ged_wdbp->dbip->db_ttol.magic = BG_TESS_TOL_MAGIC;
+    gedp->dbip->db_ttol.magic = BG_TESS_TOL_MAGIC;
 
     /* Initial values for options, must be reset each time */
     ncpu = 1;
@@ -157,9 +157,9 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str,
 		  "%s:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
 		  argv[0],
-		  gedp->ged_wdbp->dbip->db_ttol.abs,
-		  gedp->ged_wdbp->dbip->db_ttol.rel,
-		  gedp->ged_wdbp->dbip->db_ttol.norm);
+		  gedp->dbip->db_ttol.abs,
+		  gedp->dbip->db_ttol.rel,
+		  gedp->dbip->db_ttol.norm);
 
     bev_facetize_tree = (union tree *)0;
     bev_nmg_model = nmg_mm();
@@ -249,7 +249,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	failed = nmg_boolean(tmp_tree, bev_nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->dbip->db_tol, &rt_uniresource);
+	failed = nmg_boolean(tmp_tree, bev_nmg_model, &RTG.rtg_vlfree, &gedp->dbip->db_tol, &rt_uniresource);
 	BU_UNSETJUMP;
     } else
 	failed = 1;
@@ -282,7 +282,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 	    bev_nmg_model = (struct model *)NULL;
 	    return BRLCAD_ERROR;
 	}
-	nmg_triangulate_model(bev_nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->dbip->db_tol);
+	nmg_triangulate_model(bev_nmg_model, &RTG.rtg_vlfree, &gedp->dbip->db_tol);
 	BU_UNSETJUMP;
     }
 

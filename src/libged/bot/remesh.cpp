@@ -251,7 +251,7 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	GED_DB_DIRADD(gedp, dp_output, output_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type, BRLCAD_ERROR);
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp_output, gb->intern, gedp->ged_wdbp->dbip->db_resp, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp_output, gb->intern, gedp->dbip->db_resp, BRLCAD_ERROR);
 
     return BRLCAD_OK;
 }

@@ -192,8 +192,8 @@ main(int ac, char *av[]) {
 	    bu_log("Error: 'mater -d source' failed to run correctly\n");
 	    goto ged_test_fail;
 	} else {
-	    if (bu_strncmp(bu_vls_cstr(gedp->ged_result_str), gedp->ged_wdbp->dbip->dbi_filename, strlen(gedp->ged_wdbp->dbip->dbi_filename))) {
-		bu_log("Error: 'mater -d source' reports a location of %s instead of %s\n", bu_vls_cstr(gedp->ged_result_str), gedp->ged_wdbp->dbip->dbi_filename);
+	    if (bu_strncmp(bu_vls_cstr(gedp->ged_result_str), gedp->dbip->dbi_filename, strlen(gedp->dbip->dbi_filename))) {
+		bu_log("Error: 'mater -d source' reports a location of %s instead of %s\n", bu_vls_cstr(gedp->ged_result_str), gedp->dbip->dbi_filename);
 		goto ged_test_fail;
 	    }
 	}

@@ -1538,11 +1538,11 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 	}
 	// iterate through the db and find all materials
 	for (int i = 0; i < RT_DBNHASH; i++) {
-	    struct directory *dp = _ged_current_gedp->ged_wdbp->dbip->dbi_Head[i];
+	    struct directory *dp = _ged_current_gedp->dbip->dbi_Head[i];
 	    if (dp != NULL) {
 		struct rt_db_internal intern;
 		struct rt_material_internal *material_ip;
-		if (rt_db_get_internal(&intern, dp, _ged_current_gedp->ged_wdbp->dbip, NULL, &rt_uniresource) >= 0) {
+		if (rt_db_get_internal(&intern, dp, _ged_current_gedp->dbip, NULL, &rt_uniresource) >= 0) {
 		    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 			// if the material has an id and density, add it to the density table
 			material_ip = (struct rt_material_internal *)intern.idb_ptr;
@@ -2499,7 +2499,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
      *
      * FIXME: should probably be based on the model size.
      */
-    gridSpacingLimit = 10.0 * gedp->ged_wdbp->dbip->db_tol.dist;
+    gridSpacingLimit = 10.0 * gedp->dbip->db_tol.dist;
 
     makeOverlapAssemblies = 0;
     require_num_hits = 1;

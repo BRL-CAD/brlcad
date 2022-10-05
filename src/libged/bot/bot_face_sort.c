@@ -77,7 +77,7 @@ ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, gedp->ged_wdbp->dbip->db_resp, BRLCAD_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, gedp->dbip->db_resp, BRLCAD_ERROR);
 
 	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	    rt_db_free_internal(&intern);
@@ -100,7 +100,7 @@ ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->ged_wdbp->dbip->db_resp, BRLCAD_ERROR);
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->dbip->db_resp, BRLCAD_ERROR);
     }
 
     return BRLCAD_OK;

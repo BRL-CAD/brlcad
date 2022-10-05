@@ -152,8 +152,8 @@ add_solid(const struct directory *dp,
 
 	if (!OBJ[id].ft_tessellate ||
 	    OBJ[id].ft_tessellate(&r, eptr->l.m, &intern,
-					 &dgcdp->gedp->ged_wdbp->dbip->db_ttol,
-					 &dgcdp->gedp->ged_wdbp->dbip->db_tol) < 0)
+					 &dgcdp->gedp->dbip->db_ttol,
+					 &dgcdp->gedp->dbip->db_tol) < 0)
 	{
 	    nmg_km(eptr->l.m);
 	    eptr->l.m = NULL;
@@ -182,7 +182,7 @@ add_solid(const struct directory *dp,
 
 	    if (solid_is_plate_mode_bot
 		|| !eptr->l.m
-		|| (bot = nmg_bot(s, &RTG.rtg_vlfree, &dgcdp->gedp->ged_wdbp->dbip->db_tol)) == (struct rt_bot_internal *)NULL)
+		|| (bot = nmg_bot(s, &RTG.rtg_vlfree, &dgcdp->gedp->dbip->db_tol)) == (struct rt_bot_internal *)NULL)
 	    {
 		eptr->l.stp->st_id = id;
 		eptr->l.stp->st_meth = &OBJ[id];
@@ -1023,7 +1023,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
 
     /* set up "ray_data" structure for nmg raytrace */
     rd.rp = &new_rp;
-    rd.tol = &dgcdp->gedp->ged_wdbp->dbip->db_tol;
+    rd.tol = &dgcdp->gedp->dbip->db_tol;
     rd.ap = dgcdp->ap;
     rd.magic = NMG_RAY_DATA_MAGIC;
     rd.classifying_ray = 0;
@@ -1122,7 +1122,7 @@ shoot_and_plot(point_t start_pt,
 
     /* set up "ray_data" structure for nmg raytrace */
     rd.rp = &rp;
-    rd.tol = &dgcdp->gedp->ged_wdbp->dbip->db_tol;
+    rd.tol = &dgcdp->gedp->dbip->db_tol;
     rd.ap = dgcdp->ap;
     rd.magic = NMG_RAY_DATA_MAGIC;
     rd.classifying_ray = 0;
@@ -1159,18 +1159,18 @@ shoot_and_plot(point_t start_pt,
 		    else if (!leaf->l.stp->st_matp &&
 			     bn_mat_is_equal(shoot->l.stp->st_matp,
 					     bn_mat_identity,
-					     &dgcdp->gedp->ged_wdbp->dbip->db_tol))
+					     &dgcdp->gedp->dbip->db_tol))
 			dont_shoot = 1;
 		    else if (!shoot->l.stp->st_matp &&
 			     bn_mat_is_equal(leaf->l.stp->st_matp,
 					     bn_mat_identity,
-					     &dgcdp->gedp->ged_wdbp->dbip->db_tol))
+					     &dgcdp->gedp->dbip->db_tol))
 			dont_shoot = 1;
 		    else if (leaf->l.stp->st_matp &&
 			     shoot->l.stp->st_matp &&
 			     bn_mat_is_equal(leaf->l.stp->st_matp,
 					     shoot->l.stp->st_matp,
-					     &dgcdp->gedp->ged_wdbp->dbip->db_tol))
+					     &dgcdp->gedp->dbip->db_tol))
 			dont_shoot = 1;
 		}
 	    }
@@ -1182,18 +1182,18 @@ shoot_and_plot(point_t start_pt,
 		    else if (!leaf->l.stp->st_matp &&
 			     bn_mat_is_equal(shoot->l.stp->st_matp,
 					     bn_mat_identity,
-					     &dgcdp->gedp->ged_wdbp->dbip->db_tol))
+					     &dgcdp->gedp->dbip->db_tol))
 			dont_shoot = 1;
 		    else if (!shoot->l.stp->st_matp &&
 			     bn_mat_is_equal(leaf->l.stp->st_matp,
 					     bn_mat_identity,
-					     &dgcdp->gedp->ged_wdbp->dbip->db_tol))
+					     &dgcdp->gedp->dbip->db_tol))
 			dont_shoot = 1;
 		    else if (leaf->l.stp->st_matp &&
 			     shoot->l.stp->st_matp &&
 			     bn_mat_is_equal(leaf->l.stp->st_matp,
 					     shoot->l.stp->st_matp,
-					     &dgcdp->gedp->ged_wdbp->dbip->db_tol))
+					     &dgcdp->gedp->dbip->db_tol))
 			dont_shoot = 1;
 		}
 	    }
@@ -1316,7 +1316,7 @@ Eplot(union E_tree *eptr,
     struct bu_list *result;
     struct bn_tol *tol;
 
-    tol = &dgcdp->gedp->ged_wdbp->dbip->db_tol;
+    tol = &dgcdp->gedp->dbip->db_tol;
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     CK_ETREE(eptr);
@@ -1707,7 +1707,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
     size_t count=0;
     struct bn_tol *tol;
 
-    tol = &dgcdp->gedp->ged_wdbp->dbip->db_tol;
+    tol = &dgcdp->gedp->dbip->db_tol;
 
     VSETALL(max, -INFINITY);
     VSETALL(min, INFINITY);
@@ -2062,7 +2062,7 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
 	bu_ptbl_init(&dgcdp->leaf_list, 8, "leaf_list");
 
 	dgcdp->rtip = rt_new_rti(gedp->dbip);
-	dgcdp->rtip->rti_tol = gedp->ged_wdbp->dbip->db_tol;	/* struct copy */
+	dgcdp->rtip->rti_tol = gedp->dbip->db_tol;	/* struct copy */
 	dgcdp->rtip->useair = 1;
 	dgcdp->ap->a_rt_i = dgcdp->rtip;
 

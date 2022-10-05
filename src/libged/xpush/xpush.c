@@ -284,7 +284,7 @@ Copy_solid(struct ged *gedp,
 
     /* Look for a copy that already has this transform matrix */
     for (BU_LIST_FOR (use, object_use, &dp->d_use_hd)) {
-	if (bn_mat_is_equal(xform, use->xform, &gedp->ged_wdbp->dbip->db_tol)) {
+	if (bn_mat_is_equal(xform, use->xform, &gedp->dbip->db_tol)) {
 	    /* found a match, no need to make another copy */
 	    use->used = 1;
 	    return use->dp;
@@ -342,7 +342,7 @@ Copy_comb(struct ged *gedp,
 
     /* Look for a copy that already has this transform matrix */
     for (BU_LIST_FOR (use, object_use, &dp->d_use_hd)) {
-	if (bn_mat_is_equal(xform, use->xform, &gedp->ged_wdbp->dbip->db_tol)) {
+	if (bn_mat_is_equal(xform, use->xform, &gedp->dbip->db_tol)) {
 	    /* found a match, no need to make another copy */
 	    use->used = 1;
 	    return use->dp;

@@ -209,14 +209,14 @@ _tree_print_node(struct ged *gedp,
 		for (j = 0; j < pathpos+1; j++)
 		    bu_vls_printf(gedp->ged_result_str, "\t");
 
-		if (verbosity && rt_tree_array[i].tl_tree->tr_l.tl_mat && !bn_mat_is_equal(rt_tree_array[i].tl_tree->tr_l.tl_mat, bn_mat_identity, &gedp->ged_wdbp->dbip->db_tol))
+		if (verbosity && rt_tree_array[i].tl_tree->tr_l.tl_mat && !bn_mat_is_equal(rt_tree_array[i].tl_tree->tr_l.tl_mat, bn_mat_identity, &gedp->dbip->db_tol))
 		    bu_vls_printf(gedp->ged_result_str, "%s ", mlabel);
 		bu_vls_printf(gedp->ged_result_str, "%c ", op);
 		bu_vls_printf(gedp->ged_result_str, "%s\n", rt_tree_array[i].tl_tree->tr_l.tl_name);
 	    } else {
 
 		int domprefix = 0;
-		if (verbosity && rt_tree_array[i].tl_tree->tr_l.tl_mat && !bn_mat_is_equal(rt_tree_array[i].tl_tree->tr_l.tl_mat, bn_mat_identity, &gedp->ged_wdbp->dbip->db_tol)) {
+		if (verbosity && rt_tree_array[i].tl_tree->tr_l.tl_mat && !bn_mat_is_equal(rt_tree_array[i].tl_tree->tr_l.tl_mat, bn_mat_identity, &gedp->dbip->db_tol)) {
 		    domprefix = 1;
 		}
 

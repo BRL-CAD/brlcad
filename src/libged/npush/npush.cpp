@@ -1171,7 +1171,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
      * instances involved with matrices */
     struct push_state s;
     s.verbosity = verbosity;
-    s.tol = &gedp->ged_wdbp->dbip->db_tol;
+    s.tol = &gedp->dbip->db_tol;
     s.max_depth = max_depth;
     s.stop_at_regions = (to_regions) ? true : false;
     s.stop_at_shapes = (to_solids) ? true : false;
@@ -1237,7 +1237,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
 	    /* Sanity - if we didn't end up with m back at the identity matrix,
 	     * something went wrong with the walk */
-	    if (!bn_mat_is_equal(m, bn_mat_identity, &gedp->ged_wdbp->dbip->db_tol)) {
+	    if (!bn_mat_is_equal(m, bn_mat_identity, &gedp->dbip->db_tol)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error - initial tree walk down %s finished with non-IDN matrix.\n", dp->d_namep);
 		bu_free(all_paths, "free db_ls output");
 		return BRLCAD_ERROR;

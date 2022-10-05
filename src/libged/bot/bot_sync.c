@@ -81,7 +81,7 @@ ged_bot_sync_core(struct ged *gedp, int argc, const char *argv[])
 		bot = (struct rt_bot_internal *)intern.idb_ptr;
 		rt_bot_sync(bot);
 
-		GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->ged_wdbp->dbip->db_resp, BRLCAD_ERROR);
+		GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->dbip->db_resp, BRLCAD_ERROR);
 	    }
 	}
 	bu_free(obj, "free obj");

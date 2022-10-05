@@ -81,7 +81,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    s_tmp = nmg_dup_shell(s, &trans_tbl, &RTG.rtg_vlfree, &gedp->ged_wdbp->dbip->db_tol);
+	    s_tmp = nmg_dup_shell(s, &trans_tbl, &RTG.rtg_vlfree, &gedp->dbip->db_tol);
 	    bu_free((void *)trans_tbl, "trans_tbl");
 
 	    m_tmp = nmg_mmr();
@@ -114,7 +114,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* make sure the geometry/bounding boxes are up to date */
-	    nmg_rebound(m_tmp, &gedp->ged_wdbp->dbip->db_tol);
+	    nmg_rebound(m_tmp, &gedp->dbip->db_tol);
 
 	    if (rt_db_put_internal(new_dp, gedp->dbip, &new_intern, &rt_uniresource) < 0) {
 		/* Free memory */

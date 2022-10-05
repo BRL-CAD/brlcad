@@ -164,7 +164,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     struct model *m;
     struct nmgregion *r;
     int ret, c, i;
-    struct bn_tol *tol = &gedp->ged_wdbp->dbip->db_tol;
+    struct bn_tol *tol = &gedp->dbip->db_tol;
     int total = 0;
     volatile int out_type = 0; /* open edge output type: 0 = none, 1 = show, 2 = plot */
     size_t open_cnt;
@@ -229,7 +229,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 
     /* place bot in nmg structure */
     bu_log("%s: running rt_bot_tess\n", argv[0]);
-    ret = rt_bot_tess(&r, m, &intern, &gedp->ged_wdbp->dbip->db_ttol, tol);
+    ret = rt_bot_tess(&r, m, &intern, &gedp->dbip->db_ttol, tol);
 
     /* free internal representation of original bot */
     rt_db_free_internal(&intern);

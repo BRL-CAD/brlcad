@@ -77,7 +77,7 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 
 	gedp->dbip = old_dbip;
 	if (gedp->ged_wdbp) {
-	    gedp->ged_wdbp->dbip = gedp->dbip;
+	    gedp->dbip = gedp->dbip;
 	}
 	rt_new_material_head(old_materp);
 
