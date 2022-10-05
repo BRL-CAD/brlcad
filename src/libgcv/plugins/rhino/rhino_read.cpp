@@ -1133,7 +1133,7 @@ polish_output(const gcv_opts& gcv_options, db_i& db)
 			    && bu_path_match("IDef*", (*entry)->fp_names[i]->d_namep, 0))) {
 			std::string entry_name = (*entry)->fp_names[i]->d_namep;
 			std::string suffix = ".s";
-			std::size_t num = 1;
+			std::size_t num = 0;
 
 			/* check for (and remove) trailing .r from parent layer */
 			if (entry_name[entry_name.size() - 1] == 'r' && entry_name[entry_name.size() - 2] == '.')
