@@ -894,9 +894,10 @@ bv_obj_get(struct bview *v, int type)
 struct bv_scene_obj *
 bv_obj_get_child(struct bv_scene_obj *sp)
 {
-    bv_log(1, "bv_obj_get_child");
     if (!sp)
 	return NULL;
+
+    bv_log(1, "bv_obj_get_child %s(%s)", bu_vls_cstr(&sp->s_uuid), bu_vls_cstr(&sp->s_v->gv_name));
 
     struct bv_scene_obj *s = NULL;
 
