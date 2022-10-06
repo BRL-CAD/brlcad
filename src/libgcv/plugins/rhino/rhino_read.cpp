@@ -398,7 +398,9 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
     }
 
     unsigned char mode;
-    {
+    // TODO: validate this approach is accurate.
+    // leverage opennurbs API to check mode
+    /*{
 	rt_bot_internal bot;
 	std::memset(&bot, 0, sizeof(bot));
 	bot.magic = RT_BOT_INTERNAL_MAGIC;
@@ -408,7 +410,8 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 	bot.vertices = &vertices.at(0);
 	bot.faces = &faces.at(0);
 	mode = bg_trimesh_solid((int)bot.num_vertices, (int)bot.num_faces, bot.vertices, bot.faces, NULL) ? RT_BOT_PLATE : RT_BOT_SOLID;
-    }
+    }*/
+    mode = (mesh.IsSolid() && mesh.IsManifold() && mesh.IsClosed() && mesh.IsOriented()) ? RT_BOT_SOLID : RT_BOT_PLATE;
 
     std::vector<fastf_t> thicknesses;
     AutoPtr<bu_bitv, bu_bitv_free> bitv;
