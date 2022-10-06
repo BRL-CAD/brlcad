@@ -608,30 +608,6 @@ struct bview_set {
     struct bview_settings       settings;
 };
 
-
-// Uncomment to allow the env command to enable printouts
-// reporting on when drawing related functions are being
-// called.  This is defined in bv, but is intended to be
-// used by higher level libraries and apps as well - any
-// part of the drawing stack needed to understand flow
-#include "bu/log.h"
-#include "bu/str.h"
-#define BV_SUPPORT_ENV_DRAW_REPORTING 1
-#ifdef BV_SUPPORT_ENV_DRAW_REPORTING
-#  define BV_DRAW(draw_name, level) {\
-    const char *brsig = getenv("BV_REPORT_DRAWS");\
-    if (brsig) {\
-        int blev = atoi(brsig);\
-        if (blev == level) {\
-            bu_log("%s\n", draw_name); \
-        } \
-    }\
-}
-#else
-#  define BV_DRAW(draw_name, level)
-#endif
-
-
 __END_DECLS
 
 #endif /* BV_DEFINES_H */

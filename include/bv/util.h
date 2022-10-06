@@ -209,6 +209,15 @@ BV_EXPORT struct bu_ptbl *
 bv_view_objs(struct bview *v, int type);
 
 
+/* Environment variable controlled logging.
+ *
+ * Set BV_LOG to numerical levels to get increasingly
+ * verbose reporting of drawing info */
+#define BV_ENABLE_ENV_LOGGING 1
+BV_EXPORT void
+bv_log(int level, const char *fmt, ...)  _BU_ATTR_PRINTF23;
+
+
 __END_DECLS
 
 /** @} */

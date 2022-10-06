@@ -786,6 +786,8 @@ bv_obj_create(struct bview *v, int type)
     if (!v)
 	return NULL;
 
+    bv_log(1, "bv_obj_create");
+
     struct bv_scene_obj *s = NULL;
 
     // What we get and from where is based on the requested obj type and the
@@ -875,7 +877,7 @@ bv_obj_create(struct bview *v, int type)
 struct bv_scene_obj *
 bv_obj_get(struct bview *v, int type)
 {
-    BV_DRAW("bv_obj_get_child", 1);
+    bv_log(1, "bv_obj_get");
     if (!v)
 	return NULL;
 
@@ -892,7 +894,7 @@ bv_obj_get(struct bview *v, int type)
 struct bv_scene_obj *
 bv_obj_get_child(struct bv_scene_obj *sp)
 {
-    BV_DRAW("bv_obj_get_child", 1);
+    bv_log(1, "bv_obj_get_child");
     if (!sp)
 	return NULL;
 
@@ -1344,6 +1346,33 @@ bv_illum_obj(struct bv_scene_obj *s, char ill_state)
 
     return changed;
 }
+
+void
+bv_log(int level, const char *fmt, ...)
+{
+    if (level < 0 || !fmt)
+	return;
+
+#ifdef BV_ENABLE_ENV_LOGGING
+    const char *brsig = getenv("BV_LOG");
+    if (!brsig)
+	return;
+    if (brsig) {
+	int blev = atoi(brsig);
+	if (blev < level)
+	    return;
+    }
+
+    va_list ap;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    va_start(ap, fmt);
+    bu_vls_vprintf(&msg, fmt, ap);
+    bu_log("%s\n", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    va_end(ap);
+#endif
+}
+
 
 // Local Variables:
 // tab-width: 8

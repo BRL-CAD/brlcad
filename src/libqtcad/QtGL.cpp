@@ -174,7 +174,7 @@ void QtGL::resizeGL(int, int)
 
 void QtGL::need_update()
 {
-    BV_DRAW("QtGL::need_update", 1);
+    bv_log(1, "QtGL::need_update");
     QTCAD_SLOT("QtGL::need_update", 1);
     if (!dmp)
 	return;

@@ -103,7 +103,7 @@ CADApp::do_quad_view_change(QtCADView *cv)
 void
 CADApp::do_view_changed(unsigned long long flags)
 {
-    BV_DRAW("CADApp::do_view_changed", 1);
+    bv_log(1, "CADApp::do_view_changed");
     QTCAD_SLOT("CADApp::do_view_changed", 1);
 
     if (flags & QTCAD_VIEW_DRAWN) {

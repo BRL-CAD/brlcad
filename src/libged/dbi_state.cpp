@@ -2503,7 +2503,7 @@ BViewState::is_hdrawn(int mode, unsigned long long phash)
 unsigned long long
 BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views, int no_autoview)
 {
-    BV_DRAW("BViewState::redraw", 1);
+    bv_log(1, "BViewState::redraw");
     // We (well, callers) need to be able to tell if the redraw pass actually
     // changed anything.
     unsigned long long ret = 0;

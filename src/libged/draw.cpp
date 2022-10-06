@@ -107,7 +107,7 @@ draw_free_data(struct bv_scene_obj *s)
 static int
 csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
 {
-    BV_DRAW("csg_wireframe_update", 1);
+    bv_log(1, "csg_wireframe_update");
     /* Validate */
     if (!s || !v)
 	return 0;
@@ -555,7 +555,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 static void
 wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *ip)
 {
-    BV_DRAW("wireframe_plot", 1);
+    bv_log(1, "wireframe_plot");
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     const struct bn_tol *tol = d->tol;
     const struct bg_tess_tol *ttol = d->ttol;
