@@ -246,15 +246,16 @@ clean_name(const ON_wString chk_name, const std::string default_name = "Default"
 {
     /* jump through some hoops to make sure we have a name in std::string format */
     std::string ret = default_name;
-    if (chk_name.IsNotEmpty())
-        ret = std::string(ON_String(chk_name).Array());
+    if (chk_name.IsNotEmpty()) {
+	ret = std::string(ON_String(chk_name).Array());
 
-    /* remove spaces, slashes and non-standard characters */
-    bu_vls scrub = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&scrub, "%s", ret.c_str());
-    bu_vls_simplify(&scrub, nullptr, " _\0", " _\0");
-    ret = ret.size() > 0 ? std::string(bu_vls_cstr(&scrub)) : default_name;   /* somemtimes we scrub out the entire name */
-    
+	/* remove spaces, slashes and non-standard characters */
+	bu_vls scrub = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&scrub, "%s", ret.c_str());
+	bu_vls_simplify(&scrub, nullptr, " _\0", " _\0");
+	ret = ret.size() > 0 ? std::string(bu_vls_cstr(&scrub)) : default_name;   /* somemtimes we scrub out the entire name */
+    }
+
     return ret;
 }
 
