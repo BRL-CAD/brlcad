@@ -102,8 +102,12 @@ ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) & BRLCAD_ERROR)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
+    }
+    wdb_close(wdbp);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {
@@ -133,7 +137,7 @@ ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    arb_type = rt_arb_std_type(&intern, &gedp->ged_wdbp->wdb_tol);
+    arb_type = rt_arb_std_type(&intern, &gedp->dbip->db_tol);
 
     /* check the arb type */
     switch (arb_type) {
@@ -194,7 +198,7 @@ bad_edge:
 	return BRLCAD_ERROR;
     }
 
-    if (rt_arb_calc_planes(gedp->ged_result_str, arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol)) {
+    if (rt_arb_calc_planes(gedp->ged_result_str, arb, arb_type, planes, &gedp->dbip->db_tol)) {
 	rt_db_free_internal(&intern);
 
 	return BRLCAD_ERROR;
@@ -206,7 +210,7 @@ bad_edge:
 	VADD2(pt, pt, arb->pt[arb_pt_index]);
     }
 
-    if (rt_arb_edit(gedp->ged_result_str, arb, arb_type, edge, pt, planes, &gedp->ged_wdbp->wdb_tol)) {
+    if (rt_arb_edit(gedp->ged_result_str, arb, arb_type, edge, pt, planes, &gedp->dbip->db_tol)) {
 	rt_db_free_internal(&intern);
 
 	return BRLCAD_ERROR;
@@ -276,10 +280,13 @@ ged_find_arb_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
     }
     ptol = ptol_scan;
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == BRLCAD_ERROR) {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) == BRLCAD_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
+    wdb_close(wdbp);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {

@@ -13,7 +13,9 @@ changes made.  See document footer for additional details.
 --- 2022-XX-XX  Release 7.34.X                                     ---
 ----------------------------------------------------------------------
 
+* major STEPcode updates, using unmodified upstream 0.8.1 - Cliff Yapp
 * added aircode reporting support to the lc command - Sean Morrison
+* fixed 3dm to g names converting alphabitized - Chris McGregor
 * updated Tcl/Tk to version 8.6.12 - Cliff Yapp
 * updated netpbm to version 10.73.40 - Cliff Yapp
 * updated zlib to version 1.2.12 - Cliff Yapp

@@ -2765,13 +2765,10 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	bu_vls_printf(&msg, "%s: READ ONLY\n", DBIP->dbi_filename);
     }
 
-    /* associate the gedp with a wdbp as well, but separate from the
-     * one we fed tcl.  must occur before the call to [get_dbip] since
+    /* This must occur before the call to [get_dbip] since
      * that hooks into a libged callback.
      */
-    GEDP->ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
-    if (GEDP->ged_wdbp)
-	GEDP->dbip = GEDP->ged_wdbp->dbip;
+    GEDP->dbip = DBIP;
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
     GEDP->ged_create_vlist_scene_obj_callback = createDListSolid;
@@ -2915,8 +2912,7 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     Tcl_Eval(interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
 
     /* close the geometry instance */
-    wdb_close(GEDP->ged_wdbp);
-    GEDP->ged_wdbp = RT_WDB_NULL;
+    db_close(GEDP->dbip);
     GEDP->dbip = NULL;
 
     WDBP = RT_WDB_NULL;

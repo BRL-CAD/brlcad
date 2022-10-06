@@ -71,12 +71,15 @@ _gcv_brlcad_read(struct gcv_context *context,
     }
 
     if (db_version(in_dbip) > 4) {
-	if (db_dump(context->dbip->dbi_wdbp, in_dbip)) {
+	struct rt_wdb *wdbp = wdb_dbopen(in_dbip, RT_WDB_TYPE_DB_INMEM);
+	if (db_dump(wdbp, in_dbip)) {
 	    bu_log("db_dump() failed (from '%s' to context->dbip)\n", source_path);
+	    wdb_close(wdbp);
 	    db_close(in_dbip);
 	    return 0;
 	}
 
+	wdb_close(wdbp);
 	db_close(in_dbip);
     } else {
 	// For v4 .g files, use the original rather than an inmem (which is v5)
@@ -433,7 +436,6 @@ gcv_context_destroy(struct gcv_context *context)
 
     // TODO - clean up the inmem db so db_close will
     // do the job correctly here...
-    wdb_close(context->dbip->dbi_wdbp);
     bu_avs_free(&context->messages);
 }
 

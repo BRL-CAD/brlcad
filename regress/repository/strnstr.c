@@ -41,8 +41,22 @@ twobyte_strstr(const unsigned char *h, const unsigned char *n, size_t hlen)
 {
     size_t hpos = 0;
     uint16_t nw = n[0]<<8 | n[1], hw = h[0]<<8 | h[1];
-    for (h++; *h && hpos < hlen && hw != nw; hw = hw<<8 | *++h) {hpos++;};
-    return *h ? (char *)h-1 : 0;
+
+    // for (h++; *h && hw != nw; hw = hw<<8 | *++h);
+    while (hpos < hlen && h) {
+	h++;
+	hpos++;
+	if (hpos == hlen || !(*h))
+	    break;
+	if (hw == nw)
+	    break;
+	hpos++;
+	if (hpos >= hlen)
+	    break;
+	hw = hw<<8 | *++h;
+    }
+
+    return (hpos < hlen && *h) ? (char *)h-1 : 0;
 }
 
 static char *
@@ -51,8 +65,22 @@ threebyte_strstr(const unsigned char *h, const unsigned char *n, size_t hlen)
     size_t hpos = 0;
     uint32_t nw = n[0]<<24 | n[1]<<16 | n[2]<<8;
     uint32_t hw = h[0]<<24 | h[1]<<16 | h[2]<<8;
-    for (h+=2; *h && hpos < hlen && hw != nw; hw = (hw|*++h)<<8) {hpos += 2;};
-    return *h ? (char *)h-2 : 0;
+
+    // for (h+=2; *h && hw != nw; hw = (hw|*++h)<<8);
+    while (hpos < hlen && h) {
+	h+=2;
+	hpos+=2;
+	if (hpos >= hlen || !(*h))
+	    break;
+	if (hw == nw)
+	    break;
+	hpos++;
+	if (hpos >= hlen)
+	    break;
+	hw = (hw|*++h)<<8;
+    }
+
+    return (hpos < hlen && *h) ? (char *)h-2 : 0;
 }
 
 static char *
@@ -61,8 +89,22 @@ fourbyte_strstr(const unsigned char *h, const unsigned char *n, size_t hlen)
     size_t hpos = 0;
     uint32_t nw = n[0]<<24 | n[1]<<16 | n[2]<<8 | n[3];
     uint32_t hw = h[0]<<24 | h[1]<<16 | h[2]<<8 | h[3];
-    for (h+=3; *h && hpos < hlen && hw != nw; hw = hw<<8 | *++h) {hpos += 3;};
-    return *h ? (char *)h-3 : 0;
+
+    // for (h+=3; *h && hw != nw; hw = hw<<8 | *++h);
+     while (hpos < hlen && h) {
+	h+=3;
+	hpos+=3;
+	if (hpos >= hlen || !(*h))
+	    break;
+	if (hw == nw)
+	    break;
+	hpos++;
+	if (hpos >= hlen)
+	    break;
+	hw = hw<<8 | *++h;
+    }
+
+    return (hpos < hlen && *h) ? (char *)h-3 : 0;
 }
 
 #define MAX(a,b) ((a)>(b)?(a):(b))

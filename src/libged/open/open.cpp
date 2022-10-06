@@ -76,19 +76,11 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	new_materp = rt_material_head();
 
 	gedp->dbip = old_dbip;
-	if (gedp->ged_wdbp) {
-	    gedp->ged_wdbp->dbip = gedp->dbip;
-	}
 	rt_new_material_head(old_materp);
 
 	/* close current database */
-	if (gedp->ged_wdbp) {
-	    wdb_close(gedp->ged_wdbp);
-	} else {
-	    if (gedp->dbip)
-		db_close(gedp->dbip);
-	}
-	gedp->ged_wdbp = RT_WDB_NULL;
+	if (gedp->dbip)
+	    db_close(gedp->dbip);
 	gedp->dbip = NULL;
 	const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
 	if (use_dbi_state) {
@@ -112,7 +104,6 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	gedp->dbip = new_dbip;
-	gedp->ged_wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DISK);
 
 	rt_new_material_head(new_materp);
 

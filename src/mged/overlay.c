@@ -209,13 +209,13 @@ f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     /* attempt to resolve and verify */
     name = argv[1];
 
-    if ( (dp=db_lookup(GEDP->ged_wdbp->dbip, name, LOOKUP_QUIET))
+    if ( (dp=db_lookup(GEDP->dbip, name, LOOKUP_QUIET))
         == RT_DIR_NULL ) {
         bu_vls_printf(GEDP->ged_result_str, "%s does not exist\n", name);
         return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&internal, dp, GEDP->ged_wdbp->dbip,
+    if (rt_db_get_internal(&internal, dp, GEDP->dbip,
         bn_mat_identity, &rt_uniresource) < 0) {
         bu_vls_printf(GEDP->ged_result_str, "rt_db_get_internal() error\n");
         return BRLCAD_ERROR;

@@ -39,7 +39,7 @@ test_bg_isect_line_lseg(int argc, char **argv)
     vect_t d = VINIT_ZERO;
     point_t a = VINIT_ZERO;
     point_t b = VINIT_ZERO;
-    struct bn_tol tol = BG_TOL_INIT;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
 
     if (argc != 8) {
 	bu_exit(1, "ERROR: input format is Px,Py,Pz Dx,Dy,Dz Ax,Ay,Az Bx,By,Bz expected_return expected_t [%s]\n", argv[0]);
@@ -73,7 +73,7 @@ test_bg_isect_lseg3_lseg3(int argc, char **argv)
     vect_t pdir = VINIT_ZERO;
     point_t q = VINIT_ZERO;
     vect_t qdir = VINIT_ZERO;
-    struct bn_tol tol = BG_TOL_INIT;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
 
     if (argc != 9) {
 	bu_exit(1, "ERROR: input format is Px,Py,Pz PDIRx,PDIRy,PDIRz Qx,Qy,Qz QDIRx,QDIRy,QDIRz expected_return expected_dist_0 expected_dist_1 [%s]\n", argv[0]);

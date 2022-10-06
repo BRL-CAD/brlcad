@@ -82,7 +82,10 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
     memset(&anp, 0, sizeof(struct animate));
     anp.magic = ANIMATE_MAGIC;
 
-    ts = gedp->ged_wdbp->wdb_initial_tree_state;	/* struct copy */
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    ts = wdbp->wdb_initial_tree_state;	/* struct copy */
+    wdb_close(wdbp);
+
     ts.ts_dbip = gedp->dbip;
     ts.ts_resp = &rt_uniresource;
     MAT_IDN(ts.ts_mat);

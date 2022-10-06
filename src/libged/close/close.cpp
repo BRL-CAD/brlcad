@@ -48,12 +48,9 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     ged_exec(gedp, 1, (const char **)av);
 
     /* close current database */
-    if (gedp->ged_wdbp) {
-	wdb_close(gedp->ged_wdbp);
-    } else {
+    if (gedp->dbip) {
 	db_close(gedp->dbip);
     }
-    gedp->ged_wdbp = RT_WDB_NULL;
     gedp->dbip = NULL;
     if (gedp->dbi_state) {
 	delete gedp->dbi_state;

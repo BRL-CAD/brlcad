@@ -86,9 +86,9 @@ ged_close(struct ged *gedp)
     if (gedp == GED_NULL)
 	return;
 
-    if (gedp->ged_wdbp) {
-	wdb_close(gedp->ged_wdbp);
-	gedp->ged_wdbp = RT_WDB_NULL;
+    if (gedp->dbip) {
+	db_close(gedp->dbip);
+	gedp->dbip = NULL;
     }
 
     /* Terminate any ged subprocesses */
@@ -166,8 +166,6 @@ ged_free(struct ged *gedp)
 
     if (gedp->ged_fbs)
 	BU_PUT(gedp->ged_fbs, struct fbserv_obj);
-
-    gedp->ged_wdbp = RT_WDB_NULL;
 }
 
 void
@@ -176,7 +174,7 @@ ged_init(struct ged *gedp)
     if (gedp == GED_NULL)
 	return;
 
-    gedp->ged_wdbp = RT_WDB_NULL;
+    gedp->dbip = NULL;
 
     // TODO - rename to ged_name
     bu_vls_init(&gedp->go_name);

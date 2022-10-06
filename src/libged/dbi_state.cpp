@@ -842,7 +842,7 @@ DbiState::update_dp(struct directory *dp, int reset)
 	// No LoD - ask librt
 	if (!have_bbox) {
 	    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
-	    struct bn_tol tol = BG_TOL_INIT;
+	    struct bn_tol tol = BN_TOL_INIT_TOL;
 	    mat_t m;
 	    MAT_IDN(m);
 	    int bret = rt_bound_instance(&bmin, &bmax, dp, dbip,
@@ -2204,8 +2204,8 @@ BViewState::scene_obj(
     struct draw_update_data_t *ud;
     BU_GET(ud, struct draw_update_data_t);
     ud->dbip = dbis->gedp->dbip;
-    ud->tol = &dbis->gedp->ged_wdbp->wdb_tol;
-    ud->ttol = &dbis->gedp->ged_wdbp->wdb_ttol;
+    ud->tol = &dbis->gedp->dbip->db_tol;
+    ud->ttol = &dbis->gedp->dbip->db_ttol;
     ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view... local_res is temporary, don't use it here
     ud->mesh_c = dbis->gedp->ged_lod;
     sp->dp = dp;
