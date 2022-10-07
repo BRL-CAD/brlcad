@@ -237,7 +237,7 @@ void QtSW::mousePressEvent(QMouseEvent *e) {
     x_press_pos = (double)e->x();
     y_press_pos = (double)e->y();
 #endif
-    bu_log("X,Y: %g, %g\n", x_press_pos, y_press_pos);
+    //bu_log("X,Y: %g, %g\n", x_press_pos, y_press_pos);
 
     QWidget::mousePressEvent(e);
 }

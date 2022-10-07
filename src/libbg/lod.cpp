@@ -166,9 +166,12 @@ obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct 
 }
 
 // Debugging function to see constructed arb
-void
+#define ARB_MAX_STRLEN 400
+const char *
 obb_arb(vect_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3)
 {
+    static char str[ARB_MAX_STRLEN+1];
+
     // For debugging purposes, construct an arb
     point_t arb[8];
     // 1 - c - e1 - e2 - e3
@@ -209,8 +212,9 @@ obb_arb(vect_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_ex
     bu_log("e2: %f %f %f\n", V3ARGS(obb_extent2));
     bu_log("e3: %f %f %f\n", V3ARGS(obb_extent3));
 
-    bu_log("in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+    snprintf(str, ARB_MAX_STRLEN, "in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
 	    V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb  [6]), V3ARGS(arb[7]));
+    return str;
 }
 
 static void
@@ -237,7 +241,7 @@ view_obb(struct bview *v,
     VSUB2(v->obb_extent3, ep2, ec);
 
 #if 0
-    obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3);
+    bu_log("%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
 #endif
 }
 
@@ -509,7 +513,7 @@ bg_view_objs_rect_select(struct bv_scene_obj ***sset, struct bview *v, int x1, i
     VSUB2(obb_e3, ep2, ec);
 
 #if 0
-    obb_arb(obb_c, obb_e1, obb_e2, obb_e3);
+    bu_log("%s", obb_arb(obb_c, obb_e1, obb_e2, obb_e3));
 #endif
 
     // Having constructed the box, test the scene objects against it.  Any that intersect,
@@ -536,8 +540,17 @@ bg_view_objs_rect_select(struct bv_scene_obj ***sset, struct bview *v, int x1, i
 static int
 _obj_visible(struct bv_scene_obj *s, struct bview *v)
 {
-    if (bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3))
+    if (bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3)) {
+	bv_log(3, "obj_visible - passed bg_sat_abb_obb: %f %f %f -> %f %f %f", V3ARGS(s->bmin), V3ARGS(s->bmax));
+	bv_log(3, "                          view abb : %f %f %f -> [%f %f %f] [%f %f %f] [%f %f %f]", V3ARGS(v->obb_center), V3ARGS(v->obb_extent1), V3ARGS(v->obb_extent2), V3ARGS(v->obb_extent3));
+	bv_log(3, "%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
+
 	return 1;
+    } else {
+	bv_log(3, "obj_visible - FAILED bg_sat_abb_obb: %f %f %f -> %f %f %f", V3ARGS(s->bmin), V3ARGS(s->bmax));
+	bv_log(3, "                          view abb : %f %f %f -> [%f %f %f] [%f %f %f] [%f %f %f]", V3ARGS(v->obb_center), V3ARGS(v->obb_extent1), V3ARGS(v->obb_extent2), V3ARGS(v->obb_extent3));
+	bv_log(3, "%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
+    }
 
     if (SMALL_FASTF < v->gv_perspective) {
 	// For perspective mode, project the vertices of the distorted bounding
@@ -1430,9 +1443,11 @@ POPState::get_level(fastf_t vlen)
     for (int lev = 0; lev < POP_MAXLEVEL; lev++) {
 	fastf_t diag_slice = bdiag/pow(2,lev);
 	if (diag_slice < delta) {
+	    bv_log(2, "POPState::get_level %g->%d", vlen, lev);
 	    return lev;
 	}
     }
+    bv_log(2, "POPState::get_level %g->%d", vlen, POP_MAXLEVEL - 1);
     return POP_MAXLEVEL - 1;
 }
 
@@ -1987,7 +2002,6 @@ bg_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
     if (level < 0)
 	return sp->curr_level;
 
-
     int old_level = sp->curr_level;
 
     sp->force_update = (reset) ? true : false;
@@ -2016,6 +2030,8 @@ bg_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
 	l->pcnt = (int)sp->lod_tri_pnts_snapped.size();
     }
 
+    bv_log(2, "bg_mesh_lod_level %s[%d](%d): %d", bu_vls_cstr(&s->s_name), level, reset, l->fcnt);
+
     // If the data changed, any Display List we may have previously generated
     // is now obsolete
     if (old_level != sp->curr_level)
@@ -2040,6 +2056,8 @@ bg_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset)
     int vscale = (int)((double)sp->get_level(v->gv_size) * v->gv_s->lod_scale);
     vscale = (vscale < 0) ? 0 : vscale;
     vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
+
+    bv_log(2, "bg_mesh_lod_view %s[%s][%d]", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name), vscale);
 
     // If the object is not visible in the scene, don't change the data
     //bu_log("min: %f %f %f max: %f %f %f\n", V3ARGS(s->bmin), V3ARGS(s->bmax));

@@ -174,7 +174,7 @@ void QtGL::resizeGL(int, int)
 
 void QtGL::need_update()
 {
-    bv_log(1, "QtGL::need_update");
+    bv_log(4, "QtGL::need_update");
     QTCAD_SLOT("QtGL::need_update", 1);
     if (!dmp)
 	return;
@@ -228,7 +228,7 @@ void QtGL::mousePressEvent(QMouseEvent *e) {
     x_press_pos = (double)e->x();
     y_press_pos = (double)e->y();
 #endif
-    bu_log("X,Y: %g, %g\n", x_press_pos, y_press_pos);
+    //bu_log("X,Y: %g, %g\n", x_press_pos, y_press_pos);
 
     QOpenGLWidget::mousePressEvent(e);
 }

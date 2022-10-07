@@ -578,9 +578,9 @@ draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 	struct bv_scene_obj *vo = bv_obj_for_view(s, v);
 	if (!vo) {
 	    vo = s;
-	    bv_log(1, "libdm:draw_scene_obj - no view obj, drawing %s", bu_vls_cstr(&s->s_name));
+	    bv_log(1, "draw_scene_obj - no view obj, drawing %s", bu_vls_cstr(&s->s_name));
 	} else {
-	    bv_log(1, "libdm:draw_scene_obj - drawing view obj %s[%s]", bu_vls_cstr(&vo->s_name), bu_vls_cstr(&v->gv_name));
+	    bv_log(1, "draw_scene_obj - drawing view obj %s[%s]", bu_vls_cstr(&vo->s_name), bu_vls_cstr(&v->gv_name));
 	}
 
 	// If this is a database object, it may have a view dependent
@@ -607,7 +607,7 @@ draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 void
 dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, double base2local, double local2base)
 {
-    bv_log(2, "libdm:dm_draw_viewobjs");
+    bv_log(3, "libdm:dm_draw_viewobjs");
     struct dm *dmp = (struct dm *)v->dmp;
     int width = dm_get_width(dmp);
     fastf_t sf = (fastf_t)(v->gv_size) / (fastf_t)width;
@@ -701,7 +701,7 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 void
 dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_draw_custom)(struct bview *, double, double, void *), void *u_data)
 {
-    bv_log(2, "libdm:dm_draw_objs");
+    bv_log(3, "libdm:dm_draw_objs");
     if (dm_draw_custom) {
 	(*dm_draw_custom)(v, base2local, local2base, u_data);
 	return;

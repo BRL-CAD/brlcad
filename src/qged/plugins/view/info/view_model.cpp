@@ -86,6 +86,15 @@ CADViewModel::refresh(unsigned long long)
     bu_vls_sprintf(&val, "%g", v->gv_aet[2]);
     standard_nodes.insert("Tw", add_pair("Tw", bu_vls_cstr(&val), m_root, i));
 
+    vect_t center;
+    MAT_DELTAS_GET_NEG(center, v->gv_center);
+    bu_vls_sprintf(&val, "%g", center[0]);
+    standard_nodes.insert("Center[X]", add_pair("Center[X]", bu_vls_cstr(&val), m_root, i));
+    bu_vls_sprintf(&val, "%g", center[1]);
+    standard_nodes.insert("Center[Y]", add_pair("Center[Y]", bu_vls_cstr(&val), m_root, i));
+    bu_vls_sprintf(&val, "%g", center[2]);
+    standard_nodes.insert("Center[Z]", add_pair("Center[Z]", bu_vls_cstr(&val), m_root, i));
+
     endResetModel();
 
     bu_vls_free(&val);

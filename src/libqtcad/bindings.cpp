@@ -136,13 +136,13 @@ int CADmousePressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), 
     }
 
     if (e->buttons().testFlag(Qt::LeftButton)) {
-	bu_log("Press Left\n");
+	//bu_log("Press Left\n");
     }
     if (e->buttons().testFlag(Qt::RightButton)) {
-	bu_log("Press Right\n");
+	//bu_log("Press Right\n");
     }
     if (e->buttons().testFlag(Qt::MiddleButton)) {
-	bu_log("Press Middle\n");
+	//bu_log("Press Middle\n");
     }
 
     return 0;
@@ -184,7 +184,7 @@ int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UN
     unsigned long long view_flags = BV_IDLE;
 
     if (e->button() == Qt::LeftButton) {
-	bu_log("Release Left\n");
+	//bu_log("Release Left\n");
 	if (mode != BV_CENTER) {
 	    view_flags = BV_SCALE;
 	    dx = 10;
@@ -196,7 +196,7 @@ int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UN
 	}
     }
     if (e->button() == Qt::RightButton) {
-	bu_log("Release Right\n");
+	//bu_log("Release Right\n");
 	if (mode == BV_CENTER)
 	    return 0;
 	view_flags = BV_SCALE;
@@ -205,7 +205,7 @@ int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UN
     }
 
     if (e->button() == Qt::MiddleButton) {
-	bu_log("Release Center\n");
+	//bu_log("Release Center\n");
 	view_flags = BV_CENTER;
 	dx = (int)cx;
 	dy = (int)cy;
@@ -234,30 +234,30 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e, i
 	view_flags = BV_SCALE;
 
     if (e->buttons().testFlag(Qt::LeftButton)) {
-	bu_log("Left\n");
+	//bu_log("Left\n");
 
 	if (e->modifiers().testFlag(Qt::ControlModifier)) {
-	    bu_log("Ctrl+Left\n");
+	    //bu_log("Ctrl+Left\n");
 	    view_flags = BV_ROT;
 	}
 
 	if (e->modifiers().testFlag(Qt::ShiftModifier)) {
-	    bu_log("Shift+Left\n");
+	    //bu_log("Shift+Left\n");
 	    view_flags = BV_TRANS;
 	}
 
 	if (e->modifiers().testFlag(Qt::ShiftModifier) && e->modifiers().testFlag(Qt::ControlModifier)) {
-	    bu_log("Ctrl+Shift+Left\n");
+	    //bu_log("Ctrl+Shift+Left\n");
 	    view_flags = BV_SCALE;
 	}
     }
 
     if (e->buttons().testFlag(Qt::MiddleButton)) {
-	bu_log("Middle\n");
+	//bu_log("Middle\n");
     }
 
     if (e->buttons().testFlag(Qt::RightButton)) {
-	bu_log("Right\n");
+	//bu_log("Right\n");
     }
 
     if (!e->buttons().testFlag(Qt::LeftButton))

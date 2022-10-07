@@ -385,7 +385,7 @@ QtCADQuad::get_selected()
 void
 QtCADQuad::do_view_update(unsigned long long flags)
 {
-    bv_log(1, "QtCADQuad::do_view_update");
+    bv_log(4, "QtCADQuad::do_view_update");
     QTCAD_SLOT("QtCADQuad::do_view_update", 1);
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
