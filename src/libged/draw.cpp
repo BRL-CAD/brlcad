@@ -105,7 +105,7 @@ draw_free_data(struct bv_scene_obj *s)
 
 
 static int
-csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int UNUSED(flag))
+csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int flag)
 {
     /* Validate */
     if (!vo || !v)
@@ -118,8 +118,6 @@ csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int UNUSED(flag))
 
     vo->csg_obj = 1;
 
-    bool rework = false;
-
     // If the object is not visible in the scene, don't change the data.  This
     // check is useful in orthographic camera mode, where we zoom in on a
     // narrow subset of the model and far away objects are still rendered in
@@ -128,6 +126,8 @@ csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int UNUSED(flag))
     //bu_log("min: %f %f %f max: %f %f %f\n", V3ARGS(vo->bmin), V3ARGS(vo->bmax));
     if (!(v->gv_perspective > SMALL_FASTF) && !bg_sat_aabb_obb(vo->bmin, vo->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3))
 	return 0;
+
+    bool rework = (flag) ? true : false;
 
     // Check point scale
     if (!rework && !NEAR_EQUAL(vo->curve_scale, vo->s_v->gv_s->curve_scale, SMALL_FASTF))
@@ -571,9 +571,12 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	    // callbacks
 	    vo->s_update_callback = &csg_wireframe_update;
 	    vo->s_free_callback = &draw_free_data;
+
+	    // Mark type as CSG LoD
+	    vo->s_type_flags |= BV_CSG_LOD;
 	}
 
-	csg_wireframe_update(vo, v, 0);
+	csg_wireframe_update(vo, v, 1);
 	return;
     }
 
