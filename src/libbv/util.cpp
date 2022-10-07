@@ -1307,6 +1307,12 @@ bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
 	s->s_size = s->bmax[X] - s->bmin[X];
 	V_MAX(s->s_size, s->bmax[Y] - s->bmin[Y]);
 	V_MAX(s->s_size, s->bmax[Z] - s->bmin[Z]);
+
+	// sp may not be the same as s - propagate up
+	VMOVE(sp->s_center, s->s_center);
+	VMOVE(sp->bmin, s->bmin);
+	VMOVE(sp->bmax, s->bmax);
+	sp->s_size = s->s_size;
 	return 1;
     }
     return 0;
