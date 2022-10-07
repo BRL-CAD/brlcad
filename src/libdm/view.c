@@ -549,57 +549,62 @@ dm_draw_labels(struct dm *dmp, struct bv_data_label_state *gdlsp, matp_t m2vmat)
 static void
 draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 {
-    bv_log(1, "libdm:draw_scene_obj called");
     if (!s || !v || s->s_flag == DOWN)
 	return;
-
-    struct bv_scene_obj *vo = bv_obj_for_view(s, v);
-    if (!vo)
-	vo = s;
-
-    bv_log(1, "libdm:draw_scene_obj drawing");
-
-    // If this is a database object, it may have a view dependent
-    // update to do.
-    if (vo->s_update_callback)
-	(*vo->s_update_callback)(s, v, 0);
 
     // Draw children. TODO - drawing children first may not
     // always be the desired behavior - might need interior and exterior
     // children tables to provide some control
-    for (size_t i = 0; i < BU_PTBL_LEN(&vo->children); i++) {
-	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&vo->children, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
 	draw_scene_obj(dmp, s_c, v);
     }
 
     // Assign color attributes
-    if (vo->s_iflag == UP) {
-	dm_set_fg(dmp, 255, 255, 255, 0, vo->s_os->transparency);
+    if (s->s_iflag == UP) {
+	dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
     } else {
-	if (vo->s_os->color_override) {
-	    dm_set_fg(dmp, vo->s_os->color[0], vo->s_os->color[1], vo->s_os->color[2], 0, vo->s_os->transparency);
+	if (s->s_os->color_override) {
+	    dm_set_fg(dmp, s->s_os->color[0], s->s_os->color[1], s->s_os->color[2], 0, s->s_os->transparency);
 	} else {
-	    dm_set_fg(dmp, vo->s_color[0], vo->s_color[1], vo->s_color[2], 0, vo->s_os->transparency);
+	    dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os->transparency);
 	}
     }
-    dm_set_line_attr(dmp, vo->s_os->s_line_width, vo->s_soldash);
+    dm_set_line_attr(dmp, s->s_os->s_line_width, s->s_soldash);
 
+    // Primary object drawing.  See if we have an active view-specific object - if so,
+    // use that, otherwise use the original object
+    {
+	struct bv_scene_obj *vo = bv_obj_for_view(s, v);
+	if (!vo) {
+	    vo = s;
+	    bv_log(1, "libdm:draw_scene_obj - no view obj, drawing %s", bu_vls_cstr(&s->s_name));
+	} else {
+	    bv_log(1, "libdm:draw_scene_obj - drawing view obj %s[%s]", bu_vls_cstr(&vo->s_name), bu_vls_cstr(&v->gv_name));
+	}
 
-    // Primary object drawing
-    dm_draw_obj(dmp, vo);
+	// If this is a database object, it may have a view dependent
+	// update to do.
+	//
+	// TODO - don't think this should be supplying s, but if we use vo
+	// csg doesn't work correctly...
+	if (vo->s_update_callback)
+	    (*vo->s_update_callback)(s, v, 0);
+
+	dm_draw_obj(dmp, vo);
+    }
 
     if (!(s->s_type_flags & BV_MESH_LOD)) {
-	dm_add_arrows(dmp, vo);
+	dm_add_arrows(dmp, s);
     }
 
     if (s->s_type_flags & BV_AXES) {
-	dm_draw_scene_axes(dmp, vo);
+	dm_draw_scene_axes(dmp, s);
     }
 
     if (s->s_type_flags & BV_LABELS) {
-	dm_draw_label(dmp, vo);
+	dm_draw_label(dmp, s);
     }
-
 }
 
 void
