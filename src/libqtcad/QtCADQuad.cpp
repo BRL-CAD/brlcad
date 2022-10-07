@@ -44,6 +44,7 @@
 
 #include "bu/str.h"
 #include "bv.h"
+#include "bg/lod.h"
 #include "ged/defines.h"
 #include "ged/commands.h"
 #include "qtcad/QtCADQuad.h"
@@ -181,6 +182,11 @@ QtCADQuad::changeToQuadFrame()
     for (int i = UPPER_RIGHT_QUADRANT + 1; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] == nullptr) {
 	    views[i] = createView(i);
+	    // For initial layout calculations, we need to set a screen width
+	    // and height.  This won't be right in the end, but it gives
+	    // bg_view_bounds something to work with
+	    views[i]->view()->gv_width = views[UPPER_RIGHT_QUADRANT]->view()->gv_width;
+	    views[i]->view()->gv_height = views[UPPER_RIGHT_QUADRANT]->view()->gv_height;
 	}
 	// Turn on adaptive mesh for all new views, if the existing view has it
 	// enabled - we lose the memory and performance benefits if we have to
@@ -212,13 +218,25 @@ QtCADQuad::changeToQuadFrame()
     default_views();
 
     // Not sure if this is the right way to do this but need to autoset each of the views
-    const char *av[2];
-    av[0] = "autoview";
-    av[1] = (char *)0;
+    // and make sure the common geometry visible in the first quadrant is also drawn in the
+    // others.  This happens more or less automatically when we're not doing per-view
+    // adaptive drawing, but it's a different story when each view needs its own view
+    // specific version of the object.  The refresh cycle will populate this eventually,
+    // but if we don't do it here we'll start out with blank windows until something notifies
+    // the draw logic it needs to do updates.
     for (int i = UPPER_RIGHT_QUADRANT + 1; i < LOWER_RIGHT_QUADRANT + 1; i++) {
-	gedp->ged_gvp = views[i]->view();
-	ged_exec(gedp, 1, (const char **)av);
+	bg_view_bounds(views[i]->view());
+	bv_autoview(views[i]->view(), BV_AUTOVIEW_SCALE_DEFAULT, 0);
     }
+    struct bu_ptbl *db_objs = bv_view_objs(views[UPPER_RIGHT_QUADRANT]->view(), BV_DB_OBJS);
+    for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
+	struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(db_objs, i);
+	for (int j = UPPER_RIGHT_QUADRANT + 1; j < LOWER_RIGHT_QUADRANT + 1; j++) {
+	    draw_scene(so, views[j]->view());
+	}
+    }
+
+    // Current view selection pieces
     gedp->ged_gvp = views[UPPER_RIGHT_QUADRANT]->view();
     views[UPPER_RIGHT_QUADRANT]->set_current(1);
     currentView = views[UPPER_RIGHT_QUADRANT];

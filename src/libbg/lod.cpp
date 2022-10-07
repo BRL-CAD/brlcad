@@ -242,9 +242,9 @@ view_obb(struct bview *v,
     VSUB2(v->obb_extent2, ep1, ec);
     VSUB2(v->obb_extent3, ep2, ec);
 
-#if 0
-    bu_log("%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
-#endif
+    bv_log(3, "view_obb inputs[%s]: sbbc(%f %f %f) radius(%f) dir(%f %f %f)", bu_vls_cstr(&v->gv_name), V3ARGS(sbbc), radius, V3ARGS(dir));
+    bv_log(3, "view_obb[%s]: %f %f %f -> [%f %f %f] [%f %f %f] [%f %f %f]", bu_vls_cstr(&v->gv_name), V3ARGS(v->obb_center), V3ARGS(v->obb_extent1), V3ARGS(v->obb_extent2), V3ARGS(v->obb_extent3));
+    bv_log(3, "%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
 }
 
 static void

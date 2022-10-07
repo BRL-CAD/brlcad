@@ -2705,6 +2705,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     for (v_it = views.begin(); v_it != views.end(); v_it++) {
 	std::unordered_set<struct bv_scene_obj *>::iterator o_it;
 	for (o_it = objs.begin(); o_it != objs.end(); o_it++) {
+	    bv_log(3, "redraw %s[%s]", bu_vls_cstr(&((*(*o_it)).s_name)), bu_vls_cstr(&((*(*v_it)).gv_name)));
 	    draw_scene(*o_it, *v_it);
 	}
     }

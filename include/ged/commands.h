@@ -901,6 +901,8 @@ DEPRECATED GED_EXPORT extern int ged_get_obj_bounds(struct ged *gedp,
                                         point_t rpp_min,
                                         point_t rpp_max);
 
+GED_EXPORT void draw_scene(struct bv_scene_obj *s, struct bview *v);
+
 /** @} */
 
 

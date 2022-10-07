@@ -1268,6 +1268,37 @@ bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
 	s->s_displayobj = dismode;
 	calc = 1;
     }
+    if (!calc) {
+	// If nothing else has given us an answer, see if other views
+	// can help
+	std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
+	for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {
+	    struct bv_scene_obj *lv = vo_it->second;
+	    if (lv->s_type_flags & BV_MESH_LOD) {
+		struct bv_mesh_lod *i = (struct bv_mesh_lod *)lv->draw_data;
+		if (i) {
+		    point_t obmin, obmax;
+		    VMOVE(obmin, i->bmin);
+		    VMOVE(obmax, i->bmax);
+		    // Apply the scene matrix to the bounding box values to bound this
+		    // instance, since the BV_MESH_LOD data is based on the
+		    // non-instanced mesh.
+		    MAT4X3PNT(lv->bmin, lv->s_mat, obmin);
+		    MAT4X3PNT(lv->bmax, lv->s_mat, obmax);
+		    calc = 1;
+		}
+	    } else if (bu_list_len(&lv->s_vlist)) {
+		int dismode;
+		cmd = bv_vlist_bbox(&lv->s_vlist, &lv->bmin, &lv->bmax, NULL, &dismode);
+		calc = 1;
+	    }
+	    if (calc) {
+		VMOVE(s->bmin, lv->bmin);
+		VMOVE(s->bmax, lv->bmax);
+		break;
+	    }
+	}
+    }
     if (calc) {
 	s->s_center[X] = (s->bmin[X] + s->bmax[X]) * 0.5;
 	s->s_center[Y] = (s->bmin[Y] + s->bmax[Y]) * 0.5;
