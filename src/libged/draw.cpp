@@ -105,45 +105,20 @@ draw_free_data(struct bv_scene_obj *s)
 
 
 static int
-csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
+csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int UNUSED(flag))
 {
     /* Validate */
-    if (!s || !v)
+    if (!vo || !v)
 	return 0;
 
     if (!v->gv_s->adaptive_plot_csg)
 	return 0;
 
-    bv_log(1, "csg_wireframe_update %s[%s]", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name));
+    bv_log(1, "csg_wireframe_update %s[%s]", bu_vls_cstr(&vo->s_name), bu_vls_cstr(&v->gv_name));
 
-    s->csg_obj = 1;
+    vo->csg_obj = 1;
 
     bool rework = false;
-
-    struct bv_scene_obj *vo;
-#if 0
-    vo = bv_obj_for_view(s, v);
-    if (!vo) {
-	// Make a copy of the draw info for vo.
-	struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
-	struct draw_update_data_t *ld;
-	BU_GET(ld, struct draw_update_data_t);
-	ld->fp = (struct db_full_path *)s->s_path;
-	ld->dbip = d->dbip;
-	ld->tol = d->tol;
-	ld->ttol = d->ttol;
-	ld->mesh_c = d->mesh_c;
-	ld->res = d->res;
-	vo->s_i_data= (void *)ld;
-
-	vo->s_update_callback = &csg_wireframe_update;
-	vo->s_free_callback = &draw_free_data;
-
-	rework = true;
-    }
-#else
-    vo = s;
-#endif
 
     // If the object is not visible in the scene, don't change the data.  This
     // check is useful in orthographic camera mode, where we zoom in on a
@@ -155,24 +130,24 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
 	return 0;
 
     // Check point scale
-    if (!rework && !NEAR_EQUAL(s->curve_scale, s->s_v->gv_s->curve_scale, SMALL_FASTF))
+    if (!rework && !NEAR_EQUAL(vo->curve_scale, vo->s_v->gv_s->curve_scale, SMALL_FASTF))
 	rework = true;
     // Check point scale
-    if (!rework && !NEAR_EQUAL(s->point_scale, s->s_v->gv_s->point_scale, SMALL_FASTF))
+    if (!rework && !NEAR_EQUAL(vo->point_scale, vo->s_v->gv_s->point_scale, SMALL_FASTF))
 	rework = true;
     if (!rework) {
 	// Check view scale
-	fastf_t delta = s->view_scale * 0.1/s->view_scale;
-	if (!NEAR_EQUAL(s->view_scale, v->gv_scale, delta))
+	fastf_t delta = vo->view_scale * 0.1/vo->view_scale;
+	if (!NEAR_EQUAL(vo->view_scale, v->gv_scale, delta))
 	    rework = true;
     }
     if (!rework)
 	return 0;
 
     // We're going to redraw - sync with view
-    s->curve_scale = s->s_v->gv_s->curve_scale;
-    s->point_scale = s->s_v->gv_s->point_scale;
-    s->view_scale = v->gv_scale;
+    vo->curve_scale = v->gv_s->curve_scale;
+    vo->point_scale = v->gv_s->point_scale;
+    vo->view_scale = v->gv_scale;
 
     // Clear out existing vlists
     struct bu_list *p;
@@ -196,7 +171,7 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
     if (ip->idb_meth->ft_adaptive_plot) {
 	ip->idb_meth->ft_adaptive_plot(&vo->s_vlist, ip, d->tol, v, vo->s_size);
 	vo->s_type_flags |= BV_CSG_LOD;
-	bv_obj_stale(s);// TODO - is this right?
+	bv_obj_stale(vo);// TODO - is this right?
     }
 
     return 1;
