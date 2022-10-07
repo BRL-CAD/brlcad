@@ -545,13 +545,13 @@ _obj_visible(struct bv_scene_obj *s, struct bview *v)
     if (bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3)) {
 	bv_log(3, "obj_visible[%s] - passed bg_sat_abb_obb: %f %f %f -> %f %f %f", bu_vls_cstr(&v->gv_name), V3ARGS(s->bmin), V3ARGS(s->bmax));
 	bv_log(3, "                          view abb : %f %f %f -> [%f %f %f] [%f %f %f] [%f %f %f]", V3ARGS(v->obb_center), V3ARGS(v->obb_extent1), V3ARGS(v->obb_extent2), V3ARGS(v->obb_extent3));
-	bv_log(3, "%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
+	//bv_log(3, "%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
 
 	return 1;
     } else {
 	bv_log(3, "obj_visible[%s] - FAILED bg_sat_abb_obb: %f %f %f -> %f %f %f", bu_vls_cstr(&v->gv_name),V3ARGS(s->bmin), V3ARGS(s->bmax));
 	bv_log(3, "                          view abb : %f %f %f -> [%f %f %f] [%f %f %f] [%f %f %f]", V3ARGS(v->obb_center), V3ARGS(v->obb_extent1), V3ARGS(v->obb_extent2), V3ARGS(v->obb_extent3));
-	bv_log(3, "%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
+	//bv_log(3, "%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
     }
 
     if (SMALL_FASTF < v->gv_perspective) {
