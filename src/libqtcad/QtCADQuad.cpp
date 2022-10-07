@@ -225,8 +225,8 @@ QtCADQuad::changeToQuadFrame()
     // but if we don't do it here we'll start out with blank windows until something notifies
     // the draw logic it needs to do updates.
     for (int i = UPPER_RIGHT_QUADRANT + 1; i < LOWER_RIGHT_QUADRANT + 1; i++) {
-	bg_view_bounds(views[i]->view());
 	bv_autoview(views[i]->view(), BV_AUTOVIEW_SCALE_DEFAULT, 0);
+	bg_view_bounds(views[i]->view());
     }
     struct bu_ptbl *db_objs = bv_view_objs(views[UPPER_RIGHT_QUADRANT]->view(), BV_DB_OBJS);
     for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
