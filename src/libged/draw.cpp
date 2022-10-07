@@ -120,7 +120,9 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
 
     bool rework = false;
 
-    struct bv_scene_obj *vo = bv_obj_for_view(s, v);
+    struct bv_scene_obj *vo;
+#if 0
+    vo = bv_obj_for_view(s, v);
     if (!vo) {
 	// Make a copy of the draw info for vo.
 	struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
@@ -139,6 +141,9 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
 
 	rework = true;
     }
+#else
+    vo = s;
+#endif
 
     // If the object is not visible in the scene, don't change the data.  This
     // check is useful in orthographic camera mode, where we zoom in on a
@@ -554,8 +559,9 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 
     // If we're adaptive, call the primitive's adaptive plotting, if any.
     if (ip->idb_meth->ft_adaptive_plot) {
-	if (!bv_obj_have_vo(s, v)) {
-	    struct bv_scene_obj *vo = bv_obj_get_vo(s, v);
+	struct bv_scene_obj *vo = bv_obj_for_view(s, v);
+	if (!vo) {
+	    vo = bv_obj_get_vo(s, v);
 
 	    // Make a copy of the draw info for vo.
 	    struct draw_update_data_t *ld;
@@ -574,7 +580,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	    vo->s_free_callback = &draw_free_data;
 	}
 
-	csg_wireframe_update(s, v, 0);
+	csg_wireframe_update(vo, v, 0);
 	return;
     }
 

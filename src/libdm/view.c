@@ -585,11 +585,8 @@ draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 
 	// If this is a database object, it may have a view dependent
 	// update to do.
-	//
-	// TODO - don't think this should be supplying s, but if we use vo
-	// csg doesn't work correctly...
 	if (vo->s_update_callback)
-	    (*vo->s_update_callback)(s, v, 0);
+	    (*vo->s_update_callback)(vo, v, 0);
 
 	dm_draw_obj(dmp, vo);
     }
