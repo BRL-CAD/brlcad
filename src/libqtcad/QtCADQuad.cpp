@@ -182,8 +182,17 @@ QtCADQuad::changeToQuadFrame()
 	if (views[i] == nullptr) {
 	    views[i] = createView(i);
 	}
+	// Turn on adaptive mesh for all new views, if the existing view has it
+	// enabled - we lose the memory and performance benefits if we have to
+	// load a full-sized mesh in one of them.
+	views[i]->view()->gv_s->adaptive_plot_mesh = views[UPPER_RIGHT_QUADRANT]->view()->gv_s->adaptive_plot_mesh;
+	// For consistency, do the same with CSG lod - this actually cuts against
+	// us in memory usage as a rule, but default to matching the mesh setting
+	// behavior
+	views[i]->view()->gv_s->adaptive_plot_csg = views[UPPER_RIGHT_QUADRANT]->view()->gv_s->adaptive_plot_csg;
 	bv_set_add_view(&gedp->ged_views, views[i]->view());
     }
+
     QGridLayout *layout = (QGridLayout *)this->layout();
     if (layout == nullptr) {
 	layout = createLayout();
