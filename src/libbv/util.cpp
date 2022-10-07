@@ -786,7 +786,7 @@ bv_obj_create(struct bview *v, int type)
     if (!v)
 	return NULL;
 
-    bv_log(1, "bv_obj_create");
+    bv_log(1, "bv_obj_create (%s)", bu_vls_cstr(&v->gv_name));
 
     struct bv_scene_obj *s = NULL;
 
@@ -877,9 +877,10 @@ bv_obj_create(struct bview *v, int type)
 struct bv_scene_obj *
 bv_obj_get(struct bview *v, int type)
 {
-    bv_log(1, "bv_obj_get");
     if (!v)
 	return NULL;
+
+    bv_log(1, "bv_obj_get %d(%s)", type, bu_vls_cstr(&v->gv_name));
 
     struct bv_scene_obj *s = bv_obj_create(v, type);
     if (!s)
@@ -897,7 +898,7 @@ bv_obj_get_child(struct bv_scene_obj *sp)
     if (!sp)
 	return NULL;
 
-    bv_log(1, "bv_obj_get_child %s(%s)", bu_vls_cstr(&sp->s_uuid), bu_vls_cstr(&sp->s_v->gv_name));
+    bv_log(1, "bv_obj_get_child %s(%s)", bu_vls_cstr(&sp->s_name), bu_vls_cstr(&sp->s_v->gv_name));
 
     struct bv_scene_obj *s = NULL;
 
@@ -1019,6 +1020,7 @@ bv_obj_reset(struct bv_scene_obj *s)
 void
 bv_obj_put(struct bv_scene_obj *s)
 {
+    bv_log(1, "bv_obj_put %s[%s]", bu_vls_cstr(&s->s_name), (s->s_v) ? bu_vls_cstr(&s->s_v->gv_name) : "NULL");
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&s->children, i);
 	bv_obj_put(cg);
@@ -1106,75 +1108,111 @@ struct bv_scene_obj *
 bv_obj_for_view(struct bv_scene_obj *s, struct bview *v)
 {
     if (!v || !s || !s->i)
-	return s;
+	return NULL;
 
     std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
     vo_it = s->i->vobjs.find(v);
-    if (vo_it == s->i->vobjs.end())
-	return s;
+    if (vo_it == s->i->vobjs.end()) {
+	bv_log(1, "bv_obj_for_view %s(%s) - NONE", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name));
+	return NULL;
+    }
+    bv_log(1, "bv_obj_for_view %s[%s] - %s", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name), bu_vls_cstr(&vo_it->second->s_uuid));
     return vo_it->second;
 }
 
-void
-bv_set_view_obj(struct bv_scene_obj *s, struct bview *v, struct bv_scene_obj *sv)
+struct bv_scene_obj *
+bv_obj_get_vo(struct bv_scene_obj *s, struct bview *v)
 {
-    if (!v || !s || !s->i || !sv)
-	return;
+    if (!v || !s || !s->i)
+	return NULL;
 
     std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
     vo_it = s->i->vobjs.find(v);
     if (vo_it != s->i->vobjs.end())
-	bv_obj_put(vo_it->second);
-    s->i->vobjs[v] = sv;
-    sv->s_os = s->s_os;
+	return vo_it->second;
+
+
+    struct bv_scene_obj *vo = NULL;
+
+    // View local object - use the view obj pool
+    struct bv_scene_obj *free_scene_obj = v->vset->i->free_scene_obj;
+    if (BU_LIST_IS_EMPTY(&free_scene_obj->l)) {
+	BU_ALLOC((vo), struct bv_scene_obj);
+	vo->i = new bv_scene_obj_internal;
+    } else {
+	vo = BU_LIST_NEXT(bv_scene_obj, &s->free_scene_obj->l);
+	if (!vo) {
+	    BU_ALLOC((vo), struct bv_scene_obj);
+	    vo->i = new bv_scene_obj_internal;
+	} else {
+	    BU_LIST_DEQUEUE(&((vo)->l));
+	}
+    }
+
+    // Use reset to do most of the initialization
+    bv_obj_reset(vo);
+
+    // Most of the view properties (color, size, etc.) are inherited from
+    // the parent
+    bv_obj_sync(vo, s);
+
+    // View local object - the local vlist pool
+    vo->vlfree = &v->gv_objs.gv_vlfree;
+
+    bu_vls_sprintf(&vo->s_name, "%s", bu_vls_cstr(&s->s_name));
+    bu_vls_sprintf(&vo->s_uuid, "vo:%s:%s", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name));
+
+    vo->s_v = v;
+    vo->dp = s->dp;
+
+
+
+    s->i->vobjs[v] = vo;
+    vo->s_os = s->s_os;
+    bv_log(1, "bv_obj_get_vo %s[%s] = %s", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name), bu_vls_cstr(&vo->s_uuid));
+
+    return vo;
 }
 
 int
-bv_obj_have_view_obj(struct bv_scene_obj *s, struct bview *v)
+bv_obj_have_vo(struct bv_scene_obj *s, struct bview *v)
 {
-    if (!s || !s->i)
+    if (!s || !s->i || !v)
 	return 0;
-
-    if (!v)
-	return (s->i->vobjs.size()) ? 1 : 0;
 
     std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
     vo_it = s->i->vobjs.find(v);
+    bv_log(1, "bv_have_view_obj %s[%s]: %d", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name), (vo_it != s->i->vobjs.end()) ? 1 : 0);
     return (vo_it != s->i->vobjs.end()) ? 1 : 0;
 }
 
 int
 bv_clear_view_obj(struct bv_scene_obj *s, struct bview *v)
 {
-    int ret = 0;
     if (!s || !s->i)
-	return ret;
+	return 0;
 
-    if (v) {
+    bv_log(1, "bv_clear_view_obj %s(%s)", bu_vls_cstr(&s->s_name), (v) ? bu_vls_cstr(&v->gv_name) : "NULL");
+
+    if (!v) {
 	std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
-	vo_it = s->i->vobjs.find(v);
-	if (vo_it == s->i->vobjs.end())
-	    return ret;
-
-	struct bv_scene_obj *vobj = vo_it->second;
-	if (vobj != s) {
-	    bv_obj_put(vobj);
-	    ret = 1;
-	}
-	s->i->vobjs.erase(v);
-    } else {
-    	std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
 	for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {
 	    struct bv_scene_obj *vobj = vo_it->second;
-	    if (vobj != s) {
-		bv_obj_put(vobj);
-		ret = 1;
-	    }
+	    bv_obj_put(vobj);
 	}
 	s->i->vobjs.clear();
     }
 
-    return ret;
+    std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
+    vo_it = s->i->vobjs.find(v);
+    if (vo_it == s->i->vobjs.end())
+	return 0;
+
+    struct bv_scene_obj *vobj = vo_it->second;
+    bv_obj_put(vobj);
+    s->i->vobjs.erase(v);
+
+    return 1;
 }
 
 struct bv_scene_obj *

@@ -2151,7 +2151,7 @@ BViewState::scene_obj(
 	    std::unordered_set<struct bview *>::iterator v_it;
 	    if (sp->csg_obj) {
 		for (v_it = views.begin(); v_it != views.end(); v_it++) {
-		    int have_adaptive = bv_obj_have_view_obj(sp, *v_it);
+		    int have_adaptive = bv_obj_have_vo(sp, *v_it);
 		    if ((*v_it)->gv_s->adaptive_plot_csg && !have_adaptive) {
 			bv_obj_stale(sp);
 			sp->curve_scale = -1; // Make sure a rework is triggered
@@ -2165,7 +2165,7 @@ BViewState::scene_obj(
 	    }
 	    if (sp->mesh_obj) {
 		for (v_it = views.begin(); v_it != views.end(); v_it++) {
-		    int have_adaptive = bv_obj_have_view_obj(sp, *v_it);
+		    int have_adaptive = bv_obj_have_vo(sp, *v_it);
 		    if ((*v_it)->gv_s->adaptive_plot_mesh && !have_adaptive) {
 			bv_obj_stale(sp);
 			objs.insert(sp);

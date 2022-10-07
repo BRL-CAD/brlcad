@@ -182,14 +182,13 @@ bv_find_obj(struct bview *v, const char *vname);
 BV_EXPORT struct bv_scene_obj *
 bv_obj_for_view(struct bv_scene_obj *s, struct bview *v);
 
-/* Stash a view-specific object vobj for view v on object s.  If vobj is NULL,
- * this will clear the object for that particular view.  */
-BV_EXPORT void
-bv_set_view_obj(struct bv_scene_obj *s, struct bview *v, struct bv_scene_obj *vobj);
+/* Get a view-specific object vobj for view v on object s.  */
+BV_EXPORT struct bv_scene_obj *
+bv_obj_get_vo(struct bv_scene_obj *s, struct bview *v);
 
 /* Check for the presence of view-specific objects */
 BV_EXPORT int
-bv_obj_have_view_obj(struct bv_scene_obj *s, struct bview *v);
+bv_obj_have_vo(struct bv_scene_obj *s, struct bview *v);
 
 /* Clear view-specific objects */
 BV_EXPORT int

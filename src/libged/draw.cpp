@@ -107,7 +107,6 @@ draw_free_data(struct bv_scene_obj *s)
 static int
 csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
 {
-    bv_log(1, "csg_wireframe_update");
     /* Validate */
     if (!s || !v)
 	return 0;
@@ -115,15 +114,14 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
     if (!v->gv_s->adaptive_plot_csg)
 	return 0;
 
+    bv_log(1, "csg_wireframe_update %s[%s]", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name));
+
     s->csg_obj = 1;
 
     bool rework = false;
 
     struct bv_scene_obj *vo = bv_obj_for_view(s, v);
     if (!vo) {
-    	vo = bv_obj_get_child(s);
-	bv_set_view_obj(s, v, vo);
-
 	// Make a copy of the draw info for vo.
 	struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
 	struct draw_update_data_t *ld;
@@ -139,18 +137,8 @@ csg_wireframe_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
 	vo->s_update_callback = &csg_wireframe_update;
 	vo->s_free_callback = &draw_free_data;
 
-	// Most of the view properties (color, size, etc.) are inherited from
-	// the parent
-	bv_obj_sync(vo, s);
-
-	// Make the names unique
-	bu_vls_sprintf(&vo->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_name));
-	vo->s_path = NULL;  // I don't think the vo objects will need the db_fullpath...
-	bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
-
 	rework = true;
     }
-
 
     // If the object is not visible in the scene, don't change the data.  This
     // check is useful in orthographic camera mode, where we zoom in on a
@@ -283,128 +271,128 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     if (!s || !v)
 	return;
 
+    bv_log(1, "bot_adaptive_plot %s[%s]", bu_vls_cstr(&s->s_name), (v) ? bu_vls_cstr(&v->gv_name) : "NULL");
+
     s->csg_obj = 0;
     s->mesh_obj = 1;
 
-    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
-    if (!d)
-	return;
-    struct db_i *dbip = d->dbip;
-    struct db_full_path *fp = (struct db_full_path *)s->s_path;
-    struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
+    struct bv_scene_obj *vo = bv_obj_for_view(s, v);
 
-    // We need the key to look up the LoD data from the cache, and if we don't
-    // already have cache data for this bot we need to generate it.
-    unsigned long long key = bg_mesh_lod_key_get(d->mesh_c, dp->d_namep);
-    if (!key) {
-	// We don't have a key associated with the name.  Get and check the BoT
-	// data itself, creating the LoD data if we don't already have it
-	struct rt_db_internal dbintern;
-	RT_DB_INTERNAL_INIT(&dbintern);
-	struct rt_db_internal *ip = &dbintern;
-	int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
-	if (ret < 0)
+    if (!vo) {
+
+	vo = bv_obj_get_vo(s, v);
+
+	struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+	if (!d)
 	    return;
-	struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-	RT_BOT_CK_MAGIC(bot);
-	key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
-	bg_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
-	rt_db_free_internal(&dbintern);
-    }
-    if (!key)
-	return;
+	struct db_i *dbip = d->dbip;
+	struct db_full_path *fp = (struct db_full_path *)s->s_path;
+	struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
 
-    // Once we have a valid key, proceed to create the necessary
-    // data structures and objects.
-    struct bv_mesh_lod *lod = bg_mesh_lod_create(d->mesh_c, key);
-    if (!lod) {
-	// Stale key?  Clear it and try a regeneration
-	unsigned long long old_key = key;
-	bg_mesh_lod_clear_cache(d->mesh_c, key);
-
-	// Load mesh and process
-	struct rt_db_internal dbintern;
-	RT_DB_INTERNAL_INIT(&dbintern);
-	struct rt_db_internal *ip = &dbintern;
-	int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
-	if (ret < 0)
-	    return;
-	struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-	RT_BOT_CK_MAGIC(bot);
-	key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
-	bg_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
-	rt_db_free_internal(&dbintern);
-
-	// Sanity
-	if (old_key == key) {
-	    bu_log("%s: LoD lookup by key failed, but regeneration generated the same key (?)\n", dp->d_namep);
-	    return;
+	// We need the key to look up the LoD data from the cache, and if we don't
+	// already have cache data for this bot we need to generate it.
+	unsigned long long key = bg_mesh_lod_key_get(d->mesh_c, dp->d_namep);
+	if (!key) {
+	    // We don't have a key associated with the name.  Get and check the BoT
+	    // data itself, creating the LoD data if we don't already have it
+	    struct rt_db_internal dbintern;
+	    RT_DB_INTERNAL_INIT(&dbintern);
+	    struct rt_db_internal *ip = &dbintern;
+	    int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
+	    if (ret < 0)
+		return;
+	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+	    RT_BOT_CK_MAGIC(bot);
+	    key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
+	    bg_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
+	    rt_db_free_internal(&dbintern);
 	}
-	unsigned long long new_key = bg_mesh_lod_key_get(d->mesh_c, dp->d_namep);
-	if (new_key == old_key) {
-	    bu_log("%s: LoD regenerated with new key, but key lookup still returns old key (?)\n", dp->d_namep);
+	if (!key)
 	    return;
+
+	// Once we have a valid key, proceed to create the necessary
+	// data structures and objects.
+	struct bv_mesh_lod *lod = bg_mesh_lod_create(d->mesh_c, key);
+	if (!lod) {
+	    // Stale key?  Clear it and try a regeneration
+	    unsigned long long old_key = key;
+	    bg_mesh_lod_clear_cache(d->mesh_c, key);
+
+	    // Load mesh and process
+	    struct rt_db_internal dbintern;
+	    RT_DB_INTERNAL_INIT(&dbintern);
+	    struct rt_db_internal *ip = &dbintern;
+	    int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
+	    if (ret < 0)
+		return;
+	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+	    RT_BOT_CK_MAGIC(bot);
+	    key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
+	    bg_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
+	    rt_db_free_internal(&dbintern);
+
+	    // Sanity
+	    if (old_key == key) {
+		bu_log("%s: LoD lookup by key failed, but regeneration generated the same key (?)\n", dp->d_namep);
+		return;
+	    }
+	    unsigned long long new_key = bg_mesh_lod_key_get(d->mesh_c, dp->d_namep);
+	    if (new_key == old_key) {
+		bu_log("%s: LoD regenerated with new key, but key lookup still returns old key (?)\n", dp->d_namep);
+		return;
+	    }
+
+	    // If after all that we STILL don't get an LoD struct, give up
+	    lod = bg_mesh_lod_create(d->mesh_c, key);
+	    if (!lod)
+		return;
 	}
 
-	// If after all that we STILL don't get an LoD struct, give up
-	lod = bg_mesh_lod_create(d->mesh_c, key);
-	if (!lod)
-	    return;
-    }
-    struct bv_scene_obj *vo = bv_obj_get_child(s);
-    bv_set_view_obj(s, v, vo);
+	// Assign the LoD information to the object's draw_data, and let
+	// the LoD know which object it is associated with.
+	vo->draw_data = (void *)lod;
+	lod->s = vo;
 
-    // Most of the view properties (color, size, etc.) are inherited from
-    // the parent
-    bv_obj_sync(vo, s);
+	// The object bounds are based on the LoD's calculations.  Because the LoD
+	// cache stores only one cached data set per object, but full path
+	// instances in the scene can be placed with matrices, we must apply the
+	// s_mat transformation to the "baseline" LoD bbox info to get the correct
+	// box for the instance.
+	MAT4X3PNT(vo->bmin, s->s_mat, lod->bmin);
+	MAT4X3PNT(vo->bmax, s->s_mat, lod->bmax);
+	VMOVE(s->bmin, vo->bmin);
+	VMOVE(s->bmax, vo->bmax);
 
-    // Assign the LoD information to the object's draw_data, and let
-    // the LoD know which object it is associated with.
-    vo->draw_data = (void *)lod;
-    lod->s = vo;
+	// Record the necessary information for full detail information recovery.  We
+	// don't duplicate the full mesh detail in the on-disk LoD storage, since we
+	// already have that info in the .g itself, but we need to know how to get at
+	// it when needed.  The free callback will clean up, but we need to initialize
+	// the callback data here.
+	struct ged_full_detail_clbk_data *cbd;
+	BU_GET(cbd, ged_full_detail_clbk_data);
+	cbd->dbip = dbip;
+	cbd->dp = dp;
+	cbd->res = &rt_uniresource;
+	cbd->intern = NULL;
+	bg_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
+	bg_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
+	bg_mesh_lod_detail_free_clbk(lod, &bot_mesh_info_free_clbk);
 
-    // The object bounds are based on the LoD's calculations.  Because the LoD
-    // cache stores only one cached data set per object, but full path
-    // instances in the scene can be placed with matrices, we must apply the
-    // s_mat transformation to the "baseline" LoD bbox info to get the correct
-    // box for the instance.
-    MAT4X3PNT(vo->bmin, s->s_mat, lod->bmin);
-    MAT4X3PNT(vo->bmax, s->s_mat, lod->bmax);
-    VMOVE(s->bmin, vo->bmin);
-    VMOVE(s->bmax, vo->bmax);
+	// LoD will need to re-check its level settings whenever the view changes
+	vo->s_update_callback = &bg_mesh_lod_view;
+	vo->s_free_callback = &bg_mesh_lod_free;
 
-    // Record the necessary information for full detail information recovery.  We
-    // don't duplicate the full mesh detail in the on-disk LoD storage, since we
-    // already have that info in the .g itself, but we need to know how to get at
-    // it when needed.  The free callback will clean up, but we need to initialize
-    // the callback data here.
-    struct ged_full_detail_clbk_data *cbd;
-    BU_GET(cbd, ged_full_detail_clbk_data);
-    cbd->dbip = dbip;
-    cbd->dp = dp;
-    cbd->res = &rt_uniresource;
-    cbd->intern = NULL;
-    bg_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
-    bg_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
-    bg_mesh_lod_detail_free_clbk(lod, &bot_mesh_info_free_clbk);
+	// Initialize the LoD data to the current view
+	int level = bg_mesh_lod_view(vo, vo->s_v, 0);
+	if (level < 0) {
+	    bu_log("Error loading info for initial LoD view\n");
+	}
 
-    // LoD will need to re-check its level settings whenever the view changes
-    vo->s_update_callback = &bg_mesh_lod_view;
-    vo->s_free_callback = &bg_mesh_lod_free;
-
-    // Initialize the LoD data to the current view
-    int level = bg_mesh_lod_view(vo, vo->s_v, 0);
-    if (level < 0) {
-	bu_log("Error loading info for initial LoD view\n");
+	// Mark the object as a Mesh LoD so the drawing routine knows to handle it differently
+	vo->s_type_flags |= BV_MESH_LOD;
     }
 
-    // Mark the object as a Mesh LoD so the drawing routine knows to handle it differently
-    vo->s_type_flags |= BV_MESH_LOD;
-
-    // Make the names unique
-    bu_vls_sprintf(&vo->s_name, "%s", bu_vls_cstr(&s->s_name));
-    vo->s_path = NULL;  // I don't think the vo objects will need the db_fullpath...
-    bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
+    bg_mesh_lod_view(vo, vo->s_v, 0);
 
     return;
 }
@@ -417,6 +405,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     if (!d)
 	return;
+    bv_log(1, "brep_adaptive_plot %s[%s]", bu_vls_cstr(&s->s_name), (v) ? bu_vls_cstr(&v->gv_name) : "NULL");
 
     struct db_i *dbip = d->dbip;
     struct db_full_path *fp = (struct db_full_path *)s->s_path;
@@ -493,12 +482,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     if (!lod)
 	return;
 
-    struct bv_scene_obj *vo = bv_obj_get_child(s);
-    bv_set_view_obj(s, v, vo);
-
-    // Most of the view properties (color, size, etc.) are inherited from
-    // the parent
-    bv_obj_sync(vo, s);
+    struct bv_scene_obj *vo = bv_obj_get_vo(s, v);
 
     // Assign the LoD information to the object's draw_data, and let
     // the LoD know which object it is associated with.
@@ -543,11 +527,6 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     // Mark the object as a Mesh LoD so the drawing routine knows to handle it differently
     vo->s_type_flags |= BV_MESH_LOD;
 
-    // Make the names unique
-    bu_vls_sprintf(&vo->s_name, "%s", bu_vls_cstr(&s->s_name));
-    vo->s_path = NULL;  // I don't think the vo objects will need the db_fullpath...
-    bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
-
     return;
 }
 
@@ -555,7 +534,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 static void
 wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *ip)
 {
-    bv_log(1, "wireframe_plot");
+    bv_log(1, "wireframe_plot %s[%s]", bu_vls_cstr(&s->s_name), (v) ? bu_vls_cstr(&v->gv_name) : "NULL");
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     const struct bn_tol *tol = d->tol;
     const struct bg_tess_tol *ttol = d->ttol;
@@ -575,32 +554,27 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 
     // If we're adaptive, call the primitive's adaptive plotting, if any.
     if (ip->idb_meth->ft_adaptive_plot) {
-	struct bv_scene_obj *vo = bv_obj_get_child(s);
-	bv_set_view_obj(s, v, vo);
+	if (!bv_obj_have_vo(s, v)) {
+	    struct bv_scene_obj *vo = bv_obj_get_vo(s, v);
 
-	// Make a copy of the draw info for vo.
-	struct draw_update_data_t *ld;
-	BU_GET(ld, struct draw_update_data_t);
-	ld->fp = (struct db_full_path *)s->s_path;
-	ld->dbip = d->dbip;
-	ld->tol = d->tol;
-	ld->ttol = d->ttol;
-	ld->mesh_c = d->mesh_c;
-	ld->res = d->res;
-	vo->s_i_data= (void *)ld;
+	    // Make a copy of the draw info for vo.
+	    struct draw_update_data_t *ld;
+	    BU_GET(ld, struct draw_update_data_t);
+	    ld->fp = (struct db_full_path *)s->s_path;
+	    ld->dbip = d->dbip;
+	    ld->tol = d->tol;
+	    ld->ttol = d->ttol;
+	    ld->mesh_c = d->mesh_c;
+	    ld->res = d->res;
+	    vo->s_i_data= (void *)ld;
 
-	vo->s_update_callback = &csg_wireframe_update;
-	vo->s_free_callback = &draw_free_data;
+	    // We're adaptive - have to plot when the view changes.  Set the
+	    // callbacks
+	    vo->s_update_callback = &csg_wireframe_update;
+	    vo->s_free_callback = &draw_free_data;
+	}
 
-	// Most of the view properties (color, size, etc.) are inherited from
-	// the parent
-	bv_obj_sync(vo, s);
-
-	// Make the names unique
-	bu_vls_sprintf(&vo->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_name));
-	vo->s_path = NULL;  // I don't think the vo objects will need the db_fullpath...
-	bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
-
+	csg_wireframe_update(s, v, 0);
 	return;
     }
 
@@ -629,10 +603,6 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 
     // If we're not adaptive, trigger the view insensitive drawing routines
     if (v && !v->gv_s->adaptive_plot_csg && !v->gv_s->adaptive_plot_mesh) {
-
-    	// If we're coming in with old info, clear it
-	bv_clear_view_obj(s, NULL);
-
 	return draw_scene(s, NULL);
     }
 
