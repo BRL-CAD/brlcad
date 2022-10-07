@@ -1241,9 +1241,13 @@ bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
     VSET(sp->bmin, INFINITY, INFINITY, INFINITY);
     VSET(sp->bmax, -INFINITY, -INFINITY, -INFINITY);
     int calc = 0;
-    if (sp->s_type_flags & BV_MESH_LOD) {
-	struct bv_scene_obj *sv = bv_obj_for_view(sp, v);
-	struct bv_mesh_lod *i = (struct bv_mesh_lod *)sv->draw_data;
+    // If we have a view object, use that, otherwise it's
+    // the top level object
+    struct bv_scene_obj *s = bv_obj_for_view(sp, v);
+    if (!s)
+	s = sp;
+    if (s->s_type_flags & BV_MESH_LOD) {
+	struct bv_mesh_lod *i = (struct bv_mesh_lod *)s->draw_data;
 	if (i) {
 	    point_t obmin, obmax;
 	    VMOVE(obmin, i->bmin);
@@ -1251,27 +1255,27 @@ bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
 	    // Apply the scene matrix to the bounding box values to bound this
 	    // instance, since the BV_MESH_LOD data is based on the
 	    // non-instanced mesh.
-	    MAT4X3PNT(sp->bmin, sp->s_mat, obmin);
-	    MAT4X3PNT(sp->bmax, sp->s_mat, obmax);
+	    MAT4X3PNT(s->bmin, s->s_mat, obmin);
+	    MAT4X3PNT(s->bmax, s->s_mat, obmax);
 	    calc = 1;
 	}
-    } else if (bu_list_len(&sp->s_vlist)) {
-	int dispmode;
-	cmd = bv_vlist_bbox(&sp->s_vlist, &sp->bmin, &sp->bmax, NULL, &dispmode);
+    } else if (bu_list_len(&s->s_vlist)) {
+	int dismode;
+	cmd = bv_vlist_bbox(&s->s_vlist, &s->bmin, &s->bmax, NULL, &dismode);
 	if (cmd) {
 	    bu_log("unknown vlist op %d\n", cmd);
 	}
-	sp->s_displayobj = dispmode;
+	s->s_displayobj = dismode;
 	calc = 1;
     }
     if (calc) {
-	sp->s_center[X] = (sp->bmin[X] + sp->bmax[X]) * 0.5;
-	sp->s_center[Y] = (sp->bmin[Y] + sp->bmax[Y]) * 0.5;
-	sp->s_center[Z] = (sp->bmin[Z] + sp->bmax[Z]) * 0.5;
+	s->s_center[X] = (s->bmin[X] + s->bmax[X]) * 0.5;
+	s->s_center[Y] = (s->bmin[Y] + s->bmax[Y]) * 0.5;
+	s->s_center[Z] = (s->bmin[Z] + s->bmax[Z]) * 0.5;
 
-	sp->s_size = sp->bmax[X] - sp->bmin[X];
-	V_MAX(sp->s_size, sp->bmax[Y] - sp->bmin[Y]);
-	V_MAX(sp->s_size, sp->bmax[Z] - sp->bmin[Z]);
+	s->s_size = s->bmax[X] - s->bmin[X];
+	V_MAX(s->s_size, s->bmax[Y] - s->bmin[Y]);
+	V_MAX(s->s_size, s->bmax[Z] - s->bmin[Z]);
 	return 1;
     }
     return 0;

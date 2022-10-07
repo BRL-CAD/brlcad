@@ -207,10 +207,12 @@ obb_arb(vect_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_ex
     VADD2(arb[7], arb[7], obb_extent2);
     VSUB2(arb[7], arb[7], obb_extent3);
 
+#if 0
     bu_log("center: %f %f %f\n", V3ARGS(obb_center));
     bu_log("e1: %f %f %f\n", V3ARGS(obb_extent1));
     bu_log("e2: %f %f %f\n", V3ARGS(obb_extent2));
     bu_log("e3: %f %f %f\n", V3ARGS(obb_extent3));
+#endif
 
     snprintf(str, ARB_MAX_STRLEN, "in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
 	    V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb  [6]), V3ARGS(arb[7]));
