@@ -1427,13 +1427,17 @@ bv_illum_obj(struct bv_scene_obj *s, char ill_state)
     return changed;
 }
 
+//#define USE_BV_LOG
 void
+#ifdef USE_BV_LOG
 bv_log(int level, const char *fmt, ...)
+#else
+bv_log(int UNUSED(level), const char *UNUSED(fmt), ...)
+#endif
 {
+#ifdef USE_BV_LOG
     if (level < 0 || !fmt)
 	return;
-
-#ifdef BV_ENABLE_ENV_LOGGING
     const char *brsig = getenv("BV_LOG");
     if (!brsig)
 	return;
