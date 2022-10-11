@@ -304,6 +304,7 @@ class GED_EXPORT BViewState {
 	// Allow callers to calculate the drawing hash of a path
 	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
 
+    private:
 	// Sets defining all drawn solid paths (including invalid paths).  The
 	// s_keys holds the ordered individual keys of each drawn solid path - it
 	// is the latter that allows for the collapse operation to populate
@@ -321,7 +322,6 @@ class GED_EXPORT BViewState {
 	// it is practically speaking an implementation detail
 	void cache_collapsed();
 
-    private:
 	DbiState *dbis;
 
 	int check_status(
@@ -391,6 +391,8 @@ class GED_EXPORT BViewState {
 	// This holds the paths that should return 2 for is_hdrawn
 	std::unordered_map<int, std::unordered_set<unsigned long long>> partially_drawn_paths;
 	std::unordered_set<unsigned long long> all_partially_drawn_paths;
+
+	friend class BSelectState;
 };
 
 #define GED_DBISTATE_DB_CHANGE   0x01
