@@ -167,6 +167,8 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	    glCallList(s->s_dlist);
 	    dm_loadmatrix(dmp, save_mat, 0);
 	    glLineWidth(originalLineWidth);
+	    if (mvars->transparency_on)
+		glDisable(GL_BLEND);
 	    return BRLCAD_OK;
 	} else {
 	    // Display list mode is incorrect (wireframe when we
@@ -242,6 +244,9 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	}
 
 	glLineWidth(originalLineWidth);
+
+	if (mvars->transparency_on)
+	    glDisable(GL_BLEND);
 
 	return BRLCAD_OK;
     }
