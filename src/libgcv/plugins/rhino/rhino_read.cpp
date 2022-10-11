@@ -912,8 +912,8 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 		continue;
 	    if (cl->ParentLayerId() == layer->ModelObjectId()) {
                 std::string cleaned_name = clean_name(cl->Name());
-                members.push_back(std::make_pair(cleaned_name, std::vector<fastf_t*>(1, nullptr)));
                 member_vector_positions[cleaned_name] = members.size();
+                members.push_back(std::make_pair(cleaned_name, std::vector<fastf_t*>(1, nullptr)));
 	    }
 	}
     }
@@ -943,11 +943,13 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 		gname = uuidstr;
 	    }
 	    if (attributes->m_layer_index == moved_layers[layer->Index()] || attributes->m_layer_index == layer->Index()) {
-                auto handle = member_vector_positions.find(std::string(gname));
-                if (handle != member_vector_positions.end())
-                    members[handle->second].second.push_back(nullptr);
-                else
-                    members.push_back(std::make_pair(std::string(gname), std::vector<fastf_t*>(1, nullptr)));
+                std::string str_gname = std::string(gname);
+                if (member_vector_positions.find(str_gname) != member_vector_positions.end())
+                    members[member_vector_positions[str_gname]].second.push_back(nullptr);
+                else {
+                    member_vector_positions[str_gname] = members.size();
+                    members.push_back(std::make_pair(str_gname, std::vector<fastf_t*>(1, nullptr)));
+                }
 	    }
 	}
     }
