@@ -108,7 +108,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
 
     BViewState *bvs = gedp->dbi_state->get_view_state(v);
-    bvs->erase(mode, argc, argv);
+    bvs->erase_path(mode, argc, argv);
 
     return BRLCAD_OK;
 }

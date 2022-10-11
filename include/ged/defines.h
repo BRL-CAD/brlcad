@@ -277,7 +277,7 @@ class GED_EXPORT BViewState {
 	// paths that are subsets of the specified path are removed.  For
 	// evaluated modes like 3 (bigE) that generate an evaluated visual
 	// specific to that path, only precise path matches are removed
-	void erase(int mode, int argc, const char **argv);
+	void erase_path(int mode, int argc, const char **argv);
 	void erase_hpath(int mode, unsigned long long c_hash, std::vector<unsigned long long> &path_hashes, bool cache_collapse = true);
 
 	// Return a sorted vector of strings encoding the drawn paths in the
@@ -363,9 +363,6 @@ class GED_EXPORT BViewState {
 		std::vector<unsigned long long> &path_hashes,
 		std::unordered_set<struct bview *> &views
 		);
-
-	// Check if the prev_collapsed paths contain this path or a superset of this path
-	bool subsumed(struct bv_obj_settings *vs, std::vector<unsigned long long> &path);
 
 	int leaf_check(unsigned long long chash, std::vector<unsigned long long> &path_hashes);
 

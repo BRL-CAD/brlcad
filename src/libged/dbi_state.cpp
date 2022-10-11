@@ -1823,7 +1823,7 @@ BViewState::add_hpath(std::vector<unsigned long long> &path_hashes)
 }
 
 void
-BViewState::erase(int mode, int argc, const char **argv)
+BViewState::erase_path(int mode, int argc, const char **argv)
 {
     if (!argc || !argv)
 	return;
@@ -2375,32 +2375,6 @@ BViewState::clear()
     partially_drawn_paths.clear();
     mode_collapsed.clear();
     all_collapsed.clear();
-}
-
-bool
-BViewState::subsumed(struct bv_obj_settings *vs, std::vector<unsigned long long> &path)
-{
-    std::unordered_map<int, std::vector<std::vector<unsigned long long>>>::iterator p_it;
-    p_it = mode_collapsed.find(vs->s_dmode);
-    if (p_it == mode_collapsed.end())
-	return false;
-
-    for (size_t i = 0; i < p_it->second.size(); i++) {
-	std::vector<unsigned long long> &ppath = p_it->second[i];
-	if (ppath.size() > path.size())
-	    continue;
-	bool match = true;
-	for (size_t j = 0; j < ppath.size(); j++) {
-	    if (path[j] != ppath[j]) {
-		match = false;
-		break;
-	    }
-	}
-	if (match)
-	    return true;
-    }
-
-    return false;
 }
 
 std::vector<std::string>
