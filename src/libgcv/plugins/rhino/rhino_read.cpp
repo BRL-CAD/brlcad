@@ -259,80 +259,73 @@ clean_name(const ON_wString chk_name, const std::string default_name = "Default"
     return ret;
 }
 
-/* loop to check for non-unique names. Updates are reflected in the model */
-static std::vector<int>
-chk_names(ONX_Model& model, const char* default_name)
+/* check for non-unique names in map
+ * RETURNS: string of non-conflicting name, or empty string if name was valid
+ */
+static std::string
+chk_name(const ON_wString& _name, std::unordered_map <std::string, int>& used_names, const char* default_name)
 {
-    std::unordered_map <std::string, int> used_names;			/* used names, times used */
-    std::vector<std::pair<ON_UUID, ON_ModelComponent*>>to_remove;	/* remove ID, replacing copy */
-    const int num_types = 2;                                            /* checking Layer and ModelGeometry */
-    ON_ModelComponent::Type types[num_types] = { ON_ModelComponent::Type::Layer, 
-                                                 ON_ModelComponent::Type::ModelGeometry };
-    std::vector<int> moved_layers(model.ActiveComponentCount(types[0]));
-    for (size_t i = 0; i < moved_layers.size(); i++)
-        moved_layers[i] = i;
+    std::string name = clean_name(_name, default_name);
 
-    for (int j = 0; j < num_types; j++) {
-        ON_ModelComponent::Type curr_type = types[j];
-        ONX_ModelComponentIterator it(model, curr_type);
-
-        for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference()) {
-            std::string name = clean_name(cr.ModelComponent()->Name(), default_name);
-
-            /* ensure name is unique */
-            if (used_names.find(name) == used_names.end()) {
-                used_names.insert({ name, 0 });
-                /* if the changed the name at all we need to update */
-                if (name != default_name &&
-                    cr.ModelComponent()->NameIsNotEmpty() &&
-                    name == std::string(ON_String(cr.ModelComponent()->Name()).Array()))
-                    continue;
-            } else {
-                /* find non-conflicting name */
-                auto handle = used_names.find(name);
-                while (used_names.find(name + "_" + std::to_string(++handle->second)) != used_names.end())
-                    ;
-                name.append("_" + std::to_string(handle->second));
-            }
-
-            /* make a copy of the component with the non-conflicting name */
-            ON_ModelComponent* cpy = cr.ModelComponent()->Duplicate();
-            cpy->SetName(ON_wString(name.c_str()));
-
-            /* this is a linked list iteration, so we cannot add/delete inside the loop.
-             * keep track of offender/copy for clean up later
-             */
-            to_remove.push_back(std::make_pair(cr.ModelComponent()->Id(), cpy));
-        }
-    
-        /* do the removes and replacing additions */
-        for (size_t k = 0; k < to_remove.size(); k++) {
-            model.RemoveModelComponent(curr_type, to_remove[k].first);
-            if (curr_type == ON_ModelComponent::Type::Layer) {
-                /* internally, the layer's index is updated to match the geometry attributes m_layer_index.
-                 * to maintain a handle on the layer we disturbed we force the identity index to stay the 
-                 * same and map it to the new index with 'moved_layers'
-                 */
-                model.AddModelComponentForExperts(to_remove[k].second, true, false, false);
-                moved_layers[to_remove[k].second->Index()] = model.Manifest().ComponentIndexLimit(curr_type) - 1;
-            } else {
-                model.AddManagedModelComponent(to_remove[k].second);
-            }
-        }
-        to_remove.clear();
+    /* ensure name is unique */
+    if (used_names.find(name) == used_names.end()) {
+        used_names.insert({ name, 0 });
+        /* if we changed the name at all we need to update */
+        if (name != default_name &&
+            _name.IsNotEmpty() &&
+            name == std::string(ON_String(_name).Array()))
+            return "";
+    } else {
+        /* find non-conflicting name */
+        auto handle = used_names.find(name);
+        while (used_names.find(name + "_" + std::to_string(++handle->second)) != used_names.end())
+            ;
+        name.append("_" + std::to_string(handle->second));
     }
 
-    return moved_layers;
+    return name;
 }
 
-/* loads model and then checks and updates names to be unique */
+/* loads model and then checks and updates layer to be unique */
 static std::vector<int>
 load_model(const char* default_name, const std::string& path, ONX_Model& model)
 {
     if (!model.Read(path.c_str()))
 	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
 
-    std::vector<int> moved_layers = chk_names(model, default_name);
+    std::unordered_map <std::string, int> used_names;			/* used names, times used */
+    std::vector<std::pair<ON_UUID, ON_ModelComponent*>>to_remove;	/* remove ID, replacing copy */
+    ON_ModelComponent::Type type = ON_ModelComponent::Type::Layer;
+
+    /* init vector for all layers */
+    std::vector<int> moved_layers(model.ActiveComponentCount(type));
+    for (size_t i = 0; i < moved_layers.size(); i++)
+        moved_layers[i] = i;
+
+    ONX_ModelComponentIterator it(model, type);    
+    for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference()) {
+        std::string ret = chk_name(cr.ModelComponent()->Name(), used_names, default_name);
+        if (ret.length() > 0) {
+            /* make a copy of the component with the non-conflicting name */
+            ON_ModelComponent* cpy = cr.ModelComponent()->Duplicate();
+            cpy->SetName(ON_wString(ret.c_str()));
+        
+            /* this is a linked list iteration, so we cannot add/delete inside the loop.
+             * keep track of offender/copy for clean up later
+             */
+            to_remove.push_back(std::make_pair(cr.ModelComponent()->Id(), cpy));
+        }      
+    }
+    
+    /* do the removes and replacing additions */
+    for (size_t k = 0; k < to_remove.size(); k++) {
+        model.RemoveModelComponent(type, to_remove[k].first);
+        /* internally, the layer's index is updated to match the geometry attributes m_layer_index.
+         * to maintain a handle on the layer we disturbed we force the identity index to stay the 
+         * same and map it to the new index with 'moved_layers' */
+        model.AddModelComponentForExperts(to_remove[k].second, true, false, false);
+        moved_layers[to_remove[k].second->Index()] = model.Manifest().ComponentIndexLimit(type) - 1;
+    }
 
     return moved_layers;
 }
@@ -644,11 +637,13 @@ import_object(rt_wdb &wdb, const std::string &name,
 
 void
 import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
-		     ONX_Model &model)
+		     ONX_Model &model, const std::vector<int>& moved_layers)
 {
     size_t total_count = 0;
     size_t success_count = 0;
+    std::unordered_map <std::string, int> used_names;			/* used names, times used */
     std::unordered_map<std::string, ON_UUID>to_remove;
+    std::vector<std::pair<ON_UUID, ON_ModelComponent*>>to_replace;	/* remove ID, replacing copy */
     ON_ModelComponent::Type type = ON_ModelComponent::Type::ModelGeometry;
     ONX_ModelComponentIterator it(model, type);
 
@@ -660,9 +655,6 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	if (!mg)
 	    continue;
         
-	std::string name = std::string(ON_String(mg->Name()).Array());
-        const std::string member_name = name + ".s";
-
 	Shader shader;
 	unsigned char rgb[3];
 	bool own_shader, own_rgb;
@@ -670,25 +662,36 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	const ON_3dmObjectAttributes *attributes = mg->Attributes(nullptr);
 	get_object_material(attributes, model, shader, rgb, own_shader, own_rgb);
 
+        /* use parent layer name as name if no explicit object name is given */
+        const char* parent_layer = std::string(ON_String(model.LayerFromIndex(moved_layers[attributes->m_layer_index]).ModelComponent()->Name())).c_str();
+        std::string name = chk_name(ON_String(mg->Name()).Array(), used_names, parent_layer);
+        const std::string member_name = name + ".s";
+
+        /* create a copy of the component with updated name (non-conflicting and/or + ".s") */
+        ON_ModelComponent* cpy = cr.ModelComponent()->Duplicate();
+        cpy->SetName(ON_wString(member_name.c_str()));
+        to_replace.push_back(std::make_pair(cr.ModelComponent()->Id(), cpy));
+
 	const ON_Geometry *g = mg->Geometry(nullptr);
 	if (g) {
             int write_ret = write_geometry(wdb, member_name, g);
 
             if (write_ret == 1) {
-                std::vector<std::pair<std::string, std::vector<fastf_t*>>>members;
-                members.push_back(std::make_pair(member_name, std::vector<fastf_t*>(1, nullptr)));
+                // std::vector<std::pair<std::string, std::vector<fastf_t*>>>members;
+                // members.push_back(std::make_pair(member_name, std::vector<fastf_t*>(1, nullptr)));
 
-                write_layer_comb(wdb, name, members, own_shader ? shader.first.c_str() : NULL,
-			   own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
 
-                if (attributes) {
-                    ON_String uuid;
-                    const char *uuid_str = ON_UuidToString(attributes->m_uuid, uuid);
-                    int ret1 = db5_update_attribute(name.c_str(), "rhino::type", mg->ClassId()->ClassName(), wdb.dbip);
-                    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", uuid_str, wdb.dbip);
-                    if (ret1 || ret2)
-                        bu_bomb("db5_update_attribute() failed");
-                }
+                // write_layer_comb(wdb, name, members, own_shader ? shader.first.c_str() : NULL,
+		// 	   own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
+
+                // if (attributes) {
+                //     ON_String uuid;
+                //     const char *uuid_str = ON_UuidToString(attributes->m_uuid, uuid);
+                //     int ret1 = db5_update_attribute(name.c_str(), "rhino::type", mg->ClassId()->ClassName(), wdb.dbip);
+                //     int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", uuid_str, wdb.dbip);
+                //     if (ret1 || ret2)
+                //         bu_bomb("db5_update_attribute() failed");
+                // }
                 ++success_count;
             } else if (write_ret == 0)
                 ++success_count;
@@ -698,6 +701,12 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	    if (gcv_options.verbosity_level)
 		std::cerr << "skipped " << name << ", no geometry associated with ModelGeometryComponent (?)\n";
 	}
+    }
+
+    /* replace geometry with updated names */
+    for (size_t k = 0; k < to_replace.size(); k++) {
+        model.RemoveModelComponent(type, to_replace[k].first);
+        model.AddManagedModelComponent(to_replace[k].second);
     }
 
     /* cleanup the geometry not written */
@@ -1272,7 +1281,7 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	ONX_Model model;
 	std::vector<int> moved_layers = load_model(gcv_options->default_name, source_path, model);
 	
-	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
+	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model, moved_layers);
 	// The idef member set is static, but is used many times - generate it
 	// once up front.
 	const std::set<std::string> model_idef_members; // = get_all_idef_members(model);
@@ -1283,7 +1292,7 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	return 0;
     }
 
-    polish_output(*gcv_options, *context->dbip);
+//     polish_output(*gcv_options, *context->dbip);
 
     return 1;
 }
