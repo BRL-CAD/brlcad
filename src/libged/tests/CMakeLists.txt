@@ -13,6 +13,8 @@ set_property(TEST ged_test_material APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CM
 
 BRLCAD_ADDEXEC(ged_test_select test_select.c libged TEST)
 
+add_subdirectory(draw)
+
 # Note: it is particularly important that the lint tests in particular are kept
 # in a separate file, since its bad input examples stand an excellent chance of
 # breaking commands.

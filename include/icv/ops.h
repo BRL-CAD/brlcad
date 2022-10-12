@@ -190,6 +190,13 @@ ICV_EXPORT int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, size_t out
  */
 ICV_EXPORT extern int icv_rot(size_t argc, const char *argv[]);
 
+/**
+ * Compare two images and report pixel differences.  Return code is 1 if there
+ * are any differences, else 0.  For more detailed reporting, pass non-null
+ * integer pointers to the matching, off_by_1, and/or off_by_many parameters.
+ */
+ICV_EXPORT extern int icv_diff(int *matching, int *off_by_1, int *off_by_many, icv_image_t *img1, icv_image_t *img2);
+
 /** @} */
 
 __END_DECLS

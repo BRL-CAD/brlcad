@@ -32,6 +32,7 @@
 #include "bio.h"
 #include "bu/log.h"
 #include "bu/magic.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 
 
@@ -299,6 +300,63 @@ int icv_saturate(icv_image_t* img, double sat)
     }
     icv_sanitize(img);
     return 0;
+}
+
+int
+icv_diff(
+	int *matching, int *off_by_1, int *off_by_many,
+	icv_image_t *img1, icv_image_t *img2
+	)
+{
+    if (!img1 || !img2)
+	return -1;
+
+    int ret = 0;
+
+    // Have images
+    unsigned char *d1 = icv_data2uchar(img1);
+    unsigned char *d2 = icv_data2uchar(img2);
+    size_t s1 = img1->width * img1->height;
+    size_t s2 = img2->width * img2->height;
+    size_t smin = (s1 < s2) ? s1 : s2;
+    size_t smax = (s1 > s2) ? s1 : s2;
+    for (size_t i = 0; i < smin; i++) {
+	int r1 = d1[i*3+0];
+	int g1 = d1[i*3+1];
+	int b1 = d1[i*3+2];
+	int r2 = d2[i*3+0];
+	int g2 = d2[i*3+1];
+	int b2 = d2[i*3+2];
+	int dcnt = 0;
+	dcnt += (r1 != r2) ? 1 : 0;
+	dcnt += (g1 != g2) ? 1 : 0;
+	dcnt += (b1 != b2) ? 1 : 0;
+	switch (dcnt) {
+	    case 0:
+		if (matching)
+		    (*matching)++;
+		break;
+	    case 1:
+		ret = 1;
+		if (off_by_1)
+		    (*off_by_1)++;
+		break;
+	    default:
+		ret = 1;
+		if (off_by_many)
+		    (*off_by_many)++;
+	}
+    }
+    if (smin != smax) {
+	ret = 1;
+	if (off_by_many) {
+	    (*off_by_many) += (int)(smax - smin);
+	}
+    }
+    bu_free(d1, "image 1 rgb");
+    bu_free(d2, "image 2 rgb");
+
+    return ret;
 }
 
 /*
