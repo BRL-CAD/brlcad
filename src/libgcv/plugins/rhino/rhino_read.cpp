@@ -392,19 +392,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
     }
 
     unsigned char mode;
-    // TODO: validate this approach is accurate.
     // leverage opennurbs API to check mode
-    /*{
-	rt_bot_internal bot;
-	std::memset(&bot, 0, sizeof(bot));
-	bot.magic = RT_BOT_INTERNAL_MAGIC;
-	bot.orientation = orientation;
-	bot.num_vertices = num_vertices;
-	bot.num_faces = num_faces;
-	bot.vertices = &vertices.at(0);
-	bot.faces = &faces.at(0);
-	mode = bg_trimesh_solid((int)bot.num_vertices, (int)bot.num_faces, bot.vertices, bot.faces, NULL) ? RT_BOT_PLATE : RT_BOT_SOLID;
-    }*/
     mode = (mesh.IsSolid() && mesh.IsManifold() && mesh.IsClosed() && mesh.IsOriented()) ? RT_BOT_SOLID : RT_BOT_PLATE;
 
     std::vector<fastf_t> thicknesses;
@@ -683,28 +671,9 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 
 	const ON_Geometry *g = mg->Geometry(nullptr);
 	if (g) {
-            int write_ret = write_geometry(wdb, member_name, g);
-
-            if (write_ret == 1) {
-                // std::vector<std::pair<std::string, std::vector<fastf_t*>>>members;
-                // members.push_back(std::make_pair(member_name, std::vector<fastf_t*>(1, nullptr)));
-
-
-                // write_layer_comb(wdb, name, members, own_shader ? shader.first.c_str() : NULL,
-		// 	   own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
-
-                // if (attributes) {
-                //     ON_String uuid;
-                //     const char *uuid_str = ON_UuidToString(attributes->m_uuid, uuid);
-                //     int ret1 = db5_update_attribute(name.c_str(), "rhino::type", mg->ClassId()->ClassName(), wdb.dbip);
-                //     int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", uuid_str, wdb.dbip);
-                //     if (ret1 || ret2)
-                //         bu_bomb("db5_update_attribute() failed");
-                // }
+            if (write_geometry(wdb, member_name, g) >= 0)
                 ++success_count;
-            } else if (write_ret == 0)
-                ++success_count;
-              else
+            else
                 to_remove.insert(std::make_pair(member_name, mg->Id()));
 	} else {
 	    if (gcv_options.verbosity_level)
@@ -963,11 +932,6 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 	}
     }
 
-//     std::set<std::string> result;
-//     std::set_difference(members.begin(), members.end(), model_idef_members.begin(),
-// 	    model_idef_members.end(), std::inserter(result, result.end()));
-
-//     return result;
     return members;
 }
 
@@ -1060,68 +1024,20 @@ import_model_layers(rt_wdb &wdb, const ONX_Model &model,
 void
 polish_output(const gcv_opts& UNUSED(gcv_options), db_i& db)
 {
-    std::map<const directory*, std::string> renamed;
-//     bu_ptbl found = BU_PTBL_INIT_ZERO;
-//     AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
-
-//     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
-// 	(std::string() +
-// 	    "-attr rhino::type=ON_Layer -or ( ( -attr rhino::type=ON_InstanceDefinition -or -attr rhino::type=ON_InstanceRef ) -not -name IDef* -not -name "
-// 	    + gcv_options.default_name + "* )").c_str(), 0, NULL, &db, NULL))
-// 	bu_bomb("db_search() failed");
-
-//     const char* const ignored_attributes[] = { "rhino::type", "rhino::uuid" };
-//     rt_reduce_db(&db, array_length(ignored_attributes), ignored_attributes, &found);
-
-//     // apply region flag
-//     db_search_free(&found);
-//     BU_PTBL_INIT(&found);
-
-//     // Set region flags, add .r suffix to regions if not already present
+    /* search for converted regions to add .r suffix */
+    const char* reg_search = "-type region -attr rhino::type=ON_Layer";
     bu_ptbl regs = BU_PTBL_INIT_ZERO;
     AutoPtr<bu_ptbl, db_search_free> autofree_found(&regs);
-    const char* reg_search = "-type region -attr rhino::type=ON_Layer";
     if (db_search(&regs, DB_SEARCH_RETURN_UNIQ_DP, reg_search, 0, NULL, &db, NULL) < 0)
         bu_bomb("db_search() failed");
 
-//     renamed.clear();
-//     const char* reg_search = "-type comb -attr rgb -not -above -attr rgb -or -attr shader -not -above -attr shader";
-//     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP, reg_search, 0, NULL, &db, NULL))
-// 	bu_bomb("db_search() failed");
     const char* sub_reg_search = "-type region -below -type comb -attr rhino::type=ON_Layer";
     bu_ptbl found_instances = BU_PTBL_INIT_ZERO;
     AutoPtr<bu_ptbl, db_search_free> autofree_found_instances(&found_instances);
     if (0 > db_search(&found_instances, DB_SEARCH_TREE, sub_reg_search, 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
-//     if (BU_PTBL_LEN(&found)) {
-// 	directory** entry;
-
-// 	for (BU_PTBL_FOR(entry, (directory**), &found)) {
-
-// 	    comb_to_region(db, (*entry)->d_namep);
-
-// 	    comb_region_name_check(renamed, db, (*entry)->d_namep);
-
-// 	    if (gcv_options.randomize_colors) {
-// 		// random colors mode: TODO: move this into a filter after 7.26.0
-// 		std::string rgb;
-
-// 		// TODO - use bu_color for this...
-// 		for (std::size_t i = 0; i < 3; ++i)
-// 		    rgb.append(lexical_cast<std::string>(static_cast<unsigned>
-// 			(drand48() * 255.0 + 0.5)) + (i != 2 ? "/" : ""));
-
-// 		if (db5_update_attribute((*entry)->d_namep, "rgb", rgb.c_str(), &db)
-// 		    || db5_update_attribute((*entry)->d_namep, "color", rgb.c_str(), &db))
-// 		    bu_bomb("db5_update_attribute() failed");
-// 	    }
-// 	}
-//     }
-
-    // Update any combs that referred to old region names to reference the new ones instead
     /* move all comb children who are regions to have *.r */
-    int fi = found_instances.end;
     if (BU_PTBL_LEN(&found_instances)) {
 	db_full_path** entry;
 	for (BU_PTBL_FOR(entry, (db_full_path**), &found_instances)) {
@@ -1136,156 +1052,17 @@ polish_output(const gcv_opts& UNUSED(gcv_options), db_i& db)
 		bu_bomb("db_comb_mvall() failed");
 	}
     }
-    int ri = regs.end;
     db_search_free(&found_instances);
+
     /* update the actual region names to have *.r */
     if (BU_PTBL_LEN(&regs)) {
 	directory** entry;
 	for (BU_PTBL_FOR(entry, (directory**), &regs)) {
 	    std::string rname = std::string((*entry)->d_namep) + ".r";
-	    //if (rname.size() < 4 || !(rname[rname.size() - 4] == '.' && rname[rname.size() - 3] == 'r'))
 	    db_rename(&db, (*entry), rname.c_str());
 	}
     }
     db_search_free(&regs);
-
-
-//     // rename shapes after their parent layers
-//     BU_PTBL_INIT(&found);
-
-//     renamed.clear();
-//     if (0 > db_search(&found, DB_SEARCH_TREE, "-type shape", 0, NULL, &db, NULL))
-// 	bu_bomb("db_search() failed");
-
-//     if (BU_PTBL_LEN(&found)) {
-// 	const std::string unnamed_pattern = std::string() + gcv_options.default_name +
-// 	    "*";
-// 	db_full_path** entry;
-
-// 	for (BU_PTBL_FOR(entry, (db_full_path**), &found)) {
-// 	    if (!renamed.count(DB_FULL_PATH_CUR_DIR(*entry)))
-// 		for (ssize_t i = (*entry)->fp_len - 2; i >= 0; --i) {
-// 		    bu_attribute_value_set avs;
-// 		    AutoPtr<bu_attribute_value_set, bu_avs_free> autofree_avs(&avs);
-
-// 		    if (db5_get_attributes(&db, &avs, (*entry)->fp_names[i]))
-// 			bu_bomb("db5_get_attributes() failed");
-
-// 		    if (!bu_strcmp(bu_avs_get(&avs, "rhino::type"), "ON_Layer")
-// 			|| (bu_path_match(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
-// 			    && bu_path_match("IDef*", (*entry)->fp_names[i]->d_namep, 0))) {
-// 			std::string entry_name = (*entry)->fp_names[i]->d_namep;
-// 			std::string suffix = ".s";
-// 			std::size_t num = 0;
-
-// 			/* check for (and remove) trailing .r from parent layer */
-// 			if (entry_name[entry_name.size() - 1] == 'r' && entry_name[entry_name.size() - 2] == '.')
-// 			    entry_name = entry_name.substr(0, entry_name.size() - 2);
-// 			const std::string prefix = entry_name;
-
-// 			while ((prefix + suffix) != DB_FULL_PATH_CUR_DIR(*entry)->d_namep
-// 			    && db_lookup(&db, (prefix + suffix).c_str(), false))
-// 			    suffix = "_" + lexical_cast<std::string>(++num) + ".s";
-
-// 			renamed.insert(std::make_pair(DB_FULL_PATH_CUR_DIR(*entry),
-// 			    DB_FULL_PATH_CUR_DIR(*entry)->d_namep));
-
-// 			if (db_rename(&db, DB_FULL_PATH_CUR_DIR(*entry), (prefix + suffix).c_str()))
-// 			    bu_bomb("db_rename() failed");
-
-// 			break;
-// 		    }
-// 		}
-
-// 	    if (renamed.count(DB_FULL_PATH_CUR_DIR(*entry)) && (*entry)->fp_len > 1) {
-// 		bu_ptbl stack = BU_PTBL_INIT_ZERO;
-// 		AutoPtr<bu_ptbl, bu_ptbl_free> autofree_stack(&stack);
-
-// 		if (!db_comb_mvall((*entry)->fp_names[(*entry)->fp_len - 2], &db,
-// 		    renamed.at(DB_FULL_PATH_CUR_DIR(*entry)).c_str(),
-// 		    DB_FULL_PATH_CUR_DIR(*entry)->d_namep, &stack))
-// 		    bu_bomb("db_comb_mvall() failed");
-// 	    }
-// 	}
-//     }
-
-//     // ensure that all solids are below regions
-//     db_search_free(&found);
-//     BU_PTBL_INIT(&found);
-
-//     if (0 > db_search(&found, DB_SEARCH_TREE,
-// 	"-type shape -not -below -type region", 0, NULL, &db, NULL))
-// 	bu_bomb("db_search() failed");
-
-//     struct rt_wdb* wdbp = wdb_dbopen(&db, RT_WDB_TYPE_DB_DISK);
-
-//     if (BU_PTBL_LEN(&found)) {
-// 	db_full_path** entry;
-
-// 	for (BU_PTBL_FOR(entry, (db_full_path**), &found)) {
-
-// 	    // Sanity
-// 	    if (!(*entry) || (*entry)->fp_len <= 0)
-// 		continue;
-
-// 	    std::string prefix = DB_FULL_PATH_CUR_DIR(*entry)->d_namep;
-// 	    std::string suffix = ".r";
-
-// 	    if (prefix.size() >= 2 && prefix.at(prefix.size() - 2) == '.'
-// 		&& prefix.at(prefix.size() - 1) == 's')
-// 		prefix.resize(prefix.size() - 2);
-
-// 	    std::size_t num = 1;
-
-// 	    while (db_lookup(&db, (prefix + suffix).c_str(), false))
-// 		suffix = "_" + lexical_cast<std::string>(++num) + ".r";
-
-// 	    const std::string region_name = prefix + suffix;
-
-// 	    if ((*entry)->fp_len >= 2) {
-// 		bu_ptbl stack = BU_PTBL_INIT_ZERO;
-// 		AutoPtr<bu_ptbl, bu_ptbl_free> autofree_stack(&stack);
-
-// 		if (!db_comb_mvall((*entry)->fp_names[(*entry)->fp_len - 2], &db,
-// 		    DB_FULL_PATH_CUR_DIR(*entry)->d_namep, region_name.c_str(), &stack))
-// 		    bu_bomb("db_comb_mvall() failed");
-// 	    }
-
-// 	    std::vector<std::pair<std::string, std::vector<fastf_t*>>> members_vec;
-// 	    members_vec.push_back(std::make_pair(DB_FULL_PATH_CUR_DIR(*entry)->d_namep, std::vector<fastf_t*>(1, nullptr)));
-// 	    write_layer_comb(*wdbp, region_name, members_vec);
-
-// 	    comb_to_region(db, region_name);
-
-// 	    bool has_rgb = false, has_shader = false;
-
-// 	    for (ssize_t i = (*entry)->fp_len - 2; i >= 0; --i) {
-// 		bu_attribute_value_set avs;
-// 		AutoPtr<bu_attribute_value_set, bu_avs_free> autofree_avs(&avs);
-
-// 		if (db5_get_attributes(&db, &avs, (*entry)->fp_names[i]))
-// 		    bu_bomb("db5_get_attributes() failed");
-
-// 		if (!has_rgb)
-// 		    if (const char* const rgb_attr = bu_avs_get(&avs, "rgb")) {
-// 			has_rgb = true;
-
-// 			if (db5_update_attribute(region_name.c_str(), "rgb", rgb_attr, &db)
-// 			    || db5_update_attribute(region_name.c_str(), "color", rgb_attr, &db))
-// 			    bu_bomb("db5_update_attribute() failed");
-// 		    }
-
-// 		if (!has_shader)
-// 		    if (const char* const shader_attr = bu_avs_get(&avs, "shader")) {
-// 			has_shader = true;
-
-// 			if (db5_update_attribute(region_name.c_str(), "shader", shader_attr, &db)
-// 			    || db5_update_attribute(region_name.c_str(), "oshader", shader_attr, &db))
-// 			    bu_bomb("db5_update_attribute() failed");
-// 		    }
-// 	    }
-// 	}
-//     }
 }
 
 
