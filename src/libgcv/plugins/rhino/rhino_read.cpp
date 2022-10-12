@@ -671,8 +671,9 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	get_object_material(attributes, model, shader, rgb, own_shader, own_rgb);
 
         /* use parent layer name as name if no explicit object name is given */
-        const char* parent_layer = std::string(ON_String(model.LayerFromIndex(moved_layers[attributes->m_layer_index]).ModelComponent()->Name())).c_str();
-        std::string name = chk_name(ON_String(mg->Name()).Array(), used_names, parent_layer);
+	const ON_ModelComponent* layer = model.LayerFromIndex(moved_layers[attributes->m_layer_index]).ModelComponent();
+	std::string layer_name = std::string(ON_String(layer->Name()).Array());
+        std::string name = chk_name(ON_String(mg->Name()).Array(), used_names, layer_name.c_str());
         const std::string member_name = name + ".s";
 
         /* create a copy of the component with updated name (non-conflicting and/or + ".s") */
