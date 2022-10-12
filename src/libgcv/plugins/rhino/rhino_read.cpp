@@ -1078,14 +1078,20 @@ polish_output(const gcv_opts& UNUSED(gcv_options), db_i& db)
 //     BU_PTBL_INIT(&found);
 
 //     // Set region flags, add .r suffix to regions if not already present
+    bu_ptbl regs = BU_PTBL_INIT_ZERO;
+    AutoPtr<bu_ptbl, db_search_free> autofree_found(&regs);
+    const char* reg_search = "-type region -attr rhino::type=ON_Layer";
+    if (db_search(&regs, DB_SEARCH_RETURN_UNIQ_DP, reg_search, 0, NULL, &db, NULL) < 0)
+        bu_bomb("db_search() failed");
+
 //     renamed.clear();
 //     const char* reg_search = "-type comb -attr rgb -not -above -attr rgb -or -attr shader -not -above -attr shader";
 //     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP, reg_search, 0, NULL, &db, NULL))
 // 	bu_bomb("db_search() failed");
-    const char* reg_search = "-attr rhino::type=ON_Layer -attr region";
+    const char* sub_reg_search = "-type region -below -type comb -attr rhino::type=ON_Layer";
     bu_ptbl found_instances = BU_PTBL_INIT_ZERO;
     AutoPtr<bu_ptbl, db_search_free> autofree_found_instances(&found_instances);
-    if (0 > db_search(&found_instances, DB_SEARCH_TREE, reg_search, 0, NULL, &db, NULL))
+    if (0 > db_search(&found_instances, DB_SEARCH_TREE, sub_reg_search, 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
 //     if (BU_PTBL_LEN(&found)) {
@@ -1114,22 +1120,37 @@ polish_output(const gcv_opts& UNUSED(gcv_options), db_i& db)
 //     }
 
     // Update any combs that referred to old region names to reference the new ones instead
+    /* move all comb children who are regions to have *.r */
+    int fi = found_instances.end;
     if (BU_PTBL_LEN(&found_instances)) {
 	db_full_path** entry;
 	for (BU_PTBL_FOR(entry, (db_full_path**), &found_instances)) {
+	    if ((*entry)->fp_len < 2)
+		continue;
 	    struct directory* ec = DB_FULL_PATH_CUR_DIR(*entry);
-	//     struct directory* ep = (*entry)->fp_names[(*entry)->fp_len - 2];
             std::string rname = std::string(ec->d_namep) + ".r";
+	    struct directory* ep = (*entry)->fp_names[(*entry)->fp_len - 2];
 	    bu_ptbl stack = BU_PTBL_INIT_ZERO;
 	    AutoPtr<bu_ptbl, bu_ptbl_free> autofree_stack(&stack);
-	    if (!db_comb_mvall(ec, &db, ec->d_namep, rname.c_str(), &stack))
+	    if (!db_comb_mvall(ep, &db, ec->d_namep, rname.c_str(), &stack))
 		bu_bomb("db_comb_mvall() failed");
 	}
     }
+    int ri = regs.end;
     db_search_free(&found_instances);
+    /* update the actual region names to have *.r */
+    if (BU_PTBL_LEN(&regs)) {
+	directory** entry;
+	for (BU_PTBL_FOR(entry, (directory**), &regs)) {
+	    std::string rname = std::string((*entry)->d_namep) + ".r";
+	    //if (rname.size() < 4 || !(rname[rname.size() - 4] == '.' && rname[rname.size() - 3] == 'r'))
+	    db_rename(&db, (*entry), rname.c_str());
+	}
+    }
+    db_search_free(&regs);
+
 
 //     // rename shapes after their parent layers
-//     db_search_free(&found);
 //     BU_PTBL_INIT(&found);
 
 //     renamed.clear();
