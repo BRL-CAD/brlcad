@@ -37,6 +37,8 @@
 #include "ged.h"
 #include "./ged_private.h"
 
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
 #include "xxhash.h"
 
 #define LAST_SOLID(_sp)       DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
