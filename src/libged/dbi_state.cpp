@@ -792,83 +792,13 @@ DbiState::update_dp(struct directory *dp, int reset)
     unsigned long long hash = (unsigned long long)XXH64_digest(&h_state);
     d_map[hash] = dp;
 
-    // If this isn't a comb, find and record the untransformed
-    // bounding box
+    // Clear any (possibly) state bbox.  bbox calculation
+    // can be expensive, so defer it until it's needed
     bboxes.erase(hash);
-    if (!(dp->d_flags & RT_DIR_COMB)) {
-
-	point_t bmin, bmax;
-	bool have_bbox = false;
-
-	// First, check the dcache
-	const char *b = NULL;
-	size_t bsize = cache_get(dcache, (void **)&b, hash, CACHE_OBJ_BOUNDS);
-	if (bsize) {
-	    if (bsize != (sizeof(bmin) + sizeof(bmax))) {
-		bu_log("Incorrect data size found loading cached bounds data\n");
-	    } else {
-		memcpy(&bmin, b, sizeof(bmin));
-		b += sizeof(bmin);
-		memcpy(&bmax, b, sizeof(bmax));
-		//bu_log("cached: bmin: %f %f %f bbmax: %f %f %f\n", V3ARGS(bmin), V3ARGS(bmax));
-		have_bbox = true;
-	    }
-	}
-	cache_done(dcache);
-
-
-	// This calculation can be expensive.  If we've already
-	// got it stashed as part of LoD processing, use that
-	// version.
-	if (!have_bbox) {
-	    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && gedp->ged_lod) {
-		unsigned long long key = bg_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
-		if (key) {
-		    struct bv_mesh_lod *lod = bg_mesh_lod_create(gedp->ged_lod, key);
-		    if (lod) {
-			VMOVE(bmin, lod->bmin);
-			VMOVE(bmax, lod->bmax);
-			have_bbox = true;
-
-			std::stringstream s;
-			s.write(reinterpret_cast<const char *>(&bmin), sizeof(bmin));
-			s.write(reinterpret_cast<const char *>(&bmax), sizeof(bmax));
-			cache_write(dcache, hash, CACHE_OBJ_BOUNDS, s);
-		    }
-		}
-	    }
-	}
-
-	// No LoD - ask librt
-	if (!have_bbox) {
-	    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
-	    struct bn_tol tol = BN_TOL_INIT_TOL;
-	    mat_t m;
-	    MAT_IDN(m);
-	    int bret = rt_bound_instance(&bmin, &bmax, dp, dbip,
-		    &ttol, &tol, &m, res, NULL);
-	    if (bret != -1) {
-		have_bbox = true;
-
-		std::stringstream s;
-		s.write(reinterpret_cast<const char *>(&bmin), sizeof(bmin));
-		s.write(reinterpret_cast<const char *>(&bmax), sizeof(bmax));
-		cache_write(dcache, hash, CACHE_OBJ_BOUNDS, s);
-	    }
-	}
-
-	if (have_bbox) {
-	    for (size_t j = 0; j < 3; j++)
-		bboxes[hash].push_back(bmin[j]);
-	    for (size_t j = 0; j < 3; j++)
-		bboxes[hash].push_back(bmax[j]);
-	}
-    }
 
     // Encode hierarchy info if this is a comb
     if (dp->d_flags & RT_DIR_COMB)
 	populate_maps(dp, hash, reset);
-
 
     // Check for various drawing related attributes
     // Ideally, if we have enough info, we'd like to avoid loading
@@ -1242,9 +1172,7 @@ DbiState::get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned lon
     }
 
     // We might have a comb.  If that's the case, we need to work
-    // through the hierarchy to get the bboxes of the children.  When
-    // we have an object that is not a comb, look up its pre-calculated
-    // box and incorporate it into bmin/bmax.
+    // through the hierarchy to get the bboxes of the children.
     pc_it = p_c.find(key);
     if (pc_it != p_c.end()) {
 	// Have comb children - incorporate each one
@@ -1278,6 +1206,82 @@ DbiState::get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned lon
 		    ret = true;
 	    }
 	}
+    }
+
+    // When we have an object that is not a comb, look up its pre-calculated
+    // box and incorporate it into bmin/bmax.
+    point_t bmin, bmax;
+    bool have_bbox = false;
+
+    // First, check the dcache
+    const char *b = NULL;
+    size_t bsize = cache_get(dcache, (void **)&b, hash, CACHE_OBJ_BOUNDS);
+    if (bsize) {
+	if (bsize != (sizeof(bmin) + sizeof(bmax))) {
+	    bu_log("Incorrect data size found loading cached bounds data\n");
+	} else {
+	    memcpy(&bmin, b, sizeof(bmin));
+	    b += sizeof(bmin);
+	    memcpy(&bmax, b, sizeof(bmax));
+	    //bu_log("cached: bmin: %f %f %f bbmax: %f %f %f\n", V3ARGS(bmin), V3ARGS(bmax));
+	    have_bbox = true;
+	}
+    }
+    cache_done(dcache);
+
+
+    // This calculation can be expensive.  If we've already
+    // got it stashed as part of LoD processing, use that
+    // version.
+    struct directory *dp = get_hdp(hash);
+    if (!dp)
+	return false;
+    if (!have_bbox) {
+	if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && gedp->ged_lod) {
+	    key = bg_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
+	    if (key) {
+		struct bv_mesh_lod *lod = bg_mesh_lod_create(gedp->ged_lod, key);
+		if (lod) {
+		    VMOVE(bmin, lod->bmin);
+		    VMOVE(bmax, lod->bmax);
+		    have_bbox = true;
+
+		    std::stringstream s;
+		    s.write(reinterpret_cast<const char *>(&bmin), sizeof(bmin));
+		    s.write(reinterpret_cast<const char *>(&bmax), sizeof(bmax));
+		    cache_write(dcache, hash, CACHE_OBJ_BOUNDS, s);
+		}
+	    }
+	}
+    }
+
+    // No LoD - ask librt
+    if (!have_bbox) {
+	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
+	struct bn_tol tol = BN_TOL_INIT_TOL;
+	mat_t m;
+	MAT_IDN(m);
+	int bret = rt_bound_instance(&bmin, &bmax, dp, dbip,
+		&ttol, &tol, &m, res, NULL);
+	if (bret != -1) {
+	    have_bbox = true;
+
+	    std::stringstream s;
+	    s.write(reinterpret_cast<const char *>(&bmin), sizeof(bmin));
+	    s.write(reinterpret_cast<const char *>(&bmax), sizeof(bmax));
+	    cache_write(dcache, hash, CACHE_OBJ_BOUNDS, s);
+	}
+    }
+
+    if (have_bbox) {
+	for (size_t j = 0; j < 3; j++)
+	    bboxes[hash].push_back(bmin[j]);
+	for (size_t j = 0; j < 3; j++)
+	    bboxes[hash].push_back(bmax[j]);
+
+	VMINMAX(*bbmin, *bbmax, bmin);
+	VMINMAX(*bbmin, *bbmax, bmax);
+	ret = true;
     }
 
     return ret;
