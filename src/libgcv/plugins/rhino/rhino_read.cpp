@@ -1083,23 +1083,27 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	root_name = bu_vls_addr(&temp);
     }
 
+    struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+
     try {
 	// Use the openNURBS extenstion to read the whole 3dm file into memory.
 	ONX_Model model;
 	std::vector<int> moved_layers = load_model(gcv_options->default_name, source_path, model);
-	
-	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model, moved_layers);
+
+	import_model_objects(*gcv_options, *wdbp, model, moved_layers);
 	// The idef member set is static, but is used many times - generate it
 	// once up front.
 	const std::set<std::string> model_idef_members; // = get_all_idef_members(model);
-	import_model_layers(*context->dbip->dbi_wdbp, model, root_name, model_idef_members, moved_layers);
-	//import_model_idefs(*context->dbip->dbi_wdbp, model, model_idef_members);
+	import_model_layers(*wdbp, model, root_name, model_idef_members, moved_layers);
+	//import_model_idefs(*wdbp, model, model_idef_members);
     } catch (const InvalidRhinoModelError &exception) {
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
 	return 0;
     }
 
     polish_output(*gcv_options, *context->dbip);
+
+    wdb_close(wdbp);
 
     return 1;
 }
