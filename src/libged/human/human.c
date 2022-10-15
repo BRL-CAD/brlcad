@@ -2210,6 +2210,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
     read_args(ac, av, topLevel, &human_data, &percentile, location, &stance, &troops, &showBoxes);
 
     GED_CHECK_EXISTS(gedp, bu_vls_addr(&name), LOOKUP_QUIET, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     bu_log("Center Location: ");
     bu_log("%.2f %.2f %.2f\n", location[X], location[Y], location[Z]);
@@ -2227,8 +2228,8 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
     if (human_data.verbread == 1)
 	verbIn(&human_data);
     if (troops <= 1) {
-	makeBody(gedp->ged_wdbp, suffix, &human_data, location, showBoxes);
-	mk_id_units(gedp->ged_wdbp, "A single Human", "in");
+	makeBody(wdbp, suffix, &human_data, location, showBoxes);
+	mk_id_units(wdbp, "A single Human", "in");
 
 	/*This function dumps out a text file of all dimensions of bounding boxes/anthro-data/whatever on human model.*/
 	if (human_data.textwrite == 1)
@@ -2237,8 +2238,8 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 	    verbose(&human_data);
     }
     if (troops > 1) {
-	makeArmy(gedp->ged_wdbp, &human_data, troops, showBoxes);
-	mk_id_units(gedp->ged_wdbp, "An army of people", "in");
+	makeArmy(wdbp, &human_data, troops, showBoxes);
+	mk_id_units(wdbp, "An army of people", "in");
     }
 /****End Magic****/
 
@@ -2278,7 +2279,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 
 	is_region = 1;
 	VSET(rgb, 128, 255, 128); /* some wonky bright green color */
-	mk_lcomb(gedp->ged_wdbp,
+	mk_lcomb(wdbp,
 		 humanName,
 		 &human,
 		 is_region,
@@ -2312,7 +2313,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 	    (void)mk_addmember("RightFoot.sBox", &boxes.l, NULL, WMOP_UNION);
 	    is_region = 1;
 	    VSET(rgb2, 255, 128, 128); /* redish color */
-	    mk_lcomb(gedp->ged_wdbp,
+	    mk_lcomb(wdbp,
 		     "Boxes.r",
 		     &boxes,
 		     is_region,
@@ -2383,7 +2384,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 
 	    is_region = 1;
 	    VSET(rgb3, 128, 128, 255); /* blueish color */
-	    mk_lcomb(gedp->ged_wdbp,
+	    mk_lcomb(wdbp,
 		     "Hollow.r",
 		     &hollow,
 		     is_region,
@@ -2444,7 +2445,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 	    VSET(rgb, 128, 255, 128); /* some wonky bright green color */
 	    bu_log("Combining\n");
 	    is_region = 1;
-	    mk_lcomb(gedp->ged_wdbp,
+	    mk_lcomb(wdbp,
 		     body[0],
 		     &human,
 		     is_region,
@@ -2455,7 +2456,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 
 	    if (showBoxes) {
 		VSET(rgb2, 255, 128, 128); /* redish color */
-		mk_lcomb(gedp->ged_wdbp,
+		mk_lcomb(wdbp,
 			 box[0],
 			 &boxes,
 			 is_region,
@@ -2479,9 +2480,10 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 	}
     }
     if (troops)
-	mk_lcomb(gedp->ged_wdbp, "Crowd.c", &crowd, 0, NULL, NULL, NULL, 0);
+	mk_lcomb(wdbp, "Crowd.c", &crowd, 0, NULL, NULL, NULL, 0);
 
     /* Close database */
+    wdb_close(wdbp);
     bu_log("Regions Built\n");
     bu_vls_free(&name);
     bu_vls_free(&str);

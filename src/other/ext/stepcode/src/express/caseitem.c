@@ -34,8 +34,7 @@
 
 /** Initialize the Case Item module. */
 void
-CASE_ITinitialize(void)
-{
+CASE_ITinitialize( void ) {
 }
 
 /**
@@ -48,11 +47,10 @@ CASE_ITinitialize(void)
 ** \note If the 'labels' parameter is LIST_NULL, a case item
 ** matching in the default case is created.
 */
-Case_Item CASE_ITcreate(Linked_List labels, Statement statement)
-{
+Case_Item CASE_ITcreate( Linked_List labels, Statement statement ) {
     struct Case_Item_ *s = CASE_IT_new();
 
     s->labels = labels;
     s->action = statement;
-    return(s);
+    return( s );
 }

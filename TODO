@@ -29,6 +29,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
     more subcommands were added later.  looks like some were stubbed,
     should be disabled/hidden.
 
+  - when draw -S was fixed to work with -m1 option
+
+  - when primitive select causing solids to disappear was fixed
+
 * asc2g is failing on "put" command (maybe specific to 32-bit),
   resulting in "unknown command" on an uninstalled build.  title and
   units commands work, but puts fails inside ged_exec().
@@ -770,11 +774,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
       (term-line-mode)
       (switch-to-buffer termbuf))) 
 
-* fix the redblack tree callback function signatures.  they're
-  declared and handled as taking (void) but they actually take a
-  pointer and an int.  need to create a proper void* data parameter or
-  change the interface to not require so much cast spagettery.
-
 * decouple libwdb from librt, particularly the headers and relevant
   structures that cross over to both such as the rtgeom.h types.
 
@@ -862,15 +861,14 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * fix 64b detection across platforms. Fix rhel 32/64 confusion
 
-* test/fix patch-g on windows.  the input file read loops assume
-  unix-style files resulting in parser errors.
-
 * merge conv-vg2g into dbupgrade
 
 * add option to rtedge to also show back-facing hidden edges
 
 * add option to push/xpush to stop at the region level, to stop before
-  primitives, to stop after N levels, to stop before N levels.
+  primitives, to stop after N levels, to stop before N levels. (This
+  is at least partially accomplished in npush work - need to hammer
+  out any remaining issues with depth stoppage limits...)
 
 * make rt_dirbuild()+rt_dirbuild() work without vomiting error
   messages about duplicate geometry.  should be able to open the same
@@ -889,11 +887,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
   shouldn't need to search.  we were told where the database was.
 
-* check libbu implementation of red-black trees (see note in bu.h
-  referencing an error in the Cormen book used as a basis)
+* replace use of libbu red-black trees with C++ containers (current
+  remaining uses appear to be pixcount and glint)
 
-* make libfb parallel-safe.  use bu memory management.  remove
-  semaphore locks in src/rt/main.c and elsewhere.
+* make libdm framebuffer parallel-safe.  use bu memory management.
+  remove semaphore locks in src/rt/main.c and elsewhere.
 
 * eliminate the need for bu_semaphore_init().  allocate up to the
   index requested on demand (so we can retain O(1) lookups) and
@@ -974,9 +972,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   refresh the new memory and zap the framebuffer.
 
 * make the right-hand path to oed optional
-
-* deprecate dbcp and merge functionality (and improved
-  double-buffering) with the buffer tool.
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
@@ -1143,8 +1138,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * hook bombardier in for crash reporting
 
-* modify the new tree traversal code to be generic
-
 * add high dynamic range image support to the framebuffers
 
 * add alpha channel support to the framebuffers
@@ -1158,9 +1151,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * bezier extrusions need to be optimized, really should not be
   performing dynamic memory allocation in the root solver
 
-* better/consistent argument processing supporting both long and short
-  option names, perhaps using argtable
-
 * Implement an optical shader for the new "pixelated" military
   camouflage style
 
@@ -1171,19 +1161,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   creating multiple objects for the individual objects in the dxf file
   (instead of one conglomerate BoT)
 
-* Generate plain .zip files for Windows binary releases
-
-* fix the variety of ami.tcl and ampi.tcl tclscript warnings/errors
-
-* run indent.sh on directories (one at a time, validating results)
-
-* configure support to enable/disable framebuffers, display
-  managers, geometry converters, and image converters.  consider
-  apache's module management as an example.
-
 * review and merge in the rest of the GSI modifications
-
-* display the current mode in mged graphics window
 
 * Optional compile-time support for using GMP or CLN for arbitrary
   exact precision arithmetic computation support
@@ -1214,8 +1192,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
        perl -pi -e 's/\\\\\n//g'| grep -E "PROGRAMS ?=" | \
        sed 's/.*=//g'` ; do echo $cmd ; done | sort | uniq ) ; \
        do echo command: $cmd2 ; done
-
-* add geometry example of building 238
 
 * Mac OS X SGI dial knobs support
   - Note that we might do better here to focus on the 3Dconnexion
@@ -1270,62 +1246,43 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * add support for filesystem-based geometry collections
 
-* design plugin system to allow domain specific tools (say, for
-  example, a tool to create propeller parts) to identify themselves
-  and their features to BRL-CAD, and to allow BRL-CAD to incorporate
-  those features as an integrated part of interaction environments.
-
-* see if it is possible to use tec/ehy primitives to create a proc-db
-  for airfoil/wing shapes.  Interesting possibilities with boolean
-  combinations of these primitives, provided their continuity at the
-  ends ensures continuity all along "seams" - something to consider.
-
-* we need to define a libbu api for option handling that supports more
-  features than getopt:
-
-  - need support for long options (e.g. --help and --color, not just -h
-    and -C)
+* libbu's bu_opt is our option handling API that supports more
+  features than getopt - remaining features we need:
 
   - need a way to consolidate documentation for options into one place
     (DRY) that supports all of our various documentation styles.
     Discussed with Sean in the past - initial thoughts:
 
-    + should be in C code - will be needed there, and easier to get it
-      from there to other formats than vice versa.
-
-    + should support printing out the options and documentation in
+    + support printing out the options and documentation in
       formatted structures that allow our build system to build the
-      command and have the command itself supply a generated snippit
+      command and have the command itself supply a generated block
       of text or markup that could be incorporated into the final
-      document - e.g. the DocBook man page for a command would be set
-      up to expect the <command>_options.xml file generated by
-      <command> --print-options DocBook (or some other mechanism,
+      document.  For example, the DocBook man page for a command
+      would be set up to expect the <command>_options.xml file generated
+      by <command> --print-options DocBook (or some other mechanism,
       that's just an idea) and the CMake build could first build and
-      then run the command at compilation time to provide the absolute
-      most current option listing and short descriptions for the other
-      docs.
-
-  - need to allow order dependent options (e.g. <command> inputfile
-    outputfile) that become order independent if enough information is
-    available, e.g. the above would work and <command> <opt1> -i
-    inputfile <opt2> -o outputfile <opt3> would also work.
-
-  - (maybe) incorporate some sort of sanity/bounds checking into the
-    option definitions API - i.e. in the C definition of an option,
-    there could be optional parameters to indicate the type and bounds
-    of valid input to that option.  Won't always be possible, but may
-    be a good feature to have if it can save lots of repetitive coding
-    of bounds checking in programs.
-
-  *might* be worth taking a look at http://rpm5.org/files/popt/ to see
-  if they have any code we could snarf to make life easier, but
-  regardless we need a libbu API on top of any other code - at such a
-  core level, we can't introduce an external API.
+      then run the command at compilation time to provide the most
+      current option listing and short descriptions for the other docs.
 
 * investigate the libngpcore and libngput libraries from the ngPlant
   project as a possible means of procedurally generating plant models
   in BRL-CAD (libraries are BSD licensed:
-  http://ngplant.sourceforge.net)
+  https://github.com/stager13/ngplant)
+
+* Literally days after I completed my initial extraction of the
+  OSMesa code for a software rendering fallback, a project for a compact C99
+  implementation of OpenGL 3.x first released some public code:
+  https://github.com/rswinkle/PortableGL  The project shows current
+  activity, and it appears based on some code used there that TinyGL itself
+  has also gotten some fixes from the original author.  Based on experiments
+  with the other "cleaned up" fork, TinyGL on its own doesn't have enough of
+  OpenGL to support all of BRL-CAD's currently used features, but it would be
+  interesting to know if PortableGL could be a viable alternative to
+  libosmesa.  Given the latter works and has been cleaned up quite a lot the
+  question is not urgent, but if PortableGL is actively maintained, gives us
+  a similar capability with a newer standard and similar independence from
+  any third party dependencies, it is of interest.  First question is how
+  much of our existing OpenGL would need to be updated to target 3.x...
 
 
 OVERLAP TOOLS

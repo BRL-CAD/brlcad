@@ -67,14 +67,17 @@ ged_copy_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (wdb_export_external(gedp->ged_wdbp, &external, argv[2],
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_export_external(wdbp, &external, argv[2],
 			    from_dp->d_flags,  from_dp->d_minor_type) < 0) {
 	bu_free_external(&external);
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to write new object (%s) to database - aborting!!\n",
 		      argv[2]);
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
+    wdb_close(wdbp);
 
     bu_free_external(&external);
 

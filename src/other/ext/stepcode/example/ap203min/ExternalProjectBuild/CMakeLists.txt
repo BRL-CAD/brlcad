@@ -6,7 +6,7 @@
 # for the use of this file.
 #
 project(AP203Minimum)
-cmake_minimum_required(VERSION 3.6.3)
+cmake_minimum_required(VERSION 3.12)
 
 INCLUDE( ExternalProject )
 
@@ -19,7 +19,6 @@ INCLUDE( External_STEPCode )
 
 IF(NOT WIN32)
 	set( STEPCODE_LIBRARIES
-	${STEPCODE_INSTALL_DIR}/lib/libbase.a
 	${STEPCODE_INSTALL_DIR}/lib/libstepcore.a
 	${STEPCODE_INSTALL_DIR}/lib/libstepeditor.a
 	${STEPCODE_INSTALL_DIR}/lib/libstepdai.a
@@ -28,7 +27,6 @@ IF(NOT WIN32)
 	)
 ELSE()
 	set( STEPCODE_LIBRARIES
-	${STEPCODE_INSTALL_DIR}/lib/libbase.lib
 	${STEPCODE_INSTALL_DIR}/lib/libstepcore.lib
 	${STEPCODE_INSTALL_DIR}/lib/libstepeditor.lib
 	${STEPCODE_INSTALL_DIR}/lib/libstepdai.lib
@@ -44,7 +42,6 @@ MESSAGE( STATUS "STEPCODE_INSTALL_DIR: " ${STEPCODE_INSTALL_DIR} )
 
 set( STEPCODE_INCLUDE_DIR
 ${STEPCODE_INSTALL_DIR}/include/stepcode
-${STEPCODE_INSTALL_DIR}/include/stepcode/base
 ${STEPCODE_INSTALL_DIR}/include/stepcode/clstepcore
 ${STEPCODE_INSTALL_DIR}/include/stepcode/cldai
 ${STEPCODE_INSTALL_DIR}/include/stepcode/clutils

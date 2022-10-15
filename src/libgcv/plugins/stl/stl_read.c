@@ -564,7 +564,8 @@ stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     state.stl_read_options = (struct stl_read_options *)options_data;
     state.id_no = state.stl_read_options->starting_id;
     state.input_file = source_path;
-    state.fd_out = context->dbip->dbi_wdbp;
+    struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+    state.fd_out = wdbp;
 
     if ((state.fd_in = fopen(source_path, "rb")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", source_path);
@@ -582,9 +583,10 @@ stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     Convert_input(&state);
 
     /* make a top level group */
-    mk_lcomb(context->dbip->dbi_wdbp, "all", &state.all_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+    mk_lcomb(wdbp, "all", &state.all_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 
     fclose(state.fd_in);
+    wdb_close(wdbp);
 
     return 1;
 }

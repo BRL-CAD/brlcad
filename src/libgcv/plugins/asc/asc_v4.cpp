@@ -1482,9 +1482,10 @@ asc_read_v4(
 	std::ifstream &fs
 	)
 {
+    struct rt_wdb *wdbp = wdb_dbopen(c->dbip, RT_WDB_TYPE_DB_INMEM);
     struct ascv4_rstate *s = ascv4_rcreate();
     s->fs = &fs;
-    s->ofp = c->dbip->dbi_wdbp;
+    s->ofp = wdbp;
 
     bu_log("Reading v4...\n");
 
@@ -1596,6 +1597,7 @@ after_read:
 
     /* close up shop */
     ascv4_rdestroy(s);
+    wdb_close(wdbp);
     return 1;
 }
 

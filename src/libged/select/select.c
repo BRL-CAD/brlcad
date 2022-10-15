@@ -65,6 +65,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     /* Get command line options. */
     bu_optind = 1;
     while ((c = bu_getopt(argc, (char * const *)argv, "b:pz:")) != -1) {
@@ -77,7 +78,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	    if (botip != (struct rt_bot_internal *)NULL)
 		break;
 
-	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, gedp->ged_wdbp, mat) & BRLCAD_ERROR) {
+	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, wdbp, mat) & BRLCAD_ERROR) {
 		bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, bu_optarg);
 		return BRLCAD_ERROR;
 	    }
@@ -85,6 +86,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 		intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 		bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT", cmd, bu_optarg);
+		wdb_close(wdbp);
 		rt_db_free_internal(&intern);
 
 		return BRLCAD_ERROR;
@@ -109,9 +111,11 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	    wdb_close(wdbp);
 	    return BRLCAD_ERROR;
 	}
     }
+    wdb_close(wdbp);
 
     argc -= (bu_optind - 1);
     argv += (bu_optind - 1);
@@ -194,6 +198,8 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
     /* Get command line options. */
     bu_optind = 1;
     while ((c = bu_getopt(argc, (char * const *)argv, "b:pz:")) != -1) {
@@ -206,8 +212,9 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 	    if (botip != (struct rt_bot_internal *)NULL)
 		break;
 
-	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, gedp->ged_wdbp, mat) == BRLCAD_ERROR) {
+	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, wdbp, mat) == BRLCAD_ERROR) {
 		bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, bu_optarg);
+		wdb_close(wdbp);
 		return BRLCAD_ERROR;
 	    }
 
@@ -215,6 +222,7 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 		intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 		bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT", cmd, bu_optarg);
 		rt_db_free_internal(&intern);
+		wdb_close(wdbp);
 
 		return BRLCAD_ERROR;
 	    }
@@ -238,9 +246,11 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	    wdb_close(wdbp);
 	    return BRLCAD_ERROR;
 	}
     }
+    wdb_close(wdbp);
 
     argc -= (bu_optind - 1);
 

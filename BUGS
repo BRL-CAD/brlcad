@@ -15,6 +15,18 @@ on-going issues.
 Recent Bugs
 -----------
 
+* garbage_collect -c wipes out custom attributes on _GLOBAL
+  > attr set _GLOBAL foo bar
+  > garbage_collect -c
+
+* Visual error when drawing using -S -m1 of a region with the same solid
+  subtracted and then unioned.
+
+  make two boxes stacked on top of one another
+  > r boxes.r u box - box1 u box1
+  > e -S -m1 boxes.r
+  box1 is not drawn
+
 * When run inside mged, invalid syntax reported on "gqa -p prefix"
   despite it being documented as the correct form (and working outside
   mged).  specifying gqa -pprefix appears to be workaround, though

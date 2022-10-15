@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.6.3)
+cmake_minimum_required(VERSION 3.12)
 #c++ tests that depend on a particular schema
 
 include_directories( ${SC_SOURCE_DIR}/src/cldai ${SC_SOURCE_DIR}/src/cleditor ${SC_SOURCE_DIR}/src/clutils
-  ${SC_SOURCE_DIR}/src/clstepcore ${SC_SOURCE_DIR}/src/base )
+  ${SC_SOURCE_DIR}/src/clstepcore )
 
 # helper function for add_schema_dependent_test
 # given an sdai target, set out_path_var to the include dir
@@ -92,7 +92,7 @@ set_tests_properties( test_aggregate_bound_runtime_FAIL1 PROPERTIES
 add_schema_dependent_test( "inverse_attr1" "inverse_attr" "${SC_SOURCE_DIR}/test/p21/test_inverse_attr.p21" )
 add_schema_dependent_test( "inverse_attr2" "inverse_attr" "${SC_SOURCE_DIR}/test/p21/test_inverse_attr.p21" )
 add_schema_dependent_test( "inverse_attr3" "inverse_attr" "${SC_SOURCE_DIR}/test/p21/test_inverse_attr.p21"
-                            "${SC_SOURCE_DIR}/src/cllazyfile;${SC_SOURCE_DIR}/src/base/judy/src" "" "steplazyfile" )
+                            "${SC_SOURCE_DIR}/src/cllazyfile;${SC_SOURCE_DIR}/src/cllazyfile/judy/src" "" "steplazyfile" )
 add_schema_dependent_test( "attribute" "inverse_attr" "${SC_SOURCE_DIR}/test/p21/test_inverse_attr.p21" )
 
 if(HAVE_STD_THREAD)

@@ -37,27 +37,23 @@ static int PrintFunctionTrace = 2;
 #include <sdai.h>
 
 #include <string.h> // to get bcopy() - ANSI
-#include "sc_memmgr.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // class MgrNodeArray member functions
 //////////////////////////////////////////////////////////////////////////////
 
-MgrNodeArray::MgrNodeArray(int defaultSize)
-    : GenNodeArray(defaultSize)
-{
+MgrNodeArray::MgrNodeArray( int defaultSize )
+    : GenNodeArray( defaultSize ) {
 }
 
-void MgrNodeArray::AssignIndexAddress(int index)
-{
+void MgrNodeArray::AssignIndexAddress( int index ) {
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNodeArray::AssignIndexAddress()\n";
-    ((MgrNode *)_buf[index])->ArrayIndex(index);
+    ( ( MgrNode * )_buf[index] )->ArrayIndex( index );
 }
 
-MgrNodeArray::~MgrNodeArray()
-{
-    if(debug_level >= PrintFunctionTrace) {
+MgrNodeArray::~MgrNodeArray() {
+    if( debug_level >= PrintFunctionTrace ) {
         cout << "MgrNodeArray::~MgrNodeArray()\n";
     }
     DeleteEntries();
@@ -65,13 +61,12 @@ MgrNodeArray::~MgrNodeArray()
 
 /*****************************************************************************/
 
-void MgrNodeArray::ClearEntries()
-{
-    if(debug_level >= PrintFunctionTrace) {
+void MgrNodeArray::ClearEntries() {
+    if( debug_level >= PrintFunctionTrace ) {
         cout << "MgrNodeArray::ClearEntries()\n";
     }
     int i;
-    for(i = 0 ; i < _count; i++) {
+    for( i = 0 ; i < _count; i++ ) {
         _buf[i] = 0;
     }
     _count = 0;
@@ -79,59 +74,55 @@ void MgrNodeArray::ClearEntries()
 
 /*****************************************************************************/
 
-void MgrNodeArray::DeleteEntries()
-{
-    if(debug_level >= PrintFunctionTrace) {
+void MgrNodeArray::DeleteEntries() {
+    if( debug_level >= PrintFunctionTrace ) {
         cout << "MgrNodeArray::DeleteEntries()\n";
     }
     int i;
-    for(i = 0 ; i < _count; i++) {
-        delete((MgrNode *)_buf[i]);
+    for( i = 0 ; i < _count; i++ ) {
+        delete( ( MgrNode * )_buf[i] );
     }
     _count = 0;
 }
 
 /*****************************************************************************/
 
-int MgrNodeArray::Insert(GenericNode *gn, int index)
-{
-    if(debug_level >= PrintFunctionTrace) {
+int MgrNodeArray::Insert( GenericNode * gn, int index ) {
+    if( debug_level >= PrintFunctionTrace ) {
         cout << "MgrNodeArray::Insert()\n";
     }
-    int AssignedIndex = GenNodeArray::Insert(gn, index);
+    int AssignedIndex = GenNodeArray::Insert( gn, index );
     int i;
-    for(i = AssignedIndex ; i < _count; i++) {
-        ((MgrNode *)_buf[i])->ArrayIndex(i);
+    for( i = AssignedIndex ; i < _count; i++ ) {
+        ( ( MgrNode * )_buf[i] )->ArrayIndex( i );
     }
     return AssignedIndex;
 }
 
 /*****************************************************************************/
 
-void MgrNodeArray::Remove(int index)
-{
-    if(debug_level >= PrintFunctionTrace) {
+void MgrNodeArray::Remove( int index ) {
+    if( debug_level >= PrintFunctionTrace ) {
         cout << "MgrNodeArray::Remove()\n";
     }
-    if(0 <= index && index < _count) {
-        GenNodeArray::Remove(index);
+    if( 0 <= index && index < _count ) {
+        GenNodeArray::Remove( index );
         int i;
-        for(i = index; i < _count; i++) {
-            ((MgrNode *)_buf[i])->ArrayIndex(i);
+        for( i = index; i < _count; i++ ) {
+            ( ( MgrNode * )_buf[i] )->ArrayIndex( i );
         }
     }
 }
 
 /*****************************************************************************/
 
-int MgrNodeArray::MgrNodeIndex(int fileId)
-{
-    if(debug_level >= PrintFunctionTrace) {
+int MgrNodeArray::MgrNodeIndex( int fileId ) {
+    if( debug_level >= PrintFunctionTrace ) {
         cout << "MgrNodeArray::MgrNodeIndex()\n";
     }
     int i;
-    for(i = 0; i < _count; ++i) {
-        if(((MgrNode *)_buf[i])->GetApplication_instance()->GetFileId() == fileId) {
+    for( i = 0; i < _count; ++i ) {
+        if( ( ( MgrNode * )_buf[i] )->GetApplication_instance()->GetFileId() == fileId ) {
             return i;
         }
     }
@@ -142,47 +133,42 @@ int MgrNodeArray::MgrNodeIndex(int fileId)
 // class MgrNodeArraySorted member functions
 //////////////////////////////////////////////////////////////////////////////
 
-MgrNodeArraySorted::MgrNodeArraySorted(int defaultSize)
-    : GenNodeArray(defaultSize)
-{
+MgrNodeArraySorted::MgrNodeArraySorted( int defaultSize )
+    : GenNodeArray( defaultSize ) {
 }
 
-int MgrNodeArraySorted::Insert(GenericNode *gn)
-{
+int MgrNodeArraySorted::Insert( GenericNode * gn ) {
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNodeArraySorted::Insert()\n";
 
     // since gn is really a MgrNode
-    int fileId = ((MgrNode *)gn)->GetApplication_instance()->GetFileId();
+    int fileId = ( ( MgrNode * )gn )->GetApplication_instance()->GetFileId();
 
-    int index = FindInsertPosition(fileId);
+    int index = FindInsertPosition( fileId );
 
-    return GenNodeArray::Insert(gn, index);
+    return GenNodeArray::Insert( gn, index );
 }
 
-int MgrNodeArraySorted::Index(GenericNode *gn)
-{
+int MgrNodeArraySorted::Index( GenericNode * gn ) {
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNodeArraySorted::Index()\n";
     // since gn is really a MgrNode
-    return MgrNodeIndex(((MgrNode *)gn)->GetFileId());
+    return MgrNodeIndex( ( ( MgrNode * )gn )->GetFileId() );
 }
 
-int MgrNodeArraySorted::Index(GenericNode **gn)
-{
+int MgrNodeArraySorted::Index( GenericNode ** gn ) {
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNodeArraySorted::Index()\n";
     // since gn is really a MgrNode
-    return MgrNodeIndex(((MgrNode *)(*gn))->GetFileId());
+    return MgrNodeIndex( ( ( MgrNode * )( *gn ) )->GetFileId() );
 }
 
-void MgrNodeArraySorted::ClearEntries()
-{
-    if(debug_level >= PrintFunctionTrace) {
+void MgrNodeArraySorted::ClearEntries() {
+    if( debug_level >= PrintFunctionTrace ) {
         cout << "MgrNodeArraySorted::ClearEntries()\n";
     }
     int i;
-    for(i = 0 ; i < _count; i++) {
+    for( i = 0 ; i < _count; i++ ) {
         _buf[i] = 0;
     }
     _count = 0;
@@ -190,14 +176,13 @@ void MgrNodeArraySorted::ClearEntries()
 
 /*****************************************************************************/
 
-void MgrNodeArraySorted::DeleteEntries()
-{
-    if(debug_level >= PrintFunctionTrace) {
+void MgrNodeArraySorted::DeleteEntries() {
+    if( debug_level >= PrintFunctionTrace ) {
         cout << "MgrNodeArraySorted::DeleteEntries()\n";
     }
     int i;
-    for(i = 0 ; i < _count; i++) {
-        delete((MgrNode *)_buf[i]);
+    for( i = 0 ; i < _count; i++ ) {
+        delete( ( MgrNode * )_buf[i] );
     }
     _count = 0;
 }
@@ -207,17 +192,16 @@ void MgrNodeArraySorted::DeleteEntries()
 // the reason this is written this way is because most of the
 // time the file id will be higher than any seen so far and
 // thus the insert position will be at the end
-int MgrNodeArraySorted::FindInsertPosition(const int fileId)
-{
-    if(debug_level >= PrintFunctionTrace) {
+int MgrNodeArraySorted::FindInsertPosition( const int fileId ) {
+    if( debug_level >= PrintFunctionTrace ) {
         cout << "MgrNodeArraySorted::FindInsertPosition()\n";
     }
     int i;
     int curFileId;
 
-    for(i = _count - 1; i >= 0; --i) {
-        curFileId = ((MgrNode *)_buf[i])->GetApplication_instance()->GetFileId();
-        if(curFileId < fileId /*|| curFileId == fileId*/) {
+    for( i = _count - 1; i >= 0; --i ) {
+        curFileId = ( ( MgrNode * )_buf[i] )->GetApplication_instance()->GetFileId();
+        if( curFileId < fileId /*|| curFileId == fileId*/ ) {
             return i + 1;
         }
     }
@@ -226,12 +210,11 @@ int MgrNodeArraySorted::FindInsertPosition(const int fileId)
 
 /*****************************************************************************/
 
-int MgrNodeArraySorted::MgrNodeIndex(int fileId)
-{
+int MgrNodeArraySorted::MgrNodeIndex( int fileId ) {
 // this function assumes that _buf[0] to _buf[_count] ALL point to MgrNodes
 // that are sorted by fileId
 
-    if(debug_level >= PrintFunctionTrace) {
+    if( debug_level >= PrintFunctionTrace ) {
         cout << "MgrNodeArraySorted::MgrNodeIndex()\n";
     }
     int low = 0;
@@ -240,18 +223,18 @@ int MgrNodeArraySorted::MgrNodeIndex(int fileId)
     int found = 0;
     int curFileId;
 
-    while(!found && (low <= high)) {
-        mid = (low + high) / 2;
-        curFileId = ((MgrNode *)_buf[mid])->GetApplication_instance()->GetFileId();
-        if(curFileId == fileId) {
+    while( !found && ( low <= high ) ) {
+        mid = ( low + high ) / 2;
+        curFileId = ( ( MgrNode * )_buf[mid] )->GetApplication_instance()->GetFileId();
+        if( curFileId == fileId ) {
             found = 1;
-        } else if(curFileId < fileId) {
+        } else if( curFileId < fileId ) {
             low = mid + 1;
         } else {
             high = mid - 1;
         }
     }
-    if(found) {
+    if( found ) {
         return mid;
     }
     return -1;

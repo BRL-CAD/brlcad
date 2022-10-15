@@ -84,6 +84,8 @@ asc_read_v5(
     int ocnt = 0;
     int ccnt = 0;
     int balanced = 0;
+    struct rt_wdb *wdbp = wdb_dbopen(c->dbip, RT_WDB_TYPE_DB_INMEM);
+
     while (std::getline(fs, sline)) {
 
 	bu_vls_printf(&cur_line, "%s\n", sline.c_str());
@@ -120,7 +122,7 @@ asc_read_v5(
 	    continue;
 	}
 	if (BU_STR_EQUAL(list_v[0], "put")) {
-	    rt_cmd_put(NULL, c->dbip, list_c, (const char **)list_v);
+	    rt_cmd_put(NULL, wdbp, list_c, (const char **)list_v);
 	    bu_free(list_v, "tcl argv list");
 	    bu_vls_trunc(&cur_line, 0);
 	    continue;
@@ -144,6 +146,7 @@ asc_read_v5(
     }
 
     bu_vls_free(&cur_line);
+    wdb_close(wdbp);
 
     return balanced;
 }

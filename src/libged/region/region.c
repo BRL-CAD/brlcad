@@ -60,21 +60,23 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    ident = gedp->ged_wdbp->wdb_item_default;
-    air = gedp->ged_wdbp->wdb_air_default;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    ident = wdbp->wdb_item_default;
+    air = wdbp->wdb_air_default;
 
     /* Check for even number of arguments */
     if (argc & 01) {
 	bu_vls_printf(gedp->ged_result_str, "error in number of args!");
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
 
     if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
 	/* will attempt to create the region */
-	if (gedp->ged_wdbp->wdb_item_default) {
-	    gedp->ged_wdbp->wdb_item_default++;
+	if (wdbp->wdb_item_default) {
+	    wdbp->wdb_item_default++;
 	    bu_vls_printf(gedp->ged_result_str, "Defaulting item number to %d\n",
-			  gedp->ged_wdbp->wdb_item_default);
+			  wdbp->wdb_item_default);
 	}
     }
 
@@ -98,16 +100,19 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (_ged_combadd(gedp, dp, (char *)argv[1], 1, oper, ident, air) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "error in combadd");
+	    wdb_close(wdbp);
 	    return BRLCAD_ERROR;
 	}
     }
 
     if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
 	/* failed to create region */
-	if (gedp->ged_wdbp->wdb_item_default > 1)
-	    gedp->ged_wdbp->wdb_item_default--;
+	if (wdbp->wdb_item_default > 1)
+	    wdbp->wdb_item_default--;
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
+    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }

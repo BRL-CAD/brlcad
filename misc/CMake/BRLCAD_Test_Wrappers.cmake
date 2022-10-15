@@ -104,112 +104,16 @@ endif (NOT TARGET unit)
 # unknowingly tries.
 function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
 
-  # TODO - once we can require CMake 3.18, replace the empty string workaround
-  # below with this cmake_language based version.  See
-  # https://gitlab.kitware.com/cmake/cmake/-/issues/21414
-
-  # cmake_parse_arguments(PARSE_ARGV 3 ARG "" "" "")
-  # foreach(_av IN LISTS ARG_UNPARSED_ARGUMENTS)
-  #   string(APPEND test_args " [==[${_av}]==]")
-  # endforeach()
-  # cmake_language(EVAL CODE "add_test(NAME ${test_name} COMMAND ${test_args})")
-
-
-  # find any occurrences of empty strings
-  set(idx 0)
-  set(matches)
-  foreach (ARG IN LISTS ARGV)
-    # need 'x' to avoid older cmake seeing "COMMAND" "STREQUAL" ""
-    if ("x${ARG}" STREQUAL "x")
-      list(APPEND matches ${idx})
-    endif ("x${ARG}" STREQUAL "x")
-    math(EXPR idx "${idx} + 1")
+  # CMake 3.18, cmake_language based wrapper for add_test, replaces the
+  # previous workaround for default ARGN behavior that doesn't pass through
+  # empty strings.  See https://gitlab.kitware.com/cmake/cmake/-/issues/21414
+  cmake_parse_arguments(PARSE_ARGV 3 ARG "" "" "")
+  foreach(_av IN LISTS ARG_UNPARSED_ARGUMENTS)
+    string(APPEND test_args " [==[${_av}]==]")
   endforeach()
+  cmake_language(EVAL CODE "add_test(NAME ${test_name} COMMAND ${test_args})")
 
-  # make sure we don't exceed current support
-  list(LENGTH matches cnt)
-  if ("${cnt}" GREATER 1)
-    message(FATAL_ERROR "ERROR: encountered ${cnt} > 1 empty string being passed to add_test(${test_name}).  Expand support in the top-level CMakeLists.txt file (grep add_test) or pass fewer empty strings.")
-  endif ("${cnt}" GREATER 1)
-
-  # if there are empty strings, we need to manually recreate their calling
-  if ("${cnt}" GREATER 0)
-
-    list(GET matches 0 empty)
-    if ("${empty}" EQUAL 4)
-      foreach (i 1)
-        if (ARGN)
-          list(REMOVE_AT ARGN 0)
-        endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} "" ${ARGN})
-    elseif ("${empty}" EQUAL 5)
-      foreach (i 1 2)
-        if (ARGN)
-          list(REMOVE_AT ARGN 0)
-        endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} "" ${ARGN})
-    elseif ("${empty}" EQUAL 6)
-      foreach (i 1 2 3)
-        if (ARGN)
-          list(REMOVE_AT ARGN 0)
-        endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} "" ${ARGN})
-    elseif ("${empty}" EQUAL 7)
-      foreach (i 1 2 3 4)
-        if (ARGN)
-          list(REMOVE_AT ARGN 0)
-        endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} "" ${ARGN})
-    elseif ("${empty}" EQUAL 8)
-      foreach (i 1 2 3 4 5)
-        if (ARGN)
-          list(REMOVE_AT ARGN 0)
-        endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} "" ${ARGN})
-    elseif ("${empty}" EQUAL 9)
-      foreach (i 1 2 3 4 5 6)
-        if (ARGN)
-          list(REMOVE_AT ARGN 0)
-        endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} "" ${ARGN})
-    elseif ("${empty}" EQUAL 10)
-      foreach (i 1 2 3 4 5 6 7)
-        if (ARGN)
-          list(REMOVE_AT ARGN 0)
-        endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} "" ${ARGN})
-    elseif ("${empty}" EQUAL 11)
-      foreach (i 1 2 3 4 5 6 7 8)
-        if (ARGN)
-          list(REMOVE_AT ARGN 0)
-        endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} ${ARGV10} "" ${ARGN})
-
-
-      # ADD_EMPTY_HERE: insert support for additional argv positions
-      # as extra elseif tests here using the preceding pattern.  be
-      # sure to update the index in the following else clause fatal
-      # error message too.
-
-    else ("${empty}" EQUAL 4)
-      message(FATAL_ERROR "ERROR: encountered an empty string passed to add_test(${test_name}) as ARGV${empty} > ARGV11.  Expand support in the top-level CMakeLists.txt file (grep ADD_EMPTY_HERE).")
-    endif ("${empty}" EQUAL 4)
-
-  else ("${cnt}" GREATER 0)
-    # no empty strings, no worries
-    add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGN})
-  endif ("${cnt}" GREATER 0)
-
-
-  # There are a variety of criteria that disqualify test_prog as a
+ # There are a variety of criteria that disqualify test_prog as a
   # dependency - check and return if we hit any of them.
   if (NOT TARGET ${test_prog})
     return()

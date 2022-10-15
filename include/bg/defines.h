@@ -127,9 +127,21 @@ struct bg_tess_tol {
 };
 #define BG_CK_TESS_TOL(_p) BU_CKMAG(_p, BG_TESS_TOL_MAGIC, "bg_tess_tol")
 #define BG_TESS_TOL_INIT_ZERO {BG_TESS_TOL_MAGIC, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+#define BG_TESS_TOL_INIT_TOL {BG_TESS_TOL_MAGIC, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+#define BG_TESS_TOL_INIT_SET_TOL(_p) { \
+	(_p)->magic = BG_TESS_TOL_MAGIC; \
+	(_p)->abs = 0.0; \
+	(_p)->rel = 0.01; \
+	(_p)->norm = 0.0; \
+	(_p)->absmax = 0.0; \
+	(_p)->absmin = 0.0; \
+	(_p)->relmax = 0.0; \
+	(_p)->relmin = 0.0; \
+	(_p)->rel_lmax = 0.0; \
+	(_p)->rel_lmin = 0.0; \
+    }
 
-/* A default tolerance to use when user supplied tolerances aren't available */
-#define BG_TOL_INIT {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 }
+
 
 #endif  /* BG_DEFINES_H */
 /** @} */

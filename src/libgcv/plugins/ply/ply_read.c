@@ -340,13 +340,16 @@ ply_read_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, co
 {
     struct conversion_state state;
 
+    struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+
     state.gcv_options = gcv_options;
     state.ply_read_options = (struct ply_read_options*)options_data;
     state.input_file = source_path;
-    state.fd_out = context->dbip->dbi_wdbp;
+    state.fd_out = wdbp;
 
     if ((state.fd_in = fopen(source_path, "rb")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", source_path);
+	wdb_close(wdbp);
 	perror("libgcv");
 	bu_exit(1, NULL);
     }
@@ -355,7 +358,7 @@ ply_read_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, co
 
     /* initialize necessary components */
     BU_LIST_INIT(&state.wm.l);
-    
+
     BU_ALLOC(state.bot, struct rt_bot_internal);
     state.bot->magic = RT_BOT_INTERNAL_MAGIC;
     state.bot->mode = RT_BOT_SURFACE;
@@ -364,6 +367,8 @@ ply_read_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, co
     convert_input(&state);
 
     fclose(state.fd_in);
+
+    wdb_close(wdbp);
 
     return 1;
 }

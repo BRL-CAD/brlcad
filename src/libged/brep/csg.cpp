@@ -486,9 +486,8 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
     /* Unpack B-Rep */
     struct rt_db_internal intern;
     struct rt_brep_internal *brep_ip = NULL;
-    struct rt_wdb *wdbp = gedp->ged_wdbp;
     RT_DB_INTERNAL_INIT(&intern)
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
 	return -1;
     }
     if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
@@ -532,6 +531,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 	    }
 	    if (!have_non_breps) return 2;
 
+	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 		struct subbrep_island_data *sb = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
 		make_island(log, sb, wdbp, bu_vls_addr(&root_name), &pcomb);
@@ -565,11 +565,12 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 		*/
 		mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
 	    }
+	    wdb_close(wdbp);
 
 	    // Verify that the resulting csg tree and the original B-Rep pass a difference test.
 	    if (verify) {
 		ON_BoundingBox bbox;
-		struct bn_tol tol = BG_TOL_INIT;
+		struct bn_tol tol = BN_TOL_INIT_TOL;
 		brep->GetBoundingBox(bbox);
 		tol.dist = (bbox.Diagonal().Length() / 100.0);
 		bu_vls_printf(log, "Analyzing %s csg conversion, tol %f...\n", dp->d_namep, tol.dist);
@@ -703,22 +704,23 @@ comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set 
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb_internal = NULL;
-    struct rt_wdb *wdbp = gedp->ged_wdbp;
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&comb_name, "csg_%s", dp->d_namep);
 
     RT_DB_INTERNAL_INIT(&intern)
 
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
 	return -1;
     }
 
     RT_CK_COMB(intern.idb_ptr);
     comb_internal = (struct rt_comb_internal *)intern.idb_ptr;
 
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (comb_internal->tree == NULL) {
 	// Empty tree
 	(void)wdb_export(wdbp, bu_vls_addr(&comb_name), comb_internal, ID_COMBINATION, 1);
+	wdb_close(wdbp);
 	return 0;
     }
 
@@ -737,6 +739,7 @@ comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set 
 	bu_log("Error (brep/csg.cpp:%d) brep_csg_conversion_tree\n", __LINE__);
 
     (void)wdb_export(wdbp, bu_vls_addr(&comb_name), (void *)new_internal, ID_COMBINATION, 1);
+    wdb_close(wdbp);
 
     return 0;
 }
@@ -747,8 +750,7 @@ int _ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
     struct bu_attribute_value_set ito = BU_AVS_INIT_ZERO; /* islands to objects */
     int ret = 0;
     struct bu_vls log = BU_VLS_INIT_ZERO;
-    struct rt_wdb *wdbp = gedp->ged_wdbp;
-    struct directory *dp = db_lookup(wdbp->dbip, dp_name, LOOKUP_QUIET);
+    struct directory *dp = db_lookup(gedp->dbip, dp_name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) return BRLCAD_ERROR;
 
     if (dp->d_flags & RT_DIR_COMB) {

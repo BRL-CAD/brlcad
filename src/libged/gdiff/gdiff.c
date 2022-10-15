@@ -46,6 +46,8 @@ check_walk_subtree(int *diff, struct bu_vls *msgs, struct db_i *dbip, struct db_
 {
     int idn1, idn2;
     struct directory *dp1, *dp2;
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct bn_tol *tol = &wdbp->dbip->db_tol;
 
     if (!diff)
        	return;
@@ -72,7 +74,7 @@ check_walk_subtree(int *diff, struct bu_vls *msgs, struct db_i *dbip, struct db_
 		return;
 	    }
 	    if (tp1->tr_l.tl_mat && tp2->tr_l.tl_mat) {
-		if (!bn_mat_is_equal(tp1->tr_l.tl_mat, tp2->tr_l.tl_mat, &dbip->dbi_wdbp->wdb_tol)) {
+		if (!bn_mat_is_equal(tp1->tr_l.tl_mat, tp2->tr_l.tl_mat, tol)) {
 		    (*diff) = 1;
 		    return;
 		}
@@ -175,7 +177,9 @@ check_walk(int *diff,
     }
 
     /* If we have two solids, use db_diff_dp */
-    int dr = db_diff_dp(dbip, dbip, dp1, dp2, &dbip->dbi_wdbp->wdb_tol, DB_COMPARE_ALL, NULL);
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct bn_tol *tol = &wdbp->dbip->db_tol;
+    int dr = db_diff_dp(dbip, dbip, dp1, dp2, tol, DB_COMPARE_ALL, NULL);
     if (dr != DIFF_UNCHANGED) {
 	char *p1s = db_path_to_string(p1);
 	char *p2s = db_path_to_string(p2);
@@ -192,7 +196,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 {
     size_t i;
     struct analyze_raydiff_results *results;
-    struct bn_tol tol = BG_TOL_INIT;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
 
     long verbosity = 0;
     int structure_diff = 0;

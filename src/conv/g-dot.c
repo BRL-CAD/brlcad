@@ -373,10 +373,10 @@ main(int ac, char *av[])
     while (objs[c]) {
 	struct directory *dp = NULL;
 
-	dp = db_lookup(gp->ged_wdbp->dbip, objs[c], 1);
+	dp = db_lookup(gp->dbip, objs[c], 1);
 	if (dp) {
 	    bu_log("Exporting object [%s]\n", objs[c]);
-	    db_functree(gp->ged_wdbp->dbip, dp, dot_comb, dot_leaf, NULL, &o);
+	    db_functree(gp->dbip, dp, dot_comb, dot_leaf, NULL, &o);
 	} else {
 	    bu_log("ERROR: Unable to locate [%s] within input database, skipping.\n", objs[c]);
 	}

@@ -161,6 +161,7 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
         return BRLCAD_ERROR;
     }
 
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     while (bu_fgets(buffer, BUFSIZ, densityTable)) {
 	char *p;
 	double density = -1;
@@ -280,7 +281,7 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_strcat(&mat_with_id, "matl");
 	    bu_vls_vlscat(&mat_with_id, &idxChar);
 
-	    mk_material(gedp->ged_wdbp,
+	    mk_material(wdbp,
 			bu_vls_cstr(&mat_with_id),
 			bu_vls_cstr(&name),
 			"",
@@ -291,7 +292,7 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 			&thermalProperties);
 	    bu_vls_free(&mat_with_id);
 	} else {
-	    mk_material(gedp->ged_wdbp,
+	    mk_material(wdbp,
 			bu_vls_cstr(&name),
 			bu_vls_cstr(&name),
 			"",
@@ -307,6 +308,7 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 
 	memset(buffer, 0, BUFSIZ);
     }
+    wdb_close(wdbp);
 
     return 0;
 }
@@ -354,7 +356,8 @@ create_material(struct ged *gedp, int argc, const char *argv[])
     parent = NULL;
     source = NULL;
 
-    mk_material(gedp->ged_wdbp,
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    mk_material(wdbp,
 		db_name,
 		name,
 		parent,
@@ -364,6 +367,7 @@ create_material(struct ged *gedp, int argc, const char *argv[])
 		&opticalProperties,
 		&thermalProperties);
 
+    wdb_close(wdbp);
     return 0;
 }
 
@@ -516,7 +520,10 @@ set_material(struct ged *gedp, int argc, const char *argv[])
         return BRLCAD_ERROR;
     }
 
-    return wdb_put_internal(gedp->ged_wdbp, argv[2], &intern, mk_conv2mm);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    int ret = wdb_put_internal(wdbp, argv[2], &intern, mk_conv2mm);
+    wdb_close(wdbp);
+    return ret;
 }
 
 
@@ -570,7 +577,9 @@ remove_material(struct ged *gedp, int argc, const char *argv[])
         return BRLCAD_ERROR;
     }
 
-    return wdb_put_internal(gedp->ged_wdbp, argv[2], &intern, mk_conv2mm);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    int ret = wdb_put_internal(wdbp, argv[2], &intern, mk_conv2mm);
+    return ret;
 }
 
 

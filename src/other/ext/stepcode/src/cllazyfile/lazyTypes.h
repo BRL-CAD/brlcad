@@ -1,7 +1,7 @@
 #ifndef LAZYTYPES_H
 #define LAZYTYPES_H
 
-#include "sc_cf.h"
+#include "config.h"
 
 #include <iostream>
 #include <vector>
@@ -65,8 +65,8 @@ typedef struct {
 /// used when populating the instance type map \sa lazyInstMgr::_instanceTypeMMap
 typedef struct {
     lazyInstanceLoc loc;
-    const char *name;
-    instanceRefs *refs;
+    const char * name;
+    instanceRefs * refs;
 } namedLazyInstance;
 
 // instanceRefs - map between an instanceID and instances that refer to it

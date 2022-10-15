@@ -34,6 +34,7 @@
 #include <time.h>
 #include "bsocket.h"
 
+#define XXH_STATIC_LINKING_ONLY
 #include "xxhash.h"
 
 #include "bu/cmd.h"
