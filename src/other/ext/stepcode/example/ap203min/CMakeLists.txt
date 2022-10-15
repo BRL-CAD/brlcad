@@ -6,7 +6,7 @@
 # for the use of this file.
 #
 project(AP203Minimum)
-cmake_minimum_required(VERSION 3.6.3)
+cmake_minimum_required(VERSION 3.12)
 
 # Set STEPCODE_ROOT_DIR to point to the root of the STEPcode source tree.
 if(NOT DEFINED STEPCODE_ROOT_DIR)
@@ -51,14 +51,13 @@ endif(NOT EXISTS ${SCHEMA_FILE})
 
 get_filename_component(SCHEMA_SN ${SCHEMA_FILE} NAME)
 string(REGEX REPLACE "\(.*\).[Ee][Xx][Pp]" "sdai_\\1" SCHEMA_LINK_NAME ${SCHEMA_SN})
-set(STEPCODE_LIBRARIES base stepcore stepeditor stepdai steputils ${SCHEMA_LINK_NAME})
+set(STEPCODE_LIBRARIES stepcore stepeditor stepdai steputils ${SCHEMA_LINK_NAME})
 
 # Add STEPCode project to CMake build.
 add_subdirectory(${STEPCODE_ROOT_DIR} "${CMAKE_CURRENT_BINARY_DIR}/sc" EXCLUDE_FROM_ALL)
 
 # Set up STEPcode include directories.
 set(STEPCODE_INCLUDE_DIR
-  ${STEPCODE_ROOT_DIR}/src/base
   ${STEPCODE_ROOT_DIR}/src/clstepcore
   ${STEPCODE_ROOT_DIR}/src/cldai
   ${STEPCODE_ROOT_DIR}/src/clutils

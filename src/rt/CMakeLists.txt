@@ -92,6 +92,9 @@ set_property(TARGET rtweight APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT"
 BRLCAD_ADDEXEC(rtxray "${LIBRTUIF_SOURCES};viewxray.c" "${RT_STD_LIBS}" FOLDER Rt)
 ADD_TARGET_DEPS(rtxray dm_plugins)
 
+BRLCAD_ADDEXEC(rtdepth "${LIBRTUIF_SOURCES};viewdepth.c" "${RT_STD_LIBS}" FOLDER Rt)
+ADD_TARGET_DEPS(rtdepth dm_plugins)
+
 set(rt_ignore_files
   CMakeLists.txt
   ext.h

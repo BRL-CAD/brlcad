@@ -370,8 +370,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	struct draw_data_t dd;
 	dd.dbip = gedp->dbip;
 	dd.v = v;
-	dd.tol = &gedp->ged_wdbp->wdb_tol;
-	dd.ttol = &gedp->ged_wdbp->wdb_ttol;
+	dd.tol = &gedp->dbip->db_tol;
+	dd.ttol = &gedp->dbip->db_ttol;
 	dd.mesh_c = gedp->ged_lod;
 	dd.color_inherit = 0;
 	dd.bound_only = 0;

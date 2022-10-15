@@ -628,8 +628,12 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
     /* convert from double to fastf_t */
     VMOVE(view_ps_pt, scan);
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) & BRLCAD_ERROR)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
+    }
+    wdb_close(wdbp);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE) {

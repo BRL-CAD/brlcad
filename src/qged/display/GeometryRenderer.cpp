@@ -76,7 +76,7 @@ void GeometryRenderer::onDatabaseUpdated() {
  */
 void GeometryRenderer::drawDatabase() {
     db_tree_state initState;
-    db_init_db_tree_state(&initState, r_database->rti_dbip, database->wdb_resp);
+    db_init_db_tree_state(&initState, r_database->rti_dbip, database->dbip->db_resp);
     initState.ts_ttol = &r_database->rti_ttol;
     initState.ts_tol = &r_database->rti_tol;
 

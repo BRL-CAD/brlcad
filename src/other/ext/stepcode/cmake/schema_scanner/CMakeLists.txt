@@ -1,5 +1,5 @@
 project(SC_SUBPROJECT_SCHEMA_SCANNER)
-cmake_minimum_required(VERSION 3.6.3)
+cmake_minimum_required(VERSION 3.12)
 
 if(NOT ("${CALLED_FROM}" STREQUAL "STEPCODE_CMAKELISTS" AND DEFINED SC_ROOT AND DEFINED SC_BUILDDIR))
   message(" ${CALLED_FROM}  ${SC_ROOT} ${SC_BUILDDIR}")
@@ -16,7 +16,6 @@ set(SC_BINARY_DIR ${SC_BUILDDIR})
 include(${CMAKE_CURRENT_SOURCE_DIR}/../SC_Outdirs.cmake)
 
 set(schema_scanner_src
-  ${SC_ROOT}/src/base/sc_mkdir.c
   ${SC_ROOT}/src/exp2cxx/genCxxFilenames.c
   ${SC_ROOT}/src/exp2cxx/class_strings.c
   ${SC_ROOT}/src/express/generated/expparse.c
@@ -52,7 +51,6 @@ include_directories(
   ${SC_ROOT}/include/
   ${SC_ROOT}/src/express/
   ${SC_ROOT}/src/express/generated
-  ${SC_ROOT}/src/base
   ${SC_ROOT}/src/exp2cxx
   ${SC_BUILDDIR}/include
  )

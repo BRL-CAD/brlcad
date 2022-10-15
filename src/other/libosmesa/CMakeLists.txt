@@ -1,18 +1,11 @@
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.18)
 
 # Set CMake project name
 project(OSMESA)
 
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-O3 O3_COMPILER_FLAG)
-
-# Tell CMake where to look for local CMake modules,
-# if we have them
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
-  list(APPEND CMAKE_MODULE_PATH "${OSMESA_SOURCE_DIR}/CMake")
-  include(Path_Setup)
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
 
 find_package(Threads REQUIRED)
 if (CMAKE_USE_PTHREADS_INIT)
@@ -30,32 +23,20 @@ endif (HAVE_M_LIBRARY)
 # prefixing
 add_definitions(-DUSE_MGL_NAMESPACE)
 
-# If we have a stripped down source tree, need to default
-# to off for extras
-if (NOT DEFINED OSMESA_BUNDLE_GLU OR OSMESA_BUNDLE_GLU)
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/glu)
-    set(GLU_OPT_DEFAULT ON)
-  else()
-    set(GLU_OPT_DEFAULT OFF)
-  endif()
-else()
-  set(GLU_OPT_DEFAULT OFF)
-endif()
-if (GLU_OPT_DEFAULT AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/examples)
-  set(EX_OPT_DEFAULT ON)
-else()
-  set(EX_OPT_DEFAULT OFF)
-endif()
-
-# Optional component settings
-option(OSMESA_BUNDLE_GLU "Incorporate GLU into library" ${GLU_OPT_DEFAULT})
-option(OSMESA_BUILD_EXAMPLES "Build example programs" ${EX_OPT_DEFAULT})
-
+# The primarly libosmesa library
 add_subdirectory(src)
 
-if (OSMESA_BUILD_EXAMPLES)
-  add_subdirectory(examples)
-endif (OSMESA_BUILD_EXAMPLES)
+# For testing purposes, the build defines a number
+# of (relatively) self-contained OpenGL examples.
+# These are very much optional - in case a distribution
+# does not wish to include them, allow for the examples
+# directory to have been removed
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/examples)
+  option(OSMESA_BUILD_EXAMPLES "Build example programs" ON)
+  if (OSMESA_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+  endif (OSMESA_BUILD_EXAMPLES)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/examples)
 
 # Local Variables:
 # tab-width: 8

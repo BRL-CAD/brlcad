@@ -29,7 +29,7 @@ static int
 get_arb_type(struct directory *dp, struct db_i *dbip)
 {
     int type;
-    const struct bn_tol arb_tol = BG_TOL_INIT;
+    const struct bn_tol arb_tol = BN_TOL_INIT_TOL;
     struct rt_db_internal intern;
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
     type = rt_arb_std_type(&intern, &arb_tol);

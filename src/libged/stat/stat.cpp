@@ -115,7 +115,7 @@ type_str(struct bu_vls *n, struct directory *dp, struct db_i *dbip)
 {
     int type;
     struct rt_db_internal intern;
-    const struct bn_tol arb_tol = BG_TOL_INIT;
+    const struct bn_tol arb_tol = BN_TOL_INIT_TOL;
     if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 	bu_vls_sprintf(n, " ");
 	return;

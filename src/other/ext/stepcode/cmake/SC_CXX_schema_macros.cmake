@@ -27,16 +27,16 @@ endmacro(P21_TESTS sfile)
 # create p21read_sdai_*, lazy_sdai_*, any exes listed in SC_SDAI_ADDITIONAL_EXES_SRCS
 macro(SCHEMA_EXES)
   RELATIVE_PATH_TO_TOPLEVEL(${CMAKE_CURRENT_SOURCE_DIR} RELATIVE_PATH_COMPONENT)
-  SC_ADDEXEC(p21read_${PROJECT_NAME} SOURCES "${RELATIVE_PATH_COMPONENT}/src/test/p21read/p21read.cc" LINK_LIBRARIES ${PROJECT_NAME} stepdai stepcore stepeditor steputils base TESTABLE)
+  SC_ADDEXEC(p21read_${PROJECT_NAME} SOURCES "${RELATIVE_PATH_COMPONENT}/src/test/p21read/p21read.cc;${RELATIVE_PATH_COMPONENT}/src/test/p21read/sc_benchmark.cc" LINK_LIBRARIES ${PROJECT_NAME} stepdai stepcore stepeditor steputils TESTABLE)
   if(NOT WIN32)
-    SC_ADDEXEC(lazy_${PROJECT_NAME} SOURCES "${RELATIVE_PATH_COMPONENT}/src/cllazyfile/lazy_test.cc" LINK_LIBRARIES ${PROJECT_NAME} steplazyfile stepdai stepcore stepeditor steputils base TESTABLE)
+    SC_ADDEXEC(lazy_${PROJECT_NAME} SOURCES "${RELATIVE_PATH_COMPONENT}/src/cllazyfile/lazy_test.cc;${RELATIVE_PATH_COMPONENT}/src/cllazyfile/sc_benchmark.cc" LINK_LIBRARIES ${PROJECT_NAME} steplazyfile stepdai stepcore stepeditor steputils TESTABLE)
   endif(NOT WIN32)
 
   #add user-defined executables
   foreach(src ${SC_SDAI_ADDITIONAL_EXES_SRCS})
     get_filename_component(name ${src} NAME_WE)
     get_filename_component(path ${src} ABSOLUTE)
-    SC_ADDEXEC(${name}_${PROJECT_NAME} SOURCES ${src} LINK_LIBRARIES ${PROJECT_NAME} stepdai stepcore stepeditor steputils base TESTABLE)
+    SC_ADDEXEC(${name}_${PROJECT_NAME} SOURCES ${src} LINK_LIBRARIES ${PROJECT_NAME} stepdai stepcore stepeditor steputils TESTABLE)
     #set_target_properties(${name}_${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "${${PROJECT_NAME}_COMPILE_FLAGS} -I${path}")
   endforeach(src ${SC_SDAI_ADDITIONAL_EXES_SRCS})
 ENDMACRO(SCHEMA_EXES)
@@ -89,12 +89,12 @@ macro(SCHEMA_TARGETS expFile schemaName sourceFiles)
   )
   include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}         ${SC_SOURCE_DIR}/src/cldai          ${SC_SOURCE_DIR}/src/cleditor
-    ${SC_SOURCE_DIR}/src/clutils        ${SC_SOURCE_DIR}/src/clstepcore     ${SC_SOURCE_DIR}/src/base
-    ${SC_SOURCE_DIR}/src/base/judy/src
+    ${SC_SOURCE_DIR}/src/clutils        ${SC_SOURCE_DIR}/src/clstepcore     ${SC_SOURCE_DIR}/src/cllazyfile
+    ${SC_SOURCE_DIR}/src/cllazyfile/judy/src
   )
   # if testing is enabled, "TESTABLE" sets property EXCLUDE_FROM_ALL and prevents installation
   if(BUILD_SHARED_LIBS)
-    SC_ADDLIB(${PROJECT_NAME} SHARED SOURCES ${sourceFiles} LINK_LIBRARIES stepdai stepcore stepeditor steputils base TESTABLE)
+    SC_ADDLIB(${PROJECT_NAME} SHARED SOURCES ${sourceFiles} LINK_LIBRARIES stepdai stepcore stepeditor steputils TESTABLE)
     add_dependencies(${PROJECT_NAME} generate_cpp_${PROJECT_NAME})
     if(WIN32)
       target_compile_definitions("${PROJECT_NAME}" PRIVATE SC_SCHEMA_DLL_EXPORTS)
@@ -111,9 +111,9 @@ macro(SCHEMA_TARGETS expFile schemaName sourceFiles)
   endif()
 
   if($CACHE{SC_BUILD_STATIC_LIBS})
-    SC_ADDLIB(${PROJECT_NAME}-static STATIC SOURCES ${sourceFiles} LINK_LIBRARIES stepdai-static stepcore-static stepeditor-static steputils-static base-static TESTABLE)
+    SC_ADDLIB(${PROJECT_NAME}-static STATIC SOURCES ${sourceFiles} LINK_LIBRARIES stepdai-static stepcore-static stepeditor-static steputils-static TESTABLE)
     add_dependencies(${PROJECT_NAME}-static generate_cpp_${PROJECT_NAME})
-    target_compile_defines("${PROJECT_NAME}-static" PRIVATE SC_STATIC)
+    target_compile_definitions("${PROJECT_NAME}-static" PRIVATE SC_STATIC)
     if(MSVC)
       target_compile_options("${PROJECT_NAME}-static" PRIVATE "/bigobj")
     endif()

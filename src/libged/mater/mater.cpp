@@ -684,10 +684,13 @@ mater_import(struct ged *gedp, size_t argc, const char *argv[])
 	}
     }
 
-    if (rt_mk_binunif (gedp->ged_wdbp, GED_DB_DENSITY_OBJECT, argv[1], DB5_MINORTYPE_BINU_8BITINT, 0)) {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (rt_mk_binunif (wdbp, GED_DB_DENSITY_OBJECT, argv[1], DB5_MINORTYPE_BINU_8BITINT, 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Error reading density file %s", argv[1]);
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
+    wdb_close(wdbp);
 
     /* Mark it hidden */
     {
@@ -1161,7 +1164,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     struct bu_external bin_ext;
     int ret = -1;
     if (intern.idb_meth->ft_export5) {
-	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, gedp->dbip, gedp->ged_wdbp->wdb_resp);
+	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, gedp->dbip, gedp->dbip->db_resp);
     }
     if (ret != 0) {
 	bu_vls_printf(gedp->ged_result_str, "Error while attempting to export %s\n", GED_DB_DENSITY_OBJECT);

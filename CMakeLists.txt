@@ -66,7 +66,7 @@
 # *               Stage 0 of 9 - Project Info               *
 # ***********************************************************
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.18)
 
 #---------------------------------------------------------------------
 # BRL-CAD's version is centrally stored in include/conf/.  See HACKING
@@ -2201,9 +2201,7 @@ set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
 set(ALL_DIRS)
 get_property(SUBDIRS DIRECTORY "${CMAKE_SOURCE_DIR}" PROPERTY SUBDIRECTORIES)
 while(SUBDIRS)
-  # TODO - once we require 3.15.7 or greater, use list(POP_FRONT) for this...
-  list(GET SUBDIRS 0 CDIR)
-  list(REMOVE_AT SUBDIRS 0)
+  list(POP_FRONT SUBDIRS CDIR)
   set(ALL_DIRS ${ALL_DIRS} ${CDIR})
   get_property(CSUBDIRS DIRECTORY "${CDIR}" PROPERTY SUBDIRECTORIES)
   set(SUBDIRS ${SUBDIRS} ${CSUBDIRS})
@@ -2475,7 +2473,7 @@ list(SORT BRLCAD_EXEC_FILES)
 string(REPLACE ";" "\n" BRLCAD_EXEC_FILES "${BRLCAD_EXEC_FILES}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/brlcadexec.cmake" "${BRLCAD_EXEC_FILES}")
 
-#Done with all really time-consuming steps - do the configure time delta
+# Done with all really time-consuming steps - do the configure time delta
 if(NOT BRLCAD_IS_SUBBUILD)
   execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/dreport" "Elapsed configuration time: " "${CONFIG_DELTA_START}")
 endif(NOT BRLCAD_IS_SUBBUILD)

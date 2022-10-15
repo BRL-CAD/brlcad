@@ -131,7 +131,7 @@ RT_EXPORT extern int rt_cmd_color(struct bu_vls *msg, struct db_i *dbip, int arg
  *
  * Returns BRLCAD_OK on success, BRLCAD_ERROR on failure.
  */
-RT_EXPORT extern int rt_cmd_put(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv);
+RT_EXPORT extern int rt_cmd_put(struct bu_vls *msg, struct rt_wdb *wdbp, int argc, const char **argv);
 
 /**
  * @brief Convert an ASCII v5 "title" command into a .g title

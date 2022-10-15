@@ -37,6 +37,8 @@
 #include "ged.h"
 #include "./ged_private.h"
 
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
 #include "xxhash.h"
 
 #define LAST_SOLID(_sp)       DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
@@ -787,7 +789,8 @@ int
 dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions)
 {
     struct db_i *dbip = gedp->dbip;
-    struct db_tree_state *tsp = &gedp->ged_wdbp->wdb_initial_tree_state;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct db_tree_state *tsp = &wdbp->wdb_initial_tree_state;
     struct bview *gvp = gedp->ged_gvp;
     int ret = 0;
     struct bv_scene_obj *sp;

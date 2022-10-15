@@ -118,7 +118,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 
 				    if (DIST_PNT_PLANE(mpt,
 					arbn->eqn[l]) >
-					gedp->ged_wdbp->wdb_tol.dist) {
+					gedp->dbip->db_tol.dist) {
 					good_vert = 0;
 					break;
 				    }

@@ -526,14 +526,14 @@ get_object_material(const ON_3dmObjectAttributes &attributes,
 
 static void
 write_comb(rt_wdb &wdb, const std::string &name,
-	   const std::set<std::string> &members, const mat_t matrix = NULL,
+	   const std::vector<std::string> &members, const mat_t matrix = NULL,
 	   const char *shader_name = NULL, const char *shader_options = NULL,
 	   const unsigned char *rgb = NULL)
 {
     wmember wmembers;
     BU_LIST_INIT(&wmembers.l);
 
-    for (std::set<std::string>::const_iterator it = members.begin();
+    for (std::vector<std::string>::const_iterator it = members.begin();
 	 it != members.end(); ++it)
 	mk_addmember(it->c_str(), &wmembers.l, const_cast<fastf_t *>(matrix),
 		     WMOP_UNION);
@@ -559,10 +559,10 @@ import_object(rt_wdb &wdb, const std::string &name,
 	for (std::size_t j = 0; j < 4; ++j)
 	    matrix[4 * i + j] = instance_ref.m_xform[i][j];
 
-    std::set<std::string> members;
-    members.insert(ON_String(idef.m_name).Array());
+    std::vector<std::string> members_vec;
+    members_vec.push_back(ON_String(idef.m_name).Array());
 
-    write_comb(wdb, name, members, matrix, shader_name, shader_options, rgb);
+    write_comb(wdb, name, members_vec, matrix, shader_name, shader_options, rgb);
 }
 
 
@@ -605,9 +605,9 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 			  own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
 	else if (write_geometry(wdb, member_name,
 				*ON_Geometry::Cast(object.m_object))) {
-	    std::set<std::string> members;
-	    members.insert(member_name);
-	    write_comb(wdb, name, members, NULL, own_shader ? shader.first.c_str() : NULL,
+	    std::vector<std::string> members_vec;
+	    members_vec.push_back(member_name);
+	    write_comb(wdb, name, members_vec, NULL, own_shader ? shader.first.c_str() : NULL,
 		       own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
 	} else {
 	    if (gcv_options.verbosity_level)
@@ -633,17 +633,19 @@ import_idef(rt_wdb &wdb, const ON_InstanceDefinition &idef,
 	    const ONX_Model &model)
 {
     std::set<std::string> members;
+    std::vector<std::string> members_vec;
 
     for (std::size_t i = 0; i < idef.m_object_uuid.UnsignedCount(); ++i) {
 	const ONX_Model_Object &object = at(model.m_object_table,
 					    model.ObjectIndex(at(idef.m_object_uuid, i)));
 
-	members.insert(ON_String(object.m_attributes.m_name).Array());
+	if (members.insert(ON_String(object.m_attributes.m_name).Array()).second)
+	    members_vec.push_back(ON_String(object.m_attributes.m_name).Array());
     }
 
     const std::string name = ON_String(idef.m_name).Array();
 
-    write_comb(wdb, name, members);
+    write_comb(wdb, name, members_vec);
     write_attributes(wdb, name, idef, idef.m_uuid);
 }
 
@@ -675,23 +677,28 @@ get_all_idef_members(const ONX_Model &model)
 }
 
 
-static std::set<std::string>
+static std::vector<std::string>
 get_layer_members(const ON_Layer &layer, const ONX_Model &model)
 {
     std::set<std::string> members;
+    std::map<std::string, int> members_pos; /* member name, order encountered */
 
     for (std::size_t i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
 	const ON_Layer &current_layer = at(model.m_layer_table, i);
 
-	if (current_layer.m_parent_layer_id == layer.ModelObjectId())
-	    members.insert(ON_String(current_layer.m_name).Array());
+	if (current_layer.m_parent_layer_id == layer.ModelObjectId()) {
+	    if (members.insert(ON_String(current_layer.m_name).Array()).second)
+		members_pos.emplace(ON_String(current_layer.m_name).Array(), members.size() - 1);
+	}
     }
 
     for (std::size_t i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
 	const ONX_Model_Object &object = at(model.m_object_table, i);
 
-	if (object.m_attributes.m_layer_index == layer.m_layer_index)
-	    members.insert(ON_String(object.m_attributes.m_name).Array());
+	if (object.m_attributes.m_layer_index == layer.m_layer_index) {
+	    if (members.insert(ON_String(object.m_attributes.m_name).Array()).second)
+		members_pos.emplace(ON_String(object.m_attributes.m_name).Array(), members.size() - 1);
+	}
     }
 
     const std::set<std::string> model_idef_members = get_all_idef_members(model);
@@ -699,7 +706,20 @@ get_layer_members(const ON_Layer &layer, const ONX_Model &model)
     std::set_difference(members.begin(), members.end(), model_idef_members.begin(),
 			model_idef_members.end(), std::inserter(result, result.end()));
 
-    return result;
+    /* add results to vector in order encountered */
+    std::vector<std::string> members_vec(members.size(), "");
+    for (auto& itr : result) {
+	members_vec[members_pos[itr]] = itr;
+    }
+    /* if any were removed by set_difference, erase the empty location in vector */
+    if (result.size() != members.size()) {
+	for (int i = members_vec.size() - 1; i >= 0; i--) {
+	    if (members_vec[i] == "")
+		members_vec.erase(members_vec.begin() + i);
+	}
+    }
+
+    return members_vec;
 }
 
 
@@ -871,6 +891,8 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 		      "-type shape -not -below -type region", 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
+    struct rt_wdb *wdbp = wdb_dbopen(&db, RT_WDB_TYPE_DB_DISK);
+
     if (BU_PTBL_LEN(&found)) {
 	db_full_path **entry;
 
@@ -903,9 +925,9 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 		    bu_bomb("db_comb_mvall() failed");
 	    }
 
-	    std::set<std::string> members;
-	    members.insert(DB_FULL_PATH_CUR_DIR(*entry)->d_namep);
-	    write_comb(*db.dbi_wdbp, region_name, members);
+	    std::vector<std::string> members_vec;
+	    members_vec.push_back(DB_FULL_PATH_CUR_DIR(*entry)->d_namep);
+	    write_comb(*wdbp, region_name, members_vec);
 
 	    comb_to_region(db, region_name);
 
@@ -956,18 +978,23 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	root_name = bu_vls_addr(&temp);
     }
 
+    struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+
     try {
 	ONX_Model model;
 	load_model(*gcv_options, source_path, model, root_name);
-	import_model_layers(*context->dbip->dbi_wdbp, model, root_name);
-	import_model_idefs(*context->dbip->dbi_wdbp, model);
-	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
+	import_model_layers(*wdbp, model, root_name);
+	import_model_idefs(*wdbp, model);
+	import_model_objects(*gcv_options, *wdbp, model);
     } catch (const InvalidRhinoModelError &exception) {
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
+	wdb_close(wdbp);
 	return 0;
     }
 
     polish_output(*gcv_options, *context->dbip);
+
+    wdb_close(wdbp);
 
     return 1;
 }

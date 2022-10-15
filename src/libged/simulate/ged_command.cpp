@@ -114,9 +114,6 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 	return BRLCAD_ERROR;
     }
 
-    rt_wdb * const orig_wdbp = gedp->dbip->dbi_wdbp;
-    gedp->dbip->dbi_wdbp = gedp->ged_wdbp;
-
     try {
 	const simulate::Simulation::DebugMode debug_mode =
 	get_debug_mode(debug_mode_string);
@@ -137,11 +134,9 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 	simulation.step(seconds, debug_mode);
     } catch (const simulate::InvalidSimulationError &exception) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s", exception.what());
-	gedp->dbip->dbi_wdbp = orig_wdbp;
 	return BRLCAD_ERROR;
     }
 
-    gedp->dbip->dbi_wdbp = orig_wdbp;
     return BRLCAD_OK;
 }
 

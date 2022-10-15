@@ -124,7 +124,7 @@ main(int argc, const char **argv)
     }
 
     // Make sure our reference counts are up to date
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     // Perform the specified push operation on all example objects
     for (size_t i = 0; i <= 16; i++) {
@@ -209,7 +209,7 @@ main(int argc, const char **argv)
 	ss << std::setfill('0') << std::setw(3) << i;
 	ss << "_ext";
 	std::string oname = ss.str();
-	if (db_lookup(gedp->ged_wdbp->dbip, oname.c_str(), LOOKUP_QUIET) == RT_DIR_NULL) {
+	if (db_lookup(gedp->dbip, oname.c_str(), LOOKUP_QUIET) == RT_DIR_NULL) {
 	    continue;
 	}
 	char *gobj = bu_strdup(oname.c_str());

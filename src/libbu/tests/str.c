@@ -34,12 +34,12 @@ static int
 test_bu_strlcatm(int argc, char *argv[])
 {
     char *dst;
-    char *expected_result = argv[6];
+    const char *expected_result = argv[6];
     int ret, expected_ret;
     int scanned_size;
     size_t size;
     size_t len;
-    char *empty_result = bu_strdup("");
+    const char *empty_result = "";
 
     /* CMake won't pass empty strings as test parameters properly;
      * assume expected_result is supposed to be empty.
@@ -72,7 +72,6 @@ test_bu_strlcatm(int argc, char *argv[])
 
     int eqtest1 = BU_STR_EQUAL(expected_result, dst);
     int eqtest2 = (expected_ret == ret);
-    bu_free(empty_result, "empty_result");
 
     return !(eqtest1 && eqtest2
 	     && len <= size
@@ -83,12 +82,12 @@ static int
 test_bu_strlcpym(int argc, char *argv[])
 {
     char *dst;
-    char *expected_result = argv[5];
+    const char *expected_result = argv[5];
     int ret, expected_ret;
     int scanned_size;
     size_t size;
     size_t len;
-    char *empty_result = bu_strdup("");
+    const char *empty_result = "";
 
     /* CMake won't pass empty strings as test parameters properly;
      * assume expected_result is supposed to be empty.
@@ -120,7 +119,6 @@ test_bu_strlcpym(int argc, char *argv[])
 
     int eqtest1 = BU_STR_EQUAL(expected_result, dst);
     int eqtest2 = (expected_ret == ret);
-    bu_free(empty_result, "empty_result");
 
     return !(eqtest1 && eqtest2
 	     && len <= size

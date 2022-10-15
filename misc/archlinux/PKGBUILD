@@ -36,7 +36,7 @@ build() {
     -DCMAKE_BUILD_TYPE=Release \
     -DBRLCAD_ENABLE_STRICT=OFF
 
-    make
+    make -j4
 }
 
 package() {
@@ -49,10 +49,8 @@ package() {
     chmod 755 $pkgdir/etc/profile.d/$pkgname.sh
 
     mkdir -p $pkgdir/usr/share/licenses/$pkgname
-    cp $srcdir/../../doc/legal/bdl.txt \
-        $pkgdir/usr/share/licenses/$pkgname
-    cp $srcdir/../../doc/legal/bsd.txt \
-        $pkgdir/usr/share/licenses/$pkgname
+    test -f $srcdir/doc/legal/bdl.txt && cp $srcdir/doc/legal/bdl.txt $pkgdir/usr/share/licenses/$pkgname/.
+    test -f $srcdir/doc/legal/bsd.txt && cp $srcdir/doc/legal/bsd.txt $pkgdir/usr/share/licenses/$pkgname/.
 
     mkdir -p $pkgdir/etc/ld.so.conf.d
     echo ${_pkgprefix}/lib > $pkgdir/etc/ld.so.conf.d/$pkgname.conf

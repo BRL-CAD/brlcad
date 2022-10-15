@@ -1,32 +1,28 @@
 #include "STEPaggrInt.h"
 
 
-IntAggregate::IntAggregate()
-{
+IntAggregate::IntAggregate() {
 }
 
-IntAggregate::~IntAggregate()
-{
+IntAggregate::~IntAggregate() {
 }
 
-SingleLinkNode *IntAggregate::NewNode()
-{
+SingleLinkNode * IntAggregate::NewNode() {
     return new IntNode();
 }
 
 /// COPY
-STEPaggregate &IntAggregate::ShallowCopy(const STEPaggregate &a)
-{
-    const IntNode *tmp = (const IntNode *) a.GetHead();
-    IntNode *to;
+STEPaggregate & IntAggregate::ShallowCopy( const STEPaggregate & a ) {
+    const IntNode * tmp = ( const IntNode * ) a.GetHead();
+    IntNode * to;
 
-    while(tmp) {
-        to = (IntNode *) NewNode();
+    while( tmp ) {
+        to = ( IntNode * ) NewNode();
         to -> value = tmp -> value;
-        AddNode(to);
-        tmp = (const IntNode *) tmp -> NextNode();
+        AddNode( to );
+        tmp = ( const IntNode * ) tmp -> NextNode();
     }
-    if(head) {
+    if( head ) {
         _null = 0;
     } else {
         _null = 1;
@@ -37,28 +33,23 @@ STEPaggregate &IntAggregate::ShallowCopy(const STEPaggregate &a)
 
 
 
-IntNode::IntNode()
-{
+IntNode::IntNode() {
     value = S_INT_NULL;
 }
 
-IntNode::IntNode(SDAI_Integer v)
-{
+IntNode::IntNode( SDAI_Integer v ) {
     value = v;
 }
 
-IntNode::~IntNode()
-{
+IntNode::~IntNode() {
 }
 
-SingleLinkNode *IntNode::NewNode()
-{
+SingleLinkNode * IntNode::NewNode() {
     return new IntNode();
 }
 
-Severity IntNode::StrToVal(const char *s, ErrorDescriptor *err)
-{
-    if(ReadInteger(value, s, err, ",)")) {     // returns true if value is assigned
+Severity IntNode::StrToVal( const char * s, ErrorDescriptor * err ) {
+    if( ReadInteger( value, s, err, ",)" ) ) { // returns true if value is assigned
         _null = 0;
     } else {
         set_null();
@@ -67,9 +58,8 @@ Severity IntNode::StrToVal(const char *s, ErrorDescriptor *err)
     return err->severity();
 }
 
-Severity IntNode::StrToVal(istream &in, ErrorDescriptor *err)
-{
-    if(ReadInteger(value, in, err, ",)")) {     // returns true if value is assigned
+Severity IntNode::StrToVal( istream & in, ErrorDescriptor * err ) {
+    if( ReadInteger( value, in, err, ",)" ) ) { // returns true if value is assigned
         _null = 0;
     } else {
         set_null();
@@ -78,9 +68,8 @@ Severity IntNode::StrToVal(istream &in, ErrorDescriptor *err)
     return err->severity();
 }
 
-Severity IntNode::STEPread(const char *s, ErrorDescriptor *err)
-{
-    if(ReadInteger(value, s, err, ",)")) {     // returns true if value is assigned
+Severity IntNode::STEPread( const char * s, ErrorDescriptor * err ) {
+    if( ReadInteger( value, s, err, ",)" ) ) { // returns true if value is assigned
         _null = 0;
     } else {
         set_null();
@@ -89,9 +78,8 @@ Severity IntNode::STEPread(const char *s, ErrorDescriptor *err)
     return err->severity();
 }
 
-Severity IntNode::STEPread(istream &in, ErrorDescriptor *err)
-{
-    if(ReadInteger(value, in, err, ",)")) {     // returns true if value is assigned
+Severity IntNode::STEPread( istream & in, ErrorDescriptor * err ) {
+    if( ReadInteger( value, in, err, ",)" ) ) { // returns true if value is assigned
         _null = 0;
     } else {
         set_null();
@@ -100,26 +88,23 @@ Severity IntNode::STEPread(istream &in, ErrorDescriptor *err)
     return err->severity();
 }
 
-const char *IntNode::asStr(std::string &s)
-{
-    STEPwrite(s);
-    return const_cast<char *>(s.c_str());
+const char * IntNode::asStr( std::string & s ) {
+    STEPwrite( s );
+    return const_cast<char *>( s.c_str() );
 }
 
-const char *IntNode::STEPwrite(std::string &s, const char *)
-{
+const char * IntNode::STEPwrite( std::string & s, const char * ) {
     char tmp[BUFSIZ+1];
-    if(value != S_INT_NULL) {
-        sprintf(tmp, "%ld", value);
+    if( value != S_INT_NULL ) {
+        sprintf( tmp, "%ld", value );
         s = tmp;
     } else {
         s.clear();
     }
-    return const_cast<char *>(s.c_str());
+    return const_cast<char *>( s.c_str() );
 }
 
-void IntNode::STEPwrite(ostream &out)
-{
+void IntNode::STEPwrite( ostream & out ) {
     std::string s;
-    out << STEPwrite(s);
+    out << STEPwrite( s );
 }

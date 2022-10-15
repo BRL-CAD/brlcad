@@ -220,6 +220,7 @@ server_geom(struct pkg_conn *connection, char *buf)
 	/* first geometry received, initialize */
 	stash->DBIP = db_open_inmem();
     }
+    struct rt_wdb *wdbp = wdb_dbopen(stash->DBIP, RT_WDB_TYPE_DB_INMEM);
 
     if (db5_get_raw_internal_ptr(&raw, (const unsigned char *)buf) == NULL) {
 	bu_log("Corrupted serialized geometry?  Could not deserialize.\n");
@@ -234,7 +235,8 @@ server_geom(struct pkg_conn *connection, char *buf)
     ext.ext_buf = (uint8_t *)buf;
     ext.ext_nbytes = raw.object_length;
     flags = db_flags_raw_internal(&raw) | RT_DIR_INMEM;
-    wdb_export_external(stash->DBIP->dbi_wdbp, &ext, (const char *)raw.name.ext_buf, flags, raw.minor_type);
+    wdb_export_external(wdbp, &ext, (const char *)raw.name.ext_buf, flags, raw.minor_type);
+    wdb_close(wdbp);
 
     bu_log("Received %s (MAJOR=%d, MINOR=%d)\n", raw.name.ext_buf, raw.major_type, raw.minor_type);
 }

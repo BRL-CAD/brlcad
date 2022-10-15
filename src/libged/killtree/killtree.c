@@ -223,7 +223,7 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 
 	db_functree(gedp->dbip, dp,
 		    killtree_callback, killtree_callback,
-		    gedp->ged_wdbp->wdb_resp, (void *)&gktd);
+		    gedp->dbip->db_resp, (void *)&gktd);
     }
 
     /* Close the sublist of would-be killed objects. Also open the

@@ -34,6 +34,7 @@
 #include <string.h>
 #define XXH_STATIC_LINKING_ONLY
 #define XXH_IMPLEMENTATION
+#define XXH_PRIVATE_API
 #include "xxhash.h"
 #include "bio.h"
 
@@ -1470,6 +1471,7 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 	int ac;
 	char **av;
 	char *str1 = NULL;
+	int str1_len = 0;
 	struct bu_vls mvls = BU_VLS_INIT_ZERO;
 
 	// Pre-process
@@ -1489,10 +1491,11 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 	if (bu_vls_cstr(&mvls)[0] == '{')
 	    bu_vls_nibble(&mvls, 1);
 	str1 = bu_strdup(bu_vls_cstr(&mvls));
+	str1_len = bu_vls_strlen(&mvls);
 	bu_vls_free(&mvls);
 
-	av = (char **)bu_calloc(strlen(str1)+1, sizeof(char *), "av");
-	ac = bu_argv_from_string(av, strlen(str1), str1);
+	av = (char **)bu_calloc(str1_len+1, sizeof(char *), "av");
+	ac = bu_argv_from_string(av, str1_len, str1);
 	if (ac == 16) {
 	    // We have 16 elements - read each one to see if it's a valid fastf_t
 	    for (i = 0; i < ac; i++) {

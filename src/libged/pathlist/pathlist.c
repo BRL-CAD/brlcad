@@ -94,8 +94,9 @@ ged_pathlist_core(struct ged *gedp, int argc, const char *argv[])
 	--argc;
     }
 
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (db_walk_tree(gedp->dbip, argc-1, (const char **)argv+1, 1,
-		     &gedp->ged_wdbp->wdb_initial_tree_state,
+		     &wdbp->wdb_initial_tree_state,
 		     0, 0, pathlist_leaf_func, (void *)gedp) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "ged_pathlist_core: db_walk_tree() error");
 	return BRLCAD_ERROR;
