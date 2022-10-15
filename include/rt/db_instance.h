@@ -34,10 +34,12 @@
 #include "bu/file.h"
 #include "bu/mapped_file.h"
 #include "bu/ptbl.h"
+#include "bn/tol.h"
 #include "rt/mem.h"
 #include "rt/op.h"
 #include "rt/directory.h"
 #include "rt/anim.h"
+#include "rt/tol.h"
 
 __BEGIN_DECLS
 
@@ -112,6 +114,10 @@ struct db_i {
     char * dbi_title;                   /**< @brief title from IDENT rec */
     char ** dbi_filepath;               /**< @brief search path for aux file opens (convenience var) */
 
+    struct bg_tess_tol  db_ttol;
+    struct bn_tol       db_tol;
+    struct resource*    db_resp;
+
     /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
 
     struct directory * dbi_Head[RT_DBNHASH]; /** @brief PRIVATE: object hash table */
@@ -125,7 +131,10 @@ struct db_i {
     struct bu_mapped_file * dbi_mf;     /**< @brief PRIVATE: Only in read-only mode */
     struct bu_ptbl dbi_clients;         /**< @brief PRIVATE: List of rtip's using this db_i */
     int dbi_version;                    /**< @brief PRIVATE: use db_version() */
-    struct rt_wdb * dbi_wdbp;           /**< @brief PRIVATE: ptr back to containing rt_wdb */
+    struct rt_wdb * dbi_wdbp;           /**< @brief PRIVATE: disk rt_wdb */
+    struct rt_wdb * dbi_wdbp_a;         /**< @brief PRIVATE: disk append-only rt_wdb */
+    struct rt_wdb * dbi_wdbp_inmem;     /**< @brief PRIVATE: inmem rt_wdb */
+    struct rt_wdb * dbi_wdbp_inmem_a;   /**< @brief PRIVATE: inmem append-only rt_wdb */
     struct bu_ptbl dbi_changed_clbks;     /**< @brief PRIVATE: dbi_changed_t callbacks registered with dbi */
     struct bu_ptbl dbi_update_nref_clbks; /**< @brief PRIVATE: dbi_update_nref_t callbacks registered with dbi */
     int dbi_use_comb_instance_ids;            /**< @brief PRIVATE: flag to enable/disable comb instance tracking in full paths */

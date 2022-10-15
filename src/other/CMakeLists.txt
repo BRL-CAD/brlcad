@@ -204,10 +204,6 @@ mark_as_advanced(OSMESA_INCLUDE_DIRS)
 include("${CMAKE_CURRENT_SOURCE_DIR}/libosmesa.dist")
 CMAKEFILES_IN_DIR(libosmesa_ignore_files libosmesa)
 
-# linenoise is used by applications directly
-include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
-CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
-
 if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK)
 
   # Tkhtml doesn't have an active upstream

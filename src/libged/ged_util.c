@@ -515,7 +515,7 @@ _ged_densities_from_file(struct analyze_densities **dens, char **den_src, struct
     int ret = 0;
     int ecnt = 0;
 
-    if (gedp == GED_NULL || gedp->ged_wdbp == RT_WDB_NULL || !dens) {
+    if (gedp == GED_NULL || gedp->dbip == NULL || !dens) {
 	return BRLCAD_ERROR;
     }
 
@@ -703,14 +703,17 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 	return BRLCAD_ERROR;
     }
 
-    if (wdb_export_external(to_gedp->ged_wdbp, &external, to,
+    struct rt_wdb *wdbp = wdb_dbopen(to_gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_export_external(wdbp, &external, to,
 			    from_dp->d_flags,  from_dp->d_minor_type) < 0) {
 	bu_free_external(&external);
 	bu_vls_printf(from_gedp->ged_result_str,
 		      "Failed to write new object (%s) to database - aborting!!\n",
 		      to);
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
+    wdb_close(wdbp);
 
     bu_free_external(&external);
 
@@ -1812,17 +1815,19 @@ _ged_combadd2(struct ged *gedp,
 	intern.idb_ptr = (void *)comb;
 
 	if (region_flag) {
+	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	    comb->region_flag = 1;
 	    comb->region_id = ident;
 	    comb->aircode = air;
-	    comb->los = gedp->ged_wdbp->wdb_los_default;
-	    comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;
+	    comb->los = wdbp->wdb_los_default;
+	    comb->GIFTmater = wdbp->wdb_mat_default;
 	    bu_vls_printf(gedp->ged_result_str, "Creating region with attrs: region_id=%d, ", ident);
 	    if (air)
 		bu_vls_printf(gedp->ged_result_str, "air=%d, ", air);
 	    bu_vls_printf(gedp->ged_result_str, "los=%d, material_id=%d\n",
-			  gedp->ged_wdbp->wdb_los_default,
-			  gedp->ged_wdbp->wdb_mat_default);
+			  wdbp->wdb_los_default,
+			  wdbp->wdb_mat_default);
+	    wdb_close(wdbp);
 	} else {
 	    comb->region_flag = 0;
 	}

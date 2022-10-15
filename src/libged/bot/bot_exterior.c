@@ -227,7 +227,7 @@ ged_bot_exterior(struct ged *gedp, int argc, const char *argv[])
     /* prep geometry */
     struct application ap;
     RT_APPLICATION_INIT(&ap);
-    ap.a_rt_i = rt_new_rti(gedp->ged_wdbp->dbip);
+    ap.a_rt_i = rt_new_rti(gedp->dbip);
     ap.a_hit = exterior_hit;
     ap.a_miss = exterior_miss;
     ap.a_uptr = (void *)bot;

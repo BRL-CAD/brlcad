@@ -16,7 +16,7 @@ set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
 # code to any internal, compile time behaviors or features.
 
 # We deliberately do not use any of the BRL-CAD wrapper functions such as
-# BRLCAD_ADDEXEC in order to avoid their automatic addtiion of compile
+# BRLCAD_ADDEXEC in order to avoid their automatic addition of compile
 # definitions or other magic specific to BRL-CAD's internal build.
 add_executable(cad_user cad_user.c)
 target_link_libraries(cad_user libged)
@@ -34,9 +34,9 @@ endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
 set_target_properties(cad_user PROPERTIES FOLDER "BRL-CAD Regression Tests/user")
 
 if (TARGET moss.g)
-set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-user.log")
-BRLCAD_REGRESSION_TEST(regress-user "cad_user;moss.g" EXEC cad_user)
-DISTCLEAN(${LOG_FILE})
+  set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-user.log")
+  BRLCAD_REGRESSION_TEST(regress-user "cad_user;moss.g" EXEC cad_user)
+  DISTCLEAN(${LOG_FILE})
 endif (TARGET moss.g)
 
 CMAKEFILES(

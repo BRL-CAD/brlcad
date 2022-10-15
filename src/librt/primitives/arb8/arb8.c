@@ -2543,7 +2543,7 @@ rt_arb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct b
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    const struct bn_tol arb_tol = BG_TOL_INIT;
+    const struct bn_tol arb_tol = BN_TOL_INIT_TOL;
     int arbType = rt_arb_std_type(ip, &arb_tol);
 
     // Set up the containers

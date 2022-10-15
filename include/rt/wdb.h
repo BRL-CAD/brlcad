@@ -31,16 +31,22 @@
 #include "bu/list.h"
 #include "bu/vls.h"
 #include "bu/observer.h"
-#include "bn/tol.h"
 #include "rt/db_instance.h"
 #include "rt/tree.h"
-#include "rt/tol.h"
 
 __BEGIN_DECLS
 
 struct resource;  /* forward declaration */
 
-/* struct rt_wdb database types (for wdb_type struct entry) */
+/* struct rt_wdb database types (for wdb_type struct entry).
+ * The "default" types will return the wdbp associated with
+ * the dbip - i.e., if the dbip is an inmem it will return
+ * the INMEM types, and if associated with a file it will
+ * return the DISK types.  This is for calling code that
+ * just needs a wdbp and isn't concerned with the details
+ * of how objects are being written. */
+#define RT_WDB_TYPE_DB_DEFAULT                  0
+#define RT_WDB_TYPE_DB_DEFAULT_APPEND_ONLY      1
 #define RT_WDB_TYPE_DB_DISK                     2
 #define RT_WDB_TYPE_DB_DISK_APPEND_ONLY         3
 #define RT_WDB_TYPE_DB_INMEM                    4
@@ -58,9 +64,6 @@ struct rt_wdb {
     int                 wdb_type; /** < @brief .g database type (RT_WDB_TYPE - disk or inmem, append-only) */
     struct db_i *       dbip;
     struct db_tree_state        wdb_initial_tree_state;
-    struct bg_tess_tol  wdb_ttol;
-    struct bn_tol       wdb_tol;
-    struct resource*    wdb_resp;
 
     /* variables for name prefixing */
     struct bu_vls       wdb_prestr;
@@ -81,7 +84,7 @@ struct rt_wdb {
 
 #define RT_CHECK_WDB(_p) BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
 #define RT_CK_WDB(_p) RT_CHECK_WDB(_p)
-#define RT_WDB_INIT_ZERO { {RT_WDB_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, NULL, RT_DBTS_INIT_ZERO, BG_TESS_TOL_INIT_ZERO, BN_TOL_INIT_ZERO, NULL, BU_VLS_INIT_ZERO, 0, 0, 0, 0, 0, 0, BU_VLS_INIT_ZERO, BU_OBSERVER_LIST_INIT_ZERO, NULL }
+#define RT_WDB_INIT_ZERO { {RT_WDB_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, NULL, RT_DBTS_INIT_ZERO, BU_VLS_INIT_ZERO, 0, 0, 0, 0, 0, 0, BU_VLS_INIT_ZERO, BU_OBSERVER_LIST_INIT_ZERO, NULL }
 #define RT_WDB_NULL             ((struct rt_wdb *)NULL)
 
 /**
@@ -100,6 +103,8 @@ RT_EXPORT extern struct rt_wdb *wdb_fopen(const char *filename);
  * directory is built along the way, allowing retrievals and object
  * replacements as needed.
  *
+ * The rt_wdb type returned is RT_WDB_TYPE_DB_DISK.
+ *
  * Users can change the database title by calling: ???
  */
 RT_EXPORT extern struct rt_wdb *wdb_fopen_v(const char *filename,
@@ -107,8 +112,12 @@ RT_EXPORT extern struct rt_wdb *wdb_fopen_v(const char *filename,
 
 
 /**
- * Create a libwdb output stream destined for an existing BRL-CAD
- * database, already opened via a db_open() call.
+ * Create a libwdb output stream destined for an existing BRL-CAD database,
+ * already opened via a db_open() call.
+ *
+ * Note: there can be only one rt_wdb container of each type per dbip - if an
+ * rt_wdb of the specified type is already associated with the database, the
+ * pre-existing stream will be returned.
  *
  * RT_WDB_TYPE_DB_DISK Add to on-disk database
  * RT_WDB_TYPE_DB_DISK_APPEND_ONLY Add to on-disk database, don't clobber existing names, use prefix

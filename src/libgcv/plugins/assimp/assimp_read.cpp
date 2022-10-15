@@ -463,7 +463,8 @@ assimp_read(struct gcv_context *context, const struct gcv_opts* gcv_options, con
     state.assimp_read_options = (assimp_read_options_t*)options_data;
     state.id_no = state.assimp_read_options->starting_id;
     state.input_file = source_path;
-    state.fd_out = context->dbip->dbi_wdbp;
+    struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+    state.fd_out = wdbp;
 
     /* check and validate the specied input file type against ai
      * checks using file extension if no --format is supplied
@@ -483,7 +484,9 @@ assimp_read(struct gcv_context *context, const struct gcv_opts* gcv_options, con
 
     mk_id_units(state.fd_out, "Conversion using Asset Importer Library (assimp)", "mm");
 
-    return convert_input(&state);
+    int ret = convert_input(&state);
+    wdb_close(wdbp);
+    return ret;
 }
 
 

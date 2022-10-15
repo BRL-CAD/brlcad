@@ -74,10 +74,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "sc_cf.h"
-#include "sc_memmgr.h"
+#include "config.h"
 #include "sc_export.h"
-#include "sc_getopt.h"
 #include "express/error.h"
 #include "express/express.h"
 #include "express/resolve.h"
@@ -87,20 +85,80 @@
 extern int exp_yydebug;
 #endif /*YYDEBUG*/
 
+char  * sc_optarg;        // global argument pointer
+int sc_optind = 0;     // global argv index
+
+int sc_getopt( int argc, char * argv[], char * optstring ) {
+    static char * next = NULL;
+    if( sc_optind == 0 ) {
+        next = NULL;
+    }
+
+    sc_optarg = NULL;
+
+    if( next == NULL || *next == '\0' ) {
+        if( sc_optind == 0 ) {
+            sc_optind++;
+        }
+
+        if( sc_optind >= argc || argv[sc_optind][0] != '-' || argv[sc_optind][1] == '\0' ) {
+            sc_optarg = NULL;
+            if( sc_optind < argc ) {
+                sc_optarg = argv[sc_optind];
+            }
+            return EOF;
+        }
+
+        if( strcmp( argv[sc_optind], "--" ) == 0 ) {
+            sc_optind++;
+            sc_optarg = NULL;
+            if( sc_optind < argc ) {
+                sc_optarg = argv[sc_optind];
+            }
+            return EOF;
+        }
+
+        next = argv[sc_optind];
+        next++;     // skip past -
+        sc_optind++;
+    }
+
+    char c = *next++;
+    char * cp = strchr( optstring, c );
+
+    if( cp == NULL || c == ':' ) {
+        return '?';
+    }
+
+    cp++;
+    if( *cp == ':' ) {
+        if( *next != '\0' ) {
+            sc_optarg = next;
+            next = NULL;
+        } else if( sc_optind < argc ) {
+            sc_optarg = argv[sc_optind];
+            sc_optind++;
+        } else {
+            return '?';
+        }
+    }
+
+    return c;
+}
+
+
 char EXPRESSgetopt_options[256] = "Bbd:e:i:w:p:rvz"; /* larger than the string because exp2cxx, exppp, etc may append their own options */
 static int no_need_to_work = 0; /* TRUE if we can exit gracefully without doing any work */
 
-void print_fedex_version(void)
-{
-    fprintf(stderr, "Build info for %s: %s\nhttp://github.com/stepcode/stepcode and scl-dev on google groups\n", EXPRESSprogram_name, SC_VERSION);
+void print_fedex_version( void ) {
+    fprintf( stderr, "Build info for %s: %s\nhttp://github.com/stepcode/stepcode and scl-dev on google groups\n", EXPRESSprogram_name, SC_VERSION );
     no_need_to_work = 1;
 }
 
-int main(int argc, char **argv)
-{
+int main( int argc, char ** argv ) {
     int c;
     int rc;
-    char *cp;
+    char * cp;
     int no_warnings = 1;
     int resolve = 1;
     int result;
@@ -115,27 +173,27 @@ int main(int argc, char **argv)
 
     EXPRESSinitialize();
 
-    if(EXPRESSinit_args) {
-        (*EXPRESSinit_args)(argc, argv);
+    if( EXPRESSinit_args ) {
+        ( *EXPRESSinit_args )( argc, argv );
     }
 
     sc_optind = 1;
-    while((c = sc_getopt(argc, argv, EXPRESSgetopt_options)) != -1) {
-        switch(c) {
+    while( ( c = sc_getopt( argc, argv, EXPRESSgetopt_options ) ) != -1 ) {
+        switch( c ) {
             case 'd':
                 ERRORdebugging = 1;
-                switch(atoi(sc_optarg)) {
+                switch( atoi( sc_optarg ) ) {
                     case 0:
-                        fprintf(stderr, "\ndebug codes:\n");
-                        fprintf(stderr, "  0 - this help\n");
-                        fprintf(stderr, "  1 - basic debugging\n");
+                        fprintf( stderr, "\ndebug codes:\n" );
+                        fprintf( stderr, "  0 - this help\n" );
+                        fprintf( stderr, "  1 - basic debugging\n" );
 #ifdef debugging
-                        fprintf(stderr, "  4 - light malloc debugging\n");
-                        fprintf(stderr, "  5 - heavy malloc debugging\n");
-                        fprintf(stderr, "  6 - heavy malloc debugging while resolving\n");
+                        fprintf( stderr, "  4 - light malloc debugging\n" );
+                        fprintf( stderr, "  5 - heavy malloc debugging\n" );
+                        fprintf( stderr, "  6 - heavy malloc debugging while resolving\n" );
 #endif /* debugging*/
 #ifdef YYDEBUG
-                        fprintf(stderr, "  8 - set YYDEBUG\n");
+                        fprintf( stderr, "  8 - set YYDEBUG\n" );
 #endif /*YYDEBUG*/
                         break;
                     case 1:
@@ -143,10 +201,10 @@ int main(int argc, char **argv)
                         break;
 #ifdef debugging
                     case 4:
-                        malloc_debug(1);
+                        malloc_debug( 1 );
                         break;
                     case 5:
-                        malloc_debug(2);
+                        malloc_debug( 2 );
                         break;
                     case 6:
                         malloc_debug_resolve = 1;
@@ -174,16 +232,16 @@ int main(int argc, char **argv)
             case 'i':
             case 'w':
                 no_warnings = 0;
-                ERRORset_warning(sc_optarg, c == 'w');
+                ERRORset_warning( sc_optarg, c == 'w' );
                 break;
             case 'p':
-                for(cp = sc_optarg; *cp; cp++) {
-                    if(*cp == '#') {
+                for( cp = sc_optarg; *cp; cp++ ) {
+                    if( *cp == '#' ) {
                         print_objects_while_running |= OBJ_PASS_BITS;
-                    } else if(*cp == 'E') {
+                    } else if( *cp == 'E' ) {
                         print_objects_while_running = OBJ_ANYTHING_BITS;
                     } else {
-                        print_objects_while_running |= OBJget_bits(*cp);
+                        print_objects_while_running |= OBJget_bits( *cp );
                     }
                 }
                 break;
@@ -193,12 +251,12 @@ int main(int argc, char **argv)
                 break;
             default:
                 rc = 1;
-                if(EXPRESSgetopt) {
-                    rc = (*EXPRESSgetopt)(c, sc_optarg);
+                if( EXPRESSgetopt ) {
+                    rc = ( *EXPRESSgetopt )( c, sc_optarg );
                 }
-                if(rc == 1) {
-                    if(ERRORusage_function) {
-                        (*ERRORusage_function)();
+                if( rc == 1 ) {
+                    if( ERRORusage_function ) {
+                        ( *ERRORusage_function )();
                     } else {
                         EXPRESSusage(1);
                     }
@@ -206,66 +264,66 @@ int main(int argc, char **argv)
                 break;
         }
     }
-    if(!input_filename) {
+    if( !input_filename ) {
         input_filename = argv[sc_optind];
-        if(!input_filename) {
+        if( !input_filename ) {
             EXPRESScleanup();
-            if(no_need_to_work) {
-                return(0);
+            if( no_need_to_work ) {
+                return( 0 );
             } else {
-                (*ERRORusage_function)();
+                ( *ERRORusage_function )();
             }
         }
     }
 
-    if(no_warnings) {
-        ERRORset_all_warnings(1);
+    if( no_warnings ) {
+        ERRORset_all_warnings( 1 );
     }
-    ERRORbuffer_messages(buffer_messages);
+    ERRORbuffer_messages( buffer_messages );
 
-    if(EXPRESSinit_parse) {
-        (*EXPRESSinit_parse)();
+    if( EXPRESSinit_parse ) {
+        ( *EXPRESSinit_parse )();
     }
 
     model = EXPRESScreate();
-    EXPRESSparse(model, (FILE *)0, input_filename);
-    if(ERRORoccurred) {
-        result = EXPRESS_fail(model);
+    EXPRESSparse( model, ( FILE * )0, input_filename );
+    if( ERRORoccurred ) {
+        result = EXPRESS_fail( model );
         EXPRESScleanup();
-        EXPRESSdestroy(model);
+        EXPRESSdestroy( model );
         return result;
     }
 
 #ifdef debugging
-    if(malloc_debug_resolve) {
+    if( malloc_debug_resolve ) {
         malloc_verify();
-        malloc_debug(2);
+        malloc_debug( 2 );
     }
 #endif /*debugging*/
 
-    if(resolve) {
-        EXPRESSresolve(model);
-        if(ERRORoccurred) {
-            result = EXPRESS_fail(model);
+    if( resolve ) {
+        EXPRESSresolve( model );
+        if( ERRORoccurred ) {
+            result = EXPRESS_fail( model );
             EXPRESScleanup();
-            EXPRESSdestroy(model);
+            EXPRESSdestroy( model );
             return result;
         }
     }
 
-    if(EXPRESSbackend) {
-        (*EXPRESSbackend)(model);
+    if( EXPRESSbackend ) {
+        ( *EXPRESSbackend )( model );
     }
 
-    if(ERRORoccurred) {
-        result = EXPRESS_fail(model);
+    if( ERRORoccurred ) {
+        result = EXPRESS_fail( model );
         EXPRESScleanup();
-        EXPRESSdestroy(model);
+        EXPRESSdestroy( model );
         return result;
     }
 
-    result = EXPRESS_succeed(model);
+    result = EXPRESS_succeed( model );
     EXPRESScleanup();
-    EXPRESSdestroy(model);
+    EXPRESSdestroy( model );
     return result;
 }

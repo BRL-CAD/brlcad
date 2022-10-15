@@ -1,4 +1,4 @@
-# create sc_cf.h
+# create config.h
 
 include(CheckLibraryExists)
 include(CheckIncludeFile)
@@ -77,9 +77,9 @@ int main() {return !(f() == f());}
   cmake_pop_check_state()
 endif(SC_ENABLE_CXX11)
 
-# Now that all the tests are done, configure the sc_cf.h file:
-configure_file(${CMAKE_SOURCE_DIR}/include/sc_cf.h.in ${SC_BINARY_DIR}/${INCLUDE_DIR}/sc_cf.h.gen)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SC_BINARY_DIR}/${INCLUDE_DIR}/sc_cf.h.gen ${SC_BINARY_DIR}/${INCLUDE_DIR}/sc_cf.h)
+# Now that all the tests are done, configure the config.h file:
+configure_file(${CMAKE_SOURCE_DIR}/include/config.h.in ${SC_BINARY_DIR}/${INCLUDE_DIR}/config.h.gen)
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SC_BINARY_DIR}/${INCLUDE_DIR}/config.h.gen ${SC_BINARY_DIR}/${INCLUDE_DIR}/config.h)
 
 # Local Variables:
 # tab-width: 8

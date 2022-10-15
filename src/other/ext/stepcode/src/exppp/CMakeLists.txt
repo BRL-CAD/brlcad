@@ -26,12 +26,11 @@ SET(EXPPP_SOURCES
 include_directories(
   ${SC_SOURCE_DIR}/include
   ${SC_SOURCE_DIR}/include/exppp
-  ${SC_SOURCE_DIR}/src/base
   ${SC_SOURCE_DIR}/src/express
  )
 
 if(BUILD_SHARED_LIBS)
-  SC_ADDLIB(libexppp SHARED SOURCES ${LIBEXPPP_SOURCES} LINK_LIBRARIES express base)
+  SC_ADDLIB(libexppp SHARED SOURCES ${LIBEXPPP_SOURCES} LINK_LIBRARIES express)
   set_target_properties(libexppp PROPERTIES PREFIX "")
   if(WIN32)
     target_compile_definitions(libexppp PRIVATE SC_EXPPP_DLL_EXPORTS)
@@ -39,11 +38,11 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 if(BUILD_STATIC_LIBS)
-  SC_ADDLIB(libexppp-static STATIC SOURCES ${LIBEXPPP_SOURCES} LINK_LIBRARIES express-static base-static)
+  SC_ADDLIB(libexppp-static STATIC SOURCES ${LIBEXPPP_SOURCES} LINK_LIBRARIES express-static)
   set_target_properties(libexppp-static PROPERTIES PREFIX "")
 endif()
 
-SC_ADDEXEC(exppp SOURCES ${EXPPP_SOURCES} LINK_LIBRARIES libexppp express base)
+SC_ADDEXEC(exppp SOURCES ${EXPPP_SOURCES} LINK_LIBRARIES libexppp express)
 
 if(SC_ENABLE_TESTING)
   add_subdirectory(test)

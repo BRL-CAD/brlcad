@@ -341,7 +341,7 @@ get_diff_components(struct diff_elements *el, const struct db_i *dbip, const str
 
 	/* object type isn't a normal parameter attribute, so add it as such */
 	if (el->intern->idb_minor_type == DB5_MINORTYPE_BRLCAD_ARB8) {
-	    struct bn_tol arb_tol = BG_TOL_INIT;
+	    struct bn_tol arb_tol = BN_TOL_INIT_TOL;
 	    bu_avs_add(el->params, "DB5_MINORTYPE", type_to_str(el->intern, rt_arb_std_type(el->intern, &arb_tol)));
 	} else {
 	    bu_avs_add(el->params, "DB5_MINORTYPE", el->intern->idb_meth->ft_label);
