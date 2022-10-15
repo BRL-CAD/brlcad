@@ -14,8 +14,9 @@ set(other_licenses
   openNURBS.txt
   png.txt
   poly2tri.txt
-  proj-4.txt
+  proj.txt
   regex.txt
+  sqlite3.txt
   stepcode.txt
   tcl.txt
   tk.txt
