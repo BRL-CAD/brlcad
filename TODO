@@ -29,6 +29,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
     more subcommands were added later.  looks like some were stubbed,
     should be disabled/hidden.
 
+  - when draw -S was fixed to work with -m1 option
+
+  - when primitive select causing solids to disappear was fixed
+
 * asc2g is failing on "put" command (maybe specific to 32-bit),
   resulting in "unknown command" on an uninstalled build.  title and
   units commands work, but puts fails inside ged_exec().
