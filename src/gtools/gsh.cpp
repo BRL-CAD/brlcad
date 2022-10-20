@@ -95,7 +95,12 @@ view_checkpoint(struct gsh_state *s)
 	struct dm *dmp = (struct dm *)s->gedp->ged_gvp->dmp;
 	s->prev_dhash = (dmp) ? dm_hash(dmp) : 0;
 	s->prev_vhash = bv_hash(s->gedp->ged_gvp);
-	s->prev_lhash = dl_name_hash(s->gedp);
+	const char *ncmd = getenv("GED_TEST_NEW_CMD_FORMS");
+	if (BU_STR_EQUAL(ncmd, "1")) {
+	    s->prev_lhash = 0;
+	} else {
+	    s->prev_lhash = dl_name_hash(s->gedp);
+	}
 	s->prev_ghash = ged_dl_hash((struct display_list *)s->gedp->ged_gdp->gd_headDisplay);
     }
 }
@@ -103,7 +108,7 @@ view_checkpoint(struct gsh_state *s)
 void
 view_update(struct gsh_state *s)
 {
-    if (!s || !s->gedp || !s->gedp->dbip)
+    if (!s || !s->gedp || !s->gedp->ged_gvp)
 	return;
 
     struct ged *gedp = s->gedp;
@@ -112,13 +117,29 @@ view_update(struct gsh_state *s)
     if (!v)
 	return;
 
-    struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
+    struct dm *dmp = (struct dm *)v->dmp;
     if (!dmp)
 	return;
 
     unsigned long long dhash = dm_hash(dmp);
-    unsigned long long vhash = bv_hash(gedp->ged_gvp);
-    unsigned long long lhash = dl_name_hash(gedp);
+    unsigned long long vhash = bv_hash(v);
+    unsigned long long lhash;
+    const char *ncmd = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(ncmd, "1")) {
+	if (gedp->dbi_state) {
+	    unsigned long long updated = gedp->dbi_state->update();
+	    lhash = (updated) ? s->prev_lhash + 1 : 0;
+	    if (v->gv_s->gv_cleared) {
+		lhash = 1;
+		v->gv_s->gv_cleared = 0;
+	    }
+	} else {
+	    lhash = 0;
+	}
+    } else {
+	lhash = dl_name_hash(s->gedp);
+    }
+
     unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
     unsigned long long lhash_edit = lhash;
     if (dhash != s->prev_dhash) {
@@ -134,20 +155,34 @@ view_update(struct gsh_state *s)
 	dm_set_dirty(dmp, 1);
     }
     if (dm_get_dirty(dmp)) {
-	matp_t mat = gedp->ged_gvp->gv_model2view;
-	dm_loadmatrix(dmp, mat, 0);
-	unsigned char geometry_default_color[] = { 255, 0, 0 };
-	dm_draw_begin(dmp);
-	dm_draw_head_dl(dmp, gedp->ged_gdp->gd_headDisplay,
-		1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
-		0, 0, geometry_default_color, 1, 0);
+	ncmd = getenv("GED_TEST_NEW_CMD_FORMS");
+	if (BU_STR_EQUAL(ncmd, "1")) {
+	    unsigned char *dm_bg1;
+	    unsigned char *dm_bg2;
+	    dm_get_bg(&dm_bg1, &dm_bg2, dmp);
+	    dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
+	    dm_set_dirty(dmp, 0);
+	    dm_draw_objs(v, v->gv_base2local, v->gv_local2base, NULL, NULL);
+	    dm_draw_end(dmp);
+	} else {
+	    matp_t mat = gedp->ged_gvp->gv_model2view;
+	    dm_loadmatrix(dmp, mat, 0);
+	    unsigned char geometry_default_color[] = { 255, 0, 0 };
+	    dm_draw_begin(dmp);
+	    dm_draw_head_dl(dmp, gedp->ged_gdp->gd_headDisplay,
+		    1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
+		    0, 0, geometry_default_color, 1, 0);
 
-	// Faceplate drawing
-	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-	dm_draw_viewobjs(wdbp, v, NULL, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
-	wdb_close(wdbp);
-
-	dm_draw_end(dmp);
+	    // Faceplate drawing
+	    if (gedp->dbip) {
+		struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+		dm_draw_viewobjs(wdbp, v, NULL, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
+		wdb_close(wdbp);
+	    } else {
+		dm_draw_viewobjs(NULL, v, NULL, 1, 1);
+	    }
+	    dm_draw_end(dmp);
+	}
     }
 }
 #endif
@@ -315,6 +350,9 @@ main(int argc, const char **argv)
 
     /* Done with program name */
     argv++; argc--;
+
+    // Prepare the dbi_state container for running with GED_TEST_NEW_CMD_FORMS
+    bu_setenv("LIBGED_DBI_STATE", "1", 1);
 
     /* Parse options, fail if anything goes wrong */
     if ((argc = bu_opt_parse(&msg, argc, argv, d)) == -1) {

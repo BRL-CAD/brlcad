@@ -144,6 +144,7 @@ void QtGL::paintGL()
     if (!m_init || !dmp)
 	return;
 
+    // Re-draw the background to clear any previous drawing
     unsigned char *dm_bg1;
     unsigned char *dm_bg2;
     dm_get_bg(&dm_bg1, &dm_bg2, dmp);

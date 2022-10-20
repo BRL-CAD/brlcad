@@ -1,4 +1,4 @@
-/*                           D R A W . C
+/*                       D R A W . C P P
  * BRL-CAD
  *
  * Copyright (c) 2018-2022 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file draw.c
+/** @file draw.cpp
  *
  * Testing routines for new drawing logic
  *
@@ -64,6 +64,22 @@ img_cmp(int id, const char *cdir)
     bu_vls_free(&cname);
 }
 
+void
+dm_refresh(struct ged *gedp)
+{
+    gedp->dbi_state->update();
+
+    struct bview *v= gedp->ged_gvp;
+    struct dm *dmp = (struct dm *)v->dmp;
+    unsigned char *dm_bg1;
+    unsigned char *dm_bg2;
+    dm_get_bg(&dm_bg1, &dm_bg2, dmp);
+    dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
+    dm_set_dirty(dmp, 0);
+    dm_draw_objs(v, v->gv_base2local, v->gv_local2base, NULL, NULL);
+    dm_draw_end(dmp);
+}
+
 int
 main(int ac, char *av[]) {
     struct ged *dbp;
@@ -99,7 +115,6 @@ main(int ac, char *av[]) {
     bv_init(dbp->ged_gvp, &dbp->ged_views);
     bu_vls_sprintf(&dbp->ged_gvp->gv_name, "default");
     bv_set_add_view(&dbp->ged_views, dbp->ged_gvp);
-    struct bview *v = dbp->ged_gvp;
 
     /* To generate images that will allow us to check if the drawing
      * is proceeding as expected, we use the swrast off-screen dm. */
@@ -109,6 +124,7 @@ main(int ac, char *av[]) {
     s_av[1] = "attach";
     s_av[2] = "swrast";
     s_av[3] = "SW";
+    s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
 
     struct dm *dmp = (struct dm *)dbp->ged_gvp->dmp;
@@ -118,6 +134,7 @@ main(int ac, char *av[]) {
     /***** Basic wireframe draw *****/
     s_av[0] = "draw";
     s_av[1] = "all.g";
+    s_av[2] = NULL;
     ged_exec(dbp, 2, s_av);
 
     s_av[0] = "autoview";
@@ -127,22 +144,25 @@ main(int ac, char *av[]) {
     s_av[0] = "ae";
     s_av[1] = "35";
     s_av[2] = "25";
+    s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
-    dm_draw_objs(v, v->gv_base2local, v->gv_local2base, NULL, NULL);
+    dm_refresh(dbp);
 
     s_av[0] = "screengrab";
     s_av[1] = "v001.png";
+    s_av[2] = NULL;
     ged_exec(dbp, 2, s_av);
     img_cmp(1, av[2]);
 
     s_av[0] = "Z";
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
-    dm_draw_objs(v, v->gv_base2local, v->gv_local2base, NULL, NULL);
+    dm_refresh(dbp);
 
     // Check that everything is in fact cleared
     s_av[0] = "screengrab";
     s_av[1] = "clear.png";
+    s_av[2] = NULL;
     ged_exec(dbp, 2, s_av);
     img_cmp(0, av[2]);
 
@@ -150,12 +170,13 @@ main(int ac, char *av[]) {
     s_av[0] = "view";
     s_av[1] = "obj";
     s_av[2] = "p1";
-    s_av[3] = "create";
-    s_av[4] = "256";
+    s_av[3] = "polygon";
+    s_av[4] = "create";
     s_av[5] = "256";
-    s_av[6] = "circle";
-    s_av[7] = NULL;
-    ged_exec(dbp, 1, s_av);
+    s_av[6] = "256";
+    s_av[7] = "circle";
+    s_av[8] = NULL;
+    ged_exec(dbp, 8, s_av);
 
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -163,14 +184,15 @@ main(int ac, char *av[]) {
     s_av[3] = "update";
     s_av[4] = "300";
     s_av[5] = "300";
-    s_av[7] = NULL;
-    ged_exec(dbp, 1, s_av);
-    dm_draw_objs(v, v->gv_base2local, v->gv_local2base, NULL, NULL);
+    s_av[6] = NULL;
+    ged_exec(dbp, 6, s_av);
+    dm_refresh(dbp);
 
     s_av[0] = "screengrab";
     s_av[1] = "v002.png";
+    s_av[2] = NULL;
     ged_exec(dbp, 2, s_av);
-    img_cmp(1, av[2]);
+    img_cmp(2, av[2]);
 
 
     ged_close(dbp);
@@ -178,12 +200,13 @@ main(int ac, char *av[]) {
     return 0;
 }
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+
