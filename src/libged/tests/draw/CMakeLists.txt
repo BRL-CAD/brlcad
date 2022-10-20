@@ -10,6 +10,9 @@ CMAKEFILES(
   v004_ctrl.png
   v005_ctrl.png
   v006_ctrl.png
+  v007_ctrl.png
+  v008_ctrl.png
+  v009_ctrl.png
   )
 
 CMAKEFILES(CMakeLists.txt)

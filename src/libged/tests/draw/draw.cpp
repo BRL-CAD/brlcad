@@ -58,7 +58,7 @@ scene_clear(struct ged *gedp)
 }
 
 void
-img_cmp(int id, struct ged *gedp, const char *cdir)
+img_cmp(int id, struct ged *gedp, const char *cdir, bool clear)
 {
     icv_image_t *ctrl, *timg;
     struct bu_vls tname = BU_VLS_INIT_ZERO;
@@ -93,7 +93,8 @@ img_cmp(int id, struct ged *gedp, const char *cdir)
 
     bu_vls_free(&tname);
     bu_vls_free(&cname);
-    scene_clear(gedp);
+    if (clear)
+	scene_clear(gedp);
 }
 
 
@@ -318,40 +319,140 @@ main(int ac, char *av[]) {
     s_av[2] = "25";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
-    img_cmp(1, dbp, av[2]);
+    img_cmp(1, dbp, av[2], true);
 
     // Check that everything is in fact cleared
-    img_cmp(0, dbp, av[2]);
+    img_cmp(0, dbp, av[2], false);
     bu_log("Done.\n");
 
     /***** Polygon circle *****/
     bu_log("Testing view polygon circle draw...\n");
     poly_circ(dbp);
-    img_cmp(2, dbp, av[2]);
+    img_cmp(2, dbp, av[2], true);
 
     // Check that everything is in fact cleared
-    img_cmp(0, dbp, av[2]);
+    img_cmp(0, dbp, av[2], false);
     bu_log("Done.\n");
 
     /***** Polygon ellipse *****/
     bu_log("Testing view polygon ellipse draw...\n");
     poly_ell(dbp);
-    img_cmp(3, dbp, av[2]);
+    img_cmp(3, dbp, av[2], true);
+    bu_log("Done.\n");
 
     /***** Polygon square *****/
     bu_log("Testing view polygon square draw...\n");
     poly_sq(dbp);
-    img_cmp(4, dbp, av[2]);
+    img_cmp(4, dbp, av[2], true);
+    bu_log("Done.\n");
 
     /***** Polygon rectangle *****/
     bu_log("Testing view polygon rectangle draw...\n");
     poly_rect(dbp);
-    img_cmp(5, dbp, av[2]);
+    img_cmp(5, dbp, av[2], true);
+    bu_log("Done.\n");
 
     /***** Polygon general *****/
-    bu_log("Testing view polygon ellipse draw...\n");
+    bu_log("Testing view general polygon draw...\n");
     poly_general(dbp);
-    img_cmp(6, dbp, av[2]);
+    img_cmp(6, dbp, av[2], true);
+    bu_log("Done.\n");
+
+    /***** Test draw UP and DOWN *****/
+    poly_general(dbp);
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "g1";
+    s_av[3] = "draw";
+    s_av[4] = "DOWN";
+    s_av[5] = NULL;
+    ged_exec(dbp, 5, s_av);
+    // Should be an empty scene - make sure we don't clear after this
+    // comparison, as we want to re-enable the drawing of this object.
+    img_cmp(0, dbp, av[2], false);
+
+    s_av[4] = "UP";
+    s_av[5] = NULL;
+    ged_exec(dbp, 5, s_av);
+    // Enabling the draw should produce the same visual as the general polygon
+    // draw test above, so we can check using the same image
+    img_cmp(6, dbp, av[2], true);
+
+    /***** Test view polygon booleans: union ****/
+    poly_circ(dbp);
+    poly_ell(dbp);
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "c1";
+    s_av[3] = "polygon";
+    s_av[4] = "csg";
+    s_av[5] = "u";
+    s_av[6] = "e1";
+    s_av[7] = NULL;
+    ged_exec(dbp, 7, s_av);
+
+    // Result is stored in c1 - turn off e1
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "e1";
+    s_av[3] = "draw";
+    s_av[4] = "DOWN";
+    s_av[5] = NULL;
+    ged_exec(dbp, 5, s_av);
+
+    // See if we got what we expected
+    img_cmp(7, dbp, av[2], true);
+
+    /***** Test view polygon booleans: subtraction ****/
+    poly_circ(dbp);
+    poly_ell(dbp);
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "c1";
+    s_av[3] = "polygon";
+    s_av[4] = "csg";
+    s_av[5] = "-";
+    s_av[6] = "e1";
+    s_av[7] = NULL;
+    ged_exec(dbp, 7, s_av);
+
+    // Result is stored in c1 - turn off e1
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "e1";
+    s_av[3] = "draw";
+    s_av[4] = "DOWN";
+    s_av[5] = NULL;
+    ged_exec(dbp, 5, s_av);
+
+    // See if we got what we expected
+    img_cmp(8, dbp, av[2], true);
+
+    /***** Test view polygon booleans: intersection ****/
+    poly_circ(dbp);
+    poly_ell(dbp);
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "c1";
+    s_av[3] = "polygon";
+    s_av[4] = "csg";
+    s_av[5] = "+";
+    s_av[6] = "e1";
+    s_av[7] = NULL;
+    ged_exec(dbp, 7, s_av);
+
+    // Result is stored in c1 - turn off e1
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "e1";
+    s_av[3] = "draw";
+    s_av[4] = "DOWN";
+    s_av[5] = NULL;
+    ged_exec(dbp, 5, s_av);
+
+    // See if we got what we expected
+    img_cmp(9, dbp, av[2], true);
+
 
 
 
