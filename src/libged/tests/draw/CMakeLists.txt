@@ -1,11 +1,12 @@
 BRLCAD_ADDEXEC(ged_test_draw draw.cpp "libged;libdm" TEST)
-BRLCAD_ADD_TEST(NAME ged_test_draw_moss COMMAND ged_test_draw "${CMAKE_CURRENT_SOURCE_DIR}/moss.g" "${CMAKE_CURRENT_SOURCE_DIR}")
+BRLCAD_ADD_TEST(NAME ged_test_drawing COMMAND ged_test_draw "${CMAKE_CURRENT_SOURCE_DIR}/moss.g" "${CMAKE_CURRENT_SOURCE_DIR}")
 
 CMAKEFILES(
   empty.png
   moss.g
   v001_ctrl.png
   v002_ctrl.png
+  v003_ctrl.png
   )
 
 CMAKEFILES(CMakeLists.txt)

@@ -80,6 +80,71 @@ dm_refresh(struct ged *gedp)
     dm_draw_end(dmp);
 }
 
+void
+scene_clear(struct ged *gedp)
+{
+    const char *s_av[2] = {NULL};
+    s_av[0] = "Z";
+    ged_exec(gedp, 1, s_av);
+    dm_refresh(gedp);
+}
+
+/* We will often want to do multiple different operations with
+ * similar shapes - to make this easier, we encapsulate the
+ * creation calls for some reusable cases */
+
+/* Creates a view circle "c1" */
+void
+poly_circ(struct ged *gedp)
+{
+    const char *s_av[15] = {NULL};
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "c1";
+    s_av[3] = "polygon";
+    s_av[4] = "create";
+    s_av[5] = "256";
+    s_av[6] = "256";
+    s_av[7] = "circle";
+    s_av[8] = NULL;
+    ged_exec(gedp, 8, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "c1";
+    s_av[3] = "update";
+    s_av[4] = "300";
+    s_av[5] = "300";
+    s_av[6] = NULL;
+    ged_exec(gedp, 6, s_av);
+}
+
+/* Creates a view ellipse "e1" */
+void
+poly_ell(struct ged *gedp)
+{
+    const char *s_av[15] = {NULL};
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "e1";
+    s_av[3] = "polygon";
+    s_av[4] = "create";
+    s_av[5] = "300";
+    s_av[6] = "256";
+    s_av[7] = "ellipse";
+    s_av[8] = NULL;
+    ged_exec(gedp, 8, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "e1";
+    s_av[3] = "update";
+    s_av[4] = "400";
+    s_av[5] = "300";
+    s_av[6] = NULL;
+    ged_exec(gedp, 6, s_av);
+}
+
 int
 main(int ac, char *av[]) {
     struct ged *dbp;
@@ -154,11 +219,7 @@ main(int ac, char *av[]) {
     s_av[2] = NULL;
     ged_exec(dbp, 2, s_av);
     img_cmp(1, av[2]);
-
-    s_av[0] = "Z";
-    s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
-    dm_refresh(dbp);
+    scene_clear(dbp);
 
     // Check that everything is in fact cleared
     s_av[0] = "screengrab";
@@ -170,25 +231,7 @@ main(int ac, char *av[]) {
 
     /***** Polygon circle *****/
     bu_log("Testing view polygon circle draw...\n");
-    s_av[0] = "view";
-    s_av[1] = "obj";
-    s_av[2] = "p1";
-    s_av[3] = "polygon";
-    s_av[4] = "create";
-    s_av[5] = "256";
-    s_av[6] = "256";
-    s_av[7] = "circle";
-    s_av[8] = NULL;
-    ged_exec(dbp, 8, s_av);
-
-    s_av[0] = "view";
-    s_av[1] = "obj";
-    s_av[2] = "p1";
-    s_av[3] = "update";
-    s_av[4] = "300";
-    s_av[5] = "300";
-    s_av[6] = NULL;
-    ged_exec(dbp, 6, s_av);
+    poly_circ(dbp);
     dm_refresh(dbp);
 
     s_av[0] = "screengrab";
@@ -196,11 +239,7 @@ main(int ac, char *av[]) {
     s_av[2] = NULL;
     ged_exec(dbp, 2, s_av);
     img_cmp(2, av[2]);
-
-    s_av[0] = "Z";
-    s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
-    dm_refresh(dbp);
+    scene_clear(dbp);
 
     // Check that everything is in fact cleared
     s_av[0] = "screengrab";
@@ -209,6 +248,20 @@ main(int ac, char *av[]) {
     ged_exec(dbp, 2, s_av);
     img_cmp(0, av[2]);
     bu_log("Done.\n");
+
+    /***** Polygon ellipse *****/
+    bu_log("Testing view polygon ellipse draw...\n");
+    poly_ell(dbp);
+    dm_refresh(dbp);
+
+    s_av[0] = "screengrab";
+    s_av[1] = "v003.png";
+    s_av[2] = NULL;
+    ged_exec(dbp, 2, s_av);
+    img_cmp(3, av[2]);
+    scene_clear(dbp);
+
+
 
 
     ged_close(dbp);
