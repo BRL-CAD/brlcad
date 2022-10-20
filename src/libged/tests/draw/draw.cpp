@@ -33,38 +33,6 @@
 #include <ged.h>
 
 void
-img_cmp(int id, const char *cdir)
-{
-    icv_image_t *ctrl, *timg;
-    struct bu_vls tname = BU_VLS_INIT_ZERO;
-    struct bu_vls cname = BU_VLS_INIT_ZERO;
-    if (id <= 0) {
-	bu_vls_sprintf(&tname, "clear.png");
-	bu_vls_sprintf(&cname, "%s/empty.png", cdir);
-    } else {
-	bu_vls_sprintf(&tname, "v%03d.png", id);
-	bu_vls_sprintf(&cname, "%s/v%03d_ctrl.png", cdir, id);
-    }
-
-    timg = icv_read(bu_vls_cstr(&tname), BU_MIME_IMAGE_AUTO, 0, 0);
-    if (!timg)
-	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&tname));
-    ctrl = icv_read(bu_vls_cstr(&cname), BU_MIME_IMAGE_AUTO, 0, 0);
-    if (!ctrl)
-	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&cname));
-    if (icv_diff(NULL, NULL, NULL, ctrl,timg))
-	bu_exit(EXIT_FAILURE, "%d wireframe diff failed\n", id);
-    icv_destroy(ctrl);
-    icv_destroy(timg);
-
-    // Image comparison done and successful - clear image
-    bu_file_delete(bu_vls_cstr(&tname));
-
-    bu_vls_free(&tname);
-    bu_vls_free(&cname);
-}
-
-void
 dm_refresh(struct ged *gedp)
 {
     gedp->dbi_state->update();
@@ -88,6 +56,46 @@ scene_clear(struct ged *gedp)
     ged_exec(gedp, 1, s_av);
     dm_refresh(gedp);
 }
+
+void
+img_cmp(int id, struct ged *gedp, const char *cdir)
+{
+    icv_image_t *ctrl, *timg;
+    struct bu_vls tname = BU_VLS_INIT_ZERO;
+    struct bu_vls cname = BU_VLS_INIT_ZERO;
+    if (id <= 0) {
+	bu_vls_sprintf(&tname, "clear.png");
+	bu_vls_sprintf(&cname, "%s/empty.png", cdir);
+    } else {
+	bu_vls_sprintf(&tname, "v%03d.png", id);
+	bu_vls_sprintf(&cname, "%s/v%03d_ctrl.png", cdir, id);
+    }
+
+    dm_refresh(gedp);
+    const char *s_av[2] = {NULL};
+    s_av[0] = "screengrab";
+    s_av[1] = bu_vls_cstr(&tname);
+    ged_exec(gedp, 2, s_av);
+
+    timg = icv_read(bu_vls_cstr(&tname), BU_MIME_IMAGE_AUTO, 0, 0);
+    if (!timg)
+	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&tname));
+    ctrl = icv_read(bu_vls_cstr(&cname), BU_MIME_IMAGE_AUTO, 0, 0);
+    if (!ctrl)
+	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&cname));
+    if (icv_diff(NULL, NULL, NULL, ctrl,timg))
+	bu_exit(EXIT_FAILURE, "%d wireframe diff failed\n", id);
+    icv_destroy(ctrl);
+    icv_destroy(timg);
+
+    // Image comparison done and successful - clear image
+    bu_file_delete(bu_vls_cstr(&tname));
+
+    bu_vls_free(&tname);
+    bu_vls_free(&cname);
+    scene_clear(gedp);
+}
+
 
 /* We will often want to do multiple different operations with
  * similar shapes - to make this easier, we encapsulate the
@@ -143,6 +151,104 @@ poly_ell(struct ged *gedp)
     s_av[5] = "300";
     s_av[6] = NULL;
     ged_exec(gedp, 6, s_av);
+}
+
+/* Creates a view square "s1" */
+void
+poly_sq(struct ged *gedp)
+{
+    const char *s_av[15] = {NULL};
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "s1";
+    s_av[3] = "polygon";
+    s_av[4] = "create";
+    s_av[5] = "200";
+    s_av[6] = "200";
+    s_av[7] = "square";
+    s_av[8] = NULL;
+    ged_exec(gedp, 8, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "s1";
+    s_av[3] = "update";
+    s_av[4] = "310";
+    s_av[5] = "310";
+    s_av[6] = NULL;
+    ged_exec(gedp, 6, s_av);
+}
+
+/* Creates a view rectangle "r1" */
+void
+poly_rect(struct ged *gedp)
+{
+    const char *s_av[15] = {NULL};
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "r1";
+    s_av[3] = "polygon";
+    s_av[4] = "create";
+    s_av[5] = "190";
+    s_av[6] = "190";
+    s_av[7] = "rectangle";
+    s_av[8] = NULL;
+    ged_exec(gedp, 8, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "r1";
+    s_av[3] = "update";
+    s_av[4] = "380";
+    s_av[5] = "290";
+    s_av[6] = NULL;
+    ged_exec(gedp, 6, s_av);
+}
+
+
+/* Creates a general polygon "g1" */
+void
+poly_general(struct ged *gedp)
+{
+    const char *s_av[15] = {NULL};
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "g1";
+    s_av[3] = "polygon";
+    s_av[4] = "create";
+    s_av[5] = "190";
+    s_av[6] = "350";
+    s_av[7] = NULL;
+    ged_exec(gedp, 7, s_av);
+
+    s_av[4] = "append";
+    s_av[5] = "400";
+    s_av[6] = "300";
+    ged_exec(gedp, 7, s_av);
+
+    s_av[4] = "append";
+    s_av[5] = "380";
+    s_av[6] = "300";
+    ged_exec(gedp, 7, s_av);
+
+    s_av[4] = "append";
+    s_av[5] = "230";
+    s_av[6] = "245";
+    ged_exec(gedp, 7, s_av);
+
+    s_av[4] = "append";
+    s_av[5] = "180";
+    s_av[6] = "150";
+    ged_exec(gedp, 7, s_av);
+
+    s_av[4] = "append";
+    s_av[5] = "210";
+    s_av[6] = "300";
+    ged_exec(gedp, 7, s_av);
+
+    s_av[4] = "close";
+    s_av[5] = NULL;
+    ged_exec(gedp, 5, s_av);
 }
 
 int
@@ -212,55 +318,40 @@ main(int ac, char *av[]) {
     s_av[2] = "25";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
-    dm_refresh(dbp);
-
-    s_av[0] = "screengrab";
-    s_av[1] = "v001.png";
-    s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
-    img_cmp(1, av[2]);
-    scene_clear(dbp);
+    img_cmp(1, dbp, av[2]);
 
     // Check that everything is in fact cleared
-    s_av[0] = "screengrab";
-    s_av[1] = "clear.png";
-    s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
-    img_cmp(0, av[2]);
+    img_cmp(0, dbp, av[2]);
     bu_log("Done.\n");
 
     /***** Polygon circle *****/
     bu_log("Testing view polygon circle draw...\n");
     poly_circ(dbp);
-    dm_refresh(dbp);
-
-    s_av[0] = "screengrab";
-    s_av[1] = "v002.png";
-    s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
-    img_cmp(2, av[2]);
-    scene_clear(dbp);
+    img_cmp(2, dbp, av[2]);
 
     // Check that everything is in fact cleared
-    s_av[0] = "screengrab";
-    s_av[1] = "clear.png";
-    s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
-    img_cmp(0, av[2]);
+    img_cmp(0, dbp, av[2]);
     bu_log("Done.\n");
 
     /***** Polygon ellipse *****/
     bu_log("Testing view polygon ellipse draw...\n");
     poly_ell(dbp);
-    dm_refresh(dbp);
+    img_cmp(3, dbp, av[2]);
 
-    s_av[0] = "screengrab";
-    s_av[1] = "v003.png";
-    s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
-    img_cmp(3, av[2]);
-    scene_clear(dbp);
+    /***** Polygon square *****/
+    bu_log("Testing view polygon square draw...\n");
+    poly_sq(dbp);
+    img_cmp(4, dbp, av[2]);
 
+    /***** Polygon rectangle *****/
+    bu_log("Testing view polygon rectangle draw...\n");
+    poly_rect(dbp);
+    img_cmp(5, dbp, av[2]);
+
+    /***** Polygon general *****/
+    bu_log("Testing view polygon ellipse draw...\n");
+    poly_general(dbp);
+    img_cmp(6, dbp, av[2]);
 
 
 
