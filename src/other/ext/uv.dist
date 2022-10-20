@@ -128,6 +128,10 @@ include/uv/version.h
 include/uv/win.h
 libuv-static.pc.in
 libuv.pc.in
+m4/.gitignore
+m4/as_case.m4
+m4/ax_pthread.m4
+m4/libuv-check-flags.m4
 src/fs-poll.c
 src/heap-inl.h
 src/idna.c
