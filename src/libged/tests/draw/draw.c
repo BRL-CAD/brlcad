@@ -38,8 +38,13 @@ img_cmp(int id, const char *cdir)
     icv_image_t *ctrl, *timg;
     struct bu_vls tname = BU_VLS_INIT_ZERO;
     struct bu_vls cname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&tname, "v%03d.png", id);
-    bu_vls_sprintf(&cname, "%s/v%03d_ctrl.png", cdir, id);
+    if (id <= 0) {
+	bu_vls_sprintf(&tname, "clear.png");
+	bu_vls_sprintf(&cname, "%s/empty.png", cdir);
+    } else {
+	bu_vls_sprintf(&tname, "v%03d.png", id);
+	bu_vls_sprintf(&cname, "%s/v%03d_ctrl.png", cdir, id);
+    }
 
     timg = icv_read(bu_vls_cstr(&tname), BU_MIME_IMAGE_AUTO, 0, 0);
     if (!timg)
@@ -48,9 +53,13 @@ img_cmp(int id, const char *cdir)
     if (!ctrl)
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&cname));
     if (icv_diff(NULL, NULL, NULL, ctrl,timg))
-	bu_exit(EXIT_FAILURE, "Default 35/25 moss all.g wireframe diff failed\n");
+	bu_exit(EXIT_FAILURE, "%d wireframe diff failed\n", id);
     icv_destroy(ctrl);
     icv_destroy(timg);
+
+    // Image comparison done and successful - clear image
+    bu_file_delete(bu_vls_cstr(&tname));
+
     bu_vls_free(&tname);
     bu_vls_free(&cname);
 }
@@ -94,7 +103,7 @@ main(int ac, char *av[]) {
 
     /* To generate images that will allow us to check if the drawing
      * is proceeding as expected, we use the swrast off-screen dm. */
-    const char *s_av[5] = {NULL, NULL, NULL, NULL, NULL};
+    const char *s_av[15] = {NULL};
 
     s_av[0] = "dm";
     s_av[1] = "attach";
@@ -106,6 +115,7 @@ main(int ac, char *av[]) {
     dm_set_width(dmp, 512);
     dm_set_height(dmp, 512);
 
+    /***** Basic wireframe draw *****/
     s_av[0] = "draw";
     s_av[1] = "all.g";
     ged_exec(dbp, 2, s_av);
@@ -118,14 +128,50 @@ main(int ac, char *av[]) {
     s_av[1] = "35";
     s_av[2] = "25";
     ged_exec(dbp, 3, s_av);
-
     dm_draw_objs(v, v->gv_base2local, v->gv_local2base, NULL, NULL);
 
     s_av[0] = "screengrab";
     s_av[1] = "v001.png";
     ged_exec(dbp, 2, s_av);
-
     img_cmp(1, av[2]);
+
+    s_av[0] = "Z";
+    s_av[1] = NULL;
+    ged_exec(dbp, 1, s_av);
+    dm_draw_objs(v, v->gv_base2local, v->gv_local2base, NULL, NULL);
+
+    // Check that everything is in fact cleared
+    s_av[0] = "screengrab";
+    s_av[1] = "clear.png";
+    ged_exec(dbp, 2, s_av);
+    img_cmp(0, av[2]);
+
+    /***** Polygon circle *****/
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "p1";
+    s_av[3] = "create";
+    s_av[4] = "256";
+    s_av[5] = "256";
+    s_av[6] = "circle";
+    s_av[7] = NULL;
+    ged_exec(dbp, 1, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "p1";
+    s_av[3] = "update";
+    s_av[4] = "300";
+    s_av[5] = "300";
+    s_av[7] = NULL;
+    ged_exec(dbp, 1, s_av);
+    dm_draw_objs(v, v->gv_base2local, v->gv_local2base, NULL, NULL);
+
+    s_av[0] = "screengrab";
+    s_av[1] = "v002.png";
+    ged_exec(dbp, 2, s_av);
+    img_cmp(1, av[2]);
+
 
     ged_close(dbp);
 
