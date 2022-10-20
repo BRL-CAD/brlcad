@@ -574,7 +574,7 @@ draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 
     // Primary object drawing.  See if we have an active view-specific object - if so,
     // use that, otherwise use the original object
-    {
+    if (s->s_type_flags & BV_DB_OBJS) {
 	struct bv_scene_obj *vo = bv_obj_for_view(s, v);
 	if (!vo) {
 	    vo = s;
@@ -589,6 +589,8 @@ draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 	    (*vo->s_update_callback)(vo, v, 0);
 
 	dm_draw_obj(dmp, vo);
+    } else {
+	dm_draw_obj(dmp, s);
     }
 
     if (!(s->s_type_flags & BV_MESH_LOD)) {
