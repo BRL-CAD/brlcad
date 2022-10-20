@@ -132,6 +132,7 @@ main(int ac, char *av[]) {
     dm_set_height(dmp, 512);
 
     /***** Basic wireframe draw *****/
+    bu_log("Testing basic db wireframe draw...\n");
     s_av[0] = "draw";
     s_av[1] = "all.g";
     s_av[2] = NULL;
@@ -165,8 +166,10 @@ main(int ac, char *av[]) {
     s_av[2] = NULL;
     ged_exec(dbp, 2, s_av);
     img_cmp(0, av[2]);
+    bu_log("Done.\n");
 
     /***** Polygon circle *****/
+    bu_log("Testing view polygon circle draw...\n");
     s_av[0] = "view";
     s_av[1] = "obj";
     s_av[2] = "p1";
@@ -193,6 +196,19 @@ main(int ac, char *av[]) {
     s_av[2] = NULL;
     ged_exec(dbp, 2, s_av);
     img_cmp(2, av[2]);
+
+    s_av[0] = "Z";
+    s_av[1] = NULL;
+    ged_exec(dbp, 1, s_av);
+    dm_refresh(dbp);
+
+    // Check that everything is in fact cleared
+    s_av[0] = "screengrab";
+    s_av[1] = "clear.png";
+    s_av[2] = NULL;
+    ged_exec(dbp, 2, s_av);
+    img_cmp(0, av[2]);
+    bu_log("Done.\n");
 
 
     ged_close(dbp);
