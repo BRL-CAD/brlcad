@@ -78,7 +78,6 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[2], "",  "format",         "fmt",  &image_mime,      &type,             "output image file format");
     BU_OPT_NULL(d[3]);
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
