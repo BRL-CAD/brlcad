@@ -115,6 +115,12 @@ bv_polygon_vlist(struct bv_scene_obj *s)
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     int type = p->type;
 
+    // Clear any old holes
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	bv_obj_put(s_c);
+    }
+
     for (size_t i = 0; i < p->polygon.num_contours; ++i) {
 	/* Draw holes using segmented lines.  Since vlists don't have a style
 	 * command for that, we make child scene objects for the holes. */
@@ -163,6 +169,7 @@ bv_create_polygon(struct bview *v, int type, int x, int y)
 {
     struct bv_scene_obj *s = bv_obj_get(v, BV_VIEW_OBJS);
     s->s_type_flags |= BV_POLYGONS;
+    s->s_type_flags |= BV_VIEWONLY;
 
     struct bv_polygon *p;
     BU_GET(p, struct bv_polygon);

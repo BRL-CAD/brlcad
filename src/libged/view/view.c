@@ -534,6 +534,7 @@ const struct bu_cmdtab _view_cmds[] = {
     { "list",       _view_cmd_list},
     { "lod",        _view_cmd_lod},
     { "obj",        _view_cmd_objs},
+    { "objs",       _view_cmd_objs},
     { "quat",       _view_cmd_quat},
     { "selections", _view_cmd_selections},
     { "size",       _view_cmd_size},
