@@ -26,7 +26,6 @@ docs/code/idle-basic/main.c
 docs/code/idle-compute/main.c
 docs/code/interfaces/main.c
 docs/code/locks/main.c
-docs/code/multi-echo-server/hammer.js
 docs/code/multi-echo-server/main.c
 docs/code/multi-echo-server/worker.c
 docs/code/onchange/main.c
@@ -129,11 +128,6 @@ include/uv/version.h
 include/uv/win.h
 libuv-static.pc.in
 libuv.pc.in
-m4/.gitignore
-m4/as_case.m4
-m4/ax_pthread.m4
-m4/libuv-check-flags.m4
-m4/libuv-check-versions.m4
 src/fs-poll.c
 src/heap-inl.h
 src/idna.c
