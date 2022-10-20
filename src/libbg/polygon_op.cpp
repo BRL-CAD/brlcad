@@ -34,9 +34,7 @@
 #include "bg/plane.h"
 #include "bg/defines.h"
 #include "bg/polygon.h"
-
-#define FREE_BV_SCENE_OBJ(p, fp) { \
-    BU_LIST_APPEND(fp, &((p)->l)); }
+#include "bv/util.h"
 
 fastf_t
 bg_find_polygon_area(struct bg_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size)
@@ -640,7 +638,6 @@ bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op, int m
     struct bu_ptbl null_polys = BU_PTBL_INIT_ZERO;
     int pcnt = 0;
     struct bv_scene_obj *bp = p;
-    struct bv_scene_obj *free_scene_obj = p->free_scene_obj;
 
     for (size_t i = 0; i < BU_PTBL_LEN(objs); i++) {
 	struct bv_scene_obj *vp = (struct bv_scene_obj *)BU_PTBL_GET(objs, i);
@@ -700,8 +697,8 @@ bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op, int m
 	struct bv_polygon *ip = (struct bv_polygon *)np->s_i_data;
 	bg_polygon_free(&ip->polygon);
 	BU_PUT(ip, struct bv_polygon);
-	bu_ptbl_rm(objs, (long *)np);
-	FREE_BV_SCENE_OBJ(np, &free_scene_obj->l);
+	np->s_i_data = NULL;
+	bv_obj_put(np);
     }
 
     return pcnt;
