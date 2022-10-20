@@ -327,9 +327,11 @@ QPolyMod::clear_pnt_selection(bool checked)
     struct bv_polygon *ip = NULL;
     if (p) {
 	ip = (struct bv_polygon *)p->s_i_data;
+	if (!ip)
+	    return;
 	ptype = ip->type;
     }
-    if (!ip || ptype != BV_POLYGON_GENERAL) {
+    if (ptype != BV_POLYGON_GENERAL) {
 	return;
     }
     bu_log("got pnt selection clear\n");
