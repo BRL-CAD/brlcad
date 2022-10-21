@@ -42,6 +42,7 @@
 #include "bu/sort.h"
 #include "vmath.h"
 #include "bn.h"
+#include "bg/lod.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "bv/plot3.h"
@@ -90,6 +91,9 @@ ged_close(struct ged *gedp)
 	db_close(gedp->dbip);
 	gedp->dbip = NULL;
     }
+
+    if (gedp->ged_lod)
+	bg_mesh_lod_context_destroy(gedp->ged_lod);
 
     /* Terminate any ged subprocesses */
     if (gedp != GED_NULL) {
@@ -350,6 +354,8 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     bv_init(gedp->ged_gvp, &gedp->ged_views);
 
     db_update_nref(gedp->dbip, &rt_uniresource);
+
+    gedp->ged_lod = bg_mesh_lod_context_create(filename);
 
     const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
     if (use_dbi_state) {
