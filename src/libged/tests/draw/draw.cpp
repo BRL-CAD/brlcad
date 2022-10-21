@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <fstream>
 
 #define XXH_STATIC_LINKING_ONLY
 #define XXH_IMPLEMENTATION
@@ -336,43 +337,24 @@ main(int ac, char *av[]) {
 	return 2;
     }
 
-
-    /* We are going to generate geometry from the basic moss data,
-     * so we make a temporary copy */
-    char draw_tmpfile[MAXPATHLEN];
-    FILE *fp = bu_temp_file(draw_tmpfile, MAXPATHLEN);
-    if (fp == NULL) {
-	bu_exit(EXIT_FAILURE, "Error: unable to create temporary .g file\n");
-	return 1;
-    } else {
-	bu_log("Working .g file copy: %s\n", draw_tmpfile);
-    }
-
-    /* Manually turn the temp file into a .g */
-    if (db5_fwrite_ident(fp, "libged drawing test file", 1.0) < 0) {
-	bu_log("Error: failed to prepare .g file %s\n", draw_tmpfile);
-	return 1;
-    }
-    (void)fclose(fp);
-
     /* FIXME: To draw, we need to init this LIBRT global */
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
+    /* We are going to generate geometry from the basic moss data,
+     * so we make a temporary copy */
+    bu_vls_sprintf(&fname, "%s/moss.g", av[1]);
+    std::ifstream orig(bu_vls_cstr(&fname), std::ios::binary);
+    std::ofstream tmpg("moss_tmp.g", std::ios::binary);
+    tmpg << orig.rdbuf();
+    orig.close();
+    tmpg.close();
+
     /* Open the temp file, then dbconcat argv[1] into it */
     const char *s_av[15] = {NULL};
-    dbp = ged_open("db", draw_tmpfile, 1);
+    dbp = ged_open("db", "moss_tmp.g", 1);
 
     // Set callback so database changes will update dbi_state
     db_add_changed_clbk(dbp->dbip, &ged_changed_callback, (void *)dbp);
-
-    bu_vls_sprintf(&fname, "%s/moss.g", av[1]);
-    s_av[0] = "dbconcat";
-    s_av[1] = "-u";
-    s_av[2] = "-c";
-    s_av[3] = bu_vls_cstr(&fname);
-    s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
-    dbp->dbi_state->update();
 
     // Set up the view
     BU_GET(dbp->ged_gvp, struct bview);
@@ -825,7 +807,7 @@ main(int ac, char *av[]) {
     s_av[0] = "close";
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
-    bu_file_delete(draw_tmpfile);
+    bu_file_delete("moss_tmp.g");
 
     /* The rook model is a more appropriate test case for mode 3, since its
      * wireframe is dramatically different when evaluated.*/
