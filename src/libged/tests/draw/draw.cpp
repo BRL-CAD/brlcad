@@ -26,11 +26,63 @@
 #include "common.h"
 
 #include <stdio.h>
+
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash.h"
+
 #include <bu.h>
+#include <bg/lod.h>
 #include <icv.h>
 #define DM_WITH_RT
 #include <dm.h>
 #include <ged.h>
+
+// In order to handle changes to .g geometry contents, we need to defined
+// callbacks for the librt hooks that will update the working data structures.
+// In Qt we have libqtcad handle this, but as we are not using a QgModel we
+// need to do it ourselves.
+extern "C" void
+ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
+{
+    XXH64_state_t h_state;
+    unsigned long long hash;
+    struct ged *gedp = (struct ged *)u_data;
+    DbiState *ctx = gedp->dbi_state;
+
+    // Clear cached GED drawing data and update
+    ctx->clear_cache(dp);
+
+    // Need to invalidate any LoD caches associated with this dp
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp) {
+	unsigned long long key = bg_mesh_lod_key_get(ctx->gedp->ged_lod, dp->d_namep);
+	if (key) {
+	    bg_mesh_lod_clear_cache(ctx->gedp->ged_lod, key);
+	    bg_mesh_lod_key_put(ctx->gedp->ged_lod, dp->d_namep, 0);
+	}
+    }
+
+    switch(mode) {
+	case 0:
+	    ctx->changed.insert(dp);
+	    break;
+	case 1:
+	    ctx->added.insert(dp);
+	    break;
+	case 2:
+	    // When this callback is made, dp is still valid, but in subsequent
+	    // processing it will not be.  We need to capture everything we
+	    // will need from this dp now, for later use when updating state
+	    XXH64_reset(&h_state, 0);
+	    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	    hash = (unsigned long long)XXH64_digest(&h_state);
+	    ctx->removed.insert(hash);
+	    ctx->old_names[hash] = std::string(dp->d_namep);
+	    break;
+	default:
+	    bu_log("changed callback mode error: %d\n", mode);
+    }
+}
 
 void
 dm_refresh(struct ged *gedp)
@@ -307,19 +359,17 @@ main(int ac, char *av[]) {
     /* Open the temp file, then dbconcat argv[1] into it */
     const char *s_av[15] = {NULL};
     dbp = ged_open("db", draw_tmpfile, 1);
+
+    // Set callback so database changes will update dbi_state
+    db_add_changed_clbk(dbp->dbip, &ged_changed_callback, (void *)dbp);
+
     s_av[0] = "dbconcat";
     s_av[1] = "-u";
     s_av[2] = "-c";
     s_av[3] = av[1];
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-
-    // TODO - dbconcat and dbi_state aren't playing nice right now - work
-    // around this by closing and re-opening the file to make a new gedp, but
-    // need to run down why dbconcat is managing to alter the .g without
-    // dbi_state hearing about it...
-    ged_close(dbp);
-    dbp = ged_open("db", draw_tmpfile, 1);
+    dbp->dbi_state->update();
 
     // Set up the view
     BU_GET(dbp->ged_gvp, struct bview);
@@ -329,7 +379,6 @@ main(int ac, char *av[]) {
 
     /* To generate images that will allow us to check if the drawing
      * is proceeding as expected, we use the swrast off-screen dm. */
-
     s_av[0] = "dm";
     s_av[1] = "attach";
     s_av[2] = "swrast";
@@ -343,7 +392,6 @@ main(int ac, char *av[]) {
     dm_set_height(dmp, 512);
 
     dm_configure_win(dmp, 0);
-    dm_set_pathname(dmp, "SWDM");
     dm_set_zbuffer(dmp, 1);
 
     // See QtSW.cpp...
@@ -412,6 +460,7 @@ main(int ac, char *av[]) {
     bu_log("Done.\n");
 
     /***** Test draw UP and DOWN *****/
+    bu_log("Testing UP and DOWN visibility control of drawn objects...\n");
     poly_general(dbp);
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -430,8 +479,10 @@ main(int ac, char *av[]) {
     // Enabling the draw should produce the same visual as the general polygon
     // draw test above, so we can check using the same image
     img_cmp(6, dbp, av[2], true);
+    bu_log("Done.\n");
 
     /***** Test view polygon booleans: union ****/
+    bu_log("Testing view polygon boolean operation: union...\n");
     poly_circ(dbp);
     poly_ell(dbp);
     s_av[0] = "view";
@@ -455,8 +506,10 @@ main(int ac, char *av[]) {
 
     // See if we got what we expected
     img_cmp(7, dbp, av[2], true);
+    bu_log("Done.\n");
 
     /***** Test view polygon booleans: subtraction ****/
+    bu_log("Testing view polygon boolean operation: subtraction...\n");
     poly_circ(dbp);
     poly_ell(dbp);
     s_av[0] = "view";
@@ -480,8 +533,10 @@ main(int ac, char *av[]) {
 
     // See if we got what we expected
     img_cmp(8, dbp, av[2], true);
+    bu_log("Done.\n");
 
     /***** Test view polygon booleans: intersection ****/
+    bu_log("Testing view polygon boolean operation: intersection...\n");
     poly_circ(dbp);
     poly_ell(dbp);
     s_av[0] = "view";
@@ -505,9 +560,11 @@ main(int ac, char *av[]) {
 
     // See if we got what we expected
     img_cmp(9, dbp, av[2], true);
+    bu_log("Done.\n");
 
 
     /***** Test color ****/
+    bu_log("Testing setting view object color...\n");
     poly_general(dbp);
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -519,8 +576,10 @@ main(int ac, char *av[]) {
 
     // See if we got what we expected
     img_cmp(10, dbp, av[2], true);
+    bu_log("Done.\n");
 
     /***** Test fill ****/
+    bu_log("Testing enabling polygon fill...\n");
     poly_general(dbp);
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -535,8 +594,10 @@ main(int ac, char *av[]) {
 
     // See if we got what we expected
     img_cmp(11, dbp, av[2], true);
+    bu_log("Done.\n");
 
     /***** Test label ****/
+    bu_log("Testing label with leader line...\n");
     s_av[0] = "draw";
     s_av[1] = "all.g";
     s_av[2] = NULL;
@@ -610,8 +671,10 @@ main(int ac, char *av[]) {
     s_av[3] = "0";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
+    bu_log("Done.\n");
 
     /***** Test axes ****/
+    bu_log("Testing simple data axes drawing...\n");
     s_av[0] = "draw";
     s_av[1] = "all.g";
     s_av[2] = NULL;
@@ -644,8 +707,10 @@ main(int ac, char *av[]) {
     ged_exec(dbp, 6, s_av);
 
     img_cmp(19, dbp, av[2], true);
+    bu_log("Done.\n");
 
     /***** Test shaded modes ****/
+    bu_log("Testing shaded mode 1 (triangle only) drawing, Level-of-Detail disabled...\n");
     s_av[0] = "view";
     s_av[1] = "lod";
     s_av[2] = "mesh";
@@ -659,23 +724,35 @@ main(int ac, char *av[]) {
     s_av[3] = "all.bot";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
+    dbp->dbi_state->update();
 
-    // TODO - -m1 is broken in draw_rework branch??
-    //s_av[0] = "draw";
-    //s_av[1] = "-m1";
-    //s_av[2] = "all.bot";
-    //s_av[3] = NULL;
-    //ged_exec(dbp, 3, s_av);
 
-    //img_cmp(20, dbp, av[2], true);
+    s_av[0] = "draw";
+    s_av[1] = "-m1";
+    s_av[2] = "all.bot";
+    s_av[3] = NULL;
+    ged_exec(dbp, 3, s_av);
 
+    s_av[0] = "autoview";
+    s_av[1] = NULL;
+    ged_exec(dbp, 1, s_av);
+
+    img_cmp(20, dbp, av[2], true);
+    bu_log("Done.\n");
+
+    bu_log("Testing shaded mode 2 drawing (unevaluated primitive shading). (Note: does not use Level-of-Detail)...\n");
     s_av[0] = "draw";
     s_av[1] = "-m2";
     s_av[2] = "all.g";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
+    s_av[0] = "autoview";
+    s_av[1] = NULL;
+    ged_exec(dbp, 1, s_av);
+
     img_cmp(21, dbp, av[2], true);
+    bu_log("Done.\n");
 
 
     ged_close(dbp);

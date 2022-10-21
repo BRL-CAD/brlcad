@@ -24,7 +24,7 @@ CMAKEFILES(
   v017_ctrl.png
   v018_ctrl.png
   v019_ctrl.png
-  #v020_ctrl.png
+  v020_ctrl.png
   v021_ctrl.png
   )
 
