@@ -483,6 +483,115 @@ main(int ac, char *av[]) {
     // See if we got what we expected
     img_cmp(11, dbp, av[2], true);
 
+    /***** Test label ****/
+    s_av[0] = "draw";
+    s_av[1] = "all.g";
+    s_av[2] = NULL;
+    ged_exec(dbp, 2, s_av);
+
+    s_av[0] = "autoview";
+    s_av[1] = NULL;
+    ged_exec(dbp, 1, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "lbl1";
+    s_av[3] = "label";
+    s_av[4] = "create";
+    s_av[5] = "LIGHT";
+    s_av[6] = "110.41";
+    s_av[7] = "-32.2352";
+    s_av[8] = "90.4497";
+    s_av[9] = "20.1576";
+    s_av[10] = "-13.526";
+    s_av[11] = "8";
+    s_av[12] = NULL;
+    ged_exec(dbp, 12, s_av);
+
+    img_cmp(12, dbp, av[2], false);
+
+    s_av[0] = "ae";
+    s_av[1] = "10";
+    s_av[2] = "4";
+    s_av[3] = "11";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+    img_cmp(13, dbp, av[2], false);
+
+    s_av[0] = "ae";
+    s_av[1] = "270";
+    s_av[2] = "0";
+    s_av[3] = "0";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+    img_cmp(14, dbp, av[2], false);
+
+    s_av[0] = "ae";
+    s_av[1] = "48";
+    s_av[2] = "16";
+    s_av[3] = "143";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+    img_cmp(15, dbp, av[2], false);
+
+    s_av[0] = "ae";
+    s_av[1] = "40";
+    s_av[2] = "-15";
+    s_av[3] = "180";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+    img_cmp(16, dbp, av[2], false);
+
+    s_av[0] = "ae";
+    s_av[1] = "250";
+    s_av[2] = "5";
+    s_av[3] = "-140";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+    img_cmp(17, dbp, av[2], true);
+
+    // Restore view to ae 35/25
+    s_av[0] = "ae";
+    s_av[1] = "35";
+    s_av[2] = "25";
+    s_av[3] = "0";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    /***** Test axes ****/
+    s_av[0] = "draw";
+    s_av[1] = "all.g";
+    s_av[2] = NULL;
+    ged_exec(dbp, 2, s_av);
+
+    s_av[0] = "autoview";
+    s_av[1] = NULL;
+    ged_exec(dbp, 1, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "a1";
+    s_av[3] = "axes";
+    s_av[4] = "create";
+    s_av[5] = "1";
+    s_av[6] = "1";
+    s_av[7] = "1";
+    s_av[8] = NULL;
+    ged_exec(dbp, 8, s_av);
+
+    img_cmp(18, dbp, av[2], false);
+
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "a1";
+    s_av[3] = "axes";
+    s_av[4] = "axes_color";
+    s_av[5] = "0/0/255";
+    s_av[6] = NULL;
+    ged_exec(dbp, 6, s_av);
+
+    img_cmp(19, dbp, av[2], true);
+
 
     ged_close(dbp);
 
