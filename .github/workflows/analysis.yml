@@ -58,7 +58,9 @@ jobs:
           sudo apt-get clean
 
 #     - name: Setup - Qt
-#       uses: jurplel/install-qt-action@v2
+#       uses: jurplel/install-qt-action@v3
+#       with:
+#         cache: 'true'
 
       - name: Checkout
         uses: actions/checkout@v3
