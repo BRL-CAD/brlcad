@@ -83,8 +83,12 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear)
     ctrl = icv_read(bu_vls_cstr(&cname), BU_MIME_IMAGE_AUTO, 0, 0);
     if (!ctrl)
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&cname));
-    if (icv_diff(NULL, NULL, NULL, ctrl,timg)) {
-	bu_exit(EXIT_FAILURE, "%d wireframe diff failed\n", id);
+    int matching_cnt = 0;
+    int off_by_1_cnt = 0;
+    int off_by_many_cnt = 0;
+    int iret = icv_diff(&matching_cnt, &off_by_1_cnt, &off_by_many_cnt, ctrl,timg);
+    if (iret) {
+	bu_exit(EXIT_FAILURE, "%d wireframe diff failed.  %d matching, %d off by 1, %d off by many\n", id, matching_cnt, off_by_1_cnt, off_by_many_cnt);
     }
     icv_destroy(ctrl);
     icv_destroy(timg);
