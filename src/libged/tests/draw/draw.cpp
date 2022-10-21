@@ -129,10 +129,10 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear)
     s_av[1] = bu_vls_cstr(&tname);
     ged_exec(gedp, 2, s_av);
 
-    timg = icv_read(bu_vls_cstr(&tname), BU_MIME_IMAGE_AUTO, 0, 0);
+    timg = icv_read(bu_vls_cstr(&tname), BU_MIME_IMAGE_PNG, 0, 0);
     if (!timg)
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&tname));
-    ctrl = icv_read(bu_vls_cstr(&cname), BU_MIME_IMAGE_AUTO, 0, 0);
+    ctrl = icv_read(bu_vls_cstr(&cname), BU_MIME_IMAGE_PNG, 0, 0);
     if (!ctrl)
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&cname));
     int matching_cnt = 0;
