@@ -43,6 +43,7 @@ CMAKEFILES(
   v023_ctrl.png
   v024_ctrl.png
   v025_ctrl.png
+  v026_ctrl.png
   )
 
 CMAKEFILES(CMakeLists.txt)
