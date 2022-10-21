@@ -28,14 +28,6 @@
 #include <stdio.h>
 #include <fstream>
 
-/* Not all the drawing routines result in pixel identical output
- * for different build configurations and platforms.  The images
- * here are from a Ubuntu Linux debug build.  Even though they are
- * not (currently) suitable for broad cross platform checking, we
- * define them and make it easy to enable them so they can be used
- * to locally check the health of the drawing logic. */
-//#define ENABLE_UNSTABLE 1
-
 #define XXH_STATIC_LINKING_ONLY
 #define XXH_IMPLEMENTATION
 #include "xxhash.h"
@@ -322,13 +314,22 @@ int
 main(int ac, char *av[]) {
     struct ged *dbp;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
+    int need_help = 0;
+    int run_unstable_tests = 0;
 
     bu_setprogname(av[0]);
 
-    if (ac != 2) {
-	printf("Usage: %s dir\n", av[0]);
-	return 1;
-    }
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",            "", NULL,          &need_help, "Print help and exit");
+    BU_OPT(d[1], "U", "enable-unstable", "", NULL, &run_unstable_tests, "Test drawing routines known to differ between build configs/platforms.");
+    BU_OPT_NULL(d[2]);
+
+    /* Done with program name */
+    int uac = bu_opt_parse(NULL, ac, (const char **)av, d);
+    if (uac == -1 || need_help)
+
+    if (ac != 2)
+	bu_exit(EXIT_FAILURE, "%s [-h] [-U] <directory>", av[0]);
 
     if (!bu_file_directory(av[1])) {
 	printf("ERROR: [%s] is not a directory.  Expecting control image directory\n", av[1]);
@@ -589,84 +590,84 @@ main(int ac, char *av[]) {
     img_cmp(11, dbp, av[1], true);
     bu_log("Done.\n");
 
-#ifdef ENABLE_UNSTABLE
-    /***** Test label ****/
-    bu_log("Testing label with leader line...\n");
-    s_av[0] = "draw";
-    s_av[1] = "all.g";
-    s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    if (run_unstable_tests) {
+	/***** Test label ****/
+	bu_log("Testing label with leader line...\n");
+	s_av[0] = "draw";
+	s_av[1] = "all.g";
+	s_av[2] = NULL;
+	ged_exec(dbp, 2, s_av);
 
-    s_av[0] = "autoview";
-    s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+	s_av[0] = "autoview";
+	s_av[1] = NULL;
+	ged_exec(dbp, 1, s_av);
 
-    s_av[0] = "view";
-    s_av[1] = "obj";
-    s_av[2] = "lbl1";
-    s_av[3] = "label";
-    s_av[4] = "create";
-    s_av[5] = "LIGHT";
-    s_av[6] = "110.41";
-    s_av[7] = "-32.2352";
-    s_av[8] = "90.4497";
-    s_av[9] = "20.1576";
-    s_av[10] = "-13.526";
-    s_av[11] = "8";
-    s_av[12] = NULL;
-    ged_exec(dbp, 12, s_av);
+	s_av[0] = "view";
+	s_av[1] = "obj";
+	s_av[2] = "lbl1";
+	s_av[3] = "label";
+	s_av[4] = "create";
+	s_av[5] = "LIGHT";
+	s_av[6] = "110.41";
+	s_av[7] = "-32.2352";
+	s_av[8] = "90.4497";
+	s_av[9] = "20.1576";
+	s_av[10] = "-13.526";
+	s_av[11] = "8";
+	s_av[12] = NULL;
+	ged_exec(dbp, 12, s_av);
 
-    img_cmp(12, dbp, av[1], false);
+	img_cmp(12, dbp, av[1], false);
 
-    s_av[0] = "ae";
-    s_av[1] = "10";
-    s_av[2] = "4";
-    s_av[3] = "11";
-    s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
-    img_cmp(13, dbp, av[1], false);
+	s_av[0] = "ae";
+	s_av[1] = "10";
+	s_av[2] = "4";
+	s_av[3] = "11";
+	s_av[4] = NULL;
+	ged_exec(dbp, 4, s_av);
+	img_cmp(13, dbp, av[1], false);
 
-    s_av[0] = "ae";
-    s_av[1] = "270";
-    s_av[2] = "0";
-    s_av[3] = "0";
-    s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
-    img_cmp(14, dbp, av[1], false);
+	s_av[0] = "ae";
+	s_av[1] = "270";
+	s_av[2] = "0";
+	s_av[3] = "0";
+	s_av[4] = NULL;
+	ged_exec(dbp, 4, s_av);
+	img_cmp(14, dbp, av[1], false);
 
-    s_av[0] = "ae";
-    s_av[1] = "48";
-    s_av[2] = "16";
-    s_av[3] = "143";
-    s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
-    img_cmp(15, dbp, av[1], false);
+	s_av[0] = "ae";
+	s_av[1] = "48";
+	s_av[2] = "16";
+	s_av[3] = "143";
+	s_av[4] = NULL;
+	ged_exec(dbp, 4, s_av);
+	img_cmp(15, dbp, av[1], false);
 
-    s_av[0] = "ae";
-    s_av[1] = "40";
-    s_av[2] = "-15";
-    s_av[3] = "180";
-    s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
-    img_cmp(16, dbp, av[1], false);
+	s_av[0] = "ae";
+	s_av[1] = "40";
+	s_av[2] = "-15";
+	s_av[3] = "180";
+	s_av[4] = NULL;
+	ged_exec(dbp, 4, s_av);
+	img_cmp(16, dbp, av[1], false);
 
-    s_av[0] = "ae";
-    s_av[1] = "250";
-    s_av[2] = "5";
-    s_av[3] = "-140";
-    s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
-    img_cmp(17, dbp, av[1], true);
+	s_av[0] = "ae";
+	s_av[1] = "250";
+	s_av[2] = "5";
+	s_av[3] = "-140";
+	s_av[4] = NULL;
+	ged_exec(dbp, 4, s_av);
+	img_cmp(17, dbp, av[1], true);
 
-    // Restore view to ae 35/25
-    s_av[0] = "ae";
-    s_av[1] = "35";
-    s_av[2] = "25";
-    s_av[3] = "0";
-    s_av[4] = NULL;
-    ged_exec(dbp, 4, s_av);
-    bu_log("Done.\n");
-#endif
+	// Restore view to ae 35/25
+	s_av[0] = "ae";
+	s_av[1] = "35";
+	s_av[2] = "25";
+	s_av[3] = "0";
+	s_av[4] = NULL;
+	ged_exec(dbp, 4, s_av);
+	bu_log("Done.\n");
+    }
 
     /***** Test axes ****/
     bu_log("Testing simple data axes drawing...\n");
@@ -749,21 +750,21 @@ main(int ac, char *av[]) {
     img_cmp(21, dbp, av[1], true);
     bu_log("Done.\n");
 
-#ifdef ENABLE_UNSTABLE
-    bu_log("Testing mode 3 drawing (evaluated wireframe)...\n");
-    s_av[0] = "draw";
-    s_av[1] = "-m3";
-    s_av[2] = "all.g";
-    s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    if (run_unstable_tests) {
+	bu_log("Testing mode 3 drawing (evaluated wireframe)...\n");
+	s_av[0] = "draw";
+	s_av[1] = "-m3";
+	s_av[2] = "all.g";
+	s_av[3] = NULL;
+	ged_exec(dbp, 3, s_av);
 
-    s_av[0] = "autoview";
-    s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+	s_av[0] = "autoview";
+	s_av[1] = NULL;
+	ged_exec(dbp, 1, s_av);
 
-    img_cmp(22, dbp, av[1], true);
-    bu_log("Done.\n");
-#endif
+	img_cmp(22, dbp, av[1], true);
+	bu_log("Done.\n");
+    }
 
     bu_log("Testing mode 4 drawing (hidden lines)...\n");
     s_av[0] = "draw";
@@ -779,21 +780,21 @@ main(int ac, char *av[]) {
     img_cmp(23, dbp, av[1], true);
     bu_log("Done.\n");
 
-#ifdef ENABLE_UNSTABLE
-    bu_log("Testing mode 5 drawing (point based triangles)...\n");
-    s_av[0] = "draw";
-    s_av[1] = "-m5";
-    s_av[2] = "all.g";
-    s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+    if (run_unstable_tests) {
+	bu_log("Testing mode 5 drawing (point based triangles)...\n");
+	s_av[0] = "draw";
+	s_av[1] = "-m5";
+	s_av[2] = "all.g";
+	s_av[3] = NULL;
+	ged_exec(dbp, 3, s_av);
 
-    s_av[0] = "autoview";
-    s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+	s_av[0] = "autoview";
+	s_av[1] = NULL;
+	ged_exec(dbp, 1, s_av);
 
-    img_cmp(24, dbp, av[1], true);
-    bu_log("Done.\n");
-#endif
+	img_cmp(24, dbp, av[1], true);
+	bu_log("Done.\n");
+    }
 
     bu_log("Testing mixed drawing (shaded and wireframe)...\n");
     s_av[0] = "draw";
@@ -822,29 +823,29 @@ main(int ac, char *av[]) {
     ged_exec(dbp, 1, s_av);
     bu_file_delete("moss_tmp.g");
 
-#ifdef ENABLE_UNSTABLE
-    /* The rook model is a more appropriate test case for mode 3, since its
-     * wireframe is dramatically different when evaluated.*/
-    bu_vls_sprintf(&fname, "%s/rook.g", av[1]);
-    s_av[0] = "open";
-    s_av[1] = bu_vls_cstr(&fname);
-    s_av[2] = NULL;
-    ged_exec(dbp, 2, s_av);
+    if (run_unstable_tests) {
+	/* The rook model is a more appropriate test case for mode 3, since its
+	 * wireframe is dramatically different when evaluated.*/
+	bu_vls_sprintf(&fname, "%s/rook.g", av[1]);
+	s_av[0] = "open";
+	s_av[1] = bu_vls_cstr(&fname);
+	s_av[2] = NULL;
+	ged_exec(dbp, 2, s_av);
 
-    bu_log("Testing mode 3 drawing (evaluated wireframe)...\n");
-    s_av[0] = "draw";
-    s_av[1] = "-m3";
-    s_av[2] = "scene.g";
-    s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
+	bu_log("Testing mode 3 drawing (evaluated wireframe)...\n");
+	s_av[0] = "draw";
+	s_av[1] = "-m3";
+	s_av[2] = "scene.g";
+	s_av[3] = NULL;
+	ged_exec(dbp, 3, s_av);
 
-    s_av[0] = "autoview";
-    s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
+	s_av[0] = "autoview";
+	s_av[1] = NULL;
+	ged_exec(dbp, 1, s_av);
 
-    img_cmp(26, dbp, av[1], true);
-    bu_log("Done.\n");
-#endif
+	img_cmp(26, dbp, av[1], true);
+	bu_log("Done.\n");
+    }
 
     ged_close(dbp);
 
