@@ -454,6 +454,34 @@ main(int ac, char *av[]) {
     img_cmp(9, dbp, av[2], true);
 
 
+    /***** Test color ****/
+    poly_general(dbp);
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "g1";
+    s_av[3] = "color";
+    s_av[4] = "0/255/0";
+    s_av[5] = NULL;
+    ged_exec(dbp, 5, s_av);
+
+    // See if we got what we expected
+    img_cmp(10, dbp, av[2], true);
+
+    /***** Test fill ****/
+    poly_general(dbp);
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "g1";
+    s_av[3] = "polygon";
+    s_av[4] = "fill";
+    s_av[5] = "1";
+    s_av[6] = "10";
+    s_av[7] = "3";
+    s_av[8] = NULL;
+    ged_exec(dbp, 8, s_av);
+
+    // See if we got what we expected
+    img_cmp(11, dbp, av[2], true);
 
 
     ged_close(dbp);
