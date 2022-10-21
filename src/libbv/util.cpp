@@ -866,6 +866,9 @@ bv_obj_create(struct bview *v, int type)
     // Set view
     s->s_v = v;
 
+    // Set the type flag(s) on the object itself
+    s->s_type_flags = type;
+
     // Set this object's containers
     s->free_scene_obj = free_scene_obj;
     s->vlfree = vlfree;
