@@ -28,6 +28,14 @@
 #include <stdio.h>
 #include <fstream>
 
+/* Not all the drawing routines result in pixel identical output
+ * for different build configurations and platforms.  The images
+ * here are from a Ubuntu Linux debug build.  Even though they are
+ * not (currently) suitable for broad cross platform checking, we
+ * define them and make it easy to enable them so they can be used
+ * to locally check the health of the drawing logic. */
+//#define ENABLE_UNSTABLE 1
+
 #define XXH_STATIC_LINKING_ONLY
 #define XXH_IMPLEMENTATION
 #include "xxhash.h"
@@ -581,6 +589,7 @@ main(int ac, char *av[]) {
     img_cmp(11, dbp, av[1], true);
     bu_log("Done.\n");
 
+#ifdef ENABLE_UNSTABLE
     /***** Test label ****/
     bu_log("Testing label with leader line...\n");
     s_av[0] = "draw";
@@ -657,6 +666,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
     bu_log("Done.\n");
+#endif
 
     /***** Test axes ****/
     bu_log("Testing simple data axes drawing...\n");
@@ -739,6 +749,7 @@ main(int ac, char *av[]) {
     img_cmp(21, dbp, av[1], true);
     bu_log("Done.\n");
 
+#ifdef ENABLE_UNSTABLE
     bu_log("Testing mode 3 drawing (evaluated wireframe)...\n");
     s_av[0] = "draw";
     s_av[1] = "-m3";
@@ -752,6 +763,7 @@ main(int ac, char *av[]) {
 
     img_cmp(22, dbp, av[1], true);
     bu_log("Done.\n");
+#endif
 
     bu_log("Testing mode 4 drawing (hidden lines)...\n");
     s_av[0] = "draw";
@@ -767,6 +779,7 @@ main(int ac, char *av[]) {
     img_cmp(23, dbp, av[1], true);
     bu_log("Done.\n");
 
+#ifdef ENABLE_UNSTABLE
     bu_log("Testing mode 5 drawing (point based triangles)...\n");
     s_av[0] = "draw";
     s_av[1] = "-m5";
@@ -780,7 +793,7 @@ main(int ac, char *av[]) {
 
     img_cmp(24, dbp, av[1], true);
     bu_log("Done.\n");
-
+#endif
 
     bu_log("Testing mixed drawing (shaded and wireframe)...\n");
     s_av[0] = "draw";
@@ -809,6 +822,7 @@ main(int ac, char *av[]) {
     ged_exec(dbp, 1, s_av);
     bu_file_delete("moss_tmp.g");
 
+#ifdef ENABLE_UNSTABLE
     /* The rook model is a more appropriate test case for mode 3, since its
      * wireframe is dramatically different when evaluated.*/
     bu_vls_sprintf(&fname, "%s/rook.g", av[1]);
@@ -830,6 +844,7 @@ main(int ac, char *av[]) {
 
     img_cmp(26, dbp, av[1], true);
     bu_log("Done.\n");
+#endif
 
     ged_close(dbp);
 
