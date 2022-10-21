@@ -83,8 +83,9 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear)
     ctrl = icv_read(bu_vls_cstr(&cname), BU_MIME_IMAGE_AUTO, 0, 0);
     if (!ctrl)
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&cname));
-    if (icv_diff(NULL, NULL, NULL, ctrl,timg))
+    if (icv_diff(NULL, NULL, NULL, ctrl,timg)) {
 	bu_exit(EXIT_FAILURE, "%d wireframe diff failed\n", id);
+    }
     icv_destroy(ctrl);
     icv_destroy(timg);
 
@@ -273,6 +274,24 @@ main(int ac, char *av[]) {
 	return 2;
     }
 
+    /* We are going to generate geometry from the basic moss data,
+     * so we make a temporary copy */
+    char draw_tmpfile[MAXPATHLEN];
+    FILE *fp = bu_temp_file(draw_tmpfile, MAXPATHLEN);
+    if (fp == NULL) {
+	bu_exit(EXIT_FAILURE, "Error: unable to create temporary .g file\n");
+	return 1;
+    } else {
+	bu_log("Working .g file copy: %s\n", draw_tmpfile);
+    }
+
+    /* Manually turn the temp file into a .g */
+    if (db5_fwrite_ident(fp, "libged drawing test file", 1.0) < 0) {
+	bu_log("Error: failed to prepare .g file %s\n", draw_tmpfile);
+	return 1;
+    }
+    (void)fclose(fp);
+
     /* Enable all the experimental logic */
     bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
@@ -281,8 +300,24 @@ main(int ac, char *av[]) {
     /* FIXME: To draw, we need to init this LIBRT global */
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
+    /* Open the temp file, then dbconcat argv[1] into it */
+    const char *s_av[15] = {NULL};
+    dbp = ged_open("db", draw_tmpfile, 1);
+    s_av[0] = "dbconcat";
+    s_av[1] = "-u";
+    s_av[2] = "-c";
+    s_av[3] = av[1];
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
 
-    dbp = ged_open("db", av[1], 1);
+    // TODO - dbconcat and dbi_state aren't playing nice right now - work
+    // around this by closing and re-opening the file to make a new gedp, but
+    // need to run down why dbconcat is managing to alter the .g without
+    // dbi_state hearing about it...
+    ged_close(dbp);
+    dbp = ged_open("db", draw_tmpfile, 1);
+
+    // Set up the view
     BU_GET(dbp->ged_gvp, struct bview);
     bv_init(dbp->ged_gvp, &dbp->ged_views);
     bu_vls_sprintf(&dbp->ged_gvp->gv_name, "default");
@@ -290,7 +325,6 @@ main(int ac, char *av[]) {
 
     /* To generate images that will allow us to check if the drawing
      * is proceeding as expected, we use the swrast off-screen dm. */
-    const char *s_av[15] = {NULL};
 
     s_av[0] = "dm";
     s_av[1] = "attach";
@@ -299,9 +333,24 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
 
-    struct dm *dmp = (struct dm *)dbp->ged_gvp->dmp;
+    struct bview *v = dbp->ged_gvp;
+    struct dm *dmp = (struct dm *)v->dmp;
     dm_set_width(dmp, 512);
     dm_set_height(dmp, 512);
+
+    dm_configure_win(dmp, 0);
+    dm_set_pathname(dmp, "SWDM");
+    dm_set_zbuffer(dmp, 1);
+
+    // See QtSW.cpp...
+    fastf_t windowbounds[6] = { -1, 1, -1, 1, -100, 100 };
+    dm_set_win_bounds(dmp, windowbounds);
+
+    dm_set_vp(dmp, &v->gv_scale);
+    v->dmp = dmp;
+    v->gv_width = dm_get_width(dmp);
+    v->gv_height = dm_get_height(dmp);
+
 
     /***** Basic wireframe draw *****/
     bu_log("Testing basic db wireframe draw...\n");
@@ -592,8 +641,41 @@ main(int ac, char *av[]) {
 
     img_cmp(19, dbp, av[2], true);
 
+    /***** Test shaded modes ****/
+    s_av[0] = "view";
+    s_av[1] = "lod";
+    s_av[2] = "mesh";
+    s_av[3] = "0";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    s_av[0] = "facetize";
+    s_av[1] = "-r";
+    s_av[2] = "all.g";
+    s_av[3] = "all.bot";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    // TODO - -m1 is broken in draw_rework branch??
+    //s_av[0] = "draw";
+    //s_av[1] = "-m1";
+    //s_av[2] = "all.bot";
+    //s_av[3] = NULL;
+    //ged_exec(dbp, 3, s_av);
+
+    //img_cmp(20, dbp, av[2], true);
+
+    s_av[0] = "draw";
+    s_av[1] = "-m2";
+    s_av[2] = "all.g";
+    s_av[3] = NULL;
+    ged_exec(dbp, 3, s_av);
+
+    img_cmp(21, dbp, av[2], true);
+
 
     ged_close(dbp);
+    bu_file_delete(draw_tmpfile);
 
     return 0;
 }
