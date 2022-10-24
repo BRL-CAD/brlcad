@@ -2,7 +2,6 @@ set(test_deps
   dm-swrast
   ged-autoview
   ged-close
-  ged-concat
   ged-draw
   ged-dm
   ged-facetize
@@ -60,6 +59,15 @@ set(faceplate_test_ctrls
 BRLCAD_ADDEXEC(ged_test_faceplate faceplate.cpp "libged;libdm" TEST)
 add_dependencies(ged_test_faceplate ${test_deps})
 BRLCAD_ADD_TEST(NAME ged_test_drawing_faceplate COMMAND ged_test_faceplate "${CMAKE_CURRENT_SOURCE_DIR}")
+
+
+set(lod_test_ctrls
+  lod001_ctrl.png
+  lod002_ctrl.png
+  )
+BRLCAD_ADDEXEC(ged_test_lod lod.cpp "libged;libdm" TEST)
+add_dependencies(ged_test_lod ${test_deps})
+BRLCAD_ADD_TEST(NAME ged_test_drawing_lod COMMAND ged_test_lod "${CMAKE_CURRENT_SOURCE_DIR}")
 
 
 

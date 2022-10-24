@@ -386,7 +386,7 @@ main(int ac, char *av[]) {
     orig.close();
     tmpg.close();
 
-    /* Open the temp file, then dbconcat argv[1] into it */
+    /* Open the temp file */
     const char *s_av[15] = {NULL};
     dbp = ged_open("db", "moss_tmp.g", 1);
 
