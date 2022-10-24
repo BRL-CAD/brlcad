@@ -18,3 +18,10 @@ place to spot when refactoring has completely broken a feature - in time, we
 may be able to work towards more "full coverage" CI testing of the drawing
 system's code paths.
 
+
+Tests to set up:
+
+Faceplate elements
+LoD - enable, disable, brep, mesh and csg - ideally cache clearing and re-generation
+Selection highlighting and de-highlighting
+(eventually) embedded framebuffer raytracing

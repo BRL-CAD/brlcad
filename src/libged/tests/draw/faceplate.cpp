@@ -1,0 +1,270 @@
+/*                    F A C E P L A T E . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2018-2022 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file faceplate.cpp
+ *
+ * Testing routines for drawing "built-in" faceplate view elements
+ *
+ */
+
+#include "common.h"
+
+#include <stdio.h>
+#include <fstream>
+
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash.h"
+
+#include <bu.h>
+#include <bg/lod.h>
+#include <icv.h>
+#define DM_WITH_RT
+#include <dm.h>
+#include <ged.h>
+
+void
+dm_refresh(struct ged *gedp)
+{
+    gedp->dbi_state->update();
+
+    struct bview *v= gedp->ged_gvp;
+    struct dm *dmp = (struct dm *)v->dmp;
+    unsigned char *dm_bg1;
+    unsigned char *dm_bg2;
+    dm_get_bg(&dm_bg1, &dm_bg2, dmp);
+    dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
+    dm_set_dirty(dmp, 0);
+    dm_draw_objs(v, v->gv_base2local, v->gv_local2base, NULL, NULL);
+    dm_draw_end(dmp);
+}
+
+void
+scene_clear(struct ged *gedp)
+{
+    const char *s_av[2] = {NULL};
+    s_av[0] = "Z";
+    ged_exec(gedp, 1, s_av);
+    dm_refresh(gedp);
+}
+
+void
+img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail)
+{
+    icv_image_t *ctrl, *timg;
+    struct bu_vls tname = BU_VLS_INIT_ZERO;
+    struct bu_vls cname = BU_VLS_INIT_ZERO;
+    if (id <= 0) {
+	bu_vls_sprintf(&tname, "clear.png");
+	bu_vls_sprintf(&cname, "%s/empty.png", cdir);
+    } else {
+	bu_vls_sprintf(&tname, "fp%03d.png", id);
+	bu_vls_sprintf(&cname, "%s/fp%03d_ctrl.png", cdir, id);
+    }
+
+    dm_refresh(gedp);
+    const char *s_av[2] = {NULL};
+    s_av[0] = "screengrab";
+    s_av[1] = bu_vls_cstr(&tname);
+    ged_exec(gedp, 2, s_av);
+
+    timg = icv_read(bu_vls_cstr(&tname), BU_MIME_IMAGE_PNG, 0, 0);
+    if (!timg) {
+	if (soft_fail) {
+	    bu_log("Failed to read %s\n", bu_vls_cstr(&tname));
+	    if (clear)
+		scene_clear(gedp);
+	    bu_vls_free(&tname);
+	    return;
+	}
+	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&tname));
+    }
+    ctrl = icv_read(bu_vls_cstr(&cname), BU_MIME_IMAGE_PNG, 0, 0);
+    if (!ctrl) {
+	if (soft_fail) {
+	    bu_log("Failed to read %s\n", bu_vls_cstr(&cname));
+	    if (clear)
+		scene_clear(gedp);
+	    bu_vls_free(&tname);
+	    bu_vls_free(&cname);
+	    return;
+	}
+	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&cname));
+    }
+    bu_vls_free(&cname);
+    int matching_cnt = 0;
+    int off_by_1_cnt = 0;
+    int off_by_many_cnt = 0;
+    int iret = icv_diff(&matching_cnt, &off_by_1_cnt, &off_by_many_cnt, ctrl,timg);
+    if (iret) {
+	if (soft_fail) {
+	    bu_log("%d wireframe diff failed.  %d matching, %d off by 1, %d off by many\n", id, matching_cnt, off_by_1_cnt, off_by_many_cnt);
+	    icv_destroy(ctrl);
+	    icv_destroy(timg);
+	    if (clear)
+		scene_clear(gedp);
+	    return;
+	}
+	bu_exit(EXIT_FAILURE, "%d wireframe diff failed.  %d matching, %d off by 1, %d off by many\n", id, matching_cnt, off_by_1_cnt, off_by_many_cnt);
+    }
+
+    icv_destroy(ctrl);
+    icv_destroy(timg);
+
+    // Image comparison done and successful - clear image
+    bu_file_delete(bu_vls_cstr(&tname));
+    bu_vls_free(&tname);
+
+    if (clear)
+	scene_clear(gedp);
+}
+
+
+int
+main(int ac, char *av[]) {
+    struct ged *dbp;
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    int need_help = 0;
+    int run_unstable_tests = 0;
+    int soft_fail = 0;
+
+    bu_setprogname(av[0]);
+
+    struct bu_opt_desc d[4];
+    BU_OPT(d[0], "h", "help",            "", NULL,          &need_help, "Print help and exit");
+    BU_OPT(d[1], "U", "enable-unstable", "", NULL, &run_unstable_tests, "Test drawing routines known to differ between build configs/platforms.");
+    BU_OPT(d[2], "c", "continue",        "", NULL,          &soft_fail, "Continue testing if a failure is encountered.");
+    BU_OPT_NULL(d[3]);
+
+    /* Done with program name */
+    int uac = bu_opt_parse(NULL, ac, (const char **)av, d);
+    if (uac == -1 || need_help)
+
+    if (ac != 2)
+	bu_exit(EXIT_FAILURE, "%s [-h] [-U] <directory>", av[0]);
+
+    if (!bu_file_directory(av[1])) {
+	printf("ERROR: [%s] is not a directory.  Expecting control image directory\n", av[1]);
+	return 2;
+    }
+
+    /* Enable all the experimental logic */
+    bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
+    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
+    bu_setenv("LIBGED_DBI_STATE", "1", 1);
+
+    if (!bu_file_exists(av[1], NULL)) {
+	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
+	return 2;
+    }
+
+    /* FIXME: To draw, we need to init this LIBRT global */
+    BU_LIST_INIT(&RTG.rtg_vlfree);
+
+    /* Open the temp file, then dbconcat argv[1] into it */
+    bu_vls_sprintf(&fname, "%s/moss.g", av[1]);
+    dbp = ged_open("db", bu_vls_cstr(&fname), 1);
+
+    // Set up the view
+    BU_GET(dbp->ged_gvp, struct bview);
+    bv_init(dbp->ged_gvp, &dbp->ged_views);
+    bu_vls_sprintf(&dbp->ged_gvp->gv_name, "default");
+    bv_set_add_view(&dbp->ged_views, dbp->ged_gvp);
+
+    /* To generate images that will allow us to check if the drawing
+     * is proceeding as expected, we use the swrast off-screen dm. */
+    const char *s_av[15] = {NULL};
+    s_av[0] = "dm";
+    s_av[1] = "attach";
+    s_av[2] = "swrast";
+    s_av[3] = "SW";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    struct bview *v = dbp->ged_gvp;
+    struct dm *dmp = (struct dm *)v->dmp;
+    dm_set_width(dmp, 512);
+    dm_set_height(dmp, 512);
+
+    dm_configure_win(dmp, 0);
+    dm_set_zbuffer(dmp, 1);
+
+    // See QtSW.cpp...
+    fastf_t windowbounds[6] = { -1, 1, -1, 1, -100, 100 };
+    dm_set_win_bounds(dmp, windowbounds);
+
+    dm_set_vp(dmp, &v->gv_scale);
+    v->dmp = dmp;
+    v->gv_width = dm_get_width(dmp);
+    v->gv_height = dm_get_height(dmp);
+
+
+    /***** Sanity - basic wireframe draw *****/
+    bu_log("Testing basic db wireframe draw...\n");
+    s_av[0] = "draw";
+    s_av[1] = "all.g";
+    s_av[2] = NULL;
+    ged_exec(dbp, 2, s_av);
+
+    s_av[0] = "autoview";
+    s_av[1] = NULL;
+    ged_exec(dbp, 1, s_av);
+
+    s_av[0] = "ae";
+    s_av[1] = "35";
+    s_av[2] = "25";
+    s_av[3] = NULL;
+    ged_exec(dbp, 3, s_av);
+    img_cmp(1, dbp, av[1], true, soft_fail);
+
+    // Check that everything is in fact cleared
+    img_cmp(0, dbp, av[1], false, soft_fail);
+    bu_log("Done.\n");
+
+    /***** Center Dot *****/
+    bu_log("Testing center dot...\n");
+    s_av[0] = "view";
+    s_av[1] = "faceplate";
+    s_av[2] = "center_dot";
+    s_av[3] = "1";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+    img_cmp(2, dbp, av[1], false, soft_fail);
+
+    // Check that turning off the dot works
+    s_av[3] = "0";
+    ged_exec(dbp, 4, s_av);
+    img_cmp(0, dbp, av[1], false, soft_fail);
+    bu_log("Done.\n");
+
+    ged_close(dbp);
+
+    return 0;
+}
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

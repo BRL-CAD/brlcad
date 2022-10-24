@@ -1,5 +1,4 @@
-BRLCAD_ADDEXEC(ged_test_draw draw.cpp "libged;libdm" TEST)
-add_dependencies(ged_test_draw
+set(test_deps
   dm-swrast
   ged-autoview
   ged-close
@@ -11,13 +10,9 @@ add_dependencies(ged_test_draw
   ged-view
   ged-zap
   )
-BRLCAD_ADD_TEST(NAME ged_test_drawing COMMAND ged_test_draw "${CMAKE_CURRENT_SOURCE_DIR}")
 
-CMAKEFILES(
-  README
-  empty.png
-  moss.g
-  rook.g
+
+set(basic_view_test_ctrls
   v001_ctrl.png
   v002_ctrl.png
   v003_ctrl.png
@@ -44,6 +39,29 @@ CMAKEFILES(
   v024_ctrl.png
   v025_ctrl.png
   v026_ctrl.png
+  )
+BRLCAD_ADDEXEC(ged_test_draw draw.cpp "libged;libdm" TEST)
+add_dependencies(ged_test_draw ${test_deps})
+BRLCAD_ADD_TEST(NAME ged_test_drawing_basic COMMAND ged_test_draw "${CMAKE_CURRENT_SOURCE_DIR}")
+
+
+set(faceplate_test_ctrls
+  fp001_ctrl.png
+  )
+BRLCAD_ADDEXEC(ged_test_faceplate faceplate.cpp "libged;libdm" TEST)
+add_dependencies(ged_test_faceplate ${test_deps})
+BRLCAD_ADD_TEST(NAME ged_test_drawing_faceplate COMMAND ged_test_faceplate "${CMAKE_CURRENT_SOURCE_DIR}")
+
+
+
+
+CMAKEFILES(
+  README
+  empty.png
+  moss.g
+  rook.g
+  ${basic_view_test_ctrls}
+  ${faceplate_test_ctrls}
   )
 
 CMAKEFILES(CMakeLists.txt)
