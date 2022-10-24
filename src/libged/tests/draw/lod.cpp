@@ -88,9 +88,13 @@ ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, 
 void
 dm_refresh(struct ged *gedp)
 {
-    gedp->dbi_state->update();
-
     struct bview *v= gedp->ged_gvp;
+    BViewState *bvs = gedp->dbi_state->get_view_state(v);
+    gedp->dbi_state->update();
+    std::unordered_set<struct bview *> uset;
+    uset.insert(v);
+    bvs->redraw(NULL, uset, 1);
+
     struct dm *dmp = (struct dm *)v->dmp;
     unsigned char *dm_bg1;
     unsigned char *dm_bg2;
@@ -313,7 +317,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(1, dbp, av[1], true, soft_fail);
+    img_cmp(1, dbp, av[1], false, soft_fail);
     bu_log("Done.\n");
 
     bu_log("Enable LoD, using coarse scale to enhance visual change...\n");
@@ -330,7 +334,7 @@ main(int ac, char *av[]) {
     s_av[3] = "0.8";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-
+#if 0
     s_av[0] = "draw";
     s_av[1] = "-m1";
     s_av[2] = "all.bot";
@@ -340,7 +344,7 @@ main(int ac, char *av[]) {
     s_av[0] = "autoview";
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
-
+#endif
     img_cmp(2, dbp, av[1], false, soft_fail);
     bu_log("Done.\n");
 

@@ -296,6 +296,9 @@ class GED_EXPORT BViewState {
 	// Clear all drawn objects (TODO - should allow mode specification here)
 	void clear();
 
+	// A View State refresh regenerates already drawn objects.
+	unsigned long long refresh(struct bview *v);
+
 	// A View State redraw can impact multiple views with a shared state - most of
 	// the elements will be the same, but adaptive plotting will be view specific even
 	// with otherwise common objects - we must update accordingly.

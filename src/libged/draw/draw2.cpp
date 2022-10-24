@@ -246,34 +246,16 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 static int
-_ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[])
+_ged_redraw_view(struct ged *gedp, struct bview *v, int UNUSED(argc), const char **UNUSED(argv))
 {
-    if (!gedp || !v)
+    if (!gedp || !gedp->dbi_state || !v)
 	return BRLCAD_ERROR;
-
-    int ac = (v->independent) ? 5 : 3;
-    const char *av[7] = {NULL};
-    av[0] = "draw";
-    av[1] = "-R";
-    av[2] = "--refresh";
-    av[3] = (v->independent) ? "--view" : NULL;
-    av[4] = (v->independent) ? bu_vls_cstr(&v->gv_name) : NULL;
-    int oind = (v->independent) ? 5 : 3;
-    if (!argc) {
-	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
-	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	    av[oind] = bu_vls_cstr(&cg->s_name);
-	    ged_exec(gedp, ac, (const char **)av);
-	}
-	return BRLCAD_OK;
-    } else {
-	for (int i = 0; i < argc; i++) {
-	    av[oind] = argv[i];
-	    ged_exec(gedp, ac, (const char **)av);
-	}
-	return BRLCAD_OK;
-    }
+    std::unordered_set<struct bview *> vset;
+    BViewState *bvs = gedp->dbi_state->get_view_state(v);
+    if (!bvs)
+	return BRLCAD_ERROR;
+    bvs->refresh(v);
+    return BRLCAD_OK;
 }
 
 extern "C" int

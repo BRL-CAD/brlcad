@@ -2477,6 +2477,78 @@ BViewState::is_hdrawn(int mode, unsigned long long phash)
     return 0;
 }
 
+unsigned long long
+BViewState::refresh(struct bview *v)
+{
+    if (!v)
+	return 0;
+
+    bv_log(1, "BViewState::refresh");
+    // We (well, callers) need to be able to tell if the redraw pass actually
+    // changed anything.
+    unsigned long long ret = 0;
+
+    // Make sure the view knows how to update the oriented bounding box
+    v->gv_bounds_update = &bg_view_bounds;
+
+    // Objects may be "drawn" in different ways - wireframes, shaded,
+    // evaluated.  How they must be redrawn is mode dependent.
+    std::unordered_map<int, std::unordered_set<unsigned long long>> mode_map;
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator sk_it;
+    for (sk_it = s_keys.begin(); sk_it != s_keys.end(); sk_it++) {
+	std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator s_it;
+	s_it = s_map.find(sk_it->first);
+	if (s_it == s_map.end())
+	    continue;
+	std::unordered_map<int, struct bv_scene_obj *>::iterator sm_it;
+	for (sm_it = s_it->second.begin(); sm_it != s_it->second.end(); sm_it++) {
+	    mode_map[sm_it->first].insert(sk_it->first);
+	}
+    }
+
+    // Redo drawing based on current db info - color, matrix, and geometry
+    std::unordered_map<int, std::unordered_set<unsigned long long>>::iterator mm_it;
+    for (mm_it = mode_map.begin(); mm_it != mode_map.end(); mm_it++) {
+	std::unordered_set<unsigned long long> &mkeys = mm_it->second;
+	std::unordered_set<unsigned long long>::iterator k_it;
+	for (k_it = mkeys.begin(); k_it != mkeys.end(); k_it++) {
+	    std::vector<unsigned long long> &cp = s_keys[*k_it];
+	    struct bv_scene_obj *s = NULL;
+	    if (s_map.find(*k_it) != s_map.end()) {
+		if (s_map[*k_it].find(mm_it->first) != s_map[*k_it].end())
+		    s = s_map[*k_it][mm_it->first];
+	    }
+	    if (!s)
+		continue;
+	    struct bv_scene_obj *nso = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
+	    bv_obj_sync(nso, s);
+	    nso->s_i_data = s->s_i_data;
+	    s->s_i_data = NULL;
+	    s_map[*k_it].erase(mm_it->first);
+	    ret = GED_DBISTATE_VIEW_CHANGE;
+
+	    // print path name, set view - otherwise empty
+	    dbis->print_path(&nso->s_name, cp);
+	    nso->s_v = dbis->gedp->ged_gvp;
+	    nso->dp = s->dp;
+	    s_map[*k_it][mm_it->first] = nso;
+	    
+	    //bv_log(3, "refresh %s[%s]", bu_vls_cstr(&(nso->s_name)), bu_vls_cstr(&(v->gv_name)));
+	    bu_log("refresh %s[%s]\n", bu_vls_cstr(&(nso->s_name)), bu_vls_cstr(&(v->gv_name)));
+	    draw_scene(nso, v);
+	    bv_obj_put(s);
+	}
+    }
+
+    // Do selection sync
+    BSelectState *ss = dbis->find_selected_state(NULL);
+    if (ss) {
+	ss->draw_sync();
+	ret = GED_DBISTATE_VIEW_CHANGE;
+    }
+
+    return ret;
+}
 
 unsigned long long
 BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views, int no_autoview)
