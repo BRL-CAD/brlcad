@@ -75,6 +75,7 @@ CMAKEFILES(
   README
   empty.png
   moss.g
+  moss.png
   rook.g
   ${basic_view_test_ctrls}
   ${faceplate_test_ctrls}
