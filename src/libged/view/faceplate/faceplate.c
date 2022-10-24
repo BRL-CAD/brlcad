@@ -338,10 +338,10 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 
 const struct bu_cmdtab _fp_cmds[] = {
     { "center_dot",      _fp_cmd_center_dot},
-    { "grid",            _fp_cmd_grid},
-    { "irect",           _fp_cmd_irect},
     { "fb",              _fp_cmd_fb},
     { "fps",             _fp_cmd_fps},
+    { "grid",            _fp_cmd_grid},
+    { "irect",           _fp_cmd_irect},
     { "model_axes",      _fp_cmd_model_axes},
     { "params",          _fp_cmd_params},
     { "scale",           _fp_cmd_scale},

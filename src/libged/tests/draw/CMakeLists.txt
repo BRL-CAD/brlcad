@@ -7,6 +7,7 @@ set(test_deps
   ged-dm
   ged-facetize
   ged-open
+  ged-png2fb
   ged-view
   ged-zap
   )
@@ -47,11 +48,18 @@ BRLCAD_ADD_TEST(NAME ged_test_drawing_basic COMMAND ged_test_draw "${CMAKE_CURRE
 
 set(faceplate_test_ctrls
   fp001_ctrl.png
+  fp002_ctrl.png
+  fp003_ctrl.png
+  fp004_ctrl.png
+  fp005_ctrl.png
+  fp006_ctrl.png
+  fp007_ctrl.png
+  fp008_ctrl.png
+  fp009_ctrl.png
   )
 BRLCAD_ADDEXEC(ged_test_faceplate faceplate.cpp "libged;libdm" TEST)
 add_dependencies(ged_test_faceplate ${test_deps})
 BRLCAD_ADD_TEST(NAME ged_test_drawing_faceplate COMMAND ged_test_faceplate "${CMAKE_CURRENT_SOURCE_DIR}")
-
 
 
 

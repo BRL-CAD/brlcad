@@ -21,7 +21,6 @@ system's code paths.
 
 Tests to set up:
 
-Faceplate elements
 LoD - enable, disable, brep, mesh and csg - ideally cache clearing and re-generation
 Selection highlighting and de-highlighting
 (eventually) embedded framebuffer raytracing

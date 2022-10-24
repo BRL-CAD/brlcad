@@ -424,7 +424,8 @@ main(int ac, char *av[]) {
     v->dmp = dmp;
     v->gv_width = dm_get_width(dmp);
     v->gv_height = dm_get_height(dmp);
-
+    v->gv_base2local = dbp->dbip->dbi_base2local;
+    v->gv_local2base = dbp->dbip->dbi_local2base;
 
     /***** Basic wireframe draw *****/
     bu_log("Testing basic db wireframe draw...\n");
