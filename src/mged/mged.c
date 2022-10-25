@@ -1640,6 +1640,15 @@ main(int argc, char *argv[])
 		Tcl_SetChannelOption(INTERP, chan, "-blocking", "false");
 		Tcl_SetChannelOption(INTERP, chan, "-buffering", "line");
 		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
+		/* intermittently, the process of Tcl_UnregisterChannel does not
+		 * finish cleaning up the write threads before we spawn new
+		 * ones with Tcl_MakeFileChannel. This error prematurely invokes the
+		 * new threads when the old ones finally signal which breaks all 'puts'
+		 * from the channel. Calling puts with an empty string here
+		 * *appears* to force a sync and resolve the issue.
+		 */
+		if (Tcl_Eval(INTERP, "puts \"\"") != TCL_OK)
+		    perror("STDOUT chan broken");
 		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
 	    }
 
@@ -1651,6 +1660,8 @@ main(int argc, char *argv[])
 		Tcl_SetChannelOption(INTERP, chan, "-blocking", "false");
 		Tcl_SetChannelOption(INTERP, chan, "-buffering", "line");
 		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
+		if (Tcl_Eval(INTERP, "puts stderr \"\"") != TCL_OK)
+		    perror("STDERR chan broken");
 		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
 	    }
 	}
