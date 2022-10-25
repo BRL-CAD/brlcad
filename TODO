@@ -37,10 +37,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   resulting in "unknown command" on an uninstalled build.  title and
   units commands work, but puts fails inside ged_exec().
 
-* On some Windows machine Tcl script commands using "puts" to write to
-  stdout are intermittently failing with:
-  Error: error writing "stdout": invalid argument
-
 * snap grid mode is failing in Archer (user report, most likely related
   to one of the code refactorings breaking something.)
 
