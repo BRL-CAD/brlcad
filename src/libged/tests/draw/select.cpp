@@ -735,6 +735,12 @@ main(int ac, char *av[]) {
 #endif
 
     /***** LoD Mesh wireframe ****/
+
+    // Temporary - remove when above CSG tests can be enabled
+    s_av[0] = "Z";
+    s_av[1] = NULL;
+    ged_exec(dbp, 1, s_av);
+
     s_av[0] = "view";
     s_av[1] = "lod";
     s_av[2] = "mesh";
