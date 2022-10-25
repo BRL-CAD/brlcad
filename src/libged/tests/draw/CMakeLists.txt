@@ -90,6 +90,11 @@ set(select_test_ctrls
 	select011_ctrl.png
 	select012_ctrl.png
 	select013_ctrl.png
+	select014_ctrl.png
+	select015_ctrl.png
+	select016_ctrl.png
+	select017_ctrl.png
+	select018_ctrl.png
 	select019_ctrl.png
 	select020_ctrl.png
 	select021_ctrl.png

@@ -612,8 +612,6 @@ main(int ac, char *av[]) {
     img_cmp(13, dbp, av[1], false, soft_fail);
     bu_log("Done.\n");
 
-    // TODO - selection and CSG LoD not working together
-#if 0
     bu_log("Selecting a single object...\n");
     s_av[0] = "select";
     s_av[1] = "add";
@@ -732,7 +730,6 @@ main(int ac, char *av[]) {
     ged_exec(dbp, 2, s_av);
 
     img_cmp(13, dbp, av[1], true, soft_fail);
-#endif
 
     /***** LoD Mesh wireframe ****/
 
