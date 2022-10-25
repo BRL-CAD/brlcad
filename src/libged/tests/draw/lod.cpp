@@ -334,18 +334,29 @@ main(int ac, char *av[]) {
     s_av[3] = "0.8";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-#if 0
-    s_av[0] = "draw";
-    s_av[1] = "-m1";
-    s_av[2] = "all.bot";
-    s_av[3] = NULL;
-    ged_exec(dbp, 3, s_av);
 
-    s_av[0] = "autoview";
-    s_av[1] = NULL;
-    ged_exec(dbp, 1, s_av);
-#endif
     img_cmp(2, dbp, av[1], false, soft_fail);
+
+    bu_log("Disable LoD\n");
+    s_av[0] = "view";
+    s_av[1] = "lod";
+    s_av[2] = "mesh";
+    s_av[3] = "0";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    img_cmp(1, dbp, av[1], false, soft_fail);
+
+    bu_log("Re-enable LoD\n");
+    s_av[0] = "view";
+    s_av[1] = "lod";
+    s_av[2] = "mesh";
+    s_av[3] = "1";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    img_cmp(2, dbp, av[1], false, soft_fail);
+
     bu_log("Done.\n");
 
     ged_close(dbp);
