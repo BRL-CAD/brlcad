@@ -246,7 +246,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 static int
-_ged_redraw_view(struct ged *gedp, struct bview *v, int UNUSED(argc), const char **UNUSED(argv))
+_ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char **argv)
 {
     if (!gedp || !gedp->dbi_state || !v)
 	return BRLCAD_ERROR;
@@ -254,7 +254,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int UNUSED(argc), const char
     BViewState *bvs = gedp->dbi_state->get_view_state(v);
     if (!bvs)
 	return BRLCAD_ERROR;
-    bvs->refresh(v);
+    bvs->refresh(v, argc, argv);
     return BRLCAD_OK;
 }
 

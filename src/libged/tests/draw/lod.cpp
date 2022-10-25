@@ -230,14 +230,14 @@ main(int ac, char *av[]) {
      * so we make a temporary copy */
     bu_vls_sprintf(&fname, "%s/moss.g", av[1]);
     std::ifstream orig(bu_vls_cstr(&fname), std::ios::binary);
-    std::ofstream tmpg("moss_tmp.g", std::ios::binary);
+    std::ofstream tmpg("moss_lod_tmp.g", std::ios::binary);
     tmpg << orig.rdbuf();
     orig.close();
     tmpg.close();
 
     /* Open the temp file */
     const char *s_av[15] = {NULL};
-    dbp = ged_open("db", "moss_tmp.g", 1);
+    dbp = ged_open("db", "moss_lod_tmp.g", 1);
 
     // Set callback so database changes will update dbi_state
     db_add_changed_clbk(dbp->dbip, &ged_changed_callback, (void *)dbp);

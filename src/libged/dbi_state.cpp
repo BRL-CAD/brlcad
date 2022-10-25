@@ -2478,7 +2478,7 @@ BViewState::is_hdrawn(int mode, unsigned long long phash)
 }
 
 unsigned long long
-BViewState::refresh(struct bview *v)
+BViewState::refresh(struct bview *v, int argc, const char **argv)
 {
     if (!v)
 	return 0;
@@ -2491,6 +2491,22 @@ BViewState::refresh(struct bview *v)
     // Make sure the view knows how to update the oriented bounding box
     v->gv_bounds_update = &bg_view_bounds;
 
+    // If we have specific paths specified, the leaves of those paths
+    // denote which paths need refreshing.  We need to process them
+    // and turn them to hashes, so we can check the s_keys hash vectors
+    // for the presence of "hashes of interest".
+    //
+    // Note - this is too aggressive, in that it will result in refreshing
+    // of objects that have the leaf in their paths but don't match the
+    // parent full path.  However, checking the full parent path is more
+    // complicated without an n^2 order performance problem, so for the
+    // moment we punt and use the more aggressive redraw solution.
+    std::unordered_set<unsigned long long> active_hashes;
+    for (int i = 0; i < argc; i++) {
+	std::vector<unsigned long long> phashes = dbis->digest_path(argv[i]);
+	active_hashes.insert(phashes[phashes.size() - 1]);
+    }
+
     // Objects may be "drawn" in different ways - wireframes, shaded,
     // evaluated.  How they must be redrawn is mode dependent.
     std::unordered_map<int, std::unordered_set<unsigned long long>> mode_map;
@@ -2500,6 +2516,21 @@ BViewState::refresh(struct bview *v)
 	s_it = s_map.find(sk_it->first);
 	if (s_it == s_map.end())
 	    continue;
+
+	// If we have specified objects, we only refresh if the path
+	// involves a hash of interest
+	if (active_hashes.size()) {
+	    int active = 0;
+	    for (size_t i = 0; i < sk_it->second.size(); i++) {
+		if (active_hashes.find(sk_it->second[i]) != active_hashes.end()) {
+		    active = 1;
+		    break;
+		}
+	    }
+	    if (!active)
+		continue;
+	}
+
 	std::unordered_map<int, struct bv_scene_obj *>::iterator sm_it;
 	for (sm_it = s_it->second.begin(); sm_it != s_it->second.end(); sm_it++) {
 	    mode_map[sm_it->first].insert(sk_it->first);
