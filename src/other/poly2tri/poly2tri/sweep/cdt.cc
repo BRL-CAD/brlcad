@@ -61,9 +61,9 @@ namespace p2t {
 	return sweep_context_->GetPoints();
     }
 
-    void CDT::Triangulate(bool finalize, int num_points)
+    void CDT::Triangulate(bool finalize, int num_points, long maxtime)
     {
-	sweep_->Triangulate(*sweep_context_, finalize, num_points);
+	sweep_->Triangulate(*sweep_context_, finalize, num_points, maxtime);
     }
 
     std::vector<p2t::Triangle*>& CDT::GetTriangles()
