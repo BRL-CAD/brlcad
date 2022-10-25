@@ -714,7 +714,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 		goto geom_done;
 		break;
 	    case DB5_MINORTYPE_BRLCAD_BREP:
-		(void)rt_brep_plot_poly(&s->s_vlist, fp, ip, ttol, tol, NULL);
+		(void)rt_brep_plot_poly(&s->s_vlist, dp, ip, ttol, tol, NULL);
 		goto geom_done;
 		break;
 	    default:

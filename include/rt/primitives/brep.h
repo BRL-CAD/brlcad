@@ -40,7 +40,7 @@ RT_EXPORT extern int rt_brep_plot(struct bu_list                *vhead,
 				  const struct bn_tol            *tol,
 				  const struct bview *info);
 RT_EXPORT extern int rt_brep_plot_poly(struct bu_list           *vhead,
-				       const struct db_full_path *pathp,
+				       const struct directory   *dp,
 				       struct rt_db_internal     *ip,
 				       const struct bg_tess_tol  *ttol,
 				       const struct bn_tol       *tol,

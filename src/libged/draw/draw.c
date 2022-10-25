@@ -98,7 +98,7 @@ plot_shaded(
 		(void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
 		break;
 	    case DB5_MINORTYPE_BRLCAD_BREP:
-		(void)rt_brep_plot_poly(&vhead, pathp, ip, tsp->ts_ttol,
+		(void)rt_brep_plot_poly(&vhead, DB_FULL_PATH_CUR_DIR(pathp), ip, tsp->ts_ttol,
 			tsp->ts_tol, NULL);
 	}
 	_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
@@ -370,7 +370,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 		if (dgcdp->nmg_fast_wireframe_draw) {
 		    (void)rt_brep_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		} else {
-		    (void)rt_brep_plot_poly(&vhead, pathp, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
+		    (void)rt_brep_plot_poly(&vhead, DB_FULL_PATH_CUR_DIR(pathp), &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		}
 	    }
 	    goto out;

@@ -2949,17 +2949,17 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
     }
 }
 
-int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, struct rt_db_internal *ip,
+int rt_brep_plot_poly(struct bu_list *vhead, const struct directory *dp, struct rt_db_internal *ip,
 		      const struct bg_tess_tol *ttol, const struct bn_tol *tol,
 		      const struct bview *UNUSED(info))
 {
     TRACE1("rt_brep_plot");
 
-    if (!vhead || !pathp || pathp->fp_len <= 0 || !ip || !ttol || !tol)
+    if (!vhead || dp == RT_DIR_NULL || !ip || !ttol || !tol)
 	return -1;
 
     struct rt_brep_internal* bi;
-    const char *solid_name =  DB_FULL_PATH_CUR_DIR(pathp)->d_namep;
+    const char *solid_name =  dp->d_namep;
     ON_wString wstr;
     ON_TextLog tl(wstr);
 
