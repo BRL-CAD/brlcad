@@ -159,7 +159,7 @@ dm_label_primitive(struct rt_wdb *wdbp,
 		(struct rt_arb_internal *)ip->idb_ptr;
 
 	    RT_ARB_CK_MAGIC(arb);
-	    arbType = rt_arb_std_type(ip, &wdbp->wdb_tol);
+	    arbType = rt_arb_std_type(ip, &wdbp->dbip->db_tol);
 
 	    switch (arbType) {
 		case ARB8:

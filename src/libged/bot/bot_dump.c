@@ -1028,13 +1028,14 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	gbdcdp.fd = fd;
 	gbdcdp.file_ext = file_ext;
 
+	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	for (i = 0; i < argc; ++i) {
 	    av[0] = (char *)argv[i];
 	    ret = db_walk_tree(gedp->dbip,
 			       ac,
 			       (const char **)av,
 			       ncpu,
-			       &gedp->ged_wdbp->wdb_initial_tree_state,
+			       &wdbp->wdb_initial_tree_state,
 			       0,
 			       0,
 			       bot_dump_leaf,

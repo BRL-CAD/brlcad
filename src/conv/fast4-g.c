@@ -2096,7 +2096,7 @@ make_bot_object(struct f4g_state *s)
     bot_ip.orientation = RT_BOT_UNORIENTED;
     bot_ip.bot_flags = 0;
 
-    count = rt_bot_vertex_fuse(&bot_ip, &s->fpout->wdb_tol);
+    count = rt_bot_vertex_fuse(&bot_ip, &s->fpout->dbip->db_tol);
     if (count)
 	bu_log("WARNING: %d duplicate vertices eliminated from group %d component %d\n", count, s->group_id, s->comp_id);
 

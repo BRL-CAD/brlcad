@@ -54,7 +54,7 @@ draw_points(struct bv_scene_obj *s)
 	return BRLCAD_OK; /* nothing to do is fine */
 
     /* there's a path to draw */
-    struct bn_tol btol = BG_TOL_INIT;
+    struct bn_tol btol = BN_TOL_INIT_TOL;
     struct db_i* dbip = d->dbip;
     struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
     if (!dbip || !dp)
@@ -95,7 +95,7 @@ draw_points(struct bv_scene_obj *s)
     // TODO - apply matrix from full path to points
 
     // Make triangles based on the point vertex and normal
-    struct bn_tol btolt = BG_TOL_INIT;
+    struct bn_tol btolt = BN_TOL_INIT_TOL;
     double scale = btol.dist;
     fastf_t ty1 =  0.57735026918962573 * scale; /* tan(PI/6) */
     fastf_t ty2 = -0.28867513459481287 * scale; /* 0.5 * tan(PI/6) */

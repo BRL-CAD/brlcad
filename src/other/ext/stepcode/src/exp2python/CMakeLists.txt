@@ -3,7 +3,6 @@ if(SC_PYTHON_GENERATOR)
   include_directories(
     ${SC_SOURCE_DIR}/include
     ${SC_SOURCE_DIR}/include/express
-    ${SC_SOURCE_DIR}/src/base
    )
 
   add_definitions(-DHAVE_CONFIG_H)
@@ -29,7 +28,7 @@ if(SC_PYTHON_GENERATOR)
     ../exp2cxx/write.cc
     ../exp2cxx/print.cc
    )
- SC_ADDEXEC(exp2python SOURCES ${exp2python_SOURCES} LINK_LIBRARIES express base)
+ SC_ADDEXEC(exp2python SOURCES ${exp2python_SOURCES} LINK_LIBRARIES express)
 
 endif(SC_PYTHON_GENERATOR)
 

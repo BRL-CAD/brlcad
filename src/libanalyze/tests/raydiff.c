@@ -34,7 +34,7 @@ main(int argc, char **argv)
     struct db_i *dbip = DBI_NULL;
     struct directory *dp1 = RT_DIR_NULL;
     struct directory *dp2 = RT_DIR_NULL;
-    struct bn_tol tol = BG_TOL_INIT;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
     struct analyze_raydiff_results *results;
 
     bu_setprogname(argv[0]);

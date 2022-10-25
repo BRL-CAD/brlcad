@@ -195,7 +195,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 		return BRLCAD_ERROR;
 	    }
 
-	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, gedp->ged_wdbp->wdb_resp) < 0) {
+	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, gedp->dbip->db_resp) < 0) {
 		rt_db_free_internal(&new_intern);
 		bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 	    }
@@ -298,7 +298,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 		return BRLCAD_ERROR;
 	    }
 
-	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, gedp->ged_wdbp->wdb_resp) < 0) {
+	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, gedp->dbip->db_resp) < 0) {
 		rt_db_free_internal(&new_intern);
 		bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 		return BRLCAD_ERROR;

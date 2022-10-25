@@ -103,7 +103,8 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 	    struct db_full_path path;
 
 	    db_full_path_init(&path);
-	    ts = gedp->ged_wdbp->wdb_initial_tree_state;     /* struct copy */
+	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	    ts = wdbp->wdb_initial_tree_state;     /* struct copy */
 	    ts.ts_dbip = gedp->dbip;
 	    ts.ts_resp = &rt_uniresource;
 	    MAT_IDN(ts.ts_mat);

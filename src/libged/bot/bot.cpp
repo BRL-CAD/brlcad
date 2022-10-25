@@ -324,7 +324,9 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    retval = mk_bot(gb->gedp->ged_wdbp, bu_vls_cstr(&out_name), RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
+    struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    retval = mk_bot(wdbp, bu_vls_cstr(&out_name), RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
+    wdb_close(wdbp);
 
     bu_vls_free(&out_name);
     bu_free(faces, "free faces");

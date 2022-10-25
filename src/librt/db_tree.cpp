@@ -2007,6 +2007,8 @@ _db_walk_dispatcher(int cpu, void *arg)
     }
     RT_CK_RESOURCE(resp);
 
+    struct db_i *dbip = (wps->rtip) ? wps->rtip->rti_dbip : NULL;
+
     while (1) {
 	bu_semaphore_acquire(RT_SEM_WORKER);
 	mine = wps->reg_current++;
@@ -2025,9 +2027,7 @@ _db_walk_dispatcher(int cpu, void *arg)
 	/* Walk the full subtree now */
 	region_start_statep = (struct combined_tree_state *)0;
 
-	struct db_i *dbip = curtree->tr_c.tc_ctsp->cts_s.ts_dbip;
-	RT_CK_DBI(dbip);
-	if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	if (UNLIKELY(dbip && dbip->dbi_use_comb_instance_ids)) {
 	    std::unordered_map<std::string, int> c_inst_map;
 	    _db_walk_subtree(curtree, &region_start_statep, wps->reg_leaf_func, wps->client_data, resp, (void *)&c_inst_map);
 	} else {

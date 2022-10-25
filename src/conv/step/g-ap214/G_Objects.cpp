@@ -35,7 +35,7 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
 {
     //int type;
     struct bn_tol tol;
-    //struct bn_tol arb_tol = BG_TOL_INIT;
+    //struct bn_tol arb_tol = BN_TOL_INIT_TOL;
     ON_Brep **brep;
     STEPentity *brep_shape;
     STEPentity *brep_product;

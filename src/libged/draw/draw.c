@@ -174,7 +174,8 @@ get_path_and_state(
     const char *path_name,
     struct ged *gedp)
 {
-    *tsp = gedp->ged_wdbp->wdb_initial_tree_state;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    *tsp = wdbp->wdb_initial_tree_state;
     tsp->ts_dbip = gedp->dbip;
     tsp->ts_resp = &rt_uniresource;
 
@@ -789,6 +790,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	return -1;
     }
 
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     switch (kind) {
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "ERROR, bad kind\n");
@@ -837,7 +839,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       ac,
 				       (const char **)av,
 				       ncpu,
-				       &gedp->ged_wdbp->wdb_initial_tree_state,
+				       &wdbp->wdb_initial_tree_state,
 				       NULL,
 				       draw_check_region_end,
 				       draw_check_leaf,
@@ -880,7 +882,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       ac,
 				       (const char **)av,
 				       ncpu,
-				       &gedp->ged_wdbp->wdb_initial_tree_state,
+				       &wdbp->wdb_initial_tree_state,
 				       NULL,
 				       wireframe_region_end,
 				       append_solid_to_display_list,
@@ -928,7 +930,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	case _GED_DRAW_NMG_POLY:
 	    {
 		nmg_model = nmg_mm();
-		gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
+		wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
 		if (dgcdp.draw_edge_uses) {
 		    bu_vls_printf(gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
 		    dgcdp.draw_edge_uses_vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
@@ -946,7 +948,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       ac,
 				       (const char **)av,
 				       ncpu,
-				       &gedp->ged_wdbp->wdb_initial_tree_state,
+				       &wdbp->wdb_initial_tree_state,
 				       enable_fastpath ? draw_nmg_region_start : 0,
 				       draw_nmg_region_end,
 				       nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,

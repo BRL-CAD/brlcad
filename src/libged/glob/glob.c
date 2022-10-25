@@ -217,7 +217,7 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* No database to match against, so return. */
-    if (gedp->ged_wdbp == RT_WDB_NULL || gedp->dbip == DBI_NULL)
+    if (gedp->dbip == DBI_NULL)
 	return BRLCAD_OK;
 
     /* must be wanting help */

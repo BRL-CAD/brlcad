@@ -11,9 +11,12 @@ We love contributions!
   * Encouraged but not enforced: each commit should stand alone, in the sense that the code should compile and run at that point.
 * One major topic per pull request. Commits that fix small things (typos, formatting) are perfectly acceptable in a PR fixing a bug or adding a feature.
   * Tests are good. Tests are required unless you're fixing something simple or that was obviously broken.
+  * Do not change EXPRESS schema definition without reference to an upstream change.
 * Make your changes and push them to your GitHub repo
 * Once your branch is pushed, submit a pull request.
-* We'll look at the PR and either merge or add feedback. If there isn't any activity within several days, send a message to the mailing list - `scl-dev` AT `groups.google.com`.
+  - enable github option on each PR 'Allow edits from maintainers', refer to github help if necessary
+* We'll look at the PR and either merge (possibly after rebase) or add feedback.
+  - If there isn't any activity within several days send a message to the mailing list - `scl-dev` AT `groups.google.com`.
 
 ## Coding Standards
 

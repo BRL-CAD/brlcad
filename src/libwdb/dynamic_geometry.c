@@ -118,7 +118,7 @@ make_hole(struct rt_wdb *wdbp,		/* database to be modified */
 	union tree *tree;
 
 	/* get the internal form of the combination */
-	if (rt_db_get_internal(&intern, dp[i], wdbp->dbip, NULL, wdbp->wdb_resp) < 0) {
+	if (rt_db_get_internal(&intern, dp[i], wdbp->dbip, NULL, wdbp->dbip->db_resp) < 0) {
 	    bu_log("Failed to get %s\n", dp[i]->d_namep);
 	    bu_vls_free(&tmp_name);
 	    return 3;
@@ -199,7 +199,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     }
 
     /* get the internal form of the new RCC */
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, wdbp->wdb_resp) < 0) {
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, wdbp->dbip->db_resp) < 0) {
 	bu_log("Failed to get internal form of RCC (%s) just made by make_hole_in_prepped_regions()!!!\n",
 	       bu_vls_addr(&tmp_name));
 	bu_bomb("Failed to get internal form of RCC just made by make_hole_in_prepped_regions()!!!\n");

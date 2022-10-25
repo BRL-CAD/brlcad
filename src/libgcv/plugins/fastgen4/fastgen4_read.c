@@ -261,6 +261,9 @@ fg4_free_conversion_state(struct conversion_state *state)
     if (state->fpin)
 	fclose(state->fpin);
 
+    if (state->fpout)
+	wdb_close(state->fpout);
+
     if (state->fp_plot)
 	fclose(state->fp_plot);
 
@@ -2123,7 +2126,7 @@ make_bot_object(struct conversion_state *pstate)
     bot_ip.orientation = RT_BOT_UNORIENTED;
     bot_ip.bot_flags = 0;
 
-    count = rt_bot_vertex_fuse(&bot_ip, &pstate->fpout->wdb_tol);
+    count = rt_bot_vertex_fuse(&bot_ip, &pstate->fpout->dbip->db_tol);
     if (count)
 	bu_log("WARNING: %d duplicate vertices eliminated from group %d component %d\n", count, pstate->group_id, pstate->comp_id);
 
@@ -2886,18 +2889,20 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
     fg4_zero_conversion_state(&state);
     state.gcv_options = gcv_options;
 
-    state.fpout = context->dbip->dbi_wdbp;
+    state.fpout = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
 
     if (fg4_read_options->muves_path)
 	if ((state.fp_muves=fopen(fg4_read_options->muves_path, "wb")) == (FILE *)NULL) {
 	    bu_log("Unable to open MUVES file (%s)\n\tno MUVES file created\n", fg4_read_options->muves_path);
 	    fg4_free_conversion_state(&state);
+	    wdb_close(state.fpout);
 	    return 0;
 	}
 
     if ((state.fpin=fopen(source_path, "rb")) == (FILE *)NULL) {
 	bu_log("Cannot open FASTGEN4 file (%s)\n", source_path);
 	fg4_free_conversion_state(&state);
+	wdb_close(state.fpout);
 	return 0;
     }
 
@@ -2905,6 +2910,7 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
 	if ((state.fp_plot=fopen(fg4_read_options->plot_path, "wb")) == NULL) {
 	    bu_log("Cannot open plot file (%s)\n", fg4_read_options->plot_path);
 	    fg4_free_conversion_state(&state);
+	    wdb_close(state.fpout);
 	    return 0;
 	}
     }

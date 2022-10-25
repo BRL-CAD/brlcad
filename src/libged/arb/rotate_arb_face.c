@@ -95,8 +95,12 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) & BRLCAD_ERROR)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
+    }
+    wdb_close(wdbp);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {
@@ -149,9 +153,9 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    arb_type = rt_arb_std_type(&intern, &gedp->ged_wdbp->wdb_tol);
+    arb_type = rt_arb_std_type(&intern, &gedp->dbip->db_tol);
 
-    if (rt_arb_calc_planes(gedp->ged_result_str, arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol)) {
+    if (rt_arb_calc_planes(gedp->ged_result_str, arb, arb_type, planes, &gedp->dbip->db_tol)) {
 	rt_db_free_internal(&intern);
 
 	return BRLCAD_ERROR;
@@ -199,7 +203,7 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* calculate new points for the arb */
-    (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &gedp->ged_wdbp->wdb_tol);
+    (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &gedp->dbip->db_tol);
 
     {
 	mat_t invmat;

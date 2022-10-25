@@ -19,35 +19,32 @@
  * schema is determined by the file schema section of the header section of a
  * part21 file (the _headerInstances of STEPfile).
  */
-class SC_CORE_EXPORT SchRename
-{
-    public:
-        SchRename(const char *sch = "\0", const char *newnm = "\0") : next(0)
-        {
-            strncpy(schName, sch, BUFSIZ);
-            strncpy(newName, newnm, BUFSIZ);
-        }
-        ~SchRename()
-        {
-            delete next;
-        }
-        const char *objName() const
-        {
-            return newName;
-        }
-        int operator< (SchRename &schrnm)
-        {
-            return (strcmp(schName, schrnm.schName) < 0);
-        }
-        bool choice(const char *nm) const;
-        // is nm one of our possible choices?
-        char *rename(const char *schm, char *newnm) const;
-        // given a schema name, returns new object name if exists
-        SchRename *next;
+class SC_CORE_EXPORT SchRename {
+public:
+    SchRename( const char * sch = "\0", const char * newnm = "\0" ) : next( 0 ) {
+        strncpy( schName, sch, BUFSIZ );
+	schName[BUFSIZ] = '\0';
+        strncpy( newName, newnm, BUFSIZ );
+	newName[BUFSIZ] = '\0';
+    }
+    ~SchRename() {
+        delete next;
+    }
+    const char * objName() const {
+        return newName;
+    }
+    int operator< ( SchRename & schrnm ) {
+        return ( strcmp( schName, schrnm.schName ) < 0 );
+    }
+    bool choice( const char * nm ) const;
+    // is nm one of our possible choices?
+    char * rename( const char * schm, char * newnm ) const;
+    // given a schema name, returns new object name if exists
+    SchRename * next;
 
-    private:
-        char schName[BUFSIZ+1];
-        char newName[BUFSIZ+1];
+private:
+    char schName[BUFSIZ+1];
+    char newName[BUFSIZ+1];
 };
 
 

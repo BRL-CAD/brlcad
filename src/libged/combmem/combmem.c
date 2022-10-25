@@ -326,7 +326,7 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 #define COMBMEM_GETCOMBTREE(_gedp, _cmd, _name, _dp, _intern, _ntp, _rt_tree_array, _node_count) { \
 	struct rt_comb_internal *_comb; \
 	\
-	if ((_dp = db_lookup((_gedp)->ged_wdbp->dbip, (_name), LOOKUP_NOISY)) == RT_DIR_NULL) { \
+	if ((_dp = db_lookup((_gedp)->dbip, (_name), LOOKUP_NOISY)) == RT_DIR_NULL) { \
 	    bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", (_cmd), (_name)); \
 	    return BRLCAD_ERROR; \
 	} \
@@ -336,7 +336,7 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 	    return BRLCAD_ERROR; \
 	} \
 	\
-	if (rt_db_get_internal(&(_intern), _dp, (_gedp)->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
+	if (rt_db_get_internal(&(_intern), _dp, (_gedp)->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
 	    bu_vls_printf((_gedp)->ged_result_str, "Database read error, aborting"); \
 	    return BRLCAD_ERROR; \
 	} \
@@ -418,7 +418,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 
 
 #define COMBMEM_SET_PART_I(_gedp, _argc, _cmd, _name, _num_params, _intern, _dp, _comb, _node_count, _rt_tree_array) { \
-	if (rt_db_get_internal(&(_intern), (_dp), (_gedp)->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
+	if (rt_db_get_internal(&(_intern), (_dp), (_gedp)->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
 	    bu_vls_printf((_gedp)->ged_result_str, "Database read error, aborting"); \
 	    return BRLCAD_ERROR;							\
 	}									\
@@ -480,7 +480,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 		      (_intern).idb_ptr = (void *)(_comb); \
 		      (_comb)->tree = (_final_tree); \
 		      \
-		      if (rt_db_put_internal((_dp), (_gedp)->ged_wdbp->dbip, &(_intern), &rt_uniresource) < 0) { \
+		      if (rt_db_put_internal((_dp), (_gedp)->dbip, &(_intern), &rt_uniresource) < 0) { \
 			  bu_vls_printf((_gedp)->ged_result_str, "Unable to write new combination into database.\n"); \
 			  \
 			  rt_db_free_internal(&(_old_intern)); \

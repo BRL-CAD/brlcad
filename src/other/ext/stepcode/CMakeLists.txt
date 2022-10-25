@@ -1,4 +1,4 @@
-#                C M A K E L I S T S . T X T
+#    C M A K E L I S T S . T X T   F O R   S T E P C O D E
 #
 # This file is Copyright (c) 2010 United States Government as
 # represented by the U.S. Army Research Laboratory.
@@ -48,7 +48,7 @@ endif (POLICY CMP0077)
 
 # SC version
 set(SC_VERSION_MAJOR 0)
-set(SC_VERSION_MINOR 9)
+set(SC_VERSION_MINOR 8)
 set(SC_VERSION_PATCH 1)
 set(SC_VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR}.${SC_VERSION_PATCH})
 
@@ -120,7 +120,6 @@ option(BUILD_STATIC_LIBS "Build static libraries" OFF)
 option(SC_PYTHON_GENERATOR "Compile exp2python" ON)
 option(SC_CPP_GENERATOR "Compile exp2cxx" ON)
 
-option(SC_MEMMGR_ENABLE_CHECKS "Enable sc_memmgr's memory leak detection" OFF)
 option(SC_TRACE_FPRINTF "Enable extra comments in generated code so the code's source in exp2cxx may be located" OFF)
 
 option(SC_ENABLE_COVERAGE "Enable code coverage test" OFF)
@@ -130,9 +129,12 @@ if (SC_ENABLE_COVERAGE AND ${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
   set(CMAKE_MODULE_LINKER_FLAGS_DEBUG "-fprofile-arcs -ftest-coverage" CACHE STRING "Extra linker flags required by code coverage" FORCE)
 endif (SC_ENABLE_COVERAGE AND ${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
 
+option(SC_BUILD_EXPRESS_ONLY "Only build express parser." OFF)
+mark_as_advanced(SC_BUILD_EXPRESS_ONLY)
+
 option(SC_ENABLE_TESTING "Enable unittesting framework" OFF)
 if(SC_ENABLE_TESTING)
-  if(NOT DEFINED SC_BUILD_SCHEMAS)
+  if(NOT "${SC_BUILD_EXPRESS_ONLY}" AND NOT DEFINED SC_BUILD_SCHEMAS)
     set(SC_BUILD_SCHEMAS "ALL") #test all schemas, unless otherwise specified
   endif()
   include(CTest)
@@ -150,17 +152,17 @@ include(SC_Locale)
 # logic related to regenerating the lexer and parser source code
 include(SC_Regenerate)
 
-# create config header sc_cf.h
+# create config.h header
 include(SC_Config_Headers)
 
 if(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS)
   set(SC_SDAI_ADDITIONAL_EXES_SRCS "" CACHE STRING "Source files for additional executables to be linked with SDAI libs")
 endif(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS)
 
-if(NOT DEFINED SC_BUILD_SCHEMAS)
+if(NOT "${SC_BUILD_EXPRESS_ONLY}" AND NOT DEFINED SC_BUILD_SCHEMAS)
   list(APPEND CONFIG_END_MESSAGES
     "** Note: CMake variable SC_BUILD_SCHEMAS was not set - defaults to building ALL schemas")
-#this makes SC_BUILD_SCHEMAS show up in cmake-gui
+# this makes SC_BUILD_SCHEMAS show up in cmake-gui
   set(SC_BUILD_SCHEMAS "ALL" CACHE STRING "Semicolon-separated list of paths to EXPRESS schemas to be built")
 endif()
 
@@ -170,10 +172,6 @@ if(NOT SC_IS_SUBBUILD)
     "    you see 'Configuring done' below. Headers and features vary by compiler."
     ".. Generating step can take a while if you are building several schemas.")
 endif(NOT SC_IS_SUBBUILD)
-
-# create config headers sc_cf.h
-include(SC_Config_Headers)
-
 
 ################
 
@@ -190,7 +188,6 @@ include_directories(
   ${SC_BINARY_DIR}/include
  )
 
-add_subdirectory(src/base)
 add_subdirectory(src/express)
 add_subdirectory(src/exppp)
 add_subdirectory(src/exp2cxx)

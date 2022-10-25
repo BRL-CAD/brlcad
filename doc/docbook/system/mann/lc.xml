@@ -9,7 +9,9 @@
 
 <refnamediv xml:id="name">
   <refname>lc</refname>
-  <refpurpose>Lists codes (i.e. region attributes) 'region_id', 'material_id', 'los', 'region name', 'region parent' within a group or combination.
+  <refpurpose>Lists codes (i.e. region attributes) 'region_id',
+  'material_id', 'los', 'aircode', 'region name', 'region parent'
+  within a group or combination.
    </refpurpose>
 </refnamediv>
 
@@ -31,6 +33,7 @@
 	 <arg choice="plain" rep="norepeat">-3</arg>
 	 <arg choice="plain" rep="norepeat">-4</arg>
 	 <arg choice="plain" rep="norepeat">-5</arg>
+	 <arg choice="plain" rep="norepeat">-6</arg>
        </group>
        <group choice="opt" rep="norepeat">
 	 <arg choice="plain" rep="norepeat">-f</arg>
@@ -43,10 +46,12 @@
 </refsynopsisdiv>
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
- <para>The 'lc' command lists a set of codes (i.e. attributes) of
- regions within a group/combination. Listed in columns are the
- following: 'region_id', 'material_id', 'los', 'region name',
- 'region parent'. If a value is unset, it is reported as '--'.</para>
+<para>
+  The 'lc' command lists a set of codes (i.e. attributes) of regions
+  within a group/combination. Listed in columns are the following:
+  'region_id', 'material_id', 'los', 'aircode', 'region name', 'region
+  parent'. If a value is unset, it is reported as '--'.
+</para>
 </refsection>
 
   <refsection xml:id="options"><title>OPTIONS</title>
@@ -60,25 +65,28 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-s</option></term>
+      <term><option>-m</option></term>
       <listitem>
 	<para>
-	  Specifies to list only one region with each combination of 'region_id',
-	  'material_id' and 'los'.  In addition to the output of '-d', it lists
-	  those cases where 'region_id' is the same but 'material_id' and/or
-	  'los' are different.
+	  Specifies to list only regions with shared 'region_id'
+	  values where one or more of the objects in the set of
+	  objects defined by shared 'region_id' value reports a
+	  different 'material_id', 'aircode' and/or 'los' values.
+	  Essentially, this allows users to quickly find and resolve
+	  inconsistent codes (i.e, id settings) within a 'region_id'
+	  group.
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-m</option></term>
+      <term><option>-s</option></term>
       <listitem>
 	<para>
-	  Specifies to list only regions with shared 'region_id' values where one
-	  or more of the objects in the set of objects defined by shared 'region_id'
-	  value reports a different 'material_id' and/or 'los'.  Essentially, this
-	  allows users to quickly find and resolve inconsistent 'material_id' and
-	  'los' settings within a 'region_id' group.
+	  Specifies to list only one region with each combination of
+	  'region_id', 'material_id', 'los', and 'aircode'.  In
+	  addition to the output of '-d', it lists those cases where
+	  'region_id' is the same but 'material_id' and/or 'los'
+	  and/or 'aircode' are different.
 	</para>
       </listitem>
     </varlistentry>
@@ -86,9 +94,9 @@
       <term><option>-r</option></term>
       <listitem>
 	<para>
-	  Remove regions from the list in which their parent is a region
-	  and the region is subtracted within the parent. The '-r' option
-	  can be combined with any other option.
+	  Remove regions from the list in which their parent is a
+	  region and the region is subtracted within the parent. The
+	  '-r' option can be combined with any other option.
 	</para>
       </listitem>
     </varlistentry>
@@ -107,13 +115,16 @@
       <term><option>-3</option></term>
       <term><option>-4</option></term>
       <term><option>-5</option></term>
+      <term><option>-6</option></term>
       <listitem>
 	<para>
-	Specifies sort column 1, 2, 3, 4 or 5 (referring to columns listed in the description of this command);
-	1 is default.
-	If 0 is specified, the regions are listed in the order in which they are stored, but this will be overridden
-	if <option>-d</option> or <option>-s</option> is used, because of the sorting which needs to be done when
-        either of those options is used.
+	Specifies sort column 1, 2, 3, 4, 5, or 6 (referring to
+	columns listed in the description of this command); 1 is
+	default.  If 0 is specified, the regions are listed in the
+	order in which they are stored, but this will be overridden if
+	<option>-d</option>, <option>-m</option>, or
+	<option>-s</option> options are used, because of the sorting
+	which needs to be done when either of those options is used.
 	</para>
       </listitem>
     </varlistentry>
@@ -121,9 +132,9 @@
       <term><option>-f FileName</option></term>
       <listitem>
 	<para>
-	  Identifies output should be to a file and specifies the file name.
-	  If the path is not included as part of the 'FileName' the path will
-	  be the 'current directory'.
+	  Identifies output should be to a file and specifies the file
+	  name.  If the path is not included as part of the 'FileName'
+	  the path will be the 'current directory'.
 	</para>
       </listitem>
     </varlistentry>

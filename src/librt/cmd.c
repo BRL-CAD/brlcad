@@ -226,7 +226,7 @@ _rt_color_zaprec(struct bu_vls *msg, struct db_i *dbip, struct mater *mp)
 int
 rt_cmd_color(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 {
-    if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || !argv)
+    if (dbip == DBI_NULL || !argv)
 	return BRLCAD_ERROR;
 
     if (dbip->dbi_read_only) {
@@ -318,10 +318,12 @@ rt_cmd_color(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 }
 
 int
-rt_cmd_put(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
+rt_cmd_put(struct bu_vls *msg, struct rt_wdb *wdbp, int argc, const char **argv)
 {
-    if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || argc < 3 || !argv)
+    if (!wdbp || !wdbp->dbip || argc < 3 || !argv)
 	return BRLCAD_ERROR;
+
+    struct db_i *dbip = wdbp->dbip;
 
     if (dbip->dbi_read_only) {
 	if (msg)
@@ -382,7 +384,7 @@ rt_cmd_put(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
      }
      bu_vls_free(&tmpmsg);
 
-     if (wdb_put_internal(dbip->dbi_wdbp, argv[1], &intern, 1.0) < 0) {
+     if (wdb_put_internal(wdbp, argv[1], &intern, 1.0) < 0) {
 	 if (msg)
 	     bu_vls_printf(msg, "rt_cmd_put: wdb_put_internal(%s)", argv[1]);
 	 rt_db_free_internal(&intern);
@@ -397,7 +399,7 @@ rt_cmd_put(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 int
 rt_cmd_title(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 {
-    if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || argc < 1 || !argv)
+    if (dbip == DBI_NULL || argc < 1 || !argv)
 	return BRLCAD_ERROR;
 
     if (!BU_STR_EQUAL(argv[0], "title")) {
@@ -439,7 +441,7 @@ rt_cmd_units(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 {
     int sflag = 0;
 
-    if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || argc < 1 || argc > 2 || !argv)
+    if (dbip == DBI_NULL || argc < 1 || argc > 2 || !argv)
 	return BRLCAD_ERROR;
 
     if (!BU_STR_EQUAL(argv[0], "units")) {

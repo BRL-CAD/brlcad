@@ -195,8 +195,8 @@ QEll::update_obj_wireframe()
     intern.idb_meth = &OBJ[intern.idb_type];
     if (!intern.idb_meth->ft_plot)
 	return;
-    struct bn_tol *tol = &gedp->ged_wdbp->wdb_tol;
-    struct bg_tess_tol *ttol = &gedp->ged_wdbp->wdb_ttol;
+    struct bn_tol *tol = &gedp->dbip->db_tol;
+    struct bg_tess_tol *ttol = &gedp->dbip->db_ttol;
     intern.idb_meth->ft_plot(&p->s_vlist, &intern, ttol, tol, p->s_v);
 
     // At least for now, mimic the MGED behavior and make editing wireframes white

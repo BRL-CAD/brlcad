@@ -3555,7 +3555,8 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
 	collect_global_obj_file_attributes(&ga);
     }
 
-    do_grouping(context->dbip->dbi_wdbp, gcv_options, obj_read_options, &ga);
+    struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+    do_grouping(wdbp, gcv_options, obj_read_options, &ga);
 
     /* cleanup */
 
@@ -3568,6 +3569,7 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     obj_parser_destroy(ga.parser);
 
     rt_clean_resource(NULL, &rt_uniresource);
+    wdb_close(wdbp);
 
     return 1;
 }

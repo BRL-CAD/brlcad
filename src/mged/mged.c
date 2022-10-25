@@ -1640,6 +1640,15 @@ main(int argc, char *argv[])
 		Tcl_SetChannelOption(INTERP, chan, "-blocking", "false");
 		Tcl_SetChannelOption(INTERP, chan, "-buffering", "line");
 		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
+		/* intermittently, the process of Tcl_UnregisterChannel does not
+		 * finish cleaning up the write threads before we spawn new
+		 * ones with Tcl_MakeFileChannel. This error prematurely invokes the
+		 * new threads when the old ones finally signal which breaks all 'puts'
+		 * from the channel. Calling puts with an empty string here
+		 * *appears* to force a sync and resolve the issue.
+		 */
+		if (Tcl_Eval(INTERP, "puts \"\"") != TCL_OK)
+		    perror("STDOUT chan broken");
 		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
 	    }
 
@@ -1651,6 +1660,8 @@ main(int argc, char *argv[])
 		Tcl_SetChannelOption(INTERP, chan, "-blocking", "false");
 		Tcl_SetChannelOption(INTERP, chan, "-buffering", "line");
 		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
+		if (Tcl_Eval(INTERP, "puts stderr \"\"") != TCL_OK)
+		    perror("STDERR chan broken");
 		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
 	    }
 	}
@@ -2765,13 +2776,10 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	bu_vls_printf(&msg, "%s: READ ONLY\n", DBIP->dbi_filename);
     }
 
-    /* associate the gedp with a wdbp as well, but separate from the
-     * one we fed tcl.  must occur before the call to [get_dbip] since
+    /* This must occur before the call to [get_dbip] since
      * that hooks into a libged callback.
      */
-    GEDP->ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
-    if (GEDP->ged_wdbp)
-	GEDP->dbip = GEDP->ged_wdbp->dbip;
+    GEDP->dbip = DBIP;
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
     GEDP->ged_create_vlist_scene_obj_callback = createDListSolid;
@@ -2915,8 +2923,7 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     Tcl_Eval(interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
 
     /* close the geometry instance */
-    wdb_close(GEDP->ged_wdbp);
-    GEDP->ged_wdbp = RT_WDB_NULL;
+    db_close(GEDP->dbip);
     GEDP->dbip = NULL;
 
     WDBP = RT_WDB_NULL;

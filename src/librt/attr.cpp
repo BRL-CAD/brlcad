@@ -318,7 +318,7 @@ rt_cmd_attr(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
     int ret = BRLCAD_OK;
     size_t i;
 
-    if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || argc < 3 || !argv)
+    if (dbip == DBI_NULL || argc < 3 || !argv)
         return BRLCAD_ERROR;
 
     if (!BU_STR_EQUAL(argv[0], "attr")) {

@@ -11,74 +11,67 @@
 */
 
 #include <cmdmgr.h>
-#include "sc_memmgr.h"
 
-ReplicateLinkNode *ReplicateList::FindNode(MgrNode *mn)
-{
-    ReplicateLinkNode *rln = (ReplicateLinkNode *)GetHead();
+ReplicateLinkNode * ReplicateList::FindNode( MgrNode * mn ) {
+    ReplicateLinkNode * rln = ( ReplicateLinkNode * )GetHead();
     int numEntries = EntryCount();
-    while(numEntries--) {
-        if(rln->ReplicateNode() == mn) {
+    while( numEntries-- ) {
+        if( rln->ReplicateNode() == mn ) {
             return rln;
         }
-        rln = (ReplicateLinkNode *)rln->NextNode();
+        rln = ( ReplicateLinkNode * )rln->NextNode();
     }
     return 0;
 }
 
-bool ReplicateList::IsOnList(MgrNode *mn)
-{
-    return (FindNode(mn) != 0);
+bool ReplicateList::IsOnList( MgrNode * mn ) {
+    return ( FindNode( mn ) != 0 );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // returns true if it could delete the node
 ///////////////////////////////////////////////////////////////////////////////
-bool ReplicateList::Remove(ReplicateLinkNode *rln)
-{
-    ReplicateLinkNode *rnFollow = (ReplicateLinkNode *)GetHead();
-    if(!rnFollow || !rln) {
+bool ReplicateList::Remove( ReplicateLinkNode * rln ) {
+    ReplicateLinkNode * rnFollow = ( ReplicateLinkNode * )GetHead();
+    if( !rnFollow || !rln ) {
         return false;
     } else {
-        if(rnFollow == rln) {
+        if( rnFollow == rln ) {
             head = rln->NextNode();
             delete rln;
             return true;
         } else {
-            ReplicateLinkNode *rn = (ReplicateLinkNode *)rnFollow->NextNode();
-            while(rn) {
-                if(rn == rln) {
-                    rnFollow->next = (SingleLinkNode *)rln->NextNode();
+            ReplicateLinkNode * rn = ( ReplicateLinkNode * )rnFollow->NextNode();
+            while( rn ) {
+                if( rn == rln ) {
+                    rnFollow->next = ( SingleLinkNode * )rln->NextNode();
                     delete rln;
                     return true;
                 }
                 rnFollow = rn;
-                rn = (ReplicateLinkNode *)rn->NextNode();
+                rn = ( ReplicateLinkNode * )rn->NextNode();
             } // end while(rn)
         } // end else
     } // end else
     return false;
 }
 
-bool ReplicateList::Remove(MgrNode *rn)
-{
-    return Remove(FindNode(rn));
+bool ReplicateList::Remove( MgrNode * rn ) {
+    return Remove( FindNode( rn ) );
 }
 
-CmdMgr::CmdMgr()
-{
-    completeList = new MgrNodeList(completeSE);
-    incompleteList = new MgrNodeList(incompleteSE);
-    deleteList = new MgrNodeList(deleteSE);
+CmdMgr::CmdMgr() {
+    completeList = new MgrNodeList( completeSE );
+    incompleteList = new MgrNodeList( incompleteSE );
+    deleteList = new MgrNodeList( deleteSE );
 
-    mappedWriteList = new DisplayNodeList(mappedWrite);
-    mappedViewList = new DisplayNodeList(mappedView);
-    closeList = new DisplayNodeList(notMapped);
+    mappedWriteList = new DisplayNodeList( mappedWrite );
+    mappedViewList = new DisplayNodeList( mappedView );
+    closeList = new DisplayNodeList( notMapped );
     replicateList = new ReplicateList();
 }
 
-CmdMgr::~CmdMgr()
-{
+CmdMgr::~CmdMgr() {
     delete completeList;
     delete incompleteList;
     delete deleteList;
@@ -88,15 +81,13 @@ CmdMgr::~CmdMgr()
     delete replicateList;
 }
 
-void CmdMgr::ReplicateCmdList(MgrNode *mn)
-{
-    if(!(replicateList->IsOnList(mn))) {
-        replicateList->AddNode(mn);
+void CmdMgr::ReplicateCmdList( MgrNode * mn ) {
+    if( !( replicateList->IsOnList( mn ) ) ) {
+        replicateList->AddNode( mn );
     }
 }
 
-void CmdMgr::ClearInstances()
-{
+void CmdMgr::ClearInstances() {
     completeList->ClearEntries();
     incompleteList->ClearEntries();
     cancelList->ClearEntries();
@@ -105,15 +96,14 @@ void CmdMgr::ClearInstances()
 
 }
 /// searches current list for fileId
-MgrNode *CmdMgr::StateFindFileId(stateEnum s, int fileId)
-{
-    switch(s) {
+MgrNode * CmdMgr::StateFindFileId( stateEnum s, int fileId ) {
+    switch( s ) {
         case completeSE:
-            return completeList->FindFileId(fileId);
+            return completeList->FindFileId( fileId );
         case incompleteSE:
-            return incompleteList->FindFileId(fileId);
+            return incompleteList->FindFileId( fileId );
         case deleteSE:
-            return deleteList->FindFileId(fileId);
+            return deleteList->FindFileId( fileId );
         case newSE: // there is no new list
         case noStateSE:
         default:
@@ -123,31 +113,29 @@ MgrNode *CmdMgr::StateFindFileId(stateEnum s, int fileId)
     }
 }
 
-MgrNode *CmdMgr::GetHead(stateEnum listType)
-{
-    switch(listType) {
+MgrNode * CmdMgr::GetHead( stateEnum listType ) {
+    switch( listType ) {
         case completeSE:    // saved complete list
-            return (MgrNode *)completeList->GetHead();
+            return ( MgrNode * )completeList->GetHead();
         case incompleteSE:  // saved incomplete list
-            return (MgrNode *)incompleteList->GetHead();
+            return ( MgrNode * )incompleteList->GetHead();
         case deleteSE:      // delete list
-            return (MgrNode *)deleteList->GetHead();
+            return ( MgrNode * )deleteList->GetHead();
         default:
             return 0;
     }
 }
 
-DisplayNode *CmdMgr::GetHead(displayStateEnum listType)
-{
-    switch(listType) {
+DisplayNode * CmdMgr::GetHead( displayStateEnum listType ) {
+    switch( listType ) {
         case mappedWrite:
-            return (DisplayNode *)mappedWriteList->GetHead();
+            return ( DisplayNode * )mappedWriteList->GetHead();
 
         case mappedView:
-            return (DisplayNode *)mappedViewList->GetHead();
+            return ( DisplayNode * )mappedViewList->GetHead();
 
         case notMapped:
-            return (DisplayNode *)closeList->GetHead();
+            return ( DisplayNode * )closeList->GetHead();
 
         case noMapState:
         default:
@@ -155,9 +143,8 @@ DisplayNode *CmdMgr::GetHead(displayStateEnum listType)
     }
 }
 
-void CmdMgr::ClearEntries(stateEnum listType)
-{
-    switch(listType) {
+void CmdMgr::ClearEntries( stateEnum listType ) {
+    switch( listType ) {
         case completeSE:    // saved complete list
             completeList->ClearEntries();
             break;
@@ -172,9 +159,8 @@ void CmdMgr::ClearEntries(stateEnum listType)
     }
 }
 
-void CmdMgr::ClearEntries(displayStateEnum listType)
-{
-    switch(listType) {
+void CmdMgr::ClearEntries( displayStateEnum listType ) {
+    switch( listType ) {
         case mappedWrite:
             mappedWriteList->ClearEntries();
             break;

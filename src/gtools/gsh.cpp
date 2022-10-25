@@ -103,7 +103,7 @@ view_checkpoint(struct gsh_state *s)
 void
 view_update(struct gsh_state *s)
 {
-    if (!s || !s->gedp || !s->gedp->ged_wdbp || !s->gedp->dbip)
+    if (!s || !s->gedp || !s->gedp->dbip)
 	return;
 
     struct ged *gedp = s->gedp;
@@ -143,7 +143,9 @@ view_update(struct gsh_state *s)
 		0, 0, geometry_default_color, 1, 0);
 
 	// Faceplate drawing
-	dm_draw_viewobjs(gedp->ged_wdbp, v, NULL, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
+	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	dm_draw_viewobjs(wdbp, v, NULL, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
+	wdb_close(wdbp);
 
 	dm_draw_end(dmp);
     }
