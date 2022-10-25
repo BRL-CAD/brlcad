@@ -121,7 +121,7 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail)
     struct bu_vls tname = BU_VLS_INIT_ZERO;
     struct bu_vls cname = BU_VLS_INIT_ZERO;
     if (id <= 0) {
-	bu_vls_sprintf(&tname, "clear.png");
+	bu_vls_sprintf(&tname, "lod_clear.png");
 	bu_vls_sprintf(&cname, "%s/empty.png", cdir);
     } else {
 	bu_vls_sprintf(&tname, "lod%03d.png", id);
