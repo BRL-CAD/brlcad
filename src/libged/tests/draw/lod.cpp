@@ -276,6 +276,14 @@ main(int ac, char *av[]) {
     v->gv_base2local = dbp->dbip->dbi_base2local;
     v->gv_local2base = dbp->dbip->dbi_local2base;
 
+    /* Fully clear any prior cached LoD data */
+    s_av[0] = "view";
+    s_av[1] = "lod";
+    s_av[2] = "cache";
+    s_av[3] = "clear";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+
     /* Generate geometry appropriate for mesh LoD */
     s_av[0] = "tol";
     s_av[1] = "rel";
@@ -483,7 +491,69 @@ main(int ac, char *av[]) {
 
     bu_log("Done.\n");
 
+    /* Check cache behavior */
 
+    /* Fully clear any cached LoD data */
+    s_av[0] = "view";
+    s_av[1] = "lod";
+    s_av[2] = "cache";
+    s_av[3] = "clear";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    /* Generate cached LoD data */
+    s_av[0] = "view";
+    s_av[1] = "lod";
+    s_av[2] = "cache";
+    s_av[3] = NULL;
+    ged_exec(dbp, 3, s_av);
+
+    /* Enable LoD and check drawing of meshes and breps */
+    s_av[0] = "view";
+    s_av[1] = "lod";
+    s_av[2] = "mesh";
+    s_av[3] = "1";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "lod";
+    s_av[2] = "scale";
+    s_av[3] = "0.8";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    s_av[0] = "draw";
+    s_av[1] = "-m1";
+    s_av[2] = "all.bot";
+    s_av[3] = NULL;
+    ged_exec(dbp, 3, s_av);
+
+    s_av[0] = "autoview";
+    s_av[1] = NULL;
+    ged_exec(dbp, 1, s_av);
+
+    img_cmp(2, dbp, av[1], true, soft_fail);
+
+    s_av[0] = "draw";
+    s_av[1] = "-m1";
+    s_av[2] = "all.brep";
+    s_av[3] = NULL;
+    ged_exec(dbp, 3, s_av);
+
+    s_av[0] = "autoview";
+    s_av[1] = NULL;
+    ged_exec(dbp, 1, s_av);
+
+    img_cmp(4, dbp, av[1], true, soft_fail);
+
+    /* Fully clear any cached LoD data */
+    s_av[0] = "view";
+    s_av[1] = "lod";
+    s_av[2] = "cache";
+    s_av[3] = "clear";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
 
     ged_close(dbp);
 
