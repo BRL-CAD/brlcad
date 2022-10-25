@@ -21,7 +21,6 @@ system's code paths.
 
 Tests to set up:
 
-LoD - enable, disable, brep, mesh and csg - ideally cache clearing and re-generation
 Selection highlighting and de-highlighting
 multiple shared and independent attached dms, with view independent drawing
 (eventually) embedded framebuffer raytracing

@@ -83,6 +83,7 @@ CMAKEFILES(
   rook.g
   ${basic_view_test_ctrls}
   ${faceplate_test_ctrls}
+  ${lod_test_ctrls}
   )
 
 CMAKEFILES(CMakeLists.txt)
