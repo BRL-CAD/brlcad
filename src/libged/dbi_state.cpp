@@ -688,6 +688,7 @@ DbiState::print_hash(struct bu_vls *opath, unsigned long long phash)
 	return true;
     }
 
+    bu_exit(EXIT_FAILURE, "DbiState::print_hash failure, dbi_state.cpp::%d - a hash not known to tha database's DbiState was passed in.  This can happen when the dbip contents change and dbi_state->update() isn't called in the parent application after doing so.\n", __LINE__);
     bu_vls_printf(opath, "\nERROR!!!\n");
     return false;
 }

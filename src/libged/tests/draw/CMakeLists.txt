@@ -64,6 +64,8 @@ BRLCAD_ADD_TEST(NAME ged_test_drawing_faceplate COMMAND ged_test_faceplate "${CM
 set(lod_test_ctrls
   lod001_ctrl.png
   lod002_ctrl.png
+  lod003_ctrl.png
+  lod004_ctrl.png
   )
 BRLCAD_ADDEXEC(ged_test_lod lod.cpp "libged;libdm" TEST)
 add_dependencies(ged_test_lod ${test_deps})
