@@ -21,6 +21,5 @@ system's code paths.
 
 Tests to set up:
 
-Selection highlighting and de-highlighting
 multiple shared and independent attached dms, with view independent drawing
 (eventually) embedded framebuffer raytracing
