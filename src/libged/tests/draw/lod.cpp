@@ -424,9 +424,66 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
 
-    img_cmp(4, dbp, av[1], false, soft_fail);
+    img_cmp(4, dbp, av[1], true, soft_fail);
 
     bu_log("Done.\n");
+
+
+    /***** CSG LoD ****/
+    bu_log("Sanity - testing wireframe, Level-of-Detail disabled...\n");
+    s_av[0] = "view";
+    s_av[1] = "lod";
+    s_av[2] = "csg";
+    s_av[3] = "0";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    s_av[0] = "draw";
+    s_av[1] = "-m0";
+    s_av[2] = "all.g";
+    s_av[3] = NULL;
+    ged_exec(dbp, 3, s_av);
+
+    s_av[0] = "autoview";
+    s_av[1] = NULL;
+    ged_exec(dbp, 1, s_av);
+
+    img_cmp(5, dbp, av[1], false, soft_fail);
+    bu_log("Done.\n");
+
+    bu_log("Enable LoD...\n");
+    s_av[0] = "view";
+    s_av[1] = "lod";
+    s_av[2] = "csg";
+    s_av[3] = "1";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    img_cmp(6, dbp, av[1], false, soft_fail);
+
+    bu_log("Disable LoD\n");
+    s_av[0] = "view";
+    s_av[1] = "lod";
+    s_av[2] = "csg";
+    s_av[3] = "0";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    img_cmp(5, dbp, av[1], false, soft_fail);
+
+    bu_log("Re-enable LoD\n");
+    s_av[0] = "view";
+    s_av[1] = "lod";
+    s_av[2] = "csg";
+    s_av[3] = "1";
+    s_av[4] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    img_cmp(6, dbp, av[1], true, soft_fail);
+
+    bu_log("Done.\n");
+
+
 
     ged_close(dbp);
 

@@ -66,6 +66,8 @@ set(lod_test_ctrls
   lod002_ctrl.png
   lod003_ctrl.png
   lod004_ctrl.png
+  lod005_ctrl.png
+  lod006_ctrl.png
   )
 BRLCAD_ADDEXEC(ged_test_lod lod.cpp "libged;libdm" TEST)
 add_dependencies(ged_test_lod ${test_deps})
