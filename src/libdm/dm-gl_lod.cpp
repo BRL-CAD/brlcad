@@ -385,6 +385,21 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
 	s->s_dlist = 0;
     }
 
+    // We don't want color to be part of the dlist, to allow the app
+    // to change it without regeneration - hence, we need to do it
+    // up front
+    if (s->s_iflag == UP) {
+	dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
+    }
+    if (mvars->lighting_on) {
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+	if (mvars->transparency_on)
+	    glDisable(GL_BLEND);
+    }
+
     // If we have a dlist in the correct mode, use it
     if (s->s_dlist) {
 	if (mode == s->s_dlist_mode) {
@@ -421,16 +436,6 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
 	glNewList(s->s_dlist, GL_COMPILE);
     } else {
 	bu_log("Not using dlist\n");
-    }
-
-    // Wireframe
-    if (mvars->lighting_on) {
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-	if (mvars->transparency_on)
-	    glDisable(GL_BLEND);
     }
 
     int first = 1;
@@ -478,9 +483,6 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
     if (first == 0)
 	glEnd();
 
-    if (mvars->lighting_on && mvars->transparency_on)
-	glDisable(GL_BLEND);
-
     if (gen_dlist) {
 	glEndList();
 	s->s_dlist_stale = 0;
@@ -507,6 +509,9 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
 	glCallList(s->s_dlist);
 	dm_loadmatrix(dmp, save_mat, 0);
     }
+
+    if (mvars->lighting_on && mvars->transparency_on)
+	glDisable(GL_BLEND);
 
     glPointSize(originalPointSize);
     glLineWidth(originalLineWidth);
