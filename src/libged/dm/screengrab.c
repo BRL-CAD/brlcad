@@ -98,19 +98,30 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 
     argc = opt_ret;
 
-    if (!gedp->ged_gvp) {
-	bu_vls_printf(gedp->ged_result_str, ": no current view set\n");
-	return BRLCAD_ERROR;
-    }
+    struct dm *cdmp = (gedp->ged_gvp) ? (struct dm *)gedp->ged_gvp->dmp : NULL;
 
-    if (bu_vls_strlen(&dm_name)) {
-    	bu_vls_printf(gedp->ged_result_str, "TODO - implement dm specification option for screengrab\n");
-	return BRLCAD_ERROR;
+    if (bu_vls_strlen(&dm_name) && gedp->ged_gvp) {
+	// We have a name - see if we can match it.
+	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	for (size_t j = 0; j < BU_PTBL_LEN(views); j++) {
+	    if (dmp)
+		break;
+	    struct bview *gdvp = (struct bview *)BU_PTBL_GET(views, j);
+	    struct dm *ndmp = (struct dm *)gdvp->dmp;
+	    if (!bu_vls_strcmp(dm_get_pathname(ndmp), &dm_name))
+		dmp = ndmp;
+	}
+	if (!dmp) {
+	    bu_vls_sprintf(gedp->ged_result_str, "DM %s specified, but not found in active set\n", bu_vls_cstr(&dm_name));
+	    bu_vls_free(&dm_name);
+	    return BRLCAD_ERROR;
+	}
     }
+    bu_vls_free(&dm_name);
 
-    if (!dmp) {
-	dmp = (struct dm *)gedp->ged_gvp->dmp;
-    }
+    if (!dmp)
+	dmp = cdmp;
+
     if (!dmp) {
 	bu_vls_printf(gedp->ged_result_str, ": no current display manager set and no valid name specified\n");
 	return BRLCAD_ERROR;
