@@ -43,6 +43,10 @@
 // callbacks for the librt hooks that will update the working data structures.
 // In Qt we have libqtcad handle this, but as we are not using a QgModel we
 // need to do it ourselves.
+//
+// TODO - can probably make this a "standard" callback in libged, set up by
+// default but something that can be overridden/augmented if the app needs to
+// do extra work.
 extern "C" void
 ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
@@ -416,14 +420,17 @@ main(int ac, char *av[]) {
     dm_configure_win(dmp, 0);
     dm_set_zbuffer(dmp, 1);
 
-    // See QtSW.cpp...
+    // See QtSW.cpp... TODO - if we need this consistently,
+    // it should be part of the dm setup.
     fastf_t windowbounds[6] = { -1, 1, -1, 1, -100, 100 };
     dm_set_win_bounds(dmp, windowbounds);
 
-    dm_set_vp(dmp, &v->gv_scale);
-    v->dmp = dmp;
+    // TODO - these syncing operations need to happen whenever the dm size
+    // changes - can they be done in dm_set_width/dm_set_height?
     v->gv_width = dm_get_width(dmp);
     v->gv_height = dm_get_height(dmp);
+    dm_set_vp(dmp, &v->gv_scale);
+
     v->gv_base2local = dbp->dbip->dbi_base2local;
     v->gv_local2base = dbp->dbip->dbi_local2base;
 
