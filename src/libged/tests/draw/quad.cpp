@@ -204,6 +204,42 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, bool clear, int so
 	scene_clear(gedp, vnum);
 }
 
+/* Creates a view circle "c1" */
+void
+poly_circ(struct ged *gedp, int v_id)
+{
+    struct bu_vls vname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&vname, "V%d", v_id);
+
+    const char *s_av[15] = {NULL};
+    s_av[0] = "view";
+    s_av[1] = "-V";
+    s_av[2] = bu_vls_cstr(&vname);
+    s_av[3] = "obj";
+    s_av[4] = "c1";
+    s_av[5] = "polygon";
+    s_av[6] = "create";
+    s_av[7] = "256";
+    s_av[8] = "256";
+    s_av[9] = "circle";
+    s_av[10] = NULL;
+    ged_exec(gedp, 10, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "-V";
+    s_av[2] = bu_vls_cstr(&vname);
+    s_av[3] = "obj";
+    s_av[4] = "c1";
+    s_av[5] = "update";
+    s_av[6] = "300";
+    s_av[7] = "300";
+    s_av[8] = NULL;
+    ged_exec(gedp, 8, s_av);
+
+    bu_vls_free(&vname);
+}
+
+
 int
 main(int ac, char *av[]) {
     struct ged *dbp;
@@ -348,12 +384,25 @@ main(int ac, char *av[]) {
     img_cmp(0, 1, dbp, av[1], false, soft_fail);
     img_cmp(1, 1, dbp, av[1], false, soft_fail);
     img_cmp(2, 1, dbp, av[1], false, soft_fail);
-    img_cmp(3, 1, dbp, av[1], false, soft_fail);
+    img_cmp(3, 1, dbp, av[1], true, soft_fail);
 
+    s_av[0] = "Z";
+    ged_exec(dbp, 1, s_av);
 
+    for (int i = 0; i < 4; i++)
+	dm_refresh(dbp, i);
 
+    img_cmp(0, -1, dbp, av[1], false, soft_fail);
+    img_cmp(1, -1, dbp, av[1], false, soft_fail);
+    img_cmp(2, -1, dbp, av[1], false, soft_fail);
+    img_cmp(3, -1, dbp, av[1], false, soft_fail);
 
-
+    /* Check behavior of a view element */
+    poly_circ(dbp, 1);
+    img_cmp(0, 2, dbp, av[1], false, soft_fail);
+    img_cmp(1, 2, dbp, av[1], false, soft_fail);
+    img_cmp(2, 2, dbp, av[1], false, soft_fail);
+    img_cmp(3, 2, dbp, av[1], true, soft_fail);
 
 
 
