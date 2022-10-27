@@ -134,6 +134,10 @@ set(quad_test_ctrls
   quad_01_002_ctrl.png
   quad_02_002_ctrl.png
   quad_03_002_ctrl.png
+  quad_00_003_ctrl.png
+  quad_01_003_ctrl.png
+  quad_02_003_ctrl.png
+  quad_03_003_ctrl.png
   )
 BRLCAD_ADDEXEC(ged_test_quad quad.cpp "libged;libdm" TEST)
 add_dependencies(ged_test_quad ${test_deps})

@@ -99,7 +99,6 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
     }
     bu_vls_init(&s->s_uuid);
     bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
-    bu_ptbl_ins(gd->cv->gv_objs.view_objs, (long *)s);
 
     return BRLCAD_OK;
 }
@@ -567,8 +566,9 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
     // Look up the polygon to check for overlaps
     struct bview *v = gd->cv;
     struct bv_scene_obj *s2 = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
-        struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
+    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
+    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+        struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
         if (BU_STR_EQUAL(argv[0], bu_vls_cstr(&stest->s_uuid))) {
             s2 = stest;
             break;
@@ -645,9 +645,6 @@ _poly_cmd_import(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-
-    /* Done - add to scene objects */
-    bu_ptbl_ins(gd->cv->gv_objs.view_objs, (long *)s);
 
     return BRLCAD_OK;
 }
@@ -860,8 +857,9 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
     // Look up the polygon to check for overlaps
     struct bview *v = gd->cv;
     struct bv_scene_obj *s2 = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
-        struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
+    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
+    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+        struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
         if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&stest->s_uuid))) {
             s2 = stest;
             break;

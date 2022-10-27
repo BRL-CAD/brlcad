@@ -919,7 +919,11 @@ bv_obj_get(struct bview *v, int type)
 
     bv_log(1, "bv_obj_get %d(%s)", type, bu_vls_cstr(&v->gv_name));
 
-    struct bv_scene_obj *s = bv_obj_create(v, type);
+   int ltype = type;
+   if (v->independent)
+       type |= BV_LOCAL_OBJS;
+
+    struct bv_scene_obj *s = bv_obj_create(v, ltype);
     if (!s)
 	return NULL;
 

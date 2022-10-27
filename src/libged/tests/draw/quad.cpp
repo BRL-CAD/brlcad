@@ -434,8 +434,8 @@ main(int ac, char *av[]) {
     img_cmp(2, -1, dbp, av[1], false, soft_fail);
     img_cmp(3, -1, dbp, av[1], false, soft_fail);
 
-    /***********************************/
-    /* Check view independent behavior */
+    /***************************************************/
+    /* Check view independent behavior - basic drawing */
     bu_log("Basic independent views drawing test - V1 active\n");
 
     struct bu_ptbl *views = bv_set_views(&dbp->ged_views);
@@ -486,7 +486,6 @@ main(int ac, char *av[]) {
     img_cmp(3, 1, dbp, av[1], false, soft_fail);
 
     bu_log("Basic independent views drawing test - all active\n");
-    //bu_setenv("BV_LOG", "1", 1);
     s_av[0] = "draw";
     s_av[1] = "-V";
     s_av[2] = "V2";
@@ -501,7 +500,7 @@ main(int ac, char *av[]) {
     img_cmp(3, 1, dbp, av[1], false, soft_fail);
 
     /* Make sure "Z" clears in the expected way */
-    bu_log("Independent views - clear\n");
+    bu_log("Independent views - clear.  Basic 'Z' should only get current view.\n");
     s_av[0] = "Z";
     ged_exec(dbp, 1, s_av);
 
@@ -547,6 +546,89 @@ main(int ac, char *av[]) {
     img_cmp(2, -1, dbp, av[1], false, soft_fail);
     img_cmp(3, -1, dbp, av[1], false, soft_fail);
 
+    /**************************************************/
+    /* Check view independent behavior - view element */
+    bu_log("Independent views - view object drawing test. V2\n");
+    poly_circ(dbp, 2);
+    img_cmp(0, -1, dbp, av[1], false, soft_fail);
+    img_cmp(1, -1, dbp, av[1], false, soft_fail);
+    img_cmp(2, 3, dbp, av[1], false, soft_fail);
+    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+
+    bu_log("Independent views - view object drawing test. V3\n");
+    poly_circ(dbp, 3);
+    img_cmp(0, -1, dbp, av[1], false, soft_fail);
+    img_cmp(1, -1, dbp, av[1], false, soft_fail);
+    img_cmp(2, 3, dbp, av[1], false, soft_fail);
+    img_cmp(3, 3, dbp, av[1], false, soft_fail);
+
+    bu_log("Independent views - view object drawing test. V0\n");
+    poly_circ(dbp, 0);
+    img_cmp(0, 3, dbp, av[1], false, soft_fail);
+    img_cmp(1, -1, dbp, av[1], false, soft_fail);
+    img_cmp(2, 3, dbp, av[1], false, soft_fail);
+    img_cmp(3, 3, dbp, av[1], false, soft_fail);
+
+    bu_log("Independent views - view object drawing test. V1\n");
+    poly_circ(dbp, 1);
+    img_cmp(0, 3, dbp, av[1], false, soft_fail);
+    img_cmp(1, 3, dbp, av[1], false, soft_fail);
+    img_cmp(2, 3, dbp, av[1], false, soft_fail);
+    img_cmp(3, 3, dbp, av[1], false, soft_fail);
+
+
+    /* Make sure "Z" clears in the expected way */
+    bu_log("Independent views - view obj clearing - default\n");
+    s_av[0] = "Z";
+    ged_exec(dbp, 1, s_av);
+
+    for (int i = 0; i < 4; i++)
+	dm_refresh(dbp, i);
+
+    img_cmp(0, -1, dbp, av[1], false, soft_fail);
+    img_cmp(1, 3, dbp, av[1], false, soft_fail);
+    img_cmp(2, 3, dbp, av[1], false, soft_fail);
+    img_cmp(3, 3, dbp, av[1], false, soft_fail);
+
+    bu_log("Independent views - view obj clearing - V2\n");
+    s_av[0] = "Z";
+    s_av[1] = "-V";
+    s_av[2] = "V2";
+    s_av[3] = NULL;
+    ged_exec(dbp, 3, s_av);
+
+    img_cmp(0, -1, dbp, av[1], false, soft_fail);
+    img_cmp(1, 3, dbp, av[1], false, soft_fail);
+    img_cmp(2, -1, dbp, av[1], false, soft_fail);
+    img_cmp(3, 3, dbp, av[1], false, soft_fail);
+
+
+    bu_log("Independent views - view obj clearing - V3\n");
+    s_av[0] = "Z";
+    s_av[1] = "-V";
+    s_av[2] = "V3";
+    s_av[3] = NULL;
+    ged_exec(dbp, 3, s_av);
+
+    img_cmp(0, -1, dbp, av[1], false, soft_fail);
+    img_cmp(1, 3, dbp, av[1], false, soft_fail);
+    img_cmp(2, -1, dbp, av[1], false, soft_fail);
+    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+
+    bu_log("Independent views - view obj clearing - V1\n");
+    s_av[0] = "Z";
+    s_av[1] = "-V";
+    s_av[2] = "V1";
+    s_av[3] = NULL;
+    ged_exec(dbp, 3, s_av);
+
+    img_cmp(0, -1, dbp, av[1], false, soft_fail);
+    img_cmp(1, -1, dbp, av[1], false, soft_fail);
+    img_cmp(2, -1, dbp, av[1], false, soft_fail);
+    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+
+
+    //bu_setenv("BV_LOG", "1", 1);
 
     ged_close(dbp);
 
