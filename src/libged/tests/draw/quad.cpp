@@ -308,6 +308,7 @@ main(int ac, char *av[]) {
 	if (!i)
 	    dbp->ged_gvp = v;
 	bv_init(v, &dbp->ged_views);
+	v->independent = 0;
 	bu_vls_sprintf(&v->gv_name, "V%zd", i);
 	bv_set_add_view(&dbp->ged_views, v);
 
@@ -344,14 +345,6 @@ main(int ac, char *av[]) {
 	v->gv_local2base = dbp->dbip->dbi_local2base;
     }
 
-    /* Set up a basic wireframe */
-    s_av[0] = "draw";
-    s_av[1] = "-m0";
-    s_av[2] = "all.g";
-    s_av[3] = NULL;
-    ged_exec(dbp, 4, s_av);
-
-
     /* Set distinct view az/el for each of the four quad views */
     s_av[0] = "view";
     s_av[1] = "-V";
@@ -381,11 +374,21 @@ main(int ac, char *av[]) {
     s_av[6] = "90";
     ged_exec(dbp, 7, s_av);
 
+
+    /************************************/
+    /* Set up a basic wireframe */
+    s_av[0] = "draw";
+    s_av[1] = "-m0";
+    s_av[2] = "all.g";
+    s_av[3] = NULL;
+    ged_exec(dbp, 4, s_av);
+
     img_cmp(0, 1, dbp, av[1], false, soft_fail);
     img_cmp(1, 1, dbp, av[1], false, soft_fail);
     img_cmp(2, 1, dbp, av[1], false, soft_fail);
     img_cmp(3, 1, dbp, av[1], true, soft_fail);
 
+    /* Make sure "Z" clears everything */
     s_av[0] = "Z";
     ged_exec(dbp, 1, s_av);
 
@@ -397,6 +400,7 @@ main(int ac, char *av[]) {
     img_cmp(2, -1, dbp, av[1], false, soft_fail);
     img_cmp(3, -1, dbp, av[1], false, soft_fail);
 
+    /************************************/
     /* Check behavior of a view element */
     poly_circ(dbp, 1);
     img_cmp(0, 2, dbp, av[1], false, soft_fail);
@@ -404,7 +408,45 @@ main(int ac, char *av[]) {
     img_cmp(2, 2, dbp, av[1], false, soft_fail);
     img_cmp(3, 2, dbp, av[1], true, soft_fail);
 
+    /* Make sure "Z" clears everything */
+    s_av[0] = "Z";
+    ged_exec(dbp, 1, s_av);
 
+    for (int i = 0; i < 4; i++)
+	dm_refresh(dbp, i);
+
+    img_cmp(0, -1, dbp, av[1], false, soft_fail);
+    img_cmp(1, -1, dbp, av[1], false, soft_fail);
+    img_cmp(2, -1, dbp, av[1], false, soft_fail);
+    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+
+    // TODO - this test exposes the first problem -
+    // specifying V1 results in drawing in V0.  Has
+    // to do with src/libged/draw.cpp:546 using s->s_v
+    // when a NULL is passed to indicate no LoD drawing.
+    // s_v isn't reflecting the specified V1 view, but
+    // instead uses V0.
+#if 0
+    /***********************************/
+    /* Check view independent behavior */
+    struct bu_ptbl *views = bv_set_views(&dbp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	v->independent = 1;
+    } 
+    s_av[0] = "draw";
+    s_av[1] = "-V";
+    s_av[2] = "V1";
+    s_av[3] = "-m0";
+    s_av[4] = "all.g";
+    s_av[5] = NULL;
+    ged_exec(dbp, 5, s_av);
+
+    img_cmp(0, 1, dbp, av[1], false, soft_fail);
+    img_cmp(1, 1, dbp, av[1], false, soft_fail);
+    img_cmp(2, 1, dbp, av[1], false, soft_fail);
+    img_cmp(3, 1, dbp, av[1], true, soft_fail);
+#endif
 
     ged_close(dbp);
 
