@@ -563,7 +563,7 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	}
     }
 
-    struct bview *target_view;
+    struct bview *target_view = NULL;
     if (bu_vls_strlen(&view_name)) {
 	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
 	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
@@ -573,7 +573,6 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 		break;
 	    }
 	}
-
     } else {
 	target_view = (gedp->ged_gvp->dmp) ? NULL : gedp->ged_gvp;
     }
