@@ -285,14 +285,14 @@ main(int ac, char *av[]) {
      * so we make a temporary copy */
     bu_vls_sprintf(&fname, "%s/moss.g", av[1]);
     std::ifstream orig(bu_vls_cstr(&fname), std::ios::binary);
-    std::ofstream tmpg("moss_lod_tmp.g", std::ios::binary);
+    std::ofstream tmpg("moss_quad_tmp.g", std::ios::binary);
     tmpg << orig.rdbuf();
     orig.close();
     tmpg.close();
 
     /* Open the temp file */
     const char *s_av[15] = {NULL};
-    dbp = ged_open("db", "moss_lod_tmp.g", 1);
+    dbp = ged_open("db", "moss_quad_tmp.g", 1);
 
     // Set callback so database changes will update dbi_state
     db_add_changed_clbk(dbp->dbip, &ged_changed_callback, (void *)dbp);
@@ -420,20 +420,13 @@ main(int ac, char *av[]) {
     img_cmp(2, -1, dbp, av[1], false, soft_fail);
     img_cmp(3, -1, dbp, av[1], false, soft_fail);
 
-    // TODO - this test exposes the first problem -
-    // specifying V1 results in drawing in V0.  Has
-    // to do with src/libged/draw.cpp:546 using s->s_v
-    // when a NULL is passed to indicate no LoD drawing.
-    // s_v isn't reflecting the specified V1 view, but
-    // instead uses V0.
-#if 0
     /***********************************/
     /* Check view independent behavior */
     struct bu_ptbl *views = bv_set_views(&dbp->ged_views);
     for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
 	v->independent = 1;
-    } 
+    }
     s_av[0] = "draw";
     s_av[1] = "-V";
     s_av[2] = "V1";
@@ -442,11 +435,10 @@ main(int ac, char *av[]) {
     s_av[5] = NULL;
     ged_exec(dbp, 5, s_av);
 
-    img_cmp(0, 1, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, dbp, av[1], false, soft_fail);
     img_cmp(1, 1, dbp, av[1], false, soft_fail);
-    img_cmp(2, 1, dbp, av[1], false, soft_fail);
-    img_cmp(3, 1, dbp, av[1], true, soft_fail);
-#endif
+    img_cmp(2, -1, dbp, av[1], false, soft_fail);
+    img_cmp(3, -1, dbp, av[1], true, soft_fail);
 
     ged_close(dbp);
 

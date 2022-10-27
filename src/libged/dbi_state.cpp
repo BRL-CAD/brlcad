@@ -2187,7 +2187,8 @@ BViewState::scene_obj(
     }
 
     // No pre-existing object - make a new one
-    sp = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
+    struct bview *av = (views.size() > 1 && dbis->gedp->ged_gvp) ? dbis->gedp->ged_gvp : (*(views.begin()));
+    sp = bv_obj_get(av, BV_DB_OBJS);
 
     // Find the leaf directory pointer
     struct directory *dp = RT_DIR_NULL;
@@ -2552,7 +2553,7 @@ BViewState::refresh(struct bview *v, int argc, const char **argv)
 	    }
 	    if (!s)
 		continue;
-	    struct bv_scene_obj *nso = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
+	    struct bv_scene_obj *nso = bv_obj_get(v, BV_DB_OBJS);
 	    bv_obj_sync(nso, s);
 	    nso->s_i_data = s->s_i_data;
 	    s->s_i_data = NULL;
@@ -2561,10 +2562,10 @@ BViewState::refresh(struct bview *v, int argc, const char **argv)
 
 	    // print path name, set view - otherwise empty
 	    dbis->print_path(&nso->s_name, cp);
-	    nso->s_v = dbis->gedp->ged_gvp;
+	    nso->s_v = v;
 	    nso->dp = s->dp;
 	    s_map[*k_it][mm_it->first] = nso;
-	    
+
 	    //bv_log(3, "refresh %s[%s]", bu_vls_cstr(&(nso->s_name)), bu_vls_cstr(&(v->gv_name)));
 	    bu_log("refresh %s[%s]\n", bu_vls_cstr(&(nso->s_name)), bu_vls_cstr(&(v->gv_name)));
 	    draw_scene(nso, v);
@@ -2603,7 +2604,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     // For most operations on objects, we need only the current view (for
     // independent views) or a single instance of any representative view (for
     // shared state views).
-    struct bview *v = *views.begin();
+    struct bview *v = (views.size() > 1 && dbis->gedp->ged_gvp) ? dbis->gedp->ged_gvp : (*(views.begin()));
 
     // The principle for redrawing will be that anything that was previously
     // fully drawn should stay fully drawn, even if its tree structure has
@@ -2728,12 +2729,13 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    cpath.pop_back();
 	    gather_paths(objs, ihash, ms_it->first, vs, m, NULL, cpath, views, &ret);
 	}
+	struct bview *av = (views.size() > 1 && dbis->gedp->ged_gvp) ? dbis->gedp->ged_gvp : (*(views.begin()));
 	for (sz_it = draw_invalid_collapsed.begin(); sz_it != draw_invalid_collapsed.end(); sz_it++) {
 	    std::vector<unsigned long long> cpath = ms_it->second[*sz_it];
-	    struct bv_scene_obj *s = bv_obj_get(dbis->gedp->ged_gvp, BV_DB_OBJS);
+	    struct bv_scene_obj *s = bv_obj_get(av, BV_DB_OBJS);
 	    // print path name, set view - otherwise empty
 	    dbis->print_path(&s->s_name, cpath);
-	    s->s_v = dbis->gedp->ged_gvp;
+	    s->s_v = av;
 	    s_map[ms_it->first][*iv_it] = s;
 
 	    // NOTE: Because there is no geometry to update, these scene objs
