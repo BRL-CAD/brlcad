@@ -38,6 +38,8 @@
 #include "bv/view_sets.h"
 #include "./bv_private.h"
 
+#define VIEW_NAME_MAXTRIES 100000
+
 void
 bv_init(struct bview *gvp, struct bview_set *s)
 {
@@ -50,6 +52,35 @@ bv_init(struct bview *gvp, struct bview_set *s)
 
     if (!BU_VLS_IS_INITIALIZED(&gvp->gv_name)) {
 	bu_vls_init(&gvp->gv_name);
+    }
+    // If we have a non-null set, go ahead and generate a unique
+    // view name to start out with.  App may override, but make
+    // sure we at least start out with a unique name
+    bu_vls_sprintf(&gvp->gv_name, "V0");
+    bool name_collide = false;
+    int view_try_cnt = 0;
+    struct bu_ptbl *views = bv_set_views(s);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	struct bview *nv = (struct bview *)BU_PTBL_GET(views, i);
+	if (!bu_vls_strcmp(&nv->gv_name, &gvp->gv_name)) {
+	    name_collide = true;
+	    break;
+	}
+    }
+    while (name_collide && view_try_cnt < VIEW_NAME_MAXTRIES) {
+	bu_vls_incr(&gvp->gv_name, NULL, "0:0:0:0:-", NULL, NULL);
+	name_collide = false;
+	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	    struct bview *nv = (struct bview *)BU_PTBL_GET(views, i);
+	    if (!bu_vls_strcmp(&nv->gv_name, &gvp->gv_name)) {
+		name_collide = true;
+		break;
+	    }
+	    view_try_cnt++;
+	}
+    }
+    if (view_try_cnt >= VIEW_NAME_MAXTRIES) {
+	bu_log("Warning - unable to generate view name unique to view set\n");
     }
 
     // Independent has to be the default, since we don't
@@ -112,6 +143,9 @@ bv_init(struct bview *gvp, struct bview_set *s)
     gvp->callbacks = NULL;
     gvp->gv_callback = NULL;
     gvp->gv_bounds_update= NULL;
+
+    // Also don't have a display manager
+    gvp->dmp = NULL;
 
     bv_update(gvp);
 }

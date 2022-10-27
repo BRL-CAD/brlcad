@@ -77,54 +77,63 @@ BRLCAD_ADD_TEST(NAME ged_test_drawing_lod COMMAND ged_test_lod "${CMAKE_CURRENT_
 
 
 set(select_test_ctrls
-	select001_ctrl.png
-	select002_ctrl.png
-	select003_ctrl.png
-	select004_ctrl.png
-	select005_ctrl.png
-	select006_ctrl.png
-	select007_ctrl.png
-	select008_ctrl.png
-	select009_ctrl.png
-	select010_ctrl.png
-	select011_ctrl.png
-	select012_ctrl.png
-	select013_ctrl.png
-	select014_ctrl.png
-	select015_ctrl.png
-	select016_ctrl.png
-	select017_ctrl.png
-	select018_ctrl.png
-	select019_ctrl.png
-	select020_ctrl.png
-	select021_ctrl.png
-	select022_ctrl.png
-	select023_ctrl.png
-	select024_ctrl.png
-	select001_ctrl.png
-	select002_ctrl.png
-	select003_ctrl.png
-	select004_ctrl.png
-	select005_ctrl.png
-	select006_ctrl.png
-	select007_ctrl.png
-	select008_ctrl.png
-	select009_ctrl.png
-	select010_ctrl.png
-	select011_ctrl.png
-	select012_ctrl.png
-	select013_ctrl.png
-	select019_ctrl.png
-	select020_ctrl.png
-	select021_ctrl.png
-	select022_ctrl.png
-	select023_ctrl.png
-	select024_ctrl.png
-	)
+  select001_ctrl.png
+  select002_ctrl.png
+  select003_ctrl.png
+  select004_ctrl.png
+  select005_ctrl.png
+  select006_ctrl.png
+  select007_ctrl.png
+  select008_ctrl.png
+  select009_ctrl.png
+  select010_ctrl.png
+  select011_ctrl.png
+  select012_ctrl.png
+  select013_ctrl.png
+  select014_ctrl.png
+  select015_ctrl.png
+  select016_ctrl.png
+  select017_ctrl.png
+  select018_ctrl.png
+  select019_ctrl.png
+  select020_ctrl.png
+  select021_ctrl.png
+  select022_ctrl.png
+  select023_ctrl.png
+  select024_ctrl.png
+  select001_ctrl.png
+  select002_ctrl.png
+  select003_ctrl.png
+  select004_ctrl.png
+  select005_ctrl.png
+  select006_ctrl.png
+  select007_ctrl.png
+  select008_ctrl.png
+  select009_ctrl.png
+  select010_ctrl.png
+  select011_ctrl.png
+  select012_ctrl.png
+  select013_ctrl.png
+  select019_ctrl.png
+  select020_ctrl.png
+  select021_ctrl.png
+  select022_ctrl.png
+  select023_ctrl.png
+  select024_ctrl.png
+  )
 BRLCAD_ADDEXEC(ged_test_select_draw select.cpp "libged;libdm" TEST)
 add_dependencies(ged_test_select_draw ${test_deps})
 BRLCAD_ADD_TEST(NAME ged_test_drawing_select COMMAND ged_test_select_draw "${CMAKE_CURRENT_SOURCE_DIR}")
 
+set(quad_test_ctrls
+  quad_00_001_ctrl.png
+  quad_01_001_ctrl.png
+  quad_02_001_ctrl.png
+  quad_03_001_ctrl.png
+  )
+BRLCAD_ADDEXEC(ged_test_quad quad.cpp "libged;libdm" TEST)
+add_dependencies(ged_test_quad ${test_deps})
+BRLCAD_ADD_TEST(NAME ged_test_drawing_quad COMMAND ged_test_quad "${CMAKE_CURRENT_SOURCE_DIR}")
 
 CMAKEFILES(
   README
@@ -136,6 +145,7 @@ CMAKEFILES(
   ${faceplate_test_ctrls}
   ${lod_test_ctrls}
   ${select_test_ctrls}
+  ${quad_test_ctrls}
   )
 
 CMAKEFILES(CMakeLists.txt)

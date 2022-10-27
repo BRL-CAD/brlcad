@@ -710,6 +710,10 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
     }
 
     struct dm *dmp = (struct dm *)v->dmp;
+    if (!dmp) {
+	bu_log("Warning - dm_draw_objs called when view has no associated display manager\n");
+	return;
+    }
 
     // This is the start of a draw cycle - start the stopwatch to time the
     // frame.  If the faceplate fps display is enabled, the faceplate draw at
