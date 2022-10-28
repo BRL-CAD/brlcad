@@ -77,6 +77,11 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    if (!clear_solid_objs && !clear_view_objs) {
+	clear_solid_objs = 1;
+	clear_view_objs = 1;
+    }
+
     if (!clear_all_views && bu_vls_strlen(&cvls)) {
 	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
 	if (!v) {
@@ -85,22 +90,7 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	if (!v->independent) {
-	    bu_vls_printf(gedp->ged_result_str, "Specified view %s is not an independent view, and as such does not support clearing db objects in only this view.  To change the view's status, the command 'view independent %s 1' may be applied.\n", bu_vls_cstr(&cvls), bu_vls_cstr(&cvls));
-	    bu_vls_free(&cvls);
-	    return BRLCAD_ERROR;
-	}
-    }
-    bu_vls_free(&cvls);
-
-    if (!clear_solid_objs && !clear_view_objs) {
-	clear_solid_objs = 1;
-	clear_view_objs = 1;
-    }
-
-    // If we're clearing just one view, handle it
-    if (v && v->independent && !clear_all_views) {
-	int flags = 0;
+	int flags = BV_LOCAL_OBJS;
 	if (clear_solid_objs) {
 	    flags |= BV_DB_OBJS;
 	    if (gedp->dbi_state) {
@@ -108,10 +98,14 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 		bvs->clear();
 	    }
 	}
+
 	if (clear_view_objs)
 	    flags |= BV_VIEW_OBJS;
+
 	if (!bv_clear(v, flags))
 	    v->gv_s->gv_cleared = 1;
+
+	bu_vls_free(&cvls);
 	return BRLCAD_OK;
     }
 
@@ -133,15 +127,16 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	if (clear_view_objs)
 	    flags |= BV_VIEW_OBJS;
 	int nret = bv_clear(v, flags);
-	if (nret) {
-	    flags |= BV_LOCAL_OBJS;
-	    nret = bv_clear(v, flags);
-	}
-	if (!nret)
+	flags |= BV_LOCAL_OBJS;
+	int lret = bv_clear(v, flags);
+
+	if (!nret || !lret)
 	    v->gv_s->gv_cleared = 1;
+
 	ret = BRLCAD_OK;
     }
 
+    bu_vls_free(&cvls);
     return ret;
 }
 
