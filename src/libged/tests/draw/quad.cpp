@@ -867,6 +867,7 @@ main(int ac, char *av[]) {
     img_cmp(3, 6, dbp, av[1], false, soft_fail);
 
     // Scrub view specific data
+    bu_log("Clearing view-specific data only...\n");
     scene_clear(dbp, 0, 0);
     for (int i = 0; i < 4; i++)
 	dm_refresh(dbp, i);
@@ -910,6 +911,88 @@ main(int ac, char *av[]) {
     for (int i = 0; i < 4; i++)
 	dm_refresh(dbp, i);
 
+    img_cmp(0, -1, dbp, av[1], false, soft_fail);
+    img_cmp(1, -1, dbp, av[1], false, soft_fail);
+    img_cmp(2, -1, dbp, av[1], false, soft_fail);
+    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+
+    // Reset the stage - clearing only shared
+    bu_log("Restore drawn data for shared-only clearing test...\n");
+    s_av[0] = "draw";
+    s_av[1] = "-m0";
+    s_av[2] = "all.g";
+    s_av[3] = NULL;
+    ged_exec(dbp, 4, s_av);
+    l_line(dbp, 0, 0, -200, -100, -100, 200, 100, 100);
+    l_line(dbp, 2, 2, -50, -50, -30, 100, -70, 80);
+    l_line(dbp, 1, 1, 50, -20, 10, 130, 70, -80);
+    l_line(dbp, 3, 3, 0, 0, 0, 100, 100, 100);
+    vline(dbp, 4, 0, 0, 0, 10, 10, -100);
+    // Turn the shared line green
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "l4";
+    s_av[3] = "color";
+    s_av[4] = "0/255/0";
+    s_av[5] = NULL;
+    ged_exec(dbp, 5, s_av);
+
+    img_cmp(0, 6, dbp, av[1], false, soft_fail);
+    img_cmp(1, 6, dbp, av[1], false, soft_fail);
+    img_cmp(2, 6, dbp, av[1], false, soft_fail);
+    img_cmp(3, 6, dbp, av[1], false, soft_fail);
+
+    s_av[0] = "Z";
+    s_av[1] = "-S";
+    s_av[2] = NULL;
+    ged_exec(dbp, 2, s_av);
+
+    img_cmp(0, 8, dbp, av[1], false, soft_fail);
+    img_cmp(1, 8, dbp, av[1], false, soft_fail);
+    img_cmp(2, 8, dbp, av[1], false, soft_fail);
+    img_cmp(3, 8, dbp, av[1], false, soft_fail);
+
+    scene_clear(dbp, 0, 0);
+    scene_clear(dbp, 1, 1);
+    scene_clear(dbp, 2, 2);
+    scene_clear(dbp, 3, 3);
+
+    img_cmp(0, -1, dbp, av[1], false, soft_fail);
+    img_cmp(1, -1, dbp, av[1], false, soft_fail);
+    img_cmp(2, -1, dbp, av[1], false, soft_fail);
+    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+
+
+    // Reset the stage - clearing everything test
+    bu_log("Restore drawn data for clear all test...\n");
+    s_av[0] = "draw";
+    s_av[1] = "-m0";
+    s_av[2] = "all.g";
+    s_av[3] = NULL;
+    ged_exec(dbp, 4, s_av);
+    l_line(dbp, 0, 0, -200, -100, -100, 200, 100, 100);
+    l_line(dbp, 2, 2, -50, -50, -30, 100, -70, 80);
+    l_line(dbp, 1, 1, 50, -20, 10, 130, 70, -80);
+    l_line(dbp, 3, 3, 0, 0, 0, 100, 100, 100);
+    vline(dbp, 4, 0, 0, 0, 10, 10, -100);
+    // Turn the shared line green
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "l4";
+    s_av[3] = "color";
+    s_av[4] = "0/255/0";
+    s_av[5] = NULL;
+    ged_exec(dbp, 5, s_av);
+
+    img_cmp(0, 6, dbp, av[1], false, soft_fail);
+    img_cmp(1, 6, dbp, av[1], false, soft_fail);
+    img_cmp(2, 6, dbp, av[1], false, soft_fail);
+    img_cmp(3, 6, dbp, av[1], false, soft_fail);
+
+    bu_log("Clearing everything...\n");
+    scene_clear(dbp, 0, -1);
+    for (int i = 0; i < 4; i++)
+	dm_refresh(dbp, i);
     img_cmp(0, -1, dbp, av[1], false, soft_fail);
     img_cmp(1, -1, dbp, av[1], false, soft_fail);
     img_cmp(2, -1, dbp, av[1], false, soft_fail);
