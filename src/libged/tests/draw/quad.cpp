@@ -251,6 +251,122 @@ poly_circ(struct ged *gedp, int v_id)
     bu_vls_free(&vname);
 }
 
+/* Creates a shared line */
+void
+vline(struct ged *gedp, int l_id, int x0, int y0, int z0, int x1, int y1, int z1)
+{
+    const char *s_av[15] = {NULL};
+    struct bu_vls lname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&lname, "l%d", l_id);
+
+    struct bu_vls vx0 = BU_VLS_INIT_ZERO;
+    struct bu_vls vy0 = BU_VLS_INIT_ZERO;
+    struct bu_vls vz0 = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&vx0, "%d", x0);
+    bu_vls_sprintf(&vy0, "%d", y0);
+    bu_vls_sprintf(&vz0, "%d", z0);
+
+    struct bu_vls vx1 = BU_VLS_INIT_ZERO;
+    struct bu_vls vy1 = BU_VLS_INIT_ZERO;
+    struct bu_vls vz1 = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&vx1, "%d", x1);
+    bu_vls_sprintf(&vy1, "%d", y1);
+    bu_vls_sprintf(&vz1, "%d", z1);
+
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = bu_vls_cstr(&lname);
+    s_av[3] = "line";
+    s_av[4] = "create";
+    s_av[5] = bu_vls_cstr(&vx0);
+    s_av[6] = bu_vls_cstr(&vy0);
+    s_av[7] = bu_vls_cstr(&vz0);
+    s_av[8] = NULL;
+    ged_exec(gedp, 8, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = bu_vls_cstr(&lname);
+    s_av[3] = "line";
+    s_av[4] = "append";
+    s_av[5] = bu_vls_cstr(&vx1);
+    s_av[6] = bu_vls_cstr(&vy1);
+    s_av[7] = bu_vls_cstr(&vz1);
+    s_av[8] = NULL;
+    ged_exec(gedp, 8, s_av);
+
+    bu_vls_free(&lname);
+    bu_vls_free(&vx0);
+    bu_vls_free(&vy0);
+    bu_vls_free(&vz0);
+    bu_vls_free(&vx1);
+    bu_vls_free(&vy1);
+    bu_vls_free(&vz1);
+}
+
+/* View local line */
+void
+l_line(struct ged *gedp, int v_id, int l_id, int x0, int y0, int z0, int x1, int y1, int z1)
+{
+    const char *s_av[15] = {NULL};
+    struct bu_vls vname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&vname, "V%d", v_id);
+
+    struct bu_vls lname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&lname, "l%d", l_id);
+
+    struct bu_vls vx0 = BU_VLS_INIT_ZERO;
+    struct bu_vls vy0 = BU_VLS_INIT_ZERO;
+    struct bu_vls vz0 = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&vx0, "%d", x0);
+    bu_vls_sprintf(&vy0, "%d", y0);
+    bu_vls_sprintf(&vz0, "%d", z0);
+
+    struct bu_vls vx1 = BU_VLS_INIT_ZERO;
+    struct bu_vls vy1 = BU_VLS_INIT_ZERO;
+    struct bu_vls vz1 = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&vx1, "%d", x1);
+    bu_vls_sprintf(&vy1, "%d", y1);
+    bu_vls_sprintf(&vz1, "%d", z1);
+
+    s_av[0] = "view";
+    s_av[1] = "-V";
+    s_av[2] = bu_vls_cstr(&vname);
+    s_av[3] = "obj";
+    s_av[4] = "-L";
+    s_av[5] = bu_vls_cstr(&lname);
+    s_av[6] = "line";
+    s_av[7] = "create";
+    s_av[8] = bu_vls_cstr(&vx0);
+    s_av[9] = bu_vls_cstr(&vy0);
+    s_av[10] = bu_vls_cstr(&vz0);
+    s_av[11] = NULL;
+    ged_exec(gedp, 11, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "-V";
+    s_av[2] = bu_vls_cstr(&vname);
+    s_av[3] = "obj";
+    s_av[4] = "-L";
+    s_av[5] = bu_vls_cstr(&lname);
+    s_av[6] = "line";
+    s_av[7] = "append";
+    s_av[8] = bu_vls_cstr(&vx1);
+    s_av[9] = bu_vls_cstr(&vy1);
+    s_av[10] = bu_vls_cstr(&vz1);
+    s_av[11] = NULL;
+    ged_exec(gedp, 11, s_av);
+
+    bu_vls_free(&vname);
+    bu_vls_free(&lname);
+    bu_vls_free(&vx0);
+    bu_vls_free(&vy0);
+    bu_vls_free(&vz0);
+    bu_vls_free(&vx1);
+    bu_vls_free(&vy1);
+    bu_vls_free(&vz1);
+}
+
 
 int
 main(int ac, char *av[]) {
@@ -269,11 +385,7 @@ main(int ac, char *av[]) {
     BU_OPT_NULL(d[3]);
 
     /* Done with program name */
-    int uac = bu_opt_parse(NULL, ac, (const char **)av, d);
-    if (uac == -1 || need_help)
-
-    if (ac != 2)
-	bu_exit(EXIT_FAILURE, "%s [-h] [-U] <directory>", av[0]);
+    (void)bu_opt_parse(NULL, ac, (const char **)av, d);
 
     if (!bu_file_directory(av[1])) {
 	printf("ERROR: [%s] is not a directory.  Expecting control image directory\n", av[1]);
@@ -650,28 +762,7 @@ main(int ac, char *av[]) {
     s_av[3] = NULL;
     ged_exec(dbp, 4, s_av);
 
-    s_av[0] = "view";
-    s_av[1] = "obj";
-    s_av[2] = "l1";
-    s_av[3] = "line";
-    s_av[4] = "create";
-    s_av[5] = "-200";
-    s_av[6] = "-200";
-    s_av[7] = "-200";
-    s_av[8] = NULL;
-    ged_exec(dbp, 8, s_av);
-
-    s_av[0] = "view";
-    s_av[1] = "obj";
-    s_av[2] = "l1";
-    s_av[3] = "line";
-    s_av[4] = "append";
-    s_av[5] = "200";
-    s_av[6] = "200";
-    s_av[7] = "200";
-    s_av[8] = NULL;
-    ged_exec(dbp, 8, s_av);
-
+    vline(dbp, 1, -200, -200, -200, 200, 200, 200);
     img_cmp(0, 4, dbp, av[1], false, soft_fail);
     img_cmp(1, 4, dbp, av[1], false, soft_fail);
     img_cmp(2, 4, dbp, av[1], false, soft_fail);
@@ -701,141 +792,48 @@ main(int ac, char *av[]) {
     s_av[3] = NULL;
     ged_exec(dbp, 4, s_av);
 
-    s_av[0] = "view";
-    s_av[1] = "-V";
-    s_av[2] = "V0";
-    s_av[3] = "obj";
-    s_av[4] = "-L";
-    s_av[5] = "l0";
-    s_av[6] = "line";
-    s_av[7] = "create";
-    s_av[8] = "-200";
-    s_av[9] = "-100";
-    s_av[10] = "-100";
-    s_av[11] = NULL;
-    ged_exec(dbp, 11, s_av);
-
-    s_av[0] = "view";
-    s_av[1] = "-V";
-    s_av[2] = "V0";
-    s_av[3] = "obj";
-    s_av[4] = "-L";
-    s_av[5] = "l0";
-    s_av[6] = "line";
-    s_av[7] = "append";
-    s_av[8] = "200";
-    s_av[9] = "100";
-    s_av[10] = "100";
-    s_av[11] = NULL;
-    ged_exec(dbp, 11, s_av);
-
+    l_line(dbp, 0, 0, -200, -100, -100, 200, 100, 100);
     img_cmp(0, 5, dbp, av[1], false, soft_fail);
     img_cmp(1, 1, dbp, av[1], false, soft_fail);
     img_cmp(2, 1, dbp, av[1], false, soft_fail);
     img_cmp(3, 1, dbp, av[1], false, soft_fail);
 
 
-    s_av[0] = "view";
-    s_av[1] = "-V";
-    s_av[2] = "V2";
-    s_av[3] = "obj";
-    s_av[4] = "-L";
-    s_av[5] = "l2";
-    s_av[6] = "line";
-    s_av[7] = "create";
-    s_av[8] = "-50";
-    s_av[9] = "-50";
-    s_av[10] = "-30";
-    s_av[11] = NULL;
-    ged_exec(dbp, 11, s_av);
-
-    s_av[0] = "view";
-    s_av[1] = "-V";
-    s_av[2] = "V2";
-    s_av[3] = "obj";
-    s_av[4] = "-L";
-    s_av[5] = "l2";
-    s_av[6] = "line";
-    s_av[7] = "append";
-    s_av[8] = "100";
-    s_av[9] = "-70";
-    s_av[10] = "80";
-    s_av[11] = NULL;
-    ged_exec(dbp, 11, s_av);
-
+    l_line(dbp, 2, 2, -50, -50, -30, 100, -70, 80);
     img_cmp(0, 5, dbp, av[1], false, soft_fail);
     img_cmp(1, 1, dbp, av[1], false, soft_fail);
     img_cmp(2, 5, dbp, av[1], false, soft_fail);
     img_cmp(3, 1, dbp, av[1], false, soft_fail);
 
 
-    s_av[0] = "view";
-    s_av[1] = "-V";
-    s_av[2] = "V1";
-    s_av[3] = "obj";
-    s_av[4] = "-L";
-    s_av[5] = "l1";
-    s_av[6] = "line";
-    s_av[7] = "create";
-    s_av[8] = "50";
-    s_av[9] = "-20";
-    s_av[10] = "10";
-    s_av[11] = NULL;
-    ged_exec(dbp, 11, s_av);
-
-    s_av[0] = "view";
-    s_av[1] = "-V";
-    s_av[2] = "V1";
-    s_av[3] = "obj";
-    s_av[4] = "-L";
-    s_av[5] = "l1";
-    s_av[6] = "line";
-    s_av[7] = "append";
-    s_av[8] = "130";
-    s_av[9] = "70";
-    s_av[10] = "-80";
-    s_av[11] = NULL;
-    ged_exec(dbp, 11, s_av);
-
+    l_line(dbp, 1, 1, 50, -20, 10, 130, 70, -80);
     img_cmp(0, 5, dbp, av[1], false, soft_fail);
     img_cmp(1, 5, dbp, av[1], false, soft_fail);
     img_cmp(2, 5, dbp, av[1], false, soft_fail);
     img_cmp(3, 1, dbp, av[1], false, soft_fail);
 
 
-    s_av[0] = "view";
-    s_av[1] = "-V";
-    s_av[2] = "V3";
-    s_av[3] = "obj";
-    s_av[4] = "-L";
-    s_av[5] = "l3";
-    s_av[6] = "line";
-    s_av[7] = "create";
-    s_av[8] = "0";
-    s_av[9] = "0";
-    s_av[10] = "0";
-    s_av[11] = NULL;
-    ged_exec(dbp, 11, s_av);
-
-    s_av[0] = "view";
-    s_av[1] = "-V";
-    s_av[2] = "V3";
-    s_av[3] = "obj";
-    s_av[4] = "-L";
-    s_av[5] = "l3";
-    s_av[6] = "line";
-    s_av[7] = "append";
-    s_av[8] = "100";
-    s_av[9] = "100";
-    s_av[10] = "100";
-    s_av[11] = NULL;
-    ged_exec(dbp, 11, s_av);
-
+    l_line(dbp, 3, 3, 0, 0, 0, 100, 100, 100);
     img_cmp(0, 5, dbp, av[1], false, soft_fail);
     img_cmp(1, 5, dbp, av[1], false, soft_fail);
     img_cmp(2, 5, dbp, av[1], false, soft_fail);
     img_cmp(3, 5, dbp, av[1], false, soft_fail);
 
+
+    // Add a shared line to all four views
+    vline(dbp, 4, 0, 0, 0, 10, 10, -100);
+    // Turn the shared line green
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "l4";
+    s_av[3] = "color";
+    s_av[4] = "0/255/0";
+    s_av[5] = NULL;
+    ged_exec(dbp, 5, s_av);
+    img_cmp(0, 6, dbp, av[1], false, soft_fail);
+    img_cmp(1, 6, dbp, av[1], false, soft_fail);
+    img_cmp(2, 6, dbp, av[1], false, soft_fail);
+    img_cmp(3, 6, dbp, av[1], false, soft_fail);
 
 
     scene_clear(dbp, 0, -1);
