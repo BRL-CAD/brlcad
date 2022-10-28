@@ -121,7 +121,10 @@ _label_cmd_create(void *bs, int argc, const char **argv)
 	}
     }
 
-    s = bv_obj_get(gd->cv, BV_VIEW_OBJS);
+    int flags = BV_VIEW_OBJS;
+    if (gd->local_obj)
+	flags |= BV_LOCAL_OBJS;
+    s = bv_obj_get(gd->cv, flags);
     s->s_v = gd->cv;
     BU_LIST_INIT(&(s->s_vlist));
     BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p, BV_VLIST_LINE_MOVE);

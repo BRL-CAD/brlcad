@@ -627,8 +627,220 @@ main(int ac, char *av[]) {
     img_cmp(2, -1, dbp, av[1], false, soft_fail);
     img_cmp(3, -1, dbp, av[1], false, soft_fail);
 
+    // Scrub all data out of the views, switch back to non-independent
+    scene_clear(dbp, 0, 0);
+    scene_clear(dbp, 1, 1);
+    scene_clear(dbp, 2, 2);
+    scene_clear(dbp, 3, 3);
 
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	v->independent = 0;
+    }
+    scene_clear(dbp, 0, -1);
     //bu_setenv("BV_LOG", "1", 1);
+
+    /***************************************************/
+    /* Check shared view behavior - non-local line drawing */
+    bu_log("Shared views drawing test - non-local view line\n");
+
+    s_av[0] = "draw";
+    s_av[1] = "-m0";
+    s_av[2] = "all.g";
+    s_av[3] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "l1";
+    s_av[3] = "line";
+    s_av[4] = "create";
+    s_av[5] = "-200";
+    s_av[6] = "-200";
+    s_av[7] = "-200";
+    s_av[8] = NULL;
+    ged_exec(dbp, 8, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "obj";
+    s_av[2] = "l1";
+    s_av[3] = "line";
+    s_av[4] = "append";
+    s_av[5] = "200";
+    s_av[6] = "200";
+    s_av[7] = "200";
+    s_av[8] = NULL;
+    ged_exec(dbp, 8, s_av);
+
+    img_cmp(0, 4, dbp, av[1], false, soft_fail);
+    img_cmp(1, 4, dbp, av[1], false, soft_fail);
+    img_cmp(2, 4, dbp, av[1], false, soft_fail);
+    img_cmp(3, 4, dbp, av[1], false, soft_fail);
+
+    /* Make sure we've cleared everything */
+    s_av[0] = "Z";
+    ged_exec(dbp, 1, s_av);
+
+    for (int i = 0; i < 4; i++)
+	dm_refresh(dbp, i);
+
+    img_cmp(0, -1, dbp, av[1], false, soft_fail);
+    img_cmp(1, -1, dbp, av[1], false, soft_fail);
+    img_cmp(2, -1, dbp, av[1], false, soft_fail);
+    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+
+    /***************************************************/
+    /* Check shared view behavior - local line drawing.
+     * This combines shared and non-shared elements,
+     * the most complex of the structural scenarios. */
+    bu_log("Shared views drawing test - local view line\n");
+
+    s_av[0] = "draw";
+    s_av[1] = "-m0";
+    s_av[2] = "all.g";
+    s_av[3] = NULL;
+    ged_exec(dbp, 4, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "-V";
+    s_av[2] = "V0";
+    s_av[3] = "obj";
+    s_av[4] = "-L";
+    s_av[5] = "l0";
+    s_av[6] = "line";
+    s_av[7] = "create";
+    s_av[8] = "-200";
+    s_av[9] = "-100";
+    s_av[10] = "-100";
+    s_av[11] = NULL;
+    ged_exec(dbp, 11, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "-V";
+    s_av[2] = "V0";
+    s_av[3] = "obj";
+    s_av[4] = "-L";
+    s_av[5] = "l0";
+    s_av[6] = "line";
+    s_av[7] = "append";
+    s_av[8] = "200";
+    s_av[9] = "100";
+    s_av[10] = "100";
+    s_av[11] = NULL;
+    ged_exec(dbp, 11, s_av);
+
+    img_cmp(0, 5, dbp, av[1], false, soft_fail);
+    img_cmp(1, 1, dbp, av[1], false, soft_fail);
+    img_cmp(2, 1, dbp, av[1], false, soft_fail);
+    img_cmp(3, 1, dbp, av[1], false, soft_fail);
+
+
+    s_av[0] = "view";
+    s_av[1] = "-V";
+    s_av[2] = "V2";
+    s_av[3] = "obj";
+    s_av[4] = "-L";
+    s_av[5] = "l2";
+    s_av[6] = "line";
+    s_av[7] = "create";
+    s_av[8] = "-50";
+    s_av[9] = "-50";
+    s_av[10] = "-30";
+    s_av[11] = NULL;
+    ged_exec(dbp, 11, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "-V";
+    s_av[2] = "V2";
+    s_av[3] = "obj";
+    s_av[4] = "-L";
+    s_av[5] = "l2";
+    s_av[6] = "line";
+    s_av[7] = "append";
+    s_av[8] = "100";
+    s_av[9] = "-70";
+    s_av[10] = "80";
+    s_av[11] = NULL;
+    ged_exec(dbp, 11, s_av);
+
+    img_cmp(0, 5, dbp, av[1], false, soft_fail);
+    img_cmp(1, 1, dbp, av[1], false, soft_fail);
+    img_cmp(2, 5, dbp, av[1], false, soft_fail);
+    img_cmp(3, 1, dbp, av[1], false, soft_fail);
+
+
+    s_av[0] = "view";
+    s_av[1] = "-V";
+    s_av[2] = "V1";
+    s_av[3] = "obj";
+    s_av[4] = "-L";
+    s_av[5] = "l1";
+    s_av[6] = "line";
+    s_av[7] = "create";
+    s_av[8] = "50";
+    s_av[9] = "-20";
+    s_av[10] = "10";
+    s_av[11] = NULL;
+    ged_exec(dbp, 11, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "-V";
+    s_av[2] = "V1";
+    s_av[3] = "obj";
+    s_av[4] = "-L";
+    s_av[5] = "l1";
+    s_av[6] = "line";
+    s_av[7] = "append";
+    s_av[8] = "130";
+    s_av[9] = "70";
+    s_av[10] = "-80";
+    s_av[11] = NULL;
+    ged_exec(dbp, 11, s_av);
+
+    img_cmp(0, 5, dbp, av[1], false, soft_fail);
+    img_cmp(1, 5, dbp, av[1], false, soft_fail);
+    img_cmp(2, 5, dbp, av[1], false, soft_fail);
+    img_cmp(3, 1, dbp, av[1], false, soft_fail);
+
+
+    s_av[0] = "view";
+    s_av[1] = "-V";
+    s_av[2] = "V3";
+    s_av[3] = "obj";
+    s_av[4] = "-L";
+    s_av[5] = "l3";
+    s_av[6] = "line";
+    s_av[7] = "create";
+    s_av[8] = "0";
+    s_av[9] = "0";
+    s_av[10] = "0";
+    s_av[11] = NULL;
+    ged_exec(dbp, 11, s_av);
+
+    s_av[0] = "view";
+    s_av[1] = "-V";
+    s_av[2] = "V3";
+    s_av[3] = "obj";
+    s_av[4] = "-L";
+    s_av[5] = "l3";
+    s_av[6] = "line";
+    s_av[7] = "append";
+    s_av[8] = "100";
+    s_av[9] = "100";
+    s_av[10] = "100";
+    s_av[11] = NULL;
+    ged_exec(dbp, 11, s_av);
+
+    img_cmp(0, 5, dbp, av[1], false, soft_fail);
+    img_cmp(1, 5, dbp, av[1], false, soft_fail);
+    img_cmp(2, 5, dbp, av[1], false, soft_fail);
+    img_cmp(3, 5, dbp, av[1], false, soft_fail);
+
+
+
+    scene_clear(dbp, 0, -1);
+
+
 
     ged_close(dbp);
 
