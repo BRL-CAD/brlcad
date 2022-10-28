@@ -165,9 +165,9 @@ bv_polygon_vlist(struct bv_scene_obj *s)
 }
 
 struct bv_scene_obj *
-bv_create_polygon(struct bview *v, int type, int x, int y)
+bv_create_polygon(struct bview *v, int flags, int type, int x, int y)
 {
-    struct bv_scene_obj *s = bv_obj_get(v, BV_VIEW_OBJS);
+    struct bv_scene_obj *s = bv_obj_get(v, flags);
     s->s_type_flags |= BV_POLYGONS;
     s->s_type_flags |= BV_VIEWONLY;
 
@@ -857,7 +857,7 @@ bg_dup_view_polygon(const char *nname, struct bv_scene_obj *s)
     // TODO - fix this...
     // ip->v.gv_objs.vlfree = &s->s_v->vset->vlfree;
 
-    struct bv_scene_obj *np = bv_create_polygon(&ip->v, ip->type, ip->v.gv_prevMouseX, ip->v.gv_prevMouseY);
+    struct bv_scene_obj *np = bv_create_polygon(&ip->v, s->s_type_flags, ip->type, ip->v.gv_prevMouseX, ip->v.gv_prevMouseY);
 
     // Internal "creation" view is defined - now set the working view that s is
     // using for normal operations.

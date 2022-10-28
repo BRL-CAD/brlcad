@@ -403,7 +403,7 @@ QPolyCreate::do_import_sketch()
     }
 
     // Names are valid, dp is ready - try the sketch import
-    p = db_sketch_to_scene_obj(vname, gedp->dbip, dp, gedp->ged_gvp);
+    p = db_sketch_to_scene_obj(vname, gedp->dbip, dp, gedp->ged_gvp, BV_VIEW_OBJS);
     bu_free(vname, "name cpy");
     if (!p) {
 	return;
@@ -629,9 +629,9 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 		ptype = BV_POLYGON_GENERAL;
 	    }
 #ifdef USE_QT6
-	    p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->position().x(), m_e->position().y());
+	    p = bv_create_polygon(gedp->ged_gvp, BV_VIEW_OBJS, ptype, m_e->position().x(), m_e->position().y());
 #else
-	    p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->x(), m_e->y());
+	    p = bv_create_polygon(gedp->ged_gvp, BV_VIEW_OBJS, ptype, m_e->x(), m_e->y());
 #endif
 	    p->s_v = gedp->ged_gvp;
 	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;

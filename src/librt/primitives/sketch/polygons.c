@@ -85,7 +85,7 @@ _sketch_mat_aet(struct bview *gvp)
 }
 
 struct bv_scene_obj *
-db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *dp, struct bview *sv)
+db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *dp, struct bview *sv, int flags)
 {
     // Begin import
     size_t ncontours = 0;
@@ -111,7 +111,7 @@ db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *d
     }
 
     // Have a sketch - create an empty polygon
-    struct bv_scene_obj *s = bv_create_polygon(sv, BV_POLYGON_GENERAL, 0, 0);
+    struct bv_scene_obj *s = bv_create_polygon(sv, flags, BV_POLYGON_GENERAL, 0, 0);
     if (!s) {
 	rt_db_free_internal(&intern);
 	return NULL;
