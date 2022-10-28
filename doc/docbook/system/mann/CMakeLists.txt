@@ -139,6 +139,7 @@ set(mann_EN
   orientation.xml
   orot.xml
   oscale.xml
+  overlaps_tool.xml
   overlay.xml
   p.xml
   pathlist.xml
