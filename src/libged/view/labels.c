@@ -127,7 +127,7 @@ _label_cmd_create(void *bs, int argc, const char **argv)
     s = bv_obj_get(gd->cv, flags);
     s->s_v = gd->cv;
     BU_LIST_INIT(&(s->s_vlist));
-    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p, BV_VLIST_LINE_MOVE);
     VSET(s->s_color, 255, 255, 0);
 
     struct bv_label *l;

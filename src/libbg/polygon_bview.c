@@ -49,19 +49,19 @@ bv_polygon_contour(struct bv_scene_obj *s, struct bg_poly_contour *c, int curr_c
 	return;
     }
 
-    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, c->point[0], BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(s->vlfree, &s->s_vlist, c->point[0], BV_VLIST_LINE_MOVE);
     for (size_t i = 0; i < c->num_points; i++) {
-	BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, c->point[i], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(s->vlfree, &s->s_vlist, c->point[i], BV_VLIST_LINE_DRAW);
     }
     if (!c->open)
-	BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, c->point[0], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(s->vlfree, &s->s_vlist, c->point[0], BV_VLIST_LINE_DRAW);
 
     if (curr_c && curr_i >= 0) {
 	point_t psize;
 	VSET(psize, 10, 0, 0);
-	BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, c->point[curr_i], BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, psize, BV_VLIST_POINT_SIZE);
-	BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, c->point[curr_i], BV_VLIST_POINT_DRAW);
+	BV_ADD_VLIST(s->vlfree, &s->s_vlist, c->point[curr_i], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(s->vlfree, &s->s_vlist, psize, BV_VLIST_POINT_SIZE);
+	BV_ADD_VLIST(s->vlfree, &s->s_vlist, c->point[curr_i], BV_VLIST_POINT_DRAW);
     }
 }
 
@@ -820,7 +820,7 @@ bv_update_polygon(struct bv_scene_obj *s, struct bview *v, int utype)
 		if (!s_c)
 		    continue;
 		if (BU_STR_EQUAL(bu_vls_cstr(&s_c->s_uuid), "fill")) {
-		    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s_c->s_vlist);
+		    BV_FREE_VLIST(s->vlfree, &s_c->s_vlist);
 		    break;
 		}
 	    }

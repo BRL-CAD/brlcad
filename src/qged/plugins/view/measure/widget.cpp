@@ -382,7 +382,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    mode = 1;
 	    VMOVE(p1, mpnt);
 	    VMOVE(p2, mpnt);
-	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
 	    bu_vls_init(&s->s_uuid);
 	    bu_vls_printf(&s->s_uuid, "tool:measurement");
 	    emit view_updated(QTCAD_VIEW_REFRESH);
@@ -400,11 +400,11 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 		return true;
 
 	    mode = 3;
-	    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
-	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
+	    BV_FREE_VLIST(s->vlfree, &s->s_vlist);
+	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
 	    VMOVE(p3, mpnt);
-	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
 	    adjust_text();
 	    emit view_updated(QTCAD_VIEW_REFRESH);
 	}
@@ -418,10 +418,10 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    if (!get_point(m_e))
 		return true;
 
-	    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
-	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
+	    BV_FREE_VLIST(s->vlfree, &s->s_vlist);
+	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
 	    VMOVE(p2, mpnt);
-	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
 	    adjust_text();
 	    emit view_updated(QTCAD_VIEW_REFRESH);
 	}
@@ -429,11 +429,11 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    if (!get_point(m_e))
 		return true;
 
-	    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
-	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
+	    BV_FREE_VLIST(s->vlfree, &s->s_vlist);
+	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
 	    VMOVE(p3, mpnt);
-	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
 	    adjust_text();
 	    emit view_updated(QTCAD_VIEW_REFRESH);
 	}
@@ -459,10 +459,10 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    if (!get_point(m_e))
 		return true;
 	    mode = 2;
-	    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
-	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
+	    BV_FREE_VLIST(s->vlfree, &s->s_vlist);
+	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
 	    VMOVE(p2, mpnt);
-	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
 	    adjust_text();
 	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
@@ -471,11 +471,11 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    if (!get_point(m_e))
 		return true;
 	    mode = 4;
-	    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
-	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
+	    BV_FREE_VLIST(s->vlfree, &s->s_vlist);
+	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
 	    VMOVE(p3, mpnt);
-	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
 	    adjust_text();
 	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
