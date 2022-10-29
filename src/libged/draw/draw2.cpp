@@ -114,9 +114,21 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     }
     bu_vls_free(&cvls);
 
+    // If we don't have a specified view, and the default view isn't a shared view, see if
+    // we can find a shared view in the view set.
+    if (!bu_vls_strlen(&cvls) && (!cv || cv->independent)) {
+	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	    struct bview *bv = (struct bview *)BU_PTBL_GET(views, i);
+	    if (!bv->independent) {
+		cv = bv;
+		break;
+	    }
+	}
+    }
+
+
     // We need a current view, either from gedp or from the options
-    // TODO - can we default to the shared view set, if none is
-    // specified?
     if (!cv) {
 	bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
 	return BRLCAD_ERROR;
@@ -201,9 +213,12 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // Before we start doing anything with the object set, record if things are
     // starting out empty.
     int blank_slate = 0;
+    struct bu_ptbl *dobjs = bv_view_objs(cv, BV_DB_OBJS);
+    struct bu_ptbl *local_dobjs = bv_view_objs(cv, BV_DB_OBJS);
     struct bu_ptbl *vobjs = bv_view_objs(cv, BV_VIEW_OBJS);
     struct bu_ptbl *vlobjs = bv_view_objs(cv, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-    if (!BU_PTBL_LEN(bv_view_objs(cv, BV_DB_OBJS)) && !BU_PTBL_LEN(vobjs) && !BU_PTBL_LEN(vlobjs)) {
+    if ((!dobjs || !BU_PTBL_LEN(dobjs)) && (!local_dobjs || !BU_PTBL_LEN(local_dobjs)) &&
+	    (!vobjs || !BU_PTBL_LEN(vobjs)) && (!vlobjs || !BU_PTBL_LEN(vlobjs))) {
 	blank_slate = 1;
     }
 

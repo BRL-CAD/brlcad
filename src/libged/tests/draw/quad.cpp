@@ -998,6 +998,24 @@ main(int ac, char *av[]) {
     img_cmp(2, -1, dbp, av[1], false, soft_fail);
     img_cmp(3, -1, dbp, av[1], false, soft_fail);
 
+#if 0
+    // Next, test a mix of shared and independent views
+    bu_log("Testing mixed shared and independent views\n");
+    ((struct bview *)BU_PTBL_GET(views, 0))->independent = 1;
+    ((struct bview *)BU_PTBL_GET(views, 1))->independent = 0;
+    ((struct bview *)BU_PTBL_GET(views, 2))->independent = 1;
+    ((struct bview *)BU_PTBL_GET(views, 3))->independent = 0;
+    s_av[0] = "draw";
+    s_av[1] = "-m0";
+    s_av[2] = "all.g";
+    s_av[3] = NULL;
+    ged_exec(dbp, 3, s_av);
+ 
+    img_cmp(0, -1, dbp, av[1], false, soft_fail);
+    img_cmp(1, 1, dbp, av[1], false, soft_fail);
+    img_cmp(2, -1, dbp, av[1], false, soft_fail);
+    img_cmp(3, 1, dbp, av[1], true, soft_fail);
+#endif
 
     ged_close(dbp);
 

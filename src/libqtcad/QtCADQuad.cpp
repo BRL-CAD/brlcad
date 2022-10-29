@@ -229,10 +229,21 @@ QtCADQuad::changeToQuadFrame()
 	bg_view_bounds(views[i]->view());
     }
     struct bu_ptbl *db_objs = bv_view_objs(views[UPPER_RIGHT_QUADRANT]->view(), BV_DB_OBJS);
-    for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
-	struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(db_objs, i);
-	for (int j = UPPER_RIGHT_QUADRANT + 1; j < LOWER_RIGHT_QUADRANT + 1; j++) {
-	    draw_scene(so, views[j]->view());
+    if (db_objs) {
+	for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
+	    struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(db_objs, i);
+	    for (int j = UPPER_RIGHT_QUADRANT + 1; j < LOWER_RIGHT_QUADRANT + 1; j++) {
+		draw_scene(so, views[j]->view());
+	    }
+	}
+    }
+    struct bu_ptbl *local_db_objs = bv_view_objs(views[UPPER_RIGHT_QUADRANT]->view(), BV_DB_OBJS | BV_LOCAL_OBJS);
+    if (local_db_objs) {
+	for (size_t i = 0; i < BU_PTBL_LEN(local_db_objs); i++) {
+	    struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(local_db_objs, i);
+	    for (int j = UPPER_RIGHT_QUADRANT + 1; j < LOWER_RIGHT_QUADRANT + 1; j++) {
+		draw_scene(so, views[j]->view());
+	    }
 	}
     }
 

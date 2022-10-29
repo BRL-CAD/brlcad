@@ -1431,7 +1431,11 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
 	if (BU_STR_EQUAL(cmd2, "1")) {
 	    struct bu_ptbl *db_objs = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
-	    (void)scene_bounding_sph(db_objs, &(extremum[0]), &(extremum[1]), 1);
+	    if (db_objs)
+		(void)scene_bounding_sph(db_objs, &(extremum[0]), &(extremum[1]), 1);
+	    struct bu_ptbl *local_db_objs = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS | BV_LOCAL_OBJS);
+	    if (local_db_objs)
+		(void)scene_bounding_sph(local_db_objs, &(extremum[0]), &(extremum[1]), 1);
 	} else {
 	    (void)dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &(extremum[0]), &(extremum[1]), 1);
 	}

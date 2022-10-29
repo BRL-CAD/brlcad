@@ -401,28 +401,47 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     if (!ac && cmd_pos < 0 && !help) {
 	if (list_db) {
 	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
-	    for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
-		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
-		if (bu_list_len(&cg->s_vlist)) {
-		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&cg->s_name));
-		} else {
-		    for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
-			struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
-			bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
+	    if (db_objs) {
+		for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
+		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
+		    if (bu_list_len(&cg->s_vlist)) {
+			bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&cg->s_name));
+		    } else {
+			for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
+			    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
+			    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
+			}
+		    }
+		}
+	    }
+	    struct bu_ptbl *local_db_objs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
+	    if (local_db_objs) {
+		for (size_t i = 0; i < BU_PTBL_LEN(local_db_objs); i++) {
+		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(local_db_objs, i);
+		    if (bu_list_len(&cg->s_vlist)) {
+			bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&cg->s_name));
+		    } else {
+			for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
+			    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
+			    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
+			}
 		    }
 		}
 	    }
 	}
 	if (list_view) {
 	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
+	    if (view_objs) {
+		for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
+		}
 	    }
 
-	    if (view_objs != v->gv_objs.view_objs) {
-		for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
-		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
+	    struct bu_ptbl *local_view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
+	    if (local_view_objs) {
+		for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
+		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
 		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
 		}
 	    }

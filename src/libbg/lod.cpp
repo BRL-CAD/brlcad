@@ -259,12 +259,14 @@ _scene_radius(point_t *sbbc, fastf_t *radius, struct bview *v)
     VSETALL(max, -INFINITY);
     int have_objs = 0;
     struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
+    if (!so)
+	return;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
 	obj_bb(&have_objs, &min, &max, g, v);
     }
     struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-    if (so != sol) {
+    if (sol) {
 	for (size_t i = 0; i < BU_PTBL_LEN(sol); i++) {
 	    struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(sol, i);
 	    obj_bb(&have_objs, &min, &max, g, v);
@@ -432,9 +434,18 @@ bg_view_objs_select(struct bv_scene_obj ***sset, struct bview *v, int x, int y)
     // add them to the set
     std::set<struct bv_scene_obj *> active;
     struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
-    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
-	_find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
+    if (so) {
+	for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	    _find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
+	}
+    }
+    struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
+    if (sol) {
+	for (size_t i = 0; i < BU_PTBL_LEN(sol); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sol, i);
+	    _find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
+	}
     }
     if (active.size()) {
 	std::set<struct bv_scene_obj *>::iterator a_it;
@@ -522,9 +533,18 @@ bg_view_objs_rect_select(struct bv_scene_obj ***sset, struct bview *v, int x1, i
     // add them to the set
     std::set<struct bv_scene_obj *> active;
     struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
-    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
-	_find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
+    if (so) {
+	for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	    _find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
+	}
+    }
+    struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
+    if (sol) {
+	for (size_t i = 0; i < BU_PTBL_LEN(sol); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sol, i);
+	    _find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
+	}
     }
     if (active.size()) {
 	std::set<struct bv_scene_obj *>::iterator a_it;

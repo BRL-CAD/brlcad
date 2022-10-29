@@ -318,6 +318,8 @@ bv_hash(struct bview *v)
     tbls[2] = bv_view_objs(v, BV_VIEW_OBJS);
     tbls[3] = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
     for (int t = 0; t < 4; t++) {
+	if (!tbls[t])
+	    continue;
 	for (size_t i = 0; i < BU_PTBL_LEN(tbls[t]); i++) {
 	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(tbls[t], i);
 	    if (BU_PTBL_IS_INITIALIZED(&g->children)) {

@@ -200,6 +200,8 @@ QPolyCreate::finalize(bool)
 
     int pcnt = 0;
     struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
+    if (!view_objs)
+	return;
     if (do_bool) {
 	pcnt = bv_polygon_csg(view_objs, p, op, 1);
     }
@@ -306,6 +308,8 @@ QPolyCreate::do_vpoly_copy()
     }
     bool colliding = false;
     struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
+    if (!view_objs)
+	return;
     for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
@@ -378,6 +382,8 @@ QPolyCreate::do_import_sketch()
     }
     bool colliding = false;
     struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
+    if (!view_objs)
+	return;
     for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
@@ -515,6 +521,8 @@ QPolyCreate::view_sync()
     }
     bool colliding = false;
     struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
+    if (!view_objs)
+	return;
     for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
@@ -550,6 +558,8 @@ QPolyCreate::toplevel_config(bool)
     // by a selection button.  Clear any selected points being displayed.
     if (gedp) {
 	struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
+	if (!view_objs)
+	    return;
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 	    if (s->s_type_flags & BV_POLYGONS) {

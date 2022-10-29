@@ -79,15 +79,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     }
     gd->vobj = argv[0];
 
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
-	if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&s->s_uuid))) {
-	    gd->s = s;
-	    break;
-	}
-    }
-
-    struct bv_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = bv_find_obj(gedp->ged_gvp, argv[1]);
     if (s) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s already exists\n", argv[1]);
 	return BRLCAD_ERROR;
@@ -164,9 +156,6 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
 
     // Create a wireframe from the current state of the specified object
     draw_gather_paths(fp, &mat, (void *)&dd);
-
-    // Add to the scene
-    bu_ptbl_ins(v->gv_objs.view_objs, (long *)g);
 
     // TODO - set the object callbacks
 
@@ -250,15 +239,17 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
     struct bview *v = gd->cv;
     if (!ac && cmd_pos < 0 && !help) {
 	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    // TODO - strip gobjs:: prefix
-	    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
+	if (view_objs) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+		// TODO - strip gobjs:: prefix
+		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
+	    }
 	}
-
-	if (view_objs != v->gv_objs.view_objs) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
+	struct bu_ptbl *local_view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
+	if (local_view_objs) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
 		// TODO - strip gobjs:: prefix
 		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
 	    }
@@ -267,7 +258,6 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
     }
 
     gd->s = NULL;
-    // TODO - if independent use gv_objs.view_objs, else use gv_objs.view_shared_objs
     // TODO - append gobjs:: prefix
  
     if (!gd->s) {

@@ -280,7 +280,11 @@ bv_autoview(struct bview *v, double factor, int all_view_objs)
     VSETALL(max, -INFINITY);
 
     struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
-    _bound_objs(&is_empty, &have_geom_objs, min, max, so, v);
+    if (so)
+	_bound_objs(&is_empty, &have_geom_objs, min, max, so, v);
+    struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
+    if (sol)
+	_bound_objs(&is_empty, &have_geom_objs, min, max, sol, v);
 
     // When it comes to view-only objects, normally we will only include those
     // that are db object based, polygons or labels, unless the flag to
@@ -290,8 +294,15 @@ bv_autoview(struct bview *v, double factor, int all_view_objs)
     // then basing autoview on the view-only objs is more intuitive than just
     // using the default view settings.
     so = bv_view_objs(v, BV_VIEW_OBJS);
-    _find_view_geom(&have_geom_objs, so);
-    _bound_objs_view(&is_empty,min, max, so, v, have_geom_objs, all_view_objs);
+    if (so) {
+	_find_view_geom(&have_geom_objs, so);
+	_bound_objs_view(&is_empty,min, max, so, v, have_geom_objs, all_view_objs);
+    }
+    sol = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
+    if (sol) {
+	_find_view_geom(&have_geom_objs, sol);
+	_bound_objs_view(&is_empty,min, max, sol, v, have_geom_objs, all_view_objs);
+    }
 
     if (is_empty) {
 	/* Nothing is in view */
@@ -1405,18 +1416,20 @@ struct bu_ptbl *
 bv_view_objs(struct bview *v, int type)
 {
     if (type & BV_DB_OBJS) {
-	if (v->independent || type & BV_LOCAL_OBJS || !v->vset) {
+	if (type & BV_LOCAL_OBJS) {
 	    return v->gv_objs.db_objs;
 	} else {
-	    return &v->vset->i->shared_db_objs;
+	    if (v->vset)
+		return &v->vset->i->shared_db_objs;
 	}
     }
 
     if (type & BV_VIEW_OBJS) {
-	if (v->independent || type & BV_LOCAL_OBJS || !v->vset) {
+	if (type & BV_LOCAL_OBJS) {
 	    return v->gv_objs.view_objs;
 	} else {
-	    return &v->vset->i->shared_view_objs;
+	    if (v->vset)
+		return &v->vset->i->shared_view_objs;
 	}
     }
 
