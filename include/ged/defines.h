@@ -339,6 +339,7 @@ class GED_EXPORT BViewState {
 		std::unordered_set<struct bv_scene_obj *> &objs,
 		unsigned long long chash,
 		int curr_mode,
+		struct bview *v,
 		struct bv_obj_settings *vs,
 		matp_t m,
 		std::vector<unsigned long long> &path_hashes,
@@ -350,6 +351,7 @@ class GED_EXPORT BViewState {
 		std::unordered_set<struct bv_scene_obj *> &objs,
 		unsigned long long c_hash,
 		int curr_mode,
+		struct bview *v,
 		struct bv_obj_settings *vs,
 		matp_t m,
 		matp_t lm,
@@ -364,7 +366,8 @@ class GED_EXPORT BViewState {
 		struct bv_obj_settings *vs,
 		matp_t m,
 		std::vector<unsigned long long> &path_hashes,
-		std::unordered_set<struct bview *> &views
+		std::unordered_set<struct bview *> &views,
+		struct bview *v
 		);
 
 	int leaf_check(unsigned long long chash, std::vector<unsigned long long> &path_hashes);

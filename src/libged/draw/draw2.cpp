@@ -112,7 +112,6 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
     }
-    bu_vls_free(&cvls);
 
     // If we don't have a specified view, and the default view isn't a shared view, see if
     // we can find a shared view in the view set.
@@ -127,6 +126,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    bu_vls_free(&cvls);
 
     // We need a current view, either from gedp or from the options
     if (!cv) {

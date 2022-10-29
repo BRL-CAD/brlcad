@@ -2126,7 +2126,8 @@ BViewState::scene_obj(
 	struct bv_obj_settings *vs,
 	matp_t m,
        	std::vector<unsigned long long> &path_hashes,
-	std::unordered_set<struct bview *> &views
+	std::unordered_set<struct bview *> &views,
+	struct bview *v
 	)
 {
     // Solid - scene object time
@@ -2187,8 +2188,7 @@ BViewState::scene_obj(
     }
 
     // No pre-existing object - make a new one
-    struct bview *av = (views.size() > 1 && dbis->gedp->ged_gvp) ? dbis->gedp->ged_gvp : (*(views.begin()));
-    sp = bv_obj_get(av, BV_DB_OBJS);
+    sp = bv_obj_get(v, BV_DB_OBJS);
 
     // Find the leaf directory pointer
     struct directory *dp = RT_DIR_NULL;
@@ -2282,6 +2282,7 @@ BViewState::walk_tree(
 	std::unordered_set<struct bv_scene_obj *> &objs,
 	unsigned long long chash,
 	int curr_mode,
+	struct bview *v,
 	struct bv_obj_settings *vs,
 	matp_t m,
        	std::vector<unsigned long long> &path_hashes,
@@ -2308,7 +2309,7 @@ BViewState::walk_tree(
     unsigned long long phash = path_hashes[path_hashes.size() - 1];
     dbis->get_matrix(lm, phash, chash);
 
-    gather_paths(objs, chash, curr_mode, vs, m, lm, path_hashes, views, ret);
+    gather_paths(objs, chash, curr_mode, v, vs, m, lm, path_hashes, views, ret);
 }
 
 // Note - by the time we are using gather_paths, any existing objects
@@ -2319,6 +2320,7 @@ BViewState::gather_paths(
 	std::unordered_set<struct bv_scene_obj *> &objs,
 	unsigned long long c_hash,
 	int curr_mode,
+	struct bview *v,
 	struct bv_obj_settings *vs,
 	matp_t m,
        	matp_t lm,
@@ -2352,15 +2354,15 @@ BViewState::gather_paths(
 	    /* Keep going */
 	    std::unordered_set<unsigned long long>::iterator c_it;
 	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++) {
-		walk_tree(objs, *c_it, curr_mode, vs, m, path_hashes, views, ret);
+		walk_tree(objs, *c_it, curr_mode, v, vs, m, path_hashes, views, ret);
 	    }
 	} else {
 	    // Comb without children - (empty) scene object time
-	    scene_obj(objs, curr_mode, vs, m, path_hashes, views);
+	    scene_obj(objs, curr_mode, vs, m, path_hashes, views, v);
 	}
     } else {
 	// Solid - scene object time
-	struct bv_scene_obj *nobj = scene_obj(objs, curr_mode, vs, m, path_hashes, views);
+	struct bv_scene_obj *nobj = scene_obj(objs, curr_mode, vs, m, path_hashes, views, v);
 	if (nobj && ret)
 	    (*ret) |= GED_DBISTATE_VIEW_CHANGE;
     }
@@ -2604,7 +2606,19 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     // For most operations on objects, we need only the current view (for
     // independent views) or a single instance of any representative view (for
     // shared state views).
-    struct bview *v = (views.size() > 1 && dbis->gedp->ged_gvp) ? dbis->gedp->ged_gvp : (*(views.begin()));
+    struct bview *v = NULL;
+    if (views.size() == 1)
+	v = (*(views.begin()));
+    if (!v && views.size() > 1) {
+	// If we have multiple views, we want a non-independent view
+	for (v_it = views.begin(); v_it != views.end(); v_it++) {
+	    struct bview *nv = *v_it;
+	    if (nv->independent)
+		continue;
+	    v = nv;
+	    break;
+	}
+    }
 
     // The principle for redrawing will be that anything that was previously
     // fully drawn should stay fully drawn, even if its tree structure has
@@ -2722,20 +2736,19 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    dbis->get_path_matrix(m, cpath);
 	    if (ms_it->first == 3 || ms_it->first == 5) {
 		dbis->get_path_matrix(m, cpath);
-		scene_obj(objs, ms_it->first, vs, m, cpath, views);
+		scene_obj(objs, ms_it->first, vs, m, cpath, views, v);
 		continue;
 	    }
 	    unsigned long long ihash = cpath[cpath.size() - 1];
 	    cpath.pop_back();
-	    gather_paths(objs, ihash, ms_it->first, vs, m, NULL, cpath, views, &ret);
+	    gather_paths(objs, ihash, ms_it->first, v, vs, m, NULL, cpath, views, &ret);
 	}
-	struct bview *av = (views.size() > 1 && dbis->gedp->ged_gvp) ? dbis->gedp->ged_gvp : (*(views.begin()));
 	for (sz_it = draw_invalid_collapsed.begin(); sz_it != draw_invalid_collapsed.end(); sz_it++) {
 	    std::vector<unsigned long long> cpath = ms_it->second[*sz_it];
-	    struct bv_scene_obj *s = bv_obj_get(av, BV_DB_OBJS);
+	    struct bv_scene_obj *s = bv_obj_get(v, BV_DB_OBJS);
 	    // print path name, set view - otherwise empty
 	    dbis->print_path(&s->s_name, cpath);
-	    s->s_v = av;
+	    s->s_v = v;
 	    s_map[ms_it->first][*iv_it] = s;
 
 	    // NOTE: Because there is no geometry to update, these scene objs
@@ -2756,12 +2769,12 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    dbis->get_path_matrix(m, cpath);
 	    if ((vs->s_dmode == 3 || vs->s_dmode == 5)) {
 		dbis->get_path_matrix(m, cpath);
-		scene_obj(objs, vs->s_dmode, vs, m, cpath, views);
+		scene_obj(objs, vs->s_dmode, vs, m, cpath, views, v);
 		continue;
 	    }
 	    unsigned long long ihash = cpath[cpath.size() - 1];
 	    cpath.pop_back();
-	    gather_paths(objs, ihash, vs->s_dmode, vs, m, NULL, cpath, views, &ret);
+	    gather_paths(objs, ihash, vs->s_dmode, v, vs, m, NULL, cpath, views, &ret);
 	}
     }
     // Staged paths are now added (as long as settings were supplied) - clear the queue

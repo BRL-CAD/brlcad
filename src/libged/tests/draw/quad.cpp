@@ -781,7 +781,6 @@ main(int ac, char *av[]) {
 	v->independent = 0;
     }
     scene_clear(dbp, 0, -1);
-    //bu_setenv("BV_LOG", "1", 1);
 
     /***************************************************/
     /* Check shared view behavior - non-local line drawing */
@@ -990,6 +989,10 @@ main(int ac, char *av[]) {
     img_cmp(3, 6, dbp, av[1], false, soft_fail);
 
     bu_log("Clearing everything...\n");
+    scene_clear(dbp, 0, 0);
+    scene_clear(dbp, 1, 1);
+    scene_clear(dbp, 2, 2);
+    scene_clear(dbp, 3, 3);
     scene_clear(dbp, 0, -1);
     for (int i = 0; i < 4; i++)
 	dm_refresh(dbp, i);
@@ -998,24 +1001,37 @@ main(int ac, char *av[]) {
     img_cmp(2, -1, dbp, av[1], false, soft_fail);
     img_cmp(3, -1, dbp, av[1], false, soft_fail);
 
-#if 0
     // Next, test a mix of shared and independent views
     bu_log("Testing mixed shared and independent views\n");
     ((struct bview *)BU_PTBL_GET(views, 0))->independent = 1;
     ((struct bview *)BU_PTBL_GET(views, 1))->independent = 0;
     ((struct bview *)BU_PTBL_GET(views, 2))->independent = 1;
     ((struct bview *)BU_PTBL_GET(views, 3))->independent = 0;
+    //bu_setenv("BV_LOG", "1", 1);
     s_av[0] = "draw";
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
- 
+
     img_cmp(0, -1, dbp, av[1], false, soft_fail);
     img_cmp(1, 1, dbp, av[1], false, soft_fail);
     img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, 1, dbp, av[1], true, soft_fail);
-#endif
+    img_cmp(3, 1, dbp, av[1], false, soft_fail);
+
+    s_av[0] = "draw";
+    s_av[1] = "-V";
+    s_av[2] = "V0";
+    s_av[3] = "-m0";
+    s_av[4] = "all.g";
+    s_av[5] = NULL;
+    ged_exec(dbp, 5, s_av);
+
+    img_cmp(0, 1, dbp, av[1], false, soft_fail);
+    img_cmp(1, 1, dbp, av[1], false, soft_fail);
+    img_cmp(2, -1, dbp, av[1], false, soft_fail);
+    img_cmp(3, 1, dbp, av[1], false, soft_fail);
+
 
     ged_close(dbp);
 
