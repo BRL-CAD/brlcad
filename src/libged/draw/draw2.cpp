@@ -130,7 +130,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
     // We need a current view, either from gedp or from the options
     if (!cv) {
-	bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
+	bu_vls_printf(gedp->ged_result_str, "No view specified and no shared views found");
 	return BRLCAD_ERROR;
     }
 
