@@ -1007,7 +1007,10 @@ main(int ac, char *av[]) {
     ((struct bview *)BU_PTBL_GET(views, 1))->independent = 0;
     ((struct bview *)BU_PTBL_GET(views, 2))->independent = 1;
     ((struct bview *)BU_PTBL_GET(views, 3))->independent = 0;
-    //bu_setenv("BV_LOG", "1", 1);
+
+    // First, draw without specifying any particular view.
+    // This should result in the non-independent views being
+    // populated.
     s_av[0] = "draw";
     s_av[1] = "-m0";
     s_av[2] = "all.g";
@@ -1019,6 +1022,7 @@ main(int ac, char *av[]) {
     img_cmp(2, -1, dbp, av[1], false, soft_fail);
     img_cmp(3, 1, dbp, av[1], false, soft_fail);
 
+    // Populate an independent view
     s_av[0] = "draw";
     s_av[1] = "-V";
     s_av[2] = "V0";
@@ -1032,6 +1036,36 @@ main(int ac, char *av[]) {
     img_cmp(2, -1, dbp, av[1], false, soft_fail);
     img_cmp(3, 1, dbp, av[1], false, soft_fail);
 
+    // Clear shared views
+    s_av[0] = "Z";
+    s_av[1] = NULL;
+    ged_exec(dbp, 1, s_av);
+
+    img_cmp(0, 1, dbp, av[1], false, soft_fail);
+    img_cmp(1, -1, dbp, av[1], false, soft_fail);
+    img_cmp(2, -1, dbp, av[1], false, soft_fail);
+    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+
+    // Draw specifying a view, but this time specifying a shared view.
+    // Should be a no-op - we can mix shared and independent view
+    // objects, but db objects are either independent or shared.
+    // TODO - should we support mixing them?  Would complicate the
+    // who, B and Z command usage somewhat - right now, for geometry
+    // objects, those are consistent across shared views.
+    s_av[0] = "draw";
+    s_av[1] = "-V";
+    s_av[2] = "V1";
+    s_av[3] = "-m0";
+    s_av[4] = "all.g";
+    s_av[5] = NULL;
+    ged_exec(dbp, 5, s_av);
+
+    img_cmp(0, 1, dbp, av[1], false, soft_fail);
+    img_cmp(1, -1, dbp, av[1], false, soft_fail);
+    img_cmp(2, -1, dbp, av[1], false, soft_fail);
+    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+
+    //bu_setenv("BV_LOG", "1", 1);
 
     ged_close(dbp);
 
