@@ -473,6 +473,8 @@ QgModel::g_update(struct db_i *n_dbip)
 	    if (gedp->dbi_state->p_v.find(itm->ihash) == gedp->dbi_state->p_v.end() &&
 		    gedp->dbi_state->d_map.find(itm->ihash) == gedp->dbi_state->d_map.end())
 		to_clear.push(itm);
+	    if (!itm->dp && gedp->dbi_state->get_hdp(itm->ihash))
+		to_clear.push(itm);
 	}
 	while (!to_clear.empty()) {
 	    QgItem *i_itm = to_clear.front();
