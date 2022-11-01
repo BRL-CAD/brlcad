@@ -673,11 +673,19 @@ test frame-3.10 {TkCreateFrame procedure, -use option} -constraints {
 } -body {
     toplevel .t -container 1 -width 300 -height 120
     wm geometry .t +0+0
+    if {[tk windowingsystem] eq "aqua"} {
+	update idletasks
+    } else {
+	update
+    }
     option add *x.use [winfo id .t]
-    update
     toplevel .x -width 140 -height 300 -bg green
-    tkwait visibility .x
-    update
+    if {[tk windowingsystem] eq "aqua"} {
+	update idletasks
+    } else {
+	tkwait visibility .x
+	update
+    }
     list [expr {[winfo rootx .x] - [winfo rootx .t]}] \
 	    [expr {[winfo rooty .x] - [winfo rooty .t]}] \
 	    [winfo width .t] [winfo height .t]
@@ -1154,17 +1162,26 @@ test frame-12.2 {FrameWorldChanged procedure} -setup {
 } -result {1 1 1 1 1 1 1 1 1 1 1 1}
 test frame-12.3 {FrameWorldChanged procedure} -setup {
 	deleteWindows
+	update idletasks
 } -body {
     # Check reaction on font change
     font create myfont -family courier -size 10
     labelframe .f -font myfont -text Mupp
     place .f -x 0 -y 0 -width 40 -height 40
     pack [frame .f.f] -fill both -expand 1
-    update
+    if {[tk windowingsystem] eq "aqua"} {
+	update idletasks
+    } else {
+	update
+    }
     set h1 [font metrics myfont -linespace]
     set y1 [winfo y .f.f]
     font configure myfont -size 20
-    update
+    if {[tk windowingsystem] eq "aqua"} {
+	update idletasks
+    } else {
+	update
+    }
     set h2 [font metrics myfont -linespace]
     set y2 [winfo y .f.f]
     expr {($h2 - $h1) - ($y2 - $y1)}

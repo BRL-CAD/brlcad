@@ -59,7 +59,7 @@ pnthickness_free(struct pnt_normal_thickness *p, int free_pnt) {
     BU_PUT(p, struct pnt_normal_thickness);
 }
 
-HIDDEN void
+static void
 _tgc_hack_fix(struct partition *part, struct soltab *stp) {
     /* hack fix for bad tgc surfaces - avoids a logging crash, which is probably something else altogether... */
     if (bu_strncmp("rec", stp->st_meth->ft_label, 3) == 0 || bu_strncmp("tgc", stp->st_meth->ft_label, 3) == 0) {
@@ -74,7 +74,7 @@ _tgc_hack_fix(struct partition *part, struct soltab *stp) {
     }
 }
 
-HIDDEN int
+static int
 outer_pnts_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     double thickness = 0.0;
@@ -112,7 +112,7 @@ outer_pnts_hit(struct application *ap, struct partition *PartHeadp, struct seg *
     return 0;
 }
 
-HIDDEN int
+static int
 all_pnts_hit(struct application *app, struct partition *partH, struct seg *UNUSED(segs))
 {
     double thickness = 0.0;
@@ -152,7 +152,7 @@ all_pnts_hit(struct application *app, struct partition *partH, struct seg *UNUSE
     return 0;
 }
 
-HIDDEN int
+static int
 op_overlap(struct application *ap, struct partition *UNUSED(pp),
 		struct region *UNUSED(reg1), struct region *UNUSED(reg2),
 		struct partition *UNUSED(hp))
@@ -162,7 +162,7 @@ op_overlap(struct application *ap, struct partition *UNUSED(pp),
 }
 
 
-HIDDEN int
+static int
 op_miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);
@@ -339,7 +339,8 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 	/* We now know enough to get the max ray count.  Try up to 10x the number of max
 	 * points of rays, or up to 2 million. */
 	size_t mrc = ((max_pnts * 10) > 2000000 || !max_pnts) ? 2000000 : max_pnts * 10;
-	size_t craynum = mrc/((long)ncpus+1);
+	size_t ccnt = (ncpus >= LONG_MAX-1) ? ncpus : ncpus+1;
+	size_t craynum = mrc/ccnt;
 	fastf_t mt = (max_time > 0) ? (fastf_t)max_time : (fastf_t)INT_MAX;
 
 	point_t center;

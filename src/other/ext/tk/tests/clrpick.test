@@ -10,6 +10,8 @@ eval tcltest::configure $argv
 tcltest::loadTestedCommands
 namespace import -force tcltest::test
 
+testConstraint failsOnXQuarz [expr {$tcl_platform(os) ne "Darwin" || [tk windowingsystem] ne "x11" }]
+
 if {[testConstraint defaultPseudocolor8]} {
     # let's soak up a bunch of colors...so that
     # machines with small color palettes still fail.
@@ -172,7 +174,7 @@ test clrpick-2.2 {tk_chooseColor command} -constraints {
     tk_chooseColor -parent . -title "choose #808040"
 } -result {#808040}
 test clrpick-2.3 {tk_chooseColor command} -constraints {
-    nonUnixUserInteraction colorsLeftover
+    nonUnixUserInteraction colorsLeftover failsOnXQuarz
 } -body {
     ToPressButton . ok
     tk_chooseColor -parent . -title "Press OK"

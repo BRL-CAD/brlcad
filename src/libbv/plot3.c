@@ -828,8 +828,8 @@ read_tstring(FILE *fp, int mode)
 	return 0;
     }
     if (mode == PL_OUTPUT_MODE_TEXT) {
-	char carg[256];
-	ret = fscanf(fp, "%256s\n", &carg[0]);
+	char carg[256] = {0};
+	ret = fscanf(fp, "%255s\n", &carg[0]);
 	if (ret != 1)
 	    return 1;
 	return 0;

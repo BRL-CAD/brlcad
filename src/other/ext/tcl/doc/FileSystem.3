@@ -1350,11 +1350,11 @@ is considered to be owned by the filesystem (not by Tcl's core), but
 should be given a reference count for Tcl. Tcl will use the contents of the
 list and then decrement that reference count. This allows filesystems to
 choose whether they actually want to retain a
-.QW "master list"
+.QW "global list"
 of volumes
 or not (if not, they generate the list on the fly and pass it to Tcl
 with a reference count of 1 and then forget about the list, if yes, then
-they simply increment the reference count of their master list and pass it
+they simply increment the reference count of their global list and pass it
 to Tcl which will copy the contents and then decrement the count back
 to where it was).
 .PP

@@ -14,13 +14,10 @@
 
 #define _CRT_SECURE_NO_DEPRECATE
 #include <windows.h>
-#define NO_SHLWAPI_GDI
-#define NO_SHLWAPI_STREAM
-#define NO_SHLWAPI_REG
-#include <shlwapi.h>
+#ifdef _MSC_VER
 #pragma comment (lib, "user32.lib")
 #pragma comment (lib, "kernel32.lib")
-#pragma comment (lib, "shlwapi.lib")
+#endif
 #include <stdio.h>
 #include <math.h>
 
@@ -42,7 +39,7 @@
 /* protos */
 
 static int CheckForCompilerFeature(const char *option);
-static int CheckForLinkerFeature(const char **options, int count);
+static int CheckForLinkerFeature(char **options, int count);
 static int IsIn(const char *string, const char *substring);
 static int SubstituteFile(const char *substs, const char *filename);
 static int QualifyPath(const char *path);
@@ -59,8 +56,8 @@ typedef struct {
     char buffer[STATICBUFFERSIZE];
 } pipeinfo;
 
-pipeinfo Out = {INVALID_HANDLE_VALUE, '\0'};
-pipeinfo Err = {INVALID_HANDLE_VALUE, '\0'};
+pipeinfo Out = {INVALID_HANDLE_VALUE, ""};
+pipeinfo Err = {INVALID_HANDLE_VALUE, ""};
 
 /*
  * exitcodes: 0 == no, 1 == yes, 2 == error
@@ -74,7 +71,7 @@ main(
     char msg[300];
     DWORD dwWritten;
     int chars;
-    char *s;
+    const char *s;
 
     /*
      * Make sure children (cl.exe and link.exe) are kept quiet.
@@ -278,7 +275,7 @@ CheckForCompilerFeature(
 		"Tried to launch: \"%s\", but got error [%u]: ", cmdline, err);
 
 	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS|
-		FORMAT_MESSAGE_MAX_WIDTH_MASK, 0L, err, 0, (LPVOID)&msg[chars],
+		FORMAT_MESSAGE_MAX_WIDTH_MASK, 0L, err, 0, (LPSTR)&msg[chars],
 		(300-chars), 0);
 	WriteFile(GetStdHandle(STD_ERROR_HANDLE), msg, lstrlen(msg), &err,NULL);
 	return 2;
@@ -331,7 +328,7 @@ CheckForCompilerFeature(
 
 static int
 CheckForLinkerFeature(
-    const char **options,
+    char **options,
     int count)
 {
     STARTUPINFO si;
@@ -412,7 +409,7 @@ CheckForLinkerFeature(
 		"Tried to launch: \"%s\", but got error [%u]: ", cmdline, err);
 
 	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS|
-		FORMAT_MESSAGE_MAX_WIDTH_MASK, 0L, err, 0, (LPVOID)&msg[chars],
+		FORMAT_MESSAGE_MAX_WIDTH_MASK, 0L, err, 0, (LPSTR)&msg[chars],
 		(300-chars), 0);
 	WriteFile(GetStdHandle(STD_ERROR_HANDLE), msg, lstrlen(msg), &err,NULL);
 	return 2;
@@ -508,7 +505,6 @@ GetVersionFromFile(
     const char *match,
     int numdots)
 {
-    size_t cbBuffer = 100;
     static char szBuffer[100];
     char *szResult = NULL;
     FILE *fp = fopen(filename, "rt");
@@ -518,7 +514,7 @@ GetVersionFromFile(
 	 * Read data until we see our match string.
 	 */
 
-	while (fgets(szBuffer, cbBuffer, fp) != NULL) {
+	while (fgets(szBuffer, sizeof(szBuffer), fp) != NULL) {
 	    LPSTR p, q;
 
 	    p = strstr(szBuffer, match);
@@ -528,7 +524,7 @@ GetVersionFromFile(
 		 */
 
 		p += strlen(match);
-		while (*p && !isdigit(*p)) {
+		while (*p && !isdigit((unsigned char)*p)) {
 		    ++p;
 		}
 
@@ -537,14 +533,13 @@ GetVersionFromFile(
 		 */
 
 		q = p;
-		while (*q && (strchr("0123456789.ab", *q)) && ((!strchr(".ab", *q)
-			    && (!strchr("ab", q[-1])) || --numdots))) {
+		while (*q && (strchr("0123456789.ab", *q)) && (((!strchr(".ab", *q)
+			    && !strchr("ab", q[-1])) || --numdots))) {
 		    ++q;
 		}
 
-		memcpy(szBuffer, p, q - p);
-		szBuffer[q-p] = 0;
-		szResult = szBuffer;
+		*q = 0;
+		szResult = p;
 		break;
 	    }
 	}
@@ -567,7 +562,7 @@ typedef struct list_item_t {
 static list_item_t *
 list_insert(list_item_t **listPtrPtr, const char *key, const char *value)
 {
-    list_item_t *itemPtr = malloc(sizeof(list_item_t));
+    list_item_t *itemPtr = (list_item_t *)malloc(sizeof(list_item_t));
     if (itemPtr) {
 	itemPtr->key = strdup(key);
 	itemPtr->value = strdup(value);
@@ -616,9 +611,7 @@ SubstituteFile(
     const char *substitutions,
     const char *filename)
 {
-    size_t cbBuffer = 1024;
     static char szBuffer[1024], szCopy[1024];
-    char *szResult = NULL;
     list_item_t *substPtr = NULL;
     FILE *fp, *sp;
 
@@ -631,7 +624,7 @@ SubstituteFile(
 
 	sp = fopen(substitutions, "rt");
 	if (sp != NULL) {
-	    while (fgets(szBuffer, cbBuffer, sp) != NULL) {
+	    while (fgets(szBuffer, sizeof(szBuffer), sp) != NULL) {
 		unsigned char *ks, *ke, *vs, *ve;
 		ks = (unsigned char*)szBuffer;
 		while (ks && *ks && isspace(*ks)) ++ks;
@@ -648,7 +641,7 @@ SubstituteFile(
 	}
 
 	/* debug: dump the list */
-#ifdef _DEBUG
+#ifndef NDEBUG
 	{
 	    int n = 0;
 	    list_item_t *p = NULL;
@@ -662,7 +655,7 @@ SubstituteFile(
 	 * Run the substitutions over each line of the input
 	 */
 
-	while (fgets(szBuffer, cbBuffer, fp) != NULL) {
+	while (fgets(szBuffer, sizeof(szBuffer), fp) != NULL) {
 	    list_item_t *p = NULL;
 	    for (p = substPtr; p != NULL; p = p->nextPtr) {
 		char *m = strstr(szBuffer, p->key);
@@ -679,7 +672,7 @@ SubstituteFile(
 		    memcpy(szBuffer, szCopy, sizeof(szCopy));
 		}
 	    }
-	    printf(szBuffer);
+	    printf("%s", szBuffer);
 	}
 
 	list_free(&substPtr);
@@ -688,6 +681,17 @@ SubstituteFile(
     return 0;
 }
 
+BOOL FileExists(LPCTSTR szPath)
+{
+#ifndef INVALID_FILE_ATTRIBUTES
+    #define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
+#endif
+    DWORD pathAttr = GetFileAttributes(szPath);
+    return (pathAttr != INVALID_FILE_ATTRIBUTES &&
+	    !(pathAttr & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+
 /*
  * QualifyPath --
  *
@@ -701,13 +705,8 @@ QualifyPath(
     const char *szPath)
 {
     char szCwd[MAX_PATH + 1];
-    char szTmp[MAX_PATH + 1];
-    char *p;
-    GetCurrentDirectory(MAX_PATH, szCwd);
-    while ((p = strchr(szPath, '/')) && *p)
-	*p = '\\';
-    PathCombine(szTmp, szCwd, szPath);
-    PathCanonicalize(szCwd, szTmp);
+
+    GetFullPathName(szPath, sizeof(szCwd)-1, szCwd, NULL);
     printf("%s\n", szCwd);
     return 0;
 }
@@ -724,7 +723,8 @@ static int LocateDependencyHelper(const char *dir, const char *keypath)
 {
     HANDLE hSearch;
     char path[MAX_PATH+1];
-    int dirlen, keylen, ret;
+    size_t dirlen;
+    int keylen, ret;
     WIN32_FIND_DATA finfo;
 
     if (dir == NULL || keypath == NULL)
@@ -765,7 +765,7 @@ static int LocateDependencyHelper(const char *dir, const char *keypath)
 	strncpy(path+dirlen+1, finfo.cFileName, sublen);
 	path[dirlen+1+sublen] = '\\';
 	strncpy(path+dirlen+1+sublen+1, keypath, keylen+1);
-	if (PathFileExists(path)) {
+	if (FileExists(path)) {
 	    /* Found a match, print to stdout */
 	    path[dirlen+1+sublen] = '\0';
 	    QualifyPath(path);
@@ -791,8 +791,9 @@ static int LocateDependencyHelper(const char *dir, const char *keypath)
  */
 static int LocateDependency(const char *keypath)
 {
-    int i, ret;
-    static char *paths[] = {"..", "..\\..", "..\\..\\.."};
+    size_t i;
+    int ret;
+    static const char *paths[] = {"..", "..\\..", "..\\..\\.."};
 
     for (i = 0; i < (sizeof(paths)/sizeof(paths[0])); ++i) {
 	ret = LocateDependencyHelper(paths[i], keypath);

@@ -269,7 +269,6 @@ pushStack(fillStack * const stackP,
     assert(stackP->topOfStack < stackP->stackSize);
 
     stackP->stack[stackP->topOfStack++] = newPoint;
-pm_message("pushed (%u, %u) at %u", newPoint.x, newPoint.y, stackP->topOfStack-1);
 }
 
 
@@ -282,7 +281,6 @@ popStack(fillStack * const stackP) {
     assert(stackP->topOfStack < stackP->stackSize);
 
     retval = stackP->stack[--stackP->topOfStack];
-pm_message("popped (%u, %u) at %u", retval.x, retval.y, stackP->topOfStack);
     return retval;
 }
 
@@ -321,7 +319,6 @@ drawFillLine(ppmd_point const begPoint,
 
     assert(begPoint.y == endPoint.y);
 
-pm_message("filling from (%u, %u) to (%u, %u)", begPoint.x, begPoint.y, endPoint.x, endPoint.y);
     row = begPoint.y;
 
     if (begPoint.x <= endPoint.x) {
@@ -350,7 +347,6 @@ fillPoint(fillStack * const stackP,
    Fill the image in 'pixels' with color 'color' and update *stackP as
    required.
 -----------------------------------------------------------------------------*/
-pm_message("filling point (%u, %u)", point.x, point.y);
     if (inStackDirection(stackP, point)) {
         pushStack(stackP, point);
         pixels[point.y][point.x] = color;

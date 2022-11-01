@@ -60,10 +60,16 @@
 # listening at port 2048. If all fails, a message is printed and the tests
 # using the remote server are not performed.
 
-package require tcltest 2
-namespace import -force ::tcltest::*
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
+    namespace import -force ::tcltest::*
+}
 
-if {[expr {[info exists ::env(TRAVIS_OSX_IMAGE)] && [string match xcode* $::env(TRAVIS_OSX_IMAGE)]}]} {
+::tcltest::loadTestedCommands
+
+# A bad interaction between socket creation, macOS, and unattended CI
+# environments make this whole file impractical to run; too many weird hangs.
+if {[info exists ::env(MAC_CI)]} {
     return
 }
 
@@ -233,7 +239,7 @@ if {$doTestsWithRemoteServer} {
 # Some tests are run only if we are doing testing against a remote server.
 testConstraint doTestsWithRemoteServer $doTestsWithRemoteServer
 if {!$doTestsWithRemoteServer} {
-    if {[string first s $::tcltest::verbose] != -1} {
+    if {[string first s $::tcltest::verbose] >= 0} {
     	puts "Skipping tests with remote server. See tests/socket.test for"
 	puts "information on how to run remote server."
 	puts "Reason for not doing remote tests: $noRemoteTestReason"
@@ -279,6 +285,8 @@ proc getPort sock {
 # Some tests in this file are known to hang *occasionally* on OSX; stop the
 # worst offenders.
 testConstraint notOSX [expr {$::tcl_platform(os) ne "Darwin"}]
+# Here "Windows" means derived platforms as Cygwin or Msys2 too.
+testConstraint notWindows [expr {![regexp {^(Windows|MSYS|CYGWIN)} $::tcl_platform(os)]}]
 
 # ----------------------------------------------------------------------
 
@@ -903,7 +911,7 @@ test socket_$af-5.1 {byte order problems, socket numbers, htons} -body {
         return {htons problem, should be disallowed, are you running as SU?}
     }
     return {couldn't open socket: not owner}
-} -constraints [list socket supported_$af unix notRoot] -result {couldn't open socket: not owner}
+} -constraints [list socket supported_$af unix notRoot notOSX notWindows] -result {couldn't open socket: not owner}
 test socket_$af-5.2 {byte order problems, socket numbers, htons} -body {
     if {![catch {socket -server dodo 0x10000} msg]} {
 	close $msg
@@ -917,7 +925,7 @@ test socket_$af-5.3 {byte order problems, socket numbers, htons} -body {
 	return {htons problem, should be disallowed, are you running as SU?}
     }
     return {couldn't open socket: not owner}
-} -constraints [list socket supported_$af unix notRoot] -result {couldn't open socket: not owner}
+} -constraints [list socket supported_$af unix notRoot notOSX notWindows] -result {couldn't open socket: not owner}
 
 test socket_$af-6.1 {accept callback error} -constraints [list socket supported_$af stdio] -setup {
     proc myHandler {msg options} {
@@ -935,7 +943,7 @@ test socket_$af-6.1 {accept callback error} -constraints [list socket supported_
     }
     close $f
     set f [open "|[list [interpreter] $path(script)]" r+]
-    proc accept {s a p} {expr 10 / 0}
+    proc accept {s a p} {expr {10 / 0}}
     set s [socket -server accept -myaddr $localhost 0]
     puts $f [lindex [fconfigure $s -sockname] 2]
     close $f
@@ -1816,6 +1824,105 @@ test socket_$af-13.1 {Testing use of shared socket between two threads} -body {
     thread::release $serverthread
     append result " " [llength [thread::names]]
 } -result {hello 1} -constraints [list socket supported_$af thread]
+
+proc transf_test {{testmode transfer} {maxIter 1000} {maxTime 10000}} {
+  try {
+    set ::count 0
+    set ::testmode $testmode
+    set port 0
+    set srvsock {}
+    # if binding on port 0 is not possible (system related, blocked on ISPs etc):
+    if {[catch {close [socket -async $::localhost $port]}]} {
+      # simplest server on random port (immediatelly closing a connect):
+      set port [randport]
+      set srvsock [socket -server {apply {{ch args} {close $ch}}} -myaddr $::localhost $port]
+      # socket on windows has some issues yet (e. g. bug [b6d0d8cc2c]), so we simply decrease iteration count (to 1/4):
+      if {$::tcl_platform(platform) eq "windows" && $maxIter > 50} {
+      	set ::count [expr {$maxIter / 4 * 3 - 1}]; # bypass 3/4 iterations
+      }
+    }
+    tcltest::DebugPuts 2 "== test \[$::localhost\]:$port $testmode =="
+    set ::parent [thread::id]
+    # helper thread creating async connection and initiating transfer (detach) to parent:
+    set ::helper [thread::create]
+    thread::send -async $::helper [list \
+      lassign [list $::parent $::localhost $port $testmode] \
+                     ::parent ::localhost ::port ::testmode
+    ]
+    thread::send -async $::helper {
+      set ::helper [thread::id]
+      proc iteration {args} {
+        set fd [socket -async $::localhost $::port]
+        if {"helper-writable" in $::testmode} {;# to test both sides during connect
+          fileevent $fd writable [list apply {{fd} {
+            if {[thread::id] ne $::helper} {
+              thread::send -async $::parent {set ::count "ERROR: invalid thread, $::helper is expecting"}
+              close $fd
+              return
+            }
+          }} $fd]
+        };#
+        thread::detach $fd
+        thread::send -async $::parent [list transf_parent $fd {*}$args]
+      }
+      iteration first
+    }
+    # parent proc commiting transfer attempt (attach) and checking acquire was successful:
+    proc transf_parent {fd args} {
+      tcltest::DebugPuts 2 "** trma / $::count ** $args **"
+      thread::attach $fd
+      if {"parent-close" in $::testmode} {;# to test close during connect
+        set ::count $::count
+        close $fd
+        return
+      };#
+      fileevent $fd writable [list apply {{fd} {
+        if {[thread::id] ne $::parent} {
+          thread::send -async $::parent {set ::count "ERROR: invalid thread, $::parent is expecting"}
+          close $fd
+          return
+        }
+        set ::count $::count
+        close $fd
+      }} $fd]
+    }
+    # repeat maxIter times (up to maxTime ms as timeout):
+    set tout [after $maxTime {set ::count "TIMEOUT"}]
+    while 1 {
+      vwait ::count
+      if {![string is integer $::count]} {
+        # if timeout just skip (test was successful until now):
+      	if {$::count eq "TIMEOUT"} {::tcltest::Skip "timing issue"}
+        break
+      }
+      if {[incr ::count] >= $maxIter} break
+      tcltest::DebugPuts 2 "** iter / $::count **"
+      thread::send -async $::helper [list iteration nr $::count]
+    }
+    update
+    set ::count
+  } finally {
+    catch {after cancel $tout}
+    if {$srvsock ne {}} {close $srvsock}
+    if {[info exists ::helper]} {thread::release -wait $::helper}
+    tcltest::DebugPuts 2 "== stop / $::count =="
+    unset -nocomplain ::count ::testmode ::parent ::helper
+  }
+}
+test socket_$af-13.2.tr1 {Testing socket transfer between threads during async connect} -body {
+    transf_test {transfer} 1000
+} -result 1000 -constraints [list socket supported_$af thread]
+test socket_$af-13.2.tr2 {Testing socket transfer between threads during async connect} -body {
+    transf_test {transfer helper-writable} 100
+} -result 100 -constraints [list socket supported_$af thread]
+test socket_$af-13.2.cl1 {Testing socket transfer between threads during async connect} -body {
+    transf_test {parent-close} 100
+} -result 100 -constraints [list socket supported_$af thread]
+test socket_$af-13.2.cl2 {Testing socket transfer between threads during async connect} -body {
+    transf_test {parent-close helper-writable} 100
+} -result 100 -constraints [list socket supported_$af thread]
+catch {rename transf_parent {}}
+rename transf_test {}
 
 # ----------------------------------------------------------------------
 

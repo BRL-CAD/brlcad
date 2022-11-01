@@ -102,13 +102,9 @@ BG_EXPORT extern int bg_3d_coplanar_obr(point_t *center,
  * for a set of 3D points.  Returns 0 on success.
  *
  * TODO - the GeometricTools engine has an implementation
- * of the stack needed to do this - want to look not only
- * at their MinimumVolumeBox3 implementation but the supporting
- * convex hull 3d routines to see if they're an improvement
- * on the Clarkson implementation.  Also want to check their
- * obb/obb intersection test (GteIntrOrientedBox3OrientedBox3.h)
+ * of the stack needed to do this:
  *
- * http://www.geometrictools.com/GTEngine/Include/GteMinimumVolumeBox3.h
+ * https://github.com/davideberly/GeometricTools/blob/master/GTE/Mathematics/MinimumVolumeBox3.h
  *
  * The points in the output array are arranged as seen
  * in the figure below, with the integer number at each

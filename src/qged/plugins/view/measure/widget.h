@@ -52,7 +52,7 @@ class CADViewMeasure : public QWidget
 	QColorRGB *color_3d;
 
     signals:
-	void view_updated(struct bview **);
+	void view_updated(unsigned long long);
 
     public slots:
         void adjust_text();

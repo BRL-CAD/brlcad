@@ -8,8 +8,8 @@
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -19,6 +19,8 @@ catch [list package require -exact Tcltest [info patchlevel]]
 # Used for constraining memory leak tests
 testConstraint memory [llength [info commands memory]]
 testConstraint testobj [llength [info commands testobj]]
+source [file join [file dirname [info script]] internals.tcl]
+namespace import -force ::tcltest::internals::*
 
 test cmdIL-1.1 {Tcl_LsortObjCmd procedure} -returnCodes error -body {
     lsort
@@ -496,7 +498,7 @@ test cmdIL-5.5 {lsort with list style index and sharing} -body {
 	foreach e $l {lappend n [list [expr {rand()}] $e]}
 	lindex [lsort -real -index $l $n] 1 1
     }
-    expr srand(1)
+    expr {srand(1)}
     test_lsort 0
 } -result 0 -cleanup {
     rename test_lsort ""
@@ -504,6 +506,21 @@ test cmdIL-5.5 {lsort with list style index and sharing} -body {
 test cmdIL-5.6 {lsort with multiple list-style index options} {
     lsort -index {1 2 3} -index 0 {{a b} {c d} {b e}}
 } {{a b} {b e} {c d}}
+test cmdIL-5.7 {lsort memory exhaustion} -constraints {testWithLimit} -body {
+    # test it in child process (with limited address space) ca. 80MB extra memory
+    # on x64 system it would be not enough to sort 4M items (the half 2M only),
+    # warn and skip if no error (enough memory) or error by list creation:
+    testWithLimit \
+	-warn-on-code 0 -warn-on-alloc-error 1 \
+	-addmem [expr {$tcl_platform(pointerSize)*4000000 + $tcl_platform(pointerSize)*3*2000000}] \
+    {
+	# create list and get length (avoid too long output in interactive shells):
+	llength [set l [lrepeat 4000000 ""]]
+	# test OOM:
+	llength [lsort $l]
+    }
+    # expecting error no memory by sort
+} -returnCodes 1 -result {no enough memory to proccess sort of 4000000 items}
 
 # Compiled version
 test cmdIL-6.1 {lassign command syntax} -returnCodes error -body {
@@ -743,7 +760,7 @@ test cmdIL-7.6 {lreverse command - unshared object [Bug 1672585]} {
 test cmdIL-7.7 {lreverse command - empty object [Bug 1876793]} {
     lreverse [list]
 } {}
-test cmdIL-7.8 {lreverse command - shared intrep [Bug 1675044]} -setup {
+test cmdIL-7.8 {lreverse command - shared internalrep [Bug 1675044]} -setup {
     teststringobj set 1 {1 2 3}
     testobj convert 1 list
     testobj duplicate 1 2

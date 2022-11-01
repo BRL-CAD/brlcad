@@ -68,6 +68,7 @@ __BEGIN_DECLS
 
 /* Forward declaration */
 struct ged;
+struct ged_selection_set;
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 #define GED_FUNC_PTR_NULL ((ged_func_ptr)0)
@@ -90,16 +91,17 @@ struct ged_callback_state;
 #define GED_SEM_LAST GED_SEM_LIST+1
 
 #define GED_INIT(_gedp, _wdbp) { \
-	ged_init((_gedp)); \
-	(_gedp)->ged_wdbp = (_wdbp); \
-        if ((_gedp)->ged_wdbp) { \
-	    (_gedp)->dbip = (_gedp)->ged_wdbp->dbip; \
-        } \
-    }
+    ged_init((_gedp)); \
+    ged_init((_gedp)); \
+    (_gedp)->dbip = NULL; \
+    if ((struct rt_wdb *)(_wdbp) != NULL) {\
+	(_gedp)->dbip = ((struct rt_wdb *)(_wdbp))->dbip; \
+    } \
+}
 
-#define GED_INITIALIZED(_gedp) ((_gedp)->ged_wdbp != RT_WDB_NULL)
-#define GED_LOCAL2BASE(_gedp) ((_gedp)->ged_wdbp->dbip->dbi_local2base)
-#define GED_BASE2LOCAL(_gedp) ((_gedp)->ged_wdbp->dbip->dbi_base2local)
+#define GED_INITIALIZED(_gedp) ((_gedp)->dbip != NULL)
+#define GED_LOCAL2BASE(_gedp) ((_gedp)->dbip->dbi_local2base)
+#define GED_BASE2LOCAL(_gedp) ((_gedp)->dbip->dbi_base2local)
 
 /* From include/dm.h */
 #define GED_MAX 2047.0
@@ -185,7 +187,6 @@ struct ged_results;
 
 struct ged {
     struct bu_vls               go_name;
-    struct rt_wdb		*ged_wdbp;
     struct db_i                 *dbip;
 
     /*************************************************************/
@@ -225,6 +226,7 @@ struct ged {
 
     /* Selection data */
     struct ged_selection_sets	*ged_selection_sets;
+    struct ged_selection_set    *ged_cset;
 
 
     /* FIXME -- this ugly hack needs to die.  the result string should

@@ -1,6 +1,6 @@
 .\"
-.\" Copyright (c) 2008 by Kevin B. Kenny.
-.\" Copyright (c) 2018 by Nathan Coulter. 
+.\" Copyright (c) 2008 Kevin B. Kenny.
+.\" Copyright (c) 2018 Nathan Coulter.
 .\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -40,7 +40,7 @@ void
 .AS Tcl_CmdDeleteProc *interp in
 .AP Tcl_Interp *interp in
 The relevant Interpreter.
-.AP char *cmdName in
+.AP "const char" *cmdName in
 Name of the command to create.
 .AP Tcl_ObjCmdProc *proc in
 Called in order to evaluate a command.  Is often just a small wrapper that uses
@@ -232,5 +232,5 @@ Tcl_CreateCommand(3), Tcl_CreateObjCommand(3), Tcl_EvalObjEx(3), Tcl_GetCommandF
 .SH KEYWORDS
 stackless, nonrecursive, execute, command, global, value, result, script
 .SH COPYRIGHT
-Copyright (c) 2008 by Kevin B. Kenny.
-Copyright (c) 2018 by Nathan Coulter.
+Copyright \(co 2008 Kevin B. Kenny.
+Copyright \(co 2018 Nathan Coulter.

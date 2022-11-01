@@ -396,7 +396,7 @@ proc ::tk::dialog::color::DrawColorScale {w c {create 0}} {
 
 	# Draw the selection polygons
 	CreateSelector $w $sel $c
-	$sel bind $data($c,index) <ButtonPress-1> \
+	$sel bind $data($c,index) <Button-1> \
 		[list tk::dialog::color::StartMove $w $sel $c %x $data(selPad) 1]
 	$sel bind $data($c,index) <B1-Motion> \
 		[list tk::dialog::color::MoveSelector $w $sel $c %x $data(selPad)]
@@ -409,14 +409,14 @@ proc ::tk::dialog::color::DrawColorScale {w c {create 0}} {
 	set data($c,clickRegion) [$sel create rectangle 0 0 \
 		$data(canvasWidth) $height -fill {} -outline {}]
 
-	bind $col <ButtonPress-1> \
+	bind $col <Button-1> \
 		[list tk::dialog::color::StartMove $w $sel $c %x $data(colorPad)]
 	bind $col <B1-Motion> \
 		[list tk::dialog::color::MoveSelector $w $sel $c %x $data(colorPad)]
 	bind $col <ButtonRelease-1> \
 		[list tk::dialog::color::ReleaseMouse $w $sel $c %x $data(colorPad)]
 
-	$sel bind $data($c,clickRegion) <ButtonPress-1> \
+	$sel bind $data($c,clickRegion) <Button-1> \
 		[list tk::dialog::color::StartMove $w $sel $c %x $data(selPad)]
 	$sel bind $data($c,clickRegion) <B1-Motion> \
 		[list tk::dialog::color::MoveSelector $w $sel $c %x $data(selPad)]

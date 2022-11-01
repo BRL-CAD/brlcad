@@ -121,6 +121,8 @@ Tk_SetAppName(
 				 * be globally unique. */
 {
 #ifndef TK_SEND_ENABLED_ON_WINDOWS
+    (void)tkwin;
+
     /*
      * Temporarily disabled for bug #858822
      */
@@ -163,7 +165,7 @@ Tk_SetAppName(
     if (riPtr == NULL) {
 	LPUNKNOWN *objPtr;
 
-	riPtr = ckalloc(sizeof(RegisteredInterp));
+	riPtr = (RegisteredInterp *)ckalloc(sizeof(RegisteredInterp));
 	memset(riPtr, 0, sizeof(RegisteredInterp));
 	riPtr->interp = interp;
 
@@ -213,6 +215,8 @@ TkGetInterpNames(
 				 * lookup. */
 {
 #ifndef TK_SEND_ENABLED_ON_WINDOWS
+    (void)interp;
+    (void)tkwin;
     /*
      * Temporarily disabled for bug #858822
      */
@@ -254,7 +258,8 @@ TkGetInterpNames(
 			    if (*p) {
 				Tcl_DString ds;
 
-				Tcl_WinTCharToUtf((LPCTSTR)(p + 1), -1, &ds);
+				Tcl_DStringInit(&ds);
+				Tcl_WCharToUtfDString(p + 1, wcslen(p + 1), &ds);
 				result = Tcl_ListObjAppendElement(interp,
 					objList,
 					Tcl_NewStringObj(Tcl_DStringValue(&ds),
@@ -619,7 +624,8 @@ BuildMoniker(
 	LPMONIKER pmkItem = NULL;
 	Tcl_DString dString;
 
-	Tcl_WinUtfToTChar(name, -1, &dString);
+	Tcl_DStringInit(&dString);
+	Tcl_UtfToWCharDString(name, -1, &dString);
 	hr = CreateFileMoniker((LPOLESTR)Tcl_DStringValue(&dString), &pmkItem);
 	Tcl_DStringFree(&dString);
 	if (SUCCEEDED(hr)) {
@@ -733,7 +739,7 @@ Send(
 				 * object. */
     Tcl_Interp *interp,		/* The local interpreter. */
     int async,			/* Flag for the calling style. */
-    ClientData clientData,	/* The RegisteredInterp structure for this
+    ClientData dummy,	/* The RegisteredInterp structure for this
 				 * interp. */
     int objc,			/* Number of arguments to be sent. */
     Tcl_Obj *const objv[])	/* The arguments to be sent. */
@@ -747,6 +753,7 @@ Send(
     DISPID dispid;
     Tcl_DString ds;
     const char *src;
+    (void)dummy;
 
     cmd = Tcl_ConcatObj(objc, objv);
 
@@ -761,8 +768,8 @@ Send(
 
     vCmd.vt = VT_BSTR;
     src = Tcl_GetString(cmd);
-    Tcl_WinUtfToTChar(src, cmd->length, &ds);
-    vCmd.bstrVal = SysAllocString((WCHAR *) Tcl_DStringValue(&ds));
+    Tcl_DStringInit(&ds);
+    vCmd.bstrVal = SysAllocString(Tcl_UtfToWCharDString(src, cmd->length, &ds));
     Tcl_DStringFree(&ds);
 
     dp.cArgs = 1;
@@ -784,8 +791,8 @@ Send(
 
     ehr = VariantChangeType(&vResult, &vResult, 0, VT_BSTR);
     if (SUCCEEDED(ehr)) {
-	Tcl_WinTCharToUtf((LPCTSTR)vResult.bstrVal, SysStringLen(vResult.bstrVal) *
-		sizeof (WCHAR), &ds);
+	Tcl_DStringInit(&ds);
+	Tcl_WCharToUtfDString(vResult.bstrVal, SysStringLen(vResult.bstrVal), &ds);
 	Tcl_DStringResult(interp, &ds);
     }
 
@@ -797,8 +804,9 @@ Send(
 
     if (hr == DISP_E_EXCEPTION && ei.bstrSource != NULL) {
 	Tcl_Obj *opError, *opErrorCode, *opErrorInfo;
-	Tcl_WinTCharToUtf((LPCTSTR)ei.bstrSource, SysStringLen(ei.bstrSource) *
-		sizeof (WCHAR), &ds);
+
+	Tcl_DStringInit(&ds);
+	Tcl_WCharToUtfDString(ei.bstrSource, SysStringLen(ei.bstrSource), &ds);
 	opError = Tcl_NewStringObj(Tcl_DStringValue(&ds),
 		Tcl_DStringLength(&ds));
 	Tcl_DStringFree(&ds);
@@ -869,14 +877,14 @@ TkWinSend_SetExcepInfo(
     /* TODO: Handle failure to append */
 
     src = Tcl_GetString(opError);
-    Tcl_WinUtfToTChar(src, opError->length, &ds);
+    Tcl_DStringInit(&ds);
     pExcepInfo->bstrDescription =
-	    SysAllocString((WCHAR *) Tcl_DStringValue(&ds));
+	    SysAllocString(Tcl_UtfToWCharDString(src, opError->length, &ds));
     Tcl_DStringFree(&ds);
     src = Tcl_GetString(opErrorCode);
-    Tcl_WinUtfToTChar(src, opErrorCode->length, &ds);
+    Tcl_DStringInit(&ds);
     pExcepInfo->bstrSource =
-	    SysAllocString((WCHAR *) Tcl_DStringValue(&ds));
+	    SysAllocString(Tcl_UtfToWCharDString(src, opErrorCode->length, &ds));
     Tcl_DStringFree(&ds);
     Tcl_DecrRefCount(opErrorCode);
     pExcepInfo->scode = E_FAIL;
@@ -923,7 +931,7 @@ TkWinSend_QueueCommand(
 
     TRACE("SendQueueCommand()\n");
 
-    evPtr = ckalloc(sizeof(SendEvent));
+    evPtr = (SendEvent *)ckalloc(sizeof(SendEvent));
     evPtr->header.proc = SendEventProc;
     evPtr->header.nextPtr = NULL;
     evPtr->interp = interp;
@@ -965,6 +973,7 @@ SendEventProc(
     int flags)
 {
     SendEvent *evPtr = (SendEvent *)eventPtr;
+    (void)flags;
 
     TRACE("SendEventProc\n");
 

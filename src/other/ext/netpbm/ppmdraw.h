@@ -8,6 +8,8 @@
 ** a single point, and it looks like this:
 */
 
+#include "pm_config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -16,14 +18,32 @@ extern "C" {
 #endif
 
 
+typedef struct {
+    int x;
+    int y;
+} ppmd_point;
+
+static __inline__ ppmd_point
+ppmd_makePoint(int const x,
+               int const y) {
+
+    ppmd_point p;
+
+    p.x = x;
+    p.y = y;
+
+    return p;
+}
+
+void
+ppmd_validateCoord(int const c);
+
+void
+ppmd_validatePoint(ppmd_point const p);
+
 typedef enum {
     PPMD_PATHLEG_LINE
 } ppmd_pathlegtype;
-
-typedef struct {
-    unsigned int x;
-    unsigned int y;
-} ppmd_point;
 
 struct ppmd_linelegparms {
     ppmd_point end;
@@ -59,8 +79,11 @@ typedef struct {
 
 
 
-typedef void ppmd_drawproc(pixel ** const, int const, int const, pixval const, int const, int const, const void *const);
+typedef void ppmd_drawprocp(pixel **, unsigned int, unsigned int,
+                            pixval, ppmd_point, const void *);
+typedef void ppmd_drawproc(pixel **, int, int, pixval, int, int, const void *);
 
+ppmd_drawprocp ppmd_point_drawprocp;
 ppmd_drawproc ppmd_point_drawproc;
 
 /*
@@ -111,6 +134,18 @@ ppmd_setlineclip(int const clip);
 */
 
 void
+ppmd_linep(pixel **       const pixels, 
+           int            const cols, 
+           int            const rows, 
+           pixval         const maxval, 
+           ppmd_point     const p0,
+           ppmd_point     const p1,
+           ppmd_drawprocp       drawProc,
+           const void *   const clientdata);
+
+    /* Draws a line from p0 to p1.  */
+
+void
 ppmd_line(pixel**       const pixels, 
           int           const cols, 
           int           const rows, 
@@ -121,8 +156,23 @@ ppmd_line(pixel**       const pixels,
           int           const y1, 
           ppmd_drawproc       drawproc,
           const void *  const clientdata);
-/* Draws a line from (x0, y0) to (x1, y1).
-*/
+    /* Draws a line from (x0, y0) to (x1, y1). */
+
+void
+ppmd_spline3p(pixel **       const pixels, 
+              int            const cols, 
+              int            const rows, 
+              pixval         const maxval, 
+              ppmd_point     const p0,
+              ppmd_point     const p1,
+              ppmd_point     const p2,
+              ppmd_drawprocp       drawProc,
+              const void *   const clientdata);
+
+    /* Draws a three-point spline from p0 to p2, with p1
+       as the control point.  All drawing is done via ppmd_linep(),
+       so the routines that control it control ppmd_spline3p() as well. 
+    */
 
 void
 ppmd_spline3(pixel **      const pixels, 
@@ -137,9 +187,22 @@ ppmd_spline3(pixel **      const pixels,
              int           const y2, 
              ppmd_drawproc       drawproc,
              const void *  const clientdata);
-    /* Draws a three-point spline from (x0, y0) to (x2, y2), with (x1,
-       y1) as the control point.  All drawing is done via ppmd_line(),
-       so the routines that control it control ppmd_spline3() as well. 
+
+void
+ppmd_polysplinep(pixel **       const pixels, 
+                 unsigned int   const cols, 
+                 unsigned int   const rows, 
+                 pixval         const maxval, 
+                 ppmd_point     const p0,
+                 unsigned int   const nc,
+                 ppmd_point *   const c,
+                 ppmd_point     const p1,
+                 ppmd_drawprocp       drawProc,
+                 const void *   const clientdata);
+
+    /* Draws a bunch of splines end to end.  p0 and p1 are the initial and
+       final points, and the c[] are the intermediate control points.  nc is
+       the number of these control points.
     */
 
 void
@@ -156,32 +219,29 @@ ppmd_polyspline(pixel **     const pixels,
                 int          const y1, 
                 ppmd_drawproc      drawProc,
                 const void * const clientdata);
-    /* Draws a bunch of splines end to end.  (x0, y0) and (x1, y1) are
-       the initial and final points, and the xc and yc are the
-       intermediate control points.  nc is the number of these control
-       points.
-    */
 
 void
-ppmd_spline4(pixel **      const pixels, 
-             int           const cols, 
-             int           const rows, 
-             pixval        const maxval, 
-             int           const x0, 
-             int           const y0, 
-             int           const x1, 
-             int           const y1, 
-             int           const x2, 
-             int           const y2, 
-             int           const x3, 
-             int           const y3, 
-             ppmd_drawproc       drawproc,
-             const void *  const clientdata);
-    /* Draws a four-point spline from (x0, y0) to (x3, y3), with (x1,
-       y1) and (x2, y2) as the control points.  All drawing is done
-       via ppmd_line(), so the routines that control it control this
-       as well.
-    */
+ppmd_spline4p(pixel **       const pixels, 
+              unsigned int   const cols, 
+              unsigned int   const rows, 
+              pixval         const maxval, 
+              ppmd_point     const endPt0,
+              ppmd_point     const endPt1,
+              ppmd_point     const ctlPt0,
+              ppmd_point     const ctlPt1,
+              ppmd_drawprocp       drawproc,
+              const void *   const clientdata);
+
+void
+ppmd_circlep(pixel **       const pixels, 
+             unsigned int   const cols, 
+             unsigned int   const rows, 
+             pixval         const maxval, 
+             ppmd_point     const center,
+             unsigned int   const radius, 
+             ppmd_drawprocp       drawProc,
+             const void *   const clientData);
+    /* Draws a circle centered at 'center' with radius 'radius' */
 
 void
 ppmd_circle(pixel **     const pixels, 
@@ -193,7 +253,6 @@ ppmd_circle(pixel **     const pixels,
             int          const radius, 
             ppmd_drawproc      drawProc,
             const void * const clientdata);
-    /* Draws a circle centered at (cx, cy) with the specified radius. */
 
 
 /* Simple filling routines.  */
@@ -242,16 +301,25 @@ char *
 ppmd_fill_init(void);
 
 void
-ppmd_fill_drawproc(pixel ** const pixels, 
-                   int      const cols, 
-                   int      const rows, 
-                   pixval   const maxval, 
-                   int      const x, 
-                   int      const y, 
-                   const void * const clientdata);
+ppmd_fill_drawprocp(pixel **     const pixels, 
+                    unsigned int const cols, 
+                    unsigned int const rows, 
+                    pixval       const maxval, 
+                    ppmd_point   const p,
+                    const void * const clientdata);
     /* Use this drawproc to trace the outline you want filled.  Use
        the fillhandle as the clientdata.
     */
+
+void
+ppmd_fill_drawproc(pixel **     const pixels, 
+                   int          const cols, 
+                   int          const rows, 
+                   pixval       const maxval, 
+                   int          const x, 
+                   int          const y, 
+                   const void * const clientdata);
+
 void
 ppmd_fill(pixel **         const pixels, 
           int              const cols, 
@@ -269,17 +337,29 @@ ppmd_fill(pixel **         const pixels,
 /* Text drawing routines. */
 
 void
-ppmd_text(pixel**      const pixels, 
-          int          const cols, 
-          int          const rows, 
-          pixval       const maxval, 
-          int          const xpos, 
-          int          const ypos, 
-          int          const height, 
-          int          const angle, 
-          const char * const sArg, 
-	  ppmd_drawproc,
-    const void*  const clientdata);
+ppmd_textp(pixel**        const pixels, 
+           int            const cols, 
+           int            const rows, 
+           pixval         const maxval, 
+           ppmd_point     const pos,
+           int            const height, 
+           int            const angle, 
+           const char *   const sArg, 
+           ppmd_drawprocp       drawProc,
+           const void *   const clientdata);
+
+void
+ppmd_text(pixel**       const pixels, 
+          int           const cols, 
+          int           const rows, 
+          pixval        const maxval, 
+          int           const xpos, 
+          int           const ypos, 
+          int           const height, 
+          int           const angle, 
+          const char *  const sArg, 
+          ppmd_drawproc       drawProc,
+          const void *  const clientdata);
 /* Draws the null-terminated string 's' left justified at the point
    ('x', 'y').  The text will be 'height' pixels high and will be aligned on a
    baseline inclined 'angle' degrees with the X axis.  The supplied

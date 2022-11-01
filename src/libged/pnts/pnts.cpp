@@ -48,7 +48,7 @@ extern "C" {
 #include "../pnts_util.h"
 }
 
-HIDDEN void
+static void
 _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale, unsigned long pntcnt)
 {
     fastf_t ty1 =  0.57735026918962573 * scale; /* tan(PI/6) */
@@ -59,7 +59,7 @@ _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale
     vect_t v1pp, v2pp, v3pp = {0.0, 0.0, 0.0};
     vect_t v1fp, v2fp, v3fp = {0.0, 0.0, 0.0};
     mat_t rot;
-    struct bn_tol btol = BG_TOL_INIT;
+    struct bn_tol btol = BN_TOL_INIT_TOL;
 
     VSET(n1, 0, 0, 1);
     VSET(v1, 0, ty1, 0);
@@ -96,7 +96,7 @@ void _pnts_fastf_t_to_vls(struct bu_vls *o, fastf_t d, int p)
     bu_vls_sprintf(o, "%s", sd.c_str());
 }
 
-HIDDEN int
+static int
 _pnts_to_bot(struct ged *gedp, int argc, const char **argv)
 {
     int have_normals = 1;
@@ -254,7 +254,7 @@ _pnts_to_bot(struct ged *gedp, int argc, const char **argv)
 }
 
 #if 0
-HIDDEN int
+static int
 _pnts_wn(struct ged *gedp, int argc, const char **argv)
 {
     struct directory *pnt_dp;
@@ -338,7 +338,7 @@ _pnts_wn(struct ged *gedp, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 _pnts_to_wnmesh(struct ged *gedp, int argc, const char **argv)
 {
     fastf_t beta = 0.0;
@@ -491,7 +491,7 @@ _pnts_to_wnmesh(struct ged *gedp, int argc, const char **argv)
 #endif
 
 
-HIDDEN int
+static int
 _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
 {
     struct directory *dp;
@@ -507,7 +507,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     int flags = 0;
     double avg_thickness = 0.0;
     struct rt_db_internal internal;
-    struct bn_tol btol = BG_TOL_INIT;
+    struct bn_tol btol = BN_TOL_INIT_TOL;
     struct rt_pnts_internal *pnts = NULL;
     const char *pnt_prim= NULL;
     const char *obj_name = NULL;
@@ -648,7 +648,7 @@ _pnt_read(struct rt_pnts_internal *pnts, int numcnt, const char **nums, const ch
 }
 
 
-HIDDEN int
+static int
 _read_pnts(struct ged *gedp, int argc, const char **argv)
 {
     int print_help = 0;
@@ -819,7 +819,7 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 _write_pnts(struct ged *gedp, int argc, const char **argv)
 {
     int print_help = 0;
@@ -1131,7 +1131,7 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-HIDDEN void
+static void
 _pnts_show_help(struct ged *gedp, struct bu_opt_desc *d)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;

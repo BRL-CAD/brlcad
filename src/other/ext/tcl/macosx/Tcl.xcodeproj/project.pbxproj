@@ -263,7 +263,7 @@
 		F96D3E1F08F272A5004A47F5 /* CrtInterp.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = CrtInterp.3; sourceTree = "<group>"; };
 		F96D3E2008F272A5004A47F5 /* CrtMathFnc.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = CrtMathFnc.3; sourceTree = "<group>"; };
 		F96D3E2108F272A5004A47F5 /* CrtObjCmd.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = CrtObjCmd.3; sourceTree = "<group>"; };
-		F96D3E2208F272A5004A47F5 /* CrtSlave.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = CrtSlave.3; sourceTree = "<group>"; };
+		F96D3E2208F272A5004A47F5 /* CrtAlias.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = CrtAlias.3; sourceTree = "<group>"; };
 		F96D3E2308F272A5004A47F5 /* CrtTimerHdlr.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = CrtTimerHdlr.3; sourceTree = "<group>"; };
 		F96D3E2408F272A5004A47F5 /* CrtTrace.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = CrtTrace.3; sourceTree = "<group>"; };
 		F96D3E2508F272A5004A47F5 /* dde.n */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = dde.n; sourceTree = "<group>"; };
@@ -1013,7 +1013,7 @@
 				F96D3E1F08F272A5004A47F5 /* CrtInterp.3 */,
 				F96D3E2008F272A5004A47F5 /* CrtMathFnc.3 */,
 				F96D3E2108F272A5004A47F5 /* CrtObjCmd.3 */,
-				F96D3E2208F272A5004A47F5 /* CrtSlave.3 */,
+				F96D3E2208F272A5004A47F5 /* CrtAlias.3 */,
 				F96D3E2308F272A5004A47F5 /* CrtTimerHdlr.3 */,
 				F96D3E2408F272A5004A47F5 /* CrtTrace.3 */,
 				F96D3E2508F272A5004A47F5 /* dde.n */,
@@ -1909,7 +1909,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "if [ \"${ACTION:-build}\" == \"build\" ]; then\nif [ -z \"${HOME}\" ]; then export HOME=\"$(echo ~)\"; fi\ncd \"${TARGET_TEMP_DIR}\"; rm -rf \"${DERIVED_FILE_DIR}\"; mkdir -p \"${DERIVED_FILE_DIR}\"\nprintf '%s%s%s%s%s' '\npackage require tcltest 2.2\nnamespace import tcltest::*\nconfigure -testdir [file normalize {' \"${TCL_SRCROOT}\" '/tests}]\nconfigure -tmpdir [file normalize {' \"${DERIVED_FILE_DIR}\" '}]\nconfigure -verbose [concat [configure -verbose] line]\nrunAllTests\n' | \"${TEST_RIG}\"; TEST_RIG_RESULT=$?\n[ ${TEST_RIG_RESULT} -ne 0 ] && echo \"tcltest:0: error: tcltest exited abnormally with code ${TEST_RIG_RESULT}.\"\nexit ${TEST_RIG_RESULT}\nfi";
+			shellScript = "if [ \"${ACTION:-build}\" == \"build\" ]; then\nif [ -z \"${HOME}\" ]; then export HOME=\"$(echo ~)\"; fi\ncd \"${TARGET_TEMP_DIR}\"; rm -rf \"${DERIVED_FILE_DIR}\"; mkdir -p \"${DERIVED_FILE_DIR}\"\nprintf '%s%s%s%s%s' '\npackage require tcltest 2.5\nnamespace import tcltest::*\nconfigure -testdir [file normalize {' \"${TCL_SRCROOT}\" '/tests}]\nconfigure -tmpdir [file normalize {' \"${DERIVED_FILE_DIR}\" '}]\nconfigure -verbose [concat [configure -verbose] line]\nrunAllTests\n' | \"${TEST_RIG}\"; TEST_RIG_RESULT=$?\n[ ${TEST_RIG_RESULT} -ne 0 ] && echo \"tcltest:0: error: tcltest exited abnormally with code ${TEST_RIG_RESULT}.\"\nexit ${TEST_RIG_RESULT}\nfi";
 			showEnvVarsInLog = 0;
 		};
 		F97AF02F0B665DA900310EA2 /* Build Tcl */ = {

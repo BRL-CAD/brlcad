@@ -14,18 +14,16 @@
  *****************************************************************************/
 
 #include "complexSupport.h"
-#include "sc_memmgr.h"
 
 /**
  * Returns the number of EntLists in this's list (EntList->next, next->next
  * etc.) including this.
  */
-int EntList::siblings()
-{
+int EntList::siblings() {
     int count;
-    EntList *el;
+    EntList * el;
 
-    for(count = 1, el = next; el; count++, el = el->next) {
+    for( count = 1, el = next; el; count++, el = el->next ) {
         ;
     }
     return count;
@@ -34,11 +32,10 @@ int EntList::siblings()
 /**
  * Returns the first EntList not of type join, starting from this.
  */
-EntList *EntList::firstNot(JoinType j)
-{
-    EntList *sibling = this;
+EntList * EntList::firstNot( JoinType j ) {
+    EntList * sibling = this;
 
-    while(sibling != NULL && sibling->join == j) {
+    while( sibling != NULL && sibling->join == j ) {
         sibling = sibling->next;
     }
     return sibling;  // (may = NULL)
@@ -47,11 +44,10 @@ EntList *EntList::firstNot(JoinType j)
 /**
  * Returns the first EntList where viable = match, starting from this.
  */
-EntList *EntList::firstWanted(MatchType match)
-{
-    EntList *sibling = this;
+EntList * EntList::firstWanted( MatchType match ) {
+    EntList * sibling = this;
 
-    while(sibling != NULL && sibling->viable != match) {
+    while( sibling != NULL && sibling->viable != match ) {
         sibling = sibling->next;
     }
     return sibling;  // (may = NULL)
@@ -61,11 +57,10 @@ EntList *EntList::firstWanted(MatchType match)
  * Returns the last EntList not of type join, searching backwards from
  * this.
  */
-EntList *EntList::lastNot(JoinType j)
-{
-    EntList *sibling = this;
+EntList * EntList::lastNot( JoinType j ) {
+    EntList * sibling = this;
 
-    while(sibling != NULL && sibling->join == j) {
+    while( sibling != NULL && sibling->join == j ) {
         sibling = sibling->prev;
     }
     return sibling;  // (may = NULL)
@@ -75,11 +70,10 @@ EntList *EntList::lastNot(JoinType j)
  * Returns the last EntList where viable = match, searching backwards from
  * this.
  */
-EntList *EntList::lastWanted(MatchType match)
-{
-    EntList *sibling = this;
+EntList * EntList::lastWanted( MatchType match ) {
+    EntList * sibling = this;
 
-    while(sibling != NULL && sibling->viable != match) {
+    while( sibling != NULL && sibling->viable != match ) {
         sibling = sibling->prev;
     }
     return sibling;  // (may = NULL)
@@ -90,22 +84,21 @@ EntList *EntList::lastWanted(MatchType match)
  * Unmarks the node that was marked by this List.  Normally called when
  * undoing an OR choice to try out another.
  */
-void SimpleList::unmarkAll(EntNode *ents)
-{
-    EntNode *eptr = ents;
+void SimpleList::unmarkAll( EntNode * ents ) {
+    EntNode * eptr = ents;
     int comp = -1;
 
-    if(viable < MATCHSOME) {
+    if( viable < MATCHSOME ) {
         return;
     }
 
-    while(eptr != NULL && (comp = strcmp(eptr->name, name)) < 0) {
+    while( eptr != NULL && ( comp = strcmp( eptr->name, name ) ) < 0 ) {
         eptr = eptr->next;
     }
     // (We assume we have a match now since viable >= MATCHSOME.)
-    if(eptr->mark <= I_marked) {
+    if( eptr->mark <= I_marked ) {
         // Only unmark if we gave it the strongest mark:
-        eptr->setmark(NOMARK);
+        eptr->setmark( NOMARK );
     }
     // Either way (whether or not another List's mark remains), we no longer
     // marked:
@@ -118,15 +111,14 @@ void SimpleList::unmarkAll(EntNode *ents)
  * viable val of MATCHSOME.  Return true if we mark a previously unmarked
  * node; otherwise false.
  */
-bool SimpleList::acceptChoice(EntNode *ents)
-{
-    EntNode *eptr = ents;
+bool SimpleList::acceptChoice( EntNode * ents ) {
+    EntNode * eptr = ents;
     int comp;
 
-    while(eptr != NULL) {
-        if((comp = strcmp(name, eptr->name)) == 0) {
-            if(! eptr->marked()) {
-                eptr->setmark(ORMARK);
+    while( eptr != NULL ) {
+        if( ( comp = strcmp( name, eptr->name ) ) == 0 ) {
+            if( ! eptr->marked() ) {
+                eptr->setmark( ORMARK );
                 I_marked = ORMARK;
                 // Remember that we're the one who marked this.  (Nec. in case
                 // we have to unmark later to try out another OR branch.)
@@ -134,7 +126,7 @@ bool SimpleList::acceptChoice(EntNode *ents)
             }
             return false;  // we didn't mark
         }
-        if(comp < 0) {
+        if( comp < 0 ) {
             // We're beyond name in the ents list.  No more checking to do.
             return false;
         }

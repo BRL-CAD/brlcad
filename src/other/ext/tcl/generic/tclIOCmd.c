@@ -713,7 +713,7 @@ Tcl_CloseObjCmd(
 	/*
 	 * Special handling is needed if and only if the channel mode supports
 	 * more than the direction to close. Because if the close the last
-	 * direction suppported we can and will go through the regular
+	 * direction supported we can and will go through the regular
 	 * process.
 	 */
 

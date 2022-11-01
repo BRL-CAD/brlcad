@@ -1411,7 +1411,7 @@
 		F96D3E1F08F272A5004A47F5 /* CrtInterp.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = CrtInterp.3; sourceTree = "<group>"; };
 		F96D3E2008F272A5004A47F5 /* CrtMathFnc.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = CrtMathFnc.3; sourceTree = "<group>"; };
 		F96D3E2108F272A5004A47F5 /* CrtObjCmd.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = CrtObjCmd.3; sourceTree = "<group>"; };
-		F96D3E2208F272A5004A47F5 /* CrtSlave.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = CrtSlave.3; sourceTree = "<group>"; };
+		F96D3E2208F272A5004A47F5 /* CrtAlias.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = CrtAlias.3; sourceTree = "<group>"; };
 		F96D3E2308F272A5004A47F5 /* CrtTimerHdlr.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = CrtTimerHdlr.3; sourceTree = "<group>"; };
 		F96D3E2408F272A5004A47F5 /* CrtTrace.3 */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = CrtTrace.3; sourceTree = "<group>"; };
 		F96D3E2508F272A5004A47F5 /* dde.n */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = dde.n; sourceTree = "<group>"; };
@@ -3078,7 +3078,7 @@
 				F96D3E1F08F272A5004A47F5 /* CrtInterp.3 */,
 				F96D3E2008F272A5004A47F5 /* CrtMathFnc.3 */,
 				F96D3E2108F272A5004A47F5 /* CrtObjCmd.3 */,
-				F96D3E2208F272A5004A47F5 /* CrtSlave.3 */,
+				F96D3E2208F272A5004A47F5 /* CrtAlias.3 */,
 				F96D3E2308F272A5004A47F5 /* CrtTimerHdlr.3 */,
 				F96D3E2408F272A5004A47F5 /* CrtTrace.3 */,
 				F96D3E2508F272A5004A47F5 /* dde.n */,

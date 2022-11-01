@@ -9,8 +9,8 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -66,7 +66,7 @@ test coroutine-1.3 {yield returns new arg} -setup {
 	    incr i
 	}
     }
-    coroutine foo ::apply [list {{start 2} {stop 10}} $body] 
+    coroutine foo ::apply [list {{start 2} {stop 10}} $body]
     set res {}
 } -body {
     for {set k 1} {$k < 4} {incr k} {
@@ -476,7 +476,7 @@ test coroutine-5.1 {right numLevels on coro return} -constraints {testnrelevels}
 	expr {[lindex [testnrelevels] 1] - 1}
     }
     proc relativeLevel base {
-	# remove the level for this proc's call	
+	# remove the level for this proc's call
 	expr {[getNumLevel] - $base - 1}
     }
     proc foo {} {
@@ -517,7 +517,7 @@ test coroutine-5.2 {right numLevels within coro} -constraints {testnrelevels} \
 	expr {[lindex [testnrelevels] 1] - 1}
     }
     proc relativeLevel base {
-	# remove the level for this proc's call	
+	# remove the level for this proc's call
 	expr {[getNumLevel] - $base - 1}
     }
     proc foo base {
@@ -588,7 +588,7 @@ test coroutine-7.2 {multi-argument yielding with yieldto} -body {
     coroutine a corobody
     coroutine b corobody
     list [a x] [a y z] [a \{p] [a \{q r] [a] [a] [rename a {}] \
-	[b ok] [rename b {}] 
+	[b ok] [rename b {}]
 } -cleanup {
     rename corobody {}
 } -result {x {y z 2} \{p {\{q r 2} {} 0 {} ok {}}
@@ -771,25 +771,25 @@ test coroutine-8.0.1 {coro inject after error} -body {
     lappend ::result [catch {demo} err] $err
 } -result {inject-executed 1 test}
 test coroutine-8.1.1 {coro inject, ticket 42202ba1e5ff566e} -body {
-    interp create slave
-    slave eval {
+    interp create child
+    child eval {
 	coroutine demo apply {{} { while {1} yield }}
 	demo
 	tcl::unsupported::inject demo set ::result inject-executed
     }
-    interp delete slave
+    interp delete child
 } -result {}
 test coroutine-8.1.2 {coro inject with result, ticket 42202ba1e5ff566e} -body {
-    interp create slave
-    slave eval {
+    interp create child
+    child eval {
 	coroutine demo apply {{} { while {1} yield }}
 	demo
 	tcl::unsupported::inject demo set ::result inject-executed
     }
-    slave eval demo
-    set result [slave eval {set ::result}]
+    child eval demo
+    set result [child eval {set ::result}]
 
-    interp delete slave
+    interp delete child
     set result
 } -result {inject-executed}
 

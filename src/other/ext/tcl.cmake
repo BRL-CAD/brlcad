@@ -146,6 +146,7 @@ if (BRLCAD_TCL_BUILD)
     clock.tcl
     encoding/ascii.enc
     encoding/big5.enc
+    encoding/cns11643.enc
     encoding/cp1250.enc
     encoding/cp1251.enc
     encoding/cp1252.enc
@@ -189,6 +190,7 @@ if (BRLCAD_TCL_BUILD)
     encoding/iso2022.enc
     encoding/iso8859-1.enc
     encoding/iso8859-10.enc
+    encoding/iso8859-11.enc
     encoding/iso8859-13.enc
     encoding/iso8859-14.enc
     encoding/iso8859-15.enc
@@ -358,10 +360,10 @@ if (BRLCAD_TCL_BUILD)
     package.tcl
     parray.tcl
     safe.tcl
-    ${TCL_APPINIT}
     tclIndex
     tm.tcl
     word.tcl
+    ${TCL_APPINIT}
     )
 
   ExternalProject_ByProducts(tcl TCL_BLD ${TCL_INSTDIR} ${LIB_DIR}/tcl8/8.5
@@ -410,4 +412,5 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/tcl.dist")
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
+
 

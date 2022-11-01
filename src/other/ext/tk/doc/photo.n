@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" Author: Paul Mackerras (paulus@cs.anu.edu.au),
 '\"	    Department of Computer Science,
 '\"	    Australian National University.

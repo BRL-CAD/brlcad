@@ -183,7 +183,7 @@ Tcl_DetachPids(
 				 * array pointed to by pidPtr. */
     Tcl_Pid *pidPtr)		/* Array of pids to detach. */
 {
-    register Detached *detPtr;
+    Detached *detPtr;
     int i;
 
     Tcl_MutexLock(&pipeMutex);
@@ -219,7 +219,7 @@ Tcl_DetachPids(
 void
 Tcl_ReapDetachedProcs(void)
 {
-    register Detached *detPtr;
+    Detached *detPtr;
     Detached *nextPtr, *prevPtr;
     int status;
     Tcl_Pid pid;

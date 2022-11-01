@@ -113,24 +113,6 @@
 #  define _BU_ATTR_SCANF23
 #endif
 
-/**
- * shorthand declaration of a function that doesn't return
- */
-#ifdef HAVE_NORETURN_ATTRIBUTE
-#  define _BU_ATTR_NORETURN __attribute__((__noreturn__))
-#else
-#  define _BU_ATTR_NORETURN
-#endif
-
-/* For the moment, we need to specially flag some functions
- * for clang.  It's not clear if we will always need to do
- * this, but for now this suppresses a lot of noise in the
- * reports */
-#ifdef HAVE_ANALYZER_NORETURN_ATTRIBUTE
-#  define _BU_ATTR_ANALYZE_NORETURN __attribute__((analyzer_noreturn))
-#else
-#  define _BU_ATTR_ANALYZE_NORETURN
-#endif
 
 /**
  * shorthand declaration of a function that should always be inline

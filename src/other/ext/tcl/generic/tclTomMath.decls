@@ -7,7 +7,7 @@
 # If you edit this file, advance the revision number (and the epoch
 # if the new stubs are not backward compatible) in tclTomMathDecls.h
 #
-# Copyright (c) 2005 by Kevin B. Kenny.  All rights reserved.
+# Copyright © 2005 Kevin B. Kenny.  All rights reserved.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -17,7 +17,6 @@ library tcl
 # Define the unsupported generic interfaces.
 
 interface tclTomMath
-# hooks {tclTomMathInt}
 scspec EXTERN
 
 # Declare each of the functions in the Tcl tommath interface
@@ -220,9 +219,6 @@ declare 62 {
 declare 63 {
     int TclBN_mp_cnt_lsb(const mp_int *a)
 }
-
-# Formerly internal API to allow initialisation of bignums without knowing the
-# typedefs of how a bignum works internally.
 declare 64 {
     int TclBNInitBignumFromLong(mp_int *bignum, long initVal)
 }
@@ -241,6 +237,13 @@ declare 67 {
 declare 68 {
     void TclBN_mp_set_ull(mp_int *a, Tcl_WideUInt i)
 }
+declare 69 {
+    Tcl_WideUInt TclBN_mp_get_mag_ull(const mp_int *a)
+}
+declare 70 {
+    void TclBN_mp_set_ll(mp_int *a, Tcl_WideInt i)
+}
+
 # Added in libtommath 1.1.0
 declare 73 {
     mp_err TclBN_mp_tc_and(const mp_int *a, const mp_int *b, mp_int *c)
@@ -258,6 +261,9 @@ declare 76 {
 # Added in libtommath 1.2.0
 declare 78 {
     int TclBN_mp_to_ubin(const mp_int *a, unsigned char *buf, size_t maxlen, size_t *written)
+}
+declare 79 {
+    mp_err TclBN_mp_div_ld(const mp_int *a, Tcl_WideUInt b, mp_int *q, Tcl_WideUInt *r)
 }
 declare 80 {
     int TclBN_mp_to_radix(const mp_int *a, char *str, size_t maxlen, size_t *written, int radix)

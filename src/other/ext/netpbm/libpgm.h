@@ -12,13 +12,4 @@ pgm_readpgminitrest(FILE * const file,
                     int *  const rowsP, 
                     gray * const maxvalP);
 
-gray
-pgm_getrawsample(FILE * const file,
-                 gray   const maxval);
-
-void
-pgm_writerawsample(FILE * const fileP,
-                   gray   const val,
-                   gray   const maxval);
-
 #endif

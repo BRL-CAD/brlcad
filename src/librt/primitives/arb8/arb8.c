@@ -423,7 +423,7 @@ rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
  * 0 point was accepted
  * -1 point was rejected
  */
-HIDDEN int
+static int
 rt_arb_add_pnt(register pointp_t point, const char *title, struct prep_arb *pap, int ptno, const char *name)
 
 
@@ -564,7 +564,7 @@ rt_arb_add_pnt(register pointp_t point, const char *title, struct prep_arb *pap,
  * 0 OK
  * <0 failure
  */
-HIDDEN int
+static int
 rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, const char *name)
 {
     vect_t sum;		/* Sum of all endpoints */
@@ -712,7 +712,7 @@ rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * 0 OK
  * !0 failure
  */
-HIDDEN int
+static int
 rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip, int uv_wanted)
 {
     register int i;
@@ -2543,7 +2543,7 @@ rt_arb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct b
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    const struct bn_tol arb_tol = BG_TOL_INIT;
+    const struct bn_tol arb_tol = BN_TOL_INIT_TOL;
     int arbType = rt_arb_std_type(ip, &arb_tol);
 
     // Set up the containers

@@ -34,7 +34,7 @@ static void		TrimUnreachable(CompileEnv *envPtr);
 #define AddrLength(address) \
     (tclInstructionTable[*(unsigned char *)(address)].numBytes)
 #define InstLength(instruction) \
-    (tclInstructionTable[(unsigned char)(instruction)].numBytes)
+    (tclInstructionTable[UCHAR(instruction)].numBytes)
 
 /*
  * ----------------------------------------------------------------------

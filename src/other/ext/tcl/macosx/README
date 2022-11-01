@@ -165,3 +165,13 @@ If you only want to build and install the debug or optimized build, use the
 For example, to build and install only the optimized versions:
 	make -C tcl${ver}/macosx deploy
 	sudo make -C tcl${ver}/macosx install-deploy
+
+- To build a Tcl.framework for use as a subframework in another framework, use the
+install-embedded target and set SUBFRAMEWORK=1.  Set the DYLIB_INSTALL_DIR
+variable to the path which should be the install_name path of the Tcl library, set
+the DESTDIR variable to the pathname of a staging directory where the framework
+will be written .  For example, running this command in the Tcl source directory:
+	make -C macosx install-embedded SUBFRAMEWORK=1 DESTDIR=/tmp/tcl \
+	DYLIB_INSTALL_DIR=/Library/Frameworks/Some.framework/Versions/X.Y/Frameworks/Tcl.framework
+will produce a Tcl.framework intended for installing as a subframework of
+Some.framework.  The framework will be found in /tmp/tcl/Frameworks/

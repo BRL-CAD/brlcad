@@ -67,7 +67,7 @@ struct conversion_state
 };
 
 
-HIDDEN void
+static void
 nmg_to_obj(struct conversion_state *pstate, struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int aircode, int los, int material_id)
 {
     struct model *m;
@@ -284,7 +284,7 @@ nmg_to_obj(struct conversion_state *pstate, struct nmgregion *r, const struct db
 }
 
 
-HIDDEN void
+static void
 process_triangulation(struct conversion_state *pstate, struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp)
 {
     if (!BU_SETJUMP) {
@@ -323,7 +323,7 @@ process_triangulation(struct conversion_state *pstate, struct nmgregion *r, cons
 }
 
 
-HIDDEN union tree *
+static union tree *
 obj_write_process_boolean(const struct conversion_state *pstate, union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
     static union tree *ret_tree = TREE_NULL;
@@ -374,7 +374,7 @@ obj_write_process_boolean(const struct conversion_state *pstate, union tree *cur
  *
  * This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *
+static union tree *
 do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *ret_tree;
@@ -477,7 +477,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 }
 
 
-HIDDEN void
+static void
 obj_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
 {
     struct obj_write_options *options_data;
@@ -495,14 +495,14 @@ obj_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_dat
 }
 
 
-HIDDEN void
+static void
 obj_write_free_opts(void *options_data)
 {
     bu_free(options_data, "options_data");
 }
 
 
-HIDDEN int
+static int
 obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *dest_path)
 {
     size_t i;
@@ -535,7 +535,7 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     else if (NEAR_EQUAL(state.gcv_options->scale_factor, 1.0, RT_LEN_TOL))
 	fprintf(state.fp, "# BRL-CAD generated Wavefront OBJ file (Units mm)\n");
     else
-	fprintf(state.fp, "# BRL-CAD generated Wavefront OBJ file (Units %f/mm)\n", (float)state.gcv_options->scale_factor);
+	fprintf(state.fp, "# BRL-CAD generated Wavefront OBJ file (Units %lf/mm)\n", state.gcv_options->scale_factor);
 
     fprintf(state.fp, "# BRL-CAD model\n# BRL_CAD objects:");
 

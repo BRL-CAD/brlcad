@@ -29,7 +29,8 @@
 #define FONTMAP_SHIFT	    10
 
 #define FONTMAP_BITSPERPAGE	(1 << FONTMAP_SHIFT)
-#define FONTMAP_PAGES		(0x30000 / FONTMAP_BITSPERPAGE)
+#define FONTMAP_NUMCHARS	0x40000
+#define FONTMAP_PAGES		(FONTMAP_NUMCHARS / FONTMAP_BITSPERPAGE)
 
 typedef struct FontFamily {
     struct FontFamily *nextPtr;	/* Next in list of all known font families. */
@@ -214,8 +215,8 @@ static int		LoadFontRanges(HDC hdc, HFONT hFont,
 			    USHORT **startCount, USHORT **endCount,
 			    int *symbolPtr);
 static void		MultiFontTextOut(HDC hdc, WinFont *fontPtr,
-			    const char *source, int numBytes, int x, int y,
-			    double angle);
+			    const char *source, int numBytes,
+			    double x, double y, double angle);
 static void		ReleaseFont(WinFont *fontPtr);
 static inline void	ReleaseSubFont(SubFont *subFontPtr);
 static int		SeenName(const char *name, Tcl_DString *dsPtr);
@@ -299,8 +300,8 @@ TkpGetNativeFont(
     }
 
     tkwin = (Tk_Window) ((TkWindow *) tkwin)->mainPtr->winPtr;
-    fontPtr = ckalloc(sizeof(WinFont));
-    InitFont(tkwin, GetStockObject(object), 0, fontPtr);
+    fontPtr = (WinFont *)ckalloc(sizeof(WinFont));
+    InitFont(tkwin, (HFONT)GetStockObject(object), 0, fontPtr);
 
     return (TkFont *) fontPtr;
 }
@@ -557,7 +558,7 @@ TkpGetFontFromAttributes(
     hFont = GetScreenFont(faPtr, faceName,
 	    (int)(TkFontGetPixels(tkwin, faPtr->size) + 0.5), 0.0);
     if (tkFontPtr == NULL) {
-	fontPtr = ckalloc(sizeof(WinFont));
+	fontPtr = (WinFont *)ckalloc(sizeof(WinFont));
     } else {
 	fontPtr = (WinFont *) tkFontPtr;
 	ReleaseFont(fontPtr);
@@ -653,14 +654,16 @@ TkpGetFontFamilies(
 static int CALLBACK
 WinFontFamilyEnumProc(
     ENUMLOGFONTW *lfPtr,		/* Logical-font data. */
-    NEWTEXTMETRIC *tmPtr,	/* Physical-font data (not used). */
-    int fontType,		/* Type of font (not used). */
+    TCL_UNUSED(NEWTEXTMETRIC *),	/* Physical-font data (not used). */
+    TCL_UNUSED(int),		/* Type of font (not used). */
     LPARAM lParam)		/* Result object to hold result. */
 {
+    WCHAR *faceName = lfPtr->elfLogFont.lfFaceName;
     Tcl_Obj *resultObj = (Tcl_Obj *) lParam;
     Tcl_DString faceString;
 
-    Tcl_WinTCharToUtf((LPCTSTR)lfPtr->elfLogFont.lfFaceName, -1, &faceString);
+    Tcl_DStringInit(&faceString);
+    Tcl_WCharToUtfDString(faceName, wcslen(faceName), &faceString);
     Tcl_ListObjAppendElement(NULL, resultObj, Tcl_NewStringObj(
 	    Tcl_DStringValue(&faceString), Tcl_DStringLength(&faceString)));
     Tcl_DStringFree(&faceString);
@@ -749,7 +752,7 @@ TkpGetFontAttrsForChar(
      * Get the font attributes.
      */
 
-    oldfont = SelectObject(hdc, thisSubFontPtr->hFont0);
+    oldfont = (HFONT)SelectObject(hdc, thisSubFontPtr->hFont0);
     GetTextMetricsW(hdc, &tm);
     SelectObject(hdc, oldfont);
     ReleaseDC(fontPtr->hwnd, hdc);
@@ -827,7 +830,7 @@ Tk_MeasureChars(
 
     hdc = GetDC(fontPtr->hwnd);
     lastSubFontPtr = &fontPtr->subFontArray[0];
-    oldFont = SelectObject(hdc, lastSubFontPtr->hFont0);
+    oldFont = (HFONT)SelectObject(hdc, lastSubFontPtr->hFont0);
 
     /*
      * A three step process:
@@ -1013,7 +1016,7 @@ TkpMeasureCharsInContext(
     Tk_Font tkfont,		/* Font in which characters will be drawn. */
     const char *source,		/* UTF-8 string to be displayed. Need not be
 				 * '\0' terminated. */
-    int numBytes,		/* Maximum number of bytes to consider from
+    TCL_UNUSED(int),		/* Maximum number of bytes to consider from
 				 * source string in all. */
     int rangeStart,		/* Index of first byte to measure. */
     int rangeLength,		/* Length of range to measure in bytes. */
@@ -1035,7 +1038,6 @@ TkpMeasureCharsInContext(
     int *lengthPtr)		/* Filled with x-location just after the
 				 * terminating character. */
 {
-    (void) numBytes; /*unused*/
     return Tk_MeasureChars(tkfont, source + rangeStart, rangeLength,
 	    maxLength, flags, lengthPtr);
 }
@@ -1061,7 +1063,7 @@ Tk_DrawChars(
     Display *display,		/* Display on which to draw. */
     Drawable drawable,		/* Window or pixmap in which to draw. */
     GC gc,			/* Graphics context for drawing characters. */
-    Tk_Font tkfont,		/* Font in which characters will be drawn;
+    TCL_UNUSED(Tk_Font),	/* Font in which characters will be drawn;
 				 * must be the same as font used in GC. */
     const char *source,		/* UTF-8 string to be displayed. Need not be
 				 * '\0' terminated. All Tk meta-characters
@@ -1116,7 +1118,7 @@ Tk_DrawChars(
 
 	stipple = CreatePatternBrush(twdPtr->bitmap.handle);
 	SetBrushOrgEx(dc, gc->ts_x_origin, gc->ts_y_origin, NULL);
-	oldBrush = SelectObject(dc, stipple);
+	oldBrush = (HBRUSH)SelectObject(dc, stipple);
 
 	SetTextAlign(dcMem, TA_LEFT | TA_BASELINE);
 	SetTextColor(dcMem, gc->foreground);
@@ -1131,7 +1133,7 @@ Tk_DrawChars(
 	GetTextMetricsW(dcMem, &tm);
 	size.cx -= tm.tmOverhang;
 	bitmap = CreateCompatibleBitmap(dc, size.cx, size.cy);
-	oldBitmap = SelectObject(dcMem, bitmap);
+	oldBitmap = (HBITMAP)SelectObject(dcMem, bitmap);
 
 	/*
 	 * The following code is tricky because fonts are rendered in multiple
@@ -1185,7 +1187,7 @@ Tk_DrawChars(
 	GetTextMetricsW(dcMem, &tm);
 	size.cx -= tm.tmOverhang;
 	bitmap = CreateCompatibleBitmap(dc, size.cx, size.cy);
-	oldBitmap = SelectObject(dcMem, bitmap);
+	oldBitmap = (HBITMAP)SelectObject(dcMem, bitmap);
 
 	MultiFontTextOut(dcMem, fontPtr, source, numBytes, 0, tm.tmAscent,
 		0.0);
@@ -1208,7 +1210,7 @@ TkDrawAngledChars(
     Display *display,		/* Display on which to draw. */
     Drawable drawable,		/* Window or pixmap in which to draw. */
     GC gc,			/* Graphics context for drawing characters. */
-    Tk_Font tkfont,		/* Font in which characters will be drawn;
+    TCL_UNUSED(Tk_Font),	/* Font in which characters will be drawn;
 				 * must be the same as font used in GC. */
     const char *source,		/* UTF-8 string to be displayed. Need not be
 				 * '\0' terminated. All Tk meta-characters
@@ -1264,7 +1266,7 @@ TkDrawAngledChars(
 
 	stipple = CreatePatternBrush(twdPtr->bitmap.handle);
 	SetBrushOrgEx(dc, gc->ts_x_origin, gc->ts_y_origin, NULL);
-	oldBrush = SelectObject(dc, stipple);
+	oldBrush = (HBRUSH)SelectObject(dc, stipple);
 
 	SetTextAlign(dcMem, TA_LEFT | TA_BASELINE);
 	SetTextColor(dcMem, gc->foreground);
@@ -1279,7 +1281,7 @@ TkDrawAngledChars(
 	GetTextMetricsW(dcMem, &tm);
 	size.cx -= tm.tmOverhang;
 	bitmap = CreateCompatibleBitmap(dc, size.cx, size.cy);
-	oldBitmap = SelectObject(dcMem, bitmap);
+	oldBitmap = (HBITMAP)SelectObject(dcMem, bitmap);
 
 	/*
 	 * The following code is tricky because fonts are rendered in multiple
@@ -1290,11 +1292,11 @@ TkDrawAngledChars(
 	 */
 
 	PatBlt(dcMem, 0, 0, size.cx, size.cy, BLACKNESS);
-	MultiFontTextOut(dc, fontPtr, source, numBytes, (int)x, (int)y, angle);
+	MultiFontTextOut(dc, fontPtr, source, numBytes, x, y, angle);
 	BitBlt(dc, (int)x, (int)y - tm.tmAscent, size.cx, size.cy, dcMem,
 		0, 0, 0xEA02E9);
 	PatBlt(dcMem, 0, 0, size.cx, size.cy, WHITENESS);
-	MultiFontTextOut(dc, fontPtr, source, numBytes, (int)x, (int)y, angle);
+	MultiFontTextOut(dc, fontPtr, source, numBytes, x, y, angle);
 	BitBlt(dc, (int)x, (int)y - tm.tmAscent, size.cx, size.cy, dcMem,
 		0, 0, 0x8A0E06);
 
@@ -1311,7 +1313,7 @@ TkDrawAngledChars(
 	SetTextAlign(dc, TA_LEFT | TA_BASELINE);
 	SetTextColor(dc, gc->foreground);
 	SetBkMode(dc, TRANSPARENT);
-	MultiFontTextOut(dc, fontPtr, source, numBytes, (int)x, (int)y, angle);
+	MultiFontTextOut(dc, fontPtr, source, numBytes, x, y, angle);
     } else {
 	HBITMAP oldBitmap, bitmap;
 	HDC dcMem;
@@ -1333,7 +1335,7 @@ TkDrawAngledChars(
 	GetTextMetricsW(dcMem, &tm);
 	size.cx -= tm.tmOverhang;
 	bitmap = CreateCompatibleBitmap(dc, size.cx, size.cy);
-	oldBitmap = SelectObject(dcMem, bitmap);
+	oldBitmap = (HBITMAP)SelectObject(dcMem, bitmap);
 
 	MultiFontTextOut(dcMem, fontPtr, source, numBytes, 0, tm.tmAscent,
 		angle);
@@ -1359,7 +1361,10 @@ TkDrawAngledChars(
  *	Draw a string of characters on the screen like Tk_DrawChars(), but
  *	with access to all the characters on the line for context. On Windows
  *	this context isn't consulted, so we just call Tk_DrawChars().
- *
+  *
+ *      Note: TK_DRAW_IN_CONTEXT being currently defined only on macOS, this
+ *            function is unused (and possibly unfinished). See [7655f65ae7].
+*
  * Results:
  *	None.
  *
@@ -1383,7 +1388,7 @@ TkpDrawCharsInContext(
 				 * is passed to this function. If they are not
 				 * stripped out, they will be displayed as
 				 * regular printing characters. */
-    int numBytes,		/* Number of bytes in string. */
+    TCL_UNUSED(int),		/* Number of bytes in string. */
     int rangeStart,		/* Index of first byte to draw. */
     int rangeLength,		/* Length of range to draw in bytes. */
     int x, int y)		/* Coordinates at which to place origin of the
@@ -1392,11 +1397,40 @@ TkpDrawCharsInContext(
 {
     int widthUntilStart;
 
-    (void) numBytes; /*unused*/
-
     Tk_MeasureChars(tkfont, source, rangeStart, -1, 0, &widthUntilStart);
     Tk_DrawChars(display, drawable, gc, tkfont, source + rangeStart,
 	    rangeLength, x+widthUntilStart, y);
+}
+
+void
+TkpDrawAngledCharsInContext(
+    Display *display,		/* Display on which to draw. */
+    Drawable drawable,		/* Window or pixmap in which to draw. */
+    GC gc,			/* Graphics context for drawing characters. */
+    Tk_Font tkfont,		/* Font in which characters will be drawn; must
+				 * be the same as font used in GC. */
+    const char * source,	/* UTF-8 string to be displayed. Need not be
+				 * '\0' terminated. All Tk meta-characters
+				 * (tabs, control characters, and newlines)
+				 * should be stripped out of the string that is
+				 * passed to this function. If they are not
+				 * stripped out, they will be displayed as
+				 * regular printing characters. */
+    int numBytes,		/* Number of bytes in string. */
+    int rangeStart,		/* Index of first byte to draw. */
+    int rangeLength,		/* Length of range to draw in bytes. */
+    double x, double y,		/* Coordinates at which to place origin of the
+				 * whole (not just the range) string when
+				 * drawing. */
+    double angle)		/* What angle to put text at, in degrees. */
+{
+    int widthUntilStart;
+    double sinA = sin(angle * PI/180.0), cosA = cos(angle * PI/180.0);
+    (void) numBytes; /*unused*/
+
+    Tk_MeasureChars(tkfont, source, rangeStart, -1, 0, &widthUntilStart);
+    TkDrawAngledChars(display, drawable, gc, tkfont, source + rangeStart,
+	    rangeLength, x+cosA*widthUntilStart, y-sinA*widthUntilStart, angle);
 }
 
 /*
@@ -1426,7 +1460,7 @@ MultiFontTextOut(
 				 * following string. */
     const char *source,		/* Potentially multilingual UTF-8 string. */
     int numBytes,		/* Length of string in bytes. */
-    int x, int y,		/* Coordinates at which to place origin of
+    double x, double y,		/* Coordinates at which to place origin of
 				 * string when drawing. */
     double angle)
 {
@@ -1438,6 +1472,7 @@ MultiFontTextOut(
     const char *p, *end, *next;
     SubFont *lastSubFontPtr, *thisSubFontPtr;
     TEXTMETRICW tm;
+    double sinA = sin(angle * PI/180.0), cosA = cos(angle * PI/180.0);
 
     lastSubFontPtr = &fontPtr->subFontArray[0];
     oldFont = SelectFont(hdc, fontPtr, lastSubFontPtr, angle);
@@ -1460,14 +1495,15 @@ MultiFontTextOut(
 		familyPtr = lastSubFontPtr->familyPtr;
  		Tcl_UtfToExternalDString(familyPtr->encoding, source,
 			(int) (p - source), &runString);
-		familyPtr->textOutProc(hdc, x-(tm.tmOverhang/2), y,
+		familyPtr->textOutProc(hdc, (int)(x-(double)tm.tmOverhang/2.0), y,
 			(WCHAR *)Tcl_DStringValue(&runString),
-			Tcl_DStringLength(&runString)>>familyPtr->isWideFont);
+			Tcl_DStringLength(&runString) >> familyPtr->isWideFont);
 		familyPtr->getTextExtentPoint32Proc(hdc,
 			(WCHAR *)Tcl_DStringValue(&runString),
 			Tcl_DStringLength(&runString) >> familyPtr->isWideFont,
 			&size);
-		x += size.cx;
+		x += cosA*size.cx;
+		y -= sinA*size.cx;
 		Tcl_DStringFree(&runString);
 	    }
 	    lastSubFontPtr = thisSubFontPtr;
@@ -1481,7 +1517,7 @@ MultiFontTextOut(
 	familyPtr = lastSubFontPtr->familyPtr;
  	Tcl_UtfToExternalDString(familyPtr->encoding, source,
 		(int) (p - source), &runString);
-	familyPtr->textOutProc(hdc, x-(tm.tmOverhang/2), y,
+	familyPtr->textOutProc(hdc, (int)(x-(double)tm.tmOverhang/2.0), y,
 		(WCHAR *)Tcl_DStringValue(&runString),
 		Tcl_DStringLength(&runString) >> familyPtr->isWideFont);
 	Tcl_DStringFree(&runString);
@@ -1497,9 +1533,9 @@ SelectFont(
     double angle)
 {
     if (angle == 0.0) {
-	return SelectObject(hdc, subFontPtr->hFont0);
+	return (HFONT)SelectObject(hdc, subFontPtr->hFont0);
     } else if (angle == subFontPtr->angle) {
-	return SelectObject(hdc, subFontPtr->hFontAngled);
+	return (HFONT)SelectObject(hdc, subFontPtr->hFontAngled);
     } else {
 	if (subFontPtr->hFontAngled) {
 	    DeleteObject(subFontPtr->hFontAngled);
@@ -1507,10 +1543,10 @@ SelectFont(
 	subFontPtr->hFontAngled = GetScreenFont(&fontPtr->font.fa,
 		subFontPtr->familyPtr->faceName, fontPtr->pixelSize, angle);
 	if (subFontPtr->hFontAngled == NULL) {
-	    return SelectObject(hdc, subFontPtr->hFont0);
+	    return (HFONT)SelectObject(hdc, subFontPtr->hFont0);
 	}
 	subFontPtr->angle = angle;
-	return SelectObject(hdc, subFontPtr->hFontAngled);
+	return (HFONT)SelectObject(hdc, subFontPtr->hFontAngled);
     }
 }
 
@@ -1562,12 +1598,13 @@ InitFont(
     window = Tk_WindowId(tkwin);
     hwnd = (window == None) ? NULL : TkWinGetHWND(window);
     hdc = GetDC(hwnd);
-    oldFont = SelectObject(hdc, hFont);
+    oldFont = (HFONT)SelectObject(hdc, hFont);
 
     GetTextMetricsW(hdc, &tm);
 
     GetTextFaceW(hdc, LF_FACESIZE, buf);
-    Tcl_WinTCharToUtf((LPCTSTR)buf, -1, &faceString);
+    Tcl_DStringInit(&faceString);
+    Tcl_WCharToUtfDString(buf, wcslen(buf), &faceString);
 
     fontPtr->font.fid	= (Font) fontPtr;
     fontPtr->hwnd	= hwnd;
@@ -1731,7 +1768,7 @@ AllocFontFamily(
     HDC hdc,			/* HDC in which font can be selected. */
     HFONT hFont,		/* Screen font whose FontFamily is to be
 				 * returned. */
-    int base)			/* Non-zero if this font family is to be used
+    TCL_UNUSED(int))			/* Non-zero if this font family is to be used
 				 * in the base font of a font object. */
 {
     Tk_Uid faceName;
@@ -1739,15 +1776,16 @@ AllocFontFamily(
     Tcl_DString faceString;
     Tcl_Encoding encoding;
     WCHAR buf[LF_FACESIZE];
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    hFont = SelectObject(hdc, hFont);
+    hFont = (HFONT)SelectObject(hdc, hFont);
     GetTextFaceW(hdc, LF_FACESIZE, buf);
-    Tcl_WinTCharToUtf((LPCTSTR)buf, -1, &faceString);
+    Tcl_DStringInit(&faceString);
+    Tcl_WCharToUtfDString(buf, wcslen(buf), &faceString);
     faceName = Tk_GetUid(Tcl_DStringValue(&faceString));
     Tcl_DStringFree(&faceString);
-    hFont = SelectObject(hdc, hFont);
+    hFont = (HFONT)SelectObject(hdc, hFont);
 
     familyPtr = tsdPtr->fontFamilyList;
     for ( ; familyPtr != NULL; familyPtr = familyPtr->nextPtr) {
@@ -1757,7 +1795,7 @@ AllocFontFamily(
 	}
     }
 
-    familyPtr = ckalloc(sizeof(FontFamily));
+    familyPtr = (FontFamily *)ckalloc(sizeof(FontFamily));
     memset(familyPtr, 0, sizeof(FontFamily));
     familyPtr->nextPtr = tsdPtr->fontFamilyList;
     tsdPtr->fontFamilyList = familyPtr;
@@ -1843,7 +1881,7 @@ FreeFontFamily(
 {
     int i;
     FontFamily **familyPtrPtr;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (familyPtr == NULL) {
@@ -1920,7 +1958,7 @@ FindSubFontForChar(
     SubFont *subFontPtr;
     Tcl_DString ds;
 
-    if ((ch < BASE_CHARS) || (ch >= 0x30000)) {
+    if ((ch < BASE_CHARS) || (ch >= FONTMAP_NUMCHARS)) {
 	return &fontPtr->subFontArray[0];
     }
 
@@ -2028,8 +2066,8 @@ FindSubFontForChar(
 static int CALLBACK
 WinFontCanUseProc(
     ENUMLOGFONTW *lfPtr,		/* Logical-font data. */
-    NEWTEXTMETRIC *tmPtr,	/* Physical-font data (not used). */
-    int fontType,		/* Type of font (not used). */
+    TCL_UNUSED(NEWTEXTMETRIC *),	/* Physical-font data (not used). */
+    TCL_UNUSED(int),		/* Type of font (not used). */
     LPARAM lParam)		/* Result object to hold result. */
 {
     int ch;
@@ -2047,7 +2085,10 @@ WinFontCanUseProc(
     fontPtr	    = canUsePtr->fontPtr;
     nameTriedPtr    = canUsePtr->nameTriedPtr;
 
-    fallbackName = Tcl_WinTCharToUtf((LPCTSTR)lfPtr->elfLogFont.lfFaceName, -1, &faceString);
+    fallbackName = (char *) lfPtr->elfLogFont.lfFaceName;
+    Tcl_DStringInit(&faceString);
+    Tcl_WCharToUtfDString((WCHAR *)fallbackName, wcslen((WCHAR *)fallbackName), &faceString);
+    fallbackName = Tcl_DStringValue(&faceString);
 
     if (SeenName(fallbackName, nameTriedPtr) == 0) {
 	subFontPtr = CanUseFallback(hdc, fontPtr, fallbackName, ch,
@@ -2090,7 +2131,7 @@ FontMapLookup(
 {
     int row, bitOffset;
 
-    if (ch < 0 || ch >= 0x30000) {
+    if (ch < 0 || ch >= FONTMAP_NUMCHARS) {
 	return 0;
     }
 
@@ -2134,7 +2175,7 @@ FontMapInsert(
 {
     int row, bitOffset;
 
-    if (ch >= 0 && ch < 0x30000) {
+    if (ch >= 0 && ch < FONTMAP_NUMCHARS) {
 	row = ch >> FONTMAP_SHIFT;
 	if (subFontPtr->fontMap[row] == NULL) {
 	    FontMapLoadPage(subFontPtr, row);
@@ -2172,11 +2213,11 @@ FontMapLoadPage(
 {
     FontFamily *familyPtr;
     Tcl_Encoding encoding;
-    char src[XMaxTransChars], buf[16];
-    USHORT *startCount, *endCount;
     int i, j, bitOffset, end, segCount;
+    USHORT *startCount, *endCount;
+    char buf[16], src[6];
 
-    subFontPtr->fontMap[row] = ckalloc(FONTMAP_BITSPERPAGE / 8);
+    subFontPtr->fontMap[row] = (char *)ckalloc(FONTMAP_BITSPERPAGE / 8);
     memset(subFontPtr->fontMap[row], 0, FONTMAP_BITSPERPAGE / 8);
 
     familyPtr = subFontPtr->familyPtr;
@@ -2407,7 +2448,7 @@ CanUseFallback(
     if (fontPtr->numSubFonts >= SUBFONT_SPACE) {
 	SubFont *newPtr;
 
-    	newPtr = ckalloc(sizeof(SubFont) * (fontPtr->numSubFonts + 1));
+    	newPtr = (SubFont *)ckalloc(sizeof(SubFont) * (fontPtr->numSubFonts + 1));
 	memcpy(newPtr, fontPtr->subFontArray,
 		fontPtr->numSubFonts * sizeof(SubFont));
 	if (fontPtr->subFontArray != fontPtr->staticSubFonts) {
@@ -2455,7 +2496,6 @@ GetScreenFont(
     double angle)		/* What is the desired orientation of the
 				 * font. */
 {
-    Tcl_DString ds;
     HFONT hFont;
     LOGFONTW lf;
 
@@ -2474,9 +2514,7 @@ GetScreenFont(
     lf.lfQuality	= DEFAULT_QUALITY;
     lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
 
-    Tcl_WinUtfToTChar(faceName, -1, &ds);
-    wcsncpy(lf.lfFaceName, (WCHAR *)Tcl_DStringValue(&ds), LF_FACESIZE-1);
-    Tcl_DStringFree(&ds);
+    MultiByteToWideChar(CP_UTF8, 0, faceName, -1, lf.lfFaceName, LF_FACESIZE);
     lf.lfFaceName[LF_FACESIZE-1] = 0;
     hFont = CreateFontIndirectW(&lf);
     return hFont;
@@ -2525,7 +2563,8 @@ FamilyExists(
 	return 0;
     }
 
-    Tcl_WinUtfToTChar(faceName, -1, &faceString);
+    Tcl_DStringInit(&faceString);
+    Tcl_UtfToWCharDString(faceName, -1, &faceString);
 
     /*
      * If the family exists, WinFontExistProc() will be called and
@@ -2534,7 +2573,7 @@ FamilyExists(
      * non-zero value.
      */
 
-    result = EnumFontFamiliesW(hdc, (WCHAR*) Tcl_DStringValue(&faceString),
+    result = EnumFontFamiliesW(hdc, (WCHAR *)Tcl_DStringValue(&faceString),
 	    (FONTENUMPROCW) WinFontExistProc, 0);
     Tcl_DStringFree(&faceString);
     return (result == 0);
@@ -2564,10 +2603,10 @@ FamilyOrAliasExists(
 
 static int CALLBACK
 WinFontExistProc(
-    ENUMLOGFONTW *lfPtr,		/* Logical-font data. */
-    NEWTEXTMETRIC *tmPtr,	/* Physical-font data (not used). */
-    int fontType,		/* Type of font (not used). */
-    LPARAM lParam)		/* EnumFontData to hold result. */
+    TCL_UNUSED(ENUMLOGFONTW *),		/* Logical-font data. */
+    TCL_UNUSED(NEWTEXTMETRIC *),	/* Physical-font data (not used). */
+    TCL_UNUSED(int),		/* Type of font (not used). */
+    TCL_UNUSED(LPARAM))		/* EnumFontData to hold result. */
 {
     return 0;
 }
@@ -2709,7 +2748,7 @@ LoadFontRanges(
 				 * range information. */
     int *symbolPtr)
  {
-    int n, i, swapped, offset, cbData, segCount;
+    int n, i, j, k, swapped, offset, cbData, segCount;
     DWORD cmapKey;
     USHORT *startCount, *endCount;
     CMAPTABLE cmapTable;
@@ -2722,7 +2761,7 @@ LoadFontRanges(
     endCount = NULL;
     *symbolPtr = 0;
 
-    hFont = SelectObject(hdc, hFont);
+    hFont = (HFONT)SelectObject(hdc, hFont);
 
     i = 0;
     s = (char *) &i;
@@ -2777,17 +2816,17 @@ LoadFontRanges(
 		segCount = subTable.segment.segCountX2 / 2;
 		cbData = segCount * sizeof(USHORT);
 
-		startCount = ckalloc(cbData);
-		endCount = ckalloc(cbData);
+		startCount = (USHORT *)ckalloc(cbData);
+		endCount = (USHORT *)ckalloc(cbData);
 
 		offset = encTable.offset + sizeof(subTable.segment);
 		GetFontData(hdc, cmapKey, (DWORD) offset, endCount, cbData);
 		offset += cbData + sizeof(USHORT);
 		GetFontData(hdc, cmapKey, (DWORD) offset, startCount, cbData);
 		if (swapped) {
-		    for (i = 0; i < segCount; i++) {
-			SwapShort(&endCount[i]);
-			SwapShort(&startCount[i]);
+		    for (j = 0; j < segCount; j++) {
+			SwapShort(&endCount[j]);
+			SwapShort(&startCount[j]);
 		    }
 		}
 		if (*symbolPtr != 0) {
@@ -2803,11 +2842,11 @@ LoadFontRanges(
 		     * 8-bit characters [note Bug: 2406]
 		     */
 
-		    for (i = 0; i < segCount; i++) {
-			if (((startCount[i] & 0xff00) == 0xf000)
-				&& ((endCount[i] & 0xff00) == 0xf000)) {
-			    startCount[i] &= 0xff;
-			    endCount[i] &= 0xff;
+		    for (k = 0; k < segCount; k++) {
+			if (((startCount[k] & 0xff00) == 0xf000)
+				&& ((endCount[k] & 0xff00) == 0xf000)) {
+			    startCount[k] &= 0xff;
+			    endCount[k] &= 0xff;
 			}
 		    }
 		}
@@ -2821,8 +2860,8 @@ LoadFontRanges(
 
 	segCount = 1;
 	cbData = segCount * sizeof(USHORT);
-	startCount = ckalloc(cbData);
-	endCount = ckalloc(cbData);
+	startCount = (USHORT *)ckalloc(cbData);
+	endCount = (USHORT *)ckalloc(cbData);
 	startCount[0] = 0x0000;
 	endCount[0] = 0x00ff;
     }

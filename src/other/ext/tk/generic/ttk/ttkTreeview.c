@@ -4,8 +4,6 @@
  * ttk::treeview widget implementation.
  */
 
-#include <string.h>
-#include <stdio.h>
 #include "tkInt.h"
 #include "ttkTheme.h"
 #include "ttkWidget.h"
@@ -1779,7 +1777,7 @@ static void DrawItem(
 		x+indent, y, colwidth-indent, rowHeight);
 	if (item->textObj) { displayItem.textObj = item->textObj; }
 	if (item->imageObj) { displayItem.imageObj = item->imageObj; }
-	/* ??? displayItem.anchorObj = 0; <<NOTE-ANCHOR>> */
+        displayItem.anchorObj = tv->tree.column0.anchorObj;
 	DisplayLayout(tv->tree.itemLayout, &displayItem, state, parcel, d);
 	x += colwidth;
     }
@@ -2842,7 +2840,6 @@ static int TreeviewSeeCommand(
 	    TtkRedisplayWidget(&tv->core);
 	}
     }
-    tv->tree.yscroll.total = CountRows(tv->tree.root) - 1;
 
     /* Make sure item is visible:
      */
@@ -3321,8 +3318,7 @@ TTK_LAYOUT("Item",
     TTK_GROUP("Treeitem.padding", TTK_FILL_BOTH,
 	TTK_NODE("Treeitem.indicator", TTK_PACK_LEFT)
 	TTK_NODE("Treeitem.image", TTK_PACK_LEFT)
-	TTK_GROUP("Treeitem.focus", TTK_PACK_LEFT,
-	    TTK_NODE("Treeitem.text", TTK_PACK_LEFT))))
+	TTK_NODE("Treeitem.text", TTK_FILL_BOTH)))
 
 TTK_LAYOUT("Cell",
     TTK_GROUP("Treedata.padding", TTK_FILL_BOTH,

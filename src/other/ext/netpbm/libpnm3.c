@@ -11,27 +11,54 @@
 */
 
 #include "pnm.h"
-
 #include "ppm.h"
-#include "libppm.h"
-
 #include "pgm.h"
-#include "libpgm.h"
-
 #include "pbm.h"
-#include "libpbm.h"
 
-#if __STDC__
+
+
+static xel
+mean4(int const format,
+      xel const a,
+      xel const b,
+      xel const c,
+      xel const d) {
+/*----------------------------------------------------------------------------
+   Return cartesian mean of the 4 colors.
+-----------------------------------------------------------------------------*/
+    xel retval;
+
+    switch (PNM_FORMAT_TYPE(format)) {
+    case PPM_TYPE:
+        PPM_ASSIGN(
+            retval,
+            (PPM_GETR(a) + PPM_GETR(b) + PPM_GETR(c) + PPM_GETR(d)) / 4,
+            (PPM_GETG(a) + PPM_GETG(b) + PPM_GETG(c) + PPM_GETG(d)) / 4,
+            (PPM_GETB(a) + PPM_GETB(b) + PPM_GETB(c) + PPM_GETB(d)) / 4);
+        break;
+
+    case PGM_TYPE:
+    case PBM_TYPE:
+        PNM_ASSIGN1(
+            retval,
+            (PNM_GET1(a) + PNM_GET1(b) + PNM_GET1(c) + PNM_GET1(d))/4);
+        break;
+
+    default:
+        pm_error("Invalid format passed to pnm_backgroundxel()");
+    }
+    return retval;
+}
+
+
+
 xel
-pnm_backgroundxel( xel** xels, int cols, int rows, xelval maxval, int format )
-#else /*__STDC__*/
-xel
-pnm_backgroundxel( xels, cols, rows, maxval, format )
-    xel** xels;
-    int cols, rows, format;
-    xelval maxval;
-#endif /*__STDC__*/
-    {
+pnm_backgroundxel(xel**  const xels,
+                  int    const cols,
+                  int    const rows,
+                  xelval const maxval,
+                  int    const format) {
+
     xel bgxel, ul, ur, ll, lr;
 
     /* Guess a good background value. */
@@ -40,192 +67,143 @@ pnm_backgroundxel( xels, cols, rows, maxval, format )
     ll = xels[rows-1][0];
     lr = xels[rows-1][cols-1];
 
-    /* First check for three corners equal. */
-    if ( PNM_EQUAL( ul, ur ) && PNM_EQUAL( ur, ll ) )
-    bgxel = ul;
-    else if ( PNM_EQUAL( ul, ur ) && PNM_EQUAL( ur, lr ) )
-    bgxel = ul;
-    else if ( PNM_EQUAL( ul, ll ) && PNM_EQUAL( ll, lr ) )
-    bgxel = ul;
-    else if ( PNM_EQUAL( ur, ll ) && PNM_EQUAL( ll, lr ) )
-    bgxel = ur;
-    /* Nope, check for two corners equal. */
-    else if ( PNM_EQUAL( ul, ur ) || PNM_EQUAL( ul, ll ) ||
-          PNM_EQUAL( ul, lr ) )
-    bgxel = ul;
-    else if ( PNM_EQUAL( ur, ll ) || PNM_EQUAL( ur, lr ) )
-    bgxel = ur;
-    else if ( PNM_EQUAL( ll, lr ) )
-    bgxel = ll;
+    /* We first recognize three corners equal.  If not, we look for any
+       two.  If not, we just average all four.
+    */
+    if (PNM_EQUAL(ul, ur) && PNM_EQUAL(ur, ll))
+        bgxel = ul;
+    else if (PNM_EQUAL(ul, ur) && PNM_EQUAL(ur, lr))
+        bgxel = ul;
+    else if (PNM_EQUAL(ul, ll) && PNM_EQUAL(ll, lr))
+        bgxel = ul;
+    else if (PNM_EQUAL(ur, ll) && PNM_EQUAL(ll, lr))
+        bgxel = ur;
+    else if (PNM_EQUAL(ul, ur))
+        bgxel = ul;
+    else if (PNM_EQUAL(ul, ll))
+        bgxel = ul;
+    else if (PNM_EQUAL(ul, lr))
+        bgxel = ul;
+    else if (PNM_EQUAL(ur, ll))
+        bgxel = ur;
+    else if (PNM_EQUAL(ur, lr))
+        bgxel = ur;
+    else if (PNM_EQUAL(ll, lr))
+        bgxel = ll;
     else
-    {
-    /* Nope, we have to average the four corners.  This breaks the
-    ** rules of pnm, but oh well.  Let's try to do it portably. */
-    switch ( PNM_FORMAT_TYPE(format) )
-        {
-        case PPM_TYPE:
-        PPM_ASSIGN( bgxel,
-        (PPM_GETR(ul) + PPM_GETR(ur) + PPM_GETR(ll) + PPM_GETR(lr)) / 4,
-        (PPM_GETG(ul) + PPM_GETG(ur) + PPM_GETG(ll) + PPM_GETG(lr)) / 4,
-        (PPM_GETB(ul) + PPM_GETB(ur) + PPM_GETB(ll) + PPM_GETB(lr)) / 4 );
-        break;
-
-        case PGM_TYPE:
-        {
-        gray gul, gur, gll, glr;
-        gul = (gray) PNM_GET1( ul );
-        gur = (gray) PNM_GET1( ur );
-        gll = (gray) PNM_GET1( ll );
-        glr = (gray) PNM_GET1( lr );
-        PNM_ASSIGN1( bgxel, ( ( gul + gur + gll + glr ) / 4 ) );
-        break;
-        }
-
-        case PBM_TYPE:
-        pm_error(
-        "pnm_backgroundxel: four bits no two of which equal each other??" );
-
-        default:
-        pm_error( "Invalid format passed to pnm_backgroundxel()");
-        }
-    }
+        bgxel = mean4(format, ul, ur, ll, lr);
 
     return bgxel;
-    }
+}
 
-#if __STDC__
+
+
 xel
-pnm_backgroundxelrow( xel* xelrow, int cols, xelval maxval, int format )
-#else /*__STDC__*/
-xel
-pnm_backgroundxelrow( xelrow, cols, maxval, format )
-    xel* xelrow;
-    int cols, format;
-    xelval maxval;
-#endif /*__STDC__*/
-    {
+pnm_backgroundxelrow(xel *  const xelrow,
+                     int    const cols,
+                     xelval const maxval,
+                     int    const format) {
+
     xel bgxel, l, r;
 
     /* Guess a good background value. */
     l = xelrow[0];
     r = xelrow[cols-1];
 
-    /* First check for both corners equal. */
-    if ( PNM_EQUAL( l, r ) )
-    bgxel = l;
-    else
-    {
-    /* Nope, we have to average the two corners.  This breaks the
-    ** rules of pnm, but oh well.  Let's try to do it portably. */
-    switch ( PNM_FORMAT_TYPE(format) )
-        {
+    if (PNM_EQUAL(l, r))
+        /* Both corners are same color, so that's the background color,
+           without any extra computation.
+        */
+        bgxel = l;
+    else {
+        /* Corners are different, so use cartesian mean of them */
+        switch (PNM_FORMAT_TYPE(format)) {
         case PPM_TYPE:
-        PPM_ASSIGN(bgxel,
-                   (PPM_GETR(l) + PPM_GETR(r)) / 2,
-                   (PPM_GETG(l) + PPM_GETG(r)) / 2,
-                   (PPM_GETB(l) + PPM_GETB(r)) / 2
-            );
-        break;
+            PPM_ASSIGN(bgxel,
+                       (PPM_GETR(l) + PPM_GETR(r)) / 2,
+                       (PPM_GETG(l) + PPM_GETG(r)) / 2,
+                       (PPM_GETB(l) + PPM_GETB(r)) / 2
+                );
+            break;
 
         case PGM_TYPE:
-        {
-        gray gl, gr;
-        gl = (gray) PNM_GET1( l );
-        gr = (gray) PNM_GET1( r );
-        PNM_ASSIGN1( bgxel, ( ( gl + gr ) / 2 ) );
-        break;
-        }
+            PNM_ASSIGN1(bgxel, (PNM_GET1(l) + PNM_GET1(r)) / 2);
+            break;
 
-        case PBM_TYPE:
-        {
-        int col, blacks;
+        case PBM_TYPE: {
+            unsigned int col, blackCnt;
 
-        /* One black, one white.  Gotta count. */
-        for ( col = 0, blacks = 0; col < cols; ++col )
-        {
-        if ( PNM_GET1( xelrow[col] ) == 0 )
-            ++blacks;
-        }
-        if ( blacks >= cols / 2 )
-        PNM_ASSIGN1( bgxel, 0 );
-        else
-        PNM_ASSIGN1( bgxel, maxval );
-        break;
+            /* One black, one white.  Gotta count. */
+            for (col = 0, blackCnt = 0; col < cols; ++col) {
+                if (PNM_GET1(xelrow[col] ) == 0)
+                    ++blackCnt;
+            }
+            if (blackCnt >= cols / 2)
+                PNM_ASSIGN1(bgxel, 0);
+            else
+                PNM_ASSIGN1(bgxel, maxval);
+            break;
         }
 
         default:
-        pm_error( "Invalid format passed to pnm_backgroundxelrow()");
+            pm_error("Invalid format passed to pnm_backgroundxelrow()");
         }
     }
 
     return bgxel;
-    }
+}
 
-#if __STDC__
-xel
-pnm_whitexel( xelval maxval, int format )
-#else /*__STDC__*/
-xel
-pnm_whitexel( maxval, format )
-    xelval maxval;
-    int format;
-#endif /*__STDC__*/
-    {
-    xel x;
 
-    switch ( PNM_FORMAT_TYPE(format) )
-    {
+
+xel
+pnm_whitexel(xelval const maxval,
+             int    const format) {
+
+    xel retval;
+
+    switch (PNM_FORMAT_TYPE(format)) {
     case PPM_TYPE:
-    PPM_ASSIGN( x, maxval, maxval, maxval );
-    break;
+        PPM_ASSIGN(retval, maxval, maxval, maxval);
+        break;
 
     case PGM_TYPE:
-    PNM_ASSIGN1( x, maxval );
-    break;
-
     case PBM_TYPE:
-    PNM_ASSIGN1( x, maxval );
-    break;
+        PNM_ASSIGN1(retval, maxval);
+        break;
 
     default:
-    pm_error( "Invalid format passed to pnm_whitexel()");
+        pm_error("Invalid format %d passed to pnm_whitexel()", format);
     }
 
-    return x;
-    }
+    return retval;
+}
 
-#if __STDC__
-xel
-pnm_blackxel( xelval maxval, int format )
-#else /*__STDC__*/
-xel
-pnm_blackxel( maxval, format )
-    xelval maxval;
-    int format;
-#endif /*__STDC__*/
-    {
-    xel x;
 
-    switch ( PNM_FORMAT_TYPE(format) )
-    {
+
+xel
+pnm_blackxel(xelval const maxval,
+             int    const format) {
+
+    xel retval;
+
+    switch (PNM_FORMAT_TYPE(format)) {
     case PPM_TYPE:
-    PPM_ASSIGN( x, 0, 0, 0 );
-    break;
+        PPM_ASSIGN(retval, 0, 0, 0);
+        break;
 
     case PGM_TYPE:
-    PNM_ASSIGN1( x, (xelval) 0 );
-    break;
-
     case PBM_TYPE:
-    PNM_ASSIGN1( x, (xelval) 0 );
-    break;
+        PNM_ASSIGN1(retval, 0);
+        break;
 
     default:
-    pm_error( "Invalid format passed to pnm_blackxel(): %d", format);
+        pm_error("Invalid format %d passed to pnm_blackxel()", format);
     }
+    
+    return retval;
+}
 
-    return x;
-    }
+
 
 void
 pnm_invertxel(xel*   const xP, 
@@ -255,16 +233,8 @@ pnm_invertxel(xel*   const xP,
 
 
 
-#if __STDC__
 void
 pnm_promoteformat( xel** xels, int cols, int rows, xelval maxval, int format, xelval newmaxval, int newformat )
-#else /*__STDC__*/
-void
-pnm_promoteformat( xels, cols, rows, maxval, format, newmaxval, newformat )
-    xel** xels;
-    xelval maxval, newmaxval;
-    int cols, rows, format, newformat;
-#endif /*__STDC__*/
     {
     int row;
 
@@ -273,16 +243,8 @@ pnm_promoteformat( xels, cols, rows, maxval, format, newmaxval, newformat )
         xels[row], cols, maxval, format, newmaxval, newformat );
     }
 
-#if __STDC__
 void
 pnm_promoteformatrow( xel* xelrow, int cols, xelval maxval, int format, xelval newmaxval, int newformat )
-#else /*__STDC__*/
-void
-pnm_promoteformatrow( xelrow, cols, maxval, format, newmaxval, newformat )
-    xel* xelrow;
-    xelval maxval, newmaxval;
-    int cols, format, newformat;
-#endif /*__STDC__*/
     {
     register int col;
     register xel* xP;
@@ -411,4 +373,46 @@ pnm_xeltopixel(xel const inputxel,
     }
 
     return outputpixel;
+}
+
+
+
+xel
+pnm_parsecolorxel(const char * const colorName,
+                  xelval       const maxval,
+                  int          const format) {
+
+    pixel const bgColor = ppm_parsecolor(colorName, maxval);
+
+    xel retval;
+
+    switch(PNM_FORMAT_TYPE(format)) {
+    case PPM_TYPE:
+        PNM_ASSIGN(retval,
+                   PPM_GETR(bgColor), PPM_GETG(bgColor), PPM_GETB(bgColor));
+        break;
+    case PGM_TYPE:
+        if (PPM_ISGRAY(bgColor))
+            PNM_ASSIGN1(retval, PPM_GETB(bgColor));
+        else
+            pm_error("Non-gray color '%s' specified for a "
+                     "grayscale (PGM) image",
+                     colorName);
+                   break;
+    case PBM_TYPE:
+        if (PPM_EQUAL(bgColor, ppm_whitepixel(maxval)))
+            PNM_ASSIGN1(retval, maxval);
+        else if (PPM_EQUAL(bgColor, ppm_blackpixel()))
+            PNM_ASSIGN1(retval, 0);
+        else
+            pm_error ("Color '%s', which is neither black nor white, "
+                      "specified for a black and white (PBM) image",
+                      colorName);
+        break;
+    default:
+        pm_error("Invalid format code %d passed to pnm_parsecolorxel()",
+                 format);
+    }
+    
+    return retval;
 }

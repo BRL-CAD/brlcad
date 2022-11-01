@@ -18,11 +18,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/**
- * @file part.cpp
- */
 
 #include "common.h"
+
 #include "creo-brl.h"
 
 
@@ -37,36 +35,40 @@ generic_filter(ProDimension *UNUSED(dim), ProAppData UNUSED(data)) {
  * duplicate vertices
  */
 extern "C" int
-bad_triangle(struct creo_conv_info *cinfo,  int v1, int v2, int v3, struct bg_vert_tree *tree)
+bad_triangle(struct creo_conv_info *cinfo,  size_t v1, size_t v2, size_t v3, struct bg_vert_tree *tree)
 {
     double dist;
     double coord;
 
-    if (v1 == v2 || v2 == v3 || v1 == v3) return 1;
+    if (v1 == v2 || v2 == v3 || v1 == v3)
+        return 1;
 
     dist = 0;
-    for (int i = 0; i < 3; i++) {
+    for (size_t i = 0; i < 3; i++) {
         coord = tree->the_array[v1*3+i] - tree->the_array[v2*3+i];
         dist += coord * coord;
     }
     dist = sqrt(dist);
-    if (dist < cinfo->local_tol) return 1;
+    if (dist < cinfo->local_tol)
+        return 1;
 
     dist = 0;
-    for (int i = 0; i < 3; i++) {
+    for (size_t i = 0; i < 3; i++) {
         coord = tree->the_array[v2*3+i] - tree->the_array[v3*3+i];
         dist += coord * coord;
     }
     dist = sqrt(dist);
-    if (dist < cinfo->local_tol) return 1;
+    if (dist < cinfo->local_tol)
+        return 1;
 
     dist = 0;
-    for (int i = 0; i < 3; i++) {
+    for (size_t i = 0; i < 3; i++) {
         coord = tree->the_array[v1*3+i] - tree->the_array[v3*3+i];
         dist += coord * coord;
     }
     dist = sqrt(dist);
-    if (dist < cinfo->local_tol) return 1;
+    if (dist < cinfo->local_tol)
+        return 1;
 
     return 0;
 }
@@ -410,7 +412,7 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
                     ns->SetKnot(0, i, 0.0);
                 }
                 for (int j = 1; j < n - p; j++) {
-                    double x = (double)j / (double)(n - p);
+                    double x = (double)j / ((double)n - (double)p);
                     int knot_index = j + p - 1;
                     ns->SetKnot(0, knot_index, x);
                 }
@@ -425,7 +427,7 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
                     ns->SetKnot(1, i, 0.0);
                 }
                 for (int j = 1; j < n - p; j++) {
-                    double x = (double)j / (double)(n - p);
+                    double x = (double)j / ((double)n - (double)p);
                     int knot_index = j + p - 1;
                     ns->SetKnot(1, knot_index, x);
                 }
@@ -535,8 +537,8 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
     std::vector<int> faces;
     std::vector<int> face_normals;
 
-    int v1, v2, v3;
-    int n1, n2, n3;
+    size_t v1, v2, v3;
+    size_t n1, n2, n3;
     int vert_no;
     int surface_count;
 
@@ -598,40 +600,41 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
         for (int surfno = 0; surfno < surface_count; surfno++) {
             for (int j = 0; j < tess[surfno].n_facets; j++) {
                 /* Grab the triangle */
-                vert_no = tess[surfno].facets[j][0];
+                vert_no = (size_t)tess[surfno].facets[j][0];
                 v1 = bg_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 				      tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq);
-                vert_no = tess[surfno].facets[j][1];
+                vert_no = (size_t)tess[surfno].facets[j][1];
                 v2 = bg_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 				      tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq);
-                vert_no = tess[surfno].facets[j][2];
+                vert_no = (size_t)tess[surfno].facets[j][2];
                 v3 = bg_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 				      tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq);
 
-                if (bad_triangle(cinfo, v1, v2, v3, vert_tree)) continue;
+                if (bad_triangle(cinfo, v1, v2, v3, vert_tree))
+                    continue;
 
-                faces.push_back(v1);
-                faces.push_back(v3);
-                faces.push_back(v2);
+                faces.push_back((int)v1);
+                faces.push_back((int)v3);
+                faces.push_back((int)v2);
 
                 /* Grab the surface normals */
                 if (cinfo->get_normals) {
-                    vert_no = tess[surfno].facets[j][0];
+                    vert_no = (size_t)tess[surfno].facets[j][0];
                     VUNITIZE(tess[surfno].normals[vert_no]);
                     n1 = bg_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 					  tess[surfno].normals[vert_no][2], cinfo->local_tol_sq);
-                    vert_no = tess[surfno].facets[j][1];
+                    vert_no = (size_t)tess[surfno].facets[j][1];
                     VUNITIZE(tess[surfno].normals[vert_no]);
                     n2 = bg_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 					  tess[surfno].normals[vert_no][2], cinfo->local_tol_sq);
-                    vert_no = tess[surfno].facets[j][2];
+                    vert_no = (size_t)tess[surfno].facets[j][2];
                     VUNITIZE(tess[surfno].normals[vert_no]);
                     n3 = bg_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 					  tess[surfno].normals[vert_no][2], cinfo->local_tol_sq);
 
-                    face_normals.push_back(n1);
-                    face_normals.push_back(n3);
-                    face_normals.push_back(n2);
+                    face_normals.push_back((int)n1);
+                    face_normals.push_back((int)n3);
+                    face_normals.push_back((int)n2);
                 }
             }
         }
@@ -793,7 +796,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
         /* If we've got anything to suppress, go ahead and do it. */
         if (!pinfo->suppressed_features->empty()) {
-            ret = ProFeatureSuppress(ProMdlToSolid(model), &(pinfo->suppressed_features->at(0)), pinfo->suppressed_features->size(), NULL, 0);
+            ret = ProFeatureSuppress(ProMdlToSolid(model), &(pinfo->suppressed_features->at(0)), (int)pinfo->suppressed_features->size(), NULL, 0);
             /* If something went wrong, need to undo just the suppressions we added */
             if (ret != PRO_TK_NO_ERROR) {
                 creo_log(cinfo, MSG_DEBUG, "%s: failed to suppress features!!!\n", pname);
@@ -982,7 +985,7 @@ cleanup:
     /* Unsuppress anything we suppressed */
     if (cinfo->do_elims && !pinfo->suppressed_features->empty()) {
         creo_log(cinfo, MSG_OK, "Unsuppressing %zu features\n", pinfo->suppressed_features->size());
-        ret = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features->at(0), pinfo->suppressed_features->size(), NULL, 0);
+        ret = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features->at(0), (int)pinfo->suppressed_features->size(), NULL, 0);
         if (ret != PRO_TK_NO_ERROR) {
             creo_log(cinfo, MSG_DEBUG, "%s: failed to unsuppress features.\n", pname);
             cinfo->warn_feature_unsuppress = 1;

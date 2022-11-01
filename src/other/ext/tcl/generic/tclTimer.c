@@ -217,7 +217,7 @@ TimerExitProc(
 
     Tcl_DeleteEventSource(TimerSetupProc, TimerCheckProc, NULL);
     if (tsdPtr != NULL) {
-	register TimerHandler *timerHandlerPtr;
+	TimerHandler *timerHandlerPtr;
 
 	timerHandlerPtr = tsdPtr->firstTimerHandlerPtr;
 	while (timerHandlerPtr != NULL) {
@@ -294,7 +294,7 @@ TclCreateAbsoluteTimerHandler(
     Tcl_TimerProc *proc,
     ClientData clientData)
 {
-    register TimerHandler *timerHandlerPtr, *tPtr2, *prevPtr;
+    TimerHandler *timerHandlerPtr, *tPtr2, *prevPtr;
     ThreadSpecificData *tsdPtr = InitTimer();
 
     timerHandlerPtr = ckalloc(sizeof(TimerHandler));
@@ -355,7 +355,7 @@ Tcl_DeleteTimerHandler(
     Tcl_TimerToken token)	/* Result previously returned by
 				 * Tcl_DeleteTimerHandler. */
 {
-    register TimerHandler *timerHandlerPtr, *prevPtr;
+    TimerHandler *timerHandlerPtr, *prevPtr;
     ThreadSpecificData *tsdPtr = InitTimer();
 
     if (token == NULL) {
@@ -621,7 +621,7 @@ Tcl_DoWhenIdle(
     Tcl_IdleProc *proc,		/* Function to invoke. */
     ClientData clientData)	/* Arbitrary value to pass to proc. */
 {
-    register IdleHandler *idlePtr;
+    IdleHandler *idlePtr;
     Tcl_Time blockTime;
     ThreadSpecificData *tsdPtr = InitTimer();
 
@@ -665,7 +665,7 @@ Tcl_CancelIdleCall(
     Tcl_IdleProc *proc,		/* Function that was previously registered. */
     ClientData clientData)	/* Arbitrary value to pass to proc. */
 {
-    register IdleHandler *idlePtr, *prevPtr;
+    IdleHandler *idlePtr, *prevPtr;
     IdleHandler *nextPtr;
     ThreadSpecificData *tsdPtr = InitTimer();
 
@@ -898,7 +898,7 @@ Tcl_AfterObjCmd(
 	if (objc == 3) {
 	    commandPtr = objv[2];
 	} else {
-	    commandPtr = Tcl_ConcatObj(objc-2, objv+2);;
+	    commandPtr = Tcl_ConcatObj(objc-2, objv+2);
 	}
 	command = Tcl_GetStringFromObj(commandPtr, &length);
 	for (afterPtr = assocPtr->firstAfterPtr;  afterPtr != NULL;
@@ -906,7 +906,7 @@ Tcl_AfterObjCmd(
 	    tempCommand = Tcl_GetStringFromObj(afterPtr->commandPtr,
 		    &tempLength);
 	    if ((length == tempLength)
-		    && !memcmp(command, tempCommand, (unsigned) length)) {
+		    && !memcmp(command, tempCommand, length)) {
 		break;
 	    }
 	}

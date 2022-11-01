@@ -259,7 +259,8 @@ outside this range, \fBTcl_SetChannelBufferSize\fR sets the buffer size to
 the generic layer that the events specified by \fImask\fR have
 occurred on the channel.  Channel drivers are responsible for invoking
 this function whenever the channel handlers need to be called for the
-channel.  See \fBWATCHPROC\fR below for more details.
+channel (or other pending tasks like a write flush should be performed).
+See \fBWATCHPROC\fR below for more details.
 .PP
 \fBTcl_BadChannelOption\fR is called from driver specific
 \fIsetOptionProc\fR or \fIgetOptionProc\fR to generate a complete
@@ -648,8 +649,8 @@ It should call \fBTcl_BadChannelOption\fR which itself returns
 unrecognized.
 If \fInewValue\fR specifies a value for the option that
 is not supported or if a system call error occurs,
-the function should leave an error message in the
-\fIresult\fR field of \fIinterp\fR if \fIinterp\fR is not NULL. The
+the function should leave an error message in the result
+of \fIinterp\fR if \fIinterp\fR is not NULL. The
 function should also call \fBTcl_SetErrno\fR to store an appropriate POSIX
 error code.
 .PP

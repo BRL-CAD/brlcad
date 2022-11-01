@@ -46,7 +46,7 @@
 #include "bg/tri_tri.h"
 #include "bg/trimesh.h"
 
-HIDDEN void
+static void
 plot_faces(const char *fname, std::set<int> *faces, int *f, point_t *v)
 {
     std::set<int>::iterator f_it;

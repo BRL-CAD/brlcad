@@ -303,7 +303,7 @@ static unsigned long blumtbl[256];
  *
  * Typically the screen and visual default to 0 by being omitted.
  */
-HIDDEN void
+static void
 print_display_info(Display *dpy)
 {
     int i;
@@ -428,7 +428,7 @@ print_display_info(Display *dpy)
 /*
   Create 6x9x4 color cube.
 */
-HIDDEN void
+static void
 X24_createColorCube(struct xinfo *xi)
 {
     size_t i;
@@ -465,7 +465,7 @@ X24_createColorCube(struct xinfo *xi)
 /*
   Create fast lookup tables for dithering
 */
-HIDDEN void
+static void
 X24_createColorTables(struct xinfo *xi)
 {
     int i, j;
@@ -525,7 +525,7 @@ X24_createColorTables(struct xinfo *xi)
 }
 
 
-HIDDEN int
+static int
 x24_setup(struct fb *ifp, int width, int height)
 {
     struct xinfo *xi = XI(ifp);
@@ -1004,7 +1004,7 @@ x24_setup(struct fb *ifp, int width, int height)
  *
  * x_1, y_1->w, h describes a Rectangle of changed bits (image space coord.)
  */
-HIDDEN void
+static void
 X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx flags */)
 {
     struct xinfo *xi = XI(ifp);
@@ -1859,7 +1859,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 }
 
 
-HIDDEN int
+static int
 X24_rmap(struct fb *ifp, ColorMap *cmp)
 {
     struct xinfo *xi = XI(ifp);
@@ -1871,7 +1871,7 @@ X24_rmap(struct fb *ifp, ColorMap *cmp)
 }
 
 
-HIDDEN int
+static int
 X24_wmap(struct fb *ifp, const ColorMap *cmp)
 {
     struct xinfo *xi = XI(ifp);
@@ -1979,7 +1979,7 @@ X24_wmap(struct fb *ifp, const ColorMap *cmp)
  * previous contents of the frame buffer still exist, and can be
  * accessed again, even though the windows are transient, per-process.
  */
-HIDDEN int
+static int
 X24_getmem(struct fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
@@ -2022,7 +2022,8 @@ X24_getmem(struct fb *ifp)
 		}
 
 		// fd tests over
-		close(fd);
+		if (fd >= 0)
+		    close(fd);
 
 		/* Change it to local */
 		xi->xi_mode = (xi->xi_mode & ~MODE10_MASK) | MODE10_MALLOC;
@@ -2080,7 +2081,7 @@ store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
 }
 
 
-HIDDEN void
+static void
 X24_updstate(struct fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
@@ -2339,7 +2340,7 @@ X24_updstate(struct fb *ifp)
 }
 
 
-HIDDEN void
+static void
 X24_zapmem(void)
 {
 #ifndef HAVE_SYS_MMAN_H
@@ -2369,7 +2370,7 @@ X24_zapmem(void)
 }
 
 
-HIDDEN void
+static void
 X24_destroy(struct xinfo *xi)
 {
     if (xi) {
@@ -2415,7 +2416,7 @@ X24_destroy(struct xinfo *xi)
 }
 
 
-HIDDEN int
+static int
 X24_open(struct fb *ifp, const char *file, int width, int height)
 {
     struct xinfo *xi;
@@ -2829,7 +2830,7 @@ _X24_open_existing(struct fb *ifp, Display *dpy, Window win, Window cwinp, Color
     return 0;
 }
 
-HIDDEN struct fb_platform_specific *
+static struct fb_platform_specific *
 X24_get_fbps(uint32_t magic)
 {
     struct fb_platform_specific *fb_ps = NULL;
@@ -2842,7 +2843,7 @@ X24_get_fbps(uint32_t magic)
 }
 
 
-HIDDEN void
+static void
 X24_put_fbps(struct fb_platform_specific *fbps)
 {
     BU_CKMAG(fbps, FB_X24_MAGIC, "X24 framebuffer");
@@ -2851,7 +2852,7 @@ X24_put_fbps(struct fb_platform_specific *fbps)
     return;
 }
 
-HIDDEN int
+static int
 X24_open_existing(struct fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
     struct X24_fb_info *x24_internal = (struct X24_fb_info *)fb_p->data;
@@ -2864,7 +2865,7 @@ X24_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spec
 
 static int alive = 1;
 
-HIDDEN void
+static void
 X24_handle_event(struct fb *ifp, XEvent *event)
 {
     struct xinfo *xi = XI(ifp);
@@ -2989,7 +2990,7 @@ X24_handle_event(struct fb *ifp, XEvent *event)
 }
 
 
-HIDDEN int
+static int
 x24_linger(struct fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3007,7 +3008,7 @@ x24_linger(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 X24_close(struct fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3050,7 +3051,7 @@ X24_close_existing(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 X24_clear(struct fb *ifp, unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3092,7 +3093,7 @@ X24_clear(struct fb *ifp, unsigned char *pp)
 }
 
 
-HIDDEN ssize_t
+static ssize_t
 X24_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     struct xinfo *xi = XI(ifp);
@@ -3113,7 +3114,7 @@ X24_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 }
 
 
-HIDDEN ssize_t
+static ssize_t
 X24_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     struct xinfo *xi = XI(ifp);
@@ -3153,7 +3154,7 @@ X24_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t coun
 }
 
 
-HIDDEN int
+static int
 X24_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct xinfo *xi = XI(ifp);
@@ -3184,7 +3185,7 @@ X24_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-HIDDEN int
+static int
 X24_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 
@@ -3198,7 +3199,7 @@ X24_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 /*ARGSUSED*/
-HIDDEN int
+static int
 X24_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     FB_CK_FB(ifp->i);
@@ -3207,7 +3208,7 @@ X24_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbit
 }
 
 
-HIDDEN int
+static int
 X24_cursor(struct fb *ifp, int mode, int x, int y)
 {
     struct xinfo *xi = XI(ifp);
@@ -3265,7 +3266,7 @@ X24_cursor(struct fb *ifp, int mode, int x, int y)
 }
 
 
-HIDDEN int
+static int
 X24_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 {
     fb_sim_getcursor(ifp, mode, x, y);
@@ -3274,7 +3275,7 @@ X24_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 }
 
 
-HIDDEN int
+static int
 X24_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3317,7 +3318,7 @@ X24_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned
 }
 
 
-HIDDEN int
+static int
 X24_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3363,7 +3364,7 @@ X24_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const u
 }
 
 
-HIDDEN int
+static int
 X24_poll(struct fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3379,7 +3380,7 @@ X24_poll(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 X24_flush(struct fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3390,7 +3391,7 @@ X24_flush(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 X24_free(struct fb *ifp)
 {
     FB_CK_FB(ifp->i);
@@ -3399,7 +3400,7 @@ X24_free(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 X24_help(struct fb *ifp)
 {
     struct xinfo *xi = XI(ifp);

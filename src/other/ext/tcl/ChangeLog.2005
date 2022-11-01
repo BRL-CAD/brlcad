@@ -2913,7 +2913,7 @@
 	* generic/tclCompCmds.c:	Updated callers to call new routine.
 	* generic/tclDictObj.c:	Updated callers to call new routine.
 	* tests/obj.test:	Corrected bad tests that actually expected
-	values like "47" and "0xac" to be accepted as booleans.
+	values like "47" and "0xAC" to be accepted as booleans.
 
 	* generic/tclLiteral.c: Disabled the code that forces some literals
 	into the "int" Tcl_ObjType during registration. We can re-enable it if

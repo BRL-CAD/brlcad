@@ -8,7 +8,7 @@
 .so man.macros
 .BS
 .SH NAME
-Tcl_Alloc, Tcl_Free, Tcl_Realloc, Tcl_AttemptAlloc, Tcl_AttemptRealloc, ckalloc, ckfree, ckrealloc, attemptckalloc, attemptckrealloc \- allocate or free heap memory
+Tcl_Alloc, Tcl_Free, Tcl_Realloc, Tcl_AttemptAlloc, Tcl_AttemptRealloc, Tcl_GetMemoryInfo, ckalloc, ckfree, ckrealloc, attemptckalloc, attemptckrealloc \- allocate or free heap memory
 .SH SYNOPSIS
 .nf
 \fB#include <tcl.h>\fR
@@ -27,6 +27,9 @@ char *
 .sp
 char *
 \fBTcl_AttemptRealloc\fR(\fIptr, size\fR)
+.sp
+void
+\fBTcl_GetMemoryInfo\fR(\fIdsPtr\fR)
 .sp
 char *
 \fBckalloc\fR(\fIsize\fR)
@@ -48,6 +51,8 @@ char *
 Size in bytes of the memory block to allocate.
 .AP char *ptr in
 Pointer to memory block to free or realloc.
+.AP Tcl_DString *dsPtr in
+Initialized DString pointer.
 .BE
 
 .SH DESCRIPTION
@@ -87,6 +92,10 @@ calling Tcl are compiled with \fBTCL_MEM_DEBUG\fR defined, however,
 these macros are redefined to be special debugging versions
 of these procedures.  To support Tcl's memory debugging within a
 module, use the macros rather than direct calls to \fBTcl_Alloc\fR, etc.
+
+\fBTcl_GetMemoryInfo\fR appends a list-of-lists of memory stats to the
+provided DString. This function cannot be used in stub-enabled extensions,
+and it is only available if Tcl is compiled with the threaded memory allocator.
 
 .SH KEYWORDS
 alloc, allocation, free, malloc, memory, realloc, TCL_MEM_DEBUG

@@ -5,7 +5,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH interp n 8.6 Tcl "Tcl Built-In Commands"
 .so man.macros
 .BS
@@ -19,18 +19,18 @@ interp \- Create and manipulate Tcl interpreters
 .PP
 This command makes it possible to create one or more new Tcl
 interpreters that co-exist with the creating interpreter in the
-same application.  The creating interpreter is called the \fImaster\fR
-and the new interpreter is called a \fIslave\fR.
-A master can create any number of slaves, and each slave can
-itself create additional slaves for which it is master, resulting
+same application.  The creating interpreter is called the \fIparent\fR
+and the new interpreter is called a \fIchild\fR.
+A parent can create any number of children, and each child can
+itself create additional children for which it is parent, resulting
 in a hierarchy of interpreters.
 .PP
 Each interpreter is independent from the others: it has its own name
 space for commands, procedures, and global variables.
-A master interpreter may create connections between its slaves and
+A parent interpreter may create connections between its children and
 itself using a mechanism called an \fIalias\fR.  An \fIalias\fR is
-a command in a slave interpreter which, when invoked, causes a
-command to be invoked in its master interpreter or in another slave
+a command in a child interpreter which, when invoked, causes a
+command to be invoked in its parent interpreter or in another child
 interpreter.  The only other connections between interpreters are
 through environment variables (the \fBenv\fR variable), which are
 normally shared among all interpreters in the application,
@@ -41,7 +41,7 @@ share files and to transfer references to open files from one interpreter
 to another.
 .PP
 The \fBinterp\fR command also provides support for \fIsafe\fR
-interpreters.  A safe interpreter is a slave whose functions have
+interpreters.  A safe interpreter is a child whose functions have
 been greatly restricted, so that it is safe to execute untrusted
 scripts without fear of them damaging other interpreters or the
 application's environment. For example, all IO channel creation
@@ -54,18 +54,18 @@ instead, it is \fIhidden\fR, so that only trusted interpreters can obtain
 access to it. For a detailed explanation of hidden commands, see
 \fBHIDDEN COMMANDS\fR, below.
 The alias mechanism can be used for protected communication (analogous to a
-kernel call) between a slave interpreter and its master.
+kernel call) between a child interpreter and its parent.
 See \fBALIAS INVOCATION\fR, below, for more details
 on how the alias mechanism works.
 .PP
-A qualified interpreter name is a proper Tcl lists containing a subset of its
+A qualified interpreter name is a proper Tcl list containing a subset of its
 ancestors in the interpreter hierarchy, terminated by the string naming the
-interpreter in its immediate master. Interpreter names are relative to the
+interpreter in its immediate parent. Interpreter names are relative to the
 interpreter in which they are used. For example, if
 .QW \fBa\fR
-is a slave of the current interpreter and it has a slave
+is a child of the current interpreter and it has a child
 .QW \fBa1\fR ,
-which in turn has a slave
+which in turn has a child
 .QW \fBa11\fR ,
 the qualified name of
 .QW \fBa11\fR
@@ -77,14 +77,14 @@ is the list
 The \fBinterp\fR command, described below, accepts qualified interpreter
 names as arguments; the interpreter in which the command is being evaluated
 can always be referred to as \fB{}\fR (the empty list or string). Note that
-it is impossible to refer to a master (ancestor) interpreter by name in a
-slave interpreter except through aliases. Also, there is no global name by
+it is impossible to refer to a parent (ancestor) interpreter by name in a
+child interpreter except through aliases. Also, there is no global name by
 which one can refer to the first interpreter created in an application.
 Both restrictions are motivated by safety concerns.
 .SH "THE INTERP COMMAND"
 .PP
 The \fBinterp\fR command is used to create, delete, and manipulate
-slave interpreters, and to share or transfer
+child interpreters, and to share or transfer
 channels between interpreters.  It can have any of several forms, depending
 on the \fIsubcommand\fR argument:
 .TP
@@ -94,11 +94,11 @@ Returns a Tcl list whose elements are the \fItargetCmd\fR and
 \fIarg\fRs associated with the alias represented by \fIsrcToken\fR
 (this is the value returned when the alias was
 created; it is possible that the name of the source command in the
-slave is different from \fIsrcToken\fR).
+child is different from \fIsrcToken\fR).
 .TP
 \fBinterp\fR \fBalias\fR \fIsrcPath\fR \fIsrcToken\fR \fB{}\fR
 .
-Deletes the alias for \fIsrcToken\fR in the slave interpreter identified by
+Deletes the alias for \fIsrcToken\fR in the child interpreter identified by
 \fIsrcPath\fR.
 \fIsrcToken\fR refers to the value returned when the alias
 was created;  if the source command has been renamed, the renamed
@@ -106,9 +106,9 @@ command will be deleted.
 .TP
 \fBinterp\fR \fBalias\fR \fIsrcPath\fR \fIsrcCmd\fR \fItargetPath\fR \fItargetCmd \fR?\fIarg arg ...\fR?
 .
-This command creates an alias between one slave and another (see the
-\fBalias\fR slave command below for creating aliases between a slave
-and its master).  In this command, either of the slave interpreters
+This command creates an alias between one child and another (see the
+\fBalias\fR child command below for creating aliases between a child
+and its parent).  In this command, either of the child interpreters
 may be anywhere in the hierarchy of interpreters under the interpreter
 invoking the command.
 \fISrcPath\fR and \fIsrcCmd\fR identify the source of the alias.
@@ -117,9 +117,9 @@ interpreter.  For example,
 .QW "\fBa b\fR"
 identifies an interpreter
 .QW \fBb\fR ,
-which is a slave of interpreter
+which is a child of interpreter
 .QW \fBa\fR ,
-which is a slave of the invoking interpreter.  An empty list specifies
+which is a child of the invoking interpreter.  An empty list specifies
 the interpreter invoking the command.  \fIsrcCmd\fR gives the name of
 a new command, which will be created in the source interpreter.
 \fITargetPath\fR and \fItargetCmd\fR specify a target interpreter
@@ -171,33 +171,33 @@ used.
 .TP
 \fBinterp\fR \fBcreate \fR?\fB\-safe\fR? ?\fB\-\|\-\fR? ?\fIpath\fR?
 .
-Creates a slave interpreter identified by \fIpath\fR and a new command,
-called a \fIslave command\fR. The name of the slave command is the last
-component of \fIpath\fR. The new slave interpreter and the slave command
+Creates a child interpreter identified by \fIpath\fR and a new command,
+called a \fIchild command\fR. The name of the child command is the last
+component of \fIpath\fR. The new child interpreter and the child command
 are created in the interpreter identified by the path obtained by removing
 the last component from \fIpath\fR. For example, if \fIpath\fR is \fBa b
-c\fR then a new slave interpreter and slave command named \fBc\fR are
+c\fR then a new child interpreter and child command named \fBc\fR are
 created in the interpreter identified by the path \fBa b\fR.
-The slave command may be used to manipulate the new interpreter as
+The child command may be used to manipulate the new interpreter as
 described below. If \fIpath\fR is omitted, Tcl creates a unique name of the
 form \fBinterp\fIx\fR, where \fIx\fR is an integer, and uses it for the
-interpreter and the slave command. If the \fB\-safe\fR switch is specified
-(or if the master interpreter is a safe interpreter), the new slave
+interpreter and the child command. If the \fB\-safe\fR switch is specified
+(or if the parent interpreter is a safe interpreter), the new child
 interpreter will be created as a safe interpreter with limited
-functionality; otherwise the slave will include the full set of Tcl
+functionality; otherwise the child will include the full set of Tcl
 built-in commands and variables. The \fB\-\|\-\fR switch can be used to
 mark the end of switches;  it may be needed if \fIpath\fR is an unusual
 value such as \fB\-safe\fR. The result of the command is the name of the
-new interpreter. The name of a slave interpreter must be unique among all
-the slaves for its master;  an error occurs if a slave interpreter by the
-given name already exists in this master.
-The initial recursion limit of the slave interpreter is set to the
+new interpreter. The name of a child interpreter must be unique among all
+the children for its parent;  an error occurs if a child interpreter by the
+given name already exists in this parent.
+The initial recursion limit of the child interpreter is set to the
 current recursion limit of its parent interpreter.
 .TP
 \fBinterp\fR \fBdebug \fIpath\fR ?\fB\-frame\fR ?\fIbool\fR??
 .
 Controls whether frame-level stack information is captured in the
-slave interpreter identified by \fIpath\fR.  If no arguments are
+child interpreter identified by \fIpath\fR.  If no arguments are
 given, option and current setting are returned.  If \fB\-frame\fR
 is given, the debug setting is set to the given boolean if provided
 and the current setting is returned.
@@ -239,8 +239,8 @@ consistency of the underlying interpreter's state.
 \fBinterp\fR \fBdelete \fR?\fIpath ...?\fR
 .
 Deletes zero or more interpreters given by the optional \fIpath\fR
-arguments, and for each interpreter, it also deletes its slaves. The
-command also deletes the slave command for each interpreter deleted.
+arguments, and for each interpreter, it also deletes its children. The
+command also deletes the child command for each interpreter deleted.
 For each \fIpath\fR argument, if no interpreter by that name
 exists, the command raises an error.
 .TP
@@ -248,20 +248,20 @@ exists, the command raises an error.
 .
 This command concatenates all of the \fIarg\fR arguments in the same
 fashion as the \fBconcat\fR command, then evaluates the resulting string as
-a Tcl script in the slave interpreter identified by \fIpath\fR. The result
+a Tcl script in the child interpreter identified by \fIpath\fR. The result
 of this evaluation (including all \fBreturn\fR options,
 such as \fB\-errorinfo\fR and \fB\-errorcode\fR information, if an
 error occurs) is returned to the invoking interpreter.
 Note that the script will be executed in the current context stack frame of the
-\fIpath\fR interpreter; this is so that the implementations (in a master
-interpreter) of aliases in a slave interpreter can execute scripts in
-the slave that find out information about the slave's current state
+\fIpath\fR interpreter; this is so that the implementations (in a parent
+interpreter) of aliases in a child interpreter can execute scripts in
+the child that find out information about the child's current state
 and stack frame.
 .TP
 \fBinterp exists \fIpath\fR
 .
-Returns \fB1\fR if a slave interpreter by the specified \fIpath\fR
-exists in this master, \fB0\fR otherwise. If \fIpath\fR is omitted, the
+Returns \fB1\fR if a child interpreter by the specified \fIpath\fR
+exists in this parent, \fB0\fR otherwise. If \fIpath\fR is omitted, the
 invoking interpreter is used.
 .TP
 \fBinterp expose \fIpath\fR \fIhiddenName\fR ?\fIexposedCmdName\fR?
@@ -287,7 +287,7 @@ Currently both \fIexposedCmdName\fR and \fIhiddenCmdName\fR can
 not contain namespace qualifiers, or an error is raised.
 Commands to be hidden by \fBinterp hide\fR are looked up in the global
 namespace even if the current namespace is not the global one. This
-prevents slaves from fooling a master interpreter into hiding the wrong
+prevents children from fooling a parent interpreter into hiding the wrong
 command, by making the current namespace be different from the global one.
 Hidden commands are explained in more detail in \fBHIDDEN COMMANDS\fR, below.
 .TP
@@ -373,9 +373,15 @@ interpreter is destroyed.
 .TP
 \fBinterp\fR \fBslaves\fR ?\fIpath\fR?
 .
-Returns a Tcl list of the names of all the slave interpreters associated
+Returns a Tcl list of the names of all the child interpreters associated
 with the interpreter identified by \fIpath\fR. If \fIpath\fR is omitted,
 the invoking interpreter is used.
+.VS "TIP 581"
+.TP
+\fBinterp\fR \fBchildren\fR ?\fIpath\fR?
+.
+Synonym for . \fBinterp\fR \fBslaves\fR ?\fIpath\fR?
+.VE "TIP 581"
 .TP
 \fBinterp\fR \fBtarget\fR \fIpath alias\fR
 .
@@ -393,48 +399,48 @@ The target command does not have to be defined at the time of this invocation.
 Causes the IO channel identified by \fIchannelId\fR to become available in
 the interpreter identified by \fIdestPath\fR and unavailable in the
 interpreter identified by \fIsrcPath\fR.
-.SH "SLAVE COMMAND"
+.SH "child COMMAND"
 .PP
-For each slave interpreter created with the \fBinterp\fR command, a
-new Tcl command is created in the master interpreter with the same
+For each child interpreter created with the \fBinterp\fR command, a
+new Tcl command is created in the parent interpreter with the same
 name as the new interpreter. This command may be used to invoke
 various operations on the interpreter.  It has the following
 general form:
 .PP
 .CS
-\fIslave command \fR?\fIarg arg ...\fR?
+\fIchild command \fR?\fIarg arg ...\fR?
 .CE
 .PP
-\fISlave\fR is the name of the interpreter, and \fIcommand\fR
+\fIchild\fR is the name of the interpreter, and \fIcommand\fR
 and the \fIarg\fRs determine the exact behavior of the command.
 The valid forms of this command are:
 .TP
-\fIslave \fBaliases\fR
+\fIchild \fBaliases\fR
 .
 Returns a Tcl list whose elements are the tokens of all the
-aliases in \fIslave\fR.  The tokens correspond to the values returned when
+aliases in \fIchild\fR.  The tokens correspond to the values returned when
 the aliases were created (which may not be the same
 as the current names of the commands).
 .TP
-\fIslave \fBalias \fIsrcToken\fR
+\fIchild \fBalias \fIsrcToken\fR
 .
 Returns a Tcl list whose elements are the \fItargetCmd\fR and
 \fIarg\fRs associated with the alias represented by \fIsrcToken\fR
 (this is the value returned when the alias was
 created; it is possible that the actual source command in the
-slave is different from \fIsrcToken\fR).
+child is different from \fIsrcToken\fR).
 .TP
-\fIslave \fBalias \fIsrcToken \fB{}\fR
+\fIchild \fBalias \fIsrcToken \fB{}\fR
 .
-Deletes the alias for \fIsrcToken\fR in the slave interpreter.
+Deletes the alias for \fIsrcToken\fR in the child interpreter.
 \fIsrcToken\fR refers to the value returned when the alias
 was created;  if the source command has been renamed, the renamed
 command will be deleted.
 .TP
-\fIslave \fBalias \fIsrcCmd targetCmd \fR?\fIarg ..\fR?
+\fIchild \fBalias \fIsrcCmd targetCmd \fR?\fIarg ..\fR?
 .
 Creates an alias such that whenever \fIsrcCmd\fR is invoked
-in \fIslave\fR, \fItargetCmd\fR is invoked in the master.
+in \fIchild\fR, \fItargetCmd\fR is invoked in the parent.
 The \fIarg\fR arguments will be passed to \fItargetCmd\fR as additional
 arguments, prepended before any arguments passed in the invocation of
 \fIsrcCmd\fR.
@@ -443,69 +449,69 @@ The command returns a token that uniquely identifies the command created
 \fIsrcCmd\fR, even if the command is renamed afterwards. The token may but
 does not have to be equal to \fIsrcCmd\fR.
 .TP
-\fIslave \fBbgerror\fR ?\fIcmdPrefix\fR?
+\fIchild \fBbgerror\fR ?\fIcmdPrefix\fR?
 .
 This command either gets or sets the current background exception handler
-for the \fIslave\fR interpreter. If \fIcmdPrefix\fR is
+for the \fIchild\fR interpreter. If \fIcmdPrefix\fR is
 absent, the current background exception handler is returned, and if it is
 present, it is a list of words (of minimum length one) that describes
 what to set the interpreter's background exception handler to. See the
 \fBBACKGROUND EXCEPTION HANDLING\fR section for more details.
 .TP
-\fIslave \fBeval \fIarg \fR?\fIarg ..\fR?
+\fIchild \fBeval \fIarg \fR?\fIarg ..\fR?
 .
 This command concatenates all of the \fIarg\fR arguments in
 the same fashion as the \fBconcat\fR command, then evaluates
-the resulting string as a Tcl script in \fIslave\fR.
+the resulting string as a Tcl script in \fIchild\fR.
 The result of this evaluation (including all \fBreturn\fR options,
 such as \fB\-errorinfo\fR and \fB\-errorcode\fR information, if an
 error occurs) is returned to the invoking interpreter.
 Note that the script will be executed in the current context stack frame
-of \fIslave\fR; this is so that the implementations (in a master
-interpreter) of aliases in a slave interpreter can execute scripts in
-the slave that find out information about the slave's current state
+of \fIchild\fR; this is so that the implementations (in a parent
+interpreter) of aliases in a child interpreter can execute scripts in
+the child that find out information about the child's current state
 and stack frame.
 .TP
-\fIslave \fBexpose \fIhiddenName \fR?\fIexposedCmdName\fR?
+\fIchild \fBexpose \fIhiddenName \fR?\fIexposedCmdName\fR?
 .
 This command exposes the hidden command \fIhiddenName\fR, eventually bringing
 it back under a new \fIexposedCmdName\fR name (this name is currently
 accepted only if it is a valid global name space name without any ::),
-in \fIslave\fR.
+in \fIchild\fR.
 If an exposed command with the targeted name already exists, this command
 fails.
 For more details on hidden commands, see \fBHIDDEN COMMANDS\fR, below.
 .TP
-\fIslave \fBhide \fIexposedCmdName\fR ?\fIhiddenCmdName\fR?
+\fIchild \fBhide \fIexposedCmdName\fR ?\fIhiddenCmdName\fR?
 .
 This command hides the exposed command \fIexposedCmdName\fR, renaming it to
 the hidden command \fIhiddenCmdName\fR, or keeping the same name if the
-argument is not given, in the \fIslave\fR interpreter.
+argument is not given, in the \fIchild\fR interpreter.
 If a hidden command with the targeted name already exists, this command
 fails.
 Currently both \fIexposedCmdName\fR and \fIhiddenCmdName\fR can
 not contain namespace qualifiers, or an error is raised.
 Commands to be hidden are looked up in the global
 namespace even if the current namespace is not the global one. This
-prevents slaves from fooling a master interpreter into hiding the wrong
+prevents children from fooling a parent interpreter into hiding the wrong
 command, by making the current namespace be different from the global one.
 For more details on hidden commands, see \fBHIDDEN COMMANDS\fR, below.
 .TP
-\fIslave \fBhidden\fR
+\fIchild \fBhidden\fR
 .
-Returns a list of the names of all hidden commands in \fIslave\fR.
+Returns a list of the names of all hidden commands in \fIchild\fR.
 .TP
-\fIslave \fBinvokehidden\fR ?\fI\-option ...\fR? \fIhiddenName \fR?\fIarg ..\fR?
+\fIchild \fBinvokehidden\fR ?\fI\-option ...\fR? \fIhiddenName \fR?\fIarg ..\fR?
 .
 This command invokes the hidden command \fIhiddenName\fR with the
-supplied arguments, in \fIslave\fR. No substitutions or evaluations are
+supplied arguments, in \fIchild\fR. No substitutions or evaluations are
 applied to the arguments. Three \fI\-option\fRs are supported, all
 of which start with \fB\-\fR: \fB\-namespace\fR (which takes a single
 argument afterwards, \fInsName\fR), \fB\-global\fR, and \fB\-\|\-\fR.
 If the \fB\-namespace\fR flag is given, the hidden command is invoked in
-the specified namespace in the slave.
+the specified namespace in the child.
 If the \fB\-global\fR flag is given, the command is invoked at the global
-level in the slave; otherwise it is invoked at the current call frame and
+level in the child; otherwise it is invoked at the current call frame and
 can access local variables in that or outer call frames.
 The \fB\-\|\-\fR flag allows the \fIhiddenCmdName\fR argument to start with a
 .QW \-
@@ -513,37 +519,37 @@ character, and is otherwise unnecessary.
 If both the \fB\-namespace\fR and \fB\-global\fR flags are given, the
 \fB\-namespace\fR flag is ignored.
 Note that the hidden command will be executed (by default) in the
-current context stack frame of \fIslave\fR.
+current context stack frame of \fIchild\fR.
 For more details on hidden commands,
 see \fBHIDDEN COMMANDS\fR, below.
 .TP
-\fIslave \fBissafe\fR
+\fIchild \fBissafe\fR
 .
-Returns  \fB1\fR if the slave interpreter is safe, \fB0\fR otherwise.
+Returns  \fB1\fR if the child interpreter is safe, \fB0\fR otherwise.
 .TP
-\fIslave \fBlimit\fR \fIlimitType\fR ?\fI\-option\fR? ?\fIvalue\fR \fI...\fR?
+\fIchild \fBlimit\fR \fIlimitType\fR ?\fI\-option\fR? ?\fIvalue\fR \fI...\fR?
 .
 Sets up, manipulates and queries the configuration of the resource
-limit \fIlimitType\fR for the slave interpreter.  If no \fI\-option\fR
+limit \fIlimitType\fR for the child interpreter.  If no \fI\-option\fR
 is specified, return the current configuration of the limit.  If
 \fI\-option\fR is the sole argument, return the value of that option.
 Otherwise, a list of \fI\-option\fR/\fIvalue\fR argument pairs must
 supplied. See \fBRESOURCE LIMITS\fR below for a more detailed explanation of
 what limits and options are supported.
 .TP
-\fIslave \fBmarktrusted\fR
+\fIchild \fBmarktrusted\fR
 .
-Marks the slave interpreter as trusted. Can only be invoked by a
+Marks the child interpreter as trusted. Can only be invoked by a
 trusted interpreter. This command does not expose any hidden
-commands in the slave interpreter. The command has no effect if the slave
+commands in the child interpreter. The command has no effect if the child
 is already trusted.
 .TP
-\fIslave\fR \fBrecursionlimit\fR ?\fInewlimit\fR?
+\fIchild\fR \fBrecursionlimit\fR ?\fInewlimit\fR?
 .
-Returns the maximum allowable nesting depth for the \fIslave\fR interpreter.
-If \fInewlimit\fR is specified, the recursion limit in \fIslave\fR will be
+Returns the maximum allowable nesting depth for the \fIchild\fR interpreter.
+If \fInewlimit\fR is specified, the recursion limit in \fIchild\fR will be
 set so that nesting of more than \fInewlimit\fR calls to \fBTcl_Eval()\fR
-and related procedures in \fIslave\fR will return an error.
+and related procedures in \fIchild\fR will return an error.
 The \fInewlimit\fR value is also returned.
 The \fInewlimit\fR value must be a positive integer between 1 and the
 maximum value of a non-long integer on the platform.
@@ -567,14 +573,14 @@ For example, commands to create files on disk are removed, and the
 \fBexec\fR command is removed, since it could be used to cause damage
 through subprocesses.
 Limited access to these facilities can be provided, by creating
-aliases to the master interpreter which check their arguments carefully
+aliases to the parent interpreter which check their arguments carefully
 and provide restricted access to a safe subset of facilities.
 For example, file creation might be allowed in a particular subdirectory
 and subprocess invocation might be allowed for a carefully selected and
 fixed set of programs.
 .PP
 A safe interpreter is created by specifying the \fB\-safe\fR switch
-to the \fBinterp create\fR command.  Furthermore, any slave created
+to the \fBinterp create\fR command.  Furthermore, any child created
 by a safe interpreter will also be safe.
 .PP
 A safe interpreter is created with exactly the following set of
@@ -661,15 +667,15 @@ including itself.
 .SH "ALIAS INVOCATION"
 .PP
 The alias mechanism has been carefully designed so that it can
-be used safely when an untrusted script is executing
-in a safe slave and the target of the alias is a trusted
-master.  The most important thing in guaranteeing safety is to
-ensure that information passed from the slave to the master is
-never evaluated or substituted in the master;  if this were to
-occur, it would enable an evil script in the slave to invoke
-arbitrary functions in the master, which would compromise security.
+be used safely in an untrusted script which is being executed in a
+safe interpreter even if the target of the alias is not a safe
+interpreter.  The most important thing in guaranteeing safety is to
+ensure that information passed from the child to the parent is
+never evaluated or substituted in the parent;  if this were to
+occur, it would enable an evil script in the child to invoke
+arbitrary functions in the parent, which would compromise security.
 .PP
-When the source for an alias is invoked in the slave interpreter, the
+When the source for an alias is invoked in the child interpreter, the
 usual Tcl substitutions are performed when parsing that command.
 These substitutions are carried out in the source interpreter just
 as they would be for any other command invoked in that interpreter.
@@ -696,8 +702,8 @@ the alias's source command is parsed in the source interpreter.
 When writing the \fItargetCmd\fRs for aliases in safe interpreters,
 it is very important that the arguments to that command never be
 evaluated or substituted, since this would provide an escape
-mechanism whereby the slave interpreter could execute arbitrary
-code in the master.  This in turn would compromise the security
+mechanism whereby the child interpreter could execute arbitrary
+code in the parent.  This in turn would compromise the security
 of the system.
 .SH "HIDDEN COMMANDS"
 .PP
@@ -724,28 +730,28 @@ invoke\fR. Hidden commands and exposed commands reside in separate name
 spaces. It is possible to define a hidden command and an exposed command by
 the same name within one interpreter.
 .PP
-Hidden commands in a slave interpreter can be invoked in the body of
-procedures called in the master during alias invocation. For example, an
-alias for \fBsource\fR could be created in a slave interpreter. When it is
-invoked in the slave interpreter, a procedure is called in the master
+Hidden commands in a child interpreter can be invoked in the body of
+procedures called in the parent during alias invocation. For example, an
+alias for \fBsource\fR could be created in a child interpreter. When it is
+invoked in the child interpreter, a procedure is called in the parent
 interpreter to check that the operation is allowable (e.g. it asks to
-source a file that the slave interpreter is allowed to access). The
-procedure then it invokes the hidden \fBsource\fR command in the slave
+source a file that the child interpreter is allowed to access). The
+procedure then it invokes the hidden \fBsource\fR command in the child
 interpreter to actually source in the contents of the file. Note that two
-commands named \fBsource\fR exist in the slave interpreter: the alias, and
+commands named \fBsource\fR exist in the child interpreter: the alias, and
 the hidden command.
 .PP
-Because a master interpreter may invoke a hidden command as part of
+Because a parent interpreter may invoke a hidden command as part of
 handling an alias invocation, great care must be taken to avoid evaluating
 any arguments passed in through the alias invocation.
-Otherwise, malicious slave interpreters could cause a trusted master
+Otherwise, malicious child interpreters could cause a trusted parent
 interpreter to execute dangerous commands on their behalf. See the section
 on \fBALIAS INVOCATION\fR for a more complete discussion of this topic.
 To help avoid this problem, no substitutions or evaluations are
 applied to arguments of \fBinterp invokehidden\fR.
 .PP
 Safe interpreters are not allowed to invoke hidden commands in themselves
-or in their descendants. This prevents safe slaves from gaining access to
+or in their descendants. This prevents them from gaining access to
 hidden functionality in themselves or their descendants.
 .PP
 The set of hidden commands in an interpreter can be manipulated by a trusted
@@ -764,12 +770,12 @@ qualifiers, and you must first rename a command in a namespace to the
 global namespace before you can hide it.
 Commands to be hidden by \fBinterp hide\fR are looked up in the global
 namespace even if the current namespace is not the global one. This
-prevents slaves from fooling a master interpreter into hiding the wrong
+prevents children from fooling a parent interpreter into hiding the wrong
 command, by making the current namespace be different from the global one.
 .SH "RESOURCE LIMITS"
 .PP
 Every interpreter has two kinds of resource limits that may be imposed by any
-master interpreter upon its slaves. Command limits (of type \fBcommand\fR)
+parent interpreter upon its children. Command limits (of type \fBcommand\fR)
 restrict the total number of Tcl commands that may be executed by an
 interpreter (as can be inspected via the \fBinfo cmdcount\fR command), and
 time limits (of type \fBtime\fR) place a limit by which execution within the
@@ -778,7 +784,7 @@ interpreter must complete. Note that time limits are expressed as
 \fBafter\fR) because they may be modified after creation.
 .PP
 When a limit is exceeded for an interpreter, first any handler callbacks
-defined by master interpreters are called. If those callbacks increase or
+defined by parent interpreters are called. If those callbacks increase or
 remove the limit, execution within the (previously) limited interpreter
 continues. If the limit is still in force, an error is generated at that point
 and normal processing of errors within the interpreter (by the \fBcatch\fR
@@ -835,13 +841,13 @@ This option specifies the number of commands that the interpreter may execute
 before triggering the command limit. This option may be the empty string,
 which indicates that a command limit is not set for the interpreter.
 .PP
-Where an interpreter with a resource limit set on it creates a slave
-interpreter, that slave interpreter will have resource limits imposed on it
-that are at least as restrictive as the limits on the creating master
-interpreter. If the master interpreter of the limited master wishes to relax
+Where an interpreter with a resource limit set on it creates a child
+interpreter, that child interpreter will have resource limits imposed on it
+that are at least as restrictive as the limits on the creating parent
+interpreter. If the parent interpreter of the limited parent wishes to relax
 these conditions, it should hide the \fBinterp\fR command in the child and
 then use aliases and the \fBinterp invokehidden\fR subcommand to provide such
-access as it chooses to the \fBinterp\fR command to the limited master as
+access as it chooses to the \fBinterp\fR command to the limited parent as
 necessary.
 .SH "BACKGROUND EXCEPTION HANDLING"
 .PP
@@ -902,9 +908,9 @@ set i [\fBinterp create\fR]
 }
 .CE
 .SH "SEE ALSO"
-bgerror(n), load(n), safe(n), Tcl_CreateSlave(3), Tcl_Eval(3), Tcl_BackgroundException(3)
+bgerror(n), load(n), safe(n), Tcl_CreateChild(3), Tcl_Eval(3), Tcl_BackgroundException(3)
 .SH KEYWORDS
-alias, master interpreter, safe interpreter, slave interpreter
+alias, parent interpreter, safe interpreter, child interpreter
 '\"Local Variables:
 '\"mode: nroff
 '\"End:

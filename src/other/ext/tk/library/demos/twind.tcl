@@ -265,9 +265,9 @@ proc createPlot {t} {
 	$c addtag point withtag $item
     }
 
-    $c bind point <Any-Enter> "$c itemconfig current -fill red"
-    $c bind point <Any-Leave> "$c itemconfig current -fill SkyBlue2"
-    $c bind point <1> "embPlotDown $c %x %y"
+    $c bind point <Enter> "$c itemconfig current -fill red"
+    $c bind point <Leave> "$c itemconfig current -fill SkyBlue2"
+    $c bind point <Button-1> "embPlotDown $c %x %y"
     $c bind point <ButtonRelease-1> "$c dtag selected"
     bind $c <B1-Motion> "embPlotMove $c %x %y"
     return $c

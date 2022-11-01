@@ -36,6 +36,7 @@ typedef struct TCLEXCEPTION_REGISTRATION {
  */
 typedef struct TclWinProcs {
     BOOL (WINAPI *cancelSynchronousIo)(HANDLE);
+    BOOLEAN (WINAPI *createSymbolicLink)(LPCWSTR, LPCWSTR, DWORD);
 } TclWinProcs;
 
 MODULE_SCOPE TclWinProcs tclWinProcs;
@@ -53,11 +54,18 @@ MODULE_SCOPE TclWinProcs tclWinProcs;
 #define VER_PLATFORM_WIN32_CE 3
 #endif
 
-#ifdef _WIN64
-#         define TCL_I_MODIFIER        "I"
-#else
-#         define TCL_I_MODIFIER        ""
+#ifndef TCL_Z_MODIFIER
+#   ifdef _WIN64
+#	if defined(__USE_MINGW_ANSI_STDIO) && __USE_MINGW_ANSI_STDIO
+#         define TCL_Z_MODIFIER        "ll"
+#	else
+#         define TCL_Z_MODIFIER        "I"
+#	endif
+#   else
+#         define TCL_Z_MODIFIER        ""
+#   endif
 #endif
+#define TCL_I_MODIFIER TCL_Z_MODIFIER
 
 /*
  * Declarations of functions that are not accessible by way of the
@@ -66,7 +74,7 @@ MODULE_SCOPE TclWinProcs tclWinProcs;
 
 MODULE_SCOPE char	TclWinDriveLetterForVolMountPoint(
 			    const WCHAR *mountPoint);
-MODULE_SCOPE void	TclWinEncodingsCleanup();
+MODULE_SCOPE void	TclWinEncodingsCleanup(void);
 MODULE_SCOPE void	TclWinInit(HINSTANCE hInst);
 MODULE_SCOPE TclFile	TclWinMakeFile(HANDLE handle);
 MODULE_SCOPE Tcl_Channel TclWinOpenConsoleChannel(HANDLE handle,

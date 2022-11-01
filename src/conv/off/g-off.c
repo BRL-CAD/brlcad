@@ -130,10 +130,14 @@ main(int argc, char **argv)
 		ncpu = atoi( bu_optarg );
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_debug );
+		c = bu_sscanf( bu_optarg, "%x", (unsigned int *)&rt_debug );
+		if (c < 1)
+		    bu_exit(1, "ERROR: unexpected error parsing -x debug option\n");
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&nmg_debug );
+		c = bu_sscanf( bu_optarg, "%x", (unsigned int *)&nmg_debug );
+		if (c < 1)
+		    bu_exit(1, "ERROR: unexpected error parsing -X debug option\n");
 		NMG_debug = nmg_debug;
 		break;
 	    default:

@@ -11,7 +11,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
+if {"::tcltest" ni [namespace children]} {
     package require tcltest 2.1
     namespace import -force ::tcltest::*
 }
@@ -91,29 +91,29 @@ test subst-5.4 {command substitutions} {
 } {1 {invalid command name "bogus_command"}}
 test subst-5.5 {command substitutions} {
     set a 0
-    list [catch {subst {[set a 1}} msg] $a $msg 
+    list [catch {subst {[set a 1}} msg] $a $msg
 } {1 0 {missing close-bracket}}
 test subst-5.6 {command substitutions} {
     set a 0
-    list [catch {subst {0[set a 1}} msg] $a $msg 
+    list [catch {subst {0[set a 1}} msg] $a $msg
 } {1 0 {missing close-bracket}}
 test subst-5.7 {command substitutions} {
     set a 0
-    list [catch {subst {0[set a 1; set a 2}} msg] $a $msg 
+    list [catch {subst {0[set a 1; set a 2}} msg] $a $msg
 } {1 1 {missing close-bracket}}
 
 # repeat the tests above simulating cmd line input
 test subst-5.8 {command substitutions} {
     set script {[subst {[set a 1}]}
-    list [catch {exec [info nameofexecutable] << $script} msg] $msg 
+    list [catch {exec [info nameofexecutable] << $script} msg] $msg
 } {1 {missing close-bracket}}
 test subst-5.9 {command substitutions} {
     set script {[subst {0[set a 1}]}
-    list [catch {exec [info nameofexecutable] << $script} msg] $msg 
+    list [catch {exec [info nameofexecutable] << $script} msg] $msg
 } {1 {missing close-bracket}}
 test subst-5.10 {command substitutions} {
     set script {[subst {0[set a 1; set a 2}]}
-    list [catch {exec [info nameofexecutable] << $script} msg] $msg 
+    list [catch {exec [info nameofexecutable] << $script} msg] $msg
 } {1 {missing close-bracket}}
 
 test subst-6.1 {clear the result after command substitution} -body {
@@ -132,20 +132,20 @@ test subst-7.3 {switches} -returnCodes error -body {
 } -result {bad option "-bogus": must be -nobackslashes, -nocommands, or -novariables}
 test subst-7.4 {switches} {
     set x 123
-    subst -nobackslashes {abc $x [expr 1+2] \\\x41}
+    subst -nobackslashes {abc $x [expr {1 + 2}] \\\x41}
 } {abc 123 3 \\\x41}
 test subst-7.5 {switches} {
     set x 123
-    subst -nocommands {abc $x [expr 1+2] \\\x41}
-} {abc 123 [expr 1+2] \A}
+    subst -nocommands {abc $x [expr {1 + 2}] \\\x41}
+} {abc 123 [expr {1 + 2}] \A}
 test subst-7.6 {switches} {
     set x 123
-    subst -novariables {abc $x [expr 1+2] \\\x41}
+    subst -novariables {abc $x [expr {1 + 2}] \\\x41}
 } {abc $x 3 \A}
 test subst-7.7 {switches} {
     set x 123
-    subst -nov -nob -noc {abc $x [expr 1+2] \\\x41}
-} {abc $x [expr 1+2] \\\x41}
+    subst -nov -nob -noc {abc $x [expr {1 + 2}] \\\x41}
+} {abc $x [expr {1 + 2}] \\\x41}
 
 test subst-8.1 {return in a subst} {
     subst {foo [return {x}; bogus code] bar}
@@ -166,7 +166,7 @@ test subst-8.6 {return in a subst} -returnCodes error -body {
     subst "foo \[return {x}; bogus code bar"
 } -result {missing close-bracket}
 test subst-8.7 {return in a subst, parse error} -body {
-    subst {foo [return {x} ; set a {}"" ; stuff] bar} 
+    subst {foo [return {x} ; set a {}"" ; stuff] bar}
 } -returnCodes error -result {extra characters after close-brace}
 test subst-8.8 {return in a subst, parse error} -body {
     subst {foo [return {x} ; set bar baz ; set a {}"" ; stuff] bar}
@@ -282,18 +282,18 @@ test subst-13.1 {Bug 3081065} -setup {
 	demo name2
     } subst13.tcl]
 } -body {
-    interp create slave
-    slave eval [list source $script]
-    interp delete slave
-    interp create slave
-    slave eval {
+    interp create child
+    child eval [list source $script]
+    interp delete child
+    interp create child
+    child eval {
 	set count 400
 	while {[incr count -1]} {
 	    lappend bloat [expr {rand()}]
 	}
     }
-    slave eval [list source $script]
-    interp delete slave
+    child eval [list source $script]
+    interp delete child
 } -cleanup {
     removeFile subst13.tcl
 }

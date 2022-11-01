@@ -20,9 +20,9 @@ DIR *
 opendir(
     char *name)
 {
-    register DIR *dirp;
-    register int fd;
-    char *myname;
+    DIR *dirp;
+    int fd;
+    const char *myname;
 
     myname = ((*name == '\0') ? "." : name);
     if ((fd = open(myname, 0, 0)) == -1) {
@@ -65,9 +65,9 @@ struct olddirect {
 
 struct dirent *
 readdir(
-    register DIR *dirp)
+    DIR *dirp)
 {
-    register struct olddirect *dp;
+    struct olddirect *dp;
     static struct dirent dir;
 
     for (;;) {
@@ -101,10 +101,10 @@ readdir(
 
 void
 closedir(
-    register DIR *dirp)
+    DIR *dirp)
 {
     close(dirp->dd_fd);
     dirp->dd_fd = -1;
     dirp->dd_loc = 0;
-    ckfree((char *) dirp);
+    ckfree((char *)dirp);
 }

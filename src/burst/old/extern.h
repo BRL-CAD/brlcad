@@ -37,7 +37,7 @@
 
 /* External functions from application. */
 
-extern Func *getTrie(char *name, Trie *triep);
+extern Func *getTrie(char *name, int buflen, Trie *triep);
 extern Trie *addTrie(char *name, Trie **triepp);
 extern void prntTrie(Trie *triep, int level);
 
@@ -101,9 +101,10 @@ extern void clr_Tabs();
 extern void reset_Tty();
 extern void save_Tty();
 
-extern void (*norml_sig)(), (*abort_sig)();
-extern void abort_RT();
-extern void intr_sig();
+extern void (*norml_sig)(int);
+extern void (*abort_sig)(int);
+extern void abort_RT(int);
+extern void intr_sig(int);
 
 /* proper prototype */
 extern void prntScr(const char *, ...);

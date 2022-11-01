@@ -26,7 +26,7 @@
 typedef struct {
     TkWindow *grabWinPtr;	/* Window that defines the top of the grab
 				 * tree in a global grab. */
-    int lastState;		/* Last known state flags. */
+    unsigned lastState;		/* Last known state flags. */
     XPoint lastPos;		/* Last reported mouse position. */
     TkWindow *lastWinPtr;	/* Last reported mouse window. */
     TkWindow *restrictWinPtr;	/* Window to which all mouse events will be
@@ -225,8 +225,9 @@ Tk_UpdatePointer(
     TkWindow *targetWinPtr;
     XPoint pos;
     XEvent event;
-    int changes = (state ^ tsdPtr->lastState) & ALL_BUTTONS;
-    int type, b, mask;
+    unsigned changes = (state ^ tsdPtr->lastState) & ALL_BUTTONS;
+    int type, b;
+    unsigned mask;
 
     pos.x = x;
     pos.y = y;
@@ -494,7 +495,7 @@ TkPointerDeadWindow(
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (winPtr == tsdPtr->lastWinPtr) {
-	tsdPtr->lastWinPtr = NULL;
+	tsdPtr->lastWinPtr = TkGetContainer(winPtr);
     }
     if (winPtr == tsdPtr->grabWinPtr) {
 	tsdPtr->grabWinPtr = NULL;
@@ -591,47 +592,6 @@ XDefineCursor(
     }
     display->request++;
     return Success;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TkGenerateActivateEvents --
- *
- *	This function is called by the Mac and Windows window manager routines
- *	when a toplevel window is activated or deactivated.
- *	Activate/Deactivate events will be sent to every subwindow of the
- *	toplevel followed by a FocusIn/FocusOut message.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Generates X events.
- *
- *----------------------------------------------------------------------
- */
-
-void
-TkGenerateActivateEvents(
-    TkWindow *winPtr,		/* Toplevel to activate. */
-    int active)			/* Non-zero if the window is being activated,
-				 * else 0.*/
-{
-    XEvent event;
-
-    /*
-     * Generate Activate and Deactivate events. This event is sent to every
-     * subwindow in a toplevel window.
-     */
-
-    event.xany.serial = winPtr->display->request++;
-    event.xany.send_event = False;
-    event.xany.display = winPtr->display;
-    event.xany.window = winPtr->window;
-
-    event.xany.type = active ? ActivateNotify : DeactivateNotify;
-    TkQueueEventForAllChildren(winPtr, &event);
 }
 
 /*

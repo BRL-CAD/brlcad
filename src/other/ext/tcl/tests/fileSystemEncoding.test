@@ -7,8 +7,11 @@ if {[string equal $::tcl_platform(os) "Windows NT"]} {
 }
 
 namespace eval ::tcl::test::fileSystemEncoding {
-    package require tcltest 2
-    namespace import ::tcltest::*
+
+    if {"::tcltest" ni [namespace children]} {
+	package require tcltest 2.5
+	namespace import -force ::tcltest::*
+    }
 
     variable fname1 \u767b\u9e1b\u9d72\u6a13
 
@@ -39,7 +42,7 @@ namespace eval ::tcl::test::fileSystemEncoding {
 	set globbed [lindex [glob -directory $dir *] 0]
 	encoding system utf-8
 	set res [file exists $globbed]
-	encoding system iso8859-1 
+	encoding system iso8859-1
 	lappend res [file exists $globbed]
 	return $res
     } -cleanup {

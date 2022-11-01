@@ -174,7 +174,7 @@ timeTable_singleProcess(struct application *app, fastf_t **timeTable, fastf_t *t
     return timeColor;
 }
 
-#ifndef RT_TXT_OUTPUT
+
 /**
  * This function takes the contents of the time table, and produces the
  * heat graph based on time taken for each pixel.
@@ -263,7 +263,7 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), struct f
       (void)fb_view(fbp, width/2, height/2, zoomH, zoomW);
     }
 }
-#endif
+
 
 /*
  * Local Variables:

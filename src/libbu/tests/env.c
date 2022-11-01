@@ -33,16 +33,29 @@ main(int UNUSED(ac), char *av[])
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(av[0]);
 
-    int ec = 0;
-    unsigned long long all_mem = bu_mem(BU_MEM_ALL, &ec);
-    if (ec)
+    ssize_t all_mem = bu_mem(BU_MEM_ALL, NULL);
+    if (all_mem < 0)
 	return -1;
-    unsigned long long avail_mem = bu_mem(BU_MEM_AVAIL, &ec);
-    if (ec)
-	return -1;
-    unsigned long long page_mem = bu_mem(BU_MEM_PAGE_SIZE, &ec);
-    if (ec)
-	return -1;
+    ssize_t avail_mem = bu_mem(BU_MEM_AVAIL, NULL);
+    if (avail_mem < 0)
+	return -2;
+    ssize_t page_mem = bu_mem(BU_MEM_PAGE_SIZE, NULL);
+    if (page_mem < 0)
+	return -3;
+
+    /* make sure passing works too */
+    size_t all_mem2 = 0;
+    size_t avail_mem2 = 0;
+    size_t page_mem2 = 0;
+    (void)bu_mem(BU_MEM_ALL, &all_mem2);
+    if (all_mem2 != (size_t)all_mem)
+	return -4;
+    (void)bu_mem(BU_MEM_AVAIL, &avail_mem2);
+    if (avail_mem2 != (size_t)avail_mem)
+	return -5;
+    (void)bu_mem(BU_MEM_PAGE_SIZE, &page_mem2);
+    if (page_mem2 != (size_t)page_mem)
+	return -6;
 
     char all_buf[6] = {'\0'};
     char avail_buf[6] = {'\0'};
@@ -51,7 +64,7 @@ main(int UNUSED(ac), char *av[])
     bu_humanize_number(avail_buf, 5, avail_mem, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
     bu_humanize_number(p_buf, 5, page_mem, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
 
-    bu_log("MEM report: all: %s(%llu) avail: %s(%llu) page_size: %s(%llu)\n",
+    bu_log("MEM report: all: %s(%zd) avail: %s(%zd) page_size: %s(%zd)\n",
 	    all_buf, all_mem,
 	    avail_buf, avail_mem,
 	    p_buf, page_mem);

@@ -753,7 +753,8 @@ This command returns an empty string.
 \fIpathName \fBmoveto \fItagOrId xPos yPos\fR
 .VS 8.6
 Move the items given by \fItagOrId\fR in the canvas coordinate
-space so that the first coordinate pair of the bottommost item with
+space so that the first coordinate pair (the upper-left corner of the
+bounding box) of the first item (the lowest in the display list) with
 tag \fItagOrId\fR is located at
 position (\fIxPos\fR,\fIyPos\fR). \fIxPos\fR and \fIyPos\fR may be
 the empty string, in which case the corresponding coordinate
@@ -1122,7 +1123,7 @@ becomes visible; if it is positive then information farther to the right
 becomes visible.
 .RE
 .TP
-\fIpathName \fByview \fI?args\fR?
+\fIpathName \fByview ?\fIargs\fR?
 .
 This command is used to query and change the vertical position of the
 information displayed in the canvas's window.
@@ -1523,6 +1524,12 @@ ends of the line.
 \fBlast\fR (for an arrowhead at the last point of the line), or
 \fBboth\fR (for arrowheads at both ends).
 This option defaults to \fBnone\fR.
+When requested to draw an arrowhead, Tk internally adjusts the corresponding
+line end point so that the rendered line ends at the neck of the arrowhead
+rather than at its tip so that the line doesn't extend past the edge of the
+arrowhead. This may trigger a \fBLeave\fR event if the mouse is hovering this
+line end. Conversely, when removing an arrowhead Tk adjusts the corresponding
+line point the other way round, which may trigger an \fBEnter\fR event.
 .TP
 \fB\-arrowshape \fIshape\fR
 This option indicates how to draw arrowheads.

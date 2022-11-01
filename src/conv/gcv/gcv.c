@@ -82,7 +82,7 @@ fmt_fun(struct bu_vls *UNUSED(msgs), size_t argc, const char **argv, void *set_v
 	equal_pos = strchr(arg, '=');
 	bu_vls_sprintf(&cmp_arg, "%s", arg);
 	if (equal_pos)
-	    bu_vls_trunc(&cmp_arg, -1 * strlen(equal_pos));
+	    bu_vls_trunc(&cmp_arg, (int)strlen(equal_pos) * -1);
 
 	while (((d->shortopt && strlen(d->shortopt) > 0) || (d->longopt && strlen(d->longopt) > 0)) && !in_desc) {
 	    if (BU_STR_EQUAL(bu_vls_addr(&cmp_arg), d->shortopt) || BU_STR_EQUAL(bu_vls_addr(&cmp_arg), d->longopt)) {
@@ -158,7 +158,7 @@ extract_format_prefix(struct bu_vls *format, const char *input)
     if (colon_pos) {
 	int ret = 0;
 	bu_vls_sprintf(&wformat, "%s", input);
-	bu_vls_trunc(&wformat, -1 * strlen(colon_pos));
+	bu_vls_trunc(&wformat, (int)strlen(colon_pos) * -1);
 	/* Note: because Windows supports drive letters in the form {drive}: in
 	 * paths, we can't use single characters as format specifiers for the
 	 * {format}: prefix - they must be multi-character. */
@@ -373,6 +373,9 @@ do_conversion(
     const struct gcv_filter *in_filter = NULL, *out_filter = NULL;
 
     for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
+	if (!entry || !*entry)
+	    break;
+
 	bu_mime_model_t emt = (*entry)->mime_type;
 	if ((*entry)->filter_type == GCV_FILTER_READ) {
 	    if (!in_filter && (emt != BU_MIME_MODEL_AUTO) && (emt == in_type))

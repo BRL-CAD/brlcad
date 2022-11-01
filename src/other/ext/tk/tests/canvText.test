@@ -11,6 +11,9 @@ namespace import ::tcltest::*
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
 
+testConstraint failsOnUbuntu [expr {![info exists ::env(CI)] || ![string match Linux $::tcl_platform(os)]}]
+testConstraint failsOnXQuarz [expr {$tcl_platform(os) ne "Darwin" || [tk windowingsystem] ne "x11" }]
+
 # Canvas used in 1.* - 17.* tests
 canvas .c -width 400 -height 300 -bd 2 -relief sunken
 pack .c
@@ -803,6 +806,25 @@ test canvText-14.6 {select clear errors} -setup {
 } -cleanup {
     .c delete test
 } -returnCodes error -result "wrong \# args: should be \".c select clear\""
+test canvText-14.7 {GetTextIndex procedure: pixel index with non-default scrollregion} -setup {
+    canvas .cc
+    .cc create text 50 80 -tag test -text Hello -anchor nw -font "Arial 30"
+    foreach {xmin ymin xmax ymax} [.cc bbox test] {}
+} -body {
+    # default -scrollregion
+    set res [.cc index test @$xmin,$ymin]
+    lappend res [.cc index test @$xmax,$ymax]
+    # -scrollregion with positive upper left corner
+    .cc configure -scrollregion {50 50 700 900}
+    lappend res [.cc index test @$xmin,$ymin]
+    lappend res [.cc index test @$xmax,$ymax]
+    # -scrollregion with negative upper left corner
+    .cc configure -scrollregion {-100 -100 700 900}
+    lappend res [.cc index test @$xmin,$ymin]
+    lappend res [.cc index test @$xmax,$ymax]
+} -cleanup {
+    destroy .cc
+} -result {0 5 0 5 0 5}
 
 test canvText-15.1 {SetTextCursor procedure} -setup {
     .c create text 0 0 -tag test
@@ -921,7 +943,7 @@ test canvText-19.1 {patch 1006286, leading space caused wrap under Win32} -setup
     destroy .c
 } -result {{Yeah } Yeah- 4 4}
 
-test canvText-20.1 {angled text bounding box} -setup {
+test canvText-20.1 {angled text bounding box} -constraints {failsOnUbuntu failsOnXQuarz} -setup {
     destroy .c
     canvas .c
     proc transpose {bbox} {
@@ -944,6 +966,20 @@ test canvText-20.1 {angled text bounding box} -setup {
     destroy .c
     rename transpose {}
 } -result {ok ok ok}
+
+test canvText-20.2 {crash on angled text selection (X11, without xft) - bug 2712f43f6e} -setup {
+    destroy .c
+    canvas .c -background bisque -selectforeground green2
+    grid .c
+    set id [.c create text 50 150 -anchor w -text "Angled text" \
+	    -angle 30 -font {Helvetica 32} -fill darkblue]
+} -body {
+    .c select clear
+    .c select from $id 0
+    .c select to $id 8 ; update    ;  # used to crash on X11 (--disable-xft build only)
+} -cleanup {
+    destroy .c
+} -result {}
 
 # cleanup
 cleanupTests

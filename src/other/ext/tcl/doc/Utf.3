@@ -141,8 +141,8 @@ source buffer is long enough such that this routine does not run off the
 end and dereference non-existent or random memory; if the source buffer
 is known to be null-terminated, this will not happen.  If the input is
 not in proper UTF-8 format, \fBTcl_UtfToUniChar\fR will store the first
-byte of \fIsrc\fR in \fI*chPtr\fR as a Tcl_UniChar between 0x0000 and
-0x00ff and return 1.
+byte of \fIsrc\fR in \fI*chPtr\fR as a Tcl_UniChar between 0x80 and
+0xFF and return 1.
 .PP
 \fBTcl_UniCharToUtfDString\fR converts the given Unicode string
 to UTF-8, storing the result in a previously initialized \fBTcl_DString\fR.
@@ -197,10 +197,10 @@ characters.
 .PP
 \fBTcl_UtfCharComplete\fR returns 1 if the source UTF-8 string \fIsrc\fR
 of \fIlength\fR bytes is long enough to be decoded by
-\fBTcl_UtfToUniChar\fR, or 0 otherwise.  This function does not guarantee
-that the UTF-8 string is properly formed.  This routine is used by
-procedures that are operating on a byte at a time and need to know if a
-full Tcl_UniChar has been seen.
+\fBTcl_UtfToUniChar\fR/\fBTcl_UtfNext\fR, or 0 otherwise.  This function
+does not guarantee that the UTF-8 string is properly formed.  This routine
+is used by procedures that are operating on a byte at a time and need to
+know if a full Tcl_UniChar has been seen.
 .PP
 \fBTcl_NumUtfChars\fR corresponds to \fBstrlen\fR for UTF-8 strings.  It
 returns the number of Tcl_UniChars that are represented by the UTF-8 string
@@ -221,15 +221,30 @@ Given \fIsrc\fR, a pointer to some location in a UTF-8 string,
 \fBTcl_UtfNext\fR returns a pointer to the next UTF-8 character in the
 string.  The caller must not ask for the next character after the last
 character in the string if the string is not terminated by a null
-character.
+character. \fBTcl_UtfCharComplete\fR can be used in that case to
+make sure enough bytes are available before calling \fBTcl_UtfNext\fR.
 .PP
-Given \fIsrc\fR, a pointer to some location in a UTF-8 string (or to a
-null byte immediately following such a string), \fBTcl_UtfPrev\fR
-returns a pointer to the closest preceding byte that starts a UTF-8
-character.
-This function will not back up to a position before \fIstart\fR,
-the start of the UTF-8 string.  If \fIsrc\fR was already at \fIstart\fR, the
-return value will be \fIstart\fR.
+\fBTcl_UtfPrev\fR is used to step backward through but not beyond the
+UTF-8 string that begins at \fIstart\fR.  If the UTF-8 string is made
+up entirely of complete and well-formed characters, and \fIsrc\fR points
+to the lead byte of one of those characters (or to the location one byte
+past the end of the string), then repeated calls of \fBTcl_UtfPrev\fR will
+return pointers to the lead bytes of each character in the string, one
+character at a time, terminating when it returns \fIstart\fR.
+.PP
+When the conditions of completeness and well-formedness may not be satisfied,
+a more precise description of the function of \fBTcl_UtfPrev\fR is necessary.
+It always returns a pointer greater than or equal to \fIstart\fR; that is,
+always a pointer to a location in the string. It always returns a pointer to
+a byte that begins a character when scanning for characters beginning
+from \fIstart\fR. When \fIsrc\fR is greater than \fIstart\fR, it
+always returns a pointer less than \fIsrc\fR and greater than or
+equal to (\fIsrc\fR - \fBTCL_UTF_MAX\fR).  The character that begins
+at the returned pointer is the first one that either includes the
+byte \fIsrc[-1]\fR, or might include it if the right trail bytes are
+present at \fIsrc\fR and greater. \fBTcl_UtfPrev\fR never reads the
+byte \fIsrc[0]\fR nor the byte \fIstart[-1]\fR nor the byte
+\fIsrc[-\fBTCL_UTF_MAX\fI-1]\fR.
 .PP
 \fBTcl_UniCharAtIndex\fR corresponds to a C string array dereference or the
 Pascal Ord() function.  It returns the Tcl_UniChar represented at the
@@ -240,7 +255,7 @@ characters.  Behavior is undefined if a negative \fIindex\fR is given.
 \fBTcl_UtfAtIndex\fR returns a pointer to the specified character (not
 byte) \fIindex\fR in the UTF-8 string \fIsrc\fR.  The source string must
 contain at least \fIindex\fR characters.  This is equivalent to calling
-\fBTcl_UtfNext\fR \fIindex\fR times.  If a negative \fIindex\fR is given,
+\fBTcl_UtfToUniChar\fR \fIindex\fR times.  If a negative \fIindex\fR is given,
 the return pointer points to the first character in the source string.
 .PP
 \fBTcl_UtfBackslash\fR is a utility procedure used by several of the Tcl

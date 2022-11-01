@@ -116,6 +116,10 @@ TCLAPI void		Tcl_ClassSetDestructor(Tcl_Interp *interp,
 /* 28 */
 TCLAPI Tcl_Obj *	Tcl_GetObjectName(Tcl_Interp *interp,
 				Tcl_Object object);
+/* Slot 29 is reserved */
+/* Slot 30 is reserved */
+/* 31 */
+TCLAPI void		TclOOUnusedStubEntry(void);
 
 typedef struct {
     const struct TclOOIntStubs *tclOOIntStubs;
@@ -154,6 +158,9 @@ typedef struct TclOOStubs {
     void (*tcl_ClassSetConstructor) (Tcl_Interp *interp, Tcl_Class clazz, Tcl_Method method); /* 26 */
     void (*tcl_ClassSetDestructor) (Tcl_Interp *interp, Tcl_Class clazz, Tcl_Method method); /* 27 */
     Tcl_Obj * (*tcl_GetObjectName) (Tcl_Interp *interp, Tcl_Object object); /* 28 */
+    void (*reserved29)(void);
+    void (*reserved30)(void);
+    void (*tclOOUnusedStubEntry) (void); /* 31 */
 } TclOOStubs;
 
 extern const TclOOStubs *tclOOStubsPtr;
@@ -226,9 +233,15 @@ extern const TclOOStubs *tclOOStubsPtr;
 	(tclOOStubsPtr->tcl_ClassSetDestructor) /* 27 */
 #define Tcl_GetObjectName \
 	(tclOOStubsPtr->tcl_GetObjectName) /* 28 */
+/* Slot 29 is reserved */
+/* Slot 30 is reserved */
+#define TclOOUnusedStubEntry \
+	(tclOOStubsPtr->tclOOUnusedStubEntry) /* 31 */
 
 #endif /* defined(USE_TCLOO_STUBS) */
 
 /* !END!: Do not edit above this line. */
+
+#undef TclOOUnusedStubEntry
 
 #endif /* _TCLOODECLS */

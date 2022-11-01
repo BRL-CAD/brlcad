@@ -1,6 +1,8 @@
 # Common build directories used in the source tree
 /build
 /.build
+/*_build
+/*-build
 /out
 
 # Temporary files

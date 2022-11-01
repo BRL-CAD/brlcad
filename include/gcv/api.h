@@ -209,6 +209,12 @@ struct gcv_plugin {
  */
 GCV_EXPORT const struct bu_ptbl *gcv_list_filters(struct gcv_context *context);
 
+/* Returns a pointer to a gcv_filter if it exists within the registered filters
+  * returns NULL if no matching filter can be found
+  */
+ GCV_EXPORT const struct gcv_filter*
+ find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type, const char *data, struct gcv_context *context);
+ 
 /**
  * Perform a filtering operation on a gcv_context.
  *

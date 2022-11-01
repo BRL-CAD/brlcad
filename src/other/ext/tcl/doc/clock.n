@@ -465,43 +465,43 @@ a Daylight Saving Time change skips over that time, or an ambiguous
 time because a Daylight Saving Time change skips back so that the clock
 observes the given time twice, and no time zone specifier (\fB%z\fR
 or \fB%Z\fR) is present in the format, the time is interpreted as
-if the clock had not changed. 
+if the clock had not changed.
 .SH "FORMAT GROUPS"
 .PP
 The following format groups are recognized by the \fBclock scan\fR and
 \fBclock format\fR commands.
 .TP
 \fB%a\fR
-On output, receives an abbreviation (\fIe.g.,\fR \fBMon\fR) for the day
+On output, produces an abbreviation (\fIe.g.,\fR \fBMon\fR) for the day
 of the week in the given locale.  On input, matches the name of the day
 of the week in the given locale (in either abbreviated or full form, or
 any unique prefix of either form).
 .TP
 \fB%A\fR
-On output, receives the full name (\fIe.g.,\fR \fBMonday\fR) of the day
+On output, produces the full name (\fIe.g.,\fR \fBMonday\fR) of the day
 of the week in the given locale.  On input, matches the name of the day
 of the week in the given locale (in either abbreviated or full form, or
 any unique prefix of either form).
 .TP
 \fB%b\fR
-On output, receives an abbreviation (\fIe.g.,\fR \fBJan\fR) for the name
+On output, produces an abbreviation (\fIe.g.,\fR \fBJan\fR) for the name
 of the month in the given locale.  On input, matches the name of the month
 in the given locale (in either abbreviated or full form, or
 any unique prefix of either form).
 .TP
 \fB%B\fR
-On output, receives the full name (\fIe.g.,\fR \fBJanuary\fR)
+On output, produces the full name (\fIe.g.,\fR \fBJanuary\fR)
 of the month in the given locale.  On input, matches the name of the month
 in the given locale (in either abbreviated or full form, or
 any unique prefix of either form).
 .TP
 \fB%c\fR
-On output, receives a localized representation of date and time of day;
+On output, produces a localized representation of date and time of day;
 the localized representation is expected to use the Gregorian calendar.
 On input, matches whatever \fB%c\fR produces.
 .TP
 \fB%C\fR
-On output, receives the number of the century in Indo-Arabic numerals.
+On output, produces the number of the century in Indo-Arabic numerals.
 On input, matches one or two digits, possibly with leading whitespace,
 that are expected to be the number of the century.
 .TP
@@ -824,7 +824,7 @@ the minus sign one west of Greenwich.
 A time zone string conforming to the Posix specification of the \fBTZ\fR
 environment variable will be recognized.  The specification
 may be found at
-\fIhttp://www.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap08.html\fR.
+\fIhttps://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap08.html\fR.
 .PP
 If the Posix time zone string contains a DST (Daylight Savings Time)
 part, but doesn't contain a rule stating when DST starts or ends,
@@ -848,7 +848,7 @@ to use it as a location name, as above.
 .SH "LOCALIZATION"
 .PP
 Developers wishing to localize the date and time formatting and parsing
-are referred to \fIhttp://tip.tcl.tk/173\fR for a
+are referred to \fIhttps://tip.tcl-lang.org/173\fR for a
 specification.
 .SH "FREE FORM SCAN"
 .PP
@@ -913,9 +913,10 @@ An ISO 8601 point-in-time specification, such as
 where \fBT\fR is the literal
 .QW T ,
 .QW "\fICCyymmdd hhmmss\fR" ,
+.QW \fICCyymmdd\fBT\fIhh:mm:ss\fR ,
 or
-.QW \fICCyymmdd\fBT\fIhh:mm:ss\fR .
-Note that only these three formats are accepted.
+.QW \fICCyy-mm-dd\fBT\fIhh:mm:ss\fR.
+Note that only these four formats are accepted.
 The command does \fInot\fR accept the full range of point-in-time
 specifications specified in ISO8601.  Other formats can be recognized by
 giving an explicit \fB\-format\fR option to the \fBclock scan\fR command.
@@ -945,7 +946,7 @@ msgcat(n)
 .SH KEYWORDS
 clock, date, time
 .SH "COPYRIGHT"
-Copyright (c) 2004 Kevin B. Kenny <kennykb@acm.org>. All rights reserved.
+Copyright \(co 2004 Kevin B. Kenny <kennykb@acm.org>. All rights reserved.
 '\" Local Variables:
 '\" mode: nroff
 '\" End:

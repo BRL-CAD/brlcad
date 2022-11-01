@@ -67,12 +67,12 @@ Tk_ParseArgv(
     int flags)			/* Or'ed combination of various flag bits,
 				 * such as TK_ARGV_NO_DEFAULTS. */
 {
-    register const Tk_ArgvInfo *infoPtr;
+    const Tk_ArgvInfo *infoPtr;
 				/* Pointer to the current entry in the table
 				 * of argument descriptions. */
     const Tk_ArgvInfo *matchPtr;/* Descriptor that matches current argument. */
     const char *curArg;		/* Current argument */
-    register char c;		/* Second character of current arg (used for
+    char c;		/* Second character of current arg (used for
 				 * quick check for matching; use 2nd char.
 				 * because first char. will almost always be
 				 * '-'). */
@@ -338,7 +338,7 @@ PrintUsage(
 				 * this word, then don't generate information
 				 * for default options. */
 {
-    register const Tk_ArgvInfo *infoPtr;
+    const Tk_ArgvInfo *infoPtr;
     size_t width, i, numSpaces;
     Tcl_Obj *message;
 

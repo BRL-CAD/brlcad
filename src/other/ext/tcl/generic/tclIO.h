@@ -44,7 +44,7 @@ typedef struct ChannelBuffer {
     int bufLength;		/* How big is the buffer? */
     struct ChannelBuffer *nextPtr;
     				/* Next buffer in chain. */
-    char buf[1];		/* Placeholder for real buffer. The real
+    char buf[TCLFLEXARRAY];		/* Placeholder for real buffer. The real
 				 * buffer occuppies this space + bufSize-1
 				 * bytes. This must be the last field in the
 				 * structure. */

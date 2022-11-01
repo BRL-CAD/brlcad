@@ -77,15 +77,13 @@ _line_cmd_create(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    BU_GET(s, struct bv_scene_obj);
-    s->s_v = gd->cv;
+    s = bv_obj_get(gd->cv, BV_VIEW_OBJS);
     BU_LIST_INIT(&(s->s_vlist));
 
     BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p, BV_VLIST_LINE_MOVE);
 
     bu_vls_init(&s->s_uuid);
     bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
-    bu_ptbl_ins(gd->cv->gv_objs.view_objs, (long *)s);
 
     return BRLCAD_OK;
 }

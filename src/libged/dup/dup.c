@@ -170,51 +170,55 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    bu_vls_trunc(&gedp->ged_wdbp->wdb_prestr, 0);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    bu_vls_trunc(&wdbp->wdb_prestr, 0);
     if (argc == 3)
-	(void)bu_vls_strcpy(&gedp->ged_wdbp->wdb_prestr, argv[2]);
+	(void)bu_vls_strcpy(&wdbp->wdb_prestr, argv[2]);
 
-    gedp->ged_wdbp->wdb_num_dups = 0;
+    wdbp->wdb_num_dups = 0;
     if (db_version(gedp->dbip) < 5) {
-	if ((gedp->ged_wdbp->wdb_ncharadd = bu_vls_strlen(&gedp->ged_wdbp->wdb_prestr)) > 12) {
-	    gedp->ged_wdbp->wdb_ncharadd = 12;
-	    bu_vls_trunc(&gedp->ged_wdbp->wdb_prestr, 12);
+	if ((wdbp->wdb_ncharadd = bu_vls_strlen(&wdbp->wdb_prestr)) > 12) {
+	    wdbp->wdb_ncharadd = 12;
+	    bu_vls_trunc(&wdbp->wdb_prestr, 12);
 	}
     } else {
-	gedp->ged_wdbp->wdb_ncharadd = bu_vls_strlen(&gedp->ged_wdbp->wdb_prestr);
+	wdbp->wdb_ncharadd = bu_vls_strlen(&wdbp->wdb_prestr);
     }
 
     /* open the input file */
     if ((newdbp = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[1]);
 	bu_vls_printf(gedp->ged_result_str, "dup: Cannot open geometry database file %s", argv[1]);
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
 
     bu_vls_printf(gedp->ged_result_str,
 		  "\n*** Comparing %s with %s for duplicate names\n",
 		  gedp->dbip->dbi_filename, argv[1]);
-    if (gedp->ged_wdbp->wdb_ncharadd) {
+    if (wdbp->wdb_ncharadd) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "  For comparison, all names in %s were prefixed with: %s\n",
-		      argv[1], bu_vls_addr(&gedp->ged_wdbp->wdb_prestr));
+		      argv[1], bu_vls_addr(&wdbp->wdb_prestr));
     }
 
     /* Get array to hold names of duplicates */
     if ((dirp0 = _ged_getspace(gedp->dbip, 0)) == (struct directory **) 0) {
 	bu_vls_printf(gedp->ged_result_str, "f_dup: unable to get memory\n");
+	wdb_close(wdbp);
 	db_close(newdbp);
 	return BRLCAD_ERROR;
     }
 
     /* Scan new database for overlaps */
     dcs.main_dbip = gedp->dbip;
-    dcs.wdbp = gedp->ged_wdbp;
+    dcs.wdbp = wdbp;
     dcs.dup_dirp = dirp0;
     if (db_version(newdbp) < 5) {
 	if (db_scan(newdbp, dup_dir_check, 0, (void *)&dcs) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "dup: db_scan failure");
 	    bu_free((void *)dirp0, "_ged_getspace array");
+	    wdb_close(wdbp);
 	    db_close(newdbp);
 	    return BRLCAD_ERROR;
 	}
@@ -222,6 +226,7 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 	if (db5_scan(newdbp, dup_dir_check5, (void *)&dcs) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "dup: db_scan failure");
 	    bu_free((void *)dirp0, "_ged_getspace array");
+	    wdb_close(wdbp);
 	    db_close(newdbp);
 	    return BRLCAD_ERROR;
 	}
@@ -229,8 +234,9 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
     rt_mempurge(&(newdbp->dbi_freep));        /* didn't really build a directory */
 
     _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dcs.dup_dirp - dirp0), 0, 0);
-    bu_vls_printf(gedp->ged_result_str, "\n -----  %d duplicate names found  -----", gedp->ged_wdbp->wdb_num_dups);
+    bu_vls_printf(gedp->ged_result_str, "\n -----  %d duplicate names found  -----", wdbp->wdb_num_dups);
     bu_free((void *)dirp0, "_ged_getspace array");
+    wdb_close(wdbp);
     db_close(newdbp);
 
     return BRLCAD_OK;

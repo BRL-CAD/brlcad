@@ -2068,7 +2068,7 @@ ParseLexeme(
 	} else {
 	    char utfBytes[TCL_UTF_MAX];
 
-	    memcpy(utfBytes, start, (size_t) numBytes);
+	    memcpy(utfBytes, start, numBytes);
 	    utfBytes[numBytes] = '\0';
 	    scanned = TclUtfToUniChar(utfBytes, &ch);
 	}
@@ -2424,8 +2424,8 @@ CompileExprTree(
 	    if (optimize) {
 		int length;
 		const char *bytes = TclGetStringFromObj(literal, &length);
-		int index = TclRegisterNewLiteral(envPtr, bytes, length);
-		Tcl_Obj *objPtr = TclFetchLiteral(envPtr, index);
+		int idx = TclRegisterNewLiteral(envPtr, bytes, length);
+		Tcl_Obj *objPtr = TclFetchLiteral(envPtr, idx);
 
 		if ((objPtr->typePtr == NULL) && (literal->typePtr != NULL)) {
 		    /*
@@ -2438,22 +2438,22 @@ CompileExprTree(
 		     * However, the design of the "global" and "local"
 		     * LiteralTable does not permit the value of lePtr->objPtr
 		     * to change. So rather than replace lePtr->objPtr, we do
-		     * surgery to transfer our desired intrep into it.
+		     * surgery to transfer our desired internalrep into it.
 		     */
 
 		    objPtr->typePtr = literal->typePtr;
 		    objPtr->internalRep = literal->internalRep;
 		    literal->typePtr = NULL;
 		}
-		TclEmitPush(index, envPtr);
+		TclEmitPush(idx, envPtr);
 	    } else {
 		/*
 		 * When optimize==0, we know the expression is a one-off and
 		 * there's nothing to be gained from sharing literals when
 		 * they won't live long, and the copies we have already have
-		 * an appropriate intrep. In this case, skip literal
+		 * an appropriate internalrep. In this case, skip literal
 		 * registration that would enable sharing, and use the routine
-		 * that preserves intreps.
+		 * that preserves internalreps.
 		 */
 
 		TclEmitPush(TclAddLiteralObj(envPtr, literal, NULL), envPtr);
@@ -2471,7 +2471,7 @@ CompileExprTree(
 
 		if (ExecConstantExprTree(interp, nodes, next, litObjvPtr)
 			== TCL_OK) {
-		    int index;
+		    int idx;
 		    Tcl_Obj *objPtr = Tcl_GetObjResult(interp);
 
 		    /*
@@ -2482,13 +2482,13 @@ CompileExprTree(
 		    if (objPtr->bytes) {
 			Tcl_Obj *tableValue;
 
-			index = TclRegisterNewLiteral(envPtr, objPtr->bytes,
+			idx = TclRegisterNewLiteral(envPtr, objPtr->bytes,
 				objPtr->length);
-			tableValue = TclFetchLiteral(envPtr, index);
+			tableValue = TclFetchLiteral(envPtr, idx);
 			if ((tableValue->typePtr == NULL) &&
 				(objPtr->typePtr != NULL)) {
 			    /*
-			     * Same intrep surgery as for OT_LITERAL.
+			     * Same internalrep surgery as for OT_LITERAL.
 			     */
 
 			    tableValue->typePtr = objPtr->typePtr;
@@ -2496,9 +2496,9 @@ CompileExprTree(
 			    objPtr->typePtr = NULL;
 			}
 		    } else {
-			index = TclAddLiteralObj(envPtr, objPtr, NULL);
+			idx = TclAddLiteralObj(envPtr, objPtr, NULL);
 		    }
-		    TclEmitPush(index, envPtr);
+		    TclEmitPush(idx, envPtr);
 		} else {
 		    TclCompileSyntaxError(interp, envPtr);
 		}
@@ -2689,7 +2689,7 @@ TclVariadicOpCmd(
 	Tcl_Obj *const *litObjPtrPtr = litObjv;
 
 	if (lexeme == EXPON) {
-	    litObjv[1] = Tcl_NewIntObj(occdPtr->i.identity);
+	    TclNewIntObj(litObjv[1], occdPtr->i.identity);
 	    Tcl_IncrRefCount(litObjv[1]);
 	    decrMe = 1;
 	    litObjv[0] = objv[1];
@@ -2705,7 +2705,7 @@ TclVariadicOpCmd(
 	    if (lexeme == DIVIDE) {
 		litObjv[0] = Tcl_NewDoubleObj(1.0);
 	    } else {
-		litObjv[0] = Tcl_NewIntObj(occdPtr->i.identity);
+		TclNewIntObj(litObjv[0], occdPtr->i.identity);
 	    }
 	    Tcl_IncrRefCount(litObjv[0]);
 	    litObjv[1] = objv[1];

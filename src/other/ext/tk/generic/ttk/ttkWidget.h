@@ -111,8 +111,8 @@ MODULE_SCOPE int TtkWidgetConstructorObjCmd(
 
 /* WIDGET_TAKEFOCUS_TRUE --
  * WIDGET_TAKEFOCUS_FALSE --
- *	Add one or the other of these to each OptionSpecs table 
- *	to indicate whether the widget should take focus 
+ *	Add one or the other of these to each OptionSpecs table
+ *	to indicate whether the widget should take focus
  *	during keyboard traversal.
  */
 #define WIDGET_TAKEFOCUS_TRUE \

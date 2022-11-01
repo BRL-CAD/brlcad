@@ -10,8 +10,7 @@
  * [style map].
  */
 
-#include <string.h>
-#include <tk.h>
+#include "tkInt.h"
 #include "ttkTheme.h"
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))

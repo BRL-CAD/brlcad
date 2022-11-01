@@ -43,3 +43,4 @@ model/vnd.gift					cg comgeom
 model/vnd.intaval				tgf
 model/vnd.rhino					3dm
 model/vnd.gdal					gdal dem dted tif tiff
+model/vnd.assimp				assimp

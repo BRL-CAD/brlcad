@@ -324,7 +324,7 @@ test scale-2.1 {Tk_ScaleCmd procedure} -body {
     scale
 } -returnCodes error -result {wrong # args: should be "scale pathName ?-option value ...?"}
 test scale-2.2 {Tk_ScaleCmd procedure} -body {
-    scale foo 
+    scale foo
 } -returnCodes error -result {bad window path name "foo"}
 test scale-2.3 {Tk_ScaleCmd procedure} -body {
     catch {scale foo}
@@ -1473,17 +1473,18 @@ test scale-20.3 {Bug [2262543fff] - Scale widget unexpectedly fires command call
 test scale-20.4 {Bug [2262543fff] - Scale widget unexpectedly fires command callback, case 4} -setup {
     catch {destroy .s}
     set res {}
-    set commandedVar -1
 } -body {
     scale .s -from 1 -to 50 -command {set commandedVar}
-    .s set 10
     pack .s
+    update idletasks
+    .s set 10
     set timeout [after 500 {set $commandedVar "timeout"}]
+    set commandedVar -1
     vwait commandedVar  ; # -command callback shall fire
     set res [list [.s get] $commandedVar]
 } -cleanup {
-    destroy .s
     after cancel $timeout
+    destroy .s
 } -result {10 10}
 test scale-20.5 {Bug [2262543fff] - Scale widget unexpectedly fires command callback, case 5} -setup {
     catch {destroy .s}
@@ -1492,6 +1493,7 @@ test scale-20.5 {Bug [2262543fff] - Scale widget unexpectedly fires command call
 } -body {
     scale .s -from 1 -to 50
     pack .s
+    update idletasks
     .s set 10
     .s configure -command {set commandedVar}
     update  ; # -command callback shall NOT fire
@@ -1506,6 +1508,7 @@ test scale-20.6 {Bug [2262543fff] - Scale widget unexpectedly fires command call
 } -body {
     scale .s -from 1 -to 50
     pack .s
+    update idletasks
     .s configure -command {set commandedVar}
     .s set 10
     set timeout [after 500 {set $commandedVar "timeout"}]
@@ -1522,6 +1525,7 @@ test scale-20.7 {Bug [2262543fff] - Scale widget unexpectedly fires command call
 } -body {
     scale .s -from 1 -to 50 -command {set commandedVar}
     pack .s
+    update idletasks
     .s set 10
     set timeout [after 500 {set $commandedVar "timeout"}]
     vwait commandedVar  ; # -command callback shall fire
@@ -1538,6 +1542,7 @@ test scale-20.8 {Bug [2262543fff] - Scale widget unexpectedly fires command call
 } -body {
     scale .s -from 1 -to 50 -variable scaleVar -command {set commandedVar}
     pack .s
+    update idletasks
     .s set 10
     set timeout [after 500 {set $commandedVar "timeout"}]
     vwait commandedVar  ; # -command callback shall fire

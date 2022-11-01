@@ -11,6 +11,9 @@ namespace import ::tcltest::*
 tcltest::configure {*}$argv
 tcltest::loadTestedCommands
 
+testConstraint failsOnUbuntu [expr {![info exists ::env(CI)] || ![string match Linux $::tcl_platform(os)]}]
+testConstraint failsOnXQuarz [expr {$tcl_platform(os) ne "Darwin" || [tk windowingsystem] ne "x11" }]
+
 # eatColors --
 # Creates a toplevel window and allocates enough colors in it to
 # use up all the slots in the colormap.
@@ -291,7 +294,7 @@ test winfo-9.2 {"winfo viewable" command} -body {
 test winfo-9.3 {"winfo viewable" command} -body {
     winfo viewable .
 } -result {1}
-test winfo-9.4 {"winfo viewable" command} -body {
+test winfo-9.4 {"winfo viewable" command} -constraints {failsOnUbuntu failsOnXQuarz} -body {
     wm iconify .
     winfo viewable .
 } -cleanup {
@@ -320,7 +323,7 @@ test winfo-9.6 {"winfo viewable" command} -setup {
 } -cleanup {
     deleteWindows
 } -result {0 0}
-test winfo-9.7 {"winfo viewable" command} -setup {
+test winfo-9.7 {"winfo viewable" command} -constraints {failsOnUbuntu failsOnXQuarz} -setup {
     deleteWindows
 } -body {
     frame .f1 -width 100 -height 100 -relief raised -bd 2

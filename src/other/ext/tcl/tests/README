@@ -59,7 +59,7 @@ should correspond to the Tcl or C code file that they are testing.
 For example, the test file for the C file "tclCmdAH.c" is
 "cmdAH.test".  Test files that contain black-box tests may not
 correspond to any Tcl or C code file so they should match the pattern
-"*_bb.test". 
+"*_bb.test".
 
 Be sure your new test file can be run from any working directory.
 
@@ -72,12 +72,12 @@ as well as an installation environment.  If your test file contains
 tests that should not be run in one or more of those cases, please use
 the constraints mechanism to skip those tests.
 
-4. Incompatibilities of package tcltest 2.1 with 
+4. Incompatibilities of package tcltest 2.1 with
    testing machinery of very old versions of Tcl:
 ------------------------------------------------
 
 1) Global variables such as VERBOSE, TESTS, and testConfig of the
-   old machinery correspond to the [configure -verbose], 
+   old machinery correspond to the [configure -verbose],
    [configure -match], and [testConstraint] commands of tcltest 2.1,
    respectively.
 

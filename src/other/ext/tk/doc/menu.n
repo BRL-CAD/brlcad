@@ -40,7 +40,7 @@ top.  If so, it will exist as entry 0 of the menu and the other
 entries will number starting at 1.  The default
 menu bindings arrange for the menu to be torn off when the tear-off
 entry is invoked.
-This option is ignored under Aqua/Mac OS X, where menus cannot
+This option is ignored under Aqua/MacOS, where menus cannot
 be torn off.
 .OP \-tearoffcommand tearOffCommand TearOffCommand
 If this option has a non-empty value, then it specifies a Tcl command
@@ -54,7 +54,7 @@ and menu \fB.x.y\fR is torn off to
 create a new menu \fB.x.tearoff1\fR, then the command
 .QW "\fBa b .x.y .x.tearoff1\fR"
 will be invoked.
-This option is ignored under Aqua/Mac OS X, where menus cannot
+This option is ignored under Aqua/MacOS, where menus cannot
 be torn off.
 .OP \-title title Title
 The string will be used to title the window created when this menu is
@@ -267,7 +267,7 @@ toplevels are automatically appended after all the Tk-defined items and
 a separator. The Window menu on the Mac also allows toggling the
 window into a fullscreen state, and managing a tabbed window interface
 (multiple windows grouped into a single window) if supported by that
-version of the operating system. 
+version of the operating system.
 .PP
 When Tk sees a .menubar.help menu on the Macintosh, the menu's contents
 are appended to the standard Help menu of the user's menubar whenever
@@ -523,8 +523,8 @@ supported by all entry types.
 \fB\-activebackground \fIvalue\fR
 .
 Specifies a background color to use for displaying this entry when it
-is active.
-If this option is specified as an empty string (the default), then the
+is active. This option is ignored on Aqua/MacOS.
+If it is specified as an empty string (the default), then the
 \fB\-activebackground\fR option for the overall menu is used.
 If the \fBtk_strictMotif\fR variable has been set to request strict
 Motif compliance, then this option is ignored and the \fB\-background\fR
@@ -534,7 +534,7 @@ This option is not available for separator or tear-off entries.
 \fB\-activeforeground \fIvalue\fR
 .
 Specifies a foreground color to use for displaying this entry when it
-is active.
+is active.   This option is ignored on Aqua/macOS.
 If this option is specified as an empty string (the default), then the
 \fB\-activeforeground\fR option for the overall menu is used.
 This option is not available for separator or tear-off entries.
@@ -552,7 +552,8 @@ for separator or tear-off entries.
 .
 Specifies a background color to use for displaying this entry when it
 is in the normal state (neither active nor disabled).
-If this option is specified as an empty string (the default), then the
+This option is ignored on Aqua/macOS.
+If it is specified as an empty string (the default), then the
 \fB\-background\fR option for the overall menu is used.
 This option is not available for separator or tear-off entries.
 .TP
@@ -573,7 +574,7 @@ This option is not available for separator or tear-off entries.
 When this option is zero, the entry appears below the previous entry. When
 this option is one, the entry appears at the top of a new column in the
 menu.
-This option is ignored on Aqua/Mac OS X, where menus are always a single
+This option is ignored on Aqua/macOS, where menus are always a single
 column.
 .TP
 \fB\-command \fIvalue\fR
@@ -603,7 +604,8 @@ This option is not available for separator or tear-off entries.
 .
 Specifies a foreground color to use for displaying this entry when it
 is in the normal state (neither active nor disabled).
-If this option is specified as an empty string (the default), then the
+This option is ignored on Aqua/macOS.
+If it is specified as an empty string (the default), then the
 \fB\-foreground\fR option for the overall menu is used.
 This option is not available for separator or tear-off entries.
 .TP

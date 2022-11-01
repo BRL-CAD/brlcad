@@ -23,7 +23,7 @@
 #include "brep.h"
 
 bool
-Get_outer_brep(ON_Brep* brep, int entityno, int shell_orient)
+Get_outer_brep(ON_Brep* brep, size_t entityno, int shell_orient)
 {
     int sol_num;		/* IGES solid type number */
     int no_of_faces;		/* Number of faces in shell */
@@ -66,7 +66,7 @@ Get_outer_brep(ON_Brep* brep, int entityno, int shell_orient)
 struct shell *
 Get_outer_shell(r , entityno , shell_orient)
      struct nmgregion *r;
-     int entityno;
+     size_t entityno;
      int shell_orient;
 {
 

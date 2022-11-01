@@ -127,8 +127,8 @@ Tk_ScrollbarObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])		/* Argument strings. */
 {
-    Tk_Window tkwin = clientData;
-    register TkScrollbar *scrollPtr;
+    Tk_Window tkwin = (Tk_Window)clientData;
+    TkScrollbar *scrollPtr;
     Tk_Window newWin;
 
     if (objc < 2) {
@@ -223,7 +223,7 @@ ScrollbarWidgetObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])		/* Argument strings. */
 {
-    register TkScrollbar *scrollPtr = clientData;
+    TkScrollbar *scrollPtr = (TkScrollbar *)clientData;
     int result = TCL_OK;
     int length, cmdIndex;
     static const char *const commandNames[] = {
@@ -308,7 +308,7 @@ ScrollbarWidgetObjCmd(
 	break;
     }
     case COMMAND_DELTA: {
-	int xDelta, yDelta, pixels, length;
+	int xDelta, yDelta, pixels;
 	double fraction;
 
 	if (objc != 4) {
@@ -337,7 +337,7 @@ ScrollbarWidgetObjCmd(
 	break;
     }
     case COMMAND_FRACTION: {
-	int x, y, pos, length;
+	int x, y, pos;
 	double fraction;
 
 	if (objc != 4) {
@@ -521,7 +521,7 @@ ScrollbarWidgetObjCmd(
 static int
 ConfigureScrollbar(
     Tcl_Interp *interp,		/* Used for error reporting. */
-    register TkScrollbar *scrollPtr,
+    TkScrollbar *scrollPtr,
 				/* Information about widget; may or may not
 				 * already have values for some fields. */
     int objc,			/* Number of valid entries in argv. */
@@ -584,7 +584,7 @@ TkScrollbarEventProc(
     ClientData clientData,	/* Information about window. */
     XEvent *eventPtr)		/* Information about event. */
 {
-    TkScrollbar *scrollPtr = clientData;
+    TkScrollbar *scrollPtr = (TkScrollbar *)clientData;
 
     if ((eventPtr->type == Expose) && (eventPtr->xexpose.count == 0)) {
 	TkScrollbarEventuallyRedraw(scrollPtr);
@@ -649,7 +649,7 @@ static void
 ScrollbarCmdDeletedProc(
     ClientData clientData)	/* Pointer to widget record for widget. */
 {
-    TkScrollbar *scrollPtr = clientData;
+    TkScrollbar *scrollPtr = (TkScrollbar *)clientData;
     Tk_Window tkwin = scrollPtr->tkwin;
 
     /*

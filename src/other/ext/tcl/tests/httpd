@@ -10,12 +10,10 @@
 
 #set httpLog 1
 
-if {$::tcl_platform(os) eq "Darwin"} {
-    # Name resolution often a problem on OSX; not focus of HTTP package anyway
-    set HOST localhost
-} else {
-    set HOST [info hostname]
-}
+# Do not use [info hostname].
+# Name resolution is often a problem on OSX; not focus of HTTP package anyway.
+# Also a problem on other platforms for http-4.14 (test with bad port number).
+set HOST localhost
 
 proc httpd_init {{port 8015}} {
     socket -server httpdAccept $port
@@ -216,7 +214,7 @@ proc httpdRespond { sock } {
     }
 
     # Catch errors from premature client closes
-    
+
     catch {
 	if {$data(proto) == "HEAD"} {
 	    puts $sock "HTTP/1.0 200 OK"

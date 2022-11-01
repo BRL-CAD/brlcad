@@ -240,17 +240,17 @@ TkSelGetSelection(
 
 void
 TkSelPropProc(
-    register XEvent *eventPtr)	/* X PropertyChange event. */
+    XEvent *eventPtr)	/* X PropertyChange event. */
 {
-    register IncrInfo *incrPtr;
-    register TkSelHandler *selPtr;
+    IncrInfo *incrPtr;
+    TkSelHandler *selPtr;
     int length, numItems;
     unsigned long i;
     Atom target, formatType;
     long buffer[TK_SEL_WORDS_AT_ONCE];
     TkDisplay *dispPtr = TkGetDisplay(eventPtr->xany.display);
     Tk_ErrorHandler errorHandler;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
@@ -356,7 +356,7 @@ TkSelPropProc(
 	    ((char *) buffer)[numItems] = 0;
 
 	    errorHandler = Tk_CreateErrorHandler(eventPtr->xproperty.display,
-		    -1, -1, -1, (int (*)()) NULL, NULL);
+		    -1, -1, -1, NULL, NULL);
 
 	    /*
 	     * Encode the data using the proper format for each type.
@@ -449,7 +449,7 @@ TkSelPropProc(
 		if (srcLen > 3) {
 		    Tcl_Panic("selection conversion left too many bytes unconverted");
 		}
-		memcpy(incrPtr->converts[i].buffer, src, (size_t) srcLen+1);
+		memcpy(incrPtr->converts[i].buffer, src, srcLen + 1);
 		Tcl_DStringFree(&ds);
 	    } else {
 		/*
@@ -519,10 +519,10 @@ TkSelPropProc(
 void
 TkSelEventProc(
     Tk_Window tkwin,		/* Window for which event was targeted. */
-    register XEvent *eventPtr)	/* X event: either SelectionClear,
+    XEvent *eventPtr)	/* X event: either SelectionClear,
 				 * SelectionRequest, or SelectionNotify. */
 {
-    register TkWindow *winPtr = (TkWindow *) tkwin;
+    TkWindow *winPtr = (TkWindow *) tkwin;
     TkDisplay *dispPtr = winPtr->dispPtr;
     Tcl_Interp *interp;
 
@@ -540,12 +540,11 @@ TkSelEventProc(
      */
 
     if (eventPtr->type == SelectionNotify) {
-	register TkSelRetrievalInfo *retrPtr;
+	TkSelRetrievalInfo *retrPtr;
 	char *propInfo, **propInfoPtr = &propInfo;
 	Atom type;
 	int format, result;
 	unsigned long numItems, bytesAfter;
-	Tcl_DString ds;
 
 	for (retrPtr = pendingRetrievals; ; retrPtr = retrPtr->nextPtr) {
 	    if (retrPtr == NULL) {
@@ -591,6 +590,7 @@ TkSelEventProc(
 	if ((type == XA_STRING) || (type == dispPtr->textAtom)
 		|| (type == dispPtr->compoundTextAtom)) {
 	    Tcl_Encoding encoding;
+		Tcl_DString ds;
 
 	    if (format != 8) {
 		Tcl_SetObjResult(retrPtr->interp, Tcl_ObjPrintf(
@@ -649,7 +649,7 @@ TkSelEventProc(
 	    }
 
 	    if (propInfo[numItems] != '\0') {
-		propData = ckalloc(numItems + 1);
+		propData = (char *)ckalloc(numItems + 1);
 		strcpy(propData, propInfo);
 		propData[numItems] = '\0';
 	    }
@@ -742,7 +742,7 @@ static void
 SelTimeoutProc(
     ClientData clientData)	/* Information about retrieval in progress. */
 {
-    register TkSelRetrievalInfo *retrPtr = clientData;
+    TkSelRetrievalInfo *retrPtr = (TkSelRetrievalInfo *)clientData;
 
     /*
      * Make sure that the retrieval is still in progress. Then see how long
@@ -766,7 +766,7 @@ SelTimeoutProc(
 	retrPtr->result = TCL_ERROR;
     } else {
 	retrPtr->timeout = Tcl_CreateTimerHandler(1000, SelTimeoutProc,
-		(ClientData) retrPtr);
+		retrPtr);
     }
 }
 
@@ -796,7 +796,7 @@ ConvertSelection(
 				 * request; may not be selection's current
 				 * owner, be we set it to the current
 				 * owner. */
-    register XSelectionRequestEvent *eventPtr)
+    XSelectionRequestEvent *eventPtr)
 				/* Event describing request. */
 {
 	union {
@@ -813,11 +813,11 @@ ConvertSelection(
     Tk_ErrorHandler errorHandler;
     TkSelectionInfo *infoPtr;
     TkSelInProgress ip;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    errorHandler = Tk_CreateErrorHandler(eventPtr->display, -1, -1,-1,
-	    (int (*)()) NULL, NULL);
+    errorHandler = Tk_CreateErrorHandler(eventPtr->display, -1, -1,
+	    -1, NULL, NULL);
 
     /*
      * Initialize the reply event.
@@ -893,12 +893,12 @@ ConvertSelection(
      * below).
      */
 
-    incr.converts = ckalloc(incr.numConversions * sizeof(ConvertInfo));
+    incr.converts = (ConvertInfo *)ckalloc(incr.numConversions * sizeof(ConvertInfo));
     incr.numIncrs = 0;
     for (i = 0; i < incr.numConversions; i++) {
 	Atom target, property, type;
 	long buffer[TK_SEL_WORDS_AT_ONCE];
-	register TkSelHandler *selPtr;
+	TkSelHandler *selPtr;
 	int numItems, format;
 	char *propPtr;
 
@@ -919,7 +919,7 @@ ConvertSelection(
 	    /*
 	     * Nobody seems to know about this kind of request. If it's of a
 	     * sort that we can handle without any help, do it. Otherwise mark
-	     * the request as an errror.
+	     * the request as an error.
 	     */
 
 	    numItems = TkSelDefaultSelection(infoPtr, target, (char *) buffer,
@@ -1064,7 +1064,7 @@ ConvertSelection(
 	}
 	Tcl_DeleteTimerHandler(incr.timeout);
 	errorHandler = Tk_CreateErrorHandler(winPtr->display,
-		-1, -1, -1, (int (*)()) NULL, NULL);
+		-1, -1, -1, NULL, NULL);
 	XSelectInput(reply.xsel.display, reply.xsel.requestor, 0L);
 	Tk_DeleteErrorHandler(errorHandler);
 	if (tsdPtr->pendingIncrs == &incr) {
@@ -1124,9 +1124,9 @@ ConvertSelection(
 static void
 SelRcvIncrProc(
     ClientData clientData,	/* Information about retrieval. */
-    register XEvent *eventPtr)	/* X PropertyChange event. */
+    XEvent *eventPtr)	/* X PropertyChange event. */
 {
-    register TkSelRetrievalInfo *retrPtr = clientData;
+    TkSelRetrievalInfo *retrPtr = (TkSelRetrievalInfo *)clientData;
     char *propInfo, **propInfoPtr = &propInfo;
     Atom type;
     int format, result;
@@ -1374,7 +1374,7 @@ IncrTimeoutProc(
 				 * retrieval for which we are selection
 				 * owner. */
 {
-    register IncrInfo *incrPtr = clientData;
+    IncrInfo *incrPtr = (IncrInfo *)clientData;
 
     incrPtr->idleTime++;
     if (incrPtr->idleTime >= 5) {
@@ -1435,7 +1435,7 @@ SelCvtToX(
     if (Tcl_SplitList(NULL, string, &numFields, &field) != TCL_OK) {
 	return NULL;
     }
-    propPtr = ckalloc(numFields * sizeof(long));
+    propPtr = (long *)ckalloc(numFields * sizeof(long));
 
     /*
      * Convert the fields one-by-one.
@@ -1487,7 +1487,7 @@ SelCvtToX(
 
 static void
 SelCvtFromX32(
-    register long *propPtr,	/* Property value from X. */
+    long *propPtr,	/* Property value from X. */
     int numValues,		/* Number of 32-bit values in property. */
     Atom type,			/* Type of property Should not be XA_STRING
 				 * (if so, don't bother calling this function
@@ -1520,12 +1520,12 @@ SelCvtFromX32(
 
 static void
 SelCvtFromX8(
-    register char *propPtr,	/* Property value from X. */
+    char *propPtr,	/* Property value from X. */
     int numValues,		/* Number of 8-bit values in property. */
-    Atom type,			/* Type of property Should not be XA_STRING
+    TCL_UNUSED(Atom),			/* Type of property Should not be XA_STRING
 				 * (if so, don't bother calling this function
 				 * at all). */
-    Tk_Window tkwin,		/* Window to use for atom conversion. */
+    TCL_UNUSED(Tk_Window),		/* Window to use for atom conversion. */
     Tcl_DString *dsPtr)		/* Where to store the converted string. */
 {
     /*

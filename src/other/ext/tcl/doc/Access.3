@@ -20,7 +20,7 @@ int
 \fBTcl_Stat\fR(\fIpath\fR, \fIstatPtr\fR)
 .SH ARGUMENTS
 .AS "struct stat" *statPtr out
-.AP char *path in
+.AP "const char" *path in
 Native name of the file to check the attributes of.
 .AP int mode in
 Mask consisting of one or more of \fBR_OK\fR, \fBW_OK\fR, \fBX_OK\fR and

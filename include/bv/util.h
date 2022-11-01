@@ -78,10 +78,9 @@ BV_EXPORT extern unsigned long long bv_hash(struct bview *v);
 /* Return a hash of the contents of a display list.  Returns 0 on failure. */
 BV_EXPORT extern unsigned long long bv_dl_hash(struct display_list *dl);
 
-/* Return number of objects defined in any object container
+/* Returns number of objects defined in any object container
  * known to this view (0 if completely cleared). */
-BV_EXPORT size_t
-bv_clear(struct bview *v, int flags);
+BV_EXPORT extern size_t bv_clear(struct bview *v, int flags);
 
 /* Note that some of these are mutually exclusive as far as producing any
  * changes - a simultaneous constraint in X and Y, for example, results in a
@@ -120,6 +119,19 @@ BV_EXPORT extern fastf_t bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int
 
 /* Copy object attributes (but not geometry) from src to dest */
 BV_EXPORT extern void bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj *src);
+
+/* Mark object and any child objects as stale for the drawing routines */
+/* There are a few options for this situation - this one, which requires the client code
+ * to explicitly notify the drawing routines they need to do work, an internal options
+ * hash stored in the bv_scene_obj itself which is checked at render time, and setter
+ * wrapper functions that do the bookkeeping for the caller (in lieu of directly setting
+ * values in the bv_scene_obj struct.)  The first one isn't ideal because the visual will
+ * be wrong if the caller doesn't supply the notification, the second has unknown
+ * performance implications, and the third would be a major rework of how the bv_scene_obj
+ * data is accessed (effectively, making the internal storage of bv_scene_obj fully hidden
+ * a.l.a the libdm rework.)  Not sure what the best option is yet... leaning towards #2
+ * if it is "fast enough"... */
+BV_EXPORT void bv_obj_stale(struct bv_scene_obj *s);
 
 /* Given a view, create an object of the specified type.  Like bv_obj_get, except it
  * leaves the addition of objects to the client.  Lower level. */

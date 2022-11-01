@@ -351,7 +351,7 @@
 
 	* mac/tclMacFile.c: fixed bug in permission checking code
 
-	* mac/tclMacLoad.c: corrected utf8 handling, comparison of package
+	* mac/tclMacLoad.c: corrected utf-8 handling, comparison of package
 	names to code fragment names changed to only match on the length of
 	package name, this allows for fragment names with version numbers
 	appended.
@@ -3525,7 +3525,7 @@
 	* generic/tclVar.c (Tcl_UnsetObjCmd): Rewrote argument parser to avoid
 	a read off the end of the argument array that could occur when
 	executing something like [unset -nocomplain] was executed. Improved
-	the error message given when too few arguments are given (-nocomplain
+	the error message given when not enough arguments are given (-nocomplain
 	should obviously be *before* --, not after it) and also modified the
 	test suite to take account of that and the documentation to use the
 	same improvement. [Bug 405769]

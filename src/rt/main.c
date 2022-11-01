@@ -75,17 +75,17 @@ extern const char title[];
 struct fb	*fbp = FB_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
 struct icv_image *bif = NULL;
-mat_t		view2model;
-mat_t		model2view;
+
 /***** end of sharing with viewing model *****/
+
 
 /***** variables shared with worker() ******/
 struct application APP;
 int		report_progress;	/* !0 = user wants progress report */
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern size_t	incr_nlevel;		/* number of levels */
-
 /***** end variables shared with worker() *****/
+
 
 /***** variables shared with do.c *****/
 extern int	pix_start;		/* pixel to start at */
@@ -107,8 +107,6 @@ extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
 extern char	*framebuffer;		/* desired framebuffer */
 
 extern struct command_tab rt_do_tab[];
-
-int	save_overlaps=0;	/* flag for setting rti_save_overlaps */
 
 
 void
@@ -142,21 +140,24 @@ memory_summary(void)
 }
 
 
-#ifndef RT_TXT_OUTPUT
 int fb_setup() {
     /* Framebuffer is desired */
     size_t xx, yy;
     int zoom;
+
+    /* make sure width/height are set via -g/-G */
+    grid_sync_dimensions(viewsize);
 
     /* Ask for a fb big enough to hold the image, at least 512. */
     /* This is so MGED-invoked "postage stamps" get zoomed up big
      * enough to see.
      */
     xx = yy = 512;
-    if (width > xx || height > yy) {
+    if (xx < width || yy < height) {
 	xx = width;
 	yy = height;
     }
+
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     fbp = fb_open(framebuffer, xx, yy);
     bu_semaphore_release(BU_SEM_SYSCALL);
@@ -167,27 +168,75 @@ int fb_setup() {
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     /* If fb came out smaller than requested, do less work */
-    if ((size_t)fb_getwidth(fbp) < width)
-	width = fb_getwidth(fbp);
-    if ((size_t)fb_getheight(fbp) < height)
-	height = fb_getheight(fbp);
+    size_t fbwidth = (size_t)fb_getwidth(fbp);
+    size_t fbheight = (size_t)fb_getheight(fbp);
+    if (width > fbwidth)
+	width = fbwidth;
+    if (height > fbheight)
+	height = fbheight;
 
-    /* If the fb is lots bigger (>= 2X), zoom up & center */
+    /* If fb is lots bigger (>= 2X), zoom up & center */
     if (width > 0 && height > 0) {
-	zoom = fb_getwidth(fbp)/width;
-	if ((size_t)fb_getheight(fbp)/height < (size_t)zoom)
+	zoom = fbwidth/width;
+	if (fbheight/height < (size_t)zoom) {
 	    zoom = fb_getheight(fbp)/height;
-    } else {
-	zoom = 1;
+	}
+	(void)fb_view(fbp, width/2, height/2, zoom, zoom);
     }
-    (void)fb_view(fbp, width/2, height/2,
-		  zoom, zoom);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
 #ifdef USE_OPENCL
     clt_connect_fb(fbp);
 #endif
     return 0;
+}
+
+
+static void
+initialize_resources(size_t cnt, struct resource *resp, struct rt_i *rtip)
+{
+    if (!resp)
+	return;
+
+    /* Initialize all the per-CPU memory resources.  Number of
+     * processors can change at runtime, so initialize all.
+     */
+    memset(resp, 0, sizeof(struct resource) * cnt);
+
+    int i;
+    for (i = 0; i < MAX_PSW; i++) {
+	rt_init_resource(&resp[i], i, rtip);
+    }
+}
+
+
+static void
+initialize_option_defaults()
+{
+    /* GIFT defaults */
+    azimuth = 35.0;
+    elevation = 25.0;
+
+    /* 40% ambient light */
+    AmbientIntensity = 0.4;
+
+    /* 0/0/1 background */
+    background[0] = background[1] = 0.0;
+    background[2] = 1.0/255.0; /* slightly non-black */
+
+    /* Before option processing, get default number of processors */
+    npsw = bu_avail_cpus();		/* Use all that are present */
+    if (npsw > MAX_PSW)
+	npsw = MAX_PSW;
+
+}
+
+
+#ifdef MPI_ENABLED
+/* MPI atexit() handler */
+static void mpi_exit_func(void)
+{
+    MPI_Finalize();
 }
 #endif
 
@@ -217,23 +266,18 @@ int main(int argc, char *argv[])
     bu_setlinebuf(stdout);
     bu_setlinebuf(stderr);
 
-    azimuth = 35.0;			/* GIFT defaults */
-    elevation = 25.0;
+    /* establish defaults managed by option handling */
+    initialize_option_defaults();
 
-    AmbientIntensity = 0.4;
-    background[0] = background[1] = 0.0;
-    background[2] = 1.0/255.0; /* slightly non-black */
-
-    /* Before option processing, get default number of processors */
-    npsw = bu_avail_cpus();		/* Use all that are present */
-    if (npsw > MAX_PSW) npsw = MAX_PSW;
-
-    /* Before option processing, do application-specific initialization */
+    /* global application context */
     RT_APPLICATION_INIT(&APP);
+
+    /* Before option processing, do RTUIF app-specific init */
     application_init();
 
 #ifdef MPI_ENABLED
     MPI_Init(&argc, &argv);
+    atexit(&mpi_exit_func);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     fprintf(stderr, "MPI Rank: %d of %d\n", rank+1, size);
@@ -243,16 +287,10 @@ int main(int argc, char *argv[])
     i = get_args(argc, (const char **)argv);
     if (i < 0) {
 	usage(argv[0], 0);
-#ifdef MPI_ENABLED
-	MPI_Finalize();
-#endif
 	return 1;
     } else if (i == 0) {
 	/* asking for help is ok */
 	usage(argv[0], 100);
-#ifdef MPI_ENABLED
-	MPI_Finalize();
-#endif
 	return 0;
     }
 
@@ -282,9 +320,6 @@ int main(int argc, char *argv[])
     if (bu_optind >= argc) {
 	fprintf(stderr, "%s:  BRL-CAD geometry database not specified\n", argv[0]);
 	usage(argv[0], 0);
-#ifdef MPI_ENABLED
-	MPI_Finalize();
-#endif
 	return 1;
     }
 
@@ -299,12 +334,35 @@ int main(int argc, char *argv[])
     if (height <= 0 && cell_height <= 0)
 	height = 512;
 
-    /* If user didn't provide an aspect ratio, use the image
-     * dimensions ratio as a default.
+    /* incremental mode requires height and width be square and a
+     * power of 2
      */
-    if (aspect <= 0.0) {
+    if (incr_mode) {
+	size_t x = height;
+	if (x < width)
+	    x = width;
+	incr_nlevel = 1;
+	while ((size_t)(1ULL << incr_nlevel) < x)
+	    incr_nlevel++;
+	height = width = 1ULL << incr_nlevel;
+	if (rt_verbosity & VERBOSE_INCREMENTAL) {
+	    fprintf(stderr,
+		    "incremental resolution, nlevels = %lu, width=%lu\n",
+		    (unsigned long)incr_nlevel, (unsigned long)width);
+	}
+    }
+
+    /* If user didn't provide an aspect ratio, use the image
+     * dimensions if they've been set as a default.
+     */
+    if (width > 0.0 && height > 0.0 && aspect <= 0.0) {
 	aspect = (fastf_t)width / (fastf_t)height;
     }
+
+    /* figure out the viewsize so we can finalize grid dimensions */
+
+    /* finalize the grid dimensions */
+    grid_sync_dimensions(viewsize);
 
     if (sub_grid_mode) {
 	/* check that we have a legal subgrid */
@@ -312,55 +370,63 @@ int main(int argc, char *argv[])
 	    fprintf(stderr, "rt: illegal values for subgrid %d, %d, %d, %d\n",
 		    sub_xmin, sub_ymin, sub_xmax, sub_ymax);
 	    fprintf(stderr, "\tFor a %lu X %lu image, the subgrid must be within 0, 0, %lu, %lu\n",
-		    (unsigned long)width, (unsigned long)height, (unsigned long)width-1, (unsigned long)height-1);
-#ifdef MPI_ENABLED
-	    MPI_Finalize();
-#endif
+		    (unsigned long)width, (unsigned long)height,
+		    (unsigned long)width-1, (unsigned long)height-1);
+
 	    return 1;
 	}
     }
 
-    if (incr_mode) {
-	size_t x = height;
-	if (x < width) x = width;
-	incr_nlevel = 1;
-	while ((size_t)(1ULL << incr_nlevel) < x)
-	    incr_nlevel++;
-	height = width = 1ULL << incr_nlevel;
-	if (rt_verbosity & VERBOSE_INCREMENTAL)
-	    fprintf(stderr,
-		    "incremental resolution, nlevels = %lu, width=%lu\n",
-		    (unsigned long)incr_nlevel, (unsigned long)width);
-    }
+    /* figure out number of CPU cores from what was specified */
+    {
+	size_t avail_cpus = bu_avail_cpus();
 
-    /*
-     * Handle parallel initialization, if applicable.
-     */
 #ifndef PARALLEL
-    npsw = 1;			/* force serial */
+	npsw = 1;			/* force serial */
 #endif
 
-    /* parsing the user value needs separation from the set value,
-     * probably handled better during global elimination. --CSM */
-/*     if (npsw < 0) { */
-/* 	/\* Negative number means "all but" npsw *\/ */
-/* 	npsw = bu_avail_cpus() + npsw; */
-/*     } */
-
-
-    /* allow debug builds to go higher than the max */
-    if (!(bu_debug & BU_DEBUG_PARALLEL)) {
-	if (npsw > MAX_PSW) {
-	    npsw = MAX_PSW;
+	/* Negative means "all but" #CPUs */
+	if (npsw < 0) {
+	    npsw += avail_cpus;
+	    /* could still be negative */
+	    if (npsw < 1)
+		npsw = 1;
 	}
-    }
 
-    if (npsw > 1) {
-	RTG.rtg_parallel = 1;
+	/* make sure #CPUs is in range */
+	if (npsw > (ssize_t)avail_cpus) {
+	    if (rt_verbosity & VERBOSE_STATS) {
+		fprintf(stderr, "Specified %zd CPU cores, only %zu available.\n",
+			npsw, avail_cpus);
+	    }
+
+	    if ((bu_debug | RT_G_DEBUG | optical_debug)) {
+		if (rt_verbosity & VERBOSE_STATS) {
+		    fprintf(stderr, "\tAllowing surplus CPU cores due to debug flag.\n");
+		}
+	    } else {
+		npsw = avail_cpus;
+	    }
+	} else if (npsw > (ssize_t)MAX_PSW) {
+	    if (rt_verbosity & VERBOSE_STATS) {
+		fprintf(stderr, "Specified %zd CPU cores, out of range 1..%d",
+			npsw, MAX_PSW);
+	    }
+
+	    if ((bu_debug | RT_G_DEBUG | optical_debug)) {
+		if (rt_verbosity & VERBOSE_STATS) {
+		    fprintf(stderr, "\tAllowing surplus CPU cores due to debug flag.\n");
+		}
+	    } else {
+		npsw = avail_cpus;
+	    }
+	} else if (npsw < 1) {
+	    npsw = avail_cpus;
+	}
+
+	RTG.rtg_parallel = (npsw == 1) ? 0 : 1;
 	if (rt_verbosity & VERBOSE_MULTICPU)
-	    fprintf(stderr, "Planning to run with %lu processors\n", (unsigned long)npsw);
-    } else {
-	RTG.rtg_parallel = 0;
+	    fprintf(stderr, "Planning to run with %zd processor(s)\n", npsw);
     }
 
     /*
@@ -424,34 +490,37 @@ int main(int argc, char *argv[])
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 
 	bu_vls_from_argv(&str, bu_optind, (const char **)argv);
-	bu_vls_strcat(&str, "\nopendb ");
-	bu_vls_strcat(&str, title_file);
-	bu_vls_strcat(&str, ";\ntree ");
+	bu_vls_strcat(&str, "\n");
+	bu_vls_printf(&str, "opendb %s;\n", title_file);
 
-	/* arbitrarily limit the number of command-line objects being
-	 * echo'd back for log printing, followed by ellipses.
-	 */
-	bu_vls_from_argv(&str,
-			 objc <= 16 ? objc : 16,
-			 (const char **)argv+bu_optind+1);
-	if (objc > 16)
-	    bu_vls_strcat(&str, " ...");
-	else
-	    bu_vls_putc(&str, ';');
+	if (objc) {
+	    bu_vls_strcat(&str, "tree ");
+
+	    /* arbitrarily limit number of command-line objects being
+	     * echo'd back for log printing, followed by ellipses.
+	     */
+	    bu_vls_from_argv(&str,
+			     objc <= 16 ? objc : 16,
+			     (const char **)argv+bu_optind+1);
+	    if (objc > 16)
+		bu_vls_strcat(&str, " ...");
+	    else
+		bu_vls_putc(&str, ';');
+	}
+
 	bu_log("%s\n", bu_vls_addr(&str));
 	bu_vls_free(&str);
     }
 
     /* Build directory of GED database */
     rt_prep_timer();
-    if ((rtip = rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL) {
+    rtip = rt_dirbuild(title_file, idbuf, sizeof(idbuf));
+    if (rtip == RTI_NULL) {
 	bu_log("rt:  rt_dirbuild(%s) failure\n", title_file);
-#ifdef MPI_ENABLED
-	MPI_Finalize();
-#endif
 	return 2;
     }
     APP.a_rt_i = rtip;
+
     (void)rt_get_timer(&times, NULL);
     if (rt_verbosity & VERBOSE_MODELTITLE)
 	bu_log("db title:  %s\n", idbuf);
@@ -479,14 +548,8 @@ int main(int argc, char *argv[])
     if (outputfile && BU_STR_EQUAL(outputfile, "-"))
 	outputfile = (char *)0;
 
-    /*
-     * Initialize all the per-CPU memory resources.
-     * The number of processors can change at runtime, init them all.
-     */
-    memset(resource, 0, sizeof(resource));
-    for (i = 0; i < MAX_PSW; i++) {
-	rt_init_resource(&resource[i], i, APP.a_rt_i);
-    }
+    /* per-CPU preparation */
+    initialize_resources(sizeof(resource) / sizeof(struct resource), resource, rtip);
     memory_summary();
 
 #ifdef SIGUSR1
@@ -527,36 +590,27 @@ int main(int argc, char *argv[])
 	    /* output_is_binary is changed by view_init, as appropriate */
 	    if (output_is_binary && isatty(fileno(outfp))) {
 		fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
-#ifdef MPI_ENABLED
-		MPI_Finalize();
-#endif
 		return 14;
 	    }
 	}
 
-#ifndef RT_TXT_OUTPUT
-	if (need_fb != 0 && !fbp) {
-	    int fb_status = fb_setup();
-	    if (fb_status) {
-#ifdef MPI_ENABLED
-		MPI_Finalize();
-#endif
-		return fb_status;
-	    }
-	}
-#endif
-
 	/* orientation command has not been used */
 	if (!orientflag)
 	    do_ae(azimuth, elevation);
+
+	if (need_fb != 0 && !fbp) {
+	    int fb_status = fb_setup();
+	    if (fb_status) {
+		return fb_status;
+	    }
+	}
+
 	frame_retval = do_frame(curframe);
 	if (frame_retval != 0) {
-#ifndef RT_TXT_OUTPUT
 	    /* Release the framebuffer, if any */
 	    if (fbp != FB_NULL) {
 		fb_close(fbp);
 	    }
-#endif
 	    ret = 1;
 	    goto rt_cleanup;
 	}
@@ -576,9 +630,6 @@ int main(int argc, char *argv[])
 	    /* output_is_binary is changed by view_init, as appropriate */
 	    if (output_is_binary && isatty(fileno(outfp))) {
 		fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
-#ifdef MPI_ENABLED
-		MPI_Finalize();
-#endif
 		return 14;
 	    }
 	}
@@ -612,18 +663,13 @@ int main(int argc, char *argv[])
 	     * Postpone fb setup until we're ready to render something
 	     * to avoid backing up stdin's pipe.
 	     */
-	    if (!bu_strncmp(buf, "end", 3) || !bu_strncmp(buf, "multiview", 8)) {
-#ifndef RT_TXT_OUTPUT
+	    if (!bu_strncmp(buf, "end", sizeof("end")) || !bu_strncmp(buf, "multiview", sizeof("multiview"))) {
 		if (need_fb != 0 && !fbp) {
 		    int fb_status = fb_setup();
 		    if (fb_status) {
-#ifdef MPI_ENABLED
-			MPI_Finalize();
-#endif
 			return fb_status;
 		    }
 		}
-#endif
 	    }
 
 	    nret = rt_do_cmd(APP.a_rt_i, buf, rt_do_tab);
@@ -639,11 +685,9 @@ int main(int argc, char *argv[])
     }
 
     /* Release the framebuffer, if any */
-#ifndef RT_TXT_OUTPUT
     if (fbp != FB_NULL) {
 	fb_close(fbp);
     }
-#endif
 
 rt_cleanup:
     /* Clean up objv memory, if necessary */
@@ -666,10 +710,6 @@ rt_cleanup:
     /* Release the ray-tracer instance */
     rt_free_rti(APP.a_rt_i);
     APP.a_rt_i = NULL;
-
-#ifdef MPI_ENABLED
-    MPI_Finalize();
-#endif
 
     return ret;
 }

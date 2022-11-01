@@ -36,7 +36,7 @@
 
 #include "../ged_private.h"
 
-HIDDEN int
+static int
 region_flag_set(struct ged *gedp, struct directory *dp) {
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
@@ -56,7 +56,7 @@ region_flag_set(struct ged *gedp, struct directory *dp) {
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 region_flag_clear(struct ged *gedp, struct directory *dp) {
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
@@ -76,7 +76,7 @@ region_flag_clear(struct ged *gedp, struct directory *dp) {
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 color_shader_clear(struct ged *gedp, struct directory *dp) {
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
@@ -98,7 +98,7 @@ color_shader_clear(struct ged *gedp, struct directory *dp) {
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 comb_tree_clear(struct ged *gedp, struct directory *dp)
 {
     struct rt_db_internal intern;
@@ -112,17 +112,20 @@ comb_tree_clear(struct ged *gedp, struct directory *dp)
     comb->tree = TREE_NULL;
     db5_sync_comb_to_attr(&((&intern)->idb_avs), comb);
     db5_standardize_avs(&((&intern)->idb_avs));
-    if (wdb_put_internal(gedp->ged_wdbp, dp->d_namep, &intern, 1.0) < 0) {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_put_internal(wdbp, dp->d_namep, &intern, 1.0) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "wdb_export(%s) failure", dp->d_namep);
 	rt_db_free_internal(&intern);
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
+    wdb_close(wdbp);
     rt_db_free_internal(&intern);
     return BRLCAD_OK;
 }
 
 
-HIDDEN int
+static int
 comb_wrap(struct ged *gedp, struct directory *dp) {
 
     struct bu_vls orig_name, comb_child_name;
@@ -152,13 +155,16 @@ comb_wrap(struct ged *gedp, struct directory *dp) {
 	bu_vls_free(&orig_name);
 	return BRLCAD_ERROR;
     }
-    if (wdb_export_external(gedp->ged_wdbp, &external, bu_vls_addr(&comb_child_name), dp->d_flags, dp->d_minor_type) < 0) {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_export_external(wdbp, &external, bu_vls_addr(&comb_child_name), dp->d_flags, dp->d_minor_type) < 0) {
 	bu_free_external(&external);
 	bu_vls_printf(gedp->ged_result_str, "Failed to write new object (%s) to database - aborting!!\n", bu_vls_addr(&comb_child_name));
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
+    wdb_close(wdbp);
     bu_free_external(&external);
 
     /* Load new obj.c comb and clear its region flag, if any */
@@ -231,7 +237,7 @@ name_compare(const void *d1, const void *d2, void *UNUSED(arg))
  *  which (if any) of the combs under the current comb are not used
  *  elsewhere.  For those that are not, remove them.
  */
-HIDDEN int
+static int
 comb_flatten(struct ged *gedp, struct directory *dp)
 {
     int result_cnt = 0;
@@ -323,7 +329,7 @@ comb_flatten(struct ged *gedp, struct directory *dp)
 /* "Lift a region flag to the specified comb, removing all region
  * flags below in the tree if practical.
  */
-HIDDEN int
+static int
 comb_lift_region(struct ged *gedp, struct directory *dp)
 {
     int j;
@@ -466,7 +472,7 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 comb_decimate(struct ged *gedp, struct directory *dp)
 {
     unsigned int i;
@@ -483,7 +489,7 @@ comb_decimate(struct ged *gedp, struct directory *dp)
     }
 
     for (i = 0; i < BU_PTBL_LEN(bot_dps); i++) {
-	struct bn_tol btol = BG_TOL_INIT;
+	struct bn_tol btol = BN_TOL_INIT_TOL;
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
 	int not_solid = 0;
@@ -537,9 +543,11 @@ comb_decimate(struct ged *gedp, struct directory *dp)
 	    if (not_solid) {
 		bu_log("Unable to create a valid version of %s via decimation\n", bot_dp->d_namep);
 	    } else {
-		if (wdb_put_internal(gedp->ged_wdbp, bot_dp->d_namep, &intern, 1.0) < 0) {
+		struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+		if (wdb_put_internal(wdbp, bot_dp->d_namep, &intern, 1.0) < 0) {
 		    bu_log("Failed to write decimated version of %s back to database\n", bot_dp->d_namep);
 		}
+		wdb_close(wdbp);
 	    }
 	}
     }

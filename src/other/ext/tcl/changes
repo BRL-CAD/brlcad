@@ -2307,7 +2307,7 @@ to the standard channel, do not increment the refcount. The channel can
 be NULL if there is for example no standard input. (JL)
 
 9/6/96 (portability improvement) Changed parsing of backslash sequences
-like \n to translate directly to absolute values like 0xa instead of
+like \n to translate directly to absolute values like 0xA instead of
 letting the compiler do the translation.  This guarantees that the
 translation is done the same everywhere. (JO)
 
@@ -8893,7 +8893,7 @@ improvements to regexp engine from Postgres (lane,porter,fellows,seltenreich)
 
 2018-11-16 (bug)[00d04c] Repair [binary encode base64] (sebres)
 
-- Released 8.6.9, November 16, 2018 - details at http://core.tcl-lang.org/tcl/ -
+- Released 8.6.9, November 16, 2018 - details at https://core.tcl-lang.org/tcl/ -
 
 2018-11-22 (bug)[7a9dc5] [file normalize ~/~foo] segfault (sebres)
 
@@ -8944,4 +8944,175 @@ improvements to regexp engine from Postgres (lane,porter,fellows,seltenreich)
 2019-11-18 (bug)[13657a] application/json us text, not binary (noe,nijtmans)
 => http 2.9.1
 
-- Released 8.6.10, Nov 21, 2019 - details at http://core.tcl-lang.org/tcl/ -
+- Released 8.6.10, Nov 21, 2019 - details at https://core.tcl-lang.org/tcl/ -
+
+2019-12-03 (bug)[3cd9be] Corner case in surrogate handling (nijtmans)
+
+2019-12-09 (new) Add tcltest::(Setup|Eval|Cleanup|)Test (coulter,sebres)
+=> tcltest 2.5.2
+
+2019-12-12 (new) Add 3 libtommath functions to stub table (nijtmans)
+
+2019-12-23 (bug)[ce3b9f] compilation errors with clang, windows msys2 (nijtmans)
+
+2019-12-27 (bug)[1de6b0] [expr 1e2147483648] => 0.0 (kbk)
+
+2020-01-04 (bug)[912886] tis-620 encoding fails to load (coulter)
+
+2020-01-13 (bug)[0b9332] Win: support system encoding init to utf-8 (jedlička)
+
+2020-01-17 (bug)[8cd2fe] [unload] corrupted list of loaded packages (berc)
+
+2020-01-17 (bug)[5d989f] segfault in lsort for large list length (sebres)
+
+2020-01-30 (bug) Reset WSAGetLastError()/errno in channel close (nijtmans)
+
+2020-02-17 (bug) Win: avoid create of legacy error-vars on init phase (sebres)
+
+2020-02-25 (bug) release refs when setting class's superclasses fails (dkf)
+
+2020-02-26 (bug) C++ compiler compatibility for registry and dde (nijtmans)
+=> registry 1.3.5
+=> dde 1.4.3
+
+2020-03-05 (new) Update to Unicode-13 (nijtmans)
+
+2020-03-16 (bug)[8f89e2] Win: env var encoding, env-2.5 (sebres, nijtmans)
+
+2020-03-27 (bug)[767e07] Tcl_Get(Range|UniChar) validate index inputs (nijtmans)
+
+2020-03-28 (bug)[8edfce] [binary encode base64] & multi-byte wrapchars (dgp)
+
+2020-03-28 (bug)[ffeb20] [binary decode base64] ignore invalid chars (dgp)
+See RFC 2045
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2020-03-31 (bug)[b8e82d] some -maxlen values break uuencode round trip (dgp)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2020-04-01 (bug)[f58371] Fileevent run in proper thread (bron,sebres)
+
+2020-04-13 (bug)[afa4b2] TclNeedSpace bug; tests util-8.5 .. util-8.11 (dgp)
+
+2020-04-13 (bug)[085913] Tcl_DStringAppendElement # quoting precision (dgp)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2020-04-13 (bug)[a7f685] test util-5.52 (dgp)
+
+2020-04-13 (bug)[c61818] Tcl_UtfPrev regression (dgp)
+
+2020-04-15 (bug)[8af92d] zlib transform issue, bad inflate (sebres)
+
+2020-04-16 (bug)[5e6346] Tcl_UtfPrev handling of overlong sequences (dgp)
+
+2020-04-27 (bug)[45ca23] [string tolower] inconsistency (dgp)
+
+2020-04-30 (bug)[da2352] init [info hostname] with DNS, not NetBIOS (nadkarni)
+
+2020-05-11 (bug)[d402ff] Win32 potential crash when using main() (werner)
+
+2020-05-13 (bug)[81242a] revised documentation for Tcl_UtfAtIndex() (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2020-05-13 (bug)[ed2980] Tcl_UtfToUniChar reads > TCL_UTF_MAX bytes (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2020-06-02 (bug) prevent segfault in parser (sebres)
+
+2020-06-21 (bug)[f81bec] http POST a binary file (alakendu,nash)
+=> http 2.9.2
+
+2020-06-23 (bug)[41c985] auto_path nonsense in Safe Base (nash)
+
+2020-06-24 (bug)[f70ce1] zlib multi-stream inflate acts only on first (sebres)
+
+2020-07-09 (bug)[a1bd37] [clock scan] new ISO format (clock-34.(19-24)) (sebres)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2020-07-10 (bug)[501974] [clock scan] +time zone (clock-34.(53-68)) (sebres)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2020-07-15 (bug)[3c6e47] compiled [lappend] performance, avoid copy (sebres)
+
+2020-07-16 (bug)[5bbd04] Fix index underflow (schwab)
+
+2020-07-27 (bug)[cb0373] http::geturl -keepalive fixes (nash)
+=> http 2.9.3
+
+2020-08-10 (bug)[29e884] cmd resolution cycle (namespace-57.0) (coulter,sebres)
+
+2020-08-12 (bug)[e87000] Tcl_BadChannelOption tolerate NULL (werner,nijtmans)
+
+2020-08-31 (TIP #581) disfavor Master/Slave terminology (nijtmans)
+=> opt 0.4.8
+
+2020-09-11 (bug)[3bc0f4] UBSan complains about body.chars[] usage (nijtmans)
+
+2020-09-17 (bug)[835c93] Support TIP 525 exit code for -singleproc 1 (nijtmans)
+=> tcltest 2.5.3
+
+2020-09-25 (new) force -eofchar \032 when evaluating library scripts (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2020-09-29 (bug)[0063cb] http::geturl -headers must be dict (oehlmann,nijtmans)
+
+2020-10-19 (bug)[cb4582] Update install-sh script (stu,nijtmans)
+
+2020-10-22 (bug)[c97593] Usage of gnu_printf in latest mingw-w64 (nijtmans)
+
+2020-10-26 (new)[48898a] improve error message consistency (stu)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2020-11-06 (new) revised case of module names (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2020-12-10 (bug)[ed5be7] Win: recognize "comx:" as serial port (oehlmann)
+
+2020-12-11 (new) support for msys2, Big Sur (nijtmans)
+=> platform 1.0.15
+
+2020-12-23 tzdata updated to Olson's tzdata2020e (jima)
+
+- Released 8.6.11, Dec 31, 2020 - details at https://core.tcl-lang.org/tcl/ -
+
+2021-02-02 (new) support for MacOS Big Sur updates (nijtmans)
+=> platform 1.0.17
+
+2021-02-15 (bug)[d43f96] [string trim*] broken for Emoji (werner)
+
+2021-02-16 (bug)[22324b] [string reverse] broken for Emoji (werner)
+
+2021-02-19 (bug)[1dab71,7c64aa] BRE broken by uninitialized value use (lane)
+
+2021-03-09 (bug)[8419c5] Unix tty channels tolerate EINTR (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2021-03-10 (bug)[4c591f] [string compare] EIAS violation (nijtmans)
+
+2021-04-08 (new) dde package installation compatible with Tcl 9 (nijtmans)
+=> dde 1.4.4
+
+2021-04-14 (bug)[266494] [concat foo [list #]] EIAS violation (porter)
+
+2021-05-03 (bug)[24b918] Save IO buffers from modern optimizers (rupprecht)
+
+2021-05-06 (new) support for POSIX error EILSEQ (nijtmans)
+
+2021-05-17 (bug)[688fcc] segfault during traced delete of alias (coulter)
+
+2021-06-22 (bug)[bad6cc] More secure build tool. CVE-2021-35331 (nijtmans)
+
+2021-07-17 (bug)[592a25] Win: segfault in Tcl_PutEnv() (danckaert,nijtmans)
+
+2021-09-02 (bug)[ccc448] segfault in ensemble rewrite machinery (coulter)
+
+2021-09-14 (new) Update to Unicode-14 (nijtmans)
+
+2021-10-08 (bug)[a8579d] failed proc argument spec processing (russell,coulter)
+
+2021-10-27 (new) support for MacOS Monterey (nijtmans)
+=> platform 1.0.18
+
+2021-10-27 tzdata updated to Olson's tzdata2021e (nijtmans)
+
+- Released 8.6.12, Nov 5, 2021 - details at https://core.tcl-lang.org/tcl/ -

@@ -31,16 +31,18 @@
 
 #include "tkMacOSXPrivate.h"
 #include "ttk/ttkTheme.h"
-#include <math.h>
 
 /*
  * Macros for handling drawing contexts.
  */
 
-#define BEGIN_DRAWING(d) {	   \
-	TkMacOSXDrawingContext dc; \
-	if (!TkMacOSXSetupDrawingContext((d), NULL, 1, &dc)) {return;}
-#define END_DRAWING \
+#define BEGIN_DRAWING(d) {				    \
+    TkMacOSXDrawingContext dc;				    \
+    if (!TkMacOSXSetupDrawingContext((d), NULL, &dc)) {	    \
+	return;						    \
+    }							    \
+
+#define END_DRAWING				\
     TkMacOSXRestoreDrawingContext(&dc);}
 
 #define HIOrientation kHIThemeOrientationNormal
@@ -61,7 +63,10 @@
  */
 
 static CGFloat darkButtonFace[4] = {
-    112.0 / 255, 113.0 / 255, 115.0 / 255, 1.0
+    90.0 / 255, 86.0 / 255, 95.0 / 255, 1.0
+};
+static CGFloat darkPressedButtonFace[4] = {
+    114.0 / 255, 110.0 / 255, 118.0 / 255, 1.0
 };
 static CGFloat darkPressedBevelFace[4] = {
     135.0 / 255, 136.0 / 255, 138.0 / 255, 1.0
@@ -74,6 +79,12 @@ static CGFloat darkDisabledButtonFace[4] = {
 };
 static CGFloat darkInactiveSelectedTab[4] = {
     159.0 / 255, 160.0 / 255, 161.0 / 255, 1.0
+};
+static CGFloat darkSelectedTab[4] = {
+    97.0 / 255, 94.0 / 255, 102.0 / 255, 1.0
+};
+static CGFloat darkTab[4] = {
+    44.0 / 255, 41.0 / 255, 50.0 / 255, 1.0
 };
 static CGFloat darkFocusRing[4] = {
     38.0 / 255, 113.0 / 255, 159.0 / 255, 1.0
@@ -153,7 +164,7 @@ static inline CGRect BoxToRect(
     Drawable d,
     Ttk_Box b)
 {
-    MacDrawable *md = (MacDrawable *) d;
+    MacDrawable *md = (MacDrawable *)d;
     CGRect rect;
 
     rect.origin.y       = b.y + md->yOff;
@@ -169,7 +180,7 @@ static inline CGRect BoxToRect(
  */
 
 static Ttk_StateTable ThemeStateTable[] = {
-    {kThemeStateActive, TTK_STATE_ALTERNATE | TTK_STATE_BACKGROUND},
+    {kThemeStateActive, TTK_STATE_ALTERNATE | TTK_STATE_BACKGROUND, 0},
     {kThemeStateUnavailable, TTK_STATE_DISABLED, 0},
     {kThemeStatePressed, TTK_STATE_PRESSED, 0},
     {kThemeStateInactive, TTK_STATE_BACKGROUND, 0},
@@ -232,51 +243,51 @@ static CGRect NormalizeButtonBounds(
  * support Dark Mode anyway.
  */
 
-static CGFloat windowBackground[4] = {
+static const CGFloat WINDOWBACKGROUND[4] = {
     235.0 / 255, 235.0 / 255, 235.0 / 255, 1.0
 };
-static CGFloat whiteRGBA[4] = {1.0, 1.0, 1.0, 1.0};
-static CGFloat blackRGBA[4] = {0.0, 0.0, 0.0, 1.0};
+static const CGFloat WHITERGBA[4] = {1.0, 1.0, 1.0, 1.0};
+static const CGFloat BLACKRGBA[4] = {0.0, 0.0, 0.0, 1.0};
 
 /*----------------------------------------------------------------------
  * GetBackgroundColor --
  *
  *      Fills the array rgba with the color coordinates for a background color.
- *      Start with the background color of a window's geometry master, or the
- *      standard ttk window background if there is no master. If the contrast
- *      parameter is nonzero, modify this color to be darker, for the aqua
- *      appearance, or lighter for the DarkAqua appearance.  This is primarily
- *      used by the Fill and Background elements.
+ *      Start with the background color of a window's geometry container, or
+ *      the standard ttk window background if there is no container. If the
+ *      contrast parameter is nonzero, modify this color to be darker, for the
+ *      aqua appearance, or lighter for the DarkAqua appearance.  This is
+ *      primarily used by the Fill and Background elements.
  */
 
 static void GetBackgroundColor(
-    CGContextRef context,
+    TCL_UNUSED(CGContextRef),
     Tk_Window tkwin,
     int contrast,
     CGFloat *rgba)
 {
-    TkWindow *winPtr = (TkWindow *) tkwin;
-    TkWindow *masterPtr = (TkWindow *) TkGetGeomMaster(tkwin);
+    TkWindow *winPtr = (TkWindow *)tkwin;
+    TkWindow *containerPtr = (TkWindow *)TkGetContainer(tkwin);
 
-    while (masterPtr && masterPtr->privatePtr) {
-	if (masterPtr->privatePtr->flags & TTK_HAS_CONTRASTING_BG) {
+    while (containerPtr && containerPtr->privatePtr) {
+	if (containerPtr->privatePtr->flags & TTK_HAS_CONTRASTING_BG) {
 	    break;
 	}
-	masterPtr = (TkWindow *) TkGetGeomMaster(masterPtr);
+	containerPtr = (TkWindow *)TkGetContainer(containerPtr);
     }
-    if (masterPtr && masterPtr->privatePtr) {
+    if (containerPtr && containerPtr->privatePtr) {
 	for (int i = 0; i < 4; i++) {
-	    rgba[i] = masterPtr->privatePtr->fillRGBA[i];
+	    rgba[i] = containerPtr->privatePtr->fillRGBA[i];
 	}
     } else {
-	if ([NSApp macMinorVersion] > 13) {
+	if ([NSApp macOSVersion] > 101300) {
 	    NSColorSpace *deviceRGB = [NSColorSpace deviceRGBColorSpace];
 	    NSColor *windowColor = [[NSColor windowBackgroundColor]
 		colorUsingColorSpace: deviceRGB];
 	    [windowColor getComponents: rgba];
 	} else {
 	    for (int i = 0; i < 4; i++) {
-		rgba[i] = windowBackground[i];
+		rgba[i] = WINDOWBACKGROUND[i];
 	    }
 	}
     }
@@ -303,9 +314,10 @@ static void GetBackgroundColor(
 
 
 /*----------------------------------------------------------------------
- * +++ Single Arrow Buttons --
+ * +++ Single Arrow Images --
  *
- * Used in ListHeaders and Comboboxes.
+ * Used in ListHeaders and Comboboxes as well as disclosure triangles in
+ * macOS 11.
  */
 
 static void DrawDownArrow(
@@ -313,7 +325,7 @@ static void DrawDownArrow(
     CGRect bounds,
     CGFloat inset,
     CGFloat size,
-    CGFloat *rgba)
+    const CGFloat *rgba)
 {
     CGFloat x, y;
 
@@ -335,7 +347,7 @@ static void DrawUpArrow(
     CGRect bounds,
     CGFloat inset,
     CGFloat size,
-    CGFloat *rgba)
+    const CGFloat *rgba)
 {
     CGFloat x, y;
 
@@ -352,6 +364,48 @@ static void DrawUpArrow(
     CGContextStrokePath(context);
 }
 
+static void DrawClosedDisclosure(
+    CGContextRef context,
+    CGRect bounds,
+    CGFloat inset,
+    CGFloat size,
+    CGFloat *rgba)
+{
+    CGFloat x, y;
+
+    CGContextSetRGBStrokeColor(context, rgba[0], rgba[1], rgba[2], rgba[3]);
+    CGContextSetLineWidth(context, 1.5);
+    x = bounds.origin.x + inset;
+    y = bounds.origin.y + trunc(bounds.size.height / 2);
+    CGContextBeginPath(context);
+    CGPoint arrow[3] = {
+	{x, y - size / 4 - 1}, {x + size / 2, y}, {x, y + size / 4 + 1}
+    };
+    CGContextAddLines(context, arrow, 3);
+    CGContextStrokePath(context);
+}
+
+static void DrawOpenDisclosure(
+    CGContextRef context,
+    CGRect bounds,
+    CGFloat inset,
+    CGFloat size,
+    CGFloat *rgba)
+{
+    CGFloat x, y;
+
+    CGContextSetRGBStrokeColor(context, rgba[0], rgba[1], rgba[2], rgba[3]);
+    CGContextSetLineWidth(context, 1.5);
+    x = bounds.origin.x + inset;
+    y = bounds.origin.y + trunc(bounds.size.height / 2);
+    CGContextBeginPath(context);
+    CGPoint arrow[3] = {
+	{x, y - size / 4}, {x + size / 2, y + size / 2}, {x + size, y - size / 4}
+    };
+    CGContextAddLines(context, arrow, 3);
+    CGContextStrokePath(context);
+}
+
 /*----------------------------------------------------------------------
  * +++ Double Arrow Buttons --
  *
@@ -363,7 +417,7 @@ static void DrawUpDownArrows(
     CGRect bounds,
     CGFloat inset,
     CGFloat size,
-    CGFloat *rgba)
+    const CGFloat *rgba)
 {
     CGFloat x, y;
 
@@ -501,10 +555,13 @@ static void SolidFillRoundedRectangle(
     NSColor *color)
 {
     CGPathRef path;
-    CHECK_RADIUS(radius, bounds)
 
-    CGContextSetFillColorWithColor(context, CGCOLOR(color));
+    CHECK_RADIUS(radius, bounds)
     path = CGPathCreateWithRoundedRect(bounds, radius, radius, NULL);
+    if (!path) {
+	return;
+    }
+    CGContextSetFillColorWithColor(context, CGCOLOR(color));
     CGContextBeginPath(context);
     CGContextAddPath(context, path);
     CGContextFillPath(context);
@@ -547,7 +604,7 @@ static void DrawListHeader(
      * So we have to query the Apple window manager.
      */
 
-    NSWindow *win = TkMacOSXDrawableWindow(Tk_WindowId(tkwin));
+    NSWindow *win = TkMacOSXGetNSWindowForDrawable(Tk_WindowId(tkwin));
     CGFloat *bgRGBA = [win isKeyWindow] ? activeBgRGBA : inactiveBgRGBA;
     CGFloat x = bounds.origin.x, y = bounds.origin.y;
     CGFloat w = bounds.size.width, h = bounds.size.height;
@@ -587,9 +644,9 @@ static void DrawListHeader(
 	arrowBounds.origin.x = bounds.origin.x + bounds.size.width - 16;
 	arrowBounds.size.width = 16;
 	if (state & TTK_STATE_ALTERNATE) {
-	    DrawUpArrow(context, arrowBounds, 3, 8, blackRGBA);
+	    DrawUpArrow(context, arrowBounds, 3, 8, BLACKRGBA);
 	} else if (state & TTK_STATE_SELECTED) {
-	    DrawDownArrow(context, arrowBounds, 3, 8, blackRGBA);
+	    DrawDownArrow(context, arrowBounds, 3, 8, BLACKRGBA);
 	}
     }
 }
@@ -672,8 +729,15 @@ static void DrawDarkButton(
 
     bounds = CGRectInset(bounds, 1, 1);
     if (kind == kThemePushButton && (state & TTK_STATE_PRESSED)) {
-	GradientFillRoundedRectangle(context, bounds, 4,
+	if ([NSApp macOSVersion] < 120000) {
+	    GradientFillRoundedRectangle(context, bounds, 4,
 	    pressedPushButtonGradient, 2);
+	} else {
+	    faceColor = [NSColor colorWithColorSpace: deviceRGB
+		components: darkPressedButtonFace
+		count: 4];
+	    SolidFillRoundedRectangle(context, bounds, 4, faceColor);
+	}
     } else if (kind == kThemePushButton &&
 	       (state & TTK_STATE_ALTERNATE) &&
 	       !(state & TTK_STATE_BACKGROUND)) {
@@ -711,9 +775,9 @@ static void DrawDarkButton(
 		darkSelectedGradient, 2);
 	}
 	if (kind == kThemePopupButton) {
-	    DrawUpDownArrows(context, arrowBounds, 3, 7, whiteRGBA);
+	    DrawUpDownArrows(context, arrowBounds, 3, 7, WHITERGBA);
 	} else {
-	    DrawDownArrow(context, arrowBounds, 4, 8, whiteRGBA);
+	    DrawDownArrow(context, arrowBounds, 4, 8, WHITERGBA);
 	}
     }
 
@@ -772,7 +836,7 @@ static void DrawDarkIncDecButton(
 	    darkSelectedGradient, 2);
 	CGContextRestoreGState(context);
     }
-    DrawUpDownArrows(context, bounds, 3, 5, whiteRGBA);
+    DrawUpDownArrows(context, bounds, 3, 5, WHITERGBA);
     HighlightButtonBorder(context, bounds);
 }
 
@@ -948,6 +1012,7 @@ static void DrawDarkTab(
     NSColorSpace *deviceRGB = [NSColorSpace deviceRGBColorSpace];
     NSColor *faceColor, *stroke;
     CGRect originalBounds = bounds;
+    int OSVersion = [NSApp macOSVersion];
 
     CGContextSetLineWidth(context, 1.0);
     CGContextClipToRect(context, bounds);
@@ -957,13 +1022,14 @@ static void DrawDarkTab(
      * clipped off.
      */
 
-    if (!(state & TTK_STATE_FIRST_TAB)) {
-	bounds.origin.x -= 10;
-	bounds.size.width += 10;
-    }
-
-    if (!(state & TTK_STATE_LAST_TAB)) {
-	bounds.size.width += 10;
+    if (OSVersion < 110000 || !(state & TTK_STATE_SELECTED)) {
+	if (!(state & TTK_STATE_FIRST_TAB)) {
+	    bounds.origin.x -= 10;
+	    bounds.size.width += 10;
+	}
+	if (!(state & TTK_STATE_LAST_TAB)) {
+	    bounds.size.width += 10;
+	}
     }
 
     /*
@@ -975,13 +1041,25 @@ static void DrawDarkTab(
     bounds = CGRectInset(bounds, 1, 1);
     if (!(state & TTK_STATE_SELECTED)) {
 	if (state & TTK_STATE_DISABLED) {
-	    faceColor = [NSColor colorWithColorSpace: deviceRGB
-		components: darkDisabledButtonFace
-		count: 4];
+	    if (OSVersion < 110000) {
+		faceColor = [NSColor colorWithColorSpace: deviceRGB
+					      components: darkDisabledButtonFace
+						   count: 4];
+	    } else {
+		faceColor = [NSColor colorWithColorSpace: deviceRGB
+					      components: darkTab
+						   count: 4];
+	    }
 	} else {
-	    faceColor = [NSColor colorWithColorSpace: deviceRGB
-		components: darkButtonFace
-		count: 4];
+	    if (OSVersion < 110000) {
+		faceColor = [NSColor colorWithColorSpace: deviceRGB
+					      components: darkButtonFace
+						   count: 4];
+	    } else {
+		faceColor = [NSColor colorWithColorSpace: deviceRGB
+					      components: darkTab
+						   count: 4];
+	    }
 	}
 	SolidFillRoundedRectangle(context, bounds, 4, faceColor);
 
@@ -1008,21 +1086,34 @@ static void DrawDarkTab(
     } else {
 
         /*
-         * This is the selected tab; paint it blue.  If it is first, cover up
-         * the separator line drawn by the second one.  (The selected tab is
-         * always drawn last.)
+         * This is the selected tab.  If it is first, cover up the separator
+         * line drawn by the second one.  (The selected tab is always drawn
+         * last.)
          */
 
 	if ((state & TTK_STATE_FIRST_TAB) && !(state & TTK_STATE_LAST_TAB)) {
 	    bounds.size.width += 1;
 	}
 	if (!(state & TTK_STATE_BACKGROUND)) {
-	    GradientFillRoundedRectangle(context, bounds, 4,
-		darkSelectedGradient, 2);
+	    if (OSVersion < 110000) {
+		GradientFillRoundedRectangle(context, bounds, 4,
+					     darkSelectedGradient, 2);
+	    } else {
+		faceColor = [NSColor colorWithColorSpace: deviceRGB
+					      components: darkSelectedTab
+						   count: 4];
+		SolidFillRoundedRectangle(context, bounds, 4, faceColor);
+	    }
 	} else {
-	    faceColor = [NSColor colorWithColorSpace: deviceRGB
-		components: darkInactiveSelectedTab
-		count: 4];
+	    if (OSVersion < 110000) {
+		faceColor = [NSColor colorWithColorSpace: deviceRGB
+					      components: darkInactiveSelectedTab
+						   count: 4];
+	    } else {
+		faceColor = [NSColor colorWithColorSpace: deviceRGB
+					      components: darkSelectedTab
+						   count: 4];
+	    } 
 	    SolidFillRoundedRectangle(context, bounds, 4, faceColor);
 	}
 	HighlightButtonBorder(context, bounds);
@@ -1039,7 +1130,7 @@ static void DrawDarkTab(
 static void DrawDarkSeparator(
     CGRect bounds,
     CGContextRef context,
-    Tk_Window tkwin)
+    TCL_UNUSED(Tk_Window))
 {
     static CGFloat fill[4] = {1.0, 1.0, 1.0, 0.3};
     NSColorSpace *deviceRGB = [NSColorSpace deviceRGBColorSpace];
@@ -1165,7 +1256,7 @@ static void DrawDarkFrame(
 static void DrawDarkListHeader(
     CGRect bounds,
     CGContextRef context,
-    Tk_Window tkwin,
+    TCL_UNUSED(Tk_Window),
     int state)
 {
     NSColorSpace *deviceRGB = [NSColorSpace deviceRGBColorSpace];
@@ -1174,10 +1265,10 @@ static void DrawDarkListHeader(
     CGContextSetStrokeColorSpace(context, deviceRGB.CGColorSpace);
     CGFloat x = bounds.origin.x, y = bounds.origin.y;
     CGFloat w = bounds.size.width, h = bounds.size.height;
-    CGPoint top[2] = {{x, y}, {x + w, y}};
-    CGPoint bottom[2] = {{x, y + h}, {x + w, y + h}};
-    CGPoint separator[2] = {{x + w, y + 3}, {x + w, y + h - 3}};
 
+    CGPoint top[2] = {{x, y + 1}, {x + w, y + 1}};
+    CGPoint bottom[2] = {{x, y + h}, {x + w, y + h}};
+    CGPoint separator[2] = {{x + w - 1, y + 3}, {x + w - 1, y + h - 3}};
     CGContextSaveGState(context);
     CGContextSetShouldAntialias(context, false);
     stroke = [NSColor colorWithColorSpace: deviceRGB
@@ -1199,9 +1290,9 @@ static void DrawDarkListHeader(
 	arrowBounds.origin.x = bounds.origin.x + bounds.size.width - 16;
 	arrowBounds.size.width = 16;
 	if (state & TTK_STATE_ALTERNATE) {
-	    DrawUpArrow(context, arrowBounds, 3, 8, whiteRGBA);
+	    DrawUpArrow(context, arrowBounds, 3, 8, WHITERGBA);
 	} else if (state & TTK_STATE_SELECTED) {
-	    DrawDownArrow(context, arrowBounds, 3, 8, whiteRGBA);
+	    DrawDownArrow(context, arrowBounds, 3, 8, WHITERGBA);
 	}
     }
 }
@@ -1231,7 +1322,7 @@ static ThemeButtonParams
     ListHeaderParams =
 {kThemeListHeaderButton, kThemeMetricListHeaderHeight};
 static Ttk_StateTable ButtonValueTable[] = {
-    {kThemeButtonOff, TTK_STATE_ALTERNATE | TTK_STATE_BACKGROUND},
+    {kThemeButtonOff, TTK_STATE_ALTERNATE | TTK_STATE_BACKGROUND, 0},
     {kThemeButtonMixed, TTK_STATE_ALTERNATE, 0},
     {kThemeButtonOn, TTK_STATE_SELECTED, 0},
     {kThemeButtonOff, 0, 0}
@@ -1260,7 +1351,7 @@ static Ttk_StateTable ButtonAdornmentTable[] = {
 static inline HIThemeButtonDrawInfo computeButtonDrawInfo(
     ThemeButtonParams *params,
     Ttk_State state,
-    Tk_Window tkwin)
+    TCL_UNUSED(Tk_Window))
 {
 
     /*
@@ -1296,16 +1387,16 @@ static inline HIThemeButtonDrawInfo computeButtonDrawInfo(
 
 static void ButtonElementMinSize(
     void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
     int *minWidth,
     int *minHeight,
-    Ttk_Padding *paddingPtr)
+    TCL_UNUSED(Ttk_Padding *))
 {
-    ThemeButtonParams *params = clientData;
+    ThemeButtonParams *params = (ThemeButtonParams *)clientData;
 
     if (params->heightMetric != NoThemeMetric) {
-	ChkErr(GetThemeMetric, params->heightMetric, minHeight);
+	ChkErr(GetThemeMetric, params->heightMetric, (SInt *) minHeight);
 
         /*
          * The theme height does not include the 1-pixel border around
@@ -1334,7 +1425,7 @@ static void ButtonElementSize(
     int *minHeight,
     Ttk_Padding *paddingPtr)
 {
-    ThemeButtonParams *params = clientData;
+    ThemeButtonParams *params = (ThemeButtonParams *)clientData;
     const HIThemeButtonDrawInfo info =
 	computeButtonDrawInfo(params, 0, tkwin);
     static const CGRect scratchBounds = {{0, 0}, {100, 100}};
@@ -1374,13 +1465,13 @@ static void ButtonElementSize(
 
 static void ButtonElementDraw(
     void *clientData,
-    void *elementRecord,
+    TCL_UNUSED(void *),
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
     Ttk_State state)
 {
-    ThemeButtonParams *params = clientData;
+    ThemeButtonParams *params = (ThemeButtonParams *)clientData;
     CGRect bounds = BoxToRect(d, b);
     HIThemeButtonDrawInfo info = computeButtonDrawInfo(params, state, tkwin);
 
@@ -1409,7 +1500,7 @@ static void ButtonElementDraw(
     } else if (info.kind == kThemePushButton &&
 	       (state & TTK_STATE_PRESSED)) {
 	bounds.size.height += 2;
-	if ([NSApp macMinorVersion] > 8) {
+	if ([NSApp macOSVersion] > 100800) {
 	    GradientFillRoundedRectangle(dc.context, bounds, 4,
 					 pressedPushButtonGradient, 2);
 	}
@@ -1464,25 +1555,25 @@ static Ttk_ElementSpec ButtonElementSpec = {
 
 /* Tab position logic, c.f. ttkNotebook.c TabState() */
 static Ttk_StateTable TabStyleTable[] = {
-    {kThemeTabFrontInactive, TTK_STATE_SELECTED | TTK_STATE_BACKGROUND},
-    {kThemeTabNonFrontInactive, TTK_STATE_BACKGROUND},
-    {kThemeTabFrontUnavailable, TTK_STATE_DISABLED | TTK_STATE_SELECTED},
-    {kThemeTabNonFrontUnavailable, TTK_STATE_DISABLED},
-    {kThemeTabFront, TTK_STATE_SELECTED},
-    {kThemeTabNonFrontPressed, TTK_STATE_PRESSED},
-    {kThemeTabNonFront, 0}
+    {kThemeTabFrontInactive, TTK_STATE_SELECTED | TTK_STATE_BACKGROUND, 0},
+    {kThemeTabNonFrontInactive, TTK_STATE_BACKGROUND, 0},
+    {kThemeTabFrontUnavailable, TTK_STATE_DISABLED | TTK_STATE_SELECTED, 0},
+    {kThemeTabNonFrontUnavailable, TTK_STATE_DISABLED, 0},
+    {kThemeTabFront, TTK_STATE_SELECTED, 0},
+    {kThemeTabNonFrontPressed, TTK_STATE_PRESSED, 0},
+    {kThemeTabNonFront, 0, 0}
 };
 static Ttk_StateTable TabAdornmentTable[] = {
-    {kHIThemeTabAdornmentNone, TTK_STATE_FIRST_TAB | TTK_STATE_LAST_TAB},
-    {kHIThemeTabAdornmentTrailingSeparator, TTK_STATE_FIRST_TAB},
-    {kHIThemeTabAdornmentNone, TTK_STATE_LAST_TAB},
-    {kHIThemeTabAdornmentTrailingSeparator, 0},
+    {kHIThemeTabAdornmentNone, TTK_STATE_FIRST_TAB | TTK_STATE_LAST_TAB, 0},
+    {kHIThemeTabAdornmentTrailingSeparator, TTK_STATE_FIRST_TAB, 0},
+    {kHIThemeTabAdornmentNone, TTK_STATE_LAST_TAB, 0},
+    {kHIThemeTabAdornmentTrailingSeparator, 0, 0},
 };
 static Ttk_StateTable TabPositionTable[] = {
-    {kHIThemeTabPositionOnly, TTK_STATE_FIRST_TAB | TTK_STATE_LAST_TAB},
-    {kHIThemeTabPositionFirst, TTK_STATE_FIRST_TAB},
-    {kHIThemeTabPositionLast, TTK_STATE_LAST_TAB},
-    {kHIThemeTabPositionMiddle, 0},
+    {kHIThemeTabPositionOnly, TTK_STATE_FIRST_TAB | TTK_STATE_LAST_TAB, 0},
+    {kHIThemeTabPositionFirst, TTK_STATE_FIRST_TAB, 0},
+    {kHIThemeTabPositionLast, TTK_STATE_LAST_TAB, 0},
+    {kHIThemeTabPositionMiddle, 0, 0},
 };
 
 /*
@@ -1526,10 +1617,10 @@ static Ttk_StateTable TabPositionTable[] = {
  */
 
 static void TabElementSize(
-    void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
-    int *minWidth,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
+    TCL_UNUSED(int *),
     int *minHeight,
     Ttk_Padding *paddingPtr)
 {
@@ -1539,8 +1630,8 @@ static void TabElementSize(
 }
 
 static void TabElementDraw(
-    void *clientData,
-    void *elementRecord,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
@@ -1580,19 +1671,19 @@ static Ttk_ElementSpec TabElementSpec = {
  */
 
 static void PaneElementSize(
-    void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
-    int *minWidth,
-    int *minHeight,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
+    TCL_UNUSED(int *),
+    TCL_UNUSED(int *),
     Ttk_Padding *paddingPtr)
 {
     *paddingPtr = Ttk_MakePadding(9, 5, 9, 9);
 }
 
 static void PaneElementDraw(
-    void *clientData,
-    void *elementRecord,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
@@ -1603,7 +1694,7 @@ static void PaneElementDraw(
     bounds.origin.y -= kThemeMetricTabFrameOverlap;
     bounds.size.height += kThemeMetricTabFrameOverlap;
     BEGIN_DRAWING(d)
-    if ([NSApp macMinorVersion] > 8) {
+    if ([NSApp macOSVersion] > 100800) {
 	DrawGroupBox(bounds, dc.context, tkwin);
     } else {
 	HIThemeTabPaneDrawInfo info = {
@@ -1641,19 +1732,19 @@ static Ttk_ElementSpec PaneElementSpec = {
  */
 
 static void GroupElementSize(
-    void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
-    int *minWidth,
-    int *minHeight,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
+    TCL_UNUSED(int *),
+    TCL_UNUSED(int *),
     Ttk_Padding *paddingPtr)
 {
     *paddingPtr = Ttk_UniformPadding(4);
 }
 
 static void GroupElementDraw(
-    void *clientData,
-    void *elementRecord,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
@@ -1662,7 +1753,7 @@ static void GroupElementDraw(
     CGRect bounds = BoxToRect(d, b);
 
     BEGIN_DRAWING(d)
-    if ([NSApp macMinorVersion] > 8) {
+    if ([NSApp macOSVersion] > 100800) {
 	DrawGroupBox(bounds, dc.context, tkwin);
     } else {
 	const HIThemeGroupBoxDrawInfo info = {
@@ -1702,29 +1793,29 @@ static Ttk_ElementOptionSpec EntryElementOptions[] = {
      Tk_Offset(EntryElement, backgroundObj), ENTRY_DEFAULT_BACKGROUND},
     {"-fieldbackground", TK_OPTION_BORDER,
      Tk_Offset(EntryElement, fieldbackgroundObj), ENTRY_DEFAULT_BACKGROUND},
-    {0}
+    {NULL, TK_OPTION_BOOLEAN, 0, NULL}
 };
 
 static void EntryElementSize(
-    void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
-    int *minWidth,
-    int *minHeight,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
+    TCL_UNUSED(int *),
+    TCL_UNUSED(int *),
     Ttk_Padding *paddingPtr)
 {
     *paddingPtr = Ttk_MakePadding(7, 5, 7, 6);
 }
 
 static void EntryElementDraw(
-    void *clientData,
+    TCL_UNUSED(void *),
     void *elementRecord,
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
     Ttk_State state)
 {
-    EntryElement *e = elementRecord;
+    EntryElement *e = (EntryElement *)elementRecord;
     Ttk_Box inner = Ttk_PadBox(b, Ttk_UniformPadding(3));
     CGRect bounds = BoxToRect(d, inner);
     NSColor *background;
@@ -1785,7 +1876,7 @@ static void EntryElementDraw(
 	}
 	BEGIN_DRAWING(d)
 	if (backgroundPtr == NULL) {
-	    if ([NSApp macMinorVersion] > 8) {
+	    if ([NSApp macOSVersion] > 100800) {
 		background = [NSColor textBackgroundColor];
 		CGContextSetFillColorWithColor(dc.context, CGCOLOR(background));
 	    } else {
@@ -1826,11 +1917,12 @@ static Ttk_ElementSpec EntryElementSpec = {
  *      1 pixel to account for the fact that the button is not centered.
  */
 
-static Ttk_Padding ComboboxPadding = {4, 2, 20, 2};
+static Ttk_Padding ComboboxPadding = {4, 4, 20, 4};
+static Ttk_Padding DarkComboboxPadding = {6, 6, 22, 6};
 
 static void ComboboxElementSize(
-    void *clientData,
-    void *elementRecord,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
     Tk_Window tkwin,
     int *minWidth,
     int *minHeight,
@@ -1838,12 +1930,16 @@ static void ComboboxElementSize(
 {
     *minWidth = 24;
     *minHeight = 23;
-    *paddingPtr = ComboboxPadding;
+    if (TkMacOSXInDarkMode(tkwin)) {
+	*paddingPtr = DarkComboboxPadding;
+    } else {
+	*paddingPtr = ComboboxPadding;
+    }
 }
 
 static void ComboboxElementDraw(
-    void *clientData,
-    void *elementRecord,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
@@ -1859,19 +1955,24 @@ static void ComboboxElementDraw(
     };
 
     BEGIN_DRAWING(d)
-    bounds.origin.y += 1;
     if (TkMacOSXInDarkMode(tkwin)) {
-	bounds.size.height += 1;
-	DrawDarkButton(bounds, info.kind, state, dc.context);
-    } else if ([NSApp macMinorVersion] > 8) {
-	if ((state & TTK_STATE_BACKGROUND) &&
-	    !(state & TTK_STATE_DISABLED)) {
-	    NSColor *background = [NSColor textBackgroundColor];
-	    CGRect innerBounds = CGRectInset(bounds, 1, 2);
-	    SolidFillRoundedRectangle(dc.context, innerBounds, 4, background);
+	bounds = CGRectInset(bounds, 3, 3);
+	if (state & TTK_STATE_FOCUS) {
+	    DrawDarkFocusRing(bounds, dc.context);
 	}
+	DrawDarkButton(bounds, info.kind, state, dc.context);
+    } else {
+	if ([NSApp macOSVersion] > 100800) {
+	    if ((state & TTK_STATE_BACKGROUND) &&
+		!(state & TTK_STATE_DISABLED)) {
+		NSColor *background = [NSColor textBackgroundColor];
+		CGRect innerBounds = CGRectInset(bounds, 1, 4);
+		bounds.origin.y += 1;
+		SolidFillRoundedRectangle(dc.context, innerBounds, 4, background);
+	    }
+	}
+	ChkErr(HIThemeDrawButton, &bounds, &info, dc.context, HIOrientation, NULL);
     }
-    ChkErr(HIThemeDrawButton, &bounds, &info, dc.context, HIOrientation, NULL);
     END_DRAWING
 }
 
@@ -1907,12 +2008,12 @@ static Ttk_ElementSpec ComboboxElementSpec = {
 static Ttk_Padding SpinbuttonMargins = {0, 0, 2, 0};
 
 static void SpinButtonUpElementSize(
-    void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
     int *minWidth,
     int *minHeight,
-    Ttk_Padding *paddingPtr)
+    TCL_UNUSED(Ttk_Padding *))
 {
     SInt32 s;
 
@@ -1923,8 +2024,8 @@ static void SpinButtonUpElementSize(
 }
 
 static void SpinButtonUpElementDraw(
-    void *clientData,
-    void *elementRecord,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
@@ -1964,12 +2065,12 @@ static Ttk_ElementSpec SpinButtonUpElementSpec = {
     SpinButtonUpElementDraw
 };
 static void SpinButtonDownElementSize(
-    void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
     int *minWidth,
     int *minHeight,
-    Ttk_Padding *paddingPtr)
+    TCL_UNUSED(Ttk_Padding *))
 {
     SInt32 s;
 
@@ -1980,8 +2081,8 @@ static void SpinButtonDownElementSize(
 }
 
 static void SpinButtonDownElementDraw(
-    void *clientData,
-    void *elementRecord,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
@@ -2058,21 +2159,21 @@ typedef struct {
 } TrackElement;
 
 static Ttk_ElementOptionSpec TrackElementOptions[] = {
-    {"-from", TK_OPTION_DOUBLE, Tk_Offset(TrackElement, fromObj)},
-    {"-to", TK_OPTION_DOUBLE, Tk_Offset(TrackElement, toObj)},
-    {"-value", TK_OPTION_DOUBLE, Tk_Offset(TrackElement, valueObj)},
-    {"-orient", TK_OPTION_STRING, Tk_Offset(TrackElement, orientObj)},
-    {0, 0, 0}
+    {"-from", TK_OPTION_DOUBLE, Tk_Offset(TrackElement, fromObj), NULL},
+    {"-to", TK_OPTION_DOUBLE, Tk_Offset(TrackElement, toObj), NULL},
+    {"-value", TK_OPTION_DOUBLE, Tk_Offset(TrackElement, valueObj), NULL},
+    {"-orient", TK_OPTION_STRING, Tk_Offset(TrackElement, orientObj), NULL},
+    {NULL, TK_OPTION_BOOLEAN, 0, NULL}
 };
 static void TrackElementSize(
     void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
     int *minWidth,
     int *minHeight,
-    Ttk_Padding *paddingPtr)
+    TCL_UNUSED(Ttk_Padding *))
 {
-    TrackElementData *data = clientData;
+    TrackElementData *data = (TrackElementData *)clientData;
     SInt32 size = 24;   /* reasonable default ... */
 
     ChkErr(GetThemeMetric, data->thicknessMetric, &size);
@@ -2087,10 +2188,11 @@ static void TrackElementDraw(
     Ttk_Box b,
     Ttk_State state)
 {
-    TrackElementData *data = clientData;
-    TrackElement *elem = elementRecord;
+    TrackElementData *data = (TrackElementData *)clientData;
+    TrackElement *elem = (TrackElement *)elementRecord;
     int orientation = TTK_ORIENT_HORIZONTAL;
     double from = 0, to = 100, value = 0, factor;
+    CGRect bounds;
 
     Ttk_GetOrientFromObj(NULL, elem->orientObj, &orientation);
     Tcl_GetDoubleFromObj(NULL, elem->fromObj, &from);
@@ -2098,10 +2200,16 @@ static void TrackElementDraw(
     Tcl_GetDoubleFromObj(NULL, elem->valueObj, &value);
     factor = RangeToFactor(to);
 
+    /*
+     * HIThemeTrackDrawInfo uses 2-byte alignment; assigning to a separate
+     * bounds variable avoids UBSan (-fsanitize=alignment) complaints.
+     */
+
+    bounds = BoxToRect(d, b);
     HIThemeTrackDrawInfo info = {
 	.version = 0,
 	.kind = data->kind,
-	.bounds = BoxToRect(d, b),
+	.bounds = bounds,
 	.min = from * factor,
 	.max = to * factor,
 	.value = value * factor,
@@ -2123,7 +2231,7 @@ static void TrackElementDraw(
     }
     BEGIN_DRAWING(d)
     if (TkMacOSXInDarkMode(tkwin)) {
-	CGRect bounds = BoxToRect(d, b);
+	bounds = BoxToRect(d, b);
 	NSColorSpace *deviceRGB = [NSColorSpace deviceRGBColorSpace];
 	NSColor *trackColor = [NSColor colorWithColorSpace: deviceRGB
 	    components: darkTrack
@@ -2157,12 +2265,12 @@ static Ttk_ElementSpec TrackElementSpec = {
  */
 
 static void SliderElementSize(
-    void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
     int *minWidth,
     int *minHeight,
-    Ttk_Padding *paddingPtr)
+    TCL_UNUSED(Ttk_Padding *))
 {
     *minWidth = *minHeight = 24;
 }
@@ -2202,15 +2310,15 @@ static Ttk_ElementOptionSpec PbarElementOptions[] = {
      Tk_Offset(PbarElement, phaseObj), "0"},
     {"-mode", TK_OPTION_STRING,
      Tk_Offset(PbarElement, modeObj), "determinate"},
-    {0, 0, 0, 0}
+    {NULL, TK_OPTION_BOOLEAN, 0, NULL}
 };
 static void PbarElementSize(
-    void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
     int *minWidth,
     int *minHeight,
-    Ttk_Padding *paddingPtr)
+    TCL_UNUSED(Ttk_Padding *))
 {
     SInt32 size = 24;           /* @@@ Check HIG for correct default */
 
@@ -2219,43 +2327,67 @@ static void PbarElementSize(
 }
 
 static void PbarElementDraw(
-    void *clientData,
+    TCL_UNUSED(void *),
     void *elementRecord,
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
     Ttk_State state)
 {
-    PbarElement *pbar = elementRecord;
-    int orientation = TTK_ORIENT_HORIZONTAL, phase = 0;
-    double value = 0, maximum = 100, factor;
+    PbarElement *pbar = (PbarElement *)elementRecord;
+    int orientation = TTK_ORIENT_HORIZONTAL, phase = 0, kind;
+
+    /*
+     * Using 1000 as the maximum should give better than 1 pixel
+     * resolution for most progress bars.
+     */
+
+    int ivalue, imaximum = 1000;
+    CGRect bounds;
 
     Ttk_GetOrientFromObj(NULL, pbar->orientObj, &orientation);
-    Tcl_GetDoubleFromObj(NULL, pbar->valueObj, &value);
-    Tcl_GetDoubleFromObj(NULL, pbar->maximumObj, &maximum);
-    Tcl_GetIntFromObj(NULL, pbar->phaseObj, &phase);
-    factor = RangeToFactor(maximum);
+    kind = !strcmp("indeterminate", Tcl_GetString(pbar->modeObj)) ?
+	kThemeIndeterminateBar : kThemeProgressBar;
+    if (kind == kThemeIndeterminateBar) {
+	Tcl_GetIntFromObj(NULL, pbar->phaseObj, &phase);
 
+	/*
+	 * On macOS 11 the fraction of an indeterminate progress bar which is
+	 * traversed by the oscillating thumb is value / maximum.  The phase
+	 * determines the position of the moving thumb in that range and is
+	 * apparently expected to vary between 0 and 120.  On earlier systems
+	 * it is unclear how the phase is used in generating the animation.
+	 */
+
+	ivalue = imaximum;
+    } else {
+	double value, maximum;
+	Tcl_GetDoubleFromObj(NULL, pbar->valueObj, &value);
+	Tcl_GetDoubleFromObj(NULL, pbar->maximumObj, &maximum);
+	ivalue = (value / maximum)*1000;
+    }
+
+    /*
+     * HIThemeTrackDrawInfo uses 2-byte alignment; assigning to a separate
+     * bounds variable avoids UBSan (-fsanitize=alignment) complaints.
+     */
+
+    bounds = BoxToRect(d, b);
     HIThemeTrackDrawInfo info = {
 	.version = 0,
-	.kind =
-	    (!strcmp("indeterminate",
-	    Tcl_GetString(pbar->modeObj)) && value) ?
-	    kThemeIndeterminateBar : kThemeProgressBar,
-	.bounds = BoxToRect(d, b),
+	.kind = kind,
+	.bounds = bounds,
 	.min = 0,
-	.max = maximum * factor,
-	.value = value * factor,
+	.max = imaximum,
+	.value = ivalue,
 	.attributes = kThemeTrackShowThumb |
-	    (orientation == TTK_ORIENT_HORIZONTAL ?
-	    kThemeTrackHorizontal : 0),
+	    (orientation == TTK_ORIENT_HORIZONTAL ? kThemeTrackHorizontal : 0),
 	.enableState = Ttk_StateTableLookup(ThemeTrackEnableTable, state),
-	.trackInfo.progress.phase = phase,
+	.trackInfo.progress.phase = phase
     };
-
     BEGIN_DRAWING(d)
     if (TkMacOSXInDarkMode(tkwin)) {
-	CGRect bounds = BoxToRect(d, b);
+	bounds = BoxToRect(d, b);
 	NSColorSpace *deviceRGB = [NSColorSpace deviceRGBColorSpace];
 	NSColor *trackColor = [NSColor colorWithColorSpace: deviceRGB
 	    components: darkTrack
@@ -2291,17 +2423,17 @@ typedef struct
 static Ttk_ElementOptionSpec ScrollbarElementOptions[] = {
     {"-orient", TK_OPTION_STRING,
      Tk_Offset(ScrollbarElement, orientObj), "horizontal"},
-    {0, 0, 0, 0}
+    {NULL, TK_OPTION_BOOLEAN, 0, NULL}
 };
 static void TroughElementSize(
-    void *clientData,
+    TCL_UNUSED(void *),
     void *elementRecord,
-    Tk_Window tkwin,
+    TCL_UNUSED(Tk_Window),
     int *minWidth,
     int *minHeight,
     Ttk_Padding *paddingPtr)
 {
-    ScrollbarElement *scrollbar = elementRecord;
+    ScrollbarElement *scrollbar = (ScrollbarElement *)elementRecord;
     int orientation = TTK_ORIENT_HORIZONTAL;
     SInt32 thickness = 15;
 
@@ -2309,12 +2441,12 @@ static void TroughElementSize(
     ChkErr(GetThemeMetric, kThemeMetricScrollBarWidth, &thickness);
     if (orientation == TTK_ORIENT_HORIZONTAL) {
 	*minHeight = thickness;
-	if ([NSApp macMinorVersion] > 7) {
+	if ([NSApp macOSVersion] > 100700) {
 	    *paddingPtr = Ttk_MakePadding(4, 4, 4, 3);
 	}
     } else {
 	*minWidth = thickness;
-	if ([NSApp macMinorVersion] > 7) {
+	if ([NSApp macOSVersion] > 100700) {
 	    *paddingPtr = Ttk_MakePadding(4, 4, 3, 4);
 	}
     }
@@ -2335,14 +2467,14 @@ static CGFloat darkActiveThumb[4] = {
     158.0 / 255, 158.0 / 255, 159.0 / 255, 1.0
 };
 static void TroughElementDraw(
-    void *clientData,
+    TCL_UNUSED(void *),
     void *elementRecord,
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
-    Ttk_State state)
+    TCL_UNUSED(Ttk_State))
 {
-    ScrollbarElement *scrollbar = elementRecord;
+    ScrollbarElement *scrollbar = (ScrollbarElement *)elementRecord;
     int orientation = TTK_ORIENT_HORIZONTAL;
     CGRect bounds = BoxToRect(d, b);
     NSColorSpace *deviceRGB = [NSColorSpace deviceRGBColorSpace];
@@ -2359,7 +2491,7 @@ static void TroughElementDraw(
 	components: rgba
 	count: 4];
     BEGIN_DRAWING(d)
-    if ([NSApp macMinorVersion] > 8) {
+    if ([NSApp macOSVersion] > 100800) {
 	CGContextSetFillColorWithColor(dc.context, CGCOLOR(troughColor));
     } else {
 	ChkErr(HIThemeSetFill, kThemeBrushDocumentWindowBackground, NULL,
@@ -2377,14 +2509,14 @@ static Ttk_ElementSpec TroughElementSpec = {
     TroughElementDraw
 };
 static void ThumbElementSize(
-    void *clientData,
+    TCL_UNUSED(void *),
     void *elementRecord,
-    Tk_Window tkwin,
+    TCL_UNUSED(Tk_Window),
     int *minWidth,
     int *minHeight,
-    Ttk_Padding *paddingPtr)
+    TCL_UNUSED(Ttk_Padding *))
 {
-    ScrollbarElement *scrollbar = elementRecord;
+    ScrollbarElement *scrollbar = (ScrollbarElement *)elementRecord;
     int orientation = TTK_ORIENT_HORIZONTAL;
 
     Ttk_GetOrientFromObj(NULL, scrollbar->orientObj, &orientation);
@@ -2398,14 +2530,14 @@ static void ThumbElementSize(
 }
 
 static void ThumbElementDraw(
-    void *clientData,
+    TCL_UNUSED(void *),
     void *elementRecord,
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
     Ttk_State state)
 {
-    ScrollbarElement *scrollbar = elementRecord;
+    ScrollbarElement *scrollbar = (ScrollbarElement *)elementRecord;
     int orientation = TTK_ORIENT_HORIZONTAL;
 
     Ttk_GetOrientFromObj(NULL, scrollbar->orientObj, &orientation);
@@ -2422,7 +2554,7 @@ static void ThumbElementDraw(
      * draw the thumb directly.
      */
 
-    if ([NSApp macMinorVersion] > 8) {
+    if ([NSApp macOSVersion] > 100800) {
 	CGRect thumbBounds = BoxToRect(d, b);
 	NSColorSpace *deviceRGB = [NSColorSpace deviceRGBColorSpace];
 	NSColor *thumbColor;
@@ -2448,7 +2580,7 @@ static void ThumbElementDraw(
 	END_DRAWING
     } else {
 	double thumbSize, trackSize, visibleSize, factor, fraction;
-	MacDrawable *macWin = (MacDrawable *) Tk_WindowId(tkwin);
+	MacDrawable *macWin = (MacDrawable *)Tk_WindowId(tkwin);
 	CGRect troughBounds = {{macWin->xOff, macWin->yOff},
 			       {Tk_Width(tkwin), Tk_Height(tkwin)}};
 
@@ -2482,7 +2614,7 @@ static void ThumbElementDraw(
 	visibleSize = (thumbSize / trackSize) * factor;
 	info.max = factor - visibleSize;
 	info.trackInfo.scrollbar.viewsize = visibleSize;
-	if ([NSApp macMinorVersion] < 8 ||
+	if ([NSApp macOSVersion] < 100800 ||
 	    orientation == TTK_ORIENT_HORIZONTAL) {
 	    info.value = factor * fraction;
 	} else {
@@ -2513,14 +2645,14 @@ static Ttk_ElementSpec ThumbElementSpec = {
     ThumbElementDraw
 };
 static void ArrowElementSize(
-    void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
     int *minWidth,
     int *minHeight,
-    Ttk_Padding *paddingPtr)
+    TCL_UNUSED(Ttk_Padding *))
 {
-    if ([NSApp macMinorVersion] < 8) {
+    if ([NSApp macOSVersion] < 100800) {
 	*minHeight = *minWidth = 14;
     } else {
 	*minHeight = *minWidth = -1;
@@ -2544,19 +2676,19 @@ static Ttk_ElementSpec ArrowElementSpec = {
  */
 
 static void SeparatorElementSize(
-    void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
     int *minWidth,
     int *minHeight,
-    Ttk_Padding *paddingPtr)
+    TCL_UNUSED(Ttk_Padding *))
 {
     *minWidth = *minHeight = 1;
 }
 
 static void SeparatorElementDraw(
-    void *clientData,
-    void *elementRecord,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
@@ -2596,12 +2728,12 @@ static const ThemeGrowDirection sizegripGrowDirection
     = kThemeGrowRight | kThemeGrowDown;
 
 static void SizegripElementSize(
-    void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
     int *minWidth,
     int *minHeight,
-    Ttk_Padding *paddingPtr)
+    TCL_UNUSED(Ttk_Padding *))
 {
     HIThemeGrowBoxDrawInfo info = {
 	.version = 0,
@@ -2618,9 +2750,9 @@ static void SizegripElementSize(
 }
 
 static void SizegripElementDraw(
-    void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
     Drawable d,
     Ttk_Box b,
     unsigned int state)
@@ -2695,8 +2827,8 @@ static Ttk_ElementSpec SizegripElementSpec = {
  */
 
 static void FillElementDraw(
-    void *clientData,
-    void *elementRecord,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
@@ -2704,7 +2836,7 @@ static void FillElementDraw(
 {
     CGRect bounds = BoxToRect(d, b);
 
-    if ([NSApp macMinorVersion] > 8) {
+    if ([NSApp macOSVersion] > 100800) {
 	NSColorSpace *deviceRGB = [NSColorSpace deviceRGBColorSpace];
 	NSColor *bgColor;
 	CGFloat fill[4];
@@ -2733,7 +2865,7 @@ static void BackgroundElementDraw(
     void *elementRecord,
     Tk_Window tkwin,
     Drawable d,
-    Ttk_Box b,
+    TCL_UNUSED(Ttk_Box),
     unsigned int state)
 {
     FillElementDraw(clientData, elementRecord, tkwin, d, Ttk_WinBox(tkwin),
@@ -2770,12 +2902,12 @@ static Ttk_ElementSpec BackgroundElementSpec = {
  */
 
 static void ToolbarBackgroundElementDraw(
-    void *clientData,
-    void *elementRecord,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
     Tk_Window tkwin,
     Drawable d,
-    Ttk_Box b,
-    Ttk_State state)
+    TCL_UNUSED(Ttk_Box),
+    TCL_UNUSED(Ttk_State))
 {
     ThemeBrush brush = kThemeBrushToolbarBackground;
     CGRect bounds = BoxToRect(d, Ttk_WinBox(tkwin));
@@ -2799,7 +2931,7 @@ static Ttk_ElementSpec ToolbarBackgroundElementSpec = {
  * +++ Field elements --
  *
  *      Used for the Treeview widget. This is like the BackgroundElement
- *      except that the fieldbackground color is configureable.
+ *      except that the fieldbackground color is configurable.
  */
 
 typedef struct {
@@ -2809,18 +2941,18 @@ typedef struct {
 static Ttk_ElementOptionSpec FieldElementOptions[] = {
     {"-fieldbackground", TK_OPTION_BORDER,
      Tk_Offset(FieldElement, backgroundObj), "white"},
-    {NULL, 0, 0, NULL}
+    {NULL, TK_OPTION_BOOLEAN, 0, NULL}
 };
 
 static void FieldElementDraw(
-    void *clientData,
+    TCL_UNUSED(void *),
     void *elementRecord,
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
-    Ttk_State state)
+    TCL_UNUSED(Ttk_State))
 {
-    FieldElement *e = elementRecord;
+    FieldElement *e = (FieldElement *)elementRecord;
     Tk_3DBorder backgroundPtr =
 	Tk_Get3DBorderFromObj(tkwin, e->backgroundObj);
 
@@ -2846,28 +2978,28 @@ static Ttk_ElementSpec FieldElementSpec = {
  */
 
 static Ttk_StateTable TreeHeaderValueTable[] = {
-    {kThemeButtonOn, TTK_STATE_ALTERNATE},
-    {kThemeButtonOn, TTK_STATE_SELECTED},
-    {kThemeButtonOff, 0}
+    {kThemeButtonOn, TTK_STATE_ALTERNATE, 0},
+    {kThemeButtonOn, TTK_STATE_SELECTED, 0},
+    {kThemeButtonOff, 0, 0}
 };
 
 static Ttk_StateTable TreeHeaderAdornmentTable[] = {
     {kThemeAdornmentHeaderButtonSortUp,
-     TTK_STATE_ALTERNATE | TTK_TREEVIEW_STATE_SORTARROW},
+     TTK_STATE_ALTERNATE | TTK_TREEVIEW_STATE_SORTARROW, 0},
     {kThemeAdornmentDefault,
-     TTK_STATE_SELECTED | TTK_TREEVIEW_STATE_SORTARROW},
-    {kThemeAdornmentHeaderButtonNoSortArrow, TTK_STATE_ALTERNATE},
-    {kThemeAdornmentHeaderButtonNoSortArrow, TTK_STATE_SELECTED},
-    {kThemeAdornmentFocus, TTK_STATE_FOCUS},
-    {kThemeAdornmentNone, 0}
+     TTK_STATE_SELECTED | TTK_TREEVIEW_STATE_SORTARROW, 0},
+    {kThemeAdornmentHeaderButtonNoSortArrow, TTK_STATE_ALTERNATE, 0},
+    {kThemeAdornmentHeaderButtonNoSortArrow, TTK_STATE_SELECTED, 0},
+    {kThemeAdornmentFocus, TTK_STATE_FOCUS, 0},
+    {kThemeAdornmentNone, 0, 0}
 };
 
 static void TreeAreaElementSize (
-    void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
-    int *minWidth,
-    int *minHeight,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
+    TCL_UNUSED(int *),
+    TCL_UNUSED(int *),
     Ttk_Padding *paddingPtr)
 {
 
@@ -2876,7 +3008,7 @@ static void TreeAreaElementSize (
      * widget expects the heading to be the same height as a row.
      */
 
-    if ([NSApp macMinorVersion] > 8) {
+    if ([NSApp macOSVersion] > 100800) {
 	paddingPtr->top = 4;
     }
 }
@@ -2896,7 +3028,7 @@ static void TreeHeaderElementSize(
     int *minHeight,
     Ttk_Padding *paddingPtr)
 {
-    if ([NSApp macMinorVersion] > 8) {
+    if ([NSApp macOSVersion] > 100800) {
 	*minHeight = 24;
     } else {
 	ButtonElementSize(clientData, elementRecord, tkwin, minWidth,
@@ -2906,13 +3038,13 @@ static void TreeHeaderElementSize(
 
 static void TreeHeaderElementDraw(
     void *clientData,
-    void *elementRecord,
+    TCL_UNUSED(void *),
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
     Ttk_State state)
 {
-    ThemeButtonParams *params = clientData;
+    ThemeButtonParams *params = (ThemeButtonParams *)clientData;
     CGRect bounds = BoxToRect(d, b);
     const HIThemeButtonDrawInfo info = {
 	.version = 0,
@@ -2923,7 +3055,7 @@ static void TreeHeaderElementDraw(
     };
 
     BEGIN_DRAWING(d)
-    if ([NSApp macMinorVersion] > 8) {
+    if ([NSApp macOSVersion] > 100800) {
 
         /*
          * Compensate for the padding added in TreeHeaderElementSize, so
@@ -2962,12 +3094,12 @@ static Ttk_StateTable DisclosureValueTable[] = {
     {kThemeDisclosureRight, 0, 0},
 };
 static void DisclosureElementSize(
-    void *clientData,
-    void *elementRecord,
-    Tk_Window tkwin,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
+    TCL_UNUSED(Tk_Window),
     int *minWidth,
     int *minHeight,
-    Ttk_Padding *paddingPtr)
+    TCL_UNUSED(Ttk_Padding *))
 {
     SInt32 s;
 
@@ -2978,8 +3110,8 @@ static void DisclosureElementSize(
 }
 
 static void DisclosureElementDraw(
-    void *clientData,
-    void *elementRecord,
+    TCL_UNUSED(void *),
+    TCL_UNUSED(void *),
     Tk_Window tkwin,
     Drawable d,
     Ttk_Box b,
@@ -2998,8 +3130,21 @@ static void DisclosureElementDraw(
 	};
 
 	BEGIN_DRAWING(d)
-	ChkErr(HIThemeDrawButton, &bounds, &info, dc.context, HIOrientation,
+	if ([NSApp macOSVersion] >= 110000) {
+	    CGFloat rgba[4];
+	    NSColorSpace *deviceRGB = [NSColorSpace deviceRGBColorSpace];
+	    NSColor *stroke = [[NSColor textColor]
+		colorUsingColorSpace: deviceRGB];
+	    [stroke getComponents: rgba];
+	    if (state & TTK_TREEVIEW_STATE_OPEN) {
+		DrawOpenDisclosure(dc.context, bounds, 2, 8, rgba);
+	    } else {
+		DrawClosedDisclosure(dc.context, bounds, 2, 12, rgba);
+	    }
+	} else {
+	    ChkErr(HIThemeDrawButton, &bounds, &info, dc.context, HIOrientation,
 	    NULL);
+	}
 	END_DRAWING
     }
 }
@@ -3049,20 +3194,20 @@ TTK_LAYOUT("TCombobox",
 /* Notebook tabs -- no focus ring */
 TTK_LAYOUT("Tab",
     TTK_GROUP("Notebook.tab", TTK_FILL_BOTH,
-    TTK_GROUP("Notebook.padding", TTK_EXPAND | TTK_FILL_BOTH,
-    TTK_NODE("Notebook.label", TTK_EXPAND | TTK_FILL_BOTH))))
+    TTK_GROUP("Notebook.padding", TTK_FILL_BOTH,
+    TTK_NODE("Notebook.label", TTK_FILL_BOTH))))
 
 /* Spinbox -- buttons 2px to the right of the field. */
 TTK_LAYOUT("TSpinbox",
     TTK_GROUP("Spinbox.buttons", TTK_PACK_RIGHT,
     TTK_NODE("Spinbox.uparrow", TTK_PACK_TOP | TTK_STICK_E)
     TTK_NODE("Spinbox.downarrow", TTK_PACK_BOTTOM | TTK_STICK_E))
-    TTK_GROUP("Spinbox.field", TTK_EXPAND | TTK_FILL_X,
-    TTK_NODE("Spinbox.textarea", TTK_EXPAND | TTK_FILL_X)))
+    TTK_GROUP("Spinbox.field", TTK_FILL_X,
+    TTK_NODE("Spinbox.textarea", TTK_FILL_X)))
 
 /* Progress bars -- track only */
 TTK_LAYOUT("TProgressbar",
-    TTK_NODE("Progressbar.track", TTK_EXPAND | TTK_FILL_BOTH))
+    TTK_NODE("Progressbar.track", TTK_FILL_BOTH))
 
 /* Treeview -- no border. */
 TTK_LAYOUT("Treeview",
@@ -3087,15 +3232,13 @@ TTK_LAYOUT("Item",
 
 TTK_LAYOUT("Vertical.TScrollbar",
     TTK_GROUP("Vertical.Scrollbar.trough", TTK_FILL_Y,
-    TTK_NODE("Vertical.Scrollbar.thumb",
-    TTK_PACK_TOP | TTK_EXPAND | TTK_FILL_BOTH)
+    TTK_NODE("Vertical.Scrollbar.thumb", TTK_FILL_BOTH)
     TTK_NODE("Vertical.Scrollbar.downarrow", TTK_PACK_BOTTOM)
     TTK_NODE("Vertical.Scrollbar.uparrow", TTK_PACK_BOTTOM)))
 
 TTK_LAYOUT("Horizontal.TScrollbar",
     TTK_GROUP("Horizontal.Scrollbar.trough", TTK_FILL_X,
-    TTK_NODE("Horizontal.Scrollbar.thumb",
-    TTK_PACK_LEFT | TTK_EXPAND | TTK_FILL_BOTH)
+    TTK_NODE("Horizontal.Scrollbar.thumb", TTK_FILL_BOTH)
     TTK_NODE("Horizontal.Scrollbar.rightarrow", TTK_PACK_RIGHT)
     TTK_NODE("Horizontal.Scrollbar.leftarrow", TTK_PACK_RIGHT)))
 

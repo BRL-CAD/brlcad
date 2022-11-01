@@ -52,7 +52,7 @@ test 1.1 {running visual tests} -constraints userInteraction -body {
     frame .menu -relief raised -borderwidth 1
     message .msg -font {Times 18} -relief raised -width 4i \
         -borderwidth 1 -text "This application provides a collection of visual tests for the Tk toolkit.  Each menu entry invokes a test, which displays information on the screen.  You can then verify visually that the information is being displayed in the correct way.  The tests under the \"Postscript\" menu exercise the Postscript-generation capabilities of canvas widgets."
-   
+
     pack .menu -side top -fill x
     pack .msg -side bottom -expand yes -fill both
 
@@ -64,7 +64,7 @@ test 1.1 {running visual tests} -constraints userInteraction -body {
     menubutton .menu.file -text "File" -menu .menu.file.m
     menu .menu.file.m
     .menu.file.m add command -label "Quit" -command end
-   
+
     menubutton .menu.group1 -text "Group 1" -menu .menu.group1.m
     menu .menu.group1.m
     .menu.group1.m add command -label "Canvas arcs" -command {runTest arc.tcl}
@@ -76,7 +76,7 @@ test 1.1 {running visual tests} -constraints userInteraction -body {
         -command {runTest butGeom.tcl}
     .menu.group1.m add command -label "Label/button colors" \
         -command {runTest butGeom2.tcl}
-   
+
     menubutton .menu.ps -text "Canvas Postscript" -menu .menu.ps.m
     menu .menu.ps.m
     .menu.ps.m add command -label "Rectangles and other graphics" \
@@ -89,11 +89,11 @@ test 1.1 {running visual tests} -constraints userInteraction -body {
         -command {runTest canvPsImg.tcl}
     .menu.ps.m add command -label "Arcs" \
         -command {runTest canvPsArc.tcl}
-   
+
     pack .menu.file .menu.group1 .menu.ps -side left -padx 1m
-   
+
     # Set up for keyboard-based menu traversal
-   
+
     bind . <Any-FocusIn> {
     if {("%d" == "NotifyVirtual") && ("%m" == "NotifyNormal")} {
         focus .menu

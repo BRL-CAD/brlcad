@@ -140,6 +140,8 @@ static int		ConsoleBlockModeProc(ClientData instanceData,
 static void		ConsoleCheckProc(ClientData clientData, int flags);
 static int		ConsoleCloseProc(ClientData instanceData,
 			    Tcl_Interp *interp);
+static int		ConsoleClose2Proc(ClientData instanceData,
+			    Tcl_Interp *interp, int flags);
 static int		ConsoleEventProc(Tcl_Event *evPtr, int flags);
 static void		ConsoleExitHandler(ClientData clientData);
 static int		ConsoleGetHandleProc(ClientData instanceData,
@@ -179,7 +181,7 @@ static const Tcl_ChannelType consoleChannelType = {
     NULL,			/* Get option proc. */
     ConsoleWatchProc,		/* Set up notifier to watch the channel. */
     ConsoleGetHandleProc,	/* Get an OS handle from channel. */
-    NULL,			/* close2proc. */
+	ConsoleClose2Proc,		/* close2proc. */
     ConsoleBlockModeProc,	/* Set blocking or non-blocking mode. */
     NULL,			/* Flush proc. */
     NULL,			/* Handler proc. */
@@ -506,7 +508,7 @@ ConsoleBlockModeProc(
 /*
  *----------------------------------------------------------------------
  *
- * ConsoleCloseProc --
+ * ConsoleCloseProc/ConsoleClose2Proc --
  *
  *	Closes a console based IO channel.
  *
@@ -604,6 +606,18 @@ ConsoleCloseProc(
 
     return errorCode;
 }
+
+static int
+ConsoleClose2Proc(
+    ClientData instanceData,	/* Pointer to ConsoleInfo structure. */
+    Tcl_Interp *interp,		/* For error reporting. */
+	int flags)
+{
+    if ((flags & (TCL_CLOSE_READ | TCL_CLOSE_WRITE)) == 0) {
+	return ConsoleCloseProc(instanceData, interp);
+    }
+    return EINVAL;
+}
 
 /*
  *----------------------------------------------------------------------
@@ -658,11 +672,11 @@ ConsoleInputProc(
 	 */
 
 	if (bufSize < (infoPtr->bytesRead - infoPtr->offset)) {
-	    memcpy(buf, &infoPtr->buffer[infoPtr->offset], (size_t) bufSize);
+	    memcpy(buf, &infoPtr->buffer[infoPtr->offset], bufSize);
 	    bytesRead = bufSize;
 	    infoPtr->offset += bufSize;
 	} else {
-	    memcpy(buf, &infoPtr->buffer[infoPtr->offset], (size_t) bufSize);
+	    memcpy(buf, &infoPtr->buffer[infoPtr->offset], bufSize);
 	    bytesRead = infoPtr->bytesRead - infoPtr->offset;
 
 	    /*
@@ -769,7 +783,7 @@ ConsoleOutputProc(
 	    infoPtr->writeBufLen = toWrite;
 	    infoPtr->writeBuf = ckalloc(toWrite);
 	}
-	memcpy(infoPtr->writeBuf, buf, (size_t) toWrite);
+	memcpy(infoPtr->writeBuf, buf, toWrite);
 	infoPtr->toWrite = toWrite;
 	ResetEvent(threadInfo->readyEvent);
 	TclPipeThreadSignal(&threadInfo->TI);
@@ -1318,7 +1332,7 @@ TclWinOpenConsoleChannel(
      * for instance).
      */
 
-    sprintf(channelName, "file%" TCL_I_MODIFIER "x", (size_t) infoPtr);
+    sprintf(channelName, "file%" TCL_Z_MODIFIER "x", (size_t) infoPtr);
 
     infoPtr->channel = Tcl_CreateChannel(&consoleChannelType, channelName,
 	    infoPtr, permissions);

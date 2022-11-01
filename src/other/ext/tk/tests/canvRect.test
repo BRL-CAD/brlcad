@@ -228,7 +228,7 @@ test canvRect-6.2 {RectToPoint procedure} -body {
 		 [expr {[.c find closest 20 25.1] eq $yId}] \
 	    [expr {[.c find closest 20 29.9] eq $yId}] \
 		 [expr {[.c find closest 20 30.1] eq $xId}]
-		
+
 } -cleanup {
 	.c delete all
 } -result {1 1 1 1}
@@ -250,7 +250,7 @@ test canvRect-6.4 {RectToPoint procedure} -body {
     list [expr {[.c find closest 20 24.4] eq $xId}] \
 		 [expr {[.c find closest 20 24.6] eq $yId}] \
 	    [expr {[.c find closest 20 30.4] eq $yId}] \
-		 [expr {[.c find closest 20 30.6] eq $xId}]		
+		 [expr {[.c find closest 20 30.6] eq $xId}]
 } -cleanup {
 	.c delete all
 } -result {1 1 1 1}
@@ -275,18 +275,18 @@ test canvRect-6.6 {RectToPoint procedure} -body {
     list [expr {[.c find closest 20 23.2] eq $xId}] \
 		 [expr {[.c find closest 20 23.3] eq $yId}] \
 	    [expr {[.c find closest 20 31.7] eq $yId}] \
-		 [expr {[.c find closest 20 31.8] eq $xId}] 
+		 [expr {[.c find closest 20 31.8] eq $xId}]
 } -cleanup {
 	.c delete all
 } -result {1 1 1 1}
-		
+
 test canvRect-6.7 {RectToPoint procedure} -body {
-	set xId [.c create rectangle 10 20 30 40 -outline {} -fill black]		
+	set xId [.c create rectangle 10 20 30 40 -outline {} -fill black]
 	set yId [.c create rectangle 40 40 50 50 -outline {} -fill black]
     list [expr {[.c find closest 35 35] eq $xId}] \
 		 [expr {[.c find closest 36 36] eq $yId}] \
 	    [expr {[.c find closest 37 37] eq $yId}] \
-		 [expr {[.c find closest 38 38] eq $yId}] 
+		 [expr {[.c find closest 38 38] eq $yId}]
 } -cleanup {
 	.c delete all
 } -result {1 1 1 1}

@@ -1,4 +1,4 @@
-'\" 
+'\"
 '\" Copyright (c) 2006 Andreas Kupries <andreas_kupries@users.sourceforge.net>
 '\"
 '\" See the file "license.terms" for information on usage and redistribution

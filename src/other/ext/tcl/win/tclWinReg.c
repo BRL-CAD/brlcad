@@ -191,7 +191,7 @@ Registry_Init(
     cmd = Tcl_CreateObjCommand(interp, "registry", RegistryObjCmd,
 	    interp, DeleteCmd);
     Tcl_SetAssocData(interp, REGISTRY_ASSOC_KEY, NULL, cmd);
-    return Tcl_PkgProvideEx(interp, "registry", "1.3.4", NULL);
+    return Tcl_PkgProvideEx(interp, "registry", "1.3.5", NULL);
 }
 
 /*
@@ -444,7 +444,7 @@ DeleteKey(
      */
 
     keyName = Tcl_GetString(keyNameObj);
-    buffer = Tcl_Alloc(keyNameObj->length + 1);
+    buffer = (char *)Tcl_Alloc(keyNameObj->length + 1);
     strcpy(buffer, keyName);
 
     if (ParseKeyName(interp, buffer, &hostName, &rootKey,
@@ -977,7 +977,7 @@ OpenKey(
     DWORD result;
 
     keyName = Tcl_GetString(keyNameObj);
-    buffer = Tcl_Alloc(keyNameObj->length + 1);
+    buffer = (char *)Tcl_Alloc(keyNameObj->length + 1);
     strcpy(buffer, keyName);
 
     result = ParseKeyName(interp, buffer, &hostName, &rootKey, &keyName);
@@ -1235,7 +1235,7 @@ RecursiveDeleteKey(
 		checkExProc = 1;
 		handle = GetModuleHandleW(L"ADVAPI32");
 		regDeleteKeyExProc = (LONG (*) (HKEY, LPCWSTR, REGSAM, DWORD))
-			GetProcAddress(handle, "RegDeleteKeyExW");
+			(void *)GetProcAddress(handle, "RegDeleteKeyExW");
 	    }
 	    if (mode && regDeleteKeyExProc) {
 		result = regDeleteKeyExProc(startKey, keyName, mode, 0);

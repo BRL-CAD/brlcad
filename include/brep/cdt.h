@@ -134,14 +134,20 @@ ON_Brep_CDT_Mesh(
     int exp_face_cnt, int *exp_faces
     );
 
-/* Original (fast but not watertight) routine used for plotting */
 #ifdef __cplusplus
+/* Original (fast but not watertight) routine used for plotting */
 extern BREP_EXPORT int
 brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
 	const ON_Brep *brep, struct bu_list *p_vhead,
 	struct bv_vlblock *vbp, struct bu_list *vlfree,
       	int index, int plottype, int num_points);
+
+/* Routine to capture the triangles from the fast CDT process
+ * for caching */
+extern BREP_EXPORT int
+brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, int *pntcnt,
+	const ON_Brep *brep, int index, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 #endif
 
 /* PImpl exposure of some mesh operations for use in tests - not to be considered public API */

@@ -67,7 +67,7 @@ adc_vls_print(struct bview *gvp, fastf_t base2local, struct bu_vls *out_vp)
 }
 
 
-HIDDEN void
+static void
 adc_usage(struct bu_vls *vp, const char *name)
 {
     bu_vls_printf(vp, "Usage: %s \n", name);

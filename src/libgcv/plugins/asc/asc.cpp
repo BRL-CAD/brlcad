@@ -17,29 +17,26 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file asc.cpp
- *
- * Brief description
- *
- */
 
 #include "common.h"
 #include "vmath.h"
 
-#include <cstdio>
 #include <fstream>
-#include <regex>
 #include <sstream>
 #include <string>
+
+#include "bio.h"
 
 #include "rt/db_io.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
 
+
 extern int asc_read_v4(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
 extern int asc_read_v5(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
 extern int asc_write_v4(struct gcv_context *c, const struct gcv_opts *o, const char *dest_path);
 extern int asc_write_v5(struct gcv_context *c, const struct gcv_opts *o, const char *dest_path);
+
 
 static int
 asc_can_read(const char *data)
@@ -48,6 +45,7 @@ asc_can_read(const char *data)
     bu_log("asc can read: %s\n", data);
     return 1;
 }
+
 
 static int
 asc_read(
@@ -120,6 +118,7 @@ asc_cleanup:
     return ret;
 }
 
+
 static int
 asc_write(struct gcv_context *c, const struct gcv_opts *o,
 	       const void *UNUSED(odata), const char *dest_path)
@@ -132,6 +131,7 @@ asc_write(struct gcv_context *c, const struct gcv_opts *o,
     }
     return 1;
 }
+
 
 extern "C"
 {

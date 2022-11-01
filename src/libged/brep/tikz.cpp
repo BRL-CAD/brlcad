@@ -92,14 +92,13 @@ tikz_comb(struct ged *gedp, struct bu_vls *tikz, struct directory *dp, struct bu
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb_internal = NULL;
-    struct rt_wdb *wdbp = gedp->ged_wdbp;
     struct bu_vls color_backup = BU_VLS_INIT_ZERO;
 
     bu_vls_sprintf(&color_backup, "%s", bu_vls_addr(color));
 
     RT_DB_INTERNAL_INIT(&intern)
 
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
 	return;
     }
 
@@ -133,7 +132,6 @@ brep_tikz(struct _ged_brep_info *gb, const char *outfile)
     struct bu_vls tikz = BU_VLS_INIT_ZERO;
 
     struct ged *gedp = gb->gedp;
-    struct rt_wdb *wdbp = gedp->ged_wdbp;
     struct rt_brep_internal *brep_ip = NULL;
 
     bu_vls_printf(&tikz, "\\documentclass{article}\n");
@@ -159,7 +157,7 @@ brep_tikz(struct _ged_brep_info *gb, const char *outfile)
 	struct rt_brep_internal *b_ip = NULL;
 	RT_DB_INTERNAL_INIT(&bintern)
 	struct directory *d = (struct directory *)BU_PTBL_GET(&breps, i);
-	if (rt_db_get_internal(&bintern, d, wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&bintern, d, gedp->dbip, NULL, &rt_uniresource) < 0) {
 	    return BRLCAD_ERROR;
 	}
 	b_ip = (struct rt_brep_internal *)bintern.idb_ptr;

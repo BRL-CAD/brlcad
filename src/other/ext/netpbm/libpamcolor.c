@@ -1,9 +1,12 @@
-/*----------------------------------------------------------------------------
+/*============================================================================
                                   libpamcolor.c
-------------------------------------------------------------------------------
-   These are the library functions, which belong in the libnetpbm library,
-   that deal with colors in the PAM image format.
------------------------------------------------------------------------------*/
+==============================================================================
+  These are the library functions, which belong in the libnetpbm library,
+  that deal with colors in the PAM image format.
+
+  This file was originally written by Bryan Henderson and is contributed
+  to the public domain by him and subsequent authors.
+=============================================================================*/
 
 /* See libpbm.c for the complicated explanation of this 32/64 bit file
    offset stuff.
@@ -11,11 +14,19 @@
 #define _FILE_OFFSET_BITS 64
 #define _LARGE_FILES  
 
+#ifndef __APPLE__
+#define _BSD_SOURCE 1      /* Make sure strdup() is in string.h */
+#define _XOPEN_SOURCE 500  /* Make sure strdup() is in string.h */
+#endif
+
+#include <string.h>
 #include <limits.h>
 
 #include "pm_c_util.h"
+
 #include "pam.h"
 #include "ppm.h"
+
 
 
 tuple
@@ -38,6 +49,34 @@ pnm_parsecolor(const char * const colorname,
     retval[PAM_RED_PLANE] = PPM_GETR(color);
     retval[PAM_GRN_PLANE] = PPM_GETG(color);
     retval[PAM_BLU_PLANE] = PPM_GETB(color);
+
+    return retval;
+}
+
+
+
+const char *
+pnm_colorname(struct pam * const pamP,
+              tuple        const color,
+              int          const hexok) {
+
+    const char * retval;
+    pixel colorp;
+    char * colorname;
+
+    if (pamP->depth < 3)
+        PPM_ASSIGN(colorp, color[0], color[0], color[0]);
+    else 
+        PPM_ASSIGN(colorp,
+                   color[PAM_RED_PLANE],
+                   color[PAM_GRN_PLANE],
+                   color[PAM_BLU_PLANE]);
+
+    colorname = ppm_colorname(&colorp, pamP->maxval, hexok);
+
+    retval = strdup(colorname);
+    if (retval == NULL)
+        pm_error("Couldn't get memory for color name string");
 
     return retval;
 }

@@ -35,8 +35,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "xxhash.h"
-
 #include "qtcad/defines.h"
 
 #ifndef Q_MOC_RUN
@@ -91,12 +89,6 @@ class QTCAD_EXPORT gInstance
 	// the explicit @ specifier
 	int icnt = 0;
 };
-
-/* Given gInstance data, construct its hash.  This function is public to allow
- * for hashing of different "modes" in client codes wanting to do fuzzy matching
- * of instances. */
-QTCAD_EXPORT extern unsigned long long
-ginstance_hash(XXH64_state_t *h_state, struct directory *parent, std::string &dp_name, db_op_t op, mat_t c_m, int cnt);
 
 // Given a dbip, construct or find the instances associated with it and add them
 // to the containers.  The instances maps may contain previous gInstances created

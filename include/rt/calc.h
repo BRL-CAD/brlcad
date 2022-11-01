@@ -118,6 +118,22 @@ RT_EXPORT extern int rt_bound_internal(struct db_i *dbip,
 				       point_t rpp_max);
 
 /**
+ * Given the info defining a comb tree instance, calculate its
+ * bounding box (using ft_plot methods as a fallback.)  This
+ * routine has its origins in the drawing code
+ */
+RT_EXPORT extern int
+rt_bound_instance(point_t *bmin, point_t *bmax,
+	struct directory *dp,
+	struct db_i *dbip,
+	const struct bg_tess_tol *ttol,
+	const struct bn_tol *tol,
+	mat_t *s_mat,
+	struct resource *res,
+	struct bview *v
+	);
+
+/**
  * Given an argc/argv list of objects, calculate their collective
  * bounding box */
 RT_EXPORT extern int

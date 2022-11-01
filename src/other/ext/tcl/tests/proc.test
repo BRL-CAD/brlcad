@@ -14,7 +14,7 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 if {"::tcltest" ni [namespace children]} {
-    package require tcltest 2
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -99,15 +99,15 @@ test proc-1.6 {Tcl_ProcObjCmd, namespace code ignores single ":"s in middle or e
 test proc-1.7 {Tcl_ProcObjCmd, check that formal parameter names are not array elements} -setup {
     catch {rename p ""}
 } -returnCodes error -body {
-    proc p {a(1) a(2)} { 
-	set z [expr $a(1)+$a(2)]
+    proc p {a(1) a(2)} {
+	set z [expr {$a(1)+$a(2)}]
 	puts "$z=z, $a(1)=$a(1)"
     }
 } -result {formal parameter "a(1)" is an array element}
 test proc-1.8 {Tcl_ProcObjCmd, check that formal parameter names are simple names} -setup {
     catch {rename p ""}
 } -body {
-    proc p {b:a b::a} { 
+    proc p {b:a b::a} {
     }
 } -returnCodes error -result {formal parameter "b::a" is not a simple name}
 test proc-1.9 {Tcl_ProcObjCmd, arguments via canonical list (string-representation bug [631b4c45df])} -body {
@@ -324,6 +324,15 @@ test proc-4.8 {TclCreateProc, procbody obj, no leak on multiple iterations} -set
 test proc-4.9 {[39fed4dae5] Valid Tcl_PkgPresent return} procbodytest {
     procbodytest::check
 } 1
+test proc-4.10 {
+    TclCreateProc, issue a8579d906a28, argument with no name
+} -body {
+    catch {
+	proc p1 [list [list [expr {1 + 2}] default]] {}
+    }
+} -cleanup {
+    catch {rename p1 {}}
+} -result 0
 
 test proc-5.1 {Bytecompiling noop; test for correct argument substitution} -body {
     proc p args {} ; # this will be bytecompiled into t
@@ -340,7 +349,7 @@ test proc-5.1 {Bytecompiling noop; test for correct argument substitution} -body
 } -cleanup {
     catch {rename p ""}
     catch {rename t ""}
-} -result {aba}    
+} -result {aba}
 
 test proc-6.1 {ProcessProcResultCode: Bug 647307 (negative return code)} -body {
     proc a {} {return -code -5}
@@ -389,9 +398,9 @@ test proc-7.3 {Returning loop exception from redefined cmd: Bug 729692} -body {
 test proc-7.4 {Proc struct outlives its interp: Bug 3532959} {
     set lambda x
     lappend lambda {set a 1}
-    interp create slave
-    slave eval [list apply $lambda foo]
-    interp delete slave
+    interp create child
+    child eval [list apply $lambda foo]
+    interp delete child
     unset lambda
 } {}
 

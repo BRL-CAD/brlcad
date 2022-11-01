@@ -63,7 +63,7 @@ test cmdMZ-1.4 {Tcl_PwdObjCmd: failure} -setup {
     # This test fails on various unix platforms (eg Linux) where permissions
     # caching causes this to fail. The caching is strictly incorrect, but we
     # have no control over that.
-    file attr . -permissions 000
+    file attr . -permissions 0o000
     pwd
 } -returnCodes error -cleanup {
     cd $cwd
@@ -321,7 +321,7 @@ test cmdMZ-4.13 {Tcl_SplitObjCmd: basic split commands} {
 # The tests for Tcl_SubstObjCmd are in subst.test
 # The tests for Tcl_SwitchObjCmd are in switch.test
 
-# todo: rewrite this if monotonic clock is provided resp. command "after" 
+# todo: rewrite this if monotonic clock is provided resp. command "after"
 # gets microsecond accuracy (RFE [fdfbd5e10] gets merged):
 proc _nrt_sleep {msec} {
     set usec [expr {$msec * 1000}]

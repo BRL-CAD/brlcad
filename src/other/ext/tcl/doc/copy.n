@@ -33,9 +33,9 @@ as the empty string, a new name is chosen. Names, unless specified, are
 chosen with the same algorithm used by the \fBnew\fR method of
 \fBoo::class\fR.
 .VE TIP473
-The copied object will be of the same class as the source object, and will have 
-all its per-object methods copied. If it is a class, it will also have all the 
-class methods in the class copied, but it will not have any of its instances 
+The copied object will be of the same class as the source object, and will have
+all its per-object methods copied. If it is a class, it will also have all the
+class methods in the class copied, but it will not have any of its instances
 copied.
 .PP
 .VS

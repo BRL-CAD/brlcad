@@ -31,11 +31,10 @@
 
 #include <iostream>
 
-#define FILE_TYPE_UNKNOWN    0
-#define FILE_TYPE_VRML1      1
-#define FILE_TYPE_VRML       2
+#define FILEUTIL_TYPE_UNKNOWN    0
+#define FILEUTIL_TYPE_VRML1      1
+#define FILEUTIL_TYPE_VRML       2
 
-using namespace std;
 
 class FileUtil
 {

@@ -21,6 +21,8 @@ namespace import ::tcltest::*
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
 
+testConstraint failsOnXQuarz [expr {$tcl_platform(os) ne "Darwin" || [tk windowingsystem] ne "x11" }]
+
 # set up a very large buffer to test INCR retrievals
 set longValue ""
 foreach i {a b c d e f g j h i j k l m o p q r s t u v w x y z} {
@@ -180,7 +182,7 @@ test clipboard-4.4 {ClipboardLostSel procedure} -setup {
     clipboard get
 } -cleanup {
     clipboard clear
-}  -returnCodes error -result {CLIPBOARD selection doesn't exist or form "STRING" not defined} 
+}  -returnCodes error -result {CLIPBOARD selection doesn't exist or form "STRING" not defined}
 test clipboard-4.5 {ClipboardLostSel procedure} -setup {
     clipboard clear
 } -body {
@@ -233,7 +235,7 @@ test clipboard-6.1 {Tk_ClipboardAppend procedure} -setup {
 } -cleanup {
     clipboard clear
 }  -returnCodes ok -result {first chunk second chunk}
-test clipboard-6.2 {Tk_ClipboardAppend procedure} -constraints x11 -setup {
+test clipboard-6.2 {Tk_ClipboardAppend procedure} -constraints {x11 failsOnXQuarz} -setup {
     clipboard clear
 } -body {
     setupbg

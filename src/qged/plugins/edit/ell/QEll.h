@@ -56,8 +56,7 @@ class QEll : public QWidget
 	QPushButton *reset_values;
 
     signals:
-	void view_updated(struct bview **);
-	void db_updated();
+	void view_updated(unsigned long long);
 
     private slots:
 	void read_from_db();

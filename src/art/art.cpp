@@ -189,20 +189,19 @@ extern "C" {
     extern int rt_verbosity;
     extern mat_t Viewrotscale;
     extern point_t eye_model; /* model-space location of eye */
-    extern size_t npsw;
+    extern ssize_t npsw;
     extern size_t width, height;
     extern struct bu_ptbl* cmd_objs;
     extern struct command_tab rt_do_tab[];
-    int save_overlaps = 1;
-    mat_t model2view;
-    mat_t view2model;
+    extern mat_t model2view;
+    extern mat_t view2model;
+    extern point_t viewbase_model;
     size_t n_free;
     size_t n_malloc;		/* Totals at last check */
     size_t n_realloc;
     struct application APP;
     struct icv_image* bif = NULL;
 
-    void grid_setup();
     void option(const char *cat, const char *opt, const char *des, int verbose);
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
@@ -283,7 +282,7 @@ init_defaults(void)
     option("Raytrace", "-P #", "Specify number of processors to use (default: all available)", 100);
     option("Raytrace", "-T # or -T #/#", "Tolerance as distance or distance/angular", 100);
 
-    option("Advanced", "-c \"command\"", "[eventually will] Run a semicolon-separated list of commands (just samples for now)", 0);
+    option("Advanced", "-c \"command\"", "Run a semicolon-separated list of rt commands", 0);
     option("Advanced", "-M", "Read matrix + commands on stdin (RT 'saveview' scripts)", 100);
     option("Advanced", "-D #", "Specify starting frame number (ending is specified via -K #)", 100);
     option("Advanced", "-K #", "Specify ending frame number (starting is specified via -D #)", 100);
@@ -675,7 +674,7 @@ build_project(const char* file, const char* UNUSED(objects))
     project->configurations()
 	.get_by_name("final")->get_parameters()
 	.insert_path("uniform_pixel_renderer.samples", samples)
-	.insert_path("rendering_threads", npsw);
+	.insert_path("rendering_threads", (size_t)npsw);
     project->configurations()
 	.get_by_name("interactive")->get_parameters()
 	.insert_path("rendering_threads", "1"); /* no multithreading - for debug rendering on appleseed */
@@ -705,10 +704,10 @@ build_project(const char* file, const char* UNUSED(objects))
     }
     if (cmd_objs) {
 
-	int cmdobjc = BU_PTBL_LEN(cmd_objs);
+	size_t cmdobjc = BU_PTBL_LEN(cmd_objs);
 	const char** cmdobjv = (const char**)cmd_objs->buffer;
 	if (cmdobjc) {
-	    db_walk_tree(APP.a_rt_i->rti_dbip, cmdobjc, cmdobjv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
+	    db_walk_tree(APP.a_rt_i->rti_dbip, (int)cmdobjc, cmdobjv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
 	}
     }
 
@@ -916,7 +915,7 @@ fb_setup() {
 	yy = height;
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    fbp = fb_open(framebuffer, xx, yy);
+    fbp = fb_open(framebuffer, (int)xx, (int)yy);
     bu_semaphore_release(BU_SEM_SYSCALL);
     if (fbp == FB_NULL) {
 	fprintf(stderr, "rt:  can't open frame buffer\n");
@@ -932,18 +931,18 @@ fb_setup() {
 
     /* If the fb is lots bigger (>= 2X), zoom up & center */
     if (width > 0 && height > 0) {
-	zoom = fb_getwidth(fbp) / width;
+	zoom = (int)(fb_getwidth(fbp) / width);
 	if ((size_t)fb_getheight(fbp) / height < (size_t)zoom)
-	    zoom = fb_getheight(fbp) / height;
+	    zoom = (int)(fb_getheight(fbp) / height);
     }
     else {
 	zoom = 1;
     }
-    (void)fb_view(fbp, width / 2, height / 2,
-	zoom, zoom);
+    (void)fb_view(fbp, (int)(width / 2), (int)(height / 2), (int)zoom, (int)zoom);
     bu_semaphore_release(BU_SEM_SYSCALL);
     return 0;
 }
+
 
 extern "C" void
 view_setup(struct rt_i* UNUSED(rtip))
@@ -976,13 +975,6 @@ extern "C" void
 do_run(int UNUSED(a), int UNUSED(b))
 {
     bu_bomb("in run, Dont call me!");
-}
-
-
-extern "C" void
-grid_setup(void)
-{
-    bu_bomb("in grid setup, Dont call me!");
 }
 
 
@@ -1019,7 +1011,7 @@ def_tree(struct rt_i* rtip)
     RT_CK_RTI(rtip);
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, objc, (const char**)objv, npsw) < 0) {
+    if (rt_gettrees(rtip, objc, (const char**)objv, (int)npsw) < 0) {
 	bu_log("rt_gettrees(%s) FAILED\n", (objv && objv[0]) ? objv[0] : "ERROR");
     }
     (void)rt_get_timer(&times, NULL);

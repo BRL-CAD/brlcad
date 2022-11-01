@@ -116,7 +116,7 @@ proc parse_command_line {} {
     }
 
     if {$build_tcl} {
-	# Find Tcl.
+	# Find Tcl
 	set tcldir [lindex [lsort [glob -nocomplain -tails -type d \
 		-directory $tcltkdir tcl$useversion]] end]
 	if {$tcldir eq ""} {
@@ -127,7 +127,7 @@ proc parse_command_line {} {
     }
 
     if {$build_tk} {
-	# Find Tk.
+	# Find Tk
 	set tkdir [lindex [lsort [glob -nocomplain -tails -type d \
 		-directory $tcltkdir tk$useversion]] end]
 	if {$tkdir eq ""} {
@@ -168,7 +168,7 @@ proc css-style args {
     append style $tokens " \{" $body "\}\n"
 }
 proc css-stylesheet {} {
-    set hBd "1px dotted #11577b"
+    set hBd "1px dotted #11577B"
 
     css-style body div p th td li dd ul ol dl dt blockquote {
 	font-family: Verdana, sans-serif;
@@ -177,7 +177,7 @@ proc css-stylesheet {} {
 	font-family: 'Courier New', Courier, monospace;
     }
     css-style pre {
-	background-color:  #f6fcec;
+	background-color:  #F6FCEC;
 	border-top:        1px solid #6A6A6A;
 	border-bottom:     1px solid #6A6A6A;
 	padding:           1em;
@@ -197,20 +197,20 @@ proc css-stylesheet {} {
     }
     css-style h1 {
 	font-size:         18px;
-	color:             #11577b;
+	color:             #11577B;
 	border-bottom:     $hBd;
 	margin-top:        0px;
     }
     css-style h2 {
 	font-size:         14px;
-	color:             #11577b;
-	background-color:  #c5dce8;
+	color:             #11577B;
+	background-color:  #C5DCE8;
 	padding-left:      1em;
 	border:            1px solid #6A6A6A;
     }
     css-style h3 h4 {
 	color:             #1674A4;
-	background-color:  #e8f2f6;
+	background-color:  #E8F2F6;
 	border-bottom:     $hBd;
 	border-top:        $hBd;
     }
@@ -224,16 +224,16 @@ proc css-stylesheet {} {
 	width: 20em;
 	float: left;
 	padding: 2px;
-	border-top: 1px solid #999;
+	border-top: 1px solid #999999;
     }
     css-style ".keylist dt" { font-weight: bold; }
     css-style ".keylist dd" ".arguments dd" {
 	margin-left: 20em;
 	padding: 2px;
-	border-top: 1px solid #999;
+	border-top: 1px solid #999999;
     }
     css-style .copy {
-	background-color:  #f6fcfc;
+	background-color:  #F6FCFC;
 	white-space:       pre;
 	font-size:         80%;
 	border-top:        1px solid #6A6A6A;
@@ -257,10 +257,12 @@ proc make-man-pages {html args} {
 
     makedirhier $html
     set cssfd [open $html/$::CSSFILE w]
+    fconfigure $cssfd -translation lf -encoding utf-8
     puts $cssfd [css-stylesheet]
     close $cssfd
     set manual(short-toc-n) 1
     set manual(short-toc-fp) [open $html/[indexfile] w]
+    fconfigure $manual(short-toc-fp) -translation lf -encoding utf-8
     puts $manual(short-toc-fp) [htmlhead $overall_title $overall_title]
     puts $manual(short-toc-fp) "<DL class=\"keylist\">"
     set manual(merge-copyrights) {}
@@ -298,6 +300,7 @@ proc make-man-pages {html args} {
     file delete -force -- $html/Keywords
     makedirhier $html/Keywords
     set keyfp [open $html/Keywords/[indexfile] w]
+    fconfigure $keyfp -translation lf -encoding utf-8
     puts $keyfp [htmlhead "$tcltkdesc Keywords" "$tcltkdesc Keywords" \
 		     $overall_title "../[indexfile]"]
     set letters {A B C D E F G H I J K L M N O P Q R S T U V W X Y Z}
@@ -321,6 +324,7 @@ proc make-man-pages {html args} {
 	}
 	# Per-keyword page
 	set afp [open $html/Keywords/$a.htm w]
+	fconfigure $afp -translation lf -encoding utf-8
 	puts $afp [htmlhead "$tcltkdesc Keywords - $a" \
 		       "$tcltkdesc Keywords - $a" \
 		       $overall_title "../[indexfile]"]
@@ -397,6 +401,7 @@ proc make-man-pages {html args} {
 		puts -nonewline stderr .
 	    }
 	    set outfd [open $html/$manual(wing-file)/$manual(name).htm w]
+	    fconfigure $outfd -translation lf -encoding utf-8
 	    puts $outfd [htmlhead "$manual($manual(wing-file)-$manual(name)-title)" \
 		    $manual(name) $wing_name "[indexfile]" \
 		    $overall_title "../[indexfile]"]
@@ -439,6 +444,7 @@ proc plus-base {var root glob name dir desc} {
     if {$var} {
 	if {[file exists $tcltkdir/$root/README]} {
 	    set f [open $tcltkdir/$root/README]
+	    fconfigure $f -encoding utf-8
 	    set d [read $f]
 	    close $f
 	    if {[regexp {This is the \w+ (\S+) source distribution} $d -> version]} {
@@ -557,6 +563,7 @@ array set remap_link_target {
     Tk_Font	Tk_GetFont
     Tk_Image	Tk_GetImage
     Tk_ImageMaster Tk_GetImage
+    Tk_ImageModel Tk_GetImage
     Tk_ItemType Tk_CreateItemType
     Tk_Justify	Tk_GetJustify
     Ttk_Theme	Ttk_GetTheme
@@ -586,6 +593,7 @@ array set exclude_refs_map {
     scrollbar.n		{set}
     selection.n		{string}
     tcltest.n		{error}
+    text.n		{bind image lower raise}
     tkvars.n		{tk}
     tkwait.n		{variable}
     tm.n		{exec}
@@ -672,6 +680,7 @@ try {
 		} trap {POSIX ENOENT} {} {
 		    set f [open [file join $pkgsDir $dir configure.ac]]
 		}
+		fconfigure $f -encoding utf-8
 		foreach line [split [read $f] \n] {
 		    if {2 == [scan $line \
 			    { AC_INIT ( [%[^]]] , [%[^]]] ) } n v]} {
@@ -696,6 +705,7 @@ try {
 	set packageDirNameMap {}
 	if {$build_tcl} {
 	    set f [open $tcltkdir/$tcldir/pkgs/package.list.txt]
+	    fconfigure $f -encoding utf-8
 	    try {
 		foreach line [split [read $f] \n] {
 		    if {[string trim $line] eq ""} continue

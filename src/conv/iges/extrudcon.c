@@ -27,7 +27,7 @@
 #include "./iges_extern.h"
 
 int
-Extrudcon(int entityno, int curve, vect_t evect)
+Extrudcon(size_t entityno, int curve, vect_t evect)
     /* extrusion entity number */
     /* elliptical arc entity number */
     /* extrusion vector */

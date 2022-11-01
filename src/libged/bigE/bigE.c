@@ -105,7 +105,7 @@ union E_tree {
 #define CK_ETREE(_p) BU_CKMAG(_p, E_TREE_MAGIC, "struct E_tree")
 
 
-HIDDEN union E_tree *
+static union E_tree *
 add_solid(const struct directory *dp,
 	  matp_t mat,
 	  struct _ged_client_data *dgcdp)
@@ -152,8 +152,8 @@ add_solid(const struct directory *dp,
 
 	if (!OBJ[id].ft_tessellate ||
 	    OBJ[id].ft_tessellate(&r, eptr->l.m, &intern,
-					 &dgcdp->gedp->ged_wdbp->wdb_ttol,
-					 &dgcdp->gedp->ged_wdbp->wdb_tol) < 0)
+					 &dgcdp->gedp->dbip->db_ttol,
+					 &dgcdp->gedp->dbip->db_tol) < 0)
 	{
 	    nmg_km(eptr->l.m);
 	    eptr->l.m = NULL;
@@ -182,7 +182,7 @@ add_solid(const struct directory *dp,
 
 	    if (solid_is_plate_mode_bot
 		|| !eptr->l.m
-		|| (bot = nmg_bot(s, &RTG.rtg_vlfree, &dgcdp->gedp->ged_wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)
+		|| (bot = nmg_bot(s, &RTG.rtg_vlfree, &dgcdp->gedp->dbip->db_tol)) == (struct rt_bot_internal *)NULL)
 	    {
 		eptr->l.stp->st_id = id;
 		eptr->l.stp->st_meth = &OBJ[id];
@@ -303,7 +303,7 @@ show_seg(struct bu_list *seg, int str)
 
 
 /* given a segment list, eliminate any overlaps in the segments */
-HIDDEN void
+static void
 eliminate_overlaps(struct bu_list *seghead,
 		   struct _ged_client_data *dgcdp)
 {
@@ -341,7 +341,7 @@ eliminate_overlaps(struct bu_list *seghead,
 /* perform the intersection of two segments the result is assigned the
  * provided type
  */
-HIDDEN void
+static void
 do_intersect(struct seg *A,
 	     struct seg *B,
 	     struct bu_list *seghead,
@@ -384,7 +384,7 @@ do_intersect(struct seg *A,
 /* perform the subtraction of one segment from another the result is
  * assigned the type from segment A
  */
-HIDDEN void
+static void
 do_subtract(struct seg *A,
 	    struct seg *B,
 	    struct bu_list *seghead,
@@ -434,7 +434,7 @@ do_subtract(struct seg *A,
 }
 
 
-HIDDEN void
+static void
 promote_ints(struct bu_list *head,
 	     struct _ged_client_data *dgcdp)
 {
@@ -635,7 +635,7 @@ promote_ints(struct bu_list *head,
 
 
 /* Evaluate an operation on the operands (segment lists) */
-HIDDEN struct bu_list *
+static struct bu_list *
 eval_op(struct bu_list *A,
 	int op,
 	struct bu_list *B,
@@ -956,7 +956,7 @@ eval_op(struct bu_list *A,
 
 
 /* evaluate an E-tree */
-HIDDEN struct bu_list *
+static struct bu_list *
 eval_etree(union E_tree *eptr,
 	   struct _ged_client_data *dgcdp)
 
@@ -998,7 +998,7 @@ eval_etree(union E_tree *eptr,
 }
 
 
-HIDDEN struct soltab *
+static struct soltab *
 classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ged_client_data *dgcdp)
 {
     fastf_t mid_dist;
@@ -1023,7 +1023,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
 
     /* set up "ray_data" structure for nmg raytrace */
     rd.rp = &new_rp;
-    rd.tol = &dgcdp->gedp->ged_wdbp->wdb_tol;
+    rd.tol = &dgcdp->gedp->dbip->db_tol;
     rd.ap = dgcdp->ap;
     rd.magic = NMG_RAY_DATA_MAGIC;
     rd.classifying_ray = 0;
@@ -1091,7 +1091,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
  * solids, put the results in the E-tree leaves as type IN_SOL.  Call
  * eval_etree() and plot the results
  */
-HIDDEN void
+static void
 shoot_and_plot(point_t start_pt,
 	       vect_t dir,
 	       struct bu_list *vlfree,
@@ -1122,7 +1122,7 @@ shoot_and_plot(point_t start_pt,
 
     /* set up "ray_data" structure for nmg raytrace */
     rd.rp = &rp;
-    rd.tol = &dgcdp->gedp->ged_wdbp->wdb_tol;
+    rd.tol = &dgcdp->gedp->dbip->db_tol;
     rd.ap = dgcdp->ap;
     rd.magic = NMG_RAY_DATA_MAGIC;
     rd.classifying_ray = 0;
@@ -1159,18 +1159,18 @@ shoot_and_plot(point_t start_pt,
 		    else if (!leaf->l.stp->st_matp &&
 			     bn_mat_is_equal(shoot->l.stp->st_matp,
 					     bn_mat_identity,
-					     &dgcdp->gedp->ged_wdbp->wdb_tol))
+					     &dgcdp->gedp->dbip->db_tol))
 			dont_shoot = 1;
 		    else if (!shoot->l.stp->st_matp &&
 			     bn_mat_is_equal(leaf->l.stp->st_matp,
 					     bn_mat_identity,
-					     &dgcdp->gedp->ged_wdbp->wdb_tol))
+					     &dgcdp->gedp->dbip->db_tol))
 			dont_shoot = 1;
 		    else if (leaf->l.stp->st_matp &&
 			     shoot->l.stp->st_matp &&
 			     bn_mat_is_equal(leaf->l.stp->st_matp,
 					     shoot->l.stp->st_matp,
-					     &dgcdp->gedp->ged_wdbp->wdb_tol))
+					     &dgcdp->gedp->dbip->db_tol))
 			dont_shoot = 1;
 		}
 	    }
@@ -1182,18 +1182,18 @@ shoot_and_plot(point_t start_pt,
 		    else if (!leaf->l.stp->st_matp &&
 			     bn_mat_is_equal(shoot->l.stp->st_matp,
 					     bn_mat_identity,
-					     &dgcdp->gedp->ged_wdbp->wdb_tol))
+					     &dgcdp->gedp->dbip->db_tol))
 			dont_shoot = 1;
 		    else if (!shoot->l.stp->st_matp &&
 			     bn_mat_is_equal(leaf->l.stp->st_matp,
 					     bn_mat_identity,
-					     &dgcdp->gedp->ged_wdbp->wdb_tol))
+					     &dgcdp->gedp->dbip->db_tol))
 			dont_shoot = 1;
 		    else if (leaf->l.stp->st_matp &&
 			     shoot->l.stp->st_matp &&
 			     bn_mat_is_equal(leaf->l.stp->st_matp,
 					     shoot->l.stp->st_matp,
-					     &dgcdp->gedp->ged_wdbp->wdb_tol))
+					     &dgcdp->gedp->dbip->db_tol))
 			dont_shoot = 1;
 		}
 	    }
@@ -1301,7 +1301,7 @@ shoot_and_plot(point_t start_pt,
 
 #define HITS_BLOCK 20
 
-HIDDEN void
+static void
 Eplot(union E_tree *eptr,
       struct bu_list *vhead,
       struct _ged_client_data *dgcdp)
@@ -1316,7 +1316,7 @@ Eplot(union E_tree *eptr,
     struct bu_list *result;
     struct bn_tol *tol;
 
-    tol = &dgcdp->gedp->ged_wdbp->wdb_tol;
+    tol = &dgcdp->gedp->dbip->db_tol;
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     CK_ETREE(eptr);
@@ -1660,7 +1660,7 @@ Eplot(union E_tree *eptr,
 }
 
 
-HIDDEN void
+static void
 free_etree(union E_tree *eptr,
 	   struct _ged_client_data *dgcdp)
 {
@@ -1699,7 +1699,7 @@ free_etree(union E_tree *eptr,
 
 
 /* convert all "half" solids to polysolids */
-HIDDEN void
+static void
 fix_halfs(struct _ged_client_data *dgcdp)
 {
     point_t max, min;
@@ -1707,7 +1707,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
     size_t count=0;
     struct bn_tol *tol;
 
-    tol = &dgcdp->gedp->ged_wdbp->wdb_tol;
+    tol = &dgcdp->gedp->dbip->db_tol;
 
     VSETALL(max, -INFINITY);
     VSETALL(min, INFINITY);
@@ -2062,7 +2062,7 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
 	bu_ptbl_init(&dgcdp->leaf_list, 8, "leaf_list");
 
 	dgcdp->rtip = rt_new_rti(gedp->dbip);
-	dgcdp->rtip->rti_tol = gedp->ged_wdbp->wdb_tol;	/* struct copy */
+	dgcdp->rtip->rti_tol = gedp->dbip->db_tol;	/* struct copy */
 	dgcdp->rtip->useair = 1;
 	dgcdp->ap->a_rt_i = dgcdp->rtip;
 

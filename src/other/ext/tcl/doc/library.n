@@ -124,7 +124,7 @@ will read all the \fB.tcl\fR files in subdirectory \fBfoo\fR and
 generate a new index file \fBfoo/tclIndex\fR.
 .PP
 \fBAuto_mkindex\fR parses the Tcl scripts by sourcing them into a
-slave interpreter and monitoring the proc and namespace commands that
+child interpreter and monitoring the proc and namespace commands that
 are executed.  Extensions can use the (undocumented)
 auto_mkindex_parser package to register other commands that can
 contribute to the auto_load index. You will have to read through

@@ -762,12 +762,15 @@ binunif_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 	    bu_log("Unrecognized minor type (%c)\n", *cmd_argvs[3]);
 	    return BRLCAD_ERROR;
     }
-    if (rt_mk_binunif(gedp->ged_wdbp, name, cmd_argvs[4], minor_type, atol(cmd_argvs[5]))) {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (rt_mk_binunif(wdbp, name, cmd_argvs[4], minor_type, atol(cmd_argvs[5]))) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to create binary object %s from file %s\n",
 		      name, cmd_argvs[4]);
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
+    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }
@@ -1423,8 +1426,12 @@ half_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern,
     }
 
     VUNITIZE(norm);
-    if (mk_half(gedp->ged_wdbp, name, norm, d) < 0)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (mk_half(wdbp, name, norm, d) < 0) {
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
+    }
+    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }
@@ -1516,8 +1523,13 @@ sph_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 	return BRLCAD_ERROR;
     }
 
-    if (mk_sph(gedp->ged_wdbp, name, center, r) < 0)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (mk_sph(wdbp, name, center, r) < 0) {
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
+    }
+    wdb_close(wdbp);
+
     return BRLCAD_OK;
 }
 
@@ -2143,8 +2155,12 @@ rpp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 	return BRLCAD_ERROR;
     }
 
-    if (mk_rpp(gedp->ged_wdbp, name, min, max) < 0)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (mk_rpp(wdbp, name, min, max) < 0) {
+	wdb_close(wdbp);
 	return 1;
+    }
+    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }
@@ -2180,8 +2196,12 @@ orpp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern,
 	return BRLCAD_ERROR;
     }
 
-    if (mk_rpp(gedp->ged_wdbp, name, min, max) < 0)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (mk_rpp(wdbp, name, min, max) < 0) {
+	wdb_close(wdbp);
 	return BRLCAD_ERROR;
+    }
+    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }

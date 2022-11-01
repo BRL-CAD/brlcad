@@ -613,7 +613,7 @@ namespace eval ::tcl::test::main {
 	variable wait
 	chan event $f readable \
 		[list set [namespace which -variable wait] "child exit"]
-	set id [after 2000 [list set [namespace which -variable wait] timeout]]
+	set id [after 5000 [list set [namespace which -variable wait] timeout]]
 	vwait [namespace which -variable wait]
 	after cancel $id
 	set wait
@@ -636,7 +636,7 @@ namespace eval ::tcl::test::main {
 	variable wait
 	chan event $f readable \
 		[list set [namespace which -variable wait] "child exit"]
-	set id [after 2000 [list set [namespace which -variable wait] timeout]]
+	set id [after 5000 [list set [namespace which -variable wait] timeout]]
 	vwait [namespace which -variable wait]
 	after cancel $id
 	set wait
@@ -719,7 +719,7 @@ namespace eval ::tcl::test::main {
     } -result "Exit MainLoop\nIn exit\neven 0\n"
 
     test Tcl_Main-5.9 {
-	Tcl_Main: interactive mode: delete interp 
+	Tcl_Main: interactive mode: delete interp
 		-> main loop & exit handlers, but no [exit]
     } -constraints {
 	exec Tcltest

@@ -10,7 +10,7 @@ eval tcltest::configure $argv
 tcltest::loadTestedCommands
 namespace import -force tcltest::*
 
-test packgrid-1.1 {pack and grid in same master} -setup {
+test packgrid-1.1 {pack and grid in same container window} -setup {
     grid propagate . true
     pack propagate . true
     label .p -text PACK
@@ -24,7 +24,7 @@ test packgrid-1.1 {pack and grid in same master} -setup {
     destroy .g
 } -result {cannot use geometry manager pack inside . which already has slaves managed by grid}
 
-test packgrid-1.2 {pack and grid in same master} -setup {
+test packgrid-1.2 {pack and grid in same container window} -setup {
     grid propagate . true
     pack propagate . true
     label .p -text PACK
@@ -38,7 +38,7 @@ test packgrid-1.2 {pack and grid in same master} -setup {
     destroy .g
 } -result {cannot use geometry manager grid inside . which already has slaves managed by pack}
 
-test packgrid-1.3 {pack and grid in same master} -setup {
+test packgrid-1.3 {pack and grid in same container window} -setup {
     grid propagate . false
     pack propagate . true
     label .p -text PACK
@@ -52,7 +52,7 @@ test packgrid-1.3 {pack and grid in same master} -setup {
     destroy .g
 } -result {}
 
-test packgrid-1.4 {pack and grid in same master} -setup {
+test packgrid-1.4 {pack and grid in same container window} -setup {
     grid propagate . false
     pack propagate . true
     label .p -text PACK
@@ -66,7 +66,7 @@ test packgrid-1.4 {pack and grid in same master} -setup {
     destroy .g
 } -result {}
 
-test packgrid-1.5 {pack and grid in same master} -setup {
+test packgrid-1.5 {pack and grid in same container window} -setup {
     grid propagate . true
     pack propagate . false
     label .p -text PACK
@@ -80,7 +80,7 @@ test packgrid-1.5 {pack and grid in same master} -setup {
     destroy .g
 } -result {}
 
-test packgrid-1.6 {pack and grid in same master} -setup {
+test packgrid-1.6 {pack and grid in same container window} -setup {
     grid propagate . true
     pack propagate . false
     label .p -text PACK
@@ -94,7 +94,7 @@ test packgrid-1.6 {pack and grid in same master} -setup {
     destroy .g
 } -result {}
 
-test packgrid-1.7 {pack and grid in same master} -setup {
+test packgrid-1.7 {pack and grid in same container window} -setup {
     grid propagate . true
     pack propagate . true
     label .p -text PACK
@@ -103,13 +103,13 @@ test packgrid-1.7 {pack and grid in same master} -setup {
     # Basic conflict should stop widget from being handled
     grid .g
     catch { pack .p }
-    pack slaves .
+    pack content .
 } -cleanup {
     destroy .p
     destroy .g
 } -result {}
 
-test packgrid-1.8 {pack and grid in same master} -setup {
+test packgrid-1.8 {pack and grid in same container window} -setup {
     grid propagate . true
     pack propagate . true
     label .p -text PACK
@@ -118,13 +118,13 @@ test packgrid-1.8 {pack and grid in same master} -setup {
     # Basic conflict should stop widget from being handled
     pack .p
     catch { grid .g }
-    grid slaves .
+    grid content .
 } -cleanup {
     destroy .p
     destroy .g
 } -result {}
 
-test packgrid-2.1 {pack and grid in same master, change propagation} -setup {
+test packgrid-2.1 {pack and grid in same container window, change propagation} -setup {
     grid propagate . false
     pack propagate . true
     label .p -text PACK
@@ -139,7 +139,7 @@ test packgrid-2.1 {pack and grid in same master, change propagation} -setup {
     destroy .g
 } -result {cannot use geometry manager grid inside . which already has slaves managed by pack}
 
-test packgrid-2.2 {pack and grid in same master, change propagation} -setup {
+test packgrid-2.2 {pack and grid in same container window, change propagation} -setup {
     grid propagate . true
     pack propagate . false
     label .p -text PACK
@@ -155,7 +155,7 @@ test packgrid-2.2 {pack and grid in same master, change propagation} -setup {
     destroy .g
 } -result {cannot use geometry manager pack inside . which already has slaves managed by grid}
 
-test packgrid-2.3 {pack and grid in same master, change propagation} -setup {
+test packgrid-2.3 {pack and grid in same container window, change propagation} -setup {
     grid propagate . false
     pack propagate . false
     label .p -text PACK
@@ -172,7 +172,7 @@ test packgrid-2.3 {pack and grid in same master, change propagation} -setup {
     destroy .g
 } -result {cannot use geometry manager pack inside . which already has slaves managed by grid}
 
-test packgrid-2.4 {pack and grid in same master, change propagation} -setup {
+test packgrid-2.4 {pack and grid in same container window, change propagation} -setup {
     grid propagate . false
     pack propagate . false
     label .p -text PACK
@@ -188,7 +188,7 @@ test packgrid-2.4 {pack and grid in same master, change propagation} -setup {
     destroy .g
 } -result {cannot use geometry manager grid inside . which already has slaves managed by pack}
 
-test packgrid-3.1 {stealing slave} -setup {
+test packgrid-3.1 {stealing content} -setup {
     grid propagate . true
     pack propagate . true
     label .p -text PACK
@@ -202,7 +202,7 @@ test packgrid-3.1 {stealing slave} -setup {
     destroy .g
 } -result {}
 
-test packgrid-3.2 {stealing slave} -setup {
+test packgrid-3.2 {stealing content} -setup {
     grid propagate . true
     pack propagate . true
     label .p -text PACK
@@ -216,7 +216,7 @@ test packgrid-3.2 {stealing slave} -setup {
     destroy .g
 } -result {}
 
-test packgrid-3.3 {stealing slave} -setup {
+test packgrid-3.3 {stealing content} -setup {
     grid propagate . true
     pack propagate . true
     label .p -text PACK
@@ -231,7 +231,7 @@ test packgrid-3.3 {stealing slave} -setup {
     destroy .g
 } -result {cannot use geometry manager pack inside . which already has slaves managed by grid}
 
-test packgrid-3.4 {stealing slave} -setup {
+test packgrid-3.4 {stealing content} -setup {
     grid propagate . true
     pack propagate . true
     label .p -text PACK
@@ -246,7 +246,7 @@ test packgrid-3.4 {stealing slave} -setup {
     destroy .g
 } -result {cannot use geometry manager grid inside . which already has slaves managed by pack}
 
-test packgrid-4.1 {slave stolen after master destruction - bug [aa7679685e]} -setup {
+test packgrid-4.1 {content stolen after container destruction - bug [aa7679685e]} -setup {
     frame .f
     button .b -text hello
 } -body {
@@ -261,7 +261,7 @@ test packgrid-4.1 {slave stolen after master destruction - bug [aa7679685e]} -se
     destroy .b
 } -result {}
 
-test packgrid-4.2 {slave stolen after master destruction - bug [aa7679685e]} -setup {
+test packgrid-4.2 {content stolen after container destruction - bug [aa7679685e]} -setup {
     frame .f
     button .b -text hello
 } -body {

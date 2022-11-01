@@ -95,7 +95,7 @@ listbox $w.f.list -width 20 -height 10 -yscrollcommand "$w.f.scroll set"
 ttk::scrollbar $w.f.scroll -command "$w.f.list yview"
 pack $w.f.list $w.f.scroll -side left -fill y -expand 1
 $w.f.list insert 0 earth.gif earthris.gif teapot.ppm
-bind $w.f.list <Double-1> "loadImage $w %x %y"
+bind $w.f.list <Double-Button-1> "loadImage $w %x %y"
 
 catch {image delete image2a}
 image create photo image2a

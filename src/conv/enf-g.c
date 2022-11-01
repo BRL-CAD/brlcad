@@ -449,7 +449,7 @@ Part_import(int id_start)
 		v[i] = atof(ptr);
 		ptr = strtok((char *)NULL, " \t");
 	    }
-	    tri[++corner_index] = bg_vert_tree_add(tree, V3ARGS(v), local_tol_sq);
+	    tri[++corner_index] = (int)bg_vert_tree_add(tree, V3ARGS(v), local_tol_sq);
 	    if (corner_index == 2) {
 		if (!bad_triangle(tri, tree->the_array)) {
 		    add_triangle(tri);

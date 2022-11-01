@@ -9,8 +9,10 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require tcltest 2
-namespace import -force ::tcltest::*
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
+    namespace import -force ::tcltest::*
+}
 
 catch {
     ::tcltest::loadTestedCommands
@@ -23,16 +25,18 @@ testConstraint testfilehandler [llength [info commands testfilehandler]]
 testConstraint testexithandler [llength [info commands testexithandler]]
 testConstraint testfilewait [llength [info commands testfilewait]]
 testConstraint exec [llength [info commands exec]]
-
+testConstraint notOSX [expr {$::tcl_platform(os) ne "Darwin"}]
+
 test event-1.1 {Tcl_CreateFileHandler, reading} -setup {
     testfilehandler close
     set result ""
-} -constraints {testfilehandler} -body {
+} -constraints {testfilehandler notOSX} -body {
     testfilehandler create 0 readable off
     testfilehandler clear 0
     testfilehandler oneevent
     lappend result [testfilehandler counts 0]
     testfilehandler fillpartial 0
+    update idletasks
     testfilehandler oneevent
     lappend result [testfilehandler counts 0]
     testfilehandler oneevent
@@ -595,16 +599,16 @@ test event-11.7 {Bug 16828b3744} {
 test event-11.8 {Bug 16828b3744} -setup {
     oo::class create A {
 	variable continue
-    
+
 	method start {} {
            after idle [self] destroy
-        
+
            set continue 0
            vwait [namespace current]::continue
 	}
 	destructor {
            set continue 1
-	}	
+	}
     }
 } -body {
     [A new] start

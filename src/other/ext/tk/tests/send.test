@@ -10,11 +10,13 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require tcltest 2.1
+package require tcltest 2.2
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
 
 testConstraint xhost [llength [auto_execok xhost]]
+testConstraint failsOnUbuntu [expr {![info exists ::env(CI)] || ![string match Linux $::tcl_platform(os)]}]
+testConstraint failsOnXQuarz [expr {$tcl_platform(os) ne "Darwin" || [tk windowingsystem] ne "x11" }]
 
 # Compute a script that will load Tk into a child interpreter.
 
@@ -286,7 +288,7 @@ test send-8.14 {Tk_SendCmd procedure, local interp killed by send} {secureserver
 
 catch {interp delete t_s_2}
 
-test send-8.15 {Tk_SendCmd procedure, local interp, error info} {secureserver testsend} {
+test send-8.15 {Tk_SendCmd procedure, local interp, error info} {secureserver testsend failsOnUbuntu} {
     catch {error foo}
     list [catch {send t_s_1 {if 1 {open bogus_file_name}}} msg] $msg $errorInfo $errorCode
 } {1 {couldn't open "bogus_file_name": no such file or directory} {couldn't open "bogus_file_name": no such file or directory
@@ -296,7 +298,7 @@ test send-8.15 {Tk_SendCmd procedure, local interp, error info} {secureserver te
 "if 1 {open bogus_file_name}"
     invoked from within
 "send t_s_1 {if 1 {open bogus_file_name}}"} {POSIX ENOENT {no such file or directory}}}
-test send-8.16 {Tk_SendCmd procedure, bogusCommWindow} {secureserver testsend} {
+test send-8.16 {Tk_SendCmd procedure, bogusCommWindow} {secureserver testsend failsOnUbuntu failsOnXQuarz} {
     testsend prop root InterpRegistry "10234 bogus\n"
     set result [list [catch {send bogus bogus command} msg] $msg]
     winfo interps
@@ -522,10 +524,10 @@ test send-10.19 {SendEventProc procedure, send exits} {secureserver testsend} {
     set x
 } {1 {target application died}}
 
-test send-11.1 {AppendPropCarefully and AppendErrorProc procedures} {secureserver testsend} {
+test send-11.1 {AppendPropCarefully and AppendErrorProc procedures} -constraints {secureserver testsend} -body {
     testsend prop root InterpRegistry "0x21447 dummy\n"
-    list [catch {send dummy foo} msg] $msg
-} {1 {no application named "dummy"}}
+    send dummy foo
+} -returnCodes 1 -match regexp -result {^(target application died|no application named "dummy")$}
 test send-11.2 {AppendPropCarefully and AppendErrorProc procedures} {secureserver testsend} {
     testsend prop comm Comm "c\n-r0x123 44\n-n tktest\n-s concat a b c\n"
     update

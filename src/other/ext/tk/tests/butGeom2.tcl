@@ -8,7 +8,7 @@ wm iconname .t "Button Geometry"
 wm geom .t +0+0
 wm minsize .t 1 1
 
-label .t.l -text {This screen exercises the color options for various flavors of buttons.  Select display options below, and they will be applied to the appropiate button widgets.} -wraplength 5i
+label .t.l -text {This screen exercises the color options for various flavors of buttons.  Select display options below, and they will be applied to the appropriate button widgets.} -wraplength 5i
 pack .t.l -side top -fill both
 
 button .t.quit -text Quit -command {destroy .t}

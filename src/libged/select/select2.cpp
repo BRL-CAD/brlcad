@@ -129,6 +129,71 @@ _select_cmd_list(void *bs, int argc, const char **argv)
 }
 
 int
+_select_cmd_clear(void *bs, int argc, const char **argv)
+{
+    struct _ged_select_info *gd = (struct _ged_select_info *)bs;
+    const char *usage_string = "select [options] clear [set_name_pattern]";
+    const char *purpose_string = "clear contents of specified sets (or default set if none specified)";
+    if (_select_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+        return BRLCAD_OK;
+    }
+
+    argc--; argv++;
+
+    struct ged *gedp = gd->gedp;
+    if (!gedp->ged_selection_sets)
+	return BRLCAD_ERROR;
+
+    if (!argc && !bu_vls_strlen(&gd->curr_set)) {
+	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
+	if (scnt) {
+	    for (size_t i = 0; i < scnt; i++) {
+		struct ged_selection_set *s = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
+		ged_selection_set_clear(s);
+	    }
+	}
+	bu_ptbl_free(&ssets);
+	return BRLCAD_OK;
+    }
+
+    if (bu_vls_strlen(&gd->curr_set)) {
+	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, bu_vls_cstr(&gd->curr_set));
+	if (!scnt) {
+	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", bu_vls_cstr(&gd->curr_set));
+	    return BRLCAD_ERROR;
+	}
+
+	for (size_t i = 0; i < scnt; i++) {
+	    struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
+	    ged_selection_set_clear(gs);
+	}
+	bu_ptbl_free(&ssets);
+
+	if (!argc || BU_STR_EQUAL(bu_vls_cstr(&gd->curr_set), argv[0]))
+	    return BRLCAD_OK;
+    }
+
+    struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
+    size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, argv[0]);
+    if (!scnt) {
+	bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    for (size_t i = 0; i < scnt; i++) {
+	struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
+	ged_selection_set_clear(gs);
+    }
+    bu_ptbl_free(&ssets);
+
+    return BRLCAD_OK;
+}
+
+
+
+int
 _select_cmd_add(void *bs, int argc, const char **argv)
 {
     struct _ged_select_info *gd = (struct _ged_select_info *)bs;
@@ -164,12 +229,18 @@ _select_cmd_add(void *bs, int argc, const char **argv)
     struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
     bu_ptbl_free(&ssets);
 
+    struct bu_vls dpath = BU_VLS_INIT_ZERO;
     for (int i = 0; i < argc; i++) {
-	if (!ged_selection_insert(gs, argv[i])) {
+	bu_vls_sprintf(&dpath, "%s", argv[i]);
+	if (bu_vls_cstr(&dpath)[0] != '/')
+	    bu_vls_prepend(&dpath, "/");
+	if (!ged_selection_insert(gs, bu_vls_cstr(&dpath))) {
 	    bu_vls_printf(gedp->ged_result_str, "unable to add path to selection: %s", argv[i]);
+	    bu_vls_free(&dpath);
 	    return BRLCAD_ERROR;
 	}
     }
+    bu_vls_free(&dpath);
     return BRLCAD_OK;
 }
 
@@ -328,11 +399,12 @@ _select_cmd_expand(void *bs, int argc, const char **argv)
 }
 
 const struct bu_cmdtab _select_cmds[] = {
-    { "list",       _select_cmd_list},
     { "add",        _select_cmd_add},
-    { "rm",         _select_cmd_rm},
+    { "clear",      _select_cmd_clear},
     { "collapse",   _select_cmd_collapse},
     { "expand",     _select_cmd_expand},
+    { "list",       _select_cmd_list},
+    { "rm",         _select_cmd_rm},
     { (char *)NULL,      NULL}
 };
 

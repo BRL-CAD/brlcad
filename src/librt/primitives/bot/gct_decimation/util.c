@@ -486,10 +486,9 @@ void mmInit()
 #endif
 
     if (!(mmcontext.numaflag)) {
-	int ec = 0;
 	mmcontext.nodecount = 1;
-	mmcontext.pagesize = bu_mem(BU_MEM_PAGE_SIZE, &ec);
-	mmcontext.sysmemory = bu_mem(BU_MEM_ALL, &ec);
+	mmcontext.pagesize = (int)bu_mem(BU_MEM_PAGE_SIZE, NULL);
+	mmcontext.sysmemory = (int64_t)bu_mem(BU_MEM_ALL, NULL);
 	mmcontext.nodesize[0] = mmcontext.sysmemory;
     }
 

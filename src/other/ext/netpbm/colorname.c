@@ -57,8 +57,8 @@ pm_openColornameFile(const char * const fileName, const int must_open) {
    exist), exit the program with an error message.  If 'must_open' is
    false and we can't open the file, just return a null pointer.
 -----------------------------------------------------------------------------*/
-    const char *rgbdef;
-    FILE *f;
+    const char *rgbdef = NULL;
+    FILE *f = NULL;
 
     if (fileName == NULL) {
         if ((rgbdef = getenv(RGBENV))==NULL) {
@@ -155,11 +155,16 @@ pm_parse_dictionary_name(char    const colorname[],
     bool gotit;
     bool colorfileExhausted;
     struct colorfile_entry colorfile_entry;
-    char * canoncolor;
+    char * canoncolor = NULL;
     pixval r,g,b;
 
     f = pm_openColornameFile(NULL, TRUE);  /* exits if error */
     canoncolor = strdup(colorname);
+
+    if (!canoncolor)
+        pm_error("Failed to allocate memory for %u-byte color name",
+                 (unsigned)strlen(colorname));
+
     pm_canonstr(canoncolor);
     gotit = FALSE;
     colorfileExhausted = FALSE;
@@ -167,7 +172,7 @@ pm_parse_dictionary_name(char    const colorname[],
         colorfile_entry = pm_colorget(f);
         if (colorfile_entry.colorname) {
             pm_canonstr(colorfile_entry.colorname);
-            if (strcmp( canoncolor, colorfile_entry.colorname) == 0)
+            if (!strcmp( canoncolor, colorfile_entry.colorname))
                 gotit = TRUE;
         } else
             colorfileExhausted = TRUE;

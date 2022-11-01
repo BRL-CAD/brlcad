@@ -17,25 +17,21 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file asc_v5.cpp
- *
- * Brief description
- *
- */
 
 #include "common.h"
 #include "vmath.h"
 
-#include <cstdio>
 #include <fstream>
-#include <regex>
 #include <sstream>
 #include <string>
+
+#include "bio.h"
 
 #include "bu/units.h"
 #include "raytrace.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
+
 
 static int
 check_bracket_balance(int *ocnt, int *ccnt, std::string &s)
@@ -49,6 +45,7 @@ check_bracket_balance(int *ocnt, int *ccnt, std::string &s)
     }
     return (*ocnt == *ccnt);
 }
+
 
 /* Note - in its full generality, a "v5 ASCII BRL-CAD geometry file" may
  * technically be a completely arbitrary Tcl script, given the way the
@@ -87,6 +84,8 @@ asc_read_v5(
     int ocnt = 0;
     int ccnt = 0;
     int balanced = 0;
+    struct rt_wdb *wdbp = wdb_dbopen(c->dbip, RT_WDB_TYPE_DB_INMEM);
+
     while (std::getline(fs, sline)) {
 
 	bu_vls_printf(&cur_line, "%s\n", sline.c_str());
@@ -123,7 +122,7 @@ asc_read_v5(
 	    continue;
 	}
 	if (BU_STR_EQUAL(list_v[0], "put")) {
-	    rt_cmd_put(NULL, c->dbip, list_c, (const char **)list_v);
+	    rt_cmd_put(NULL, wdbp, list_c, (const char **)list_v);
 	    bu_free(list_v, "tcl argv list");
 	    bu_vls_trunc(&cur_line, 0);
 	    continue;
@@ -147,6 +146,7 @@ asc_read_v5(
     }
 
     bu_vls_free(&cur_line);
+    wdb_close(wdbp);
 
     return balanced;
 }

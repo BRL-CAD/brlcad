@@ -138,9 +138,9 @@ TclCompileAppendCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     Tcl_Token *varTokenPtr, *valueTokenPtr;
     int isScalar, localIndex, numWords, i;
-    DefineLineInformation;	/* TIP #280 */
 
     /* TODO: Consider support for compiling expanded args. */
     numWords = parsePtr->numWords;
@@ -403,9 +403,9 @@ TclCompileArraySetCmd(
     keyVar = AnonymousLocal(envPtr);
     valVar = AnonymousLocal(envPtr);
 
-    infoPtr = ckalloc(sizeof(ForeachInfo));
+    infoPtr = ckalloc(TclOffset(ForeachInfo, varLists) + sizeof(ForeachVarList *));
     infoPtr->numLists = 1;
-    infoPtr->varLists[0] = ckalloc(sizeof(ForeachVarList) + sizeof(int));
+    infoPtr->varLists[0] = ckalloc(TclOffset(ForeachVarList, varIndexes) + 2 * sizeof(int));
     infoPtr->varLists[0]->numVars = 2;
     infoPtr->varLists[0]->varIndexes[0] = keyVar;
     infoPtr->varLists[0]->varIndexes[1] = valVar;
@@ -587,10 +587,10 @@ TclCompileCatchCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     JumpFixup jumpFixup;
     Tcl_Token *cmdTokenPtr, *resultNameTokenPtr, *optsNameTokenPtr;
     int resultIndex, optsIndex, range, dropScript = 0;
-    DefineLineInformation;	/* TIP #280 */
     int depth = TclGetStackDepth(envPtr);
 
     /*
@@ -620,13 +620,11 @@ TclCompileCatchCmd(
     cmdTokenPtr = TokenAfter(parsePtr->tokenPtr);
     if (parsePtr->numWords >= 3) {
 	resultNameTokenPtr = TokenAfter(cmdTokenPtr);
-	/* DGP */
 	resultIndex = LocalScalarFromToken(resultNameTokenPtr, envPtr);
 	if (resultIndex < 0) {
 	    return TCL_ERROR;
 	}
 
-	/* DKF */
 	if (parsePtr->numWords == 4) {
 	    optsNameTokenPtr = TokenAfter(resultNameTokenPtr);
 	    optsIndex = LocalScalarFromToken(optsNameTokenPtr, envPtr);
@@ -1022,10 +1020,9 @@ TclCompileDictSetCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
-    Tcl_Token *tokenPtr;
-    int i, dictVarIndex;
     DefineLineInformation;	/* TIP #280 */
-    Tcl_Token *varTokenPtr;
+    Tcl_Token *tokenPtr, *varTokenPtr;
+    int i, dictVarIndex;
 
     /*
      * There must be at least one argument after the command.
@@ -1148,9 +1145,9 @@ TclCompileDictGetCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     Tcl_Token *tokenPtr;
     int i;
-    DefineLineInformation;	/* TIP #280 */
 
     /*
      * There must be at least two arguments after the command (the single-arg
@@ -1185,9 +1182,9 @@ TclCompileDictExistsCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     Tcl_Token *tokenPtr;
     int i;
-    DefineLineInformation;	/* TIP #280 */
 
     /*
      * There must be at least two arguments after the command (the single-arg
@@ -1222,8 +1219,8 @@ TclCompileDictUnsetCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
-    Tcl_Token *tokenPtr;
     DefineLineInformation;	/* TIP #280 */
+    Tcl_Token *tokenPtr;
     int i, dictVarIndex;
 
     /*
@@ -1779,7 +1776,7 @@ TclCompileDictUpdateCmd(
      * that are to be used.
      */
 
-    duiPtr = ckalloc(sizeof(DictUpdateInfo) + sizeof(int) * (numVars - 1));
+    duiPtr = ckalloc(TclOffset(DictUpdateInfo, varIndices) + sizeof(int) * numVars);
     duiPtr->length = numVars;
     keyTokenPtrs = TclStackAlloc(interp, sizeof(Tcl_Token *) * numVars);
     tokenPtr = TokenAfter(dictVarTokenPtr);
@@ -2261,7 +2258,7 @@ DupDictUpdateInfo(
     unsigned len;
 
     dui1Ptr = clientData;
-    len = sizeof(DictUpdateInfo) + sizeof(int) * (dui1Ptr->length - 1);
+    len = TclOffset(DictUpdateInfo, varIndices) + sizeof(int) * dui1Ptr->length;
     dui2Ptr = ckalloc(len);
     memcpy(dui2Ptr, dui1Ptr, len);
     return dui2Ptr;
@@ -2338,12 +2335,12 @@ TclCompileErrorCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
+    Tcl_Token *tokenPtr;
+
     /*
      * General syntax: [error message ?errorInfo? ?errorCode?]
      */
-
-    Tcl_Token *tokenPtr;
-    DefineLineInformation;	/* TIP #280 */
 
     if (parsePtr->numWords < 2 || parsePtr->numWords > 4) {
 	return TCL_ERROR;
@@ -2457,11 +2454,11 @@ TclCompileForCmd(
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
+    DefineLineInformation;	/* TIP #280 */
     Tcl_Token *startTokenPtr, *testTokenPtr, *nextTokenPtr, *bodyTokenPtr;
     JumpFixup jumpEvalCondFixup;
     int bodyCodeOffset, nextCodeOffset, jumpDist;
     int bodyRange, nextRange;
-    DefineLineInformation;	/* TIP #280 */
 
     if (parsePtr->numWords != 5) {
 	return TCL_ERROR;
@@ -2670,6 +2667,7 @@ CompileEachloopCmd(
     int collect)		/* Select collecting or accumulating mode
 				 * (TCL_EACH_*) */
 {
+    DefineLineInformation;	/* TIP #280 */
     Proc *procPtr = envPtr->procPtr;
     ForeachInfo *infoPtr=NULL;	/* Points to the structure describing this
 				 * foreach command. Stored in a AuxData
@@ -2679,7 +2677,6 @@ CompileEachloopCmd(
     int jumpBackOffset, infoIndex, range;
     int numWords, numLists, i, j, code = TCL_OK;
     Tcl_Obj *varListObj = NULL;
-    DefineLineInformation;	/* TIP #280 */
 
     /*
      * If the foreach command isn't in a procedure, don't compile it inline:
@@ -2715,8 +2712,8 @@ CompileEachloopCmd(
      */
 
     numLists = (numWords - 2)/2;
-    infoPtr = ckalloc(sizeof(ForeachInfo)
-	    + (numLists - 1) * sizeof(ForeachVarList *));
+    infoPtr = ckalloc(TclOffset(ForeachInfo, varLists)
+	    + numLists * sizeof(ForeachVarList *));
     infoPtr->numLists = 0;	/* Count this up as we go */
 
     /*
@@ -2749,8 +2746,8 @@ CompileEachloopCmd(
 	    goto done;
 	}
 
-	varListPtr = ckalloc(sizeof(ForeachVarList)
-		+ (numVars - 1) * sizeof(int));
+	varListPtr = ckalloc(TclOffset(ForeachVarList, varIndexes)
+		+ numVars * sizeof(int));
 	varListPtr->numVars = numVars;
 	infoPtr->varLists[i/2] = varListPtr;
 	infoPtr->numLists++;
@@ -2880,12 +2877,12 @@ DupForeachInfo(
     ClientData clientData)	/* The foreach command's compilation auxiliary
 				 * data to duplicate. */
 {
-    register ForeachInfo *srcPtr = clientData;
+    ForeachInfo *srcPtr = clientData;
     ForeachInfo *dupPtr;
-    register ForeachVarList *srcListPtr, *dupListPtr;
+    ForeachVarList *srcListPtr, *dupListPtr;
     int numVars, i, j, numLists = srcPtr->numLists;
 
-    dupPtr = ckalloc(sizeof(ForeachInfo)
+    dupPtr = ckalloc(TclOffset(ForeachInfo, varLists)
 	    + numLists * sizeof(ForeachVarList *));
     dupPtr->numLists = numLists;
     dupPtr->firstValueTemp = srcPtr->firstValueTemp;
@@ -2894,7 +2891,7 @@ DupForeachInfo(
     for (i = 0;  i < numLists;  i++) {
 	srcListPtr = srcPtr->varLists[i];
 	numVars = srcListPtr->numVars;
-	dupListPtr = ckalloc(sizeof(ForeachVarList)
+	dupListPtr = ckalloc(TclOffset(ForeachVarList, varIndexes)
 		+ numVars * sizeof(int));
 	dupListPtr->numVars = numVars;
 	for (j = 0;  j < numVars;  j++) {
@@ -2929,10 +2926,10 @@ FreeForeachInfo(
     ClientData clientData)	/* The foreach command's compilation auxiliary
 				 * data to free. */
 {
-    register ForeachInfo *infoPtr = clientData;
-    register ForeachVarList *listPtr;
+    ForeachInfo *infoPtr = clientData;
+    ForeachVarList *listPtr;
     int numLists = infoPtr->numLists;
-    register int i;
+    int i;
 
     for (i = 0;  i < numLists;  i++) {
 	listPtr = infoPtr->varLists[i];
@@ -2965,8 +2962,8 @@ PrintForeachInfo(
     ByteCode *codePtr,
     unsigned int pcOffset)
 {
-    register ForeachInfo *infoPtr = clientData;
-    register ForeachVarList *varsPtr;
+    ForeachInfo *infoPtr = clientData;
+    ForeachVarList *varsPtr;
     int i, j;
 
     Tcl_AppendToObj(appendObj, "data=[", -1);
@@ -3005,8 +3002,8 @@ PrintNewForeachInfo(
     ByteCode *codePtr,
     unsigned int pcOffset)
 {
-    register ForeachInfo *infoPtr = clientData;
-    register ForeachVarList *varsPtr;
+    ForeachInfo *infoPtr = clientData;
+    ForeachVarList *varsPtr;
     int i, j;
 
     Tcl_AppendPrintfToObj(appendObj, "jumpOffset=%+d, vars=",
@@ -3035,8 +3032,8 @@ DisassembleForeachInfo(
     ByteCode *codePtr,
     unsigned int pcOffset)
 {
-    register ForeachInfo *infoPtr = clientData;
-    register ForeachVarList *varsPtr;
+    ForeachInfo *infoPtr = clientData;
+    ForeachVarList *varsPtr;
     int i, j;
     Tcl_Obj *objPtr, *innerPtr;
 
@@ -3082,8 +3079,8 @@ DisassembleNewForeachInfo(
     ByteCode *codePtr,
     unsigned int pcOffset)
 {
-    register ForeachInfo *infoPtr = clientData;
-    register ForeachVarList *varsPtr;
+    ForeachInfo *infoPtr = clientData;
+    ForeachVarList *varsPtr;
     int i, j;
     Tcl_Obj *objPtr, *innerPtr;
 
@@ -3407,9 +3404,9 @@ TclPushVarName(
     int *localIndexPtr,		/* Must not be NULL. */
     int *isScalarPtr)		/* Must not be NULL. */
 {
-    register const char *p;
+    const char *p;
     const char *last, *name, *elName;
-    register int n;
+    int n;
     Tcl_Token *elemTokenPtr = NULL;
     int nameLen, elNameLen, simpleVarName, localIndex;
     int elemTokenCount = 0, allocedTokens = 0, removedParen = 0;
@@ -3441,10 +3438,10 @@ TclPushVarName(
 	    /*
 	     * last char is ')' => potential array reference.
 	     */
-	    last = Tcl_UtfPrev(name + nameLen, name);
+	    last = &name[nameLen-1];
 
 	    if (*last == ')') {
-		for (p = name;  p < last;  p = Tcl_UtfNext(p)) {
+		for (p = name;  p < last;  p++) {
 		    if (*p == '(') {
 			elName = p + 1;
 			elNameLen = last - elName;
@@ -3472,15 +3469,14 @@ TclPushVarName(
     } else if (interp && ((n = varTokenPtr->numComponents) > 1)
 	    && (varTokenPtr[1].type == TCL_TOKEN_TEXT)
 	    && (varTokenPtr[n].type == TCL_TOKEN_TEXT)
-	    && (*((p = varTokenPtr[n].start + varTokenPtr[n].size)-1) == ')')
-	    && (*Tcl_UtfPrev(p, varTokenPtr[n].start) == ')')) {
+	    && (*(varTokenPtr[n].start + varTokenPtr[n].size - 1) == ')')) {
 	/*
 	 * Check for parentheses inside first token.
 	 */
 
 	simpleVarName = 0;
 	for (p = varTokenPtr[1].start,
-	     last = p + varTokenPtr[1].size;  p < last;  p = Tcl_UtfNext(p)) {
+	     last = p + varTokenPtr[1].size;  p < last;  p++) {
 	    if (*p == '(') {
 		simpleVarName = 1;
 		break;
@@ -3548,7 +3544,7 @@ TclPushVarName(
 
 	int hasNsQualifiers = 0;
 
-	for (p = name, last = p + nameLen-1;  p < last;  p = Tcl_UtfNext(p)) {
+	for (p = name, last = p + nameLen-1;  p < last;  p++) {
 	    if ((*p == ':') && (*(p+1) == ':')) {
 		hasNsQualifiers = 1;
 		break;

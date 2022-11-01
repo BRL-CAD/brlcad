@@ -14,9 +14,9 @@
 # Note: It is now ok to let untrusted code being executed
 #       between the creation of the interp and the actual loading
 #       of Tk in that interp because the C side Tk_Init will
-#       now look up the master interp and ask its safe::TkInit
+#       now look up the parent interp and ask its safe::TkInit
 #       for the actual parameters to use for it's initialization (if allowed),
-#       not relying on the slave state.
+#       not relying on the child state.
 #
 
 # We use opt (optional arguments parsing)
@@ -29,31 +29,31 @@ namespace eval ::safe {
 }
 
 #
-# tkInterpInit : prepare the slave interpreter for tk loading
+# tkInterpInit : prepare the child interpreter for tk loading
 #                most of the real job is done by loadTk
-# returns the slave name (tkInterpInit does)
+# returns the child name (tkInterpInit does)
 #
-proc ::safe::tkInterpInit {slave argv} {
+proc ::safe::tkInterpInit {child argv} {
     global env tk_library
 
     # We have to make sure that the tk_library variable is normalized.
     set tk_library [file normalize $tk_library]
 
     # Clear Tk's access for that interp (path).
-    allowTk $slave $argv
+    allowTk $child $argv
 
     # Ensure tk_library and subdirs (eg, ttk) are on the access path
-    ::interp eval $slave [list set tk_library [::safe::interpAddToAccessPath $slave $tk_library]]
+    ::interp eval $child [list set tk_library [::safe::interpAddToAccessPath $child $tk_library]]
     foreach subdir [::safe::AddSubDirs [list $tk_library]] {
-	::safe::interpAddToAccessPath $slave $subdir
+	::safe::interpAddToAccessPath $child $subdir
     }
-    return $slave
+    return $child
 }
 
 
 # tkInterpLoadTk:
 # Do additional configuration as needed (calling tkInterpInit)
-# and actually load Tk into the slave.
+# and actually load Tk into the child.
 #
 # Either contained in the specified windowId (-use) or
 # creating a decorated toplevel for it.
@@ -62,37 +62,37 @@ proc ::safe::tkInterpInit {slave argv} {
 proc ::safe::loadTk {} {}
 
 ::tcl::OptProc ::safe::loadTk {
-    {slave -interp "name of the slave interpreter"}
+    {child -interp "name of the child interpreter"}
     {-use  -windowId {} "window Id to use (new toplevel otherwise)"}
     {-display -displayName {} "display name to use (current one otherwise)"}
 } {
     set displayGiven [::tcl::OptProcArgGiven "-display"]
     if {!$displayGiven} {
 	# Try to get the current display from "."
-	# (which might not exist if the master is tk-less)
+	# (which might not exist if the parent is tk-less)
 	if {[catch {set display [winfo screen .]}]} {
 	    if {[info exists ::env(DISPLAY)]} {
 		set display $::env(DISPLAY)
 	    } else {
-		Log $slave "no winfo screen . nor env(DISPLAY)" WARNING
+		Log $child "no winfo screen . nor env(DISPLAY)" WARNING
 		set display ":0.0"
 	    }
 	}
     }
 
     # Get state for access to the cleanupHook.
-    namespace upvar ::safe S$slave state
+    namespace upvar ::safe S$child state
 
     if {![::tcl::OptProcArgGiven "-use"]} {
 	# create a decorated toplevel
-	lassign [tkTopLevel $slave $display] w use
+	lassign [tkTopLevel $child $display] w use
 
-	# set our delete hook (slave arg is added by interpDelete)
-	# to clean up both window related code and tkInit(slave)
+	# set our delete hook (child arg is added by interpDelete)
+	# to clean up both window related code and tkInit(child)
 	set state(cleanupHook) [list tkDelete {} $w]
     } else {
-	# set our delete hook (slave arg is added by interpDelete)
-	# to clean up tkInit(slave)
+	# set our delete hook (child arg is added by interpDelete)
+	# to clean up tkInit(child)
 	set state(cleanupHook) [list disallowTk]
 
 	# Let's be nice and also accept tk window names instead of ids
@@ -122,12 +122,12 @@ proc ::safe::loadTk {} {}
 	}
     }
 
-    # Prepares the slave for tk with those parameters
-    tkInterpInit $slave [list "-use" $use "-display" $display]
+    # Prepares the child for tk with those parameters
+    tkInterpInit $child [list "-use" $use "-display" $display]
 
-    load {} Tk $slave
+    load {} Tk $child
 
-    return $slave
+    return $child
 }
 
 proc ::safe::TkInit {interpPath} {
@@ -149,7 +149,7 @@ proc ::safe::TkInit {interpPath} {
 #	safe::TkInit.
 #
 # Arguments:
-#	interpPath	slave interpreter handle
+#	interpPath	child interpreter handle
 #	argv		arguments passed to safe::TkInterpInit
 #
 # Results:
@@ -168,7 +168,7 @@ proc ::safe::allowTk {interpPath argv} {
 #	in safe::TkInit.
 #
 # Arguments:
-#	interpPath	slave interpreter handle
+#	interpPath	child interpreter handle
 #
 # Results:
 #	none.
@@ -188,43 +188,43 @@ proc ::safe::disallowTk {interpPath} {
 #	Clean up the window associated with the interp being deleted.
 #
 # Arguments:
-#	interpPath	slave interpreter handle
+#	interpPath	child interpreter handle
 #
 # Results:
 #	none.
 
-proc ::safe::tkDelete {W window slave} {
+proc ::safe::tkDelete {W window child} {
 
     # we are going to be called for each widget... skip untill it's
     # top level
 
-    Log $slave "Called tkDelete $W $window" NOTICE
-    if {[::interp exists $slave]} {
-	if {[catch {::safe::interpDelete $slave} msg]} {
-	    Log $slave "Deletion error : $msg"
+    Log $child "Called tkDelete $W $window" NOTICE
+    if {[::interp exists $child]} {
+	if {[catch {::safe::interpDelete $child} msg]} {
+	    Log $child "Deletion error : $msg"
 	}
     }
     if {[winfo exists $window]} {
-	Log $slave "Destroy toplevel $window" NOTICE
+	Log $child "Destroy toplevel $window" NOTICE
 	destroy $window
     }
 
-    # clean up tkInit(slave)
-    disallowTk $slave
+    # clean up tkInit(child)
+    disallowTk $child
     return
 }
 
-proc ::safe::tkTopLevel {slave display} {
+proc ::safe::tkTopLevel {child display} {
     variable tkSafeId
     incr tkSafeId
     set w ".safe$tkSafeId"
     if {[catch {toplevel $w -screen $display -class SafeTk} msg]} {
 	return -code error -errorcode {TK TOPLEVEL SAFE} \
-	    "Unable to create toplevel for safe slave \"$slave\" ($msg)"
+	    "Unable to create toplevel for \"$child\" ($msg)"
     }
-    Log $slave "New toplevel $w" NOTICE
+    Log $child "New toplevel $w" NOTICE
 
-    set msg "Untrusted Tcl applet ($slave)"
+    set msg "Untrusted Tcl applet ($child)"
     wm title $w $msg
 
     # Control frame (we must create a style for it)
@@ -236,7 +236,7 @@ proc ::safe::tkTopLevel {slave display} {
 
     # We will destroy the interp when the window is destroyed
     bindtags $wc [concat Safe$wc [bindtags $wc]]
-    bind Safe$wc <Destroy> [list ::safe::tkDelete %W $w $slave]
+    bind Safe$wc <Destroy> [list ::safe::tkDelete %W $w $child]
 
     ttk::label $wc.l -text $msg -anchor w
 
@@ -247,7 +247,7 @@ proc ::safe::tkTopLevel {slave display} {
     # but still have the default background instead of red one from the parent
     ttk::frame  $wc.fb -borderwidth 0
     ttk::button $wc.fb.b -text "Delete" \
-	    -command [list ::safe::tkDelete $w $w $slave]
+	    -command [list ::safe::tkDelete $w $w $child]
     pack $wc.fb.b -side right -fill both
     pack $wc.fb -side right -fill both -expand 1
     pack $wc.l -side left -fill both -expand 1 -ipady 2

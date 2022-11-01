@@ -306,6 +306,21 @@ bg_trimesh_sync(int *of, int *f, int fcnt);
 BG_EXPORT extern int
 bg_trimesh_split(int ***ofs, int **ofc, int *f, int fcnt);
 
+/**
+ * @brief
+ * Return a set of face sets where all topologically connected faces are
+ * grouped into common sets.
+ *
+ * @param[in]  fname     plot file name
+ * @param[in]  faces     face index array
+ * @param[in]  num_faces number of faces
+ * @param[in]  pnts      points array
+ * @param[in]  num_pnts  number of points
+ *
+ * @return BRLCAD_ERROR if error, otherwise return BRLCAD_OK
+ */
+BG_EXPORT extern int
+bg_trimesh_2d_plot3(const char *fname, const int *faces, size_t num_faces, const point2d_t *pnts, size_t num_pnts);
 
 __END_DECLS
 

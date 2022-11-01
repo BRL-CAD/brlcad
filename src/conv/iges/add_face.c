@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 struct faceuse *
-Add_face_to_shell(struct shell *s, int entityno, int face_orient)
+Add_face_to_shell(struct shell *s, size_t entityno, int face_orient)
 {
 
     int sol_num = 0;		/* IGES solid type number */

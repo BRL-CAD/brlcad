@@ -54,7 +54,7 @@ CADPalette::makeCurrent(QWidget *w)
 {
     if (w == this) {
 	if (this->tpalette->selected)
-	    this->tpalette->displayElement(this->tpalette->selected);
+	    this->tpalette->palette_displayElement(this->tpalette->selected);
 	emit interaction_mode(m_mode);
     } else {
 	if (this->tpalette->selected)

@@ -3,7 +3,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH load n 7.5 Tcl "Tcl Built-In Commands"
 .so man.macros
 .BS
@@ -13,22 +13,21 @@ load \- Load machine code and initialize new commands
 .SH SYNOPSIS
 \fBload\fR ?\fB\-global\fR? ?\fB\-lazy\fR? ?\fB\-\-\fR? \fIfileName\fR
 .br
-\fBload\fR ?\fB\-global\fR? ?\fB\-lazy\fR? ?\fB\-\-\fR? \fIfileName packageName\fR
+\fBload\fR ?\fB\-global\fR? ?\fB\-lazy\fR? ?\fB\-\-\fR? \fIfileName prefix\fR
 .br
-\fBload\fR ?\fB\-global\fR? ?\fB\-lazy\fR? ?\fB\-\-\fR? \fIfileName packageName interp\fR
+\fBload\fR ?\fB\-global\fR? ?\fB\-lazy\fR? ?\fB\-\-\fR? \fIfileName prefix interp\fR
 .BE
 .SH DESCRIPTION
 .PP
 This command loads binary code from a file into the
 application's address space and calls an initialization procedure
-in the package to incorporate it into an interpreter.  \fIfileName\fR
+in the library to incorporate it into an interpreter.  \fIfileName\fR
 is the name of the file containing the code;  its exact form varies
 from system to system but on most systems it is a shared library,
 such as a \fB.so\fR file under Solaris or a DLL under Windows.
-\fIpackageName\fR is the name of the package, and is used to
-compute the name of an initialization procedure.
+\fIprefix\fR is used to compute the name of an initialization procedure.
 \fIinterp\fR is the path name of the interpreter into which to load
-the package (see the \fBinterp\fR manual entry for details);
+the library (see the \fBinterp\fR manual entry for details);
 if \fIinterp\fR is omitted, it defaults to the
 interpreter in which the \fBload\fR command was invoked.
 .PP
@@ -37,21 +36,21 @@ one of two initialization procedures will be invoked in the new code.
 Typically the initialization procedure will add new commands to a
 Tcl interpreter.
 The name of the initialization procedure is determined by
-\fIpackageName\fR and whether or not the target interpreter
+\fIprefix\fR and whether or not the target interpreter
 is a safe one.  For normal interpreters the name of the initialization
-procedure will have the form \fIpkg\fB_Init\fR, where \fIpkg\fR
-is the same as \fIpackageName\fR except that the first letter is
+procedure will have the form \fIpfx\fB_Init\fR, where \fIpfx\fR
+is the same as \fIprefix\fR except that the first letter is
 converted to upper case and all other letters
-are converted to lower case.  For example, if \fIpackageName\fR is
+are converted to lower case.  For example, if \fIprefix\fR is
 \fBfoo\fR or \fBFOo\fR, the initialization procedure's name will
 be \fBFoo_Init\fR.
 .PP
 If the target interpreter is a safe interpreter, then the name
-of the initialization procedure will be \fIpkg\fB_SafeInit\fR
-instead of \fIpkg\fB_Init\fR.
-The \fIpkg\fB_SafeInit\fR function should be written carefully, so that it
+of the initialization procedure will be \fIpfx\fB_SafeInit\fR
+instead of \fIpfx\fB_Init\fR.
+The \fIpfx\fB_SafeInit\fR function should be written carefully, so that it
 initializes the safe interpreter only with partial functionality provided
-by the package that is safe for use by untrusted code. For more information
+by the library that is safe for use by untrusted code. For more information
 on Safe\-Tcl, see the \fBsafe\fR manual entry.
 .PP
 The initialization procedure must match the following prototype:
@@ -62,7 +61,7 @@ typedef int \fBTcl_PackageInitProc\fR(
 .CE
 .PP
 The \fIinterp\fR argument identifies the interpreter in which the
-package is to be loaded.  The initialization procedure must return
+library is to be loaded.  The initialization procedure must return
 \fBTCL_OK\fR or \fBTCL_ERROR\fR to indicate whether or not it completed
 successfully;  in the event of an error it should set the interpreter's result
 to point to an error message.  The result of the \fBload\fR command
@@ -74,36 +73,36 @@ interpreters, then the first \fBload\fR will load the code and
 call the initialization procedure;  subsequent \fBload\fRs will
 call the initialization procedure without loading the code again.
 For Tcl versions lower than 8.5, it is not possible to unload or reload a
-package. From version 8.5 however, the \fBunload\fR command allows the unloading
+library. From version 8.5 however, the \fBunload\fR command allows the unloading
 of libraries loaded with \fBload\fR, for libraries that are aware of the
 Tcl's unloading mechanism.
 .PP
-The \fBload\fR command also supports packages that are statically
-linked with the application, if those packages have been registered
+The \fBload\fR command also supports libraries that are statically
+linked with the application, if those libraries have been registered
 by calling the \fBTcl_StaticPackage\fR procedure.
-If \fIfileName\fR is an empty string, then \fIpackageName\fR must
+If \fIfileName\fR is an empty string, then \fIprefix\fR must
 be specified.
 .PP
-If \fIpackageName\fR is omitted or specified as an empty string,
-Tcl tries to guess the name of the package.
-This may be done differently on different platforms.
-The default guess, which is used on most UNIX platforms, is to
-take the last element of \fIfileName\fR, strip off the first
-three characters if they are \fBlib\fR, and use any following
-alphabetic and underline characters as the module name.
-For example, the command \fBload libxyz4.2.so\fR uses the module
-name \fBxyz\fR and the command \fBload bin/last.so {}\fR uses the
-module name \fBlast\fR.
+If \fIprefix\fR is omitted or specified as an empty string,
+Tcl tries to guess the prefix. This may be done differently on
+different platforms. The default guess, which is used on most
+UNIX platforms, is to take the last element of
+\fIfileName\fR, strip off the first three characters if they
+are \fBlib\fR, and use any following alphabetic and
+underline characters, converted to titlecase as the prefix.
+For example, the command \fBload libxyz4.2.so\fR uses the prefix
+\fBXyz\fR and the command \fBload bin/last.so {}\fR uses the
+prefix \fBLast\fR.
 .PP
-If \fIfileName\fR is an empty string, then \fIpackageName\fR must
+If \fIfileName\fR is an empty string, then \fIprefix\fR must
 be specified.
-The \fBload\fR command first searches for a statically loaded package
+The \fBload\fR command first searches for a statically loaded library
 (one that has been registered by calling the \fBTcl_StaticPackage\fR
 procedure) by that name; if one is found, it is used.
 Otherwise, the \fBload\fR command searches for a dynamically loaded
-package by that name, and uses it if it is found.  If several
+library by that name, and uses it if it is found.  If several
 different files have been \fBload\fRed with different versions of
-the package, Tcl picks the file that was loaded first.
+the library, Tcl picks the file that was loaded first.
 .PP
 If \fB\-global\fR is specified preceding the filename, all symbols
 found in the shared library are exported for global use by other
@@ -111,7 +110,7 @@ libraries. The option \fB\-lazy\fR delays the actual loading of
 symbols until their first actual use. The options may be abbreviated.
 The option \fB\-\-\fR indicates the end of the options, and should
 be used if you wish to use a filename which starts with \fB\-\fR
-and you provide a packageName to the \fBload\fR command.
+and you provide a prefix to the \fBload\fR command.
 .PP
 On platforms which do not support the \fB\-global\fR or \fB\-lazy\fR
 options, the options still exist but have no effect. Note that use
@@ -154,7 +153,7 @@ The following is a minimal extension:
 .CS
 #include <tcl.h>
 #include <stdio.h>
-static int fooCmd(ClientData clientData,
+static int fooCmd(void *clientData,
         Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
     printf("called with %d arguments\en", objc);
     return TCL_OK;

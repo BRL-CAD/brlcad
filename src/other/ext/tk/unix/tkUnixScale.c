@@ -50,9 +50,9 @@ static void		DisplayVerticalValue(TkScale *scalePtr,
 
 TkScale *
 TkpCreateScale(
-    Tk_Window tkwin)
+    TCL_UNUSED(Tk_Window))
 {
-    return ckalloc(sizeof(TkScale));
+    return (TkScale *)ckalloc(sizeof(TkScale));
 }
 
 /*
@@ -256,7 +256,7 @@ DisplayVerticalScale(
 
 static void
 DisplayVerticalValue(
-    register TkScale *scalePtr,	/* Information about widget in which to
+    TkScale *scalePtr,	/* Information about widget in which to
 				 * display value. */
     Drawable drawable,		/* Pixmap or window in which to draw the
 				 * value. */
@@ -267,7 +267,7 @@ DisplayVerticalValue(
 				 * specified in pixels. */
     const char *format)		/* Format string to use for the value */
 {
-    register Tk_Window tkwin = scalePtr->tkwin;
+    Tk_Window tkwin = scalePtr->tkwin;
     int y, width, length;
     char valueString[TCL_DOUBLE_SPACE];
     Tk_FontMetrics fm;
@@ -325,7 +325,7 @@ DisplayHorizontalScale(
 				 * to reflect the part of the window that was
 				 * redrawn. */
 {
-    register Tk_Window tkwin = scalePtr->tkwin;
+    Tk_Window tkwin = scalePtr->tkwin;
     int x, y, width, height, shadowWidth;
     double tickInterval = scalePtr->tickInterval;
     Tk_3DBorder sliderBorder;
@@ -479,7 +479,7 @@ DisplayHorizontalScale(
 
 static void
 DisplayHorizontalValue(
-    register TkScale *scalePtr,	/* Information about widget in which to
+    TkScale *scalePtr,	/* Information about widget in which to
 				 * display value. */
     Drawable drawable,		/* Pixmap or window in which to draw the
 				 * value. */
@@ -490,7 +490,7 @@ DisplayHorizontalValue(
 				 * in pixels. */
     const char *format)		/* Format string to use for the value */
 {
-    register Tk_Window tkwin = scalePtr->tkwin;
+    Tk_Window tkwin = scalePtr->tkwin;
     int x, y, length, width;
     char valueString[TCL_DOUBLE_SPACE];
     Tk_FontMetrics fm;
@@ -546,7 +546,7 @@ void
 TkpDisplayScale(
     ClientData clientData)	/* Widget record for scale. */
 {
-    TkScale *scalePtr = (TkScale *) clientData;
+    TkScale *scalePtr = (TkScale *)clientData;
     Tk_Window tkwin = scalePtr->tkwin;
     Tcl_Interp *interp = scalePtr->interp;
     Pixmap pixmap;
@@ -575,7 +575,7 @@ TkpDisplayScale(
 	Tcl_DStringAppend(&buf, scalePtr->command, -1);
 	Tcl_DStringAppend(&buf, " ", -1);
 	Tcl_DStringAppend(&buf, string, -1);
-	result = Tcl_EvalEx(interp, Tcl_DStringValue(&buf), -1, 0);
+	result = Tcl_EvalEx(interp, Tcl_DStringValue(&buf), -1, TCL_EVAL_GLOBAL);
 	Tcl_DStringFree(&buf);
 	if (result != TCL_OK) {
 	    Tcl_AddErrorInfo(interp, "\n    (command executed by scale)");

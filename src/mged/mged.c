@@ -281,7 +281,7 @@ attach_display_manager(Tcl_Interp *interpreter, const char *manager, const char 
 }
 
 
-HIDDEN void
+static void
 mged_notify(int UNUSED(i))
 {
     pr_prompt(interactive);
@@ -1371,6 +1371,9 @@ main(int argc, char *argv[])
 
 	    /* Command line may have more than 2 args, opendb only wants 2
 	     * expecting second to be the file name.
+	     * NOTE: this way makes it so f_opendb does not care about y/n
+	     * and always create a new db if one does not exist since we want
+	     * to allow mged to process args after the db as a command
 	     */
 	    if (f_opendb((ClientData)NULL, INTERP, 2, av) == TCL_ERROR) {
 		if (!run_in_foreground && use_pipe) {
@@ -1517,8 +1520,16 @@ main(int argc, char *argv[])
 	/* Call cmdline instead of calling mged_cmd directly so that
 	 * access to Tcl/Tk is possible.
 	 */
-	for (argc -= 1, argv += 1; argc; --argc, ++argv)
+	for (argc -= 1, argv += 1; argc; --argc, ++argv) {
+	    /* in order to process interactively, an old optional y/n argument
+	    * intended for f_opendb must be filtered out here to remove
+	    * garbage "unrecognized command" line prints
+	    */
+	    if (!BU_STR_EQUAL("y", argv[0]) && !BU_STR_EQUAL("Y", argv[0])
+	     && !BU_STR_EQUAL("n", argv[0]) && !BU_STR_EQUAL("N", argv[0])) {
 	    bu_vls_printf(&input_str, "%s ", *argv);
+	    }
+	}
 
 	cmdline(&input_str, TRUE);
 	bu_vls_free(&input_str);
@@ -1629,6 +1640,15 @@ main(int argc, char *argv[])
 		Tcl_SetChannelOption(INTERP, chan, "-blocking", "false");
 		Tcl_SetChannelOption(INTERP, chan, "-buffering", "line");
 		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
+		/* intermittently, the process of Tcl_UnregisterChannel does not
+		 * finish cleaning up the write threads before we spawn new
+		 * ones with Tcl_MakeFileChannel. This error prematurely invokes the
+		 * new threads when the old ones finally signal which breaks all 'puts'
+		 * from the channel. Calling puts with an empty string here
+		 * *appears* to force a sync and resolve the issue.
+		 */
+		if (Tcl_Eval(INTERP, "puts \"\"") != TCL_OK)
+		    perror("STDOUT chan broken");
 		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
 	    }
 
@@ -1640,6 +1660,8 @@ main(int argc, char *argv[])
 		Tcl_SetChannelOption(INTERP, chan, "-blocking", "false");
 		Tcl_SetChannelOption(INTERP, chan, "-buffering", "line");
 		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
+		if (Tcl_Eval(INTERP, "puts stderr \"\"") != TCL_OK)
+		    perror("STDERR chan broken");
 		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
 	    }
 	}
@@ -2754,13 +2776,10 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	bu_vls_printf(&msg, "%s: READ ONLY\n", DBIP->dbi_filename);
     }
 
-    /* associate the gedp with a wdbp as well, but separate from the
-     * one we fed tcl.  must occur before the call to [get_dbip] since
+    /* This must occur before the call to [get_dbip] since
      * that hooks into a libged callback.
      */
-    GEDP->ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
-    if (GEDP->ged_wdbp)
-	GEDP->dbip = GEDP->ged_wdbp->dbip;
+    GEDP->dbip = DBIP;
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
     GEDP->ged_create_vlist_scene_obj_callback = createDListSolid;
@@ -2904,8 +2923,7 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     Tcl_Eval(interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
 
     /* close the geometry instance */
-    wdb_close(GEDP->ged_wdbp);
-    GEDP->ged_wdbp = RT_WDB_NULL;
+    db_close(GEDP->dbip);
     GEDP->dbip = NULL;
 
     WDBP = RT_WDB_NULL;

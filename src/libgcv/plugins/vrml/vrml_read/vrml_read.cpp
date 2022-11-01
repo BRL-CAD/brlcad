@@ -200,7 +200,7 @@ Parse_input(vector<NODE*> &childlist)
 }
 
 
-HIDDEN int
+static int
 vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *UNUSED(options_data), const char *source_path)
 {
     vector<NODE *> childlist;
@@ -241,10 +241,11 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     infile.freeFileInput();
 
     FILE *fd_in;
-    fd_out = context->dbip->dbi_wdbp;
+    fd_out = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
 
     if ((fd_in=fopen(source_path, "rb")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", source_path);
+	wdb_close(fd_out);
 	perror("libgcv");
 	return 0;
     }
@@ -258,6 +259,7 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     if (objnumb < 0) {
 	bu_log("ERROR: unable to get objects\n");
+	wdb_close(fd_out);
 	return 0;
     }
 
@@ -267,12 +269,13 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     if (gcv_options->verbosity_level)
 	bu_log("%d objects created\n", objnumb + 1);
 
+    wdb_close(fd_out);
     return 1;
 }
 
 
 
-HIDDEN int
+static int
 vrml_can_read(const char *source_path)
 {
     if (!source_path) return 0;

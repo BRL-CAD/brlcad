@@ -25,17 +25,17 @@
 #include "tkInt.h"
 
 /*
- * The following data structure represents the master for a test image:
+ * The following data structure represents the model for a test image:
  */
 
-typedef struct TImageMaster {
-    Tk_ImageMaster master;      /* Tk's token for image master. */
+typedef struct TImageModel {
+    Tk_ImageModel model;        /* Tk's token for image model. */
     Tcl_Interp *interp;         /* Interpreter for application. */
     int width, height;          /* Dimensions of image. */
     char *imageName;            /* Name of image (malloc-ed). */
     char *varName;              /* Name of variable in which to log events for
                                  * image (malloc-ed). */
-} TImageMaster;
+} TImageModel;
 
 /*
  * The following data structure represents a particular use of a particular
@@ -43,7 +43,7 @@ typedef struct TImageMaster {
  */
 
 typedef struct TImageInstance {
-    TImageMaster *masterPtr;    /* Pointer to master for image. */
+    TImageModel *modelPtr;    /* Pointer to model for image. */
     XColor *fg;                 /* Foreground color for drawing in image. */
     GC gc;                      /* Graphics context for drawing in image. */
 } TImageInstance;
@@ -54,7 +54,7 @@ typedef struct TImageInstance {
 
 static int		ImageCreate(Tcl_Interp *interp,
 			    char *name, int argc, char **argv,
-			    Tk_ImageType *typePtr, Tk_ImageMaster master,
+			    Tk_ImageType *typePtr, Tk_ImageModel model,
 			    ClientData *clientDataPtr);
 static ClientData	ImageGet(Tk_Window tkwin, ClientData clientData);
 static void		ImageDisplay(ClientData clientData,
@@ -143,12 +143,12 @@ ImageCreate(
     char **argv,		/* Argument strings for options (doesn't
 				 * include image name or type). */
     Tk_ImageType *typePtr,	/* Pointer to our type record (not used). */
-    Tk_ImageMaster master,	/* Token for image, to be used by us in later
+    Tk_ImageModel model,	/* Token for image, to be used by us in later
 				 * callbacks. */
     ClientData *clientDataPtr)	/* Store manager's token for image here; it
 				 * will be returned in later callbacks. */
 {
-    TImageMaster *timPtr;
+    TImageModel *timPtr;
     const char *varName;
     int i;
 
@@ -167,8 +167,8 @@ ImageCreate(
 	varName = argv[i+1];
     }
 
-    timPtr = ckalloc(sizeof(TImageMaster));
-    timPtr->master = master;
+    timPtr = ckalloc(sizeof(TImageModel));
+    timPtr->model = model;
     timPtr->interp = interp;
     timPtr->width = 30;
     timPtr->height = 15;
@@ -178,7 +178,7 @@ ImageCreate(
     strcpy(timPtr->varName, varName);
     Tcl_CreateObjCommand(interp, name, ImageObjCmd, timPtr, NULL);
     *clientDataPtr = timPtr;
-    Tk_ImageChanged(master, 0, 0, 30, 15, 30, 15);
+    Tk_ImageChanged(model, 0, 0, 30, 15, 30, 15);
     return TCL_OK;
 }
 
@@ -207,7 +207,7 @@ ImageObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])		/* Argument strings. */
 {
-    TImageMaster *timPtr = clientData;
+    TImageModel *timPtr = clientData;
     int x, y, width, height;
 
     if (objc < 2) {
@@ -228,7 +228,7 @@ ImageObjCmd(
 		|| (Tcl_GetIntFromObj(interp, objv[7], &timPtr->height) != TCL_OK)) {
 	    return TCL_ERROR;
 	}
-	Tk_ImageChanged(timPtr->master, x, y, width, height, timPtr->width,
+	Tk_ImageChanged(timPtr->model, x, y, width, height, timPtr->width,
 		timPtr->height);
     } else {
 	Tcl_AppendResult(interp, "bad option \"", Tcl_GetString(objv[1]),
@@ -260,9 +260,9 @@ static ClientData
 ImageGet(
     Tk_Window tkwin,		/* Token for window in which image will be
 				 * used. */
-    ClientData clientData)	/* Pointer to TImageMaster for image. */
+    ClientData clientData)	/* Pointer to TImageModel for image. */
 {
-    TImageMaster *timPtr = clientData;
+    TImageModel *timPtr = clientData;
     TImageInstance *instPtr;
     char buffer[100];
     XGCValues gcValues;
@@ -272,7 +272,7 @@ ImageGet(
 	    TCL_GLOBAL_ONLY|TCL_APPEND_VALUE|TCL_LIST_ELEMENT);
 
     instPtr = ckalloc(sizeof(TImageInstance));
-    instPtr->masterPtr = timPtr;
+    instPtr->modelPtr = timPtr;
     instPtr->fg = Tk_GetColor(timPtr->interp, tkwin, "#ff0000");
     gcValues.foreground = instPtr->fg->pixel;
     instPtr->gc = Tk_GetGC(tkwin, GCForeground, &gcValues);
@@ -313,15 +313,15 @@ ImageDisplay(
     char buffer[200 + TCL_INTEGER_SPACE * 6];
 
     sprintf(buffer, "%s display %d %d %d %d %d %d",
-	    instPtr->masterPtr->imageName, imageX, imageY, width, height,
+	    instPtr->modelPtr->imageName, imageX, imageY, width, height,
 	    drawableX, drawableY);
-    Tcl_SetVar2(instPtr->masterPtr->interp, instPtr->masterPtr->varName, NULL,
+    Tcl_SetVar2(instPtr->modelPtr->interp, instPtr->modelPtr->varName, NULL,
 	    buffer, TCL_GLOBAL_ONLY|TCL_APPEND_VALUE|TCL_LIST_ELEMENT);
-    if (width > (instPtr->masterPtr->width - imageX)) {
-	width = instPtr->masterPtr->width - imageX;
+    if (width > (instPtr->modelPtr->width - imageX)) {
+	width = instPtr->modelPtr->width - imageX;
     }
-    if (height > (instPtr->masterPtr->height - imageY)) {
-	height = instPtr->masterPtr->height - imageY;
+    if (height > (instPtr->modelPtr->height - imageY)) {
+	height = instPtr->modelPtr->height - imageY;
     }
     XDrawRectangle(display, drawable, instPtr->gc, drawableX, drawableY,
 	    (unsigned) (width-1), (unsigned) (height-1));
@@ -357,8 +357,8 @@ ImageFree(
     TImageInstance *instPtr = clientData;
     char buffer[200];
 
-    sprintf(buffer, "%s free", instPtr->masterPtr->imageName);
-    Tcl_SetVar2(instPtr->masterPtr->interp, instPtr->masterPtr->varName, NULL,
+    sprintf(buffer, "%s free", instPtr->modelPtr->imageName);
+    Tcl_SetVar2(instPtr->modelPtr->interp, instPtr->modelPtr->varName, NULL,
 	    buffer, TCL_GLOBAL_ONLY|TCL_APPEND_VALUE|TCL_LIST_ELEMENT);
     Tk_FreeColor(instPtr->fg);
     Tk_FreeGC(display, instPtr->gc);
@@ -384,11 +384,11 @@ ImageFree(
 
 static void
 ImageDelete(
-    ClientData clientData)	/* Pointer to TImageMaster for image. When
+    ClientData clientData)	/* Pointer to TImageModel for image. When
 				 * this function is called, no more instances
 				 * exist. */
 {
-    TImageMaster *timPtr = clientData;
+    TImageModel *timPtr = clientData;
     char buffer[100];
 
     sprintf(buffer, "%s delete", timPtr->imageName);

@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 int
-sphere(int entityno)
+sphere(size_t entityno)
 {
     fastf_t radius = 0.0;
     point_t center;

@@ -232,11 +232,6 @@ MouseTimerProc(
 
     mouseTimerSet = 0;
 
-    /*
-     * Get the current mouse position and window. Don't do anything if the
-     * mouse hasn't moved since the last time we looked.
-     */
-
     GetCursorPos(&pos);
     Tk_PointerEvent(NULL, pos.x, pos.y);
 }
@@ -368,6 +363,19 @@ void TkSetCursorPos(
     input.type = INPUT_MOUSE;
     input.mi.dx = (x * 65535 + xscreen/2) / xscreen;
     input.mi.dy = (y * 65535 + yscreen/2) / yscreen;
+
+    /*
+     * Horrible workaround here. There is a bug on Win 10: when warping to
+     * pixel (x = 0, y = 0) the SendInput() below just does not move the
+     * mouse pointer. However, as soon as dx or dy is non zero it moves as
+     * expected. Given the scaling factor of 65535 (see above),
+     * (dx = 1 , dy = 0) still means pixel (x = 0, y = 0).
+     * See ticket [69b48f427e].
+     */
+    if (input.mi.dx == 0 && input.mi.dy == 0) {
+        input.mi.dx = 1;
+    }
+
     input.mi.mouseData = 0;
     input.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
     input.mi.time = 0;

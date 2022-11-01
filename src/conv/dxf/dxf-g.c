@@ -675,7 +675,7 @@ add_polyline_vertex(fastf_t x, fastf_t y, fastf_t z)
 	polyline_vertex_max = POLYLINE_VERTEX_BLOCK;
     } else if (polyline_vertex_count >= polyline_vertex_max) {
 	polyline_vertex_max += POLYLINE_VERTEX_BLOCK;
-	polyline_verts = (fastf_t *)bu_realloc(polyline_verts, polyline_vertex_max * 3 * sizeof(fastf_t), "polyline_verts");
+	polyline_verts = (fastf_t *)bu_realloc(polyline_verts, sizeof(fastf_t) * 3 * polyline_vertex_max, "polyline_verts");
     }
 
     VSET(&polyline_verts[polyline_vertex_count*3], x, y, z);
@@ -781,7 +781,7 @@ process_entities_polyline_vertex_code(int code)
 		}
 		VSET(tmp_pt1, x, y, z);
 		MAT4X3PNT(tmp_pt2, curr_state->xform, tmp_pt1);
-		polyline_vert_indices[polyline_vert_indices_count++] = bg_vert_tree_add(layers[curr_layer]->vert_tree, tmp_pt2[X], tmp_pt2[Y], tmp_pt2[Z], tol_sq);
+		polyline_vert_indices[polyline_vert_indices_count++] = (int)bg_vert_tree_add(layers[curr_layer]->vert_tree, tmp_pt2[X], tmp_pt2[Y], tmp_pt2[Z], tol_sq);
 		if (verbose) {
 		    bu_log("Added 3D mesh vertex (%g %g %g) index = %d, number = %d\n",
 			   x, y, z, polyline_vert_indices[polyline_vert_indices_count-1],
@@ -1466,7 +1466,10 @@ process_line_entities_code(int code)
 	case 21:
 	case 31:
 	    vert_no = code % 10;
-	    coord = code / 10 - 1;
+	    coord = (code / 10) - 1;
+	    if (vert_no != 0 && vert_no != 1) {
+		break;
+	    }
 	    line_pt[vert_no][coord] = atof(line) * units_conv[units] * scale_factor;
 	    if (verbose) {
 		bu_log("LINE vertex #%d coord #%d = %g\n", vert_no, coord, line_pt[vert_no][coord]);
@@ -1902,7 +1905,7 @@ drawString(char *theText, point_t firstAlignmentPoint, point_t secondAlignmentPo
 
     BU_LIST_INIT(&vhead);
 
-    copyOfText = (char *)bu_calloc((unsigned int)strlen(theText)+1, 1, "copyOfText");
+    copyOfText = (char *)bu_calloc(strlen(theText)+1, 1, "copyOfText");
     c = theText;
     cp = copyOfText;
     (void)convertSecretCodes(c, cp, &maxLineLen);
@@ -1986,7 +1989,7 @@ drawMtext(char *text, int attachPoint, int UNUSED(drawingDirection), double text
     double scale = 1.0;
     double xdel = 0.0, ydel = 0.0;
     double radians = rotationAngle * DEG2RAD;
-    char *copyOfText = (char *)bu_calloc((unsigned int)strlen(text)+1, 1, "copyOfText");
+    char *copyOfText = (char *)bu_calloc(strlen(text)+1, 1, "copyOfText");
 
     BU_LIST_INIT(&vhead);
 
@@ -2736,10 +2739,8 @@ process_spline_entities_code(int code)
 	case 73:
 	    numCtlPts = atoi(line);
 	    if (numCtlPts > 0) {
-		ctlPts = (fastf_t *)bu_malloc(numCtlPts*3*sizeof(fastf_t),
-					      "spline control points");
-		weights = (fastf_t *)bu_malloc(numCtlPts*sizeof(fastf_t),
-					       "spline weights");
+		ctlPts = (fastf_t *)bu_malloc(sizeof(fastf_t) * 3 * numCtlPts, "spline control points");
+		weights = (fastf_t *)bu_malloc(sizeof(fastf_t) * numCtlPts, "spline weights");
 	    }
 	    for (i = 0; i < numCtlPts; i++) {
 		weights[i] = 1.0;
@@ -2748,8 +2749,7 @@ process_spline_entities_code(int code)
 	case 74:
 	    numFitPts = atoi(line);
 	    if (numFitPts > 0) {
-		fitPts = (fastf_t *)bu_malloc(numFitPts*3*sizeof(fastf_t),
-					      "fit control points");
+		fitPts = (fastf_t *)bu_malloc(sizeof(fastf_t) * 3 * numFitPts, "fit control points");
 	    }
 	    break;
 	case 42:
@@ -2844,7 +2844,7 @@ process_spline_entities_code(int code)
 	    paramDelta = (stopParam - startParam) / (double)splineSegs;
 	    nmg_nurb_c_eval(crv, startParam, pt);
 	    for (i = 0; i < splineSegs; i++) {
-		fastf_t param = startParam + paramDelta * (i+1);
+		fastf_t param = startParam + paramDelta * ((fastf_t)i+1);
 		eu = nmg_me(v1, v2, layers[curr_layer]->s);
 		v1 = eu->vu_p->v_p;
 		if (i == 0) {
@@ -2940,9 +2940,9 @@ process_3dface_entities_code(int code)
 		point_t tmp_pt1;
 		MAT4X3PNT(tmp_pt1, curr_state->xform, pts[vert_no]);
 		VMOVE(pts[vert_no], tmp_pt1);
-		face[vert_no] = bg_vert_tree_add(layers[curr_layer]->vert_tree,
-						 V3ARGS(pts[vert_no]),
-						 tol_sq);
+		face[vert_no] = (int)bg_vert_tree_add(layers[curr_layer]->vert_tree,
+						      V3ARGS(pts[vert_no]),
+						      tol_sq);
 	    }
 	    add_triangle(face[0], face[1], face[2], curr_layer);
 	    add_triangle(face[2], face[3], face[0], curr_layer);
@@ -3050,9 +3050,9 @@ nmg_wire_edges_to_sketch(struct model *m)
 		BU_ALLOC(lseg, struct line_seg);
 		lseg->magic = CURVE_LSEG_MAGIC;
 		v = eu->vu_p->v_p;
-		lseg->start = bg_vert_tree_add(tree, V3ARGS(v->vg_p->coord), tol_sq);
+		lseg->start = (int)bg_vert_tree_add(tree, V3ARGS(v->vg_p->coord), tol_sq);
 		v = eu->eumate_p->vu_p->v_p;
-		lseg->end = bg_vert_tree_add(tree, V3ARGS(v->vg_p->coord), tol_sq);
+		lseg->end = (int)bg_vert_tree_add(tree, V3ARGS(v->vg_p->coord), tol_sq);
 		if (verbose) {
 		    bu_log("making sketch line seg from #%d (%g %g %g) to #%d (%g %g %g)\n",
 			   lseg->start, V3ARGS(&tree->the_array[lseg->start]),
@@ -3210,7 +3210,7 @@ main(int argc, char *argv[])
     else
 	name_len = ptr2 - ptr1;
 
-    base_name = (char *)bu_calloc((unsigned int)name_len + 1, 1, "base_name");
+    base_name = (char *)bu_calloc(name_len + 1, 1, "base_name");
     bu_strlcpy(base_name , ptr1 , name_len+1);
 
     mk_id(out_fp, base_name);

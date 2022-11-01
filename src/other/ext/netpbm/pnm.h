@@ -4,6 +4,7 @@
 #ifndef _PNM_H_
 #define _PNM_H_
 
+#include "pm.h"
 #include "ppm.h"
 
 #ifdef __cplusplus
@@ -19,6 +20,9 @@ typedef pixval xelval;
 #define PNM_OVERALLMAXVAL PPM_OVERALLMAXVAL
 #define PNM_MAXMAXVAL PPM_MAXMAXVAL
 #define PNM_GET1(x) PPM_GETB(x)
+#define PNM_GETR(x) PPM_GETR(x)
+#define PNM_GETG(x) PPM_GETG(x)
+#define PNM_GETB(x) PPM_GETB(x)
 #define PNM_ASSIGN1(x,v) PPM_ASSIGN(x,0,0,v)
 #define PNM_ASSIGN(x,r,g,b) PPM_ASSIGN(x,r,g,b)
 #define PNM_EQUAL(x,y) PPM_EQUAL(x,y)
@@ -28,15 +32,17 @@ typedef pixval xelval;
 
 /* Declarations of routines. */
 
-void pnm_init ARGS(( int* argcP, char* argv[] ));
+void
+pnm_init(int *   const argcP,
+         char ** const argv);
 
 void
-pnm_nextimage(FILE *file, int * const eofP);
+pnm_nextimage(FILE * const file, int * const eofP);
 
 xel *
 pnm_allocrow(unsigned int const cols);
 
-#define pnm_freerow(xelrow) free(xelrow)
+#define pnm_freerow(xelrow) pm_freerow(xelrow)
 
 #define pnm_allocarray( cols, rows ) \
   ((xel**) pm_allocarray( cols, rows, sizeof(xel) ))
@@ -83,12 +89,12 @@ pnm_writepnminit(FILE * const fileP,
                  int    const forceplain);
 
 void
-pnm_writepnmrow(FILE * const fileP, 
-                xel *  const xelrow, 
-                int    const cols, 
-                xelval const maxval, 
-                int    const format, 
-                int    const forceplain);
+pnm_writepnmrow(FILE *      const fileP, 
+                const xel * const xelrow, 
+                int         const cols, 
+                xelval      const maxval, 
+                int         const format, 
+                int         const forceplain);
 
 void
 pnm_writepnm(FILE * const fileP,
@@ -100,13 +106,13 @@ pnm_writepnm(FILE * const fileP,
              int    const forceplain);
 
 xel 
-pnm_backgroundxel (xel** xels, int cols, int rows, xelval maxval, int format);
+pnm_backgroundxel(xel** xels, int cols, int rows, xelval maxval, int format);
 
 xel 
-pnm_backgroundxelrow (xel* xelrow, int cols, xelval maxval, int format);
+pnm_backgroundxelrow(xel* xelrow, int cols, xelval maxval, int format);
 
 xel 
-pnm_whitexel (xelval maxval, int format);
+pnm_whitexel(xelval maxval, int format);
 
 xel 
 pnm_blackxel(xelval maxval, int format);
@@ -126,6 +132,11 @@ pnm_promoteformatrow(xel* xelrow, int cols, xelval maxval, int format,
 pixel
 pnm_xeltopixel(xel const inputxel,
                int const format);
+
+xel
+pnm_parsecolorxel(const char * const colorName,
+                  xelval       const maxval,
+                  int          const format);
 
 #ifdef __cplusplus
 }

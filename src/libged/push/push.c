@@ -244,12 +244,14 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
      * check to make sure that a solid is not pushed in two
      * different directions at the same time.
      */
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     i = db_walk_tree(gedp->dbip, argc, (const char **)argv,
 		     ncpu,
-		     &gedp->ged_wdbp->wdb_initial_tree_state,
+		     &wdbp->wdb_initial_tree_state,
 		     0,				/* take all regions */
 		     push_region_end,
 		     push_leaf, (void *)gpdp);
+    wdb_close(wdbp);
 
     /*
      * If there was any error, then just free up the solid

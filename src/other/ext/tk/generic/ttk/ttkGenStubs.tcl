@@ -4,7 +4,7 @@
 #	interface.
 #
 #
-# Copyright (c) 1998-1999 by Scriptics Corporation.
+# Copyright (c) 1998-1999 Scriptics Corporation.
 # Copyright (c) 2007 Daniel A. Steffen <das@users.sourceforge.net>
 #
 # See the file "license.terms" for information on usage and redistribution
@@ -248,8 +248,9 @@ proc genStubs::rewriteFile {file text} {
 	return
     }
     set in [open ${file} r]
+    fconfigure $in -eofchar "\032 {}" -encoding utf-8
     set out [open ${file}.new w]
-    fconfigure $out -translation lf
+    fconfigure $out -translation lf -encoding utf-8
 
     while {![eof $in]} {
 	set line [gets $in]
@@ -284,18 +285,26 @@ proc genStubs::rewriteFile {file text} {
 # Results:
 #	Returns the original text inside an appropriate #ifdef.
 
-proc genStubs::addPlatformGuard {plat iftxt {eltxt {}}} {
+proc genStubs::addPlatformGuard {plat iftxt {eltxt {}} {withCygwin 0}} {
     set text ""
     switch $plat {
 	win {
-	    append text "#ifdef _WIN32 /* WIN */\n${iftxt}"
+	    append text "#if defined(_WIN32)"
+	    if {$withCygwin} {
+		append text " || defined(__CYGWIN__)"
+	    }
+	    append text " /* WIN */\n${iftxt}"
 	    if {$eltxt ne ""} {
 		append text "#else /* WIN */\n${eltxt}"
 	    }
 	    append text "#endif /* WIN */\n"
 	}
 	unix {
-	    append text "#if !defined(_WIN32) && !defined(MAC_OSX_TCL)\
+	    append text "#if !defined(_WIN32)"
+	    if {$withCygwin} {
+		append text " && !defined(__CYGWIN__)"
+	    }
+	    append text " && !defined(MAC_OSX_TCL)\
 		    /* UNIX */\n${iftxt}"
 	    if {$eltxt ne ""} {
 		append text "#else /* UNIX */\n${eltxt}"
@@ -317,7 +326,11 @@ proc genStubs::addPlatformGuard {plat iftxt {eltxt {}}} {
 	    append text "#endif /* AQUA */\n"
 	}
 	x11 {
-	    append text "#if !(defined(_WIN32) || defined(MAC_OSX_TK))\
+	    append text "#if !(defined(_WIN32)"
+	    if {$withCygwin} {
+		append text " || defined(__CYGWIN__)"
+	    }
+	    append text " || defined(MAC_OSX_TK))\
 		    /* X11 */\n${iftxt}"
 	    if {$eltxt ne ""} {
 		append text "#else /* X11 */\n${eltxt}"
@@ -450,12 +463,23 @@ proc genStubs::parseArg {arg} {
 
 proc genStubs::makeDecl {name decl index} {
     variable scspec
+    variable stubs
+    variable libraryName
     lassign $decl rtype fname args
 
     append text "/* $index */\n"
-    set line "$scspec $rtype"
+    if {[info exists stubs($name,deprecated,$index)]} {
+	append text "[string toupper $libraryName]_DEPRECATED(\"$stubs($name,deprecated,$index)\")\n"
+	set line "$rtype"
+    } elseif {[string range $rtype end-5 end] eq "MP_WUR"} {
+	set line "$scspec [string trim [string range $rtype 0 end-6]]"
+    } else {
+	set line "$scspec $rtype"
+    }
     set count [expr {2 - ([string length $line] / 8)}]
-    append line [string range "\t\t\t" 0 $count]
+    if {$count >= 0} {
+	append line [string range "\t\t\t" 0 $count]
+    }
     set pad [expr {24 - [string length $line]}]
     if {$pad <= 0} {
 	append line " "
@@ -494,6 +518,9 @@ proc genStubs::makeDecl {name decl index} {
 		set sep ", "
 	    }
 	    append line ", ...)"
+	    if {[lindex $args end] eq "{const char *} format"} {
+		append line " TCL_FORMAT_PRINTF(" [expr {[llength $args] - 1}] ", " [llength $args] ")"
+	    }
 	}
 	default {
 	    set sep "("
@@ -516,6 +543,9 @@ proc genStubs::makeDecl {name decl index} {
 	    }
 	    append line ")"
 	}
+    }
+    if {[string range $rtype end-5 end] eq "MP_WUR"} {
+	append line " MP_WUR"
     }
     return "$text$line;\n"
 }
@@ -561,17 +591,27 @@ proc genStubs::makeMacro {name decl index} {
 
 proc genStubs::makeSlot {name decl index} {
     lassign $decl rtype fname args
+    variable stubs
 
     set lfname [string tolower [string index $fname 0]]
     append lfname [string range $fname 1 end]
 
     set text "    "
+    if {[info exists stubs($name,deprecated,$index)]} {
+	append text "TCL_DEPRECATED_API(\"$stubs($name,deprecated,$index)\") "
+    } elseif {[info exists stubs($name,nostub,$index)]} {
+	append text "TCL_DEPRECATED_API(\"$stubs($name,nostub,$index)\") "
+    }
     if {$args eq ""} {
 	append text $rtype " *" $lfname "; /* $index */\n"
 	return $text
     }
     if {[string range $rtype end-8 end] eq "__stdcall"} {
 	append text [string trim [string range $rtype 0 end-9]] " (__stdcall *" $lfname ") "
+    } elseif {[string range $rtype 0 11] eq "TCL_NORETURN"} {
+	append text "TCL_NORETURN1 " [string trim [string range $rtype 12 end]] " (*" $lfname ") "
+    } elseif {[string range $rtype end-5 end] eq "MP_WUR"} {
+	append text [string trim [string range $rtype 0 end-6]] " (*" $lfname ") "
     } else {
 	append text $rtype " (*" $lfname ") "
     }
@@ -591,6 +631,9 @@ proc genStubs::makeSlot {name decl index} {
 		set sep ", "
 	    }
 	    append text ", ...)"
+	    if {[lindex $args end] eq "{const char *} format"} {
+		append text " TCL_FORMAT_PRINTF(" [expr {[llength $args] - 1}] ", " [llength $args] ")"
+	    }
 	}
 	default {
 	    set sep "("
@@ -606,6 +649,9 @@ proc genStubs::makeSlot {name decl index} {
 	}
     }
 
+    if {[string range $rtype end-5 end] eq "MP_WUR"} {
+	append text " MP_WUR"
+    }
     append text "; /* $index */\n"
     return $text
 }
@@ -643,7 +689,7 @@ proc genStubs::makeInit {name decl index} {
 #			have the interface name, the declaration,  and
 #			the index appended.
 #	guardProc	The proc to invoke to add guards.  It will have
-#		        the slot status and text appended.
+#			the slot status and text appended.
 #	textVar		The variable to use for output.
 #	skipString	The string to emit if a slot is skipped.  This
 #			string will be subst'ed in the loop so "$i" can
@@ -837,7 +883,7 @@ proc genStubs::emitInit {name textVar} {
     }
     foreach intf [array names interfaces] {
 	if {[info exists hooks($intf)]} {
-	    if {[lsearch -exact $hooks($intf) $name] >= 0} {
+	    if {$name in $hooks($intf)} {
 		set root 0
 		break
 	    }
@@ -928,7 +974,7 @@ proc genStubs::init {} {
     set outDir [lindex $argv 0]
 
     foreach file [lrange $argv 1 end] {
-	source $file
+	source -encoding utf-8 $file
     }
 
     foreach name [lsort [array names interfaces]] {

@@ -59,7 +59,7 @@ extern struct hostent *gethostbyname(const char *);
 
 typedef struct tienet_master_data_s {
     void *data;
-    int size;	/* Current size of work in bytes */
+    size_t size;	/* Current size of work in bytes */
 } tienet_master_data_t;
 
 

@@ -58,7 +58,7 @@ proc ttk::traverseTo {w} {
 }
 
 ## ttk::clickToFocus $w --
-#	Utility routine, used in <ButtonPress-1> bindings --
+#	Utility routine, used in <Button-1> bindings --
 #	Assign keyboard focus to the specified widget if -takefocus is enabled.
 #
 proc ttk::clickToFocus {w} {
@@ -278,9 +278,6 @@ proc ttk::copyBindings {from to} {
 # On OSX, Tk generates sensible values for the %D field in <MouseWheel> events.
 #
 # On Windows, %D must be scaled by a factor of 120.
-# In addition, Tk redirects mousewheel events to the window with
-# keyboard focus instead of sending them to the window under the pointer.
-# We do not attempt to fix that here, see also TIP#171.
 #
 # OSX conventionally uses Shift+MouseWheel for horizontal scrolling,
 # and Option+MouseWheel for accelerated scrolling.
@@ -301,45 +298,40 @@ proc ttk::copyBindings {from to} {
 
 proc ttk::bindMouseWheel {bindtag callback} {
     if {[tk windowingsystem] eq "x11"} {
-	bind $bindtag <ButtonPress-4> "$callback -1"
-	bind $bindtag <ButtonPress-5> "$callback +1"
+	bind $bindtag <Button-4> "$callback -1"
+	bind $bindtag <Button-5> "$callback +1"
     }
     if {[tk windowingsystem] eq "aqua"} {
-	bind $bindtag <MouseWheel> [append callback { [expr {-(%D)}]} ]
-	bind $bindtag <Option-MouseWheel> [append callback { [expr {-10 *(%D)}]} ]
+	bind $bindtag <MouseWheel> "$callback \[expr {-%D}\]"
+	bind $bindtag <Option-MouseWheel> "$callback \[expr {-10 * %D}\]"
     } else {
-	bind $bindtag <MouseWheel> [append callback { [expr {-(%D / 120)}]}]
+	bind $bindtag <MouseWheel> "$callback \[expr {-%D / 120}\]"
     }
 }
 
 ## Mousewheel bindings for standard scrollable widgets.
 #
-# Usage: [ttk::copyBindings TtkScrollable $bindtag]
-#
-# $bindtag should be for a widget that supports the
-# standard scrollbar protocol.
-#
 
 if {[tk windowingsystem] eq "x11"} {
-    bind TtkScrollable <ButtonPress-4>       { %W yview scroll -5 units }
-    bind TtkScrollable <ButtonPress-5>       { %W yview scroll  5 units }
-    bind TtkScrollable <Shift-ButtonPress-4> { %W xview scroll -5 units }
-    bind TtkScrollable <Shift-ButtonPress-5> { %W xview scroll  5 units }
+    bind TtkScrollable <Button-4>       { %W yview scroll -5 units }
+    bind TtkScrollable <Button-5>       { %W yview scroll  5 units }
+    bind TtkScrollable <Shift-Button-4> { %W xview scroll -5 units }
+    bind TtkScrollable <Shift-Button-5> { %W xview scroll  5 units }
 }
 if {[tk windowingsystem] eq "aqua"} {
     bind TtkScrollable <MouseWheel> \
-	    { %W yview scroll [expr {-(%D)}] units }
+	    { %W yview scroll [expr {-%D}] units }
     bind TtkScrollable <Shift-MouseWheel> \
-	    { %W xview scroll [expr {-(%D)}] units }
+	    { %W xview scroll [expr {-%D}] units }
     bind TtkScrollable <Option-MouseWheel> \
-	    { %W yview scroll  [expr {-10 * (%D)}] units }
+	    { %W yview scroll  [expr {-10 * %D}] units }
     bind TtkScrollable <Shift-Option-MouseWheel> \
-	    { %W xview scroll [expr {-10 * (%D)}] units }
+	    { %W xview scroll [expr {-10 * %D}] units }
 } else {
     bind TtkScrollable <MouseWheel> \
-	    { %W yview scroll [expr {-(%D / 120)}] units }
+	    { %W yview scroll [expr {-%D / 120}] units }
     bind TtkScrollable <Shift-MouseWheel> \
-	    { %W xview scroll [expr {-(%D / 120)}] units }
+	    { %W xview scroll [expr {-%D / 120}] units }
 }
 
 #*EOF*

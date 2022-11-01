@@ -909,9 +909,9 @@ inline void output_formatter(ParserStateT &state, const char *s)
 }
 
 
-typedef basic_obj_contents<float, char> objFileContents;
+typedef basic_obj_contents<double, char> objFileContents;
 typedef basic_obj_parser<char> objParser;
-typedef basic_parser_extra<float, char> objCombinedState;
+typedef basic_parser_extra<double, char> objCombinedState;
 
 } /* namespace obj */
 } /* namespace gcv */

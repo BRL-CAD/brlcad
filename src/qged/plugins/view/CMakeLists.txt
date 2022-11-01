@@ -1,4 +1,4 @@
-add_subdirectory(erase)
+add_subdirectory(select)
 add_subdirectory(info)
 add_subdirectory(measure)
 add_subdirectory(settings)

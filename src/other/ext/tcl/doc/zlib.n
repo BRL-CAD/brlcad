@@ -193,10 +193,18 @@ How hard to compress the data. Must be an integer from 0 (uncompressed) to 9
 .TP
 \fB\-limit\fI readaheadLimit\fR
 .
-The maximum number of bytes ahead to read when decompressing. This defaults to
-1, which ensures that data is always decompressed correctly, but may be
-increased to improve performance. This is more useful when the channel is
-non-blocking.
+The maximum number of bytes ahead to read when decompressing.
+.RS
+.PP
+This option has become \fBirrelevant\fR. It was originally introduced
+to prevent Tcl from reading beyond the end of a compressed stream in
+multi-stream channels to ensure that the data after was left alone for
+further reading, at the cost of speed.
+.PP
+Tcl now automatically returns any bytes it has read beyond the end of
+a compressed stream back to the channel, making them appear as unread
+to further readers.
+.RE
 .PP
 Both compressing and decompressing channel transformations add extra
 configuration options that may be accessed through \fBchan configure\fR. The
@@ -238,10 +246,8 @@ off the data stream.
 \fB\-limit\fI readaheadLimit\fR
 .
 This read-write option is used by decompressing channels to control the
-maximum number of bytes ahead to read from the underlying data source. This
-defaults to 1, which ensures that data is always decompressed correctly, but
-may be increased to improve performance. This is more useful when the channel
-is non-blocking.
+maximum number of bytes ahead to read from the underlying data source. See
+above for more information.
 .RE
 .SS "STREAMING SUBCOMMAND"
 .TP

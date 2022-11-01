@@ -17,9 +17,9 @@ if {"::tcltest" ni [namespace children]} {
     namespace import -force ::tcltest::*
 }
 
-# Do all this in a slave interp to avoid garbaging the package list
+# Do all this in a child interp to avoid garbaging the package list
 set i [interp create]
-tcltest::loadIntoSlaveInterpreter $i {*}$argv
+tcltest::loadIntoChildInterpreter $i {*}$argv
 interp eval $i {
 namespace import -force ::tcltest::*
 package forget {*}[package names]
@@ -613,13 +613,13 @@ test package-3.54 {Tcl_PkgRequire procedure, coroutine support} -setup {
 } -body {
     coroutine coro1 apply {{} {
 	package ifneeded t 2.1 {
-	    yield 
+	    yield
 	    package provide t 2.1
 	}
 	package require t 2.1
     }}
     list [catch {coro1} msg] $msg
-} -match glob -result {0 2.1} 
+} -match glob -result {0 2.1}
 
 
 test package-4.1 {Tcl_PackageCmd procedure} -returnCodes error -body {
@@ -862,15 +862,15 @@ test package-4.56 {Tcl_PackageCmd procedure, "vsatisfies" option} -body {
 # No tests for FindPackage; can't think up anything detectable errors.
 
 test package-5.1 {TclFreePackageInfo procedure} {
-    interp create slave
-    slave eval {
+    interp create child
+    child eval {
 	package ifneeded t 2.3 x
 	package ifneeded t 2.4 y
 	package ifneeded x 3.1 z
 	package provide q 4.3
 	package unknown "will this get freed?"
     }
-    interp delete slave
+    interp delete child
 } {}
 test package-5.2 {TclFreePackageInfo procedure} -body {
     interp create foo

@@ -32,7 +32,7 @@ namespace eval ttk::sizegrip {
     }
 }
 
-bind TSizegrip <ButtonPress-1> 		{ ttk::sizegrip::Press	%W %X %Y }
+bind TSizegrip <Button-1> 		{ ttk::sizegrip::Press	%W %X %Y }
 bind TSizegrip <B1-Motion> 		{ ttk::sizegrip::Drag 	%W %X %Y }
 bind TSizegrip <ButtonRelease-1> 	{ ttk::sizegrip::Release %W %X %Y }
 

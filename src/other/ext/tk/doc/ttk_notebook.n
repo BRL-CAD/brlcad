@@ -20,7 +20,7 @@ ttk::notebook \- Multi-paned container widget
 .SH DESCRIPTION
 A \fBttk::notebook\fR widget manages a collection of windows
 and displays a single one at a time.
-Each slave window is associated with a \fItab\fR,
+Each content window is associated with a \fItab\fR,
 which the user may select to change the currently-displayed window.
 .SO ttk_widget
 \-class	\-cursor	\-takefocus
@@ -56,11 +56,11 @@ Either \fBnormal\fR, \fBdisabled\fR or \fBhidden\fR.
 If \fBdisabled\fR, then the tab is not selectable.
 If \fBhidden\fR, then the tab is not shown.
 .OP \-sticky sticky Sticky
-Specifies how the slave window is positioned within the pane area.
+Specifies how the content window is positioned within the pane area.
 Value is a string containing zero or more of the characters
 \fBn, s, e,\fR or \fBw\fR.
 Each letter refers to a side (north, south, east, or west)
-that the slave window will
+that the content window will
 .QW stick
 to, as per the \fBgrid\fR geometry manager.
 .OP \-padding padding Padding
@@ -86,7 +86,7 @@ any of the following forms:
 .IP \(bu
 An integer between zero and the number of tabs;
 .IP \(bu
-The name of a slave window;
+The name of a content window;
 .IP \(bu
 A positional specification of the form
 .QW @\fIx\fR,\fIy\fR ,
@@ -156,7 +156,7 @@ See \fIttk::widget(n)\fR.
 .TP
 \fIpathname \fBselect\fR ?\fItabid\fR?
 Selects the specified tab.
-The associated slave window will be displayed,
+The associated content window will be displayed,
 and the previously-selected window (if different) is unmapped.
 If \fItabid\fR is omitted, returns the widget name of the
 currently selected pane.

@@ -18,6 +18,19 @@ if {"::tcltest" ni [namespace children]} {
 # Clear out any namespaces called test_ns_*
 catch {namespace delete {*}[namespace children :: test_ns_*]}
 
+test init-0.1 {no error on initialization phase (init.tcl)} -setup {
+    interp create child
+} -body {
+    child eval {
+	list [set v [info exists ::errorInfo]] \
+		[if {$v} {set ::errorInfo}] \
+	     [set v [info exists ::errorCode]] \
+		[if {$v} {set ::errorCode}]
+    }
+} -cleanup {
+    interp delete child
+} -result {0 {} 0 {}}
+
 # Six cases - white box testing
 
 test init-1.1 {auto_qualify - absolute cmd - namespace} {
@@ -28,7 +41,7 @@ test init-1.2 {auto_qualify - absolute cmd - global} {
 } global
 test init-1.3 {auto_qualify - no colons cmd - global} {
     auto_qualify nocolons ::
-} nocolons 
+} nocolons
 test init-1.4 {auto_qualify - no colons cmd - namespace} {
     auto_qualify nocolons ::sub
 } {::sub::nocolons nocolons}
@@ -46,11 +59,11 @@ test init-1.8 {auto_qualify - multiple colons 2} {
     auto_qualify :::foo ::bar
 } foo
 
-# We use a sub-interp and auto_reset and double the tests because there is 2
+# We use a child interp and auto_reset and double the tests because there is 2
 # places where auto_loading occur (before loading the indexes files and after)
 
 set testInterp [interp create]
-tcltest::loadIntoSlaveInterpreter $testInterp {*}$argv
+tcltest::loadIntoChildInterpreter $testInterp {*}$argv
 interp eval $testInterp {
     namespace import -force ::tcltest::*
     customMatch pairwise {apply {{mode pair} {
@@ -93,11 +106,11 @@ test init-2.5 {load safe:::setLogCmd - stage 2} {
 auto_reset
 catch {rename ::safe::setLogCmd {}}
 test init-2.6 {load setLogCmd from safe:: - stage 1} {
-    namespace eval safe setLogCmd 
+    namespace eval safe setLogCmd
     rename ::safe::setLogCmd {}  ;# should not fail
 } {}
 test init-2.7 {oad setLogCmd from safe::  - stage 2} {
-    namespace eval safe setLogCmd 
+    namespace eval safe setLogCmd
     rename ::safe::setLogCmd {}  ;# should not fail
 } {}
 test init-2.8 {load tcl::HistAdd} -setup {
@@ -132,12 +145,12 @@ foreach arg [subst -nocommands -novariables {
                 and is long enough to be truncated and
 "               <- includes a false lead in the prune point search
                 and must be longer still to force truncation}
-                {contrived example: rare circumstance 
+                {contrived example: rare circumstance
 		where the point at which to prune the
 		error stack cannot be uniquely determined.
 		foo bar foo
 "}
-    {contrived example: rare circumstance 
+    {contrived example: rare circumstance
 		where the point at which to prune the
 		error stack cannot be uniquely determined.
 		foo bar

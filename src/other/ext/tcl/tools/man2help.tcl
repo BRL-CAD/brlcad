@@ -4,7 +4,7 @@
 # man2tcl program to generate a Windows help file from Tcl manual
 # entries.
 #
-# Copyright (c) 1996 by Sun Microsystems, Inc.
+# Copyright (c) 1996 Sun Microsystems, Inc.
 
 #
 # PASS 1

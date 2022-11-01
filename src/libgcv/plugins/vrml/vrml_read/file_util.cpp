@@ -41,7 +41,7 @@ extern "C" b_off_t ftello(FILE *);
 
 #include "bu.h"
 
-using namespace std;
+
 //Constructor with filename a parameter
 FileUtil::FileUtil(const char *fname)
 {
@@ -62,22 +62,22 @@ FileUtil::getFileType()
     FILE *fp = fopen(filename, "rb");
 
     if (!fp)
-	return FILE_TYPE_UNKNOWN; //return with unknown type if it could not open file
+	return FILEUTIL_TYPE_UNKNOWN; //return with unknown type if it could not open file
     if (fread(format, sizeof(unsigned char), 10, fp) != 10) {
 	fclose(fp);
-	return FILE_TYPE_UNKNOWN;
+	return FILEUTIL_TYPE_UNKNOWN;
     }
 
     fclose(fp);
 
-    int fileType = FILE_TYPE_UNKNOWN;
+    int fileType = FILEUTIL_TYPE_UNKNOWN;
 
     //compares file formate with known formats to check for vrml version 1 or 2
     if (bu_strncmp((char *)format, "#VRML V2.0", 10) == 0) {
-	    fileType = FILE_TYPE_VRML;  //vrml version 2
+	    fileType = FILEUTIL_TYPE_VRML;  //vrml version 2
     }
     if (bu_strncmp((char *)format, "#VRML V1.0", 10) == 0) {
-	    fileType = FILE_TYPE_VRML1; //vrml version 1
+	    fileType = FILEUTIL_TYPE_VRML1; //vrml version 1
     }
 
     return fileType;
@@ -88,11 +88,11 @@ char *
 FileUtil::storeFileInput()
 {
     int size, i;
-    ifstream infile(filename, ios::in);
+    std::ifstream infile(filename, std::ios::in);
 
-    infile.seekg(0, ios::end);
+    infile.seekg(0, std::ios::end);
     size = infile.tellg();  //Get file size
-    infile.seekg(0, ios::beg);
+    infile.seekg(0, std::ios::beg);
 
     fileinput = new char[(2*size) + 1];
 

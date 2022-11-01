@@ -60,7 +60,7 @@ For example, the \fBtext\fR element
 (which displays a text string) has
 \fB\-text\fR, \fB\-font\fR, \fB\-foreground\fR, \fB\-background\fR,
 \fB\-underline\fR, and \fB\-width\fR options.
-The value of an element option is taken from:
+The value of an element option is taken from (in precedence order):
 .IP \(bu
 an option of the same name and type in the widget containing the element;
 .IP \(bu
@@ -86,7 +86,7 @@ ttk::\fBstyle layout\fR Horizontal.TScrollbar {
     Scrollbar.trough \-children {
 	Scrollbar.leftarrow \-side left \-sticky w
 	Scrollbar.rightarrow \-side right \-sticky e
-	Scrollbar.thumb \-side left \-expand true \-sticky ew
+	Scrollbar.thumb \-sticky ew
     }
 }
 .CE

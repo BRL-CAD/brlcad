@@ -1,6 +1,6 @@
 '\"
-'\" Copyright (c) 1997 by Sun Microsystems, Inc.
-'\" Copyright (c) 2008 by Donal K. Fellows
+'\" Copyright (c) 1997 Sun Microsystems, Inc.
+'\" Copyright (c) 2008 Donal K. Fellows
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -78,7 +78,9 @@ During decoding, the following options are supported:
 .TP
 \fB\-strict\fR
 .
-Instructs the decoder to throw an error if it encounters whitespace characters. Otherwise it ignores them.
+Instructs the decoder to throw an error if it encounters any characters
+that are not strictly part of the encoding itself. Otherwise it ignores them.
+RFC 2045 calls for base64 decoders to be non-strict.
 .RE
 .TP
 \fBhex\fR
@@ -92,7 +94,8 @@ options are supported:
 .TP
 \fB\-strict\fR
 .
-Instructs the decoder to throw an error if it encounters whitespace characters. Otherwise it ignores them.
+Instructs the decoder to throw an error if it encounters whitespace characters.
+Otherwise it ignores them.
 .RE
 .TP
 \fBuuencode\fR
@@ -107,23 +110,27 @@ produce files that other implementations of decoders cannot process):
 .TP
 \fB\-maxlen \fIlength\fR
 .
-Indicates that the output should be split into lines of no more than
-\fIlength\fR characters. By default, lines are split every 61 characters, and
-this must be in the range 3 to 85 due to limitations in the encoding.
+Indicates the maximum number of characters to produce for each encoded line.
+The valid range is 5 to 85. Line lengths outside that range cannot be
+accommodated by the encoding format. The default value is 61.
 .TP
 \fB\-wrapchar \fIcharacter\fR
 .
-Indicates that, when lines are split because of the \fB\-maxlen\fR option,
-\fIcharacter\fR should be used to separate lines. By default, this is a
-newline character,
-.QW \en .
+Indicates the character(s) to use to mark the end of each encoded line.
+Acceptable values are a sequence of zero or more characters from the
+set { \\x09 (TAB), \\x0B (VT), \\x0C (FF), \\x0D (CR) } followed
+by zero or one newline \\x0A (LF).  Any other values are rejected because
+they would generate encoded text that could not be decoded. The default value
+is a single newline.
 .PP
 During decoding, the following options are supported:
 .TP
 \fB\-strict\fR
 .
-Instructs the decoder to throw an error if it encounters unexpected whitespace
-characters. Otherwise it ignores them.
+Instructs the decoder to throw an error if it encounters anything
+outside of the standard encoding format. Without this option, the
+decoder tolerates some deviations, mostly to forgive reflows of lines
+between the encoder and decoder.
 .PP
 Note that neither the encoder nor the decoder handle the header and footer of
 the uuencode format.
@@ -653,7 +660,7 @@ stored in \fIvar2\fR.  Note that the integers returned are signed, but
 they can be converted to unsigned 8-bit quantities using an expression
 like:
 .CS
-set num [expr { $num & 0xff }]
+set num [expr { $num & 0xFF }]
 .CE
 .RE
 .IP \fBs\fR 5
@@ -672,7 +679,7 @@ stored in \fIvar2\fR.  Note that the integers returned are signed, but
 they can be converted to unsigned 16-bit quantities using an expression
 like:
 .CS
-set num [expr { $num & 0xffff }]
+set num [expr { $num & 0xFFFF }]
 .CE
 .RE
 .IP \fBS\fR 5
@@ -709,7 +716,7 @@ stored in \fIvar2\fR.  Note that the integers returned are signed, but
 they can be converted to unsigned 32-bit quantities using an expression
 like:
 .CS
-set num [expr { $num & 0xffffffff }]
+set num [expr { $num & 0xFFFFFFFF }]
 .CE
 .RE
 .IP \fBI\fR 5

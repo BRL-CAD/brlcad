@@ -2,8 +2,9 @@
 # ttk::combobox widget tests
 #
 
-package require Tk 8.5
-package require tcltest ; namespace import -force tcltest::*
+package require Tk
+package require tcltest 2.2
+namespace import -force tcltest::*
 loadTestedCommands
 
 test combobox-1.0 "Combobox tests -- setup" -body {
@@ -12,7 +13,7 @@ test combobox-1.0 "Combobox tests -- setup" -body {
 
 test combobox-1.1 "Bad -values list" -body {
     .cb configure -values "bad \{list"
-} -result "unmatched open brace in list" -returnCodes 1
+} -result "unmatched open brace in list" -returnCodes error
 
 test combobox-1.end "Combobox tests -- cleanup" -body {
     destroy .cb
@@ -38,18 +39,18 @@ test combobox-2.3 "current -- change value" -body {
     .cb current
 } -result 1
 
-test combobox-2.4 "current -- value not in list" -body { 
+test combobox-2.4 "current -- value not in list" -body {
     .cb set "z"
     .cb current
 } -result -1
 
-test combobox-2.5 "current -- set to end index" -body { 
+test combobox-2.5 "current -- set to end index" -body {
     .cb configure -values [list a b c d e thelastone]
     .cb current end
     .cb get
 } -result thelastone
 
-test combobox-2.6 "current -- set to unknown index" -body { 
+test combobox-2.6 "current -- set to unknown index" -body {
     .cb configure -values [list a b c d e]
     .cb current notanindex
 } -returnCodes error -result {Incorrect index notanindex}
@@ -58,7 +59,7 @@ test combobox-2.end "Cleanup" -body { destroy .cb }
 
 test combobox-3 "Read postoffset value dynamically from current style" -body {
     ttk::combobox .cb -values [list a b c] -style "DerivedStyle.TCombobox"
-    pack .cb -expand true -fill both 
+    pack .cb -expand true -fill both
     ttk::style configure DerivedStyle.TCombobox -postoffset [list 25 0 0 0]
     ttk::combobox::Post .cb
     expr {[winfo rootx .cb.popdown] - [winfo rootx .cb]}

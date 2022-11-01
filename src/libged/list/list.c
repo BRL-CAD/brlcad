@@ -93,11 +93,18 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 		ged_exec(gedp, 3, (const char **)tmp_argv);
 	    }
 	} else if (strchr(argv[arg], '/')) {
+	   // Still need to check if the slash containing string is an object first...
+	    if ((dp = db_lookup(gedp->dbip, argv[arg], LOOKUP_QUIET)) != RT_DIR_NULL) {
+		_ged_do_list(gedp, dp, verbose);	/* very verbose */
+		continue;
+	    }
+
 	    struct db_tree_state ts;
 	    struct db_full_path path;
 
 	    db_full_path_init(&path);
-	    ts = gedp->ged_wdbp->wdb_initial_tree_state;     /* struct copy */
+	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	    ts = wdbp->wdb_initial_tree_state;     /* struct copy */
 	    ts.ts_dbip = gedp->dbip;
 	    ts.ts_resp = &rt_uniresource;
 	    MAT_IDN(ts.ts_mat);

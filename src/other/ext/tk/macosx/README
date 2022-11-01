@@ -275,9 +275,9 @@ but rather refers to the context in which the color should be used.
 Tk now provides the following semantic colors as system colors:
 systemTextColor, systemTextBackgroundColor, systemSelectedTextColor,
 systemSelectedTextBackgroundColor, systemControlTextColor,
-systemDisabledControlTextColor, systemLabelColor, and
-systemControlAccentColor.  All of these except the last two were
-present in OSX 10.0 (and those two are simulated in systems where they
+systemDisabledControlTextColor, systemLabelColor, systemLinkColor, and
+systemControlAccentColor.  All of these except the last three were
+present in OSX 10.0 (and those three are simulated in systems where they
 do not exist).  The change in 10.14 was that the RGB color value of
 these colors became dynamic, meaning that the color value can change
 when the application appearance changes.  In particular, when a user
@@ -454,6 +454,20 @@ make overrides to the tk/macosx GNUmakefile, e.g.
 	sudo make -C tk${ver}/macosx install \
 	    TCL_FRAMEWORK_DIR=$HOME/Library/Frameworks TCLSH_DIR=$HOME/usr/bin
 The Makefile variables TCL_FRAMEWORK_DIR and TCLSH_DIR were added with Tk 8.4.3.
+
+- To build a Tcl.framework and Tk.framework for use as subframeworks in another
+framework, use the install-embedded target and set SUBFRAMEWORK=1.  Set the
+DYLIB_INSTALL_DIR variable to the path which should be the install_name path of
+the shared library and set the DESTDIR variable to the pathname of a staging
+directory where the frameworks will be written.  The Tcl framework must be
+built first.
+For example, running the commands:
+	make -C ../tcl8.6/macosx install-embedded SUBFRAMEWORK=1 DESTDIR=/tmp/tcltk \
+	DYLIB_INSTALL_DIR=/Library/Frameworks/Some.framework/Versions/X.Y/Frameworks/Tcl.framework
+	make -C macosx install-embedded SUBFRAMEWORK=1 DESTDIR=/tmp/tcltk \
+	DYLIB_INSTALL_DIR=/Library/Frameworks/Some.framework/Versions/X.Y/Frameworks/Tk.framework
+will produce a Tcl.framework and a Tk.framework usable as subframeworks of
+Some.framework.  The frameworks will be found in /tmp/tcltk/Frameworks/
 
 5. Details regarding the macOS port of Tk.
 -------------------------------------------
@@ -662,15 +676,35 @@ source and destination rectangles for the scrolling.  The embedded
 windows are redrawn within the DisplayText function by some
 conditional code which is only used for macOS.
 
-6.0 Virtual events on 10.14
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.0 Virtual events on macOS 10.14 and later
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-10.14 supports system appearance changes, and has added a "Dark Mode"
-that casts all window frames and menus as black. Tk 8.6.9 has added two
-virtual events, <<LightAqua>> and <<DarkAqua>>, to allow you to update
-your Tk app's appearance when the system appearance changes. Just bind
-your appearance-updating code to these virtual events and you will see
-it triggered when the system appearance toggles between dark and light.
+The 10.14 release added support for system appearance changes,
+including a "Dark Mode" that renders all window frames and menus in
+dark colors. Tk 8.6 provides three virtual events <<LightAqua>>,
+<<DarkAqua>> and <<AppearanceChanged>>, to allow you to update your Tk
+app's appearance when the system appearance changes.  These events are
+generated in [NSView effectiveAppearanceChanged], which is called by
+the Apple window manager when the General Preferences is changed
+either by switching between Light Mode and Dark Mode or by changing
+the Accent Color or Highlight Color.
+
+The <<AppearanceChanged>> virtual event has a data string which can be
+accessed with the %d substitution.  The format of the data string is
+that it consists of 6 words:
+  "Appearance XXXX Accent YYYY Highlight ZZZZ"
+For example, the following code will print the current appearance
+name, accent color and highlight color when the <<AppearanceChanged>>
+virtual event fires:
+
+bind . <<AppearanceChanged>> {
+    array set data [split %d]
+    puts "  Appearance: $data(Appearance)"
+    puts "  Accent: $data(Accent)"
+    puts "  Highlight: $data(Highlight)\n"
+}
+
+
 
 7.0 Mac Services
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

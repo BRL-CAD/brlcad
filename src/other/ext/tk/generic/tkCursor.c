@@ -100,7 +100,7 @@ Tk_AllocCursorFromObj(
     if (objPtr->typePtr != &tkCursorObjType) {
 	InitCursorObj(objPtr);
     }
-    cursorPtr = objPtr->internalRep.twoPtrValue.ptr1;
+    cursorPtr = (TkCursor *)objPtr->internalRep.twoPtrValue.ptr1;
 
     /*
      * If the object currently points to a TkCursor, see if it's the one we
@@ -129,7 +129,7 @@ Tk_AllocCursorFromObj(
      */
 
     if (cursorPtr != NULL) {
-	TkCursor *firstCursorPtr = Tcl_GetHashValue(cursorPtr->hashPtr);
+	TkCursor *firstCursorPtr = (TkCursor *)Tcl_GetHashValue(cursorPtr->hashPtr);
 
 	FreeCursorObj(objPtr);
 	for (cursorPtr = firstCursorPtr;  cursorPtr != NULL;
@@ -229,7 +229,7 @@ TkcGetCursor(
 				 * details on legal syntax. */
 {
     Tcl_HashEntry *nameHashPtr;
-    register TkCursor *cursorPtr;
+    TkCursor *cursorPtr;
     TkCursor *existingCursorPtr = NULL;
     int isNew;
     TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
@@ -241,7 +241,7 @@ TkcGetCursor(
     nameHashPtr = Tcl_CreateHashEntry(&dispPtr->cursorNameTable,
 	    string, &isNew);
     if (!isNew) {
-	existingCursorPtr = Tcl_GetHashValue(nameHashPtr);
+	existingCursorPtr = (TkCursor *)Tcl_GetHashValue(nameHashPtr);
 	for (cursorPtr = existingCursorPtr; cursorPtr != NULL;
 		cursorPtr = cursorPtr->nextPtr) {
 	    if (Tk_Display(tkwin) == cursorPtr->display) {
@@ -320,7 +320,7 @@ Tk_GetCursorFromData(
 {
     DataKey dataKey;
     Tcl_HashEntry *dataHashPtr;
-    register TkCursor *cursorPtr;
+    TkCursor *cursorPtr;
     int isNew;
     XColor fgColor, bgColor;
     TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
@@ -341,7 +341,7 @@ Tk_GetCursorFromData(
     dataHashPtr = Tcl_CreateHashEntry(&dispPtr->cursorDataTable,
 	    (char *) &dataKey, &isNew);
     if (!isNew) {
-	cursorPtr = Tcl_GetHashValue(dataHashPtr);
+	cursorPtr = (TkCursor *)Tcl_GetHashValue(dataHashPtr);
 	cursorPtr->resourceRefCount++;
 	return cursorPtr->cursor;
     }
@@ -432,7 +432,7 @@ Tk_NameOfCursor(
     if (idHashPtr == NULL) {
 	goto printid;
     }
-    cursorPtr = Tcl_GetHashValue(idHashPtr);
+    cursorPtr = (TkCursor *)Tcl_GetHashValue(idHashPtr);
     if (cursorPtr->otherTable != &dispPtr->cursorNameTable) {
 	goto printid;
     }
@@ -463,13 +463,12 @@ FreeCursor(
 {
     TkCursor *prevPtr;
 
-    cursorPtr->resourceRefCount--;
-    if (cursorPtr->resourceRefCount > 0) {
+    if (cursorPtr->resourceRefCount-- > 1) {
 	return;
     }
 
     Tcl_DeleteHashEntry(cursorPtr->idHashPtr);
-    prevPtr = Tcl_GetHashValue(cursorPtr->hashPtr);
+    prevPtr = (TkCursor *)Tcl_GetHashValue(cursorPtr->hashPtr);
     if (prevPtr == cursorPtr) {
 	if (cursorPtr->nextPtr == NULL) {
 	    Tcl_DeleteHashEntry(cursorPtr->hashPtr);
@@ -522,7 +521,7 @@ Tk_FreeCursor(
     if (idHashPtr == NULL) {
 	Tcl_Panic("Tk_FreeCursor received unknown cursor argument");
     }
-    FreeCursor(Tcl_GetHashValue(idHashPtr));
+    FreeCursor((TkCursor *)Tcl_GetHashValue(idHashPtr));
 }
 
 /*
@@ -587,11 +586,10 @@ static void
 FreeCursorObj(
     Tcl_Obj *objPtr)		/* The object we are releasing. */
 {
-    TkCursor *cursorPtr = objPtr->internalRep.twoPtrValue.ptr1;
+    TkCursor *cursorPtr = (TkCursor *)objPtr->internalRep.twoPtrValue.ptr1;
 
     if (cursorPtr != NULL) {
-	cursorPtr->objRefCount--;
-	if ((cursorPtr->objRefCount == 0)
+	if ((cursorPtr->objRefCount-- <= 1)
 		&& (cursorPtr->resourceRefCount == 0)) {
 	    ckfree(cursorPtr);
 	}
@@ -622,7 +620,7 @@ DupCursorObjProc(
     Tcl_Obj *srcObjPtr,		/* The object we are copying from. */
     Tcl_Obj *dupObjPtr)		/* The object we are copying to. */
 {
-    TkCursor *cursorPtr = srcObjPtr->internalRep.twoPtrValue.ptr1;
+    TkCursor *cursorPtr = (TkCursor *)srcObjPtr->internalRep.twoPtrValue.ptr1;
 
     dupObjPtr->typePtr = srcObjPtr->typePtr;
     dupObjPtr->internalRep.twoPtrValue.ptr1 = cursorPtr;
@@ -707,7 +705,7 @@ GetCursorFromObj(
      * cached is the one that is needed.
      */
 
-    cursorPtr = objPtr->internalRep.twoPtrValue.ptr1;
+    cursorPtr = (TkCursor *)objPtr->internalRep.twoPtrValue.ptr1;
     if ((cursorPtr != NULL) && (Tk_Display(tkwin) == cursorPtr->display)) {
 	return cursorPtr;
     }
@@ -722,7 +720,7 @@ GetCursorFromObj(
     if (hashPtr == NULL) {
 	goto error;
     }
-    for (cursorPtr = Tcl_GetHashValue(hashPtr);
+    for (cursorPtr = (TkCursor *)Tcl_GetHashValue(hashPtr);
 	    cursorPtr != NULL; cursorPtr = cursorPtr->nextPtr) {
 	if (Tk_Display(tkwin) == cursorPtr->display) {
 	    FreeCursorObj(objPtr);
@@ -857,7 +855,7 @@ TkDebugCursor(
     resultPtr = Tcl_NewObj();
     hashPtr = Tcl_FindHashEntry(&dispPtr->cursorNameTable, name);
     if (hashPtr != NULL) {
-	cursorPtr = Tcl_GetHashValue(hashPtr);
+	cursorPtr = (TkCursor *)Tcl_GetHashValue(hashPtr);
 	if (cursorPtr == NULL) {
 	    Tcl_Panic("TkDebugCursor found empty hash table entry");
 	}

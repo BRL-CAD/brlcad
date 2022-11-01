@@ -204,7 +204,8 @@ where the caller does not need the length of the unicode string
 representation.
 .PP
 \fBTcl_GetUniChar\fR returns the \fIindex\fR'th character in the
-value's Unicode representation.
+value's Unicode representation. The index is assumed to be in the
+appropriate range.
 .PP
 \fBTcl_GetRange\fR returns a newly created value comprised of the
 characters between \fIfirst\fR and \fIlast\fR (inclusive) in the

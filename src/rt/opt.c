@@ -97,8 +97,8 @@ size_t incr_level = 0;                  /* current incremental level */
 size_t incr_nlevel = 0;                 /* number of levels */
 size_t full_incr_sample = 0;            /* current fully incremental sample */
 size_t full_incr_nsamples = 0;          /* number of samples in the fully incremental mode */
-size_t npsw = 1;                        /* number of worker PSWs to run */
-struct resource resource[MAX_PSW];      /* memory resources */
+ssize_t npsw = 1;                        /* number of worker PSWs to run */
+struct resource resource[MAX_PSW] = {0};      /* memory resources */
 int top_down = 0;                       /* render image top-down or bottom-up (default) */
 int random_mode = 0;                    /* Mode to shoot rays at random directions */
 int opencl_mode = 0;                    /* enable/disable OpenCL */
@@ -139,6 +139,8 @@ int sub_ymax = 0;
  * retained, and can be expected to show up in the partition lists.
  */
 int use_air = 0;                        /* whether librt should handle air */
+
+int save_overlaps = 0;                  /* flag for setting rti_save_overlaps */
 
 /***** end variables shared with do.c *****/
 
@@ -207,7 +209,6 @@ get_args(int argc, const char *argv[])
     struct bu_vls oline = BU_VLS_INIT_ZERO;
     int oid = 0;
     bu_optind = 1;                /* restart */
-    npsw = bu_avail_cpus();
 
 #define GETOPT_STR	\
     ".:, :@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v::w:x:z:A:BC:D:E:F:G:H:I:J:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
@@ -561,40 +562,8 @@ get_args(int argc, const char *argv[])
 	    case 'E':
 		eye_backoff = atof(bu_optarg);
 		break;
-
 	    case 'P':
-		{
-		    /* Number of parallel workers */
-		    size_t avail_cpus;
-
-		    avail_cpus = bu_avail_cpus();
-
-		    npsw = atoi(bu_optarg);
-
-		    if (npsw > avail_cpus) {
-			fprintf(stderr, "Requesting %lu cpus, only %lu available.",
-				(unsigned long)npsw, (unsigned long)avail_cpus);
-
-			if ((bu_debug & BU_DEBUG_PARALLEL) ||
-			    (RT_G_DEBUG & RT_DEBUG_PARALLEL)) {
-			    fprintf(stderr, "\nAllowing surplus cpus due to debug flag.\n");
-			} else {
-			    fprintf(stderr, "  Will use %lu.\n", (unsigned long)avail_cpus);
-			    npsw = avail_cpus;
-			}
-		    }
-		    if (npsw < 1 || npsw > MAX_PSW) {
-			fprintf(stderr, "Numer of requested cpus (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
-
-			if ((bu_debug & BU_DEBUG_PARALLEL) ||
-			    (RT_G_DEBUG & RT_DEBUG_PARALLEL)) {
-			    fprintf(stderr, ", but allowing due to debug flag\n");
-			} else {
-			    fprintf(stderr, ", using -P1\n");
-			    npsw = 1;
-			}
-		    }
-		}
+		npsw = atoi(bu_optarg);
 		break;
 	    case 'Q':
 		Query_one_pixel = ! Query_one_pixel;

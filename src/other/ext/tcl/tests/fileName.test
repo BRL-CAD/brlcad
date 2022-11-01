@@ -11,7 +11,7 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 if {"::tcltest" ni [namespace children]} {
-    package require tcltest 2
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -1061,10 +1061,10 @@ test filename-11.45 {Tcl_GlobCmd on root volume} -setup {
     set tmpd [pwd]
 } -body {
     catch {
-	set res1 [glob -dir [lindex [file volumes] 0] -tails *]
+	set res1 [glob -dir [lindex [file volumes] end] -tails *]
     }
     catch {
-	cd [lindex [file volumes] 0]
+	cd [lindex [file volumes] end]
 	set res2 [glob *]
     }
     list $res1 $res2
@@ -1083,6 +1083,12 @@ test filename-11.48 {Tcl_GlobCmd} -returnCodes error -body {
 test filename-11.49 {Tcl_GlobCmd} -returnCodes error -body {
     glob -types abcde -path foo -join * *
 } -result {bad argument to "-types": abcde}
+test filename-11.50 {Tcl_GlobCmd} -returnCodes error -body {
+    glob -path hello -path salut *
+} -result {"-path" may only be used once}
+test filename-11.51 {Tcl_GlobCmd} -returnCodes error -body {
+    glob -dir hello -dir salut *
+} -result {"-directory" may only be used once}
 
 file rename $horribleglobname globTest
 file delete -force $tildeglobname
@@ -1321,7 +1327,7 @@ unset globname
 # AFS, "000" protection doesn't prevent access by owner, so the following test
 # is not portable.
 
-catch {file attributes globTest/a1 -permissions 0000}
+catch {file attributes globTest/a1 -permissions 0o000}
 test filename-15.1 {unix specific globbing} {unix nonPortable} {
     string tolower [list [catch {glob globTest/a1/*} msg] $msg $errorCode]
 } {1 {couldn't read directory "globtest/a1": permission denied} {posix eacces {permission denied}}}
@@ -1333,7 +1339,7 @@ test filename-15.3 {unix specific no complain: no errors, good result} \
     # test fails because if an error occurs, the interp's result is reset...
     glob -nocomplain globTest/a2 globTest/a1/* globTest/a3
 } {globTest/a2 globTest/a3}
-catch {file attributes globTest/a1 -permissions 0755}
+catch {file attributes globTest/a1 -permissions 0o755}
 test filename-15.4 {unix specific no complain: no errors, good result} \
 	{unix nonPortable} {
     # test fails because if an error occurs, the interp's result is reset...

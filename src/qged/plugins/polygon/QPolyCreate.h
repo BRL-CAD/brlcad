@@ -69,8 +69,7 @@ class QPolyCreate : public QWidget
 
     signals:
 	void poly_added();
-	void view_updated(struct bview **);
-	void db_updated();
+	void view_updated(unsigned long long);
 
     private slots:
 	void toplevel_config(bool);

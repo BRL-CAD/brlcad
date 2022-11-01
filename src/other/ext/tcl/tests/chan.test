@@ -7,8 +7,8 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -135,7 +135,7 @@ test chan-16.4 {chan command: pending subcommand} -body {
     chan pending {input output} stdout
 } -returnCodes error -result "bad mode \"input output\": must be input or output"
 test chan-16.5 {chan command: pending input subcommand} -body {
-    chan pending input stdout 
+    chan pending input stdout
 } -result -1
 test chan-16.6 {chan command: pending input subcommand} -body {
     chan pending input stdin
@@ -173,7 +173,7 @@ test chan-16.9 {chan command: pending input subcommand} -setup {
 
         lappend ::chan-16.9-data $r $l $e $b $i
 
-        if {$r != -1 || $e || $l || !$b || $i > 128} {
+        if {$r >= 0 || $e || $l || !$b || $i > 128} {
             set data [read $sock $i]
             lappend ::chan-16.9-data [string range $data 0 2]
             lappend ::chan-16.9-data [string range $data end-2 end]
@@ -194,7 +194,7 @@ test chan-16.9 {chan command: pending input subcommand} -setup {
     set ::chan-16.9-data [list]
     set ::chan-16.9-done 0
 } -body {
-    after idle chan-16.9-client 
+    after idle chan-16.9-client
     vwait ::chan-16.9-done
     set ::chan-16.9-data
 } -result {-1 0 0 1 36 -1 0 0 1 72 -1 0 0 1 108 -1 0 0 1 144 ABC 890} -cleanup {

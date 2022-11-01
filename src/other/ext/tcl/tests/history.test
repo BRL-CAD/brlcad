@@ -10,9 +10,9 @@
 #
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
-  
+
 if {"::tcltest" ni [namespace children]} {
-    package require tcltest 2
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -40,7 +40,7 @@ test history-1.1 {event option} history {history event -1} \
 	{set b [format {A test %s} string]}
 test history-1.2 {event option} history {history event $num} \
 	{set a 12345}
-test history-1.3 {event option} history {history event [expr $num+2]} \
+test history-1.3 {event option} history {history event [expr {$num+2}]} \
 	{Another test}
 test history-1.4 {event option} history {history event set} \
 	{set b [format {A test %s} string]}
@@ -149,11 +149,11 @@ test history-5.1 {info option} history {history info} [format {%6d  set a {b
 %6d  set b 1234
 %6d  set c {a
 	b
-	c}} $num [expr $num+1] [expr $num+2]]
+	c}} $num [expr {$num+1}] [expr {$num+2}]]
 test history-5.2 {info option} history {history i 2} [format {%6d  set b 1234
 %6d  set c {a
 	b
-	c}} [expr $num+1] [expr $num+2]]
+	c}} [expr {$num+1}] [expr {$num+2}]]
 test history-5.3 {info option} history {catch {history i 2 3}} 1
 test history-5.4 {info option} history {
     catch {history i 2 3} msg
@@ -164,7 +164,7 @@ test history-5.5 {info option} history {history} [format {%6d  set a {b
 %6d  set b 1234
 %6d  set c {a
 	b
-	c}} $num [expr $num+1] [expr $num+2]]
+	c}} $num [expr {$num+1}] [expr {$num+2}]]
 
 # "history keep"
 
@@ -174,7 +174,9 @@ if {[testConstraint history]} {
     history add "foo3"
     history keep 2
 }
-test history-6.1 {keep option} history {history event [expr [history n]-1]} foo3
+test history-6.1 {keep option} history {
+    history event [expr {[history n]-1}]
+} foo3
 test history-6.2 {keep option} history {history event -1} foo2
 test history-6.3 {keep option} history {catch {history event -3}} 1
 test history-6.4 {keep option} history {
@@ -216,7 +218,7 @@ if {[testConstraint history]} {
     history add "Testing2"
 }
 test history-7.1 {nextid option} history {history event} "Testing"
-test history-7.2 {nextid option} history {history next} [expr $num+2]
+test history-7.2 {nextid option} history {history next} [expr {$num+2}]
 test history-7.3 {nextid option} history {catch {history nextid garbage}} 1
 test history-7.4 {nextid option} history {
     catch {history nextid garbage} msg
@@ -262,7 +264,7 @@ test history-10.1 {references kept by history} -constraints history -setup {
 } -body {
     histtest eval {
 	# A fresh object, refcount 1 from the variable we write it to
-	set obj [expr rand()]
+	set obj [expr {rand()}]
 	set baseline [refcount $obj]
 	lappend result [refcount $obj]
 	history add [list list $obj]
@@ -288,7 +290,7 @@ test history-10.2 {references kept by history} -constraints history -setup {
 } -body {
     histtest eval {
 	# A fresh object, refcount 1 from the variable we write it to
-	set obj [expr rand()]
+	set obj [expr {rand()}]
 	set baseline [refcount $obj]
 	lappend result [refcount $obj]
 	history add [list list $obj]

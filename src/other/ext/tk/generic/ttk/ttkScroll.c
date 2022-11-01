@@ -104,15 +104,18 @@ static int UpdateScrollbar(Tcl_Interp *interp, ScrollHandle h)
     Tcl_Release(corePtr);
 
     if (code != TCL_OK && !Tcl_InterpDeleted(interp)) {
-	/* Disable the -scrollcommand, add to stack trace:
+	/* Add error to stack trace.
+         * Also set the SCROLL_UPDATE_REQUIRED flag so that a later call to
+         * TtkScrolled has an effect. Indeed, the error in the -scrollcommand
+         * callback may later be gone, for instance the callback proc got
+         * defined in the meantime.
 	 */
-	ckfree(s->scrollCmd);
-	s->scrollCmd = 0;
 
 	Tcl_AddErrorInfo(interp, /* @@@ "horizontal" / "vertical" */
 		"\n    (scrolling command executed by ");
 	Tcl_AddErrorInfo(interp, Tk_PathName(h->corePtr->tkwin));
 	Tcl_AddErrorInfo(interp, ")");
+        TtkScrollbarUpdateRequired(h);
     }
     return code;
 }

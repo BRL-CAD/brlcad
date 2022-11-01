@@ -66,17 +66,17 @@ static void		GCInit(TkDisplay *dispPtr);
 GC
 Tk_GetGC(
     Tk_Window tkwin,		/* Window in which GC will be used. */
-    register unsigned long valueMask,
+    unsigned long valueMask,
 				/* 1 bits correspond to values specified in
 				 * *valuesPtr; other values are set from
 				 * defaults. */
-    register XGCValues *valuePtr)
+    XGCValues *valuePtr)
 				/* Values are specified here for bits set in
 				 * valueMask. */
 {
     ValueKey valueKey;
     Tcl_HashEntry *valueHashPtr, *idHashPtr;
-    register TkGC *gcPtr;
+    TkGC *gcPtr;
     int isNew;
     Drawable d, freeDrawable;
     TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
@@ -218,7 +218,7 @@ Tk_GetGC(
     valueHashPtr = Tcl_CreateHashEntry(&dispPtr->gcValueTable,
 	    (char *) &valueKey, &isNew);
     if (!isNew) {
-	gcPtr = Tcl_GetHashValue(valueHashPtr);
+	gcPtr = (TkGC *)Tcl_GetHashValue(valueHashPtr);
 	gcPtr->refCount++;
 	return gcPtr->gc;
     }
@@ -228,7 +228,7 @@ Tk_GetGC(
      * and add a new structure to the database.
      */
 
-    gcPtr = ckalloc(sizeof(TkGC));
+    gcPtr = (TkGC *)ckalloc(sizeof(TkGC));
 
     /*
      * Find or make a drawable to use to specify the screen and depth of the
@@ -291,7 +291,7 @@ Tk_FreeGC(
     GC gc)			/* Graphics context to be released. */
 {
     Tcl_HashEntry *idHashPtr;
-    register TkGC *gcPtr;
+    TkGC *gcPtr;
     TkDisplay *dispPtr = TkGetDisplay(display);
 
     if (!dispPtr->gcInit) {
@@ -311,9 +311,8 @@ Tk_FreeGC(
     if (idHashPtr == NULL) {
 	Tcl_Panic("Tk_FreeGC received unknown gc argument");
     }
-    gcPtr = Tcl_GetHashValue(idHashPtr);
-    gcPtr->refCount--;
-    if (gcPtr->refCount == 0) {
+    gcPtr = (TkGC *)Tcl_GetHashValue(idHashPtr);
+    if (gcPtr->refCount-- <= 1) {
 	XFreeGC(gcPtr->display, gcPtr->gc);
 	Tcl_DeleteHashEntry(gcPtr->valueHashPtr);
 	Tcl_DeleteHashEntry(idHashPtr);
@@ -348,7 +347,7 @@ TkGCCleanup(
 
     for (entryPtr = Tcl_FirstHashEntry(&dispPtr->gcIdTable, &search);
 	    entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
-	gcPtr = Tcl_GetHashValue(entryPtr);
+	gcPtr = (TkGC *)Tcl_GetHashValue(entryPtr);
 
 	XFreeGC(gcPtr->display, gcPtr->gc);
 	Tcl_DeleteHashEntry(gcPtr->valueHashPtr);

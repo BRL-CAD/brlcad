@@ -20,13 +20,12 @@ set(SC_CLUTILS_HDRS
   )
 
 include_directories(
-  ${SC_SOURCE_DIR}/src/base
   ${SC_BINARY_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
 if(BUILD_SHARED_LIBS)
-  SC_ADDLIB(steputils SHARED SOURCES ${LIBSTEPUTILS_SRCS} LINK_LIBRARIES base)
+  SC_ADDLIB(steputils SHARED SOURCES ${LIBSTEPUTILS_SRCS})
   if(WIN32)
     target_compile_definitions(steputils PRIVATE SC_UTILS_DLL_EXPORTS)
     target_link_libraries(steputils shlwapi)
@@ -34,7 +33,7 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 if(BUILD_STATIC_LIBS)
-  SC_ADDLIB(steputils-static STATIC SOURCES ${LIBSTEPUTILS_SRCS} LINK_LIBRARIES base-static)
+  SC_ADDLIB(steputils-static STATIC SOURCES ${LIBSTEPUTILS_SRCS})
   if(WIN32)
     target_link_libraries(steputils-static shlwapi)
   endif()

@@ -76,6 +76,8 @@ static void		DrawMenuButtonImageAndText(TkMenuButton *butPtr);
 Tk_ClassProcs tkpMenubuttonClass = {
     sizeof(Tk_ClassProcs),	/* size */
     TkMenuButtonWorldChanged,	/* worldChangedProc */
+	NULL,
+	NULL
 };
 
 /*
@@ -133,7 +135,7 @@ TkMenuButton *
 TkpCreateMenuButton(
     Tk_Window tkwin)
 {
-    MacMenuButton *mbPtr = (MacMenuButton *) ckalloc(sizeof(MacMenuButton));
+    MacMenuButton *mbPtr = (MacMenuButton *)ckalloc(sizeof(MacMenuButton));
 
     Tk_CreateEventHandler(tkwin, ActivateMask, MenuButtonEventProc, mbPtr);
     mbPtr->flags = FIRST_DRAW;
@@ -163,8 +165,8 @@ void
 TkpDisplayMenuButton(
     ClientData clientData)	/* Information about widget. */
 {
-    MacMenuButton *mbPtr = clientData;
-    TkMenuButton *butPtr = clientData;
+    MacMenuButton *mbPtr = (MacMenuButton *)clientData;
+    TkMenuButton *butPtr = (TkMenuButton *)clientData;
     Tk_Window tkwin = butPtr->tkwin;
     Pixmap pixmap;
     DrawParams *dpPtr = &mbPtr->drawParams;
@@ -177,13 +179,6 @@ TkpDisplayMenuButton(
     pixmap = (Pixmap) Tk_WindowId(tkwin);
 
     TkMacOSXComputeMenuButtonDrawParams(butPtr, dpPtr);
-
-    /*
-     * Set up clipping region.  Make sure the we are using the port for this
-     * button, or we will set the wrong window's clip.
-     */
-
-    TkMacOSXSetUpClippingRgn(pixmap);
 
     /*
      * Draw the native portion of the buttons.
@@ -222,7 +217,7 @@ TkpDisplayMenuButton(
 
 void
 TkpDestroyMenuButton(
-    TkMenuButton *mbPtr)
+    TCL_UNUSED(TkMenuButton *))
 {
 }
 
@@ -245,8 +240,8 @@ TkpDestroyMenuButton(
  */
 
 void
-TkpComputeMenuButtonGeometry(butPtr)
-    register TkMenuButton *butPtr;	/* Widget record for menu button. */
+TkpComputeMenuButtonGeometry(
+    TkMenuButton *butPtr)	/* Widget record for menu button. */
 {
     int width, height, avgWidth, haveImage = 0, haveText = 0;
     int txtWidth, txtHeight;
@@ -362,7 +357,7 @@ TkpComputeMenuButtonGeometry(butPtr)
  *
  * DrawMenuButtonImageAndText --
  *
- *        Draws the image and text associated witha button or label.
+ *        Draws the image and text associated with a button or label.
  *
  * Results:
  *        None.
@@ -393,7 +388,7 @@ DrawMenuButtonImageAndText(
     DrawParams *dpPtr = &mbPtr->drawParams;
     pixmap = (Pixmap) Tk_WindowId(tkwin);
 
-    if (butPtr->image != None) {
+    if (butPtr->image != NULL) {
         Tk_SizeOfImage(butPtr->image, &width, &height);
         haveImage = 1;
     } else if (butPtr->bitmap != None) {
@@ -544,8 +539,7 @@ DrawMenuButtonImageAndText(
 static void
 TkMacOSXDrawMenuButton(
     MacMenuButton *mbPtr, /* Mac menubutton. */
-    GC gc,                /* The GC we are drawing into - needed for the bevel
-                           * button */
+    TCL_UNUSED(GC),       /* The GC we are drawing into - not used */
     Pixmap pixmap)        /* The pixmap we are drawing into - needed for the
                            * bevel button */
 {
@@ -566,7 +560,7 @@ TkMacOSXDrawMenuButton(
         static HIThemeButtonDrawInfo hiinfo;
 
         MenuButtonBackgroundDrawCB(mbPtr, 32, true);
-	if (!TkMacOSXSetupDrawingContext(pixmap, dpPtr->gc, 1, &dc)) {
+	if (!TkMacOSXSetupDrawingContext(pixmap, dpPtr->gc, &dc)) {
 	    return;
 	}
 
@@ -597,7 +591,7 @@ TkMacOSXDrawMenuButton(
         MenuButtonContentDrawCB(mbPtr->btnkind, &mbPtr->drawinfo,
 		mbPtr, 32, true);
     } else {
-	if (!TkMacOSXSetupDrawingContext(pixmap, dpPtr->gc, 1, &dc)) {
+	if (!TkMacOSXSetupDrawingContext(pixmap, dpPtr->gc, &dc)) {
 	    return;
 	}
 	TkMacOSXRestoreDrawingContext(&dc);
@@ -625,8 +619,8 @@ TkMacOSXDrawMenuButton(
 static void
 MenuButtonBackgroundDrawCB (
     MacMenuButton *ptr,
-    SInt16 depth,
-    Boolean isColorDev)
+    TCL_UNUSED(SInt16),
+    TCL_UNUSED(Boolean))
 {
     TkMenuButton* butPtr = (TkMenuButton *) ptr;
     Tk_Window tkwin = butPtr->tkwin;
@@ -658,11 +652,11 @@ MenuButtonBackgroundDrawCB (
 
 static void
 MenuButtonContentDrawCB (
-    ThemeButtonKind kind,
-    const HIThemeButtonDrawInfo *drawinfo,
+    TCL_UNUSED(ThemeButtonKind),
+    TCL_UNUSED(const HIThemeButtonDrawInfo *),
     MacMenuButton *ptr,
-    SInt16 depth,
-    Boolean isColorDev)
+    TCL_UNUSED(SInt16),
+    TCL_UNUSED(Boolean))
 {
     TkMenuButton *butPtr = (TkMenuButton *) ptr;
     Tk_Window tkwin = butPtr->tkwin;
@@ -695,8 +689,8 @@ MenuButtonEventProc(
     ClientData clientData,	/* Information about window. */
     XEvent *eventPtr)		/* Information about event. */
 {
-    TkMenuButton *buttonPtr = clientData;
-    MacMenuButton *mbPtr = clientData;
+    TkMenuButton *buttonPtr = (TkMenuButton *)clientData;
+    MacMenuButton *mbPtr = (MacMenuButton *)clientData;
 
     if (eventPtr->type == ActivateNotify
 	    || eventPtr->type == DeactivateNotify) {
@@ -709,7 +703,7 @@ MenuButtonEventProc(
 	    mbPtr->flags &= ~ACTIVE;
 	}
 	if ((buttonPtr->flags & REDRAW_PENDING) == 0) {
-	    Tcl_DoWhenIdle(TkpDisplayMenuButton, (ClientData) buttonPtr);
+	    Tcl_DoWhenIdle(TkpDisplayMenuButton, buttonPtr);
 	    buttonPtr->flags |= REDRAW_PENDING;
 	}
     }

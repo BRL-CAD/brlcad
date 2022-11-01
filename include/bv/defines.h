@@ -195,6 +195,7 @@ struct bv_scene_obj  {
     /* View object name and type id */
     unsigned long long s_type_flags;
     struct bu_vls s_name;       /**< @brief object name (may not be unique, used for activities like path lookup) */
+    void *s_path;       	/**< @brief alternative (app specific) encoding of s_name */
     struct bu_vls s_uuid;       /**< @brief object name (unique, may be less immediately clear to user) */
     mat_t s_mat;		/**< @brief mat to use for internal lookup and mesh LoD drawing */
 
@@ -210,7 +211,7 @@ struct bv_scene_obj  {
      * manage any custom data specific to this object */
     void *s_i_data;  /**< @brief custom view data (bv_line_seg, bv_label, bv_polyon, etc) */
     int (*s_update_callback)(struct bv_scene_obj *, struct bview *, int);  /**< @brief custom update/generator for s_vlist */
-    void (*s_free_callback)(struct bv_scene_obj *);  /**< @brief free any info stored in s_i_data and draw_data */
+    void (*s_free_callback)(struct bv_scene_obj *);  /**< @brief free any info stored in s_i_data, s_path and draw_data */
 
     /* 3D vector list geometry data */
     struct bu_list s_vlist;	/**< @brief  Pointer to unclipped vector list */
@@ -257,7 +258,8 @@ struct bv_scene_obj  {
 
     /* Scene object settings which also (potentially) have global defaults but
      * may be overridden locally */
-    struct bv_obj_settings s_os;
+    struct bv_obj_settings *s_os;
+    struct bv_obj_settings s_local_os;
 
     /* Settings that may be less necessary... */
     struct bv_scene_obj_old_settings s_old;
@@ -366,11 +368,14 @@ struct bv_mesh_lod {
     const int *faces;
 
     // The vertices used by the faces array
+    int pcnt;
     const point_t *points;      // If using snapped points, that's this array.  Else, points == points_orig.
+    int porig_cnt;
     const point_t *points_orig;
 
-    // Optional: per-face-vertex normals
-    const int *face_normals;
+    // Optional: per-face-vertex normals (one normal per triangle vertex - NOT
+    // one normal per vertex.  I.e., a given point from points_orig may have
+    // multiple normals associated with it in different faces.)
     const vect_t *normals;
 
     // Bounding box of the original full-detail data

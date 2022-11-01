@@ -1,20 +1,71 @@
-/*----------------------------------------------------------------------------
+/*=============================================================================
                                   libpamn.c
-------------------------------------------------------------------------------
+===============================================================================
    These are the library functions, which belong in the libnetpbm library,
    that deal with the PAM image format via maxval-normalized, floating point
    sample values.
------------------------------------------------------------------------------*/
+
+   This file was originally written by Bryan Henderson and is contributed
+   to the public domain by him and subsequent authors.
+=============================================================================*/
 
 #include <assert.h>
 
 #include "pm_c_util.h"
 #include "mallocvar.h"
+
+
 #include "pam.h"
 #include "fileio.h"
 #include "pm_gamma.h"
 
 #define EPSILON 1e-7
+
+
+
+static void
+allocpamrown(const struct pam * const pamP,
+             tuplen **          const tuplerownP,
+             const char **      const errorP) {
+/*----------------------------------------------------------------------------
+   We assume that the dimensions of the image are such that arithmetic
+   overflow will not occur in our calculations.  NOTE: pnm_readpaminit()
+   ensures this assumption is valid.
+-----------------------------------------------------------------------------*/
+    int const bytes_per_tuple = pamP->depth * sizeof(samplen);
+
+    tuplen * tuplerown;
+    const char * error = NULL;
+
+    /* The tuple row data structure starts with 'width' pointers to
+       the tuples, immediately followed by the 'width' tuples
+       themselves.  Each tuple consists of 'depth' samples.
+    */
+
+    tuplerown = malloc(pamP->width * (sizeof(tuplen *) + bytes_per_tuple));
+    if (tuplerown == NULL)
+        pm_error("Out of memory allocating space for a tuple row of"
+                    "%u tuples by %u samples per tuple "
+                    "by %u bytes per sample.",
+                    pamP->width, pamP->depth, (unsigned)sizeof(samplen));
+    else {
+        /* Now we initialize the pointers to the individual tuples to make this
+           a regulation C two dimensional array.
+        */
+        
+        unsigned char * p;
+        unsigned int i;
+        
+        p = (unsigned char*) (tuplerown + pamP->width);
+            /* location of Tuple 0 */
+        for (i = 0; i < pamP->width; ++i) {
+            tuplerown[i] = (tuplen) p;
+            p += bytes_per_tuple;
+        }
+        *errorP = NULL;
+        *tuplerownP = tuplerown;
+    }
+}
 
 
 
@@ -25,35 +76,85 @@ pnm_allocpamrown(const struct pam * const pamP) {
    overflow will not occur in our calculations.  NOTE: pnm_readpaminit()
    ensures this assumption is valid.
 -----------------------------------------------------------------------------*/
-    const int bytes_per_tuple = pamP->depth * sizeof(samplen);
-    tuplen * tuplerown;
+    const char * error = NULL;
+    tuplen * tuplerown = NULL;
 
-    /* The tuple row data structure starts with 'width' pointers to
-       the tuples, immediately followed by the 'width' tuples
-       themselves.  Each tuple consists of 'depth' samples.
-    */
+    allocpamrown(pamP, &tuplerown, &error);
 
-    tuplerown = malloc(pamP->width * (sizeof(tuplen *) + bytes_per_tuple));
-    if (tuplerown == NULL)
-        pm_error("Out of memory allocating space for a tuple row of\n"
-                 "%d tuples by %d samples per tuple by %d bytes per sample.",
-                 pamP->width, pamP->depth, sizeof(samplen));
-
-    {
-        /* Now we initialize the pointers to the individual tuples to make this
-           a regulation C two dimensional array.
-        */
-        
-        char *p;
-        int i;
-        
-        p = (char*) (tuplerown + pamP->width);  /* location of Tuple 0 */
-        for (i = 0; i < pamP->width; i++) {
-            tuplerown[i] = (tuplen) p;
-            p += bytes_per_tuple;
-        }
+    if (error) {
+        pm_error("pnm_allocpamrown() failed.  %s", error);
+        free((void *)error);
+        pm_longjmp();
     }
-    return(tuplerown);
+
+    return tuplerown;
+}
+
+
+
+static void
+readpbmrow(const struct pam * const pamP, 
+           tuplen *           const tuplenrow) {
+
+    bit * bitrow;
+    jmp_buf jmpbuf;
+    jmp_buf * origJmpbufP;
+
+    bitrow = pbm_allocrow(pamP->width);
+    
+    if (setjmp(jmpbuf) != 0) {
+        pbm_freerow(bitrow);
+        pm_setjmpbuf(origJmpbufP);
+        pm_longjmp();
+    } else {
+        unsigned int col;
+        pm_setjmpbufsave(&jmpbuf, &origJmpbufP);
+
+        pbm_readpbmrow(pamP->file, bitrow, pamP->width, pamP->format);
+
+        for (col = 0; col < pamP->width; ++col)
+            tuplenrow[col][0] = bitrow[col] == PBM_BLACK ? 0.0 : 1.0;
+
+        pm_setjmpbuf(origJmpbufP);
+    }
+    pbm_freerow(bitrow);
+}
+
+
+
+static void
+readpamrow(const struct pam * const pamP, 
+           tuplen *           const tuplenrow) {
+
+    jmp_buf jmpbuf;
+    jmp_buf * origJmpbufP;
+    tuple * tuplerow;
+    
+    tuplerow = pnm_allocpamrow(pamP);
+    
+    if (setjmp(jmpbuf) != 0) {
+        pnm_freepamrow(tuplerow);
+        pm_setjmpbuf(origJmpbufP);
+        pm_longjmp();
+    } else {
+        float const scaler = 1.0 / pamP->maxval;
+            /* Note: multiplication is faster than division, so we divide
+               once here so we can multiply many times later.
+            */
+
+        unsigned int col;
+
+        pm_setjmpbufsave(&jmpbuf, &origJmpbufP);
+
+        pnm_readpamrow(pamP, tuplerow);
+        for (col = 0; col < pamP->width; ++col) {
+            unsigned int plane;
+            for (plane = 0; plane < pamP->depth; ++plane)
+                tuplenrow[col][plane] = tuplerow[col][plane] * scaler;
+        }
+        pm_setjmpbuf(origJmpbufP);
+    }
+    pnm_freepamrow(tuplerow);
 }
 
 
@@ -73,35 +174,78 @@ pnm_readpamrown(const struct pam * const pamP,
        packed into one byte.
     */
     if (PAM_FORMAT_TYPE(pamP->format) == PBM_TYPE) {
-        int col;
-        bit *bitrow;
         if (pamP->depth != 1)
             pm_error("Invalid pam structure passed to pnm_readpamrow().  "
                      "It says PBM format, but 'depth' member is not 1.");
-        bitrow = pbm_allocrow(pamP->width);
-        pbm_readpbmrow(pamP->file, bitrow, pamP->width, pamP->format);
-        for (col = 0; col < pamP->width; col++)
-            tuplenrow[col][0] = 
-                bitrow[col] == PBM_BLACK ? 0.0 : 1.0;
+
+        readpbmrow(pamP, tuplenrow);
+    } else
+        readpamrow(pamP, tuplenrow);
+}
+
+
+
+static void
+writepbmrow(const struct pam * const pamP, 
+            const tuplen *     const tuplenrow) {
+
+    jmp_buf jmpbuf;
+    jmp_buf * origJmpbufP;
+    bit * bitrow;
+
+    bitrow = pbm_allocrow(pamP->width);
+
+    if (setjmp(jmpbuf) != 0) {
         pbm_freerow(bitrow);
+        pm_setjmpbuf(origJmpbufP);
+        pm_longjmp();
     } else {
-        float const scaler = 1.0 / pamP->maxval;
-            /* Note: multiplication is faster than division, so we divide
-               once here so we can multiply many times later.
-            */
-        int col;
-        tuple * tuplerow;
+        unsigned int col;
 
-        tuplerow = pnm_allocpamrow(pamP);
+        pm_setjmpbufsave(&jmpbuf, &origJmpbufP);
 
-        pnm_readpamrow(pamP, tuplerow);
+        for (col = 0; col < pamP->width; ++col)
+            bitrow[col] = tuplenrow[col][0] < 0.5 ? PBM_BLACK : PBM_WHITE;
+        pbm_writepbmrow(pamP->file, bitrow, pamP->width, 
+                        pamP->format == PBM_FORMAT);
+
+        pm_setjmpbuf(origJmpbufP);
+    }
+    pbm_freerow(bitrow);
+} 
+
+
+
+static void
+writepamrow(const struct pam * const pamP, 
+            const tuplen *     const tuplenrow) {
+
+    jmp_buf jmpbuf;
+    jmp_buf * origJmpbufP;
+    tuple * tuplerow;
+    
+    tuplerow = pnm_allocpamrow(pamP);
+    
+    if (setjmp(jmpbuf) != 0) {
+        pnm_freepamrow(tuplerow);
+        pm_setjmpbuf(origJmpbufP);
+        pm_longjmp();
+    } else {
+        unsigned int col;
+
+        pm_setjmpbufsave(&jmpbuf, &origJmpbufP);
+
         for (col = 0; col < pamP->width; ++col) {
             unsigned int plane;
             for (plane = 0; plane < pamP->depth; ++plane)
-                tuplenrow[col][plane] = tuplerow[col][plane] * scaler;
-        }
-        pnm_freepamrow(tuplerow);
+                tuplerow[col][plane] = (sample)
+                    (tuplenrow[col][plane] * pamP->maxval + 0.5);
+        }    
+        pnm_writepamrow(pamP, tuplerow);
+
+        pm_setjmpbuf(origJmpbufP);
     }
+    pnm_freepamrow(tuplerow);
 }
 
 
@@ -120,31 +264,10 @@ pnm_writepamrown(const struct pam * const pamP,
     /* Need a special case for raw PBM because it has multiple tuples (8)
        packed into one byte.
     */
-    if (PAM_FORMAT_TYPE(pamP->format) == PBM_TYPE) {
-        int col;
-        bit *bitrow;
-        bitrow = pbm_allocrow(pamP->width);
-        for (col = 0; col < pamP->width; col++)
-            bitrow[col] = 
-                tuplenrow[col][0] < 0.5 ? PBM_BLACK : PBM_WHITE;
-        pbm_writepbmrow(pamP->file, bitrow, pamP->width, 
-                        pamP->format == PBM_FORMAT);
-        pbm_freerow(bitrow);
-    } else {
-        tuple * tuplerow;
-        int col;
-
-        tuplerow = pnm_allocpamrow(pamP);
-
-        for (col = 0; col < pamP->width; ++col) {
-            unsigned int plane;
-            for (plane = 0; plane < pamP->depth; ++plane)
-                tuplerow[col][plane] = (sample)
-                    (tuplenrow[col][plane] * pamP->maxval + 0.5);
-        }    
-        pnm_writepamrow(pamP, tuplerow);
-        pnm_freepamrow(tuplerow);
-    }
+    if (PAM_FORMAT_TYPE(pamP->format) == PBM_TYPE)
+        writepbmrow(pamP, tuplenrow);
+    else
+        writepamrow(pamP, tuplenrow);
 }
 
 
@@ -152,8 +275,8 @@ pnm_writepamrown(const struct pam * const pamP,
 tuplen **
 pnm_allocpamarrayn(const struct pam * const pamP) {
     
-    tuplen **tuplenarray;
-    int row;
+    tuplen ** tuplenarray = NULL;
+    const char * error = NULL;
 
     /* If the speed of this is ever an issue, it might be sped up a little
        by allocating one large chunk.
@@ -162,11 +285,31 @@ pnm_allocpamarrayn(const struct pam * const pamP) {
     MALLOCARRAY(tuplenarray, pamP->height);
     if (tuplenarray == NULL) 
         pm_error("Out of memory allocating the row pointer section of "
-                 "a %u row array", pamP->height);
+                    "a %u row array", pamP->height);
+    else {
+        unsigned int rowsDone;
 
-    for (row = 0; row < pamP->height; row++) {
-        tuplenarray[row] = pnm_allocpamrown(pamP);
+        rowsDone = 0;
+        error = NULL;
+
+        while (rowsDone < pamP->height && !error) {
+            allocpamrown(pamP, &tuplenarray[rowsDone], &error);
+            if (!error)
+                ++rowsDone;
+        }
+        if (error) {
+            unsigned int row;
+            for (row = 0; row < rowsDone; ++row)
+                pnm_freepamrown(tuplenarray[rowsDone]);
+            free(tuplenarray);
+        }
     }
+    if (error) {
+        pm_error("pnm_allocpamarrayn() failed.  %s", error);
+        free((void *)error);
+        pm_longjmp();
+    }
+
     return(tuplenarray);
 }
 
@@ -191,16 +334,28 @@ pnm_readpamn(FILE *       const file,
              int          const size) {
 
     tuplen **tuplenarray;
-    int row;
+    jmp_buf jmpbuf;
+    jmp_buf * origJmpbufP;
 
     pnm_readpaminit(file, pamP, size);
     
     tuplenarray = pnm_allocpamarrayn(pamP);
     
-    for (row = 0; row < pamP->height; row++) 
-        pnm_readpamrown(pamP, tuplenarray[row]);
+    if (setjmp(jmpbuf) != 0) {
+        pnm_freepamarrayn(tuplenarray, pamP);
+        pm_setjmpbuf(origJmpbufP);
+        pm_longjmp();
+    } else {
+        unsigned int row;
 
-    return(tuplenarray);
+        pm_setjmpbufsave(&jmpbuf, &origJmpbufP);
+
+        for (row = 0; row < pamP->height; ++row) 
+            pnm_readpamrown(pamP, tuplenarray[row]);
+
+        pm_setjmpbuf(origJmpbufP);
+    }
+    return tuplenarray;
 }
 
 
@@ -209,11 +364,11 @@ void
 pnm_writepamn(struct pam * const pamP, 
               tuplen **    const tuplenarray) {
 
-    int row;
+    unsigned int row;
 
     pnm_writepaminit(pamP);
     
-    for (row = 0; row < pamP->height; row++) 
+    for (row = 0; row < pamP->height; ++row) 
         pnm_writepamrown(pamP, tuplenarray[row]);
 }
 
@@ -343,7 +498,7 @@ gammaCommon(struct pam *  const pamP,
 
     unsigned int plane;
     unsigned int opacityPlane;
-    bool haveOpacity;
+    int haveOpacity;
     
     pnm_getopacity(pamP, &haveOpacity, &opacityPlane);
 
@@ -386,9 +541,14 @@ static void
 applyopacityCommon(enum applyUnapply const applyUnapply,
                    struct pam *      const pamP,
                    tuplen *          const tuplenrow) {
-
+/*----------------------------------------------------------------------------
+   Either apply or unapply opacity to the row tuplenrow[], per
+   'applyUnapply'.  Apply means to multiply each foreground sample by
+   the opacity value for that pixel; Unapply means to do the inverse, as
+   if the foreground values had already been so multiplied.
+-----------------------------------------------------------------------------*/
     unsigned int opacityPlane;
-    bool haveOpacity;
+    int haveOpacity;
     
     pnm_getopacity(pamP, &haveOpacity, &opacityPlane);
 
@@ -473,6 +633,8 @@ createUngammaMapOffset(const struct pam * const pamP,
    can be used in a reverse lookup to convert normalized ungamma'ed
    samplen values to integer sample values.  The 0.5 effectively does
    the rounding.
+
+   This never throws an error.  Return value NULL means failed.
 -----------------------------------------------------------------------------*/
     pnm_transformMap * retval;
     pnm_transformMap ungammaTransformMap;
@@ -483,7 +645,7 @@ createUngammaMapOffset(const struct pam * const pamP,
         MALLOCARRAY(ungammaTransformMap, pamP->maxval+1);
 
         if (ungammaTransformMap != NULL) {
-            bool haveOpacity;
+            int haveOpacity;
             unsigned int opacityPlane;
             unsigned int plane;
 

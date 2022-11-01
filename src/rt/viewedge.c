@@ -482,9 +482,9 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	 * geometry. Need one per cpu, the upper half does the per-
 	 * thread allocation in worker, but that's off limits.
 	 */
-	occlusion_apps = (struct application **)bu_calloc(npsw, sizeof(struct application *),
+	occlusion_apps = (struct application **)bu_calloc((size_t)npsw, sizeof(struct application *),
 							  "occlusion application structure array");
-	for (i=0; i<npsw; ++i) {
+	for (i=0; i<(size_t)npsw; ++i) {
 	    BU_ALLOC(occlusion_apps[i], struct application);
 	    RT_APPLICATION_INIT(occlusion_apps[i]);
 
@@ -631,7 +631,7 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
      * Create a edge flag buffer for each processor.  Create a
      * scanline buffer for each processor.
      */
-    for (i = 0; i < npsw; ++i) {
+    for (i = 0; i < (size_t)npsw; ++i) {
 	if (saved[i] == NULL)
 	    BU_ALLOC(saved[i], struct cell);
 	if (writeable[i] == NULL)

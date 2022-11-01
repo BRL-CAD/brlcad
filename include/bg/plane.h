@@ -1146,11 +1146,11 @@ BG_EXPORT extern int bg_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml);
  * Calculates the best fit plane for a set of points
  *
  * Use SVD algorithm from Soderkvist to fit a plane to vertex points
- * http://www.math.ltu.se/~jove/courses/mam208/svd.pdf
+ * https://www.ltu.se/cms_fs/1.51590!/svd-fitting.pdf
  *
  * Returns a center point and a normal direction for the plane
  */
-BG_EXPORT extern int bg_fit_plane(point_t *c, vect_t *n, int npnts, point_t *pnts);
+BG_EXPORT extern int bg_fit_plane(point_t *c, vect_t *n, size_t npnts, point_t *pnts);
 
 /**
  * @brief

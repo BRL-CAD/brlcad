@@ -10,29 +10,32 @@
 ** implied warranty.
 */
 
+#include <assert.h>
+
+#include "pm_c_util.h"
+
 #include "pbm.h"
-#include "libpbm.h"
-#include "bitreverse.h"
 
-/* HAVE_MMX_SSE means we have the means to use MMX and SSE CPU facilities
-   to make PBM raster processing faster.
-
-   The GNU Compiler -msse option makes SSE available.
-*/
-
-#if defined(__GNUC__) && \
-  (__GNUC__ * 100 + __GNUC_MINOR__ >= 301) && \
-  (__GNUC__ * 100 + __GNUC_MINOR__ < 403) && \
-  defined (__SSE__)
-/* GCC 4.3 does have the facility, but it is different from what this
-   code knows how to use.  In particular, the calls to
-   __builtin_ia32_pcmpeqb() and __builtin_ia32_pmovmskb() fail to
-   compile, with complaints of improper argument types.
-*/
-
-#define HAVE_MMX_SSE 1
+#ifndef PACKBITS_SSE
+#if WANT_SSE && defined(__SSE2__) && HAVE_GCC_BSWAP
+  #define PACKBITS_SSE 2
 #else
-#define HAVE_MMX_SSE 0
+  #define PACKBITS_SSE 0
+#endif
+#endif
+
+/* WANT_SSE means we want to use SSE CPU facilities to make PBM raster
+   processing faster.  This implies it's actually possible - i.e. the
+   build environment has <emmintrin.h>.
+
+   The GNU Compiler -msse2 option makes SSE/SSE2 available, and is
+   evidenced by __SSE2__.
+   For x86-32 with SSE, "-msse2" must be explicitly given.
+   For x86-64 and AMD64, "-msse2" is the default (from Gcc v.4.)
+*/
+
+#if PACKBITS_SSE == 2
+  #include <emmintrin.h>
 #endif
 
 
@@ -44,9 +47,6 @@ pbm_writepbminit(FILE * const fileP,
 
     if (!forceplain && !pm_plain_output) {
         fprintf(fileP, "%c%c\n%d %d\n", PBM_MAGIC1, RPBM_MAGIC2, cols, rows);
-#ifdef VMS
-        set_outfile_binary();
-#endif
     } else
         fprintf(fileP, "%c%c\n%d %d\n", PBM_MAGIC1, PBM_MAGIC2, cols, rows);
 }
@@ -66,81 +66,110 @@ writePackedRawRow(FILE *                const fileP,
 
 
 
+#if PACKBITS_SSE == 2
 static void
-packBitsWithMmxSse(FILE *          const fileP,
+packBitsWithSse2(  FILE *          const fileP,
                    const bit *     const bitrow,
                    unsigned char * const packedBits,
-                   int             const cols,
-                   int *           const nextColP) {
+                   unsigned int    const cols) {
 /*----------------------------------------------------------------------------
-   Pack the bits of bitrow[] into bytes at 'packedBits'.  Going left to right,
-   stop when there aren't enough bits left to fill a whole byte.  Return
-   as *nextColP the number of the next column after the rightmost one we
-   packed.
+    Pack the bits of bitrow[] into bytes at 'packedBits'.
 
-   Use the Pentium MMX and SSE facilities to pack the bits quickly, but
-   perform the exact same function as the simpler packBitsGeneric().
+    Use the SSE2 facilities to pack the bits quickly, but
+    perform the exact same function as the simpler
+    packBitsGeneric() + packPartialBytes()
+
+    Unlike packBitsGeneric(), the whole row is converted.
 -----------------------------------------------------------------------------*/
-#if HAVE_MMX_SSE
     /*
-      We use MMX/SSE facilities that operate on 8 bytes at once to pack
-      the bits quickly.
-    
-      We use 2 MMX registers (no SSE registers).
+      We use 2 SSE registers.
     
       The key machine instructions are:
+        
+      PCMPGTB128  Packed CoMPare Greater Than Byte
     
+        Compares 16 bytes in parallel
+        Result is x00 if greater than, xFF if not for each byte
+
     
-      PCMPEQB  Packed CoMPare EQual Byte
+      PMOVMSKB128 Packed MOVe MaSK Byte 
     
-        Compares 8 bytes in parallel
-        Result is x00 if equal, xFF if unequal for each byte       
-    
-      PMOVMSKB Packed MOVe MaSK Byte 
-    
-        Result is a byte of the MSBs of 8 bytes
-        x00 xFF x00 xFF xFF xFF x00 x00 --> 01011100B = 0x5C     
-    
-    
-      EMMS     Empty MMx State
-    
-        Free MMX registers  
-    
-    
-      Here's a one-statement version of the code in our foor loop.  It's harder 
-      to read, but if we find out this generates more efficient code, we could 
-      use this.
-    
-        packedBits[col/8] 
-          = bitreverse [ ~ (unsigned char) __builtin_ia32_pmovmskb (
-            __builtin_ia32_pcmpeqb ( *(v8qi*) (&bitrow[col]), *(v8qi*) &zero64)
-            ) ];
+        Result is 16 bits, the MSBs of 16 bytes
+        x00 xFF x00 xFF xFF xFF x00 x00 xFF xFF xFF xFF x00 x00 x00 x00 
+        --> 0101110011110000B = 0x5CF0
+        
+        The result is actually a 64 bit int, but the higher bits are
+        always 0.
+
+      We use SSE instructions in "_mm_" form in favor of "__builtin_".
+      In GCC the "__builtin_" form is documented but "_mm_" is not.
+      Former versions of this source file used "__builtin_".  This was
+      changed to make possible compilation with clang, which does not
+      implement some "__builtin_" forms.
+
+      __builtin_ia32_pcmpgtb128 :  _mm_cmpgt_epi8
+      __builtin_ia32_pmovmskb128 : _mm_movemask_epi8
+
+      The conversion requires <emmintrin.h> .
     */
 
-    typedef int v8qi __attribute__ ((vector_size(8)));
-    typedef int di __attribute__ ((mode(DI)));
-
-    di const zero64 = 0;        /* to clear with PXOR */
+    typedef char v16qi __attribute__ ((vector_size(16)));
 
     unsigned int col;
+    union {
+        v16qi    v16;
+        uint64_t i64[2];
+        unsigned char byte[16];
+    } bit128;
 
-    for (col = 0; col + 7 < cols; col += 8) {
-        v8qi const compare =
-            __builtin_ia32_pcmpeqb(*(v8qi*) (&bitrow[col]), *(v8qi*) &zero64);
-        unsigned char const backwardWhiteMask = (unsigned char)
-            __builtin_ia32_pmovmskb(compare);
-        unsigned char const backwardBlackMask = ~backwardWhiteMask;
-        unsigned char const blackMask = bitreverse[backwardBlackMask];
+    v16qi zero128;
+    zero128 = zero128 ^ zero128;   /* clear to zero */
 
-        packedBits[col/8] = blackMask;
+    for (col = 0; col + 15 < cols; col += 16) {
+        bit128.i64[0]=__builtin_bswap64( *(uint64_t*) &bitrow[col]);
+        bit128.i64[1]=__builtin_bswap64( *(uint64_t*) &bitrow[col+8]);
+
+        {
+            v16qi const compare = (v16qi)
+                _mm_cmpgt_epi8((__m128i)bit128.v16, (__m128i) zero128);
+            uint16_t const blackMask = _mm_movemask_epi8 ((__m128i)compare);
+            
+            *(uint16_t *) & packedBits[col/8] = blackMask;
+        }
     }
-    *nextColP = col;
 
-    __builtin_ia32_emms();
+    if (cols % 16 > 0) {
+        unsigned int i, j;
 
+        bit128.v16 = bit128.v16 ^ bit128.v16;
+    
+        for (i = 0, j = col ; j < cols; ++i, ++j) 
+            bit128.byte[ (i&8) + 7-(i&7) ] = bitrow[j];
+      
+        {
+            v16qi const compare = (v16qi)
+                _mm_cmpgt_epi8((__m128i)bit128.v16, (__m128i) zero128);
+            uint16_t const blackMask = _mm_movemask_epi8 ((__m128i)compare);
+
+            if ( cols%16 >8 )  /* Two partial bytes */
+                *(uint16_t *) & packedBits[col/8] = blackMask;
+            else              /* One partial byte */
+                packedBits[col/8] = (unsigned char) blackMask ;
+        }
+    }
+}
 #else
-    if (bitreverse == bitreverse) {}; /* avoid unused vbl compiler warning */
+/* Avoid undefined function warning; never actually called */
+
+#define packBitsWithSse2(a,b,c,d) packBitsGeneric((a),(b),(c),(d),NULL)
 #endif
+
+
+
+static unsigned int
+bitValue(unsigned char const byteValue) {
+
+    return byteValue == 0 ? 0 : 1;
 }
 
 
@@ -149,10 +178,10 @@ static void
 packBitsGeneric(FILE *          const fileP,
                 const bit *     const bitrow,
                 unsigned char * const packedBits,
-                int             const cols,
-                int *           const nextColP) {
+                unsigned int    const cols,
+                unsigned int *  const nextColP) {
 /*----------------------------------------------------------------------------
-   Pack the bits of bitrow[] into byts at 'packedBits'.  Going left to right,
+   Pack the bits of bitrow[] into bytes at 'packedBits'.  Going left to right,
    stop when there aren't enough bits left to fill a whole byte.  Return
    as *nextColP the number of the next column after the rightmost one we
    packed.
@@ -161,20 +190,44 @@ packBitsGeneric(FILE *          const fileP,
 -----------------------------------------------------------------------------*/
     unsigned int col;
 
-    #define iszero(x) ((x) == 0 ? 0 : 1)
-
     for (col = 0; col + 7 < cols; col += 8)
         packedBits[col/8] = (
-            iszero(bitrow[col+0]) << 7 |
-            iszero(bitrow[col+1]) << 6 |
-            iszero(bitrow[col+2]) << 5 |
-            iszero(bitrow[col+3]) << 4 |
-            iszero(bitrow[col+4]) << 3 |
-            iszero(bitrow[col+5]) << 2 |
-            iszero(bitrow[col+6]) << 1 |
-            iszero(bitrow[col+7]) << 0
+            bitValue(bitrow[col+0]) << 7 |
+            bitValue(bitrow[col+1]) << 6 |
+            bitValue(bitrow[col+2]) << 5 |
+            bitValue(bitrow[col+3]) << 4 |
+            bitValue(bitrow[col+4]) << 3 |
+            bitValue(bitrow[col+5]) << 2 |
+            bitValue(bitrow[col+6]) << 1 |
+            bitValue(bitrow[col+7]) << 0
             );
     *nextColP = col;
+}
+
+
+
+static void
+packPartialBytes(const bit *     const bitrow,
+                 unsigned int    const cols,
+                 unsigned int    const nextCol,
+                 unsigned char * const packedBits) {
+              
+    /* routine for partial byte at the end of packedBits[]
+       Prior to addition of the above enhancement,
+       this method was used for the entire process
+    */                   
+    
+    unsigned int col;
+    int bitshift;
+    unsigned char item;
+    
+    bitshift = 7;  /* initial value */
+    item = 0;      /* initial value */
+    for (col = nextCol; col < cols; ++col, --bitshift)
+        if (bitrow[col] != 0)
+            item |= 1 << bitshift;
+    
+    packedBits[col/8] = item;
 }
 
 
@@ -184,46 +237,44 @@ writePbmRowRaw(FILE *      const fileP,
                const bit * const bitrow,
                int         const cols) {
 
-    int nextCol;
+    jmp_buf jmpbuf;
+    jmp_buf * origJmpbufP;
+    unsigned char * packedBits;
 
-    unsigned char * const packedBits = pbm_allocrow_packed(cols);
+    packedBits = pbm_allocrow_packed(cols);
 
-    if (HAVE_MMX_SSE)
-        packBitsWithMmxSse(fileP, bitrow, packedBits, cols, &nextCol);
-    else 
-        packBitsGeneric(fileP, bitrow, packedBits, cols, &nextCol);
+    if (setjmp(jmpbuf) != 0) {
+        pbm_freerow_packed(packedBits);
+        pm_setjmpbuf(origJmpbufP);
+        pm_longjmp();
+    } else {
 
-    /* routine for partial byte at the end of packed_bits[]
-       Prior to addition of the above enhancement,
-       this method was used for the entire process
-     */                   
+        pm_setjmpbufsave(&jmpbuf, &origJmpbufP);
 
-    if (cols % 8 > 0) {
-        int col;
-        int bitshift;
-        unsigned char item;
+        switch (PACKBITS_SSE) {
+        case 2: 
+            packBitsWithSse2(fileP, bitrow, packedBits, cols);
+            break;
+        default: {
+            unsigned int nextCol;
+            packBitsGeneric(fileP, bitrow, packedBits, cols, &nextCol);
+            if (cols % 8 > 0)
+                packPartialBytes(bitrow, cols, nextCol, packedBits);
+        }
+        }
+        writePackedRawRow(fileP, packedBits, cols);
 
-        bitshift = 7;  /* initial value */
-        item = 0;      /* initial value */
-        for (col = nextCol; col < cols; ++col, --bitshift )
-            if (bitrow[col] !=0)
-                item |= 1 << bitshift
-                ;
-        
-        packedBits[col/8] = item;
+        pm_setjmpbuf(origJmpbufP);
     }
-    
-    writePackedRawRow(fileP, packedBits, cols);
-    
     pbm_freerow_packed(packedBits);
 }
 
 
 
 static void
-writePbmRowPlain(FILE * const fileP,
-                 bit *  const bitrow, 
-                 int    const cols) {
+writePbmRowPlain(FILE *      const fileP,
+                 const bit * const bitrow, 
+                 int         const cols) {
     
     int col, charcount;
 
@@ -242,10 +293,10 @@ writePbmRowPlain(FILE * const fileP,
 
 
 void
-pbm_writepbmrow(FILE * const fileP, 
-                bit *  const bitrow, 
-                int    const cols, 
-                int    const forceplain) {
+pbm_writepbmrow(FILE *       const fileP, 
+                const bit *  const bitrow, 
+                int          const cols, 
+                int          const forceplain) {
 
     if (!forceplain && !pm_plain_output)
         writePbmRowRaw(fileP, bitrow, cols);
@@ -257,24 +308,115 @@ pbm_writepbmrow(FILE * const fileP,
 
 void
 pbm_writepbmrow_packed(FILE *                const fileP, 
-                       const unsigned char * const packed_bits,
+                       const unsigned char * const packedBits,
                        int                   const cols, 
                        int                   const forceplain) {
 
     if (!forceplain && !pm_plain_output)
-        writePackedRawRow(fileP, packed_bits, cols);
+        writePackedRawRow(fileP, packedBits, cols);
     else {
-        bit *bitrow;
-        int col;
+        jmp_buf jmpbuf;
+        jmp_buf * origJmpbufP;
+        bit * bitrow;
 
         bitrow = pbm_allocrow(cols);
 
-        for (col = 0; col < cols; ++col) 
-            bitrow[col] = 
-                packed_bits[col/8] & (0x80 >> (col%8)) ? PBM_BLACK : PBM_WHITE;
-        writePbmRowPlain(fileP, bitrow, cols);
+        if (setjmp(jmpbuf) != 0) {
+            pbm_freerow(bitrow);
+            pm_setjmpbuf(origJmpbufP);
+            pm_longjmp();
+        } else {
+            unsigned int col;
+            
+            pm_setjmpbufsave(&jmpbuf, &origJmpbufP);
+
+            for (col = 0; col < cols; ++col) 
+                bitrow[col] = 
+                    packedBits[col/8] & (0x80 >> (col%8)) ?
+                    PBM_BLACK : PBM_WHITE;
+
+            writePbmRowPlain(fileP, bitrow, cols);
+
+            pm_setjmpbuf(origJmpbufP);
+        }
         pbm_freerow(bitrow);
     }
+}
+
+
+
+static unsigned char
+leftBits(unsigned char const x,
+         unsigned int  const n) {
+/*----------------------------------------------------------------------------
+   Clear rightmost (8-n) bits, retain leftmost (=high) n bits.
+-----------------------------------------------------------------------------*/
+    unsigned char buffer;
+
+    assert(n < 8);
+
+    buffer = x;
+
+    buffer >>= (8-n);
+    buffer <<= (8-n);
+
+    return buffer;
+}
+
+
+
+void
+pbm_writepbmrow_bitoffset(FILE *          const fileP,
+                          unsigned char * const packedBits,
+                          unsigned int    const cols,
+                          int             const format,
+                          unsigned int    const offset) {
+/*----------------------------------------------------------------------------
+   Write PBM row from a packed bit buffer 'packedBits, starting at the
+   specified offset 'offset' in the buffer.
+
+   We destroy the buffer.
+-----------------------------------------------------------------------------*/
+    unsigned int const rsh = offset % 8;
+    unsigned int const lsh = (8 - rsh) % 8;
+    unsigned int const csh = cols % 8;
+    unsigned char * const window = &packedBits[offset/8];
+        /* Area of packed row buffer from which we take the image data.
+           Aligned to nearest byte boundary to the left, so the first
+           few bits might be irrelvant.
+
+           Also our work buffer, in which we shift bits and from which we
+           ultimately write the bits to the file.
+        */
+    unsigned int const colByteCnt = pbm_packed_bytes(cols);
+    unsigned int const last = colByteCnt - 1;
+        /* Position within window of rightmost byte after shift */
+
+    bool const carryover = (csh == 0 || rsh + csh > 8);
+        /* TRUE:  Input comes from colByteCnt bytes and one extra byte.
+           FALSE: Input comes from colByteCnt bytes.  For example:
+           TRUE:  xxxxxxii iiiiiiii iiiiiiii iiixxxxx  cols=21, offset=6 
+           FALSE: xiiiiiii iiiiiiii iiiiiixx ________  cols=21, offset=1
+
+           We treat these differently for in the FALSE case the byte after
+           last (indicated by ________) may not exist.
+        */
+       
+    if (rsh > 0) {
+        unsigned int const shiftBytes =  carryover ? colByteCnt : colByteCnt-1;
+
+        unsigned int i;
+        for (i = 0; i < shiftBytes; ++i)
+            window[i] = window[i] << rsh | window[i+1] >> lsh;
+
+        if (!carryover)
+            window[last] = window[last] << rsh;
+    }
+      
+    if (csh > 0)
+        window[last] = leftBits(window[last], csh);
+          
+    pbm_writepbmrow_packed(fileP, window, cols, 0);
 }
 
 

@@ -60,7 +60,7 @@ enum diff {
 };
 
 
-HIDDEN void
+static void
 usage(const char *name)
 {
     const char *unknown = "pixcmp";
@@ -95,7 +95,7 @@ usage(const char *name)
 }
 
 
-HIDDEN void
+static void
 handle_range_opt(const char *arg, size_t *skip1, size_t *skip2)
 {
     const char *endptr = arg;
@@ -141,7 +141,7 @@ handle_range_opt(const char *arg, size_t *skip1, size_t *skip2)
 }
 
 
-HIDDEN enum diff
+static enum diff
 compare_rgb(int r1, int g1, int b1, int r2, int g2, int b2, size_t *matching, size_t *off1, size_t *offmany, size_t *missing)
 {
     enum diff result = MISSING;
@@ -372,7 +372,7 @@ main(int argc, char *argv[])
 	    for (skipped = 0; skipped < f1_skip; skipped++) {
 		(void)fgetc(f1);
 	    }
-	} else if (fseek(f1, f1_skip, SEEK_SET)) {
+	} else if (fseek(f1, (long)f1_skip, SEEK_SET)) {
 	    bu_log("ERROR: Unable to seek %zd %s%s in FILE1\n",
 		   f1_skip,
 		   print_bytes?"byte":"pixel",
@@ -389,7 +389,7 @@ main(int argc, char *argv[])
 	    for (skipped = 0; skipped < f2_skip; skipped++) {
 		(void)fgetc(f2);
 	    }
-	} else if (fseek(f2, f2_skip, SEEK_SET)) {
+	} else if (fseek(f2, (long)f2_skip, SEEK_SET)) {
 	    bu_log("ERROR: Unable to seek %zd %s%s in FILE2\n",
 		   f2_skip,
 		   print_bytes?"byte":"pixel",

@@ -3,7 +3,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tcl_GetCwd 3 8.1 Tcl "Tcl Library Procedures"
 .so man.macros
 .BS
@@ -17,7 +17,7 @@ char *
 \fBTcl_GetCwd\fR(\fIinterp\fR, \fIbufferPtr\fR)
 .sp
 int
-\fBTcl_Chdir\fR(\fIpath\fR)
+\fBTcl_Chdir\fR(\fIdirName\fR)
 .SH ARGUMENTS
 .AS Tcl_DString *bufferPtr in/out
 .AP Tcl_Interp *interp in
@@ -27,7 +27,7 @@ This dynamic string is used to store the current working directory.
 At the time of the call it should be uninitialized or free.  The
 caller must eventually call \fBTcl_DStringFree\fR to free up
 anything stored here.
-.AP char *path in
+.AP "const char" *dirName in
 File path in UTF\-8 format.
 .BE
 
@@ -45,7 +45,7 @@ must call \fBTcl_DStringFree()\fR when the result is no longer needed.
 The format of the path is UTF\-8.
 .PP
 \fBTcl_Chdir\fR changes the applications current working directory to
-the value specified in \fIpath\fR.  The format of the passed in string
+the value specified in \fIdirName\fR.  The format of the passed in string
 must be UTF\-8.  The function returns -1 on error or 0 on success.
 
 .SH KEYWORDS

@@ -110,7 +110,7 @@ TclOOInitInfo(
     TclMakeEnsemble(interp, "::oo::InfoClass", infoClassCmds);
 
     /*
-     * Install into the master [info] ensemble.
+     * Install into the [info] ensemble.
      */
 
     infoCmd = Tcl_FindCommand(interp, "info", NULL, TCL_GLOBAL_ONLY);

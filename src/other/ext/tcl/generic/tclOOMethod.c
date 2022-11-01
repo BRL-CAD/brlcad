@@ -149,8 +149,8 @@ Tcl_NewInstanceMethod(
     ClientData clientData)	/* Some data associated with the particular
 				 * method to be created. */
 {
-    register Object *oPtr = (Object *) object;
-    register Method *mPtr;
+    Object *oPtr = (Object *) object;
+    Method *mPtr;
     Tcl_HashEntry *hPtr;
     int isNew;
 
@@ -217,8 +217,8 @@ Tcl_NewMethod(
     ClientData clientData)	/* Some data associated with the particular
 				 * method to be created. */
 {
-    register Class *clsPtr = (Class *) cls;
-    register Method *mPtr;
+    Class *clsPtr = (Class *) cls;
+    Method *mPtr;
     Tcl_HashEntry *hPtr;
     int isNew;
 
@@ -336,7 +336,7 @@ TclOONewProcInstanceMethod(
 				 * interested. */
 {
     int argsLen;
-    register ProcedureMethod *pmPtr;
+    ProcedureMethod *pmPtr;
     Tcl_Method method;
 
     if (Tcl_ListObjLength(interp, argsObj, &argsLen) != TCL_OK) {
@@ -388,7 +388,7 @@ TclOONewProcMethod(
 				 * interested. */
 {
     int argsLen;		/* -1 => delete argsObj before exit */
-    register ProcedureMethod *pmPtr;
+    ProcedureMethod *pmPtr;
     const char *procName;
     Tcl_Method method;
 
@@ -790,7 +790,7 @@ PushMethodCallFrame(
 				 * frame. */
 {
     Namespace *nsPtr = (Namespace *) contextPtr->oPtr->namespacePtr;
-    register int result;
+    int result;
     const char *namePtr;
     CallFrame **framePtrPtr = &fdPtr->framePtr;
 
@@ -822,7 +822,7 @@ PushMethodCallFrame(
      */
 
     if (pmPtr->flags & USE_DECLARER_NS) {
-	register Method *mPtr =
+	Method *mPtr =
 		contextPtr->callPtr->chain[contextPtr->index].mPtr;
 
 	if (mPtr->declaringClassPtr != NULL) {
@@ -895,7 +895,7 @@ PushMethodCallFrame(
 	fdPtr->efi.fields[1].proc = pmPtr->gfivProc;
 	fdPtr->efi.fields[1].clientData = pmPtr;
     } else {
-	register Tcl_Method method =
+	Tcl_Method method =
 		Tcl_ObjectContextMethod((Tcl_ObjectContext) contextPtr);
 
 	if (Tcl_MethodDeclarerObject(method) != NULL) {
@@ -1271,7 +1271,7 @@ static void
 DeleteProcedureMethod(
     ClientData clientData)
 {
-    register ProcedureMethod *pmPtr = clientData;
+    ProcedureMethod *pmPtr = clientData;
 
     if (pmPtr->refCount-- <= 1) {
 	DeleteProcedureMethodRecord(pmPtr);
@@ -1364,7 +1364,7 @@ TclOONewForwardInstanceMethod(
 				 * prefix to forward to. */
 {
     int prefixLen;
-    register ForwardMethod *fmPtr;
+    ForwardMethod *fmPtr;
 
     if (Tcl_ListObjLength(interp, prefixObj, &prefixLen) != TCL_OK) {
 	return NULL;
@@ -1403,7 +1403,7 @@ TclOONewForwardMethod(
 				 * prefix to forward to. */
 {
     int prefixLen;
-    register ForwardMethod *fmPtr;
+    ForwardMethod *fmPtr;
 
     if (Tcl_ListObjLength(interp, prefixObj, &prefixLen) != TCL_OK) {
 	return NULL;

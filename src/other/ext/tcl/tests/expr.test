@@ -10,8 +10,8 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2.1
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -19,7 +19,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 catch [list package require -exact Tcltest [info patchlevel]]
 
 testConstraint testmathfunctions [expr {
-    ([catch {expr T1()} msg] != 1) || ($msg ne {invalid command name "tcl::mathfunc::T1"})
+    ([catch {expr {T1()}} msg] != 1) || ($msg ne {invalid command name "tcl::mathfunc::T1"})
 }]
 
 # Determine if "long int" type is a 32 bit number and if the wide
@@ -138,7 +138,7 @@ proc do_twelve_days {} {
     unset xxx
     return $result
 }
-
+
 # start of tests
 
 catch {unset a b i x}
@@ -673,13 +673,13 @@ test expr-15.3 {CompileMathFuncCall: too many arguments} -body {
 test expr-15.4 {CompileMathFuncCall: ')' found before last required arg} -body {
     catch {expr sin()} msg
     set ::errorInfo
-} -match glob -result {too few arguments for math function*
+} -match glob -result {not enough arguments for math function*
     while *ing
 "expr sin()"}
-test expr-15.5 {CompileMathFuncCall: too few arguments} -body {
+test expr-15.5 {CompileMathFuncCall: not enough arguments} -body {
     catch {expr pow(1)} msg
     set ::errorInfo
-} -match glob -result {too few arguments for math function*
+} -match glob -result {not enough arguments for math function*
     while *ing
 "expr pow(1)"}
 test expr-15.6 {CompileMathFuncCall: missing ')'} -body {
@@ -1438,7 +1438,7 @@ test expr-23.74.3 {INST_EXPON: Bug 2798543} {
     expr {(-14)**17 == (-14)**65553}
 } 0
 
-	
+
 # Some compilers get this wrong; ensure that we work around it correctly
 test expr-24.1 {expr edge cases; shifting} {expr int(5)>>32} 0
 test expr-24.2 {expr edge cases; shifting} {expr int(5)>>63} 0
@@ -5786,7 +5786,7 @@ test expr-32.1 {expr mod basics} {
     0 1 0 3 3 \
     0 -1 0 -1 -2 \
     ]
-        
+
 test expr-32.2 {expr div basics} {
     set mod_nums [list \
         {-3 1} {-3 2} {-3 3} {-3 4} {-3 5} \
@@ -6722,6 +6722,12 @@ test expr-38.12 {abs and -0x0 [Bug 2954959]} {
 test expr-38.13 {abs and 0.0 [Bug 2954959]} {
     ::tcl::mathfunc::abs 1e-324
 } 1e-324
+test expr-38.14 {abs and INT64_MIN special-case} {
+    ::tcl::mathfunc::abs -9223372036854775808
+} 9223372036854775808
+test expr-38.15 {abs and INT128_MIN special-case} {
+    ::tcl::mathfunc::abs -170141183460469231731687303715884105728
+} 170141183460469231731687303715884105728
 
 testConstraint testexprlongobj   [llength [info commands testexprlongobj]]
 testConstraint testexprdoubleobj [llength [info commands testexprdoubleobj]]
@@ -6794,7 +6800,7 @@ test expr-39.16 {Tcl_ExprLongObj handles overflows} \
 	list [catch {testexprlongobj 4294967296.} result] $result
     } \
     -result {1 {integer value too large to represent*}}
-    
+
 test expr-39.17 {Check that Tcl_ExprDoubleObj doesn't modify interpreter result if no error} testexprdoubleobj {
     testexprdoubleobj 4.+1.
 } {This is a result: 5.0}
@@ -6844,6 +6850,72 @@ test expr-41.1 {exponent overflow} {
 test expr-41.2 {exponent underflow} {
     expr 1.0e-2147483630
 } 0.0
+
+test expr-41.3 {exponent overflow} {
+    expr 1e2147483647
+} Inf
+test expr-41.4 {exponent overflow} {
+    expr 1e2147483648
+} Inf
+test expr-41.5 {exponent overflow} {
+    expr 100e2147483645
+} Inf
+test expr-41.6 {exponent overflow} {
+    expr 100e2147483646
+} Inf
+test expr-41.7 {exponent overflow} {
+    expr 1.0e2147483647
+} Inf
+test expr-41.8 {exponent overflow} {
+    expr 1.0e2147483648
+} Inf
+test expr-41.9 {exponent overflow} {
+    expr 1.2e2147483647
+} Inf
+test expr-41.10 {exponent overflow} {
+    expr 1.2e2147483648
+} Inf
+
+test expr-41.11 {exponent overflow} {
+    expr 1e-2147483648
+} 0.0
+test expr-41.12 {exponent overflow} {
+    expr 1e-2147483649
+} 0.0
+test expr-41.13 {exponent overflow} {
+    expr 100e-2147483650
+} 0.0
+test expr-41.14 {exponent overflow} {
+    expr 100e-2147483651
+} 0.0
+test expr-41.15 {exponent overflow} {
+    expr 1.0e-2147483648
+} 0.0
+test expr-41.16 {exponent overflow} {
+    expr 1.0e-2147483649
+} 0.0
+test expr-41.17 {exponent overflow} {
+    expr 1.23e-2147483646
+} 0.0
+test expr-41.18 {exponent overflow} {
+    expr 1.23e-2147483647
+} 0.0
+
+test expr-41.19 {numSigDigs == 0} {
+    expr 0e309
+} 0.0
+test expr-41.20 {numSigDigs == 0} {
+    expr 0e310
+} 0.0
+test expr-41.21 {negative zero, large exponent} {
+    expr -0e309
+} -0.0
+test expr-41.22 {negative zero, large exponent} {
+    expr -0e310
+} -0.0
+test expr-41.23 {floating point overflow on significand (Bug 1de6b0629e)} {
+    expr 123[string repeat 0 309]1e-310
+} 123.0
 
 test expr-42.1 {denormals} ieeeFloatingPoint {
     expr 7e-324
@@ -7203,7 +7275,7 @@ test expr-52.1 {
 	list [expr {$a eq {}}] [expr {$a < {}}] [expr {$a > {}}] [
 		string match {*no string representation*} [
 		::tcl::unsupported::representation $a]]
-} {0 0 1 1} 
+} {0 0 1 1}
 
 
 

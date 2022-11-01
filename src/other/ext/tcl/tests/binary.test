@@ -10,10 +10,13 @@
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
+::tcltest::loadTestedCommands
+catch {package require -exact Tcltest [info patchlevel]}
+
 testConstraint bigEndian [expr {$tcl_platform(byteOrder) eq "bigEndian"}]
 testConstraint littleEndian [expr {$tcl_platform(byteOrder) eq "littleEndian"}]
 
@@ -2624,6 +2627,9 @@ test binary-72.27 {binary encode base64} -body {
 test binary-72.28 {binary encode base64} -body {
     binary encode base64 -maxlen 6 -wrapchar 0123456789 abcabcabc
 } -result {YWJjYW0123456789JjYWJj}
+test binary-72.29 {binary encode base64} {
+    string length [binary encode base64 -maxlen 3 -wrapchar \xca abc]
+} 5
 
 test binary-73.1 {binary decode base64} -body {
     binary decode base64
@@ -2637,19 +2643,19 @@ test binary-73.3 {binary decode base64} -body {
 test binary-73.4 {binary decode base64} -body {
     binary decode base64 [string repeat YWJj 20]
 } -result [string repeat abc 20]
-test binary-73.5 {binary encode base64} -body {
+test binary-73.5 {binary decode base64} -body {
     binary decode base64 AAECAwQAAQID
 } -result "\0\1\2\3\4\0\1\2\3"
-test binary-73.6 {binary encode base64} -body {
+test binary-73.6 {binary decode base64} -body {
     binary decode base64 AA==
 } -result "\0"
-test binary-73.7 {binary encode base64} -body {
+test binary-73.7 {binary decode base64} -body {
     binary decode base64 AAA=
 } -result "\0\0"
-test binary-73.8 {binary encode base64} -body {
+test binary-73.8 {binary decode base64} -body {
     binary decode base64 AAAA
 } -result "\0\0\0"
-test binary-73.9 {binary encode base64} -body {
+test binary-73.9 {binary decode base64} -body {
     binary decode base64 AAAAAA==
 } -result "\0\0\0\0"
 test binary-73.10 {binary decode base64} -body {
@@ -2709,7 +2715,7 @@ test binary-73.30 {binary decode base64} -body {
     list [string length [set r [binary decode base64 -strict WFla\n]]] $r
 } -returnCodes error -match glob -result {invalid base64 character *}
 test binary-73.31 {binary decode base64} -body {
-    list [string length [set r [binary decode base64 WA==WFla]]] $r
+    list [string length [set r [binary decode base64 -strict WA==WFla]]] $r
 } -returnCodes error -match glob -result {invalid base64 character *}
 test binary-73.32 {binary decode base64, bug [00d04c4f12]} -body {
     list \
@@ -2751,6 +2757,9 @@ test binary-73.36 {binary decode base64: check encoded & decoded equals original
     }
     join $r \n
 } -result {}
+test binary-73.37 {binary decode base64: Bug ffeb2097af} {
+    binary decode base64 [binary encode base64 -maxlen 3 -wrapchar : abc]
+} abc
 
 test binary-74.1 {binary encode uuencode} -body {
     binary encode uuencode
@@ -2788,11 +2797,17 @@ test binary-74.10 {binary encode uuencode} -returnCodes error -body {
     binary encode uuencode -foo 30 abcabcabc
 } -result {bad option "-foo": must be -maxlen or -wrapchar}
 test binary-74.11 {binary encode uuencode} -returnCodes error -body {
-    binary encode uuencode -maxlen 1 abcabcabc
+    binary encode uuencode -maxlen 4 abcabcabc
 } -result {line length out of range}
 test binary-74.12 {binary encode uuencode} -body {
-    binary encode uuencode -maxlen 3 -wrapchar | abcabcabc
-} -result {!80|!8@|!8P|!80|!8@|!8P|!80|!8@|!8P|}
+    binary encode uuencode -maxlen 5 -wrapchar \t abcabcabc
+} -result #86)C\t#86)C\t#86)C\t
+test binary-74.13 {binary encode uuencode} -body {
+    binary encode uuencode -maxlen 85 -wrapchar \t abcabcabc
+} -result )86)C86)C86)C\t
+test binary-74.14 {binary encode uuencode} -returnCodes error -body {
+    binary encode uuencode -maxlen 86 abcabcabc
+} -result {line length out of range}
 
 test binary-75.1 {binary decode uuencode} -body {
     binary decode uuencode
@@ -2889,6 +2904,17 @@ test binary-76.2 {binary string appending growth algorithm} win {
     # Append to it
     string length [append str [binary format a* foo]]
 } 3
+
+testConstraint testsetbytearraylength \
+		[expr {"testsetbytearraylength" in [info commands]}]
+
+test binary-79.1 {Tcl_SetByteArrayLength} testsetbytearraylength {
+    testsetbytearraylength [string cat A B C] 1
+} A
+test binary-79.2 {Tcl_SetByteArrayLength} testsetbytearraylength {
+    testsetbytearraylength [string cat \u0141 B C] 1
+} A
+
 
 # ----------------------------------------------------------------------
 # cleanup

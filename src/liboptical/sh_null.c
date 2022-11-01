@@ -36,10 +36,10 @@
 #include "optical.h"
 
 
-HIDDEN int sh_null_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int sh_null_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void sh_null_print(register struct region *rp, void *dp);
-HIDDEN void sh_null_free(void *cp);
+static int sh_null_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int sh_null_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void sh_null_print(register struct region *rp, void *dp);
+static void sh_null_free(void *cp);
 
 /* The "mfuncs" table describes what the user interface may call this shader.
  * The null shader may be referred to as null or invisible.  Note that the
@@ -64,7 +64,7 @@ struct mfuncs null_mfuncs[] = {
  * need to keep any region info.  This means that sh_null_render will not even
  * get called.
  */
-HIDDEN int
+static int
 sh_null_setup(register struct region *UNUSED(rp), struct bu_vls *UNUSED(matparm), void **UNUSED(dpp), const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     /* no point to check the arguments since we do nothing with them.  we leave the error
@@ -87,7 +87,7 @@ sh_null_setup(register struct region *UNUSED(rp), struct bu_vls *UNUSED(matparm)
  * an empty black void would be rendered.  this is not really important
  * though, since it shouldn't normally be called.
  */
-HIDDEN int
+static int
 sh_null_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *UNUSED(dp))
 {
     /* check the validity of the arguments we got */
@@ -113,7 +113,7 @@ sh_null_render(struct application *ap, const struct partition *pp, struct shadew
 /*
  * This routine is called if setup fails (which it never should).
  */
-HIDDEN void
+static void
 sh_null_print(register struct region *rp, void *UNUSED(dp))
 {
     bu_log("%s uses the null shader\n", rp->reg_name);
@@ -127,7 +127,7 @@ sh_null_print(register struct region *rp, void *UNUSED(dp))
  *
  * The null shader allocates nothing.  Therefore it releases nothing.
  */
-HIDDEN void
+static void
 sh_null_free(void *UNUSED(cp))
 {
 }

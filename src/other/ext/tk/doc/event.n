@@ -343,6 +343,15 @@ This is sent to all widgets when the ttk theme changed. The ttk
 widgets listen to this event and redisplay themselves when it fires.
 The legacy widgets ignore this event.
 .TP
+\fB<<TkWorldChanged>>\fR
+.
+This event is sent to all widgets when a font is changed, for example,
+by the use of [font configure].  The user_data field (%d) will have the
+value "FontChanged".  For other system wide changes, this event will
+be sent to all widgets, and the user_data field will indicate the
+cause of the change.  NOTE: all tk and ttk widgets already handle this
+event internally.
+.TP
 \fB<<TraverseIn>>\fR
 This is sent to a widget when the focus enters the widget because of a
 user-driven

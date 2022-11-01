@@ -6,7 +6,7 @@
 # Copyright (c) 2004 Neil McKay.
 # All rights reserved.
 
-package require tcltest 2.1
+package require tcltest 2.2
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
 
@@ -33,7 +33,7 @@ test canvMoveto-1.5 {Bad args handling for "moveto" command} -body {
 test canvMoveto-2.1 {Canvas "moveto" command coordinates} {
     .c moveto test 200 150
     .c bbox test
-} {200 150 272 232} 
+} {200 150 272 232}
 test canvMoveto-2.2 {Canvas "moveto" command, blank y coordinate} {
     .c moveto test 200 150
     .c moveto test 150 {}

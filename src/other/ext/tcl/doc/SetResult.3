@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
-.TH Tcl_SetResult 3 8.0 Tcl "Tcl Library Procedures"
+.TH Tcl_SetResult 3 8.6 Tcl "Tcl Library Procedures"
 .so man.macros
 .BS
 .SH NAME
@@ -31,7 +31,7 @@ const char *
 \fBTcl_ResetResult\fR(\fIinterp\fR)
 .sp
 .VS 8.6
-\fBTcl_TransferResult\fR(\fIsourceInterp, result, targetInterp\fR)
+\fBTcl_TransferResult\fR(\fIsourceInterp, code, targetInterp\fR)
 .VE 8.6
 .sp
 \fBTcl_AppendElement\fR(\fIinterp, element\fR)
@@ -58,16 +58,15 @@ An argument list which must have been initialized using
 \fBva_start\fR, and cleared using \fBva_end\fR.
 .AP Tcl_Interp *sourceInterp in
 .VS 8.6
-Interpreter that the result and error information should be copied from.
+Interpreter that the result and return options should be transferred from.
 .VE 8.6
 .AP Tcl_Interp *targetInterp in
 .VS 8.6
-Interpreter that the result and error information should be copied to.
+Interpreter that the result and return options should be transferred to.
 .VE 8.6
-.AP int result in
+.AP int code in
 .VS 8.6
-If \fBTCL_OK\fR, only copy the result. If \fBTCL_ERROR\fR, copy the error
-information as well.
+Return code value that controls transfer of return options.
 .VE 8.6
 .BE
 .SH DESCRIPTION
@@ -156,10 +155,14 @@ call; the last argument in the list must be a NULL pointer.
 instead of taking a variable number of arguments it takes an argument list.
 .PP
 .VS 8.6
-\fBTcl_TransferResult\fR moves a result from one interpreter to another,
-optionally (dependent on the \fIresult\fR parameter) including the error
-information dictionary as well. The interpreters must be in the same thread.
-The source interpreter will have its result reset by this operation.
+\fBTcl_TransferResult\fR transfers interpreter state from \fIsourceInterp\fR
+to \fItargetInterp\fR. The two interpreters must have been created in the
+same thread.  If \fIsourceInterp\fR and \fItargetInterp\fR are the same,
+nothing is done. Otherwise, \fBTcl_TransferResult\fR moves the result
+from \fIsourceInterp\fR to \fItargetInterp\fR, and resets the result
+in \fIsourceInterp\fR. It also moves the return options dictionary as
+controlled by the return code value \fIcode\fR in the same manner
+as \fBTcl_GetReturnOptions\fR.
 .VE 8.6
 .SH "DEPRECATED INTERFACES"
 .SS "OLD STRING PROCEDURES"
@@ -250,6 +253,7 @@ typedef void \fBTcl_FreeProc\fR(
 When \fIfreeProc\fR is called, its \fIblockPtr\fR will be set to
 the value of \fIresult\fR passed to \fBTcl_SetResult\fR.
 .SH "SEE ALSO"
-Tcl_AddErrorInfo, Tcl_CreateObjCommand, Tcl_SetErrorCode, Tcl_Interp
+Tcl_AddErrorInfo, Tcl_CreateObjCommand, Tcl_SetErrorCode, Tcl_Interp,
+Tcl_GetReturnOptions
 .SH KEYWORDS
 append, command, element, list, value, result, return value, interpreter

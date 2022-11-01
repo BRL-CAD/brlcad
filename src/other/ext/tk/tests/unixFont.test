@@ -12,9 +12,13 @@
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
 
-package require tcltest 2.1
+package require tcltest 2.2
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
+
+testConstraint failsOnUbuntu [expr {![info exists ::env(CI)] || ![string match Linux $::tcl_platform(os)]}]
+testConstraint failsOnUbuntuNoXft [expr {[testConstraint failsOnUbuntu] || (![catch {tk::pkgconfig get fontsystem} fs] && ($fs eq "xft"))}]
+testConstraint failsOnXQuarz [expr {$tcl_platform(os) ne "Darwin" || [tk windowingsystem] ne "x11" }]
 
 if {[tk windowingsystem] eq "x11"} {
     set xlsf [auto_execok xlsfonts]
@@ -69,7 +73,7 @@ proc getsize {} {
 test unixfont-1.1 {TkpGetNativeFont procedure: not native} {x11 noExceed} {
     list [catch {font measure {} xyz} msg] $msg
 } {1 {font "" doesn't exist}}
-test unixfont-1.2 {TkpGetNativeFont procedure: native} x11 {
+test unixfont-1.2 {TkpGetNativeFont procedure: native} {x11 failsOnUbuntu} {
     font measure fixed 0
 } {6}
 
@@ -78,21 +82,21 @@ test unixfont-2.1 {TkpGetFontFromAttributes procedure: no family} x11 {
     set x {}
 } {}
 test unixfont-2.2 {TkpGetFontFromAttributes procedure: Times relatives} \
-	{x11 noExceed hasTimesNew} {
+	{x11 noExceed hasTimesNew failsOnUbuntu} {
     set x {}
     lappend x [lindex [font actual {-family "Times New Roman"}] 1]
     lappend x [lindex [font actual {-family "New York"}] 1]
     lappend x [lindex [font actual {-family "Times"}] 1]
 } {times times times}
 test unixfont-2.3 {TkpGetFontFromAttributes procedure: Courier relatives} \
-	{x11 noExceed hasCourierNew} {
+	{x11 noExceed hasCourierNew failsOnUbuntu} {
     set x {}
     lappend x [lindex [font actual {-family "Courier New"}] 1]
     lappend x [lindex [font actual {-family "Monaco"}] 1]
     lappend x [lindex [font actual {-family "Courier"}] 1]
 } {courier courier courier}
 test unixfont-2.4 {TkpGetFontFromAttributes procedure: Helvetica relatives} \
-	{x11 noExceed hasArial} {
+	{x11 noExceed hasArial failsOnUbuntu} {
     set x {}
     lappend x [lindex [font actual {-family "Arial"}] 1]
     lappend x [lindex [font actual {-family "Geneva"}] 1]
@@ -102,19 +106,19 @@ test unixfont-2.5 {TkpGetFontFromAttributes procedure: fallback} x11 {
     font actual {-xyz-xyz-*-*-*-*-*-*-*-*-*-*-*-*}
     set x {}
 } {}
-test unixfont-2.6 {TkpGetFontFromAttributes: fallback to fixed family} x11 {
+test unixfont-2.6 {TkpGetFontFromAttributes: fallback to fixed family} {x11 failsOnUbuntu} {
     lindex [font actual {-family fixed -size 10}] 1
 } {fixed}
 test unixfont-2.7 {TkpGetFontFromAttributes: fixed family not available!} x11 {
     # no test available
 } {}
-test unixfont-2.8 {TkpGetFontFromAttributes: loop over returned font names} x11 {
+test unixfont-2.8 {TkpGetFontFromAttributes: loop over returned font names} {x11 failsOnUbuntu} {
     lindex [font actual {-family fixed -size 31}] 1
 } {fixed}
-test unixfont-2.9 {TkpGetFontFromAttributes: reject adobe courier if possible} {x11 noExceed} {
+test unixfont-2.9 {TkpGetFontFromAttributes: reject adobe courier if possible} {x11 noExceed failsOnUbuntu} {
     lindex [font actual {-family courier}] 1
 } {courier}
-test unixfont-2.10 {TkpGetFontFromAttributes: scalable font found} x11 {
+test unixfont-2.10 {TkpGetFontFromAttributes: scalable font found} {x11 failsOnUbuntuNoXft} {
     lindex [font actual {-family courier -size 37}] 3
 } {37}
 test unixfont-2.11 {TkpGetFontFromAttributes: font cannot be loaded} x11 {
@@ -166,11 +170,11 @@ test unixfont-5.7 {Tk_MeasureChars procedure: already saw space in line} x11 {
     .b.l config -text "000000     00000"
     getsize
 } "[expr $ax*6] [expr $ay*2]"
-test unixfont-5.8 {Tk_MeasureChars procedure: internal spaces significant} x11 {
+test unixfont-5.8 {Tk_MeasureChars procedure: internal spaces significant} {x11 failsOnUbuntu} {
     .b.l config -text "00  000     00000"
     getsize
 } "[expr $ax*7] [expr $ay*2]"
-test unixfont-5.9 {Tk_MeasureChars procedure: TK_PARTIAL_OK} x11 {
+test unixfont-5.9 {Tk_MeasureChars procedure: TK_PARTIAL_OK} {x11 failsOnUbuntu} {
     .b.c dchars $t 0 end
     .b.c insert $t 0 "0000"
     .b.c index $t @[expr int($ax*2.5)],1
@@ -186,7 +190,7 @@ test unixfont-5.11 {Tk_MeasureChars: TK_AT_LEAST_ONE + not even one char fit!} x
     .b.l config -wrap $a
     set x
 } "$ax [expr $ay*6]"
-test unixfont-5.12 {Tk_MeasureChars procedure: include eol spaces} x11 {
+test unixfont-5.12 {Tk_MeasureChars procedure: include eol spaces} {x11 failsOnUbuntu} {
     .b.l config -text "000   \n000"
     getsize
 } "[expr $ax*6] [expr $ay*2]"
@@ -253,7 +257,7 @@ test unixfont-8.3 {AllocFont procedure: can't parse info from name} x11 {
     catch {unset fontArray}
     set result
 } {-family -overstrike -size -slant -underline -weight}
-test unixfont-8.4 {AllocFont procedure: classify characters} x11 {
+test unixfont-8.4 {AllocFont procedure: classify characters} {x11 failsOnUbuntu failsOnXQuarz} {
     set x 0
     incr x [font measure $courier "\u4000"]   ;# 6
     incr x [font measure $courier "\002"]   ;# 4
@@ -264,7 +268,7 @@ test unixfont-8.4 {AllocFont procedure: classify characters} x11 {
 test unixfont-8.5 {AllocFont procedure: setup widths of normal chars} x11 {
     font metrics $courier -fixed
 } {1}
-test unixfont-8.6 {AllocFont procedure: setup widths of special chars} x11 {
+test unixfont-8.6 {AllocFont procedure: setup widths of special chars} {x11 failsOnUbuntu failsOnXQuarz} {
     set x 0
     incr x [font measure $courier "\001"]   ;# 4
     incr x [font measure $courier "\002"]   ;# 4
@@ -292,7 +296,7 @@ test unixfont-8.11 {AllocFont procedure: XA_UNDERLINE_POSITION was 0} x11 {
     set x {}
 } {}
 
-test unixfont-9.1 {GetControlCharSubst procedure: 2 chars subst} x11 {
+test unixfont-9.1 {GetControlCharSubst procedure: 2 chars subst} {x11 failsOnUbuntu failsOnXQuarz} {
     .b.c dchars $t 0 end
     .b.c insert $t 0 "0\a0"
     set x {}
@@ -301,7 +305,7 @@ test unixfont-9.1 {GetControlCharSubst procedure: 2 chars subst} x11 {
     lappend x [.b.c index $t @[expr $ax*2],0]
     lappend x [.b.c index $t @[expr $ax*3],0]
 } {0 1 1 2}
-test unixfont-9.2 {GetControlCharSubst procedure: 4 chars subst} x11 {
+test unixfont-9.2 {GetControlCharSubst procedure: 4 chars subst} {x11 failsOnUbuntu failsOnXQuarz} {
     .b.c dchars $t 0 end
     .b.c insert $t 0 "0\0010"
     set x {}

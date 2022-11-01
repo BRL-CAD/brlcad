@@ -562,7 +562,7 @@ test button-1.57 {configuration option: "borderwidth" for label} -setup {
     update
 } -body {
     .l configure -borderwidth 1.3
-    .l cget -borderwidth 
+    .l cget -borderwidth
 } -cleanup {
     destroy .l
 } -result {1.3}
@@ -581,7 +581,7 @@ test button-1.59 {configuration option: "borderwidth" for button} -setup {
     update
 } -body {
     .b configure -borderwidth 1.3
-    .b cget -borderwidth 
+    .b cget -borderwidth
 } -cleanup {
     destroy .b
 } -result {1.3}
@@ -600,7 +600,7 @@ test button-1.61 {configuration option: "borderwidth" for checkbutton} -setup {
     update
 } -body {
     .c configure -borderwidth 1.3
-    .c cget -borderwidth 
+    .c cget -borderwidth
 } -cleanup {
     destroy .c
 } -result {1.3}
@@ -619,7 +619,7 @@ test button-1.63 {configuration option: "borderwidth" for radiobutton} -setup {
     update
 } -body {
     .r configure -borderwidth 1.3
-    .r cget -borderwidth 
+    .r cget -borderwidth
 } -cleanup {
     destroy .r
 } -result {1.3}
@@ -1003,7 +1003,7 @@ test button-1.102 {configuration option: "fg" for radiobutton} -setup {
 } -returnCodes {error} -result {unknown color name "non-existent"}
 
 test button-1.103 {configuration option: "font" for label} -setup {
-    label .l -borderwidth 2 -highlightthickness 2 
+    label .l -borderwidth 2 -highlightthickness 2
     pack .l
     update
 } -body {
@@ -1013,7 +1013,7 @@ test button-1.103 {configuration option: "font" for label} -setup {
     destroy .l
 } -result {Helvetica -12}
 test button-1.104 {configuration option: "activebackground" for label} -setup {
-    label .l -borderwidth 2 -highlightthickness 2 
+    label .l -borderwidth 2 -highlightthickness 2
     pack .l
     update
 } -body {
@@ -1022,7 +1022,7 @@ test button-1.104 {configuration option: "activebackground" for label} -setup {
     destroy .l
 } -returnCodes {error} -result {font "" doesn't exist}
 test button-1.105 {configuration option: "font" for button} -setup {
-    button .b -borderwidth 2 -highlightthickness 2 
+    button .b -borderwidth 2 -highlightthickness 2
     pack .b
     update
 } -body {
@@ -1032,7 +1032,7 @@ test button-1.105 {configuration option: "font" for button} -setup {
     destroy .b
 } -result {Helvetica -12}
 test button-1.106 {configuration option: "activebackground" for button} -setup {
-    button .b -borderwidth 2 -highlightthickness 2 
+    button .b -borderwidth 2 -highlightthickness 2
     pack .b
     update
 } -body {
@@ -1041,7 +1041,7 @@ test button-1.106 {configuration option: "activebackground" for button} -setup {
     destroy .b
 } -returnCodes {error} -result {font "" doesn't exist}
 test button-1.107 {configuration option: "font" for checkbutton} -setup {
-    checkbutton .c -borderwidth 2 -highlightthickness 2 
+    checkbutton .c -borderwidth 2 -highlightthickness 2
     pack .c
     update
 } -body {
@@ -1051,7 +1051,7 @@ test button-1.107 {configuration option: "font" for checkbutton} -setup {
     destroy .c
 } -result {Helvetica -12}
 test button-1.108 {configuration option: "activebackground" for checkbutton} -setup {
-    checkbutton .c -borderwidth 2 -highlightthickness 2 
+    checkbutton .c -borderwidth 2 -highlightthickness 2
     pack .c
     update
 } -body {
@@ -1060,7 +1060,7 @@ test button-1.108 {configuration option: "activebackground" for checkbutton} -se
     destroy .c
 } -returnCodes {error} -result {font "" doesn't exist}
 test button-1.109 {configuration option: "font" for radiobutton} -setup {
-    radiobutton .r -borderwidth 2 -highlightthickness 2 
+    radiobutton .r -borderwidth 2 -highlightthickness 2
     pack .r
     update
 } -body {
@@ -1070,7 +1070,7 @@ test button-1.109 {configuration option: "font" for radiobutton} -setup {
     destroy .r
 } -result {Helvetica -12}
 test button-1.110 {configuration option: "activebackground" for radiobutton} -setup {
-    radiobutton .r -borderwidth 2 -highlightthickness 2 
+    radiobutton .r -borderwidth 2 -highlightthickness 2
     pack .r
     update
 } -body {
@@ -2669,7 +2669,7 @@ test button-1.270 {configuration options} -body {
 } -result {}
 
 # ex-tests 3.*
-test button-2.1 {ButtonCreate - not enough arguments} -body {   
+test button-2.1 {ButtonCreate - not enough arguments} -body {
     button
 } -returnCodes {error} -result {wrong # args: should be "button pathName ?-option value ...?"}
 
@@ -2709,16 +2709,16 @@ test button-2.6 {ButtonCreate - setting class} -body {
 test button-2.7 {ButtonCreate - bad window name} -body {
     button foo
 } -cleanup {
-    destroy foo             
+    destroy foo
 } -returnCodes {error} -result {bad window path name "foo"}
-######### test ex 3.8 
-test button-2.8 {ButtonCreate procedure - error in default option value} -body { 
+######### test ex 3.8
+test button-2.8 {ButtonCreate procedure - error in default option value} -body {
     option add *funny.background bogus
     button .funny
 } -cleanup {
     option clear
     destroy .funny
-} -returnCodes {error} -result {unknown color name "bogus"} 
+} -returnCodes {error} -result {unknown color name "bogus"}
 test button-2.9 {ButtonCreate procedure - error in default option value} -body {
    option add *funny.background bogus
     catch {button .funny}
@@ -2731,13 +2731,13 @@ test button-2.9 {ButtonCreate procedure - error in default option value} -body {
     invoked from within
 "button .funny"}
 
-test button-2.10 {ButtonCreate procedure - option error} -body {    
+test button-2.10 {ButtonCreate procedure - option error} -body {
     button .x -gorp foo
 }  -cleanup {
     destroy .x
-} -returnCodes {error} -result {unknown option "-gorp"} 
+} -returnCodes {error} -result {unknown option "-gorp"}
 test button-2.11 {ButtonCreate procedure - option error} -body {
-    catch {button .x -gorp foo} 
+    catch {button .x -gorp foo}
     winfo exists .x
 }  -cleanup {
     destroy .x
@@ -2788,13 +2788,13 @@ test button-3.6 {ButtonWidgetCmd procedure, "cget" option} -body {
     .l cget -disabledforeground
 } -cleanup {
     destroy .l
-} -returnCodes {ok} -match {glob} -result {*} 
+} -returnCodes {ok} -match {glob} -result {*}
 test button-3.7 {ButtonWidgetCmd procedure, "cget" option} -body {
     button .b
     .b cget -disabledforeground
 } -cleanup {
     destroy .b
-} -returnCodes {ok} -match {glob} -result {*} 
+} -returnCodes {ok} -match {glob} -result {*}
 test button-3.8 {ButtonWidgetCmd procedure, "cget" option} -body {
     button .b
     .b cget -variable
@@ -2807,7 +2807,7 @@ test button-3.9 {ButtonWidgetCmd procedure, "cget" option} -body {
     .c cget -variable
 } -cleanup {
     destroy .c
-} -returnCodes {ok} -match {glob} -result {*} 
+} -returnCodes {ok} -match {glob} -result {*}
 test button-3.10 {ButtonWidgetCmd procedure, "cget" option} -body {
     checkbutton .c
     .c cget -value
@@ -2820,7 +2820,7 @@ test button-3.11 {ButtonWidgetCmd procedure, "cget" option} -body {
     .r cget -value
 } -cleanup {
     destroy .r
-} -returnCodes {ok} -match {glob} -result {*} 
+} -returnCodes {ok} -match {glob} -result {*}
 test button-3.12 {ButtonWidgetCmd procedure, "cget" option} -body {
     radiobutton .r
     .r cget -onvalue
@@ -2840,7 +2840,7 @@ test button-3.14 {ButtonWidgetCmd procedure, "configure" option} -body {
     llength [.c configure]
 } -cleanup {
     destroy .c
-} -result {41} 
+} -result {41}
 test button-3.15 {ButtonWidgetCmd procedure, "configure" option} -body {
     button .b
     .b configure -gorp
@@ -2889,7 +2889,7 @@ test button-3.21 {ButtonWidgetCmd procedure, "deselect" option} -body {
     return $checkvar
 } -cleanup {
     destroy .c
-} -result {0} 
+} -result {0}
 test button-3.22 {ButtonWidgetCmd procedure, "deselect" option} -body {
     radiobutton .r -variable radiovar -value red
     set radiovar green
@@ -2897,7 +2897,7 @@ test button-3.22 {ButtonWidgetCmd procedure, "deselect" option} -body {
     return $radiovar
 } -cleanup {
     destroy .r
-} -result {green} 
+} -result {green}
 test button-3.23 {ButtonWidgetCmd procedure, "deselect" option} -body {
     radiobutton .r -variable radiovar -value red
     set radiovar red
@@ -2905,9 +2905,9 @@ test button-3.23 {ButtonWidgetCmd procedure, "deselect" option} -body {
     return $radiovar
 } -cleanup {
     destroy .r
-} -result {} 
+} -result {}
 
-test button-3.24 {ButtonWidgetCmd procedure, "deselect" option} -body {  
+test button-3.24 {ButtonWidgetCmd procedure, "deselect" option} -body {
     checkbutton .c -variable checkvar -onvalue 1 -offvalue 0
     set checkvar 1
     trace variable checkvar w bogusTrace
@@ -2915,7 +2915,7 @@ test button-3.24 {ButtonWidgetCmd procedure, "deselect" option} -body {
 } -cleanup {
     destroy .c
     trace vdelete checkvar w bogusTrace
-} -returnCodes {error} -result {can't set "checkvar": trace aborted} 
+} -returnCodes {error} -result {can't set "checkvar": trace aborted}
 test button-3.25 {ButtonWidgetCmd procedure, "deselect" option} -body {
     checkbutton .c -variable checkvar -onvalue 1 -offvalue 0
     set checkvar 1
@@ -2937,7 +2937,7 @@ test button-3.26 {ButtonWidgetCmd procedure, "deselect" option} -body {
 } -cleanup {
     destroy .r
     trace vdelete radiovar w bogusTrace
-} -match {glob} -returnCodes {error} -result {can't set "radiovar": trace aborted} 
+} -match {glob} -returnCodes {error} -result {can't set "radiovar": trace aborted}
 test button-3.27 {ButtonWidgetCmd procedure, "deselect" option} -body {
     radiobutton .r -variable radiovar -value red
     set radiovar red
@@ -2964,19 +2964,19 @@ test button-3.29 {ButtonWidgetCmd procedure, "flash" option} -body {
 } -cleanup {
     destroy .l
 } -returnCodes {error} -result {bad option "flash": must be cget or configure}
-test button-3.30 {ButtonWidgetCmd procedure, "flash" option} -body {                    
+test button-3.30 {ButtonWidgetCmd procedure, "flash" option} -body {
     button .b
     catch {.b flash}
 } -cleanup {
     destroy .b
 } -returnCodes {ok} -match {glob} -result {*}
-test button-3.31 {ButtonWidgetCmd procedure, "flash" option} -body {                    
+test button-3.31 {ButtonWidgetCmd procedure, "flash" option} -body {
     checkbutton .c
     catch {.c flash}
 } -cleanup {
     destroy .c
 } -returnCodes {ok} -match {glob} -result {*}
-test button-3.32 {ButtonWidgetCmd procedure, "flash" option} -body {                    
+test button-3.32 {ButtonWidgetCmd procedure, "flash" option} -body {
     radiobutton .r
     catch {.r f}
 } -cleanup {
@@ -3060,14 +3060,14 @@ test button-3.42 {ButtonWidgetCmd procedure, "select" option} -body {
     destroy .c
 } -result  {lovely}
 test button-3.43 {ButtonWidgetCmd procedure, "select" option} -body {
-    radiobutton .r -variable radiovar -value red    
+    radiobutton .r -variable radiovar -value red
     set radiovar green
     .r select
     return $radiovar
 } -cleanup {
     destroy .r
 } -result  {red}
-test button-3.44 {ButtonWidgetCmd procedure, "select" option} -body { 
+test button-3.44 {ButtonWidgetCmd procedure, "select" option} -body {
     radiobutton .r -variable radiovar -value red
     set radiovar yellow
     trace variable radiovar w bogusTrace
@@ -3075,7 +3075,7 @@ test button-3.44 {ButtonWidgetCmd procedure, "select" option} -body {
 } -cleanup {
     destroy .r
     trace vdelete radiovar w bogusTrace
-} -returnCodes {error} -result {can't set "radiovar": trace aborted} 
+} -returnCodes {error} -result {can't set "radiovar": trace aborted}
 test button-3.45 {ButtonWidgetCmd procedure, "select" option} -body {
     radiobutton .r -variable radiovar -value red
     set radiovar yellow
@@ -3128,7 +3128,7 @@ test button-3.50 {ButtonWidgetCmd procedure, "toggle" option} -body {
 } -cleanup {
     destroy .c
 } -result {sunshine rain sunshine}
-test button-3.51 {ButtonWidgetCmd procedure, "toggle" option} -body {  
+test button-3.51 {ButtonWidgetCmd procedure, "toggle" option} -body {
     checkbutton .c -variable checkvar -onvalue xyz -offvalue abc
     set checkvar xyz
     trace variable checkvar w bogusTrace
@@ -3136,12 +3136,12 @@ test button-3.51 {ButtonWidgetCmd procedure, "toggle" option} -body {
 } -cleanup {
     destroy .c
     trace vdelete checkvar w bogusTrace
-} -returnCodes {error} -result {can't set "checkvar": trace aborted} 
+} -returnCodes {error} -result {can't set "checkvar": trace aborted}
 test button-3.52 {ButtonWidgetCmd procedure, "toggle" option} -body {
     checkbutton .c -variable checkvar -onvalue xyz -offvalue abc
     set checkvar xyz
     trace variable checkvar w bogusTrace
-    catch {.c toggle} 
+    catch {.c toggle}
     list $errorInfo $checkvar
 } -cleanup {
     trace vdelete checkvar w bogusTrace
@@ -3150,7 +3150,7 @@ test button-3.52 {ButtonWidgetCmd procedure, "toggle" option} -body {
     while executing
 *
 ".c toggle"} abc}
-test button-3.53 {ButtonWidgetCmd procedure, "toggle" option} -body {   
+test button-3.53 {ButtonWidgetCmd procedure, "toggle" option} -body {
     checkbutton .c -variable checkvar -onvalue xyz -offvalue abc
     set checkvar abc
     trace variable checkvar w bogusTrace
@@ -3158,12 +3158,12 @@ test button-3.53 {ButtonWidgetCmd procedure, "toggle" option} -body {
 } -cleanup {
     trace vdelete checkvar w bogusTrace
     destroy .c
-} -returnCodes {error} -result {can't set "checkvar": trace aborted} 
+} -returnCodes {error} -result {can't set "checkvar": trace aborted}
 test button-3.54 {ButtonWidgetCmd procedure, "toggle" option} -body {
     checkbutton .c -variable checkvar -onvalue xyz -offvalue abc
     set checkvar abc
     trace variable checkvar w bogusTrace
-    catch {.c toggle} 
+    catch {.c toggle}
     list $errorInfo $checkvar
 } -cleanup {
     trace vdelete checkvar w bogusTrace
@@ -3174,17 +3174,17 @@ test button-3.54 {ButtonWidgetCmd procedure, "toggle" option} -body {
 ".c toggle"} xyz}
 test button-3.55 {ButtonWidgetCmd procedure, "toggle" option} -setup {
     unset -nocomplain checkvar
-} -body { 
+} -body {
     checkbutton .c -variable checkvar -onvalue xyz -offvalue abc
     unset checkvar
     set checkvar(1) 1
     .c toggle
 } -cleanup {
     destroy .c
-} -returnCodes {error} -result {can't set "checkvar": variable is array} 
+} -returnCodes {error} -result {can't set "checkvar": variable is array}
 test button-3.56 {ButtonWidgetCmd procedure, "toggle" option} -setup {
     unset -nocomplain checkvar
-} -body { 
+} -body {
     checkbutton .c -variable checkvar -onvalue xyz -offvalue abc
     unset checkvar
     set checkvar(1) 1
@@ -3209,22 +3209,22 @@ test button-4.1 {DestroyButton procedure} -constraints {
     checkbutton .b5 -variable x -text "Checkbutton 5"
     set x 1
     pack .b1 .b2 .b3 .b4 .b5
-    update 
-    deleteWindows  
+    update
+    deleteWindows
 } -cleanup {
     destroy .b1 .b2 .b3 .b4 .b5
     image delete image1
-} -result {} 
+} -result {}
 
 test button-5.1 {ConfigureButton - textvariable trace} -body {
     button .b -bd 4 -bg green
     .b configure -bd 7 -bg red -fg bogus
 } -cleanup {
     destroy .b
-} -returnCodes {error} -result {unknown color name "bogus"} 
+} -returnCodes {error} -result {unknown color name "bogus"}
 test button-5.2 {ConfigureButton - textvariable trace} -body {
     button .b -bd 4 -bg green
-    catch {.b configure -bd 7 -bg red -fg bogus} 
+    catch {.b configure -bd 7 -bg red -fg bogus}
     list [.b cget -bd] [.b cget -bg]
 } -cleanup {
     destroy .b
@@ -3271,7 +3271,7 @@ test button-5.6 {ConfigureButton - default value for variable} -body {
     checkbutton .c
     .c cget -variable
 } -cleanup {
-    destroy .c 
+    destroy .c
 } -result {c}
 test button-5.7 {ConfigureButton - setting selected state from variable} -body {
     set x 0
@@ -3305,7 +3305,7 @@ test button-5.10 {ConfigureButton - error in setting variable} -setup {
     unset -nocomplain x
 } -body {
     trace variable x w bogusTrace
-    radiobutton .r -variable x 
+    radiobutton .r -variable x
 } -cleanup {
     destroy .r
     trace vdelete x w bogusTrace
@@ -3342,7 +3342,7 @@ test button-5.14 {ConfigureButton - variable handling} -setup {
 } -cleanup {
     trace vdelete x w bogusTrace
     destroy .r
-} -returnCodes {error} -result {can't set "x": trace aborted} 
+} -returnCodes {error} -result {can't set "x": trace aborted}
 test button-5.15 {ConfigureButton - variable handling} -setup {
     unset -nocomplain x
 } -body {
@@ -3355,12 +3355,12 @@ test button-5.15 {ConfigureButton - variable handling} -setup {
 } -result {foo}
 
 #ex 6.14
-test button-5.16 {ConfigureButton - -width option} -body { 
+test button-5.16 {ConfigureButton - -width option} -body {
     button .b -text "Button 1"
     .b configure -width 1i
 } -cleanup {
     destroy .b
-} -returnCodes {error} -result {expected integer but got "1i"} 
+} -returnCodes {error} -result {expected integer but got "1i"}
 test button-5.17 {ConfigureButton - -width option} -body {
     button .b -text "Button 1"
     catch {.b configure -width 1i}
@@ -3371,15 +3371,15 @@ test button-5.17 {ConfigureButton - -width option} -body {
     (processing -width option)
     invoked from within
 ".b configure -width 1i"}
-test button-5.18 {ConfigureButton - -height option} -body { 
+test button-5.18 {ConfigureButton - -height option} -body {
     button .b -text "Button 1"
     .b configure -height 0.5c
 } -cleanup {
     destroy .b
-} -returnCodes {error} -result {expected integer but got "0.5c"} 
-test button-5.19 {ConfigureButton - -height option} -body { 
+} -returnCodes {error} -result {expected integer but got "0.5c"}
+test button-5.19 {ConfigureButton - -height option} -body {
     button .b -text "Button 1"
-    catch {.b configure -height 0.5c} 
+    catch {.b configure -height 0.5c}
     return $errorInfo
 } -cleanup {
     destroy .b
@@ -3393,10 +3393,10 @@ test button-5.20 {ConfigureButton - -width option} -body {
     .b configure -width abc
 } -cleanup {
     destroy .b
-} -returnCodes {error} -result  {bad screen distance "abc"} 
+} -returnCodes {error} -result  {bad screen distance "abc"}
 test button-5.21 {ConfigureButton - -width option} -body {
     button .b -bitmap questhead
-    catch {.b configure -width abc} 
+    catch {.b configure -width abc}
     return $errorInfo
 } -cleanup {
     destroy .b
@@ -3414,7 +3414,7 @@ test button-5.22 {ConfigureButton - -height option} -constraints {
 } -cleanup {
     destroy .b
     image delete image1
-} -returnCodes {error} -result {bad screen distance "0.5x"} 
+} -returnCodes {error} -result {bad screen distance "0.5x"}
 test button-5.23 {ConfigureButton - -height option} -constraints {
     testImageType
 } -setup {
@@ -3422,7 +3422,7 @@ test button-5.23 {ConfigureButton - -height option} -constraints {
 } -body {
 #ztestImageType
     button .b -image image1
-    catch {.b configure -height 0.5x} 
+    catch {.b configure -height 0.5x}
     return $errorInfo
 } -cleanup {
     destroy .b
@@ -3523,7 +3523,7 @@ test button-7.1 {ButtonCmdDeletedProc procedure} -body {
 
 test button-8.1 {TkInvokeButton procedure} -setup {
     set x 0
-} -body { 
+} -body {
     checkbutton .c -variable x
     set result $x
     .c invoke
@@ -3534,9 +3534,9 @@ test button-8.1 {TkInvokeButton procedure} -setup {
     destroy .c
 } -result {0 1 0}
 
-test button-8.2 {TkInvokeButton procedure} -setup {     
+test button-8.2 {TkInvokeButton procedure} -setup {
     set x 0
-} -body { 
+} -body {
     checkbutton .c -variable x
     trace variable x w bogusTrace
     .c invoke
@@ -3546,7 +3546,7 @@ test button-8.2 {TkInvokeButton procedure} -setup {
 } -returnCodes {error} -result {can't set "x": trace aborted}
 test button-8.3 {TkInvokeButton procedure} -setup {
     set x 0
-} -body { 
+} -body {
     checkbutton .c -variable x
     trace variable x w bogusTrace
     catch {.c invoke}
@@ -3555,9 +3555,9 @@ test button-8.3 {TkInvokeButton procedure} -setup {
     destroy .c
     trace vdelete x w bogusTrace
 } -result {1}
-test button-8.4 {TkInvokeButton procedure} -setup {   
+test button-8.4 {TkInvokeButton procedure} -setup {
     set x 1
-} -body { 
+} -body {
     checkbutton .c -variable x
     trace variable x w bogusTrace
     .c invoke
@@ -3567,7 +3567,7 @@ test button-8.4 {TkInvokeButton procedure} -setup {
 } -returnCodes {error} -result {can't set "x": trace aborted}
 test button-8.5 {TkInvokeButton procedure} -setup {
     set x 1
-} -body { 
+} -body {
     checkbutton .c -variable x
     trace variable x w bogusTrace
     catch {.c invoke}
@@ -3579,7 +3579,7 @@ test button-8.5 {TkInvokeButton procedure} -setup {
 
 test button-8.6 {TkInvokeButton procedure} -setup {
     set x 0
-} -body { 
+} -body {
     radiobutton .r -variable x -value red
     set result $x
     .r invoke
@@ -3590,7 +3590,7 @@ test button-8.6 {TkInvokeButton procedure} -setup {
     destroy .r
 } -result {0 red red}
 
-test button-8.7 {TkInvokeButton procedure} -body {  
+test button-8.7 {TkInvokeButton procedure} -body {
     radiobutton .r -variable x -value red
     set x green
     trace variable x w bogusTrace
@@ -3599,7 +3599,7 @@ test button-8.7 {TkInvokeButton procedure} -body {
     destroy .r
     trace vdelete x w bogusTrace
 } -returnCodes {error} -result {can't set "x": trace aborted}
-test button-8.8 {TkInvokeButton procedure} -body { 
+test button-8.8 {TkInvokeButton procedure} -body {
     radiobutton .r -variable x -value red
     set x green
     trace variable x w bogusTrace
@@ -3754,7 +3754,7 @@ test button-10.2 {ButtonTextVarProc procedure} -setup {
 } -result {0}
 
 test button-11.1 {ButtonImageProc procedure} -constraints {
-    testImageType 
+    testImageType
 } -setup {
     label .l -highlightthickness 0 -font {Helvetica -12 bold}
     image create test image1
@@ -3788,7 +3788,7 @@ test button-13.1 {size behavior: label} -setup {
     label .c -borderwidth 2 -highlightthickness 2 -font {Helvetica -12 bold}
     set result {}
 } -body {
-	.a configure -text Hej 
+	.a configure -text Hej
 	.b configure -text Hej -width 10 -height 1
 	.c configure -text "" -width 10 -height 1
 
@@ -3800,14 +3800,14 @@ test button-13.1 {size behavior: label} -setup {
 	lappend result [expr {[winfo reqheight .a] == [winfo reqheight .b]}]
 } -cleanup {
     destroy .a .b .c
-} -result {1 1 1} 
+} -result {1 1 1}
 test button-13.2 {size behavior: label} -setup {
     label .a -borderwidth 2 -highlightthickness 2 -font {Arial 20}
     label .b -borderwidth 2 -highlightthickness 2 -font {Arial 20}
     label .c -borderwidth 2 -highlightthickness 2 -font {Arial 20}
     set result {}
 } -body {
-	.a configure -text Hej 
+	.a configure -text Hej
 	.b configure -text Hej -width 10 -height 1
 	.c configure -text "" -width 10 -height 1
 
@@ -3819,7 +3819,7 @@ test button-13.2 {size behavior: label} -setup {
 	lappend result [expr {[winfo reqheight .a] == [winfo reqheight .b]}]
 } -cleanup {
     destroy .a .b .c
-} -result {1 1 1} 
+} -result {1 1 1}
 
 test button-13.3 {size behavior: button} -setup {
     button .a -borderwidth 2 -highlightthickness 2 -font {Helvetica -12 bold}
@@ -3827,7 +3827,7 @@ test button-13.3 {size behavior: button} -setup {
     button .c -borderwidth 2 -highlightthickness 2 -font {Helvetica -12 bold}
     set result {}
 } -body {
-	.a configure -text Hej 
+	.a configure -text Hej
 	.b configure -text Hej -width 10 -height 1
 	.c configure -text "" -width 10 -height 1
 
@@ -3839,14 +3839,14 @@ test button-13.3 {size behavior: button} -setup {
 	lappend result [expr {[winfo reqheight .a] == [winfo reqheight .b]}]
 } -cleanup {
     destroy .a .b .c
-} -result {1 1 1} 
+} -result {1 1 1}
 test button-13.4 {size behavior: button} -setup {
     button .a -borderwidth 2 -highlightthickness 2 -font {Arial 20}
     button .b -borderwidth 2 -highlightthickness 2 -font {Arial 20}
     button .c -borderwidth 2 -highlightthickness 2 -font {Arial 20}
     set result {}
 } -body {
-	.a configure -text Hej 
+	.a configure -text Hej
 	.b configure -text Hej -width 10 -height 1
 	.c configure -text "" -width 10 -height 1
 
@@ -3858,7 +3858,7 @@ test button-13.4 {size behavior: button} -setup {
 	lappend result [expr {[winfo reqheight .a] == [winfo reqheight .b]}]
 } -cleanup {
     destroy .a .b .c
-} -result {1 1 1} 
+} -result {1 1 1}
 
 test button-13.5 {size behavior: radiobutton} -setup {
     radiobutton .a -borderwidth 2 -highlightthickness 2 -font {Helvetica -12 bold}
@@ -3866,7 +3866,7 @@ test button-13.5 {size behavior: radiobutton} -setup {
     radiobutton .c -borderwidth 2 -highlightthickness 2 -font {Helvetica -12 bold}
     set result {}
 } -body {
-	.a configure -text Hej 
+	.a configure -text Hej
 	.b configure -text Hej -width 10 -height 1
 	.c configure -text "" -width 10 -height 1
 
@@ -3878,7 +3878,7 @@ test button-13.5 {size behavior: radiobutton} -setup {
 	lappend result [expr {[winfo reqheight .a] == [winfo reqheight .b]}]
 } -cleanup {
     destroy .a .b .c
-} -result {1 1 1} 
+} -result {1 1 1}
 
 test button-13.6 {size behavior: radiobutton} -setup {
     radiobutton .a -borderwidth 2 -highlightthickness 2 -font {Arial 20}
@@ -3886,7 +3886,7 @@ test button-13.6 {size behavior: radiobutton} -setup {
     radiobutton .c -borderwidth 2 -highlightthickness 2 -font {Arial 20}
     set result {}
 } -body {
-	.a configure -text Hej 
+	.a configure -text Hej
 	.b configure -text Hej -width 10 -height 1
 	.c configure -text "" -width 10 -height 1
 
@@ -3898,7 +3898,7 @@ test button-13.6 {size behavior: radiobutton} -setup {
 	lappend result [expr {[winfo reqheight .a] == [winfo reqheight .b]}]
 } -cleanup {
     destroy .a .b .c
-} -result {1 1 1} 
+} -result {1 1 1}
 
 test button-13.7 {size behavior: checkbutton} -setup {
     checkbutton .a -borderwidth 2 -highlightthickness 2 -font {Helvetica -12 bold}
@@ -3906,7 +3906,7 @@ test button-13.7 {size behavior: checkbutton} -setup {
     checkbutton .c -borderwidth 2 -highlightthickness 2 -font {Helvetica -12 bold}
     set result {}
 } -body {
-	.a configure -text Hej 
+	.a configure -text Hej
 	.b configure -text Hej -width 10 -height 1
 	.c configure -text "" -width 10 -height 1
 
@@ -3918,7 +3918,7 @@ test button-13.7 {size behavior: checkbutton} -setup {
 	lappend result [expr {[winfo reqheight .a] == [winfo reqheight .b]}]
 } -cleanup {
     destroy .a .b .c
-} -result {1 1 1} 
+} -result {1 1 1}
 
 test button-13.8 {size behavior: checkbutton} -setup {
     checkbutton .a -borderwidth 2 -highlightthickness 2 -font {Arial 20}
@@ -3926,7 +3926,7 @@ test button-13.8 {size behavior: checkbutton} -setup {
     checkbutton .c -borderwidth 2 -highlightthickness 2 -font {Arial 20}
     set result {}
 } -body {
-	.a configure -text Hej 
+	.a configure -text Hej
 	.b configure -text Hej -width 10 -height 1
 	.c configure -text "" -width 10 -height 1
 
@@ -3938,7 +3938,7 @@ test button-13.8 {size behavior: checkbutton} -setup {
 	lappend result [expr {[winfo reqheight .a] == [winfo reqheight .b]}]
 } -cleanup {
     destroy .a .b .c
-} -result {1 1 1} 
+} -result {1 1 1}
 
 test button-14.1 {bug fix: [011706ec42] tk::ButtonInvoke unsafe wrt widget destruction} -body {
     proc destroy_button {} {
@@ -3956,7 +3956,7 @@ test button-14.1 {bug fix: [011706ec42] tk::ButtonInvoke unsafe wrt widget destr
     update  ; # shall not trigger error  invalid command name ".top.b"
 } -cleanup {
     destroy .top.b .top
-} -result {} 
+} -result {}
 
 test button-15.1 {Bug [5d991b822e]} {
     # Want this not to segfault

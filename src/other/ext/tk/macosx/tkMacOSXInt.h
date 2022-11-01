@@ -117,21 +117,6 @@ typedef struct {
 MODULE_SCOPE TkMacOSXEmbedHandler *tkMacOSXEmbedHandler;
 
 /*
- * GC CGColorRef cache for tkMacOSXColor.c
- */
-
-typedef struct {
-    unsigned long cachedForeground;
-    CGColorRef cachedForegroundColor;
-    unsigned long cachedBackground;
-    CGColorRef cachedBackgroundColor;
-} TkpGCCache;
-
-MODULE_SCOPE TkpGCCache *TkpGetGCCache(GC gc);
-MODULE_SCOPE void TkpInitGCCache(GC gc);
-MODULE_SCOPE void TkpFreeGCCache(GC gc);
-
-/*
  * Undef compatibility platform types defined above.
  */
 
@@ -180,7 +165,7 @@ MODULE_SCOPE void TkpFreeGCCache(GC gc);
 #define TK_MACOSX_HANDLE_EVENT_IMMEDIATELY 1024
 
 /*
- * Defines for tkTextDisp.c
+ * Defines for tkTextDisp.c and tkFont.c
  */
 
 #define TK_LAYOUT_WITH_BASE_CHUNKS	1
@@ -191,19 +176,10 @@ MODULE_SCOPE void TkpFreeGCCache(GC gc);
  */
 
 MODULE_SCOPE void TkMacOSXDefaultStartupScript(void);
-#if 0
-MODULE_SCOPE int XSetClipRectangles(Display *d, GC gc, int clip_x_origin,
-	int clip_y_origin, XRectangle* rectangles, int n, int ordering);
-#endif
 MODULE_SCOPE void TkpClipDrawableToRect(Display *display, Drawable d, int x,
 	int y, int width, int height);
-MODULE_SCOPE void TkpRetainRegion(TkRegion r);
-MODULE_SCOPE void TkpReleaseRegion(TkRegion r);
 MODULE_SCOPE void TkpShiftButton(NSButton *button, NSPoint delta);
-MODULE_SCOPE Bool TkpAppIsDrawing(void);
-MODULE_SCOPE void TkpDisplayWindow(Tk_Window tkwin);
-MODULE_SCOPE Bool TkTestLogDisplay(void);
-MODULE_SCOPE Bool TkMacOSXInDarkMode(Tk_Window tkwin);
+MODULE_SCOPE Bool TkTestLogDisplay(Drawable drawable);
 
 /*
  * Include the stubbed internal platform-specific API.

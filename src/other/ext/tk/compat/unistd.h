@@ -15,6 +15,9 @@
 #define _UNISTD
 
 #include <sys/types.h>
+#ifndef _TCL
+#   include <tcl.h>
+#endif
 
 #ifndef NULL
 #define NULL    0
@@ -37,7 +40,7 @@ extern int		execle(const char *path, ...);
 extern int		execlp(const char *file, ...);
 extern int		execv(const char *path, char **argv);
 extern int		execve(const char *path, char **argv, char **envp);
-extern int		execvpw(const char *file, char **argv);
+extern int		execvp(const char *file, char **argv);
 extern pid_t		fork(void);
 extern char *		getcwd(char *buf, size_t size);
 extern gid_t		getegid(void);
@@ -65,7 +68,7 @@ extern int		ftruncate(int fd, unsigned long length);
 extern int		ioctl(int fd, int request, ...);
 extern int		readlink(const char *path, char *buf, int bufsize);
 extern int		setegid(gid_t group);
-extern int		seteuidw(uid_t user);
+extern int		seteuid(uid_t user);
 extern int		setreuid(int ruid, int euid);
 extern int		symlink(const char *, const char *);
 extern int		ttyslot(void);
@@ -74,3 +77,4 @@ extern int		vfork(void);
 #endif /* _POSIX_SOURCE */
 
 #endif /* _UNISTD */
+

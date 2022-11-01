@@ -92,7 +92,7 @@ rt_bot_makesegs(
     struct seg *seghead,
     struct rt_piecestate *psp);
 
-HIDDEN int
+static int
 rt_bot_unoriented_segs(struct hit *hits,
 		       size_t nhits,
 		       struct soltab *stp,
@@ -459,8 +459,11 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_BOT_CK_MAGIC(bot_ip);
 
     rt_bot_mintie = RT_DEFAULT_MINTIE;
-    if (getenv("LIBRT_BOT_MINTIE")) {
-	rt_bot_mintie = atoi(getenv("LIBRT_BOT_MINTIE"));
+    char *ebmintie = getenv("LIBRT_BOT_MINTIE");
+    char *bmintie = (ebmintie) ? bu_strdup(ebmintie) : NULL;
+    if (bmintie) {
+	rt_bot_mintie = atoi(bmintie);
+	bu_free(bmintie, "LIBRT_BOT_MINTIE copy");
     }
 
     if (rt_bot_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
@@ -486,7 +489,7 @@ rt_bot_print(const struct soltab *stp)
 }
 
 
-HIDDEN int
+static int
 rt_bot_plate_segs(struct hit *hits,
 		  size_t nhits,
 		  struct soltab *stp,
@@ -503,7 +506,7 @@ rt_bot_plate_segs(struct hit *hits,
 }
 
 
-HIDDEN int
+static int
 rt_bot_unoriented_segs(struct hit *hits,
 		       size_t nhits,
 		       struct soltab *stp,
@@ -1827,7 +1830,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 }
 
 
-HIDDEN void
+static void
 bot_ifree2(struct rt_bot_internal *bot_ip)
 {
     RT_BOT_CK_MAGIC(bot_ip);
@@ -4072,7 +4075,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 }
 
 
-HIDDEN int
+static int
 bot_smooth_miss(struct application *ap)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -4080,7 +4083,7 @@ bot_smooth_miss(struct application *ap)
 }
 
 
-HIDDEN int
+static int
 bot_smooth_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(seg))
 {
     struct partition *pp;

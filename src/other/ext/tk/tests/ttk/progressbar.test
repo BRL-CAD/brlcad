@@ -1,5 +1,6 @@
-package require Tk 8.5
-package require tcltest ; namespace import -force tcltest::*
+package require Tk
+package require tcltest 2.2
+namespace import -force tcltest::*
 loadTestedCommands
 
 
@@ -76,7 +77,7 @@ test progressbar-2.5 "error in write trace" -body {
     trace variable PB w { error "YIPES!" ;# }
     .pb step
     set PB		;# NOTREACHED
-} -cleanup { unset PB } -returnCodes 1 -match glob -result "*YIPES!"
+} -cleanup { unset PB } -returnCodes error -match glob -result "*YIPES!"
 
 test progressbar-end "Cleanup" -body {
     destroy .pb

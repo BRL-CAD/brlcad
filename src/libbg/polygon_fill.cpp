@@ -140,8 +140,8 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 	c->num_points = 2;
 	c->open = 1;
 	c->point = (point_t *)bu_calloc(c->num_points, sizeof(point_t), "l_point");
-	V2JOIN2(p2d1, bcenter, fabs(line_spacing) * (i - dir_step_cnt), per, ldiag*0.51, lseg);
-	V2JOIN2(p2d2, bcenter, fabs(line_spacing) * (i - dir_step_cnt), per, -ldiag*0.51, lseg);
+	V2JOIN2(p2d1, bcenter, fabs(line_spacing) * ((double)i - dir_step_cnt), per, ldiag*0.51, lseg);
+	V2JOIN2(p2d2, bcenter, fabs(line_spacing) * ((double)i - dir_step_cnt), per, -ldiag*0.51, lseg);
 	VSET(c->point[0], p2d1[0], p2d1[1], 0);
 	VSET(c->point[1], p2d2[0], p2d2[1], 0);
     }

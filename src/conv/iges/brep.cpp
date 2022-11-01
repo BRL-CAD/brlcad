@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 int
-brep(int entityno)
+brep(size_t entityno)
 {
 
     int sol_num;		/* IGES solid type number */

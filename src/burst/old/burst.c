@@ -122,8 +122,9 @@ readBatchInput(FILE *fp)
     batchmode = 1;
     while (getCommand(cmdname, cmdbuf, LNBUFSZ, fp)) {
 	Func *cmdfunc;
-	if ((cmdfunc = getTrie(cmdname, cmdtrie)) == NULL) {
-	    int i, len = strlen(cmdname);
+	if ((cmdfunc = getTrie(cmdname, LNBUFSZ, cmdtrie)) == NULL) {
+	    size_t i;
+	    size_t len = strlen(cmdname);
 	    brst_log("ERROR -- command syntax:\n");
 	    brst_log("\t%s\n", cmdbuf);
 	    brst_log("\t");
@@ -216,6 +217,7 @@ main(int argc, const char *argv[])
     tmpfp = bu_temp_file(tmpfname, TIMER_LEN);
     if (!tmpfp) {
 	bu_exit(EXIT_FAILURE, "ERROR: Unable to create temporary file.\n");
+	return EXIT_FAILURE;
     }
 
     setupSigs();

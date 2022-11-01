@@ -93,9 +93,9 @@ const struct bu_structparse vrml_mat_parse[]={
 };
 
 
-HIDDEN union tree *do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-HIDDEN union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-HIDDEN union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+static union tree *do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+static union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+static union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 
 struct vrml_write_options
@@ -119,7 +119,7 @@ struct conversion_state {
 };
 
 
-HIDDEN void
+static void
 clean_pmp(struct plate_mode *pmp)
 {
     int i;
@@ -149,7 +149,7 @@ clean_pmp(struct plate_mode *pmp)
 
 
 /* duplicate bot */
-HIDDEN struct rt_bot_internal *
+static struct rt_bot_internal *
 dup_bot(struct rt_bot_internal *bot_in)
 {
     struct rt_bot_internal *bot;
@@ -214,7 +214,7 @@ struct region_end_data
 /* return 0 when object is NOT a light or an error occurred. regions
  * are skipped when this function returns 0.
  */
-HIDDEN int
+static int
 select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), void *client_data)
 {
     const struct region_end_data * const data = (struct region_end_data *)client_data;
@@ -259,7 +259,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
 /* return 0 when IS a light or an error occurred. regions are skipped
  * when this function returns 0.
  */
-HIDDEN int
+static int
 select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), void *client_data)
 {
     const struct region_end_data * const data = (struct region_end_data *)client_data;
@@ -296,7 +296,7 @@ select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *
  * used when we want CSG objects tessellated and evaluated but we
  * want to output BOTs without boolean evaluation.
  */
-HIDDEN union tree *
+static union tree *
 leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
 {
     const struct region_end_data * const data = (struct region_end_data *)client_data;
@@ -332,7 +332,7 @@ leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct r
  * BOTs directly to the VRML file without performing a boolean
  * evaluation.
  */
-HIDDEN union tree *
+static union tree *
 leaf_tess2(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), struct rt_db_internal *ip, void *client_data)
 {
     const struct region_end_data * const data = (struct region_end_data *)client_data;
@@ -370,7 +370,7 @@ leaf_tess2(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(
  * in mged such that two conversions will result in the same name, but
  * it should be an extremely rare situation.
  */
-HIDDEN void path_2_vrml_id(struct bu_vls *id, const char *path) {
+static void path_2_vrml_id(struct bu_vls *id, const char *path) {
     static int counter = 0;
     unsigned int i;
     char c;
@@ -591,7 +591,7 @@ HIDDEN void path_2_vrml_id(struct bu_vls *id, const char *path) {
 }
 
 
-HIDDEN void
+static void
 nmg_2_vrml(const struct conversion_state *pstate, struct db_tree_state *tsp, const struct db_full_path *pathp, struct model *m)
 {
     struct mater_info *mater = &tsp->ts_mater;
@@ -916,7 +916,7 @@ nmg_2_vrml(const struct conversion_state *pstate, struct db_tree_state *tsp, con
 }
 
 
-HIDDEN void
+static void
 bot2vrml(const struct conversion_state *pstate, struct plate_mode *pmp, const struct db_full_path *pathp, int region_id)
 {
     struct bu_vls shape_name = BU_VLS_INIT_ZERO;
@@ -978,7 +978,7 @@ bot2vrml(const struct conversion_state *pstate, struct plate_mode *pmp, const st
  * Called from db_walk_tree().
  * This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *
+static union tree *
 do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     const struct region_end_data * const data = (struct region_end_data *)client_data;
@@ -1018,7 +1018,7 @@ do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
  *
  * Only send bots from structure outside tree to vrml file.
  */
-HIDDEN union tree *
+static union tree *
 do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), void *client_data)
 {
     const struct region_end_data * const data = (struct region_end_data *)client_data;
@@ -1047,7 +1047,7 @@ do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 }
 
 
-HIDDEN union tree *
+static union tree *
 vrml_write_process_boolean(struct conversion_state *pstate, union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
     static union tree *ret_tree = TREE_NULL;
@@ -1079,7 +1079,7 @@ vrml_write_process_boolean(struct conversion_state *pstate, union tree *curtree,
 }
 
 
-HIDDEN union tree *
+static union tree *
 nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     const struct region_end_data * const data = (struct region_end_data *)client_data;
@@ -1169,7 +1169,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 }
 
 
-HIDDEN char *
+static char *
 vrml_write_make_units_str(double scale_factor)
 {
     const char *bu_units = bu_units_string(scale_factor);
@@ -1184,7 +1184,7 @@ vrml_write_make_units_str(double scale_factor)
 }
 
 
-HIDDEN void
+static void
 vrml_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
 {
     struct vrml_write_options *options_data;
@@ -1205,14 +1205,14 @@ vrml_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_da
 }
 
 
-HIDDEN void
+static void
 vrml_write_free_opts(void *options_data)
 {
     bu_free(options_data, "options_data");
 }
 
 
-HIDDEN int
+static int
 vrml_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *dest_path)
 {
     struct conversion_state state;

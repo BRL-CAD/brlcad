@@ -39,11 +39,12 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 {
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (tvd->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_OVERLAY) {
 	if (gdvp->gv_s->gv_rect.draw) {
 	    go_draw(gdvp);
 
-	    dm_draw_viewobjs(gedp->ged_wdbp, gdvp, &tgd->go_dmv, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
+	    dm_draw_viewobjs(wdbp, gdvp, &tgd->go_dmv, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
 
 	    /* disable write to depth buffer */
 	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
@@ -72,6 +73,7 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 	    (void)dm_set_zbuffer((struct dm *)gdvp->dmp, 1);
 	}
 
+	wdb_close(wdbp);
 	return;
     } else if (tvd->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_INTERLAY) {
 	go_draw(gdvp);
@@ -117,7 +119,8 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 	go_draw(gdvp);
     }
 
-    dm_draw_viewobjs(gedp->ged_wdbp, gdvp, &tgd->go_dmv, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
+    dm_draw_viewobjs(wdbp, gdvp, &tgd->go_dmv, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
+    wdb_close(wdbp);
 }
 
 void

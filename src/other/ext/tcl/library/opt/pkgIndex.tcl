@@ -8,5 +8,5 @@
 # script is sourced, the variable $dir must contain the
 # full path name of this file's directory.
 
-if {![package vsatisfies [package provide Tcl] 8.2]} {return}
-package ifneeded opt 0.4.6 [list source [file join $dir optparse.tcl]]
+if {![package vsatisfies [package provide Tcl] 8.5-]} {return}
+package ifneeded opt 0.4.8 [list source [file join $dir optparse.tcl]]

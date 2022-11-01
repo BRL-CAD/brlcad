@@ -13,6 +13,6 @@ ple
 *x 4:	brown
 # More comments, this time delimited by hash-marks.
 	# Comment-line with space.
-*x6:	  
+*x6:
 *x9: \ \	\\\101\n
 # comment line as last line of file.

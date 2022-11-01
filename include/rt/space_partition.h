@@ -28,6 +28,7 @@
 #include "vmath.h"
 #include "bn/tol.h"
 #include "rt/defines.h"
+#include "rt/application.h"
 #include "rt/soltab.h"
 
 __BEGIN_DECLS

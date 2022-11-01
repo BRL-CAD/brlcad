@@ -226,6 +226,13 @@ BG_EXPORT extern int bg_polygon_triangulate(int **faces, int *num_faces, point2d
 					    const point2d_t *pts, const size_t npts, triangulation_t type);
 
 
+/* Test function - do not use */
+BG_EXPORT extern int
+bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+	const int *poly, const size_t poly_pnts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const point2d_t *pts);
 
 /*********************************************************
   Operations on 3D point types - these are assumed to be

@@ -50,8 +50,6 @@ main(int UNUSED(argc), const char **argv)
     bu_log("X valid: %d\n", vtype);
     vtype = dm_valid_type("ogl", NULL);
     bu_log("ogl valid: %d\n", vtype);
-    vtype = dm_valid_type("osgl", NULL);
-    bu_log("osgl valid: %d\n", vtype);
     vtype = dm_valid_type("wgl", NULL);
     bu_log("wgl valid: %d\n", vtype);
 

@@ -3,7 +3,8 @@
 #
 
 package require Tk
-package require tcltest ; namespace import -force tcltest::*
+package require tcltest 2.2
+namespace import -force tcltest::*
 loadTestedCommands
 
 test checkbutton-1.1 "Checkbutton check" -body {

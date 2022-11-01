@@ -29,6 +29,7 @@
 
 #include "bu/parallel.h"
 #include "rt/rt_instance.h"
+#include "rt/nmg_conv.h"
 #include "gcv.h"
 
 
@@ -143,7 +144,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     if (!BU_SETJUMP) {
 	/* try */
 	/* Write the region out */
-	data->write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color, data->client_data);
+	data->write_region(r, pathp, tsp, data->client_data);
     } else {
 	/* catch */
 	/* Error, bail out */

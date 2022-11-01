@@ -85,14 +85,12 @@ unless \fIinterp\fR is NULL.
 Otherwise, it returns \fBTCL_OK\fR.
 Passing a NULL \fIinterp\fR allows this procedure to be used
 as a test whether the conversion can be done (and in fact was done).
-.VS 8.5
 .PP
 In many cases, the \fItypePtr->setFromAnyProc\fR routine will
 set \fIobjPtr->typePtr\fR to the argument value \fItypePtr\fR,
 but that is no longer guaranteed.  The \fIsetFromAnyProc\fR is
 free to set the internal representation for \fIobjPtr\fR to make
 use of another related Tcl_ObjType, if it sees fit.
-.VE 8.5
 .SH "THE TCL_OBJTYPE STRUCTURE"
 .PP
 Extension writers can define new value types by defining four

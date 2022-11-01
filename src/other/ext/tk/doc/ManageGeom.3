@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tk_ManageGeometry 3 4.0 Tk "Tk Library Procedures"
 .so man.macros
 .BS
@@ -32,7 +32,7 @@ Arbitrary one-word value to pass to geometry manager callbacks.
 .PP
 \fBTk_ManageGeometry\fR arranges for a particular geometry manager,
 described by the \fImgrPtr\fR argument, to control the geometry
-of a particular slave window, given by \fItkwin\fR.
+of a particular content window, given by \fItkwin\fR.
 If \fItkwin\fR was previously managed by some other geometry manager,
 the previous manager loses control in favor of the new one.
 If \fImgrPtr\fR is NULL, geometry management is cancelled for
@@ -53,7 +53,7 @@ by the command \fBwinfo manager\fR.
 .PP
 \fIrequestProc\fR is a procedure in the geometry manager that
 will be invoked whenever \fBTk_GeometryRequest\fR is called by the
-slave to change its desired geometry.
+content window to change its desired geometry.
 \fIrequestProc\fR should have arguments and results that match the
 type \fBTk_GeomRequestProc\fR:
 .CS

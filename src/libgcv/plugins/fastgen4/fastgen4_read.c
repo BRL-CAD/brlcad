@@ -120,7 +120,7 @@ struct name_tree {
 #define NAME_TREE_MAGIC 0x55555555
 
 
-HIDDEN void
+static void
 check_name_tree_magic(const struct name_tree *tree)
 {
 	if (!tree) { \
@@ -133,7 +133,7 @@ check_name_tree_magic(const struct name_tree *tree)
 }
 
 
-HIDDEN void
+static void
 free_name_tree(struct name_tree *ptree)
 {
     if (!ptree)
@@ -172,7 +172,7 @@ struct holes {
 };
 
 
-HIDDEN const int hex_faces[12][3]={
+static const int hex_faces[12][3]={
     { 0, 1, 4 }, /* 1 */
     { 1, 5, 4 }, /* 2 */
     { 1, 2, 5 }, /* 3 */
@@ -236,7 +236,7 @@ struct conversion_state {
 };
 
 
-HIDDEN void
+static void
 fg4_zero_conversion_state(struct conversion_state *state)
 {
     memset(state, 0, sizeof(*state));
@@ -255,11 +255,14 @@ fg4_zero_conversion_state(struct conversion_state *state)
 }
 
 
-HIDDEN void
+static void
 fg4_free_conversion_state(struct conversion_state *state)
 {
     if (state->fpin)
 	fclose(state->fpin);
+
+    if (state->fpout)
+	wdb_close(state->fpout);
 
     if (state->fp_plot)
 	fclose(state->fp_plot);
@@ -318,7 +321,7 @@ fg4_free_conversion_state(struct conversion_state *state)
 
 
 /* convenient function for building regions */
-HIDDEN void
+static void
 make_region(const struct conversion_state *pstate, struct rt_wdb *fp, struct wmember *headp, const char *name, int r_id, const unsigned char *rgb)
 {
 	if (pstate->mode == MODE_PLATE) {
@@ -335,7 +338,7 @@ make_region(const struct conversion_state *pstate, struct rt_wdb *fp, struct wme
 }
 
 
-HIDDEN int
+static int
 get_line(struct conversion_state *pstate)
 {
     int len, done;
@@ -365,7 +368,7 @@ out:
 }
 
 
-HIDDEN unsigned char *
+static unsigned char *
 get_fast4_color(const struct conversion_state *pstate, int r_id) {
     struct fast4_color *fcp;
 
@@ -378,7 +381,7 @@ get_fast4_color(const struct conversion_state *pstate, int r_id) {
 }
 
 
-HIDDEN int
+static int
 is_a_hole(const struct conversion_state *pstate, int id)
 {
     struct holes *hole_ptr;
@@ -401,7 +404,7 @@ is_a_hole(const struct conversion_state *pstate, int id)
 }
 
 
-HIDDEN void
+static void
 plot_tri(const struct conversion_state *pstate, int pt1, int pt2, int pt3)
 {
     pdv_3move(pstate->fp_plot, pstate->grid_points[pt1]);
@@ -411,7 +414,7 @@ plot_tri(const struct conversion_state *pstate, int pt1, int pt2, int pt3)
 }
 
 
-HIDDEN void
+static void
 Check_names(struct conversion_state *pstate)
 {
     struct name_tree *ptr;
@@ -456,7 +459,7 @@ Check_names(struct conversion_state *pstate)
 }
 
 
-HIDDEN struct name_tree *
+static struct name_tree *
 Search_names(struct name_tree *root, const char *name, int *found)
 {
     struct name_tree *ptr;
@@ -489,7 +492,7 @@ Search_names(struct name_tree *root, const char *name, int *found)
 }
 
 
-HIDDEN struct name_tree *
+static struct name_tree *
 Search_ident(struct name_tree *root, int reg_id, int *found)
 {
     struct name_tree *ptr;
@@ -523,7 +526,7 @@ Search_ident(struct name_tree *root, int reg_id, int *found)
 }
 
 
-HIDDEN void
+static void
 List_names(struct conversion_state *pstate)
 {
     struct name_tree *ptr;
@@ -565,7 +568,7 @@ List_names(struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 Insert_region_name(struct conversion_state *pstate, const char *name, int reg_id)
 {
     struct name_tree *nptr_model, *rptr_model;
@@ -645,7 +648,7 @@ Insert_region_name(struct conversion_state *pstate, const char *name, int reg_id
 }
 
 
-HIDDEN char *
+static char *
 find_region_name(const struct conversion_state *pstate, int g_id, int c_id)
 {
     struct name_tree *ptr;
@@ -691,7 +694,7 @@ make_unique_name(struct bu_vls *name, const struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 make_region_name(struct conversion_state *pstate, int g_id, int c_id)
 {
     int r_id;
@@ -717,7 +720,7 @@ make_region_name(struct conversion_state *pstate, int g_id, int c_id)
 }
 
 
-HIDDEN char *
+static char *
 get_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 {
     int reg_id;
@@ -731,7 +734,7 @@ get_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 }
 
 
-HIDDEN void
+static void
 Insert_name(const struct conversion_state *pstate, struct name_tree **root, char *name, int inner)
 {
     struct name_tree *ptr;
@@ -780,7 +783,7 @@ Insert_name(const struct conversion_state *pstate, struct name_tree **root, char
 }
 
 
-HIDDEN char *
+static char *
 make_solid_name(struct conversion_state *pstate, char type, int element_id, int c_id, int g_id, int inner)
 {
     char *name;
@@ -793,7 +796,7 @@ make_solid_name(struct conversion_state *pstate, char type, int element_id, int 
 }
 
 
-HIDDEN void
+static void
 f4_do_compsplt(struct conversion_state *pstate)
 {
     int gr, co, gr1, co1;
@@ -833,7 +836,7 @@ f4_do_compsplt(struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 List_holes(const struct conversion_state *pstate)
 {
     struct holes *hole_ptr;
@@ -853,7 +856,7 @@ List_holes(const struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 Add_stragglers_to_groups(struct conversion_state *pstate)
 {
     struct name_tree *ptr;
@@ -912,7 +915,7 @@ Add_stragglers_to_groups(struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 f4_do_groups(struct conversion_state *pstate)
 {
     int group_no;
@@ -946,7 +949,7 @@ f4_do_groups(struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 f4_do_name(struct conversion_state *pstate)
 {
     int foundr = 0;
@@ -1006,7 +1009,7 @@ f4_do_name(struct conversion_state *pstate)
 }
 
 
-HIDDEN int
+static int
 f4_do_grid(struct conversion_state *pstate)
 {
     int grid_no;
@@ -1045,7 +1048,7 @@ f4_do_grid(struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 f4_do_sphere(struct conversion_state *pstate)
 {
     int element_id;
@@ -1126,7 +1129,7 @@ f4_do_sphere(struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 f4_do_vehicle(struct conversion_state *pstate)
 {
     if (pstate->pass)
@@ -1137,7 +1140,7 @@ f4_do_vehicle(struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 f4_do_cline(struct conversion_state *pstate)
 {
     int element_id;
@@ -1196,7 +1199,7 @@ f4_do_cline(struct conversion_state *pstate)
 }
 
 
-HIDDEN int
+static int
 f4_do_ccone1(struct conversion_state *pstate)
 {
     int element_id;
@@ -1402,7 +1405,7 @@ f4_do_ccone1(struct conversion_state *pstate)
 }
 
 
-HIDDEN int
+static int
 f4_do_ccone2(struct conversion_state *pstate)
 {
     int element_id;
@@ -1516,7 +1519,7 @@ f4_do_ccone2(struct conversion_state *pstate)
 }
 
 
-HIDDEN int
+static int
 f4_do_ccone3(struct conversion_state *pstate)
 {
     int element_id;
@@ -1724,7 +1727,7 @@ f4_do_ccone3(struct conversion_state *pstate)
 }
 
 
-HIDDEN int
+static int
 skip_region(const struct conversion_state *pstate, int id)
 {
     int i;
@@ -1741,7 +1744,7 @@ skip_region(const struct conversion_state *pstate, int id)
 }
 
 
-HIDDEN void
+static void
 Add_holes(struct conversion_state *pstate, int type, int gr, int comp, struct hole_list *ptr)
 {
     struct holes *hole_ptr = (struct holes *)NULL;
@@ -1816,7 +1819,7 @@ Add_holes(struct conversion_state *pstate, int type, int gr, int comp, struct ho
 }
 
 
-HIDDEN void
+static void
 f4_do_hole_wall(struct conversion_state *pstate, int type)
 {
     struct hole_list *list_ptr;
@@ -1890,7 +1893,7 @@ f4_do_hole_wall(struct conversion_state *pstate, int type)
 }
 
 
-HIDDEN void
+static void
 f4_Add_bot_face(struct conversion_state *pstate, int pt1, int pt2, int pt3, fastf_t thick, int pos)
 {
 
@@ -1934,7 +1937,7 @@ f4_Add_bot_face(struct conversion_state *pstate, int pt1, int pt2, int pt3, fast
 }
 
 
-HIDDEN void
+static void
 f4_do_tri(struct conversion_state *pstate)
 {
     int element_id;
@@ -1995,7 +1998,7 @@ f4_do_tri(struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 f4_do_quad(struct conversion_state *pstate)
 {
     int element_id;
@@ -2057,7 +2060,7 @@ f4_do_quad(struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 make_bot_object(struct conversion_state *pstate)
 {
     int i;
@@ -2123,7 +2126,7 @@ make_bot_object(struct conversion_state *pstate)
     bot_ip.orientation = RT_BOT_UNORIENTED;
     bot_ip.bot_flags = 0;
 
-    count = rt_bot_vertex_fuse(&bot_ip, &pstate->fpout->wdb_tol);
+    count = rt_bot_vertex_fuse(&bot_ip, &pstate->fpout->dbip->db_tol);
     if (count)
 	bu_log("WARNING: %d duplicate vertices eliminated from group %d component %d\n", count, pstate->group_id, pstate->comp_id);
 
@@ -2146,7 +2149,7 @@ make_bot_object(struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 skip_section(struct conversion_state *pstate)
 {
     b_off_t section_start;
@@ -2179,7 +2182,7 @@ skip_section(struct conversion_state *pstate)
 /* cleanup from previous component and start a new one.
  * This is called with final == 1 when ENDDATA is found
  */
-HIDDEN void
+static void
 f4_do_section(struct conversion_state *pstate, int final)
 {
     int found;
@@ -2251,7 +2254,7 @@ f4_do_section(struct conversion_state *pstate, int final)
 }
 
 
-HIDDEN int
+static int
 f4_do_hex1(struct conversion_state *pstate)
 {
     fastf_t thick=0.0;
@@ -2351,7 +2354,7 @@ f4_do_hex1(struct conversion_state *pstate)
 }
 
 
-HIDDEN int
+static int
 f4_do_hex2(struct conversion_state *pstate)
 {
     int pts[8];
@@ -2417,7 +2420,7 @@ f4_do_hex2(struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 Process_hole_wall(struct conversion_state *pstate)
 {
     if (pstate->gcv_options->debug_mode)
@@ -2463,7 +2466,7 @@ Process_hole_wall(struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 f4_do_chgcomp(const struct conversion_state *pstate)
 {
 
@@ -2477,7 +2480,7 @@ f4_do_chgcomp(const struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 f4_do_cbacking(struct conversion_state *pstate)
 {
     int gr1, co1, gr2, co2, material;
@@ -2514,7 +2517,7 @@ f4_do_cbacking(struct conversion_state *pstate)
 }
 
 
-HIDDEN int
+static int
 Process_input(struct conversion_state *pstate, int pass_number)
 {
     if (pstate->gcv_options->debug_mode)
@@ -2592,7 +2595,7 @@ Process_input(struct conversion_state *pstate, int pass_number)
 }
 
 
-HIDDEN void
+static void
 make_region_list(struct conversion_state *pstate, const char *in_str)
 {
     char *str = bu_strdup(in_str);
@@ -2632,7 +2635,7 @@ make_region_list(struct conversion_state *pstate, const char *in_str)
 }
 
 
-HIDDEN void
+static void
 make_regions(struct conversion_state *pstate)
 {
     struct name_tree *ptr1, *ptr2;
@@ -2797,7 +2800,7 @@ make_regions(struct conversion_state *pstate)
 
 #define COLOR_LINE_LEN 256
 
-HIDDEN void
+static void
 read_fast4_colors(struct conversion_state *pstate, const char *color_file)
 {
     FILE *fp;
@@ -2847,7 +2850,7 @@ fastgen4_read_options
 };
 
 
-HIDDEN void
+static void
 fastgen4_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
 {
     struct fastgen4_read_options *options_data;
@@ -2868,14 +2871,14 @@ fastgen4_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data
 }
 
 
-HIDDEN void
+static void
 fastgen4_free_opts(void *options_data)
 {
     bu_free(options_data, "options_data");
 }
 
 
-HIDDEN int
+static int
 fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *source_path)
 {
     const struct fastgen4_read_options * const fg4_read_options =
@@ -2886,18 +2889,20 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
     fg4_zero_conversion_state(&state);
     state.gcv_options = gcv_options;
 
-    state.fpout = context->dbip->dbi_wdbp;
+    state.fpout = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
 
     if (fg4_read_options->muves_path)
 	if ((state.fp_muves=fopen(fg4_read_options->muves_path, "wb")) == (FILE *)NULL) {
 	    bu_log("Unable to open MUVES file (%s)\n\tno MUVES file created\n", fg4_read_options->muves_path);
 	    fg4_free_conversion_state(&state);
+	    wdb_close(state.fpout);
 	    return 0;
 	}
 
     if ((state.fpin=fopen(source_path, "rb")) == (FILE *)NULL) {
 	bu_log("Cannot open FASTGEN4 file (%s)\n", source_path);
 	fg4_free_conversion_state(&state);
+	wdb_close(state.fpout);
 	return 0;
     }
 
@@ -2905,6 +2910,7 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
 	if ((state.fp_plot=fopen(fg4_read_options->plot_path, "wb")) == NULL) {
 	    bu_log("Cannot open plot file (%s)\n", fg4_read_options->plot_path);
 	    fg4_free_conversion_state(&state);
+	    wdb_close(state.fpout);
 	    return 0;
 	}
     }

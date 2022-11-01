@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH tkvars n 4.1 Tk "Tk Built-In Commands"
 .so man.macros
 .BS
@@ -26,7 +26,7 @@ plus other files containing procedures that implement default behaviors
 for widgets.
 .RS
 .PP
-The initial value of \fBtcl_library\fR is set when Tk is added to
+The initial value of \fBtk_library\fR is set when Tk is added to
 an interpreter;  this is done by searching several different directories
 until one is found that contains an appropriate Tk startup script.
 If the \fBTK_LIBRARY\fR environment variable exists, then

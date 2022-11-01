@@ -35,6 +35,14 @@
 
 #include "tclInt.h"
 
+#ifndef TCL_CFGVAL_ENCODING
+#   ifdef _WIN32
+#	define TCL_CFGVAL_ENCODING "cp1252"
+#   else
+#	define TCL_CFGVAL_ENCODING "iso8859-1"
+#   endif
+#endif
+
 /*
  * Use C preprocessor statements to define the various values for the embedded
  * configuration information.

@@ -96,7 +96,7 @@ lswap(unsigned int *v)
 
 
 static void
-nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]), void *UNUSED(client_data))
+nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *UNUSED(tsp), void *UNUSED(client_data))
 {
     struct model *m;
     struct shell *s;

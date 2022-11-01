@@ -10,8 +10,8 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -142,7 +142,7 @@ test if-1.16 {TclCompileIfCmd: test jumpFalse instruction replacement after long
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 2
@@ -165,7 +165,7 @@ test if-1.16 {TclCompileIfCmd: test jumpFalse instruction replacement after long
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 3
@@ -239,7 +239,7 @@ test if-2.5 {TclCompileIfCmd: test jumpFalse instruction replacement after long 
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 2
@@ -262,7 +262,7 @@ test if-2.5 {TclCompileIfCmd: test jumpFalse instruction replacement after long 
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 3
@@ -287,7 +287,7 @@ test if-2.5 {TclCompileIfCmd: test jumpFalse instruction replacement after long 
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 5
@@ -310,7 +310,7 @@ test if-2.5 {TclCompileIfCmd: test jumpFalse instruction replacement after long 
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 6
@@ -389,7 +389,7 @@ test if-3.6 {TclCompileIfCmd: test jumpFalse instruction replacement after long 
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 2
@@ -412,7 +412,7 @@ test if-3.6 {TclCompileIfCmd: test jumpFalse instruction replacement after long 
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 3
@@ -437,7 +437,7 @@ test if-3.6 {TclCompileIfCmd: test jumpFalse instruction replacement after long 
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 5
@@ -460,7 +460,7 @@ test if-3.6 {TclCompileIfCmd: test jumpFalse instruction replacement after long 
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 6
@@ -485,7 +485,7 @@ test if-3.6 {TclCompileIfCmd: test jumpFalse instruction replacement after long 
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 8
@@ -508,7 +508,7 @@ test if-3.6 {TclCompileIfCmd: test jumpFalse instruction replacement after long 
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 9
@@ -713,7 +713,7 @@ test if-5.16 {if cmd with computed command names: test jumpFalse instruction rep
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 2
@@ -736,7 +736,7 @@ test if-5.16 {if cmd with computed command names: test jumpFalse instruction rep
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 3
@@ -816,7 +816,7 @@ test if-6.5 {if cmd with computed command names: test jumpFalse instruction repl
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 2
@@ -839,7 +839,7 @@ test if-6.5 {if cmd with computed command names: test jumpFalse instruction repl
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 3
@@ -864,7 +864,7 @@ test if-6.5 {if cmd with computed command names: test jumpFalse instruction repl
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 5
@@ -887,7 +887,7 @@ test if-6.5 {if cmd with computed command names: test jumpFalse instruction repl
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 6
@@ -975,7 +975,7 @@ test if-7.6 {if cmd with computed command names: test jumpFalse instruction repl
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 2
@@ -998,7 +998,7 @@ test if-7.6 {if cmd with computed command names: test jumpFalse instruction repl
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 3
@@ -1023,7 +1023,7 @@ test if-7.6 {if cmd with computed command names: test jumpFalse instruction repl
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 5
@@ -1046,7 +1046,7 @@ test if-7.6 {if cmd with computed command names: test jumpFalse instruction repl
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 6
@@ -1071,7 +1071,7 @@ test if-7.6 {if cmd with computed command names: test jumpFalse instruction repl
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 8
@@ -1094,7 +1094,7 @@ test if-7.6 {if cmd with computed command names: test jumpFalse instruction repl
 		    set i $i
 		    set i [lindex $s $i]
 		}
-		set i [expr $i-1]
+		incr i -1
 	    }
 	}
 	set a 9

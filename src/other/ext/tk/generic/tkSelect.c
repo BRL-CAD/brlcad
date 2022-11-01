@@ -28,7 +28,7 @@ typedef struct {
 				 * chunk. */
     char buffer[4];	/* A buffer to hold part of a UTF character
 				 * that is split across chunks. */
-    char command[1];		/* Command to invoke. Actual space is
+    char command[TKFLEXARRAY];		/* Command to invoke. Actual space is
 				 * allocated as large as necessary. This must
 				 * be the last entry in the structure. */
 } CommandInfo;
@@ -125,7 +125,7 @@ Tk_CreateSelHandler(
 				 * listed in the ICCCM will be tolerated
 				 * (blech). */
 {
-    register TkSelHandler *selPtr;
+    TkSelHandler *selPtr;
     TkWindow *winPtr = (TkWindow *) tkwin;
 
     if (winPtr->dispPtr->multipleAtom == None) {
@@ -139,7 +139,7 @@ Tk_CreateSelHandler(
 
     for (selPtr = winPtr->selHandlerList; ; selPtr = selPtr->nextPtr) {
 	if (selPtr == NULL) {
-	    selPtr = ckalloc(sizeof(TkSelHandler));
+	    selPtr = (TkSelHandler *)ckalloc(sizeof(TkSelHandler));
 	    selPtr->nextPtr = winPtr->selHandlerList;
 	    winPtr->selHandlerList = selPtr;
 	    break;
@@ -177,7 +177,7 @@ Tk_CreateSelHandler(
 	target = winPtr->dispPtr->utf8Atom;
 	for (selPtr = winPtr->selHandlerList; ; selPtr = selPtr->nextPtr) {
 	    if (selPtr == NULL) {
-		selPtr = ckalloc(sizeof(TkSelHandler));
+		selPtr = (TkSelHandler *)ckalloc(sizeof(TkSelHandler));
 		selPtr->nextPtr = winPtr->selHandlerList;
 		winPtr->selHandlerList = selPtr;
 		selPtr->selection = selection;
@@ -239,9 +239,9 @@ Tk_DeleteSelHandler(
 				 * removed. */
 {
     TkWindow *winPtr = (TkWindow *) tkwin;
-    register TkSelHandler *selPtr, *prevPtr;
-    register TkSelInProgress *ipPtr;
-    ThreadSpecificData *tsdPtr =
+    TkSelHandler *selPtr, *prevPtr;
+    TkSelInProgress *ipPtr;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
@@ -353,7 +353,7 @@ Tk_OwnSelection(
     ClientData clientData)	/* Arbitrary one-word argument to pass to
 				 * proc. */
 {
-    register TkWindow *winPtr = (TkWindow *) tkwin;
+    TkWindow *winPtr = (TkWindow *) tkwin;
     TkDisplay *dispPtr = winPtr->dispPtr;
     TkSelectionInfo *infoPtr;
     Tk_LostSelProc *clearProc = NULL;
@@ -382,7 +382,7 @@ Tk_OwnSelection(
 	}
     }
     if (infoPtr == NULL) {
-	infoPtr = ckalloc(sizeof(TkSelectionInfo));
+	infoPtr = (TkSelectionInfo *)ckalloc(sizeof(TkSelectionInfo));
 	infoPtr->selection = selection;
 	infoPtr->nextPtr = dispPtr->selectionInfoPtr;
 	dispPtr->selectionInfoPtr = infoPtr;
@@ -460,7 +460,7 @@ Tk_ClearSelection(
     Tk_Window tkwin,		/* Window that selects a display. */
     Atom selection)		/* Selection to be cancelled. */
 {
-    register TkWindow *winPtr = (TkWindow *) tkwin;
+    TkWindow *winPtr = (TkWindow *) tkwin;
     TkDisplay *dispPtr = winPtr->dispPtr;
     TkSelectionInfo *infoPtr;
     TkSelectionInfo *prevPtr;
@@ -556,7 +556,7 @@ Tk_GetSelection(
     TkWindow *winPtr = (TkWindow *) tkwin;
     TkDisplay *dispPtr = winPtr->dispPtr;
     TkSelectionInfo *infoPtr;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (dispPtr->multipleAtom == None) {
@@ -577,7 +577,7 @@ Tk_GetSelection(
 	}
     }
     if (infoPtr != NULL) {
-	register TkSelHandler *selPtr;
+	TkSelHandler *selPtr;
 	int offset, result, count;
 	char buffer[TK_SEL_BYTES_AT_ONCE+1];
 	TkSelInProgress ip;
@@ -670,7 +670,7 @@ Tk_SelectionObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    Tk_Window tkwin = clientData;
+    Tk_Window tkwin = (Tk_Window)clientData;
     const char *path = NULL;
     Atom selection;
     const char *selName = NULL;
@@ -830,7 +830,7 @@ Tk_SelectionObjCmd(
 	Atom target, format;
 	const char *targetName = NULL;
 	const char *formatName = NULL;
-	register CommandInfo *cmdInfoPtr;
+	CommandInfo *cmdInfoPtr;
 	int cmdLength;
 	static const char *const handleOptionStrings[] = {
 	    "-format", "-selection", "-type", NULL
@@ -904,7 +904,7 @@ Tk_SelectionObjCmd(
 	if (cmdLength == 0) {
 	    Tk_DeleteSelHandler(tkwin, selection, target);
 	} else {
-	    cmdInfoPtr = ckalloc(Tk_Offset(CommandInfo, command)
+	    cmdInfoPtr = (CommandInfo *)ckalloc(Tk_Offset(CommandInfo, command)
 		    + 1 + cmdLength);
 	    cmdInfoPtr->interp = interp;
 	    cmdInfoPtr->charOffset = 0;
@@ -919,7 +919,7 @@ Tk_SelectionObjCmd(
     }
 
     case SELECTION_OWN: {
-	register LostCommand *lostPtr;
+	LostCommand *lostPtr;
 	Tcl_Obj *commandObj = NULL;
 	static const char *const ownOptionStrings[] = {
 	    "-command", "-displayof", "-selection", NULL
@@ -1008,7 +1008,7 @@ Tk_SelectionObjCmd(
 	    Tk_OwnSelection(tkwin, selection, NULL, NULL);
 	    return TCL_OK;
 	}
-	lostPtr = ckalloc(sizeof(LostCommand));
+	lostPtr = (LostCommand *)ckalloc(sizeof(LostCommand));
 	lostPtr->interp = interp;
 	lostPtr->cmdObj = commandObj;
 	Tcl_IncrRefCount(commandObj);
@@ -1040,7 +1040,7 @@ Tk_SelectionObjCmd(
 TkSelInProgress *
 TkSelGetInProgress(void)
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     return tsdPtr->pendingPtr;
@@ -1067,7 +1067,7 @@ void
 TkSelSetInProgress(
     TkSelInProgress *pendingPtr)
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     tsdPtr->pendingPtr = pendingPtr;
@@ -1092,12 +1092,12 @@ TkSelSetInProgress(
 
 void
 TkSelDeadWindow(
-    register TkWindow *winPtr)	/* Window that's being deleted. */
+    TkWindow *winPtr)	/* Window that's being deleted. */
 {
-    register TkSelHandler *selPtr;
-    register TkSelInProgress *ipPtr;
+    TkSelHandler *selPtr;
+    TkSelInProgress *ipPtr;
     TkSelectionInfo *infoPtr, *prevPtr, *nextPtr;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
@@ -1170,7 +1170,7 @@ TkSelInit(
     Tk_Window tkwin)		/* Window token (used to find display to
 				 * initialize). */
 {
-    register TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
+    TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
 
     /*
      * Fetch commonly-used atoms.
@@ -1191,7 +1191,7 @@ TkSelInit(
      * Using UTF8_STRING instead of the XA_UTF8_STRING macro allows us to
      * support older X servers that didn't have UTF8_STRING yet. This is
      * necessary on Unix systems. For more information, see:
-     *	  http://www.cl.cam.ac.uk/~mgk25/unicode.html#x11
+     *	  https://www.cl.cam.ac.uk/~mgk25/unicode.html#x11
      */
 
 #if !defined(_WIN32)
@@ -1221,9 +1221,9 @@ TkSelInit(
 void
 TkSelClearSelection(
     Tk_Window tkwin,		/* Window for which event was targeted. */
-    register XEvent *eventPtr)	/* X SelectionClear event. */
+    XEvent *eventPtr)	/* X SelectionClear event. */
 {
-    register TkWindow *winPtr = (TkWindow *) tkwin;
+    TkWindow *winPtr = (TkWindow *) tkwin;
     TkDisplay *dispPtr = winPtr->dispPtr;
     TkSelectionInfo *infoPtr;
     TkSelectionInfo *prevPtr;
@@ -1285,16 +1285,15 @@ TkSelClearSelection(
  *--------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 static int
 SelGetProc(
     ClientData clientData,	/* Dynamic string holding partially assembled
 				 * selection. */
-    Tcl_Interp *interp,		/* Interpreter used for error reporting (not
+    TCL_UNUSED(Tcl_Interp *),	/* Interpreter used for error reporting (not
 				 * used). */
     const char *portion)	/* New information to be appended. */
 {
-    Tcl_DStringAppend(clientData, portion, -1);
+    Tcl_DStringAppend((Tcl_DString *)clientData, portion, -1);
     return TCL_OK;
 }
 
@@ -1326,7 +1325,7 @@ HandleTclCommand(
     char *buffer,		/* Place to store converted selection. */
     int maxBytes)		/* Maximum # of bytes to store at buffer. */
 {
-    CommandInfo *cmdInfoPtr = clientData;
+    CommandInfo *cmdInfoPtr = (CommandInfo *)clientData;
     int length;
     Tcl_Obj *command;
     const char *string;
@@ -1400,17 +1399,18 @@ HandleTclCommand(
 		cmdInfoPtr->charOffset += Tcl_NumUtfChars(string, -1);
 		cmdInfoPtr->buffer[0] = '\0';
 	    } else {
+		Tcl_UniChar ch = 0;
 		p = string;
 		string += count;
 		numChars = 0;
 		while (p < string) {
-		    p = Tcl_UtfNext(p);
+		    p += Tcl_UtfToUniChar(p, &ch);
 		    numChars++;
 		}
 		cmdInfoPtr->charOffset += numChars;
 		length = p - string;
 		if (length > 0) {
-		    strncpy(cmdInfoPtr->buffer, string, (size_t) length);
+		    strncpy(cmdInfoPtr->buffer, string, length);
 		}
 		cmdInfoPtr->buffer[length] = '\0';
 	    }
@@ -1469,7 +1469,7 @@ TkSelDefaultSelection(
     Atom *typePtr)		/* Store here the type of the selection, for
 				 * use in converting to proper X format. */
 {
-    register TkWindow *winPtr = (TkWindow *) infoPtr->owner;
+    TkWindow *winPtr = (TkWindow *) infoPtr->owner;
     TkDisplay *dispPtr = winPtr->dispPtr;
 
     if (target == dispPtr->timestampAtom) {
@@ -1482,7 +1482,7 @@ TkSelDefaultSelection(
     }
 
     if (target == dispPtr->targetsAtom) {
-	register TkSelHandler *selPtr;
+	TkSelHandler *selPtr;
 	int length;
 	Tcl_DString ds;
 
@@ -1508,7 +1508,7 @@ TkSelDefaultSelection(
 	    Tcl_DStringFree(&ds);
 	    return -1;
 	}
-	memcpy(buffer, Tcl_DStringValue(&ds), (unsigned) (1+length));
+	memcpy(buffer, Tcl_DStringValue(&ds), length + 1);
 	Tcl_DStringFree(&ds);
 	*typePtr = XA_ATOM;
 	return length;
@@ -1565,7 +1565,7 @@ static void
 LostSelection(
     ClientData clientData)	/* Pointer to LostCommand structure. */
 {
-    LostCommand *lostPtr = clientData;
+    LostCommand *lostPtr = (LostCommand *)clientData;
     Tcl_Interp *interp = lostPtr->interp;
     Tcl_InterpState savedState;
     int code;

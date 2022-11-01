@@ -25,7 +25,7 @@ struct iges_edge_list *
 Read_edge_list(struct iges_edge_use *edge)
 {
     struct iges_edge_list *edge_list;
-    int entityno;
+    size_t entityno;
     int sol_num = 0;
     int i;
 

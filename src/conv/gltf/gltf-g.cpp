@@ -97,7 +97,7 @@ gathershapeinfo(const tinygltf::Model &model, int &numvert, int &numfaces)
 	unsigned short* indices = (unsigned short*) dataPtr;
 	int *faces = new int[bufferView.byteLength / byte_stride];
 	//int faces[bufferView.byteLength / byte_stride] ;
-	numfaces = bufferView.byteLength / byte_stride;
+	numfaces = (int)bufferView.byteLength / byte_stride;
 
 	for(long unsigned int i = 0; i < bufferView.byteLength / byte_stride; i++) {
 	    //std::cout << "i : " << i  << " = " << indices[i] << std::endl;
@@ -166,7 +166,7 @@ insertvectorfaces(const tinygltf::Model &model, double vertices[], int faces[])
 
 	unsigned short* indices = (unsigned short*) dataPtr;
 	//int faces[bufferView.byteLength / byte_stride] ;
-	int numfaces = bufferView.byteLength / byte_stride;
+	int numfaces = (int)bufferView.byteLength / byte_stride;
 
 	for(long unsigned int i = 0; i < bufferView.byteLength / byte_stride; i++) {
 	    //std::cout << "i : " << i  << " = " << indices[i] << std::endl;
@@ -193,7 +193,7 @@ insertvectorfaces(const tinygltf::Model &model, double vertices[], int faces[])
 	float* positions = (float*) dataPtr;
 	//change double to fast_f for mk_bot
 	//double vertices[(bufferView.byteLength / byte_stride) * 3] ;
-	int numvert = (bufferView.byteLength / byte_stride) * 3;
+	int numvert = ((int)bufferView.byteLength / byte_stride) * 3;
 
 	for(long unsigned int i = 0; i < bufferView.byteLength / byte_stride; i++) {
 	    std::cout << "i : " << i  << " = " << positions[i*3] << " , "
@@ -295,8 +295,8 @@ int main(int argc, char **argv)
     std::cout << "Num vert : " << num_vert_values / 3 << std::endl;
     std::cout << "Num faces: " << num_face_values / 3 << std::endl;
 
-    int *faces = new int[num_face_values*3];
-    double *vertices = new double[num_vert_values*3];
+    int *faces = new int[(size_t)num_face_values*3];
+    double *vertices = new double[(size_t)num_vert_values*3];
     //int faces[num_faces];
     //double vertices[num_vert_values];
 

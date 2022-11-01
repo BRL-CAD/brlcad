@@ -26,7 +26,7 @@
 #include "brep.h"
 
 void
-Add_face_to_brep(ON_Brep* brep, int entityno, int face_orient)
+Add_face_to_brep(ON_Brep* brep, size_t entityno, int face_orient)
 {
 
 }
@@ -35,7 +35,7 @@ Add_face_to_brep(ON_Brep* brep, int entityno, int face_orient)
 struct faceuse *
 Add_face_to_shell(s , entityno , face_orient)
      struct shell *s;
-     int entityno;
+     size_t entityno;
      int face_orient;
 {
 

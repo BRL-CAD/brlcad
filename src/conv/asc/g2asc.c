@@ -879,7 +879,7 @@ arbn_dump(void)
 
     fprintf(ofp, "%c %.16s %lu\n", 'n', name, (unsigned long)arbn->neqn);
     for (i = 0; i < arbn->neqn; i++) {
-	fprintf(ofp, "n %26.20e %20.26e %26.20e %26.20e\n",
+	fprintf(ofp, "n %26.20e %26.20e %26.20e %26.20e\n",
 		arbn->eqn[i][X], arbn->eqn[i][Y],
 		arbn->eqn[i][Z], arbn->eqn[i][3]);
     }

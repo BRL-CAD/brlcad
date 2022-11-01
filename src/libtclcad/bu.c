@@ -68,7 +68,7 @@ lwrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
  *
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
-HIDDEN int
+static int
 tcl_bu_prmem(void *UNUSED(clientData),
 	     int argc,
 	     const char **argv)
@@ -105,7 +105,7 @@ tcl_bu_prmem(void *UNUSED(clientData),
  *
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
-HIDDEN int
+static int
 tcl_bu_get_value_by_keyword(void *clientData,
 			    int argc,
 			    const char **argv)
@@ -189,7 +189,7 @@ tcl_bu_get_value_by_keyword(void *clientData,
  *
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
-HIDDEN int
+static int
 tcl_bu_rgb_to_hsv(void *clientData,
 		  int argc,
 		  const char **argv)
@@ -238,7 +238,7 @@ tcl_bu_rgb_to_hsv(void *clientData,
  *
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
-HIDDEN int
+static int
 tcl_bu_hsv_to_rgb(void *clientData,
 		  int argc,
 		  const char **argv)
@@ -358,7 +358,7 @@ _tclcad_bu_dir_print(const char *dirkey, int fail_quietly)
  *
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
-HIDDEN int
+static int
 tcl_bu_dir(void *clientData,
 		   int argc,
 		   const char **argv)
@@ -381,7 +381,7 @@ tcl_bu_dir(void *clientData,
  *
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
-HIDDEN int
+static int
 tcl_bu_brlcad_dir(void *clientData,
 		   int argc,
 		   const char **argv)
@@ -433,7 +433,7 @@ tcl_bu_brlcad_dir(void *clientData,
  *
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
-HIDDEN int
+static int
 tcl_bu_brlcad_root(void *clientData,
 		   int argc,
 		   const char **argv)
@@ -469,7 +469,7 @@ tcl_bu_brlcad_root(void *clientData,
  *
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
-HIDDEN int
+static int
 tcl_bu_units_conversion(void *clientData,
 			int argc,
 			const char **argv)

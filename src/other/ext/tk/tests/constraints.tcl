@@ -5,7 +5,7 @@ if {[namespace exists tk::test]} {
     return
 }
 
-package require Tk 8.4
+package require Tk
 tk appname tktest
 wm title . tktest
 # If the main window isn't already mapped (e.g. because the tests are
@@ -17,7 +17,7 @@ if {![winfo ismapped .]} {
     update
 }
 
-package require tcltest 2.1
+package require tcltest 2.2
 
 namespace eval tk {
     namespace eval test {
@@ -37,7 +37,7 @@ namespace eval tk {
 
 	namespace eval bg {
 	    # Manage a background process.
-	    # Replace with slave interp or thread?
+	    # Replace with child interp or thread?
 	    namespace import ::tcltest::interpreter
 	    namespace import ::tk::test::loadTkCommand
 	    namespace export setup cleanup do
@@ -172,6 +172,67 @@ namespace eval tk {
             return $r
         }
 
+	#
+	#  CONTROL TIMING ASPECTS OF POINTER WARPING
+	#
+	# The proc [controlPointerWarpTiming] takes care of the following timing
+	# details of pointer warping:
+	#
+	# a. Allow pointer warping to happen if it was scheduled for execution at
+	#    idle time.
+	#    - In Tk releases 8.6 and older, pointer warping is scheduled for
+	#      execution at idle time
+	#    - In release 8.7 and newer this happens synchronously and no extra
+	#      control is needed.
+	#    The namespace variable idle_pointer_warping records which of these is
+	#    the case.
+	#
+	# b. Work around a race condition associated with OS notification of
+	#    mouse motion on Windows.
+	#
+	#    When calling [event generate $w $event -warp 1 ...], the following
+	#    sequence occurs:
+	#    - At some point in the processing of this command, either via a
+	#      synchronous execution path, or asynchronously at idle time, Tk calls
+	#      an OS function* to carry out the mouse cursor motion.
+	#    - Tk has previously registered a callback function** with the OS, for
+	#      the OS to call in order to notify Tk when a mouse move is completed.
+	#    - Tk doesn't wait for the callback function to receive the notification
+	#      from the OS, but continues processing. This suits most use cases
+	#      because (usually) the notification comes quickly enough
+	#      (range: a few ms?). However ...
+	#    - A problem arises if Tk performs some processing, immediately following
+	#      up on [event generate $w $event -warp 1 ...], and that processing
+	#      relies on the mouse pointer having actually moved. If such processing
+	#      happens just before the notification from the OS has been received,
+	#      Tk will be using not yet updated info (e.g. mouse coordinates).
+	#
+	#         Hickup, choke etc ... !
+	#
+	#            *  the function SendInput() of the Win32 API
+	#            ** the callback function is TkWinChildProc()
+	#
+	#    This timing issue can be addressed by putting the Tk process on hold
+	#    (do nothing at all) for a somewhat extended amount of time, while
+	#    letting the OS complete its job in the meantime. This is what is
+	#    accomplished by calling [after ms].
+	#
+	#    ----
+	#    For the history of this issue please refer to Tk ticket [69b48f427e],
+	#    specifically the comment on 2019-10-27 14:24:26.
+	#
+	variable idle_pointer_warping [expr {![package vsatisfies [package provide Tk] 8.7-]}]
+	proc controlPointerWarpTiming {{duration 50}} {
+		variable idle_pointer_warping
+		if {$idle_pointer_warping} {
+			update idletasks ;# see a. above
+		}
+		if {[tk windowingsystem] eq "win32"} {
+			after $duration ;# see b. above
+		}
+	}
+	namespace export controlPointerWarpTiming
+
     }
 }
 
@@ -197,8 +258,8 @@ testConstraint noExceed [expr {
 }]
 
 # constraints for testing facilities defined in the tktest executable...
-testConstraint testImageType [expr {[lsearch [image types] test] >= 0}]
-testConstraint testOldImageType [expr {[lsearch [image types] oldtest] >= 0}]
+testConstraint testImageType [expr {"test" in [image types]}]
+testConstraint testOldImageType [expr {"oldtest" in [image types]}]
 testConstraint testbitmap    [llength [info commands testbitmap]]
 testConstraint testborder    [llength [info commands testborder]]
 testConstraint testcbind     [llength [info commands testcbind]]
@@ -247,10 +308,10 @@ testConstraint pseudocolor8 [expr {
 }]
 destroy .t
 testConstraint haveTruecolor24 [expr {
-    [lsearch -exact [winfo visualsavailable .] {truecolor 24}] >= 0
+    {truecolor 24} in [winfo visualsavailable .]
 }]
 testConstraint haveGrayscale8 [expr {
-    [lsearch -exact [winfo visualsavailable .] {grayscale 8}] >= 0
+    {grayscale 8} in [winfo visualsavailable .]
 }]
 testConstraint defaultPseudocolor8 [expr {
     ([winfo visual .] eq "pseudocolor") && ([winfo depth .] == 8)

@@ -36,10 +36,10 @@
 
 char *
 strstr(
-    register char *string,	/* String to search. */
-    char *substring)		/* Substring to try to find in string. */
+    const char *string,		/* String to search. */
+    const char *substring)		/* Substring to try to find in string. */
 {
-    register char *a, *b;
+    const char *a, *b;
 
     /*
      * First scan quickly through the two strings looking for a
@@ -49,7 +49,7 @@ strstr(
 
     b = substring;
     if (*b == 0) {
-	return string;
+	return (char *)string;
     }
     for ( ; *string != 0; string += 1) {
 	if (*string != *b) {
@@ -58,7 +58,7 @@ strstr(
 	a = string;
 	while (1) {
 	    if (*b == 0) {
-		return string;
+		return (char *)string;
 	    }
 	    if (*a++ != *b++) {
 		break;

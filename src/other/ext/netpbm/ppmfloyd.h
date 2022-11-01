@@ -15,17 +15,17 @@ struct ppm_fs_info {
     /* thisXerr and nextXerr are dynamically allocated arrays each of whose
        dimension is the width of the image plus 2
        */
-    long *thisrederr;
-    long *thisgreenerr;
-    long *thisblueerr;
-    long *nextrederr;
-    long *nextgreenerr;
-    long *nextblueerr;
+    long * thisrederr;
+    long * thisgreenerr;
+    long * thisblueerr;
+    long * nextrederr;
+    long * nextgreenerr;
+    long * nextblueerr;
     int lefttoright;
     int cols;
     pixval maxval;
     int flags;
-    pixel *pixrow;
+    pixel * pixrow;
     int col_end;
     pixval red, green, blue;
 };
@@ -37,7 +37,9 @@ typedef struct ppm_fs_info ppm_fs_info;
 #define FS_ALTERNATE  0x02
 
 ppm_fs_info *
-ppm_fs_init(int cols, pixval maxval, int flags);
+ppm_fs_init(unsigned int const cols,
+            pixval       const maxval,
+            unsigned int const flags);
 
 void
 ppm_fs_free(ppm_fs_info *fi);

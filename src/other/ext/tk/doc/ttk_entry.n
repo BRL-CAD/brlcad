@@ -23,7 +23,9 @@ with the \fB\-textvariable\fR option.
 Entry widgets support horizontal scrolling with the
 standard \fB\-xscrollcommand\fR option and \fBxview\fR widget command.
 .SO ttk_widget
-\-class	\-cursor	\-style
+\-class	\-cursor
+\-font	\-foreground
+\-style
 \-takefocus	\-xscrollcommand
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
@@ -34,8 +36,6 @@ If the selection is exported, then selecting in the widget deselects
 the current X selection, selecting outside the widget deselects any
 widget selection, and the widget will respond to selection retrieval
 requests when it has a selection.
-.\" MAYBE: .OP \-font font Font
-.\" MAYBE: .OP \-foreground foreground Foreground
 .\" MAYBE: .OP \-insertbackground insertBackground Foreground
 .\" MAYBE: .OP \-insertwidth insertWidth InsertWidth
 .OP \-invalidcommand invalidCommand InvalidCommand
@@ -353,9 +353,10 @@ insert cursor in the entry without affecting the selection.
 If any normal printing characters are typed in an entry, they are
 inserted at the point of the insert cursor.
 .IP \0\(bu 4
-The view in the entry can be adjusted by dragging with mouse button 2.
-If mouse button 2 is clicked without moving the mouse, the selection
-is copied into the entry at the position of the mouse cursor.
+The view in the entry can be adjusted by dragging with the middle
+mouse button (button 2, or button 3 in TkAqua). If the middle mouse
+button is clicked without moving the mouse, the selection is copied
+into the entry at the position of the mouse cursor.
 .IP \0\(bu 4
 If the mouse is dragged out of the entry on the left or right sides
 while button 1 is pressed, the entry will automatically scroll to
@@ -446,6 +447,8 @@ value is specified for \fB\-fieldbackground\fP. Otherwise it is ignored.
 Some themes use a graphical background and their field background colors cannot be changed.
 .RE
 \fB\-foreground\fP \fIcolor\fP
+.br
+\fB\-insertcolor\fP \fIcolor\fP
 .br
 \fB\-insertwidth\fP \fIamount\fP
 .br

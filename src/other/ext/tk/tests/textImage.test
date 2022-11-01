@@ -74,7 +74,7 @@ test textImage-1.6 {configure argument checking} -setup {
 } -body {
     text .t -font test_font -bd 0 -highlightthickness 0 -padx 0 -pady 0
     pack .t
-    .t image configure 
+    .t image configure
 } -cleanup {
     destroy .t
 } -returnCodes error -result {wrong # args: should be ".t image configure index ?-option value ...?"}
@@ -84,7 +84,7 @@ test textImage-1.7 {configure argument checking} -setup {
 } -body {
     text .t -font test_font -bd 0 -highlightthickness 0 -padx 0 -pady 0
     pack .t
-    .t image configure blurf 
+    .t image configure blurf
 } -cleanup {
     destroy .t
 } -returnCodes error -result {bad text index "blurf"}
@@ -94,7 +94,7 @@ test textImage-1.8 {configure argument checking} -setup {
 } -body {
     text .t -font test_font -bd 0 -highlightthickness 0 -padx 0 -pady 0
     pack .t
-    .t image configure 1.1 
+    .t image configure 1.1
 } -cleanup {
     destroy .t
 } -returnCodes error -result {no embedded image at index "1.1"}
@@ -114,7 +114,7 @@ test textImage-1.10 {create argument checking} -setup {
 } -body {
     text .t -font test_font -bd 0 -highlightthickness 0 -padx 0 -pady 0
     pack .t
-    .t image create blurf 
+    .t image create blurf
 } -cleanup {
     destroy .t
 } -returnCodes error -result {bad text index "blurf"}
@@ -221,7 +221,7 @@ test textImage-1.17 {basic cget options} -setup {
     .t image create end -image small
     foreach i {align padx pady image name} {
         lappend result $i:[.t image cget small -$i]
-    } 
+    }
     return $result
 } -cleanup {
     destroy .t
@@ -243,7 +243,7 @@ test textImage-1.18 {basic configure options} -setup {
     .t image create end -image small
     foreach {option value}  {align top padx 5 pady 7 image large name none} {
         .t image configure small -$option $value
-    } 
+    }
     update
     .t image configure small
 } -cleanup {
@@ -309,7 +309,7 @@ test textImage-3.1 {image change propagation} -setup {
         vary configure -width $i -height $i
         update
         lappend result $i:[.t bbox vary]
-    } 
+    }
     return $result
 } -cleanup {
     destroy .t

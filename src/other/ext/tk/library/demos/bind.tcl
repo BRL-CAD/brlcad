@@ -63,16 +63,16 @@ $w.text insert end \
 # Create bindings for tags.
 
 foreach tag {d1 d2 d3 d4 d5 d6} {
-    $w.text tag bind $tag <Any-Enter> "$w.text tag configure $tag $bold"
-    $w.text tag bind $tag <Any-Leave> "$w.text tag configure $tag $normal"
+    $w.text tag bind $tag <Enter> "$w.text tag configure $tag $bold"
+    $w.text tag bind $tag <Leave> "$w.text tag configure $tag $normal"
 }
 # Main widget program sets variable tk_demoDirectory
-$w.text tag bind d1 <1> {source [file join $tk_demoDirectory items.tcl]}
-$w.text tag bind d2 <1> {source [file join $tk_demoDirectory plot.tcl]}
-$w.text tag bind d3 <1> {source [file join $tk_demoDirectory ctext.tcl]}
-$w.text tag bind d4 <1> {source [file join $tk_demoDirectory arrow.tcl]}
-$w.text tag bind d5 <1> {source [file join $tk_demoDirectory ruler.tcl]}
-$w.text tag bind d6 <1> {source [file join $tk_demoDirectory cscroll.tcl]}
+$w.text tag bind d1 <Button-1> {source -encoding utf-8 [file join $tk_demoDirectory items.tcl]}
+$w.text tag bind d2 <Button-1> {source -encoding utf-8 [file join $tk_demoDirectory plot.tcl]}
+$w.text tag bind d3 <Button-1> {source -encoding utf-8 [file join $tk_demoDirectory ctext.tcl]}
+$w.text tag bind d4 <Button-1> {source -encoding utf-8 [file join $tk_demoDirectory arrow.tcl]}
+$w.text tag bind d5 <Button-1> {source -encoding utf-8 [file join $tk_demoDirectory ruler.tcl]}
+$w.text tag bind d6 <Button-1> {source -encoding utf-8 [file join $tk_demoDirectory cscroll.tcl]}
 
 $w.text mark set insert 0.0
 $w.text configure -state disabled

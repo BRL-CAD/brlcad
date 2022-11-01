@@ -27,7 +27,7 @@ typedef struct LoadedPackage {
 				 * is loaded statically. Malloc-ed. */
     char *packageName;		/* Name of package prefix for the package,
 				 * properly capitalized (first letter UC,
-				 * others LC), no "_", as in "Net".
+				 * others LC), as in "Net".
 				 * Malloc-ed. */
     Tcl_LoadHandle loadHandle;	/* Token for the loaded file which should be
 				 * passed to (*unLoadProcPtr)() when the file
@@ -122,7 +122,7 @@ Tcl_LoadObjCmd(
 {
     Tcl_Interp *target;
     LoadedPackage *pkgPtr, *defaultPtr;
-    Tcl_DString pkgName, tmp, initName, safeInitName;
+    Tcl_DString prefix, tmp, initName, safeInitName;
     Tcl_DString unloadName, safeUnloadName;
     InterpPackage *ipFirstPtr, *ipPtr;
     int code, namesMatch, filesMatch, offset;
@@ -167,7 +167,7 @@ Tcl_LoadObjCmd(
     }
     fullFileName = Tcl_GetString(objv[1]);
 
-    Tcl_DStringInit(&pkgName);
+    Tcl_DStringInit(&prefix);
     Tcl_DStringInit(&initName);
     Tcl_DStringInit(&safeInitName);
     Tcl_DStringInit(&unloadName);
@@ -196,9 +196,9 @@ Tcl_LoadObjCmd(
 
     target = interp;
     if (objc == 4) {
-	const char *slaveIntName = Tcl_GetString(objv[3]);
+	const char *childIntName = Tcl_GetString(objv[3]);
 
-	target = Tcl_GetSlave(interp, slaveIntName);
+	target = Tcl_GetChild(interp, childIntName);
 	if (target == NULL) {
 	    code = TCL_ERROR;
 	    goto done;
@@ -222,20 +222,20 @@ Tcl_LoadObjCmd(
 	if (packageName == NULL) {
 	    namesMatch = 0;
 	} else {
-	    TclDStringClear(&pkgName);
-	    Tcl_DStringAppend(&pkgName, packageName, -1);
+	    TclDStringClear(&prefix);
+	    Tcl_DStringAppend(&prefix, packageName, -1);
 	    TclDStringClear(&tmp);
 	    Tcl_DStringAppend(&tmp, pkgPtr->packageName, -1);
-	    Tcl_UtfToLower(Tcl_DStringValue(&pkgName));
+	    Tcl_UtfToLower(Tcl_DStringValue(&prefix));
 	    Tcl_UtfToLower(Tcl_DStringValue(&tmp));
 	    if (strcmp(Tcl_DStringValue(&tmp),
-		    Tcl_DStringValue(&pkgName)) == 0) {
+		    Tcl_DStringValue(&prefix)) == 0) {
 		namesMatch = 1;
 	    } else {
 		namesMatch = 0;
 	    }
 	}
-	TclDStringClear(&pkgName);
+	TclDStringClear(&prefix);
 
 	filesMatch = (strcmp(pkgPtr->fileName, fullFileName) == 0);
 	if (filesMatch && (namesMatch || (packageName == NULL))) {
@@ -300,7 +300,7 @@ Tcl_LoadObjCmd(
 	 */
 
 	if (packageName != NULL) {
-	    Tcl_DStringAppend(&pkgName, packageName, -1);
+	    Tcl_DStringAppend(&prefix, packageName, -1);
 	} else {
 	    int retc;
 
@@ -308,7 +308,7 @@ Tcl_LoadObjCmd(
 	     * Threading note - this call used to be protected by a mutex.
 	     */
 
-	    retc = TclGuessPackageName(fullFileName, &pkgName);
+	    retc = TclGuessPackageName(fullFileName, &prefix);
 	    if (!retc) {
 		Tcl_Obj *splitPtr, *pkgGuessPtr;
 		int pElements;
@@ -353,7 +353,7 @@ Tcl_LoadObjCmd(
 		    code = TCL_ERROR;
 		    goto done;
 		}
-		Tcl_DStringAppend(&pkgName, pkgGuess, p - pkgGuess);
+		Tcl_DStringAppend(&prefix, pkgGuess, p - pkgGuess);
 		Tcl_DecrRefCount(splitPtr);
 	    }
 	}
@@ -364,21 +364,21 @@ Tcl_LoadObjCmd(
 	 * lower-case.
 	 */
 
-	Tcl_DStringSetLength(&pkgName,
-		Tcl_UtfToTitle(Tcl_DStringValue(&pkgName)));
+	Tcl_DStringSetLength(&prefix,
+		Tcl_UtfToTitle(Tcl_DStringValue(&prefix)));
 
 	/*
 	 * Compute the names of the two initialization functions, based on the
 	 * package name.
 	 */
 
-	TclDStringAppendDString(&initName, &pkgName);
+	TclDStringAppendDString(&initName, &prefix);
 	TclDStringAppendLiteral(&initName, "_Init");
-	TclDStringAppendDString(&safeInitName, &pkgName);
+	TclDStringAppendDString(&safeInitName, &prefix);
 	TclDStringAppendLiteral(&safeInitName, "_SafeInit");
-	TclDStringAppendDString(&unloadName, &pkgName);
+	TclDStringAppendDString(&unloadName, &prefix);
 	TclDStringAppendLiteral(&unloadName, "_Unload");
-	TclDStringAppendDString(&safeUnloadName, &pkgName);
+	TclDStringAppendDString(&safeUnloadName, &prefix);
 	TclDStringAppendLiteral(&safeUnloadName, "_SafeUnload");
 
 	/*
@@ -405,9 +405,9 @@ Tcl_LoadObjCmd(
 	len = strlen(fullFileName) + 1;
 	pkgPtr->fileName	   = ckalloc(len);
 	memcpy(pkgPtr->fileName, fullFileName, len);
-	len = (unsigned) Tcl_DStringLength(&pkgName) + 1;
+	len = (unsigned) Tcl_DStringLength(&prefix) + 1;
 	pkgPtr->packageName	   = ckalloc(len);
-	memcpy(pkgPtr->packageName, Tcl_DStringValue(&pkgName), len);
+	memcpy(pkgPtr->packageName, Tcl_DStringValue(&prefix), len);
 	pkgPtr->loadHandle	   = loadHandle;
 	pkgPtr->initProc	   = initProc;
 	pkgPtr->safeInitProc	   = (Tcl_PackageInitProc *)
@@ -501,7 +501,7 @@ Tcl_LoadObjCmd(
     Tcl_SetAssocData(target, "tclLoad", LoadCleanupProc, ipPtr);
 
   done:
-    Tcl_DStringFree(&pkgName);
+    Tcl_DStringFree(&prefix);
     Tcl_DStringFree(&initName);
     Tcl_DStringFree(&safeInitName);
     Tcl_DStringFree(&unloadName);
@@ -536,7 +536,7 @@ Tcl_UnloadObjCmd(
 {
     Tcl_Interp *target;		/* Which interpreter to unload from. */
     LoadedPackage *pkgPtr, *defaultPtr;
-    Tcl_DString pkgName, tmp;
+    Tcl_DString prefix, tmp;
     Tcl_PackageUnloadProc *unloadProc;
     InterpPackage *ipFirstPtr, *ipPtr;
     int i, index, code, complain = 1, keepLibrary = 0;
@@ -594,7 +594,7 @@ Tcl_UnloadObjCmd(
     }
 
     fullFileName = Tcl_GetString(objv[i]);
-    Tcl_DStringInit(&pkgName);
+    Tcl_DStringInit(&prefix);
     Tcl_DStringInit(&tmp);
 
     packageName = NULL;
@@ -619,9 +619,9 @@ Tcl_UnloadObjCmd(
 
     target = interp;
     if (objc - i == 3) {
-	const char *slaveIntName = Tcl_GetString(objv[i + 2]);
+	const char *childIntName = Tcl_GetString(objv[i + 2]);
 
-	target = Tcl_GetSlave(interp, slaveIntName);
+	target = Tcl_GetChild(interp, childIntName);
 	if (target == NULL) {
 	    return TCL_ERROR;
 	}
@@ -646,20 +646,20 @@ Tcl_UnloadObjCmd(
 	if (packageName == NULL) {
 	    namesMatch = 0;
 	} else {
-	    TclDStringClear(&pkgName);
-	    Tcl_DStringAppend(&pkgName, packageName, -1);
+	    TclDStringClear(&prefix);
+	    Tcl_DStringAppend(&prefix, packageName, -1);
 	    TclDStringClear(&tmp);
 	    Tcl_DStringAppend(&tmp, pkgPtr->packageName, -1);
-	    Tcl_UtfToLower(Tcl_DStringValue(&pkgName));
+	    Tcl_UtfToLower(Tcl_DStringValue(&prefix));
 	    Tcl_UtfToLower(Tcl_DStringValue(&tmp));
 	    if (strcmp(Tcl_DStringValue(&tmp),
-		    Tcl_DStringValue(&pkgName)) == 0) {
+		    Tcl_DStringValue(&prefix)) == 0) {
 		namesMatch = 1;
 	    } else {
 		namesMatch = 0;
 	    }
 	}
-	TclDStringClear(&pkgName);
+	TclDStringClear(&prefix);
 
 	filesMatch = (strcmp(pkgPtr->fileName, fullFileName) == 0);
 	if (filesMatch && (namesMatch || (packageName == NULL))) {
@@ -871,7 +871,7 @@ Tcl_UnloadObjCmd(
 
 		    for (ipPrevPtr = ipPtr; ipPtr != NULL;
 			    ipPrevPtr = ipPtr, ipPtr = ipPtr->nextPtr) {
-			if (ipPtr->pkgPtr == pkgPtr) {
+			if (ipPtr->pkgPtr == defaultPtr) {
 			    ipPrevPtr->nextPtr = ipPtr->nextPtr;
 			    break;
 			}
@@ -899,7 +899,7 @@ Tcl_UnloadObjCmd(
     }
 
   done:
-    Tcl_DStringFree(&pkgName);
+    Tcl_DStringFree(&prefix);
     Tcl_DStringFree(&tmp);
     if (!complain && (code != TCL_OK)) {
 	code = TCL_OK;
@@ -932,7 +932,7 @@ Tcl_StaticPackage(
 				 * already been loaded into the given
 				 * interpreter by calling the appropriate init
 				 * proc. */
-    const char *pkgName,	/* Name of package (must be properly
+    const char *prefix,	/* Prefix (must be properly
 				 * capitalized: first letter upper case,
 				 * others lower case). */
     Tcl_PackageInitProc *initProc,
@@ -957,7 +957,7 @@ Tcl_StaticPackage(
     for (pkgPtr = firstPackagePtr; pkgPtr != NULL; pkgPtr = pkgPtr->nextPtr) {
 	if ((pkgPtr->initProc == initProc)
 		&& (pkgPtr->safeInitProc == safeInitProc)
-		&& (strcmp(pkgPtr->packageName, pkgName) == 0)) {
+		&& (strcmp(pkgPtr->packageName, prefix) == 0)) {
 	    break;
 	}
     }
@@ -972,8 +972,8 @@ Tcl_StaticPackage(
 	pkgPtr = ckalloc(sizeof(LoadedPackage));
 	pkgPtr->fileName	= ckalloc(1);
 	pkgPtr->fileName[0]	= 0;
-	pkgPtr->packageName	= ckalloc(strlen(pkgName) + 1);
-	strcpy(pkgPtr->packageName, pkgName);
+	pkgPtr->packageName	= ckalloc(strlen(prefix) + 1);
+	strcpy(pkgPtr->packageName, prefix);
 	pkgPtr->loadHandle	= NULL;
 	pkgPtr->initProc	= initProc;
 	pkgPtr->safeInitProc	= safeInitProc;
@@ -1049,7 +1049,7 @@ TclGetLoadedPackages(
 	 * Return information about all of the available packages.
 	 */
 
-	resultObj = Tcl_NewObj();
+	TclNewObj(resultObj);
 	Tcl_MutexLock(&packageMutex);
 	for (pkgPtr = firstPackagePtr; pkgPtr != NULL;
 		pkgPtr = pkgPtr->nextPtr) {
@@ -1068,12 +1068,12 @@ TclGetLoadedPackages(
      * interpreter.
      */
 
-    target = Tcl_GetSlave(interp, targetName);
+    target = Tcl_GetChild(interp, targetName);
     if (target == NULL) {
 	return TCL_ERROR;
     }
     ipPtr = Tcl_GetAssocData(target, "tclLoad", NULL);
-    resultObj = Tcl_NewObj();
+    TclNewObj(resultObj);
     for (; ipPtr != NULL; ipPtr = ipPtr->nextPtr) {
 	pkgPtr = ipPtr->pkgPtr;
 	pkgDesc[0] = Tcl_NewStringObj(pkgPtr->fileName, -1);

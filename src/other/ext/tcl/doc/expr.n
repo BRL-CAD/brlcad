@@ -1,7 +1,7 @@
 '\"
 '\" Copyright (c) 1993 The Regents of the University of California.
 '\" Copyright (c) 1994-2000 Sun Microsystems, Inc.
-'\" Copyright (c) 2005 by Kevin B. Kenny <kennykb@acm.org>. All rights reserved
+'\" Copyright (c) 2005 Kevin B. Kenny <kennykb@acm.org>. All rights reserved
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -107,9 +107,9 @@ will produce the value on the right side of the line:
 .PP
 .CS
 .ta 9c
-\fBexpr\fR 3.1 + $a	\fI6.1\fR
-\fBexpr\fR 2 + "$a.$b"	\fI5.6\fR
-\fBexpr\fR 4*[llength "6 2"]	\fI8\fR
+\fBexpr\fR {3.1 + $a}	\fI6.1\fR
+\fBexpr\fR {2 + "$a.$b"}	\fI5.6\fR
+\fBexpr\fR {4*[llength "6 2"]}	\fI8\fR
 \fBexpr\fR {{word one} < "word $a"}	\fI0\fR
 .CE
 .SS OPERATORS
@@ -246,7 +246,7 @@ just as in C, which means that operands are not evaluated if they are
 not needed to determine the outcome.  For example, in the command
 .PP
 .CS
-\fBexpr\fR {$v ? [a] : [b]}
+\fBexpr\fR {$v?[a]:[b]}
 .CE
 .PP
 only one of
@@ -490,10 +490,11 @@ string(n), Tcl(n), while(n)
 arithmetic, boolean, compare, expression, fuzzy comparison
 .SH COPYRIGHT
 .nf
-Copyright (c) 1993 The Regents of the University of California.
-Copyright (c) 1994-2000 Sun Microsystems Incorporated.
-Copyright (c) 2005 by Kevin B. Kenny <kennykb@acm.org>. All rights reserved.
+Copyright \(co 1993 The Regents of the University of California.
+Copyright \(co 1994-2000 Sun Microsystems Incorporated.
+Copyright \(co 2005 Kevin B. Kenny <kennykb@acm.org>. All rights reserved.
 .fi
 '\" Local Variables:
 '\" mode: nroff
+'\" fill-column: 78
 '\" End:

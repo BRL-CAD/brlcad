@@ -13,8 +13,18 @@ changes made.  See document footer for additional details.
 --- 2022-XX-XX  Release 7.34.X                                     ---
 ----------------------------------------------------------------------
 
+* added man page for MGED Overlaps Tool - Chris McGregor
+* major STEPcode updates, using unmodified upstream 0.8.1 - Cliff Yapp
+* added aircode reporting support to the lc command - Sean Morrison
+* fixed 3dm to g names converting alphabitized - Chris McGregor
+* updated Tcl/Tk to version 8.6.12 - Cliff Yapp
+* updated netpbm to version 10.73.40 - Cliff Yapp
+* updated zlib to version 1.2.12 - Cliff Yapp
+* fixed mged -c 'unknown variable' warning dialogs - Sean Morrison
 * improved mged & archer html command help formatting - Sean Morrison
 * fixed archer empty string ("") loading behavior - Cliff Yapp
+* rt* tools' -P option accepts negative #core counts - Sean Morrison
+* gqa -Ae exposed air report no longer has gapped air - Sean Morrison
 * fixed rt framebuffer bug with -g/-G cellsize options - Sean Morrison
 * added new idents(5) file format manual page - Sean Morrison
 * preserved path prefixes on search cmd results - Cliff Yapp
@@ -234,6 +244,7 @@ infrastructure with BRL-CAD's imminent migration to Git.
 * fixed a locking condition in MGED's rtcheck command - Cliff Yapp
 * added support for >=< prefixes for mater -d get options - Cliff Yapp
 * fixed brlman lookup location of html manual pages - Cliff Yapp
+* fixed rtweight infinite loop bug on invalid .density - Cliff Yapp
 * fixed rt -t top-to-bottom parallel rendering option - Sean Morrison
 * added a 'flip' normals command to MGED's brep command - Cliff Yapp
 * added rtweight support for in-.g density information - Cliff Yapp

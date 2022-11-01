@@ -461,7 +461,7 @@ TestplatformChmod(
      * nativePath not found
      */
 
-    if (attr == 0xffffffff) {
+    if (attr == 0xFFFFFFFF) {
 	res = -1;
 	goto done;
     }

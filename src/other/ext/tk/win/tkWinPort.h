@@ -21,6 +21,7 @@
  *---------------------------------------------------------------------------
  */
 
+#include <stdio.h>
 #include <wchar.h>
 #include <io.h>
 #include <stdlib.h>
@@ -64,6 +65,9 @@
     typedef _TCHAR TCHAR;
 #endif
 
+#if defined(__GNUC__) && !defined(__cplusplus)
+#   pragma GCC diagnostic ignored "-Wc++-compat"
+#endif
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
 #include <X11/keysym.h>
@@ -91,11 +95,15 @@
  * See ticket [916c1095438eae56]: GetVersionExW triggers warnings
  */
 #if defined(_MSC_VER)
+#   pragma warning(disable:4146)
 #   pragma warning(disable:4267)
 #   pragma warning(disable:4244)
 #   pragma warning(disable:4311)
 #   pragma warning(disable:4312)
 #   pragma warning(disable:4996)
+#if !defined(_WIN64)
+#   pragma warning(disable:4305)
+#endif
 #endif
 
 /*
@@ -115,6 +123,12 @@
 
 #define TkpGetPixel(p) (((((p)->red >> 8) & 0xff) \
 	| ((p)->green & 0xff00) | (((p)->blue << 8) & 0xff0000)) | 0x20000000)
+
+/*
+ * Used by tkWindow.c
+ */
+
+#define TkpHandleMapOrUnmap(tkwin, event)  Tk_HandleEvent(event)
 
 /*
  * These calls implement native bitmaps which are not currently

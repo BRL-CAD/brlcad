@@ -77,10 +77,10 @@ $c addtag well withtag [$c create rect 13.2c 1c 13.8c 0.5c \
 $c addtag well withtag [rulerMkTab $c [winfo pixels $c 13.5c] \
 	[winfo pixels $c .65c]]
 
-$c bind well <1> "rulerNewTab $c %x %y"
-$c bind tab <1> "rulerSelectTab $c %x %y"
+$c bind well <Button-1> "rulerNewTab $c %x %y"
+$c bind tab <Button-1> "rulerSelectTab $c %x %y"
 bind $c <B1-Motion> "rulerMoveTab $c %x %y"
-bind $c <Any-ButtonRelease-1> "rulerReleaseTab $c"
+bind $c <ButtonRelease-1> "rulerReleaseTab $c"
 
 # rulerNewTab --
 # Does all the work of creating a tab stop, including creating the

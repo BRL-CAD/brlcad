@@ -15,7 +15,7 @@
 #ifdef HAVE_XKBKEYCODETOKEYSYM
 #  include <X11/XKBlib.h>
 #else
-#  define XkbOpenDisplay(D,V,E,M,m,R) ((V),(E),(M),(m),(R),(NULL))
+#  define XkbOpenDisplay(D,V,E,M,m,R) (((void)D),((void)V),((void)E),((void)M),((void)m),((void)R),(NULL))
 #endif
 
 /*
@@ -360,9 +360,6 @@ TransferXEventsToTcl(
 	int type;
 	XEvent x;
 	TkKeyEvent k;
-#ifdef GenericEvent
-	xGenericEvent xge;
-#endif
     } event;
     Window w;
     TkDisplay *dispPtr = NULL;
@@ -380,12 +377,9 @@ TransferXEventsToTcl(
 
     while (QLength(display) > 0) {
 	XNextEvent(display, &event.x);
-#ifdef GenericEvent
-	if (event.type == GenericEvent) {
-	    Tcl_Panic("Wild GenericEvent; panic! (extension=%d,evtype=%d)",
-		    event.xge.extension, event.xge.evtype);
+	if (event.type > MappingNotify) {
+	    continue;
 	}
-#endif
 	w = None;
 	if (event.type == KeyPress || event.type == KeyRelease) {
 	    for (dispPtr = TkGetDisplayList(); ; dispPtr = dispPtr->nextPtr) {
@@ -514,9 +508,9 @@ DisplayFileProc(
 	 * nice (?!) message.
 	 */
 
-	void (*oldHandler)();
+	void (*oldHandler)(int);
 
-	oldHandler = (void (*)()) signal(SIGPIPE, SIG_IGN);
+	oldHandler = (void (*)(int)) signal(SIGPIPE, SIG_IGN);
 	XNoOp(display);
 	XFlush(display);
 	(void) signal(SIGPIPE, oldHandler);

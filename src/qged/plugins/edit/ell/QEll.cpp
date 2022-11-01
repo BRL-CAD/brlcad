@@ -93,10 +93,9 @@ QEll::~QEll()
 void
 QEll::read_from_db()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -128,11 +127,9 @@ QEll::write_to_db()
 {
     if (!bu_vls_strlen(&oname))
 	return;
-
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -163,16 +160,15 @@ QEll::write_to_db()
 
     rt_db_free_internal(&intern);
 
-    emit db_updated();
+    emit view_updated(QTCAD_VIEW_DB);
 }
 
 void
 QEll::update_obj_wireframe()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -199,8 +195,8 @@ QEll::update_obj_wireframe()
     intern.idb_meth = &OBJ[intern.idb_type];
     if (!intern.idb_meth->ft_plot)
 	return;
-    struct bn_tol *tol = &gedp->ged_wdbp->wdb_tol;
-    struct bg_tess_tol *ttol = &gedp->ged_wdbp->wdb_ttol;
+    struct bn_tol *tol = &gedp->dbip->db_tol;
+    struct bg_tess_tol *ttol = &gedp->dbip->db_ttol;
     intern.idb_meth->ft_plot(&p->s_vlist, &intern, ttol, tol, p->s_v);
 
     // At least for now, mimic the MGED behavior and make editing wireframes white
@@ -218,16 +214,15 @@ QEll::update_obj_wireframe()
     // TODO - we should be able to set UP or DOWN on the various labels
     // when their respective controls are enabled/disabled...
 
-    emit view_updated(&v);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 void
 QEll::update_viewobj_name(const QString &)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
@@ -262,7 +257,7 @@ QEll::update_viewobj_name(const QString &)
 	} else {
 	    // Turning off wireframe - obj name is now invalid
 	    p->s_flag = DOWN;
-	    emit view_updated(&v);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	}
     }
 }

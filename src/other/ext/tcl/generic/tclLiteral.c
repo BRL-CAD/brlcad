@@ -58,7 +58,7 @@ static void		RebuildLiteralTable(LiteralTable *tablePtr);
 
 void
 TclInitLiteralTable(
-    register LiteralTable *tablePtr)
+    LiteralTable *tablePtr)
 				/* Pointer to table structure, which is
 				 * supplied by the caller. */
 {
@@ -213,7 +213,7 @@ TclCreateLiteral(
 
 	    if ((objLength == length) && ((length == 0)
 		    || ((objBytes[0] == bytes[0])
-		    && (memcmp(objBytes, bytes, (unsigned) length) == 0)))) {
+		    && (memcmp(objBytes, bytes, length) == 0)))) {
 		/*
 		 * A literal was found: return it
 		 */
@@ -269,7 +269,7 @@ TclCreateLiteral(
     }
 #endif
 
-    globalPtr = ckalloc(sizeof(LiteralEntry));
+    globalPtr = (LiteralEntry *)ckalloc(sizeof(LiteralEntry));
     globalPtr->objPtr = objPtr;
     Tcl_IncrRefCount(objPtr);
     globalPtr->refCount = 1;
@@ -381,7 +381,7 @@ int
 TclRegisterLiteral(
     void *ePtr,		/* Points to the CompileEnv in whose object
 				 * array an object is found or created. */
-    register char *bytes,	/* Points to string for which to find or
+    char *bytes,	/* Points to string for which to find or
 				 * create an object in CompileEnv's object
 				 * array. */
     int length,			/* Number of bytes in the string. If < 0, the
@@ -418,7 +418,7 @@ TclRegisterLiteral(
 	objPtr = localPtr->objPtr;
 	if ((objPtr->length == length) && ((length == 0)
 		|| ((objPtr->bytes[0] == bytes[0])
-		&& (memcmp(objPtr->bytes, bytes, (unsigned) length) == 0)))) {
+		&& (memcmp(objPtr->bytes, bytes, length) == 0)))) {
 	    if ((flags & LITERAL_ON_HEAP)) {
 		ckfree(bytes);
 	    }
@@ -490,13 +490,13 @@ static LiteralEntry *
 LookupLiteralEntry(
     Tcl_Interp *interp,		/* Interpreter for which objPtr was created to
 				 * hold a literal. */
-    register Tcl_Obj *objPtr)	/* Points to a Tcl object holding a literal
+    Tcl_Obj *objPtr)	/* Points to a Tcl object holding a literal
 				 * that was previously created by a call to
 				 * TclRegisterLiteral. */
 {
     Interp *iPtr = (Interp *) interp;
     LiteralTable *globalTablePtr = &iPtr->literalTable;
-    register LiteralEntry *entryPtr;
+    LiteralEntry *entryPtr;
     const char *bytes;
     int length, globalHash;
 
@@ -536,7 +536,7 @@ void
 TclHideLiteral(
     Tcl_Interp *interp,		/* Interpreter for which objPtr was created to
 				 * hold a literal. */
-    register CompileEnv *envPtr,/* Points to CompileEnv whose literal array
+    CompileEnv *envPtr,/* Points to CompileEnv whose literal array
 				 * contains the entry being hidden. */
     int index)			/* The index of the entry in the literal
 				 * array. */
@@ -599,14 +599,14 @@ TclHideLiteral(
 
 int
 TclAddLiteralObj(
-    register CompileEnv *envPtr,/* Points to CompileEnv in whose literal array
+    CompileEnv *envPtr,/* Points to CompileEnv in whose literal array
 				 * the object is to be inserted. */
     Tcl_Obj *objPtr,		/* The object to insert into the array. */
     LiteralEntry **litPtrPtr)	/* The location where the pointer to the new
 				 * literal entry should be stored. May be
 				 * NULL. */
 {
-    register LiteralEntry *lPtr;
+    LiteralEntry *lPtr;
     int objIndex;
 
     if (envPtr->literalArrayNext >= envPtr->literalArrayEnd) {
@@ -648,12 +648,12 @@ TclAddLiteralObj(
 
 static int
 AddLocalLiteralEntry(
-    register CompileEnv *envPtr,/* Points to CompileEnv in whose literal array
+    CompileEnv *envPtr,/* Points to CompileEnv in whose literal array
 				 * the object is to be inserted. */
     Tcl_Obj *objPtr,		/* The literal to add to the CompileEnv. */
     int localHash)		/* Hash value for the literal's string. */
 {
-    register LiteralTable *localTablePtr = &envPtr->localLitTable;
+    LiteralTable *localTablePtr = &envPtr->localLitTable;
     LiteralEntry *localPtr;
     int objIndex;
 
@@ -725,7 +725,7 @@ AddLocalLiteralEntry(
 
 static void
 ExpandLocalLiteralArray(
-    register CompileEnv *envPtr)/* Points to the CompileEnv whose object array
+    CompileEnv *envPtr)/* Points to the CompileEnv whose object array
 				 * must be enlarged. */
 {
     /*
@@ -747,14 +747,14 @@ ExpandLocalLiteralArray(
     }
 
     if (envPtr->mallocedLiteralArray) {
-	newArrayPtr = ckrealloc(currArrayPtr, newSize);
+	newArrayPtr = (LiteralEntry *)ckrealloc(currArrayPtr, newSize);
     } else {
 	/*
 	 * envPtr->literalArrayPtr isn't a ckalloc'd pointer, so we must
 	 * code a ckrealloc equivalent for ourselves.
 	 */
 
-	newArrayPtr = ckalloc(newSize);
+	newArrayPtr = (LiteralEntry *)ckalloc(newSize);
 	memcpy(newArrayPtr, currArrayPtr, currBytes);
 	envPtr->mallocedLiteralArray = 1;
     }
@@ -807,13 +807,13 @@ void
 TclReleaseLiteral(
     Tcl_Interp *interp,		/* Interpreter for which objPtr was created to
 				 * hold a literal. */
-    register Tcl_Obj *objPtr)	/* Points to a literal object that was
+    Tcl_Obj *objPtr)	/* Points to a literal object that was
 				 * previously created by a call to
 				 * TclRegisterLiteral. */
 {
     Interp *iPtr = (Interp *) interp;
     LiteralTable *globalTablePtr;
-    register LiteralEntry *entryPtr, *prevPtr;
+    LiteralEntry *entryPtr, *prevPtr;
     const char *bytes;
     int length, index;
 
@@ -888,10 +888,10 @@ TclReleaseLiteral(
 
 static unsigned
 HashString(
-    register const char *string,	/* String for which to compute hash value. */
+    const char *string,	/* String for which to compute hash value. */
     int length)			/* Number of bytes in the string. */
 {
-    register unsigned int result = 0;
+    unsigned int result = 0;
 
     /*
      * I tried a zillion different hash functions and asked many other people
@@ -952,12 +952,12 @@ HashString(
 
 static void
 RebuildLiteralTable(
-    register LiteralTable *tablePtr)
+    LiteralTable *tablePtr)
 				/* Local or global table to enlarge. */
 {
     LiteralEntry **oldBuckets;
-    register LiteralEntry **oldChainPtr, **newChainPtr;
-    register LiteralEntry *entryPtr;
+    LiteralEntry **oldChainPtr, **newChainPtr;
+    LiteralEntry *entryPtr;
     LiteralEntry **bucketPtr;
     const char *bytes;
     unsigned int oldSize;
@@ -982,7 +982,8 @@ RebuildLiteralTable(
     }
 
     tablePtr->numBuckets *= 4;
-    tablePtr->buckets = ckalloc(tablePtr->numBuckets * sizeof(LiteralEntry*));
+    tablePtr->buckets = (LiteralEntry **)ckalloc(
+	    tablePtr->numBuckets * sizeof(LiteralEntry *));
     for (count=tablePtr->numBuckets, newChainPtr=tablePtr->buckets;
 	    count>0 ; count--, newChainPtr++) {
 	*newChainPtr = NULL;
@@ -1086,7 +1087,7 @@ TclLiteralStats(
 #define NUM_COUNTERS 10
     int count[NUM_COUNTERS], overflow, i, j;
     double average, tmp;
-    register LiteralEntry *entryPtr;
+    LiteralEntry *entryPtr;
     char *result, *p;
 
     /*
@@ -1118,7 +1119,7 @@ TclLiteralStats(
      * Print out the histogram and a few other pieces of information.
      */
 
-    result = ckalloc(NUM_COUNTERS*60 + 300);
+    result = (char *)ckalloc(NUM_COUNTERS*60 + 300);
     sprintf(result, "%d entries in table, %d buckets\n",
 	    tablePtr->numEntries, tablePtr->numBuckets);
     p = result + strlen(result);
@@ -1157,10 +1158,10 @@ TclVerifyLocalLiteralTable(
     CompileEnv *envPtr)		/* Points to CompileEnv whose literal table is
 				 * to be validated. */
 {
-    register LiteralTable *localTablePtr = &envPtr->localLitTable;
-    register LiteralEntry *localPtr;
+    LiteralTable *localTablePtr = &envPtr->localLitTable;
+    LiteralEntry *localPtr;
     char *bytes;
-    register int i;
+    int i;
     int length, count;
 
     count = 0;
@@ -1208,10 +1209,10 @@ TclVerifyGlobalLiteralTable(
     Interp *iPtr)		/* Points to interpreter whose global literal
 				 * table is to be validated. */
 {
-    register LiteralTable *globalTablePtr = &iPtr->literalTable;
-    register LiteralEntry *globalPtr;
+    LiteralTable *globalTablePtr = &iPtr->literalTable;
+    LiteralEntry *globalPtr;
     char *bytes;
-    register int i;
+    int i;
     int length, count;
 
     count = 0;

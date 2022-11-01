@@ -12,11 +12,19 @@
 
 #include "tkInt.h"
 
+#ifdef __GNUC__
+/*
+ * We know that XKeycodeToKeysym is deprecated, nothing we can do about it.
+ */
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 /*
 ** Bug [3607830]: Before using Xkb, it must be initialized.  TkpOpenDisplay
 **                does this and sets the USE_XKB flag if xkb is supported.
 **                (should this be function ptr?)
 */
+
 #ifdef HAVE_XKBKEYCODETOKEYSYM
 #  include <X11/XKBlib.h>
 #else
@@ -138,8 +146,7 @@ TkpGetString(
 
 #ifdef TK_USE_INPUT_METHODS
     if ((winPtr->dispPtr->flags & TK_DISPLAY_USE_IM)
-	    && (winPtr->inputContext != NULL)
-	    && (eventPtr->type == KeyPress)) {
+	    && (winPtr->inputContext != NULL)) {
 	Status status;
 
 #if X_HAVE_UTF8_STRING
@@ -194,8 +201,7 @@ TkpGetString(
     {
 	/*
 	 * Fall back to convert a keyboard event to a UTF-8 string using
-	 * XLookupString. This is used when input methods are turned off and
-	 * for KeyRelease events.
+	 * XLookupString. This is used when input methods are turned off.
 	 *
 	 * Note: XLookupString() normally returns a single ISO Latin 1 or
 	 * ASCII control character.
@@ -279,9 +285,9 @@ TkpSetKeycodeAndState(
     mincode = 0;
     maxcode = -1;
     XDisplayKeycodes(dispPtr->display, &mincode, &maxcode);
-    if (keycode < mincode) {
+    if (keycode < (KeyCode)mincode) {
 	keycode = mincode;
-    } else if (keycode > maxcode) {
+    } else if (keycode > (KeyCode)maxcode) {
 	keycode = maxcode;
     }
 
@@ -307,6 +313,10 @@ TkpSetKeycodeAndState(
  *----------------------------------------------------------------------
  */
 
+#ifdef __GNUC__
+#   pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 KeySym
 TkpGetKeySym(
     TkDisplay *dispPtr,		/* Display in which to map keycode. */
@@ -315,6 +325,14 @@ TkpGetKeySym(
     KeySym sym;
     int index;
     TkKeyEvent* kePtr = (TkKeyEvent*) eventPtr;
+
+    /*
+     * X11 keycodes always lie in the inclusive range [8,255].
+     */
+
+    if (eventPtr->xkey.keycode > 0xff) {
+        return NoSymbol;
+    }
 
     /*
      * Refresh the mapping information if it's stale. This must happen before
@@ -363,6 +381,7 @@ TkpGetKeySym(
 	    && (eventPtr->xkey.state & LockMask))) {
 	index += 1;
     }
+
     sym = TkKeycodeToKeysym(dispPtr, eventPtr->xkey.keycode, 0,
 	    index);
 
@@ -372,11 +391,15 @@ TkpGetKeySym(
      * alphabetic, then switch back to the unshifted keysym.
      */
 
+#ifndef XK_Oslash
+    /* XK_Oslash is the official name, but might not be present in older X11 headers */
+#   define XK_Oslash XK_Ooblique
+#endif
     if ((index & 1) && !(eventPtr->xkey.state & ShiftMask)
 	    && (dispPtr->lockUsage == LU_CAPS)) {
 	if (!(((sym >= XK_A) && (sym <= XK_Z))
 		|| ((sym >= XK_Agrave) && (sym <= XK_Odiaeresis))
-		|| ((sym >= XK_Ooblique) && (sym <= XK_Thorn)))) {
+		|| ((sym >= XK_Oslash) && (sym <= XK_Thorn)))) {
 	    index &= ~1;
 	    sym = TkKeycodeToKeysym(dispPtr, eventPtr->xkey.keycode,
 		    0, index);
@@ -466,6 +489,7 @@ TkpInitKeymapInfo(
 	    continue;
 	}
 	keysym = TkKeycodeToKeysym(dispPtr, *codePtr, 0, 0);
+
 	if (keysym == XK_Mode_switch) {
 	    dispPtr->modeModMask |= ShiftMask << (i/modMapPtr->max_keypermod);
 	}

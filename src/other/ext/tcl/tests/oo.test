@@ -8,8 +8,8 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 package require TclOO 1.0.3
-package require tcltest 2
-if {"::tcltest" in [namespace children]} {
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -113,8 +113,8 @@ test oo-0.8 {leak in variable management} -setup {
 } -result 0
 test oo-0.9 {various types of presence of the TclOO package} {
     list [lsearch -nocase -all -inline [package names] tcloo] \
-	[package present TclOO] [package versions TclOO]
-} [list TclOO $::oo::patchlevel $::oo::patchlevel]
+	[package present TclOO] [expr {$::oo::patchlevel in [package versions TclOO]}]
+} [list TclOO $::oo::patchlevel 1]
 
 test oo-1.1 {basic test of OO functionality: no classes} {
     set result {}
@@ -142,7 +142,7 @@ test oo-1.4 {basic test of OO functionality} -body {
     oo::object create {}
 } -returnCodes 1 -result {object name must not be empty}
 test oo-1.4.1 {fully-qualified nested name} -body {
-    oo::object create ::one::two::three 
+    oo::object create ::one::two::three
 } -result {::one::two::three}
 test oo-1.4.2 {automatic command name has same name as namespace} -body {
     set obj [oo::object new]
@@ -306,15 +306,49 @@ test oo-1.18.2 {Bug 75b8433707: memory leak in oo-1.18} -setup {
     rename test-oo-1.18 {}
 } -result 0
 test oo-1.18.3 {Bug 21c144f0f5} -setup {
-    interp create slave
+    interp create child
 } -body {
-    slave eval {
+    child eval {
 	oo::define [oo::class create foo] superclass oo::class
 	oo::class destroy
     }
 } -cleanup {
-    interp delete slave
-} 
+    interp delete child
+}
+test oo-1.18.4 {correct handling of cleanup in superclass set error} -setup {
+    interp create child
+} -body {
+    child eval {
+	oo::class create A
+	oo::class create B {
+	    superclass oo::class
+	    constructor {} {
+		next {superclass A}
+		next {superclass -append A}
+	    }
+	}
+	[B create C] create d
+    }
+} -returnCodes error -cleanup {
+    interp delete child
+} -result {class should only be a direct superclass once}
+test oo-1.18.5 {correct handling of cleanup in superclass set error} -setup {
+    interp create child
+} -body {
+    child eval {
+	oo::class create A
+	oo::class create B {
+	    superclass oo::class
+	    constructor {c} {
+		next {superclass A}
+		next [list superclass -append {*}$c]
+	    }
+	}
+	[B create C {B C}] create d
+    }
+} -returnCodes error -cleanup {
+    interp delete child
+} -result {attempt to form circular dependency graph}
 test oo-1.19 {basic test of OO functionality: teardown order} -body {
     oo::object create o
     namespace delete [info object namespace o]
@@ -1336,16 +1370,16 @@ test oo-7.8 {OO: next at the end of the method chain} -setup {
 } -result {foo2 foo 1 {no next method implementation}}
 test oo-7.9 {OO: defining inheritance in namespaces} -setup {
     set ::result {}
-    oo::class create ::master
+    oo::class create ::parent
     namespace eval ::foo {
-	oo::class create mixin {superclass ::master}
+	oo::class create mixin {superclass ::parent}
     }
 } -cleanup {
-    ::master destroy
+    ::parent destroy
     namespace delete ::foo
 } -body {
     namespace eval ::foo {
-	oo::class create bar {superclass master}
+	oo::class create bar {superclass parent}
 	oo::class create boo
 	oo::define boo {superclass bar}
 	oo::define boo {mixin mixin}
@@ -1864,7 +1898,7 @@ test oo-13.5 {OO: changing an object's class: non-class to class} -setup {
 	class oo::class
     }
     oo::define fooObj {
-	method x {} {expr 1+2+3}
+	method x {} {expr {1+2+3}}
     }
     [fooObj new] x
 } -cleanup {
@@ -1876,7 +1910,7 @@ test oo-13.6 {OO: changing an object's class: class to non-class} -setup {
 } -body {
     set result dangling
     oo::define foo {
-	method x {} {expr 1+2+3}
+	method x {} {expr {1+2+3}}
     }
     oo::class create boo {
 	superclass foo
@@ -1899,7 +1933,7 @@ test oo-13.7 {OO: changing an object's class} -setup {
 } -body {
     oo::define bar method x {} {return ok}
     oo::define foo {
-	method x {} {expr 1+2+3}
+	method x {} {expr {1+2+3}}
 	self mixin foo
     }
     lappend result [foo x]
@@ -1913,7 +1947,7 @@ test oo-13.8 {OO: changing an object's class to itself} -setup {
     oo::class create foo
 } -body {
     oo::define foo {
-	method x {} {expr 1+2+3}
+	method x {} {expr {1+2+3}}
     }
     oo::objdefine foo class foo
 } -cleanup {
@@ -2032,18 +2066,18 @@ test oo-14.5 {OO and mixins and filters - advanced case} -setup {
     mix destroy
 } -result >>foobar<<
 test oo-14.6 {OO and mixins of mixins - Bug 1960703} -setup {
-    oo::class create master
+    oo::class create parent
 } -cleanup {
-    master destroy
+    parent destroy
 } -body {
     oo::class create A {
-	superclass master
+	superclass parent
 	method egg {} {
 	    return chicken
 	}
     }
     oo::class create B {
-	superclass master
+	superclass parent
 	mixin A
 	method bar {} {
 	    # mixin from A
@@ -2051,7 +2085,7 @@ test oo-14.6 {OO and mixins of mixins - Bug 1960703} -setup {
 	}
     }
     oo::class create C {
-	superclass master
+	superclass parent
 	mixin B
 	method foo {} {
 	    # mixin from B
@@ -2061,12 +2095,12 @@ test oo-14.6 {OO and mixins of mixins - Bug 1960703} -setup {
     [C new] foo
 } -result chicken
 test oo-14.7 {OO and filters from mixins of mixins} -setup {
-    oo::class create master
+    oo::class create parent
 } -cleanup {
-    master destroy
+    parent destroy
 } -body {
     oo::class create A {
-	superclass master
+	superclass parent
 	method egg {} {
 	    return chicken
 	}
@@ -2077,7 +2111,7 @@ test oo-14.7 {OO and filters from mixins of mixins} -setup {
 	}
     }
     oo::class create B {
-	superclass master
+	superclass parent
 	mixin A
 	filter f
 	method bar {} {
@@ -2086,7 +2120,7 @@ test oo-14.7 {OO and filters from mixins of mixins} -setup {
 	}
     }
     oo::class create C {
-	superclass master
+	superclass parent
 	mixin B
 	filter f
 	method foo {} {
@@ -2098,18 +2132,18 @@ test oo-14.7 {OO and filters from mixins of mixins} -setup {
 } -result {(foo) (bar) (egg) chicken (egg) (bar) (foo)}
 test oo-14.8 {OO: class mixin order - Bug 1998221} -setup {
     set ::result {}
-    oo::class create master {
+    oo::class create parent {
 	method test {} {}
     }
 } -cleanup {
-    master destroy
+    parent destroy
 } -body {
     oo::class create mix {
-	superclass master
+	superclass parent
 	method test {} {lappend ::result mix; next; return $::result}
     }
     oo::class create cls {
-	superclass master
+	superclass parent
 	mixin mix
 	method test {} {lappend ::result cls; next; return $::result}
     }
@@ -2257,7 +2291,7 @@ test oo-15.10 {variable binding must not bleed through oo::copy} -setup {
 } -body {
     set obj1 [FooClass new]
     oo::objdefine $obj1 {
-	variable var 
+	variable var
 	method m {} {
 	    set var foo
 	}
@@ -2306,7 +2340,7 @@ test oo-15.13.1 {
 } -cleanup {
     Cls destroy
     Cls2 destroy
-} -result done 
+} -result done
 test oo-15.13.2 {OO: object cloning with target NS} -setup {
     oo::class create Super
     oo::class create Cls {superclass Super}
@@ -2334,7 +2368,7 @@ test oo-15.15 {method cloning must ensure that there is a string representation 
 } -body {
     cls create foo
     oo::objdefine foo {
-	method m1 {} [string map {a b} {return hello}] 
+	method m1 {} [string map {a b} {return hello}]
     }
     [oo::copy foo] m1
 } -cleanup {
@@ -2744,13 +2778,13 @@ test oo-18.7 {OO: objdefine command support} -setup {
     invoked from within
 "oo::objdefine inst {rename ::inst ::INST;error foo}"}}
 test oo-18.8 {OO: define/self command support} -setup {
-    oo::class create master
-    oo::class create ::foo {superclass master}
+    oo::class create parent
+    oo::class create ::foo {superclass parent}
 } -body {
     catch {oo::define foo {rename ::foo ::bar; self {error foobar}}} msg opt
     dict get $opt -errorinfo
 } -cleanup {
-    master destroy
+    parent destroy
 } -result {foobar
     while executing
 "error foobar"
@@ -2761,15 +2795,15 @@ test oo-18.8 {OO: define/self command support} -setup {
     invoked from within
 "oo::define foo {rename ::foo ::bar; self {error foobar}}"}
 test oo-18.9 {OO: define/self command support} -setup {
-    oo::class create master
+    oo::class create parent
     set c [oo::class create now_this_is_a_very_very_long_class_name_indeed {
-        superclass master
+        superclass parent
     }]
 } -body {
     catch {oo::define $c {error err}} msg opt
     dict get $opt -errorinfo
 } -cleanup {
-    master destroy
+    parent destroy
 } -result {err
     while executing
 "error err"
@@ -2777,13 +2811,13 @@ test oo-18.9 {OO: define/self command support} -setup {
     invoked from within
 "oo::define $c {error err}"}
 test oo-18.10 {OO: define/self command support} -setup {
-    oo::class create master
-    oo::class create ::foo {superclass master}
+    oo::class create parent
+    oo::class create ::foo {superclass parent}
 } -body {
     catch {oo::define foo {self {rename ::foo {}; error foobar}}} msg opt
     dict get $opt -errorinfo
 } -cleanup {
-    master destroy
+    parent destroy
 } -result {foobar
     while executing
 "error foobar"
@@ -2794,13 +2828,13 @@ test oo-18.10 {OO: define/self command support} -setup {
     invoked from within
 "oo::define foo {self {rename ::foo {}; error foobar}}"}
 test oo-18.11 {OO: define/self command support} -setup {
-    oo::class create master
-    oo::class create ::foo {superclass master}
+    oo::class create parent
+    oo::class create ::foo {superclass parent}
 } -body {
     catch {oo::define foo {rename ::foo {}; self {error foobar}}} msg opt
     dict get $opt -errorinfo
 } -cleanup {
-    master destroy
+    parent destroy
 } -result {this command cannot be called when the object has been deleted
     while executing
 "self {error foobar}"
@@ -2995,7 +3029,7 @@ test oo-20.10 {OO: variable and varname methods refer to same things} -setup {
 test oo-20.11 {OO: variable mustn't crash when recursing} -body {
     oo::class create A {
 	constructor {name} {
-	    my variable np_name 
+	    my variable np_name
 	    set np_name $name
 	}
 	method copy {nm} {
@@ -3010,7 +3044,7 @@ test oo-20.11 {OO: variable mustn't crash when recursing} -body {
 			lappend objs [$ref copy {}]
 		    }
 		    $cpy prop $var $objs
-		} else { 
+		} else {
 		    $cpy prop $var $val
 		}
 	    }
@@ -3423,12 +3457,12 @@ test oo-27.2 {variables declaration - object introspection} -setup {
     info object variables foo
 } -result {a b c}
 test oo-27.3 {variables declaration - basic behaviour} -setup {
-    oo::class create master
+    oo::class create parent
 } -cleanup {
-    master destroy
+    parent destroy
 } -body {
     oo::class create foo {
-	superclass master
+	superclass parent
 	variable x!
 	constructor {} {set x! 1}
 	method y {} {incr x!}
@@ -3438,13 +3472,13 @@ test oo-27.3 {variables declaration - basic behaviour} -setup {
     bar y
 } -result 3
 test oo-27.4 {variables declaration - destructors too} -setup {
-    oo::class create master
+    oo::class create parent
     set result bad!
 } -cleanup {
-    master destroy
+    parent destroy
 } -body {
     oo::class create foo {
-	superclass master
+	superclass parent
 	variable x!
 	constructor {} {set x! 1}
 	method y {} {incr x!}
@@ -3469,12 +3503,12 @@ test oo-27.5 {variables declaration - object-bound variables} -setup {
     foo y
 } -result 2
 test oo-27.6 {variables declaration - non-interference of levels} -setup {
-    oo::class create master
+    oo::class create parent
 } -cleanup {
-    master destroy
+    parent destroy
 } -body {
     oo::class create foo {
-	superclass master
+	superclass parent
 	variable x!
 	constructor {} {set x! 1}
 	method y {} {incr x!}
@@ -3489,12 +3523,12 @@ test oo-27.6 {variables declaration - non-interference of levels} -setup {
     list [bar y] [lsort [info object vars bar]] [bar eval {info vars *!}]
 } -result {{3 2 y! {}} {x! y!} {x! y!}}
 test oo-27.7 {variables declaration - one underlying variable space} -setup {
-    oo::class create master
+    oo::class create parent
 } -cleanup {
-    master destroy
+    parent destroy
 } -body {
     oo::class create foo {
-	superclass master
+	superclass parent
 	variable x!
 	constructor {} {set x! 1}
 	method y {} {incr x!}
@@ -3521,12 +3555,12 @@ test oo-27.9 {variables declaration - error cases - arrays} -body {
     oo::define oo::object variable bad(var)
 } -returnCodes error -result {invalid declared variable name "bad(var)": must not refer to an array element}
 test oo-27.10 {variables declaration - no instance var leaks with class resolvers} -setup {
-    oo::class create master
+    oo::class create parent
 } -cleanup {
-    master destroy
+    parent destroy
 } -body {
     oo::class create foo {
-	superclass master
+	superclass parent
 	variable clsvar
 	constructor {} {
 	    set clsvar 0
@@ -3549,12 +3583,12 @@ test oo-27.10 {variables declaration - no instance var leaks with class resolver
     list [inst1 value] [inst2 value]
 } -result {3 2}
 test oo-27.11 {variables declaration - no instance var leaks with class resolvers} -setup {
-    oo::class create master
+    oo::class create parent
 } -cleanup {
-    master destroy
+    parent destroy
 } -body {
     oo::class create foo {
-	superclass master
+	superclass parent
 	variable clsvar
 	constructor {} {
 	    set clsvar 0
@@ -3622,12 +3656,12 @@ test oo-27.13 {variables declaration: Bug 3185009: require refcount management} 
     foo destroy
 } -result {0 7 1 7 {} 0 1 {can't read "x": no such variable}}
 test oo-27.14 {variables declaration - multiple use} -setup {
-    oo::class create master
+    oo::class create parent
 } -cleanup {
-    master destroy
+    parent destroy
 } -body {
     oo::class create foo {
-	superclass master
+	superclass parent
 	variable x
 	variable y
 	method boo {} {
@@ -3638,12 +3672,12 @@ test oo-27.14 {variables declaration - multiple use} -setup {
     list [bar boo] [bar boo]
 } -result {1,1 2,2}
 test oo-27.15 {variables declaration - multiple use} -setup {
-    oo::class create master
+    oo::class create parent
 } -cleanup {
-    master destroy
+    parent destroy
 } -body {
     oo::class create foo {
-	superclass master
+	superclass parent
 	variable
 	variable x y
 	method boo {} {
@@ -3654,12 +3688,12 @@ test oo-27.15 {variables declaration - multiple use} -setup {
     list [bar boo] [bar boo]
 } -result {1,1 2,2}
 test oo-27.16 {variables declaration - multiple use} -setup {
-    oo::class create master
+    oo::class create parent
 } -cleanup {
-    master destroy
+    parent destroy
 } -body {
     oo::class create foo {
-	superclass master
+	superclass parent
 	variable x
 	variable -clear
 	variable y
@@ -3671,12 +3705,12 @@ test oo-27.16 {variables declaration - multiple use} -setup {
     list [bar boo] [bar boo]
 } -result {1,1 1,2}
 test oo-27.17 {variables declaration - multiple use} -setup {
-    oo::class create master
+    oo::class create parent
 } -cleanup {
-    master destroy
+    parent destroy
 } -body {
     oo::class create foo {
-	superclass master
+	superclass parent
 	variable x
 	variable -set y
 	method boo {} {
@@ -3687,12 +3721,12 @@ test oo-27.17 {variables declaration - multiple use} -setup {
     list [bar boo] [bar boo]
 } -result {1,1 1,2}
 test oo-27.18 {variables declaration - multiple use} -setup {
-    oo::class create master
+    oo::class create parent
 } -cleanup {
-    master destroy
+    parent destroy
 } -body {
     oo::class create foo {
-	superclass master
+	superclass parent
 	variable x
 	variable -? y
 	method boo {} {
@@ -3790,12 +3824,12 @@ test oo-27.22 {variables declaration uniqueifies: Bug 3396896} -setup {
 } -result {v t}
 test oo-27.23 {variable resolver leakage: Bug 1493a43044} -setup {
     oo::class create Super
-    oo::class create Master {
+    oo::class create parent {
 	superclass Super
 	variable member1 member2
 	constructor {} {
-	    set member1 master1
-	    set member2 master2
+	    set member1 parent1
+	    set member2 parent2
 	}
 	method getChild {} {
 	    Child new [self]
@@ -3816,10 +3850,10 @@ test oo-27.23 {variable resolver leakage: Bug 1493a43044} -setup {
 	method result {} {return $result}
     }
 } -body {
-    [[Master new] getChild] result
+    [[parent new] getChild] result
 } -cleanup {
     Super destroy
-} -result {master1 master2 master1 master2 master1 master2 master1 master2}
+} -result {parent1 parent2 parent1 parent2 parent1 parent2 parent1 parent2}
 
 # A feature that's not supported because the mechanism may change without
 # warning, but is supposed to work...
@@ -4147,7 +4181,7 @@ test oo-35.6 {
     return done
 } -cleanup {
     rename obj {}
-} -result done 
+} -result done
 
 
 

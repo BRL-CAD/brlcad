@@ -13,10 +13,6 @@
 #ifndef _TKMENU
 #define _TKMENU
 
-#ifndef _TK
-#include "tk.h"
-#endif
-
 #ifndef _TKINT
 #include "tkInt.h"
 #endif
@@ -189,7 +185,7 @@ typedef struct TkMenuEntry {
     				 * the menu. */
 
     /*
-     * Bookeeping for master menus and cascade menus.
+     * Bookeeping for main menus and cascade menus.
      */
 
     struct TkMenuReferences *childMenuRefPtr;
@@ -270,7 +266,7 @@ typedef struct TkMenu {
     int numEntries;		/* Number of elements in entries. */
     int active;			/* Index of active entry. -1 means nothing
 				 * active. */
-    int menuType;		/* MASTER_MENU, TEAROFF_MENU, or MENUBAR. See
+    int menuType;		/* MAIN_MENU, TEAROFF_MENU, or MENUBAR. See
     				 * below for definitions. */
     Tcl_Obj *menuTypePtr;	/* Used to control whether created tkwin is a
 				 * toplevel or not. "normal", "menubar", or
@@ -358,7 +354,7 @@ typedef struct TkMenu {
     struct TkMenu *masterMenuPtr;
     				/* A pointer to the original menu for this
     				 * clone chain. Points back to this structure
-    				 * if this menu is a master menu. */
+    				 * if this menu is a main menu. */
     void *reserved1; /* not used any more. */
     Tk_Window parentTopLevelPtr;/* If this menu is a menubar, this is the
     				 * toplevel that owns the menu. Only
@@ -437,7 +433,7 @@ typedef struct TkMenuReferences {
  * MENU_DELETION_PENDING	Non-zero means that we are currently
  *				destroying this menu's internal structures.
  *				This is useful when we are in the middle of
- *				cleaning this master menu's chain of menus up
+ *				cleaning this main menu's chain of menus up
  *				when TkDestroyMenu was called again on this
  *				menu (via a destroy binding or somesuch).
  * MENU_WIN_DESTRUCTION_PENDING Non-zero means we are in the middle of
@@ -455,15 +451,16 @@ typedef struct TkMenuReferences {
 #define MENU_PLATFORM_FLAG3	(1 << 28)
 
 /*
- * Each menu created by the user is a MASTER_MENU. When a menu is torn off, a
+ * Each menu created by the user is a MAIN_MENU. When a menu is torn off, a
  * TEAROFF_MENU instance is created. When a menu is assigned to a toplevel as
  * a menu bar, a MENUBAR instance is created. All instances have the same
- * configuration information. If the master instance is deleted, all instances
+ * configuration information. If the main instance is deleted, all instances
  * are deleted. If one of the other instances is deleted, only that instance
  * is deleted.
  */
 
 #define UNKNOWN_TYPE		-1
+#define MAIN_MENU 		0
 #define MASTER_MENU 		0
 #define TEAROFF_MENU 		1
 #define MENUBAR 		2

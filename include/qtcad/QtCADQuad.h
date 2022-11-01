@@ -37,6 +37,18 @@ extern "C" {
 #include "qtcad/defines.h"
 #include "qtcad/QtCADView.h"
 
+// Abbreviations:
+//
+// ur == 0 == Upper Right Quadrant
+// ul == 1 == Upper Left Quadrant
+// ll == 2 == Lower Left Quadrant
+// lr == 3 == Lower Right Quadrant
+
+#define UPPER_RIGHT_QUADRANT 0
+#define UPPER_LEFT_QUADRANT 1
+#define LOWER_LEFT_QUADRANT 2
+#define LOWER_RIGHT_QUADRANT 3
+
 class QTCAD_EXPORT QtCADQuad : public QWidget
 {
     Q_OBJECT
@@ -52,11 +64,12 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 	void fallback();
 
 	void default_views(); // Set the aet of the four quadrants to their standard defaults.
-	QtCADView *get(int quadrant_num = 0);
-	struct bview * view(int quadrant_id = 0);
+	QtCADView *get(int quadrant_num = UPPER_RIGHT_QUADRANT);
+	struct bview * view(int quadrant_id = UPPER_RIGHT_QUADRANT);
 
 	void select(int quadrant_num);
 	void select(const char *id); // valid inputs: ur, ul, ll and lr
+	int get_selected(); // returns UPPER_RIGHT_QUADRANT, UPPER_LEFT_QUADRANT, LOWER_LEFT_QUADRANT, or LOWER_RIGHT_QUADRANT
 
         void changeToSingleFrame();
         void changeToQuadFrame();
@@ -74,14 +87,14 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 	void init_done();
 
     public slots:
-	void need_update(void *);
+	void do_view_update(unsigned long long);
         void do_view_changed();
 	void do_init_done();
 	void set_lmouse_move_default(int);
 
     private:
         bool eventFilter(QObject*, QEvent*);
-        QtCADView *createView(int index);
+        QtCADView *createView(unsigned int index);
         QGridLayout *createLayout();
 
         int graphicsType = QtCADView_SW;
@@ -92,7 +105,7 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
         // We need to hang on to this because we don't create the other quad views until the user switches mode
         struct ged *gedp;
 
-        // Hang on to thiese pointers so when we need to clean up memory we have them
+        // Hang on to these pointers so when we need to clean up memory we have them
         QGridLayout *currentLayout = nullptr;
         QSpacerItem *spacerTop = nullptr;
         QSpacerItem *spacerBottom = nullptr;

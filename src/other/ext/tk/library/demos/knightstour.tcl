@@ -21,7 +21,7 @@
 #	If you let it repeat then it will choose random start positions
 #	for each new tour.
 
-package require Tk 8.5
+package require Tk
 
 # Return a list of accessible squares from a given square
 proc ValidMoves {square} {
@@ -29,7 +29,7 @@ proc ValidMoves {square} {
     foreach pair {{-1 -2} {-2 -1} {-2 1} {-1 2} {1 2} {2 1} {2 -1} {1 -2}} {
         set col [expr {($square % 8) + [lindex $pair 0]}]
         set row [expr {($square / 8) + [lindex $pair 1]}]
-        if {$row > -1 && $row < 8 && $col > -1 && $col < 8} {
+        if {$row >= 0 && $row < 8 && $col >= 0 && $col < 8} {
             lappend moves [expr {$row * 8 + $col}]
         }
     }
@@ -41,7 +41,7 @@ proc CheckSquare {square} {
     variable visited
     set moves 0
     foreach test [ValidMoves $square] {
-        if {[lsearch -exact -integer $visited $test] == -1} {
+        if {[lsearch -exact -integer $visited $test] < 0} {
             incr moves
         }
     }
@@ -55,7 +55,7 @@ proc Next {square} {
     set minimum 9
     set nextSquare -1
     foreach testSquare [ValidMoves $square] {
-        if {[lsearch -exact -integer $visited $testSquare] == -1} {
+        if {[lsearch -exact -integer $visited $testSquare] < 0} {
             set count [CheckSquare $testSquare]
             if {$count < $minimum} {
                 set minimum $count
@@ -190,7 +190,7 @@ proc CreateGUI {} {
     ttk::button $dlg.tf.b1 -text Start -command [list Tour $dlg]
     ttk::button $dlg.tf.b2 -text Exit -command [list Exit $dlg]
     set square 0
-    for {set row 7} {$row != -1} {incr row -1} {
+    for {set row 7} {$row >= 0} {incr row -1} {
         for {set col 0} {$col < 8} {incr col} {
             if {(($col & 1) ^ ($row & 1))} {
                 set fill tan3 ; set dfill tan4
@@ -218,7 +218,7 @@ proc CreateGUI {} {
             -fill black -activefill "#600000"
     }
     $c moveto knight {*}[lrange [$c coords [expr {1 + int(rand() * 64)}]] 0 1]
-    $c bind knight <ButtonPress-1> [namespace code [list DragStart %W %x %y]]
+    $c bind knight <Button-1> [namespace code [list DragStart %W %x %y]]
     $c bind knight <Motion> [namespace code [list DragMotion %W %x %y]]
     $c bind knight <ButtonRelease-1> [namespace code [list DragEnd %W %x %y]]
 

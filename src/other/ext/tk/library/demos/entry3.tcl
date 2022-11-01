@@ -102,7 +102,7 @@ foreach {chars digit} {abc 2 def 3 ghi 4 jkl 5 mno 6 pqrs 7 tuv 8 wxyz 9} {
 
 proc validatePhoneChange {W vmode idx char} {
     global phoneNumberMap entry3content
-    if {$idx == -1} {return 1}
+    if {$idx < 0} {return 1}
     after idle [list $W configure -validate $vmode -invcmd bell]
     if {
 	!($idx<3 || $idx==6 || $idx==7 || $idx==11 || $idx>15) &&

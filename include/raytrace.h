@@ -123,7 +123,7 @@ __BEGIN_DECLS
 
 #include "./rt/private.h"
 
-#include "./rt/nmg.h"
+#include "./rt/nmg_conv.h"
 
 #include "./rt/overlap.h"
 

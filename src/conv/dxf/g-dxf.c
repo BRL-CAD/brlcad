@@ -135,7 +135,7 @@ find_closest_color(float color[3])
 
 
 static void
-nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float color[3], void *UNUSED(client_data))
+nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, void *UNUSED(client_data))
 {
     struct model *m;
     struct shell *s;
@@ -218,7 +218,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
     nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
 
-    color_num = find_closest_color(color);
+    color_num = find_closest_color(tsp->ts_mater.ma_color);
 
     if (polyface_mesh) {
 	size_t i;

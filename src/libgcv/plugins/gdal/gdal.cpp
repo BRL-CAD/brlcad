@@ -81,7 +81,7 @@ struct conversion_state {
     GDALDatasetH hDataset;
 };
 
-HIDDEN void
+static void
 gdal_state_init(struct conversion_state *gs)
 {
     if(!gs) return;
@@ -93,7 +93,7 @@ gdal_state_init(struct conversion_state *gs)
     gs->hDataset = NULL;
 }
 
-HIDDEN int
+static int
 get_dataset_info(GDALDatasetH hDataset)
 {
     char *gdal_info = GDALInfo(hDataset, NULL);
@@ -103,7 +103,7 @@ get_dataset_info(GDALDatasetH hDataset)
     return 0;
 }
 
-HIDDEN int
+static int
 gdal_can_read(const char *data)
 {
     GDALDatasetH hDataset;
@@ -125,7 +125,7 @@ gdal_can_read(const char *data)
     return 1;
 }
 
-HIDDEN void
+static void
 gdal_elev_minmax(GDALDatasetH ds)
 {
     int bmin, bmax = 0;
@@ -141,7 +141,7 @@ gdal_elev_minmax(GDALDatasetH ds)
 /* Get the UTM zone of the GDAL dataset - see
  * https://gis.stackexchange.com/questions/241696/how-to-convert-from-lat-lon-to-utm-with-gdaltransform
  * and the linked posts in the answers for more info. */
-HIDDEN int
+static int
 gdal_utm_zone(struct conversion_state *state)
 {
     int zone = INT_MAX;
@@ -158,7 +158,7 @@ gdal_utm_zone(struct conversion_state *state)
 /* Get corresponding EPSG number of the UTM zone - see
  * https://gis.stackexchange.com/questions/241696/how-to-convert-from-lat-lon-to-utm-with-gdaltransform
  * and the linked posts in the answers for more info. */
-HIDDEN int
+static int
 gdal_utm_epsg(struct conversion_state *state, int zone)
 {
     int epsg = INT_MAX;
@@ -170,7 +170,7 @@ gdal_utm_epsg(struct conversion_state *state, int zone)
     return epsg;
 }
 
-HIDDEN int
+static int
 gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	const void *options_data, const char *source_path)
 {
@@ -186,7 +186,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     state->gcv_options = gcv_options;
     state->ops = (struct gdal_read_options *)options_data;
     state->input_file = source_path;
-    state->wdbp = context->dbip->dbi_wdbp;
+    state->wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
 
     /* If the environment is identifying a PROJ_LIB directory use it,
      * else set it to the correct one for BRL-CAD */
@@ -361,13 +361,14 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     }
 
     wdb_export(state->wdbp, bu_vls_addr(&name_dsp), (void *)dsp, ID_DSP, 1);
+    wdb_close(state->wdbp);
 
     /* Write out the original and current Spatial Reference Systems
      * and other dimensional information to attributes on the dsp */
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
-    struct directory *dp = db_lookup(state->wdbp->dbip, bu_vls_addr(&name_dsp), LOOKUP_QUIET);
-    if (dp != RT_DIR_NULL && !db5_get_attributes(state->wdbp->dbip, &avs, dp)) {
+    struct directory *dp = db_lookup(context->dbip, bu_vls_addr(&name_dsp), LOOKUP_QUIET);
+    if (dp != RT_DIR_NULL && !db5_get_attributes(context->dbip, &avs, dp)) {
 	struct bu_vls tstr = BU_VLS_INIT_ZERO;
 	(void)bu_avs_add(&avs, "s_srs" , orig_proj4_str);
 	(void)bu_avs_add(&avs, "t_srs" , bu_vls_addr(&new_proj4_str));
@@ -383,7 +384,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	    (void)bu_avs_add(&avs, "y_offset" , bu_vls_addr(&tstr));
 	}
 	bu_vls_free(&tstr);
-	(void)db5_update_attributes(dp, &avs, state->wdbp->dbip);
+	(void)db5_update_attributes(dp, &avs, context->dbip);
     }
 
     if (dunit != dunit_default)
@@ -401,7 +402,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     return 1;
 }
 
-HIDDEN void
+static void
 gdal_read_create_opts(struct bu_opt_desc **odesc, void **dest_options_data)
 {
     struct gdal_read_options *odata;
@@ -420,7 +421,7 @@ gdal_read_create_opts(struct bu_opt_desc **odesc, void **dest_options_data)
     BU_OPT_NULL((*odesc)[3]);
 }
 
-HIDDEN void
+static void
 gdal_read_free_opts(void *options_data)
 {
     bu_free(options_data, "options_data");

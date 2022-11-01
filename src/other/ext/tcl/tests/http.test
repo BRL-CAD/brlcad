@@ -11,15 +11,17 @@
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require tcltest 2
-namespace import -force ::tcltest::*
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
+    namespace import -force ::tcltest::*
+}
 
 if {[catch {package require http 2} version]} {
     if {[info exists http2]} {
 	catch {puts "Cannot load http 2.* package"}
 	return
     } else {
-	catch {puts "Running http 2.* tests in slave interp"}
+	catch {puts "Running http 2.* tests in child interp"}
 	set interp [interp create http2]
 	$interp eval [list set http2 "running"]
 	$interp eval [list set argv $argv]
@@ -36,13 +38,10 @@ proc bgerror {args} {
     puts stderr $errorInfo
 }
 
-if {$::tcl_platform(os) eq "Darwin"} {
-    # Name resolution often a problem on OSX; not focus of HTTP package anyway
-    set HOST localhost
-} else {
-    set HOST [info hostname]
-}
-
+# Do not use [info hostname].
+# Name resolution is often a problem on OSX; not focus of HTTP package anyway.
+# Also a problem on other platforms for http-4.14 (test with bad port number).
+set HOST localhost
 set port 8010
 set bindata "This is binary data\x0d\x0amore\x0dmore\x0amore\x00null"
 catch {unset data}
@@ -79,6 +78,8 @@ if {[catch {package present Thread}] == 0 && [file exists $httpdFile]} {
 	unset port
 	return
     } else {
+	# Running httpd in the current thread overwrites the values of port
+	# (here) and HOST (in the sourced server file).
 	set port [lindex [fconfigure $listen -sockname] 2]
     }
 }
@@ -126,7 +127,7 @@ test http-3.2 {http::geturl} -returnCodes error -body {
     http::geturl http:junk
 } -result {Unsupported URL: http:junk}
 set url //${::HOST}:$port
-set badurl //${::HOST}:[expr $port+1]
+set badurl //${::HOST}:[expr {$port+1}]
 test http-3.3 {http::geturl} -body {
     set token [http::geturl $url]
     http::data $token
@@ -446,6 +447,9 @@ test http-3.33 {http::geturl application/xml is text} -body {
 } -cleanup {
     catch { http::cleanup $token }
 } -result {test 4660 /test}
+test http-3.34 {http::geturl -headers not a dict} -returnCodes error -body {
+    http::geturl http://test/t -headers NoDict
+} -result {Bad value for -headers (NoDict), must be dict}
 
 test http-4.1 {http::Event} -body {
     set token [http::geturl $url -keepalive 0]

@@ -1,6 +1,6 @@
-/******************************************************************************
+/*=============================================================================
                                   libpammap.c
-*******************************************************************************
+===============================================================================
 
   These are functions that deal with tuple hashes and tuple tables.
 
@@ -11,12 +11,16 @@
   A tuple table lets you scan all the values, being a table of elements
   that consist of an ordered pair of a tuple value and integer.
 
-******************************************************************************/
+  This file was originally written by Bryan Henderson and is contributed
+  to the public domain by him and subsequent authors.
+=============================================================================*/
 
 #include <assert.h>
 
 #include "pm_c_util.h"
 #include "mallocvar.h"
+
+
 #include "pam.h"
 #include "pammap.h"
 
@@ -24,18 +28,20 @@
 #define HASH_SIZE 20023
 
 unsigned int
-pnm_hashtuple(struct pam * const pamP, tuple const tuple) {
+pnm_hashtuple(struct pam * const pamP,
+              tuple        const tuple) {
 /*----------------------------------------------------------------------------
    Return the hash value of the tuple 'tuple' -- i.e. an index into a hash
    table.
 -----------------------------------------------------------------------------*/
-    int i;
+    unsigned int const hash_factor[] = {1, 33, 33*33};
+
+    unsigned int i;
     unsigned int hash;
-    const unsigned int hash_factor[] = {33023, 30013, 27011};
 
     hash = 0;  /* initial value */
     for (i = 0; i < MIN(pamP->depth, 3); ++i) {
-        hash += tuple[i] * hash_factor[i];  /* May overflow */
+        hash += tuple[i] * hash_factor[i];
     }
     hash %= HASH_SIZE;
     return hash;
@@ -69,7 +75,7 @@ pnm_createtuplehash(void) {
 void
 pnm_destroytuplehash(tuplehash const tuplehash) {
 
-    int i;
+    unsigned int i;
 
     /* Free the chains */
 
@@ -150,7 +156,13 @@ pnm_lookuptuple(struct pam *    const pamP,
                 const tuple           searchval, 
                 int *           const foundP, 
                 int *           const retvalP) {
-    
+/*----------------------------------------------------------------------------
+   Return as *revtvalP the index of the tuple value 'searchval' in the
+   tuple hash 'tuplehash'.
+
+   But iff the tuple value isn't in the hash, return *foundP == false
+   and nothing as *retvalP.
+-----------------------------------------------------------------------------*/
     unsigned int const hashvalue = pnm_hashtuple(pamP, searchval);
     struct tupleint_list_item * p;
     struct tupleint_list_item * found;
@@ -187,7 +199,7 @@ addColorOccurrenceToHash(tuple          const color,
          p = p->next);
 
     if (p) {
-        /* It's in the hash; just tally one more occurence */
+        /* It's in the hash; just tally one more occurrence */
         ++p->tupleint.value;
         *fullP = FALSE;
     } else {
@@ -215,7 +227,16 @@ pnm_addtuplefreqoccurrence(struct pam *   const pamP,
                            tuple          const value,
                            tuplehash      const tuplefreqhash,
                            int *          const firstOccurrenceP) {
+/*----------------------------------------------------------------------------
+  Tally one more occurence of the tuple value 'value' to the tuple frequencey
+  hash 'tuplefreqhash', adding the tuple to the hash if it isn't there
+  already.
 
+  Allocate new space for the tuple value and the hash chain element.
+
+  If we can't allocate space for the new hash chain element, abort the
+  program.
+-----------------------------------------------------------------------------*/
     unsigned int const hashvalue = pnm_hashtuple(pamP, value);
             
     struct tupleint_list_item * p;
@@ -225,7 +246,7 @@ pnm_addtuplefreqoccurrence(struct pam *   const pamP,
          p = p->next);
 
     if (p) {
-        /* It's in the hash; just tally one more occurence */
+        /* It's in the hash; just tally one more occurrence */
         ++p->tupleint.value;
         *firstOccurrenceP = FALSE;
     } else {
@@ -251,6 +272,7 @@ static void
 computehashrecoverable(struct pam *   const pamP,
                        tuple **       const tupleArray, 
                        unsigned int   const maxsize, 
+                       unsigned int   const newDepth,
                        sample         const newMaxval,
                        unsigned int * const sizeP,
                        tuplehash *    const tuplefreqhashP,
@@ -267,13 +289,16 @@ computehashrecoverable(struct pam *   const pamP,
 
     freqPam = *pamP;
     freqPam.maxval = newMaxval;
+    freqPam.depth = newDepth;
+
+    assert(freqPam.depth <= pamP->depth);
 
     *tuplefreqhashP = pnm_createtuplehash();
     *sizeP = 0;   /* initial value */
     
     *rowbufferP = pnm_allocpamrow(pamP);
     
-    *colorP = pnm_allocpamtuple(&freqPam);
+    *colorP = pnm_allocpamtuple(pamP);
     
     full = FALSE;  /* initial value */
     
@@ -281,7 +306,7 @@ computehashrecoverable(struct pam *   const pamP,
        tuple values. 
     */
     for (row = 0; row < pamP->height && !full; ++row) {
-        int col;
+        unsigned int col;
         const tuple * tuplerow;  /* The row of tuples we are processing */
         
         if (tupleArray)
@@ -312,6 +337,7 @@ static tuplehash
 computetuplefreqhash(struct pam *   const pamP,
                      tuple **       const tupleArray, 
                      unsigned int   const maxsize, 
+                     unsigned int   const newDepth,
                      sample         const newMaxval,
                      unsigned int * const sizeP) {
 /*----------------------------------------------------------------------------
@@ -334,6 +360,10 @@ computetuplefreqhash(struct pam *   const pamP,
   However, if the number of unique tuple values is greater than 'maxsize', 
   return a null return value and *sizeP undefined.
 
+  The tuple values that index the hash have depth 'newDepth'.  We look at
+  only the first 'newDepth' planes of the input.  Caler must ensure that
+  the input has at least that many planes.
+
   The tuple values that index the hash are scaled to a new maxval of
   'newMaxval'.  E.g.  if the input has maxval 100 and 'newMaxval' is
   50, and a particular tuple has sample value 50, it would be counted
@@ -354,19 +384,20 @@ computetuplefreqhash(struct pam *   const pamP,
     rowbuffer = NULL;
     color = NULL;
 
-    if (setjmp(jmpbuf) == 0) {
-        pm_setjmpbufsave(&jmpbuf, &origJmpbufP);
-        computehashrecoverable(pamP, tupleArray, maxsize, newMaxval, sizeP,
-                               &tuplefreqhash, &rowbuffer, &color);
-        pm_setjmpbuf(origJmpbufP);
-    } else {
+    if (setjmp(jmpbuf) != 0) {
         if (color) 
             pnm_freepamtuple(color);
         if (rowbuffer)
             pnm_freepamrow(rowbuffer);
         if (tuplefreqhash)
             pnm_destroytuplehash(tuplefreqhash);
+        pm_setjmpbuf(origJmpbufP);
         pm_longjmp();
+    } else {
+        pm_setjmpbufsave(&jmpbuf, &origJmpbufP);
+        computehashrecoverable(pamP, tupleArray, maxsize, newDepth, newMaxval,
+                               sizeP, &tuplefreqhash, &rowbuffer, &color);
+        pm_setjmpbuf(origJmpbufP);
     }
     return tuplefreqhash;
 }
@@ -381,19 +412,22 @@ pnm_computetuplefreqhash(struct pam *   const pamP,
 /*----------------------------------------------------------------------------
    Compute the tuple frequency hash for the tuple array tupleArray[][].
 -----------------------------------------------------------------------------*/
-    return computetuplefreqhash(pamP, tupleArray, maxsize, pamP->maxval, 
+    return computetuplefreqhash(pamP, tupleArray, maxsize,
+                                pamP->depth, pamP->maxval, 
                                 sizeP);
 }
 
 
 
-static int 
+static void
 alloctupletable(const struct pam * const pamP, 
                 unsigned int       const size,
-                tupletable *       const tupletableP) {
-
-    if (UINT_MAX / sizeof(struct tupleint) < size) return 1;
-    {
+                tupletable *       const tupletableP,
+                const char **      const errorP) {
+    
+    if (UINT_MAX / sizeof(struct tupleint) < size)
+        pm_error("size %u is too big for arithmetic", size);
+    else {
         unsigned int const mainTableSize = size * sizeof(struct tupleint *);
         unsigned int const tupleIntSize = 
             sizeof(struct tupleint) - sizeof(sample) 
@@ -403,20 +437,23 @@ alloctupletable(const struct pam * const pamP,
            each individual tuple, we do a trick here and allocate everything
            as a single malloc block and suballocate internally.
         */
-        if ((UINT_MAX - mainTableSize) / tupleIntSize < size) return 1;
-
-        {
+        if ((UINT_MAX - mainTableSize) / tupleIntSize < size)
+            pm_error("size %u is too big for arithmetic", size);
+        else {
             unsigned int const allocSize = mainTableSize + size * tupleIntSize;
             void * pool;
-
+    
             pool = malloc(allocSize);
 
-            if (!pool) return 1;
-
-            {
+            if (!pool)
+                pm_error("Unable to allocate %u bytes for a %u-entry "
+                            "tuple table", allocSize, size);
+            else {
                 tupletable const tbl = (tupletable) pool;
 
                 unsigned int i;
+
+                *errorP = NULL;
 
                 for (i = 0; i < size; ++i)
                     tbl[i] = (struct tupleint *)
@@ -426,20 +463,23 @@ alloctupletable(const struct pam * const pamP,
             }
         }
     }
-
-    return 0;
 }
 
 
 
 tupletable
-pnm_alloctupletable(const struct pam * const pamP,
+pnm_alloctupletable(const struct pam * const pamP, 
                     unsigned int       const size) {
 
     tupletable retval;
+    const char * error = NULL;
 
-    if (alloctupletable(pamP, size, &retval)) {
-        pm_error("Failed to allocation tuple table of size %u", size);
+    alloctupletable(pamP, size, &retval, &error);
+
+    if (error) {
+        pm_error("%s", error);
+        free((void *)error);
+        pm_longjmp();
     }
     return retval;
 }
@@ -447,8 +487,8 @@ pnm_alloctupletable(const struct pam * const pamP,
 
 
 void
-pnm_freetupletable(struct pam * const pamP,
-                   tupletable   const tupletable) {
+pnm_freetupletable(const struct pam * const pamP,
+                   tupletable         const tupletable) {
 
     /* Note that the address 'tupletable' is, to the operating system, 
        the address of a larger block of memory that contains not only 
@@ -462,8 +502,8 @@ pnm_freetupletable(struct pam * const pamP,
 
 
 void
-pnm_freetupletable2(struct pam * const pamP,
-                    tupletable2  const tupletable) {
+pnm_freetupletable2(const struct pam * const pamP,
+                    tupletable2        const tupletable) {
 
     pnm_freetupletable(pamP, tupletable.table);
 }
@@ -487,9 +527,14 @@ tuplehashtotable(const struct pam * const pamP,
    in the table to tuples or anything else in existing space.
 -----------------------------------------------------------------------------*/
     tupletable tupletable;
+    const char * error = NULL;
 
-    if (alloctupletable(pamP, allocsize, &tupletable)) {
-        pm_error("Failed to allocate table table of size %u", allocsize);
+    alloctupletable(pamP, allocsize, &tupletable, &error);
+
+    if (error) {
+        pm_error("%s", error);
+        free((void *)error);
+        pm_longjmp();
     } else {
         unsigned int i, j;
         /* Loop through the hash table. */
@@ -544,7 +589,7 @@ pnm_computetupletablehash(struct pam * const pamP,
 -----------------------------------------------------------------------------*/
     tuplehash tupletablehash;
     unsigned int i;
-    bool fits;
+    int fits;
     
     tupletablehash = pnm_createtuplehash();
 
@@ -563,9 +608,10 @@ pnm_computetupletablehash(struct pam * const pamP,
 
 
 tupletable
-pnm_computetuplefreqtable2(struct pam *   const pamP,
+pnm_computetuplefreqtable3(struct pam *   const pamP,
                            tuple **       const tupleArray,
                            unsigned int   const maxsize,
+                           unsigned int   const newDepth,
                            sample         const newMaxval,
                            unsigned int * const countP) {
 /*----------------------------------------------------------------------------
@@ -592,6 +638,9 @@ pnm_computetuplefreqtable2(struct pam *   const pamP,
    Return the number of unique tuple values in tupleArray[][] as
    *countP.
 
+   The tuples in the table have depth 'newDepth'.  We look at
+   only the first 'newDepth' planes of the input.  If the input doesn't
+   have that many planes, we throw an error.
 
    Scale the tuple values to a new maxval of 'newMaxval' before
    processing them.  E.g. if the input has maxval 100 and 'newMaxval'
@@ -603,8 +652,13 @@ pnm_computetuplefreqtable2(struct pam *   const pamP,
     tupletable tuplefreqtable;
     unsigned int uniqueCount;
 
+    if (newDepth > pamP->depth)
+        pm_error("pnm_computetuplefreqtable3 called with 'newDepth' "
+                 "argument (%u) greater than input depth (%u)",
+                 newDepth, pamP->depth);
+
     tuplefreqhash = computetuplefreqhash(pamP, tupleArray, maxsize, 
-                                         newMaxval, &uniqueCount);
+                                         newDepth, newMaxval, &uniqueCount);
     if (tuplefreqhash == NULL)
         tuplefreqtable = NULL;
     else {
@@ -618,6 +672,20 @@ pnm_computetuplefreqtable2(struct pam *   const pamP,
     *countP = uniqueCount;
 
     return tuplefreqtable;
+}
+
+
+
+tupletable
+pnm_computetuplefreqtable2(struct pam *   const pamP,
+                           tuple **       const tupleArray,
+                           unsigned int   const maxsize,
+                           sample         const newMaxval,
+                           unsigned int * const countP) {
+
+    return
+        pnm_computetuplefreqtable3(pamP, tupleArray, maxsize,
+                                   pamP->depth, newMaxval, countP);
 }
 
 
@@ -681,3 +749,5 @@ pam_colorname(struct pam *         const pamP,
     sprintf(colorname, "#%02x%02x%02x", r, g, b);
     return colorname;
 }
+
+

@@ -37,6 +37,8 @@
 #include "ged.h"
 #include "./ged_private.h"
 
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
 #include "xxhash.h"
 
 #define LAST_SOLID(_sp)       DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
@@ -328,7 +330,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 }
 
 
-HIDDEN void
+static void
 eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
 			      struct db_full_path *subpath,
 			      const int skip_first)
@@ -714,8 +716,8 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     solid_set_color_info(sp, wireframe_color_override, tsp);
 
     sp->s_dlist = 0;
-    sp->s_os.transparency = dgcdp->vs.transparency;
-    sp->s_os.s_dmode = dgcdp->vs.s_dmode;
+    sp->s_os->transparency = dgcdp->vs.transparency;
+    sp->s_os->s_dmode = dgcdp->vs.s_dmode;
 
     /* append solid to display list */
     bu_semaphore_acquire(RT_SEM_MODEL);
@@ -772,7 +774,7 @@ draw_solid_wireframe(struct bv_scene_obj *sp, struct bview *gvp, struct db_i *db
 int
 redraw_solid(struct bv_scene_obj *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp)
 {
-    if (sp->s_os.s_dmode == _GED_WIREFRAME) {
+    if (sp->s_os->s_dmode == _GED_WIREFRAME) {
 	/* replot wireframe */
 	if (BU_LIST_NON_EMPTY(&sp->s_vlist)) {
 	    BV_FREE_VLIST(&RTG.rtg_vlfree, &sp->s_vlist);
@@ -787,7 +789,8 @@ int
 dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions)
 {
     struct db_i *dbip = gedp->dbip;
-    struct db_tree_state *tsp = &gedp->ged_wdbp->wdb_initial_tree_state;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct db_tree_state *tsp = &wdbp->wdb_initial_tree_state;
     struct bview *gvp = gedp->ged_gvp;
     int ret = 0;
     struct bv_scene_obj *sp;
@@ -969,8 +972,8 @@ append_solid_to_display_list(
     }
 
     sp->s_dlist = 0;
-    sp->s_os.transparency = bv_data->transparency;
-    sp->s_os.s_dmode = bv_data->dmode;
+    sp->s_os->transparency = bv_data->transparency;
+    sp->s_os->s_dmode = bv_data->dmode;
     MAT_COPY(sp->s_mat, tsp->ts_mat);
 
     /* append solid to display list */
@@ -1063,8 +1066,8 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     sp->s_old.s_cflag = 0;
     sp->s_old.s_wflag = 0;
 
-    sp->s_os.transparency = transparency;
-    sp->s_os.s_dmode = dmode;
+    sp->s_os->transparency = transparency;
+    sp->s_os->s_dmode = dmode;
 
     /* Solid successfully drawn, add to linked list of solid structs */
     BU_LIST_APPEND(gdlp->dl_head_scene_obj.back, &sp->l);
@@ -1241,16 +1244,16 @@ dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int bot
 
 
 	    /* found a match */
-	    if (sp->s_os.s_dmode == 4) {
+	    if (sp->s_os->s_dmode == 4) {
 		if (both)
 		    bu_vls_printf(vls, "%d 1", _GED_HIDDEN_LINE);
 		else
 		    bu_vls_printf(vls, "%d", _GED_HIDDEN_LINE);
 	    } else {
 		if (both)
-		    bu_vls_printf(vls, "%d %g", sp->s_os.s_dmode, sp->s_os.transparency);
+		    bu_vls_printf(vls, "%d %g", sp->s_os->s_dmode, sp->s_os->transparency);
 		else
-		    bu_vls_printf(vls, "%d", sp->s_os.s_dmode);
+		    bu_vls_printf(vls, "%d", sp->s_os->s_dmode);
 	    }
 
 	    return 1;
@@ -2395,7 +2398,7 @@ dl_set_transparency(struct ged *gedp, struct directory **dpp, double transparenc
 		continue;
 
 	    /* found a match */
-	    sp->s_os.transparency = transparency;
+	    sp->s_os->transparency = transparency;
 
 	}
 

@@ -52,7 +52,7 @@ static void render_camera_prep_persp_dof(render_camera_t *camera);
 static struct render_shader_s *render_shader_register (const char *name, int (*init)(render_t *, const char *));
 
 void
-render_camera_init(render_camera_t *camera, int threads)
+render_camera_init(render_camera_t *camera, size_t threads)
 {
     camera->type = RENDER_CAMERA_PERSPECTIVE;
 
@@ -62,7 +62,7 @@ render_camera_init(render_camera_t *camera, int threads)
     camera->tilt = 0;
 
     /* The camera will use a thread for every cpu the machine has. */
-    camera->thread_num = threads ? threads : (uint8_t)bu_avail_cpus();
+    camera->thread_num = threads ? (uint8_t)threads : (uint8_t)bu_avail_cpus();
 
     /* Initialize camera to rendering surface normals */
     render_normal_init(&camera->render, NULL);

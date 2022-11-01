@@ -214,7 +214,9 @@ bv_scene_obj_hash(XXH64_state_t *state, struct bv_scene_obj *s)
     for (BU_LIST_FOR(tvp, bv_vlist, &((struct bv_vlist *)&s->s_vlist)->l)) {
 	XXH64_update(state, tvp, sizeof(struct bv_vlist));
     }
-    _bv_obj_settings_hash(state, &s->s_os);
+    if (s->s_os)
+	_bv_obj_settings_hash(state, s->s_os);
+    _bv_obj_settings_hash(state, &s->s_local_os);
 }
 
 unsigned long long

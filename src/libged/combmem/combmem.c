@@ -48,7 +48,7 @@ enum etypes {
  * Given the azimuth, elevation and twist angles, calculate the
  * rotation part of a 4x4 matrix.
  */
-HIDDEN void
+static void
 combmem_mat_aet(matp_t matp, fastf_t az, fastf_t el, fastf_t tw)
 {
     fastf_t cos_az, sin_az;
@@ -89,7 +89,7 @@ combmem_mat_aet(matp_t matp, fastf_t az, fastf_t el, fastf_t tw)
 /**
  * Disassemble the given rotation matrix into az, el, tw.
  */
-HIDDEN void
+static void
 combmem_disassemble_rmat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw)
 {
     fastf_t cos_az, sin_az;
@@ -141,7 +141,7 @@ combmem_disassemble_rmat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw)
 /**
  * Disassemble the given matrix into az, el, tw, tx, ty, tz, sa, sx, sy and sz.
  */
-HIDDEN int
+static int
 combmem_disassemble_mat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw, fastf_t *tx, fastf_t *ty, fastf_t *tz, fastf_t *sa, fastf_t *sx, fastf_t *sy, fastf_t *sz)
 {
     mat_t m;
@@ -204,7 +204,7 @@ combmem_disassemble_mat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw, fast
 /**
  * Assemble the given aetvec, tvec and svec into a 4x4 matrix using key_pt for rotations and scale.
  */
-HIDDEN void
+static void
 combmem_assemble_mat(matp_t matp, vect_t aetvec, vect_t tvec, hvect_t svec, point_t key_pt, int sflag)
 {
     mat_t mat_aet_about_pt;
@@ -267,7 +267,7 @@ combmem_assemble_mat(matp_t matp, vect_t aetvec, vect_t tvec, hvect_t svec, poin
 }
 
 
-HIDDEN void
+static void
 combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum etypes etype)
 {
     fastf_t az, el, tw;
@@ -326,7 +326,7 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 #define COMBMEM_GETCOMBTREE(_gedp, _cmd, _name, _dp, _intern, _ntp, _rt_tree_array, _node_count) { \
 	struct rt_comb_internal *_comb; \
 	\
-	if ((_dp = db_lookup((_gedp)->ged_wdbp->dbip, (_name), LOOKUP_NOISY)) == RT_DIR_NULL) { \
+	if ((_dp = db_lookup((_gedp)->dbip, (_name), LOOKUP_NOISY)) == RT_DIR_NULL) { \
 	    bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", (_cmd), (_name)); \
 	    return BRLCAD_ERROR; \
 	} \
@@ -336,7 +336,7 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 	    return BRLCAD_ERROR; \
 	} \
 	\
-	if (rt_db_get_internal(&(_intern), _dp, (_gedp)->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
+	if (rt_db_get_internal(&(_intern), _dp, (_gedp)->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
 	    bu_vls_printf((_gedp)->ged_result_str, "Database read error, aborting"); \
 	    return BRLCAD_ERROR; \
 	} \
@@ -367,7 +367,7 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
     }
 
 
-HIDDEN int
+static int
 combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 {
     struct directory *dp;
@@ -418,7 +418,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 
 
 #define COMBMEM_SET_PART_I(_gedp, _argc, _cmd, _name, _num_params, _intern, _dp, _comb, _node_count, _rt_tree_array) { \
-	if (rt_db_get_internal(&(_intern), (_dp), (_gedp)->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
+	if (rt_db_get_internal(&(_intern), (_dp), (_gedp)->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
 	    bu_vls_printf((_gedp)->ged_result_str, "Database read error, aborting"); \
 	    return BRLCAD_ERROR;							\
 	}									\
@@ -480,7 +480,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 		      (_intern).idb_ptr = (void *)(_comb); \
 		      (_comb)->tree = (_final_tree); \
 		      \
-		      if (rt_db_put_internal((_dp), (_gedp)->ged_wdbp->dbip, &(_intern), &rt_uniresource) < 0) { \
+		      if (rt_db_put_internal((_dp), (_gedp)->dbip, &(_intern), &rt_uniresource) < 0) { \
 			  bu_vls_printf((_gedp)->ged_result_str, "Unable to write new combination into database.\n"); \
 			  \
 			  rt_db_free_internal(&(_old_intern)); \
@@ -518,7 +518,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     }
 
 
-HIDDEN int
+static int
 combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 {
     struct rt_db_internal old_intern;
@@ -620,7 +620,7 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 }
 
 
-HIDDEN int
+static int
 combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 {
     struct rt_db_internal old_intern;
@@ -714,7 +714,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 }
 
 
-HIDDEN int
+static int
 combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 {
     struct rt_db_internal old_intern;
@@ -793,7 +793,7 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 }
 
 
-HIDDEN int
+static int
 combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 {
     struct rt_db_internal old_intern;
@@ -855,7 +855,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 }
 
 
-HIDDEN int
+static int
 combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 {
     struct rt_db_internal old_intern;
@@ -939,7 +939,7 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 }
 
 
-HIDDEN int
+static int
 combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;

@@ -36,7 +36,7 @@ mkstemp(
 {
     static const char alphanumerics[] =
 	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    register char *a, *b;
+    char *a, *b;
     int fd, count, alphanumericsLen = strlen(alphanumerics); /* == 62 */
 
     a = template + strlen(template);

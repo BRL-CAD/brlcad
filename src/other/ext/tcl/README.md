@@ -1,11 +1,13 @@
 # README:  Tcl
 
-This is the **Tcl 8.6.10** source distribution.
+This is the **Tcl 8.6.12** source distribution.
 
 You can get any source release of Tcl from [our distribution
 site](https://sourceforge.net/projects/tcl/files/Tcl/).
 
-[![Build Status](https://travis-ci.org/tcltk/tcl.svg?branch=core-8-6-branch)](https://travis-ci.org/tcltk/tcl)
+[![Build Status](https://github.com/tcltk/tcl/workflows/Linux/badge.svg?branch=core-8-6-branch)](https://github.com/tcltk/tcl/actions?query=workflow%3A%22Linux%22+branch%3Acore-8-6-branch)
+[![Build Status](https://github.com/tcltk/tcl/workflows/Windows/badge.svg?branch=core-8-6-branch)](https://github.com/tcltk/tcl/actions?query=workflow%3A%22Windows%22+branch%3Acore-8-6-branch)
+[![Build Status](https://github.com/tcltk/tcl/workflows/macOS/badge.svg?branch=core-8-6-branch)](https://github.com/tcltk/tcl/actions?query=workflow%3A%22macOS%22+branch%3Acore-8-6-branch)
 
 ## Contents
  1. [Introduction](#intro)
@@ -29,21 +31,21 @@ powerful command languages for applications.
 
 Tcl is maintained, enhanced, and distributed freely by the Tcl community.
 Source code development and tracking of bug reports and feature requests
-takes place at [core.tcl-lang.org](https://core.tcl-lang.org/).
+take place at [core.tcl-lang.org](https://core.tcl-lang.org/).
 Tcl/Tk release and mailing list services are [hosted by
 SourceForge](https://sourceforge.net/projects/tcl/)
 with the Tcl Developer Xchange hosted at
 [www.tcl-lang.org](https://www.tcl-lang.org).
 
-Tcl is a freely available open source package.  You can do virtually
+Tcl is a freely available open-source package.  You can do virtually
 anything you like with it, such as modifying it, redistributing it,
 and selling it either in whole or in part.  See the file
 `license.terms` for complete information.
 
 ## <a id="doc">2.</a> Documentation
-Extensive documentation is available at our website.
+Extensive documentation is available on our website.
 The home page for this release, including new features, is
-[here](https://www.tcl.tk/software/tcltk/8.6.html).
+[here](https://www.tcl-lang.org/software/tcltk/8.6.html).
 Detailed release notes can be found at the
 [file distributions page](https://sourceforge.net/projects/tcl/files/Tcl/)
 by clicking on the relevant version.
@@ -88,16 +90,16 @@ about building Tcl from sources
 [online](https://www.tcl-lang.org/doc/howto/compile.html).
 
 ## <a id="devtools">4.</a> Development tools
-ActiveState produces a high quality set of commercial quality development
+ActiveState produces a high-quality set of commercial quality development
 tools that is available to accelerate your Tcl application development.
 Tcl Dev Kit builds on the earlier TclPro toolset and provides a debugger,
-static code checker, single-file wrapping utility, bytecode compiler and
+static code checker, single-file wrapping utility, bytecode compiler, and
 more.  More information can be found at
 
-	http://www.ActiveState.com/Tcl
+	https://www.activestate.com/products/tcl/
 
 ## <a id="complangtcl">5.</a> Tcl newsgroup
-There is a USENET news group, "`comp.lang.tcl`", intended for the exchange of
+There is a USENET newsgroup, "`comp.lang.tcl`", intended for the exchange of
 information about Tcl, Tk, and related applications.  The newsgroup is a
 great place to ask general information questions.  For bug reports, please
 see the "Support and bug fixes" section below.

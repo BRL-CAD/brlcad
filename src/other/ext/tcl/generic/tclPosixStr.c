@@ -158,6 +158,9 @@ Tcl_ErrnoId(void)
 #ifdef EINIT
     case EINIT: return "EINIT";
 #endif
+#ifdef EILSEQ
+    case EILSEQ: return "EILSEQ";
+#endif
 #ifdef EINPROGRESS
     case EINPROGRESS: return "EINPROGRESS";
 #endif
@@ -616,6 +619,9 @@ Tcl_ErrnoMsg(
 #endif
 #ifdef EINIT
     case EINIT: return "initialization error";
+#endif
+#ifdef EILSEQ
+    case EILSEQ: return "illegal byte sequence";
 #endif
 #ifdef EINPROGRESS
     case EINPROGRESS: return "operation now in progress";

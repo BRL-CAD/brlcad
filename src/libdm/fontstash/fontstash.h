@@ -950,6 +950,8 @@ int fonsAddFont(FONScontext* stash, const char* name, const char* path)
 	if (fp == NULL) goto error;
 	fseek(fp,0,SEEK_END);
 	dataSize = (int)ftell(fp);
+	if (dataSize < 1)
+	   goto error;
 	fseek(fp,0,SEEK_SET);
 	data = (unsigned char*)malloc(dataSize);
 	if (data == NULL) goto error;

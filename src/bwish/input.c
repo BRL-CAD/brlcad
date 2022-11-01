@@ -87,11 +87,11 @@ extern void history_record_priv(struct bu_vls *cmdp, struct timeval *start, stru
 /* defined in main.c */
 extern Tcl_Interp *INTERP;
 
-HIDDEN void inputHandler(ClientData clientData, int mask);
-HIDDEN void processChar(char ch);
-HIDDEN void insert_prompt(void);
-HIDDEN void insert_char(char ch);
-HIDDEN void insert_beep(void);
+static void inputHandler(ClientData clientData, int mask);
+static void processChar(char ch);
+static void insert_prompt(void);
+static void insert_char(char ch);
+static void insert_beep(void);
 
 static struct bu_vls input_str = BU_VLS_INIT_ZERO;
 static struct bu_vls input_str_prefix = BU_VLS_INIT_ZERO;
@@ -119,7 +119,7 @@ initInput(void)
 }
 
 
-HIDDEN void
+static void
 inputHandler(ClientData clientData, int UNUSED(mask))
 {
     int count;
@@ -149,7 +149,7 @@ inputHandler(ClientData clientData, int UNUSED(mask))
 
 
 /* Process character */
-HIDDEN void
+static void
 processChar(char ch)
 {
     struct bu_vls *vp = NULL;
@@ -533,14 +533,14 @@ processChar(char ch)
 }
 
 
-HIDDEN void
+static void
 insert_prompt(void)
 {
     bu_log("%s", bu_vls_addr(&prompt));
 }
 
 
-HIDDEN void
+static void
 insert_char(char ch)
 {
     if (input_str_index == bu_vls_strlen(&input_str)) {
@@ -563,7 +563,7 @@ insert_char(char ch)
 }
 
 
-HIDDEN void
+static void
 insert_beep(void)
 {
     bu_log("%c", 7);

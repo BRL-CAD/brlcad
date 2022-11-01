@@ -27,6 +27,7 @@
 
 #include "bu/env.h"
 #include "qtcad/QViewCtrl.h"
+#include "qtcad/SignalFlags.h"
 
 
 QViewCtrl::QViewCtrl(QWidget *pparent, struct ged *pgedp) : QToolBar(pparent)
@@ -92,7 +93,7 @@ QViewCtrl::fbclear_cmd()
     const char *av[2] = {NULL};
     av[0] = "fbclear";
     ged_exec(gedp, 1, (const char **)av);
-    emit gui_changed_view(&gedp->ged_gvp);
+    emit view_changed(QTCAD_VIEW_REFRESH);
 }
 
 void
@@ -114,13 +115,13 @@ QViewCtrl::fb_mode_cmd()
 	default:
 	    bu_log("Error - invalid fb mode: %d\n", v->gv_s->gv_fb_mode);
     }
-    emit gui_changed_view(&gedp->ged_gvp);
+    emit view_changed(QTCAD_VIEW_REFRESH);
 }
 
 void
-QViewCtrl::fb_mode_icon()
+QViewCtrl::do_view_update(unsigned long long flags)
 {
-    if (!gedp->ged_gvp)
+    if (!gedp->ged_gvp || !flags)
 	return;
     struct bview *v = gedp->ged_gvp;
     switch (v->gv_s->gv_fb_mode) {
@@ -174,7 +175,7 @@ QViewCtrl::raytrace_cmd()
 
     av[0] = "ert";
     ged_exec(gedp, 1, (const char **)av);
-    emit gui_changed_view(&gedp->ged_gvp);
+    emit view_changed(QTCAD_VIEW_REFRESH);
 
 cmd_cleanup:
     gedp->ged_subprocess_init_callback = NULL;

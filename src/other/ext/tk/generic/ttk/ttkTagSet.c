@@ -4,9 +4,7 @@
  * Copyright (C) 2005, Joe English.  Freely redistributable.
  */
 
-#include <string.h>	/* for memset() */
-#include <tcl.h>
-#include <tk.h>
+#include "tkInt.h"
 
 #include "ttkTheme.h"
 #include "ttkWidget.h"
@@ -34,7 +32,7 @@ struct TtkTagTable {
  */
 static Ttk_Tag NewTag(Ttk_TagTable tagTable, const char *tagName)
 {
-    Ttk_Tag tag = ckalloc(sizeof(*tag));
+    Ttk_Tag tag = (Ttk_Tag)ckalloc(sizeof(*tag));
     tag->tagRecord = ckalloc(tagTable->recordSize);
     memset(tag->tagRecord, 0, tagTable->recordSize);
     /* Don't need Tk_InitOptions() here, all defaults should be NULL. */
@@ -58,7 +56,7 @@ Ttk_TagTable Ttk_CreateTagTable(
     Tcl_Interp *interp, Tk_Window tkwin,
     Tk_OptionSpec optionSpecs[], int recordSize)
 {
-    Ttk_TagTable tagTable = ckalloc(sizeof(*tagTable));
+    Ttk_TagTable tagTable = (Ttk_TagTable)ckalloc(sizeof(*tagTable));
     tagTable->tkwin = tkwin;
     tagTable->optionSpecs = optionSpecs;
     tagTable->optionTable = Tk_CreateOptionTable(interp, optionSpecs);
@@ -75,7 +73,7 @@ void Ttk_DeleteTagTable(Ttk_TagTable tagTable)
 
     entryPtr = Tcl_FirstHashEntry(&tagTable->tags, &search);
     while (entryPtr != NULL) {
-	DeleteTag(tagTable, Tcl_GetHashValue(entryPtr));
+	DeleteTag(tagTable, (Ttk_Tag)Tcl_GetHashValue(entryPtr));
 	entryPtr = Tcl_NextHashEntry(&search);
     }
 
@@ -90,10 +88,10 @@ Ttk_Tag Ttk_GetTag(Ttk_TagTable tagTable, const char *tagName)
 	&tagTable->tags, tagName, &isNew);
 
     if (isNew) {
-	tagName = Tcl_GetHashKey(&tagTable->tags, entryPtr);
+	tagName = (char *)Tcl_GetHashKey(&tagTable->tags, entryPtr);
 	Tcl_SetHashValue(entryPtr, NewTag(tagTable,tagName));
     }
-    return Tcl_GetHashValue(entryPtr);
+    return (Ttk_Tag)Tcl_GetHashValue(entryPtr);
 }
 
 Ttk_Tag Ttk_GetTagFromObj(Ttk_TagTable tagTable, Tcl_Obj *objPtr)
@@ -116,7 +114,7 @@ Ttk_Tag Ttk_GetTagFromObj(Ttk_TagTable tagTable, Tcl_Obj *objPtr)
 Ttk_TagSet Ttk_GetTagSetFromObj(
     Tcl_Interp *interp, Ttk_TagTable tagTable, Tcl_Obj *objPtr)
 {
-    Ttk_TagSet tagset = ckalloc(sizeof(*tagset));
+    Ttk_TagSet tagset = (Ttk_TagSet)ckalloc(sizeof(*tagset));
     Tcl_Obj **objv;
     int i, objc;
 
@@ -131,7 +129,7 @@ Ttk_TagSet Ttk_GetTagSetFromObj(
     	return NULL;
     }
 
-    tagset->tags = ckalloc((objc+1) * sizeof(Ttk_Tag));
+    tagset->tags = (Ttk_Tag *)ckalloc((objc+1) * sizeof(Ttk_Tag));
     for (i=0; i<objc; ++i) {
 	tagset->tags[i] = Ttk_GetTagFromObj(tagTable, objv[i]);
     }
@@ -188,7 +186,7 @@ int Ttk_TagSetAdd(Ttk_TagSet tagset, Ttk_Tag tag)
 	    return 0;
 	}
     }
-    tagset->tags = ckrealloc(tagset->tags, 
+    tagset->tags = (Ttk_Tag *)ckrealloc(tagset->tags,
 	    (tagset->nTags+1)*sizeof(tagset->tags[0]));
     tagset->tags[tagset->nTags++] = tag;
     return 1;

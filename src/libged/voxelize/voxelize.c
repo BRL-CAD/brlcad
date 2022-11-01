@@ -47,7 +47,7 @@ struct voxelizeData
     struct wmember content;
 };
 
-HIDDEN void
+static void
 create_boxes(void *callBackData, int x, int y, int z, const char *a, fastf_t fill)
 {
     if (a != NULL) {
@@ -196,12 +196,13 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
 	argv++;
     }
 
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     voxDat.sizeVoxel[0] = sizeVoxel[0];
     voxDat.sizeVoxel[1] = sizeVoxel[1];
     voxDat.sizeVoxel[2] = sizeVoxel[2];
     voxDat.threshold = threshold;
-    voxDat.wdbp = gedp->ged_wdbp;
+    voxDat.wdbp = wdbp;
     voxDat.bbMin = rtip->mdl_min;
     BU_LIST_INIT(&voxDat.content.l);
 
@@ -210,10 +211,11 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
    /* voxelize function is called here with rtip(ray trace instance), userParameter and create_boxes function */
     voxelize(rtip, sizeVoxel, levelOfDetail, create_boxes, callBackData);
 
-    mk_comb(gedp->ged_wdbp, voxDat.newname, &voxDat.content.l, 1, "plastic", "sh=4 sp=0.5 di=0.5 re=0.1", 0, 1000, 0, 0, 100, 0, 0, 0);
+    mk_comb(wdbp, voxDat.newname, &voxDat.content.l, 1, "plastic", "sh=4 sp=0.5 di=0.5 re=0.1", 0, 1000, 0, 0, 100, 0, 0, 0);
 
     mk_freemembers(&voxDat.content.l);
     rt_free_rti(rtip);
+    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }

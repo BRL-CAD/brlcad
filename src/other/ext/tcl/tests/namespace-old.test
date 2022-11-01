@@ -749,13 +749,13 @@ test namespace-old-9.14 {imported commands can be removed} {
 } {{} 1 {invalid command name "cmd1"}}
 test namespace-old-9.15 {existing commands can't be overwritten} {
     proc cmd1 {x y} {
-        return [expr $x+$y]
+        return [expr {$x+$y}]
     }
     list [catch {namespace import test_ns_import::cmd?} msg] $msg \
          [cmd1 3 5]
 } {1 {can't import command "cmd1": already exists} 8}
 test namespace-old-9.16 {use "-force" option to override existing commands} {
-    proc cmd1 {x y} { return [expr $x+$y] }
+    proc cmd1 {x y} { return [expr {$x+$y}] }
     list [cmd1 3 5] \
          [namespace import -force test_ns_import::cmd?] \
          [cmd1 3 5]

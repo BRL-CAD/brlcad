@@ -28,6 +28,8 @@ MODULE_SCOPE const char tclDefaultTrimSet[];
 /*
  * The whitespace trimming set used when [concat]enating. This is a subset of
  * the above, and deliberately so.
+ *
+ * TODO: Find a reasonable way to guarantee in sync with TclIsSpaceProc()
  */
 
 #define CONCAT_TRIM_SET " \f\v\r\t\n"

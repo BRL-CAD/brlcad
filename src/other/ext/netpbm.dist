@@ -1,8 +1,6 @@
 set(netpbm_ignore_files
 CMakeLists.txt
 README
-bitio.c
-bitio.h
 colorname.c
 colorname.h
 compile.h.in
@@ -20,11 +18,10 @@ libpbm1.c
 libpbm2.c
 libpbm3.c
 libpbmfont.c
-libpbmvms.c
 libpgm.h
 libpgm1.c
 libpgm2.c
-libpm.cxx
+libpm.c
 libpnm1.c
 libpnm2.c
 libpnm3.c
@@ -36,10 +33,6 @@ libppmcolor.c
 libppmd.c
 libppmfloyd.c
 libppmfuzzy.c
-libsystem.c
-libsystem_dummy.c
-lum.h
-mkstemp.c
 pam.h
 pammap.h
 path.c
@@ -49,7 +42,7 @@ pgm.h
 pm.h
 pm_config.h.in
 pm_gamma.h
-pm_system.h
+pmfileio.cxx
 pnm.h
 ppm.h
 ppmcmap.h
@@ -60,8 +53,9 @@ ppmfloyd.h
 rgb.txt
 standard.ppmdfont
 standardppmdfont.c
-util/bitreverse.h
-util/intcode.h
+util/bitio.c
+util/bitio.h
+util/mallocvar.c
 util/mallocvar.h
 util/pm_c_util.h
 util/ppmdcfont.c

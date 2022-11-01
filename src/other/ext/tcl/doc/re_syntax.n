@@ -137,11 +137,26 @@ later, under \fBESCAPES\fR.
 .TP 8
 \fB^\fR
 .
-matches at the beginning of a line
+matches at the beginning of the string or a line (according to whether
+matching is newline-sensitive or not, as described in \fBMATCHING\fR,
+below).
 .TP
 \fB$\fR
 .
-matches at the end of a line
+matches at the end of the string or a line (according to whether
+matching is newline-sensitive or not, as described in \fBMATCHING\fR,
+below).
+.RS
+.PP
+The difference between string and line matching modes is immaterial
+when the string does not contain a newline character.  The \fB\eA\fR
+and \fB\eZ\fR constraint escapes have a similar purpose but are
+always constraints for the overall string.
+.PP
+The default newline-sensitivity depends on the command that uses the
+regular expression, and can be overridden as described in
+\fBMETASYNTAX\fR, below.
+.RE
 .TP
 \fB(?=\fIre\fB)\fR
 .
@@ -293,12 +308,12 @@ treatment is as if the enclosing delimiters were
 .QW \fB[.\fR \&
 and
 .QW \fB.]\fR .)
-For example, if \fBo\fR and \fB\*(qo\fR are the members of an
+For example, if \fBo\fR and \fB\(^o\fR are the members of an
 equivalence class, then
 .QW \fB[[=o=]]\fR ,
-.QW \fB[[=\*(qo=]]\fR ,
+.QW \fB[[=\(^o=]]\fR ,
 and
-.QW \fB[o\*(qo]\fR \&
+.QW \fB[o\(^o]\fR \&
 are all synonymous. An equivalence class may not be an endpoint of a range.
 .RS
 .PP
@@ -431,7 +446,7 @@ commonly-used character classes:
 .TP
 \fB\ew\fR
 .
-\fB[[:alnum:]_]\fR (note underscore)
+\fB[[:alnum:]_\eu203F\eu2040\eu2054\euFE33\euFE34\euFE4D\euFE4E\euFE4F\euFF3F]\fR (including punctuation connector characters)
 .TP
 \fB\eD\fR
 .
@@ -443,7 +458,7 @@ commonly-used character classes:
 .TP
 \fB\eW\fR
 .
-\fB[^[:alnum:]_]\fR (note underscore)
+\fB[^[:alnum:]_\eu203F\eu2040\eu2054\euFE33\euFE34\euFE4D\euFE4E\euFE4F\euFF3F]\fR (including punctuation connector characters)
 .RE
 .PP
 Within bracket expressions,

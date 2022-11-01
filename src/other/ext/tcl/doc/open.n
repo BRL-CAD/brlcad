@@ -72,7 +72,7 @@ indicate that the opened channel should be configured as if with the
 reading or writing of binary data.
 .PP
 In the second form, \fIaccess\fR consists of a list of any of the
-following flags, all of which have the standard POSIX meanings.
+following flags, most of which have the standard POSIX meanings.
 One of the flags must be either \fBRDONLY\fR, \fBWRONLY\fR or \fBRDWR\fR.
 .TP 15
 \fBRDONLY\fR
@@ -383,6 +383,12 @@ application are competing for the console at the same time.  If the command
 pipeline is started from a script, so that Tcl is not accessing the console,
 or if the command pipeline does not use standard input or output, but is
 redirected from or to a file, then the above problems do not occur.
+.PP
+Files opened in the
+.QW \fBa\fR
+mode or with the \fBAPPEND\fR flag set are implemented by seeking immediately
+before each write, which is not an atomic operation and does not carry the
+guarantee of strict appending that is present on POSIX platforms.
 .RE
 .TP
 \fBUnix\fR\0\0\0\0\0\0\0
@@ -408,7 +414,21 @@ input, but is redirected from a file, then the above problem does not occur.
 See the \fBPORTABILITY ISSUES\fR section of the \fBexec\fR command for
 additional information not specific to command pipelines about executing
 applications on the various platforms
-.SH "EXAMPLE"
+.SH "EXAMPLES"
+Open a file for writing, forcing it to be created and raising an error if it
+already exists.
+.PP
+.CS
+set myNewFile [\fBopen\fR filename.txt {WRONLY CREAT EXCL}]
+.CE
+.PP
+Open a file for writing as a log file.
+.PP
+.CS
+set myLogFile [\fBopen\fR filename.log "a"]
+fconfigure $myLogFile -buffering line
+.CE
+.PP
 .PP
 Open a command pipeline and catch any errors:
 .PP
@@ -418,6 +438,18 @@ set data [read $fl]
 if {[catch {close $fl} err]} {
     puts "ls command failed: $err"
 }
+.CE
+.PP
+Open a command pipeline and read binary data from it. Note the unusual form
+with
+.QW |[list
+that handles non-trivial edge cases with arguments that potentially have
+spaces in.
+.PP
+.CS
+set fl [\fBopen\fR |[list create_image_data $input] "rb"]
+set binData [read $fl]
+close $fl
 .CE
 .SH "SEE ALSO"
 file(n), close(n), filename(n), fconfigure(n), gets(n), read(n),

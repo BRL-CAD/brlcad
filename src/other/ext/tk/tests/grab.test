@@ -107,7 +107,7 @@ test grab-2.1 {Tk_GrabObjCmd, grab status gives correct status} -body {
     grab status .
 } -cleanup {
     grab release .
-} -result {none}
+} -result none
 test grab-2.2 {Tk_GrabObjCmd, grab status gives correct status} -body {
     set curr [grab current .]
     if { [string length $curr] > 0 } {

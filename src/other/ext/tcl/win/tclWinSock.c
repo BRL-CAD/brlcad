@@ -343,11 +343,11 @@ InitializeHostName(
     int *lengthPtr,
     Tcl_Encoding *encodingPtr)
 {
-    WCHAR wbuf[MAX_COMPUTERNAME_LENGTH + 1];
-    DWORD length = MAX_COMPUTERNAME_LENGTH + 1;
+    WCHAR wbuf[256];
+    DWORD length = sizeof(wbuf)/sizeof(WCHAR);
     Tcl_DString ds;
 
-    if (GetComputerNameW(wbuf, &length) != 0) {
+    if (GetComputerNameExW(ComputerNamePhysicalDnsFullyQualified, wbuf, &length) != 0) {
 	/*
 	 * Convert string from native to UTF then change to lowercase.
 	 */
@@ -378,7 +378,7 @@ InitializeHostName(
     *encodingPtr = Tcl_GetEncoding(NULL, "utf-8");
     *lengthPtr = Tcl_DStringLength(&ds);
     *valuePtr = ckalloc((*lengthPtr) + 1);
-    memcpy(*valuePtr, Tcl_DStringValue(&ds), (size_t)(*lengthPtr)+1);
+    memcpy(*valuePtr, Tcl_DStringValue(&ds), *lengthPtr + 1);
     Tcl_DStringFree(&ds);
 }
 
@@ -522,7 +522,6 @@ TclpFinalizeSockets(void)
  *----------------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 static int
 TcpBlockModeProc(
     ClientData instanceData,	/* Socket state. */
@@ -722,7 +721,6 @@ WaitForConnect(
  *----------------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 static int
 TcpInputProc(
     ClientData instanceData,	/* Socket state. */
@@ -973,7 +971,6 @@ TcpOutputProc(
  *----------------------------------------------------------------------
  */
 
-    /* ARGSUSED */
 static int
 TcpCloseProc(
     ClientData instanceData,	/* The socket to close. */
@@ -1068,36 +1065,28 @@ TcpClose2Proc(
     int flags)			/* Flags that indicate which side to close. */
 {
     TcpState *statePtr = instanceData;
-    int errorCode = 0;
-    int sd;
+    int readError = 0;
+    int writeError = 0;
 
     /*
      * Shutdown the OS socket handle.
      */
 
-    switch(flags) {
-    case TCL_CLOSE_READ:
-	sd = SD_RECEIVE;
-	break;
-    case TCL_CLOSE_WRITE:
-	sd = SD_SEND;
-	break;
-    default:
-	if (interp) {
-	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
-		    "socket close2proc called bidirectionally", -1));
-	}
-	return TCL_ERROR;
+    if ((flags & (TCL_CLOSE_READ|TCL_CLOSE_WRITE)) == 0) {
+	return TcpCloseProc(instanceData, interp);
     }
 
     /* single fd operation: Tcl_OpenTcpServer() does not set TCL_READABLE or
      * TCL_WRITABLE so this should never be called for a server socket. */
-    if (shutdown(statePtr->sockets->fd, sd) == SOCKET_ERROR) {
+    if ((flags & TCL_CLOSE_READ) && (shutdown(statePtr->sockets->fd, SD_RECEIVE) == SOCKET_ERROR)) {
 	TclWinConvertError((DWORD) WSAGetLastError());
-	errorCode = Tcl_GetErrno();
+	readError = Tcl_GetErrno();
     }
-
-    return errorCode;
+    if ((flags & TCL_CLOSE_WRITE) && (shutdown(statePtr->sockets->fd, SD_SEND) == SOCKET_ERROR)) {
+	TclWinConvertError((DWORD) WSAGetLastError());
+	writeError = Tcl_GetErrno();
+    }
+    return (readError != 0) ? readError : writeError;
 }
 
 /*
@@ -1582,7 +1571,6 @@ TcpWatchProc(
  *----------------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 static int
 TcpGetHandleProc(
     ClientData instanceData,	/* The socket state. */
@@ -2233,7 +2221,6 @@ error:
  *----------------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 static void
 TcpAccept(
     TcpFdList *fds,	/* Server socket that accepted newSocket. */
@@ -2423,7 +2410,6 @@ InitSockets(void)
  *----------------------------------------------------------------------
  */
 
-    /* ARGSUSED */
 static int
 SocketsEnabled(void)
 {
@@ -2453,7 +2439,6 @@ SocketsEnabled(void)
  *----------------------------------------------------------------------
  */
 
-    /* ARGSUSED */
 static void
 SocketExitHandler(
     ClientData clientData)		/* Not used. */

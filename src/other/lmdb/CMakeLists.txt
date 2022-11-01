@@ -39,7 +39,7 @@
 ###
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.18)
 
 # Set CMake project name
 project(LMDB)

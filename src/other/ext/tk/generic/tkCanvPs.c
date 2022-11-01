@@ -193,7 +193,7 @@ TkCanvPostscriptCmd(
      * such.
      */
 
-    result = Tcl_EvalEx(interp, "::tk::ensure_psenc_is_loaded", -1, 0);
+    result = Tcl_EvalEx(interp, "::tk::ensure_psenc_is_loaded", -1, TCL_EVAL_GLOBAL);
     if (result != TCL_OK) {
 	return result;
     }
@@ -572,7 +572,6 @@ TkCanvPostscriptCmd(
 	    continue;
 	}
 
-	Tcl_ResetResult(interp);
 	result = itemPtr->typePtr->postscriptProc(interp,
 		(Tk_Canvas) canvasPtr, itemPtr, 0);
 	if (result != TCL_OK) {
@@ -585,6 +584,7 @@ TkCanvPostscriptCmd(
 	Tcl_AppendToObj(psObj, "gsave\n", -1);
 	Tcl_AppendObjToObj(psObj, Tcl_GetObjResult(interp));
 	Tcl_AppendToObj(psObj, "grestore\n", -1);
+	Tcl_ResetResult(interp);
 
 	if (psInfo.chan != NULL) {
 	    if (Tcl_WriteObj(psInfo.chan, psObj) == -1) {
@@ -1601,7 +1601,7 @@ Tk_PostscriptPhoto(
 	    /*
 	     * Generate data for image in monochrome mode. No attempt at
 	     * dithering is made--instead, just set a threshold. To handle
-	     * transparecies we need to output two lines: one for the black
+	     * transparencies we need to output two lines: one for the black
 	     * pixels, one for the white ones.
 	     */
 

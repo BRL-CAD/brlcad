@@ -39,7 +39,7 @@ test cmds-1.5 {tkwait visibility, window gets deleted} -setup {
 } -body {
     after 100 {set x deleted; destroy .f}
     tkwait visibility .f.b
-} -returnCodes {error} -result {window ".f.b" was deleted before its visibility changed} 
+} -returnCodes {error} -result {window ".f.b" was deleted before its visibility changed}
 test cmds-1.6 {tkwait visibility, window gets deleted} -setup {
     frame .f
     button .f.b -text "Test"

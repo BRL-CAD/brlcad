@@ -87,7 +87,7 @@ main(int argc, const char **argv)
     if (ac == 1) {
 	const char *homed = bu_dir(NULL, 0, BU_DIR_HOME, NULL);
 	if (homed && chdir(homed)) {
-	    bu_free(av, "av cpy");
+	    bu_free((void *)av, "av cpy");
 	    bu_exit(1, "Failed to change working directory to \"%s\" ", homed);
 	}
     }
@@ -136,7 +136,7 @@ main(int argc, const char **argv)
 
 #endif /* HAVE_TK */
 
-    bu_free(av, "argv cpy");
+    bu_free((void *)av, "argv cpy");
 
     return status;
 }

@@ -399,7 +399,7 @@ vnormal(point_t *point, PROCESS *p, point_t *v)
 }
 
 
-HIDDEN void
+static void
 _polygonizer_tgc_hack_fix(struct partition *part, struct soltab *stp) {
     /* hack fix for bad tgc surfaces - avoids a logging crash, which is probably something else altogether... */
     if (bu_strncmp("rec", stp->st_meth->ft_label, 3) == 0 || bu_strncmp("tgc", stp->st_meth->ft_label, 3) == 0) {
@@ -414,7 +414,7 @@ _polygonizer_tgc_hack_fix(struct partition *part, struct soltab *stp) {
     }
 }
 
-HIDDEN int
+static int
 first_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     struct partition *part = PartHeadp->pt_forw;
@@ -628,7 +628,7 @@ polygonizer_mesh_free(struct polygonizer_mesh *m)
 }
 
 
-HIDDEN int
+static int
 in_out_hit(struct application *ap, struct partition *partH, struct seg *UNUSED(segs))
 {
     struct partition *part = partH->pt_forw;
@@ -820,7 +820,7 @@ analyze_polygonize(
     setcenter(&p, p.centers, 0, 0, 0);
 
     while (p.cubes != NULL) { /* process active cubes till none left */
-	unsigned long long avail_mem = 0;
+	size_t avail_mem = 0;
 	CUBE c;
 	CUBES *temp = p.cubes;
 	c = p.cubes->cube;
@@ -857,10 +857,9 @@ analyze_polygonize(
 	}
 
 	if (params && params->minimum_free_mem > 0) {
-	    int ec;
-	    avail_mem = bu_mem(BU_MEM_AVAIL, &ec);
-	    if (!ec && avail_mem < params->minimum_free_mem) {
-		/* memory too tight, bail */
+	    avail_mem = bu_mem(BU_MEM_AVAIL, NULL);
+	    if (avail_mem > 0 && avail_mem < params->minimum_free_mem) {
+		/* error or memory too tight, bail */
 		ret = 3;
 		goto analyze_polygonizer_memfree;
 	    }

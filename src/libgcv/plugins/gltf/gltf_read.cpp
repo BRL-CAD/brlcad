@@ -218,7 +218,7 @@ convert_from_gltf(struct conversion_state *state, tinygltf::Model &model)
 	}
 }
 
-HIDDEN int
+static int
 gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data), const char *source_path)
 {
 
@@ -262,10 +262,12 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
 
 	struct conversion_state state = CONVERSION_STATE_ZERO;
 
+	struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_DISK);
+
 	//generate list to hold scene geometry
 	BU_LIST_INIT(&state.scene.l);
 	state.input_file = input_filename;
-	state.fd_out = context->dbip->dbi_wdbp;
+	state.fd_out = wdbp;
 
 	std::string title = "gltf conversion from" + state.input_file;
 	//set geometry title
@@ -274,13 +276,15 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
 	convert_from_gltf(&state, model);
 
 	//combine all top level regions
-	mk_lcomb(context->dbip->dbi_wdbp, "all", &state.scene, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	mk_lcomb(wdbp, "all", &state.scene, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+
+	wdb_close(wdbp);
 
 	return 1;
 }
 
 
-HIDDEN int
+static int
 gltf_can_read(const char *UNUSED(data))
 {
 	/* FIXME */

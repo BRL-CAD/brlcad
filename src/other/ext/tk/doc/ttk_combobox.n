@@ -142,6 +142,8 @@ are:
 .RS
 Can only be changed when using non-native and non-graphical themes.
 .RE
+\fB\-insertcolor\fP \fIcolor\fP
+.br
 \fB\-insertwidth\fP \fIamount\fP
 .br
 \fB\-lightcolor\fP \fIcolor\fP

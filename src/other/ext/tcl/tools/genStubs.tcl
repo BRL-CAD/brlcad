@@ -4,7 +4,7 @@
 #	interface.
 #
 #
-# Copyright (c) 1998-1999 by Scriptics Corporation.
+# Copyright (c) 1998-1999 Scriptics Corporation.
 # Copyright (c) 2007 Daniel A. Steffen <das@users.sourceforge.net>
 #
 # See the file "license.terms" for information on usage and redistribution
@@ -257,8 +257,9 @@ proc genStubs::rewriteFile {file text} {
 	return
     }
     set in [open ${file} r]
+    fconfigure $in -eofchar "\032 {}" -encoding utf-8
     set out [open ${file}.new w]
-    fconfigure $out -translation lf
+    fconfigure $out -translation lf -encoding utf-8
 
     while {![eof $in]} {
 	set line [gets $in]
@@ -479,11 +480,15 @@ proc genStubs::makeDecl {name decl index} {
     if {[info exists stubs($name,deprecated,$index)]} {
 	append text "[string toupper $libraryName]_DEPRECATED(\"$stubs($name,deprecated,$index)\")\n"
 	set line "$rtype"
+    } elseif {[string range $rtype end-5 end] eq "MP_WUR"} {
+	set line "$scspec [string trim [string range $rtype 0 end-6]]"
     } else {
 	set line "$scspec $rtype"
     }
     set count [expr {2 - ([string length $line] / 8)}]
-    append line [string range "\t\t\t" 0 $count]
+    if {$count >= 0} {
+	append line [string range "\t\t\t" 0 $count]
+    }
     set pad [expr {24 - [string length $line]}]
     if {$pad <= 0} {
 	append line " "
@@ -548,6 +553,9 @@ proc genStubs::makeDecl {name decl index} {
 	    append line ")"
 	}
     }
+    if {[string range $rtype end-5 end] eq "MP_WUR"} {
+	append line " MP_WUR"
+    }
     return "$text$line;\n"
 }
 
@@ -611,6 +619,8 @@ proc genStubs::makeSlot {name decl index} {
 	append text [string trim [string range $rtype 0 end-9]] " (__stdcall *" $lfname ") "
     } elseif {[string range $rtype 0 11] eq "TCL_NORETURN"} {
 	append text "TCL_NORETURN1 " [string trim [string range $rtype 12 end]] " (*" $lfname ") "
+    } elseif {[string range $rtype end-5 end] eq "MP_WUR"} {
+	append text [string trim [string range $rtype 0 end-6]] " (*" $lfname ") "
     } else {
 	append text $rtype " (*" $lfname ") "
     }
@@ -648,6 +658,9 @@ proc genStubs::makeSlot {name decl index} {
 	}
     }
 
+    if {[string range $rtype end-5 end] eq "MP_WUR"} {
+	append text " MP_WUR"
+    }
     append text "; /* $index */\n"
     return $text
 }
@@ -1088,7 +1101,7 @@ proc genStubs::emitInit {name textVar} {
     }
     foreach intf [array names interfaces] {
 	if {[info exists hooks($intf)]} {
-	    if {[lsearch -exact $hooks($intf) $name] >= 0} {
+	    if {$name in $hooks($intf)} {
 		set root 0
 		break
 	    }
@@ -1179,7 +1192,7 @@ proc genStubs::init {} {
     set outDir [lindex $argv 0]
 
     foreach file [lrange $argv 1 end] {
-	source $file
+	source -encoding utf-8 $file
     }
 
     foreach name [lsort [array names interfaces]] {
@@ -1201,7 +1214,7 @@ proc genStubs::init {} {
 # Results:
 #	Returns any values that were not assigned to variables.
 
-if {[string length [namespace which lassign]] == 0} {
+if {[namespace which lassign] ne ""} {
     proc lassign {valueList args} {
 	if {[llength $args] == 0} {
 	    error "wrong # args: should be \"lassign list varName ?varName ...?\""

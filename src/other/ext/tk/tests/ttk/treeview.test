@@ -3,8 +3,9 @@
 # what it currently does)
 #
 
-package require Tk 8.5
-package require tcltest ; namespace import -force tcltest::*
+package require Tk
+package require tcltest 2.2
+namespace import -force tcltest::*
 loadTestedCommands
 
 # consistencyCheck --
@@ -45,33 +46,33 @@ test treeview-1.1 "columns" -body {
 test treeview-1.2 "Bad columns" -body {
     #.tv configure -columns {illegal "list"value}
     ttk::treeview .badtv -columns {illegal "list"value}
-} -returnCodes 1 -result "list element in quotes followed by*" -match glob
+} -returnCodes error -result "list element in quotes followed by*" -match glob
 
 test treeview-1.3 "bad displaycolumns" -body {
     .tv configure -displaycolumns {a b d}
-} -returnCodes 1 -result "Invalid column index d"
+} -returnCodes error -result "Invalid column index d"
 
 test treeview-1.4 "more bad displaycolumns" -body {
     .tv configure -displaycolumns {1 2 3}
-} -returnCodes 1 -result "Column index 3 out of bounds"
+} -returnCodes error -result "Column index 3 out of bounds"
 
 test treeview-1.5 "Don't forget to check negative numbers" -body {
     .tv configure -displaycolumns {1 -2 3}
-} -returnCodes 1 -result "Column index -2 out of bounds"
+} -returnCodes error -result "Column index -2 out of bounds"
 
 # Item creation.
 #
 test treeview-2.1 "insert -- not enough args" -body {
     .tv insert
-} -returnCodes 1 -result "wrong # args: *" -match glob
+} -returnCodes error -result "wrong # args: *" -match glob
 
 test treeview-2.3 "insert -- bad integer index" -body {
     .tv insert {} badindex
-} -returnCodes 1 -result "expected integer *" -match glob
+} -returnCodes error -result "expected integer *" -match glob
 
 test treeview-2.4 "insert -- bad parent node" -body {
     .tv insert badparent end
-} -returnCodes 1 -result "Item badparent not found" -match glob
+} -returnCodes error -result "Item badparent not found" -match glob
 
 test treeview-2.5 "insert -- finaly insert a node" -body {
     .tv insert {} end -id newnode -text "New node"
@@ -83,7 +84,7 @@ test treeview-2.6 "insert -- make sure node was inserted" -body {
 
 test treeview-2.7 "insert -- prevent duplicate node names" -body {
     .tv insert {} end -id newnode
-} -returnCodes 1 -result "Item newnode already exists"
+} -returnCodes error -result "Item newnode already exists"
 
 test treeview-2.8 "insert -- new node at end" -body {
     .tv insert {} end -id lastnode
@@ -125,7 +126,7 @@ test treeview-2.13 "insert -- one more at beginning" -body {
 
 test treeview-2.14 "insert -- bad options" -body {
     .tv insert {} end -badoption foo
-} -returnCodes 1 -result {unknown option "-badoption"}
+} -returnCodes error -result {unknown option "-badoption"}
 
 test treeview-2.15 "insert -- at position 0 w/no children" -body {
     .tv insert newnode 0 -id newnode.n2 -text "Foo"
@@ -201,7 +202,7 @@ test treeview-3.11 "Can't detach root item" -body {
     .tv detach [list {}]
     update
     consistencyCheck .tv
-} -returnCodes 1 -result "Cannot detach root item"
+} -returnCodes error -result "Cannot detach root item"
 consistencyCheck .tv
 
 test treeview-3.12 "Reattach" -body {
@@ -274,7 +275,7 @@ test treeview-4.3 "opened - closed node" -body {
 
 test treeview-5.1 "item -- error checks" -body {
     .tv item newnode -text "Bad values" -values "{bad}list"
-} -returnCodes 1 -result "list element in braces followed by*" -match glob
+} -returnCodes error -result "list element in braces followed by*" -match glob
 
 test treeview-5.2 "item -- error leaves options unchanged " -body {
     .tv item newnode -text
@@ -297,11 +298,11 @@ test treeview-5.5 "set cell" -body {
 
 test treeview-5.6 "set illegal cell" -body {
     .tv set newnode #0 YYY
-} -returnCodes 1 -result "Display column #0 cannot be set"
+} -returnCodes error -result "Display column #0 cannot be set"
 
 test treeview-5.7 "set illegal cell" -body {
     .tv set newnode 3 YY	;# 3 == current #columns
-} -returnCodes 1 -result "Column index 3 out of bounds"
+} -returnCodes error -result "Column index 3 out of bounds"
 
 test treeview-5.8 "set display columns" -body {
     .tv configure -displaycolumns [list 2 1 0]
@@ -317,7 +318,7 @@ test treeview-5.9 "display columns part 2" -body {
 
 test treeview-5.10 "cannot set column -id" -body {
     .tv column #1 -id X
-} -returnCodes 1 -result "Attempt to change read-only option"
+} -returnCodes error -result "Attempt to change read-only option"
 
 test treeview-5.11 "get" -body {
     .tv set newnode #1
@@ -405,7 +406,7 @@ test treeview-7.1 "move" -body {
 
 test treeview-7.2 "illegal move" -body {
    .tv move d d2 end
-} -returnCodes 1 -result "Cannot insert d as descendant of d2"
+} -returnCodes error -result "Cannot insert d as descendant of d2"
 
 test treeview-7.3 "illegal move has no effect" -body {
     consistencyCheck .tv
@@ -426,7 +427,7 @@ test treeview-7.5 "replace children - precondition" -body {
 
 test treeview-7.6 "Replace children - illegal move" -body {
     .tv children newnode.n1 [list newnode.n1 newnode.n2 newnode.n3]
-} -returnCodes 1 -result "Cannot insert newnode.n1 as descendant of newnode.n1"
+} -returnCodes error -result "Cannot insert newnode.n1 as descendant of newnode.n1"
 
 consistencyCheck .tv
 
@@ -457,7 +458,7 @@ test treeview-8.4 "Selection - clear" -body {
 
 test treeview-8.5 "Selection - bad operation" -body {
     .tv selection badop foo
-} -returnCodes 1 -match glob -result {bad selection operation "badop": must be *}
+} -returnCodes error -match glob -result {bad selection operation "badop": must be *}
 
 test treeview-8.6 "Selection - <<TreeviewSelect>> on selection add" -body {
     .tv selection set {}
@@ -507,6 +508,60 @@ test treeview-9.1 "scrolling" -setup {
 } -cleanup {
     destroy .tree
 } -result {I006}
+
+test treeview-9.2 {scrolling on see command - bug [14188104c3]} -setup {
+    toplevel .top
+    ttk::treeview .top.tree -show {} -height 10 -columns {label} \
+            -yscrollcommand [list .top.vs set]
+    ttk::scrollbar .top.vs -command {.top.tree yview}
+    grid .top.tree -row 0 -column 0 -sticky ns
+    grid .top.vs -row 0 -column 1 -sticky ns
+    update
+    proc setrows {n} {
+        .top.tree delete [.top.tree children {}]
+        for {set i 1} {$i <= $n} {incr i} {
+            .top.tree insert {} end -id row$i \
+                    -values [list [format "Row %2.2d" $i]]
+        }
+        .top.tree see row1
+        update idletasks
+    }
+} -body {
+    setrows 10
+    set res [.top.vs get]
+    setrows 20
+    lappend res [expr [lindex [.top.vs get] 1] < 1]
+} -cleanup {
+    destroy .top
+} -result {0.0 1.0 1}
+
+test treeview-9.3 {scrolling on see command, requested item is closed} -setup {
+    toplevel .top
+    ttk::treeview .top.tree -show tree -height 10 -columns {label} \
+            -yscrollcommand [list .top.vs set]
+    ttk::scrollbar .top.vs -command {.top.tree yview}
+    grid .top.tree -row 0 -column 0 -sticky ns
+    grid .top.vs -row 0 -column 1 -sticky ns
+
+    .top.tree insert {} end -id a -text a
+    .top.tree insert a  end -id b -text b
+    .top.tree insert b  end -id c -text c
+    .top.tree insert c  end -id d -text d
+    .top.tree insert d  end -id e -text e
+    for {set i 6} {$i <= 15} {incr i} {
+        .top.tree insert {} end -id row$i \
+                -values [list [format "Row %2.2d" $i]]
+    }
+    update
+} -body {
+    set before [lindex [.top.vs get] 1]
+    .top.tree see e
+    update idletasks
+    set after [lindex [.top.vs get] 1]
+    expr $after < $before
+} -cleanup {
+    destroy .top
+} -result {1}
 
 ### identify tests:
 #
@@ -675,7 +730,7 @@ test treeview-3085489-2 "tag remove, no -tags" -setup {
 
 test treeview-368fa4561e "indicators cannot be clicked on leafs" -setup {
     pack [ttk::treeview .tv]
-    .tv insert {} end -id foo -text "<-- (1) Click the blank space to my left" 
+    .tv insert {} end -id foo -text "<-- (1) Click the blank space to my left"
     update
 } -body {
     foreach {x y w h} [.tv bbox foo #0] {}
@@ -694,7 +749,7 @@ test treeview-368fa4561e "indicators cannot be clicked on leafs" -setup {
 
 test treeview-ce470f20fd-1 "dragging further than the right edge of the treeview is allowed" -setup {
     pack [ttk::treeview .tv]
-    .tv heading #0 -text "Drag my right edge -->" 
+    .tv heading #0 -text "Drag my right edge -->"
     update
 } -body {
     set res [.tv column #0 -width]
@@ -764,7 +819,7 @@ test treeview-ce470f20fd-4 "changing -stretch resizes columns" -setup {
     update idletasks ; # redisplay treeview
 } -body {
     # only some columns are displayed (and in a different order than declared
-    # in -columns), a non-displayed column becomes stretchable  --> nothing 
+    # in -columns), a non-displayed column becomes stretchable  --> nothing
     # happens
     set origTreeWidth [winfo width .tv]
     set res [list [.tv column bar -width] [.tv column colA -width]]

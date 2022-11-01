@@ -215,9 +215,9 @@ struct ga_t {
     const char * const *str_arr_obj_objects;   /* obj_objects */
     const char * const *str_arr_obj_materials; /* obj_materials */
     const char * const *str_arr_obj_texmaps;   /* obj_texmaps */
-    const float (*vert_list)[4];          /* obj_vertices */
-    const float (*norm_list)[3];          /* obj_normals */
-    const float (*texture_coord_list)[3]; /* obj_texture_coord */
+    const double (*vert_list)[4];          /* obj_vertices */
+    const double (*norm_list)[3];          /* obj_normals */
+    const double (*texture_coord_list)[3]; /* obj_texture_coord */
     const size_t *attindex_arr_nv_faces;  /* obj_polygonal_nv_faces */
     const size_t *attindex_arr_v_faces;   /* obj_polygonal_v_faces */
     const size_t *attindex_arr_tv_faces;  /* obj_polygonal_tv_faces */
@@ -354,7 +354,7 @@ cleanup_name(struct bu_vls *outputObjectName_ptr)
  * Compare function used by the function bsearch for
  * sorting and searching an array of numbers.
  */
-HIDDEN int
+static int
 comp_b(const void *p1, const void *p2)
 {
     size_t i = * (size_t *) p1;
@@ -368,7 +368,7 @@ comp_b(const void *p1, const void *p2)
  * Compare function used by the function bu_sort for
  * sorting an array of numbers.
  */
-HIDDEN int
+static int
 comp_b_sort(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return comp_b(p1, p2);
@@ -379,7 +379,7 @@ comp_b_sort(const void *p1, const void *p2, void *UNUSED(arg))
  * Compare function used by the function bu_sort for sorting an index
  * into a multi-dimensional array.
  */
-HIDDEN int
+static int
 comp(const void *p1, const void *p2, void *arg)
 {
     size_t i = * (size_t *) p1;
@@ -394,7 +394,7 @@ comp(const void *p1, const void *p2, void *arg)
  * Compare function used by the function bu_sort for sorting a 2D array
  * of numbers.
  */
-HIDDEN int
+static int
 comp_c(const void *p1, const void *p2, void *UNUSED(arg))
 {
     edge_arr_2D_t i = (edge_arr_2D_t) p1;
@@ -3107,7 +3107,7 @@ struct obj_read_options
 };
 
 
-HIDDEN int
+static int
 parse_grouping_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     char * const value = (char *)set_var;
@@ -3135,7 +3135,7 @@ parse_grouping_option(struct bu_vls *error_msg, size_t argc, const char **argv, 
 }
 
 
-HIDDEN int
+static int
 parse_mode_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     struct obj_read_options * const options = (struct obj_read_options *)set_var;
@@ -3161,7 +3161,7 @@ parse_mode_option(struct bu_vls *error_msg, size_t argc, const char **argv, void
 }
 
 
-HIDDEN int
+static int
 parse_bot_thickness_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     struct obj_read_options * const options = (struct obj_read_options *)set_var;
@@ -3184,7 +3184,7 @@ parse_bot_thickness_option(struct bu_vls *error_msg, size_t argc, const char **a
 }
 
 
-HIDDEN int
+static int
 parse_normal_mode_option(struct bu_vls *UNUSED(error_msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     int * const value = (int *)set_var;
@@ -3196,7 +3196,7 @@ parse_normal_mode_option(struct bu_vls *UNUSED(error_msg), size_t UNUSED(argc), 
 }
 
 
-HIDDEN int
+static int
 parse_open_bot_output_mode_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int * const value = (int *)set_var;
@@ -3220,7 +3220,7 @@ parse_open_bot_output_mode_option(struct bu_vls *error_msg, size_t argc, const c
 }
 
 
-HIDDEN int
+static int
 parse_plot_mode_option(struct bu_vls *UNUSED(error_msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     int * const value = (int *)set_var;
@@ -3232,7 +3232,7 @@ parse_plot_mode_option(struct bu_vls *UNUSED(error_msg), size_t UNUSED(argc), co
 }
 
 
-HIDDEN int
+static int
 parse_bot_orientation_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int have_orientation = 0;
@@ -3261,7 +3261,7 @@ parse_bot_orientation_option(struct bu_vls *error_msg, size_t argc, const char *
 }
 
 
-HIDDEN void
+static void
 obj_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
 {
     struct obj_read_options *options_data;
@@ -3322,14 +3322,14 @@ obj_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data
 }
 
 
-HIDDEN void
+static void
 obj_read_free_opts(void *options_data)
 {
     bu_free(options_data, "options_data");
 }
 
 
-HIDDEN void
+static void
 do_grouping(struct rt_wdb *wdbp, const struct gcv_opts *gcv_options, const struct obj_read_options *obj_read_options, struct ga_t *ga)
 {
     const int native_face_test_type = TEST_ALL;
@@ -3491,7 +3491,7 @@ do_grouping(struct rt_wdb *wdbp, const struct gcv_opts *gcv_options, const struc
 }
 
 
-HIDDEN int
+static int
 obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *source_path)
 {
     const struct obj_read_options * const obj_read_options = (struct obj_read_options *)options_data;
@@ -3555,7 +3555,8 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
 	collect_global_obj_file_attributes(&ga);
     }
 
-    do_grouping(context->dbip->dbi_wdbp, gcv_options, obj_read_options, &ga);
+    struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+    do_grouping(wdbp, gcv_options, obj_read_options, &ga);
 
     /* cleanup */
 
@@ -3568,11 +3569,12 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     obj_parser_destroy(ga.parser);
 
     rt_clean_resource(NULL, &rt_uniresource);
+    wdb_close(wdbp);
 
     return 1;
 }
 
-HIDDEN int
+static int
 obj_can_read(const char *source_path)
 {
     FILE *fp;

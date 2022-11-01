@@ -100,8 +100,8 @@ main(int ac, char *av[])
       struct ged ged;
       int tops_ac = 1;
       const char *tops_av[2] = {"tops", NULL};
-
-      GED_INIT(&ged, dbip->dbi_wdbp);
+      struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+      GED_INIT(&ged, wdbp);
       (void)ged_exec(&ged, tops_ac, (const char **)tops_av);
     }
     seconds[4] += (bu_gettime() - timer) / 1000000.0;

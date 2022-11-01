@@ -11,8 +11,8 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -36,8 +36,8 @@ testConstraint thread [expr {0 == [catch {package require Thread 2.7-}]}]
 # can access this variable.
 
 set helperscript {
-    if {[lsearch [namespace children] ::tcltest] == -1} {
-	package require tcltest 2
+    if {"::tcltest" ni [namespace children]} {
+	package require tcltest 2.5
 	namespace import -force ::tcltest::*
     }
 
@@ -1162,7 +1162,7 @@ test iortrans-8.3 {chan flush, bug 2921116} -match glob -setup {
 test iortrans-11.0 {origin interpreter of moved transform gone} -setup {
     set ida [interp create];	#puts <<$ida>>
     set idb [interp create];	#puts <<$idb>>
-    # Magic to get the test* commands in the slaves
+    # Magic to get the test* commands in the children
     load {} Tcltest $ida
     load {} Tcltest $idb
 } -constraints {testchannel} -match glob -body {
@@ -1205,7 +1205,7 @@ test iortrans-11.0 {origin interpreter of moved transform gone} -setup {
 test iortrans-11.1 {origin interpreter of moved transform destroyed during access} -setup {
     set ida [interp create];	#puts <<$ida>>
     set idb [interp create];	#puts <<$idb>>
-    # Magic to get the test* commands in the slaves
+    # Magic to get the test* commands in the children
     load {} Tcltest $ida
     load {} Tcltest $idb
 } -constraints {testchannel} -match glob -body {
@@ -1244,16 +1244,16 @@ test iortrans-11.1 {origin interpreter of moved transform destroyed during acces
     tempdone
 } -result {Owner lost}
 test iortrans-11.2 {delete interp of reflected transform} -setup {
-    interp create slave
-    # Magic to get the test* commands into the slave
-    load {} Tcltest slave
+    interp create child
+    # Magic to get the test* commands into the child
+    load {} Tcltest child
 } -constraints {testchannel} -body {
-    # Get base channel into the slave
+    # Get base channel into the child
     set c [tempchan]
     testchannel cut $c
-    interp eval slave [list testchannel splice $c]
-    interp eval slave [list set c $c]
-    slave eval {
+    interp eval child [list testchannel splice $c]
+    interp eval child [list set c $c]
+    child eval {
 	proc no-op args {}
 	proc driver {c sub args} {
 	    return {initialize finalize read write}
@@ -1261,7 +1261,7 @@ test iortrans-11.2 {delete interp of reflected transform} -setup {
 	set t [chan push $c [list driver $c]]
 	chan event $c readable no-op
     }
-    interp delete slave
+    interp delete child
 } -cleanup {
     tempdone
 } -result {}
@@ -1320,7 +1320,7 @@ proc inthread {chan script args} {
     # forwarded channel operations.
 
     set ::tres ""
-    thread::send -async $tid {	
+    thread::send -async $tid {
 	after 50
 	catch {s} res;	# This runs the script, 's' was defined at (*)
 	thread::send -async $mid [list set ::tres $res]

@@ -458,7 +458,7 @@ static const char *separator = "|";
 
 /* Format flags parameter for meaningful display */
 static char *
-str_flags(int hn_flags, char *noFlags) {
+str_flags(int hn_flags, const char *noFlags) {
     size_t i;
     char * result;
 
@@ -486,9 +486,8 @@ str_scale(int scale) {
     char *result;
 
     if (scale == BU_HN_AUTOSCALE || scale == BU_HN_GETSCALE) {
-	char *tmpstr = bu_strdup("");
+	const char *tmpstr = "";
 	result = str_flags(scale, tmpstr);
-	bu_free(tmpstr, "tmpstr");
 	return result;
     }
 
@@ -538,7 +537,7 @@ main(int argc, char * const argv[])
 	printf("Warning: buffer size %zu != 4, expect some results to differ.\n", buflen);
 
     printf("1..%lu\n", (long unsigned int)(sizeof test_args / sizeof *test_args));
-    char *nflags = bu_strdup("[no flags]");
+    const char *nflags = "[no flags]";
     for (i = 0; i < sizeof test_args / sizeof *test_args; i++) {
 	blen = (buflen > 0) ? buflen : test_args[i].buflen;
 	buf = (char *)bu_realloc(buf, blen, "buf");
@@ -597,7 +596,6 @@ main(int argc, char * const argv[])
 	}
 	tested++;
     }
-    bu_free(nflags, "free nflags");
     bu_free(buf, "free buf");
 
     if (verbose)

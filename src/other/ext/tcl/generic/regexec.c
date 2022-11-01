@@ -73,7 +73,7 @@ struct dfa {
     chr *lastnopr;		/* location of last cache-flushed NOPROGRESS */
     struct sset *search;	/* replacement-search-pointer memory */
     int cptsmalloced;		/* were the areas individually malloced? */
-    char *mallocarea;		/* self, or master malloced area, or NULL */
+    char *mallocarea;		/* self, or malloced area, or NULL */
 };
 
 #define	WORK	1		/* number of work bitvectors needed */

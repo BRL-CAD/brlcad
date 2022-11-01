@@ -429,14 +429,27 @@ bind Text <Control-h> {
 	%W see insert
     }
 }
-bind Text <2> {
-    if {!$tk_strictMotif} {
-	tk::TextScanMark %W %x %y
+if {[tk windowingsystem] ne "aqua"} {
+    bind Text <2> {
+        if {!$tk_strictMotif} {
+        tk::TextScanMark %W %x %y
+        }
     }
-}
-bind Text <B2-Motion> {
-    if {!$tk_strictMotif} {
-	tk::TextScanDrag %W %x %y
+    bind Text <B2-Motion> {
+        if {!$tk_strictMotif} {
+        tk::TextScanDrag %W %x %y
+        }
+    }
+} else {
+    bind Text <3> {
+        if {!$tk_strictMotif} {
+        tk::TextScanMark %W %x %y
+        }
+    }
+    bind Text <B3-Motion> {
+        if {!$tk_strictMotif} {
+        tk::TextScanDrag %W %x %y
+        }
     }
 }
 set ::tk::Priv(prevPos) {}
@@ -486,7 +499,7 @@ if {[tk windowingsystem] eq "x11"} {
     # Support for mousewheels on Linux/Unix commonly comes through mapping
     # the wheel to the extended buttons.  If you have a mousewheel, find
     # Linux configuration info at:
-    #	http://linuxreviews.org/howtos/xfree/mouse/
+    #	https://linuxreviews.org/HOWTO_change_the_mouse_speed_in_X
     bind Text <4> {
 	if {!$tk_strictMotif} {
 	    %W yview scroll -50 pixels
@@ -558,12 +571,7 @@ proc ::tk::TextButton1 {w x y} {
     } else {
 	$w mark gravity $anchorname left
     }
-    # Allow focus in any case on Windows, because that will let the
-    # selection be displayed even for state disabled text widgets.
-    if {[tk windowingsystem] eq "win32" \
-	    || [$w cget -state] eq "normal"} {
-	focus $w
-    }
+    focus $w
     if {[$w cget -autoseparators]} {
 	$w edit separator
     }

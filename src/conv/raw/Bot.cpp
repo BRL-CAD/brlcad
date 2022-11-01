@@ -105,14 +105,14 @@ void Bot::write(rt_wdb* wdbp) const
 
 void Bot::writeSolid(rt_wdb* wdbp) const
 {
-    fastf_t* vertices = static_cast<fastf_t*>(malloc(m_vertices.size() * sizeof(fastf_t)));
-    int*     faces    = static_cast<int*>(malloc(m_faces.size() * sizeof(int)));
+    fastf_t* vertices = static_cast<fastf_t*>(bu_malloc(m_vertices.size() * sizeof(fastf_t), "vertices"));
+    int*     faces    = static_cast<int*>(bu_malloc(m_faces.size() * sizeof(int), "faces"));
 
     for (size_t i = 0; i < m_vertices.size(); ++i)
 	vertices[i] = m_vertices[i];
 
     for (size_t i = 0; i < m_faces.size(); ++i)
-	faces[i] = m_faces[i];
+	faces[i] = (int)m_faces[i];
 
     mk_bot(wdbp,
 	   m_name.c_str(),
@@ -126,23 +126,23 @@ void Bot::writeSolid(rt_wdb* wdbp) const
 	   0,
 	   0);
 
-    free(vertices);
-    free(faces);
+    bu_free(vertices, "vertices");
+    bu_free(faces, "faces");
 }
 
 
 void Bot::writePlate(rt_wdb* wdbp) const
 {
-    fastf_t* vertices    = static_cast<fastf_t*>(malloc(m_vertices.size() * sizeof(fastf_t)));
-    int*     faces       = static_cast<int*>(malloc(m_faces.size() * sizeof(int)));
-    fastf_t* thicknesses = static_cast<fastf_t*>(malloc(m_faces.size() * sizeof(fastf_t) / 3));
+    fastf_t* vertices    = static_cast<fastf_t*>(bu_malloc(m_vertices.size() * sizeof(fastf_t), "vertices"));
+    int*     faces       = static_cast<int*>(bu_malloc(m_faces.size() * sizeof(int), "faces"));
+    fastf_t* thicknesses = static_cast<fastf_t*>(bu_malloc(m_faces.size() * sizeof(fastf_t) / 3, "thicknesses"));
     bu_bitv* faceModes   = bu_bitv_new(m_faces.size() / 3);
 
     for (size_t i = 0; i < m_vertices.size(); ++i)
 	vertices[i] = m_vertices[i];
 
     for (size_t i = 0; i < m_faces.size(); ++i)
-	faces[i] = m_faces[i];
+	faces[i] = (int)m_faces[i];
 
     for (size_t i = 0; i < (m_faces.size() / 3); ++i)
 	thicknesses[i] = m_thickness;
@@ -161,8 +161,8 @@ void Bot::writePlate(rt_wdb* wdbp) const
 	   thicknesses,
 	   faceModes);
 
-    free(vertices);
-    free(faces);
-    free(thicknesses);
+    bu_free(vertices, "vertices");
+    bu_free(faces, "faces");
+    bu_free(thicknesses, "thicknesses");
     bu_bitv_free(faceModes);
 }

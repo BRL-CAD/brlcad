@@ -51,8 +51,8 @@ struct nmg_bool_state {
 };
 
 
-HIDDEN void nmg_eval_shell(struct shell *s, struct nmg_bool_state *bs);
-HIDDEN void nmg_eval_plot(struct nmg_bool_state *bs, int num);
+static void nmg_eval_shell(struct shell *s, struct nmg_bool_state *bs);
+static void nmg_eval_plot(struct nmg_bool_state *bs, int num);
 
 
 #define BACTION_KILL 1
@@ -268,7 +268,7 @@ static int nmg_eval_count = 0;	/* debug -- plot file numbering */
  * future, this should be done with one big array).  Then, return the
  * action code for an item of that classification.
  */
-HIDDEN int
+static int
 nmg_eval_action(uint32_t *ptr, register struct nmg_bool_state *bs)
 {
     register int ret;
@@ -351,7 +351,7 @@ out:
  *
  * Note that there is no moving of items from one shell to another.
  */
-HIDDEN void
+static void
 nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 {
     struct faceuse *fu;
@@ -593,7 +593,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
  * Located here because definition of nmg_bool_state is local to this
  * module.
  */
-HIDDEN void
+static void
 nmg_eval_plot(struct nmg_bool_state *bs, int num)
 {
     FILE *fp;

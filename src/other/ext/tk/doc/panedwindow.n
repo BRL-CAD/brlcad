@@ -330,7 +330,7 @@ When a pane is resized from outside (e.g. it is packed to expand and
 fill, and the containing toplevel is resized), space is added to the final
 (rightmost or bottommost) pane in the window.
 .PP
-Unlike slave windows managed by e.g. pack or grid, the panes managed by a
+Unlike child windows managed by e.g. pack or grid, the panes managed by a
 panedwindow do not change width or height to accommodate changes in the
 requested widths or heights of the panes, once these have become mapped.
 Therefore it may be advisable, particularly when creating layouts

@@ -1,6 +1,7 @@
 
 package require Tk
-package require tcltest ; namespace import -force tcltest::*
+package require tcltest 2.2
+namespace import -force tcltest::*
 loadTestedCommands
 
 ### treeview tag invariants:
@@ -105,7 +106,7 @@ test treetags-1.8 "tag names" -body {
 } -result [list tag1 tag2 tag3]
 
 test treetags-1.9 "tag names - tag added to item" -body {
-    $tv item item1 -tags tag4 
+    $tv item item1 -tags tag4
     lsort [$tv tag names]
 } -result [list tag1 tag2 tag3 tag4]
 
@@ -165,7 +166,7 @@ test treetags-2.3 "Virtual events delivered to focus item" -body {
 
 test treetags-2.4 "Bad events" -body {
     $tv tag bind bad <Enter> { puts "Entered!" }
-} -returnCodes 1 -result "unsupported event <Enter>*" -match glob
+} -returnCodes error -result "unsupported event <Enter>*" -match glob
 
 test treetags-3.0 "tag configure - set" -body {
     $tv tag configure tag1 -foreground blue -background red
@@ -201,12 +202,12 @@ test treetags-3.4 "stomp tags in tag binding procedure" -body {
     set result [list]
     $tv tag bind rm1 <<Remove>> { lappend ::result rm1 [%W focus] <<Remove>> }
     $tv tag bind rm2 <<Remove>> {
-    	lappend ::result rm2 [%W focus] <<Remove>> 
+    	lappend ::result rm2 [%W focus] <<Remove>>
 	%W item [%W focus] -tags {tag1}
     }
     $tv tag bind rm3 <<Remove>> { lappend ::result rm3 [%W focus] <<Remove>> }
 
-    $tv item item1 -tags {rm1 rm2 rm3} 
+    $tv item item1 -tags {rm1 rm2 rm3}
     $tv focus item1
     event generate $tv <<Remove>>
     set result

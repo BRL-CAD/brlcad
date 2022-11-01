@@ -406,7 +406,7 @@ parallel_wait_for_slot(int throttle, struct parallel_info *parent, size_t max_th
 }
 
 
-HIDDEN void *
+static void *
 parallel_interface_arg(void *utd)
 {
     struct thread_data *user_thread_data = (struct thread_data *)utd;
@@ -446,7 +446,7 @@ parallel_interface_arg(void *utd)
  *  cleanly stop the thread.
  *  *See ThreadProc MSDN documentation.
  */
-HIDDEN DWORD
+static DWORD
 parallel_interface_arg_stub(struct thread_data *user_thread_data)
 {
     parallel_interface_arg(user_thread_data);
@@ -491,7 +491,6 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 
     struct thread_data *thread_context;
     rt_thread_t thread_tbl[MAX_PSW];
-    size_t avail_cpus = 1;
     size_t x;
     size_t i;
 
@@ -530,16 +529,6 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	    bu_log("CPU affinity enabled. (LIBBU_AFFINITY=%d)\n", affinity);
 	else
 	    bu_log("CPU affinity disabled.\n");
-    }
-
-    /* if we're in debug mode, allow additional cpus */
-    if (!(bu_debug & BU_DEBUG_PARALLEL)) {
-	/* otherwise, limit ourselves to what is actually available */
-	avail_cpus = bu_avail_cpus();
-	if (ncpu > avail_cpus) {
-	    bu_log("%zd cpus requested, but only %zu available\n", ncpu, avail_cpus);
-	    ncpu = avail_cpus;
-	}
     }
 
     parent = parallel_mapping(PARALLEL_GET, bu_parallel_id(), ncpu);

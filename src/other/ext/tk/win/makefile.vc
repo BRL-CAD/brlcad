@@ -58,7 +58,7 @@
 # 64-bit compiler, if your SDK has it.
 #
 # Examples:
-# Assumign Tcl sources lie in ../../tcl
+# Assuming Tcl sources lie in ../../tcl
 #       c:\tcl_src\win\>nmake -f makefile.vc release
 # If Tcl sources are not in ../../tcl, use the TCLDIR macro to specify dir
 #       c:\tcl_src\win\>nmake -f makefile.vc release TCLDIR=c:\src\tcl
@@ -66,7 +66,7 @@
 #       c:\tcl_src\win\>nmake -f makefile.vc test
 # Install Tk in location specified by INSTALLDIR macro
 #       c:\tcl_src\win\>nmake -f makefile.vc install INSTALLDIR=c:\progra~1\tcl
-# Build release with PDF files
+# Build release with PDB files
 #       c:\tcl_src\win\>nmake -f makefile.vc release OPTS=pdbs
 # Build debug version
 #       c:\tcl_src\win\>nmake -f makefile.vc release OPTS=symbols
@@ -306,8 +306,7 @@ PRJ_INCLUDES	= -I"$(BITMAPDIR)" -I"$(XLIBDIR)"
 
 CONFIG_DEFS     =/DSTDC_HEADERS=1 /DHAVE_SYS_TYPES_H=1 /DHAVE_SYS_STAT_H=1 \
 		 /DHAVE_STDLIB_H=1 /DHAVE_STRING_H=1 /DHAVE_MEMORY_H=1 \
-		 /DHAVE_STRINGS_H=1 /DHAVE_INTTYPES_H=1 \
-		 /DSUPPORT_CONFIG_EMBEDDED /DUNICODE /D_UNICODE \
+		 /DHAVE_STRINGS_H=1 \
 !if $(HAVE_UXTHEME_H)
 		 /DHAVE_UXTHEME_H=1 \
 !endif
@@ -455,8 +454,8 @@ $(TKTEST): $(TKTESTOBJS) $(TKSTUBLIB) $(TKIMPLIB)
 
 
 $(CAT32): $(_TCLDIR)\win\cat.c
-	$(cc32) $(cflags) $(crt) /D_CRT_NONSTDC_NO_DEPRECATE /DCONSOLE -Fo$(TMP_DIR)\ $?
-	$(CONEXECMD) /DCONSOLE -stack:16384 $(TMP_DIR)\cat.obj
+	$(cc32) $(cflags) $(crt) /D_CRT_NONSTDC_NO_DEPRECATE /DCONSOLE /DUNICODE /D_UNICODE -Fo$(TMP_DIR)\ $?
+	$(CONEXECMD) -stack:16384 $(TMP_DIR)\cat.obj
 	$(_VC_MANIFEST_EMBED_EXE)
 
 #---------------------------------------------------------------------
@@ -470,6 +469,7 @@ genstubs:
 	set TCL_LIBRARY=$(TCL_LIBRARY)
 	$(TCLSH) $(_TCLDIR)\tools\genStubs.tcl $(GENERICDIR) \
 		$(GENERICDIR)\$(PROJECT).decls $(GENERICDIR)\$(PROJECT)Int.decls
+	$(TCLSH) $(_TCLDIR)\tools\genStubs.tcl $(GENERICDIR)\ttk $(GENERICDIR)\ttk\ttk.decls
 !endif
 
 
@@ -531,7 +531,7 @@ install-pdbs:
 #---------------------------------------------------------------------
 
 $(TMP_DIR)\testMain.obj: $(WIN_DIR)\winMain.c
-	$(cc32) $(appcflags_nostubs) /DTK_TEST \
+	$(cc32) $(appcflags_nostubs) /DTK_TEST /DUNICODE /D_UNICODE \
 	    /DTCL_USE_STATIC_PACKAGES=$(TCL_USE_STATIC_PACKAGES) \
 	    -Fo$@ $?
 
@@ -548,12 +548,12 @@ $(TMP_DIR)\tkSquare.obj: $(GENERICDIR)\tkSquare.c
 	$(cc32) $(appcflags_nostubs) -Fo$@ $?
 
 $(TMP_DIR)\winMain.obj: $(WIN_DIR)\winMain.c
-	$(cc32) $(appcflags_nostubs) \
+	$(cc32) $(appcflags_nostubs) /DUNICODE /D_UNICODE \
 	    /DTCL_USE_STATIC_PACKAGES=$(TCL_USE_STATIC_PACKAGES) \
 	    -Fo$@ $?
 
 $(TMP_DIR)\tkMain2.obj: $(GENERICDIR)\tkMain.c
-	$(cc32) $(pkgcflags) /DTK_ASCII_MAIN -Fo$@ $?
+	$(cc32) $(pkgcflags) /DUNICODE /D_UNICODE -Fo$@ $?
 
 # The following objects are part of the stub library and should not
 # be built as DLL objects but none of the symbols should be exported
@@ -652,12 +652,12 @@ install-binaries:
 !if !$(STATIC_BUILD)
 	@echo creating package index
 	@type << > $(OUT_DIR)\pkgIndex.tcl
-if {[catch {package present Tcl 8.6.0}]} { return }
+if {![package vsatisfies [package provide Tcl] 8.6.0]} return
 if {($$::tcl_platform(platform) eq "unix") && ([info exists ::env(DISPLAY)]
 	|| ([info exists ::argv] && ("-display" in $$::argv)))} {
-    package ifneeded Tk $(TK_PATCH_LEVEL) [list load [file join $$dir .. .. bin libtk$(DOTVERSION).dll] Tk]
+    package ifneeded Tk $(TK_PATCH_LEVEL) [list load [file join $$dir .. .. bin libtk$(DOTVERSION).dll]]
 } else {
-    package ifneeded Tk $(TK_PATCH_LEVEL) [list load [file join $$dir .. .. bin $(TKLIBNAME)] Tk]
+    package ifneeded Tk $(TK_PATCH_LEVEL) [list load [file join $$dir .. .. bin $(TKLIBNAME)]]
 }
 <<
 	@$(CPY) $(OUT_DIR)\pkgIndex.tcl "$(SCRIPT_INSTALL_DIR)\"

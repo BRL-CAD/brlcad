@@ -131,7 +131,7 @@ proc ::tk::ConsoleInit {} {
         default { set preferred {} }
     }
     foreach {family size} $preferred {
-        if {[lsearch -exact $families $family] != -1} {
+        if {$family in $families} {
             font configure TkConsoleFont -family $family -size $size
             break
         }
@@ -592,7 +592,7 @@ proc ::tk::ConsoleBind {w} {
     }
     bind Console <F9> {
 	eval destroy [winfo child .]
-	source [file join $tk_library console.tcl]
+	source -encoding utf-8 [file join $tk_library console.tcl]
     }
     if {[tk windowingsystem] eq "aqua"} {
 	bind Console <Command-q> {
@@ -740,9 +740,9 @@ proc ::tk::console::FontchooserToggle {} {
 }
 proc ::tk::console::FontchooserVisibility {index} {
     if {[tk fontchooser configure -visible]} {
-	.menubar.edit entryconfigure $index -label [msgcat::mc "Hide Fonts"]
+	.menubar.edit entryconfigure $index -label [::tk::msgcat::mc "Hide Fonts"]
     } else {
-	.menubar.edit entryconfigure $index -label [msgcat::mc "Show Fonts"]
+	.menubar.edit entryconfigure $index -label [::tk::msgcat::mc "Show Fonts"]
     }
 }
 proc ::tk::console::FontchooserFocus {w isFocusIn} {

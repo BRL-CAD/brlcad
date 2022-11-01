@@ -72,7 +72,7 @@ tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int of
 }
 
 /* TODO - this should be a function somewhere, is it already? */
-HIDDEN const char *
+static const char *
 arb_type_to_str(int type) {
     switch (type) {
 	case 4:
@@ -97,7 +97,7 @@ arb_type_to_str(int type) {
     return NULL;
 }
 
-HIDDEN const char *
+static const char *
 type_to_str(const struct rt_db_internal *obj, int arb_type) {
     if (arb_type) return arb_type_to_str(arb_type);
     return obj->idb_meth->ft_label;
@@ -183,7 +183,7 @@ diff_free_result(struct diff_result *result)
     }
 }
 
-HIDDEN int
+static int
 avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_tol)
 {
     /* We need to look for numbers to do tolerance based comparisons */
@@ -263,7 +263,7 @@ db_avs_diff(const struct bu_attribute_value_set *left_set,
 }
 
 
-HIDDEN int
+static int
 db_diff_external(const struct bu_external *ext1, const struct bu_external *ext2)
 {
     if (ext1->ext_nbytes != ext2->ext_nbytes) {
@@ -285,7 +285,7 @@ struct diff_elements {
     struct bu_attribute_value_set *attrs;
 };
 
-HIDDEN void
+static void
 get_diff_components(struct diff_elements *el, const struct db_i *dbip, const struct directory *dp)
 {
     el->name = NULL;
@@ -341,7 +341,7 @@ get_diff_components(struct diff_elements *el, const struct db_i *dbip, const str
 
 	/* object type isn't a normal parameter attribute, so add it as such */
 	if (el->intern->idb_minor_type == DB5_MINORTYPE_BRLCAD_ARB8) {
-	    struct bn_tol arb_tol = BG_TOL_INIT;
+	    struct bn_tol arb_tol = BN_TOL_INIT_TOL;
 	    bu_avs_add(el->params, "DB5_MINORTYPE", type_to_str(el->intern, rt_arb_std_type(el->intern, &arb_tol)));
 	} else {
 	    bu_avs_add(el->params, "DB5_MINORTYPE", el->intern->idb_meth->ft_label);
@@ -364,7 +364,7 @@ get_diff_components(struct diff_elements *el, const struct db_i *dbip, const str
     }
 }
 
-HIDDEN void
+static void
 free_diff_components(struct diff_elements *el)
 {
     bu_avs_free(el->attrs);
@@ -377,7 +377,7 @@ free_diff_components(struct diff_elements *el)
     }
 }
 
-HIDDEN int
+static int
 diff_dp_attr_add(const char *attr_name, const char *attr_val, void *data)
 {
     struct bu_ptbl *diffs = (struct bu_ptbl *)data;
@@ -391,7 +391,7 @@ diff_dp_attr_add(const char *attr_name, const char *attr_val, void *data)
     return avp->state;
 }
 
-HIDDEN int
+static int
 diff_dp_attr_del(const char *attr_name, const char *attr_val, void *data)
 {
     struct bu_ptbl *diffs = (struct bu_ptbl *)data;
@@ -405,7 +405,7 @@ diff_dp_attr_del(const char *attr_name, const char *attr_val, void *data)
     return avp->state;
 }
 
-HIDDEN int
+static int
 diff_dp_attr_chgd(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data)
 {
     struct bu_ptbl *diffs = (struct bu_ptbl *)data;
@@ -420,7 +420,7 @@ diff_dp_attr_chgd(const char *attr_name, const char *attr_val_left, const char *
     return avp->state;
 }
 
-HIDDEN int
+static int
 diff_dp_attr_unchgd(const char *attr_name, const char *attr_val, void *data)
 {
     struct bu_ptbl *diffs = (struct bu_ptbl *)data;
@@ -709,7 +709,7 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
     return state;
 }
 
-HIDDEN int
+static int
 diff3_dp_attr_add(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data)
 {
     struct bu_ptbl *diffs = (struct bu_ptbl *)data;
@@ -724,7 +724,7 @@ diff3_dp_attr_add(const char *attr_name, const char *attr_val_left, const char *
     return avp->state;
 }
 
-HIDDEN int
+static int
 diff3_dp_attr_del(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data)
 {
     struct bu_ptbl *diffs = (struct bu_ptbl *)data;
@@ -742,7 +742,7 @@ diff3_dp_attr_del(const char *attr_name, const char *attr_val_left, const char *
     return avp->state;
 }
 
-HIDDEN int
+static int
 diff3_dp_attr_chgd(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data)
 {
     struct bu_ptbl *diffs = (struct bu_ptbl *)data;
@@ -758,7 +758,7 @@ diff3_dp_attr_chgd(const char *attr_name, const char *attr_val_left, const char 
     return avp->state;
 }
 
-HIDDEN int
+static int
 diff3_dp_attr_conflict(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data)
 {
     struct bu_ptbl *diffs = (struct bu_ptbl *)data;
@@ -774,7 +774,7 @@ diff3_dp_attr_conflict(const char *attr_name, const char *attr_val_left, const c
     return avp->state;
 }
 
-HIDDEN int
+static int
 diff3_dp_attr_unchgd(const char *attr_name, const char *attr_val, void *data)
 {
     struct bu_ptbl *diffs = (struct bu_ptbl *)data;

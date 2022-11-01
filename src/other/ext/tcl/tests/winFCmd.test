@@ -5,13 +5,13 @@
 # generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1996-1997 Sun Microsystems, Inc.
-# Copyright (c) 1998-1999 by Scriptics Corporation.
+# Copyright (c) 1998-1999 Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
 
@@ -29,7 +29,9 @@ testConstraint testchmod      [llength [info commands testchmod]]
 testConstraint cdrom 0
 testConstraint exdev 0
 testConstraint longFileNames 0
-testConstraint knownMsvcBug [expr {![info exists ::env(TRAVIS_OS_NAME)] || ![string match windows $::env(TRAVIS_OS_NAME)]}]
+# Some things fail under all Continuous Integration systems for subtle reasons
+# such as CI often running with elevated privileges in a container.
+testConstraint notInCIenv     [expr {![info exists ::env(CI)]}]
 
 proc createfile {file {string a}} {
     set f [open $file w]
@@ -401,7 +403,7 @@ proc MakeFiles {dirname} {
         set f [open $filename w]
         close $f
         file stat $filename stat
-        if {[set n [lsearch -exact -integer $inodes $stat(ino)]] != -1} {
+        if {[set n [lsearch -exact -integer $inodes $stat(ino)]] >= 0} {
             return [list [file join $dirname Test$n] $filename]
         }
         lappend inodes $stat(ino)
@@ -411,7 +413,7 @@ proc MakeFiles {dirname} {
 
 test winFCmd-1.38 {TclpRenameFile: check rename of conflicting inodes} -setup {
     cleanup
-} -constraints {win winNonZeroInodes knownMsvcBug} -body {
+} -constraints {win winNonZeroInodes notInCIenv} -body {
     file mkdir td1
     foreach {a b} [MakeFiles td1] break
     file rename -force $a $b
@@ -661,7 +663,7 @@ test winFCmd-5.1 {TclpCopyDirectory: calls TraverseWinTree} -setup {
 
 test winFCmd-6.1 {TclpRemoveDirectory: errno: EACCES} -setup {
     cleanup
-} -constraints {winVista testfile testchmod knownMsvcBug} -body {
+} -constraints {winVista testfile testchmod notInCIenv} -body {
     file mkdir td1
     testchmod 0 td1
     testfile rmdir td1
@@ -715,7 +717,7 @@ test winFCmd-6.8 {TclpRemoveDirectory: RemoveDirectory fails} -setup {
 } -result {1 {tf1 ENOTDIR}}
 test winFCmd-6.9 {TclpRemoveDirectory: errno == EACCES} -setup {
     cleanup
-} -constraints {winVista testfile testchmod knownMsvcBug} -body {
+} -constraints {winVista testfile testchmod notInCIenv} -body {
     file mkdir td1
     testchmod 0 td1
     testfile rmdir td1
@@ -733,7 +735,7 @@ test winFCmd-6.11 {TclpRemoveDirectory: attr == -1} -setup {
 } -returnCodes error -match regexp -result {^/ E(ACCES|EXIST)$}
 test winFCmd-6.13 {TclpRemoveDirectory: write-protected} -setup {
     cleanup
-} -constraints {winVista testfile testchmod knownMsvcBug} -body {
+} -constraints {winVista testfile testchmod notInCIenv} -body {
     file mkdir td1
     testchmod 0 td1
     testfile rmdir td1
@@ -962,7 +964,7 @@ test winFCmd-9.1 {TraversalDelete: DOTREE_F} -setup {
 } -result {}
 test winFCmd-9.3 {TraversalDelete: DOTREE_PRED} -setup {
     cleanup
-} -constraints {winVista testfile testchmod knownMsvcBug} -body {
+} -constraints {winVista testfile testchmod notInCIenv} -body {
     file mkdir td1/td2
     testchmod 0 td1
     testfile rmdir -force td1
@@ -1381,7 +1383,7 @@ test winFCmd-19.3 {Windows extended path names} -constraints nt -setup {
 } -cleanup {
     catch {file delete $tmpfile}
 } -result [list 0 {}]
-test winFCmd-19.4 {Windows extended path names} -constraints nt -setup {
+test winFCmd-19.4 {Windows extended path names} -constraints {win nt} -setup {
     set tmpfile [file join $::env(TEMP) tcl[string repeat x 20].tmp]
     set tmpfile //?/[file normalize $tmpfile]
 } -body {
@@ -1403,7 +1405,7 @@ test winFCmd-19.5 {Windows extended path names} -constraints nt -setup {
 } -cleanup {
     catch {file delete $tmpfile}
 } -result [list 0 {}]
-test winFCmd-19.6 {Windows extended path names} -constraints nt -setup {
+test winFCmd-19.6 {Windows extended path names} -constraints {win nt} -setup {
     set tmpfile [file join $::env(TEMP) tcl[string repeat x 248].tmp]
     set tmpfile //?/[file normalize $tmpfile]
 } -body {
@@ -1414,7 +1416,7 @@ test winFCmd-19.6 {Windows extended path names} -constraints nt -setup {
 } -cleanup {
     catch {file delete $tmpfile}
 } -result [list 0 {}]
-test winFCmd-19.7 {Windows extended path names} -constraints nt -setup {
+test winFCmd-19.7 {Windows extended path names} -constraints {win nt} -setup {
     set tmpfile [file join $::env(TEMP) "tcl[pid].tmp "]
     set tmpfile [file normalize $tmpfile]
 } -body {
@@ -1425,7 +1427,7 @@ test winFCmd-19.7 {Windows extended path names} -constraints nt -setup {
 } -cleanup {
     catch {file delete $tmpfile}
 } -result [list 0 {} [list tcl[pid].tmp]]
-test winFCmd-19.8 {Windows extended path names} -constraints nt -setup {
+test winFCmd-19.8 {Windows extended path names} -constraints {win nt} -setup {
     set tmpfile [file join $::env(TEMP) "tcl[pid].tmp "]
     set tmpfile //?/[file normalize $tmpfile]
 } -body {
@@ -1437,7 +1439,7 @@ test winFCmd-19.8 {Windows extended path names} -constraints nt -setup {
     catch {file delete $tmpfile}
 } -result [list 0 {} [list "tcl[pid].tmp "]]
 
-test winFCmd-19.9 {Windows devices path names} -constraints nt -body {
+test winFCmd-19.9 {Windows devices path names} -constraints {win nt} -body {
     file normalize //./com1
 } -result //./com1
 

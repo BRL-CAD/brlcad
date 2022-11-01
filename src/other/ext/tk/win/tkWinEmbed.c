@@ -1088,8 +1088,8 @@ EmbedWindowDeleted(
 
     prevPtr = NULL;
     containerPtr = tsdPtr->firstContainerPtr;
-    if (containerPtr == NULL) return;
     while (1) {
+	if (containerPtr == NULL) return;
 	if (containerPtr->embeddedPtr == winPtr) {
 	    containerPtr->embeddedHWnd = NULL;
 	    containerPtr->embeddedPtr = NULL;

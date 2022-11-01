@@ -54,7 +54,7 @@ proc readsettings {} {
     global screencyc ;	set screencyc	600
 
     set xfd [open "|xset q" r]
-    while {[gets $xfd line] > -1} {
+    while {[gets $xfd line] >= 0} {
 	switch -- [lindex $line 0] {
 	    auto {
 		set rpt [lindex $line 1]
@@ -197,7 +197,7 @@ proc createwindows {} {
 
     bind . <Return> {.buttons.ok   flash; .buttons.ok   invoke}
     bind . <Escape> {.buttons.quit flash; .buttons.quit invoke}
-    bind . <1> {
+    bind . <Button-1> {
 	if {![string match .buttons* %W]} {
 	    .buttons.apply  configure -state normal
 	    .buttons.cancel configure -state normal

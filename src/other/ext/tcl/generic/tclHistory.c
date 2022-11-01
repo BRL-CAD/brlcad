@@ -61,7 +61,7 @@ Tcl_RecordAndEval(
 				 * TCL_EVAL_GLOBAL means use Tcl_GlobalEval
 				 * instead of Tcl_Eval. */
 {
-    register Tcl_Obj *cmdPtr;
+    Tcl_Obj *cmdPtr;
     int length = strlen(cmd);
     int result;
 
@@ -214,7 +214,7 @@ DeleteHistoryObjs(
     ClientData clientData,
     Tcl_Interp *interp)
 {
-    register HistoryObjs *histObjsPtr = clientData;
+    HistoryObjs *histObjsPtr = clientData;
 
     TclDecrRefCount(histObjsPtr->historyObj);
     TclDecrRefCount(histObjsPtr->addObj);

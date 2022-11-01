@@ -528,6 +528,7 @@ bv_plot_vlblock(FILE *fp, const struct bv_vlblock *vbp)
 	BU_LIST_DEQUEUE(&((p)->l)); \
     } \
     bu_vls_init(&(p)->s_name); \
+    (p)->s_path = NULL; \
     bu_vls_init(&(p)->s_uuid); \
     BU_LIST_INIT( &((p)->s_vlist) ); }
 

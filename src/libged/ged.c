@@ -84,9 +84,9 @@ ged_close(struct ged *gedp)
     if (gedp == GED_NULL)
 	return;
 
-    if (gedp->ged_wdbp) {
-	wdb_close(gedp->ged_wdbp);
-	gedp->ged_wdbp = RT_WDB_NULL;
+    if (gedp->dbip) {
+	db_close(gedp->dbip);
+	gedp->dbip = NULL;
     }
 
     /* Terminate any ged subprocesses */
@@ -160,6 +160,7 @@ ged_free(struct ged *gedp)
 
     ged_selection_sets_destroy(gedp->ged_selection_sets);
     gedp->ged_selection_sets = NULL;
+    gedp->ged_cset = NULL;
 
     BU_PUT(gedp->ged_cbs, struct ged_callback_state);
 
@@ -167,8 +168,6 @@ ged_free(struct ged *gedp)
 
     if (gedp->ged_fbs)
 	BU_PUT(gedp->ged_fbs, struct fbserv_obj);
-
-    gedp->ged_wdbp = RT_WDB_NULL;
 }
 
 void
@@ -177,7 +176,7 @@ ged_init(struct ged *gedp)
     if (gedp == GED_NULL)
 	return;
 
-    gedp->ged_wdbp = RT_WDB_NULL;
+    gedp->dbip = NULL;
 
     // TODO - rename to ged_name
     bu_vls_init(&gedp->go_name);
@@ -218,7 +217,7 @@ ged_init(struct ged *gedp)
     qray_init(gedp->ged_gdp);
 
     gedp->ged_selection_sets = ged_selection_sets_create(gedp);
-
+    gedp->ged_cset = ged_selection_sets_get(gedp->ged_selection_sets, "default"); // default set
 
     BU_GET(gedp->ged_log, struct bu_vls);
     bu_vls_init(gedp->ged_log);

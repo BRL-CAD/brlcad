@@ -856,8 +856,8 @@ logoverlap(struct application *ap,
 void _gqa_exposed_air(struct application *ap,
 		      struct partition *pp,
 		      point_t last_out_point,
-		      point_t pt,
-		      point_t opt)
+		      point_t in_pt,
+		      point_t out_pt)
 {
     struct cstate *state = (struct cstate *)ap->A_STATE;
 
@@ -867,14 +867,14 @@ void _gqa_exposed_air(struct application *ap,
     add_unique_pair(&exposedAirList,
 		    pp->pt_regionp,
 		    (struct region *)NULL,
-		    pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist, /* thickness */
+		    DIST_PNT_PNT(in_pt, out_pt), /* thickness */
 		    last_out_point); /* location */
     bu_semaphore_release(state->sem_lists);
 
     if (plot_expair) {
 	bu_semaphore_acquire(state->sem_plot);
 	pl_color(plot_expair, V3ARGS(expAir_color));
-	pdv_3line(plot_expair, pt, opt);
+	pdv_3line(plot_expair, in_pt, out_pt);
 	bu_semaphore_release(state->sem_plot);
     }
 }
@@ -897,7 +897,6 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     int last_air = 0;  /* what was the aircode of the last item */
     int air_first = 1; /* are we in an air before a solid */
     double dist;       /* the thickness of the partition */
-    double gap_dist;
     double last_out_dist = -1.0;
     double val;
     struct cstate *state = (struct cstate *)ap->A_STATE;
@@ -921,24 +920,37 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
 	if (debug) {
 	    bu_semaphore_acquire(state->sem_worker);
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s %g->%g\n", pp->pt_regionp->reg_name,
-			  pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
+	    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s %g->%g\n",
+			  pp->pt_regionp->reg_name,
+			  pp->pt_inhit->hit_dist,
+			  pp->pt_outhit->hit_dist);
 	    bu_semaphore_release(state->sem_worker);
 	}
 
 	/* checking for air sticking out of the model.  This is done
 	 * here because there may be any number of air regions
-	 * sticking out of the model along the ray.
+	 * sticking out of the model along the ray.  This check only
+	 * tests the front exposure; and a second test below checks
+	 * the exit exposure.
 	 */
 	if (analysis_flags & ANALYSIS_EXP_AIR) {
 
-	    gap_dist = (pp->pt_inhit->hit_dist - last_out_dist);
-
-	    /* if air is first on the ray, or we're moving from void/gap to air
-	     * then this is exposed air
+	    /* FIXME: verify that the next partition is never
+	     * overlapping numerically with the current partition.
+	     * otherwise, we'll need to account for it. This debug
+	     * statement should be removed after confirming.
+	     * CSM@20220516
 	     */
-	    if (pp->pt_regionp->reg_aircode &&
-		(air_first || gap_dist > overlap_tolerance)) {
+	    if (pp->pt_forw != PartHeadp) {
+		double next_dist = pp->pt_forw->pt_inhit->hit_dist - pp->pt_inhit->hit_dist;
+		if (next_dist < dist) {
+		    bu_log("DEBUG: next partition's entry is prior to current partition's exit\n");
+		    VJOIN1(opt, ap->a_ray.r_pt, pp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir);
+		}
+	    }
+
+	    /* if air is first on the ray */
+	    if (pp->pt_regionp->reg_aircode && air_first) {
 		_gqa_exposed_air(ap, pp, last_out_point, pt, opt);
 	    } else {
 		air_first = 0;
@@ -948,6 +960,8 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	/* looking for voids in the model */
 	if (analysis_flags & ANALYSIS_GAPS) {
 	    if (pp->pt_back != PartHeadp) {
+		double gap_dist;
+
 		/* if this entry point is further than the previous
 		 * exit point then we have a void
 		 */
@@ -1183,7 +1197,6 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		add_unique_pair(&adjAirList, pp->pt_back->pt_regionp, pp->pt_regionp, 0.0, pt);
 		bu_semaphore_release(state->sem_lists);
 
-
 		d *= 0.25;
 		VJOIN1(aapt, pt, d, ap->a_ray.r_dir);
 
@@ -1203,10 +1216,11 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     }
 
 
+    /* This checks the last partition was exposed air.  A check above
+     * checks the partition entry for exposed air.
+     */
     if (analysis_flags & ANALYSIS_EXP_AIR && last_air) {
-	/* the last thing we hit was air.  Make a note of that */
 	pp = PartHeadp->pt_back;
-
 	_gqa_exposed_air(ap, pp, last_out_point, pt, opt);
     }
 
@@ -1548,11 +1562,11 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 	}
 	// iterate through the db and find all materials
 	for (int i = 0; i < RT_DBNHASH; i++) {
-	    struct directory *dp = _ged_current_gedp->ged_wdbp->dbip->dbi_Head[i];
+	    struct directory *dp = _ged_current_gedp->dbip->dbi_Head[i];
 	    if (dp != NULL) {
 		struct rt_db_internal intern;
 		struct rt_material_internal *material_ip;
-		if (rt_db_get_internal(&intern, dp, _ged_current_gedp->ged_wdbp->dbip, NULL, &rt_uniresource) >= 0) {
+		if (rt_db_get_internal(&intern, dp, _ged_current_gedp->dbip, NULL, &rt_uniresource) >= 0) {
 		    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 			// if the material has an id and density, add it to the density table
 			material_ip = (struct rt_material_internal *)intern.idb_ptr;
@@ -2509,7 +2523,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
      *
      * FIXME: should probably be based on the model size.
      */
-    gridSpacingLimit = 10.0 * gedp->ged_wdbp->wdb_tol.dist;
+    gridSpacingLimit = 10.0 * gedp->dbip->db_tol.dist;
 
     makeOverlapAssemblies = 0;
     require_num_hits = 1;

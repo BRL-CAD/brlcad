@@ -106,7 +106,7 @@ typedef	struct finderinfo {
     u_int32_t extendedFileInfo[4];
 } __attribute__ ((__packed__)) finderinfo;
 
-typedef struct fileinfobuf {
+typedef struct {
     u_int32_t info_length;
     u_int32_t data[8];
 } fileinfobuf;
@@ -172,7 +172,7 @@ TclMacOSXGetFileAttribute(
     } else {
 	alist.commonattr = ATTR_CMN_FNDRINFO;
     }
-    native = Tcl_FSGetNativePath(fileName);
+    native = (const char *)Tcl_FSGetNativePath(fileName);
     result = getattrlist(native, &alist, &finfo, sizeof(fileinfobuf), 0);
 
     if (result != 0) {
@@ -268,7 +268,7 @@ TclMacOSXSetFileAttribute(
     } else {
 	alist.commonattr = ATTR_CMN_FNDRINFO;
     }
-    native = Tcl_FSGetNativePath(fileName);
+    native = (const char *)Tcl_FSGetNativePath(fileName);
     result = getattrlist(native, &alist, &finfo, sizeof(fileinfobuf), 0);
 
     if (result != 0) {
@@ -347,7 +347,7 @@ TclMacOSXSetFileAttribute(
 	    Tcl_DStringAppend(&ds, native, -1);
 	    Tcl_DStringAppend(&ds, _PATH_RSRCFORKSPEC, -1);
 
-	    result = truncate(Tcl_DStringValue(&ds), (off_t)0);
+	    result = truncate(Tcl_DStringValue(&ds), 0);
 	    if (result != 0) {
 		/*
 		 * truncate() on a valid resource fork path may fail with a
@@ -654,7 +654,7 @@ SetOSTypeFromAny(
 	OSType osType;
 	char bytes[4] = {'\0','\0','\0','\0'};
 
-	memcpy(bytes, Tcl_DStringValue(&ds), (size_t)Tcl_DStringLength(&ds));
+	memcpy(bytes, Tcl_DStringValue(&ds), Tcl_DStringLength(&ds));
 	osType = (OSType) bytes[0] << 24 |
 		 (OSType) bytes[1] << 16 |
 		 (OSType) bytes[2] <<  8 |
@@ -689,7 +689,7 @@ SetOSTypeFromAny(
 
 static void
 UpdateStringOfOSType(
-    register Tcl_Obj *objPtr)	/* OSType object whose string rep to
+    Tcl_Obj *objPtr)	/* OSType object whose string rep to
 				 * update. */
 {
     char string[5];

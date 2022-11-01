@@ -26,7 +26,9 @@
 #include <map>
 #include <set>
 #include <QTimer>
+#include <QMessageBox>
 #include "qtcad/QViewCtrl.h"
+#include "qtcad/QgTreeSelectionModel.h"
 #include "bu/str.h"
 #include "main_window.h"
 #include "app.h"
@@ -34,10 +36,140 @@
 #include "attributes.h"
 #include "fbserv.h"
 
+// The palette tools are loaded as dynamic plugins.  Since the logic for doing
+// so is rather verbose and not dependent on the Qt main_window information, we
+// break it out into a separate function to keep the main_window initialization
+// more readable.
+static void
+_load_palette_tools(
+	struct bu_vls *msgs,
+	CADPalette *vc,
+	CADPalette *oc,
+	std::map<int, std::set<QToolPaletteElement *>> &vc_map,
+	std::map<int, std::set<QToolPaletteElement *>> &oc_map
+	)
+{
+    const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "qged", NULL);
+    char **filenames;
+    struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&plugin_pattern, "*%s", QGED_PLUGIN_SUFFIX);
+    size_t nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &filenames);
+    for (size_t i = 0; i < nfiles; i++) {
+	char pfile[MAXPATHLEN] = {0};
+	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "qged", filenames[i], NULL);
+	void *dl_handle;
+	dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
+	if (!dl_handle) {
+	    const char * const error_msg = bu_dlerror();
+	    if (error_msg)
+		bu_vls_printf(msgs, "%s\n", error_msg);
+
+	    bu_vls_printf(msgs, "Unable to dynamically load '%s' (skipping)\n", pfile);
+	    continue;
+	}
+	{
+	    const char *psymbol = "qged_plugin_info";
+	    void *info_val = bu_dlsym(dl_handle, psymbol);
+	    const struct qged_plugin *(*plugin_info)() = (const struct qged_plugin *(*)())(intptr_t)info_val;
+	    if (!plugin_info) {
+		const char * const error_msg = bu_dlerror();
+
+		if (error_msg)
+		    bu_vls_printf(msgs, "%s\n", error_msg);
+
+		bu_vls_printf(msgs, "Unable to load symbols from '%s' (skipping)\n", pfile);
+		bu_vls_printf(msgs, "Could not find '%s' symbol in plugin\n", psymbol);
+		bu_dlclose(dl_handle);
+		continue;
+	    }
+
+	    const struct qged_plugin *plugin = plugin_info();
+
+	    if (!plugin) {
+		bu_vls_printf(msgs, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
+		bu_dlclose(dl_handle);
+		continue;
+	    }
+
+	    if (!plugin->cmds) {
+		bu_vls_printf(msgs, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
+		bu_dlclose(dl_handle);
+		continue;
+	    }
+
+	    if (!plugin->cmd_cnt) {
+		bu_vls_printf(msgs, "Plugin '%s' contains no commands, (skipping)\n", pfile);
+		bu_dlclose(dl_handle);
+		continue;
+	    }
+
+	    const struct qged_tool **cmds = plugin->cmds;
+	    uint32_t ptype = *((const uint32_t *)(plugin));
+
+	    switch (ptype) {
+		case QGED_VC_TOOL_PLUGIN:
+		    for (int c = 0; c < plugin->cmd_cnt; c++) {
+			const struct qged_tool *cmd = cmds[c];
+			QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
+			vc_map[cmd->palette_priority].insert(el);
+		    }
+		    break;
+		case QGED_OC_TOOL_PLUGIN:
+		    for (int c = 0; c < plugin->cmd_cnt; c++) {
+			const struct qged_tool *cmd = cmds[c];
+			QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
+			oc_map[cmd->palette_priority].insert(el);
+		    }
+		    break;
+		case QGED_CMD_PLUGIN:
+		    bu_vls_printf(msgs, "TODO - implement cmd plugins\n");
+		    bu_dlclose(dl_handle);
+		    break;
+		default:
+		    bu_vls_printf(msgs, "Plugin type %d of '%s' does not match any valid candidates (skipping)\n", ptype, pfile);
+		    bu_dlclose(dl_handle);
+		    continue;
+		    break;
+	    }
+	}
+    }
+    bu_argv_free(nfiles, filenames);
+    bu_vls_free(&plugin_pattern);
+
+    std::map<int, std::set<QToolPaletteElement *>>::iterator e_it;
+    for (e_it = vc_map.begin(); e_it != vc_map.end(); e_it++) {
+	std::set<QToolPaletteElement *>::iterator el_it;
+	for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
+	    QToolPaletteElement *el = *el_it;
+	    vc->addTool(el);
+	}
+    }
+
+    for (e_it = oc_map.begin(); e_it != oc_map.end(); e_it++) {
+	std::set<QToolPaletteElement *>::iterator el_it;
+	for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
+	    QToolPaletteElement *el = *el_it;
+	    oc->addTool(el);
+	}
+    }
+
+
+    // Add placeholder oc tool until we implement more real tools
+    {
+	QIcon *obj_icon = new QIcon();
+	QString obj_label("primitive controls ");
+	QPushButton *obj_control = new QPushButton(obj_label);
+	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
+	oc->addTool(el);
+    }
+
+}
+
+
 BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 {
     CADApp *ap = (CADApp *)qApp;
-    QgModel *m = (QgModel *)ap->mdl->sourceModel();
+    QgModel *m = ap->mdl;
     struct ged *gedp = m->gedp;
     ap->w = this;
 
@@ -91,30 +223,55 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 
 
     // Define a widget to hold the main view and its associated
-    // controls
+    // view control toolbar
     QWidget *cw = new QWidget(this);
-    QVBoxLayout *cwl = new QVBoxLayout;
 
+    // The core of the interface is the CAD view widget, which is capable
+    // of either a single display or showing 4 views in a grid arrangement
+    // (the "quad" view).  By default it displays a single view, unless
+    // overridden by a user option.
+    c4 = new QtCADQuad(cw, gedp, canvas_type);
+    if (!c4) {
+	QMessageBox *msgbox = new QMessageBox();
+	msgbox->setText("Fatal error: unable to create QtCADQuad widget");
+	msgbox->exec();
+	bu_exit(EXIT_FAILURE, "Unable to create QtCADQuad widget\n");
+    }
+    c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+    // Make the fundamental connection that allows the view to update in
+    // response to commands or widgets taking actions that will impact the
+    // scene.  Camera view changes, adding/removing objects or view elements
+    // from the scene, and updates such as incremental display of raytracing
+    // results in an embedded framebuffer all need to notify the QtCADQuad
+    // it is time to update.
+    QObject::connect(ap, &CADApp::view_update, c4, &QtCADQuad::do_view_update);
+
+    // Define a graphical toolbar with control widgets
     vcw = new QViewCtrl(cw, gedp);
     vcw->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    cwl->addWidget(vcw);
-    QObject::connect(vcw, &QViewCtrl::gui_changed_view, ap, &CADApp::do_view_change);
-    QObject::connect(ap, &CADApp::view_change, vcw, &QViewCtrl::fb_mode_icon);
-
-    c4 = new QtCADQuad(cw, gedp, canvas_type);
-    c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    cwl->addWidget(c4);
+    QObject::connect(vcw, &QViewCtrl::view_changed, ap, &CADApp::do_view_changed);
+    QObject::connect(ap, &CADApp::view_update, vcw, &QViewCtrl::do_view_update);
+    // Make the connection so the view control can change the mouse mode of the Quad View
     QObject::connect(vcw, &QViewCtrl::lmouse_mode, c4, &QtCADQuad::set_lmouse_move_default);
 
+    // The toolbar is added to the layout first, so it is drawn above the Quad view
+    QVBoxLayout *cwl = new QVBoxLayout;
+    cwl->addWidget(vcw);
+    cwl->addWidget(c4);
+
+    // Having defined the layout, we set cw to use it and let the main window
+    // know cw is the central widget.
     cw->setLayout(cwl);
     setCentralWidget(cw);
 
+    // Let GED know to use the QtCADQuad view as its current view
     gedp->ged_gvp = c4->view();
 
+    // See if the user has requested a particular mode
     if (quad_view) {
 	c4->changeToQuadFrame();
-    }
-    else {
+    } else {
 	c4->changeToSingleFrame();
     }
 
@@ -124,6 +281,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     gedp->fbs_open_server_handler = &qdm_open_server_handler;
     gedp->fbs_close_server_handler = &qdm_close_server_handler;
 
+    // Unfortunately, there are technical differences involved with
+    // the embedded fb mechanisms depending on whether we are using
+    // the system native OpenGL or our fallback software rasterizer
     int type = c4->get(0)->view_type();
 #ifdef BRLCAD_OPENGL
     if (type == QtCADView_GL) {
@@ -136,10 +296,14 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     gedp->fbs_close_client_handler = &qdm_close_client_handler;
 
 
-    // Define dock widgets - these are the console, controls, etc. that can be attached
-    // and detached from the main window.  Eventually this should be a dynamic set
-    // of widgets rather than hardcoded statics, so plugins can define their own
-    // graphical elements...
+    // Having set up the central widget and fb connections, we now define
+    // dockable control widgets.  These are the console, controls, etc. that
+    // can be attached and detached from the main window.  Generally speaking
+    // we will also define menu actions to enable and disable these windows,
+    // to all them to be recovered even if the user closes them completely.
+    //
+    // TODO -  Eventually this should be a dynamic set of widgets rather than
+    // hardcoded statics, so plugins can define their own graphical elements...
 
     vcd = new QDockWidget("View Controls", this);
     addDockWidget(Qt::RightDockWidgetArea, vcd);
@@ -155,150 +319,20 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     oc = new CADPalette(2, this);
     ocd->setWidget(oc);
 
-    // The view and edit panels have consequences for the tree widget, so each
-    // needs to know which one is current
-    connect(vc, &CADPalette::current, vc, &CADPalette::makeCurrent);
+    // The makeCurrent connections enforce an either/or paradigm
+    // for the view and object editing panels.
     connect(vc, &CADPalette::current, oc, &CADPalette::makeCurrent);
-    connect(oc, &CADPalette::current, vc, &CADPalette::makeCurrent);
+    connect(vc, &CADPalette::current, vc, &CADPalette::makeCurrent);
     connect(oc, &CADPalette::current, oc, &CADPalette::makeCurrent);
+    connect(oc, &CADPalette::current, vc, &CADPalette::makeCurrent);
 
     /****************************************************************************
      * The primary view and palette widgets are now in place.  We are ready to
      * start loading tools defined as plugins.
      ****************************************************************************/
-
-    {
-	const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "qged", NULL);
-	char **filenames;
-	struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&plugin_pattern, "*%s", QGED_PLUGIN_SUFFIX);
-	size_t nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &filenames);
-	std::map<int, std::set<QToolPaletteElement *>> vc_map;
-	std::map<int, std::set<QToolPaletteElement *>> oc_map;
-	for (size_t i = 0; i < nfiles; i++) {
-	    char pfile[MAXPATHLEN] = {0};
-	    bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "qged", filenames[i], NULL);
-	    void *dl_handle;
-	    dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
-	    if (!dl_handle) {
-		const char * const error_msg = bu_dlerror();
-		if (error_msg)
-		    bu_vls_printf(&ap->init_msgs, "%s\n", error_msg);
-
-		bu_vls_printf(&ap->init_msgs, "Unable to dynamically load '%s' (skipping)\n", pfile);
-		continue;
-	    }
-	    {
-		const char *psymbol = "qged_plugin_info";
-		void *info_val = bu_dlsym(dl_handle, psymbol);
-		const struct qged_plugin *(*plugin_info)() = (const struct qged_plugin *(*)())(intptr_t)info_val;
-		if (!plugin_info) {
-		    const char * const error_msg = bu_dlerror();
-
-		    if (error_msg)
-			bu_vls_printf(&ap->init_msgs, "%s\n", error_msg);
-
-		    bu_vls_printf(&ap->init_msgs, "Unable to load symbols from '%s' (skipping)\n", pfile);
-		    bu_vls_printf(&ap->init_msgs, "Could not find '%s' symbol in plugin\n", psymbol);
-		    bu_dlclose(dl_handle);
-		    continue;
-		}
-
-		const struct qged_plugin *plugin = plugin_info();
-
-		if (!plugin) {
-		    bu_vls_printf(&ap->init_msgs, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
-		    bu_dlclose(dl_handle);
-		    continue;
-		}
-
-
-
-		if (!plugin->cmds) {
-		    bu_vls_printf(&ap->init_msgs, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
-		    bu_dlclose(dl_handle);
-		    continue;
-		}
-
-		if (!plugin->cmd_cnt) {
-		    bu_vls_printf(&ap->init_msgs, "Plugin '%s' contains no commands, (skipping)\n", pfile);
-		    bu_dlclose(dl_handle);
-		    continue;
-		}
-
-		const struct qged_tool **cmds = plugin->cmds;
-		uint32_t ptype = *((const uint32_t *)(plugin));
-
-		switch (ptype) {
-		    case QGED_VC_TOOL_PLUGIN:
-			for (int c = 0; c < plugin->cmd_cnt; c++) {
-			    const struct qged_tool *cmd = cmds[c];
-			    QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
-			    vc_map[cmd->palette_priority].insert(el);
-			}
-			break;
-		    case QGED_OC_TOOL_PLUGIN:
-			for (int c = 0; c < plugin->cmd_cnt; c++) {
-			    const struct qged_tool *cmd = cmds[c];
-			    QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
-			    oc_map[cmd->palette_priority].insert(el);
-			}
-			break;
-		    case QGED_CMD_PLUGIN:
-			bu_vls_printf(&ap->init_msgs, "TODO - implement cmd plugins\n");
-			bu_dlclose(dl_handle);
-			break;
-		    default:
-			bu_vls_printf(&ap->init_msgs, "Plugin type %d of '%s' does not match any valid candidates (skipping)\n", ptype, pfile);
-			bu_dlclose(dl_handle);
-			continue;
-			break;
-		}
-	    }
-	}
-	bu_argv_free(nfiles, filenames);
-	bu_vls_free(&plugin_pattern);
-
-	std::map<int, std::set<QToolPaletteElement *>>::iterator e_it;
-	for (e_it = vc_map.begin(); e_it != vc_map.end(); e_it++) {
-	    std::set<QToolPaletteElement *>::iterator el_it;
-	    for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
-		QToolPaletteElement *el = *el_it;
-		vc->addTool(el);
-		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_view_sync);
-		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_db_sync);
-		QObject::connect(m, &QgModel::view_change, el, &QToolPaletteElement::do_view_sync);
-
-		QObject::connect(el, &QToolPaletteElement::view_changed, ap, &CADApp::do_view_change);
-		QObject::connect(el, &QToolPaletteElement::db_changed, ap, &CADApp::do_db_change);
-	    }
-	}
-
-	for (e_it = oc_map.begin(); e_it != oc_map.end(); e_it++) {
-	    std::set<QToolPaletteElement *>::iterator el_it;
-	    for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
-		QToolPaletteElement *el = *el_it;
-		oc->addTool(el);
-		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_view_sync);
-		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_db_sync);
-		QObject::connect(m, &QgModel::view_change, el, &QToolPaletteElement::do_view_sync);
-		QObject::connect(el, &QToolPaletteElement::view_changed, ap, &CADApp::do_view_change);
-	    }
-	}
-
-    }
-
-
-
-
-    // Add some placeholder tools until we start to implement the real ones
-    {
-	QIcon *obj_icon = new QIcon();
-	QString obj_label("primitive controls ");
-	QPushButton *obj_control = new QPushButton(obj_label);
-	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
-	oc->addTool(el);
-    }
+    std::map<int, std::set<QToolPaletteElement *>> vc_map;
+    std::map<int, std::set<QToolPaletteElement *>> oc_map;
+    _load_palette_tools(&ap->init_msgs, vc, oc, vc_map, oc_map);
 
     // Now that we've got everything set up, connect the palette selection
     // signals so they can update the view event filter as needed.  We don't do
@@ -306,26 +340,18 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // addition would trigger a selection which we're not going to use.  (We
     // default to selecting the default view tool at the end of this
     // procedure by making vc the current palette.)
-    QObject::connect(vc->tpalette, &QToolPalette::element_selected, ap, &CADApp::element_selected);
-    QObject::connect(oc->tpalette, &QToolPalette::element_selected, ap, &CADApp::element_selected);
+    // TODO - need to figure out how this should (or shouldn't) be rolled into
+    // do_view_changed
+    QObject::connect(vc->tpalette, &QToolPalette::palette_element_selected, ap, &CADApp::element_selected);
+    QObject::connect(oc->tpalette, &QToolPalette::palette_element_selected, ap, &CADApp::element_selected);
 
-
-#if 0
-    // TODO - check if we still need this after we get proper post-construction
-    // plugin population working for palettes
-    //
-    // Make sure the palette buttons are all visible - trick from
-    // https://stackoverflow.com/a/56852841/2037687
-    QTimer::singleShot(0, vc, &CADPalette::reflow);
-    QTimer::singleShot(0, oc, &CADPalette::reflow);
-#endif
-
-    /* Because the console usually doesn't need a huge amount of horizontal
-     * space and the tree can use all the vertical space it can get when
-     * viewing large .g hierarchyes, give the bottom corners to the left/right
-     * docks */
-    setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
-    setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
+    // The tools in the view and edit panels may have consequences for the view.
+    // Connect to the palette signals and slots (the individual tool connections
+    // are handled by the palette container.)
+    QObject::connect(ap, &CADApp::view_update, vc->tpalette, &QToolPalette::do_view_update);
+    QObject::connect(vc->tpalette, &QToolPalette::view_changed, ap, &CADApp::do_view_changed);
+    QObject::connect(ap, &CADApp::view_update, oc->tpalette, &QToolPalette::do_view_update);
+    QObject::connect(oc->tpalette, &QToolPalette::view_changed, ap, &CADApp::do_view_changed);
 
     /* Console */
     console_dock = new QgDockWidget("Console", this);
@@ -355,16 +381,18 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     treeview = new QgTreeView(tree_dock, ca->mdl);
     tree_dock->setWidget(treeview);
     tree_dock->m = m;
+    ap->treeview = treeview;
     connect(tree_dock, &QgDockWidget::banner_click, m, &QgModel::toggle_hierarchy);
     connect(vm_topview, &QAction::triggered, m, &QgModel::toggle_hierarchy);
-
-    // Tell the selection model we have a tree view
-    ca->mdl->treeview = treeview;
+    connect(m, &QgModel::opened_item, treeview, &QgTreeView::qgitem_select_sync);
+    connect(m, &QgModel::view_change, ca, &CADApp::do_view_changed);
+    QObject::connect(treeview, &QgTreeView::view_changed, ap, &CADApp::do_view_changed);
+    QObject::connect(ap, &CADApp::view_update, treeview, &QgTreeView::do_view_update);
 
     // We need to record the expanded/contracted state of the tree items,
     // and restore them after a model reset
-    connect(treeview, &QgTreeView::expanded, ca->mdl, &QgSelectionProxyModel::item_expanded);
-    connect(treeview, &QgTreeView::collapsed, ca->mdl, &QgSelectionProxyModel::item_collapsed);
+    connect(treeview, &QgTreeView::expanded, m, &QgModel::item_expanded);
+    connect(treeview, &QgTreeView::collapsed, m, &QgModel::item_collapsed);
     connect(m, &QgModel::mdl_changed_db, treeview, &QgTreeView::redo_expansions);
     connect(m, &QgModel::check_highlights, treeview, &QgTreeView::redo_highlights);
 
@@ -375,8 +403,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // panels for the two modes.  That's looking like it may be overkill, so
     // the interaction mode of oc may need to change for the specific comb case
     // of editing an instance in the comb tree.
-    connect(vc, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
-    connect(oc, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
+    QgTreeSelectionModel *selm = (QgTreeSelectionModel *)treeview->selectionModel();
+    connect(vc, &CADPalette::interaction_mode, selm, &QgTreeSelectionModel::mode_change);
+    connect(oc, &CADPalette::interaction_mode, selm, &QgTreeSelectionModel::mode_change);
 
 
     // Dialogues for attribute viewing (and eventually manipulation)
@@ -403,36 +432,25 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     QObject::connect(treeview, &QgTreeView::clicked, stdpropmodel, &CADAttributesModel::refresh);
     QObject::connect(treeview, &QgTreeView::clicked, userpropmodel, &CADAttributesModel::refresh);
 
-    // If the database changes, we need to refresh the tree.  (Right now this is only triggered
-    // if we open a new .g file, IIRC, but it needs to happen when we've editing combs or added/
-    // removed solids too...)  TODO - do we still need this?
-    //QObject::connect(m, &QgModel::mdl_changed_db, ca->mdl, &QgSelectionProxyModel::refresh);
-
     // If the model does something that it things should trigger a view update, let the app know
-    QObject::connect(m, &QgModel::view_change, ap, &CADApp::do_view_change);
+    QObject::connect(m, &QgModel::view_change, ap, &CADApp::do_view_changed);
 
-    // If the database changes, we need to update our views
-    if (c4) {
-	QObject::connect(m, &QgModel::mdl_changed_db, c4, &QtCADQuad::need_update);
-	QObject::connect((CADApp *)qApp, &CADApp::view_change, c4, &QtCADQuad::need_update);
-	// The Quad View has an additional condition in the sense that the current view may
-	// change.  Probably we won't try to track this for floating dms attached to qged,
-	// but the quad view is a central view widget so we need to support it.
-	QObject::connect(c4, &QtCADQuad::selected, (CADApp *)qApp, &CADApp::do_quad_view_change);
-	ap->curr_view = c4->get(0);
-    }
 
-    // If the view changes, let the GUI know.  The ap supplied signals are used by other
-    // widgets to hide the specifics of the current view implementation (single or quad).
-    if (c4) {
-	QObject::connect(c4, &QtCADQuad::changed, ap, &CADApp::do_quad_view_change);
-    }
+    // Connect the primary view widget to the app
+    QObject::connect(c4, &QtCADQuad::selected, ap, &CADApp::do_quad_view_change);
+    QObject::connect(c4, &QtCADQuad::changed, ap, &CADApp::do_quad_view_change);
+    ap->curr_view = c4->get(0);
 
     // Some of the dm initialization has to be delayed - make the connections so we can
     // do the work after widget initialization is complete.
-    if (c4) {
-	QObject::connect(c4, &QtCADQuad::init_done, this, &BRLCAD_MainWindow::do_dm_init);
-    }
+    QObject::connect(c4, &QtCADQuad::init_done, this, &BRLCAD_MainWindow::do_dm_init);
+
+    /* Because the console usually doesn't need a huge amount of horizontal
+     * space and the tree can use all the vertical space it can get when
+     * viewing large .g hierarchies, give the bottom corners to the left/right
+     * docks */
+    setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
+    setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
 
     // We start out with the View Control panel as the current panel - by
     // default we are viewing, not editing
@@ -442,25 +460,20 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 bool
 BRLCAD_MainWindow::isValid3D()
 {
-    if (c4)
-	return c4->isValid();
-    return false;
+    return c4->isValid();
 }
 
 void
 BRLCAD_MainWindow::fallback3D()
 {
-    if (c4) {
-	c4->fallback();
-	return;
-    }
+    c4->fallback();
 }
 
 void
 BRLCAD_MainWindow::do_dm_init()
 {
     CADApp *ap = (CADApp *)qApp;
-    QgModel *m = (QgModel *)ap->mdl->sourceModel();
+    QgModel *m = ap->mdl;
     struct ged *gedp = m->gedp;
 
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
@@ -485,7 +498,7 @@ BRLCAD_MainWindow::do_dm_init()
     av[3] = "1";
     ged_exec(gedp, 4, (const char **)av);
 
-    emit ap->view_change(&gedp->ged_gvp);
+    emit ap->view_update(QTCAD_VIEW_REFRESH);
     ///////////////////////////////////////////////////////////////////////////
 }
 

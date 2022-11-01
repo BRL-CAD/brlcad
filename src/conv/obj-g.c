@@ -294,9 +294,9 @@ struct ga_t {
     const char * const *str_arr_obj_objects;   /* obj_objects */
     const char * const *str_arr_obj_materials; /* obj_materials */
     const char * const *str_arr_obj_texmaps;   /* obj_texmaps */
-    const float (*vert_list)[4];          /* obj_vertices */
-    const float (*norm_list)[3];          /* obj_normals */
-    const float (*texture_coord_list)[3]; /* obj_texture_coord */
+    const double (*vert_list)[4];          /* obj_vertices */
+    const double (*norm_list)[3];          /* obj_normals */
+    const double (*texture_coord_list)[3]; /* obj_texture_coord */
     const size_t *attindex_arr_nv_faces;  /* obj_polygonal_nv_faces */
     const size_t *attindex_arr_v_faces;   /* obj_polygonal_v_faces */
     const size_t *attindex_arr_tv_faces;  /* obj_polygonal_tv_faces */
@@ -2893,7 +2893,7 @@ output_to_nmg(struct ga_t *ga,
 	if ((verbose > 1) || debug) {
 	    bu_log("Running nmg_gluefaces on (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
-	nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, tol);
+	nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), (int)BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, tol);
 	if ((verbose > 1) || debug) {
 	    bu_log("Completed nmg_gluefaces for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}

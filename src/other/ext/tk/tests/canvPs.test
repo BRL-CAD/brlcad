@@ -19,17 +19,17 @@ pack .c
 update
 
 test canvPs-1.1 {test writing to a file} -constraints {
-    unixOrPc
+    unixOrWin
 } -setup {
     set foo [makeFile {} foo.ps]
 } -body {
-    .c postscript -file $foo
-    file exists $foo
+    set res [.c postscript -file $foo]
+    lappend res [file exists $foo]
 } -cleanup {
     removeFile foo.ps
 } -result 1
 test canvPs-1.2 {test writing to a file, idempotency} -constraints {
-    unixOrPc
+    unixOrWin
 } -setup {
     set foo [makeFile {} foo.ps]
     set bar [makeFile {} bar.ps]
@@ -48,21 +48,21 @@ test canvPs-1.2 {test writing to a file, idempotency} -constraints {
 
 
 test canvPs-2.1 {test writing to a channel} -constraints {
-    unixOrPc
+    unixOrWin
 } -setup {
     set foo [makeFile {} foo.ps]
     file delete $foo
 } -body {
     set chan [open $foo w]
     fconfigure $chan -translation lf
-    .c postscript -channel $chan
+    set res [.c postscript -channel $chan]
     close $chan
-    file exists $foo
+    lappend res [file exists $foo]
 } -cleanup {
     removeFile foo.ps
 } -result 1
 test canvPs-2.2 {test writing to channel, idempotency} -constraints {
-    unixOrPc
+    unixOrWin
 } -setup {
     set foo [makeFile {} foo.ps]
     set bar [makeFile {} bar.ps]

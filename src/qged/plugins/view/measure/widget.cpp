@@ -115,11 +115,9 @@ _cpnt_ovlp(struct application *ap, struct partition *pp, struct region *UNUSED(r
 bool
 CADViewMeasure::get_point(QMouseEvent *m_e)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return false;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return false;
@@ -260,25 +258,22 @@ CADViewMeasure::update_color()
 {
     if (!s)
 	return;
-
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return;
 
     if (!measure_3d->isChecked()) {
 	bu_color_to_rgb_chars(&color_2d->bc, s->s_color);
-	emit view_updated(&gedp->ged_gvp);
+	emit view_updated(QTCAD_VIEW_REFRESH);
 	return;
     }
 
     if (measure_3d->isChecked()) {
 	bu_color_to_rgb_chars(&color_3d->bc, s->s_color);
-	emit view_updated(&gedp->ged_gvp);
+	emit view_updated(QTCAD_VIEW_REFRESH);
 	return;
     }
 }
@@ -292,11 +287,9 @@ CADViewMeasure::adjust_text_db(void *)
 void
 CADViewMeasure::adjust_text()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return;
@@ -335,11 +328,9 @@ CADViewMeasure::adjust_text()
 bool
 CADViewMeasure::eventFilter(QObject *, QEvent *e)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return false;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return false;
@@ -367,7 +358,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    length1_report->clear();
 	    length2_report->clear();
 	    angle_report->clear();
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
 	if (mode == 4) {
@@ -377,7 +368,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    length1_report->clear();
 	    length2_report->clear();
 	    angle_report->clear();
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
 	if (!mode) {
@@ -394,7 +385,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
 	    bu_vls_init(&s->s_uuid);
 	    bu_vls_printf(&s->s_uuid, "tool:measurement");
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
 	if (mode == 1) {
@@ -415,7 +406,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    VMOVE(p3, mpnt);
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
 	    adjust_text();
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	}
 	return true;
     }
@@ -432,7 +423,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    VMOVE(p2, mpnt);
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
 	    adjust_text();
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	}
 	if (mode == 3) {
 	    if (!get_point(m_e))
@@ -444,7 +435,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    VMOVE(p3, mpnt);
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
 	    adjust_text();
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	}
 	return true;
     }
@@ -454,7 +445,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    mode = 0;
 	    if (s) {
 		bv_obj_put(s);
-		emit view_updated(&gedp->ged_gvp);
+		emit view_updated(QTCAD_VIEW_REFRESH);
 	    }
 	    s = NULL;
 	    return true;
@@ -473,7 +464,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    VMOVE(p2, mpnt);
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
 	    adjust_text();
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
 	if (mode == 3) {
@@ -486,7 +477,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    VMOVE(p3, mpnt);
 	    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
 	    adjust_text();
-	    emit view_updated(&gedp->ged_gvp);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
 

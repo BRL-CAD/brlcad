@@ -66,8 +66,9 @@ Extra padding (in pixels) to add uniformly to each side of a region.
 .AP short bottom in
 Extra padding (in pixels) to add to the bottom of a region.
 .AP Ttk_Box box in
-.AP "Ttk_Box *" box_rtn out
 Specifies a rectangular region.
+.AP "Ttk_Box *" box_rtn out
+A rectangular region.
 .AP int height in
 The height in pixels of a region.
 .AP "Tcl_Interp *" interp in
@@ -79,13 +80,14 @@ String value contains a symbolic name
 to be converted to an enumerated value or bitmask.
 Internal rep may be be modified to cache corresponding value.
 .AP Ttk_Padding padding in
-.AP "Ttk_Padding *" padding_rtn out
 Extra padding to add on the inside of a region.
+.AP "Ttk_Padding *" padding_rtn out
+Padding present in the inside of a region.
 .AP Ttk_Box parcel in
 A rectangular region, allocated from a cavity.
 .AP int relief in
 One of the standard Tk relief options
-(TK_RELIEF_RAISED, TK_RELIEF_SUNKEN, etc.).
+(\fBTK_RELIEF_RAISED\fR, \fBTK_RELIEF_SUNKEN\fR, etc.).
 See \fBTk_GetReliefFromObj\fR.
 .AP short right in
 Extra padding (in pixels) to add to the right side of a region.
@@ -95,13 +97,13 @@ One of \fBTTK_SIDE_LEFT\fR, \fBTTK_SIDE_TOP\fR,
 .AP unsigned sticky in
 A bitmask containing one or more of the bits
 \fBTTK_STICK_W\fR (west, or left),
-\fBTTK_STICK_E\fR (east, or right,
+\fBTTK_STICK_E\fR (east, or right),
 \fBTTK_STICK_N\fR (north, or top), and
 \fBTTK_STICK_S\fR (south, or bottom).
-\fBTTK_FILL_X\fR is defined as a synonym for (TTK_STICK_W|TTK_STICK_E),
-\fBTTK_FILL_Y\fR is a synonym for (TTK_STICK_N|TTK_STICK_S),
-and  \fBTTK_FILL_BOTH\fR and \fBTTK_STICK_ALL\fR
-are synonyms for (TTK_FILL_X|TTK_FILL_Y).
+\fBTTK_FILL_X\fR is defined as a synonym for (\fBTTK_STICK_W\fR|\fBTTK_STICK_E\fR),
+\fBTTK_FILL_Y\fR is a synonym for (\fBTTK_STICK_N\fR|\fBTTK_STICK_S\fR),
+and  \fBTTK_FILL_BOTH\fR
+is a synonym for (\fBTTK_FILL_X\fR|\fBTTK_FILL_Y\fR).
 See also: \fIgrid(n)\fR.
 .AP Tk_Window tkwin in
 Window whose screen geometry determines

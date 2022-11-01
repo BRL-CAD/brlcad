@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH spinbox n 8.4 Tk "Tk Built-In Commands"
 .so man.macros
 .BS
@@ -514,9 +514,10 @@ insertion cursor in the spinbox without affecting the selection.
 If any normal printing characters are typed in a spinbox, they are
 inserted at the point of the insertion cursor.
 .IP [7]
-The view in the spinbox can be adjusted by dragging with mouse button 2.
-If mouse button 2 is clicked without moving the mouse, the selection
-is copied into the spinbox at the position of the mouse cursor.
+The view in the spinbox can be adjusted by dragging with the middle
+mouse button (button 2, or button 3 in TkAqua). If the middle mouse
+button is clicked without moving the mouse, the selection is copied
+into the spinbox at the position of the mouse cursor.
 .IP [8]
 If the mouse is dragged out of the spinbox on the left or right sides
 while button 1 is pressed, the spinbox will automatically scroll to

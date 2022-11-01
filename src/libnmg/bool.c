@@ -68,7 +68,7 @@ int debug_file_count=0;
  * 0  No open edges, no plot file created.
  * !0 Has open edges, plot file created.
  */
-HIDDEN size_t
+static size_t
 nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix, struct bu_list *vlfree)
 {
     struct loopuse *lu;
@@ -147,7 +147,7 @@ nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix, struct bu_list 
 }
 
 
-HIDDEN void
+static void
 nmg_dangling_handler(uint32_t *longp, void *state, int UNUSED(unused))
 {
     register struct faceuse *fu = (struct faceuse *)longp;
@@ -173,7 +173,7 @@ nmg_dangling_handler(uint32_t *longp, void *state, int UNUSED(unused))
  * 0 No dangling faces
  * !0 Has dangling faces
  */
-HIDDEN int
+static int
 nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds, struct bu_list *vlfree)
 {
     struct model *m;
@@ -205,7 +205,7 @@ nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds, struct bu_list 
  * Note that in "non-fancy" mode, show_broken_eu() draws just the
  * edge.
  */
-HIDDEN void
+static void
 nmg_show_each_loop(struct shell *s, char **classlist, int redraw, int fancy, const char *str, struct bu_list *vlfree)
 
 
@@ -242,7 +242,7 @@ nmg_show_each_loop(struct shell *s, char **classlist, int redraw, int fancy, con
 
 /* TODO - do we need this? */
 #if 0
-HIDDEN void
+static void
 nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
 {
     struct faceuse *fu;
@@ -402,7 +402,7 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
  * edges and vertices marked as shared.
  */
 
-HIDDEN void
+static void
 nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **classlist, struct bu_list *vlfree)
 {
     struct bu_ptbl verts;
@@ -477,7 +477,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
  * Look for same loop in opposite direction in shell "s", Kill them.
  */
 
-HIDDEN void
+static void
 nmg_kill_anti_loops(struct shell *s)
 {
     struct bu_ptbl loops;
@@ -573,7 +573,7 @@ out:
 }
 
 
-HIDDEN void
+static void
 nmg_kill_wire_edges(struct shell *s)
 {
     struct loopuse *lu;
@@ -598,7 +598,7 @@ nmg_kill_wire_edges(struct shell *s)
  *
  * XXX this probably should operate on regions, not shells.
  */
-HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int oper, struct bu_list *vlfree, const struct bn_tol *tol)
+static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int oper, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     int i;
     long nelem;

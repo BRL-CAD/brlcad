@@ -48,11 +48,7 @@ This copy has been simplified down to the essential sorting comparison of C stri
   the "Alphanum Algorithm". This function is designed to read
   through the l and r strings only one time, for
   maximum performance. It does not allocate memory for
-  substrings. It can either use the C-library functions isdigit()
-  and atoi() to honour your locale settings, when recognizing
-  digit characters when you "#define ALPHANUM_LOCALE=1" or use
-  it's own digit character handling which only works with ASCII
-  digit characters, but provides better performance.
+  substrings.
 
   @param l NULL-terminated C-style string
   @param r NULL-terminated C-style string
@@ -72,8 +68,14 @@ int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
 	    char l_char, r_char;
 	    while((l_char=*l) && (r_char=*r))
 	    {
-		// check if this are digit characters
-		const int l_digit = isdigit(l_char), r_digit=isdigit(r_char);
+		// Check if this are digit characters.  Note that the unsigned
+		// char cast will not handle non-ASCII characters "correctly"
+		// in the sense of producing a local aware decision - we do
+		// this for simplicity given most candidate inputs will be
+		// ASCII, and we don't want to produce some form of sorting
+		// decision the (relatively rare) cases where we hit a
+		// non-ASCII character in the input string.
+		const int l_digit = isdigit((unsigned char)l_char), r_digit=isdigit((unsigned char)r_char);
 		// if both characters are digits, we continue in NUMBER mode
 		if(l_digit && r_digit)
 		{
@@ -95,19 +97,29 @@ int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
 	}
 	else // mode==NUMBER
 	{
-	    // get the left number
-	    char *end;
-	    unsigned long l_int=strtoul(l, &end, 0);
-	    l=end;
+	    // try to get the numbers
+	    char *lend, *rend;
+	    unsigned long l_int=strtoul(l, &lend, 0);
+	    unsigned long r_int=strtoul(r, &rend, 0);
 
-	    // get the right number
-	    unsigned long r_int=strtoul(r, &end, 0);
-	    r=end;
-
-	    // if the difference is not equal to zero, we have a comparison result
-	    const long diff=l_int-r_int;
-	    if(diff != 0)
-		return diff;
+	    if (lend == l || rend == r) {
+		// One or more of the numerical conversions failed.  Fall back
+		// on char comparison
+		char l_char=*l;
+		char r_char=*r;
+		const int diff = l_char - r_char;
+		if(diff != 0) return diff;
+		++l;
+		++r;
+	    } else {
+		// Numerical conversion successful - proceed
+		l=lend;
+		r=rend;
+		// if the difference is not equal to zero, we have a comparison result
+		const long diff=l_int-r_int;
+		if(diff != 0)
+		    return diff;
+	    }
 
 	    // otherwise we process the next substring in STRING mode
 	    mode=STRING;

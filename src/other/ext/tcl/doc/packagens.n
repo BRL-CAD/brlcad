@@ -1,7 +1,7 @@
 '\"
-'\" Copyright (c) 1998-2000 by Scriptics Corporation.
+'\" Copyright (c) 1998-2000 Scriptics Corporation.
 '\" All rights reserved.
-'\" 
+'\"
 .TH pkg::create n 8.3 Tcl "Tcl Built-In Commands"
 .so man.macros
 .BS

@@ -5,7 +5,7 @@
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
 
-package require tcltest 2.1
+package require tcltest 2.2
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
 
@@ -162,7 +162,7 @@ test color-1.4 {Tk_AllocColorFromObj - try other colors in list} colorsFree {
 test color-1.5 {Color table} nonPortable {
     set fd [open ../xlib/rgb.txt]
     set result {}
-    while {[gets $fd line] != -1} {
+    while {[gets $fd line] >= 0} {
     	if {[string index $line 0] == "!"} continue
 	set rgb [c255 [winfo rgb . [lrange $line 3 end]]]
 	if {$rgb != [lrange $line 0 2] } {

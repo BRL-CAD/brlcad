@@ -34,7 +34,7 @@
 
 project(BDEPS)
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.18)
 
 # Find the executable extension, if there is one
 get_filename_component(EXE_EXT "${CMAKE_COMMAND}" EXT)
@@ -171,22 +171,23 @@ include(ExternalProject)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CMake/buildpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
 add_executable(buildpath_replace ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
 set_target_properties(buildpath_replace PROPERTIES FOLDER "Compilation Utilities")
-# TODO - remove once we require CMake >=3.14
-# Until we can require CMake 3.14 for generator expressions in install(CODE), force
-# the location of buildpath_replace to a known location in all cases
-set_property(TARGET buildpath_replace PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/CMakeTmp)
-if(CMAKE_CONFIGURATION_TYPES)
-  foreach(ct ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${ct}" CTU)
-    set_property(TARGET buildpath_replace PROPERTY RUNTIME_OUTPUT_DIRECTORY_${CTU} ${CMAKE_BINARY_DIR}/CMakeTmp)
-  endforeach(ct ${CMAKE_CONFIGURATION_TYPES})
-endif(CMAKE_CONFIGURATION_TYPES)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
 
-# patchelf is used to set/update RPATH values on certain platforms.
-# Build a copy if we don't already have it and we're not on Windows
-# or Mac.  If we're going to use it, it needs to be defined before
-# we start setting up the external targets.
+# patchelf (https://github.com/NixOS/patchelf) is used to set/update RPATH
+# values on certain platforms.  Build a copy if we don't already have it and
+# we're not on Windows or Mac.  If we're going to use it, it needs to be
+# defined before we start setting up the external targets.
+#
+# Notes - patchelf is GPL, so we cannot combine it or use it with any of the
+# BRL-CAD distributed libraries.  It is bundled STRICTLY as a build time
+# convenience for platforms that might not have it installed by default - a
+# system version is fine, even preferred.  As of the time of this writing (2022)
+# patchelf seems to be the best way to do the necessary RPATH manipulation for
+# this third party management approach to work.
+
+# This copy of patchelf is not quite the newest version on github, as the newer
+# code needs newer C++ standards than BRL-CAD currently requires - see
+# UPGRADE_NOTE.txt in the patchelf directory.
 find_program(PATCHELF_EXECUTABLE patchelf)
 if (NOT PATCHELF_EXECUTABLE)
   add_subdirectory(patchelf)
@@ -200,6 +201,7 @@ set(PATCHELF_FILES
   patchelf/COPYING
   patchelf/patchelf.cc
   patchelf/elf.h
+  patchelf/UPGRADE_NOTE.txt
   )
 CMAKEFILES(${PATCHELF_FILES})
 
@@ -293,29 +295,56 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/perplex.cmake)
 ###############################################################################
 
 # zlib compression/decompression library
+# https://zlib.net
+#
+# Note - our copy is modified from Vanilla upstream to support specifying a
+# custom prefix - until a similar feature is available in upstream zlib, we
+# need this to reliably avoid conflicts between bundled and system zlib.
 include(${CMAKE_CURRENT_SOURCE_DIR}/zlib.cmake)
 
 # libregex regular expression matching
 include(${CMAKE_CURRENT_SOURCE_DIR}/regex.cmake)
 
 # netpbm library - support for pnm,ppm,pbm, etc. image files
+# http://netpbm.sourceforge.net/
+#
+# Note - we build a custom subset of this library for convenience, and (at the
+# moment) mod it to remove a GPL string component, although there is some hope
+# (2022) that the latter issue will be addressed upstream.  Arguably in this
+# form our netpbm copy isn't really a good fit for ext, but it is kept here
+# because a) there is an active upstream and b) we are unlikely to need to
+# modify these sources to our needs from a functional perspective.
 include(${CMAKE_CURRENT_SOURCE_DIR}/netpbm.cmake)
 
 # libpng - Portable Network Graphics image file support
+# http://www.libpng.org/pub/png/libpng.html
 include(${CMAKE_CURRENT_SOURCE_DIR}/png.cmake)
 
 # STEPcode - support for reading and writing STEP files
+# https://github.com/stepcode/stepcode
+#
+# Note - We are heavily involved with the stepcode effort and in the past our
+# stepcode copy has been extensively modified, but we are working to get our
+# copy and a released upstream copy synced - in anticipation of that, stepcode
+# lives in ext.
 include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
 
-## libbson - for binary attributes, always use this local version
-#include(${CMAKE_CURRENT_SOURCE_DIR}/bson.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/bson.dist)
-
-# PROJ4 - generic coordinate transformation
+# PROJ4 - generic coordinate transformation - https://proj.org/
 include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
 
 # GDAL -  translator library for raster and vector geospatial data formats
+# https://gdal.org
+#
+# Note - the original inclusion of GDAL in BRL-CAD required a custom CMake
+# build and source mods.  Upstream changes have largely eliminated the need for
+# this, and work is pending to migrate our code to using vanilla upstream GDAL
+# - hence, despite the mods, GDAL lives in ext in anticipation of that change.
 include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
+
+# Open Asset Import Library - library for supporting I/O for a number of
+# Geometry file formats
+# https://github.com/assimp/assimp
+#include(${CMAKE_CURRENT_SOURCE_DIR}/assimp.cmake)
 
 # TCL - scripting language.  For Tcl/Tk builds we want
 # static lib building on so we get the stub libraries.
@@ -340,12 +369,16 @@ if (COMMAND CONFIG_H_APPEND)
 endif (COMMAND CONFIG_H_APPEND)
 
 
-# The above libraries are all compilation targets with libraries, and
-# so have build outputs that must be distributed with BRL-CAD.  The
-# following are header-only libraries, and as such may remain in place
-# and are needed only for building.
+# The above libraries are all compilation targets with libraries, and so have
+# build outputs that must be distributed with BRL-CAD.  The following are
+# either header-only libraries or built directly into executables, and as such
+# may remain in place - they are needed only for building.
 include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
 CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
+
+# linenoise is used by applications directly
+include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
+CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
 
 
 std_build_rpath()
@@ -354,7 +387,7 @@ if (COMMAND CMAKEFILES)
   CMAKEFILES(
     CMakeLists.txt
     CMake/ExternalProject_Target.cmake
-    CMake/FindBSON.cmake
+    CMake/FindASSIMP.cmake
     CMake/FindITCL.cmake
     CMake/FindLEMON.cmake
     CMake/FindNETPBM.cmake
@@ -375,8 +408,8 @@ if (COMMAND CMAKEFILES)
     CMake/rpath_replace.cxx.in
     CMake/tcl_replace.cxx.in
     Eigen.dist
-    bson.cmake
-    bson.dist
+    assimp.cmake
+    assimp.dist
     gdal.cmake
     gdal.dist
     itcl.cmake
@@ -385,6 +418,7 @@ if (COMMAND CMAKEFILES)
     itk3.dist
     iwidgets.cmake
     iwidgets.dist
+    linenoise.dist
     netpbm.cmake
     netpbm.dist
     perplex.cmake

@@ -94,13 +94,13 @@ static int		ReadPPMStringHeader(Tcl_Obj *dataObj, int *widthPtr,
 static int
 FileMatchPPM(
     Tcl_Channel chan,		/* The image file, open for reading. */
-    const char *fileName,	/* The name of the image file. */
-    Tcl_Obj *format,		/* User-specified format string, or NULL. */
+    TCL_UNUSED(const char *),	/* The name of the image file. */
+    TCL_UNUSED(Tcl_Obj *),		/* User-specified format string, or NULL. */
     int *widthPtr, int *heightPtr,
 				/* The dimensions of the image are returned
 				 * here if the file is a valid raw PPM
 				 * file. */
-    Tcl_Interp *interp)		/* unused */
+    TCL_UNUSED(Tcl_Interp *))		/* unused */
 {
     int dummy;
 
@@ -131,7 +131,7 @@ FileReadPPM(
     Tcl_Interp *interp,		/* Interpreter to use for reporting errors. */
     Tcl_Channel chan,		/* The image file, open for reading. */
     const char *fileName,	/* The name of the image file. */
-    Tcl_Obj *format,		/* User-specified format string, or NULL. */
+    TCL_UNUSED(Tcl_Obj *),		/* User-specified format string, or NULL. */
     Tk_PhotoHandle imageHandle,	/* The photo image to write into. */
     int destX, int destY,	/* Coordinates of top-left pixel in photo
 				 * image to be written to. */
@@ -211,7 +211,7 @@ FileReadPPM(
 	nLines = 1;
     }
     nBytes = nLines * block.pitch;
-    pixelPtr = ckalloc(nBytes);
+    pixelPtr = (unsigned char *)ckalloc(nBytes);
     block.pixelPtr = pixelPtr + srcX * block.pixelSize;
 
     for (h = height; h > 0; h -= nLines) {
@@ -281,7 +281,7 @@ static int
 FileWritePPM(
     Tcl_Interp *interp,
     const char *fileName,
-    Tcl_Obj *format,
+    TCL_UNUSED(Tcl_Obj *),
     Tk_PhotoImageBlock *blockPtr)
 {
     Tcl_Channel chan;
@@ -323,8 +323,8 @@ FileWritePPM(
 	    pixelPtr = pixLinePtr;
 	    for (w = blockPtr->width; w > 0; w--) {
 		if (    Tcl_Write(chan,(char *)&pixelPtr[0], 1) == -1 ||
-			Tcl_Write(chan,(char *)&pixelPtr[greenOffset],1)==-1 ||
-			Tcl_Write(chan,(char *)&pixelPtr[blueOffset],1) ==-1) {
+			Tcl_Write(chan,(char *)&pixelPtr[greenOffset],1) == -1 ||
+			Tcl_Write(chan,(char *)&pixelPtr[blueOffset],1) == -1) {
 		    goto writeerror;
 		}
 		pixelPtr += blockPtr->pixelSize;
@@ -368,7 +368,7 @@ FileWritePPM(
 static int
 StringWritePPM(
     Tcl_Interp *interp,
-    Tcl_Obj *format,
+    TCL_UNUSED(Tcl_Obj *),
     Tk_PhotoImageBlock *blockPtr)
 {
     int w, h, size, greenOffset, blueOffset;
@@ -444,12 +444,12 @@ StringWritePPM(
 static int
 StringMatchPPM(
     Tcl_Obj *dataObj,		/* The image data. */
-    Tcl_Obj *format,		/* User-specified format string, or NULL. */
+    TCL_UNUSED(Tcl_Obj *),		/* User-specified format string, or NULL. */
     int *widthPtr, int *heightPtr,
 				/* The dimensions of the image are returned
 				 * here if the file is a valid raw PPM
 				 * file. */
-    Tcl_Interp *interp)		/* unused */
+    TCL_UNUSED(Tcl_Interp *))		/* unused */
 {
     int dummy;
 
@@ -479,7 +479,7 @@ static int
 StringReadPPM(
     Tcl_Interp *interp,		/* Interpreter to use for reporting errors. */
     Tcl_Obj *dataObj,		/* The image data. */
-    Tcl_Obj *format,		/* User-specified format string, or NULL. */
+    TCL_UNUSED(Tcl_Obj *),		/* User-specified format string, or NULL. */
     Tk_PhotoHandle imageHandle,	/* The photo image to write into. */
     int destX, int destY,	/* Coordinates of top-left pixel in photo
 				 * image to be written to. */
@@ -578,7 +578,7 @@ StringReadPPM(
 	nLines = 1;
     }
     nBytes = nLines * block.pitch;
-    pixelPtr = ckalloc(nBytes);
+    pixelPtr = (unsigned char *)ckalloc(nBytes);
     block.pixelPtr = pixelPtr + srcX * block.pixelSize;
 
     for (h = height; h > 0; h -= nLines) {
@@ -600,7 +600,6 @@ StringReadPPM(
 		*p = (((int) *dataBuffer) * 255)/maxIntensity;
 	    }
 	} else {
-	    unsigned char *p;
 	    unsigned int value;
 
 	    for (p = pixelPtr,count=nBytes; count > 1; count-=2, p += 2) {

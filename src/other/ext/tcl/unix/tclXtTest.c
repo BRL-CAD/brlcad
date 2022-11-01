@@ -16,7 +16,6 @@
 #include "tcl.h"
 
 static Tcl_ObjCmdProc TesteventloopCmd;
-extern DLLEXPORT Tcl_PackageInitProc Tclxttest_Init;
 
 /*
  * Functions defined in tclXtNotify.c for use by users of the Xt Notifier:
@@ -44,7 +43,7 @@ extern XtAppContext	TclSetAppContext(XtAppContext ctx);
  *----------------------------------------------------------------------
  */
 
-int
+DLLEXPORT int
 Tclxttest_Init(
     Tcl_Interp *interp)		/* Interpreter for application. */
 {

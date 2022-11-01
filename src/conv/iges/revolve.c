@@ -51,7 +51,7 @@ struct trclist
 
 
 int
-revolve(int entityno)
+revolve(size_t entityno)
 {
     struct wmember head;			/* For region */
     int sol_num;		/* IGES solid type number */
@@ -196,7 +196,7 @@ revolve(int entityno)
 	}
 
 	/* Make a name for the TRC */
-	bu_vls_sprintf(&trcptr->name, "rev.%d.%d", entityno, ntrcs); /* Format for creating TRC names */
+	bu_vls_sprintf(&trcptr->name, "rev.%zd.%d", entityno, ntrcs); /* Format for creating TRC names */
 
 	/* Make the TRC */
 	if (mk_trc_top(fdout, bu_vls_cstr(&trcptr->name), trcptr->base,

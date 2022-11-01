@@ -65,7 +65,7 @@
  *
  * this routine must be prepared to run in parallel
  */
-HIDDEN int
+static int
 analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 {
     /* see raytrace.h for all of these guys */
@@ -407,7 +407,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
  *
  * This routine must be prepared to run in parallel
  */
-HIDDEN int
+static int
 analyze_miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);
@@ -428,7 +428,7 @@ analyze_miss(struct application *ap)
  *
  * This routine must be prepared to run in parallel
  */
-HIDDEN int
+static int
 analyze_overlap(struct application *ap,
 		struct partition *pp,
 		struct region *reg1,
@@ -483,7 +483,7 @@ analyze_overlap(struct application *ap,
  * 0 on success
  * !0 on failure
  */
-HIDDEN int
+static int
 densities_from_file(struct current_state *state, char *name)
 {
     struct bu_vls msgs = BU_VLS_INIT_ZERO;
@@ -525,7 +525,7 @@ densities_from_file(struct current_state *state, char *name)
  * 0 on success
  * !0 on failure
  */
-HIDDEN int
+static int
 densities_from_database(struct current_state *state, struct rt_i *rtip)
 {
     struct bu_vls msgs = BU_VLS_INIT_ZERO;
@@ -581,7 +581,7 @@ densities_from_database(struct current_state *state, struct rt_i *rtip)
  * 0 terminate
  * 1 continue processing
  */
-HIDDEN int
+static int
 mass_volume_surf_area_terminate_check(struct current_state *state)
 {
     /* Both mass and volume computations rely on this routine to
@@ -740,7 +740,7 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
  * 0 Terminate
  * 1 Continue processing
  */
-HIDDEN int
+static int
 check_terminate(struct current_state *state)
 {
     int wv_status;
@@ -779,7 +779,7 @@ check_terminate(struct current_state *state)
 /**
  * This routine must be prepared to run in parallel
  */
-HIDDEN void
+static void
 analyze_worker(int cpu, void *ptr)
 {
     struct application ap;
@@ -835,7 +835,7 @@ analyze_worker(int cpu, void *ptr)
  * 0 continue, ready to go
  * !0 error encountered, terminate processing
  */
-HIDDEN int
+static int
 options_set(struct current_state *state)
 {
     struct rt_i *rtip = state->rtip;
@@ -973,7 +973,7 @@ options_set(struct current_state *state)
     return ANALYZE_OK;
 }
 
-HIDDEN int
+static int
 find_cmd_obj(struct current_state *state, struct per_obj_data *obj_rpt, const char *name)
 {
     int i;
@@ -1002,7 +1002,7 @@ find_cmd_obj(struct current_state *state, struct per_obj_data *obj_rpt, const ch
  * Allocate data structures for tracking statistics on a per-view
  * basis for each of the view, object and region levels.
  */
-HIDDEN void
+static void
 allocate_region_data(struct current_state *state, char *av[])
 {
     struct region *regp;
@@ -1077,7 +1077,7 @@ allocate_region_data(struct current_state *state, char *av[])
 }
 
 
-HIDDEN int
+static int
 analyze_single_grid_setup(struct current_state *state)
 {
     mat_t toEye;
@@ -1139,7 +1139,7 @@ analyze_single_grid_setup(struct current_state *state)
 }
 
 
-HIDDEN void
+static void
 analyze_triple_grid_setup(int view, struct current_state *state)
 {
     struct rectangular_grid *grid = (struct rectangular_grid *)state->grid;
@@ -1174,7 +1174,7 @@ analyze_triple_grid_setup(int view, struct current_state *state)
 }
 
 
-HIDDEN int
+static int
 analyze_setup_ae(struct current_state *state)
 {
     vect_t temp;
@@ -1241,7 +1241,7 @@ analyze_setup_ae(struct current_state *state)
 }
 
 
-HIDDEN void
+static void
 shoot_rays(struct current_state *state)
 {
     /* compute */
@@ -1455,7 +1455,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     bu_list_free(&overlapList.l);
 
     if (state->densities != NULL) {
-	bu_free(state->densities, "densities");
+	analyze_densities_destroy(state->densities);
 	state->densities = NULL;
     }
 

@@ -306,7 +306,7 @@ MODULE_SCOPE char tkDefLabelPady[TCL_INTEGER_SPACE];
  */
 
 #ifndef TkpButtonSetDefaults
-MODULE_SCOPE void	TkpButtonSetDefaults();
+MODULE_SCOPE void	TkpButtonSetDefaults(void);
 #endif
 MODULE_SCOPE void	TkButtonWorldChanged(ClientData instanceData);
 MODULE_SCOPE void	TkpComputeButtonGeometry(TkButton *butPtr);

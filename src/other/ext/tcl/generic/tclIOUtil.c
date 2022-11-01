@@ -184,7 +184,7 @@ const Tcl_Filesystem tclNativeFilesystem = {
     TclpObjCopyDirectory,
     TclpObjLstat,
     /* Needs casts since we're using version_2. */
-    (Tcl_FSLoadFileProc *) TclpDlopen,
+    (Tcl_FSLoadFileProc *)(void *) TclpDlopen,
     (Tcl_FSGetCwdProc *) TclpGetNativeCwd,
     TclpObjChdir
 };
@@ -1798,7 +1798,7 @@ Tcl_FSEvalFileEx(
      */
 
     if (Tcl_ReadChars(chan, objPtr, -1,
-	    memcmp(string, "\xef\xbb\xbf", 3)) < 0) {
+	    memcmp(string, "\xEF\xBB\xBF", 3)) < 0) {
 	Tcl_Close(interp, chan);
 	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 		"couldn't read file \"%s\": %s",
@@ -1933,7 +1933,7 @@ TclNREvalFile(
      */
 
     if (Tcl_ReadChars(chan, objPtr, -1,
-	    memcmp(string, "\xef\xbb\xbf", 3)) < 0) {
+	    memcmp(string, "\xEF\xBB\xBF", 3)) < 0) {
 	Tcl_Close(interp, chan);
 	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 		"couldn't read file \"%s\": %s",
@@ -3158,6 +3158,13 @@ Tcl_FSLoadFile(
  * present and set to true (any integer > 0) then the unlink is skipped.
  */
 
+#ifdef _WIN32
+#define getenv(x) _wgetenv(L##x)
+#define atoi(x) _wtoi(x)
+#else
+#define WCHAR char
+#endif
+
 static int
 skipUnlink (Tcl_Obj* shlibFile)
 {
@@ -3178,9 +3185,9 @@ skipUnlink (Tcl_Obj* shlibFile)
 #ifdef hpux
     return 1;
 #else
-    char* skipstr;
+    WCHAR *skipstr;
 
-    skipstr = getenv ("TCL_TEMPLOAD_NO_UNLINK");
+    skipstr = getenv("TCL_TEMPLOAD_NO_UNLINK");
     if (skipstr && (skipstr[0] != '\0')) {
 	return atoi(skipstr);
     }
@@ -3244,7 +3251,7 @@ Tcl_LoadFile(
     }
 
     if (fsPtr->loadFileProc != NULL) {
-	int retVal = ((Tcl_FSLoadFileProc2 *)(fsPtr->loadFileProc))
+	retVal = ((Tcl_FSLoadFileProc2 *)(void *)(fsPtr->loadFileProc))
 		(interp, pathPtr, handlePtr, &unloadProcPtr, flags);
 
 	if (retVal == TCL_OK) {
@@ -4209,7 +4216,7 @@ TclFSNonnativePathType(
 		    if (pathLen < len) {
 			continue;
 		    }
-		    if (strncmp(strVol, path, (size_t) len) == 0) {
+		    if (strncmp(strVol, path, len) == 0) {
 			type = TCL_PATH_ABSOLUTE;
 			if (filesystemPtrPtr != NULL) {
 			    *filesystemPtrPtr = fsRecPtr->fsPtr;
@@ -4619,7 +4626,7 @@ Tcl_FSGetFileSystemForPath(
     /*
      * Check if the filesystem has changed in some way since this object's
      * internal representation was calculated. Before doing that, assure we
-     * have the most up-to-date copy of the master filesystem. This is
+     * have the most up-to-date copy of the first filesystem. This is
      * accomplished by the FsGetFirstFilesystem() call.
      */
 

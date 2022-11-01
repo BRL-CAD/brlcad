@@ -957,19 +957,23 @@ DisplayCanvText(
      */
 
     if ((selFirstChar >= 0) && (textPtr->selTextGC != textPtr->gc)) {
-	TkDrawAngledTextLayout(display, drawable, textPtr->gc,
-		textPtr->textLayout, drawableX, drawableY, textPtr->angle,
-		0, selFirstChar);
+	if (0 < selFirstChar) {
+	    TkDrawAngledTextLayout(display, drawable, textPtr->gc,
+		    textPtr->textLayout, drawableX, drawableY, textPtr->angle,
+		    0, selFirstChar);
+	}
 	TkDrawAngledTextLayout(display, drawable, textPtr->selTextGC,
 		textPtr->textLayout, drawableX, drawableY, textPtr->angle,
 		selFirstChar, selLastChar + 1);
-	TkDrawAngledTextLayout(display, drawable, textPtr->gc,
-		textPtr->textLayout, drawableX, drawableY, textPtr->angle,
-		selLastChar + 1, -1);
+	if (selLastChar + 1 < textPtr->numChars) {
+	    TkDrawAngledTextLayout(display, drawable, textPtr->gc,
+		    textPtr->textLayout, drawableX, drawableY, textPtr->angle,
+		    selLastChar + 1, textPtr->numChars);
+	}
     } else {
 	TkDrawAngledTextLayout(display, drawable, textPtr->gc,
 		textPtr->textLayout, drawableX, drawableY, textPtr->angle,
-		0, -1);
+		0, textPtr->numChars);
     }
     TkUnderlineAngledTextLayout(display, drawable, textPtr->gc,
 	    textPtr->textLayout, drawableX, drawableY, textPtr->angle,
@@ -1021,14 +1025,14 @@ TextInsert(
     if (index > textPtr->numChars) {
 	index = textPtr->numChars;
     }
-    byteIndex = Tcl_UtfAtIndex(text, index) - text;
+    byteIndex = TkUtfAtIndex(text, index) - text;
     byteCount = strlen(string);
     if (byteCount == 0) {
 	return;
     }
 
-    newStr = ckalloc(textPtr->numBytes + byteCount + 1);
-    memcpy(newStr, text, (size_t) byteIndex);
+    newStr = (char *)ckalloc(textPtr->numBytes + byteCount + 1);
+    memcpy(newStr, text, byteIndex);
     strcpy(newStr + byteIndex, string);
     strcpy(newStr + byteIndex + byteCount, text + byteIndex);
 
@@ -1104,12 +1108,12 @@ TextDeleteChars(
     }
     charsRemoved = last + 1 - first;
 
-    byteIndex = Tcl_UtfAtIndex(text, first) - text;
-    byteCount = Tcl_UtfAtIndex(text + byteIndex, charsRemoved)
+    byteIndex = TkUtfAtIndex(text, first) - text;
+    byteCount = TkUtfAtIndex(text + byteIndex, charsRemoved)
 	- (text + byteIndex);
 
-    newStr = ckalloc(textPtr->numBytes + 1 - byteCount);
-    memcpy(newStr, text, (size_t) byteIndex);
+    newStr = (char *)ckalloc(textPtr->numBytes + 1 - byteCount);
+    memcpy(newStr, text, byteIndex);
     strcpy(newStr + byteIndex, text + byteIndex + byteCount);
 
     ckfree(text);
@@ -1263,7 +1267,6 @@ TextToArea(
  *--------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 static void
 ScaleText(
     Tk_Canvas canvas,		/* Canvas containing rectangle. */
@@ -1334,7 +1337,7 @@ TranslateText(
 static int
 GetTextIndex(
     Tcl_Interp *interp,		/* Used for error reporting. */
-    Tk_Canvas canvas,		/* Canvas containing item. */
+    TCL_UNUSED(Tk_Canvas),		/* Canvas containing item. */
     Tk_Item *itemPtr,		/* Item for which the index is being
 				 * specified. */
     Tcl_Obj *obj,		/* Specification of a particular character in
@@ -1345,19 +1348,18 @@ GetTextIndex(
     TextItem *textPtr = (TextItem *) itemPtr;
     int length;
     int c;
-    TkCanvas *canvasPtr = (TkCanvas *) canvas;
     Tk_CanvasTextInfo *textInfoPtr = textPtr->textInfoPtr;
     const char *string = Tcl_GetStringFromObj(obj, &length);
 
     c = string[0];
 
-    if ((c == 'e') && (strncmp(string, "end", (unsigned) length) == 0)) {
+    if ((c == 'e') && (strncmp(string, "end", length) == 0)) {
 	*indexPtr = textPtr->numChars;
     } else if ((c == 'i')
-	    && (strncmp(string, "insert", (unsigned) length) == 0)) {
+	    && (strncmp(string, "insert", length) == 0)) {
 	*indexPtr = textPtr->insertPos;
     } else if ((c == 's') && (length >= 5)
-	    && (strncmp(string, "sel.first", (unsigned) length) == 0)) {
+	    && (strncmp(string, "sel.first", length) == 0)) {
 	if (textInfoPtr->selItemPtr != itemPtr) {
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
 		    "selection isn't in item", -1));
@@ -1366,7 +1368,7 @@ GetTextIndex(
 	}
 	*indexPtr = textInfoPtr->selectFirst;
     } else if ((c == 's') && (length >= 5)
-	    && (strncmp(string, "sel.last", (unsigned) length) == 0)) {
+	    && (strncmp(string, "sel.last", length) == 0)) {
 	if (textInfoPtr->selItemPtr != itemPtr) {
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
 		    "selection isn't in item", -1));
@@ -1376,7 +1378,7 @@ GetTextIndex(
 	*indexPtr = textInfoPtr->selectLast;
     } else if (c == '@') {
 	int x, y;
-	double tmp, c = textPtr->cosine, s = textPtr->sine;
+	double tmp, cs = textPtr->cosine, s = textPtr->sine;
 	char *end;
 	const char *p;
 
@@ -1392,10 +1394,10 @@ GetTextIndex(
 	    goto badIndex;
 	}
 	y = (int) ((tmp < 0) ? tmp - 0.5 : tmp + 0.5);
-	x += canvasPtr->scrollX1 - (int) textPtr->drawOrigin[0];
-	y += canvasPtr->scrollY1 - (int) textPtr->drawOrigin[1];
+	x -= (int) textPtr->drawOrigin[0];
+	y -= (int) textPtr->drawOrigin[1];
 	*indexPtr = Tk_PointToChar(textPtr->textLayout,
-		(int) (x*c - y*s), (int) (y*c + x*s));
+		(int) (x*cs - y*s), (int) (y*cs + x*s));
     } else if (Tcl_GetIntFromObj(NULL, obj, indexPtr) == TCL_OK) {
 	if (*indexPtr < 0) {
 	    *indexPtr = 0;
@@ -1432,10 +1434,9 @@ GetTextIndex(
  *--------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 static void
 SetTextCursor(
-    Tk_Canvas canvas,		/* Record describing canvas widget. */
+    TCL_UNUSED(Tk_Canvas),		/* Record describing canvas widget. */
     Tk_Item *itemPtr,		/* Text item in which cursor position is to be
 				 * set. */
     int index)			/* Character index of character just before
@@ -1474,7 +1475,7 @@ SetTextCursor(
 
 static int
 GetSelText(
-    Tk_Canvas canvas,		/* Canvas containing selection. */
+    TCL_UNUSED(Tk_Canvas),		/* Canvas containing selection. */
     Tk_Item *itemPtr,		/* Text item containing selection. */
     int offset,			/* Byte offset within selection of first
 				 * character to be returned. */
@@ -1494,8 +1495,8 @@ GetSelText(
 	return 0;
     }
     text = textPtr->text;
-    selStart = Tcl_UtfAtIndex(text, textInfoPtr->selectFirst);
-    selEnd = Tcl_UtfAtIndex(selStart,
+    selStart = TkUtfAtIndex(text, textInfoPtr->selectFirst);
+    selEnd = TkUtfAtIndex(selStart,
 	    textInfoPtr->selectLast + 1 - textInfoPtr->selectFirst);
     byteCount = selEnd - selStart - offset;
     if (byteCount > maxBytes) {
@@ -1605,7 +1606,7 @@ TextToPostscript(
 		Tcl_GetString(Tcl_GetObjResult(interp)));
     }
 
-    x = 0;  y = 0;  justify = NULL;	/* lint. */
+    x = 0;  y = 0;  justify = NULL;
     switch (textPtr->anchor) {
     case TK_ANCHOR_NW:	   x = 0; y = 0; break;
     case TK_ANCHOR_N:	   x = 1; y = 0; break;

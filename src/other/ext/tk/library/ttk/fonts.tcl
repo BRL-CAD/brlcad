@@ -82,7 +82,7 @@ switch -- [tk windowingsystem] {
                 set F(family) "MS Sans Serif"
             }
         } else {
-            if {[lsearch -exact [font families] Tahoma] != -1} {
+            if {[lsearch -exact [font families] Tahoma] >= 0} {
                 set F(family) "Tahoma"
             } else {
                 set F(family) "MS Sans Serif"

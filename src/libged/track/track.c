@@ -74,7 +74,10 @@ ged_track_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    return ged_track2(gedp->ged_result_str, gedp->ged_wdbp, argv);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    int ret = ged_track2(gedp->ged_result_str, wdbp, argv);
+    wdb_close(wdbp);
+    return ret;
 }
 
 #ifdef GED_PLUGIN

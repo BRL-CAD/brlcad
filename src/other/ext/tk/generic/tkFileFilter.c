@@ -164,7 +164,7 @@ TkFreeFileFilters(
     FileFilterClause *clausePtr;
     GlobPattern *globPtr;
     MacFileType *mfPtr;
-    register void *toFree;	/* A pointer that we are about to free. */
+    void *toFree;	/* A pointer that we are about to free. */
 
     for (filterPtr = flistPtr->filters; filterPtr != NULL; ) {
 	for (clausePtr = filterPtr->clauses; clausePtr != NULL; ) {

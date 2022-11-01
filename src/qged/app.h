@@ -38,7 +38,8 @@
 #include "bv.h"
 #include "raytrace.h"
 #include "ged.h"
-#include "qtcad/QgSelectionProxyModel.h"
+#include "qtcad/QgTreeView.h"
+#include "qtcad/SignalFlags.h"
 
 #include "main_window.h"
 
@@ -59,9 +60,7 @@ class CADApp : public QApplication
 
     public:
 	CADApp(int &argc, char *argv[]) :QApplication(argc, argv) {
-	    QgModel *m = new QgModel();
-	    mdl = new QgSelectionProxyModel();
-	    mdl->setSourceModel(m);
+	    mdl = new QgModel();
 	    BU_LIST_INIT(&RTG.rtg_vlfree);
 	};
 	~CADApp() {};
@@ -69,18 +68,17 @@ class CADApp : public QApplication
 	void initialize();
 
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
-	bool view_dirty = false;
 
 	int opendb(QString filename);
 	void closedb();
 
-	QgSelectionProxyModel *mdl = NULL;
+	QgModel *mdl = NULL;
 	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
 
 	//int prev_interaction_mode = 0;
 
     signals:
-	void view_change(struct bview **);
+	void view_update(unsigned long long);
 
         /* Menu slots */
     public slots:
@@ -93,25 +91,12 @@ class CADApp : public QApplication
     public slots:
 
 	// "Universal" slot to be connected to for widgets altering the view.
-	// All logic in the application can access the global qApp, which is a
-	// CADApp, so this method is universally accessible by any application
-	// logic needing to make signal/slot connections concerning view
-	// changes.  Will emit the view_change signal to notify all concerned
-	// widgets in the application of the change.  Note that nothing
-	// attached to that signal should trigger any logic that leads back to
-	// this slot being called again, or an infinite loop may result.
-	void do_view_change(struct bview **);
-
-	// "Universal" slot to be connected to for widgets altering the .g
-	// contents.  All logic in the application can access the global qApp,
-	// which is a CADApp, so this method is universally accessible by any
-	// application logic needing to make signal/slot connections concerning
-	// view changes.  Causes the model to emit its changed signal to notify
-	// all concerned widgets in the app there has been a db change.  Note
-	// that nothing attached to that signal should trigger any logic that
-	// leads back to this slot being called again, or an infinite loop may
+	// Will emit the view_update signal to notify all concerned widgets in
+	// the application of the change.  Note that nothing attached to that
+	// signal should trigger ANY logic (directly OR indirectly) that leads
+	// back to this slot being called again, or an infinite loop may
 	// result.
-	void do_db_change();
+	void do_view_changed(unsigned long long);
 
 	// This slot is used for quad view configurations - it is called if the
 	// user uses the mouse to select one of multiple views.  This slot has
@@ -120,22 +105,29 @@ class CADApp : public QApplication
 	// refer to the now-current view.
 	void do_quad_view_change(QtCADView *);
 
+	// Method for graphical updates that are best handled at an app level
+	void do_view_update(unsigned long long);
+
        	/* Utility slots */
     public slots:
 	void run_qcmd(const QString &command);
         void readSettings();
+
+	// TODO - fold into do_view_changed...
 	void tree_update();
 	void element_selected(QToolPaletteElement *el);
 
     public:
 	BRLCAD_MainWindow *w = NULL;
 	QtCADView *curr_view = NULL;
+	QgTreeView *treeview = NULL;
 	QString db_filename;
 	struct bu_vls init_msgs = BU_VLS_INIT_ZERO;
 
     private:
 	QMap<QString, app_cmd_ptr> app_cmd_map;
 	std::vector<char *> tmp_av;
+	unsigned long long select_hash = 0;
 	long history_mark_start = -1;
 	long history_mark_end = -1;
 };

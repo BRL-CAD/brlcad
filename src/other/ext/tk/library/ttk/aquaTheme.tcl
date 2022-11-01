@@ -15,7 +15,7 @@ namespace eval ttk::theme::aqua {
 	    -insertwidth 1
 
 	ttk::style map . \
-	    -foreground { 
+	    -foreground {
 		disabled systemDisabledControlTextColor
 		background systemLabelColor} \
 	    -selectbackground {
@@ -35,6 +35,12 @@ namespace eval ttk::theme::aqua {
 	ttk::style configure TMenubutton -anchor center -padding {2 0 0 2}
 	ttk::style configure Toolbutton -anchor center
 
+	# For Entry, Combobox and Spinbox widgets the selected text background
+	# is the "Highlight color" selected in preferences when the widget
+	# has focus.  It is a gray color when the widget does not have focus or
+	# the window does not have focus. (The background state implies !focus
+	# so we only need to specify !focus.)
+
 	# Entry
 	ttk::style configure TEntry \
 	    -foreground systemTextColor \
@@ -43,13 +49,30 @@ namespace eval ttk::theme::aqua {
 	    -foreground {
 		disabled systemDisabledControlTextColor
 	    } \
-	    -selectforeground {
-		background systemTextColor
+	    -selectbackground {
+		!focus systemUnemphasizedSelectedTextBackgroundColor
+	    }
+
+	# Combobox:
+	ttk::style map TCombobox \
+	    -foreground {
+		disabled systemDisabledControlTextColor
 	    } \
 	    -selectbackground {
-		background systemTextBackgroundColor
+		!focus systemUnemphasizedSelectedTextBackgroundColor
 	    }
-	    
+
+	# Spinbox
+	ttk::style configure TSpinbox \
+	    -foreground systemTextColor \
+	    -background systemTextBackgroundColor
+	ttk::style map TSpinbox \
+	    -foreground {
+		disabled systemDisabledControlTextColor
+	    } \
+	    -selectbackground {
+		!focus systemUnemphasizedSelectedTextBackgroundColor
+	    }
 
 	# Workaround for #1100117:
 	# Actually, on Aqua we probably shouldn't stipple images in
@@ -67,40 +90,6 @@ namespace eval ttk::theme::aqua {
 		disabled systemDisabledControlTextColor
 		selected systemSelectedTabTextColor}
 
-	# Combobox:
-	ttk::style configure TCombobox \
-	    -foreground systemTextColor \
-	    -background systemTransparent
-	ttk::style map TCombobox \
-	    -foreground {
-		disabled systemDisabledControlTextColor
-	    } \
-	    -selectforeground {
-		background systemTextColor
-	    } \
-	    -selectbackground {
-		background systemTransparent
-	    }
-
-	# Spinbox
-	ttk::style configure TSpinbox \
-	    -foreground systemTextColor \
-	    -background systemTextBackgroundColor \
-	    -selectforeground systemSelectedTextColor \
-	    -selectbackground systemSelectedTextBackgroundColor
-	ttk::style map TSpinbox \
-	    -foreground {
-		disabled systemDisabledControlTextColor
-	    } \
-	    -selectforeground {
-		!active systemTextColor
-	    } \
-	    -selectbackground {
-		!active systemTextBackgroundColor
-		!focus systemTextBackgroundColor
-		focus systemSelectedTextBackgroundColor
-	    }
-	
 	# Treeview:
 	ttk::style configure Heading \
 	    -font TkHeadingFont \
@@ -116,7 +105,7 @@ namespace eval ttk::theme::aqua {
 	    }
 
 	# Enable animation for ttk::progressbar widget:
-	ttk::style configure TProgressbar -period 100 -maxphase 255
+	ttk::style configure TProgressbar -period 100 -maxphase 120
 
 	# For Aqua, labelframe labels should appear outside the border,
 	# with a 14 pixel inset and 4 pixels spacing between border and label

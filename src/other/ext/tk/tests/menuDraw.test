@@ -76,7 +76,7 @@ test menuDraw-5.3 {TkMenuConfigureDrawOptions - no disabledFg} -setup {
     menu .m1 -disabledforeground ""
 } -cleanup {
     deleteWindows
-} -result {.m1}  
+} -result {.m1}
 
 
 test menuDraw-6.1 {TkMenuConfigureEntryDrawOptions - no tkfont specified} -setup {
@@ -321,7 +321,7 @@ test menuDraw-10.4 {ComputeMenuGeometry - resize not necessary} -setup {
 
 
 test menuDraw-11.1 {TkMenuSelectImageProc - entry selected; redraw not pending} -constraints {
-    testImageType 
+    testImageType
 } -setup {
     deleteWindows
     imageCleanup
@@ -338,7 +338,7 @@ test menuDraw-11.1 {TkMenuSelectImageProc - entry selected; redraw not pending} 
     imageCleanup
 } -result {{} {}}
 test menuDraw-11.2 {TkMenuSelectImageProc - entry selected; redraw pending} -constraints {
-    testImageType 
+    testImageType
 } -setup {
     deleteWindows
     imageCleanup
@@ -354,7 +354,7 @@ test menuDraw-11.2 {TkMenuSelectImageProc - entry selected; redraw pending} -con
     imageCleanup
 } -result {{} {}}
 test menuDraw-11.3 {TkMenuSelectImageProc - entry not selected} -constraints {
-    testImageType 
+    testImageType
 } -setup {
     deleteWindows
     imageCleanup
@@ -451,7 +451,7 @@ test menuDraw.12.7 {DisplayMenu - three columns} -setup {
     deleteWindows
 } -result {}
 test menuDraw-12.6 {Display menu - testing for extra space and menubars} -constraints {
-    unix 
+    unix
 } -setup {
     deleteWindows
 } -body {
@@ -561,7 +561,7 @@ test menuDraw-15.2 {TkPostTearoffMenu - Deactivation} -setup {
     $tearoff index active
 } -cleanup {
     deleteWindows
-} -result {none}
+} -result none
 test menuDraw-15.3 {TkPostTearoffMenu - post command} -setup {
     deleteWindows
 } -body {
@@ -668,7 +668,7 @@ test menuDraw-16.6 {TkPostSubMenu} -constraints {
     menu .m2
     .m2 add command -label "Hit ESCAPE to get rid of this menu"
     set tearoff [tk::TearOffMenu .m1 40 40]
-    $tearoff postcascade 0 
+    $tearoff postcascade 0
 } -cleanup {
     deleteWindows
 } -result {}

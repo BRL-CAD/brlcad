@@ -10,7 +10,7 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-package require Tk 8.6
+package require Tk
 
 ::oo::class create ::tk::Megawidget {
     superclass ::oo::class

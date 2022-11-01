@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH toplevel n 8.4 Tk "Tk Built-In Commands"
 .so man.macros
 .BS
@@ -29,7 +29,9 @@ and border.
 Specifies a class for the window.
 This class will be used when querying the option database for
 the window's other options, and it will also be used later for
-other purposes such as bindings.
+other purposes such as bindings. Some window managers display the
+class name for windows in their dock while some others display the
+window title.
 The \fB\-class\fR option may not be changed with the \fBconfigure\fR
 widget command.
 .OP \-colormap colormap Colormap

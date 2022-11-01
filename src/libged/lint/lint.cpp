@@ -108,7 +108,7 @@ struct _ged_invalid_data {
 /* Because lint is intended to be a deep inspection of the .g looking for problems,
  * we need to do this check using the low level tree walk rather than operating on
  * a search result set (which has checks to filter out cyclic paths.) */
-HIDDEN void
+static void
 _ged_cyclic_search_subtree(struct db_full_path *path, int curr_bool, union tree *tp,
 			   void (*traverse_func) (struct db_full_path *path, void *), void *client_data)
 {
@@ -228,7 +228,7 @@ _ged_cyclic_check(struct _ged_cyclic_data *cdata, struct ged *gedp, int argc, st
     return ret;
 }
 
-HIDDEN void
+static void
 _ged_lint_comb_find_missing(struct _ged_missing_data *mdata, const char *parent, struct db_i *dbip, union tree *tp)
 {
     if (!tp) return;
@@ -260,7 +260,7 @@ _ged_lint_comb_find_missing(struct _ged_missing_data *mdata, const char *parent,
     }
 }
 
-HIDDEN void
+static void
 _ged_lint_shape_find_missing(struct _ged_missing_data *mdata, struct db_i *dbip, struct directory *dp)
 {
     struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
@@ -510,6 +510,14 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	_ged_cmd_help(gedp, usage, d);
 	ret = BRLCAD_OK;
 	goto ged_lint_memfree;
+    }
+
+    /* Skip empty strings */
+    for (int i = 0; i < argc; i++) {
+	if (!strlen(argv[i])) {
+	    argc-=(argc>0); argv+=(argc>0);
+	    i--;
+	}
     }
 
     if (argc) {

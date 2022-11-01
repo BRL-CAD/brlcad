@@ -8,8 +8,8 @@
 # (If the button is released off the widget, the grab deactivates and
 # we get a <Leave> event then, which turns off the "active" state)
 #
-# Normally, <ButtonRelease> and <ButtonN-Enter/Leave> events are 
-# delivered to the widget which received the initial <ButtonPress>
+# Normally, <ButtonRelease> and <ButtonN-Enter/Leave> events are
+# delivered to the widget which received the initial <Button>
 # event.  However, Tk [grab]s (#1223103) and menu interactions
 # (#1222605) can interfere with this.  To guard against spurious
 # <Button1-Enter> events, the <Button1-Enter> binding only sets
@@ -20,10 +20,10 @@ namespace eval ttk::button {}
 
 bind TButton <Enter> 		{ %W instate !disabled {%W state active} }
 bind TButton <Leave>		{ %W state !active }
-bind TButton <Key-space>	{ ttk::button::activate %W }
+bind TButton <space>		{ ttk::button::activate %W }
 bind TButton <<Invoke>> 	{ ttk::button::activate %W }
 
-bind TButton <ButtonPress-1> \
+bind TButton <Button-1> \
     { %W instate !disabled { ttk::clickToFocus %W; %W state pressed } }
 bind TButton <ButtonRelease-1> \
     { %W instate pressed { %W state !pressed; %W instate !disabled { %W invoke } } }
@@ -39,11 +39,11 @@ ttk::copyBindings TButton TRadiobutton
 
 # ...plus a few more:
 
-bind TRadiobutton <KeyPress-Up> 	{ ttk::button::RadioTraverse %W -1 }
-bind TRadiobutton <KeyPress-Down> 	{ ttk::button::RadioTraverse %W +1 }
+bind TRadiobutton <Up>  		{ ttk::button::RadioTraverse %W -1 }
+bind TRadiobutton <Down> 		{ ttk::button::RadioTraverse %W +1 }
 
-# bind TCheckbutton <KeyPress-plus> { %W select }
-# bind TCheckbutton <KeyPress-minus> { %W deselect }
+# bind TCheckbutton <plus> { %W select }
+# bind TCheckbutton <minus> { %W deselect }
 
 # activate --
 #	Simulate a button press: temporarily set the state to 'pressed',

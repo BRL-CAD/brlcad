@@ -109,10 +109,10 @@ if {[usePresentationFormsFor Arabic]} {
 }
 addSample $w "Trad. Chinese"  "\u4E2D\u570B\u7684\u6F22\u5B57"
 addSample $w "Simpl. Chinese" "\u6C49\u8BED"
-addSample $w French "Langue fran\u00E7aise"
+addSample $w French "Langue fran\xE7aise"
 addSample $w Greek \
-	 "\u0395\u03BB\u03BB\u03B7\u03BD\u03B9\u03BA\u03AE " \
-	 "\u03B3\u03BB\u03CE\u03C3\u03C3\u03B1"
+	"\u0395\u03BB\u03BB\u03B7\u03BD\u03B9\u03BA\u03AE " \
+	"\u03B3\u03BB\u03CE\u03C3\u03C3\u03B1"
 if {[usePresentationFormsFor Hebrew]} {
     # Visual order (pre-layouted)
     addSample $w Hebrew \
@@ -123,17 +123,21 @@ if {[usePresentationFormsFor Hebrew]} {
 	    "\u05DB\u05EA\u05D1 \u05E2\u05D1\u05E8\u05D9\u05EA"
 }
 addSample $w Hindi \
-    "\u0939\u093f\u0928\u094d\u0926\u0940 \u092d\u093e\u0937\u093e"
-addSample $w Icelandic "\u00CDslenska"
+    "\u0939\u093F\u0928\u094D\u0926\u0940 \u092D\u093E\u0937\u093E"
+addSample $w Icelandic "\xCDslenska"
 addSample $w Japanese \
-	 "\u65E5\u672C\u8A9E\u306E\u3072\u3089\u304C\u306A, " \
-	 "\u6F22\u5B57\u3068\u30AB\u30BF\u30AB\u30CA"
+	"\u65E5\u672C\u8A9E\u306E\u3072\u3089\u304C\u306A, " \
+	"\u6F22\u5B57\u3068\u30AB\u30BF\u30AB\u30CA"
 addSample $w Korean "\uB300\uD55C\uBBFC\uAD6D\uC758 \uD55C\uAE00"
 addSample $w Russian \
 	"\u0420\u0443\u0441\u0441\u043A\u0438\u0439 \u044F\u0437\u044B\u043A"
-if {[tk windowingsystem] ne "x11"} {
-    addSample $w Emoji \
-	    "\uD83D\uDE00\uD83D\uDCA9\uD83D\uDC4D\uD83C\uDDF3\uD83C\uDDF1"
+if {([tk windowingsystem] ne "x11") || (![catch {tk::pkgconfig get fontsystem} fs] && ($fs eq "xft"))} {
+    if {[package vsatisfies [package provide Tcl] 8.7-]} {
+	addSample $w Emoji "😀💩👍🇳🇱"
+    } else {
+	addSample $w Emoji \
+		"\uD83D\uDE00\uD83D\uDCA9\uD83D\uDC4D\uD83C\uDDF3\uD83C\uDDF1"
+    }
 }
 
 ## We're done processing, so change things back to normal running...

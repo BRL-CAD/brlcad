@@ -516,6 +516,7 @@ library/ttk/xpTheme.tcl
 library/unsupported.tcl
 library/xmfbox.tcl
 license.terms
+macosx/Credits.html.in
 macosx/GNUmakefile
 macosx/README
 macosx/Tk-Common.xcconfig
@@ -538,6 +539,7 @@ macosx/tkMacOSXBitmap.c
 macosx/tkMacOSXButton.c
 macosx/tkMacOSXClipboard.c
 macosx/tkMacOSXColor.c
+macosx/tkMacOSXColor.h
 macosx/tkMacOSXConfig.c
 macosx/tkMacOSXConstants.h
 macosx/tkMacOSXCursor.c
@@ -559,6 +561,7 @@ macosx/tkMacOSXInit.c
 macosx/tkMacOSXInt.h
 macosx/tkMacOSXKeyEvent.c
 macosx/tkMacOSXKeyboard.c
+macosx/tkMacOSXKeysyms.h
 macosx/tkMacOSXMenu.c
 macosx/tkMacOSXMenubutton.c
 macosx/tkMacOSXMenus.c
@@ -579,6 +582,7 @@ macosx/tkMacOSXWm.h
 macosx/tkMacOSXXCursors.h
 macosx/tkMacOSXXStubs.c
 macosx/ttkMacOSXTheme.c
+manifest.uuid
 tests/README
 tests/all.tcl
 tests/arc.tcl

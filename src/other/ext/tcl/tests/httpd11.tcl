@@ -170,13 +170,18 @@ proc Service {chan addr port} {
             set close 1
         }
 
+        set nosendclose 0
         foreach pair [split $query &] {
             if {[scan $pair {%[^=]=%s} key val] != 2} {set val ""}
             switch -exact -- $key {
+                nosendclose  {set nosendclose 1}
                 close        {set close 1 ; set transfer 0}
                 transfer     {set transfer $val}
                 content-type {set type $val}
             }
+        }
+        if {$protocol eq "HTTP/1.1"} {
+            set nosendclose 0
         }
 
         chan configure $chan -buffering line -encoding iso8859-1 -translation crlf
@@ -186,12 +191,16 @@ proc Service {chan addr port} {
         if {$req eq "POST"} {
             Puts $chan [format "x-query-length: %d" [string length $query]]
         }
-        if {$close} {
+        if {$close && (!$nosendclose)} {
             Puts $chan "connection: close"
         }
 	Puts $chan "x-requested-encodings: [dict get? $meta accept-encoding]"
-        if {$encoding eq "identity"} {
+        if {$encoding eq "identity" && (!$nosendclose)} {
             Puts $chan "content-length: [string length $data]"
+        } elseif {$encoding eq "identity"} {
+            # This is a blatant attempt to confuse the client by sending neither
+            # "Connection: close" nor "Content-Length" when in non-chunked mode.
+            # See test http11-3.4.
         } else {
             Puts $chan "content-encoding: $encoding"
         }
@@ -228,7 +237,7 @@ proc Accept {chan addr port} {
 }
 
 proc Control {chan} {
-    if {[gets $chan line] != -1} {
+    if {[gets $chan line] >= 0} {
         if {[string trim $line] eq "quit"} {
             set ::forever 1
         }

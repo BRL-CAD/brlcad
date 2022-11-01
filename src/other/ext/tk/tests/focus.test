@@ -11,6 +11,9 @@ eval tcltest::configure $argv
 tcltest::loadTestedCommands
 namespace import -force tcltest::test
 
+testConstraint failsOnUbuntu [expr {![info exists ::env(CI)] || ![string match Linux $::tcl_platform(os)]}]
+testConstraint failsOnXQuarz [expr {$tcl_platform(os) ne "Darwin" || [tk windowingsystem] ne "x11" }]
+
 proc focusSetup {} {
     destroy .t
     toplevel .t
@@ -104,7 +107,7 @@ test focus-1.7 {Tk_FocusCmd procedure} -constraints unix -body {
     focus .gorp a
 } -returnCodes error -result {bad option ".gorp": must be -displayof, -force, or -lastfor}
 test focus-1.8 {Tk_FocusCmd procedure, focussing on dead window} -constraints {
-	unix 
+	unix
 } -setup {
     destroy .t2
 } -body {
@@ -130,29 +133,29 @@ test focus-1.8 {Tk_FocusCmd procedure, focussing on dead window} -constraints {
     destroy .t2
 } -result {.t2.f2 .t2 .t2}
 test focus-1.9 {Tk_FocusCmd procedure, -displayof option} -constraints {
-	unix 
+	unix
 } -body {
     focus -displayof
 } -returnCodes error -result {wrong # args: should be "focus -displayof window"}
 test focus-1.10 {Tk_FocusCmd procedure, -displayof option} -constraints {
-	unix 
+	unix
 } -body {
     focus -displayof a b
 } -returnCodes error -result {wrong # args: should be "focus -displayof window"}
 test focus-1.11 {Tk_FocusCmd procedure, -displayof option} -constraints {
-	unix 
+	unix
 } -body {
     focus -displayof .lousy
 } -returnCodes error -result {bad window path name ".lousy"}
 test focus-1.12 {Tk_FocusCmd procedure, -displayof option} -constraints {
-	unix 
+	unix
 } -body {
     focusClear
     focus .t
     focus -displayof .t.b3
 }  -result {}
 test focus-1.13 {Tk_FocusCmd procedure, -displayof option} -constraints {
-	unix 
+	unix
 } -body {
     focusClear
     focus -force .t
@@ -185,22 +188,22 @@ test focus-1.19 {Tk_FocusCmd procedure, -force option} -constraints unix -body {
     lappend x [focus]
 } -result {{} .t.b1}
 test focus-1.20 {Tk_FocusCmd procedure, -lastfor option} -constraints {
-    unix 
+    unix
 } -body {
     focus -lastfor
 } -returnCodes error -result {wrong # args: should be "focus -lastfor window"}
 test focus-1.21 {Tk_FocusCmd procedure, -lastfor option} -constraints {
-    unix 
+    unix
 } -body {
     focus -lastfor 1 2
 } -returnCodes error -result {wrong # args: should be "focus -lastfor window"}
 test focus-1.22 {Tk_FocusCmd procedure, -lastfor option} -constraints {
-    unix 
+    unix
 } -body {
     focus -lastfor who_knows?
 } -returnCodes error -result {bad window path name "who_knows?"}
 test focus-1.23 {Tk_FocusCmd procedure, -lastfor option} -constraints {
-    unix 
+    unix
 } -body {
     focusClear
     focusSetup
@@ -209,7 +212,7 @@ test focus-1.23 {Tk_FocusCmd procedure, -lastfor option} -constraints {
     list [focus -lastfor .] [focus -lastfor .t.b3]
 } -result {.b .t.b1}
 test focus-1.24 {Tk_FocusCmd procedure, -lastfor option} -constraints {
-    unix 
+    unix
 } -body {
     focusClear
     focusSetup
@@ -308,7 +311,7 @@ in .t.b1 NotifyNonlinear
 } .t.b1}
 
 test focus-2.6 {TkFocusFilterEvent procedure, FocusIn events} -constraints {
-    unix  testwrapper
+    unix  testwrapper failsOnUbuntu failsOnXQuarz
 } -body {
     focus .t.b1
     focus .
@@ -320,7 +323,7 @@ test focus-2.6 {TkFocusFilterEvent procedure, FocusIn events} -constraints {
     list $x $focusInfo
 } -result {.t.b1 {press .t.b1 x}}
 test focus-2.7 {TkFocusFilterEvent procedure, FocusOut events} -constraints {
-    unix  testwrapper
+    unix  testwrapper failsOnUbuntu failsOnXQuarz
 } -body {
     set result {}
     foreach detail {NotifyAncestor NotifyInferior NotifyNonlinear
@@ -341,7 +344,7 @@ test focus-2.8 {TkFocusFilterEvent procedure, FocusOut events} -constraints {
     focus
 } -result {.t.b1}
 test focus-2.9 {TkFocusFilterEvent procedure, FocusOut events} -constraints {
-    unix  testwrapper
+    unix  testwrapper failsOnUbuntu failsOnXQuarz
 } -body {
     focus .t.b1
     event gen [testwrapper .] <FocusOut> -detail NotifyAncestor
@@ -599,7 +602,7 @@ cleanupbg
 
 # Test 5.1 fails (before and after update)
 test focus-5.1 {ChangeXFocus procedure, don't take focus unless have it} -constraints {
-    unix testwrapper secureserver
+    unix testwrapper secureserver failsOnUbuntu failsOnXQuarz
 } -body {
     setupbg
     focusSetup
@@ -730,6 +733,26 @@ test focus-6.2 {miscellaneous - embedded application in different process} -cons
     bind all <FocusOut> {}
 } -result {{.t.f2.e1 {} {focus out .t.f2.e1 NotifyNonlinear} {focus out .t.f2 NotifyNonlinearVirtual} {focus in .t.f1 NotifyNonlinear} | {focus out .t.f1 NotifyNonlinear} {focus in .t.f2 NotifyNonlinearVirtual} {focus in .t.f2.e1 NotifyNonlinear}} {{focus in . NotifyVirtual} {focus in .e1 NotifyAncestor} | {focus out .e1 NotifyAncestor} {focus out . NotifyVirtual}}}
 
+test focus-7.1 {TkSetFocusWin procedure, unmapped windows} -setup {
+    # TkSetFocusWin handles the case of not yet mapped windows
+    # by not setting the focus on them right at the time it is
+    # requested, but by scheduling an event handler that will
+    # set the focus later once it gets mapped. The purpose of
+    # this test is to check that event scheduling and deletion
+    # work as expected (bug [08e2f8e6f0]).
+    toplevel .top
+    spinbox .top.s1
+    spinbox .top.s2
+    spinbox .top.s3
+    grid .top.s1 .top.s2 .top.s3
+} -body {
+    focus -force .top.s2
+    focus -force .top.s3
+    update
+    focus
+} -cleanup {
+    destroy .top
+} -result {.top.s3}
 
 
 deleteWindows

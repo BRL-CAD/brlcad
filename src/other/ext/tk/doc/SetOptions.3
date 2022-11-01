@@ -3,7 +3,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tk_SetOptions 3 8.1 Tk "Tk Library Procedures"
 .so man.macros
 .BS
@@ -63,7 +63,7 @@ no window-dependent options, then a NULL value may be supplied for
 this argument.
 .AP int objc in
 Number of values in \fIobjv\fR.
-.AP Tcl_Obj "*const objv[]" in
+.AP Tcl_Obj "*const *objv" in
 Command-line arguments for setting configuring options.
 .AP Tk_SavedOptions *savePtr out
 If not NULL, the structure pointed to by this argument is filled
@@ -443,7 +443,9 @@ suitable for passing to \fBTcl_GetIndexFromObj\fR.  The value must
 be one of the strings in the table, or a unique abbreviation of
 one of the strings.  The internal form is an integer giving the index
 into the table of the matching string, like the return value
-from \fBTcl_GetStringFromObj\fR.
+from \fBTcl_GetStringFromObj\fR.  This option type supports the
+\fBTK_OPTION_NULL_OK\fR flag; if a NULL value is set, the internal
+representation is set to -1.
 .TP
 \fBTK_OPTION_SYNONYM\fR
 This type is used to provide alternative names for an option (for

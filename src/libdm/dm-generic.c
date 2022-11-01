@@ -979,12 +979,12 @@ dm_drawSolid(struct dm *dmp,
 
     if (sp->s_old.s_cflag) {
 	if (!DM_SAME_COLOR(r, g, b, (short)gdc[0], (short)gdc[1], (short)gdc[2])) {
-	    dm_set_fg(dmp, (short)gdc[0], (short)gdc[1], (short)gdc[2], 0, sp->s_os.transparency);
+	    dm_set_fg(dmp, (short)gdc[0], (short)gdc[1], (short)gdc[2], 0, sp->s_os->transparency);
 	    DM_COPY_COLOR(r, g, b, (short)gdc[0], (short)gdc[1], (short)gdc[2]);
 	}
     } else {
 	if (!DM_SAME_COLOR(r, g, b, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2])) {
-	    dm_set_fg(dmp, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2], 0, sp->s_os.transparency);
+	    dm_set_fg(dmp, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2], 0, sp->s_os->transparency);
 	    DM_COPY_COLOR(r, g, b, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2]);
 	}
     }
@@ -994,7 +994,7 @@ dm_drawSolid(struct dm *dmp,
 	sp->s_flag = UP;
 	ndrawn++;
     } else {
-	if (sp->s_os.s_dmode == 4) {
+	if (sp->s_os->s_dmode == 4) {
 	    if (dm_draw_vlist_hidden_line(dmp, (struct bv_vlist *)&sp->s_vlist) == BRLCAD_OK) {
 	    	sp->s_flag = UP;
 		ndrawn++;
@@ -1047,14 +1047,14 @@ dm_draw_head_dl(struct dm *dmp,
 	    if ((sp->s_iflag == UP && !draw_edit) || (sp->s_iflag != UP && draw_edit))
 		continue;
 
-	    opaque = EQUAL(sp->s_os.transparency, 1.0);
+	    opaque = EQUAL(sp->s_os->transparency, 1.0);
 	    if (opaque_only) {
 		if (!opaque) {
 		    continue;
 		}
 	    } else {
 		/* transparent only */
-		if (opaque || !(sp->s_os.transparency > transparency_threshold || EQUAL(sp->s_os.transparency, transparency_threshold))) {
+		if (opaque || !(sp->s_os->transparency > transparency_threshold || EQUAL(sp->s_os->transparency, transparency_threshold))) {
 		    continue;
 		}
 	    }

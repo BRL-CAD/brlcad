@@ -42,7 +42,7 @@
      ((_step)[Z] >= 0 && (_pz) > (_hi)[Z]))
 
 
-HIDDEN void
+static void
 shoot_setup_status(struct rt_shootray_status *ss, struct application *ap)
 {
     ss->newray = ap->a_ray;		/* struct copy */

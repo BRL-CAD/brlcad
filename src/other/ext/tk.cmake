@@ -156,10 +156,10 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     tearoff.tcl
     text.tcl
     tk.tcl
-    ${TK_APPINIT}
     tkfbox.tcl
     unsupported.tcl
     xmfbox.tcl
+    ${TK_APPINIT}
     )
 
   ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/images

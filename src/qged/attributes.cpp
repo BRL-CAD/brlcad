@@ -69,7 +69,7 @@ CADAttributesModel::~CADAttributesModel()
     BU_PUT(avs, struct bu_attribute_value_set);
 }
 
-HIDDEN int
+static int
 attr_children(const char *attr)
 {
     if (BU_STR_EQUAL(attr, "color")) return 3;
@@ -181,16 +181,15 @@ int CADAttributesModel::update(struct db_i *new_dbip, struct directory *new_dp)
 void
 CADAttributesModel::refresh(const QModelIndex &idx)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *m = ((CADApp *)qApp)->mdl;
+    if (!m)
 	return;
 
-    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
 
-    current_dp = (struct directory *)(idx.data(QgSelectionProxyModel::DirectoryInternalRole).value<void *>());
+    current_dp = (struct directory *)(idx.data(QgModel::DirectoryInternalRole).value<void *>());
     update(gedp->dbip, current_dp);
 }
 

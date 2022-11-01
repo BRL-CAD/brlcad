@@ -13,8 +13,10 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require tcltest 2
-namespace import ::tcltest::*
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2.5
+    namespace import -force ::tcltest::*
+}
 
 ::tcltest::loadTestedCommands
 catch [list package require -exact Tcltest [info patchlevel]]
@@ -133,7 +135,7 @@ format %s $b
 } a22b
 test parseOld-4.4 {command substitution} {
     set a 7.7
-    if [catch {expr int($a)}] {set a foo}
+    if {[catch {expr {int($a)}}]} {set a foo}
     set a
 } 7.7
 
@@ -453,80 +455,14 @@ test parseOld-12.4 {comments} {
 
 test parseOld-13.1 {comments at the end of a bracketed script} {
     set x "[
-expr 1+1
+expr {1+1}
 # skip this!
 ]"
 } {2}
 
-test parseOld-14.1 {TclWordEnd procedure} {testwordend} {
-    testwordend " 	\n abc"
-} {c}
-test parseOld-14.2 {TclWordEnd procedure} {testwordend} {
-    testwordend "   \\\n"
-} {}
-test parseOld-14.3 {TclWordEnd procedure} {testwordend} {
-    testwordend "   \\\n "
-} { }
-test parseOld-14.4 {TclWordEnd procedure} {testwordend} {
-    testwordend {"abc"}
-} {"}
-#" Emacs formatting :^(
-test parseOld-14.5 {TclWordEnd procedure} {testwordend} {
-    testwordend {{xyz}}
-} \}
-test parseOld-14.6 {TclWordEnd procedure} {testwordend} {
-    testwordend {{a{}b{}\}} xyz}
-} "\} xyz"
-test parseOld-14.7 {TclWordEnd procedure} {testwordend} {
-    testwordend {abc[this is a]def ghi}
-} {f ghi}
-test parseOld-14.8 {TclWordEnd procedure} {testwordend} {
-    testwordend "puts\\\n\n  "
-} "s\\\n\n  "
-test parseOld-14.9 {TclWordEnd procedure} {testwordend} {
-    testwordend "puts\\\n   	"
-} "s\\\n   	"
-test parseOld-14.10 {TclWordEnd procedure} {testwordend} {
-    testwordend "puts\\\n   	xyz"
-} "s\\\n   	xyz"
-test parseOld-14.11 {TclWordEnd procedure} {testwordend} {
-    testwordend {a$x.$y(a long index) foo}
-} ") foo"
-test parseOld-14.12 {TclWordEnd procedure} {testwordend} {
-    testwordend {abc; def}
-} {; def}
-test parseOld-14.13 {TclWordEnd procedure} {testwordend} {
-    testwordend {abc def}
-} {c def}
-test parseOld-14.14 {TclWordEnd procedure} {testwordend} {
-    testwordend {abc	def}
-} {c	def}
-test parseOld-14.15 {TclWordEnd procedure} {testwordend} {
-    testwordend "abc\ndef"
-} "c\ndef"
-test parseOld-14.16 {TclWordEnd procedure} {testwordend} {
-    testwordend "abc"
-} {c}
-test parseOld-14.17 {TclWordEnd procedure} {testwordend} {
-    testwordend "a\000bc"
-} {c}
-test parseOld-14.18 {TclWordEnd procedure} {testwordend} {
-    testwordend \[a\000\]
-} {]}
-test parseOld-14.19 {TclWordEnd procedure} {testwordend} {
-    testwordend \"a\000\"
-} {"}
-#" Emacs formatting :^(
-test parseOld-14.20 {TclWordEnd procedure} {testwordend} {
-    testwordend a{\000}b
-} {b}
-test parseOld-14.21 {TclWordEnd procedure} {testwordend} {
-    testwordend "   \000b"
-} {b}
-
 test parseOld-15.1 {TclScriptEnd procedure} {
     info complete {puts [
-	expr 1+1
+	expr {1+1}
 	#this is a comment ]}
 } {0}
 test parseOld-15.2 {TclScriptEnd procedure} {

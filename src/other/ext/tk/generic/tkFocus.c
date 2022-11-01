@@ -113,8 +113,8 @@ Tk_FocusObjCmd(
     static const char *const focusOptions[] = {
 	"-displayof", "-force", "-lastfor", NULL
     };
-    Tk_Window tkwin = clientData;
-    TkWindow *winPtr = clientData;
+    Tk_Window tkwin = (Tk_Window)clientData;
+    TkWindow *winPtr = (TkWindow *)clientData;
     TkWindow *newPtr, *topLevelPtr;
     ToplevelFocusInfo *tlFocusPtr;
     const char *windowName;
@@ -415,7 +415,7 @@ TkFocusFilterEvent(
 	}
     }
     if (tlFocusPtr == NULL) {
-	tlFocusPtr = ckalloc(sizeof(ToplevelFocusInfo));
+	tlFocusPtr = (ToplevelFocusInfo *)ckalloc(sizeof(ToplevelFocusInfo));
 	tlFocusPtr->topLevelPtr = tlFocusPtr->focusWinPtr = winPtr;
 	tlFocusPtr->nextPtr = winPtr->mainPtr->tlFocusPtr;
 	winPtr->mainPtr->tlFocusPtr = tlFocusPtr;
@@ -603,7 +603,7 @@ TkSetFocusWin(
 
     if (displayFocusPtr->focusOnMapPtr != NULL) {
 	Tk_DeleteEventHandler((Tk_Window) displayFocusPtr->focusOnMapPtr,
-		StructureNotifyMask, FocusMapProc,
+		VisibilityChangeMask, FocusMapProc,
 		displayFocusPtr->focusOnMapPtr);
 	displayFocusPtr->focusOnMapPtr = NULL;
     }
@@ -622,7 +622,7 @@ TkSetFocusWin(
 	}
     }
     if (tlFocusPtr == NULL) {
-	tlFocusPtr = ckalloc(sizeof(ToplevelFocusInfo));
+	tlFocusPtr = (ToplevelFocusInfo *)ckalloc(sizeof(ToplevelFocusInfo));
 	tlFocusPtr->topLevelPtr = topLevelPtr;
 	tlFocusPtr->nextPtr = winPtr->mainPtr->tlFocusPtr;
 	winPtr->mainPtr->tlFocusPtr = tlFocusPtr;
@@ -807,7 +807,7 @@ TkFocusKeyEvent(
 
 void
 TkFocusDeadWindow(
-    register TkWindow *winPtr)	/* Information about the window that is being
+    TkWindow *winPtr)	/* Information about the window that is being
 				 * deleted. */
 {
     ToplevelFocusInfo *tlFocusPtr, *prevPtr;
@@ -961,7 +961,7 @@ FocusMapProc(
     ClientData clientData,	/* Toplevel window. */
     XEvent *eventPtr)		/* Information about event. */
 {
-    TkWindow *winPtr = clientData;
+    TkWindow *winPtr = (TkWindow *)clientData;
     DisplayFocusInfo *displayFocusPtr;
 
     if (eventPtr->type == VisibilityNotify) {
@@ -1015,7 +1015,7 @@ FindDisplayFocusInfo(
      * The record doesn't exist yet. Make a new one.
      */
 
-    displayFocusPtr = ckalloc(sizeof(DisplayFocusInfo));
+    displayFocusPtr = (DisplayFocusInfo *)ckalloc(sizeof(DisplayFocusInfo));
     displayFocusPtr->dispPtr = dispPtr;
     displayFocusPtr->focusWinPtr = NULL;
     displayFocusPtr->focusOnMapPtr = NULL;
@@ -1143,7 +1143,7 @@ TkFocusSplit(
 	 * Move focus to new toplevel.
 	 */
 
-	ToplevelFocusInfo *newTlFocusPtr = ckalloc(sizeof(ToplevelFocusInfo));
+	ToplevelFocusInfo *newTlFocusPtr = (ToplevelFocusInfo *)ckalloc(sizeof(ToplevelFocusInfo));
 
 	newTlFocusPtr->topLevelPtr = winPtr;
 	newTlFocusPtr->focusWinPtr = tlFocusPtr->focusWinPtr;

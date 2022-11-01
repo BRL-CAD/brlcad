@@ -8,11 +8,11 @@ MacOSX platform too, but they all depend on UNIX (POSIX/ANSI C) interfaces and
 some of them only make sense under UNIX.
 
 Updated forms of the information found in this file is available at:
-	http://www.tcl.tk/doc/howto/compile.html#unix
+	https://www.tcl-tk.org/doc/howto/compile.html#unix
 
 For information on platforms where Tcl is known to compile, along with any
 porting notes for getting it to work on those platforms, see:
-	http://www.tcl.tk/software/tcltk/platforms.html
+	https://www.tcl-tk.org/software/tcltk/platforms.html
 
 The rest of this file contains instructions on how to do this. The release
 should compile and run either "out of the box" or with trivial changes on any
@@ -91,7 +91,7 @@ How To Compile And Install Tcl:
 	--enable-dtrace		Enable tcl DTrace provider (if DTrace is
 				available on the platform), c.f. tclDTrace.d
 				for descriptions of the probes made available,
-				see http://wiki.tcl.tk/DTrace for more details
+				see https://wiki.tcl-lang.org/page/DTrace for more details
 	--with-encoding=ENCODING Specifies the encoding for compile-time
 				configuration values. Defaults to iso8859-1,
 				which is also sufficient for ASCII.

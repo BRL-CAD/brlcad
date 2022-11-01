@@ -67,13 +67,13 @@ static int
 gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 {
     int fcnt = lod->fcnt;
+    int pcnt = lod->pcnt;
     const int *faces = lod->faces;
     const point_t *points = lod->points;
     const point_t *points_orig = lod->points_orig;
-    const int *face_normals = lod->face_normals;
     const vect_t *normals = lod->normals;
     struct bv_scene_obj *s = lod->s;
-    int mode = s->s_os.s_dmode;
+    int mode = s->s_os->s_dmode;
     mat_t save_mat, draw_mat;
 
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
@@ -119,11 +119,10 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
     // usage while they are being generated.  If we're tight on memory and the
     // triangle set is large, accept the slower drawing to avoid memory stress
     // - otherwise, we want the list
-    int ec;
-    unsigned long long avail_mem = 0.5*bu_mem(BU_MEM_AVAIL, &ec);
-    unsigned long long size_est = (unsigned long long)(fcnt*3*sizeof(point_t));
+    ssize_t avail_mem = 0.5*bu_mem(BU_MEM_AVAIL, NULL);
+    size_t size_est = (size_t)(fcnt*3*sizeof(point_t));
     bool gen_dlist = false;
-    if (!s->s_dlist && size_est < avail_mem) {
+    if (!s->s_dlist && avail_mem > 0 && size_est < (size_t)avail_mem) {
 	gen_dlist = true;
 	s->s_dlist = glGenLists(1);
 	s->s_dlist_mode = mode;
@@ -148,6 +147,19 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 
 	// Draw all the triangles in faces array
 	for (int i = 0; i < fcnt; i++) {
+
+	    bool bad_face = false;
+	    for (int j = 0; j < 3; j++) {
+		int f_ind = faces[3*i+j];
+		if (f_ind >= pcnt || f_ind < 0) {
+		    bu_log("bad face %d - skipping\n", i);
+		    bad_face = true;
+		    break;
+		}
+	    }
+	    if (bad_face)
+		continue;
+
 	    glBegin(GL_LINE_STRIP);
 	    VMOVE(dpt, points[faces[3*i+0]]);
 	    glVertex3dv(dpt);
@@ -228,29 +240,63 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	// Draw all the triangles in faces array
 	for (int i = 0; i < fcnt; i++) {
 
+	    bool bad_face = false;
+	    for (int j = 0; j < 3; j++) {
+		int f_ind = faces[3*i+j];
+		if (f_ind >= pcnt || f_ind < 0) {
+		    bu_log("bad face %d - skipping\n", i);
+		    bad_face = true;
+		    break;
+		}
+	    }
+	    if (bad_face)
+		continue;
+
 	    // Set surface normal
 	    vect_t ab, ac, norm;
 	    VSUB2(ab, points_orig[faces[3*i+0]], points_orig[faces[3*i+1]]);
 	    VSUB2(ac, points_orig[faces[3*i+0]], points_orig[faces[3*i+2]]);
 	    VCROSS(norm, ab, ac);
 	    VUNITIZE(norm);
-	    glNormal3dv(norm);
 
-	    if (face_normals && normals) {
-		bu_log("todo - per-vertex normals\n");
+	    if (normals) {
+		vect_t vnorm;
+		VMOVE(vnorm, normals[3*i+0]);
+		if (((int)(vnorm[0]*10+vnorm[1]*10+vnorm[2]*10)) != 0) {
+		    glNormal3dv(vnorm);
+		} else {
+		    glNormal3dv(norm);
+		}
+		VMOVE(dpt, points[faces[3*i+0]]);
+		glVertex3dv(dpt);
+
+		VMOVE(vnorm, normals[3*i+1]);
+		if (((int)(vnorm[0]*10+vnorm[1]*10+vnorm[2]*10)) != 0) {
+		    glNormal3dv(vnorm);
+		} else {
+		    glNormal3dv(norm);
+		}
+		VMOVE(dpt, points[faces[3*i+1]]);
+		glVertex3dv(dpt);
+
+		VMOVE(vnorm, normals[3*i+2]);
+		if (((int)(vnorm[0]*10+vnorm[1]*10+vnorm[2]*10)) != 0) {
+		    glNormal3dv(vnorm);
+		} else {
+		    glNormal3dv(norm);
+		}
+		VMOVE(dpt, points[faces[3*i+2]]);
+		glVertex3dv(dpt);
+
+	    } else {
+		glNormal3dv(norm);
+		VMOVE(dpt, points[faces[3*i+0]]);
+		glVertex3dv(dpt);
+		VMOVE(dpt, points[faces[3*i+1]]);
+		glVertex3dv(dpt);
+		VMOVE(dpt, points[faces[3*i+2]]);
+		glVertex3dv(dpt);
 	    }
-	    VMOVE(dpt, points[faces[3*i+0]]);
-	    glVertex3dv(dpt);
-	    if (face_normals && normals) {
-		bu_log("todo - per-vertex normals\n");
-	    }
-	    VMOVE(dpt, points[faces[3*i+1]]);
-	    glVertex3dv(dpt);
-	    if (face_normals && normals) {
-		bu_log("todo - per-vertex normals\n");
-	    }
-	    VMOVE(dpt, points[faces[3*i+2]]);
-	    glVertex3dv(dpt);
 
 	}
 
@@ -289,7 +335,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 static int
 gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
 {
-    int mode = s->s_os.s_dmode;
+    int mode = s->s_os->s_dmode;
     mat_t save_mat, draw_mat;
 
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
@@ -335,11 +381,10 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
     // we can use them, but they require more memory usage while they are being
     // generated.  If we're tight on memory and the vlist is large, accept the
     // slower drawing to avoid memory stress - otherwise, use display lists
-    int ec;
-    unsigned long long avail_mem = 0.5*bu_mem(BU_MEM_AVAIL, &ec);
-    unsigned long long size_est = (unsigned long long)(bu_list_len(&s->s_vlist)*sizeof(point_t));
+    ssize_t avail_mem = 0.5*bu_mem(BU_MEM_AVAIL, NULL);
+    size_t size_est = (bu_list_len(&s->s_vlist)*sizeof(point_t));
     bool gen_dlist = false;
-    if (!s->s_dlist && size_est < avail_mem) {
+    if (!s->s_dlist && avail_mem > 0 && size_est < (size_t)avail_mem) {
 	gen_dlist = true;
 	s->s_dlist = glGenLists(1);
 	s->s_dlist_mode = mode;
@@ -455,7 +500,7 @@ int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
 
     // "Standard" vlist object drawing
     if (bu_list_len(&s->s_vlist)) {
-	if (s->s_os.s_dmode == 4) {
+	if (s->s_os->s_dmode == 4) {
 	    dm_draw_vlist_hidden_line(dmp, (struct bv_vlist *)&s->s_vlist);
 	} else {
 	    dm_draw_vlist(dmp, (struct bv_vlist *)&s->s_vlist);

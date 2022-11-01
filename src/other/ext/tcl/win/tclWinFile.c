@@ -169,7 +169,7 @@ static int		NativeWriteReparse(const WCHAR *LinkDirectory,
 			    REPARSE_DATA_BUFFER *buffer);
 static int		NativeMatchType(int isDrive, DWORD attr,
 			    const WCHAR *nativeName, Tcl_GlobTypeData *types);
-static int		WinIsDrive(const char *name, int nameLen);
+static int		WinIsDrive(const char *name, size_t nameLen);
 static int		WinIsReserved(const char *path);
 static Tcl_Obj *	WinReadLink(const WCHAR *LinkSource);
 static Tcl_Obj *	WinReadLinkDirectory(const WCHAR *LinkDirectory);
@@ -264,11 +264,21 @@ WinLink(
 
 	    TclWinConvertError(GetLastError());
 	} else if (linkAction & TCL_CREATE_SYMBOLIC_LINK) {
-	    /*
-	     * Can't symlink files.
-	     */
+	    if (!tclWinProcs.createSymbolicLink) {
+		/*
+		 * Can't symlink files.
+		 */
+		Tcl_SetErrno(EINVAL);
+	    } else if (tclWinProcs.createSymbolicLink(linkSourcePath, linkTargetPath,
+		    0x2 /* SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE */)) {
+		/*
+		 * Success!
+		 */
 
-	    Tcl_SetErrno(ENOTDIR);
+		return 0;
+	    } else {
+		TclWinConvertError(GetLastError());
+	    }
 	} else {
 	    Tcl_SetErrno(ENODEV);
 	}
@@ -395,11 +405,11 @@ WinSymLinkDirectory(
      */
 
     for (loop = nativeTarget; *loop != 0; loop++) {
-	if (*loop == L'/') {
-	    *loop = L'\\';
+	if (*loop == '/') {
+	    *loop = '\\';
 	}
     }
-    if ((nativeTarget[len-1] == L'\\') && (nativeTarget[len-2] != L':')) {
+    if ((nativeTarget[len-1] == '\\') && (nativeTarget[len-2] != ':')) {
 	nativeTarget[len-1] = 0;
     }
 
@@ -572,8 +582,7 @@ WinReadLinkDirectory(
 	 */
 
 	offset = 0;
-#if 1
-	if (reparseBuffer->MountPointReparseBuffer.PathBuffer[0] == L'\\') {
+	if (reparseBuffer->MountPointReparseBuffer.PathBuffer[0] == '\\') {
 	    /*
 	     * Check whether this is a mounted volume.
 	     */
@@ -587,7 +596,7 @@ WinReadLinkDirectory(
 		 * to fix here. It doesn't seem very well documented.
 		 */
 
-		reparseBuffer->MountPointReparseBuffer.PathBuffer[1]=L'\\';
+		reparseBuffer->MountPointReparseBuffer.PathBuffer[1] = '\\';
 
 		/*
 		 * Check if a corresponding drive letter exists, and use that
@@ -634,11 +643,10 @@ WinReadLinkDirectory(
 		offset = 4;
 	    }
 	}
-#endif /* UNICODE */
 
 	Tcl_WinTCharToUtf((TCHAR *)
 		reparseBuffer->MountPointReparseBuffer.PathBuffer,
-		(int) reparseBuffer->MountPointReparseBuffer
+		reparseBuffer->MountPointReparseBuffer
 		.SubstituteNameLength, &ds);
 
 	copy = Tcl_DStringValue(&ds)+offset;
@@ -810,13 +818,13 @@ tclWinDebugPanic(
 {
 #define TCL_MAX_WARN_LEN 1024
     va_list argList;
-    char buf[TCL_MAX_WARN_LEN * TCL_UTF_MAX];
+    char buf[TCL_MAX_WARN_LEN * 3];
     WCHAR msgString[TCL_MAX_WARN_LEN];
 
     va_start(argList, format);
     vsnprintf(buf, sizeof(buf), format, argList);
 
-    msgString[TCL_MAX_WARN_LEN-1] = L'\0';
+    msgString[TCL_MAX_WARN_LEN-1] = '\0';
     MultiByteToWideChar(CP_UTF8, 0, buf, -1, msgString, TCL_MAX_WARN_LEN);
 
     /*
@@ -824,7 +832,7 @@ tclWinDebugPanic(
      * and cause possible oversized window error.
      */
 
-    if (msgString[TCL_MAX_WARN_LEN-1] != L'\0') {
+    if (msgString[TCL_MAX_WARN_LEN-1] != '\0') {
 	memcpy(msgString + (TCL_MAX_WARN_LEN - 5), L" ...", 5 * sizeof(WCHAR));
     }
     if (IsDebuggerPresent()) {
@@ -869,7 +877,7 @@ TclpFindExecutable(
 				 * ignore. */
 {
     WCHAR wName[MAX_PATH];
-    char name[MAX_PATH * TCL_UTF_MAX];
+    char name[MAX_PATH * 3];
 
     /*
      * Under Windows we ignore argv0, and return the path for the file used to
@@ -880,7 +888,7 @@ TclpFindExecutable(
 	Tcl_SetPanicProc(tclWinDebugPanic);
     }
 
-    GetModuleFileNameW(NULL, wName, MAX_PATH);
+    GetModuleFileNameW(NULL, wName, sizeof(wName)/sizeof(WCHAR));
     WideCharToMultiByte(CP_UTF8, 0, wName, -1, name, sizeof(name), NULL, NULL);
     TclWinNoBackslash(name);
     TclSetObjNameOfExecutable(Tcl_NewStringObj(name, -1), NULL);
@@ -1093,7 +1101,6 @@ TclpMatchInDirectory(
 	do {
 	    const char *utfname;
 	    int checkDrive = 0, isDrive;
-	    DWORD attr;
 
 	    native = data.cFileName;
 	    attr = data.dwFileAttributes;
@@ -1174,7 +1181,7 @@ TclpMatchInDirectory(
 static int
 WinIsDrive(
     const char *name,		/* Name (UTF-8) */
-    int len)			/* Length of name */
+    size_t len)			/* Length of name */
 {
     int remove = 0;
 
@@ -1253,7 +1260,7 @@ WinIsReserved(
 
 	    if (path[4] == '\0') {
 		return 4;
-	    } else if (path [4] == ':' && path[5] == '\0') {
+	    } else if (path[4] == ':' && path[5] == '\0') {
 		return 4;
 	    }
 	} else if ((path[2] == 'n' || path[2] == 'N') && path[3] == '\0') {
@@ -1274,7 +1281,7 @@ WinIsReserved(
 
 	    if (path[4] == '\0') {
 		return 4;
-	    } else if (path [4] == ':' && path[5] == '\0') {
+	    } else if (path[4] == ':' && path[5] == '\0') {
 		return 4;
 	    }
 	}
@@ -1443,7 +1450,6 @@ TclpGetUserHome(
     int rc = 0;
     const char *domain;
     WCHAR *wName, *wHomeDir, *wDomain;
-    WCHAR buf[MAX_PATH];
 
     Tcl_DStringInit(bufferPtr);
 
@@ -1471,14 +1477,12 @@ TclpGetUserHome(
 	}
 	Tcl_DStringFree(&ds);
     } else {
-	Tcl_DStringInit(&ds);
 	wName = (WCHAR *)Tcl_WinUtfToTChar(domain + 1, -1, &ds);
 	rc = NetGetDCName(NULL, wName, (LPBYTE *) &wDomain);
 	Tcl_DStringFree(&ds);
 	nameLen = domain - name;
     }
     if (rc == 0) {
-	Tcl_DStringInit(&ds);
 	wName = (WCHAR *)Tcl_WinUtfToTChar(name, nameLen, &ds);
 	while (NetUserGetInfo(wDomain, wName, 1, (LPBYTE *) &uiPtr) != 0) {
 	    /*
@@ -1505,10 +1509,11 @@ TclpGetUserHome(
 	    DWORD i, size = MAX_PATH;
 
 	    wHomeDir = uiPtr->usri1_home_dir;
-	    if ((wHomeDir != NULL) && (wHomeDir[0] != L'\0')) {
+	    if ((wHomeDir != NULL) && (wHomeDir[0] != '\0')) {
 		size = lstrlenW(wHomeDir);
 		Tcl_WinTCharToUtf((TCHAR *)wHomeDir, size*sizeof(WCHAR), bufferPtr);
 	    } else {
+		WCHAR buf[MAX_PATH];
 		/*
 		 * User exists but has no home dir. Return
 		 * "{GetProfilesDirectory}/<user>".
@@ -1522,7 +1527,7 @@ TclpGetUserHome(
 	    result = Tcl_DStringValue(bufferPtr);
 
 	    /*
-	     * Be sure we returns normalized path
+	     * Be sure we return normalized path
 	     */
 
 	    for (i = 0; i < size; ++i) {
@@ -1691,7 +1696,6 @@ NativeAccess(
      * what permissions the OS has set for a file.
      */
 
-#if 1
     {
 	SECURITY_DESCRIPTOR *sdPtr = NULL;
 	unsigned long size;
@@ -1854,7 +1858,6 @@ NativeAccess(
 	}
 
     }
-#endif /* !UNICODE */
     return 0;
 }
 
@@ -1887,11 +1890,10 @@ NativeIsExec(
     }
 
     path += len-3;
-    if ((wcsicmp(path, L"exe") == 0)
-	    || (wcsicmp(path, L"com") == 0)
-	    || (wcsicmp(path, L"cmd") == 0)
-	    || (wcsicmp(path, L"cmd") == 0)
-	    || (wcsicmp(path, L"bat") == 0)) {
+    if ((_wcsicmp(path, L"exe") == 0)
+	    || (_wcsicmp(path, L"com") == 0)
+	    || (_wcsicmp(path, L"cmd") == 0)
+	    || (_wcsicmp(path, L"bat") == 0)) {
 	return 1;
     }
     return 0;
@@ -2205,7 +2207,7 @@ NativeDev(
 	p = strchr(p + 1, '\\');
 	if (p == NULL) {
 	    /*
-	     * Add terminating backslash to fullpath or GetVolumeInformationW()
+	     * Add terminating backslash to fullpath or GetVolumeInformation()
 	     * won't work.
 	     */
 
@@ -2538,8 +2540,9 @@ TclpFilesystemPathType(
 int
 TclpObjNormalizePath(
     Tcl_Interp *interp,
-    Tcl_Obj *pathPtr,
-    int nextCheckpoint)
+    Tcl_Obj *pathPtr,	        /* An unshared object containing the path to
+				 * normalize */
+    int nextCheckpoint)	        /* offset to start at in pathPtr */
 {
     char *lastValidPathEnd = NULL;
     Tcl_DString dsNorm;		/* This will hold the normalized string. */
@@ -2586,8 +2589,8 @@ TclpObjNormalizePath(
 			for (i=0 ; i<len ; i++) {
 			    WCHAR wc = ((WCHAR *) nativePath)[i];
 
-			    if (wc >= L'a') {
-				wc -= (L'a' - L'A');
+			    if (wc >= 'a') {
+				wc -= ('a' - 'A');
 				((WCHAR *) nativePath)[i] = wc;
 			    }
 			}
@@ -2677,8 +2680,8 @@ TclpObjNormalizePath(
 	    if (isDrive) {
 		WCHAR drive = ((WCHAR *) nativePath)[0];
 
-		if (drive >= L'a') {
-		    drive -= (L'a' - L'A');
+		if (drive >= 'a') {
+		    drive -= ('a' - 'A');
 		    ((WCHAR *) nativePath)[0] = drive;
 		}
 		Tcl_DStringAppend(&dsNorm, (const char *)nativePath,
@@ -2709,7 +2712,7 @@ TclpObjNormalizePath(
 		    Tcl_DStringAppend(&dsNorm, ((const char *)nativePath)
 			    + Tcl_DStringLength(&ds)
 			    - (dotLen * sizeof(WCHAR)),
-			    (int)(dotLen * sizeof(WCHAR)));
+			    dotLen * sizeof(WCHAR));
 		} else {
 		    /*
 		     * Normal path.
@@ -2775,8 +2778,8 @@ TclpObjNormalizePath(
 	     * We have to make the drive letter uppercase.
 	     */
 
-	    if (wpath[0] >= L'a') {
-		wpath[0] -= (L'a' - L'A');
+	    if (wpath[0] >= 'a') {
+		wpath[0] -= ('a' - 'A');
 	    }
 	    Tcl_DStringAppend(&dsNorm, (const char *) wpath,
 		    wpathlen * sizeof(WCHAR));
@@ -2806,7 +2809,6 @@ TclpObjNormalizePath(
 	     */
 
 	    int len;
-	    char *path;
 	    Tcl_Obj *tmpPathPtr;
 
 	    tmpPathPtr = Tcl_NewStringObj(Tcl_DStringValue(&ds),
@@ -3021,7 +3023,7 @@ TclpNativeToNormalized(
  *	The nativePath representation.
  *
  * Side effects:
- *	Memory will be allocated. The path may need to be normalized.
+ *	Memory will be allocated. The path might be normalized.
  *
  *---------------------------------------------------------------------------
  */
@@ -3073,7 +3075,7 @@ TclNativeCreateNativeRep(
     str = Tcl_GetString(validPathPtr);
     len = validPathPtr->length;
 
-    if (strlen(str) != (unsigned int) len) {
+    if (strlen(str) != len) {
 	/*
 	 * String contains NUL-bytes. This is invalid.
 	 */
@@ -3107,7 +3109,8 @@ TclNativeCreateNativeRep(
       goto done;
     }
     MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, -1, nativePathPtr,
-	    len + 1);
+	    len + 2);
+    nativePathPtr[len] = 0;
 
     /*
      * If path starts with "//?/" or "\\?\" (extended path), translate any
@@ -3125,7 +3128,7 @@ TclNativeCreateNativeRep(
      * If there is no "\\?\" prefix but there is a drive or UNC path prefix
      * and the path is larger than MAX_PATH chars, no Win32 API function can
      * handle that unless it is prefixed with the extended path prefix. See:
-     * <http://msdn.microsoft.com/en-us/library/aa365247(VS.85).aspx#maxpath>
+     * <https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maxpath>
      */
 
     if (((str[0] >= 'A' && str[0] <= 'Z') || (str[0] >= 'a' && str[0] <= 'z'))

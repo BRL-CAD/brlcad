@@ -25,7 +25,7 @@
 #include "./iges_extern.h"
 
 struct faceuse *
-Make_planar_face(struct shell *s, int entityno, int face_orient)
+Make_planar_face(struct shell *s, size_t entityno, int face_orient)
 {
 
     int sol_num = 0;		/* IGES solid type number */
@@ -51,7 +51,7 @@ Make_planar_face(struct shell *s, int entityno, int face_orient)
     Readrec(dir[entityno]->param);
     Readint(&sol_num, "");
     if (sol_num != 508) {
-	bu_exit(1, "ERROR: Entity #%d is not a loop (it's a %s)\n", entityno, iges_type(sol_num));
+	bu_exit(1, "ERROR: Entity #%zd is not a loop (it's a %s)\n", entityno, iges_type(sol_num));
     }
 
     Readint(&no_of_edges, "");
@@ -148,7 +148,7 @@ Make_planar_face(struct shell *s, int entityno, int face_orient)
 
 	area = nmg_loop_plane_area(lu, pl);
 	if (area < 0.0) {
-	    bu_log("Could not calculate area for face (entityno = %d)\n", entityno);
+	    bu_log("Could not calculate area for face (entityno = %zd)\n", entityno);
 	    nmg_pr_fu_briefly(fu, "");
 	    nmg_kfu(fu);
 	    fu = (struct faceuse *)NULL;

@@ -67,6 +67,7 @@ TclpDlopen(
     const WCHAR *nativeName;
     Tcl_LoadHandle handlePtr;
     DWORD firstError;
+    (void)flags;
 
     /*
      * First try the full path the user gave us. This is particularly
@@ -74,7 +75,7 @@ TclpDlopen(
      * relative path.
      */
 
-    nativeName = Tcl_FSGetNativePath(pathPtr);
+    nativeName = (const WCHAR *)Tcl_FSGetNativePath(pathPtr);
     if (nativeName != NULL) {
 	hInstance = LoadLibraryExW(nativeName, NULL,
 		LOAD_WITH_ALTERED_SEARCH_PATH);
@@ -170,7 +171,7 @@ TclpDlopen(
      * Succeded; package everything up for Tcl.
      */
 
-    handlePtr = ckalloc(sizeof(struct Tcl_LoadHandle_));
+    handlePtr = (Tcl_LoadHandle)ckalloc(sizeof(struct Tcl_LoadHandle_));
     handlePtr->clientData = (ClientData) hInstance;
     handlePtr->findSymbolProcPtr = &FindSymbol;
     handlePtr->unloadFileProcPtr = &UnloadFile;
@@ -202,14 +203,14 @@ FindSymbol(
     const char *symbol)
 {
     HINSTANCE hInstance = (HINSTANCE) loadHandle->clientData;
-    Tcl_PackageInitProc *proc = NULL;
+    void *proc = NULL;
 
     /*
      * For each symbol, check for both Symbol and _Symbol, since Borland
      * generates C symbols with a leading '_' by default.
      */
 
-    proc = (void *) GetProcAddress(hInstance, symbol);
+    proc = (void *)GetProcAddress(hInstance, symbol);
     if (proc == NULL) {
 	Tcl_DString ds;
 	const char *sym2;
@@ -217,7 +218,7 @@ FindSymbol(
 	Tcl_DStringInit(&ds);
 	TclDStringAppendLiteral(&ds, "_");
 	sym2 = Tcl_DStringAppend(&ds, symbol, -1);
-	proc = (Tcl_PackageInitProc *) GetProcAddress(hInstance, sym2);
+	proc = (void *)GetProcAddress(hInstance, sym2);
 	Tcl_DStringFree(&ds);
     }
     if (proc == NULL && interp != NULL) {
@@ -285,6 +286,9 @@ TclGuessPackageName(
     Tcl_DString *bufPtr)	/* Initialized empty dstring. Append package
 				 * name to this if possible. */
 {
+    (void)fileName;
+    (void)bufPtr;
+
     return 0;
 }
 
@@ -416,7 +420,7 @@ InitDLLDirectoryName(void)
      */
 
   copyToGlobalBuffer:
-    dllDirectoryName = ckalloc((nameLen+1) * sizeof(WCHAR));
+    dllDirectoryName = (WCHAR *)ckalloc((nameLen+1) * sizeof(WCHAR));
     wcscpy(dllDirectoryName, name);
     return TCL_OK;
 }
