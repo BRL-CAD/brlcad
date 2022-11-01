@@ -37,15 +37,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   resulting in "unknown command" on an uninstalled build.  title and
   units commands work, but puts fails inside ged_exec().
 
-* snap grid mode is failing in Archer (user report, most likely related
-  to one of the code refactorings breaking something.)
-
-* Overlap tool in MGED is not handling no overlaps reporting correctly.
-
-* Overlap tool needs to have basic documentation written.
-
-* gqa is crashing when supplied all.g/box.r as an object argument
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
