@@ -1,7 +1,7 @@
 #                     C M A K E L I S T S . T X T
 # BRL-CAD
 #
-# Copyright (c) 2010-2021 United States Government as represented by
+# Copyright (c) 2010-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
