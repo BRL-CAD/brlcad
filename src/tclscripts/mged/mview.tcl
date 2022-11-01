@@ -43,7 +43,7 @@ proc openmv { id w wc dpy dtype } {
 	dm set zclip 1
 	dm set zbuffer 1
     }
-    if { $dtype == "ogl" || $dtype == "osgl" } {
+    if { $dtype == "ogl" } {
 	dm set zbuffer $mged_default(zbuffer)
 	dm set lighting $mged_default(lighting)
     }
@@ -57,7 +57,7 @@ proc openmv { id w wc dpy dtype } {
 	dm set zclip 1
 	dm set zbuffer 1
     }
-    if { $dtype == "ogl" || $dtype == "osgl" } {
+    if { $dtype == "ogl" } {
 	dm set zbuffer $mged_default(zbuffer)
 	dm set lighting $mged_default(lighting)
     }
@@ -71,7 +71,7 @@ proc openmv { id w wc dpy dtype } {
 	dm set zclip 1
 	dm set zbuffer 1
     }
-    if { $dtype == "ogl" || $dtype == "osgl" } {
+    if { $dtype == "ogl" } {
 	dm set zbuffer $mged_default(zbuffer)
 	dm set lighting $mged_default(lighting)
     }
@@ -85,7 +85,7 @@ proc openmv { id w wc dpy dtype } {
 	dm set zclip 1
 	dm set zbuffer 1
     }
-    if { $dtype == "ogl" || $dtype == "osgl" } {
+    if { $dtype == "ogl" } {
 	dm set zbuffer $mged_default(zbuffer)
 	dm set lighting $mged_default(lighting)
     }

@@ -4513,12 +4513,6 @@ to_new_view(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "ogl"))
 	type = argv[2];
 
-    if (BU_STR_EQUAL(argv[2], "osg"))
-	type = argv[2];
-
-    if (BU_STR_EQUAL(argv[2], "osgl"))
-	type = argv[2];
-
     if (BU_STR_EQUAL(argv[2], "wgl"))
 	type = argv[2];
 
