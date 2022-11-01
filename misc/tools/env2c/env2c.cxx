@@ -69,7 +69,7 @@ process_file(env_outputs &env_t)
     env_outputs &env = const_cast<env_outputs &>(env_t);
 
     std::regex getenv_regex(".*getenv\\(\\\".*");
-    std::regex evar_regex(".*getenv\\(\\\"([^\\\"]+)\\\"\\).*");
+    std::regex evar_regex(".*getenv\\(\\\"([^\\\"]+)\\\"([^\\)]*)\\).*");
     std::regex o_regex(".*[\\/]other[\\/].*");
     std::regex sp_regex(".*[\\/]other[\\/]([A-Za-z0-9_-]+).*");
     std::regex lp_regex(".*[\\/]lib([A-Za-z0-9_-]+)[\\/].*");
