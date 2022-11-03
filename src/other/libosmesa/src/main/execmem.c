@@ -98,23 +98,6 @@ _mesa_exec_malloc(GLuint size)
     return addr;
 }
 
-
-void
-_mesa_exec_free(void *addr)
-{
-    _glthread_LOCK_MUTEX(exec_mutex);
-
-    if (exec_heap) {
-	struct mem_block *block = mmFindBlock(exec_heap, (unsigned char *)addr - exec_mem);
-
-	if (block)
-	    mmFreeMem(block);
-    }
-
-    _glthread_UNLOCK_MUTEX(exec_mutex);
-}
-
-
 #else
 
 /*
@@ -126,14 +109,6 @@ _mesa_exec_malloc(GLuint size)
 {
     return _mesa_malloc(size);
 }
-
-
-void
-_mesa_exec_free(void *addr)
-{
-    _mesa_free(addr);
-}
-
 
 #endif
 
