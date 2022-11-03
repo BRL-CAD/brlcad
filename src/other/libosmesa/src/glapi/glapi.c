@@ -31,10 +31,6 @@
  * current thread and to manage registration/dispatch of dynamically
  * added extension functions.
  *
- * It's intended that this file and the other glapi*.[ch] files are
- * flexible enough to be reused in several places:  XFree86, DRI-
- * based libGL.so, and perhaps the SGI SI.
- *
  * NOTE: There are no dependencies on Mesa in this code.
  *
  * Versions (API changes):
@@ -332,11 +328,7 @@ _glapi_get_dispatch(void)
  *** The rest of this file is pretty much concerned with GetProcAddress
  *** functionality.
  ***/
-
-
-#if !defined(DISPATCH_FUNCTION_SIZE) && !defined(XFree86Server) && !defined(XGLServer)
-# define NEED_FUNCTION_POINTER
-#endif
+#define NEED_FUNCTION_POINTER
 
 /* The code in this file is auto-generated with Python */
 #include "glprocs.h"
@@ -374,10 +366,6 @@ get_static_proc_offset(const char *funcName)
     return -1;
 }
 
-
-#if !defined(XFree86Server) && !defined(XGLServer)
-
-
 /**
  * Return dispatch function address for the named static (built-in) function.
  * Return NULL if function not found.
@@ -402,10 +390,6 @@ get_static_proc_address(const char *funcName)
 	return NULL;
     }
 }
-
-#endif /* !defined(XFree86Server) && !defined(XGLServer) */
-
-
 
 /**
  * Return the name of the function at the given offset in the dispatch
@@ -744,14 +728,12 @@ _glapi_get_proc_address(const char *funcName)
 	}
     }
 
-#if !defined( XFree86Server ) && !defined( XGLServer )
     /* search static functions */
     {
 	const _glapi_proc func = get_static_proc_address(funcName);
 	if (func)
 	    return func;
     }
-#endif /* !defined( XFree86Server ) */
 
     entry = add_function_name(funcName);
     return (entry == NULL) ? NULL : entry->dispatch_stub;

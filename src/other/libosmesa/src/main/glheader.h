@@ -46,48 +46,25 @@
 #ifndef GLHEADER_H
 #define GLHEADER_H
 
-/* This allows Mesa to be integrated into XFree86 */
-#ifdef HAVE_DIX_CONFIG_H
-#include "dix-config.h"
-#endif
-
 #include <assert.h>
 #include <ctype.h>
-#if defined(__alpha__) && defined(CCPML)
-#include <cpml.h> /* use Compaq's Fast Math Library on Alpha */
-#else
 #include <math.h>
-#endif
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#if defined(__linux__) && defined(__i386__)
-#include <fpu_control.h>
-#endif
 #include <float.h>
 #include <stdarg.h>
 
 
 /* Get typedefs for uintptr_t and friends */
-#if defined(__MINGW32__) || defined(__NetBSD__)
-#  include <stdint.h>
-#elif defined(_WIN32)
+#include <stdint.h>
+#if defined(_WIN32)
 #  include <BaseTsd.h>
-#  if _MSC_VER == 1200
-typedef UINT_PTR uintptr_t;
-#  endif
-#elif defined(__INTERIX)
-/* Interix 3.x has a gcc that shadows this. */
-#  ifndef _UINTPTR_T_DEFINED
-typedef unsigned long uintptr_t;
-#  define _UINTPTR_T_DEFINED
-#  endif
-#else
-#  include <inttypes.h>
 #endif
+#include <inttypes.h>
 
-#if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__) && !defined(BUILD_FOR_SNAP)
+#if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__)
 #  define __WIN32__
 #  define finite _finite
 #endif
@@ -101,7 +78,7 @@ typedef unsigned long uintptr_t;
 #	undef WGLAPI
 #endif
 
-#if !defined(OPENSTEP) && (defined(__WIN32__) && !defined(__CYGWIN__)) && !defined(BUILD_FOR_SNAP)
+#if !defined(OPENSTEP) && (defined(__WIN32__) && !defined(__CYGWIN__))
 #  if !defined(__GNUC__) /* mingw environment */
 #    pragma warning( disable : 4068 ) /* unknown pragma */
 #    pragma warning( disable : 4710 ) /* function 'foo' not inlined */
@@ -151,7 +128,7 @@ typedef unsigned long uintptr_t;
 #include "OSMesa/glext.h"
 
 
-#if !defined(CAPI) && defined(WIN32) && !defined(BUILD_FOR_SNAP)
+#if !defined(CAPI) && defined(WIN32)
 #define CAPI _cdecl
 #endif
 
@@ -172,7 +149,7 @@ typedef unsigned long uintptr_t;
  * than GNU C
  */
 #ifndef _ASMAPI
-#if defined(WIN32) && !defined(BUILD_FOR_SNAP)/* was: !defined( __GNUC__ ) && !defined( VMS ) && !defined( __INTEL_COMPILER )*/
+#if defined(WIN32)
 #define _ASMAPI __cdecl
 #else
 #define _ASMAPI
@@ -229,9 +206,7 @@ typedef unsigned long uintptr_t;
 #endif
 
 
-#if defined(BUILD_FOR_SNAP) && defined(CHECKED)
-#  define ASSERT(X)   _CHECK(X)
-#elif defined(DEBUG)
+#if defined(DEBUG)
 #  define ASSERT(X)   assert(X)
 #else
 #  define ASSERT(X)
