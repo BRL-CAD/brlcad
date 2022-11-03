@@ -186,13 +186,7 @@ _math_init_transformation(void)
     _math_test_all_cliptest_functions("default");
 #endif
 
-#ifdef USE_X86_ASM
-    _mesa_init_all_x86_transform_asm();
-#elif defined( USE_SPARC_ASM )
-    _mesa_init_all_sparc_transform_asm();
-#elif defined( USE_PPC_ASM )
-    _mesa_init_all_ppc_transform_asm();
-#elif defined( USE_X86_64_ASM )
+#if   defined( USE_X86_64_ASM )
     _mesa_init_all_x86_64_transform_asm();
 #endif
 }

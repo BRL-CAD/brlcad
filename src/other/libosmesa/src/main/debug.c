@@ -126,16 +126,8 @@ void _mesa_print_info(void)
 #else
     _mesa_debug(NULL, "Mesa thread-safe: NO\n");
 #endif
-#if defined(USE_X86_ASM)
-    _mesa_debug(NULL, "Mesa x86-optimized: YES\n");
-#else
     _mesa_debug(NULL, "Mesa x86-optimized: NO\n");
-#endif
-#if defined(USE_SPARC_ASM)
-    _mesa_debug(NULL, "Mesa sparc-optimized: YES\n");
-#else
     _mesa_debug(NULL, "Mesa sparc-optimized: NO\n");
-#endif
 }
 
 

@@ -134,9 +134,6 @@
 #endif
 #include "shader_api.h"
 
-#ifdef USE_SPARC_ASM
-#include "sparc/sparc.h"
-#endif
 
 #ifndef MESA_VERBOSE
 int MESA_VERBOSE = 0;
@@ -372,9 +369,6 @@ one_time_init(GLcontext *ctx)
 	}
 #endif
 
-#ifdef USE_SPARC_ASM
-	_mesa_init_sparc_glapi_relocs();
-#endif
 	if (_mesa_getenv("MESA_DEBUG")) {
 	    _glapi_noop_enable_warnings(GL_TRUE);
 	    _glapi_set_warning_func((_glapi_warning_func) _mesa_warning);
