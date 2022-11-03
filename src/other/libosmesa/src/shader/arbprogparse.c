@@ -629,7 +629,6 @@ static void
 program_error2(GLcontext *ctx, GLint position, const char *descrip,
 	       const char *var)
 {
-    char *str = NULL;
     if (descrip) {
 	const char *prefix = "glProgramString(", *suffix = ")";
 	char *str = (char *) _mesa_malloc(_mesa_strlen(descrip) +
