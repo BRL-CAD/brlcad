@@ -70,11 +70,7 @@
 #define MAX_AUX_BUFFERS 4
 
 /** Maximum order (degree) of curves */
-#ifdef AMIGA
-#   define MAX_EVAL_ORDER 12
-#else
 #   define MAX_EVAL_ORDER 30
-#endif
 
 /** Maximum Name stack depth */
 #define MAX_NAME_STACK_DEPTH 64
