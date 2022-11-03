@@ -1359,7 +1359,7 @@ _swrast_write_rgba_span(GLcontext *ctx, SWspan *span)
     GLboolean deferredTexture;
 
     /*
-    printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__,
+    printf("%s()  interp 0x%x  array 0x%x\n", __func__,
            span->interpMask, span->arrayMask);
     */
 

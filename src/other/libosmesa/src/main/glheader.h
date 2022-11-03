@@ -247,20 +247,6 @@ typedef unsigned long uintptr_t;
 #  define __builtin_expect(x, y) x
 #endif
 
-/* The __FUNCTION__ gcc variable is generally only used for debugging.
- * If we're not using gcc, define __FUNCTION__ as a cpp symbol here.
- * Don't define it if using a newer Windows compiler.
- */
-#if defined(__VMS)
-# define __FUNCTION__ "VMS$NL:"
-#elif __STDC_VERSION__ < 199901L
-# if ((!defined __GNUC__) || (__GNUC__ < 2)) && (!defined __xlC__) && \
-      (!defined(_MSC_VER) || _MSC_VER < 1300)
-#  define __FUNCTION__ "<unknown>"
-# endif
-#endif
-
-
 #include "config.h"
 
 #endif /* GLHEADER_H */

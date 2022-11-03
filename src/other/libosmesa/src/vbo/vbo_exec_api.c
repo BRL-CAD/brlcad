@@ -373,7 +373,7 @@ do {								\
 } while (0)
 
 
-#define ERROR() _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ )
+#define ERROR() _mesa_error( ctx, GL_INVALID_ENUM, __func__ )
 #define TAG(x) vbo_##x
 
 #include "vbo_attrib_tmp.h"

@@ -40,7 +40,7 @@ static void vbo_exec_debug_verts(struct vbo_exec_context *exec)
     GLuint i;
 
     _mesa_printf("%s: %u vertices %d primitives, %d vertsize\n",
-		 __FUNCTION__,
+		 __func__,
 		 count,
 		 exec->vtx.prim_count,
 		 exec->vtx.vertex_size);

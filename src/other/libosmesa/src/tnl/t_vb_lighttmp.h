@@ -69,7 +69,7 @@ static void TAG(light_rgba_spec)(GLcontext *ctx,
     const GLuint nr = VB->Count;
 
 #ifdef TRACE
-    fprintf(stderr, "%s\n", __FUNCTION__);
+    fprintf(stderr, "%s\n", __func__);
 #endif
 
     VB->ColorPtr[0] = &store->LitColor[0];
@@ -251,7 +251,7 @@ static void TAG(light_rgba)(GLcontext *ctx,
     const GLuint nr = VB->Count;
 
 #ifdef TRACE
-    fprintf(stderr, "%s\n", __FUNCTION__);
+    fprintf(stderr, "%s\n", __func__);
 #endif
 
     VB->ColorPtr[0] = &store->LitColor[0];
@@ -433,7 +433,7 @@ static void TAG(light_fast_rgba_single)(GLcontext *ctx,
 #endif
 
 #ifdef TRACE
-    fprintf(stderr, "%s\n", __FUNCTION__);
+    fprintf(stderr, "%s\n", __func__);
 #endif
 
     (void) input;		/* doesn't refer to Eye or Obj */
@@ -538,7 +538,7 @@ static void TAG(light_fast_rgba)(GLcontext *ctx,
     const struct gl_light *light;
 
 #ifdef TRACE
-    fprintf(stderr, "%s %d\n", __FUNCTION__, nr);
+    fprintf(stderr, "%s %d\n", __func__, nr);
 #endif
 
     (void) input;
@@ -648,7 +648,7 @@ static void TAG(light_ci)(GLcontext *ctx,
     const GLuint nr = VB->Count;
 
 #ifdef TRACE
-    fprintf(stderr, "%s\n", __FUNCTION__);
+    fprintf(stderr, "%s\n", __func__);
 #endif
 
     VB->IndexPtr[0] = &store->LitIndex[0];

@@ -591,7 +591,7 @@ static void _save_reset_vertex(GLcontext *ctx)
 
 
 
-#define ERROR()   _mesa_compile_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+#define ERROR()   _mesa_compile_error( ctx, GL_INVALID_ENUM, __func__ );
 
 
 /* Only one size for each attribute may be active at once.  Eg. if
