@@ -425,7 +425,7 @@ static void TAG(light_fast_rgba_single)(GLcontext *ctx,
 #endif
     const struct gl_light *light = ctx->Light.EnabledList.next;
     GLuint j = 0;
-    GLfloat base[2][4];
+    GLfloat base[2][4] = {{0}};
 #if IDX & LIGHT_MATERIAL
     const GLuint nr = VB->Count;
 #else
