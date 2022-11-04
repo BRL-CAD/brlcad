@@ -68,7 +68,7 @@
 typedef OpenMesh::TriMesh_ArrayKernelT<>  TriMesh;
 
 static struct rt_bot_internal *
-bot_decimate(struct ged *gedp, struct rt_bot_internal *input_bot, int alg, double UNUSED(max_err))
+bot_decimate(struct ged *gedp, struct rt_bot_internal *input_bot, int alg, double max_err)
 {
     if (!gedp || !input_bot)
 	return NULL;
@@ -97,18 +97,6 @@ bot_decimate(struct ged *gedp, struct rt_bot_internal *input_bot, int alg, doubl
 
     /* initialize decimater */
     switch (alg) {
-	case 1:
-	    {
-		OpenMesh::Decimater::DecimaterT<TriMesh> decimater(trimesh);
-		OpenMesh::Decimater::ModQuadricT<TriMesh>::Handle hModQuadric;
-		decimater.add(hModQuadric);
-		decimater.module(hModQuadric).unset_max_err();
-		decimater.initialize();
-		decimater.decimate();
-		trimesh.garbage_collection();
-		break;
-	    }
-
 	default:
 	    {
 		OpenMesh::Decimater::DecimaterT<TriMesh> decimater(trimesh);
@@ -116,6 +104,7 @@ bot_decimate(struct ged *gedp, struct rt_bot_internal *input_bot, int alg, doubl
 		decimater.add(hModQuadric);
 		decimater.module(hModQuadric).unset_max_err();
 		decimater.initialize();
+		decimater.module(hModQuadric).set_max_err(max_err);
 		decimater.decimate();
 		trimesh.garbage_collection();
 		break;
@@ -230,7 +219,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 
     int error_metric = 0;
     int print_help = 0;
-    double max_error = 0.0;
+    double max_error = 1000.0;
 
     struct bu_opt_desc d[4];
     BU_OPT(d[0], "h",      "help",  "",            NULL,   &print_help, "Print help");
@@ -266,7 +255,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     struct rt_bot_internal *input_bot = (struct rt_bot_internal*)gb->intern->idb_ptr;
     RT_BOT_CK_MAGIC(input_bot);
 
-    bu_log("INPUT BoT has %zu vertices and %zu faces\n", input_bot->num_vertices, input_bot->num_faces);
+    bu_log("INPUT BoT has %zu vertices and %zu faces, max_err = %f\n", input_bot->num_vertices, input_bot->num_faces, max_error);
 
     struct rt_bot_internal *output_bot = bot_decimate(gedp, input_bot, error_metric, max_error);
     if (!output_bot) {
