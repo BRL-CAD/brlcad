@@ -267,6 +267,15 @@ if (BRLCAD_OPENMESH_BUILD)
     )
   set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} OpenMesh CACHE STRING "Bundled system include dirs" FORCE)
 
+  # OpenMesh needs slightly different target management, so we
+  # we need to make sure the dependencies are established for
+  # the targets ExternalProject_ByProducts isn't aware of
+  foreach(OMT ${OPENMESH_LIBS})
+    if (TARGET ${OMT} AND TARGET openmesh_stage)
+      add_dependencies(${OMT} openmesh_stage)
+    endif (TARGET ${OMT} AND TARGET openmesh_stage)
+  endforeach(OMT ${OPENMESH_LIBS})
+
   set(OPENMESH_CORE_GEOMETRY_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Core/Geometry CACHE STRING "Building bundled OpenMesh" FORCE)
   set(OPENMESH_CORE_IO_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Core/IO CACHE STRING "Building bundled OpenMesh" FORCE)
   set(OPENMESH_CORE_MESH_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Core/Mesh CACHE STRING "Building bundled OpenMesh" FORCE)
