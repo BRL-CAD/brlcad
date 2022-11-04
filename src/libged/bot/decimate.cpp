@@ -68,7 +68,7 @@
 typedef OpenMesh::TriMesh_ArrayKernelT<>  TriMesh;
 
 static struct rt_bot_internal *
-bot_decimate(struct ged *gedp, struct rt_bot_internal *input_bot, int alg, double max_err)
+om_bot_decimate(struct ged *gedp, struct rt_bot_internal *input_bot, double max_err)
 {
     if (!gedp || !input_bot)
 	return NULL;
@@ -95,21 +95,20 @@ bot_decimate(struct ged *gedp, struct rt_bot_internal *input_bot, int alg, doubl
 	trimesh.add_face(indices);
     }
 
-    /* initialize decimater */
-    switch (alg) {
-	default:
-	    {
-		OpenMesh::Decimater::DecimaterT<TriMesh> decimater(trimesh);
-		OpenMesh::Decimater::ModQuadricT<TriMesh>::Handle hModQuadric;
-		decimater.add(hModQuadric);
-		decimater.module(hModQuadric).unset_max_err();
-		decimater.initialize();
-		decimater.module(hModQuadric).set_max_err(max_err);
-		decimater.decimate();
-		trimesh.garbage_collection();
-		break;
-	    }
-    }
+    /* initialize decimater
+     * TODO - study the openflipper plugin to see how the various constraints
+     * offered by open mesh (edge length, aspect ratio, etc.) can be optionally
+     * incorporated.  See:
+     * https://www.graphics.rwth-aachen.de/media/openmesh_static/Documentations/OpenMesh-6.2-Documentation/a00004.html
+     */
+    OpenMesh::Decimater::DecimaterT<TriMesh> decimater(trimesh);
+    OpenMesh::Decimater::ModQuadricT<TriMesh>::Handle hModQuadric;
+    decimater.add(hModQuadric);
+    decimater.module(hModQuadric).unset_max_err();
+    decimater.initialize();
+    decimater.module(hModQuadric).set_max_err(max_err);
+    decimater.decimate();
+    trimesh.garbage_collection();
 
     /* convert mesh back to bot */
     struct rt_bot_internal *obot = NULL;
@@ -180,7 +179,7 @@ bot_decimate(struct ged *gedp, struct rt_bot_internal *input_bot, int alg, doubl
 #else /* BUILD_OPENMESH_TOOLS */
 
 static bool
-bot_decimate(struct ged* gedp, struct rt_bot_internal* UNUSED(bot), int UNUSED(alg), double UNUSED(max_err))
+om_bot_decimate(struct ged* gedp, struct rt_bot_internal* UNUSED(bot), int UNUSED(alg), double UNUSED(max_err))
 {
     bu_vls_printf(gedp->ged_result_str,
 	"WARNING: BoT OpenMesh subcommands are unavailable.\n"
@@ -217,7 +216,6 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	return BRLCAD_OK;
     }
 
-    int error_metric = 0;
     int print_help = 0;
     double max_error = 1000.0;
     double feature_size = 0.0;
@@ -225,9 +223,8 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     struct bu_opt_desc d[5];
     BU_OPT(d[0], "h",      "help",     "",            NULL, &print_help,   "Print help");
     BU_OPT(d[1], "f", "feature-size", "#", &bu_opt_fastf_t, &feature_size, "Feature size (implies use of GCT decimator)");
-    BU_OPT(d[2], "A", "algorithm",    "#",     &bu_opt_int, &error_metric, "Decimation error metric to use (OpenMesh)");
-    BU_OPT(d[3], "e", "max-error",    "#", &bu_opt_fastf_t, &max_error,    "Maximum allowed error introduced by decimation (OpenMesh)");
-    BU_OPT_NULL(d[4]);
+    BU_OPT(d[2], "e", "max-error",    "#", &bu_opt_fastf_t, &max_error,    "Maximum allowed error introduced by decimation (OpenMesh)");
+    BU_OPT_NULL(d[3]);
 
     // We know we're the decimate command - start processing args
     argc--; argv++;
@@ -260,8 +257,8 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     bu_log("INPUT BoT has %zu vertices and %zu faces, max_err = %f\n", input_bot->num_vertices, input_bot->num_faces, max_error);
 
     if (feature_size > 0) {
-
-	// Copy input bot
+	// If feature size is specified, we're using the GCT algorithm rather than OpenMesh. Copy input bot
+	// so we can work on it.
 	struct directory *dp = db_diradd(dbip, bu_vls_cstr(&output_bot_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type);
 	if (dp == RT_DIR_NULL) {
 	    bu_vls_free(&output_bot_name);
@@ -276,7 +273,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, gedp->dbip->db_resp, BRLCAD_ERROR);
 	struct rt_bot_internal *obot = (struct rt_bot_internal*)intern.idb_ptr;
 
-	// Decimate
+	// Decimate with GCT
 	size_t edges_removed;
 	feature_size *= gedp->dbip->dbi_local2base;
 	edges_removed = rt_bot_decimate_gct(obot, feature_size);
@@ -291,7 +288,8 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	return BRLCAD_OK;
     }
 
-    struct rt_bot_internal *output_bot = bot_decimate(gedp, input_bot, error_metric, max_error);
+    // Not using GCT - go with OpenMesh
+    struct rt_bot_internal *output_bot = om_bot_decimate(gedp, input_bot, max_error);
     if (!output_bot) {
 	bu_vls_free(&output_bot_name);
 	return BRLCAD_ERROR;
