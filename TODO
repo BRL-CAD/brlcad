@@ -435,11 +435,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * Fedora doesn't have the old fonts mged assumes: dm-X: Can't open font '9x15' or '-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1'
 
-* Investigate using https://github.com/weiss/c99-snprintf to guarantee
-  snprintf cross-platform.  There are potential drawbacks to the current
-  MSVC approach pre Visual Studio 2015 (_snprintf doesn't null terminate
-  on overflow, and _snprintf_s returns -1 on overflow...)
-
 * lay out filesystem and URI models for database storage and access -
   these design decisions are fundamental and have broad implications for many
   other design decisions.  Issues to consider include where and how versioning,
