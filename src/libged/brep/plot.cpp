@@ -1092,7 +1092,7 @@ extern "C" int
 _brep_cmd_curve_3d_plot(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname1> plot C3 [[index][index-index]]";
-    const char *purpose_string = "3D parameter space geometric curves";
+    const char *purpose_string = "3D geometric curves";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
