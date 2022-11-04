@@ -1277,6 +1277,7 @@ _brep_cmd_valid(void *bs, int argc, const char **argv)
     return brep_valid(gedp->ged_result_str, &gb->intern, argc, argv);
 }
 
+#if 0
 extern "C" int
 _brep_cmd_weld(void *bs, int argc, const char **argv)
 {
@@ -1298,6 +1299,7 @@ _brep_cmd_weld(void *bs, int argc, const char **argv)
     bu_vls_printf(gb->gedp->ged_result_str, "UNIMPLEMENTED\n");
     return BRLCAD_ERROR;
 }
+#endif
 
 const struct bu_cmdtab _brep_cmds[] = {
     { "bool",            _brep_cmd_boolean},
@@ -1317,7 +1319,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "shrink_surfaces", _brep_cmd_shrink_surfaces},
     { "tikz",            _brep_cmd_tikz},
     { "valid",           _brep_cmd_valid},
-    { "weld",            _brep_cmd_weld},
+    //{ "weld",            _brep_cmd_weld},
     { (char *)NULL,      NULL}
 };
 
