@@ -510,7 +510,7 @@ _brep_pick_help(struct _ged_brep_ipick *bs, int argc, const char **argv)
 {
     struct _ged_brep_ipick *gb = (struct _ged_brep_ipick *)bs;
     if (!argc || !argv) {
-	bu_vls_printf(gb->vls, "brep [options] <objname> plot <subcommand> [args]\n");
+	bu_vls_printf(gb->vls, "brep [options] <objname> pick <subcommand> [args]\n");
 	bu_vls_printf(gb->vls, "Available subcommands:\n");
 	const struct bu_cmdtab *ctp = NULL;
 	int ret;

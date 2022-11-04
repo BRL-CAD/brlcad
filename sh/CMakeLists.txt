@@ -23,6 +23,7 @@ install(PROGRAMS ${sh_SCRIPTS} DESTINATION ${BIN_DIR} PERMISSIONS OWNER_EXECUTE 
 set(noinst_SCRIPTS
   copyright.sh
   enumerate.sh
+  facetall.sh
   footer.sh
   fs2org.sh
   header.sh

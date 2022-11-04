@@ -4513,12 +4513,6 @@ to_new_view(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "ogl"))
 	type = argv[2];
 
-    if (BU_STR_EQUAL(argv[2], "osg"))
-	type = argv[2];
-
-    if (BU_STR_EQUAL(argv[2], "osgl"))
-	type = argv[2];
-
     if (BU_STR_EQUAL(argv[2], "wgl"))
 	type = argv[2];
 
@@ -5826,6 +5820,7 @@ to_snap_view(struct ged *gedp,
 
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
     gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
+    gdvp->gv_base2local = gedp->dbip->dbi_base2local;
 
     gedp->ged_gvp = gdvp;
     if (!gedp->ged_gvp->gv_s->gv_snap_lines && !gedp->ged_gvp->gv_s->gv_grid.snap) {

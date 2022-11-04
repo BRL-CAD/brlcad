@@ -25,26 +25,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * document user-visible changes
 
-  - a1773fc2bf02f59eafbcf56e3170be22be986260 changed brep command, and
-    more subcommands were added later.  looks like some were stubbed,
-    should be disabled/hidden.
-
-  - when draw -S was fixed to work with -m1 option
-
-  - when primitive select causing solids to disappear was fixed
-
 * asc2g is failing on "put" command (maybe specific to 32-bit),
   resulting in "unknown command" on an uninstalled build.  title and
   units commands work, but puts fails inside ged_exec().
-
-* snap grid mode is failing in Archer (user report, most likely related
-  to one of the code refactorings breaking something.)
-
-* Overlap tool in MGED is not handling no overlaps reporting correctly.
-
-* Overlap tool needs to have basic documentation written.
-
-* gqa is crashing when supplied all.g/box.r as an object argument
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -323,12 +306,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   with respect to mode (i.e. correctly using setmode/O_BINARY when
   performing file I/O.)
 
-* the osgl libdm backend has what appears to be an off-by-one-pixel
-  error in the x and y directions with respect to mouse placement.
-  Using kmag, can see that putting the mouse cursor over the center
-  yellow dot and center clicking (which should be a no-op, and is
-  with ogl) results in the scene shifting slightly.
-
 * replace los references/terminology with span, len, dist, factor, etc
   accordingly since los is ambiguous and a source of user confusion.
 
@@ -457,11 +434,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   we can upgrade to these for our DocBook processing
 
 * Fedora doesn't have the old fonts mged assumes: dm-X: Can't open font '9x15' or '-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1'
-
-* Investigate using https://github.com/weiss/c99-snprintf to guarantee
-  snprintf cross-platform.  There are potential drawbacks to the current
-  MSVC approach pre Visual Studio 2015 (_snprintf doesn't null terminate
-  on overflow, and _snprintf_s returns -1 on overflow...)
 
 * lay out filesystem and URI models for database storage and access -
   these design decisions are fundamental and have broad implications for many
