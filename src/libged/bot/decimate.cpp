@@ -220,12 +220,14 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     int error_metric = 0;
     int print_help = 0;
     double max_error = 1000.0;
+    double feature_size = 0.0;
 
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h",      "help",  "",            NULL,   &print_help, "Print help");
-    BU_OPT(d[1], "A", "algorithm", "#",     &bu_opt_int, &error_metric, "Decimation error metric to use");
-    BU_OPT(d[2], "e", "max-error", "#", &bu_opt_fastf_t,    &max_error, "Maximum allowed error introduced by decimation");
-    BU_OPT_NULL(d[3]);
+    struct bu_opt_desc d[5];
+    BU_OPT(d[0], "h",      "help",     "",            NULL, &print_help,   "Print help");
+    BU_OPT(d[1], "f", "feature-size", "#", &bu_opt_fastf_t, &feature_size, "Feature size (implies use of GCT decimator)");
+    BU_OPT(d[2], "A", "algorithm",    "#",     &bu_opt_int, &error_metric, "Decimation error metric to use (OpenMesh)");
+    BU_OPT(d[3], "e", "max-error",    "#", &bu_opt_fastf_t, &max_error,    "Maximum allowed error introduced by decimation (OpenMesh)");
+    BU_OPT_NULL(d[4]);
 
     // We know we're the decimate command - start processing args
     argc--; argv++;
@@ -257,13 +259,45 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 
     bu_log("INPUT BoT has %zu vertices and %zu faces, max_err = %f\n", input_bot->num_vertices, input_bot->num_faces, max_error);
 
+    if (feature_size > 0) {
+
+	// Copy input bot
+	struct directory *dp = db_diradd(dbip, bu_vls_cstr(&output_bot_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type);
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_free(&output_bot_name);
+	    return BRLCAD_ERROR;
+	}
+	bu_vls_free(&output_bot_name);
+	if (rt_db_put_internal(dp, dbip, gb->intern, &rt_uniresource) < 0) {
+	    return BRLCAD_ERROR;
+	}
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, gedp->dbip->db_resp, BRLCAD_ERROR);
+	struct rt_bot_internal *obot = (struct rt_bot_internal*)intern.idb_ptr;
+
+	// Decimate
+	size_t edges_removed;
+	feature_size *= gedp->dbip->dbi_local2base;
+	edges_removed = rt_bot_decimate_gct(obot, feature_size);
+	bu_log("[GCT] OUTPUT BoT has %zu vertices and %zu faces (%zu edges removed)\n", obot->num_vertices, obot->num_faces, edges_removed);
+
+	// Write decimation to disk
+	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+	    rt_db_free_internal(&intern);
+	    return BRLCAD_ERROR;
+	}
+
+	return BRLCAD_OK;
+    }
+
     struct rt_bot_internal *output_bot = bot_decimate(gedp, input_bot, error_metric, max_error);
     if (!output_bot) {
 	bu_vls_free(&output_bot_name);
 	return BRLCAD_ERROR;
     }
 
-    bu_log("OUTPUT BoT has %zu vertices and %zu faces\n", output_bot->num_vertices, output_bot->num_faces);
+    bu_log("[OM] OUTPUT BoT has %zu vertices and %zu faces\n", output_bot->num_vertices, output_bot->num_faces);
 
     /* Export BOT as a new solid */
     struct rt_db_internal intern;
