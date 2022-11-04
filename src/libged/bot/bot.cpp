@@ -707,6 +707,7 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "isect",      _bot_cmd_isect},
     { "remesh",     _bot_cmd_remesh},
     { "set",        _bot_cmd_set},
+    { "smooth",     _bot_cmd_smooth},
     { "split",      _bot_cmd_split},
     { "stat",       _bot_cmd_stat},
     { "subd",       _bot_cmd_subd},

@@ -1,4 +1,4 @@
-/*                B O T _ S U B D I V I D E . C P P
+/*                  S U B D I V I D E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2019-2022 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
- /** @file libged/bot/bot_subdivide.cpp
+ /** @file libged/bot/subdivide.cpp
   *
   * Subdivide a BoT using OpenMesh
   * based on remesh.cpp
