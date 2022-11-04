@@ -306,12 +306,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   with respect to mode (i.e. correctly using setmode/O_BINARY when
   performing file I/O.)
 
-* the osgl libdm backend has what appears to be an off-by-one-pixel
-  error in the x and y directions with respect to mouse placement.
-  Using kmag, can see that putting the mouse cursor over the center
-  yellow dot and center clicking (which should be a no-op, and is
-  with ogl) results in the scene shifting slightly.
-
 * replace los references/terminology with span, len, dist, factor, etc
   accordingly since los is ambiguous and a source of user confusion.
 
