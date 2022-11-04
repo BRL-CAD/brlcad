@@ -25,10 +25,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * document user-visible changes
 
-  - a1773fc2bf02f59eafbcf56e3170be22be986260 changed brep command, and
-    more subcommands were added later.  looks like some were stubbed,
-    should be disabled/hidden.
-
 * asc2g is failing on "put" command (maybe specific to 32-bit),
   resulting in "unknown command" on an uninstalled build.  title and
   units commands work, but puts fails inside ged_exec().

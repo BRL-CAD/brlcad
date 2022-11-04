@@ -1229,7 +1229,7 @@ extern "C" int
 _brep_cmd_tikz(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> tikz <outfile>";
-    const char *purpose_string = "generate Tikz 3dplot of BRep object";
+    const char *purpose_string = "generate PGF/TikZ 3D plot of BRep object";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }

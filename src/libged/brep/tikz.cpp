@@ -19,7 +19,7 @@
  */
 /** @file libged/brep/tikz.cpp
  *
- * The brep command logic for exporting Tikz plotting files.
+ * The brep command logic for exporting TikZ plotting files.
  *
  */
 

@@ -41,7 +41,7 @@
       <cmdsynopsis>
         <command>C2</command>
         <group choice="opt" rep="norepeat">
-          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat"><replaceable>index[,index]</replaceable></arg>
           <arg choice="plain" rep="norepeat">
             <replaceable>index</replaceable>-<replaceable>index</replaceable>
           </arg>
@@ -56,11 +56,11 @@
         </listitem>
       </varlistentry>
     </variablelist>
-<variablelist>
+    <variablelist>
       <cmdsynopsis>
         <command>C3</command>
         <group choice="opt" rep="norepeat">
-          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat"><replaceable>index[,index]</replaceable></arg>
           <arg choice="plain" rep="norepeat">
             <replaceable>index</replaceable>-<replaceable>index</replaceable>
           </arg>
@@ -79,7 +79,7 @@
       <cmdsynopsis>
         <command>E</command>
         <group choice="opt" rep="norepeat">
-          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat"><replaceable>index[,index]</replaceable></arg>
           <arg choice="plain" rep="norepeat">
             <replaceable>index</replaceable>-<replaceable>index</replaceable>
           </arg>
@@ -98,7 +98,7 @@
       <cmdsynopsis>
         <command>F</command>
         <group choice="opt" rep="norepeat">
-          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat"><replaceable>index[,index]</replaceable></arg>
           <arg choice="plain" rep="norepeat">
             <replaceable>index</replaceable>-<replaceable>index</replaceable>
           </arg>
@@ -117,7 +117,7 @@
       <cmdsynopsis>
 	<command>L</command>
         <group choice="opt" rep="norepeat">
-          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat"><replaceable>index[,index]</replaceable></arg>
           <arg choice="plain" rep="norepeat">
             <replaceable>index</replaceable>-<replaceable>index</replaceable>
           </arg>
@@ -136,7 +136,7 @@
       <cmdsynopsis>
         <command>S</command>
         <group choice="opt" rep="norepeat">
-          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat"><replaceable>index[,index]</replaceable></arg>
           <arg choice="plain" rep="norepeat">
             <replaceable>index</replaceable>-<replaceable>index</replaceable>
           </arg>
@@ -155,7 +155,7 @@
       <cmdsynopsis>
         <command>SB</command>
         <group choice="opt" rep="norepeat">
-          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat"><replaceable>index[,index]</replaceable></arg>
           <arg choice="plain" rep="norepeat">
             <replaceable>index</replaceable>-<replaceable>index</replaceable>
           </arg>
@@ -174,7 +174,7 @@
       <cmdsynopsis>
         <command>T</command>
         <group choice="opt" rep="norepeat">
-          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat"><replaceable>index[,index]</replaceable></arg>
           <arg choice="plain" rep="norepeat">
             <replaceable>index</replaceable>-<replaceable>index</replaceable>
           </arg>
@@ -193,7 +193,7 @@
       <cmdsynopsis>
         <command>TB</command>
         <group choice="opt" rep="norepeat">
-          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat"><replaceable>index[,index]</replaceable></arg>
           <arg choice="plain" rep="norepeat">
             <replaceable>index</replaceable>-<replaceable>index</replaceable>
           </arg>
@@ -212,7 +212,7 @@
       <cmdsynopsis>
         <command>V</command>
         <group choice="req" rep="norepeat">
-          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat"><replaceable>index[,index]</replaceable></arg>
           <arg choice="plain" rep="norepeat">
             <replaceable>index</replaceable>-<replaceable>index</replaceable>
           </arg>
@@ -324,7 +324,27 @@ Control Points  10 rational points
         Detailed information on the geometric data defining the surface.
       </para>
     </example>
-    
+
+    <example><title>Multiple loops</title>
+
+      <para>
+        <prompt>mged&gt; </prompt><userinput>brep Brep_1.s info L 1,5,12</userinput>
+        <literallayout class="normal">
+loop[1] on face 1 with 4 trims
+trims: 4,5,6,7
+
+loop[5] on face 5 with 4 trims
+trims: 20,21,22,23
+
+loop[12] on face 12 with 4 trims
+trims: 48,49,50,51
+        </literallayout>
+      </para>
+      <para>
+        Report the trims making up multiple loops.
+      </para>
+    </example>
+
   </refsection>
 
   <refsection xml:id='author'>

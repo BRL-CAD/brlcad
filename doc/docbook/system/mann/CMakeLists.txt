@@ -35,6 +35,9 @@ set(mann_EN
   bot_vertex_fuse.xml
   brep.xml
   brep_info.xml
+  brep_intersect.xml
+  brep_plot.xml
+  brep_selection.xml
   build_region.xml
   c.xml
   cat.xml

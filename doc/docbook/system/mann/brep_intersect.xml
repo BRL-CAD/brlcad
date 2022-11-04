@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="brep">
+
+  <refmeta>
+    <refentrytitle>BREP INTERSECT</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='manual'>BRL-CAD MGED User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id='name'>
+    <refname>brep intersect</refname>
+    <refpurpose>
+      Intersect components of specified BRep solids.
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id='synopsis'>
+    <cmdsynopsis>
+      <command>brep</command>
+      <arg choice="req" rep="norepeat"><replaceable>obj</replaceable></arg>
+      <command> intersect</command>
+      <arg choice="opt" rep="norepeat"><replaceable>append|translate</replaceable></arg>
+      <arg choice="opt"><replaceable>arguments</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection xml:id='description'>
+    <title>DESCRIPTION</title>
+    <para>
+      Low level routines for intersecting elements of BRep solids and visualizing the results.
+    </para>
+
+    <variablelist>
+      <cmdsynopsis>
+        <command>intersect</command>
+        <arg choice="req" rep="norepeat"><replaceable>obj2</replaceable></arg>
+        <arg choice="req" rep="norepeat"><replaceable>i</replaceable></arg>
+        <arg choice="req" rep="norepeat"><replaceable>j</replaceable></arg>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat">PP</arg>
+          <arg choice="plain" rep="norepeat">PC</arg>
+          <arg choice="plain" rep="norepeat">PS</arg>
+          <arg choice="plain" rep="norepeat">CC</arg>
+          <arg choice="plain" rep="norepeat">CS</arg>
+          <arg choice="plain" rep="norepeat">SS</arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Visualize intersecting two BREP objects.  The last
+            argument specifies what portions of each to intersect; if
+            it is not specified, it defaults to SS:
+            <variablelist>
+              <varlistentry>
+                <term>PP</term>
+                <listitem>
+                  <para>Intersect a point from the first object with a
+                  point from the second.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>PC</term>
+                <listitem>
+                  <para>Intersect a point from the first object with a
+                  curve from the second.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>PS</term>
+                <listitem>
+                  <para>Intersect a point from the first object with a
+                  surface from the second.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>CC</term>
+                <listitem>
+                  <para>Intersect a curve from the first object with
+                  a curve from of the second.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>CS</term>
+                <listitem>
+                  <para>Intersect a curve from the first object with a
+                  surface from the second</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>SS</term>
+                <listitem>
+                  <para>Intersect a surface from the first object with
+                  a surface from the second.</para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+  </refsection>
+
+  <refsection xml:id='author'>
+    <title>AUTHOR</title>
+    <para>BRLCAD-TEAM</para>
+  </refsection>
+
+  <refsection xml:id='bug_reports'>
+    <title>BUG REPORTS</title>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to <email>devs@brlcad.org</email>
+    </para>
+  </refsection>
+</refentry>
+
