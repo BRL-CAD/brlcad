@@ -164,6 +164,12 @@ MGED gui
 
 	Settings->Mouse Behavior->Pick Raytrace-Object(s)
 
+MGED overlay command
+	Instead of an optional second argument being the view object
+	name, command will take (potentially) multiple plot files
+	as input to overlay.  Optional view object name will be
+	specified with the -N option.
+
 7.30
 ----
 ~/.density
