@@ -34,6 +34,7 @@ set(mann_EN
   bot_sync.xml
   bot_vertex_fuse.xml
   brep.xml
+  brep_info.xml
   build_region.xml
   c.xml
   cat.xml
