@@ -35,6 +35,7 @@
 #  pragma clang diagnostic push /* start new diagnostic pragma */
 #  pragma clang diagnostic ignored "-Wunused-parameter"
 #  pragma clang diagnostic ignored "-Wfloat-equal"
+#  pragma clang diagnostic ignored "-Wdocumentation"
 #endif
 #include "OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh"
 #include "OpenMesh/Tools/Decimater/DecimaterT.hh"

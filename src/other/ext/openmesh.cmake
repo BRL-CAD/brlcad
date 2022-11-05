@@ -14,7 +14,7 @@ THIRD_PARTY(openmesh OPENMESH openmesh
   )
 
 if (BRLCAD_OPENMESH_BUILD)
-  set(OM_MAJOR_VERION 9)
+  set(OM_MAJOR_VERSION 9)
   set(OM_MINOR_VERSION 0)
   set(OM_PATCH_VERSION 0)
 
@@ -28,7 +28,7 @@ if (BRLCAD_OPENMESH_BUILD)
   elseif (APPLE)
     set(OPENMESH_BASENAME libOpenMeshCore)
     set(OPENMESH_STATICNAME libOpenMeshCore)
-    set(OPENMESH_SUFFIX ${OM_MAJOR_VERSION}.${OM_MINOR_VERSION}.{CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(OPENMESH_SUFFIX .${OM_MAJOR_VERSION}.${OM_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
   elseif (OPENBSD)
     set(OPENMESH_BASENAME libOpenMeshCore)
     set(OPENMESH_STATICNAME libOpenMeshCore)
@@ -36,7 +36,7 @@ if (BRLCAD_OPENMESH_BUILD)
   else (MSVC)
     set(OPENMESH_BASENAME libOpenMesh)
     set(OPENMESH_STATICNAME libOpenMesh)
-    set(OPENMESH_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.${OM_MAJOR_VERION}.${OM_MINOR_VERSION})
+    set(OPENMESH_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX}.${OM_MAJOR_VERSION}.${OM_MINOR_VERSION})
   endif (MSVC)
 
   set(OPENMESH_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/openmesh)
@@ -213,8 +213,6 @@ if (BRLCAD_OPENMESH_BUILD)
     Tools/Kernel_OSG/Traits.hh
     Tools/Kernel_OSG/TriMesh_OSGArrayKernelT.hh
     Tools/Kernel_OSG/VectorAdapter.hh
-    Tools/SmartTagger/SmartTaggerT.hh
-    Tools/SmartTagger/SmartTaggerT_impl.hh
     Tools/Smoother/JacobiLaplaceSmootherT.hh
     Tools/Smoother/JacobiLaplaceSmootherT_impl.hh
     Tools/Smoother/LaplaceSmootherT.hh
@@ -288,7 +286,6 @@ if (BRLCAD_OPENMESH_BUILD)
   set(OPENMESH_TOOLS_DECIMATER_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/Decimater CACHE STRING "Building bundled OpenMesh" FORCE)
   set(OPENMESH_TOOLS_DUALIZER_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/Dualizer CACHE STRING "Building bundled OpenMesh" FORCE)
   set(OPENMESH_TOOLS_KERNERL_OSG_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/Kernel_OSG CACHE STRING "Building bundled OpenMesh" FORCE)
-  set(OPENMESH_TOOLS_SMARTTAGGER_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/SmartTagger CACHE STRING "Building bundled OpenMesh" FORCE)
   set(OPENMESH_TOOLS_SMOOTHER_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/Smoother CACHE STRING "Building bundled OpenMesh" FORCE)
   set(OPENMESH_TOOLS_SUBDIVIDER_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/Subdivider CACHE STRING "Building bundled OpenMesh" FORCE)
   set(OPENMESH_TOOLS_UTILS_DIR ${CMAKE_BINARY_ROOT}/${INCLUDE_DIR}/OpenMesh/Tools/Utils CACHE STRING "Building bundled OpenMesh" FORCE)
@@ -303,7 +300,6 @@ if (BRLCAD_OPENMESH_BUILD)
     ${OPENMESH_TOOLS_DECIMATER_DIR}
     ${OPENMESH_TOOLS_DUALIZER_DIR}
     ${OPENMESH_TOOLS_KERNERL_OSG_DIR}
-    ${OPENMESH_TOOLS_SMARTTAGGER_DIR}
     ${OPENMESH_TOOLS_SMOOTHER_DIR}
     ${OPENMESH_TOOLS_SUBDIVIDER_DIR}
     ${OPENMESH_TOOLS_UTILS_DIR}
