@@ -61,7 +61,7 @@ _brep_cmd_curve_2d_info(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info C2 [[index][index-index]]";
     const char *purpose_string = "2D parameter space geometric curves";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -70,8 +70,8 @@ _brep_cmd_curve_2d_info(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gib->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -89,7 +89,7 @@ _brep_cmd_curve_2d_info(void *bs, int argc, const char **argv)
 	ON_wString wstr;
 	ON_TextLog dump(wstr);
 	if (!((ci >= 0) && (ci < brep->m_C2.Count()))) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	const ON_Curve *curve = brep->m_C2[ci];
 	ON_NurbsCurve* nc2 = ON_NurbsCurve::New();
@@ -103,7 +103,7 @@ _brep_cmd_curve_2d_info(void *bs, int argc, const char **argv)
 
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // C3 - 3D edge curves
@@ -113,7 +113,7 @@ _brep_cmd_curve_3d_info(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info C3 [[index][index-index]]";
     const char *purpose_string = "3D parameter space geometric curves";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -122,8 +122,8 @@ _brep_cmd_curve_3d_info(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gib->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -141,7 +141,7 @@ _brep_cmd_curve_3d_info(void *bs, int argc, const char **argv)
 	ON_wString wstr;
 	ON_TextLog dump(wstr);
 	if (!((ci >= 0) && (ci < brep->m_C3.Count()))) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	const ON_Curve *curve = brep->m_C3[ci];
 	ON_NurbsCurve* nc3 = ON_NurbsCurve::New();
@@ -155,7 +155,7 @@ _brep_cmd_curve_3d_info(void *bs, int argc, const char **argv)
 
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // E - topological edges
@@ -165,7 +165,7 @@ _brep_cmd_edge_info(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info E [[index][index-index]]";
     const char *purpose_string = "topological 3D edges";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -174,8 +174,8 @@ _brep_cmd_edge_info(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gib->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -193,7 +193,7 @@ _brep_cmd_edge_info(void *bs, int argc, const char **argv)
 	ON_wString wstr;
 	ON_TextLog dump(wstr);
 	if (!((ei >= 0) && (ei < brep->m_E.Count()))) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	const ON_BrepEdge &edge = brep->m_E[ei];
 	int trim_cnt = edge.m_ti.Count();
@@ -225,7 +225,7 @@ _brep_cmd_edge_info(void *bs, int argc, const char **argv)
 
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // F - topological faces
@@ -235,7 +235,7 @@ _brep_cmd_face_info(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info F [[index][index-index]]";
     const char *purpose_string = "topological faces";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -244,8 +244,8 @@ _brep_cmd_face_info(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gib->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -262,7 +262,7 @@ _brep_cmd_face_info(void *bs, int argc, const char **argv)
 	ON_wString s;
 	ON_TextLog dump(s);
 	if (!((fi >= 0) && (fi < brep->m_F.Count()))) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	//ON_wString s;
 	//ON_TextLog dump(s);
@@ -390,7 +390,7 @@ _brep_cmd_face_info(void *bs, int argc, const char **argv)
 	bu_vls_printf(gib->vls, "%s\n", ss.Array());
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // L - 2D parameter space topological trimming loops
@@ -400,7 +400,7 @@ _brep_cmd_loop_info(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info L [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trimming loops";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -409,8 +409,8 @@ _brep_cmd_loop_info(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gib->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -426,7 +426,7 @@ _brep_cmd_loop_info(void *bs, int argc, const char **argv)
 	ON_wString wstr;
 	ON_TextLog dump(wstr);
 	if (!((li >= 0) && (li < brep->m_L.Count()))) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	const ON_BrepLoop &loop = brep->m_L[li];
 	dump.Print("loop[%d] on face %d with %d trims\n", li, loop.m_fi, loop.TrimCount());
@@ -441,7 +441,7 @@ _brep_cmd_loop_info(void *bs, int argc, const char **argv)
 	bu_vls_printf(gib->vls, "%s\n", ss.Array());
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // S - surfaces
@@ -451,7 +451,7 @@ _brep_cmd_surface_info(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info S [[index][index-index]]";
     const char *purpose_string = "surfaces";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -460,8 +460,8 @@ _brep_cmd_surface_info(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gib->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -478,7 +478,7 @@ _brep_cmd_surface_info(void *bs, int argc, const char **argv)
 	ON_wString wonstr;
 	ON_TextLog info_output(wonstr);
 	if (!((si >= 0) && (si < brep->m_S.Count()))) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	const ON_Surface* srf = brep->m_S[si];
 	if (srf) {
@@ -507,7 +507,7 @@ _brep_cmd_surface_info(void *bs, int argc, const char **argv)
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // SB - piecewise Bezier surfaces
@@ -517,7 +517,7 @@ _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info SB [[index][index-index]]";
     const char *purpose_string = "piecewise Bezier surfaces";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -526,8 +526,8 @@ _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gib->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -544,7 +544,7 @@ _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
 	ON_wString wonstr;
 	ON_TextLog info_output(wonstr);
 	if (!((si >= 0) && (si < brep->m_S.Count()))) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	const ON_Surface* srf = brep->m_S[si];
 	if (srf) {
@@ -595,7 +595,7 @@ _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // T - 2D topological trims
@@ -605,7 +605,7 @@ _brep_cmd_trim_info(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info T [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trims";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -614,8 +614,8 @@ _brep_cmd_trim_info(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gib->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -632,7 +632,7 @@ _brep_cmd_trim_info(void *bs, int argc, const char **argv)
 	ON_wString wstr;
 	ON_TextLog dump(wstr);
 	if (!((ti >= 0) && (ti < brep->m_T.Count()))) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	const ON_BrepTrim &trim = brep->m_T[ti];
 	const ON_Surface* trim_srf = trim.SurfaceOf();
@@ -718,7 +718,7 @@ _brep_cmd_trim_info(void *bs, int argc, const char **argv)
 	bu_vls_printf(gib->vls, "%s\n", ss.Array());
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // TB - 2D piecewise Bezier trims
@@ -728,7 +728,7 @@ _brep_cmd_trim_bezier_info(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info TB [[index][index-index]]";
     const char *purpose_string = "2D piecewise Bezier trims";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -737,8 +737,8 @@ _brep_cmd_trim_bezier_info(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gib->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -755,7 +755,7 @@ _brep_cmd_trim_bezier_info(void *bs, int argc, const char **argv)
 	ON_wString wstr;
 	ON_TextLog dump(wstr);
 	if (!((ti >= 0) && (ti < brep->m_T.Count()))) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	const ON_BrepTrim &trim = brep->m_T[ti];
 	const ON_Curve* c2 = trim.TrimCurveOf();
@@ -784,7 +784,7 @@ _brep_cmd_trim_bezier_info(void *bs, int argc, const char **argv)
 	bu_vls_printf(gib->vls, "%s\n", ss.Array());
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // V - 3D vertices
@@ -795,7 +795,7 @@ _brep_cmd_vertex_info(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info V [[index][index-index]]";
     const char *purpose_string = "3D vertices";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -804,8 +804,8 @@ _brep_cmd_vertex_info(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gib->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -821,7 +821,7 @@ _brep_cmd_vertex_info(void *bs, int argc, const char **argv)
 	int vi = *e_it;
 
 	if (!((vi >= 0) && (vi < brep->m_V.Count()))) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	const ON_BrepVertex &vertex = brep->m_V[vi];
 	ON_3dPoint p = vertex.Point();
@@ -831,7 +831,7 @@ _brep_cmd_vertex_info(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gib->vls, "   m_E[%d]: %d -> %d\n", vertex.m_ei[i], edge.m_vi[0], edge.m_vi[1]);
 	}
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 static void
@@ -891,21 +891,21 @@ brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv)
 	bu_vls_printf(vls, "loops:     %d\n", brep->m_L.Count());
 	bu_vls_printf(vls, "trims:     %d\n", brep->m_T.Count());
 	bu_vls_printf(vls, "2d curves: %d\n", brep->m_C2.Count());
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc > 1 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
 	argc--;argv++;
 	argc--;argv++;
 	_brep_info_help(&gib, argc, argv);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // Must have valid subcommand to process
     if (bu_cmd_valid(_brep_info_cmds, argv[0]) != BRLCAD_OK) {
 	bu_vls_printf(gib.vls, "invalid subcommand \"%s\" specified\n", argv[0]);
 	_brep_info_help(&gib, 0, NULL);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int ret;
@@ -913,7 +913,7 @@ brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv)
 	return ret;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // Local Variables:

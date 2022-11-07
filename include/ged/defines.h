@@ -51,18 +51,7 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/** all okay return code, not a maskable result */
-#define GED_OK    0x0000
-
-/**
- * possible maskable return codes from ged functions.  callers should
- * not rely on the actual values but should instead test via masking.
- */
-#define GED_ERROR 0x0001 /**< something went wrong, the action was not performed */
-#define GED_HELP  0x0002 /**< invalid specification, result contains usage */
-#define GED_MORE  0x0004 /**< incomplete specification, can specify again interactively */
-#define GED_QUIET 0x0008 /**< don't set or modify the result string */
-#define GED_UNKNOWN 0x0010 /**< argv[0] was not a known command */
+#define BRLCAD_QUIET 0x0008 /**< don't set or modify the result string */
 
 #define GED_VMIN -2048.0
 #define GED_VMAX 2047.0
@@ -101,9 +90,9 @@ struct ged_callback_state;
 #define GED_SEM_LAST GED_SEM_LIST+1
 
 #define GED_INIT(_gedp, _wdbp) { \
-	ged_init((_gedp)); \
+    ged_init((_gedp)); \
 	(_gedp)->ged_wdbp = (_wdbp); \
-    }
+}
 
 #define GED_INITIALIZED(_gedp) ((_gedp)->ged_wdbp != RT_WDB_NULL)
 #define GED_LOCAL2BASE(_gedp) ((_gedp)->ged_wdbp->dbip->dbi_local2base)
@@ -316,7 +305,7 @@ GED_EXPORT extern struct ged *ged_open(const char *dbtype,
  */
 #define GED_CHECK_ARGC_GT_0(_gedp, _argc, _flags) \
     if ((_argc) < 1) { \
-	int ged_check_argc_gt_0_quiet = (_flags) & GED_QUIET; \
+	int ged_check_argc_gt_0_quiet = (_flags) & BRLCAD_QUIET; \
 	if (!ged_check_argc_gt_0_quiet) { \
 	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
 	    bu_vls_printf((_gedp)->ged_result_str, "Command name not provided on (%s:%d).", __FILE__, __LINE__); \

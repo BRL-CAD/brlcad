@@ -159,9 +159,9 @@ add_operator(struct ged *gedp, struct bu_list *hp, char *ptr, short int *last_to
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "Illegal operator: %c (0x%x), aborting\n", ptr[0], ptr[0]);
 	    free_tokens(hp);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -444,9 +444,9 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
     union tree *final_tree;
     static const char *usage = "[-cr] comb_name <boolean_expr>";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -454,12 +454,12 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Parse options */
@@ -477,7 +477,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	    case '?':
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return GED_OK;
+		return BRLCAD_OK;
 	}
     }
     argc -= (bu_optind + 1);
@@ -486,21 +486,21 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
     comb_name = (char *)*argv++;
     if (argc == -1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if ((region_flag != -1) && (argc == 0)) {
 	/*
 	 * Set/Reset the REGION flag of an existing combination
 	 */
-	GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+	GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
 
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s is not a combination\n", comb_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
 
@@ -516,9 +516,9 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	} else
 	    comb->region_flag = 0;
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
 
-	return GED_OK;
+	return BRLCAD_OK;
     }
     /*
      * At this point, we know we have a Boolean expression.
@@ -529,7 +529,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
      * Otherwise, make sure to set its c_flags according to region_flag.
      */
 
-    GED_CHECK_EXISTS(gedp, comb_name, LOOKUP_QUIET, GED_ERROR);
+    GED_CHECK_EXISTS(gedp, comb_name, LOOKUP_QUIET, BRLCAD_ERROR);
     dp = RT_DIR_NULL;
 
     /* parse Boolean expression */
@@ -561,9 +561,9 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (last_tok == TOK_RPAREN) {
 		/* next token MUST be an operator */
-		if (add_operator(gedp, &tok_hd.l, ptr, &last_tok) & GED_ERROR) {
+		if (add_operator(gedp, &tok_hd.l, ptr, &last_tok) & BRLCAD_ERROR) {
 		    free_tokens(&tok_hd.l);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		ptr++;
 	    } else if (last_tok == TOK_LPAREN) {
@@ -573,15 +573,15 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 		name_len = add_operand(gedp, &tok_hd.l, ptr);
 		if (name_len < 1) {
 		    free_tokens(&tok_hd.l);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		last_tok = TOK_TREE;
 		ptr += name_len;
 	    } else if (last_tok == TOK_TREE) {
 		/* must be an operator */
-		if (add_operator(gedp, &tok_hd.l, ptr, &last_tok) == GED_ERROR) {
+		if (add_operator(gedp, &tok_hd.l, ptr, &last_tok) == BRLCAD_ERROR) {
 		    free_tokens(&tok_hd.l);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		ptr++;
 	    } else if (last_tok == TOK_UNION ||
@@ -593,7 +593,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 		name_len = add_operand(gedp, &tok_hd.l, ptr);
 		if (name_len < 1) {
 		    free_tokens(&tok_hd.l);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		last_tok = TOK_TREE;
 		ptr += name_len;
@@ -603,7 +603,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 
     if (check_syntax(gedp, &tok_hd.l, comb_name, dp)) {
 	free_tokens(&tok_hd.l);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     final_tree = eval_bool(&tok_hd.l);
@@ -646,11 +646,11 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_meth = &OBJ[ID_COMBINATION];
 	intern.idb_ptr = (void *)comb;
 
-	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type, GED_ERROR);
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type, BRLCAD_ERROR);
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

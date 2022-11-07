@@ -2338,7 +2338,7 @@ dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx,
         gdlp = next_gdlp;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -2446,7 +2446,7 @@ dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, do
         gdlp = next_gdlp;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

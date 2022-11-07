@@ -39,9 +39,9 @@ ged_v2m_point_core(struct ged *gedp, int argc, const char *argv[])
     point_t model;
     static const char *usage = "x y z";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -49,35 +49,35 @@ ged_v2m_point_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 2 && argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 2) {
 	if (bn_decode_vect(view, argv[1]) != 3) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     } else {
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point_core: bad X value - %s\n", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point_core: bad Y value - %s\n", argv[2]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point_core: bad Z value - %s\n", argv[3]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* convert from double to fastf_t */
@@ -88,7 +88,7 @@ ged_v2m_point_core(struct ged *gedp, int argc, const char *argv[])
     MAT4X3PNT(model, gedp->ged_gvp->gv_view2model, view);
     bn_encode_vect(gedp->ged_result_str, model, 1);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

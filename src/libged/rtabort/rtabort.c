@@ -45,16 +45,16 @@ ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
     struct ged_subprocess *rrp;
     struct bu_vls cmdroot = BU_VLS_INIT_ZERO;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
@@ -73,7 +73,7 @@ ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_free(&cmdroot);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -58,10 +58,10 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
     int is_pipe = 0;
     static const char *usage = "file [2|3] [f] [g] [z]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -69,7 +69,7 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* Process any options */
@@ -105,7 +105,7 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
     }
     if (argv[1] == (char *)0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: no filename or filter specified\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (argv[1][0] == '|') {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -117,7 +117,7 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 	fp = popen(bu_vls_addr(&str), "wb");
 	if (fp == NULL) {
 	    perror(bu_vls_addr(&str));
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "piped to %s\n", bu_vls_addr(&str));
@@ -127,7 +127,7 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 	fp = fopen(argv[1], "wb");
 	if (fp == NULL) {
 	    perror(argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "plot stored in %s\n", argv[1]);
@@ -141,7 +141,7 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
     else
 	(void)fclose(fp);
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

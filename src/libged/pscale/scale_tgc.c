@@ -75,19 +75,19 @@ _ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attrib
 				VSCALE(tgc->d, tgc->d, ma/mb);
 			    } else {
 				bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-				return GED_ERROR;
+				return BRLCAD_ERROR;
 			    }
 
 			    break;
 			default:
 			    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-			    return GED_ERROR;
+			    return BRLCAD_ERROR;
 		    }
 
 		    break;
 		default:
 		    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 	    }
 
 	    break;
@@ -116,7 +116,7 @@ _ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attrib
 		    break;
 		default:
 		    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 	    }
 
 	    break;
@@ -164,7 +164,7 @@ _ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attrib
 			}
 		    } else {
 			bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-			return GED_ERROR;
+			return BRLCAD_ERROR;
 		    }
 
 		    break;
@@ -211,28 +211,28 @@ _ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attrib
 				}
 			    } else {
 				bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-				return GED_ERROR;
+				return BRLCAD_ERROR;
 			    }
 
 			    break;
 			default:
 			    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-			    return GED_ERROR;
+			    return BRLCAD_ERROR;
 		    } /* switch (attribute[2]) */
 
 		    break;
 		default:
 		    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 	    } /* switch (attribute[1]) */
 
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     } /* switch (attribute[0]) */
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

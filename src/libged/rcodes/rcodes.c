@@ -46,9 +46,9 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -56,18 +56,18 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s filename", argv[0]);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s filename", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     fp = fopen(argv[1], "r");
     if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Failed to read file - %s", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     while (bu_fgets(line, RT_MAXLINE, fp) != NULL) {
@@ -134,7 +134,7 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 
 		rt_db_free_internal(&intern);
 		fclose(fp);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 	g_changed += (size_t)changed;
@@ -152,7 +152,7 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

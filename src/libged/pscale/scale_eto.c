@@ -114,10 +114,10 @@ _ged_scale_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attrib
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "bad eto attribute - %s", attribute);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

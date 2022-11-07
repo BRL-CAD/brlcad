@@ -41,9 +41,9 @@ ged_view2model_core_lu(struct ged *gedp, int argc, const char *argv[])
     double scan[3];
     static const char *usage = "x y z";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -65,11 +65,11 @@ ged_view2model_core_lu(struct ged *gedp, int argc, const char *argv[])
 
     bn_encode_vect(gedp->ged_result_str, model_pt, 1);
 
-    return GED_OK;
+    return BRLCAD_OK;
 
 bad:
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

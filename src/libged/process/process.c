@@ -94,7 +94,7 @@ _ged_process_list(struct ged *gedp)
 	bu_vls_printf(gedp->ged_result_str, "No currently running GED subprocesses.");
     }
     bu_vls_free(&plist);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 HIDDEN int
@@ -113,7 +113,7 @@ _ged_process_pabort(struct ged *gedp, int argc, const char **argv)
 	    int pid;
 	    if (bu_opt_int(NULL, 1, (const char **)&argv[j], (void *)&pid) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "PID argument %s is not a valid process id.", argv[j]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    if (ppid == pid) {
 		bu_terminate(bu_process_pid(rrp->p));
@@ -124,7 +124,7 @@ _ged_process_pabort(struct ged *gedp, int argc, const char **argv)
 	    }
 	}
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 HIDDEN int
@@ -153,16 +153,16 @@ _ged_process_gabort(struct ged *gedp, int argc, const char **argv)
 	    }
 	}
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
 int
 ged_process_core(struct ged *gedp, int argc, const char *argv[])
 {
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -170,18 +170,18 @@ ged_process_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc < 2) {
 	_process_show_help(gedp);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 2 && !BU_STR_EQUAL(argv[1], "list")) {
 	_process_show_help(gedp);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
     if (argc == 3 && (!BU_STR_EQUAL(argv[1], "gabort") && !BU_STR_EQUAL(argv[1], "pabort"))) {
 	_process_show_help(gedp);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 2) {
@@ -196,7 +196,7 @@ ged_process_core(struct ged *gedp, int argc, const char *argv[])
 	return _ged_process_pabort(gedp, argc - 2, (const char **)&argv[2]);
     }
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

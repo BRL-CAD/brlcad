@@ -47,16 +47,16 @@ ged_heal_core(struct ged *gedp, int argc, const char *argv[])
 
     double zipper_tol = 0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if(argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s <bot_solid>", argv[0]);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     primitive = argv[1];
@@ -65,12 +65,12 @@ ged_heal_core(struct ged *gedp, int argc, const char *argv[])
 	zipper_tol = atof(argv[2]);
 
     /* get bot */
-    GED_DB_LOOKUP(gedp, bot_dp, primitive, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    GED_DB_LOOKUP(gedp, bot_dp, primitive, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!", cmd, primitive);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bot = (struct rt_bot_internal *)intern.idb_ptr;
@@ -81,7 +81,7 @@ ged_heal_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_printf(gedp->ged_result_str, "Healed Mesh!");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

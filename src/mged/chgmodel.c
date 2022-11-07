@@ -103,7 +103,7 @@ f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	const char *av[4];
 
 	av[0] = "draw";

@@ -37,8 +37,8 @@ ged_mat_ae_core(struct ged *gedp,
     double az, el;
     static const char *usage = "azimuth elevation";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -47,13 +47,13 @@ ged_mat_ae_core(struct ged *gedp,
 	bu_sscanf(argv[1], "%lf", &az) != 1 ||
 	bu_sscanf(argv[2], "%lf", &el) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bn_mat_ae(o, (fastf_t)az, (fastf_t)el);
     bn_encode_mat(gedp->ged_result_str, o, 1);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -65,21 +65,21 @@ ged_mat_mul_core(struct ged *gedp,
     mat_t o, a, b;
     static const char *usage = "matA matB";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc < 3 || bn_decode_mat(a, argv[1]) < 16 || bn_decode_mat(b, argv[2]) < 16) {
 	bu_vls_printf(gedp->ged_result_str, "usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bn_mat_mul(o, a, b);
     bn_encode_mat(gedp->ged_result_str, o, 1);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -92,8 +92,8 @@ ged_mat4x3pnt_core(struct ged *gedp,
     point_t i, o;
     static const char *usage = "matrix point";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -101,13 +101,13 @@ ged_mat4x3pnt_core(struct ged *gedp,
     if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
 	bn_decode_vect(i, argv[2]) < 3) {
 	bu_vls_printf(gedp->ged_result_str, "usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     MAT4X3PNT(o, m, i);
     bn_encode_vect(gedp->ged_result_str, o, 1);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -121,8 +121,8 @@ ged_mat_scale_about_pnt_core(struct ged *gedp,
     double scale;
     static const char *usage = "point scale";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -130,17 +130,17 @@ ged_mat_scale_about_pnt_core(struct ged *gedp,
     if (argc < 3 || bn_decode_vect(v, argv[1]) < 3 ||
 	bu_sscanf(argv[2], "%lf", &scale) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bn_mat_scale_about_pnt(o, v, scale) != 0) {
 	bu_vls_printf(gedp->ged_result_str, "error performing calculation");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bn_encode_mat(gedp->ged_result_str, o, 1);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

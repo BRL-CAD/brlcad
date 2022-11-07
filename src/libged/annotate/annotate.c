@@ -127,8 +127,8 @@ ged_annotate_core(struct ged *gedp, int argc, const char *argv[])
     int object_count = 0;
     int i;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -136,10 +136,10 @@ ged_annotate_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	annotate_help(gedp->ged_result_str, argv0);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* stash objects, quoting them if they include spaces */
     for (i = 1; i < argc; i++) {
@@ -165,7 +165,7 @@ ged_annotate_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&objects);
     bu_free((void *)object_argv, "ged_annotate_core");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

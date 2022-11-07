@@ -300,7 +300,7 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
     const char *usage_string = "analyze [options] summarize obj1 <obj2 ...>";
     const char *purpose_string = "Summary of analytical information about listed objects";
     if (_analyze_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
@@ -310,11 +310,11 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
     argc--; argv++;
     if (!argc) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -325,14 +325,14 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
 	if (ndp == RT_DIR_NULL)
 	    continue;
 
-	GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
 	_ged_do_list(gedp, ndp, 1);
 	analyze_do_summary(gedp, &intern);
 	rt_db_free_internal(&intern);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 static void
@@ -370,7 +370,7 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
     const char *usage_string = "analyze [options] intersect [-o out_obj] obj1 obj2 <...>";
     const char *purpose_string = "Intersect obj1 with obj2 and any subsequent objs";
     if (_analyze_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
@@ -379,11 +379,11 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
     argc--; argv++;
     if (!argc) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -399,11 +399,11 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
     int ac = bu_opt_parse(NULL, argc, argv, d);
     if (help) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
     if (ac < 2) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
     argc = ac;
 
@@ -412,7 +412,7 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 	if (dp_out != RT_DIR_NULL) {
 	    bu_vls_sprintf(gedp->ged_result_str, "specified output object %s already exists.\n", bu_vls_cstr(&oname));
 	    bu_vls_free(&oname);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -424,14 +424,14 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
     if (!of) {
 	bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
 	bu_vls_free(&oname);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     clear_obj(gc->gedp, tmpname);
     ret = (*of)(tmpname, gc->gedp,  DB_OP_INTERSECT, argv[0], argv[1]);
     if (ret == -1) {
 	clear_obj(gc->gedp, tmpname);
 	bu_vls_free(&oname);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc > 2) {
@@ -447,7 +447,7 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 		clear_obj(gc->gedp, tmpname);
 		clear_obj(gc->gedp, tmpname2);
 		bu_vls_free(&oname);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    ret = (*of)(tmpname2, gc->gedp,  DB_OP_INTERSECT, n1, n2);
 	    mv_obj(gc->gedp, tmpname2, tmpname);
@@ -455,7 +455,7 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 		clear_obj(gc->gedp, tmpname);
 		clear_obj(gc->gedp, tmpname2);
 		bu_vls_free(&oname);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -469,7 +469,7 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
     bu_vls_sprintf(gedp->ged_result_str, "%ld\n", ret);
     bu_vls_free(&oname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 extern "C" int
@@ -478,7 +478,7 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
     const char *usage_string = "analyze [options] subtract [-o out_obj] obj1 obj2 <...>";
     const char *purpose_string = "Subtract obj2 (and any subsequent objects) from obj1";
     if (_analyze_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
@@ -487,11 +487,11 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
     argc--; argv++;
     if (!argc) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -507,11 +507,11 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
     int ac = bu_opt_parse(NULL, argc, argv, d);
     if (help) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
     if (ac < 2) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
     argc = ac;
 
@@ -520,7 +520,7 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
 	if (dp_out != RT_DIR_NULL) {
 	    bu_vls_sprintf(gedp->ged_result_str, "specified output object %s already exists.\n", bu_vls_cstr(&oname));
 	    bu_vls_free(&oname);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -532,14 +532,14 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
     if (!of) {
 	bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
 	bu_vls_free(&oname);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     clear_obj(gc->gedp, tmpname);
     ret = (*of)(tmpname, gc->gedp,  DB_OP_SUBTRACT, argv[0], argv[1]);
     if (ret == -1) {
 	clear_obj(gc->gedp, tmpname);
 	bu_vls_free(&oname);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc > 2) {
@@ -555,7 +555,7 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
 		clear_obj(gc->gedp, tmpname);
 		clear_obj(gc->gedp, tmpname2);
 		bu_vls_free(&oname);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    ret = (*of)(tmpname2, gc->gedp,  DB_OP_SUBTRACT, n1, n2);
 	    mv_obj(gc->gedp, tmpname2, tmpname);
@@ -563,7 +563,7 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
 		clear_obj(gc->gedp, tmpname);
 		clear_obj(gc->gedp, tmpname2);
 		bu_vls_free(&oname);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -577,7 +577,7 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
     bu_vls_sprintf(gedp->ged_result_str, "%ld\n", ret);
     bu_vls_free(&oname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 extern "C" int
@@ -624,7 +624,7 @@ _analyze_cmd_help(void *bs, int argc, const char **argv)
 	return ret;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -647,7 +647,7 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
     // Sanity
     if (UNLIKELY(!gedp || !argc || !argv)) {
 	_analyze_info_destroy(gc);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // Clear results
@@ -664,7 +664,7 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	_analyze_cmd_help(gc, 0, NULL);
 	_analyze_info_destroy(gc);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // High level options are only defined prior to the subcommand
@@ -689,7 +689,7 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 	    _analyze_cmd_help(gc, 0, NULL);
 	}
 	_analyze_info_destroy(gc);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
 
@@ -715,7 +715,7 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     _analyze_info_destroy(gc);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 // Local Variables:

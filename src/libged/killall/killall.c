@@ -39,10 +39,10 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
     int ret;
     static const char *usage = "[-n] object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -50,7 +50,7 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* Process the -n option */
@@ -68,7 +68,7 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
 
     gedp->ged_internal_call = 1;
     argv[0] = "killrefs";
-    if ((ret = ged_killrefs(gedp, argc, argv)) != GED_OK) {
+    if ((ret = ged_killrefs(gedp, argc, argv)) != BRLCAD_OK) {
 	gedp->ged_internal_call = 0;
 	bu_vls_printf(gedp->ged_result_str, "KILL skipped because of earlier errors.\n");
 	return ret;
@@ -78,7 +78,7 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
     if (nflag) {
 	/* Close the sublist of objects that reference the would-be killed objects. */
 	bu_vls_printf(gedp->ged_result_str, "}");
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* ALL references removed...now KILL the object[s] */

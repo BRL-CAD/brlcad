@@ -480,7 +480,7 @@ wdb_importFg4Section_cmd(void *data,
 
     if (argc != 3) {
 	bu_log("ERROR: expecting three arguments\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     grid_size = GRID_BLOCK;
@@ -539,7 +539,7 @@ wdb_importFg4Section_cmd(void *data,
     THICKNESS = NULL;
     facemode = NULL;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 /** @} */
 

@@ -50,16 +50,16 @@ editarb(struct ged *gedp, struct rt_arb_internal *arb, int type, int edge, vect_
     if (rt_arb_calc_planes(&error_msg, arb, type, peqn, &gedp->ged_wdbp->wdb_tol)) {
 	bu_vls_printf(gedp->ged_result_str, "%s. Cannot calculate plane equations for faces\n", bu_vls_addr(&error_msg));
 	bu_vls_free(&error_msg);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_vls_free(&error_msg);
     ret = arb_edit(arb, peqn, edge, newedge, pos_model, &gedp->ged_wdbp->wdb_tol);
     if (!ret) {
-	return GED_OK;
+	return BRLCAD_OK;
     } else {
 	/* Error handling */
 	bu_vls_printf(gedp->ged_result_str, "Error editing arb\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 }
 
@@ -82,28 +82,28 @@ edarb_extrude(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, GED_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
+    GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_type != ID_ARB8) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: solid type must be ARB\n", argv[0], argv[1]);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     type = rt_arb_std_type(&intern, &gedp->ged_wdbp->wdb_tol);
     if (type != 8 && type != 6 && type != 4) {
 	bu_vls_printf(gedp->ged_result_str, "ARB%d: extrusion of faces not allowed\n", type);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
@@ -120,13 +120,13 @@ edarb_extrude(void *data, int argc, const char *argv[])
     if (arb_extrude(arb, face, dist, &gedp->ged_wdbp->wdb_tol, peqn)) {
 	bu_vls_printf(gedp->ged_result_str, "ARB%d: error extruding face\n", type);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -146,21 +146,21 @@ edarb_mirface(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, GED_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
+    GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_type != ID_ARB8) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: solid type must be ARB\n", argv[0], argv[1]);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
@@ -171,13 +171,13 @@ edarb_mirface(void *data, int argc, const char *argv[])
     if (arb_mirror_face_axis(arb, peqn, face, argv[4], &gedp->ged_wdbp->wdb_tol)) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: mirror operation failed\n");
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -202,27 +202,27 @@ edarb_edgedir(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 6 || 7 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[3], "%d", &edge) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "bad edge - %s", argv[3]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     edge -= 1;
 
-    GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, GED_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
+    GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_type != ID_ARB8) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: solid type must be ARB\n", argv[0], argv[1]);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     type = rt_arb_std_type(&intern, &gedp->ged_wdbp->wdb_tol);
@@ -249,12 +249,12 @@ edarb_edgedir(void *data, int argc, const char *argv[])
     if (ZERO(MAGNITUDE(slope))) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: BAD slope\n", argv[0], argv[1]);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     ret = editarb(gedp, arb, type, edge, slope, 1);
-    if (ret == GED_OK) {
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+    if (ret == BRLCAD_OK) {
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
     }
 
     rt_db_free_internal(&intern);
@@ -291,21 +291,21 @@ edarb_permute(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: edarb %s %s %s", argv[0], argv[1], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: edarb %s %s %s", argv[0], argv[1], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, GED_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
+    GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_type != ID_ARB8) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: solid type must be ARB\n", argv[0], argv[1]);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
@@ -314,13 +314,13 @@ edarb_permute(void *data, int argc, const char *argv[])
     if (arb_permute(arb, argv[3], &gedp->ged_wdbp->wdb_tol)) {
 	bu_vls_printf(gedp->ged_result_str, "Permute failed\n");
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -338,9 +338,9 @@ ged_edarb_core(struct ged *gedp, int argc, const char *argv[])
     };
     static const char *usage = "edgedir|extrude|mirror|permute arb [args]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -348,7 +348,7 @@ ged_edarb_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
 
@@ -357,7 +357,7 @@ ged_edarb_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

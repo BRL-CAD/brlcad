@@ -46,9 +46,9 @@ ged_set_transparency_core(struct ged *gedp, int argc, const char *argv[])
 
     static const char *usage = "node tval";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -56,22 +56,22 @@ ged_set_transparency_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &transparency) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "dgo_set_transparency: bad transparency - %s\n", argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((dpp = _ged_build_dpp(gedp, argv[1])) == NULL) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     dl_set_transparency(gedp, dpp, transparency);
@@ -79,7 +79,7 @@ ged_set_transparency_core(struct ged *gedp, int argc, const char *argv[])
     if (dpp != (struct directory **)NULL)
 	bu_free((void *)dpp, "ged_set_transparency_core: directory pointers");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

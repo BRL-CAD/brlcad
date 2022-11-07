@@ -44,9 +44,9 @@ ged_bot_sync_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_bot_internal *bot;
     static const char *usage = "bot [bot2 bot3 ...]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -54,7 +54,7 @@ ged_bot_sync_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     for (i = 1; i < argc; ++i) {
@@ -71,7 +71,7 @@ ged_bot_sync_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s: db_lookup(%s) error\n", argv[0], obj);
 	} else {
 
-	    GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	    GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
 	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 		rt_db_free_internal(&intern);
@@ -81,13 +81,13 @@ ged_bot_sync_core(struct ged *gedp, int argc, const char *argv[])
 		bot = (struct rt_bot_internal *)intern.idb_ptr;
 		rt_bot_sync(bot);
 
-		GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
+		GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->ged_wdbp->wdb_resp, BRLCAD_ERROR);
 	    }
 	}
 	bu_free(obj, "free obj");
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

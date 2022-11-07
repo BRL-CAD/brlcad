@@ -52,7 +52,7 @@ _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
 	    bu_vls_printf(gedp->ged_result_str, "%s ", gd_rt_cmd[i]);
 	}
 	bu_vls_printf(gedp->ged_result_str, "\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     BU_GET(run_rtp, struct ged_subprocess);
@@ -70,7 +70,7 @@ _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
 	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDERR, _ged_rt_output_handler, (void *)run_rtp);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -89,15 +89,15 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls eye_vls = BU_VLS_INIT_ZERO;
     char **gd_rt_cmd = NULL;
     int gd_rt_cmd_len = 0;
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
 
     const char *bin;
     char rtscript[256] = {0};
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);

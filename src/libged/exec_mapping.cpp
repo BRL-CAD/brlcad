@@ -55,7 +55,7 @@
 	    }\
 	    int ret = ged_exec(gedp, argc, argv); \
 	    if (vret) { \
-		ret |= GED_UNKNOWN; \
+		ret |= BRLCAD_UNKNOWN; \
 	    } \
 	    argv[0] = argv0; \
 	    return ret; \

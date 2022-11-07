@@ -61,7 +61,7 @@ _brep_cmd_curve_2d_valid(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info C2 [[index][index-index]]";
     const char *purpose_string = "2D parameter space geometric curves";
     if (_brep_valid_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -70,8 +70,8 @@ _brep_cmd_curve_2d_valid(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gvb->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gvb->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gvb->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -89,7 +89,7 @@ _brep_cmd_curve_2d_valid(void *bs, int argc, const char **argv)
 
 	if (!((ci >= 0) && (ci < brep->m_C2.Count()))) {
 	    bu_vls_printf(gvb->vls, "Invalid index: %d\n", ci);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	const ON_Curve *curve = brep->m_C2[ci];
@@ -103,7 +103,7 @@ _brep_cmd_curve_2d_valid(void *bs, int argc, const char **argv)
 	}
     }
 
-    return (valid) ? GED_OK : GED_ERROR;
+    return (valid) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 // C3 - 3D edge curves
@@ -113,7 +113,7 @@ _brep_cmd_curve_3d_valid(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info C3 [[index][index-index]]";
     const char *purpose_string = "3D parameter space geometric curves";
     if (_brep_valid_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -122,8 +122,8 @@ _brep_cmd_curve_3d_valid(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gvb->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gvb->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gvb->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -141,7 +141,7 @@ _brep_cmd_curve_3d_valid(void *bs, int argc, const char **argv)
 
 	if (!((ci >= 0) && (ci < brep->m_C3.Count()))) {
 	    bu_vls_printf(gvb->vls, "Invalid index: %d\n", ci);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	const ON_Curve *curve = brep->m_C3[ci];
@@ -155,7 +155,7 @@ _brep_cmd_curve_3d_valid(void *bs, int argc, const char **argv)
 	}
     }
 
-    return (valid) ? GED_OK : GED_ERROR;
+    return (valid) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 // E - topological edges
@@ -165,7 +165,7 @@ _brep_cmd_edge_valid(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info E [[index][index-index]]";
     const char *purpose_string = "topological 3D edges";
     if (_brep_valid_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -174,8 +174,8 @@ _brep_cmd_edge_valid(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gvb->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gvb->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gvb->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -193,7 +193,7 @@ _brep_cmd_edge_valid(void *bs, int argc, const char **argv)
 
 	if (!((ei >= 0) && (ei < brep->m_E.Count()))) {
 	    bu_vls_printf(gvb->vls, "Invalid index: %d\n", ei);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	const ON_BrepEdge &edge = brep->m_E[ei];
@@ -207,7 +207,7 @@ _brep_cmd_edge_valid(void *bs, int argc, const char **argv)
 	}
     }
 
-    return (valid) ? GED_OK : GED_ERROR;
+    return (valid) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 // F - topological faces
@@ -217,7 +217,7 @@ _brep_cmd_face_valid(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info F [[index][index-index]]";
     const char *purpose_string = "topological faces";
     if (_brep_valid_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -226,8 +226,8 @@ _brep_cmd_face_valid(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gvb->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gvb->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gvb->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -245,7 +245,7 @@ _brep_cmd_face_valid(void *bs, int argc, const char **argv)
 
 	if (!((fi >= 0) && (fi < brep->m_F.Count()))) {
 	    bu_vls_printf(gvb->vls, "Invalid index: %d\n", fi);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	const ON_BrepFace& face = brep->m_F[fi];
@@ -259,7 +259,7 @@ _brep_cmd_face_valid(void *bs, int argc, const char **argv)
 	}
     }
 
-    return (valid) ? GED_OK : GED_ERROR;
+    return (valid) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 // L - 2D parameter space topological trimming loops
@@ -269,7 +269,7 @@ _brep_cmd_loop_valid(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info L [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trimming loops";
     if (_brep_valid_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -278,8 +278,8 @@ _brep_cmd_loop_valid(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gvb->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gvb->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gvb->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -297,7 +297,7 @@ _brep_cmd_loop_valid(void *bs, int argc, const char **argv)
 
 	if (!((li >= 0) && (li < brep->m_L.Count()))) {
 	    bu_vls_printf(gvb->vls, "Invalid index: %d\n", li);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	const ON_BrepLoop &loop = brep->m_L[li];
@@ -311,7 +311,7 @@ _brep_cmd_loop_valid(void *bs, int argc, const char **argv)
 	}
     }
 
-    return (valid) ? GED_OK : GED_ERROR;
+    return (valid) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 // S - surfaces
@@ -321,7 +321,7 @@ _brep_cmd_surface_valid(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info S [[index][index-index]]";
     const char *purpose_string = "surfaces";
     if (_brep_valid_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -330,8 +330,8 @@ _brep_cmd_surface_valid(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gvb->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gvb->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gvb->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -349,7 +349,7 @@ _brep_cmd_surface_valid(void *bs, int argc, const char **argv)
 	ON_wString wonstr;
 	ON_TextLog info_output(wonstr);
 	if (!((si >= 0) && (si < brep->m_S.Count()))) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	const ON_Surface* srf = brep->m_S[si];
 	if (!srf) continue;
@@ -363,7 +363,7 @@ _brep_cmd_surface_valid(void *bs, int argc, const char **argv)
 	}
     }
 
-    return (valid) ? GED_OK : GED_ERROR;
+    return (valid) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 // T - 2D topological trims
@@ -373,7 +373,7 @@ _brep_cmd_trim_valid(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info T [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trims";
     if (_brep_valid_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -382,8 +382,8 @@ _brep_cmd_trim_valid(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gvb->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gvb->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gvb->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -399,7 +399,7 @@ _brep_cmd_trim_valid(void *bs, int argc, const char **argv)
 
 	int ti = *e_it;
 	if (!((ti >= 0) && (ti < brep->m_T.Count()))) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	const ON_BrepTrim &trim = brep->m_T[ti];
     	ON_wString wstr;
@@ -412,7 +412,7 @@ _brep_cmd_trim_valid(void *bs, int argc, const char **argv)
 	}
     }
 
-    return (valid) ? GED_OK : GED_ERROR;
+    return (valid) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 // V - 3D vertices
@@ -423,7 +423,7 @@ _brep_cmd_vertex_valid(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> info V [[index][index-index]]";
     const char *purpose_string = "3D vertices";
     if (_brep_valid_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -432,8 +432,8 @@ _brep_cmd_vertex_valid(void *bs, int argc, const char **argv)
     const ON_Brep *brep = gvb->brep;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gvb->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gvb->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -450,7 +450,7 @@ _brep_cmd_vertex_valid(void *bs, int argc, const char **argv)
 	int vi = *e_it;
 
 	if (!((vi >= 0) && (vi < brep->m_V.Count()))) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	const ON_BrepVertex &vertex = brep->m_V[vi];
 	ON_wString wstr;
@@ -463,7 +463,7 @@ _brep_cmd_vertex_valid(void *bs, int argc, const char **argv)
 	}
     }
 
-    return (valid) ? GED_OK : GED_ERROR;
+    return (valid) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 static void
@@ -515,28 +515,28 @@ brep_valid(struct bu_vls *vls, struct rt_db_internal *intern, int argc, const ch
     if (!argc) {
 	// No arg case is easy - just report overall status
 	int valid = rt_brep_valid(vls, intern, 0);
-	return (valid) ? GED_OK : GED_ERROR;
+	return (valid) ? BRLCAD_OK : BRLCAD_ERROR;
     }
 
     if (argc > 1 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
 	argc--;argv++;
 	argc--;argv++;
 	_brep_valid_help(&gvb, argc, argv);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // Must have valid subcommand to process
     if (bu_cmd_valid(_brep_valid_cmds, argv[0]) != BRLCAD_OK) {
 	bu_vls_printf(gvb.vls, "invalid subcommand \"%s\" specified\n", argv[0]);
 	_brep_valid_help(&gvb, 0, NULL);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int ret;
     if (bu_cmd(_brep_valid_cmds, argc, argv, 0, (void *)&gvb, &ret) == BRLCAD_OK) {
 	return ret;
     }
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 // Local Variables:

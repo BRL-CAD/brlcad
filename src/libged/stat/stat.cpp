@@ -456,7 +456,7 @@ int
 ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 {
     if (!gedp || !argc || !argv)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     int print_help = 0;;
     long verbosity = 1;
@@ -498,7 +498,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&sort_str);
 	bu_vls_free(&keys_str);
 	bu_vls_free(&ofile);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_vls_free(&msg);
 
@@ -508,7 +508,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&sort_str);
 	bu_vls_free(&keys_str);
 	bu_vls_free(&ofile);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     // If we have one or a series of patterns, process
@@ -520,7 +520,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&sort_str);
 	bu_vls_free(&keys_str);
 	bu_vls_free(&ofile);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // If we have an output file specified, make sure it's not already there
@@ -542,7 +542,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_free(&sort_str);
 	    bu_vls_free(&keys_str);
 	    bu_vls_free(&ofile);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -555,7 +555,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 #if 0
     if (db_dirbuild(dbip) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "db_dirbuild failed on geometry database file\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 #endif
     db_update_nref(dbip, &rt_uniresource);
@@ -590,7 +590,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", ft_to_string(table));
 	    ft_destroy_table(table);
 	    bu_ptbl_free(&sobjs);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 
@@ -644,7 +644,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     ft_destroy_table(table);
     bu_ptbl_free(&sobjs);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 #ifdef GED_PLUGIN

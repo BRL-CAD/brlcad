@@ -51,7 +51,7 @@ to_faceplate(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 4 || 7 < argc)
@@ -60,14 +60,14 @@ to_faceplate(struct ged *gedp,
     gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(argv[2], "center_dot")) {
 	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
 		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_center_dot.gos_draw);
-		return GED_OK;
+		return BRLCAD_OK;
 	    } else if (argc == 5) {
 		if (bu_sscanf(argv[4], "%d", &i) != 1)
 		    goto bad;
@@ -78,14 +78,14 @@ to_faceplate(struct ged *gedp,
 		    gdvp->gv_center_dot.gos_draw = 0;
 
 		to_refresh_view(gdvp);
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 	}
 
 	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
 		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gv_center_dot.gos_line_color));
-		return GED_OK;
+		return BRLCAD_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
 
@@ -96,7 +96,7 @@ to_faceplate(struct ged *gedp,
 
 		VSET(gdvp->gv_center_dot.gos_line_color, r, g, b);
 		to_refresh_view(gdvp);
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 	}
 
@@ -107,7 +107,7 @@ to_faceplate(struct ged *gedp,
 	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
 		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_prim_labels.gos_draw);
-		return GED_OK;
+		return BRLCAD_OK;
 	    } else if (argc == 5) {
 		if (bu_sscanf(argv[4], "%d", &i) != 1)
 		    goto bad;
@@ -118,14 +118,14 @@ to_faceplate(struct ged *gedp,
 		    gdvp->gv_prim_labels.gos_draw = 0;
 
 		to_refresh_view(gdvp);
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 	}
 
 	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
 		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gv_prim_labels.gos_text_color));
-		return GED_OK;
+		return BRLCAD_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
 
@@ -136,7 +136,7 @@ to_faceplate(struct ged *gedp,
 
 		VSET(gdvp->gv_prim_labels.gos_text_color, r, g, b);
 		to_refresh_view(gdvp);
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 	}
 
@@ -147,7 +147,7 @@ to_faceplate(struct ged *gedp,
 	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
 		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_view_params.gos_draw);
-		return GED_OK;
+		return BRLCAD_OK;
 	    } else if (argc == 5) {
 		if (bu_sscanf(argv[4], "%d", &i) != 1)
 		    goto bad;
@@ -158,14 +158,14 @@ to_faceplate(struct ged *gedp,
 		    gdvp->gv_view_params.gos_draw = 0;
 
 		to_refresh_view(gdvp);
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 	}
 
 	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
 		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gv_view_params.gos_text_color));
-		return GED_OK;
+		return BRLCAD_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
 
@@ -176,7 +176,7 @@ to_faceplate(struct ged *gedp,
 
 		VSET(gdvp->gv_view_params.gos_text_color, r, g, b);
 		to_refresh_view(gdvp);
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 	}
 
@@ -187,7 +187,7 @@ to_faceplate(struct ged *gedp,
 	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
 		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_view_scale.gos_draw);
-		return GED_OK;
+		return BRLCAD_OK;
 	    } else if (argc == 5) {
 		if (bu_sscanf(argv[4], "%d", &i) != 1)
 		    goto bad;
@@ -198,14 +198,14 @@ to_faceplate(struct ged *gedp,
 		    gdvp->gv_view_scale.gos_draw = 0;
 
 		to_refresh_view(gdvp);
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 	}
 
 	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
 		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gv_view_scale.gos_line_color));
-		return GED_OK;
+		return BRLCAD_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
 
@@ -216,7 +216,7 @@ to_faceplate(struct ged *gedp,
 
 		VSET(gdvp->gv_view_scale.gos_line_color, r, g, b);
 		to_refresh_view(gdvp);
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 	}
 
@@ -225,7 +225,7 @@ to_faceplate(struct ged *gedp,
 
 bad:
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

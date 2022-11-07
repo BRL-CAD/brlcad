@@ -277,7 +277,7 @@ _bot_cmd_degen_faces(void *bs, int argc, const char **argv)
     const char *usage_string = "bot [options] degen_faces <objname>";
     const char *purpose_string = "Check BoT for degenerate faces";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -332,7 +332,7 @@ _bot_cmd_degen_faces(void *bs, int argc, const char **argv)
 
     bu_vls_printf(gib->vls, degenerate_faces ? "1" : "0");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 extern "C" int
@@ -341,7 +341,7 @@ _bot_cmd_extra_edges(void *bs, int argc, const char **argv)
     const char *usage_string = "bot [options] extra_edges <objname>";
     const char *purpose_string = "Check BoT for edges which are not part of any triangle faces";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -359,7 +359,7 @@ _bot_cmd_extra_edges(void *bs, int argc, const char **argv)
     struct bg_trimesh_halfedge *edge_list;
     if (!(edge_list = bg_trimesh_generate_edge_list(num_faces, bot->faces))) {
 	bu_vls_printf(gib->vls, "ERROR: failed to generate an edge list\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int extra_edges = 0;
@@ -405,7 +405,7 @@ _bot_cmd_extra_edges(void *bs, int argc, const char **argv)
 
     bu_vls_printf(gib->vls, extra_edges ? "1" : "0");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 extern "C" int
@@ -414,7 +414,7 @@ _bot_cmd_flipped_edges(void *bs, int argc, const char **argv)
     const char *usage_string = "bot [options] flipped_edges <objname>";
     const char *purpose_string = "Check BoT for edges which are incorrectly oriented";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -432,7 +432,7 @@ _bot_cmd_flipped_edges(void *bs, int argc, const char **argv)
     struct bg_trimesh_halfedge *edge_list;
     if (!(edge_list = bg_trimesh_generate_edge_list(num_faces, bot->faces))) {
 	bu_vls_printf(gib->vls, "ERROR: failed to generate an edge list\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int flipped_edges = 0;
@@ -478,7 +478,7 @@ _bot_cmd_flipped_edges(void *bs, int argc, const char **argv)
 
     bu_vls_printf(gib->vls, flipped_edges ? "1" : "0");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 extern "C" int
@@ -487,7 +487,7 @@ _bot_cmd_open_edges(void *bs, int argc, const char **argv)
     const char *usage_string = "bot [options] open_edges <objname>";
     const char *purpose_string = "Check BoT for edges which are not connected to two triangle faces";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -505,7 +505,7 @@ _bot_cmd_open_edges(void *bs, int argc, const char **argv)
     struct bg_trimesh_halfedge *edge_list;
     if (!(edge_list = bg_trimesh_generate_edge_list(num_faces, bot->faces))) {
 	bu_vls_printf(gib->vls, "ERROR: failed to generate an edge list\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int open_edges = 0;
@@ -551,7 +551,7 @@ _bot_cmd_open_edges(void *bs, int argc, const char **argv)
 
     bu_vls_printf(gib->vls, open_edges ? "1" : "0");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -561,7 +561,7 @@ _bot_cmd_solid(void *bs, int argc, const char **argv)
     const char *usage_string = "bot [options] check solid <objname>";
     const char *purpose_string = "Check if BoT defines a topologically closed solid";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
@@ -572,7 +572,7 @@ _bot_cmd_solid(void *bs, int argc, const char **argv)
 
     if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
 	bu_vls_printf(gib->vls, "1");
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     int num_vertices = (int)bot->num_vertices;
@@ -635,7 +635,7 @@ _bot_cmd_solid(void *bs, int argc, const char **argv)
 
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 static void
@@ -688,19 +688,19 @@ _bot_cmd_check(void *bs, int argc, const char **argv)
     const char *purpose_string = "Check topological integrity of mesh defined by BoT";
     if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (!argc) {
 	_bot_check_help(&gib, 0, NULL);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc > 1 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
 	argc--;argv++;
 	argc--;argv++;
 	_bot_check_help(&gib, argc, argv);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // Skip the "check" subcommand
@@ -708,11 +708,11 @@ _bot_cmd_check(void *bs, int argc, const char **argv)
 
     if (!argc) {
 	_bot_check_help(&gib, 0, NULL);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
-    if (_bot_obj_setup(gb, argv[argc-1]) & GED_ERROR) {
-	return GED_ERROR;
+    if (_bot_obj_setup(gb, argv[argc-1]) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
     }
     argc--;
 
@@ -725,14 +725,14 @@ _bot_cmd_check(void *bs, int argc, const char **argv)
     if (bu_cmd_valid(_bot_check_cmds, argv[0]) != BRLCAD_OK) {
 	bu_vls_printf(gib.vls, "invalid subcommand \"%s\" specified\n", argv[0]);
 	_bot_check_help(&gib, 0, NULL);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int ret;
     if (bu_cmd(_bot_check_cmds, argc, argv, 0, (void *)&gib, &ret) == BRLCAD_OK) {
 	return ret;
     }
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

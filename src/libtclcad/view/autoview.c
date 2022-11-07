@@ -50,7 +50,7 @@ to_autoview_view(struct bview *gdvp, const char *scale)
     else
 	ret = ged_autoview(tvd->gedp, 1, (const char **)av);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
 	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
 	}
@@ -74,13 +74,13 @@ to_autoview(struct ged *gedp,
 
     if (argc > 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s [scale]", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc > 2)
@@ -88,7 +88,7 @@ to_autoview(struct ged *gedp,
     else
 	to_autoview_view(gdvp, NULL);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

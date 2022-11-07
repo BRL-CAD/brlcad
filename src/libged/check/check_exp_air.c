@@ -87,7 +87,7 @@ int check_exp_air(struct current_state *state,
 
     if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_EXP_AIR)) {
 	clear_list(&exposedAirList);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     print_verbose_debug(options);
@@ -99,7 +99,7 @@ int check_exp_air(struct current_state *state,
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

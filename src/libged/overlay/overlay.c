@@ -65,7 +65,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     int height = 0;  /* may need to specify for some formats (such as PIX) */
     int inverse = 0;
     int print_help = 0;
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     int scr_xoff=0;
     int scr_yoff=0;
     int square = 0; /* may need to specify for some formats (such as PIX) */
@@ -95,16 +95,16 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[12], "",  "format",         "fmt",  &image_mime,     &type,             "[Fb]   image file format");
     BU_OPT_NULL(d[13]);
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (!gedp->ged_dmp) {
 	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dmp = (struct dm *)gedp->ged_dmp;
@@ -112,7 +112,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
@@ -121,13 +121,13 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (!write_fb && NEAR_ZERO(size, VUNITIZE_TOL)) {
 	if (!gedp->ged_gvp) {
 	    bu_vls_printf(gedp->ged_result_str, ": no character size specified, and could not determine default value");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	size = gedp->ged_gvp->gv_scale * 0.01;
     }
@@ -138,19 +138,19 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	fbp = dm_get_fb(dmp);
 	if (!fbp) {
 	    bu_vls_printf(gedp->ged_result_str, ": display manager does not have a framebuffer");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
     /* must be wanting help */
     if (!argc) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
     /* check arg cnt */
     if (argc > 2) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* Second arg, if present, is view obj name */
@@ -170,21 +170,21 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    size_t count = bu_file_list(".", argv[0], &files);
 	    if (count <= 0) {
 		bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", argv[1]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    vbp = rt_vlblock_init();
 	    for (size_t i = 0; i < count; i++) {
 		if ((fp = fopen(files[i], "rb")) == NULL) {
 		    bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", files[i]);
 		    bu_argv_free(count, files);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		ret = rt_uplot_to_vlist(vbp, fp, size, gedp->ged_gdp->gd_uplotOutputMode);
 		fclose(fp);
 		if (ret < 0) {
 		    bn_vlblock_free(vbp);
 		    bu_argv_free(count, files);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 	    }
 	    bu_argv_free(count, files);
@@ -195,20 +195,20 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    fclose(fp);
 	    if (ret < 0) {
 		bn_vlblock_free(vbp);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 
 	_ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
 	bn_vlblock_free(vbp);
 
-	return GED_OK;
+	return BRLCAD_OK;
 
     } else {
 
 	if (!bu_file_exists(argv[0], NULL)) {
 	    bu_vls_printf(gedp->ged_result_str, ": file %s not found", argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	const char *file_name = argv[0];
@@ -222,7 +222,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "no input file image type specified - need either a specified input image type or a path that provides MIME information.\n");
 		bu_vls_free(&c);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    bu_vls_free(&c);
 	}
@@ -239,12 +239,12 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    struct stat sbuf;
 	    if (stat(file_name, &sbuf) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "unable to stat input file");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    size_t lwidth, lheight;
 	    if (!icv_image_size(NULL, 0, (size_t)sbuf.st_size, type, &lwidth, &lheight)) {
 		bu_vls_printf(gedp->ged_result_str, "input image type does not have dimension information encoded, and libicv was not able to deduce a size.  Please specify image width in pixels with the \"-w\" option and image height in pixels with the \"-n\" option.\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    } else {
 		width = (int)lwidth;
 		height = (int)lheight;
@@ -260,7 +260,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "icv_read failed to read %s.\n", file_name);
 	    }
 	    icv_destroy(img);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	ret = fb_read_icv(fbp, img, 0, 0, 0, 0,	scr_xoff, scr_yoff, clear, zoom, inverse, 0, 0, gedp->ged_result_str);

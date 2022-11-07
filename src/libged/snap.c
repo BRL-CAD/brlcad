@@ -172,7 +172,7 @@ ged_snap_lines(point_t *out_pt, struct ged *gedp, point_t *p)
 {
     struct ged_cp_info cpinfo = GED_CP_INFO_INIT;
 
-    if (!p || !gedp) return GED_ERROR;
+    if (!p || !gedp) return BRLCAD_ERROR;
 
     // There are some issues with line snapping that don't come up with grid
     // snapping - in particular, when are we "close enough" to a line to snap,
@@ -195,10 +195,10 @@ ged_snap_lines(point_t *out_pt, struct ged *gedp, point_t *p)
     // If we found something, we can snap
     if (ret) {
 	VMOVE(*out_pt, cpinfo.cp);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 int
@@ -215,7 +215,7 @@ ged_snap_to_lines(struct ged *gedp, fastf_t *vx, fastf_t *vy)
     V2SET(p2d, *vx, *vy);
     VSET(vp, p2d[0], p2d[1], 0);
     MAT4X3PNT(p, gedp->ged_gvp->gv_view2model, vp);
-    if (ged_snap_lines(&out_pt, gedp, &p) == GED_OK) {
+    if (ged_snap_lines(&out_pt, gedp, &p) == BRLCAD_OK) {
 	MAT4X3PNT(vp, gedp->ged_gvp->gv_model2view, out_pt);
 	(*vx) = vp[0];
 	(*vy) = vp[1];
