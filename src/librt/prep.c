@@ -47,7 +47,7 @@
 
 extern void rt_ck(struct rt_i *rtip);
 
-HIDDEN void rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp);
+static void rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp);
 
 
 int RT_SEM_WORKER = 0;
@@ -1325,7 +1325,7 @@ rt_del_regtree(struct rt_i *rtip, register struct region *delregp, struct resour
  * the tree to the provided bit vector.  Should be called AFTER the
  * region bits have been assigned.
  */
-HIDDEN void
+static void
 rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp)
 {
     register union tree **sp;
@@ -1621,7 +1621,7 @@ obj_in_path(const char *path, const char *obj)
 }
 
 
-HIDDEN int
+static int
 unprep_reg_start(struct db_tree_state *tsp,
 		 const struct db_full_path *pathp,
 		 const struct rt_comb_internal *comb,
@@ -1645,7 +1645,7 @@ unprep_reg_start(struct db_tree_state *tsp,
 }
 
 
-HIDDEN union tree *
+static union tree *
 unprep_reg_end(struct db_tree_state *tsp,
 	       const struct db_full_path *pathp,
 	       union tree *tree,
@@ -1664,7 +1664,7 @@ unprep_reg_end(struct db_tree_state *tsp,
 }
 
 
-HIDDEN union tree *
+static union tree *
 unprep_leaf(struct db_tree_state *tsp,
 	    const struct db_full_path *pathp,
 	    struct rt_db_internal *ip,

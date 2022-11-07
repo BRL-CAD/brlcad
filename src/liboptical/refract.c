@@ -53,7 +53,7 @@ int max_bounces = 5;	/* Maximum recursion level */
 
 extern vect_t background;
 
-HIDDEN int
+static int
 rr_miss(struct application *ap)
 {
     RT_AP_CHECK(ap);
@@ -77,7 +77,7 @@ rr_miss(struct application *ap)
  *	a_vvec		exit Normal (inward pointing)
  *	a_refrac_index	RI of *next* material
  */
-HIDDEN int
+static int
 rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp;
@@ -285,7 +285,7 @@ out:
  *
  * Note:  output (v_2) can be same storage as an input.
  */
-HIDDEN int
+static int
 rr_refract(vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2)
 {
     vect_t w, u;

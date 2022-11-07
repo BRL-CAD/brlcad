@@ -525,7 +525,7 @@ map_new_vertexuse(struct bu_list *tbl2d, struct vertexuse *vu_p)
  * departing edges have the min/max dot product with the direction vector.
  *
  */
-HIDDEN void
+static void
 pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct vertexuse **vu_last, int *max_dir, struct faceuse *fu, fastf_t *dir)
 
 
@@ -2225,7 +2225,7 @@ nmg_dump_model(struct model *m)
 }
 
 
-HIDDEN void
+static void
 nmg_tri_kill_accordions(struct loopuse *lu, struct bu_list *tbl2d)
 {
     struct edgeuse *eu_curr, *eu_prev, *eu_next;
@@ -2301,7 +2301,7 @@ nmg_tri_kill_accordions(struct loopuse *lu, struct bu_list *tbl2d)
 }
 
 
-HIDDEN void
+static void
 validate_tbl2d(const char *str, struct bu_list *tbl2d, struct faceuse *fu)
 {
     struct loopuse *lu = (struct loopuse *)NULL;
@@ -2345,7 +2345,7 @@ validate_tbl2d(const char *str, struct bu_list *tbl2d, struct faceuse *fu)
 /**
  * Given a unimonotone loopuse, triangulate it into multiple loopuses
  */
-HIDDEN void
+static void
 cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     int verts = 0;

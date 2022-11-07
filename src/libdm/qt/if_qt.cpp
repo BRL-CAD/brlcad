@@ -147,7 +147,7 @@ static struct modeflags {
 };
 
 
-HIDDEN void
+static void
 qt_updstate(struct fb *ifp)
 {
     struct qtinfo *qi = QI(ifp);
@@ -432,14 +432,14 @@ qt_configureWindow(struct fb *ifp, int width, int height)
     qt_updstate(ifp);
 }
 
-HIDDEN int
+static int
 qt_configure_window(struct fb *ifp, int width, int height)
 {
     qt_configureWindow(ifp, width, height);
     return 0;
 }
 
-HIDDEN int
+static int
 qt_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
     return 0;
@@ -462,7 +462,7 @@ qt_close_existing(struct fb *ifp)
 __END_DECLS
 
 
-HIDDEN void
+static void
 qt_update(struct fb *ifp, int x1, int y1, int w, int h)
 {
     struct qtinfo *qi = QI(ifp);
@@ -598,7 +598,7 @@ qt_update(struct fb *ifp, int x1, int y1, int w, int h)
 }
 
 
-HIDDEN int
+static int
 qt_rmap(struct fb *ifp, ColorMap *cmp)
 {
     struct qtinfo *qi = QI(ifp);
@@ -610,7 +610,7 @@ qt_rmap(struct fb *ifp, ColorMap *cmp)
 }
 
 
-HIDDEN int
+static int
 qt_wmap(struct fb *ifp, const ColorMap *cmp)
 {
     struct qtinfo *qi = QI(ifp);
@@ -679,7 +679,7 @@ qt_wmap(struct fb *ifp, const ColorMap *cmp)
     return 0;
 }
 
-HIDDEN int
+static int
 qt_setup(struct fb *ifp, int width, int height)
 {
     struct qtinfo *qi = QI(ifp);
@@ -711,7 +711,7 @@ qt_setup(struct fb *ifp, int width, int height)
     return 0;
 }
 
-HIDDEN void
+static void
 qt_destroy(struct qtinfo *qi)
 {
     if (qi) {
@@ -719,7 +719,7 @@ qt_destroy(struct qtinfo *qi)
     }
 }
 
-HIDDEN int
+static int
 qt_open(struct fb *ifp, const char *file, int width, int height)
 {
     struct qtinfo *qi;
@@ -834,7 +834,7 @@ qt_open(struct fb *ifp, const char *file, int width, int height)
 }
 
 
-HIDDEN struct fb_platform_specific *
+static struct fb_platform_specific *
 qt_get_fbps(uint32_t magic)
 {
     struct fb_platform_specific *fb_ps = NULL;
@@ -847,7 +847,7 @@ qt_get_fbps(uint32_t magic)
 }
 
 
-HIDDEN void
+static void
 qt_put_fbps(struct fb_platform_specific *fbps)
 {
     BU_CKMAG(fbps, FB_QT_MAGIC, "Qt framebuffer");
@@ -946,7 +946,7 @@ _qt_open_existing(struct fb *ifp, int width, int height, void *qapp, void *qwin,
     return 0;
 }
 
-HIDDEN int
+static int
 qt_open_existing(struct fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
     struct qt_fb_info *qt_internal = (struct qt_fb_info *)fb_p->data;
@@ -956,7 +956,7 @@ qt_open_existing(struct fb *ifp, int width, int height, struct fb_platform_speci
 }
 
 
-HIDDEN int
+static int
 qt_close(struct fb *ifp)
 {
     struct qtinfo *qi = QI(ifp);
@@ -972,7 +972,7 @@ qt_close(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 qt_clear(struct fb *ifp, unsigned char *pp)
 {
     struct qtinfo *qi = QI(ifp);
@@ -1013,7 +1013,7 @@ qt_clear(struct fb *ifp, unsigned char *pp)
 }
 
 
-HIDDEN ssize_t
+static ssize_t
 qt_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     struct qtinfo *qi = QI(ifp);
@@ -1036,7 +1036,7 @@ qt_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 }
 
 
-HIDDEN ssize_t
+static ssize_t
 qt_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     struct qtinfo *qi = QI(ifp);
@@ -1076,7 +1076,7 @@ qt_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count
 }
 
 
-HIDDEN int
+static int
 qt_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct qtinfo *qi = QI(ifp);
@@ -1108,7 +1108,7 @@ qt_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-HIDDEN int
+static int
 qt_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     FB_CK_FB(ifp->i);
@@ -1122,7 +1122,7 @@ qt_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 }
 
 
-HIDDEN int
+static int
 qt_setcursor(struct fb *UNUSED(ifp), const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     fb_log("qt_setcursor\n");
@@ -1131,7 +1131,7 @@ qt_setcursor(struct fb *UNUSED(ifp), const unsigned char *UNUSED(bits), int UNUS
 }
 
 
-HIDDEN int
+static int
 qt_cursor(struct fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
     fb_log("qt_cursor\n");
@@ -1140,7 +1140,7 @@ qt_cursor(struct fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y)
 }
 
 
-HIDDEN int
+static int
 qt_getcursor(struct fb *UNUSED(ifp), int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 {
     fb_log("qt_getcursor\n");
@@ -1149,7 +1149,7 @@ qt_getcursor(struct fb *UNUSED(ifp), int *UNUSED(mode), int *UNUSED(x), int *UNU
 }
 
 
-HIDDEN int
+static int
 qt_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     struct qtinfo *qi = QI(ifp);
@@ -1188,7 +1188,7 @@ qt_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned 
 }
 
 
-HIDDEN int
+static int
 qt_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     struct qtinfo *qi = QI(ifp);
@@ -1229,7 +1229,7 @@ qt_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const un
 }
 
 
-HIDDEN int
+static int
 qt_help(struct fb *ifp)
 {
     fb_log("Description: %s\n", qt_interface.i->if_type);
@@ -1245,7 +1245,7 @@ qt_help(struct fb *ifp)
 }
 
 
-HIDDEN void
+static void
 qt_handle_event(struct fb *ifp, QEvent *event)
 {
     struct qtinfo *qi = QI(ifp);
@@ -1318,7 +1318,7 @@ qt_handle_event(struct fb *ifp, QEvent *event)
 }
 
 
-HIDDEN int
+static int
 qt_poll(struct fb *UNUSED(ifp))
 {
     fb_log("qt_poll\n");
@@ -1327,7 +1327,7 @@ qt_poll(struct fb *UNUSED(ifp))
 }
 
 
-HIDDEN int
+static int
 qt_flush(struct fb *ifp)
 {
     struct qtinfo *qi = QI(ifp);
@@ -1338,7 +1338,7 @@ qt_flush(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 qt_free(struct fb *UNUSED(ifp))
 {
     fb_log("qt_free\n");

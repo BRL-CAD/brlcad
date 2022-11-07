@@ -62,14 +62,14 @@ static struct fb *curr_fbp;		/* current framebuffer pointer */
 /*
  * Communication error.  An error occurred on the PKG link.
  */
-HIDDEN void
+static void
 comm_error(const char *str)
 {
     bu_log("%s", str);
 }
 
 
-HIDDEN void
+static void
 drop_client(struct fbserv_obj *fbsp, int sub)
 {
     if (fbsp->fbs_clients[sub].fbsc_pkg != PKC_NULL) {
@@ -95,7 +95,7 @@ drop_client(struct fbserv_obj *fbsp, int sub)
 /*
  * Process arrivals from existing clients.
  */
-HIDDEN void
+static void
 existing_client_handler(ClientData clientData, int UNUSED(mask))
 {
     register int i;
@@ -135,7 +135,7 @@ existing_client_handler(ClientData clientData, int UNUSED(mask))
 }
 
 
-HIDDEN void
+static void
 setup_socket(int fd)
 {
     int on     = 1;
@@ -173,7 +173,7 @@ setup_socket(int fd)
 
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-HIDDEN void
+static void
 new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel chan)
 {
     int i;
@@ -205,7 +205,7 @@ new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel chan)
 }
 
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
-HIDDEN void
+static void
 new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel UNUSED(chan))
 {
     int i;
@@ -235,7 +235,7 @@ new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel UNUSED(cha
 #endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-HIDDEN struct pkg_conn *
+static struct pkg_conn *
 fbs_makeconn(int fd, const struct pkg_switch *switchp)
 {
     register struct pkg_conn *pc;
@@ -278,7 +278,7 @@ fbs_makeconn(int fd, const struct pkg_switch *switchp)
 /*
  * This is where we go for message types we don't understand.
  */
-HIDDEN void
+static void
 fbs_rfbunknown(struct pkg_conn *pcp, char *buf)
 {
     bu_log("fbserv: unable to handle message type %d\n", pcp->pkc_type);
@@ -290,7 +290,7 @@ fbs_rfbunknown(struct pkg_conn *pcp, char *buf)
 
 /******** Here's where the hooks lead *********/
 
-HIDDEN void
+static void
 fbs_rfbopen(struct pkg_conn *pcp, char *buf)
 {
     char rbuf[5*NET_LONG_LEN+1];
@@ -888,7 +888,7 @@ fbs_rfbhelp(struct pkg_conn *pcp, char *buf)
  * Accept any new client connections.
  */
 #if defined(_WIN32) && !defined(__CYGWIN__)
-HIDDEN void
+static void
 new_client_handler(ClientData clientData,
 		   Tcl_Channel chan,
 		   char *UNUSED(host),
@@ -936,7 +936,7 @@ new_client_handler(ClientData clientData,
 	new_client(fbsp, fbs_makeconn((int)fd, pswitch), chan);
 }
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
-HIDDEN void
+static void
 new_client_handler(ClientData clientData,
 		   int UNUSED(port))
 {

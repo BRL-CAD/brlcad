@@ -331,7 +331,7 @@ pipe_seg_is_bend(const struct pipe_segment *seg)
 }
 
 
-HIDDEN int
+static int
 rt_bend_pipe_prep(
     struct bu_list *head,
     fastf_t *bend_center, fastf_t *bend_start, fastf_t *bend_end,
@@ -435,7 +435,7 @@ rt_bend_pipe_prep(
 }
 
 
-HIDDEN void
+static void
 rt_linear_pipe_prep(
     struct bu_list *head,
     fastf_t *pt1, fastf_t id1, fastf_t od1,
@@ -530,7 +530,7 @@ rt_linear_pipe_prep(
 }
 
 
-HIDDEN void
+static void
 pipe_elements_calculate(struct bu_list *elements_head, struct rt_db_internal *ip, point_t *min, point_t *max)
 {
     struct rt_pipe_internal *pip;
@@ -639,7 +639,7 @@ pipe_elements_calculate(struct bu_list *elements_head, struct rt_db_internal *ip
 }
 
 
-HIDDEN void
+static void
 pipe_elements_free(struct bu_list *head)
 {
     if (head != 0) {
@@ -801,7 +801,7 @@ rt_vls_pipe_pnt(
  * end. Bend segments must have constant radii .  These surfaces are
  * normal to the flow of the pipe.
  */
-HIDDEN void
+static void
 discont_radius_shot(
     struct xray *rp,
     point_t center,
@@ -884,7 +884,7 @@ rt_in_sph(struct xray *rp, point_t center, fastf_t radius_sq)
 }
 
 
-HIDDEN void
+static void
 bend_pipe_shot(
     struct soltab *stp,
     struct xray *rp,
@@ -1204,7 +1204,7 @@ check_discont_radii:
 }
 
 
-HIDDEN void
+static void
 linear_pipe_shot(
     struct soltab *stp,
     struct xray *rp,
@@ -1353,7 +1353,7 @@ linear_pipe_shot(
 }
 
 
-HIDDEN void
+static void
 pipe_start_shot(
     struct soltab *stp,
     struct xray *rp,
@@ -1428,7 +1428,7 @@ pipe_start_shot(
 }
 
 
-HIDDEN void
+static void
 pipe_end_shot(
     struct soltab *stp,
     struct xray *rp,
@@ -1511,7 +1511,7 @@ pipe_end_shot(
 }
 
 
-HIDDEN void
+static void
 rt_pipe_elim_dups(
     struct hit *hit,
     int *nh,
@@ -2018,7 +2018,7 @@ draw_pipe_linear_seg(
  * Using the specified number of segments, draw the shortest arc on the given
  * circle which starts at (center + radius * v1) and ends at (arc_end).
  */
-HIDDEN void
+static void
 draw_pipe_arc(
     struct bu_list *vhead,
     struct pipe_circle arc_circle,
@@ -2388,7 +2388,7 @@ rt_pipe_plot(
 }
 
 
-HIDDEN void
+static void
 tesselate_pipe_start(
     struct wdb_pipe_pnt *pipe_pnt,
     int arc_segs,
@@ -2510,7 +2510,7 @@ tesselate_pipe_start(
 }
 
 
-HIDDEN void
+static void
 tesselate_pipe_linear(
     fastf_t *start_pt, fastf_t orad, fastf_t irad,
     fastf_t *end_pt, fastf_t end_orad, fastf_t end_irad,
@@ -3191,7 +3191,7 @@ tesselate_pipe_linear(
 }
 
 
-HIDDEN void
+static void
 tesselate_pipe_bend(
     fastf_t *bend_start,
     fastf_t *bend_end,
@@ -3630,7 +3630,7 @@ tesselate_pipe_bend(
 }
 
 
-HIDDEN void
+static void
 tesselate_pipe_end(
     struct wdb_pipe_pnt *pipe_pnt,
     int arc_segs,
@@ -4734,7 +4734,7 @@ rt_pipe_surf_area(fastf_t *area, struct rt_db_internal *ip)
 }
 
 
-HIDDEN void
+static void
 pipe_elem_volume_and_centroid(struct id_pipe *p, fastf_t *vol, point_t *cent)
 {
     fastf_t crt_vol, cs;

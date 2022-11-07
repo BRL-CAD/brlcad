@@ -50,7 +50,7 @@ struct tokens {
 #define TOK_SUBTR	5
 #define TOK_TREE	6
 
-HIDDEN void
+static void
 free_tokens(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -66,7 +66,7 @@ free_tokens(struct bu_list *hp)
 }
 
 
-HIDDEN void
+static void
 append_union(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -80,7 +80,7 @@ append_union(struct bu_list *hp)
 }
 
 
-HIDDEN void
+static void
 append_inter(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -94,7 +94,7 @@ append_inter(struct bu_list *hp)
 }
 
 
-HIDDEN void
+static void
 append_subtr(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -108,7 +108,7 @@ append_subtr(struct bu_list *hp)
 }
 
 
-HIDDEN void
+static void
 append_lparen(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -122,7 +122,7 @@ append_lparen(struct bu_list *hp)
 }
 
 
-HIDDEN void
+static void
 append_rparen(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -136,7 +136,7 @@ append_rparen(struct bu_list *hp)
 }
 
 
-HIDDEN int
+static int
 add_operator(struct ged *gedp, struct bu_list *hp, char *ptr, short int *last_tok)
 {
     db_op_t op = db_str2op(ptr);
@@ -165,7 +165,7 @@ add_operator(struct ged *gedp, struct bu_list *hp, char *ptr, short int *last_to
 }
 
 
-HIDDEN int
+static int
 add_operand(struct ged *gedp, struct bu_list *hp, char *name)
 {
     char *ptr_lparen;
@@ -222,7 +222,7 @@ add_operand(struct ged *gedp, struct bu_list *hp, char *name)
 }
 
 
-HIDDEN void
+static void
 do_inter(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -257,7 +257,7 @@ do_inter(struct bu_list *hp)
 }
 
 
-HIDDEN void
+static void
 do_union_subtr(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -295,7 +295,7 @@ do_union_subtr(struct bu_list *hp)
 }
 
 
-HIDDEN int
+static int
 do_paren(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -329,7 +329,7 @@ do_paren(struct bu_list *hp)
 }
 
 
-HIDDEN union tree *
+static union tree *
 eval_bool(struct bu_list *hp)
 {
     int done=0;
@@ -351,7 +351,7 @@ eval_bool(struct bu_list *hp)
 }
 
 
-HIDDEN int
+static int
 check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct directory *dp)
 {
     struct tokens *tok;

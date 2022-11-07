@@ -48,7 +48,7 @@ CADTreeModel::headerData(int section, Qt::Orientation, int role) const
 }
 
 
-HIDDEN int
+static int
 get_arb_type(struct directory *dp, struct db_i *dbip)
 {
     int type;
@@ -61,7 +61,7 @@ get_arb_type(struct directory *dp, struct db_i *dbip)
 }
 
 
-HIDDEN void 
+static void 
 db_find_subregion(int *ret, union tree *tp, struct db_i *dbip, int *depth, int max_depth,
 	void (*traverse_func) (int *ret, struct directory *, struct db_i *, int *, int))
 {
@@ -107,7 +107,7 @@ db_find_subregion(int *ret, union tree *tp, struct db_i *dbip, int *depth, int m
     return;
 }
 
-HIDDEN void
+static void
 db_find_region(int *ret, struct directory *search, struct db_i *dbip, int *depth, int max_depth)
 {
 
@@ -131,7 +131,7 @@ db_find_region(int *ret, struct directory *search, struct db_i *dbip, int *depth
     return;
 }
 
-HIDDEN int
+static int
 get_comb_type(struct directory *dp, struct db_i *dbip)
 {
     struct bu_attribute_value_set avs;
@@ -170,7 +170,7 @@ get_comb_type(struct directory *dp, struct db_i *dbip)
     return 0;
 }
 
-HIDDEN QImage
+static QImage
 get_type_icon(struct directory *dp, struct db_i *dbip)
 {
     int type = 0;
@@ -393,7 +393,7 @@ CADTreeModel::setData(const QModelIndex & idx, const QVariant & value, int role)
     return ret;
 }
 
-HIDDEN void
+static void
 db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, int *depth, int max_depth, QHash<struct directory *, struct rt_db_internal *> *combinternals,
 	void (*traverse_func) (int *ret, const char *, struct directory *, struct db_i *, int *, int, QHash<struct directory *, struct rt_db_internal *> *))
 {
@@ -439,7 +439,7 @@ db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, i
     return;
 }
 
-HIDDEN void
+static void
 db_find_obj(int *ret, const char *name, struct directory *search, struct db_i *dbip, int *depth, int max_depth, QHash<struct directory *, struct rt_db_internal *> *combinternals)
 {
     /* If we have a match, we need look no further */
@@ -835,7 +835,7 @@ void CADTreeModel::refresh()
     populate(((CADApp *)qApp)->dbip());
 }
 
-HIDDEN int
+static int
 dp_cmp(const void *d1, const void *d2, void *UNUSED(arg))
 {
     struct directory *dp1 = *(struct directory **)d1;

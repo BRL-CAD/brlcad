@@ -69,7 +69,7 @@ extern void rt_bot_ifree(struct rt_db_internal *ip);
  * reads a set of ARS B records and returns a pointer to memory
  * allocated for holding the curve's fastf_t values.
  */
-HIDDEN fastf_t *
+static fastf_t *
 ars_rd_curve(union record *rp, int npts, int flip)
 {
     int lim;

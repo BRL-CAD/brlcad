@@ -53,7 +53,7 @@
 
 #define INFORMATION_ATTRS_ON 0
 
-HIDDEN void
+static void
 set_attr_key(struct rt_wdb *wdbp, const char *obj_name, const char *key, int array_cnt, int *array)
 {
     struct bu_vls val = BU_VLS_INIT_ZERO;
@@ -82,7 +82,7 @@ set_attr_key(struct rt_wdb *wdbp, const char *obj_name, const char *key, int arr
     bu_vls_free(&val);
 }
 
-HIDDEN void
+static void
 subbrep_obj_name(int type, int id, const char *root, struct bu_vls *name)
 {
     if (!root || !name) return;
@@ -127,7 +127,7 @@ subbrep_obj_name(int type, int id, const char *root, struct bu_vls *name)
 }
 
 
-HIDDEN int
+static int
 subbrep_to_csg_arbn(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
 {
     if (!msgs || !data || !wdbp || !pname) return 0;
@@ -147,7 +147,7 @@ subbrep_to_csg_arbn(struct bu_vls *msgs, struct csg_object_params *data, struct 
     }
 }
 
-HIDDEN int
+static int
 subbrep_to_csg_planar(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
 {
     if (!msgs || !data || !wdbp || !pname) return 0;
@@ -167,7 +167,7 @@ subbrep_to_csg_planar(struct bu_vls *msgs, struct csg_object_params *data, struc
     }
 }
 
-HIDDEN int
+static int
 subbrep_to_csg_cylinder(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
 {
     if (!msgs || !data || !wdbp || !pname) return 0;
@@ -185,7 +185,7 @@ subbrep_to_csg_cylinder(struct bu_vls *msgs, struct csg_object_params *data, str
     return 0;
 }
 
-HIDDEN int
+static int
 subbrep_to_csg_cone(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
 {
     if (!msgs || !data || !wdbp || !pname) return 0;
@@ -203,7 +203,7 @@ subbrep_to_csg_cone(struct bu_vls *msgs, struct csg_object_params *data, struct 
     return 0;
 }
 
-HIDDEN int
+static int
 subbrep_to_csg_sph(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
 {
     if (!msgs || !data || !wdbp || !pname) return 0;
@@ -221,7 +221,7 @@ subbrep_to_csg_sph(struct bu_vls *msgs, struct csg_object_params *data, struct r
     return 0;
 }
 
-HIDDEN void
+static void
 csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_wdb *wdbp, const char *pname)
 {
 #if 0
@@ -268,7 +268,7 @@ csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_w
 
 #define BOOL_RESOLVE(_a, _b) (_b == '+') ? &isect : ((_a == '-' && _b == '-') || (_a == 'u' && _b == 'u')) ? &un : &sub
 
-HIDDEN int
+static int
 make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *wdbp, const char *rname)
 {
     char un = 'u';
@@ -314,7 +314,7 @@ make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *
     return 1;
 }
 
-HIDDEN int
+static int
 make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb *wdbp, const char *rname, struct wmember *pcomb)
 {
     struct wmember icomb;

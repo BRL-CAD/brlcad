@@ -406,7 +406,7 @@ parallel_wait_for_slot(int throttle, struct parallel_info *parent, size_t max_th
 }
 
 
-HIDDEN void *
+static void *
 parallel_interface_arg(void *utd)
 {
     struct thread_data *user_thread_data = (struct thread_data *)utd;
@@ -446,7 +446,7 @@ parallel_interface_arg(void *utd)
  *  cleanly stop the thread.
  *  *See ThreadProc MSDN documentation.
  */
-HIDDEN DWORD
+static DWORD
 parallel_interface_arg_stub(struct thread_data *user_thread_data)
 {
     parallel_interface_arg(user_thread_data);

@@ -47,7 +47,7 @@
 #include "gcv/api.h"
 
 
-HIDDEN int
+static int
 _gcv_brlcad_read(struct gcv_context *context,
 		 const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
 		 const char *source_path)
@@ -82,7 +82,7 @@ _gcv_brlcad_read(struct gcv_context *context,
 }
 
 
-HIDDEN int
+static int
 _gcv_brlcad_write(struct gcv_context *context,
 		  const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
 		  const char *dest_path)
@@ -138,7 +138,7 @@ static const struct gcv_filter _gcv_filter_brlcad_write =
 {"BRL-CAD Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, _gcv_brlcad_can_write, NULL, NULL, _gcv_brlcad_write};
 
 
-HIDDEN void
+static void
 _gcv_filter_register(struct bu_ptbl *filter_table,
 		     const struct gcv_filter *filter)
 {
@@ -186,7 +186,7 @@ _gcv_filter_register(struct bu_ptbl *filter_table,
 }
 
 
-HIDDEN void
+static void
 _gcv_filter_options_create(const struct gcv_filter *filter,
 			   struct bu_opt_desc **options_desc, void **options_data)
 {
@@ -210,7 +210,7 @@ _gcv_filter_options_create(const struct gcv_filter *filter,
 }
 
 
-HIDDEN void
+static void
 _gcv_filter_options_free(const struct gcv_filter *filter, void *options_data)
 {
     if (!filter || (!filter->create_opts_fn != !options_data))
@@ -221,7 +221,7 @@ _gcv_filter_options_free(const struct gcv_filter *filter, void *options_data)
 }
 
 
-HIDDEN int
+static int
 _gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
 			    const char * const *argv, void **options_data)
 {
@@ -270,7 +270,7 @@ _gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
 }
 
 
-HIDDEN void
+static void
 _gcv_opts_check(const struct gcv_opts *gcv_options)
 {
     if (!gcv_options)
@@ -293,7 +293,7 @@ _gcv_opts_check(const struct gcv_opts *gcv_options)
 }
 
 
-HIDDEN void
+static void
 _gcv_context_check(const struct gcv_context *context)
 {
     if (!context)
@@ -303,7 +303,7 @@ _gcv_context_check(const struct gcv_context *context)
     BU_CK_AVS(&context->messages);
 }
 
-HIDDEN void
+static void
 _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 {
     void *info_val;
@@ -348,7 +348,7 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 }
 
 
-HIDDEN const char *
+static const char *
 _gcv_plugins_get_path(void)
 {
     const char *pdir = bu_dir(NULL, 0, BU_DIR_LIBEXEC, LIBGCV_PLUGINS_DIRECTORY, NULL);
@@ -357,7 +357,7 @@ _gcv_plugins_get_path(void)
 }
 
 
-HIDDEN void
+static void
 _gcv_plugins_load_all(struct bu_ptbl *filter_table)
 {
     const char * const plugins_path = _gcv_plugins_get_path();

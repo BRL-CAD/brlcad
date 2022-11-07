@@ -1781,7 +1781,7 @@ MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, 
     bu_vls_free(&str);
 }
 
-HIDDEN int
+static int
 _opt_tire_iso(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     int d1, d2, d3;
@@ -1809,7 +1809,7 @@ _opt_tire_iso(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 #define ISO_TIRE_FMT "<width>/<aspect>R<rim diameter>"
 
 /* Help message printed when -h option is supplied */
-HIDDEN void
+static void
 _tire_show_help(struct ged *gedp, const char *cmd, struct bu_opt_desc *d)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;

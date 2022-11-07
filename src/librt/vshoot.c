@@ -37,7 +37,7 @@
 /**
  * Stub function which will "simulate" a call to a vector shot routine
  */
-HIDDEN void
+static void
 vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
 /* An array of solid pointers */
 /* An array of ray pointers */

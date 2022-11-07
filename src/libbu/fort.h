@@ -836,7 +836,7 @@ enum ft_text_style {
     FT_TSTYLE_UNDERLINED = (1U << 4), /**< Underlined */
     FT_TSTYLE_BLINK      = (1U << 5), /**< Blink */
     FT_TSTYLE_INVERTED   = (1U << 6), /**< Reverse (invert the foreground and background colors) */
-    FT_TSTYLE_HIDDEN     = (1U << 7)  /**< Hidden (useful for passwords)  */
+    FT_TSTYLE_static     = (1U << 7)  /**< Hidden (useful for passwords)  */
 };
 
 

@@ -75,10 +75,10 @@ struct bu_structparse toon_parse_tab[] = {
 };
 
 
-HIDDEN int toon_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int toon_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void toon_print(register struct region *rp, void *dp);
-HIDDEN void toon_free(void *cp);
+static int toon_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int toon_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void toon_print(register struct region *rp, void *dp);
+static void toon_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -107,7 +107,7 @@ struct mfuncs toon_mfuncs[] = {
  * 0 success, but delete region
  * -1 failure
  */
-HIDDEN int
+static int
 toon_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
@@ -144,14 +144,14 @@ toon_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
 }
 
 
-HIDDEN void
+static void
 toon_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, toon_print_tab, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 toon_free(void *cp)
 {
     BU_PUT(cp, struct toon_specific);

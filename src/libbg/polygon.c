@@ -207,7 +207,7 @@ bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts, size_t neqs, const p
 }
 
 
-HIDDEN int
+static int
 sort_ccw_3d(const void *x, const void *y, void *cmp)
 {
     vect_t tmp;

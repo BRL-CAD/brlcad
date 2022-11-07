@@ -59,7 +59,7 @@ enum diff {
 };
 
 
-HIDDEN void
+static void
 usage(const char *name)
 {
     const char *unknown = "pixcmp";
@@ -94,7 +94,7 @@ usage(const char *name)
 }
 
 
-HIDDEN void
+static void
 handle_range_opt(const char *arg, size_t *skip1, size_t *skip2)
 {
     const char *endptr = arg;
@@ -140,7 +140,7 @@ handle_range_opt(const char *arg, size_t *skip1, size_t *skip2)
 }
 
 
-HIDDEN enum diff
+static enum diff
 compare_rgb(int r1, int g1, int b1, int r2, int g2, int b2, size_t *matching, size_t *off1, size_t *offmany, size_t *missing)
 {
     enum diff result = MISSING;

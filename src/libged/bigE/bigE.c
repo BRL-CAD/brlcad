@@ -105,7 +105,7 @@ union E_tree {
 #define CK_ETREE(_p) BU_CKMAG(_p, E_TREE_MAGIC, "struct E_tree")
 
 
-HIDDEN union E_tree *
+static union E_tree *
 add_solid(const struct directory *dp,
 	  matp_t mat,
 	  struct _ged_client_data *dgcdp)
@@ -303,7 +303,7 @@ show_seg(struct bu_list *seg, int str)
 
 
 /* given a segment list, eliminate any overlaps in the segments */
-HIDDEN void
+static void
 eliminate_overlaps(struct bu_list *seghead,
 		   struct _ged_client_data *dgcdp)
 {
@@ -341,7 +341,7 @@ eliminate_overlaps(struct bu_list *seghead,
 /* perform the intersection of two segments the result is assigned the
  * provided type
  */
-HIDDEN void
+static void
 do_intersect(struct seg *A,
 	     struct seg *B,
 	     struct bu_list *seghead,
@@ -384,7 +384,7 @@ do_intersect(struct seg *A,
 /* perform the subtraction of one segment from another the result is
  * assigned the type from segment A
  */
-HIDDEN void
+static void
 do_subtract(struct seg *A,
 	    struct seg *B,
 	    struct bu_list *seghead,
@@ -434,7 +434,7 @@ do_subtract(struct seg *A,
 }
 
 
-HIDDEN void
+static void
 promote_ints(struct bu_list *head,
 	     struct _ged_client_data *dgcdp)
 {
@@ -635,7 +635,7 @@ promote_ints(struct bu_list *head,
 
 
 /* Evaluate an operation on the operands (segment lists) */
-HIDDEN struct bu_list *
+static struct bu_list *
 eval_op(struct bu_list *A,
 	int op,
 	struct bu_list *B,
@@ -957,7 +957,7 @@ eval_op(struct bu_list *A,
 
 
 /* evaluate an E-tree */
-HIDDEN struct bu_list *
+static struct bu_list *
 eval_etree(union E_tree *eptr,
 	   struct _ged_client_data *dgcdp)
 
@@ -999,7 +999,7 @@ eval_etree(union E_tree *eptr,
 }
 
 
-HIDDEN struct soltab *
+static struct soltab *
 classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ged_client_data *dgcdp)
 {
     fastf_t mid_dist;
@@ -1092,7 +1092,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
  * solids, put the results in the E-tree leaves as type IN_SOL.  Call
  * eval_etree() and plot the results
  */
-HIDDEN void
+static void
 shoot_and_plot(point_t start_pt,
 	       vect_t dir,
 	       struct bu_list *vhead,
@@ -1301,7 +1301,7 @@ shoot_and_plot(point_t start_pt,
 
 #define HITS_BLOCK 20
 
-HIDDEN void
+static void
 Eplot(union E_tree *eptr,
       struct bu_list *vhead,
       struct _ged_client_data *dgcdp)
@@ -1663,7 +1663,7 @@ Eplot(union E_tree *eptr,
 }
 
 
-HIDDEN void
+static void
 free_etree(union E_tree *eptr,
 	   struct _ged_client_data *dgcdp)
 {
@@ -1702,7 +1702,7 @@ free_etree(union E_tree *eptr,
 
 
 /* convert all "half" solids to polysolids */
-HIDDEN void
+static void
 fix_halfs(struct _ged_client_data *dgcdp)
 {
     point_t max, min;

@@ -58,7 +58,7 @@
  *
  * @return boolean on whether a match was found.
  */
-HIDDEN int
+static int
 join_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_vls *searched, const char *where)
 {
     size_t llen, rlen;
@@ -153,7 +153,7 @@ join_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_v
  * print out an error/warning message if we cannot find the specified
  * BRLCAD_ROOT (compile-time install path)
  */
-HIDDEN void
+static void
 root_missing(const char *paths)
 {
     bu_log("\

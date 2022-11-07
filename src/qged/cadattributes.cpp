@@ -199,7 +199,7 @@ int CADAttributesModel::NodeRow(CADAttributesNode *node) const
 }
 
 
-HIDDEN int
+static int
 attr_children(const char *attr)
 {
     if (BU_STR_EQUAL(attr, "color")) return 3;

@@ -72,7 +72,7 @@ static struct pkg_switch pkgswitch[] = {
 
 
 /* True if the non-null string s is all digits */
-HIDDEN int
+static int
 numeric(const char *s)
 {
     if (s == (char *)0 || *s == 0)
@@ -192,7 +192,7 @@ done:
 }
 
 
-HIDDEN void
+static void
 rem_log(const char *msg)
 {
     fb_log("%s", msg);
@@ -205,7 +205,7 @@ rem_log(const char *msg)
  * We send NET_LONG_LEN bytes of mode, NET_LONG_LEN bytes of size,
  * then the devname (or NULL if default).
  */
-HIDDEN int
+static int
 rem_open(register struct fb *ifp, const char *file, int width, int height)
 {
     size_t i;
@@ -283,45 +283,45 @@ rem_open(register struct fb *ifp, const char *file, int width, int height)
     return 0;		/* OK */
 }
 
-HIDDEN struct fb_platform_specific *
+static struct fb_platform_specific *
 rem_get_fbps(uint32_t UNUSED(magic))
 {
         return NULL;
 }
 
 
-HIDDEN void
+static void
 rem_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 {
         return;
 }
 
-HIDDEN int
+static int
 rem_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
 
-HIDDEN int
+static int
 rem_close_existing(struct fb *UNUSED(ifp))
 {
         return 0;
 }
 
-HIDDEN int
+static int
 rem_configure_window(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
         return 0;
 }
 
-HIDDEN int
+static int
 rem_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
         return 0;
 }
 
 
-HIDDEN int
+static int
 rem_close(struct fb *ifp)
 {
     unsigned char buf[NET_LONG_LEN+1];
@@ -346,7 +346,7 @@ rem_close(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 rem_free(struct fb *ifp)
 {
     unsigned char buf[NET_LONG_LEN+1];
@@ -361,7 +361,7 @@ rem_free(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 rem_clear(struct fb *ifp, unsigned char *bgpp)
 {
     unsigned char buf[NET_LONG_LEN+1];
@@ -385,7 +385,7 @@ rem_clear(struct fb *ifp, unsigned char *bgpp)
 /*
  * Send as longs:  x, y, num
  */
-HIDDEN ssize_t
+static ssize_t
 rem_read(register struct fb *ifp, int x, int y, unsigned char *pixelp, size_t num)
 {
     ssize_t ret;
@@ -414,7 +414,7 @@ rem_read(register struct fb *ifp, int x, int y, unsigned char *pixelp, size_t nu
 /*
  * As longs, x, y, num
  */
-HIDDEN ssize_t
+static ssize_t
 rem_write(register struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t num)
 {
     ssize_t ret;
@@ -438,7 +438,7 @@ rem_write(register struct fb *ifp, int x, int y, const unsigned char *pixelp, si
 }
 
 
-HIDDEN int
+static int
 rem_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     int num;
@@ -468,7 +468,7 @@ rem_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned
 }
 
 
-HIDDEN int
+static int
 rem_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     int num;
@@ -499,7 +499,7 @@ rem_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const u
 /*
  * Issue:  Determining if other end has support for this yet.
  */
-HIDDEN int
+static int
 rem_bwreadrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     int num;
@@ -528,7 +528,7 @@ rem_bwreadrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsign
 }
 
 
-HIDDEN int
+static int
 rem_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     int num;
@@ -559,7 +559,7 @@ rem_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const
 /*
  * 32-bit longs: mode, x, y
  */
-HIDDEN int
+static int
 rem_cursor(struct fb *ifp, int mode, int x, int y)
 {
     unsigned char buf[3*NET_LONG_LEN+1];
@@ -576,7 +576,7 @@ rem_cursor(struct fb *ifp, int mode, int x, int y)
 }
 
 
-HIDDEN int
+static int
 rem_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 {
     unsigned char buf[4*NET_LONG_LEN+1];
@@ -604,7 +604,7 @@ rem_getcursor(struct fb *ifp, int *mode, int *x, int *y)
  *
  * Do not confuse this routine with the old fb_scursor() call.
  */
-HIDDEN int
+static int
 rem_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     unsigned char buf[4*NET_LONG_LEN+1];
@@ -633,7 +633,7 @@ rem_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, i
 }
 
 
-HIDDEN int
+static int
 rem_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     unsigned char buf[4*NET_LONG_LEN+1];
@@ -651,7 +651,7 @@ rem_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-HIDDEN int
+static int
 rem_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     unsigned char buf[5*NET_LONG_LEN+1];
@@ -675,7 +675,7 @@ rem_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 #define REM_CMAP_BYTES (256*3*2)
 
-HIDDEN int
+static int
 rem_rmap(register struct fb *ifp, register ColorMap *cmap)
 {
     register int i;
@@ -697,7 +697,7 @@ rem_rmap(register struct fb *ifp, register ColorMap *cmap)
 }
 
 
-HIDDEN int
+static int
 rem_wmap(register struct fb *ifp, const ColorMap *cmap)
 {
     register int i;
@@ -727,7 +727,7 @@ rem_wmap(register struct fb *ifp, const ColorMap *cmap)
  * to wait for a reply (FLUSH can be used for synchronization.  In
  * fact, we may not want to send polls at all....
  */
-HIDDEN int
+static int
 rem_poll(struct fb *ifp)
 {
     /* send a poll package to remote */
@@ -737,7 +737,7 @@ rem_poll(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 rem_flush(struct fb *ifp)
 {
     unsigned char buf[NET_LONG_LEN+1];
@@ -751,7 +751,7 @@ rem_flush(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 rem_help(struct fb *ifp)
 {
     unsigned char buf[1*NET_LONG_LEN+1];
@@ -773,7 +773,7 @@ rem_help(struct fb *ifp)
  * are counting on the remote machine now to prefix his own name to
  * messages, so we don't touch them ourselves.
  */
-HIDDEN void
+static void
 pkgerror(struct pkg_conn *UNUSED(pcpp), char *buf)
 {
     fb_log("%s", buf);

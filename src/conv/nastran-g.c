@@ -131,8 +131,8 @@ static struct shell *nmg_shell;		/* NMG shell */
 static struct bn_tol tol;		/* tolerance for NMG's */
 static int polysolids=1;		/* flag for outputting NMG's rather than BOT's */
 
-HIDDEN int get_next_record(FILE *fp, int call_input, int write_flag);
-HIDDEN int convert_pnt(const point_t pt, struct coord_sys *cs, point_t out_pt);
+static int get_next_record(FILE *fp, int call_input, int write_flag);
+static int convert_pnt(const point_t pt, struct coord_sys *cs, point_t out_pt);
 
 #define INPUT_OK 0
 #define INPUT_NULL 1
@@ -152,7 +152,7 @@ print_usage(const char *progname)
 }
 
 
-HIDDEN void
+static void
 reset_input(void)
 {
     int i;
@@ -175,7 +175,7 @@ reset_input(void)
 }
 
 
-HIDDEN void
+static void
 write_fields(void)
 {
     int i;
@@ -198,7 +198,7 @@ write_fields(void)
 }
 
 
-HIDDEN void
+static void
 do_silly_nastran_shortcuts(void)
 {
     int field_no;
@@ -234,7 +234,7 @@ do_silly_nastran_shortcuts(void)
 }
 
 
-HIDDEN void
+static void
 get_large_field_input(FILE *fp, int write_flag)
 {
     char **tmp_rec;
@@ -292,7 +292,7 @@ get_large_field_input(FILE *fp, int write_flag)
 }
 
 
-HIDDEN void
+static void
 get_small_field_input(FILE *fp, int write_flag)
 {
     char **tmp_rec;
@@ -343,7 +343,7 @@ get_small_field_input(FILE *fp, int write_flag)
 }
 
 
-HIDDEN void
+static void
 get_free_form_input(FILE *fp, int write_flag)
 {
     char **tmp_rec;
@@ -420,7 +420,7 @@ get_free_form_input(FILE *fp, int write_flag)
 }
 
 
-HIDDEN int
+static int
 get_next_record(FILE *fp, int call_input, int write_flag)
 {
     char *tmp;
@@ -505,7 +505,7 @@ get_next_record(FILE *fp, int call_input, int write_flag)
 }
 
 
-HIDDEN void
+static void
 log_line(char *str)
 {
     int i;
@@ -520,7 +520,7 @@ log_line(char *str)
 }
 
 
-HIDDEN void
+static void
 convert_input(void)
 {
 
@@ -530,7 +530,7 @@ convert_input(void)
 }
 
 
-HIDDEN int
+static int
 convert_cs(struct coord_sys *cs)
 {
     struct coord_sys *cs2;
@@ -572,7 +572,7 @@ convert_cs(struct coord_sys *cs)
 }
 
 
-HIDDEN int
+static int
 convert_pnt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 {
     point_t tmp_pt;
@@ -620,7 +620,7 @@ convert_pnt(const point_t pt, struct coord_sys *cs, point_t out_pt)
  * 1 if cannot convert
  */
 
-HIDDEN int
+static int
 convert_grid(int idx)
 {
     struct coord_sys *cs;
@@ -649,7 +649,7 @@ convert_grid(int idx)
 }
 
 
-HIDDEN int
+static int
 get_gridi(int gid)
 {
     int i;
@@ -677,7 +677,7 @@ get_gridi(int gid)
 }
 
 
-HIDDEN void
+static void
 get_grid(int gid, fastf_t *pt)
 {
     int i;
@@ -705,7 +705,7 @@ get_grid(int gid, fastf_t *pt)
 }
 
 
-HIDDEN void
+static void
 get_coord_sys(void)
 {
     int form;
@@ -813,7 +813,7 @@ get_coord_sys(void)
 }
 
 
-HIDDEN int
+static int
 convert_all_cs(void)
 {
     int ret=0;
@@ -828,7 +828,7 @@ convert_all_cs(void)
 }
 
 
-HIDDEN int
+static int
 convert_all_pts(void)
 {
     int i;
@@ -843,7 +843,7 @@ convert_all_pts(void)
 }
 
 
-HIDDEN int
+static int
 get_pid_index(int pid)
 {
     struct pshell *psh;
@@ -862,7 +862,7 @@ get_pid_index(int pid)
 }
 
 
-HIDDEN void
+static void
 get_cquad4(void)
 {
     int pid;
@@ -963,7 +963,7 @@ get_cquad4(void)
 }
 
 
-HIDDEN void
+static void
 get_ctria3(void)
 {
     int pid;
@@ -1051,7 +1051,7 @@ get_ctria3(void)
 }
 
 
-HIDDEN void
+static void
 get_cbar(void)
 {
     int eid, pid;

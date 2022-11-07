@@ -210,7 +210,7 @@ static const vect_t dsp_pl[BBOX_PLANES] = {
 };
 
 
-HIDDEN void
+static void
 hook_verify(const struct bu_structparse *sp,
 	    const char *sp_name,
 	    void *base,
@@ -259,7 +259,7 @@ hook_verify(const struct bu_structparse *sp,
 }
 
 
-HIDDEN void
+static void
 hook_file(
     const struct bu_structparse *sp,
     const char *sp_name,
@@ -317,7 +317,7 @@ static int plot_file_num = 0;
 /**
  * Plot an RPP to a file in the given color
  */
-HIDDEN void
+static void
 plot_rpp(FILE *fp, struct bound_rpp *rpp, int r, int g, int b)
 {
     pl_color(fp, r, g, b);
@@ -339,7 +339,7 @@ plot_rpp(FILE *fp, struct bound_rpp *rpp, int r, int g, int b)
 /**
  * Plot a dsp_bb structure
  */
-HIDDEN void
+static void
 plot_dsp_bb(FILE *fp, struct dsp_bb *dsp_bb,
 	    struct dsp_specific *dsp,
 	    int r, int g, int b, int blather)
@@ -367,7 +367,7 @@ plot_dsp_bb(FILE *fp, struct dsp_bb *dsp_bb,
 /*
  * drawing support for isect_ray_dsp_bb()
  */
-HIDDEN FILE *
+static FILE *
 draw_dsp_bb(int *plotnum,
 	    struct dsp_bb *dsp_bb,
 	    struct dsp_specific *dsp,
@@ -399,7 +399,7 @@ draw_dsp_bb(int *plotnum,
 /**
  * Plot the bounding box layers for a dsp
  */
-HIDDEN void
+static void
 plot_layers(struct dsp_specific *dsp_sp)
 {
     FILE *fp;
@@ -455,7 +455,7 @@ plot_layers(struct dsp_specific *dsp_sp)
 /**
  * Plot the results of intersecting a ray with the top of a cell
  */
-HIDDEN void
+static void
 plot_cell_top(struct isect_stuff *isect,
 	      struct dsp_bb *dsp_bb,
 	      point_t A,
@@ -543,7 +543,7 @@ plot_cell_top(struct isect_stuff *isect,
 }
 
 
-HIDDEN void
+static void
 dsp_print(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 {
     point_t pt = VINIT_ZERO;
@@ -624,7 +624,7 @@ rt_dsp_print(register const struct soltab *stp)
  * compute bounding boxes for each cell, then compute bounding boxes
  * for collections of bounding boxes
  */
-HIDDEN void
+static void
 dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_max)
 {
     int idx, curr_layer, xs, ys, xv, yv, tot;
@@ -1064,7 +1064,7 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-HIDDEN void
+static void
 plot_seg(struct isect_stuff *isect,
 	 struct hit *in_hit,
 	 struct hit *out_hit,
@@ -1112,7 +1112,7 @@ plot_seg(struct isect_stuff *isect,
  * 0 continue to intersect
  * 1 All intersections computed, terminate intersection processing
  */
-HIDDEN int
+static int
 add_seg(struct isect_stuff *isect,
 	struct hit *in_hit,
 	struct hit *out_hit,
@@ -1289,7 +1289,7 @@ add_seg(struct isect_stuff *isect,
  * 0 Ray misses triangle
  * -1 Ray/plane parallel
  */
-HIDDEN int
+static int
 isect_ray_triangle(struct isect_stuff *isect,
 		   point_t A,
 		   point_t B,
@@ -1485,7 +1485,7 @@ isect_ray_triangle(struct isect_stuff *isect,
  * them to the intersection algorithm.  That's what this function
  * does.
  */
-HIDDEN int
+static int
 permute_cell(point_t A,
 	     point_t B,
 	     point_t C,
@@ -1650,7 +1650,7 @@ permute_cell(point_t A,
  * 0 if pt above line (such as P in diagram)
  * 1 if pt at/below line (such as Q in diagram)
  */
-HIDDEN int
+static int
 check_bbpt_hit_elev(int i,	/* indicates face of cell */
 		    point_t A,
 		    point_t B,
@@ -1743,7 +1743,7 @@ check_bbpt_hit_elev(int i,	/* indicates face of cell */
  * 0 continue intersection calculations
  * 1 Terminate intersection computation
  */
-HIDDEN int
+static int
 isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 {
     point_t A, B, C, D, P;
@@ -2146,7 +2146,7 @@ dsp_in_rpp(struct isect_stuff *isect,
 
 
 #ifdef ORDERED_ISECT
-HIDDEN int
+static int
 isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb);
 
 
@@ -2155,7 +2155,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb);
  * 0 continue intersection calculations
  * 1 Terminate intersection computation
  */
-HIDDEN int
+static int
 recurse_dsp_bb(struct isect_stuff *isect,
 	       struct dsp_bb *dsp_bb,
 	       point_t minpt, /* entry point of dsp_bb */
@@ -2320,7 +2320,7 @@ recurse_dsp_bb(struct isect_stuff *isect,
  * 0 continue intersection calculations
  * 1 Terminate intersection computation
  */
-HIDDEN int
+static int
 isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 {
     point_t bbmin, bbmax;
@@ -2667,7 +2667,7 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  * Compute the model-space normal at a gridpoint
  *
  */
-HIDDEN void
+static void
 compute_normal_at_gridpoint(vect_t N,
 			    struct dsp_specific *dsp,
 			    unsigned int x,
@@ -3375,7 +3375,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
  * DSP_CUT_DIR_llUR - lower left to upper right
  * DSP_CUT_DIR_ULlr - upper right to lower left
  */
-HIDDEN int
+static int
 get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
 {
 /*
@@ -3970,7 +3970,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * 0 Success
  * !0 Failure
  */
-HIDDEN int
+static int
 get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 {
     struct bu_mapped_file *mf;
@@ -4028,7 +4028,7 @@ extern int rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *
 /**
  * Retrieve data for DSP from a database object.
  */
-HIDDEN int
+static int
 get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 {
     struct rt_binunif_internal *bip;
@@ -4115,7 +4115,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
  * 0 success
  * !0 failure
  */
-HIDDEN int
+static int
 dsp_get_data(struct rt_dsp_internal *dsp_ip, const mat_t mat, const struct db_i *dbip)
 {
     mat_t tmp;
@@ -4700,7 +4700,7 @@ rt_dsp_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 }
 
 
-HIDDEN int
+static int
 swap_cell_pts(int A[3],
 	      int B[3],
 	      int C[3],

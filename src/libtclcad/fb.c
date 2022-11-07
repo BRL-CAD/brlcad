@@ -71,7 +71,7 @@ static struct fb_obj_list {
 } fb_objs;
 
 
-HIDDEN int
+static int
 fbo_coords_ok(struct fb *fbp, int x, int y)
 {
     int width;
@@ -113,7 +113,7 @@ fbo_coords_ok(struct fb *fbp, int x, int y)
 /*
  * Called when the object is destroyed.
  */
-HIDDEN void
+static void
 fbo_deleteProc(void *clientData)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -136,7 +136,7 @@ fbo_deleteProc(void *clientData)
  * Usage:
  * procname close
  */
-HIDDEN int
+static int
 fbo_close_tcl(void *clientData, int argc, const char **UNUSED(argv))
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -153,7 +153,7 @@ fbo_close_tcl(void *clientData, int argc, const char **UNUSED(argv))
 }
 
 
-HIDDEN int
+static int
 fbo_tcllist2color(const char *str, unsigned char *pixel)
 {
     int r, g, b;
@@ -178,7 +178,7 @@ fbo_tcllist2color(const char *str, unsigned char *pixel)
  * Usage:
  * procname clear [rgb]
  */
-HIDDEN int
+static int
 fbo_clear_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -220,7 +220,7 @@ fbo_clear_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname cursor mode x y
  */
-HIDDEN int
+static int
 fbo_cursor_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -261,7 +261,7 @@ fbo_cursor_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname getcursor
  */
-HIDDEN int
+static int
 fbo_getcursor_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -296,7 +296,7 @@ fbo_getcursor_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname refresh [rect]
  */
-HIDDEN int
+static int
 fbo_refresh_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -331,7 +331,7 @@ fbo_refresh_tcl(void *clientData, int argc, const char **argv)
  * Returns the port number actually used.
  *
  */
-HIDDEN int
+static int
 fbo_listen_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -383,7 +383,7 @@ fbo_listen_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname pixel x y [rgb]
  */
-HIDDEN int
+static int
 fbo_pixel_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -445,7 +445,7 @@ fbo_pixel_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname cell xmin ymin width height color
  */
-HIDDEN int
+static int
 fbo_cell_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -522,7 +522,7 @@ fbo_cell_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname flush
  */
-HIDDEN int
+static int
 fbo_flush_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -545,7 +545,7 @@ fbo_flush_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname getheight
  */
-HIDDEN int
+static int
 fbo_getheight_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -571,7 +571,7 @@ fbo_getheight_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname getwidth
  */
-HIDDEN int
+static int
 fbo_getwidth_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -597,7 +597,7 @@ fbo_getwidth_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname getsize
  */
-HIDDEN int
+static int
 fbo_getsize_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -625,7 +625,7 @@ fbo_getsize_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname cell xmin ymin width height color
  */
-HIDDEN int
+static int
 fbo_rect_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -712,7 +712,7 @@ fbo_rect_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname configure width height
  */
-HIDDEN int
+static int
 fbo_configure_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -748,7 +748,7 @@ fbo_configure_tcl(void *clientData, int argc, const char **argv)
  *
  * Returns: result of FB command.
  */
-HIDDEN int
+static int
 fbo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char **argv)
 {
     int ret;
@@ -785,7 +785,7 @@ fbo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
  * Usage:
  * fb_open [name device [args]]
  */
-HIDDEN int
+static int
 fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char **argv)
 {
     struct fb_obj *fbop;

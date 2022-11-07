@@ -92,7 +92,7 @@ DebugPlot::LinkedCurves(void)
     return linked_curve_count;
 }
 
-HIDDEN void
+static void
 rt_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
 {
     struct bn_vlist *vp;
@@ -128,7 +128,7 @@ rt_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
     }
 }
 
-HIDDEN void
+static void
 write_plot_to_file(
     const char *filename,
     const struct bu_list *vhead,
@@ -266,7 +266,7 @@ DebugPlot::WriteLog()
     BN_FREE_VLIST(&vlist_free_list, &vhead);
 }
 
-HIDDEN double
+static double
 find_next_t(const ON_Curve* crv, double start_t, double step, double max_dist)
 {
     ON_Interval dom = crv->Domain();

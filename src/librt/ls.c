@@ -33,7 +33,7 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
-HIDDEN int
+static int
 dp_eval_flags(struct directory *dp, int flags)
 {
     int flag_eval = 0;

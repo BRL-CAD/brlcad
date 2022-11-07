@@ -83,7 +83,7 @@ struct conversion_state
 #define MAX_LINE_SIZE 512
 
 
-HIDDEN void
+static void
 Add_face(struct conversion_state *pstate, int face[3])
 {
     if (!pstate->bot_faces) {
@@ -99,7 +99,7 @@ Add_face(struct conversion_state *pstate, int face[3])
     pstate->bot_fcurr++;
 }
 
-HIDDEN void
+static void
 mk_unique_brlcad_name(struct conversion_state *pstate, struct bu_vls *name)
 {
     char *c;
@@ -126,7 +126,7 @@ mk_unique_brlcad_name(struct conversion_state *pstate, struct bu_vls *name)
     }
 }
 
-HIDDEN void
+static void
 Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 {
     char line1[MAX_LINE_SIZE];
@@ -348,7 +348,7 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 }
 
 /* Byte swaps a 4-byte val */
-HIDDEN void stl_read_lswap(unsigned int *v)
+static void stl_read_lswap(unsigned int *v)
 {
     unsigned int r;
 
@@ -357,7 +357,7 @@ HIDDEN void stl_read_lswap(unsigned int *v)
 	| ((r & 0xff000000) >> 24);
 }
 
-HIDDEN void
+static void
 Convert_part_binary(struct conversion_state *pstate)
 {
     unsigned char buf[51];
@@ -482,7 +482,7 @@ Convert_part_binary(struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 Convert_input(struct conversion_state *pstate)
 {
     char line[ MAX_LINE_SIZE ];
@@ -515,7 +515,7 @@ Convert_input(struct conversion_state *pstate)
 }
 
 
-HIDDEN void
+static void
 stl_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
 {
     struct stl_read_options *options_data;
@@ -549,14 +549,14 @@ stl_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data
 }
 
 
-HIDDEN void
+static void
 stl_read_free_opts(void *options_data)
 {
     bu_free(options_data, "options_data");
 }
 
 
-HIDDEN int
+static int
 stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *source_path)
 {
     struct conversion_state state;
@@ -598,7 +598,7 @@ stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
  *
  * The STL format is so simple this is actually a bit tricky to do reliably...
  */
-HIDDEN int
+static int
 stl_can_read(const char *data)
 {
     struct stat stat_buf;

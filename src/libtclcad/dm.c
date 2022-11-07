@@ -72,7 +72,7 @@ static struct dm_obj HeadDMObj;	/* head of display manager object list */
 /*
  * Open/activate the display managers framebuffer.
  */
-HIDDEN int
+static int
 dmo_openFb(struct dm_obj *dmop)
 {
     if (!dmop || !dmop->interp)
@@ -108,7 +108,7 @@ dmo_openFb(struct dm_obj *dmop)
  * objname drawPoint x y
  *
  */
-HIDDEN int
+static int
 dmo_closeFb(struct dm_obj *dmop)
 {
     if (dmop->dmo_fbs.fbs_fbp == FB_NULL)
@@ -132,7 +132,7 @@ dmo_closeFb(struct dm_obj *dmop)
  * Returns the port number actually used.
  *
  */
-HIDDEN int
+static int
 dmo_listen_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -202,7 +202,7 @@ dmo_listen_tcl(void *clientData, int argc, const char **argv)
  * objname refresh
  *
  */
-HIDDEN int
+static int
 dmo_refreshFb_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -234,7 +234,7 @@ dmo_refreshFb_tcl(void *clientData, int argc, const char **argv)
 #endif
 
 
-HIDDEN int
+static int
 dmo_parseAxesArgs(int argc,
 		  const char **argv,
 		  fastf_t *viewSize,
@@ -356,7 +356,7 @@ dmo_parseAxesArgs(int argc,
  * objname drawViewAxes args
  *
  */
-HIDDEN int
+static int
 dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
 {
     point_t axesPos;
@@ -415,7 +415,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
  * drawCenterDot color
  *
  */
-HIDDEN int
+static int
 dmo_drawCenterDot_cmd(struct dm_obj *dmop,
 		      int argc,
 		      const char **argv)
@@ -478,7 +478,7 @@ dmo_drawCenterDot_cmd(struct dm_obj *dmop,
  * objname drawCenterDot color
  *
  */
-HIDDEN int
+static int
 dmo_drawCenterDot_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -490,7 +490,7 @@ dmo_drawCenterDot_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dmo_parseDataAxesArgs(int argc,
 		      const char **argv,
 		      fastf_t *viewSize,
@@ -574,7 +574,7 @@ dmo_parseDataAxesArgs(int argc,
  *
  *XXX This needs to be modified to handle an array/list of data points
  */
-HIDDEN int
+static int
 dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
 {
     point_t modelAxesPos;
@@ -629,7 +629,7 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dmo_parseModelAxesArgs(int argc,
 		       const char **argv,
 		       fastf_t *viewSize,
@@ -788,7 +788,7 @@ dmo_parseModelAxesArgs(int argc,
  * objname drawModelAxes args
  *
  */
-HIDDEN int
+static int
 dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
 {
     point_t modelAxesPos;
@@ -873,7 +873,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
  * objname drawBegin
  *
  */
-HIDDEN int
+static int
 dmo_drawBegin_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -885,7 +885,7 @@ dmo_drawBegin_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 }
 
 
-HIDDEN int
+static int
 dmo_drawEnd_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -904,7 +904,7 @@ dmo_drawEnd_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
  * objname drawEnd
  *
  */
-HIDDEN int
+static int
 dmo_clear_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -927,7 +927,7 @@ dmo_clear_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
  * objname clear
  *
  */
-HIDDEN int
+static int
 dmo_normal_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -946,7 +946,7 @@ dmo_normal_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
  * objname normal
  *
  */
-HIDDEN int
+static int
 dmo_loadmat_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -994,7 +994,7 @@ dmo_loadmat_tcl(void *clientData, int argc, const char **argv)
  * objname drawString args
  *
  */
-HIDDEN int
+static int
 dmo_drawString_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1024,7 +1024,7 @@ dmo_drawString_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dmo_drawPoint_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1057,7 +1057,7 @@ dmo_drawPoint_tcl(void *clientData, int argc, const char **argv)
  * objname drawLine x1 y1 x2 y2
  *
  */
-HIDDEN int
+static int
 dmo_drawLine_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1091,7 +1091,7 @@ dmo_drawLine_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname drawVList vid
  */
-HIDDEN int
+static int
 dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1127,7 +1127,7 @@ dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-HIDDEN void
+static void
 dmo_drawSolid(struct dm_obj *dmop,
 	      struct solid *sp)
 {
@@ -1214,7 +1214,7 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
  * Usage:
  * objname drawScale vsize unit color
  */
-HIDDEN int
+static int
 dmo_drawScale_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1230,7 +1230,7 @@ dmo_drawScale_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname drawSList hsp
  */
-HIDDEN int
+static int
 dmo_drawSList(struct dm_obj *dmop,
 	      struct bu_list *hsp)
 {
@@ -1293,7 +1293,7 @@ dmo_drawSList(struct dm_obj *dmop,
  * Usage:
  * objname drawSList sid
  */
-HIDDEN int
+static int
 dmo_drawSList_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1336,7 +1336,7 @@ dmo_drawSList_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname fg [rgb]
  */
-HIDDEN int
+static int
 dmo_fg_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1405,7 +1405,7 @@ bad_color:
  * Usage:
  * objname bg [rgb]
  */
-HIDDEN int
+static int
 dmo_bg_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1470,7 +1470,7 @@ bad_color:
  * Usage:
  * objname linewidth [n]
  */
-HIDDEN int
+static int
 dmo_lineWidth_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1530,7 +1530,7 @@ bad_lineWidth:
  * Usage:
  * objname linestyle [0|1]
  */
-HIDDEN int
+static int
 dmo_lineStyle_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1591,7 +1591,7 @@ bad_linestyle:
  * Usage:
  * objname configure
  */
-HIDDEN int
+static int
 dmo_configure_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1630,7 +1630,7 @@ dmo_configure_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname zclip [0|1]
  */
-HIDDEN int
+static int
 dmo_zclip_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1681,7 +1681,7 @@ dmo_zclip_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname zbuffer [0|1]
  */
-HIDDEN int
+static int
 dmo_zbuffer_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1732,7 +1732,7 @@ dmo_zbuffer_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname light [0|1]
  */
-HIDDEN int
+static int
 dmo_light_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1784,7 +1784,7 @@ dmo_light_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname transparency [0|1]
  */
-HIDDEN int
+static int
 dmo_transparency_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1836,7 +1836,7 @@ dmo_transparency_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname depthMask [0|1]
  */
-HIDDEN int
+static int
 dmo_depthMask_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1888,7 +1888,7 @@ dmo_depthMask_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname bounds ["xmin xmax ymin ymax zmin zmax"]
  */
-HIDDEN int
+static int
 dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1966,7 +1966,7 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname perspective [n]
  */
-HIDDEN int
+static int
 dmo_perspective_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2013,7 +2013,7 @@ dmo_perspective_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dmo_png_cmd(struct dm_obj *dmop,
 	    int argc,
 	    const char **argv)
@@ -2059,7 +2059,7 @@ dmo_png_cmd(struct dm_obj *dmop,
  * objname png args
  *
  */
-HIDDEN int
+static int
 dmo_png_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2078,7 +2078,7 @@ dmo_png_tcl(void *clientData, int argc, const char **argv)
  * objname clearBufferAfter [flag]
  *
  */
-HIDDEN int
+static int
 dmo_clearBufferAfter_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2129,7 +2129,7 @@ dmo_clearBufferAfter_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname debug [n]
  */
-HIDDEN int
+static int
 dmo_debug_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2179,7 +2179,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname logfile [filename]
  */
-HIDDEN int
+static int
 dmo_logfile_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2223,7 +2223,7 @@ dmo_logfile_tcl(void *clientData, int argc, const char **argv)
  * objname flush
  *
  */
-HIDDEN int
+static int
 dmo_flush_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2246,7 +2246,7 @@ dmo_flush_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
  * objname sync
  *
  */
-HIDDEN int
+static int
 dmo_sync_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2269,7 +2269,7 @@ dmo_sync_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
  * objname size [width [height]]
  *
  */
-HIDDEN int
+static int
 dmo_size_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2335,7 +2335,7 @@ dmo_size_tcl(void *clientData, int argc, const char **argv)
  * objname get_aspect
  *
  */
-HIDDEN int
+static int
 dmo_get_aspect_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2372,7 +2372,7 @@ dmo_get_aspect_tcl(void *clientData, int argc, const char **argv)
  * objname observer cmd [args]
  *
  */
-HIDDEN int
+static int
 dmo_observer_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2393,14 +2393,14 @@ dmo_observer_tcl(void *clientData, int argc, const char **argv)
     return bu_observer_cmd((ClientData)&dmop->dmo_observers, argc-2, (const char **)argv+2);
 }
 
-HIDDEN void
+static void
 _dm_obj_eval(void *context, const char *cmd) {
     Tcl_Interp *interp = (Tcl_Interp *)context;
     Tcl_Eval(interp, cmd);
 }
 
 #ifdef USE_FBSERV
-HIDDEN void
+static void
 dmo_fbs_callback(void *clientData)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2413,7 +2413,7 @@ dmo_fbs_callback(void *clientData)
 #endif
 
 
-HIDDEN int
+static int
 dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 {
     char buf[64];
@@ -2443,7 +2443,7 @@ dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dmo_getDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2452,7 +2452,7 @@ dmo_getDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 {
     int (*hook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
@@ -2506,7 +2506,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dmo_setDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2518,7 +2518,7 @@ dmo_setDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 /*
  * Called by Tcl when the object is destroyed.
  */
-HIDDEN void
+static void
 dmo_deleteProc(ClientData clientData)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2546,7 +2546,7 @@ dmo_deleteProc(ClientData clientData)
  *
  * Returns: result of DM command.
  */
-HIDDEN int
+static int
 dmo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char **argv)
 {
     int ret;
@@ -2615,7 +2615,7 @@ dmo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
  * Usage:
  * dm_open [name type [args]]
  */
-HIDDEN int
+static int
 dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct dm_obj *dmop;
@@ -2783,7 +2783,7 @@ Dmo_Init(Tcl_Interp *interp)
 /* from libdm/query.c */
 extern int dm_validXType(const char *dpy_string, const char *name);
 
-HIDDEN int
+static int
 dm_validXType_tcl(void *clientData, int argc, const char **argv)
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;
@@ -2811,7 +2811,7 @@ dm_validXType_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dm_bestXType_tcl(void *clientData, int argc, const char **argv)
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;

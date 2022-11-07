@@ -52,8 +52,8 @@ extern struct fb osgl_interface;
 
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
 
-HIDDEN int osgl_nwindows = 0; 	/* number of open windows */
-/*HIDDEN XColor color_cell[256];*/		/* used to set colormap */
+static int osgl_nwindows = 0; 	/* number of open windows */
+/*static XColor color_cell[256];*/		/* used to set colormap */
 
 
 /*
@@ -147,7 +147,7 @@ struct osglinfo {
 #define MODE_15NORMAL	(0<<14)
 #define MODE_15UNUSED	(1<<14)
 #if 0
-HIDDEN struct modeflags {
+static struct modeflags {
     const char c;
     long mask;
     long value;
@@ -172,7 +172,7 @@ HIDDEN struct modeflags {
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
  * rectangle of the frame buffer
  */
-HIDDEN void
+static void
 osgl_xmit_scanlines(register struct fb *ifp, int ybase, int nlines, int xbase, int npix)
 {
     register int y;
@@ -286,7 +286,7 @@ osgl_xmit_scanlines(register struct fb *ifp, int ybase, int nlines, int xbase, i
 }
 
 
-HIDDEN void
+static void
 osgl_cminit(register struct fb *ifp)
 {
     register int i;
@@ -299,7 +299,7 @@ osgl_cminit(register struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 osgl_getmem(struct fb *ifp)
 {
     int pixsize;
@@ -431,7 +431,7 @@ osgl_configureWindow(struct fb *ifp, int width, int height)
 }
 
 
-HIDDEN void
+static void
 osgl_do_event(struct fb *ifp)
 {
     if (OSGL(ifp)->firstTime) {
@@ -446,7 +446,7 @@ osgl_do_event(struct fb *ifp)
  * Check for a color map being linear in R, G, and B.  Returns 1 for
  * linear map, 0 for non-linear map (i.e., non-identity map).
  */
-HIDDEN int
+static int
 is_linear_cmap(register struct fb *ifp)
 {
     register int i;
@@ -460,7 +460,7 @@ is_linear_cmap(register struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 fb_osgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 {
     FB_CK_FB(ifp->i);
@@ -647,7 +647,7 @@ _osgl_open_existing(struct fb *ifp, int width, int height, void *glc, void *trai
     return 0;
 }
 
-HIDDEN struct fb_platform_specific *
+static struct fb_platform_specific *
 osgl_get_fbps(uint32_t magic)
 {
     struct fb_platform_specific *fb_ps = NULL;
@@ -660,7 +660,7 @@ osgl_get_fbps(uint32_t magic)
 }
 
 
-HIDDEN void
+static void
 osgl_put_fbps(struct fb_platform_specific *fbps)
 {
     BU_CKMAG(fbps, FB_OSGL_MAGIC, "osgl framebuffer");
@@ -669,7 +669,7 @@ osgl_put_fbps(struct fb_platform_specific *fbps)
     return;
 }
 
-HIDDEN int
+static int
 osgl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
     struct osgl_fb_info *osgl_internal = (struct osgl_fb_info *)fb_p->data;
@@ -678,7 +678,7 @@ osgl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spe
 }
 
 
-HIDDEN int
+static int
 osgl_final_close(struct fb *ifp)
 {
     if (FB_DEBUG)
@@ -712,7 +712,7 @@ osgl_final_close(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 osgl_flush(struct fb *UNUSED(ifp))
 {
     glFlush();
@@ -720,7 +720,7 @@ osgl_flush(struct fb *UNUSED(ifp))
 }
 
 
-HIDDEN int
+static int
 fb_osgl_close(struct fb *ifp)
 {
     osgl_flush(ifp);
@@ -792,7 +792,7 @@ osgl_close_existing(struct fb *ifp)
 /*
  * Handle any pending input events
  */
-HIDDEN int
+static int
 osgl_poll(struct fb *ifp)
 {
     osgl_do_event(ifp);
@@ -806,7 +806,7 @@ osgl_poll(struct fb *ifp)
 /*
  * Free memory resources and close.
  */
-HIDDEN int
+static int
 osgl_free(struct fb *ifp)
 {
     int ret;
@@ -821,7 +821,7 @@ osgl_free(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 osgl_clear(struct fb *ifp, unsigned char *pp)
 {
     struct fb_pixel bg;
@@ -887,7 +887,7 @@ osgl_clear(struct fb *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+static int
 osgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct fb_clip *clp;
@@ -947,7 +947,7 @@ osgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-HIDDEN int
+static int
 osgl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     if (FB_DEBUG)
@@ -963,7 +963,7 @@ osgl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 /* read count pixels into pixelp starting at x, y */
-HIDDEN ssize_t
+static ssize_t
 osgl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t n;
@@ -1018,7 +1018,7 @@ osgl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 /* write count pixels from pixelp starting at xstart, ystart */
-HIDDEN ssize_t
+static ssize_t
 osgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     register int x;
@@ -1184,7 +1184,7 @@ osgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
  * internal form, and then arrange to have them sent to the screen
  * separately.
  */
-HIDDEN int
+static int
 osgl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register int x;
@@ -1243,7 +1243,7 @@ osgl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const 
  * internal form, and then arrange to have them sent to the screen
  * separately.
  */
-HIDDEN int
+static int
 osgl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register int x;
@@ -1297,7 +1297,7 @@ osgl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, cons
 }
 
 
-HIDDEN int
+static int
 osgl_rmap(register struct fb *ifp, register ColorMap *cmp)
 {
     register int i;
@@ -1315,7 +1315,7 @@ osgl_rmap(register struct fb *ifp, register ColorMap *cmp)
 }
 
 
-HIDDEN int
+static int
 osgl_wmap(register struct fb *ifp, register const ColorMap *cmp)
 {
     register int i;
@@ -1361,7 +1361,7 @@ osgl_wmap(register struct fb *ifp, register const ColorMap *cmp)
 }
 
 
-HIDDEN int
+static int
 osgl_help(struct fb *ifp)
 {
     fb_log("Description: %s\n", ifp->i->if_type);
@@ -1381,7 +1381,7 @@ osgl_help(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 osgl_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     FB_CK_FB(ifp->i);
@@ -1393,7 +1393,7 @@ osgl_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbi
 }
 
 
-HIDDEN int
+static int
 osgl_cursor(struct fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
 

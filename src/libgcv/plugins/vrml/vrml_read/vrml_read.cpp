@@ -200,7 +200,7 @@ Parse_input(vector<NODE*> &childlist)
 }
 
 
-HIDDEN int
+static int
 vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *UNUSED(options_data), const char *source_path)
 {
     vector<NODE *> childlist;
@@ -272,7 +272,7 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
 
 
-HIDDEN int
+static int
 vrml_can_read(const char *source_path)
 {
     if (!source_path) return 0;

@@ -770,7 +770,7 @@ rt_eto_free(struct soltab *stp)
  * almost certainly a bug in here as extensive recursion has been
  * observed when normal tol is set to 1 or 2.
  */
-HIDDEN int
+static int
 make_ellipse4(struct rt_pnt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol, size_t recursions)
 {
     fastf_t dist, intr, m, theta0, theta1;
@@ -827,7 +827,7 @@ make_ellipse4(struct rt_pnt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf
  * semi-major and semi-minor axes a and b.  The line segments fall
  * within the normal and distance tolerances of ntol and dtol.
  */
-HIDDEN point_t *
+static point_t *
 make_ellipse(int *n, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 {
     int i;

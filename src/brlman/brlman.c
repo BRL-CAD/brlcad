@@ -78,7 +78,7 @@ const char *iso639_1[] = {"ab", "aa", "af", "ak", "sq", "am", "ar", "an",
 			  "tw", "ug", "uk", "ur", "ug", "uz", "ca", "ve", "vi", "vo", "wa", "cy",
 			  "fy", "wo", "xh", "yi", "yo", "za", "zu", NULL};
 
-HIDDEN int
+static int
 opt_lang(struct bu_vls *msg, size_t argc, const char **argv, void *l)
 {
     size_t i = 0;
@@ -102,7 +102,7 @@ opt_lang(struct bu_vls *msg, size_t argc, const char **argv, void *l)
 }
 
 
-HIDDEN int
+static int
 opt_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     size_t i = 0;
@@ -127,7 +127,7 @@ opt_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 }
 
 
-HIDDEN char *
+static char *
 find_man_file(const char *man_name, const char *lang, char section, int gui)
 {
     const char *ddir;

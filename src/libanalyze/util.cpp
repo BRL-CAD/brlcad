@@ -320,7 +320,7 @@ struct segfilter_container {
     struct bu_ptbl *test;
 };
 
-HIDDEN int
+static int
 segfilter_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     point_t in_pt, out_pt;
@@ -342,7 +342,7 @@ segfilter_hit(struct application *ap, struct partition *PartHeadp, struct seg *U
     return 0;
 }
 
-HIDDEN int
+static int
 segfilter_miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);
@@ -350,7 +350,7 @@ segfilter_miss(struct application *ap)
     return 0;
 }
 
-HIDDEN int
+static int
 segfilter_overlap(struct application *ap,
                 struct partition *UNUSED(pp),
                 struct region *UNUSED(reg1),
@@ -494,14 +494,14 @@ analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct 
     return;
 }
 
-HIDDEN struct xray *
+static struct xray *
 mp_ray(void *container)
 {
     struct minimal_partitions *d = (struct minimal_partitions *)container;
     return &(d->ray);
 }
 
-HIDDEN int *
+static int *
 mp_flag(void *container)
 {
     struct minimal_partitions *d = (struct minimal_partitions *)container;
@@ -513,7 +513,7 @@ struct solids_container {
     struct minimal_partitions **results;
 };
 
-HIDDEN int
+static int
 sp_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     int hit_cnt = 0;
@@ -565,14 +565,14 @@ sp_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     return 0;
 }
 
-HIDDEN int
+static int
 sp_miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);
     return 0;
 }
 
-HIDDEN int
+static int
 sp_overlap(struct application *ap,
 	struct partition *UNUSED(pp),
 	struct region *UNUSED(reg1),

@@ -41,7 +41,7 @@
 #define EDCODES_HALT -99
 
 
-HIDDEN int
+static int
 edcodes_id_compare(const void *p1, const void *p2, void *UNUSED(arg))
 {
     int id1, id2;
@@ -53,7 +53,7 @@ edcodes_id_compare(const void *p1, const void *p2, void *UNUSED(arg))
 }
 
 
-HIDDEN int
+static int
 edcodes_reg_compare(const void *p1, const void *p2, void *UNUSED(arg))
 {
     char *reg1, *reg2;
@@ -65,9 +65,9 @@ edcodes_reg_compare(const void *p1, const void *p2, void *UNUSED(arg))
 }
 
 
-HIDDEN int edcodes_collect_regnames(struct ged *, struct directory *, int);
+static int edcodes_collect_regnames(struct ged *, struct directory *, int);
 
-HIDDEN void
+static void
 edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *user_ptr3, void *UNUSED(user_ptr4))
 {
     int ret;
@@ -95,7 +95,7 @@ edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), 
 }
 
 
-HIDDEN int
+static int
 edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
 {
     int id;

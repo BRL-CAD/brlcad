@@ -61,7 +61,7 @@ namespace
 {
 
 
-HIDDEN simulate::Simulation::DebugMode
+static simulate::Simulation::DebugMode
 get_debug_mode(const std::string &debug_mode_string)
 {
     simulate::Simulation::DebugMode result = simulate::Simulation::debug_none;

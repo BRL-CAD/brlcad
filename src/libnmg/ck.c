@@ -1591,7 +1591,7 @@ struct v_ck_state {
 };
 
 
-HIDDEN void
+static void
 nmg_ck_v_in_fus(uint32_t *vp, void *state, int UNUSED(unused))
 {
     register struct v_ck_state *sp = (struct v_ck_state *)state;

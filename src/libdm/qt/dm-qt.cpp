@@ -306,7 +306,7 @@ void QTkMainWindow::render(QPainter *painter)
 }
 
 
-HIDDEN bool
+static bool
 qt_sendRepaintEvent(struct dm *dmp)
 {
     struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
@@ -508,7 +508,7 @@ qt_open(void *vinterp, int argc, const char **argv)
 /**
  * Release the display manager
  */
-HIDDEN int
+static int
 qt_close(struct dm *dmp)
 {
     //struct dm_qtvars *pubvars = (struct dm_qtvars *)dmp->i->dm_vars.pub_vars;
@@ -545,7 +545,7 @@ qt_viable(const char *UNUSED(dpy_string))
 }
 
 
-HIDDEN int
+static int
 qt_drawBegin(struct dm *dmp)
 {
     struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
@@ -567,7 +567,7 @@ qt_drawBegin(struct dm *dmp)
 }
 
 
-HIDDEN int
+static int
 qt_drawEnd(struct dm *dmp)
 {
     struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
@@ -586,7 +586,7 @@ qt_drawEnd(struct dm *dmp)
  * Restore the display processor to a normal mode of operation (i.e.,
  * not scaled, rotated, displaced, etc.).
  */
-HIDDEN int
+static int
 qt_normal(struct dm *dmp)
 {
     if (dmp->i->dm_debugLevel)
@@ -599,7 +599,7 @@ qt_normal(struct dm *dmp)
  * Load a new transformation matrix.  This will be followed by many
  * calls to qt_draw().
  */
-HIDDEN int
+static int
 qt_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 {
     struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
@@ -618,7 +618,7 @@ qt_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
  * Output a string into the displaylist. The starting position of the
  * beam is as specified.
  */
-HIDDEN int
+static int
 qt_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     int sx, sy;
@@ -639,7 +639,7 @@ qt_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSE
 }
 
 
-HIDDEN int
+static int
 qt_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 {
     int sx1, sy1, sx2, sy2;
@@ -662,7 +662,7 @@ qt_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2
 }
 
 
-HIDDEN int
+static int
 qt_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     int sx, sy;
@@ -683,7 +683,7 @@ qt_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 }
 
 
-HIDDEN int
+static int
 qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
     static vect_t spnt, lpnt, pnt;
@@ -908,7 +908,7 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-HIDDEN int
+static int
 qt_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
@@ -933,7 +933,7 @@ qt_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **da
 }
 
 
-HIDDEN int
+static int
 qt_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int UNUSED(strict), fastf_t UNUSED(transparency))
 {
     struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
@@ -958,7 +958,7 @@ qt_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 }
 
 
-HIDDEN int
+static int
 qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
@@ -982,7 +982,7 @@ qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 }
 
 
-HIDDEN int
+static int
 qt_setLineAttr(struct dm *dmp, int width, int style)
 {
     struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
@@ -1011,7 +1011,7 @@ qt_setLineAttr(struct dm *dmp, int width, int style)
 }
 
 
-HIDDEN int
+static int
 qt_reshape(struct dm *dmp, int width, int height)
 {
     if (dmp->i->dm_debugLevel) {
@@ -1026,7 +1026,7 @@ qt_reshape(struct dm *dmp, int width, int height)
 }
 
 
-HIDDEN int
+static int
 qt_configureWin(struct dm *dmp, int force)
 {
     //struct dm_qtvars *pubvars = (struct dm_qtvars *)dmp->i->dm_vars.pub_vars;
@@ -1083,7 +1083,7 @@ qt_configureWin(struct dm *dmp, int force)
 }
 
 
-HIDDEN int
+static int
 qt_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     if (dmp->i->dm_debugLevel) {
@@ -1101,7 +1101,7 @@ qt_setWinBounds(struct dm *dmp, fastf_t *w)
 }
 
 
-HIDDEN int
+static int
 qt_setZBuffer(struct dm *dmp, int zbuffer_on)
 {
     if (dmp->i->dm_debugLevel) {
@@ -1114,7 +1114,7 @@ qt_setZBuffer(struct dm *dmp, int zbuffer_on)
 }
 
 
-HIDDEN int
+static int
 qt_debug(struct dm *dmp, int lvl)
 {
     dmp->i->dm_debugLevel = lvl;
@@ -1123,7 +1123,7 @@ qt_debug(struct dm *dmp, int lvl)
 }
 
 
-HIDDEN int
+static int
 qt_logfile(struct dm *dmp, const char *filename)
 {
     bu_vls_sprintf(&dmp->i->dm_log, "%s", filename);
@@ -1132,7 +1132,7 @@ qt_logfile(struct dm *dmp, const char *filename)
 }
 
 
-HIDDEN int
+static int
 qt_getDisplayImage(struct dm *dmp, unsigned char **image)
 {
     struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
@@ -1157,7 +1157,7 @@ qt_getDisplayImage(struct dm *dmp, unsigned char **image)
 }
 
 
-HIDDEN int
+static int
 qt_setLight(struct dm *dmp, int light_on)
 {
     if (dmp->i->dm_debugLevel)
@@ -1169,7 +1169,7 @@ qt_setLight(struct dm *dmp, int light_on)
 }
 
 
-HIDDEN void
+static void
 qt_processEvents(struct dm *dmp)
 {
     struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
@@ -1177,7 +1177,7 @@ qt_processEvents(struct dm *dmp)
 }
 
 
-HIDDEN int
+static int
 qt_openFb(struct dm *dmp)
 {
 

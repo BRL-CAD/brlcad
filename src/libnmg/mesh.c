@@ -51,7 +51,7 @@
  * 0 t is outside angle ab
  * 1 t is inside angle ab
  */
-HIDDEN int
+static int
 nmg_is_angle_in_wedge(double a, double b, double t)
 {
     /* XXX What tolerance to use here (in radians)? */

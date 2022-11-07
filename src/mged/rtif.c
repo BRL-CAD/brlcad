@@ -133,7 +133,7 @@ cmd_rrt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 /**
  * Read in one view in the old RT format.
  */
-HIDDEN int
+static int
 rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
 {
     int i;

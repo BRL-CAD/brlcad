@@ -54,7 +54,7 @@ const struct bu_structparse rt_ell_parse[] = {
 };
 
 
-HIDDEN void nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m);
+static void nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m);
 
 /*
  * Algorithm:
@@ -1680,7 +1680,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
  *
  * The V direction runs from the south to the north pole.
  */
-HIDDEN void
+static void
 nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 {
     struct face_g_snurb *fg;

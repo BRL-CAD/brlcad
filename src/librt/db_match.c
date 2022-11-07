@@ -35,7 +35,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 
-HIDDEN void
+static void
 db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, void *UNUSED(dummy1), void *UNUSED(dummy2), void *UNUSED(dummy3), void *UNUSED(dummy4))
 {
     struct directory *dp;

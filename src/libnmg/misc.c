@@ -563,7 +563,7 @@ struct top_face
 };
 
 
-HIDDEN void
+static void
 nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, struct bu_list *vlfree, const struct bn_tol *ttol)
 {
     struct shell *outer_shell, *void_s, *s;
@@ -2193,7 +2193,7 @@ nmg_count_shell_kids(const struct model *m, size_t *total_faces, size_t *total_w
  *   tbl_size is the size of the table (provided by caller)
  *   loop_size is the number of edgeuses in the loop (calculated by order_tbl)
  */
-HIDDEN void
+static void
 order_tbl(struct bu_ptbl *tbl, int start_idx, int **idx, size_t tbl_size, size_t *loop_size)
 {
     size_t i, j, k;
@@ -3156,7 +3156,7 @@ nmg_propagate_normals(struct faceuse *fu_in, long int *flags, const struct bn_to
  * looks for edges that have uses in more than one shell in region.
  * creates new edges so that there is no sharing of edges among shells
  */
-HIDDEN void
+static void
 nmg_disconnect_shells(struct nmgregion *r, struct bu_list *vlfree)
 {
     struct shell *s1;
@@ -3865,7 +3865,7 @@ struct nmg_split_loops_state
 };
 
 
-HIDDEN void
+static void
 nmg_split_loops_handler(uint32_t *fu_p, void *sl_state, int UNUSED(unused), struct bu_list *vlfree)
 {
     struct faceuse *fu;
@@ -4520,7 +4520,7 @@ struct nmg_unbreak_state
  * and, if so, kills the second edgeuse.  Also moves the vu of the
  * first edgeuse mate to the vu of the killed edgeuse mate.
  */
-HIDDEN void
+static void
 nmg_unbreak_handler(uint32_t *eup, void *state, int UNUSED(unused))
 {
     struct edgeuse *eu1, *eu2;
@@ -4943,7 +4943,7 @@ struct intersect_fus
  * debug printing of the table of intersect_fus structs used by
  * extruder
  */
-HIDDEN void
+static void
 nmg_pr_inter(const struct vertex *new_v, const struct bu_ptbl *int_faces)
 {
     size_t i;
@@ -5035,7 +5035,7 @@ nmg_pr_inter(const struct vertex *new_v, const struct bu_ptbl *int_faces)
  *   1 - Failure
  */
 
-HIDDEN int
+static int
 nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct bn_tol *tol)
 {
     struct vertex_g *vg;
@@ -5263,7 +5263,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
  * around new_v by calculating the intersection with neighboring edges
  * and selecting the furthest one from new_v.
  */
-HIDDEN int
+static int
 nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, const struct bu_ptbl *faces, const struct bn_tol *tol)
 {
     struct model *m;
@@ -5431,7 +5431,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
  * "i_fus".  This is done when the "vp" vertices of the two structures
  * have been joined.
  */
-HIDDEN void
+static void
 nmg_fuse_inters(struct intersect_fus *i_fus, struct intersect_fus *j_fus, struct bu_ptbl *int_faces, const struct bn_tol *tol)
 {
     struct edgeuse *radial_eu;
@@ -5494,7 +5494,7 @@ nmg_fuse_inters(struct intersect_fus *i_fus, struct intersect_fus *j_fus, struct
  * edgeuse (eu) in each struct at the point (pt) store the new
  * vertices in the structure (vp) and assign the geometry.
  */
-HIDDEN void
+static void
 nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, const struct bn_tol *tol)
 {
     size_t edge_no;
@@ -5599,7 +5599,7 @@ nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, co
 /**
  * kill all zero length edgeuses in faces around new_v
  */
-HIDDEN void
+static void
 nmg_remove_short_eus_inter(struct vertex *new_v, struct bu_ptbl *int_faces, const struct bn_tol *tol)
 {
     size_t edge_no;
@@ -5740,7 +5740,7 @@ nmg_remove_short_eus_inter(struct vertex *new_v, struct bu_ptbl *int_faces, cons
 /**
  * Eliminates adjacent intersect_fus structs with collinear edges
  */
-HIDDEN void
+static void
 nmg_simplify_inter(const struct vertex *new_v, struct bu_ptbl *int_faces, const struct bn_tol *tol)
 {
     size_t edge_no=0;
@@ -6199,7 +6199,7 @@ nmg_kill_cracks_at_vertex(const struct vertex *vp)
  * 	distance to intersection if edge intersect
  * 	-1.0 if they don't
  */
-HIDDEN fastf_t
+static fastf_t
 nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus *j_fus, fastf_t *new_pt, const struct bn_tol *tol)
 {
     plane_t pl = HINIT_ZERO;
@@ -6373,7 +6373,7 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
  * vertices cross. If so, the middle face is deleted and the two
  * vertices are fused.
  */
-HIDDEN void
+static void
 nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const struct bn_tol *tol)
 {
     size_t edge_no;
@@ -6541,7 +6541,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 /*
  * Calculates a new geometry for new_v
  */
-HIDDEN int
+static int
 nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const struct bn_tol *tol)
 {
     plane_t *planes;
@@ -7422,7 +7422,7 @@ nmg_follow_free_edges_to_vertex(const struct vertex *vpa, const struct vertex *v
 }
 
 
-HIDDEN struct bu_ptbl *
+static struct bu_ptbl *
 nmg_find_path(const struct vertex *vpa, const struct vertex *vpb, struct bu_ptbl *bad_verts, const struct shell *s)
 {
     int done = 0;
@@ -7542,7 +7542,7 @@ nmg_glue_face_in_shell(const struct faceuse *fu, struct shell *s, const struct b
 }
 
 
-HIDDEN int
+static int
 nmg_make_connect_faces(struct shell *dst, struct vertex *vpa, struct vertex *vpb, struct bu_ptbl *verts, const struct bn_tol *tol)
 {
     int done=0;
@@ -9285,7 +9285,7 @@ nmg_simplify_shell_edges(struct shell *s, const struct bn_tol *tol)
 
 #define EDGE_COLLAPSE_DEBUG 0
 
-HIDDEN int
+static int
 nmg_select_collapse(const fastf_t max_dist1, const fastf_t max_dot1, const int flip1, const fastf_t max_dist2, const fastf_t max_dot2, const int flip2, const fastf_t max_dot, const fastf_t tol_dist)
 {
     unsigned int ret;

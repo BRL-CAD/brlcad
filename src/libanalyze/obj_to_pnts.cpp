@@ -59,7 +59,7 @@ pnthickness_free(struct pnt_normal_thickness *p, int free_pnt) {
     BU_PUT(p, struct pnt_normal_thickness);
 }
 
-HIDDEN void
+static void
 _tgc_hack_fix(struct partition *part, struct soltab *stp) {
     /* hack fix for bad tgc surfaces - avoids a logging crash, which is probably something else altogether... */
     if (bu_strncmp("rec", stp->st_meth->ft_label, 3) == 0 || bu_strncmp("tgc", stp->st_meth->ft_label, 3) == 0) {
@@ -74,7 +74,7 @@ _tgc_hack_fix(struct partition *part, struct soltab *stp) {
     }
 }
 
-HIDDEN int
+static int
 outer_pnts_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     double thickness = 0.0;
@@ -112,7 +112,7 @@ outer_pnts_hit(struct application *ap, struct partition *PartHeadp, struct seg *
     return 0;
 }
 
-HIDDEN int
+static int
 all_pnts_hit(struct application *app, struct partition *partH, struct seg *UNUSED(segs))
 {
     double thickness = 0.0;
@@ -152,7 +152,7 @@ all_pnts_hit(struct application *app, struct partition *partH, struct seg *UNUSE
     return 0;
 }
 
-HIDDEN int
+static int
 op_overlap(struct application *ap, struct partition *UNUSED(pp),
 		struct region *UNUSED(reg1), struct region *UNUSED(reg2),
 		struct partition *UNUSED(hp))
@@ -162,7 +162,7 @@ op_overlap(struct application *ap, struct partition *UNUSED(pp),
 }
 
 
-HIDDEN int
+static int
 op_miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);

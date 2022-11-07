@@ -52,7 +52,7 @@ typedef enum {
 /*
  * avs attribute comparison function, e.g. for bu_sort
  */
-HIDDEN int
+static int
 attr_cmp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return bu_strcmp(((struct bu_attribute_value_pair *)p1)->name,
@@ -60,7 +60,7 @@ attr_cmp(const void *p1, const void *p2, void *UNUSED(arg))
 }
 
 
-HIDDEN int
+static int
 attr_cmp_nocase(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return bu_strcasecmp(((struct bu_attribute_value_pair *)p1)->name,
@@ -68,7 +68,7 @@ attr_cmp_nocase(const void *p1, const void *p2, void *UNUSED(arg))
 }
 
 
-HIDDEN int
+static int
 attr_cmp_value(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return bu_strcmp(((struct bu_attribute_value_pair *)p1)->value,
@@ -76,7 +76,7 @@ attr_cmp_value(const void *p1, const void *p2, void *UNUSED(arg))
 }
 
 
-HIDDEN int
+static int
 attr_cmp_value_nocase(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return bu_strcasecmp(((struct bu_attribute_value_pair *)p1)->value,
@@ -84,7 +84,7 @@ attr_cmp_value_nocase(const void *p1, const void *p2, void *UNUSED(arg))
 }
 
 
-HIDDEN int
+static int
 attr_pretty_print(struct ged *gedp, struct directory *dp, const char *name)
 {
     if (dp->d_flags & RT_DIR_COMB) {
@@ -117,7 +117,7 @@ attr_pretty_print(struct ged *gedp, struct directory *dp, const char *name)
 }
 
 
-HIDDEN attr_cmd_t
+static attr_cmd_t
 attr_cmd(const char* arg)
 {
     /* sub-commands */
@@ -239,7 +239,7 @@ attr_list(struct ged *gedp, size_t path_cnt, struct directory **paths, int argc,
  
 
 
-HIDDEN void
+static void
 attr_print(struct ged *gedp, struct bu_attribute_value_set *avs, int argc, const char **argv)
 {
     size_t max_attr_name_len  = 0;

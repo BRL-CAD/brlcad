@@ -872,7 +872,7 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
 /**
  * Helper routine for db_recurse()
  */
-HIDDEN void
+static void
 _db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, void *client_data)
 {
     struct db_tree_state memb_state;
@@ -1809,7 +1809,7 @@ db_tally_subtree_regions(
 
 /* ============================== */
 
-HIDDEN union tree *
+static union tree *
 _db_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
 
@@ -1827,7 +1827,7 @@ _db_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 }
 
 
-HIDDEN union tree *
+static union tree *
 _db_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *UNUSED(ip), void *UNUSED(client_data))
 {
     return _db_gettree_region_end(tsp, pathp, NULL, NULL);
@@ -1848,7 +1848,7 @@ struct db_walk_parallel_state {
 #define DB_CK_WPS(_p) BU_CKMAG(_p, DB_WALK_PARALLEL_STATE_MAGIC, "db_walk_parallel_state")
 
 
-HIDDEN void
+static void
 _db_walk_subtree(
     union tree *tp,
     struct combined_tree_state **region_start_statepp,
@@ -1950,7 +1950,7 @@ _db_walk_subtree(
  * Uses the self-dispatcher pattern: Pick off the next region's tree,
  * and walk it.
  */
-HIDDEN void
+static void
 _db_walk_dispatcher(int cpu, void *arg)
 {
     struct combined_tree_state *region_start_statep;
@@ -2376,7 +2376,7 @@ rt_shader_mat(
 }
 
 
-HIDDEN int
+static int
 tree_list_needspace(struct bu_vls *vls)
 {
     int len = 0;
@@ -2419,7 +2419,7 @@ tree_list_needspace(struct bu_vls *vls)
 }
 
 
-HIDDEN void
+static void
 tree_list_sublist_begin(struct bu_vls *vls)
 {
     if (!vls) return;
@@ -2432,7 +2432,7 @@ tree_list_sublist_begin(struct bu_vls *vls)
 }
 
 
-HIDDEN void
+static void
 tree_list_sublist_end(struct bu_vls *vls)
 {
     if (!vls) return;
@@ -2443,7 +2443,7 @@ tree_list_sublist_end(struct bu_vls *vls)
 /* implements a large portion of what Tcl does when appending elements
  * to DStrings.
  */
-HIDDEN void
+static void
 tree_list_append(struct bu_vls *vls, const char *str)
 {
     const char *p;

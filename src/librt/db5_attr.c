@@ -187,7 +187,7 @@ db5_standardize_attribute(const char *attr)
 }
 
 
-HIDDEN
+static
 int
 boolean_attribute(int attr) {
     if (attr == ATTR_REGION)
@@ -198,7 +198,7 @@ boolean_attribute(int attr) {
 }
 
 
-HIDDEN
+static
 void
 attr_add(struct bu_attribute_value_set *newavs, int attr_type, const char *stdattr, const char *value)
 {

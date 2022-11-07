@@ -295,7 +295,7 @@ NEWPG\n\
 /*
  * Gracefully release the display.
  */
-HIDDEN int
+static int
 ps_close(struct dm *dmp)
 {
     if (!((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp)
@@ -328,7 +328,7 @@ ps_viable(const char *UNUSED(dpy_string))
 /*
  * There are global variables which are parameters to this routine.
  */
-HIDDEN int
+static int
 ps_drawBegin(struct dm *dmp)
 {
     if (!dmp)
@@ -338,7 +338,7 @@ ps_drawBegin(struct dm *dmp)
 }
 
 
-HIDDEN int
+static int
 ps_drawEnd(struct dm *dmp)
 {
     if (!dmp)
@@ -359,7 +359,7 @@ ps_drawEnd(struct dm *dmp)
  * Load a new transformation matrix.  This will be followed by
  * many calls to ps_draw().
  */
-HIDDEN int
+static int
 ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
     Tcl_Obj *obj;
@@ -394,7 +394,7 @@ ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 
 /* ARGSUSED */
-HIDDEN int
+static int
 ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
     static vect_t last;
@@ -540,7 +540,7 @@ ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 /* ARGSUSED */
-HIDDEN int
+static int
 ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
@@ -565,7 +565,7 @@ ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **da
  * (i.e., not scaled, rotated, displaced, etc.).
  * Turns off windowing.
  */
-HIDDEN int
+static int
 ps_normal(struct dm *dmp)
 {
     if (!dmp)
@@ -580,7 +580,7 @@ ps_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 /* ARGSUSED */
-HIDDEN int
+static int
 ps_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
 {
     int sx, sy;
@@ -614,7 +614,7 @@ ps_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size,
 }
 
 
-HIDDEN int
+static int
 ps_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
 {
     int sx1, sy1;
@@ -636,14 +636,14 @@ ps_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf
 }
 
 
-HIDDEN int
+static int
 ps_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
     return draw_Line3D(dmp, pt1, pt2);
 }
 
 
-HIDDEN int
+static int
 ps_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
@@ -653,14 +653,14 @@ ps_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 }
 
 
-HIDDEN int
+static int
 ps_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     return ps_drawLine2D(dmp, x, y, x, y);
 }
 
 
-HIDDEN int
+static int
 ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     if (!dmp) {
@@ -672,7 +672,7 @@ ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 }
 
 
-HIDDEN int
+static int
 ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     if (!dmp) {
@@ -684,7 +684,7 @@ ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 }
 
 
-HIDDEN int
+static int
 ps_setLineAttr(struct dm *dmp, int width, int style)
 {
     dmp->i->dm_lineWidth = width;
@@ -700,21 +700,21 @@ ps_setLineAttr(struct dm *dmp, int width, int style)
 
 
 /* ARGSUSED */
-HIDDEN int
+static int
 ps_debug(struct dm *dmp, int lvl)
 {
     dmp->i->dm_debugLevel = lvl;
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 ps_logfile(struct dm *dmp, const char *filename)
 {
     bu_vls_sprintf(&dmp->i->dm_log, "%s", filename);
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 ps_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     /* Compute the clipping bounds */

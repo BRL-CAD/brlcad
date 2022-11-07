@@ -82,444 +82,444 @@
 #include "./tclcad_private.h"
 #include "./view/view.h"
 
-HIDDEN int to_base2local(struct ged *gedp,
+static int to_base2local(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_bg(struct ged *gedp,
+static int to_bg(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_bounds(struct ged *gedp,
+static int to_bounds(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_configure(struct ged *gedp,
+static int to_configure(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_constrain_rmode(struct ged *gedp,
+static int to_constrain_rmode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_constrain_tmode(struct ged *gedp,
+static int to_constrain_tmode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_copy(struct ged *gedp,
+static int to_copy(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_data_move(struct ged *gedp,
+static int to_data_move(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_data_move_func(struct ged *gedp,
+static int to_data_move_func(struct ged *gedp,
 	struct bview *gdvp,
 	int argc,
 	const char *argv[],
 	const char *usage);
-HIDDEN int to_data_move_object_mode(struct ged *gedp,
+static int to_data_move_object_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_data_move_object_mode_func(struct ged *gedp,
+static int to_data_move_object_mode_func(struct ged *gedp,
 	struct bview *gdvp,
 	int argc,
 	const char *argv[],
 	const char *usage);
-HIDDEN int to_data_move_point_mode(struct ged *gedp,
+static int to_data_move_point_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_data_move_point_mode_func(struct ged *gedp,
+static int to_data_move_point_mode_func(struct ged *gedp,
 	struct bview *gdvp,
 	int argc,
 	const char *argv[],
 	const char *usage);
-HIDDEN int to_data_pick(struct ged *gedp,
+static int to_data_pick(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int
+static int
 to_data_pick_func(struct ged *gedp,
 	struct bview *gdvp,
 	int argc,
 	const char *argv[],
 	const char *usage);
-HIDDEN int to_data_vZ(struct ged *gedp,
+static int to_data_vZ(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_dplot(struct ged *gedp,
+static int to_dplot(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_dlist_on(struct ged *gedp,
+static int to_dlist_on(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_bot_edge_split(struct ged *gedp,
+static int to_bot_edge_split(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_bot_face_split(struct ged *gedp,
+static int to_bot_face_split(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_fontsize(struct ged *gedp,
+static int to_fontsize(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_fit_png_image(struct ged *gedp,
+static int to_fit_png_image(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_init_view_bindings(struct ged *gedp,
+static int to_init_view_bindings(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_delete_view(struct ged *gedp,
+static int to_delete_view(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_handle_expose(struct ged *gedp,
+static int to_handle_expose(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_hide_view(struct ged *gedp,
+static int to_hide_view(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_idle_mode(struct ged *gedp,
+static int to_idle_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_light(struct ged *gedp,
+static int to_light(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_list_views(struct ged *gedp,
+static int to_list_views(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_local2base(struct ged *gedp,
+static int to_local2base(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_lod(struct ged *gedp,
+static int to_lod(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_make(struct ged *gedp,
+static int to_make(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_mirror(struct ged *gedp,
+static int to_mirror(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_edit_motion_delta_callback(struct ged *gedp,
+static int to_edit_motion_delta_callback(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_more_args_callback(struct ged *gedp,
+static int to_more_args_callback(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_move_arb_edge_mode(struct ged *gedp,
+static int to_move_arb_edge_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_move_arb_face_mode(struct ged *gedp,
+static int to_move_arb_face_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_bot_move_pnt(struct ged *gedp,
+static int to_bot_move_pnt(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_bot_move_pnts(struct ged *gedp,
+static int to_bot_move_pnts(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_bot_move_pnt_mode(struct ged *gedp,
+static int to_bot_move_pnt_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_bot_move_pnts_mode(struct ged *gedp,
+static int to_bot_move_pnts_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_metaball_move_pnt_mode(struct ged *gedp,
+static int to_metaball_move_pnt_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_pipe_move_pnt_mode(struct ged *gedp,
+static int to_pipe_move_pnt_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_move_pnt_common(struct ged *gedp,
+static int to_move_pnt_common(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_new_view(struct ged *gedp,
+static int to_new_view(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_orotate_mode(struct ged *gedp,
+static int to_orotate_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_oscale_mode(struct ged *gedp,
+static int to_oscale_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_otranslate_mode(struct ged *gedp,
+static int to_otranslate_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_paint_rect_area(struct ged *gedp,
+static int to_paint_rect_area(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
 #ifdef HAVE_GL_GL_H
-HIDDEN int to_pix(struct ged *gedp,
+static int to_pix(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_png(struct ged *gedp,
+static int to_png(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
 #endif
-HIDDEN int to_rect_mode(struct ged *gedp,
+static int to_rect_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_rotate_arb_face_mode(struct ged *gedp,
+static int to_rotate_arb_face_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_rotate_mode(struct ged *gedp,
+static int to_rotate_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_rt_end_callback(struct ged *gedp,
+static int to_rt_end_callback(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_rt_gettrees(struct ged *gedp,
+static int to_rt_gettrees(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_protate_mode(struct ged *gedp,
+static int to_protate_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_pscale_mode(struct ged *gedp,
+static int to_pscale_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_ptranslate_mode(struct ged *gedp,
+static int to_ptranslate_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_data_scale_mode(struct ged *gedp,
+static int to_data_scale_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_scale_mode(struct ged *gedp,
+static int to_scale_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_screen2model(struct ged *gedp,
+static int to_screen2model(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_screen2view(struct ged *gedp,
+static int to_screen2view(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_set_coord(struct ged *gedp,
+static int to_set_coord(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_snap_view(struct ged *gedp,
+static int to_snap_view(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_translate_mode(struct ged *gedp,
+static int to_translate_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_transparency(struct ged *gedp,
+static int to_transparency(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_view_callback(struct ged *gedp,
+static int to_view_callback(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_view_win_size(struct ged *gedp,
+static int to_view_win_size(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_view2screen(struct ged *gedp,
+static int to_view2screen(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_vmake(struct ged *gedp,
+static int to_vmake(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_vslew(struct ged *gedp,
+static int to_vslew(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_zbuffer(struct ged *gedp,
+static int to_zbuffer(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-HIDDEN int to_zclip(struct ged *gedp,
+static int to_zclip(struct ged *gedp,
 	int argc,
 	const char *argv[],
 	ged_func_ptr func,
@@ -528,12 +528,12 @@ HIDDEN int to_zclip(struct ged *gedp,
 
 /* Utility Functions */
 
-HIDDEN void to_create_vlist_callback_solid(struct solid *gdlp);
-HIDDEN void to_create_vlist_callback(struct display_list *gdlp);
-HIDDEN void to_destroy_vlist_callback(unsigned int dlist, int range);
-HIDDEN void to_rt_end_callback_internal(int aborted);
+static void to_create_vlist_callback_solid(struct solid *gdlp);
+static void to_create_vlist_callback(struct display_list *gdlp);
+static void to_destroy_vlist_callback(unsigned int dlist, int range);
+static void to_rt_end_callback_internal(int aborted);
 
-HIDDEN void to_output_handler(struct ged *gedp, char *line);
+static void to_output_handler(struct ged *gedp, char *line);
 
 typedef int (*to_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_ptr, const char *, int);
 #define TO_WRAPPER_FUNC_PTR_NULL (to_wrapper_func_ptr)0
@@ -995,7 +995,7 @@ Ged_Init(Tcl_Interp *interp)
  *
  * @return result of ged command.
  */
-HIDDEN int
+static int
 to_cmd(ClientData clientData,
 	Tcl_Interp *interp,
 	int argc,
@@ -1075,7 +1075,7 @@ to_cmd(ClientData clientData,
 }
 
 
-HIDDEN void
+static void
 free_path_edit_params(struct bu_hash_tbl *t)
 {
     struct bu_hash_entry *entry = bu_hash_next(t, NULL);
@@ -1304,7 +1304,7 @@ to_open_tcl(ClientData UNUSED(clientData),
 
 /*************************** Local Command Functions ***************************/
 
-HIDDEN int
+static int
 to_base2local(struct ged *gedp,
 	int UNUSED(argc),
 	const char *UNUSED(argv[]),
@@ -1321,7 +1321,7 @@ to_base2local(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_bg(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -1388,7 +1388,7 @@ bad_color:
 }
 
 
-HIDDEN int
+static int
 to_bounds(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -1461,7 +1461,7 @@ to_bounds(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_configure(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -1520,7 +1520,7 @@ to_configure(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_constrain_rmode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -1585,7 +1585,7 @@ to_constrain_rmode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_constrain_tmode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -1649,7 +1649,7 @@ to_constrain_tmode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_copy(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -1810,7 +1810,7 @@ go_data_move(Tcl_Interp *UNUSED(interp),
 /*
  * Usage: data_move vname dtype dindex mx my
  */
-HIDDEN int
+static int
 to_data_move(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -1844,7 +1844,7 @@ to_data_move(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_data_move_func(struct ged *gedp,
 	struct bview *gdvp,
 	int argc,
@@ -2210,7 +2210,7 @@ go_data_move_object_mode(Tcl_Interp *UNUSED(interp),
 }
 
 
-HIDDEN int
+static int
 to_data_move_object_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -2244,7 +2244,7 @@ to_data_move_object_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_data_move_object_mode_func(struct ged *gedp,
 	struct bview *gdvp,
 	int UNUSED(argc),
@@ -2302,7 +2302,7 @@ go_data_move_point_mode(Tcl_Interp *UNUSED(interp),
 }
 
 
-HIDDEN int
+static int
 to_data_move_point_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -2336,7 +2336,7 @@ to_data_move_point_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_data_move_point_mode_func(struct ged *gedp,
 	struct bview *gdvp,
 	int UNUSED(argc),
@@ -2393,7 +2393,7 @@ go_data_pick(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_data_pick(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -2427,7 +2427,7 @@ to_data_pick(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_data_pick_func(struct ged *gedp,
 	struct bview *gdvp,
 	int argc,
@@ -2786,7 +2786,7 @@ bad:
 }
 
 
-HIDDEN int
+static int
 to_data_vZ(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -2835,7 +2835,7 @@ to_data_vZ(struct ged *gedp,
 }
 
 
-HIDDEN void
+static void
 to_init_default_bindings(struct bview *gdvp)
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
@@ -3099,7 +3099,7 @@ to_init_default_bindings(struct bview *gdvp)
 }
 
 
-HIDDEN int
+static int
 to_dlist_on(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3135,7 +3135,7 @@ to_dlist_on(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 to_dplot(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3274,7 +3274,7 @@ to_dplot(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 to_fontsize(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3327,7 +3327,7 @@ bad_fontsize:
 }
 
 
-HIDDEN int
+static int
 to_fit_png_image(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3433,7 +3433,7 @@ to_fit_png_image(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_init_view_bindings(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3467,7 +3467,7 @@ to_init_view_bindings(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_delete_view(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3499,7 +3499,7 @@ to_delete_view(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_handle_expose(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3532,7 +3532,7 @@ to_handle_expose(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_hide_view(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3584,7 +3584,7 @@ struct redraw_edited_path_data {
 };
 
 
-HIDDEN void
+static void
 redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 {
     const char *av[5] = {0};
@@ -3669,7 +3669,7 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 }
 
 
-HIDDEN int
+static int
 to_idle_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3776,7 +3776,7 @@ to_idle_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_light(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3829,7 +3829,7 @@ to_light(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_list_views(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3856,7 +3856,7 @@ to_list_views(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_local2base(struct ged *gedp,
 	int UNUSED(argc),
 	const char *UNUSED(argv[]),
@@ -3873,7 +3873,7 @@ to_local2base(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_lod(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3893,7 +3893,7 @@ to_lod(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_make(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3917,7 +3917,7 @@ to_make(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_mirror(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3941,7 +3941,7 @@ to_mirror(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_edit_motion_delta_callback(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -3984,7 +3984,7 @@ to_edit_motion_delta_callback(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_more_args_callback(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4014,7 +4014,7 @@ to_more_args_callback(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_view_cmd(ClientData UNUSED(clientData),
 	Tcl_Interp *UNUSED(interp),
 	int UNUSED(argc),
@@ -4024,7 +4024,7 @@ to_view_cmd(ClientData UNUSED(clientData),
 }
 
 
-HIDDEN int
+static int
 to_move_arb_edge_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4083,7 +4083,7 @@ to_move_arb_edge_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_move_arb_face_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4142,7 +4142,7 @@ to_move_arb_face_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_bot_move_pnt(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4173,7 +4173,7 @@ to_bot_move_pnt(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_bot_move_pnts(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4198,7 +4198,7 @@ to_bot_move_pnts(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_bot_move_pnt_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4257,7 +4257,7 @@ to_bot_move_pnt_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_bot_move_pnts_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4320,7 +4320,7 @@ to_bot_move_pnts_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_metaball_move_pnt_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4379,7 +4379,7 @@ to_metaball_move_pnt_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_pipe_move_pnt_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4438,7 +4438,7 @@ to_pipe_move_pnt_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_move_pnt_common(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4469,7 +4469,7 @@ to_move_pnt_common(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_new_view(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4478,7 +4478,7 @@ to_new_view(struct ged *gedp,
 	int UNUSED(maxargs))
 {
     struct bview *new_gdvp;
-    HIDDEN const int name_index = 1;
+    static const int name_index = 1;
     const char *type = NULL;
     struct bu_vls event_vls = BU_VLS_INIT_ZERO;
 
@@ -4625,7 +4625,7 @@ to_new_view(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_orotate_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4683,7 +4683,7 @@ to_orotate_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_oscale_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4742,7 +4742,7 @@ to_oscale_mode(struct ged *gedp,
 
 
 /* to_model_delta_mode */
-HIDDEN int
+static int
 to_otranslate_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4800,7 +4800,7 @@ to_otranslate_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_paint_rect_area(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4841,7 +4841,7 @@ to_paint_rect_area(struct ged *gedp,
 
 
 #ifdef HAVE_GL_GL_H
-HIDDEN int
+static int
 to_pix(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -4923,7 +4923,7 @@ to_pix(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_png(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5029,7 +5029,7 @@ to_png(struct ged *gedp,
 #endif
 
 
-HIDDEN int
+static int
 to_rect_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5116,7 +5116,7 @@ to_rect_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_rotate_arb_face_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5176,7 +5176,7 @@ to_rotate_arb_face_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_rotate_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5236,7 +5236,7 @@ to_rotate_mode(struct ged *gedp,
 /**
  * Called when the named proc created by rt_gettrees() is destroyed.
  */
-HIDDEN void
+static void
 to_deleteProc_rt(ClientData clientData)
 {
     struct application *ap = (struct application *)clientData;
@@ -5253,7 +5253,7 @@ to_deleteProc_rt(ClientData clientData)
 }
 
 
-HIDDEN int
+static int
 to_rt_end_callback(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5339,7 +5339,7 @@ to_rt_gettrees(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_protate_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5398,7 +5398,7 @@ to_protate_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_pscale_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5457,7 +5457,7 @@ to_pscale_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_ptranslate_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5516,7 +5516,7 @@ to_ptranslate_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_data_scale_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5573,7 +5573,7 @@ to_data_scale_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_scale_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5630,7 +5630,7 @@ to_scale_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_screen2model(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5681,7 +5681,7 @@ to_screen2model(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_screen2view(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5730,7 +5730,7 @@ to_screen2view(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_set_coord(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5776,7 +5776,7 @@ to_set_coord(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_snap_view(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5838,7 +5838,7 @@ to_snap_view(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_bot_edge_split(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5870,7 +5870,7 @@ to_bot_edge_split(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_bot_face_split(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5902,7 +5902,7 @@ to_bot_face_split(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_translate_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -5959,7 +5959,7 @@ to_translate_mode(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_transparency(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -6011,7 +6011,7 @@ to_transparency(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_view_callback(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -6054,7 +6054,7 @@ to_view_callback(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_view_win_size(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -6114,7 +6114,7 @@ to_view_win_size(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_view2screen(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -6166,7 +6166,7 @@ to_view2screen(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_vmake(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -6229,7 +6229,7 @@ to_vmake(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_vslew(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -6321,7 +6321,7 @@ to_vslew(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_zbuffer(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -6376,7 +6376,7 @@ to_zbuffer(struct ged *gedp,
 }
 
 
-HIDDEN int
+static int
 to_zclip(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -6433,7 +6433,7 @@ to_zclip(struct ged *gedp,
 
 /*************************** Local Utility Functions ***************************/
 
-HIDDEN void
+static void
 to_create_vlist_callback_solid(struct solid *sp)
 {
     struct bview *gdvp;
@@ -6474,7 +6474,7 @@ to_create_vlist_callback_solid(struct solid *sp)
 }
 
 
-HIDDEN void
+static void
 to_create_vlist_callback(struct display_list *gdlp)
 {
     struct solid *sp;
@@ -6484,7 +6484,7 @@ to_create_vlist_callback(struct display_list *gdlp)
 }
 
 
-HIDDEN void
+static void
 to_destroy_vlist_callback(unsigned int dlist, int range)
 {
     struct bview *gdvp;
@@ -6500,7 +6500,7 @@ to_destroy_vlist_callback(unsigned int dlist, int range)
 }
 
 
-HIDDEN void
+static void
 to_rt_end_callback_internal(int aborted)
 {
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
@@ -6518,7 +6518,7 @@ to_rt_end_callback_internal(int aborted)
 }
 
 
-HIDDEN void
+static void
 to_output_handler(struct ged *gedp, char *line)
 {
     const char *script;

@@ -617,7 +617,7 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
  * This routine provides the name of the objects in a database along with their
  * type and positions within the graph.
  */
-HIDDEN void
+static void
 graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
 {
     /* The bounding positions of the rectangle corresponding to one object. */

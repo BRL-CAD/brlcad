@@ -36,14 +36,14 @@
 #include "ged.h"
 
 /* These are general globbing flags. */
-#define _GED_GLOB_HIDDEN       0x1    /**< @brief include hidden objects in results */
+#define _GED_GLOB_static       0x1    /**< @brief include hidden objects in results */
 #define _GED_GLOB_NON_GEOM     0x2    /**< @brief include non-geometry objects in results */
 #define _GED_GLOB_SKIP_FIRST   0x4    /**< @brief do not expand the first item */
 
 /**
  * unescapes various special characters
  */
-HIDDEN void
+static void
 _debackslash(struct bu_vls *dest, struct bu_vls *src)
 {
     char *ptr;
@@ -61,7 +61,7 @@ _debackslash(struct bu_vls *dest, struct bu_vls *src)
 /**
  * escapes various special characters
  */
-HIDDEN void
+static void
 _backslash_specials(struct bu_vls *dest, struct bu_vls *src)
 {
     int backslashed;
@@ -88,7 +88,7 @@ _backslash_specials(struct bu_vls *dest, struct bu_vls *src)
     }
 }
 
-HIDDEN int
+static int
 _ged_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, int flags)
 {
     char *start, *end;          /* Start and ends of words */
@@ -167,7 +167,7 @@ _ged_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, 
 	    for (i = num = 0; i < RT_DBNHASH; i++) {
 		for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		    if (bu_path_match(bu_vls_addr(&word), dp->d_namep, 0) != 0) continue;
-		    if (!(flags & _GED_GLOB_HIDDEN) && (dp->d_flags & RT_DIR_HIDDEN)) continue;
+		    if (!(flags & _GED_GLOB_static) && (dp->d_flags & RT_DIR_HIDDEN)) continue;
 		    if (!(flags & _GED_GLOB_NON_GEOM) && (dp->d_flags & RT_DIR_NON_GEOM)) continue;
 		    if (num == 0)
 			bu_vls_strcat(&temp, dp->d_namep);
@@ -203,7 +203,7 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "expression";
     int flags = 0;
-    flags |= _GED_GLOB_HIDDEN;
+    flags |= _GED_GLOB_static;
     flags |= _GED_GLOB_NON_GEOM;
     flags |= _GED_GLOB_SKIP_FIRST;
 

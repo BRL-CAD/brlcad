@@ -37,7 +37,7 @@
 /*
  * A recursive function that is only called by ged_path_validate()
  */
-HIDDEN int
+static int
 path_validate_recurse(struct ged *gedp, struct db_full_path *path,
 		      struct directory *roots_child)
 {

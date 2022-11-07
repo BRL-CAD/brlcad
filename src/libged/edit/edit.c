@@ -583,7 +583,7 @@ struct edit_cmd_tab {
 /**
  * Initialize an argument node.
  */
-HIDDEN void
+static void
 edit_arg_init(struct edit_arg *arg)
 {
     arg->next = (struct edit_arg *)NULL;
@@ -598,7 +598,7 @@ edit_arg_init(struct edit_arg *arg)
 /**
  * Attach an argument node to the end of the list.
  */
-HIDDEN void
+static void
 edit_arg_postfix(struct edit_arg *head,
 		 struct edit_arg *node)
 {
@@ -615,7 +615,7 @@ edit_arg_postfix(struct edit_arg *head,
  * Returns a pointer to the new node. Caller is responsible for
  * freeing.
  */
-HIDDEN struct edit_arg *
+static struct edit_arg *
 edit_arg_postfix_new(struct edit_arg *head)
 {
     struct edit_arg *arg;
@@ -632,7 +632,7 @@ edit_arg_postfix_new(struct edit_arg *head)
  * calling, caller is responsible for freeing objects contained by
  * destination argument node, if necessary, via edit_arg_free_inner().
  */
-HIDDEN void
+static void
 edit_arg_duplicate_in_place(struct edit_arg *const dest,
 			    const struct edit_arg *src)
 {
@@ -663,7 +663,7 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
  * responsible for freeing destination argument, using the
  * appropriate edit_arg_free*() function.
  */
-HIDDEN void
+static void
 edit_arg_duplicate(struct edit_arg **dest, const struct edit_arg *src)
 {
     BU_ALLOC(*dest, struct edit_arg);
@@ -674,7 +674,7 @@ edit_arg_duplicate(struct edit_arg **dest, const struct edit_arg *src)
 /**
  * Returns BRLCAD_OK if arg is empty, otherwise BRLCAD_ERROR is returned
  */
-HIDDEN int
+static int
 edit_arg_is_empty(struct edit_arg *arg)
 {
     if (!arg->next &&
@@ -691,7 +691,7 @@ edit_arg_is_empty(struct edit_arg *arg)
 /**
  * Free all objects contained by an argument node.
  */
-HIDDEN void
+static void
 edit_arg_free_inner(struct edit_arg *arg)
 {
     if (arg->object) {
@@ -709,7 +709,7 @@ edit_arg_free_inner(struct edit_arg *arg)
 /**
  * Free an argument node, including what it contains.
  */
-HIDDEN void
+static void
 edit_arg_free(struct edit_arg *arg)
 {
     edit_arg_free_inner(arg);
@@ -720,7 +720,7 @@ edit_arg_free(struct edit_arg *arg)
 /**
  * Free the last argument node in the list.
  */
-HIDDEN void
+static void
 edit_arg_free_last(struct edit_arg *arg)
 {
     struct edit_arg *last_arg = arg;
@@ -738,7 +738,7 @@ edit_arg_free_last(struct edit_arg *arg)
 /**
  * Free an argument node and all nodes down its list.
  */
-HIDDEN void
+static void
 edit_arg_free_all(struct edit_arg *arg)
 {
     if (arg->next)
@@ -762,7 +762,7 @@ edit_arg_free_all(struct edit_arg *arg)
  *
  * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
  */
-HIDDEN int
+static int
 edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 			   vect_t *const coord)
 {
@@ -857,7 +857,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
  *
  * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
  */
-HIDDEN int
+static int
 edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
 {
     vect_t obj_coord = VINIT_ZERO;
@@ -900,7 +900,7 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
  *
  * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
  */
-HIDDEN int
+static int
 edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 		     const struct edit_arg *src_objs, const int flags)
 {
@@ -956,7 +956,7 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 /**
  * Initialize all command argument-pointer members to NULL.
  */
-HIDDEN void
+static void
 edit_cmd_init(union edit_cmd *const subcmd)
 {
     struct edit_arg **arg_head;
@@ -973,7 +973,7 @@ edit_cmd_init(union edit_cmd *const subcmd)
 /**
  * Free any dynamically allocated argument nodes that may exist.
  */
-HIDDEN void
+static void
 edit_cmd_free(union edit_cmd *const cmd)
 {
     struct edit_arg **arg_head;
@@ -993,7 +993,7 @@ edit_cmd_free(union edit_cmd *const cmd)
 /**
  * Perform a shallow copy of a subcommand's argument grouping.
  */
-HIDDEN void
+static void
 edit_cmd_sduplicate(union edit_cmd *const dest,
 		    const union edit_cmd *const src)
 {
@@ -1024,7 +1024,7 @@ edit_cmd_sduplicate(union edit_cmd *const dest,
  * (i.e. edit_<subcmd>_wrapper()) call this prior to execution, so
  * that some commands can expand their own vectors in an unusual ways.
  */
-HIDDEN int
+static int
 edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 {
     struct edit_arg **arg_head;
@@ -1098,7 +1098,7 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
  *
  * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
  */
-HIDDEN int
+static int
 edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 		      int skip_common_objects)
 {
@@ -1191,7 +1191,7 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 /**
  * Rotate an object by specifying points.
  */
-HIDDEN int
+static int
 edit_rotate(struct ged *gedp, const vect_t * axis_from,
 	    const vect_t *axis_to, const vect_t *center,
 	    const vect_t *angle_origin, const vect_t *angle_from,
@@ -1213,7 +1213,7 @@ edit_rotate(struct ged *gedp, const vect_t * axis_from,
  * Maps edit_arg fields to the subcommand function's arguments and
  * calls it.
  */
-HIDDEN int
+static int
 edit_rotate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     const vect_t *from_vp = (const vect_t *)cmd->rotate.ref_axis.from->vector;
@@ -1231,7 +1231,7 @@ edit_rotate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 /*
  * Add arguments to the command that were built from the cmd line.
  */
-HIDDEN int
+static int
 edit_rotate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 			const int flags)
 {
@@ -1246,7 +1246,7 @@ edit_rotate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
  * Given an pointer to an argument head in the edit_cmd union, this
  * function will return the next argument head in the union.
  */
-HIDDEN struct edit_arg **
+static struct edit_arg **
 edit_rotate_get_arg_head(const union edit_cmd *const cmd, int idx)
 {
 #define EDIT_ROTATE_ARG_HEADS_LEN 7
@@ -1290,7 +1290,7 @@ edit_scale(struct ged *gedp, const vect_t *scale_from,
  * Maps edit_arg fields to the subcommand function's arguments and
  * calls it.
  */
-HIDDEN int
+static int
 edit_scale_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     const vect_t *from_vp = (const vect_t *)cmd->scale.ref_scale.from->vector;
@@ -1307,7 +1307,7 @@ edit_scale_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 /*
  * Add arguments to the command that were built from the cmd line.
  */
-HIDDEN int
+static int
 edit_scale_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 		       const int flags)
 {
@@ -1322,7 +1322,7 @@ edit_scale_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
  * Given an pointer to an argument head in the edit_cmd union, this
  * function will return the next argument head in the union.
  */
-HIDDEN struct edit_arg **
+static struct edit_arg **
 edit_scale_get_arg_head(const union edit_cmd *const cmd, int idx)
 {
 #define EDIT_SCALE_ARG_HEADS_LEN 6
@@ -1344,7 +1344,7 @@ edit_scale_get_arg_head(const union edit_cmd *const cmd, int idx)
 /**
  * Perform a translation on an object by specifying points.
  */
-HIDDEN int
+static int
 edit_translate(struct ged *gedp, const vect_t *from,
 	       const vect_t *to,
 	       const struct db_full_path *path)
@@ -1432,7 +1432,7 @@ edit_translate(struct ged *gedp, const vect_t *from,
  * other than vector, and the first object to operate on in the
  * objects edit_arg. Ignores all edit_arg->next arguments.
  */
-HIDDEN int
+static int
 edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     const vect_t *from = (const vect_t *)cmd->translate.ref_vector.from->vector;
@@ -1452,7 +1452,7 @@ edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
  * Note: This command happens to only accept the standard command line
  * options, so others are ignored.
  */
-HIDDEN int
+static int
 edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 			   const int flags)
 {
@@ -1554,7 +1554,7 @@ err_option_unknown:
  *
  * XXX: Kind of dirty; haven't found a better way yet, though.
  */
-HIDDEN struct edit_arg **
+static struct edit_arg **
 edit_translate_get_arg_head(const union edit_cmd *const cmd, int idx)
 {
 #define EDIT_TRANSLATE_ARG_HEADS_LEN 3
@@ -1651,7 +1651,7 @@ static const struct edit_cmd_tab edit_cmds[] = {
  * lopsided set of arguments, which should result in a BU_ASSERT
  * failure.
  */
-HIDDEN int
+static int
 edit(struct ged *gedp, union edit_cmd *const subcmd)
 {
     struct edit_arg **arg_head;
@@ -1758,7 +1758,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
  *
  * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
  */
-HIDDEN int
+static int
 edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 		const int flags)
 {
@@ -1908,7 +1908,7 @@ convert_obj:
  * BRLCAD_ERROR is returned.
  *
  */
-HIDDEN int
+static int
 edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 		 struct edit_arg *arg, int flags)
 {

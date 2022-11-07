@@ -96,7 +96,7 @@ struct nurb_hit {
 #endif /* CONVERT_TO_BREP */
 
 
-HIDDEN int
+static int
 rt_nurb_grans(struct face_g_snurb *srf)
 {
     int total_knots, total_points;

@@ -36,7 +36,7 @@
 
 #include "../ged_private.h"
 
-HIDDEN int
+static int
 region_flag_set(struct ged *gedp, struct directory *dp) {
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
@@ -56,7 +56,7 @@ region_flag_set(struct ged *gedp, struct directory *dp) {
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 region_flag_clear(struct ged *gedp, struct directory *dp) {
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
@@ -76,7 +76,7 @@ region_flag_clear(struct ged *gedp, struct directory *dp) {
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 color_shader_clear(struct ged *gedp, struct directory *dp) {
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
@@ -98,7 +98,7 @@ color_shader_clear(struct ged *gedp, struct directory *dp) {
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 comb_tree_clear(struct ged *gedp, struct directory *dp)
 {
     struct rt_db_internal intern;
@@ -122,7 +122,7 @@ comb_tree_clear(struct ged *gedp, struct directory *dp)
 }
 
 
-HIDDEN int
+static int
 comb_wrap(struct ged *gedp, struct directory *dp) {
 
     struct bu_vls orig_name, comb_child_name;
@@ -231,7 +231,7 @@ name_compare(const void *d1, const void *d2, void *UNUSED(arg))
  *  which (if any) of the combs under the current comb are not used
  *  elsewhere.  For those that are not, remove them.
  */
-HIDDEN int
+static int
 comb_flatten(struct ged *gedp, struct directory *dp)
 {
     int result_cnt = 0;
@@ -323,7 +323,7 @@ comb_flatten(struct ged *gedp, struct directory *dp)
 /* "Lift a region flag to the specified comb, removing all region
  * flags below in the tree if practical.
  */
-HIDDEN int
+static int
 comb_lift_region(struct ged *gedp, struct directory *dp)
 {
     int j;
@@ -466,7 +466,7 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 comb_decimate(struct ged *gedp, struct directory *dp)
 {
     unsigned int i;

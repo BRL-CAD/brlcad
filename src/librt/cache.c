@@ -83,7 +83,7 @@ struct rt_cache {
 #define CACHE_INIT {{0}, 0, 0, bu_log, NULL, NULL}
 
 
-HIDDEN void
+static void
 cache_get_objdir(const struct rt_cache *cache, const char *filename, char *buffer, size_t len)
 {
     char idx[3] = {0};
@@ -93,7 +93,7 @@ cache_get_objdir(const struct rt_cache *cache, const char *filename, char *buffe
 }
 
 
-HIDDEN void
+static void
 cache_get_objfile(const struct rt_cache *cache, const char *filename, char *buffer, size_t len)
 {
     char dir[MAXPATHLEN] = {0};
@@ -103,7 +103,7 @@ cache_get_objfile(const struct rt_cache *cache, const char *filename, char *buff
 
 
 /* returns truthfully if a path exists, creating it if necessary. */
-HIDDEN int
+static int
 cache_ensure_path(const char *path, int is_file)
 {
     char *dir;
@@ -154,7 +154,7 @@ cache_ensure_path(const char *path, int is_file)
 }
 
 
-HIDDEN void
+static void
 cache_warn(const struct rt_cache *cache, const char *path, const char *msg)
 {
     CACHE_LOG("  CACHE  %s\n", path);
@@ -162,7 +162,7 @@ cache_warn(const struct rt_cache *cache, const char *path, const char *msg)
 }
 
 
-HIDDEN int
+static int
 cache_format(const struct rt_cache *cache)
 {
     const char *librt_cache = cache->dir;
@@ -210,7 +210,7 @@ cache_format(const struct rt_cache *cache)
 }
 
 
-HIDDEN int
+static int
 cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
 {
     struct bu_external raw_external;
@@ -249,7 +249,7 @@ cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
 /* returns truthfully if a cache location is exists and is usable,
  * creating and initializing the location if necessary.
  */
-HIDDEN int
+static int
 cache_init(struct rt_cache *cache)
 {
     const char *dir = cache->dir;
@@ -341,7 +341,7 @@ cache_init(struct rt_cache *cache)
 }
 
 
-HIDDEN void
+static void
 compress_external(const struct rt_cache *cache, struct bu_external *external)
 {
     int ret;
@@ -376,7 +376,7 @@ compress_external(const struct rt_cache *cache, struct bu_external *external)
 }
 
 
-HIDDEN void
+static void
 uncompress_external(const struct rt_cache *cache, const struct bu_external *external, struct bu_external *dest)
 {
     int ret;
@@ -404,7 +404,7 @@ uncompress_external(const struct rt_cache *cache, const struct bu_external *exte
 }
 
 
-HIDDEN struct rt_cache_entry *
+static struct rt_cache_entry *
 cache_read_entry(const struct rt_cache *cache, const char *name)
 {
     long int fbytes = 0;
@@ -455,7 +455,7 @@ cache_read_entry(const struct rt_cache *cache, const char *name)
 }
 
 
-HIDDEN int
+static int
 cache_create_dir(const struct rt_cache *cache, const char *name)
 {
     struct rt_cache_entry *e = NULL;
@@ -485,7 +485,7 @@ cache_create_dir(const struct rt_cache *cache, const char *name)
 }
 
 
-HIDDEN int
+static int
 cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_db_internal *internal, struct soltab *stp)
 {
     size_t version = (size_t)-1;
@@ -544,7 +544,7 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
 }
 
 
-HIDDEN int
+static int
 cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_internal *internal, struct soltab *stp)
 {
     FILE *focache = NULL;

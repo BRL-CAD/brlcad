@@ -116,20 +116,6 @@ extern int snprintf(char *str, size_t size, const char *format, ...);
 #  endif
 #endif
 
-/**
- * Functions local to one file IN A LIBRARY should be declared HIDDEN.
- * Disabling the static classifier is sometimes helpful for debugging.
- * It can help prevent some compilers from inlining functions that one
- * might want to set a breakpoint on.  Do not use on variables.
- */
-#if !defined(HIDDEN)
-#  if defined(NDEBUG)
-#    define HIDDEN	static
-#  else
-#    define HIDDEN	/***/
-#  endif
-#endif
-
 /* ANSI c89 does not allow the 'inline' keyword, check if GNU inline
  * rules are in effect.
  *
@@ -174,21 +160,21 @@ typedef unsigned short u_short;
  */
 #if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
 # ifndef HAVE_SSIZE_T
-#   ifdef HAVE_SYS_TYPES_H
-#     include <sys/types.h>
-#   endif
-#   include <limits.h>
-#   include <stddef.h>
+#  ifdef HAVE_SYS_TYPES_H
+#    include <sys/types.h>
+#  endif
+#  include <limits.h>
+#  include <stddef.h>
 #   ifndef SSIZE_MAX
 typedef ptrdiff_t ssize_t;
-#     define HAVE_SSIZE_T 1
-#     if defined(_WIN64)
-#        define SSIZE_MAX LONG_MAX
-#     else
-#        define SSIZE_MAX INT_MAX
-#     endif
-#   endif
-# endif
+#  define HAVE_SSIZE_T 1
+#    if defined(_WIN64)
+#      define SSIZE_MAX LONG_MAX
+#    else
+#      define SSIZE_MAX INT_MAX
+#    endif
+#  endif
+#endif
 #endif
 
 /* make sure most of the C99 stdint types are provided including the

@@ -46,7 +46,7 @@
 #define if_seekpos u5.l	/* stored seek position */
 
 
-HIDDEN int
+static int
 dsk_open(struct fb *ifp, const char *file, int width, int height)
 {
     static char zero = 0;
@@ -100,51 +100,51 @@ dsk_open(struct fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
-HIDDEN struct fb_platform_specific *
+static struct fb_platform_specific *
 dsk_get_fbps(uint32_t UNUSED(magic))
 {
         return NULL;
 }
 
 
-HIDDEN void
+static void
 dsk_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 {
         return;
 }
 
-HIDDEN int
+static int
 dsk_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
 
-HIDDEN int
+static int
 dsk_close_existing(struct fb *UNUSED(ifp))
 {
         return 0;
 }
 
-HIDDEN int
+static int
 dsk_configure_window(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
         return 0;
 }
 
-HIDDEN int
+static int
 dsk_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
         return 0;
 }
 
-HIDDEN int
+static int
 dsk_close(struct fb *ifp)
 {
     return close(ifp->i->if_fd);
 }
 
 
-HIDDEN int
+static int
 dsk_free(struct fb *ifp)
 {
     close(ifp->i->if_fd);
@@ -159,7 +159,7 @@ dsk_free(struct fb *ifp)
 /*
  * Clear the disk file to the given color.
  */
-HIDDEN int
+static int
 disk_color_clear(struct fb *ifp, register unsigned char *bpp)
 {
     static unsigned char pix_buf[DISK_DMA_BYTES] = {0};
@@ -195,7 +195,7 @@ disk_color_clear(struct fb *ifp, register unsigned char *bpp)
 }
 
 
-HIDDEN int
+static int
 dsk_clear(struct fb *ifp, unsigned char *bgpp)
 {
     static RGBpixel black = { 0, 0, 0 };
@@ -207,7 +207,7 @@ dsk_clear(struct fb *ifp, unsigned char *bgpp)
 }
 
 
-HIDDEN ssize_t
+static ssize_t
 dsk_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t bytes = count * sizeof(RGBpixel);
@@ -255,7 +255,7 @@ dsk_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 }
 
 
-HIDDEN ssize_t
+static ssize_t
 dsk_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     register ssize_t bytes = count * sizeof(RGBpixel);
@@ -286,7 +286,7 @@ dsk_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t coun
 }
 
 
-HIDDEN int
+static int
 dsk_rmap(struct fb *ifp, ColorMap *cmap)
 {
     int fd = ifp->i->if_fd;
@@ -310,7 +310,7 @@ dsk_rmap(struct fb *ifp, ColorMap *cmap)
 }
 
 
-HIDDEN int
+static int
 dsk_wmap(struct fb *ifp, const ColorMap *cmap)
 {
     if (cmap == (ColorMap *) NULL)
@@ -331,7 +331,7 @@ dsk_wmap(struct fb *ifp, const ColorMap *cmap)
 }
 
 
-HIDDEN int
+static int
 dsk_help(struct fb *ifp)
 {
     fb_log("Description: %s\n", disk_interface.i->if_type);

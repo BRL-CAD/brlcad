@@ -56,7 +56,7 @@ txt_open(void *interp, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 txt_close(struct dm *dmp)
 {
     bu_log("close called\n");
@@ -72,7 +72,7 @@ txt_viable(const char *UNUSED(dpy_string))
 }
 
 
-HIDDEN int
+static int
 txt_drawBegin(struct dm *UNUSED(dmp))
 {
     bu_log("drawBegin called\n");
@@ -80,7 +80,7 @@ txt_drawBegin(struct dm *UNUSED(dmp))
 }
 
 
-HIDDEN int
+static int
 txt_drawEnd(struct dm *UNUSED(dmp))
 {
     bu_log("drawEnd called\n");
@@ -88,7 +88,7 @@ txt_drawEnd(struct dm *UNUSED(dmp))
 }
 
 
-HIDDEN int
+static int
 txt_normal(struct dm *UNUSED(dmp))
 {
     bu_log("normal called\n");
@@ -96,7 +96,7 @@ txt_normal(struct dm *UNUSED(dmp))
 }
 
 
-HIDDEN int
+static int
 txt_loadMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat), int UNUSED(which_eye))
 {
     bu_log("loadMatrix called\n");
@@ -104,7 +104,7 @@ txt_loadMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat), int UNUSED(which_ey
 }
 
 
-HIDDEN int
+static int
 txt_loadPMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat))
 {
     bu_log("loadPMatrix called\n");
@@ -112,7 +112,7 @@ txt_loadPMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat))
 }
 
 
-HIDDEN int
+static int
 txt_drawString2D(struct dm *UNUSED(dmp), const char *UNUSED(str), fastf_t UNUSED(x), fastf_t UNUSED(y), int UNUSED(size), int UNUSED(use_aspect))
 {
     bu_log("drawString2D called\n");
@@ -120,7 +120,7 @@ txt_drawString2D(struct dm *UNUSED(dmp), const char *UNUSED(str), fastf_t UNUSED
 }
 
 
-HIDDEN int
+static int
 txt_drawLine2D(struct dm *UNUSED(dmp), fastf_t UNUSED(x_1), fastf_t UNUSED(y_1), fastf_t UNUSED(x_2), fastf_t UNUSED(y_2))
 {
     bu_log("drawLine2D called\n");
@@ -128,7 +128,7 @@ txt_drawLine2D(struct dm *UNUSED(dmp), fastf_t UNUSED(x_1), fastf_t UNUSED(y_1),
 }
 
 
-HIDDEN int
+static int
 txt_drawLine3D(struct dm *UNUSED(dmp), point_t UNUSED(pt1), point_t UNUSED(pt2))
 {
     bu_log("drawLine3D called\n");
@@ -136,7 +136,7 @@ txt_drawLine3D(struct dm *UNUSED(dmp), point_t UNUSED(pt1), point_t UNUSED(pt2))
 }
 
 
-HIDDEN int
+static int
 txt_drawLines3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(points), int UNUSED(sflag))
 {
     bu_log("drawLines3D called\n");
@@ -144,7 +144,7 @@ txt_drawLines3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(poi
 }
 
 
-HIDDEN int
+static int
 txt_drawPoint2D(struct dm *UNUSED(dmp), fastf_t UNUSED(x), fastf_t UNUSED(y))
 {
     bu_log("drawPoint2D called\n");
@@ -152,7 +152,7 @@ txt_drawPoint2D(struct dm *UNUSED(dmp), fastf_t UNUSED(x), fastf_t UNUSED(y))
 }
 
 
-HIDDEN int
+static int
 txt_drawPoint3D(struct dm *UNUSED(dmp), point_t UNUSED(point))
 {
     bu_log("drawPoint3D called\n");
@@ -160,7 +160,7 @@ txt_drawPoint3D(struct dm *UNUSED(dmp), point_t UNUSED(point))
 }
 
 
-HIDDEN int
+static int
 txt_drawPoints3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(points))
 {
     bu_log("drawPoints3D called\n");
@@ -168,7 +168,7 @@ txt_drawPoints3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(po
 }
 
 
-HIDDEN int
+static int
 txt_drawVList(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
 {
     bu_log("drawVList called\n");
@@ -176,7 +176,7 @@ txt_drawVList(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
 }
 
 
-HIDDEN int
+static int
 txt_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
 {
     bu_log("drawVListHiddenLine called\n");
@@ -184,7 +184,7 @@ txt_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
 }
 
 
-HIDDEN int
+static int
 txt_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     bu_log("draw called\n");
@@ -192,7 +192,7 @@ txt_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **d
 }
 
 
-HIDDEN int
+static int
 txt_setFGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UNUSED(g), unsigned char UNUSED(b), int UNUSED(strict), fastf_t UNUSED(transparency))
 {
     bu_log("setFGColor called\n");
@@ -200,7 +200,7 @@ txt_setFGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UN
 }
 
 
-HIDDEN int
+static int
 txt_setBGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UNUSED(g), unsigned char UNUSED(b))
 {
     bu_log("setBGColor called\n");
@@ -208,7 +208,7 @@ txt_setBGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UN
 }
 
 
-HIDDEN int
+static int
 txt_setLineAttr(struct dm *UNUSED(dmp), int UNUSED(width), int UNUSED(style))
 {
     bu_log("setLineAttr called\n");
@@ -216,7 +216,7 @@ txt_setLineAttr(struct dm *UNUSED(dmp), int UNUSED(width), int UNUSED(style))
 }
 
 
-HIDDEN int
+static int
 txt_configureWin(struct dm *UNUSED(dmp), int UNUSED(force))
 {
     bu_log("configureWin called\n");
@@ -224,7 +224,7 @@ txt_configureWin(struct dm *UNUSED(dmp), int UNUSED(force))
 }
 
 
-HIDDEN int
+static int
 txt_setWinBounds(struct dm *UNUSED(dmp), fastf_t *UNUSED(w))
 {
     bu_log("setWinBounds called\n");
@@ -232,7 +232,7 @@ txt_setWinBounds(struct dm *UNUSED(dmp), fastf_t *UNUSED(w))
 }
 
 
-HIDDEN int
+static int
 txt_setLight(struct dm *UNUSED(dmp), int UNUSED(light_on))
 {
     bu_log("setLight called\n");
@@ -240,7 +240,7 @@ txt_setLight(struct dm *UNUSED(dmp), int UNUSED(light_on))
 }
 
 
-HIDDEN int
+static int
 txt_setTransparency(struct dm *UNUSED(dmp), int UNUSED(transparency))
 {
     bu_log("setTransparency called\n");
@@ -248,7 +248,7 @@ txt_setTransparency(struct dm *UNUSED(dmp), int UNUSED(transparency))
 }
 
 
-HIDDEN int
+static int
 txt_setDepthMask(struct dm *UNUSED(dmp), int UNUSED(mask))
 {
     bu_log("setDepthMask called\n");
@@ -256,7 +256,7 @@ txt_setDepthMask(struct dm *UNUSED(dmp), int UNUSED(mask))
 }
 
 
-HIDDEN int
+static int
 txt_setZBuffer(struct dm *UNUSED(dmp), int UNUSED(zbuffer_on))
 {
     bu_log("setZBuffer called\n");
@@ -264,7 +264,7 @@ txt_setZBuffer(struct dm *UNUSED(dmp), int UNUSED(zbuffer_on))
 }
 
 
-HIDDEN int
+static int
 txt_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
 {
     bu_log("debug called\n");
@@ -272,7 +272,7 @@ txt_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
 }
 
 
-HIDDEN int
+static int
 txt_logfile(struct dm *UNUSED(dmp), const char *UNUSED(filename))
 {
     bu_log("logfile called\n");
@@ -280,7 +280,7 @@ txt_logfile(struct dm *UNUSED(dmp), const char *UNUSED(filename))
 }
 
 
-HIDDEN int
+static int
 txt_beginDList(struct dm *UNUSED(dmp), unsigned int UNUSED(list))
 {
     bu_log("beginDList called\n");
@@ -288,7 +288,7 @@ txt_beginDList(struct dm *UNUSED(dmp), unsigned int UNUSED(list))
 }
 
 
-HIDDEN int
+static int
 txt_endDList(struct dm *UNUSED(dmp))
 {
     bu_log("endDList called\n");
@@ -296,7 +296,7 @@ txt_endDList(struct dm *UNUSED(dmp))
 }
 
 
-HIDDEN int
+static int
 txt_drawDList(unsigned int UNUSED(list))
 {
     bu_log("drawDList called\n");
@@ -304,7 +304,7 @@ txt_drawDList(unsigned int UNUSED(list))
 }
 
 
-HIDDEN int
+static int
 txt_freeDLists(struct dm *UNUSED(dmp), unsigned int UNUSED(list), int UNUSED(range))
 {
     bu_log("freeDList called\n");
@@ -312,7 +312,7 @@ txt_freeDLists(struct dm *UNUSED(dmp), unsigned int UNUSED(list), int UNUSED(ran
 }
 
 
-HIDDEN int
+static int
 txt_genDLists(struct dm *UNUSED(dmp), size_t UNUSED(range))
 {
     bu_log("genDLists called\n");
@@ -320,7 +320,7 @@ txt_genDLists(struct dm *UNUSED(dmp), size_t UNUSED(range))
 }
 
 
-HIDDEN int
+static int
 txt_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
 {
     bu_log("getDisplayImage called\n");
@@ -328,7 +328,7 @@ txt_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
 }
 
 
-HIDDEN int
+static int
 txt_reshape(struct dm *UNUSED(dmp), int UNUSED(width), int UNUSED(height))
 {
     bu_log("reshape called\n");
@@ -336,7 +336,7 @@ txt_reshape(struct dm *UNUSED(dmp), int UNUSED(width), int UNUSED(height))
 }
 
 
-HIDDEN int
+static int
 txt_makeCurrent(struct dm *UNUSED(dmp))
 {
     bu_log("makeCurrent called\n");
@@ -344,14 +344,14 @@ txt_makeCurrent(struct dm *UNUSED(dmp))
 }
 
 
-HIDDEN int
+static int
 txt_doevent(struct dm *UNUSED(dmp), void *UNUSED(vclientData), void *UNUSED(veventPtr))
 {
     bu_log("doevent called\n");
     return 0;
 }
 
-HIDDEN int
+static int
 txt_openFb(struct dm *UNUSED(dmp))
 {
     bu_log("openFb called\n");

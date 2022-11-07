@@ -185,7 +185,7 @@ struct tokens {
 #define WDB_TOK_SUBTR 5
 #define WDB_TOK_TREE 6
 
-HIDDEN void
+static void
 wdb_free_tokens(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -201,7 +201,7 @@ wdb_free_tokens(struct bu_list *hp)
 }
 
 
-HIDDEN void
+static void
 wdb_append_union(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -215,7 +215,7 @@ wdb_append_union(struct bu_list *hp)
 }
 
 
-HIDDEN void
+static void
 wdb_append_inter(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -229,7 +229,7 @@ wdb_append_inter(struct bu_list *hp)
 }
 
 
-HIDDEN void
+static void
 wdb_append_subtr(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -243,7 +243,7 @@ wdb_append_subtr(struct bu_list *hp)
 }
 
 
-HIDDEN void
+static void
 wdb_append_lparen(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -257,7 +257,7 @@ wdb_append_lparen(struct bu_list *hp)
 }
 
 
-HIDDEN void
+static void
 wdb_append_rparen(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -271,7 +271,7 @@ wdb_append_rparen(struct bu_list *hp)
 }
 
 
-HIDDEN int
+static int
 wdb_add_operator(Tcl_Interp *interp, struct bu_list *hp, char *ptr, short int *last_tok)
 {
     char illegal[2];
@@ -303,7 +303,7 @@ wdb_add_operator(Tcl_Interp *interp, struct bu_list *hp, char *ptr, short int *l
 }
 
 
-HIDDEN int
+static int
 wdb_add_operand(Tcl_Interp *interp, struct bu_list *hp, char *name)
 {
     char *ptr_lparen;
@@ -362,7 +362,7 @@ wdb_add_operand(Tcl_Interp *interp, struct bu_list *hp, char *name)
 }
 
 
-HIDDEN void
+static void
 wdb_do_inter(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -397,7 +397,7 @@ wdb_do_inter(struct bu_list *hp)
 }
 
 
-HIDDEN void
+static void
 wdb_do_union_subtr(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -435,7 +435,7 @@ wdb_do_union_subtr(struct bu_list *hp)
 }
 
 
-HIDDEN int
+static int
 wdb_do_paren(struct bu_list *hp)
 {
     struct tokens *tok;
@@ -469,7 +469,7 @@ wdb_do_paren(struct bu_list *hp)
 }
 
 
-HIDDEN union tree *
+static union tree *
 wdb_eval_bool(struct bu_list *hp)
 {
     int done=0;
@@ -491,7 +491,7 @@ wdb_eval_bool(struct bu_list *hp)
 }
 
 
-HIDDEN int
+static int
 wdb_check_syntax(Tcl_Interp *interp, struct db_i *dbip, struct bu_list *hp, char *comb_name, struct directory *dp)
 {
     struct tokens *tok;
@@ -2667,7 +2667,7 @@ wdb_put_cmd(struct rt_wdb *wdbp,
     return TCL_OK;
 }
 
-HIDDEN void
+static void
 _wdb_eval(void *context, const char *cmd) {
     Tcl_Interp *interp = (Tcl_Interp *)context;
     Tcl_Eval(interp, cmd);
@@ -5707,7 +5707,7 @@ wdb_find_ref(struct db_i *UNUSED(dbip),
 }
 
 
-HIDDEN union tree *
+static union tree *
 facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, void *client_data)
 {
     struct bu_list vhead;
@@ -7747,7 +7747,7 @@ Copy_solid(struct db_i *dbip,
 
 static struct directory *Copy_object(struct db_i *dbip, struct directory *dp, mat_t xform, struct rt_wdb *wdbp);
 
-HIDDEN void
+static void
 Do_copy_membs(struct db_i *dbip,
 	      struct rt_comb_internal *UNUSED(comb),
 	      union tree *comb_leaf,
@@ -7881,7 +7881,7 @@ Copy_object(struct db_i *dbip,
 }
 
 
-HIDDEN void
+static void
 Do_ref_incr(struct db_i *dbip,
 	    struct rt_comb_internal *UNUSED(comb),
 	    union tree *comb_leaf,

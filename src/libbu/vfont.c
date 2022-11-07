@@ -109,7 +109,7 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
  * Obtain a 16-bit signed integer from two adjacent characters, stored
  * in VAX order, regardless of word alignment.
  */
-HIDDEN int
+static int
 _vax_gshort(unsigned char *msgp)
 {
     register unsigned char *p = (unsigned char *) msgp;

@@ -40,7 +40,7 @@
 extern int rt_ell_plot(struct bu_list *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct rt_view_info *);
 
 
-HIDDEN unsigned char *
+static unsigned char *
 pnts_pack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 {
     bu_cv_htond(buf, data, count);
@@ -49,7 +49,7 @@ pnts_pack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 }
 
 
-HIDDEN unsigned char *
+static unsigned char *
 pnts_unpack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 {
     bu_cv_ntohd(data, buf, count);
@@ -57,7 +57,7 @@ pnts_unpack_double(unsigned char *buf, unsigned char *data, unsigned int count)
     return buf;
 }
 
-HIDDEN void
+static void
 _pnts_calc_bbox(point_t *min, point_t *max, point_t *v, fastf_t scale)
 {
     point_t sph_min, sph_max;

@@ -59,18 +59,18 @@
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
 static int wgl_actively_drawing;
-HIDDEN int wgl_choose_visual();
+static int wgl_choose_visual();
 
 /* Display Manager package interface */
 #define IRBOUND	4095.9	/* Max magnification in Rot matrix */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-HIDDEN int	wgl_close();
-HIDDEN int	wgl_drawString2D();
-HIDDEN int	wgl_configureWin_guts();
-HIDDEN int	wgl_setLight();
-HIDDEN int	wgl_setZBuffer();
-HIDDEN int	wgl_reshape(struct dm *dmp, int width, int height);
+static int	wgl_close();
+static int	wgl_drawString2D();
+static int	wgl_configureWin_guts();
+static int	wgl_setLight();
+static int	wgl_setZBuffer();
+static int	wgl_reshape(struct dm *dmp, int width, int height);
 
 static fastf_t default_viewscale = 1000.0;
 static double	xlim_view = 1.0;	/* args for glOrtho*/
@@ -97,7 +97,7 @@ wgl_fogHint(struct dm *dmp, int fastfog)
 }
 
 
-HIDDEN int
+static int
 wgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict,  fastf_t transparency)
 {
     if (dmp->i->dm_debugLevel)
@@ -157,7 +157,7 @@ wgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 }
 
 
-HIDDEN int
+static int
 wgl_setBGColor(struct dm *dmp,
 	       unsigned char r,
 	       unsigned char g,
@@ -187,7 +187,7 @@ wgl_setBGColor(struct dm *dmp,
     return BRLCAD_OK;
 }
 
-HIDDEN void
+static void
 WGLEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
 {
 	struct dm *dmp = (struct dm *)clientData;
@@ -371,7 +371,7 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 /*
  *  Gracefully release the display.
  */
-HIDDEN int
+static int
 wgl_close(struct dm *dmp)
 {
     if (((struct dm_wglvars *)dmp->i->dm_vars.pub_vars)->dpy) {
@@ -412,7 +412,7 @@ wgl_viable(const char *UNUSED(dpy_string))
 /*
  * There are global variables which are parameters to this routine.
  */
-HIDDEN int
+static int
 wgl_drawBegin(struct dm *dmp)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
@@ -482,7 +482,7 @@ wgl_drawBegin(struct dm *dmp)
 }
 
 
-HIDDEN int
+static int
 wgl_drawEnd(struct dm *dmp)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
@@ -532,7 +532,7 @@ wgl_drawEnd(struct dm *dmp)
  *  Load a new transformation matrix.  This will be followed by
  *  many calls to wgl_drawVList().
  */
-HIDDEN int
+static int
 wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
 {
     fastf_t *mptr;
@@ -607,7 +607,7 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
  * Load a new projection matrix.
  *
  */
-HIDDEN int
+static int
 wgl_loadPMatrix(struct dm *dmp, fastf_t *mat)
 {
     fastf_t *mptr;
@@ -659,7 +659,7 @@ wgl_loadPMatrix(struct dm *dmp, fastf_t *mat)
 }
 
 
-HIDDEN int
+static int
 wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 {
     register struct bn_vlist	*tvp;
@@ -910,7 +910,7 @@ wgl_draw_data_axes(struct dm *dmp,
     return 0;
 }
 
-HIDDEN int
+static int
 wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
     struct bn_vlist	*tvp;
@@ -1090,7 +1090,7 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-HIDDEN int
+static int
 wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
@@ -1114,7 +1114,7 @@ wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **d
  * Restore the display processor to a normal mode of operation
  * (i.e., not scaled, rotated, displaced, etc.).
  */
-HIDDEN int
+static int
 wgl_normal(struct dm *dmp)
 {
 
@@ -1144,7 +1144,7 @@ wgl_normal(struct dm *dmp)
  * Output a string.
  * The starting position of the beam is as specified.
  */
-HIDDEN int
+static int
 wgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     if (dmp->i->dm_debugLevel)
@@ -1162,7 +1162,7 @@ wgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size
 }
 
 
-HIDDEN int
+static int
 wgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
 
@@ -1195,21 +1195,21 @@ wgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 }
 
 
-HIDDEN int
+static int
 wgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
     return drawLine3D(dmp, pt1, pt2, "wgl_drawLine3D()\n", wireColor);
 }
 
 
-HIDDEN int
+static int
 wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag)
 {
     return drawLines3D(dmp, npoints, points, sflag, "wgl_drawLine3D()\n", wireColor);
 }
 
 
-HIDDEN int
+static int
 wgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     if (dmp->i->dm_debugLevel) {
@@ -1228,7 +1228,7 @@ wgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 }
 
 
-HIDDEN int
+static int
 wgl_drawPoint3D(struct dm *dmp, point_t point)
 {
     if (!dmp || !point)
@@ -1250,7 +1250,7 @@ wgl_drawPoint3D(struct dm *dmp, point_t point)
 }
 
 
-HIDDEN int
+static int
 wgl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
 {
     register int i;
@@ -1274,7 +1274,7 @@ wgl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
 }
 
 
-HIDDEN int
+static int
 wgl_setLineAttr(struct dm *dmp, int width, int style)
 {
     if (dmp->i->dm_debugLevel)
@@ -1295,7 +1295,7 @@ wgl_setLineAttr(struct dm *dmp, int width, int style)
 
 
 /* ARGSUSED */
-HIDDEN int
+static int
 wgl_debug(struct dm *dmp, int lvl)
 {
     dmp->i->dm_debugLevel = lvl;
@@ -1304,7 +1304,7 @@ wgl_debug(struct dm *dmp, int lvl)
 }
 
 
-HIDDEN int
+static int
 wgl_setWinBounds(struct dm *dmp, fastf_t w[6])
 {
     GLint mm;
@@ -1335,7 +1335,7 @@ wgl_setWinBounds(struct dm *dmp, fastf_t w[6])
 /* currently, get a double buffered rgba visual that works with Tk and
  * OpenGL
  */
-HIDDEN int
+static int
 wgl_choose_visual(struct dm *dmp,
 		  Tk_Window tkwin)
 {
@@ -1394,7 +1394,7 @@ wgl_choose_visual(struct dm *dmp,
  *
  * also change font size if necessary
  */
-HIDDEN int
+static int
 wgl_configureWin_guts(struct dm *dmp,
 		      int force)
 {
@@ -1717,7 +1717,7 @@ wgl_configureWin_guts(struct dm *dmp,
 }
 
 
-HIDDEN int
+static int
 wgl_getDisplayImage(struct dm *dmp, unsigned char **image)
 {
   	unsigned char *idata;
@@ -1739,7 +1739,7 @@ wgl_getDisplayImage(struct dm *dmp, unsigned char **image)
 }
 
 
-HIDDEN int
+static int
 wgl_reshape(struct dm *dmp, int width, int height)
 {
     GLint mm;
@@ -1771,7 +1771,7 @@ wgl_reshape(struct dm *dmp, int width, int height)
 }
 
 
-HIDDEN int
+static int
 wgl_makeCurrent(struct dm *dmp)
 {
     if (dmp->i->dm_debugLevel)
@@ -1786,7 +1786,7 @@ wgl_makeCurrent(struct dm *dmp)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 wgl_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
 {
     XEvent *eventPtr= (XEvent *)veventPtr;
@@ -1806,7 +1806,7 @@ wgl_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
 }
 
 
-HIDDEN int
+static int
 wgl_configureWin(struct dm *dmp, int force)
 {
     if (!wglMakeCurrent(((struct dm_wglvars *)dmp->i->dm_vars.pub_vars)->hdc,
@@ -1819,7 +1819,7 @@ wgl_configureWin(struct dm *dmp, int force)
 }
 
 
-HIDDEN int
+static int
 wgl_setLight(struct dm *dmp, int lighting_on)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
@@ -1854,7 +1854,7 @@ wgl_setLight(struct dm *dmp, int lighting_on)
 }
 
 
-HIDDEN int
+static int
 wgl_setTransparency(struct dm *dmp,
 		    int transparency_on)
 {
@@ -1878,7 +1878,7 @@ wgl_setTransparency(struct dm *dmp,
 }
 
 
-HIDDEN int
+static int
 wgl_setDepthMask(struct dm *dmp,
 		 int enable) {
     if (dmp->i->dm_debugLevel)
@@ -1895,7 +1895,7 @@ wgl_setDepthMask(struct dm *dmp,
 }
 
 
-HIDDEN int
+static int
 wgl_setZBuffer(struct dm *dmp, int zbuffer_on)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
@@ -1971,7 +1971,7 @@ wgl_genDLists(struct dm *dmp, size_t range)
     return glGenLists((GLsizei)range);
 }
 
-HIDDEN int
+static int
 wgl_draw_obj(struct dm *dmp, struct display_list *obj)
 {
     struct solid *sp;

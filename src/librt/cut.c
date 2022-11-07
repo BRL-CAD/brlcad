@@ -50,18 +50,18 @@
 #include "bn/plot3.h"
 
 
-HIDDEN int rt_ck_overlap(const vect_t min, const vect_t max, const struct soltab *stp, const struct rt_i *rtip);
-HIDDEN int rt_ct_box(struct rt_i *rtip, union cutter *cutp, int axis, double where, int force);
-HIDDEN void rt_ct_optim(struct rt_i *rtip, union cutter *cutp, size_t depth);
-HIDDEN void rt_ct_free(struct rt_i *rtip, union cutter *cutp);
-HIDDEN void rt_ct_release_storage(union cutter *cutp);
+static int rt_ck_overlap(const vect_t min, const vect_t max, const struct soltab *stp, const struct rt_i *rtip);
+static int rt_ct_box(struct rt_i *rtip, union cutter *cutp, int axis, double where, int force);
+static void rt_ct_optim(struct rt_i *rtip, union cutter *cutp, size_t depth);
+static void rt_ct_free(struct rt_i *rtip, union cutter *cutp);
+static void rt_ct_release_storage(union cutter *cutp);
 
-HIDDEN void rt_ct_measure(struct rt_i *rtip, union cutter *cutp, int depth);
-HIDDEN union cutter *rt_ct_get(struct rt_i *rtip);
-HIDDEN void rt_plot_cut(FILE *fp, struct rt_i *rtip, union cutter *cutp, int lvl);
+static void rt_ct_measure(struct rt_i *rtip, union cutter *cutp, int depth);
+static union cutter *rt_ct_get(struct rt_i *rtip);
+static void rt_plot_cut(FILE *fp, struct rt_i *rtip, union cutter *cutp, int lvl);
 
 extern void rt_pr_cut_info(const struct rt_i *rtip, const char *str);
-HIDDEN int rt_ct_old_assess(register union cutter *, register int, double *, double *);
+static int rt_ct_old_assess(register union cutter *, register int, double *, double *);
 
 #define AXIS(depth)	((depth)%3)	/* cuts: X, Y, Z, repeat */
 
@@ -386,7 +386,7 @@ rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i
  * 0 if outp has the same number of items as inp
  * 1 if outp has fewer items than inp
  */
-HIDDEN int
+static int
 rt_ct_populate_box(union cutter *outp, const union cutter *inp, struct rt_i *rtip)
 {
     register int i;
@@ -498,7 +498,7 @@ rt_ct_populate_box(union cutter *outp, const union cutter *inp, struct rt_i *rti
  * 0 failure
  * 1 success
  */
-HIDDEN int
+static int
 rt_ct_box(struct rt_i *rtip, register union cutter *cutp, register int axis, double where, int force)
 {
     register union cutter *rhs, *lhs;
@@ -570,7 +570,7 @@ rt_ct_box(struct rt_i *rtip, register union cutter *cutp, register int axis, dou
  * !0 if object overlaps box.
  *  0 if no overlap.
  */
-HIDDEN int
+static int
 rt_ck_overlap(const vect_t min, const vect_t max, const struct soltab *stp, const struct rt_i *rtip)
 {
     RT_CHECK_SOLTAB(stp);
@@ -608,7 +608,7 @@ rt_ck_overlap(const vect_t min, const vect_t max, const struct soltab *stp, cons
 /**
  * Returns the total number of solids and solid "pieces" in a boxnode.
  */
-HIDDEN size_t
+static size_t
 rt_ct_piececount(const union cutter *cutp)
 {
     long i;
@@ -635,7 +635,7 @@ rt_ct_piececount(const union cutter *cutp)
  * easily be the case when several solids involved in a CSG operation
  * overlap in space.
  */
-HIDDEN void
+static void
 rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
 {
     size_t oldlen;
@@ -726,7 +726,7 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
  * This version results in nbins=22, maxlen=3, avg=1.09, while new
  * version results in nbins=42, maxlen=3, avg=1.667 (on moss.g).
  */
-HIDDEN int
+static int
 rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p, double *offcenter_p)
 {
     double val;
@@ -841,7 +841,7 @@ rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p
 /*
  * This routine must run in parallel
  */
-HIDDEN union cutter *
+static union cutter *
 rt_ct_get(struct rt_i *rtip)
 {
     register union cutter *cutp;
@@ -877,7 +877,7 @@ rt_ct_get(struct rt_i *rtip)
 /*
  * Release subordinate storage
  */
-HIDDEN void
+static void
 rt_ct_release_storage(register union cutter *cutp)
 {
     size_t i;
@@ -919,7 +919,7 @@ rt_ct_release_storage(register union cutter *cutp)
 /*
  * This routine must run in parallel
  */
-HIDDEN void
+static void
 rt_ct_free(struct rt_i *rtip, register union cutter *cutp)
 {
     RT_CK_RTI(rtip);
@@ -1052,7 +1052,7 @@ rt_fr_cut(struct rt_i *rtip, register union cutter *cutp)
 }
 
 
-HIDDEN void
+static void
 rt_plot_cut(FILE *fp, struct rt_i *rtip, register union cutter *cutp, int lvl)
 {
     RT_CK_RTI(rtip);
@@ -1078,7 +1078,7 @@ rt_plot_cut(FILE *fp, struct rt_i *rtip, register union cutter *cutp, int lvl)
  * Find the maximum number of solids in a leaf node, and other
  * interesting statistics.
  */
-HIDDEN void
+static void
 rt_ct_measure(register struct rt_i *rtip, register union cutter *cutp, int depth)
 {
     register int len;

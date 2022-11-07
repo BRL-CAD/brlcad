@@ -53,7 +53,7 @@ rt_pr_mater(register const struct mater *mp)
 }
 
 
-HIDDEN void
+static void
 _rt_check_overlap(struct mater *newp)
 {
     struct mater *zot;

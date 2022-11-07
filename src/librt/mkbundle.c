@@ -302,7 +302,7 @@ int rt_gen_rect(struct xrays *rays, const struct xray *center_ray,
 }
 
 
-HIDDEN int
+static int
 rt_pattern_rect_orthogrid(fastf_t **rays, size_t *ray_cnt, const point_t center_pt, const vect_t dir,
 		const vect_t a_vec, const vect_t b_vec, const fastf_t da, const fastf_t db)
 {
@@ -355,7 +355,7 @@ rt_pattern_rect_orthogrid(fastf_t **rays, size_t *ray_cnt, const point_t center_
 }
 
 
-HIDDEN int
+static int
 rt_pattern_rect_perspgrid(fastf_t **rays, size_t *ray_cnt, const point_t center_pt, const vect_t dir,
 	       const vect_t a_vec, const vect_t b_vec,
 	       const fastf_t a_theta, const fastf_t b_theta,
@@ -408,7 +408,7 @@ rt_pattern_rect_perspgrid(fastf_t **rays, size_t *ray_cnt, const point_t center_
     return count;
 }
 
-HIDDEN int
+static int
 rt_pattern_circ_spiral(fastf_t **rays, size_t *ray_cnt, const point_t center_pt, const vect_t dir,
 	const double radius, const int rays_per_ring, const int nring, const double delta)
 {

@@ -78,7 +78,7 @@ static void disable_duplicate_close_check(const wchar_t* UNUSED(expression),
 					  uintptr_t UNUSED(pReserved)) {}
 #endif
 
-HIDDEN void
+static void
 temp_close_files(void)
 {
     size_t i;
@@ -121,7 +121,7 @@ temp_close_files(void)
 }
 
 
-HIDDEN void
+static void
 temp_add_to_list(const char *fn, int fd)
 {
     if (all_temp_files.capacity == 0) {
@@ -149,7 +149,7 @@ temp_add_to_list(const char *fn, int fd)
 
 
 #ifndef HAVE_MKSTEMP
-HIDDEN int
+static int
 mkstemp(char *file_template)
 {
     int fd = -1;

@@ -39,7 +39,7 @@
  * This performs the normalization when the input image has data
  * entries less than 0.0 or greater than 1.0 .
  */
-HIDDEN icv_image_t *
+static icv_image_t *
 icv_normalize(icv_image_t *bif)
 {
     double *data;

@@ -291,7 +291,7 @@ icv_image_size(const char *name, size_t udpi, size_t file_size, bu_mime_image_t 
     return      0;
 }
 
-HIDDEN int
+static int
 shrink_image(icv_image_t* bif, size_t factor)
 {
     double *data_p, *res_p; /**< input and output pointers */
@@ -337,7 +337,7 @@ shrink_image(icv_image_t* bif, size_t factor)
 }
 
 
-HIDDEN int
+static int
 under_sample(icv_image_t* bif, size_t factor)
 {
     double *data_p, *res_p;
@@ -366,7 +366,7 @@ under_sample(icv_image_t* bif, size_t factor)
 }
 
 
-HIDDEN int
+static int
 ninterp(icv_image_t* bif, size_t out_width, size_t out_height)
 {
     double xstep, ystep;
@@ -413,7 +413,7 @@ ninterp(icv_image_t* bif, size_t out_width, size_t out_height)
 }
 
 
-HIDDEN int
+static int
 binterp(icv_image_t *bif, size_t out_width, size_t out_height)
 {
     size_t i, j;

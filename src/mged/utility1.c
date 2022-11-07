@@ -249,10 +249,10 @@ f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 
 
 /* cyclic, for db_tree_funcleaf in printcodes() */
-HIDDEN void Do_printnode(struct db_i *dbip2, struct rt_comb_internal *comb, union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *user_ptr3, void *UNUSED(user_ptr4));
+static void Do_printnode(struct db_i *dbip2, struct rt_comb_internal *comb, union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *user_ptr3, void *UNUSED(user_ptr4));
 
 
-HIDDEN int
+static int
 printcodes(FILE *fp, struct directory *dp, int pathpos)
 {
     int i;
@@ -306,7 +306,7 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
 }
 
 
-HIDDEN void
+static void
 Do_printnode(struct db_i *dbip2, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *UNUSED(user_ptr3), void *UNUSED(user_ptr4))
 {
     FILE *fp;

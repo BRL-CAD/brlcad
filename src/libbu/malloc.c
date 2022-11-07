@@ -84,7 +84,7 @@ extern int bu_bomb_failsafe_init(void);
  *
  * type is 0 for malloc, 1 for calloc
  */
-HIDDEN void *
+static void *
 alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 {
     void *ptr = 0;

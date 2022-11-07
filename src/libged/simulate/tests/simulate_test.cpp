@@ -36,7 +36,7 @@ namespace
 {
 
 
-HIDDEN bool
+static bool
 matrix_equal(const db_i &db, const std::string &path,
 	     const fastf_t * const other_matrix)
 {
@@ -68,7 +68,7 @@ matrix_equal(const db_i &db, const std::string &path,
 }
 
 
-HIDDEN bool
+static bool
 test_basic()
 {
     ged ged_instance;
@@ -164,7 +164,7 @@ test_basic()
 }
 
 
-HIDDEN bool
+static bool
 test_matrices()
 {
     ged ged_instance;
@@ -243,7 +243,7 @@ test_matrices()
 }
 
 
-HIDDEN bool
+static bool
 test_tutorial()
 {
     ged ged_instance;
@@ -325,7 +325,7 @@ test_tutorial()
 }
 
 
-HIDDEN bool
+static bool
 simulate_test()
 {
     return test_basic() && test_matrices() && test_tutorial();

@@ -1462,7 +1462,7 @@ static unsigned char broken_colors[][3] = {
 	else \
 	    broken_color = 4;}
 
-HIDDEN void
+static void
 show_broken_vu(struct bn_vlblock *vbp, const struct vertexuse *vu, struct bu_list *vlfree)
 {
     pointp_t p;
@@ -1516,7 +1516,7 @@ show_broken_vu(struct bn_vlblock *vbp, const struct vertexuse *vu, struct bu_lis
 }
 
 
-HIDDEN void
+static void
 show_broken_e(struct bn_vlblock *vbp, const struct edgeuse *eu, struct bu_list *vlfree)
 {
     pointp_t p0, p1;

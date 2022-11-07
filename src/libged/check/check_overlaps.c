@@ -57,7 +57,7 @@ struct overlaps_context {
 };
 
 
-HIDDEN void
+static void
 check_log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit, vect_t ohit, void *context)
 {
     struct overlaps_context *callbackdata = (struct overlaps_context*)context;
@@ -118,7 +118,7 @@ check_log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit
 }
 
 
-HIDDEN void
+static void
 printOverlaps(void *context, struct check_parameters *options)
 {
     struct overlaps_context *overlapData = (struct overlaps_context*)context;
@@ -236,7 +236,7 @@ printOverlaps(void *context, struct check_parameters *options)
 }
 
 
-HIDDEN void
+static void
 overlap(const struct xray *ray,
 	const struct partition *pp,
 	const struct region *reg1,

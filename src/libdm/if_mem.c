@@ -75,7 +75,7 @@ static struct modeflags {
 };
 
 
-HIDDEN int
+static int
 mem_open(struct fb *ifp, const char *file, int width, int height)
 {
     int mode;
@@ -187,44 +187,44 @@ mem_open(struct fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
-HIDDEN struct fb_platform_specific *
+static struct fb_platform_specific *
 mem_get_fbps(uint32_t UNUSED(magic))
 {
         return NULL;
 }
 
 
-HIDDEN void
+static void
 mem_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 {
         return;
 }
 
-HIDDEN int
+static int
 mem_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
 
-HIDDEN int
+static int
 mem_close_existing(struct fb *UNUSED(ifp))
 {
         return 0;
 }
 
-HIDDEN int
+static int
 mem_configure_window(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
         return 0;
 }
 
-HIDDEN int
+static int
 mem_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
         return 0;
 }
 
-HIDDEN int
+static int
 mem_close(struct fb *ifp)
 {
     /*
@@ -248,7 +248,7 @@ mem_close(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 mem_clear(struct fb *ifp, unsigned char *pp)
 {
     RGBpixel v;
@@ -286,7 +286,7 @@ mem_clear(struct fb *ifp, unsigned char *pp)
 }
 
 
-HIDDEN ssize_t
+static ssize_t
 mem_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
@@ -305,7 +305,7 @@ mem_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 }
 
 
-HIDDEN ssize_t
+static ssize_t
 mem_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
@@ -329,7 +329,7 @@ mem_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t coun
 }
 
 
-HIDDEN int
+static int
 mem_rmap(struct fb *ifp, ColorMap *cmp)
 {
     *cmp = MI(ifp)->cmap;		/* struct copy */
@@ -337,7 +337,7 @@ mem_rmap(struct fb *ifp, ColorMap *cmp)
 }
 
 
-HIDDEN int
+static int
 mem_wmap(struct fb *ifp, const ColorMap *cmp)
 {
     if (cmp == COLORMAP_NULL) {
@@ -355,7 +355,7 @@ mem_wmap(struct fb *ifp, const ColorMap *cmp)
 }
 
 
-HIDDEN int
+static int
 mem_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
@@ -367,7 +367,7 @@ mem_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-HIDDEN int
+static int
 mem_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     if (MI(ifp)->write_thru) {
@@ -379,7 +379,7 @@ mem_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 }
 
 
-HIDDEN int
+static int
 mem_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     if (MI(ifp)->write_thru) {
@@ -390,7 +390,7 @@ mem_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, i
 }
 
 
-HIDDEN int
+static int
 mem_cursor(struct fb *ifp, int mode, int x, int y)
 {
     fb_sim_cursor(ifp, mode, x, y);
@@ -401,7 +401,7 @@ mem_cursor(struct fb *ifp, int mode, int x, int y)
 }
 
 
-HIDDEN int
+static int
 mem_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 {
     if (MI(ifp)->write_thru) {
@@ -412,7 +412,7 @@ mem_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 }
 
 
-HIDDEN int
+static int
 mem_poll(struct fb *ifp)
 {
     if (MI(ifp)->write_thru) {
@@ -422,7 +422,7 @@ mem_poll(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 mem_flush(struct fb *ifp)
 {
     /*
@@ -447,7 +447,7 @@ mem_flush(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 mem_help(struct fb *ifp)
 {
     struct modeflags *mfp;

@@ -551,7 +551,7 @@ CPP_XGLUE(bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
  * Given an array of hits, make segments out of them.  Exactly how
  * this is to be done depends on the mode of the BoT.
  */
-HIDDEN int
+static int
 CPP_XGLUE(bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab *stp,
 				   struct xray *rp, struct application *ap,
 				   struct seg *seghead, struct rt_piecestate *psp)

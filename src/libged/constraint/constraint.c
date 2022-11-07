@@ -25,7 +25,7 @@
 #include "ged.h"
 
 
-HIDDEN int
+static int
 constraint_set(void *datap, int argc, const char *argv[])
 {
     struct directory *dp;
@@ -66,7 +66,7 @@ constraint_set(void *datap, int argc, const char *argv[])
 }
 
 
-HIDDEN int
+static int
 constraint_get(void *datap, int argc, const char *argv[])
 {
     size_t i, obj;
@@ -108,7 +108,7 @@ constraint_get(void *datap, int argc, const char *argv[])
 }
 
 
-HIDDEN int
+static int
 constraint_show(void *datap, int argc, const char *argv[])
 {
     size_t i, obj;
@@ -151,7 +151,7 @@ constraint_show(void *datap, int argc, const char *argv[])
 }
 
 
-HIDDEN int
+static int
 constraint_eval(void *datap, int argc, const char *argv[])
 {
     size_t i, obj;
@@ -196,7 +196,7 @@ constraint_eval(void *datap, int argc, const char *argv[])
 }
 
 
-HIDDEN void
+static void
 constraint_usage(struct bu_vls *vp, const char *argv0)
 {
     static const char *usage1 = "set constraint_name [expression]";
@@ -208,7 +208,7 @@ constraint_usage(struct bu_vls *vp, const char *argv0)
 }
 
 
-HIDDEN int
+static int
 constraint_help(void *datap, int argc, const char *argv[])
 {
     struct ged *gedp = (struct ged *)datap;

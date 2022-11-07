@@ -823,7 +823,7 @@ bu_vls_prepend(struct bu_vls *vp, const char *str)
     vp->vls_len += len;
 }
 
-HIDDEN int
+static int
 vls_char_in_set(const char *c, const char *str)
 {
     unsigned int i = 0;

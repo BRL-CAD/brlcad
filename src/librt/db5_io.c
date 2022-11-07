@@ -193,7 +193,7 @@ db5_encode_length(
  * 0 on success
  * -1 on error
  */
-HIDDEN int
+static int
 crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 {
     if (cp[0] != DB5HDR_MAGIC1) {

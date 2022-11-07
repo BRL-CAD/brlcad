@@ -56,8 +56,8 @@ struct txt_specific {
 #define TX_O(m) bu_offsetof(struct txt_specific, m)
 
 /* local sp_hook functions */
-HIDDEN void txt_transp_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
-HIDDEN void txt_source_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void txt_transp_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void txt_source_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 
 
@@ -84,7 +84,7 @@ struct bu_structparse txt_parse[] = {
  * looked up.  If neither is found, object name is left null so txt_setup() will
  * fail.
  */
-HIDDEN void
+static void
 txt_source_hook(const struct bu_structparse *UNUSED(sdp),
 		const char *name,
 		void *base,
@@ -105,7 +105,7 @@ txt_source_hook(const struct bu_structparse *UNUSED(sdp),
 /*
  * Hooked function, called by bu_structparse
  */
-HIDDEN void
+static void
 txt_transp_hook(const struct bu_structparse *sdp,
 		const char *name,
 		void *base,
@@ -129,7 +129,7 @@ txt_transp_hook(const struct bu_structparse *sdp,
  * a file or from a db object.  The resources are released in txt_free()
  * (there is no specific unload_datasource function).
  */
-HIDDEN int
+static int
 txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const unsigned long int size)
 {
     struct directory *dirEntry;
@@ -223,7 +223,7 @@ txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const
  * Note that .pix files are stored left-to-right, bottom-to-top,
  * which works out very naturally for the indexing scheme.
  */
-HIDDEN int
+static int
 txt_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct txt_specific *tp =
@@ -479,7 +479,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
  * Note that .bw files are stored left-to-right, bottom-to-top,
  * which works out very naturally for the indexing scheme.
  */
-HIDDEN int
+static int
 bwtxt_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct txt_specific *tp =
@@ -596,7 +596,7 @@ bwtxt_render(struct application *ap, const struct partition *pp, struct shadewor
 }
 
 
-HIDDEN int
+static int
 txt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 {
     register struct txt_specific *tp;
@@ -650,14 +650,14 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
 }
 
 
-HIDDEN void
+static void
 txt_print(register struct region *rp, void *UNUSED(dp))
 {
     bu_struct_print(rp->reg_name, txt_parse, (char *)rp->reg_udata);
 }
 
 
-HIDDEN void
+static void
 txt_free(void *cp)
 {
     struct txt_specific *tp =	(struct txt_specific *)cp;
@@ -687,7 +687,7 @@ struct bu_structparse ckr_parse[] = {
 };
 
 
-HIDDEN int
+static int
 ckr_render(struct application *ap, const struct partition *pp, register struct shadework *swp, void *dp)
 {
     register struct ckr_specific *ckp =
@@ -716,7 +716,7 @@ ckr_render(struct application *ap, const struct partition *pp, register struct s
 }
 
 
-HIDDEN int
+static int
 ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 /* New since 4.4 release */
 {
@@ -742,14 +742,14 @@ ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp
 }
 
 
-HIDDEN void
+static void
 ckr_print(register struct region *rp, void *UNUSED(dp))
 {
     bu_struct_print(rp->reg_name, ckr_parse, (const char *)rp->reg_udata);
 }
 
 
-HIDDEN void
+static void
 ckr_free(void *cp)
 {
     BU_PUT(cp, struct ckr_specific);
@@ -760,7 +760,7 @@ ckr_free(void *cp)
  * Render a map which varies red with U and blue with V values.
  * Mostly useful for debugging ft_uv() routines.
  */
-HIDDEN int
+static int
 tstm_render(struct application *ap, const struct partition *pp, register struct shadework *swp, void *UNUSED(dp))
 {
     VSET(swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v);
@@ -785,7 +785,7 @@ static vect_t star_colors[] = {
 };
 
 
-HIDDEN int
+static int
 star_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *UNUSED(dp))
 {
     /* Probably want to diddle parameters based on what part of sky */
@@ -821,7 +821,7 @@ star_render(register struct application *ap, const struct partition *pp, struct 
  * Note that .pix files are stored left-to-right, bottom-to-top,
  * which works out very naturally for the indexing scheme.
  */
-HIDDEN int
+static int
 bmp_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct txt_specific *tp =
@@ -897,7 +897,7 @@ bmp_render(struct application *ap, const struct partition *pp, struct shadework 
 }
 
 
-HIDDEN int
+static int
 envmap_setup(register struct region *rp, struct bu_vls *matparm, void **UNUSED(dpp), const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 {
     struct mfuncs *shaders = MF_NULL;

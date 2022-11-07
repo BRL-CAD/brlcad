@@ -53,7 +53,7 @@ struct killtree_data {
  * can make sure we don't kill objects that are referenced somewhere
  * else in the database.
  */
-HIDDEN int
+static int
 find_reference(struct db_i *dbip, const char *topobj, const char *obj)
 {
     int ret;
@@ -75,7 +75,7 @@ find_reference(struct db_i *dbip, const char *topobj, const char *obj)
 }
 
 
-HIDDEN void
+static void
 killtree_callback(struct db_i *dbip, struct directory *dp, void *ptr)
 {
     struct killtree_data *gktdp = (struct killtree_data *)ptr;

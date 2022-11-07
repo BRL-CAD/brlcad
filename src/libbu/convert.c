@@ -127,7 +127,7 @@ bu_cv_cookie(const char *in)			/* input format */
 }
 
 
-HIDDEN void
+static void
 bu_cv_fmt_cookie(char *buf, size_t buflen, int cookie)
 {
     register char *cp = buf;

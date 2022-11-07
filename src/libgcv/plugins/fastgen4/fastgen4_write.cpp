@@ -123,7 +123,7 @@ typedef Triple<fastf_t> Point;
 typedef Triple<unsigned char> Color;
 
 
-HIDDEN Color
+static Color
 color_from_floats(const float *float_color)
 {
     Color result;
@@ -1163,7 +1163,7 @@ Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
 
 
 // returns: thickness, thickness_is_centered
-HIDDEN std::pair<fastf_t, bool>
+static std::pair<fastf_t, bool>
 get_face_info(const rt_bot_internal &bot, std::size_t i)
 {
     RT_BOT_CK_MAGIC(&bot);
@@ -1184,7 +1184,7 @@ get_face_info(const rt_bot_internal &bot, std::size_t i)
 }
 
 
-HIDDEN void
+static void
 write_bot(Section &section, const rt_bot_internal &bot)
 {
     RT_BOT_CK_MAGIC(&bot);
@@ -1220,7 +1220,7 @@ write_bot(Section &section, const rt_bot_internal &bot)
  * possibly in libbg or handled as a typing interface in librt as
  * other entities have similar needs, e.g., tgc, eto, superell, arb8.
  */
-HIDDEN bool
+static bool
 ell_is_sphere(const rt_ell_internal &ell)
 {
     RT_ELL_CK_MAGIC(&ell);
@@ -1260,7 +1260,7 @@ ell_is_sphere(const rt_ell_internal &ell)
 }
 
 
-HIDDEN bool
+static bool
 mutually_orthogonal(const fastf_t *vect_a, const fastf_t *vect_b,
 		    const fastf_t *vect_c)
 {
@@ -1272,7 +1272,7 @@ mutually_orthogonal(const fastf_t *vect_a, const fastf_t *vect_b,
 
 // Determines whether a tgc can be represented by a CCONE2 element.
 // Assumes that `tgc` is a valid rt_tgc_internal.
-HIDDEN bool
+static bool
 tgc_is_ccone2(const rt_tgc_internal &tgc)
 {
     RT_TGC_CK_MAGIC(&tgc);
@@ -1315,7 +1315,7 @@ tgc_is_ccone2(const rt_tgc_internal &tgc)
 }
 
 
-HIDDEN void
+static void
 path_to_mat(db_i &db, const db_full_path &path, mat_t &result)
 {
     RT_CK_DBI(&db);
@@ -1331,7 +1331,7 @@ path_to_mat(db_i &db, const db_full_path &path, mat_t &result)
 }
 
 
-HIDDEN void
+static void
 apply_path_xform(db_i &db, const mat_t &matrix, rt_db_internal &internal)
 {
     RT_CK_DBI(&db);
@@ -1342,7 +1342,7 @@ apply_path_xform(db_i &db, const mat_t &matrix, rt_db_internal &internal)
 }
 
 
-HIDDEN const db_full_path
+static const db_full_path
 get_parent_path(const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
@@ -1357,7 +1357,7 @@ get_parent_path(const db_full_path &path)
 
 
 // get the parent region's directory
-HIDDEN const directory &
+static const directory &
 get_region_dir(const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
@@ -1371,7 +1371,7 @@ get_region_dir(const db_full_path &path)
 
 
 // get the parent region's path
-HIDDEN const db_full_path
+static const db_full_path
 get_region_path(const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
@@ -1386,7 +1386,7 @@ get_region_path(const db_full_path &path)
 }
 
 
-HIDDEN bool
+static bool
 path_is_subtracted(db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
@@ -1409,7 +1409,7 @@ path_is_subtracted(db_i &db, const db_full_path &path)
 
 // helper; sets `outer` and `inner` if they exist in
 // a tree describing `outer` - `inner`
-HIDDEN bool
+static bool
 get_cutout(db_i &db, const db_full_path &parent_path, DBInternal &outer,
 	   DBInternal &inner)
 {
@@ -1456,7 +1456,7 @@ get_cutout(db_i &db, const db_full_path &parent_path, DBInternal &outer,
 // most uses of CCONE1 elements can be represented as CCONE2 elements.
 // this handles the cases for which we can't do this.
 // note: CCONE1 is deprecated.
-HIDDEN bool
+static bool
 get_ccone1_cutout_helper(Section &section, const std::string &name,
 			 const rt_tgc_internal &outer_tgc, const rt_tgc_internal &inner_tgc)
 {
@@ -1524,7 +1524,7 @@ get_ccone1_cutout_helper(Section &section, const std::string &name,
 
 
 // test for and create CCONE{1, 2} elements
-HIDDEN bool
+static bool
 find_ccone_cutout(Section &section, db_i &db, const db_full_path &parent_path,
 		  std::set<const directory *> &completed)
 {
@@ -1588,7 +1588,7 @@ find_ccone_cutout(Section &section, db_i &db, const db_full_path &parent_path,
 
 
 // test for and create CSPHERE elements
-HIDDEN bool
+static bool
 find_csphere_cutout(Section &section, db_i &db, const db_full_path &parent_path,
 		    std::set<const directory *> &completed)
 {
@@ -1640,7 +1640,7 @@ find_csphere_cutout(Section &section, db_i &db, const db_full_path &parent_path,
 
 
 // test for and create CHEX1 elements
-HIDDEN bool
+static bool
 get_chex1(Section &section, const rt_bot_internal &bot)
 {
     RT_BOT_CK_MAGIC(&bot);
@@ -1713,7 +1713,7 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 typedef std::map<const directory *, Matrix> LeafMap;
 
 
-HIDDEN void
+static void
 get_unioned(const db_i &db, const tree *tree, LeafMap &results)
 {
     RT_CK_DBI(&db);
@@ -1745,7 +1745,7 @@ get_unioned(const db_i &db, const tree *tree, LeafMap &results)
 }
 
 
-HIDDEN void
+static void
 get_intersected(const db_i &db, const tree *tree, LeafMap &results)
 {
     RT_CK_DBI(&db);
@@ -1778,7 +1778,7 @@ get_intersected(const db_i &db, const tree *tree, LeafMap &results)
 }
 
 
-HIDDEN void
+static void
 get_subtracted(const db_i &db, const tree *tree, LeafMap &results)
 {
     RT_CK_DBI(&db);
@@ -1812,7 +1812,7 @@ get_subtracted(const db_i &db, const tree *tree, LeafMap &results)
 enum CompspltPartitionType {partition_none, partition_intersected, partition_subtracted};
 typedef std::pair<CompspltPartitionType, Matrix> CompspltID;
 
-HIDDEN CompspltID
+static CompspltID
 identify_compsplt(const db_i &db, const directory &parent_region_dir,
 		  const directory &half_dir)
 {
@@ -1852,7 +1852,7 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
 typedef std::pair<std::set<const directory *>, std::set<const directory *> >
 WallsInfo;
 
-HIDDEN WallsInfo
+static WallsInfo
 find_walls(const db_i &db, const directory &region_dir, const bn_tol &tol)
 {
     RT_CK_DBI(&db);
@@ -2134,7 +2134,7 @@ FastgenConversion::RegionManager::get_section(const db_full_path
 
 
 // test for and create compsplts
-HIDDEN bool
+static bool
 find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 	      const rt_half_internal &half)
 {
@@ -2314,7 +2314,7 @@ FastgenConversion::do_force_facetize_region(const directory *region_dir) const
 }
 
 
-HIDDEN bool
+static bool
 convert_primitive(FastgenConversion &data, const db_full_path &path,
 		  const rt_db_internal &internal, bool subtracted)
 {
@@ -2414,7 +2414,7 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 }
 
 
-HIDDEN void
+static void
 write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 		 int UNUSED(region_id), int UNUSED(material_id), float *UNUSED(color),
 		 void *client_data)
@@ -2450,7 +2450,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 }
 
 
-HIDDEN int
+static int
 convert_region_start(db_tree_state *tree_state, const db_full_path *path,
 		     const rt_comb_internal * comb, void *client_data)
 {
@@ -2465,7 +2465,7 @@ convert_region_start(db_tree_state *tree_state, const db_full_path *path,
 }
 
 
-HIDDEN tree *
+static tree *
 convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	     rt_db_internal *internal, void *client_data)
 {
@@ -2508,7 +2508,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 }
 
 
-HIDDEN tree *
+static tree *
 convert_region_end(db_tree_state *tree_state, const db_full_path *path,
 		   tree *current_tree, void *client_data)
 {
@@ -2527,7 +2527,7 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
 }
 
 
-HIDDEN std::set<const directory *>
+static std::set<const directory *>
 do_conversion(db_i &db, const struct gcv_opts &gcv_options,
 	      const std::string &path,
 	      const std::set<const directory *> &facetize_regions =
@@ -2561,7 +2561,7 @@ do_conversion(db_i &db, const struct gcv_opts &gcv_options,
 }
 
 
-HIDDEN int
+static int
 fastgen4_write(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	       const void *UNUSED(options_data), const char *dest_path)
 {

@@ -66,7 +66,7 @@
     }
 
 
-HIDDEN void
+static void
 _rt_tree_region_assign(union tree *tp, const struct region *regionp)
 {
     RT_CK_TREE(tp);
@@ -104,7 +104,7 @@ _rt_tree_region_assign(union tree *tp, const struct region *regionp)
 /**
  * This routine must be prepared to run in parallel.
  */
-HIDDEN int
+static int
 _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, void *UNUSED(client_data))
 {
     if (tsp) {
@@ -141,7 +141,7 @@ struct gettree_data
  * Therefore, everything which referred to the tree has been moved out
  * into the serial section.  (_rt_tree_region_assign, rt_bound_tree)
  */
-HIDDEN union tree *
+static union tree *
 _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct region *rp;
@@ -305,7 +305,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
  * will be using the same hash, and will thus wait for the proper
  * semaphore.
  */
-HIDDEN struct soltab *
+static struct soltab *
 _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rtip)
 {
     struct soltab *stp = RT_SOLTAB_NULL;
@@ -439,7 +439,7 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
 /**
  * This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *
+static union tree *
 _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
 {
     struct gettree_data *data;

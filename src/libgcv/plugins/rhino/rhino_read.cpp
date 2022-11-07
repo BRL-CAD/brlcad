@@ -86,14 +86,14 @@ private:
 
 
 template <typename T, std::size_t length>
-HIDDEN std::size_t array_length(const T(&)[length])
+static std::size_t array_length(const T(&)[length])
 {
     return length;
 }
 
 
 template <typename Target, typename Source>
-HIDDEN Target lexical_cast(const Source &value)
+static Target lexical_cast(const Source &value)
 {
     std::stringstream interpreter;
     Target result;
@@ -107,7 +107,7 @@ HIDDEN Target lexical_cast(const Source &value)
 }
 
 
-HIDDEN void
+static void
 comb_to_region(db_i &db, const std::string &name)
 {
     RT_CK_DBI(&db);
@@ -178,7 +178,7 @@ public:
 
 
 template <template<typename> class Array, typename T>
-HIDDEN const T &at(const Array<T> &array, std::size_t index)
+static const T &at(const Array<T> &array, std::size_t index)
 {
     if (const T * const result = array.At(static_cast<unsigned>(index)))
 	return *result;
@@ -188,14 +188,14 @@ HIDDEN const T &at(const Array<T> &array, std::size_t index)
 
 
 template <template<typename> class Array, typename T>
-HIDDEN T &at(Array<T> &array, std::size_t index)
+static T &at(Array<T> &array, std::size_t index)
 {
     return const_cast<T &>(at(const_cast<const Array<T> &>(array), index));
 }
 
 
 template <typename T, typename Array>
-HIDDEN const T &at(const Array &array, std::size_t index)
+static const T &at(const Array &array, std::size_t index)
 {
     if (const T * const result = array.At(static_cast<unsigned>(index)))
 	return *result;
@@ -206,7 +206,7 @@ HIDDEN const T &at(const Array &array, std::size_t index)
 
 // ON_CreateUuid() is not implemented for all platforms.
 // When it fails, we create a UUIDv4.
-HIDDEN ON_UUID
+static ON_UUID
 generate_uuid()
 {
     ON_UUID result;
@@ -234,7 +234,7 @@ generate_uuid()
 
 // ONX_Model::Audit() fails to repair UUID issues on platforms
 // where ON_CreateUuid() is not implemented.
-HIDDEN std::size_t
+static std::size_t
 replace_invalid_uuids(ONX_Model &model)
 {
     std::size_t num_repairs = 0;
@@ -275,7 +275,7 @@ replace_invalid_uuids(ONX_Model &model)
 }
 
 
-HIDDEN void
+static void
 clean_name(std::map<ON_wString, std::size_t> &seen,
 	   const std::string &default_name, ON_wString &name)
 {
@@ -292,7 +292,7 @@ clean_name(std::map<ON_wString, std::size_t> &seen,
 }
 
 
-HIDDEN void
+static void
 load_model(const gcv_opts &gcv_options, const std::string &path,
 	   ONX_Model &model, std::string &root_name)
 {
@@ -336,7 +336,7 @@ load_model(const gcv_opts &gcv_options, const std::string &path,
 }
 
 
-HIDDEN void
+static void
 write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 {
     ON_Brep *b = const_cast<ON_Brep *>(&brep);
@@ -345,7 +345,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 }
 
 
-HIDDEN void
+static void
 write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 {
     mesh.ConvertQuadsToTriangles();
@@ -450,7 +450,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 }
 
 
-HIDDEN bool
+static bool
 write_geometry(rt_wdb &wdb, const std::string &name,
 	       const ON_Geometry &geometry)
 {
@@ -471,7 +471,7 @@ write_geometry(rt_wdb &wdb, const std::string &name,
 typedef std::pair<std::string, std::string> Shader;
 
 
-HIDDEN Shader
+static Shader
 get_shader(const ON_Material &material)
 {
     std::ostringstream sstream;
@@ -491,7 +491,7 @@ get_shader(const ON_Material &material)
 }
 
 
-HIDDEN void
+static void
 get_object_material(const ON_3dmObjectAttributes &attributes,
 		    const ONX_Model &model, Shader &out_shader, unsigned char *out_rgb,
 		    bool &out_own_shader, bool &out_own_rgb)
@@ -520,7 +520,7 @@ get_object_material(const ON_3dmObjectAttributes &attributes,
 }
 
 
-HIDDEN void
+static void
 write_comb(rt_wdb &wdb, const std::string &name,
 	   const std::set<std::string> &members, const mat_t matrix = NULL,
 	   const char *shader_name = NULL, const char *shader_options = NULL,
@@ -540,7 +540,7 @@ write_comb(rt_wdb &wdb, const std::string &name,
 }
 
 
-HIDDEN void
+static void
 import_object(rt_wdb &wdb, const std::string &name,
 	      const ON_InstanceRef &instance_ref, const ONX_Model &model,
 	      const char *shader_name, const char *shader_options, const unsigned char *rgb)
@@ -562,7 +562,7 @@ import_object(rt_wdb &wdb, const std::string &name,
 }
 
 
-HIDDEN void
+static void
 write_attributes(rt_wdb &wdb, const std::string &name, const ON_Object &object,
 		 const ON_UUID &uuid)
 {
@@ -578,7 +578,7 @@ write_attributes(rt_wdb &wdb, const std::string &name, const ON_Object &object,
 }
 
 
-HIDDEN void
+static void
 import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 		     const ONX_Model &model)
 {
@@ -624,7 +624,7 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 }
 
 
-HIDDEN void
+static void
 import_idef(rt_wdb &wdb, const ON_InstanceDefinition &idef,
 	    const ONX_Model &model)
 {
@@ -644,7 +644,7 @@ import_idef(rt_wdb &wdb, const ON_InstanceDefinition &idef,
 }
 
 
-HIDDEN void
+static void
 import_model_idefs(rt_wdb &wdb, const ONX_Model &model)
 {
     for (std::size_t i = 0; i < model.m_idef_table.UnsignedCount(); ++i)
@@ -652,7 +652,7 @@ import_model_idefs(rt_wdb &wdb, const ONX_Model &model)
 }
 
 
-HIDDEN std::set<std::string>
+static std::set<std::string>
 get_all_idef_members(const ONX_Model &model)
 {
     std::set<std::string> result;
@@ -671,7 +671,7 @@ get_all_idef_members(const ONX_Model &model)
 }
 
 
-HIDDEN std::set<std::string>
+static std::set<std::string>
 get_layer_members(const ON_Layer &layer, const ONX_Model &model)
 {
     std::set<std::string> members;
@@ -699,7 +699,7 @@ get_layer_members(const ON_Layer &layer, const ONX_Model &model)
 }
 
 
-HIDDEN void
+static void
 import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
 {
     const std::string name = ON_String(layer.m_name).Array();
@@ -718,7 +718,7 @@ import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
 }
 
 
-HIDDEN void
+static void
 import_model_layers(rt_wdb &wdb, const ONX_Model &model,
 		    const std::string &root_name)
 {
@@ -731,7 +731,7 @@ import_model_layers(rt_wdb &wdb, const ONX_Model &model,
 }
 
 
-HIDDEN void
+static void
 polish_output(const gcv_opts &gcv_options, db_i &db)
 {
     std::map<const directory *, std::string> renamed;
@@ -932,7 +932,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 }
 
 
-HIDDEN int
+static int
 rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	   const void *UNUSED(options_data), const char *source_path)
 {
@@ -963,7 +963,7 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     return 1;
 }
 
-HIDDEN int
+static int
 rhino_can_read(const char *source_path)
 {
     int fv;

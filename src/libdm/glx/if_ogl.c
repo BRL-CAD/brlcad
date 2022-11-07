@@ -90,8 +90,8 @@ extern struct fb ogl_interface;
 
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
 
-HIDDEN int ogl_nwindows = 0; 	/* number of open windows */
-HIDDEN XColor color_cell[256];		/* used to set colormap */
+static int ogl_nwindows = 0; 	/* number of open windows */
+static XColor color_cell[256];		/* used to set colormap */
 
 
 /*
@@ -191,7 +191,7 @@ struct oglinfo {
 #define MODE_15NORMAL	(0<<14)
 #define MODE_15ZAP	(1<<14)	/* zap the shared memory segment */
 
-HIDDEN struct modeflags {
+static struct modeflags {
     char c;
     long mask;
     long value;
@@ -223,7 +223,7 @@ HIDDEN struct modeflags {
  * the front buffer. Do one scanline specified by one_y, or whole
  * screen if one_y equals -1.
  */
-HIDDEN void
+static void
 backbuffer_to_screen(register struct fb *ifp, int one_y)
 {
     struct fb_clip *clp;
@@ -298,7 +298,7 @@ backbuffer_to_screen(register struct fb *ifp, int one_y)
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
  * rectangle of the frame buffer
  */
-HIDDEN void
+static void
 ogl_xmit_scanlines(register struct fb *ifp, int ybase, int nlines, int xbase, int npix)
 {
     register int y;
@@ -423,7 +423,7 @@ ogl_xmit_scanlines(register struct fb *ifp, int ybase, int nlines, int xbase, in
 }
 
 
-HIDDEN void
+static void
 ogl_cminit(register struct fb *ifp)
 {
     register int i;
@@ -467,7 +467,7 @@ ogl_cminit(register struct fb *ifp)
  * memory to be satisfied.  In special cases, the values used here
  * might need to be increased.
  */
-HIDDEN int
+static int
 ogl_getmem(struct fb *ifp)
 {
     size_t pixsize;
@@ -637,7 +637,7 @@ fb_clipper(register struct fb *ifp)
 }
 
 
-HIDDEN void
+static void
 expose_callback(struct fb *ifp)
 {
     XWindowAttributes xwa;
@@ -790,7 +790,7 @@ ogl_configureWindow(struct fb *ifp, int width, int height)
 }
 
 
-HIDDEN void
+static void
 ogl_do_event(struct fb *ifp)
 {
     XEvent event;
@@ -894,7 +894,7 @@ ogl_do_event(struct fb *ifp)
  *
  * Return NULL on failure.
  */
-HIDDEN XVisualInfo *
+static XVisualInfo *
 fb_ogl_choose_visual(struct fb *ifp)
 {
 
@@ -1016,7 +1016,7 @@ fb_ogl_choose_visual(struct fb *ifp)
  * Check for a color map being linear in R, G, and B.  Returns 1 for
  * linear map, 0 for non-linear map (i.e., non-identity map).
  */
-HIDDEN int
+static int
 is_linear_cmap(register struct fb *ifp)
 {
     register int i;
@@ -1030,7 +1030,7 @@ is_linear_cmap(register struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 {
     static char title[128] = {0};
@@ -1360,7 +1360,7 @@ open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
 }
 
 
-HIDDEN struct fb_platform_specific *
+static struct fb_platform_specific *
 ogl_get_fbps(uint32_t magic)
 {
     struct fb_platform_specific *fb_ps = NULL;
@@ -1373,7 +1373,7 @@ ogl_get_fbps(uint32_t magic)
 }
 
 
-HIDDEN void
+static void
 ogl_put_fbps(struct fb_platform_specific *fbps)
 {
     BU_CKMAG(fbps, FB_OGL_MAGIC, "ogl framebuffer");
@@ -1383,7 +1383,7 @@ ogl_put_fbps(struct fb_platform_specific *fbps)
 }
 
 
-HIDDEN int
+static int
 ogl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
     struct ogl_fb_info *ogl_internal = (struct ogl_fb_info *)fb_p->data;
@@ -1434,7 +1434,7 @@ ogl_close_existing(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 ogl_final_close(struct fb *ifp)
 {
     Display *display = OGL(ifp)->dispp;
@@ -1454,7 +1454,7 @@ ogl_final_close(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 ogl_flush(struct fb *ifp)
 {
     if (FB_DEBUG)
@@ -1487,7 +1487,7 @@ ogl_flush(struct fb *ifp)
 /*
  * Handle any pending input events
  */
-HIDDEN int
+static int
 ogl_poll(struct fb *ifp)
 {
     ogl_do_event(ifp);
@@ -1498,7 +1498,7 @@ ogl_poll(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 fb_ogl_close(struct fb *ifp)
 {
     ogl_flush(ifp);
@@ -1547,7 +1547,7 @@ fb_ogl_close(struct fb *ifp)
 /*
  * Free shared memory resources, and close.
  */
-HIDDEN int
+static int
 ogl_free(struct fb *ifp)
 {
     int ret;
@@ -1566,7 +1566,7 @@ ogl_free(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 ogl_clear(struct fb *ifp, unsigned char *pp)
 {
     struct fb_pixel bg;
@@ -1640,7 +1640,7 @@ ogl_clear(struct fb *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+static int
 ogl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct fb_clip *clp;
@@ -1713,7 +1713,7 @@ ogl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-HIDDEN int
+static int
 ogl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     if (FB_DEBUG)
@@ -1729,7 +1729,7 @@ ogl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 /* read count pixels into pixelp starting at x, y */
-HIDDEN ssize_t
+static ssize_t
 ogl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t n;
@@ -1781,7 +1781,7 @@ ogl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 /* write count pixels from pixelp starting at xstart, ystart */
-HIDDEN ssize_t
+static ssize_t
 ogl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     size_t scan_count;	/* # pix on this scanline */
@@ -1911,7 +1911,7 @@ ogl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, s
  * internal form, and then arrange to have them sent to the screen
  * separately.
  */
-HIDDEN int
+static int
 ogl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register int x;
@@ -1976,7 +1976,7 @@ ogl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const u
  * internal form, and then arrange to have them sent to the screen
  * separately.
  */
-HIDDEN int
+static int
 ogl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register int x;
@@ -2036,7 +2036,7 @@ ogl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const
 }
 
 
-HIDDEN int
+static int
 ogl_rmap(register struct fb *ifp, register ColorMap *cmp)
 {
     register int i;
@@ -2054,7 +2054,7 @@ ogl_rmap(register struct fb *ifp, register ColorMap *cmp)
 }
 
 
-HIDDEN int
+static int
 ogl_wmap(register struct fb *ifp, register const ColorMap *cmp)
 {
     register int i;
@@ -2115,7 +2115,7 @@ ogl_wmap(register struct fb *ifp, register const ColorMap *cmp)
 }
 
 
-HIDDEN int
+static int
 ogl_help(struct fb *ifp)
 {
     struct modeflags *mfp;
@@ -2179,7 +2179,7 @@ ogl_help(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 ogl_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     FB_CK_FB(ifp->i);
@@ -2188,7 +2188,7 @@ ogl_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbit
 }
 
 
-HIDDEN int
+static int
 ogl_cursor(struct fb *ifp, int mode, int x, int y)
 {
     if (mode) {

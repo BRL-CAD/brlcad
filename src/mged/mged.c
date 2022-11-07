@@ -285,7 +285,7 @@ attach_display_manager(Tcl_Interp *interpreter, const char *manager, const char 
 }
 
 
-HIDDEN void
+static void
 mged_notify(int UNUSED(i))
 {
     pr_prompt(interactive);

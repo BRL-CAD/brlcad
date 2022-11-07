@@ -86,7 +86,7 @@ struct conversion_state
 };
 
 
-HIDDEN char *
+static char *
 stl_write_make_units_str(double scale_factor)
 {
     const char *bu_units = bu_units_string(scale_factor);
@@ -102,7 +102,7 @@ stl_write_make_units_str(double scale_factor)
 
 
 /* Byte swaps a four byte value */
-HIDDEN void
+static void
 stl_write_lswap(unsigned int *v)
 {
     unsigned int r;
@@ -113,7 +113,7 @@ stl_write_lswap(unsigned int *v)
 }
 
 
-HIDDEN void
+static void
 nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]), void *client_data)
 {
     struct model *m;
@@ -315,7 +315,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 }
 
 
-HIDDEN void
+static void
 stl_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
 {
     struct stl_write_options *options_data;
@@ -336,14 +336,14 @@ stl_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_dat
 }
 
 
-HIDDEN void
+static void
 stl_write_free_opts(void *options_data)
 {
     bu_free(options_data, "options_data");
 }
 
 
-HIDDEN int
+static int
 stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *dest_path)
 {
     int ret;

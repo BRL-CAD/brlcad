@@ -302,7 +302,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 }
 
 
-HIDDEN void
+static void
 eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
 			      struct db_full_path *subpath,
 			      const int skip_first)
@@ -1349,9 +1349,9 @@ dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int bot
 	    /* found a match */
 	    if (sp->s_hiddenLine) {
 		if (both)
-		    bu_vls_printf(vls, "%d 1", _GED_HIDDEN_LINE);
+		    bu_vls_printf(vls, "%d 1", _GED_static_LINE);
 		else
-		    bu_vls_printf(vls, "%d", _GED_HIDDEN_LINE);
+		    bu_vls_printf(vls, "%d", _GED_static_LINE);
 	    } else {
 		if (both)
 		    bu_vls_printf(vls, "%d %g", sp->s_dmode, sp->s_transparency);

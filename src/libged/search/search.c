@@ -96,7 +96,7 @@ struct ged_search {
 };
 
 
-HIDDEN db_search_callback_t
+static db_search_callback_t
 ged_get_interp_eval_callback(struct ged *gedp)
 {
     /* FIXME this might need to be more robust? */
@@ -104,7 +104,7 @@ ged_get_interp_eval_callback(struct ged *gedp)
 }
 
 
-HIDDEN int
+static int
 _path_scrub(struct bu_vls *path)
 {
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
@@ -133,7 +133,7 @@ _path_scrub(struct bu_vls *path)
 }
 
 
-HIDDEN void
+static void
 _ged_free_search_set(struct bu_ptbl *search_set)
 {
     size_t i;
@@ -159,7 +159,7 @@ _ged_free_search_set(struct bu_ptbl *search_set)
 
 /* Returns 1 if char string seems to be part of a plan,
  * else return 0 */
-HIDDEN int
+static int
 _ged_plan_item(char *arg)
 {
     if (!arg)
@@ -179,7 +179,7 @@ _ged_plan_item(char *arg)
  *
  * The variables is_specific, is_local, and is_flat convey specifics about the search.
  */
-HIDDEN int
+static int
 _ged_search_characterize_path(struct ged *gedp, const char *orig, struct bu_vls *normalized, int *is_specific, int *is_local, int *is_flat, int *flat_only)
 {
     struct directory *path_dp = NULL;
@@ -235,7 +235,7 @@ _ged_search_characterize_path(struct ged *gedp, const char *orig, struct bu_vls 
 }
 
 
-HIDDEN int
+static int
 _ged_search_localized_obj_list(struct ged *gedp, struct directory *path, struct directory ***path_list, struct db_search_context *ctx)
 {
     size_t path_cnt;
@@ -261,7 +261,7 @@ _ged_search_localized_obj_list(struct ged *gedp, struct directory *path, struct 
 }
 
 
-HIDDEN void
+static void
 search_print_objs_to_vls(const struct bu_ptbl *objs, struct bu_vls *out)
 {
     size_t len;

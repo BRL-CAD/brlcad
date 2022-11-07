@@ -123,7 +123,7 @@ int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, do
 }
 
 
-HIDDEN double
+static double
 find_next_point(const ON_Curve* crv, double startdomval, double increment, double tolerance, int stepcount)
 {
     double inc = increment;

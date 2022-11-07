@@ -34,7 +34,7 @@
 
 /* private functions */
 
-HIDDEN void
+static void
 get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
 {
     switch (filter_type) {
@@ -88,7 +88,7 @@ get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
     return;
 }
 
-HIDDEN void
+static void
 get_kernel3(ICV_FILTER3 filter_type, double *kern, double *offset)
 {
     switch (filter_type) {

@@ -75,7 +75,7 @@ private:
 };
 
 
-HIDDEN void
+static void
 remove_dead_references_leaf_func(db_i *db, rt_comb_internal *comb, tree *tree,
 				 void *user1, void *UNUSED(user2), void *UNUSED(user3), void *UNUSED(user4))
 {
@@ -91,7 +91,7 @@ remove_dead_references_leaf_func(db_i *db, rt_comb_internal *comb, tree *tree,
 }
 
 
-HIDDEN void
+static void
 remove_dead_references(db_i &db)
 {
     RT_CK_DBI(&db);

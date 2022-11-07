@@ -164,7 +164,7 @@ new_image(const struct bu_structparse *UNUSED(sdp),
  * 0 success, but delete region
  * -1 failure
  */
-HIDDEN int
+static int
 bbd_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 {
     register struct bbd_specific *bbd_sp;
@@ -289,14 +289,14 @@ bbd_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mf
 }
 
 
-HIDDEN void
+static void
 bbd_print(struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, bbd_print_tab, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 bbd_free(void *cp)
 {
     BU_PUT(cp, struct bbd_specific);
