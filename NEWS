@@ -26,7 +26,7 @@ rewrite it to match ours.
 * fixed 3dm to g names converting alphabetized - Chris McGregor
 * updated Tcl/Tk to version 8.6.12 - Cliff Yapp
 * updated netpbm to version 10.73.40 - Cliff Yapp
-* updated zlib to version 1.2.12 - Cliff Yapp
+* updated zlib to version 1.2.13 - Cliff Yapp
 * fixed mged -c 'unknown variable' warning dialogs - Sean Morrison
 * improved mged & archer html command help formatting - Sean Morrison
 * fixed archer empty string ("") loading behavior - Cliff Yapp
