@@ -546,7 +546,7 @@ fb_server_fb_close(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_free(struct pkg_conn *pcp, char *buf)
 {
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {'\0'};
 
     /* Don't really free framebuffer */
     if (pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp) != NET_LONG_LEN)

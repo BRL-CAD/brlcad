@@ -340,7 +340,7 @@ fbs_rfbclose(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbfree(struct pkg_conn *pcp, char *buf)
 {
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {'\0'};
 
     /* Don't really free framebuffer */
     if (pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp) != NET_LONG_LEN)
