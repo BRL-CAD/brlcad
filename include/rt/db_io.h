@@ -97,8 +97,26 @@ db_open(const char *name, const char *mode);
  * DBI_NULL on error
  * db_i * on success
  */
-RT_EXPORT extern struct db_i *db_create(const char *name,
-					int version);
+RT_EXPORT extern struct db_i *
+db_create(const char *name, int version);
+
+/**
+ * Create a new database using an existing FILE stream.  fp needs to be opened
+ * with wb+ privileges for this to work.  Does a db_dirbuild so the caller
+ * doesn't need to.
+ *
+ * On some platforms, fclose on a temp file created by bu_temp_file will
+ * immediately erase the file, and a follow-on fopen (or db_open) will fail.
+ * This function allows us to execute the db_create/db_open initializations
+ * without ever closing the opened FILE stream.
+ *
+ * Returns:
+ * DBI_NULL on error
+ * db_i * on success
+ */
+RT_EXPORT extern struct db_i *
+db_setup(FILE *fp, const char *name, int version);
+
 
 /* close a model database */
 /**
