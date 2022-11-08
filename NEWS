@@ -13,6 +13,11 @@ changes made.  See document footer for additional details.
 --- 2022-XX-XX  Release 7.34.X                                     ---
 ----------------------------------------------------------------------
 
+This major release introduces a new method for managing third party
+library building - src/other/ext dependencies now use the native
+build system provided by the project, rather than having BRL-CAD
+rewrite it to match ours.
+
 * added -N view obj name option to overlay command - Cliff Yapp
 * updated man pages for GED brep command - Cliff Yapp
 * added man page for MGED Overlaps Tool - Chris McGregor
@@ -37,12 +42,6 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 --- 2022-05-08  Release 7.32.6                                     ---
 ----------------------------------------------------------------------
-
-This major release introduces a new method for managing third party
-library building - src/other/ext dependencies now use the native
-build system provided by the project, rather than having BRL-CAD
-rewrite it to match ours.
-
 
 * reduced mged & archer max image size and memory use - Sean Morrison
 * fixed librt handling of object names with '/' chars - Cliff Yapp
