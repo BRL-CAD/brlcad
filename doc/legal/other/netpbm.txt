@@ -1,3 +1,5 @@
+https://netpbm.sourceforge.net/
+
 Copyright (C) 1988, 1989, 1991 by Jef Poskanzer.
 Copyright (C) 1994 Ingo Wilken (Ingo.Wilken@informatik.uni-oldenburg.de)
 Copyright (C) 1992 by David W. Sanderson.
