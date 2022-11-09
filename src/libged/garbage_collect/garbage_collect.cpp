@@ -169,11 +169,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 	    who_objs.push_back(std::string(bu_vls_cstr(&gdlp->dl_path)));
     }
 
-    /* Create "working" database.
-     *
-     * TODO - properly speaking we should be using bu_temp_file and db_setup
-     * for this, in the style of src/librt/tests/rt_datum.c, once the latter
-     * approach is proven to work cross platform. */
+    /* Create "working" database. */
     bu_vls_sprintf(&working_file, "%s/%d_gc_%s", bu_vls_cstr(&fdir),
 	    bu_process_id(), bu_vls_cstr(&fname));
     bu_file_delete(bu_vls_cstr(&working_file));
