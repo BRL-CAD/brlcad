@@ -9,7 +9,7 @@
 #define MAXBITS 15
 
 const char inflate_copyright[] =
-   " inflate 1.2.13 Copyright 1995-2022 Mark Adler ";
+   " inflate 1.2.13-brl Copyright 1995-2022 Mark Adler ";
 /*
   If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot
