@@ -917,10 +917,16 @@ wdb_reopen_cmd(struct rt_wdb *wdbp,
 	    return TCL_ERROR;
 	}
 
+	// Stash wdb type and interp
+	int wdb_type = wdbp->wdb_type;
+	void *interp = wdbp->wdb_interp;
+
 	/* close current database */
 	db_close(wdbp->dbip);
 
-	wdbp->dbip = dbip;
+	/* get the appropriate type for the new dbip */
+	wdbp = wdb_dbopen(dbip, wdb_type);
+	wdbp->wdb_interp = interp;
 
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, wdbp->dbip->dbi_filename, (char *)NULL);
 	return TCL_OK;
