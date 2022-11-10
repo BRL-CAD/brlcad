@@ -222,6 +222,7 @@ static void setCursorPos(struct current *current, int x);
 static void setOutputHighlight(struct current *current, const int *props, int nprops);
 static void set_current(struct current *current, const char *str);
 
+#if 0
 static int fd_isatty(struct current *current)
 {
 #ifdef USE_TERMIOS
@@ -231,6 +232,7 @@ static int fd_isatty(struct current *current)
     return 0;
 #endif
 }
+#endif
 
 void linenoiseHistoryFree(void) {
     if (history) {
