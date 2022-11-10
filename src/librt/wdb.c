@@ -48,7 +48,12 @@ wdb_fopen_v(const char *filename, int version)
     if ((dbip = db_create(filename, version)) == DBI_NULL)
 	return RT_WDB_NULL;
 
-    return wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    // We're going through the fopen API, which means the
+    // parent code expects wdb_close to do the work of
+    // cleaning up the database.
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    wdbp->fopen = 1;
+    return wdbp;
 }
 
 
@@ -329,7 +334,13 @@ wdb_close(struct rt_wdb *wdbp)
 
     RT_CK_WDB(wdbp);
 
-    // no-op - handled during db_close
+    // no-op (handled during db_close) unless one of the wdb_fopen creation
+    // paths was used - in that case, calling code expects wdb_close to take
+    // care of db_close as well.
+    if (wdbp->fopen) {
+	wdbp->fopen = 0;
+	db_close(wdbp->dbip);
+    }
 }
 
 
