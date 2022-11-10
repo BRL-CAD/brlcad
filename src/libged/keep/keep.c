@@ -224,6 +224,9 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     wdb_close(keepfp);
+    if (new_dbip != DBI_NULL)
+	db_close(new_dbip);
+
     return BRLCAD_OK;
 }
 
