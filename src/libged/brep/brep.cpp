@@ -207,7 +207,6 @@ _brep_cmd_boolean(void *bs, int argc, const char **argv)
     struct rt_brep_internal *bip = (struct rt_brep_internal *)intern_res.idb_ptr;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     mk_brep(wdbp, argv[3], (void *)(bip->brep));
-    wdb_close(wdbp);
     rt_db_free_internal(&intern2);
     rt_db_free_internal(&intern_res);
 
@@ -285,11 +284,9 @@ _brep_cmd_bot(void *bs, int argc, const char **argv)
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (wdb_export(wdbp, bot_name, (void *)bot, ID_BOT, 1.0)) {
-	wdb_close(wdbp);
 	bu_vls_free(&bname_bot);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
 
     bu_vls_free(&bname_bot);
     return BRLCAD_OK;
@@ -413,10 +410,8 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	if (wdb_export(wdbp, bu_vls_cstr(&bot_name), (void *)bot, ID_BOT, 1.0)) {
-	    wdb_close(wdbp);
 	    return BRLCAD_ERROR;
 	}
-	wdb_close(wdbp);
 	bu_vls_free(&bot_name);
     }
 
@@ -475,7 +470,6 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	brep_conversion_comb(&intern, bu_vls_cstr(&bname_suffix), bu_vls_cstr(&suffix), wdbp, mk_conv2mm);
-	wdb_close(wdbp);
 	bu_vls_free(&bname_suffix);
 	bu_vls_free(&bname);
 	bu_vls_free(&suffix);
@@ -513,7 +507,6 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 	brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	ret = mk_brep(wdbp, bu_vls_cstr(&bname), brep);
-	wdb_close(wdbp);
 	if (ret == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s is made.", bu_vls_cstr(&bname));
 	}
@@ -581,10 +574,8 @@ _brep_cmd_flip(void *bs, int argc, const char **argv)
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
     return BRLCAD_OK;
 }
 
@@ -1044,10 +1035,8 @@ _brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
     return BRLCAD_OK;
 }
 
@@ -1181,7 +1170,6 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 	if (!object_per_face) {
 	    delete brep;
 	}
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
 
@@ -1195,13 +1183,11 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 	    if (ndp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, ": failed to create brep");
 		bu_vls_free(&ocomb);
-		wdb_close(wdbp);
 		return BRLCAD_ERROR;
 	    }
 	    if (db5_get_attributes(gb->gedp->dbip, &avs, gb->dp)) {
 		bu_vls_printf(gedp->ged_result_str, ": failed to get attributes from brep");
 		bu_vls_free(&ocomb);
-		wdb_close(wdbp);
 		return BRLCAD_ERROR;
 	    };
 	    double local2base = gb->gedp->dbip->dbi_local2base;
@@ -1213,7 +1199,6 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 	    if (db5_replace_attributes(ndp, &avs, gb->gedp->dbip)) {
 		bu_vls_printf(gedp->ged_result_str, ": failed to set plate mode thickness");
 		bu_vls_free(&ocomb);
-		wdb_close(wdbp);
 		return BRLCAD_ERROR;
 	    }
 	}
@@ -1221,7 +1206,6 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 	ret = mk_lcomb(wdbp, bu_vls_cstr(&ocomb), &wcomb, 0, NULL, NULL, NULL, 0);
     }
 
-    wdb_close(wdbp);
     return ret;
 }
 

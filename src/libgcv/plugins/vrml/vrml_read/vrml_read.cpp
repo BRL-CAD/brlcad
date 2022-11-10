@@ -245,7 +245,6 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     if ((fd_in=fopen(source_path, "rb")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", source_path);
-	wdb_close(fd_out);
 	perror("libgcv");
 	return 0;
     }
@@ -259,7 +258,6 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     if (objnumb < 0) {
 	bu_log("ERROR: unable to get objects\n");
-	wdb_close(fd_out);
 	return 0;
     }
 
@@ -269,7 +267,6 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     if (gcv_options->verbosity_level)
 	bu_log("%d objects created\n", objnumb + 1);
 
-    wdb_close(fd_out);
     return 1;
 }
 

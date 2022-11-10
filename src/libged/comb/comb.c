@@ -116,10 +116,8 @@ comb_tree_clear(struct ged *gedp, struct directory *dp)
     if (wdb_put_internal(wdbp, dp->d_namep, &intern, 1.0) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "wdb_export(%s) failure", dp->d_namep);
 	rt_db_free_internal(&intern);
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
     rt_db_free_internal(&intern);
     return BRLCAD_OK;
 }
@@ -161,10 +159,8 @@ comb_wrap(struct ged *gedp, struct directory *dp) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to write new object (%s) to database - aborting!!\n", bu_vls_addr(&comb_child_name));
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
     bu_free_external(&external);
 
     /* Load new obj.c comb and clear its region flag, if any */
@@ -547,7 +543,6 @@ comb_decimate(struct ged *gedp, struct directory *dp)
 		if (wdb_put_internal(wdbp, bot_dp->d_namep, &intern, 1.0) < 0) {
 		    bu_log("Failed to write decimated version of %s back to database\n", bot_dp->d_namep);
 		}
-		wdb_close(wdbp);
 	    }
 	}
     }

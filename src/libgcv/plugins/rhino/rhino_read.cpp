@@ -994,13 +994,10 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	import_model_objects(*gcv_options, *wdbp, model);
     } catch (const InvalidRhinoModelError &exception) {
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
-	wdb_close(wdbp);
 	return 0;
     }
 
     polish_output(*gcv_options, *context->dbip);
-
-    wdb_close(wdbp);
 
     return 1;
 }

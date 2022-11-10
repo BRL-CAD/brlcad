@@ -125,14 +125,7 @@ main(int ac, char *av[])
 	    print_elapsed("mk_lcomb", bu_gettime() - t);
 	}
     }
-
-    {
-	t = bu_gettime();
-	for (size_t i = 0; i < iterations; i++) {
-	    wdb_close(wdbfp);
-	}
-	print_elapsed("wdb_close", bu_gettime() - t);
-    }
+    wdb_close(wdbfp);
 
     {
 	t = bu_gettime();

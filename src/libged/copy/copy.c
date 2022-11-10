@@ -74,10 +74,8 @@ ged_copy_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to write new object (%s) to database - aborting!!\n",
 		      argv[2]);
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
 
     bu_free_external(&external);
 

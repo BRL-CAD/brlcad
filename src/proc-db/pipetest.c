@@ -144,6 +144,8 @@ main(int argc, char **argv)
 	fprintf(stderr, "mk_pipe(%s) returns %d\n", "pipe1", i);
 
     do_bending(outfp, "pipe2", pipeB, pipeB_npts, 0.1, 0.05);
+
+    wdb_close(outfp);
     return 0;
 }
 

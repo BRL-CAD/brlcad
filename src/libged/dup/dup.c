@@ -189,7 +189,6 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
     if ((newdbp = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[1]);
 	bu_vls_printf(gedp->ged_result_str, "dup: Cannot open geometry database file %s", argv[1]);
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
 
@@ -205,7 +204,6 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
     /* Get array to hold names of duplicates */
     if ((dirp0 = _ged_getspace(gedp->dbip, 0)) == (struct directory **) 0) {
 	bu_vls_printf(gedp->ged_result_str, "f_dup: unable to get memory\n");
-	wdb_close(wdbp);
 	db_close(newdbp);
 	return BRLCAD_ERROR;
     }
@@ -218,7 +216,6 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 	if (db_scan(newdbp, dup_dir_check, 0, (void *)&dcs) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "dup: db_scan failure");
 	    bu_free((void *)dirp0, "_ged_getspace array");
-	    wdb_close(wdbp);
 	    db_close(newdbp);
 	    return BRLCAD_ERROR;
 	}
@@ -226,7 +223,6 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 	if (db5_scan(newdbp, dup_dir_check5, (void *)&dcs) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "dup: db_scan failure");
 	    bu_free((void *)dirp0, "_ged_getspace array");
-	    wdb_close(wdbp);
 	    db_close(newdbp);
 	    return BRLCAD_ERROR;
 	}
@@ -236,7 +232,6 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
     _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dcs.dup_dirp - dirp0), 0, 0);
     bu_vls_printf(gedp->ged_result_str, "\n -----  %d duplicate names found  -----", wdbp->wdb_num_dups);
     bu_free((void *)dirp0, "_ged_getspace array");
-    wdb_close(wdbp);
     db_close(newdbp);
 
     return BRLCAD_OK;

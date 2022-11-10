@@ -687,10 +687,8 @@ mater_import(struct ged *gedp, size_t argc, const char *argv[])
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (rt_mk_binunif (wdbp, GED_DB_DENSITY_OBJECT, argv[1], DB5_MINORTYPE_BINU_8BITINT, 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Error reading density file %s", argv[1]);
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
 
     /* Mark it hidden */
     {

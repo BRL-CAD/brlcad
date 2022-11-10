@@ -59,7 +59,6 @@ ged_importFg4Section_core(struct ged *gedp, int argc, const char *argv[])
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     int ret = wdb_importFg4Section_cmd(wdbp, argc, argv);
-    wdb_close(wdbp);
     return ret;
 }
 /** @} */

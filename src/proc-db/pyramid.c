@@ -65,6 +65,8 @@ main(int argc, char **argv)
     do_leaf("leaf");
     do_tree("tree", "leaf", depth);
 
+    wdb_close(outfp);
+
     return 0;
 }
 

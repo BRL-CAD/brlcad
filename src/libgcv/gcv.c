@@ -74,12 +74,10 @@ _gcv_brlcad_read(struct gcv_context *context,
 	struct rt_wdb *wdbp = wdb_dbopen(in_dbip, RT_WDB_TYPE_DB_INMEM);
 	if (db_dump(wdbp, in_dbip)) {
 	    bu_log("db_dump() failed (from '%s' to context->dbip)\n", source_path);
-	    wdb_close(wdbp);
 	    db_close(in_dbip);
 	    return 0;
 	}
 
-	wdb_close(wdbp);
 	db_close(in_dbip);
     } else {
 	// For v4 .g files, use the original rather than an inmem (which is v5)
@@ -97,32 +95,36 @@ _gcv_brlcad_write(struct gcv_context *context,
 {
     struct db_i *dbip = NULL;
     struct rt_wdb * out_wdbp = NULL;
+    int created = 0;
     if (!bu_file_exists(dest_path, NULL)) {
 	out_wdbp = wdb_fopen(dest_path);
+	created = 1;
+	if (!out_wdbp) {
+	    bu_log("wdb_fopen() failed for '%s'\n", dest_path);
+	    return 0;
+	}
     } else {
 	dbip = db_open(dest_path, DB_OPEN_READWRITE);
+	if (!out_wdbp) {
+	    bu_log("db_open() failed for '%s'\n", dest_path);
+	    return 0;
+	}
 	out_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
     }
 
-    if (!out_wdbp) {
-	bu_log("wdb_fopen() failed for '%s'\n", dest_path);
-	if (dbip)
-	    db_close(dbip);
-	return 0;
-    }
-
+    int ret = 1;
     if (db_dump(out_wdbp, context->dbip)) {
 	bu_log("db_dump() failed (from context->dbip to '%s')\n", dest_path);
-	wdb_close(out_wdbp);
-	if (dbip)
-	    db_close(dbip);
-	return 0;
+	ret = 0;
     }
 
-    wdb_close(out_wdbp);
-    if (dbip)
+    if (created) {
+	wdb_close(out_wdbp);
+    } else {
 	db_close(dbip);
-    return 1;
+    }
+
+    return ret;
 }
 
 int

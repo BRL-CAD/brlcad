@@ -361,7 +361,6 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     }
 
     wdb_export(state->wdbp, bu_vls_addr(&name_dsp), (void *)dsp, ID_DSP, 1);
-    wdb_close(state->wdbp);
 
     /* Write out the original and current Spatial Reference Systems
      * and other dimensional information to attributes on the dsp */

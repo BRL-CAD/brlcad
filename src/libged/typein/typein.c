@@ -767,10 +767,8 @@ binunif_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to create binary object %s from file %s\n",
 		      name, cmd_argvs[4]);
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }
@@ -1428,10 +1426,8 @@ half_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern,
     VUNITIZE(norm);
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (mk_half(wdbp, name, norm, d) < 0) {
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }
@@ -1525,10 +1521,8 @@ sph_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (mk_sph(wdbp, name, center, r) < 0) {
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }
@@ -2157,10 +2151,8 @@ rpp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (mk_rpp(wdbp, name, min, max) < 0) {
-	wdb_close(wdbp);
 	return 1;
     }
-    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }
@@ -2198,10 +2190,8 @@ orpp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern,
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (mk_rpp(wdbp, name, min, max) < 0) {
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }

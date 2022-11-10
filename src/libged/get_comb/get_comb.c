@@ -184,7 +184,6 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 		      wdbp->wdb_air_default,
 		      wdbp->wdb_mat_default,
 		      wdbp->wdb_los_default);
-	wdb_close(wdbp);
     }
 
     return BRLCAD_OK;

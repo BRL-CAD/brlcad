@@ -204,7 +204,11 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     if (db_update_ident(keepfp->dbip, bu_vls_addr(&title), gedp->dbip->dbi_local2base) < 0) {
 	perror("fwrite");
 	bu_vls_printf(gedp->ged_result_str, "db_update_ident() failed\n");
-	wdb_close(keepfp);
+	if (new_dbip != DBI_NULL) {
+	    db_close(new_dbip);
+	} else {
+	    wdb_close(keepfp);
+	}
 	bu_vls_free(&title);
 	return BRLCAD_ERROR;
     }
@@ -223,9 +227,11 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    wdb_close(keepfp);
-    if (new_dbip != DBI_NULL)
+    if (new_dbip != DBI_NULL) {
 	db_close(new_dbip);
+    } else {
+	wdb_close(keepfp);
+    }
 
     return BRLCAD_OK;
 }

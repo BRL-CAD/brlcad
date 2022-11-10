@@ -251,7 +251,6 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
 		     0,				/* take all regions */
 		     push_region_end,
 		     push_leaf, (void *)gpdp);
-    wdb_close(wdbp);
 
     /*
      * If there was any error, then just free up the solid

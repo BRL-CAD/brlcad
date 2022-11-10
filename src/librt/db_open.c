@@ -477,6 +477,7 @@ db_close(register struct db_i *dbip)
 	bu_free((void *)dbip->dbi_wdbp, "struct rt_wdb");
 	dbip->dbi_wdbp = NULL;
     }
+    dbip->dbi_wdbp = NULL;
 
     if (dbip->dbi_wdbp_a) {
 	BU_LIST_DEQUEUE(&dbip->dbi_wdbp_a->l);
@@ -489,6 +490,7 @@ db_close(register struct db_i *dbip)
 	bu_free((void *)dbip->dbi_wdbp_a, "struct rt_wdb");
 	dbip->dbi_wdbp_a = NULL;
     }
+    dbip->dbi_wdbp_a = NULL;
 
     if (dbip->dbi_wdbp_inmem) {
 	BU_LIST_DEQUEUE(&dbip->dbi_wdbp_inmem->l);
@@ -501,6 +503,7 @@ db_close(register struct db_i *dbip)
 	bu_free((void *)dbip->dbi_wdbp_inmem, "struct rt_wdb");
 	dbip->dbi_wdbp_inmem = NULL;
     }
+    dbip->dbi_wdbp_inmem = NULL;
 
     if (dbip->dbi_wdbp_inmem_a) {
 	BU_LIST_DEQUEUE(&dbip->dbi_wdbp_inmem_a->l);
@@ -513,6 +516,7 @@ db_close(register struct db_i *dbip)
 	bu_free((void *)dbip->dbi_wdbp_inmem_a, "struct rt_wdb");
 	dbip->dbi_wdbp_inmem_a = NULL;
     }
+    dbip->dbi_wdbp_inmem_a = NULL;
 
     /* ready to free the database -- use count is now zero */
 

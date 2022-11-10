@@ -173,7 +173,6 @@ main(int argc, char **argv)
 	rt_db_free_internal(&intern);
     } FOR_ALL_DIRECTORY_END
 
-    wdb_close( fp );
     db_close( dbip4 );
     db_close( dbip );
 
