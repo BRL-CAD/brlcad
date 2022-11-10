@@ -1554,7 +1554,7 @@ main(int argc, char *argv[])
 	bu_vls_trunc(&line, 0);
 	if (bu_vls_gets(&line, ifp) < 0) {
 	    fclose(ifp); ifp = NULL;
-	    wdb_close(ofp); ofp = NULL;
+	    wdb_fclose(ofp); ofp = NULL;
 	    bu_exit(1, "Unexpected EOF\n");
 	}
 	str = bu_vls_addr(&line);
@@ -1591,7 +1591,7 @@ main(int argc, char *argv[])
 	    bu_log("tclcad_init error: %s\n", bu_vls_cstr(&msg));
 	}
 	bu_vls_free(&msg);
-	wdb_close(ofp);
+	wdb_fclose(ofp);
 
 	{
 	    int ac = 4;
@@ -1769,7 +1769,7 @@ main(int argc, char *argv[])
     bu_free(buf, "input buffer");
     buf = NULL; /* sanity */
     fclose(ifp); ifp = NULL;
-    wdb_close(ofp); ofp = NULL;
+    wdb_fclose(ofp); ofp = NULL;
 
     return 0;
 }

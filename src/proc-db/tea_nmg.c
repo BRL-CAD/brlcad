@@ -214,7 +214,7 @@ main(int argc, char **argv)
 
     /* write NMG to output file */
     (void)mk_nmg(outfp, tea_name, m);
-    wdb_close(outfp);
+    wdb_fclose(outfp);
 
     /* Make a vlist drawing of the model */
     BU_LIST_INIT(&vhead);

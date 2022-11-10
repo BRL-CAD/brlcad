@@ -271,7 +271,7 @@ main(int argc, char** argv)
     unsigned char rgb[] = {255, 255, 255};
     mk_region1(outfp, "cube.r", geom_name, "plastic", "", rgb);
 
-    wdb_close(outfp);
+    wdb_fclose(outfp);
     delete brep;
 
     printf("Reading a twisted cube b-rep...\n");

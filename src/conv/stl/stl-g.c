@@ -640,7 +640,7 @@ main(int argc, char *argv[])
 
     fclose(fd_in);
 
-    wdb_close(fd_out);
+    wdb_fclose(fd_out);
 
     return 0;
 }

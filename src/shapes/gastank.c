@@ -801,7 +801,7 @@ main(int argc, char **argv)
     }							/* START # 2 */
 
     /* Close file. */
-    wdb_close(fpw);
+    wdb_fclose(fpw);
     return 0;
 }							/* END # 1 */
 

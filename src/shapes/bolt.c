@@ -550,7 +550,7 @@ main(int argc, char **argv)
     }							/* END # 20 */
 
     /* Close mged file. */
-    wdb_close(fpw);
+    wdb_fclose(fpw);
     return 0;
 }
 

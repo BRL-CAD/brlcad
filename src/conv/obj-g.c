@@ -3853,7 +3853,7 @@ main(int argc, char **argv)
 	return EXIT_FAILURE;
     }
 
-    wdb_close(fd_out);
+    wdb_fclose(fd_out);
     rt_clean_resource_complete(NULL, &rt_uniresource);
 
     (void)time(&overall_end_time);

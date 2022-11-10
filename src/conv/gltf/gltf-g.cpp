@@ -325,7 +325,7 @@ int main(int argc, char **argv)
 
     mk_bot(outfp, shape_name.c_str(), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, num_vert_values / 3, num_face_values / 3, vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
 
-    wdb_close(outfp);
+    wdb_fclose(outfp);
 
     return 0;
 }

@@ -772,7 +772,7 @@ main(int argc, char **argv)
 
     Groups();	/* Make some groups */
 
-    wdb_close(fdout);
+    wdb_fclose(fdout);
 
     return 0;
 }

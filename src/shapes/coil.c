@@ -66,7 +66,7 @@ main(int ac, char *av[])
     GED_INIT(&ged, db_fp);
     flag = ged_exec(&ged, ac, (const char**)av);
     /* Close database */
-    wdb_close(db_fp);
+    wdb_fclose(db_fp);
     if (flag & BRLCAD_ERROR)
 	/* Creation failed - remove file */
 	bu_file_delete(DEFAULT_COIL_FILENAME);

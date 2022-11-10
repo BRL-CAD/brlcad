@@ -239,7 +239,7 @@ main(int argc, char **argv)
 
 	fprintf(stderr, "frame %d\n", frame);  fflush(stderr);
     }
-    wdb_close(outfp);
+    wdb_fclose(outfp);
     fflush(stderr);
 
     return 0;

@@ -457,7 +457,7 @@ main(int argc, char *argv[])
     }
 
     mk_lfcomb(fpw, group, &comb1, 0);
-    wdb_close(fpw);
+    wdb_fclose(fpw);
     return 0;
 }
 

@@ -325,7 +325,7 @@ main(int argc, char **argv)
 
     bu_free((char *)face_mode, "bottest: face_mode");
 
-    wdb_close(outfp);
+    wdb_fclose(outfp);
 
     bu_log(" done.\n");
 

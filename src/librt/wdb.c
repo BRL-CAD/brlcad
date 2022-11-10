@@ -49,7 +49,7 @@ wdb_fopen_v(const char *filename, int version)
 	return RT_WDB_NULL;
 
     // We're going through the fopen API, which means the
-    // parent code expects wdb_close to do the work of
+    // parent code expects wdb_fclose to do the work of
     // cleaning up the database.
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
     wdbp->fopen = 1;
@@ -329,18 +329,17 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 
 
 void
-wdb_close(struct rt_wdb *wdbp)
+wdb_fclose(struct rt_wdb *wdbp)
 {
 
     RT_CK_WDB(wdbp);
 
-    // no-op (handled during db_close) unless one of the wdb_fopen creation
-    // paths was used - in that case, calling code expects wdb_close to take
-    // care of db_close as well.
-    if (wdbp->fopen) {
-	wdbp->fopen = 0;
-	db_close(wdbp->dbip);
+    if (!wdbp->fopen) {
+	bu_log("wdb_fclose called on wdb pointer not created with wdb_fopen\n");
+	return;
     }
+
+    db_close(wdbp->dbip);
 }
 
 

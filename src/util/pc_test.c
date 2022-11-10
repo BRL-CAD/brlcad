@@ -113,7 +113,7 @@ main(int argc, char **argv)
 
     /* Todo: Free pcs parametric set */
 
-    wdb_close(fp);
+    wdb_fclose(fp);
 
     return 0;
 }

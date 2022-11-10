@@ -81,7 +81,7 @@ main(int argc, char **argv)
 	}
     }
 
-    wdb_close(outfp);
+    wdb_fclose(outfp);
     bu_log(" done.\n");
 
     return 0;

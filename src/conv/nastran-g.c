@@ -1371,7 +1371,7 @@ main(int argc, char **argv)
     if (BU_LIST_NON_EMPTY(&all_head.l)) {
 	mk_lfcomb(fpout, "all", &all_head, 0);
     }
-    wdb_close(fpout);
+    wdb_fclose(fpout);
     return 0;
 }
 

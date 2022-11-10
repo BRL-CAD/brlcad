@@ -207,7 +207,7 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 	if (new_dbip != DBI_NULL) {
 	    db_close(new_dbip);
 	} else {
-	    wdb_close(keepfp);
+	    wdb_fclose(keepfp);
 	}
 	bu_vls_free(&title);
 	return BRLCAD_ERROR;
@@ -230,7 +230,7 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     if (new_dbip != DBI_NULL) {
 	db_close(new_dbip);
     } else {
-	wdb_close(keepfp);
+	wdb_fclose(keepfp);
     }
 
     return BRLCAD_OK;

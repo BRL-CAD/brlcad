@@ -63,7 +63,7 @@ ged_dump_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     ret = db_dump(op, gedp->dbip);
-    wdb_close(op);
+    wdb_fclose(op);
 
     if (ret < 0) {
 	bu_vls_printf(gedp->ged_result_str, "dump: %s: db_dump() error", argv[1]);

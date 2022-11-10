@@ -289,7 +289,7 @@ db_open(const char *name, const char *mode)
     BU_ALLOC(dbip->dbi_wdbp_inmem_a, struct rt_wdb);
     wdb_init(dbip->dbi_wdbp_inmem_a, dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 
-    // By default, wdb_close doesn't take down the dbip
+    // Don't set these flags by default - wdb_fopen will set these
     dbip->dbi_wdbp->fopen = 0;
     dbip->dbi_wdbp_a->fopen = 0;
     dbip->dbi_wdbp_inmem->fopen = 0;

@@ -56,7 +56,7 @@ int main(int ac, char *av[])
     bu_log("Building\n");
     ret = ged_exec(&ged, ac, (const char **)av);
     bu_log("Finished Building\n");
-    wdb_close(db_fp);
+    wdb_fclose(db_fp);
 
     if (ret) {
 	bu_file_delete(filename);

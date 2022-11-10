@@ -134,7 +134,7 @@ main(int argc, char **argv)
 
     mk_bspline(outfp, tea_name, surfaces);
 
-    wdb_close(outfp);
+    wdb_fclose(outfp);
     bu_log(" done.\n");
 
     return 0;

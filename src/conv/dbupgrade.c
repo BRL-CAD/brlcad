@@ -246,7 +246,7 @@ main(int argc, char **argv)
     } FOR_ALL_DIRECTORY_END
 
     if (in_version == 5)
-	wdb_close(fp);
+	wdb_fclose(fp);
     if (dbip4)
 	db_close(dbip4);
 

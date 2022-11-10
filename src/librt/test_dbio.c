@@ -76,7 +76,7 @@ main(int ac, char *av[])
 	t = bu_gettime();
 	for (size_t i = 0; i < iterations; i++) {
 	    wdbfp = wdb_fopen(gfile);
-	    wdb_close(wdbfp);
+	    wdb_fclose(wdbfp);
 	}
 	wdbfp = wdb_fopen(gfile);
 	print_elapsed("wdb_fopen", bu_gettime() - t);
@@ -125,7 +125,7 @@ main(int ac, char *av[])
 	    print_elapsed("mk_lcomb", bu_gettime() - t);
 	}
     }
-    wdb_close(wdbfp);
+    wdb_fclose(wdbfp);
 
     {
 	t = bu_gettime();

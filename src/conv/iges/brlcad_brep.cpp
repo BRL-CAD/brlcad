@@ -91,7 +91,7 @@ BRLCADBrepHandler::write(const string& filename) {
     mk_brep(outfp, sol.c_str(), (void *)_brep);
     unsigned char rgb[] = {200, 180, 180};
     mk_region1(outfp, reg.c_str(), sol.c_str(), "plastic", "", rgb);
-    wdb_close(outfp);
+    wdb_fclose(outfp);
 }
 
 

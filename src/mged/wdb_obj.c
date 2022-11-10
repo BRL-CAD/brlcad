@@ -2001,7 +2001,7 @@ wdb_deleteProc(ClientData clientData)
     bu_observer_free(&wdbp->wdb_observers);
 
     /* close up shop */
-    wdb_close(wdbp);
+    wdb_fclose(wdbp);
 }
 
 

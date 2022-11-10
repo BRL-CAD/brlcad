@@ -425,7 +425,7 @@ main(int argc, char** argv)
     unsigned char rgb[] = {50, 255, 50};
     mk_region1(outfp, "brep_invalid.r", geom_name, "plastic", "", rgb);
 
-    wdb_close(outfp);
+    wdb_fclose(outfp);
     delete brep;
 
     ON::End();

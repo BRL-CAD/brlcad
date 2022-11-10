@@ -145,7 +145,7 @@ main(int argc, char **argv)
     mk_sketch(outfp, "test_sketch", &skt);
 
     /* cleanup */
-    wdb_close(outfp);
+    wdb_fclose(outfp);
 
     bu_log(" done.\n");
 

@@ -145,7 +145,7 @@ main(int argc, char **argv)
 
     do_bending(outfp, "pipe2", pipeB, pipeB_npts, 0.1, 0.05);
 
-    wdb_close(outfp);
+    wdb_fclose(outfp);
     return 0;
 }
 

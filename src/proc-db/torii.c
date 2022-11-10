@@ -216,7 +216,7 @@ main(int ac, char *av[])
 
     bu_log("\n...done! (see %s)\n", av[1]);
 
-    wdb_close(db_fp);
+    wdb_fclose(db_fp);
 
     return 0;
 }

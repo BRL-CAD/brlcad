@@ -119,7 +119,7 @@ _gcv_brlcad_write(struct gcv_context *context,
     }
 
     if (created) {
-	wdb_close(out_wdbp);
+	wdb_fclose(out_wdbp);
     } else {
 	db_close(dbip);
     }

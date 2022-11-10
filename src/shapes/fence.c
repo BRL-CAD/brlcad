@@ -2375,7 +2375,7 @@ int main(int argc, char **argv)
 
     bu_free(verboseinput, "verboseinput");
 
-    wdb_close(fp);
+    wdb_fclose(fp);
     return errors;
 }
 

@@ -2250,7 +2250,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
 
 out:
     bu_free_external(&ext);
-    wdb_close(fp);
+    wdb_fclose(fp);
 
     bu_log("nmg_stash_model_to_file(): wrote error.s to '%s'\n",
 	   filename);

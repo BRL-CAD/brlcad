@@ -211,11 +211,10 @@ RT_EXPORT extern void wdb_init(struct rt_wdb *wdbp,
 
 
 /**
- * Close the database stream.  For a stream created with wdb_fopen or
- * wdb_fopen_v (which also create internally a new database instance), close
- * the associated database instance.
+ * Close a database stream created with wdb_fopen or wdb_fopen_v (invalidates
+ * the internal dbip).
  */
-RT_EXPORT extern void wdb_close(struct rt_wdb *wdbp);
+RT_EXPORT extern void wdb_fclose(struct rt_wdb *wdbp);
 
 /**
  * Given the name of a database object or a full path to a leaf

@@ -2915,7 +2915,7 @@ main(int argc, char **argv)
     if (s.debug)
 	List_holes();
 
-    wdb_close(s.fpout);
+    wdb_fclose(s.fpout);
 
     if (!s.quiet)
 	bu_log("%d components converted\n", s.comp_count);

@@ -62,7 +62,7 @@ int main(int ac, char *av[])
     ret = ged_exec(&ged, ac, (const char **)av);
 
     /* Close database */
-    wdb_close(db_fp);
+    wdb_fclose(db_fp);
     if (ret & BRLCAD_ERROR) {
 	bu_file_delete(filename);
 	bu_log("%s", bu_vls_addr(ged.ged_result_str));

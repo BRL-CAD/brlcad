@@ -250,7 +250,7 @@ int main(int argc, char **argv)
     off2nmg(fpin, fpout);
 
     fclose(fpin);
-    wdb_close(fpout);
+    wdb_fclose(fpout);
 
     return 0;
 }

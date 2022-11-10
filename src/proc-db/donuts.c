@@ -907,7 +907,7 @@ main(int argc, char **argv)
 
     createScene(&parameters);
 
-    wdb_close(fp);
+    wdb_fclose(fp);
     bu_free(wmemberArray, "free wmemberArray");
 
 
