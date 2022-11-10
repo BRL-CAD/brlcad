@@ -95,26 +95,33 @@ _gcv_brlcad_write(struct gcv_context *context,
 		  const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
 		  const char *dest_path)
 {
+    struct db_i *dbip = NULL;
     struct rt_wdb * out_wdbp = NULL;
     if (!bu_file_exists(dest_path, NULL)) {
 	out_wdbp = wdb_fopen(dest_path);
     } else {
-	struct db_i *dbip = db_open(dest_path, DB_OPEN_READWRITE);
+	dbip = db_open(dest_path, DB_OPEN_READWRITE);
 	out_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
     }
 
     if (!out_wdbp) {
 	bu_log("wdb_fopen() failed for '%s'\n", dest_path);
+	if (dbip)
+	    db_close(dbip);
 	return 0;
     }
 
     if (db_dump(out_wdbp, context->dbip)) {
 	bu_log("db_dump() failed (from context->dbip to '%s')\n", dest_path);
 	wdb_close(out_wdbp);
+	if (dbip)
+	    db_close(dbip);
 	return 0;
     }
 
     wdb_close(out_wdbp);
+    if (dbip)
+	db_close(dbip);
     return 1;
 }
 
