@@ -246,6 +246,7 @@ main(int argc, char **argv)
     } FOR_ALL_DIRECTORY_END
 
     wdb_close(fp);
+    db_close(dbip4);
     db_close(dbip);
 
     fprintf(stderr, "%ld objects failed to convert\n", errors);

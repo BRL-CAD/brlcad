@@ -55,8 +55,8 @@
 int
 main(int argc, char **argv)
 {
-    struct rt_wdb *fp;
-    struct db_i *dbip, *dbip4;
+    struct rt_wdb *fp = NULL;
+    struct db_i *dbip = NULL, *dbip4 = NULL;
     struct directory *dp;
     long errors = 0, skipped = 0;
     struct bn_tol tol;
@@ -173,7 +173,8 @@ main(int argc, char **argv)
 	rt_db_free_internal(&intern);
     } FOR_ALL_DIRECTORY_END
 
-	  wdb_close( fp );
+    wdb_close( fp );
+    db_close( dbip4 );
     db_close( dbip );
 
     bu_log( "%ld database version 5 specific objects not attempted to convert\n", skipped );
