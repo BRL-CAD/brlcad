@@ -334,10 +334,8 @@ wdb_fclose(struct rt_wdb *wdbp)
 
     RT_CK_WDB(wdbp);
 
-    if (!wdbp->fopen) {
-	bu_log("wdb_fclose called on wdb pointer not created with wdb_fopen\n");
+    if (!wdbp->fopen)
 	return;
-    }
 
     db_close(wdbp->dbip);
 }
