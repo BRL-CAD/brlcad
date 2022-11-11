@@ -164,7 +164,7 @@ main(int argc, char *argv[])
     }
 
 
-    wdb_fclose(fp);
+    db_close(fp->dbip);
     bu_log("BRL-CAD geometry database file [%s] created.\nDone.\n", outfile);
 
     return EXIT_SUCCESS;

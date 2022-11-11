@@ -327,7 +327,7 @@ main(int ac, char *av[])
     }
 
     /* Close database */
-    wdb_fclose(db_fp);
+    db_close(db_fp->dbip);
 
     bu_log("Done.\n");
 

@@ -282,7 +282,7 @@ main(int argc, char *argv[])
     matcolor[2] = 20;
     mk_lcomb(fp_db, bu_vls_cstr(&name), &fwm, 0, "plastic", "", matcolor, 0);
 
-    wdb_fclose(fp_db);
+    db_close(fp_db->dbip);
     bu_vls_free(&name);
 
     return 0;

@@ -80,14 +80,11 @@ struct rt_wdb {
     struct bu_vls       wdb_name;       /**< @brief  database object name */
     struct bu_observer_list  wdb_observers;
     void *              wdb_interp; /**< @brief Tcl_Interp */
-
-    /* INTERNAL - do not use (should eventually be part of a hidden impl container) */
-    int fopen;
 };
 
 #define RT_CHECK_WDB(_p) BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
 #define RT_CK_WDB(_p) RT_CHECK_WDB(_p)
-#define RT_WDB_INIT_ZERO { {RT_WDB_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, NULL, RT_DBTS_INIT_ZERO, BU_VLS_INIT_ZERO, 0, 0, 0, 0, 0, 0, BU_VLS_INIT_ZERO, BU_OBSERVER_LIST_INIT_ZERO, NULL, 0 }
+#define RT_WDB_INIT_ZERO { {RT_WDB_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, NULL, RT_DBTS_INIT_ZERO, BU_VLS_INIT_ZERO, 0, 0, 0, 0, 0, 0, BU_VLS_INIT_ZERO, BU_OBSERVER_LIST_INIT_ZERO, NULL }
 #define RT_WDB_NULL             ((struct rt_wdb *)NULL)
 
 /**
@@ -211,10 +208,9 @@ RT_EXPORT extern void wdb_init(struct rt_wdb *wdbp,
 
 
 /**
- * Close a database stream created with wdb_fopen or wdb_fopen_v (invalidates
- * the internal dbip).
+ * Close a database created with wdb_fopen or wdb_fopen_v.
  */
-RT_EXPORT extern void wdb_fclose(struct rt_wdb *wdbp);
+RT_EXPORT extern void wdb_close(struct rt_wdb *wdbp);
 
 /**
  * Given the name of a database object or a full path to a leaf

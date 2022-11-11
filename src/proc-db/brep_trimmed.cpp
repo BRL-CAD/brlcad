@@ -651,7 +651,7 @@ int main(int argc, char *argv[])
     unsigned char rgb[] = {50, 255, 50};
     mk_region1(outfp, "brep_trimmed.r", geom_name, "plastic", "", rgb);
 
-    wdb_fclose(outfp);
+    db_close(outfp->dbip);
     delete brep;
 
     ON::End();

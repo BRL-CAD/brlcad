@@ -640,7 +640,7 @@ main(int argc, char *argv[])
 
     fclose(fd_in);
 
-    wdb_fclose(fd_out);
+    db_close(fd_out->dbip);
 
     return 0;
 }

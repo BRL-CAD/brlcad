@@ -323,7 +323,7 @@ main(int argc, char *argv[])
 
     /* close up our files */
     SHPClose(shapefile);
-    wdb_fclose(fd_out);
+    db_close(fd_out->dbip);
 
     /* free up allocated resources */
     bu_vls_free(&vls_in);

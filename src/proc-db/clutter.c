@@ -174,7 +174,7 @@ main(int argc, char **argv)
     /* Build the overall combination */
     mk_lfcomb(outfp, "clut", &head, 0);
 
-    wdb_fclose(outfp);
+    db_close(outfp->dbip);
 
     return 0;
 }

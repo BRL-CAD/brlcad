@@ -175,7 +175,7 @@ main(int ac, char *av[])
 	     NULL,		/* item color */
 	     0);		/* inherit (override) flag */
 
-    wdb_fclose(db_fp);
+    db_close(db_fp->dbip);
     return 0;
 }
 

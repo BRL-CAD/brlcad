@@ -192,7 +192,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     if (db_update_ident(gc_wdbp->dbip, old_dbip->dbi_title, old_dbip->dbi_local2base) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: db_update_ident() failed on %s, cannot proceed.\n", bu_vls_cstr(&working_file));
 	bu_vls_printf(gedp->ged_result_str, "Aborting garbage collect, database unchanged.");
-	wdb_fclose(gc_wdbp);
+	db_close(gc_wdbp->dbip);
 	bu_file_delete(bu_vls_cstr(&working_file));
 	ret = BRLCAD_ERROR;
 	goto gc_cleanup;
@@ -229,7 +229,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 	    wdb_export_external(gc_wdbp, &ext, dp->d_namep, flags, id);
 	}
     }
-    wdb_fclose(gc_wdbp);
+    db_close(gc_wdbp->dbip);
 
 
     // If we got this far, we need to close the current database, open the new

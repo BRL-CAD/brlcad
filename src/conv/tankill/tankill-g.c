@@ -569,7 +569,7 @@ main(int argc, char **argv)
 		       (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 ) )
 	    bu_exit( EXIT_FAILURE,  "tankill: Error in freeing region memory" );
     }
-    wdb_fclose( out_fp );
+    db_close( out_fp->dbip );
     return 0;
 }
 

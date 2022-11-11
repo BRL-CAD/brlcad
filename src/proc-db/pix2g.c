@@ -265,7 +265,7 @@ main(int ac, char *av[])
 
     bu_close_mapped_file(image);
 
-    wdb_fclose(db_fp);
+    db_close(db_fp->dbip);
 
     return 0;
 }

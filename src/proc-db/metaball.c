@@ -206,7 +206,7 @@ make_spaghetti(const char *filename, const char *name, long count)
     mk_comb1(fp, "manyballs.r", balls[2], 1);
     mk_comb1(fp, "meatballs.r", "meatballs.s", 1);
 
-    wdb_fclose(fp);
+    db_close(fp->dbip);
 
     /* done with the write-only, now begins read/write */
     dbip = db_open(filename, DB_OPEN_READWRITE);

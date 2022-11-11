@@ -329,7 +329,7 @@ BRLCADWrapper::Close()
 	return true;
 
     if (outfp) {
-	wdb_fclose(outfp);
+	db_close(outfp->dbip);
 	outfp = NULL;
     }
     if (dbip) {

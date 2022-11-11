@@ -322,7 +322,7 @@ main (int argc, char **argv)
     /* make final region */
     mk_lcomb(db, "channel.r", &channel, 1, NULL, NULL, NULL, 1);
 
-    wdb_fclose(db);
+    db_close(db->dbip);
 
     return 0;
 }

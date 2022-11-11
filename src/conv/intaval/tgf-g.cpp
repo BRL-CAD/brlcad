@@ -78,7 +78,7 @@ int main
 
 		    conv(is, wdbp);
 		    createRegions(wdbp);
-		    wdb_fclose(wdbp);
+		    db_close(wdbp->dbip);
 		}
 	    }
 	}

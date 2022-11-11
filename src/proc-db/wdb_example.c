@@ -135,7 +135,7 @@ main(int ac, char *av[])
 	     0);             /* inherit (override) flag */
 
     /* Close the database file. */
-    wdb_fclose(db_fp);
+    db_close(db_fp->dbip);
 
     return 0;
 }

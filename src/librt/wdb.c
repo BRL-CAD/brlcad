@@ -48,11 +48,7 @@ wdb_fopen_v(const char *filename, int version)
     if ((dbip = db_create(filename, version)) == DBI_NULL)
 	return RT_WDB_NULL;
 
-    // We're going through the fopen API, which means the
-    // parent code expects wdb_fclose to do the work of
-    // cleaning up the database.
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-    wdbp->fopen = 1;
     return wdbp;
 }
 
@@ -329,14 +325,9 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 
 
 void
-wdb_fclose(struct rt_wdb *wdbp)
+wdb_close(struct rt_wdb *wdbp)
 {
-
     RT_CK_WDB(wdbp);
-
-    if (!wdbp->fopen)
-	return;
-
     db_close(wdbp->dbip);
 }
 

@@ -999,7 +999,7 @@ main(int argc, char *argv[])
 
     destroyPlant(plant);
 
-    wdb_fclose(fp);
+    db_close(fp->dbip);
     return 0;
 }
 

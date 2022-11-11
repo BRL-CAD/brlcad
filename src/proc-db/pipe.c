@@ -772,7 +772,7 @@ main(int argc, char **argv)
 
     Groups();	/* Make some groups */
 
-    wdb_fclose(fdout);
+    db_close(fdout->dbip);
 
     return 0;
 }

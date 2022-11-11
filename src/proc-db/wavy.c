@@ -119,7 +119,7 @@ main(int argc, char **argv)
 
     mk_bspline(outfp, nurb_name, surfaces);
 
-    wdb_fclose(outfp);
+    db_close(outfp->dbip);
 
     bu_log(" done.\n");
 

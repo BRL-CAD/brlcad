@@ -809,7 +809,7 @@ main(int argc, char **argv)
 
     mk_comb(fd_out, "all", &all_head.l, 0, (char *)NULL, (char *)NULL, NULL, 0, 0, 0, 0, 0, 0, 0);
 
-    wdb_fclose(fd_out);
+    db_close(fd_out->dbip);
     rt_clean_resource_complete(NULL, &rt_uniresource);
 
     for (size_t i = 0; i < BU_PTBL_LEN(world->nodes); i++) {

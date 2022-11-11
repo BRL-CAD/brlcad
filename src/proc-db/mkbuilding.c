@@ -66,7 +66,7 @@ main(int ac, char *av[])
 
     mkbldg_makeWallSegment("TestWall", db_filepointer, p1, p2);
 
-    wdb_fclose(db_filepointer);
+    db_close(db_filepointer->dbip);
     return 0;
 }
 

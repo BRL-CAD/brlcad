@@ -547,7 +547,7 @@ main(int ac, char *av[])
 	bu_free(sponge, "free sponge");
     }
 
-    wdb_fclose(fp);
+    db_close(fp->dbip);
     bu_vls_free(&filename);
     bu_vls_free(&pattern);
     bu_vls_free(boxes);

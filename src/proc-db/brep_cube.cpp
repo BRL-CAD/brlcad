@@ -267,7 +267,7 @@ main(int argc, char** argv)
     unsigned char rgb[] = {255, 255, 255};
     mk_region1(outfp, "cube.r", geom_name, "plastic", "", rgb);
 
-    wdb_fclose(outfp);
+    db_close(outfp->dbip);
     delete brep;
 
     /* reread from file to make sure brep import is working okay */
