@@ -97,10 +97,8 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
-	wdb_fclose(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_fclose(wdbp);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {
