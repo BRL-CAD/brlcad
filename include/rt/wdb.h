@@ -61,7 +61,7 @@ struct resource;  /* forward declaration */
 
 struct rt_wdb {
     struct bu_list      l;
-    int                 wdb_type; /** < @brief .g database type (RT_WDB_TYPE - disk or inmem, append-only) */
+    int                 type; /** < @brief .g database type (RT_WDB_TYPE - disk or inmem, append-only) */
     struct db_i *       dbip;
     struct db_tree_state        wdb_initial_tree_state;
 

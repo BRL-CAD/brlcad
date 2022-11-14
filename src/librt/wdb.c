@@ -137,7 +137,7 @@ wdb_export_external(
 	return -4;
     }
 
-    switch (wdbp->wdb_type) {
+    switch (wdbp->type) {
 
 	case RT_WDB_TYPE_DB_DISK:
 	    if (wdbp->dbip->dbi_read_only) {
@@ -305,7 +305,7 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 {
     BU_LIST_INIT_MAGIC(&wdbp->l, RT_WDB_MAGIC);
 
-    wdbp->wdb_type = mode;
+    wdbp->type = mode;
     wdbp->dbip = dbip;
 
     bu_vls_init(&wdbp->wdb_name);

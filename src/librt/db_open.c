@@ -465,7 +465,7 @@ db_close(register struct db_i *dbip)
 	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp->l, 0);
 	bu_vls_free(&dbip->dbi_wdbp->wdb_name);
 	bu_vls_free(&dbip->dbi_wdbp->wdb_prestr);
-	dbip->dbi_wdbp->wdb_type = 0;
+	dbip->dbi_wdbp->type = 0;
 	dbip->dbi_wdbp->dbip->db_resp = NULL;
 	dbip->dbi_wdbp->wdb_interp = NULL;
 	bu_free((void *)dbip->dbi_wdbp, "struct rt_wdb");
@@ -478,7 +478,7 @@ db_close(register struct db_i *dbip)
 	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp_a->l, 0);
 	bu_vls_free(&dbip->dbi_wdbp_a->wdb_name);
 	bu_vls_free(&dbip->dbi_wdbp_a->wdb_prestr);
-	dbip->dbi_wdbp_a->wdb_type = 0;
+	dbip->dbi_wdbp_a->type = 0;
 	dbip->dbi_wdbp_a->dbip->db_resp = NULL;
 	dbip->dbi_wdbp_a->wdb_interp = NULL;
 	bu_free((void *)dbip->dbi_wdbp_a, "struct rt_wdb");
@@ -491,7 +491,7 @@ db_close(register struct db_i *dbip)
 	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp_inmem->l, 0);
 	bu_vls_free(&dbip->dbi_wdbp_inmem->wdb_name);
 	bu_vls_free(&dbip->dbi_wdbp_inmem->wdb_prestr);
-	dbip->dbi_wdbp_inmem->wdb_type = 0;
+	dbip->dbi_wdbp_inmem->type = 0;
 	dbip->dbi_wdbp_inmem->dbip->db_resp = NULL;
 	dbip->dbi_wdbp_inmem->wdb_interp = NULL;
 	bu_free((void *)dbip->dbi_wdbp_inmem, "struct rt_wdb");
@@ -504,7 +504,7 @@ db_close(register struct db_i *dbip)
 	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp_inmem_a->l, 0);
 	bu_vls_free(&dbip->dbi_wdbp_inmem_a->wdb_name);
 	bu_vls_free(&dbip->dbi_wdbp_inmem_a->wdb_prestr);
-	dbip->dbi_wdbp_inmem_a->wdb_type = 0;
+	dbip->dbi_wdbp_inmem_a->type = 0;
 	dbip->dbi_wdbp_inmem_a->dbip->db_resp = NULL;
 	dbip->dbi_wdbp_inmem_a->wdb_interp = NULL;
 	bu_free((void *)dbip->dbi_wdbp_inmem_a, "struct rt_wdb");

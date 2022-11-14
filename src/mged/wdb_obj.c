@@ -918,7 +918,7 @@ wdb_reopen_cmd(struct rt_wdb *wdbp,
 	}
 
 	// Stash wdb type and interp
-	int wdb_type = wdbp->wdb_type;
+	int wdb_type = wdbp->type;
 	void *interp = wdbp->wdb_interp;
 
 	/* close current database */
