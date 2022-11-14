@@ -47,6 +47,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     }
 
     struct ged *gedp = gd->gedp;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct bview *gvp;
     int print_help = 0;
     static const char *usage = "view lod [csg|mesh] [0|1]\n"
@@ -262,8 +263,8 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			vect_t *normals = NULL;
 			point_t *pnts = NULL;
 			int pnt_cnt = 0;
-			struct bn_tol *tol = &gedp->dbip->db_tol;
-			struct bg_tess_tol *ttol = &gedp->dbip->db_ttol;
+			struct bn_tol *tol = &wdbp->wdb_tol;
+			struct bg_tess_tol *ttol = &wdbp->wdb_ttol;
 
 			int bret = brep_cdt_fast(&faces, &face_cnt, &normals, &pnts, &pnt_cnt, bi->brep, -1, ttol, tol);
 			if (bret != BRLCAD_OK) {

@@ -2123,7 +2123,7 @@ make_bot_object(struct conversion_state *pstate)
     bot_ip.orientation = RT_BOT_UNORIENTED;
     bot_ip.bot_flags = 0;
 
-    count = rt_bot_vertex_fuse(&bot_ip, &pstate->fpout->dbip->db_tol);
+    count = rt_bot_vertex_fuse(&bot_ip, &pstate->fpout->wdb_tol);
     if (count)
 	bu_log("WARNING: %d duplicate vertices eliminated from group %d component %d\n", count, pstate->group_id, pstate->comp_id);
 

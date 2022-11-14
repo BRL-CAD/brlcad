@@ -65,6 +65,10 @@ struct rt_wdb {
     struct db_i *       dbip;
     struct db_tree_state        wdb_initial_tree_state;
 
+    struct bg_tess_tol  wdb_ttol;
+    struct bn_tol       wdb_tol;
+    struct resource*    wdb_resp;
+
     /* variables for name prefixing */
     struct bu_vls       wdb_prestr;
     int                 wdb_ncharadd;
@@ -84,7 +88,7 @@ struct rt_wdb {
 
 #define RT_CHECK_WDB(_p) BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
 #define RT_CK_WDB(_p) RT_CHECK_WDB(_p)
-#define RT_WDB_INIT_ZERO { {RT_WDB_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, NULL, RT_DBTS_INIT_ZERO, BU_VLS_INIT_ZERO, 0, 0, 0, 0, 0, 0, BU_VLS_INIT_ZERO, BU_OBSERVER_LIST_INIT_ZERO, NULL }
+#define RT_WDB_INIT_ZERO { {RT_WDB_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, NULL, RT_DBTS_INIT_ZERO, BG_TESS_TOL_INIT_ZERO, BN_TOL_INIT_ZERO, NULL, BU_VLS_INIT_ZERO, 0, 0, 0, 0, 0, 0, BU_VLS_INIT_ZERO, BU_OBSERVER_LIST_INIT_ZERO, NULL }
 #define RT_WDB_NULL             ((struct rt_wdb *)NULL)
 
 /**

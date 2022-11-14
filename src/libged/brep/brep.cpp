@@ -232,7 +232,7 @@ _brep_cmd_bot(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gb->gedp->dbip->db_ttol;
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gb->wdbp->wdb_ttol;
     struct rt_brep_internal *bi = (struct rt_brep_internal*)gb->intern.idb_ptr;
     struct bu_vls bname_bot = BU_VLS_INIT_ZERO;
 
@@ -324,7 +324,7 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 
     double ovlp_max_smallest = DBL_MAX;
 
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gedp->dbip->db_ttol;
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gb->wdbp->wdb_ttol;
     struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
     cdttol.abs = ttol->abs;
     cdttol.rel = ttol->rel;
@@ -408,8 +408,7 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 	bot->normals = normals;
 	bot->face_normals = face_normals;
 
-	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-	if (wdb_export(wdbp, bu_vls_cstr(&bot_name), (void *)bot, ID_BOT, 1.0)) {
+	if (wdb_export(gb->wdbp, bu_vls_cstr(&bot_name), (void *)bot, ID_BOT, 1.0)) {
 	    return BRLCAD_ERROR;
 	}
 	bu_vls_free(&bot_name);
@@ -1322,6 +1321,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     int help = 0;
     struct _ged_brep_info gb;
     gb.gedp = gedp;
+    gb.wdbp = wdb_dbopen(gb.gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     gb.cmds = _brep_cmds;
     gb.verbosity = 0;
     struct bu_color *color = NULL;

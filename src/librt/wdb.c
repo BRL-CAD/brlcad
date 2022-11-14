@@ -313,8 +313,8 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 
     /* initialize tree state */
     wdbp->wdb_initial_tree_state = rt_initial_tree_state;  /* struct copy */
-    wdbp->wdb_initial_tree_state.ts_ttol = &dbip->db_ttol;
-    wdbp->wdb_initial_tree_state.ts_tol = &dbip->db_tol;
+    wdbp->wdb_initial_tree_state.ts_ttol = &wdbp->wdb_ttol;
+    wdbp->wdb_initial_tree_state.ts_tol = &wdbp->wdb_tol;
 
     /* default region ident codes */
     wdbp->wdb_item_default = 1000;

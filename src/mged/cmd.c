@@ -1820,8 +1820,8 @@ cmd_tol(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 	return TCL_ERROR;
 
     /* hack to keep mged tolerance settings current */
-    mged_ttol = WDBP->dbip->db_ttol;
-    mged_tol = WDBP->dbip->db_tol;
+    mged_ttol = WDBP->wdb_ttol;
+    mged_tol = WDBP->wdb_tol;
     mged_abs_tol = mged_ttol.abs;
     mged_rel_tol = mged_ttol.rel;
     mged_nrm_tol = mged_ttol.norm;

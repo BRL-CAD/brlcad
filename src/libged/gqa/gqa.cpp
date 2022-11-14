@@ -2494,6 +2494,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -2523,7 +2524,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
      *
      * FIXME: should probably be based on the model size.
      */
-    gridSpacingLimit = 10.0 * gedp->dbip->db_tol.dist;
+    gridSpacingLimit = 10.0 * wdbp->wdb_tol.dist;
 
     makeOverlapAssemblies = 0;
     require_num_hits = 1;

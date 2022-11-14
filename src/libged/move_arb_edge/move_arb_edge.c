@@ -135,7 +135,7 @@ ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    arb_type = rt_arb_std_type(&intern, &gedp->dbip->db_tol);
+    arb_type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
 
     /* check the arb type */
     switch (arb_type) {
@@ -196,7 +196,7 @@ bad_edge:
 	return BRLCAD_ERROR;
     }
 
-    if (rt_arb_calc_planes(gedp->ged_result_str, arb, arb_type, planes, &gedp->dbip->db_tol)) {
+    if (rt_arb_calc_planes(gedp->ged_result_str, arb, arb_type, planes, &wdbp->wdb_tol)) {
 	rt_db_free_internal(&intern);
 
 	return BRLCAD_ERROR;
@@ -208,7 +208,7 @@ bad_edge:
 	VADD2(pt, pt, arb->pt[arb_pt_index]);
     }
 
-    if (rt_arb_edit(gedp->ged_result_str, arb, arb_type, edge, pt, planes, &gedp->dbip->db_tol)) {
+    if (rt_arb_edit(gedp->ged_result_str, arb, arb_type, edge, pt, planes, &wdbp->wdb_tol)) {
 	rt_db_free_internal(&intern);
 
 	return BRLCAD_ERROR;

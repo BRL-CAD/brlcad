@@ -50,6 +50,7 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -129,9 +130,9 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
     bu_ptbl_free(&faces);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &gedp->dbip->db_tol);
+    nmg_triangulate_model(m, &RTG.rtg_vlfree, &wdbp->wdb_tol);
 
-    count = (size_t)nmg_edge_collapse(m, &gedp->dbip->db_tol, tol_coll, min_angle, &RTG.rtg_vlfree);
+    count = (size_t)nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle, &RTG.rtg_vlfree);
 
     dp = db_diradd(gedp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {

@@ -52,6 +52,7 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -167,7 +168,7 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* get object being mirrored */
-    ret = rt_db_get_internal(&internal, dp, gedp->dbip, NULL, gedp->dbip->db_resp);
+    ret = rt_db_get_internal(&internal, dp, gedp->dbip, NULL, wdbp->wdb_resp);
     if (ret < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to load solid [%s]\n", argv[bu_optind]);
 	return BRLCAD_ERROR;
@@ -182,7 +183,7 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
 		   &internal,
 		   mirror_pt,
 		   mirror_dir,
-		   gedp->dbip->db_resp);
+		   wdbp->wdb_resp);
     if (ip == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to mirror [%s]", argv[bu_optind]);
 	return BRLCAD_ERROR;
@@ -195,7 +196,7 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
     /* save the mirrored object to disk */
-    if (rt_db_put_internal(dp, gedp->dbip, ip, gedp->dbip->db_resp) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, ip, wdbp->wdb_resp) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to store [%s] to the database", argv[bu_optind+1]);
 	return BRLCAD_ERROR;
     }

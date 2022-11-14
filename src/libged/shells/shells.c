@@ -48,6 +48,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -81,7 +82,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    s_tmp = nmg_dup_shell(s, &trans_tbl, &RTG.rtg_vlfree, &gedp->dbip->db_tol);
+	    s_tmp = nmg_dup_shell(s, &trans_tbl, &RTG.rtg_vlfree, &wdbp->wdb_tol);
 	    bu_free((void *)trans_tbl, "trans_tbl");
 
 	    m_tmp = nmg_mmr();
@@ -114,7 +115,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* make sure the geometry/bounding boxes are up to date */
-	    nmg_rebound(m_tmp, &gedp->dbip->db_tol);
+	    nmg_rebound(m_tmp, &wdbp->wdb_tol);
 
 	    if (rt_db_put_internal(new_dp, gedp->dbip, &new_intern, &rt_uniresource) < 0) {
 		/* Free memory */

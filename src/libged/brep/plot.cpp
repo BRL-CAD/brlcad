@@ -2467,8 +2467,8 @@ _brep_cmd_face_cdt_plot(void *bs, int argc, const char **argv)
     struct bv_vlblock *vbp = gib->gb->vbp;
     struct bu_list *vlfree = &RTG.rtg_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->dbip->db_ttol;
-    const struct bn_tol *tol = &gib->gb->gedp->dbip->db_tol;
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
+    const struct bn_tol *tol = &gib->gb->wdbp->wdb_tol;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -2512,8 +2512,8 @@ _brep_cmd_face_cdt_2d_plot(void *bs, int argc, const char **argv)
     struct bv_vlblock *vbp = gib->gb->vbp;
     struct bu_list *vlfree = &RTG.rtg_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->dbip->db_ttol;
-    const struct bn_tol *tol = &gib->gb->gedp->dbip->db_tol;
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
+    const struct bn_tol *tol = &gib->gb->wdbp->wdb_tol;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -2557,8 +2557,8 @@ _brep_cmd_face_cdt_m2d_plot(void *bs, int argc, const char **argv)
     struct bv_vlblock *vbp = gib->gb->vbp;
     struct bu_list *vlfree = &RTG.rtg_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->dbip->db_ttol;
-    const struct bn_tol *tol = &gib->gb->gedp->dbip->db_tol;
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
+    const struct bn_tol *tol = &gib->gb->wdbp->wdb_tol;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -2602,8 +2602,8 @@ _brep_cmd_face_cdt_p2d_plot(void *bs, int argc, const char **argv)
     struct bv_vlblock *vbp = gib->gb->vbp;
     struct bu_list *vlfree = &RTG.rtg_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->dbip->db_ttol;
-    const struct bn_tol *tol = &gib->gb->gedp->dbip->db_tol;
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
+    const struct bn_tol *tol = &gib->gb->wdbp->wdb_tol;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -2647,8 +2647,8 @@ _brep_cmd_face_cdt_wireframe_plot(void *bs, int argc, const char **argv)
     struct bv_vlblock *vbp = gib->gb->vbp;
     struct bu_list *vlfree = &RTG.rtg_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->dbip->db_ttol;
-    const struct bn_tol *tol = &gib->gb->gedp->dbip->db_tol;
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
+    const struct bn_tol *tol = &gib->gb->wdbp->wdb_tol;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -2692,7 +2692,7 @@ _brep_cmd_face_cdt2_plot(void *bs, int argc, const char **argv)
     struct bv_vlblock *vbp = gib->gb->vbp;
     struct bu_list *vlfree = &RTG.rtg_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->dbip->db_ttol;
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -2754,7 +2754,7 @@ _brep_cmd_face_cdt2_2d_plot(void *bs, int argc, const char **argv)
     struct bv_vlblock *vbp = gib->gb->vbp;
     struct bu_list *vlfree = &RTG.rtg_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->dbip->db_ttol;
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -2815,7 +2815,7 @@ _brep_cmd_face_cdt2_wireframe_plot(void *bs, int argc, const char **argv)
     struct bv_vlblock *vbp = gib->gb->vbp;
     struct bu_list *vlfree = &RTG.rtg_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->dbip->db_ttol;
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {

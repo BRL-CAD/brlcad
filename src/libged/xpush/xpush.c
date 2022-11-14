@@ -254,6 +254,7 @@ Copy_solid(struct ged *gedp,
 	   struct directory *dp,
 	   mat_t xform)
 {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct directory *found;
     struct rt_db_internal sol_int;
     struct object_use *use;
@@ -284,7 +285,7 @@ Copy_solid(struct ged *gedp,
 
     /* Look for a copy that already has this transform matrix */
     for (BU_LIST_FOR (use, object_use, &dp->d_use_hd)) {
-	if (bn_mat_is_equal(xform, use->xform, &gedp->dbip->db_tol)) {
+	if (bn_mat_is_equal(xform, use->xform, &wdbp->wdb_tol)) {
 	    /* found a match, no need to make another copy */
 	    use->used = 1;
 	    return use->dp;
@@ -333,6 +334,7 @@ Copy_comb(struct ged *gedp,
 	  struct directory *dp,
 	  mat_t xform)
 {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct object_use *use;
     struct directory *found;
     struct rt_db_internal intern;
@@ -342,7 +344,7 @@ Copy_comb(struct ged *gedp,
 
     /* Look for a copy that already has this transform matrix */
     for (BU_LIST_FOR (use, object_use, &dp->d_use_hd)) {
-	if (bn_mat_is_equal(xform, use->xform, &gedp->dbip->db_tol)) {
+	if (bn_mat_is_equal(xform, use->xform, &wdbp->wdb_tol)) {
 	    /* found a match, no need to make another copy */
 	    use->used = 1;
 	    return use->dp;

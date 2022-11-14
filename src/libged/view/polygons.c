@@ -539,6 +539,7 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     const char *usage_string = "view obj <obj1> polygon overlap <obj2>";
     const char *purpose_string = "report if two polygons overlap";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
@@ -588,7 +589,7 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
     struct bv_polygon *polyA = (struct bv_polygon *)s->s_i_data;
     struct bv_polygon *polyB = (struct bv_polygon *)s2->s_i_data;
 
-    int ovlp = bg_polygons_overlap(&polyA->polygon, &polyB->polygon, polyA->v.gv_model2view, &gedp->dbip->db_tol, polyA->v.gv_scale);
+    int ovlp = bg_polygons_overlap(&polyA->polygon, &polyB->polygon, polyA->v.gv_model2view, &wdbp->wdb_tol, polyA->v.gv_scale);
 
     bu_vls_printf(gedp->ged_result_str, "%d", ovlp);
 

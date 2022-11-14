@@ -44,6 +44,7 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
     plane_t old_plane = HINIT_ZERO;
     struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
     struct poly_face face = POLY_FACE_INIT_ZERO;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct rt_ars_internal *arip = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(arip);
 
@@ -62,7 +63,7 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 	    if (double_ended && i != 0 && (j == 0 || j == k || j == arip->pts_per_curve - 1)) continue;
 
 	    /* first triangular face, make sure it's not a duplicate */
-	    if (bg_make_plane_3pnts(face.plane_eqn, ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), &gedp->dbip->db_tol) == 0
+	    if (bg_make_plane_3pnts(face.plane_eqn, ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), &wdbp->wdb_tol) == 0
 	       && !HEQUAL(old_plane, face.plane_eqn)) {
 		HMOVE(old_plane, face.plane_eqn);
 		ADD_PT(face, ARS_PT(0, 1));
@@ -85,7 +86,7 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 	    }
 
 	    /* second triangular face, make sure it's not a duplicate */
-	    if (bg_make_plane_3pnts(face.plane_eqn, ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), &gedp->dbip->db_tol) == 0
+	    if (bg_make_plane_3pnts(face.plane_eqn, ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), &wdbp->wdb_tol) == 0
 	       && !HEQUAL(old_plane, face.plane_eqn)) {
 		HMOVE(old_plane, face.plane_eqn);
 		ADD_PT(face, ARS_PT(1, 0));

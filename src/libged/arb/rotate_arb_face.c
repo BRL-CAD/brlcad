@@ -151,9 +151,9 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    arb_type = rt_arb_std_type(&intern, &gedp->dbip->db_tol);
+    arb_type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
 
-    if (rt_arb_calc_planes(gedp->ged_result_str, arb, arb_type, planes, &gedp->dbip->db_tol)) {
+    if (rt_arb_calc_planes(gedp->ged_result_str, arb, arb_type, planes, &wdbp->wdb_tol)) {
 	rt_db_free_internal(&intern);
 
 	return BRLCAD_ERROR;
@@ -201,7 +201,7 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* calculate new points for the arb */
-    (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &gedp->dbip->db_tol);
+    (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &wdbp->wdb_tol);
 
     {
 	mat_t invmat;
