@@ -327,6 +327,8 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 void
 wdb_close(struct rt_wdb *wdbp)
 {
+    if (!wdbp)
+	return;
     RT_CK_WDB(wdbp);
     db_close(wdbp->dbip);
 }
