@@ -18,6 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* fa2ac4d164f143 broke embedded raytrace viewing in qged, and the rt
+  command windows display when launched from qged
+
 * re-enable regress-asc and regress-weight
 
 * material infrastructure has regressions due to attr sync code that
