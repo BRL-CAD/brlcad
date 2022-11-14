@@ -67,7 +67,6 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
     /* Check for even number of arguments */
     if (argc & 01) {
 	bu_vls_printf(gedp->ged_result_str, "error in number of args!");
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
 
@@ -100,7 +99,6 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (_ged_combadd(gedp, dp, (char *)argv[1], 1, oper, ident, air) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "error in combadd");
-	    wdb_close(wdbp);
 	    return BRLCAD_ERROR;
 	}
     }
@@ -109,10 +107,8 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 	/* failed to create region */
 	if (wdbp->wdb_item_default > 1)
 	    wdbp->wdb_item_default--;
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }

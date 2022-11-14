@@ -1,5 +1,6 @@
 set(zlib_ignore_files
 CMakeLists.txt
+LICENSE
 README
 adler32.c
 compress.c

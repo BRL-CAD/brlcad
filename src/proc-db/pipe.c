@@ -772,6 +772,8 @@ main(int argc, char **argv)
 
     Groups();	/* Make some groups */
 
+    db_close(fdout->dbip);
+
     return 0;
 }
 

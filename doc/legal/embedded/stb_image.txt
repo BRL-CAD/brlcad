@@ -1,3 +1,5 @@
+https://github.com/nothings/stb
+
 This software is available under 2 licenses -- choose whichever you prefer.
 ------------------------------------------------------------------------------
 ALTERNATIVE A - MIT License
@@ -40,3 +42,4 @@ file:/src/conv/gltf/tinygltf/stb_image.h
 file:/src/conv/gltf/tinygltf/stb_image_write.h
 file:/src/libgcv/plugins/gltf/tinygltf_headers/stb_image.h
 file:/src/libgcv/plugins/gltf/tinygltf_headers/stb_image_write.h
+

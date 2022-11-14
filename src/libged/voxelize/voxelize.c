@@ -215,7 +215,6 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
 
     mk_freemembers(&voxDat.content.l);
     rt_free_rti(rtip);
-    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }

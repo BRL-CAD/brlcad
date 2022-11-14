@@ -208,8 +208,7 @@ RT_EXPORT extern void wdb_init(struct rt_wdb *wdbp,
 
 
 /**
- * Release from associated database "file", destroy dynamic data
- * structure.
+ * Close a database created with wdb_fopen or wdb_fopen_v.
  */
 RT_EXPORT extern void wdb_close(struct rt_wdb *wdbp);
 

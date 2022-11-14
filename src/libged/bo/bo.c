@@ -170,10 +170,8 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	if (rt_mk_binunif (wdbp, obj_name, file_name, minor_type, 0)) {
 	    bu_vls_printf(gedp->ged_result_str, "Error creating %s", obj_name);
-	    wdb_close(wdbp);
 	    return BRLCAD_ERROR;
 	}
-	wdb_close(wdbp);
 
     } else if (output_mode) {
 	FILE *fp;

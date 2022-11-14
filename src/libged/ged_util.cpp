@@ -710,10 +710,8 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 	bu_vls_printf(from_gedp->ged_result_str,
 		      "Failed to write new object (%s) to database - aborting!!\n",
 		      to);
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
 
     bu_free_external(&external);
 
@@ -1874,7 +1872,6 @@ _ged_combadd2(struct ged *gedp,
 	    bu_vls_printf(gedp->ged_result_str, "los=%d, material_id=%d\n",
 			  wdbp->wdb_los_default,
 			  wdbp->wdb_mat_default);
-	    wdb_close(wdbp);
 	} else {
 	    comb->region_flag = 0;
 	}

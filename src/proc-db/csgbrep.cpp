@@ -532,7 +532,7 @@ main(int argc, char** argv)
 */
 
     /* clean up */
-    wdb_close(outfp);
+    db_close(outfp->dbip);
 
     ON::End();
 

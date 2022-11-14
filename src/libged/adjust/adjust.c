@@ -79,10 +79,8 @@ ged_adjust_core(struct ged *gedp, int argc, const char *argv[])
     if (status == BRLCAD_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "wdb_export(%s) failure", name);
 	rt_db_free_internal(&intern);
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }

@@ -143,12 +143,11 @@ pop_spawn (struct population *p)
 	mk_lcomb(wdbp, NL_P(p->parent[i].id), &wm_hd, 1, NULL, NULL, NULL, 0);
     }
 
-/*
- * reload the db so we don't
- * have to do any extra checks
- * in the main loop
- */
-    wdb_close(wdbp);
+    /*
+     * reload the db so we don't
+     * have to do any extra checks
+     * in the main loop
+     */
     db_close(p->db_p);
     if ((p->db_p = db_open("gen000", DB_OPEN_READONLY)) == DBI_NULL)
 	bu_exit(EXIT_FAILURE, "Failed to re-open initial population");

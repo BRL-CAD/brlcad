@@ -81,6 +81,7 @@ main(int argc, char **argv)
 	}
     }
 
+    db_close(outfp->dbip);
     bu_log(" done.\n");
 
     return 0;

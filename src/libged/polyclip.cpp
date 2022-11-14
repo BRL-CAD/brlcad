@@ -160,10 +160,8 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (wdb_import_from_path(gedp->ged_result_str, &intern, sname, wdbp) & BRLCAD_ERROR) {
-	wdb_close(wdbp);
 	return (struct bg_polygon *)0;
     }
-    wdb_close(wdbp);
 
     sketch_ip = (rt_sketch_internal *)intern.idb_ptr;
     if (sketch_ip->vert_count < 3 || sketch_ip->curve.count < 1) {

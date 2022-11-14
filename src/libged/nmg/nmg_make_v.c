@@ -127,10 +127,8 @@ ged_nmg_make_v_core(struct ged *gedp, int argc, const char *argv[])
     if (wdb_put_internal(wdbp, name, &internal, 1.0) < 0 ) {
 	bu_vls_printf(gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
 	rt_db_free_internal(&internal);
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
 
     rt_db_free_internal(&internal);
     bu_free(verts, "new verts");

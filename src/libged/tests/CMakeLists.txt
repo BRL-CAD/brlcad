@@ -1,17 +1,24 @@
 BRLCAD_ADDEXEC(ged_test_tops test_tops.c libged TEST)
+add_dependencies(ged_test_tops ged_plugins)
 BRLCAD_ADD_TEST(NAME ged_test_tops_moss COMMAND ged_test_tops "${CMAKE_CURRENT_SOURCE_DIR}/ged_tests.g")
 
 BRLCAD_ADDEXEC(ged_test_list test_list.c libged TEST)
+add_dependencies(ged_test_list ged_plugins)
 BRLCAD_ADD_TEST(NAME ged_test_list COMMAND ged_test_list 2)
+
+BRLCAD_ADDEXEC(ged_test_gqa test_gqa.c libged TEST)
+add_dependencies(ged_test_gqa ged_plugins)
 
 BRLCAD_ADDEXEC(ged_test_plugins plugins.cpp libged TEST)
 add_dependencies(ged_test_plugins ged_plugins)
 
 BRLCAD_ADDEXEC(ged_test_material test_material.c libged TEST)
+add_dependencies(ged_test_material ged_plugins)
 BRLCAD_ADD_TEST(NAME ged_test_material COMMAND ged_test_material "${CMAKE_CURRENT_BINARY_DIR}/ged_test_material.g")
 set_property(TEST ged_test_material APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
 
 BRLCAD_ADDEXEC(ged_test_select test_select.c libged TEST)
+add_dependencies(ged_test_select ged_plugins)
 
 add_subdirectory(draw)
 

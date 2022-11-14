@@ -8,3 +8,4 @@ Feel free to use.
 
 file:/src/libbg/QuickHull.cpp
 file:/src/libbg/QuickHull.hpp
+

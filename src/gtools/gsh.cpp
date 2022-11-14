@@ -177,7 +177,6 @@ view_update(struct gsh_state *s)
 	    if (gedp->dbip) {
 		struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 		dm_draw_viewobjs(wdbp, v, NULL, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
-		wdb_close(wdbp);
 	    } else {
 		dm_draw_viewobjs(NULL, v, NULL, 1, 1);
 	    }

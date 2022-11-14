@@ -1,3 +1,6 @@
+https://levien.com/type/myfonts/inconsolata.html
+https://github.com/googlefonts/Inconsolata
+
 SIL OPEN FONT LICENSE
 
 Version 1.1 - 26 February 2007
@@ -86,3 +89,4 @@ FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
 
 file:/src/qged/fonts/Inconsolata.otf
+

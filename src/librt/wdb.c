@@ -48,7 +48,8 @@ wdb_fopen_v(const char *filename, int version)
     if ((dbip = db_create(filename, version)) == DBI_NULL)
 	return RT_WDB_NULL;
 
-    return wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    return wdbp;
 }
 
 
@@ -326,10 +327,8 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 void
 wdb_close(struct rt_wdb *wdbp)
 {
-
     RT_CK_WDB(wdbp);
-
-    // no-op - handled during db_close
+    db_close(wdbp->dbip);
 }
 
 

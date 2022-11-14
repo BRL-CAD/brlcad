@@ -73,7 +73,6 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 	    (void)dm_set_zbuffer((struct dm *)gdvp->dmp, 1);
 	}
 
-	wdb_close(wdbp);
 	return;
     } else if (tvd->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_INTERLAY) {
 	go_draw(gdvp);
@@ -120,7 +119,6 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
     }
 
     dm_draw_viewobjs(wdbp, gdvp, &tgd->go_dmv, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
-    wdb_close(wdbp);
 }
 
 void
