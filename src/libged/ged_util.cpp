@@ -165,15 +165,15 @@ ged_pop_scene_obj(struct ged *gedp)
     return sp;
 }
 
-int
-scene_bounding_sph(struct bu_ptbl *so, vect_t *min, vect_t *max, int pflag)
+/* NOTE - caller must initialize vmin and vmax to INFINITY and -INFINITY
+ * respectively (we don't do it here so callers may run this routine
+ * repeatedly over different tables to accumulate bounds. */
+static int
+scene_bounding_sph(struct bu_ptbl *so, vect_t *vmin, vect_t *vmax, int pflag)
 {
     struct bv_scene_obj *sp;
     vect_t minus, plus;
     int is_empty = 1;
-
-    VSETALL((*min),  INFINITY);
-    VSETALL((*max), -INFINITY);
 
     /* calculate the bounding for of all solids being displayed */
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
@@ -184,11 +184,11 @@ scene_bounding_sph(struct bu_ptbl *so, vect_t *min, vect_t *max, int pflag)
 		minus[X] = sp->s_center[X] - sp->s_size;
 		minus[Y] = sp->s_center[Y] - sp->s_size;
 		minus[Z] = sp->s_center[Z] - sp->s_size;
-		VMIN((*min), minus);
+		VMIN((*vmin), minus);
 		plus[X] = sp->s_center[X] + sp->s_size;
 		plus[Y] = sp->s_center[Y] + sp->s_size;
 		plus[Z] = sp->s_center[Z] + sp->s_size;
-		VMAX((*max), plus);
+		VMAX((*vmax), plus);
 
 		is_empty = 0;
 	    }
@@ -198,11 +198,11 @@ scene_bounding_sph(struct bu_ptbl *so, vect_t *min, vect_t *max, int pflag)
 	    minus[X] = g->s_center[X] - g->s_size;
 	    minus[Y] = g->s_center[Y] - g->s_size;
 	    minus[Z] = g->s_center[Z] - g->s_size;
-	    VMIN((*min), minus);
+	    VMIN((*vmin), minus);
 	    plus[X] = g->s_center[X] + g->s_size;
 	    plus[Y] = g->s_center[Y] + g->s_size;
 	    plus[Z] = g->s_center[Z] + g->s_size;
-	    VMAX((*max), plus);
+	    VMAX((*vmax), plus);
 	}
     }
     if (!pflag) {
@@ -1428,6 +1428,8 @@ _ged_rt_set_eye_model(struct ged *gedp,
 
 	const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
 	if (BU_STR_EQUAL(cmd2, "1")) {
+	    VSETALL(extremum[0],  INFINITY);
+	    VSETALL(extremum[1], -INFINITY);
 	    struct bu_ptbl *db_objs = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
 	    if (db_objs)
 		(void)scene_bounding_sph(db_objs, &(extremum[0]), &(extremum[1]), 1);

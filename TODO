@@ -18,9 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* fa2ac4d164f143 broke embedded raytrace viewing in qged, and the rt
-  command windows display when launched from qged
-
 * verify bot_dump -o file.obj generates valid obj files (see BUGS)
 
 * docs:
