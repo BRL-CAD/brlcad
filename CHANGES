@@ -176,10 +176,6 @@ MGED overlay command
         automatic reading of .density file in home directory
         materials need to be specified or imported [deprecated 7.28]
 
-btclsh, bwish
-	Emacs key binding emulation
-	achieved by running btclsh in Emacs [deprecated 7.30]
-
 include/bu/redblack.h
 	All redblack related functions, structures and macros
 	defined in libbu's redblack.h.  Functions are:
