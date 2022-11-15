@@ -27,6 +27,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   r76009 NEWS, CHANGES
   r76019 NEWS, man page
   r76021 NEWS, CHANGES
+  r72682 NEWS
 
 * re-enable regress-asc and regress-weight
 
