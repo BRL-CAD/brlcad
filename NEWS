@@ -18,6 +18,7 @@ library building - src/other/ext dependencies now use the native
 build system provided by the project, rather than having BRL-CAD
 rewrite it to match ours.
 
+* fixed suffix for 3dm-g converted solids - Cliff Yapp
 * added -N view obj name option to overlay command - Cliff Yapp
 * updated man pages for GED brep command - Cliff Yapp
 * added man page for MGED Overlaps Tool - Chris McGregor
