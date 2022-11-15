@@ -185,7 +185,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     /* must be wanting help */
     if (argc != 3 && argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], bot_fuse_options_str, usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* Turn off getopt's error messages */
@@ -208,7 +208,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 	    default :
 		{
 		    bu_vls_printf(gedp->ged_result_str, "Unknown option: '%c'", c);
-		    return BRLCAD_HELP;
+		    return GED_HELP;
 		}
 	}
     }
@@ -217,7 +217,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 
     bu_log("%s: start\n", argv[0]);
 
-    GED_DB_LOOKUP(gedp, old_dp, argv[i+1], LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(gedp, old_dp, argv[i+1], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gedp, &intern, old_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {

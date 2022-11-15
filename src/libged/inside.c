@@ -936,7 +936,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
     /* get the inside solid name */
     if (argc < arg+1) {
 	bu_vls_printf(gedp->ged_result_str, "Enter name of the inside solid: ");
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     if (db_lookup(gedp->dbip, argv[arg], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s already exists.\n", argv[0], argv[arg]);
@@ -988,7 +988,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < nface; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", prompt[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1003,7 +1003,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < 3; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_tgcin[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1016,7 +1016,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	case ID_ELL:
 	    if (argc < arg+1) {
 		bu_vls_printf(gedp->ged_result_str, "Enter desired thickness: ");
-		return BRLCAD_MORE;
+		return GED_MORE;
 	    }
 	    thick[0] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 	    ++arg;
@@ -1028,7 +1028,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	case ID_TOR:
 	    if (argc < arg+1) {
 		bu_vls_printf(gedp->ged_result_str, "Enter desired thickness: ");
-		return BRLCAD_MORE;
+		return GED_MORE;
 	    }
 	    thick[0] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 	    ++arg;
@@ -1041,7 +1041,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < 1; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_partin[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1055,7 +1055,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < 4; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_rpcin[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1069,7 +1069,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < 4; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_rhcin[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1083,7 +1083,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < 2; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_epain[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1097,7 +1097,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < 2; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_ehyin[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1111,7 +1111,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < 1; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_etoin[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1124,7 +1124,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	case ID_NMG:
 	    if (argc < arg+1) {
 		bu_vls_printf(gedp->ged_result_str, "%s", *p_nmgin);
-		return BRLCAD_MORE;
+		return GED_MORE;
 	    }
 	    thick[0] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 	    ++arg;

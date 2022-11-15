@@ -71,7 +71,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_optind = 1;      /* re-init bu_getopt() */
@@ -119,7 +119,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: bb %s", usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (!oriented_bb) {

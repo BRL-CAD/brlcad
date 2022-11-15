@@ -280,7 +280,7 @@ ged_nmg_move_v_core(struct ged* gedp, int argc, const char* argv[])
     /* must be wanting help */
     if (argc != 9 ) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* attempt to resolve and verify */

@@ -201,7 +201,7 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n%s", usage_string, purpose_string);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* check that we are using a version 5 database */

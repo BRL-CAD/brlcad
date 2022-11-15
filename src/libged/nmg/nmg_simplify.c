@@ -68,7 +68,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	/* must be wanting help */
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
-	ret = BRLCAD_HELP;
+	ret = GED_HELP;
 	goto out3;
     } else if (argc == 3) {
 	/* FIXME: if you use the default but have a TGC, the cleanup

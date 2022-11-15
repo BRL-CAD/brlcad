@@ -57,7 +57,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3) {
@@ -79,12 +79,12 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     if (strchr(argv[1], '/')) {
 	tok = strtok((char *)argv[1], "/");
 	while (tok) {
-	    GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], tok, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+	    GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], tok, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
 	    endpos++;
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
-	GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], argv[1], LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+	GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], argv[1], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
 	endpos++;
     }
 

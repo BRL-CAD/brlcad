@@ -251,7 +251,7 @@ geval(struct gsh_state *s, int argc, const char **argv)
 	ret = ged_exec(s->gedp, argc, argv);
     }
 
-    if (!(ret & BRLCAD_MORE)) {
+    if (!(ret & GED_MORE)) {
 	printf("%s", bu_vls_cstr(s->gedp->ged_result_str));
     }
     return ret;
@@ -272,7 +272,7 @@ gsh_clear(void *vs, int UNUSED(argc), const char **UNUSED(argv))
 int
 gsh_exit(void *UNUSED(vs), int UNUSED(argc), const char **UNUSED(argv))
 {
-    return BRLCAD_EXIT;
+    return GED_EXIT;
 }
 
 // TODO - an equivalent to the MGED opendb command would go here.
@@ -442,7 +442,7 @@ main(int argc, const char **argv)
 		    printf("Error executing command %s\n", av[0]);
 
 		// If we are supposed to quit now, go to the cleanup section
-		if (cbret & BRLCAD_EXIT) {
+		if (cbret & GED_EXIT) {
 		    /* Free the temporary argv structures */
 		    bu_free(input, "input copy");
 		    bu_free(av, "input argv");
@@ -477,7 +477,7 @@ main(int argc, const char **argv)
 	 * some research to confirm there aren't any valid cases where this
 	 * would be a bad idea. */
 	struct bu_vls *rstr = s.gedp->ged_result_str;
-	if (gret & BRLCAD_MORE) {
+	if (gret & GED_MORE) {
 	    // If we're being asked for more input, the return string holds
 	    // the prompt for the next input
 	    bu_vls_sprintf(&custom_pmpt, "%s", bu_vls_cstr(s.gedp->ged_result_str));

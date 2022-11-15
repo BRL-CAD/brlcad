@@ -288,7 +288,7 @@ ged_grid_core(struct ged *gedp, int argc, const char *argv[])
 
     if (BU_STR_EQUAL(parameter, "help")) {
 	grid_usage(gedp, argv[0]);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_vls_printf(gedp->ged_result_str, "%s: unrecognized command '%s'\n", argv[0], command);

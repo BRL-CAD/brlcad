@@ -136,14 +136,14 @@ ged_fb2pix_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     screen_height = screen_width = 512;		/* Defaults */
 
     if (!get_args(argc, (char **)argv)) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     setmode(fileno(stdout), O_BINARY);

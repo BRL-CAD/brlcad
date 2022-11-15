@@ -966,7 +966,7 @@ _view_cmd_polygons(void *bs, int argc, const char **argv)
 
     if (help) {
 	_ged_cmd_help(gedp, usage_string, d);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     return _ged_subcmd_exec(gedp, d, _poly_cmds, "view obj <objname>", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);

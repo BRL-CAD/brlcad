@@ -76,7 +76,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR);
@@ -123,7 +123,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[argc+offset-1]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
 
@@ -1634,7 +1634,7 @@ mater_density(struct ged *gedp, size_t argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (BU_STR_EQUAL(argv[1], "get")) {
@@ -1703,7 +1703,7 @@ ged_mater_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* The -s option allows us to do mater on an object even if the

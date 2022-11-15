@@ -84,7 +84,7 @@ edarb_extrude(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -149,7 +149,7 @@ edarb_mirface(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -206,7 +206,7 @@ edarb_edgedir(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 6 || 7 < argc) {
@@ -296,7 +296,7 @@ edarb_permute(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: edarb %s %s %s", argv[0], argv[1], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 4) {
@@ -353,7 +353,7 @@ ged_edarb_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
 

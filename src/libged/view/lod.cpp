@@ -74,7 +74,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
     if (print_help) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc > 3) {

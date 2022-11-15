@@ -186,7 +186,7 @@ edarb_facedef(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
@@ -283,7 +283,7 @@ edarb_facedef(void *data, int argc, const char *argv[])
 \tq   quit\n\
 Enter form of new face definition: ");
 	rt_db_free_internal(&intern);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     switch (argv[4][0]) {
@@ -299,7 +299,7 @@ Enter form of new face definition: ");
 		/* total # of args under this option */
 		bu_vls_printf(gedp->ged_result_str, "%s", p_pleqn[argc-5]);
 		rt_db_free_internal(&intern);
-		return BRLCAD_MORE;
+		return GED_MORE;
 	    }
 	    get_pleqn(gedp, planes[plane], &argv[5]);
 	    break;
@@ -315,7 +315,7 @@ Enter form of new face definition: ");
 		/* total # of args under this option */
 		bu_vls_printf(gedp->ged_result_str, "%s %d: ", p_3pts[(argc-5)%3], (argc-2)/3);
 		rt_db_free_internal(&intern);
-		return BRLCAD_MORE;
+		return GED_MORE;
 	    }
 	    if (get_3pts(gedp, planes[plane], &argv[5], &wdbp->wdb_tol)) {
 		return BRLCAD_ERROR;
@@ -327,7 +327,7 @@ Enter form of new face definition: ");
 		if (argc < 7) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_rotfb[argc-5]);
 		    rt_db_free_internal(&intern);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 
 		argv[7] = "Release 6";
@@ -337,7 +337,7 @@ Enter form of new face definition: ");
 	    else if (argc < 10 && (argc > 7 ? argv[7][0] != 'R' : 1)) {
 		bu_vls_printf(gedp->ged_result_str, "%s", p_rotfb[argc-5]);
 		rt_db_free_internal(&intern);
-		return BRLCAD_MORE;
+		return GED_MORE;
 	    }
 	    get_rotfb(gedp, planes[plane], &argv[5], arb);
 	    break;
@@ -352,7 +352,7 @@ Enter form of new face definition: ");
 	    if (argc < 8) {
 		bu_vls_printf(gedp->ged_result_str, "%s", p_nupnt[argc-5]);
 		rt_db_free_internal(&intern);
-		return BRLCAD_MORE;
+		return GED_MORE;
 	    }
 	    get_nupnt(gedp, planes[plane], &argv[5]);
 	    break;

@@ -52,7 +52,7 @@ ged_zoom_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s scale_factor", argv[0]);
-	return (argc == 1) ? BRLCAD_HELP : BRLCAD_ERROR;
+	return (argc == 1) ? GED_HELP : BRLCAD_ERROR;
     }
 
     /* get the scale factor */

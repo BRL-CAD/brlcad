@@ -195,7 +195,7 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);

@@ -51,7 +51,7 @@ ged_copy_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3) {
@@ -59,7 +59,7 @@ ged_copy_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_LOOKUP(gedp, from_dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(gedp, from_dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
 
     if (db_get_external(&external, from_dp, gedp->dbip)) {
