@@ -112,7 +112,7 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
     /* incorrect arguments */
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     sizeVoxel[0]  = 1.0;

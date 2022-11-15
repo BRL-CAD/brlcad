@@ -73,7 +73,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
     if (print_help) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc > 3) {
@@ -178,6 +178,8 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    if (!gedp || !gedp->dbip)
 		return BRLCAD_ERROR;
 
+	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
 	    // Clear any old cache in memory
 	    bg_mesh_lod_clear_cache(gedp->ged_lod, 0);
 
@@ -262,8 +264,8 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			vect_t *normals = NULL;
 			point_t *pnts = NULL;
 			int pnt_cnt = 0;
-			struct bn_tol *tol = &gedp->dbip->db_tol;
-			struct bg_tess_tol *ttol = &gedp->dbip->db_ttol;
+			struct bn_tol *tol = &wdbp->wdb_tol;
+			struct bg_tess_tol *ttol = &wdbp->wdb_ttol;
 
 			int bret = brep_cdt_fast(&faces, &face_cnt, &normals, &pnts, &pnt_cnt, bi->brep, -1, ttol, tol);
 			if (bret != BRLCAD_OK) {

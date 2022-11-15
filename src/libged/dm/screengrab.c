@@ -93,7 +93,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     argc = opt_ret;
@@ -138,7 +138,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (!argc) {
 	_ged_cmd_help(gedp, usage, d);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* create image file */

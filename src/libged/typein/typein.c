@@ -1051,7 +1051,7 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 
     if (argc < 7) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     num_verts = atoi(argv[3]);
@@ -1081,20 +1081,20 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     arg_count = argc - 7;
     if (arg_count < num_verts*3) {
 	bu_vls_printf(gedp->ged_result_str, "%s for vertex %d : ", prompt[4+arg_count%3], arg_count/3);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     arg_count = argc - 7 - num_verts*3;
     if (arg_count < num_faces*3) {
 	bu_vls_printf(gedp->ged_result_str, "%s for triangle %d : ", prompt[7+arg_count%3], arg_count/3);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     if (mode == RT_BOT_PLATE) {
 	arg_count = argc - 7 - num_verts*3 - num_faces*3;
 	if (arg_count < num_faces*2) {
 	    bu_vls_printf(gedp->ged_result_str, "%s for face %d : ", prompt[10+arg_count%2], arg_count/2);
-	    return BRLCAD_MORE;
+	    return GED_MORE;
 	}
     }
 
@@ -1158,14 +1158,14 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
     if (argc < 4) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     num_planes = atoi(argv[3]);
 
     if (argc < num_planes * 4 + 4) {
 	bu_vls_printf(gedp->ged_result_str, "%s for plane %d : ", prompt[(argc-4)%4 + 1], 1+(argc-4)/4);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1198,7 +1198,7 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
     if (argc < 4) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     num_points = atoi(argv[3]);
@@ -1209,12 +1209,12 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
     if (argc < 10) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     if (argc < 4 + num_points*6) {
 	bu_vls_printf(gedp->ged_result_str, "%s for point %d : ", prompt[7+(argc-10)%6], 1+(argc-4)/6);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1286,7 +1286,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 	 * pre-formatted prompts exist
 	 */
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[vals_present]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     total_vals_needed = 2 +             /* #rows, #pts/row */
@@ -1320,7 +1320,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 		break;
 	}
 
-	return BRLCAD_MORE;
+	return GED_MORE;
     } else if (vals_present < total_vals_needed) {
 	/* we're looking for the last point which is used for all points
 	 * on the last curve
@@ -1347,7 +1347,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 		break;
 	}
 
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -2703,13 +2703,13 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 
     if (argc < 4) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     method = atof(argv[3]);
 
     if (argc < 5) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     threshold = atof(argv[4]);
 
@@ -2720,7 +2720,7 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 
     if (argc < 6) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     num_points = atoi(argv[5]);
@@ -2731,12 +2731,12 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 
     if (argc < 10) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     if (argc < 6 + num_points*4) {
 	bu_vls_printf(gedp->ged_result_str, "%s for point %d : ", prompt[6+(argc-9)%4], 1+(argc-5)/4);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -2795,7 +2795,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     /* prompt if points file */
     if (argc < 4) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[0]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     /* if points are in a file */
@@ -2822,7 +2822,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     /* prompt for readPoints if not entered */
     if (argc < 5) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[1]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     readPoints = atol(argv[4]);
     if (readPoints < 0) {
@@ -2833,28 +2833,28 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     /* prompt for orientation */
     if (argc < 6) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[2]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     oriented = booleanize(argv[5]);
 
     /* prompt for color */
     if (argc < 7) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[3]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     hasColor = booleanize(argv[6]);
 
     /* prompt for uniform scale */
     if (argc < 8) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[4]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     hasScale = booleanize(argv[7]); /* has scale if not uniform */
 
     /* prompt for size of points if not entered */
     if (argc < 9) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[5]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     defaultSize = atof(argv[8]);
     if (defaultSize < 0.0) {
@@ -2953,7 +2953,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&vls));
 
 	bu_vls_free(&vls);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     /* now we have everything we need to allocate an internal */
@@ -3137,7 +3137,7 @@ datum_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *i
 
     if (argc == 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[0]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     /* first pass, make sure we have all args */
@@ -3155,7 +3155,7 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 	    if ((size_t)argc-idx < ARGS_PER_POINT) {
 		/* idx into the next query prompt (== 1) for datum points */
 		bu_vls_printf(gedp->ged_result_str, "%s", prompt[1+argc-idx]);
-		return BRLCAD_MORE;
+		return GED_MORE;
 	    }
 
 	    for (count = 0; count < ARGS_PER_POINT; count++) {
@@ -3172,7 +3172,7 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 	    if ((size_t)argc-idx < ARGS_PER_LINE) {
 		/* idx into the next query prompt (== 4) for datum lines */
 		bu_vls_printf(gedp->ged_result_str, "%s", prompt[4+argc-idx]);
-		return BRLCAD_MORE;
+		return GED_MORE;
 	    }
 
 	    for (count = 0; count < ARGS_PER_LINE; count++) {
@@ -3189,7 +3189,7 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 	    if ((size_t)argc-idx < ARGS_PER_PLANE) {
 		/* idx into the next query prompt (== 10) for datum planes */
 		bu_vls_printf(gedp->ged_result_str, "%s", prompt[10+argc-idx]);
-		return BRLCAD_MORE;
+		return GED_MORE;
 	    }
 
 	    for (count = 0; count < ARGS_PER_PLANE; count++) {
@@ -3374,7 +3374,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
     /* Get the name of the object to be created */
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "Enter name of object: ");
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     if (db_lookup(gedp->dbip,  argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s already exists", argv[0], argv[1]);
@@ -3390,7 +3390,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
     /* Get the object type to be created and make it */
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Enter object type: ");
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     RT_DB_INTERNAL_INIT(&internal);
@@ -3410,8 +3410,8 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, arbn not made!\n", argv[0]);
 		rt_db_free_internal(&internal);
 		return BRLCAD_ERROR;
-	    case BRLCAD_MORE:
-		return BRLCAD_MORE;
+	    case GED_MORE:
+		return GED_MORE;
 	}
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "bot")) {
@@ -3420,8 +3420,8 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, bot not made!\n", argv[0]);
 		rt_db_free_internal(&internal);
 		return BRLCAD_ERROR;
-	    case BRLCAD_MORE:
-		return BRLCAD_MORE;
+	    case GED_MORE:
+		return GED_MORE;
 	}
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "submodel")) {
@@ -3463,8 +3463,8 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, pipe not made!\n", argv[0]);
 		rt_db_free_internal(&internal);
 		return BRLCAD_ERROR;
-	    case BRLCAD_MORE:
-		return BRLCAD_MORE;
+	    case GED_MORE:
+		return GED_MORE;
 	}
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "metaball")) {
@@ -3473,8 +3473,8 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, metaball not made!\n", argv[0]);
 		rt_db_free_internal(&internal);
 		return BRLCAD_ERROR;
-	    case BRLCAD_MORE:
-		return BRLCAD_MORE;
+	    case GED_MORE:
+		return GED_MORE;
 	}
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "ars")) {
@@ -3483,8 +3483,8 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, ars not made!\n", argv[0]);
 		rt_db_free_internal(&internal);
 		return BRLCAD_ERROR;
-	    case BRLCAD_MORE:
-		return BRLCAD_MORE;
+	    case GED_MORE:
+		return GED_MORE;
 	}
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "half")) {
@@ -3638,8 +3638,8 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, pnts not made!\n", argv[0]);
 		rt_db_free_internal(&internal);
 		return BRLCAD_ERROR;
-	    case BRLCAD_MORE:
-		return BRLCAD_MORE;
+	    case GED_MORE:
+		return GED_MORE;
 	}
 
 	goto do_new_update;
@@ -3649,8 +3649,8 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, datum not made!\n", argv[0]);
 		rt_db_free_internal(&internal);
 		return BRLCAD_ERROR;
-	    case BRLCAD_MORE:
-		return BRLCAD_MORE;
+	    case GED_MORE:
+		return GED_MORE;
 	}
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "cline") ||
@@ -3669,7 +3669,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
     /* Read arguments */
     if (argc < 3+nvals) {
 	bu_vls_printf(gedp->ged_result_str, "%s", menu[argc-3]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     if (fn_in) {

@@ -87,7 +87,7 @@ ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str,
 		  "\tmake V         -  creates a new "
 		  "vertex in the nmg object.\n");
-    return BRLCAD_HELP;
+    return GED_HELP;
     }
 
     if (argc < 3) {

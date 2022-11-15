@@ -486,7 +486,7 @@ main(int argc, const char *argv[])
 	ofile << "\n";
 	ofile << "\tif (print_help) {\n";
 	ofile << "\t\tbu_vls_printf(s_out, \"%s      %s      %s\", usage1, usage2, usage3);\n";
-	ofile << "\t\treturn BRLCAD_HELP;\n";
+	ofile << "\t\treturn GED_HELP;\n";
 	ofile << "\t}\n";
 	ofile << "\n";
 	ofile << "\tif (report_mem) {\n";

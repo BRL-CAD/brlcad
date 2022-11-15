@@ -65,6 +65,14 @@
 
 #define GED_RESULT_NULL ((void *)0)
 
+/* Sequence starts after BRLCAD_ERROR, to be compatible with
+ * BU return codes */
+#define GED_HELP    0x0002 /**< invalid specification, result contains usage */
+#define GED_MORE    0x0004 /**< incomplete specification, can specify again interactively */
+#define GED_QUIET   0x0008 /**< don't set or modify the result string */
+#define GED_UNKNOWN 0x0010 /**< argv[0] was not a known command */
+#define GED_EXIT    0x0020 /**< command is requesting a clean application shutdown */
+
 /* Forward declaration */
 struct ged;
 struct ged_selection_set;
@@ -726,7 +734,7 @@ GED_EXPORT extern struct ged *ged_open(const char *dbtype,
  */
 #define GED_CHECK_ARGC_GT_0(_gedp, _argc, _flags) \
     if ((_argc) < 1) { \
-	int ged_check_argc_gt_0_quiet = (_flags) & BRLCAD_QUIET; \
+	int ged_check_argc_gt_0_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_argc_gt_0_quiet) { \
 	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
 	    bu_vls_printf((_gedp)->ged_result_str, "Command name not provided on (%s:%d).", __FILE__, __LINE__); \

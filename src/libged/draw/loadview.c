@@ -117,7 +117,7 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* make sure the file exists */
@@ -319,7 +319,9 @@ _ged_cm_lookat_pt(const int argc, const char **argv)
     {
 	vect_t neg_Z_axis = VINIT_ZERO;
 	neg_Z_axis[Z] = -1.0;
-	bn_mat_fromto(_ged_viewrot, dir, neg_Z_axis, &_ged_current_gedp->dbip->db_tol);
+
+	struct rt_wdb *wdbp = wdb_dbopen(_ged_current_gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	bn_mat_fromto(_ged_viewrot, dir, neg_Z_axis, &wdbp->wdb_tol);
     }
 
     /* Final processing is deferred until view 'end', but eye_pt

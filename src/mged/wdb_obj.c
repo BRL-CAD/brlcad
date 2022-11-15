@@ -386,7 +386,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_db_put_internal(dp, wdbp->dbip, &new_intern, wdbp->dbip->db_resp) < 0) {
+    if (rt_db_put_internal(dp, wdbp->dbip, &new_intern, wdbp->wdb_resp) < 0) {
 	rt_db_free_internal(&new_intern);
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database write error, aborting.\n", (char *)NULL);
 
@@ -489,7 +489,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    arb_type = rt_arb_std_type(&intern, &wdbp->dbip->db_tol);
+    arb_type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
 
     /* check the arb type */
     switch (arb_type) {
@@ -534,7 +534,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
     }
 
     bu_vls_init(&error_msg);
-    if (rt_arb_calc_planes(&error_msg, arb, arb_type, planes, &wdbp->dbip->db_tol)) {
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, planes, &wdbp->wdb_tol)) {
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&error_msg), (char *)0);
 	rt_db_free_internal(&intern);
 	bu_vls_free(&error_msg);
@@ -542,7 +542,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_arb_edit(&error_msg, arb, arb_type, edge, pt, planes, &wdbp->dbip->db_tol)) {
+    if (rt_arb_edit(&error_msg, arb, arb_type, edge, pt, planes, &wdbp->wdb_tol)) {
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&error_msg), (char *)0);
 	rt_db_free_internal(&intern);
 	bu_vls_free(&error_msg);
@@ -677,10 +677,10 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    arb_type = rt_arb_std_type(&intern, &wdbp->dbip->db_tol);
+    arb_type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
 
     bu_vls_init(&error_msg);
-    if (rt_arb_calc_planes(&error_msg, arb, arb_type, planes, &wdbp->dbip->db_tol)) {
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, planes, &wdbp->wdb_tol)) {
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&error_msg), (char *)0);
 	rt_db_free_internal(&intern);
 	bu_vls_free(&error_msg);
@@ -693,7 +693,7 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
     planes[face][3] = VDOT(&planes[face][0], pt);
 
     /* calculate new points for the arb */
-    (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &wdbp->dbip->db_tol);
+    (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &wdbp->wdb_tol);
 
     {
 	int i;
@@ -826,9 +826,9 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
     bu_ptbl_free(&faces);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &wdbp->dbip->db_tol);
+    nmg_triangulate_model(m, &RTG.rtg_vlfree, &wdbp->wdb_tol);
 
-    count = nmg_edge_collapse(m, &wdbp->dbip->db_tol, tol_coll, min_angle, &RTG.rtg_vlfree);
+    count = nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle, &RTG.rtg_vlfree);
 
     dp = db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
@@ -918,7 +918,7 @@ wdb_reopen_cmd(struct rt_wdb *wdbp,
 	}
 
 	// Stash wdb type and interp
-	int wdb_type = wdbp->wdb_type;
+	int wdb_type = wdbp->type;
 	void *interp = wdbp->wdb_interp;
 
 	/* close current database */
@@ -1223,10 +1223,10 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    arb_type = rt_arb_std_type(&intern, &wdbp->dbip->db_tol);
+    arb_type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
 
     bu_vls_init(&error_msg);
-    if (rt_arb_calc_planes(&error_msg, arb, arb_type, planes, &wdbp->dbip->db_tol)) {
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, planes, &wdbp->wdb_tol)) {
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&error_msg), (char *)0);
 	rt_db_free_internal(&intern);
 	bu_vls_free(&error_msg);
@@ -1267,7 +1267,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
     }
 
     /* calculate new points for the arb */
-    (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &wdbp->dbip->db_tol);
+    (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &wdbp->wdb_tol);
 
     {
 	struct bu_vls vls;
@@ -1464,38 +1464,38 @@ wdb_tol_cmd(struct rt_wdb *wdbp,
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Current tolerance settings are:\n", (char *)NULL);
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Tessellation tolerances:\n", (char *)NULL);
 
-	if (wdbp->dbip->db_ttol.abs > 0.0) {
+	if (wdbp->wdb_ttol.abs > 0.0) {
 	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "\tabs %g mm\n", wdbp->dbip->db_ttol.abs);
+	    bu_vls_printf(&vls, "\tabs %g mm\n", wdbp->wdb_ttol.abs);
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 	} else {
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "\tabs None\n", (char *)NULL);
 	}
 
-	if (wdbp->dbip->db_ttol.rel > 0.0) {
+	if (wdbp->wdb_ttol.rel > 0.0) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "\trel %g (%g%%)\n",
-			  wdbp->dbip->db_ttol.rel, wdbp->dbip->db_ttol.rel * 100.0);
+			  wdbp->wdb_ttol.rel, wdbp->wdb_ttol.rel * 100.0);
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 	} else {
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "\trel None\n", (char *)NULL);
 	}
 
-	if (wdbp->dbip->db_ttol.norm > 0.0) {
+	if (wdbp->wdb_ttol.norm > 0.0) {
 	    int deg, min;
 	    double sec;
 
 	    bu_vls_init(&vls);
-	    sec = wdbp->dbip->db_ttol.norm * RAD2DEG;
+	    sec = wdbp->wdb_ttol.norm * RAD2DEG;
 	    deg = (int)(sec);
 	    sec = (sec - (double)deg) * 60;
 	    min = (int)(sec);
 	    sec = (sec - (double)min) * 60;
 
 	    bu_vls_printf(&vls, "\tnorm %g degrees (%d deg %d min %g sec)\n",
-			  wdbp->dbip->db_ttol.norm * RAD2DEG, deg, min, sec);
+			  wdbp->wdb_ttol.norm * RAD2DEG, deg, min, sec);
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 	} else {
@@ -1506,8 +1506,8 @@ wdb_tol_cmd(struct rt_wdb *wdbp,
 	bu_vls_printf(&vls, "Calculational tolerances:\n");
 	bu_vls_printf(&vls,
 		      "\tdistance = %g mm\n\tperpendicularity = %g (cosine of %g degrees)",
-		      wdbp->dbip->db_tol.dist, wdbp->dbip->db_tol.perp,
-		      acos(wdbp->dbip->db_tol.perp)*RAD2DEG);
+		      wdbp->wdb_tol.dist, wdbp->wdb_tol.perp,
+		      acos(wdbp->wdb_tol.perp)*RAD2DEG);
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1522,28 +1522,28 @@ wdb_tol_cmd(struct rt_wdb *wdbp,
 
 	switch (argv[1][0]) {
 	    case 'a':
-		if (wdbp->dbip->db_ttol.abs > 0.0)
-		    bu_vls_printf(&vls, "%g", wdbp->dbip->db_ttol.abs);
+		if (wdbp->wdb_ttol.abs > 0.0)
+		    bu_vls_printf(&vls, "%g", wdbp->wdb_ttol.abs);
 		else
 		    bu_vls_printf(&vls, "None");
 		break;
 	    case 'r':
-		if (wdbp->dbip->db_ttol.rel > 0.0)
-		    bu_vls_printf(&vls, "%g", wdbp->dbip->db_ttol.rel);
+		if (wdbp->wdb_ttol.rel > 0.0)
+		    bu_vls_printf(&vls, "%g", wdbp->wdb_ttol.rel);
 		else
 		    bu_vls_printf(&vls, "None");
 		break;
 	    case 'n':
-		if (wdbp->dbip->db_ttol.norm > 0.0)
-		    bu_vls_printf(&vls, "%g", wdbp->dbip->db_ttol.norm);
+		if (wdbp->wdb_ttol.norm > 0.0)
+		    bu_vls_printf(&vls, "%g", wdbp->wdb_ttol.norm);
 		else
 		    bu_vls_printf(&vls, "None");
 		break;
 	    case 'd':
-		bu_vls_printf(&vls, "%g", wdbp->dbip->db_tol.dist);
+		bu_vls_printf(&vls, "%g", wdbp->wdb_tol.dist);
 		break;
 	    case 'p':
-		bu_vls_printf(&vls, "%g", wdbp->dbip->db_tol.perp);
+		bu_vls_printf(&vls, "%g", wdbp->wdb_tol.perp);
 		break;
 	    default:
 		bu_vls_printf(&vls, "unrecognized tolerance type - %s", argv[1]);
@@ -1582,13 +1582,13 @@ wdb_tol_cmd(struct rt_wdb *wdbp,
 	switch (argv[0][0]) {
 	    case 'a':
 		/* Absolute tol */
-		if (f < wdbp->dbip->db_tol.dist) {
+		if (f < wdbp->wdb_tol.dist) {
 		    bu_vls_init(&vls);
-		    bu_vls_printf(&vls, "absolute tolerance cannot be less than distance tolerance, clamped to %f\n", wdbp->dbip->db_tol.dist);
+		    bu_vls_printf(&vls, "absolute tolerance cannot be less than distance tolerance, clamped to %f\n", wdbp->wdb_tol.dist);
 		    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls), (char *)NULL);
 		    bu_vls_free(&vls);
 		}
-		wdbp->dbip->db_ttol.abs = f;
+		wdbp->wdb_ttol.abs = f;
 		break;
 	    case 'r':
 		if (f >= 1.0) {
@@ -1598,7 +1598,7 @@ wdb_tol_cmd(struct rt_wdb *wdbp,
 		    return TCL_ERROR;
 		}
 		/* Note that a value of 0.0 will disable relative tolerance */
-		wdbp->dbip->db_ttol.rel = f;
+		wdbp->wdb_ttol.rel = f;
 		break;
 	    case 'n':
 		/* Normal tolerance, in degrees */
@@ -1609,12 +1609,12 @@ wdb_tol_cmd(struct rt_wdb *wdbp,
 		    return TCL_ERROR;
 		}
 		/* Note that a value of 0.0 or 360.0 will disable this tol */
-		wdbp->dbip->db_ttol.norm = f * DEG2RAD;
+		wdbp->wdb_ttol.norm = f * DEG2RAD;
 		break;
 	    case 'd':
 		/* Calculational distance tolerance */
-		wdbp->dbip->db_tol.dist = f;
-		wdbp->dbip->db_tol.dist_sq = wdbp->dbip->db_tol.dist * wdbp->dbip->db_tol.dist;
+		wdbp->wdb_tol.dist = f;
+		wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
 		break;
 	    case 'p':
 		/* Calculational perpendicularity tolerance */
@@ -1624,8 +1624,8 @@ wdb_tol_cmd(struct rt_wdb *wdbp,
 				     (char *)NULL);
 		    return TCL_ERROR;
 		}
-		wdbp->dbip->db_tol.perp = f;
-		wdbp->dbip->db_tol.para = 1.0 - f;
+		wdbp->wdb_tol.perp = f;
+		wdbp->wdb_tol.para = 1.0 - f;
 		break;
 	    default:
 		bu_vls_init(&vls);

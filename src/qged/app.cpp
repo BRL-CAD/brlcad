@@ -296,7 +296,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	ret = mdl->run_cmd(msg, ac, (const char **)av);
     }
 
-    if (!(ret & BRLCAD_MORE)) {
+    if (!(ret & GED_MORE)) {
 
 	// Handle any necessary redrawing.
 	view_flags = qged_view_update(gedp);
@@ -318,7 +318,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	}
     }
 
-    if (ret & BRLCAD_MORE) {
+    if (ret & GED_MORE) {
 	// If this is the first time through stash in tmp_av, since we
 	// didn't know to do it above
 	if (!tmp_av.size()) {
@@ -407,7 +407,7 @@ CADApp::run_qcmd(const QString &command)
     }
 
     if (console) {
-	if (ret & BRLCAD_MORE) {
+	if (ret & GED_MORE) {
 	    console->prompt(bu_vls_cstr(mdl->gedp->ged_result_str));
 	} else {
 	    console->prompt("$ ");

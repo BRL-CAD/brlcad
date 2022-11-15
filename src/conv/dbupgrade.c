@@ -245,11 +245,8 @@ main(int argc, char **argv)
 	rt_db_free_internal(&intern);
     } FOR_ALL_DIRECTORY_END
 
-    if (in_version == 5)
-	db_close(fp->dbip);
-    if (dbip4)
-	db_close(dbip4);
-
+    wdb_close(fp);
+    db_close(dbip4);
     db_close(dbip);
 
     fprintf(stderr, "%ld objects failed to convert\n", errors);

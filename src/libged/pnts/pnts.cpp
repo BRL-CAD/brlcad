@@ -145,7 +145,7 @@ _pnts_to_bot(struct ged *gedp, int argc, const char **argv)
     bot_name = argv[1];
 
     /* get pnt */
-    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
@@ -303,7 +303,7 @@ _pnts_wn(struct ged *gedp, int argc, const char **argv)
     (void)bu_opt_fastf_t(NULL, 1, (const char **)&argv[3], (void *)&(qp[Z]));
 
     /* get pnt */
-    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
@@ -388,7 +388,7 @@ _pnts_to_wnmesh(struct ged *gedp, int argc, const char **argv)
     bot_name = argv[1];
 
     /* get pnt */
-    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
@@ -873,7 +873,7 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
     }
 
     /* get pnt */
-    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
@@ -1280,7 +1280,7 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     /* prompt for point-cloud name */
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[0]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, BRLCAD_ERROR);
@@ -1288,13 +1288,13 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     /* prompt for data file name with path */
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[1]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     /* prompt for data file format */
     if (argc < 4) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[2]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     /* Validate 'point file data format string' and return point-cloud type. */
@@ -1306,7 +1306,7 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     /* prompt for data file units */
     if (argc < 5) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[3]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     /* Validate unit */
@@ -1321,7 +1321,7 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     /* prompt for default point size */
     if (argc < 6) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[4]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     psize = strtod(argv[5], &endp);

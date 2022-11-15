@@ -79,6 +79,7 @@ __BEGIN_DECLS
 
 struct _ged_brep_info {
     struct ged *gedp = NULL;
+    struct rt_wdb *wdbp = NULL;
     struct rt_db_internal intern;
     struct directory *dp = NULL;
     struct bv_vlblock *vbp = NULL;

@@ -76,7 +76,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR);
@@ -123,7 +123,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[argc+offset-1]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
 
@@ -1067,6 +1067,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
 {
     struct directory *dp;
     struct analyze_densities *a = NULL;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
@@ -1162,7 +1163,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     struct bu_external bin_ext;
     int ret = -1;
     if (intern.idb_meth->ft_export5) {
-	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, gedp->dbip, gedp->dbip->db_resp);
+	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, gedp->dbip, wdbp->wdb_resp);
     }
     if (ret != 0) {
 	bu_vls_printf(gedp->ged_result_str, "Error while attempting to export %s\n", GED_DB_DENSITY_OBJECT);
@@ -1633,7 +1634,7 @@ mater_density(struct ged *gedp, size_t argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (BU_STR_EQUAL(argv[1], "get")) {
@@ -1702,7 +1703,7 @@ ged_mater_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* The -s option allows us to do mater on an object even if the

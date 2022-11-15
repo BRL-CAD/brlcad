@@ -109,7 +109,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 
     if (!argc) {
 	print_help_msg(gedp->ged_result_str);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* parse standard options */

@@ -21,6 +21,16 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * fa2ac4d164f143 broke embedded raytrace viewing in qged, and the rt
   command windows display when launched from qged
 
+* verify bot_dump -o file.obj generates valid obj files (see BUGS)
+
+* docs:
+  r72314 in CHANGES, minimally impacting
+  r72315 ps man page, NEWS
+  r78172 NEWS (mention tool(s), not libanalyze)
+  r76009 NEWS, CHANGES
+  r76019 NEWS, man page
+  r76021 NEWS, CHANGES
+
 * re-enable regress-asc and regress-weight
 
 * material infrastructure has regressions due to attr sync code that

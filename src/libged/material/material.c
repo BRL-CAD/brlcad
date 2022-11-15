@@ -594,7 +594,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
     /* incorrect arguments */
     if (argc < 2) {
         bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-        return BRLCAD_HELP;
+        return GED_HELP;
     }
 
     scmd = get_material_cmd(argv[1]);

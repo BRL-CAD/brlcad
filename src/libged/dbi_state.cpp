@@ -2207,11 +2207,12 @@ BViewState::scene_obj(
     }
 
     // Prepare draw data
+    struct rt_wdb *wdbp = wdb_dbopen(dbis->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct draw_update_data_t *ud;
     BU_GET(ud, struct draw_update_data_t);
     ud->dbip = dbis->gedp->dbip;
-    ud->tol = &dbis->gedp->dbip->db_tol;
-    ud->ttol = &dbis->gedp->dbip->db_ttol;
+    ud->tol = &wdbp->wdb_tol;
+    ud->ttol = &wdbp->wdb_ttol;
     ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view... local_res is temporary, don't use it here
     ud->mesh_c = dbis->gedp->ged_lod;
     sp->dp = dp;

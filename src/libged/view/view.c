@@ -369,7 +369,7 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
 
     if (print_help || (calc_near.set && calc_far.set)) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage_string);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     int calc_mode = -1;
