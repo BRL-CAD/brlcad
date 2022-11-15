@@ -658,6 +658,42 @@ DbiState::digest_path(const char *path)
 }
 
 bool
+DbiState::valid_hash(unsigned long long phash)
+{
+    if (!phash)
+	return false;
+
+    // First, see if the hash is an instance string
+    if (i_str.find(phash) != i_str.end())
+	return true;
+
+    // If we have potentially obsolete names, check those
+    // before trying the dp (which may no longer be invalid)
+    if (old_names.size() && old_names.find(phash) != old_names.end())
+	return true;
+
+    // If not, try the directory pointer
+    if (d_map.find(phash) != d_map.end())
+	return true;
+
+    // Last option - invalid string
+    if (invalid_entry_map.find(phash) != invalid_entry_map.end())
+	return true;
+
+    return false;
+}
+
+bool
+DbiState::valid_hash_path(std::vector<unsigned long long> &phashes)
+{
+    for (size_t i = 0; i < phashes.size(); i++) {
+	if (!valid_hash(phashes[i]))
+	    return false;
+    }
+    return true;
+}
+
+bool
 DbiState::print_hash(struct bu_vls *opath, unsigned long long phash)
 {
     if (!phash)
@@ -2762,9 +2798,13 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     if (vs) {
 	for (size_t i = 0; i < staged.size(); i++) {
 	    std::vector<unsigned long long> cpath = staged[i];
+	    // Validate this path - if the user has specified an invalid
+	    // path, there's nothing else to do
+	    if (!dbis->valid_hash_path(cpath))
+		continue;
 	    unsigned long long phash = dbis->path_hash(cpath, 0);
 	    if (check_status(NULL, NULL, phash, cpath, false))
-	       continue;
+		continue;
 	    mat_t m;
 	    MAT_IDN(m);
 	    dbis->get_path_matrix(m, cpath);
