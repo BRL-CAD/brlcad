@@ -47,7 +47,6 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     }
 
     struct ged *gedp = gd->gedp;
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct bview *gvp;
     int print_help = 0;
     static const char *usage = "view lod [csg|mesh] [0|1]\n"
@@ -178,6 +177,8 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
 	    if (!gedp || !gedp->dbip)
 		return BRLCAD_ERROR;
+
+	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
 	    // Clear any old cache in memory
 	    bg_mesh_lod_clear_cache(gedp->ged_lod, 0);
