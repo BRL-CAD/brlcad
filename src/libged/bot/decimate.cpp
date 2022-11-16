@@ -235,7 +235,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 
     if (print_help || !argc) {
 	decimate_usage(gedp->ged_result_str, "bot decimate", d);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
@@ -251,6 +251,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     }
 
     GED_CHECK_EXISTS(gedp, bu_vls_cstr(&output_bot_name), LOOKUP_QUIET, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     struct rt_bot_internal *input_bot = (struct rt_bot_internal*)gb->intern->idb_ptr;
     RT_BOT_CK_MAGIC(input_bot);
@@ -271,7 +272,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	}
 	struct rt_db_internal intern;
 	RT_DB_INTERNAL_INIT(&intern);
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, gedp->dbip->db_resp, BRLCAD_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, wdbp->wdb_resp, BRLCAD_ERROR);
 	struct rt_bot_internal *obot = (struct rt_bot_internal*)intern.idb_ptr;
 
 	// Decimate with GCT

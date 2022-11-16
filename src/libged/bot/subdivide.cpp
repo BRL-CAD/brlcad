@@ -285,7 +285,7 @@ _bot_cmd_subd(void* bs, int argc, const char** argv)
 
     if (print_help || !argc) {
 	subd_usage(gedp->ged_result_str, "bot subd", d);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
