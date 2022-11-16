@@ -1,4 +1,4 @@
-https://www.geometrictools.com/GTEngine/Include/Mathematics/GteDistSegmentSegment.h
+https://github.com/davideberly/GeometricTools/blob/master/GTE/Mathematics/DistSegmentSegment.h
 
 David Eberly, Geometric Tools, Redmond WA 98052
 Copyright (c) 1998-2019
