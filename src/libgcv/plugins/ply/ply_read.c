@@ -349,7 +349,6 @@ ply_read_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, co
 
     if ((state.fd_in = fopen(source_path, "rb")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", source_path);
-	wdb_close(wdbp);
 	perror("libgcv");
 	bu_exit(1, NULL);
     }
@@ -367,8 +366,6 @@ ply_read_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, co
     convert_input(&state);
 
     fclose(state.fd_in);
-
-    wdb_close(wdbp);
 
     return 1;
 }

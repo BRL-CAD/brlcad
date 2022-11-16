@@ -38,6 +38,7 @@ static int frac_stat;
 static void
 fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct rt_db_internal new_intern;
     struct directory *new_dp;
     struct nmgregion *r;
@@ -60,7 +61,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 
     /* make sure the geometry/bounding boxes are up to date */
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
-	nmg_region_a(r, &gedp->dbip->db_tol);
+	nmg_region_a(r, &wdbp->wdb_tol);
 
 
     /* Export NMG as a new solid */
@@ -110,7 +111,7 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (3 < argc) {

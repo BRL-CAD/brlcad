@@ -165,7 +165,7 @@ main(int argc, char **argv)
 	rt_db_free_internal(&intern);
     } FOR_ALL_DIRECTORY_END
 
-	  wdb_close(fp);
+    db_close(fp->dbip);
     db_close(dbip);
 
     fprintf(stderr, "%ld objects failed to convert\n", errors);

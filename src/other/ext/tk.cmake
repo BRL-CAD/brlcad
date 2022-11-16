@@ -16,9 +16,8 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
   if (TARGET tcl_stage)
     # If we're building against a compiled Tcl and not a system Tcl,
     # set some vars accordingly
+    VERSIONS("${CMAKE_CURRENT_SOURCE_DIR}/tcl/generic/tcl.h" TCL_MAJOR_VERSION TCL_MINOR_VERSION TCL_PATCH_VERSION)
     set(TCL_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TCL_BLD-prefix/src/TCL_BLD")
-    set(TCL_MAJOR_VERSION 8)
-    set(TCL_MINOR_VERSION 6)
     set(TCL_TARGET tcl_stage)
   else (TARGET tcl_stage)
     get_filename_component(TCLCONF_DIR "${TCL_LIBRARY}" DIRECTORY)

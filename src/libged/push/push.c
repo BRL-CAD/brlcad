@@ -202,7 +202,7 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     BU_GET(gpdp, struct push_data);
@@ -251,7 +251,6 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
 		     0,				/* take all regions */
 		     push_region_end,
 		     push_leaf, (void *)gpdp);
-    wdb_close(wdbp);
 
     /*
      * If there was any error, then just free up the solid

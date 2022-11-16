@@ -66,7 +66,7 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 
     /* get dsp */
     primitive = argv[1];
-    GED_DB_LOOKUP(gedp, dsp_dp, primitive, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(gedp, dsp_dp, primitive, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gedp, &intern, dsp_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_DSP) {
@@ -106,7 +106,7 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 	    rt_db_free_internal(&intern);
 	    return BRLCAD_ERROR;
 	}
-	GED_DB_LOOKUP(gedp, dsp_dp2, argv[3], LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+	GED_DB_LOOKUP(gedp, dsp_dp2, argv[3], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
 	GED_DB_GET_INTERNAL(gedp, &intern2, dsp_dp2, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
 	if (intern2.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern2.idb_minor_type != DB5_MINORTYPE_BRLCAD_DSP) {

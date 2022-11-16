@@ -3490,7 +3490,7 @@ joint_cmd(struct ged *gedp,
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: joint {command} [command_options]\n\n");
 	(void)joint_usage(gedp, argc, argv, functions);
-	return BRLCAD_HELP;	/* No command entered */
+	return GED_HELP;	/* No command entered */
     }
 
     for (ftp = &functions[1]; ftp->ft_name; ftp++) {

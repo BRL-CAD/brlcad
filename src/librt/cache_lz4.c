@@ -617,6 +617,9 @@ FORCE_INLINE int brl_LZ4_decompress_generic(
                  const size_t dictSize         /* note : = 0 if noDict */
                  )
 {
+    if (source == NULL || outputSize < 0)
+        return -1;
+
     /* Local Variables */
     const BYTE* ip = (const BYTE*) source;
     const BYTE* const iend = ip + inputSize;

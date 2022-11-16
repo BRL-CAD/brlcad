@@ -236,7 +236,7 @@ rt_cmd_color(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
     }
 
     if (argc != 6 && argc != 2)
-	return BRLCAD_ERROR | BRLCAD_HELP;
+	return BRLCAD_ERROR;
 
     if (!BU_STR_EQUAL(argv[0], "color")) {
 	if (msg)
@@ -255,7 +255,7 @@ rt_cmd_color(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 	} else {
 	    if (msg)
 		bu_vls_printf(msg, "rt_cmd_color: unknown option: %s\n", argv[1]);
-            return BRLCAD_ERROR | BRLCAD_HELP;
+            return BRLCAD_ERROR;
         }
     }
 

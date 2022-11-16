@@ -47,7 +47,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* Verify that this wdb supports lookup operations
@@ -56,7 +56,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
     int ret = rt_cmd_attr(gedp->ged_result_str, gedp->dbip, argc, argv);
 
-    if (ret & BRLCAD_HELP) {
+    if (ret & GED_HELP) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
     }
 

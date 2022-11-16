@@ -97,8 +97,9 @@ db_open(const char *name, const char *mode);
  * DBI_NULL on error
  * db_i * on success
  */
-RT_EXPORT extern struct db_i *db_create(const char *name,
-					int version);
+RT_EXPORT extern struct db_i *
+db_create(const char *name, int version);
+
 
 /* close a model database */
 /**

@@ -99,7 +99,7 @@ main(int argc, char **argv)
 
     ascii_to_brlcad(fpin, fpout, "nmg", NULL);
     fclose(fpin);
-    wdb_close(fpout);
+    db_close(fpout->dbip);
     return 0;
 }
 

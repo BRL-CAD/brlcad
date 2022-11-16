@@ -1597,7 +1597,6 @@ after_read:
 
     /* close up shop */
     ascv4_rdestroy(s);
-    wdb_close(wdbp);
     return 1;
 }
 

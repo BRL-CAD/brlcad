@@ -3569,7 +3569,6 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     obj_parser_destroy(ga.parser);
 
     rt_clean_resource(NULL, &rt_uniresource);
-    wdb_close(wdbp);
 
     return 1;
 }

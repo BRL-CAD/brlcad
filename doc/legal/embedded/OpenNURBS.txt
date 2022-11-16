@@ -1,3 +1,5 @@
+https://github.com/mcneel/opennurbs
+
 Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
 OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 McNeel & Associates.
@@ -245,3 +247,4 @@ file:/src/other/openNURBS/opennurbs_zlib.h
 file:/src/other/openNURBS/opennurbs_zlib_memory.cpp
 file:/src/other/openNURBS/readme.txt
 file:/src/librt/primitives/tor/tor_brep.cpp
+

@@ -117,7 +117,7 @@ to_more_args_func(struct ged *gedp,
 	av[i] = bu_strdup((char *)argv[i]);
     av[ac] = (char *)0;
 
-    while ((ret = (*func)(gedp, ac, (const char **)av)) & BRLCAD_MORE) {
+    while ((ret = (*func)(gedp, ac, (const char **)av)) & GED_MORE) {
 	int ac_more;
 	const char **avmp;
 	const char **av_more = NULL;
@@ -257,7 +257,7 @@ to_view_func_common(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (maxargs != TO_UNLIMITED && maxargs < argc) {
@@ -375,7 +375,7 @@ to_dm_func(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (maxargs != TO_UNLIMITED && maxargs < argc) {

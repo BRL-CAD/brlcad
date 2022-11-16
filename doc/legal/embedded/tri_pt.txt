@@ -1,3 +1,5 @@
+https://github.com/davideberly/GeometricTools/blob/master/GTE/Mathematics/DistPointTriangle.h
+
 David Eberly, Geometric Tools, Redmond WA 98052
 Copyright (c) 1998-2019
 Distributed under the Boost Software License, Version 1.0.
@@ -29,7 +31,6 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
 File Version: 3.0.2 (2019/07/30)
-https://www.geometrictools.com/GTEngine/Include/Mathematics/GteDistPointTriangle.h
 
 file:/src/libbg/tri_pt.c
 

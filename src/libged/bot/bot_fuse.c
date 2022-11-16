@@ -164,7 +164,8 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     struct model *m;
     struct nmgregion *r;
     int ret, c, i;
-    struct bn_tol *tol = &gedp->dbip->db_tol;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct bn_tol *tol = &wdbp->wdb_tol;
     int total = 0;
     volatile int out_type = 0; /* open edge output type: 0 = none, 1 = show, 2 = plot */
     size_t open_cnt;
@@ -184,7 +185,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     /* must be wanting help */
     if (argc != 3 && argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], bot_fuse_options_str, usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* Turn off getopt's error messages */
@@ -207,7 +208,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 	    default :
 		{
 		    bu_vls_printf(gedp->ged_result_str, "Unknown option: '%c'", c);
-		    return BRLCAD_HELP;
+		    return GED_HELP;
 		}
 	}
     }
@@ -216,7 +217,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 
     bu_log("%s: start\n", argv[0]);
 
-    GED_DB_LOOKUP(gedp, old_dp, argv[i+1], LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(gedp, old_dp, argv[i+1], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gedp, &intern, old_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
@@ -229,7 +230,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 
     /* place bot in nmg structure */
     bu_log("%s: running rt_bot_tess\n", argv[0]);
-    ret = rt_bot_tess(&r, m, &intern, &gedp->dbip->db_ttol, tol);
+    ret = rt_bot_tess(&r, m, &intern, &wdbp->wdb_ttol, tol);
 
     /* free internal representation of original bot */
     rt_db_free_internal(&intern);

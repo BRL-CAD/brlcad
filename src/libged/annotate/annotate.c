@@ -136,7 +136,7 @@ ged_annotate_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	annotate_help(gedp->ged_result_str, argv0);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);

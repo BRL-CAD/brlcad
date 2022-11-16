@@ -853,7 +853,13 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 		    if (!bu_strcmp(bu_avs_get(&avs, "rhino::type"), "ON_Layer")
 			|| (bu_path_match(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
 			    && bu_path_match("IDef*", (*entry)->fp_names[i]->d_namep, 0))) {
-			const std::string prefix = (*entry)->fp_names[i]->d_namep;
+
+			// If we have a .r suffix, we don't want to incorporate it into the solid name
+			struct bu_vls basename = BU_VLS_INIT_ZERO;
+			bu_path_component(&basename, (*entry)->fp_names[i]->d_namep, BU_PATH_EXTLESS);
+			const std::string prefix = bu_vls_cstr(&basename);
+			bu_vls_free(&basename);
+
 			std::string suffix = ".s";
 			std::size_t num = 1;
 
@@ -988,13 +994,10 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	import_model_objects(*gcv_options, *wdbp, model);
     } catch (const InvalidRhinoModelError &exception) {
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
-	wdb_close(wdbp);
 	return 0;
     }
 
     polish_output(*gcv_options, *context->dbip);
-
-    wdb_close(wdbp);
 
     return 1;
 }

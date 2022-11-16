@@ -58,7 +58,7 @@ ged_inside_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < arg+1) {
 	bu_vls_printf(gedp->ged_result_str, "Enter name of outside solid: ");
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     if ((outdp = db_lookup(gedp->dbip,  argv[arg], LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s not found", argv[0], argv[arg]);

@@ -109,7 +109,7 @@ dm_graphics_system(const char *dmtype)
 }
 
 
-static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", NULL};
+static const char *priority_list[] = {"wgl", "ogl", "X", NULL};
 
 
 extern "C" void
@@ -152,6 +152,11 @@ dm_list_types(struct bu_vls *list, const char *separator)
     }
 
     /* Report anything not included in the priority list but still available */
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    int report_swrast = 0;
+    if (BU_STR_EQUAL(cmd2, "1"))
+	report_swrast = 1;
+
     std::map<std::string, const struct dm *>::iterator d_it;
     for (d_it = dmb->begin(); d_it != dmb->end(); d_it++) {
 	if (checked.find(d_it->first) != checked.end()) {
@@ -160,6 +165,8 @@ dm_list_types(struct bu_vls *list, const char *separator)
 	const struct dm *d = d_it->second;
 	const char *dname = dm_get_name(d);
 	if (dname) {
+	    if (BU_STR_EQUAL(dname, "swrast") && !report_swrast)
+		continue;
 	    if (strlen(bu_vls_cstr(list)) > 0)
 		bu_vls_printf(list, "%s", separator);
 	    bu_vls_printf(list, "%s", dname);
@@ -188,6 +195,13 @@ dm_validXType(const char *dpy_string, const char *name)
     if (d_it == dmb->end()) {
 	return 0;
     }
+
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    int report_swrast = 0;
+    if (BU_STR_EQUAL(cmd2, "1"))
+	report_swrast = 1;
+    if (BU_STR_EQUAL(name, "swrast") && !report_swrast)
+	return 0;
 
     const struct dm *d = d_it->second;
     int is_valid = d->i->dm_viable(dpy_string);

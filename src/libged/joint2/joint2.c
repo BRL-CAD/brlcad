@@ -193,7 +193,7 @@ ged_joint2_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	vls_col_eol(gedp->ged_result_str);
 	bu_vls_printf(gedp->ged_result_str,"\n");
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if ((ndp = db_lookup(gedp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {

@@ -509,7 +509,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&sort_str);
 	bu_vls_free(&keys_str);
 	bu_vls_free(&ofile);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     // If we have one or a series of patterns, process

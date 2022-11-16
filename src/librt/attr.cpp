@@ -365,7 +365,7 @@ rt_cmd_attr(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
     argv += bu_optind - 1;
 
     if (argc < 3) {
-	return BRLCAD_ERROR | BRLCAD_HELP;
+	return BRLCAD_ERROR;
     }
 
     scmd = attr_cmd(argv[1]);
@@ -562,7 +562,7 @@ rt_cmd_attr(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 	const char *oattr, *nattr;
 
 	if (argc != 5) {
-	    return BRLCAD_ERROR | BRLCAD_HELP;
+	    return BRLCAD_ERROR;
 	}
 	oattr = argv[3];
 	nattr = argv[4];

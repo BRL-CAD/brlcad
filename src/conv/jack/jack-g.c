@@ -149,7 +149,7 @@ main(int argc, char **argv)
 
     jack_to_brlcad(fpin, fpout, reg_name, grp_name, jfile);
     fclose(fpin);
-    wdb_close(fpout);
+    db_close(fpout->dbip);
     return 0;
 }
 

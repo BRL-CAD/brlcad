@@ -23,9 +23,9 @@ THIRD_PARTY(tcl TCL tcl
 
 if (BRLCAD_TCL_BUILD)
 
+  VERSIONS("${CMAKE_CURRENT_SOURCE_DIR}/tcl/generic/tcl.h" TCL_MAJOR_VERSION TCL_MINOR_VERSION TCL_PATCH_VERSION)
+
   set(TCL_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TCL_BLD-prefix/src/TCL_BLD")
-  set(TCL_MAJOR_VERSION 8)
-  set(TCL_MINOR_VERSION 6)
 
   # In addition to the usual target dependencies, we need to adjust for the
   # non-standard BRL-CAD zlib name, if we are using our bundled version.  Set a

@@ -885,7 +885,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     using_dbot_dump = 0;
@@ -1416,7 +1416,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, usage, argv[0]);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     using_dbot_dump = 1;

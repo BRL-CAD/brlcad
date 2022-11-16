@@ -63,6 +63,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -70,7 +71,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_optind = 1;      /* re-init bu_getopt() */
@@ -118,7 +119,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: bb %s", usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (!oriented_bb) {
@@ -195,7 +196,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 		return BRLCAD_ERROR;
 	    }
 
-	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, gedp->dbip->db_resp) < 0) {
+	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, wdbp->wdb_resp) < 0) {
 		rt_db_free_internal(&new_intern);
 		bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 	    }
@@ -298,7 +299,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 		return BRLCAD_ERROR;
 	    }
 
-	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, gedp->dbip->db_resp) < 0) {
+	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, wdbp->wdb_resp) < 0) {
 		rt_db_free_internal(&new_intern);
 		bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 		return BRLCAD_ERROR;
