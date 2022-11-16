@@ -129,7 +129,7 @@ main(int ac, char *av[])
     mk_id(outfp, title);
     mk_sph(outfp, ORIGIN_SPHERE, center, 1.0);
 
-    wdb_close(outfp);
+    db_close(outfp->dbip);
     fclose(fp);
     bu_free(title, "title");
 

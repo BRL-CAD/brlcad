@@ -165,7 +165,7 @@ ged_showmats_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc == 3 && argv[1][0] == '-' && argv[1][1] == 'a' && argv[1][2] == '\0') {

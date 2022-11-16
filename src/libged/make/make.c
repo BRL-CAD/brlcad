@@ -86,7 +86,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_optind = 1;
@@ -117,7 +117,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 		if (argc == 2) {
 		    /* intentionally not included: cline */
 		    bu_vls_printf(gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot datum ehy ell ell1 epa eto extrude grip half hyp nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
-		    return BRLCAD_HELP;
+		    return GED_HELP;
 		}
 
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -125,7 +125,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	    case 'h':
 	    case 'H':
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_HELP;
+		return GED_HELP;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return BRLCAD_ERROR;
@@ -551,7 +551,6 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	VSET(vectA, 0.0, scale*0.5, 0.0);
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	int ret = mk_hyp(wdbp, argv[save_bu_optind], vertex, height, vectA, scale*0.25, 0.4);
-	wdb_close(wdbp);
 	return ret;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "part")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;

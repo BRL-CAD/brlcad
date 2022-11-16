@@ -236,7 +236,6 @@ server_geom(struct pkg_conn *connection, char *buf)
     ext.ext_nbytes = raw.object_length;
     flags = db_flags_raw_internal(&raw) | RT_DIR_INMEM;
     wdb_export_external(wdbp, &ext, (const char *)raw.name.ext_buf, flags, raw.minor_type);
-    wdb_close(wdbp);
 
     bu_log("Received %s (MAJOR=%d, MINOR=%d)\n", raw.name.ext_buf, raw.major_type, raw.minor_type);
 }

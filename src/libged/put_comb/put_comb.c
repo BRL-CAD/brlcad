@@ -499,7 +499,7 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 7 || 11 < argc) {

@@ -1158,6 +1158,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct db_i *dbip = gedp->dbip;
 
     /* Need nref current for db_ls to work */
@@ -1171,7 +1172,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
      * instances involved with matrices */
     struct push_state s;
     s.verbosity = verbosity;
-    s.tol = &gedp->dbip->db_tol;
+    s.tol = &wdbp->wdb_tol;
     s.max_depth = max_depth;
     s.stop_at_regions = (to_regions) ? true : false;
     s.stop_at_shapes = (to_solids) ? true : false;
@@ -1237,7 +1238,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
 	    /* Sanity - if we didn't end up with m back at the identity matrix,
 	     * something went wrong with the walk */
-	    if (!bn_mat_is_equal(m, bn_mat_identity, &gedp->dbip->db_tol)) {
+	    if (!bn_mat_is_equal(m, bn_mat_identity, &wdbp->wdb_tol)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error - initial tree walk down %s finished with non-IDN matrix.\n", dp->d_namep);
 		bu_free(all_paths, "free db_ls output");
 		return BRLCAD_ERROR;
@@ -1527,7 +1528,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	struct rt_db_internal *in = u_it->second;
 	if (!s.dry_run) {
-	    if (rt_db_put_internal(dp, s.dbip, in, s.dbip->db_resp) < 0) {
+	    if (rt_db_put_internal(dp, s.dbip, in, wdbp->wdb_resp) < 0) {
 		bu_log("Unable to store %s to the database", dp->d_namep);
 	    }
 	}
@@ -1541,7 +1542,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	struct rt_db_internal *in = u_it->second;
 	if (!s.dry_run) {
-	    if (rt_db_put_internal(dp, s.dbip, in, s.dbip->db_resp) < 0) {
+	    if (rt_db_put_internal(dp, s.dbip, in, wdbp->wdb_resp) < 0) {
 		bu_log("Unable to store %s to the database", dp->d_namep);
 	    }
 	} else {

@@ -63,6 +63,7 @@ _tree_print_node(struct ged *gedp,
     unsigned aflag = (flags & _GED_TREE_AFLAG);
     unsigned cflag = (flags & _GED_TREE_CFLAG);
     struct bu_vls tmp_str = BU_VLS_INIT_ZERO;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* cflag = don't show shapes, so return if this is not a combination */
     if (cflag && !(dp->d_flags & RT_DIR_COMB)) {
@@ -209,14 +210,14 @@ _tree_print_node(struct ged *gedp,
 		for (j = 0; j < pathpos+1; j++)
 		    bu_vls_printf(gedp->ged_result_str, "\t");
 
-		if (verbosity && rt_tree_array[i].tl_tree->tr_l.tl_mat && !bn_mat_is_equal(rt_tree_array[i].tl_tree->tr_l.tl_mat, bn_mat_identity, &gedp->dbip->db_tol))
+		if (verbosity && rt_tree_array[i].tl_tree->tr_l.tl_mat && !bn_mat_is_equal(rt_tree_array[i].tl_tree->tr_l.tl_mat, bn_mat_identity, &wdbp->wdb_tol))
 		    bu_vls_printf(gedp->ged_result_str, "%s ", mlabel);
 		bu_vls_printf(gedp->ged_result_str, "%c ", op);
 		bu_vls_printf(gedp->ged_result_str, "%s\n", rt_tree_array[i].tl_tree->tr_l.tl_name);
 	    } else {
 
 		int domprefix = 0;
-		if (verbosity && rt_tree_array[i].tl_tree->tr_l.tl_mat && !bn_mat_is_equal(rt_tree_array[i].tl_tree->tr_l.tl_mat, bn_mat_identity, &gedp->dbip->db_tol)) {
+		if (verbosity && rt_tree_array[i].tl_tree->tr_l.tl_mat && !bn_mat_is_equal(rt_tree_array[i].tl_tree->tr_l.tl_mat, bn_mat_identity, &wdbp->wdb_tol)) {
 		    domprefix = 1;
 		}
 

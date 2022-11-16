@@ -439,7 +439,7 @@ main(int argc, char **argv)
     }							/* END # 2 */
 
     /* Close mged file. */
-    wdb_close(fpw);
+    db_close(fpw->dbip);
     return 0;
 
 }							/* END # 1 */

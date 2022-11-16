@@ -278,8 +278,6 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
 	//combine all top level regions
 	mk_lcomb(wdbp, "all", &state.scene, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 
-	wdb_close(wdbp);
-
 	return 1;
 }
 

@@ -308,7 +308,6 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 
 	memset(buffer, 0, BUFSIZ);
     }
-    wdb_close(wdbp);
 
     return 0;
 }
@@ -367,7 +366,6 @@ create_material(struct ged *gedp, int argc, const char *argv[])
 		&opticalProperties,
 		&thermalProperties);
 
-    wdb_close(wdbp);
     return 0;
 }
 
@@ -522,7 +520,6 @@ set_material(struct ged *gedp, int argc, const char *argv[])
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     int ret = wdb_put_internal(wdbp, argv[2], &intern, mk_conv2mm);
-    wdb_close(wdbp);
     return ret;
 }
 
@@ -597,7 +594,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
     /* incorrect arguments */
     if (argc < 2) {
         bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-        return BRLCAD_HELP;
+        return GED_HELP;
     }
 
     scmd = get_material_cmd(argv[1]);

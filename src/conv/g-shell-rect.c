@@ -1923,7 +1923,7 @@ main(int argc, char **argv)
     }
 
     Make_shell();
-    wdb_close(fd_out);
+    db_close(fd_out->dbip);
     return 0;
 }
 

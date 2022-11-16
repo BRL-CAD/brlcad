@@ -48,7 +48,7 @@ extern void *ged_cmds;
 	    }\
 	    int ret = ged_exec(gedp, argc, argv); \
 	    if (vret) { \
-		ret |= BRLCAD_UNKNOWN; \
+		ret |= GED_UNKNOWN; \
 	    } \
 	    argv[0] = argv0; \
 	    return ret; \

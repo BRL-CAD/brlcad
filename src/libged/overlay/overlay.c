@@ -121,7 +121,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	_ged_cmd_help(gedp, usage, d);
 	bu_vls_free(&vname);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
@@ -131,7 +131,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
 	bu_vls_free(&vname);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (!write_fb && NEAR_ZERO(size, VUNITIZE_TOL)) {
@@ -158,13 +158,13 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     if (!argc) {
 	_ged_cmd_help(gedp, usage, d);
 	bu_vls_free(&vname);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
     /* check arg cnt */
     if (argc > 2) {
 	_ged_cmd_help(gedp, usage, d);
 	bu_vls_free(&vname);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* Second arg, if present, is view obj name */

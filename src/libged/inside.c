@@ -224,7 +224,8 @@ arbin(struct ged *gedp,
 	    return BRLCAD_ERROR;
 	}
 
-	if (bg_pnt3_pnt3_equal(pt[0], pt[1], &gedp->dbip->db_tol)) {
+	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	if (bg_pnt3_pnt3_equal(pt[0], pt[1], &wdbp->wdb_tol)) {
 	    /* if any two of the calculates intersection points are equal,
 	     * then all four must be equal
 	     */
@@ -270,16 +271,17 @@ arbin(struct ged *gedp,
 	struct bu_ptbl vert_tab;
 	struct rt_bot_internal *bot;
 
+	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	ttol.magic = BG_TESS_TOL_MAGIC;
-	ttol.abs = gedp->dbip->db_ttol.abs;
-	ttol.rel = gedp->dbip->db_ttol.rel;
-	ttol.norm = gedp->dbip->db_ttol.norm;
+	ttol.abs = wdbp->wdb_ttol.abs;
+	ttol.rel = wdbp->wdb_ttol.rel;
+	ttol.norm = wdbp->wdb_ttol.norm;
 
 	/* Make a model to hold the inside solid */
 	m = nmg_mm();
 
 	/* get an NMG version of this arb7 */
-	if (!OBJ[ip->idb_type].ft_tessellate || OBJ[ip->idb_type].ft_tessellate(&r, m, ip, &ttol, &gedp->dbip->db_tol)) {
+	if (!OBJ[ip->idb_type].ft_tessellate || OBJ[ip->idb_type].ft_tessellate(&r, m, ip, &ttol, &wdbp->wdb_tol)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot tessellate arb7\n");
 	    rt_db_free_internal(ip);
 	    return BRLCAD_ERROR;
@@ -300,7 +302,7 @@ arbin(struct ged *gedp,
 		    continue;
 
 		NMG_GET_FU_PLANE(pl, fu);
-		if (bg_coplanar(planes[i], pl, &gedp->dbip->db_tol) > 0) {
+		if (bg_coplanar(planes[i], pl, &wdbp->wdb_tol) > 0) {
 		    /* found the NMG face geometry that matches arb face i */
 		    found = 1;
 		    fg = fu->f_p->g.plane_p;
@@ -333,7 +335,7 @@ arbin(struct ged *gedp,
 	    v = (struct vertex *)BU_PTBL_GET(&vert_tab, i);
 	    NMG_CK_VERTEX(v);
 
-	    if (nmg_in_vert(v, 0, &RTG.rtg_vlfree, &gedp->dbip->db_tol)) {
+	    if (nmg_in_vert(v, 0, &RTG.rtg_vlfree, &wdbp->wdb_tol)) {
 		bu_vls_printf(gedp->ged_result_str, "Could not find coordinates for inside arb7\n");
 		nmg_km(m);
 		bu_ptbl_free(&vert_tab);
@@ -343,16 +345,16 @@ arbin(struct ged *gedp,
 	bu_ptbl_free(&vert_tab);
 
 	/* rebound model */
-	nmg_rebound(m, &gedp->dbip->db_tol);
+	nmg_rebound(m, &wdbp->wdb_tol);
 
 	/* free old ip pointer */
 	rt_db_free_internal(ip);
 
 	/* convert the NMG to a BOT */
-	bot = (struct rt_bot_internal *)nmg_bot(s, &RTG.rtg_vlfree, &gedp->dbip->db_tol);
+	bot = (struct rt_bot_internal *)nmg_bot(s, &RTG.rtg_vlfree, &wdbp->wdb_tol);
 	nmg_km(m);
 
-	nmg_extrude_cleanup(s, 0, &RTG.rtg_vlfree, &gedp->dbip->db_tol);
+	nmg_extrude_cleanup(s, 0, &RTG.rtg_vlfree, &wdbp->wdb_tol);
 
 	/* put new solid in "ip" */
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -848,6 +850,7 @@ nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
 {
     struct model *m;
     struct nmgregion *r;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (ip->idb_type != ID_NMG)
 	return BRLCAD_ERROR;
@@ -870,9 +873,9 @@ nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
 
 	    next_s = BU_LIST_PNEXT(shell, &s->l);
 
-	    nmg_shell_coplanar_face_merge(s, &gedp->dbip->db_tol, 1, &RTG.rtg_vlfree);
+	    nmg_shell_coplanar_face_merge(s, &wdbp->wdb_tol, 1, &RTG.rtg_vlfree);
 	    if (!nmg_kill_cracks(s))
-		(void)nmg_extrude_shell(s, thick, 0, 0, &RTG.rtg_vlfree, &gedp->dbip->db_tol);
+		(void)nmg_extrude_shell(s, thick, 0, 0, &RTG.rtg_vlfree, &wdbp->wdb_tol);
 
 	    s = next_s;
 	}
@@ -902,6 +905,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
     fastf_t thick[6];
     plane_t planes[6];
     char *newname;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -911,7 +915,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	int uvec[8], svec[11];
 	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
-	if (rt_arb_get_cgtype(&cgtype, (struct rt_arb_internal *)ip->idb_ptr, &gedp->dbip->db_tol, uvec, svec) == 0) {
+	if (rt_arb_get_cgtype(&cgtype, (struct rt_arb_internal *)ip->idb_ptr, &wdbp->wdb_tol, uvec, svec) == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: BAD ARB\n", o_name);
 	    return BRLCAD_ERROR;
 	}
@@ -919,7 +923,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	/* must find new plane equations to account for
 	 * any editing in the es_mat matrix or path to this solid.
 	 */
-	if (rt_arb_calc_planes(&error_msg, (struct rt_arb_internal *)ip->idb_ptr, cgtype, planes, &gedp->dbip->db_tol) < 0) {
+	if (rt_arb_calc_planes(&error_msg, (struct rt_arb_internal *)ip->idb_ptr, cgtype, planes, &wdbp->wdb_tol) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s\nrt_arb_calc_planes(%s): failed\n", bu_vls_addr(&error_msg), o_name);
 	    bu_vls_free(&error_msg);
 	    return BRLCAD_ERROR;
@@ -932,7 +936,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
     /* get the inside solid name */
     if (argc < arg+1) {
 	bu_vls_printf(gedp->ged_result_str, "Enter name of the inside solid: ");
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     if (db_lookup(gedp->dbip, argv[arg], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s already exists.\n", argv[0], argv[arg]);
@@ -984,7 +988,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < nface; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", prompt[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -999,7 +1003,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < 3; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_tgcin[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1012,7 +1016,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	case ID_ELL:
 	    if (argc < arg+1) {
 		bu_vls_printf(gedp->ged_result_str, "Enter desired thickness: ");
-		return BRLCAD_MORE;
+		return GED_MORE;
 	    }
 	    thick[0] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 	    ++arg;
@@ -1024,7 +1028,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	case ID_TOR:
 	    if (argc < arg+1) {
 		bu_vls_printf(gedp->ged_result_str, "Enter desired thickness: ");
-		return BRLCAD_MORE;
+		return GED_MORE;
 	    }
 	    thick[0] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 	    ++arg;
@@ -1037,7 +1041,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < 1; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_partin[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1051,7 +1055,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < 4; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_rpcin[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1065,7 +1069,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < 4; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_rhcin[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1079,7 +1083,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < 2; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_epain[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1093,7 +1097,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < 2; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_ehyin[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1107,7 +1111,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    for (i = 0; i < 1; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_etoin[i]);
-		    return BRLCAD_MORE;
+		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 		++arg;
@@ -1120,7 +1124,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	case ID_NMG:
 	    if (argc < arg+1) {
 		bu_vls_printf(gedp->ged_result_str, "%s", *p_nmgin);
-		return BRLCAD_MORE;
+		return GED_MORE;
 	    }
 	    thick[0] = atof(argv[arg]) * gedp->dbip->dbi_local2base;
 	    ++arg;

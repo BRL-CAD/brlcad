@@ -267,31 +267,37 @@ db_open(const char *name, const char *mode)
     }
 
     /* Initialize tolerances */
-    BN_TOL_INIT_SET_TOL(&dbip->db_tol);
-    BG_TESS_TOL_INIT_SET_TOL(&dbip->db_ttol);
 
     /* Set up the four possible wdb containers. */
     if (rt_uniresource.re_magic != RESOURCE_MAGIC)
 	rt_init_resource(&rt_uniresource, 0, NULL);
 
-    // TODO - don't use a global for this...
-    dbip->db_resp = &rt_uniresource;
-
     BU_ALLOC(dbip->dbi_wdbp, struct rt_wdb);
     wdb_init(dbip->dbi_wdbp, dbip, RT_WDB_TYPE_DB_DISK);
+    dbip->dbi_wdbp->wdb_resp = &rt_uniresource;
+    BN_TOL_INIT_SET_TOL(&dbip->dbi_wdbp->wdb_tol);
+    BG_TESS_TOL_INIT_SET_TOL(&dbip->dbi_wdbp->wdb_ttol);
 
     BU_ALLOC(dbip->dbi_wdbp_a, struct rt_wdb);
     wdb_init(dbip->dbi_wdbp_a, dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
+    dbip->dbi_wdbp_a->wdb_resp = &rt_uniresource;
+    BN_TOL_INIT_SET_TOL(&dbip->dbi_wdbp_a->wdb_tol);
+    BG_TESS_TOL_INIT_SET_TOL(&dbip->dbi_wdbp_a->wdb_ttol);
 
     BU_ALLOC(dbip->dbi_wdbp_inmem, struct rt_wdb);
     wdb_init(dbip->dbi_wdbp_inmem, dbip, RT_WDB_TYPE_DB_INMEM);
+    dbip->dbi_wdbp_inmem->wdb_resp = &rt_uniresource;
+    BN_TOL_INIT_SET_TOL(&dbip->dbi_wdbp_inmem->wdb_tol);
+    BG_TESS_TOL_INIT_SET_TOL(&dbip->dbi_wdbp_inmem->wdb_ttol);
 
     BU_ALLOC(dbip->dbi_wdbp_inmem_a, struct rt_wdb);
     wdb_init(dbip->dbi_wdbp_inmem_a, dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
+    dbip->dbi_wdbp_inmem_a->wdb_resp = &rt_uniresource;
+    BN_TOL_INIT_SET_TOL(&dbip->dbi_wdbp_inmem_a->wdb_tol);
+    BG_TESS_TOL_INIT_SET_TOL(&dbip->dbi_wdbp_inmem_a->wdb_ttol);
 
     return dbip;
 }
-
 
 struct db_i *
 db_create(const char *name, int version)
@@ -383,48 +389,52 @@ db_close(register struct db_i *dbip)
 	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp->l, 0);
 	bu_vls_free(&dbip->dbi_wdbp->wdb_name);
 	bu_vls_free(&dbip->dbi_wdbp->wdb_prestr);
-	dbip->dbi_wdbp->wdb_type = 0;
-	dbip->dbi_wdbp->dbip->db_resp = NULL;
+	dbip->dbi_wdbp->type = 0;
+	dbip->dbi_wdbp->wdb_resp = NULL;
 	dbip->dbi_wdbp->wdb_interp = NULL;
 	bu_free((void *)dbip->dbi_wdbp, "struct rt_wdb");
 	dbip->dbi_wdbp = NULL;
     }
+    dbip->dbi_wdbp = NULL;
 
     if (dbip->dbi_wdbp_a) {
 	BU_LIST_DEQUEUE(&dbip->dbi_wdbp_a->l);
 	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp_a->l, 0);
 	bu_vls_free(&dbip->dbi_wdbp_a->wdb_name);
 	bu_vls_free(&dbip->dbi_wdbp_a->wdb_prestr);
-	dbip->dbi_wdbp_a->wdb_type = 0;
-	dbip->dbi_wdbp_a->dbip->db_resp = NULL;
+	dbip->dbi_wdbp_a->type = 0;
+	dbip->dbi_wdbp_a->wdb_resp = NULL;
 	dbip->dbi_wdbp_a->wdb_interp = NULL;
 	bu_free((void *)dbip->dbi_wdbp_a, "struct rt_wdb");
 	dbip->dbi_wdbp_a = NULL;
     }
+    dbip->dbi_wdbp_a = NULL;
 
     if (dbip->dbi_wdbp_inmem) {
 	BU_LIST_DEQUEUE(&dbip->dbi_wdbp_inmem->l);
 	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp_inmem->l, 0);
 	bu_vls_free(&dbip->dbi_wdbp_inmem->wdb_name);
 	bu_vls_free(&dbip->dbi_wdbp_inmem->wdb_prestr);
-	dbip->dbi_wdbp_inmem->wdb_type = 0;
-	dbip->dbi_wdbp_inmem->dbip->db_resp = NULL;
+	dbip->dbi_wdbp_inmem->type = 0;
+	dbip->dbi_wdbp_inmem->wdb_resp = NULL;
 	dbip->dbi_wdbp_inmem->wdb_interp = NULL;
 	bu_free((void *)dbip->dbi_wdbp_inmem, "struct rt_wdb");
 	dbip->dbi_wdbp_inmem = NULL;
     }
+    dbip->dbi_wdbp_inmem = NULL;
 
     if (dbip->dbi_wdbp_inmem_a) {
 	BU_LIST_DEQUEUE(&dbip->dbi_wdbp_inmem_a->l);
 	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp_inmem_a->l, 0);
 	bu_vls_free(&dbip->dbi_wdbp_inmem_a->wdb_name);
 	bu_vls_free(&dbip->dbi_wdbp_inmem_a->wdb_prestr);
-	dbip->dbi_wdbp_inmem_a->wdb_type = 0;
-	dbip->dbi_wdbp_inmem_a->dbip->db_resp = NULL;
+	dbip->dbi_wdbp_inmem_a->type = 0;
+	dbip->dbi_wdbp_inmem_a->wdb_resp = NULL;
 	dbip->dbi_wdbp_inmem_a->wdb_interp = NULL;
 	bu_free((void *)dbip->dbi_wdbp_inmem_a, "struct rt_wdb");
 	dbip->dbi_wdbp_inmem_a = NULL;
     }
+    dbip->dbi_wdbp_inmem_a = NULL;
 
     /* ready to free the database -- use count is now zero */
 

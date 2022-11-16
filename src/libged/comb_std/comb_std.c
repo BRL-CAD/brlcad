@@ -454,7 +454,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3) {
@@ -493,7 +493,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	/*
 	 * Set/Reset the REGION flag of an existing combination
 	 */
-	GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+	GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
 
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s is not a combination\n", comb_name);

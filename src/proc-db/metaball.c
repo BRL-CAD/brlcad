@@ -167,7 +167,6 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
     /* write out new "mega metaball" out to disk */
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
     wdb_export(wdbp, name, newmp, ID_METABALL, 1.0);
-    wdb_close(wdbp);
 }
 
 
@@ -207,7 +206,7 @@ make_spaghetti(const char *filename, const char *name, long count)
     mk_comb1(fp, "manyballs.r", balls[2], 1);
     mk_comb1(fp, "meatballs.r", "meatballs.s", 1);
 
-    wdb_close(fp);
+    db_close(fp->dbip);
 
     /* done with the write-only, now begins read/write */
     dbip = db_open(filename, DB_OPEN_READWRITE);

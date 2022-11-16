@@ -48,6 +48,7 @@ ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     dp_old = dp_new = RT_DIR_NULL;
 
@@ -57,7 +58,7 @@ ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* check that we are using a version 5 database */
@@ -99,7 +100,7 @@ ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
 	dp_new = dp_old;
     }
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp_old, NULL, gedp->dbip->db_resp, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp_old, NULL, wdbp->wdb_resp, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a BOT primitive\n", old_bot_name);
@@ -120,7 +121,7 @@ ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
 	GED_DB_DIRADD(gedp, dp_new, new_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, BRLCAD_ERROR);
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp_new, &intern, gedp->dbip->db_resp, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp_new, &intern, wdbp->wdb_resp, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
 
     return BRLCAD_OK;

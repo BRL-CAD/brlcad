@@ -61,6 +61,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct db_i *dbip = gedp->dbip;
     struct bview *v = gd->cv;
     const char *usage_string = "view gobjs name create";
@@ -151,8 +152,8 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     struct draw_data_t dd;
     dd.dbip = gedp->dbip;
     dd.v = v;
-    dd.tol = &gedp->dbip->db_tol;
-    dd.ttol = &gedp->dbip->db_ttol;
+    dd.tol = &wdbp->wdb_tol;
+    dd.ttol = &wdbp->wdb_ttol;
     dd.mesh_c = gedp->ged_lod;
     dd.color_inherit = 0;
     dd.bound_only = 0;

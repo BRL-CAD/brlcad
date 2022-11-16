@@ -322,7 +322,7 @@ ged_constraint_core(struct ged *gedp, int argc, const char *argv[])
     if (argc < 2) {
 	/* must be wanting help */
 	constraint_usage(gedp->ged_result_str, argv[0]);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
     if (BU_STR_EQUIV(argv[1], "help")) {
 	constraint_help(gedp, argc, argv);
@@ -332,7 +332,7 @@ ged_constraint_core(struct ged *gedp, int argc, const char *argv[])
     if (argc < 3) {
 	/* must be confused */
 	constraint_usage(gedp->ged_result_str, argv[0]);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);

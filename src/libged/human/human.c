@@ -2483,7 +2483,6 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 	mk_lcomb(wdbp, "Crowd.c", &crowd, 0, NULL, NULL, NULL, 0);
 
     /* Close database */
-    wdb_close(wdbp);
     bu_log("Regions Built\n");
     bu_vls_free(&name);
     bu_vls_free(&str);

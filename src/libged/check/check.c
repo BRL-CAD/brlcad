@@ -531,7 +531,7 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 
    if (argc < 2) {
 	check_show_help(gedp);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* See if we have any options to deal with.  Once we hit a subcommand, we're done */
@@ -550,7 +550,7 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 
     if (opt_argc >= argc) {
 	check_show_help(gedp);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     options.getfromview = 0;
@@ -570,7 +570,7 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 
     if (arg_count < 0 ) {
 	check_show_help(gedp);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     nobjs = argc - arg_count;

@@ -451,14 +451,14 @@ main(int argc, char *argv[])
     ret = mk_brep(wdbp, name, (void *)brep);
     if (ret) {
 	delete brep;
-	wdb_close(wdbp);
+	db_close(wdbp->dbip);
 	bu_exit(3, "ERROR: Unable to export %s\n", name);
     }
 
     bu_log("Done.\n");
 
     delete brep;
-    wdb_close(wdbp);
+    db_close(wdbp->dbip);
 
     return 0;
 }

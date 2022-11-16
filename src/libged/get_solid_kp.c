@@ -44,6 +44,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 			const fastf_t *const mat)
 {
     point_t mpt = VINIT_ZERO;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -118,7 +119,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 
 				    if (DIST_PNT_PLANE(mpt,
 					arbn->eqn[l]) >
-					gedp->dbip->db_tol.dist) {
+					wdbp->wdb_tol.dist) {
 					good_vert = 0;
 					break;
 				    }

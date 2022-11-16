@@ -1,3 +1,5 @@
+https://github.com/mmp/pbrt-v3/
+
 pbrt source code is Copyright(c) 1998-2015
                     Matt Pharr, Greg Humphreys, and Wenzel Jakob.
 

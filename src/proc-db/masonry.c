@@ -1007,7 +1007,7 @@ int main(int ac, char **av)
 	    brick(db_fd);
     }
 
-    wdb_close(db_fd);
+    db_close(db_fd->dbip);
     return 0;
 }
 

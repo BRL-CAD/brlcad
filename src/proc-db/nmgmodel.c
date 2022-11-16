@@ -567,7 +567,7 @@ main(int ac, char *av[])
 	/* build a database region mentioning the solid */
 	mk_comb1(fdmodel, "r.NMG", "s.NMG", 1);
 
-	wdb_close(fdmodel);
+	db_close(fdmodel->dbip);
     }
 
     bu_log(" done.\n");

@@ -18,16 +18,23 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* verify bot_dump -o file.obj generates valid obj files (see BUGS)
+
+* docs:
+  r72314 in CHANGES, minimally impacting
+  r72315 ps man page, NEWS
+  r78172 NEWS (mention tool(s), not libanalyze)
+  r76009 NEWS, CHANGES
+  r76019 NEWS, man page
+  r76021 NEWS, CHANGES
+  r72682 NEWS
+
 * re-enable regress-asc and regress-weight
 
 * material infrastructure has regressions due to attr sync code that
   needs to be resolved.
 
 * document user-visible changes
-
-* asc2g is failing on "put" command (maybe specific to 32-bit),
-  resulting in "unknown command" on an uninstalled build.  title and
-  units commands work, but puts fails inside ged_exec().
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS

@@ -112,7 +112,7 @@ ged_qray_core(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	usage(gedp, argv[0]);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* catch bug introduced pre 7.26.0 where .mgedrc ends up with qray
@@ -405,7 +405,7 @@ ged_qray_core(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[1], "help")) {
 	usage(gedp, argv[0]);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_vls_printf(gedp->ged_result_str, "qray: unrecognized command: '%s'\n", argv[1]);

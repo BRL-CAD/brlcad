@@ -163,7 +163,7 @@ int main(int   argc,
 	    }
 
 	    regions.create(wdbp);
-	    wdb_close(wdbp);
+	    db_close(wdbp->dbip);
 	}
     }
 

@@ -427,7 +427,7 @@ void output_brlcad (char *ofile,
       if (faces) free (faces);
     }
 
-  wdb_close(db_fp);
+  db_close(db_fp->dbip);
 }
 
 //******************************************************************************

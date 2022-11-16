@@ -146,7 +146,6 @@ asc_read_v5(
     }
 
     bu_vls_free(&cur_line);
-    wdb_close(wdbp);
 
     return balanced;
 }

@@ -46,14 +46,15 @@ editarb(struct ged *gedp, struct rt_arb_internal *arb, int type, int edge, vect_
     int ret;
     fastf_t peqn[7][4];
     struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
-    if (rt_arb_calc_planes(&error_msg, arb, type, peqn, &gedp->dbip->db_tol)) {
+    if (rt_arb_calc_planes(&error_msg, arb, type, peqn, &wdbp->wdb_tol)) {
 	bu_vls_printf(gedp->ged_result_str, "%s. Cannot calculate plane equations for faces\n", bu_vls_addr(&error_msg));
 	bu_vls_free(&error_msg);
 	return BRLCAD_ERROR;
     }
     bu_vls_free(&error_msg);
-    ret = arb_edit(arb, peqn, edge, newedge, pos_model, &gedp->dbip->db_tol);
+    ret = arb_edit(arb, peqn, edge, newedge, pos_model, &wdbp->wdb_tol);
     if (!ret) {
 	return BRLCAD_OK;
     } else {
@@ -70,6 +71,7 @@ static int
 edarb_extrude(void *data, int argc, const char *argv[])
 {
     struct ged *gedp = (struct ged *)data;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     int type;
     struct directory *dp;
     struct rt_db_internal intern;
@@ -82,7 +84,7 @@ edarb_extrude(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -99,7 +101,7 @@ edarb_extrude(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    type = rt_arb_std_type(&intern, &gedp->dbip->db_tol);
+    type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
     if (type != 8 && type != 6 && type != 4) {
 	bu_vls_printf(gedp->ged_result_str, "ARB%d: extrusion of faces not allowed\n", type);
 	rt_db_free_internal(&intern);
@@ -117,7 +119,7 @@ edarb_extrude(void *data, int argc, const char *argv[])
     /* convert from the local unit (as input) to the base unit */
     dist = dist * gedp->dbip->dbi_local2base;
 
-    if (arb_extrude(arb, face, dist, &gedp->dbip->db_tol, peqn)) {
+    if (arb_extrude(arb, face, dist, &wdbp->wdb_tol, peqn)) {
 	bu_vls_printf(gedp->ged_result_str, "ARB%d: error extruding face\n", type);
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
@@ -136,6 +138,7 @@ int
 edarb_mirface(void *data, int argc, const char *argv[])
 {
     struct ged *gedp = (struct ged *)data;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;
@@ -146,7 +149,7 @@ edarb_mirface(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -168,7 +171,7 @@ edarb_mirface(void *data, int argc, const char *argv[])
 
     face = atoi(argv[3]);
 
-    if (arb_mirror_face_axis(arb, peqn, face, argv[4], &gedp->dbip->db_tol)) {
+    if (arb_mirror_face_axis(arb, peqn, face, argv[4], &wdbp->wdb_tol)) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: mirror operation failed\n");
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
@@ -188,6 +191,7 @@ static int
 edarb_edgedir(void *data, int argc, const char *argv[])
 {
     struct ged *gedp = (struct ged *)data;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     int type;
     struct directory *dp;
     struct rt_db_internal intern;
@@ -202,7 +206,7 @@ edarb_edgedir(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 6 || 7 < argc) {
@@ -225,7 +229,7 @@ edarb_edgedir(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    type = rt_arb_std_type(&intern, &gedp->dbip->db_tol);
+    type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
@@ -283,6 +287,7 @@ static int
 edarb_permute(void *data, int argc, const char *argv[])
 {
     struct ged *gedp = (struct ged *)data;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;
@@ -291,7 +296,7 @@ edarb_permute(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: edarb %s %s %s", argv[0], argv[1], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 4) {
@@ -311,7 +316,7 @@ edarb_permute(void *data, int argc, const char *argv[])
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    if (arb_permute(arb, argv[3], &gedp->dbip->db_tol)) {
+    if (arb_permute(arb, argv[3], &wdbp->wdb_tol)) {
 	bu_vls_printf(gedp->ged_result_str, "Permute failed\n");
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
@@ -348,7 +353,7 @@ ged_edarb_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
 

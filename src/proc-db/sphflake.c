@@ -189,7 +189,7 @@ int main(int argc, char **argv)
     createScene(&params);
 
     /* clean up */
-    wdb_close(fp);
+    db_close(fp->dbip);
     bu_free(wmemberArray, "free wmemberArray");
     bu_free(params.matArray, "free matArray");
 

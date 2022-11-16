@@ -1,3 +1,5 @@
+https://github.com/mcneel/opennurbs
+
 Copyright (c) 1993-2012 Robert McNeel & Associates.
 All Rights Reserved.
 
@@ -13,3 +15,4 @@ AND OF MERCHANTABILITY ARE HEREBY DISCLAIMED.
 
 openNURBS is a trademark of Robert McNeel & Associates. Rhinoceros is
 a registered trademark of Robert McNeel & Associates.
+

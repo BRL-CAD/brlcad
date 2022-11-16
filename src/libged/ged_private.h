@@ -153,6 +153,7 @@ struct _ged_id_to_names {
 struct _ged_client_data {
     uint32_t magic;  /* add this so a pointer to the struct and a pointer to any of its active elements will differ */
     struct ged *gedp;
+    struct rt_wdb *wdbp;
     struct display_list *gdlp;
     int fastpath_count;			/* statistics */
     struct bv_vlblock *draw_edge_uses_vbp;
