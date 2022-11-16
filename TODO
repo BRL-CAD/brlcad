@@ -18,8 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* verify bot_dump -o file.obj generates valid obj files (see BUGS)
-
 * docs:
   r72314 in CHANGES, minimally impacting
   r72315 ps man page, NEWS
