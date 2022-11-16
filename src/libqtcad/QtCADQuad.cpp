@@ -68,11 +68,28 @@ QtCADQuad::QtCADQuad(QWidget *parent, struct ged *gedpRef, int type) : QWidget(p
     gedp->ged_gvp = views[UPPER_RIGHT_QUADRANT]->view();
 
     // Define the spacers
-    spacerTop = new QSpacerItem(3, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
-    spacerBottom = new QSpacerItem(3, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
-    spacerLeft = new QSpacerItem(0, 3, QSizePolicy::Expanding, QSizePolicy::Fixed);
-    spacerRight = new QSpacerItem(0, 3, QSizePolicy::Expanding, QSizePolicy::Fixed);
-    spacerCenter = new QSpacerItem(3, 3, QSizePolicy::Fixed, QSizePolicy::Fixed);
+    spacerTop = new QWidget;
+    spacerTop->setMinimumWidth(1);
+    spacerTop->setMaximumWidth(1);
+    spacerTop->setStyleSheet("");
+    spacerBottom = new QWidget;
+    spacerBottom->setMinimumWidth(1);
+    spacerBottom->setMaximumWidth(1);
+    spacerBottom->setStyleSheet("");
+    spacerLeft = new QWidget;
+    spacerLeft->setMinimumHeight(1);
+    spacerLeft->setMaximumHeight(1);
+    spacerLeft->setStyleSheet("");
+    spacerRight = new QWidget;
+    spacerRight->setMinimumHeight(1);
+    spacerRight->setMaximumHeight(1);
+    spacerRight->setStyleSheet("");
+    spacerCenter = new QWidget;
+    spacerCenter->setMinimumSize(1,1);
+    spacerCenter->setMaximumSize(1,1);
+    // Something is always selected, so the center widget is always colored
+    // accordingly.
+    spacerCenter->setStyleSheet("background-color:yellow;");
 
     views[UPPER_RIGHT_QUADRANT]->set_current(1);
     currentView = views[UPPER_RIGHT_QUADRANT];
@@ -166,8 +183,12 @@ QtCADQuad::changeToSingleFrame()
 
     views[UPPER_RIGHT_QUADRANT]->set_current(1);
     currentView = views[UPPER_RIGHT_QUADRANT];
-    // This is only used in quad mode
-    currentView->select(1);
+
+    // No need to indicate active quad
+    spacerTop->setStyleSheet("");
+    spacerBottom->setStyleSheet("");
+    spacerLeft->setStyleSheet("");
+    spacerRight->setStyleSheet("");
 
     default_views();
 }
@@ -206,13 +227,13 @@ QtCADQuad::changeToQuadFrame()
     while (layout->takeAt(0) != NULL);
 
     layout->addWidget(views[UPPER_LEFT_QUADRANT], 0, 0);
-    layout->addItem(spacerTop, 0, 1);
+    layout->addWidget(spacerTop, 0, 1);
     layout->addWidget(views[UPPER_RIGHT_QUADRANT], 0, 2);
-    layout->addItem(spacerLeft, 1, 0);
-    layout->addItem(spacerCenter, 1, 1);
-    layout->addItem(spacerRight, 1, 2);
+    layout->addWidget(spacerLeft, 1, 0);
+    layout->addWidget(spacerCenter, 1, 1);
+    layout->addWidget(spacerRight, 1, 2);
     layout->addWidget(views[LOWER_LEFT_QUADRANT], 2, 0);
-    layout->addItem(spacerBottom, 2, 1);
+    layout->addWidget(spacerBottom, 2, 1);
     layout->addWidget(views[LOWER_RIGHT_QUADRANT], 2, 2);
 
     default_views();
@@ -248,11 +269,10 @@ QtCADQuad::changeToQuadFrame()
     }
 
     // Current view selection pieces
+    select(UPPER_RIGHT_QUADRANT);
     gedp->ged_gvp = views[UPPER_RIGHT_QUADRANT]->view();
     views[UPPER_RIGHT_QUADRANT]->set_current(1);
     currentView = views[UPPER_RIGHT_QUADRANT];
-    // This is only used in quad mode
-    currentView->select(1);
 }
 
 void
@@ -358,21 +378,47 @@ QtCADQuad::select(int quadrantId)
     // Set new selection
     if (views[quadrantId] != nullptr) {
 	currentView = views[quadrantId];
-	// Make sure we are in quad mode
-	if (views[1] != nullptr) {
-	    views[quadrantId]->select(1);
-	    currentView->set_current(1);
-	}
     }
 
     // Clear any old selections
+    spacerTop->setStyleSheet("");
+    spacerBottom->setStyleSheet("");
+    spacerLeft->setStyleSheet("");
+    spacerRight->setStyleSheet("");
+
+    // If we're not in Quad mode, done
+    if (views[1] == nullptr)
+	return;
+
+    // If we're in quad mode, more work to do
+    currentView->set_current(1);
+
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (i == quadrantId)
 	    continue;
 	if (views[i] != nullptr) {
 	    views[i]->set_current(0);
-	    views[i]->select(0);
 	}
+    }
+
+    if (quadrantId == UPPER_RIGHT_QUADRANT) {
+	spacerTop->setStyleSheet("background-color:yellow;");
+	spacerRight->setStyleSheet("background-color:yellow;");
+    }
+
+    if (quadrantId == UPPER_LEFT_QUADRANT) {
+	spacerTop->setStyleSheet("background-color:yellow;");
+	spacerLeft->setStyleSheet("background-color:yellow;");
+    }
+
+    if (quadrantId == LOWER_LEFT_QUADRANT) {
+	spacerBottom->setStyleSheet("background-color:yellow;");
+	spacerLeft->setStyleSheet("background-color:yellow;");
+    }
+
+    if (quadrantId == LOWER_RIGHT_QUADRANT) {
+	spacerBottom->setStyleSheet("background-color:yellow;");
+	spacerRight->setStyleSheet("background-color:yellow;");
     }
 
     if (oc != currentView)

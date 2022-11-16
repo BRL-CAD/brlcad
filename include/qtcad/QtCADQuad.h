@@ -107,11 +107,14 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 
         // Hang on to these pointers so when we need to clean up memory we have them
         QGridLayout *currentLayout = nullptr;
-        QSpacerItem *spacerTop = nullptr;
-        QSpacerItem *spacerBottom = nullptr;
-        QSpacerItem *spacerLeft = nullptr;
-        QSpacerItem *spacerRight = nullptr;
-        QSpacerItem *spacerCenter = nullptr;
+	// Note that we use QWidget here rather than QSpacerItem in order to allow
+	// for color control to indicate active quadrants without having to resize
+	// the windows in response to a selection.
+        QWidget *spacerTop = nullptr;
+        QWidget *spacerBottom = nullptr;
+        QWidget *spacerLeft = nullptr;
+        QWidget *spacerRight = nullptr;
+        QWidget *spacerCenter = nullptr;
 
 	// Flag for initializations of sub-widgets
 	bool init_done_flag = false;

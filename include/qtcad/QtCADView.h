@@ -67,8 +67,6 @@ class QTCAD_EXPORT QtCADView : public QWidget
 	bool isValid();
 	void fallback();
 
-	void select(int quad);
-
 	struct bview * view();
 	struct dm * dmp();
 	struct fb * ifp();

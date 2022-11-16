@@ -144,18 +144,6 @@ QtCADView::save_image(int UNUSED(quad))
 }
 
 void
-QtCADView::select(int quad)
-{
-    if (quad) {
-	// TODO This spacing needs to be configurable
-	l->setContentsMargins(5, 5, 5, 5);
-    }
-    else {
-	l->setContentsMargins(0, 0, 0, 0);
-    }
-}
-
-void
 QtCADView::do_view_changed()
 {
     QTCAD_SLOT("QtCADView::do_view_changed", 1);
