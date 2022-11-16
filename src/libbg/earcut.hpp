@@ -16,8 +16,6 @@
 // OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
-//
-// This version is based off of earcut.js 2.2.3
 
 #pragma once
 
@@ -257,8 +255,7 @@ Earcut<N>::filterPoints(Node* start, Node* end) {
     do {
         again = false;
 
-        if (p && !p->steiner && (equals(p, p->next) || ((p->prev && p->next) && area(p->prev, p, p->next) == 0))) {
-
+        if (!p->steiner && (equals(p, p->next) || area(p->prev, p, p->next) == 0)) {
             removeNode(p);
             p = end = p->prev;
 
@@ -266,7 +263,7 @@ Earcut<N>::filterPoints(Node* start, Node* end) {
             again = true;
 
         } else {
-            p = (p) ? p->next : end;
+            p = p->next;
         }
     } while (again || p != end);
 
