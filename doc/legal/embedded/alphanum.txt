@@ -29,7 +29,7 @@ freely, subject to the following restrictions:
        distribution.
 
 Source:
-https://github.com/facontidavide/PlotJuggler/blob/master/include/PlotJuggler/alphanum.hpp
+https://github.com/facontidavide/PlotJuggler/blob/main/plotjuggler_base/include/PlotJuggler/alphanum.hpp
 
 file:/src/libged/alphanum.h
 
