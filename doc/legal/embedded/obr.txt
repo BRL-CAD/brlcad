@@ -1,5 +1,5 @@
-http://www.geometrictools.com/LibMathematics/Containment/Wm5ContMinBox2.cpp
-http://www.geometrictools.com/LibMathematics/Algebra/Wm5Vector2.inl
+https://github.com/davideberly/GeometricTools/blob/master/GTE/Mathematics/MinimumAreaBox2.h
+https://github.com/davideberly/GeometricTools/blob/master/GTE/Mathematics/Vector2.h
 
 Geometric Tools, LLC
 Copyright (c) 1998-2013
@@ -29,3 +29,4 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
 file:/src/libbg/obr.c
+

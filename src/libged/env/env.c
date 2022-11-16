@@ -56,7 +56,7 @@ ged_env_core(struct ged *gedp, int argc, const char *argv[])
     ret = env_cmd(gedp->ged_result_str, argc, argv);
 
     if (ret == 2) {
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     ret = (!ret) ? BRLCAD_OK : BRLCAD_ERROR;

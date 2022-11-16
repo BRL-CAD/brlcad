@@ -164,15 +164,17 @@ MGED gui
 
 	Settings->Mouse Behavior->Pick Raytrace-Object(s)
 
+MGED overlay command
+	Instead of an optional second argument being the view object
+	name, command will take (potentially) multiple plot files
+	as input to overlay.  Optional view object name will be
+	specified with the -N option.
+
 7.30
 ----
 ~/.density
         automatic reading of .density file in home directory
         materials need to be specified or imported [deprecated 7.28]
-
-btclsh, bwish
-	Emacs key binding emulation
-	achieved by running btclsh in Emacs [deprecated 7.30]
 
 include/bu/redblack.h
 	All redblack related functions, structures and macros
@@ -1664,9 +1666,6 @@ s/(#[[:space:]]*include[[:space:]]+["<])bn\/vectfont\.h/\1bview\/vectfont.h/g
         moved vertfont.h header to bview[7.32]
 s/ID_MATERIAL/ID_COLORTAB/g
         renamed to make room for material objects [7.32]
-s/loop_g/loop_a/g
-s/LOOP_G/LOOP_A/g
-s/->lg_p/->la_p/g
 s/GED_OK/BRLCAD_OK/g
 s/GED_ERROR/BRLCAD_ERROR/g
 s/GED_HELP/BRLCAD_HELP/g
@@ -1677,6 +1676,4 @@ s/dm_draw_obj\(/dm_draw_display_list\(/g
 s/bu_whereis\(/bu_whence\(/g
 s/bu_which\(/bu_whence\(/g
 s/rt_gettree_muves\(/rt_gettrees_and_attrs\(/g
-s/->wdb_tol/->dbip->db_tol/g
-s/->wdb_ttol/->dbip->db_ttol/g
-s/->wdb_resp/->dbip->db_resp/g
+

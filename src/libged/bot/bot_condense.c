@@ -53,7 +53,7 @@ ged_bot_condense_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3) {
@@ -61,7 +61,7 @@ ged_bot_condense_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_LOOKUP(gedp, old_dp, argv[2], LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(gedp, old_dp, argv[2], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gedp, &intern,  old_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {

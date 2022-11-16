@@ -130,8 +130,8 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 
     if (cinfo->logger)
 	fclose(cinfo->logger);
-    if (cinfo->wdbp)
-	wdb_close(cinfo->wdbp);
+    if (cinfo->dbip)
+	db_close(cinfo->dbip);
 
     /* Finally, clear the container */
     //BU_PUT(cinfo, struct creo_conv_info);

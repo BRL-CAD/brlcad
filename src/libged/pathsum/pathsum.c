@@ -81,7 +81,7 @@ ged_pathsum_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage2); /* paths */
 	}
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (BU_STR_EQUAL(argv[1], "-t") && gtd.gtd_flag == _GED_LISTEVAL) {

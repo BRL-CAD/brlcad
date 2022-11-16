@@ -51,7 +51,7 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret & BRLCAD_HELP)
+    if (ret & GED_HELP)
 	return TCL_OK;
 
     if (ret != BRLCAD_OK)

@@ -586,7 +586,6 @@ stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     mk_lcomb(wdbp, "all", &state.all_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 
     fclose(state.fd_in);
-    wdb_close(wdbp);
 
     return 1;
 }

@@ -1,3 +1,5 @@
+https://github.com/openbsd/src/blob/master/lib/libc/gen/fnmatch.c
+
 /* OpenBSD: fnmatch.c v1.23 2020/10/13 04:42:28 */
 
 /* Copyright (c) 2011, VMware, Inc.
@@ -48,3 +50,4 @@ file:/src/libbu/fnmatch.c
 file:/src/libbu/charclass.h
 file:/src/libbu/tests/path_match.cpp
 file:/src/libbu/tests/path_match.in
+

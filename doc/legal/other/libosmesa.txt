@@ -1,3 +1,14 @@
+Original sources from:
+https://archive.mesa3d.org//older-versions/7.x/7.0/
+Cleaned up version with graphical examples:
+https://github.com/starseeker/osmesa
+
+As this particular iteration of Mesa3D is no longer part of the upstream
+project's distribution or maintained by them, sources maintained by BRL-CAD are
+now the primary repository.
+
+
+
 This repository contains Mesa libraries.  The examples directory, if present,
 contains additional 3rd party codes.  Check each source code file for specific
 terms.  The default Mesa license is:

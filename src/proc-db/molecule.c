@@ -89,7 +89,7 @@ main(int argc, char **argv)
     /* Build the overall combination */
     mk_lfcomb(outfp, "molecule", &head, 0);
 
-    wdb_close(outfp);
+    db_close(outfp->dbip);
     return 0;
 }
 

@@ -898,7 +898,7 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
  * certain meta_arg flags applied and/or consolidated with those of
  * the source objects. Objects + offsets are converted to coordinates.
  *
- * Set BRLCAD_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
+ * Set GED_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively.
  *
  * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
@@ -1759,7 +1759,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
  * Converts a string to an existing edit_arg. See subcommand manuals
  * for examples of acceptable argument strings.
  *
- * Set BRLCAD_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
+ * Set GED_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively.
  *
  * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
@@ -1906,7 +1906,7 @@ convert_obj:
  * arguments. See subcommand manuals for examples of acceptable
  * argument strings.
  *
- * Set BRLCAD_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
+ * Set GED_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively. Note that output is always
  * suppressed after the first string is successfully converted.
  *
@@ -1939,7 +1939,7 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 	    break;
 
 	ret = BRLCAD_OK;
-	flags = BRLCAD_QUIET; /* only first conv attempt can be noisy */
+	flags = GED_QUIET; /* only first conv attempt can be noisy */
 	--(*argc);
 	++(*argv);
     }
@@ -2034,7 +2034,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	argv += 2;
     } else {
 	/* no subcommand was found */
-	ret = BRLCAD_HELP;
+	ret = GED_HELP;
 
 	if (argc > 1) {
 	    /* no arguments accepted without a subcommand */
@@ -2073,7 +2073,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 		    if (edit_cmds[i].enabled)
 			bu_vls_printf(gedp->ged_result_str, "%s ",
 				      edit_cmds[i].name);
-		return BRLCAD_HELP;
+		return GED_HELP;
 	    } else {
 		/* get long usage string for a specific command */
 		for (i = 0; edit_cmds[i].name; ++i)
@@ -2101,7 +2101,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 		/* no args to subcommand; must want usage */
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s [help] | %s",
 			      subcmd.cmd->name, subcmd.cmd->usage);
-		return BRLCAD_HELP;
+		return GED_HELP;
 	    }
 
 	    /* Handle "subcmd help" (identical to "help subcmd"),
@@ -2123,7 +2123,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 			  "Usage: %s [help] | %s\n\n%s [help] | %s",
 			  subcmd.cmd->name, subcmd.cmd->usage,
 			  subcmd.cmd->name, subcmd.cmd->help);
-	    return BRLCAD_HELP;
+	    return GED_HELP;
     }
 
     /* Now that the cmd type is known (and wasn't "help"), we can
@@ -2181,7 +2181,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
      */
 
     /* no options are required by default, so quietly look for args */
-    while (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, BRLCAD_QUIET) !=
+    while (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_QUIET) !=
 	   BRLCAD_ERROR) {
 	if (argc == 0) {
 	    if (edit_arg_is_empty(subcmd.cmd_line.args) == BRLCAD_OK) {
@@ -2258,7 +2258,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	conv_flags = BRLCAD_ERROR;
 	switch (c) {
 	    case 'n': /* use natural coordinates of object */
-		conv_flags = BRLCAD_QUIET;
+		conv_flags = GED_QUIET;
 		allow_subopts = 0;
 		break;
 	    case 'x': /* singular coord specif. sub-opts */
@@ -2290,7 +2290,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 			case 'y':
 			case 'z':
 			    /* the only acceptable sub-options here */
-			    conv_flags = BRLCAD_QUIET;
+			    conv_flags = GED_QUIET;
 			    break;
 			default:
 			    if (!isdigit((int)bu_optarg[1]))
@@ -2310,7 +2310,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 		    }
 
 		/* next element may be an arg */
-		conv_flags = BRLCAD_QUIET;
+		conv_flags = GED_QUIET;
 
 		/* record opt for validation/processing by subcmd */
 		cur_arg->cl_options[idx_cur_opt] = c;

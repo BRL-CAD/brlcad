@@ -1,3 +1,5 @@
+https://github.com/syoyo/tinygltf
+
 MIT License
 
 Copyright (c) 2017 Syoyo Fujita, Aurélien Chatelain and many contributors
@@ -22,3 +24,4 @@ SOFTWARE.
 
 file:/src/conv/gltf/tinygltf/tiny_gltf.h
 file:/src/libgcv/plugins/gltf/tinygltf_headers/tiny_gltf.h
+

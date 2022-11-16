@@ -20,8 +20,9 @@
     <cmdsynopsis sepchar=" ">
       <command>overlay</command>
       <arg choice="opt" rep="norepeat"><replaceable>-s #</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-N viewobj_name</replaceable></arg>
       <arg choice="req" rep="norepeat"><replaceable>plot_file</replaceable></arg>
-      <arg choice="opt" rep="norepeat"><replaceable>name</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>viewobj_name</replaceable></arg>
     </cmdsynopsis>
     <cmdsynopsis sepchar=" ">
       <command>overlay -F</command>
@@ -33,7 +34,7 @@
       <arg choice="opt" rep="norepeat"><replaceable>-w #</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>-n #</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>-S #</replaceable></arg>
-      <arg choice="opt" rep="norepeat"><replaceable>--format fmt</replaceable></arg>      
+      <arg choice="opt" rep="norepeat"><replaceable>--format fmt</replaceable></arg>
       <arg choice="req" rep="norepeat"><replaceable>img_file</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -51,7 +52,7 @@
   <para>
     When displaying plot files, phony object names are created for each
     part of the plot file(s) with a unique color.  The names are created
-    by adding a color to the specified <emphasis>name</emphasis>, or to
+    by adding a color to the specified <emphasis>viewobj_name</emphasis>, or to
     _PLOT_OVERLAY_  if no name is provided. The color suffix is built by
     converting the RGB color to a six-digit hex number. Each color
     corresponds to 2 hex digits, so that white becomes "ffffff," red

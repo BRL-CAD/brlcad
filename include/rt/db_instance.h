@@ -114,10 +114,6 @@ struct db_i {
     char * dbi_title;                   /**< @brief title from IDENT rec */
     char ** dbi_filepath;               /**< @brief search path for aux file opens (convenience var) */
 
-    struct bg_tess_tol  db_ttol;
-    struct bn_tol       db_tol;
-    struct resource*    db_resp;
-
     /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
 
     struct directory * dbi_Head[RT_DBNHASH]; /** @brief PRIVATE: object hash table */

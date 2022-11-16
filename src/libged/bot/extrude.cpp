@@ -196,7 +196,6 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 
     // Write the comb
     mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 1, NULL, NULL, NULL, 0);
-    wdb_close(wdbp);
 
     bu_vls_free(&comb_name);
     bu_vls_free(&prim_name);

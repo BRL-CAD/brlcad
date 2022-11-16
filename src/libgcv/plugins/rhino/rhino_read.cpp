@@ -1103,8 +1103,6 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 
     polish_output(*gcv_options, *context->dbip);
 
-    wdb_close(wdbp);
-
     return 1;
 }
 

@@ -399,11 +399,11 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
     int ac = bu_opt_parse(NULL, argc, argv, d);
     if (help) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
     if (ac < 2) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
     argc = ac;
 
@@ -507,11 +507,11 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
     int ac = bu_opt_parse(NULL, argc, argv, d);
     if (help) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
     if (ac < 2) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
     argc = ac;
 

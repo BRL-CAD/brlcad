@@ -47,6 +47,7 @@ ged_bot_sync_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -54,7 +55,7 @@ ged_bot_sync_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     for (i = 1; i < argc; ++i) {
@@ -81,7 +82,7 @@ ged_bot_sync_core(struct ged *gedp, int argc, const char *argv[])
 		bot = (struct rt_bot_internal *)intern.idb_ptr;
 		rt_bot_sync(bot);
 
-		GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->dbip->db_resp, BRLCAD_ERROR);
+		GED_DB_PUT_INTERNAL(gedp, dp, &intern, wdbp->wdb_resp, BRLCAD_ERROR);
 	    }
 	}
 	bu_free(obj, "free obj");

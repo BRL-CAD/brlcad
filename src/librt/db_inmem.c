@@ -137,7 +137,6 @@ db_create_inmem(void) {
     bu_free_external(&attr);
     bu_avs_free(&avs);
     bu_vls_free(&units);
-    wdb_close(wdbp);
 
     return dbip;
 }

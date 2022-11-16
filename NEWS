@@ -13,12 +13,22 @@ changes made.  See document footer for additional details.
 --- 2022-XX-XX  Release 7.34.X                                     ---
 ----------------------------------------------------------------------
 
+This major release introduces a new method for managing third party
+library building - src/other/ext dependencies now use the native
+build system provided by the project, rather than having BRL-CAD
+rewrite it to match ours.
+
+* improved bot_dump default command help - Chris McGregor
+* fixed suffix for 3dm-g converted solids - Cliff Yapp
+* added -N view obj name option to overlay command - Cliff Yapp
+* updated man pages for GED brep command - Cliff Yapp
+* added man page for MGED Overlaps Tool - Chris McGregor
 * major STEPcode updates, using unmodified upstream 0.8.1 - Cliff Yapp
 * added aircode reporting support to the lc command - Sean Morrison
-* fixed 3dm to g names converting alphabitized - Chris McGregor
+* fixed 3dm to g names converting alphabetized - Chris McGregor
 * updated Tcl/Tk to version 8.6.12 - Cliff Yapp
 * updated netpbm to version 10.73.40 - Cliff Yapp
-* updated zlib to version 1.2.12 - Cliff Yapp
+* updated zlib to version 1.2.13 - Cliff Yapp
 * fixed mged -c 'unknown variable' warning dialogs - Sean Morrison
 * improved mged & archer html command help formatting - Sean Morrison
 * fixed archer empty string ("") loading behavior - Cliff Yapp
@@ -433,6 +443,7 @@ and address portability issues.
 * support rt -C colors specified as 0-255 or 0.0-1.0 - Jon Engbert
 * fixed xpush bug leaving stray top-level objects - Nick Reed
 * removed MGED wrapper 'mged.bat' batch script on Windows - Cliff Yapp
+* fixed png-pix redirected output on Windows - Bob Parker
 
 
 ----------------------------------------------------------------------

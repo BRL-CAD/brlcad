@@ -52,7 +52,7 @@ ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     myArgc = argc;
