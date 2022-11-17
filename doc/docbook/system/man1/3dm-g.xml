@@ -76,9 +76,6 @@
 
   <para>
     <prompt>mged&gt; </prompt><userinput>3dm-g -r -o nist.g NIST_MBE_PMI_7-10.3dm</userinput>
-    <literallayout class="normal">
-
-    </literallayout>
   </para>
   <para>
     This example imports the BRL-CAD copy of NIST's MBE PMI models 7-10 to nist.g while randomizing
