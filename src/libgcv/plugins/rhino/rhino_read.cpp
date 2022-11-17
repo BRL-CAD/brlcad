@@ -897,7 +897,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 		      "-type shape -not -below -type region", 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
-    struct rt_wdb *wdbp = wdb_dbopen(&db, RT_WDB_TYPE_DB_DISK);
+    struct rt_wdb *wdbp = wdb_dbopen(&db, RT_WDB_TYPE_DB_INMEM);
 
     if (BU_PTBL_LEN(&found)) {
 	db_full_path **entry;
