@@ -19,7 +19,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
 * docs:
-  r74890 in NEWS for -r option (and needs man page)
   af0cf075e0767070394e5a99fc194de0eea99683 in NEWS, man page
   r72314 in CHANGES, minimally impacting
   r72315 ps man page, NEWS
