@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='stlg1'>
+  <refmeta>
+    <refentrytitle>3DM-G
+    </refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='software'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='manual'>User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>3dm-g</refname>
+    <refpurpose>Rhinoceros 3D Translator (3dm to BRL-CAD)</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv xml:id='synopsis'>
+    <cmdsynopsis>
+      <command>3dm-g</command>
+      <arg choice='opt'>-r</arg>
+      <arg choice='opt'>-v</arg>
+      <arg choice='opt'>-h</arg>
+      <arg choice='req'>-o <replaceable>out.g</replaceable></arg>
+      <arg choice='req'><replaceable>file.3dm</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection xml:id='description'><title>DESCRIPTION</title>
+  <para>
+    <command>3dm-g</command> converts the <emphasis remap='I'>file.3dm</emphasis>
+    Rhino3D file to a BRL-CAD <emphasis remap='I'>file.g</emphasis> file.
+  </para>
+  <para>
+    BRL-CAD utilizes the OpenNURBS library for reading and processing 3dm files.
+    Since BRL-CAD also uses this library internally for NURBS support, 3dm-g
+    import is generally a very direct and relatively problem free conversion path.
+  </para>
+  </refsection>
+
+  <refsection xml:id='options'><title>OPTIONS</title>
+
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-o</emphasis></term>
+      <listitem>
+	<para>
+	  Specify the output name of the .g file.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-r</emphasis></term>
+      <listitem>
+	<para>
+	  Randomize colors assigned to imported objects.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-v</emphasis></term>
+      <listitem>
+	<para>
+	  Verbose reporting of conversion progress.
+	</para>
+      </listitem>
+    </varlistentry>
+
+  </variablelist>
+  </refsection>
+
+  <refsection xml:id='example'><title>EXAMPLE</title>
+
+  <example><title>Verbose Reporting of Search Information </title>
+
+  <para>
+    <prompt>mged&gt; </prompt><userinput>3dm-g -r -o nist.g NIST_MBE_PMI_7-10.3dm</userinput>
+    <literallayout class="normal">
+
+    </literallayout>
+  </para>
+  <para>
+    This example imports the BRL-CAD copy of NIST's MBE PMI models 7-10 to nist.g while randomizing
+    the colors assigned to objects.
+  </para>
+  </example>
+
+  </refsection>
+
+  <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
+
+  <para>
+    User will see OpenNURBS diagnostic reporting as the 3dm file is read.
+  </para>
+  </refsection>
+
+  <refsection xml:id='author'><title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+
+  </refsection>
+
+  <refsection xml:id='copyright'><title>COPYRIGHT</title>
+  <para>
+    This software is Copyright (c) 1999-2022 by the United States
+    Government as represented by U.S. Army Research Laboratory.
+  </para>
+  </refsection>
+
+  <refsection xml:id='bug_reports'><title>BUG REPORTS</title>
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to <email>devs@brlcad.org</email>
+  </para>
+  </refsection>
+</refentry>
+
+<!-- vim: set shiftwidth=2 : -->
+

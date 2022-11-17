@@ -18,6 +18,7 @@ library building - src/other/ext dependencies now use the native
 build system provided by the project, rather than having BRL-CAD
 rewrite it to match ours.
 
+* added man page for 3dm-g Rhino3D importer - Cliff Yapp
 * improved bot_dump default command help - Chris McGregor
 * fixed suffix for 3dm-g converted solids - Cliff Yapp
 * added -N view obj name option to overlay command - Cliff Yapp
