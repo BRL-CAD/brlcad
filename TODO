@@ -20,7 +20,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * docs:
   af0cf075e0767070394e5a99fc194de0eea99683 in NEWS, man page
-  r72314 in CHANGES, minimally impacting
   r78172 NEWS (mention tool(s), not libanalyze)
   r76009 NEWS, CHANGES
   r76019 NEWS, man page
