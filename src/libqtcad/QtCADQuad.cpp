@@ -91,6 +91,12 @@ QtCADQuad::QtCADQuad(QWidget *parent, struct ged *gedpRef, int type) : QWidget(p
     // accordingly.
     spacerCenter->setStyleSheet("background-color:yellow;");
 
+    spacerTop->setVisible(false);
+    spacerBottom->setVisible(false);
+    spacerLeft->setVisible(false);
+    spacerRight->setVisible(false);
+    spacerCenter->setVisible(false);
+
     views[UPPER_RIGHT_QUADRANT]->set_current(1);
     currentView = views[UPPER_RIGHT_QUADRANT];
 
@@ -185,10 +191,10 @@ QtCADQuad::changeToSingleFrame()
     currentView = views[UPPER_RIGHT_QUADRANT];
 
     // No need to indicate active quad
-    spacerTop->setStyleSheet("");
-    spacerBottom->setStyleSheet("");
-    spacerLeft->setStyleSheet("");
-    spacerRight->setStyleSheet("");
+    spacerTop->setVisible(false);
+    spacerBottom->setVisible(false);
+    spacerLeft->setVisible(false);
+    spacerRight->setVisible(false);
 
     default_views();
 }
@@ -219,6 +225,12 @@ QtCADQuad::changeToQuadFrame()
 	views[i]->view()->gv_s->adaptive_plot_csg = views[UPPER_RIGHT_QUADRANT]->view()->gv_s->adaptive_plot_csg;
 	bv_set_add_view(&gedp->ged_views, views[i]->view());
     }
+
+    spacerTop->setVisible(true);
+    spacerBottom->setVisible(true);
+    spacerLeft->setVisible(true);
+    spacerRight->setVisible(true);
+    spacerCenter->setVisible(true);
 
     QGridLayout *layout = (QGridLayout *)this->layout();
     if (layout == nullptr) {
