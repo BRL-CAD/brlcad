@@ -67,36 +67,6 @@ QtCADQuad::QtCADQuad(QWidget *parent, struct ged *gedpRef, int type) : QWidget(p
     bv_set_add_view(&gedp->ged_views, views[UPPER_RIGHT_QUADRANT]->view());
     gedp->ged_gvp = views[UPPER_RIGHT_QUADRANT]->view();
 
-    // Define the spacers
-    spacerTop = new QWidget;
-    spacerTop->setMinimumWidth(1);
-    spacerTop->setMaximumWidth(1);
-    spacerTop->setStyleSheet("");
-    spacerBottom = new QWidget;
-    spacerBottom->setMinimumWidth(1);
-    spacerBottom->setMaximumWidth(1);
-    spacerBottom->setStyleSheet("");
-    spacerLeft = new QWidget;
-    spacerLeft->setMinimumHeight(1);
-    spacerLeft->setMaximumHeight(1);
-    spacerLeft->setStyleSheet("");
-    spacerRight = new QWidget;
-    spacerRight->setMinimumHeight(1);
-    spacerRight->setMaximumHeight(1);
-    spacerRight->setStyleSheet("");
-    spacerCenter = new QWidget;
-    spacerCenter->setMinimumSize(1,1);
-    spacerCenter->setMaximumSize(1,1);
-    // Something is always selected, so the center widget is always colored
-    // accordingly.
-    spacerCenter->setStyleSheet("background-color:yellow;");
-
-    spacerTop->setVisible(false);
-    spacerBottom->setVisible(false);
-    spacerLeft->setVisible(false);
-    spacerRight->setVisible(false);
-    spacerCenter->setVisible(false);
-
     views[UPPER_RIGHT_QUADRANT]->set_current(1);
     currentView = views[UPPER_RIGHT_QUADRANT];
 
@@ -111,11 +81,16 @@ QtCADQuad::~QtCADQuad()
 	}
     }
 
-    delete spacerTop;
-    delete spacerBottom;
-    delete spacerLeft;
-    delete spacerRight;
-    delete spacerCenter;
+    if (spacerTop)
+	delete spacerTop;
+    if (spacerBottom)
+	delete spacerBottom;
+    if (spacerLeft)
+	delete spacerLeft;
+    if (spacerRight)
+	delete spacerRight;
+    if (spacerCenter)
+	delete spacerCenter;
 }
 
 /**
@@ -191,10 +166,16 @@ QtCADQuad::changeToSingleFrame()
     currentView = views[UPPER_RIGHT_QUADRANT];
 
     // No need to indicate active quad
-    spacerTop->setVisible(false);
-    spacerBottom->setVisible(false);
-    spacerLeft->setVisible(false);
-    spacerRight->setVisible(false);
+    delete spacerTop;
+    delete spacerBottom;
+    delete spacerLeft;
+    delete spacerRight;
+    delete spacerCenter;
+    spacerTop = nullptr;
+    spacerBottom = nullptr;
+    spacerLeft = nullptr;
+    spacerRight = nullptr;
+    spacerCenter = nullptr;
 
     default_views();
 }
@@ -226,11 +207,29 @@ QtCADQuad::changeToQuadFrame()
 	bv_set_add_view(&gedp->ged_views, views[i]->view());
     }
 
-    spacerTop->setVisible(true);
-    spacerBottom->setVisible(true);
-    spacerLeft->setVisible(true);
-    spacerRight->setVisible(true);
-    spacerCenter->setVisible(true);
+    // Define the spacers
+    spacerTop = new QWidget;
+    spacerTop->setMinimumWidth(1);
+    spacerTop->setMaximumWidth(1);
+    spacerTop->setStyleSheet("");
+    spacerBottom = new QWidget;
+    spacerBottom->setMinimumWidth(1);
+    spacerBottom->setMaximumWidth(1);
+    spacerBottom->setStyleSheet("");
+    spacerLeft = new QWidget;
+    spacerLeft->setMinimumHeight(1);
+    spacerLeft->setMaximumHeight(1);
+    spacerLeft->setStyleSheet("");
+    spacerRight = new QWidget;
+    spacerRight->setMinimumHeight(1);
+    spacerRight->setMaximumHeight(1);
+    spacerRight->setStyleSheet("");
+    spacerCenter = new QWidget;
+    spacerCenter->setMinimumSize(1,1);
+    spacerCenter->setMaximumSize(1,1);
+    // Something is always selected, so the center widget is always colored
+    // accordingly.
+    spacerCenter->setStyleSheet("background-color:yellow;");
 
     QGridLayout *layout = (QGridLayout *)this->layout();
     if (layout == nullptr) {
@@ -393,10 +392,14 @@ QtCADQuad::select(int quadrantId)
     }
 
     // Clear any old selections
-    spacerTop->setStyleSheet("");
-    spacerBottom->setStyleSheet("");
-    spacerLeft->setStyleSheet("");
-    spacerRight->setStyleSheet("");
+    if (spacerTop)
+	spacerTop->setStyleSheet("");
+    if (spacerBottom)
+	spacerBottom->setStyleSheet("");
+    if (spacerLeft)
+	spacerLeft->setStyleSheet("");
+    if (spacerRight)
+	spacerRight->setStyleSheet("");
 
     // If we're not in Quad mode, done
     if (views[1] == nullptr)
