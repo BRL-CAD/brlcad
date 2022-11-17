@@ -20,9 +20,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * docs:
   af0cf075e0767070394e5a99fc194de0eea99683 in NEWS, man page
-  r76009 NEWS, CHANGES
-  r76019 NEWS, man page
-  r76021 NEWS, CHANGES
   r72682 NEWS
 
 * re-enable regress-asc and regress-weight
