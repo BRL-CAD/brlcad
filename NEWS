@@ -208,6 +208,7 @@ infrastructure with BRL-CAD's imminent migration to Git.
 --- 2020-03-19  Release 7.30.6                                     ---
 ----------------------------------------------------------------------
 
+* fixed comgeom-g GIFT combination conversion - Daniel Roßberg
 * fixed transparent drawing in MGED - Nick Reed
 * fixed solid NURBS brep intersection testing - Cliff Yapp
 * removed extra blank line after commands in MGED GUI - Sean Morrison
