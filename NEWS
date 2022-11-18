@@ -131,6 +131,7 @@ BRL-CAD's command-line utilities so they work properly on Windows.
 This is likely the last major release of BRL-CAD on Subversion
 infrastructure with BRL-CAD's imminent migration to Git.
 
+* added additional pre-defined MGED view key bindings - Cliff Yapp
 * added basic example to remrt man page - Cliff Yapp, Sean Morrison
 * added new 'nburst' version of classic burst tool - Cliff Yapp
 * added 'bot set' command for low level BoT manipulation - Cliff Yapp
