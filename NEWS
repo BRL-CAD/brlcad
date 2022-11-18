@@ -85,9 +85,7 @@ rewrite it to match ours.
 * added -S structural diff option to MGED gdiff command - Cliff Yapp
 * added -v verbosity option to MGED tree command - Cliff Yapp
 * added -? option to MGED which command - Cliff Yapp
-* updated Archer to set cwd=HOME when run without args - Cliff Yapp
-* updated rtwizard to set cwd=HOME when run without args - Cliff Yapp
-* updated MGED to set cwd=HOME when run without args - Cliff Yapp
+* MGED, Archer, rtwizard graphically launch with pwd=HOME - Cliff Yapp
 * fixed reporting of MGED "vars" command - Cliff Yapp
 * updated MGED to not open non-.g-files as databases - Cliff Yapp
 * fixed MGED I/O when running GED subcommands - Cliff Yapp
