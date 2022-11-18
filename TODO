@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* remove docs pertaining to 7c9572e27025047b145d0a8b415e03a91ccf716d
+
 * docs:
   r75384 NEWS, more mged view key bindings
   r74890 NEWS for -r option (and needs man page)
