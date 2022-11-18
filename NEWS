@@ -220,6 +220,7 @@ infrastructure with BRL-CAD's imminent migration to Git.
 --- 2019-12-05  Release 7.30.4                                     ---
 ----------------------------------------------------------------------
 
+* improved Creo export plugin handling of color and shader - Nick Reed
 * enhanced attr list command to support reporting values - Cliff Yapp
 * updated FAA Generic Twin example FASTGEN model - Cliff Yapp
 * fixed handling of duplicate FASTGEN object names - Cliff Yapp
