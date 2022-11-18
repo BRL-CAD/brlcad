@@ -92,7 +92,8 @@ rewrite it to match ours.
 * fixed MGED I/O when running GED subcommands - Cliff Yapp
 * added decimation control examples to facetize man page - Cliff Yapp
 * changed gcv converter to append to existing .g files - Cliff Yapp
-* removed obscure MGED menu entries for unused features - Cliff Yapp
+* removed MGED collaboration and rateknob features - Cliff Yapp
+* removed MGED ViewRing menu and sweep rectangle features - Cliff Yapp
 * fixed crash when trying to shade invalid breps - Cliff Yapp
 * improved librt CPU timer behavior - Cliff Yapp
 * fixed example in saveview manual page - Sean Morrison
