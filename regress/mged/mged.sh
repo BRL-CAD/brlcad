@@ -99,7 +99,16 @@ check_command ( ) {
     return 0
 }
 
-log "setting up an almost empty database (mged.g) to make sure mged runs"
+
+output="`$MGED -c ${RANDOM}.g quit 2>&1`"
+if test $? != 0 ; then
+    log "Output: $output"
+    log "Unable to run mged, aborting"
+    exit 1
+fi
+
+
+log "set up a minimal database (mged.g) to make sure mged runs commands"
 rm -f mged.g
 $MGED -c >> $LOGFILE 2>&1 <<EOF
 opendb mged.g y
