@@ -19,11 +19,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
 * docs:
-<<<<<<< HEAD
-=======
   r75384 NEWS, more mged view key bindings
   r74890 NEWS for -r option (and needs man page)
->>>>>>> 0ecd005e02 (more key bindings)
   af0cf075e0767070394e5a99fc194de0eea99683 in NEWS, man page
 
 * re-enable regress-asc and regress-weight
