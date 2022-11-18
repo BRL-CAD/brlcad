@@ -77,6 +77,7 @@ rewrite it to match ours.
 --- 2021-02-06  Release 7.32.2                                     ---
 ----------------------------------------------------------------------
 
+* updated Creo export plugin to work with latest Creo - Bill Chambers
 * fixed memory leak in MGED's gdiff command - Cliff Yapp
 * fixed OSX g-iges crash due to improper memory freeing - Cliff Yapp
 * fixed GQA multithreaded plotting file corruption - Cliff Yapp
