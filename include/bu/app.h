@@ -185,6 +185,11 @@ BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
 /**
  * NOTE: this API is replaced by bu_dir()
  *
+ * For example:
+ * bu_brlcad_dir("doc", 1);
+ * is now:
+ * bu_dir(NULL, 0, BU_DIR_DOC, NULL);
+ *
  * @brief
  * Report the relative paths being used to hold BRL-CAD applications,
  * libraries, and data.
@@ -211,6 +216,11 @@ DEPRECATED BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fa
 
 /**
  * NOTE: this API is replaced by bu_dir()
+ *
+ * For example:
+ * bu_brlcad_root("share/tclscripts/isst/isst.tcl", 1);
+ * is now:
+ * bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "isst", "isst.tcl", NULL);
  *
  * @brief
  * Locate where the BRL-CAD applications and libraries are installed.
