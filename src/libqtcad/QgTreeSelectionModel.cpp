@@ -27,6 +27,7 @@
 #include <unordered_set>
 #include <stack>
 #include <vector>
+#include <QGuiApplication>
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeSelectionModel.h"
@@ -71,10 +72,16 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 
 	// If we are selecting an already selected node, clear it
 	if (flags & QItemSelectionModel::Select && ss->is_selected(snode->path_hash())) {
-	    std::vector<unsigned long long> path_hashes = snode->path_items();
-	    ss->deselect_hpath(path_hashes);
-	    // This toggle is a local operation
-	    continue;
+	    if (!(QGuiApplication::keyboardModifiers().testFlag(Qt::ShiftModifier))) {
+		if (flags & QItemSelectionModel::Clear && ss->selected.size() > 1) {
+		    ss->clear();
+		    std::vector<unsigned long long> path_hashes = snode->path_items();
+		    ss->select_hpath(path_hashes);
+		} else {
+		    std::vector<unsigned long long> path_hashes = snode->path_items();
+		    ss->deselect_hpath(path_hashes);
+		}
+	    }
 	} else {
 	    if (flags & QItemSelectionModel::Clear)
 		ss->clear();
