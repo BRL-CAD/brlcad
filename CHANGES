@@ -150,11 +150,13 @@ include/bg/chull.h
         bg_3d_chull
 
 include/bu/exit.h
-        bu_backtrace and bu_crashreport will be replaced with versions
-        that take an optional parameter to pass in a full path from
-        the calling application.  (Currently available as
-        bu_backtrace_app and bu_crashreport_app, these will
-        replace existing versions after deprecation is complete.)
+        TODO: warrants discussion
+
+        considering replacing bu_backtrace and bu_crashreport with
+        versions that take an optional parameter to pass in a full
+        path from the calling application.  (Currently available as
+        bu_backtrace_app and bu_crashreport_app, these would replace
+        existing versions after deprecation is final.)
 
 MGED gui
 	The following will be removed from MGED's menu bar (unused
