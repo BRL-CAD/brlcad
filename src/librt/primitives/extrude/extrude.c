@@ -1579,14 +1579,14 @@ get_seg_midpoint(void *seg, struct rt_sketch_internal *skt, point2d_t pt)
 		dir[0] = -s2m[1];
 		dir[1] = s2m[0];
 		s2m_len_sq =  s2m[0]*s2m[0] + s2m[1]*s2m[1];
-		if (s2m_len_sq <= SMALL_FASTF) {
+		if (s2m_len_sq < SMALL_FASTF) {
 		    bu_log("start and end points are too close together in circular arc of sketch\n");
-		    return -1;
+		    s2m_len_sq = SMALL_FASTF;
 		}
 		len_sq = csg->radius*csg->radius - s2m_len_sq;
 		if (len_sq < 0.0) {
 		    bu_log("Impossible radius for specified start and end points in circular arc\n");
-		    return -1;
+		    len_sq = 0;
 		}
 		tmp_len = sqrt(dir[0]*dir[0] + dir[1]*dir[1]);
 		dir[0] = dir[0] / tmp_len;
