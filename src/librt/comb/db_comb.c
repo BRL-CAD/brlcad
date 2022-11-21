@@ -245,11 +245,7 @@ rt_comb_import4(
 
 	    tp->tr_l.tl_name = bu_strdup(namebuf);
 
-	    if (dbip) {
-		flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, dbip->dbi_version < 0 ? 1 : 0);
-	    } else {
-		flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, 0);
-	    }
+	    flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, (dbip && dbip->dbi_version) < 0 ? 1 : 0);
 
 	    /* Verify that rotation part is pure rotation */
 	    if (fabs(diskmat[0]) > 1 || fabs(diskmat[1]) > 1 ||
