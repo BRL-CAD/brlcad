@@ -22,7 +22,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   and update CHANGES with itemization
 
 * docs:
-  r74890 NEWS for -r option (and needs man page)
   af0cf075e0767070394e5a99fc194de0eea99683 in NEWS, man page
 
 * re-enable regress-asc and regress-weight
