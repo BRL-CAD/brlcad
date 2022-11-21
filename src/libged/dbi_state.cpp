@@ -3091,6 +3091,7 @@ BSelectState::clear()
 {
     selected.clear();
     active_paths.clear();
+    characterize();
 }
 
 std::vector<std::string>
