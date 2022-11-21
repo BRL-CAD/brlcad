@@ -56,6 +56,8 @@ bu_glob(const char *pattern, int flags, struct bu_glob_context *gp)
 
     return glob(pattern, flags, NULL, &g);
 #else
+    // FIXME: fallback method needed for non-POSIX
+    bu_log("INTERNAL ERROR: globbing unsupported\n");
     return 1;
 #endif
 }
