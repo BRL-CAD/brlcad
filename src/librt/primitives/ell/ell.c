@@ -966,11 +966,14 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Create unit length versions of A, B, C */
-    invAlen = 1.0/(Alen = sqrt(magsq_a));
+    Alen = sqrt(magsq_a);
+    Blen = sqrt(magsq_b);
+    Clen = sqrt(magsq_c);
+    invAlen = 1.0/Alen;
+    invBlen = 1.0/Blen;
+    invClen = 1.0/Clen;
     VSCALE(Au, state.eip->a, invAlen);
-    invBlen = 1.0/(Blen = sqrt(magsq_b));
     VSCALE(Bu, state.eip->b, invBlen);
-    invClen = 1.0/(Clen = sqrt(magsq_c));
     VSCALE(Cu, state.eip->c, invClen);
 
     /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
@@ -1556,10 +1559,10 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     Blen = sqrt(magsq_b);
     Clen = sqrt(magsq_c);
     invAlen = 1.0/Alen;
-    VSCALE(Au, eip->a, invAlen);
     invBlen = 1.0/Blen;
-    VSCALE(Bu, eip->b, invBlen);
     invClen = 1.0/Clen;
+    VSCALE(Au, eip->a, invAlen);
+    VSCALE(Bu, eip->b, invBlen);
     VSCALE(Cu, eip->c, invClen);
 
     /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
