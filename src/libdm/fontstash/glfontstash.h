@@ -99,10 +99,13 @@ static void glfons__renderDraw(void* userPtr, const float* verts, const float* t
 static void glfons__renderDelete(void* userPtr)
 {
 	GLFONScontext* gl = (GLFONScontext*)userPtr;
-	if (gl->tex != 0)
-		glDeleteTextures(1, &gl->tex);
-	gl->tex = 0;
-	free(gl);
+        if (gl) {
+          if (gl->tex != 0) {
+            glDeleteTextures(1, &gl->tex);
+          }
+          gl->tex = 0;
+          free(gl);
+        }
 }
 
 
@@ -136,11 +139,14 @@ cerror:
 
 void glfonsDelete(FONScontext* ctx)
 {
-	if (ctx->params->userPtr) {
-	   free(ctx->params->userPtr);
+        if (!ctx)
+          return;
+
+	if (cxt->params && ctx->params->userPtr) {
+          free(ctx->params->userPtr);
 	}
 	if (ctx->params) {
-	   free(ctx->params);
+          free(ctx->params);
 	}
 	fonsDeleteInternal(ctx);
 }
