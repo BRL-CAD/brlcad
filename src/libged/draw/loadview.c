@@ -391,7 +391,7 @@ int
 _ged_cm_end(const int argc, const char **argv)
 {
     struct bu_vls eye = BU_VLS_INIT_ZERO;
-    char *eye_argv[6] = {"eye", NULL, NULL, NULL, NULL, NULL};
+    char *eye_argv[6] = {"eye", NULL, NULL, NULL, NULL};
 
     if (argc < 0 || argv == NULL)
 	return 1;
@@ -404,7 +404,7 @@ _ged_cm_end(const int argc, const char **argv)
     bv_update(_ged_current_gedp->ged_gvp);
 
     bu_vls_printf(&eye, "%lf %lf %lf", V3ARGS(_ged_eye_model));
-    bu_argv_from_string(eye_argv+1, 4, bu_vls_addr(&eye));
+    bu_argv_from_string(eye_argv+1, 3, bu_vls_addr(&eye));
     ged_exec(_ged_current_gedp, 4, (const char **)eye_argv);
     bu_vls_free(&eye);
 

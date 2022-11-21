@@ -1238,7 +1238,7 @@ bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *vec)
     size_t i = 0;
     size_t acnum = 0;
     char *str1 = NULL;
-    char *avnum[5] = {NULL, NULL, NULL, NULL, NULL};
+    char *avnum[5] = {NULL, NULL, NULL, NULL};
     vect_t *v= (vect_t *)vec;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_vect_t");
@@ -1254,7 +1254,7 @@ bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *vec)
 	}
 	i++;
     }
-    acnum = bu_argv_from_string(avnum, 4, str1);
+    acnum = bu_argv_from_string(avnum, 3, str1);
     if (acnum == 3) {
 	/* We might have three numbers - find out */
 	fastf_t v1 = 0.0;
