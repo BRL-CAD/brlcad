@@ -142,7 +142,7 @@ void glfonsDelete(FONScontext* ctx)
         if (!ctx)
           return;
 
-	if (cxt->params && ctx->params->userPtr) {
+	if (ctx->params && ctx->params->userPtr) {
           free(ctx->params->userPtr);
 	}
 	if (ctx->params) {
