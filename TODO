@@ -18,12 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* manually test NMG I/O.  specifically need to test whether a variety
-  of NMG (e.g., with and without normals) serialized in an older
-  release (7.32.0 or older) open and raytrace without issue in the
-  latest code and vice-versa.  i.e., ensure we can create in latest
-  and open in 7.32.0 also.
-
 * remove docs pertaining to 7c9572e27025047b145d0a8b415e03a91ccf716d
   and update CHANGES with itemization
 
