@@ -19,7 +19,7 @@ build system provided by the project, rather than having BRL-CAD
 rewrite it to match ours.
 
 * fixed perspective to orthogonal view toggling in archer - Cliff Yapp
-* improved 'burst' cross-platform support, removed nburst - Cliff Yapp
+* removed 'nburst' rewrite with burst now deprecated - Cliff Yapp
 * fixed bot_merge with oriented plate mode bots - Sean Morrison
 * bot_dump infers output type from filename extension - Sean Morrison
 * readded MGED viewring, sweep, collab, & rateknob menus - Cliff Yapp
