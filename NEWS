@@ -22,19 +22,17 @@ rewrite it to match ours.
 * improved 'burst' cross-platform support, removed nburst - Cliff Yapp
 * fixed bot_merge with oriented plate mode bots - Sean Morrison
 * bot_dump infers output type from filename extension - Sean Morrison
-* restored MGED ViewRing menu, sweep rectangle features - Cliff Yapp
-* restored MGED collaboration and rateknob features - Cliff Yapp
-* fixed a crash when shaded BRep drawing fails - Cliff Yapp
-* added man pages for process and ps commands - Cliff Yapp
-* added man page for 3dm-g Rhino3D importer - Cliff Yapp
+* readded MGED viewring, sweep, collab, & rateknob menus - Cliff Yapp
+* fixed a crash when shaded NURBS brep drawing fails - Cliff Yapp
+* added new man pages for brep, process, and ps commands - Cliff Yapp
+* added new man page for 3dm-g Rhino3D importer - Cliff Yapp
 * improved bot_dump default command help - Chris McGregor
-* fixed suffix for 3dm-g converted solids - Cliff Yapp
+* improved suffix handling for 3dm-g converted primitives - Cliff Yapp
 * added -N view obj name option to overlay command - Cliff Yapp
-* updated man pages for GED brep command - Cliff Yapp
 * added man page for MGED Overlaps Tool - Chris McGregor
 * major STEPcode updates, using unmodified upstream 0.8.1 - Cliff Yapp
 * added aircode reporting support to the lc command - Sean Morrison
-* fixed 3dm to g names converting alphabetized - Chris McGregor
+* 3dm-g now converts as encountered, not alphabetized - Chris McGregor
 * updated Tcl/Tk to version 8.6.12 - Cliff Yapp
 * updated netpbm to version 10.73.40 - Cliff Yapp
 * updated zlib to version 1.2.13 - Cliff Yapp
@@ -332,8 +330,8 @@ corrections.
 This major release of BRL-CAD incorporates a new feature for caching
 of raytrace acceleration structures used when working with explicit
 boundary representation (BREP) Non-uniform Rational Basis Spline
-(NURBS) solids.  This will result in significant improvements to
-run times when repeatedly raytracing BREP solids.
+(NURBS) objects.  This will result in significant improvements to run
+times when repeatedly raytracing BREP objects.
 
 Support for terrain import has been significantly expanded with the
 addition of a new Geospatial Data Abstraction Library (GDAL) based
