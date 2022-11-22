@@ -44,16 +44,16 @@ the stage for the aforementioned major feature developments.
 * updated netpbm to version 10.73.40 - Cliff Yapp
 * updated zlib to version 1.2.13 - Cliff Yapp
 * fixed mged -c 'unknown variable' warning dialogs - Sean Morrison
-* fixed and improved gqa grid spacing - Daniel Rossberg
+* fixed and improved gqa grid spacing - Daniel Roßberg
 * improved mged & archer html command help formatting - Sean Morrison
 * fixed archer empty string ("") loading behavior - Cliff Yapp
 * rt* tools' -P option accepts negative #core counts - Sean Morrison
+* added text label size & rotation angle support to annotation objects
+	- Ali Haydar, Himanshu Nayak, and Daniel Roßberg
 * gqa -Ae exposed air report no longer has gapped air - Sean Morrison
 * fixed rt framebuffer bug with -g/-G cellsize options - Sean Morrison
 * added new idents(5) file format manual page - Sean Morrison
 * preserved path prefixes on search cmd results - Cliff Yapp
-* added text size and angle to annotation attributes
-	- Haydar, Nayak, Rossberg
 * new 'material' command and material object infrastructure
         - Dinges, Connelly, Olivarez, McGregor, Studwell, Wilson
 
