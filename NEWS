@@ -44,6 +44,8 @@ rewrite it to match ours.
 * fixed rt framebuffer bug with -g/-G cellsize options - Sean Morrison
 * added new idents(5) file format manual page - Sean Morrison
 * preserved path prefixes on search cmd results - Cliff Yapp
+* added text size and angle to annotation attributes
+	- Haydar, Nayak, Rossberg
 * new 'material' command and material object infrastructure
         - Dinges, Connelly, Olivarez, McGregor, Studwell, Wilson
 
