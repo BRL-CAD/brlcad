@@ -134,6 +134,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* consider user interface and usability implications of gchecker
+  and/or overlap_tool as commands that kick off GUI.  need to consider
+  if there's a non-GUI output/utility and how the CLI pairs up with
+  other GUI-inducing commands like rtwizard, raytrace control panel,
+  geometree, etc.
+
 * Add manual page for 3dm-g
 
 * Attempt to update to use latest upstream poly2tri resulted in incorrect
