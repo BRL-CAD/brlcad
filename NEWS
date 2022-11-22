@@ -18,6 +18,7 @@ library building - src/other/ext dependencies now use the native
 build system provided by the project, rather than having BRL-CAD
 rewrite it to match ours.
 
+* fixed resetting perspective mode to ortho in Archer - Cliff Yapp
 * removed 'nburst' version of burst tool - Cliff Yapp
 * fixed bot_merge w/ oriented plate mode bots - Sean Morrison
 * restored MGED ViewRing menu, sweep rectangle features - Cliff Yapp
