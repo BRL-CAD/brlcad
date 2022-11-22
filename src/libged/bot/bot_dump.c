@@ -36,6 +36,7 @@
 #include "bu/cv.h"
 #include "bu/getopt.h"
 #include "bu/units.h"
+#include "bu/path.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -860,12 +861,28 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    /* let the user know we do not try to be smart with the specified file extension and will 
-     * default to stl if no type is specified
+    /* try to be smart with the specified file extension, but warn
+     * when we default to stl
      */
     if (!specified_t) {
-	char* warning = "WARNING: no format type '-t' specified, defaulting to stl\n";
-	bu_vls_printf(gedp->ged_result_str, "%s", warning);
+	struct bu_vls ext = BU_VLS_INIT_ZERO;
+	if (!bu_path_component(&ext, output_file, BU_PATH_EXT)) {
+	    bu_vls_printf(gedp->ged_result_str,
+			  "WARNING: no format type '-t' specified, defaulting to stl\n");
+	} else {
+	    if (BU_STR_EQUAL("dxf", bu_vls_cstr(&ext)))
+		output_type = OTYPE_DXF;
+	    else if (BU_STR_EQUAL("obj", bu_vls_cstr(&ext)))
+		output_type = OTYPE_OBJ;
+	    else if (BU_STR_EQUAL("sat", bu_vls_cstr(&ext)))
+		output_type = OTYPE_SAT;
+	    else if (BU_STR_EQUAL("stl", bu_vls_cstr(&ext)))
+		output_type = OTYPE_STL;
+	    else {
+		bu_vls_printf(gedp->ged_result_str,
+			      "WARNING: unrecognized filename type, defaulting to stl\n");
+	    }
+	}
     }
 
     return BRLCAD_OK;
