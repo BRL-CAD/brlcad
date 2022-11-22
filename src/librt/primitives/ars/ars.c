@@ -297,9 +297,9 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ari->magic = RT_ARS_INTERNAL_MAGIC;
 
     cp = (unsigned char *)ep->ext_buf;
-    ari->ncurves = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+    ari->ncurves = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
-    ari->pts_per_curve = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+    ari->pts_per_curve = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
 
     /*
