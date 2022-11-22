@@ -218,7 +218,13 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     }
 
     int print_help = 0;
+
+    // TODO - pseudo-random default max_error, gave decent results on one test
+    // case.  Either need to figure out how to more intelligently calculate a
+    // sane default for this based on input, or at least document what this
+    // number means and why we go with whatever final default we pick.
     double max_error = 1000.0;
+
     double feature_size = 0.0;
 
     struct bu_opt_desc d[5];
