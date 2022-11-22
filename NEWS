@@ -10,13 +10,20 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2022-XX-XX  Release 7.34.X                                     ---
+--- 2022-11-23  Release 7.34.0                                     ---
 ----------------------------------------------------------------------
 
-This major release introduces a new method for managing third party
-library building - src/other/ext dependencies now use the native
-build system provided by the project, rather than having BRL-CAD
-rewrite it to match ours.
+With development efforts spanning several years, this major update to
+BRL-CAD includes considerable progress on infrastructure for graphical
+user interface improvements, geometry conversion, and physically-based
+rendering.  It also includes hundreds of logic and memory management
+bug fixes, potential code vulnerability updates, and other issues
+reported by Coverity and Clang Static Analysis.
+
+This release also overhauls the way 3rd-party dependencies are managed
+in BRL-CAD.  Native build systems are now used in order for updates to
+be more readily applied, to reduce maintenance overhead, and to set
+the stage for the aforementioned major feature developments.
 
 * fixed perspective to orthogonal view toggling in archer - Cliff Yapp
 * removed 'nburst' rewrite with burst now deprecated - Cliff Yapp
