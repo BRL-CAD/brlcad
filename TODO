@@ -30,6 +30,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * docs:
   af0cf075e0767070394e5a99fc194de0eea99683 in NEWS, man page
   52e23cf6a9efbaa5e9ffdb88811960f85bf44e0a and 98d01c7b65f959ee2559c4b2b8b3892bb5ab83d2 in NEWS (two-liner with himanshu, ali, and daniel)
+  b4a8cbda3ce815dabbe6c7503b7198d7b5932045 in NEWS (daniel)
 
 * re-enable regress-asc and regress-weight
 
