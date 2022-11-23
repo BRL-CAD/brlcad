@@ -18,16 +18,16 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* re-enable regress-asc and regress-weight
-
-* material infrastructure has regressions due to attr sync code that
-  needs to be resolved.
-
 * document user-visible changes
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* re-enable regress-asc and regress-weight
+
+* material infrastructure has regressions due to attr sync code that
+  needs to be resolved.
 
 * dbconcat corrupted database / failed. created a top-level comb with
   invalid "1_[subcomb]/" to be created that result in error messages
